@@ -183,7 +183,7 @@ test('vertical-execution.md rewrites the per-slice review argument rather than d
   );
   assert.match(
     execution,
-    /run once, on Opus, when\s+the last slice is integrated, never on a slice's own draft PR/i,
+    /run once, on Opus, when\s+the last slice is integrated, never on a slice's own branch/i,
     'section 4 must say plainly when and how often the principles review runs now',
   );
 

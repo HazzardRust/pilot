@@ -112,13 +112,13 @@ test('a registry naming a dir outside the scratch dirs is refused', async (t) =>
 test('a planted registry that is a symlink is refused (S1)', async (t) => {
   const pid = sleeper(t);
   const port = await impostor(t, pid);
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-scratch-planted-'));
+  // This run's own temp dir: a reused pid's registry file left in the shared one is never in the way.
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-scratch-registry-'));
+  t.mock.method(os, 'tmpdir', () => tmp);
+  const dir = fs.mkdtempSync(path.join(tmp, 'pilot-scratch-planted-'));
   const target = path.join(dir, 'entry.json');
   fs.writeFileSync(target, JSON.stringify({ pid, port, dir }));
-  t.after(() => {
-    fs.rmSync(dir, { recursive: true, force: true });
-    fs.rmSync(registryFile(pid), { force: true });
-  });
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
   try {
     fs.symlinkSync(target, registryFile(pid), 'file');
   } catch (err) {

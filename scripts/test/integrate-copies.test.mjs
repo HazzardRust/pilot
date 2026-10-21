@@ -115,7 +115,7 @@ function conflicting(work, picks) {
   return git(work, 'rev-parse', 'HEAD');
 }
 
-const run = (work) => integrate(undefined, { cwd: work, test: 'exit 0', findPr: () => null, install: () => {} });
+const run = (work) => integrate(undefined, { cwd: work, test: 'exit 0', install: () => {} });
 
 test('a base conflict on a branch carrying copies names the count', (t) => {
   const { origin, work, pilotCommits } = repos(t);

@@ -543,7 +543,8 @@ test('QA runs once per feature, the fundamentalist reports and the pilot decides
   assert.match(architect, /\*\*Spec\*\*/, 'the artefact has a Spec section');
 
   // One QA pass, on the integration branch, never per slice.
-  assert.match(skill, /no slice PR is ever marked ready/, 'the skill says no slice PR leaves draft');
+  // pilot-develop-line S4 (spec 3): no slice PR exists to leave draft; the slice branch is pushed and integrated.
+  assert.match(skill, /no\s+PR\s+ever\s+targets\s+`feat\/<slug>`/, 'the skill says no slice PR is opened');
   assert.doesNotMatch(skill, /QA per slice/i, 'QA is no longer a per-slice step');
   assert.match(qa, /feat\/<slug>/, 'the QA agent works on the integration branch');
   // gate-no-stall L6: only `pilot land` flips the feature PR, never the pilot or QA.
@@ -559,6 +560,28 @@ test('QA runs once per feature, the fundamentalist reports and the pilot decides
   assert.match(pilot, /\*\*The verdicts\.\*\*/, 'the verdict on a finding is the pilot\'s and never delegated');
   assert.match(implementer, /## A fix brief/, 'the implementer is the fixer, given a fix brief');
   assert.doesNotMatch(qa, /fundamentalist's (blocking )?findings/, 'the QA agent no longer carries the fundamentalist\'s findings');
+});
+
+// pilot-develop-line S4 (spec 3; A3, A8): a slice reaches `feat/<slug>` as a pushed branch `pilot integrate`
+// merges, never as a PR, so no agent file may still describe one.
+const sliceAgents = () => fs.readdirSync(path.join(ROOT, 'agents')).filter((name) => name.endsWith('.md')).map((name) => [name, read(`agents/${name}`)]);
+
+test('the implementer opens no PR', () => {
+  const implementer = read('agents/pilot-implementer.md');
+  assert.match(implementer, /^## Commit, push, report$/m, 'the section is named for what it does now');
+  assert.doesNotMatch(implementer, /^## Commit, push, draft PR$/m);
+  assert.equal(implementer.match(/gh pr create/g)?.length ?? 0, 0, 'the implementer runs no gh pr create');
+  assert.match(implementer, /<remote>\/feat\/<slug>\.\.\.HEAD/, 'its reviewers read the slice against the integration branch');
+  for (const [name, text] of sliceAgents()) {
+    assert.doesNotMatch(text, /slice\s+PR\b|draft\s+PR\s+#/,`${name} still describes a slice PR`);
+  }
+});
+
+test("security's verdict rides a trailer", () => {
+  const pilot = read('agents/pilot.md');
+  assert.ok(pilot.includes('--trailer "Reviewed-by: <reviewer>: <verdict>"'), 'one Reviewed-by trailer per reviewer');
+  assert.doesNotMatch(pilot, /slice PR body/i, 'the security verdict is read from the report, not a PR body');
+  assert.match(pilot, /`Verdict:` line[^.]*report/, "security's verdict comes from the implementer's report");
 });
 
 test('the runner carries the mutation-safety rule', () => {
@@ -1289,6 +1312,44 @@ test('QA loads `diagnosing-bugs` on demand, not at spawn (independence L8)', () 
   assert.match(qa, /Skill tool[^.]*`pilot:diagnosing-bugs`/, 'the Fixes section never says to load it when a bug needs diagnosing');
 });
 
+// --- debug-workflow S1 (spec 1, 2; L6, L7, L11): the crew's bug path ---
+
+test('the implementer loads diagnosing-bugs on demand', () => {
+  // The implementer writes every fix, so it loads the bug path on a fix brief and on a
+  // `regression`; most slices fix no bug, so a preload would be paid and never read (L6).
+  const implementer = agentSource('pilot-implementer');
+  assert.doesNotMatch(fieldOf(implementer, 'skills'), /diagnosing-bugs/, 'L6: pilot-implementer preloads diagnosing-bugs');
+  // Either word order, so a rewording that keeps the bug path keeps the pin.
+  const loads = /Skill tool[^.]*`pilot:diagnosing-bugs`|`pilot:diagnosing-bugs`[^.]*Skill tool/;
+  for (const [heading, when] of [['A fix brief', /\bbug\b/], ['The loop', /`regression`/]]) {
+    const sentence = flat(sectionOf(implementer, heading))
+      .split(/(?<=\.) /)
+      .find((s) => loads.test(s));
+    assert.ok(sentence, `spec 1: "${heading}" never says to load diagnosing-bugs with the Skill tool`);
+    assert.match(sentence, when, `spec 1: "${heading}" loads diagnosing-bugs but not on its ${when.source}`);
+  }
+});
+
+test("the co-pilot's fix brief names the bug path", () => {
+  const steps = flat(sectionOf(agentSource('pilot-co-pilot'), 'Steps 4 to 8'));
+  const sentence = steps.split(/(?<=\.) /).find((s) => /diagnosing-bugs/.test(s));
+  assert.ok(sentence, 'L7: "Steps 4 to 8" never names diagnosing-bugs');
+  assert.match(sentence, /fix brief/, 'L7: the sentence naming diagnosing-bugs is not about the fix brief');
+});
+
+test('the bug path is recorded and the skill exists', () => {
+  // The landing numbers the NNNN placeholder and refreshes the index (adr-allocate), so on the
+  // feature branch the ADR exists unnumbered and `adr-index --check` holds the README.
+  const front = leadingFrontmatter(read('docs/adr/0175-debug-workflow.md'));
+  assert.match(front, /^status: proposed$/m, 'spec 2: the ADR is proposed until it lands');
+  const paths = /^paths: \[(.*)\]$/m.exec(front);
+  assert.ok(paths, 'spec 2: the ADR names its paths');
+  for (const file of ['agents/pilot-implementer.md', 'agents/pilot-co-pilot.md']) {
+    assert.ok(paths[1].split(/,\s*/).includes(file), `spec 2: the ADR's paths omit ${file}`);
+  }
+  assert.ok(fs.existsSync(path.join(ROOT, 'skills/diagnosing-bugs/SKILL.md')), 'the bug path names a skill that is not vendored');
+});
+
 /** The report-shape section each crew reporter carries; pilot-explorer's lives under a differently named heading. */
 const DEFAULT_REPORT_SECTION = /## Report\n([\s\S]*?)(?=\n## )/;
 const REPORT_SECTION = {
@@ -1425,7 +1486,7 @@ test('a fix over the small-diff limit becomes an added slice only within its rai
     /whose fix would exceed the small-diff limit becomes an added slice within its rails/,
     'the small-diff-limit finding becomes an added slice, not a question, by default',
   );
-  assert.match(step, /its own PR and reviewer/, 'rail: its own PR and reviewer');
+  assert.match(step, /its own branch and reviewer/, 'rail: its own branch and reviewer (pilot-develop-line S4: no slice PR)');
   // bigger-jobs S2 (L3): no count and no agreed-spec-line rail; the slice brings its own line.
   assert.match(step, /its own spec line, marked added/, 'rail: its own spec line, marked added');
   assert.match(step, /moves no locked decision/, 'rail: moves no locked decision');
@@ -1610,7 +1671,7 @@ test('the pilot names the three PR-title formats', () => {
   const pilot = read('agents/pilot.md');
   const step4 = /\n### 4\. Implement per slice[^\n]*\n([\s\S]*?)(?=\n### )/.exec(pilot);
   assert.ok(step4, 'agents/pilot.md has no step 4');
-  assert.match(step4[1].replace(/\s+/g, ' '), /the PR title, `feat\(<slug>\): S<n> <title>`/, "spec 8: step 4's brief carries the slice title in its format");
+  assert.match(step4[1].replace(/\s+/g, ' '), /the subject, `feat\(<slug>\): S<n> <title>`/, "spec 8: step 4's brief carries the slice title in its format");
   // three-lanes S9 (spec 9): the architect writes brief.md now.
   const brief = read('agents/pilot-architect.md').split(/\n\s*\n/).find((p) => p.startsWith('Once §6 is settled, write `docs/design/<slug>/brief.md`'));
   assert.ok(brief, "agents/pilot-architect.md never says what brief.md's headings are");

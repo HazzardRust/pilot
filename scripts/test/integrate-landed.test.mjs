@@ -80,7 +80,7 @@ function buildRepos(dir) {
 }
 
 const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
-const quiet = { findPr: () => null, install: () => {}, test: passing, push: false };
+const quiet = { install: () => {}, test: passing, push: false };
 
 test("a landed feature's integration takes no base", (t) => {
   const { work, bCommit } = repos(t);
