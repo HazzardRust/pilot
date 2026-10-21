@@ -14,6 +14,14 @@ _Avoid_: Orchestrator, main agent, controller
 The agents the pilot spawns: explorer, architect, implementer, fundamentalist, QA, teacher, auditor.
 _Avoid_: Subagents, workers, team
 
+**Decisions pass**:
+The fundamentalist's first pass, over every L, A and S of the artefact against the built diff; its output is report item 1's opening table, one row per id, each with a verdict of needed, drop or simplify.
+_Avoid_: Design review, architecture pass
+
+**Decision finding**:
+A row of the decisions table whose verdict is drop or simplify; it is a finding like any other.
+_Avoid_: Design finding, big-picture finding
+
 **Run**:
 One piloted feature, identified by repository path plus slug. Several runs can be live at once.
 _Avoid_: Session, job, project

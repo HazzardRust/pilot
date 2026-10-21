@@ -447,12 +447,15 @@ decided.
 
 When the last slice is integrated, spawn one `pilot-fundamentalist` on the
 whole feature: the feature PR number, `feat/<slug>` against its
-base as the diff, the artefact's spec and every slice file's path, the test
+base as the diff, the artefact's path and every slice file's path, the test
 and coverage commands, and the small-diff limit. Opus, because this is the feature's only
 principles review — no slice was reviewed on principles on its own way in.
 
 The pilot triages the report: check each finding against the diff, drop what
-does not hold with the reason, and weigh what does. A `consider` row is not
+does not hold with the reason, and weigh what does. Each drop or simplify
+row of the decisions table is one `findings` line, id first:
+`kept: <id> <verdict> — <what>` or `dropped: <id> <verdict> — <reason>`; a
+needed row gets no line. A `consider` row is not
 triaged away: spawn `pilot:security-reviewer` on its files and weigh its
 findings with the rest — a finding is worth
 fixing when its stated consequence (change amplification, cognitive load,
@@ -462,7 +465,10 @@ whose fix would exceed the small-diff limit becomes an added slice within
 its rails: its own PR and reviewer; its own spec line, marked added; moves
 no locked decision; within the per-slice diff limit; recorded in the status
 table as added; the Gate 2 walkthrough names it as built. Only one that
-would move a locked decision stays a question for the user. Kept findings
+would move a locked decision stays a question for the user, and so does
+every kept decision finding that moves a decision (drops or simplifies an
+`L<n>`, overturns an `A<n>`): whatever its cost, it is a question for the user,
+never dropped for moving one, and the run does not wait on it; the user's answer, once QA is the branch's writer, goes to QA as a user find. Kept findings
 go to a fresh `pilot-implementer` with
 a fix brief on `feat/<slug>` itself, and the pilot verifies the fixes
 against the diff — before the Gate 2

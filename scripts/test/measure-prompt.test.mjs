@@ -186,13 +186,16 @@ test('the command prints the table, and --json prints the rows', (t) => {
 // architect-runs-red S3 (2026-10-21) raised it from 11562.5 to the measured 11572.5 (spec 4; L2): deck_ticket's `verdicts` action and its `verdicts: { type: 'string' }`, 10.
 // architect-runs-red S4 (2026-10-21) raised it from 11572.5 to the measured 11659.75 (spec 1, 3, 4, 7; L2, A1; ADR 0169): step 3's two-call handover, the verdict message's line shape, the record-first rule for a pilot-posted gate1 and the wait on the hand-back, net of the Gate 1 git paragraph and the answer-recording paragraph they replace, 87.25.
 // architect-runs-red fix round (2026-10-21) raised it from 11659.75 to the measured 11675 (F1): deck_status's `author: AUTHOR`, so the hook's stamp reaches the architect refusal, 15.25.
+// fundamentalist-decisions S2 (2026-10-21) raised it from 11562.5 to the measured 11662.25 (spec 6, 7; L4-L6, A1): step 7's brief passes the artefact's path, each drop or simplify row is one `findings` line id first, and a kept finding that moves a decision is always a question the run does not wait on, 104 (11558.25 to 11662.25 at eedd7b7a).
+// fundamentalist-decisions fix (2026-10-21) raised it from 11662.25 to the measured 11681.75 (spec 6): step 7 sends the user's answer to QA as a user find once QA is the branch's writer, 19.5.
+// Carry of feat/fundamentalist-decisions onto the new main (2026-10-21) set it to the measured 11797: architect-runs-red's 11675 plus fundamentalist-decisions' 119.25 sum to 11794.25; the merged pilot.md measures 11797.
 test('the pilot pin holds at its new number', async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const pilot = rows.find((row) => row.agent === 'pilot');
   const own = (pilot.definition + pilot.skills + pilot.tools) / 4;
-  assert.ok(own <= 11675, `pilot's own share is ${own} tokens, over its 11675`);
+  assert.ok(own <= 11797, `pilot's own share is ${own} tokens, over its 11797`);
 });
 
 // research-first S1 raised the explorer's from 2209 to the measured 2409 (L5): `## A research brief` cost 200.5 (2208.5 to 2409), 41 of it the security-review sentence on fetched pages and queries.

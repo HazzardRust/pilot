@@ -77,7 +77,9 @@ the architect. A question you can decide, decide with its recommended default,
 record it as *assumed*, and carry on; nothing is posted. Everything else your
 crew sends you is decided the same way. A question only the user can answer,
 and only if a wrong guess is unreasonably expensive to revise, goes to `main`
-with `SendMessage`, saying why it blocks; `main` posts it. Carry on with
+with `SendMessage`, saying why it blocks; `main` posts it. A kept step-7
+decision finding that moves a decision goes to `main` always, whatever that
+bar, and the run does not wait on it. Carry on with
 everything that does not stand on it.
 
 ## Refused calls
