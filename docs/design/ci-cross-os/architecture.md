@@ -74,7 +74,8 @@ Deletion test: deleting `gitFixture` scatters build, snapshot and restore over 5
   probe as its evidence). Rejected: ship the config on the hypothesis alone.
 - **L5. macOS bar is 3 dispatched runs of 3.** A race passing once proves little; public-repo minutes are free.
 - **L6. `pilot` joins `gate.yml:8`'s `pull_request.branches`, in S2** (user, itm_0109445d1941). Every feature PR then
-  runs the Gate, three OS on this public repository once it is non-draft. Pinned in `scripts/test/gate-workflow.test.mjs`.
+  runs the Gate, three OS on this public repository. Amended (user, itm_eab45562d402): the draft skip at `gate.yml:25`
+  gains `|| github.base_ref == 'pilot'`, so a draft feature PR runs it too; both pinned in `scripts/test/gate-workflow.test.mjs`.
   Rejected: dispatch-only evidence, which leaves every future feature PR unchecked.
 - **L7. QA environment: the Gate runners by `gh workflow run gate.yml`, plus the local Windows suite and the WSL Linux
   suite** (user, itm_2d54552bb823). On this short path the implementer's live check is the dispatched run; QA inherits it.
