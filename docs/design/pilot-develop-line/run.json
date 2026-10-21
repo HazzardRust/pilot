@@ -1,0 +1,114 @@
+{
+  "slug": "pilot-develop-line",
+  "feature": "The pilot branch reads as a develop line",
+  "ticket": "itm_ec448e2fd6f6",
+  "branch": "feat/pilot-develop-line",
+  "worktree": "C:/Users/Hazzard/projects/pilot-feat-pilot-develop-line",
+  "artefact": "docs/design/pilot-develop-line/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A landing leaves a labelled release PR",
+      "state": "implementing",
+      "branch": "slice/pilot-develop-line-s1",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s1"
+    },
+    {
+      "slice": "S2 The feature PR reads merged, never closed",
+      "state": "planned",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/pilot-develop-line-s2"
+    },
+    {
+      "slice": "S3 A slice integrates as one subject with its verdicts",
+      "state": "draft PR #10",
+      "branch": "slice/pilot-develop-line-s3",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s3",
+      "pr": 10
+    },
+    {
+      "slice": "S4 No slice PR is opened",
+      "state": "implementing",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/pilot-develop-line-s4",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s4"
+    },
+    {
+      "slice": "S5 pilot base names the concluding feature",
+      "state": "draft PR #9",
+      "branch": "slice/pilot-develop-line-s5",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s5",
+      "pr": 9
+    },
+    {
+      "slice": "S6 integrate takes the chained base until N lands",
+      "state": "planned",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/pilot-develop-line-s6"
+    },
+    {
+      "slice": "S7 land guards the chain and retargets",
+      "state": "planned",
+      "after": [
+        "S2",
+        "S6"
+      ],
+      "branch": "slice/pilot-develop-line-s7"
+    },
+    {
+      "slice": "S8 The take and the cut follow the base line",
+      "state": "planned",
+      "after": [
+        "S4",
+        "S5"
+      ],
+      "branch": "slice/pilot-develop-line-s8"
+    },
+    {
+      "slice": "S9 ADR for the develop line",
+      "state": "planned",
+      "branch": "slice/pilot-develop-line-s9"
+    },
+    {
+      "slice": "S10 The shipped-rules ledger matches the public history (added)",
+      "state": "implementing",
+      "branch": "slice/pilot-develop-line-s10",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s10"
+    }
+  ],
+  "next": "co-pilot: S3 #10, S5 #9 wait on S10 to integrate; S1, S10, S4 (from S3 tip) implementing; S6, S9 wait a slot",
+  "updatedAt": "2026-10-21T02:48:56.951Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test stops before the suite on the base: the rules ledger is rebuilt from the squashed public history",
+      "evidence": "ledger stale: scripts/shipped-rules.json, rebuilt; commit it (113+/124-); a second ~10 min gate run on a local rebuild",
+      "size": 15
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the locally rebuilt ledger fails 9 unrelated install/rules tests, to be told apart from real failures",
+      "evidence": "install.test.mjs:185-348, rules-repair.test.mjs:71,84 pass on the committed ledger"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5's slice file missed that deck/test/gate2-base.test.mjs spawns pilot base and would reach the live deck",
+      "evidence": "deck/test/gate2-base.test.mjs:190"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3.md's refusal rule contradicted 'integrate-base.test.mjs passes unchanged': no fixture writes a run.json",
+      "evidence": "integrate-base/-landed/-prune/-remote/-select fixtures; one round with the co-pilot"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md's Claude-Session trailer and Actions billing note are stale",
+      "evidence": "brief.md lines 26 and 37"
+    }
+  ]
+}
