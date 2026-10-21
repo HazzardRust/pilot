@@ -2,7 +2,7 @@
 status: proposed
 date: 2026-10-21
 tags: [git, landing, release, chain, agents]
-supersedes: []
+supersedes: [0100]
 superseded_by: []
 paths: [scripts/land.mjs, scripts/release.mjs, scripts/integrate.mjs, scripts/base.mjs, deck/tickets.mjs, agents/pilot.md, agents/pilot-implementer.md, docs/design/pilot-develop-line/architecture.md]
 ---

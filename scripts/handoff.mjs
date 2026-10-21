@@ -27,7 +27,7 @@ import fs from 'node:fs';
 
 import { deckUrl } from '../deck/tools.mjs';
 import { bearer } from '../hooks/lib/deck-secret.js';
-import { commitRecords, git } from './integrate.mjs';
+import { commitRecords, git, TRAILER } from './integrate.mjs';
 import { remoteOf, runRemote } from './remotes.mjs';
 
 /** A loopback deck answers in milliseconds or not at all. */
@@ -136,6 +136,9 @@ const firstLine = (err) => (err.stderr?.toString().trim() || err.message).split(
  * lines for the record's commit. Answers `{ ok, line }`; never throws.
  */
 export async function handoff({ cwd = process.cwd(), env = process.env, trailers = [] } = {}) {
+  // A trailer reaches `git commit --trailer`: one with a newline would forge a second line.
+  const forged = trailers.find((trailer) => !TRAILER.test(String(trailer)));
+  if (forged !== undefined) return { ok: false, line: `NOT handed off: trailer ${JSON.stringify(String(forged))} is not one "Key: value" line; no handoff item posted` };
   const typed = wrapperAlive(env);
   const repo = typed && env[RUN_REPO] ? env[RUN_REPO] : cwd;
   let landed = null;

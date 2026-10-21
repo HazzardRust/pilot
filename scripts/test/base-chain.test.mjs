@@ -34,6 +34,15 @@ test('a green ticket is the concluding feature', (t) => {
   assert.deepEqual(queueView(listItems(), green.repo, records).concluding, { ticket: green.id, slug: 'n', branch: 'feat/n' });
 });
 
+test('a green ticket itself chained on a feature is not concluding', (t) => {
+  tempDeck(t);
+  const green = aTicket('Chained', 'green');
+  aTicket('Planning', 'red');
+  takeTicket(green.id);
+  const records = [{ slug: 'n', ticket: green.id, branch: 'feat/n', base: 'feat/m' }];
+  assert.equal(queueView(listItems(), green.repo, records).concluding, null);
+});
+
 test('no green ticket, no chain', (t) => {
   tempDeck(t);
   const red = aTicket('Planning', 'red');
@@ -76,10 +85,12 @@ test('base prints the chained line', async (t) => {
 
 test('a concluding branch origin lacks falls back', async (t) => {
   const { work } = scratchRepos(t);
-  for (const branch of ['feat/gone', '--upload-pack=x']) {
-    const { code, out } = await printed(work, async () => ({ ticket: 'itm_1', slug: 'gone', branch }));
+  const gone = await printed(work, async () => ({ ticket: 'itm_1', slug: 'gone', branch: 'feat/gone' }));
+  assert.equal(gone.out, `base pilot ${git(work, 'rev-parse', '--short', 'origin/pilot')} (feat/gone not on origin)\n`);
+  for (const feature of [{ ticket: 'itm_1', branch: '--upload-pack=x' }, { ticket: 'itm_1) (x', branch: 'feat/n' }]) {
+    const { code, out } = await printed(work, async () => ({ slug: 'gone', ...feature }));
     assert.equal(code, 0);
-    assert.equal(out, `base pilot ${git(work, 'rev-parse', '--short', 'origin/pilot')}\n`, branch);
+    assert.equal(out, `base pilot ${git(work, 'rev-parse', '--short', 'origin/pilot')}\n`, feature.ticket);
   }
   const none = await printed(work, async () => null);
   assert.equal(none.out, `base pilot ${git(work, 'rev-parse', '--short', 'origin/pilot')}\n`);

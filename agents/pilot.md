@@ -362,12 +362,9 @@ nothing else. The deck refuses a gate1 whose Verdict lines differ from that
 record, whoever posts it; a gate1 you post yourself (trivial work, a re-cut)
 records first. The architect then writes the lines, commits and pushes
 `design/<slug>`, creates `feat/<slug>` from its tip and pushes that too, opens
-the feature PR as a **draft** against `pilot` with the artefact's spec and
+the feature PR as a **draft** against its base, `pilot` or `feat/<N>`, with the artefact's spec and
 slice table as its body, sends `deck_status` and posts the gate1, which is your
-thread. The artefact therefore lands with the feature, and the feature PR
-exists from the first slice on, so the user can watch it fill. On its
-hand-back, wait on the gate1 with `pilot wait`; a refusal it sends you is yours
-to clear.
+thread. On its hand-back, `pilot wait` on the gate1; clear any refusal it sends you.
 
 On the Sign off press, `deck_status` `finished: "planned"` with `ticket`, and
 take the next ticket, same session.
@@ -499,7 +496,7 @@ Sign off on its walkthrough is not the feature's Gate 2; QA closes that thread a
 edits its QA comment. On QA's `signed <id>`, or your own gate2's press, the deck lands it and
 the press frees the lane: its line wakes you with what the deck took in place, and you run no `pilot landing`.
 On `landed` its `report due` line asks for your `Findings:` (Ending a run).
-A `NOT landed: built on feat/<N>` for a dropped N is a fix brief reverting N's own commits on `feat/<slug>`, then a fresh gate2.
+A `NOT landed: built on feat/<N>` waits for N's lander while N's gate2 is pressed; for a dropped N it is a fix brief reverting N's own commits on `feat/<slug>`, `deck_status` `base: pilot`, `gh pr edit --base pilot` on the feature PR, then a fresh gate2.
 Every press, a clean one too, and every `NOT landed` but that get one `pilot-lander` whose brief is the gate2 id: it resolves
 with `resolving-merge-conflicts`, says `Land again` and the deck lands, then prunes and hands you one line; its
 trade-off is one question from you. A `lander due` line asks for that spawn; with no room in `pilot budget`, spawn

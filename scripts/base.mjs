@@ -15,12 +15,14 @@
  *
  *   base feat/<N> <sha> (concluding <ticket>)  the deck's concluding feature, its branch on origin
  *   base pilot <sha> (deck not reached)        the deck did not answer: today's line, said so
+ *   base pilot <sha> (feat/<N> not on origin)  the deck named a branch origin does not hold
  *
  * The deck is read only through `concluding`, which `main` points at `/api/tickets`; without it, today's line.
  */
 
 import { execFileSync } from 'node:child_process';
 import { bearer } from '../hooks/lib/deck-secret.js';
+import { RUN_BASE } from '../deck/runs.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { ensurePilotBranch, firstLine, PILOT_BRANCH } from './pilot-branch.mjs';
 
@@ -34,18 +36,22 @@ export const deckConcluding = (cwd) => async () => {
   return (await response.json()).concluding ?? null;
 };
 
-/** The chained line's ref and tip, or null when the deck names no feature branch origin holds; throws when the deck does not answer. */
+/**
+ * The chained line's ref and tip as `{ line }`, `{ note }` when origin lacks the branch, or null when the deck names
+ * no feature; throws when the deck does not answer.
+ */
 async function chainedOn(concluding, git) {
   const feature = await concluding();
   const branch = feature?.branch;
-  // A branch from the deck reaches git as an argument: only a `feat/` name, never one that reads as an option.
-  if (typeof branch !== 'string' || !/^feat\/[\w.-]+$/.test(branch)) return null;
+  // A branch and a ticket from the deck reach git and the parsed line: only a run base and an item id, never an option.
+  if (typeof branch !== 'string' || !RUN_BASE.test(branch)) return null;
+  if (typeof feature.ticket !== 'string' || !/^itm_[0-9a-f]+$/.test(feature.ticket)) return null;
   try {
     git(['fetch', '-q', 'origin', `+refs/heads/${branch}:refs/remotes/origin/${branch}`]);
   } catch {
-    return null;
+    return { note: ` (${branch} not on origin)` };
   }
-  return `${branch} ${git(['rev-parse', '--short', `origin/${branch}`])} (concluding ${feature.ticket})`;
+  return { line: `${branch} ${git(['rev-parse', '--short', `origin/${branch}`])} (concluding ${feature.ticket})` };
 }
 
 /** Print the base line. Answers the exit code. */
@@ -74,10 +80,11 @@ export async function base({ cwd = process.cwd(), say = (text) => process.stdout
   if (concluding && runs === 'origin') {
     try {
       const chained = await chainedOn(concluding, git);
-      if (chained) {
-        say(`base ${chained}\n`);
+      if (chained?.line) {
+        say(`base ${chained.line}\n`);
         return 0;
       }
+      deck = chained?.note ?? '';
     } catch {
       deck = ' (deck not reached)';
     }

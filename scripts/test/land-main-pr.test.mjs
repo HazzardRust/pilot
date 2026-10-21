@@ -1,7 +1,6 @@
 /**
  * S2 of one-integration-line: the landing keeps one PR from pilot to main (spec 3; A1, A5, A6).
- * `mainGetsPilot` reuses the one open PR head pilot, base the default branch, else opens it; a
- * run remote other than origin opens none. A feature PR GitHub left open takes the
+ * `releasePr` reuses the one open PR head pilot, base the default branch, else opens it. A feature PR GitHub left open takes the
  * landing comment and is never closed (pilot-develop-line S2), and the landing's last line is `mainLine`'s. `gh` is always faked.
  */
 
@@ -10,7 +9,8 @@ import { repos, passing, fakeGh, mainSays, land } from './lib/land-repos.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-const { mainGetsPilot, mainLine } = await import('../land.mjs');
+const { mainLine } = await import('../land.mjs');
+const { releasePr } = await import('../release.mjs');
 
 /** A git with `pilot.remote` set to `remote` (unset when undefined), remotes origin and fork, and main as origin's HEAD. */
 function stubGit(remote) {
@@ -33,7 +33,7 @@ const creates = (calls) => calls.filter((args) => args[0] === 'pr' && args[1] ==
 test('the first landing opens the main PR', () => {
   const { gh, calls } = fakeGh([], undefined, { created: 901 });
 
-  const main = mainGetsPilot({ git: stubGit(), gh });
+  const main = releasePr({ git: stubGit(), gh });
 
   assert.equal(creates(calls).length, 1);
   assert.deepEqual(creates(calls)[0], ['pr', 'create', '--base', 'main', '--head', 'pilot', '--title', 'Release: a', '--body', `| Feature | PR | Landing |\n| --- | --- | --- |\n| a | – | ${'a'.repeat(40)} |`, '--label', 'release']);
@@ -48,23 +48,11 @@ test('a later landing reuses it', () => {
     { number: 950, headRefName: 'pilot', state: 'OPEN', isCrossRepository: true },
   ]);
 
-  const main = mainGetsPilot({ git: stubGit('origin'), gh });
+  const main = releasePr({ git: stubGit('origin'), gh });
 
   assert.equal(creates(calls).length, 0);
   assert.deepEqual(main, { number: 901, opened: false });
   assert.equal(mainLine(main), 'main gets pilot: #901');
-});
-
-test('a fork run remote opens none', () => {
-  const { gh, calls } = fakeGh();
-
-  const main = mainGetsPilot({ git: stubGit('fork'), gh });
-
-  assert.equal(main.number, null);
-  assert.equal(calls.length, 0);
-  assert.equal(mainLine(main), 'main gets pilot: open a PR from fork/pilot to main by hand');
-  assert.equal(mainLine(mainGetsPilot({ git: stubGit('none'), gh })), 'main gets pilot: open a PR from pilot to main by hand');
-  assert.equal(calls.length, 0);
 });
 
 test('a gh that fails reads unknown, with why', () => {
@@ -72,7 +60,7 @@ test('a gh that fails reads unknown, with why', () => {
     throw new Error('no GitHub host');
   };
 
-  const main = mainGetsPilot({ git: stubGit(), gh });
+  const main = releasePr({ git: stubGit(), gh });
 
   assert.equal(main.number, null);
   assert.equal(mainLine(main), 'main gets pilot: unknown (gh pr list failed: no GitHub host)');

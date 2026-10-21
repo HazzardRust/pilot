@@ -67,7 +67,7 @@ export function queueView(items, repo, records = [], { open = false, agent, coPi
   const decided = live && mergeDecisionOf(items, live.id);
   const filed = agent === undefined ? undefined : laneTicketOf(items, repo, agent, coPilot) ?? null;
   const green = liveTicketOf(items, repo, 'green');
-  const run = green && records.find((record) => record?.ticket === green.id && typeof record.branch === 'string');
+  const run = green && records.find((record) => record?.ticket === green.id && typeof record.branch === 'string' && (record.base ?? 'pilot') === 'pilot');
   return {
     live: live && asTicket(live),
     red: ticketQueueOf(items, repo).filter((item) => item !== live).map(asTicket),

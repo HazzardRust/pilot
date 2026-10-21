@@ -15,7 +15,7 @@
  * The feature never takes pilot, so it never carries a later feature; pilot grows by merge
  * commits only. No PR is merged: the feature's PR against pilot reads merged from the push
  * and takes the landing comment, never a close, and main gets pilot through the one open PR `pilot → main`
- * (`mainGetsPilot`, one-integration-line A1, A5, A6), which the user merges. Every failure
+ * (`releasePr`, one-integration-line A1, A5, A6), which the user merges. Every failure
  * throws with `exitCode` 3 for a conflict merging into pilot, 1 otherwise.
  */
 
@@ -46,7 +46,7 @@ const reason = (err) =>
  * `adr` the `{ from, to }` the landing allocated or null,
  * `commentFailed` why `landed on pilot at <sha>` is not on the feature's PR, `stillOpen` the PR numbers
  * that still read open after `wait` ms (30 s by default; `sleep` injected), `main` what
- * `mainGetsPilot` answers, `pushSkipped` the push fallback taken (three-lanes spec 17), `deleted`, `kept` and
+ * `releasePr` answers, `pushSkipped` the push fallback taken (three-lanes spec 17), `deleted`, `kept` and
  * `deleteFailed` what `deleteRunBranches` answers, `cleared` the lines `clear` answers, then
  * `gc`'s (process-gc L14): `() => string[]`, none by default, so only the CLI stops processes.
  * `holder` is `prune`'s (landing-keeps-worktrees L2): none by default, so nothing is held.
@@ -237,7 +237,7 @@ function landCaughtUp({ cwd, git, gh, test, head, wait, sleep }) {
     // on GitHub's origin only, where pilot is.
     const retargeted = runs === 'origin' ? retarget({ gh, head }) : [];
     // Only now, pilot pushed, and on an already-landed feature too: main gets pilot through one PR (A1).
-    return { ...landed, retargeted, main: mainGetsPilot({ git, gh, already: !merge.merged }) };
+    return { ...landed, retargeted, main: releasePr({ git, gh, already: !merge.merged }) };
   }
 }
 
@@ -355,15 +355,7 @@ function readsMerged({ gh, number, wait, sleep }) {
   }
 }
 
-/**
- * Main gets pilot through the one open release PR `pilot → main` (A1, A6; pilot-develop-line spec 1):
- * `releasePr`'s answer, which `mainLine` prints (L4).
- */
-export function mainGetsPilot({ git, gh, already = false }) {
-  return releasePr({ git, gh, already });
-}
-
-/** The landing's last line, which the deck's closing report parses (S3): what `mainGetsPilot` answered. */
+/** The landing's last line, which the deck's closing report parses (S3): what `releasePr` answered. */
 export function mainLine({ number, opened, why, byHand, none }) {
   if (number !== null && number !== undefined) return `main gets pilot: #${number}${opened ? ' (opened)' : ''}`;
   if (none) return 'main gets pilot: no open PR';

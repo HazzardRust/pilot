@@ -40,6 +40,6 @@ test('a dropped base goes to a fix brief', () => {
   assert.equal(round.length, 1, 'one sentence handles the refusal');
   assert.match(round[0], /fix brief/, 'A2: the fix round takes it');
   assert.match(round[0], /revert/, 'it reverts N');
-  assert.match(round[0], /gate2/, 'then a fresh gate2');
-  assert.doesNotMatch(round[0], /lander/, 'no lander for a dropped base');
+  assert.match(round[0], /`deck_status` `base: pilot`, `gh pr edit --base pilot` on the feature PR, then a fresh gate2/, 'the base is reset, so chainGuard passes');
+  assert.match(round[0], /waits for N's lander while N's gate2 is pressed; for a dropped N/, 'a landing N is waited on, never reverted');
 });

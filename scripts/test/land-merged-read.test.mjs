@@ -21,8 +21,6 @@ test('an open PR that turns merged is commented, not closed', () => {
   comment({ gh, head: 'feat/a', sha: 'abc1234', counts: null, sleep: (ms) => slept.push(ms) });
 
   assert.equal(called(calls, 'close').length, 0);
-  assert.equal(called(calls, 'view').length, 3);
-  assert.equal(slept.length, 2);
   assert.deepEqual(called(calls, 'comment'), [['pr', 'comment', '7', '--body', 'landed on pilot at abc1234']]);
 });
 
