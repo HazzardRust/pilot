@@ -25,13 +25,17 @@
     },
     {
       "slice": "feature",
-      "state": "both slices integrated; trial and gate2 next",
+      "state": "gate2 itm_437954462052 signed at d8ab5dc7; lander spawned",
       "branch": "feat/ci-cross-os",
       "pr": 11
+    },
+    {
+      "slice": "ci-cross-os",
+      "state": "landing started in C:/Users/Hazzard/Projects/pilot-feat-ci-cross-os"
     }
   ],
-  "next": "ci-cross-os (short path, concluding): trial on feat d8ab5dc7, then walkthrough (3 green Gate runs) and own gate2 (Verdict per slice, Gate line).",
-  "updatedAt": "2026-10-21T06:57:15.784Z",
+  "next": "ci-cross-os (green): lander live on gate2 itm_437954462052; Findings: on its closing report (human steps: merge the pilot->main PR with a merge commit; kept worktrees feat-ci-cross-os, slice-ci-cross-os-s1/s2). handoff-prompt: co-pilot live. audit-f1 (red): its 4 questions open. Proposal itm_12ba901f9f50 (yellow-lane refusal) open.",
+  "updatedAt": "2026-10-21T06:58:39.609Z",
   "friction": [
     {
       "agent": "pilot-implementer S1",
