@@ -2,10 +2,11 @@ name: Gate
 
 # The project's full gate on every non-draft PR to main and every push to main (main-never-red L8), on
 # ubuntu. macOS and Windows join for a PR labelled all-os (drafts included), the weekly schedule, a
-# dispatch, or any non-draft PR once the repository is public (mac-linux L7, L10).
+# dispatch, or any non-draft PR once the repository is public (mac-linux L7, L10). A feature PR to
+# pilot runs it too, drafts included (ci-cross-os L6).
 on:
   pull_request:
-    branches: [main, 'feat/**']
+    branches: [main, 'feat/**', pilot]
     types: [opened, synchronize, reopened, ready_for_review, labeled]
   push:
     branches: [main]
@@ -22,7 +23,7 @@ concurrency:
 
 jobs:
   gate:
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft || contains(github.event.pull_request.labels.*.name, 'all-os')
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft || contains(github.event.pull_request.labels.*.name, 'all-os') || github.base_ref == 'pilot'
     strategy:
       fail-fast: false
       matrix:
