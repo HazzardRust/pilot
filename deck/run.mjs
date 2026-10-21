@@ -69,6 +69,7 @@ import { bearer } from '../hooks/lib/deck-secret.js';
 export { logLine };
 
 import { claimNameFor, takeClaim, releaseClaim, laneMarked, lastTurnEnded, waitFor, pause } from './run-claim.mjs';
+import { SETTLE_MS, submitPrompt } from './run-prompt.mjs';
 
 export { claimNameFor, takeClaim, RESUME_PROMPT, claudeArgs, runEnv };
 
@@ -296,6 +297,7 @@ export async function clearOnce({
   pollMs = LANE_POLL_MS,
   waitMs = LANE_WAIT_MS,
   restWaitMs = REST_WAIT_MS,
+  settleMs = SETTLE_MS,
   coPilot = () => coPilotAt(cwd, signal),
   now = Date.now,
   wake = () => {},
@@ -365,7 +367,8 @@ export async function clearOnce({
   } catch {
     items = [];
   }
-  type(`${firstPrompt(items, cwd)}\r`);
+  // Pasted, then Enter alone after a settle: a `\r` in the prompt's own chunk is a pasted newline (handoff-prompt L1).
+  if (!(await submitPrompt(firstPrompt(items, cwd), { type, signal, settleMs }))) return true;
   logLine(`run: marker for ${handoff.id}, typed the prompt`);
   return true;
 }
