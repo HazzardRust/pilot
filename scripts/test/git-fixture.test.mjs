@@ -109,6 +109,14 @@ test('the fixture dir is its realpath', (t) => {
   assert.ok(seen.startsWith(real + path.sep), 'the dir is spelled through the real directory, not the link');
 });
 
+test('fixture git runs no auto maintenance', (t) => {
+  const { dir } = gitFixture(t, 'quiet', oneCommit);
+  assert.equal(git(dir, 'config', '--get', 'maintenance.auto'), 'false');
+  assert.equal(git(dir, 'config', '--get', 'maintenance.autoDetach'), 'false');
+  assert.equal(git(dir, 'config', '--get', 'gc.auto'), '0');
+  assert.equal(git(dir, 'config', '--get', 'gc.autoDetach'), 'false');
+});
+
 test('identity comes from the global file', (t) => {
   const { dir, sha } = gitFixture(t, 'identity', oneCommit);
   assert.match(sha, /^[0-9a-f]{40}$/, 'git commit succeeded with no git config call');
