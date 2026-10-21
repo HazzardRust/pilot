@@ -49,7 +49,9 @@ https://claude.ai/code/session_01PLSy3oNjHdFSiMkkcniEyc
 
 `docs/design/ci-cross-os/architecture.md`; slice files `slices/S<n>.md`. The one seam is
 `scripts/test/lib/git-fixture.mjs` (`gitFixture`, its `tempDir` and the global gitconfig it writes on import). Only
-that file and `scripts/test/git-fixture.test.mjs` change. No assertion in any other test is edited (L1).
+that file and `scripts/test/git-fixture.test.mjs` change, plus `.github/workflows/gate.yml:8` and its pin in
+`scripts/test/gate-workflow.test.mjs` in S2 (L6). No assertion in any other test is edited (L1). QA environment (L7): the
+Gate runners by dispatch, the local Windows suite and the WSL Linux suite.
 
 ## Gate command
 
