@@ -402,7 +402,7 @@ with no `Verdict:` line from it in the implementer's report waits: no security v
 alone, state `integrated`, and the deck writes `docs/design/<slug>/run.json`
 into your `feat/<slug>` worktree once `worktree` has been named. Then
 one call: `cd "<worktree>" && pilot integrate <slice-branch>
---trailer "Reviewed-by: <reviewer>: <verdict>"` (one per reviewer, its `Verdict:` from the report; set `git config pilot.test` once where there
+--trailer "Reviewed-by: <reviewer>: <verdict>"` (one per reviewer, `<verdict>` only the `Verdict:` line's first word, never more of the report; set `git config pilot.test` once where there
 is no package.json); it takes the base first. On a pass it pushes and commits the run record as
 `chore(<slug>): run record`. On a failure it pushes nothing: send the row's real state and route its line.
 If slice N+1 is already running from N's old tip, send it the new one so it
