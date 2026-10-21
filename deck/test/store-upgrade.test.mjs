@@ -94,5 +94,5 @@ test('the plugin version moved with the store', () => {
   const pkg = read('package.json');
   assert.equal(read('.claude-plugin/plugin.json'), pkg);
   assert.notEqual(pkg, '0.9.0', 'the v3 store ships in a new release (co-pilot-tickets S5)');
-  assert.equal(pkg, '0.9.5');
+  assert.equal(pkg, '0.9.6');
 });

@@ -1,6 +1,6 @@
 {
   "name": "pilot",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "private": true,
   "description": "Pilot Deck Claude Code: pilot orchestration and its deck.",
   "license": "MIT",
