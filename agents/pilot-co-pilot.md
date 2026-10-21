@@ -51,6 +51,9 @@ Read steps 4 to 8 of `${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, and its
   or merge into `pilot` another way: send QA `feat/<slug>`'s tip and name it a
   blocked step in the hand-back; nothing waits on it.
 - The verdicts of step 7 are yours: judge each finding before a fixer sees it.
+  A fix brief that carries a bug, a kept finding that is a defect rather than
+  a tidy, names `pilot:diagnosing-bugs`, so the fixer loads it without
+  re-deriving the call.
 - On each crew report, send its friction row in one `deck_status` as
   `friction`: `[{ agent, what, evidence, size? }]`, the child's agent type as
   `agent`. The deck appends it to the record's rows, so it reaches the close
