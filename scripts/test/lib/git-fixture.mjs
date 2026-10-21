@@ -35,6 +35,10 @@ fs.writeFileSync(GLOBAL_CONFIG, [
   '[commit]', '\tgpgsign = false',
   // A restored file keeps its mtime and size but not its inode or ctime; compare only those two.
   '[core]', '\tcheckStat = minimal',
+  // No auto maintenance, detached or not: a detached run holds objects/maintenance.lock after the
+  // git that spawned it returns, and the snapshot's copy meets it vanishing (ENOENT on macOS).
+  '[maintenance]', '\tauto = false', '\tautoDetach = false',
+  '[gc]', '\tauto = 0', '\tautoDetach = false',
   '',
 ].join('\n'));
 process.env.GIT_CONFIG_GLOBAL = GLOBAL_CONFIG;
