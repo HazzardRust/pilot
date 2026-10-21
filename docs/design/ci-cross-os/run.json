@@ -3,26 +3,29 @@
   "feature": "The suite passes on macOS and Windows CI",
   "ticket": "itm_b8a9e3785d28",
   "branch": "feat/ci-cross-os",
-  "worktree": "C:/Users/Hazzard/projects/pilot-feat-ci-cross-os",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-ci-cross-os",
   "artefact": "docs/design/ci-cross-os/architecture.md",
   "slices": [
     {
       "slice": "S1 Walking skeleton: the fixture hands every build its realpath",
-      "state": "integrated",
+      "state": "integrated at d60f2926 (PR #17)",
       "branch": "slice/ci-cross-os-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-ci-cross-os-s1",
       "pr": 17
     },
     {
       "slice": "S2 The macOS fixture copy is diagnosed and its git kept quiet",
-      "state": "planned, held until PR #1 lands",
+      "state": "integrated",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/ci-cross-os-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-ci-cross-os-s2",
+      "pr": 29
     }
   ],
-  "next": "ci-cross-os (yellow, short path): integrate S1 (PR #17 at eeabcc5a, nested-slot NaN fixed as in develop-line 29d78f17); then spawn S2 implementer from the feat tip, integrate, own gate2 with walkthrough.",
-  "updatedAt": "2026-10-21T05:38:30.521Z",
+  "next": "ci-cross-os (short path): integrating S2 (PR #29, 948e8831) into feat/ci-cross-os; then pilot integrate --trial and own gate2 with the walkthrough (surface true).",
+  "updatedAt": "2026-10-21T06:51:08.560Z",
   "friction": [
     {
       "agent": "pilot-implementer S1",
@@ -35,6 +38,21 @@
       "what": "gate slot contention with other sessions; full Windows suite >10 min",
       "evidence": "log: gate: waiting for a slot",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "dispatches to one ref queue at most one pending run and a newer one cancels it; three back-to-back lost one run, ~15 min",
+      "evidence": "concurrency: gate-${{ github.ref }}; run 39554536534 cancelled"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the S2 probe recipe listed the error's path, which Node reports as the destination, not the source objects/",
+      "evidence": "src/node_file.cc CopyDirRecursive; probe run 39553108509"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "WSL output comes back UTF-16 with NUL bytes; the background output file was flagged binary",
+      "evidence": "S2 WSL gate log"
     }
   ]
 }
