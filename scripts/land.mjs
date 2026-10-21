@@ -24,7 +24,7 @@ import path from 'node:path';
 
 import { deleteMerged } from './branches.mjs';
 import { assertPushable, firstLine, holds, PILOT_BRANCH } from './pilot-branch.mjs';
-import { commitRecords, ghIn, git as gitAt, landingMessage } from './integrate.mjs';
+import { baseOf, commitRecords, ghIn, git as gitAt, landingMessage } from './integrate.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
 import { releasePr } from './release.mjs';
 import { runRef, runRemote } from './remotes.mjs';
@@ -41,7 +41,8 @@ const reason = (err) =>
  * Lands the feature checked out in `cwd` on the run remote's pilot branch (`runRemote`). `git` is
  * `(args) => string` run in `cwd`, `gh` is `(args) => string` (argv only), `test` the
  * shell command, the repository's own by default. Answers `{ head, sha, retried, already, adr,
- * commentFailed?, stillOpen?, main, pushSkipped?, deleted, kept, deleteFailed?, cleared }`: `sha` is pilot's tip after, `already` that the feature was on it,
+ * commentFailed?, stillOpen?, retargeted, main, pushSkipped?, deleted, kept, deleteFailed?, cleared }`: `sha` is pilot's tip after, `already` that the feature was on it,
+ * `retargeted` `retarget`'s lines (none off origin), a chained feature refused first by `chainGuard`,
  * `adr` the `{ from, to }` the landing allocated or null,
  * `commentFailed` why `landed on pilot at <sha>` is not on the feature's PR, `stillOpen` the PR numbers
  * that still read open after `wait` ms (30 s by default; `sleep` injected), `main` what
@@ -199,6 +200,7 @@ function landCaughtUp({ cwd, git, gh, test, head, wait, sleep }) {
   } catch (err) {
     throw fail(`${firstLine(err)}; nothing pushed`);
   }
+  chainGuard({ cwd });
   // The deck's run record rides in the landing merge (lander L10): committed, not discarded.
   commitRecords(cwd);
   const source = git(['rev-parse', 'HEAD']);
@@ -231,9 +233,55 @@ function landCaughtUp({ cwd, git, gh, test, head, wait, sleep }) {
     } catch (err) {
       landed.commentFailed = firstLine(err);
     }
+    // Pilot pushed: a chained run's PR based on this feature now shows only its own diff (A6),
+    // on GitHub's origin only, where pilot is.
+    const retargeted = runs === 'origin' ? retarget({ gh, head }) : [];
     // Only now, pilot pushed, and on an already-landed feature too: main gets pilot through one PR (A1).
-    return { ...landed, main: mainGetsPilot({ git, gh, already: !merge.merged }) };
+    return { ...landed, retargeted, main: mainGetsPilot({ git, gh, already: !merge.merged }) };
   }
+}
+
+/**
+ * Refuses, exit 1, a feature built on `feat/<N>` while N has not landed on pilot (pilot-develop-line
+ * spec 4b; L6): `baseOf`'s `chained`, read from the run record against the run remote's pilot as
+ * last fetched. A record or pilot `baseOf` cannot read refuses too. Never reverts N (A2).
+ */
+export function chainGuard({ cwd }) {
+  let base;
+  try {
+    base = baseOf(cwd);
+  } catch (err) {
+    throw fail(`${firstLine(err)}; nothing pushed`);
+  }
+  if (base.chained) throw fail(`built on ${base.chained}, which has not landed; land it first, or revert it (fix round); nothing pushed`);
+}
+
+/**
+ * Moves each open feature PR (head `feat/`) based on `head` to pilot, `gh pr edit <n> --base pilot` (spec 4c; A6), and
+ * answers one `retargeted #<n> to pilot` line each. Never throws: the feature is landed, so a list or
+ * an edit that fails is a `retarget failed` line.
+ */
+export function retarget({ gh, head }) {
+  let prs;
+  try {
+    prs = JSON.parse(gh(['pr', 'list', '--base', head, '--state', 'open', '--json', 'number,headRefName']));
+  } catch (err) {
+    return [`retarget failed: ${firstLine(err)}`];
+  }
+  if (!Array.isArray(prs)) return ['retarget failed: gh pr list answered no list'];
+  return prs
+    // A chained feature's PR only: an open slice PR moved to pilot would offer its unreviewed work there.
+    .filter((pr) => typeof pr?.headRefName === 'string' && pr.headRefName.startsWith('feat/'))
+    .map((pr) => pr.number)
+    .filter(Number.isSafeInteger)
+    .map((number) => {
+      try {
+        gh(['pr', 'edit', String(number), '--base', PILOT_BRANCH]);
+        return `retargeted #${number} to ${PILOT_BRANCH}`;
+      } catch (err) {
+        return `retarget failed for #${number}: ${firstLine(err)}`;
+      }
+    });
 }
 
 /** git's words when origin could not be asked at all, as against a push origin heard and refused. */
@@ -354,7 +402,7 @@ export function main(argv, inject = {}) {
   const table = inject.read && once(inject.read);
   const shared = table ? { holder: holderFrom(table), gc: inject.gc && (() => inject.gc(table)) } : {};
   try {
-    const { head, sha, retried, already, adr, main: mainPr, pushSkipped, commentFailed, stillOpen = [], deleted, kept, deleteFailed, caughtUp, cleared } = land({ ...inject, ...shared });
+    const { head, sha, retried, already, adr, main: mainPr, pushSkipped, commentFailed, stillOpen = [], retargeted = [], deleted, kept, deleteFailed, caughtUp, cleared } = land({ ...inject, ...shared });
     const said = already ? `${head} already on ${PILOT_BRANCH}` : `landed ${head} on ${PILOT_BRANCH}`;
     // Above the main line: the comment that failed, then the number the landing allocated (S8).
     const above = `${commentFailed === undefined ? '' : `pr comment failed: ${commentFailed}\n`}${stillOpen.map((number) => `feature PR #${number} still reads open\n`).join('')}${adr ? `ADR ${adr.from} is ${adr.to}\n` : ''}`;
@@ -366,6 +414,7 @@ export function main(argv, inject = {}) {
       ...(deleteFailed === undefined ? [] : [`branch deletion failed, some may be gone; check the run remote: ${deleteFailed.slice(0, 200)}`]),
       // Each fallback a landing took says so (three-lanes spec 17).
       ...(pushSkipped === undefined ? [] : [pushSkipped]),
+      ...retargeted,
     ];
     process.stdout.write(`${caughtUp}${[...branches, ...cleared].map((line) => `${line}\n`).join('')}${said} at ${sha.slice(0, 7)}${retried ? ' (pilot moved; merged again once)' : ''}\n${above}${mainLine(mainPr)}\n`);
     return 0;
