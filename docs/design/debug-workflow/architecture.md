@@ -84,6 +84,8 @@ five tests for no spec line, so there is **no fold slice** (L8).
 - **L7 The routing rule is the pilot's prose.** The co-pilot gets the line by `SendMessage` and writes the fix brief, which names `pilot ci <id>`
   and the skill. The crew never reads a raw log.
 - **L8 No fold of `failingNames`** (§3). Tradeoff: two parsers of `✖` lines, on different inputs.
+- **L9 QA environment** (user, itm_6fcfb321b58e): a live red run on this repository's Actions, from a scratch branch with one deliberately red test, dispatched and deleted after. Also the deck, and the local Windows (`npm test`) and WSL (`node scripts/gate.mjs`, five times) suites.
+- **L10 Depth** (user, itm_347cf0c7f44f): grill the forks only. A1–A4 are those forks, and nothing more is asked.
 
 ## 6. Assumed decisions
 
@@ -94,6 +96,7 @@ five tests for no spec line, so there is **no fold slice** (L8).
   evidence becomes a chat line plus a pin instead of a proposal item. Rejected: the daemon posting the proposal, because it cannot fill
   Found or Estimate.
   Verdict: stands — matches ticket-making: no ticket without the user's yes.
+  Answer: the user chose "Chat line, pilot proposes" (default) on itm_9777b734b8eb, 2026-10-21. Settled.
 - **A3 All own-branch runs count**: push, PR (draft or not), dispatch and schedule, with forks excluded (itm_d9ad308820aa). Tradeoff:
   scratch dispatches are reported too. Rejected: only `pilot` and open PRs, which misses the dispatch that started this ticket.
   Verdict: stands — the motivating run was a dispatch on a fix branch.
