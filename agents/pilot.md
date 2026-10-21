@@ -181,9 +181,9 @@ on one ticket; each counts within `pilot budget`.
 Every run is cut from the pilot branch, `pilot`, and lands on it. One feature
 is one integration branch, `feat/<slug>`, and one **feature PR** from it to
 `pilot`, which the landing merges; main gets pilot through the one main PR,
-which only the user merges. Every slice is a draft PR against
-`feat/<slug>`, reviewed by its own fresh language reviewer, and merged into
-it by the pilot; no slice PR is ever marked ready. QA and the feature's one
+which only the user merges. Every slice is a pushed branch, reviewed by its
+own fresh language reviewer and merged into `feat/<slug>` by the pilot; no
+PR ever targets `feat/<slug>`. QA and the feature's one
 principles review both happen once, on the whole feature, when the last
 slice is in; the feature lands on the Sign off press at Gate 2.
 Trivial work, with no architect and no slices, is one PR to the default
@@ -380,13 +380,13 @@ take the next ticket, same session.
 For each slice in DAG order, spawn one `pilot-implementer` agent with a brief
 that carries only the slice: the path of `docs/design/<slug>/brief.md`, the
 path of its slice file, `docs/design/<slug>/slices/S<n>.md`, the worktree and
-branch to create, and the PR title, `feat(<slug>): S<n> <title>`.
+branch to create, and the subject, `feat(<slug>): S<n> <title>`.
 
 Sequential along the DAG is the default; two relaxations need no asking:
 
-- **Pipeline.** Start the next slice on N's lane the moment N's draft PR exists,
+- **Pipeline.** Start the next slice on N's lane the moment N's branch is pushed,
   branched from N's tip, while step 5 integrates N. When N is merged into
-  `feat/<slug>`, N+1 rebases onto the new tip before its own PR opens: the
+  `feat/<slug>`, N+1 rebases onto the new tip before it reports: the
   implementer does it when it is still live (`SendMessage` it the tip), the
   pilot does it otherwise, with `resolving-merge-conflicts` when it stops.
 - **Parallel lanes.** Slices no line joins, top to bottom, on the deck's graph,
@@ -395,19 +395,17 @@ Sequential along the DAG is the default; two relaxations need no asking:
 
 ### 5. Integrate the slice, AFK
 
-When a slice's draft PR exists and its reviewers have cleared it, the
+When a slice's branch is pushed and its reviewers have cleared it, the
 pilot **integrates**. A slice whose Reviewers line names `pilot:security-reviewer`
-with no `Verdict:` line from it in the slice PR body waits: no security verdict, no integration; spawn
-`pilot:security-reviewer` on the slice PR first. Then send `deck_status` with `slug`, the current `next` and the slice's row
+with no `Verdict:` line from it in the implementer's report waits: no security verdict, no integration; spawn
+`pilot:security-reviewer` on the slice branch first. Then send `deck_status` with `slug`, the current `next` and the slice's row
 alone, state `integrated`, and the deck writes `docs/design/<slug>/run.json`
 into your `feat/<slug>` worktree once `worktree` has been named. Then
-one call: `cd "<worktree>" && pilot integrate <slice-branch> --trailer
-"<line>"` (one `--trailer` per trailer line; set `git config pilot.test` once where there
+one call: `cd "<worktree>" && pilot integrate <slice-branch>
+--trailer "Reviewed-by: <reviewer>: <verdict>"` (one per reviewer, its `Verdict:` from the report; set `git config pilot.test` once where there
 is no package.json); it takes the base first. On a pass it pushes and commits the run record as
 `chore(<slug>): run record`. On a failure it pushes nothing: send the row's real state and route its line.
-GitHub records the slice PR as merged; if it does not, close the PR with a
-comment naming the merge SHA. Never mark a slice PR ready and never merge
-one through GitHub. If slice N+1 is already running from N's old tip, send it the new one so it
+If slice N+1 is already running from N's old tip, send it the new one so it
 rebases.
 
 ### 6. Questions while the crew works, with the user
@@ -459,7 +457,7 @@ fixing when its stated consequence (change amplification, cognitive load,
 unknown unknowns, or an assertion the tests are missing) outweighs the diff
 it costs, and a removal at equal consequence beats an addition. A finding
 whose fix would exceed the small-diff limit becomes an added slice within
-its rails: its own PR and reviewer; its own spec line, marked added; moves
+its rails: its own branch and reviewer; its own spec line, marked added; moves
 no locked decision; within the per-slice diff limit; recorded in the status
 table as added; the Gate 2 walkthrough names it as built. Only one that
 would move a locked decision stays a question for the user. Kept findings
@@ -559,7 +557,7 @@ an assumed one `A‹n›`, and `D‹n›` is a deck and nothing else — so that
 `docs/design/<slug>/architecture.md` holds the spec, the design, the locked
 decisions, the assumed decisions still awaiting the user, the slice DAG, the
 verdict on every principles finding, and a status table: slice, state
-(planned, implementing, draft PR #n, integrated), branch,
+(planned, implementing, pushed <sha7>, integrated), branch,
 worktree, the blockers it names in the slice DAG (the slices
 it comes after — a walking skeleton names none), and the spec lines it
 delivers, with a row for the feature itself (in QA, landed). As
