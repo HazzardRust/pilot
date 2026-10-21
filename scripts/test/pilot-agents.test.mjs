@@ -1312,6 +1312,44 @@ test('QA loads `diagnosing-bugs` on demand, not at spawn (independence L8)', () 
   assert.match(qa, /Skill tool[^.]*`pilot:diagnosing-bugs`/, 'the Fixes section never says to load it when a bug needs diagnosing');
 });
 
+// --- debug-workflow S1 (spec 1, 2; L6, L7, L11): the crew's bug path ---
+
+test('the implementer loads diagnosing-bugs on demand', () => {
+  // The implementer writes every fix, so it loads the bug path on a fix brief and on a
+  // `regression`; most slices fix no bug, so a preload would be paid and never read (L6).
+  const implementer = agentSource('pilot-implementer');
+  assert.doesNotMatch(fieldOf(implementer, 'skills'), /diagnosing-bugs/, 'L6: pilot-implementer preloads diagnosing-bugs');
+  // Either word order, so a rewording that keeps the bug path keeps the pin.
+  const loads = /Skill tool[^.]*`pilot:diagnosing-bugs`|`pilot:diagnosing-bugs`[^.]*Skill tool/;
+  for (const [heading, when] of [['A fix brief', /\bbug\b/], ['The loop', /`regression`/]]) {
+    const sentence = flat(sectionOf(implementer, heading))
+      .split(/(?<=\.) /)
+      .find((s) => loads.test(s));
+    assert.ok(sentence, `spec 1: "${heading}" never says to load diagnosing-bugs with the Skill tool`);
+    assert.match(sentence, when, `spec 1: "${heading}" loads diagnosing-bugs but not on its ${when.source}`);
+  }
+});
+
+test("the co-pilot's fix brief names the bug path", () => {
+  const steps = flat(sectionOf(agentSource('pilot-co-pilot'), 'Steps 4 to 8'));
+  const sentence = steps.split(/(?<=\.) /).find((s) => /diagnosing-bugs/.test(s));
+  assert.ok(sentence, 'L7: "Steps 4 to 8" never names diagnosing-bugs');
+  assert.match(sentence, /fix brief/, 'L7: the sentence naming diagnosing-bugs is not about the fix brief');
+});
+
+test('the bug path is recorded and the skill exists', () => {
+  // The landing numbers the NNNN placeholder and refreshes the index (adr-allocate), so on the
+  // feature branch the ADR exists unnumbered and `adr-index --check` holds the README.
+  const front = leadingFrontmatter(read('docs/adr/0175-debug-workflow.md'));
+  assert.match(front, /^status: proposed$/m, 'spec 2: the ADR is proposed until it lands');
+  const paths = /^paths: \[(.*)\]$/m.exec(front);
+  assert.ok(paths, 'spec 2: the ADR names its paths');
+  for (const file of ['agents/pilot-implementer.md', 'agents/pilot-co-pilot.md']) {
+    assert.ok(paths[1].split(/,\s*/).includes(file), `spec 2: the ADR's paths omit ${file}`);
+  }
+  assert.ok(fs.existsSync(path.join(ROOT, 'skills/diagnosing-bugs/SKILL.md')), 'the bug path names a skill that is not vendored');
+});
+
 /** The report-shape section each crew reporter carries; pilot-explorer's lives under a differently named heading. */
 const DEFAULT_REPORT_SECTION = /## Report\n([\s\S]*?)(?=\n## )/;
 const REPORT_SECTION = {

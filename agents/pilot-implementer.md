@@ -71,7 +71,7 @@ checklist behind it:
 3. The tests: `npm run test:changed -- --since=origin/feat/<slug>`, or the
    full suite where the project has no such script; only the failures the
    brief names are allowed. Run it with `run_in_background` or a `timeout` of 600000 ms, past the shell's
-   120 s default, and read its log to the pass and fail counts. A test red in that run is rerun alone once, `node --test <file>` on the file holding each name it printed, before you change code; report both results and call each `flake` (green alone) or `regression` (red alone).
+   120 s default, and read its log to the pass and fail counts. A test red in that run is rerun alone once, `node --test <file>` on the file holding each name it printed, before you change code; report both results and call each `flake` (green alone) or `regression` (red alone). On a `regression`, load the bug path with the Skill tool, `pilot:diagnosing-bugs`, before you change code.
 4. Build.
 5. If the slice has a surface someone uses, run it the way it is used, in
    the environment the brief names, and read what it produces: a CLI's
@@ -144,6 +144,9 @@ from the PR branch:
 git fetch --all && git worktree add -b fix/<slice> <path> <remote>/<pr-branch>
 ```
 
+Where the brief carries a bug, a kept finding or a red that is a defect
+rather than a tidy, load the Skill tool's `pilot:diagnosing-bugs` before the
+first edit.
 Fix each finding the way a slice is built: a test first where the finding is
 a missing assertion or an uncovered branch (that test is the fix), and a
 deletion where the finding is something the slice could do without, with the

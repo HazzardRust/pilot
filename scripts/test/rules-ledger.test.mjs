@@ -54,18 +54,6 @@ test('a rebuild on a history that no longer holds an old version keeps its hash 
   });
 });
 
-test('a committed ledger that is not a map of hash lists is refused', (t) => {
-  const dir = tempDir(t);
-  git(dir, 'init', '-q', '-b', 'main');
-  fs.mkdirSync(path.join(dir, 'rules'));
-  fs.mkdirSync(path.join(dir, 'scripts'));
-  fs.writeFileSync(path.join(dir, 'rules', 'a.md'), 'new\n');
-  git(dir, 'add', 'rules');
-  git(dir, 'commit', '-q', '-m', 'one');
-  fs.writeFileSync(path.join(dir, 'scripts', 'shipped-rules.json'), '{"a.md": "not a list"}');
-  assert.throws(() => rulesLedgerText(dir), /shipped-rules\.json/);
-});
-
 test('a shallow clone is refused', (t) => {
   const src = tempDir(t);
   git(src, 'init', '-q', '-b', 'main');
@@ -77,6 +65,54 @@ test('a shallow clone is refused', (t) => {
   const dest = path.join(tempDir(t), 'clone');
   git(src, 'clone', '-q', '--depth', '1', pathToFileURL(src).href, dest);
   assert.throws(() => rulesLedgerText(dest), /shallow/);
+});
+
+/** A one-commit repo, as after the fresh-repo move: `rules/a.md` at "two", and a ledger recording more than history holds. */
+function freshRepo(t) {
+  const dir = tempDir(t);
+  git(dir, 'init', '-q', '-b', 'main');
+  fs.mkdirSync(path.join(dir, 'rules'));
+  fs.mkdirSync(path.join(dir, 'scripts'));
+  fs.writeFileSync(path.join(dir, 'rules', 'a.md'), 'two\n');
+  const ledger = {
+    'a.md': [sha256('one\n'), sha256('two\n')].sort(),
+    'gone.md': [sha256('retired\n')],
+  };
+  const text = `{\n${Object.entries(ledger).map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)}`).join(',\n')}\n}\n`;
+  fs.writeFileSync(path.join(dir, 'scripts', 'shipped-rules.json'), text);
+  git(dir, 'add', 'rules', 'scripts');
+  git(dir, 'commit', '-q', '-m', 'fresh');
+  return { dir, text };
+}
+
+test('a ledger entry the history no longer holds is kept', (t) => {
+  const { dir, text } = freshRepo(t);
+  // `--check` passes exactly when the rebuilt text equals the committed file.
+  assert.equal(rulesLedgerText(dir), text);
+});
+
+test('an entry deleted from the ledger by hand comes back', (t) => {
+  const { dir, text } = freshRepo(t);
+  const file = path.join(dir, 'scripts', 'shipped-rules.json');
+  fs.writeFileSync(file, `{\n  "a.md": ${JSON.stringify([sha256('two\n')])}\n}\n`);
+  git(dir, 'commit', '-q', '-am', 'drop entries');
+  assert.equal(rulesLedgerText(dir), text);
+});
+
+test('a rules edit without its ledger entry is still stale', (t) => {
+  const { dir, text } = freshRepo(t);
+  fs.writeFileSync(path.join(dir, 'rules', 'a.md'), 'three\n');
+  const rebuilt = JSON.parse(rulesLedgerText(dir));
+  assert.notEqual(rulesLedgerText(dir), text);
+  assert.ok(rebuilt['a.md'].includes(sha256('three\n')));
+  assert.ok(rebuilt['a.md'].includes(sha256('one\n')));
+});
+
+test('a malformed committed ledger is an error, never carried forward', (t) => {
+  const { dir } = freshRepo(t);
+  fs.writeFileSync(path.join(dir, 'scripts', 'shipped-rules.json'), '{"a.md": "not-a-list"}\n');
+  git(dir, 'commit', '-q', '-am', 'bad ledger');
+  assert.throws(() => rulesLedgerText(dir), /shipped-rules\.json at blob [0-9a-f]+ is malformed/);
 });
 
 test('a merge in progress counts the incoming commits', (t) => {
