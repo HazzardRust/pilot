@@ -1,0 +1,185 @@
+{
+  "slug": "merge-first",
+  "feature": "Merge first, by the architect",
+  "ticket": "itm_9aa2494af867",
+  "branch": "feat/merge-first",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-merge-first",
+  "qa": {
+    "branch": "feat/merge-first",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-feat-merge-first-qa",
+    "url": "http://127.0.0.1:4710"
+  },
+  "artefact": "docs/design/merge-first/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Walking skeleton: pilot tickets and an architect-owned thread",
+      "state": "integrated",
+      "delivers": [
+        "2",
+        "9",
+        "10"
+      ],
+      "branch": "slice/merge-first-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-merge-first-s1",
+      "pr": 291
+    },
+    {
+      "slice": "S2 The architect merges first; the pilot and ticket-making let go",
+      "state": "integrated",
+      "after": "S1 Walking skeleton: pilot tickets and an architect-owned thread",
+      "delivers": [
+        "1",
+        "3",
+        "4",
+        "7",
+        "8"
+      ],
+      "branch": "slice/merge-first-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-merge-first-s2",
+      "pr": 293
+    },
+    {
+      "slice": "S3 A gate1 is refused when the merge step did not run",
+      "state": "integrated",
+      "after": "S1 Walking skeleton: pilot tickets and an architect-owned thread",
+      "delivers": [
+        "5"
+      ],
+      "branch": "slice/merge-first-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-merge-first-s3",
+      "pr": 292
+    },
+    {
+      "slice": "S4 The deck refuses an unsigned gate close; the hooks ask for the press",
+      "state": "integrated",
+      "after": "S3 A gate1 is refused when the merge step did not run",
+      "delivers": [
+        "6"
+      ],
+      "branch": "slice/merge-first-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-merge-first-s4",
+      "pr": 295
+    },
+    {
+      "slice": "S5 The prompt rot is reworded: the press is the pass",
+      "state": "integrated",
+      "after": "S2 The architect merges first; the pilot and ticket-making let go",
+      "delivers": [
+        "6"
+      ],
+      "branch": "slice/merge-first-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-merge-first-s5",
+      "pr": 294
+    },
+    {
+      "slice": "Feature: merge-first",
+      "state": "ready",
+      "branch": "feat/merge-first",
+      "pr": 290
+    }
+  ],
+  "findings": [
+    "kept: security /reopen on a gate needs the deck's own page (QA, bd567d3)",
+    "dropped: a no-Origin plain reply reopens a dismissed gate; it comes back unsigned, and L14 accepts what a local agent can do",
+    "dropped: a walkthrough's Sign off has no own-page check; out of scope per artefact section 7"
+  ],
+  "report": {
+    "featurePr": {
+      "number": 290,
+      "state": "ready"
+    },
+    "slices": [
+      {
+        "slice": "S1",
+        "pr": 291,
+        "mergeSha": "5e56b85"
+      },
+      {
+        "slice": "S2",
+        "pr": 293,
+        "mergeSha": "7fac645"
+      },
+      {
+        "slice": "S3",
+        "pr": 292,
+        "mergeSha": "6e5ec49"
+      },
+      {
+        "slice": "S4",
+        "pr": 295,
+        "mergeSha": "cfd9966"
+      },
+      {
+        "slice": "S5",
+        "pr": 294,
+        "mergeSha": "94382c0"
+      },
+      {
+        "slice": "fix round",
+        "pr": 296,
+        "mergeSha": "56bd2db"
+      }
+    ],
+    "assumed": [
+      {
+        "id": "A10",
+        "decision": "The exit of an unsigned gate",
+        "taken": "Dismiss accepts gate1 and gate2; a dismissed gate is never signed and moves no ticket"
+      }
+    ],
+    "friction": [
+      {
+        "agent": "implementers S2-S5, fix",
+        "what": "Git Bash heredocs garble backslashes in generated JS",
+        "evidence": "SyntaxErrors in merge-gate, ticket-making, pilot-agents, inbox tests; 2-3 extra rounds each"
+      },
+      {
+        "agent": "implementer S2, QA",
+        "what": "a spawned agent's deck tools reach only 4321, so no real architect ran on a scratch deck",
+        "evidence": "S2 and QA reports"
+      },
+      {
+        "agent": "QA",
+        "what": "pilot wait --as qa --item matched by cwd and missed a user reply",
+        "evidence": "walkthrough itm_baeb5d6dd5e6, 04:31Z reply answered 04:32Z after a restart"
+      },
+      {
+        "agent": "implementer S4",
+        "what": "design fact F5 (Dismiss closes any item) was wrong; pin lists short",
+        "evidence": "store.mjs dismissItem refused known kinds; away/red-grilling/ticket-states pins unlisted"
+      },
+      {
+        "agent": "implementer S4, fix",
+        "what": "Sign off confirm step and ticket-body thread id are in no brief",
+        "evidence": "first press read as refusal; scratch ticket refused"
+      },
+      {
+        "agent": "fundamentalist",
+        "what": "no hooks coverage config; inbox.test.js 21 s",
+        "evidence": "hooks mutation run 13m10s"
+      },
+      {
+        "agent": "pilot",
+        "what": "daemon.test.mjs fails when two suites run at once",
+        "evidence": "first S3 integrate: 1 fail, clean on rerun"
+      },
+      {
+        "agent": "implementer S3",
+        "what": "a deck stopped on purpose reports failed, exit 127",
+        "evidence": "background-agent notification after Stop-Process"
+      }
+    ],
+    "humanSteps": [
+      "Merge PR #290",
+      "Bump the version, update the plugin, restart the deck daemon",
+      "Watch the architect's merge thread on the next run: its first real run"
+    ],
+    "worktreesLeft": [
+      "C:/Users/Hazzard/Projects/pilot-feat-merge-first (until #290 merges)"
+    ]
+  },
+  "next": "Run finished: closing report itm_4a74f55ec003. Left: confirm QA tore down (scratch deck 4710, worktree pilot-feat-merge-first-qa), remove slice worktrees s1-s5 and fix. The merge of PR #290 is the user's.",
+  "finished": "closing report posted",
+  "finishedAt": "2026-10-04T04:46:12.504Z",
+  "updatedAt": "2026-10-04T04:46:12.504Z"
+}

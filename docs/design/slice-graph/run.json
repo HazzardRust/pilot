@@ -1,0 +1,107 @@
+{
+  "slug": "slice-graph",
+  "feature": "listener in a worktree",
+  "ticket": "itm_846b8ed427e8",
+  "branch": "feat/slice-graph",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-slice-graph",
+  "qa": {
+    "branch": "feat/slice-graph",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-slice-graph",
+    "url": "http://127.0.0.1:4442"
+  },
+  "artefact": "docs/design/slice-graph/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The Tree panel draws the run as a git graph",
+      "state": "integrated, merge 68ee36a2",
+      "delivers": [
+        "1",
+        "2",
+        "3",
+        "6",
+        "7"
+      ],
+      "branch": "slice/slice-graph-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-graph-s1",
+      "pr": 407
+    },
+    {
+      "slice": "S2 The old tree leaves the deck",
+      "state": "integrated, merge 40209d74",
+      "after": "S1 The Tree panel draws the run as a git graph",
+      "delivers": [
+        "8"
+      ],
+      "branch": "slice/slice-graph-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-graph-s2",
+      "pr": 409
+    },
+    {
+      "slice": "S3 deck_status takes a list of blockers",
+      "state": "integrated, merge fda7aa5e",
+      "after": "S2 The old tree leaves the deck",
+      "delivers": [
+        "4"
+      ],
+      "branch": "slice/slice-graph-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-graph-s3",
+      "pr": 410
+    },
+    {
+      "slice": "S4 The crew reads parallelism off the lanes",
+      "state": "integrated, merge 1320773d",
+      "after": "S3 deck_status takes a list of blockers",
+      "delivers": [
+        "5"
+      ],
+      "branch": "slice/slice-graph-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-graph-s4",
+      "pr": 411
+    },
+    {
+      "slice": "slice-graph",
+      "state": "red: walkthrough itm_b46b100bc0e5 signed; QA comment on #401 at dcff3181; gate2 itm_dd96f3709c89 awaits Sign off",
+      "after": "S4 The crew reads parallelism off the lanes",
+      "delivers": [
+        "1–8"
+      ],
+      "branch": "feat/slice-graph",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-slice-graph",
+      "pr": 401
+    }
+  ],
+  "findings": [
+    "kept: reviewer risk, stored cycle must not throw on render: break plus end point at order.length (status.mjs graphOf), +2",
+    "kept: reviewer risk, stored after null reads as [] (blockersOf), 0",
+    "dropped: reviewer risk, dotsBefore visited set: cycles refused on write, tables cap at 32"
+  ],
+  "report": {
+    "featurePr": {
+      "number": 401,
+      "state": "draft"
+    },
+    "slices": [],
+    "assumed": [],
+    "friction": [
+      {
+        "agent": "qa",
+        "what": "Editing test pins by script on Windows cost three retries (sed, heredoc escape, Python CRLF); Python with newline='' worked",
+        "evidence": "graph.test.mjs <summary> pin edits during fff3ff11"
+      },
+      {
+        "agent": "qa",
+        "what": "Re-registering the fixture run after each scratch-deck restart took a helper script run 4 times: POST /api/runs gives a new run, and deck_status over /api/tool needs run plus slug, undocumented",
+        "evidence": "qa-sg-reregister.mjs, 4 restarts of 4442"
+      },
+      {
+        "agent": "qa",
+        "what": "The deck delivered user walkthrough replies to the pilot, so QA's own wait fired only on Sign off; every reply was relayed by hand",
+        "evidence": "8 SendMessage relays on itm_b46b100bc0e5, 2026-10-09"
+      }
+    ],
+    "humanSteps": [],
+    "worktreesLeft": []
+  },
+  "next": "Red: gate2 itm_dd96f3709c89 open (pr #401, dcff3181). On Sign off: pilot land in C:/Users/Hazzard/Projects/pilot-feat-slice-graph, gh pr ready 401, tell QA to tear down 4442, closing report (human: restart deck daemon; deferred: graph zooms with the panel, native-size lanes later), prune slice-graph worktrees.",
+  "updatedAt": "2026-10-09T07:38:16.614Z"
+}

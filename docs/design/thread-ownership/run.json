@@ -1,0 +1,101 @@
+{
+  "slug": "thread-ownership",
+  "feature": "Thread ownership",
+  "branch": "feat/thread-ownership",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-thread-ownership",
+  "artefact": "docs/design/thread-ownership/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Walking skeleton: a QA-owned thread wakes only QA's wait",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2 (wait)"
+      ],
+      "branch": "slice/thread-ownership-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-ownership-s1",
+      "pr": 153
+    },
+    {
+      "slice": "S2 The pilot's hooks ignore threads it does not own",
+      "state": "integrated",
+      "after": "S1 Walking skeleton: a QA-owned thread wakes only QA's wait",
+      "delivers": [
+        "2 (hooks)"
+      ],
+      "branch": "slice/thread-ownership-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-ownership-s2",
+      "pr": 155
+    },
+    {
+      "slice": "S3 Reads hand over only your own threads",
+      "state": "integrated",
+      "after": "S1 Walking skeleton: a QA-owned thread wakes only QA's wait",
+      "delivers": [
+        "2 (read)"
+      ],
+      "branch": "slice/thread-ownership-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-ownership-s3",
+      "pr": 154
+    },
+    {
+      "slice": "S4 Pass a thread, and a non-owner is refused",
+      "state": "integrated",
+      "after": "S3 Reads hand over only your own threads",
+      "delivers": [
+        "3",
+        "4"
+      ],
+      "branch": "slice/thread-ownership-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-ownership-s4",
+      "pr": 156
+    },
+    {
+      "slice": "S5 Fall back to the pilot after the grace period",
+      "state": "integrated; timers change pending (30 s pick-up, 5 min answer)",
+      "after": "S4 Pass a thread, and a non-owner is refused",
+      "delivers": [
+        "5"
+      ],
+      "branch": "slice/thread-ownership-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-ownership-s5",
+      "pr": 157
+    },
+    {
+      "slice": "S6 Sign off reaches the pilot, version 0.7.3",
+      "state": "integrated",
+      "after": "S5 Fall back to the pilot after the grace period",
+      "delivers": [
+        "6"
+      ],
+      "branch": "slice/thread-ownership-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-ownership-s6",
+      "pr": 158
+    },
+    {
+      "slice": "feature thread-ownership",
+      "state": "conditional Gate 2, fixes in flight; tip 7aa24e2 or later; draft PR #152; QA worktree C:/Users/Hazzard/Projects/pilot-thread-ownership-qa on qa/thread-ownership is the writer",
+      "branch": "feat/thread-ownership",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-thread-ownership",
+      "pr": 152
+    }
+  ],
+  "findings": [
+    "kept: QA probe 4, a user reply in flight when a thread is passed reaches nobody (store.mjs:628-649); breaks spec 5",
+    "kept: F1 ownerOf duplicated in hooks/lib/deck.js; stop-gate reads the owner the daemon already stamps (server.mjs:669); net -35",
+    "kept: F2 threadState reads ownerOf only; unpinned deliveredTo branch removed; net -1",
+    "kept: F3 one fallbackDue query replaces overdueReplies plus nextFallbackAt; fewer store reads per wake",
+    "kept: F4 test pins author on deck_read and deck_wait schemas and to.enum on deck_reply; +8",
+    "kept: F5 test pins the MAX_AGENTS cap on the activity map; +10",
+    "kept: nit OWNER_GRACE_MS moves to items.mjs; store no longer imports the roster",
+    "kept: nits inline deliveredToKind, ownerOf(item) at store.mjs:872, isGateReply unexported, claim as a for loop",
+    "kept: QA 1 heartbeat cwd mapped from a worktree to its repository before noteActive; protects L4",
+    "kept: QA 2 inbox notice no longer tells the pilot to resolve a QA-owned walkthrough on Sign off",
+    "kept: QA 3 state bar names the kind that replied, not always the pilot, if the fix stays under 20 lines",
+    "dropped: nit A2 delete the OWNER_KINDS guard in noteActive; taste, and the guard states the intent",
+    "dropped: mutant R2 escapeHtml on fellBack.from; equivalent, escaping stays",
+    "dropped: QA 4 header repeats the owner and wraps; cosmetic, not in the spec"
+  ],
+  "next": "QA in flight (scroll jump; owner name only, coloured; drop has-ended line): read its diff. Then Opus fix round: L6 (30s unclaimed + owner quiet 90s) and L7 (5 min unanswered after pick-up + quiet 90s) replace L4, remove fellBack; resolutions on itm_c002827378c4, itm_4ec1a1055344. User 09:38Z: signs off after fixes, may merge. Then pr ready 152, merge, report. Preview pid 23476",
+  "updatedAt": "2026-09-27T09:42:25.916Z"
+}

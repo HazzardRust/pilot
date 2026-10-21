@@ -1,0 +1,84 @@
+{
+  "slug": "co-pilot-reports",
+  "feature": "A co-pilot's crew reports to the co-pilot",
+  "ticket": "itm_ae28cb59ce35",
+  "branch": "feat/co-pilot-reports",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-co-pilot-reports",
+  "artefact": "docs/design/co-pilot-reports/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 An implementer reports to the co-pilot",
+      "state": "integrated",
+      "delivers": [
+        "1 (implementer)",
+        "2",
+        "4",
+        "5"
+      ],
+      "branch": "slice/co-pilot-reports-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-co-pilot-reports-s1",
+      "pr": 376
+    },
+    {
+      "slice": "S2 QA and the fundamentalist report to the co-pilot",
+      "state": "integrated",
+      "after": "S1 An implementer reports to the co-pilot",
+      "delivers": [
+        "1",
+        "3"
+      ],
+      "branch": "slice/co-pilot-reports-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-co-pilot-reports-s2",
+      "pr": 379
+    },
+    {
+      "slice": "S3 One reply per override, pushback row, PR-title format",
+      "state": "integrated",
+      "after": "S2 QA and the fundamentalist report to the co-pilot",
+      "delivers": [
+        "6",
+        "7",
+        "8"
+      ],
+      "branch": "slice/co-pilot-reports-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-co-pilot-reports-s3",
+      "pr": 381
+    },
+    {
+      "slice": "S4 pilot integrate refuses a PR title off the format",
+      "state": "integrated",
+      "delivers": [
+        "9"
+      ],
+      "branch": "slice/co-pilot-reports-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-co-pilot-reports-s4",
+      "pr": 375
+    },
+    {
+      "slice": "Feature",
+      "state": "in QA, principles review running",
+      "pr": 374
+    },
+    {
+      "slice": "Fix round",
+      "state": "integrated",
+      "branch": "slice/co-pilot-reports-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-co-pilot-reports-fix",
+      "pr": 383
+    }
+  ],
+  "findings": [
+    "kept: F1 the co-pilot opens every brief `co-pilot of <ticket>`, the promise the children's hello wait relies on (+2)",
+    "kept: F2 two tests pinning A1's skip branches in integrate (+14)",
+    "kept: F3 delete S1's addresseeParagraph helper and pins S2's addresseeRule subsumes (-9)",
+    "dropped: N1 PR-title clause in pilot.md step 4 - moves spec 8's evidence line, the user's call",
+    "kept: N2 drop the ?? '' and String() guards on a title gh always returns",
+    "kept: N3 a metacharacter slug and S3a id in titleProblem's tests (+2)",
+    "dropped: N4 hello wording - it is A4's",
+    "kept: QA-F1 pilot.md step 8 drops 'to `main`' so QA's own addressee rules",
+    "dropped: QA-F2 fix( titles on slice branches - matches L9 and ADR 0100",
+    "dropped: QA-F3 QA database request under a co-pilot - assumed a crew hand-off the co-pilot cannot resolve, so it goes to main"
+  ],
+  "next": "Integrating the fix round (#383); then send QA the tip; QA posts the walkthrough.",
+  "updatedAt": "2026-10-07T12:11:25.142Z"
+}

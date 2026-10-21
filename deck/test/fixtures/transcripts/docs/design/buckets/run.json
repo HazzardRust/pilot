@@ -1,0 +1,11 @@
+{
+  "slug": "buckets",
+  "branch": "feat/buckets",
+  "worktree": "C:/fixture/feat-buckets",
+  "slices": [
+    { "slice": "S1 One", "branch": "slice/buckets-s1", "worktree": "C:/fixture/buckets-s1" },
+    { "slice": "S2 Two", "branch": "slice/buckets-s2", "worktree": "C:/fixture/buckets-s2" },
+    { "slice": "S3 Three", "state": "planned" },
+    { "slice": "feature", "branch": "feat/buckets", "worktree": "C:/fixture/feat-buckets" }
+  ]
+}

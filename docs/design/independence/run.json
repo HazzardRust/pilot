@@ -1,0 +1,187 @@
+{
+  "slug": "independence",
+  "feature": "Pilot independence",
+  "branch": "feat/independence",
+  "artefact": "docs/design/independence/architecture.md",
+  "slices": [
+    {
+      "slice": "Feature",
+      "state": "PR #104 draft, feat/independence at 6bc982d (1474/1474); fix round finishing; merge to main by the pilot after it (L21)",
+      "branch": "feat/independence",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-independence",
+      "pr": 104
+    },
+    {
+      "slice": "S1 Prompt cost is measured",
+      "state": "integrated (PR #105)",
+      "delivers": [
+        "7 prompt cost measured before and after"
+      ],
+      "pr": 105
+    },
+    {
+      "slice": "S2 Status line names its own deck",
+      "state": "integrated (PR #106)",
+      "after": "S1 Prompt cost is measured",
+      "delivers": [
+        "15 status line shows this session's deck"
+      ],
+      "pr": 106
+    },
+    {
+      "slice": "S3 Rules become checks, tools get lighter",
+      "state": "integrated (PR #107)",
+      "after": "S1 Prompt cost is measured",
+      "delivers": [
+        "8 mechanical rules move to code",
+        "9 tool and hook text shrinks"
+      ],
+      "pr": 107
+    },
+    {
+      "slice": "S4 Crew prompts lose their restatements",
+      "state": "integrated (PR #108); pilot −34%, qa −32%",
+      "after": "S3 Rules become checks, tools get lighter",
+      "delivers": [
+        "7 prompt cost reduced",
+        "17 spec item layout is standard"
+      ],
+      "pr": 108
+    },
+    {
+      "slice": "S14 Orchestration plumbing",
+      "state": "integrated (PR #111)",
+      "after": "S4 Crew prompts lose their restatements",
+      "delivers": [
+        "22 one-call integrate, lean status, no duplicate replies, shared brief, short reports"
+      ],
+      "pr": 111
+    },
+    {
+      "slice": "S5 Create opens a named thread for the live pilot",
+      "state": "integrated (PR #113)",
+      "after": "S14 Orchestration plumbing",
+      "delivers": [
+        "1 Create under Open/All",
+        "2 name, then confirm",
+        "3 thread goes to the live pilot",
+        "3a repo pick",
+        "3b deck page only",
+        "19 pilot keeps listening on chat",
+        "20 55-min waits, 10-hour cap, finished",
+        "21 Everything reads Open / All"
+      ],
+      "pr": 113
+    },
+    {
+      "slice": "Fix: guard reads only its own session",
+      "state": "integrated (PR #114)",
+      "after": "S14 Orchestration plumbing",
+      "pr": 114
+    },
+    {
+      "slice": "S6 No pilot live: the daemon starts one headless",
+      "state": "integrated (PR #115): trust gate, 120 s startup watchdog, reply seen live",
+      "after": "S5 Create opens a named thread for the live pilot",
+      "delivers": [
+        "3 headless session when none is live",
+        "3d Stop and session-ended notice",
+        "24 hand-off prompt waits for the fresh session"
+      ],
+      "pr": 115
+    },
+    {
+      "slice": "S7 The pilot hands new work to fresh sessions",
+      "state": "integrated (PR #116); QA saw 3c and 3e live",
+      "after": "S6 No pilot live: the daemon starts one headless",
+      "delivers": [
+        "3c replies reach only their session",
+        "3e explorer answers; hand-off on your yes"
+      ],
+      "pr": 116
+    },
+    {
+      "slice": "S8 Full auto",
+      "state": "integrated (PR #117)",
+      "after": "S7 The pilot hands new work to fresh sessions",
+      "delivers": [
+        "5 toggle with warning confirm",
+        "6 decides and gates itself; merges only if ticked"
+      ],
+      "pr": 117
+    },
+    {
+      "slice": "S9 The Tree's drill-down links go",
+      "state": "integrated (PR #118)",
+      "after": "S8 Full auto",
+      "delivers": [
+        "10 no navigation from the Tree"
+      ],
+      "pr": 118
+    },
+    {
+      "slice": "S10 An old deck tab can be removed",
+      "state": "integrated (PR #119)",
+      "after": "S9 The Tree's drill-down links go",
+      "delivers": [
+        "18 remove a tab, history kept"
+      ],
+      "pr": 119
+    },
+    {
+      "slice": "S11 QA judges taste, faster",
+      "state": "integrated (PR #109)",
+      "after": "S4 Crew prompts lose their restatements",
+      "delivers": [
+        "12 taste pass with screenshots",
+        "13 vetted checklist",
+        "14 QA quicker (baseline 33 min)"
+      ],
+      "pr": 109
+    },
+    {
+      "slice": "S12 Contradicting rules stop loading",
+      "state": "integrated (PR #110); env PR #4 yours",
+      "after": "S11 QA judges taste, faster",
+      "delivers": [
+        "16 rules/common pruned; CLAUDE.md trim proposed"
+      ],
+      "pr": 110
+    },
+    {
+      "slice": "S15 Friction log and closing review",
+      "state": "integrated (PR #112)",
+      "after": "S12 Contradicting rules stop loading",
+      "delivers": [
+        "23 friction rows → ranked closing review"
+      ],
+      "pr": 112
+    },
+    {
+      "slice": "S13 Release 0.7.0",
+      "state": "version 0.7.0 at 7832a6d; install after the merge to main (L21)",
+      "after": "S15 Friction log and closing review"
+    },
+    {
+      "slice": "Fix round: step 7 findings",
+      "state": "F1–F5, N1 done at f0c568b (1471/1471); finisher (Sonnet) on N2, F6, gates, review, browser, PR",
+      "after": "S10 An old deck tab can be removed",
+      "branch": "slice/independence-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-independence-fix"
+    }
+  ],
+  "findings": [
+    "kept: F1 delete the drill-down leftovers (LAYERS cap, node=, crumbs); deep branches were unreachable (spec 10), ≈−120",
+    "kept: F2 one confirm.mjs for Create/auto/Remove plus the missing cancel/other-form tests, ≈−70",
+    "kept: F3 deck_wait re-reads bound threads per reply, not a snapshot at wait start",
+    "kept: F4 cursor-move CSIs become spaces; one plainTail rule for both exit paths",
+    "kept: F5 four record.test assertions (relative worktree, next clears finished, duplicate row, blank slice)",
+    "kept: F6 budget test, pilot ≤9800, explorer ≤2150, qa ≤5500 (user reset L8)",
+    "kept: N1 listening rule only in agents/pilot.md; N2 deck_launch pointer says below",
+    "dropped: N3 integrate.mjs abort/argv tests (low consequence for +25)",
+    "dropped: N4 mergeSliceTable CCN 16 (splitting adds diff with no consequence)",
+    "dropped: QA's post-registration first-reply deadline (Stop covers it; cold npx cache) → closing review"
+  ],
+  "next": "L21: Gate 2 skipped, the pilot merges (user, 2026-09-26). Fix round finisher (Sonnet) on slice/independence-fix: verify 1 claim, merge into feat (npm test exit code), mark #104 ready, merge to main, install 0.7.0, closing report with friction rows. No walkthrough. L19/L20 hold.",
+  "updatedAt": "2026-09-25T16:43:36.829Z"
+}

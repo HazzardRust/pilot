@@ -1,0 +1,183 @@
+{
+  "slug": "deck-press-feedback",
+  "feature": "Audit fixes",
+  "ticket": "itm_6b7801fce544",
+  "branch": "feat/deck-press-feedback",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deck-press-feedback",
+  "artefact": "docs/design/deck-press-feedback/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A refused press lands on its thread with the reason",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2",
+        "3",
+        "6"
+      ],
+      "branch": "slice/deck-press-feedback-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-press-feedback-s1",
+      "pr": 370
+    },
+    {
+      "slice": "S2 A gate2 lists the questions it waits on",
+      "state": "integrated",
+      "after": "S1 A refused press lands on its thread with the reason",
+      "delivers": [
+        "4"
+      ],
+      "branch": "slice/deck-press-feedback-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-press-feedback-s2",
+      "pr": 371
+    },
+    {
+      "slice": "S3 Every card names its ticket",
+      "state": "integrated",
+      "after": "S2 A gate2 lists the questions it waits on",
+      "delivers": [
+        "5"
+      ],
+      "branch": "slice/deck-press-feedback-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-press-feedback-s3",
+      "pr": 372
+    },
+    {
+      "slice": "S4 An agent-closed thread leaves a notice the user clears",
+      "state": "integrated",
+      "after": "S3 Every card names its ticket",
+      "delivers": [
+        "7",
+        "8",
+        "10",
+        "11"
+      ],
+      "branch": "slice/deck-press-feedback-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-press-feedback-s4",
+      "pr": 373
+    },
+    {
+      "slice": "S5 The tab counts at first paint and is highlighted while unseen",
+      "state": "integrated",
+      "after": "S4 An agent-closed thread leaves a notice the user clears",
+      "delivers": [
+        "9",
+        "12"
+      ],
+      "branch": "slice/deck-press-feedback-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-press-feedback-s5",
+      "pr": 377
+    },
+    {
+      "slice": "S6 The Tickets button and thread read Add",
+      "state": "integrated",
+      "after": "S5 The tab counts at first paint and is highlighted while unseen",
+      "delivers": [
+        "13",
+        "14"
+      ],
+      "branch": "slice/deck-press-feedback-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-press-feedback-s6",
+      "pr": 378
+    },
+    {
+      "slice": "S7 Weekly alerts toggle, and weekly alerts at 95% only",
+      "state": "integrated",
+      "after": "S6 The Tickets button and thread read Add",
+      "delivers": [
+        "15",
+        "16"
+      ],
+      "branch": "slice/deck-press-feedback-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-press-feedback-s7",
+      "pr": 380
+    },
+    {
+      "slice": "S8 Walkthrough fields are general and carry a working directory",
+      "state": "integrated",
+      "after": "S7 Weekly alerts toggle, and weekly alerts at 95% only",
+      "delivers": [
+        "17",
+        "18"
+      ],
+      "branch": "slice/deck-press-feedback-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-press-feedback-s8",
+      "pr": 382
+    },
+    {
+      "slice": "S9 Walkthroughs are optional and say where commands run",
+      "state": "integrated",
+      "after": "S8 Walkthrough fields are general and carry a working directory",
+      "delivers": [
+        "18",
+        "19"
+      ],
+      "branch": "slice/deck-press-feedback-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-press-feedback-s9",
+      "pr": 384
+    },
+    {
+      "slice": "S10 pilot integrate asks for --test outside npm",
+      "state": "integrated",
+      "delivers": [
+        "20"
+      ],
+      "branch": "slice/deck-press-feedback-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-press-feedback-s10",
+      "pr": 369
+    },
+    {
+      "slice": "S11 Go, Rust and C++ reviewers are on the crew",
+      "state": "integrated",
+      "after": "S9 Walkthroughs are optional and say where commands run",
+      "delivers": [
+        "21"
+      ],
+      "branch": "slice/deck-press-feedback-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-press-feedback-s11",
+      "pr": 386
+    },
+    {
+      "slice": "S12 QA loads the browser checklists only for a GUI",
+      "state": "integrated",
+      "after": "S9 Walkthroughs are optional and say where commands run",
+      "delivers": [
+        "22"
+      ],
+      "branch": "slice/deck-press-feedback-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-press-feedback-s12",
+      "pr": 385
+    },
+    {
+      "slice": "S13 Principles and QA fix round",
+      "state": "integrated",
+      "after": "S12 QA loads the browser checklists only for a GUI",
+      "branch": "slice/deck-press-feedback-fixes",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-press-feedback-fixes",
+      "pr": 387
+    },
+    {
+      "slice": "Feature",
+      "state": "walkthrough signed at b2c9470c, Gate 2 posted",
+      "pr": 319
+    }
+  ],
+  "findings": [
+    "kept: QA F1 walkthrough verdict prompt is web-only (deck/items.mjs:336-337), against spec 17",
+    "kept: QA F2 agents/pilot-co-pilot.md:6 Agent list lacks go/rust/cpp reviewers (spec 21)",
+    "dropped: QA F3 /create bare refusal (server.mjs:1243): no thread to land on; outside spec 1-3 and A2",
+    "kept: QA F4 + S2 low: .asked has no CSS, flush against gate2 buttons; one margin rule",
+    "kept: F1 delete the x's fetch branch (notifications.mjs:367-394); no-script form already clears and 303s; no spec line needs in-place",
+    "kept: F2 pin noticesOf newest-first",
+    "kept: F3 pin data-count removed at zero",
+    "kept: F4 pin the x form's action and id",
+    "kept: F5 hook test through setAlertSwitch; drop renderEverything alerts default",
+    "kept: N1 unreached defaults; N2 impossible guards; N4 clearNotice return; N5 un-export; N6 record S5 stamp-on-shut",
+    "dropped: N3 rename (0 net), N7 (+2 for a nit), N8 (rule unchanged)",
+    "dropped: S2 low resolved gate2 lists questions: accurate for the ticket, read on request",
+    "kept: S10 low test main exits 2",
+    "kept: stale 'preloads' prose architecture.md:66, VENDOR.md:56, vendor/taste.md:32,39",
+    "dropped: case-against first-paint count excludes unseen open threads: S5 decision, spec 9 passes in QA; noted, not filed"
+  ],
+  "next": "Walkthrough itm_93f3b3cb8bd9 signed; gate2 posted on itm_6b7801fce544 at b2c9470c. On Sign off: pilot land in C:/Users/Hazzard/Projects/pilot-feat-deck-press-feedback (expect the classifier refusal: route as a human step), gh pr ready 319, QA tear down (:4391), closing report.",
+  "updatedAt": "2026-10-08T08:32:37.100Z"
+}

@@ -1,0 +1,168 @@
+{
+  "slug": "readme-pitch",
+  "feature": "Store durability",
+  "ticket": "itm_acab2d47e56b",
+  "branch": "feat/readme-pitch",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-readme-pitch",
+  "artefact": "docs/design/readme-pitch/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated at b352b922, PR #756 merged",
+      "branch": "slice/readme-pitch-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-readme-pitch-s1",
+      "pr": 756
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at 78763d86, PR #757 merged",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/readme-pitch-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-readme-pitch-s2",
+      "pr": 757
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at 069fa69c, PR #758 merged",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/readme-pitch-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-readme-pitch-s3",
+      "pr": 758
+    },
+    {
+      "slice": "readme-pitch",
+      "state": "fix round on F1-F4, feat at 069fa69c",
+      "after": [
+        "S3",
+        "S4"
+      ],
+      "branch": "feat/readme-pitch",
+      "pr": 741
+    },
+    {
+      "slice": "S4",
+      "state": "integrated (added: vocabulary exemption), PR #755 merged",
+      "branch": "slice/readme-pitch-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-readme-pitch-s4",
+      "pr": 755
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S3",
+        "S4"
+      ],
+      "branch": "slice/readme-pitch-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-readme-pitch-fix",
+      "pr": 759
+    }
+  ],
+  "findings": [
+    "kept: F1 readme-pitch.test.mjs:107-111 duplicate the four OPERATING.md branch asserts of run-remote-readme.test.mjs:31-35; delete (-5)",
+    "kept: F2 readme-pitch.test.mjs:126 duplicates install.test.mjs:986; delete (-1)",
+    "kept: F3 architecture.md A5 still reads 'Verdict: stands' while S3's seam relaxed the 200-line ceiling; record the verdict as relaxed and name it at Gate 2",
+    "kept: F4 six feature bullets (Researched defaults, Teach me, Depth dial, Vertical slices, Principles review, QA walkthrough) repeat a hook or walkthrough step; delete, list stays at 15 (spec 3), any bullet carrying a pin stays",
+    "dropped: N1 the whole-directory vocabulary exemption follows the sibling design dirs' convention (co-pilot-tickets, blocked-yellow-yields); narrowing it buys little",
+    "dropped: N2 :176's sentence is named by spec 4; :143 costs one line and guards a real regression",
+    "dropped: N3 the assertion checks a real claim (agents named in code); moving it costs more than the cognitive load it saves",
+    "dropped: N4 moving a pin out of pilot-agents.test.mjs risks spec 8 for -7 lines",
+    "dropped: C1 Your part is frozen by spec 8 pins; deleting it moves a spec line, left as is (assumed)",
+    "dropped: mutation 0/169 - tool selected the wrong tests, not a test gap; S4.md check-slices errors - record only"
+  ],
+  "next": "integrate the fix round (#759 at 4cf1c2db), pilot land, then QA with the tip.",
+  "updatedAt": "2026-10-17T06:51:41.302Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "an evidence-runner report from run 2's fundamentalist (co-pilot-tickets-history) was handed back to main instead of its parent",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 one-line slice: none; npm test about 4 minutes",
+      "evidence": "PR #755 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1's slice file asked test 1 green on all of README.md while forbidding edits below Use (Philosophy 7 lines, Built on 6 and 5): one round trip",
+      "evidence": "S1.md test 1 vs Prohibited; seam at 0a8acecd",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md's commit trailer names Claude Fable 5.1 while slices run on Opus/Sonnet; copied exactly it misattributes commits",
+      "evidence": "brief.md:36; S1 wrote Opus 5.5, S4 wrote Fable",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Python heredocs in Git Bash turned \\n into real newlines in JS regex text; broke pilot-agents.test.mjs once",
+      "evidence": "PR #757 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "seven README pin files each slice sections their own way (indexOf, split, exact heading); every pin boundary checked by hand",
+      "evidence": "PR #757 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "A co-pilot's Blocked item was filed under the planning ticket (itm_06d54e3b798b), not its own yellow ticket; the hook picks the wrong lane's ticket",
+      "evidence": "itm_f67cf4dbd948, 06:19Z, ticket field itm_06d54e3b798b while the co-pilot held itm_acab2d47e56b",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "a second S3 implementer spawned before the correction landed, rebasing the orphan's worktree; one Blocked item and three messages to unwind",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a successor brief said spawn a fresh S3 implementer while the original was still live; the duplicate rebased the branch and ran npm ci under the live gate before the correction landed",
+      "evidence": "slice/readme-pitch-s3 reflog 48f86772 -> 43baaa68",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "A co-pilot that ends a turn to wait on a background Monitor is force-handed-back by the harness ([handback-send-enforce]); two co-pilots lost this way at 70k and 55k tokens",
+      "evidence": "co-pilot reports 06:15Z and 06:27Z, quoting the injected line; the fix is a foreground until-loop, or a co-pilot rule saying so",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 worktree rebased and npm ci'd under a live gate by a duplicate implementer; the 5-minute gate ran three times",
+      "evidence": "PR #758 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "section() exists in two forms (readme-flow vs readme-pitch tests) and S3.md did not say which",
+      "evidence": "PR #758 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the brief's diff base origin/main... was 138 commits too wide because feat/readme-pitch is cut from pilot; it found f2e462ba itself",
+      "evidence": "fundamentalist report, scope line",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "Stryker's test selection left out vocabulary-guard.test.mjs (0/169 meaningless); knip repo-wide with no config gives 446 false unused files; jscpd --silent prints no clone locations",
+      "evidence": "fundamentalist report, tools table",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix round: a foreground sleep 100 was blocked by the harness and a long until-loop moved to the background, leaving the agent with background work after its hand-back",
+      "evidence": "PR #759 report",
+      "size": 1
+    }
+  ]
+}

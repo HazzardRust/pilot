@@ -1,0 +1,106 @@
+{
+  "slug": "unimported-exports",
+  "feature": "Co-pilot and tickets: history",
+  "ticket": "itm_f102a5755745",
+  "branch": "feat/unimported-exports",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-unimported-exports",
+  "artefact": "docs/design/unimported-exports/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The 15 unimported exports become module-private",
+      "state": "integrated (PR #709) at 9d40f079",
+      "branch": "slice/unimported-exports-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-unimported-exports-s1",
+      "pr": 709
+    },
+    {
+      "slice": "unimported-exports",
+      "state": "gate2 itm_8206ea0f9ffe open at fa1c445 (walkthrough itm_8412355d958f signed at 9d40f079); PR #683 draft, MERGEABLE",
+      "after": [
+        "S1"
+      ],
+      "branch": "feat/unimported-exports",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-unimported-exports",
+      "pr": 683
+    }
+  ],
+  "findings": [
+    "dropped: N1 replace RUN_PID/RUN_REPO with literals, breaks L1, out of scope under §7",
+    "dropped: N2 remove unreachable default = SURFACE, more than the export prefix (spec 3, L2)",
+    "dropped: N3 remove unreachable default = SCANNED, same"
+  ],
+  "next": "1) FIRST: itm_5fd7f5553036 \"overview\": user said \"make these into tickets\" on the explorer's 10-gap table: one proposal question each, fundamental first. 2) On gate2 itm_8206ea0f9ffe Sign off: pilot landing it in pilot-feat-unimported-exports, then closing report (S1 #709). 3) Yellow itm_a5394180830f: spawn co-pilot from slug co-pilot-tickets-history record (held for Live on pilot).",
+  "updatedAt": "2026-10-16T22:53:56.221Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "the audit report has no top-level findings array; the JSON key for row F6 had to be guessed",
+      "evidence": "rows / findings tried in turn"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "a Bash heredoc with \\| escapes in a Markdown table dies with unexpected EOF",
+      "evidence": "one failed cat <<'EOF' call, ~3k tokens; written with the Write tool instead"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "the architect's merge question was refused once for a missing Research: line, a rule its merge instructions do not state",
+      "evidence": "deck refusal on the first post of itm_39ab2671ed8b"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test runs past the 120s foreground timeout and is auto-backgrounded",
+      "evidence": "one gate run waited on a background-agent notification"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test prints two `ℹ tests` summaries (8 and 3699); which is the suite count is ambiguous",
+      "evidence": "implementer read the larger one"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Monitor tool not available to the implementer",
+      "evidence": "waited with a Bash until-loop instead"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "deck_status friction `size` must be a number; the co-pilot prompt does not say so",
+      "evidence": "one refused deck_status call"
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "ran npm test in a fresh worktree without npm ci; @modelcontextprotocol/sdk not found, so diff coverage produced nothing",
+      "evidence": "ERR_MODULE_NOT_FOUND after ~6000 output lines"
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "knip without a config reports 408 unused files, useless as a diff signal",
+      "evidence": "npx --yes knip output"
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "wrote to /tmp/tmp.* instead of the briefed scratch path",
+      "evidence": "fundamentalist report; removed afterwards"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "co-pilot brief gave `npm test` as the test command without `npm ci` first for a fresh worktree",
+      "evidence": "coverage row could not run"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "deck_wait progress probe needs over 2 minutes because MAX_POLL_MS is 120000",
+      "evidence": "first notifications/progress at +120s, result at +130s"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "deck_post refused `pr` on a walkthrough, and its wording check read the word `export` as a command",
+      "evidence": "two refused deck_post calls"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot told QA to report evidence instead of posting a walkthrough when nothing needed stepping through, but every ticket needs a walkthrough Sign off before Gate 2",
+      "evidence": "QA pushback; it posted itm_8412355d958f anyway"
+    }
+  ]
+}

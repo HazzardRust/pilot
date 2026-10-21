@@ -1,0 +1,462 @@
+{
+  "slug": "lander",
+  "feature": "A landing agent owns every merge",
+  "ticket": "itm_439d37064018",
+  "branch": "feat/lander",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-lander",
+  "artefact": "docs/design/lander/architecture.md",
+  "slices": [
+    {
+      "slice": "lander",
+      "state": "gate2 itm_26bb336ed0ef signed 02:54Z; deck's landing died (daemon from pruned pilot-qa-lander, no node_modules), Land again refused (lander-only); pilot runs pilot land by hand from the deck's code in pilot-feat-lander",
+      "after": [
+        "S16"
+      ],
+      "branch": "feat/lander",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-lander",
+      "pr": 849
+    },
+    {
+      "slice": "S1",
+      "state": "integrated at da631db6",
+      "branch": "slice/lander-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s1",
+      "pr": 855
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at 4e17641e",
+      "branch": "slice/lander-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s2",
+      "pr": 853
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at d139e2a4",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/lander-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s3",
+      "pr": 859
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at 19829553",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/lander-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s4",
+      "pr": 856
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at 322464d5",
+      "after": [
+        "S1",
+        "S3",
+        "S4"
+      ],
+      "branch": "slice/lander-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s5",
+      "pr": 862
+    },
+    {
+      "slice": "S6",
+      "state": "integrated at d7677870",
+      "branch": "slice/lander-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s6",
+      "pr": 860
+    },
+    {
+      "slice": "S7",
+      "state": "integrated at e375d145",
+      "after": [
+        "S1",
+        "S2"
+      ],
+      "branch": "slice/lander-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s7",
+      "pr": 857
+    },
+    {
+      "slice": "S8",
+      "state": "integrated at cb3f0105",
+      "after": [
+        "S1",
+        "S7"
+      ],
+      "branch": "slice/lander-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s8",
+      "pr": 864
+    },
+    {
+      "slice": "S9",
+      "state": "integrated at 16ccd8a9",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/lander-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s9",
+      "pr": 863
+    },
+    {
+      "slice": "S10",
+      "state": "integrated at 005f1807",
+      "after": [
+        "S8",
+        "S1"
+      ],
+      "branch": "slice/lander-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s10",
+      "pr": 865
+    },
+    {
+      "slice": "S11",
+      "state": "integrated at 9bd9c54f",
+      "branch": "slice/lander-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s11",
+      "pr": 861
+    },
+    {
+      "slice": "S12",
+      "state": "integrated at 97590a51",
+      "branch": "slice/lander-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s12",
+      "pr": 858
+    },
+    {
+      "slice": "S13",
+      "state": "integrated at 74bdccd5",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11",
+        "S12",
+        "S14",
+        "S15"
+      ],
+      "branch": "slice/lander-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s13",
+      "pr": 868
+    },
+    {
+      "slice": "S14",
+      "state": "integrated at 66877b91",
+      "branch": "slice/lander-s14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s14",
+      "pr": 851
+    },
+    {
+      "slice": "S15",
+      "state": "integrated at e402f22c",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/lander-s15",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s15",
+      "pr": 866
+    },
+    {
+      "slice": "sync pilot aefe54a7",
+      "state": "integrated at 005f1807 (with S10)",
+      "branch": "sync/lander-pilot",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-sync-lander-pilot",
+      "pr": 867
+    },
+    {
+      "slice": "S16",
+      "state": "integrated at 5388c4c5",
+      "after": [
+        "S13"
+      ],
+      "branch": "slice/lander-s16",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s16",
+      "pr": 869
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated at 5d04be66",
+      "after": [
+        "S16"
+      ],
+      "branch": "fix/lander-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-lander-principles",
+      "pr": 870
+    },
+    {
+      "slice": "S17",
+      "state": "integrated at ada3d5e9",
+      "branch": "slice/lander-s17",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-s17",
+      "pr": 871
+    }
+  ],
+  "findings": [
+    "kept: F1 landerDue drops a gate2 that landed clean while queued, so with no orphan fallback its ticket never gets a report; due also on a landed gate2 whose ticket is open, plus a firstPrompt test (+8)",
+    "kept: F2 a clean press's lander never claims, so a second press re-announces the first gate2 (two landers, breaks L5); the lander replies Resolving first, conflict or none (0)",
+    "kept: F3 worktree-identity guard duplicated in integrate isWorktreeOf and sync resume; one export (-8)",
+    "kept: F4 the <checkout>-land-<slug> kept-dir name built in three places; one keptDir helper (-4)",
+    "kept: F5 in part, the deck stops loading integrate.mjs (git moved to leaf pilot-branch.mjs; madge confirmed the cycles)",
+    "dropped: F5's move of trialOnPilot into sync.mjs (churn over consequence)",
+    "kept: F6 delete the frozen OLD_EXEMPT test and the two run.json exempt lines the regex covers (-10)",
+    "kept: nits sync.mjs:54 dead throw (-1), sync.mjs:83-85 message built once (-1), closing-report mergeStep/linesOf one parse (-2)",
+    "dropped: nit conflictLine takes a string (taste, six callers' churn)",
+    "dropped: nit trialOnPilot last line to a throw (unconfirmed: coverage never ran)",
+    "dropped: the case against L12 (deck keeps posting): the user locked A on the S10 question",
+    "dropped: slice lint on S14-S16 (docs only, slices already built)",
+    "kept: QA-F1 a lander-resolved landing commits as Merge commit '<sha>' into HEAD, so landedOnPilot and merge-first miss it; -m landingMessage plus a test (~+10)",
+    "kept: QA-F2 pilot-qa.md:233 says the deck writes the report; one clause",
+    "kept: QA-F3 deckGate2Prs compares a short sha to a full one, so a feature names its own PR as merge-first; prefix compare plus report test",
+    "kept: QA-F4 the report's Worktrees kept lists branch kept lines; filter to worktrees",
+    "dropped: QA-F5 mixed path styles in lander lines (cosmetic, the deck parses both)",
+    "kept: QA A1 gap, a lander queued for no budget room is never named again; the pilot spawns it once a slot frees"
+  ],
+  "next": "on land's line: pilot land --ready, post the landed line on itm_26bb336ed0ef, closing report, finished; then prune with pilot branches prune --slug lander",
+  "updatedAt": "2026-10-19T03:09:16.698Z",
+  "friction": [
+    {
+      "agent": "pilot-co-pilot",
+      "what": "the gate's spawn ceiling, set at git-light-tests' measure plus 10%, is crossed by a feature's cumulative fixture tests at whichever slice merges last, not the one that added most",
+      "evidence": "S6 merge: spawns 9909 over 9855, scripts/gate.mjs:37",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "python/perl heredocs under Git Bash turned \\n escapes into newlines; one pass left NUL bytes in a source file",
+      "evidence": "S5 deck/gate2-base.mjs, deck/test/gate2-base.test.mjs:144",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice prose collided with a crew-wide pin the slice file did not name",
+      "evidence": "scripts/test/pilot-agents.test.mjs:1588 no crew definition sends to a bare main",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the slice had QA wait on a lander line (clean at <sha>) that no slice wrote",
+      "evidence": "S5 agents/pilot-qa.md vs agents/pilot-lander.md",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "deleting slice branches broke land-clear.test.mjs, which the slice file did not own",
+      "evidence": "S9 scripts/test/land-clear.test.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "focused land tests wait on the machine-wide gate slot; one timed out at 400s",
+      "evidence": "S9 gate: waiting for a slot",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the slice file and brief said held-handoff had landed with holdFor; it has not",
+      "evidence": "S8.md after line; holdFor absent from the repo",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the slice named a press line that did not exist; traced to noteLaneFilled",
+      "evidence": "deck/server-routes.mjs:256",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a landed gate2 is closed, so an open-only read cannot see it",
+      "evidence": "deck/closing-report.mjs:109 closeLanded",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the slice file called deck/closing-report.mjs new and had the lander post the report, but the deck already posts it and closes the ticket on landed, so L12 went back to the user",
+      "evidence": "S10: deck/landing.mjs:277,292,351 closeLanded; store-items.mjs TICKET_STATES_FOR report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the slice's measure-prompt pin baseline was stale (11496.5 vs live 11485.75 set by S8)",
+      "evidence": "S10: scripts/test/measure-prompt.test.mjs:176",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the measure test prints no measured share on a pass; a scratch script was needed again",
+      "evidence": "S10 scratchpad m.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "pins on agents/pilot.md are spread across about 8 test files, so a paragraph leaving cannot stay inside the slice's owned files",
+      "evidence": "S10: pilot-agents, report-record-wording, ticket-states, yellow-lane-wording, record-report, run-remote-prose tests",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a python heredoc wrote a literal backspace byte for \\b into a test regex",
+      "evidence": "S10 test regex, found by od dump",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "regex text passed through a quoted bash heredoc into JS lost its backslashes; one extra 4-minute gate",
+      "evidence": "sync: scripts/vocabulary.mjs:38 Invalid regular expression flags",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "merge=union on docs/adr/README.md keeps both rows but not their order, so the adr-index test fails after a merge",
+      "evidence": "sync: adr-index.test.mjs:173, 0161 above 0160",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S13's 'three files only' missed two tests pinning the version literal, and its evidence command pilot --version does not exist",
+      "evidence": "deck/test/status-command.test.mjs:74, deck/test/store-upgrade.test.mjs:97; bin/pilot.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test takes about 230s, past the 120s tool timeout, so it ran in the background and was polled; Monitor was not available to the implementer",
+      "evidence": "S16 gate",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a scripted edit left a literal newline inside a template string",
+      "evidence": "S16 bin/pilot.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "the evidence runner had not returned when the hand-back was enforced, so no coverage, mutation or complexity data backed the review",
+      "evidence": "lander principles review, pilot-review-lander",
+      "size": 2
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "added slice files S14-S16 fail check-slices (no Rewrite check line, S15 over 60 lines)",
+      "evidence": "check-slices.mjs docs/design/lander/slices",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "a crew child's full report (the evidence runner's ~700-line table, and earlier the S15 implementer's) was delivered to main instead of the co-pilot's fundamentalist that spawned it, after the co-pilot handed back; the pilot read and re-summarised it",
+      "size": 4
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "the runner sent its table to main, not to the fundamentalist that spawned it, and twice ended without re-sending it",
+      "evidence": "lander principles review; table relayed by main",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "pilot wait --as qa with no --item replayed three other runs' resolved Sign off replies repo-wide",
+      "evidence": "itm_93e43b77d471, itm_00625e425012, itm_ae594b9f04f1; S17 added",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "a fixture clone of an empty bare repo has no origin/HEAD, so gate2 posts fail with no default branch known",
+      "evidence": "QA fixtures, git remote set-head origin main",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "the harness ended QA's run during the read-only window, so the re-probe and walkthrough need a second QA spawn",
+      "evidence": "QA handed back 14:10:37Z before the fix tip",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "prompt-share pins are caught only by the full gate, so a one-clause prose fix cost a second 10-minute gate",
+      "evidence": "fix round: qa-preview pin 4939.5 to 4945",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "bash heredocs into python lost a level of backslash escaping again",
+      "evidence": "fix round, exact-match replacements failed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the slice file missed scripts/test/crew-waits.test.mjs, which pins the wizard wording; and shell one-liners dropped backslashes again, about six wasted gate runs",
+      "evidence": "S17: crew-waits.test.mjs:108; String.fromCharCode(92) workaround",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "agents/pilot.md step 7 has the pilot run `pilot land` before QA writes, but land marks the feature PR ready (#849 left draft before Gate 2); the pilot undid it with gh pr ready --undo",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "pilot land accepts no --trailer; the first call printed usage and the land ran twice",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot land removed the feat worktree the run record names (the bug landing-keeps-worktrees #785 fixes, not yet landed); recreated by hand at the same path from origin/feat/lander",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "npm test in the QA worktree tears down a scratch deck started from the same worktree, costing a rebuilt fixture deck",
+      "evidence": "stopped 17944 daemon ... --leash-dir pilot-qa-lander",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot wait --as qa --item cannot hear a thread the pilot has taken; four 110-minute waits ran blind",
+      "evidence": "lander QA report, waits 15:24 to 00:35 UTC",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the WSL HTTPS clone of github.com hung 7+ minutes; a local clone from /mnt/c worked at once",
+      "evidence": "lander QA report",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "the fresh session took a QA walkthrough on the first-turn rule while its QA agent was still alive mid-wait; the thread went back to QA after its message",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot integrate --default fails in a worktree without node_modules (ERR_MODULE_NOT_FOUND @modelcontextprotocol/sdk); npm ci first",
+      "evidence": "lander QA sign-off report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the deck's tool route wants pr as a url or #n, and Bash heredocs collapse backslashes; three refused posts before the gate2 took",
+      "evidence": "lander QA sign-off report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a resumed QA session's deck tools were stamped non-qa, so it posted as qa through POST /api/tool by hand (flagged by the harness)",
+      "evidence": "lander QA sign-off report, assumed section",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "the running deck is feat/lander code (0.9.4) while the installed plugin is 0.9.2: its landing refusal wants a pilot-lander agent the plugin does not ship, so the pilot lands by hand",
+      "size": 3
+    }
+  ]
+}

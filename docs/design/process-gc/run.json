@@ -1,0 +1,168 @@
+{
+  "slug": "process-gc",
+  "feature": "Signed gate never stalls",
+  "ticket": "itm_f74117ba4db7",
+  "branch": "feat/process-gc",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-process-gc",
+  "artefact": "docs/design/process-gc/architecture.md",
+  "slices": [
+    {
+      "slice": "process-gc",
+      "state": "fixing: draft PR #619 (fix/process-gc-principles), reviews running",
+      "branch": "feat/process-gc",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-process-gc",
+      "pr": 606
+    },
+    {
+      "slice": "S1",
+      "state": "integrated at 8079c45d",
+      "branch": "slice/process-gc-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-process-gc-s1",
+      "pr": 607
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at 5471f8d2",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/process-gc-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-process-gc-s2",
+      "pr": 609
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at 7ac67da6",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/process-gc-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-process-gc-s3",
+      "pr": 610
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at 8c225512",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/process-gc-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-process-gc-s4",
+      "pr": 611
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at 86c5a54e",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/process-gc-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-process-gc-s5",
+      "pr": 614
+    },
+    {
+      "slice": "S6",
+      "state": "integrated at b027180c",
+      "branch": "slice/process-gc-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-process-gc-s6",
+      "pr": 608
+    },
+    {
+      "slice": "S7",
+      "state": "integrated at 42c239b8",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/process-gc-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-process-gc-s7",
+      "pr": 613
+    },
+    {
+      "slice": "S8",
+      "state": "integrated at 4123d4e5",
+      "after": [
+        "S7",
+        "S3"
+      ],
+      "branch": "slice/process-gc-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-process-gc-s8",
+      "pr": 617
+    },
+    {
+      "slice": "S9",
+      "state": "integrated at 57cb29a0",
+      "after": [
+        "S8"
+      ],
+      "branch": "slice/process-gc-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-process-gc-s9",
+      "pr": 618
+    },
+    {
+      "slice": "S10",
+      "state": "integrated at b10636ed",
+      "branch": "slice/process-gc-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-process-gc-s10",
+      "pr": 612
+    },
+    {
+      "slice": "S11",
+      "state": "integrated at ee4b991b",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/process-gc-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-process-gc-s11",
+      "pr": 615
+    },
+    {
+      "slice": "S12",
+      "state": "integrated at ec21577e",
+      "after": [
+        "S1",
+        "S3"
+      ],
+      "branch": "slice/process-gc-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-process-gc-s12",
+      "pr": 616
+    }
+  ],
+  "findings": [
+    "kept: S3 sec HIGH user's deck can read as orphan in the unbound window; fix: a leashless daemon is an orphan only when the 4321 probe answered a positive pid not its own and its parent is gone, else unsure (main accepted; L5 and evidence 3 stand; at install with no deck, pre-feature leftovers wait for the next landing's gc, within L14)",
+    "kept: S3 sec MEDIUM wait orphan only when the ancestor chain ends at a ppid missing from the table; a live non-claude root is unsure",
+    "kept: S3 sec MEDIUM node --test root is pilot-owned only when its command line names a path under a pilot checkout (L5 read narrowly)",
+    "kept: S3 sec LOW powershell by absolute System32 path",
+    "kept: S3 sec LOW inexact ps path is unsure; drop repeated pids",
+    "kept: S3 sec LOW reader failure prints one line and no orphan; A9 macOS ps out of scope, L6 unchanged",
+    "kept: S4 sec MEDIUM gc skips its own pid and ancestors, printing could not stop <pid>: gc runs under it (main; a few lines past 300 accepted)",
+    "dropped: S4 sec LOW pid-reuse recheck: the window is milliseconds and L11 says gc never asks (main)",
+    "dropped: S4 sec LOW user's deck restarting between probe and read: the probe runs just before the read (main)",
+    "kept: S7 sec MEDIUM checkout root escaped for glob metacharacters, else a bracketed root runs 0 tests green (main)",
+    "kept: S7 sec LOW main-module guard exits non-zero with a reason instead of 0 (main)",
+    "kept: S7 sec LOW gateEnv strips every inherited --max-old-space-size token, both forms, then appends the cap (main)",
+    "dropped: S7 sec LOW caller flags after the caps: the developer at their own prompt (main)",
+    "dropped: S7 sec LOW shared slot dir ownership and wait timeout: deferred, L8 and L15 cover it, local same-user only (main)",
+    "kept: S11 sec MEDIUM admin line prints the root as a PowerShell single-quoted literal, quotes doubled (main)",
+    "kept: S11 sec LOW a null ExclusionPath stays null so doctor says cannot tell (main, L12)",
+    "kept: count-spawns records null for async spawns (QA F2, fundamentalist a): record a microtask later; fixture async spawn is node",
+    "kept: engines >=22.8.0 (gate needs 20.10, S9 tests 22.8); assumed, Node 20 EOL (main)",
+    "kept: isRunning copies in leash.mjs and gate-slots.mjs replaced by runs.mjs isRunning (-16)",
+    "kept: isClaude exported once from procs.mjs, used by idle.mjs and gate.mjs",
+    "kept: gate-slots held flag removed; release checks ownership",
+    "kept: mutation-gap tests: leash liveness while owner lives, slot release after takeover, stale lock, unreadable slot, idle catch path, psLine spec 4 fields",
+    "kept: gate-slots tests through the API, not slot-0.json (S6 rewrite check)",
+    "kept: unused exports and wait.mjs stale comment (nits)",
+    "kept: S1 sec MEDIUM scratch deck outside a session dies: sessionPid(env) ?? process.ppid, always --leash owner --leash-dir cwd (main)",
+    "kept: S5 sec LOW install note wording and INSTALL.md:158 sentence (main)",
+    "kept: S11 sec LOW hostile-root test uses String.raw (main)",
+    "dropped: S1 sec MEDIUM --leash-dir without --leash on 4321: no caller emits it (main)",
+    "dropped: S1 sec LOW x4 positiveInt bound, --leash= form, ppid 1, recycled pid: fail closed or paths back them (main)",
+    "dropped: S3 sec LOW x3 leashless live parent, forged ps row, wait shell exit (main)",
+    "dropped: S5 sec LOW narrower deny unreported; S7 escapeGlob backslash on POSIX (main)",
+    "dropped: QA F1 census stops a same-checkout scratch deck started mid-gate: L9 as locked (main)",
+    "dropped: L5 never-orphan waits: gc's net is for what a leash cannot catch (main); L4 pid-file alternative goes to the closing report as a follow-up",
+    "dropped: nits land collect inline, spawns undefined branch, daemonRow extract, process.binding try/catch, Atomics.wait sleep copies"
+  ],
+  "next": "on #619's reviewer verdicts: integrate fix/process-gc-principles; pilot land; resume QA with the tip",
+  "updatedAt": "2026-10-12T15:21:58.020Z"
+}

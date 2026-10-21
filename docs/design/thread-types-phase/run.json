@@ -1,0 +1,165 @@
+{
+  "slug": "thread-types-phase",
+  "feature": "Thread types and deck phase",
+  "branch": "feat/thread-types-phase",
+  "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-thread-types-phase",
+  "artefact": "docs/design/thread-types-phase/architecture.md",
+  "slices": [],
+  "findings": [
+    "kept: recommended on buttoned kinds (items.mjs:396) deleted; no writer passes it and it is never drawn",
+    "kept: PHASES export deleted, one reader and an equivalent mutant; the guard becomes phase ?",
+    "kept: two phase asserts added — report then walkthrough, report then signoff give planning (mutants M4, M5 survived)",
+    "kept: pilot.md Legend's repeat of step 6 and step 6's resolve-before-Gate-2 clause cut; the deck's refusal names the ids",
+    "kept: postStored writes straight into the store file and replaces the three fixture seedings",
+    "kept: NOT_YET imported in type-buttons.test instead of re-spelled",
+    "kept: the deck_post gate enum and description derived from the type table, not re-spelled",
+    "dropped: the dedicated options refusal with the article rule — its wording is S3's Interface, and the generic refusal names less",
+    "dropped: clearing away on reopen — spec 6 reads literally and it is an addition",
+    "kept: QA F1, the Gate 2 note holds for a walkthrough with no Not yet",
+    "kept: QA F2, the handoff note drawn only when the item carries Handoff failed",
+    "kept: QA F3, the type note sits above the body on card and page alike",
+    "kept: QA F4, an away question says on card and page that the pilot went with its recommended and a reply revises it",
+    "kept: QA F5, a walkthrough carrying both gate and ticket is refused in detailOf, not only in prose"
+  ],
+  "report": {
+    "featurePr": {
+      "number": 222,
+      "state": "ready for review at 5bfc7d3, not merged"
+    },
+    "slices": [
+      {
+        "slice": "S1 Handoff failed and Reply",
+        "pr": 223,
+        "mergeSha": "50955d6"
+      },
+      {
+        "slice": "S2 Only the thread types can be posted",
+        "pr": 224,
+        "mergeSha": "903e92b"
+      },
+      {
+        "slice": "S3 Deck buttons and gate tags",
+        "pr": 225,
+        "mergeSha": "e5b2592"
+      },
+      {
+        "slice": "S4 Phase on the strip",
+        "pr": 226,
+        "mergeSha": "23d3281"
+      },
+      {
+        "slice": "S5 Yellow means the user is away",
+        "pr": 227,
+        "mergeSha": "a399c39"
+      },
+      {
+        "slice": "Fix round: principles findings and QA",
+        "pr": 228,
+        "mergeSha": "5bfc7d3"
+      }
+    ],
+    "assumed": [
+      {
+        "id": "A1",
+        "decision": "who sets the phase",
+        "taken": "the deck derives it from gate-tagged items and the newest report"
+      },
+      {
+        "id": "A4",
+        "decision": "word with the colour",
+        "taken": "yes: planning / implementing / closing"
+      },
+      {
+        "id": "A5",
+        "decision": "runs",
+        "taken": "one run of five slices"
+      },
+      {
+        "id": "A6",
+        "decision": "deck buttons",
+        "taken": "spec agree / agree with edits; signoff Sign off / Not yet; audit none"
+      },
+      {
+        "id": "A7",
+        "decision": "which handoffs change",
+        "taken": "all three writers; no Dismiss on a pilot handoff"
+      },
+      {
+        "id": "A8",
+        "decision": "abandoned runs",
+        "taken": "only a report clears the phase"
+      },
+      {
+        "id": "A9",
+        "decision": "when a gate passes",
+        "taken": "when its item is resolved; Not yet keeps it open"
+      }
+    ],
+    "friction": [
+      {
+        "agent": "implementers S1, S2, S4, S5, r1",
+        "what": "Python text-mode edits on Windows wrote CRLF, breaking the frontmatter parser and inflating the pilot.md token pin",
+        "evidence": "each lost one suite run; S5: 3 failures then 2009/2009 after sed -i 's/\\r$//'"
+      },
+      {
+        "agent": "implementers S1, S2, S4, S5",
+        "what": "slice files said 150 lines, brief.md said 300",
+        "evidence": "four stop-and-ask rounds"
+      },
+      {
+        "agent": "implementer S1",
+        "what": "handoff was the suite's example unknown kind in four files",
+        "evidence": "17 failures, ~100 lines of churn"
+      },
+      {
+        "agent": "fundamentalist",
+        "what": "no diff-coverage, mutation or dead-export tooling",
+        "evidence": "hand-built lcov x diff and a mutant harness; two failed heredoc runs"
+      },
+      {
+        "agent": "qa",
+        "what": "the user had to drive the agent side with an untracked walk.mjs; deck not started before posting",
+        "evidence": "replies '4398 is 404' and 'what is the point of the walk command?'"
+      },
+      {
+        "agent": "implementer r1",
+        "what": "measure-prompt.mjs does not print the pinned figure",
+        "evidence": "wrote a script to compute (definition+skills+tools)/4"
+      },
+      {
+        "agent": "qa",
+        "what": "a new store needs version: 1, undocumented",
+        "evidence": "first walk start was a 500"
+      },
+      {
+        "agent": "implementer S5",
+        "what": "setAuto(repo, false) turns full auto on",
+        "evidence": "every gate item resolved auto in the first fixture"
+      },
+      {
+        "agent": "implementer S2",
+        "what": "slice file's list of affected tests was wrong",
+        "evidence": "19 failures across five files, run.test not among them"
+      },
+      {
+        "agent": "implementer S4",
+        "what": "Git Bash $! is an MSYS pid",
+        "evidence": "registerRun needed a Windows pid; holder spawned from Node"
+      }
+    ],
+    "humanSteps": [
+      "merge PR #222",
+      "merge PR #221 (temporary drop-rows rule)",
+      "bump the version and restart the deck daemon",
+      "remove pilot-feat-thread-types-phase and pilot-design-thread-types-phase after the merge"
+    ],
+    "worktreesLeft": [
+      "C:/Users/Hazzard/Projects/pilot-feat-thread-types-phase",
+      "C:/Users/Hazzard/Projects/pilot-design-thread-types-phase"
+    ]
+  },
+  "next": "closing report itm_956483612f7c posted; the user merges PR #222 and PR #221, bumps and restarts the daemon",
+  "finished": "closing report posted",
+  "finishedAt": "2026-10-01T02:51:47.646Z",
+  "updatedAt": "2026-10-01T02:51:47.646Z"
+}

@@ -1,0 +1,14 @@
+{
+  "name": "pilot",
+  "displayName": "Pilot",
+  "version": "0.9.5",
+  "description": "Pilot orchestration and its deck: a crew of agents that takes a feature from idea to reviewed pull requests, and one local inbox at http://127.0.0.1:4321 where every question, walkthrough and sign-off queues up as a thread.",
+  "author": {
+    "name": "HazzardRust",
+    "url": "https://github.com/HazzardRust"
+  },
+  "homepage": "https://github.com/HazzardRust/pilot",
+  "repository": "https://github.com/HazzardRust/pilot",
+  "license": "MIT",
+  "keywords": ["orchestration", "agents", "pilot", "deck"]
+}

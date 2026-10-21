@@ -1,0 +1,86 @@
+{
+  "slug": "verdict-pass",
+  "feature": "Verdict on every assumed decision",
+  "ticket": "itm_a34a2ad27b29",
+  "branch": "feat/verdict-pass",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-verdict-pass",
+  "artefact": "docs/design/verdict-pass/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated at 991b9786 (PR #633 merged)",
+      "branch": "slice/verdict-pass-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-verdict-pass-s1",
+      "pr": 633
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at b8fd0aa8 (PR #635 merged)",
+      "branch": "slice/verdict-pass-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-verdict-pass-s2",
+      "pr": 635
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at 760380ee (PR #636 merged)",
+      "branch": "slice/verdict-pass-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-verdict-pass-s3",
+      "pr": 636
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at d476dbfb (PR #634 merged)",
+      "branch": "slice/verdict-pass-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-verdict-pass-s4",
+      "pr": 634
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at d6725d8f (PR #637 merged)",
+      "branch": "slice/verdict-pass-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-verdict-pass-s5",
+      "pr": 637
+    },
+    {
+      "slice": "verdict-pass",
+      "state": "in QA, parked read-only: S1-S5 integrated, feat at d6725d8f; fundamentalist reported (4 findings, 6 nits, 1 consider), triaged; consider row awaits a security review; fix round not spawned; not landed",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "branch": "feat/verdict-pass",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-verdict-pass",
+      "pr": 631
+    },
+    {
+      "slice": "fix round",
+      "state": "draft PR #638 at a4204a05, typescript-reviewer approved; integrating",
+      "after": [
+        "S5"
+      ],
+      "branch": "fix/verdict-pass-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-verdict-pass-fix",
+      "pr": 638
+    }
+  ],
+  "findings": [
+    "kept: F2 redundant existsSync assert and fs import in audit-rederived.test.mjs deleted (-2)",
+    "kept: F3 /git grep/ assert subsumed by the -F one, deleted (-1)",
+    "kept: F4 lineage.mjs SHA regex replaced by SHA_FIELD.shape import, one argv guard shape (0)",
+    "kept: F5 (security review) VERDICT regex loses its lazy .*? and trailing \\s* so long whitespace runs cannot stall the deck (0)",
+    "dropped: F1 the doesNotMatch git (show|cat-file) pin is deliberate: the pilot prose names no git subcommand so the code may change it",
+    "dropped: N1 fold of the repo guard waits for gate-no-stall's hunk, as §3 says",
+    "dropped: N2 '5 s' in the refusal is the production deadline; the injectable timeout is a test seam",
+    "dropped: N3 a single verdicts() export changes S1's named seam that S3 reads, for -3 lines",
+    "dropped: N4 the prose instructs the pilot to list ids beside verdicts; the deck's presence check is the floor, not a mismatch",
+    "dropped: N5 second copy of a test fixture, Rule of Three",
+    "dropped: N6 naming read.error is a +1 addition at low consequence",
+    "dropped: (deferred) the case against A2, the deck writing the listing itself, moves a signed assumption and spec 5: offered at gate2 as a follow-up ticket",
+    "dropped: (deferred) mutation pass unfinished, 135 mutants and no results; verdicts.mjs at 100% line and branch coverage, not rerun"
+  ],
+  "next": "pilot integrate fix/verdict-pass-principles, then pilot integrate --default (PR #631 conflicts with main), pilot land, send QA ae82b801baa9ddb16 the tip for the walkthrough; gate2 body offers the A2 follow-up.",
+  "updatedAt": "2026-10-13T14:33:05.765Z"
+}

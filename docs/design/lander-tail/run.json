@@ -1,0 +1,249 @@
+{
+  "slug": "lander-tail",
+  "feature": "The lander's tail is the lander's",
+  "ticket": "itm_6971c0f47a93",
+  "branch": "feat/lander-tail",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-lander-tail",
+  "qa": {
+    "branch": "feat/lander-tail",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-lander-tail",
+    "url": "http://127.0.0.1:63756"
+  },
+  "artefact": "docs/design/lander-tail/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 a bodiless report posts through the deck_post schema",
+      "state": "integrated at 759e571c",
+      "branch": "slice/lander-tail-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-lander-tail-s1",
+      "pr": 971
+    },
+    {
+      "slice": "S2 a landed run's prune takes every worktree but tracked dirt",
+      "state": "integrated at e9204c5e",
+      "branch": "slice/lander-tail-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-lander-tail-s2",
+      "pr": 972
+    },
+    {
+      "slice": "S3 the landing leaves no land dir",
+      "state": "integrated at e08b5859",
+      "branch": "slice/lander-tail-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-lander-tail-s3",
+      "pr": 973
+    },
+    {
+      "slice": "S4 the closing report lists the worktrees left",
+      "state": "integrated at 146edaa0",
+      "after": [
+        "S1 a bodiless report posts through the deck_post schema",
+        "S2 a landed run's prune takes every worktree but tracked dirt"
+      ],
+      "branch": "slice/lander-tail-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-lander-tail-s4",
+      "pr": 974
+    },
+    {
+      "slice": "lander-tail",
+      "state": "QA walkthrough itm_1282adf5f211 posted at 8b27a385 (4412 pass); ticket at need",
+      "after": [
+        "S4 the closing report lists the worktrees left"
+      ],
+      "branch": "feat/lander-tail",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-lander-tail",
+      "pr": 959
+    }
+  ],
+  "findings": [
+    "kept: F1 -D only on run branches",
+    "kept: F2 none recorded keeps its cause",
+    "kept: F3 tests no longer pass only because the lister fails",
+    "kept: N1 runWorktrees returns paths only",
+    "kept: N3 left=[] default dropped",
+    "kept: N4 stateOf landed renamed landedSlug",
+    "kept: SEC1 removeLand removes only a registered worktree (isWorktreeOf)",
+    "dropped: N2 removeLand try/catch",
+    "dropped: case-sensitive land-dir match; fails safe",
+    "dropped: keptDir not injective; predates the feature",
+    "dropped: evidence-runner complexity rows; pre-existing code",
+    "dropped: QA nits outside the feature: ticket row state cut mid-word after a long gh error on land; deck_status slices:[] says 3 slices saved; NOT removed branch line carries git hint lines"
+  ],
+  "next": "lander-tail: on Sign off of itm_1282adf5f211 resume QA a915afeaa03ab9805 with it; tell QA: no seed folder, skip sign-off step 4. Then it integrates and posts the gate2; spawn pilot-lander on the press. Yellow: fundamentalist-decisions co-pilot live.",
+  "updatedAt": "2026-10-20T19:51:07.002Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "the bodiless-report test calls callTool directly, never meeting the MCP schema, so it stayed green while every real call was refused",
+      "evidence": "deck/test/report-post-body.test.mjs vs deck/tools.mjs:194",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck.log refusal lines carry no timestamp or tool name",
+      "evidence": "deck/refusal-log.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "the deck runs the plugin cache, not the repo; invisible without reading the process command line",
+      "evidence": "pid 5744 command line",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "a heredoc with backticks and quotes failed in Bash; fell back to Write",
+      "evidence": "first architecture write",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "could not TaskStop its own S3 implementer at the harness hand-back; the successor had to re-adopt it",
+      "evidence": "fresh-public-repo co-pilot hand-back, TaskStop refused as self-owned",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a schema description edit in deck/tools.mjs broke three prompt-share pins far from the change; only the full gate showed it",
+      "evidence": "scripts/measure-prompt.mjs:84 imports TOOLS; 3 pins red over ~14 tokens",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test log holds several summaries; the last quiet line read fail 3 while exit was 0",
+      "evidence": "S1 gate log, grep of the i-lines needed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the slice's interface line and pilot-lander.md step 3 omit the slices that deck_status requires, so the lander's finished call is refused",
+      "evidence": "deck/tools.mjs:349, deck/status.mjs:295, agents/pilot-lander.md:49",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the brief's ADR number 0168 was already taken on the base",
+      "evidence": "docs/adr/0168-a-small-ticket-takes-the-short-path.md at 5291c60e; 3 gate failures",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the machine's process table holds every fixture tree as kept live unsure, so a real prune --run removed nothing",
+      "evidence": "S2 live CLI run on a throwaway fixture: 5 trees kept live unsure",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "auto-mode note says edit through Bash, conflicting with the implementer rule against sed -i and heredocs",
+      "evidence": "S2 implementer report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test queues behind other worktrees for a gate slot; land-clear tests take 3-6 s each",
+      "evidence": "gate: waiting for a slot; 22 land tests ~2 min per round",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice test 1 was not red before the change: mergeIntoPilot's finally already removes a reused land dir",
+      "evidence": "scripts/sync.mjs:146",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "deck fixtures fake a repository, so a git read on the post path turned two test files into the cannot-list case",
+      "evidence": "deck/test/report-post-body.test.mjs now expects closingReportOf(record, gate, null)",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the S3 tip arrived mid-gate, so the full gate ran twice",
+      "evidence": "two npm test runs of ~230 s",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "the evidence runner did not finish before the hand-back, so no coverage or mutation rows exist",
+      "evidence": "runner waiting on background work after 517 s",
+      "size": 3
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "its own worktree could not be removed (Permission denied) while the runner held files",
+      "evidence": "git worktree remove --force exit 255",
+      "size": 1
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "the evidence runner's hand-back lands at the pilot session, not at the fundamentalist that spawned it, so the pilot reads and relays a 5k-token table each run",
+      "evidence": "architect-runs-red and lander-tail runs, 2026-10-20",
+      "size": 2
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "Stryker's initial run under a scratch HOME takes >4 min and the 900 s cap kills it before any mutant runs; sandbox left busy",
+      "evidence": "lander-tail: 1748 mutants instrumented, 0 run, exit 124",
+      "size": 2
+    },
+    {
+      "agent": "pilot-security-reviewer",
+      "what": "S3's new destructive removal path carried no security reviewer; the consider row found a MEDIUM",
+      "evidence": "S3 Reviewers line typescript only; removeLand rmSync on an unregistered dir",
+      "size": 2
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "its report reached the pilot instead of the fundamentalist; mutation hit the 900 s cap and coverage overlapped it on one PILOT_DECK_DIR",
+      "evidence": "Stryker exit 124; diff-cover never ran; stryker sandbox left in tmp.saJLe802Et",
+      "size": 3
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "npm test's after-suite census stopped QA's scratch deck started from the same worktree while the suite ran",
+      "evidence": "scripts/gate.mjs:137-160, scratch deck pid 11232",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "the ticket row's state after landing is cut mid-word from land's long gh error",
+      "evidence": "landed: is repository point to ...",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "multi-line edits through Bash heredocs turned \\n escapes into real newlines, twice",
+      "evidence": "report-post-body.test.mjs regex, closing-report.mjs split",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "node --test --test-name-pattern reports a pass when it matches nothing, so a red check read green",
+      "evidence": "pass 1 with the SEC1 guard disabled",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a bare git stash in a worktree shares the main repo's stash list",
+      "evidence": "5 older entries from other sessions",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "npm test's after-run census stops a scratch deck started from the same worktree, so the suite cannot run beside QA's deck as the definition says",
+      "evidence": "scripts/gate.mjs census stopped pid 11232 (pilot-qa-lander-tail deck); deck rebuilt once",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "staging a landed gate2 on a scratch deck takes ~6 refused calls (gate1 needs surface, gate2 pr as #n, Verdict:/Gate: lines, record posted from the main checkout); --seed-run cannot do it without a real ticket id",
+      "evidence": "lander-tail QA, ~10 extra calls",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "QA's own deck_post schema is the installed 0.9.4 one, so a schema change under test must be driven through the worktree's deck client over stdio",
+      "evidence": "lander-tail spec 1",
+      "size": 1
+    }
+  ]
+}

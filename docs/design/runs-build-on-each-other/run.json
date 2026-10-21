@@ -1,0 +1,206 @@
+{
+  "slug": "runs-build-on-each-other",
+  "feature": "Consecutive runs build on each other",
+  "ticket": "itm_ded1a879578b",
+  "branch": "feat/runs-build-on-each-other",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-runs-build-on-each-other",
+  "qa": {
+    "branch": "qa/runs-build-on-each-other",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-runs-build-on-each-other-qa",
+    "url": "http://127.0.0.1:4398"
+  },
+  "artefact": "docs/design/runs-build-on-each-other/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Walking skeleton: pilot base names the top of the stack",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2",
+        "5",
+        "7",
+        "8",
+        "12"
+      ],
+      "branch": "slice/runs-build-on-each-other-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-runs-build-on-each-other-s1",
+      "pr": 312
+    },
+    {
+      "slice": "S2 pilot integrate takes the base",
+      "state": "integrated",
+      "after": "S1 Walking skeleton: pilot base names the top of the stack",
+      "delivers": [
+        "3",
+        "4",
+        "9",
+        "12"
+      ],
+      "branch": "slice/runs-build-on-each-other-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-runs-build-on-each-other-s2",
+      "pr": 315
+    },
+    {
+      "slice": "S3 A stack deeper than 3 is refused",
+      "state": "integrated",
+      "after": "S1 Walking skeleton: pilot base names the top of the stack",
+      "delivers": [
+        "6"
+      ],
+      "branch": "slice/runs-build-on-each-other-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-runs-build-on-each-other-s3",
+      "pr": 313
+    },
+    {
+      "slice": "S4 Ticket-making checks what already exists",
+      "state": "integrated",
+      "after": "S1 Walking skeleton: pilot base names the top of the stack",
+      "delivers": [
+        "10",
+        "11"
+      ],
+      "branch": "slice/runs-build-on-each-other-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-runs-build-on-each-other-s4",
+      "pr": 314
+    },
+    {
+      "slice": "feature",
+      "state": "ready; PR #311",
+      "branch": "feat/runs-build-on-each-other",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-runs-build-on-each-other",
+      "pr": 311
+    },
+    {
+      "slice": "S5 A closed base is taken out when that is clean",
+      "state": "integrated",
+      "after": "S2 pilot integrate takes the base",
+      "delivers": [
+        "13"
+      ],
+      "branch": "slice/runs-build-on-each-other-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-runs-build-on-each-other-s5",
+      "pr": 316
+    }
+  ],
+  "findings": [
+    "kept: 1 openRuns makes one gh call per record ever made; one `gh pr list --state open --author @me` instead",
+    "kept: 2 a failed fetch unstacks a run for good (base.mjs:74); keep the top and append the reason",
+    "kept: 3 default-branch lookup written 3 times, firstLine twice; one export in stack.mjs",
+    "kept: 4 findPrWithGh is a second gh seam; delete, call through the injected gh",
+    "kept: 5 integrate() at cognitive complexity 37; take-out block moves to one takeBase step, lines unchanged",
+    "kept: 6 seven surviving mutants / uncovered exits in integrate; six tests added",
+    "kept: n1 topOf's cycle fallback is always discarded; reduce over tops",
+    "kept: n2 unread fields and exports in stack.mjs and base.mjs removed",
+    "kept: n3 closed-base test renamed to what it pins since S5",
+    "dropped: n4 a checkedPr refusal inside integrate shares the gh-unavailable catch already pinned, and QA probed it live",
+    "kept: QA J1 a Stands on line that does not parse is silently unstacked; the integrate line now says so",
+    "dropped: QA J2 a refused base still lands the slice: R1 by design, the line says why",
+    "dropped: QA J3 stop-line wording nits; no consequence beyond the wording",
+    "dropped: QA J4 tickets --open diffs a stacked run against main, so its base's files show under it too; low, recorded for a later ticket"
+  ],
+  "report": {
+    "featurePr": {
+      "number": 311,
+      "state": "ready for review"
+    },
+    "slices": [
+      {
+        "slice": "S1",
+        "pr": 312,
+        "mergeSha": "cbc012d"
+      },
+      {
+        "slice": "S3",
+        "pr": 313,
+        "mergeSha": "a6258e2"
+      },
+      {
+        "slice": "S4",
+        "pr": 314,
+        "mergeSha": "3334644"
+      },
+      {
+        "slice": "S2",
+        "pr": 315,
+        "mergeSha": "69f4ede"
+      },
+      {
+        "slice": "S5",
+        "pr": 316,
+        "mergeSha": "4deabfe"
+      },
+      {
+        "slice": "fix round",
+        "pr": 317,
+        "mergeSha": "4d97485"
+      }
+    ],
+    "assumed": [
+      {
+        "id": "A3",
+        "decision": "How deep may a stack grow?",
+        "taken": "3 open PRs; the fourth is refused and the pilot asks"
+      },
+      {
+        "id": "A4",
+        "decision": "Do parallel decks stack?",
+        "taken": "No: records are per directory"
+      },
+      {
+        "id": "A5",
+        "decision": "What does 'parts already exist' mean?",
+        "taken": "Open tickets' text and unmerged PRs' changed files; the pilot judges overlap"
+      }
+    ],
+    "friction": [
+      {
+        "agent": "qa, fix implementer",
+        "what": "Port 4399 hard-coded as 'no deck here' in seven test files",
+        "evidence": "3 tests failed while QA's scratch deck held it; integration blocked until it moved"
+      },
+      {
+        "agent": "implementers S1-S5, qa",
+        "what": "gh.exe stub recipe for Windows only in PR bodies",
+        "evidence": "rebuilt four times; S1's first probe reached real GitHub read-only"
+      },
+      {
+        "agent": "pilot, S2 implementer",
+        "what": "Flaky tests",
+        "evidence": "usage.test.mjs:674 red on S4's first integration; daemon.test.mjs 'progress token of 0' once"
+      },
+      {
+        "agent": "qa",
+        "what": "No supported way to seed a run record into a scratch deck",
+        "evidence": "seed.mjs writes deck.json directly"
+      },
+      {
+        "agent": "implementers, pilot",
+        "what": "Heredoc edits of JS through Git Bash fail; gateguard blocks Write on scratch files",
+        "evidence": "about 10 wasted calls across four agents"
+      },
+      {
+        "agent": "fundamentalist",
+        "what": "No complexity or mutation tool configured",
+        "evidence": "scratch eslint+sonarjs install, 18 hand mutants, about 4 minutes"
+      },
+      {
+        "agent": "pilot",
+        "what": "Installed pilot 0.7.17 has no /api/tickets or pilot tickets",
+        "evidence": "the queue's next pick could not be read"
+      }
+    ],
+    "humanSteps": [
+      "Merge PR #311",
+      "Update the plugin to 0.7.18 and restart the deck daemon",
+      "Delete C:/Users/Hazzard/Projects/qa-runs-build-on-each-other when done with it",
+      "After the merge, remove the feat worktree and the feat/ and design/ branches"
+    ],
+    "worktreesLeft": [
+      "C:/Users/Hazzard/Projects/pilot-feat-runs-build-on-each-other"
+    ]
+  },
+  "next": "Run closed. PR #311 ready at 73e4913 (signed d663d3b + docs), the merge is the user's. Closing report itm_958289ffa538. Only the feat worktree is left.",
+  "finished": "closing report posted",
+  "finishedAt": "2026-10-04T11:20:01.564Z",
+  "updatedAt": "2026-10-04T11:20:01.564Z"
+}

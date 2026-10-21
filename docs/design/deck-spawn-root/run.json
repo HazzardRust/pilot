@@ -1,0 +1,289 @@
+{
+  "slug": "deck-spawn-root",
+  "feature": "Deck spawns from the installed plugin",
+  "ticket": "itm_2c871094c3ac",
+  "branch": "feat/deck-spawn-root",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deck-spawn-root",
+  "artefact": "docs/design/deck-spawn-root/architecture.md",
+  "slices": [
+    {
+      "slice": "deck-spawn-root",
+      "state": "gate2 itm_74231be071a3 signed; lander resolving deck/README.md in pilot-land-deck-spawn-root (rebuilt on 7adb378)",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "branch": "feat/deck-spawn-root",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deck-spawn-root",
+      "pr": 879
+    },
+    {
+      "slice": "S1 A checkout client spawns the installed deck",
+      "state": "integrated at c6349f3e (#942)",
+      "branch": "slice/deck-spawn-root-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-spawn-root-s1",
+      "pr": 942
+    },
+    {
+      "slice": "S2 pilot deck --from is the one opt-in",
+      "state": "integrated at 7735e255 (#944)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/deck-spawn-root-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-spawn-root-s2",
+      "pr": 944
+    },
+    {
+      "slice": "S3 The deck names its root; a checkout deck says so",
+      "state": "integrated at b474be60 (#943)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/deck-spawn-root-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-spawn-root-s3",
+      "pr": 943
+    },
+    {
+      "slice": "S4 Doctor fails a checkout deck",
+      "state": "integrated at 441bd77c (#945)",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/deck-spawn-root-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-spawn-root-s4",
+      "pr": 945
+    },
+    {
+      "slice": "S5 Pins: landing root and prune holder",
+      "state": "integrated at 868ba0f6 (#941)",
+      "branch": "slice/deck-spawn-root-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-spawn-root-s5",
+      "pr": 941
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated at 59afffa2 (#946)",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "branch": "slice/deck-spawn-root-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-spawn-root-fix",
+      "pr": 946
+    },
+    {
+      "slice": "added: off-port --from deck leashed to the session",
+      "state": "built by QA at 363a7a9c (eeed4486, 363a7a9c); gate 4298 pass 0 fail",
+      "after": [
+        "fix round"
+      ],
+      "branch": "feat/deck-spawn-root"
+    }
+  ],
+  "findings": [
+    "dropped: case against (checkout client only joins on 4321) moves spec 1 and L8, outside the rails",
+    "kept: F1 pin ensureDaemon's spawn argv and the version it passes to replaceOlder (+20)",
+    "kept: F2 delete environment-pinned health-root.test.mjs:49 (-1)",
+    "kept: F3 memoise the default resolve per process; the 30 s spawnSync lookup can run 3x per join (+2)",
+    "kept: F4 drop spawnRoot's unused env parameter (0)",
+    "kept: F5 record replaceOlder's version default in S1.md (+1 doc)",
+    "kept: N1 export fromRoot, drop spawnRoot's from mode (-2)",
+    "kept: N2 OWN_ROOT via path.resolve, no trailing separator in the L3 error (0)",
+    "kept: QA F1 doctor's deck root row only on DECK_PORT (+4)"
+  ],
+  "next": "deck-spawn-root: lander live on itm_74231be071a3 (README hunk → Land again → tail); on hand-back reply Findings on its report. plain-session: done, PR #964 to main. stage-queue-tail: on Done on itm_db764540f47f post report + Findings. architect-runs-red: co-pilot live on S3.",
+  "updatedAt": "2026-10-20T15:52:58.250Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "gate1 refused: the artefact's 'Verdict: stands; <why>' lines fail the deck's regex, which takes only 'Verdict: stands — <why>'; the refusal names neither the separator nor that the line must start with Verdict",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-explorer",
+      "what": "Get-MpPreference exclusions unreadable non-admin; deck/doctor.mjs Defender row exists only in the defender-dev-drive worktree, not the main checkout",
+      "evidence": "itm_5cde0141d2f9 answer",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 Tests 1 reads as if a spawn-argv assertion pins PILOT_BIN; it is fixed at import, so the pin needs a fresh module load under another cwd",
+      "evidence": "the callTool version stayed green under the process.cwd() mutation",
+      "size": 20
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 evidence mutation 'holderOf answering unsure' is ambiguous: only the sure branch breaks the daemon pin",
+      "evidence": "mutating the final fallthrough leaves the pin green",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: the deck module-list test (deck/README.md row) is named nowhere a slice reads, so a new deck/*.mjs fails only the full gate",
+      "evidence": "'every deck module is listed' failed the first full run",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: the ADR index on the base was stale after pilot merged in (0166 row)",
+      "evidence": "adr-index --check: README.md differs",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: a full gate run was wasted because review fixes landed mid-run",
+      "evidence": "two runs before the final one",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 Interface names escape.mjs as the escaper; it is the Esc-key handler",
+      "evidence": "deck/ui/js/escape.mjs:7 exports only install(env)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: a test outside the owned files pins the page's fetch list",
+      "evidence": "deck/test/ui-route.test.mjs:131",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: a thread page on a bare scratch deck needs POST /api/runs first; Create refuses",
+      "evidence": "'start a pilot there once first'",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: /create and back arrow do full navigation, losing DevTools script context",
+      "evidence": "'Execution context was destroyed' twice",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: parallel Edit calls on an unread file failed silently, reading as a false red",
+      "evidence": "first GREEN run still 12 pass 1 fail",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 Interface left open what --from does when a deck already answers, and whether 'exit 2 on missing <dir>' means the argument or the path",
+      "evidence": "typescript-reviewer MEDIUM: 'The deck is up' claimed with nothing started from <dir>",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: a --from scratch deck on 4399 exited within seconds of answering health",
+      "evidence": "pid 21648 gone at Stop-Process",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: the fact-sheet spawn added nothing on a 2-file slice",
+      "evidence": "11 tool calls, ~32k tokens, table matched own reads",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: Monitor is not available to implementers and a bare sleep is blocked, so the gate wait is a blocking until-loop",
+      "evidence": "Monitor: No such tool; sleep 100 rejected",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "c8 wrapped the whole gate and its output was cut; no coverage figures",
+      "evidence": "exit 1, output stops mid-run",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "Stryker dry run failed on an environment-pinned test",
+      "evidence": "health-root.test.mjs:49",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the gate's leak sweep stops a QA scratch deck started from the same worktree",
+      "evidence": "gate.log: stopped 28260 daemon --leash-dir pilot-deck-spawn-root-qa",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "prune checks merged/moved state before a live holder, so a fresh tree cannot show live <pid>",
+      "evidence": "QA tree read 'kept open'; a throwaway merged tree was needed",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the harness forced QA's hand-back before the fix tip arrived",
+      "evidence": "interim hand-back, no walkthrough posted",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a shell command mixing python3 with a node -e fallback hung to the 120 s timeout",
+      "evidence": "fix round report: backgrounded after the timeout",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix round wrote tests and fixes together, so the new pins were never seen red",
+      "evidence": "fix round report: no separate red step",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a --from deck off 4321 holds its exited CLI as leash and closes within seconds; L9 relies on it, and S2 saw the same exit without it being routed",
+      "evidence": "deck.log: leash broke: pid 21588 has exited; closing",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "first cut of the leash fix in spawn-root.mjs pulled server-wait.mjs and runs.mjs into the stdio client graph",
+      "evidence": "'stdio client never touches the store' test failed",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot deck --stop refuses a --from deck, so taskkill by the health pid is the only way to stop one",
+      "evidence": "pilot deck --stop: pid 23060 is not a scratch deck",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the client import-graph rule is not visible from spawn-root.mjs; found only by the full gate",
+      "evidence": "daemon.test.mjs:1603 failure at eeed4486",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the free-port test bans the literal 4399 in any .mjs",
+      "evidence": "free-port.test.mjs:55",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "prune's live <pid> needs a merged tree whose reflog moved, so a hand-built fixture was needed",
+      "evidence": "worktrees.mjs:66-77",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the walkthrough forbids commands in steps, so §9 step 0's restart sits in the body",
+      "evidence": "walkthrough itm_960ff646db55",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "removed a kept land worktree the deck's resume would have taken (first parent an ancestor of the pilot tip, source the feat tip); Land again then refused on the missing dir and the worktree had to be rebuilt by hand with the merge prepared",
+      "size": 2
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "slug": "tickets-add-button",
+  "feature": "Tickets tab: Add button beside the title",
+  "ticket": "itm_28891dcb8357",
+  "branch": "feat/tickets-add-button",
+  "worktree": "C:/Users/socce/Projects/pilot-tickets-add-button",
+  "artefact": "docs/design/tickets-add-button/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Tickets panel grid puts Add on the title row",
+      "state": "integrated at 1da877db (#573 merged fc72999b)",
+      "branch": "slice/tickets-add-button-s1",
+      "worktree": "C:/Users/socce/Projects/pilot-tickets-add-button-s1",
+      "pr": 573
+    },
+    {
+      "slice": "feature",
+      "state": "in QA",
+      "after": [
+        "S1 Tickets panel grid puts Add on the title row"
+      ],
+      "branch": "feat/tickets-add-button",
+      "pr": 571
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S1 Tickets panel grid puts Add on the title row"
+      ],
+      "branch": "slice/tickets-add-button-fix",
+      "worktree": "C:/Users/socce/Projects/pilot-tickets-add-button-fix",
+      "pr": 574
+    }
+  ],
+  "findings": [
+    "kept: align-content: start on #tickets > .panel; a resized (style.height) grid panel stretches its rows away from the title (size.mjs:86); +1 decl, pin 1 extended",
+    "dropped: delete regex pins 1, 2, 4 as text-not-layout; moves locked L5 (regex pins), and pin 4 evidences L4",
+    "dropped: remove the 0.6rem gap; L4 locks the gap at 0.6rem",
+    "dropped: unscope .tickets-state rule (drop #tickets); 0 net, no consequence, churn only",
+    "kept: cut two comment clauses restating rules already in deck.css; -2 lines"
+  ],
+  "next": "Integrating fix round #574 (652ac61e); then pilot land, send QA the tip for re-probe and walkthrough.",
+  "updatedAt": "2026-10-11T05:31:13.153Z"
+}

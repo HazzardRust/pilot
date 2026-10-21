@@ -1,0 +1,157 @@
+{
+  "slug": "audit-fixes",
+  "feature": "Security reviewer runs and is called",
+  "ticket": "itm_a331c85c66a7",
+  "branch": "feat/audit-fixes",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-fixes",
+  "artefact": "docs/design/audit-fixes/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A deep worktree checks out clean",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2"
+      ],
+      "branch": "slice/audit-fixes-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-fixes-s1",
+      "pr": 388
+    },
+    {
+      "slice": "S2 The gateguard is gone",
+      "state": "integrated",
+      "delivers": [
+        "3",
+        "4"
+      ],
+      "branch": "slice/audit-fixes-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-fixes-s2",
+      "pr": 389
+    },
+    {
+      "slice": "S3 Rules repair themselves after an upgrade",
+      "state": "integrated",
+      "after": "S2 The gateguard is gone",
+      "delivers": [
+        "5",
+        "6",
+        "7"
+      ],
+      "branch": "slice/audit-fixes-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-fixes-s3",
+      "pr": 390
+    },
+    {
+      "slice": "S4 The install allows the deck tools",
+      "state": "integrated",
+      "after": "S3 Rules repair themselves after an upgrade",
+      "delivers": [
+        "12",
+        "13",
+        "14"
+      ],
+      "branch": "slice/audit-fixes-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-fixes-s4",
+      "pr": 393
+    },
+    {
+      "slice": "S5 A plain pickup is warned and released",
+      "state": "integrated",
+      "delivers": [
+        "8"
+      ],
+      "branch": "slice/audit-fixes-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-fixes-s5",
+      "pr": 391
+    },
+    {
+      "slice": "S6 pilot worktrees lists and prunes",
+      "state": "integrated",
+      "delivers": [
+        "9",
+        "10"
+      ],
+      "branch": "slice/audit-fixes-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-fixes-s6",
+      "pr": 392
+    },
+    {
+      "slice": "S7 The pilot prunes when its run closes",
+      "state": "integrated",
+      "after": "S6 pilot worktrees lists and prunes",
+      "delivers": [
+        "11"
+      ],
+      "branch": "slice/audit-fixes-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-fixes-s7",
+      "pr": 394
+    },
+    {
+      "slice": "S8 The ADR format has front matter",
+      "state": "integrated",
+      "delivers": [
+        "15"
+      ],
+      "branch": "slice/audit-fixes-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-fixes-s8",
+      "pr": 395
+    },
+    {
+      "slice": "S9 The ADR index is generated and checked",
+      "state": "integrated",
+      "after": "S8 The ADR format has front matter",
+      "delivers": [
+        "16"
+      ],
+      "branch": "slice/audit-fixes-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-fixes-s9",
+      "pr": 396
+    },
+    {
+      "slice": "S10 Every ADR carries front matter",
+      "state": "integrated",
+      "after": "S9 The ADR index is generated and checked",
+      "delivers": [
+        "17",
+        "18"
+      ],
+      "branch": "slice/audit-fixes-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-fixes-s10",
+      "pr": 397
+    },
+    {
+      "slice": "S11 Agents find ADRs through the index",
+      "state": "integrated",
+      "after": "S9 The ADR index is generated and checked",
+      "delivers": [
+        "19"
+      ],
+      "branch": "slice/audit-fixes-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-fixes-s11",
+      "pr": 398
+    },
+    {
+      "slice": "S12 Principles fixes",
+      "state": "integrated",
+      "pr": 400
+    },
+    {
+      "slice": "audit-fixes",
+      "state": "walkthrough signed; QA comment on #320; gate2 itm_2caac45b9513 awaits Sign off; PR #320 draft at d4cae14c (0.7.23)",
+      "branch": "feat/audit-fixes",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-fixes",
+      "pr": 320
+    }
+  ],
+  "findings": [
+    "kept: F1–F7, F9, F10, nits a, f; QA's spec 3 and spec 12 rewordings (fix round S12 #400, +74/-54)",
+    "dropped: F8 per-row ADR index check — the whole-text comparison covers header, order, duplicates and stray text",
+    "dropped: nit c — STATE_DIRNAME is not exported from hooks/lib/deck.js",
+    "dropped: nits b, e — refactors with no named consequence",
+    "dropped: plain-pickup redesign on PILOT_RUN_PID (~-90 lines) — over the small-diff limit, deferred to the user in the closing report",
+    "dropped: install-rules --repair hashes the rules tree every SessionStart (465–612 ms) — deferred to the user",
+    "dropped: ADR index Summary column describes situations, not decisions — deferred to the user"
+  ],
+  "next": "Red, live. gate2 itm_2caac45b9513 open; on Sign off: `pilot land` in C:/Users/Hazzard/Projects/pilot-feat-audit-fixes, `gh pr ready 320`, closing report (3 deferred findings, friction rows in record), then remove worktrees pilot-audit-fixes-s1..s11, -fix, -qa, pilot-design-audit-fixes. Also open: itm_f8bac959d919 (base route + systematic-change yes), itm_042d847b0d40 (depth), chat A/B pair.",
+  "updatedAt": "2026-10-08T10:17:29.851Z"
+}

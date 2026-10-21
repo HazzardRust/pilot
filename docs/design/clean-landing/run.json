@@ -1,0 +1,149 @@
+{
+  "slug": "clean-landing",
+  "feature": "Clean landing",
+  "ticket": "itm_09983af566aa",
+  "branch": "feat/clean-landing",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-clean-landing",
+  "artefact": "docs/design/clean-landing/architecture.md",
+  "slices": [
+    {
+      "slice": "clean-landing",
+      "state": "fixing: fix round #594 integrated",
+      "branch": "feat/clean-landing",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-clean-landing",
+      "pr": 559
+    },
+    {
+      "slice": "S1 Two features each adding an ADR land without a stop",
+      "state": "integrated at c1fc7aa5 (3256/0)",
+      "branch": "slice/clean-landing-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-clean-landing-s1",
+      "pr": 575
+    },
+    {
+      "slice": "S2 A conflicting run record lands; a source conflict is named alone",
+      "state": "integrated at f9f79904 (3293/0)",
+      "after": [
+        "S1 Two features each adding an ADR land without a stop",
+        "S3 A press lands a feature whose worktree is behind origin"
+      ],
+      "branch": "slice/clean-landing-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-clean-landing-s2",
+      "pr": 583
+    },
+    {
+      "slice": "S3 A press lands a feature whose worktree is behind origin",
+      "state": "integrated at d11ff684 (base pilot@cd7862ce; 3289/0)",
+      "branch": "slice/clean-landing-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-clean-landing-s3",
+      "pr": 581
+    },
+    {
+      "slice": "S4 A landing removes its run's merged worktrees and names the rest",
+      "state": "integrated at c0b67b0e (base pilot@5102389d; first try red on load flakes)",
+      "after": [
+        "S3 A press lands a feature whose worktree is behind origin",
+        "S2 A conflicting run record lands; a source conflict is named alone"
+      ],
+      "branch": "slice/clean-landing-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-clean-landing-s4",
+      "pr": 586
+    },
+    {
+      "slice": "S5 The landing's tests pass under the deck; a red run names tests and log",
+      "state": "integrated at 4aa119a0 (green; counts line misread as 6/0, held for fix round)",
+      "after": [
+        "S1 Two features each adding an ADR land without a stop"
+      ],
+      "branch": "slice/clean-landing-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-clean-landing-s5",
+      "pr": 585
+    },
+    {
+      "slice": "S6 No test names a fixed port",
+      "state": "integrated at 0128e061 (base pilot@1a04fe31)",
+      "after": [
+        "S5 The landing's tests pass under the deck; a red run names tests and log"
+      ],
+      "branch": "slice/clean-landing-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-clean-landing-s6",
+      "pr": 587
+    },
+    {
+      "slice": "S7 `test:quiet` ends with one count line",
+      "state": "integrated at b92bd789 (3297/0)",
+      "branch": "slice/clean-landing-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-clean-landing-s7",
+      "pr": 584
+    },
+    {
+      "slice": "S8 A refused landing shows on the ticket's row",
+      "state": "integrated at 42c38986 (base pilot@1a04fe31)",
+      "after": [
+        "S5 The landing's tests pass under the deck; a red run names tests and log"
+      ],
+      "branch": "slice/clean-landing-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-clean-landing-s8",
+      "pr": 588
+    },
+    {
+      "slice": "S9 The landing readies the feature PR",
+      "state": "integrated at 9b05737d",
+      "after": [
+        "S4 A landing removes its run's merged worktrees and names the rest",
+        "S8 A refused landing shows on the ticket's row"
+      ],
+      "branch": "slice/clean-landing-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-clean-landing-s9",
+      "pr": 590
+    },
+    {
+      "slice": "S10 The pilot's close waits for a ready PR",
+      "state": "integrated at e557ca26",
+      "after": [
+        "S9 The landing readies the feature PR"
+      ],
+      "branch": "slice/clean-landing-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-clean-landing-s10",
+      "pr": 591
+    },
+    {
+      "slice": "S11 The inbox test survives a loaded machine",
+      "state": "integrated at 8a024142 (cause: deckFor took a foreign health answer)",
+      "branch": "slice/clean-landing-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-clean-landing-s11",
+      "pr": 589
+    }
+  ],
+  "findings": [
+    "kept: K1 integrate.mjs:78-79 countsOf takes the last summary (red-line.test.mjs:20 leaks 'pass 6'); 0",
+    "kept: K2 land.mjs:329-330 print clear lines before 'landed ... at <sha>', ready-failed line drops repeated 'landed at <sha>;' so the 300/2000-char tails keep the SHA; -1",
+    "kept: K3 land.mjs:224-243 + sync.mjs:68-90 one shared landing merge in merge-generated.mjs carrying firstLine(err) (held 4+6); -12",
+    "kept: K4 merge-generated.mjs:2 ADR 0128 -> 0129; 0",
+    "kept: K5 store-runs.mjs:619,637 test with a second repo and second ticket; +15",
+    "kept: K6 quiet-reporter.mjs:14 a describe in test 1's source; +1",
+    "kept: K7 land.mjs:128-129 the promised test for a throwing prune; +10",
+    "kept: K8 integrate.mjs:115,143 worktrees.mjs:100 three assertions (exactly 3 failing, TAP anchor, s10+); +3",
+    "kept: K9 worktrees.mjs:95-101 isRunBranch(branch, slug), drop Set and sort; -6",
+    "kept: K10 QA F1/F2 land.mjs:95 catchUp and worktrees.mjs:72 prune treat the deck-mirrored docs/design/<slug>/run.json as a user change: exclude it (generated, L3); High",
+    "dropped: K11 delete merge-generated.mjs:69 side guard: the security verdict rests on it validating side before git checkout",
+    "kept: K12 QA F4 pilot --help and worktrees.mjs header list --run <slug>; +2",
+    "kept: K13 QA F5 red integrate names the failing test once; small",
+    "kept: K14 QA F7 row reads 'refused: NOT landed: ...' once; small",
+    "kept: K15 quiet-reporter.test.mjs:62 rename 'the whole suite'; 0",
+    "kept: K16 security LOW merge-generated.mjs generatedIndex refuses a symlinked index; +1",
+    "kept: K17 security LOW store-runs.mjs:631-636 noteLanding run-table loop also matches the ticket; with K5",
+    "dropped: security LOW merge-generated.mjs:23 slug '..': git never lists it",
+    "dropped: security LOW store-core.mjs:82-93 credential shapes miss JWT/URL/npm: not this diff",
+    "dropped: held 2 orphan daemons: 0 left after a green full run; leak lies in aborted runs, outside this feature",
+    "dropped: --run flag removal: a user surface QA exercised, the way to clear what a landing kept",
+    "dropped: findCredential re-check in noteLanding: security reviewer found it the reason a cut cannot hide a credential",
+    "dropped: red-run log pruning: scope, no spec line",
+    "dropped: scratch-origin fixture dedupe (-40): test-only, no product consequence, grows the fix diff",
+    "dropped: QA F3 --check naming reordered rows: nit, no spec line",
+    "dropped: QA F6 branch -d upstream check: refusal-safe per L6, not hit by run branches that track their remote",
+    "dropped: parity test 1 deletion (-75) for now: moves spec 6 evidence, asked of main (itm_2cde67b535ad); kept as is unless the user says delete"
+  ],
+  "next": "integrating fix round #594 (fix/clean-landing); then pilot land; then send QA the tip",
+  "updatedAt": "2026-10-12T07:39:34.404Z"
+}

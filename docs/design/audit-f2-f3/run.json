@@ -1,0 +1,82 @@
+{
+  "slug": "audit-f2-f3",
+  "feature": "Flake rerun step and a shipped gh stub",
+  "ticket": "itm_a796b37c2d10",
+  "branch": "feat/audit-f2-f3",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f2-f3",
+  "artefact": "docs/design/audit-f2-f3/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 pilot gh-stub, help lines, naming lines, ADR 0173",
+      "state": "integrated at bf1ac573 (4444 pass)",
+      "branch": "slice/audit-f2-f3-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f2-f3-s1",
+      "pr": 983
+    },
+    {
+      "slice": "S2 a red at the gate is rerun alone once",
+      "state": "integrated at e878bfe1 (864 pass)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/audit-f2-f3-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f2-f3-s2",
+      "pr": 985
+    },
+    {
+      "slice": "audit-f2-f3",
+      "state": "gate2 itm_3dcf710e2a48 open at e878bfe1 (trial clean); walkthrough itm_28f008b55675 open",
+      "after": [
+        "S1",
+        "S2"
+      ],
+      "branch": "feat/audit-f2-f3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f2-f3",
+      "pr": 982
+    }
+  ],
+  "next": "audit-f2-f3 (concluding, short path): gate2 itm_3dcf710e2a48 for #982 open; on Sign off the deck lands it, spawn pilot-lander with that id; walkthrough itm_28f008b55675 is a look for taste, resolve on its reply. Leftover worktrees: pilot-audit-f2-f3-s1, -s2, pilot-design-audit-f2-f3, pilot-fix-duplicate-import (#984 merged; prune).",
+  "updatedAt": "2026-10-21T00:11:33.158Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the only record of the gh stub recipe is a PR body",
+      "evidence": "PR #312 'For QA'; gate2-frees-lane run.json:359"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the audit's F5 evidence misread ADR numbering: 0170 was NNNN renumbered at landing",
+      "evidence": "adr-allocate.mjs on origin/pilot"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the pilot's brief said 'pick the next free ADR number', contradicting pilot-architect.md:207 and ADR 0167",
+      "evidence": "architect report"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "a new subcommand must join NON_MOVING in a test file and no doc says so",
+      "evidence": "scripts/test/operating-commands.test.mjs:14"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "node bin/pilot.mjs help fails in a fresh worktree until npm ci",
+      "evidence": "ERR_MODULE_NOT_FOUND @modelcontextprotocol/sdk"
+    },
+    {
+      "kind": "drain",
+      "what": "deck_post refused three questions for a missing Research: line; reposted",
+      "size": 3
+    },
+    {
+      "agent": "pilot",
+      "what": "pilot integrate in a fresh feat worktree without node_modules: 15 bin tests red, one wasted run",
+      "evidence": "log 20261020T232339094Z... first run; npm ci fixed it"
+    },
+    {
+      "agent": "pilot",
+      "what": "a hand merge of main into pilot on GitHub landed a duplicate import; every deck test red on main and pilot",
+      "evidence": "847bc818, 27ec68ac; store-items.mjs:54,56"
+    }
+  ]
+}

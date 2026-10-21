@@ -1,0 +1,129 @@
+{
+  "slug": "gate-no-stall",
+  "feature": "A signed gate never stalls",
+  "ticket": "itm_0ade3839d64b",
+  "branch": "feat/gate-no-stall",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-gate-no-stall",
+  "qa": {
+    "branch": "qa/gate-no-stall",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-gate-no-stall-qa",
+    "url": "http://127.0.0.1:55962"
+  },
+  "artefact": "docs/design/gate-no-stall/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated at 13e00b58",
+      "branch": "slice/gate-no-stall-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-no-stall-s1",
+      "pr": 621
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at beec5728",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/gate-no-stall-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-no-stall-s2",
+      "pr": 622
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at 54940b11",
+      "branch": "slice/gate-no-stall-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-no-stall-s3",
+      "pr": 624
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at c9cfc25e",
+      "branch": "slice/gate-no-stall-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-no-stall-s4",
+      "pr": 625
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at 33d1491c",
+      "branch": "slice/gate-no-stall-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-no-stall-s5",
+      "pr": 623
+    },
+    {
+      "slice": "S6",
+      "state": "integrated at 9d9e3ae1",
+      "after": [
+        "S3",
+        "S5"
+      ],
+      "branch": "slice/gate-no-stall-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-no-stall-s6",
+      "pr": 627
+    },
+    {
+      "slice": "gate-no-stall",
+      "state": "yellow, successor co-pilot live: merge-forward slice implementing; fix round #629 waits on it; QA read-only at 62c48e51",
+      "branch": "feat/gate-no-stall",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-gate-no-stall",
+      "pr": 620
+    },
+    {
+      "slice": "S7 A blocked item says why, and the gate checks run the real git (added)",
+      "state": "integrated at f00d5eb2 (added)",
+      "after": [
+        "S2",
+        "S5"
+      ],
+      "branch": "slice/gate-no-stall-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-no-stall-s7",
+      "pr": 626
+    },
+    {
+      "slice": "S8 No pilot process runs a git from the repository directory (added)",
+      "state": "integrated at 62c48e51 (added)",
+      "after": [
+        "S6",
+        "S7 A blocked item says why, and the gate checks run the real git (added)"
+      ],
+      "branch": "slice/gate-no-stall-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-no-stall-s8",
+      "pr": 628
+    },
+    {
+      "slice": "fix round",
+      "state": "fixing: integrating onto 72113b01 (merges clean)",
+      "branch": "fix/gate-no-stall-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-no-stall-fix",
+      "pr": 629
+    },
+    {
+      "slice": "merge pilot + S7/S8 record (added)",
+      "state": "on feat at 72113b01: feat fast-forwarded to ae7445da, then pilot integrate (base alone) gated 3518/0 and pushed; PR #630 merged",
+      "after": [
+        "S8 No pilot process runs a git from the repository directory (added)"
+      ],
+      "branch": "slice/gate-no-stall-merge-pilot",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-no-stall-merge-pilot",
+      "pr": 630
+    }
+  ],
+  "findings": [
+    "kept: F1 posted claim never expires; one 10-min window, pending/posted states removed",
+    "kept: F2 double runs() in the 2 s budget; postBlocked takes deps.live",
+    "kept: F3 refuse() repeats isPilotLane; deleted",
+    "kept: F5 test a pin-file conflict outside the pin exits 3",
+    "kept: F6 assert L4 title/body caps",
+    "kept: F7 three uncovered integrate --default branches tested",
+    "kept: F8 spawned-process test of permission-denied.js",
+    "kept: F9 claude sessions start with the pre-strip env (spec 7 is git only)",
+    "kept: F10 one git runner, one SHA shape",
+    "kept: F12 S1.md interface records source/now/live",
+    "kept: F13 readStdin to hooks/lib",
+    "kept: F15 unreachable LEAD_UNKNOWN and agent fallback removed",
+    "dropped: F4 A3 alternative (pin conflict exits 3): spec 5 names pin-by-measuring; A3 stands for the user",
+    "dropped: F11 askReady's own item shape is S3.md's interface; wording only",
+    "dropped: F14 two copies only, Rule of Three"
+  ],
+  "next": "pilot integrate fix/gate-no-stall-principles onto 72113b01, pilot land, QA gets the landed tip",
+  "updatedAt": "2026-10-13T12:12:13.171Z"
+}

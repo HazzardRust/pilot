@@ -1,0 +1,1241 @@
+/*
+ * The deck's whole stylesheet, shared by every page it serves and inlined into
+ * each one through the template's `<!--CSS-->` slot. Slice 1 kept these rules
+ * inside `index.html`, which worked until there was a second page.
+ *
+ * Per the user's reference (pi.dev): monospace, hairline rules, no colour of
+ * its own, light and dark taken from the system. Everything here is a rule
+ * about spacing or a rule about a hairline; there is no framework and nothing
+ * to build.
+ */
+
+:root {
+  color-scheme: light dark;
+  --rule: color-mix(in srgb, currentColor 18%, transparent);
+  --quiet: color-mix(in srgb, currentColor 55%, transparent);
+  /*
+   * One colour per author kind on a message's byline (spec 1, A4). Each is a
+   * hue mixed with the text colour, the way `--quiet` is mixed, so it darkens
+   * on a light page and lightens on a dark one and stays the same family in
+   * both. `other` is not the crew and reads quiet.
+   */
+  --by-pilot: color-mix(in srgb, currentColor 35%, #2563eb);
+  --by-architect: color-mix(in srgb, currentColor 35%, #7c3aed);
+  --by-implementer: color-mix(in srgb, currentColor 35%, #d97706);
+  --by-fundamentalist: color-mix(in srgb, currentColor 35%, #e11d48);
+  --by-qa: color-mix(in srgb, currentColor 35%, #059669);
+  --by-teacher: color-mix(in srgb, currentColor 35%, #0891b2);
+  --by-explorer: color-mix(in srgb, currentColor 35%, #65a30d);
+  --by-auditor: color-mix(in srgb, currentColor 35%, #c026d3);
+  --by-other: var(--quiet);
+  /*
+   * One colour per bucket `renderThreadState` (render.mjs) sorts the five
+   * words of `threadState` into: waiting on the user, with the pilot, or
+   * resolved — "the status in the preview of 'the pilot has it' needs to be
+   * colour coded." Mixed with `currentColor` the way `--by-*` above is, so
+   * each stays the same family of colour on a light page and a dark one. A
+   * resolved thread gets no hue of its own: it is already drawn back a step
+   * (`article.settled`), and `--quiet` says "done" without adding a fourth
+   * colour to learn. A hand-off nobody has picked up (thread-kinds spec 19)
+   * is the fourth: it waits on neither side, so it reads as an alarm.
+   */
+  --state-waiting: color-mix(in srgb, currentColor 35%, #d97706);
+  --state-pilot: color-mix(in srgb, currentColor 35%, #2563eb);
+  --state-resolved: var(--quiet);
+  --state-unacknowledged: color-mix(in srgb, currentColor 35%, #dc2626);
+  /* The co-pilot's lane (ticket-state-accents spec 21): blue, set apart from the main slot's amber. */
+  --lane-co-pilot: color-mix(in srgb, currentColor 35%, #2563eb);
+  /*
+   * A panel's width when nobody has dragged it, and the rail of bookmarks it
+   * opens beside. The column's gutter below is these two added up, which is
+   * the whole of L16: "there should be enough space to have it not hang over
+   * the main content by default". Kept as one number each and never restated,
+   * because a default width and a gutter written twice drift apart on the
+   * first change and the drift is invisible until a panel lies over a
+   * paragraph. Drag a panel past the gutter and it does cover the text — that
+   * is what an overlay is, and it still moves nothing.
+   *
+   * `--rail` is what the bookmarks measure: a line of vertical text plus its
+   * padding and the one border. A shade wider than they need, so the slack is
+   * in the gutter rather than in a panel that starts inside the column.
+   */
+  --panel: 19rem;
+  --rail: 2.4rem;
+  /*
+   * The page's top inset: the body's own top padding, and the sticky
+   * header's.
+   */
+  --top: 2.5rem;
+  /* Where the rail starts, so the blank box above it is this tall. */
+  --strip-top: 4rem;
+}
+
+/*
+ * The column, which since deck-workspace sits *beside* the rail rather than
+ * centred in the window with the rail floating in the blank space to its left
+ * (spec 7). Its left gutter is the rail plus a panel at its default width, so
+ * an open panel covers no text and moves none; its right gutter is the rail the
+ * Everything toggle stands in. What is left over is the column, which is where
+ * the width that used to be blank on the right has gone.
+ */
+body {
+  font: 13px/1.6 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+  margin: 0;
+  padding-block: var(--top) 6rem;
+  padding-inline: calc(var(--rail) + var(--panel) + 1.5rem) calc(var(--rail) + 1.5rem);
+}
+
+header {
+  align-items: baseline;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+}
+
+/*
+ * A deck serving from a checkout (deck-spawn-root spec 8, L7), above the header on every
+ * page. The amber of a waiting thread: worth a look, not an alarm. The root wraps
+ * anywhere, since a path has no spaces to break on.
+ */
+.checkout-banner {
+  border: 1px solid var(--state-waiting);
+  border-radius: 4px;
+  color: var(--state-waiting);
+  margin: 0 0 0.75rem;
+  overflow-wrap: anywhere;
+  padding: 0.25rem 0.75rem;
+}
+
+/* A thread's sticky header pulls itself up by `--top`; this gives that back, so it does not cover the banner. */
+body[data-item] .checkout-banner {
+  margin-bottom: var(--top);
+}
+
+/*
+ * The way back on a thread: an arrow at the start of the header, where the
+ * title stood before it moved to the top-left box (spec 15, L19). In the flow
+ * of the sticky header rather than fixed, so it travels with the header and
+ * spec 5 still holds wherever the reader has scrolled to.
+ */
+.back {
+  font-size: 1.5rem;
+  /* The text's own line (body: 13px/1.6) on the text's baseline, then the
+     glyph down onto the text's centreline: an arrow sits 0.31em over its
+     baseline, and the text's x-height centre 3.5px over its own (measured). */
+  line-height: calc(13px * 1.6);
+  text-decoration: none;
+  translate: 0 calc(1em / 6);
+}
+
+/*
+ * The header's centre on a thread: `‹ D3 ›`, the arrows either side of the
+ * code of the thread's deck (spec 15, L20). An end the walk cannot go past is
+ * drawn quiet. It is placed by the thread page's header grid below, in the
+ * flow, so a long kind line wraps beside it instead of running under it.
+ */
+.threads {
+  align-items: baseline;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.threads a, .threads span { text-decoration: none; }
+.threads > :is(a, span):first-child, .threads > :is(a, span):last-child { font-size: 1.25rem; line-height: 1; }
+.threads [aria-disabled] { color: var(--quiet); }
+
+/*
+ * X/N (`renderThreadNav`), landing in the column the grid below already
+ * reserves to mirror the kind line — empty until now, which is the
+ * "whitespace on the right side of the header" the user pointed at. No
+ * `grid-column` of its own: it is the fourth item in the header's flow, same
+ * as the kind line is the second, so the same auto-placement that already
+ * centres the nav puts it there. Right-aligned against the header's true
+ * right edge, the way the kind line reads from its own left.
+ */
+.position { color: var(--quiet); letter-spacing: 0.08em; text-align: right; text-transform: uppercase; }
+
+/*
+ * The rest of the header travels with the reader too — the kind, the moment,
+ * the usage readout — and spec 5 used to rest on this, when the way back was a
+ * line of words in it. Sticky rather than fixed, so it still takes its own
+ * space in the flow on arrival and nothing has to be pushed down to make room
+ * for it.
+ *
+ * Only on a thread, which is the page that scrolls past its own header; the
+ * home page's header carries the strip of runs and pinning that would spend a
+ * third of a short viewport on a line the user is not reading. `[data-item]` is
+ * the thread page's own marker on <body> and needs nothing new to be added.
+ *
+ * The negative margin pulls the header up over the page's top padding and the
+ * matching padding gives the gap back, so that once it is stuck at the top of
+ * the viewport there is no strip of argument sliding past above it. It needs a
+ * background for the same reason, and a z-index above the edge bookmarks.
+ */
+body[data-item] header {
+  background: Canvas;
+  margin-top: calc(-1 * var(--top));
+  padding-top: var(--top);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/*
+ * The thread page's header is a grid: the way back and the kind line, then the
+ * nav, then two columns that mirror the first two, so the nav's two sides are
+ * equal and it sits on the header's centre (spec 15). The last column holds an
+ * unseen copy of the back arrow, which is what makes the mirror exact in any
+ * font. The usage readout keeps its own full-width line under them.
+ */
+body[data-item] header {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr auto;
+}
+
+body[data-item] header::after {
+  content: "←";
+  font-size: 1.5rem;
+  grid-area: 1 / 5;
+  line-height: 1;
+  visibility: hidden;
+}
+
+body[data-item] header .usage { grid-column: 1 / -1; }
+
+/*
+ * The reply box, on the header's own idiom above (L10, spec 5): sticky rather
+ * than fixed, so it takes its own place in the flow once the thread is short
+ * enough to fit, instead of floating over the last line forever. Sticking the
+ * slot itself, and not anything inside it, is what makes a live-region swap
+ * unable to undo it: the reply slot is only ever replaced from within, never
+ * itself.
+ *
+ * It needs a background for the same reason the header does, and a border
+ * where the header needed none: the header's own rule sits above it, and here
+ * there is only the thread scrolling up to meet the box.
+ *
+ * Single-quoted, so this rule (inlined into every page, `.thread` included)
+ * does not itself read as a second reply region to `live.test.mjs`'s own
+ * scan for `data-live="…"`, double-quoted, in the page it renders.
+ */
+body[data-item] [data-live='reply'] {
+  background: Canvas;
+  border-top: 1px solid var(--rule);
+  bottom: 0;
+  position: sticky;
+}
+
+/*
+ * The strip of runs: which run the page is showing, and the way to another.
+ * It takes the whole width so it wraps onto its own line under the heading and
+ * a deck holding a dozen runs grows downwards rather than squeezing the title.
+ * These are links and not the edge bookmarks, so `.tab` and `.strip` are not
+ * reused here: the selected one is marked with `aria-current`, and drawn as the
+ * only one of them that is not quiet.
+ */
+.runs-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.25rem;
+  width: 100%;
+}
+
+.runs-strip a {
+  color: var(--quiet);
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.runs-strip a[aria-current] { box-shadow: inset 0 -1px currentColor; color: inherit; }
+
+/*
+ * The strip's last tab, `+` (deck-polish spec 5): a word of the strip like the
+ * links, and opened, one path box and Add on the same line.
+ */
+.add-deck summary { color: var(--quiet); cursor: pointer; list-style: none; }
+.add-deck summary::-webkit-details-marker { display: none; }
+.add-deck[open] summary { color: inherit; }
+.add-deck[open] { display: flex; gap: 0.5rem; align-items: baseline; }
+.add-deck form { flex-direction: row; gap: 0.5rem; }
+.add-deck input { font: inherit; width: 24rem; max-width: 60vw; }
+.add-deck button { padding: 0.1rem 0.75rem; }
+.add-deck .refused, .strip.right .refused { margin: 0; color: var(--state-waiting); }
+/* A refused press on its thread (deck-press-feedback L1), over the reply box. */
+#reply + .refused { color: var(--state-waiting); }
+
+/*
+ * How many open items are waiting behind a tab: a number set off from the name
+ * by a space of its own rather than a badge, because the strip is a line of
+ * words and a filled pill would be the only decorated thing on the page. The
+ * underline under the selected tab is the link's, so the count sits inside the
+ * link and is underlined with it.
+ */
+.count { margin-left: 0.5rem; }
+
+/*
+ * The usage readout: how full the context window is, and how much of the
+ * five-hour and weekly limits is gone (spec 11). Its own line under the
+ * heading, the way the strip of runs takes one, because it is three readings
+ * and squeezing them beside the title would push the link off the end of it on
+ * a narrow window.
+ *
+ * Quiet, and no colour of its own. The status line bands these figures green to
+ * red because it is one line in a terminal and a band is the only way it can
+ * shout; the page has room to say the number, and colouring it would be the
+ * only coloured thing the deck draws.
+ */
+.usage {
+  color: var(--quiet);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.25rem;
+  margin: 0;
+  width: 100%;
+}
+
+.usage b { font-weight: 600; }
+
+/*
+ * The three figures, banded the way the status line in the terminal bands them:
+ * "I was more talking about the CTX and WEEKLY, the same way it turns to red in
+ * my console if it reaches past 95%" (the walkthrough of 2026-09-19). The
+ * thresholds are the hook's and `usage.mjs` puts the class on, one figure at a
+ * time; the reset lines beside them stay quiet, because a time is not a level.
+ *
+ * This reverses S11, which decided the page would not band these at all on the
+ * grounds that a terminal line has no room to say the number and the page does.
+ * It is still the only colour the deck draws.
+ *
+ * `light-dark()` because the background is the system's: the first of each pair
+ * is for a light one and the second for a dark one. A browser without it leaves
+ * the figures the colour they have always been, which is what this replaced.
+ */
+.usage-fine { color: light-dark(#15803d, #86efac); }
+.usage-warm { color: light-dark(#a16207, #fde047); }
+.usage-high { color: light-dark(#b91c1c, #fca5a5); font-weight: 700; }
+
+.usage-critical {
+  background: light-dark(#b91c1c, #7f1d1d);
+  color: light-dark(#fff, #fee2e2);
+  font-weight: 700;
+  padding: 0 0.3rem;
+}
+
+/*
+ * A run whose sessions have all gone keeps its tab while it has open threads
+ * (spec 6). The strip says so in the tab's own line, and the page that tab
+ * selects says it once above the queue. Both are quiet and neither is
+ * uppercased with the strip around it, so "ended" reads as a word about the
+ * run rather than as a second name for it.
+ */
+.ended, .ended-note { color: var(--quiet); letter-spacing: 0; text-transform: none; }
+.ended { margin-left: 0.5rem; }
+.ended-note { margin: 1.75rem 0 0; }
+
+/* A ticket's state in the usage readout's own three colours (ticket-states L8). */
+.ticket-state[data-state="green"], .ticket-queue[data-queue="green"] > summary { color: light-dark(#15803d, #86efac); }
+.ticket-state[data-state="yellow"], .ticket-queue[data-queue="yellow"] > summary { color: light-dark(#a16207, #fde047); }
+.ticket-state[data-state="red"], .ticket-queue[data-queue="red"] > summary { color: light-dark(#b91c1c, #fca5a5); }
+/* A ticket's state badge (ticket-states L8): its state's colour beside its title. */
+.ticket-state, .ticket-slices, .artefact, .questions { margin-left: 0.6ch; }
+/* An artefact path is one long word to the browser: it breaks anywhere rather than run past the panel (QA D2). */
+.artefact { overflow-wrap: anywhere; }
+.questions { color: var(--state-waiting); }
+/* A blocking question, on its card, its page and its ticket's row (ticket-states spec 17, S18). */
+.blocking { border: 1px solid currentColor; border-radius: 0.25rem; color: light-dark(#b91c1c, #fca5a5); font-size: 0.8em; margin-left: 0.6ch; padding: 0 0.4ch; }
+.choices .assume { border-style: dashed; }
+/* The red ticket the tab opens on: its questions and its gate2, one per line (ticket-states spec 20). */
+.previews p { border-left: 1px solid var(--rule); margin: 0; padding: 0.1rem 0 0.1rem 1ch; }
+/*
+ * A ticket row reads as lines, not one run of words (Gate 2 walk): `next` above the
+ * title, the title alone, its badges below, the slice count and the artefact each on
+ * their own, the arrows at the row's top right out of the text's way.
+ */
+.tickets-list li[data-state] { padding-right: 3ch; position: relative; }
+.tickets-list li[data-state] > .next { display: block; margin-left: 0; }
+.tickets-list li[data-state] > a:first-of-type { display: block; font-weight: 600; }
+.tickets-list li[data-state] > a:first-of-type + span { margin-left: 0; }
+.tickets-list li[data-state] > .ticket-slices, .tickets-list li[data-state] > .short-path, .tickets-list li[data-state] > .artefact { display: block; margin-left: 0; }
+.tickets-list li[data-state] > .ticket-slices, .tickets-list li[data-state] > .short-path { color: var(--quiet); }
+/* The row's right edge (ticket-state-accents walkthrough): up at the top, play in the middle, down at the bottom. */
+.tickets-list li[data-state] > .controls { bottom: 0.55rem; display: grid; grid-template-rows: auto 1fr auto; justify-items: center; position: absolute; right: 0; top: 0.55rem; }
+.tickets-list .controls form.move { display: contents; }
+.tickets-list .controls button[value="up"] { grid-row: 1; }
+.tickets-list .controls button[value="down"] { grid-row: 3; }
+.tickets-list .controls > form.switch, .tickets-list .controls > button[data-switch] { align-self: center; grid-row: 2; }
+/*
+ * A confirm row confirming (handoff-failed-confirm L1, `confirm.mjs`): its trigger and all beside its confirm step
+ * blank, leaving one sentence and Confirm; a click anywhere else reverts. A choice row closes up around it; Play's
+ * (L13 as amended) is the Tickets row's controls, stretched across the row, which blanks around them and keeps its height.
+ */
+[data-confirm-row][data-confirming] [data-confirm] { display: none; }
+[data-confirm-row][data-confirming] > :not(.step.sure, :has(.step.sure)) { visibility: hidden; }
+:is(.choices, .send)[data-confirming] > :not(.step) { display: none; }
+/* A verdict's option is a confirm row of its own inside the row of options (spec 5): it lays out as its button
+   alone, and while it confirms, the options beside it give way to its step. */
+.choices > [data-confirm-row]:not([data-confirming]) { display: contents; }
+.choices:has(> [data-confirming]) > :not([data-confirming]) { display: none; }
+.choices .step.sure p { margin: 0; }
+.tickets-list li:has(> [data-confirming]) > :not(.controls) { visibility: hidden; }
+.tickets-list li > .controls[data-confirming] { left: 0; }
+.tickets-list .controls[data-confirming] > form.switch { justify-self: stretch; text-align: center; }
+.tickets-list .controls[data-confirming] .step.sure { align-items: center; justify-content: center; }
+
+/* The deck's note on a typed card (spec 2): quiet, so it does not read as the body's first line. */
+.type-note { color: var(--quiet); font-size: 0.85em; }
+
+/*
+ * The title, in the blank box at the top-left of every page (spec 15, L19,
+ * A8): as wide as the rail and a panel, which is the column the page leaves
+ * blank for them, and centred across it and down it: one line as tall as the
+ * box above the rail (the user's word at deferred-ledger's Gate 2). Fixed, so
+ * it takes no room in the header, and above the bookmarks for the same reason
+ * the header is.
+ */
+h1 {
+  font-size: 1rem;
+  font-weight: 600;
+  left: 0;
+  letter-spacing: 0.06em;
+  line-height: var(--strip-top);
+  margin: 0;
+  position: fixed;
+  text-align: center;
+  text-transform: uppercase;
+  top: 0;
+  width: calc(var(--rail) + var(--panel));
+  z-index: 3;
+}
+
+/* The heading is the way to the overview from wherever the reader is (spec 1).
+   Undecorated: it is the page's own name, and a rule under it would be the only
+   underlined title on a page whose links are otherwise words in a sentence. */
+h1 a { text-decoration: none; }
+
+a { color: inherit; }
+
+.kind, .quiet {
+  color: var(--quiet);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* The thread header's owner starts a line of its own (Gate 2, itm_8dc56c0d58cd). */
+.kind .owner { display: block; }
+
+.quiet { letter-spacing: 0; text-transform: none; }
+
+/*
+ * The bar's own colour, one rule per bucket `renderThreadState` names in
+ * `data-state` (spec: "colour coded"). `.state` inherits `.kind`'s own
+ * letter-spacing and case above; only the colour differs per bucket, so a
+ * settled thread still reads quiet exactly as it always has.
+ */
+.state[data-state="waiting"] { color: var(--state-waiting); }
+.state[data-state="pilot"] { color: var(--state-pilot); }
+.state[data-state="resolved"] { color: var(--state-resolved); }
+/* A hand-off nobody has picked up (thread-kinds spec 19): on its card, its thread and its tab. */
+.state[data-state="unacknowledged"], .unacked { color: var(--state-unacknowledged); }
+.unacked { margin-left: 0.5rem; letter-spacing: 0; text-transform: none; }
+
+article { border-bottom: 1px solid var(--rule); padding: 1.75rem 0; }
+article.thread { border-bottom: 0; }
+
+/*
+ * A thread's ticket accent (ticket-state-accents spec 3, L11): the ticket-state palette plus blue for an
+ * unticketed thread, a 3px stripe down a card and a leading mark on the thread page's kind line.
+ * Plain is the rule's quiet grey; a settled card keeps its own 2px rule below.
+ */
+[data-accent="green"] { --accent: light-dark(#15803d, #86efac); }
+[data-accent="yellow"] { --accent: light-dark(#a16207, #fde047); }
+[data-accent="red"] { --accent: light-dark(#b91c1c, #fca5a5); }
+[data-accent="blue"] { --accent: light-dark(#1d4ed8, #93c5fd); }
+[data-accent="plain"] { --accent: var(--rule); }
+article[data-accent] { border-left: 3px solid var(--accent); padding-left: 0.9rem; }
+.kind .accent { background: var(--accent); border-radius: 50%; display: inline-block; height: 0.7em; margin-right: 0.6ch; vertical-align: baseline; width: 0.7em; }
+
+/* A settled thread, which is only on the page while the Everything toggle is
+   on: quoted like a message rather than standing in the queue, because it is
+   there to be looked up and not worked through. */
+article.settled { border-left: 2px solid var(--rule); padding-left: 0.9rem; }
+article.settled h2 a { color: var(--quiet); }
+
+/* One day of settled threads, behind a heading saying which day it is and how
+   many are on it (spec 35). A plain <details>, so the fold is the platform's
+   as the tree's is, and the marker it draws is what says the heading can be
+   pressed. Only the settled cards are ever in one: what is waiting on the user
+   stays above them, flat, whichever way the toggle is. */
+.day > summary {
+  color: var(--quiet);
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  padding: 0.8rem 0;
+  text-transform: uppercase;
+}
+
+.day[open] > summary { color: inherit; }
+.day > summary .tally { color: var(--quiet); font-weight: 700; }
+.day > summary .tally::before { content: " · "; font-weight: 400; }
+
+h2 { font-size: 1rem; font-weight: 600; margin: 0.35rem 0 0.75rem; }
+pre { margin: 0 0 1rem; white-space: pre-wrap; word-wrap: break-word; }
+
+/* A card's excerpt of a body, which is markdown like the thread's (`.md` below)
+   and carries the margin the preformatted block it replaced used to. The
+   elision after it is the card's own mark and not the pilot's text, so it is
+   drawn as one. */
+.preview { margin: 0 0 1rem; overflow-wrap: anywhere; }
+.preview th, .preview td { overflow-wrap: normal; }
+.preview .more { color: var(--quiet); margin: 0; }
+
+.reply {
+  border-left: 2px solid var(--rule);
+  margin: 0 0 1rem;
+  padding: 0 0 0 0.9rem;
+}
+
+.reply .who, .agent .who { color: var(--quiet); }
+.from-pilot { border-left-style: dashed; }
+
+.who.by-pilot { color: var(--by-pilot); }
+.who.by-architect { color: var(--by-architect); }
+.who.by-implementer { color: var(--by-implementer); }
+.who.by-fundamentalist { color: var(--by-fundamentalist); }
+.who.by-qa { color: var(--by-qa); }
+.who.by-teacher { color: var(--by-teacher); }
+.who.by-explorer { color: var(--by-explorer); }
+.who.by-auditor { color: var(--by-auditor); }
+.who.by-other { color: var(--by-other); }
+
+/*
+ * Markdown, from `ui/markdown.mjs` and from nowhere else (D8). One class on the
+ * two containers that hold it — a body on a thread page, and a message — rather
+ * than a rule per container, because the same fourteen tags come out either way.
+ *
+ * `white-space: pre-wrap` used to do this job on `.reply` and is gone from it:
+ * the renderer now writes the line breaks the pilot typed as `<br />`, and
+ * pre-wrap on top of that would show every newline twice.
+ *
+ * The first block's top margin and the last one's bottom margin are taken off.
+ * Since run-record S1 a body opens with its author's byline as a message
+ * does: `.who` comes first inside `.body.md` and `.reply.md` alike, so the
+ * first block of either keeps its top margin after the byline.
+ */
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md p { margin: 0 0 0.75rem; }
+.md h3, .md h4, .md h5, .md h6 { font-size: 1rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.md h5, .md h6 { color: var(--quiet); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; }
+.md ul, .md ol { margin: 0 0 0.75rem; padding-left: 1.4rem; }
+.md li { margin: 0.15rem 0; }
+.md code { background: var(--rule); border-radius: 2px; padding: 0.05rem 0.3rem; }
+.md pre { border-left: 2px solid var(--rule); padding: 0 0 0 0.9rem; }
+.md pre code { background: none; padding: 0; }
+
+.resolved {
+  border: 1px solid var(--rule);
+  margin: 1.5rem 0;
+  padding: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.resolved .who { color: var(--quiet); }
+
+/* A walkthrough's URL, login and steps: a label column and what it says. */
+.detail {
+  border-left: 2px solid var(--rule);
+  display: grid;
+  gap: 0.15rem 1rem;
+  grid-template-columns: max-content 1fr;
+  margin: 0 0 1.5rem;
+  padding: 0 0 0 0.9rem;
+}
+
+.detail dt { color: var(--quiet); letter-spacing: 0.08em; text-transform: uppercase; }
+.detail dd { margin: 0; }
+
+/* A QA walkthrough's body follows its steps: its byline clears the table, and the table the reply slot. */
+.detail + .body { margin-bottom: 1.5rem; }
+.md > .who + table { margin-top: 0.35rem; }
+
+/*
+ * The steps of a walkthrough, as the "do this / correct result" pairs the user
+ * asked for (spec 6). Each step is one grid row of three columns — its number,
+ * what to do, what should happen — and the template is the same on every row, so
+ * the instructions read down the middle and the results read down the right
+ * without a table.
+ *
+ * The number is a counter and not the list's own marker, because laying a
+ * `<li>` out as a grid takes its `display` away from `list-item` and the marker
+ * goes with it. The element stays an `<ol>`: it is an ordered list whether or
+ * not this stylesheet is the thing drawing the numbers.
+ *
+ * A step whose only span is the instruction — no arrow in it, so no correct
+ * result (D9) — takes the rest of the row rather than leaving a column empty.
+ */
+.steps { counter-reset: step; list-style: none; margin: 0; padding-left: 0; }
+
+.steps li {
+  counter-increment: step;
+  display: grid;
+  gap: 0 1rem;
+  grid-template-columns: max-content 1fr 1fr;
+}
+
+.steps li::before { color: var(--quiet); content: counter(step) "."; }
+.steps .result { color: var(--quiet); }
+.steps .step:only-child { grid-column: 2 / -1; }
+
+form { display: flex; flex-direction: column; gap: 0.6rem; }
+label { color: var(--quiet); }
+
+textarea {
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: inherit;
+  font: inherit;
+  padding: 0.6rem;
+  resize: vertical;
+}
+
+button {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.4rem 1rem;
+  text-align: left;
+}
+
+/* The options on a question: one click is a whole reply, so they come first. */
+.choices { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.choices button { align-self: auto; }
+
+/* The deck's own offer in the row, which answers nothing and so does not look
+   like an answer: last, dashed, and in the quiet colour. The words are not in
+   this comment on purpose — every page inlines this file, so a page would then
+   carry them whether or not the button is on it. */
+.choices .teach { border-style: dashed; color: var(--quiet); }
+
+/* Reply on a card of a kind the deck does not know (spec 27, amended at Gate
+   2): the way into the thread's own box, beside Dismiss. A link and not a
+   button, because it answers nothing and sends nothing — and so it is drawn as
+   the quiet half of the row and stays live after Dismiss has gone through,
+   which is when the thread is still worth reading and Reopen is on it. */
+.choices .to-thread { align-self: center; color: var(--quiet); }
+
+/*
+ * The answer that was sent, said the moment it is pressed and not when the
+ * deck answers (spec 18): the reply goes over `fetch` and leaves the page
+ * exactly as it was, so without this nothing on screen moves between the click
+ * and the change arriving. The row goes quiet and stops taking presses
+ * (`reply.mjs` sets `disabled`), and the one that was pressed is lit the way an
+ * open bookmark is and says so in a word.
+ *
+ * The word is in the stylesheet rather than in the script because the mark is
+ * what the state looks like, and the card is redrawn by the change the deck
+ * announces (D1) — a word written into the button would be markup to take back
+ * out again. The comment above about words in this file is about a comment: a
+ * page carries every rule here whether or not it has the element.
+ */
+.choices button:disabled { color: var(--quiet); cursor: default; }
+.choices button.sent { background: color-mix(in srgb, currentColor 14%, Canvas); color: inherit; }
+.choices button.sent::after { color: var(--quiet); content: " — sent"; }
+
+.empty { color: var(--quiet); padding: 3rem 0; }
+/* The pilot's state under the queue (pilot-state-line L7): quiet and muted like `.empty`, without its 3rem. */
+.pilot-state { color: var(--quiet); font-size: 0.875rem; margin: 1rem 0 0; }
+
+/*
+ * A panel with nothing in it, in words (spec 33's other half at Gate 2). Not
+ * `.empty` above, which is the column's own empty state and spends 3rem on
+ * saying so — in a panel that is most of the floor. One line, in the gutter a
+ * section would have stood in.
+ */
+.nobody { color: var(--quiet); margin: 0; padding: 0.35rem 0 0.7rem; }
+
+/*
+ * The Chat bookmark stands only on a deck's own pages (spec 4, L9): a page that
+ * names no deck draws its panel empty, and a move there in place empties it, so
+ * the bookmark goes with no script of its own. First in the rail, so the layout
+ * pass reserves nothing for it when it is gone.
+ */
+#chat:has(> .panel:empty) { display: none; }
+.panel > form.chat { padding-bottom: 0.8rem; }
+
+/*
+ * Tickets and Closing reports stand only on a repository's own tab, the same as
+ * Chat above and for the same reason: the overview names no repository, so
+ * both are served with an empty summary and an empty panel, and this is what
+ * takes the two bookmarks off the rail rather than a script that would have to
+ * run before the layout pass sees them.
+ */
+#tickets:has(> .panel:empty), #reports:has(> .panel:empty) { display: none; }
+
+/*
+ * The roster's own foot, for the reason the tree's is the same number: with the
+ * floor at `4rem` a panel of two agents is its content's height and nothing
+ * else, and its last row ended 4.8px off the border — which is the line box
+ * flush against it, and reads as clipped rather than as fitted. Unlike the
+ * table above it the roster closes on no rule of its own, so it needs the
+ * `0.5rem` for the same reason `.tree` does. The 96px floor was hiding this,
+ * which is why it arrives with the floor coming down and not before.
+ */
+.agents { display: block; padding-bottom: 0.5rem; }
+.runs { border-bottom: 1px solid var(--rule); padding: 1.25rem 0; }
+.runs ul { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+.runs li { padding: 0.15rem 0; }
+.run { font-weight: 600; }
+
+/* The home screen's table: Slice | State | Yours, one per run, hairlines only. */
+.run-status { border-bottom: 1px solid var(--rule); display: block; padding: 1.25rem 0 1.75rem; }
+.slices { border-collapse: collapse; margin: 1.25rem 0 0; width: 100%; }
+
+/* Whose record the Status tab draws (three-lanes spec 13): one held lane's ticket a line, the chosen one marked. */
+.status-select a { color: var(--quiet); display: block; padding: 0.15rem 0; text-decoration: none; }
+.status-select a[aria-current] { box-shadow: inset 2px 0 currentColor; color: inherit; padding-left: 0.5rem; }
+
+.slices th {
+  border-bottom: 1px solid var(--rule);
+  color: var(--quiet);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.slices th, .slices td { padding: 0.5rem 1.25rem 0.5rem 0; vertical-align: top; }
+.slices td { border-bottom: 1px solid var(--rule); }
+.slices td:last-child, .slices th:last-child { padding-right: 0; }
+
+/*
+ * A confirm step showing, wherever its row is (handoff-failed-confirm L1): its sentence and Confirm on one
+ * line. The rule has to exclude the hidden one: a `display` of any kind beats `hidden`, and the step would
+ * stand there on a page whose script never ran.
+ */
+.step.sure:not([hidden]) { align-items: baseline; display: flex; gap: 0.5rem; }
+.send .step.sure p, .dismiss .step.sure p, .tickets-list .step.sure p { margin: 0; }
+
+/*
+ * The reply form's last line (spec 14, L17): Reply and, on an open question,
+ * Close beside it, the `.choices` idiom and not a layout trick — two flex
+ * items in a row is what keeps them level without either one positioned out
+ * of the flow it was laid out in.
+ */
+.send { display: flex; gap: 0.5rem; }
+
+/*
+ * The slice is a label and the state is a word, and each is held to one line
+ * by the cell above: a name wider than the panel is the scrollbar the user
+ * asked for (spec 6) rather than a word broken in half to avoid one.
+ */
+.slices .slice { font-weight: 600; }
+
+/*
+ * The rail of bookmarks: notifications, chat, the status table with its tree
+ * under it (three-lanes S5), the agents, tickets and reports, one under the other in a strip fixed to the left edge, with the
+ * column beginning past
+ * the width a panel takes when it opens. A tab is a <details>, so its <summary>
+ * is the bookmark standing on the edge and the panel is what opens beside it —
+ * `.panel` below is what puts it there. The right-hand strip holds no bookmark
+ * any more, only the Everything toggle. Nothing here is animated and nothing
+ * here is scripted: a <details> opens on a click and on the keyboard by itself.
+ */
+.strip { position: fixed; top: var(--strip-top); z-index: 1; }
+
+/*
+ * On a thread page a panel dragged up over the sticky header stays on top of it
+ * (deck-polish spec 8, L7). Level with the header's z 2 and after it in the
+ * page, so painted over it; under the fixed title's z 3. A stacking order and
+ * not a clamp: `layout.mjs` still lets a panel go where it is dragged.
+ */
+body[data-item] .strip { z-index: 2; }
+.strip.left { left: 0; }
+.strip.right { right: 0; }
+
+.tab { align-items: flex-start; display: flex; }
+
+/*
+ * The bookmark reads down the edge, so its inline axis is the vertical one and
+ * `padding-inline` is what would make it longer rather than wider — which is
+ * why neither state below touches a padding: see the rule under this one.
+ */
+.tab > summary, .everything, .create > summary, .session > summary, .remove > summary, .alerts > button {
+  background: Canvas;
+  border: 1px solid var(--rule);
+  color: var(--quiet);
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  list-style: none;
+  padding-block: 0.45rem;
+  padding-inline: 0.9rem;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+}
+
+.tab > summary::-webkit-details-marker, .create > summary::-webkit-details-marker, .session > summary::-webkit-details-marker, .remove > summary::-webkit-details-marker { display: none; }
+
+/*
+ * Lit, and not longer — both of them, and by one rule so they cannot drift. An
+ * open bookmark used to take extra inline padding, the way a marker left in a
+ * book sticks further out of the page: "the top one just gains more width ...
+ * which just looks silly. maybe we just leave the size and just change the
+ * color scheme" (the user, walkthrough #2, having asked the same of the
+ * EVERYTHING tab at 266a397: "shouldn't enlarge the button, just highlight
+ * it"). So the state is said in colour alone and nothing here may change a
+ * padding, a border or a font — the labels down the edge stand still while the
+ * user opens and shuts what is beside them.
+ */
+.tab[open] > summary,
+.create[open] > summary,
+.session[open] > summary,
+.remove[open] > summary,
+.alerts > button.on,
+.everything.on {
+  background: color-mix(in srgb, currentColor 14%, Canvas);
+  color: inherit;
+}
+.strip.left .tab > summary { border-left: 0; }
+.strip.right .everything { border-right: 0; display: block; text-decoration: none; }
+
+/*
+ * Create, a bookmark under the Open/All toggle (independence spec 1). Its form
+ * opens to the left of it, a name and then the confirm step `confirm.mjs` shows.
+ */
+.strip.right details.create { margin-top: 0.4rem; position: relative; }
+.strip.right .create > summary { border-right: 0; }
+
+/* Weekly alerts (deck-press-feedback spec 15), the strip's last bookmark: lit while on. */
+.strip.right form.alerts { margin-top: 0.4rem; }
+.strip.right .alerts > button { border-right: 0; font: inherit; }
+
+/*
+ * Remove, a bookmark under Session (independence spec 18), drawn only for an
+ * ended tab: the same popout shape as Create's, so its rules join Session's
+ * rather than repeat them.
+ */
+.strip.right details.session, .strip.right details.remove { margin-top: 0.4rem; position: relative; }
+.strip.right .session > summary, .strip.right .remove > summary { border-right: 0; }
+
+/* One length whichever word it reads, Start, Resume or End, so the gap below never moves (FF). */
+.strip.right .session > summary {
+  box-sizing: content-box;
+  inline-size: calc(7 * (1ch + 0.08em));
+  text-align: center;
+}
+
+/*
+ * Create, Session and Remove all show this one popout shape (independence spec 1, 5, 18): Create's name and
+ * then its confirm step, the others' trigger and then theirs, so it is one block rather than one per form.
+ */
+form.confirm, form.session, form.remove {
+  background: Canvas;
+  border: 1px solid var(--rule);
+  box-sizing: border-box;
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.5rem 0.7rem;
+}
+details :is(form.confirm, form.session, form.remove) { position: absolute; right: 100%; top: 0; width: 18rem; }
+:is(form.confirm, form.session, form.remove) .step { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+:is(form.confirm, form.session, form.remove) .step[hidden] { display: none; }
+form.confirm input[name="name"], form.confirm select, :is(form.confirm, form.session, form.remove) p { flex: 1 1 100%; margin: 0; min-width: 0; }
+form.session p { overflow-wrap: anywhere; }
+/* Continue (ticket-state-accents spec 11, 15) asks on its own Tickets row, not in a popout; its pending button is lit. */
+.tickets-list .controls form.switch { background: none; border: 0; display: inline-grid; padding: 0; position: static; width: auto; }
+/* A tint under the page's own text colour, as the row marks are, so the lit label reads in both themes. */
+.tickets-list button[data-switch="pending"] { background: color-mix(in srgb, var(--state-waiting) 35%, transparent); border-color: var(--state-waiting); color: inherit; opacity: 1; }
+/* The co-pilot lane's lit button wears its lane's blue, not the main slot's amber (spec 21). */
+.tickets-list li[data-state="yellow"] button[data-switch="pending"] { background: color-mix(in srgb, var(--lane-co-pilot) 35%, transparent); border-color: var(--lane-co-pilot); }
+.threads-created { margin: 0; padding: 0.5rem 0 0.2rem 1.1rem; }
+
+/*
+ * A rail bookmark's count: the Notifications one's notices plus the open threads this browser has
+ * not seen (spec 26; deck-press-feedback L8), Tickets' and Closing reports' own rows. The server
+ * draws it at first paint (`renderTabSummary`) and `notifications.mjs` restates it on each change;
+ * the <summary> is outside every live region, so a swap underneath cannot take it away.
+ *
+ * A bookmark with nothing to count carries no attribute at all rather than a
+ * zero, so this rule matches nothing and the label is the label. It changes no
+ * padding, border or font for the reason the rule above states: the labels down
+ * the edge stand still.
+ */
+.tab > summary[data-count]::after { color: inherit; content: " " attr(data-count); font-weight: 700; }
+
+/*
+ * Notifications holds a notice not yet in view (deck-press-feedback spec 12): a dot, so it reads
+ * in greyscale and not by colour alone, out of the flow at the bookmark's head so no label moves.
+ */
+.tab > summary[data-highlight] { color: inherit; position: relative; }
+.tab > summary[data-highlight]::before { content: "●"; font-size: 0.7em; left: 50%; position: absolute; top: 0.1rem; transform: translateX(-50%); }
+
+/*
+ * The count above is the one label on the rail whose *length* changes rather
+ * than its state, and the bookmark's inline axis is the vertical one
+ * (`writing-mode: vertical-rl`, above) — so an unseen thread arriving used to
+ * make this one bookmark taller and push Chat, Status and Agents down
+ * the strip under it, the same "just looks silly" the open state was fixed
+ * against by colour alone rather than size. Reserved by id, not by the shared
+ * rule above every bookmark shares: `#notifications` is the one whose label
+ * ever grows, so it is the one whose box is pinned to its longest ordinary
+ * reading — "Notifications" plus a two-digit count, as many as a personal-
+ * scale run leaves unseen in practice. `notifications.mjs` enforces no ceiling
+ * on `data-count` itself, so a three-digit count is still possible; `clip`
+ * below is the backstop for that count rather than a size the box grows to
+ * meet, the same choice this rule exists to avoid making for every other
+ * label on the rail.
+ */
+#notifications > summary { inline-size: calc(16 * (1ch + 0.08em)); overflow: clip; text-align: center; }
+
+/*
+ * The Everything toggle reads "Open" or "All" (`render.mjs`'s
+ * `renderEverything`) — the same kind of content-driven length change, on the
+ * same vertical axis, so it gets the same fix: pinned to the longer of the
+ * two rather than left to size itself to whichever word is on screen. Both
+ * lengths are counted in the label's own cells — one `ch` of monospace plus
+ * the 0.08em letter-spacing per character, "Notifications 99" and "Open" —
+ * and the word centred in them, so the box is the label and no more.
+ */
+.strip.right .everything { inline-size: calc(4 * (1ch + 0.08em)); text-align: center; }
+
+
+/*
+ * A panel is out of the flow: absolutely positioned inside the strip, which is
+ * already fixed, and hung from the *group* rather than from its own bookmark
+ * (L3). That one move answers two complaints at once, because they had one
+ * cause. The panels used to stack in ordinary block flow, so opening the
+ * tree pushed the status bookmark down the screen under the user's cursor
+ * (spec 3), and the lower bookmark's panel started wherever the one above it
+ * happened to end and ran off the bottom of the window (spec 4). Nothing in the
+ * flow, nothing to push: the rail of bookmarks is all that is left in it.
+ *
+ * It scrolls inside itself, so a 32-row table gets its own scrollbar rather
+ * than the page's, and it carries a background at every width now: a panel
+ * dragged past the gutter lies over the column by L16, and text over text is
+ * not readable at 1920px any more than at 1280px. That one scrollbar also
+ * backs spec 6 (reversed at Gate 2): the rows below wrap a name at word
+ * boundaries rather than breaking it mid-word, and this is only reached by a
+ * single unbreakable token longer than the panel.
+ *
+ * `resize: both` is the platform's own grabber (spec 5), and it stays the
+ * platform's: `size.mjs` writes no width and no height here, it only remembers
+ * the size the grabber leaves behind, under the deck the address names (L4).
+ *
+ * The `top` and the `max-height` here are the *unscripted* values, and they
+ * are the only two declarations `size.mjs` overwrites. Where an open panel
+ * really sits is a running sum of the used heights of the open panels above
+ * it, and its cap is what that sum leaves to the foot of the window (spec 22
+ * and 23) — neither of which a stylesheet can compute, because CSS cannot
+ * read another element's used height and these panels are not siblings of
+ * each other to lay out as a column. So a layout pass in `layout.mjs` writes
+ * both, and what is left here is where a page running no script puts a panel:
+ * at the top of the group, capped at the window bar its foot, which the
+ * counters this replaced computed by fractions of the viewport instead (L17,
+ * ADR 0026). With no script the open panels overlap, which is the cost that
+ * decision names.
+ *
+ * There is no `height` here on purpose, and there never was: a panel with
+ * nothing remembered is exactly as tall as its content because nothing
+ * declares otherwise, which is the whole of spec 23's opening height (L18).
+ *
+ * `min-height` is `min-width`'s other half, and it arrived with the second
+ * dimension: the grabber took the panel to 15px in the browser the moment it
+ * could move vertically, and a panel that small shows nothing, is remembered
+ * that way, and has to be found again by its own corner. Both floors are
+ * bare numbers, because a panel is measured against the window rather than
+ * against anything else in the stylesheet.
+ *
+ * It was `6rem` until Gate 2 on 2026-09-23, where the user's complaint about
+ * white space reached the Agents panel: 96px is taller than that panel's whole
+ * content, so the floor *was* the blank space — 96px of it with nobody live,
+ * and 36px under two live agents, measured. A floor taller than what a panel
+ * holds fails line 23 for that panel exactly as a gutter under the last row
+ * did for the other two. `4rem` is the label of spec 33 and one line of
+ * whatever the panel holds, measured at 60.8px, rounded up; it is four times
+ * the 15px the grabber collapses an unfloored panel to, measured again at the
+ * same gate with this declaration lifted. The reservation L17's pass makes for
+ * the panels below comes down with it, which is room the panel above gets
+ * back.
+ *
+ * `min-height` is read by that layout pass as well, and this is the only place
+ * it is declared: a panel's cap holds back the floor of every open panel below
+ * it, so that a tree with more content than the whole window cannot leave the
+ * ones under it standing past the foot of the screen. Changing the number here
+ * changes the reservation with it, which is why the pass asks the element for
+ * it rather than carrying a second copy (the discipline L16 set for the width).
+ */
+.panel {
+  background: Canvas;
+  border: 1px solid var(--rule);
+  box-sizing: border-box;
+  left: 100%;
+  max-height: calc(100vh - 6rem);
+  max-width: calc(100vw - 6rem);
+  min-height: 4rem;
+  min-width: 12rem;
+  overflow: auto;
+  padding: 0 1rem;
+  position: absolute;
+  resize: both;
+  top: 0;
+  width: var(--panel);
+}
+
+/*
+ * An open panel says which one it is (spec 33, the user at Gate 2, 2026-09-23):
+ * the word on the bookmark that opened it, quiet and uppercase like the kind
+ * line on a thread, where the eye lands before the content.
+ *
+ * Drawn from an attribute on the panel rather than rendered into it, because
+ * `.panel` is a live region and a change replaces its content wholesale
+ * (`live.mjs`: `region.innerHTML = replacement.innerHTML`). A label inside the
+ * content would have to be drawn by all four of the functions that fill a
+ * panel and would still be a label a swap could lose; an attribute survives
+ * the swap untouched.
+ *
+ * Being a pseudo-element buys nothing for a screen reader and is not claimed
+ * to: Chrome and Firefox both put generated content in the accessibility tree
+ * and announce it, so a reader entering the panel hears the name after the
+ * `<summary>` has already given it — the same repetition a sighted user sees,
+ * and the cost of naming the panel at all. `content: attr(data-name) / ""`
+ * would take it out of the tree, and is not used: the alt-text syntax reached
+ * Firefox only in 2025, an unsupported value makes the whole declaration
+ * invalid, and the failure mode is no label at all, which is a worse bet than
+ * a repeated one (the reasoning L17 gives for refusing anchor positioning).
+ *
+ * `display: block` because the label is a line and not the start of the first
+ * row. Its own bottom padding is small: the section under it brings its own
+ * `1.25rem` top gutter, and this stands in the top half of it.
+ */
+.panel::before {
+  color: var(--quiet);
+  content: attr(data-name);
+  display: block;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  padding: 0.7rem 0 0;
+  text-transform: uppercase;
+}
+
+/*
+ * A panel opens at the height of its content (spec 23), and the height of its
+ * content was not the height of its ink. The user at Gate 2: "both tree and
+ * status spawned with too much white space." Measured on the preview at
+ * 1280x1400, from the last line of text down to the panel's own border: Tree
+ * 32px, Status 43px — and on Status that space was boxed in, between the
+ * table's last hairline and the section's own one drawn a pixel above the
+ * panel's border, which is what made it read as an empty row.
+ *
+ * The cause is a gutter carried for something that is not there. These
+ * sections stack one per run on the overview, so each carries `padding-bottom`
+ * and a rule *for the section below it*; the one at the foot of a panel has
+ * nothing below it and carries neither. The panel's own vertical padding is
+ * `0` and always was, so there is nothing else between the two.
+ *
+ * The selector is the panel's own children and not `:last-child`, because on
+ * the overview every section is the last child of its own `<details>` — the
+ * existing `.tree:last-child` below takes the rule off all three of them, and
+ * a gutter taken off all three is a gutter taken out from *between* two runs.
+ * There the foot of the panel is the last run's section, which is what the
+ * second selector of each pair says.
+ *
+ * The table closes on nothing at all, because it closes itself: every cell
+ * carries a hairline, so the last row's own rule becomes the foot of the panel
+ * a pixel above its border, which is where the section's rule stood anyway.
+ * The tree has no such closing line and its last name would sit on the border
+ * — measured at 4.8px to the descenders, which reads as clipped rather than as
+ * fitted — so it keeps the `0.5rem` that already stands between its name and
+ * its first row. There is no new number here.
+ */
+.panel > .run-status,
+.panel > .run-section:last-child > .run-status {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.panel > .tree,
+.panel > .run-section:last-child > .tree {
+  border-bottom: 0;
+  padding-bottom: 0.5rem;
+}
+
+/*
+ * On the overview a panel holds one section per tab, in the strip's own order,
+ * each one shut on arrival: the bookmarks are drawn wherever the user is (the
+ * walkthrough of 2026-09-19), and a dozen runs' rows opened at once would be
+ * the stack that run-tabs removed. A run's own tab draws its rows straight and
+ * has none of these. The name is the summary, quiet until it is opened, so a
+ * shut panel reads as a list of runs.
+ */
+.run-section > summary {
+  border-bottom: 1px solid var(--rule);
+  color: var(--quiet);
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  padding: 0.7rem 0;
+  text-transform: uppercase;
+}
+
+.run-section[open] > summary { color: inherit; }
+.run-section:last-of-type > summary { border-bottom: 0; }
+.run-section[open]:last-of-type > summary { border-bottom: 1px solid var(--rule); }
+
+/*
+ * Tickets and Closing reports (run-chaining L13, and the walkthrough that moved
+ * them into the rail): each is its own bookmark now, so its list lives in an
+ * ordinary `.panel` and needs nothing to hold it out of the flow. The row rule
+ * is `.notice`'s own, so a ticket and a notification read as the same kind of
+ * line; a ticket's own nested spec `<details>` is the one thing here that is not
+ * a notification's shape, and reads the way the overview's own bookmarks do.
+ */
+/* Add stands on the Tickets panel's title row, at its right-hand end
+   (tickets-add-button spec 1-3). The title is `.panel::before`, so it becomes the
+   grid's first item; `.tickets-state` stays in the markup (deck-state L5) and steps
+   out of the layout, so Add beside the title and what follows it below are grid
+   items too. Its form carries the gap before what follows it, the way
+   `.panel > form.chat` carries one below its own box. */
+#tickets > .panel { align-content: start; align-items: baseline; display: grid; grid-template-columns: 1fr auto; }
+#tickets .tickets-state { display: contents; }
+.tickets-state > form.make-tickets { padding-bottom: 0.6rem; }
+.tickets-state > :not(form.make-tickets) { grid-column: 1 / -1; }
+
+.tickets-list, .reports-list { list-style: none; margin: 0; padding: 0; }
+.tickets-list li, .reports-list li { border-bottom: 1px solid var(--rule); padding: 0.55rem 0; }
+.tickets-list li:last-child, .reports-list li:last-child { border-bottom: 0; }
+/* A report's ×, drawn where a notice's is (below), and its row declares no `display` either. */
+.reports-list li { padding-right: 1rem; position: relative; }
+.tickets-list .next, .tickets-list .live, .reports-list .open { color: var(--state-waiting); margin-left: 0.6ch; }
+/* The co-pilot lane's next (ticket-state-accents spec 16, L22): the yellow head, in the lane's blue, never highlighted. */
+.tickets-list .next[data-lane="co-pilot"] { color: var(--lane-co-pilot); }
+/* The ticket in hand's whole row stands out, live or next (ticket-states spec 3; overview-one-ticket spec 10). */
+/* The accents grow into the panel's 1rem left gutter, so a marked row's text keeps the unmarked rows' column. */
+.tickets-list li.in-hand { background: color-mix(in srgb, var(--state-waiting) 14%, transparent); box-shadow: inset 3px 0 0 var(--state-waiting); margin-left: -1rem; padding-left: 1rem; }
+/* The co-pilot's ticket (ticket-state-accents spec 1, 21): drawn as in-hand is, in the lane's blue, with `co-pilot` down its edge. */
+.tickets-list li.co-pilot-held { background: color-mix(in srgb, var(--lane-co-pilot) 14%, transparent); box-shadow: inset 3px 0 0 var(--lane-co-pilot); margin-left: -1rem; min-height: 4.6em; padding-left: 1rem; position: relative; }
+.tickets-list .lane-label { bottom: 0; color: var(--lane-co-pilot); font-size: 0.7rem; left: 0.2rem; letter-spacing: 0.08em; line-height: 1; position: absolute; text-align: center; top: 0; writing-mode: vertical-rl; }
+.tickets-list details.body > summary, .tickets-list details.previews > summary { color: var(--quiet); cursor: pointer; }
+/* A ticket's arrows (ticket-making spec 7): small, beside the title, quiet until hovered. */
+.tickets-list form.move { display: inline; margin-left: 0.6ch; }
+.tickets-list form.move button, .tickets-list .controls button[data-switch] { background: none; border: 0; color: var(--quiet); cursor: pointer; font: inherit; line-height: 1; padding: 0 0.25ch; opacity: 0.55; }
+.tickets-list li:hover form.move button, .tickets-list li:hover .controls button[data-switch="idle"] { opacity: 1; }
+.tickets-list form.move button:hover, .tickets-list form.move button:focus-visible, .tickets-list .controls button[data-switch="idle"]:hover, .tickets-list .controls button[data-switch="idle"]:focus-visible { color: inherit; opacity: 1; }
+/* Mid-switch (ticket-state-accents spec 14): the arrows and every other Continue greyed out, hover or not. */
+.tickets-list li form.move button:disabled, .tickets-list li button[data-switch="locked"] { color: var(--quiet); cursor: default; opacity: 0.35; }
+/*
+ * The three queues (ticket-states spec 3), each a fold (overview-one-ticket spec 12-14): a small
+ * heading and its count in its state's colour, a press away from its list.
+ */
+.ticket-queue ~ .ticket-queue { margin-top: 0.8rem; }
+.ticket-queue > summary { cursor: pointer; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; margin: 0 0 0.2rem; text-transform: uppercase; }
+#tickets .nobody, #reports .nobody { color: var(--quiet); }
+
+/* The run's section: the graph below, ruled off from what follows. */
+.tree { border-bottom: 1px solid var(--rule); padding: 1.25rem 0; }
+.tree:last-child { border-bottom: 0; }
+
+/*
+ * The run as a git graph (slice-graph S1): lines down lanes, a dot per slice
+ * filled by its phase (A5) — hollow when planned, a ring with a centre while
+ * in progress, solid when done, a quiet hollow when the state names no phase —
+ * and the identifiers in one column right of the lanes. Geometry is the
+ * renderer's (L6); only paint lives here.
+ */
+.graph { display: block; margin-top: 0.5rem; overflow: visible; width: 100%; height: auto; }
+.graph .edges path { fill: none; stroke: var(--quiet); stroke-width: 1.5; }
+.graph .dot circle { fill: Canvas; stroke: currentColor; stroke-width: 1.5; }
+.graph .dot.done circle, .graph .dot .core { fill: currentColor; }
+.graph .dot .core { stroke: none; }
+.graph .dot.none circle { stroke: var(--quiet); }
+.graph .dot text { dominant-baseline: central; fill: currentColor; font-size: 0.8rem; }
+.graph .end { fill: var(--quiet); }
+.graph .dot .hit { fill: transparent; stroke: none; pointer-events: all; }
+.graph .dot .rest { display: none; }
+.graph-name { background: Canvas; border: 1px solid var(--rule); font-size: 0.8rem; margin-left: 0.5rem; padding: 0.1rem 0.4rem; pointer-events: none; position: fixed; transform: translateY(-50%); white-space: nowrap; z-index: 10; }
+
+/*
+ * One line of the Notifications panel: a thread that is open on some deck, its
+ * title as the way into it, the deck it came from beside it, and the × at the
+ * end (A10, S16).
+ *
+ * Nothing here declares a `display`, on purpose. `notifications.mjs` hides a line the
+ * user has dropped by setting the `hidden` property on it, and that is the
+ * browser's own `display: none` — a `display: flex` written here would beat it
+ * and the × would appear to do nothing.
+ *
+ * The × is a mark and not a button to look at: it takes the line off this panel
+ * and closes nothing (L25), so it is drawn as quietly as the deck's label
+ * beside it rather than as a control that ends something.
+ *
+ * It stands at the right edge of the row, out of the flow (the user at Gate 2,
+ * 2026-09-23). Last in an inline row it stood wherever the title's last word
+ * left it — measured across the six lines of one panel, its right edge at
+ * x=303, 257, 173, 227, 135 and 196, and below the title's first line on every
+ * one of them, because a title long enough to wrap pushed it onto the next.
+ *
+ * Absolute against the row and not a flex row, because the title and the
+ * deck's name beside it are one sentence that wraps: as three flex items the
+ * deck's name would stand in a column of its own beside a two-line title. The
+ * row reserves the mark's width on its right so a wrapping title stops before
+ * it, the way `.tree li` reserves its marker's on the left, and `top` is the
+ * row's own padding so the mark sits on the first line rather than floating in
+ * the middle of a wrapped one. Being out of the flow it is also the one thing
+ * here that may carry a `display` — the row still must not (above).
+ */
+.notice { border-bottom: 1px solid var(--rule); padding: 0.55rem 0; padding-right: 1rem; position: relative; }
+.notice .who { color: var(--quiet); }
+/* The gate2 card's "Waits on:" line (S2), held off the card and the buttons below it. */
+.asked { margin: 0.75rem 0; }
+/*
+ * A title the deck places in a line (deck-title-prose L2, L8): a faint chip of the text's own colour.
+ * It wraps with the line, and `clone` gives every wrapped line its own chip. No underline: the tint already
+ * marks the title, so a link chip is told by its pointer (walkthrough itm_6bb543d0c29a).
+ */
+.ref {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  border-radius: 0.25em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding: 0 0.25em;
+  text-decoration: none;
+}
+.notice .drop, .reports-list .drop {
+  background: none;
+  border: 0;
+  color: var(--quiet);
+  cursor: pointer;
+  font: inherit;
+  padding: 0 0 0 0.4rem;
+  position: absolute;
+  right: 0;
+  top: 0.55rem;
+}
+/* Mark all seen heads the Notifications panel (notifications-seen L1): a quiet row of its own, like the ×. */
+.mark-all-form { border-bottom: 1px solid var(--rule); padding: 0.55rem 0; text-align: right; }
+.mark-all { background: none; border: 0; color: var(--quiet); cursor: pointer; font: inherit; padding: 0; text-decoration: underline; }
+
+/*
+ * A pipe table inside a body (S11), kept as its own block at the end of the
+ * file rather than folded into `.md` above so a rebase past S2 stays clean.
+ */
+.md table { border-collapse: collapse; margin: 0 0 0.75rem; width: 100%; }
+.md th, .md td { border-bottom: 1px solid var(--rule); padding: 0.3rem 0.6rem; text-align: left; }
+.md th { font-weight: 600; }
+
+/*
+ * A table in a chat message scrolls sideways inside its message (spec 3, L6).
+ * The Chat panel is `--panel` wide, and a four-column table held to that
+ * width squeezed each column to a few characters (F3). So the message holding
+ * a table scrolls, and a table of three or more columns is given 36rem as a
+ * whole rather than a floor per cell: the table's own layout then keeps a
+ * short column (a line number) at its content's width and shares the room
+ * among the prose columns, which read in one to three lines. A floor per
+ * cell made every column that wide, a one-digit one included. The panel is
+ * not widened: that would move every bookmark's panel for one kind of content.
+ */
+#chat .md:has(> table) { overflow-x: auto; }
+#chat .md table:has(th:nth-child(3)) { min-width: 36rem; }

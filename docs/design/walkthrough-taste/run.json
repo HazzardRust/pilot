@@ -1,0 +1,91 @@
+{
+  "slug": "walkthrough-taste",
+  "feature": "The walkthrough is a look for taste",
+  "ticket": "itm_9792c6d0e6d0",
+  "branch": "feat/walkthrough-taste",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-walkthrough-taste",
+  "qa": {
+    "branch": "qa/walkthrough-taste",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-walkthrough-taste-qa",
+    "url": "http://127.0.0.1:4441/thread/itm_4b0608fa066c"
+  },
+  "artefact": "docs/design/walkthrough-taste/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The deck refuses a QA walkthrough step that runs a command",
+      "state": "integrated at 0b020676 (#402 merged)",
+      "delivers": [
+        "2",
+        "9"
+      ],
+      "branch": "slice/walkthrough-taste-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-walkthrough-taste-s1",
+      "pr": 402
+    },
+    {
+      "slice": "S2 A walkthrough's page draws its checked-for-you table under the steps",
+      "state": "integrated at 261c67b3",
+      "delivers": [
+        "3"
+      ],
+      "branch": "slice/walkthrough-taste-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-walkthrough-taste-s2",
+      "pr": 404
+    },
+    {
+      "slice": "S3 QA writes the walkthrough as a look for taste",
+      "state": "integrated at 3efeccca",
+      "delivers": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "10"
+      ],
+      "branch": "slice/walkthrough-taste-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-walkthrough-taste-s3",
+      "pr": 403
+    },
+    {
+      "slice": "S4 QA proves state controls live, twice, from the record",
+      "state": "integrated at 3dcec06b (#405 merged b36100b0)",
+      "after": "S3 QA writes the walkthrough as a look for taste",
+      "delivers": [
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "branch": "slice/walkthrough-taste-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-walkthrough-taste-s4",
+      "pr": 405
+    },
+    {
+      "slice": "walkthrough-taste",
+      "state": "red: walkthrough itm_90c4fee732dd with the user, QA live; feature tip 05291d6b, PR #399 draft",
+      "after": "S4 QA proves state controls live, twice, from the record",
+      "delivers": [
+        "1–10"
+      ],
+      "branch": "feat/walkthrough-taste",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-walkthrough-taste",
+      "pr": 399
+    }
+  ],
+  "findings": [
+    "dropped: F0 delete the deck-side command refusal (-165): reverses signed L2-L4 and exceeds 150; sent to main for the user, default keep",
+    "kept: F1 table test over every L4 command word and edge (mutation survivors)",
+    "kept: F2 qa-taste.test.mjs uses lib/area-file.mjs instead of a 7th section extractor",
+    "kept: F3 cut 33+ tokens of redundant QA prose, lower the pin (QA share rose 4417 to 4449.75)",
+    "kept: N1 drop one-element loop pilot-rules.test.mjs:484",
+    "kept: N2 drop duplicate GUI-first pin pilot-agents.test.mjs:869",
+    "kept: N3 drop |forty pilot-agents.test.mjs:505",
+    "kept: Q1 detailFirst only for a QA-authored walkthrough (spec 9, L3)",
+    "kept: Q2 card preview table wraps mid-word; cell overflow-wrap",
+    "dropped: Q2b preview excerpt cuts the evidence cell: the excerpt limit L1 accepted",
+    "kept: Q3 gap around the qa byline and the table on the thread page, CSS only",
+    "kept: Q4 pilot-qa.md: the walkthrough is always posted; S3's no-surface sentence wins over the older report-instead clause"
+  ],
+  "next": "Red: QA holds walkthrough itm_90c4fee732dd; on its Sign off post gate2 (pr #399, sha 05291d6b, walkthrough itm_90c4fee732dd); on gate2 Sign off `pilot land` in pilot-feat-walkthrough-taste, `gh pr ready 399`, closing report (deferred: pilot.md steps 8/9 narrowing; dock covers table rows), remove worktrees walkthrough-taste-s1..s4, -fix, -qa, design-walkthrough-taste.",
+  "updatedAt": "2026-10-08T11:06:57.704Z"
+}

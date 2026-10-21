@@ -1,0 +1,235 @@
+{
+  "slug": "held-handoff",
+  "feature": "A held hand-off is bounded",
+  "ticket": "itm_8a85a7dbe884",
+  "branch": "feat/held-handoff",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-held-handoff",
+  "artefact": "docs/design/held-handoff/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 a held hand-off says so, and is not a pick-up",
+      "state": "integrated at bc8ab65c",
+      "branch": "slice/held-handoff-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-held-handoff-s1",
+      "pr": 927
+    },
+    {
+      "slice": "S2 Handoff failed on a held hand-off re-arms the /clear",
+      "state": "integrated at d6061f76",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/held-handoff-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-held-handoff-s2",
+      "pr": 928
+    },
+    {
+      "slice": "S3 a hold past 20 minutes types the /clear anyway",
+      "state": "integrated at df7633c9",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/held-handoff-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-held-handoff-s3",
+      "pr": 929
+    },
+    {
+      "slice": "S4 a fresh session adopts a live co-pilot",
+      "state": "integrated at 11057e4f",
+      "branch": "slice/held-handoff-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-held-handoff-s4",
+      "pr": 926
+    },
+    {
+      "slice": "held-handoff",
+      "state": "gate2 itm_86f7a5b1d8b7 pressed; landing refused 3x on measure-prompt.test.mjs (pilot moved to 400d1187 under it); lander live, resolution committed on 400d1187 in C:/Users/Hazzard/Projects/pilot-land-held-handoff, awaiting its Land again",
+      "after": [
+        "S3",
+        "S4"
+      ],
+      "branch": "feat/held-handoff",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-held-handoff",
+      "pr": 847
+    }
+  ],
+  "findings": [
+    "kept: F1 holdFor counts stale open superseded holds and presses; fixed f1838cb0",
+    "kept: F2 a held press put the chain ticket down; fixed f1838cb0",
+    "kept: F3 no hook-run test for spec 5; added f1838cb0",
+    "dropped: N1 fourth item-id regex; items.mjs at the 800 bar, no behaviour change",
+    "kept: QA-F2 held confirm copy; fixed 4c4027fb",
+    "dropped: QA-F1 held line names ticket id not title; spec 1 says <ticket>",
+    "kept: QA-F3 stale rearmedAt; same as F1",
+    "kept: QA-F4 the F1 fix let the bound slide forever on a hold older than go-live; fixed 79fb399e",
+    "dropped: QA-F5 card reads re-armed while a stale press is ignored; needs a go-live between press and turn end, named in the walkthrough"
+  ],
+  "next": "lander live on gate2 itm_86f7a5b1d8b7; if no Land again landed, spawn a lander with that id (trim items.mjs/store-items.mjs under 800 after the merge; pin = measured). Lanes: planning itm_6971c0f47a93 step 1 not started; yellow itm_c570093cafb5 held, no co-pilot live, spawn its successor; concluding itm_3f18af072438 gate2 itm_8c49d31b5a67 open. Pilot holds walkthrough itm_8f8e02710cd5.",
+  "updatedAt": "2026-10-20T13:26:17.830Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "Git Bash heredoc broke on an apostrophe and wrote nothing; slice files rewritten with Write",
+      "evidence": "unexpected EOF while looking for matching '' at line 120",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "the hand-off timeline lives only in deck.json and wrapper.log, read with an ad hoc node -e",
+      "evidence": "items itm_0a9fa92cd367, itm_dde1063d8030, itm_c36e4aff3beb",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "§6 written as a table, which the deck's verdict parser does not read; the pilot rewrote A1 as a bullet",
+      "evidence": "assumedIds [] on the table form",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "clearing 381 closed-thread notices needed 381 loopback POSTs from the pilot; no mark-all exists (ticket itm_99df897efcaa)",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "pilot.md had zero prompt headroom, so S4 had to raise the pin in scripts/test/measure-prompt.test.mjs, a file S4 does not own",
+      "evidence": "measure-prompt.mjs: own share 11455.75, pin 11455.75, headroom 0; pin raised to 11484.5",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the no-stored-literal rule in hooks/test/join.test.js is in neither slice file nor fact sheet, and its pattern also trips on deck.STORED.coPilot",
+      "evidence": "full suite failed join.test.js 'no hook spells a stored literal of its own'; fixed by destructuring STORED (7eda9ec3)",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md's trailer, small-diff limit and worktree name differ from the co-pilot's slice brief",
+      "evidence": "brief.md lines 9, 43-52",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1.md's run.test.mjs anchors were stale",
+      "evidence": "S1.md :1275-1390; held tests at :1420-1535",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the 800-line bar on server-routes.mjs and items.mjs is named in no slice; S1 had to move the route into deck/hold-route.mjs",
+      "evidence": "first gate failed facades.test.mjs at 811 and 801 lines",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "store facade names frozen in a test and deck/README.md must list each module; neither in the slice",
+      "evidence": "facades.test.mjs:80; scripts/test/deck-readme.test.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the 800-line bar counts split('\\n'), so wc -l 800 fails as 801",
+      "evidence": "facades.test.mjs:58; 'store-items.mjs has 801 lines'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "facades.test.mjs also freezes run.mjs's export names; the seam notes named only store.mjs",
+      "evidence": "'run's names are unchanged' failed until holdFor was added",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "full suite takes about 4 minutes per gate run",
+      "evidence": "duration_ms 238233",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "deckWatching in run.test.mjs hard-coded no co-pilot; a record option was needed before any watch test could hold",
+      "evidence": "deck/test/run.test.mjs deckWatching",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "clearOnce held the co-pilot entry in a variable named now, clashing with the clock argument",
+      "evidence": "old run.mjs:352 const now = await coPilot(); renamed live",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3's adr-index verification proves nothing: ADR 0089 already read amended",
+      "evidence": "npm run adr-index leaves docs/adr/README.md unchanged",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "fresh detached worktree had no node_modules, so diff coverage and mutation produced no evidence",
+      "evidence": "node_modules missing: run npm ci",
+      "size": 2
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "the 800-line facade bar trips Stryker's instrumented sandbox, so mutation cannot pass its dry run on these files",
+      "evidence": "facade bar read 1179/1508/1497/1411 lines on Stryker copies",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "knip has no knip.json; its output is repo-wide noise",
+      "evidence": "511 unused files, 706 lines",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "postStored skips postItem's defaults such as options, so a press on that fixture silently does nothing",
+      "evidence": "chosenOf returns null without options: [HANDOFF_FAILED]",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Edit refused before a Read; edits made through a Node script instead",
+      "evidence": "first Edit calls rejected",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "pilot run cannot be driven without a real claude; claudeBin takes only claude.exe from PATH, so QA compiled a stub",
+      "evidence": "C# stub claude.exe in the QA scratchpad",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "a wrapper start releases the co-pilot entry (chainAtStart -> releaseCoPilot), so a fixture's live co-pilot set before start reads free",
+      "evidence": "first hand-off cleared as free in run 1",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "wrapper did not exit when its ConPTY child exited (Windows, pre-existing)",
+      "evidence": "pid 9348 outlived the stub",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "the fix round's unit test asserted the sliding until, so a regression to an unbounded hold passed review and gate",
+      "evidence": "QA-F4, replaced in 79fb399e",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "S3 hold tests fixed HELD_AT to a wall-clock date one day ahead; they went red by themselves when the clock passed it, found at integrate --default",
+      "evidence": "deck/test/run.test.mjs:1653; integrate log 20261020T115122092Z-origin-main.log, 6 fail",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "two closing reports and three worktree prunes done by the pilot because the lander's bodiless report post is refused by the 0.9.4 deck (ticketed itm_6971c0f47a93)",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "main moved under two feature PRs after the user merged on GitHub; integrate --default's mergeable line and gh pr view disagreed until re-fetched",
+      "size": 2
+    }
+  ]
+}

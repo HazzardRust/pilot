@@ -1,0 +1,63 @@
+{
+  "slug": "session-row",
+  "feature": "Clean landing",
+  "ticket": "itm_723a6a8120d1",
+  "branch": "feat/session-row",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-session-row",
+  "qa": {
+    "branch": "qa/session-row",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-session-row",
+    "url": "http://127.0.0.1:51097"
+  },
+  "artefact": "docs/design/session-row/architecture.md",
+  "slices": [
+    {
+      "slice": "session-row",
+      "state": "red: gate2 itm_382611c39dc4 open on #576 at b7599c4c (default window 5 landed; QA updating comment 6116249421 and PR body)",
+      "after": [
+        "S4"
+      ],
+      "branch": "feat/session-row",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-session-row",
+      "pr": 576
+    },
+    {
+      "slice": "S1 A session that registers again keeps its run",
+      "state": "integrated",
+      "branch": "slice/session-row-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-session-row-s1",
+      "pr": 580
+    },
+    {
+      "slice": "S2 A thread read returns the window asked for",
+      "state": "integrated",
+      "branch": "slice/session-row-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-session-row-s2",
+      "pr": 578
+    },
+    {
+      "slice": "S3 With no yellow open, the pick is green",
+      "state": "integrated",
+      "branch": "slice/session-row-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-session-row-s3",
+      "pr": 577
+    },
+    {
+      "slice": "S4 Every read names its window, and the pilot names the pick",
+      "state": "integrated",
+      "after": [
+        "S2",
+        "S3"
+      ],
+      "branch": "slice/session-row-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-session-row-s4",
+      "pr": 579
+    }
+  ],
+  "findings": [
+    "dropped: F-spec7 remove the Yellow restatement of nextTicketOf from agents/pilot.md — moves signed spec 7",
+    "dropped: F-L6 one messages:'all' default in hooks/lib/deck.js — moves L6 (each reader passes it explicitly)"
+  ],
+  "next": "red: on Sign off of itm_382611c39dc4: pilot landing, closing report, gh pr ready 576. Also: clean-landing red (walkthrough itm_5915109687a6 qa, blocking q itm_2cde67b535ad, QA deck :63217 pid 43564; then gate2 #559); pilot-fork yellow paused, co-pilot released: deck_ticket co-pilot + spawn from its record; GC ticket itm_f74117ba4db7 green head; bigger-jobs closed.",
+  "updatedAt": "2026-10-12T09:03:39.727Z"
+}

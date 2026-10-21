@@ -1,0 +1,53 @@
+{
+  "slug": "deck-title-prose",
+  "feature": "Install allows pilot land",
+  "ticket": "itm_e24283466e43",
+  "branch": "feat/deck-title-prose",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deck-title-prose",
+  "artefact": "docs/design/deck-title-prose/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Placed titles are set off",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "3",
+        "4"
+      ],
+      "branch": "slice/deck-title-prose-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-title-prose-s1",
+      "pr": 475
+    },
+    {
+      "slice": "S2 Ids in a refusal or a notice are drawn as titles",
+      "state": "integrated",
+      "after": "S1 Placed titles are set off",
+      "delivers": [
+        "2",
+        "3"
+      ],
+      "branch": "slice/deck-title-prose-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-title-prose-s2",
+      "pr": 476
+    },
+    {
+      "slice": "deck-title-prose",
+      "state": "in QA; underline fix (option B) at f63ff9ec on the walkthrough for the user's look",
+      "branch": "feat/deck-title-prose",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deck-title-prose",
+      "pr": 457
+    }
+  ],
+  "findings": [
+    "kept: F1 render.mjs:257 vs chain.mjs:93, no test renders a hand-off chainNext posted; fix within L3: a test posts its hand-off through chainNext and asserts the chip (+~10 test)",
+    "dropped: F1 alternative, drop the exact-title check and always chip item.next's title: moves locked L3; F1's test closes the silent-break risk at a fraction of the cost",
+    "kept: F2 render.mjs:247,305 rebuild ticketLink's ref anchor; withTitles and renderAsked call ticketLink (two copies removed)",
+    "kept: N1 render.mjs:256 `&& item.next !== undefined` is redundant (ticketNamed(items, undefined) finds nothing); delete",
+    "dropped: N2 id regex duplicates ticket-shape.mjs THREAD_ID; second copy only, not worth the import",
+    "dropped: QA nit 'gate2 Gate 2:' in a refusal: store text is fixed by L5",
+    "dropped: QA nit long uppercase ticket line in the header: layout predates the feature, out of scope (section 7)",
+    "dropped: QA nit spec-3 grep also hits class=\"refused\": the evidence grep is loose, the code is right"
+  ],
+  "next": "Red. Walkthrough itm_6bb543d0c29a (QA's) open: underline fix pushed, feat tip f63ff9ec, screenshots posted. QA agent ended; on the user's reply, resume QA from the ticket's qa refs (scratch deck :4517 pid 19100, worktree pilot-deck-title-prose-qa). On Sign off: gate2 (#457, f63ff9ec, walkthrough id), pilot land, gh pr ready 457, closing report; delete ref evidence/deck-title-prose-s1.",
+  "updatedAt": "2026-10-09T22:00:01.792Z"
+}

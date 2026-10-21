@@ -1,0 +1,389 @@
+{
+  "slug": "co-pilot-tickets",
+  "feature": "co-pilot and tickets (Live)",
+  "task": "itm_8b75a1e6b83d",
+  "branch": "feat/co-pilot-tickets",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-co-pilot-tickets",
+  "artefact": "docs/design/co-pilot-tickets/architecture.md",
+  "slices": [
+    {
+      "slice": "co-pilot-tickets",
+      "state": "fixing (principles fix round; QA read-only pass clean)",
+      "branch": "feat/co-pilot-tickets",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-co-pilot-tickets",
+      "pr": 688
+    },
+    {
+      "slice": "S1",
+      "state": "integrated at 9da51db9",
+      "branch": "slice/co-pilot-tickets-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s1",
+      "pr": 716
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at 299de90c",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/co-pilot-tickets-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s2",
+      "pr": 718
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at 116fa292",
+      "after": [
+        "S16",
+        "S2"
+      ],
+      "branch": "slice/co-pilot-tickets-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s3",
+      "pr": 719
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at 2adb4631 (via #723)",
+      "after": [
+        "S3",
+        "S17"
+      ],
+      "branch": "slice/co-pilot-tickets-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s4",
+      "pr": 721
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at 5ac85fa2",
+      "after": [
+        "S18",
+        "S2"
+      ],
+      "branch": "slice/co-pilot-tickets-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s5",
+      "pr": 725
+    },
+    {
+      "slice": "S6",
+      "state": "integrated at 41a8b23f",
+      "branch": "slice/co-pilot-tickets-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s6",
+      "pr": 715
+    },
+    {
+      "slice": "S7",
+      "state": "integrated at 1a6875aa",
+      "after": [
+        "S5",
+        "S1"
+      ],
+      "branch": "slice/co-pilot-tickets-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s7",
+      "pr": 727
+    },
+    {
+      "slice": "S16",
+      "state": "integrated at 11abee99 (added)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/co-pilot-tickets-s16",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s16",
+      "pr": 717
+    },
+    {
+      "slice": "S17",
+      "state": "integrated at 23086b8b (added)",
+      "after": [
+        "S16"
+      ],
+      "branch": "slice/co-pilot-tickets-s17",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s17",
+      "pr": 720
+    },
+    {
+      "slice": "S18",
+      "state": "integrated at db7b4d9e (added)",
+      "after": [
+        "S19"
+      ],
+      "branch": "slice/co-pilot-tickets-s18",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s18",
+      "pr": 724
+    },
+    {
+      "slice": "S19",
+      "state": "integrated at 2adb4631 (added, as S19b #723)",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/co-pilot-tickets-s19",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s19",
+      "pr": 723
+    },
+    {
+      "slice": "S20",
+      "state": "integrated at bbbe5671 (added)",
+      "after": [
+        "S5"
+      ],
+      "branch": "slice/co-pilot-tickets-s20",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s20",
+      "pr": 726
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S7",
+        "S20"
+      ],
+      "branch": "fix/co-pilot-tickets-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-fix",
+      "pr": 728
+    }
+  ],
+  "findings": [
+    "kept: S5 db+ts MEDIUM backup never silently incomplete (atomic, -<n> on differing bytes, unreadableStore on failure): moved to added slice S20",
+    "dropped: S5 ts scratch task destructure: would spell task outside L13; deck_status ignores the key",
+    "dropped: S5 ts tautology assertion: it is the slice's Test 4 wording",
+    "dropped: S5 ICU in test: Node ships full ICU",
+    "dropped: S5 cross-process lock: pre-existing v1->v2 pattern",
+    "kept: S20 reviewers' MEDIUM no-hard-link filesystems fail safe (store untouched, error names the backup); the deck lives on NTFS; no fallback copy",
+    "kept: F1 hooks/test/join.test.js:220 codemod turned \\.foremen?\\b into \\.co-pilots?\\b, which no member read matches; restore as \\.coPilots?\\b (0 lines)",
+    "kept: F2 store-v3 real v1 path asserts kinds only; add the green/red listing (+1)",
+    "kept: F3 RETIRED built from TASK_SPELLINGS, which S15 deletes: recorded in S15.md (77a0c335), no code now",
+    "kept: F4 delete scripts/test/co-pilot-live-scope.test.mjs, S3's interim grep superseded by the S7 guard (-29)",
+    "kept: F5 delete ticket-live-scope.test.mjs:95, a duplicate of the guard (-1)",
+    "dropped: F6 STORED.coPilots unread: STORED mirrors the deck's stored spellings, whose pins stay equal (spec 2)",
+    "kept: F7 delete the unused SPELLINGS export in scripts/vocabulary.mjs (-2)",
+    "dropped: nit store-v3 tautology: same call as S5's, it is Test 4's wording",
+    "kept: nit S15 Rewrite check unsatisfiable: reworded in S15.md (77a0c335)",
+    "dropped: nit LIVE_SCOPE at import time: S15 rewrites the scope",
+    "dropped: nit UPGRADES_FROM: pre-existing pattern at base",
+    "kept: QA's found issue, the up/down refusal lists no co-pilot or release action (pre-existing): built in the fix round"
+  ],
+  "next": "integrating fix round #728 onto feat 77a0c335; then pilot land, send QA the tip",
+  "updatedAt": "2026-10-16T15:15:26.207Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1's literal-site list in the artefact was stale by one file (three-lanes landed after the count)",
+      "evidence": "scripts/test/three-lanes-wording.test.mjs:55 on PR #716"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a one-character address rename moved the pilot prompt pin, found only on the first full npm test, costing a second ~4 min run",
+      "evidence": "pin 11035.25 -> 11035.75 on PR #716",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the sed rewrote the new pin file, so the old address had to be spelt indirectly",
+      "evidence": "['pilot','foreman'].join('-') in scripts/test/vocabulary.test.mjs on PR #716"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S16 was briefed to branch from S1's tip, where slices/S16.md did not exist, so the fact sheet could not find it",
+      "evidence": "S16 report; S16.md only on feat ef08b502"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "six review findings plus a second review round did not fit 200 changed lines; the all-caps spelling was dropped and S3/S4 must grep FOREMAN in prose themselves",
+      "evidence": "PR #717 body, 190/200",
+      "size": 255
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a Bash heredoc holding JS template literals failed to parse",
+      "evidence": "S16 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2's slice file named TASK_ID_FIELD, which is not exported (exporting it breaks a facade pin), and its Files owned missed hooks/session-handoff.js, which its own test 2 scans",
+      "evidence": "PR #718; deck/test/facades.test.mjs; hooks/session-handoff.js yellow.task",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3's codemod run flipped stored keys outside STORED (foreman: keys, .foreman reads, 'foreman' values), split {...foremen} from its declaration (silent ReferenceError) and camelCased a CSS class; ~60 of 200 hand-fix lines",
+      "evidence": "PR #719 friction; deck/store-runs.mjs:380; .foreman-held",
+      "size": 60
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the Bash tool halved backslashes in heredocs and sed, breaking a regex twice",
+      "evidence": "S3 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node --check cannot see a broken binding; only running the renamed clone's tests found 59 failures incl. a TypeError",
+      "evidence": "PR #720 body",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the Edit tool refused a file read only through Bash",
+      "evidence": "4 failed Edit calls in S17"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4's hand-fixes came to ~229 of 200: the red test file was 89 lines, and the held DOM id spread over 12 test files where S17's dry run predicted 3",
+      "evidence": "S4 report; 18 git grep hits for id=\"tasks\"/'tasks' in deck/test",
+      "size": 229
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "readme-flow landed on pilot mid-run with a README graph naming pilot-foreman and tasks; S4's merge with the base went red on 4 tests",
+      "evidence": "C:/Users/Hazzard/.claude/pilot/logs/20261016T130048749Z-slice-co-pilot-tickets-s4.log",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the stored-spelling list missed the localStorage key pilot.task-folds and field names inside tool descriptions; only review caught them",
+      "evidence": "PR #721 review"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4's implementer reached its context advisory before the base-drift fix and handed it on unstarted",
+      "evidence": "S4 hand-back; PR #721 head f0fbfa61"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the rules ledger is derived from git history, so a ledger rebuilt on a slice branch goes stale on the integrate merge commit",
+      "evidence": "C:/Users/Hazzard/.claude/pilot/logs/20261016T131827441Z-slice-co-pilot-tickets-s19.log",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fact-sheet",
+      "what": "the fact sheet cannot read a slice file that exists only on a remote ref (no shell)",
+      "evidence": "S16 and S19 reports"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "origin/pilot moved twice during S4/S19 (readme-flow, gate-script); each move stales the history-derived rules ledger and can add retired words",
+      "evidence": "pilot 05f14373 then 4d3cc0a3; logs 20261016T131827449Z and 20261016T132656924Z",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-foreman",
+      "what": "pilot integrate runs the suite on merge --no-commit, so build-rules-ledger --check reads pre-merge history; a slice that changes rules/ in more than one commit goes red on integrate though green on its branch and on the committed merge",
+      "evidence": "scripts/integrate.mjs:314; logs 20261016T131827441Z, 20261016T132656924Z, 20261016T133444961Z; S4 commits b396f8c6 and 4fea096a both touch rules/",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4's obfuscated 'ta'+'sk' spelling in ticket-live-scope.test.mjs hid a held DOM id from grep; found only by a full-suite run",
+      "evidence": "PR #724",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S18.md named deck/ui/live.mjs; the file is deck/ui/js/live.mjs",
+      "evidence": "PR #724"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5's slice file listed only deck/hooks/bin, but stored spellings live in agent prose and scripts/handoff.mjs; 10 failures surfaced only on the full run",
+      "evidence": "PR #725; S5.md seam note 2d45da4b",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the --stored codemod matches inside regex text (\\bTaskOutput became TicketOutput) and rewrote a guard pin that spells the old word on purpose; it also leaves x: x shorthand (88 sites)",
+      "evidence": "PR #725 friction; tickets-region.test.mjs",
+      "size": 88
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot deck --scratch cannot take a planted store; the rehearsal needed a custom daemon launcher",
+      "evidence": "PR #725 rehearsal"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the 200-line cap counts new tests; S5's migration with its mandatory tests came to 229 and its backup was split out",
+      "evidence": "S5 report; S20.md",
+      "size": 229
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the node test runner's default reporter piped through grep printed nothing; counts needed --test-reporter=spec and start with ℹ",
+      "evidence": "S20 report, two empty runs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the slice brief's pilot deck --scratch plus browser check does not fit a slice with no page; rehearsed with PILOT_DECK_DIR and listItems instead",
+      "evidence": "PR #726 rehearsal"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S20 item 3 asked for an atomic write without naming filesystems lacking hard links; the fail-safe outage was left for the implementer",
+      "evidence": "PR #726 reviewers' shared MEDIUM",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a Python heredoc edit unescaped \\n twice and wrote NUL bytes and real newlines into scripts/vocabulary.mjs",
+      "evidence": "S7 report; node 'Invalid regular expression: missing /'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "§7 was closed yet the L5 codemod spells every retired word; S7's live-scope pin needed a mid-slice seam change",
+      "evidence": "196 of 221 hits at af464da6; S7.md seam note 33b5e17a",
+      "size": 196
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pins asserting an old word is absent must spell it; the halves pattern is documented only inside vocabulary.test.mjs",
+      "evidence": "3 test files hand-fixed on PR #727",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7's verification plants the word in a scratch copy, but an untracked copy is outside git ls-files; a tracked file was edited and restored",
+      "evidence": "S7.md Done; PR #727"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "npm test's census stopped a scratch deck started from the worktree, then pilot deck --stop refused it as not a scratch deck, leaving its dir and registry",
+      "evidence": "QA read-only pass, pid 4572"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot deck --scratch cannot take a planted store; QA ran daemon.mjs with PILOT_DECK_DIR by hand",
+      "evidence": "rehearsal daemons :58665 and :61232"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the review worktree had no node_modules and the runner may not install, so coverage and mutation never ran",
+      "evidence": "fundamentalist report §3; stryker 'Cannot find package @modelcontextprotocol/sdk'"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the codemod's --stored pass rewrote regex text in L11's hook pin, half-killing it",
+      "evidence": "hooks/test/join.test.js:220 since 57fb1429",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "added slices S16-S20 fail check-slices (no Tests lines, no Rewrite check), leaving the depth pass no contract",
+      "evidence": "check-slices.mjs slices/"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "knip with no knip.json gives 595 lines of noise; git diff --name-only lists deleted files that eslint/stryker then fail on",
+      "evidence": "fundamentalist report §5"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "restoring L11's pin to \\.coPilots?\\b flagged a legitimate deck.STORED.coPilot read in a hook; the fix brief's six changes needed a seventh",
+      "evidence": "hooks/context-size-guard.js:649 on PR #728",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "check-provenance.mjs needs a directory argument and gives 148 false failures on '.'",
+      "evidence": "fix round report"
+    }
+  ]
+}

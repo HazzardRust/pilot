@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><!--TITLE--> · Pilot deck</title>
+    <link rel="icon" href="/ui/favicon.svg" />
+    <style><!--CSS--></style>
+  </head>
+  <body data-item="<!--ID-->">
+    <!--
+      The title, in the blank box at the top-left over the rail and the panel
+      column, centred there (spec 15, L19). It is fixed in that box on every
+      page, so it takes no room in the header.
+    -->
+    <h1><a href="<!--HOME-->">Pilot deck</a></h1>
+    <header>
+      <!--
+        The way back, as an arrow at the start of the header where the title
+        used to stand (spec 15). It travels with the sticky header, so spec 5
+        holds wherever the reader has scrolled to. The words are not lost: they
+        are the label a screen reader reads and the title a hover says. The
+        href is the owning deck's tab (ADR 0118); a plain click goes back when
+        there is a page of the deck's behind it (`escape.mjs`).
+      -->
+      <a class="back" href="<!--BACK-->" title="Back to deck" aria-label="Back to deck">←</a>
+      <span class="kind" data-live="kind"><!--KIND--></span>
+      <!--NAV-->
+      <!--USAGE-->
+    </header>
+    <main>
+      <article class="thread">
+        <h2><!--HEADING--></h2>
+        <!--
+          Two live regions rather than one, because they are read and written by
+          different people at the same time. The argument above is the pilot's
+          and updates under the user as it grows; the reply below is the user's
+          and is skipped while there is a caret or unsent text in it. One region
+          around both would mean a pilot who answers while the user is typing is
+          a pilot whose answer does not appear until they stop.
+        -->
+        <div data-live="thread"><!--THREAD--></div>
+        <!--
+          Where a reply's 303 lands (`#reply`): here in the flow, under the
+          newest message, and not on the box below, because a browser scrolls a
+          sticky target to where it is stuck, which is a fixed way down the page
+          however long the thread — the page jumped up on every reply.
+        -->
+        <span id="reply"></span>
+        <!-- A refused press's reason (ADR 0096), outside every live region: a refresh never draws it. -->
+        <!--REFUSED-->
+        <div data-live="reply"><!--REPLY--></div>
+      </article>
+    </main>
+    <!--STRIPS-->
+    <!-- The Open/All toggle, pointed at this thread: it picks what the arrows walk. -->
+    <!--EVERYTHING-->
+    <script type="module" src="/ui/deck.mjs"></script>
+  </body>
+</html>

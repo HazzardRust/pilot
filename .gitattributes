@@ -1,0 +1,3 @@
+* text=auto eol=lf
+docs/adr/README.md merge=union
+scripts/vocabulary-exempt.txt merge=union

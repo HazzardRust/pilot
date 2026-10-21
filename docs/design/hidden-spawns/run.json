@@ -1,0 +1,87 @@
+{
+  "slug": "hidden-spawns",
+  "feature": "Hidden spawns",
+  "ticket": "itm_bddbe9c0a3d9",
+  "branch": "feat/hidden-spawns",
+  "worktree": "C:/Users/socce/Projects/pilot-hidden-spawns",
+  "artefact": "docs/design/hidden-spawns/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Every child the pilot starts is started hidden",
+      "state": "integrated at 19fe51ab (3856 pass, 0 fail)",
+      "branch": "slice/hidden-spawns-s1",
+      "worktree": "C:/Users/socce/Projects/pilot-hidden-spawns-s1",
+      "pr": 770
+    },
+    {
+      "slice": "feature",
+      "state": "PR #592 draft at e7d3c1e5; QA read-only pass green (spec 1, 2 pass; 3 running); fix round running with 7 items (2 added by QA)",
+      "after": [
+        "S1 Every child the pilot starts is started hidden"
+      ],
+      "pr": 592
+    }
+  ],
+  "findings": [
+    "kept: test-1 fixture line outside any comment block breaks S1's rewrite check; wrap it (+2)",
+    "dropped: duplicate windowsHide key at deck/landing.mjs startLanding; the alternative is a scanner special case for one helper, and the duplicated key is observable in no test (pilot's decision, PR #770)",
+    "kept: childStarts and EXEMPT exported with no importer; drop both exports (0)",
+    "kept: the function-declaration skip at line 28 never fires in production; delete it, fixture declared list carries spawnChild (-1)",
+    "kept: no guard against namespace/require/non-spawn aliases of child_process; add one assertion (+3..8), closes the reviewer's MEDIUM",
+    "kept: S1.md Files owned misses the five base-added files and has no Model line (doc only)",
+    "kept: consider row, security read of the five base-added files -> pilot:security-reviewer spawned on them",
+    "kept: the review's alternative design (child_process shim + import ban) moves L1/L5, so it is the user's: question posted, recommended keep",
+    "dropped: evidence runner's table (coverage none, mutation none, complexity/dup/cycles): it ran on a review worktree whose checkout was incomplete (ENOENT agents/, docs/adr; the scan test failing on 22 sites that pass at the tip), so none of it describes the feature"
+  ],
+  "next": "Fix implementer live with 7 items (QA's gc.mjs alias + audit-context usage bug added). On its PR with verdict: pilot integrate fix/hidden-spawns-review, pilot land, send QA the tip; QA posts the walkthrough and gate2.",
+  "updatedAt": "2026-10-17T09:27:11.280Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "SessionStart hand-off notice (2 landings, 3 designs) fired on a fresh session with nothing in context yet",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "pilot sync has no dry mode; the brief's 'sync (dry)' cannot be run without pushing origin/pilot",
+      "evidence": "S1 report, live evidence row",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a 150-line small-diff limit counted the spec'd 115-line test file, so S1 could never fit it (172 changed lines)",
+      "evidence": "S1 report, pushback row",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "build-rules-ledger reads git log HEAD -- rules/, so npm test fails with 'shipped-rules.json is stale' while a merge is uncommitted",
+      "evidence": "S1 fix-round report, friction row",
+      "size": 1
+    },
+    {
+      "agent": "pilot",
+      "what": "pilot integrate stopped on docs/adr/README.md (ADR number collision 0129) and on two source conflicts, each needing the pilot's hands; the slice branch had to be re-merged and re-reviewed",
+      "evidence": "two 'NOT integrated' lines in this session",
+      "size": 3
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "evidence runner parked on background work and returned its table after the fundamentalist had reported; its worktree was an incomplete checkout, so every number was of the wrong tree",
+      "evidence": "runner report: ENOENT docs/adr, agents/pilot.md; scan test failing on 22 sites that pass at 19fe51ab",
+      "size": 3
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "git worktree remove --force pilot-hidden-spawns-review failed with Permission denied (handle held by the runner); directory left on disk",
+      "evidence": "fundamentalist friction row",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "deck MCP failed to connect at spawn (CONNECTION_CLOSED) though the deck answered /api/health; QA may need the pilot to post its walkthrough",
+      "evidence": "QA read-only report",
+      "size": 1
+    }
+  ]
+}

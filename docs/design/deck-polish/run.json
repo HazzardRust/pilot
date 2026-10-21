@@ -1,0 +1,236 @@
+{
+  "slug": "deck-polish",
+  "feature": "Deck polish",
+  "branch": "feat/deck-polish",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deck-polish",
+  "artefact": "docs/design/deck-polish/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A + tab adds a deck by path",
+      "state": "integrated",
+      "delivers": [
+        "5"
+      ],
+      "branch": "slice/deck-polish-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s1",
+      "pr": 208
+    },
+    {
+      "slice": "S2 Reopen only reopens",
+      "state": "integrated",
+      "after": "S1 A + tab adds a deck by path",
+      "delivers": [
+        "11"
+      ],
+      "branch": "slice/deck-polish-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s2",
+      "pr": 209
+    },
+    {
+      "slice": "S3 The chat keeps its place and shows tables",
+      "state": "integrated",
+      "after": "S1 A + tab adds a deck by path",
+      "delivers": [
+        "3",
+        "4"
+      ],
+      "branch": "slice/deck-polish-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s3",
+      "pr": 210
+    },
+    {
+      "slice": "S4 The status line drops deck <n>",
+      "state": "integrated",
+      "delivers": [
+        "7"
+      ],
+      "branch": "slice/deck-polish-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s4",
+      "pr": 207
+    },
+    {
+      "slice": "S5 Close: the deck's button and a user thread's card",
+      "state": "integrated",
+      "after": "S2 Reopen only reopens",
+      "delivers": [
+        "1",
+        "9"
+      ],
+      "branch": "slice/deck-polish-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s5",
+      "pr": 211
+    },
+    {
+      "slice": "S7 Rail panels: a report takes an x, and panels sit above the thread header",
+      "state": "integrated",
+      "after": "S6 A card remembers its pick, and lists read and sort by the last message's time",
+      "delivers": [
+        "6",
+        "8"
+      ],
+      "branch": "slice/deck-polish-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s7",
+      "pr": 213
+    },
+    {
+      "slice": "feature deck-polish",
+      "state": "ready for review: PR #206 at 61f4d40; closing report itm_0a1220a5463f",
+      "branch": "feat/deck-polish",
+      "pr": 206
+    },
+    {
+      "slice": "S6 A card remembers its pick, and lists read and sort by the last message's time",
+      "state": "integrated",
+      "after": "S5 Close: the deck's button and a user thread's card",
+      "delivers": [
+        "2",
+        "10"
+      ],
+      "branch": "slice/deck-polish-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s6",
+      "pr": 212
+    },
+    {
+      "slice": "Fix round: principles findings",
+      "state": "integrated",
+      "after": "S7 Rail panels: a report takes an x, and panels sit above the thread header",
+      "branch": "fix/deck-polish-principles",
+      "pr": 214
+    }
+  ],
+  "findings": [
+    "kept: one order rule — newestSaidFirst into items.mjs, sorted inside queueOf, byNewestSaid deleted (−8)",
+    "kept: pin the order where store order differs from newest-said, overview and nav (+12)",
+    "kept: three assertions — settled user card gets no Close, Teach me disabled when locked, audit pick locked (+8)",
+    "kept: branch tests for addDeck ENOTDIR/could-not-be-checked and corrupt hiddenReports (+6)",
+    "kept: one shared separator constant for chosenOf and replyFrom (+1)",
+    "kept: drop renderDeckPage's added and its listAdded() (0)",
+    "kept: delete stale daySections sentence, reportsOf .reverse(), two unreachable guards in notifications.mjs (−5)",
+    "kept: pin renderThreadPage's added (+3)",
+    "kept: no ended banner on an added deck with no run (+1)",
+    "kept: docs — report row comment and spec 6 evidence say 'at its address'; S7.md hiddenReports not pruned; S1.md UNC; deck.css spec 3; ADR 0023/0031 superseded in part (+2)",
+    "dropped: awaitsPilot reading 'Closed.' as waiting — both copies need seq > baseline, so a cursor past it sees nothing",
+    "dropped: options object for renderHomePage's nine parameters — a refactor past this run's diff"
+  ],
+  "report": {
+    "featurePr": {
+      "number": 206,
+      "state": "ready for review, OPEN, MERGEABLE at 61f4d40"
+    },
+    "slices": [
+      {
+        "slice": "S1 A + tab adds a deck by path",
+        "pr": 208,
+        "mergeSha": "00636f8"
+      },
+      {
+        "slice": "S2 Reopen only reopens",
+        "pr": 209,
+        "mergeSha": "593ce49"
+      },
+      {
+        "slice": "S3 The chat keeps its place and shows tables",
+        "pr": 210,
+        "mergeSha": "7754043"
+      },
+      {
+        "slice": "S4 The status line drops deck <n>",
+        "pr": 207,
+        "mergeSha": "9ec64bb"
+      },
+      {
+        "slice": "S5 Close: the deck's button and a user thread's card",
+        "pr": 211,
+        "mergeSha": "452bee1"
+      },
+      {
+        "slice": "S6 A card remembers its pick, and lists read and sort by the last message's time",
+        "pr": 212,
+        "mergeSha": "379b7c6"
+      },
+      {
+        "slice": "S7 Rail panels: a report takes an x, and panels sit above the thread header",
+        "pr": 213,
+        "mergeSha": "9728323"
+      },
+      {
+        "slice": "Fix round: principles findings",
+        "pr": 214,
+        "mergeSha": "6882e5d"
+      }
+    ],
+    "assumed": [
+      {
+        "id": "A3",
+        "decision": "any existing directory may be added, git repository or not",
+        "taken": "assumed at Gate 1"
+      },
+      {
+        "id": "A4",
+        "decision": "a hidden closing report is hidden per browser (localStorage)",
+        "taken": "assumed at Gate 1"
+      },
+      {
+        "id": "A5",
+        "decision": "the Close confirm paragraph stays, reworded; only the buttons change",
+        "taken": "assumed at Gate 1"
+      }
+    ],
+    "friction": [
+      {
+        "agent": "S1, S3, S5, S6, S7, QA",
+        "what": "Git Bash $! is the MSYS pid, not the Windows pid a run registration or a kill needs",
+        "evidence": "each restarted a sleeper or read the pid from netstat/deck.log"
+      },
+      {
+        "agent": "every implementer, both QA",
+        "what": "no shipped scratch-deck recipe; a stopped ticket's shell kills the deck it started",
+        "evidence": "rebuilt per agent; QA restarted the deck three times"
+      },
+      {
+        "agent": "architect, every implementer",
+        "what": "render.mjs 1892 lines, store.mjs 1490, server.mjs 1295",
+        "evidence": "each question needed a researcher's file:line map"
+      },
+      {
+        "agent": "S4, QA",
+        "what": "no gate script; flaky usage/daemon timing tests under load",
+        "evidence": "two checks skipped after a last commit; 3 flakes in three full runs, green alone"
+      },
+      {
+        "agent": "S4, QA",
+        "what": "slice files do not name tests elsewhere that pin the surface",
+        "evidence": "S4 broke two store tests; J4 broke 12 day-section fixtures"
+      },
+      {
+        "agent": "six agents",
+        "what": "heredoc edits mangle \\n, backticks and CRLF on Windows",
+        "evidence": "one lost cycle each"
+      },
+      {
+        "agent": "S2, QA",
+        "what": "deck_post over /api/tool answers prose, not JSON",
+        "evidence": "JSON.parse threw in a seeding script"
+      },
+      {
+        "agent": "S3, fundamentalist",
+        "what": "live.mjs test stubs never stamp <time>",
+        "evidence": "the scroll bug and the 41px anchoring both hid from the suite"
+      }
+    ],
+    "humanSteps": [
+      "Merge PR #206 into main",
+      "Bump the plugin version and reinstall",
+      "Remove worktrees pilot-feat-deck-polish and pilot-design-deck-polish after the merge",
+      "Ticket itm_d7b9fe47483e (Start/End session button) chains as the next run"
+    ],
+    "worktreesLeft": [
+      "C:/Users/Hazzard/Projects/pilot-feat-deck-polish",
+      "C:/Users/Hazzard/Projects/pilot-design-deck-polish"
+    ]
+  },
+  "next": "Run finished; merge of PR #206 is the user's; ticket itm_d7b9fe47483e chains as the next run",
+  "finished": "closing report posted",
+  "finishedAt": "2026-09-30T08:00:17.286Z",
+  "updatedAt": "2026-09-30T08:00:17.286Z"
+}

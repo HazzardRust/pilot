@@ -1,0 +1,82 @@
+{
+  "slug": "cheaper-crew",
+  "feature": "Cheaper crew",
+  "ticket": "itm_55f675c9714d",
+  "branch": "feat/cheaper-crew",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-cheaper-crew",
+  "artefact": "docs/design/cheaper-crew/architecture.md",
+  "slices": [
+    {
+      "slice": "cheaper-crew",
+      "state": "fixing: principles and QA findings; feat/cheaper-crew at 40fc8603",
+      "after": [
+        "S4 Every implementer brief names Sonnet or Opus, ADR 0150"
+      ],
+      "branch": "feat/cheaper-crew",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-cheaper-crew",
+      "pr": 644
+    },
+    {
+      "slice": "S1 An implementer reads a fact sheet before its first Read",
+      "state": "integrated at 0bb59f88",
+      "branch": "slice/cheaper-crew-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-cheaper-crew-s1",
+      "pr": 660
+    },
+    {
+      "slice": "S3 A slice file states its model",
+      "state": "integrated at d84bae91",
+      "branch": "slice/cheaper-crew-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-cheaper-crew-s3",
+      "pr": 659
+    },
+    {
+      "slice": "S2 The fundamentalist reads the evidence runner's output",
+      "state": "integrated at 038058ae",
+      "after": [
+        "S1 An implementer reads a fact sheet before its first Read"
+      ],
+      "branch": "slice/cheaper-crew-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-cheaper-crew-s2",
+      "pr": 662
+    },
+    {
+      "slice": "S4 Every implementer brief names Sonnet or Opus, ADR 0150",
+      "state": "integrated at 7dbb8a02",
+      "after": [
+        "S2 The fundamentalist reads the evidence runner's output",
+        "S3 A slice file states its model"
+      ],
+      "branch": "slice/cheaper-crew-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-cheaper-crew-s4",
+      "pr": 663
+    },
+    {
+      "slice": "S5 Scratch deck starts over a stale pid registry (added)",
+      "state": "integrated at 33690215",
+      "branch": "slice/cheaper-crew-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-cheaper-crew-s5",
+      "pr": 661
+    }
+  ],
+  "findings": [
+    "kept: K1 (fund F1) runner $FILES/$MUTATE filtered per column to the language's extensions; Stryker aborts on .md",
+    "kept: K2 (fund F2) Node mutation cell runs a scoped command (node --test on the changed tests) via a config written under $S, not npm test per mutant",
+    "kept: K3 (QA F1) runner runs the mutation cell with run_in_background and reads it on completion, never polls; timeout 900 exceeds the 600 s foreground cap",
+    "kept: K4 (QA F2) Stryker's report goes under $S, not the worktree",
+    "kept: K5 (security re-review S2) $FILES regex refuses a leading '-'",
+    "kept: K6 (fund F3) deck/scratch.mjs: rmSync force then one wx write; removes the inner try",
+    "kept: K7 (fund F4) scratch-registry test drops call-count/options asserts that pin the implementation",
+    "kept: K8 (fund F5, N1, N2) redundant roster, example and ADR-copy asserts deleted; spawnableTypes takes the agent name",
+    "kept: K9 (fund N3) fundamentalist's duplicate runner paragraph and the discarded changed-files input removed; artefact ADR 0150, §3 alias figures as fetched, §10 status and these verdicts",
+    "kept: K10 (S3 security MEDIUM) check-slices refuses Model: sonnet on a slice naming pilot:security-reviewer (A2 machine-checked)",
+    "dropped: env -i on fetched tool cells: no regression (the fundamentalist's old cells ran the same), env -i drops SYSTEMROOT/TEMP and breaks node on Windows; scratch HOME stays the containment",
+    "dropped: never-mutate grep excludes deck/scratch.mjs via PILOT_DECK_: by design, a process starter is not mutated",
+    "dropped: re-open L3: K1-K2 make the fixed table work within L3; a locked decision is the user's",
+    "dropped: delete the fact sheet until L4 measures a saving: QA measured it at $0.003 a slice; the saving is the user's read at the walkthrough",
+    "dropped: fact-sheet not-found row for a new symbol in an existing file: a lead by design",
+    "dropped: check-slices passes a slice with no Reviewers line: pre-existing, outside this feature"
+  ],
+  "next": "co-pilot live: fix round on fix/cheaper-crew-principles (kept K1-K11), then pilot integrate, pilot land, send QA the tip for its walkthrough",
+  "updatedAt": "2026-10-14T13:26:38.717Z"
+}

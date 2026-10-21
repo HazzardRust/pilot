@@ -1,0 +1,108 @@
+{
+  "slug": "run-chaining",
+  "feature": "Run chaining v2",
+  "branch": "feat/run-chaining-v2",
+  "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-run-chaining-v2",
+  "artefact": "docs/design/run-chaining/architecture.md",
+  "slices": [
+    {
+      "slice": "Feature",
+      "state": "ready: PR #131 at c59b7d4, mergeable; Gate 2 signed 13:15Z; merge is the user's",
+      "branch": "feat/run-chaining-v2",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-run-chaining-v2",
+      "pr": 131
+    },
+    {
+      "slice": "S1 A clean finish with an open ticket chains into the next run",
+      "state": "integrated at 04e9928 (merge 91ae81d, PR #132 merged); 1521/1521",
+      "delivers": [
+        "3 chain hand-off, pilot run clears",
+        "4 without pilot run, wait for /clear",
+        "5 abandoned never chains",
+        "9 no stale stop listening"
+      ],
+      "branch": "slice/run-chaining-v2-s1",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-run-chaining-v2-s1",
+      "pr": 132
+    },
+    {
+      "slice": "S2 Headless launching goes; Create is a chat with the live pilot",
+      "state": "integrated at 9a73415 (merge 40337e6, PR #133 merged); 1480/1480; pilot share 9498",
+      "after": "S1 A clean finish with an open ticket chains into the next run",
+      "delivers": [
+        "10 prompt pin",
+        "11 no headless sessions"
+      ],
+      "branch": "slice/run-chaining-v2-s2",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-run-chaining-v2-s2",
+      "pr": 133
+    },
+    {
+      "slice": "S3 Tickets and closing reports have their own sections and never hold a turn",
+      "state": "integrated at 3af7a39 (merge 09846c2, PR #134 merged); 1490/1490; pilot share 9506, QA share 5499/5500",
+      "after": "S2 Headless launching goes; Create is a chat with the live pilot",
+      "delivers": [
+        "2 Tickets section, left group",
+        "6 Closing reports section"
+      ],
+      "branch": "slice/run-chaining-v2-s3",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-run-chaining-v2-s3",
+      "pr": 134
+    },
+    {
+      "slice": "S4 The pilot stores agreed work as a ticket and posts a report",
+      "state": "integrated at 5a5703b (merge 0b30ba4, PR #136 merged); 1493/1493; pilot share 9556",
+      "after": "S3 Tickets and closing reports have their own sections and never hold a turn",
+      "delivers": [
+        "6 report kind",
+        "8 never store unasked",
+        "10 prompt pin"
+      ],
+      "branch": "slice/run-chaining-v2-s4",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-run-chaining-v2-s4",
+      "pr": 136
+    },
+    {
+      "slice": "S5 The architect bound and the split question",
+      "state": "integrated at 828826c (merge 37ac399, PR #137 merged); 1496/1496; pilot share 9621",
+      "after": "S4 The pilot stores agreed work as a ticket and posts a report",
+      "delivers": [
+        "1 split question, in-sequence recommended",
+        "3 later runs start at step 4",
+        "10 prompt pin"
+      ],
+      "branch": "slice/run-chaining-v2-s5",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-run-chaining-v2-s5",
+      "pr": 137
+    },
+    {
+      "slice": "S6 Parallel decks: a worktree and a pilot run step per deck",
+      "state": "integrated at 28d4b98 (merge d3d089b, PR #138 merged); 1508/1508; pilot share 9651",
+      "after": "S5 The architect bound and the split question",
+      "delivers": [
+        "5 pilot run with an open ticket starts it",
+        "7 one walkthrough step per deck",
+        "10 prompt pin"
+      ],
+      "branch": "slice/run-chaining-v2-s6",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-run-chaining-v2-s6",
+      "pr": 138
+    }
+  ],
+  "findings": [
+    "kept: F1 session-handoff resolves the chain hand-off before the payload write; a failed write loses the ticket — resolve after the write, non-parsing call, test",
+    "kept: F2 createThread's body parameter has no caller since deck_launch went — removed (−6)",
+    "kept: F3 chain.mjs:47 supersede mutant survives — test that a second clean finish still says stop listening",
+    "kept: F4 render mutants survive — assert head is next, ticket/report sections disjoint, section names",
+    "kept: F5 the next-run frame's fence strings unpinned — assert begin/end markers and the widens sentence",
+    "kept: N1 unreachable item.next branch in notice() (−1); N2 UNRENDERED_SPECS one-entry map (−2); N3 renderStanding export unused",
+    "kept: N5 pins for the same-ms tie (>=) and a ticket never having options",
+    "dropped: N4 isOpenTicket helper for three spellings — net zero, no consequence named",
+    "kept: QA F1 REVISED by the user on the preview (2026-09-26 21:35): Tickets and Closing reports are their own rail tabs with badge counts, like Notifications; the sections-with-a-count answer is withdrawn. Plus: an expanded item overlaid the section; items inside Tickets were squashed together",
+    "kept: QA F2 chain hand-off card says type /clear starts it; dismissing it reopens the ticket instead of losing it",
+    "kept: QA F3 at-start frame wording after an abandoned or absent run; F4 deck_post's answer for a ticket no longer tells the pilot to resolve it; F5 /api/chain bad-body message"
+  ],
+  "next": "user merges #131, bumps the version, restarts the deck on the new plugin; then `pilot run` chains housekeeping audit → analytics → usage telemetry",
+  "finished": "closing report posted",
+  "updatedAt": "2026-09-26T14:13:39.388Z"
+}

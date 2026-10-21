@@ -1,0 +1,92 @@
+{
+  "slug": "run-analytics",
+  "feature": "Run analytics in closing report",
+  "branch": "feat/run-analytics",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-run-analytics",
+  "artefact": "docs/design/run-analytics/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Walking skeleton: one row per agent",
+      "state": "integrated",
+      "delivers": [
+        "1 command prints the section",
+        "2 one row per agent",
+        "6 run spans sessions",
+        "7 no transcript text",
+        "8 bad lines skipped",
+        "9 one shared reader"
+      ],
+      "branch": "slice/run-analytics-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-run-analytics-s1",
+      "pr": 160
+    },
+    {
+      "slice": "S2 Each agent lands in its slice",
+      "state": "integrated",
+      "after": "S1 Walking skeleton: one row per agent",
+      "delivers": [
+        "3 one row per slice, rows add up"
+      ],
+      "branch": "slice/run-analytics-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-run-analytics-s2",
+      "pr": 162
+    },
+    {
+      "slice": "S3 Cost from an editable price table",
+      "state": "integrated",
+      "after": "S2 Each agent lands in its slice",
+      "delivers": [
+        "4 cost column from the price table",
+        "5 no price, never zero"
+      ],
+      "branch": "slice/run-analytics-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-run-analytics-s3",
+      "pr": 163
+    },
+    {
+      "slice": "S4 Closing report carries the section, 0.8.0",
+      "state": "integrated, then withdrawn (L8, L9)",
+      "after": "S1 Walking skeleton: one row per agent",
+      "branch": "slice/run-analytics-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-run-analytics-s4",
+      "pr": 161
+    },
+    {
+      "slice": "feature",
+      "state": "ready; Gate 2 passed on itm_b9b308c1d5a7; merging PR #159 on the user's word",
+      "branch": "feat/run-analytics",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-run-analytics",
+      "pr": 159
+    },
+    {
+      "slice": "S5 Usage no transcript holds gets its own row",
+      "state": "integrated",
+      "after": "S3 Cost from an editable price table",
+      "delivers": [
+        "10 table reconciles to Claude Code's count"
+      ],
+      "branch": "slice/run-analytics-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-run-analytics-s5",
+      "pr": 164
+    }
+  ],
+  "findings": [
+    "kept: P-F1 four ways to steer fixtures; delete --repo and PILOT_PROJECTS_DIR, main takes cwd, repo, projectsRoot (about -9)",
+    "kept: P-F2 four drifted copies of the analytics test helper become one that always uses a temp dir (about -50)",
+    "kept: P-F3 and QA-F3 cost-state read twice under two rules; one read, one rule, shape per the user's answer on itm_c51158cc22b4",
+    "kept: P-F4 costOf returns usd or null, unpriced computed once (-3)",
+    "kept: M1 bucketOf rank and longest-needle rule tested and recorded in S2 (+10)",
+    "kept: M2 modelUsage summed over two sessions tested (+8)",
+    "kept: M3 synthetic entries skipped, tested (+3)",
+    "kept: M4 negative cost prints -$ tested (+2)",
+    "kept: M5 meta first line, skipped line in a main session, session order tested (+6)",
+    "kept: QA-F1 strip the bracket suffix from cost-state model keys so they pair; base rate, assumed",
+    "kept: QA-F2 the live session has no cost-state at closing-report time; shape is the user's, asked on itm_c51158cc22b4",
+    "kept: nit slug checked against SLUG before it builds a path (+3)",
+    "kept: nits redundant sort, readRecord uses isObject, loadPrices returns the override path, newline rule documented (-3)",
+    "dropped: low-consequence surviving mutants (zero price, hour durations, header alignment, line/lines): message and format strings, tests would pin wording",
+    "dropped: QA taste nits (wide table wraps, 13 ids in the feature row, Total duration mixes wall and agent time): QA recommends no fix, the pilot row is already labelled a wall span"
+  ],
+  "next": "Merge PR #159 into main, post the closing report, tear down worktrees and slice branches",
+  "updatedAt": "2026-09-27T12:32:33.867Z"
+}

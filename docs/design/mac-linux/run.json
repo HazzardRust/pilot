@@ -1,0 +1,434 @@
+{
+  "slug": "mac-linux",
+  "feature": "A landing agent owns every merge",
+  "ticket": "itm_1d6f74c3861a",
+  "branch": "feat/mac-linux",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-mac-linux",
+  "qa": {
+    "branch": "qa/mac-linux",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-qa",
+    "url": "http://127.0.0.1:63752"
+  },
+  "artefact": "docs/design/mac-linux/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/mac-linux-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s1",
+      "pr": 830
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "branch": "slice/mac-linux-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s2",
+      "pr": 826
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "branch": "slice/mac-linux-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s3",
+      "pr": 828
+    },
+    {
+      "slice": "S4",
+      "state": "integrated",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/mac-linux-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s4",
+      "pr": 831
+    },
+    {
+      "slice": "S5",
+      "state": "integrated",
+      "after": [
+        "S4",
+        "S15"
+      ],
+      "branch": "slice/mac-linux-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s5",
+      "pr": 834
+    },
+    {
+      "slice": "S6",
+      "state": "integrated",
+      "branch": "slice/mac-linux-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s6",
+      "pr": 825
+    },
+    {
+      "slice": "S7",
+      "state": "integrated",
+      "after": [
+        "S3",
+        "S15"
+      ],
+      "branch": "slice/mac-linux-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s7",
+      "pr": 833
+    },
+    {
+      "slice": "S8",
+      "state": "integrated",
+      "branch": "slice/mac-linux-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s8",
+      "pr": 829
+    },
+    {
+      "slice": "S9",
+      "state": "integrated",
+      "after": [
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S8",
+        "S12"
+      ],
+      "branch": "slice/mac-linux-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s9",
+      "pr": 845
+    },
+    {
+      "slice": "mac-linux",
+      "state": "concluding: feat 1fa45bd2; walkthrough itm_29aca240baa2 signed; QA comment 6248432300 done; main 8e19ecc conflicts in 14 files (deck/procs.mjs, 10 deck tests, check-references, install-settings, audit-session-start); QA (pilot-mac-linux-qa) merging main, pushing feat, then gate2 at that sha naming the 3-OS gap (walk unproven); scratch deck pid 16532 port 63752 up",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9"
+      ],
+      "branch": "feat/mac-linux",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-mac-linux",
+      "pr": 819
+    },
+    {
+      "slice": "S10",
+      "state": "integrated",
+      "branch": "slice/mac-linux-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s10",
+      "pr": 832
+    },
+    {
+      "slice": "S11",
+      "state": "integrated",
+      "branch": "slice/mac-linux-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s11",
+      "pr": 838
+    },
+    {
+      "slice": "S12",
+      "state": "integrated",
+      "branch": "slice/mac-linux-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s12",
+      "pr": 839
+    },
+    {
+      "slice": "S13",
+      "state": "integrated",
+      "branch": "slice/mac-linux-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s13",
+      "pr": 841
+    },
+    {
+      "slice": "S14",
+      "state": "integrated",
+      "branch": "slice/mac-linux-s14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s14",
+      "pr": 840
+    },
+    {
+      "slice": "S15",
+      "state": "integrated",
+      "branch": "slice/mac-linux-s15",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s15",
+      "pr": 842
+    },
+    {
+      "slice": "S16",
+      "state": "integrated",
+      "branch": "slice/mac-linux-s16",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-s16",
+      "pr": 843
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S9"
+      ],
+      "branch": "fix/mac-linux-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-mac-linux-fix",
+      "pr": 850
+    }
+  ],
+  "findings": [
+    "kept: pathKey realpath costs ~190 us/key (probed 191 us here), so one sameRepo filter over the live 1677-item deck is ~0.45 s sync in the daemon; memoise successful realpaths in a bounded Map in pathKey (+6)",
+    "kept: both repoKey bodies are return pathKey(x); alias them and delete the join agreement test (~-12)",
+    "kept: scripts/pilot-branch.mjs re-exports onSearchPath for one test; delete it, point the test at platform.js (-5)",
+    "kept: privateDir's EPERM keep cites an A5 that architecture section 6 lacks; record A5 in section 6 and S7's Interface (onKept), as a record not a code change, since removing it would crash the daemon on a dir another user owns",
+    "kept: the platform-reads pin misses os.platform(), const { platform } = process and require('os').platform(); widen its regex (+1)",
+    "kept: security LOW, install-settings.mjs:131 backup loop has no bound; cap at 100 and throw, fail closed before the write (+2)",
+    "kept: security LOW, bump.mjs:43 realpathSync(argv[1]) throws ENOENT on a missing argv[1] at import; fall back to argv[1] (+1)",
+    "kept: install-command.mjs:39 const WINDOWS = isWindows() is the module constant L2 rejects (fundamentalist nit, QA F3); read isWindows() at each use (0)",
+    "dropped: QA F1, gate.yml also runs on PRs to feat/** and on labeled - the brief's all-os check on slice PRs needs it; spec 1 states what main gets, it bans nothing",
+    "dropped: security LOW, isInPluginCache through pathKey follows a link inside the plugin cache - intended (L3), needs write access to the user's own cache",
+    "dropped: security LOW, check-references stops a path at a backslash - a repo lint, not a boundary",
+    "dropped: privateDir at 14 call sites vs L6's named 3 - a move with no consequence today",
+    "dropped: mainGuard to a lib for bump/install-command - adds code, the two inline checks are correct",
+    "dropped: LEGACY_PROFILE name for uninstall's 'linux' - a rename at one call site",
+    "dropped: realpath once in the fixture tempDirs - touches every fixture user for -2 lines; per-test wraps are green on 3 OSes",
+    "dropped: killTree complexity 16 - two platform branches, readable as is"
+  ],
+  "next": "concluding: no gate2 → resume pilot-qa from qa refs to finish main merge, push feat, gate2 at that sha; signed → pilot landing; report names 3-OS CI once public. Yellow: lander co-pilot sent pause; successor from pilot-feat-lander/docs/design/lander/run.json. Queued: notifications-seen itm_99df897efcaa (031a89a9, 1 slice, #852). Planning empty. #783 landed, report itm_d049809c736a.",
+  "updatedAt": "2026-10-18T12:19:31.187Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "backslash escaping through bash heredocs and Python patch scripts cost four edit attempts; one silently did not apply, one corrupted a literal; `&` inside a background call returned at once",
+      "evidence": "S2 report, PR #826",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "backslashes lost writing files through bash heredocs and node -e; notifications.test.mjs failed at file level under full-suite load (not a named flake); gate-install.test.mjs copy fixture hard-codes ['scripts','deck'] so a new hooks/lib import breaks it",
+      "evidence": "S3 report, PR #828",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8's owned files left out scripts/uninstall.mjs though profileFor changes what uninstall finds; both reviewers flagged it; slice's Apple page did not support 'iCloud Drive', a second page was needed",
+      "evidence": "S8 report, PR #829",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "hidden-spawns scan bans every CommonJS require of child_process, found only by a 5-minute full suite; no host can run POSIX tests (WSL has no node, Docker engine down); Edit refused files read via Bash",
+      "evidence": "S4 report, PR #831",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1's interface trigger `pull_request: branches [main]` could never fire on a slice PR, so labelled evidence was impossible until A3; the all-os label did not exist; Edit refused already-read files while the suite ran",
+      "evidence": "S1 report, PR #830, run 39100117226",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the 500-log flake never reproduced in 128 loaded runs and 2 suites; integrate logs keep only the assertion, not deck.log, so the stray request's path could not be read; root cause is freePort releasing the port before the daemon binds it (deck/testUtils.mjs)",
+      "evidence": "S10 report, PR #832",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7's owned files did not cover every creator of the store and pilot-inbox; both reviewers found 7 more mkdir sites; no POSIX host to see a mode pin go red",
+      "evidence": "S7 report, PR #833",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 needed a stand-in claude on run.test.mjs's PATH (outside owned files), since run() now refuses the bare name on POSIX and the windows runner has no claude.exe",
+      "evidence": "S5 report, PR #834, run 39103524557",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a second co-pilot adopted the ticket while this one was live; S5 and S7 handed back to it, and both wrote rows; this one stood down",
+      "evidence": "S5 report naming co-pilot a2f6556b5e84be6f5; record rows S7, S11, S12 set by the other",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "after /clear the prior co-pilot's transcript file was 0 bytes while it was live, so liveness could not be read from the tasks dir; a successor was spawned and the two co-pilots overlapped for ~25 min before the first stood down",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "bash heredocs and node -e collapsed doubled backslashes in Windows path literals; switched to the Edit tool",
+      "evidence": "S11 report: three failed attempts on 'D:\\\\work\\\\x' patterns",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "bash heredocs collapsed \\n and \\S escapes in edits",
+      "evidence": "S12 report: three failed edits to procs.test.mjs and procs.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "two co-pilots overlapped on one feat worktree: the predecessor committed 1d4bf9b8 into a staged --no-commit S7 merge, the integrate's commit failed and its reset orphaned 1d4bf9b8 (S7 code mixed with S13/S14 docs)",
+      "evidence": "pilot integrate slice/mac-linux-s7: 'the commit failed'; 1d4bf9b8 on no branch; S13/S14 files recommitted as 40cab718",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a deck-written friction row carries a retired word and turns the repo-clean test red, blocking every integrate",
+      "evidence": "log C:/Users/Hazzard/.claude/pilot/logs/20261018T064702404Z-slice-mac-linux-s7.log: run.json:244:tasks, 1 retired word",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Python text-mode edits wrote CRLF on Windows and failed line-endings.test.mjs",
+      "evidence": "one full npm test run wasted; converted with sed",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the co-pilot's own S15 slice file quoted the retired word it was fixing, so feat was red at 247162a1 until S15 reworded it",
+      "evidence": "S15 #842 rewrote S15.md lines 12-14",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "4 of S14's 7 named failures were one root cause, an unresolved os.tmpdir() (8.3 short name on Windows, /var vs /private/var on macOS) handed out by the fixtures' tempDir",
+      "evidence": "S14 #840 report; reproduced with TEMP set to an 8.3 path",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "file edits through a python heredoc in Git Bash and through sed -i turned \\\\ into \\ inside regexes, twice",
+      "evidence": "S13 #841: pilot-agents.test.mjs:638 became a SyntaxError, check-references.mjs:64 lost an escape",
+      "size": 2
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "ran git checkout of a baseline sha inside the implementer's worktree while the implementer's gate was queued",
+      "evidence": "S16 #843 report; the gate ran after the switch back",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "changed the product sort before grepping for the tests pinning tie order",
+      "evidence": "S16 7f3e5c5a broke 9 thread-nav tests; reverted at 7fa0a4e2",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a Linux-only failure came from a test leaking a process.platform stub into a later test, visible only when the whole file runs on Linux; the brief named two causes and not this third",
+      "evidence": "S11 #838 fix 02e1599a; WSL run alone 409, whole file 400",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the artefact's F2 line list of process.platform reads was stale by integrate time: 14 on the tip, not 20; deck/gc.mjs had none and scripts/uninstall.mjs held one no slice owned",
+      "evidence": "S9 #845 fact sheet; seam change recorded at 7de62366",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the review worktree had no node_modules and the brief named no npm ci, so diff coverage was not measured; Stryker cannot run on this suite because source-text pins fail under instrumentation",
+      "evidence": "evidence runner: 'node_modules missing: run npm ci'; 'failed tests in the initial test run'",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "added slices S10-S16 carry no Tests or Rewrite check lines, so their tests could not be judged against an interface",
+      "evidence": "check-slices: 15 errors",
+      "size": 1
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "the brief named three files but the same diff also routed isInPluginCache through pathKey; reviewed it too",
+      "evidence": "install-settings.mjs:781",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the base-merge fix implementer died mid-task on an API error (ENOTFOUND) after committing the merge and the README line, before the artefact line, gate and push",
+      "evidence": "fix/mac-linux-base at 61920bb0, clean, unpushed",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "daemon-replace.test.mjs:323 timed out at 30 s under load from other worktrees' gates; 260 ms alone; not a named flake",
+      "evidence": "QA local gate at 51293b26",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the user's answer and its correction seconds later crossed in flight; the implementer got three briefs on one line",
+      "evidence": "itm_d4795a080ae2",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a python3 heredoc conflict-resolution script with a || node fallback committed the merge with conflict markers still in the file; reset and redone",
+      "evidence": "fix/mac-linux-base merge, caught from sed output before push",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the gate's census stopped QA's scratch deck started from the same worktree as a leak",
+      "evidence": "npm test in pilot-mac-linux-qa: 'stopped 23756 daemon ... --leash-dir ...pilot-mac-linux-qa'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck_status feature is stored per pilot session run, so each co-pilot's write renames the other tickets' records; mac-linux's run.json read 'A landing agent owns every merge'",
+      "evidence": "deck/store-runs.mjs:590",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Python text-mode rewrite on Windows turned LF to CRLF in platform.js; caught only by the full suite's line-endings test",
+      "evidence": "PR #850, extra commit 9eeb2bb0",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the all-os run on #850 never started: GitHub refused the jobs for failed account payments or the spending limit",
+      "evidence": "run 39115791182, all three jobs failed in 2-4 s with no steps",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "seeding fixture threads on a scratch deck has no documented route; /api/tool and deck_post argument rules found by trial",
+      "evidence": "4 refused posts",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "the deck stores a run's feature name per pilot session, so a second co-pilot's deck_status renames other tickets' run.json",
+      "evidence": "deck/store-runs.mjs:590",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "GitHub Actions refused every job on account billing; no 3-OS CI for the fix round",
+      "evidence": "run 39115791182, 3 jobs failed in 2-4 s with no step",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "the gate census kills a scratch deck leashed to the gate's worktree",
+      "evidence": "stopped 23756 daemon --leash-dir pilot-mac-linux-qa",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "seeding fixture threads on a scratch deck has no documented route",
+      "evidence": "4 refused posts to /api/tool",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "the co-pilot's hand-back said QA was still live while its completion notice said no live children; the pilot spawned a second QA on the ticket and stopped it when the first reported",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "pilot integrate --default, the step that makes a gate2 postable, is refused by the auto-mode classifier for QA and the pilot alike; the user runs it by hand every time",
+      "evidence": "denials on #783 and #819, Merge Without Review",
+      "size": 3
+    }
+  ]
+}

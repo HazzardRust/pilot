@@ -1,0 +1,4 @@
+{
+  "slug": "beta",
+  "findings": ["kept: QA re-ran spec/clock.spec.js until it passed twice before calling the suite green, unasked"]
+}

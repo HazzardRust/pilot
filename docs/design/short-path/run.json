@@ -1,0 +1,200 @@
+{
+  "slug": "short-path",
+  "feature": "A small ticket takes the short path",
+  "ticket": "itm_3f18af072438",
+  "branch": "feat/short-path",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-short-path",
+  "qa": {
+    "branch": "qa/short-path",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-short-path",
+    "url": "http://127.0.0.1:55970"
+  },
+  "artefact": "docs/design/short-path/architecture.md",
+  "slices": [
+    {
+      "slice": "short-path",
+      "state": "gate2 itm_8c49d31b5a67 pressed; NOT landed: measure-prompt.test.mjs conflicts with pilot c1836f8 (held-handoff landed first); lander due",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "branch": "feat/short-path",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-short-path",
+      "pr": 885
+    },
+    {
+      "slice": "S1 The Tickets tab marks a short-path ticket",
+      "state": "integrated at 2c88c8ef (#930 merged)",
+      "branch": "slice/short-path-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-short-path-s1",
+      "pr": 930
+    },
+    {
+      "slice": "S2 The lane's line tells the pilot to build a short ticket itself",
+      "state": "integrated at 2c819932 (#931 merged)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/short-path-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-short-path-s2",
+      "pr": 931
+    },
+    {
+      "slice": "S3 A short-path gate2 carries its verdicts, gate and walkthrough",
+      "state": "integrated at 6b3ae894 (#932 merged)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/short-path-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-short-path-s3",
+      "pr": 932
+    },
+    {
+      "slice": "S4 The pilot runs the short path",
+      "state": "integrated at 7aa62f32 (#933 merged)",
+      "after": [
+        "S2",
+        "S3"
+      ],
+      "branch": "slice/short-path-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-short-path-s4",
+      "pr": 933
+    },
+    {
+      "slice": "S5 The plugin version bumps by a patch (added)",
+      "state": "integrated at 52c8c6cb (#934 merged)",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/short-path-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-short-path-s5",
+      "pr": 934
+    }
+  ],
+  "findings": [
+    "kept: F1 store-items.mjs:134 restates `<= SHORT_PATH_MAX`; call isShortPath({ plan: detail }), drop the import, un-export SHORT_PATH_MAX (-2)",
+    "kept: F2 short-path.test.mjs restate() writes the store file; sign the plan through postItem/SIGN_OFF/resolveItem (~0)",
+    "kept: F3 pilot.md:144 'they count in yellow' reads as the skipped agents; put 'in yellow' on the implementer clause (net tokens <= 0)",
+    "dropped: N1 Number.isInteger guard; `null <= 2` is true, so the guard is not dead (re-raised for items.mjs's 799/800 headroom; still dropped)",
+    "kept: N2 deck.css .short-path dead margin entry and duplicated colour rule (-1)",
+    "kept: N3 short-path-wording ADR README assertion duplicates adr-index.test.mjs:173 (-1)",
+    "dropped: N4 moving the mark into renderPlan; a move with no consequence",
+    "kept: N5 record in ADR 0168 that an added slice past 2 is checked against the plan's count (A3) (+1 doc)",
+    "kept: QA F2 the gate1 thread shows no Surface row; GATE_ROWS gains surface (+1, a test)",
+    "dropped: QA F1 S4's six pilot.md removals; each held elsewhere or informational, recorded in S4.md",
+    "dropped: QA F3 a short-path gate2's walkthrough id is not resolved; no gate2 resolves it, and A2 guards a forgotten one"
+  ],
+  "next": "spawn pilot-lander with gate2 itm_8c49d31b5a67: resolve measure-prompt.test.mjs in C:/Users/Hazzard/Projects/pilot-land-short-path (pin = measured), any gate fix amended INTO the merge commit (resume() reuses a kept worktree only when HEAD is the merge itself), npm ci + npm test once, Land again; then closing report (body required) and prune",
+  "updatedAt": "2026-10-20T13:32:47.730Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "short-path: 4 lane-refusal pins duplicate one literal string across deck/test and hooks/test; a gate flag is stored only when true (store-core.mjs:536), undocumented at GATE1_FIELDS; a 115-line heredoc failed in Bash",
+      "evidence": "short-path architect report",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck-token: pilot integrate --default in the QA worktree (branch qa/deck-token) prints mergeable UNKNOWN, since it finds the PR by the current branch; only the feat worktree can print the gate2's clean line",
+      "evidence": "QA report; two runs",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1's Files-owned omits deck/test/facades.test.mjs, which pins items.mjs's export list; slice file says renderTicketRow is tested directly but it is private (tested via renderHomePage); npm test prints no single summary line",
+      "evidence": "S1 report; first npm test failed facades.test.mjs deepStrictEqual",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: a scratch deck offers no cheap way to seed a planted ticket, so pilot wait's yellow line could not be shown live (lanesOf on the store file was read instead); npm test ends with no closing banner a wait loop can key on",
+      "evidence": "S2 report; /api/record refusal null on scratch deck after writing deck.json",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: a new deck_post argument moves three measured prompt pins (pilot +14, architect +14, QA +12.5) the slice file did not own and its Prohibited line forbade; architecture missed proposal.test.mjs:20's 1-slice gate1; store-items.mjs hit facades' 800-line bar; three 5-minute npm test runs; the implementer first misread its own pin failures as base failures",
+      "evidence": "S3 report; PR #932",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: agents/pilot.md had zero prompt headroom for a slice whose job is prose there; six removals paid for it, and two older wording pins (principles-sweep, ticket-states) broke on the first draft, costing two extra measure-and-test loops; three MEDIUM review findings left to the deck's refusals rather than prose",
+      "evidence": "S4 report; PR #933 pilot share 11469.25 vs pin 11469.75",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: a red step for a version bump is unobservable by stash, since the stash reverts the bump and the pins together",
+      "evidence": "S5 report; PR #934",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "short-path: the evidence runner ran the 5-minute full gate and returned no table inside the fundamentalist's run, so the evidence pass was not run; check-slices flags S5.md:20 with a message that never names the field it wanted",
+      "evidence": "fundamentalist report on #885 at 52c8c6cb",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "short-path fix round: a 0.9.5 client run from the pilot-short-path-fix worktree asked the user's 0.9.4 deck on :4321 to exit and replaced it with one demanding deck.secret; every installed-plugin deck call failed 401 until main restarted the deck; deck_status sent since 18:30 lost",
+      "evidence": "main's message; 'a session on 0.9.5 asked this 0.9.4 deck to exit'",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "short-path: the evidence runner ran the 5-minute full gate and returned no table inside the fundamentalist's run; check-slices flags S5.md:20 without naming the field",
+      "evidence": "fundamentalist report on #885 at 52c8c6cb",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "short-path: npm test's teardown reaps daemons leashed to the worktree it runs in, so it stopped QA's scratch deck mid-pass; QA restarted it from a cwd outside the worktree",
+      "evidence": "QA report part 1: 'stopped 15968 … --leash-dir …pilot-qa-short-path'",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "short-path: its report misrouted to main; diff coverage never ran (c8 npm test fails in a scratch HOME on deck.secret and .zshrc tests); mutation stopped at the dry run because instrumented copies trip facades.test's 800-line bar",
+      "evidence": "runner af875726e49072e14 relayed by main; real files 799/799/790 lines",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "short-path: planting a gate1 or gate2 on a scratch deck needs a real git repo with branch, committed artefact, origin/pilot, origin/HEAD and a run record: 7 refusals before the first fixture gate1 posted; a landing press against the QA worktree could reach the real origin, so QA built a fixture repo with a local bare origin",
+      "evidence": "QA hand-back at 52c8c6cb",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "short-path fix round: `node bin/pilot.mjs deck --help` from the worktree started a deck on :4321 instead of printing help, replacing the user's 0.9.4 deck; signing a gate1 on a scratch deck needs the page's own press (about 10 calls); npm test waited ~10 min for a slot behind other worktrees' gates; one compound git commit was refused by auto mode, a plain one passed",
+      "evidence": "fix-round report, PR #935",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "short-path: QA's first full-suite run at 5cccee3a and its scratch deck pid 15448 were killed from outside at ~18:44 UTC with no log line; rerun clean",
+      "evidence": "QA message: node --test exited 1 after ~30 tests, no failure line",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "a second evidence-runner report (~6k tokens) misrouted to main and was relayed by hand",
+      "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "a 0.9.5 crew worktree replaced the user's deck on :4321 (deck-secret 401s for every 0.9.4 client); killed and restarted from the installed plugin by hand",
+      "size": 4
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "a trim committed on top of the merge was discarded: sync.mjs resume() reuses the kept worktree only when HEAD is the merge commit; the fix must be amended into the merge. Each re-landing also wiped node_modules",
+      "evidence": "held-handoff needed three Land again; landed c1836f8",
+      "size": 3
+    }
+  ]
+}

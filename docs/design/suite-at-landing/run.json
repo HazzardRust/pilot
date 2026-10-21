@@ -1,0 +1,396 @@
+{
+  "slug": "suite-at-landing",
+  "feature": "The suite runs once per landing",
+  "ticket": "itm_82f39930287e",
+  "branch": "feat/suite-at-landing",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-suite-at-landing",
+  "artefact": "docs/design/suite-at-landing/architecture.md",
+  "slices": [
+    {
+      "slice": "suite-at-landing",
+      "state": "gate2 itm_995aef3419a5 posted at 1bebfc57 (#882 draft; on pilot at 1125a1e); QA done, walkthrough itm_5a59886809d7 signed",
+      "after": [
+        "S4",
+        "S7",
+        "S8",
+        "S9",
+        "S10"
+      ],
+      "branch": "feat/suite-at-landing",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-suite-at-landing",
+      "pr": 882
+    },
+    {
+      "slice": "S1 test:changed runs the changed tests and their importers",
+      "state": "integrated into feat/suite-at-landing at b13555e1 (4200 pass, 0 fail); PR #886",
+      "branch": "slice/suite-at-landing-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-suite-at-landing-s1",
+      "pr": 886
+    },
+    {
+      "slice": "S2 Import chains, prose pins and whole-tree tests",
+      "state": "integrated into feat/suite-at-landing at e31e2b00 (4248 pass, 0 fail); PR #890; seam note in S2.md",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/suite-at-landing-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-suite-at-landing-s2",
+      "pr": 890
+    },
+    {
+      "slice": "S3 Fallback to full with the reason",
+      "state": "integrated into feat/suite-at-landing at 046ac377 (4262 pass, 0 fail; the integrate line now carries its scope: full suite: scripts/select-tests.mjs changed); PR #895",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/suite-at-landing-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-suite-at-landing-s3",
+      "pr": 895
+    },
+    {
+      "slice": "S4 A selected run takes no gate slot",
+      "state": "integrated into feat/suite-at-landing at 82ea8b6c (4235 pass, 0 fail); PR #887",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/suite-at-landing-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-suite-at-landing-s4",
+      "pr": 887
+    },
+    {
+      "slice": "S5 testCommand picks selected or full",
+      "state": "integrated into feat/suite-at-landing at 2b724642 (4241 pass, 0 fail, on the re-run); PR #888",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/suite-at-landing-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-suite-at-landing-s5",
+      "pr": 888
+    },
+    {
+      "slice": "S6 Integrate and sync run the selection",
+      "state": "integrated into feat/suite-at-landing at c1585c9d (4253 pass, 0 fail); PR #894",
+      "after": [
+        "S5"
+      ],
+      "branch": "slice/suite-at-landing-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-suite-at-landing-s6",
+      "pr": 894
+    },
+    {
+      "slice": "S7 The landing runs the full suite once",
+      "state": "integrated into feat/suite-at-landing at 3ca9f710 (the first selected integrate: 1141 pass, 0 fail; selected 83 of 449 test files since 046ac37; S7's own full run 4256 pass, 0 fail); PR #896",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/suite-at-landing-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-suite-at-landing-s7",
+      "pr": 896
+    },
+    {
+      "slice": "S8 The crew's gate steps run the selection",
+      "state": "integrated into feat/suite-at-landing at f70e726c (4253 pass, 0 fail); PR #892",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/suite-at-landing-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-suite-at-landing-s8",
+      "pr": 892
+    },
+    {
+      "slice": "S9 Docs, help and ADR 0166",
+      "state": "integrated into feat/suite-at-landing at d1a0ae8a (4251 pass, 0 fail); PR #891",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/suite-at-landing-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-suite-at-landing-s9",
+      "pr": 891
+    },
+    {
+      "slice": "S10 The selector replays the last slice merges",
+      "state": "integrated at ea4560ba; PR #897; 4268 pass, 0 fail (full, gate.mjs changed)",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/suite-at-landing-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-suite-at-landing-s10",
+      "pr": 897
+    },
+    {
+      "slice": "S11 Helper modules under test/lib are not tests (added)",
+      "state": "integrated into feat/suite-at-landing at 424fa6af (4247 pass, 0 fail); PR #893",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/suite-at-landing-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-suite-at-landing-s11",
+      "pr": 893
+    },
+    {
+      "slice": "S12 Spawns over the ceiling name their test (added)",
+      "state": "integrated",
+      "after": [
+        "S10"
+      ],
+      "branch": "slice/suite-at-landing-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-suite-at-landing-s12",
+      "pr": 900
+    },
+    {
+      "slice": "Fix round (principles)",
+      "state": "integrated into feat/suite-at-landing at 1387c8a5 (4270 pass, 0 fail; replay median 46%); PR #899",
+      "after": [
+        "S10",
+        "S11"
+      ],
+      "branch": "fix/suite-at-landing-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-suite-at-landing-principles",
+      "pr": 899
+    }
+  ],
+  "findings": [
+    "kept: R1b replay skips full-trigger merges; spec 8 bar re-baselined to 46% (was 60% proxy), user answer (a) itm_af1d3d91c480",
+    "dropped: reviewer LOW R9 marker 'selected' becomes NaN in takeSlot; works since checks only test presence, nested full fallback in a selected suite only arises in tests",
+    "dropped: reviewer LOW R1b skip matches the reason text; a trigger field widens the interface",
+    "kept: N2b docs test :48 pins '| proposed |' in the ADR index; goes with S12's round"
+  ],
+  "next": "Gate 2 itm_995aef3419a5 awaits the press; on it spawn pilot-lander with that id; Not yet: act on the words. Yellow: co-pilot on one-integration-line. Red: crew-tests-behaviour (itm_3a521d90b85f) planning.",
+  "updatedAt": "2026-10-19T09:33:16.366Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 made two edits after its full npm test began and re-ran only the slice tests; pilot integrate's full run covers it",
+      "evidence": "S4 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: the typescript reviewer's own run of three verification files timed out at 120 s while the implementer's full gate ran beside it; it confirmed only test-command.test.mjs",
+      "evidence": "S5 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 pushback: two reviewers on a 60-line diff whose only shell composition is a hex sha; and one live child at a time doubled the review wall-clock",
+      "evidence": "S5 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot ready refused: the deck has no secret at ~/.claude/pilot/deck.secret, though deck_status over MCP still answers; the DAG was read from the slice files instead",
+      "evidence": "pilot ready --ticket itm_82f39930287e --slots 7 after S4's integration",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate slice-s5 merged red once on gate-census 'the leak fixture is red and names it': the nested fixture gate could not read the process table (powershell.exe not found) while three other lanes ran gates; S4's integration and S5's own full run passed the same test",
+      "evidence": "C:/Users/Hazzard/.claude/pilot/logs/20261019T055934648Z-slice-suite-at-landing-s5.log line 3360",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: TEST_GLOB (test/**/*) treats helpers under scripts/test/lib as test files; they count in the total and can be selected and run as empty test files (base behaviour; raised to main)",
+      "evidence": "S2 report; census returned scripts/test/lib/line-endings.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "S2: about 18 tests import via createRequire(import.meta.url)('../../hooks/...'), which A1's planned regex would have missed; only the reviewer caught it",
+      "evidence": "S2 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2's review-fix commit had no second review (one review per slice, tight lane budget)",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: a background npm test launch returned at once with the gate still running; the agent waited on gate.log in the worktree instead",
+      "evidence": "S9 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8: QA's prompt pin has 0 headroom, so new wording needed five measure rounds of trims; the pin counts only the body, not the frontmatter, and nothing says so",
+      "evidence": "S8 report; measure-prompt pilot-qa headroom 0",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8: implementer-steps.test.mjs anchors on a step heading's exact words ('3. The full test suite'), so rewording the step meant one line outside the slice",
+      "evidence": "scripts/test/implementer-steps.test.mjs:46",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8 edited during its own gate run and re-ran the full suite, about 5 minutes lost",
+      "evidence": "S8 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "S8 pushback: '<pilot tip>' in the lander prompt is never defined (a wrong ref narrows the selection; the landing's full run still catches it); the implementer's ref 'origin/feat/<slug>' assumes the remote is origin (elsewhere it cannot resolve and falls back to full)",
+      "evidence": "S8 report; slices/S8.md",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11: a shell sed -i and a Python heredoc each cost a retry on Windows; the final edits went through Edit and node",
+      "evidence": "S11 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the S11 verdict named the added spec line as 7, but architecture.md already had lines 7 and 8; the implementer numbered it 9",
+      "evidence": "S11 report; architecture.md §2",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: a run that takes no slot inherits the parent's PILOT_GATE_SLOT, so four tests expecting '-' failed only under the gate; one 4.5-minute gate run lost",
+      "evidence": "S6 report, first gate run at 4e86bd36",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: the live check needed a scratch clone plus npm ci before bin/pilot.mjs would load (deck/client.mjs imports @modelcontextprotocol/sdk)",
+      "evidence": "S6 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: a node -e fixture with escaped quotes inside package.json scripts failed through npm's shell on Windows; a committed run.mjs fixed it",
+      "evidence": "S7 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the hand-back enforcer forced the co-pilot's hand-back while the S10 implementer was live, against the definition's never-end-a-turn-with-a-child-live rule; TaskOutput was again not loadable, so every child wait was a Monitor on git/GitHub state",
+      "evidence": "handback-send-enforce notice during S10; ToolSearch select:TaskOutput found nothing",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: the replay test's fixture merges pushed the gate's spawn count to 10922, over the 10904 ceiling; the ceiling was raised to 11000 (0.7% headroom left), and the gate's 'spawns over N' names no test",
+      "evidence": "S10 report; scripts/gate.mjs SPAWN_CEILING",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "S10's 'at most 60%' expectation did not hold: --replay 20 on pilot gives a median of 71% because full-trigger merges count as the whole suite",
+      "evidence": "PR #897 body, Live replay",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the context advisory landed exactly at the step that needs a new child (the fundamentalist), so the run pays a hand-off for one spawn",
+      "evidence": "227k notice after S10's integrate",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "child waits were bounded PR polls and Monitors throughout; TaskOutput never loadable",
+      "evidence": "ToolSearch select:TaskOutput empty",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "diff mutation could not run: select-tests.test.mjs:135 treeWalkers needs a real git checkout, the Stryker sandbox exits 128",
+      "evidence": "stryker dry run failed at select-tests.test.mjs:135"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "diff coverage could not run: the coverage cell's HOME/PILOT_DECK_DIR redirect turns deck tests red",
+      "evidence": "NO_DECK_SECRET and .zshrc EISDIR under c8; diff-cover never started"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "knip with no config is unusable",
+      "evidence": "509 unused files, 194 unused exports reported"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the evidence runner took 20 minutes",
+      "evidence": "runner duration reported by the fundamentalist",
+      "size": 20
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "none; clean pass on S6/S10 in 72 s",
+      "evidence": "Verdict: pass"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "every fix touching gate.mjs or select-tests.mjs forces the ~4 min full suite, both being fallback triggers",
+      "evidence": "full suite: scripts/gate.mjs changed; 4270 pass, 0 fail",
+      "size": 4
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "Forced hand-back while a child (S12 implementer) was still running; enforcer asked twice after the first report was marked delivered",
+      "evidence": "two handback-send-enforce prompts on the same report",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "S12 title in slices/S12.md differs from the deck's row name, so the deck refused the row",
+      "evidence": "file: 'The spawn ceiling names the tests that spent it'; deck: 'Spawns over the ceiling name their test'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot budget refuses to run in the feat worktree",
+      "evidence": "'has no session on this deck'",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "co-pilot hand-back report read twice (re-sent by the enforcer)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "reported to main instead of the co-pilot; did not re-run review after fixing a BLOCK",
+      "evidence": "main relayed PR #900 report; typescript-reviewer BLOCK on 72417042, fix 7b4f60c6 unreviewed",
+      "size": 2
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "re-review needed because the implementer fixed a BLOCK without re-requesting it",
+      "evidence": "PR #900 body: BLOCK on 72417042, APPROVE on 7b4f60c6",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot land, run as the record's pre-QA step, landed feat on pilot and marked #882 ready before Gate 2; restored draft by hand",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "gh pr edit / gh api PATCH denied by the auto-mode classifier at sign-off; PR body and QA comment edits became a human step",
+      "evidence": "itm_2ce6ffbde9e9",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "pilot integrate --default denied (Unrequested Commit); moot since the feature had already landed",
+      "evidence": "itm_c01346361c0a",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "test:changed has no list/dry-run mode; selections had to be run or scripted to be seen",
+      "evidence": "QA report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "gate slot directory is machine-wide in os.tmpdir; the spec 4 probe needed a TEMP override",
+      "evidence": "QA report",
+      "size": 1
+    }
+  ]
+}

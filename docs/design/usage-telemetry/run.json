@@ -1,0 +1,160 @@
+{
+  "slug": "usage-telemetry",
+  "feature": "Usage telemetry",
+  "branch": "feat/usage-telemetry",
+  "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-usage-telemetry",
+  "artefact": "docs/design/usage-telemetry/architecture.md",
+  "slices": [
+    {
+      "slice": "Feature",
+      "state": "artefact drafted (d5a570e), spec frontier with the user",
+      "branch": "feat/run-analytics",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-run-analytics",
+      "pr": 159
+    },
+    {
+      "slice": "S1 Walking skeleton: a line of totals every half hour",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2",
+        "4",
+        "8",
+        "9"
+      ],
+      "branch": "slice/usage-telemetry-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s1",
+      "pr": 177
+    },
+    {
+      "slice": "S2 The line carries models, repositories and the snapshot",
+      "state": "integrated",
+      "after": "S1 Walking skeleton: a line of totals every half hour",
+      "delivers": [
+        "1",
+        "3",
+        "5"
+      ],
+      "branch": "slice/usage-telemetry-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s2",
+      "pr": 178
+    },
+    {
+      "slice": "S3 Restarts leave no gap and a tick never stalls the deck",
+      "state": "integrated",
+      "after": "S2 The line carries models, repositories and the snapshot",
+      "delivers": [
+        "6",
+        "7"
+      ],
+      "branch": "slice/usage-telemetry-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s3",
+      "pr": 179
+    },
+    {
+      "slice": "S4 A closing report is data in the run record",
+      "state": "integrated",
+      "delivers": [
+        "11"
+      ],
+      "branch": "slice/usage-telemetry-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s4",
+      "pr": 176
+    },
+    {
+      "slice": "S5 The audit states the measured spend",
+      "state": "integrated",
+      "after": "S3 Restarts leave no gap and a tick never stalls the deck",
+      "delivers": [
+        "10"
+      ],
+      "branch": "slice/usage-telemetry-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s5",
+      "pr": 180
+    },
+    {
+      "slice": "S6 The audit carries the latest runs' figures",
+      "state": "integrated",
+      "after": "S5 The audit states the measured spend",
+      "delivers": [
+        "10"
+      ],
+      "branch": "slice/usage-telemetry-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s6",
+      "pr": 181
+    },
+    {
+      "slice": "S7 The audit cites the closing reports",
+      "state": "integrated",
+      "after": "S6 The audit carries the latest runs' figures",
+      "delivers": [
+        "10",
+        "12"
+      ],
+      "branch": "slice/usage-telemetry-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s7",
+      "pr": 183
+    },
+    {
+      "slice": "S8 The log can be turned off",
+      "state": "integrated",
+      "after": "S3 Restarts leave no gap and a tick never stalls the deck",
+      "delivers": [
+        "13"
+      ],
+      "branch": "slice/usage-telemetry-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s8",
+      "pr": 182
+    },
+    {
+      "slice": "feature Usage telemetry",
+      "state": "ready, Gate 2 signed 2026-09-29",
+      "delivers": [
+        "1-13"
+      ],
+      "branch": "feat/usage-telemetry",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-usage-telemetry",
+      "pr": 175
+    },
+    {
+      "slice": "S9 Spend from a removed worktree counts under its repository",
+      "state": "integrated",
+      "after": "S8 The log can be turned off",
+      "delivers": [
+        "3"
+      ],
+      "branch": "slice/usage-telemetry-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s9",
+      "pr": 186
+    },
+    {
+      "slice": "Merge main: the workflow now lives in the agent file",
+      "state": "integrated",
+      "after": "S9 Spend from a removed worktree counts under its repository",
+      "branch": "slice/usage-telemetry-merge-main",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-merge-main",
+      "pr": 188
+    }
+  ],
+  "findings": [
+    "kept: F1 telemetry.mjs:145 window start advances only when the append succeeded; a failed append left a permanent gap (spec 6)",
+    "kept: F2 test, the second window after on starts at the first's to",
+    "dropped: F3 replace async repoOf with runs.repoOf: L6 locks async git, and a subdirectory cwd would key itself",
+    "kept: F4 delete S1's failed-append test, duplicated by S3's (-21)",
+    "kept: F5 export costOfAgents and call it from audit-spend (L9, one copy)",
+    "kept: F6 test, an entry exactly on the window's end counts in the next line only",
+    "kept: F7 test, the cap of three runs is pinned",
+    "kept: F8 test, a log of only torn lines gives spend null",
+    "dropped: F9 delete isFriction: the approved S7 slice names malformed reports, and the store file outlives versions",
+    "kept: F10 a failed repo resolve is not cached, so a timeout does not mis-key a directory for the daemon's life",
+    "dropped: F11 from the fix round, over the limit: spend of removed worktrees keys itself, 9.6% of 7 days' tokens; asked of the user",
+    "kept: F12 tests for the inversion clamp, onAt < due and never the same boundary twice",
+    "kept: F13 rename runs' finishedAt to updatedAt; it is not a finish date",
+    "kept: N4 git call in audit-spend gets a 10 s timeout",
+    "kept: N6 and U3 tests: report validation bounds; a snapshot file holding null logs malformed",
+    "dropped: N1 N2 N3 N5 N7 N8 N9 nits: test-only extractions or one-line removals whose comment earns its line",
+    "dropped: N10 runs are absent from an audit when the log is off: accepted, measured needs spend"
+  ],
+  "next": "post the closing report, set finished, tear down the slice worktrees; the merge of PR #175 is the user's",
+  "updatedAt": "2026-09-29T06:43:07.717Z"
+}

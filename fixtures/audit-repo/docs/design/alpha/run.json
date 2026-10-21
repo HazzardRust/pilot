@@ -1,0 +1,4 @@
+{
+  "slug": "alpha",
+  "findings": ["kept: the implementer re-ran spec/clock.spec.js three times before trusting its red, unasked"]
+}

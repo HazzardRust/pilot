@@ -1,0 +1,60 @@
+{
+  "slug": "install-allow-land",
+  "feature": "Handoff failed asks for confirmation",
+  "ticket": "itm_d56afbf23351",
+  "branch": "feat/install-allow-land",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-install-allow-land",
+  "artefact": "docs/design/install-allow-land/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The install allows the pilot's merge commands",
+      "state": "integrated at 8b2db0a4",
+      "delivers": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "branch": "slice/install-allow-land-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-install-allow-land-s1",
+      "pr": 460
+    },
+    {
+      "slice": "S2 The merge commands read the test command from the repository",
+      "state": "integrated at 94c20298",
+      "delivers": [
+        "6"
+      ],
+      "branch": "slice/install-allow-land-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-install-allow-land-s2",
+      "pr": 458
+    },
+    {
+      "slice": "install-allow-land",
+      "state": "in QA; walkthrough itm_905b2760de27 posted at b12b822a",
+      "branch": "feat/install-allow-land",
+      "pr": 455
+    },
+    {
+      "slice": "The install allows the pilot's merge commands",
+      "state": "red: walkthrough itm_905b2760de27 posted at b12b822a; #455 draft; waits for the user",
+      "branch": "feat/install-allow-land",
+      "pr": 455
+    }
+  ],
+  "findings": [
+    "kept: F1 integrate rule never matches `pilot --dir <wt> integrate`; pilot.md:386 becomes `cd \"<worktree>\" && pilot integrate ...`",
+    "kept: F2 assert merge-step notes exactly (tests 1, 2, 4)",
+    "kept: F3 sync test for the no-test-command refusal",
+    "kept: F4 S2 Interface as built recorded in S2.md",
+    "kept: N1 drop test-command test 3's integrate halves",
+    "dropped: N2 shared rule-list step; outside the diff, L4",
+    "dropped: N3 pilotMerge option; L5 locks it",
+    "kept: N4 sync resolves the test command in the merged tree",
+    "kept: N5 rename integrate.test's --test test",
+    "kept: N6 INSTALL.md sync guarded, ADR 0110 pilot.test wording, INSTALL wrap"
+  ],
+  "next": "Red, parked behind green by the user. When taken: walkthrough itm_905b2760de27 (step 1 writes the real settings.json with backup; last step is the feature's own pilot land); resume QA (pilot-qa-install-allow-land) with replies; gate2 on #455 at tip naming A-S1, A-S2, A-S2b, A-Q4.",
+  "updatedAt": "2026-10-09T15:54:35.343Z"
+}

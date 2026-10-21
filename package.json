@@ -1,0 +1,32 @@
+{
+  "name": "pilot",
+  "version": "0.9.5",
+  "private": true,
+  "description": "Pilot Deck Claude Code: pilot orchestration and its deck.",
+  "license": "MIT",
+  "bin": {
+    "pilot": "./bin/pilot.mjs"
+  },
+  "author": "HazzardRust",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HazzardRust/pilot.git"
+  },
+  "engines": {
+    "node": ">=22.8.0"
+  },
+  "scripts": {
+    "test": "node scripts/gate.mjs",
+    "test:changed": "node scripts/gate.mjs",
+    "test:quiet": "node scripts/gate.mjs --test-reporter=./scripts/quiet-reporter.mjs",
+    "adr-index": "node scripts/adr-index.mjs",
+    "bump": "node scripts/bump.mjs",
+    "coverage": "node scripts/gate.mjs --experimental-test-coverage --test-coverage-include=\"deck/**\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0"
+  },
+  "optionalDependencies": {
+    "node-pty": "1.1.0"
+  }
+}

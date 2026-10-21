@@ -1,0 +1,92 @@
+{
+  "slug": "security-reviewer",
+  "feature": "Security reviewer, called automatically",
+  "ticket": "itm_b26f9ce833c9",
+  "branch": "feat/security-reviewer",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-security-reviewer",
+  "artefact": "docs/design/security-reviewer/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Reviewers line, architect and implementer wording",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2",
+        "7"
+      ],
+      "branch": "slice/security-reviewer-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-security-reviewer-s1",
+      "pr": 413
+    },
+    {
+      "slice": "S2 The reviewer installs nothing",
+      "state": "integrated",
+      "delivers": [
+        "5"
+      ],
+      "branch": "slice/security-reviewer-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-security-reviewer-s2",
+      "pr": 414
+    },
+    {
+      "slice": "S3 The reviewer checks agent configuration",
+      "state": "integrated",
+      "after": "S2 The reviewer installs nothing",
+      "delivers": [
+        "6"
+      ],
+      "branch": "slice/security-reviewer-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-security-reviewer-s3",
+      "pr": 416
+    },
+    {
+      "slice": "S4 Integration and the fundamentalist call it when a slice did not",
+      "state": "integrated",
+      "after": "S1 Reviewers line, architect and implementer wording",
+      "delivers": [
+        "3",
+        "4"
+      ],
+      "branch": "slice/security-reviewer-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-security-reviewer-s4",
+      "pr": 415
+    },
+    {
+      "slice": "security-reviewer",
+      "state": "in QA: walkthrough itm_3ffe1a36824d posted at 26075401 (2704 pass); draft PR #408",
+      "branch": "feat/security-reviewer",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-security-reviewer",
+      "pr": 408
+    },
+    {
+      "slice": "Fix round: QA Q1 Q4 N1 N2, principles F1-F3 and nits",
+      "state": "integrated",
+      "after": "S3 The reviewer checks agent configuration",
+      "branch": "fix/security-reviewer-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-security-reviewer-principles",
+      "pr": 417
+    }
+  ],
+  "findings": [
+    "kept: QA Q1 clean checklist rows get Severity – rather than LOW",
+    "kept: QA Q4 option A, npm audit only when the diff touches a manifest or lockfile",
+    "kept: QA N1 / principles nit: consider row becomes item 4's last findings row in its seven columns",
+    "kept: QA N2 agent-configuration rows one per item, never per file",
+    "kept: F1 step 5 holds only on the Reviewers line (spec 3, L8, ADR 0103); delete the diff-hits-trigger clause",
+    "kept: F2 architect and fundamentalist reference the vertical-slicing trigger instead of copying it",
+    "kept: F3 step 5 reads 'no Verdict: line from it in the slice PR body', pinned",
+    "kept: F4 consider row keyed on files no slice whose Reviewers line names pilot:security-reviewer owns",
+    "kept: F5 assert npm audit conditioned on a manifest/lockfile and the config section's opening (+2)",
+    "kept: F6 slice interface divergence, resolved by F1 and F2",
+    "kept: nit security-reviewer.md description trigger names agent configuration and process start; adapted: updated",
+    "kept: nit pin header adapted: alongside the ledger rows",
+    "kept: nit delete test assert on pilot-implementer wording; rename 'runs no npx'; pilot.md:379 'its reviewers'",
+    "dropped: nit second sync check on the trigger paths; F2 shrinks the sync test anyway",
+    "dropped: QA Q3 S2 PR #414 has no literal Verdict line",
+    "dropped: QA Q5 BLOCK satisfying step 5",
+    "dropped: QA Q2 installed plugin is stale; a release after Gate 2",
+    "dropped: QA Q6 widen trigger paths; trigger kept as signed (assumed)"
+  ],
+  "next": "The user works walkthrough itm_3ffe1a36824d (QA holds the thread and is the only writer); then Gate 2 on PR #408.",
+  "updatedAt": "2026-10-08T13:01:44.303Z"
+}

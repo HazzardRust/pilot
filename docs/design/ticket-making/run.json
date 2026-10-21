@@ -1,0 +1,334 @@
+{
+  "slug": "ticket-making",
+  "feature": "Ticket-making and small tickets",
+  "branch": "feat/ticket-making",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-ticket-making",
+  "artefact": "docs/design/ticket-making/architecture.md",
+  "slices": [
+    {
+      "slice": "Feature",
+      "state": "artefact drafted (d5a570e), spec frontier with the user",
+      "branch": "feat/run-analytics",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-run-analytics",
+      "pr": 159
+    },
+    {
+      "slice": "S1 Walking skeleton: a line of totals every half hour",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2",
+        "4",
+        "8",
+        "9"
+      ],
+      "branch": "slice/usage-telemetry-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s1",
+      "pr": 177
+    },
+    {
+      "slice": "S2 The line carries models, repositories and the snapshot",
+      "state": "integrated",
+      "after": "S1 Walking skeleton: a line of totals every half hour",
+      "delivers": [
+        "1",
+        "3",
+        "5"
+      ],
+      "branch": "slice/usage-telemetry-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s2",
+      "pr": 178
+    },
+    {
+      "slice": "S3 Restarts leave no gap and a tick never stalls the deck",
+      "state": "integrated",
+      "after": "S2 The line carries models, repositories and the snapshot",
+      "delivers": [
+        "6",
+        "7"
+      ],
+      "branch": "slice/usage-telemetry-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s3",
+      "pr": 179
+    },
+    {
+      "slice": "S4 A closing report is data in the run record",
+      "state": "integrated",
+      "delivers": [
+        "11"
+      ],
+      "branch": "slice/usage-telemetry-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s4",
+      "pr": 176
+    },
+    {
+      "slice": "S5 The audit states the measured spend",
+      "state": "integrated",
+      "after": "S3 Restarts leave no gap and a tick never stalls the deck",
+      "delivers": [
+        "10"
+      ],
+      "branch": "slice/usage-telemetry-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s5",
+      "pr": 180
+    },
+    {
+      "slice": "S6 The audit carries the latest runs' figures",
+      "state": "integrated",
+      "after": "S5 The audit states the measured spend",
+      "delivers": [
+        "10"
+      ],
+      "branch": "slice/usage-telemetry-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s6",
+      "pr": 181
+    },
+    {
+      "slice": "S7 The audit cites the closing reports",
+      "state": "integrated",
+      "after": "S6 The audit carries the latest runs' figures",
+      "delivers": [
+        "10",
+        "12"
+      ],
+      "branch": "slice/usage-telemetry-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s7",
+      "pr": 183
+    },
+    {
+      "slice": "S8 The log can be turned off",
+      "state": "integrated",
+      "after": "S3 Restarts leave no gap and a tick never stalls the deck",
+      "delivers": [
+        "13"
+      ],
+      "branch": "slice/usage-telemetry-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s8",
+      "pr": 182
+    },
+    {
+      "slice": "feature Usage telemetry",
+      "state": "ready, Gate 2 signed 2026-09-29, closing report itm_a9408c281dc1",
+      "delivers": [
+        "1-13"
+      ],
+      "branch": "feat/usage-telemetry",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-usage-telemetry",
+      "pr": 175
+    },
+    {
+      "slice": "S9 Spend from a removed worktree counts under its repository",
+      "state": "integrated",
+      "after": "S8 The log can be turned off",
+      "delivers": [
+        "3"
+      ],
+      "branch": "slice/usage-telemetry-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-s9",
+      "pr": 186
+    },
+    {
+      "slice": "Merge main: the workflow now lives in the agent file",
+      "state": "integrated",
+      "after": "S9 Spend from a removed worktree counts under its repository",
+      "branch": "slice/usage-telemetry-merge-main",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-usage-telemetry-merge-main",
+      "pr": 188
+    },
+    {
+      "slice": "S1 Up and down arrows move a ticket in the queue",
+      "state": "integrated",
+      "delivers": [
+        "7"
+      ],
+      "branch": "slice/ticket-making-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-s1",
+      "pr": 192
+    },
+    {
+      "slice": "S2 The pilot moves a ticket with deck_ticket",
+      "state": "integrated",
+      "after": "S1 Up and down arrows move a ticket in the queue",
+      "delivers": [
+        "8"
+      ],
+      "branch": "slice/ticket-making-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-s2",
+      "pr": 193
+    },
+    {
+      "slice": "S3 A chained hand-off carries the ticket's comments",
+      "state": "integrated",
+      "delivers": [
+        "9"
+      ],
+      "branch": "slice/ticket-making-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-s3",
+      "pr": 191
+    },
+    {
+      "slice": "S4 Make tickets opens a ticket-making thread",
+      "state": "integrated",
+      "after": "S1 Up and down arrows move a ticket in the queue",
+      "delivers": [
+        "1"
+      ],
+      "branch": "slice/ticket-making-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-s4",
+      "pr": 194
+    },
+    {
+      "slice": "S5 A small ticket is marked and the chain passes it by",
+      "state": "integrated",
+      "after": "S4 Make tickets opens a ticket-making thread",
+      "delivers": [
+        "11",
+        "12"
+      ],
+      "branch": "slice/ticket-making-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-s5",
+      "pr": 196
+    },
+    {
+      "slice": "S6 One small ticket in flight, closed by its Gate 2",
+      "state": "integrated",
+      "after": "S5 A small ticket is marked and the chain passes it by",
+      "delivers": [
+        "13",
+        "14",
+        "15",
+        "16"
+      ],
+      "branch": "slice/ticket-making-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-s6",
+      "pr": 198
+    },
+    {
+      "slice": "S7 Gate 1 and Gate 2 defined once, with the small-ticket exception",
+      "state": "integrated",
+      "after": "S2 The pilot moves a ticket with deck_ticket",
+      "delivers": [
+        "17",
+        "20"
+      ],
+      "branch": "slice/ticket-making-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-s7",
+      "pr": 195
+    },
+    {
+      "slice": "S8 The pilot cuts tickets by the ticket-making skill",
+      "state": "integrated",
+      "after": "S7 Gate 1 and Gate 2 defined once, with the small-ticket exception",
+      "delivers": [
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "10",
+        "11",
+        "12",
+        "20"
+      ],
+      "branch": "slice/ticket-making-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-s8",
+      "pr": 197
+    },
+    {
+      "slice": "S9 The architect shares the target and the 12-slice bound",
+      "state": "integrated",
+      "after": "S8 The pilot cuts tickets by the ticket-making skill",
+      "delivers": [
+        "18"
+      ],
+      "branch": "slice/ticket-making-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-s9",
+      "pr": 199
+    },
+    {
+      "slice": "S10 A big fix becomes an added slice, named at Gate 2",
+      "state": "integrated",
+      "after": "S9 The architect shares the target and the 12-slice bound",
+      "delivers": [
+        "19"
+      ],
+      "branch": "slice/ticket-making-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-s10",
+      "pr": 200
+    },
+    {
+      "slice": "S11 The pilot runs a small ticket as a side job",
+      "state": "integrated",
+      "after": "S10 A big fix becomes an added slice, named at Gate 2",
+      "delivers": [
+        "13",
+        "14"
+      ],
+      "branch": "slice/ticket-making-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-s11",
+      "pr": 202
+    },
+    {
+      "slice": "S12 The listener survives memory pressure, and a stopped one is said",
+      "state": "integrated",
+      "after": "S11 The pilot runs a small ticket as a side job",
+      "delivers": [
+        "21"
+      ],
+      "branch": "slice/ticket-making-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-s12",
+      "pr": 203
+    },
+    {
+      "slice": "feature ticket-making",
+      "state": "ready, Gate 2 signed 2026-09-29, closing report itm_543245226d6e",
+      "after": "S12 The listener survives memory pressure, and a stopped one is said",
+      "delivers": [
+        "1-21"
+      ],
+      "branch": "feat/ticket-making",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-ticket-making",
+      "pr": 190
+    },
+    {
+      "slice": "Merge main: usage telemetry and the /clear fix",
+      "state": "integrated",
+      "after": "S10 A big fix becomes an added slice, named at Gate 2",
+      "branch": "slice/ticket-making-merge-main",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-merge-main",
+      "pr": 201
+    },
+    {
+      "slice": "Fix round: principles findings and QA's note",
+      "state": "integrated",
+      "after": "S12 The listener survives memory pressure, and a stopped one is said",
+      "branch": "slice/ticket-making-fixes",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-making-fixes",
+      "pr": 204
+    }
+  ],
+  "findings": [
+    "kept: F1 (H1) a hand-off body past 64 KB blocks the whole queue; comments are added only while the body fits, +14 lines",
+    "kept: F2 'a small ticket has no Gate 1' said twice in agents/pilot.md; the :296 copy and its pin go, about -17 tokens",
+    "kept: F3 no test kills 'queued = tickets'; the pilot checked the proposed assertion and it would not either, so the fixture puts the ticket in flight first",
+    "dropped: N1 the CLOSED clause in chain.mjs isComment is unreachable today but costs nothing and guards a marker a queued ticket may extend to tickets",
+    "kept: N2 the deck_ticket row in agents/pilot.md repeats the tool's description and omits start; removed, about -24 tokens",
+    "kept: N3 the head rule is written in chain.mjs and render.mjs; one queueHeadOf in items.mjs, +3 lines",
+    "kept: N4 refererPath is a second way to choose a redirect; the move form sends back like every other form, about -7 lines",
+    "kept: N5 two doc comments in render.mjs cut to two lines each, about -14 lines",
+    "kept: N6 two rules stated twice in skills/ticket-making/SKILL.md; :56 and :109 go",
+    "kept: N7 (S11 MEDIUM) 'also' removed from agents/pilot-qa.md:18, -1 token",
+    "dropped: H2 does not hold; /move checks Origin, bounds the form, and move.test.mjs covers foreign and missing origins",
+    "kept: H3 the worked example says the pilot's restated table sized the jobs",
+    "kept: H4 'so the band is roughly 10 to 14 slices' removed; the bound is 12 (L9)",
+    "kept: H5 one sentence in agents/pilot.md: a started small ticket is freed by deck_resolve, at most 15 tokens",
+    "dropped: H6 a description on deck_post size costs 12 tokens of QA's 25 left, and the skill and the store's refusal already say it",
+    "dropped: H7 for render.mjs, the repository's code already cites slice numbers; for pilot.md F2 removes it",
+    "kept: QA N1 deck_post tells every regular ticket it starts itself as the head ticket; reworded for a ticket that is not the head",
+    "dropped: QA N2 and N3 (the walkthrough card naming its ticket, larger arrows) are additions of taste; named in the closing report for the queued deck polish ticket"
+  ],
+  "next": "Run finished. PR #190 is ready at a057b8d; the merge is the user's. Closing report itm_543245226d6e carries the remaining human steps. Worktrees left: pilot-feat-ticket-making, pilot-design-ticket-making.",
+  "finished": "closing report posted",
+  "finishedAt": "2026-09-29T14:12:43.954Z",
+  "updatedAt": "2026-09-29T14:12:43.954Z"
+}

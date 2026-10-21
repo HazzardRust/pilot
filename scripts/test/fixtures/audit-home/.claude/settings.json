@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "node hooks/pre-tool-use.js" }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          { "type": "command", "command": "node hooks/session-start.js" }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "fixture-server": {
+      "command": "node",
+      "args": ["mcp/fixture-server.js"]
+    }
+  }
+}

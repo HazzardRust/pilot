@@ -1,0 +1,14 @@
+skills/iterative-retrieval/
+docs/design/co-pilot-tickets/
+docs/design/co-pilot-tickets-history/
+docs/design/readme-pitch/
+docs/adr/0152-
+docs/design/blocked-yellow-yields/
+docs/adr/0153-
+docs/design/gate2-frees-lane/
+docs/adr/0154-
+docs/design/store-durability/
+docs/adr/0157-
+docs/design/architect-deeper/
+docs/adr/0159-
+scripts/test/fixtures/init-

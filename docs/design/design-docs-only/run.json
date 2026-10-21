@@ -1,0 +1,85 @@
+{
+  "slug": "design-docs-only",
+  "feature": "Install allows pilot land",
+  "ticket": "itm_7397a07f0e86",
+  "branch": "feat/design-docs-only",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-design-docs-only",
+  "artefact": "docs/design/design-docs-only/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Integrate's base failure counts pilot's copies",
+      "state": "integrated",
+      "delivers": [
+        "3"
+      ],
+      "branch": "slice/design-docs-only-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-design-docs-only-s1",
+      "pr": 465
+    },
+    {
+      "slice": "S2 The deck refuses a gate1 off pilot's tip",
+      "state": "integrated",
+      "after": "S1 Integrate's base failure counts pilot's copies",
+      "delivers": [
+        "2"
+      ],
+      "branch": "slice/design-docs-only-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-design-docs-only-s2",
+      "pr": 467
+    },
+    {
+      "slice": "S3 The architect re-anchors by rebase only",
+      "state": "integrated",
+      "delivers": [
+        "1"
+      ],
+      "branch": "slice/design-docs-only-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-design-docs-only-s3",
+      "pr": 464
+    },
+    {
+      "slice": "S4 Every after carries its reason",
+      "state": "integrated",
+      "delivers": [
+        "5",
+        "7"
+      ],
+      "branch": "slice/design-docs-only-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-design-docs-only-s4",
+      "pr": 463
+    },
+    {
+      "slice": "S5 The architect cuts for width and the gate1 names it",
+      "state": "integrated",
+      "after": "S4 Every after carries its reason",
+      "delivers": [
+        "4",
+        "6"
+      ],
+      "branch": "slice/design-docs-only-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-design-docs-only-s5",
+      "pr": 466
+    },
+    {
+      "slice": "Design branch is pilot plus docs only",
+      "state": "Gate 2 posted at 7853a9eb (QA evidence on #459, no walkthrough); #459 draft",
+      "branch": "feat/design-docs-only",
+      "pr": 459
+    }
+  ],
+  "findings": [
+    "kept: F1 deck/lineage.mjs child node process rests on a rule ADR 0039 does not hold; call pilotLineage in-process, correct ADR 0111 (~-14)",
+    "kept: F2 fsmonitor guard and the 5 s deadline belong in pilotLineage's own git calls, so every caller has them (0)",
+    "kept: F3 the ETIMEDOUT refusal has no test; add one with an injectable timeout (+10)",
+    "kept: F4 check-slices header locator: 17 surviving mutants; locate by the after field, delete firstSection (-2)",
+    "kept: F5 (QA) '1 copies' reads singular in deck and integrate lines",
+    "dropped: nit REASONED anchor tests: low consequence, +6 for mutants on a format the CLI already refuses",
+    "dropped: nit NONE accepts '-' and the em dash: harmless leniency, accepted at S4 review",
+    "dropped: nit revert/re-add fixture for pilotLineage forks: +12 for a rare case integrate only reports",
+    "dropped: nit afterProblems extraction: a move, no consequence",
+    "dropped: nit integrate ?. and ?? 0: documented, no behaviour change",
+    "dropped: pushback width rule pinned twice (architect section 8 and skill): locked in the plan as spec 4 and 7"
+  ],
+  "next": "Red, Gate 2 itm_de73eafb9742 SIGNED, not landed: pilot land refused \"sync first: main@5b82418 merged red: 2874 pass, 3 fail\". In pilot-feat-design-docs-only (8e8351f2): merge origin/main, find the 3 failures, fix on feat, then pilot land, gh pr ready 459, QA comment, closing report (merge #445, #451, #455 first).",
+  "updatedAt": "2026-10-09T21:55:14.661Z"
+}

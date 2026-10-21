@@ -1,0 +1,285 @@
+{
+  "slug": "daemon-lifecycle",
+  "feature": "Daemon lifecycle",
+  "ticket": "itm_140d9b3c845c",
+  "branch": "feat/daemon-lifecycle",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-daemon-lifecycle",
+  "artefact": "docs/design/daemon-lifecycle/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated at e9171bec",
+      "branch": "slice/daemon-lifecycle-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-lifecycle-s1",
+      "pr": 794
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at 58a1509e",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/daemon-lifecycle-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-lifecycle-s2",
+      "pr": 797
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at 69de8cb5",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/daemon-lifecycle-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-lifecycle-s3",
+      "pr": 795
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at da752a38",
+      "after": [
+        "S2",
+        "S3"
+      ],
+      "branch": "slice/daemon-lifecycle-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-lifecycle-s4",
+      "pr": 801
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at 11a47c4d",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/daemon-lifecycle-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-lifecycle-s5",
+      "pr": 796
+    },
+    {
+      "slice": "S6",
+      "state": "integrated at b026c554",
+      "after": [
+        "S5",
+        "S1"
+      ],
+      "branch": "slice/daemon-lifecycle-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-lifecycle-s6",
+      "pr": 798
+    },
+    {
+      "slice": "S7",
+      "state": "integrated at 3f1329b1",
+      "after": [
+        "S5"
+      ],
+      "branch": "slice/daemon-lifecycle-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-lifecycle-s7",
+      "pr": 800
+    },
+    {
+      "slice": "S8",
+      "state": "integrated at 34f0b047",
+      "after": [
+        "S7"
+      ],
+      "branch": "slice/daemon-lifecycle-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-lifecycle-s8",
+      "pr": 802
+    },
+    {
+      "slice": "S9",
+      "state": "integrated at 0e0dbd5e",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/daemon-lifecycle-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-lifecycle-s9"
+    },
+    {
+      "slice": "daemon-lifecycle",
+      "state": "in QA: read-only pass done (all probed spec lines pass; F1, F5, F6 kept for QA to write); fix round running",
+      "after": [
+        "S4",
+        "S6",
+        "S8",
+        "S9",
+        "S2"
+      ],
+      "branch": "feat/daemon-lifecycle",
+      "pr": 763
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9"
+      ],
+      "branch": "fix/daemon-lifecycle-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-lifecycle-fix",
+      "pr": 803
+    }
+  ],
+  "findings": [
+    "kept: inline client.mjs rejoin into callDeckTool's catch and delete it (-9)",
+    "kept: one exported oneLine(text) used by daemon.mjs whoHolds, refusal-log.mjs, status-command.mjs plain, and the client.mjs replaceOlder stderr lines (S4 security LOW) (-1)",
+    "kept: version DRY: isVersion from version.mjs in exit-route; doctor nodeRow via isOlder; version.mjs exports ENGINES; delete doctor semver/readEngines (-9)",
+    "kept: uninstall steps carry their remover (run) instead of REMOVERS keyed on display text (-3)",
+    "kept: uninstall planners take paths from install's own home-aware defaults; store row follows storeDir (QA F8) (-3)",
+    "kept: delete the toolbox.test source pin on client.mjs; runbook test uses check-references' dispatcher list (-4)",
+    "kept: drop export on doctor rowLine (0)",
+    "kept: trim S1.md to check-slices' 60-line cap (-5)",
+    "kept: ADR 0156 records the lookalike-pid residual risk (S4 security MEDIUM) and an expiry on the L4 unversioned kill path",
+    "kept: QA F1, a 500 logs one line through logRefusal (spec 2); QA writes it",
+    "kept: QA F5, spec 15 / L9 text to 0.9.3; QA writes it",
+    "kept: QA F6, walkthrough line: do not update while a landing runs",
+    "dropped: isDeckDaemon accept path unproven: daemon-replace.test.mjs:196 plants bin/pilot.mjs and is killed",
+    "dropped: shared killDeck(pid): two sites, below the rule of three",
+    "dropped: stale deck as pass in doctor (also QA F3): a preflight alarm is the point of spec 11",
+    "dropped: daemon-replace.test.mjs:270 stand-in nit",
+    "dropped: consider/security: every process-start or config slice had a security verdict",
+    "dropped: QA F2 gh cannot tell: gh takes 9-30 s on this machine; the row is honest",
+    "dropped: QA F7 exit-route 403 wording: pre-existing shared guard",
+    "dropped: evidence runner complexity/duplication/knip rows: branchy-by-nature functions already reviewed; 2.6% duplication; knip's unused exports have callers; coverage and mutation not run"
+  ],
+  "next": "Integrating fix round #803; then resume QA with the tip; pilot land is main's.",
+  "updatedAt": "2026-10-17T17:39:17.529Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "The auto-mode classifier denied two artefact edits as Instruction Poisoning (a heredoc multi-edit and a §5 insert citing deck item ids); both were redone as smaller Edit calls, one extra round each plus a re-read of four files",
+      "evidence": "two denials during the fold of itm_7d4f880004bd / itm_9ea59b4524b1 / itm_ffac582b6ec7 answers",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "deck_post gate1 failed once on EPERM renaming deck.json.tmp and was retried",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Repo-wide pins outside S1's owned files (800-line deck cap, bump/toolbox client.mjs version pins, readme-flow NON_MOVING) surfaced only at the full gate; three full-gate runs",
+      "evidence": "PR #794 body, files outside the slice",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Heredoc/inline scripts via Bash turned \\n and \\u0000 escapes into raw bytes in source; fixed via a Write-made script",
+      "evidence": "status-command.mjs NUL bytes flagged by Read",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate refused the PR title for an upper-case first letter after S1; one retitle and rerun",
+      "evidence": "NOT integrated slice/daemon-lifecycle-s1: PR #794 title ... does not match",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3's ADR 0120 cap test sits out three real 10 s start timeouts (~31 s): ensureDaemon takes no timeout and START_TIMEOUT_MS is fixed",
+      "evidence": "deck/test/client-rejoin.test.mjs cap test, PR #795",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Bash heredocs mangled backslashes, \\n and backticks in JS written through them (second slice to hit it); switched to Edit",
+      "evidence": "SyntaxError at doctor.test.mjs:215; unexpected EOF in heredoc (S5, PR #796)",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Bash heredocs and inline node scripts stripped regex backslashes (third slice to hit it)",
+      "evidence": "S2 test 4 RegExp and reviewer-fix script lost escapes (PR #797)",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "A fresh slice worktree has no node_modules; npm test stops until npm ci",
+      "evidence": "S6: node_modules missing: run npm ci",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer (S7)",
+      "what": "Live verification of `pilot uninstall` ran against the real machine: it uninstalled the global `pilot` package, stopped the live deck on 4321 and left `pilot` unresolvable in every shell; the pilot's listener died with it",
+      "evidence": "AppData/Roaming/npm/node_modules mtime 02:11:55 with no pilot entry; npm ls -g listed none; `pilot wait` exited 1 with 'the deck at http://127.0.0.1:4321 is not answering'; restored with `pilot deck` and scripts/install-command.mjs",
+      "size": 9
+    },
+    {
+      "kind": "drain",
+      "what": "Diagnosing the dead deck and the missing command in the pilot: process list, PATH, npm ls, S7's removeCommand read, the restore",
+      "size": 7
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S7 live verification of pilot uninstall ran against the real global prefix and the live deck (deck down, pilot command gone machine-wide until the pilot restored both)",
+      "evidence": "a failed scratch-env setup chained with ; ran `pilot uninstall --yes` with the real env at 02:11:55; deck pid 17452 stopped, global pilot and ~/.claude/pilot/command removed; S7.md's Verification line named neither npm_config_prefix nor the deck port",
+      "size": 10
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S9 ran `pilot gc` as a runbook check; gc takes no scope and acts on the whole machine's process table, stopping a real orphaned wait (pid 17532)",
+      "evidence": "S9 report: `stopped 17532 wait - (no claude ancestor)`; PR #799 lists gc under commands run on a scratch deck",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Folding isDeckUp onto probeDeck turned two existing tests red (pid-less fake decks); deck-readme pins every deck module; both only showed in the full suite",
+      "evidence": "S4 first npm test: startup gives up after JOIN_ATTEMPTS 0!==3; a refusal is not a reason to rejoin 0!==1",
+      "size": 1
+    },
+    {
+      "agent": "security-reviewer",
+      "what": "procs.mjs recognise classes any node arg ending deck/daemon.mjs as a daemon, so both S4's and S7's kill guards could hit a foreign process",
+      "evidence": "S7 re-review MEDIUM, scripts/uninstall.mjs:34-39 via deck/procs.mjs:75",
+      "size": 2
+    },
+    {
+      "agent": "typescript-reviewer",
+      "what": "A read-only reviewer checked out the slice branch in the shared main checkout to read files, then restored it",
+      "evidence": "TS review of #801: checked out slice/daemon-lifecycle-s4 in C:/Users/Hazzard/Projects/pilot, restored fix/claude-workflow-tools",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "install.test.mjs pins install-settings' export list, so a new export fails the slice's own verification; neither slice file nor brief named it",
+      "evidence": "S8 first green run failed at install.test.mjs:1234 deepStrictEqual",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "The Haiku evidence runner went into background waits and never returned a table; no coverage or mutation evidence for the feature",
+      "evidence": "fundamentalist report: runner >332 s, no table before handback",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "npm test takes ~14 min; --import needs file:/// on Windows; installCommand refuses a PATH block under Git Bash",
+      "evidence": "QA report: duration_ms 825842; ERR_UNSUPPORTED_ESM_URL_SCHEME",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "Spec 2 names 500 but S2.md narrowed it to unchanged; the gap surfaced only at QA",
+      "evidence": "QA F1, deck/server-routes.mjs:792",
+      "size": 1
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "Reported to main instead of the fundamentalist; coverage run failed under a scratch HOME (167 fails, area-file ENOENT) and its worktree was removed under it; Stryker hit the 900 s cap with no results",
+      "evidence": "main relayed the runner report (aba80be746dd2a437)",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Edit needs a prior Read per file; node/python edit scripts failed on quoting and escapes before switching to Read then Edit",
+      "evidence": "fix round #803 report",
+      "size": 1
+    }
+  ]
+}

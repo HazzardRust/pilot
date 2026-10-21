@@ -1,0 +1,119 @@
+{
+  "slug": "handoff-failed-confirm",
+  "feature": "Back arrow returns to its deck",
+  "ticket": "itm_6d4847d9f1ad",
+  "branch": "feat/handoff-failed-confirm",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-failed-confirm",
+  "qa": {
+    "branch": "qa/handoff-failed-confirm",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-failed-confirm-qa",
+    "url": "http://127.0.0.1:54885/?run=C%3A%2FUsers%2FHazzard%2FProjects%2Fpilot-feat-handoff-failed-confirm"
+  },
+  "artefact": "docs/design/handoff-failed-confirm/architecture.md",
+  "slices": [
+    {
+      "slice": "Deck confirms in place, no reloads",
+      "state": "gate2 itm_1f5caa1957ed signed 07:58Z, resolved; NOT landed: pilot synced 0c6705b7 but `pilot landing` repeats stale 'sync first: main@ac840b8 merged red 3000/3' (5x)"
+    },
+    {
+      "slice": "S1 Handoff failed confirms in place, on the one seam",
+      "state": "integrated at 02b16f4d",
+      "branch": "slice/handoff-failed-confirm-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-failed-confirm-s1",
+      "pr": 502
+    },
+    {
+      "slice": "S2 Sign-offs, gates and walkthroughs confirm in place",
+      "state": "integrated at b64ecc00",
+      "after": [
+        "S1 Handoff failed confirms in place, on the one seam"
+      ],
+      "branch": "slice/handoff-failed-confirm-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-failed-confirm-s2",
+      "pr": 504
+    },
+    {
+      "slice": "S3 Close, dismiss, Remove, Start and End confirm in place",
+      "state": "integrated at 34acad11",
+      "after": [
+        "S2 Sign-offs, gates and walkthroughs confirm in place"
+      ],
+      "branch": "slice/handoff-failed-confirm-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-failed-confirm-s3",
+      "pr": 505
+    },
+    {
+      "slice": "S4 The notice × clears in place",
+      "state": "integrated at 244a5a57",
+      "after": [
+        "S3 Close, dismiss, Remove, Start and End confirm in place"
+      ],
+      "branch": "slice/handoff-failed-confirm-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-failed-confirm-s4",
+      "pr": 507
+    },
+    {
+      "slice": "S5 Reopen, Dismiss, alerts, Switch and a typed reply post in place",
+      "state": "integrated at a5f31322",
+      "after": [
+        "S4 The notice × clears in place"
+      ],
+      "branch": "slice/handoff-failed-confirm-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-failed-confirm-s5",
+      "pr": 508
+    },
+    {
+      "slice": "S6 Create, Add deck and Remove deck change the page in place",
+      "state": "integrated at bfb0251b",
+      "after": [
+        "S5 Reopen, Dismiss, alerts, Switch and a typed reply post in place"
+      ],
+      "branch": "slice/handoff-failed-confirm-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-failed-confirm-s6",
+      "pr": 510
+    },
+    {
+      "slice": "Confirm in place, and no press reloads",
+      "state": "in QA: walkthrough itm_16215bd412e3 posted at 0b4263dc, awaiting the user's Sign off; feature PR #492 draft",
+      "after": [
+        "S6 Create, Add deck and Remove deck change the page in place"
+      ],
+      "branch": "feat/handoff-failed-confirm",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-failed-confirm",
+      "pr": 492
+    },
+    {
+      "slice": "Fix round",
+      "state": "integrated at 0b4263dc (PR #511 merged f6e77f0a)",
+      "after": [
+        "S6"
+      ],
+      "branch": "fix/handoff-failed-confirm-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-failed-confirm-fix",
+      "pr": 511
+    }
+  ],
+  "findings": [
+    "kept: F1 one in-place transport: reply.mjs typed branch/sending/landed removed; inplace clears textareas and settles on a non-move take (-14)",
+    "kept: F2 confirm-sandbox aPage installs inplace; confirm.test:265-266 flips to fetched; aLivePage folded into aPage (-4)",
+    "dropped: F3 delete the page.mjs wiring pin: the only automated guard on the install order F1 names as fragile; updated, not deleted",
+    "kept: F4 live.test thread->overview via popstate (+12)",
+    "kept: F5 ctx on the shown page in the cross-deck test (+1)",
+    "kept: F6 Tab does not revert a confirm (+3)",
+    "kept: F7 inplace body asserted raw (0)",
+    "kept: F8 Continue form class=\"switch\", Create listeners off it (0)",
+    "dropped: N1 delete sent()/named submitter: reviewer recommends keeping; seam precondition",
+    "dropped: N2 confirmStep helper: churn across 4 renderers and their pins for -3",
+    "kept: N3 render-parts:379 dead !ask clause",
+    "kept: N4 live.mjs:177 dead guard",
+    "kept: N5 live.test:1329 stale comment",
+    "dropped: N6 carryUsage into usage.mjs: a redesign, not a fix",
+    "kept: QA nit1 sign-off confirm sentence says sign-off twice",
+    "kept: QA nit2 Close sentence alignment and default line on a user thread",
+    "dropped: QA nit3 Reply visible while confirming: outside the row, a press reverts (spec 3)",
+    "dropped: QA nit4 Add deck refused clears the path: as today",
+    "dropped: QA Remove lands on / not ?run=: server target unchanged (§7)"
+  ],
+  "next": "Main: land 0b4263dc on pilot (landing replays a stale sync-red line; check the gate2's stored refusal, else land from the feat worktree with test output to a file), closing report, gh pr ready 492, QA tear-down pid 6652. Co-pilot: none; back-arrow paused at b27c56a8 (spawn its successor first), then gate-stays-signed. Red waiting on user: #496, #499, #501 walkthroughs; q itm_f05ad052b4ec.",
+  "updatedAt": "2026-10-10T08:21:34.657Z"
+}

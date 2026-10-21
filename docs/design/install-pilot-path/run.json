@@ -1,0 +1,53 @@
+{
+  "slug": "install-pilot-path",
+  "feature": "Tickets tab: Add button beside the title",
+  "ticket": "itm_26df84bdd527",
+  "branch": "feat/install-pilot-path",
+  "worktree": "C:/Users/socce/Projects/pilot-install-pilot-path",
+  "artefact": "docs/design/install-pilot-path/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Windows: the install adds the command directory to the user PATH",
+      "state": "integrated",
+      "branch": "slice/install-pilot-path-s1",
+      "worktree": "C:/Users/socce/Projects/pilot-install-pilot-path-s1",
+      "pr": 568
+    },
+    {
+      "slice": "S2 macOS/Linux: the install appends the pilot block to the $SHELL profile",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/install-pilot-path-s2",
+      "worktree": "C:/Users/socce/Projects/pilot-install-pilot-path-s2",
+      "pr": 570
+    },
+    {
+      "slice": "S3 INSTALL.md and ADR 0128 say the install edits the PATH",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/install-pilot-path-s3",
+      "worktree": "C:/Users/socce/Projects/pilot-install-pilot-path-s3",
+      "pr": 569
+    },
+    {
+      "slice": "install-pilot-path",
+      "state": "fixing: draft PR #572",
+      "after": [
+        "S2 macOS/Linux: the install appends the pilot block to the $SHELL profile",
+        "S3 INSTALL.md and ADR 0128 say the install edits the PATH"
+      ],
+      "branch": "feat/install-pilot-path",
+      "pr": 567
+    }
+  ],
+  "findings": [
+    "kept: §5 row 2 amended to the two-spawn split; user locked it, itm_452634a6ed80",
+    "dropped: security LOW, POSIX home defaults to os.homedir(); every in-process test injects path, the CLI spawns are dry-run and refused only"
+  ],
+  "next": "Integrating fix PR #572 (01666808); then pilot land and send QA the tip.",
+  "updatedAt": "2026-10-11T05:01:21.793Z"
+}

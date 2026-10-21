@@ -1,0 +1,124 @@
+{
+  "slug": "deep-modules",
+  "feature": "Deep modules: seam-first tests",
+  "ticket": "itm_f72eba6ffde0",
+  "branch": "feat/deep-modules",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deep-modules",
+  "artefact": "docs/design/deep-modules/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Slice tests are checked for seam-first shape",
+      "state": "integrated",
+      "delivers": [
+        "1"
+      ],
+      "branch": "slice/deep-modules-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deep-modules-s1",
+      "pr": 418
+    },
+    {
+      "slice": "S2 The architect deepens, then writes seam-first slices",
+      "state": "integrated",
+      "after": "S1 Slice tests are checked for seam-first shape",
+      "delivers": [
+        "1",
+        "2"
+      ],
+      "branch": "slice/deep-modules-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deep-modules-s2",
+      "pr": 419
+    },
+    {
+      "slice": "S3 The implementer's red list is the seam-first Tests",
+      "state": "integrated",
+      "after": "S1 Slice tests are checked for seam-first shape",
+      "delivers": [
+        "5"
+      ],
+      "branch": "slice/deep-modules-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deep-modules-s3",
+      "pr": 420
+    },
+    {
+      "slice": "S4 The fundamentalist judges tests for depth",
+      "state": "integrated",
+      "after": "S1 Slice tests are checked for seam-first shape",
+      "delivers": [
+        "3"
+      ],
+      "branch": "slice/deep-modules-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deep-modules-s4",
+      "pr": 422
+    },
+    {
+      "slice": "S5 Merging tickets leans towards the larger ticket",
+      "state": "integrated",
+      "after": "S2 The architect deepens, then writes seam-first slices",
+      "delivers": [
+        "6",
+        "7"
+      ],
+      "branch": "slice/deep-modules-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deep-modules-s5",
+      "pr": 421
+    },
+    {
+      "slice": "S6 Named commands and deck tools are checked, not pinned",
+      "state": "integrated",
+      "after": "S5 Merging tickets leans towards the larger ticket",
+      "delivers": [
+        "4"
+      ],
+      "branch": "slice/deep-modules-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deep-modules-s6",
+      "pr": 423
+    },
+    {
+      "slice": "S7 Source-text pins test what the code does",
+      "state": "integrated",
+      "after": "S6 Named commands and deck tools are checked, not pinned",
+      "delivers": [
+        "4"
+      ],
+      "branch": "slice/deep-modules-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deep-modules-s7",
+      "pr": 424
+    },
+    {
+      "slice": "Deep modules: seam-first tests",
+      "state": "gate2 itm_ff0850a60b34 signed; pilot land refused by the auto-mode classifier (Merge Without Review), nothing pushed",
+      "branch": "feat/deep-modules",
+      "pr": 321
+    },
+    {
+      "slice": "Fix round: principles and QA findings",
+      "state": "integrated",
+      "after": "S7 Source-text pins test what the code does",
+      "branch": "slice/deep-modules-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deep-modules-fix",
+      "pr": 425
+    }
+  ],
+  "findings": [
+    "kept: F1 check-slices called repo-relative in architect, fundamentalist, vertical-slicing; use ${CLAUDE_PLUGIN_ROOT} (fundamentalist and QA)",
+    "dropped: F2 grant branch in checkReferences; spec 4b names the grant clause and it covers non-crew agents",
+    "kept: F3 duplicate whole-surface test in references-hold",
+    "kept: F4 restore the skills wait/reply/resolve pin; it states a rule beyond the name",
+    "dropped: F5 import TOOLS; checkReferences reads the root it is given",
+    "kept: F6 pickup-mark test through exported notice",
+    "kept: F7 deepening and red-list tests import area-file helpers",
+    "kept: F8 name-only pins in deepening.test where checkReferences resolves the name",
+    "dropped: F9 item 8 restates the Tests shape; spec 1 names item 8",
+    "kept: F10 duplicate worked-example test",
+    "kept: F11 check-slices tests for surviving mutants",
+    "kept: F12 record post-tool.js and run-hook.mjs in S7.md",
+    "kept: N4 textAt throws on a missing file",
+    "dropped: N1 N2 N3 N5 N6 nits, not worth their diff",
+    "kept: QA F2 spec 4 evidence restated as the migration delta (A5)",
+    "kept: QA F3 fold slice delivers the lines it keeps, red step is the new seam test (A6)",
+    "kept: QA F4 one Seams row per module",
+    "dropped: QA F5 implementer trims were the brief's budget payment, recorded in PR #420"
+  ],
+  "next": "red: gate2 signed; pilot land blocked by permission, user asked on itm_ff0850a60b34 to run it or allow it; on its output gh pr ready 321, closing report, stop scratch deck 4411",
+  "updatedAt": "2026-10-09T08:37:44.044Z"
+}

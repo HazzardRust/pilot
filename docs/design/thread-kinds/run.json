@@ -1,0 +1,346 @@
+{
+  "slug": "thread-kinds",
+  "feature": "Thread kinds",
+  "branch": "feat/thread-kinds",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-thread-kinds-2",
+  "artefact": "docs/design/thread-kinds/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Gate threads post as their own kinds",
+      "state": "integrated",
+      "delivers": [
+        "10",
+        "11"
+      ],
+      "branch": "slice/thread-kinds-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-kinds-s1",
+      "pr": 246
+    },
+    {
+      "slice": "S2 Phase reads gate kinds; red is concluding",
+      "state": "integrated",
+      "after": "S1 Gate threads post as their own kinds",
+      "delivers": [
+        "12",
+        "15"
+      ],
+      "branch": "slice/thread-kinds-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-kinds-s2",
+      "pr": 247
+    },
+    {
+      "slice": "S3 Phase resets at a new ticket",
+      "state": "integrated",
+      "after": "S2 Phase reads gate kinds; red is concluding",
+      "delivers": [
+        "16",
+        "17"
+      ],
+      "branch": "slice/thread-kinds-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-kinds-s3",
+      "pr": 249
+    },
+    {
+      "slice": "S4 A gate thread draws its evidence block",
+      "state": "integrated",
+      "after": "S2 Phase reads gate kinds; red is concluding",
+      "delivers": [
+        "13"
+      ],
+      "branch": "slice/thread-kinds-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-kinds-s4",
+      "pr": 248
+    },
+    {
+      "slice": "S5 The crew posts gate threads",
+      "state": "integrated",
+      "after": "S4 A gate thread draws its evidence block",
+      "delivers": [
+        "14"
+      ],
+      "branch": "slice/thread-kinds-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-kinds-s5",
+      "pr": 250
+    },
+    {
+      "slice": "S12 The spec kind is retired",
+      "state": "integrated",
+      "after": "S5 The crew posts gate threads",
+      "delivers": [
+        "25"
+      ],
+      "branch": "slice/thread-kinds-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-kinds-s12",
+      "pr": 251
+    },
+    {
+      "slice": "S6 The tab's table holds one run",
+      "state": "integrated",
+      "after": "S12 The spec kind is retired",
+      "delivers": [
+        "7",
+        "8",
+        "9"
+      ],
+      "branch": "slice/thread-kinds-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-kinds-s6",
+      "pr": 252
+    },
+    {
+      "slice": "S7 The audit item reads in a glance",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2",
+        "3"
+      ],
+      "branch": "slice/thread-kinds-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-kinds-s7",
+      "pr": 245
+    },
+    {
+      "slice": "S8 A picked-up hand-off says so at once",
+      "state": "integrated",
+      "after": "S6 The tab's table holds one run",
+      "delivers": [
+        "18",
+        "20"
+      ],
+      "branch": "slice/thread-kinds-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-kinds-s8",
+      "pr": 253
+    },
+    {
+      "slice": "S9 Silence on a hand-off is a state",
+      "state": "integrated",
+      "after": "S8 A picked-up hand-off says so at once",
+      "delivers": [
+        "19",
+        "21"
+      ],
+      "branch": "slice/thread-kinds-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-kinds-s9",
+      "pr": 254
+    },
+    {
+      "slice": "S11 A crashed run is recovered from its record",
+      "state": "integrated",
+      "after": "S8 A picked-up hand-off says so at once",
+      "delivers": [
+        "22",
+        "23",
+        "24"
+      ],
+      "branch": "slice/thread-kinds-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-kinds-s11",
+      "pr": 255
+    },
+    {
+      "slice": "S10 The auditor owns its thread",
+      "state": "integrated",
+      "after": "S9 Silence on a hand-off is a state",
+      "delivers": [
+        "4",
+        "5",
+        "6"
+      ],
+      "branch": "slice/thread-kinds-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-thread-kinds-s10",
+      "pr": 256
+    },
+    {
+      "slice": "Feature: Thread kinds",
+      "state": "ready: PR #244 at 1797bee (record commit on d672e4c), Gate 2 signed",
+      "branch": "feat/thread-kinds",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-thread-kinds",
+      "pr": 244
+    }
+  ],
+  "findings": [
+    "kept: F1 ownerOf returns pilot for a ticket (chain and deck_resolve can take auditor-posted tickets; QA 1, 2)",
+    "kept: F3+F4+F5+S4 one-pass phase computation with second-cycle, order and < tests; cycleStartOf export dropped",
+    "kept: F6 setSlices returns the record's table (QA 6)",
+    "kept: F7 gate field refusal tests",
+    "kept: F8 heldElsewhere fail-closed test",
+    "kept: F9 armHandoffs catch test",
+    "kept: S2 GATE_NOTES folded into SPECS.note",
+    "kept: S3 RETIRED_KINDS inlined",
+    "kept: S5 VERDICT_KINDS replaced by GATED_KINDS",
+    "kept: QA 4 audit Evidence/Fix indent",
+    "kept: QA 5 Gate 1 label in the meta line",
+    "kept: QA 7 dead never-gate clause in pilot-qa.md",
+    "kept: F2/QA 3 pickedUpAt on the press, deck note and its guards removed — user chose it on itm_06d2f3aa4061, L8 amended",
+    "dropped: N1 one earliest-due hand-off timer — live repaint already verified, L7 names the per-hand-off timer",
+    "dropped: N2 gate field list built from SPECS — zero net, costs prompt tokens"
+  ],
+  "report": {
+    "featurePr": {
+      "number": 244,
+      "state": "ready"
+    },
+    "slices": [
+      {
+        "slice": "S7",
+        "pr": 245,
+        "mergeSha": "9b3fb56"
+      },
+      {
+        "slice": "S1",
+        "pr": 246,
+        "mergeSha": "b9ed794"
+      },
+      {
+        "slice": "S2",
+        "pr": 247,
+        "mergeSha": "fa7a3da"
+      },
+      {
+        "slice": "S4",
+        "pr": 248,
+        "mergeSha": "adf6314"
+      },
+      {
+        "slice": "S3",
+        "pr": 249,
+        "mergeSha": "5b09d00"
+      },
+      {
+        "slice": "S5",
+        "pr": 250,
+        "mergeSha": "34e6e5d"
+      },
+      {
+        "slice": "S12",
+        "pr": 251,
+        "mergeSha": "d42f81d"
+      },
+      {
+        "slice": "S6",
+        "pr": 252,
+        "mergeSha": "bc39e72"
+      },
+      {
+        "slice": "S8",
+        "pr": 253,
+        "mergeSha": "24b2e68"
+      },
+      {
+        "slice": "S9",
+        "pr": 254,
+        "mergeSha": "fdfa5ea"
+      },
+      {
+        "slice": "S11",
+        "pr": 255,
+        "mergeSha": "87ed847"
+      },
+      {
+        "slice": "S10",
+        "pr": 256,
+        "mergeSha": "a9edeae"
+      },
+      {
+        "slice": "Fix round",
+        "pr": 257,
+        "mergeSha": "85deb53"
+      },
+      {
+        "slice": "Fix round F2",
+        "pr": 258,
+        "mergeSha": "c39783a"
+      }
+    ],
+    "assumed": [
+      {
+        "id": "A2",
+        "decision": "no alias for stored gate-tagged sign-offs",
+        "taken": "architect"
+      },
+      {
+        "id": "A8",
+        "decision": "concision under 55%; unacknowledged after 3 min",
+        "taken": "pilot, S7 measured"
+      },
+      {
+        "id": "A9",
+        "decision": "an unfinished record blocks chaining until finished",
+        "taken": "architect"
+      }
+    ],
+    "friction": [
+      {
+        "agent": "S1,S9,S10,fix,fundamentalist",
+        "what": "Git Bash heredocs mangle \\n, \\\\, \\'",
+        "evidence": "1-3 lost turns each"
+      },
+      {
+        "agent": "S6,S8,S11",
+        "what": "pinned prompt figure not printable by measure-prompt",
+        "evidence": "scratch script each"
+      },
+      {
+        "agent": "implementers",
+        "what": "scratch-deck port races; hand-assigned ranges",
+        "evidence": "4417/4398"
+      },
+      {
+        "agent": "QA",
+        "what": "hooks write claims under real ~/.claude/pilot-inbox",
+        "evidence": "2 claim files in the user's home"
+      },
+      {
+        "agent": "explorer,QA",
+        "what": "no /api/items or /api/record?slug=",
+        "evidence": "read deck.json directly"
+      },
+      {
+        "agent": "S10",
+        "what": "prose pins depend on line wrapping",
+        "evidence": "failed twice on rewrap"
+      },
+      {
+        "agent": "all",
+        "what": "thousand-line render/store/server; positional arg lists",
+        "evidence": "every brief says read ranges"
+      },
+      {
+        "agent": "S5,QA",
+        "what": "node --test <dir> opaque on Windows; check-provenance no-arg exits 2",
+        "evidence": "QA believed it clean once"
+      },
+      {
+        "agent": "QA",
+        "what": "MSYS path conversion on /api curl args",
+        "evidence": "one failed probe round"
+      },
+      {
+        "agent": "QA",
+        "what": "30-min background default kills scratch daemons; wait limit and ticket-shape skip not in brief",
+        "evidence": "one restart; one 400"
+      },
+      {
+        "agent": "S2,S4",
+        "what": "inline stylesheet matches CSS first",
+        "evidence": "regex probes"
+      },
+      {
+        "agent": "QA",
+        "what": "nothing seeds a crashed run",
+        "evidence": "built by hand"
+      },
+      {
+        "agent": "previous session",
+        "what": "brief carried wrong measure-prompt fact and stale pins",
+        "evidence": "two slices lost a run"
+      }
+    ],
+    "humanSteps": [
+      "merge PR #244",
+      "bump to 0.7.15, update the plugin, restart the deck daemon (pid 24092)",
+      "answer the tickets thread itm_cabac2b202fa; tickets A and B to the head after merge"
+    ],
+    "worktreesLeft": []
+  },
+  "next": "Run finished (report itm_ae106480eeb5). Fresh session: read user thread itm_cabac2b202fa (\"tickets\"); on the yes post tickets A (ticket states, planning phase) and B (autonomous/non-autonomous modes) from its words, A at head once #244 merges. Leftovers: pilot-feat-thread-kinds dir is half-deleted and locked by a stray process; pilot-feat-thread-kinds-2 is live, removable after merge.",
+  "updatedAt": "2026-10-01T11:07:46.463Z"
+}

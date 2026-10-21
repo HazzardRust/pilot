@@ -1,0 +1,65 @@
+{
+  "slug": "short-by-default",
+  "feature": "Short by default",
+  "ticket": "itm_f679fbab1ae9",
+  "branch": "feat/short-by-default",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-short-by-default",
+  "artefact": "docs/design/short-by-default/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The deck refuses a long QA walkthrough body",
+      "state": "integrated",
+      "branch": "slice/short-by-default-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-short-by-default-s1",
+      "pr": 544
+    },
+    {
+      "slice": "S2 User-facing text carries what the decision needs",
+      "state": "integrated",
+      "branch": "slice/short-by-default-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-short-by-default-s2",
+      "pr": 545
+    },
+    {
+      "slice": "S3 QA's walkthrough is a summary, checks in its PR comment",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S2"
+      ],
+      "branch": "slice/short-by-default-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-short-by-default-s3",
+      "pr": 546
+    },
+    {
+      "slice": "short-by-default",
+      "state": "red: landed on pilot at 75389d24 (feat a08715ca, fix #547); walkthrough itm_03d153719048 posted; QA comment 6103354610 on #543 (draft)",
+      "after": [
+        "S1 The deck refuses a long QA walkthrough body",
+        "S2 User-facing text carries what the decision needs",
+        "S3 QA's walkthrough is a summary, checks in its PR comment"
+      ],
+      "branch": "feat/short-by-default",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-short-by-default",
+      "pr": 543
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S3 QA's walkthrough is a summary, checks in its PR comment"
+      ],
+      "branch": "fix/short-by-default",
+      "pr": 547
+    }
+  ],
+  "findings": [
+    "kept: F1 explorer thread reply drops paths and evidence",
+    "kept: L4 mechanism - QA edits its comment by recorded id, not --edit-last",
+    "kept: stale 'posts its QA comment' wording in agents/pilot.md",
+    "dropped: fundamentalist's case against L3 (cap checks length, not content) - locked at Gate 1; follow-up candidate",
+    "dropped: fallback for a lost comment id (404 fails closed)"
+  ],
+  "next": "Red: walkthrough itm_03d153719048 is QA's (old session; on Sign off resume a fresh pilot-qa from qa refs for sign-off steps, comment id 6103354610, scratch deck :4391 pid 28596); answer itm_4f72c591f12c (spec 2 bound; edit architecture.md:18/:123, S2.md:37 on feat); then gate2 pr #543 sha a08715ca naming the L3 follow-up.",
+  "updatedAt": "2026-10-10T23:34:25.583Z"
+}

@@ -1,0 +1,106 @@
+{
+  "slug": "gate-script",
+  "feature": "Co-pilot and tickets, run 2",
+  "ticket": "itm_9ccd6158c4aa",
+  "branch": "feat/gate-script",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-gate-script",
+  "artefact": "docs/design/gate-script/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A fresh worktree's gate says run npm ci",
+      "state": "integrated at bcb4d2bd",
+      "branch": "slice/gate-script-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-script-s1",
+      "pr": 707
+    },
+    {
+      "slice": "S2 The hang test runs only the hung test",
+      "state": "integrated at b85bfb3a",
+      "branch": "slice/gate-script-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-script-s2",
+      "pr": 706
+    },
+    {
+      "slice": "gate-script",
+      "state": "fixing: one kept finding (test-timeout header); in QA read-only; feat/gate-script at bcb4d2bd, PR #681 draft",
+      "after": [
+        "S1",
+        "S2"
+      ],
+      "branch": "feat/gate-script",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-gate-script",
+      "pr": 681
+    },
+    {
+      "slice": "fix: the hang test's header says what it proves",
+      "state": "integrated",
+      "branch": "fix/gate-script-header",
+      "pr": 708
+    }
+  ],
+  "findings": [
+    "kept: test-timeout.test.mjs:7-9 header still claims --test-timeout bounds a hung test; S2 owned the F6 rewrite and left it (net 0)",
+    "dropped: devDependencies in missingInstall — A1 and spec line 1 name dependencies only, and package.json has none; widening moves a spec line",
+    "dropped: unescaped HUNG in --test-name-pattern — no metacharacters today, note only",
+    "dropped: 2000 ms bound in gate-install.test.mjs:73 — spec line 1's evidence names the time; measured 90-150 ms, 13x margin"
+  ],
+  "next": "co-pilot: integrate fix PR #708, pilot land, send QA the tip.",
+  "updatedAt": "2026-10-15T17:38:20.059Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "the audit's F5 premise (a 10 s timeout firing late) sent the search toward a leak that does not exist",
+      "evidence": "one timed node --test probe: every failure at ~5.01 s from eventually, not --test-timeout"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "test-timeout.test.mjs:7-9 says the timeout bounds a hung test, which is not what the copy does",
+      "evidence": "finding F6; S2 corrects the header"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "a bash heredoc holding the artefact failed with an unexpected EOF quoting error",
+      "evidence": "one retry; written with the Write tool instead"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2 reviewer's HIGH (guard timer still 80000) came from a missed first replace; fixed to 25000 without re-review",
+      "evidence": "PR #706 diff: guard 25000 matches S2.md interface; co-pilot checked"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a child node --test inheriting NODE_TEST_CONTEXT silently runs nothing (exit 0)",
+      "evidence": "S1 first RED run: 'run() is being called recursively ... skipping running files'; fix as gate-census.test.mjs:53"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "spawn count near the ceiling",
+      "evidence": "S1 gate: spawns 13308 of 13547 (98%)"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "full suite slow",
+      "evidence": "npm test 320 s"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "evidence runner did not finish inside the review; mutation over a 320 s suite does not fit one pass",
+      "evidence": "runner parked after ~44 s and 8 tool calls; tools table 'not run'"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2 left the F6 header rewrite undone though its Files owned named it",
+      "evidence": "test-timeout.test.mjs:9 unchanged at bcb4d2bd"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "check-provenance with no arguments prints usage and checks nothing; my fix brief named no directories",
+      "evidence": "fixer chose `skills agents`; brief.md names agents/ skills/ rules/"
+    },
+    {
+      "kind": "drain",
+      "what": "second evidence-runner report handed back to main instead of its fundamentalist (gate-script); read and relayed to the co-pilot. Helper hand-backs route to the session root, not the spawner, when the spawner's turn is parked",
+      "size": 1
+    }
+  ]
+}

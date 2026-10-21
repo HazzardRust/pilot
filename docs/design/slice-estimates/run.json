@@ -1,0 +1,180 @@
+{
+  "slug": "slice-estimates",
+  "feature": "Estimates are slice counts",
+  "ticket": "itm_1214816b3789",
+  "branch": "feat/slice-estimates",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-slice-estimates",
+  "qa": {
+    "branch": "qa/slice-estimates",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-feat-slice-estimates-qa",
+    "url": "http://127.0.0.1:4610"
+  },
+  "artefact": "docs/design/slice-estimates/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Walking skeleton: posted with a slice count, the row says it",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2",
+        "4",
+        "7 (ticket field)"
+      ],
+      "branch": "slice/slice-estimates-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-estimates-s1",
+      "pr": 299
+    },
+    {
+      "slice": "S2 Gate 1 writes no estimate and nothing measures a run",
+      "state": "integrated",
+      "after": "S1 Walking skeleton: posted with a slice count, the row says it",
+      "delivers": [
+        "3",
+        "7 (plan field)"
+      ],
+      "branch": "slice/slice-estimates-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-estimates-s2",
+      "pr": 300
+    },
+    {
+      "slice": "S3 ticket-making, the architect and the auditor size in slices",
+      "state": "integrated",
+      "delivers": [
+        "5",
+        "6"
+      ],
+      "branch": "slice/slice-estimates-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-estimates-s3",
+      "pr": 298
+    },
+    {
+      "slice": "feature",
+      "state": "ready",
+      "branch": "feat/slice-estimates",
+      "pr": 289
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "branch": "slice/slice-estimates-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-estimates-fix",
+      "pr": 301
+    },
+    {
+      "slice": "Merge main (merge-first, #290)",
+      "state": "integrated",
+      "after": "fix round",
+      "branch": "fix/slice-estimates-merge-main",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-estimates-merge",
+      "pr": 310
+    }
+  ],
+  "findings": [
+    "kept: F1 the reply re-estimate contradicts spec 1 and no code reads it; removed from the skill, ADR 0062 and L11 reworded (assumed A7, asked on the deck)",
+    "kept: F2 a mixed merge (uncounted host, counted ticket) is unpinned; one test added",
+    "kept: F3 S1's Interface omits the 'no slice count' merge answer; one line added",
+    "kept: nit, the artefact's status table still says planned",
+    "dropped: nit, fold withoutEstimate's early return; same behaviour, no stated consequence",
+    "dropped: nit, remove the architect's Estimates pointer and pin; S3's slice file keeps it on purpose",
+    "dropped: nit, fixture sliceCount values 60/150/180; churn across test files for no behaviour",
+    "dropped: nit, rename estimate.test.mjs; churn only"
+  ],
+  "report": {
+    "featurePr": {
+      "number": 289,
+      "state": "ready"
+    },
+    "slices": [
+      {
+        "slice": "S3 ticket-making, the architect and the auditor size in slices",
+        "pr": 298,
+        "mergeSha": "4ebece1"
+      },
+      {
+        "slice": "S1 Walking skeleton: posted with a slice count, the row says it",
+        "pr": 299,
+        "mergeSha": "cb6081c"
+      },
+      {
+        "slice": "S2 Gate 1 writes no estimate and nothing measures a run",
+        "pr": 300,
+        "mergeSha": "3205f6e"
+      },
+      {
+        "slice": "fix round",
+        "pr": 301,
+        "mergeSha": "54311c0"
+      },
+      {
+        "slice": "Merge main (merge-first, #290)",
+        "pr": 310,
+        "mergeSha": "fdfd369"
+      }
+    ],
+    "assumed": [
+      {
+        "id": "A3",
+        "decision": "Which cut rules survive",
+        "taken": "Same surface merges kept"
+      },
+      {
+        "id": "A4",
+        "decision": "Mid-run growth past 20",
+        "taken": "22"
+      },
+      {
+        "id": "A6",
+        "decision": "Slice count of an audit pick",
+        "taken": "S 1, M 3, L 8"
+      },
+      {
+        "id": "A7",
+        "decision": "Does a reply re-estimate a ticket",
+        "taken": "No; answered by the user"
+      }
+    ],
+    "friction": [
+      {
+        "agent": "pilot",
+        "what": "feature PRs built from main conflict with each other",
+        "evidence": "PRs 309 and 310 merged main after Gate 2"
+      },
+      {
+        "agent": "qa",
+        "what": "resumed QA is not stamped qa on the deck",
+        "evidence": "deck_resolve refused on itm_d6e848d7fef6"
+      },
+      {
+        "agent": "implementer",
+        "what": "gate1 field types not in the tool description",
+        "evidence": "two failed posts"
+      },
+      {
+        "agent": "implementer",
+        "what": "pilot tickets has no --repo",
+        "evidence": "curl on /api/tickets?repo= instead"
+      },
+      {
+        "agent": "qa",
+        "what": "scratch-deck locations lost on resume",
+        "evidence": "six commands to find the stores"
+      },
+      {
+        "agent": "qa",
+        "what": "killing a scratch deck reports a failed background shell",
+        "evidence": "four noise notifications"
+      }
+    ],
+    "humanSteps": [
+      "Merge PR #289",
+      "Install the release"
+    ],
+    "worktreesLeft": [
+      "C:/Users/Hazzard/Projects/pilot-feat-slice-estimates"
+    ]
+  },
+  "next": "Closing report itm_ce9968dda806 posted; PR 289 ready at 77b4a18 plus a run-record commit, the merge is the user's. Next green ticket: itm_ded1a879578b (Consecutive runs build on each other).",
+  "finished": "closing report posted",
+  "finishedAt": "2026-10-04T09:17:01.652Z",
+  "updatedAt": "2026-10-04T09:17:01.652Z"
+}

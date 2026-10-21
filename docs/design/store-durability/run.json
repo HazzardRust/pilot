@@ -1,0 +1,202 @@
+{
+  "slug": "store-durability",
+  "feature": "Store durability",
+  "ticket": "itm_06d54e3b798b",
+  "branch": "feat/store-durability",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-store-durability",
+  "artefact": "docs/design/store-durability/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated at cbd75c48 (3943 pass, 0 fail)",
+      "branch": "slice/store-durability-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-store-durability-s1",
+      "pr": 788
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at 4fcaaea6 (3936 pass, 0 fail)",
+      "branch": "slice/store-durability-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-store-durability-s2",
+      "pr": 787
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at a8ee594a (3950 pass, 0 fail)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/store-durability-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-store-durability-s3",
+      "pr": 789
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at b13d3fae (3956 pass, 0 fail)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/store-durability-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-store-durability-s4",
+      "pr": 790
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at 6dcfafdc (3966 pass, 0 fail)",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/store-durability-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-store-durability-s5",
+      "pr": 792
+    },
+    {
+      "slice": "store-durability",
+      "state": "fixing: QA read-only pass done at 6dcfafdc (all pass but F1, T1, both in the fix round; F2 with the user); QA parked awaiting fix tip; draft PR #760",
+      "after": [
+        "S2",
+        "S3",
+        "S5",
+        "S6"
+      ],
+      "branch": "feat/store-durability",
+      "pr": 760
+    },
+    {
+      "slice": "S6",
+      "state": "integrated at 573e6380 (3961 pass, 0 fail)",
+      "after": [
+        "S3",
+        "S4"
+      ],
+      "branch": "slice/store-durability-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-store-durability-s6",
+      "pr": 791
+    },
+    {
+      "slice": "S7 principles fix round",
+      "state": "integrated",
+      "after": [
+        "S5",
+        "S6"
+      ],
+      "branch": "slice/store-durability-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-store-durability-fix",
+      "pr": 793
+    }
+  ],
+  "findings": [
+    "kept: deck.pid identity is only isRunning(pid); Windows SIGTERM skips dropPidFile so stale pids are normal and pid reuse refuses restore forever; write `pid port`, refuse only when that port's /api/health answers that pid or cannot tell; drop daemon's 'other live deck' branch (~0 net)",
+    "kept: import cycle store-core <-> store-recovery; move storePid/restoreStore/main/servingPid to deck/store-restore.mjs (+3)",
+    "kept: a corrupt archive month file 500s every unknown-id read; archivedItem catches per file, logs, continues; archiveOld still refuses (+6)",
+    "kept: 'is a deck' check in two places (store-recovery readDeckFile, store-core readDeck); share isDeck (-2)",
+    "kept: RETRY_CODES export has no caller but its own test; drop export and test, edit S2 interface (-5)",
+    "kept: alert-switch round-trip test duplicates the one above; delete the duplicated round-trip lines (~-5)",
+    "dropped: deleting the source-text .tmp assertion in alert-switch.test.mjs; it is spec 5's evidence verbatim (the ticket's grep)",
+    "kept: archive `days` option and ARCHIVE_DAYS export unused; drop (0)",
+    "kept: `?? undefined` noise in read.mjs:48, server-routes.mjs:239,483 (0)",
+    "kept: /api/items?id= scans month files twice; once only, if pick's refusal maps to 404 (-3)",
+    "kept: restoreStore reads deck.json twice; parse once (-1)",
+    "kept: S6.md test lines name no interface symbol (check-slices); name storePid/restoreStore (0)",
+    "dropped: refusal advice `pilot deck --stop <pid>` dead-ends on the user's deck, but dropping it moves spec 4's evidence; sent to main as a question, default keep"
+  ],
+  "next": "Integrating the fix round (PR #793 at e8ab4b16); then pilot land is the pilot's (blocked step for the co-pilot), QA resumed with feat's tip to re-probe and post the walkthrough.",
+  "updatedAt": "2026-10-17T14:52:55.057Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md's commit trailer (session_01R7ez...) differs from the run's trailer (session_01HBzx...); every slice must pick one",
+      "evidence": "docs/design/store-durability/brief.md Commit trailer vs co-pilot brief"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test log prints an extra 'tests 8' summary before the real totals; a full gate takes ~4 min and a LOW fix forced a second run",
+      "evidence": "gate2.log grep ^tests; two 229 s runs",
+      "size": 229
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pass.test.mjs counted every fs.renameSync as a store write, so the new .bak rename broke a test outside the slice",
+      "evidence": "deck/test/pass.test.mjs:163"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "300-line limit counts the slice's required ADR (59) and pins (129); production code was ~130 lines, so it cost a round trip to ask",
+      "evidence": "PR #788 diff 318 lines",
+      "size": 318
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "could not wait for the co-pilot's answer: foreground sleep blocked and Monitor not available, so it pushed on its stated default",
+      "evidence": "S1 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "readme-flow.test.mjs wants every new pilot subcommand classified; neither the slice file nor brief named it, costing a second full suite",
+      "evidence": "scripts/test/readme-flow.test.mjs NON_MOVING",
+      "size": 276
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "userDeckPid probes port 4321 only while deckPort() reads PILOT_DECK_PORT; /api/health names no store path, so restore cannot tell which store a deck serves",
+      "evidence": "deck/procs.mjs userDeckPid vs deck/tools.mjs deckPort"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "open.test.mjs fails any test file naming daemon.mjs without importing ./no-open.mjs; not in the slice file or brief, cost one extra full run",
+      "evidence": "deck/test/open.test.mjs:97",
+      "size": 276
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6's verification said PILOT_DECK_PORT unset, which points the probe at the user's live deck on 4321; the step could not pass as written (co-pilot's slice file)",
+      "evidence": "docs/design/store-durability/slices/S6.md Done"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6's interface put the deck.pid check in the default daemonPid, which the CLI's injected probe would skip",
+      "evidence": "PR #791 assumed decisions"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "facades.test.mjs caps deck files at 800 lines and server-routes.mjs sat at 799 on the base; not in brief.md, cost a full run and a refactor commit",
+      "evidence": "deck/test/facades.test.mjs:18 BAR = 800",
+      "size": 300
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Node fetch cannot send Sec-Fetch-Mode: navigate, so a press test returned 400 for the wrong reason until it used node:http",
+      "evidence": "deck/test/press-refused.test.mjs:33"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "review worktree had no node_modules, so diff coverage and mutation produced no evidence; knip has no knip.json and buries real rows under 462 unused files",
+      "evidence": "evidence runner: 'node_modules missing: run npm ci'; stryker sandbox export error"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "npm test's post-run census stops a QA deck started from the QA worktree (leashed to the session), so a QA deck running before the gate is killed by it",
+      "evidence": "census line: stopped 61032 daemon ... deck/daemon.mjs --leash 11332"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "scratch decks cannot be stopped and restarted on the same store or pre-seeded, so restore and planted-archive probes needed a hand-written launcher; QA run ended by the handback hook while waiting for the fix tip",
+      "evidence": "pilot deck --stop removes the dir; QA report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the co-pilot's madge gate `npx madge --circular deck/` processes 0 .mjs files and always says no cycle; needs --extensions mjs,js",
+      "evidence": "madge default extensions skip .mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a fresh worktree has no node_modules and npm test fails at once with 'run npm ci', wasting one gate run; briefs should say npm ci first",
+      "evidence": "scripts/gate.mjs 'node_modules missing: run npm ci'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Bash heredocs holding JS template literals failed to parse, so edits went through Python scripts",
+      "evidence": "fix-round report"
+    }
+  ]
+}

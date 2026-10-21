@@ -1,0 +1,396 @@
+{
+  "slug": "ticket-states",
+  "feature": "Ticket states and autonomous mode (run 2)",
+  "branch": "feat/ticket-states",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-ticket-states",
+  "artefact": "docs/design/ticket-states/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Signing a gate1 turns its ticket yellow",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2"
+      ],
+      "branch": "slice/ticket-states-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s1",
+      "pr": 261
+    },
+    {
+      "slice": "S2 Small tickets retired from the deck",
+      "state": "integrated",
+      "after": "S1 Signing a gate1 turns its ticket yellow",
+      "delivers": [
+        "10"
+      ],
+      "branch": "slice/ticket-states-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s2",
+      "pr": 262
+    },
+    {
+      "slice": "S3 Gate2 posted turns red, the closing report closes; three queues",
+      "state": "integrated",
+      "after": "S2 Small tickets retired from the deck",
+      "delivers": [
+        "1",
+        "2",
+        "3"
+      ],
+      "branch": "slice/ticket-states-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s3",
+      "pr": 263
+    },
+    {
+      "slice": "S4 Live ticket: take, park, phase = its state",
+      "state": "integrated",
+      "after": "S3 Gate2 posted turns red, the closing report closes; three queues",
+      "delivers": [
+        "4",
+        "9"
+      ],
+      "branch": "slice/ticket-states-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s4",
+      "pr": 264
+    },
+    {
+      "slice": "S5 The chain makes nextTicketOf live instead of resolving it",
+      "state": "integrated",
+      "after": "S4 Live ticket: take, park, phase = its state",
+      "delivers": [
+        "13"
+      ],
+      "branch": "slice/ticket-states-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s5",
+      "pr": 265
+    },
+    {
+      "slice": "S6 A ticket is posted with its creation estimate",
+      "state": "integrated",
+      "after": "S5 The chain makes nextTicketOf live instead of resolving it",
+      "delivers": [
+        "6"
+      ],
+      "branch": "slice/ticket-states-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s6",
+      "pr": 266
+    },
+    {
+      "slice": "S7 Gate 1 writes the plan and its measured estimate",
+      "state": "integrated",
+      "after": "S6 A ticket is posted with its creation estimate",
+      "delivers": [
+        "7",
+        "8"
+      ],
+      "branch": "slice/ticket-states-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s7",
+      "pr": 267
+    },
+    {
+      "slice": "S8 A record names its ticket and is read by it",
+      "state": "integrated",
+      "after": "S7 Gate 1 writes the plan and its measured estimate",
+      "delivers": [
+        "14"
+      ],
+      "branch": "slice/ticket-states-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s8",
+      "pr": 268
+    },
+    {
+      "slice": "Ticket states and autonomous mode (run 1)",
+      "state": "ready for review: PR #260 at a8ee28c",
+      "after": "S8 A record names its ticket and is read by it",
+      "branch": "feat/ticket-states",
+      "pr": 260
+    },
+    {
+      "slice": "Fix round 1 (principles + QA)",
+      "state": "integrated",
+      "after": "S8 A record names its ticket and is read by it",
+      "branch": "fix/ticket-states-round-1",
+      "pr": 269
+    },
+    {
+      "slice": "S9 Merge a green ticket into the live one",
+      "state": "integrated",
+      "delivers": [
+        "11"
+      ],
+      "branch": "slice/ticket-states-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s9",
+      "pr": 271
+    },
+    {
+      "slice": "S10 The pilot plans on tickets: take, park, merge, gates naming tickets",
+      "state": "integrated",
+      "after": "S9 Merge a green ticket into the live one",
+      "delivers": [
+        "4",
+        "5",
+        "9",
+        "10",
+        "11"
+      ],
+      "branch": "slice/ticket-states-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s10",
+      "pr": 272
+    },
+    {
+      "slice": "S11 ticket-making rewritten around states and estimates",
+      "state": "integrated",
+      "after": "S9 Merge a green ticket into the live one",
+      "delivers": [
+        "10",
+        "12"
+      ],
+      "branch": "slice/ticket-states-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s11",
+      "pr": 274
+    },
+    {
+      "slice": "S12 Mode control replaces full auto on the tab",
+      "state": "integrated",
+      "after": "S11 ticket-making rewritten around states and estimates",
+      "delivers": [
+        "15"
+      ],
+      "branch": "slice/ticket-states-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s12",
+      "pr": 275
+    },
+    {
+      "slice": "S13 nextTicketOf by mode; autonomous chains at gate 2 posted",
+      "state": "integrated",
+      "after": "S12 Mode control replaces full auto on the tab",
+      "delivers": [
+        "16",
+        "18"
+      ],
+      "branch": "slice/ticket-states-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s13",
+      "pr": 276
+    },
+    {
+      "slice": "S14 Red-phase grilling: questions on a ticket, gate2 sign refused",
+      "state": "integrated",
+      "after": "S13 nextTicketOf by mode; autonomous chains at gate 2 posted",
+      "delivers": [
+        "17",
+        "20"
+      ],
+      "branch": "slice/ticket-states-s14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s14",
+      "pr": 277
+    },
+    {
+      "slice": "S15 The record carries qa refs; a parked red ticket's reply reaches the pilot",
+      "state": "integrated",
+      "after": "S14 Red-phase grilling: questions on a ticket, gate2 sign refused",
+      "delivers": [
+        "19"
+      ],
+      "branch": "slice/ticket-states-s15",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s15",
+      "pr": 278
+    },
+    {
+      "slice": "S16 The pilot runs both modes; full auto prose removed",
+      "state": "integrated",
+      "after": "S15 The record carries qa refs; a parked red ticket's reply reaches the pilot",
+      "delivers": [
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20"
+      ],
+      "branch": "slice/ticket-states-s16",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s16",
+      "pr": 279
+    },
+    {
+      "slice": "feature",
+      "state": "ready for review: PR #270 at 9430618 (0.7.17); gate 2 signed; closing report itm_c1d0a4280425",
+      "branch": "feat/ticket-states",
+      "pr": 270
+    },
+    {
+      "slice": "S17 A hand-off never leaves the fresh session idle (added)",
+      "state": "integrated",
+      "delivers": [
+        "16",
+        "18"
+      ],
+      "branch": "slice/ticket-states-s17",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s17",
+      "pr": 273
+    },
+    {
+      "slice": "S18 Blocking questions: only a blocking one stops its ticket turning red",
+      "state": "integrated",
+      "after": "S16 The pilot runs both modes; full auto prose removed",
+      "delivers": [
+        "17"
+      ],
+      "branch": "slice/ticket-states-s18",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-s18",
+      "pr": 280
+    },
+    {
+      "slice": "Fix round 2 (principles + QA + A10)",
+      "state": "integrated",
+      "after": "S18 Blocking questions: only a blocking one stops its ticket turning red",
+      "branch": "fix/ticket-states-r1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-states-fix",
+      "pr": 281
+    }
+  ],
+  "findings": [
+    "kept: F1 delete the duplicated awaitsUser (items.mjs + hooks/lib/deck.js) and the join test; live-ticket check in stop-gate.awaitsUser",
+    "kept: F2 one hooks/lib/wrapper-log.js for run.mjs and hooks/lib/deck.js",
+    "kept: F3 parked-red-walkthrough routing into store.ownerFilter",
+    "kept: F4 drop 'green' at pilot.md step 2 sign-off",
+    "kept: F5 items.mjs:695 a question on the live ticket must not mark it next; test",
+    "kept: F6 F7 F8 F10 one test each; F9 qa.url credentials test",
+    "kept: N1 N2 N5 N7 N8 one-liners; N6/QA-F2 refuse reopen of a merged item",
+    "kept: QA-F1 resolveItem refuses a signed gate2 over an open question on its ticket",
+    "kept: QA-F3 lane notice; QA-D1 panel opens at the first red row; QA-D2 if <= 5 lines CSS",
+    "kept: A10 pilot wait 110 min; pilot restarts a wait on any exit; test",
+    "dropped: N3, N4, N9 (no consequence shown / reworked by S18)",
+    "dropped: QA-D3 bare /reply refusal page from this run; deferred to a queued ticket after it merges",
+    "kept: QA-F4 gate1 refused by an open question on another ticket (store.mjs refuseOverOpenQuestions filters by repo only); QA fixes it as the branch's writer, gate1 only, one test"
+  ],
+  "report": {
+    "featurePr": {
+      "number": 270,
+      "state": "ready"
+    },
+    "slices": [
+      {
+        "slice": "S9",
+        "pr": 271,
+        "mergeSha": "48857d6"
+      },
+      {
+        "slice": "S10",
+        "pr": 272,
+        "mergeSha": "605c635"
+      },
+      {
+        "slice": "S17 (added)",
+        "pr": 273,
+        "mergeSha": "5fd616b"
+      },
+      {
+        "slice": "S11",
+        "pr": 274,
+        "mergeSha": "89d8150"
+      },
+      {
+        "slice": "S12",
+        "pr": 275,
+        "mergeSha": "c45d66d"
+      },
+      {
+        "slice": "S13",
+        "pr": 276,
+        "mergeSha": "9692e0a"
+      },
+      {
+        "slice": "S14",
+        "pr": 277,
+        "mergeSha": "f89ff25"
+      },
+      {
+        "slice": "S15",
+        "pr": 278,
+        "mergeSha": "65f42ff"
+      },
+      {
+        "slice": "S16",
+        "pr": 279,
+        "mergeSha": "e5d9087"
+      },
+      {
+        "slice": "S18 (added)",
+        "pr": 280,
+        "mergeSha": "c01b882"
+      },
+      {
+        "slice": "Fix round 2",
+        "pr": 281,
+        "mergeSha": "7325606"
+      }
+    ],
+    "assumed": [
+      {
+        "id": "A8",
+        "decision": "a hand-off with no marker posts the failure, never types a prompt",
+        "taken": "assumed by the pilot; S17 itself was the user's call"
+      },
+      {
+        "id": "A9",
+        "decision": "an audit pick's estimate is effort weight x 30 min",
+        "taken": "assumed by the pilot during S11"
+      },
+      {
+        "id": "A10",
+        "decision": "pilot wait ends at 110 min and is restarted",
+        "taken": "the user's call, fixed in fix round 2"
+      }
+    ],
+    "friction": [
+      {
+        "agent": "pilot, QA",
+        "what": "a crew agent parked in deck_wait cannot hear the pilot",
+        "evidence": "two stop-and-resumes; about 14 min and a late PR flip"
+      },
+      {
+        "agent": "implementers",
+        "what": "the pilot prompt pin has zero headroom",
+        "evidence": "S10 four measure rounds, S16 five"
+      },
+      {
+        "agent": "QA",
+        "what": "the deck caches render.mjs and an agent cannot stop a deck another agent started",
+        "evidence": "two fixes waited on the user stopping pid 18400"
+      },
+      {
+        "agent": "implementers, QA",
+        "what": "scratch-deck driving is undocumented",
+        "evidence": "eight agents rediscovered POST /api/runs and the keeper pid"
+      },
+      {
+        "agent": "QA",
+        "what": "tests pin raw markup order",
+        "evidence": "three unrelated test edits for two layout fixes"
+      },
+      {
+        "agent": "pilot",
+        "what": "deck_read of open threads is 80-160k characters",
+        "evidence": "saved to a file and grepped each time"
+      },
+      {
+        "agent": "QA",
+        "what": "first QA agent ran out of context mid-walk",
+        "evidence": "one takeover"
+      }
+    ],
+    "humanSteps": [
+      "merge PR #270",
+      "update the plugin to 0.7.17",
+      "restart the deck on 4321",
+      "start a new pilot session",
+      "remove pilot-feat-ticket-states after the merge"
+    ],
+    "worktreesLeft": [
+      "C:/Users/Hazzard/Projects/pilot-feat-ticket-states"
+    ]
+  },
+  "next": "Run finished: closing report itm_c1d0a4280425 posted; PR #270 ready at 9430618, the merge is the user's. Left: commit the run record on feat/ticket-states, remove worktrees pilot-ticket-states-s9..s18 and pilot-ticket-states-fix with their merged branches. Next run: itm_9ff19d0cd2b1 is the queue's head.",
+  "finished": "closing report posted",
+  "finishedAt": "2026-10-03T14:16:14.613Z",
+  "updatedAt": "2026-10-03T14:16:14.613Z"
+}

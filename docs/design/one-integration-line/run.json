@@ -1,0 +1,356 @@
+{
+  "slug": "one-integration-line",
+  "feature": "One integration line: pilot",
+  "ticket": "itm_d1054e1ebb14",
+  "branch": "feat/one-integration-line",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-one-integration-line",
+  "artefact": "docs/design/one-integration-line/architecture.md",
+  "slices": [
+    {
+      "slice": "one-integration-line",
+      "state": "walkthrough itm_417206a81949 signed; main merged at bf703f1 (4246 pass); gate2 posted on #884",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10"
+      ],
+      "branch": "feat/one-integration-line",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-one-integration-line",
+      "pr": 884
+    },
+    {
+      "slice": "S1 The landing runs no sync",
+      "state": "integrated",
+      "branch": "slice/one-integration-line-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-one-integration-line-s1",
+      "pr": 904
+    },
+    {
+      "slice": "S2 The landing keeps one PR from pilot to main",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/one-integration-line-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-one-integration-line-s2",
+      "pr": 907
+    },
+    {
+      "slice": "S3 The deck's report says merge the main PR",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/one-integration-line-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-one-integration-line-s3",
+      "pr": 908
+    },
+    {
+      "slice": "S4 A gate2 posts at the feature's tip",
+      "state": "integrated",
+      "branch": "slice/one-integration-line-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-one-integration-line-s4",
+      "pr": 905
+    },
+    {
+      "slice": "S5 pilot integrate --trial replaces --default",
+      "state": "integrated",
+      "branch": "slice/one-integration-line-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-one-integration-line-s5",
+      "pr": 902
+    },
+    {
+      "slice": "S6 Sync pushes nothing when main has only pilot",
+      "state": "integrated",
+      "branch": "slice/one-integration-line-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-one-integration-line-s6",
+      "pr": 903
+    },
+    {
+      "slice": "S7 adr-index names a duplicate and knows the placeholder",
+      "state": "integrated",
+      "branch": "slice/one-integration-line-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-one-integration-line-s7",
+      "pr": 901
+    },
+    {
+      "slice": "S8 The landing allocates the ADR number",
+      "state": "integrated",
+      "after": [
+        "S2",
+        "S6",
+        "S7"
+      ],
+      "branch": "slice/one-integration-line-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-one-integration-line-s8",
+      "pr": 911
+    },
+    {
+      "slice": "S9 The crew, the rules and the ADR format name one line",
+      "state": "integrated",
+      "after": [
+        "S2",
+        "S5"
+      ],
+      "branch": "slice/one-integration-line-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-one-integration-line-s9",
+      "pr": 910
+    },
+    {
+      "slice": "S10 The docs, the help and ADR 0167",
+      "state": "integrated",
+      "after": [
+        "S2",
+        "S5"
+      ],
+      "branch": "slice/one-integration-line-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-one-integration-line-s10",
+      "pr": 909
+    },
+    {
+      "slice": "S11 fixes the principles findings",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10"
+      ],
+      "pr": 912
+    }
+  ],
+  "findings": [
+    "kept: QA1 an open legacy `Mark #N ready` question blocks closeLanded on a landed gate2, and the lander's bodiless report is refused; treat those questions as non-blocking",
+    "kept: QA3 the by-hand first step reads `Push pilot, then open a PR from pilot to main by hand`",
+    "dropped: QA2 write-mode adr-index exits 0 on a duplicate; spec 7's bar is --check",
+    "dropped: QA4 the report repeats #900 unlinked; taste only",
+    "dropped: QA5 #884's base is main; the landing is main's to decide, named in the hand-back"
+  ],
+  "next": "gate2 on #884 at bf703f1 awaits the press; on Sign off the deck lands it, then spawn a pilot-lander with the gate2 id; on landed, reply Findings: on the closing report.",
+  "updatedAt": "2026-10-20T09:58:47.830Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "land.mjs (487) and integrate.mjs (616) open most functions with JSDoc citing spec/L ids from 6+ past features; learning what a function does means reading history",
+      "evidence": "one-integration-line artefact friction",
+      "size": 15
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "merge first:/pr ready failed: lines parsed by regex in 4 deck modules and pinned by ~18 tests, found only by repo-wide grep",
+      "evidence": "one-integration-line §6 red team",
+      "size": 18
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "docs-lookup could not confirm GitHub's push-marks-PR-merged rule: 3 fetches, 3 404s",
+      "evidence": "A5",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "deck-token: pilot integrate's PR-title rule (S<n> then a lower-case first letter) cost three retitle-and-rerun rounds; hand-back came while QA was live and QA died with it (no walkthrough, record qa empty)",
+      "evidence": "deck-token co-pilot report; run.json qa: null",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "deck-token: diff coverage and mutation checks never ran, the fresh worktree had no node_modules",
+      "evidence": "deck-token co-pilot report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: slice Interface block said checkIndex returns string[]; code returns {ok, problems}",
+      "evidence": "PR #901 report; docs/design/one-integration-line/slices/S7.md Interface"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: a ~100 s wait was blocked, so it ended a turn to wait for its reviewer",
+      "evidence": "S7 hand-back friction line"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: slice file's owned tests missed integrate-select.test.mjs and test-command.test.mjs, which also pin --default and the usage line",
+      "evidence": "PR #902 diff names both"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: test:changed ran the whole suite (4270) since the merge scripts changed, so red/green cost ~5 min per run",
+      "evidence": "S5 hand-back"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: gate2-base.mjs:67 (S4's file) still names --default after S5",
+      "evidence": "deck/gate2-base.mjs:67"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: sync-remote.test.mjs fixture built 'new on main' as an empty commit, which the new guard rightly skips; three failures looked unrelated",
+      "evidence": "PR #903 touches scripts/test/sync-remote.test.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: node --test scripts/test/sync*.test.mjs timed out the 120 s shell twice beside a full suite",
+      "evidence": "S6 hand-back"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: removing sync left stale wording in bin/pilot.mjs help, docs/OPERATING.md and deck/landing-wait.mjs that the slice file did not own",
+      "evidence": "PR #904 files"
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "S1: reviewer node --test runs hung under parallel gates and left orphan node processes (18900, 8212, 18732); Stop-Process on them was refused",
+      "evidence": "S1 hand-back"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: test:changed is the same script as npm test (package.json), so every red/green ran the full suite (~345 s)",
+      "evidence": "package.json test:changed = node scripts/gate.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: cleanOnPilot's unknown-sha refusal reads only 'fatal: Needed a single revision', not naming the sha",
+      "evidence": "deck/gate2-base.mjs, S4 test 2"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: scripts/land.mjs is 490 lines; a cat -n overflowed into a saved file, two passes to read",
+      "evidence": "S2 wip hand-back"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: fakeGh in scripts/test/lib/land-repos.mjs (unowned) had to change shape for pr create/close and --state",
+      "evidence": "commit 137b1ed7"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: both reviewers' own test runs queued behind the implementer's background gate ('gate: waiting for a slot') and timed out at 120 s",
+      "evidence": "S2 hand-back, PR #907"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: node --test without --test-reporter=tap gives nothing to grep in this harness; a rerun was needed",
+      "evidence": "S2 hand-back"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S2: my brief gave the PR title with a capital first letter; pilot integrate refused it until retitled",
+      "evidence": "pilot integrate NOT integrated on #907 title"
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "S2's reviewer (child of the implementer) addressed its hand-back to the main session, not its parent",
+      "evidence": "coordinator note on reviewer a7199a31"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: slice file pointed spec 8's fix at store-core.mjs:440; the real gate was postFilled in closing-report.mjs",
+      "evidence": "S3.md:15, PR #908"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3/S8/S9/S10: brief.md's commit trailer (Fable 5.1) disagrees with the co-pilot's spawn brief (Opus 5.5)",
+      "evidence": "brief.md:36"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: frontmatter-crlf.test.mjs forbids a test's own LF front-matter regex; nothing names it, a second 5-minute full run",
+      "evidence": "scripts/test/frontmatter-crlf.test.mjs, PR #909"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: a test that walks a directory must be listed in TREE_TESTS, and rule or vendor edits need build-rules-ledger and build-vendor-ledger run by hand; unnamed, extra full runs",
+      "evidence": "scripts/select-tests.mjs, PR #910"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: an assert.match failure on pilot.md printed ~60 KB",
+      "evidence": "S9 hand-back"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8: parallel implementers share %TEMP%/pilot-gate-slots; one land test failed EPERM on slot-1.json.takeover",
+      "evidence": "S8 hand-back"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S3 integration went red once on daemon-replace 'a newer caller stops the daemon through its shutdown' (30 s timeout) while four gates ran; passes in 0.8 s alone 3/3, green on rerun",
+      "evidence": "C:/Users/Hazzard/.claude/pilot/logs/20261019T105238835Z-slice-one-integration-line-s3.log"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner got no usable result: no node_modules in its worktree (npm ci forbidden), deleted paths passed to eslint/jscpd/madge, knip whole-repo",
+      "evidence": "fundamentalist hand-back, section 3"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "spec 6 scoped to a file list missed CONTEXT.md, README.md, CLAUDE.excerpt.md",
+      "evidence": "F1"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the added test lines I and the pilot wrote into S3.md/S8.md failed check-slices (Added: prefix, symbol not in Interface)",
+      "evidence": "commit 3d133777"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "npm test teardown stopped QA's scratch deck leashed to its worktree; the classifier denied reading the scratch deck.secret (user: Skip it)",
+      "evidence": "QA read-only report; itm_f17d095cb456"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11: QA1 hint named closeLanded but resolveItem re-checks gate2Blockers; the first fix stayed red until a log grep",
+      "evidence": "PR #912, commit 831f9ff3"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate refuses a fix-round PR title without S<n>; my fix brief's title had none, retitled S11",
+      "evidence": "pilot integrate on #912"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the installed pilot is older than the feature (integrate --default only), so spec 1 was proved in a fixture clone with --trial",
+      "evidence": "pilot help shows integrate --default",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "npm test's start-up sweep stopped the scratch deck QA had started in the same worktree",
+      "evidence": "gate.log: stopped 23684 daemon --leash-dir pilot-one-integration-line-qa",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a scratch deck cannot take a gate2 without a ticket through Gate 1, so cleanOnPilot was probed directly",
+      "evidence": "refusal: a gate2's ticket is an open yellow or green ticket",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot sync demands a test command before its no-op check; a fixture without package.json is refused",
+      "evidence": "NOT synced: no package.json here",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "integrate --trial pushes the checked-out branch, so QA cannot run it in its qa/ worktree",
+      "evidence": "scripts/integrate.mjs trial path",
+      "size": 2
+    }
+  ]
+}

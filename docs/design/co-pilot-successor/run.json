@@ -1,0 +1,101 @@
+{
+  "slug": "co-pilot-successor",
+  "feature": "Design branch is pilot plus docs only",
+  "ticket": "itm_8f6348630abd",
+  "branch": "feat/co-pilot-successor",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-co-pilot-successor",
+  "qa": {
+    "branch": "qa/co-pilot-successor",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-co-pilot-successor",
+    "url": "http://127.0.0.1:4417"
+  },
+  "artefact": "docs/design/co-pilot-successor/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A co-pilot pauses itself at its advisory notice and its successor is spawned",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2",
+        "3",
+        "5"
+      ],
+      "branch": "slice/co-pilot-successor-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-successor-s1",
+      "pr": 447
+    },
+    {
+      "slice": "S3 pilot ready: the scheduler from the graph",
+      "state": "integrated",
+      "delivers": [
+        "6",
+        "7",
+        "8"
+      ],
+      "branch": "slice/co-pilot-successor-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-successor-s3",
+      "pr": 446
+    },
+    {
+      "slice": "S4 The co-pilot runs the graph as drawn",
+      "state": "integrated",
+      "after": "S3 pilot ready: the scheduler from the graph",
+      "delivers": [
+        "7",
+        "9",
+        "10"
+      ],
+      "branch": "slice/co-pilot-successor-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-successor-s4",
+      "pr": 448
+    },
+    {
+      "slice": "S2 The guard posts a co-pilot's crew-handoff at its advisory mark",
+      "state": "integrated",
+      "delivers": [
+        "4"
+      ],
+      "branch": "slice/co-pilot-successor-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-successor-s2",
+      "pr": 449
+    },
+    {
+      "slice": "Co-pilot self hand-off",
+      "state": "parked by the user; F1-F5 landed at a7a8ec9b (2855/2855), fix table on itm_a26a3ef9763c; Gate 2 itm_bee1973b3e91 open, to be re-asked on a7a8ec9b",
+      "branch": "feat/co-pilot-successor",
+      "pr": 445
+    },
+    {
+      "slice": "Fix round",
+      "state": "integrated",
+      "after": "S2 The guard posts a co-pilot's crew-handoff at its advisory mark",
+      "branch": "slice/co-pilot-successor-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-successor-fix",
+      "pr": 450
+    }
+  ],
+  "findings": [
+    "kept: P1 schedule.mjs copies status.mjs resolverOf; export and delete the copy (-13)",
+    "kept: P2 schedule.mjs guards requireGraph already refuses on write (-6)",
+    "kept: P3 depthOf untested; order by S-number then name, one order test (-6)",
+    "kept: P4 draft PR row needs its branch for L12 pipeline; co-pilot bullet says so (+1)",
+    "kept: P5 pause text forbids the reviewer integration needs; 'start no slice, fix round or QA' (0)",
+    "kept: P6 pause procedure in three places; guard and item point to the Hand-back (-6)",
+    "kept: P7 pilot ready --repo has no caller (-3)",
+    "kept: P8 tests for empty state, hard-mark wording, coPilotTicketOf catch; CLI exit-code tests dropped, QA probed them live",
+    "kept: P9 MAX_TICKET_ID_CHARS checks the deck's own id (-3); safeName stays, it keys session ids",
+    "kept: Q1 failed co-pilot crew-handoff post keeps the claim and says the item exists; give the claim back",
+    "kept: Q3 Yellow clause resolves the crew-handoff only after the successor spawn",
+    "kept: Q4 pilot.md:577 'past its own hard mark' -> 'past its mark' (pays for Q3)",
+    "kept: D1 architecture.md §2 still says spec unconfirmed; it was signed at Gate 1",
+    "dropped: case against, startable via deck_status instead of pilot ready: moves locked L8",
+    "dropped: successor brief of one id instead of three: moves locked L1",
+    "dropped: nit duplicate budget bullet: the old bullet also covers reviewer, fundamentalist and QA spawns",
+    "dropped: nit share the /api/record fetch: reaches run.mjs and handoff.mjs outside the feature",
+    "dropped: Q2 deck down gives a co-pilot the generic words: S2's interface locks off-deck generic texts, and S1 acts on any advisory",
+    "dropped: fix reviewer LOW, pilot ready throws on a dangling after in a hand-edited record: the write path refuses it and the CLI still exits non-zero",
+    "dropped: fix reviewer LOW, a committed post whose reply fails is retried as a duplicate crew-handoff: a duplicate beats a lost hand-off"
+  ],
+  "next": "Parked by the user. When resumed: re-ask Gate 2 on a7a8ec9b (#445); F3 verified in agents/pilot-co-pilot.md:92, F4 at :43, F1/F2 in agents/pilot.md:138. After Sign off: pilot land, gh pr ready 445, QA comment, closing report. Scratch deck 4417 and repo pilot-qa-co-pilot-scratch stay until the user says.",
+  "updatedAt": "2026-10-09T15:07:44.350Z"
+}

@@ -1,0 +1,66 @@
+{
+  "slug": "listener-worktree",
+  "feature": "A listener hears its repository's deck",
+  "ticket": "itm_79cbc557a1de",
+  "branch": "feat/listener-worktree",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-listener-worktree",
+  "qa": {
+    "branch": "qa/listener-worktree",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-listener-worktree",
+    "url": "http://127.0.0.1:4461"
+  },
+  "artefact": "docs/design/listener-worktree/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A wait in a pilot run session listens on the session's repository",
+      "state": "integrated, merge 668129d8",
+      "delivers": [
+        "4"
+      ],
+      "branch": "slice/listener-worktree-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-listener-worktree-s1",
+      "pr": 427
+    },
+    {
+      "slice": "S2 A wait on an unknown directory says so",
+      "state": "integrated, merge 2940ee4e",
+      "after": "S1 A wait in a pilot run session listens on the session's repository",
+      "delivers": [
+        "3"
+      ],
+      "branch": "slice/listener-worktree-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-listener-worktree-s2",
+      "pr": 428
+    },
+    {
+      "slice": "listener-worktree",
+      "state": "red: walkthrough itm_a888c9ab7bd6 signed, QA comment on #426, gate2 itm_dad0e2bd8adb open at 85bcc922",
+      "after": "Fix round: 2 principles nits",
+      "delivers": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "branch": "feat/listener-worktree",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-listener-worktree",
+      "pr": 426
+    },
+    {
+      "slice": "Fix round: 2 principles nits",
+      "state": "integrated, merge a82b7a37, tip 85bcc922",
+      "after": "S2 A wait on an unknown directory says so",
+      "branch": "slice/listener-worktree-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-listener-worktree-fix",
+      "pr": 429
+    }
+  ],
+  "findings": [
+    "kept: fundamentalist nits, two unused exports dropped and the NO DECK line on one line (#429)",
+    "dropped: F1 drop the /api/runs read, moves L5",
+    "dropped: F2 env defaults to {}, moves L3",
+    "dropped: a comment that `other` owns nothing, the S2 test pins it"
+  ],
+  "next": "On Sign off of gate2 itm_dad0e2bd8adb: merge round of pilot (7e945f61) into feat/listener-worktree (docs/adr/README.md conflicts at least), then pilot land, gh pr ready 426, closing report. Deep-modules walkthrough itm_d5c4c615177b still with the user.",
+  "updatedAt": "2026-10-09T08:04:32.383Z"
+}

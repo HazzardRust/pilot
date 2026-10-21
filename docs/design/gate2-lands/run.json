@@ -1,0 +1,84 @@
+{
+  "slug": "gate2-lands",
+  "feature": "Install allows pilot land",
+  "ticket": "itm_0e8a129d4e4d",
+  "branch": "feat/gate2-lands",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-gate2-lands",
+  "qa": {
+    "branch": "qa/gate2-lands",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-gate2-lands",
+    "url": "http://127.0.0.1:4471/"
+  },
+  "artefact": "docs/design/gate2-lands/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A Sign off press on a gate2 makes the deck run pilot land",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "4",
+        "5",
+        "8",
+        "9"
+      ],
+      "branch": "slice/gate2-lands-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-lands-s1",
+      "pr": 471
+    },
+    {
+      "slice": "S2 A gate2 lands once, one landing per repository, with a timeout",
+      "state": "integrated",
+      "after": "S1 A Sign off press on a gate2 makes the deck run pilot land",
+      "delivers": [
+        "3",
+        "6",
+        "7"
+      ],
+      "branch": "slice/gate2-lands-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-lands-s2",
+      "pr": 472
+    },
+    {
+      "slice": "S3 The pilot reads the landing with pilot landing instead of running land",
+      "state": "integrated",
+      "after": "S1 A Sign off press on a gate2 makes the deck run pilot land",
+      "delivers": [
+        "2"
+      ],
+      "branch": "slice/gate2-lands-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-lands-s3",
+      "pr": 473
+    },
+    {
+      "slice": "gate2-lands",
+      "state": "QA passed at e0a0ac09, no walkthrough; awaiting gate2",
+      "branch": "feat/gate2-lands",
+      "pr": 456
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": "S3 The pilot reads the landing with pilot landing instead of running land",
+      "branch": "fix/gate2-lands",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-lands-fix",
+      "pr": 474
+    }
+  ],
+  "findings": [
+    "kept: F1 start-up sweep replaces the pid liveness check (removes pid, orphaned, interruptOrphan, landingOf's write)",
+    "kept: F2 render.mjs stops importing the store",
+    "kept: F3 beginLanding before spawn",
+    "kept: F4 POSIX tree kill on timeout",
+    "kept: F5 test that pilot landing <id> reaches the landing and exits 0",
+    "kept: F6 delete the unused --timeout flag",
+    "kept: F7 test stderr only when stdout is empty (L9)",
+    "kept: F8 tests for empty output and withheld output on exit 0",
+    "kept: F9 ADR 0111 records kill, one per repo, route, CLI",
+    "kept: F10 S2 seam records clock/kill injection (doc only, done)",
+    "kept: N1-N6 small removals",
+    "dropped: URL credential in land output; land stdout is fixed lines, belongs in findCredential",
+    "dropped: QA taste byline/header and failing indent; out of scope by section 7"
+  ],
+  "next": "Red, Gate 2 itm_b9e9a9e56372 SIGNED, not landed: base merge of origin/pilot into feat/gate2-lands (b49104ed, clean, merge aborted) conflicts in docs/adr/README.md (regenerate: node scripts/adr-index.mjs) and scripts/test/measure-prompt.test.mjs (pins; keep each feature's pin move, re-measure). Then pilot land, gh pr ready 456, closing report; tear down QA's scratch deck :4471 pid 18280.",
+  "updatedAt": "2026-10-09T21:59:40.916Z"
+}

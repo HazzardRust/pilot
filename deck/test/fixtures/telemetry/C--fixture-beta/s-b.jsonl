@@ -1,0 +1,2 @@
+{"type":"assistant","timestamp":"2026-09-01T10:15:00.000Z","cwd":"C:/fixture/beta","message":{"id":"msg_b1","model":"claude-sonnet-5","usage":{"input_tokens":4,"cache_creation_input_tokens":40,"cache_read_input_tokens":400,"output_tokens":8}}}
+{"type":"assistant","timestamp":"2026-09-01T10:45:00.000Z","cwd":"C:/fixture/beta","message":{"id":"msg_b3","model":"claude-sonnet-5","usage":{"input_tokens":2,"output_tokens":3}}}

@@ -1,0 +1,52 @@
+{
+  "slug": "research-first",
+  "feature": "A red ticket lands on pilot before Gate 2",
+  "ticket": "itm_a513988b403c",
+  "branch": "feat/research-first",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-research-first",
+  "artefact": "docs/design/research-first/architecture.md",
+  "slices": [
+    {
+      "slice": "Research first, then recommend",
+      "state": "in QA: walkthrough itm_50a6b6e824f6 posted, spec 2 fails live 3/3",
+      "after": [
+        "S2"
+      ],
+      "branch": "feat/research-first",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-research-first",
+      "pr": 506
+    },
+    {
+      "slice": "S1 The pilot's researched question goes up with its research attached",
+      "state": "integrated at 9ea76ee7",
+      "branch": "slice/research-first-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-research-first-s1",
+      "pr": 529
+    },
+    {
+      "slice": "S2 The architect and QA research before they recommend",
+      "state": "integrated at 1fdcf008",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/research-first-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-research-first-s2",
+      "pr": 530
+    },
+    {
+      "slice": "research-first",
+      "state": "red: gate2 itm_8288e4446988 signed; #506 ready at 3daa60d5 (base merged, ADR renumbered 0119); pilot land refused: sync of main@1ca6fff into pilot red 3099/4, tests unnamed; probing"
+    }
+  ],
+  "findings": [
+    "kept: F1 architect/QA clauses name skills/grilling/SKILL.md Finding facts paragraph (architect cannot load grilling)",
+    "kept: QA spec 2 live fail - grilling sentence: today's code is a fact, keeping it against outside practice is researched",
+    "dropped: F2 skip (j) wording - moves L8, sent to main as a question (rec: 'research already done for it this run')",
+    "dropped: F3 Fetch limit field - A4 knob, low consequence, costs interface+test edits",
+    "dropped: N1 shorten pilot.md clause - QA's live run shows the pilot already under-researches",
+    "dropped: N2 shared assertAll helper - touches two files outside the feature for -4 lines",
+    "dropped: N3 provenance summaries - repo convention"
+  ],
+  "next": "Red: find the 4 tests failing in pilot+main (probe worktree in scratchpad/sync-probe, npm test to a log), fix or sync, then pilot land from pilot-feat-research-first; closing report (merge first: none open — #503, #499 merged), deck_status finished; QA scratch deck :4512 pid 48756 teardown is a human step if refused.",
+  "updatedAt": "2026-10-10T11:09:11.625Z"
+}

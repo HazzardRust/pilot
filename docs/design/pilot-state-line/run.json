@@ -1,0 +1,85 @@
+{
+  "slug": "pilot-state-line",
+  "feature": "Pilot state on the threads page",
+  "ticket": "itm_959d1977b78c",
+  "branch": "feat/pilot-state-line",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-pilot-state-line",
+  "artefact": "docs/design/pilot-state-line/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A repo tab shows handing off or no session under its queue",
+      "state": "integrated at d5e1db5e",
+      "branch": "slice/pilot-state-line-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-state-line-s1",
+      "pr": 671
+    },
+    {
+      "slice": "S2 picked up, working and quiet read from their windows",
+      "state": "integrated at 4df22390",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/pilot-state-line-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-state-line-s2",
+      "pr": 673
+    },
+    {
+      "slice": "S3 A parked pilot wait reads listening, live",
+      "state": "integrated at 651abc3b",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/pilot-state-line-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-state-line-s3",
+      "pr": 674
+    },
+    {
+      "slice": "S4 A lapsing window refreshes the open page",
+      "state": "integrated at 32cd20aa",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/pilot-state-line-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-state-line-s4",
+      "pr": 675
+    },
+    {
+      "slice": "S5 The Overview shows one line per tab",
+      "state": "integrated at 86534e93",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/pilot-state-line-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-state-line-s5",
+      "pr": 672
+    },
+    {
+      "slice": "pilot-state-line",
+      "state": "fixing: integrating principles round #676 (head dcd94aef)",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "pr": 670
+    }
+  ],
+  "findings": [
+    "kept: drop `until` from pilotStateOf (no production reader; S4 recomputes) -6",
+    "kept: delete PILOT_STATES export; its 'earliest wins' comment contradicts the code's order -2",
+    "kept: one store read per change; arm state timers inside armHandoffs, delete armPendingStates -6",
+    "kept: test that a store write arms a lapse (armPendingStates() {} survived) +12",
+    "kept: tests for re-seen run, non-handoff kind, two lapses (S4 rewrite check) +15",
+    "kept: S3 wait test asserts told===1 after first hold and first since kept +3",
+    "kept: one render test asserts a whole state line +2",
+    "dropped: drop optional guards in pilotStateOf; defensive at render, no consequence",
+    "dropped: delete `held?.at === at` early-out; equivalent, no consequence",
+    "dropped: S4 LOW 1 ms early double announce; bounded at two, second correct, matches armHandoffs",
+    "dropped: fold ack lapse into arm(); second occurrence, rule of three",
+    "kept: consider row on S3 GET / route goes to security-reviewer; its findings weighed on arrival"
+  ],
+  "next": "co-pilot: pilot integrate fix/pilot-state-line-principles; pilot land; resume QA with the tip; QA posts walkthrough.",
+  "updatedAt": "2026-10-15T08:45:25.115Z"
+}

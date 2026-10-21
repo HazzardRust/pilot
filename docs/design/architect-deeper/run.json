@@ -1,0 +1,168 @@
+{
+  "slug": "architect-deeper",
+  "feature": "Runs on macOS and Linux",
+  "ticket": "itm_3885405a5b70",
+  "branch": "feat/architect-deeper",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-architect-deeper",
+  "artefact": "docs/design/architect-deeper/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Skeleton: check-slices refuses a spec line with no bar",
+      "state": "integrated",
+      "branch": "slice/architect-deeper-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-architect-deeper-s1",
+      "pr": 817
+    },
+    {
+      "slice": "S2 The architect's prose carries the depth step, the red team and the bar",
+      "state": "integrated",
+      "branch": "slice/architect-deeper-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-architect-deeper-s2",
+      "pr": 816
+    },
+    {
+      "slice": "S3 The check refuses an artefact with no practitioner tag or red-team line",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/architect-deeper-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-architect-deeper-s3",
+      "pr": 818
+    },
+    {
+      "slice": "S4 One ADR records the 3 rules, and the guard keeps this run's quotes",
+      "state": "integrated",
+      "branch": "slice/architect-deeper-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-architect-deeper-s4",
+      "pr": 815
+    },
+    {
+      "slice": "architect-deeper",
+      "state": "fixing",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "branch": "feat/architect-deeper",
+      "pr": 779
+    }
+  ],
+  "findings": [
+    "kept: check-spec.test.mjs:58-60 S3 test 3 duplicates line 25 and could never fail; delete it (-4)",
+    "kept: check-slices.mjs:187-189 list continuation join uncovered; add a two-line item with the bar on line 2 to test 1 (+4)",
+    "kept: check-slices.mjs:148 sectionLines exported with no outside caller; drop export and the S1.md Interface line (-1)",
+    "kept: measure-prompt.test.mjs:166-196 third copy of the share pin; one table-driven test with one measure() (-8)",
+    "kept: architecture.md §9 item 2 says '0 problems', the CLI prints 'file(s) checked'; correct the line (0)",
+    "kept: S2.md Rewrite check claims rewording keeps every pin green; correct the claim (0)",
+    "dropped: noun branch in check-slices.mjs:271 - an existing test and deep-modules S1.md pin 'slice file(s) checked'",
+    "dropped: 0158 index-row exemption - spec 7 locks exactly 3 paths",
+    "dropped: REFERENCE includes pr outside L4 - no consequence, and either fix moves L4 or loosens the check",
+    "dropped: case against the bar grammar (bare 'one' and 'under' pass) - spec 3 is locked and names those words; assumed it stands, named for the walkthrough"
+  ],
+  "next": "principles findings decided (6 kept); fix round implementing on slice/architect-deeper-fix from 4993e24a; QA read-only pass clean, waits on the fix tip",
+  "updatedAt": "2026-10-18T01:59:27.142Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "background `pilot wait --as architect` exits 1 at once, printing only the listening line; foreground --timeout rounds work",
+      "evidence": "3 of 3 runs, 2026-10-17; main's background pilot wait also died twice while QA's `pilot land` sweep ran (deck/procs.mjs:159-160)",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "evidence runner report for another ticket routed to main and forwarded",
+      "size": 2000
+    },
+    {
+      "agent": "pilot:pilot-explorer",
+      "what": "a multi-pattern Grep with a negated glob (!(*test*)) returned No matches; a broad grep returned every test file first",
+      "evidence": "macOS thread itm_33582a33d2fd, 1 extra round trip"
+    },
+    {
+      "kind": "drain",
+      "what": "verdict lines written as 'Verdict: stands. <why>' were refused by the gate1 post; the parser wants an em dash, found by reading scripts/verdicts.mjs; and a gate1 post with pr was refused",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "the co-pilot brief names docs/design/architect-deeper/brief.md, but the design branch never wrote one; implementers worked from the slice file and architecture.md",
+      "evidence": "git ls-tree HEAD and origin/design/architect-deeper show no brief.md under docs/design/architect-deeper",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a fresh slice worktree has no node_modules, so the first npm test run is lost to 'run npm ci' (S1, S2, S4 alike)",
+      "evidence": "S1, S2 and S4 reports: npm test printed 'node_modules missing: run npm ci' and exited 1",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the next free ADR number is not derivable from the base: 0156 and 0157 are held only on open branches, so S4 took 0158",
+      "evidence": "S4 report: 0156 on feat/daemon-lifecycle, feat/landing-keeps-worktrees, feat/main-never-red; 0157 on feat/store-durability",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "measure-prompt prints rounded tokens, but the pin needs the exact quarter-token share",
+      "evidence": "S2 report: computed 9264.25 with a separate node -e call to measure()",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the Edit tool refuses a file the harness marks unread after Bash runs",
+      "evidence": "S1 report: 2 edit rounds lost to 'File has not been read yet'",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "the harness forced the hand-back while S3's implementer was live, and TaskStop refused to stop it (owned by the child), so the co-pilot hands back with a child live",
+      "evidence": "TaskStop: 'Task a796ad88d3e4731f2 is owned by a796ad88d3e4731f2; agent a7eeda0c0eb2b972a cannot stop it.'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3's slice file says only good.md gains both markers, but the new rules force edits to every older fixture and the spec() helper",
+      "evidence": "S3 report: no-bar.md, table-ids-only.md, good.md and spec() all edited to keep S1's tests green",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a rebase notice mid-gate cost a second ~300 s npm test run",
+      "evidence": "S3 report: first log 3944 tests, final 3948 after S2 landed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fact-sheet",
+      "what": "the fact sheet repeats one grep and adds little on a small or docs slice",
+      "evidence": "S3: 15 rows, the 4 for new symbols 'not found'; S4: returned after the slice file was already read",
+      "size": 2
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "Stryker cannot run here: its sandbox has no .git and vocabulary.mjs:178's git ls-files fails the first test run",
+      "evidence": "evidence runner: diff mutation not run",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "knip has no config and reports 459 unused files repo-wide, so its row is noise",
+      "evidence": "evidence runner knip output",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "spec fixtures cannot be run from the CLI: they are not named architecture.md so check-slices routes them to checkSlice",
+      "evidence": "QA copied the artefact to scratch architecture.md files for §9 item 3",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "the artefact names origin/pilot as base but PR #779's base is main, so the PR diff carries pilot's unlanded files",
+      "evidence": "git diff origin/main... lists 25 files, origin/pilot... 21",
+      "size": 1
+    }
+  ]
+}

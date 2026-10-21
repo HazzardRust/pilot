@@ -1,0 +1,130 @@
+{
+  "slug": "main-never-red",
+  "feature": "main-never-red",
+  "ticket": "itm_d45883c51639",
+  "branch": "feat/main-never-red",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-main-never-red",
+  "artefact": "docs/design/main-never-red/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/main-never-red-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-main-never-red-s1",
+      "pr": 782
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "branch": "slice/main-never-red-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-main-never-red-s2",
+      "pr": 780
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/main-never-red-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-main-never-red-s3",
+      "pr": 784
+    },
+    {
+      "slice": "S4",
+      "state": "fixing: ADR renumber 0155 to 0156",
+      "branch": "slice/main-never-red-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-main-never-red-s4",
+      "pr": 781
+    },
+    {
+      "slice": "main-never-red",
+      "state": "draft PR #754; base pilot e78b1e85 merged at 27246fd0",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "branch": "feat/main-never-red",
+      "pr": 754
+    }
+  ],
+  "findings": [
+    "kept: S1 cancel-in-progress true cancels an earlier push-to-main run, leaving a main commit with no gate result; fix cancel-in-progress: ${{ github.event_name == 'pull_request' }} and pin 2, in the step-7 fix round (user chose this on itm_d3b75462e9c0; L4 amended)",
+    "dropped: S3 security MEDIUM ledgers = () => [] default skips the check; the Interface specifies it, L2 forbids a test default that writes the real repo, and the one production caller passes rebuildLedgers",
+    "kept: S3.md names rules/common/testing.md for the live run; corrected on feat at 27246fd0"
+  ],
+  "next": "S4 fix in flight (ADR 0156); then pilot integrate S4, then step 7 fundamentalist + QA; fix round carries L4 change (itm_d3b75462e9c0 answered) and architecture.md §9 live path.",
+  "updatedAt": "2026-10-17T12:42:08.026Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "scripts/build-rules-ledger.mjs reads its root from its own location and keeps its builder private, so it cannot build for a temp repo without a fold (S2)",
+      "evidence": "architect report, main-never-red"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "pilot wait exited 1 after 'listening on' with no reason, twice",
+      "evidence": "architect report; the pilot saw the same once (b9gowo03e)"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "ADR numbers shift between design and landing when a run ahead lands; 0153 to 0154 mid-design",
+      "evidence": "architect report"
+    },
+    {
+      "kind": "drain",
+      "what": "gate1 refused: the architect's Verdict lines carried a parenthetical reason and the deck wants the bare grammar; a commit and a repost",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "measure-prompt.mjs prints rounded tokens; the exact share needs --json and (definition+skills+tools)/4",
+      "evidence": "S4 report: table 9574 + 1710, exact 11338.75 only from --json",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the slice file named a fixed ADR number (0154) a run ahead had already taken",
+      "evidence": "S4.md names 0154-main-never-goes-red.md; 0154 is gate2-frees-lane's on origin/pilot",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a pin-raise test cannot be red before the change; it is evidence, not a test",
+      "evidence": "S4 report, test 2 'the pilot pin holds at its new number'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Bash heredocs turned \\\\s into \\s inside JS template-literal regexes; rewrote with Write",
+      "evidence": "S1 report, first test file red for that alone, ~3 extra calls",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3.md names rules/common/testing.md for the live run; it does not exist, and the gate silently ran the full suite instead",
+      "evidence": "S3 report; live run used rules/typescript/testing.md",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate slots held by other worktrees delayed the full run",
+      "evidence": "S3 report: gate: waiting for a slot: pid 14244 in ...-s4, pid 25332 in ...-sync-main",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a Python-through-heredoc edit turned \\n into literal newlines in gate.mjs",
+      "evidence": "S3 report, fixed with Edit",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the S4 ADR took 0155 as hidden-spawns landed 0155 on pilot; pilot integrate went red on adr-index",
+      "evidence": "integrate log 20261017T123521999Z: '0155-main-never-goes-red.md is missing from the index'",
+      "size": 1
+    }
+  ]
+}

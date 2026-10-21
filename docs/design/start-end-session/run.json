@@ -1,0 +1,343 @@
+{
+  "slug": "start-end-session",
+  "feature": "Start/End session",
+  "branch": "feat/start-end-session",
+  "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-start-end-session",
+  "artefact": "docs/design/start-end-session/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A + tab adds a deck by path",
+      "state": "integrated",
+      "delivers": [
+        "5"
+      ],
+      "branch": "slice/deck-polish-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s1",
+      "pr": 208
+    },
+    {
+      "slice": "S2 Reopen only reopens",
+      "state": "integrated",
+      "after": "S1 A + tab adds a deck by path",
+      "delivers": [
+        "11"
+      ],
+      "branch": "slice/deck-polish-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s2",
+      "pr": 209
+    },
+    {
+      "slice": "S3 The chat keeps its place and shows tables",
+      "state": "integrated",
+      "after": "S1 A + tab adds a deck by path",
+      "delivers": [
+        "3",
+        "4"
+      ],
+      "branch": "slice/deck-polish-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s3",
+      "pr": 210
+    },
+    {
+      "slice": "S4 The status line drops deck <n>",
+      "state": "integrated",
+      "delivers": [
+        "7"
+      ],
+      "branch": "slice/deck-polish-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s4",
+      "pr": 207
+    },
+    {
+      "slice": "S5 Close: the deck's button and a user thread's card",
+      "state": "integrated",
+      "after": "S2 Reopen only reopens",
+      "delivers": [
+        "1",
+        "9"
+      ],
+      "branch": "slice/deck-polish-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s5",
+      "pr": 211
+    },
+    {
+      "slice": "S7 Rail panels: a report takes an x, and panels sit above the thread header",
+      "state": "integrated",
+      "after": "S6 A card remembers its pick, and lists read and sort by the last message's time",
+      "delivers": [
+        "6",
+        "8"
+      ],
+      "branch": "slice/deck-polish-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s7",
+      "pr": 213
+    },
+    {
+      "slice": "feature deck-polish",
+      "state": "ready for review: PR #206 at 61f4d40; closing report itm_0a1220a5463f",
+      "branch": "feat/deck-polish",
+      "pr": 206
+    },
+    {
+      "slice": "S6 A card remembers its pick, and lists read and sort by the last message's time",
+      "state": "integrated",
+      "after": "S5 Close: the deck's button and a user thread's card",
+      "delivers": [
+        "2",
+        "10"
+      ],
+      "branch": "slice/deck-polish-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-polish-s6",
+      "pr": 212
+    },
+    {
+      "slice": "Fix round: principles findings",
+      "state": "integrated",
+      "after": "S7 Rail panels: a report takes an x, and panels sit above the thread header",
+      "branch": "fix/deck-polish-principles",
+      "pr": 214
+    },
+    {
+      "slice": "S1 Start opens a pilot run window on an ended tab",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2",
+        "6"
+      ],
+      "branch": "slice/start-end-session-s1",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-start-end-session-s1",
+      "pr": 216
+    },
+    {
+      "slice": "S2 Start refuses a missing directory and a second press",
+      "state": "integrated",
+      "after": "S1 Start opens a pilot run window on an ended tab",
+      "delivers": [
+        "3",
+        "4"
+      ],
+      "branch": "slice/start-end-session-s2",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-start-end-session-s2",
+      "pr": 217
+    },
+    {
+      "slice": "S3 A wrapper's stream turns its tab ended live",
+      "state": "integrated",
+      "after": "S2 Start refuses a missing directory and a second press",
+      "delivers": [
+        "7"
+      ],
+      "branch": "slice/start-end-session-s3",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-start-end-session-s3",
+      "pr": 218
+    },
+    {
+      "slice": "S4 End ends that deck's pilot run",
+      "state": "integrated",
+      "after": "S3 A wrapper's stream turns its tab ended live",
+      "delivers": [
+        "5",
+        "8"
+      ],
+      "branch": "slice/start-end-session-s4",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-start-end-session-s4",
+      "pr": 219
+    },
+    {
+      "slice": "feature start-end-session",
+      "state": "ready for review: PR #215 at 7d636d8; closing report itm_7534bc7a4e7a",
+      "after": "S4 End ends that deck's pilot run",
+      "delivers": [
+        "1–8"
+      ],
+      "branch": "feat/start-end-session",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-start-end-session",
+      "pr": 215
+    },
+    {
+      "slice": "Fix round: principles findings and QA",
+      "state": "integrated",
+      "after": "S4 End ends that deck's pilot run",
+      "delivers": [
+        "1",
+        "2",
+        "4",
+        "6"
+      ],
+      "branch": "fix/start-end-session-review",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-start-end-session-fix",
+      "pr": 220
+    }
+  ],
+  "findings": [
+    "kept: F1 three S1 guard tests pass vacuously on a nonexistent dir — point at aDir, assert statuses, add a linux case",
+    "kept: F2 PARENT_MARKERS pinned against the literal L4 list",
+    "kept: F3 assert args[4] and windowsVerbatimArguments",
+    "kept: F4 route test proves listWrapped reaches the End button",
+    "kept: F5 assert the confirm step is hidden and its button text",
+    "dropped: F6 pressedAt identity on the error release — cheap defence, equivalence rests on event timing",
+    "kept: F7 delete the unreachable settle guard",
+    "kept: F8 drop the unread {started}/{ended} returns and their assertions",
+    "kept: F9 storedTabFor(repo) in store.mjs as the one home for 'the tabs the deck has'",
+    "kept: F10 every stat error is a 400 naming err.code, as addDeck does",
+    "kept: F11 amend the S1/S3/S4 Interface blocks to the code",
+    "dropped: N1 options object for route/renderHomePage — a refactor past this run",
+    "kept: N2 fold SessionRefusal into DeckRefusal with a status",
+    "dropped: N3 win32 rule in two places — net 0",
+    "kept: N4 drop the unused export of WRAPPER_GONE_MS",
+    "kept: N5 fix the stream-open comment to what announceChange does",
+    "kept: N6 one assertion on wrapper event parsing",
+    "dropped: N7 signal-exit mapping predates the feature",
+    "dropped: N8 route CCN 92 is existing shape",
+    "kept: QA Medium — a Start/End refusal lands back on the tab with the reason, as /add-deck's refused= does",
+    "kept: QA nit — Start's confirm names the tab as End's does instead of wrapping the full path",
+    "dropped: QA nits — generic 403 copy fires first (harmless); ended-banner copy predates the feature"
+  ],
+  "report": {
+    "featurePr": {
+      "number": 215,
+      "state": "ready for review, mergeable; Gate 1 itm_2795e34fe98b 10:19Z, Gate 2 itm_1bad7a7629df 13:22Z at 0970de0"
+    },
+    "slices": [
+      {
+        "slice": "S1 Start opens a pilot run window on an ended tab",
+        "pr": 216,
+        "mergeSha": "f471275"
+      },
+      {
+        "slice": "S2 Start refuses a missing directory and a second press",
+        "pr": 217,
+        "mergeSha": "439e249"
+      },
+      {
+        "slice": "S3 A wrapper's stream turns its tab ended live",
+        "pr": 218,
+        "mergeSha": "55fdbc7"
+      },
+      {
+        "slice": "S4 End ends that deck's pilot run",
+        "pr": 219,
+        "mergeSha": "31faac7"
+      },
+      {
+        "slice": "Fix round: principles findings and QA",
+        "pr": 220,
+        "mergeSha": "51e6b95"
+      },
+      {
+        "slice": "QA fix: a refusal with no control draws nothing",
+        "pr": 215,
+        "mergeSha": "0970de0"
+      }
+    ],
+    "assumed": [
+      {
+        "id": "A2",
+        "decision": "window via cmd /c start (user's default terminal)",
+        "taken": "architect default, shown at Gate 1"
+      },
+      {
+        "id": "A4",
+        "decision": "the daemon's own bin/pilot.mjs run, not PATH",
+        "taken": "architect default, shown at Gate 1"
+      },
+      {
+        "id": "A6",
+        "decision": "End ends every wrapper on a repository",
+        "taken": "architect default, shown at Gate 1"
+      },
+      {
+        "id": "A7",
+        "decision": "win32 only",
+        "taken": "architect default, shown at Gate 1"
+      },
+      {
+        "id": "A9",
+        "decision": "L4 widened to twelve session markers",
+        "taken": "pilot, after S1's live gate"
+      },
+      {
+        "id": "A10",
+        "decision": "two bounded re-announces at 3 s and 20 s after a wrapper stream closes",
+        "taken": "pilot, after S3's live gate"
+      },
+      {
+        "id": "A11",
+        "decision": "S1 345, S4 340, fix round 356 lines against 300",
+        "taken": "pilot; production 140/128/121"
+      },
+      {
+        "id": "A12",
+        "decision": "refusals ride ?sessionRefused=, escaped; dropped on a tab with no control",
+        "taken": "fix implementer and QA"
+      }
+    ],
+    "friction": [
+      {
+        "agent": "S3, S4, QA",
+        "what": "spawned windows all titled pilot:pilot; telling own window from the user's needed EnumWindows + screenshots",
+        "evidence": "S3 and QA friction rows"
+      },
+      {
+        "agent": "S1-S4",
+        "what": "trust prompt on never-trusted dirs and projects/Projects key mismatch cost a round each",
+        "evidence": "each slice's friction row"
+      },
+      {
+        "agent": "six agents",
+        "what": "CRLF, \\n and backslash escaping through Python/heredoc/sed edits on Windows",
+        "evidence": "S1-S4, fix, architect friction rows"
+      },
+      {
+        "agent": "QA",
+        "what": "no wrapper count in /api/health; counted windows via Win32_Process",
+        "evidence": "QA friction row"
+      },
+      {
+        "agent": "QA",
+        "what": "a deck started from an agent shell dies with the shell",
+        "evidence": "QA restarted with Start-Process -WindowStyle Hidden"
+      },
+      {
+        "agent": "S4",
+        "what": "fakePty fires onExit after kill(); the real ConPTY DLL never does",
+        "evidence": "S4 live gate, fix 068e64c"
+      },
+      {
+        "agent": "fundamentalist",
+        "what": "single Stryker run timed out at 1000 s with no output; jscpd silently skipped server.mjs and render.mjs",
+        "evidence": "fundamentalist friction rows"
+      },
+      {
+        "agent": "pilot",
+        "what": "the deck's status table carried deck polish's nine rows into this run; drop was classifier-refused",
+        "evidence": "run.json at first deck_status"
+      },
+      {
+        "agent": "S2",
+        "what": "latch tests cannot be red before the latch exists; slice file order hides it",
+        "evidence": "S2 friction row"
+      },
+      {
+        "agent": "architect",
+        "what": "deck/run.mjs is 664 lines, about half comment",
+        "evidence": "architect friction row"
+      }
+    ],
+    "humanSteps": [
+      "Merge PR #215 into main",
+      "Bump the plugin version and reinstall so Start/End reach the 4321 deck",
+      "Remove worktrees pilot-feat-start-end-session and pilot-design-start-end-session once merged",
+      "Optional: the two classifier-refused edits (artefact §2 sentence; drop deck polish's rows from the status table)"
+    ],
+    "worktreesLeft": [
+      "C:\\Users\\Hazzard\\Projects\\pilot-feat-start-end-session",
+      "C:\\Users\\Hazzard\\Projects\\pilot-design-start-end-session"
+    ]
+  },
+  "next": "merge PR #215 (yours); bump the version; remove the feat and design worktrees",
+  "finished": "closing report posted",
+  "finishedAt": "2026-09-30T13:27:43.147Z",
+  "updatedAt": "2026-09-30T13:27:43.147Z"
+}

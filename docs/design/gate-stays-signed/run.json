@@ -1,0 +1,133 @@
+{
+  "slug": "gate-stays-signed",
+  "feature": "Short by default",
+  "ticket": "itm_c7e30555448b",
+  "branch": "feat/gate-stays-signed",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-gate-stays-signed",
+  "artefact": "docs/design/gate-stays-signed/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A typed reply leaves a gate signed",
+      "state": "integrated at 1fd4ccd3",
+      "branch": "slice/gate-stays-signed-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-stays-signed-s1",
+      "pr": 540
+    },
+    {
+      "slice": "S2 A signed gate's box says the press stands",
+      "state": "integrated at c834b20a (plus hooks seam)",
+      "after": [
+        "S1 A typed reply leaves a gate signed"
+      ],
+      "branch": "slice/gate-stays-signed-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate-stays-signed-s2",
+      "pr": 541
+    },
+    {
+      "slice": "gate-stays-signed",
+      "state": "landed on pilot at a3330f3; #519 ready at 7d84ed0f; closing report posted",
+      "after": [
+        "S1 A typed reply leaves a gate signed",
+        "S2 A signed gate's box says the press stands"
+      ],
+      "branch": "feat/gate-stays-signed",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-gate-stays-signed",
+      "pr": 519
+    }
+  ],
+  "findings": [
+    "kept: Sign off locked after Not yet on a gate (fixer's pushback): only a Sign off press locks a gate's row",
+    "kept: security LOW - threadOf fallback reads the batch's replies on the same thread"
+  ],
+  "report": {
+    "featurePr": {
+      "number": 519,
+      "state": "ready"
+    },
+    "slices": [
+      {
+        "slice": "S1",
+        "pr": 540,
+        "mergeSha": "1fd4ccd3"
+      },
+      {
+        "slice": "S2",
+        "pr": 541,
+        "mergeSha": "c834b20a"
+      },
+      {
+        "slice": "fix round",
+        "pr": 542,
+        "mergeSha": "41496edc"
+      }
+    ],
+    "assumed": [
+      {
+        "id": "A1",
+        "decision": "hooks' unsigned-gate reading",
+        "taken": "added to S2 as a seam change"
+      },
+      {
+        "id": "A2",
+        "decision": "press on a running or landed gate2",
+        "taken": "walked by typing Sign off, byte-identical"
+      },
+      {
+        "id": "A3",
+        "decision": "two LOW review notes",
+        "taken": "left as L5 reads"
+      },
+      {
+        "id": "A4",
+        "decision": "Teach me on a signed gate",
+        "taken": "stays disabled"
+      }
+    ],
+    "friction": [
+      {
+        "agent": "qa",
+        "what": "DevTools MCP browser held by another session",
+        "evidence": "browser is already running"
+      },
+      {
+        "agent": "co-pilot",
+        "what": "integrate stops on generated ADR index",
+        "evidence": "base NOT taken on docs/adr/README.md"
+      },
+      {
+        "agent": "co-pilot",
+        "what": "pilot land names no failing test",
+        "evidence": "merged red: 3139 pass, 1 fail"
+      },
+      {
+        "agent": "fundamentalist",
+        "what": "Stryker ran all 16 test files per mutant",
+        "evidence": "9m50 on hooks/"
+      },
+      {
+        "agent": "implementer",
+        "what": "CRLF and heredoc newline mangling",
+        "evidence": "two lost edit rounds"
+      },
+      {
+        "agent": "implementer",
+        "what": "pilot deck --scratch ignores PILOT_DECK_DIR",
+        "evidence": "fix report"
+      }
+    ],
+    "humanSteps": [
+      "merge #509 then #519 with merge commits",
+      "update the installed plugin after the merge"
+    ],
+    "worktreesLeft": [
+      "pilot-feat-gate-stays-signed",
+      "pilot-gate-stays-signed-s1",
+      "pilot-gate-stays-signed-s2",
+      "pilot-gate-stays-signed-fix"
+    ]
+  },
+  "next": "Done: closing report posted; merge #509 then #519 is the user's; prune worktrees after the merge.",
+  "finished": "closing report posted",
+  "finishedAt": "2026-10-10T23:35:41.983Z",
+  "updatedAt": "2026-10-10T23:35:41.983Z"
+}

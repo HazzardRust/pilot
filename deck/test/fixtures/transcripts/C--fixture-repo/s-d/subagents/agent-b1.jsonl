@@ -1,0 +1,2 @@
+{"type":"user","agentId":"b1","timestamp":"2026-01-03T09:01:00.000Z","message":{"role":"user","content":"design/buckets is your branch."}}
+{"type":"assistant","agentId":"b1","timestamp":"2026-01-03T09:01:30.000Z","message":{"id":"msg_d1","model":"claude-opus-5-5","role":"assistant","content":[{"type":"tool_use","id":"toolu_d1","name":"Read","input":{}}],"usage":{"input_tokens":10,"cache_creation_input_tokens":100,"cache_read_input_tokens":1000,"output_tokens":1}}}

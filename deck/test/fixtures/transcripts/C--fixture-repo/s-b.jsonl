@@ -1,0 +1,2 @@
+{"type":"user","timestamp":"2026-01-01T11:00:00.000Z","message":{"role":"user","content":"carry on after the hand-off"}}
+{"type":"assistant","timestamp":"2026-01-01T11:00:10.000Z","message":{"id":"msg_p3","model":"claude-fable-5-1","role":"assistant","content":[{"type":"tool_use","id":"toolu_p3","name":"mcp__plugin_pilot_deck__deck_status","input":{"slug":"demo"}}],"usage":{"input_tokens":1,"cache_creation_input_tokens":0,"cache_read_input_tokens":700,"output_tokens":3,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0}}}}

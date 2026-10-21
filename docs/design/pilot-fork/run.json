@@ -1,0 +1,122 @@
+{
+  "slug": "pilot-fork",
+  "feature": "Pilot on your fork",
+  "ticket": "itm_8dd4b8c8e06b",
+  "branch": "feat/pilot-fork",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-pilot-fork",
+  "artefact": "docs/design/pilot-fork/architecture.md",
+  "slices": [
+    {
+      "slice": "pilot-fork",
+      "state": "yellow: feat/pilot-fork 2d2df85e (S1 S2 S3 S4 S5 S6 S10 integrated); draft PR #582",
+      "branch": "feat/pilot-fork",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-pilot-fork",
+      "pr": 582
+    },
+    {
+      "slice": "S1",
+      "state": "integrated at fee4e0d2",
+      "branch": "slice/pilot-fork-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-fork-s1",
+      "pr": 597
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at b46579a8",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/pilot-fork-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-fork-s2",
+      "pr": 599
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at e027c8a5",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/pilot-fork-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-fork-s3",
+      "pr": 598
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at 2d2df85e",
+      "after": [
+        "S1",
+        "S2"
+      ],
+      "branch": "slice/pilot-fork-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-fork-s4",
+      "pr": 602
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at 46a96f7b",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/pilot-fork-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-fork-s5",
+      "pr": 600
+    },
+    {
+      "slice": "S6",
+      "state": "integrated at 2a312aea",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/pilot-fork-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-fork-s6",
+      "pr": 601
+    },
+    {
+      "slice": "S7",
+      "state": "integrated at 0f06ffe0",
+      "after": [
+        "S3",
+        "S6"
+      ],
+      "branch": "slice/pilot-fork-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-fork-s7",
+      "pr": 604
+    },
+    {
+      "slice": "S8",
+      "state": "integrated",
+      "after": [
+        "S4",
+        "S6"
+      ],
+      "branch": "slice/pilot-fork-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-fork-s8",
+      "pr": 605
+    },
+    {
+      "slice": "S9",
+      "state": "integrated at d26f36cc",
+      "after": [
+        "S1",
+        "S6"
+      ],
+      "branch": "slice/pilot-fork-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-fork-s9",
+      "pr": 603
+    },
+    {
+      "slice": "S10",
+      "state": "integrated at 7fab11e2",
+      "branch": "slice/pilot-fork-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-fork-s10",
+      "pr": 596
+    }
+  ],
+  "findings": [
+    "kept: S6 TS2 (ts re-review MEDIUM) failed second push reporting earlier deletions has no test; one test added",
+    "dropped: S6 TS6 (LOW) missing isCrossRepository fixture: one-token `!== true` filter, gh always returns the field when asked",
+    "dropped: S4 ts MEDIUM for the slice, carried to step 7: under `none` land's clear prunes against origin/pilot (worktrees.mjs takes only a remote-tracking base); fails safe, keeps worktrees; file outside S4; local cleanup is clean-landing's (itm_09983af566aa)"
+  ],
+  "next": "integrating S8 #605 at 10a7878e; then record S8 seam (fix/<slug>-s<n>) and spawn step 7 fundamentalist and QA",
+  "updatedAt": "2026-10-12T09:59:04.461Z"
+}

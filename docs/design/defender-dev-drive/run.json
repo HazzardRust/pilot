@@ -1,0 +1,204 @@
+{
+  "slug": "defender-dev-drive",
+  "feature": "Defender told before it bites",
+  "ticket": "itm_2cde11b40d8a",
+  "branch": "feat/defender-dev-drive",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-defender-dev-drive",
+  "artefact": "docs/design/defender-dev-drive/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 the Defender row on its own",
+      "state": "integrated at b5041697",
+      "branch": "slice/defender-dev-drive-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-defender-dev-drive-s1",
+      "pr": 919
+    },
+    {
+      "slice": "S2 due and advised with a marker for the machine",
+      "state": "integrated at 5851cb0b",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/defender-dev-drive-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-defender-dev-drive-s2",
+      "pr": 920
+    },
+    {
+      "slice": "S3 a new step 4a in INSTALL.md",
+      "state": "integrated at cfd8de53",
+      "after": [
+        "S1",
+        "S2"
+      ],
+      "branch": "slice/defender-dev-drive-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-defender-dev-drive-s3",
+      "pr": 922
+    },
+    {
+      "slice": "S4 a clause in step 1 of pilot.md, plus the measure-prompt pin",
+      "state": "integrated at 09bce4c5",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/defender-dev-drive-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-defender-dev-drive-s4",
+      "pr": 921
+    },
+    {
+      "slice": "defender-dev-drive",
+      "state": "in QA: walkthrough itm_cf0c58bcae36 posted at ed3970a0; npm test 4291 pass 0 fail",
+      "after": [
+        "S3 a new step 4a in INSTALL.md",
+        "S4 a clause in step 1 of pilot.md, plus the measure-prompt pin"
+      ],
+      "branch": "feat/defender-dev-drive",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-defender-dev-drive",
+      "pr": 836
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated at af0e6cdc",
+      "after": [
+        "S3 a new step 4a in INSTALL.md",
+        "S4 a clause in step 1 of pilot.md, plus the measure-prompt pin"
+      ],
+      "branch": "fix/defender-dev-drive-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-defender-dev-drive-fix",
+      "pr": 924
+    },
+    {
+      "slice": "S5 wait test holds under suite load (added)",
+      "state": "integrated at cfdc6d50",
+      "after": [
+        "S3 a new step 4a in INSTALL.md",
+        "S4 a clause in step 1 of pilot.md, plus the measure-prompt pin"
+      ],
+      "branch": "slice/defender-dev-drive-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-defender-dev-drive-s5",
+      "pr": 923
+    },
+    {
+      "slice": "S6 run test holds under suite load (added)",
+      "state": "integrated at ed3970a0",
+      "after": [
+        "S5 wait test holds under suite load (added)"
+      ],
+      "branch": "slice/defender-dev-drive-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-defender-dev-drive-s6",
+      "pr": 925
+    }
+  ],
+  "findings": [
+    "kept: F1 drop root and verdict from the advice marker so advised never probes (doctor.mjs:179-182, :347); record the shape { where, at } in S2.md and architecture §4",
+    "kept: F2 defenderDue derives its verdict from SCANNER_VERDICT and the row's step split instead of restating them (doctor.mjs:174, :176)",
+    "kept: nit, delete markAdvised's second ADVISED_WHERE guard and its assert.throws (doctor.mjs:180, test :90)",
+    "kept: nit, drop defenderDue's unused parameter defaults (doctor.mjs:169)",
+    "kept: QA J1, the pilot.md Defender clause names the walkthrough's body (why the user is shown it, both steps theirs as administrator); measure-prompt pin follows",
+    "kept: evidence-runner mutation survivors at doctor.mjs:329 (defender argv check) have no pinning test; add the exit-2 usage tests",
+    "kept: QA gate, deck/test/wait.test.mjs:359 fails under suite load (timeoutMinutes 0.001 races a 2 MB body read); built as added slice S5",
+    "kept: S5 gate, deck/test/run.test.mjs:289 fails under suite load (first prompt lacks the lander suffix); built as added slice S6",
+    "dropped: rewording 'not due: pass' (fundamentalist nit, QA J2): spec 2 names the three reasons verbatim",
+    "dropped: QA J3 unknown doctor argument exits 2: intended by main's documented interface, no caller passes args",
+    "dropped: psLiteral newline stripping: unreachable, root is a real Win32 directory and Win32 forbids control characters in names",
+    "dropped: trimming 'the exclusion leads' test: it is S1's L8 pin, the saving is cognitive only",
+    "dropped: due writes the marker itself (case against): reopens signed L1",
+    "dropped: S5 reviewer LOW, wait.test.mjs:137 and :217 still at 0.001: they assert on said and did not fail under 32 parallel runs"
+  ],
+  "next": "in concluding behind one-integration-line: QA holds walkthrough itm_cf0c58bcae36 on #836 at ed3970a0; on Sign off QA posts the gate2; teardown: pilot deck --stop 27188 (QA's scratch deck on 51906).",
+  "updatedAt": "2026-10-19T14:54:36.174Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "a live agent's transcript file reads 0 bytes in the tasks dir (co-pilot, sync implementer), so liveness after /clear cannot be read there",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "a friction row's word tripped the vocabulary guard inside run.json, which the deck rewrites and never lets the pilot edit; every mac-linux integrate is blocked on it",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the feat base's run.json tripped the vocabulary guard, so the slice gate read 1 fail it did not cause; pilot already exempts run.json, the feat branch predates it",
+      "evidence": "scripts/test/vocabulary-guard.test.mjs:61 on 303be8f0",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the marker's verdict field makes advised probe Defender again right after the row or due already did, up to 15 s twice per flow",
+      "evidence": "S2 report on PR #920; slices/S2.md interface markAdvised({ verdict })",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the 5-minute npm test ran twice because a reviewer's LOW fix landed after the first gate",
+      "evidence": "S4 report, PR #921 at 2e1cb7b3",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "two parallel slices' gates contended for the gate slot; one run stopped at 'waiting for a slot' with exit 1 and cost a full re-run",
+      "evidence": "S3 report, PR #922; gate: waiting for a slot ... pilot-defender-dev-drive-s4",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "its evidence runner went to background work and its table reached main instead of the fundamentalist, after the fundamentalist had handed back without it",
+      "evidence": "fundamentalist report §3; main relayed runner a8bb989b07d1b03fa's results",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "diff coverage via c8 over npm test (gate.mjs) made every test fail, so no coverage result",
+      "evidence": "runner result relayed by main",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "npm test teardown kills a scratch deck leashed to the QA worktree, and pilot deck --stop then refuses it as not a scratch deck, leaving its dir and registry json",
+      "evidence": "QA report: stopped 16512 daemon --leash-dir ...pilot-defender-dev-drive-qa",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a background gate printed 1 failure and exited 1 but the wrapper reported exit 0",
+      "evidence": "QA report: task output exit=1 / [exited with code 0]",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the brief's known-flaky list names daemon-lifecycle.test.mjs:110 but the gate's real load flakes were wait.test.mjs:359 and run.test.mjs:289",
+      "evidence": "fix round report #924; S5 report #923",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node --test's default reporter hides the count lines under grep; tap reporter needed to read pass and fail",
+      "evidence": "fix round report #924",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test fixtures minted item ids with Math.random().toString(16).slice(2, 14), which drops trailing zeros 0.19% of the time and fails ITEM_ID; read as a load flake",
+      "evidence": "S6 report #925: deck/test/run.test.mjs:289, hooks/test/session-handoff.test.js:75",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "posting to a scratch deck over HTTP needs the bearer secret and nothing where scratch decks are described says so",
+      "evidence": "POST /api/tool returned 'the deck wants its secret'; fix found in hooks/lib/deck-secret.js bearer(dir)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck_post refuses pr on a walkthrough while the definition gives no field list",
+      "evidence": "error: 'a walkthrough item takes no pr'",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "an evidence-runner report (6 checks, ~7k tokens) reached main instead of its fundamentalist and was relayed by hand",
+      "size": 7
+    }
+  ]
+}

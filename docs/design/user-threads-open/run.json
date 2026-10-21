@@ -1,0 +1,65 @@
+{
+  "slug": "user-threads-open",
+  "feature": "User threads stay open",
+  "ticket": "itm_5feb313ba8de",
+  "branch": "feat/user-threads-open",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-user-threads-open",
+  "artefact": "docs/design/user-threads-open/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 deck_resolve on a user thread is refused; Close is the only close",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2"
+      ],
+      "branch": "slice/user-threads-open-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-user-threads-open-s1",
+      "pr": 452
+    },
+    {
+      "slice": "S2 Hooks and pilot.md answer a user thread with deck_reply",
+      "state": "integrated",
+      "delivers": [
+        "3",
+        "4"
+      ],
+      "branch": "slice/user-threads-open-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-user-threads-open-s2",
+      "pr": 453
+    },
+    {
+      "slice": "user-threads-open",
+      "state": "red: walkthrough itm_ebdd986d36c3 posted by QA at 72e27af8; gate 2837/2837",
+      "branch": "feat/user-threads-open",
+      "pr": 451
+    },
+    {
+      "slice": "S3 fix round: answer, never close, for a user thread",
+      "state": "integrated",
+      "after": "S2 Hooks and pilot.md answer a user thread with deck_reply",
+      "delivers": [
+        "3",
+        "4"
+      ],
+      "branch": "slice/user-threads-open-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-user-threads-open-fix",
+      "pr": 454
+    }
+  ],
+  "findings": [
+    "kept: F1 stop-gate.js:173 opener says 'not closed' for a user thread; say 'not answered it' (spec 3)",
+    "kept: F2 stop-gate.js:177 non-gate ending 'closing it' false for the chat; gate wording unchanged (gates out of scope)",
+    "kept: F3 inbox-alert.js:179 still-unanswered line names deck_resolve for a lone user thread (spec 3)",
+    "kept: F4 one notToClose helper in hooks/lib/deck.js replaces three copies; L4 holds",
+    "kept: F5 isUserOpened matches the chat; sentence reworded true for both, S2 Interface updated (seam, no L moved)",
+    "kept: F6 mixed-list assertion for stillUnanswered",
+    "kept: F7 delete stubbed duplicate of inbox.test.js:991",
+    "dropped: N1 stillUnanswered export; testing through run costs more",
+    "kept: N2 pageAt pass-through in create.test.mjs",
+    "dropped: N3 layout-only mutants, equivalent",
+    "kept: N4 and QA pilot.md:53 wording, only if measure-prompt stays green"
+  ],
+  "next": "Red. Walkthrough itm_ebdd986d36c3 signed at 72e27af8; Gate 2 itm_27d4dab66865 posted on #451. On Sign off: pilot land in C:/Users/Hazzard/Projects/pilot-feat-user-threads-open, gh pr ready 451, QA comment, closing report.",
+  "updatedAt": "2026-10-09T21:35:14.364Z"
+}

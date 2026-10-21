@@ -1,0 +1,104 @@
+{
+  "slug": "user-thread-listener",
+  "feature": "user-thread-listener",
+  "ticket": "itm_eb35ade648ba",
+  "branch": "feat/user-thread-listener",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-user-thread-listener",
+  "qa": {
+    "branch": "qa/user-thread-listener",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-user-thread-listener-qa",
+    "url": "http://127.0.0.1:4388"
+  },
+  "artefact": "docs/design/user-thread-listener/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A wait from a worktree hears the user and says so first",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "3",
+        "5"
+      ],
+      "branch": "slice/user-thread-listener-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-user-thread-listener-s1",
+      "pr": 364
+    },
+    {
+      "slice": "S2 A pilot in a worktree is held on a user's thread it cannot disown",
+      "state": "integrated",
+      "delivers": [
+        "2",
+        "6"
+      ],
+      "branch": "slice/user-thread-listener-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-user-thread-listener-s2",
+      "pr": 363
+    },
+    {
+      "slice": "S3 An answered thread is repeated until the pilot answers it",
+      "state": "integrated",
+      "after": "S2 A pilot in a worktree is held on a user's thread it cannot disown",
+      "delivers": [
+        "4"
+      ],
+      "branch": "slice/user-thread-listener-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-user-thread-listener-s3",
+      "pr": 366
+    },
+    {
+      "slice": "S4 Each process logs its memory and pilot analytics shows the peak",
+      "state": "integrated",
+      "after": "S5 pilot logging is the one switch, and an old off stays off",
+      "delivers": [
+        "7",
+        "8",
+        "9",
+        "10",
+        "11"
+      ],
+      "branch": "slice/user-thread-listener-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-user-thread-listener-s4",
+      "pr": 367
+    },
+    {
+      "slice": "S5 pilot logging is the one switch, and an old off stays off",
+      "state": "integrated",
+      "delivers": [
+        "12",
+        "13"
+      ],
+      "branch": "slice/user-thread-listener-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-user-thread-listener-s5",
+      "pr": 365
+    },
+    {
+      "slice": "Fix round: principles findings",
+      "state": "integrated",
+      "after": "S4 Each process logs its memory and pilot analytics shows the peak",
+      "branch": "slice/user-thread-listener-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-user-thread-listener-fix",
+      "pr": 368
+    }
+  ],
+  "findings": [
+    "kept: F1 duplicate git-common-dir resolver: analytics uses wait.mjs listeningRepo, mainCheckout deleted (-7)",
+    "kept: F2 unused re-exports isForThisRepo/isOnLiveTicket/alias in the hooks deleted where nothing, tests included, references them (-5)",
+    "kept: F3 the open-items read limit exported once from hooks/lib/deck.js for both hooks; the repeat's read pinned as {open, limit} without repo (L5)",
+    "kept: F4 analytics peak test gets an in-span reading after the peak (+1)",
+    "kept: F5 mixed inbox case: fresh reply on A quoted, B repeated, A absent from the repeat (+15)",
+    "kept: F6 memory write failure warns once and the process keeps running (+8)",
+    "kept: N1 stop-gate inherited filter removed; namedTickets already skips held tickets (-1)",
+    "kept: N2 lastMessage/awaitsPilot pass-throughs replaced by deck.* (-2)",
+    "kept: N3 startMemoryLog's four untested injection options dropped",
+    "kept: N4 TICK_MS export dropped if no test imports it",
+    "kept: N5 Number.isFinite guards in readMemory deleted",
+    "dropped: N6 injectable listeners: a test-only seam, no behaviour at stake",
+    "dropped: N7 memory.jsonl rotation is out of scope (artefact 7)",
+    "kept: N8 folded into F5: a mixed gate-plus-thread repeat ends with the gate sentence",
+    "kept: N9 reasonFor partitions items once",
+    "dropped: N10 presentation-only alignment and an undated-file guard",
+    "dropped: QA nit 'NO REPLY after 1 minutes' plural: the spec 9 and L1 pin that exact line"
+  ],
+  "next": "Red: walkthrough itm_666b7764b85c (QA, :4388) awaits Sign off. Then gate2 (pr #318, sha b323faa0, walkthrough itm_666b7764b85c); on its Sign off: pilot land in pilot-feat-user-thread-listener, gh pr ready 318, QA tears down, closing report; remove worktrees pilot-user-thread-listener-s1..s5, -fix, -qa.",
+  "updatedAt": "2026-10-07T10:26:22.985Z"
+}

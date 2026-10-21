@@ -1,0 +1,22 @@
+node_modules/
+
+# Environment files hold secrets; an example file stays committable.
+.env
+.env.*
+!.env.example
+*.env
+.envrc
+*.local
+settings.local.json
+
+# Keys, certificates and credential files.
+*.pem
+*.key
+*.p12
+*.pfx
+.npmrc
+.netrc
+
+# Root scratch notes.
+/pb.txt
+/*.scratch.*

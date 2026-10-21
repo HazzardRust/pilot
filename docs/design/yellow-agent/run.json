@@ -1,0 +1,202 @@
+{
+  "slug": "yellow-agent",
+  "feature": "The yellow phase is a subagent",
+  "ticket": "itm_8e6896cb4c7b",
+  "branch": "feat/yellow-agent",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-yellow-agent",
+  "qa": {
+    "branch": "qa/yellow-agent",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-feat-yellow-agent-qa",
+    "url": "http://127.0.0.1:4520"
+  },
+  "artefact": "docs/design/yellow-agent/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The main session spawns a co-pilot for the yellow head",
+      "state": "integrated",
+      "delivers": [
+        "spec 2",
+        "spec 3"
+      ],
+      "branch": "slice/yellow-agent-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-s1",
+      "pr": 346
+    },
+    {
+      "slice": "S2 A blocked yellow ticket turns red and the next one starts",
+      "state": "integrated",
+      "after": "S1 The main session spawns a co-pilot for the yellow head",
+      "delivers": [
+        "spec 5"
+      ],
+      "branch": "slice/yellow-agent-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-s2",
+      "pr": 347
+    },
+    {
+      "slice": "S3 A main session is not handed a yellow run as its own",
+      "state": "integrated",
+      "delivers": [
+        "spec 8"
+      ],
+      "branch": "slice/yellow-agent-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-s3",
+      "pr": 349
+    },
+    {
+      "slice": "S4 The deck never leaves a yellow ticket in the main slot",
+      "state": "integrated",
+      "after": "S3 A main session is not handed a yellow run as its own",
+      "delivers": [
+        "spec 8"
+      ],
+      "branch": "slice/yellow-agent-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-s4",
+      "pr": 350
+    },
+    {
+      "slice": "S5 A yellow ticket's questions show on the main page",
+      "state": "integrated",
+      "after": "S2 A blocked yellow ticket turns red and the next one starts",
+      "delivers": [
+        "spec 4"
+      ],
+      "branch": "slice/yellow-agent-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-s5",
+      "pr": 352
+    },
+    {
+      "slice": "S6 A fresh session re-briefs the co-pilot after /clear or a closed terminal",
+      "state": "integrated",
+      "after": "S5 A yellow ticket's questions show on the main page",
+      "delivers": [
+        "spec 6",
+        "spec 9"
+      ],
+      "branch": "slice/yellow-agent-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-s6",
+      "pr": 353
+    },
+    {
+      "slice": "S7 The budget and the rule name the yellow lane",
+      "state": "integrated",
+      "after": "S6 A fresh session re-briefs the co-pilot after /clear or a closed terminal",
+      "delivers": [
+        "spec 7"
+      ],
+      "branch": "slice/yellow-agent-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-s7",
+      "pr": 356
+    },
+    {
+      "slice": "S8 pilot run --sub is gone",
+      "state": "integrated",
+      "delivers": [
+        "spec 1"
+      ],
+      "branch": "slice/yellow-agent-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-s8",
+      "pr": 354
+    },
+    {
+      "slice": "S9 The daemon starts, waits and pauses no sub-deck",
+      "state": "integrated",
+      "after": "S8 pilot run --sub is gone",
+      "delivers": [
+        "spec 1"
+      ],
+      "branch": "slice/yellow-agent-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-s9",
+      "pr": 355
+    },
+    {
+      "slice": "S10 The store holds no sub-deck state",
+      "state": "integrated",
+      "after": "S9 The daemon starts, waits and pauses no sub-deck",
+      "delivers": [
+        "spec 1"
+      ],
+      "branch": "slice/yellow-agent-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-s10",
+      "pr": 357
+    },
+    {
+      "slice": "S11 The page draws no sub tab",
+      "state": "integrated",
+      "after": "S10 The store holds no sub-deck state",
+      "delivers": [
+        "spec 1"
+      ],
+      "branch": "slice/yellow-agent-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-s11",
+      "pr": 358
+    },
+    {
+      "slice": "F1 The co-pilot's lane never waits on a prompt (L17)",
+      "state": "integrated",
+      "after": "S2 A blocked yellow ticket turns red and the next one starts",
+      "delivers": [
+        "spec 3"
+      ],
+      "branch": "fix/yellow-agent-l17",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-fix-l17",
+      "pr": 348
+    },
+    {
+      "slice": "A1 A crew agent's permission prompt is refused by a hook",
+      "state": "integrated",
+      "delivers": [
+        "spec 3"
+      ],
+      "branch": "slice/yellow-agent-a1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-a1",
+      "pr": 351
+    },
+    {
+      "slice": "FP Principles fix round",
+      "state": "integrated",
+      "delivers": [
+        "spec 1",
+        "spec 7"
+      ],
+      "branch": "fix/yellow-agent-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-agent-fix-principles",
+      "pr": 359
+    },
+    {
+      "slice": "QF1 The hand-off's yellow notice asserts no missing co-pilot",
+      "state": "integrated",
+      "delivers": [
+        "spec 6"
+      ],
+      "branch": "feat/yellow-agent"
+    },
+    {
+      "slice": "QF2 pilot handoff hands off a yellow-only session",
+      "state": "integrated (6a8c67ca on feat/yellow-agent, gate 2462 pass)",
+      "after": "QF1 The hand-off's yellow notice asserts no missing co-pilot",
+      "delivers": [
+        "spec 6"
+      ],
+      "branch": "feat/yellow-agent"
+    }
+  ],
+  "findings": [
+    "kept: chain.mjs specOf's yellow branch is unreachable since nextTicketOf never returns yellow; delete it, HANDOFF_BODY_CHARS and two imports (-25)",
+    "kept: the co-pilot is told to count against a budget its brief never names; pilot.md's Yellow section passes pilot budget's yellow number, paid for by a cut (+1)",
+    "kept: no test pins TICKET_ID's anchors or the claim name's sanitising in session-handoff.js; two tests (+10)",
+    "kept: budget.mjs laneOf, the role field and the CLI's role line are dead; delete with their pins (-6)",
+    "kept: client.mjs still sends parent and reads PILOT_SUB_OF; delete (-5)",
+    "kept: server.mjs refuses a tab.parent nothing sets; delete that branch",
+    "dropped: removing tabs.mjs's parent filter and S11's test 1; the finding rests on an unchecked assumption and the test is the slice's named evidence",
+    "kept: run.mjs's exit event and its always-constant args/env parameters; delete (-4)",
+    "dropped: parse the yellow head once in session-handoff.js; a refactor of a trust-boundary hook for -6 lines, the guard that matters is pinned by the kept tests",
+    "kept: ADR 0088 says dontAsk is gone while L17 keeps it in the co-pilot's frontmatter; correct the ADR, the locked decision does not move",
+    "kept: a test for client.mjs's changed reply re-wrap line",
+    "dropped: a duplicate --main flag test; consequence stated as none",
+    "dropped: 8 nits (recordHomeOf's unused parameter, resumableRecordFor reading twice, the item subdeck stamp, server.mjs stripping a subdeck argument, POST /api/budget ignoring sub, ticketRepo alias, withLane mutating, prose pins): each under 3 lines of consequence, late churn",
+    "dropped: as a fix, every clean finish chains a /clear that kills a live co-pilot mid-slice; spec 6 accepts a restart, so it is a design change for the user, raised as a question"
+  ],
+  "next": "Red. Walkthrough itm_be5b1e4cdef7 signed and resolved. Gate2 itm_38c3b5a1aa8e posted (pr #345, sha 6a8c67ca). QA agent live, doing PR body + QA comment on #345. On Sign off press: pilot land in C:/Users/Hazzard/Projects/pilot-feat-yellow-agent, gh pr ready 345, tell QA to tear down, closing report (report item + deck_status finished). Not yet: act on what the user said.",
+  "updatedAt": "2026-10-07T05:59:52.979Z"
+}

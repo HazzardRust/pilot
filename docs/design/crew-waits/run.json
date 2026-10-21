@@ -1,0 +1,105 @@
+{
+  "slug": "crew-waits",
+  "feature": "Crew waits and hand-backs",
+  "ticket": "itm_9ff19d0cd2b1",
+  "branch": "feat/crew-waits",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-waits",
+  "artefact": "docs/design/crew-waits/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 QA waits in the background",
+      "state": "integrated",
+      "delivers": [
+        "4 pilot wait --as exits only on its own kind's replies",
+        "5 crew agents wait in the background (QA)",
+        "6 a pilot message reaches a waiting agent at once",
+        "7 a wait takes what it prints, once per kind"
+      ],
+      "branch": "slice/crew-waits-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-waits-s1",
+      "pr": 284
+    },
+    {
+      "slice": "S2 Seen by mark",
+      "state": "integrated",
+      "delivers": [
+        "9 Seen by <kind> appears live under a reply",
+        "10 a Sign off reads Seen by qa and pilot"
+      ],
+      "branch": "slice/crew-waits-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-waits-s2",
+      "pr": 283
+    },
+    {
+      "slice": "S3 Teacher and auditor wait in the background",
+      "state": "integrated",
+      "after": "S1 QA waits in the background",
+      "delivers": [
+        "5 no crew file names deck_wait"
+      ],
+      "branch": "slice/crew-waits-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-waits-s3",
+      "pr": 285
+    },
+    {
+      "slice": "S4 The pilot finishes decided steps",
+      "state": "integrated",
+      "after": "S3 Teacher and auditor wait in the background",
+      "delivers": [
+        "1 QA posts the summary at Sign off, the pilot flips the PR",
+        "2 a queued SendMessage counts as undelivered",
+        "3 after a sign-off QA does only the named actions",
+        "11 both prompt pins hold"
+      ],
+      "branch": "slice/crew-waits-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-waits-s4",
+      "pr": 286
+    },
+    {
+      "slice": "S5 Never left on read",
+      "state": "integrated",
+      "after": "S4 The pilot finishes decided steps",
+      "delivers": [
+        "8 the first answer to a reply is one line on the thread",
+        "11 both prompt pins hold"
+      ],
+      "branch": "slice/crew-waits-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-waits-s5",
+      "pr": 287
+    },
+    {
+      "slice": "feature",
+      "state": "fix round running; QA read-only pass clean",
+      "branch": "feat/crew-waits",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-waits",
+      "pr": 282
+    },
+    {
+      "slice": "Fix round (principles)",
+      "state": "integrated",
+      "after": "S5 Never left on read",
+      "pr": 288
+    }
+  ],
+  "findings": [
+    "kept: F1 delete readOnlyOpen, readFlag serves both",
+    "kept: F2 in a narrower form: untakenBy uses the store's Sign off predicate; the reviewer's deliveredTo rewrite rejected (would resurface taken replies after a pass)",
+    "kept: F3 one store parse per untaken pass (open flag on repliesSince rows)",
+    "kept: F4 real-daemon test for --item",
+    "kept: F5 test that a long wait polls at pollMs",
+    "kept: F7 the three refusals asserted",
+    "kept: F8 drop the equivalent guard in renderSeenBy if tests hold",
+    "kept: F10 S1 interface block and two comments say take marks inside waitForReplies",
+    "kept: F11 stale comment, ADR 0061 supersedes line, dead awaitsPilot removed if import-only",
+    "kept: F12 delete the teacher's cannot-happen sentence",
+    "kept: F13 one-line-first dropped from the teacher only (A7, assumed while away, itm_e215a0a33e4a)",
+    "kept: N1 kinds.join, N3 two duplicate tests deleted, N4 with QA-J2: QA ends its turn after Sign off",
+    "dropped: F6 the 10 ms pause is cheap insurance against a hot loop; surviving mutants show it is untested, not dead",
+    "dropped: F14 moving the rule into what pilot wait prints changes spec 8's agreed evidence; deferred to the closing report",
+    "dropped: N2 skills keep the CLI spelling; no consequence shown",
+    "dropped: making untaken the only deck_wait behaviour: over the diff limit and changes the MCP tool; deferred to the user",
+    "dropped: QA-J1 no time on a two-kind mark matches S2's interface; QA-J3 compliance-review is out of scope (§7)"
+  ],
+  "next": "Fix round (#288, ffbfadd) being integrated with `pilot integrate fix/crew-waits-principles` in C:/Users/Hazzard/Projects/pilot-feat-crew-waits. Then: artefact gets verdicts, L15 (teacher exempt from spec 8, user itm_e215a0a33e4a), commit+push; send QA the tip; QA posts walkthrough and ends its turn, pilot relays replies; then gate2; pilot runs gh pr ready.",
+  "updatedAt": "2026-10-03T15:39:01.204Z"
+}

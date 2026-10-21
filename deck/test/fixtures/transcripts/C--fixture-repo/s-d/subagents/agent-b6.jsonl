@@ -1,0 +1,2 @@
+{"type":"user","agentId":"b6","timestamp":"2026-01-03T09:06:00.000Z","message":{"role":"user","content":"QA the preview of feat/buckets."}}
+{"type":"assistant","agentId":"b6","timestamp":"2026-01-03T09:06:30.000Z","message":{"id":"msg_d6","model":"claude-opus-5-5","role":"assistant","content":[{"type":"tool_use","id":"toolu_d6","name":"Read","input":{}}],"usage":{"input_tokens":60,"cache_creation_input_tokens":600,"cache_read_input_tokens":6000,"output_tokens":6}}}

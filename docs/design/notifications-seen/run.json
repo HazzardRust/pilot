@@ -1,0 +1,127 @@
+{
+  "slug": "notifications-seen",
+  "feature": "Notifications: mark all seen",
+  "ticket": "itm_99df897efcaa",
+  "branch": "feat/notifications-seen",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-notifications-seen",
+  "artefact": "docs/design/notifications-seen/architecture.md",
+  "slices": [
+    {
+      "slice": "notifications-seen",
+      "state": "gate2 itm_417cfe5fd323 signed; landing stopped twice: red on the 800-line bar (lander trimmed on feat), then main@c336507 → pilot sync conflict in scripts/test/measure-prompt.test.mjs; lander resolving in pilot-sync",
+      "after": [
+        "S1"
+      ],
+      "branch": "feat/notifications-seen",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-notifications-seen",
+      "pr": 852
+    },
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/notifications-seen-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-notifications-seen-s1",
+      "pr": 936
+    }
+  ],
+  "findings": [
+    "kept: clearAllNotices returns a count no production caller reads (store-items.mjs:610-620); delete the return, -1",
+    "kept: notices.test.mjs:15,25-26 red-phase namespace scaffolding; use the named import, -3",
+    "kept: spec 4 evidence has no assertion that the served summary loses data-count; add it to test 1, +3",
+    "kept: QA F1, .mark-all-form stays drawn when every row is hidden client-side, breaking spec 5; hide it in recount/rehide, +5 and a test",
+    "dropped: N1 merged /clear-notice(s) block in server-routes.mjs; correct, two adjacent checks, and the 800-line bar on that file predates this feature (799 before); a split is not this feature's diff"
+  ],
+  "next": "lander live on the sync (one merge commit, pin measured), then Land again on itm_417cfe5fd323 + tail (report needs a one-line body on 0.9.4); none reporting → spawn one with that id. Then landers: stage-queue-tail itm_e8f90de95c38, plain-session trial, held-handoff tail itm_86f7a5b1d8b7, short-path close after Done on itm_b045bb0fd012.",
+  "updatedAt": "2026-10-20T14:53:54.756Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "the notifications client's test harness is a hand-built stand-in DOM; a new control needs it extended",
+      "evidence": "deck/test/notifications.test.mjs:67-290",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "CRLF line endings broke a multiline regex edit on the artefact; duplicate rows had to be deleted",
+      "evidence": "architecture.md edit before d742dbdf",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck_post refuses a question without a Research: line, a rule the architect brief does not state",
+      "evidence": "deck_post error citing ADR 0119",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "the lander brief used as template has no small-diff-limit section",
+      "evidence": "design/lander:docs/design/lander/brief.md",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "gate1 refused a design branch cut from the pre-sync pilot; the rebase + force-push + reset bundle was refused by the classifier and had to be split into three calls",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "server-routes.mjs sits at the 800-line facades bar, not named in the brief (only items.mjs was); two re-cuts to reach zero net lines",
+      "evidence": "facades test reported 812 then 801 lines; PR #936",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the bar test counts split('\\n').length, one more than wc -l",
+      "evidence": "800 by wc -l reads 801 in deck/test/facades.test.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "starting a scratch deck (node bin/pilot.mjs deck --scratch) is refused by auto mode as Interfere With Workloads, so no slice live gate can run",
+      "evidence": "S1 live gate not run; PR #936",
+      "size": 2
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "a review worktree has no node_modules; npm test stops with 'run npm ci', so coverage and mutation did not run",
+      "evidence": "evidence runner on 23bbaf86",
+      "size": 2
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "Stryker instrumentation pushes deck sources over the 800-line facades bar, failing the mutation baseline",
+      "evidence": "facades.test.mjs:70 over 800 (server-routes.mjs 1505 lines instrumented)",
+      "size": 2
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "knip runs repo-wide (509 unused files), burying the diff",
+      "evidence": "npx knip on 23bbaf86",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "no agent can start a scratch deck under auto mode, so a web feature's live checks fall entirely to the user's walkthrough",
+      "evidence": "QA §9 steps 1-7 not run at 23bbaf86",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "artefact §9 names :4321, contradicting the rule that crew never touch the user's deck",
+      "evidence": "docs/design/notifications-seen/architecture.md §9",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a spec-4 assertion on data-count matched the inlined stylesheet; needed a <summary>-scoped regex",
+      "evidence": "notices.test.mjs test 1, PR #937",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fix worktree had no node_modules; npm ci needed before the gate",
+      "evidence": "PR #937",
+      "size": 1
+    }
+  ]
+}

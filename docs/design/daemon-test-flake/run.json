@@ -1,0 +1,90 @@
+{
+  "slug": "daemon-test-flake",
+  "feature": "Human-facing text short by default",
+  "ticket": "itm_8ced1f04d52a",
+  "branch": "feat/daemon-test-flake",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-daemon-test-flake",
+  "artefact": "docs/design/daemon-test-flake/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Two-sessions wait covers the client's limits",
+      "state": "integrated at fa4b31c4 (with S2)",
+      "branch": "slice/daemon-test-flake-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-test-flake-s1",
+      "pr": 534
+    },
+    {
+      "slice": "S2 Empty polls counted against requests made",
+      "state": "integrated at fa4b31c4",
+      "after": [
+        "S1 Two-sessions wait covers the client's limits"
+      ],
+      "branch": "slice/daemon-test-flake-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-test-flake-s2",
+      "pr": 536
+    },
+    {
+      "slice": "S3 Watch tests wait for what they assert",
+      "state": "integrated at 2f50c144",
+      "branch": "slice/daemon-test-flake-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-test-flake-s3",
+      "pr": 533
+    },
+    {
+      "slice": "S4 A failed first join tries again",
+      "state": "integrated at 6f9a40ed",
+      "after": [
+        "S1 Two-sessions wait covers the client's limits"
+      ],
+      "branch": "slice/daemon-test-flake-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-test-flake-s4",
+      "pr": 537
+    },
+    {
+      "slice": "Four timing flakes hold under load",
+      "state": "fixing: fix round #539 integrating (fix/daemon-test-flake-principles)",
+      "after": [
+        "S1 Two-sessions wait covers the client's limits",
+        "S2 Empty polls counted against requests made",
+        "S3 Watch tests wait for what they assert",
+        "S4 A failed first join tries again",
+        "S5 The marker-wait abort test waits for what it asserts",
+        "S6 The reset-time reading holds under load"
+      ],
+      "branch": "feat/daemon-test-flake",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-daemon-test-flake",
+      "pr": 509
+    },
+    {
+      "slice": "S5 The marker-wait abort test waits for what it asserts",
+      "state": "integrated at 271b3124",
+      "after": [
+        "S3 Watch tests wait for what they assert"
+      ],
+      "branch": "slice/daemon-test-flake-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-test-flake-s5",
+      "pr": 535
+    },
+    {
+      "slice": "S6 The reset-time reading holds under load",
+      "state": "integrated at 3fbceb72",
+      "branch": "slice/daemon-test-flake-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-daemon-test-flake-s6",
+      "pr": 538
+    }
+  ],
+  "findings": [
+    "kept: F1 run.test.mjs:176 old until beside eventually (two budgets in one file, L3); delete it, :251 uses eventually (-8)",
+    "kept: F2 run.test.mjs ~10 asserts straight after eventually can never fail; delete them, fold messages into what (-11)",
+    "dropped: F3 no test pins spawns <= JOIN_ATTEMPTS on a 4th call; QA proved the bound live (3 tries, no further spawn), and a pin costs ~30 s of daemon waits in the suite this feature de-flakes",
+    "kept: F4 startup.test.mjs:47 hand copy of START_TIMEOUT_MS; import it from client.mjs (-1)",
+    "kept: F5 usage.test.mjs test 1 has a 90 s margin, so pinTheClock/aBeat change nothing there; remove them from test 1 (-4)",
+    "kept: N1 daemon.test.mjs:202-204 test restates SESSION_JOIN_MS's definition; delete (-4)",
+    "kept: N2 startup.test.mjs:290-291 literal 3 -> JOIN_ATTEMPTS (0)",
+    "dropped: N3 two homes for the startup bound under L8; no removal-shaped fix; recorded",
+    "kept: consider row -> security-reviewer approve; its LOW: tolerate ENOTEMPTY too at testUtils.mjs exit cleanup (+0)",
+    "dropped: security LOW log line on the swallowed cleanup error; an addition for a stray temp dir"
+  ],
+  "next": "co-pilot: integrating the fix round #539, then pilot land, then QA re-probes from the tip",
+  "updatedAt": "2026-10-10T13:25:05.094Z"
+}

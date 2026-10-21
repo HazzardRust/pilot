@@ -1,0 +1,96 @@
+{
+  "slug": "bigger-jobs",
+  "feature": "Pilot on your fork",
+  "ticket": "itm_7397c7bb01d2",
+  "branch": "feat/bigger-jobs",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-bigger-jobs",
+  "qa": {
+    "branch": "feat/bigger-jobs",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-bigger-jobs",
+    "url": "http://127.0.0.1:53134"
+  },
+  "artefact": "docs/design/bigger-jobs/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The deck refuses an unresearched question",
+      "state": "integrated",
+      "branch": "slice/bigger-jobs-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-bigger-jobs-s1",
+      "pr": 556
+    },
+    {
+      "slice": "S2 The pilot adds a found issue as a slice",
+      "state": "integrated",
+      "branch": "slice/bigger-jobs-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-bigger-jobs-s2",
+      "pr": 555
+    },
+    {
+      "slice": "S3 The architect builds found issues in the run",
+      "state": "integrated",
+      "branch": "slice/bigger-jobs-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-bigger-jobs-s3",
+      "pr": 558
+    },
+    {
+      "slice": "S4 Twelve agents in flight",
+      "state": "integrated",
+      "branch": "slice/bigger-jobs-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-bigger-jobs-s4",
+      "pr": 557
+    },
+    {
+      "slice": "S5 Ticket-making aims big",
+      "state": "integrated",
+      "branch": "slice/bigger-jobs-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-bigger-jobs-s5",
+      "pr": 562
+    },
+    {
+      "slice": "S6 An audit posts one ticket per surface",
+      "state": "integrated",
+      "branch": "slice/bigger-jobs-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-bigger-jobs-s6",
+      "pr": 561
+    },
+    {
+      "slice": "S7 The auditor's rows are argued down",
+      "state": "integrated",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/bigger-jobs-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-bigger-jobs-s7",
+      "pr": 563
+    },
+    {
+      "slice": "S8 One command bumps the version",
+      "state": "integrated",
+      "branch": "slice/bigger-jobs-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-bigger-jobs-s8",
+      "pr": 560
+    },
+    {
+      "slice": "bigger-jobs",
+      "state": "red at efd831b4: walkthrough itm_a30f33894b39 posted; QA comment #issuecomment-6116552373; gate 3188/0; specs 1,3,4,5,7-14 PASS, 2 pins only, 6 unverified",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8"
+      ],
+      "branch": "feat/bigger-jobs",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-bigger-jobs",
+      "pr": 549
+    }
+  ],
+  "findings": [
+    "kept: QA spec-1 re-probe, agents/pilot.md step 6 'a found issue a crew agent reports' misses a pilot's own find; widen to 'A found issue, whoever finds it, ...'; pilot pin by measured cost (not yet made)"
+  ],
+  "next": "User works through walkthrough itm_a30f33894b39; on its sign-off, gate2 for PR #549 at efd831b4 (optional re-runs: spec 6 grouped tickets, spec 2 live architect run)",
+  "updatedAt": "2026-10-12T02:16:44.066Z"
+}

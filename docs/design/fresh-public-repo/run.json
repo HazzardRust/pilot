@@ -1,0 +1,232 @@
+{
+  "slug": "fresh-public-repo",
+  "feature": "A fresh public repository",
+  "ticket": "itm_c570093cafb5",
+  "branch": "feat/fresh-public-repo",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-fresh-public-repo",
+  "artefact": "docs/design/fresh-public-repo/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 the builder for the orphan repo",
+      "state": "integrated at dcb1307f (4301 pass)",
+      "branch": "feat/fresh-public-repo-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-fresh-public-repo-s1",
+      "pr": 957
+    },
+    {
+      "slice": "S2 env and scratch files ignored, tree scans clean",
+      "state": "integrated at 4e53523f (4267 pass)",
+      "branch": "feat/fresh-public-repo-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-fresh-public-repo-s2",
+      "pr": 956
+    },
+    {
+      "slice": "S3 the runbook, pins, title and workflow guards",
+      "state": "integrated at eaaab56a (4307 pass)",
+      "after": [
+        "S1"
+      ],
+      "branch": "feat/fresh-public-repo-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-fresh-public-repo-s3",
+      "pr": 958
+    },
+    {
+      "slice": "fresh-public-repo",
+      "state": "gate2 itm_85c7770a8d5c signed at 3e6c55fd; deck landing; lander due",
+      "after": [
+        "S2",
+        "S3"
+      ],
+      "branch": "feat/fresh-public-repo",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-fresh-public-repo",
+      "pr": 844
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated at aa610f69 (4321 pass)",
+      "after": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "branch": "feat/fresh-public-repo-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-fresh-public-repo-fix",
+      "pr": 960
+    }
+  ],
+  "findings": [
+    "dropped: F1 delete builder, its test and the move subsections after the move: moves locked L2, and the move runs after this PR merges so it cannot be built in this run; removal is cheap later",
+    "dropped: F2 the held/wanted object assertion in fresh-repo.test.mjs: it pins the feature's core no-history property locally (QA saw 2191 tree objects + 1 commit); the rewrite it blocks is hypothetical",
+    "kept: F3 export REPOSITORY from install-command.mjs and import it in fresh-repo-runbook.test.mjs, delete the regex repository() (-4)",
+    "dropped: F4 the tool-name loop in runbook test 2: S3's slice asked for it, it pins that the runbook names the builder, scan and secret",
+    "kept: F5 drop the literal count: 1 from buildOrphan's return, its test assert and S1's Interface (-1)",
+    "dropped: F6 the existsSync guard: it refuses before any git work and the mkdir catch is the race guard, as the code's comment says; net -1 for no consequence",
+    "dropped: nits --name option, main complexity, treeOf guard, shared runbook helpers: no stated consequence worth a diff, the last touches a file outside the feature",
+    "kept: QA F1 OPERATING Before the move step 2: git archive | tar fails in PowerShell 5.1; use git archive -o <scratch>/tree.tar then tar -xf tree.tar -C tree from <scratch> (~3 lines)",
+    "dropped: QA F2 installed pilot 0.9.4 land does not allocate ADR 0172: a landing concern flagged to main, not a code fix on this branch"
+  ],
+  "next": "fresh-public-repo: landing by the deck; spawn pilot-lander itm_85c7770a8d5c (clean tail: prune, report, finished); on its hand-back reply Findings: on the report (human step: merge the pilot → main PR with a merge commit; the move is the user's by hand from OPERATING.md once the open PR list is empty).",
+  "updatedAt": "2026-10-21T00:11:31.596Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "deck refused a merge question lacking a Research: line; the architect prompt never names that rule",
+      "evidence": "deck_post error citing ADR 0119",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "pilot:docs-lookup capped at 3 fetches, so 5 lookups took two spawns",
+      "evidence": "first lookup reported Q3 and Q5 not fetched",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "Python on Windows wrote CRLF into architecture.md, breaking the next exact-string edit",
+      "evidence": "AssertionError; fixed with sed and newline=''",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "check-slices refuses a Tests symbol with text outside backticks",
+      "evidence": "S1.md:34 tests-shape",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "the deck's verdict regex refuses 'Verdict: stands.' and 'Verdict: stands (reason)'; the architect wrote both and the pilot rewrote six lines to post the gate",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the TREE_TESTS census in scripts/select-tests.mjs only fails in the full suite; the slice file never said a test that walks ls-files must be registered",
+      "evidence": "S2's first final gate went red on 'every tree walker is listed'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the first gate run raced the implementer's own allow-marker edits and cost one extra full suite, about 15 minutes",
+      "evidence": "gate started at 8b25a8a9, before A7 was answered",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's pattern list named no key or credential files, so the security reviewer added them as a MEDIUM",
+      "evidence": "PR #956 review table",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a gitleaks dir fingerprint contains the absolute scan path, which rules out .gitleaksignore; worth knowing for the publish runbook",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the TREE_TESTS check in select-tests.mjs only shows in the full suite; S2's slice file did not name it",
+      "evidence": "first final gate failed 'every tree walker is listed'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's pattern list had no key/credential files and no allowlist rule for the A6 fixtures; the security review and a co-pilot round-trip supplied both",
+      "evidence": "S2 report pushback table",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a gitleaks dir fingerprint contains the absolute scan path, so .gitleaksignore is useless",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "the predecessor co-pilot could not TaskStop its own S3 implementer at the harness hand-back, leaving it live and briefed to a gone co-pilot",
+      "evidence": "S3 implementer a7130fbba4c121179 still live at successor start; re-homed by SendMessage"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "ADR 0167's NNNN placeholder and the methodology-skills ADR filename pin disagree; only the full suite shows it",
+      "evidence": "S3 first full run: 1 fail 'the ADR format is the shape of the ADRs already in docs/adr/'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3's Interface said README's first '# ' heading, but that heading is '# BETA'",
+      "evidence": "README.md:3",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the fact sheet listed package.json's owner/name pin as absent; it is at package.json:13",
+      "evidence": "fact sheet row vs grep -n HazzardRust package.json",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md's trailer session differs from the co-pilot's brief",
+      "evidence": "brief.md 01N5gq vs brief 01Tek2",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "no node_modules in the review worktree and the evidence runner may not run npm ci, so diff coverage cannot run",
+      "evidence": "evidence runner: 'node_modules missing: run npm ci'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "gitignore.test.mjs needs a real .git, so Stryker's sandbox fails the dry run and the feature loses mutation evidence",
+      "evidence": "Stryker dry run: 3 errors 'fatal: not a git repository'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "knip has no knip.json, so its output is repo-wide noise",
+      "evidence": "523 unused files listed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "the scratchpad held another agent's rehearsal folder; QA deleted its gitleaks.json",
+      "evidence": "rehearsal/ timestamped before QA's spawn",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "Git Bash's tar cannot open -f C:/... and PowerShell 5.1 corrupts binary pipes; the runbook names no shell",
+      "evidence": "'Cannot connect to C: resolve failed'; 'Unrecognized archive format'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "finding whether land allocates ADR numbers meant tracing the launcher into the plugin cache",
+      "evidence": "launcher.mjs:20-47 resolves to 0.9.4",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "§9 item 3's --pilot origin/pilot can only pass once pilot lands in main; QA ran --pilot origin/main",
+      "evidence": "origin/pilot 37 ahead",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "deck/test/daemon-replace.test.mjs 'a newer caller stops the daemon through its shutdown' hit its 30 s timeout under full-suite load, a flake brief.md does not name",
+      "evidence": "fix round gate: 1 cancelled, passes alone 11/11",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "a walkthrough post refuses a pr field, and the QA definition does not say so",
+      "evidence": "deck_post error 'a walkthrough item takes no pr'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "§9 item 2 pins the scan to origin/main, which cannot be clean before the merge (6 fixture hits today); only the tip's tree can be rehearsed",
+      "evidence": "gitleaks on origin/main: 6 findings in deck/test/skeleton.test.mjs; on aa610f69: []",
+      "size": 1
+    }
+  ]
+}

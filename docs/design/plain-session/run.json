@@ -1,0 +1,374 @@
+{
+  "slug": "plain-session",
+  "feature": "A plain session carries nothing",
+  "ticket": "itm_44266e980748",
+  "branch": "feat/plain-session",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-plain-session",
+  "artefact": "docs/design/plain-session/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 pilot run carries the crew with the plugin disabled",
+      "state": "integrated at bb575211",
+      "branch": "slice/plain-session-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-plain-session-s1",
+      "pr": 914
+    },
+    {
+      "slice": "S2 rules follow the reach, repair included",
+      "state": "integrated at 6c684029",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/plain-session-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-plain-session-s2",
+      "pr": 918
+    },
+    {
+      "slice": "S3 settings follow the reach: enabledPlugins and statusLine",
+      "state": "integrated at f4759d4e",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/plain-session-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-plain-session-s3",
+      "pr": 917
+    },
+    {
+      "slice": "S4 pilot reach <level> applies and stores the choice",
+      "state": "integrated at 1e5b060c",
+      "after": [
+        "S2",
+        "S3"
+      ],
+      "branch": "slice/plain-session-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-plain-session-s4",
+      "pr": 948
+    },
+    {
+      "slice": "S5 pilot doctor shows the reach and its drift",
+      "state": "integrated at 6571c2ba",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/plain-session-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-plain-session-s5",
+      "pr": 916
+    },
+    {
+      "slice": "S6 the install asks the reach; docs start through pilot run",
+      "state": "integrated at bf414532",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/plain-session-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-plain-session-s6",
+      "pr": 950
+    },
+    {
+      "slice": "S7 a plain session measures 0 pilot tokens",
+      "state": "integrated at 8e15507d",
+      "branch": "slice/plain-session-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-plain-session-s7",
+      "pr": 915
+    },
+    {
+      "slice": "plain-session",
+      "state": "gate2 itm_771217b2e4ea signed 15:40; NOT landed: stale trial in pilot-land-plain-session; lander live on it",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9"
+      ],
+      "branch": "feat/plain-session",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-plain-session",
+      "pr": 913
+    },
+    {
+      "slice": "S8 reach level type check; uninstall clears rules root",
+      "state": "integrated at b75c6045",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/plain-session-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-plain-session-s8",
+      "pr": 947
+    },
+    {
+      "slice": "S9 the subagent status line follows the reach",
+      "state": "integrated at 70073635",
+      "after": [
+        "S4",
+        "S8"
+      ],
+      "branch": "slice/plain-session-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-plain-session-s9",
+      "pr": 949
+    }
+  ],
+  "findings": [
+    "kept: cycle reach.mjs<->install-settings.mjs; move runSettings into deck/run.mjs (-6)",
+    "kept: PLANS rows carry user:bool; four sites read rulesPlan(level).user (0)",
+    "kept: export rootRules({home}) from reach.mjs for the 4 rules-root joins (-3)",
+    "kept: measure-plain reuses isShippedCopy and ownCommandPath (-12)",
+    "kept: removeShippedRules back to {target}; uninstall calls it per place (-15)",
+    "kept: drop subagentStatusLine option; statusLine:false governs both lines (-4)",
+    "kept: one shared paths: frontmatter helper for isScoped (-2)",
+    "kept: QA F1 measure-plain rules row counts only always-on shipped rules (spec 6, section 9 item 7)",
+    "kept: nits; S3/S4 interface comments, S8/S9 Rewrite check lines, S7 interface names isUnder/childEnv, run.mjs:602 default dropped, doctor uses defaultSettingsPath, selected() and enabledPlugins report key removed",
+    "kept: consider row; security-reviewer on S5 doctor and S8 uninstall: Verdict APPROVE, 3 LOW",
+    "kept: lander trade-off plain-session-default, assumed split not raise: run.mjs over the 800-line bar after main+feat; feat's claudeArgs/runEnv move to their own module; items/store-items taken from pilot, where they are already under",
+    "dropped: security LOW, link check on the rules root before removal; deletion is ledger-hash gated and the same holds for ~/.claude/rules already",
+    "dropped: security LOW, reject a non-absolute home; only internal callers, hash-gated",
+    "dropped: security LOW, rules-edited.json removed per scope; moot once finding 6 drops the scope flag",
+    "dropped: S4 pushback, drop the 8 default-branch ask rules below everything; permission rules stay at every level (architecture section 7)"
+  ],
+  "next": "plain-session: lander live on itm_771217b2e4ea (stale pilot-land-plain-session trial → fresh merge, Land again, prune, report); on its hand-back reply Findings on the report, then spawn the deck-spawn-root lander (itm_74231be071a3). stage-queue-tail: on Done on itm_db764540f47f post report + Findings. architect-runs-red: co-pilot live on S3.",
+  "updatedAt": "2026-10-20T15:41:28.788Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "git fetch --all failed on a ref lock (another session fetching); git fetch origin worked on retry",
+      "evidence": "cannot lock ref 'refs/remotes/origin/main' (S1 report)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md's commit trailer (Fable 5.1, session_01Cmu) differs from the spawn brief's (Opus 5.5, session_01Ksw)",
+      "evidence": "S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck/test/facades.test.mjs pins run.mjs export names but was not in the slice's owned files",
+      "evidence": "S1 report; PR #914",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "A3 logged-in quote checks unreachable: no way to give a throwaway HOME a login",
+      "evidence": "S1 report; PR #914 body",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "repo-wide guards (platform-reads, vocabulary-guard) not named in the S7 slice file or brief; one extra fix commit and a second 5-minute gate",
+      "evidence": "S7 gate at 7f5e3c87: 4276 pass, 2 fail",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Git Bash converted a \\\\host\\ UNC probe path to \\host\\ and created C:\\localhost\\c$\\x\\.claude; the cleanup rm was denied, so a person must delete it",
+      "evidence": "S7 report; node -e printed \\localhost\\c$\\x",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7's 'refuses a home under os.homedir()' cannot hold under L10's moved USERPROFILE; os.userInfo().homedir used instead",
+      "evidence": "S7 report pushback; PR #915",
+      "size": 2
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "S7's credential strip covered ANTHROPIC_* only; Bedrock/Vertex/Foundry routing envs still reached the child",
+      "evidence": "S7 re-review of e2eac1ba..56c4bb8d, MEDIUM at measure-plain.mjs:45",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fresh slice worktree has no node_modules; first test run silent until npm ci",
+      "evidence": "S5 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no pgrep or Monitor on the host; gate completion read by waiting on the log to stop growing",
+      "evidence": "S5 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice file says reach.mjs without its directory (scripts/, not deck/)",
+      "evidence": "S5 report; slices/S5.md",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "repo has no root eslint.config, so the gate's lint step does not exist",
+      "evidence": "S3 report: npx eslint found no eslint.config",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 test brief's 'a fixture without one' could not fail first; a stale statusLine fixture was used",
+      "evidence": "S3 report; PR #917",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 Interface left out repairRules' target, which the CLI --target path and existing tests need; both reviewers flagged the gap as MEDIUM",
+      "evidence": "S2 report; PR #918 review table",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fake-home moves HOME process-wide; CLI --target test had to write and remove a reach file in FAKE_HOME",
+      "evidence": "S2 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node -e and sed edits broke on shell quoting; switched to Edit after a few failed turns",
+      "evidence": "S8 report; PR #947",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md's Claude-Session trailer (session_01Cmu6) differs from the co-pilot brief's (session_01Tek2)",
+      "evidence": "S4 report; PR #948",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the L10 HOME's marketplace points at S1's worktree, so defaultEnabled on a fresh install was checked by claude plugin validate only",
+      "evidence": "known_marketplaces.json names pilot-plain-session-s1 (S4 report)",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "rebase tip arrived after the PR push; one extra gate run (three in all)",
+      "evidence": "S4 report: gates at 12c4f44a, 8261d563, d1d82e13",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "operating-commands guard (every moving subcommand under the hood) not named in S4's files; one failed gate",
+      "evidence": "npm test at 12c4f44a: 1 fail",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "methodology-skills.test.mjs:117 rejected the NNNN- ADR placeholder ADR 0167 prescribes; one-line fix outside the slice",
+      "evidence": "S6 report; PR #950",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "first full gate ran on the old base and was overtaken by the S9 rebase; gate run twice",
+      "evidence": "S6 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 Interface did not say whether Choose the reach replaces Copy the rules; install.test.mjs wording checks moved, not listed as owned",
+      "evidence": "S6 report; slices/S6.md",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "fresh review worktree had no node_modules and the brief named no npm ci; diff coverage and mutation not run",
+      "evidence": "evidence runner: node_modules missing; Stryker ERR_MODULE_NOT_FOUND @modelcontextprotocol/sdk",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "npm run coverage covers deck/** only while the feature lives in scripts/; knip cannot scope to the diff",
+      "evidence": "fundamentalist report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a pilot run probe on the scratch HOME without PILOT_DECK_PORT connected to the live deck on 4321",
+      "evidence": "QA report; later probes on 4399",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "scratch HOME has no login; A3 quotes and status line under pilot run unchecked",
+      "evidence": "QA report",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "150 changed-line fix limit vs net-line finding estimates; two reverse moves pushed the round to 394 changed lines (net -12)",
+      "evidence": "PR #952 body",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "install.test.mjs pins install-settings exports; found only by the full gate, one 5-minute rerun",
+      "evidence": "fix round report; commit 55f1e615",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "check-slices runs on no gate, so added slices S8 and S9 sat on the integration branch failing it",
+      "evidence": "fix round report; fundamentalist nit",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the logged-in scratch HOME syncs an account plugin with a SessionStart hook, so its hooks row is no longer 0",
+      "evidence": "PR #952: measure-plain hooks 1 from plugins/synced/.../mcpmarket-me",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "blocked step: `pilot ready --ticket itm_44266e980748 --slots 6` refused by auto mode (Merge Without Review); no slice left to start, nothing waits on it",
+      "evidence": "co-pilot Bash call after QA spawn",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "blocked step itm_7039b607608d resolved: the user ran pilot ready; record has S1-S9 integrated and only the feature row in QA, so no slice to start",
+      "evidence": "run.json at 77947144",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the gate stopped QA's scratch deck started from the same worktree",
+      "evidence": "gate log: stopped 19340 daemon --leash-dir C:\\pilot-s1-scratch\\scratch-cwd",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a claude -p probe without PILOT_DECK_PORT connected to the default deck port 4321, possibly the user's real deck (pilot only, no tool calls)",
+      "evidence": "QA report, rules-level probe",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the trust dialog blocks pilot run in a fresh cwd with no prior sign",
+      "evidence": "pty probe needed down-arrow + Enter",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "init-enabled.json fixture trims hook events (no hook_id, plugins.path, hook_response); a live probe was needed for the real shape",
+      "evidence": "QA report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "origin/main is over the 800-line bar on items.mjs and store-items.mjs by itself; the fixes live only on pilot, so every main→feat merge goes red until pilot is merged in too",
+      "evidence": "facades.test.mjs:68 on 17a11a97; main 809/808, pilot 797/795",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a module move counts twice in the small-diff limit (removed + added); the brief's raw count stops a pure move",
+      "evidence": "PR #963: 80+/70- for a net +10 move",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot integrate --default refused on a stale pilot-default-plain-session worktree after the merge had reached feat another way; one removal + rerun",
+      "size": 1
+    }
+  ]
+}

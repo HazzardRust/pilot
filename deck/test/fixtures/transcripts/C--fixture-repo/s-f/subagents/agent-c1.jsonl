@@ -1,0 +1,2 @@
+{"type":"user","agentId":"c1","timestamp":"2026-01-04T09:01:00.000Z","message":{"role":"user","content":"Find the reader."}}
+{"type":"assistant","agentId":"c1","timestamp":"2026-01-04T09:01:30.000Z","message":{"id":"msg_f2","model":"claude-opus-5-5","role":"assistant","content":[],"usage":{"input_tokens":30,"cache_creation_input_tokens":0,"cache_read_input_tokens":200000,"output_tokens":7}}}

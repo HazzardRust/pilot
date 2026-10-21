@@ -1,0 +1,338 @@
+{
+  "slug": "deck-token",
+  "feature": "The deck takes a token on loopback",
+  "ticket": "itm_f1e75f31d28b",
+  "branch": "feat/deck-token",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deck-token",
+  "qa": {
+    "branch": "feat/deck-token",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-deck-token",
+    "url": "http://127.0.0.1:50370"
+  },
+  "artefact": "docs/design/deck-token/architecture.md",
+  "slices": [
+    {
+      "slice": "deck-token",
+      "state": "concluding: gate2 itm_977aa4c6e9df posted (#827 at 82d3bdc9, walkthrough itm_458a00c0c2cf); awaiting the press",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "branch": "feat/deck-token",
+      "pr": 827
+    },
+    {
+      "slice": "S1 Walking skeleton: a POST without the secret is refused",
+      "state": "integrated",
+      "branch": "slice/deck-token-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-token-s1",
+      "pr": 875
+    },
+    {
+      "slice": "S2 pilot run, budget and handoff send the secret",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/deck-token-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-token-s2",
+      "pr": 878
+    },
+    {
+      "slice": "S3 The browser gets in through the open file; pilot deck --rotate",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/deck-token-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-token-s3",
+      "pr": 877
+    },
+    {
+      "slice": "S4 The secret is never printed; OPERATING.md says where it lives",
+      "state": "integrated",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/deck-token-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-token-s4",
+      "pr": 880
+    },
+    {
+      "slice": "S5 A read without the secret is refused; reading clients send it",
+      "state": "integrated",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/deck-token-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-deck-token-s5",
+      "pr": 881
+    },
+    {
+      "slice": "sync pilot ea1ce235; ADR 0159 to 0164",
+      "state": "integrated",
+      "after": [
+        "deck-token"
+      ],
+      "branch": "sync/deck-token-pilot",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-sync-deck-token-pilot",
+      "pr": 876
+    },
+    {
+      "slice": "S6 fix round: principles findings and the missing-secret message (added)",
+      "state": "integrated",
+      "after": [
+        "S4",
+        "S5"
+      ],
+      "branch": "fix/deck-token-principles",
+      "pr": 883
+    }
+  ],
+  "findings": [
+    "dropped: S1 sec LOW, a cookie with no Origin passes the guard; whoever holds the cookie holds the secret, and SameSite=Strict covers the browser",
+    "kept: S1 sec LOW, clients send the secret to whoever holds the port (another OS user on 4321) and 0600 does not apply on Windows; OPERATING.md under L8, in S4",
+    "kept: S3 found, /open's 303 from a file:// start lands cross-site without the cookie; S3 answers 200 with a same-origin forward (seam change, S3.md)",
+    "dropped: S3 ts+sec LOW, cmd /c start with a path holding & or ^; the path is the user's own store dir (L8)",
+    "dropped: sync ts LOW, dated '0159 is held by deck-token' notes; historical, no behaviour",
+    "kept: S2 ts MEDIUM, pilot run reports 'the deck never answered' when deck.secret is missing; fixed in S6 (#883): the secret message is the only line",
+    "kept: principles K1, run.mjs's six deck fetches folded into one deckFetch reading bearer() first (S6)",
+    "dropped: principles, one deckFetch across all ~12 client files; architecture.md §7 puts the fold out of scope, K1 covers the defect",
+    "kept: principles K2, deck/launch.mjs second escapeHtml removed (S6)",
+    "kept: principles K3, one exported sameSecret in server-wait.mjs (S6)",
+    "dropped: principles K4, hooks/lib/deck.js health exemption; removing it hands the bearer to whatever answers before it is known to be the deck (fixer pushback + security LOW on #883); reverted",
+    "kept: principles nit K5, deck/client.mjs 'Not a credential' clause deleted (S6)",
+    "dropped: nit, store-dir.mjs ~/.claude/pilot spelled twice; 0 net, couples ESM to the CJS hook lib",
+    "dropped: nit, rename OPEN_ROUTES; 0 net churn on a reviewed interface",
+    "dropped: principles pushback, hand-deleting deck.secret leaves deck-open.html stale; documented at OPERATING.md:135",
+    "kept: QA F1 LOW, pilot tickets 'did not answer: the deck has no secret'; fixed in S6",
+    "kept: QA D1/D2, spec lines 3 and 8 evidence corrected on feat a8268612",
+    "kept: QA F2, evidence 6 (0600) POSIX-only; QA runs deck-secret and open tests once in WSL at the tip",
+    "dropped: #883 ts LOW, doubled blank line in deck/launch.mjs; whitespace only"
+  ],
+  "next": "gate2 itm_977aa4c6e9df awaits the Sign off press. On the press the deck lands: spawn pilot-lander with that id; on landed reply Findings: on the report (merge first: none expected). Scratch deck pid 4892 is QA's; `pilot deck --stop 4892` if it lingers.",
+  "updatedAt": "2026-10-19T05:30:19.327Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "9 separate fetch wrappers: finding every POSTing deck client took a sweep of the whole tree",
+      "evidence": "deck-token artefact §3 client table",
+      "size": 9
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "134 test POSTs across 82 files start decks by hand; a refuse-by-default guard is affordable only via deckOnAPort in deck/testUtils.mjs",
+      "evidence": "grep over deck/test, scripts/test",
+      "size": 134
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the deck refuses a question whose Research: line gives a reason outside its fixed list; two re-posts (L3, L7)",
+      "evidence": "deck_post refusals on itm_79693c2762a6, itm_933be32afe57",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "deck_post refused the walk's 8 questions twice: the Research skip reason must be the list phrase verbatim ('decision already locked or covered by an ADR'); the refusal names the list but not that it is matched word for word",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "the every-depth Gate 1 walk re-posted the 8 decisions the grilling had already posted one by one; the user asked why. Fix: pilot.md should count the grilling's per-decision items as the walk at every",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "A4 and A5 had no Verdict: line after the architect's cut; added by hand before the gate1. The gate1 then refused design/deck-token for not sitting on pilot's tip (pilot moved under it); rebased",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit refuses a file not yet opened with Read; one extra call per file",
+      "evidence": "7 refused edits across server-wait.mjs, gate2-base, daemon-lifecycle, daemon-replace (S1)",
+      "size": 7
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1's owned test list missed the stub-server tests and three real-daemon tests",
+      "evidence": "first full run after the guard failed 162 tests; daemon-lifecycle, daemon-replace, records-for edited outside the slice",
+      "size": 162
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "server-routes.mjs started 3 lines under the facades test's 800-line limit; the guard moved to server-wait.mjs",
+      "evidence": "facades failed at 812 lines; now 799 (S1)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate's refusal line reports only git's first line for the slice merge after a base merge, so a conflict with the moved base read as a refusal of a clean merge; one pilot diagnosis round",
+      "evidence": "NOT integrated slice/deck-token-s1: the merge stopped (Command failed: git merge --no-ff --no-commit origin/slice/deck-token-s1); merge-tree origin/pilot vs the slice conflicts in 3 files",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "the deck daemon on 4321 was spawned from the pilot-qa-lander worktree by a client there; the worktree's removal left the page at HTTP 500 while the API answered; the pilot cannot kill it (auto mode), so the user restarts it",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "Gate-1 ADR took number 0159 on the design branch; pilot landed its own 0159 to 0163 before integration",
+      "evidence": "pilot integrate: base NOT taken, 1 fail 'the real docs/adr passes the check' at pilot@ea1ce235",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "default merge message carries no trailer; merge needed -m with the trailer (sync)",
+      "evidence": "first merge commit reset and redone before push",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "tests in other files pinned S3's new names and only showed in the full suite",
+      "evidence": "create.test.mjs:218 pins deck/launch.mjs absent; free-port.test.mjs:55 refuses 4399 anywhere",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "server-routes.mjs at 799/800 forced joining an unrelated send(...) to fit a dispatch line",
+      "evidence": "facades 800-line limit (S3)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "chrome-devtools network tools echo /open?key= URLs, so scratch secrets reach the transcript",
+      "evidence": "S3 live check; scratch decks stopped and dirs deleted",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 implementer hit its 225k context mark on the rebase request; a fresh implementer re-briefed from its handover",
+      "evidence": "230k subagent tokens over S1 (194 tool uses)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2's owned test list missed stub-server tests, as S1's did",
+      "evidence": "13 failures in handoff-lanes, handoff-lineage-remote, handoff-owed: 'the deck has no secret at <fake home>'; one extra 4.6 min suite",
+      "size": 13
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deckOnAPort reads its options before creating its temp store, so a string secret cannot be passed through it",
+      "evidence": "S2 budget pins use secret: undefined instead",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 parked idle waiting on feat to hold S3 before its ADR edit; the hold was the co-pilot's, the edit had no conflict risk",
+      "evidence": "S4 handed back at c462af0c with steps 4-7 not started",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4's slice file names secretFile, readSecret, openFile with no module",
+      "evidence": "fact sheet found them in hooks/lib/deck-secret.js and deck/launch.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the ticket brief's trailer (Claude Fable 5.1) differs from the session's attribution line (Claude Opus 5.5); the brief's was used",
+      "evidence": "S1 merge-forward report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "git merge-tree predicted two conflicted files; a third broke without a textual conflict",
+      "evidence": "deck/test/open.test.mjs:320 expected [deckUrl()], now [openFile()] (S3 merge-forward)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "ADR 0164's paths named files written at Gate 1, before S1 and S3 placed the code; four greps to match them",
+      "evidence": "secret in hooks/lib/deck-secret.js, guard in deck/server-wait.mjs, neither in the original paths line (S4)",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4's doc describes S5's read guard while S4 is ordered after S3 only, so feat overclaims read protection until S5 integrates",
+      "evidence": "deck/server-routes.mjs:104 isWrite guard; security review MEDIUM 1 on #880",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "server-routes.mjs at 796/800 (facades limit counts the trailing newline); OPEN_ROUTES forced onto one long line, file now 799; next change needs a split",
+      "evidence": "first suite run failed facades at 801 (S5)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test writes thousands of git CRLF warnings into its log; counts needed filtering",
+      "evidence": "S5 gate log",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spec 8's reading-client list missed deck/status-command.mjs and named /ui/deck.css, which is not a route; owned test list again missed 7 files starting decks by hand",
+      "evidence": "S5: status-command.mjs GET /api/agents; add-deck, client-rejoin, daemon-lifecycle, daemon, scratch-seed, handoff-unacked, phase",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "a fresh worktree has no node_modules; the evidence runner may not install, so diff coverage and mutation did not run (14 min lost on a doomed Stryker dry run)",
+      "evidence": "'node_modules missing: run npm ci'; Stryker 'Cannot find package @modelcontextprotocol/sdk'",
+      "size": 14
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the evidence runner refused the brief's coverage commands as outside its table",
+      "evidence": "'Those are outside the command table, so I did not run them'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "knip with no knip.json reports 500 unused files; mostly noise",
+      "evidence": "knip output cut to its last 100 lines",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the gate's leftover-process sweep stopped QA's scratch decks leashed to the QA worktree; restarted from the scratchpad",
+      "evidence": "'left running' sweep during npm test",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "reviewers diffed against a stale origin/feat/deck-token and read a8268612's artefact edit as reverted: typescript BLOCK/HIGH on a file the fix never touched",
+      "evidence": "#883 first typescript-reviewer verdict; cleared after rebase",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit refuses a file not read in full or in range; a round of re-issued edits",
+      "evidence": "fix round on #883",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate refuses a PR title not shaped 'S<n> <lower-case title>'; two implementers wrote the slice file's capitalised title and the fix round had no S<n>; three retitle-and-rerun rounds",
+      "evidence": "NOT integrated on #880, #881, #883 for the title shape",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the harness demanded the hand-back while QA was still live, against the rule that a co-pilot hands back with no child live",
+      "evidence": "handback-send-enforce notice with QA mid-re-probe",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck-token: npm test's teardown in the QA worktree killed its scratch deck (every daemon leashed to that worktree); and a wsl-gate.sh in the session scratchpad was rewritten mid-run by another agent (the first QA may not be dead)",
+      "evidence": "deck-token QA report",
+      "size": 2
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "slug": "housekeeping-audit",
+  "feature": "Housekeeping audit",
+  "branch": "feat/housekeeping-audit",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-housekeeping-audit",
+  "artefact": "docs/design/housekeeping-audit/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Audit runs a loops pass and posts a ranked, evidenced list",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2",
+        "6",
+        "11",
+        "12",
+        "13"
+      ],
+      "branch": "slice/housekeeping-audit-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-housekeeping-audit-s1",
+      "pr": 143
+    },
+    {
+      "slice": "S2 Setup cost and the preview",
+      "state": "integrated",
+      "after": "S1 Audit runs a loops pass and posts a ranked, evidenced list",
+      "delivers": [
+        "5",
+        "10"
+      ],
+      "branch": "slice/housekeeping-audit-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-housekeeping-audit-s2",
+      "pr": 145
+    },
+    {
+      "slice": "S3 Navigability",
+      "state": "integrated",
+      "after": "S1 Audit runs a loops pass and posts a ranked, evidenced list",
+      "delivers": [
+        "7"
+      ],
+      "branch": "slice/housekeeping-audit-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-housekeeping-audit-s3",
+      "pr": 144
+    },
+    {
+      "slice": "S4 Context load and tooling",
+      "state": "integrated",
+      "after": "S1 Audit runs a loops pass and posts a ranked, evidenced list",
+      "delivers": [
+        "8",
+        "9"
+      ],
+      "branch": "slice/housekeeping-audit-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-housekeeping-audit-s4",
+      "pr": 148
+    },
+    {
+      "slice": "S5 First piloted run offers the audit once",
+      "state": "integrated",
+      "after": "S1 Audit runs a loops pass and posts a ranked, evidenced list",
+      "delivers": [
+        "3",
+        "4"
+      ],
+      "branch": "slice/housekeeping-audit-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-housekeeping-audit-s5",
+      "pr": 146
+    },
+    {
+      "slice": "S6 A picked row starts its own run",
+      "state": "integrated",
+      "after": "S5 First piloted run offers the audit once",
+      "delivers": [
+        "14"
+      ],
+      "branch": "slice/housekeeping-audit-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-housekeeping-audit-s6",
+      "pr": 149
+    },
+    {
+      "slice": "S7 The open area",
+      "state": "integrated",
+      "after": "S1 Audit runs a loops pass and posts a ranked, evidenced list",
+      "delivers": [
+        "15"
+      ],
+      "branch": "slice/housekeeping-audit-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-housekeeping-audit-s7",
+      "pr": 147
+    },
+    {
+      "slice": "feature housekeeping-audit",
+      "state": "ready: PR #142 ready for review, Gate 2 signed 2026-09-27T05:51:27Z; the merge is the user's",
+      "branch": "feat/housekeeping-audit",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-housekeeping-audit",
+      "pr": 142
+    }
+  ],
+  "findings": [
+    "kept: P1 guardedRead takes root only, bound once in repoRows (guard can be dropped silently today)",
+    "kept: P2 delete the wildcard segment cap, the token cap always decides",
+    "kept: P3 delete formatContext and detailOf, the CLI always prints JSON",
+    "kept: P4 loops.md installs again before setup does; delete its install step",
+    "kept: P5 Row shape restated in four area files; delete restatements and their pins",
+    "kept: P6 five copies of area-file test helpers into scripts/test/lib/area-file.mjs",
+    "kept: P7 per-file frontmatter asserts duplicate audit-agent.test.mjs's loop",
+    "kept: P8-P11 missing assertions on report refusals, report file columns, count-then-due order, parser edges",
+    "kept: P12 import split/listOf from measure-prompt.mjs instead of a byte-identical copy",
+    "kept: P13 drop crew count words where six and seven disagree",
+    "kept: P14 record unreadable, skipped and matchCount null in S4's interface and context.md",
+    "kept: P15 pilot audit offered takes no word; the answer was stored and never read",
+    "kept: nits N2 N3 N6 N7 N8, removals of a line or two each",
+    "dropped: N1 derive the weights text: no consequence",
+    "dropped: N4 rename specFor: churn across S6's tests for a name clash nobody imports together",
+    "dropped: N5 use pilot instead of the node path in the audit skill: the explicit path works where pilot is not on PATH"
+  ],
+  "next": "Run finished. Closing report itm_9843a7e03472. Human steps: merge PR #142, bump the version from 0.7.2, restart the deck, remove the -qa worktree. Worktrees left: feat and -qa.",
+  "finished": "closing report posted",
+  "finishedAt": "2026-09-27T06:12:01.559Z",
+  "updatedAt": "2026-09-27T06:12:01.559Z"
+}

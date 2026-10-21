@@ -1,0 +1,178 @@
+{
+  "slug": "stage-queue-tail",
+  "feature": "Stage queues are arrival order",
+  "ticket": "itm_0e1448c0a24c",
+  "branch": "feat/stage-queue-tail",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-stage-queue-tail",
+  "qa": {
+    "branch": "qa/stage-queue-tail",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-stage-queue-tail-qa",
+    "url": "http://127.0.0.1:56809"
+  },
+  "artefact": "docs/design/stage-queue-tail/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 enterStage: a ticket turning green is the green tail; ADR 0047 amended",
+      "state": "integrated at fd1d3085 (4278 pass)",
+      "branch": "slice/stage-queue-tail-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-stage-queue-tail-s1",
+      "pr": 938
+    },
+    {
+      "slice": "S2 Gate 1 sign-off and reopen join the tail; resume and pivot behind enterStage",
+      "state": "integrated at 753f563b (4285 pass)",
+      "after": [
+        "S1 enterStage: a ticket turning green is the green tail; ADR 0047 amended"
+      ],
+      "branch": "slice/stage-queue-tail-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-stage-queue-tail-s2",
+      "pr": 939
+    },
+    {
+      "slice": "stage-queue-tail",
+      "state": "gate2 posted on #874 at 967da05 (origin/main merged in, 4277 pass); walkthrough itm_e1f3d10f3627 signed",
+      "after": [
+        "S2 Gate 1 sign-off and reopen join the tail; resume and pivot behind enterStage"
+      ],
+      "branch": "feat/stage-queue-tail",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-stage-queue-tail",
+      "pr": 874
+    }
+  ],
+  "findings": [
+    "kept: ADR 0047 amendment rewritten in spec 8's form (Amended 2026-10-19), store-stage.mjs path, gate1/reopen tails, resume head, pivot greenAt order, greenAt field (fundamentalist + QA F1), +1",
+    "kept: stage-queue-tail.test.mjs:188 asserts the yellow queue and relative order, not the exact splice slot, per S2's rewrite check, +1",
+    "kept: stage-queue-tail.test.mjs:83 redundant includes() assertion removed, -1",
+    "kept: :49/:61 use the gate2On helper, 0",
+    "kept: store-stage.mjs docstring drops 'Pure' (it reads the clock), 0",
+    "kept: a resumed-ticket-at-yellow-head pin; mutant place==='head'->false survived every test run (store-stage.mjs:19), +10",
+    "dropped: >= tie mutant at store-stage.mjs:18; needs same-millisecond greenAt stamps, low consequence",
+    "dropped: 3 equivalent mutants (place default '', greenAt !== undefined -> true)",
+    "dropped: place flag -> derived yellow placement; it moves A1/A2 spec 10 handling of unstamped pivots, the user's call",
+    "dropped: QA F2 co-pilot-switch-lock.test.mjs:97 up->down; an action line, intent kept, consequence of A2; noted in S2.md and for the PR body",
+    "dropped: QA F3 two unstamped (pre-ship) pivots in a row land in reverse pivot order; transitional, dies with pre-ship greens, a fix needs a new marker field (A2 forbids backfill)"
+  ],
+  "next": "gate2 open on #874 at 967da05: on Sign off the deck lands it; spawn a pilot-lander with the gate2 id when the lander slot frees (short-path, notifications-seen, held-handoff tail ahead). Worktrees: feat, s1, s2, qa, fixture dirs qa-fixture-stage-queue and qa-fixture-other-repo.",
+  "updatedAt": "2026-10-20T14:21:59.584Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "a heredoc write of architecture.md failed in Git Bash on backticks and quotes in a table; the Write tool worked",
+      "evidence": "architect report, stage-queue-tail",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck_post refused a question for a missing Research: line (ADR 0119); neither the architect prompt nor the relay names it",
+      "evidence": "architect report, stage-queue-tail; the same refusal hit the pilot on itm_ded14649c858",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the Write tool leaves CRLF endings, so git warns on each commit",
+      "evidence": "architect report, stage-queue-tail",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "store-core.mjs also sits at the 800-line facades bar; the slice file named only store-items.mjs, costing one failed full gate and a compressed enterStage",
+      "evidence": "S1 report, PR #938, facades.test.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot deck --scratch runs the installed code, so it cannot show a branch's change; the slice's Evidence line assumes it can (worked around by writing deck.json via PILOT_DECK_DIR)",
+      "evidence": "S1 report, PR #938",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2.md line anchors and enterStage's location had drifted after S1's merge",
+      "evidence": "S2 report, PR #939, fact sheet found enterStage at store-core.mjs:767",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a gate1 posted with postStored is refused at resolve as not signed; needs postItem with evidence fields and takeLive",
+      "evidence": "S2 report, PR #939, one wasted RED run",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a new deck module needs a deck/README.md row and an existing test outside the named suites (co-pilot-switch-lock) broke; both surface only in the 4-minute full gate",
+      "evidence": "S2 report, PR #939, two npm test runs",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 test 5 (unstamped pivot before never-greens) disagrees with the slice's rewrite check (the rest in arrival order)",
+      "evidence": "S2.md Tests 5 vs Rewrite check",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "its Haiku evidence runner went into background work and returned no table before the enforced handback; the report misrouted to main and arrived relayed",
+      "evidence": "fundamentalist report on #874; main's relay of runner a4a1c542e508f1034",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "the fund worktree had no node_modules, so diff coverage never ran",
+      "evidence": "runner report relayed by main",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "Git Bash rewrites /mnt/c/... arguments passed to wsl; rerun through PowerShell",
+      "evidence": "QA report, #874, first WSL run failed",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot deck --help prints the live deck's URL instead of usage; pilot tickets --open takes no repo argument",
+      "evidence": "QA report, #874",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "store refuses fixture flows (gate2 needs a live ticket; gate1 refuses while an unticketed question is open); two seed reruns",
+      "evidence": "QA report, #874",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA's run was ended by the enforced handback while it waited for the fix-round tip",
+      "evidence": "QA report, #874",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck_post refuses pr on a walkthrough item; first post rejected",
+      "evidence": "QA report, walkthrough itm_e1f3d10f3627",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 7's evidence ('no existing store test changes') conflicts with A1/A2's head pivot; F2 needed a ruling",
+      "evidence": "QA comment on #874, co-pilot-switch-lock.test.mjs:97",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "a third evidence-runner report misrouted to main and was relayed by hand; its fund worktree had no node_modules so diff coverage never ran",
+      "size": 6
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "QA comment edit (gh api PATCH) and pilot integrate --default refused by auto mode; the pilot runs integrate and the gate2 carries the completion block",
+      "evidence": "stage-queue-tail QA hand-back 14:14Z",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "a scratch deck page needs deck-open.html opened first to set the secret; tickets --open reads the current run only, so a fixture repo cannot be shown from outside",
+      "evidence": "stage-queue-tail QA rebuild",
+      "size": 1
+    }
+  ]
+}

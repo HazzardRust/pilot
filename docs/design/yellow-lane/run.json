@@ -1,0 +1,213 @@
+{
+  "slug": "yellow-lane",
+  "feature": "Pilot state on the threads page",
+  "ticket": "itm_c310da07c9c6",
+  "branch": "feat/yellow-lane",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-yellow-lane",
+  "artefact": "docs/design/yellow-lane/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/yellow-lane-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s1",
+      "pr": 639
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/yellow-lane-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s2",
+      "pr": 642
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "branch": "slice/yellow-lane-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s3",
+      "pr": 641
+    },
+    {
+      "slice": "S4",
+      "state": "integrated",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/yellow-lane-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s4",
+      "pr": 645
+    },
+    {
+      "slice": "S5",
+      "state": "integrated",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/yellow-lane-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s5",
+      "pr": 643
+    },
+    {
+      "slice": "S6",
+      "state": "integrated",
+      "branch": "slice/yellow-lane-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s6",
+      "pr": 651
+    },
+    {
+      "slice": "S7",
+      "state": "integrated",
+      "after": [
+        "S4",
+        "S5"
+      ],
+      "branch": "slice/yellow-lane-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s7",
+      "pr": 648
+    },
+    {
+      "slice": "S8",
+      "state": "integrated",
+      "after": [
+        "S2",
+        "S7"
+      ],
+      "branch": "slice/yellow-lane-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s8",
+      "pr": 649
+    },
+    {
+      "slice": "S9",
+      "state": "integrated",
+      "after": [
+        "S7"
+      ],
+      "branch": "slice/yellow-lane-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s9",
+      "pr": 650
+    },
+    {
+      "slice": "S10",
+      "state": "integrated",
+      "after": [
+        "S2",
+        "S7"
+      ],
+      "branch": "slice/yellow-lane-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s10",
+      "pr": 652
+    },
+    {
+      "slice": "S11",
+      "state": "integrated",
+      "after": [
+        "S10"
+      ],
+      "branch": "slice/yellow-lane-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s11",
+      "pr": 654
+    },
+    {
+      "slice": "S12",
+      "state": "integrated",
+      "branch": "slice/yellow-lane-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s12",
+      "pr": 647
+    },
+    {
+      "slice": "S13",
+      "state": "integrated",
+      "branch": "slice/yellow-lane-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s13",
+      "pr": 640
+    },
+    {
+      "slice": "S14",
+      "state": "integrated",
+      "branch": "slice/yellow-lane-s14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s14",
+      "pr": 646
+    },
+    {
+      "slice": "S15",
+      "state": "integrated",
+      "after": [
+        "S2",
+        "S4",
+        "S5",
+        "S8",
+        "S9",
+        "S11"
+      ],
+      "branch": "slice/yellow-lane-s15",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s15",
+      "pr": 655
+    },
+    {
+      "slice": "S16",
+      "state": "integrated",
+      "after": [
+        "S15"
+      ],
+      "branch": "slice/yellow-lane-s16",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s16",
+      "pr": 656
+    },
+    {
+      "slice": "S17",
+      "state": "integrated",
+      "after": [
+        "S13",
+        "S14"
+      ],
+      "branch": "slice/yellow-lane-s17",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-s17",
+      "pr": 653
+    },
+    {
+      "slice": "yellow-lane",
+      "state": "fix round: principles findings kept, QA read-only at e8508008",
+      "after": [
+        "S17"
+      ],
+      "branch": "feat/yellow-lane",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-yellow-lane",
+      "pr": 632
+    },
+    {
+      "slice": "fix",
+      "state": "integrated",
+      "after": [
+        "S17"
+      ],
+      "branch": "fix/yellow-lane-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-lane-fix",
+      "pr": 658
+    }
+  ],
+  "findings": [
+    "kept: F1 work count served as `work` on /api/record?repo= from deck/work.mjs, the guard's per-call deck_read deleted (subsumes held S12 deck_read throttle; seam in S12.md) - #658",
+    "kept: F2 third Sign-off check, removed by F1 - #658",
+    "kept: F3 delete the untested `moved` guard in nextRecord - #658",
+    "kept: F4 friction size/null-row and owed trim/120-char pins; redundant typeof deleted - #658",
+    "kept: N1 drop `dropped` threading; reply says friction keeps the newest 40 - #658",
+    "kept: N2 delete the proposal:false refusal (held S4 proposal flag otherwise holds) - #658",
+    "kept: N4 shared gate2Refusal naming 'press Assume the default first' (held S3 blocking count otherwise holds) - #658",
+    "kept: SEC-M friction last in RECORD_ORDER - #658",
+    "kept: QA-1 owed block names promised lines as the pilot's own reply - #658",
+    "kept: S15.md:31 check-slices shape - #658",
+    "kept: ADR 0145:19 stale 'read from the deck the guard already reads' after F1 - QA writes it",
+    "dropped: N3 bare owed notice; S8 test 1 and spec 9's evidence were signed at Gate 1, silent when nothing is owed",
+    "dropped: N5 lanes.mjs ternaries; no fix touches lanes.mjs",
+    "dropped: N6 blocked-shape typeof; taste",
+    "dropped: SEC-L friction dedupe; append-only is A6 by design",
+    "dropped: SEC-L control/bidi chars in record cells; a whole-record residual, fenced as saved state",
+    "dropped: QA-2 live red card amber tint; CSS out of scope (§7)",
+    "dropped: fix-round pushback, proposal schema const true; false is the absent flag, no caller needs to send it"
+  ],
+  "next": "co-pilot: integrating fix #658; then pilot land, send QA the tip (plus ADR 0145:19 line) to post the walkthrough",
+  "updatedAt": "2026-10-14T11:28:25.545Z"
+}

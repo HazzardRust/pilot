@@ -1,0 +1,56 @@
+{
+  "slug": "handoff-closed-on-pickup",
+  "feature": "A signed gate stays signed",
+  "ticket": "itm_f481a236668b",
+  "branch": "feat/handoff-closed-on-pickup",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-closed-on-pickup",
+  "artefact": "docs/design/handoff-closed-on-pickup/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A picked-up hand-off holds its session's turn until resolved",
+      "state": "integrated",
+      "branch": "slice/handoff-closed-on-pickup-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-handoff-closed-on-pickup-s1",
+      "pr": 513
+    },
+    {
+      "slice": "S2 pilot.md: the pick-up resolve, No grilling, the proposal item",
+      "state": "integrated",
+      "branch": "slice/handoff-closed-on-pickup-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-handoff-closed-on-pickup-s2",
+      "pr": 512
+    },
+    {
+      "slice": "S3 ticket-making: the proposal is its own question, its id the ticket's thread",
+      "state": "integrated",
+      "branch": "slice/handoff-closed-on-pickup-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-handoff-closed-on-pickup-s3",
+      "pr": 514
+    },
+    {
+      "slice": "The pilot closes the hand-off on pick-up",
+      "state": "fixing; QA read-only, waiting for the fix tip",
+      "after": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "branch": "feat/handoff-closed-on-pickup",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-closed-on-pickup",
+      "pr": 496
+    }
+  ],
+  "findings": [
+    "kept: F1 (with QA F1) the hold counts only once the pick-up is judged; gate-side guard, L5 stands",
+    "kept: F2 confirm a held id missing from the open page with deck_read {id} before dropping",
+    "kept: F3 a second open item in the resolved test",
+    "kept: nits: heldReason export, held = null, !isClosed on the open page, unread at, read-side id check (removals); log in holdHandoff catch; deck_reply assertion",
+    "kept: architecture section 8 ADR path 0113 to 0115",
+    "dropped: F4 security 'every run' vs No grilling: L10 locks step 3 skipped whole; pilot.md has 3 tokens left",
+    "dropped: poster test nit and QA awaitsUser poster probe: pre-existing, unreachable via pilot handoff",
+    "dropped: scratchHome duplicate (tests only) and run CCN (L8 places the branch)",
+    "dropped: spec 4 restatement in pilot.md: the user's spec line"
+  ],
+  "next": "Co-pilot: fix round on fix/handoff-closed-on-pickup from f4ee746b; on PR, pilot integrate, then send QA the tip.",
+  "updatedAt": "2026-10-10T04:38:05.579Z"
+}

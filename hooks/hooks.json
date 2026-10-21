@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/context-usage-alert.js\"",
+            "timeout": 5
+          }
+        ],
+        "description": "A plan usage limit already crossed before this session's first tool call",
+        "id": "start:any:context-usage-alert"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/install-settings.mjs\" --repair",
+            "timeout": 5
+          }
+        ],
+        "description": "Repoint this package's status line and subagent status line at the current plugin root after a version bump; silent unless something changed",
+        "id": "start:any:statusline-repair"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/install-rules.mjs\" --repair",
+            "timeout": 5
+          }
+        ],
+        "description": "Bring ~/.claude/rules up to this version after an upgrade, by the shipped-rules ledger (ADR 0079); an edited rule is left and named once; silent unless something changed",
+        "id": "start:any:rules-repair"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/session-handoff.js\"",
+            "timeout": 5
+          }
+        ],
+        "description": "Hand a fresh session the open handoff item left on the deck for this directory, once, so a pilot that ran out of context resumes on /clear with nothing pasted; silent when there is none",
+        "id": "start:any:session-handoff"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^mcp__plugin_pilot_deck__deck_(post|reply|resolve|read|wait|ticket|status)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/deck-author.js\"",
+            "timeout": 5
+          }
+        ],
+        "description": "Stamp who wrote a deck message from the hook payload's agent_type, overwriting any author the agent gave (spec 2 of run-record, ADR 0027)",
+        "id": "pre:deck-write:deck-author"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/post-tool.js\"",
+            "timeout": 5
+          }
+        ],
+        "description": "One process after every tool call: a reply waiting on the deck, and a plan usage limit about to be spent",
+        "id": "post:any:post-tool"
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/permission-refuse.js\"",
+            "timeout": 5
+          }
+        ],
+        "description": "Refuse a permission prompt raised by this plugin's own crew agents (L17), and the pilot session's while a run is live in its directory (gate-no-stall L10), with the blocked-step instruction, and post every refusal to the deck as a blocked item; other sessions' and other agents' prompts are left to the user",
+        "id": "permission:any:crew-refuse"
+      }
+    ],
+    "PermissionDenied": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/permission-denied.js\"",
+            "timeout": 5
+          }
+        ],
+        "description": "Post a call auto mode denied to the pilot or its crew during a live run as one blocking question on the live ticket, once per session and command, so a blocked step reaches the deck within the hook turn; never answers retry",
+        "id": "denied:any:blocked-item"
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-gate.js\"",
+            "timeout": 600
+          }
+        ],
+        "description": "Refuse to let the pilot go idle on the deck: hold the turn open while its own question is unanswered, and block on an answer it has not read",
+        "id": "stop:any:deck-inbox-gate"
+      }
+    ]
+  }
+}

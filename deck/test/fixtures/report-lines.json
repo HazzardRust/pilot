@@ -1,0 +1,27 @@
+{
+  "synthetic": "Written from the shapes report-record §2 line 4 and §3 describe, not copied from the store: reading the live deck into a tracked file was a blocked step (A5).",
+  "replyHere": [
+    "I reply here with what is kept.",
+    "**Worktrees:** `pilot-feat-demo` stays while #12 is open; I reply here with what is kept once it merges.",
+    "Once #34 merges, `pilot worktrees prune` runs and I reply here with what it kept.",
+    "Worktrees: QA's goes now; I reply here with what is kept after the prune."
+  ],
+  "questionMarks": [
+    "The route `/api/items?repo=<dir>` answers the list; see https://example.test/deck?run=1 for the page.",
+    "| `/?notice=<text>` draws the text | escaped |",
+    "The parser's pattern `^(\\w+)?:` matches an optional prefix.",
+    "Kept: the matcher drops its lazy .*? so a long line cannot stall it.",
+    "`count ?? 0` stays, documented in the module.",
+    "Assumed: a ticket with no count prints nothing, rather than \"(? steps)\".",
+    "The architect posts its \"Fold this into the ticket?\" thread first.",
+    "The old page was titled \"Is it ready?\"",
+    "The confirm prompt reads `Proceed?`"
+  ],
+  "asks": [
+    "Decide whether the flaky port becomes a ticket (say so on the chat).",
+    "This fits your open landing ticket; say so there and it is added.",
+    "Tell me which to keep",
+    "If the prune keeps two, let me know before I remove one.",
+    "Should the scratch deck stay up for the walkthrough?"
+  ]
+}

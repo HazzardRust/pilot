@@ -1,0 +1,228 @@
+{
+  "slug": "overview-one-ticket",
+  "feature": "Estimates are slice counts",
+  "ticket": "itm_70e85babf58c",
+  "branch": "feat/overview-one-ticket",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-overview-one-ticket",
+  "qa": {
+    "branch": "qa/overview-one-ticket",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-feat-overview-one-ticket-qa",
+    "url": "http://127.0.0.1:4510/"
+  },
+  "artefact": "docs/design/overview-one-ticket/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The overview lists only the ticket in hand's threads",
+      "state": "integrated",
+      "delivers": [
+        "1-8"
+      ],
+      "branch": "slice/overview-one-ticket-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-overview-one-ticket-s1",
+      "pr": 304
+    },
+    {
+      "slice": "S4 deck_ticket need and pivot",
+      "state": "integrated",
+      "delivers": [
+        "15-18"
+      ],
+      "branch": "slice/overview-one-ticket-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-overview-one-ticket-s4",
+      "pr": 302
+    },
+    {
+      "slice": "S2 The tab's colour and the highlight follow the ticket in hand",
+      "state": "integrated",
+      "after": "S1 The overview lists only the ticket in hand's threads",
+      "delivers": [
+        "9-11"
+      ],
+      "branch": "slice/overview-one-ticket-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-overview-one-ticket-s2",
+      "pr": 305
+    },
+    {
+      "slice": "S3 Ticket groups fold, start folded and show their counts",
+      "state": "integrated",
+      "after": "S2 The tab's colour and the highlight follow the ticket in hand",
+      "delivers": [
+        "12-14"
+      ],
+      "branch": "slice/overview-one-ticket-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-overview-one-ticket-s3",
+      "pr": 306
+    },
+    {
+      "slice": "S5 The pilot calls need and pivot",
+      "state": "integrated",
+      "after": "S4 deck_ticket need and pivot",
+      "delivers": [
+        "19",
+        "20"
+      ],
+      "branch": "slice/overview-one-ticket-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-overview-one-ticket-s5",
+      "pr": 303
+    },
+    {
+      "slice": "feature",
+      "state": "ready",
+      "branch": "feat/overview-one-ticket",
+      "pr": 297
+    },
+    {
+      "slice": "Fix round: principles findings and A4, A5",
+      "state": "integrated",
+      "after": "S3 Ticket groups fold, start folded and show their counts",
+      "branch": "fix/overview-one-ticket-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-overview-one-ticket-fix",
+      "pr": 307
+    },
+    {
+      "slice": "S6 Only need ends yellow, and a blocker ends in need",
+      "state": "integrated",
+      "after": "Fix round: principles findings and A4, A5",
+      "delivers": [
+        "21-24"
+      ],
+      "branch": "slice/overview-one-ticket-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-overview-one-ticket-s6",
+      "pr": 308
+    },
+    {
+      "slice": "Merge main (merge-first, #290)",
+      "state": "integrated",
+      "after": "S6 Only need ends yellow, and a blocker ends in need",
+      "branch": "fix/overview-one-ticket-merge-main",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-overview-one-ticket-merge",
+      "pr": 309
+    }
+  ],
+  "findings": [
+    "kept: store.mjs modeFor re-spells the mode rule L6 gives to modeOf; call modeOf",
+    "kept: pilot.md 'Red hands on' has no mode qualifier though spec 20 is autonomous only; prefix it, pin unraised",
+    "kept: three missing tests (mode changes the ticket in hand with none live; open thread on a closed ticket is listed; need then pivot with no gate2)",
+    "kept: A4 chain.mjs drops gate-2-posted from the autonomous chaining finishes (itm_478ca5be81f4)",
+    "kept: A5 a blocking question is never behind (itm_cff266811f2e)",
+    "kept: a need-red parked ticket with no open gate2 no longer reads 'awaiting sign-off'",
+    "dropped: fold isBehind into shownOf: L3/L16 name isBehind as the seam, A5 lands in it, and 12 ms at 4300 items is no cost at this deck's size",
+    "dropped: delete modeIn: L6 locks 'modeIn calls it'",
+    "dropped: thin bookmarks.mjs storage checks: localStorage is browser state other versions can write; the guard is cheap",
+    "dropped: nits (isBehind's ticket guard, gate2 in NEEDING_KINDS, renderStrip's two arguments, livePhaseOf inline): zero or one line each against pin churn",
+    "dropped: restore 'merge into live' in deck_ticket's description: the pilot's prompt pin has no headroom; pilot.md and ticket-making say it"
+  ],
+  "report": {
+    "featurePr": {
+      "number": 297,
+      "state": "ready"
+    },
+    "slices": [
+      {
+        "slice": "S4 deck_ticket need and pivot",
+        "pr": 302,
+        "mergeSha": "15b6744"
+      },
+      {
+        "slice": "S5 The pilot calls need and pivot",
+        "pr": 303,
+        "mergeSha": "4343561"
+      },
+      {
+        "slice": "S1 The overview lists only the ticket in hand's threads",
+        "pr": 304,
+        "mergeSha": "0623014"
+      },
+      {
+        "slice": "S2 The tab's colour and the highlight follow the ticket in hand",
+        "pr": 305,
+        "mergeSha": "3461338"
+      },
+      {
+        "slice": "S3 Ticket groups fold, start folded and show their counts",
+        "pr": 306,
+        "mergeSha": "45b2621"
+      },
+      {
+        "slice": "Fix round: principles findings and A4, A5",
+        "pr": 307,
+        "mergeSha": "c302ad4"
+      },
+      {
+        "slice": "S6 Only need ends yellow, and a blocker ends in need",
+        "pr": 308,
+        "mergeSha": "26b21e5"
+      }
+    ],
+    "assumed": [
+      {
+        "id": "A2",
+        "decision": "Folds against auto-open and scroll to red",
+        "taken": "Both go; groups fold"
+      },
+      {
+        "id": "A3",
+        "decision": "Which threads belong to a ticket",
+        "taken": "Those whose ticket names it"
+      },
+      {
+        "id": "A4",
+        "decision": "Who starts the next ticket after gate 2",
+        "taken": "Replaced by S6: needed chains nothing"
+      },
+      {
+        "id": "A5",
+        "decision": "A blocking question is never behind",
+        "taken": "Reverted by S6 on the user's word"
+      },
+      {
+        "id": "A6",
+        "decision": "In-hand group starts open",
+        "taken": "Answered by the user: open"
+      }
+    ],
+    "friction": [
+      {
+        "agent": "pilot",
+        "what": "deck_read open:true overflows the tool result",
+        "evidence": "136,240 characters on the first call"
+      },
+      {
+        "agent": "pilot",
+        "what": "run record names no live agent ids",
+        "evidence": "S6 implementer found by transcript mtime"
+      },
+      {
+        "agent": "implementer",
+        "what": "brief dropped on resume across /clear",
+        "evidence": "S6 report"
+      },
+      {
+        "agent": "qa",
+        "what": "PR write denied by the permission classifier",
+        "evidence": "itm_dbc3aa53607f"
+      },
+      {
+        "agent": "qa",
+        "what": "reseed.sh printed reseeded after every step failed",
+        "evidence": "MODULE_NOT_FOUND under MSYS_NO_PATHCONV=1"
+      },
+      {
+        "agent": "qa",
+        "what": "a signed walkthrough cannot be corrected",
+        "evidence": "stale twice: d444564, S6"
+      }
+    ],
+    "humanSteps": [
+      "Merge PR #297",
+      "Rebase #289 or #290 after the first of them merges",
+      "Install the release",
+      "Answer chat itm_0bfcf27836de"
+    ],
+    "worktreesLeft": [
+      "C:/Users/Hazzard/Projects/pilot-feat-overview-one-ticket"
+    ]
+  },
+  "next": "Merge of main (PR 309, d968d57) integrating into feat. Then confirm PR 297 MERGEABLE, tell the user on chat itm_0bfcf27836de and note on report itm_cce7d42713bc; remove worktree pilot-overview-one-ticket-merge and its branch. The merge of 297 is the user's.",
+  "updatedAt": "2026-10-04T08:17:11.050Z"
+}

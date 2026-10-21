@@ -1,0 +1,2 @@
+{"type":"user","agentId":"b5","timestamp":"2026-01-03T09:05:00.000Z","message":{"role":"user","content":"Find the reader."}}
+{"type":"assistant","agentId":"b5","timestamp":"2026-01-03T09:05:30.000Z","message":{"id":"msg_d5","model":"claude-opus-5-5","role":"assistant","content":[{"type":"tool_use","id":"toolu_d5","name":"Read","input":{}}],"usage":{"input_tokens":50,"cache_creation_input_tokens":500,"cache_read_input_tokens":5000,"output_tokens":5}}}

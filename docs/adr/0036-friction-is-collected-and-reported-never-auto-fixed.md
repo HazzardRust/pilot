@@ -1,0 +1,13 @@
+---
+status: amended
+date: 2026-09-25
+tags: [workflow]
+supersedes: []
+superseded_by: [0040]
+paths: [deck/test/usage.test.mjs]
+---
+# Friction against agents is collected during a run and reported, never auto-fixed
+
+Agent efficiency in the repository a run is working on is part of this product's philosophy, not a side concern: a fresh worktree with no `node_modules` yet, so a merge gate shows ten false failures before anyone has run `npm ci`; a flaky clock-dependent test such as `deck/test/usage.test.mjs:656`'s "in 2 hrs" versus "in 1 hr"; a repo with no typecheck or lint script, so the gate command has to be inferred from `package.json` every time; and a path-scoped rule such as `react/` matching `**/hooks/**/*.js` and loading about 8k tokens of React rules into a repo that has no React — are all costs a repository imposes on every agent that touches it, quietly, run after run, with nobody keeping a ledger. We decided every crew report — `pilot-architect`, `pilot-implementer`, `pilot-qa`, `pilot-fundamentalist` and `pilot-explorer`, the teacher excepted because it is not a crew reporter — carries a short **friction** section naming what in the target repo cost it time or tokens, with evidence, that the pilot collects those rows as they arrive across the whole run rather than only at the end, and that the closing report's last section ranks them into "make agents cheaper here": a concrete fix per row (restructure code, add a script, fix a tool or config) with its evidence, for the user to pick from. We decided nothing there is applied automatically and there is no separate audit pass: an agent mid-slice is the wrong one to go refactor the repository's own tooling on its own judgement, and a standing audit pass would be paid for on every run whether or not the user wants it. The scope is the target repo and its external tools; it is never the pilot's own agents, skills or rules (that is the separate context-budget problem, with its own tool), and it is never the user's personal end-of-session review of the run itself, which the user ruled out of the plugin by name. A per-slice friction fix was rejected as scope the slice was never asked to carry; letting an agent apply its own fix was rejected because a repository's build tooling is exactly the kind of decision only the person who owns the repository should make, and silently at that.
+
+**Consequences**: a run against an unfamiliar or badly-tooled repository now leaves a paper trail of what made it slow, ranked for the user rather than buried in five separate reports, and every crew definition pays a small, fixed prompt cost for the row whether or not this run ever hits friction worth naming.

@@ -1,0 +1,213 @@
+{
+  "slug": "implementer-gate-steps",
+  "feature": "Prose trades grammar for concision",
+  "ticket": "itm_d8205b698078",
+  "branch": "feat/implementer-gate-steps",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-implementer-gate-steps",
+  "artefact": "docs/design/implementer-gate-steps/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated at 41fce489 (3934 pass)",
+      "branch": "slice/implementer-gate-steps-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-implementer-gate-steps-s1",
+      "pr": 812
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at d3e4acb0 (3940 pass)",
+      "branch": "slice/implementer-gate-steps-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-implementer-gate-steps-s2",
+      "pr": 808
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at 360ea5c3 (3945 pass)",
+      "branch": "slice/implementer-gate-steps-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-implementer-gate-steps-s3",
+      "pr": 810
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at 806eb1c3 (3943 pass)",
+      "branch": "slice/implementer-gate-steps-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-implementer-gate-steps-s4",
+      "pr": 809
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at c03dded8 (3948 pass)",
+      "branch": "slice/implementer-gate-steps-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-implementer-gate-steps-s5",
+      "pr": 814
+    },
+    {
+      "slice": "S6",
+      "state": "integrated at cfaf9b98 (3953 pass)",
+      "branch": "slice/implementer-gate-steps-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-implementer-gate-steps-s6",
+      "pr": 813
+    },
+    {
+      "slice": "implementer-gate-steps",
+      "state": "Gate 2 signed (itm_9e6e6cd5bb4d); landing conflict resolved in pilot-land-implementer-gate-steps, pilot land running from the feat worktree",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7"
+      ],
+      "branch": "feat/implementer-gate-steps",
+      "pr": 774
+    },
+    {
+      "slice": "S7",
+      "state": "integrated at 730fe5df (3930 pass)",
+      "branch": "slice/implementer-gate-steps-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-implementer-gate-steps-s7",
+      "pr": 811
+    }
+  ],
+  "findings": [
+    "kept: F1 vocabulary.mjs:27 exempts the whole run dir; narrow to run.json (only it has hits)",
+    "dropped: F2 delete direct conflictPaths tests; they are spec 4's named evidence",
+    "kept: F3 assert pinsOf(REPO) names pilot, pilot-explorer, pilot-qa; a reworded pin prints – silently",
+    "kept: F4 S1.md Rewrite check line says pins are read from test text",
+    "kept: F5 S7.md fails check-slices; add Rewrite check line and retiredHits Interface row",
+    "kept: N1 qa-preview.test.mjs:36 imports flat from lib/area-file.mjs",
+    "dropped: N2 yellow-co-pilot field->fieldOf; undefined vs '' is a behaviour change for -1",
+    "dropped: N3 frontmatter-crlf scan; spec 10's evidence",
+    "dropped: N4 land.mjs 'ends' wording; spec text, no runtime consequence",
+    "dropped: N5 frontLength helper; an addition at no consequence",
+    "kept: QA1 three-lanes-wording.test.mjs:67 LF-only frontmatter regex contradicts spec 10; read via frontmatterOf",
+    "dropped: QA2 pilot-qa.md:96 rewrap; cosmetic on a zero-headroom pinned file",
+    "dropped: C1 adr hint fires on the failed path only; A3 accepts",
+    "dropped: C2 pins as data; moves L3, assumed default keeps L3",
+    "dropped: C3 one exemption for every run.json; prefix matcher, a glob is new code beyond the spec"
+  ],
+  "next": "read pilot land's result (origin/pilot; the gate2 thread gets the line only if the deck ran it): landed -> reply the line on itm_9e6e6cd5bb4d, resolve it, closing report (merge first #754, then #783 once signed; QA comment 6244055118), finished; red on daemon-lifecycle.test.mjs:110 -> run pilot land again",
+  "updatedAt": "2026-10-18T05:15:45.656Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "deck_post failed on EPERM renaming deck.json.tmp (second time this session) and was retried",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "The ADR-index conflict looked unsolved but is already auto-resolved in scripted merges; finding the stops left took 6 probes",
+      "evidence": "merge-generated.mjs:1-18; land-generated.test.mjs:144",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "A bash heredoc write of architecture.md failed on Windows (the F1 lesson itself); rewritten with Write",
+      "evidence": "unexpected EOF looking for matching quote",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "The audit's F5 file list was stale: task-making and yellow-foreman tests have been renamed",
+      "evidence": "now ticket-making.test.mjs and yellow-co-pilot.test.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "An exact stop-line regex pins conflictPaths output, so S4 must also own land-generated.test.mjs",
+      "evidence": "scripts/test/land-generated.test.mjs:144",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "The gate1 refused a design branch not on pilot's tip; the rebase + force-push the rule wants is denied by the auto-mode classifier (Git Destructive), so origin/pilot was merged in instead (34f45f95) and the deck accepted it. Same stand-in used for gate2-frees-lane earlier",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "The integration base already fails the full suite (run.json friction quotes retired words), so every parallel slice must show the failure is not theirs",
+      "evidence": "vocabulary-guard.test.mjs flags docs/design/implementer-gate-steps/run.json:70 from 0834923b; pilot integrate tested before committing run.json",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md carries the planning session's Claude-Session line; a slice that copies it verbatim gets the wrong trailer",
+      "evidence": "brief.md session_01R7ez vs co-pilot brief session_01HBzx",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4: base tip fails the suite on run.json:70; ~5 min to show it was not S4's",
+      "evidence": "vocabulary-guard on run.json:70 from 0834923b",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3: base tip fails the suite; the slice Interface's QA_PIN constant would hide the pin from S1's own <= <n> regex, so the literal was kept",
+      "evidence": "vocabulary-guard run.json:70; qa-preview.test.mjs own <= 4899.25",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S7: npm test failed at once in a fresh worktree until npm ci ran",
+      "evidence": "node_modules missing: run npm ci",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test takes about 300 s, and a `&` background job inside a background Bash call reported completed at once, so the log had to be polled",
+      "evidence": "S6 resume report, PR #813",
+      "size": 300
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Monitor unavailable to the implementer and sleep chains blocked; waiting on the background suite needed an until-grep loop",
+      "evidence": "S5 resume report, PR #814",
+      "size": 300
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a co-pilot from an earlier session died mid pilot integrate S7, leaving MERGE_HEAD in the feat worktree and the record saying S7 integrated; undone with git reset --merge to 0834923b and rerun",
+      "evidence": "feat worktree MERGE_HEAD a638f22b; integrated at 730fe5df",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot ready --ticket itm_d8205b698078 --slots 3 refused by the auto-mode classifier (Unrequested Commit in a Connected App)",
+      "evidence": "refused call, this session",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "diff mutation not run: Stryker sandbox has no .git, so line-endings.test.mjs (git ls-files --eol) fails the dry run; knip unscoped output cut off",
+      "evidence": "principles report, evidence runner table",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA's own probe written via heredoc lost backslashes, spec 1's exact failure; rewritten with Write",
+      "evidence": "QA read-only report at cfaf9b98",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate refused S1, S3, S5, S6 PR titles whose first letter after S<n> is upper-case; retitled with gh pr edit and rerun",
+      "evidence": "NOT integrated ... does not match feat(implementer-gate-steps): S<n> <title, first letter lower-case>",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "check-slices matches Interface symbols by exact text, so a generic retiredHits(text, file) row failed; one extra edit and run",
+      "evidence": "fix round report, 335c718b",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot wait --as qa exited 1 printing only 'listening on <repo>' and no message when its item changed state underneath it; indistinguishable from a crash, so the fix-round signal never reached QA through it",
+      "evidence": "task b2dq9iw00, walkthrough itm_8d14addb0e28",
+      "size": 1
+    }
+  ]
+}

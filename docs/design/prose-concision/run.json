@@ -1,0 +1,118 @@
+{
+  "slug": "prose-concision",
+  "feature": "User-facing prose concision",
+  "ticket": "itm_fd48aa7c2506",
+  "branch": "feat/prose-concision",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-prose-concision",
+  "artefact": "docs/design/prose-concision/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Every user-facing voice trades grammatical accuracy for conciseness",
+      "state": "integrated at 2140d580 (PR #872 merged)",
+      "branch": "slice/prose-concision-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-prose-concision-s1",
+      "pr": 872
+    },
+    {
+      "slice": "prose-concision",
+      "state": "integrated: fix round PR #873 (F1, F2, N1, N2; both reviewers APPROVE, gate 4179 pass)",
+      "after": [
+        "S1 Every user-facing voice trades grammatical accuracy for conciseness"
+      ],
+      "branch": "feat/prose-concision",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-prose-concision",
+      "pr": 835
+    }
+  ],
+  "findings": [
+    "kept: F1 'a Gate 1 walk' -> 'a gap against Gate 1' in qa, explorer, auditor, teacher",
+    "kept: F2 crew-voice pin requires 'short' for definitions outside USER_FACING",
+    "kept: N1 crew-voice header reword",
+    "kept: N2 rewrap the new sentence in six agent files",
+    "dropped: N3 misplaced architect history line predates the feature"
+  ],
+  "next": "pilot integrate fix/prose-concision-principles in the feat worktree; tip to main for pilot land; then resume QA ae0e03749d226a338 with the tip",
+  "updatedAt": "2026-10-18T23:48:58.366Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "the stop hook forced a planning take (prose-concision) 20k tokens before the hand-off threshold, so the fresh session re-reads the architect's first report from the deck",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "ADR numbers collide across parallel runs; 0159 sits on design/deck-token, not origin/pilot",
+      "evidence": "commit 8f0bd783 renumbered an ADR at a base merge",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the pilot pin's history comment is over 60 lines and two other tests read it back",
+      "evidence": "scripts/test/measure-prompt.test.mjs:104-168; landing-wording.test.mjs:47; report-record-wording.test.mjs:40",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "measuring budget headroom needs npm ci first in a fresh worktree",
+      "evidence": "node scripts/measure-prompt.mjs fails without node_modules",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot handoff said pilot run would type /clear, twice, and it never came; the session ran 60 min past its hand-off at 260k+ tokens; user: 'Handoff failed' on both items",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "deck_resolve refused twice with EPERM renaming deck.json.6224.tmp (6 MB deck.json held by a reader); third try passed",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "a git worktree add run with -C put the tree inside the repo; one worktree move",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief and slice file named pins (11496.5, 4844.75) the base had already moved; architect gained a pin",
+      "evidence": "pins at 9a02229a are 11400 and 4945; one extra measure",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Python heredoc replace failed twice on one assert line before switching to Edit",
+      "evidence": "S1 implementer report, PR #872",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner refused npm ci in a fresh worktree, so the gate exited 'node_modules missing' and diff coverage never ran",
+      "evidence": "fundamentalist report on #835, tools table",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "node --test default reporter printed nothing to a pipe; rerun with --test-reporter=tap",
+      "evidence": "fundamentalist report on #835",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "ADR seam 0160 -> 0162 recorded only in S1.md's Seam line, not in architecture.md §2, so spec line 4 read through a note",
+      "evidence": "QA report at f74303fe",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "\\b in node -e / sed one-liners became a backspace char in crew-voice.test.mjs; ~6 calls, fixed via a script file",
+      "evidence": "fix round PR #873 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Monitor unavailable to the implementer; waited on the gate with a bash until-loop",
+      "evidence": "fix round PR #873 report",
+      "size": 1
+    }
+  ]
+}

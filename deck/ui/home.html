@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pilot deck</title>
+    <link rel="icon" href="/ui/favicon.svg" />
+    <style><!--CSS--></style>
+  </head>
+  <body>
+    <!-- The title, fixed in the top-left box over the rail (spec 15, L19). -->
+    <h1><a href="<!--HOME-->">Pilot deck</a></h1>
+    <header>
+      <!--
+        The strip of runs, on its own line under the heading: the deck holds
+        every run on the machine and shows one of them at a time, and this is
+        where it says which. Plain links, so the selection lives in the URL,
+        and the strip is a live region so its counts follow the deck without
+        the selection being carried across anything.
+      -->
+      <!--USAGE-->
+      <!--TABS-->
+    </header>
+    <main data-live="queue">
+      <!--QUEUE-->
+    </main>
+    <!--STRIPS-->
+    <!--
+      The toggle that adds this page's settled threads to the ones waiting on
+      it. It stands at the right edge where the status bookmark used to, and
+      the line of words that used to sit under the heading and lead off the
+      page is gone with it (the walkthrough of 2026-09-19). Outside every live region,
+      like the bookmarks either side: which view this is lives in the address,
+      so nothing about it moves when the deck changes underneath.
+    -->
+    <!--EVERYTHING-->
+    <script type="module" src="/ui/deck.mjs"></script>
+  </body>
+</html>

@@ -1,0 +1,191 @@
+{
+  "slug": "ticket-state-accents",
+  "feature": "Co-pilot self hand-off",
+  "ticket": "itm_f1eb46885542",
+  "branch": "feat/ticket-state-accents",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-ticket-state-accents",
+  "qa": {
+    "branch": "qa/ticket-state-accents",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-ticket-state-accents",
+    "url": "http://127.0.0.1:4387"
+  },
+  "artefact": "docs/design/ticket-state-accents/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The co-pilot's ticket is marked in the Tickets panel",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "2",
+        "21"
+      ],
+      "branch": "slice/ticket-state-accents-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-state-accents-s1",
+      "pr": 431
+    },
+    {
+      "slice": "S2 Cards and thread pages wear their ticket's accent, live",
+      "state": "integrated",
+      "after": "S1 The co-pilot's ticket is marked in the Tickets panel",
+      "delivers": [
+        "3",
+        "4",
+        "8"
+      ],
+      "branch": "slice/ticket-state-accents-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-state-accents-s2",
+      "pr": 433
+    },
+    {
+      "slice": "S3 The tab says no phase",
+      "state": "integrated",
+      "after": "S2 Cards and thread pages wear their ticket's accent, live",
+      "delivers": [
+        "5"
+      ],
+      "branch": "slice/ticket-state-accents-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-state-accents-s3",
+      "pr": 434
+    },
+    {
+      "slice": "S4 Take refuses green while red waits",
+      "state": "integrated",
+      "after": "S1 The co-pilot's ticket is marked in the Tickets panel",
+      "delivers": [
+        "6"
+      ],
+      "branch": "slice/ticket-state-accents-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-state-accents-s4",
+      "pr": 432
+    },
+    {
+      "slice": "S5 Deck states and ADR 0106",
+      "state": "integrated",
+      "after": "S3 The tab says no phase",
+      "delivers": [
+        "10",
+        "16"
+      ],
+      "branch": "slice/ticket-state-accents-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-state-accents-s5",
+      "pr": 435
+    },
+    {
+      "slice": "S6 Continue requests a switch",
+      "state": "integrated",
+      "after": "S5 Deck states and ADR 0106",
+      "delivers": [
+        "11",
+        "12",
+        "15"
+      ],
+      "branch": "slice/ticket-state-accents-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-state-accents-s6",
+      "pr": 436
+    },
+    {
+      "slice": "S7 The pilot hears and completes the switch",
+      "state": "integrated",
+      "after": "S6 Continue requests a switch",
+      "delivers": [
+        "12",
+        "13",
+        "15"
+      ],
+      "branch": "slice/ticket-state-accents-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-state-accents-s7",
+      "pr": 437
+    },
+    {
+      "slice": "S8 The lock while switching",
+      "state": "integrated",
+      "after": "S7 The pilot hears and completes the switch",
+      "delivers": [
+        "14"
+      ],
+      "branch": "slice/ticket-state-accents-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-state-accents-s8",
+      "pr": 438
+    },
+    {
+      "slice": "S9 pilot.md wording",
+      "state": "integrated",
+      "after": "S11 Co-pilot switch completes or cancels",
+      "delivers": [
+        "9"
+      ],
+      "branch": "slice/ticket-state-accents-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-state-accents-s9",
+      "pr": 442
+    },
+    {
+      "slice": "S10 Co-pilot Continue requests a switch",
+      "state": "integrated",
+      "after": "S8 The lock while switching",
+      "delivers": [
+        "17",
+        "20"
+      ],
+      "branch": "slice/ticket-state-accents-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-state-accents-s10",
+      "pr": 439
+    },
+    {
+      "slice": "S11 Co-pilot switch completes or cancels",
+      "state": "integrated",
+      "after": "S10 Co-pilot Continue requests a switch",
+      "delivers": [
+        "18",
+        "20"
+      ],
+      "branch": "slice/ticket-state-accents-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-state-accents-s11",
+      "pr": 440
+    },
+    {
+      "slice": "S12 Co-pilot lock",
+      "state": "integrated",
+      "after": "S11 Co-pilot switch completes or cancels",
+      "delivers": [
+        "19"
+      ],
+      "branch": "slice/ticket-state-accents-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-state-accents-s12",
+      "pr": 441
+    },
+    {
+      "slice": "ticket-state-accents",
+      "state": "in QA: walkthrough itm_de3054766ae1, user re-walks steps 1 and 7-12 on tip 7b29f4af; QA resumed by the successor session",
+      "branch": "feat/ticket-state-accents",
+      "pr": 430
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated (#443, #444)",
+      "after": "S9 pilot.md wording",
+      "branch": "fix/ticket-state-accents-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ticket-state-accents-fix",
+      "pr": 443
+    }
+  ],
+  "findings": [
+    "dropped: F1 pilot.md cuts — the three rules survive at pilot.md:172, :182, :458 and the spec rule at :280",
+    "kept: F2 delete items.yellowHeadOf, inline at render.mjs:1766 (-4)",
+    "kept: F3 split refuseMidSwitch into main/co-pilot guards, drop unreachable throw (-3)",
+    "kept: F4 delete dead co-pilot guard on pivot (-2)",
+    "kept: F5 export switchOf, delete coPilotSwitchOf, rename mainSwitchOf (-4)",
+    "kept: F6 one validation of the switch record (-5)",
+    "kept: F7 no done marker; no switch field on a no-session completion (-1)",
+    "dropped: F8 render row parameter object — the diff (two signatures, every caller and test) outweighs one parameter fewer",
+    "kept: F9 page/rowsOf/aTicket into testUtils (-30)",
+    "kept: F10 openQuestionsOf and one takeIn (-2)",
+    "kept: F11 lane derived from to's state in the store; no hidden field (-6)",
+    "dropped: F12 spec 14 wording — moves a spec line, sent to main",
+    "kept: T1 test for a non-live co-pilot entry (+4)",
+    "kept: QA-F2 refuse co-pilot on any ticket but to mid co-pilot switch",
+    "kept: QA-F3 co-pilot-lane lit button in blue",
+    "kept: QA-F5 ADR 0106 index summary"
+  ],
+  "next": "Red, in hand; never take green over it. Successor session holds it: QA resumed (scratch :4387, worktree pilot-qa-ticket-state-accents) and waits on itm_de3054766ae1 at tip 7b29f4af. Sign off -> gate2 on #430 at the tip QA reports -> land, ready, report. Yellow co-pilot-successor: a fresh co-pilot is live (S2+S4 in parallel from a6c14695, then fundamentalist + QA).",
+  "updatedAt": "2026-10-09T13:01:36.295Z"
+}

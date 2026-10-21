@@ -1,0 +1,412 @@
+{
+  "slug": "audit-f1-f7",
+  "feature": "Audit F1-F7",
+  "ticket": "itm_f323d36f1473",
+  "branch": "feat/audit-f1-f7",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f1-f7",
+  "artefact": "docs/design/audit-f1-f7/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 An agent reads one thread by id",
+      "state": "integrated at bb81ee2b",
+      "branch": "slice/audit-f1-f7-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s1",
+      "pr": 480
+    },
+    {
+      "slice": "S2 A brief read lists the deck in one line per item",
+      "state": "integrated at b092a2ea",
+      "after": [
+        "S1 An agent reads one thread by id"
+      ],
+      "branch": "slice/audit-f1-f7-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s2",
+      "pr": 482
+    },
+    {
+      "slice": "S3 GET /api/items answers JSON",
+      "state": "integrated at 7497bf01",
+      "after": [
+        "S2 A brief read lists the deck in one line per item"
+      ],
+      "branch": "slice/audit-f1-f7-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s3",
+      "pr": 484
+    },
+    {
+      "slice": "S4 npm run test:quiet prints dots and failures",
+      "state": "integrated",
+      "branch": "slice/audit-f1-f7-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s4",
+      "pr": 470
+    },
+    {
+      "slice": "S5 A hung fake fails its test by name",
+      "state": "integrated at 8228ff5c",
+      "after": [
+        "S4 npm run test:quiet prints dots and failures"
+      ],
+      "branch": "slice/audit-f1-f7-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s5",
+      "pr": 479
+    },
+    {
+      "slice": "S6 pilot deck --scratch starts an isolated deck",
+      "state": "integrated at 5be12932",
+      "branch": "slice/audit-f1-f7-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s6",
+      "pr": 481
+    },
+    {
+      "slice": "S7 pilot deck --stop stops only a scratch deck",
+      "state": "integrated at 0a79bac8",
+      "after": [
+        "S6 pilot deck --scratch starts an isolated deck"
+      ],
+      "branch": "slice/audit-f1-f7-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s7",
+      "pr": 483
+    },
+    {
+      "slice": "S8 --seed-run loads a run record, and QA uses the command",
+      "state": "integrated at 40e213d0",
+      "after": [
+        "S7 pilot deck --stop stops only a scratch deck"
+      ],
+      "branch": "slice/audit-f1-f7-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s8",
+      "pr": 485
+    },
+    {
+      "slice": "S9 docs/architecture.md maps the repository",
+      "state": "integrated",
+      "branch": "slice/audit-f1-f7-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s9",
+      "pr": 469
+    },
+    {
+      "slice": "S10 deck/README.md maps the deck, and README says where to start",
+      "state": "integrated",
+      "after": [
+        "S9 docs/architecture.md maps the repository"
+      ],
+      "branch": "slice/audit-f1-f7-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s10",
+      "pr": 478
+    },
+    {
+      "slice": "S11 server's waiting half moves out",
+      "state": "integrated at 53d59584 (ADR 0113)",
+      "after": [
+        "S10 deck/README.md maps the deck, and README says where to start"
+      ],
+      "branch": "slice/audit-f1-f7-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s11",
+      "pr": 487
+    },
+    {
+      "slice": "S12 server's tool layer and routes move out",
+      "state": "integrated at e2c1a3e1",
+      "after": [
+        "S11 server's waiting half moves out"
+      ],
+      "branch": "slice/audit-f1-f7-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s12",
+      "pr": 488
+    },
+    {
+      "slice": "S13 store's core moves out",
+      "state": "integrated at a1394708",
+      "after": [
+        "S12 server's tool layer and routes move out"
+      ],
+      "branch": "slice/audit-f1-f7-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s13",
+      "pr": 489
+    },
+    {
+      "slice": "S14 store's items, replies and tickets move out",
+      "state": "integrated at c2262eaf (store-items + store-tickets)",
+      "after": [
+        "S13 store's core moves out"
+      ],
+      "branch": "slice/audit-f1-f7-s14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s14",
+      "pr": 490
+    },
+    {
+      "slice": "S15 store's runs and records move out; store.mjs is a facade",
+      "state": "integrated at 40b32c7a",
+      "after": [
+        "S14 store's items, replies and tickets move out"
+      ],
+      "branch": "slice/audit-f1-f7-s15",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s15",
+      "pr": 491
+    },
+    {
+      "slice": "S16 render's thread parts and cards move out",
+      "state": "integrated at 77bf6a09",
+      "after": [
+        "S15 store's runs and records move out; store.mjs is a facade"
+      ],
+      "branch": "slice/audit-f1-f7-s16",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s16",
+      "pr": 493
+    },
+    {
+      "slice": "S17 render's status, strip, tickets and rail move out",
+      "state": "integrated at e9c3dd00",
+      "after": [
+        "S16 render's thread parts and cards move out"
+      ],
+      "branch": "slice/audit-f1-f7-s17",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s17",
+      "pr": 494
+    },
+    {
+      "slice": "S18 render's days and pages move out; render.mjs is a facade",
+      "state": "integrated at 8ee869a5",
+      "after": [
+        "S17 render's status, strip, tickets and rail move out"
+      ],
+      "branch": "slice/audit-f1-f7-s18",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s18",
+      "pr": 495
+    },
+    {
+      "slice": "S19 run.mjs's claim moves out",
+      "state": "integrated at 85a67979",
+      "after": [
+        "S18 render's days and pages move out; render.mjs is a facade"
+      ],
+      "branch": "slice/audit-f1-f7-s19",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s19",
+      "pr": 497
+    },
+    {
+      "slice": "S20 items.mjs's bounds move out",
+      "state": "integrated at ad97464f",
+      "after": [
+        "S19 run.mjs's claim moves out"
+      ],
+      "branch": "slice/audit-f1-f7-s20",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-s20",
+      "pr": 498
+    },
+    {
+      "slice": "Audit fixes F1-F7: cheaper deck reads",
+      "state": "ready: #461 ready for review at 4463ee5c, landed on pilot at 97b4833",
+      "branch": "feat/audit-f1-f7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f1-f7",
+      "pr": 461
+    },
+    {
+      "slice": "audit-f1-f7",
+      "state": "in QA: walkthrough itm_e28e17b8dcf7 posted, scratch deck :49183 pid 41008",
+      "branch": "feat/audit-f1-f7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f1-f7-qa",
+      "pr": 461
+    }
+  ],
+  "findings": [
+    "kept: F1 store-items<->store-tickets cycle: releaseIn/storedCoPilot/isLiveCoPilot moved into store-core (4e37d399)",
+    "kept: F2 read.mjs id guard deleted (6bf8258a)",
+    "kept: F3 startScratch({port, seedRun}) owns the sequence; readRunRecord/seedRun private (09991a11)",
+    "kept: F4 seedRun spreads the record minus worktree (3a7f0c50)",
+    "kept: F5 scratch start-failure path tested (bf016511)",
+    "dropped: F6 test-timeout pins the audit's own hang copy, which is spec 6's evidence",
+    "kept: F7 one readdir bar test; pin lists from readdir (3e15a5b7)",
+    "kept: N1 briefLine unexported, default dropped (e048cfc8)",
+    "dropped: N2 changing route()'s shared catch touches every route for -3 lines",
+    "kept: N3 readRunRecord error names the file (22f69b1a)",
+    "dropped: N4 qa-preview.test.mjs:38-40 pins the env-var clause; pins never move",
+    "kept: N5+Q3 README/store header truth, entry step 3 names server.mjs (dcdd29c9)",
+    "kept: N6 test helper unexported (8d0fb0f3)",
+    "kept: Q1 (QA) client noteHanded skips non-array replies + test (74a4968b)",
+    "dropped: Q2 (QA) test:quiet summary: L4 locks the dot reporter",
+    "dropped: Q4 (QA) long-token overflow: outside spec, pre-existing",
+    "kept: S1 (security) registry wx/0600, lstat+uid on stop (24342498)",
+    "dropped: S2 (security) planted dir rm: covered by S1",
+    "dropped: S3 (security) Windows short-name dir compare: fails closed"
+  ],
+  "report": {
+    "featurePr": {
+      "number": 461,
+      "state": "ready for review at 4463ee5c; landed on pilot at 97b4833, merge first: none"
+    },
+    "slices": [
+      {
+        "slice": "S1",
+        "pr": 480,
+        "mergeSha": "dd60446c"
+      },
+      {
+        "slice": "S2",
+        "pr": 482,
+        "mergeSha": "1371bc34"
+      },
+      {
+        "slice": "S3",
+        "pr": 484,
+        "mergeSha": "4bf908a5"
+      },
+      {
+        "slice": "S4",
+        "pr": 470,
+        "mergeSha": "136a9d69"
+      },
+      {
+        "slice": "S5",
+        "pr": 479,
+        "mergeSha": "561850ce"
+      },
+      {
+        "slice": "S6",
+        "pr": 481,
+        "mergeSha": "4742c7b2"
+      },
+      {
+        "slice": "S7",
+        "pr": 483,
+        "mergeSha": "dce687dc"
+      },
+      {
+        "slice": "S8",
+        "pr": 485,
+        "mergeSha": "38576e39"
+      },
+      {
+        "slice": "S9",
+        "pr": 469,
+        "mergeSha": "1409f74f"
+      },
+      {
+        "slice": "S10",
+        "pr": 478,
+        "mergeSha": "cd8ebf07"
+      },
+      {
+        "slice": "S11",
+        "pr": 487,
+        "mergeSha": "31caf304"
+      },
+      {
+        "slice": "S12",
+        "pr": 488,
+        "mergeSha": "8da0e8de"
+      },
+      {
+        "slice": "S13",
+        "pr": 489,
+        "mergeSha": "be0c5888"
+      },
+      {
+        "slice": "S14",
+        "pr": 490,
+        "mergeSha": "122a08d2"
+      },
+      {
+        "slice": "S15",
+        "pr": 491,
+        "mergeSha": "4b36fa3d"
+      },
+      {
+        "slice": "S16",
+        "pr": 493,
+        "mergeSha": "84494320"
+      },
+      {
+        "slice": "S17",
+        "pr": 494,
+        "mergeSha": "8be21129"
+      },
+      {
+        "slice": "S18",
+        "pr": 495,
+        "mergeSha": "c8c51c78"
+      },
+      {
+        "slice": "S19",
+        "pr": 497,
+        "mergeSha": "9dd8bdc1"
+      },
+      {
+        "slice": "S20",
+        "pr": 498,
+        "mergeSha": "6853a410"
+      },
+      {
+        "slice": "fix round",
+        "pr": 500,
+        "mergeSha": "67366f9d"
+      }
+    ],
+    "assumed": [
+      {
+        "id": "A1",
+        "decision": "CLI checks are machine rows in the walkthrough, not user steps",
+        "taken": "QA's definition forbids commands in steps"
+      },
+      {
+        "id": "A2",
+        "decision": "run.json feature name corrected to Audit F1-F7",
+        "taken": "copied name from another run"
+      },
+      {
+        "id": "A3",
+        "decision": "L12 overridden: remaining slices build on #445 and #451 merged into feat/audit-f1-f7",
+        "taken": "the user's word on the ticket thread"
+      }
+    ],
+    "friction": [
+      {
+        "agent": "pilot/qa",
+        "what": "permission classifier denied git merge x2, pilot landing, pilot deck --stop on the live pid, a read-only curl, and one pilot wait",
+        "evidence": "blocked steps on itm_097d05144161, itm_0a0c97923957 and the QA report"
+      },
+      {
+        "agent": "pilot",
+        "what": "a typed reply after Sign off un-signed the gate2; a landed gate2 refuses a second press",
+        "evidence": "itm_0a0c97923957, ticket itm_c7e30555448b"
+      },
+      {
+        "agent": "pilot",
+        "what": "deck_read {limit:40} on the live deck returned 179 KB",
+        "evidence": "tool result overflow on pick-up"
+      },
+      {
+        "agent": "qa",
+        "what": "dot reporter prints no pass count",
+        "evidence": "grep -o '\\.' counted 3002"
+      },
+      {
+        "agent": "qa",
+        "what": "walkthrough and report refuse sha and pr",
+        "evidence": "deck_post errors"
+      },
+      {
+        "agent": "co-pilot",
+        "what": "SendMessage queued while the child was mid-turn",
+        "evidence": "SendMessage result"
+      }
+    ],
+    "humanSteps": [
+      "Merge #461 alone with a merge commit",
+      "Restart the 4321 daemon",
+      "Run pilot deck --stop <4321 pid> and expect the refusal",
+      "Confirm branch protection on main"
+    ],
+    "worktreesLeft": [
+      "pilot-feat-audit-f1-f7",
+      "pilot-audit-f1-f7-s1..s20",
+      "pilot-audit-f1-f7-fix",
+      "pilot-audit-f1-f7-base",
+      "pilot-design-audit-f1-f7"
+    ]
+  },
+  "next": "Closed: #461 ready, landed on pilot at 97b4833; user merges. After the merge: pilot worktrees prune, reply on the closing report itm_be3db36dd538. Yellow queue: #492, #496, #499, #501; green head itm_ede5c093eaf4.",
+  "finished": "closing report posted",
+  "finishedAt": "2026-10-10T01:19:34.350Z",
+  "updatedAt": "2026-10-10T01:19:34.350Z"
+}

@@ -1,0 +1,404 @@
+{
+  "slug": "gate2-frees-lane",
+  "feature": "Landing keeps a live agent's worktree",
+  "ticket": "itm_97a14cc327a5",
+  "branch": "feat/gate2-frees-lane",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-gate2-frees-lane",
+  "artefact": "docs/design/gate2-frees-lane/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/gate2-frees-lane-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-frees-lane-s1",
+      "pr": 765
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "branch": "slice/gate2-frees-lane-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-frees-lane-s2",
+      "pr": 761
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/gate2-frees-lane-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-frees-lane-s3",
+      "pr": 766
+    },
+    {
+      "slice": "S4",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S3"
+      ],
+      "branch": "slice/gate2-frees-lane-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-frees-lane-s4",
+      "pr": 767
+    },
+    {
+      "slice": "S5",
+      "state": "integrated",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/gate2-frees-lane-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-frees-lane-s5",
+      "pr": 768
+    },
+    {
+      "slice": "S6",
+      "state": "integrated",
+      "after": [
+        "S5",
+        "S4"
+      ],
+      "branch": "slice/gate2-frees-lane-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-frees-lane-s6",
+      "pr": 771
+    },
+    {
+      "slice": "S7",
+      "state": "integrated",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/gate2-frees-lane-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-frees-lane-s7",
+      "pr": 772
+    },
+    {
+      "slice": "S8",
+      "state": "integrated",
+      "after": [
+        "S7",
+        "S2"
+      ],
+      "branch": "slice/gate2-frees-lane-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-frees-lane-s8",
+      "pr": 775
+    },
+    {
+      "slice": "S9",
+      "state": "integrated",
+      "after": [
+        "S8",
+        "S4"
+      ],
+      "branch": "slice/gate2-frees-lane-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-frees-lane-s9",
+      "pr": 776
+    },
+    {
+      "slice": "S10",
+      "state": "integrated",
+      "branch": "slice/gate2-frees-lane-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-frees-lane-s10",
+      "pr": 762
+    },
+    {
+      "slice": "S11",
+      "state": "integrated",
+      "branch": "slice/gate2-frees-lane-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-frees-lane-s11",
+      "pr": 764
+    },
+    {
+      "slice": "gate2-frees-lane",
+      "state": "Gate 2 itm_d5fe74be96cf signed at 8670ade; deck landing in flight",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11",
+        "S12"
+      ],
+      "branch": "feat/gate2-frees-lane",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-gate2-frees-lane",
+      "pr": 748
+    },
+    {
+      "slice": "S12",
+      "state": "integrated (added)",
+      "branch": "slice/gate2-frees-lane-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-frees-lane-s12",
+      "pr": 769
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "branch": "fix/gate2-frees-lane-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-gate2-frees-lane-fix",
+      "pr": 778
+    }
+  ],
+  "findings": [
+    "kept: S5 fix 3, a throw in watch() counts as refused, has no test (deck/landing.mjs ~300); fix round",
+    "kept: readied() reads gateNow().landing after the gate may be gone; guard it (deck/landing.mjs:269); fix round",
+    "kept: readied() appending the ready line when no pr-ready-failed line exists has no pin (deck/landing.mjs:273); fix round",
+    "dropped: running leaks when clock.setTimeout throws (deck/landing.mjs:244,261); only a fake clock throws there",
+    "dropped: S6 a queued gate2 closed by the pilot's deck_resolve still lands (landing.mjs:373); the user pressed for it and did not withdraw it",
+    "kept: S7 conflict parse is unanchored /m, first match; anchor to the last line (deck/store-items.mjs:457); fix round",
+    "kept: S7 conflict.dir is a snapshot; Land again re-checks the kept worktree; done in S8 (land-again.test.mjs)",
+    "kept: F1 closing-report.mjs <-> landing.mjs import cycle; fix round",
+    "kept: F2 conflict.resolving written but unread; fix round",
+    "kept: F3 holdsALane parses lanesOf display text; fix round",
+    "kept: F4 finishRecord dead report param and try/catch; fix round",
+    "kept: F5 closeLanded closes the ticket before the record finishes; fix round",
+    "kept: N9 KIND_QUESTION; N10 S12.md check-slices errors; fix round",
+    "kept: item 11 pilot land's sweep spares pilot wait (gc.mjs landSweep); fix round, PR #778",
+    "dropped: N6 CONFLICT_TURN_MS / facade imports; churn with no consequence",
+    "dropped: N7 deck_reply re-derives the pilot's Land again; one line",
+    "dropped: N8 hook reads reply kind vs text for report due; both agree today",
+    "dropped: evidence complexity/duplication/dead-code rows; pre-existing hot spots",
+    "dropped: rerunning diff coverage and mutation (assumed); QA ran the full gate",
+    "kept: QA J1 deck-written landing lines show byline 'other' (store-items.mjs:409 author 'deck', items.mjs:369-372); QA fixes",
+    "kept: QA J3 third ready attempt runs at ~6 min, spec 3 says 5; read READY_DELAYS_MS (L4, unchanged) as offsets from the first attempt; QA fixes",
+    "dropped: QA J2 repeated landed block after a ready retry; cosmetic",
+    "dropped: QA J4 move arrows on landing rows; cosmetic, predates the feature",
+    "dropped: QA J5 closing report byline 'pilot'; the report speaks for the pilot's run"
+  ],
+  "next": "Landing itm_d5fe74be96cf runs; on landed: closing report (merge first none), finished, prune --slug gate2-frees-lane. Other lanes: main-never-red co-pilot was sent the pause, release on its paused hand-back then co-pilot the next yellow; readme-graph-deck and architect-deeper planned; landing-keeps-worktrees red: spawn its architect (depth forks); mac-linux parked.",
+  "updatedAt": "2026-10-17T12:14:49.177Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice file named hooks/test/inbox-alert.test.js, which did not exist; the notice pins are in hooks/test/inbox.test.js",
+      "evidence": "S4 fact sheet"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 slice file marked both test files (new) but both existed with pins from earlier features",
+      "evidence": "deck/test/landing-ready.test.mjs, scripts/test/land-ready.test.mjs (9 tests)"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "python heredocs through Git Bash failed on quoting twice; Windows python wrote CRLF once",
+      "evidence": "S5 report",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "stashing a source file mid-suite turned a gate red; the run was discarded and rerun",
+      "evidence": "test-command.test.mjs readyQuestions export",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "A2's report-then-question order cannot hold: a closed ticket refuses a question; became question then report with a past option",
+      "evidence": "S5 PR #768"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 ran 505 changed lines against the 300 limit (CLI flag, retry chain, restart sweep); accepted",
+      "evidence": "PR #768"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12 built on bcf9c73f collided with S5's closing-report.mjs; pilot integrate stopped on the merge; implementer resumed to rebase",
+      "evidence": "NOT integrated slice/gate2-frees-lane-s12: the merge stopped",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "testUtils page()/rowsOf() show rows only for the default LANE_REPO; a custom repo gave an empty set with no error",
+      "evidence": "S12 report, deck/testUtils.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck --scratch-stop is not a command and printed the live 4321 deck's status",
+      "evidence": "S12 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "Co-pilot hit its context mark after 8 slices (135k tokens) and paused mid-S6; a successor was spawned from the record",
+      "evidence": "forced hand-back at 9edffe69, S6 implementer still live",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "deck_ticket co-pilot failed on EPERM renaming deck.json.tmp (fourth this session) and was retried",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "A newer run record for a dead pid drops the older record in the same repository, so a test with two gate2s in one repo must write each record just before its gate2 starts; cost a debug pass",
+      "evidence": "S6 first green run failed with 'no run record names ticket'",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm ci run in a background command, scratch deck started before it finished",
+      "evidence": "ERR_MODULE_NOT_FOUND for zod on first launch",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6.md left unsaid what a Dismiss does to a queued landing and how a restart reaches the queue; both reviewers caught the Dismiss case",
+      "evidence": "security reviewer's first pass: request changes",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a Bash heredoc into Python corrupted \\b and \\\\ escapes in JS (third time this run); Edit tool fixed it",
+      "evidence": "S7 report, ^Resolving written with a backspace byte",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a gate2 seeded outside the daemon arms no timer until a restart; scratch tooling has no restart-on-same-store",
+      "evidence": "S7 live check, daemon killed by pid and restarted by hand",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7 slice file left 'absolute worktree of the repository' unspecified; the first cut met it and failed security review",
+      "evidence": "PR #772 review table, two MEDIUMs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the deck README test requires every deck module listed; a new module cost one 4.6-minute suite run",
+      "evidence": "S8 report, 'every deck module is listed'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot land in a scratch repo needs a lockfile, and a failed landing deletes the kept worktree; the live recipe does not say so",
+      "evidence": "S8 live check, npm ci failed",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the scratchpad is shared across agents; a seed.mjs may have overwritten another's",
+      "evidence": "S8 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a resumed implementer from a dead co-pilot's session was still live on the S9 worktree while a fresh one was spawned; two writers, one killed full gate, one reinstall of node_modules mid-suite",
+      "evidence": "commit 046f9bd5 of unclear author; 3 ajv failures in s9-final.log",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test (scripts/gate.mjs) exited 1 with no failing test named and no totals, stopping at spawns 402",
+      "evidence": "S9 report, test.log 855 lines",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9's Files owned omits four test files that pin the reworded passages (crew-waits, pilot-agents, pilot-branch-rules, three-lanes-qa-wording)",
+      "evidence": "S9 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md commit trailer names Fable 5.1; the run uses Opus 5.5",
+      "evidence": "brief.md Commit trailer"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the evidence runner's full-suite coverage pass outlived the fundamentalist's hand-back; no coverage, mutation, complexity, duplication, dead-code or cycle table came back",
+      "evidence": "fundamentalist report section 3",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "check-slices flags only S12, the slice added late (no Rewrite check line, two tests off shape)",
+      "evidence": "check-slices: 3 errors in S12.md"
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "sent its report to main, not to its fundamentalist (which had already handed back); coverage and mutation rows unread because reading its own task output file was denied",
+      "evidence": "coordinator relay; bk458yyu7.output, bmbrhd4b2.output",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a scratch pilot land's process sweep stopped three live-looking pilot waits outside the scratch (no claude ancestor); QA scratch runs can reach real processes",
+      "evidence": "stopped 27292 / 26880 / 24964 wait, deck/procs.mjs:159-160",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "pilot land's process sweep stops the main session's pilot wait (no claude ancestor under the Bash tool), so the pilot stops listening on the deck",
+      "evidence": "deck/procs.mjs:159-160; pids 27292, 26880, 24964 stopped at QA's scratch land",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "madge without --extensions mjs processed 0 files and printed a false 'no circular dependency' pass",
+      "evidence": "fix round report, PR #778",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "piping node --test into grep showed nothing; reran to a scratch file",
+      "evidence": "fix round report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "--seed-run registers the run at the feature worktree, so a seeded gate2 can never land",
+      "evidence": "NOT landed: no run record names ticket; nothing run",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "no gh seam for a scratch landing on Windows; built a node.exe-as-gh.exe preload stub",
+      "evidence": "QA report, scratchpad ghstub.cjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a gate2 posts only on the live ticket, so a multi-press fixture posts each as its ticket goes live",
+      "evidence": "DeckRefusal: a gate2's ticket is the live ticket",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA hit its context notice at 226k after the read-only pass; a fresh QA posts the walkthrough",
+      "evidence": "QA hand-back, no walkthrough id",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "npm test's leak sweep stopped the scratch deck QA had started from the same worktree, mid-landing, although its leash pid was alive; one restart and one re-probe",
+      "evidence": "npmtest.log: stopped 22076 daemon --leash 11332 --leash-dir pilot-gate2-frees-lane-qa",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "pilot land refused on a red sync of main (the user's hand-made README commits fail 3 README tests); the pilot read the sync log and diff and reshaped the prose itself",
+      "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "pilot land's process sweep stopped the pilot's own background pilot wait (\"no claude ancestor\"), so the deck listener had to be restarted; the fix (land's sweep spares pilot wait) is in this very feature and only applies once the installed plugin carries it",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot land removed the QA worktree and the feat worktree under a live QA agent; its shell fell back to the shared checkout and moved the user's branch",
+      "evidence": "git worktree list has no -qa entry; reflog of fix/claude-workflow-tools: merge origin/feat/gate2-frees-lane Fast-forward",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a `cd X; …` chain ran on after the cd failed; `git -C X` or `cd X && { … }` would have stopped",
+      "evidence": "the background output's first line: cd: pilot-gate2-frees-lane-qa: No such file or directory",
+      "size": 2
+    }
+  ]
+}

@@ -1,0 +1,304 @@
+{
+  "slug": "pilot-branch",
+  "feature": "Pilot branch and sub-deck",
+  "ticket": "itm_4f3c3e333032",
+  "branch": "feat/pilot-branch",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-pilot-branch",
+  "qa": {
+    "branch": "qa/pilot-branch",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-qa",
+    "url": "http://127.0.0.1:4440"
+  },
+  "artefact": "docs/design/pilot-branch/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 base prints the pilot branch",
+      "state": "integrated",
+      "delivers": [
+        "1",
+        "4"
+      ],
+      "branch": "slice/pilot-branch-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s1",
+      "pr": 323
+    },
+    {
+      "slice": "S2 integrate takes the pilot branch; stack gone",
+      "state": "integrated",
+      "after": "S1 base prints the pilot branch",
+      "delivers": [
+        "3",
+        "4"
+      ],
+      "branch": "slice/pilot-branch-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s2",
+      "pr": 325
+    },
+    {
+      "slice": "S3 pilot sync",
+      "state": "integrated",
+      "after": "S2 integrate takes the pilot branch; stack gone",
+      "delivers": [
+        "5",
+        "4"
+      ],
+      "branch": "slice/pilot-branch-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s3",
+      "pr": 327
+    },
+    {
+      "slice": "S4 pilot land",
+      "state": "integrated",
+      "after": "S3 pilot sync",
+      "delivers": [
+        "2",
+        "6",
+        "4"
+      ],
+      "branch": "slice/pilot-branch-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s4",
+      "pr": 329
+    },
+    {
+      "slice": "S5 Pilot prose for the pilot branch",
+      "state": "integrated",
+      "after": "S4 pilot land",
+      "delivers": [
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "branch": "slice/pilot-branch-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s5",
+      "pr": 331
+    },
+    {
+      "slice": "S6 run --sub worktree, child tab",
+      "state": "integrated",
+      "after": "S1 base prints the pilot branch",
+      "delivers": [
+        "7",
+        "8",
+        "9"
+      ],
+      "branch": "slice/pilot-branch-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s6",
+      "pr": 326
+    },
+    {
+      "slice": "S7 Sub-deck takes and holds the yellow head",
+      "state": "integrated",
+      "after": "S6 run --sub worktree, child tab",
+      "delivers": [
+        "7",
+        "10",
+        "16"
+      ],
+      "branch": "slice/pilot-branch-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s7",
+      "pr": 328
+    },
+    {
+      "slice": "S8 Main deck concludes from the sub-deck's record",
+      "state": "integrated",
+      "after": "S7 Sub-deck takes and holds the yellow head",
+      "delivers": [
+        "10"
+      ],
+      "branch": "slice/pilot-branch-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s8",
+      "pr": 330
+    },
+    {
+      "slice": "S9 Works the queue, exits when empty",
+      "state": "integrated",
+      "after": "S8 Main deck concludes from the sub-deck's record",
+      "delivers": [
+        "11"
+      ],
+      "branch": "slice/pilot-branch-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s9",
+      "pr": 333
+    },
+    {
+      "slice": "S10 Gate1 Sign off starts the sub-deck",
+      "state": "integrated",
+      "after": "S8 Main deck concludes from the sub-deck's record",
+      "delivers": [
+        "11",
+        "8"
+      ],
+      "branch": "slice/pilot-branch-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s10",
+      "pr": 332
+    },
+    {
+      "slice": "S11 Implementation mode is gone",
+      "state": "integrated",
+      "after": "S9 Works the queue, exits when empty",
+      "delivers": [
+        "12"
+      ],
+      "branch": "slice/pilot-branch-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s11",
+      "pr": 334
+    },
+    {
+      "slice": "S12 Pilot prose for main deck and sub-deck",
+      "state": "integrated",
+      "after": "S11 Implementation mode is gone",
+      "delivers": [
+        "7",
+        "12"
+      ],
+      "branch": "slice/pilot-branch-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s12",
+      "pr": 337
+    },
+    {
+      "slice": "S13 Pause and Resume",
+      "state": "integrated",
+      "after": "S11 Implementation mode is gone",
+      "delivers": [
+        "14"
+      ],
+      "branch": "slice/pilot-branch-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s13",
+      "pr": 335
+    },
+    {
+      "slice": "S14 Install ask rules",
+      "state": "integrated",
+      "delivers": [
+        "13"
+      ],
+      "branch": "slice/pilot-branch-s14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s14",
+      "pr": 324
+    },
+    {
+      "slice": "S15 Agent split setting",
+      "state": "integrated",
+      "after": "S13 Pause and Resume",
+      "delivers": [
+        "15"
+      ],
+      "branch": "slice/pilot-branch-s15",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-s15",
+      "pr": 336
+    },
+    {
+      "slice": "FA Fix round: scripts and prose",
+      "state": "integrated",
+      "after": "S12 Pilot prose for main deck and sub-deck",
+      "delivers": [
+        "2",
+        "4",
+        "5",
+        "13"
+      ],
+      "branch": "fix/pilot-branch-fa",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-fa",
+      "pr": 339
+    },
+    {
+      "slice": "FB Fix round: deck and sub-deck",
+      "state": "integrated",
+      "after": "S12 Pilot prose for main deck and sub-deck",
+      "delivers": [
+        "8",
+        "10",
+        "14",
+        "15",
+        "16"
+      ],
+      "branch": "fix/pilot-branch-fb",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-fb",
+      "pr": 338
+    },
+    {
+      "slice": "FC Fix: sub-deck worktree trusted",
+      "state": "closed, no code (A22, answered by the user)",
+      "after": "FB Fix round: deck and sub-deck",
+      "delivers": [
+        "7",
+        "11"
+      ],
+      "branch": "fix/pilot-branch-fc",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-fc"
+    },
+    {
+      "slice": "FD Fix: Pause is heard by a working sub-deck",
+      "state": "integrated",
+      "after": "FB Fix round: deck and sub-deck",
+      "delivers": [
+        "14"
+      ],
+      "branch": "fix/pilot-branch-fd",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-fd",
+      "pr": 340
+    },
+    {
+      "slice": "FE Fix: a paused sub-deck is never a live one",
+      "state": "integrated",
+      "after": "FD Fix: Pause is heard by a working sub-deck",
+      "delivers": [
+        "14"
+      ],
+      "branch": "fix/pilot-branch-fe",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-fe",
+      "pr": 341
+    },
+    {
+      "slice": "FF Fix: Start on a sub-deck tab with no live session",
+      "state": "integrated",
+      "after": "FE Fix: a paused sub-deck is never a live one",
+      "delivers": [
+        "14"
+      ],
+      "branch": "fix/pilot-branch-ff",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-ff",
+      "pr": 342
+    },
+    {
+      "slice": "FG Fix: a sub-deck's tab is nested under its main deck",
+      "state": "integrated",
+      "after": "FF Fix: Start on a sub-deck tab with no live session",
+      "delivers": [
+        "7"
+      ],
+      "branch": "fix/pilot-branch-fg",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-pilot-branch-fg",
+      "pr": 343
+    },
+    {
+      "slice": "Feature",
+      "state": "ready: gate2 itm_72c804eb8b15 signed 10:59Z, PR #322 ready at 8790fdce",
+      "pr": 322
+    }
+  ],
+  "findings": [
+    "kept: F1 pilot wait sends no run, so a sub-deck hears neither its threads nor Pause (wait.mjs:135; checked)",
+    "kept: F2 recordFor/recordForTicket do not resolve a sub-deck's home, so it cannot read record and role in one call (checked)",
+    "kept: F3 in part: one homeOf(dir) in the store for the wait, the record, role and budget; the client's repo rewrite stays",
+    "kept: F4 integrate with HEAD on pilot pushes a slice onto pilot; refuse by name (checked; QA saw it too)",
+    "kept: F5 defaultBranch reads a stale local origin/HEAD, so a renamed default branch passes the guard; read the remote's HEAD",
+    "kept: F6 bare Bash(gh pr merge) ask rule missing (A15)",
+    "kept: F7 a child tab draws Start when ended and End when live; neither belongs on a sub-deck's tab (L17); QA 4",
+    "kept: F8 pilot.md says sync then base, and sync refuses with no pilot branch (checked)",
+    "kept: F9 scripts-side copies only (test-summary parse, holds, ghIn, step, --test parse); fixes sync's '? pass'",
+    "dropped: F10 land's guard at the push is L4's shape (every push passes the guard); 5 lines kept on purpose",
+    "kept: F11 the missing assertions, split between the two fix PRs",
+    "kept: F12 closing-report wording for merge first none/unknown, Pivot names the sub-deck, Needed folded in (net -2)",
+    "kept: F13 branch-protection recommendation in the closing report if F12's savings pay for it, else recorded under L23",
+    "kept: N1 a parked wait is woken by Pause; N2 sub start latch released on registration; N4 the sub-deck's start prompt says green; N7 stale A16 comment",
+    "dropped: N3 N5 N6 N8 N9 N10 N11: refactors or guards whose consequence does not outweigh churn this late; listed in the gate2 body",
+    "dropped: claim 5 (forged parent on loopback): a local process already has the whole API and a known-deck check closes none of the three paths",
+    "kept: QA: a second pilot run --sub is refused before openSubdeck (spec 8; run.mjs:760, checked); chat and closing-report panels off the child tab (A14); a red land says the tests were red",
+    "dropped: QA: window title reads claude (claude overwrites it); budget exit codes 1 vs 2",
+    "kept: QA live: Pause on a working sub-deck is consumed (pauseHeard) but never acted on, run ends needed not paused; spec 14 fails (server.mjs:1058 checked)"
+  ],
+  "next": "Gate 2 signed; #322 READY at 8790fdce. Left: 1) `pilot land` (feat worktree's code), then L19 per architecture.md line 131: merge origin/pilot into #318-#321 in order, drop Stands on lines. 2) QA8 a6273be0e67261814: scratch deck 4440 went down; it restarts at 8790fdce, FG looks, 2nd QA comment on #322; then teardown (user may still be testing there). 3) closing report, finished.",
+  "updatedAt": "2026-10-05T10:59:47.152Z"
+}

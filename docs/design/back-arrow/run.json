@@ -1,0 +1,45 @@
+{
+  "slug": "back-arrow",
+  "feature": "A red ticket lands on pilot before Gate 2",
+  "ticket": "itm_ede5c093eaf4",
+  "branch": "feat/back-arrow",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-back-arrow",
+  "qa": {
+    "branch": "qa/back-arrow",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-back-arrow-qa",
+    "url": "http://127.0.0.1:4434"
+  },
+  "artefact": "docs/design/back-arrow/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Arrow and Esc leave the same way",
+      "state": "integrated (S1 #527, fix round #528 incl. itm_498a61106fc8 tighten)",
+      "branch": "slice/back-arrow-s1-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-back-arrow-fix",
+      "pr": 528
+    },
+    {
+      "slice": "Back arrow returns to its deck",
+      "state": "in QA: walkthrough itm_9197710e46d5 posted at b27c56a8 (3012/3012, spec 1-3 and §9 1-6 pass); waiting on the user",
+      "branch": "feat/back-arrow",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-back-arrow",
+      "pr": 503
+    },
+    {
+      "slice": "A thread's back arrow returns to the deck that owns it",
+      "state": "red: gate2 itm_cafecb635ee2 signed at b27c56a8; landing on pilot stopped on merge conflicts; QA resolving the merge of pilot into feat/back-arrow, QA comment on #503 pending",
+      "branch": "feat/back-arrow",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-back-arrow",
+      "pr": 503
+    }
+  ],
+  "findings": [
+    "kept: F2 arrow click guard: drop the unreachable defaultPrevented term, add the alt-click test row (surviving mutant)",
+    "kept: nit escape.mjs head comment no longer fits once it handles the arrow; rewrite it, rewrap :20",
+    "kept: nit spec-5 pin duplicates the owner test's href; pin the shape only (-2)",
+    "dropped: F1 thread or toggle referrer makes back land on a thread; moves spec 3/L3 and changes Esc too; sent to main for the user, built as signed meanwhile",
+    "dropped: nit arrow href stale after in-page All toggle; moot for plain clicks, tied to F1"
+  ],
+  "next": "Red, gate2 itm_cafecb635ee2 signed; landing stopped on 3 conflicts with pilot (escape.mjs, tabs.test.mjs, adr/README.md). QA (Opus, qa/back-arrow) merges origin/pilot, re-probes spec 1 live, pushes feat/back-arrow, posts QA comment on #503. Then: ff pilot-feat-back-arrow (commit run.json first), `pilot land` there, closing report, gh pr ready 503, tear down QA scratch deck.",
+  "updatedAt": "2026-10-10T10:03:45.307Z"
+}

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "deck": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/deck/client.mjs"]
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@1.9.0"]
+    }
+  }
+}

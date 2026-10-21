@@ -1,0 +1,254 @@
+{
+  "slug": "co-pilot-tickets-history",
+  "feature": "README rewritten as a pitch",
+  "ticket": "itm_a5394180830f",
+  "branch": "feat/co-pilot-tickets-history",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-co-pilot-tickets-history",
+  "artefact": "docs/design/co-pilot-tickets/architecture.md",
+  "slices": [
+    {
+      "slice": "S8",
+      "state": "integrated",
+      "branch": "slice/co-pilot-tickets-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s8",
+      "pr": 733
+    },
+    {
+      "slice": "S9",
+      "state": "integrated",
+      "branch": "slice/co-pilot-tickets-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s9",
+      "pr": 730
+    },
+    {
+      "slice": "S10",
+      "state": "integrated",
+      "branch": "slice/co-pilot-tickets-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s10",
+      "pr": 732
+    },
+    {
+      "slice": "S11",
+      "state": "integrated",
+      "branch": "slice/co-pilot-tickets-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s11",
+      "pr": 736
+    },
+    {
+      "slice": "S12",
+      "state": "integrated",
+      "branch": "slice/co-pilot-tickets-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s12",
+      "pr": 734
+    },
+    {
+      "slice": "S13",
+      "state": "integrated",
+      "branch": "slice/co-pilot-tickets-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s13",
+      "pr": 735
+    },
+    {
+      "slice": "S14",
+      "state": "integrated",
+      "branch": "slice/co-pilot-tickets-s14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s14",
+      "pr": 737
+    },
+    {
+      "slice": "S15",
+      "state": "integrated",
+      "after": [
+        "S8",
+        "S9",
+        "S10",
+        "S11",
+        "S12",
+        "S13",
+        "S14"
+      ],
+      "branch": "slice/co-pilot-tickets-s15",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-s15",
+      "pr": 739
+    },
+    {
+      "slice": "feature",
+      "state": "QA read-only pass reported (Q1 routed to the fix round); QA resumes with the fix-round tip",
+      "branch": "feat/co-pilot-tickets-history",
+      "pr": 729
+    },
+    {
+      "slice": "S21 harness terms read as the harness again",
+      "state": "integrated (added: a found issue)",
+      "after": [
+        "S8",
+        "S9",
+        "S10",
+        "S11",
+        "S12",
+        "S13",
+        "S14"
+      ],
+      "branch": "slice/co-pilot-tickets-s16",
+      "pr": 738
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S15",
+        "S21"
+      ],
+      "branch": "fix/co-pilot-tickets-history-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-co-pilot-tickets-history-fix",
+      "pr": 740
+    }
+  ],
+  "findings": [
+    "kept: F1 the guard test lost the deleted test's exception cases (Task tool, queueMicrotask, taskkill, tasklist, microtask, TaskList/Get/Stop) and has no case for the untasked RETIRED pattern; add one retiredHits case per exception and pattern (+4)",
+    "kept: F2 vocabulary-guard.test.mjs:53-54 filters to line 19 under a whole-file exemption, testing nothing; delete the filter (-1)",
+    "dropped: N1 drop `export` on EXCEPTIONS: spec 2's evidence names EXCEPTIONS as an export, so it stays",
+    "kept: N2 vocabulary-guard.test.mjs:1-2 still says 'live scope'; say 'the whole repository' (0)",
+    "kept: N3 S21.md header lacks a Rewrite check line, Tests shape and after-reasons (check-slices exit 1); fill it in (+1)",
+    "dropped: security V1 quadratic word walk-back at scripts/vocabulary.mjs:61 runs only on a hit, which a clean tree never has (LOW; reviewer verdict approve)",
+    "dropped: security V5/V6 NUL-byte files skipped by design and two unpinned safe CLI paths (LOW; reviewer verdict approve)",
+    "kept: Q1 (QA) docs/design/overview-one-ticket/architecture.md:67 still says Untasked; the un-ed RETIRED pattern is case-sensitive so the guard passed it; reword and widen the pattern with a test (~3)",
+    "dropped: the taskkill/tasklist/queueMicrotask/microtask exception is dead (no RETIRED pattern hits a letter-joined word); it stays as § 7 lists it, a 1-line removal not worth diverging from the closed list"
+  ],
+  "next": "integrating the fix round (#740); then pilot land and resume QA with the tip",
+  "updatedAt": "2026-10-17T02:34:55.541Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-foreman",
+      "what": "spawned before its start condition held; the run 1 landing check failed at spawn, so the lane was held with no work to do",
+      "evidence": "git merge-base --is-ancestor 42c20ffc origin/pilot -> FAIL; origin/pilot 4d3cc0a3",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9's test 1 (`vocabulary.mjs check` over docs/design) is vacuous: docs/design is outside LIVE_SCOPE until S15, so it exits 0 on any text; git grep used instead",
+      "evidence": "scripts/vocabulary.mjs:211; check prints 'no live tracked file'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "`pilot deck --scratch --seed-run` refuses an old run.json whose qa.worktree path is stale (400)",
+      "evidence": "docs/design/bigger-jobs/run.json -> 400 qa.worktree must be the absolute path of a worktree of this run's repository",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the scratch deck detaches, so its background task exits 0 at once and TaskStop cannot stop it; stopped by PID",
+      "evidence": "Stop-Process -Id 25340",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8/S10 slice test `vocabulary.mjs check <docs path>` cannot run before S15: live() filters docs/ out, exit 2; git grep and retiredHits used instead",
+      "evidence": "scripts/vocabulary.mjs:209; 'check: no live tracked file under docs/adr'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the codemod has no exemption for ADR 0152 (title, file name, quotation) though A10 keeps them; cost a failed 6-minute npm test on the pin test",
+      "evidence": "scripts/test/adr-co-pilot-tickets.test.mjs failed 2 until 0152 restored",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the codemod turns a sentence naming the rename into new-to-new text that inverts it; the reviewer approved it, the co-pilot caught it",
+      "evidence": "ADR 0152 L12 read '`deck_ticket`, `co-pilot`, `pilot tickets` ... stop at the release'; fixed at 5796f724",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the codemod missed the apostrophe-less possessive 'foremans' in a file name",
+      "evidence": "docs/adr/0089-...-foremans-release.md renamed by hand",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the scratch deck refuses an old run.json whose feature name is over 40 characters",
+      "evidence": "docs/design/co-pilot-reports/run.json -> 400 from /api/tool",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice test 2 'each run.json in range has ticket' does not hold for records that never had the key (older format)",
+      "evidence": "start-end-session, ticket-making, ticket-states, run-chaining, run-analytics run.json: neither key at base",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the scratch deck refuses most old run.json records (stale qa.worktree, derived report.friction); seeding needed a scratchpad copy",
+      "evidence": "ticket-state-accents and ticket-states run.json -> 400",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the codemod rewrites the harness's own 'task notification' to 'ticket notification'; restoring it would trip S15's guard",
+      "evidence": "docs/design/merge-first/run.json:169",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a foreground `sleep 240` is refused by the harness; waits need a background until-loop",
+      "evidence": "S12 and S13 reports",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the codemod already git-mv's a renamed directory, so a following manual git mv fails and leaves an empty directory",
+      "evidence": "S14: 'source directory is empty', leftover tasks-add-button/slices",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the codemod turns harness terms into deck words: 'background-task output', '\\tasks\\' folder, 'task notification'",
+      "evidence": "walkthrough-taste/architecture.md:22, slices/S4.md:18,29; unimported-exports/run.json:53",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the co-pilot numbered the added slice S16 without listing slices/, and run 1 already had S16-S20; the implementer overwrote S16.md before its reviewer caught it",
+      "evidence": "PR #738 renumbered S21; S16.md restored",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7's EXCEPTIONS has no entry for ADR 0152's quotation, which §7 names, so S15's whole-repository guard hit it",
+      "evidence": "scripts/vocabulary.mjs:66; docs/adr/0152 lines 9, 19, 46, README.md:150",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Bash calls dropped one level of backslash escaping in a regex rewrite and Python wrote CRLF on Windows",
+      "evidence": "S15: three patterns broken, ~8 calls to repair",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the brief named the base as a bare sha; the evidence runner needs origin/<base>, so its only pass was lost and no evidence table came back",
+      "evidence": "runner: origin/4a9b17ad does not resolve; git rev-parse --verify exit 1",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "blocked step: a plant-and-revert probe appending to a tracked doc in QA's own worktree was refused by auto mode as irreversible local destruction; an in-memory retiredHits probe stood in",
+      "evidence": "cd C:/Users/Hazzard/Projects/pilot-qa-co-pilot-tickets-history && printf ... >> docs/design/ticket-states/brief.md",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "each rename slice self-checked with a `\\btasks?\\b` grep, which cannot see a capitalised compound like Untasked; it passed seven slices and the guard",
+      "evidence": "docs/design/overview-one-ticket/architecture.md:67",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "its hand-back reached main instead of the fundamentalist that spawned it (which had already handed back); diff coverage 100% on scripts/vocabulary.mjs; diff mutation failed in Stryker's sandbox because `git ls-files` runs outside a repository",
+      "evidence": "main's relay; mutation sandbox has no .git",
+      "size": 2
+    }
+  ]
+}

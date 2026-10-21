@@ -1,0 +1,16 @@
+{
+  "name": "pilot",
+  "owner": {
+    "name": "HazzardRust",
+    "url": "https://github.com/HazzardRust"
+  },
+  "description": "Local marketplace for the pilot plugin: a crew of agents that runs a feature from idea to reviewed pull requests, with one deck where every question, walkthrough and sign-off queues up.",
+  "plugins": [
+    {
+      "name": "pilot",
+      "source": "./",
+      "defaultEnabled": false,
+      "description": "Runs a feature from idea to reviewed pull requests as the pilot of a crew of agents, with one local deck where every question, walkthrough and sign-off queues up as a thread."
+    }
+  ]
+}

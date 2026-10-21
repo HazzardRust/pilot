@@ -1,0 +1,182 @@
+{
+  "slug": "crew-voice-rules",
+  "feature": "Crew voice and shipped rules",
+  "branch": "feat/crew-voice-rules",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-voice-rules",
+  "artefact": "docs/design/crew-voice-rules/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Voice is measurable from a run's transcripts",
+      "state": "integrated at d5c4df2",
+      "delivers": [
+        "2",
+        "3",
+        "5"
+      ],
+      "branch": "slice/crew-voice-rules-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-voice-rules-s1",
+      "pr": 231
+    },
+    {
+      "slice": "S2 The crew writes short and does not narrate",
+      "state": "integrated at 40a45ae",
+      "after": "S1 Voice is measurable from a run's transcripts",
+      "delivers": [
+        "2",
+        "3",
+        "4"
+      ],
+      "branch": "slice/crew-voice-rules-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-voice-rules-s2",
+      "pr": 233
+    },
+    {
+      "slice": "S3 The fundamentalist argues the case against",
+      "state": "integrated",
+      "after": "S1 Voice is measurable from a run's transcripts",
+      "delivers": [
+        "1"
+      ],
+      "branch": "slice/crew-voice-rules-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-voice-rules-s3",
+      "pr": 236
+    },
+    {
+      "slice": "S4 One decision a question, security densest, pushback",
+      "state": "integrated at 257c6d6",
+      "after": "S2 The crew writes short and does not narrate",
+      "delivers": [
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "branch": "slice/crew-voice-rules-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-voice-rules-s4",
+      "pr": 234
+    },
+    {
+      "slice": "S5 The deck refuses an unshaped ticket",
+      "state": "integrated",
+      "after": "S1 Voice is measurable from a run's transcripts",
+      "delivers": [
+        "14"
+      ],
+      "branch": "slice/crew-voice-rules-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-voice-rules-s5",
+      "pr": 237
+    },
+    {
+      "slice": "S6 A job merges into a queued ticket first",
+      "state": "integrated at bf75b5d",
+      "after": "S4 One decision a question, security densest, pushback",
+      "delivers": [
+        "15",
+        "16"
+      ],
+      "branch": "slice/crew-voice-rules-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-voice-rules-s6",
+      "pr": 239
+    },
+    {
+      "slice": "S7 Install brings an earlier machine to the current rules",
+      "state": "integrated at 98f768e",
+      "delivers": [
+        "13"
+      ],
+      "branch": "slice/crew-voice-rules-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-voice-rules-s7",
+      "pr": 232
+    },
+    {
+      "slice": "S8 Always-loaded rules shrink and stand alone",
+      "state": "integrated at f2ebd71",
+      "after": "S7 Install brings an earlier machine to the current rules",
+      "delivers": [
+        "10",
+        "11"
+      ],
+      "branch": "slice/crew-voice-rules-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-voice-rules-s8",
+      "pr": 235
+    },
+    {
+      "slice": "S9 TypeScript files stop loading arkts and RN rules",
+      "state": "integrated at 064fba7",
+      "after": "S8 Always-loaded rules shrink and stand alone",
+      "delivers": [
+        "9",
+        "10"
+      ],
+      "branch": "slice/crew-voice-rules-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-voice-rules-s9",
+      "pr": 238
+    },
+    {
+      "slice": "S10 Language rules point only at what ships",
+      "state": "integrated at 1d4ba4c",
+      "after": "S9 TypeScript files stop loading arkts and RN rules",
+      "delivers": [
+        "9"
+      ],
+      "branch": "slice/crew-voice-rules-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-voice-rules-s10",
+      "pr": 240
+    },
+    {
+      "slice": "S11 check-references fails on a dead rules reference",
+      "state": "integrated at 5d7ddba",
+      "after": "S10 Language rules point only at what ships",
+      "delivers": [
+        "11",
+        "12"
+      ],
+      "branch": "slice/crew-voice-rules-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-voice-rules-s11",
+      "pr": 241
+    },
+    {
+      "slice": "S12 A .tsx read loads at most 10k rules tokens",
+      "state": "integrated at fea43ef",
+      "after": "S11 check-references fails on a dead rules reference",
+      "delivers": [
+        "9",
+        "10"
+      ],
+      "branch": "slice/crew-voice-rules-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-voice-rules-s12",
+      "pr": 242
+    },
+    {
+      "slice": "Feature: crew voice and shipped rules",
+      "state": "fix round at 8b89b94 (9 findings kept, 3 nits dropped)",
+      "branch": "feat/crew-voice-rules",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-voice-rules",
+      "pr": 230
+    }
+  ],
+  "findings": [
+    "kept: S7 diff 441 over the 400 limit, accepted; generated files excluded",
+    "kept: S2 raised explorer pin 2150→2209 and QA pin 5600→5670",
+    "kept: S8 diff ~650 over the limit, accepted (rules trim 5263→3376 tokens)",
+    "kept: S5 A8 widened: audit-pick bodies pass the ticket shape via `audit spec` appending `Audit report: <path>`",
+    "kept: tool fault: `pilot integrate` tests on an uncommitted merge; rules slices merged commit-first",
+    "kept: S9 narrowed rules/vue/hooks.md globs (A9)",
+    "kept: S10 diff 621 over the limit, accepted (clean version)",
+    "kept: S12 diff 705 over the limit, accepted (dedup); .tsx 12334→9740",
+    "kept: P1 measure-rules.mjs duplicates audit-context's glob compiler; import compileGlobs, delete the copy (≈-45)",
+    "kept: P2 rules-references.test re-implements SKILL_NAMES; delete (-18)",
+    "kept: P3 measure-rules.test CLAUDE.md pin duplicates check-references; delete (-6)",
+    "kept: P4 S10 allowlist/count pins slice history; delete, keep header-ledger agreement (-9)",
+    "kept: P5 assert the exact trigger token total (+1)",
+    "kept: P6 ticket-shape anchors untested; add asserts and delete the `_` italics branch (skill uses *…*)",
+    "kept: P7 check-references: the 3 asserts; dropped its deletion of the placeholder skip, S11 asked for that allowance",
+    "kept: P8/QA-F2 fundamentalist has no Voice paragraph; add it and the crew-voice test row",
+    "kept: P9 three tests copy area-file.mjs helpers; import them (-12)",
+    "kept: QA-F1 check-references misses bare `skill: x` and `skills:` lists without ECC; widen with tests",
+    "kept: nits 3, 4, 7, 8 (RULES_LEDGER import, one filesUnder, security-reviewer is an agent not a skill, tools.mjs description); nit 5 as one spawn test for the measure-rules CLI",
+    "dropped: nits 1, 2 (transcripts.mjs roleOf/voiceOf refactors: older code, no consequence named beyond complexity) and nit 6 (the 1837 pin is a deliberate regression guard under the 2000 acceptance)"
+  ],
+  "next": "Fix round on fix/crew-voice-rules-principles (Opus implementer); QA holds read-only until its tip lands; then walkthrough and Gate 2.",
+  "updatedAt": "2026-10-01T05:52:21.408Z"
+}

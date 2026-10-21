@@ -1,0 +1,98 @@
+{
+  "slug": "red-lands-on-pilot",
+  "feature": "A red ticket lands on pilot before Gate 2",
+  "ticket": "itm_bc0fbea3ab2b",
+  "branch": "feat/red-lands-on-pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-red-lands-on-pilot",
+  "artefact": "docs/design/red-lands-on-pilot/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A finished yellow feature lands at its fix-round tip; a refusal goes to QA",
+      "state": "integrated",
+      "branch": "slice/red-lands-on-pilot-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-red-lands-on-pilot-s1",
+      "pr": 518
+    },
+    {
+      "slice": "S2 check-slices names a cross-ticket wait",
+      "state": "integrated",
+      "branch": "slice/red-lands-on-pilot-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-red-lands-on-pilot-s2",
+      "pr": 516
+    },
+    {
+      "slice": "S4 sync's merge into pilot becomes mergeIntoPilot (fold)",
+      "state": "integrated",
+      "branch": "slice/red-lands-on-pilot-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-red-lands-on-pilot-s4",
+      "pr": 517
+    },
+    {
+      "slice": "S5 pilot land merges the feature into pilot",
+      "state": "integrated",
+      "after": [
+        "S4 sync's merge into pilot becomes mergeIntoPilot (fold)"
+      ],
+      "branch": "slice/red-lands-on-pilot-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-red-lands-on-pilot-s5",
+      "pr": 520
+    },
+    {
+      "slice": "S6 A landing conflict keeps its worktree; the next land pushes the resolution",
+      "state": "integrated (fix round #524)",
+      "after": [
+        "S5 pilot land merges the feature into pilot"
+      ],
+      "branch": "slice/red-lands-on-pilot-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-red-lands-on-pilot-fix",
+      "pr": 522
+    },
+    {
+      "slice": "S3 Merge first names what this head stands on; a landing comments on its PR",
+      "state": "integrated",
+      "after": [
+        "S6 A landing conflict keeps its worktree; the next land pushes the resolution"
+      ],
+      "branch": "slice/red-lands-on-pilot-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-red-lands-on-pilot-s3",
+      "pr": 523
+    },
+    {
+      "slice": "S7 A landed feature's integration takes no base",
+      "state": "integrated",
+      "after": [
+        "S5 pilot land merges the feature into pilot"
+      ],
+      "branch": "slice/red-lands-on-pilot-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-red-lands-on-pilot-s7",
+      "pr": 521
+    },
+    {
+      "slice": "A red ticket lands on pilot before Gate 2",
+      "state": "in QA: spec 4 (S8) re-probed at 22c548ed, 4/4 S8 shapes pass, npm test 3082/0; nothing to walk; S1-S7 walkthrough itm_525b9cfdd503 closed; feature PR #499 draft",
+      "branch": "feat/red-lands-on-pilot",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-red-lands-on-pilot",
+      "pr": 499
+    },
+    {
+      "slice": "red-lands-on-pilot",
+      "state": "red: S8 QA passed at 22c548ed (3082/3082, nothing to walk); pilot merged at 02e9b0be; gate2 posted on #499; QA scratch deck :4441 pid 31196 up",
+      "pr": 499
+    },
+    {
+      "slice": "S8 Merge first names an earlier feature this head shares unmerged commits with",
+      "state": "integrated (#532, merge deda736b; typescript and security reviewers approve, 3 LOW notes left; rule 1 narrowed, recorded in S8.md c83a225d)",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/red-lands-on-pilot-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-red-lands-on-pilot-s8",
+      "pr": 532
+    }
+  ],
+  "findings": [
+    "dropped: QA extra case 'cut from origin/pilot after A landed reads none' - co-pilot's brief was ill-posed; such a branch carries A's own commit via A's landing merge, so merge first #A is correct per spec 4 (land.mjs:179-186)"
+  ],
+  "next": "Red: gate2 on #499 at 02e9b0be posted (pilot merged in, ADR index regenerated; S8 QA passed at 22c548ed). On Sign off: pilot landing; if refused, pilot land in pilot-feat-red-lands-on-pilot; closing report, gh pr ready 499, tear down QA scratch deck :4441 pid 31196 and worktree pilot-red-lands-on-pilot-qa.",
+  "updatedAt": "2026-10-10T10:13:10.533Z"
+}

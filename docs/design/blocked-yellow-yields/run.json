@@ -1,0 +1,262 @@
+{
+  "slug": "blocked-yellow-yields",
+  "feature": "Main never goes red",
+  "ticket": "itm_d39f0d55cad6",
+  "branch": "feat/blocked-yellow-yields",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-blocked-yellow-yields",
+  "qa": {
+    "branch": "qa/blocked-yellow-yields",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-blocked-yellow-yields",
+    "url": "http://127.0.0.1:53455"
+  },
+  "artefact": "docs/design/blocked-yellow-yields/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated at 030a8290",
+      "branch": "slice/blocked-yellow-yields-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocked-yellow-yields-s1",
+      "pr": 744
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at 7885c44e",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/blocked-yellow-yields-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocked-yellow-yields-s2",
+      "pr": 750
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at 89905663",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/blocked-yellow-yields-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocked-yellow-yields-s3",
+      "pr": 747
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at 9a0a175a",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/blocked-yellow-yields-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocked-yellow-yields-s4",
+      "pr": 746
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at 72433e6d",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/blocked-yellow-yields-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocked-yellow-yields-s5",
+      "pr": 749
+    },
+    {
+      "slice": "S6",
+      "state": "integrated at 6d282cda",
+      "branch": "slice/blocked-yellow-yields-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocked-yellow-yields-s6",
+      "pr": 743
+    },
+    {
+      "slice": "S7",
+      "state": "integrated at 4d4b6b59",
+      "after": [
+        "S6",
+        "S1",
+        "S5"
+      ],
+      "branch": "slice/blocked-yellow-yields-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocked-yellow-yields-s7",
+      "pr": 752
+    },
+    {
+      "slice": "S8",
+      "state": "integrated at 1bf4b941",
+      "branch": "slice/blocked-yellow-yields-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocked-yellow-yields-s8",
+      "pr": 742
+    },
+    {
+      "slice": "blocked-yellow-yields",
+      "state": "fixing: fix/blocked-yellow-yields-principles (F1-F6, N1, N2 doc, N3, N4, C1, Q1-Q5); QA read-only pass done at 4d4b6b59, waiting on the tip",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10"
+      ],
+      "branch": "feat/blocked-yellow-yields",
+      "pr": 731
+    },
+    {
+      "slice": "S9",
+      "state": "integrated at f8bfc336",
+      "branch": "slice/blocked-yellow-yields-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocked-yellow-yields-s9",
+      "pr": 745
+    },
+    {
+      "slice": "S10",
+      "state": "integrated at 831202c7",
+      "after": [
+        "S4",
+        "S5"
+      ],
+      "branch": "slice/blocked-yellow-yields-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocked-yellow-yields-s10",
+      "pr": 751
+    }
+  ],
+  "findings": [
+    "kept: A-co1 S9 added: the user's quoted words stay; two paths join the vocabulary exemption list",
+    "kept: A-co2 S7 writes `TaskOutput file`, not `task-output file`",
+    "kept: A-co3 S2 seam: threadState reads S1's deck yield line on a question as paused, not landing ended short",
+    "kept: A-co4 S10 added: a Moot close of the pausing or last blocking item resumes the paused ticket",
+    "dropped: A-co5 deck/wait.mjs:189,248 prints deck-supplied lanes.refusal flattened: pre-existing, the local deck is the trusted writer, outside spec",
+    "kept: F1 takeIn/requestSwitch take a paused ticket (rail Continue, against spec 4); pivot leaves stale paused",
+    "kept: F2 new cycle lanes.mjs <-> store-tickets.mjs: break it, YIELD_MS stays in lanes.mjs (L4)",
+    "kept: F3 new cycle store-items.mjs <-> store-tickets.mjs: move resumeIn into store-items.mjs",
+    "kept: F4 hooks/lib/deck.js liveTicket dead: delete it, export, stub",
+    "kept: F5 lane-ticket.test.mjs:29,35 pin CO_PILOT_CREW internals: delete, unexport",
+    "kept: F6 server-wait.mjs:380-382 swallowed refusal untested: add the test",
+    "kept: N1 PILOT_STAMP stand-in: isMoot(item, item.resolution, item.resolvedBy)",
+    "dropped: N2 inline pausedOn: S2's prohibition made it; only its false doc line is fixed",
+    "kept: N3 inline one-caller filedOf",
+    "kept: N4 BLOCKED_LIST bound: export from lanes.mjs, import in wait.mjs",
+    "kept: C1 render-parts.mjs:238 paused-on id unescaped: escapeHtml (security-reviewer checking reach)",
+    "kept: Q1 QA: lane counts a user-answered blocking question as blocking after resume (spec 3): runnable/blocked count only blocking items with no user message",
+    "kept: Q2 QA: standing names the answered pausing question while another blocker holds it: name the first unanswered blocker",
+    "kept: Q3 QA: tickets panel shows a paused ticket under green as needs you: show paused",
+    "kept: Q4 QA: the deck yield line is bylined other: byline deck",
+    "dropped: Q4b QA: the yield line's text addresses the pilot: it is the pilot's wake line (L2)",
+    "kept: Q5 QA: pilot.md names neither the three refused call shapes nor the refused-edit rule (spec 8 lists pilot.md): one line and its pin"
+  ],
+  "next": "feat at 4d4b6b59; fix implementer running; then integrate fix, pilot land, resume QA with the landed sha",
+  "updatedAt": "2026-10-17T04:51:34.431Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8: none; npm ci needed in the new worktree, npm test about 217 s",
+      "evidence": "S8 report, PR #742"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "my S8 brief gave PR title 'S8 ADR 0153 ...'; pilot integrate refused a capital first letter; retitled with gh pr edit",
+      "evidence": "pilot integrate: PR #742 title does not match S<n> <title, first letter lower-case>"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "feat cut before base 2ea8122f added the vocabulary guard; every integration of this run goes red on the design docs' quoted user words until an exemption lands",
+      "evidence": "log C:/Users/Hazzard/.claude/pilot/logs/20261017T025656413Z-slice-blocked-yellow-yields-s8.log:4240-4250"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: a new deck module needs a deck/README.md row (deck-readme pin) the slice and brief do not name; cost a second full suite run",
+      "evidence": "S6 report, PR #743, first npm test red on deck-readme"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: no helper seeds a scratch deck with a co-pilot; wrote a scratchpad script over testUtils.postStored, setCoPilot, registerRun",
+      "evidence": "S6 report, live check on port 53089"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: Git Bash echo of a JSON hook payload with a Windows cwd collapses backslashes; the hook drops it silently",
+      "evidence": "SyntaxError: Bad escaped character in JSON at position 43"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: the first reviewer's hand-back never reached the implementer in readable form; it spawned a second reviewer on the same commit",
+      "evidence": "S1 report: the reviewer transcript holds no SubagentHandback"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: a store planted behind a running scratch daemon needed a plain deck_post to re-arm the yield timers; the restart path is pinned, the live check was not",
+      "evidence": "S1 report, scratch deck on port 60303"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: deck/test/facades.test.mjs enumerates every store.mjs export, so a new facade export is an edit outside the slice",
+      "evidence": "S1 report, PR #744"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: Windows working tree is CRLF; git warns on every add/diff and scripted edits must keep line endings",
+      "evidence": "S9 report, PR #745"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: Python edits on Windows silently converted two files to CRLF; a round to undo",
+      "evidence": "S4 report, PR #746, git diff CRLF warning"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S8 index regen after base merge: adr-index dropped duplicated 0151/0152 rows; mechanical, done by the co-pilot",
+      "evidence": "270669fa on PR #742"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: two pins deep-equal the whole /api/record lanes object and open.test.mjs requires the no-open guard import, so a new lanes field fails the full suite, not the file worked on; 3 npm test runs",
+      "evidence": "S3 report, PR #747; deck/test/record.test.mjs:237, deck/test/mode-gone.test.mjs:53"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: slice file named hooks/test/session-handoff.test.js but the co-pilot-line pins live in session-handoff-yellow.test.js",
+      "evidence": "S3 report, PR #747"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: a deck_post question with a recommended answer is refused without a Research: line; the Blocked shape and the brief do not show it; three tries on the scratch deck",
+      "evidence": "S5 report, PR #749; hooks/lib/blocked.js:79-99"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: npm test queued about 5 min behind S3/S4 on scripts/gate.mjs's one-per-machine slot; final full suite not rerun",
+      "evidence": "S2 report, PR #750"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: git merge --no-edit wrote a trailer-less merge commit",
+      "evidence": "fd2bdb6a on PR #747"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: the lane line has no CLI view; found /api/record lanes, planted via testUtils with PILOT_DECK_DIR, drove /api/tool by hand, about 6 tool calls",
+      "evidence": "S10 report, PR #751"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: pins on the same prose live in files the slice does not list (bare-main pin in pilot-agents.test.mjs, QA pin in qa-preview.test.mjs); each cost an extra full npm test",
+      "evidence": "S7 report, PR #752"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "first scratch deck (pid 19236) died with no log line as npm test finished in the same worktree; the suite may reach scratch decks",
+      "evidence": "QA report, ~04:46:50Z, port 51064"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "planting a gate2 took three tries (pr must be a string, then #n)",
+      "evidence": "QA report"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "Stryker cannot run: its sandbox has no .git (vocabulary-guard git ls-files) and the facades size test fails there; knip without config gives no signal",
+      "evidence": "fundamentalist report, ConfigError: failed tests in the initial test run"
+    }
+  ]
+}

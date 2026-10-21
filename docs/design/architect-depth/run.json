@@ -1,0 +1,61 @@
+{
+  "slug": "architect-depth",
+  "feature": "Architect depth",
+  "branch": "feat/architect-depth",
+  "worktree": "C:\\Users\\Hazzard\\projects\\pilot-feat-architect-depth",
+  "artefact": "docs/design/architect-depth/architecture.md",
+  "slices": [
+    {
+      "slice": "Feature",
+      "state": "Gate 2 passed; PR #121 flipping to ready",
+      "branch": "feat/architect-depth",
+      "pr": 121
+    },
+    {
+      "slice": "S1 A slice file carries files, interface and tests",
+      "state": "integrated 9bf9c34",
+      "delivers": [
+        "1 files with roles",
+        "2 Interface block",
+        "3 data shapes",
+        "5 seam stated once",
+        "6 the cap",
+        "11 no code beyond signatures"
+      ],
+      "branch": "slice/architect-depth-s1",
+      "pr": 123
+    },
+    {
+      "slice": "S2 The crew reads slice files, and a seam change reaches main",
+      "state": "integrated 8bbd921",
+      "after": "S1 A slice file carries files, interface and tests",
+      "delivers": [
+        "1 briefs pass paths",
+        "4 named ordered Tests",
+        "7 implementer sends the smallest change",
+        "8 pilot decides",
+        "9 fundamentalist reports divergence",
+        "10 budget pin stays green"
+      ],
+      "branch": "slice/architect-depth-s2",
+      "pr": 124
+    }
+  ],
+  "findings": [
+    "kept: word pins collapse into sentence regexes so specs 7, 8, 9, 11 cannot be reversed with the suite green (11 of 13 prose mutants survived)",
+    "kept: S2.md Interface names two labels the prose never got (Red steps, diverges from S<n>'s Interface) — removed from the block as a recorded seam change",
+    "kept: item 8 and the implementer opening restate the skill's field count and path (L3)",
+    "kept: implementer says the slice fields are in the brief; they are in the slice file (QA F1); duplicated PR-body clause removed",
+    "kept: Full auto trim lost the reason the rule lives in agents/pilot.md; restored within the pin",
+    "kept: step 6 says the slice-file edit is committed on feat/<slug>",
+    "kept: code-review and resolving-merge-conflicts still point at a slice section (QA F2, F3)",
+    "kept: glossary terms to CONTEXT.md, as Gate 1 requires",
+    "kept: worked example shows the S<n>'s symbol form once (QA F5)",
+    "kept: vertical-slicing states spec 3's glossary-term option (QA F6, half)",
+    "dropped: moving the divergence sentence after the reading sentence — reorder with no consequence named",
+    "dropped: S2.md bare seam names inside the block (QA F4) — heading carries the prefix, L4 holds",
+    "dropped: pin name ', in order' drift (QA F6, half) — the pin is stricter than the slice file, not looser"
+  ],
+  "next": "QA flips #121 ready -> closing report -> finished. Side: PR #122 items 2 and 3 in progress (Opus fixer), scratch deck 4404. Then release both together (version bump, user's step).",
+  "updatedAt": "2026-09-26T04:31:23.651Z"
+}

@@ -1,0 +1,407 @@
+{
+  "slug": "three-lanes",
+  "feature": "Co-pilot and tickets, run 2",
+  "ticket": "itm_7c9becb5d765",
+  "branch": "feat/three-lanes",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-three-lanes",
+  "artefact": "docs/design/three-lanes/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A planning and a concluding ticket are live at once",
+      "state": "integrated at b1cdf080",
+      "branch": "slice/three-lanes-s1 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s1",
+      "pr": 684
+    },
+    {
+      "slice": "S2 A switch moves one lane and leaves the other live",
+      "state": "integrated at 30d2519e",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/three-lanes-s2 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s2",
+      "pr": 691
+    },
+    {
+      "slice": "S3 The Tickets rail marks both live tickets",
+      "state": "integrated at d7aef0ef",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/three-lanes-s3 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s3",
+      "pr": 686
+    },
+    {
+      "slice": "S4 A chained start fills both empty lanes",
+      "state": "integrated at d7b2fa4a",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/three-lanes-s4 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s4",
+      "pr": 698
+    },
+    {
+      "slice": "S5 One Status tab draws the implementing ticket's record",
+      "state": "integrated at ba27d4d7",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/three-lanes-s5 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s5",
+      "pr": 690
+    },
+    {
+      "slice": "S6 The Status selector chooses whose record",
+      "state": "integrated at 6a88dbc8",
+      "after": [
+        "S5",
+        "S2"
+      ],
+      "branch": "slice/three-lanes-s6 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s6",
+      "pr": 696
+    },
+    {
+      "slice": "S7 Only the pilot posts a gate1 and only the pilot or QA a gate2",
+      "state": "integrated at b28c307c",
+      "branch": "slice/three-lanes-s7 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s7",
+      "pr": 692
+    },
+    {
+      "slice": "S8 QA carries concluding to the Gate 2 press",
+      "state": "integrated at 8b23614a",
+      "branch": "slice/three-lanes-s8 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s8",
+      "pr": 682
+    },
+    {
+      "slice": "S9 The architect carries the planning relay",
+      "state": "integrated at 2b88f872",
+      "after": [
+        "S8"
+      ],
+      "branch": "slice/three-lanes-s9 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s9",
+      "pr": 687
+    },
+    {
+      "slice": "S10 The prose says planning and concluding; ADR 0151",
+      "state": "integrated at 608e3e5c",
+      "after": [
+        "S9"
+      ],
+      "branch": "slice/three-lanes-s10 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s10",
+      "pr": 689
+    },
+    {
+      "slice": "S11 A landing that ends short wakes the pilot",
+      "state": "integrated at ae59ff32",
+      "after": [
+        "S7"
+      ],
+      "branch": "slice/three-lanes-s11 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s11",
+      "pr": 694
+    },
+    {
+      "slice": "S12 A gone worktree is recreated and landed",
+      "state": "integrated at 00a8f7de",
+      "branch": "slice/three-lanes-s12 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s12",
+      "pr": 693
+    },
+    {
+      "slice": "S13 Merge-first and the push survive an unreachable GitHub",
+      "state": "integrated at 848b288b",
+      "branch": "slice/three-lanes-s13 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s13",
+      "pr": 695
+    },
+    {
+      "slice": "S14 A landed gate2 stays signed",
+      "state": "integrated at 93076427",
+      "after": [
+        "S11"
+      ],
+      "branch": "slice/three-lanes-s14 (deleted)",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-three-lanes-s14",
+      "pr": 697
+    },
+    {
+      "slice": "three-lanes",
+      "state": "green on main: walkthrough itm_9e713fa56850 at 11fafde7, QA successor lost at handoff (resume on a reply from the ticket's qa refs, worktree pilot-three-lanes-qa, scratch deck :62449 pid 16436); blocked: pilot land until #699 merges (itm_6d23eb588c0d), SPAWN_CEILING itm_5905c6d7e6ea",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11",
+        "S12",
+        "S13",
+        "S14"
+      ],
+      "branch": "feat/three-lanes",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-three-lanes",
+      "pr": 677
+    }
+  ],
+  "findings": [
+    "kept: QA F1 Status heading names the record's feature (f642086d)",
+    "kept: QA F2 park reply names the other lane's live ticket (55505ba7)",
+    "dropped: reviewer LOW liveTicketOf unscoped matches a stored live yellow ticket: legacy store state only, and the park reply naming it is accurate"
+  ],
+  "next": "main=three-lanes green; on walkthrough sign-off + #699 merged: integrate --default, gate2 #677, landing; then readme-flow, gate-script, unimported-exports (each green, walkthrough posted, QA to resume on reply). Yellow idle: git-light-tests S5 and co-pilot-tickets Live wait on three-lanes landing; relay itm_9f66cf5a6f7c to readme-flow QA, itm_10aa7f88436c to git-light-tests.",
+  "updatedAt": "2026-10-15T18:13:45.944Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "tests passed a third argument the code ignored (inHandOf(..., 'main')), which misled once the parameter took meaning",
+      "evidence": "overview-one-ticket, yellow-shown tests",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 had to carry requestSwitch's from and the live guard, which the plan gave to S2, because two live tickets break a switch without them",
+      "evidence": "PR #684 deck/store-tickets.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: slice Interface/Prohibited name laneOf as the one source of next, but laneOf drops next on a held lane; needed a mid-slice ruling (A-f5)",
+      "evidence": "PR #686; S3.md Interface",
+      "size": 1
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "the reviewer ran its own full npm test (727 s) overlapping the implementer's gate",
+      "evidence": "S3 report",
+      "size": 12
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: Owned files leave out the two tests pinning the brief.md paragraph the slice moves (pilot-agents, run-remote-prose), and run-split pins a sentence a grep missed: one extra full run",
+      "evidence": "PR #687; scripts/test/run-split.test.mjs",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Python text-mode writes and bash heredocs on this machine corrupt CRLF and backslashes; S1, S3, S8 and S9 all hit it",
+      "evidence": "233 CR in agents/pilot-architect.md before commit (S9); CRLF warnings on 7 files (S3)",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 Interface named tab.runs (run.ticket) as the record source, but a stored run never carries ticket; a hand-built test fixture would have shipped green while drawing the wrong ticket",
+      "evidence": "deck/store-runs.mjs recordOf; scratch deck drew the green ticket's table",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "planting a scratch deck with a yellow ticket needs hand edits to deck.json; deck_post ticket refused three body shapes",
+      "evidence": "S5 report",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "bookmark ids pinned in seven test files beyond the two the slice names; three page cuts at id=tree silently weakened",
+      "evidence": "live, everything, chat, create tests",
+      "size": 14
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: sentence pins spread over 7 unowned test files; two found only by the full run",
+      "evidence": "read-window-wording, bigger-jobs-ceiling; PR #689",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10 PR body records reviewer verdicts in a table, not a Verdict: line, so the security gate needed a fresh security-reviewer",
+      "evidence": "PR #689 ## Review",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: store-runs.mjs is held to 800 lines by facades.test.mjs, unstated in the brief; now at 799, so S11 must move code out first",
+      "evidence": "second gate failed at 803 lines; PR #690",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 Interface signatures ({lane, record} return, cancelSwitch(repo, lane)) did not match the call sites; seam round trip A-f7",
+      "evidence": "PR #691; switch-request, co-pilot-switch tests",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no helper plants a scratch deck with tickets; each live check writes a one-off script or hand-edits deck.json",
+      "evidence": "S2 and S5 reports",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: slice verification names deck/test/deck-author*.test.mjs, which does not exist (hooks/test/deck-author.test.js); facades.test.mjs pins store.mjs export names, unstated",
+      "evidence": "PR #692; one full suite rerun",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: 'refused before the store is read' left deck_post's gate1 lineage check running git for a crew agent; the slice should have named that path",
+      "evidence": "PR #692 refusePoster in deck_post",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12: the only gone-worktree test used a fake .git dir; a real recreate fetch broke its pin",
+      "evidence": "deck/test/landing.test.mjs aCheckout",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12: the live check was skipped because Sign off on a real daemon starts a real pilot land; the slice did not say to point the scratch gate2 at a scratch repo",
+      "evidence": "PR #693 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11: a third from value ('deck') reaches ~29 readers of from across deck/ and hooks/; the slice owned 4 files and touched 5 more",
+      "evidence": "PR #694 items.mjs, render-parts.mjs, inbox-alert.js",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11: pilot wait refuses before parking when any lane holds a queued ticket, so a one-ticket-per-stage scratch deck cannot test a parked wait",
+      "evidence": "first red run: 'concluding lane empty; ... is queued'",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11 and S13 Interface signatures (repliesSince, remoteDefaultBranch) did not match the code",
+      "evidence": "store-runs.mjs:91; A-f8",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: rail markup needs CSS but deck/ui/deck.css was not in Files owned; only the live look showed the links running together",
+      "evidence": "PR #696 deck.css +4",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the gate's SPAWN_CEILING is crossed by the sum of slices, never by one; S13's merge was the first red, with 0 test failures",
+      "evidence": "log 20261015T132258136Z-slice-three-lanes-s13.log: spawns 13568 over 13547",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S14: slice Verification names deck/test/dismiss.test.mjs, but the dismissItem pins live in dismiss-item.test.mjs; A8 says 'refused' where the slice says 'landing refused'",
+      "evidence": "PR #697",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no seed option on a scratch deck: S2, S4, S5, S6, S13, S14 each wrote their own planting script",
+      "evidence": "six reports",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: a hand-off carrying two tickets broke Handoff failed's single-next put-down; deck/items.mjs and store-items.mjs were not owned; built in-slice as a found issue",
+      "evidence": "PR #698 store-items.mjs:316-330",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 Verification names a real pilot run, which launches a paid claude session; the implementer used POST /api/chain instead, leaving the real run to QA",
+      "evidence": "PR #698",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the thread page route /thread/<id> is named nowhere in the briefs; S4, S11, S14 each guessed /item/<id> first",
+      "evidence": "deck/server-wait.mjs:60",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the evidence runner outlived the review; coverage, mutation, complexity, duplication, dead code and dependency checks went unjudged, and its worktree pilot-three-lanes-fund is left behind",
+      "evidence": "fundamentalist report section 3",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "check-slices fails all 14 three-lanes slices on a missing Model: line",
+      "evidence": "check-slices.mjs docs/design/three-lanes/slices",
+      "size": 14
+    },
+    {
+      "kind": "drain",
+      "what": "the fundamentalist's evidence-runner report (six check rows, ~1,400-line stryker log excerpt) was handed back to main instead of its spawner; the pilot read it and relayed it to the co-pilot",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "the runner's report reached main, not its fundamentalist; coverage died on 'Missing script: test' under a redirected HOME, and stryker's sandbox lacked node_modules, so no coverage or mutation row exists for the feature",
+      "evidence": "runner report relayed by main; bn15fxkqc.output",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "the fundamentalist's worktree C:/Users/Hazzard/Projects/pilot-three-lanes-fund is left as a non-git directory",
+      "evidence": "git status: not a git repository",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "npm test's post-run sweep stops a scratch deck running from the QA worktree, so the deck is stood up again after every gate",
+      "evidence": "'stopped 16456 daemon … pilot-three-lanes-qa'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a succeeding scratch landing runs the CLI sweep, which classes a pilot wait as an orphan (no claude ancestor) and would stop it; QA cannot walk spec 17 live safely",
+      "evidence": "bin/pilot.mjs:229; pilot ps pid 12036",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot wait follows PILOT_RUN_REPO over cwd and --dir, so a wait on a scratch repo listens on the real repo until the variable is overridden",
+      "evidence": "first wait: NO DECK for C:\\Users\\Hazzard\\Projects\\pilot",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the fix round's first fixer reached its context notice after 11 of 14 findings; finding 2 cost two co-pilot round trips because the rail's Continue rule and eight switch tests stood on the removed ordering",
+      "evidence": "fixer report at 8a36fd04",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the first fixer left 3 tests red (nextTicketOf called without a stage) because it checked each finding with targeted tests only; the second fixer's first full run found them",
+      "evidence": "06c74630",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "briefs named npm run check-references / check-provenance, which are not npm scripts; check-provenance needs directory arguments",
+      "evidence": "package.json scripts",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA reached its context advisory right after posting the walkthrough, so no agent is reading its replies; /api/chain at start releases the repo's co-pilot, so the fixture had to be reset",
+      "evidence": "QA report, itm_9e713fa56850",
+      "size": 2
+    }
+  ]
+}

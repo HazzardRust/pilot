@@ -1,0 +1,159 @@
+{
+  "slug": "landing-keeps-worktrees",
+  "feature": "Daemon lifecycle",
+  "ticket": "itm_28b7f8187c85",
+  "branch": "feat/landing-keeps-worktrees",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-landing-keeps-worktrees",
+  "artefact": "docs/design/landing-keeps-worktrees/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/landing-keeps-worktrees-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-landing-keeps-worktrees-s1",
+      "pr": 804
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/landing-keeps-worktrees-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-landing-keeps-worktrees-s2",
+      "pr": 806
+    },
+    {
+      "slice": "landing-keeps-worktrees",
+      "state": "fixing: integrating fix round #807",
+      "after": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "branch": "feat/landing-keeps-worktrees",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-landing-keeps-worktrees",
+      "pr": 785
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "branch": "slice/landing-keeps-worktrees-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-landing-keeps-worktrees-s3",
+      "pr": 805
+    }
+  ],
+  "findings": [
+    "kept: QA spec 3 — `pilot worktrees prune --run <slug>` defaults its base to origin/main, so after a landing on pilot it removes nothing; default the base to runRef(runRemote, pilot) when --run is given (scripts/worktrees.mjs:222)",
+    "dropped: F1 delete `floating` in holderOf — it would move L3 (unsure counts as live); a kept tree is cheap to revise, a removed live tree is the incident",
+    "kept: F2 one holderOf test for a relative worktree row answering 'unsure' (+4)",
+    "kept: F3 minimal — cd-shape-wording 'the pins move by the wording' checks the pin against the newest history line, not its own S3 line",
+    "dropped: nit keep guards in prune — no consequence",
+    "dropped: nit two holderOf names — no consequence worth a rename",
+    "dropped: complexity of prune and main — none worth its diff",
+    "kept: security MEDIUM — holderOf drops a reported-orphan `pilot wait --dir` that landSweep spares, so its tree can be pruned; keep wait rows (deck/procs.mjs)",
+    "kept: security LOW — POSIX `--dir` with a space reads one word (deck/procs.mjs:86); take the words up to the next flag",
+    "dropped: security LOW — sweep reuses land's table (pid-reuse window); the fix gives up L4 and needs a pid reuse inside one clear"
+  ],
+  "next": "co-pilot: integrating fix round #807; then the pilot's land step and a fresh QA with the tip",
+  "updatedAt": "2026-10-17T19:05:51.535Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "land.mjs is 31 KB; git show went to a persisted file and was read in sed ranges",
+      "evidence": "architect report"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the prompt-size pin (scripts/test/measure-prompt.test.mjs) is hard to find by grep; only the gate2 brief named it",
+      "evidence": "architect report"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the deck refused a question without a Research: line, which no tool description mentions",
+      "evidence": "architect report; the pilot hit the same refusal twice on itm_d3b75462e9c0",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "gate1 refused over the verdict line's grammar (parenthesis, not an em dash); read scripts/verdicts.mjs to find the regex",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Python heredocs in Git Bash turned \\n escapes into real newlines in a test edit; three repair rounds",
+      "evidence": "S1 report",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 test 3 (closing report lists a concluding worktree) can never be red: closing-report.mjs already matches /^kept\\b/",
+      "evidence": "S1 report; slice file test list"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md says no known flaky tests, while gate-census has a known flake",
+      "evidence": "brief.md 'Known flaky tests: None.'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "prompt-size pins live in three test files; landing-wording.test.mjs pinned the pilot measure to an old slice's exact number, so any pin move broke it",
+      "evidence": "S3 report; scripts/test/landing-wording.test.mjs:47",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "QA's prompt pin is in qa-preview.test.mjs, not measure-prompt.test.mjs, and the artefact named only the pilot and explorer pins",
+      "evidence": "scripts/test/qa-preview.test.mjs:149"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the cd shape was specified in Bash syntax for agents that also hold PowerShell; the security reviewer caught it HIGH",
+      "evidence": "PR #805 security review item 1"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck/procs.mjs maps a hand-run `node deck/daemon.mjs` to worktree '.', which held a test fixture live-unsure and turned the first gate run red; a 5-minute rerun",
+      "evidence": "S2 report; pid 40608 on this machine",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "S2's owned files left out bin/pilot.mjs, where landSweep is wired, and the slice did not foresee rows whose worktree cannot be placed",
+      "evidence": "S2 report; bin/pilot.mjs:229"
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "a fresh detached worktree has no node_modules and the runner refuses npm ci, so diff coverage and mutation were not run",
+      "evidence": "fundamentalist report, tools table",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "knip reports all 459 test files unused without a config; its dead-code row is noise",
+      "evidence": "fundamentalist report"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot land cannot run end to end in a scratch setup: its orphan sweep covers the whole machine, so QA wrote a driver with a recorder in its place",
+      "evidence": "QA report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the S3 pin tests the phrase `pilot worktrees prune --run <slug>` while the command does nothing after a landing on pilot",
+      "evidence": "QA report; scripts/worktrees.mjs:222"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Python edits in Git Bash mangled \\n and rewrote CRLF onto an LF repo; normalised by sed afterwards (third crew report of this today)",
+      "evidence": "fix round report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the live process table always holds a relative-path hand-run daemon (pid 40608), so every real CLI prune reads `kept live unsure`; live checks need an injected empty table",
+      "evidence": "S2, QA and fix round reports"
+    }
+  ]
+}

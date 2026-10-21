@@ -1,0 +1,86 @@
+<!--
+  The bookmarks, in the blank space to the left of the column, one under the
+  other. Each is a <details>, which is the platform's own disclosure — it opens
+  on a click and on the keyboard with no script, and degrades to an open block
+  if the stylesheet never loads. Status (its table, then its graph) is open on
+  arrival.
+
+  They were one at each edge until the walkthrough of 2026-09-19, where the user
+  asked for the right edge: "put it at the top right in place of the 'status'
+  tab, move the 'status' tab to the same group as the 'tree' tab". What stands
+  there now is the toggle that adds a page's settled threads to it, which is a
+  link rather than a bookmark and is rendered by `home.html`'s own slot.
+
+  This lives in its own fragment rather than in `home.html` because the user
+  widened spec 5 at Gate 2: the panels vanished the moment they followed a
+  `Yours` link, which is the one thing the table is for. Every page the deck
+  serves pulls this in through its own STRIPS slot, so the tree and the table
+  are wherever the user is. The slot is named there without its comment
+  delimiters on purpose: written in full, its own arrow would close this
+  comment and print the rest of this paragraph on every page (spec 16).
+
+  The tree and the table are one Status bookmark since three-lanes S5 (spec 12):
+  the held ticket's table, then its graph, open on arrival.
+
+  The panels inside are live regions and the <details> around them are not, so
+  a change redraws a run's rows without closing a bookmark the user opened (D3).
+
+  Three of them since deck-workspace: the third lists the agents that are live
+  for this deck (spec 9) — what the daemon's roster says at the moment the page
+  is served, and empty when nobody is. A bookmark standing over nothing is what
+  says the deck has nothing for it, the same thing an empty tree panel says on a
+  tab with no rows. What made three possible is that a panel is out of the flow
+  now (L3): the bookmarks are all that is in it, so a fourth would cost the
+  group nothing either.
+
+  Four of them now, and Notifications is the one that is not a scope's (spec 26).
+  The other three are the deck the page is showing; this one is the open threads
+  of every deck there is (L25), because a question posted on another repository
+  has to reach the user while they are sitting inside a walkthrough thread. It
+  is first because it is the bookmark that says something arrived. Its <summary>
+  carries no number: what this browser has seen is a fact about the person
+  looking and not about the deck, so `notifications.mjs` writes the count onto it from its
+  own key and a page running no script shows the bookmark alone (L24).
+
+  Chat is under it (spec 4, L9, ADR 0031; the user's order at Gate 2): the selected deck's own thread with
+  its pilot, drawn open so an answer is on screen without a notification (L22).
+  On a page that names no deck its panel is empty and the stylesheet hides it.
+
+  Tickets and Closing reports (run-chaining L13) are two more, added after a preview
+  showed the two of them as `<details>` sections stacked under the rail rather than
+  in it: a ticket's own spec opened by overlaying the rail and the content beside it
+  instead of in a pane of its own, and the rows ran together with none of the
+  Notifications list's spacing. Both are what this bookmark shape already solves —
+  a panel opens in its own place, beside the rail, exactly like every other one
+  here — so they are two bookmarks now, not a special case. Their badge is the
+  same `data-count` idiom `deck.css` already draws (a plain count for
+  these, since there is nothing "unseen" about a stored ticket); a repository tab's
+  own, so a page naming none draws them empty and the stylesheet hides them,
+  exactly as it hides Chat's.
+-->
+<aside class="strip left">
+  <details class="tab" id="notifications">
+    <!--NOTIFICATIONS_SUMMARY-->
+    <div class="panel" data-live="notifications" data-name="Notifications"><!--NOTIFICATIONS--></div>
+  </details>
+  <details class="tab" id="chat" open>
+    <summary>Chat</summary>
+    <div class="panel" data-live="chat" data-name="Chat"><!--CHAT--></div>
+  </details>
+  <details class="tab" id="status" open>
+    <summary>Status</summary>
+    <div class="panel" data-live="status" data-name="Status"><!--STATUS--></div>
+  </details>
+  <details class="tab" id="agents">
+    <summary>Agents</summary>
+    <div class="panel" data-live="agents" data-name="Agents"><!--AGENTS--></div>
+  </details>
+  <details class="tab" id="tickets">
+    <!--TICKETS_SUMMARY-->
+    <div class="panel" data-live="tickets" data-name="Tickets"><!--TICKETS--></div>
+  </details>
+  <details class="tab" id="reports">
+    <!--REPORTS_SUMMARY-->
+    <div class="panel" data-live="reports" data-name="Closing reports"><!--REPORTS--></div>
+  </details>
+</aside>

@@ -1,0 +1,82 @@
+{
+  "slug": "handoff-over-mark",
+  "feature": "A red ticket lands on pilot before Gate 2",
+  "ticket": "itm_22ad234ca009",
+  "branch": "feat/handoff-over-mark",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-over-mark",
+  "artefact": "docs/design/handoff-over-mark/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 a finish under the mark takes the next ticket in place",
+      "state": "integrated",
+      "branch": "slice/handoff-over-mark-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-over-mark-fix",
+      "pr": 526
+    },
+    {
+      "slice": "Hand-off only over the mark",
+      "state": "in QA; walkthrough itm_4c48e8a07476 posted; feature PR #501 draft",
+      "branch": "feat/handoff-over-mark",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-over-mark",
+      "pr": 501
+    },
+    {
+      "slice": "handoff-over-mark",
+      "state": "closed: landed on pilot at bf3a3a79, #501 ready for review"
+    }
+  ],
+  "findings": [
+    "kept: F1 chain tests read the real home snapshot through the default pastMark; make deck tests hermetic (+6, within L3)",
+    "kept: F2 no test pins the over-mark finish reply without 'took'",
+    "kept: F3 pastAdvisoryAt at exactly the advisory mark is unpinned (>=)",
+    "kept: N1 S1 Rewrite check line is wrong",
+    "kept: N2 delete the redundant typeof pastAdvisoryAt assertion",
+    "dropped: N3 entryAt extraction, same-file refactor with ~0 gain",
+    "kept: N4 record testUtils helpers in S1 Files owned"
+  ],
+  "report": {
+    "featurePr": {
+      "number": 501,
+      "state": "ready for review; landed on pilot at bf3a3a79, merge first: none"
+    },
+    "slices": [
+      {
+        "slice": "S1",
+        "pr": 526,
+        "mergeSha": "d1596391"
+      }
+    ],
+    "assumed": [],
+    "friction": [
+      {
+        "agent": "pilot",
+        "what": "landing stops on a generated-file conflict (docs/adr/README.md)",
+        "evidence": "taking base pilot stopped; regenerated with scripts/adr-index.mjs and landed by hand"
+      },
+      {
+        "agent": "pilot-qa",
+        "what": "deck_read cannot fetch one item by id",
+        "evidence": "walkthrough older than the 20 newest read from deck.json (3.3 MB) by node"
+      },
+      {
+        "agent": "pilot",
+        "what": "gate2 reads unsigned after a typed reply",
+        "evidence": "deck_resolve refused once; second Sign off press needed"
+      }
+    ],
+    "humanSteps": [
+      "Merge #501 alone with a merge commit"
+    ],
+    "worktreesLeft": [
+      "pilot-feat-handoff-over-mark",
+      "pilot-design-handoff-over-mark",
+      "pilot-handoff-over-mark-s1",
+      "pilot-handoff-over-mark-fix",
+      "pilot-qa-handoff-over-mark (detached)"
+    ]
+  },
+  "next": "Closed. Landed on pilot at bf3a3a79, merge first: none.",
+  "finished": "closing report posted",
+  "finishedAt": "2026-10-10T09:56:48.985Z",
+  "updatedAt": "2026-10-10T09:56:48.985Z"
+}

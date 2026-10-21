@@ -1,0 +1,242 @@
+{
+  "slug": "architect-runs-red",
+  "feature": "The architect runs red",
+  "ticket": "itm_7168f2dafd64",
+  "branch": "feat/architect-runs-red",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-architect-runs-red",
+  "artefact": "docs/design/architect-runs-red/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The architect posts a gate1 the pilot owns",
+      "state": "integrated at fe61775c",
+      "branch": "slice/architect-runs-red-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-architect-runs-red-s1",
+      "pr": 961
+    },
+    {
+      "slice": "S2 pilot verdicts writes the lines from a message",
+      "state": "integrated at 6b1ed33f",
+      "branch": "slice/architect-runs-red-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-architect-runs-red-s2",
+      "pr": 962
+    },
+    {
+      "slice": "S3 A gate1 must match the pilot's verdict record",
+      "state": "integrated at 5e8efc23",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/architect-runs-red-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-architect-runs-red-s3",
+      "pr": 965
+    },
+    {
+      "slice": "S4 The contract in pilot.md, pilot-architect.md, orchestration.md, ADR 0169",
+      "state": "integrated at 8efecd83",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S5"
+      ],
+      "branch": "slice/architect-runs-red-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-architect-runs-red-s4",
+      "pr": 967
+    },
+    {
+      "slice": "architect-runs-red",
+      "state": "in QA: walkthrough itm_8c0e6f518b0b posted at 0afce5d6; QA comment on #889; awaiting the user's look",
+      "after": [
+        "S4",
+        "S5",
+        "S6"
+      ],
+      "branch": "feat/architect-runs-red",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-architect-runs-red",
+      "pr": 889
+    },
+    {
+      "slice": "S5 The rules ledger counts the commits a merge is bringing in (added)",
+      "state": "integrated at 141b1ab9",
+      "branch": "slice/architect-runs-red-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-architect-runs-red-s5",
+      "pr": 968
+    },
+    {
+      "slice": "S6 A failed integrate never leaves the worktree mid-merge in silence (added)",
+      "state": "integrated at 3a5da53a",
+      "branch": "slice/architect-runs-red-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-architect-runs-red-s6",
+      "pr": 969
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated at 0afce5d6",
+      "after": [
+        "S4",
+        "S5",
+        "S6"
+      ],
+      "branch": "fix/architect-runs-red",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-architect-runs-red-fix",
+      "pr": 970
+    }
+  ],
+  "findings": [
+    "kept: F1 deck_status refuses an architect stamp carrying finished/next/qa/worktree; needed the author hook to stamp deck_status (hooks/hooks.json) and an author field in its schema",
+    "dropped: fix-round security WARN (stamp bypass if the hook fails open; deny-list not allow-list; other kinds may send finished): same trust model as deck_ticket; the fields left to the architect move nothing; other kinds predate this feature"
+  ],
+  "next": "user looks at walkthrough itm_8c0e6f518b0b and presses Sign off; QA (afaa422312ad89bb8) then runs sign-off steps and posts the gate2",
+  "updatedAt": "2026-10-20T18:01:16.630Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the gate1 rules are spread over four places (server-tools.mjs:213, lineage.mjs:27/59, store-items.mjs:79/:219, store-core.mjs:580-610); 6 greps to confirm a refused post stores nothing",
+      "evidence": "architect report",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "free ADR numbers need a scan of every remote design branch; docs/adr/README.md lists landed ADRs only",
+      "evidence": "architect report",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the deck refuses a question without a Research: line and the architect definition does not say so; two posts refused",
+      "evidence": "architect report",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "the deck refuses a gate1 repost over an open gate1 and a deck_resolve on an unsigned one; the short-path bump needed the user's Dismiss/Sign off instead of a repost",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "deck/test/client-rejoin.test.mjs 'the rejoin never passes three starts' failed once under full-suite load (14.1s), passed alone and on the rerun",
+      "evidence": "C:/Users/Hazzard/.claude/pilot/logs/20261020T145813012Z-pilot@9e3b0bba.log:4869"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1.md names POSTERS at deck/store-items.mjs:79; it is at :78",
+      "evidence": "fact sheet flag, PR #961"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 test 3's red evidence needs the POSTERS change applied first to fail on ownerOf; slice file does not order it",
+      "evidence": "PR #961 red commit bda5c172"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "scripts/test/operating-commands.test.mjs census (NON_MOVING) not in S2's owned files or Verification; surfaced only at the full gate",
+      "evidence": "PR #962; ~10 min full run plus a rerun"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "rebase onto the new feat tip arrived mid full run; a third full run gated the rebased tip",
+      "evidence": "PR #962 tip 8b5c2836"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck_ticket action-list pins spread over phase, small-retired, ticket-tool tests; not in S3's owned files; surfaced only at the full gate",
+      "evidence": "PR #965 commit b6f1fd1a; one extra ~9 min full run"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "measure-prompt pins sat at exactly the pilot and architect prompt shares (0 headroom), so any tool field breaks them",
+      "evidence": "scripts/test/measure-prompt.test.mjs 11562.5 / 9323.75 at 6b1ed33f"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate stopped taking base pilot@7adb3780: NON_MOVING conflict in scripts/test/operating-commands.test.mjs ('reach' from plain-session vs 'verdicts' from S2); integrate's error names only the git command, not the conflicting path",
+      "evidence": "NOT integrated slice/architect-runs-red-s3: taking base pilot stopped"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "resolving conflict markers by line number with sed slipped twice; one wasted npm test run (~4.5 min)",
+      "evidence": "base merge 209fe913"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "measure-rules 3,500-token always-loaded budget (0 headroom) and one-line-wording's 'pr ready' ban not in S4's Verification; found only at the full gate",
+      "evidence": "PR #967; one extra full run and a fix commit"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck_status grant costs ~719 tokens of schema in the architect's prompt share (+11%); its finished/next fields held back by prose alone",
+      "evidence": "measure-prompt pin 9333.75 -> 10477.25"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate gates inside a --no-commit merge, and build-rules-ledger --check walks HEAD history only, so a slice with 2+ commits touching rules/ goes red on a false stale ledger; integrate also left the worktree mid-merge with the rebuilt ledger dirty instead of resetting",
+      "evidence": "C:/Users/Hazzard/.claude/pilot/logs/20261020T163639171Z-slice-architect-runs-red-s4.log; scripts/build-rules-ledger.mjs:70"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fresh worktree has no node_modules; first test run died ERR_MODULE_NOT_FOUND",
+      "evidence": "base merge 2da36cbb"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "firstLine in scripts/pilot-branch.mjs takes an error object, not a string; reading git stderr needs a fake error",
+      "evidence": "PR #969"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test ~4 min and ~9,000 spawns (mostly git) for a one-script change",
+      "evidence": "PRs #968, #969"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner's table reached the pilot, not the fundamentalist, after the fundamentalist's hand-back was enforced; the review ran with no tool rows",
+      "evidence": "fundamentalist report, PR #889"
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "diff coverage: npm test under a scratch HOME fails on deck.secret and .zshrc EISDIR on Windows; diff mutation: Stryker dry run aborts on facades.test.mjs:70 file-size bar under instrumentation",
+      "evidence": "runner table via main"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "check-slices flags S5/S6: slices added at integration skipped the slice template",
+      "evidence": "check-slices.mjs on slices/"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck /api/tool bearer secret not named where a QA probe looks; a gate1 fixture needs origin/pilot plus a feat/x branch, undocumented",
+      "evidence": "QA report: 'the deck wants its secret', 'has no origin/pilot', 'branch feat/x could not be read'"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA hand-back forced while it waited for the fix-round tip; walkthrough not posted in that run",
+      "evidence": "[handback-send-enforce]"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot deck --stop refuses QA's scratch deck pid 10236 as 'not a scratch deck'",
+      "evidence": "pilot deck --stop 10236 exit 1"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "hooks/test/deck-author.test.js pinned 'deck_status is not stamped', silently contradicting F1; surfaced only in the full suite. Bash-first edits turned '\\0' in a node heredoc into a literal NUL",
+      "evidence": "PR #970"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "the /api/tool bearer and a gate1 fixture's need for origin/pilot + feat/x are undocumented for probes",
+      "evidence": "3 refusals before a post, #889 QA comment",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "an evidence-runner report and a co-pilot's five paused hand-backs reached the pilot while its children ran",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "WSL gate exit codes lost in the output encoding; the five passes were read from the logs (4425 pass, 0 fail each)",
+      "evidence": "QA comment 6297613811 on #889"
+    }
+  ]
+}

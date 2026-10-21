@@ -1,0 +1,70 @@
+{
+  "slug": "report-record",
+  "feature": "Closing report is a record",
+  "ticket": "itm_6468bd2c24da",
+  "branch": "feat/report-record",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-report-record",
+  "artefact": "docs/design/report-record/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The user cannot reply on a closing report",
+      "state": "integrated at 3f26a8ee",
+      "branch": "slice/report-record-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-report-record-s1",
+      "pr": 665
+    },
+    {
+      "slice": "S2 A closing report that asks is refused",
+      "state": "integrated at e2d35bed (A5 synthetic fixture; real-store check blocked)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/report-record-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-report-record-s2",
+      "pr": 667
+    },
+    {
+      "slice": "S3 A stored reply on a report reaches no pilot",
+      "state": "integrated at ce02f641",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/report-record-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-report-record-s3",
+      "pr": 668
+    },
+    {
+      "slice": "S4 The pilot ends a run without asking on its report",
+      "state": "integrated at a0d3d035",
+      "branch": "slice/report-record-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-report-record-s4",
+      "pr": 666
+    },
+    {
+      "slice": "report-record",
+      "state": "fixing: principles and QA findings on fix/report-record-review from ce02f641",
+      "branch": "feat/report-record",
+      "pr": 657
+    }
+  ],
+  "findings": [
+    "kept: P1 report-shape quote and code-span exemptions untested; pin them (+3)",
+    "kept: P2 refusal's chat lookup untested (other repo's chat, no chat -> /) (+6)",
+    "kept: P3 delete the source-comment prose pin on RECORD_KINDS; README assert keeps spec 7 (-5)",
+    "kept: P4 S3.md Interface misses fallbackDue's record skip (+1)",
+    "kept: nit console.log refusal capture in report-shape test -> assert.throws (-8)",
+    "kept: nit repeated repliesSince assertion in wait-record test (-1)",
+    "dropped: nit single-value RECORD_KINDS; it is the artefact's seam and the hooks' pinned mirror, taste only",
+    "dropped: nit deliveredAt read via storeFile; 0 net, taste",
+    "dropped: nit postItem CCN 31; over before this diff, out of scope",
+    "dropped: case-against one shared delivery filter; hooks are a separate CommonJS mirror by design, L3 keeps the filters, a refactor of 4 paths for a hypothetical fifth",
+    "dropped: case-against remove S2's ask check; L4 is locked and only the user moves it",
+    "kept: S2 security LOW report title not checked for asks (added to fix round)",
+    "kept: QA F1 pickup badge on a record",
+    "kept: QA F2 reply refusal says body",
+    "kept: QA F4 page shows /thread/Chat half path",
+    "kept: QA F3 feature PR body lacks spec 8 and pin move (QA as writer)"
+  ],
+  "next": "co-pilot: fix round on fix/report-record-review; integrate it, then resume QA with the tip to write and post the walkthrough",
+  "updatedAt": "2026-10-14T15:23:09.679Z"
+}

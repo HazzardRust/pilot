@@ -1,0 +1,190 @@
+{
+  "slug": "readme-graph-deck",
+  "feature": "Runs on macOS and Linux",
+  "ticket": "itm_ba20129038a9",
+  "branch": "feat/readme-graph-deck",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-readme-graph-deck",
+  "artefact": "docs/design/readme-graph-deck/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The graph draws the deck's threads, not the CLI",
+      "state": "integrated at 60f90e2f (4031 pass)",
+      "branch": "slice/readme-graph-deck-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-readme-graph-deck-s1",
+      "pr": 821
+    },
+    {
+      "slice": "S2 OPERATING.md names every moving subcommand",
+      "state": "integrated at b0a05d8e (4030 pass)",
+      "branch": "slice/readme-graph-deck-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-readme-graph-deck-s2",
+      "pr": 823
+    },
+    {
+      "slice": "readme-graph-deck",
+      "state": "green; fix round at af91875d; walkthrough itm_ae594b9f04f1 awaiting the user (QA agent gone); pilot land started",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "Fix round: one pilot help parse, drop the stale count test"
+      ],
+      "branch": "feat/readme-graph-deck",
+      "pr": 783
+    },
+    {
+      "slice": "S3 This run's record may quote the stale help line",
+      "state": "integrated at 80893c1d (4027 pass)",
+      "branch": "slice/readme-graph-deck-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-readme-graph-deck-s3",
+      "pr": 822
+    },
+    {
+      "slice": "Fix round: one pilot help parse, drop the stale count test",
+      "state": "integrated at af91875d (4031 pass)",
+      "after": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "branch": "fix/readme-graph-deck-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-readme-graph-deck-fix",
+      "pr": 824
+    }
+  ],
+  "findings": [
+    "dropped: replace NON_MOVING with a literal DROPPED list (moves L2; the extra edits predate this feature)",
+    "kept: delete operating-commands test 3 (fix round #824)",
+    "kept: one shared pilot help parse, scripts/test/lib/help-subcommands.mjs (#824, net -4)",
+    "kept: S2 Interface lists 11 NON_MOVING names vs 14 in code; recorded in S2.md (0554a0a0)",
+    "dropped: THREADS is a hand-picked subset of KINDS (L5 locks it)",
+    "kept: S3 gains its Rewrite check line (0554a0a0)"
+  ],
+  "next": "check pilot land's result (origin/pilot; a kept pilot-land-readme-graph-deck means a conflict); on the walkthrough's reply resume pilot-qa from pilot-qa-readme-graph-deck (comment 6245510792 on #783) for sign-off and gate2; report names flaky daemon-lifecycle.test.mjs:110",
+  "updatedAt": "2026-10-18T04:12:57.598Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "the auto-mode classifier denied a read-only awk pipeline over the artefact (cd + git log + awk); re-read with Grep. Recurrence fix: a `pilot artefact <slug> --section n` print command",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "pilot help fails in a fresh worktree until npm ci; the main checkout's help is stale (prints pilot tasks)",
+      "evidence": "node bin/pilot.mjs help: ERR_MODULE_NOT_FOUND @modelcontextprotocol/sdk",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck_post requires a Research: line with a recommended default and §6 needs the verdicts.mjs list-item grammar; neither is in the architect's brief or definition",
+      "evidence": "one refused post, one rewrite commit (71cd52bb)",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "base was not green: vocabulary guard red at f1d3f02f on the run record's own friction row; the brief named 3930 passing and no known failure",
+      "evidence": "run.json:42 quotes a retired word; npm test 3930 pass, 1 fail",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no local Mermaid renderer in the repo; the live check needed a CDN page in the scratchpad",
+      "evidence": "node_modules has no mermaid, puppeteer or mmdc",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice file named the co-pilot as pilot land's runner, contradicting agents/pilot-co-pilot.md:92; the implementer found it",
+      "evidence": "S2.md who-runs list vs pilot-co-pilot.md:92",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "String.raw pins edited through sed silently failed to apply twice; caught only by a wrong red",
+      "evidence": "two re-runs of the slice tests",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test runs past the 600s tool timeout; a slice that merges pilot runs it again",
+      "evidence": "duration_ms 310555 plus setup",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot moved mid-run, so each slice merged it and its PR diff carries pilot's commits until feat takes pilot",
+      "evidence": "#821 and #823 diffs show bin/pilot.mjs, deck/*",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot moved twice under the slices, each time editing NON_MOVING in readme-flow.test.mjs, costing a merge and a full gate per slice",
+      "evidence": "pilot e01dbfc1 then b3614b51",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "daemon-lifecycle flake: a 500 writes one deck.log line fails intermittently (2 !== 1)",
+      "evidence": "deck/test/daemon-lifecycle.test.mjs:110, 1 of 3 solo runs failed",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "pilot integrate refused S2's PR title for its capital first letter (OPERATING.md); retitled with gh pr edit",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "review worktree had no node_modules; coverage and mutation could not run, and the brief named no npm ci",
+      "evidence": "gate.mjs: node_modules missing: run npm ci; ERR_MODULE_NOT_FOUND",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "jscpd prints a clone count without its location; knip has no diff scope",
+      "evidence": "1 exact clone, 11 lines; Unused files (467)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA cannot see GitHub's render of a private repo; spec evidence 'rendered on GitHub' moves to the user's walkthrough",
+      "evidence": "agent browser not logged in to GitHub",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "full suite slow for a docs-only feature",
+      "evidence": "npm test 237 s, 9049 processes (8157 git)",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "daemon-lifecycle flake turned the fix round's pilot integrate red once; rerun passed",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck_post refused pr on a walkthrough and any pilot token in a step, even one saying no pilot run box; three tries",
+      "evidence": "walkthrough itm_ae594b9f04f1 posted on the third attempt",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "daemon-lifecycle 'one line per 500' failed 2 of 2 QA runs; deck/ is identical to origin/pilot",
+      "evidence": "deck/test/daemon-lifecycle.test.mjs:110, 2 !== 1",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "deck/test/daemon-lifecycle.test.mjs:110 ('a 500 writes the same one line', 2 !== 1) is flaky on the pilot base b3614b51: failed 2 of 2 QA runs and one integrate, passed on rerun; belongs to the landed daemon-lifecycle work",
+      "evidence": "fix-round integrate log; deck/ identical to origin/pilot",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot moved twice mid-run (e01dbfc1, b3614b51), each move editing readme-flow's NON_MOVING and costing every slice a merge plus a full gate",
+      "evidence": "slice PRs #821–#824 rebases",
+      "size": 4
+    }
+  ]
+}

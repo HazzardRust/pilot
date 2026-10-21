@@ -1,0 +1,316 @@
+{
+  "slug": "git-light-tests",
+  "feature": "README: how it fits together",
+  "ticket": "itm_3a7c0c04efd7",
+  "branch": "feat/git-light-tests",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-git-light-tests",
+  "artefact": "docs/design/git-light-tests/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Walking skeleton: the sync family builds once and restores per test",
+      "state": "integrated at d9107fb1 (feat tip 59a11ae0 with seam rulings)",
+      "branch": "slice/git-light-tests-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-git-light-tests-s1",
+      "pr": 702
+    },
+    {
+      "slice": "S2 The land family on the seam",
+      "state": "integrated (feat tip 4fddce91)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/git-light-tests-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-git-light-tests-s2",
+      "pr": 705
+    },
+    {
+      "slice": "S3 The integrate family, branches and worktrees on the seam",
+      "state": "integrated (feat tip 6b62af01)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/git-light-tests-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-git-light-tests-s3",
+      "pr": 704
+    },
+    {
+      "slice": "S4 The remaining scripts tests on the seam",
+      "state": "integrated (feat tip 3e7ffbb8)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/git-light-tests-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-git-light-tests-s4",
+      "pr": 703
+    },
+    {
+      "slice": "S5 The deck tests on the seam",
+      "state": "integrated (feat tip 3ed16c1a)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/git-light-tests-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-git-light-tests-s5",
+      "pr": 710
+    },
+    {
+      "slice": "S6 The ceiling follows the count",
+      "state": "integrated at 63433f9e (SPAWN_CEILING 9855; npm test 222.5 s / 213.5 s)",
+      "after": [
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S7",
+        "S8"
+      ],
+      "branch": "slice/git-light-tests-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-git-light-tests-s6",
+      "pr": 713
+    },
+    {
+      "slice": "git-light-tests",
+      "state": "fixing: principles fix round (fix/git-light-tests-principles); security review APPROVE",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8"
+      ],
+      "branch": "feat/git-light-tests",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-git-light-tests",
+      "pr": 680
+    },
+    {
+      "slice": "S7 The land family to the 80% bar",
+      "state": "integrated at 806b2a48 (land builder git 426, -83.0%)",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/git-light-tests-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-git-light-tests-s7",
+      "pr": 711
+    },
+    {
+      "slice": "S8 npm test under 240 s on the merged tree",
+      "state": "integrated at 8d910855 (npm test 216.5 s / 216.3 s; base pilot@12b431f1)",
+      "after": [
+        "S7"
+      ],
+      "branch": "slice/git-light-tests-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-git-light-tests-s8",
+      "pr": 712
+    }
+  ],
+  "findings": [
+    "kept: F1 buildLandThree rewrites the remote url in .git/config, unrecorded; recorded as an S7 ruling (removal re-adds 109 builder git, land ~78% < 80%)",
+    "dropped: F2 land-generated hand-named keys; the 4 names are unique and the docstring states one name, one pair of changes; a guard adds code for a hazard no caller has",
+    "kept: nit land-repos.mjs:13 exports unused main; export land alone",
+    "kept: nit hang-timeout.test.mjs header names why it sorts early",
+    "kept: nit S1.md:38 Rewrite check names tests 1, 4, 5",
+    "kept: nit S7.md/S8.md headers to check-slices shape",
+    "dropped: consider security on land-prune fast-import and land-repos mover; security-reviewer APPROVE, one LOW (mover's double-quoted path) dropped: fixture temp paths cannot hold a quote"
+  ],
+  "next": "fix implementer live; then integrate fix → pilot land → fresh QA with the tip (census + two timed gates, walkthrough)",
+  "updatedAt": "2026-10-16T09:49:09.768Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "gate1 refused twice on the verdict grammar (an indented `Verdict: stands` line, no trailing period); found by reading scripts/verdicts.mjs in the plugin cache",
+      "size": 3
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "no checked-in per-file fixture-git census; only F2's top 12 have numbers, S2-S5 must measure their own before",
+      "evidence": "gate.mjs prints suite totals only; no attribution script"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "the same repo builder is copy-pasted under six names across 45 test files",
+      "evidence": "repos, scratchRepos, scratch, scratchRun, pilotRepos, conflicting"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "a heredoc commit writing six slice files failed to parse in Git Bash and wrote nothing",
+      "evidence": "unexpected EOF while looking for matching ' at line 113"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "the harness forces a hand-back report on every turn the co-pilot ends with a child still live, so a lane waiting on one implementer produced three parked reports in the pilot's context within 20 minutes",
+      "evidence": "git-light-tests co-pilot reports at S1 implementing, no PR, feat at 439538da, three times; each read by the pilot",
+      "size": 3
+    },
+    {
+      "agent": "pilot-fact-sheet",
+      "what": "misreported pilot-branch.test.mjs's fake-home import",
+      "evidence": "S1 implementer report, PR #702"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "`bc` missing in Git Bash broke the timing script",
+      "evidence": "S1 implementer report"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate ran twice because reviewer fixes changed the final state",
+      "evidence": "S1 implementer report, head ec7f87e6"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief's per-file wall time should name node --test duration_ms, not gate wall time (census adds 10 s grace)",
+      "evidence": "S1 implementer pushback"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "parallel implementers shared one scratchpad; measure.sh and before.txt overwritten across S2-S4",
+      "evidence": "S4 report: S2's before.txt names S4's base and base-remote files"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "auto-mode classifier blocked an implementer's mid-run SendMessage to the co-pilot",
+      "evidence": "S4 report: blocked as 'Interfere With Workloads'"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "A6 wording ambiguous for a lone init plus per-test adds (audit-context)",
+      "evidence": "S4 report; co-pilot ruled keep"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3 Test 2's 80% names 'fixture git' ambiguously: builder git (seam-reachable) vs F2 fixture column incl. test-body git",
+      "evidence": "S3 report: builder 1802->327 (-82%), vs F2 fixture ~-65%"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "reviewer ran the slice's files during the timed measurement; wall times 1.3-2x solo",
+      "evidence": "S3 report: integrate-base 24.1 s solo vs 42.9 s"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2 test 2's 80% counts test-body git the slice may not touch; unreachable by fixture work",
+      "evidence": "S2: fixture 2113->808 (-62%), 410 of it test bodies"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "no checked-in per-file git attribution; three slices built three ad hoc preloads",
+      "evidence": "S2, S3, S4 reports"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Bash tool unescapes \\\\ in heredocs; a Python heredoc turned '\\n' into a newline",
+      "evidence": "S2 report"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "diff 305 lines, 5 over the 300 limit (net -31); accepted by co-pilot",
+      "evidence": "PR #705",
+      "size": 305
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "procs.test.mjs is in S5's files but spawns no git, so measuring it was wasted",
+      "evidence": "before: spawns 3 (node 2, git 0, other 1)"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "A6's rule depends on how many tests share a builder, and the slice does not say",
+      "evidence": "schedule and telemetry-line's worktree test have one caller each, so they stayed on their own git init"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "builder git is counted nowhere in the repo; S1, S4, S5 recorded no before figure and S2 only an estimate, so S6 wrote a probe and aggregator to measure spec 1",
+      "evidence": "S6 report; scratchpad census.mjs, census.jsonl"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 was integrated at -77% against its own Done of 80%, so the shortfall surfaced only in S6",
+      "evidence": "S2.md Done; S6 census land -73.9%"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "auto mode refused the co-pilot a git commit/push on feat/git-light-tests and an Agent spawn ([Modify Shared Resources]), stopping the yellow lane on a step the plan requires",
+      "evidence": "co-pilot hand-back on itm_3a7c0c04efd7, 2026-10-16; the pilot's identical commit on the same branch (7906ad4d) was allowed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S7 implementer reported to main instead of the co-pilot; the hello was queued, not delivered, at spawn",
+      "evidence": "SendMessage answered 'Message queued for delivery'; main relayed the report"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "census.mjs computes 'before' from the current builds, so on a cut tip it understates the baseline (1884 vs fixed 2502)",
+      "evidence": "census on 3024750f prints -77.4%; fixed baseline 2502 gives -83.0%",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "census probe not handed over; S6 rewrote it and two escaping mistakes broke git-fixture.mjs for two full runs",
+      "evidence": "SyntaxError at git-fixture.mjs:58 and :62, 44 failing files each run",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a census probe that diffs spawns around build(dir) counts a nested gitFixture build twice",
+      "evidence": "land:landThree 157 = 48 own + land:aThenB 109 built inside it; land family 535 vs S7's 426",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "node:test output prints no per-file wall time for files with subtests, so the slowest files cannot be ranked from a gate log",
+      "evidence": "only red-line.test.mjs 3488 ms printed in m1/m2 logs"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "node:test output names no file per test, so per-file wall needed a custom reporter and an extra suite run",
+      "evidence": "every file after land.test.mjs reported at 280 s in the TAP; file-wall.mjs reporter written in scratch",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "spec 2's tail depends on node --test running files in path order: a 68 s single test was renamed to start earlier; a lasting fix (gate starts slow files first) needs scripts/gate.mjs",
+      "evidence": "test-timeout.test.mjs renamed hang-timeout.test.mjs; 258 s with the split alone, 216 s with the rename"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Git Bash has no bc, so a timed run's outer wall clock printed nothing",
+      "evidence": "g1.txt: 'bc: command not found'; run 1 used node duration_ms 222.5 s",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the co-pilot's go-ahead was queued while the implementer handed back, costing one resume",
+      "evidence": "two hand-backs for S6; PR #713 opened on the resume"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "pilot wait --as qa with no --item returns on unrelated deck replies",
+      "evidence": "exited on itm_e215c0e75542, itm_90c4fee732dd and two other unrelated items"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "the shared session scratchpad holds files from several agents, so names can collide",
+      "evidence": "~40 files from other agents; QA moved its own into qa-glt/"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "its worktree had no node_modules, so c8 ran on a partly red suite and Stryker aborted before mutating",
+      "evidence": "ConfigError: There were failed tests in the initial test run (@modelcontextprotocol/sdk missing)"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "knip with no knip.json returns noise; npm run coverage covers deck/** only, so it misses an all-scripts/test diff",
+      "evidence": "427 unused files reported; coverage include deck/**"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "slices S7 and S8, written by the co-pilot, failed check-slices shape",
+      "evidence": "no Rewrite check: line; Tests not name: symbol -> result; after without reason",
+      "size": 1
+    }
+  ]
+}

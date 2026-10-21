@@ -1,0 +1,50 @@
+# Friction rows, yellow-agent run (for the gate2 report)
+
+| agent | what | evidence |
+| --- | --- | --- |
+| pilot | Two deck writes at once fail one with EPERM renaming deck.json (.tmp -> deck.json) on Windows; no retry in the store's write | deck_resolve itm_2df784a14d33 and deck_reply itm_690972aec4dd each failed once, retried clean |
+| pilot | deck_read open:true returns 99k chars (600 items' bodies), over the tool limit; had to parse the saved file | first call of the session |
+| pilot | deck_status next is capped at 400 chars and refuses rather than truncates; two rejected calls | two "longer than the record keeps" errors |
+| pilot | gate1 takes no pr field though the gate's body names the PR | "a gate1 item takes no pr" |
+| S1 implementer | a sed that silently missed (Agent list on line 5 not 4) then a duplicate Models row; no test catches a duplicate row (test builds a Map) | reviewer caught it |
+| S1 implementer | a failing node:test assertion dumps all of pilot.md (~30k chars, ~5k tokens) | S1 report |
+| S1 implementer | install.test.mjs hard-codes the agent count (18), outside the slice's file list | install.test.mjs:923 |
+| S1 live gate | seeding a yellow ticket from outside a session needs a placeholder registered run (gate1 needs a live ticket, take reads args.run) | live-gate report |
+| S1 live gate | a Sign off reply carrying both choice and text is not read as a Sign off (replyFrom joins them) | live-gate report |
+| S1 live gate | trust dialog defaults to "No, exit" under ConPTY; two launches exited | live-gate report |
+| S1 live gate | no transcript written for the scratch session; who moved the row argued from timestamps | live-gate report |
+| S1 implementer | headless -p probe cannot show dontAsk (every prompt is denied anyway); S1.md's probe (c) needed an interactive pty | probe (c) reran interactively and failed |
+| S2 implementer | seeding a second yellow ticket needs an architect merge thread posted and resolved as architect, then park/take: 5 extra calls, undocumented | "the architect's merge step has not run" refusal |
+| S2 implementer | pilot prompt pin left with zero surplus by S1, so every new word needs a matching cut: three measure loops | 10132.5 before and after |
+| S2 implementer | a scratch deck keeps no log of deck tool calls and the session no transcript: "rows moving" shown by end state only | .deck/deck.log has 2 lines |
+| S2 implementer | pilot integrate refuses in a scratch repo with no remote, then when origin's HEAD names no branch | run 1 and run 2 |
+| pilot | QA note (not friction): in S2's scratch run the main session read a blocked yellow head's slice itself and posted its question instead of spawning the co-pilot; run 1 left that ticket yellow with no need. Spec 5 needs exercising with a blocker raised inside the co-pilot's work | S2 report, scratchpad/s2/run1.screen.txt, run2.screen.txt |
+| S3 implementer | /api/record pins are spread over record.test.mjs and subdeck-record.test.mjs, neither named by the slice file | first npm test 2495/2497: record.test.mjs:400, subdeck-record.test.mjs:100 |
+| S3 implementer | default node --test output cannot be grepped for results; rerun with --test-reporter=tap | grep for ^ok/^not ok returned nothing |
+| S3 implementer | no fixture recipe for seeding a yellow record into a scratch store; wrote a seed script over testUtils.mjs, registerRun and callTool | S3 report, scratchpad s3live/seed.mjs |
+| S3 implementer | a full `pilot run` start cannot be driven from an agent shell (it starts an interactive claude); live gate shown at the hook and /api/chain instead | S3 report |
+| pilot | deck_read open:true now 252k chars; and deck_status next refused once more at the 400-char cap | session of 2026-10-06 after the hand-off |
+| S4 implementer | the read-time migration collided with the gate2 live rule and the artefact did not show it: 44 failures on the first full run, a round-trip with the pilot and two extra suite runs | S4 report; 32 of 44 were "a gate2's ticket is the live ticket" |
+| S4 implementer | pins on the main-slot rule are spread over 11 test files the slice file does not name: about half the slice's diff | PR #350 file list |
+| S4 implementer | node --test failure output is verbose: file and line found by grepping a 3500-line log for `test at` | S4 report |
+| S4 implementer | the Edit tool refuses a file not yet through Read; one edit was skipped unnoticed before a suite run, a wasted full run | S4 report |
+| S4 implementer | ran out of context after the gate and before its reviewer (132k tokens, 79 tool uses): a second implementer spawned to review and close | S4 hand-back |
+| pilot | S4.md said S1 had removed pilot.md's park-on-Sign-off sentence; it had not (agents/pilot.md:353), found by the pilot reading the diff | grep park agents/pilot.md |
+| S4 second implementer | `node scripts/measure-prompt.mjs` does not print the figure its pin checks ((definition+skills+tools)/4); needed a one-line `measure()` call | scripts/test/measure-prompt.test.mjs:119 against the CLI table |
+| S4 second implementer | the pilot.md Sign off pin sits in scripts/test/ticket-states.test.mjs, found only by grepping the sentence | scripts/test/ticket-states.test.mjs:59 |
+| A1 implementer | F1's pty driver lived in the previous session's scratchpad and PR #348 names no path; found by searching temp folders | .../06fd0f41.../scratchpad/f1/drive.mjs |
+| A1 implementer | a shell heredoc lost a backslash in a regex ("Unterminated group"); rewritten with the Write tool | order.mjs |
+| A1 implementer | Claude Code prints "unknown keys description/id ignored" for every hooks.json entry, in every session | A1 live capture |
+
+## Open findings carried by the pilot (not friction)
+
+- F1 probe, 2026-10-06: under auto mode an `ask` rule overrides the classifier; a co-pilot's implementer prompted in the main terminal and the lane waited 80 s (capture: session scratchpad `f1/prompt.screen.txt`, PR of fix/yellow-agent-l17). Blocking question itm_9099ba09c0a3. `scripts/install-settings.mjs` adds `ask` rules (DEFAULT_BRANCH_ASK) on install.
+- Not shown anywhere: a main session NOT in auto mode; whether `dontAsk` on the co-pilot reaches its children there.
+- S1 implementer removed Edit/Write from the co-pilot's tools (security finding); the co-pilot edits through Bash only.
+- S2 deleted step 6's "In yellow the deck answers a plain question" paragraph as payment for the prompt pin (now 10132.5, zero surplus).
+- Explorer, 2026-10-06 (Claude Code docs, relayed summaries, not byte-verified), for itm_9099ba09c0a3: a `PermissionRequest` hook fires when a prompt is about to show and can answer an ask-rule prompt; deny shape `{"hookSpecificOutput":{"hookEventName":"PermissionRequest","decision":{"behavior":"deny","message":"...","interrupt":false}}}`; common hook input carries `agent_id` for a subagent only (`agent_type` is also set under `--agent`, so `agent_id` is the discriminator; `hooks/stop-gate.js:263`, `hooks/inbox-alert.js:259` already use it). `PreToolUse` can also return `permissionDecision: deny`. `hooks/hooks.json` registers no PermissionRequest today. Docs confirm: a subagent's `permissionMode` is ignored when the main session is in auto, acceptEdits or bypassPermissions; an explicit `ask` rule prompts even in auto mode. `DEFAULT_BRANCH_ASK` (`scripts/install-settings.mjs:419`): eight rules, pushes to main/master and `gh pr merge`, written to `~/.claude/settings.json` by an install step. Unconfirmed: whether plugins may register PermissionRequest (nothing found excluding it), what exactly the model is told on deny.
+- S3 (#349), assumed: `resumableRecordFor` filters only for a main directory (a sub-deck directory reads its own record, as the old S1 interface had it; S10/S9 remove that branch with the sub-deck); the ticket is matched by id and kind only. Two pins changed on purpose: record.test.mjs (no-ticket route answers null for a yellow newest record), subdeck-record.test.mjs (recovery test uses a red ticket). Security low, accepted: a forged newest record naming a yellow ticket hides the recovery notice; the same local writer can already write `finished`.
+- S3 live gate gap for QA: no full `pilot run` start was driven; shown were GET /api/record null, session-handoff.js silent (with a red-ticket control printing the notice) and POST /api/chain handing the green head.
+- S4 seam, decided by the pilot 2026-10-06 (assumed, for the gate2 report): the read-time migration made a gate2 on a yellow ticket unpostable (`ticketNamedBy` wants the ticket live; 44 suite failures). Spec 5 with spec 8 implies the gate rule gives way: a gate2 naming a yellow ticket needs no take; the away branch of `postItem` goes if unreachable. ADR 0087 corrected: old L6 (`takeTicket` refuses yellow) is not in L11 and S3.md named it by mistake. Readers of a stored `away` field are left for the principles review.
+- S4 (#350): readers of a stored `away` field are now dead and left for the principles review: `deck/items.mjs` (~449), `deck/server.mjs` (~847), `hooks/stop-gate.js`. Assumed by the implementer: `nextTicketOf` keeps `|| !ticket.holder` (S10 removes it); the migration matches a stored `state === 'yellow'` only. Until S9/S10 remove the sub-deck, a plain question from a sub-deck directory is no longer stamped away on this branch.
+- A1 (#351), assumed: no matcher, so a crew agent's prompt for any tool is refused (AskUserQuestion and ExitPlanMode included); a child of a crew agent that is not `pilot:`-typed (Explore) still prompts; a project agent someone names `pilot:x` is refused too; hook id `permission:any:crew-refuse`, timeout 5 s. Live gate shown with a plain auto-mode main session over `pilot:pilot-implementer` (capture: session scratchpad `a1/cap.events.log`, the pilot read it: main's own prompt shows, the agent's report quotes the refusal); NOT shown: the full pilot > co-pilot > implementer chain, for QA. Docs agreed with the explorer's entry; added fact: exit code 2 is not honoured for PermissionRequest.

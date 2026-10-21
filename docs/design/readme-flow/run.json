@@ -1,0 +1,121 @@
+{
+  "slug": "readme-flow",
+  "feature": "Co-pilot and tickets, run 2",
+  "ticket": "itm_79f3f533ec7c",
+  "branch": "feat/readme-flow",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-readme-flow",
+  "artefact": "docs/design/readme-flow/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 README heading, main flowchart and the readme-flow test",
+      "state": "integrated at 3a2d34e4",
+      "branch": "slice/readme-flow-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-readme-flow-s1",
+      "pr": 679
+    },
+    {
+      "slice": "S2 Deck subgraph, generality paragraph, contents list",
+      "state": "integrated at 0d1b80d4",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/readme-flow-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-readme-flow-s2",
+      "pr": 700
+    },
+    {
+      "slice": "readme-flow",
+      "state": "fixing: fix PR #701 (e8a89430) reviewed; integrating",
+      "after": [
+        "S1",
+        "S2"
+      ],
+      "branch": "feat/readme-flow",
+      "pr": 678
+    }
+  ],
+  "findings": [
+    "kept: deck neighbour set must equal callers and machinery (spec 2 'nothing else'); probe showed extra edges pass",
+    "kept: pilot tickets and pilot ready read the deck; add to DECK_MACHINERY and draw edges",
+    "kept: readFlow drops the arrows pre-count, throws on a second ARROW after the EDGE match (complexity 15)",
+    "kept: remove exports of readFlow, DECK_MACHINERY, deckCallers; inline deckCallers",
+    "kept: one section() helper for the heading split; S2.md Tests and Verification path corrected (nit)",
+    "kept: NODE pass skips subgraph titles (nit)",
+    "kept: QA F1 helpers node in short lines, no HTML",
+    "kept: QA F3 user->wait relabelled 'on the deck'",
+    "dropped: QA F2 graph aspect ratio; restructure for legibility only, GitHub pan/zoom",
+    "dropped: missing Model: lines in slice files; architect template, outside this feature (nit)",
+    "dropped: user<->deck edge and the three agent->you edges, pending question itm_9f66cf5a6f7c (moves spec 2)",
+    "dropped: remove contents list (A1); stays, main's call",
+    "kept: consider row, security-reviewer on test 2's spawnSync, running"
+  ],
+  "next": "pilot integrate fix/readme-flow-principles; pilot land; resume QA with the tip.",
+  "updatedAt": "2026-10-15T15:49:49.875Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "sibling worktrees' gates starve gate-census: 'the leak fixture is red and names it' times out waiting for a slot",
+      "evidence": "gate: waiting for a slot: pid 3892 in pilot-readme-flow-s2, pid 12004 in pilot-rules-ledger",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "GitHub render of a private repo's README cannot be checked from the agent's browser",
+      "evidence": "blob URL 404 unauthenticated; local mermaid-cli render used instead"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "edit script dropped a change on a CRLF file",
+      "evidence": "first edit left readFlow unchanged; redone with newline handling"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2.md's verification path names deck/test/deck-readme.test.mjs; the file is scripts/test/deck-readme.test.mjs",
+      "evidence": "fact sheet: not found at deck/test/deck-readme.test.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node heredoc dropped backslashes in a regex",
+      "evidence": "\\s+ became s+, gate 3704/1 until fixed with Edit",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "GitHub rendered view of the private repo unreachable from automation",
+      "evidence": "browser not signed in: Page not found"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA handed back while waiting on the fix-round tip instead of staying live",
+      "evidence": "report: 'made to hand back while waiting for your fix-round tip'"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "mermaid-cli has no width flag; zoom only by -s plus crop",
+      "evidence": "-w and -W rejected, two failed runs",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix round went 89 changed lines past the 80 limit without stopping",
+      "evidence": "55 insertions, 34 deletions; helpers node rewrite",
+      "size": 9
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "mermaid-cli -w invalid and -s 3 too small; cropped with PIL to read a node",
+      "evidence": "fix-round report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Python heredoc turned \\n in regex literals into newlines",
+      "evidence": "one failed edit",
+      "size": 1
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "clean read of test 2's spawnSync; LOW env inheritance dropped",
+      "evidence": "Verdict: APPROVE"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "slug": "clear-waits-co-pilot",
+  "feature": "No /clear while a co-pilot is live",
+  "ticket": "itm_f8661e31d5f7",
+  "branch": "feat/clear-waits-co-pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-clear-waits-co-pilot",
+  "qa": {
+    "branch": "feat/clear-waits-co-pilot",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-clear-waits-co-pilot",
+    "url": "http://127.0.0.1:4511"
+  },
+  "artefact": "docs/design/clear-waits-co-pilot/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A hand-off waits for the co-pilot's release",
+      "state": "integrated at 4457e77d",
+      "delivers": [
+        "1",
+        "2 (deck half)",
+        "3",
+        "5",
+        "6 (wrapper half)",
+        "7"
+      ],
+      "branch": "slice/clear-waits-co-pilot-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-clear-waits-co-pilot-s1",
+      "pr": 361
+    },
+    {
+      "slice": "S2 The pilot tells the deck and pauses its co-pilot",
+      "state": "integrated at 7b9bd34e",
+      "after": "S1 A hand-off waits for the co-pilot's release",
+      "delivers": [
+        "2 (session half)",
+        "4",
+        "6 (pause half)"
+      ],
+      "branch": "slice/clear-waits-co-pilot-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-clear-waits-co-pilot-s2",
+      "pr": 362
+    },
+    {
+      "slice": "clear-waits-co-pilot",
+      "state": "walkthrough itm_b8187b13c38f posted at 74f88ad3; awaiting the user",
+      "after": "S2 The pilot tells the deck and pauses its co-pilot",
+      "branch": "feat/clear-waits-co-pilot",
+      "pr": 360
+    }
+  ],
+  "findings": [
+    "kept: F1 delete clearOnce's first co-pilot look; the post-turn look and the releasedAt re-wait cover it (-9)",
+    "kept: F2 refuse the co-pilot inside setCoPilot via isChainHandoff moved to items.mjs; delete the server block (-3)",
+    "kept: F3 release answers 'released' only when the entry named that ticket; otherwise names the live one (+7)",
+    "kept: F4 tests for sayHeld's refused reply, coPilotFor's non-ok throw, setCoPilot's no-ticket refusal (+15)",
+    "kept: N1 drop the sameRepo clause that cannot be false",
+    "kept: N2 rename run.mjs's private coPilotFor to coPilotAt",
+    "kept: N3 record the step-3 tail cut in S2.md",
+    "kept: N5 move noCoPilot above deckHolding's JSDoc",
+    "dropped: N4 shared item-id regex constant; handoff.mjs guards deck text on its own as yellowTicket does, and the constant spreads an export for one line",
+    "dropped: N6 moot once F3 uses setCoPilot's return",
+    "dropped: the case for a SubagentStop release; rejected in yellow-agent L3 (ADR 0024: a killed agent never fires Stop)"
+  ],
+  "next": "User works through walkthrough itm_b8187b13c38f (QA owns it). On its Sign off: post gate2 (pr #360, sha 74f88ad3, walkthrough id); on that Sign off: pilot land in the feat worktree, gh pr ready 360, QA tears down, closing report.",
+  "updatedAt": "2026-10-07T08:11:38.345Z"
+}

@@ -1,0 +1,85 @@
+{
+  "slug": "idle-main-lane",
+  "feature": "One session is one run row",
+  "ticket": "itm_5717249cf87a",
+  "branch": "feat/idle-main-lane",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-idle-main-lane",
+  "artefact": "docs/design/idle-main-lane/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 pilot wait refuses an idle main lane",
+      "state": "integrated at 1a9b1d6c",
+      "branch": "slice/idle-main-lane-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-idle-main-lane-s1",
+      "pr": 550
+    },
+    {
+      "slice": "S2 The Stop hook refuses an idle main lane",
+      "state": "integrated at b5ae5323",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/idle-main-lane-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-idle-main-lane-s2",
+      "pr": 551
+    },
+    {
+      "slice": "S3 pilot handoff names both lanes",
+      "state": "integrated at ffe2ad7e",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/idle-main-lane-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-idle-main-lane-s3",
+      "pr": 553
+    },
+    {
+      "slice": "S4 The SessionStart notice names both lanes",
+      "state": "integrated at 3078efc3 (seam change ebf36cd6)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/idle-main-lane-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-idle-main-lane-s4",
+      "pr": 552
+    },
+    {
+      "slice": "S5 deck_ticket co-pilot and release say the main lane",
+      "state": "integrated at 01c29254",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/idle-main-lane-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-idle-main-lane-s5",
+      "pr": 554
+    },
+    {
+      "slice": "idle-main-lane",
+      "state": "fixing: PR #565 at ab8b4031 approved; pilot integrate stopped taking base pilot@41e787fe (conflicts: deck/test/mode-gone.test.mjs, deck/test/record.test.mjs, docs/adr/README.md); implementer resolving the base merge on feat/idle-main-lane",
+      "after": [
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "branch": "feat/idle-main-lane",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-idle-main-lane",
+      "pr": 548
+    }
+  ],
+  "findings": [
+    "kept: F1 lanesNotice pinned to every lanesFrom state + prefixed-text refusal (+12)",
+    "kept: F2 wait tests: /api/record 500 exits 1, {} parks, 500-char refusal clipped to 200 (+20)",
+    "dropped: F3 delete laneRead flag; ~1000 GETs a hold for one late pick, once-per-stop read stands",
+    "kept: F4 server-tools mainClause inside its two branches + second-repo test (+3)",
+    "kept: N1 collapse laneRefusal guards (-8)",
+    "kept: N2 drop equivalent typeof checks in session-handoff (-2)",
+    "kept: N3 one lane check at top of wait loop (-5)",
+    "dropped: N4 lanesFrom restructure, churn with no consequence",
+    "kept: N5 switching mainClause without live + assert (+1)",
+    "dropped: fix-round security LOW stop-gate refusal not whitespace-normalised; pre-existing S2 code, local deck, clipped and cannot trap",
+    "dropped: fix-round security LOW server-tools find().repo on missing item; unreachable after setCoPilot, not a regression"
+  ],
+  "next": "implementer merges origin/pilot into feat/idle-main-lane (3 conflicts), full gate, push; then pilot integrate fix/idle-main-lane, verify, pilot land; QA af20ecc30f78283e9 waits on main's word",
+  "updatedAt": "2026-10-11T03:14:52.814Z"
+}

@@ -1,0 +1,1 @@
+{"type":"assistant","timestamp":"2026-01-02T09:00:00.000Z","message":{"id":"msg_c1","model":"claude-fable-5-1","role":"assistant","content":[{"type":"tool_use","id":"toolu_c1","name":"mcp__plugin_pilot_deck__deck_status","input":{"slug":"other"}}],"usage":{"input_tokens":900,"cache_creation_input_tokens":0,"cache_read_input_tokens":900,"output_tokens":900}}}
