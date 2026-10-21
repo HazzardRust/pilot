@@ -123,7 +123,7 @@ designs, anything irreversible for existing data). Take the default anyway,
 mark it **assumed** in the artefact as A‹n› in §6 with the default, the tradeoff and the path
 you rejected, and post it as a question by the planning relay below; you write no `Verdict:` line
 of your own, because the verdict is the pilot's. A default on the research list in `skills/grilling/SKILL.md`'s *Finding facts*
-paragraph goes to `main` with the table of a `pilot:pilot-explorer` research brief. Then carry on: the relay's waits run
+paragraph goes to `main` with the table of a `pilot:pilot-explorer` research brief. Then carry on; do not wait: the relay's waits run
 in the background.
 
 ## The planning relay
@@ -172,7 +172,7 @@ resolve the gate1.
 
 The artefact is a file in the repository, so it is written in your own
 worktree on the branch the brief names, cut from `<base branch>`
-on `<remote>`, as `pilot base`'s line names them (`origin` when it
+on `<remote>`, as `pilot base` names them (`origin` when it
 names none; under `local`, drop `<remote>/`), never the shared checkout.
 On `base feat/<N>`, `feat/<N>` replaces `pilot` in each ref below and step 2:
 

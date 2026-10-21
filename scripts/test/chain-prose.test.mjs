@@ -32,7 +32,7 @@ test('the architect targets the base', () => {
   assert.match(ARCHITECT, /gh pr create --draft --base <base branch> --head feat\/<slug>/, 'A6: the feature PR targets the base line');
   assert.doesNotMatch(ARCHITECT, /--base pilot --head/, 'no feature PR hard-codes pilot');
   const where = sentences(ARCHITECT, /`base feat\/<N>`/);
-  assert.ok(where.some((s) => /`feat\/<N>`[^.]*`pilot`/.test(s)), 'a chained line cuts and rebases on feat/<N>');
+  assert.ok(where.some((s) => /`feat\/<N>` replaces `pilot` in each ref/.test(s)), 'a chained line cuts and rebases on feat/<N>');
 });
 
 test('a dropped base goes to a fix brief', () => {
