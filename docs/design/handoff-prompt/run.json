@@ -8,35 +8,38 @@
   "slices": [
     {
       "slice": "S1 Walking skeleton: the prompt is pasted, then Enter alone",
-      "state": "draft PR #31",
+      "state": "integrated",
       "branch": "slice/handoff-prompt-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-handoff-prompt-s1",
       "pr": 31
     },
     {
       "slice": "S2 The run's main session stamps its tool calls",
-      "state": "integrated at 63e605db",
+      "state": "integrated",
       "branch": "slice/handoff-prompt-s2",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-handoff-prompt-s2",
       "pr": 30
     },
     {
       "slice": "S3 An unsent prompt is retyped once, then said aloud",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S1",
         "S2"
-      ]
+      ],
+      "branch": "slice/handoff-prompt-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-handoff-prompt-s3",
+      "pr": 33
     },
     {
       "slice": "feature",
-      "state": "implementing: co-pilot running S1 ∥ S2 from 96880189; draft PR #28",
+      "state": "implementing; feat/handoff-prompt at fdddd53a; draft PR #28",
       "branch": "feat/handoff-prompt",
       "pr": 28
     }
   ],
-  "next": "co-pilot: S1 PR #31 (eca37c4a) awaiting Verdict: lines in its body, then integrate; S3 next from the new tip.",
-  "updatedAt": "2026-10-21T07:16:38.520Z",
+  "next": "successor co-pilot: pilot integrate slice/handoff-prompt-s3 (PR #33, 655e6812) in feat worktree; then fundamentalist on PR #28 and QA (5 live hand-offs under pilot run, wrapper.log)",
+  "updatedAt": "2026-10-21T07:32:52.701Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -115,6 +118,18 @@
       "agent": "pilot:pilot-implementer",
       "what": "PR body verdicts as table cells, not the checker's Verdict: shape; one round-trip",
       "evidence": "PR #31 body",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 PR body again gives reviewer verdicts as table cells without the 'Verdict:' label step 5 reads; the co-pilot's gh pr edit to add it was refused by auto mode",
+      "evidence": "PR #33 body Review table",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 implementer outlived its co-pilot and opened its PR after the hand-off; its report went to the dead co-pilot's address",
+      "evidence": "PR #33 created 07:31:57Z, after run.json updatedAt 07:29:54Z",
       "size": 1
     }
   ]
