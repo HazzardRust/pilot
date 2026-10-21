@@ -8,7 +8,8 @@
  *   the deck wrote under docs/design/, and push again. With no branch it takes the base
  *   alone.
  *
- * The base is the pilot branch, always (pilot-branch spec 3; L5): no PR is read for it,
+ * The base is the pilot branch (pilot-branch spec 3; L5), or a chained run's `feat/<N>` until
+ * N lands (`baseOf`; pilot-develop-line spec 4a, L6): no PR is read for it,
  * and a missing pilot branch on the run remote (`runRemote`; the local `pilot` under
  * `none`) stops with nothing merged rather than falling back to the default branch. A
  * feature already landed on pilot (`landedOnPilot`) takes no base, so a later feature on
@@ -38,13 +39,14 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { cleanOnPilot } from '../deck/gate2-base.mjs';
+import { RUN_BASE } from '../deck/runs.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
 import { deleteMerged } from './branches.mjs';
 import { takeSlot } from './gate-slots.mjs';
 import { mergeIntoPilot } from './sync.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
 import { assertPushable, firstLine, git, holds, PILOT_BRANCH, pilotLineage } from './pilot-branch.mjs';
-import { runRef, runRemote, shortRef } from './remotes.mjs';
+import { remoteOf, runRef, runRemote, shortRef } from './remotes.mjs';
 import { scopeOf } from './select-tests.mjs';
 import { runRecord } from './worktrees.mjs';
 
@@ -74,12 +76,19 @@ export function sliceSubject(slug, row) {
  * naming the slice throws: the slice is not this run's.
  */
 function subjectOf(cwd, head, slice) {
-  const slug = /^feat\/(.+)$/.exec(head)?.[1];
-  const file = slug && path.join(cwd, runRecord(slug));
-  if (!file || !fs.existsSync(file)) return `Merge ${slice}`;
-  const row = JSON.parse(fs.readFileSync(file, 'utf8')).slices?.find((r) => r.branch === slice);
+  const found = recordIn(cwd, head);
+  if (!found) return `Merge ${slice}`;
+  const row = found.record.slices?.find((r) => r.branch === slice);
   if (!row) throw new Error('no run record row names it');
-  return sliceSubject(slug, row);
+  return sliceSubject(found.slug, row);
+}
+
+/** The run record in `cwd` of `head`, a `feat/<slug>`: `{ slug, record }`, or null with no record there or another head. */
+function recordIn(cwd, head) {
+  const slug = /^feat\/(.+)$/.exec(head ?? '')?.[1];
+  const file = slug && path.join(cwd, runRecord(slug));
+  if (!file || !fs.existsSync(file)) return null;
+  return { slug, record: JSON.parse(fs.readFileSync(file, 'utf8')) };
 }
 
 /**
@@ -232,12 +241,11 @@ export function commitRecords(cwd, trailers = []) {
 const gitIn = (cwd) => (args) => git(cwd, ...args);
 
 /**
- * The base every integration takes: the pilot branch on the run remote, or the local one in
- * local mode (pilot-branch spec 3; pilot-fork spec 4; L5). No PR is read for it. Throws naming
- * `pilot base` when there is no pilot branch there; there is no fallback to the default branch.
- * `runs` is `runRemote`'s answer, read here when not given.
+ * The pilot branch on the run remote, or the local one in local mode (pilot-branch spec 3;
+ * pilot-fork spec 4; L5): `{ ref }`. No PR is read for it. Throws naming `pilot base` when there
+ * is no pilot branch there; there is no fallback to the default branch.
  */
-export function baseOf(cwd, runs = runRemote(gitIn(cwd))) {
+function pilotBase(cwd, runs = runRemote(gitIn(cwd))) {
   const ref = runRef(runs, PILOT_BRANCH);
   if (!holds(cwd, ['rev-parse', '-q', '--verify', `${ref}^{commit}`])) {
     throw new Error(`no ${shortRef(ref)} (run pilot base first)`);
@@ -245,21 +253,48 @@ export function baseOf(cwd, runs = runRemote(gitIn(cwd))) {
   return { ref: shortRef(ref) }; // short, so an unset pilot.remote merges with today's argv (L3)
 }
 
+/**
+ * The base every integration takes (pilot-develop-line spec 4a; L6): with the checked-out
+ * `feat/<slug>`'s run record saying `base: feat/<N>` and no landing merge of N on pilot yet,
+ * N's tip on origin, `{ ref: 'origin/feat/<N>', chained: 'feat/<N>' }`; else `pilotBase`'s
+ * `{ ref }`. The base is the record's, never read from ancestry; a record base that is neither
+ * pilot nor `feat/<slug>` throws. `runs` is `runRemote`'s answer, read here when not given.
+ */
+export function baseOf(cwd, runs = runRemote(gitIn(cwd))) {
+  const pilot = pilotBase(cwd, runs);
+  let head;
+  try {
+    head = git(cwd, 'symbolic-ref', '-q', '--short', 'HEAD');
+  } catch {} // detached: no record to read, so pilot
+  const base = recordIn(cwd, head)?.record.base;
+  if (base === undefined || base === PILOT_BRANCH) return pilot;
+  if (typeof base !== 'string' || !RUN_BASE.test(base)) throw new Error(`run record base ${JSON.stringify(base)} is not ${PILOT_BRANCH} or feat/<slug>`);
+  // Any landing of N on pilot ends the chain, contained in HEAD or not, so it never comes back.
+  if (landingsOf(cwd, base, pilot.ref).length) return pilot;
+  return { ref: shortRef(runRef(remoteOf(runs, base), base)), chained: base };
+}
+
 /** The message of the merge `pilot land` writes onto the pilot branch. */
 export const landingMessage = (head) => `Merge ${head} into ${PILOT_BRANCH}`;
 
-/**
- * Whether `landingMessage(head)` is the subject of a two-parent commit on the pilot branch's (`ref`, default `baseOf`'s)
- * first-parent history that HEAD does not contain: the feature has landed (a landed feature
- * never holds its own landing, L6). Read from git alone, never the deck; a message reaching
- * pilot only as a second parent, a one-parent commit, or a branch cut after it does not count.
- */
-export function landedOnPilot(cwd, head, ref = baseOf(cwd).ref) {
+/** `head`'s landing merges on `ref`'s first-parent history: two-parent commits subjected `landingMessage(head)`. */
+function landingsOf(cwd, head, ref) {
   const subject = landingMessage(head);
   return git(cwd, 'log', '--first-parent', '--format=%H %P%x00%s', ref)
     .split('\n')
     .map((line) => line.split('\0'))
-    .some(([ids, s]) => s === subject && ids.split(' ').length === 3 && git(cwd, 'rev-list', '-n', '1', ids.split(' ')[0], '^HEAD') !== '');
+    .filter(([ids, s]) => s === subject && ids.split(' ').length === 3)
+    .map(([ids]) => ids.split(' ')[0]);
+}
+
+/**
+ * Whether `landingMessage(head)` is the subject of a two-parent commit on the pilot branch's (`ref`, default `pilotBase`'s)
+ * first-parent history that HEAD does not contain: the feature has landed (a landed feature
+ * never holds its own landing, L6). Read from git alone, never the deck; a message reaching
+ * pilot only as a second parent, a one-parent commit, or a branch cut after it does not count.
+ */
+export function landedOnPilot(cwd, head, ref = pilotBase(cwd).ref) {
+  return landingsOf(cwd, head, ref).some((id) => git(cwd, 'rev-list', '-n', '1', id, '^HEAD') !== '');
 }
 
 /**
@@ -307,6 +342,7 @@ export function integrate(branch, options = {}) {
 
   let runs;
   let base;
+  let name;
   let taken;
   let landed;
   try {
@@ -316,8 +352,10 @@ export function integrate(branch, options = {}) {
     git(cwd, 'fetch', '-q', '--prune', 'origin');
     if (runs !== null && runs !== 'origin') git(cwd, 'fetch', '-q', '--prune', runs);
     base = baseOf(cwd, runs);
-    taken = `${PILOT_BRANCH}@${git(cwd, 'rev-parse', '--short', base.ref)}`;
-    landed = landedOnPilot(cwd, head, base.ref);
+    name = base.chained ?? PILOT_BRANCH;
+    taken = `${name}@${git(cwd, 'rev-parse', '--short', base.ref)}`;
+    // A chained run cannot have landed: its base N has not (L5).
+    landed = !base.chained && landedOnPilot(cwd, head, base.ref);
   } catch (err) {
     return { ok: false, line: `${not}: ${firstLine(err)}; nothing merged or pushed`, failing: [] };
   }
@@ -339,7 +377,7 @@ export function integrate(branch, options = {}) {
 
   try {
     // `git merge` has no --trailer: the trailers go in as the message's last paragraph.
-    if (!landed) git(cwd, 'merge', '-q', '--no-ff', '-m', `Merge base ${PILOT_BRANCH}`, ...(trailers.length ? ['-m', trailers.join('\n')] : []), base.ref);
+    if (!landed) git(cwd, 'merge', '-q', '--no-ff', '-m', `Merge base ${name}`, ...(trailers.length ? ['-m', trailers.join('\n')] : []), base.ref);
   } catch (err) {
     const stuck = reset();
     // A branch carrying pilot's commits as copies conflicts with their originals: say how
@@ -350,7 +388,7 @@ export function integrate(branch, options = {}) {
     } catch {}
     const are = copies === 1 ? 'commits is a copy' : 'commits are copies';
     const carried = copies ? `; ${copies} of ${head}'s ${are} of ${PILOT_BRANCH}'s` : '';
-    return { ok: false, line: `${not}: taking base ${PILOT_BRANCH} stopped (${firstLine(err)}); not pushed${carried}${stuck}`, failing: [] };
+    return { ok: false, line: `${not}: taking base ${name} stopped (${firstLine(err)}); not pushed${carried}${stuck}`, failing: [] };
   }
 
   if (slice) {
