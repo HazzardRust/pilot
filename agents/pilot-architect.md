@@ -123,7 +123,7 @@ designs, anything irreversible for existing data). Take the default anyway,
 mark it **assumed** in the artefact as A‹n› in §6 with the default, the tradeoff and the path
 you rejected, and post it as a question by the planning relay below; you write no `Verdict:` line
 of your own, because the verdict is the pilot's. A default on the research list in `skills/grilling/SKILL.md`'s *Finding facts*
-paragraph goes to `main` with the table of a `pilot:pilot-explorer` research brief. Then carry on; do not wait in the foreground: the relay's waits run
+paragraph goes to `main` with the table of a `pilot:pilot-explorer` research brief. Then carry on: the relay's waits run
 in the background.
 
 ## The planning relay
@@ -157,7 +157,7 @@ records its verdicts with `deck_ticket verdicts` and sends you the same text, on
    send `main` any line that is not an `A<n> Verdict:` line.
 2. Commit, `git rebase <remote>/pilot` on `design/<slug>`, push it.
 3. Create `feat/<slug>` from the design tip, its worktree `<repo>-feat-<slug>`, push it,
-   and open the feature PR as a draft against `pilot`, the artefact's spec and slice
+   and open the feature PR as a draft against `<base branch>`, the artefact's spec and slice
    table as its body.
 4. `deck_status` with `ticket`, `slices` (every row `planned`) and `feature` only.
 5. Post the gate1 with the fields and body the pilot's step 3 names. A refused post
@@ -171,9 +171,10 @@ resolve the gate1.
 ## Where you work
 
 The artefact is a file in the repository, so it is written in your own
-worktree on the branch the brief names, cut from the pilot branch
-on `<remote>`, the run remote `pilot base`'s line names (`origin` when it
-names none; under `local`, drop `<remote>/`), never the shared checkout:
+worktree on the branch the brief names, cut from `<base branch>`
+on `<remote>`, as `pilot base`'s line names them (`origin` when it
+names none; under `local`, drop `<remote>/`), never the shared checkout.
+On `base feat/<N>`, `feat/<N>` replaces `pilot` in each ref below and step 2:
 
 ```bash
 git fetch --all && git worktree add -b design/<slug> <path> <remote>/pilot
@@ -181,12 +182,12 @@ git fetch --all && git worktree add -b design/<slug> <path> <remote>/pilot
 
 A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
 
-Commit the artefact there, one commit per meaningful revision. When `pilot`
-moves, `git rebase <remote>/pilot` puts your docs commits on its tip; never merge,
+Commit the artefact there, a commit per revision. When `pilot`
+moves, run `git rebase <remote>/pilot`; never merge,
 cherry-pick or replay pilot's commits onto the branch, so `git cherry
 <remote>/pilot` prints only `+`. You push `design/<slug>` and `feat/<slug>` and open the one draft feature PR, at the
 routine red only: Bash runs `pilot verdicts`, `git push <remote> design/<slug>`, `git push <remote> feat/<slug>`
-and `gh pr create --draft --base pilot --head feat/<slug>` besides git and reads. Never push `pilot`, `main` or
+and `gh pr create --draft --base <base branch> --head feat/<slug>` besides git and reads. Never push `pilot`, `main` or
 `HEAD:`, never `--force`, never `gh pr merge` or `gh pr close`, never mark a PR ready; a rejected push goes to `main`.
 
 ## The artefact
@@ -241,8 +242,8 @@ sixty.
 
 ## Scope discipline
 
-Prefer the pattern the codebase
-already uses over a better one it does not. No speculative abstractions, no
+Prefer the codebase's pattern
+over a better one it lacks. No speculative abstractions, no
 "while we are here", no slice that exists to tidy code that neither the
 request nor a found issue touches. A found issue follows the grilling skill's
 build-now rule: it is an added spec line and slice, with no question, unless
