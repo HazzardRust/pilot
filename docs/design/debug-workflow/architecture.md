@@ -97,6 +97,7 @@ five tests for no spec line, so there is **no fold slice** (L8).
 - **A3 All own-branch runs count**: push, PR (draft or not), dispatch and schedule, with forks excluded (itm_d9ad308820aa). Tradeoff:
   scratch dispatches are reported too. Rejected: only `pilot` and open PRs, which misses the dispatch that started this ticket.
   Verdict: stands — the motivating run was a dispatch on a fix branch.
+  Answer: the user chose "All own-branch runs" (default) on itm_d9ad308820aa, 2026-10-21. Settled.
 - **A4 Add `pilot ci <run-id>`** as spec 7 (itm_861cad618f35). Tradeoff: one more subcommand. Rejected: the summary only in the line.
   Verdict: stands — the crew reads a 40-line summary instead of a 10k-line log; the user asked for a workflow the agents can use.
   Answer: the user chose "Add pilot ci" (default) on itm_861cad618f35, 2026-10-21. Settled.
