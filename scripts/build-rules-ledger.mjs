@@ -12,7 +12,9 @@
  *
  * Every commit that touched `rules/` contributes its whole `rules/` tree, and the working
  * tree contributes the files as they stand, so a rules edit and its ledger entry land in
- * the same commit. `.gitattributes` pins `eol=lf`, so the bytes hashed are the bytes a
+ * the same commit. The ledger already committed is a third input, because history can lose
+ * versions (the public origin is one squashed commit): a rebuild never drops a hash once
+ * shipped, and removing one on purpose is a hand edit of the file. `.gitattributes` pins `eol=lf`, so the bytes hashed are the bytes a
  * checkout holds and the install copies.
  *
  * Usage:
