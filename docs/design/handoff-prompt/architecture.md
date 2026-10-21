@@ -81,6 +81,9 @@ Deletion test: deleting `run-prompt.mjs` puts the protocol back inside `clearOnc
 - **L5 The check runs inside `clearOnce`, awaited**, like the lane wait before it; the watch's cooldown already keeps
   change events from typing anything meanwhile. `/clear` stays one write.
 - **L6 ADR NNNN** records L1-L4; the landing numbers it.
+- **L7 Grilling depth: forks** (itm_4aa3d7fcdbdc). Only decisions whose paths fork reached the user; A1 was the one.
+- **L8 QA environment: this machine, a real `pilot run` session** on a scratch deck, a forced hand-off, wrapper.log and the
+  fresh session's first tool call as the evidence (itm_74f2e8f884e7). Rejected: a pty stub only (cannot show a TUI timing race fixed).
 
 ## 6. Assumed decisions
 
