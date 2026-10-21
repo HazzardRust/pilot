@@ -195,7 +195,7 @@ body, opened `--draft`, and marked ready only on the user's Sign off.
 ### 1. Problem and spec, with the user
 
 With no ticket live, `deck_ticket take` the deck's next, then run `pilot base`, then
-`pilot sync`. A direct
+`pilot sync` only on `base pilot`. A direct
 request is first posted as a `ticket` in the user's words, naming
 `docs/design/<slug>/architecture.md`, then taken.
 
@@ -203,13 +203,12 @@ The user often brings a problem ("the nightly sweep runs out of memory"), not
 a feature: restate it in one paragraph in their terms, then draft the spec
 with them: a numbered list
 of behaviours, each one a sentence a user could watch happen ("a second
-`terraform apply` plans no changes", "a signed-in user's job filter survives
-a reload") with the evidence that would show it
-did. When the user came with a spec already, this step sharpens it: every
+`terraform apply` plans no changes") with the evidence that shows it
+did. When the user brings a spec, this step sharpens it: every
 line gets its evidence, and the lines that are really design decisions in
 disguise are moved to step 3. The spec is what the architect cuts into
 slices, what every slice traces back to, and what the final procedure at
-step 8 walks the user through, so a behaviour missing here is a behaviour
+step 8 walks the user through, so a behaviour missing here is one
 nobody builds or tests.
 
 **The run's first deck item asks how deep the user wants to be grilled**:
@@ -236,11 +235,11 @@ its body one line: the Defender row reads `fail`, or `cannot tell` without an ad
 both steps are the user's to run as administrator, if they choose; its screens the printed lines in order, the exclusion first, with no `ticket` and not `blocking`,
 then `pilot doctor defender advised <item id>`; exit 1 posts nothing.
 
-Name anything only the user can supply (a credential, a dashboard toggle, an
+Name anything only the user can supply (a credential, an
 account, a decision that is theirs to make) and hand those over now with
 instructions for where to find them, as a `wizard` script when the steps run
 past a couple of lines. Send the first `deck_status` before the architect is
-spawned, with `slug`, `feature`, `slices: []` and `next` naming the open items
+spawned, with `slug`, `feature`, `base`, `slices: []` and `next` naming the open items
 and the design branch, so the run has a record from its first minutes. Then
 start step 2 in the same breath: the architect
 gets the problem and the draft spec, not a finished one, and step 3 finishes
@@ -500,7 +499,8 @@ Sign off on its walkthrough is not the feature's Gate 2; QA closes that thread a
 edits its QA comment. On QA's `signed <id>`, or your own gate2's press, the deck lands it and
 the press frees the lane: its line wakes you with what the deck took in place, and you run no `pilot landing`.
 On `landed` its `report due` line asks for your `Findings:` (Ending a run).
-Every press, a clean one too, and every `NOT landed` get one `pilot-lander` whose brief is the gate2 id: it resolves
+A `NOT landed: built on feat/<N>` for a dropped N is a fix brief reverting N's own commits on `feat/<slug>`, then a fresh gate2.
+Every press, a clean one too, and every `NOT landed` but that get one `pilot-lander` whose brief is the gate2 id: it resolves
 with `resolving-merge-conflicts`, says `Land again` and the deck lands, then prunes and hands you one line; its
 trade-off is one question from you. A `lander due` line asks for that spawn; with no room in `pilot budget`, spawn
 it, as that line names it, as soon as a slot frees. At your hand-off spawn none: it queues, and the next session's first
