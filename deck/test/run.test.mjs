@@ -1410,6 +1410,23 @@ test('the wrapper logs the /clear it typed and the marker it waited for', async 
   assert.match(log, new RegExp(`Z run: marker for ${stash.id}, typed the prompt$`, 'm'));
 });
 
+test('a stop during the settle types the paste and no Enter (F5)', async (t) => {
+  const home = scratchHome(t);
+  const stash = item();
+  await deckHolding(t, [stash]);
+  const stop = new AbortController();
+  const keys = keyboard([stash]);
+  const type = (text) => {
+    keys.type(text);
+    if (text.startsWith('\x1b[200~')) stop.abort();
+  };
+  atRest();
+
+  assert.equal(await wrapper.clearOnce({ cwd: OURS, type, signal: stop.signal, pollMs: 10 }), true);
+  assert.deepEqual(keys.typed, ['/clear\r', pasted('Pick up the hand-off on the deck.')]);
+  assert.match(wrapperLog(home), new RegExp(`Z run: stopped before the prompt was taken for ${stash.id}$`, 'm'));
+});
+
 test('on no marker the wrapper posts the failure on the handoff thread and the chat, and types no prompt', async (t) => {
   const home = scratchHome(t);
   const stash = item();
@@ -1447,7 +1464,7 @@ test('not started is said on the thread', async (t) => {
   assert.deepEqual(replies.map((c) => c.arguments.id), [stash.id], 'one reply, on the hand-off');
   assert.match(replies[0].arguments.text, NOT_STARTED);
   assert.ok(replies[0].arguments.text.includes(stash.id));
-  assert.match(wrapperLog(home), /Z run: retyped Enter\n.*Z run: hand-off not started$/m);
+  assert.match(wrapperLog(home), new RegExp(`Z run: retyped Enter for ${stash.id}\\n.*Z run: hand-off not started for ${stash.id}$`, 'm'));
 });
 
 test('a closed thread falls back to the chat', async (t) => {

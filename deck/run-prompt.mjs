@@ -21,53 +21,46 @@ export const SETTLE_MS = 300;
  */
 export const TAKEN_WAIT_MS = 60_000;
 
-/** How often the tool-call stamp is read. */
-const TAKEN_POLL_MS = 1000;
-
 /** `text` as one bracketed paste. */
 export const pasted = (text) => `\x1b[200~${text}\x1b[201~`;
 
 /**
- * Types `pasted(text)`, waits `settleMs`, then types a lone `\r`. Answers whether the
- * Enter went in: false, with nothing more typed, when `signal` aborts first, because
- * a wrapper whose session has gone has no input line left to submit.
+ * Hands the fresh session its first prompt: types `pasted(text)`, waits `settleMs`, types
+ * a lone `\r`, then checks the session took it (handoff-prompt L3, L4): a tool call of its
+ * own, stamped by `post-tool.js`, at or after the moment read before the paste, so the old
+ * session's calls never count. None within `takenWaitMs` types one lone `\r` more, safe
+ * because an Enter on an empty input line does nothing (it submits whatever the user has
+ * typed there meanwhile, once, as the user's own Enter would); none within the bound again
+ * is `'not started'`, which the caller says aloud. A second retype would repeat what
+ * failed, so there is none. A stop at any point types nothing more: `'stopped'`, because a
+ * wrapper whose session has gone has no input line left to submit. Every outcome line names
+ * the hand-off `id`, because wrapper.log is machine-wide and two wrappers write to it.
  */
-export async function submitPrompt(text, { type, signal, settleMs = SETTLE_MS }) {
-  if (signal.aborted) return false;
-  type(pasted(text));
-  await pause(settleMs, signal);
-  if (signal.aborted) return false;
-  type('\r');
-  return true;
-}
-
-/**
- * Whether the fresh session took the prompt (handoff-prompt L3, L4): a tool call of its
- * own, stamped by `post-tool.js`, at or after `since`, which is read before the paste so
- * the old session's calls never count. None within `takenWaitMs` types one lone `\r`
- * more, safe because an Enter on an empty input line does nothing (it submits whatever
- * the user has typed there meanwhile, once, as the user's own Enter would); none within the
- * bound again is `'not started'`, which the caller says aloud. A second retype would
- * repeat what failed, so there is none. A stop types nothing more: `'stopped'`.
- */
-export async function promptTaken({ since, type, signal, pollMs = TAKEN_POLL_MS, takenWaitMs = TAKEN_WAIT_MS }) {
-  const taken = () => waitFor(() => lastToolRan() >= since, { signal, pollMs, waitMs: takenWaitMs });
+export async function handPrompt(text, { id, type, signal, settleMs = SETTLE_MS, pollMs, takenWaitMs = TAKEN_WAIT_MS }) {
+  const log = (what) => logLine(`run: ${what} for ${id}`);
   const stopped = () => {
-    logLine('run: stopped before the prompt was taken');
+    log('stopped before the prompt was taken');
     return 'stopped';
   };
+  if (signal.aborted) return stopped();
+  const since = Date.now();
+  type(pasted(text));
+  await pause(settleMs, signal);
+  if (signal.aborted) return stopped();
+  type('\r');
+  const taken = () => waitFor(() => lastToolRan() >= since, { signal, pollMs, waitMs: takenWaitMs });
   if (await taken()) {
-    logLine('run: prompt taken');
+    log('prompt taken');
     return 'taken';
   }
   if (signal.aborted) return stopped();
   type('\r');
-  logLine('run: retyped Enter');
+  log('retyped Enter');
   if (await taken()) {
-    logLine('run: prompt taken');
+    log('prompt taken');
     return 'retyped';
   }
   if (signal.aborted) return stopped();
-  logLine('run: hand-off not started');
+  log('hand-off not started');
   return 'not started';
 }
