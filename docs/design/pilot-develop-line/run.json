@@ -95,12 +95,13 @@
     },
     {
       "slice": "S11 The standing rules describe slice commits (added)",
-      "state": "implementing: held on a classifier-refused edit (rules/orchestration.md:37), question to main; edits uncommitted in the worktree",
+      "state": "integrated",
       "after": [
         "S4"
       ],
       "branch": "slice/pilot-develop-line-s11",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-pilot-develop-line-s11"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-pilot-develop-line-s11",
+      "pr": 22
     }
   ],
   "findings": [
@@ -112,8 +113,8 @@
     "kept: agents/pilot.md step 3 'opens the feature PR as a draft against pilot' is wrong on a chained run (pins pilot-branch-rules:39, one-line-wording:43) — for the step-7 fix round",
     "kept: scratch-stop.test.mjs EEXIST flake on a shared %TEMP% path — for the step-7 fix round"
   ],
-  "next": "co-pilot: integrating S8 (#21); S11 resuming (user made the refused edit); then step 7",
-  "updatedAt": "2026-10-21T04:20:23.935Z",
+  "next": "co-pilot: integrating S11 (#22), the last slice; then step 7 fundamentalist and QA read-only",
+  "updatedAt": "2026-10-21T04:29:58.088Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -240,6 +241,11 @@
       "agent": "pilot:pilot-implementer",
       "what": "deck/test/scratch-stop.test.mjs symlink-registry test failed EEXIST on a shared %TEMP% path, passed on rerun",
       "evidence": "S8 first gate at ce7bd767"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the always-loaded rules cap (3,500 tokens) sat within 17 tokens of its limit; the first S11 wording failed measure-rules",
+      "evidence": "measure-rules.test.mjs: 3,517 > 3,500"
     }
   ]
 }
