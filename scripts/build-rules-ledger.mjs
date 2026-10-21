@@ -12,7 +12,9 @@
  *
  * Every commit that touched `rules/` contributes its whole `rules/` tree, and the working
  * tree contributes the files as they stand, so a rules edit and its ledger entry land in
- * the same commit. `.gitattributes` pins `eol=lf`, so the bytes hashed are the bytes a
+ * the same commit. The ledger already committed is a third input, because history can lose
+ * versions (the public origin is one squashed commit): a rebuild never drops a hash once
+ * shipped, and removing one on purpose is a hand edit of the file. `.gitattributes` pins `eol=lf`, so the bytes hashed are the bytes a
  * checkout holds and the install copies.
  *
  * Usage:
@@ -59,7 +61,23 @@ function blobBytes(root, shas) {
   return bytes;
 }
 
-/** The ledger as the history and working tree of the checkout at `root` say it should be. */
+/**
+ * The ledger already at `root`, `{}` when there is none. History can lose versions a machine
+ * still holds (the public origin began as one squashed commit), so every hash the ledger
+ * once carried is kept; a ledger that is not a map of hash lists throws rather than being dropped.
+ */
+function committedLedger(root) {
+  const file = path.join(root, RULES_LEDGER_FILE);
+  if (!fs.existsSync(file)) return {};
+  let ledger;
+  try { ledger = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (err) { throw new Error(`${RULES_LEDGER_FILE}: ${err.message}`); }
+  const valid = ledger && typeof ledger === 'object' && !Array.isArray(ledger)
+    && Object.values(ledger).every((hashes) => Array.isArray(hashes) && hashes.every((h) => /^[0-9a-f]{64}$/.test(h)));
+  if (!valid) throw new Error(`${RULES_LEDGER_FILE} is not a map of sha256 lists; restore it from git.`);
+  return ledger;
+}
+
+/** The ledger as the history, working tree and committed ledger of the checkout at `root` say it should be. */
 function buildRulesLedger(root) {
   // A shallow clone has lost the versions a machine may still hold, and a ledger built
   // from it would quietly stop recognising them.
@@ -81,11 +99,13 @@ function buildRulesLedger(root) {
   }
   const bytes = blobBytes(root, [...new Set([...blobsByPath.values()].flatMap((set) => [...set]))]);
   const hashes = new Map([...blobsByPath].map(([rel, shas]) => [rel, new Set([...shas].map((s) => sha256(bytes.get(s))))]));
-  const rules = path.join(root, 'rules');
-  for (const rel of filesUnder(rules)) {
+  const add = (rel, hash) => {
     if (!hashes.has(rel)) hashes.set(rel, new Set());
-    hashes.get(rel).add(sha256(fs.readFileSync(path.join(rules, rel))));
-  }
+    hashes.get(rel).add(hash);
+  };
+  const rules = path.join(root, 'rules');
+  for (const rel of filesUnder(rules)) add(rel, sha256(fs.readFileSync(path.join(rules, rel))));
+  for (const [rel, kept] of Object.entries(committedLedger(root))) for (const hash of kept) add(rel, hash);
   const ledger = {};
   for (const rel of [...hashes.keys()].sort()) ledger[rel] = [...hashes.get(rel)].sort();
   return ledger;
