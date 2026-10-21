@@ -31,11 +31,11 @@
     },
     {
       "slice": "ci-cross-os",
-      "state": "landing started in C:/Users/Hazzard/Projects/pilot-feat-ci-cross-os"
+      "state": "refused: ail; failing: a plain directory at the land dir name is left alone and named, a failing gh still lands and leaves the main PR unknown, mergeIntoPilot lands two features that each add an ADR (+31 more); log C:\\Users\\Hazzard\\.claude\\pilot\\logs\\20261021T065802225Z-feat-ci-cross-os.log; pilot not pushed"
     }
   ],
-  "next": "ci-cross-os (green): lander live on gate2 itm_437954462052; Findings: on its closing report (human steps: merge the pilot->main PR with a merge commit; kept worktrees feat-ci-cross-os, slice-ci-cross-os-s1/s2). handoff-prompt: co-pilot live. audit-f1 (red): its 4 questions open. Proposal itm_12ba901f9f50 (yellow-lane refusal) open.",
-  "updatedAt": "2026-10-21T06:58:39.609Z",
+  "next": "ci-cross-os (green): lander pressing Land again once after the overlap; on landed, Findings: on its report. Found: a deck restart orphans a running land child — ticket proposal after the landing.",
+  "updatedAt": "2026-10-21T07:05:47.227Z",
   "friction": [
     {
       "agent": "pilot-implementer S1",
@@ -63,6 +63,17 @@
       "agent": "pilot:pilot-implementer",
       "what": "WSL output comes back UTF-16 with NUL bytes; the background output file was flagged binary",
       "evidence": "S2 WSL gate log"
+    },
+    {
+      "agent": "pilot:pilot-lander",
+      "what": "the deck's restart marked the landing interrupted while its land child kept running; Land again started a second land in the same dir, which pulled the first's files out (34 red, 31 of them ERR_MODULE_NOT_FOUND) and cut the second short",
+      "evidence": "logs 20261021T065802225Z and 20261021T070248928Z-feat-ci-cross-os.log",
+      "size": 10
+    },
+    {
+      "kind": "drain",
+      "what": "pilot read two land logs to tell overlap failures from real ones",
+      "size": 2
     }
   ]
 }
