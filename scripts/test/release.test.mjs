@@ -105,6 +105,28 @@ test('the first landing opens it labelled', (t) => {
   assert.ok(calls.findIndex((args) => args[0] === 'label') < calls.findIndex((args) => args[1] === 'create' && args[0] === 'pr'));
 });
 
+test('a label gh refuses still leaves the release PR, with why', (t) => {
+  const { gitIn, a } = repos(t, 'a');
+  land(a, gitIn);
+  const { gh: answer, calls } = fakeGh([], undefined, { created: 903 });
+  const gh = (args) => {
+    if (args[0] === 'label') {
+      calls.push(args);
+      throw new Error('HTTP 403: Resource not accessible by integration');
+    }
+    return answer(args);
+  };
+
+  const release = releasePr({ git: gitIn(a), gh });
+
+  assert.equal(release.number, 903);
+  assert.equal(release.opened, true);
+  assert.equal(release.why, 'gh label create failed: HTTP 403: Resource not accessible by integration');
+  const creates = called(calls, 'pr', 'create');
+  assert.equal(creates.length, 1);
+  assert.ok(!creates[0].includes('--label'), 'no label it could not make');
+});
+
 test('a fork run remote opens none', (t) => {
   const { gitIn, a } = repos(t, 'a');
   git(a, 'remote', 'add', 'fork', git(a, 'remote', 'get-url', 'origin'));

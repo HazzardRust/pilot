@@ -29,7 +29,8 @@ function titleOf(slugs) {
 /**
  * The release PR's title, body and rows from git (L3). `git` is `(args) => string`; `pilotRef`
  * and `mainRef` are refs git takes literally; `prs` is `gh pr list --base pilot --state merged`'s
- * `{ number, headRefName }` list, the feature PR of each row, the highest number when several.
+ * `{ number, headRefName, isCrossRepository }` list (the newest 200; an older one reads `–`), the
+ * feature PR of each row, never a fork's, the highest number when several.
  */
 export function releaseNotes({ git, pilotRef, mainRef, prs }) {
   const log = git(['log', '--first-parent', '--reverse', '--format=%H%x09%P%x09%s', `${mainRef}..${pilotRef}`]);
@@ -38,7 +39,7 @@ export function releaseNotes({ git, pilotRef, mainRef, prs }) {
     const [sha, parents, subject] = line.split('\t');
     const slug = LANDING.exec(subject ?? '')?.[1];
     if (!slug || parents.split(' ').length !== 2) continue;
-    const numbers = prs.filter((pr) => pr?.headRefName === `feat/${slug}` && Number.isSafeInteger(pr.number) && pr.number > 0).map((pr) => pr.number);
+    const numbers = prs.filter((pr) => pr?.headRefName === `feat/${slug}` && pr.isCrossRepository !== true && Number.isSafeInteger(pr.number) && pr.number > 0).map((pr) => pr.number);
     rows.push({ slug, pr: numbers.length ? Math.max(...numbers) : null, sha });
   }
   const table = ['| Feature | PR | Landing |', '| --- | --- | --- |', ...rows.map(({ slug, pr, sha }) => `| ${slug} | ${pr === null ? '–' : `#${pr}`} | ${sha} |`)];
@@ -49,7 +50,7 @@ export function releaseNotes({ git, pilotRef, mainRef, prs }) {
  * Main gets pilot through the release PR (A1, A6): the open one from this repository's pilot to
  * the default branch, rewritten with `releaseNotes` and labelled, else one opened ready with them
  * and the label, which is created first (`--force`, so an existing one stands). Answers
- * `{ number, opened }`; under a run remote other than origin, or `none`, `{ number: null, byHand }`,
+ * `{ number, opened }`, with `why` too when gh could not make the label and the PR went without it; under a run remote other than origin, or `none`, `{ number: null, byHand }`,
  * the pilot to open one from, with no gh call; when git or gh cannot answer, `{ number: null, why }`.
  * `already`, the feature on pilot before this landing, rewrites an open one but opens none: with
  * none, `{ number: null, none: true }`. Never merges and never throws: the feature is already landed.
@@ -81,7 +82,7 @@ export function releasePr({ git, gh, already = false }) {
   if (!open && already) return { number: null, opened: false, none: true };
   let notes;
   try {
-    const features = listed(['pr', 'list', '--base', PILOT_BRANCH, '--state', 'merged', '--limit', '200', '--json', 'number,headRefName']);
+    const features = listed(['pr', 'list', '--base', PILOT_BRANCH, '--state', 'merged', '--limit', '200', '--json', 'number,headRefName,isCrossRepository']);
     notes = releaseNotes({ git, pilotRef: runRef(runs, PILOT_BRANCH), mainRef: runRef(runs, base), prs: features });
   } catch (err) {
     return unknown(`release notes failed: ${firstLine(err)}`);
@@ -93,15 +94,17 @@ export function releasePr({ git, gh, already = false }) {
       return { why: `gh ${args.slice(0, 2).join(' ')} failed: ${firstLine(err)}` };
     }
   };
+  // A label gh cannot make costs the label, never the PR: its why rides on the answer.
   const label = step(['label', 'create', LABEL, '--force']);
-  if (label.why) return unknown(label.why);
+  const labelled = (flag) => (label.why ? [] : [flag, LABEL]);
+  const answer = (number, opened) => ({ number, opened, ...(label.why && { why: label.why }) });
   if (open) {
-    const edit = step(['pr', 'edit', String(open.number), '--title', notes.title, '--body', notes.body, '--add-label', LABEL]);
-    return edit.why ? unknown(edit.why) : { number: open.number, opened: false };
+    const edit = step(['pr', 'edit', String(open.number), '--title', notes.title, '--body', notes.body, ...labelled('--add-label')]);
+    return edit.why ? unknown(edit.why) : answer(open.number, false);
   }
-  const create = step(['pr', 'create', '--base', base, '--head', PILOT_BRANCH, '--title', notes.title, '--body', notes.body, '--label', LABEL]);
+  const create = step(['pr', 'create', '--base', base, '--head', PILOT_BRANCH, '--title', notes.title, '--body', notes.body, ...labelled('--label')]);
   if (create.why) return unknown(create.why);
   const number = Number(/\/pull\/(\d+)\s*$/.exec(String(create.said))?.[1]);
   if (!Number.isSafeInteger(number) || number <= 0) return unknown('gh pr create printed no PR URL');
-  return { number, opened: true };
+  return answer(number, true);
 }
