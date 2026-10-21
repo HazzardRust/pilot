@@ -89,12 +89,16 @@ five tests for no spec line, so there is **no fold slice** (L8).
 
 - **A1 Poll in the deck daemon every 5 min**, only for repositories with an open ticket (itm_2e9ff4aae745). Tradeoff: a red run while
   the deck is off, older than 6 h when it returns, is missed. Rejected: polling inside `pilot wait`, which dies with the session and repeats per wait.
+  Verdict: stands — the queued ticket other-host (itm_b18bcafffbce) will abstract the GitHub calls; the poller sits behind the same injectable gh seam as `openRuns`, so it moves with them.
 - **A2 Unrouted goes to the chat, and the pilot proposes** (itm_9777b734b8eb). Tradeoff: one pilot turn per unrouted red run, and spec 5's
   evidence becomes a chat line plus a pin instead of a proposal item. Rejected: the daemon posting the proposal, because it cannot fill
   Found or Estimate.
+  Verdict: stands — matches ticket-making: no ticket without the user's yes.
 - **A3 All own-branch runs count**: push, PR (draft or not), dispatch and schedule, with forks excluded (itm_d9ad308820aa). Tradeoff:
   scratch dispatches are reported too. Rejected: only `pilot` and open PRs, which misses the dispatch that started this ticket.
+  Verdict: stands — the motivating run was a dispatch on a fix branch.
 - **A4 Add `pilot ci <run-id>`** as spec 7 (itm_861cad618f35). Tradeoff: one more subcommand. Rejected: the summary only in the line.
+  Verdict: stands — the crew reads a 40-line summary instead of a 10k-line log; the user asked for a workflow the agents can use.
 - red team: S1 and S2 each half-built `cleanField`. S1 quoted the branch and S2 cleaned test text, which would have needed two cleaners or an `after` that serialises the skeleton. Now S1's line carries no free text: the run id and attempt are integers, the event is from a fixed list, and the URL is shape-checked. S2 owns the one cleaner, and S3 adds the branch through it.
 - red team: S2's red step adds `ci` to `pilot help`. `scripts/test/operating-commands.test.mjs:14` fails on any help subcommand that is
   neither in `NON_MOVING` nor documented under `docs/OPERATING.md` "Commands under the hood". S2 now owns that test and adds `ci` to `NON_MOVING`.
