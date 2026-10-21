@@ -13,7 +13,7 @@ the deck's chat by hand. Two gaps sit behind the question.
 
 ## 2. Spec
 
-Every line is *assumed* until the user answers the spec question (itm_95ade1208a01).
+Agreed by the user on itm_95ade1208a01.
 
 | # | Behaviour | Evidence (bar) |
 |---|---|---|
@@ -92,6 +92,7 @@ five tests for no spec line, so there is **no fold slice** (L8).
 - **A1 Poll in the deck daemon every 5 min**, only for repositories with an open ticket (itm_2e9ff4aae745). Tradeoff: a red run while
   the deck is off, older than 6 h when it returns, is missed. Rejected: polling inside `pilot wait`, which dies with the session and repeats per wait.
   Verdict: stands — the queued ticket other-host (itm_b18bcafffbce) will abstract the GitHub calls; the poller sits behind the same injectable gh seam as `openRuns`, so it moves with them.
+  Answer: the user chose "Daemon poll, 5 min" (default) on itm_2e9ff4aae745, 2026-10-21. Settled.
 - **A2 Unrouted goes to the chat, and the pilot proposes** (itm_9777b734b8eb). Tradeoff: one pilot turn per unrouted red run, and spec 5's
   evidence becomes a chat line plus a pin instead of a proposal item. Rejected: the daemon posting the proposal, because it cannot fill
   Found or Estimate.
