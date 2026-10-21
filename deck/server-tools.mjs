@@ -344,6 +344,7 @@ export function callTool(name, args, land = {}) {
       slug: args?.slug,
       ticket: args?.ticket,
       branch: args?.branch,
+      base: args?.base,
       worktree: named,
       qa: args?.qa,
       artefact: args?.artefact,

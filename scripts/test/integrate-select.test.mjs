@@ -93,7 +93,7 @@ function echoed(work) {
 const NO_SLOT = `slot=${process.env.PILOT_GATE_SLOT ?? '-'}`;
 
 const gh = (args) => (args[0] === 'pr' && args[1] === 'view' ? JSON.stringify({ mergeable: 'MERGEABLE' }) : args[0] === 'pr' ? '[]' : 'me\n');
-const quiet = { findPr: () => ({ number: 12, title: 'feat(x): S1 the first slice' }), install: () => {}, gh };
+const quiet = { install: () => {}, gh };
 
 test('a slice merge runs the selection since the tip before it', (t) => {
   const { work } = repos(t);

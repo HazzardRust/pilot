@@ -1,9 +1,9 @@
 ---
-status: accepted
+status: superseded
 date: 2026-10-07
 tags: [git, runs]
 supersedes: []
-superseded_by: []
+superseded_by: [0176]
 paths: [docs/design/co-pilot-reports/architecture.md, scripts/integrate.mjs]
 ---
 # PR titles have one format and integrate enforces it

@@ -90,25 +90,34 @@ export const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fai
 
 /**
  * A fake `gh` that records its argv, answers `pr list --head <h>` with the `prs` whose
- * head is `h` (`--state open` keeps the open ones), `pr comment` with `comment()`, `pr close`
- * with '', and `pr create` with PR `created`'s URL. A PR's state defaults to MERGED, as GitHub
+ * head is `h`, else `pr list --base <b>` with those whose base is `b` (`--state` keeps that state's),
+ * `pr comment` with `comment()`, `pr edit` and `label create` with '', and `pr create`
+ * with PR `created`'s URL, and `pr view <n> --json state` with the next of `views` (the last
+ * repeats), else the PR's listed state. A PR's state defaults to MERGED, as GitHub
  * reads a feature PR once pilot holds its head (one-integration-line A5); its base to main.
+ * `pr close` is not stubbed: the landing never closes a PR (pilot-develop-line A1).
  */
-export function fakeGh(prs = [], comment = () => '', { created = 900 } = {}) {
+export function fakeGh(prs = [], comment = () => '', { created = 900, views = [] } = {}) {
   const calls = [];
+  let viewed = 0;
   const gh = (args) => {
     calls.push(args);
-    if (args[0] === 'pr' && args[1] === 'list' && args.includes('--head')) {
-      const head = args[args.indexOf('--head') + 1];
-      const open = args[args.indexOf('--state') + 1] === 'open';
+    if (args[0] === 'pr' && args[1] === 'list') {
+      const flag = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
+      const [head, base, state] = [flag('--head'), flag('--base'), flag('--state')];
       const listed = prs
-        .filter((pr) => pr.headRefName === head)
         .map((pr) => ({ state: 'MERGED', baseRefName: 'main', isCrossRepository: false, ...pr }))
-        .filter((pr) => !open || pr.state === 'OPEN');
+        .filter((pr) => (head === undefined ? base === undefined || pr.baseRefName === base : pr.headRefName === head))
+        .filter((pr) => state === undefined || state === 'all' || pr.state === state.toUpperCase());
       return JSON.stringify(listed);
     }
     if (args[0] === 'pr' && args[1] === 'comment') return comment(args);
-    if (args[0] === 'pr' && args[1] === 'close') return '';
+    if (args[0] === 'pr' && args[1] === 'view') {
+      const state = views.length ? views[Math.min(viewed++, views.length - 1)] : prs.find((pr) => String(pr.number) === args[2])?.state ?? 'MERGED';
+      return JSON.stringify({ state });
+    }
+    if (args[0] === 'pr' && args[1] === 'edit') return '';
+    if (args[0] === 'label' && args[1] === 'create') return '';
     if (args[0] === 'pr' && args[1] === 'create') return `https://github.com/o/r/pull/${created}\n`;
     throw new Error(`unexpected gh ${args.join(' ')}`);
   };

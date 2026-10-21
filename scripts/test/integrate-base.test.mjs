@@ -79,7 +79,7 @@ function recordingGh() {
 
 const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
 const failing = `node -e "console.log('✖ broken thing (1.2ms)'); console.log('ℹ pass 2'); console.log('ℹ fail 1'); process.exit(1)"`;
-const quiet = { findPr: () => null, install: () => {}, test: passing };
+const quiet = { install: () => {}, test: passing };
 
 test('integrate merges origin/pilot before the slice', (t) => {
   const { origin, work } = pilotRepos(t);

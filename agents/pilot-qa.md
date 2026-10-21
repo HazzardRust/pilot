@@ -218,7 +218,7 @@ re-run.
 5. Stop what you started, remove your worktree, and report.
 
 Never merge, never request review, never flip the feature PR ready (the
-landing merges it, after the `gate2`), and never touch a slice PR: the pilot merged those.
+landing merges it, after the `gate2`).
 
 ## Concluding
 

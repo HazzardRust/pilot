@@ -187,9 +187,11 @@ const DAEMON = fileURLToPath(new URL('../daemon.mjs', import.meta.url));
 
 test('the pilot CLI does not run a git planted in the repository', PLANTED, (t) => {
   const { work, env } = planted(t);
-  const run = spawnSync(process.execPath, [PILOT, 'base'], { cwd: work, env, encoding: 'utf8', timeout: 30_000 });
+  // A deck directory with no secret: `pilot base` asks no deck, least of all the user's live one (pilot-develop-line S5).
+  const noDeck = { ...env, PILOT_DECK_DIR: path.join(work, '..', 'no-deck') };
+  const run = spawnSync(process.execPath, [PILOT, 'base'], { cwd: work, env: noDeck, encoding: 'utf8', timeout: 30_000 });
   assert.equal(run.status, 0, run.stderr);
-  assert.match(run.stdout, /^base pilot [0-9a-f]{7,} \(created from main\)$/m);
+  assert.match(run.stdout, /^base pilot [0-9a-f]{7,} \(created from main\) \(deck not reached\)$/m);
 });
 
 test('the deck daemon does not run a git planted in the repository', PLANTED, async (t) => {
