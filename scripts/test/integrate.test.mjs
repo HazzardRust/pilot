@@ -19,7 +19,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const { integrate, main, titleProblem } = await import('../integrate.mjs');
+const { integrate, main } = await import('../integrate.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
@@ -55,11 +55,11 @@ function buildScratchRepos(root, sliceFiles) {
 
 const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
 const failing = `node -e "console.log('✖ broken thing (1.2ms)'); console.log('ℹ pass 2'); console.log('ℹ fail 1'); process.exit(1)"`;
-// The base is pilot, which feat/x already holds; gh is asked only for the slice's PR.
-const gh =(args) => (args[0] === 'pr' ? '[]' : 'me\n');
-const quiet = { findPr: () => ({ number: 12, title: 'feat(x): S1 the first slice' }), install: () => {}, gh };
+// The base is pilot, which feat/x already holds; gh knows no PR.
+const gh = (args) => (args[0] === 'pr' ? '[]' : 'me\n');
+const quiet = { install: () => {}, gh };
 
-test('green: a no-ff merge naming the slice and PR, pushed, reported in one line', (t) => {
+test('green: a no-ff merge naming the slice, pushed, reported in one line', (t) => {
   const { origin, work } = scratchRepos(t);
 
   const result = integrate('slice/a', { cwd: work, test: passing, ...quiet });
@@ -68,7 +68,7 @@ test('green: a no-ff merge naming the slice and PR, pushed, reported in one line
   const head = git(work, 'rev-parse', '--short', 'HEAD');
   assert.equal(result.line, `integrated slice/a at ${head} (base pilot@${git(work, 'rev-parse', '--short', 'origin/pilot')}): 3 pass, 0 fail; pushed; deleted slice/a`);
   assert.doesNotMatch(result.line, /\n/);
-  assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge S1: the first slice (#12)');
+  assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge slice/a');
   assert.equal(git(work, 'log', '-1', '--format=%P').split(' ').length, 2, 'a merge commit, not a fast-forward');
   assert.equal(git(origin, 'rev-parse', 'feat/x'), git(work, 'rev-parse', 'HEAD'), 'pushed');
 });
@@ -77,7 +77,7 @@ test('green: the run record the deck wrote is committed after the merge and push
   const { origin, work } = scratchRepos(t);
   const record = path.join(work, 'docs', 'design', 'x', 'run.json');
   fs.mkdirSync(path.dirname(record), { recursive: true });
-  fs.writeFileSync(record, '{"slug": "x"}\n');
+  fs.writeFileSync(record, '{"slug": "x", "slices": [{"slice": "S1 The first slice", "branch": "slice/a"}]}\n');
 
   const result = integrate('slice/a', { cwd: work, test: passing, trailers: ['Claude-Session: s'], ...quiet });
 
@@ -85,7 +85,7 @@ test('green: the run record the deck wrote is committed after the merge and push
   assert.equal(git(work, 'status', '--porcelain'), '', 'nothing left uncommitted');
   assert.equal(git(work, 'log', '-1', '--format=%s'), 'chore(x): run record');
   assert.match(git(work, 'log', '-1', '--format=%B'), /Claude-Session: s/, 'the trailer rides on it');
-  assert.match(git(work, 'log', '-2', '--format=%B'), /Merge S1[\s\S]*Claude-Session: s/, 'and on the merge');
+  assert.match(git(work, 'log', '-2', '--format=%B'), /feat\(x\): S1 the first slice[\s\S]*Claude-Session: s/, 'and on the merge, subjected from the record');
   assert.equal(git(origin, 'rev-parse', 'feat/x'), git(work, 'rev-parse', 'HEAD'), 'both pushed');
 });
 
@@ -146,7 +146,7 @@ test('a failed npm ci aborts the merge and answers in one line, rather than thro
     throw new Error('npm ci exited 1');
   };
 
-  const result = integrate('slice/a', { cwd: work, test: passing, findPr: quiet.findPr, install, gh });
+  const result = integrate('slice/a', { cwd: work, test: passing, install, gh });
 
   assert.equal(result.ok, false);
   assert.equal(result.line, 'NOT integrated slice/a: npm ci failed (npm ci exited 1); not pushed');
@@ -219,40 +219,25 @@ test('npm ci runs when the lockfile changed or node_modules is missing, and not 
   const locked = scratchRepos(t, { 'package-lock.json': '{}\n' });
   fs.writeFileSync(path.join(locked.work, 'package.json'), '{}\n');
   fs.mkdirSync(path.join(locked.work, 'node_modules'));
-  integrate('slice/a', { cwd: locked.work, test: passing, findPr: quiet.findPr, install, gh, push: false });
+  integrate('slice/a', { cwd: locked.work, test: passing, install, gh, push: false });
   assert.equal(installs.length, 1, 'the slice changed the lockfile');
 
   const plain = scratchRepos(t);
   fs.writeFileSync(path.join(plain.work, 'package.json'), '{}\n');
-  integrate('slice/a', { cwd: plain.work, test: passing, findPr: quiet.findPr, install, gh, push: false });
+  integrate('slice/a', { cwd: plain.work, test: passing, install, gh, push: false });
   assert.equal(installs.length, 2, 'a package.json and no node_modules');
 
   const none = scratchRepos(t);
-  integrate('slice/a', { cwd: none.work, test: passing, findPr: quiet.findPr, install, gh, push: false });
+  integrate('slice/a', { cwd: none.work, test: passing, install, gh, push: false });
   assert.equal(installs.length, 2, 'no package.json, nothing to install');
 });
 
-test('with no PR found the merge names the branch alone', (t) => {
+test('with no run record the merge names the branch alone', (t) => {
   const { work } = scratchRepos(t);
 
-  integrate('slice/a', { cwd: work, test: passing, findPr: () => null, install: () => {}, gh, push: false });
+  integrate('slice/a', { cwd: work, test: passing, install: () => {}, gh, push: false });
 
   assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge slice/a');
-});
-
-test('with no findPr the slice\'s PR comes from the injected gh, never the real one', (t) => {
-  const { work } = scratchRepos(t);
-  const asked = [];
-  const ghWithPr = (args) => {
-    asked.push(args);
-    if (args[0] !== 'pr') return 'me\n';
-    return args.includes('slice/a') ? JSON.stringify([{ number: 7, title: 'feat(x): S2 found by gh' }]) : '[]';
-  };
-
-  integrate('slice/a', { cwd: work, test: passing, install: () => {}, gh: ghWithPr, push: false });
-
-  assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge S2: found by gh (#7)');
-  assert.ok(asked.some((args) => args.join(' ') === 'pr list --head slice/a --state all --limit 1 --json number,title'));
 });
 
 test('a red pilot integrate names each failing test once', (t) => {
@@ -329,100 +314,19 @@ test('npm ci never runs without package.json, even when the slice moves a lockfi
   const installs = [];
   const { work } = scratchRepos(t, { 'package-lock.json': '{}\n' });
 
-  const result = integrate('slice/a', { cwd: work, test: passing, findPr: quiet.findPr, install: (cwd) => installs.push(cwd), gh, push: false });
+  const result = integrate('slice/a', { cwd: work, test: passing, install: (cwd) => installs.push(cwd), gh, push: false });
 
   assert.equal(result.ok, true);
   assert.deepEqual(installs, []);
 });
 
-// The PR title format (co-pilot-reports spec 9; L9, L10, A1): checked before the first merge.
-const titled = (title) => ({ ...quiet, findPr: () => ({ number: 12, title }) });
-
-test('a slice PR titled off the format is refused before any merge', (t) => {
-  const { origin, work } = scratchRepos(t);
-  const before = git(work, 'rev-parse', 'HEAD');
-
-  const result = integrate('slice/a', { cwd: work, test: passing, ...titled('S1 The first slice') });
-
-  assert.equal(result.ok, false);
-  assert.deepEqual(result.failing, []);
-  assert.equal(git(work, 'rev-parse', 'HEAD'), before, 'HEAD unmoved, no merge commit');
-  assert.equal(git(work, 'status', '--porcelain'), '');
-  assert.equal(git(origin, 'rev-parse', 'feat/x'), before, 'nothing pushed');
-});
-
-test('the refusal names the title, the format and gh pr edit', (t) => {
+test('a base-only call reads no run record', (t) => {
   const { work } = scratchRepos(t);
+  const record = path.join(work, 'docs', 'design', 'x', 'run.json');
+  fs.mkdirSync(path.dirname(record), { recursive: true });
+  fs.writeFileSync(record, '{"slug": "x", "slices": []}\n');
 
-  const result = integrate('slice/a', { cwd: work, test: passing, ...titled('S1 The first slice') });
-
-  assert.equal(
-    result.line,
-    'NOT integrated slice/a: PR #12 title "S1 The first slice" does not match feat(x): S<n> <title, first letter lower-case>; retitle with gh pr edit and rerun; nothing merged or pushed',
-  );
-});
-
-test('a lower-case slice title integrates as today', (t) => {
-  const { work } = scratchRepos(t);
-  let asked = 0;
-  const findPr = () => {
-    asked += 1;
-    return { number: 12, title: 'feat(x): S1 the first slice' };
-  };
-
-  const result = integrate('slice/a', { cwd: work, test: passing, ...quiet, findPr, push: false });
+  const result = integrate(undefined, { cwd: work, test: passing, ...quiet, push: false });
 
   assert.equal(result.ok, true, result.line);
-  assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge S1: the first slice (#12)');
-  assert.equal(asked, 1, 'one PR lookup serves the check and the merge message');
-  assert.equal(titleProblem('feat(co-pilot-reports): S4 `pilot integrate` refuses a PR title off the format', 'co-pilot-reports'), null);
-  assert.equal(titleProblem('feat(x): S6 The tab', 'x'), 'feat(x): S<n> <title, first letter lower-case>');
-  assert.equal(titleProblem('feat(a.b): S3a x', 'a.b'), null);
-  assert.notEqual(titleProblem('feat(aXb): S3a x', 'a.b'), null, 'the dot in a slug is literal');
-});
-
-test('a fix-round title integrates', (t) => {
-  const { work } = scratchRepos(t);
-
-  const result = integrate('slice/a', { cwd: work, test: passing, ...titled('fix(x): drop the dead helper'), push: false });
-
-  assert.equal(result.ok, true, result.line);
-  assert.equal(titleProblem('fix(x):', 'x'), 'fix(x): <what>');
-});
-
-test('a PR title is not checked when HEAD is not a feat/ branch', (t) => {
-  const { work } = scratchRepos(t);
-  git(work, 'checkout', '-q', '-b', 'work/y');
-
-  const result = integrate('slice/a', { cwd: work, test: passing, ...titled('S1 The first slice'), push: false });
-
-  assert.equal(result.ok, true, result.line);
-});
-
-test('a base-only call does not check a PR title', (t) => {
-  const { work } = scratchRepos(t);
-
-  const result = integrate(undefined, { cwd: work, test: passing, ...quiet, findPr: () => ({ number: 12, title: 'S1 The first slice' }), push: false });
-
-  assert.equal(result.ok, true, result.line);
-});
-
-test('no PR integrates as today', (t) => {
-  const { work } = scratchRepos(t);
-
-  const result = integrate('slice/a', { cwd: work, test: passing, ...quiet, findPr: () => null, push: false });
-
-  assert.equal(result.ok, true, result.line);
-  assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge slice/a');
-});
-
-test('a title with another feature\'s slug is refused', (t) => {
-  const { work } = scratchRepos(t);
-  const before = git(work, 'rev-parse', 'HEAD');
-
-  const result = integrate('slice/a', { cwd: work, test: passing, ...titled('feat(y): S1 the first slice') });
-
-  assert.equal(result.ok, false);
-  assert.match(result.line, /^NOT integrated slice\/a: PR #12 title "feat\(y\): S1 the first slice" does not match feat\(x\): /);
-  assert.equal(git(work, 'rev-parse', 'HEAD'), before);
 });

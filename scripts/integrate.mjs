@@ -16,8 +16,10 @@
  * must not be `pilot` (`pilot land` is the only way onto it) and must pass
  * `assertPushable` before anything is merged, and every push names that branch, so a run
  * sitting on the default branch pushes nothing (spec 4; L4).
- * On `feat/<slug>` a slice whose PR title is off the one format (`titleProblem`; ADR 0100)
- * is refused next, before anything is merged; no PR, or no `gh`, skips the check. On red or a stop the branch is reset to where it started,
+ * On `feat/<slug>` the slice's merge is subjected `feat(<slug>): S<n> <title>` from the run
+ * record row whose `branch` is the slice (`sliceSubject`; pilot-develop-line spec 3), and no
+ * PR is read; a record naming no such row refuses the slice before anything is merged, and
+ * no record at all leaves `Merge <slice>`. On red or a stop the branch is reset to where it started,
  * so nothing is committed or pushed, and the failing tests are named. The answer is one
  * line: the tip, the pass and fail counts, and whether it was pushed. Written because the
  * pilot did these steps by hand for every slice, and the S3 merge of independence
@@ -44,8 +46,11 @@ import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-gene
 import { assertPushable, firstLine, git, holds, PILOT_BRANCH, pilotLineage } from './pilot-branch.mjs';
 import { runRef, runRemote, shortRef } from './remotes.mjs';
 import { scopeOf } from './select-tests.mjs';
+import { runRecord } from './worktrees.mjs';
 
 const RECORDS = ':(glob)docs/design/*/run.json';
+/** One trailer line: a key of letters and hyphens, a colon, a space, a value on the same line. */
+const TRAILER = /^[A-Za-z][A-Za-z-]*: \S.*$/;
 /** How long a slice's open PR is polled for GitHub to read it merged (L5). */
 const MERGE_WAIT_MS = 30_000;
 
@@ -54,39 +59,27 @@ export { git };
 /** The real `gh`, argv only, run without a shell in `cwd`. */
 export const ghIn = (cwd) => (args) => execFileSync('gh', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 
-/** The PR whose head is this branch, from `gh`, or null when there is none or no `gh`. */
-function prOf(branch, gh) {
-  try {
-    return JSON.parse(gh(['pr', 'list', '--head', branch, '--state', 'all', '--limit', '1', '--json', 'number,title']))[0] ?? null;
-  } catch {
-    return null;
-  }
-}
-
 // A command string, not a file and arguments: `npm` is `npm.cmd` on Windows and needs a shell.
 export const installWithNpm = (cwd) => execSync('npm ci', { cwd, stdio: 'ignore', windowsHide: true });
 
-/** "feat(x): S3 the slice" becomes "Merge S3: the slice (#12)", the way merges have read. */
-export function mergeMessage(branch, pr) {
-  if (!pr) return `Merge ${branch}`;
-  const title = String(pr.title ?? '').replace(/^\w+(\([^)]*\))?!?:\s*/, '');
-  const slice = /^(S\d+\w*)\s+(.+)$/.exec(title);
-  return `Merge ${slice ? `${slice[1]}: ${slice[2]}` : title || branch} (#${pr.number})`;
+/** A run record row's `S<n> <title>` as the slice merge's subject, `feat(<slug>): S<n> <title>`, the title lower-case first (A3). */
+export function sliceSubject(slug, row) {
+  return `feat(${slug}): ${String(row.slice).replace(/^(S\d+\w*\s+)(\S)/, (_, n, first) => n + first.toLowerCase())}`;
 }
 
-const escaped = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
 /**
- * Null when `title` fits the one PR title format for feature `slug` (co-pilot-reports L9),
- * otherwise the format it should match: a title starting `fix(` is held to the fix-round
- * format, any other to the slice format.
+ * The subject of `slice`'s merge onto `feat/<slug>`, from the row of the run record in `cwd`
+ * whose `branch` is the slice; never from a PR (pilot-develop-line spec 3). With no record
+ * there, or a head that is not `feat/`, the merge reads `Merge <slice>`. A record with no row
+ * naming the slice throws: the slice is not this run's.
  */
-export function titleProblem(title, slug) {
-  const s = escaped(slug);
-  if (title.startsWith('fix(')) {
-    return new RegExp(`^fix\\(${s}\\): \\S`).test(title) ? null : `fix(${slug}): <what>`;
-  }
-  return new RegExp(`^feat\\(${s}\\): S\\d+\\w* [^A-Z]`).test(title) ? null : `feat(${slug}): S<n> <title, first letter lower-case>`;
+function subjectOf(cwd, head, slice) {
+  const slug = /^feat\/(.+)$/.exec(head)?.[1];
+  const file = slug && path.join(cwd, runRecord(slug));
+  if (!file || !fs.existsSync(file)) return `Merge ${slice}`;
+  const row = JSON.parse(fs.readFileSync(file, 'utf8')).slices?.find((r) => r.branch === slice);
+  if (!row) throw new Error('no run record row names it');
+  return sliceSubject(slug, row);
 }
 
 /**
@@ -273,7 +266,7 @@ export function landedOnPilot(cwd, head, ref = baseOf(cwd).ref) {
  * Integrate one slice branch, or with none take the base alone. `test` is the shell
  * command, run as given (default the repository's own since the tip before the merge, `runChosen`), `push` false keeps origin untouched, `trailers` are
  * `Key: value` lines for every commit made, `wait` the ms a pushed slice's open PR is polled
- * before it is kept. `findPr`, `install` and `gh` are the calls
+ * before it is kept. `install` and `gh` are the calls
  * out to other tools, replaceable for a test. Answers `{ ok, line, failing }`, plus `code` 2 when it was refused for want of a test command.
  */
 export function integrate(branch, options = {}) {
@@ -283,7 +276,6 @@ export function integrate(branch, options = {}) {
     push = true,
     trailers = [],
     gh = ghIn(cwd),
-    findPr = (name) => prOf(name, gh),
     install = installWithNpm,
     wait = MERGE_WAIT_MS,
   } = options;
@@ -294,23 +286,23 @@ export function integrate(branch, options = {}) {
   if (test === undefined && testCommand(cwd) === undefined) {
     return { ok: false, line: `${not}: ${NO_TEST}`, failing: [], code: 2 };
   }
+  // Each trailer is one `Key: value` line (`.` matches no CR or LF), so no value forges a second, such as a Reviewed-by.
+  const forged = trailers.map(String).find((line) => !TRAILER.test(line));
+  if (forged !== undefined) {
+    return { ok: false, line: `${not}: trailer ${forged.split(/[:\r\n]/)[0]} is not one "Key: value" line; nothing merged or pushed`, failing: [] };
+  }
 
   // The branch every push names, checked before anything is merged onto it.
   let head;
-  let pr = null;
+  let subject;
   try {
     head = git(cwd, 'symbolic-ref', '--short', 'HEAD');
     if (head.toLowerCase() === PILOT_BRANCH) throw new Error(`refusing to integrate onto ${PILOT_BRANCH}: pilot land is the only way onto it`);
     assertPushable(head, { git: (args) => git(cwd, ...args) });
-    // The one PR lookup: checked here, before any merge, and reused for the merge message.
-    if (slice) pr = findPr(slice);
+    // The merge's subject, from the run record before any merge: a slice it does not name is refused here.
+    if (slice) subject = subjectOf(cwd, head, slice);
   } catch (err) {
     return { ok: false, line: `${not}: ${firstLine(err)}; nothing merged or pushed`, failing: [] };
-  }
-  const slug = /^feat\/(.+)$/.exec(head)?.[1];
-  const format = pr && slug ? titleProblem(pr.title, slug) : null;
-  if (format) {
-    return { ok: false, line: `${not}: PR #${pr.number} title "${pr.title}" does not match ${format}; retitle with gh pr edit and rerun; nothing merged or pushed`, failing: [] };
   }
 
   let runs;
@@ -393,7 +385,7 @@ export function integrate(branch, options = {}) {
   const counts = summaryOf(run);
 
   try {
-    if (slice) commit(cwd, mergeMessage(slice, pr), trailers);
+    if (slice) commit(cwd, subject, trailers);
   } catch (err) {
     return fail(`${not}: the commit failed (${firstLine(err)}); not pushed`);
   }
