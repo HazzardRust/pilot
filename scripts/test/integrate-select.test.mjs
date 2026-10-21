@@ -128,7 +128,8 @@ test('a merge into pilot without since runs full', (t) => {
 
   assert.equal(result.merged, true, result.line);
   assert.equal(git(origin, 'rev-parse', 'refs/heads/pilot'), result.sha, 'pushed');
-  assert.match(lines()[0] ?? '', /^full slot=\d+$/, 'npm test, inside a gate slot');
+  // A slot taken here, or the one inherited from a gate around this file (`selected` under a selection).
+  assert.match(lines()[0] ?? '', /^full slot=(\d+|selected)$/, 'npm test, inside a gate slot');
   assert.equal(lines().length, 1);
   assert.equal(result.counts, '1 pass, 0 fail');
 });
@@ -141,6 +142,6 @@ test('an injected test command is run as given', (t) => {
   const result = integrate('slice/a', { cwd: work, test: injected, ...quiet });
 
   assert.equal(result.ok, true, result.line);
-  assert.match(lines()[0] ?? '', /^injected slot=\d+$/, 'the injected command, inside a gate slot');
+  assert.match(lines()[0] ?? '', /^injected slot=(\d+|selected)$/, 'the injected command, inside a gate slot');
   assert.equal(lines().length, 1);
 });
