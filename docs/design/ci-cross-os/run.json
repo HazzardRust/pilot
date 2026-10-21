@@ -15,17 +15,23 @@
     },
     {
       "slice": "S2 The macOS fixture copy is diagnosed and its git kept quiet",
-      "state": "integrated",
+      "state": "integrated at d8ab5dc7 (merge 01ef425f)",
       "after": [
         "S1"
       ],
       "branch": "slice/ci-cross-os-s2",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-ci-cross-os-s2",
       "pr": 29
+    },
+    {
+      "slice": "feature",
+      "state": "both slices integrated; trial and gate2 next",
+      "branch": "feat/ci-cross-os",
+      "pr": 11
     }
   ],
-  "next": "ci-cross-os (short path): integrating S2 (PR #29, 948e8831) into feat/ci-cross-os; then pilot integrate --trial and own gate2 with the walkthrough (surface true).",
-  "updatedAt": "2026-10-21T06:51:08.560Z",
+  "next": "ci-cross-os (short path, concluding): trial on feat d8ab5dc7, then walkthrough (3 green Gate runs) and own gate2 (Verdict per slice, Gate line).",
+  "updatedAt": "2026-10-21T06:57:15.784Z",
   "friction": [
     {
       "agent": "pilot-implementer S1",
