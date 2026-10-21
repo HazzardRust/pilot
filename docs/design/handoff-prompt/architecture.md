@@ -86,7 +86,7 @@ Deletion test: deleting `run-prompt.mjs` puts the protocol back inside `clearOnc
 
 - **A1 Bound 60 s, twice.** Default: 60 s for a tool call, one lone Enter, 60 s more, then not started. Trades a slower
   notice (up to 2 min) for no retype into a normal pick-up (10-25 s seen, one 65 s). Rejected: 30 s (retypes into the
-  65 s case, harmless but noisy). Question itm_3739c92b2d43, open.
+  65 s case, harmless but noisy). Answered itm_3739c92b2d43: 60 s + 60 s, locked by the user.
   Verdict: stands.
 - red team: S3's existing-test drag. Tests that pass their own `type` (run.test.mjs:569, :594) would wait the 60 s
   bound; S3 passes `takenWaitMs` small there or uses `keyboard()`. Written into S3's Prohibited.
