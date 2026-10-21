@@ -1,0 +1,27 @@
+{
+  "slug": "debug-workflow",
+  "feature": "The crew's bug path",
+  "ticket": "itm_ddffb46808eb",
+  "branch": "feat/debug-workflow",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-debug-workflow",
+  "artefact": "docs/design/debug-workflow/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The crew's bug path, in prose and ADR",
+      "state": "draft PR #23 at d0e58f5d, reviewed (security APPROVE, ts WARN fixed); integrate red on the pre-existing stale rules ledger, nothing pushed",
+      "branch": "slice/debug-workflow-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-debug-workflow-s1",
+      "pr": 23
+    }
+  ],
+  "next": "debug-workflow (yellow, short path): S1 PR #23 ready; pilot integrate stops at `ledger stale` (pre-existing, fix = PR #1 on main, also carried by develop-line S11). Ask the user to merge #1, then pilot sync, rebase feat/debug-workflow, integrate, own gate2.",
+  "updatedAt": "2026-10-21T04:45:55.128Z",
+  "friction": [
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test stops on `ledger stale: scripts/shipped-rules.json` because the public repo's history is one squashed commit; the ledger rebuild drops older hashes, one gate run lost per slice until PR #1 merges",
+      "evidence": "scripts/gate.mjs:194, scripts/build-rules-ledger.mjs:12; fix open as PR #1",
+      "size": 237
+    }
+  ]
+}
