@@ -25,3 +25,5 @@ We decided that `pilot land`, run by the deck on a signed Gate 2, is the only pl
 - *The pilot retrying `gh pr ready` itself*: the incident.
 
 Amended 2026-10-19 by ADR 0167: the feature PR targets `pilot` and reads merged once the landing pushes, so nothing marks it ready and `pilot land` prints no `ready:` line; its last line is `main gets pilot: #<n>`. The rejection stands: neither the pilot nor the crew runs `gh pr ready`.
+
+Amended 2026-10-21 by ADR NNNN: the landing still never closes the feature PR and waits up to 30 s for GitHub to read it merged before it comments `landed on pilot at <sha>`; the rejection of a ready press, and of `gh pr merge`, stands. Every other line here stands.

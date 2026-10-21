@@ -31,7 +31,7 @@ test('0140 is superseded by 0167', () => {
 
 test('the amendments say why', () => {
   for (const name of ['0083-the-pilot-owns-a-branch.md', '0154-gate2-frees-the-lane.md', '0161-the-lander-owns-every-merge.md']) {
-    const last = read(name).trimEnd().split('\n').at(-1);
-    assert.match(last, /^Amended 2026-10-\d\d\b.*\bADR 0167\b/, `${name} ends naming ADR 0167`);
+    const amendments = read(name).split('\n').filter((line) => line.startsWith('Amended '));
+    assert.ok(amendments.some((line) => /^Amended 2026-10-\d\d\b.*\bADR 0167\b/.test(line)), `${name} names ADR 0167`);
   }
 });

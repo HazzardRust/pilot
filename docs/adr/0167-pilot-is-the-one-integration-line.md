@@ -39,3 +39,5 @@ A feature crossed four merge lines: main into pilot (`pilot sync`, also inside `
 - The changes to `land`, the deck's landing and allocation take effect after `claude plugin update`.
 
 Recorded in `docs/design/one-integration-line/architecture.md` (§2 spec 1 to 7; §5 L2, L4, L5, L6; §6 A1 to A8).
+
+Amended 2026-10-21 by ADR NNNN: "main gets pilot" becomes the release PR. The one open `pilot → main` PR is titled `Release: <slug>, <slug> +N more`, labelled `release`, its body one row per landed feature derived from git and rewritten on every landing; the line `main gets pilot: #<n>` stays. A feature merges onto `pilot` once, at its landing, as before, but a run may be cut from a concluding `feat/<N>` (a chain of depth 1) until N lands. Every other line here stands.
