@@ -51,6 +51,7 @@ import { isDeepStrictEqual } from 'node:util';
 
 import './no-open.mjs';
 import * as wrapper from '../run.mjs';
+import { pasted } from '../run-prompt.mjs';
 import { chainNext } from '../chain.mjs';
 import { KIND_TICKET } from '../items.mjs';
 import { FINISHED_CLEAN } from '../runs.mjs';
@@ -207,11 +208,12 @@ async function deckHolding(t, items, refuse = () => false, record = noCoPilot) {
 }
 
 /**
- * What one hand-off types: the `/clear`, then the fresh session's first prompt.
- * A session after `/clear` holds the lane's context but starts no turn until
- * something is typed, so without the second write somebody has to be there (S12).
+ * What one hand-off types: the `/clear`, then the fresh session's first prompt as one
+ * bracketed paste, then Enter alone (handoff-prompt L1). A session after `/clear` holds
+ * the lane's context but starts no turn until something is typed, so without the
+ * prompt and its Enter somebody has to be there (S12).
  */
-const HANDED_OFF = ['/clear\r', 'Pick up the hand-off on the deck.\r'];
+const HANDED_OFF = ['/clear\r', pasted('Pick up the hand-off on the deck.'), '\r'];
 
 /**
  * A terminal that records what was typed into it, and the session behind it.
@@ -239,7 +241,7 @@ const atRest = () => deck.markTurnEnded({ PILOT_RUN_PID: String(process.pid), PI
 
 // --- the /clear is typed ---------------------------------------------------
 
-test('an open handoff for this directory types /clear and then the first prompt, once', async (t) => {
+test('a hand-off types /clear, the paste, then Enter alone', async (t) => {
   scratchHome(t);
   const items = [item()];
   await deckHolding(t, items);
@@ -247,7 +249,7 @@ test('an open handoff for this directory types /clear and then the first prompt,
   atRest();
 
   assert.equal(await wrapper.clearOnce({ cwd: OURS, type: keys.type }), true);
-  assert.deepEqual(keys.typed, HANDED_OFF, 'each with the return that submits it, the /clear first');
+  assert.deepEqual(keys.typed, HANDED_OFF, 'the /clear first, the prompt pasted, its Enter a write of its own');
 });
 
 test('a second change event on the same hand-off types nothing more', async (t) => {
@@ -288,7 +290,7 @@ test("the next session's first prompt spawns the queued lander", async (t) => {
 
   assert.equal(await wrapper.clearOnce({ cwd: OURS, type: keys.type }), true);
   assert.equal(keys.typed[0], '/clear\r', 'the old session is cleared, never told to spawn');
-  assert.equal(keys.typed.at(-1), `Pick up the hand-off on the deck. Spawn pilot-lander ${gate.id}.\r`);
+  assert.deepEqual(keys.typed.slice(1), [pasted(`Pick up the hand-off on the deck. Spawn pilot-lander ${gate.id}.`), '\r']);
 });
 
 test('two due landers name only the oldest', () => {
