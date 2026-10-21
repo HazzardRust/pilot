@@ -1,0 +1,161 @@
+{
+  "slug": "fundamentalist-decisions",
+  "feature": "The fundamentalist attacks decisions",
+  "ticket": "itm_ff08c3e59cfa",
+  "branch": "feat/fundamentalist-decisions",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-fundamentalist-decisions",
+  "artefact": "docs/design/fundamentalist-decisions/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The fundamentalist leads with the decisions pass",
+      "state": "integrated at a33dd424",
+      "branch": "slice/fundamentalist-decisions-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fundamentalist-decisions-s1",
+      "pr": 978
+    },
+    {
+      "slice": "S2 Step 7 and the co-pilot take decision findings as findings",
+      "state": "integrated at 161167a3",
+      "branch": "slice/fundamentalist-decisions-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fundamentalist-decisions-s2",
+      "pr": 977
+    },
+    {
+      "slice": "S3 ADR 0170 and the glossary record the decisions reviewer",
+      "state": "integrated at 95ead5a2 (ADR 0171)",
+      "branch": "slice/fundamentalist-decisions-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fundamentalist-decisions-s3",
+      "pr": 976
+    },
+    {
+      "slice": "fundamentalist-decisions",
+      "state": "co-pilot sent the pause mid fix round; itm_be9b1a864c4a answered Yes (locked); PR #898 draft → main",
+      "after": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "branch": "feat/fundamentalist-decisions",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-fundamentalist-decisions",
+      "pr": 898
+    },
+    {
+      "slice": "fix round",
+      "state": "fixing",
+      "after": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "branch": "slice/fundamentalist-decisions-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fundamentalist-decisions-fix"
+    }
+  ],
+  "findings": [
+    "dropped: L9 drop — a record of how grilling ran, not a built decision; nothing in the diff to remove (process records raised to main as a question on spec 2/L3/L6)",
+    "dropped: F1 runner spawn before the decisions pass — spec 5 holds the evidence pass text and its pin unchanged; cost is latency only",
+    "dropped: F2 description clause — it is how the agent list learns the decisions-first role ADR 0171 records",
+    "kept: F3 decision-triage.test.mjs:30 duplicates seam-change.test.mjs:102 — delete, -1",
+    "kept: F4 decision-triage.test.mjs:7-17 re-implements read/flat from lib/area-file.mjs — import them, -5",
+    "kept: F5 A1's late drop answer has no owner once QA is the writer — one clause in step 7 sends it to QA as a user find, +1",
+    "kept: N1 CONTEXT.md decision finding carries the always-ask rule, its third home — cut the rule clause, 0",
+    "kept: QA obs 3 artefact still says ADR 0170 at header, spec 8, L8, §8 S3 row — read 0171",
+    "kept: L3 simplify (QA obs 2, fundamentalist pushback) — a process record is needed with evidence 'no built line', never a decision finding; assumed default of itm_be9b1a864c4a, +1 sentence and a pin",
+    "dropped: QA obs 1 case-against prose over 3 lines — Sonnet replay readers; the pinned bound is the 65-line report",
+    "dropped: QA obs 4 auditor 'tool passes' — its brief limits it to the report file; 0 auditor lines change per spec 3"
+  ],
+  "next": "yellow: co-pilot paused on itm_ff08c3e59cfa (fix round in flight) → release, co-pilot, spawn successor; queue: tdd, deck-writes-github, walkthrough-surface, other-host. concluding: walkthroughs itm_8c0e6f518b0b (architect-runs-red, QA live) and itm_1282adf5f211 (lander-tail, QA ended: resume a915afeaa03ab9805 on Sign off, no seed folder); itm_c48b8391b918 on the user. Lander per press.",
+  "updatedAt": "2026-10-20T20:33:02.165Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the fundamentalist's pins are spread over 7 test files; all grepped to find which wording is frozen",
+      "evidence": "architect report",
+      "size": 7
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the 15 logged findings live only inside each run's run.json (91 under docs/design/), no index; a script loop found the dropped decision-level ones",
+      "evidence": "architect report",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the pilot's prompt-size pin has 0 headroom, so any step 7 wording change also edits measure-prompt.test.mjs",
+      "evidence": "scripts/test/measure-prompt.test.mjs:178",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "posted two questions before the pilot's not-a-fork call arrived; both withdrawn",
+      "evidence": "itm_3ed23b4c30fa, itm_24a7004df8db",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the artefact header, spec 8, L8 and brief.md still say ADR 0170 while S3 takes 0171",
+      "evidence": "PR #976 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no test pins the glossary terms in CONTEXT.md; the once-each check lives only in the PR body",
+      "evidence": "PR #976 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a markdown-only slice still costs a fact sheet and a typescript-reviewer run",
+      "evidence": "PR #976 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the pilot pin's history block in measure-prompt.test.mjs is ~25 lines ahead of the test, hard to place a line in",
+      "evidence": "scripts/test/measure-prompt.test.mjs:160-184",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node 26's default test reporter prints 'ℹ pass', so a grep for '^# pass' found nothing; rerun with --test-reporter=spec",
+      "evidence": "PR #978 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice tests named 'pins' while the rewrite check wants rewording-proof pins; reviewer round to loosen them",
+      "evidence": "PR #978 review, ed9c270f",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the review worktree has no node_modules, so npm test and coverage could not run there; npm ci forbidden",
+      "evidence": "fundamentalist report, evidence runner exit 1",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "knip has no knip.json; 535 repo-wide unused-file rows to filter by hand",
+      "evidence": "fundamentalist report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "architecture.md §3 cites seam-change:99 for the slice-file pin, actually :102, so S2 added a duplicate pin",
+      "evidence": "fundamentalist F3",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 4's replay ran on Sonnet explorers since pilot-fundamentalist is not in QA's child list",
+      "evidence": "QA read-only report at a33dd424",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 4's replay names no runner model or agent type; QA cannot reach Opus fundamentalist fidelity",
+      "evidence": "QA report at a33dd424, pushback row",
+      "size": 1
+    }
+  ]
+}
