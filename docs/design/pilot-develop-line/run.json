@@ -70,13 +70,14 @@
     },
     {
       "slice": "S8 The take and the cut follow the base line",
-      "state": "implementing",
+      "state": "integrated",
       "after": [
         "S4",
         "S5"
       ],
       "branch": "slice/pilot-develop-line-s8",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-pilot-develop-line-s8"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-pilot-develop-line-s8",
+      "pr": 21
     },
     {
       "slice": "S9 ADR for the develop line",
@@ -106,11 +107,13 @@
     "kept: stale shipped-rules.json on the squashed history — added slice S10, integrated 60afb5f8",
     "kept: PILOT_GATE_SLOT=selected NaN in takeSlot — fixed in S3's fix round",
     "kept: unchecked --trailer can forge a Reviewed-by line — fixed in S3's fix round",
-    "kept: rules/orchestration.md, vertical-execution.md, CONTEXT.md still describe slice PRs — added slice S11, planned",
-    "kept: pilot handoff --trailer unchecked — for the step-7 fix round"
+    "kept: rules/orchestration.md, vertical-execution.md, CONTEXT.md still describe slice PRs — added slice S11",
+    "kept: pilot handoff --trailer unchecked — for the step-7 fix round",
+    "kept: agents/pilot.md step 3 'opens the feature PR as a draft against pilot' is wrong on a chained run (pins pilot-branch-rules:39, one-line-wording:43) — for the step-7 fix round",
+    "kept: scratch-stop.test.mjs EEXIST flake on a shared %TEMP% path — for the step-7 fix round"
   ],
-  "next": "co-pilot: integrating S7 (#20) onto feat 9c9acf00; S8 implementing; S11 held on itm_dd5706cfe1f8; then step 7",
-  "updatedAt": "2026-10-21T04:16:58.395Z",
+  "next": "co-pilot: integrating S8 (#21); S11 resuming (user made the refused edit); then step 7",
+  "updatedAt": "2026-10-21T04:20:23.935Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -222,6 +225,21 @@
       "agent": "pilot:pilot-implementer",
       "what": "spec 4c's 'every open PR based on feat/<N>' would retarget slice PRs too; narrowed to feat/ heads",
       "evidence": "PR #20 security-reviewer MEDIUM; S7.md seam note 9c9acf00"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "prompt pins at 0-18 tokens headroom forced trimming unrelated prose to add S8's lines; ~6 measure runs",
+      "evidence": "measure-prompt: pilot 11691.5/11692.25, pilot-architect 10497.5/10497.5"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a trimmed clause was pinned by a test the pin grep missed; a second ~300 s full run",
+      "evidence": "verdict-pass-architect 'do not wait'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck/test/scratch-stop.test.mjs symlink-registry test failed EEXIST on a shared %TEMP% path, passed on rerun",
+      "evidence": "S8 first gate at ce7bd767"
     }
   ]
 }
