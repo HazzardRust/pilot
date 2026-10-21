@@ -87,7 +87,7 @@ Deletion test: deleting `gitFixture` scatters build, snapshot and restore over 5
 - **A1. The ENOENT fix is quiet git in the fixture's global config** (`maintenance.auto=false`, `maintenance.autoDetach=false`,
   `gc.auto=0`, `gc.autoDetach=false`), conditional on L4's probe. Tradeoff: fixture git no longer exercises auto
   maintenance, which no test asserts on. Rejected: retry (L3), mirror snapshot (bigger diff). Not posted (L8).
-  Verdict: stands. Nothing in the queue or the live runs touches the fixture's git config; pilot-develop-line adds tests through gitFixture and edits neither it nor gate.yml.
+  Verdict: stands — nothing in the queue or the live runs touches the fixture's git config; pilot-develop-line adds tests through gitFixture and edits neither it nor gate.yml.
 - A2 and A3 settled: the PR trigger became L6 (itm_0109445d1941); the spec was agreed (itm_bd456e7439b3).
 
 red team: attacked (a) S1's red step — a fixture on local Windows/WSL already has a real tmp, so a plain assert passes
