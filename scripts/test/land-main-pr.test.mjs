@@ -22,6 +22,8 @@ function stubGit(remote) {
     }
     if (key === 'remote') return 'origin\nfork';
     if (key === 'ls-remote --symref origin HEAD') return 'ref: refs/heads/main\tHEAD\n';
+    // main..pilot holds one landing, feat/a's.
+    if (args[0] === 'log') return `${'a'.repeat(40)}\t${'b'.repeat(40)} ${'c'.repeat(40)}\tMerge feat/a into pilot`;
     throw new Error(`unexpected git ${key}`);
   };
 }
@@ -34,7 +36,7 @@ test('the first landing opens the main PR', () => {
   const main = mainGetsPilot({ git: stubGit(), gh });
 
   assert.equal(creates(calls).length, 1);
-  assert.deepEqual(creates(calls)[0], ['pr', 'create', '--base', 'main', '--head', 'pilot', '--title', 'main gets pilot', '--body', '']);
+  assert.deepEqual(creates(calls)[0], ['pr', 'create', '--base', 'main', '--head', 'pilot', '--title', 'Release: a', '--body', `| Feature | PR | Landing |\n| --- | --- | --- |\n| a | – | ${'a'.repeat(40)} |`, '--label', 'release']);
   assert.deepEqual(main, { number: 901, opened: true });
   assert.equal(mainLine(main), 'main gets pilot: #901 (opened)');
 });
