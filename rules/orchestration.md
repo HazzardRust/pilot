@@ -34,14 +34,14 @@ acceptable: state the reasoning either way.
 
 As an **implementing agent you own the whole slice loop for your workstream**: plan,
 vertical slices, tests first, implement, gate, one fresh review per slice, commit,
-push, draft PR, a report per slice. You may load this package's skills and spawn
+push the branch, a report per slice. You may load this package's skills and spawn
 children for review and exploration.
 
 **Both human gates survive delegation.** `vertical-execution.md` defines them, and
 you hold them as the orchestrator, because an agent cannot ask the user anything.
 Gate 1 is signed off before you write the brief, since the brief *is* the approved
 plan. For Gate 2 the
-agent stops with its work committed, pushed and in a draft PR, and you bring the
+agent stops with its work pushed on its branch, and you bring the
 result to the user before anything is landed. A brief that lets a
 workstream merge on the agent's own say-so has skipped a gate the user asked for.
 
