@@ -49,6 +49,8 @@ import { scopeOf } from './select-tests.mjs';
 import { runRecord } from './worktrees.mjs';
 
 const RECORDS = ':(glob)docs/design/*/run.json';
+/** One trailer line: a key of letters and hyphens, a colon, a space, a value on the same line. */
+const TRAILER = /^[A-Za-z][A-Za-z-]*: \S.*$/;
 /** How long a slice's open PR is polled for GitHub to read it merged (L5). */
 const MERGE_WAIT_MS = 30_000;
 
@@ -283,6 +285,11 @@ export function integrate(branch, options = {}) {
   // Outside npm and without git config pilot.test there is no test command (A5): stop before anything moves.
   if (test === undefined && testCommand(cwd) === undefined) {
     return { ok: false, line: `${not}: ${NO_TEST}`, failing: [], code: 2 };
+  }
+  // Each trailer is one `Key: value` line (`.` matches no CR or LF), so no value forges a second, such as a Reviewed-by.
+  const forged = trailers.map(String).find((line) => !TRAILER.test(line));
+  if (forged !== undefined) {
+    return { ok: false, line: `${not}: trailer ${forged.split(/[:\r\n]/)[0]} is not one "Key: value" line; nothing merged or pushed`, failing: [] };
   }
 
   // The branch every push names, checked before anything is merged onto it.
