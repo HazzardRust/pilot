@@ -36,8 +36,8 @@ export function releaseNotes({ git, pilotRef, mainRef, prs }) {
   const log = git(['log', '--first-parent', '--reverse', '--format=%H%x09%P%x09%s', `${mainRef}..${pilotRef}`]);
   const rows = [];
   for (const line of String(log).split(/\r?\n/)) {
-    const [sha, parents, subject] = line.split('\t');
-    const slug = LANDING.exec(subject ?? '')?.[1];
+    const [sha, parents, ...subject] = line.split('\t');
+    const slug = LANDING.exec(subject.join('\t'))?.[1];
     if (!slug || parents.split(' ').length !== 2) continue;
     const numbers = prs.filter((pr) => pr?.headRefName === `feat/${slug}` && pr.isCrossRepository !== true && Number.isSafeInteger(pr.number) && pr.number > 0).map((pr) => pr.number);
     rows.push({ slug, pr: numbers.length ? Math.max(...numbers) : null, sha });
