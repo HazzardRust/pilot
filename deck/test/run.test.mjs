@@ -220,13 +220,16 @@ const HANDED_OFF = ['/clear\r', pasted('Pick up the hand-off on the deck.'), '\r
  * The `/clear` starts a fresh session, and that session's `SessionStart` lane
  * claims the newest hand-off in `items` — the marker the wrapper waits on
  * before it types the prompt (spec 24). A keyboard given no items is a session
- * whose lane never fires.
+ * whose lane never fires. A lone Enter starts the fresh session's turn, whose first
+ * tool call `post-tool.js` stamps (handoff-prompt L3); `takes: false` is a session
+ * whose input line never submits.
  */
-function keyboard(items = []) {
+function keyboard(items = [], { takes = true } = {}) {
   const typed = [];
   const type = (text) => {
     typed.push(text);
     if (text === '/clear\r' && items.length) deck.claim(lane.claimFor(items.at(-1).id));
+    if (text === '\r' && takes) deck.markToolRan({ PILOT_RUN_PID: String(process.pid), PILOT_RUN_REPO: OURS }, OURS);
   };
   return { typed, type };
 }
@@ -1427,6 +1430,39 @@ test('on no marker the wrapper posts the failure on the handoff thread and the c
     'the claim is kept: one hand-off never clears a session twice');
 });
 
+// handoff-prompt S3: a prompt the fresh session never took is said once, never silent (spec 2, 3).
+const NOT_STARTED = /^hand-off itm_[0-9a-f]{12} not started: no tool call within 1 min of its prompt or of a second Enter; look at the terminal$/;
+
+test('not started is said on the thread', async (t) => {
+  const home = scratchHome(t);
+  const stash = item();
+  const chat = item({ kind: 'chat', title: 'Chat', body: '' });
+  const calls = await deckHolding(t, [chat, stash]);
+  const keys = keyboard([stash], { takes: false });
+  atRest();
+
+  assert.equal(await wrapper.clearOnce({ cwd: OURS, type: keys.type, pollMs: 10, takenWaitMs: 50 }), true);
+  assert.deepEqual(keys.typed, [...HANDED_OFF, '\r'], 'one retype, never two');
+  const replies = calls.filter((c) => c?.name === 'deck_reply');
+  assert.deepEqual(replies.map((c) => c.arguments.id), [stash.id], 'one reply, on the hand-off');
+  assert.match(replies[0].arguments.text, NOT_STARTED);
+  assert.ok(replies[0].arguments.text.includes(stash.id));
+  assert.match(wrapperLog(home), /Z run: retyped Enter\n.*Z run: hand-off not started$/m);
+});
+
+test('a closed thread falls back to the chat', async (t) => {
+  scratchHome(t);
+  const stash = item();
+  const chat = item({ kind: 'chat', title: 'Chat', body: '' });
+  const calls = await deckHolding(t, [chat, stash], (body) => body?.name === 'deck_reply' && body.arguments.id === stash.id);
+  atRest();
+
+  assert.equal(await wrapper.clearOnce({ cwd: OURS, type: keyboard([stash], { takes: false }).type, pollMs: 10, takenWaitMs: 50 }), true);
+  const replies = calls.filter((c) => c?.name === 'deck_reply');
+  assert.deepEqual(replies.map((c) => c.arguments.id), [stash.id, chat.id], 'the thread refused, so the chat');
+  assert.match(replies[1].arguments.text, NOT_STARTED);
+});
+
 test('a thread that refuses the missing-marker reply still gets the chat line (F10)', async (t) => {
   const home = scratchHome(t);
   const stash = item();
@@ -1436,7 +1472,7 @@ test('a thread that refuses the missing-marker reply still gets the chat line (F
 
   assert.equal(await wrapper.clearOnce({ cwd: OURS, type: keyboard().type, pollMs: 10, waitMs: 50 }), true);
   assert.deepEqual(calls.filter((c) => c?.name === 'deck_reply').map((c) => c.arguments.id), [stash.id, chat.id]);
-  assert.ok(wrapperLog(home).includes(`run: could not post the missing marker for ${stash.id} on the thread (the deck answered deck_reply with 400)`));
+  assert.ok(wrapperLog(home).includes(`run: could not post the notice for ${stash.id} on the thread (the deck answered deck_reply with 400)`));
 });
 
 test('a hand-off closed while the posting turn ran is not cleared into (itm_3b422012fde0)', async (t) => {
