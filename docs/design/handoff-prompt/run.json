@@ -1,0 +1,65 @@
+{
+  "slug": "handoff-prompt",
+  "feature": "The hand-off's first prompt is submitted",
+  "ticket": "itm_04e5fe15f3f9",
+  "branch": "feat/handoff-prompt",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-prompt",
+  "artefact": "docs/design/handoff-prompt/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Walking skeleton: the prompt is pasted, then Enter alone",
+      "state": "implementing",
+      "branch": "slice/handoff-prompt-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-handoff-prompt-s1"
+    },
+    {
+      "slice": "S2 The run's main session stamps its tool calls",
+      "state": "implementing",
+      "branch": "slice/handoff-prompt-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-handoff-prompt-s2"
+    },
+    {
+      "slice": "S3 An unsent prompt is retyped once, then said aloud",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S2"
+      ]
+    },
+    {
+      "slice": "feature",
+      "state": "implementing: co-pilot running S1 ∥ S2 from 96880189; draft PR #28",
+      "branch": "feat/handoff-prompt",
+      "pr": 28
+    }
+  ],
+  "next": "co-pilot: S1 and S2 implementing in parallel from feat 96880189; integrate each on its draft PR, then S3 from the new tip.",
+  "updatedAt": "2026-10-21T06:49:36.694Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the repo's run.mjs differs from the installed 0.9.5 copy, so the brief's line numbers were off",
+      "evidence": "brief cites :391 and :103; repo has :368 and :80"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the first-prompt mechanism is split across three files",
+      "evidence": "run.mjs, run-claim.mjs, session-handoff.js"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck.json has no record of which hand-offs failed; inferred from reply timing",
+      "evidence": "itm_e6a914cb63f9 took 1141 s"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "Claude Code ships only as a native binary; its paste handling was grepped out of claude.exe",
+      "evidence": "claude.exe bg-pty path"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "a Bash heredoc of the artefact failed on a quote; rewritten with Write",
+      "evidence": "architect report"
+    }
+  ]
+}
