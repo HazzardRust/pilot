@@ -1,8 +1,8 @@
 /**
  * S2 of one-integration-line: the landing keeps one PR from pilot to main (spec 3; A1, A5, A6).
  * `mainGetsPilot` reuses the one open PR head pilot, base the default branch, else opens it; a
- * run remote other than origin opens none. A feature PR GitHub left open is closed with the
- * landing comment, and the landing's last line is `mainLine`'s. `gh` is always faked.
+ * run remote other than origin opens none. A feature PR GitHub left open takes the
+ * landing comment and is never closed (pilot-develop-line S2), and the landing's last line is `mainLine`'s. `gh` is always faked.
  */
 
 import { repos, passing, fakeGh, mainSays, land } from './lib/land-repos.mjs';
@@ -78,32 +78,31 @@ test('a gh that fails reads unknown, with why', () => {
   assert.equal(mainLine(main), 'main gets pilot: unknown (gh pr list failed: no GitHub host)');
 });
 
-test('an open feature PR is closed with the landing comment', (t) => {
+test('an open feature PR takes the landing comment, never a close', (t) => {
   const { gitIn, a } = repos(t, 'a');
   // The feature PR targets pilot; GitHub left it open.
   const { gh, calls } = fakeGh([{ number: 7, headRefName: 'feat/a', baseRefName: 'pilot', state: 'OPEN' }]);
 
-  const result = land({ cwd: a, git: gitIn(a), gh, test: passing });
+  const result = land({ cwd: a, git: gitIn(a), gh, test: passing, wait: 0 });
 
-  const closes = calls.filter((args) => args[0] === 'pr' && args[1] === 'close');
-  assert.equal(closes.length, 1);
-  assert.deepEqual(closes[0].slice(0, 4), ['pr', 'close', '7', '--comment']);
-  assert.match(closes[0][4], new RegExp(`^landed on pilot at ${result.sha}`));
-  assert.ok(!calls.some((args) => args[1] === 'comment'), 'the comment rides on the close');
+  const comments = calls.filter((args) => args[0] === 'pr' && args[1] === 'comment');
+  assert.equal(comments.length, 1);
+  assert.deepEqual(comments[0].slice(0, 4), ['pr', 'comment', '7', '--body']);
+  assert.match(comments[0][4], new RegExp(`^landed on pilot at ${result.sha}`));
+  assert.ok(!calls.some((args) => args[1] === 'close'), 'no PR is closed');
   assert.ok(!calls.some((args) => args[1] === 'merge'), 'no PR is merged');
 });
 
-test('a re-landing closes the feature PR left open', (t) => {
+test('a re-landing comments on nothing', (t) => {
   const { gitIn, a } = repos(t, 'a');
-  const first = land({ cwd: a, git: gitIn(a), gh: fakeGh().gh, test: passing });
+  land({ cwd: a, git: gitIn(a), gh: fakeGh().gh, test: passing });
   const called = (calls, verb) => calls.filter((args) => args[0] === 'pr' && args[1] === verb);
 
-  // Already on pilot, its PR still open against pilot: closed with the landing comment.
+  // Already on pilot, its PR still open against pilot: neither closed nor commented.
   const open = fakeGh([{ number: 7, headRefName: 'feat/a', baseRefName: 'pilot', state: 'OPEN' }]);
-  const again = land({ cwd: a, git: gitIn(a), gh: open.gh, test: passing });
+  const again = land({ cwd: a, git: gitIn(a), gh: open.gh, test: passing, wait: 0 });
   assert.equal(again.already, true);
-  assert.equal(called(open.calls, 'close').length, 1);
-  assert.deepEqual(called(open.calls, 'close')[0], ['pr', 'close', '7', '--comment', `landed on pilot at ${first.sha}`]);
+  assert.equal(called(open.calls, 'close').length, 0);
   assert.equal(called(open.calls, 'comment').length, 0);
   // With no open main PR, an already-landed feature opens none and reads no unknown (F3).
   assert.equal(called(open.calls, 'create').length, 0);
