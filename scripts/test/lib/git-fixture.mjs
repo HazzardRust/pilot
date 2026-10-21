@@ -11,6 +11,10 @@
  * valid. node:test runs a file's tests one after another, which is what makes restoring in
  * place safe. A second call for `key` inside one test builds fresh into a new directory.
  *
+ * Every directory, and the template, is a `fs.realpathSync.native` path, so the spelling git
+ * and the code under test print (macOS `/private/var`, Windows long names) is the one `build`
+ * and the tests see, whatever `os.tmpdir()` returns.
+ *
  * `build` must not call `t.after`, nor return closures over mutable in-memory state: its value
  * is shared by every test of the key. Every directory goes when the process exits.
  *
@@ -40,7 +44,7 @@ const fixtures = new Map();
 const made = [];
 
 function tempDir(prefix) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  const dir = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
   made.push(dir);
   return dir;
 }

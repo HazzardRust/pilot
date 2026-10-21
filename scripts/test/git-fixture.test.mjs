@@ -10,6 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -77,6 +78,35 @@ test('a second call in one test gets its own directory', (t) => {
   assert.equal(git(first.dir, 'status', '--porcelain'), '?? untracked.txt', 'the first is untouched by the second');
   assert.equal(git(first.dir, 'rev-parse', 'HEAD'), first.sha);
   assert.equal(git(second.dir, 'rev-parse', 'HEAD'), second.sha);
+});
+
+test('the fixture dir is its realpath', (t) => {
+  const real = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-realpath-')));
+  const link = `${real}-link`;
+  fs.symlinkSync(real, link, process.platform === 'win32' ? 'junction' : 'dir');
+  const saved = {};
+  const names = ['TMPDIR', 'TMP', 'TEMP'];
+  for (const name of names) saved[name] = process.env[name];
+  let seen;
+  let resolved;
+  try {
+    for (const name of names) process.env[name] = link;
+    gitFixture(t, 'realpath', (dir) => {
+      seen = dir;
+      resolved = fs.realpathSync.native(dir);
+      return oneCommit(dir);
+    });
+  } finally {
+    for (const name of names) {
+      if (saved[name] === undefined) delete process.env[name];
+      else process.env[name] = saved[name];
+    }
+    fs.rmSync(link, { recursive: true, force: true });
+    fs.rmSync(real, { recursive: true, force: true });
+  }
+  assert.ok(seen, 'build ran');
+  assert.equal(seen, resolved);
+  assert.equal(seen.startsWith(link), false, 'the dir is not spelled through the link');
 });
 
 test('identity comes from the global file', (t) => {
