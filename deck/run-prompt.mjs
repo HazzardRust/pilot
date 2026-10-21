@@ -45,7 +45,8 @@ export async function submitPrompt(text, { type, signal, settleMs = SETTLE_MS })
  * Whether the fresh session took the prompt (handoff-prompt L3, L4): a tool call of its
  * own, stamped by `post-tool.js`, at or after `since`, which is read before the paste so
  * the old session's calls never count. None within `takenWaitMs` types one lone `\r`
- * more, safe because an Enter on an empty input line does nothing; none within the
+ * more, safe because an Enter on an empty input line does nothing (it submits whatever
+ * the user has typed there meanwhile, once, as the user's own Enter would); none within the
  * bound again is `'not started'`, which the caller says aloud. A second retype would
  * repeat what failed, so there is none. A stop types nothing more: `'stopped'`.
  */
