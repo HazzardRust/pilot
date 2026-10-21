@@ -434,6 +434,7 @@ const PHASES = new Map([
   ['planned', 'planned'],
   ['implementing', 'doing'],
   ['draft', 'doing'],
+  ['pushed', 'doing'],
   ['in', 'doing'],
   ['fixing', 'doing'],
   ['integrated', 'done'],

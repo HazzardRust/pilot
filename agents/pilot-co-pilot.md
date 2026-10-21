@@ -43,7 +43,7 @@ Read steps 4 to 8 of `${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, and its
   <n> is your `yellow` budget less every live agent, you included; start each slice
   it prints, from the tip it names.
 - Move each row with one `deck_status` as the work moves: `implementing` at the
-  spawn, `draft PR #n` with its `branch` when the PR opens, `integrated` only once `pilot integrate` prints `integrated …`, `fixing`
+  spawn, `pushed <sha7>` with its `branch` when the implementer reports, `integrated` only once `pilot integrate` prints `integrated …`, `fixing`
   for the fix round and `in QA` for QA. Integrate runs the selection; the full suite runs once, at `pilot land`.
 - Step 7's `pilot land` prints `landed … at <sha>`: the feature row reads
   `landed on pilot at <sha>`. A `NOT landed` conflict line goes to `main`

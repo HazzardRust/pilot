@@ -59,16 +59,21 @@ const asTicket = (item) => ({
  * With `open`, also every open ticket in any state, for ticket-making's check (runs-build-on-each-other spec 10).
  * With `agent`, also `filed`: the ticket that agent type's Blocked item is filed under, `{ id }` or null, by
  * `laneTicketOf` with `coPilot` (blocked-yellow-yields spec 7); `live` stays the red queue's either way.
+ * `concluding` is the feature waiting at Gate 2 that `pilot base` chains the next run on (pilot-develop-line spec 4,
+ * L5, A5): the live green ticket with its record's slug and branch, or null with none or a record naming no branch.
  */
 export function queueView(items, repo, records = [], { open = false, agent, coPilot = null } = {}) {
   const live = liveTicketOf(items, repo, 'red') ?? null;
   const decided = live && mergeDecisionOf(items, live.id);
   const filed = agent === undefined ? undefined : laneTicketOf(items, repo, agent, coPilot) ?? null;
+  const green = liveTicketOf(items, repo, 'green');
+  const run = green && records.find((record) => record?.ticket === green.id && typeof record.branch === 'string' && (record.base ?? 'pilot') === 'pilot');
   return {
     live: live && asTicket(live),
     red: ticketQueueOf(items, repo).filter((item) => item !== live).map(asTicket),
     decision: decided ? { id: decided.id, resolution: decided.resolution } : null,
     records: records.map(({ slug, branch, finished, updatedAt }) => ({ slug, branch, finished, updatedAt })),
+    concluding: run ? { ticket: green.id, slug: run.slug, branch: run.branch } : null,
     ...(open && {
       open: ['red', 'yellow', 'green'].flatMap((state) =>
         ticketQueueOf(items, repo, state).map(({ id, title, body }) => ({ id, title, state, body })),

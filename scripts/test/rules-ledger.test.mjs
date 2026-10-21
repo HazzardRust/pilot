@@ -38,6 +38,22 @@ test('a rule edited in the working tree adds its hash', (t) => {
   assert.equal(rulesLedgerText(dir), `{\n  "a.md": ${JSON.stringify(want)}\n}\n`);
 });
 
+test('a rebuild on a history that no longer holds an old version keeps its hash from the committed ledger', (t) => {
+  const dir = tempDir(t);
+  git(dir, 'init', '-q', '-b', 'main');
+  fs.mkdirSync(path.join(dir, 'rules'));
+  fs.mkdirSync(path.join(dir, 'scripts'));
+  fs.writeFileSync(path.join(dir, 'rules', 'a.md'), 'new\n');
+  const committed = { 'a.md': [sha256('old\n')], 'gone.md': [sha256('gone\n')] };
+  fs.writeFileSync(path.join(dir, 'scripts', 'shipped-rules.json'), JSON.stringify(committed));
+  git(dir, 'add', 'rules', 'scripts');
+  git(dir, 'commit', '-q', '-m', 'squashed');
+  assert.deepEqual(JSON.parse(rulesLedgerText(dir)), {
+    'a.md': [sha256('new\n'), sha256('old\n')].sort(),
+    'gone.md': [sha256('gone\n')],
+  });
+});
+
 test('a shallow clone is refused', (t) => {
   const src = tempDir(t);
   git(src, 'init', '-q', '-b', 'main');

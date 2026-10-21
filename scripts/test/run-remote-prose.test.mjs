@@ -41,11 +41,14 @@ test('no crew prompt hard-codes origin for a run branch', () => {
   assert.match(read('agents/pilot-architect.md'), /<remote>\/pilot/, 'the design worktree is cut from the run remote\'s pilot');
 });
 
-test('the implementer opens a slice PR only on origin', () => {
-  const push = section(IMPLEMENTER, 'Commit, push, draft PR');
-  assert.match(push, /`gh pr create --draft`[^.]*only when `<remote>` is `origin`/, 'the condition (A1)');
-  assert.match(push, /otherwise[^.]*push[^.]*no PR/i, 'the push-only path');
+// pilot-develop-line S4 (A8): the slice branch still pushes to the run remote; no remote gets a slice PR.
+test('the implementer pushes its slice branch and opens no PR on any remote', () => {
+  const push = section(IMPLEMENTER, 'Commit, push, report');
+  assert.doesNotMatch(push, /gh pr create/, 'no remote gets a slice PR');
+  assert.match(push, /Push the branch to `<remote>`/, 'the branch pushes to the run remote');
+  assert.match(push, /Open no PR/, 'the push-only path is the only path');
   assert.match(push, /`local`[^.]*push nothing/i, 'local mode pushes nothing');
+  assert.match(push, /git rebase <remote>\/feat\/<slug>/, 'the rebase reads the run remote');
 });
 
 test('the brief carries the remote', () => {

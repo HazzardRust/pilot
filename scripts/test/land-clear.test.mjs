@@ -170,7 +170,7 @@ test("with twelve long worktree lines the deck row's 300-character tail still ho
   }
   const why = 'x'.repeat(400);
   const refusing = (args) => {
-    if (args[1] === 'create') throw Object.assign(new Error('gh pr create failed'), { stderr: why });
+    if (args[0] === 'pr' && args[1] === 'create') throw Object.assign(new Error('gh pr create failed'), { stderr: why });
     return gh(args);
   };
 
