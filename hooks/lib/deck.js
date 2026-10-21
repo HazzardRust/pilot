@@ -704,10 +704,24 @@ function release(name) {
  * the project's, since the shell's drifts into a worktree while the pilot integrates.
  */
 function markTurnEnded(env, cwd) {
-  if (!env.PILOT_RUN_PID || !samePath(env.PILOT_RUN_REPO, projectDir({ cwd: cwd }, env))) return;
+  stampRun(env, cwd, 'turn-ended');
+}
+
+/**
+ * Stamp a tool call of the session `pilot run` started (handoff-prompt S2), on
+ * `markTurnEnded`'s terms, so the wrapper can tell that session at work from one
+ * at rest. `post-tool.js` calls it for the main session's calls only.
+ */
+function markToolRan(env, cwd) {
+  stampRun(env, cwd, 'tool-ran');
+}
+
+/** `claims/<name>-<PILOT_RUN_PID>.stamp` = now, only in the wrapper's directory; never throws. */
+function stampRun(env, cwd, name) {
+  if (!env || !env.PILOT_RUN_PID || !samePath(env.PILOT_RUN_REPO, projectDir({ cwd: cwd }, env))) return;
   try {
     privateInbox('claims');
-    fs.writeFileSync(path.join(claimDir(), 'turn-ended-' + sessionKey(env.PILOT_RUN_PID) + '.stamp'), String(Date.now()));
+    fs.writeFileSync(path.join(claimDir(), name + '-' + sessionKey(env.PILOT_RUN_PID) + '.stamp'), String(Date.now()));
   } catch (err) { /* the wrapper waits, then gives up and types nothing */ }
 }
 
@@ -765,6 +779,7 @@ module.exports = {
   lastMessage: lastMessage,
   isStanding: isStanding,
   isRecord: isRecord,
+  markToolRan: markToolRan,
   markTurnEnded: markTurnEnded,
   pickupPath: pickupPath,
   privateInbox: privateInbox,
