@@ -16,7 +16,7 @@ from a file the user wrote there themselves.
 
 So we decided the install carries a ledger, `scripts/shipped-rules.json`, generated from git history by
 `scripts/build-rules-ledger.mjs`: for every path the package ever shipped under `rules/`, the sha256 of every
-version. A target file whose bytes match any entry for its path is replaced with the current one. A target file
+version (append-only since ADR 0174). A target file whose bytes match any entry for its path is replaced with the current one. A target file
 whose path the ledger lists as shipped-then-removed, and whose bytes match a shipped version, is deleted. Anything
 else under `~/.claude/rules/` — a file the user edited, a file they wrote, a file from another plugin — is never
 touched; the install names it in its report (L19, itm_5d3985b83d01). A test pins the ledger against the history.
