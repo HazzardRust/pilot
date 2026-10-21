@@ -78,10 +78,10 @@ Deletion test: no module is added. The former `scripts/ci.mjs` and `deck/ci-watc
 
 None standing.
 
-- **A1 Poll in the deck daemon every 5 min** (itm_2e9ff4aae745, settled). overridden: the user rejected a GitHub-centred design; other VCS hosts must not be second-class.
-- **A2 Unrouted goes to the chat, and the pilot proposes** (itm_9777b734b8eb, settled). overridden: the user rejected a GitHub-centred design; other VCS hosts must not be second-class.
-- **A3 All own-branch runs count** (itm_d9ad308820aa, settled). overridden: the user rejected a GitHub-centred design; other VCS hosts must not be second-class.
-- **A4 Add `pilot ci <run-id>`** (itm_861cad618f35, settled). overridden: the user rejected a GitHub-centred design; other VCS hosts must not be second-class.
+- **A1 Poll in the deck daemon every 5 min** (itm_2e9ff4aae745, settled). overridden: the user rejected a GitHub-centred design; other VCS hosts must not be second-class. Verdict: overturned: the user rejected the GitHub-centred design on itm_22c8c585ac73; no replacement, the behaviour is out of scope (L11).
+- **A2 Unrouted goes to the chat, and the pilot proposes** (itm_9777b734b8eb, settled). overridden: the user rejected a GitHub-centred design; other VCS hosts must not be second-class. Verdict: overturned: the user rejected the GitHub-centred design on itm_22c8c585ac73; no replacement, the behaviour is out of scope (L11).
+- **A3 All own-branch runs count** (itm_d9ad308820aa, settled). overridden: the user rejected a GitHub-centred design; other VCS hosts must not be second-class. Verdict: overturned: the user rejected the GitHub-centred design on itm_22c8c585ac73; no replacement, the behaviour is out of scope (L11).
+- **A4 Add `pilot ci <run-id>`** (itm_861cad618f35, settled). overridden: the user rejected a GitHub-centred design; other VCS hosts must not be second-class. Verdict: overturned: the user rejected the GitHub-centred design on itm_22c8c585ac73; no replacement, the behaviour is out of scope (L11).
 - red team: the seven finds of the first cut (`cleanField`, `operating-commands`, `noteDeck` on a missing item, `announceChange`,
   `pollCi`'s `records`, the daemon's idle exit, the pilot prompt pin) retire with the old S1-S4.
 - red team: S1's first red step walked against the real files. `implementer-steps.test.mjs` pins `The loop` by phrase, so the
