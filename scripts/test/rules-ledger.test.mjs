@@ -92,6 +92,13 @@ test('a rules edit without its ledger entry is still stale', (t) => {
   assert.ok(rebuilt['a.md'].includes(sha256('one\n')));
 });
 
+test('a malformed committed ledger is an error, never carried forward', (t) => {
+  const { dir } = freshRepo(t);
+  fs.writeFileSync(path.join(dir, 'scripts', 'shipped-rules.json'), '{"a.md": "not-a-list"}\n');
+  git(dir, 'commit', '-q', '-am', 'bad ledger');
+  assert.throws(() => rulesLedgerText(dir), /shipped-rules\.json at blob [0-9a-f]+ is malformed/);
+});
+
 test('a merge in progress counts the incoming commits', (t) => {
   const dir = tempDir(t);
   git(dir, 'init', '-q', '-b', 'main');

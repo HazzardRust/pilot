@@ -95,10 +95,14 @@ function buildRulesLedger(root) {
     if (!hashes.has(rel)) hashes.set(rel, new Set());
     hashes.get(rel).add(hash);
   };
+  // A malformed version would be carried forever, so it is an error naming the blob, never skipped.
   for (const blob of ledgerBlobs) {
-    for (const [rel, recorded] of Object.entries(JSON.parse(bytes.get(blob).toString('utf8')))) {
-      for (const hash of recorded) add(rel, hash);
-    }
+    let recorded;
+    try { recorded = JSON.parse(bytes.get(blob).toString('utf8')); } catch (err) { recorded = err; }
+    const wellFormed = recorded?.constructor === Object && Object.values(recorded)
+      .every((list) => Array.isArray(list) && list.every((hash) => /^[0-9a-f]{64}$/.test(hash)));
+    if (!wellFormed) throw new Error(`${RULES_LEDGER_FILE} at blob ${blob} is malformed; it must map each path to sha256 hashes.`);
+    for (const [rel, list] of Object.entries(recorded)) for (const hash of list) add(rel, hash);
   }
   const rules = path.join(root, 'rules');
   for (const rel of filesUnder(rules)) add(rel, sha256(fs.readFileSync(path.join(rules, rel))));
