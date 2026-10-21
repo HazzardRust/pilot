@@ -102,19 +102,41 @@
       "branch": "slice/pilot-develop-line-s11",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-pilot-develop-line-s11",
       "pr": 22
+    },
+    {
+      "slice": "feature",
+      "state": "in QA: read-only pass green at 424e7aa9; fix round at 819ba5a8 (14 findings, reviewers approve, npm test 4495/0); live pass waits on itm_64aa78f5f921, itm_6e830a03b1a0",
+      "branch": "feat/pilot-develop-line",
+      "pr": 2
+    },
+    {
+      "slice": "pilot-develop-line",
+      "state": "landing started in C:/Users/Hazzard/Projects/pilot-feat-pilot-develop-line"
     }
   ],
   "findings": [
     "kept: stale shipped-rules.json on the squashed history — added slice S10, integrated 60afb5f8",
     "kept: PILOT_GATE_SLOT=selected NaN in takeSlot — fixed in S3's fix round",
     "kept: unchecked --trailer can forge a Reviewed-by line — fixed in S3's fix round",
-    "kept: rules/orchestration.md, vertical-execution.md, CONTEXT.md still describe slice PRs — added slice S11",
-    "kept: pilot handoff --trailer unchecked — for the step-7 fix round",
-    "kept: agents/pilot.md step 3 'opens the feature PR as a draft against pilot' is wrong on a chained run (pins pilot-branch-rules:39, one-line-wording:43) — for the step-7 fix round",
-    "kept: scratch-stop.test.mjs EEXIST flake on a shared %TEMP% path — for the step-7 fix round"
+    "kept: rules/orchestration.md, vertical-execution.md, CONTEXT.md still describe slice PRs — added slice S11, integrated",
+    "kept: pilot handoff --trailer unchecked (security MEDIUM) — fix round",
+    "kept: agents/pilot.md step 3 'feature PR as a draft against pilot' wrong on a chained run — fix round",
+    "kept: scratch-stop.test.mjs EEXIST flake on a shared %TEMP% path — fix round",
+    "kept: deck/tickets.mjs:70 concluding ignores the record's base, so a held landing allows a depth-2 chain (L5) — fix round",
+    "kept: agents/pilot.md:502 dropped-N revert never resets base or retargets the PR (spec 4e) — fix round",
+    "kept: land.mjs mainGetsPilot pass-through — fix round, removal",
+    "kept: integrate.mjs MERGE_WAIT_MS polls a slice PR that no longer exists — fix round, removal",
+    "kept: dead findPr keys in four integrate tests — fix round, removal",
+    "kept: land-merged-read.test.mjs:24-25 pins the wait strategy — fix round, removal",
+    "kept: S2.md Interface comment -> number[] — fix round",
+    "kept: ADR 0100 not superseded — fix round",
+    "kept: base.mjs feat/<N> fetch failure prints plain base pilot — fix round",
+    "kept: base.mjs duplicates RUN_BASE — fix round",
+    "kept: base.mjs interpolates the deck's ticket id unvalidated (security LOW) — fix round",
+    "dropped: security INFO rows on base branch regex, RUN_BASE anchors, integrate trailers — no defect found"
   ],
-  "next": "co-pilot: integrating S11 (#22), the last slice; then step 7 fundamentalist and QA read-only",
-  "updatedAt": "2026-10-21T04:29:58.088Z",
+  "next": "pilot-develop-line (green): gate2 itm_a7b0978a208f signed at feat 1e791cf3; LANDER DUE — spawn pilot-lander with that gate2 id first, then Findings: on its closing report (human steps: merge the release/main PR with a merge commit; worktrees slice s7/s8/s11, fix/pilot-develop-line, feat). ci-cross-os next: spawn S2 implementer from feat d60f2926.",
+  "updatedAt": "2026-10-21T06:00:25.070Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -246,6 +268,59 @@
       "agent": "pilot:pilot-implementer",
       "what": "the always-loaded rules cap (3,500 tokens) sat within 17 tokens of its limit; the first S11 wording failed measure-rules",
       "evidence": "measure-rules.test.mjs: 3,517 > 3,500"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot and default branch names have no knob, so the L2 scratch-branch live pass must patch a scratch copy; the patch was classifier-refused",
+      "evidence": "scripts/pilot-branch.mjs PILOT_BRANCH; refused Edit in pilot-qa-pdl-scratch"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the allowlist names `pilot deck --scratch` but PATH's pilot is the installed plugin; the branch's own scratch deck was refused",
+      "evidence": "node bin/pilot.mjs deck --scratch refused (Modify Shared Resources)"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot land's CLI sweeps pilot gc machine-wide after landing, so a QA landing must call land.mjs main() directly",
+      "evidence": "bin/pilot.mjs:320"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the evidence runner overlapped stryker with c8 npm test in one worktree; neither coverage nor mutation produced a signal",
+      "evidence": "stryker 'Initial test run timed out'; c8 output truncated"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "check-slices exits 0 on S10 and S11 missing Rewrite check lines",
+      "evidence": "check-slices.mjs on slices/"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "agents/pilot.md at 0.75 tokens headroom: ~190 added bytes cost three measure-and-trim rounds",
+      "evidence": "measure-prompt.mjs, now 0.25 headroom"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "docs/adr/README.md is generated but checked in; an ADR status change needs a hand edit of its row",
+      "evidence": "adr-index --check flagged 0100's row"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "scratch deck refused as Modify Shared Resources because QA called `node bin/pilot.mjs deck --scratch` while the allow rule reads `pilot deck --scratch *`; one user press lost and spec 4 not seen live",
+      "evidence": "~/.claude/settings.json permissions.allow; itm_e0081260ceba",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "scratch clone inherited the global private email; first push rejected GH007, fixed with a local noreply user.email",
+      "evidence": "QA report itm_ec448e2fd6f6",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "`pilot land` sweeps processes machine-wide; QA drove land() from a script instead",
+      "evidence": "QA report",
+      "size": 1
     }
   ]
 }
