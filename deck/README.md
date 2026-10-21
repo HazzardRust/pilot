@@ -56,7 +56,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `report-shape.mjs` | checks a closing report asks the user nothing (ADR 0148) |
 | `run-claim.mjs` | `pilot run`'s claim: the once-only `/clear` claim, the lane's marker, the turn stamp and the waits |
 | `run-env.mjs` | `pilot run`'s start: the session's arguments (`claudeArgs`, `RESUME_PROMPT`) and environment (`runEnv`) |
-| `run-prompt.mjs` | `pilot run`'s first prompt: one bracketed paste (`pasted`), then Enter alone after a settle (`submitPrompt`) |
+| `run-prompt.mjs` | `pilot run`'s first prompt: one bracketed paste (`pasted`), then Enter alone after a settle (`submitPrompt`), then the check that the fresh session took it, with one retyped Enter (`promptTaken`) |
 | `run.mjs` | `pilot run`: types `/clear` and the first prompt at the hand-off |
 | `runs.mjs` | what a run is and whether its session is still there |
 | `schedule.mjs` | the co-pilot's scheduler: which slices of a run's record may start now, and from which tip |
