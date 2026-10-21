@@ -50,6 +50,8 @@ test('N+1 after N lands clean', (t) => {
   assert.equal(first.code, 0, first.out);
   assert.match(first.out, /^retargeted #12 to pilot$/m);
 
+  // The guard reads pilot as last fetched; the landing's catch-up fetches first.
+  git(m, 'fetch', '-q', 'origin');
   assert.doesNotThrow(() => chainGuard({ cwd: m }));
   const second = mainSays([], { cwd: m, git: gitIn(m), gh: fakeGh().gh, test: passing, wait: 0 });
   assert.equal(second.code, 0, second.out);
