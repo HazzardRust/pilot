@@ -70,10 +70,13 @@ test("N's landing retargets N+1's PR", () => {
     // Closed, or based elsewhere: left alone.
     { number: 13, headRefName: 'feat/k', baseRefName: 'feat/n', state: 'CLOSED' },
     { number: 14, headRefName: 'feat/j', baseRefName: 'pilot', state: 'OPEN' },
+    // N's own slice PR left open: never offered to pilot.
+    { number: 15, headRefName: 'slice/n-s2', baseRefName: 'feat/n', state: 'OPEN' },
   ]);
 
   const lines = retarget({ gh, head: 'feat/n' });
 
+  assert.deepEqual(calls[0], ['pr', 'list', '--base', 'feat/n', '--state', 'open', '--json', 'number,headRefName']);
   assert.deepEqual(edits(calls), [['pr', 'edit', '12', '--base', 'pilot']]);
   assert.deepEqual(lines, ['retargeted #12 to pilot']);
 });

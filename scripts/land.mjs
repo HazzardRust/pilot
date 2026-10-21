@@ -257,20 +257,22 @@ export function chainGuard({ cwd }) {
 }
 
 /**
- * Moves each open PR based on `head` to pilot, `gh pr edit <n> --base pilot` (spec 4c; A6), and
+ * Moves each open feature PR (head `feat/`) based on `head` to pilot, `gh pr edit <n> --base pilot` (spec 4c; A6), and
  * answers one `retargeted #<n> to pilot` line each. Never throws: the feature is landed, so a list or
  * an edit that fails is a `retarget failed` line.
  */
 export function retarget({ gh, head }) {
   let prs;
   try {
-    prs = JSON.parse(gh(['pr', 'list', '--base', head, '--state', 'open', '--json', 'number']));
+    prs = JSON.parse(gh(['pr', 'list', '--base', head, '--state', 'open', '--json', 'number,headRefName']));
   } catch (err) {
     return [`retarget failed: ${firstLine(err)}`];
   }
   if (!Array.isArray(prs)) return ['retarget failed: gh pr list answered no list'];
   return prs
-    .map((pr) => pr?.number)
+    // A chained feature's PR only: an open slice PR moved to pilot would offer its unreviewed work there.
+    .filter((pr) => typeof pr?.headRefName === 'string' && pr.headRefName.startsWith('feat/'))
+    .map((pr) => pr.number)
     .filter(Number.isSafeInteger)
     .map((number) => {
       try {
