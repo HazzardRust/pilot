@@ -1,0 +1,66 @@
+/**
+ * The pty protocol for a hand-off's first prompt (handoff-prompt L1, L2).
+ *
+ * Typed as one chunk, `text\r`, the prompt sat unsent in the fresh session's input
+ * line at least twice: the TUI read the chunk as a paste, and a `\r` inside a paste
+ * is a newline, not a keypress. So the text goes in between the bracketed-paste
+ * markers, which make it one paste whatever chunking ConPTY applies, and Enter
+ * follows alone, in a write of its own, after a settle. Claude Code's own pty driver
+ * types into its REPL the same way with a 10 ms settle; ours lands just after
+ * `/clear`'s redraw and the SessionStart hooks, so it waits longer.
+ */
+import { lastToolRan, pause, waitFor } from './run-claim.mjs';
+import { log as logLine } from '../hooks/lib/wrapper-log.js';
+
+/** The pause between the paste and its Enter (L2). */
+export const SETTLE_MS = 300;
+
+/**
+ * How long the fresh session has to make a tool call before Enter is typed once more,
+ * and again after it (A1, locked by the user): pick-ups took 10-25 s, one 65 s.
+ */
+export const TAKEN_WAIT_MS = 60_000;
+
+/** `text` as one bracketed paste. */
+export const pasted = (text) => `\x1b[200~${text}\x1b[201~`;
+
+/**
+ * Hands the fresh session its first prompt: types `pasted(text)`, waits `settleMs`, types
+ * a lone `\r`, then checks the session took it (handoff-prompt L3, L4): a tool call of its
+ * own, stamped by `post-tool.js`, at or after the moment read before the paste, so the old
+ * session's calls never count. None within `takenWaitMs` types one lone `\r` more, safe
+ * because an Enter on an empty input line does nothing (it submits whatever the user has
+ * typed there meanwhile, once, as the user's own Enter would); none within the bound again
+ * is `'not started'`, which the caller says aloud. A second retype would repeat what
+ * failed, so there is none. A stop at any point types nothing more: `'stopped'`, because a
+ * wrapper whose session has gone has no input line left to submit. Every outcome line names
+ * the hand-off `id`, because wrapper.log is machine-wide and two wrappers write to it.
+ */
+export async function handPrompt(text, { id, type, signal, settleMs = SETTLE_MS, pollMs, takenWaitMs = TAKEN_WAIT_MS }) {
+  const log = (what) => logLine(`run: ${what} for ${id}`);
+  const stopped = () => {
+    log('stopped before the prompt was taken');
+    return 'stopped';
+  };
+  if (signal.aborted) return stopped();
+  const since = Date.now();
+  type(pasted(text));
+  await pause(settleMs, signal);
+  if (signal.aborted) return stopped();
+  type('\r');
+  const taken = () => waitFor(() => lastToolRan() >= since, { signal, pollMs, waitMs: takenWaitMs });
+  if (await taken()) {
+    log('prompt taken');
+    return 'taken';
+  }
+  if (signal.aborted) return stopped();
+  type('\r');
+  log('retyped Enter');
+  if (await taken()) {
+    log('prompt taken');
+    return 'retyped';
+  }
+  if (signal.aborted) return stopped();
+  log('hand-off not started');
+  return 'not started';
+}

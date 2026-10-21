@@ -1,0 +1,234 @@
+{
+  "slug": "handoff-prompt",
+  "feature": "The hand-off's first prompt is submitted",
+  "ticket": "itm_04e5fe15f3f9",
+  "branch": "feat/handoff-prompt",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-prompt",
+  "artefact": "docs/design/handoff-prompt/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Walking skeleton: the prompt is pasted, then Enter alone",
+      "state": "integrated",
+      "branch": "slice/handoff-prompt-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-handoff-prompt-s1",
+      "pr": 31
+    },
+    {
+      "slice": "S2 The run's main session stamps its tool calls",
+      "state": "integrated",
+      "branch": "slice/handoff-prompt-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-handoff-prompt-s2",
+      "pr": 30
+    },
+    {
+      "slice": "S3 An unsent prompt is retyped once, then said aloud",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S2"
+      ],
+      "branch": "slice/handoff-prompt-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-handoff-prompt-s3",
+      "pr": 33
+    },
+    {
+      "slice": "feature",
+      "state": "in QA, paused for the S4 tip; feat/handoff-prompt at eded078d, gate 4522 pass 0 fail, smoke: prompt taken 7.6 s; draft PR #28",
+      "branch": "feat/handoff-prompt",
+      "pr": 28
+    },
+    {
+      "slice": "S4 Added: one handPrompt owns the prompt's since and outcome lines (added)",
+      "state": "integrated",
+      "after": [
+        "S3"
+      ],
+      "branch": "fix/handoff-prompt-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-handoff-prompt-principles",
+      "pr": 34
+    }
+  ],
+  "findings": [
+    "kept: F1 drop TAKEN_POLL_MS",
+    "kept: F2 merge submitPrompt/promptTaken into handPrompt, which owns since and every outcome log line (added slice S4, 218 lines, net 0)",
+    "kept: N1 drop settleMs default",
+    "kept: F5 clearOnce abort-after-paste test",
+    "kept: QA hand-off-id attribution in every outcome line",
+    "dropped: five nits (cosmetic, below their diff)",
+    "dropped: QA version-skew row (installed 0.9.5 vs worktree hooks is the test harness, not the feature)",
+    "dropped: late evidence-runner complexity row (clearOnce 30, watch 17, holdFor 12, run 12 in run.mjs): largely pre-existing, past the fix limit; mutation timed out at 900 s, coverage not run"
+  ],
+  "next": "handoff-prompt (yellow): pilot integrate fix/handoff-prompt-principles in the feat worktree with the brief's trailers, then spawn a fresh pilot-qa with the new tip (5 live hand-offs via qa-proj hook, trusted cwd).",
+  "updatedAt": "2026-10-21T07:56:16.025Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the repo's run.mjs differs from the installed 0.9.5 copy, so the brief's line numbers were off",
+      "evidence": "brief cites :391 and :103; repo has :368 and :80"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the first-prompt mechanism is split across three files",
+      "evidence": "run.mjs, run-claim.mjs, session-handoff.js"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck.json has no record of which hand-offs failed; inferred from reply timing",
+      "evidence": "itm_e6a914cb63f9 took 1141 s"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "Claude Code ships only as a native binary; its paste handling was grepped out of claude.exe",
+      "evidence": "claude.exe bg-pty path"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "a Bash heredoc of the artefact failed on a quote; rewritten with Write",
+      "evidence": "architect report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node --test spec reporter output does not match ^ok/^not ok under grep; re-ran with --test-reporter=tap",
+      "evidence": "S2 report, one extra test run",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "full npm test takes about 5.6 minutes on Windows",
+      "evidence": "duration_ms 337370, 10841 spawns",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 test 2's 'stays 0' check could only fail on a missing function; added a positive real-hook stamp check",
+      "evidence": "PR #30, commit e315bbe2",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate's selection exceeded the argv limit and fell back to the full suite",
+      "evidence": "selection is 27596 characters of argv, over 24000",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a new deck module needs a deck/README.md row; neither slice file nor brief says so, found by a full npm test",
+      "evidence": "scripts/test/deck-readme.test.mjs 'every deck module is listed'",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 lists docs/adr/README.md 'its row' as owned, but the generator never indexes NNNN",
+      "evidence": "scripts/adr-index.mjs:87-88 PLACEHOLDER",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "live ConPTY probe stalled on Claude Code's folder-trust dialog in a fresh directory; probe accepted trust in ~/.claude.json for one scratch dir",
+      "evidence": "first run typed 5 rounds into the dialog",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1's 'Done when' needs 5 live hand-offs under pilot run, unreachable from an implementer's shell",
+      "evidence": "S1 report gate table",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "PR body verdicts as table cells, not the checker's Verdict: shape; one round-trip",
+      "evidence": "PR #31 body",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 PR body again gives reviewer verdicts as table cells without the 'Verdict:' label step 5 reads; the co-pilot's gh pr edit to add it was refused by auto mode",
+      "evidence": "PR #33 body Review table",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 implementer outlived its co-pilot and opened its PR after the hand-off; its report went to the dead co-pilot's address",
+      "evidence": "PR #33 created 07:31:57Z, after run.json updatedAt 07:29:54Z",
+      "size": 1
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "reviewed S3 against a stale base after the seam commit; fetch and rebase before spawning reviewers",
+      "evidence": "PR #33 Review table, S3.md seam 'deletion' not real",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "live probe needed a hand-rolled claude.exe node-pty harness, built twice (S1, S3); a scripts/probe-handoff-prompt.mjs would save it",
+      "evidence": "s3-probe.mjs in the S3 implementer's scratchpad",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "its evidence runner never reported, so diff coverage and mutation did not run; review went out without evidence and the clearOnce abort branch stayed unverified",
+      "evidence": "fundamentalist report section 3 and friction",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "its worktree could not be removed, Permission denied, the runner likely still holding files",
+      "evidence": "C:/Users/Hazzard/Projects/pilot-fundamentalist-handoff-prompt",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot run loads the installed plugin 0.9.5's hooks, which lack markToolRan, so L8's environment cannot meet the 5/5 prompt-taken bar from a worktree; QA adds the worktree's post-tool.js as a project PostToolUse hook in a scratch dir",
+      "evidence": "deck/run-env.mjs runSettings enabledPlugins pilot@pilot",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a scratch deck started from the worktree is replaced by the session's installed 0.9.5 deck client daemon; the lane read at /clear failed ECONNREFUSED and voided live attempt 1",
+      "evidence": "deck.log pids 28120 then 7632 at 07:44:32",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "wrapper.log is machine-wide and the outcome lines name no hand-off, so a probe's lines interleave with the run's",
+      "evidence": "07:44:54 retyped Enter, 07:45:54 hand-off not started, no marker before them",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "L8 assumed pilot run from the worktree runs the worktree's hooks; it runs the installed plugin's, so the live bar needed a scratch project settings.json hook",
+      "evidence": "QA report pushback; deck/run-env.mjs runSettings",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "forced hand-back while a child (S4 implementer) was still running; its report goes to a dead address, same as S3",
+      "evidence": "co-pilot hand-back 2026-10-21",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "reported 16 min after the fundamentalist finished: mutation timed out at 900 s (843 mutants), diff coverage refused by its own command pattern, knip ran on the whole project and truncated",
+      "evidence": "evidence runner hand-back, bdftjf5cx.output",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot run loads the installed 0.9.5 hooks (no stampToolRan), so QA needed a settings.json hook in its scratch project; the installed client replaced the worktree's scratch deck, voiding attempt 1",
+      "evidence": "qa-proj/.claude/settings.json",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "probe lines landed in the shared wrapper.log without a hand-off id; S4's probe stopped on the '2 new MCP servers found' dialog",
+      "evidence": "S4 implementer",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "live probe hangs on claude's 'N new MCP servers found' dialog when cwd is a fresh worktree with .mcp.json, writing stray 'not started' lines into the shared wrapper.log",
+      "evidence": "S4 hand-back; wrapper.log 07:44:54-07:48:20, two 2-minute runs lost",
+      "size": 4
+    }
+  ]
+}

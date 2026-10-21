@@ -69,6 +69,7 @@ import { bearer } from '../hooks/lib/deck-secret.js';
 export { logLine };
 
 import { claimNameFor, takeClaim, releaseClaim, laneMarked, lastTurnEnded, waitFor, pause } from './run-claim.mjs';
+import { TAKEN_WAIT_MS, handPrompt } from './run-prompt.mjs';
 
 export { claimNameFor, takeClaim, RESUME_PROMPT, claudeArgs, runEnv };
 
@@ -296,6 +297,8 @@ export async function clearOnce({
   pollMs = LANE_POLL_MS,
   waitMs = LANE_WAIT_MS,
   restWaitMs = REST_WAIT_MS,
+  settleMs,
+  takenWaitMs = TAKEN_WAIT_MS,
   coPilot = () => coPilotAt(cwd, signal),
   now = Date.now,
   wake = () => {},
@@ -356,7 +359,11 @@ export async function clearOnce({
   // The claim stays from here on, marker or none: it says the `/clear` was typed,
   // and a lane that is silent may be a fresh session that could not reach the deck.
   if (!(await waitFor(() => laneMarked(handoff.id), { signal, pollMs, waitMs }))) {
-    if (!signal.aborted) await sayNoMarker(handoff, cwd, read, waitMs, signal);
+    if (!signal.aborted) {
+      logLine(`run: no marker for ${handoff.id} after ${waitMs}`);
+      const text = `no fresh session marked for ${handoff.id} within ${Math.ceil(waitMs / 60000)} min; type /clear yourself`;
+      await sayAloud(handoff, cwd, read, text, signal, { both: true });
+    }
     return true;
   }
   // Read again: a lander may have claimed its gate2 while the lane started. A deck that does not answer names none.
@@ -365,8 +372,13 @@ export async function clearOnce({
   } catch {
     items = [];
   }
-  type(`${firstPrompt(items, cwd)}\r`);
   logLine(`run: marker for ${handoff.id}, typed the prompt`);
+  // Pasted, then Enter alone after a settle (handoff-prompt L1), then checked as taken. Awaited, like the lane
+  // wait: the watch's cooldown keeps change events from typing meanwhile (L5).
+  if ((await handPrompt(firstPrompt(items, cwd), { id: handoff.id, type, signal, settleMs, pollMs, takenWaitMs })) === 'not started') {
+    const text = `hand-off ${handoff.id} not started: no tool call within ${Math.ceil(takenWaitMs / 60000)} min of its prompt or of a second Enter; look at the terminal`;
+    await sayAloud(handoff, cwd, read, text, signal);
+  }
   return true;
 }
 
@@ -406,25 +418,26 @@ async function sayHeld(handoff, coPilot, signal) {
 }
 
 /**
- * The fallback for a `/clear` no lane answered (S17, A8 option B): one reply on
- * the hand-off's thread and one line in this directory's chat, so the user is
- * told rather than left looking at an idle session. Never a prompt: nothing
- * says which session it would land in. A deck that will not take the replies
- * is logged and left; the claim stays either way.
+ * A hand-off that went wrong, told to the user rather than left as an idle session: a
+ * reply on the hand-off's thread, and a line in this directory's chat when the thread
+ * refuses it, as a closed one does (handoff-prompt spec 3), or always when `both`, as
+ * for a `/clear` no lane answered (S17, A8 option B). Never a prompt: nothing says
+ * which session it would land in. A deck that will not take a reply is logged and left;
+ * the claim stays either way.
  */
-async function sayNoMarker(handoff, cwd, read, waitMs, signal) {
-  logLine(`run: no marker for ${handoff.id} after ${waitMs}`);
-  const text = `no fresh session marked for ${handoff.id} within ${Math.ceil(waitMs / 60000)} min; type /clear yourself`;
+async function sayAloud(handoff, cwd, read, text, signal, { both = false } = {}) {
   // Each post on its own: a thread the user closed during the wait refuses its reply, and
   // the chat line is then the only notice left.
   const say = async (where, post) => {
     try {
       await post();
+      return true;
     } catch (err) {
-      logLine(`run: could not post the missing marker for ${handoff.id} on the ${where} (${err?.message ?? err})`);
+      logLine(`run: could not post the notice for ${handoff.id} on the ${where} (${err?.message ?? err})`);
+      return false;
     }
   };
-  await say('thread', () => reply(handoff.id, text, signal));
+  if ((await say('thread', () => reply(handoff.id, text, signal))) && !both) return;
   await say('chat', async () => {
     const chat = (await read()).find((i) => i?.kind === 'chat' && sameRepo(i.repo, cwd) && typeof i.id === 'string');
     if (chat) await reply(chat.id, text, signal);
