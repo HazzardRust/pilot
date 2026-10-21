@@ -8,21 +8,23 @@
   "slices": [
     {
       "slice": "S1 A landing leaves a labelled release PR",
-      "state": "implementing",
+      "state": "integrated",
       "branch": "slice/pilot-develop-line-s1",
-      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s1"
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s1",
+      "pr": 14
     },
     {
       "slice": "S2 The feature PR reads merged, never closed",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
       ],
-      "branch": "slice/pilot-develop-line-s2"
+      "branch": "slice/pilot-develop-line-s2",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s2"
     },
     {
       "slice": "S3 A slice integrates as one subject with its verdicts",
-      "state": "draft PR #10",
+      "state": "fixing",
       "branch": "slice/pilot-develop-line-s3",
       "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s3",
       "pr": 10
@@ -39,7 +41,7 @@
     },
     {
       "slice": "S5 pilot base names the concluding feature",
-      "state": "draft PR #9",
+      "state": "integrated",
       "branch": "slice/pilot-develop-line-s5",
       "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s5",
       "pr": 9
@@ -72,8 +74,9 @@
     },
     {
       "slice": "S9 ADR for the develop line",
-      "state": "planned",
-      "branch": "slice/pilot-develop-line-s9"
+      "state": "implementing",
+      "branch": "slice/pilot-develop-line-s9",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s9"
     },
     {
       "slice": "S10 The shipped-rules ledger matches the public history (added)",
@@ -81,10 +84,18 @@
       "branch": "slice/pilot-develop-line-s10",
       "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s10",
       "pr": 12
+    },
+    {
+      "slice": "S11 The standing rules describe slice commits (added)",
+      "state": "planned",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/pilot-develop-line-s11"
     }
   ],
-  "next": "co-pilot: S10 integrated at 60afb5f8; integrating S5 #9 then S3 #10; S4 #13 rebases after S3; S1 in review",
-  "updatedAt": "2026-10-21T03:02:41.712Z",
+  "next": "co-pilot: feat at 5621559c; S3 fixing (+trailer validation); S2, S9 implementing; S4 #13 and S6 after S3; S11 (added, rules prose) after S4",
+  "updatedAt": "2026-10-21T03:14:16.504Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -126,6 +137,21 @@
       "agent": "pilot:pilot-implementer",
       "what": "prompt pins had 1.5 and 0 tokens headroom, so every prose edit to pilot.md / pilot-qa.md had to shrink them",
       "evidence": "node scripts/measure-prompt.mjs at base"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot gh-stub silently fails under Git Bash when the stub dir is under /tmp: NODE_OPTIONS --require cannot resolve the path on Windows",
+      "evidence": "S1 needed cygpath -m for the scratch dir"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot land in a scratch repo needs a package-lock.json (runs npm ci) and the stub answers one fixed reply to every call",
+      "evidence": "three reruns of S1's scratch script"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "S3 integrated red on integrate-select.test.mjs:131 'full slot=NaN' though its own integrate* run was green",
+      "evidence": "~/.claude/pilot/logs/20261021T030756614Z-slice-pilot-develop-line-s3.log"
     }
   ]
 }
