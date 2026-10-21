@@ -69,7 +69,7 @@ import { bearer } from '../hooks/lib/deck-secret.js';
 export { logLine };
 
 import { claimNameFor, takeClaim, releaseClaim, laneMarked, lastTurnEnded, waitFor, pause } from './run-claim.mjs';
-import { SETTLE_MS, TAKEN_WAIT_MS, promptTaken, submitPrompt } from './run-prompt.mjs';
+import { TAKEN_WAIT_MS, handPrompt } from './run-prompt.mjs';
 
 export { claimNameFor, takeClaim, RESUME_PROMPT, claudeArgs, runEnv };
 
@@ -297,7 +297,7 @@ export async function clearOnce({
   pollMs = LANE_POLL_MS,
   waitMs = LANE_WAIT_MS,
   restWaitMs = REST_WAIT_MS,
-  settleMs = SETTLE_MS,
+  settleMs,
   takenWaitMs = TAKEN_WAIT_MS,
   coPilot = () => coPilotAt(cwd, signal),
   now = Date.now,
@@ -372,16 +372,10 @@ export async function clearOnce({
   } catch {
     items = [];
   }
-  // Read before the paste, so no tool call of the old session reads as the fresh one taking it (handoff-prompt L3).
-  const since = Date.now();
-  // Pasted, then Enter alone after a settle: a `\r` in the prompt's own chunk is a pasted newline (handoff-prompt L1).
-  if (!(await submitPrompt(firstPrompt(items, cwd), { type, signal, settleMs }))) {
-    logLine('run: stopped before the prompt was taken');
-    return true;
-  }
   logLine(`run: marker for ${handoff.id}, typed the prompt`);
-  // Awaited, like the lane wait: the watch's cooldown keeps change events from typing meanwhile (L5).
-  if ((await promptTaken({ since, type, signal, pollMs, takenWaitMs })) === 'not started') {
+  // Pasted, then Enter alone after a settle (handoff-prompt L1), then checked as taken. Awaited, like the lane
+  // wait: the watch's cooldown keeps change events from typing meanwhile (L5).
+  if ((await handPrompt(firstPrompt(items, cwd), { id: handoff.id, type, signal, settleMs, pollMs, takenWaitMs })) === 'not started') {
     const text = `hand-off ${handoff.id} not started: no tool call within ${Math.ceil(takenWaitMs / 60000)} min of its prompt or of a second Enter; look at the terminal`;
     await sayAloud(handoff, cwd, read, text, signal);
   }

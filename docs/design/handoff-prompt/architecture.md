@@ -19,6 +19,7 @@ step the user remembers.
 | 3 | A hand-off not started is surfaced as a reply on the hand-off's thread, or, when that thread is closed (a chain hand-off), on this directory's chat. | The never-stamping test ends with that deck reply; a chain hand-off variant ends with the chat reply. | 1 reply, within 2 bounds of the prompt |
 | 4 | A tool call by the run's main session (not a subagent, only under `pilot run`, only in its directory) stamps `tool-ran-<wrapper pid>.stamp`, the turn-ended stamp's idiom. | `hooks/test` pins: a main call stamps; an `agent_id` call and a foreign directory do not. | 0 stamps from subagents |
 | 5 | A wrapper stopping (the session exits) between the paste and the Enter, or during the check, types nothing more. | An aborted-signal test: no `\r` after the paste, no retype. | 0 writes after abort |
+| 6 (added) | The prompt's paste, Enter, taken check, retype and every outcome log line live in one call, `handPrompt`, which reads `since` itself; every outcome line names the hand-off id. Traces to spec 1, 2, 5. | `deck/test/run-prompt.test.mjs`, and the `clearOnce` abort test in `deck/test/run.test.mjs`. | one call site in `clearOnce`; the stopped line written in one module |
 
 practitioner: Claude Code's own pty driver (`claude.exe`, its bg-pty reply path) types into a REPL exactly this way:
 `pty.write("\x1B[200~" + text + "\x1B[201~")`, then `setTimeout(() => pty.write("\r"), 10)`. Spec 1 copies it with a
@@ -131,4 +132,5 @@ Width 2; longest stem 2 (S1 → S3).
 | S1 | planned | | | | – | 1, 5 |
 | S2 | planned | | | | – | 4 |
 | S3 | planned | | | | S1, S2 | 2, 3, 5 |
+| S4 Added: one handPrompt owns the prompt's since and outcome lines (added) | draft PR | fix/handoff-prompt-principles | | pilot-fix-handoff-prompt-principles | S3 | 1, 2, 5, 6 |
 | feature | planned | feat/handoff-prompt | | | S1, S2, S3 | 1-5 |

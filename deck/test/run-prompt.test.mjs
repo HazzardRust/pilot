@@ -14,56 +14,23 @@ import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 
-import { TAKEN_WAIT_MS, SETTLE_MS, pasted, promptTaken, submitPrompt } from '../run-prompt.mjs';
+import { TAKEN_WAIT_MS, SETTLE_MS, pasted, handPrompt } from '../run-prompt.mjs';
 
 const deck = createRequire(import.meta.url)('../../hooks/lib/deck.js');
 
 const TEXT = 'Pick up the hand-off on the deck.';
 
-function keyboard() {
+/** What `handPrompt` typed, and when; `onType` is the session behind it reacting to each write. */
+function keyboard(onType = () => {}) {
   const typed = [];
   const at = [];
-  return { typed, at, type: (s) => { typed.push(s); at.push(performance.now()); } };
+  return { typed, at, type: (s) => { typed.push(s); at.push(performance.now()); onType(s); } };
 }
 
-test('the paste is the text between the bracketed-paste markers', () => {
-  assert.equal(pasted(TEXT), `\x1b[200~${TEXT}\x1b[201~`);
-  assert.equal(SETTLE_MS, 300);
-});
-
-test('the prompt and its Enter are two writes', async () => {
-  const keys = keyboard();
-  const sent = await submitPrompt(TEXT, { type: keys.type, signal: new AbortController().signal, settleMs: 0 });
-  assert.equal(sent, true);
-  assert.deepEqual(keys.typed, [pasted(TEXT), '\r'], 'the Enter is never inside the paste');
-});
-
-test('the Enter waits the settle', async () => {
-  const keys = keyboard();
-  await submitPrompt(TEXT, { type: keys.type, signal: new AbortController().signal, settleMs: 120 });
-  assert.equal(keys.typed.length, 2);
-  // A timer may fire up to a millisecond early on Windows; the settle is the gap, not a deadline.
-  assert.ok(keys.at[1] - keys.at[0] >= 119, `the Enter came ${keys.at[1] - keys.at[0]} ms after the paste`);
-});
-
-test('a stop before the Enter types no Enter', async () => {
-  const keys = keyboard();
-  const stop = new AbortController();
-  const sending = submitPrompt(TEXT, { type: keys.type, signal: stop.signal, settleMs: 10_000 });
-  stop.abort();
-  assert.equal(await sending, false);
-  assert.deepEqual(keys.typed, [pasted(TEXT)]);
-});
-
-test('a stop before the paste types nothing', async () => {
-  const keys = keyboard();
-  const stop = new AbortController();
-  stop.abort();
-  assert.equal(await submitPrompt(TEXT, { type: keys.type, signal: stop.signal, settleMs: 0 }), false);
-  assert.deepEqual(keys.typed, []);
-});
-
-// --- handoff-prompt S3: the prompt was taken, or Enter is typed once more, or it is said (spec 2, 5; L3, L4, A1) ---
+/** The hand-off every outcome line names: wrapper.log is machine-wide. */
+const ID = 'itm_0123456789ab';
+const quick = { id: ID, settleMs: 0, pollMs: 5, takenWaitMs: 60 };
+const going = () => new AbortController().signal;
 
 /**
  * A scratch home, and the fresh session behind the keyboard: `toolRan()` stamps a main-session tool
@@ -92,66 +59,99 @@ function session(t) {
   return { toolRan, log };
 }
 
-const quick = { pollMs: 5, takenWaitMs: 60 };
+/** The log's lines without their timestamps. */
+const lines = (log) => log.split('\n').filter(Boolean).map((l) => l.replace(/^\S+ /, ''));
 
-test('a session that stamps at once is taken', async (t) => {
-  const { toolRan, log } = session(t);
-  const keys = keyboard();
-  const since = Date.now();
-  toolRan();
-
-  assert.equal(await promptTaken({ since, type: keys.type, signal: new AbortController().signal, ...quick }), 'taken');
-  assert.deepEqual(keys.typed, [], 'a prompt the session took gets no second Enter');
-  assert.match(log(), /Z run: prompt taken$/m);
+test('the paste is the text between the bracketed-paste markers', () => {
+  assert.equal(pasted(TEXT), `\x1b[200~${TEXT}\x1b[201~`);
+  assert.equal(SETTLE_MS, 300);
   assert.equal(TAKEN_WAIT_MS, 60_000, 'A1: 60 s, twice');
 });
 
+test('the prompt and its Enter are two writes, and a session that stamps on it is taken', async (t) => {
+  const { toolRan, log } = session(t);
+  const keys = keyboard((s) => s === '\r' && toolRan());
+
+  assert.equal(await handPrompt(TEXT, { type: keys.type, signal: going(), ...quick }), 'taken');
+  assert.deepEqual(keys.typed, [pasted(TEXT), '\r'], 'the Enter is never inside the paste, and a prompt taken gets no second');
+  assert.deepEqual(lines(log()), [`run: prompt taken for ${ID}`]);
+});
+
+test('the Enter waits the settle', async (t) => {
+  const { toolRan } = session(t);
+  const keys = keyboard((s) => s === '\r' && toolRan());
+  await handPrompt(TEXT, { type: keys.type, signal: going(), ...quick, settleMs: 120 });
+  assert.equal(keys.typed.length, 2);
+  // A timer may fire up to a millisecond early on Windows; the settle is the gap, not a deadline.
+  assert.ok(keys.at[1] - keys.at[0] >= 119, `the Enter came ${keys.at[1] - keys.at[0]} ms after the paste`);
+});
+
+test('a stop before the Enter types no Enter', async (t) => {
+  const { log } = session(t);
+  const keys = keyboard();
+  const stop = new AbortController();
+  const sending = handPrompt(TEXT, { type: keys.type, signal: stop.signal, ...quick, settleMs: 10_000 });
+  stop.abort();
+  assert.equal(await sending, 'stopped');
+  assert.deepEqual(keys.typed, [pasted(TEXT)]);
+  assert.deepEqual(lines(log()), [`run: stopped before the prompt was taken for ${ID}`], 'said once');
+});
+
+test('a stop before the paste types nothing', async (t) => {
+  session(t);
+  const keys = keyboard();
+  const stop = new AbortController();
+  stop.abort();
+  assert.equal(await handPrompt(TEXT, { type: keys.type, signal: stop.signal, ...quick }), 'stopped');
+  assert.deepEqual(keys.typed, []);
+});
+
+// --- handoff-prompt S3: the prompt was taken, or Enter is typed once more, or it is said (spec 2, 5; L3, L4, A1) ---
+
 test('a session that stamps after the retype', async (t) => {
   const { toolRan, log } = session(t);
-  const typed = [];
-  const type = (s) => { typed.push(s); toolRan(); };
+  let enters = 0;
+  const keys = keyboard((s) => s === '\r' && ++enters === 2 && toolRan());
 
-  assert.equal(await promptTaken({ since: Date.now(), type, signal: new AbortController().signal, ...quick }), 'retyped');
-  assert.deepEqual(typed, ['\r'], 'one lone Enter, the second');
-  const lines = log().split('\n').filter(Boolean).map((l) => l.replace(/^\S+ /, ''));
-  assert.deepEqual(lines, ['run: retyped Enter', 'run: prompt taken']);
+  assert.equal(await handPrompt(TEXT, { type: keys.type, signal: going(), ...quick }), 'retyped');
+  assert.deepEqual(keys.typed, [pasted(TEXT), '\r', '\r'], 'one lone Enter more, the second');
+  assert.deepEqual(lines(log()), [`run: retyped Enter for ${ID}`, `run: prompt taken for ${ID}`]);
 });
 
 test('a session that never stamps', async (t) => {
   const { log } = session(t);
   const keys = keyboard();
 
-  assert.equal(await promptTaken({ since: Date.now(), type: keys.type, signal: new AbortController().signal, ...quick }), 'not started');
-  assert.deepEqual(keys.typed, ['\r'], 'at most one retype');
-  const lines = log().split('\n').filter(Boolean).map((l) => l.replace(/^\S+ /, ''));
-  assert.deepEqual(lines, ['run: retyped Enter', 'run: hand-off not started']);
+  assert.equal(await handPrompt(TEXT, { type: keys.type, signal: going(), ...quick }), 'not started');
+  assert.deepEqual(keys.typed, [pasted(TEXT), '\r', '\r'], 'at most one retype');
+  assert.deepEqual(lines(log()), [`run: retyped Enter for ${ID}`, `run: hand-off not started for ${ID}`]);
 });
 
 test('a stamp from before the prompt is not taken', async (t) => {
   const { toolRan } = session(t);
   toolRan();
+  await new Promise((resolve) => setTimeout(resolve, 20));
   const keys = keyboard();
 
-  assert.equal(await promptTaken({ since: Date.now() + 1000, type: keys.type, signal: new AbortController().signal, ...quick }), 'not started');
+  assert.equal(await handPrompt(TEXT, { type: keys.type, signal: going(), ...quick }), 'not started');
 });
 
-test('a stop during the check types nothing', async (t) => {
-  session(t);
-  const keys = keyboard();
+test('a stop during the check types nothing more', async (t) => {
+  const { log } = session(t);
   const stop = new AbortController();
-  const checking = promptTaken({ since: Date.now(), type: keys.type, signal: stop.signal, pollMs: 5, takenWaitMs: 10_000 });
-  stop.abort();
+  const keys = keyboard((s) => s === '\r' && stop.abort());
 
-  assert.equal(await checking, 'stopped');
-  assert.deepEqual(keys.typed, [], 'no retype after the session has gone');
+  assert.equal(await handPrompt(TEXT, { type: keys.type, signal: stop.signal, ...quick, takenWaitMs: 10_000 }), 'stopped');
+  assert.deepEqual(keys.typed, [pasted(TEXT), '\r'], 'no retype after the session has gone');
+  assert.deepEqual(lines(log()), [`run: stopped before the prompt was taken for ${ID}`]);
 });
 
 test('a stop during the second wait types nothing more', async (t) => {
   session(t);
   const stop = new AbortController();
-  const typed = [];
-  const type = (s) => { typed.push(s); stop.abort(); };
+  let enters = 0;
+  const keys = keyboard((s) => s === '\r' && ++enters === 2 && stop.abort());
 
-  assert.equal(await promptTaken({ since: Date.now(), type, signal: stop.signal, ...quick }), 'stopped');
-  assert.deepEqual(typed, ['\r']);
+  assert.equal(await handPrompt(TEXT, { type: keys.type, signal: stop.signal, ...quick }), 'stopped');
+  assert.deepEqual(keys.typed, [pasted(TEXT), '\r', '\r']);
 });
