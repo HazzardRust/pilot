@@ -13,8 +13,8 @@
  *   which stay as `kept concluding` for the agents still working in them.
  *
  * The feature never takes pilot, so it never carries a later feature; pilot grows by merge
- * commits only. No PR is merged: the feature's PR against pilot, closed with the landing
- * comment if GitHub left it open, and main gets pilot through the one open PR `pilot → main`
+ * commits only. No PR is merged: the feature's PR against pilot reads merged from the push
+ * and takes the landing comment, never a close, and main gets pilot through the one open PR `pilot → main`
  * (`mainGetsPilot`, one-integration-line A1, A5, A6), which the user merges. Every failure
  * throws with `exitCode` 3 for a conflict merging into pilot, 1 otherwise.
  */
@@ -41,15 +41,16 @@ const reason = (err) =>
  * Lands the feature checked out in `cwd` on the run remote's pilot branch (`runRemote`). `git` is
  * `(args) => string` run in `cwd`, `gh` is `(args) => string` (argv only), `test` the
  * shell command, the repository's own by default. Answers `{ head, sha, retried, already, adr,
- * commentFailed?, main, pushSkipped?, deleted, kept, deleteFailed?, cleared }`: `sha` is pilot's tip after, `already` that the feature was on it,
+ * commentFailed?, stillOpen?, main, pushSkipped?, deleted, kept, deleteFailed?, cleared }`: `sha` is pilot's tip after, `already` that the feature was on it,
  * `adr` the `{ from, to }` the landing allocated or null,
- * `commentFailed` why `landed on pilot at <sha>` is not on the feature's PR, `main` what
+ * `commentFailed` why `landed on pilot at <sha>` is not on the feature's PR, `stillOpen` the PR numbers
+ * that still read open after `wait` ms (30 s by default; `sleep` injected), `main` what
  * `mainGetsPilot` answers, `pushSkipped` the push fallback taken (three-lanes spec 17), `deleted`, `kept` and
  * `deleteFailed` what `deleteRunBranches` answers, `cleared` the lines `clear` answers, then
  * `gc`'s (process-gc L14): `() => string[]`, none by default, so only the CLI stops processes.
  * `holder` is `prune`'s (landing-keeps-worktrees L2): none by default, so nothing is held.
  */
-export function land({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args), gh = ghIn(cwd), test, gc = () => [], holder, remove = removeWorktree } = {}) {
+export function land({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args), gh = ghIn(cwd), test, gc = () => [], holder, remove = removeWorktree, wait, sleep } = {}) {
   let head;
   try {
     head = git(['symbolic-ref', '--short', 'HEAD']);
@@ -67,7 +68,7 @@ export function land({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args),
   // Said above the landing's line, red or green: the worktree moved either way.
   const caughtUp = moved > 0 ? `caught up ${moved} commits from origin/${head}\n` : '';
   try {
-    const landed = landCaughtUp({ cwd, git, gh, test, head });
+    const landed = landCaughtUp({ cwd, git, gh, test, head, wait, sleep });
     const branches = deleteRunBranches({ git, gh, head });
     const cleared = clear({ cwd, git, head, holder, remove });
     return { ...landed, ...branches, caughtUp, cleared: [...cleared, ...collect(gc)] };
@@ -191,7 +192,7 @@ function collect(gc) {
 }
 
 /** The landing once the worktree is caught up: push the feature, merge it into pilot. */
-function landCaughtUp({ cwd, git, gh, test, head }) {
+function landCaughtUp({ cwd, git, gh, test, head, wait, sleep }) {
   let runs;
   try {
     runs = runRemote(git);
@@ -222,10 +223,11 @@ function landCaughtUp({ cwd, git, gh, test, head }) {
       continue;
     }
     const landed = { head, sha: merge.sha, retried, already: !merge.merged, adr: merge.adr ?? null, ...(pushSkipped && { pushSkipped }) };
-    // A feature already on pilot only closes a PR GitHub left open (spec 9). Landed already:
-    // neither a refused comment nor an unreadable PR list reads as a failed landing.
+    // A feature already on pilot comments on nothing (spec 2). Landed already: neither a refused
+    // comment nor an unreadable PR list reads as a failed landing.
     try {
-      comment({ gh, head, sha: merge.sha, counts: merge.counts, already: !merge.merged });
+      const stillOpen = comment({ gh, head, sha: merge.sha, counts: merge.counts, already: !merge.merged, wait, sleep });
+      if (stillOpen.length) landed.stillOpen = stillOpen;
     } catch (err) {
       landed.commentFailed = firstLine(err);
     }
@@ -267,20 +269,41 @@ const conflict = (head, paths, dir, why) => fail(conflictLine({ head, onto: PILO
 /**
  * Puts `landed on pilot at <sha>`, then `; full suite <counts>` when the feature merge's run
  * printed counts (suite-at-landing L8), on each open or merged PR from this repository whose head
- * is `head`. An open one against pilot, which GitHub did not read merged from the push, is
- * closed with it (A5); any other, a merged one or one in flight against main (A7), takes it
- * as a comment. Throws when there is no such PR. `already`, the feature on pilot before this
- * landing, closes only an open one against pilot and comments on nothing (spec 9).
+ * is `head`. An open one against pilot is first polled, every `POLL_MS` up to `wait` ms, for
+ * GitHub to read it merged from the push (A1); no PR is ever closed. Throws when there is no
+ * such PR. `already`, the feature on pilot before this landing, comments on nothing (spec 2).
+ * Answers the numbers still reading open after the wait, commented all the same.
  */
-export function comment({ gh, head, sha, counts, already = false }) {
+export function comment({ gh, head, sha, counts, already = false, wait = 30_000, sleep = pause }) {
+  if (already) return [];
   const prs = JSON.parse(gh(['pr', 'list', '--head', head, '--state', 'all', '--json', 'number,state,baseRefName,isCrossRepository']));
-  const listed = prs.filter((pr) => Number.isSafeInteger(pr?.number) && pr.isCrossRepository === false && (pr.state === 'OPEN' || pr.state === 'MERGED'));
-  const ours = already ? listed.filter((pr) => pr.state === 'OPEN' && pr.baseRefName === PILOT_BRANCH) : listed;
-  if (!ours.length && already) return;
+  const ours = prs.filter((pr) => Number.isSafeInteger(pr?.number) && pr.isCrossRepository === false && (pr.state === 'OPEN' || pr.state === 'MERGED'));
   if (!ours.length) throw new Error(`no open or merged PR has head ${head}`);
   const body = `landed on pilot at ${sha}${counts ? `; full suite ${counts}` : ''}`;
+  const stillOpen = [];
   for (const { number, state, baseRefName } of ours) {
-    gh(state === 'OPEN' && baseRefName === PILOT_BRANCH ? ['pr', 'close', String(number), '--comment', body] : ['pr', 'comment', String(number), '--body', body]);
+    if (state === 'OPEN' && baseRefName === PILOT_BRANCH && !readsMerged({ gh, number, wait, sleep })) stillOpen.push(number);
+    gh(['pr', 'comment', String(number), '--body', body]);
+  }
+  return stillOpen;
+}
+
+const POLL_MS = 2000;
+
+/** Blocks the thread for `ms`; `comment` is synchronous like the rest of the landing. */
+const pause = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+/** Whether PR `number` reads MERGED within `wait` ms, asking at least once. */
+function readsMerged({ gh, number, wait, sleep }) {
+  for (let waited = 0; ; waited += POLL_MS) {
+    // A view that fails or is unreadable reads as still open: the comment goes all the same.
+    try {
+      if (JSON.parse(gh(['pr', 'view', String(number), '--json', 'state'])).state === 'MERGED') return true;
+    } catch {
+      return false;
+    }
+    if (waited >= wait) return false;
+    sleep(Math.min(POLL_MS, wait - waited));
   }
 }
 
@@ -331,10 +354,10 @@ export function main(argv, inject = {}) {
   const table = inject.read && once(inject.read);
   const shared = table ? { holder: holderFrom(table), gc: inject.gc && (() => inject.gc(table)) } : {};
   try {
-    const { head, sha, retried, already, adr, main: mainPr, pushSkipped, commentFailed, deleted, kept, deleteFailed, caughtUp, cleared } = land({ ...inject, ...shared });
+    const { head, sha, retried, already, adr, main: mainPr, pushSkipped, commentFailed, stillOpen = [], deleted, kept, deleteFailed, caughtUp, cleared } = land({ ...inject, ...shared });
     const said = already ? `${head} already on ${PILOT_BRANCH}` : `landed ${head} on ${PILOT_BRANCH}`;
     // Above the main line: the comment that failed, then the number the landing allocated (S8).
-    const above = `${commentFailed === undefined ? '' : `pr comment failed: ${commentFailed}\n`}${adr ? `ADR ${adr.from} is ${adr.to}\n` : ''}`;
+    const above = `${commentFailed === undefined ? '' : `pr comment failed: ${commentFailed}\n`}${stillOpen.map((number) => `feature PR #${number} still reads open\n`).join('')}${adr ? `ADR ${adr.from} is ${adr.to}\n` : ''}`;
     // The deck's row keeps only the output's tail (S8): the branch and clear lines go first, so
     // the SHA stays in it, and the main line last, bounded.
     const branches = [
