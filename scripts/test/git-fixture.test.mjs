@@ -83,13 +83,13 @@ test('a second call in one test gets its own directory', (t) => {
 test('the fixture dir is its realpath', (t) => {
   const real = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-realpath-')));
   const link = `${real}-link`;
-  fs.symlinkSync(real, link, process.platform === 'win32' ? 'junction' : 'dir');
   const saved = {};
   const names = ['TMPDIR', 'TMP', 'TEMP'];
   for (const name of names) saved[name] = process.env[name];
   let seen;
   let resolved;
   try {
+    fs.symlinkSync(real, link, process.platform === 'win32' ? 'junction' : 'dir');
     for (const name of names) process.env[name] = link;
     gitFixture(t, 'realpath', (dir) => {
       seen = dir;
@@ -106,7 +106,7 @@ test('the fixture dir is its realpath', (t) => {
   }
   assert.ok(seen, 'build ran');
   assert.equal(seen, resolved);
-  assert.equal(seen.startsWith(link), false, 'the dir is not spelled through the link');
+  assert.ok(seen.startsWith(real + path.sep), 'the dir is spelled through the real directory, not the link');
 });
 
 test('identity comes from the global file', (t) => {
