@@ -23,9 +23,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { deleteMerged } from './branches.mjs';
-import { assertPushable, firstLine, holds, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
+import { assertPushable, firstLine, holds, PILOT_BRANCH } from './pilot-branch.mjs';
 import { commitRecords, ghIn, git as gitAt, landingMessage } from './integrate.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
+import { releasePr } from './release.mjs';
 import { runRef, runRemote } from './remotes.mjs';
 import { isWorktreeOf, mergeIntoPilot, removeWorktree, resume } from './sync.mjs';
 import { holderFrom, prune, runRecord } from './worktrees.mjs';
@@ -284,44 +285,11 @@ export function comment({ gh, head, sha, counts, already = false }) {
 }
 
 /**
- * Main gets pilot through one open PR `pilot → main` (A1, A6): the open one from this repository's
- * pilot to the default branch, else one opened ready, titled `main gets pilot`, with an empty body.
- * Answers `{ number, opened }`; under a run remote other than origin, or `none`, `{ number: null,
- * byHand }`, the pilot to open one from, with no gh call; when git or gh cannot answer, `{ number:
- * null, why }`. `already`, the feature on pilot before this landing, only looks one up: with none,
- * `{ number: null, none: true }`, nothing opened. Never merges and never throws: the feature is already landed.
+ * Main gets pilot through the one open release PR `pilot → main` (A1, A6; pilot-develop-line spec 1):
+ * `releasePr`'s answer, which `mainLine` prints (L4).
  */
 export function mainGetsPilot({ git, gh, already = false }) {
-  const unknown = (why) => ({ number: null, opened: false, why });
-  let runs;
-  let base;
-  try {
-    runs = runRemote(git);
-    if (runs === 'origin') base = remoteDefaultBranch(git);
-  } catch (err) {
-    return unknown(firstLine(err));
-  }
-  if (runs !== 'origin') return { number: null, opened: false, byHand: runs === null ? PILOT_BRANCH : `${runs}/${PILOT_BRANCH}` };
-  let prs;
-  try {
-    prs = JSON.parse(gh(['pr', 'list', '--head', PILOT_BRANCH, '--base', base, '--state', 'open', '--json', 'number,headRefName,baseRefName,isCrossRepository']));
-  } catch (err) {
-    return unknown(`gh pr list failed: ${firstLine(err)}`);
-  }
-  if (!Array.isArray(prs)) return unknown('gh pr list did not answer a list');
-  // A fork's branch named pilot is never the main PR.
-  const open = prs.find((pr) => pr?.headRefName === PILOT_BRANCH && pr.baseRefName === base && pr.isCrossRepository === false && Number.isSafeInteger(pr.number) && pr.number > 0);
-  if (open) return { number: open.number, opened: false };
-  if (already) return { number: null, opened: false, none: true };
-  let url;
-  try {
-    url = gh(['pr', 'create', '--base', base, '--head', PILOT_BRANCH, '--title', 'main gets pilot', '--body', '']);
-  } catch (err) {
-    return unknown(`gh pr create failed: ${firstLine(err)}`);
-  }
-  const number = Number(/\/pull\/(\d+)\s*$/.exec(String(url))?.[1]);
-  if (!Number.isSafeInteger(number) || number <= 0) return unknown('gh pr create printed no PR URL');
-  return { number, opened: true };
+  return releasePr({ git, gh, already });
 }
 
 /** The landing's last line, which the deck's closing report parses (S3): what `mainGetsPilot` answered. */

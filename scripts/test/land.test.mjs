@@ -28,7 +28,7 @@ test('land merges the feature into pilot', (t) => {
   assert.equal(result.retried, false);
   assert.deepEqual(result.main, { number: 900, opened: true });
   assert.match(result.commentFailed, /no open or merged PR has head feat\/a/);
-  assert.deepEqual(calls.filter((args) => args.includes('create')).map((args) => args[args.indexOf('--head') + 1]), ['pilot'], 'the one PR created is pilot to main');
+  assert.deepEqual(calls.filter((args) => args[0] === 'pr' && args[1] === 'create').map((args) => args[args.indexOf('--head') + 1]), ['pilot'], 'the one PR created is pilot to main');
   assert.ok(calls.every((args) => !args.includes('merge')), 'no PR is merged');
 });
 
