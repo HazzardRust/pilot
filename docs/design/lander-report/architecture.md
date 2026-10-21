@@ -61,6 +61,7 @@ pins are tests, not modules. No shallow module to fold; no fold slice.
 ## 6. Assumed decisions
 
 - **A1** *assumed*, itm_9faf1ca57766. Default: run one slice that bumps the version. Trades a run for about 10 changed lines. Rejected: close the ticket as delivered by lander-tail and bump by hand outside a run (no QA, no record).
+  Verdict: stands
 
 red team: I walked S1's red step against the real files. `status-command.test.mjs:74` and `store-upgrade.test.mjs:97` are the only literal version pins (f8ea91f7 touched exactly those); editing them first makes 2 tests red, the bump makes them green. `bump.test.mjs` uses a temp root and does not pin the repo's version. Attacked: a concurrent bump (L2), package-lock drift under `npm ci` (bump edits text only), the user's deck being replaced by the suite (tests use `tempDeck`, never 4321). Nothing else found.
 
