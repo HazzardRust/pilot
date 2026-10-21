@@ -59,21 +59,24 @@
     },
     {
       "slice": "S7 land guards the chain and retargets",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S2",
         "S6"
       ],
-      "branch": "slice/pilot-develop-line-s7"
+      "branch": "slice/pilot-develop-line-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-pilot-develop-line-s7",
+      "pr": 20
     },
     {
       "slice": "S8 The take and the cut follow the base line",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S4",
         "S5"
       ],
-      "branch": "slice/pilot-develop-line-s8"
+      "branch": "slice/pilot-develop-line-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-pilot-develop-line-s8"
     },
     {
       "slice": "S9 ADR for the develop line",
@@ -91,11 +94,12 @@
     },
     {
       "slice": "S11 The standing rules describe slice commits (added)",
-      "state": "planned",
+      "state": "implementing: held on a classifier-refused edit (rules/orchestration.md:37), question to main; edits uncommitted in the worktree",
       "after": [
         "S4"
       ],
-      "branch": "slice/pilot-develop-line-s11"
+      "branch": "slice/pilot-develop-line-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-pilot-develop-line-s11"
     }
   ],
   "findings": [
@@ -105,8 +109,8 @@
     "kept: rules/orchestration.md, vertical-execution.md, CONTEXT.md still describe slice PRs — added slice S11, planned",
     "kept: pilot handoff --trailer unchecked — for the step-7 fix round"
   ],
-  "next": "co-pilot: integrating S6 (#19) on feat/pilot-develop-line; then S7, S8, S11 from the new tip; then step 7",
-  "updatedAt": "2026-10-21T03:56:29.201Z",
+  "next": "co-pilot: integrating S7 (#20) onto feat 9c9acf00; S8 implementing; S11 held on itm_dd5706cfe1f8; then step 7",
+  "updatedAt": "2026-10-21T04:16:58.395Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -188,6 +192,36 @@
       "agent": "pilot:pilot-implementer",
       "what": "node --test over four land files exceeds the 120 s foreground timeout on Windows",
       "evidence": "S2 task be703k0ha"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6's slice file missed that deck/server-tools.mjs must pass base to setSlices; a one-line change outside the owned files",
+      "evidence": "PR #19 body; deck/server-tools.mjs"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "integrate's selection overflowed argv and fell back to the full suite (~10 min) for one slice",
+      "evidence": "pilot integrate s6: selection is 34561 characters of argv, over 24000"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the classifier refused a one-line prose edit to rules/orchestration.md as Instruction Poisoning",
+      "evidence": "S11: rules/orchestration.md:37 'push, draft PR' -> 'push the branch'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a review fix landed after the full gate had started; the ~300 s gate ran twice",
+      "evidence": "S7 report, 97c3aee2"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit lost the file's read state after a commit; three review-fix edits failed 'File has not been read yet'",
+      "evidence": "S7 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spec 4c's 'every open PR based on feat/<N>' would retarget slice PRs too; narrowed to feat/ heads",
+      "evidence": "PR #20 security-reviewer MEDIUM; S7.md seam note 9c9acf00"
     }
   ]
 }
