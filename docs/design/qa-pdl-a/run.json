@@ -1,0 +1,13 @@
+{
+  "slug": "qa-pdl-a",
+  "feature": "QA fixture A (pilot-develop-line QA, delete after)",
+  "ticket": "itm_0000000000aa",
+  "branch": "feat/qa-pdl-a",
+  "slices": [
+    {
+      "slice": "S1 Fixture A adds a note",
+      "state": "integrating",
+      "branch": "slice/qa-pdl-a-s1"
+    }
+  ]
+}
