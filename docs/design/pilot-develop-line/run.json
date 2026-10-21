@@ -29,12 +29,13 @@
     },
     {
       "slice": "S4 No slice PR is opened",
-      "state": "implementing",
+      "state": "draft PR #13",
       "after": [
         "S3"
       ],
       "branch": "slice/pilot-develop-line-s4",
-      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s4"
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s4",
+      "pr": 13
     },
     {
       "slice": "S5 pilot base names the concluding feature",
@@ -76,13 +77,14 @@
     },
     {
       "slice": "S10 The shipped-rules ledger matches the public history (added)",
-      "state": "implementing",
+      "state": "integrated",
       "branch": "slice/pilot-develop-line-s10",
-      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s10"
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s10",
+      "pr": 12
     }
   ],
-  "next": "co-pilot: S3 #10, S5 #9 wait on S10 to integrate; S1, S10, S4 (from S3 tip) implementing; S6, S9 wait a slot",
-  "updatedAt": "2026-10-21T02:48:56.951Z",
+  "next": "co-pilot: S10 integrated at 60afb5f8; integrating S5 #9 then S3 #10; S4 #13 rebases after S3; S1 in review",
+  "updatedAt": "2026-10-21T03:02:41.712Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -109,6 +111,21 @@
       "agent": "pilot:pilot-implementer",
       "what": "brief.md's Claude-Session trailer and Actions billing note are stale",
       "evidence": "brief.md lines 26 and 37"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "started a second gate run over the first, one log, and has no TaskStop; a third run was needed",
+      "evidence": "S10 scratchpad s10-gate2.log"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "build-rules-ledger.mjs leaves shipped-rules.json staged; it rode a by-name commit",
+      "evidence": "S4 first commit numstat 113 124 scripts/shipped-rules.json"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "prompt pins had 1.5 and 0 tokens headroom, so every prose edit to pilot.md / pilot-qa.md had to shrink them",
+      "evidence": "node scripts/measure-prompt.mjs at base"
     }
   ]
 }
