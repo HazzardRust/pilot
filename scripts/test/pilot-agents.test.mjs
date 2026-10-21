@@ -1296,12 +1296,14 @@ test('the implementer loads diagnosing-bugs on demand', () => {
   // `regression`; most slices fix no bug, so a preload would be paid and never read (L6).
   const implementer = agentSource('pilot-implementer');
   assert.doesNotMatch(fieldOf(implementer, 'skills'), /diagnosing-bugs/, 'L6: pilot-implementer preloads diagnosing-bugs');
-  for (const heading of ['A fix brief', 'The loop']) {
-    assert.match(
-      flat(sectionOf(implementer, heading)),
-      /Skill tool[^.]*`pilot:diagnosing-bugs`/,
-      `spec 1: "${heading}" never says to load diagnosing-bugs with the Skill tool`,
-    );
+  // Either word order, so a rewording that keeps the bug path keeps the pin.
+  const loads = /Skill tool[^.]*`pilot:diagnosing-bugs`|`pilot:diagnosing-bugs`[^.]*Skill tool/;
+  for (const [heading, when] of [['A fix brief', /\bbug\b/], ['The loop', /`regression`/]]) {
+    const sentence = flat(sectionOf(implementer, heading))
+      .split(/(?<=\.) /)
+      .find((s) => loads.test(s));
+    assert.ok(sentence, `spec 1: "${heading}" never says to load diagnosing-bugs with the Skill tool`);
+    assert.match(sentence, when, `spec 1: "${heading}" loads diagnosing-bugs but not on its ${when.source}`);
   }
 });
 
@@ -1320,7 +1322,7 @@ test('the bug path is recorded and the skill exists', () => {
   const paths = /^paths: \[(.*)\]$/m.exec(front);
   assert.ok(paths, 'spec 2: the ADR names its paths');
   for (const file of ['agents/pilot-implementer.md', 'agents/pilot-co-pilot.md']) {
-    assert.ok(paths[1].split(', ').includes(file), `spec 2: the ADR's paths omit ${file}`);
+    assert.ok(paths[1].split(/,\s*/).includes(file), `spec 2: the ADR's paths omit ${file}`);
   }
   assert.ok(fs.existsSync(path.join(ROOT, 'skills/diagnosing-bugs/SKILL.md')), 'the bug path names a skill that is not vendored');
 });
