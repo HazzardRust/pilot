@@ -7,14 +7,16 @@
 
 import './no-open.mjs';
 
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 import { deckOnAPort, respelt, tempDeck } from '../testUtils.mjs';
-import { PARENT_MARKERS, STARTING_MS, sessionEnv, startSession } from '../session.mjs';
+import { PARENT_MARKERS, STARTING_MS, openPilot, sessionEnv, startSession } from '../session.mjs';
+import { RESUME_PROMPT, runSettings, startArgs } from '../run-env.mjs';
+import { rulesRoot } from '../../scripts/reach.mjs';
 import { renderHomePage } from '../ui/render.mjs';
 
 const { DeckRefusal, addDeck, listDeckNumbers, listItems, postItem, registerRun, storedTabFor } = await import('../store.mjs');
@@ -55,10 +57,22 @@ const aRecorder = () => {
 /** An environment the suite's own guard is not in, so the recorder is reached. */
 const anEnv = (extra = {}) => ({ PATH: 'C:/Windows', ...extra });
 
+/** A `claude` that is never run: the recorder stands in for every spawn. */
+const CLAUDE = 'C:/Program Files/Claude/claude.exe';
+const NOTHING = { level: 'nothing', chosen: true };
+const EVERYTHING = { level: 'everything', chosen: true };
+
+/** A scratch home, so no test writes the real `~/.claude/pilot/start-settings.json`. */
+const HOME = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-start-home-'));
+after(() => fs.rmSync(HOME, { recursive: true, force: true }));
+
+/** What every Start here is handed besides `spawn`: the platform, a clean env, `claude`, a home and a reach. */
+const startDeps = (extra = {}) => ({ platform: 'win32', env: anEnv(), claude: CLAUDE, home: HOME, reach: NOTHING, ...extra });
+
 /** Starts `repo` on a recorder, returning what was thrown, or nothing. */
 const refusalOf = (repo, deps) => {
   try {
-    startSession(repo, { platform: 'win32', env: anEnv(), ...deps });
+    startSession(repo, { ...startDeps(), ...deps });
     return null;
   } catch (err) {
     if (!(err instanceof DeckRefusal)) throw err;
@@ -101,16 +115,13 @@ test('the spawn carries the directory only as cwd', (t) => {
   const { calls, spawn } = aRecorder();
   const alpha = aDir(t, 'alpha & co %PATH%');
 
-  startSession(alpha, { spawn, platform: 'win32', env: anEnv() });
+  startSession(alpha, { spawn, ...startDeps() });
 
   assert.equal(calls.length, 1);
   const [{ command, args, options }] = calls;
   // Absolute: a bare `cmd.exe` is looked up in `cwd` first, which is the repo's own.
   assert.equal(command, path.win32.join('C:/Windows','System32', 'cmd.exe'));
-  assert.deepEqual(args.slice(0, 4), ['/d', '/c', 'start', '"pilot run"']);
-  assert.equal(args.at(-1), 'run');
-  assert.equal(args[4], `"${process.execPath}"`);
-  assert.match(args[5], /bin[\\/]pilot\.mjs"$/);
+  assert.deepEqual(args.slice(0, 3), ['/d', '/c', 'start']);
   for (const arg of [command, ...args]) {
     assert.ok(!arg.includes(alpha), `${arg} carries the repo`);
   }
@@ -149,7 +160,7 @@ test("sessionEnv drops the parent session's markers", (t) => {
   assert.ok(PARENT_MARKERS.includes('CLAUDE_CODE_CHILD_SESSION'), 'the one that turned transcripts off on the live gate');
 
   const { calls, spawn } = aRecorder();
-  startSession(aDir(t), { spawn, platform: 'win32', env: anEnv({ CLAUDECODE: '1', PILOT_DECK_PORT: '4397' }) });
+  startSession(aDir(t), { spawn, ...startDeps({ env: anEnv({ CLAUDECODE: '1', PILOT_DECK_PORT: '4397' }) }) });
   assert.equal(calls[0].options.env.CLAUDECODE, undefined, 'the spawn is handed the scrubbed environment');
   assert.equal(calls[0].options.env.PILOT_DECK_PORT, '4397');
 });
@@ -196,7 +207,7 @@ test('a live repo is 409 and spawns nothing', async (t) => {
 test('a refused Start lands back on its tab with the reason beside the control', async (t) => {
   onPlatform(t, 'win32');
   const { spawn, calls } = aRecorder();
-  const base = await deckOnAPort(t, { start: (repo) => startSession(repo, { spawn, platform: 'win32', env: anEnv() }) });
+  const base = await deckOnAPort(t, { start: (repo) => startSession(repo, { spawn, ...startDeps() }) });
   const repo = anAddedTab(t);
   fs.rmSync(repo, { recursive: true }); // renamed away since the tab was drawn
 
@@ -261,18 +272,95 @@ test('Start off Windows is refused before any spawn', (t) => {
   assert.deepEqual(calls, []);
 });
 
-test('a package path containing " or % is refused', (t) => {
+// handoff-mod S9: Start opens `claude` itself, with the reach's args and no prompt (spec 11, L12, A4, A9).
+
+/** Where `startArgs` puts the run settings under `home`. */
+const settingsIn = (home) => path.join(home, '.claude', 'pilot', 'start-settings.json');
+
+test("Start opens claude with the reach's args and no prompt", (t) => {
+  const { calls, spawn } = aRecorder();
+
+  startSession(aDir(t, 'below'), { spawn, ...startDeps() });
+  startSession(aDir(t, 'everything'), { spawn, ...startDeps({ reach: EVERYTHING }) });
+
+  assert.equal(calls.length, 2);
+  const [below, everything] = calls.map(({ args }) => args);
+  assert.deepEqual(below, [
+    '/d', '/c', 'start',
+    '"pilot"',
+    `"${CLAUDE}"`,
+    '--add-dir', `"${rulesRoot({ home: HOME })}"`,
+    '--agent', 'pilot:pilot',
+    '--settings', `"${settingsIn(HOME)}"`,
+  ]);
+  assert.deepEqual(everything, ['/d', '/c', 'start', '"pilot"', `"${CLAUDE}"`, '--agent', 'pilot:pilot', '--settings', `"${settingsIn(HOME)}"`]);
+  for (const args of [below, everything]) {
+    assert.ok(!args.includes('run'), 'no pilot run on the line');
+    assert.ok(!args.some((arg) => arg.includes(RESUME_PROMPT) || arg.includes('{')), 'no prompt and no JSON on the line');
+  }
+});
+
+test('the settings file holds what --settings carried', (t) => {
+  for (const level of ['nothing', 'rules', 'everything']) {
+    const args = startArgs({ level }, { home: HOME });
+    const file = args[args.indexOf('--settings') + 1];
+    assert.equal(file, settingsIn(HOME));
+    assert.deepEqual(JSON.parse(fs.readFileSync(file, 'utf8')), runSettings(level).settings, level);
+  }
+
+  const own = path.join(aDir(t, 'elsewhere'), 'settings.json');
+  const args = startArgs(NOTHING, { home: HOME, settingsFile: own });
+  assert.equal(args.at(-1), own, 'a settings file the caller names');
+  assert.deepEqual(JSON.parse(fs.readFileSync(own, 'utf8')), runSettings('nothing').settings);
+});
+
+test('a claude path or rules root with a quote is refused before any spawn', (t) => {
   const { calls, spawn } = aRecorder();
   const repo = aDir(t);
 
-  for (const bad of ['C:/a"b/bin/pilot.mjs', 'C:/%USERPROFILE%/bin/pilot.mjs']) {
-    for (const deps of [{ bin: bad }, { execPath: bad }]) {
-      const refusal = refusalOf(repo, { spawn, ...deps });
-      assert.equal(refusal?.status, 400, bad);
-      assert.ok(refusal.message.includes(bad), `the reason names ${bad}`);
-    }
+  for (const bad of ['C:/a"b/claude.exe', 'C:/%USERPROFILE%/claude.exe']) {
+    const refusal = refusalOf(repo, { spawn, claude: bad });
+    assert.equal(refusal?.status, 400, bad);
+    assert.ok(refusal.message.includes(bad), `the reason names ${bad}`);
+  }
+  for (const bad of ['C:/Users/a"b', 'C:/Users/%USERNAME%']) {
+    const refusal = refusalOf(repo, { spawn, home: bad });
+    assert.equal(refusal?.status, 400, bad);
+    assert.ok(refusal.message.includes(bad), `the reason names ${bad}`);
+    assert.ok(!fs.existsSync(settingsIn(bad)), 'nothing is written under it');
   }
   assert.deepEqual(calls, []);
+});
+
+test('no claude on the PATH is said', (t) => {
+  const { calls, spawn } = aRecorder();
+
+  let refusal;
+  try {
+    openPilot(aDir(t), { spawn, platform: 'win32', env: { PATH: '' }, home: HOME, reach: NOTHING });
+  } catch (err) {
+    refusal = err;
+  }
+
+  assert.ok(refusal instanceof DeckRefusal, String(refusal));
+  assert.equal(refusal.status, 500);
+  assert.match(refusal.message, /claude/);
+  assert.deepEqual(calls, []);
+});
+
+test("the child env is runEnv's", (t) => {
+  const { calls, spawn } = aRecorder();
+  const markers = Object.fromEntries(PARENT_MARKERS.map((name) => [name, 'from the parent']));
+
+  startSession(aDir(t), { spawn, ...startDeps({ env: anEnv({ ...markers, PILOT_DECK_PORT: '4397' }) }) });
+
+  const { env } = calls[0].options;
+  assert.equal(env.CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP, '1');
+  assert.equal(env.CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD, '1', 'below everything the rules root is read');
+  for (const name of PARENT_MARKERS.filter((name) => name !== 'CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP')) {
+    assert.equal(env[name], undefined, name);
+  }
+  assert.equal(env.PILOT_DECK_PORT, '4397', 'a scratch deck still reaches its own session');
 });
 
 // S2: Start refuses a missing directory and a second press (spec 3, 4; L3).
@@ -376,6 +464,6 @@ test('a failed spawn clears the latch', (t) => {
     throw new Error('spawn EINVAL');
   };
   const other = aDir(t);
-  assert.throws(() => startSession(other, { spawn: throwing, platform: 'win32', env: anEnv() }), /EINVAL/);
+  assert.throws(() => startSession(other, { ...startDeps(), spawn: throwing }), /EINVAL/);
   assert.equal(refusalOf(other, { spawn }), null);
 });
