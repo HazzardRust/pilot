@@ -136,7 +136,9 @@ const NOT_A_QUESTION = /\blarge reads?\b|\bwalkthrough\b/i;
  */
 const ONLY_WHERE = /\bat a time\b[^.;:|\n]{0,40}?\bonly (where|when)\b/i;
 
-// lint: no sentence states one at a time without its condition
+// lint: no sentence states one at a time without its condition. A deliberate exception (ADR NNNN):
+// it tolerates only the `only where|when` qualifier, so rewording that qualifier turns it red.
+// It stays because no code can hold this prompt rule, the user set it, and it has regressed before.
 test('no unconditional one-at-a-time rule survives anywhere it was stated (spec 13)', () => {
   // The artefact found the rule in ten places; this scan found two more, in the
   // Legend of the skill and in the question queue of `rules/orchestration.md`. A
