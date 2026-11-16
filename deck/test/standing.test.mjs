@@ -64,8 +64,8 @@ test('a report renders as a walkthrough and is not waiting', () => {
   const report = anItem('r1', KIND_REPORT, 'Closing report', { url: 'http://127.0.0.1:3000', screens: ['Open the page'] });
   assert.deepEqual(
     extraFieldsFor(KIND_REPORT),
-    extraFieldsFor(KIND_WALKTHROUGH).filter((name) => !['gate', 'longer', 'blocking'].includes(name)),
-    'every walkthrough field, its ticket the one it closes (ticket-states L6, A1), but its gate (L5), the body cap backdoor, longer (short-by-default L3), and blocking (yellow-lane L3)',
+    extraFieldsFor(KIND_WALKTHROUGH).filter((name) => !['gate', 'longer', 'blocking', 'comment'].includes(name)),
+    'every walkthrough field, its ticket the one it closes (ticket-states L6, A1), but its gate (L5), the body cap backdoor, longer (short-by-default L3), blocking (yellow-lane L3), and QA\'s PR comment (deck-writes-github spec 3)',
   );
   assert.equal(isQueued(report), false);
   assert.equal(appearsInYours(report), false);

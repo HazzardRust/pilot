@@ -46,7 +46,7 @@ const FACADES = {
     'listStoredRuns', 'markDelivered', 'mergeTicket', 'moveTicket', 'namedWorktrees', 'needTicket', 'noteLanding', 'noteLaneFilled', 'ownerFilter', 'parkTicket',
     'parkedTicketOf', 'pivotTicket', 'postItem', 'recordFor', 'recordForTicket', 'recordVerdicts', 'recordsFor', 'refuseLaneSwitch', 'refusePoster',
     'registerRun', 'releaseCoPilot', 'removeDeck', 'reopenItem', 'repliesSince', 'requestSwitch', 'resolveItem',
-    'resumableRecordFor', 'setBudget', 'setCoPilot', 'setSlices', 'settleLanding', 'storeDir', 'storeFile',
+    'resumableRecordFor', 'setBudget', 'setCoPilot', 'setQaComment', 'setSlices', 'settleLanding', 'storeDir', 'storeFile',
     'storedTabFor', 'takeTicket', 'yellowHeadOf', 'yieldTicket',
   ],
   'ui/render.mjs': [

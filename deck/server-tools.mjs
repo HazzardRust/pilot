@@ -15,7 +15,7 @@ import { startLanding } from './landing.mjs';
 import { LAND_AGAIN, LANDING_KINDS } from './landing-replies.mjs';
 import { startPrWrite } from './pr-writes.mjs';
 import {
-  KIND_GATE1, KIND_GATE2, KIND_TICKET, OWNER_KINDS, SIGN_OFF, authorKind, isChainHandoff, isGate, isRecord, liveTicketOf, messagesOf, ownerOf, stateOf, waiterKind,
+  KIND_GATE1, KIND_GATE2, KIND_TICKET, KIND_WALKTHROUGH, OWNER_KINDS, SIGN_OFF, authorKind, isChainHandoff, isGate, isOpen, isRecord, liveTicketOf, messagesOf, ownerOf, stateOf, waiterKind,
 } from './items.mjs';
 import { postFilled } from './closing-report.mjs';
 import { assertOnPilotTip, assertVerdicts } from './lineage.mjs';
@@ -26,7 +26,7 @@ import { announceChange, fallbackFor, handOff, waitForReplies } from './server-w
 import {
   DeckRefusal, addPilotMessage, coPilotFor, currentSeq, deckLanes, listItems, listStoredRuns, markDelivered, mergeTicket, moveTicket, needTicket,
   ownerFilter, parkedTicketOf, parkTicket, pivotTicket, recordFor, recordVerdicts, refusePoster, repliesSince, resolveItem,
-  setCoPilot, setSlices, takeTicket,
+  setCoPilot, setQaComment, setSlices, takeTicket,
 } from './store.mjs';
 
 import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_READ_ITEMS, MAX_READ_LIMIT, deckUrl } from './tools.mjs';
@@ -185,6 +185,18 @@ function assertCleanOnPilot(repo, sha) {
   if (!clean.ok) throw new DeckRefusal(cleanRefusal(sha, clean));
 }
 
+/**
+ * QA's `comment` becomes a public PR comment (deck-writes-github spec 3), so a walkthrough or gate2 carries one only
+ * from QA, naming an open ticket of the poster's own repository or a worktree of it. Another kind is the store's to refuse.
+ */
+function refuseComment(args) {
+  if (args?.comment === undefined || (args.kind !== KIND_WALKTHROUGH && args.kind !== KIND_GATE2)) return;
+  if (authorKind(args.author) !== 'qa') throw new DeckRefusal(`a comment is QA's to post, not ${authorKind(args.author)}'s`);
+  const ticket = listItems().find((item) => item.id === args.ticket && item.kind === KIND_TICKET && typeof item.repo === 'string');
+  const ours = ticket !== undefined && typeof args.repo === 'string' && (sameRepo(ticket.repo, args.repo) || isWorktree(args.repo, ticket.repo));
+  if (!ours || !isOpen(ticket)) throw new DeckRefusal('a comment names an open ticket of this repository');
+}
+
 /** The id of a thread, as the tool that names one is given it. */
 function threadId(args) {
   const id = args?.id;
@@ -213,6 +225,7 @@ export function callTool(name, args, deps = {}) {
     }
     // A gate's poster is refused before its lineage or base runs git (three-lanes spec 14).
     refusePoster(args?.kind, args?.author);
+    refuseComment(args);
     if (args?.kind === KIND_GATE1) {
       assertOnPilotTip(args.repo, args.branch);
       // The record is read off the gate's own ticket, in its own repository, whoever posts it (architect-runs-red A1).
@@ -226,6 +239,9 @@ export function callTool(name, args, deps = {}) {
     const item = postFilled(fields);
     // A gate1 opens the feature PR, by a deck write the poster never waits on (spec 2, L1).
     if (item.kind === KIND_GATE1) prWrite(item.ticket, item.repo);
+    // QA's comment goes to its ticket's record, the newest text winning, and the same write carries it to the PR (spec 3, A5).
+    const commented = typeof item.comment === 'string' ? setQaComment(item.ticket, item.comment) : null;
+    if (commented !== null) prWrite(item.ticket, commented);
     // In yellow (thread-types-phase L12): the item stays open for a later answer, and the
     // caller goes on with its own default now rather than waiting for one.
     if (item.away) {
