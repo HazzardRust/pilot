@@ -149,6 +149,13 @@ test('a slice whose Reviewers line names security integrates only with its Revie
   assert.equal(git(work, 'rev-parse', 'HEAD'), before, 'HEAD unmoved');
   assert.equal(git(origin, 'rev-parse', 'feat/demo'), before, 'nothing pushed');
 
+  const blocked = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, trailers: [typescript, 'Reviewed-by: pilot:security-reviewer: Block, two HIGH'] });
+
+  assert.equal(blocked.ok, false);
+  assert.equal(blocked.line, "NOT integrated slice/demo-s1: S1: pilot:security-reviewer's verdict is block; nothing merged or pushed");
+  assert.equal(git(work, 'rev-parse', 'HEAD'), before, 'HEAD unmoved');
+  assert.equal(git(origin, 'rev-parse', 'feat/demo'), before, 'nothing pushed');
+
   const trailers = [typescript, 'Reviewed-by: pilot:security-reviewer: approve'];
   const passed = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, push: false, trailers });
 

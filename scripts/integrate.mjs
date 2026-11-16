@@ -85,7 +85,8 @@ const SECURITY = 'pilot:security-reviewer';
 /**
  * Throws when `slice`'s file, `docs/design/<slug>/slices/S<n>.md` from its run record row, has a
  * `Reviewers:` line naming `pilot:security-reviewer` and no trailer is that reviewer's
- * `Reviewed-by:`: no security verdict, no integration. No record, row or slice file: no check.
+ * `Reviewed-by:`, or its verdict starts `block`: no security verdict, no integration. No record,
+ * row or slice file: no check.
  */
 function assertSecurityVerdict(cwd, head, slice, trailers) {
   const found = recordIn(cwd, head);
@@ -93,8 +94,10 @@ function assertSecurityVerdict(cwd, head, slice, trailers) {
   const file = n && path.join(cwd, 'docs', 'design', found.slug, 'slices', `${n}.md`);
   if (!file || !fs.existsSync(file)) return;
   if (!/^Reviewers:.*\bpilot:security-reviewer\b/m.test(fs.readFileSync(file, 'utf8'))) return;
-  if (trailers.some((line) => String(line).startsWith(`Reviewed-by: ${SECURITY}: `))) return;
-  throw new Error(`${n} names ${SECURITY} and no --trailer "Reviewed-by: ${SECURITY}: <verdict>"`);
+  const prefix = `Reviewed-by: ${SECURITY}: `;
+  const verdicts = trailers.map(String).filter((line) => line.startsWith(prefix)).map((line) => line.slice(prefix.length));
+  if (!verdicts.length) throw new Error(`${n} names ${SECURITY} and no --trailer "${prefix}<verdict>"`);
+  if (verdicts.some((v) => /^block/i.test(v))) throw new Error(`${n}: ${SECURITY}'s verdict is block`);
 }
 
 /** The run record in `cwd` of `head`, a `feat/<slug>`: `{ slug, record }`, or null with no record there or another head. */
