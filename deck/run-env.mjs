@@ -4,6 +4,8 @@
  * (`deck/test/facades.test.mjs`); `run.mjs` re-exports every name here.
  */
 
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import { unstrippedEnv } from '../scripts/pilot-branch.mjs';
@@ -18,7 +20,7 @@ const PLUGIN_ROOT = path.resolve(import.meta.dirname, '..');
  * `--settings`, which never touches user settings; below `everything` also the status lines, the
  * rules root as an extra directory, and the variable that makes Claude Code read its rules (A3).
  */
-function runSettings(level, pluginRoot) {
+export function runSettings(level, pluginRoot = PLUGIN_ROOT, { home } = {}) {
   const settings = { agent: 'pilot:pilot', enabledPlugins: { [PLUGIN_ID]: true } };
   if (rulesPlan(level).user) return { settings, addDirs: [], env: {} };
   return {
@@ -27,7 +29,7 @@ function runSettings(level, pluginRoot) {
       statusLine: statusLineSetting(pluginRoot),
       subagentStatusLine: subagentStatusLineSetting(pluginRoot),
     },
-    addDirs: [rulesRoot()],
+    addDirs: [rulesRoot({ home })],
     env: { CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: '1' },
   };
 }
@@ -63,6 +65,25 @@ export function claudeArgs(reach, pluginRoot = PLUGIN_ROOT) {
   return [...addDirs.flatMap((dir) => ['--add-dir', dir]), '--agent', 'pilot:pilot', '--settings', JSON.stringify(settings), RESUME_PROMPT];
 }
 
+/** Where `startArgs` writes the run settings by default: one file, rewritten on every Start. */
+export const startSettingsFile = (home = os.homedir()) => path.join(home, '.claude', 'pilot', 'start-settings.json');
+
+/**
+ * What the deck's Start (and `pilot start`) opens `claude` with: the same settings as `pilot run`,
+ * but in a file, because `cmd`'s `start` line cannot carry a JSON string intact (A9), and with no
+ * prompt, so the pilot waits for the user (L12). Writes the file and answers the argv.
+ * The file is written whole and renamed into place, so a session reading it never sees half.
+ */
+export function startArgs(reach, { settingsFile, home } = {}) {
+  const file = settingsFile ?? startSettingsFile(home);
+  const { settings, addDirs } = runSettings(reach.level, PLUGIN_ROOT, { home });
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const partial = `${file}.${process.pid}.tmp`;
+  fs.writeFileSync(partial, `${JSON.stringify(settings, null, 2)}\n`);
+  fs.renameSync(partial, file);
+  return [...addDirs.flatMap((dir) => ['--add-dir', dir]), '--agent', 'pilot:pilot', '--settings', file];
+}
+
 /**
  * What every session `pilot run` starts carries: Claude Code otherwise stops
  * background shells under memory pressure, the pilot's `pilot wait` among them,
@@ -70,7 +91,10 @@ export function claudeArgs(reach, pluginRoot = PLUGIN_ROOT) {
  */
 const SESSION_ENV = { CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP: '1' };
 
-/** The environment both spawn paths give the session: below `everything`, the rules root's rules are read (A3). */
-export function runEnv(reach) {
-  return { ...unstrippedEnv(), ...SESSION_ENV, ...runSettings(reach.level, PLUGIN_ROOT).env };
+/**
+ * The environment every spawn path gives the session: `base` (the daemon's own, unstripped,
+ * by default) and, below `everything`, the variable that has the rules root's rules read (A3).
+ */
+export function runEnv(reach, base = unstrippedEnv()) {
+  return { ...base, ...SESSION_ENV, ...runSettings(reach.level, PLUGIN_ROOT).env };
 }
