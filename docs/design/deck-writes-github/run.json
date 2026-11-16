@@ -15,9 +15,10 @@
     },
     {
       "slice": "S1 `pilot pr` writes the feature PR from the record",
-      "state": "implementing",
+      "state": "draft PR #71, reviewed: typescript and security approve with nits; ready to integrate",
       "branch": "slice/deck-writes-github-s1",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s1"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s1",
+      "pr": 71
     },
     {
       "slice": "S2 The deck runs `pilot pr` on gate1 and every status",
@@ -36,7 +37,7 @@
     },
     {
       "slice": "S4 `pilot integrate --dir`",
-      "state": "draft PR #70",
+      "state": "integrated at b0fbdf22 (#70 merged)",
       "branch": "slice/deck-writes-github-s4",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s4",
       "pr": 70
@@ -58,7 +59,7 @@
     },
     {
       "slice": "S7 ADR and OPERATING say the deck writes GitHub",
-      "state": "implementing",
+      "state": "implementing (agent aa98a05f688c01334 live)",
       "branch": "slice/deck-writes-github-s7",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s7"
     },
@@ -71,8 +72,8 @@
       ]
     }
   ],
-  "next": "Integrating S4 (#70); S1, S7 implementing; S8 after S1.",
-  "updatedAt": "2026-11-16T09:29:05.891Z",
+  "next": "integrating S1 (#71); S7 implementing; then S2, S8 (keeps S4's --dir guard), S3, S6; principles review; QA on a scratch deck.",
+  "updatedAt": "2026-11-16T09:37:48.470Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -120,6 +121,30 @@
       "agent": "pilot:pilot-implementer",
       "what": "integrate fixture tests take seconds each on Windows; 82 s cold for one",
       "evidence": "S4 typescript-reviewer report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "ran one real `gh api -X POST repos/../../issues/1/comments` without the gh stub while reviewing S1; it failed, nothing written as far as it could tell; the `..` path is now refused",
+      "evidence": "S1 report, PR #71",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit tool wrote   as the raw character and broke a regex literal; first gate showed 9 false failures",
+      "evidence": "S1 report, PR #71",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot gh-stub answers every call with one reply.txt, so a live run cannot show create then unchanged in one pass; a reply per verb would let QA's L9 rehearsal be one run",
+      "evidence": "S1 report, PR #71",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "seeding a scratch deck's fixture ticket took three tries: deck_post refuses a ticket body not in ticket-making's shape",
+      "evidence": "S1 report, PR #71",
       "size": 2
     }
   ]
