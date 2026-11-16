@@ -1016,7 +1016,7 @@ test('the README never tells a friend to run the install again after an update',
   assert.doesNotMatch(README(), /run it again/i);
 });
 
-// lint: the README's agents row names no stub, and the shipped agent count is the one the README row is changed with
+// lint: the README's agents row names no stub, and the shipped agent count stays 25
 test('the README describes the crew that is here now, not the one that was', () => {
   // It said "in this slice, one stub pilot" five slices after the stub was replaced.
   // A layout table is read by exactly the person who has not looked in the directory.
@@ -1037,6 +1037,7 @@ test('every script the instructions tell Claude to run is one this package ships
   }
 });
 
+// lint: the manifest pins chrome-devtools-mcp
 test('the browser dependency the manifest declares is pinned', () => {
   const declared = JSON.parse(read('.mcp.json')).mcpServers['chrome-devtools'].args.join(' ');
   const pin = /chrome-devtools-mcp@[0-9.]+/.exec(declared)[0];

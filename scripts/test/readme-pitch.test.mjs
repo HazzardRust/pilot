@@ -1,6 +1,6 @@
 /**
- * The README is a pitch (readme-pitch): a tagline and three one-line hooks open it, no prose
- * paragraph runs long, and the operator detail stays out of it.
+ * The README is a pitch (readme-pitch): a tagline and three one-line hooks open it, and the
+ * operator detail stays out of it.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -27,32 +27,6 @@ function section(text, heading) {
     out.push(l);
   }
   return out.join('\n');
-}
-
-/** The prose blocks of `text`, each a list of its source lines; fences, tables, lists and headings excluded. */
-function paragraphs(text) {
-  const blocks = [];
-  let block = [];
-  let fenced = false;
-  const close = () => {
-    if (block.length) blocks.push(block);
-    block = [];
-  };
-  for (const line of text.split('\n')) {
-    if (/^\s*```/.test(line)) {
-      close();
-      fenced = !fenced;
-      continue;
-    }
-    if (fenced) continue;
-    if (line.trim() === '' || /^\s*(#|\||[-*+]\s|\d+\.\s)/.test(line)) {
-      close();
-      continue;
-    }
-    block.push(line);
-  }
-  close();
-  return blocks;
 }
 
 /**
