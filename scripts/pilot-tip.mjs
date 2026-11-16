@@ -21,6 +21,7 @@ function gitIn(cwd) {
       cwd,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
       // Never a prompt: no terminal credential ask, no Git Credential Manager window.
       env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never' },
       ...options,
