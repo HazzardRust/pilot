@@ -4,9 +4,12 @@
  * (spec 1, 4; L1, L6, L8, A2). `node scripts/pilot-tip.mjs [--fetch]` prints `<ref> <sha>`,
  * or `HEAD <sha>` when there is no pilot tip; it never creates a branch or pushes, and it
  * fetches only under `--fetch`, only a tracking ref that already exists.
+ * `--session-start` is the SessionStart hook (spec 2): the payload's `cwd` on stdin, one warning
+ * line as hook JSON when that checkout is over `BEHIND_BAR` behind, else nothing; it never fetches.
  */
 
 import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -57,7 +60,37 @@ export function pilotTip({ cwd, fetch = false }) {
   }
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+/** A checkout more than this many commits behind its pilot tip is stale (L4). */
+export const BEHIND_BAR = 100;
+
+/** The SessionStart hook output warning a stale checkout, or null: no tip, or `behind` not over the bar. */
+export function staleNotice(tip) {
+  if (!tip || !(tip.behind > BEHIND_BAR)) return null;
+  const line = `This checkout is ${tip.behind} commits behind ${tip.ref} (${tip.sha.slice(0, 7)}): ` +
+    `cut a worktree from ${tip.ref} before working here.`;
+  return { systemMessage: line, hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: line } };
+}
+
+/** The SessionStart hook (L2, L3, L5): one JSON line for a stale checkout, else nothing; never fetches, exits 0. */
+function sessionStart() {
+  try {
+    let cwd;
+    try {
+      cwd = JSON.parse(fs.readFileSync(0, 'utf8'))?.cwd;
+    } catch {
+      // No payload, or not JSON: the process's own directory is the session's.
+    }
+    const notice = staleNotice(pilotTip({ cwd: typeof cwd === 'string' && cwd ? cwd : process.cwd() }));
+    if (notice) process.stdout.write(`${JSON.stringify(notice)}\n`);
+  } catch {
+    // A session start this hook could fail is worse than a missed warning.
+  }
+}
+
+const main = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (main && process.argv.includes('--session-start')) {
+  sessionStart();
+} else if (main) {
   const cwd = process.cwd();
   const tip = pilotTip({ cwd, fetch: process.argv.includes('--fetch') });
   let line = tip && `${tip.ref} ${tip.sha}`;
