@@ -63,24 +63,29 @@
     },
     {
       "slice": "S7 Sweep: docs, README, install, rules, ADR",
-      "state": "draft PR #48",
+      "state": "integrated at 0732d30e",
       "branch": "slice/crew-tests-behaviour-s7",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s7",
       "pr": 48
     },
     {
       "slice": "S8 Sweep: lane and ticket pins",
-      "state": "implementing",
+      "state": "draft PR #49",
       "branch": "slice/crew-tests-behaviour-s8",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s8"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s8",
+      "pr": 49
     },
     {
       "slice": "S9 Sweep: audit and deck report pins",
-      "state": "planned (sonnet)"
+      "state": "implementing",
+      "branch": "slice/crew-tests-behaviour-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s9"
     },
     {
       "slice": "S10 Sweep: architect, slicing, verdicts",
-      "state": "planned (sonnet)"
+      "state": "implementing",
+      "branch": "slice/crew-tests-behaviour-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s10"
     },
     {
       "slice": "S11 Sweep: crew voice and gates",
@@ -114,8 +119,8 @@
       ]
     }
   ],
-  "next": "integrating S7 (#48); S8 implementing; then S9, S10",
-  "updatedAt": "2026-11-16T03:39:55.443Z",
+  "next": "integrating S8 (#49); S9, S10 implementing from 0732d30e; then S11, S12, S13; S14 last; S4 waits on PR #8",
+  "updatedAt": "2026-11-16T03:42:17.533Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -176,6 +181,12 @@
       "what": "shell node -e and heredoc edits of Markdown-heavy JS tests mangled backslashes and quotes",
       "evidence": "S7: broken split regex in install.test.mjs, failed sed on a cut script",
       "size": 4
+    },
+    {
+      "agent": "pilot:pilot-fact-sheet",
+      "what": "returned a 70-row table restating the slice file for a 10-file test-only sweep",
+      "evidence": "S8 report",
+      "size": 1
     }
   ]
 }
