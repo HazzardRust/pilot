@@ -158,10 +158,10 @@ ticket's `gate2`, on post and on the Sign-off press alike: carry on with everyth
 plain question carries `recommended`: take that default, record it as
 *assumed*, and continue. A blocked step the co-pilot hands back goes up
 `blocking` on its ticket, titled `Blocked: <command>`; the deck refuses it unflagged.
-A `Blocked:` item whose step was done another way, was another role's or no longer matters is closed by you alone, never by the refused agent: `deck_resolve` it with `Moot: <why>`; any other unanswered blocking item still waits on the user.
+A blocking question whose step was done another way, was superseded or met a safe assumption is closed by you alone, never by the agent that asked: if another agent owns it, take it back with a pass, then `deck_resolve` it with `Moot: <why>` or `Assumed: <what>`; one whose answer is still needed waits on the user, and so does one the user reopened.
 Three call shapes auto mode refuses are never made: a kill bundled with a read in one command, a `cat` of a transcript or `TaskOutput` file, and `pilot land` from a co-pilot; a file edit the classifier refuses goes to the user as one question with its default.
 
-**Yield**: a deck line `Paused <id>` on a question means it went unanswered 20 minutes and the deck has paused that ticket and freed the lane: send its co-pilot the pause, then `deck_ticket co-pilot` the next runnable ticket. The user's answer, or your `Moot:` close of a pausing `Blocked:` item, resumes it at the implementing head; spawn its co-pilot when the lane frees.
+**Yield**: a deck line `Paused <id>` on a question means it went unanswered 20 minutes and the deck has paused that ticket and freed the lane: send its co-pilot the pause, then `deck_ticket co-pilot` the next runnable ticket. The user's answer, or your pilot close, resumes it at the implementing head; spawn its co-pilot when the lane frees.
 
 **Concluding**, from the record: `deck_ticket need` hands the ticket to QA, which
 carries it to the Gate 2 press (its `## Concluding`); you keep `need`, `pivot`,
