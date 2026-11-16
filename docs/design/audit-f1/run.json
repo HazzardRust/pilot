@@ -1,0 +1,99 @@
+{
+  "slug": "audit-f1",
+  "feature": "Audit F1: fresh base for audits",
+  "ticket": "itm_f997a8938bd4",
+  "branch": "feat/audit-f1",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f1",
+  "artefact": "docs/design/audit-f1/architecture.md",
+  "slices": [
+    {
+      "slice": "S2 session-start behind warning",
+      "state": "built at 8c5e44be, both reviewers approve, no PR yet: waits for S1's merge then rebase",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/audit-f1-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f1-s2"
+    },
+    {
+      "slice": "S1 Walking skeleton: the audit cuts from the pilot tip and records it",
+      "state": "draft PR #80, approved; integrate refused on a conflict with pilot, implementer resolving",
+      "branch": "slice/audit-f1-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f1-s1",
+      "pr": 80
+    }
+  ],
+  "next": "S1 implementer finishing merge of pilot b38de846 into slice/audit-f1-s1 (test 5 kept as marked lint, decided by main); then pilot integrate S1 in pilot-feat-audit-f1; resume S2 implementer ad7731b61d8f97707 with the feat tip: rebase, reviewers re-read (S1 fix touched pilot-tip.mjs), open draft PR (body in scratchpad pr-body.md); integrate S2; WSL x5; pilot posts gate2 + walkthrough.",
+  "updatedAt": "2026-11-16T12:32:15.361Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "old design's live check could not happen: it needed a checkout 2259 behind, pilot has 98 commits",
+      "evidence": "git rev-list --count origin/pilot = 98"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "every carried anchor needed re-reading; 7 of about 15 line numbers had drifted since the archive copy",
+      "evidence": "remotes.mjs:15/35/37, pilot-branch.mjs:122"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck connection down again, so A2 and A3 came to the pilot to post",
+      "evidence": "deck CONNECTION_CLOSED"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "hidden-spawns rule lives only in a test, so a new spawn fails the full suite (~10 min) rather than the slice's tests",
+      "evidence": "scripts/test/hidden-spawns.test.mjs:111",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spec 3 named the deck item but deckBody never carried the line; a round trip to main",
+      "evidence": "deck/audit.mjs:219-235 against architecture §3",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "security reviewer spawned on uncommitted work took a new file for base code; verdicts in PR body predate the fixes, so main re-ran both reviews",
+      "evidence": "PR #80 body; reviewer scope note",
+      "size": 3
+    },
+    {
+      "agent": "pilot",
+      "what": "pilot's brief gave a 400-line limit where brief.md says 300",
+      "evidence": "S1 implementer report",
+      "size": 1
+    },
+    {
+      "agent": "pilot",
+      "what": "pilot integrate says only 'the merge stopped' when the base-first merge makes the slice conflict; the conflicting file took four commands to find",
+      "evidence": "NOT integrated slice/audit-f1-s1; git merge-tree origin/pilot origin/slice/audit-f1-s1 names scripts/test/audit-agent.test.mjs",
+      "size": 3
+    },
+    {
+      "agent": "pilot",
+      "what": "feat/audit-f1 was cut before the day's landings and the Gate 1 'no plan file changed on pilot' check went stale",
+      "evidence": "gate1 itm_a26686beeddb checked to 05074a62; pilot now b38de846",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "brief told S2 to hold its PR for a later tip message, but an implementer's run ends at hand-back; the PR needs a resume",
+      "evidence": "S2 report, Pushback on the brief",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md's live check assumes the shared checkout is 97 behind pilot; it is 283 behind, so the expected 'nothing' is false",
+      "evidence": "S2 live check output",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "hooks/test is CommonJS and scripts/test/lib/git-fixture.mjs is ESM, so the fixture helper could not be reused",
+      "evidence": "hooks/test/stale-checkout.test.js",
+      "size": 1
+    }
+  ]
+}
