@@ -8,7 +8,7 @@
   "slices": [
     {
       "slice": "deck-writes-github",
-      "state": "implementing: S2, S8 live under the co-pilot; plan sha 9796f2d1",
+      "state": "fixing: fix round #77 integrating (security re-review APPROVE on 5c50d78b)",
       "branch": "feat/deck-writes-github",
       "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deck-writes-github-r2",
       "pr": 4
@@ -57,7 +57,7 @@
     },
     {
       "slice": "S6 The crew names no GitHub write and one plain command",
-      "state": "integrated",
+      "state": "integrated at 58c46155 (#76)",
       "after": [
         "S3",
         "S4"
@@ -86,37 +86,32 @@
     }
   ],
   "findings": [
-    "kept: fix round: OPERATING's command table has no `pilot pr` row (S7 left it out)",
-    "kept: weigh S1 security LOW: flags after `pr <verb>` (-R, --web, --editor) unrestricted",
-    "kept: weigh S1 security LOW: @mentions in record text reach the PR body and notify people"
+    "kept: OPERATING's command table has no `pilot pr` row (S7)",
+    "kept: S1 security LOW: flags after `pr <verb>` (-R, --web, --editor) pass assertHostVerb (host.mjs:61)",
+    "kept: S1 security LOW: @mentions in record text reach the PR body and notify people",
+    "kept: HOST_VERBS export has 0 importers and drifts from PR_VERBS/COMMENT_PATH; delete it (host.mjs:13-16), -4",
+    "kept: api POST comment path has no caller (feature-pr uses gh pr comment + PATCH); delete COMMENT_PATH.POST and the unused -X GET/-q/--raw-field acceptance, -3",
+    "kept: doctor.mjs:231-239 duplicates install-settings readSettings untested; export and reuse it, -5",
+    "kept: narrowed, qaComment (20000 chars) rides into run.json, committed to pilot/main, and into the session-start injection; keep it on the deck's record (spec 3 names it) but out of run.json and the hook",
+    "dropped: move qaComment off the record entirely; spec 3 says the comment is the record's qaComment, a spec line",
+    "dropped: qa-comment tests assert record().qaComment; they stay valid under the narrowed fix",
+    "dropped: credential scrub of QA comment; store-items.mjs:134 already refuses it (qa-comment.test.mjs:72)",
+    "kept: integrate usage (integrate.mjs:574) omits --dir; spec 5 evidence names the help (QA found it too)",
+    "kept: feature-pr.mjs:13-14 header says the body never goes on argv; PATCH sends -f body=; correct the header",
+    "kept: host.mjs:2-4 and ADR 0182:27 'a second host is one adapter' overstates an argv allowlist; reword to one process start and one allowlist",
+    "kept: host-bar.test.mjs:73 typeof hostIn asserts nothing; remove, -1",
+    "dropped: S2.md:33 rewrite-check wording; plan text, no code consequence",
+    "dropped: setQaComment sits in store-tickets not store-runs; store-runs at its 800-line bar, recorded in PR #75",
+    "dropped: madge cycle integrate.mjs<->sync.mjs; present on origin/pilot b38de846, not this feature's",
+    "kept: consider row, security-reviewer APPROVE on doctor/install-settings; LOW: pass detail 'every rule present' also counts deny/ask-covered rules, reword",
+    "dropped: consider row LOW: denyCovers regex backtracking on the user's own settings strings; no attacker-reachable input",
+    "kept: fix-round security HIGH: -wR/-we/-w=true clusters bypassed the flag refusal; fixed in 5c50d78b, re-review APPROVE",
+    "dropped: fix-round LOWs: label create -R, --body-file any path, &#64; mentions; pre-existing or outside the kept set",
+    "dropped: re-review LOW: PR_REFUSED also refuses a value like -wip; fails closed, no caller sends one"
   ],
-  "next": "co-pilot itm_5f1725c876a7: S6 (#76) integrating, the last slice; then principles review + QA (read-only) at once, fix round, QA on scratch deck (L9), WSL x5 on final tip BEFORE gate2.",
-  "updatedAt": "2026-11-16T11:01:18.544Z",
+  "next": "co-pilot itm_5f1725c876a7: pilot integrate fix/deck-writes-github (#77), send QA the tip; QA: plugin update, scratch deck live (L9), walkthrough, WSL x5 on final tip BEFORE gate2.",
+  "updatedAt": "2026-11-16T11:36:43.581Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "no in-repo doc says why `cd && pilot` prompts; took a docs fetch, and docs-lookup returned unsearchable page dumps",
-      "evidence": "deck-writes-github architect report",
-      "size": 5
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "a fresh slice worktree has no node_modules; npm ci before pilot doctor runs, ~1 min",
-      "evidence": "S5 report, PR #69",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "npm run test:changed is the same as npm test (both run gate.mjs): the brief's red/green selection does not exist",
-      "evidence": "S5 report, PR #69",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "context compacted right after creating the worktree, before any edit; fact sheet lost, slice restarted (S1 the same)",
-      "evidence": "S4 report, PR #70; S1 status message",
-      "size": 5
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S4's slice file left --dir's reach open; a bare is-a-directory check would widen Bash(pilot integrate *) to every repository on disk; the security reviewer caught it",
@@ -324,6 +319,30 @@
       "what": "first gate's log went to an unignored file one level above the worktree; and a gate ran before the reviewer fix, two ~5 min runs",
       "evidence": "S6 report, PR #76",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "stopped twice on its own background work without returning a table to the fundamentalist (its report reached main instead); c8 run with scratch HOME red, Stryker timed out, so no coverage or mutation data for the feature",
+      "evidence": "fundamentalist report; main's relay",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "git worktree remove of its principles worktree failed Permission denied while the runner's processes held files; left for the co-pilot",
+      "evidence": "fundamentalist report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "install.test.mjs's export-surface pin was not among the pins named; one extra 5-min gate; gh-stub env-save boilerplate copied by hand per test file (host-bar, feature-pr)",
+      "evidence": "fix round report, PR #77",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the 800-line limit is not uniformly enforced: hooks/test/session-handoff.test.js is 1077 lines with nothing flagging it",
+      "evidence": "fix round report, PR #77",
+      "size": 1
     }
   ]
 }
