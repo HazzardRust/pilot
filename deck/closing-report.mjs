@@ -9,10 +9,10 @@
 import fs from 'node:fs';
 
 import { runWorktrees } from '../scripts/worktrees.mjs';
-import { KIND_GATE2, KIND_REPORT, KIND_TICKET, authorKind, gate2Blockers, isOpen, ownerOf, sameRepo } from './items.mjs';
+import { isPilotClose } from './blocked-shape.mjs';
+import { KIND_GATE2, KIND_REPORT, KIND_TICKET, authorKind, gate2Blockers, isAnswered, isOpen, ownerOf, sameRepo } from './items.mjs';
 import { REPORT_DUE } from './items-bounds.mjs';
 import { LANDING_KINDS } from './landing-replies.mjs';
-import { closedByPilotLines, pilotClosesOf } from './pilot-closes.mjs';
 import { reportAskGaps } from './report-shape.mjs';
 import { rankFriction, repoOf } from './runs.mjs';
 import { DeckRefusal } from './store-core.mjs';
@@ -26,6 +26,24 @@ const said = (text) => {
   const line = String(text ?? '').replace(/\s+/g, ' ').trim();
   return reportAskGaps(line).length === 0 ? line : `\`${line.replace(/`/g, "'")}\``;
 };
+
+/** The pilot's closes as the gate2 and the report list them (blocking-close spec 3, L6), bounded so a thread cannot flood either. */
+const [CLOSED_BY_PILOT, MAX_CLOSES, MAX_CLOSE_TEXT] = ['Closed by the pilot:', 20, 300];
+
+/** The closed blocking questions of `ticketId` in `repo` that the pilot closed and the user never answered (the veto is in `isPilotClose`). */
+export const pilotClosesOf = (items, ticketId, repo) => items.filter((item) => item.ticket === ticketId && sameRepo(item.repo, repo)
+  && !isOpen(item) && !isAnswered(item) && isPilotClose(item, item.resolution, item.resolvedBy));
+
+/** Text past `MAX_CLOSE_TEXT` characters, cut with an ellipsis. */
+const clipped = (text) => (text.length > MAX_CLOSE_TEXT ? `${text.slice(0, MAX_CLOSE_TEXT - 1)}…` : text);
+
+/** The section's lines: the heading, then each close as `- <id> <title>: <resolution>`, at most `MAX_CLOSES` and `- and N more`, or `- none`. */
+export const closedByPilotLines = (closes) => [
+  CLOSED_BY_PILOT,
+  ...closes.slice(0, MAX_CLOSES).map((item) => `- ${item.id} ${said(clipped(`${item.title}: ${item.resolution}`))}`),
+  ...(closes.length > MAX_CLOSES ? [`- and ${closes.length - MAX_CLOSES} more`] : []),
+  ...(closes.length === 0 ? ['- none'] : []),
+];
 
 /**
  * Land's main line, in S2's `mainLine` shapes only (one-integration-line A1): `main gets pilot: #<n>`, with
@@ -131,8 +149,11 @@ function worktreesLeft(repo, slug) {
 export function postFilled(fields) {
   const { kind, body, ticket, author, repo } = fields ?? {};
   const bodiless = body === undefined || (typeof body === 'string' && body.trim() === '');
-  const closes = typeof ticket === 'string' && (kind === KIND_GATE2 || kind === KIND_REPORT) ? pilotClosesOf(listItems(), ticket) : [];
-  if (kind === KIND_GATE2 && closes.length > 0 && typeof body === 'string') return postItem({ ...fields, body: `${body}\n\n${closedByPilotLines(closes).join('\n')}` });
+  // A blank gate2 body gets no section, so the empty-body refusal still fires.
+  if (kind === KIND_GATE2 && typeof ticket === 'string' && typeof body === 'string' && !bodiless) {
+    const closes = pilotClosesOf(listItems(), ticket, repoOf(repo) ?? repo);
+    return postItem(closes.length > 0 ? { ...fields, body: `${body}\n\n${closedByPilotLines(closes).join('\n')}` } : fields);
+  }
   if (kind !== KIND_REPORT || !bodiless || typeof ticket !== 'string') return postItem(fields);
   // Only the lander, or the pilot unstamped, closes a ticket this way; any other writer gets the empty-body refusal.
   if (!LANDING_KINDS.includes(author === undefined ? 'pilot' : authorKind(author))) return postItem(fields);
@@ -148,7 +169,7 @@ export function postFilled(fields) {
   // A report built from no record would close the ticket on an empty one; the lander is told instead.
   if (!record) throw new DeckRefusal(`a report without a body is filled from the run record, and no run record names ${ticket}`);
   // Filed under the gate2's repository, as the deck's own report was, never the poster's worktree.
-  const report = postItem({ ...fields, repo: gate.repo, ...closingReportOf(record, gate, worktreesLeft(gate.repo, record.slug), closes) });
+  const report = postItem({ ...fields, repo: gate.repo, ...closingReportOf(record, gate, worktreesLeft(gate.repo, record.slug), pilotClosesOf(listItems(), ticket, gate.repo)) });
   noteDeck(report.id, REPORT_DUE);
   return report;
 }

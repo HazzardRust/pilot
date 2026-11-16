@@ -18,7 +18,7 @@ export function blockedShapeGaps({ kind, title, ticket, blocking }) {
 
 /**
  * The prefixes of the pilot's close of a blocking question it no longer needs (blocking-close spec 1,
- * L2, ADR 0172): `Moot: <why>` when the answer stopped mattering, `Assumed: <what>` when it went ahead on one.
+ * L2, ADR NNNN): `Moot: <why>` when the answer stopped mattering, `Assumed: <what>` when it went ahead on one.
  */
 export const PILOT_CLOSES = Object.freeze(['Moot:', 'Assumed:']);
 

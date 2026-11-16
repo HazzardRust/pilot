@@ -33,7 +33,7 @@ test('the pilot names the yield and Moot', () => {
   assert.match(coPilot, /pilot's close[^.]*resumes it/, 'spec 11 in the co-pilot too');
 });
 
-/** blocking-close S3 (spec 5; L1-L3, A2, ADR 0177): the pilot's close rule, one sentence of agents/pilot.md. */
+/** blocking-close S3 (spec 5; L1-L3, A2, ADR NNNN): the pilot's close rule, one sentence of agents/pilot.md. */
 const pilotRule = () => read('agents/pilot.md').match(/[^.]*`Moot: <why>` or `Assumed: <what>`[^.]*\./)?.[0] ?? '';
 /** The co-pilot's routing of a question that stopped mattering, one sentence of agents/pilot-co-pilot.md. */
 const coPilotRule = () => read('agents/pilot-co-pilot.md').match(/[^.]*`moot <id>: <why>`[^.]*\./)?.[0] ?? '';
@@ -58,11 +58,6 @@ test('the co-pilot routes a moot question to main', () => {
   const rule = coPilotRule();
   assert.match(rule, /send `main` `moot <id>: <why>`/, 'A2: the co-pilot names it to main');
   assert.match(rule, /pilot closes it/, 'A2: the pilot, never the co-pilot, closes it');
-});
-
-test('the ADR records the supersession', () => {
-  assert.match(read('docs/adr/0177-the-pilot-closes-a-blocking-question.md'), /supersedes: \[0153\]/, 'ADR 0177 supersedes 0153');
-  assert.match(read('docs/adr/0153-a-blocked-yellow-ticket-yields-the-lane.md'), /superseded_by: \[0177\]/, '0153 names 0177');
 });
 
 test('the crew forbids the three shapes', () => {

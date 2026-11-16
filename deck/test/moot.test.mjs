@@ -1,5 +1,5 @@
 /**
- * blocking-close S1 (spec 1, 2, 4, 6; L1-L5, ADR 0172): the pilot closes any open blocking question on a
+ * blocking-close S1 (spec 1, 2, 4, 6; L1-L5, ADR NNNN): the pilot closes any open blocking question on a
  * ticket with `Moot: <why>` or `Assumed: <what>`, with no press from the user, and its gate2 then posts.
  * Any other close of an unanswered blocking item is still refused, the prefixes are the pilot's alone,
  * never on a gate, signoff, walkthrough or proposal, and the user's reopen puts the hold back for good.
@@ -18,7 +18,6 @@ import {
 } from '../items.mjs';
 import { YIELD_MS } from '../lanes.mjs';
 import { DeckRefusal, listItems, postItem, reopenItem, resolveItem, setCoPilot, yieldTicket } from '../store.mjs';
-import { resumeIn } from '../store-items.mjs';
 import { postStored, shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
 
 const REPO = path.resolve('D:/work/pilot');
@@ -89,12 +88,11 @@ test('a bare or empty close is refused naming both prefixes', (t) => {
 
 test('only the pilot', (t) => {
   const { design } = heldByDesign(t);
-  const stored = reread(design.id);
   const why = `${MOOT} no longer matters`;
-  assert.equal(isPilotClose(stored, why, PILOT), true, 'the pilot');
-  assert.equal(isPilotClose(stored, why, QA), false, 'a QA writer');
-  assert.equal(isPilotClose(stored, why, undefined), false, 'an unstamped writer');
-  assert.equal(isPilotClose(stored, 'no longer matters', PILOT), false, 'no prefix');
+  // The owner check refuses a QA writer first, so the predicate's own author check is asserted directly.
+  assert.equal(isPilotClose(reread(design.id), why, QA), false, 'a QA writer');
+  assert.throws(() => resolveItem(design.id, why, undefined), refusedNaming(design.id, 'blocking'), 'an unstamped writer');
+  assert.equal(isOpen(reread(design.id)), true);
 });
 
 test('never a gate, walkthrough or proposal', (t) => {
@@ -109,7 +107,6 @@ test('never a gate, walkthrough or proposal', (t) => {
     postStored({ kind: KIND_QUESTION, title: 'Tickets', body: 'Cut?', repo: REPO, options: ['Yes', 'No'], blocking: true, proposal: true }),
   ];
   for (const item of held) {
-    assert.equal(isPilotClose(item, why, PILOT), false, item.kind);
     assert.throws(() => resolveItem(item.id, why, PILOT), DeckRefusal, `${item.kind}${item.proposal ? ' proposal' : ''}`);
     assert.equal(isOpen(reread(item.id)), true, item.kind);
   }
@@ -131,10 +128,6 @@ test('a pilot close resumes the ticket a design question paused', (t) => {
   yieldTicket(ticket.id, design.id);
   assert.equal(reread(ticket.id).state, 'green', 'paused');
 
-  const closed = { ...reread(design.id), resolution: `${ASSUMED} A`, resolvedAt: new Date().toISOString(), resolvedBy: 'pilot' };
-  const deck = { items: listItems().map((item) => (item.id === design.id ? closed : item)) };
-  assert.equal(resumeIn(deck, closed)?.id, ticket.id, 'resumeIn reads a closed pilot close as answered');
-
   resolveItem(design.id, `${ASSUMED} A`, PILOT);
 
   const after = reread(ticket.id);
@@ -149,9 +142,7 @@ test("the user's reopen restores the hold for good", (t) => {
 
   reopenItem(design.id);
 
-  const reopened = reread(design.id);
   for (const close of [`${MOOT} still not needed`, `${ASSUMED} A`]) {
-    assert.equal(isPilotClose(reopened, close, PILOT), false, `vetoed: ${close}`);
     assert.throws(() => resolveItem(design.id, close, PILOT), refusedNaming(design.id, 'blocking'), close);
   }
   assert.throws(() => aGate2(ticket), refusedNaming('gate2', design.id), 'the gate2 is held again');

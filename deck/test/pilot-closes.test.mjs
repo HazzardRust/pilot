@@ -1,7 +1,8 @@
 /**
  * blocking-close S2 (spec 3; L6): the gate2 lists the pilot's closes of its ticket's blocking questions
  * before the user presses Sign off, and the closing report lists them under `Closed by the pilot:`. A close
- * the user answered, or that is another ticket's, is not listed. The report still asks nothing (ADR 0148).
+ * the user answered, another ticket's, or another repository's is not listed. The section is bounded, and the
+ * report still asks nothing (ADR 0148).
  */
 
 import './no-open.mjs';
@@ -10,9 +11,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-import { closingReportOf, postFilled } from '../closing-report.mjs';
+import { closedByPilotLines, closingReportOf, pilotClosesOf, postFilled } from '../closing-report.mjs';
 import { KIND_GATE2, KIND_QUESTION, KIND_TICKET } from '../items.mjs';
-import { closedByPilotLines, pilotClosesOf } from '../pilot-closes.mjs';
 import { reportAskGaps } from '../report-shape.mjs';
 import { addReply, listItems, postItem, resolveItem } from '../store.mjs';
 import { postStored, shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
@@ -44,34 +44,57 @@ function fixture(t) {
   return { ours, theirs, assumed, answered, other };
 }
 
-test('a pilot close is listed', (t) => {
-  const { ours, assumed, answered, other } = fixture(t);
-  const ids = pilotClosesOf(listItems(), ours.id).map((item) => item.id);
-  assert.deepEqual(ids, [assumed.id], 'the Assumed close, not the user-answered one, not another ticket\'s');
-  assert.ok(!ids.includes(answered.id) && !ids.includes(other.id));
-});
-
 test('the report names it under its heading', (t) => {
   const { ours, assumed } = fixture(t);
   const record = { slug: 'x', slices: [] };
   const gate = { pr: '#250', landing: { state: 'landed', sha: '1a2b3c4', line: 'main gets pilot: #901' } };
-  const { body } = closingReportOf(record, gate, [], pilotClosesOf(listItems(), ours.id));
+  const { body } = closingReportOf(record, gate, [], pilotClosesOf(listItems(), ours.id, REPO));
   assert.match(body, new RegExp(`${SECTION}\\n- ${assumed.id} Schema for it: Assumed: B, the schema`));
   assert.match(closingReportOf(record, gate, [], []).body, new RegExp(`${SECTION}\\n- none`));
   assert.match(closingReportOf(record, gate, []).body, new RegExp(`${SECTION}\\n- none`));
 });
 
-test('the gate2 lists it before Sign off', (t) => {
-  const { ours, theirs } = fixture(t);
+test('the gate2 lists it before Sign off, and not the user-answered close or another ticket\'s', (t) => {
+  const { ours, theirs, assumed, answered, other } = fixture(t);
   const posted = postFilled(gate2Fields(ours));
   assert.ok(posted.body.startsWith('Walk it.'), 'the body as posted comes first');
-  assert.match(posted.body, new RegExp(`${SECTION}\\n- itm_\\w+ Schema for it: Assumed: B`));
+  assert.match(posted.body, new RegExp(`${SECTION}\\n- ${assumed.id} Schema for it: Assumed: B`));
+  assert.ok(!posted.body.includes(answered.id), 'the user-answered close is not listed');
+  assert.ok(!posted.body.includes(other.id), 'another ticket\'s close is not listed');
   assert.equal(reread(posted.id).body, posted.body, 'stored with the section');
 
   const plain = aTicket('Plain');
   takeLive(plain.id);
   assert.equal(postFilled(gate2Fields(plain)).body, 'Walk it.', 'no close, the body is as posted');
   assert.match(postFilled({ ...gate2Fields(theirs), ticket: theirs.id }).body, new RegExp(`${SECTION}\\n- itm_\\w+ Other schema: Moot:`));
+});
+
+test('a blank gate2 body is still refused when the ticket has closes', (t) => {
+  const { ours } = fixture(t);
+  const before = listItems().length;
+  assert.throws(() => postFilled({ ...gate2Fields(ours), body: '  \n ' }), /body/);
+  assert.equal(listItems().length, before, 'nothing posted');
+});
+
+test('another repository\'s close under the same ticket id is not listed', (t) => {
+  const { ours, assumed } = fixture(t);
+  // Stored past `postItem`, which refuses a question on another directory's ticket: the filter must not lean on that.
+  const elsewhere = postStored({
+    kind: KIND_QUESTION, title: 'Elsewhere schema', body: 'which?', repo: path.resolve('D:/work/other'), options: ['A', 'B'], recommended: 'A', ticket: ours.id, blocking: true,
+  });
+  resolveItem(elsewhere.id, 'Moot: done in the other repository', PILOT);
+  assert.deepEqual(pilotClosesOf(listItems(), ours.id, REPO).map((item) => item.id), [assumed.id]);
+  assert.ok(!postFilled(gate2Fields(ours)).body.includes(elsewhere.id), 'the gate2 does not list it');
+});
+
+test('the section is bounded: each close clipped, at most 20 listed', () => {
+  const closes = Array.from({ length: 23 }, (_, n) => ({ id: `itm_${n}`, title: 'Long one', resolution: `Moot: ${'x'.repeat(1000)}` }));
+  const lines = closedByPilotLines(closes);
+  assert.equal(lines.length, 1 + 20 + 1, 'the heading, 20 closes, the remainder line');
+  assert.equal(lines.at(-1), '- and 3 more');
+  assert.ok(lines[1].endsWith('…'), 'clipped with an ellipsis');
+  assert.ok(lines[1].length <= 320, `clipped to about 300 chars, got ${lines[1].length}`);
+  assert.deepEqual(closedByPilotLines(closes.slice(0, 20)).at(-1).startsWith('- itm_19'), true, 'exactly 20: no remainder line');
 });
 
 test('the report still asks nothing', () => {
