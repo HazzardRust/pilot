@@ -90,8 +90,8 @@ body,baseRefName,comments` on the fixture PR confirms the body, the base and the
   `denyCovers` :557 not exported; `checkAll` (`deck/doctor.mjs:326`) reads no settings. This machine's settings hold
   every one of them, so doctor's row passes here.
 - `checkReferences(root, paths = SURFACE)` (`scripts/check-references.mjs:237`), `FORBIDDEN` :35. ADR 0180: no test
-  asserts a phrase in prose; a structural lint carries `// lint: <rule>`. Pilot prompt pin 11864
-  (`scripts/test/measure-prompt.test.mjs:205`); QA's in `scripts/test/qa-preview.test.mjs`.
+  asserts a phrase in prose; a structural lint carries `// lint: <rule>`. Pilot prompt pin 11871, measured own share 11850 after S6
+  (`scripts/test/measure-prompt.test.mjs:206`); QA's in `scripts/test/qa-preview.test.mjs`.
 - Next ADR number 0182; ADR 0154 already reads `amended` (0161, 0167).
 - The deck lands with the installed plugin, so this takes effect after `claude plugin update`.
 

@@ -31,6 +31,8 @@ const CHECKED_EXTENSIONS = new Set(['.md', '.json', '.mjs', '.js']);
 /**
  * Each pattern is a way a file works here and nowhere else. The message says what
  * breaks, because the fix differs: an address is rewritten, a path becomes a variable.
+ * A `prompt` pattern is an instruction to the crew, so it is read in markdown only: a
+ * hook's test fixture naming a denied `gh pr ready` is data, not an ask (deck-writes-github S6).
  */
 const FORBIDDEN = [
   {
@@ -52,6 +54,31 @@ const FORBIDDEN = [
   {
     pattern: /installed_plugins\.json/g,
     why: 'reads the harness\'s private plugin registry at runtime; use ${CLAUDE_PLUGIN_ROOT}',
+  },
+  {
+    prompt: true,
+    pattern: /\bgh pr (?:edit|comment|ready|close)\b/g,
+    why: 'asks the crew for a GitHub write; the deck makes it (pilot pr, a comment on deck_post)',
+  },
+  {
+    prompt: true,
+    pattern: /\bgh api\b[^\n`]*?(?:-X|--method)[ =]?(?:PATCH|POST)\b/g,
+    why: 'asks the crew for a GitHub write; the deck makes it (pilot pr, a comment on deck_post)',
+  },
+  {
+    prompt: true,
+    pattern: /\bgh pr create\b[^\n`]*?--head[ =]feat\//g,
+    why: 'opens the feature PR from the crew; the deck opens it (pilot pr)',
+  },
+  {
+    prompt: true,
+    pattern: /\bpilot integrate\b[^\n`]*?--default(?![\w-])/g,
+    why: 'integrates onto the default branch; a slice integrates onto feat/<slug>',
+  },
+  {
+    prompt: true,
+    pattern: /&&\s*pilot integrate\b/g,
+    why: 'a compound cd call auto mode refuses; use pilot integrate --dir <worktree>',
   },
 ];
 
@@ -242,7 +269,8 @@ export function checkReferences(root, paths = SURFACE) {
 
   for (const rel of checked) {
     const source = fs.readFileSync(path.join(root, rel), 'utf8');
-    for (const { pattern, why } of FORBIDDEN) {
+    for (const { prompt, pattern, why } of FORBIDDEN) {
+      if (prompt && path.extname(rel) !== '.md') continue;
       for (const match of source.matchAll(pattern)) {
         failures.push(`${rel}:${lineOf(source, match.index)}: ${JSON.stringify(match[0])} ${why}`);
       }
