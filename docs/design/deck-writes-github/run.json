@@ -32,7 +32,7 @@
     },
     {
       "slice": "S3 QA's comment rides on its posts",
-      "state": "integrated",
+      "state": "integrated at 7342641d (#75)",
       "after": [
         "S1",
         "S2"
@@ -57,11 +57,14 @@
     },
     {
       "slice": "S6 The crew names no GitHub write and one plain command",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S3",
         "S4"
-      ]
+      ],
+      "branch": "slice/deck-writes-github-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s6",
+      "pr": 76
     },
     {
       "slice": "S7 ADR and OPERATING say the deck writes GitHub",
@@ -87,21 +90,9 @@
     "kept: weigh S1 security LOW: flags after `pr <verb>` (-R, --web, --editor) unrestricted",
     "kept: weigh S1 security LOW: @mentions in record text reach the PR body and notify people"
   ],
-  "next": "co-pilot itm_5f1725c876a7: S3 (#75) integrating; then S6 (owns pilot-qa.md's `comment`; fix architecture.md:93 pin 11864 stale), principles, QA on scratch deck (L9), WSL x5 on final tip BEFORE gate2.",
-  "updatedAt": "2026-11-16T10:40:59.765Z",
+  "next": "co-pilot itm_5f1725c876a7: S6 (#76) integrating, the last slice; then principles review + QA (read-only) at once, fix round, QA on scratch deck (L9), WSL x5 on final tip BEFORE gate2.",
+  "updatedAt": "2026-11-16T11:01:18.544Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "callTool's third argument is named `land` but is a deps bag (server-tools.mjs:205); cost a trace",
-      "evidence": "deck-writes-github architect report",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "pilot-co-pilot.md contradicts itself on `pilot land` (:47 vs :93); three places say who marks the feature PR ready (pilot.md:189, :496; pilot-qa.md:219)",
-      "evidence": "deck-writes-github architect report",
-      "size": 3
-    },
     {
       "agent": "pilot:pilot-architect",
       "what": "no in-repo doc says why `cd && pilot` prompts; took a docs fetch, and docs-lookup returned unsearchable page dumps",
@@ -320,6 +311,18 @@
       "agent": "pilot:pilot-co-pilot",
       "what": "pilot integrate refused PR #75 again for a capital first letter (\"QA's\"); a second slice title this run copied from the artefact's own capitalised title; one gh pr edit retitle, the very crew GitHub write this feature removes",
       "evidence": "NOT integrated line for slice/deck-writes-github-s3",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the repo's agents/pilot-implementer.md:128 says a slice report carries what a PR body would, while the loaded definition and brief open a draft PR",
+      "evidence": "S6 report, PR #76",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "first gate's log went to an unignored file one level above the worktree; and a gate ran before the reviewer fix, two ~5 min runs",
+      "evidence": "S6 report, PR #76",
       "size": 2
     }
   ]
