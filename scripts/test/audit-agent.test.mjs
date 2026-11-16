@@ -40,13 +40,22 @@ test('the auditor measures in a detached worktree it removes and writes nothing 
   );
   assert.match(fieldOf(source, 'description'), /\S/);
 
-  assert.match(source, /git worktree add --detach <scratchpad>\/audit-<stamp> HEAD/);
+  assert.match(source, /git worktree add --detach <scratchpad>\/audit-<stamp> <sha>/, 'audit-f1 S1: cut at the CLI sha');
   assert.match(source, /git worktree remove --force/);
   const never = sectionOf(source, 'Never');
   for (const word of ['branch', 'commit', 'push', 'pull request', 'stash', 'seed', 'migration', 'value']) {
     assert.match(never, new RegExp(word, 'i'), `the Never section names ${word}`);
   }
   assert.match(never, /shared checkout|the repository's own/i, 'no write in the repository itself');
+});
+
+test("the auditor cuts at the CLI's sha and records base", () => {
+  const source = auditor();
+  const scratch = sectionOf(source, 'Scratch worktree');
+  assert.match(scratch, /node "\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/pilot-tip\.mjs" --fetch/, 'spec 1, 4: the pilot tip, fetched');
+  assert.doesNotMatch(scratch, /git worktree add --detach \S+ HEAD$/m, 'no cut at a stale HEAD');
+  assert.match(sectionOf(source, 'Never'), /refs\/remotes\/<remote>\/pilot/, 'A2: the fetched tracking ref is the one allowed write');
+  assert.match(sectionOf(source, 'Report'), /\{ repo, scratch, base, startedAt,/, 'spec 3: the report carries base');
 });
 
 test('every command runs under a timeout, and a failure becomes a row', () => {
