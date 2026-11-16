@@ -7,13 +7,13 @@
   "qa": {
     "branch": "qa/walkthrough-surface",
     "worktree": "C:/Users/Hazzard/Projects/pilot-qa-walkthrough-surface",
-    "url": "http://127.0.0.1:50179"
+    "url": "http://127.0.0.1:50338"
   },
   "artefact": "docs/design/walkthrough-surface/architecture.md",
   "slices": [
     {
       "slice": "walkthrough-surface",
-      "state": "in QA: S1-S8 integrated; merge of pilot daa08f3c committed and pushed (feat 3cbbdb0d, npm test 4273 pass 0 fail); fix PR #68 (779ec7b8) verified, NOT integrated; co-pilot live: integrating #68, then QA as writer",
+      "state": "in QA: walkthrough itm_b01023ade3e6 signed off 08:33:46Z (T2, T3 as built); feat c72c3aa5; QA closing the thread and completing its PR #3 comment; Windows npm test and WSL gate x5 at c72c3aa5 in flight",
       "after": [
         "S1",
         "S2",
@@ -46,7 +46,7 @@
     },
     {
       "slice": "S3 A full-run gate2 without a walkthrough carries the checks table",
-      "state": "integrated at 4d172ae4; browser look at the rendered table owed (QA)",
+      "state": "integrated at 4d172ae4; QA read the rendered table HTML on the scratch deck (DevTools MCP absent); the browser look is walkthrough steps 3-4",
       "after": [
         "S2"
       ],
@@ -102,7 +102,7 @@
     },
     {
       "slice": "fix round",
-      "state": "draft PR #68 (integrating)",
+      "state": "integrated at 3213ceff (run record d0b4e472); 4275 pass, 0 fail",
       "branch": "fix/walkthrough-surface-principles",
       "pr": 68
     }
@@ -113,51 +113,9 @@
     "kept: QA T1 the gate1 page does not show Surface when false; the user signs blind — render the false case (QA)",
     "dropped: QA T2 reason line renders as plain text, T3 dir shown three times — taste, put to the user in the walkthrough"
   ],
-  "next": "co-pilot: pilot integrate fix/walkthrough-surface-principles (#68) running on feat 3cbbdb0d; then pilot-qa as writer on the new tip (B1, B2, T1, S3 browser look, walkthrough); Windows npm test + WSL gate x5 at that tip.",
-  "updatedAt": "2026-11-16T08:15:12.203Z",
+  "next": "main: call need on itm_9e228d2d345e; QA posts the gate2 at feat c72c3aa5. Gate results in flight: Windows log scratchpad/win-npmtest-c72c3aa5.log, WSL ~/gate-c72c3aa5-run1..5.log in ~/gate-walkthrough-surface-c72c3aa5.",
+  "updatedAt": "2026-11-16T08:34:17.398Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S1 first commit failed silently: git add named a path already moved by git mv, the backgrounded compound command hid the error, reviewer saw no commit",
-      "evidence": "S1 report, slice/walkthrough-surface-s1 re-commit",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S2 implementer reported a compaction without a handoff minutes after spawn and restarted the slice from the brief; nothing had been committed",
-      "evidence": "S2 status message; worktree pilot-slice-walkthrough-surface-s2 clean at 433e8b2c",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "prompt pins are split over measure-prompt.test.mjs and qa-preview.test.mjs, and cd-shape-wording.test.mjs parses the wording of pin history comments",
-      "evidence": "scripts/test/qa-preview.test.mjs:195, scripts/test/cd-shape-wording.test.mjs:49-53 (S5 report)",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "test:changed ran 3+ minutes and printed its failures among hundreds of passing lines; its final fail 0 came from an earlier sub-run",
-      "evidence": "S5 report, slice/walkthrough-surface-s5",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "existing tests pin wording in the four prompts S4 edits and the slice file did not list them; found only at the full gate, a second 8-minute run",
-      "evidence": "pilot-agents.test.mjs:930, pilot-rules.test.mjs:463,:487, ticket-states.test.mjs:86,:120, yellow-co-pilot.test.mjs:84",
-      "size": 8
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "pilot 0.25 and pilot-qa 13 tokens headroom: every prose edit needed trimming and about 8 re-measure rounds",
-      "evidence": "node scripts/measure-prompt.mjs on slice/walkthrough-surface-s4",
-      "size": 8
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "co-pilot seam note said pilot-qa's 'nothing to look at' clause was gone; a one-line grep missed it across a line wrap",
-      "evidence": "pilot-qa.md:156-157 on 6ea49cac",
-      "size": 1
-    },
     {
       "agent": "pilot:pilot-co-pilot",
       "what": "pilot integrate piped into tail was moved to the background; its output file stayed empty and the shell reported exit 0 while the launcher ran on, so the integrated line was never read; merge and push confirmed from git and the PR state instead",
@@ -349,6 +307,41 @@
       "what": "test files on pilot carry literal backspace bytes (0x08) where \\b was meant; Edit cannot match them and the regex silently matches nothing; deck/test/run.test.mjs still unfixed",
       "evidence": "merge 3cbbdb0d report; scripts/test/pilot-rules.test.mjs old lines 243, 245",
       "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate fell back to the full suite: its selection was 37152 characters of argv, over the 24000 cap",
+      "evidence": "pilot integrate fix/walkthrough-surface-principles output at d0b4e472: 'full suite: selection is 37152 characters of argv, over 24000'"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "deck/test/run.test.mjs carries literal backspace bytes (0x08) where \\b was meant (passed on by main)",
+      "evidence": "main's brief to the co-pilot of itm_9e228d2d345e"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "`node bin/pilot.mjs deck --help` is not a help flag: it reached the machine deck and wrote deck-open.html",
+      "evidence": "output 'The deck is up at http://127.0.0.1:4321 / open ...deck-open.html'"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "seeding a full-run gate2 on a scratch deck needs a yellow ticket with a signed plan; no seed helper over HTTP, so QA drove store + testUtils directly",
+      "evidence": "QA scratchpad seed.mjs, ~6 calls"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "thread pages need the key cookie (401) and live at /thread/<id>, not /item/",
+      "evidence": "curl 401 then 404, 3 calls"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "Chrome DevTools MCP absent in the QA session, so the S3 browser look fell to the user's walkthrough",
+      "evidence": "ToolSearch: no mcp__plugin_pilot_chrome-devtools__* match"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "deck MCP reports CONNECTION_CLOSED at session start yet its tools load and work through ToolSearch",
+      "evidence": "QA and co-pilot sessions, 2026-11-16"
     }
   ]
 }
