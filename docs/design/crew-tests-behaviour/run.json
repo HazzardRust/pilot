@@ -22,17 +22,20 @@
     },
     {
       "slice": "S2 Misses: line + check-slices",
-      "state": "draft PR #45",
+      "state": "integrated at 09d44ab9",
       "branch": "slice/crew-tests-behaviour-s2",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s2",
       "pr": 45
     },
     {
       "slice": "S3 Stuck red → ranked hypotheses",
-      "state": "planned (opus)",
+      "state": "draft PR #46",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/crew-tests-behaviour-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s3",
+      "pr": 46
     },
     {
       "slice": "S4 Fundamentalist names the anti-pattern",
@@ -50,14 +53,18 @@
     },
     {
       "slice": "S6 Sweep: pilot-agents second half",
-      "state": "planned (sonnet)",
+      "state": "implementing",
       "after": [
         "S5"
-      ]
+      ],
+      "branch": "slice/crew-tests-behaviour-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s6"
     },
     {
       "slice": "S7 Sweep: docs, README, install, rules, ADR",
-      "state": "planned (sonnet)"
+      "state": "implementing",
+      "branch": "slice/crew-tests-behaviour-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s7"
     },
     {
       "slice": "S8 Sweep: lane and ticket pins",
@@ -103,8 +110,8 @@
       ]
     }
   ],
-  "next": "S1 integrated at 5e7ac16b; integrating S2 (#45)",
-  "updatedAt": "2026-11-16T03:29:42.474Z",
+  "next": "integrating S3 (#46); S6, S7 implementing; then S8",
+  "updatedAt": "2026-11-16T03:35:11.236Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -146,6 +153,12 @@
       "agent": "pilot:pilot-implementer",
       "what": "a preloaded skill counts toward the architect's pin; the brief did not say a skill edit must be paid for",
       "evidence": "measure-prompt lists architect preloaded skills 4592 tokens inside its own share",
+      "size": 0
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 slice file numbers stale: QA pinned at 4990.75 in the slice, base measures 5070.5; fix-brief mention at l.149 not l.148",
+      "evidence": "measure-prompt on 58e6f5a0",
       "size": 0
     }
   ]
