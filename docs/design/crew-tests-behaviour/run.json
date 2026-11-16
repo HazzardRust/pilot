@@ -29,7 +29,7 @@
     },
     {
       "slice": "S3 Stuck red → ranked hypotheses",
-      "state": "draft PR #46",
+      "state": "integrated at dae27489",
       "after": [
         "S1"
       ],
@@ -53,12 +53,13 @@
     },
     {
       "slice": "S6 Sweep: pilot-agents second half",
-      "state": "implementing",
+      "state": "draft PR #47",
       "after": [
         "S5"
       ],
       "branch": "slice/crew-tests-behaviour-s6",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s6"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s6",
+      "pr": 47
     },
     {
       "slice": "S7 Sweep: docs, README, install, rules, ADR",
@@ -68,7 +69,9 @@
     },
     {
       "slice": "S8 Sweep: lane and ticket pins",
-      "state": "planned (sonnet)"
+      "state": "implementing",
+      "branch": "slice/crew-tests-behaviour-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s8"
     },
     {
       "slice": "S9 Sweep: audit and deck report pins",
@@ -110,8 +113,8 @@
       ]
     }
   ],
-  "next": "integrating S3 (#46); S6, S7 implementing; then S8",
-  "updatedAt": "2026-11-16T03:35:11.236Z",
+  "next": "integrating S6 (#47); S7, S8 implementing; then S9",
+  "updatedAt": "2026-11-16T03:37:54.773Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -160,6 +163,12 @@
       "what": "S3 slice file numbers stale: QA pinned at 4990.75 in the slice, base measures 5070.5; fix-brief mention at l.149 not l.148",
       "evidence": "measure-prompt on 58e6f5a0",
       "size": 0
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "L5 has no line for a forbidden-pattern lint coupled to a phrase extraction; S6 had to call the bare-main test itself",
+      "evidence": "pilot-agents.test.mjs:988 addresseeRule asserts the exact addressee sentence",
+      "size": 1
     }
   ]
 }
