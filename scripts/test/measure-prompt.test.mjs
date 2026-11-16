@@ -187,14 +187,14 @@ test('the command prints the table, and --json prints the rows', (t) => {
 // architect-runs-red S4 (2026-10-21) raised it from 11572.5 to the measured 11659.75 (spec 1, 3, 4, 7; L2, A1; ADR 0169): step 3's two-call handover, the verdict message's line shape, the record-first rule for a pilot-posted gate1 and the wait on the hand-back, net of the Gate 1 git paragraph and the answer-recording paragraph they replace, 87.25.
 // architect-runs-red fix round (2026-10-21) raised it from 11659.75 to the measured 11675 (F1): deck_status's `author: AUTHOR`, so the hook's stamp reaches the architect refusal, 15.25.
 // pilot-develop-line S6 (2026-10-21) raised it from 11675 to the measured 11692.25 (spec 4a; L6): deck_status's `base: { type: 'string', maxLength, description: 'pilot or feat/<N>' }`, 17.25.
-// blocking-close S3 (2026-11-16) raised it from 11692.25 to 11722 (spec 4, 5; L1-L3, ADR 0177): the close rule covers any blocking question, never a gate, walkthrough or proposal, with `Moot: <why>` or `Assumed: <what>`, takes another agent's thread back first, and leaves a needed or reopened answer to the user, 29.75 (measured 11692 to 11721.75).
+// blocking-close S3 (2026-11-16) raised it from 11692.25 to the measured 11721.75 (spec 4, 5; L1-L3, ADR 0177): the close rule covers any blocking question, never a gate, walkthrough or proposal, with `Moot: <why>` or `Assumed: <what>`, takes another agent's thread back first, and leaves a needed or reopened answer to the user, 29.75 (measured 11692 to 11721.75).
 test('the pilot pin holds at its new number', async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const pilot = rows.find((row) => row.agent === 'pilot');
   const own = (pilot.definition + pilot.skills + pilot.tools) / 4;
-  assert.ok(own <= 11722, `pilot's own share is ${own} tokens, over its 11722`);
+  assert.ok(own <= 11721.75, `pilot's own share is ${own} tokens, over its 11721.75`);
 });
 
 // research-first S1 raised the explorer's from 2209 to the measured 2409 (L5): `## A research brief` cost 200.5 (2208.5 to 2409), 41 of it the security-review sentence on fetched pages and queries.

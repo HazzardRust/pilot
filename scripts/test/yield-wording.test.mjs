@@ -61,9 +61,7 @@ test('the co-pilot routes a moot question to main', () => {
 });
 
 test('the ADR records the supersession', () => {
-  const adr = fs.readdirSync(path.join(ROOT, 'docs', 'adr')).find((name) => name.startsWith('0177-'));
-  assert.ok(adr, 'ADR 0177 exists');
-  assert.match(read(`docs/adr/${adr}`), /supersedes: \[0153\]/, 'ADR 0177 supersedes 0153');
+  assert.match(read('docs/adr/0177-the-pilot-closes-a-blocking-question.md'), /supersedes: \[0153\]/, 'ADR 0177 supersedes 0153');
   assert.match(read('docs/adr/0153-a-blocked-yellow-ticket-yields-the-lane.md'), /superseded_by: \[0177\]/, '0153 names 0177');
 });
 

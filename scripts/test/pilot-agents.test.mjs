@@ -1573,12 +1573,13 @@ test('the co-pilot greets each child so the child can address it', () => {
   assert.match(steps, /Every brief you write opens `co-pilot of <ticket>` \(the ticket id, never an agent id\)/, 'L1: the brief names the co-pilot, as the children expect');
 });
 
-test('the co-pilot sends main only four things', () => {
+test('the co-pilot sends main only five things', () => {
   const source = agentSource('pilot-co-pilot');
   assert.doesNotMatch(source, /## Questions go to main/, 'the section is renamed');
   assert.doesNotMatch(source.replace(/\s+/g, ' '), /Your crew sends its own questions to `main`/, 'spec 1: the crew reports to the co-pilot now');
   const toMain = agentSection('pilot-co-pilot', 'What goes to main');
-  assert.match(toMain, /four things and nothing else/, 'spec 4: only four');
+  assert.match(toMain, /five things and nothing else/, 'spec 4: only five (blocking-close S3 added the moot question)');
+  assert.match(toMain, /a moot question/, 'blocking-close spec 5: 5');
   assert.match(toMain, /a question for the user/, 'spec 4: 1');
   assert.match(toMain, /a seam change that moves a spec line or a locked decision/, 'spec 4: 2');
   assert.match(toMain, /a crew hand-off you cannot resolve/, 'spec 4: 3');
