@@ -8,23 +8,24 @@
   "slices": [
     {
       "slice": "S2 session-start behind warning",
-      "state": "built at 8c5e44be, both reviewers approve, no PR yet: waits for S1's merge then rebase",
+      "state": "integrated",
       "after": [
         "S1"
       ],
       "branch": "slice/audit-f1-s2",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f1-s2"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f1-s2",
+      "pr": 82
     },
     {
       "slice": "S1 Walking skeleton: the audit cuts from the pilot tip and records it",
-      "state": "draft PR #80, approved; integrate refused on a conflict with pilot, implementer resolving",
+      "state": "integrated",
       "branch": "slice/audit-f1-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f1-s1",
       "pr": 80
     }
   ],
-  "next": "S1 implementer finishing merge of pilot b38de846 into slice/audit-f1-s1 (test 5 kept as marked lint, decided by main); then pilot integrate S1 in pilot-feat-audit-f1; resume S2 implementer ad7731b61d8f97707 with the feat tip: rebase, reviewers re-read (S1 fix touched pilot-tip.mjs), open draft PR (body in scratchpad pr-body.md); integrate S2; WSL x5; pilot posts gate2 + walkthrough.",
-  "updatedAt": "2026-11-16T12:32:15.361Z",
+  "next": "S2 PR #82 at 71fcf018 approved: pilot integrate slice/audit-f1-s2 in pilot-feat-audit-f1 (base pilot now bc75cc5); then WSL gate x5 on a fresh clone at the feat tip, pilot integrate --trial, pilot posts walkthrough (warning line, audit item) and gate2.",
+  "updatedAt": "2026-11-16T12:47:26.601Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
