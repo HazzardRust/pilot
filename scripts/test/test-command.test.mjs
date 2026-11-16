@@ -68,7 +68,7 @@ test('--test is a usage error', (t) => {
   assert.deepEqual(pilot(work, 'integrate', '--test', 'x'), {
     code: 1,
     out: '',
-    err: 'usage: pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]... | pilot integrate --trial\n',
+    err: 'usage: pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]... [--dir <worktree>] | pilot integrate --trial [--dir <worktree>]\n',
   });
 });
 

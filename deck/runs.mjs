@@ -233,9 +233,10 @@ export function freshRuns(runs) {
  *
  * Its fields, in the order they are stored and mirrored. Open thread ids are not
  * among them: they are derived when the record is read (L6), because a stored
- * copy goes stale the moment a thread closes. `friction` and `qaComment` are last
- * because they grow: the session-start hook clips the record at 16,000 characters, and
- * the clip falls on them rather than on `next`, `finished` or `report`.
+ * copy goes stale the moment a thread closes. `friction` is last but one because it
+ * grows: the session-start hook clips the record at 16,000 characters, and the clip
+ * falls on it rather than on `next`, `finished` or `report`. `qaComment` is last and
+ * stays on the deck: neither the run.json mirror nor the session-start hook carries it.
  */
 const RECORD_ORDER = ['slug', 'feature', 'ticket', 'branch', 'base', 'worktree', 'qa', 'artefact', 'slices', 'findings', 'report', 'next', 'finished', 'finishedAt', 'updatedAt', 'friction', 'qaComment'];
 

@@ -571,7 +571,7 @@ export function main(argv, inject = {}) {
   }
   const trialMixed = options.trial && (branch !== undefined || options.push === false || options.trailers.length > 0);
   if (options.unknown || options.trailers.includes(undefined) || dir === null || trialMixed) {
-    process.stderr.write('usage: pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]... | pilot integrate --trial\n');
+    process.stderr.write('usage: pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]... [--dir <worktree>] | pilot integrate --trial [--dir <worktree>]\n');
     return 1;
   }
   if (dir !== undefined) {

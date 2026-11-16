@@ -70,7 +70,6 @@ function stubbed(t, reply) {
 test('no gh process starts outside the host', () => {
   const files = modules();
   assert.ok(files.includes(HOST), 'the scan reaches deck/host.mjs');
-  assert.equal(typeof hostIn, 'function');
   assert.ok(ghStarts([HOST]).length > 0, 'the host itself starts gh, so the scan is not blind');
   assert.deepEqual(ghStarts(files.filter((file) => file !== HOST)), []);
 });
@@ -118,4 +117,26 @@ test("the release PR's label create is a host verb", (t) => {
   assert.deepEqual(stub.calls(), [], 'no process started for a refused verb');
   gh(['label', 'create', 'pilot-release', '--force']);
   assert.deepEqual(stub.calls(), [['label', 'create', 'pilot-release', '--force']]);
+});
+
+/** Asserts every pr verb refuses each of `flags`, before any process starts. */
+function refusesOnEveryPrVerb(t, flags) {
+  const stub = stubbed(t);
+  const gh = hostIn(stub.dir);
+  for (const verb of ['create', 'edit', 'comment', 'view', 'list']) {
+    for (const flag of flags) assert.throws(() => gh(['pr', verb, '7', ...flag]), /not a host verb/, `pr ${verb} ${flag.join(' ')}`);
+  }
+  assert.deepEqual(stub.calls(), [], 'no process started');
+}
+
+test('a pr verb never names another repository', (t) => {
+  refusesOnEveryPrVerb(t, [['-R', 'o/r'], ['-Ro/r'], ['--repo', 'o/r'], ['--repo=o/r'], ['-dRo/r']]);
+});
+
+test('a pr verb never opens a browser', (t) => {
+  refusesOnEveryPrVerb(t, [['--web'], ['--web=true'], ['-w'], ['-w=true'], ['-wR']]);
+});
+
+test('a pr verb never opens an editor', (t) => {
+  refusesOnEveryPrVerb(t, [['--editor'], ['--editor=true'], ['-e'], ['-e=1'], ['-we'], ['-ew']]);
 });

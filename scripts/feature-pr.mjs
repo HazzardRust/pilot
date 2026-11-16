@@ -10,8 +10,10 @@
  * With `record.qaComment` set it then upserts QA's one comment, the one of this account's starting with
  * `QA_MARKER` (spec 3): posted once, edited when the text differs, its id read off GitHub every time.
  *
- * The body is the artefact's §2, the record's slice table and the brief's PR footer, and always
- * goes through a file, never argv. The PR is found by its head every time; its number is never
+ * The body is the artefact's §2, the record's slice table and the brief's PR footer, and goes
+ * through a file for `pr create`, `pr edit` and `pr comment`; the one exception is the QA comment's
+ * PATCH, whose body rides on argv as `-f body=`. Every @mention in it is written so GitHub notifies
+ * nobody (`quiet`). The PR is found by its head every time; its number is never
  * stored (L3). The one local write is the fetch that refreshes `refs/remotes/origin/feat/<slug>`,
  * the ref the artefact is read from. A run remote other than origin, or a `feat/<slug>` origin
  * does not have yet, prints one line and exits 0. Any failure is one line naming the step, exit 1.
@@ -49,6 +51,11 @@ const BREAKS = new RegExp(`[\\x00-\\x1f\\x7f-\\x9f${String.fromCharCode(0x2028, 
 /** Every line break and control character folded to one space: text that stays on one line. */
 const oneLine = (value) => String(value ?? '').replace(BREAKS, ' ').trim();
 
+/** An @ that opens a GitHub mention: not after a word character, so an email address is left alone. */
+const MENTION = /(?<!\w)@(?=[A-Za-z0-9])/g;
+/** `text` with a zero-width joiner after every mention's @: it reads the same, and GitHub notifies nobody. */
+const quiet = (text) => text.replace(MENTION, `@${String.fromCharCode(0x200d)}`);
+
 /** One table cell: a pipe escaped, line breaks folded, so a row stays one row. */
 const cell = (value) => oneLine(value).replace(/\|/g, '\\|');
 
@@ -63,7 +70,7 @@ export function featureBody(spec, record, footer) {
   });
   const parts = [spec.trimEnd(), ['| Slice | State | PR |', '| --- | --- | --- |', ...rows].join('\n')];
   if (footer?.trim()) parts.push(footer.trim());
-  return `${parts.join('\n\n')}\n`;
+  return quiet(`${parts.join('\n\n')}\n`);
 }
 
 /** The `## 2` section of `markdown`, its heading to the next `## ` outside a fence; throws when absent. */
@@ -180,7 +187,7 @@ export function syncFeaturePr({ gh, git, record }) {
   // `--head` matches a branch name from any fork: only this repository's own PR is the feature PR.
   open = open.filter((pr) => pr?.isCrossRepository === false);
 
-  const done = writePr(gh, open, { base, head, body, title: `feat(${slug}): ${feature}` });
+  const done = writePr(gh, open, { base, head, body, title: quiet(`feat(${slug}): ${feature}`) });
   const qa = typeof record.qaComment === 'string' && record.qaComment.trim() !== '' ? record.qaComment : null;
   if (qa === null) return done;
   const comment = syncQaComment(gh, done.number, qa, done.wrote === 'created');
@@ -217,7 +224,7 @@ const COMMENT_URL = /^https:\/\/[^/\s]+\/([\w.-]+)\/([\w.-]+)\/pull\/\d+#issueco
  * marker is never edited. A PR just `created` has no comments to read. Answers `posted`, `edited` or `none`.
  */
 function syncQaComment(gh, number, text, created) {
-  const body = `${QA_MARKER}\n${text.trimEnd()}\n`;
+  const body = `${QA_MARKER}\n${quiet(text.trimEnd())}\n`;
   let mine;
   if (!created) {
     let comments;

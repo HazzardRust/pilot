@@ -148,6 +148,26 @@ test('the body is the spec and the slice table', () => {
   assert.ok(odd.includes('| S9 a \\| b | one two three four |  |'));
 });
 
+test('an @mention in what the deck writes notifies nobody', (t) => {
+  const ZWJ = String.fromCharCode(0x200d);
+  const body = featureBody('## 2. Spec\n\n1. Ask @octocat and @org/team.', record({ slices: [{ slice: 'S1 ping @someone', state: 'done' }] }), FOOTER);
+  assert.ok(!/(?<!\w)@\w/.test(body), 'no mention GitHub would expand');
+  assert.ok(body.includes(`@${ZWJ}octocat`) && body.includes(`@${ZWJ}org/team`) && body.includes(`@${ZWJ}someone`));
+
+  // QA's comment is rendered the same way, through the one PR write.
+  const cwd = repo(t);
+  const fake = fakeGh({ open: [{ number: 7, body: bodyOf(), baseRefName: 'pilot' }] });
+  fake.gh = ((inner) => (args) => (args[1] === 'view' ? JSON.stringify({ comments: [] }) : inner(args)))(fake.gh);
+  syncFeaturePr({ gh: fake.gh, git: gitIn(cwd), record: record({ qaComment: 'thanks @reviewer' }) });
+  assert.ok(fake.bodies.at(-1).includes(`thanks @${ZWJ}reviewer`));
+
+  // And the title, from the record's feature name.
+  const fresh = fakeGh();
+  syncFeaturePr({ gh: fresh.gh, git: gitIn(cwd), record: record({ feature: 'ask @octocat' }) });
+  const [create] = fresh.writes();
+  assert.equal(create[create.indexOf('--title') + 1], `feat(${SLUG}): ask @${ZWJ}octocat`);
+});
+
 test('no branch on origin is quiet', async (t) => {
   const cwd = unpushed(t);
   const fake = fakeGh();
@@ -215,19 +235,24 @@ test('a verb outside the table is refused', (t) => {
   assert.throws(() => gh(['pr', 'merge', '7']), /pr merge/);
   assert.throws(() => gh(['api', 'user', '-X', 'DELETE']), /api/);
   assert.throws(() => gh(['api', 'user', '-f', 'name=x']), /api/);
-  assert.throws(() => gh(['api', '-X', 'POST', 'repos/../../issues/1/comments', '-f', 'body=x']), /api/);
-  assert.throws(() => gh(['api', '-X', 'POST', 'repos/o/r/issues/1/comments', '-F', 'body=@secret.txt']), /api/);
+  assert.throws(() => gh(['api', '-X', 'PATCH', 'repos/../../issues/comments/1', '-f', 'body=x']), /api/);
+  assert.throws(() => gh(['api', '-X', 'PATCH', 'repos/o/r/issues/comments/1', '-F', 'body=@secret.txt']), /api/);
   assert.throws(() => gh(['api', '-X', 'PATCH', 'repos/o/r/pulls/7']), /api/);
+  // A comment is posted with `gh pr comment`: the api POST, an explicit GET, `-q` and `--raw-field` have no caller.
+  assert.throws(() => gh(['api', '-X', 'POST', 'repos/o/r/issues/1/comments', '-f', 'body=x']), /api/);
+  assert.throws(() => gh(['api', 'user', '-X', 'GET', '--jq', '.login']), /api/);
+  assert.throws(() => gh(['api', 'user', '-q', '.login']), /api/);
+  assert.throws(() => gh(['api', '-X', 'PATCH', 'repos/o/r/issues/comments/9', '--raw-field', 'body=x']), /api/);
   assert.equal(calls(), '', 'no process started for a refused verb');
 
   // The stub would have seen one: a verb in the table reaches it.
   gh(['pr', 'view', '7']);
   gh(['api', '-X', 'PATCH', 'repos/o/r/issues/comments/9', '-f', 'body=x']);
-  gh(['api', 'user', '-X', 'GET', '--jq', '.login']);
+  gh(['api', 'user', '--jq', '.login']);
   assert.equal(calls(), [
     '["pr","view","7"]',
     '["api","-X","PATCH","repos/o/r/issues/comments/9","-f","body=x"]',
-    '["api","user","-X","GET","--jq",".login"]',
+    '["api","user","--jq",".login"]',
     '',
   ].join('\n'));
 });

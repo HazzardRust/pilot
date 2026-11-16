@@ -28,6 +28,7 @@ A run needs only `pilot run`; the rest is what the agents call under it. Who run
 | `pilot ready` | the co-pilot | to name the slices that can start |
 | `pilot integrate` | the co-pilot (and QA, or the pilot) | to merge each slice into `feat/<slug>` |
 | `pilot integrate --trial` | QA | before its gate2, to try the feature's tip on `pilot`; merges nothing into it |
+| `pilot pr --ticket <itm_id>` | the deck | after a gate1, each `deck_status` of its ticket, and QA's walkthrough or gate2 comment, to open or update the feature PR and QA's one comment on it |
 | `pilot land` | the deck | after your Gate 2 Sign off, to merge only the feature into `pilot` (no sync) and keep one open PR `pilot → main`: `main gets pilot: #<n>` |
 | `pilot sync` | the pilot | at a ticket's take (or by hand), never inside a landing, to take the default branch into `pilot` |
 | `pilot handoff` | the pilot | when its context is full |

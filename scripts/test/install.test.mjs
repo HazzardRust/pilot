@@ -1138,6 +1138,8 @@ test('the settings module offers one composed merge, not a single per setting', 
     'isInPluginCache',
     'ownCommandPath',
     'parseArgs',
+    // deck-writes-github principles round: doctor reads the settings file with the install's own reader.
+    'readSettings',
     // daemon-lifecycle S8: the uninstall's reversal of the merges, beside them on purpose.
     'removeOwnSettings',
     'repairSettings',

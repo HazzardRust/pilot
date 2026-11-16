@@ -96,7 +96,7 @@ const BOM = '\uFEFF';
 // An absent file and an empty one both mean "no settings yet"; only a file with
 // something unparseable in it is a refusal, and `existed` is what decides
 // whether there is anything worth backing up.
-function readSettings(settingsPath) {
+export function readSettings(settingsPath) {
   let raw;
   try {
     raw = fs.readFileSync(settingsPath, 'utf8');

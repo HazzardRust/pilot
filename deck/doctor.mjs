@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
-import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, resolvePluginRoot } from '../scripts/install-settings.mjs';
+import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
 import { probeDeck } from './probe.mjs';
 import { storeDir as defaultStoreDir } from './store-dir.mjs';
@@ -228,15 +228,8 @@ export function reachRow({ reach, enabled }) {
   return { name, verdict: 'pass', detail, steps: ['change with: pilot reach <level>'] };
 }
 
-/** The user settings object, `{}` when the file is absent, null when it cannot be read as one. */
-function defaultReadSettings() {
-  try {
-    const parsed = JSON.parse(fs.readFileSync(defaultSettingsPath(), 'utf8').replace(/^﻿/, '') || '{}');
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
-  } catch (error) {
-    return error.code === 'ENOENT' ? {} : null;
-  }
-}
+/** The user settings object, `{}` when the file is absent; `install-settings`' reader throws, and `allowRow` reads that as null. */
+const defaultReadSettings = () => readSettings(defaultSettingsPath()).settings;
 
 /** Which of the pilot's own allow rules the user settings lack; a rule their deny or ask covers is not missing. Read-only. */
 export function allowRow({ readSettings = defaultReadSettings }) {
@@ -251,8 +244,9 @@ export function allowRow({ readSettings = defaultReadSettings }) {
   const { allow, deny, ask } = settings.permissions ?? {};
   const list = (value) => (Array.isArray(value) ? value : []);
   const theirs = [...list(deny), ...list(ask)];
-  const missing = PILOT_MERGE_ALLOW.filter((rule) => !list(allow).includes(rule) && !theirs.some((t) => denyCovers(t, rule)));
-  if (!missing.length) return { name, verdict: 'pass', detail: 'every rule present' };
+  const absent = PILOT_MERGE_ALLOW.filter((rule) => !list(allow).includes(rule));
+  const missing = absent.filter((rule) => !theirs.some((t) => denyCovers(t, rule)));
+  if (!missing.length) return { name, verdict: 'pass', detail: absent.length ? 'every rule present or covered by your deny/ask' : 'every rule present' };
   return {
     name,
     verdict: 'fail',
