@@ -50,6 +50,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `open.mjs` | opens the deck page in a browser when a run registers |
 | `owed.mjs` | the threads the pilot still owes a directory: unanswered, or promised with `deck_reply`'s `promise`; served on `/api/record` |
 | `pilot-state.mjs` | `pilotStateOf`: the pilot's state for a repository, read at render time from items, runs and held waits and stored nowhere, in the precedence ADR 0149 records |
+| `pr-writes.mjs` | `startPrWrite`: the deck write, `pilot pr --ticket <id>` spawned on a gate1 and each status of its ticket, one in flight per ticket plus one rerun, a failure one line on the ticket (deck-writes-github spec 2, 7) |
 | `probe.mjs` | `probeDeck`: the one answer to who holds a url, a deck by pid and version, nothing, or not a deck (daemon-lifecycle §3) |
 | `procs.mjs` | `pilot ps`: the process table (one PowerShell CIM or `ps` read), the pilot-owned daemons, waits and test roots, and which are orphans and why (process-gc L5-L6) |
 | `question-shape.mjs` | checks a crew question's recommended default carries a `Research:` line |
