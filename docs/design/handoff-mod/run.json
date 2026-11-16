@@ -1,0 +1,176 @@
+{
+  "slug": "handoff-mod",
+  "feature": "the hand-off runs from a mod",
+  "ticket": "itm_97c9e8fdf1d2",
+  "branch": "feat/handoff-mod",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-mod",
+  "artefact": "docs/design/handoff-mod/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "draft PR #85 at 4bb42e70; tests green, both verdicts approve; live spike 0/3 pending trust itm_056242cf4239",
+      "branch": "slice/handoff-mod-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s1",
+      "pr": 85
+    },
+    {
+      "slice": "S9",
+      "state": "integrated",
+      "branch": "slice/handoff-mod-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s9",
+      "pr": 84
+    },
+    {
+      "slice": "handoff-mod",
+      "state": "implementing",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11",
+        "S12"
+      ],
+      "branch": "feat/handoff-mod",
+      "pr": 83
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S2"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S2",
+        "S3",
+        "S4"
+      ]
+    },
+    {
+      "slice": "S8",
+      "state": "planned",
+      "after": [
+        "S7",
+        "S6"
+      ]
+    },
+    {
+      "slice": "S10",
+      "state": "planned",
+      "after": [
+        "S4",
+        "S7",
+        "S9"
+      ]
+    },
+    {
+      "slice": "S11",
+      "state": "planned",
+      "after": [
+        "S6",
+        "S7",
+        "S10",
+        "S12"
+      ]
+    },
+    {
+      "slice": "S12",
+      "state": "planned",
+      "after": [
+        "S7",
+        "S9"
+      ]
+    }
+  ],
+  "next": "handoff-mod: S9 integrate running (main); then add deck/ui/render.mjs to S11's files. S1 PR #85 waits on trust itm_056242cf4239: on \"done\" brief a FRESH implementer for the live check (live.sh in scratchpad 6678d407, S1 agent at 150k), 3/3 then integrate S1, then spawn co-pilot for S2,S3,S5. Slice PRs get no CI (gate.yml:26); integrate's suite + CI on feat is the referee.",
+  "updatedAt": "2026-11-16T13:40:45.555Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "auto-mode classifier outage stopped the architect after 10 no-verdict responses, mid-spike; the fix implementer and the lander also stalled on it",
+      "evidence": "task a3f658ad5d2dabf36 killed 2026-11-16; fix implementer hand-back 'no verdict 7 in a row'",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "mods docs page 404 and absent from llms.txt; API facts came from greps of the 370 MB claude.exe (about 60 s each) and five headless probes",
+      "evidence": "architect report, scratchpad/probe/",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "classifier gave no verdict about 12 times in a row, ending one turn; the architect then stopped at its context limit with its A1 wait still running",
+      "evidence": "architect hand-back 2026-11-16",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "harness forces a co-pilot to hand back while its implementers still run; two co-pilots burned ~130k tokens and each hand-back orphans the children's report address",
+      "evidence": "hand-backs from a2f6376f12aa7e64d (twice) and a7e007d95d09cee2d, both with S1 and S9 live",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "workspace trust blocks every fresh scratch checkout for a mod live check; trust on the parent folder does not carry down",
+      "evidence": "S1 debug log: hooks modules not loaded until workspace trust is accepted",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Gate workflow skips draft PRs into feat/**, so a slice PR never has a CI run to cite",
+      "evidence": ".github/workflows/gate.yml:26; runs 43877902477, 43877934888 skipped",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot deck --help prints no help and touches the live deck on 4321",
+      "evidence": "S9 report: node bin/pilot.mjs deck --help",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "400-line limit counts tests and ADRs, so a walking skeleton with 8 tests exceeds it by construction",
+      "evidence": "S1: 633 lines, about 320 code",
+      "size": 2
+    }
+  ]
+}
