@@ -113,13 +113,16 @@ in the mod, untested), so it moves behind a CLI rather than going.
 - **L10 Wording that names the typing stays** in `agents/pilot.md:594`, `hooks/context-size-guard.js:444` and
   `scripts/handoff.mjs:180` ("types `/clear`"): true in effect, and the prompt pins have no headroom. Rejected:
   rewording three files the queued tickets also edit.
+- L11 (A1 overturned, itm_092acdb3e41f) The mod acts in every main session of the pilot agent while the plugin is enabled; `pilot run` is optional for hand-offs. Disabling the plugin, `--safe-mode` or disabled hooks is how the user gets a plain session. Rejected: only under `pilot run` (the architect's default).
 
 ## 6. Assumed decisions
 
 - **A1 The mod acts only under `pilot run`** (`PILOT_RUN_REPO` set). Tradeoff: the automatic cycle still needs
   `pilot run`. Rejected path: every main pilot session, which makes `pilot run` optional but can clear a session
   the user is typing in. Posted itm_092acdb3e41f.
-  Verdict: stands
+  Verdict: overturned: the user chose every pilot session (itm_092acdb3e41f, 2026-11-16): "i prefer the every pilot session"; the plugin is the switch, disabling it gives a plain session.
+  overridden: with every pilot session, a pilot session the user started by hand and is watching clears and restarts itself when the pilot runs its hand-off; `pilot run` no longer marks the sessions that may be cleared.
+  Replaced by L11. RE-CUT OWED: S1's `PILOT_RUN_REPO` gate, spec 2, 7 and 8 (the line said at `pilot run`), and where the deck watch learns the repository.
 - **A2 The minimum Claude Code is 2.1.325**, the version proven, not the draft's 2.1.287. Tradeoff: users on
   2.1.287-2.1.324 get the line and type `/clear`. Rejected path: 2.1.287, unproven. Sent to `main` (moves spec 8).
   Verdict: stands
