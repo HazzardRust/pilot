@@ -121,8 +121,8 @@ test('a credential-bearing env step is refused as a credential, never echoed', (
 test("the pilot's wizard walkthrough keeps commands and forty steps", (t) => {
   tempDeck(t);
   const wizard = forty((n) => (n === 1 ? 'gh auth login → it says Logged in' : `step ${n}`));
-  assert.equal(postItem(aWalkthrough({ screens: wizard })).screens.length, 40);
-  assert.equal(postItem(aWalkthrough({ author: 'pilot', screens: wizard })).screens.length, 40);
+  assert.equal(postItem(aWalkthrough({ screens: wizard, dir: '/srv/kettle' })).screens.length, 40);
+  assert.equal(postItem(aWalkthrough({ author: 'pilot', screens: wizard, dir: '/srv/kettle' })).screens.length, 40);
 });
 
 test('a QA walkthrough with no steps is stored: the body and Sign off alone (spec 3)', (t) => {

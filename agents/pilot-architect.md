@@ -220,7 +220,7 @@ Write it to the path in the brief, inside that worktree. Sections, in order:
    above the table: the most slices that can run at once, and the longest
    chain of `after`. Each slice also gets its own file, carrying the fields the
    preloaded `vertical-slicing` skill names: each Tests line names an Interface
-   symbol, one `Rewrite check:` line, a `Model: sonnet|opus — <reason>` line under the header (Sonnet only for a precise slice, as the skill defines it), and `node "${CLAUDE_PLUGIN_ROOT}/scripts/check-slices.mjs"` passes on `slices/` and on `architecture.md`. **L8**: nothing a Gate 1 sign-off needs
+   symbol, one `Rewrite check:` and one `Misses:` line, a `Model: sonnet|opus — <reason>` line under the header, and `node "${CLAUDE_PLUGIN_ROOT}/scripts/check-slices.mjs"` passes on `slices/` and on `architecture.md`. **L8**: nothing a Gate 1 sign-off needs
    lives only in a slice file — the spec, the decisions, the DAG, and each
    slice's spec lines and files owned stay here, in `architecture.md`.
    20 slices is the aim, never a refusal: past it, cut one run unless the user

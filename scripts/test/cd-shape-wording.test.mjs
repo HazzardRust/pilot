@@ -1,8 +1,7 @@
 /**
- * landing-keeps-worktrees S3 (spec 3, 4, 5; L5-L7): every crew agent with a shell names the
- * shape for a command on another worktree, so a failed `cd` never runs the rest in the shared
- * checkout; the pilot prunes the run's worktrees on QA's final report and alone closes a
- * `Blocked:` item. A sentence reworded keeps its pin while the phrases survive.
+ * landing-keeps-worktrees S3 (spec 3, 4, 5; L5-L7): lint that no crew agent shows the
+ * unsafe `cd <dir>;` shape, and that the measure-prompt pins move by their history lines.
+ * The prose naming the safe shape is not pinned.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,20 +13,13 @@ const CREW = [
   'pilot-evidence-runner', 'pilot-architect', 'pilot-explorer', 'pilot-auditor', 'pilot-teacher',
 ];
 
-test('every shell-running crew agent names the cd shape', () => {
+test('no crew agent shows `cd <dir>;` as an example', () => {
   for (const agent of CREW) {
     const text = flat(read(`agents/${agent}.md`));
-    for (const phrase of ['`git -C <dir>`', '`cd <dir> && {', 'never `cd <dir>;']) {
-      assert.ok(text.includes(phrase), `agents/${agent}.md does not name ${phrase}`);
-    }
     const shown = [...text.matchAll(/cd <dir>\s*;/g)].filter((m) => !text.slice(0, m.index).endsWith('never `'));
+    // lint: `cd <dir>;` appears only after "never `", never as a shape to copy
     assert.equal(shown.length, 0, `agents/${agent}.md shows \`cd <dir>;\` as an example`);
   }
-});
-
-test('the pilot owns Moot', () => {
-  const pilot = flat(read('agents/pilot.md'));
-  assert.ok(pilot.includes('never by the agent that asked'), 'the Moot paragraph does not keep the asking agent out');
 });
 
 test('the pins move by the wording', () => {

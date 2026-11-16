@@ -30,6 +30,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `exit-route.mjs` | `POST /api/exit { version }`: 202 and the daemon's shutdown only for a newer caller, 409 for one not newer or while a landing runs (daemon-lifecycle L3, ADR 0156) |
 | `gc.mjs` | `pilot gc`: stops each orphan `procs.mjs` names and nothing else, a test root as a tree; one line per stop, and `pilot land` runs it once landed (process-gc L11, L14) |
 | `gate2-base.mjs` | the gate2 base check: refuses a gate2 whose sha does not merge clean onto pilot, local git only |
+| `gate2-evidence.mjs` | the gate2 evidence check: a short-path ticket's gate2 carries a `Verdict:` per slice, a `Gate:` line and, for a surface, its walkthrough (short-path spec 2); a full run's gate2 naming no walkthrough carries the checks table and, on a plan with a surface, a `surface planned, no walkthrough:` reason line; a named walkthrough is a real one on the gate2's ticket; `walkthroughPlanGaps` refuses QA's walkthrough on a plan marked with no surface (walkthrough-surface spec 3-6) |
 | `health.mjs` | `GET /api/health`'s answer: pid, url, cursor, rss, and the plugin version with when this daemon started (daemon-lifecycle spec 3) |
 | `hold-route.mjs` | `POST /api/hold { id, ticket }`: `pilot run` marks a hand-off held for a live co-pilot, item state and no reply, written once (held-handoff L2) |
 | `idle.mjs` | the user's deck's idle rule: it exits after 10 minutes with no session, no landing and no request, reading the process table only when the other two hold (process-gc L2, ADR 0136) |
@@ -66,8 +67,8 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `server-wait.mjs` | the server's waiting half: body readers, guards, the asset allowlist and the long poll |
 | `server.mjs` | the server's facade: re-exports its siblings' names for every older importer |
 | `session.mjs` | starts a session in a terminal window when the Start route asks |
-| `short-path-shape.mjs` | checks a short-path ticket's gate2 carries a `Verdict:` per slice, a `Gate:` line and, for a surface, its walkthrough (short-path spec 2) |
 | `spawn-root.mjs` | which root a client spawns the daemon from and its version: the installed plugin for a checkout on 4321, else its own root (ADR 0165) |
+| `step-shell.mjs` | where a wizard's or a report's command steps run: a command step without a `dir` is refused, and a missing `shell` is the daemon's platform default (walkthrough-surface spec 9) |
 | `status-command.mjs` | `pilot status`: the deck's url, pid, version against the plugin's, uptime, live agents, and deck.log's last 20 lines; reads only (daemon-lifecycle spec 8, 9) |
 | `status.mjs` | the slice table and its Yours column |
 | `store-archive.mjs` | the store's month archive: closed items over 30 days old moved to `deck.archive-YYYY-MM.json`, read back by id |

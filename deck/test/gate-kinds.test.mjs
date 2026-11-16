@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-import { KIND_GATE1, KIND_GATE2, NOT_YET, SIGN_OFF, TEACH_ME } from '../items.mjs';
+import { KIND_GATE1, KIND_GATE2, KIND_WALKTHROUGH, NOT_YET, SIGN_OFF, TEACH_ME } from '../items.mjs';
 import { DeckRefusal, listItems, postItem, resolveItem } from '../store.mjs';
 import { renderHomePage, renderThreadPage } from '../ui/render.mjs';
 import { tempDeck, withTicket } from '../testUtils.mjs';
@@ -60,7 +60,9 @@ test('a gate2 missing each required field is refused naming that field', (t) => 
 test('a gate2 without walkthrough is stored', (t) => {
   tempDeck(t);
   assert.equal(post(KIND_GATE2, GATE2).walkthrough, undefined, 'walkthroughs are not mandatory (L19)');
-  assert.equal(post(KIND_GATE2, GATE2, { walkthrough: 'itm_0123456789ab' }).walkthrough, 'itm_0123456789ab');
+  const { ticket } = withTicket({}, REPO, 'yellow');
+  const walk = postItem({ kind: KIND_WALKTHROUGH, title: 'Try it', body: 'Step one.', repo: REPO, ticket });
+  assert.equal(postItem({ kind: KIND_GATE2, title: 'A gate2', body: 'The evidence.', repo: REPO, ...GATE2, ticket, walkthrough: walk.id }).walkthrough, walk.id);
 });
 
 test('a gate field of the wrong shape is refused naming it', (t) => {

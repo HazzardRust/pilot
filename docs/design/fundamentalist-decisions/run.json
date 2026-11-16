@@ -1,0 +1,271 @@
+{
+  "slug": "fundamentalist-decisions",
+  "feature": "The fundamentalist attacks decisions",
+  "ticket": "itm_ff08c3e59cfa",
+  "branch": "feat/fundamentalist-decisions",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-fundamentalist-decisions-r2",
+  "artefact": "docs/design/fundamentalist-decisions/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 The fundamentalist leads with the decisions pass",
+      "state": "integrated (carried in 1104bd54, public repo)",
+      "branch": "slice/fundamentalist-decisions-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fundamentalist-decisions-s1",
+      "pr": 978
+    },
+    {
+      "slice": "S2 Step 7 and the co-pilot take decision findings as findings",
+      "state": "integrated (carried in 1104bd54, public repo)",
+      "branch": "slice/fundamentalist-decisions-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fundamentalist-decisions-s2",
+      "pr": 977
+    },
+    {
+      "slice": "S3 ADR 0170 and the glossary record the decisions reviewer",
+      "state": "integrated (carried in 1104bd54, public repo; ADR to become NNNN)",
+      "branch": "slice/fundamentalist-decisions-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fundamentalist-decisions-s3",
+      "pr": 976
+    },
+    {
+      "slice": "fundamentalist-decisions",
+      "state": "concluding: QA evidence on #8 at 56557503, Windows 4515 pass 0 fail, WSL 5/5; no walkthrough; gate2 next",
+      "after": [
+        "base move onto pilot"
+      ],
+      "branch": "feat/fundamentalist-decisions",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-fundamentalist-decisions-r2",
+      "pr": 8
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated (carried in 1104bd54, public repo)",
+      "after": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "branch": "slice/fundamentalist-decisions-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fundamentalist-decisions-fix",
+      "pr": 979
+    },
+    {
+      "slice": "base move onto pilot",
+      "state": "integrated: pushed 56557503 (merge 906324a1 of pilot 6ea49cac, ADR 0179, pin 11815.5 measured); npm test 4515 pass 0 fail; typescript-reviewer APPROVE",
+      "after": [
+        "fix round"
+      ],
+      "branch": "feat/fundamentalist-decisions",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-fundamentalist-decisions-r2"
+    }
+  ],
+  "findings": [
+    "dropped: L9 drop — a process record, needed by definition (L10, the user, itm_be9b1a864c4a)",
+    "dropped: F1 runner spawn before the decisions pass — spec 5 holds the evidence pass text and its pin unchanged; cost is latency only",
+    "dropped: F2 description clause — it is how the agent list learns the decisions-first role ADR 0171 records",
+    "kept: F3 decision-triage.test.mjs:30 duplicates seam-change.test.mjs:102 — deleted, -1 (#979)",
+    "kept: F4 decision-triage.test.mjs:7-17 re-implemented read/flat from lib/area-file.mjs — imported, -5 (#979)",
+    "kept: F5 A1's late drop answer had no owner once QA is the writer — step 7 clause sends it to QA as a user find, +1 (#979)",
+    "kept: N1 CONTEXT.md decision finding carried the always-ask rule, its third home — cut (#979)",
+    "kept: QA obs 3 artefact said ADR 0170 — 0171 throughout (#979, fc0c2a22)",
+    "kept: L3 simplify (QA obs 2, fundamentalist pushback) — a process record is needed with evidence 'no built line', never a decision finding; locked by the user as L10 (itm_be9b1a864c4a), built in #979",
+    "dropped: QA obs 1 case-against prose over 3 lines — Sonnet replay readers; the pinned bound is the 65-line report",
+    "dropped: QA obs 4 auditor 'tool passes' — its brief limits it to the report file; 0 auditor lines change per spec 3"
+  ],
+  "next": "fundamentalist-decisions: pilot integrate --trial in -r2, post gate2 (PR #8, printed sha, no walkthrough); on press spawn pilot-lander. Leftover worktree: pilot-qa-fundamentalist-decisions-r2.",
+  "updatedAt": "2026-11-16T03:17:19.648Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the fundamentalist's pins are spread over 7 test files; all grepped to find which wording is frozen",
+      "evidence": "architect report",
+      "size": 7
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the 15 logged findings live only inside each run's run.json (91 under docs/design/), no index; a script loop found the dropped decision-level ones",
+      "evidence": "architect report",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the pilot's prompt-size pin has 0 headroom, so any step 7 wording change also edits measure-prompt.test.mjs",
+      "evidence": "scripts/test/measure-prompt.test.mjs:178",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "posted two questions before the pilot's not-a-fork call arrived; both withdrawn",
+      "evidence": "itm_3ed23b4c30fa, itm_24a7004df8db",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the artefact header, spec 8, L8 and brief.md still say ADR 0170 while S3 takes 0171",
+      "evidence": "PR #976 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no test pins the glossary terms in CONTEXT.md; the once-each check lives only in the PR body",
+      "evidence": "PR #976 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a markdown-only slice still costs a fact sheet and a typescript-reviewer run",
+      "evidence": "PR #976 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the pilot pin's history block in measure-prompt.test.mjs is ~25 lines ahead of the test, hard to place a line in",
+      "evidence": "scripts/test/measure-prompt.test.mjs:160-184",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node 26's default test reporter prints 'ℹ pass', so a grep for '^# pass' found nothing; rerun with --test-reporter=spec",
+      "evidence": "PR #978 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice tests named 'pins' while the rewrite check wants rewording-proof pins; reviewer round to loosen them",
+      "evidence": "PR #978 review, ed9c270f",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the review worktree has no node_modules, so npm test and coverage could not run there; npm ci forbidden",
+      "evidence": "fundamentalist report, evidence runner exit 1",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "knip has no knip.json; 535 repo-wide unused-file rows to filter by hand",
+      "evidence": "fundamentalist report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "architecture.md §3 cites seam-change:99 for the slice-file pin, actually :102, so S2 added a duplicate pin",
+      "evidence": "fundamentalist F3",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 4's replay ran on Sonnet explorers since pilot-fundamentalist is not in QA's child list",
+      "evidence": "QA read-only report at a33dd424",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 4's replay names no runner model or agent type; QA cannot reach Opus fundamentalist fidelity",
+      "evidence": "QA report at a33dd424, pushback row",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test stopped 'node_modules missing: run npm ci' in a fresh fix worktree, one extra run",
+      "evidence": "PR #979 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a scripted edit of a test file silently did nothing; redone with Edit",
+      "evidence": "PR #979 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "my S3 brief gave a title starting 'ADR'; pilot integrate refused the capital and I retitled",
+      "evidence": "NOT integrated ... PR #976 title does not match",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "deck MCP tools (deck_status) not loaded in this session; co-pilot could move no row, pilot writes over loopback",
+      "evidence": "ToolSearch deck_status: no matching deferred tools",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced while QA child was live; TaskStop cannot stop a child the co-pilot spawned",
+      "evidence": "TaskStop error owned by a42d98f61bf044d48",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced by handback-send-enforce while the QA child was live mid-gate; QA redirected to main rather than stopped",
+      "evidence": "handback-send-enforce notice after QA interim 'waiting on its own background work'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced by the harness while the implementer was live; TaskStop on it refused (owned by the child itself)",
+      "evidence": "local dfb3768d, origin still 1104bd54",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fresh worktree had no node_modules so the first npm test aborted; a pin history line's punctuation is pinned by a regex in another test file, costing a second full suite run",
+      "evidence": "base-move report: 'node_modules missing: run npm ci'; landing-wording.test.mjs:50",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a fresh worktree has no node_modules, so npm ci before npm test",
+      "evidence": "base-move implementer report, 56557503",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "Git Bash mangled wsl -- bash -lc calls ($VAR emptied, /mnt/c rewritten); gate ran only from PowerShell with a script file, two failed launches",
+      "evidence": "QA report at 56557503",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 4 replay again on Sonnet explorers: pilot-fundamentalist not in QA's child list; replay model slipped on back-arrow L4 and S1",
+      "evidence": "QA report at 56557503",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "Windows npm test takes 345 s",
+      "evidence": "QA report at 56557503",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "TaskOutput not available to the co-pilot; waits ran on Monitor and notifications",
+      "evidence": "No such tool available: TaskOutput",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "Git Bash mangled `wsl -- bash -lc` calls ($VAR empty, /mnt/c rewritten); the gate ran only from PowerShell with a script file",
+      "evidence": "QA report, two failed launches",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 4 replay ran on Sonnet explorers because pilot-fundamentalist is not on QA's child list; two back-arrow rows came out wrong",
+      "evidence": "co-pilot hand-back on itm_ff08c3e59cfa",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "Windows npm test takes 345 s",
+      "evidence": "QA report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "TaskOutput unavailable to the co-pilot; waited with Monitor and completion notifications",
+      "evidence": "tool error",
+      "size": 1
+    }
+  ]
+}

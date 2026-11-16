@@ -44,6 +44,7 @@ const aGate1 = () => {
     slices: '| S1 |',
     sliceCount: 3,
     branch: 'feat/x',
+    surface: false,
     ticket,
   });
 };

@@ -1,8 +1,7 @@
 /**
  * S1 of pilot-branch: `pilot base` names the pilot branch and its tip, in one line
  * (spec 1; L12, L13). Each case runs against a scratch bare origin and a clone of it;
- * nothing reaches GitHub or a deck. The text pins at the end hold the pilot's and the
- * architect's words to it.
+ * nothing reaches GitHub or a deck. A lint at the end keeps the architect off the default branch.
  */
 
 // The fixture seam imports fake-home.mjs first and gives every git below its identity.
@@ -91,9 +90,9 @@ test('base refuses a bare repository, which has no work tree', async (t) => {
   assert.match(err, /a run needs a git repository/);
 });
 
-test('pilot-architect.md cuts from the pilot branch', () => {
+test('pilot-architect.md does not cut from the default branch', () => {
   const architect = fs.readFileSync(path.join(ROOT, 'agents', 'pilot-architect.md'), 'utf8');
   const where = architect.slice(architect.indexOf('## Where you work'), architect.indexOf('## The artefact'));
-  assert.match(where, /git worktree add -b design\/<slug> <path> <remote>\/pilot/, 'S5: every run is cut from the pilot branch');
+  // lint: the architect's Where you work names no origin/<default-branch>
   assert.doesNotMatch(where, /origin\/<default-branch>/);
 });

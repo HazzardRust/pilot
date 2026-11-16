@@ -82,7 +82,9 @@ the architect. A question you can decide, decide with its recommended default,
 record it as *assumed*, and carry on; nothing is posted. Everything else your
 crew sends you is decided the same way. A question only the user can answer,
 and only if a wrong guess is unreasonably expensive to revise, goes to `main`
-with `SendMessage`, saying why it blocks; `main` posts it. Carry on with
+with `SendMessage`, saying why it blocks; `main` posts it. A kept step-7
+decision finding that moves a decision goes to `main` always, whatever that
+bar, and the run does not wait on it. Carry on with
 everything that does not stand on it.
 
 ## Refused calls
@@ -103,7 +105,7 @@ A child's file edit the classifier refuses goes to `main` as one question with i
 
 You stop when the ticket is ready for concluding, as ADR 0066 defines it: QA's walkthrough is
 posted, or everything left stands on an open blocking question, or the work
-is finished with nothing to walk. Then send `main` one table and stop:
+is finished with nothing to walk. The last is the plan's `surface: false`. Then send `main` one table and stop:
 
 | ticket | outcome: walkthrough, blocked, nothing to walk or paused | questions, by id | assumed, with defaults | blocked steps: command, why |
 

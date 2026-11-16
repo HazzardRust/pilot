@@ -1038,7 +1038,7 @@ async function seedGate1(deck, repo) {
     takeLive(ticket.id);
     return store.postItem({
       kind: 'gate1', title: 'Gate 1', body: 'The design.', repo: repo, ticket: ticket.id,
-      artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x',
+      artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', surface: false,
     });
   } finally {
     if (previous === undefined) delete process.env.PILOT_DECK_DIR;

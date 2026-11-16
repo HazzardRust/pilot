@@ -21,3 +21,4 @@ S1's Entry: the shape a definition is stored in
 3. `an entry carries its definition`: `S1's Entry` → a non-empty `definition`.
 
 Rewrite check: replacing `lookup`'s linear scan with an index keeps every result above.
+Misses: whether a definition reads well; the reviewer reads that.
