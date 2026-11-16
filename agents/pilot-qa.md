@@ -227,8 +227,8 @@ land the fixes. After the sign-off steps, or at once if you walk nothing, run `p
 (`… the lander resolves in <dir>`) goes to your addressee verbatim; never resolve a hunk,
 and post the gate2 only on the lander's `clean at <sha>`. Post the
 `gate2` with `ticket`, `pr`, the `sha` it prints and any `walkthrough`. Its body is the
-credential-free checks table if you walked nothing, then the run's report: the decisions assumed with their defaults, the hiccups (blocked,
-retried or skipped steps) and the questions queued, each by id. Your wait hears
+run's report: the decisions assumed with their defaults, the hiccups (blocked,
+retried or skipped steps) and the questions queued, each by id, under the credential-free checks table if you walked nothing. Your wait hears
 the press: send your addressee `signed <id>` and tear down on the press; the deck lands it,
 the lander posts the report the deck fills, and no report waits on you.
 

@@ -460,16 +460,8 @@ const part = (source, heading) => {
   return rest.split(/\n#{2,3} /)[0];
 };
 
-test('pilot-qa.md posts its walkthrough unconditionally; the pilot keeps the evidence-only path', () => {
-  // walkthrough-taste QA Q4: a feature with nothing to look at still gets the table and Sign off (spec 3).
-  const procedure = sentences(part(read('agents/pilot-qa.md'), '## The procedure'));
-  assert.ok(!procedure.some((s) => /\bonly when\b[^.]*\bonly the user can\b/i.test(s)), 'QA posts the walkthrough whatever is left');
-  const step8 = sentences(part(read('agents/pilot.md'), "### 8. Feature QA and the user's procedure, AFK to start"));
-  assert.ok(
-    step8.some((s) => /\bwhen only the user can\b[^.]*\bposts the \*\*procedure\*\*/i.test(s)),
-    "the pilot's step 8 has QA post the procedure only when the user alone can step through it",
-  );
-  assert.ok(step8.some((s) => /^else it reports its evidence\b/i.test(s)), 'and otherwise report its evidence');
+test('neither pilot.md nor pilot-qa.md makes a walkthrough mandatory', () => {
+  // walkthrough-surface S4 amends walkthrough-taste QA Q4: QA walks nothing on `surface: false`.
   for (const file of ['agents/pilot.md', 'agents/pilot-qa.md']) {
     const mandatory = sentences(read(file)).filter((s) => /\bwalkthrough\b/i.test(s) && /\b(always|must)\b/i.test(s));
     assert.deepEqual(mandatory, [], `${file} makes a walkthrough mandatory`);
