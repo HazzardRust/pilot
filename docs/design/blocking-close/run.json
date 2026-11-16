@@ -8,7 +8,10 @@
   "slices": [
     {
       "slice": "S1 Skeleton: the pilot closes any blocking question as Moot or Assumed",
-      "state": "planned"
+      "state": "draft PR #39, integrating",
+      "branch": "slice/blocking-close-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocking-close-s1",
+      "pr": 39
     },
     {
       "slice": "S2 The gate2 and the closing report list the pilot closes",
@@ -18,12 +21,8 @@
       ]
     },
     {
-      "slice": "S3 The pilot rule and ADR 0172 widen Moot to every blocking question",
-      "state": "planned"
-    },
-    {
       "slice": "blocking-close",
-      "state": "implementing (co-pilot), taking the base",
+      "state": "implementing (co-pilot); base taken pilot@6ea49cac, feat at d9fbf3cd",
       "after": [
         "S1",
         "S2",
@@ -32,11 +31,17 @@
       "branch": "feat/blocking-close",
       "worktree": "C:/Users/Hazzard/Projects/pilot-feat-blocking-close-r2",
       "pr": 7
+    },
+    {
+      "slice": "S3 The pilot's rule and ADR 0177 widen Moot to every blocking question",
+      "state": "implementing",
+      "branch": "slice/blocking-close-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocking-close-s3"
     }
   ],
   "findings": [],
-  "next": "co-pilot: take the base (pilot integrate, no slice) in feat worktree, correct brief.md trailer, then spawn S1 and S3",
-  "updatedAt": "2026-11-16T01:15:07.331Z",
+  "next": "co-pilot: integrating S1 (#39 at d5a662b5); then S2 from the new tip; S3 implementing; S1 browser check carried to QA",
+  "updatedAt": "2026-11-16T01:38:31.815Z",
   "friction": [
     {
       "kind": "drain",
@@ -51,6 +56,30 @@
     {
       "kind": "drain",
       "what": "ADR number clash 0170 across landed runs turned #959 red; Land again refused on a red merge without a conflict dir",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test stops every scratch deck under the worktree, so the slice's live-check deck died in the gate's cleanup and was restarted",
+      "evidence": "S1: stopped 20300 daemon --leash-dir pilot-blocking-close-s1",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no browser tools and no deck MCP in the implementer session, so the slice's browser live check was not made; carried to QA",
+      "evidence": "S1 report: chrome-devtools tool search found nothing; deck MCP CONNECTION_CLOSED",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spec 4 evidence assumed signoff was already refused; it was not, so A5 was decided mid-slice",
+      "evidence": "architecture.md §3 Gate refusal row covers gate kinds only; A5 at 1698e317",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "context compacted mid-slice early on; worktree reread and npm ci rerun",
+      "evidence": "S1 and S3 both reported a summary before their first commit",
       "size": 2
     }
   ]
