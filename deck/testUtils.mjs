@@ -144,12 +144,12 @@ export const shapedTicketBody = (words = 'fix the thing') =>
  * A gate's evidence with the ticket it names (ticket-states spec 2), that ticket put in `repo` first:
  * posted red for a gate1, or stored in `state` (a gate2's is yellow) as if its gate1 were signed,
  * and taken live, as a gate's ticket must be (ticket-states L9). A gate1's evidence gains the plan's
- * `sliceCount` and `branch` unless it names its own (ticket-states L7).
+ * `sliceCount`, `branch` and `surface: false` unless it names its own (ticket-states L7, walkthrough-surface L1).
  */
 export const withTicket = (evidence, repo, state = 'red') => {
   const ticket = { kind: 'ticket', title: 'The ticket', body: shapedTicketBody(), repo, sliceCount: 60 };
   const { id } = state === 'red' ? postItem(ticket) : postStored({ ...ticket, state });
-  const plan = 'artefact' in evidence ? { sliceCount: 3, branch: 'feat/x' } : {};
+  const plan = 'artefact' in evidence ? { sliceCount: 3, branch: 'feat/x', surface: false } : {};
   return { ...plan, ...evidence, ticket: takeLive(id).id };
 };
 

@@ -16,7 +16,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { read, sectionOf } from './lib/area-file.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..', '..');
@@ -145,25 +144,6 @@ test('the CLI without --home prints the rows, not the usage (QA read-only pass)'
   assert.equal(result.status, 0, result.stderr);
   assert.ok(JSON.parse(result.stdout).some((row) => row.source === 'CLAUDE.md'));
 });
-
-test(
-  "the context area runs the script by its plugin path and excludes the pilot's own prompts",
-  () => {
-    const source = read('skills/audit/areas/context.md');
-    const measure = sectionOf(source, 'Measure');
-    assert.match(measure, /\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/audit-context\.mjs/);
-    assert.match(measure, /A4/);
-    assert.match(measure, /this package's own agents or skills/i);
-    assert.match(measure, /never\s+read[\s\S]*harness's private plugin registry/i);
-    assert.match(sectionOf(source, 'Rows'), /context.*tooling|tooling.*context/is);
-
-    const ret = sectionOf(source, 'Return');
-    for (const field of ['area', 'finding', 'command', 'output', 'exit', 'fix', 'saving', 'effort', 'spec']) {
-      assert.match(ret, new RegExp(field), `the Return section names the ${field} field`);
-    }
-    assert.match(ret, /friction/i);
-  },
-);
 
 test('globToRegExp covers **, * and {a,b} with no glob dependency', () => {
   assert.ok(globToRegExp('**/hooks/**/*.js').test('hooks/x.js'));

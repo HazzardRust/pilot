@@ -39,20 +39,20 @@ import {
   ownerOf,
   isPaused,
   pausedOn,
-  isShortPath,
   stateOf,
   waiterKind,
 } from './items.mjs';
 import { LANDER_LINE } from '../scripts/merge-generated.mjs';
 import { sameRepo } from './runs.mjs';
 import { keptWorktree, landerDue, landingReply } from './landing-replies.mjs';
-import { blockedShapeGaps, isMoot } from './blocked-shape.mjs';
+import { blockedShapeGaps, isPilotClose, isVetoed, mayPilotClose, pilotCloseClaimed } from './blocked-shape.mjs';
 import { questionShapeGaps } from './question-shape.mjs';
 import { reportAskGaps } from './report-shape.mjs';
 import { ticketShapeGaps } from './ticket-shape.mjs';
 import { walkthroughShapeGaps } from './walkthrough-shape.mjs';
+import { placeSteps } from './step-shell.mjs';
 import { enterStage } from './store-stage.mjs';
-import { shortGate2Gaps } from './short-path-shape.mjs';
+import { gate2EvidenceGaps, namedWalkthroughGaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
 import { MAX_QUESTION_CHARS, POSTABLE_KINDS, andList } from './tools.mjs';
 import {
   DeckRefusal,
@@ -127,8 +127,8 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   // A blank `longer` is no reason, so it counts as absent; a non-string is left for detailOf to refuse.
   const { dir, ...rest } = detailOf(kind, { ...given, longer: typeof longer === 'string' ? longer.trim() || undefined : longer });
   const detail = dir === undefined ? rest : kind === KIND_TICKET ? { ...rest, repo: dir } : { ...rest, dir };
-  // A short-path plan says whether it changes a screen (short-path A2): read off the raw argument, since a false flag is not stored.
-  if (kind === KIND_GATE1 && isShortPath({ plan: detail }) && given.surface === undefined) {
+  // Every plan says whether it has a surface (walkthrough-surface L1): read off the raw argument, since a false flag is not stored.
+  if (kind === KIND_GATE1 && given.surface === undefined) {
     throw new DeckRefusal(`a gate1 of ${detail.sliceCount} slices names surface: true or false`);
   }
   refuseCredentials('this item', `${title}\n${body}\n${wordsOf(detail)}`);
@@ -145,7 +145,9 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
     kind,
     title,
     body,
-    ...detail,
+    ...placeSteps(kind, detail), // a command step names its dir; a shell left out is the daemon's platform's (spec 9, A3)
+    // A gate1 keeps `surface: false` too, so its plan tells it from one signed before the flag (L2).
+    ...(kind === KIND_GATE1 ? { surface: given.surface } : {}),
     ...bylineOf(author),
     // Whose replies these are (ADRs 0041, 0053): QA's and the teacher's own posts are theirs, the rest the pilot's (A1).
     owner: waiterKind(author) ?? 'pilot',
@@ -159,7 +161,9 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   refuseOverOpenQuestions(deck, item);
   const ticket = ticketNamedBy(deck, item);
   if (kind === KIND_GATE1 && ticket) refuseUnmerged(deck.items, ticket);
-  const unproven = kind === KIND_GATE2 ? shortGate2Gaps(ticket, item) : [];
+  // QA's walkthrough on a plan marked with no surface is refused naming it (L3); a walkthrough's ticket is optional.
+  const walked = kind === KIND_WALKTHROUGH ? deck.items.find((each) => each.id === item.ticket) : undefined;
+  const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : walkthroughPlanGaps(walked, authorKind(author));
   if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
   // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves
   // it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
@@ -560,11 +564,12 @@ export function resolveItem(id, resolution, author) {
     if (item.kind === KIND_CHAT) throw new DeckRefusal(`item ${id} is the chat: ${NEVER_CLOSED}`);
     if (item.kind === KIND_USER) throw new DeckRefusal(`item ${id} is ${USER_CLOSES}`);
     if (writerKind(author) !== ownerOf(item)) throw notTheOwner(item);
-    // A blocking item is never answered for the user (S18): closing it unanswered would lift its gate2 refusal.
-    // The pilot's Moot of a Blocked item is the one close past it (blocked-yellow-yields spec 6, A4).
-    if (isBlocking(item) && !messagesOf(item).some((message) => message?.from === 'user') && !isMoot(item, resolution, author)) {
-      throw new DeckRefusal(`item ${id} is a blocking ${item.kind} the user has not answered; it waits for their reply${item.kind === KIND_QUESTION ? ` or ${ASSUME_DEFAULT}` : ''}`);
+    // A blocking item is never answered for the user (S18), but for the pilot's close of a question (blocking-close L1, ADR 0178).
+    const [pilotClose, claimed] = [isPilotClose(item, resolution, author), pilotCloseClaimed(resolution)];
+    if (isBlocking(item) && !messagesOf(item).some((message) => message?.from === 'user') && !pilotClose) {
+      throw new DeckRefusal(`item ${id} is a blocking ${item.kind} the user has not answered; it waits for their reply${item.kind === KIND_QUESTION ? ` or ${ASSUME_DEFAULT}` : ''}${mayPilotClose(item) ? `, or the pilot's \`Moot: <why>\` / \`Assumed: <what>\`` : ''}${isVetoed(item) ? '; the user reopened your close, so only their answer clears it' : ''}`);
     }
+    if (!pilotClose && claimed) throw new DeckRefusal(`item ${id}: \`${claimed}\` is a pilot close, which needs an open blocking question the user has neither answered nor vetoed, never this ${item.kind}; close it in plain words (spec 4, 6)`);
     // Read before the close: a closed thread chooses nothing. Only a Sign off moves a ticket (L11).
     const signed = chosenOf(item) === SIGN_OFF;
     // A gate passes only on its Sign off press (merge-first spec 6, L12): typed approval closes nothing,
@@ -587,15 +592,14 @@ export function resolveItem(id, resolution, author) {
     // A ticket closed outright is no longer live (L9).
     if (item.kind === KIND_TICKET) delete item.live;
     const ticket = item.ticket === undefined ? undefined : deck.items.find((candidate) => candidate.id === item.ticket);
-    // Signing a gate1 turns its ticket yellow, in this same write (ticket-states spec 1, L3).
-    // and writes its plan by reference (spec 7, L5, L7).
+    // Signing a gate1 turns its ticket yellow and writes its plan by reference, in this same write (ticket-states spec 1, 7; L3, L5, L7).
     if (item.kind === KIND_GATE1 && signed && ticket?.kind === KIND_TICKET && stateOf(ticket) === 'red') {
       enterStage(deck, ticket, 'yellow');
       ticket.plan = planOf(item);
       delete ticket.live;
     }
-    // The pilot's Moot of the Blocked item that paused a ticket resumes it, in this same write (blocked-yellow-yields spec 11, A3).
-    if (isMoot(item, resolution, author)) resumeIn(deck, item);
+    // The pilot's close of the question that paused a ticket resumes it, in this same write (blocking-close spec 2; A3).
+    if (pilotClose) resumeIn(deck, item);
   });
 }
 
@@ -643,9 +647,9 @@ function refuseSignOffBlocked(items, gate2) {
   }
 }
 
-/** A signed gate1's plan: its references, the slug its artefact sits under (`docs/design/<slug>/`), the slice count, and `surface` when true. */
+/** A signed gate1's plan: its references, the slug its artefact sits under (`docs/design/<slug>/`), the slice count, and `surface` as a boolean, absent on a gate1 posted before it was required (L2). */
 function planOf({ artefact, branch, sha, sliceCount, surface, id }) {
-  return { artefact, branch, sha, slug: artefact.split(/[\\/]/).at(-2), sliceCount, gate1: id, ...(surface ? { surface } : {}) };
+  return { artefact, branch, sha, slug: artefact.split(/[\\/]/).at(-2), sliceCount, gate1: id, ...(typeof surface === 'boolean' ? { surface } : {}) };
 }
 
 /**
@@ -778,14 +782,14 @@ export { mayWrite };
 /**
  * The user's answer resumes a paused ticket (blocked-yellow-yields spec 3; §2, A3), pure on the deck in hand, so it is
  * part of `addReply`'s one write: once the question naming the ticket, the question that paused it, open or closed, and
- * every other open blocking item naming it carry a message from the user (or, for a `Blocked:` item, the pilot's Moot close, spec 11), the ticket turns yellow, loses `paused`, and moves in `deck.items` before its
+ * every other open blocking item naming it carry a message from the user (or, for a question, the pilot's close, blocking-close spec 2), the ticket turns yellow, loses `paused`, and moves in `deck.items` before its
  * repository's first yellow ticket. Returns the ticket, or undefined when nothing resumed.
  */
 export function resumeIn(deck, question) {
   const ticket = question?.kind === KIND_QUESTION && deck.items.find((item) => item?.id === question.ticket && item.kind === KIND_TICKET);
   if (!isPaused(ticket) || !sameRepo(ticket.repo, question.repo)) return undefined;
   const answered = (item) =>
-    isAnswered(item) || (!isOpen(item) && isMoot(item, item.resolution, item.resolvedBy));
+    isAnswered(item) || (!isOpen(item) && isPilotClose(item, item.resolution, item.resolvedBy));
   const naming = (item) =>
     item === question || item?.id === pausedOn(ticket) || (isBlocking(item) && item.ticket === ticket.id && sameRepo(item.repo, ticket.repo));
   if (deck.items.some((item) => naming(item) && !answered(item))) return undefined;

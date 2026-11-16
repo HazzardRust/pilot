@@ -79,16 +79,22 @@ function releaseClaim(name) {
 const laneMarked = (itemId) => fs.existsSync(path.join(claimDir(), `handoff-${safeName(itemId)}.claim`));
 
 /**
- * When the session this wrapper started last ended a turn, as the Stop gate
- * stamps it (`markTurnEnded` in `hooks/lib/deck.js`), or 0 for never.
+ * When the session this wrapper started last wrote the stamp `name`, as
+ * `stampRun` in `hooks/lib/deck.js` writes it, in ms, or 0 for never.
  */
-function lastTurnEnded() {
+function stampAt(name) {
   try {
-    return Number(fs.readFileSync(path.join(claimDir(), `turn-ended-${safeName(String(process.pid))}.stamp`), 'utf8')) || 0;
+    return Number(fs.readFileSync(path.join(claimDir(), `${name}-${safeName(String(process.pid))}.stamp`), 'utf8')) || 0;
   } catch (err) {
     return 0;
   }
 }
+
+/** When that session last ended a turn, as the Stop gate stamps it (`markTurnEnded`). */
+const lastTurnEnded = () => stampAt('turn-ended');
+
+/** When that session last ran a tool itself, as `post-tool.js` stamps it (`markToolRan`). */
+const lastToolRan = () => stampAt('tool-ran');
 
 /**
  * Wait until `done()` holds, or stop waiting. Answers whether it held: the
@@ -115,4 +121,4 @@ const pause = (ms, signal) => new Promise((resolve) => {
   signal.addEventListener('abort', stop, { once: true });
 });
 
-export { releaseClaim, laneMarked, lastTurnEnded, waitFor, pause, safeName };
+export { releaseClaim, laneMarked, lastTurnEnded, lastToolRan, waitFor, pause, safeName };

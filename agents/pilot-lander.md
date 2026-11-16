@@ -35,7 +35,8 @@ A brief that is a lander line instead, `… the lander resolves in <dir>`, is a 
    run no suite: wait on `pilot landing <gate2>` instead.
 6. Green: reply `Land again` on the gate2, and the deck lands that commit; for a gate2 not yet posted, send `main`
    `clean at <sha>`, the committed merge's sha, on which QA posts it. Red on a hunk you resolved:
-   fix it with the Edit tool and gate once more; red otherwise is a trade-off.
+   fix it with the Edit tool and gate once more, and if it is still red, load `pilot:diagnosing-bugs` with the
+   Skill tool before another fix; red otherwise is a trade-off.
 7. On `landed <sha7>` go to the clean tail; send `main` the `NOT landed` line the deck printed instead.
 
 ## Clean tail
@@ -46,7 +47,7 @@ On `landed`, once QA has torn down (it does on the press), close the run in this
    every run worktree, the land dir included, and keeps only one with a tracked change (`kept merged-dirty <path>`)
    or a live holder (`kept live <pid> <path>`); you never kill a holder.
 2. `mcp__plugin_pilot_deck__deck_post` one `report` with the gate2's `ticket` and no body: the deck fills it from
-   the run record.
+   the run record. A command step it carries names `shell` and `dir`, in that shell's syntax, on the post.
 3. `mcp__plugin_pilot_deck__deck_status` with that `slug`, `slices: []` and `finished: "closing report posted"`.
 4. Send `main` one line, from land's `main gets pilot:` and `kept` lines on the gate2 and the report's id:
    `landed <sha7> · main gets pilot: <#n or its line> · kept: <paths> · report: <id>`.

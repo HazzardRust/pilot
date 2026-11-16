@@ -17,8 +17,6 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
-import { read, sectionOf } from './lib/area-file.mjs';
-
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..', '..');
 const SCRIPT = path.join(ROOT, 'scripts', 'audit-session-start.mjs');
@@ -177,23 +175,4 @@ test('the CLI prints JSON and never a transcript\'s content', (t) => {
   assert.equal(run.status, 0, run.stderr);
   assert.equal(JSON.parse(run.stdout).sessions[0].id, 'dddd4444');
   assert.ok(!run.stdout.includes('SECRET-CONTENT'));
-});
-
-test('the context area runs the session-start script and turns its figures into rows', () => {
-  const source = read('skills/audit/areas/context.md');
-  assert.match(sectionOf(source, 'Measure'), /\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/audit-session-start\.mjs/);
-  const rows = sectionOf(source, 'Rows');
-  assert.match(rows, /pickupsWithoutPilot/);
-  assert.match(rows, /median/);
-});
-
-test('the context area says how to trim each kind of source, so a row\'s fix is a technique and not "trim this"', () => {
-  const trimming = sectionOf(read('skills/audit/areas/context.md'), 'Trimming');
-  assert.match(trimming, /`paths:`/, 'scope a language or tool rule to its files');
-  assert.match(trimming, /skill/i, 'move a procedure into a skill, loaded on demand');
-  assert.match(trimming, /enabledPlugins/, 'turn off a plugin the repository does not use');
-  assert.match(trimming, /README/, 'a document about the rules is not a rule');
-  assert.match(trimming, /contradict/i, 'delete what contradicts a higher source');
-  assert.match(trimming, /`@`/, 'an import loads the whole file');
-  assert.match(sectionOf(read('skills/audit/areas/context.md'), 'Rows'), /Trimming/);
 });

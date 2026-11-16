@@ -72,15 +72,19 @@ Read steps 4 to 8 of `${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, and its
 
 ## What goes to main
 
-You send `main` four things and nothing else: a question for the user, a seam
+You send `main` five things and nothing else: a question for the user, a seam
 change that moves a spec line or a locked decision, a crew hand-off you cannot
-resolve, and your hand-back table. A seam change that breaks a later slice's
+resolve, a moot question, and your hand-back table. A blocking question that
+stopped mattering, its step done another way, superseded or met by a safe
+assumption: send `main` `moot <id>: <why>`, and the pilot closes it. A seam change that breaks a later slice's
 files or tests is a hand-off you cannot resolve, because only `main` resumes
 the architect. A question you can decide, decide with its recommended default,
 record it as *assumed*, and carry on; nothing is posted. Everything else your
 crew sends you is decided the same way. A question only the user can answer,
 and only if a wrong guess is unreasonably expensive to revise, goes to `main`
-with `SendMessage`, saying why it blocks; `main` posts it. Carry on with
+with `SendMessage`, saying why it blocks; `main` posts it. A kept step-7
+decision finding that moves a decision goes to `main` always, whatever that
+bar, and the run does not wait on it. Carry on with
 everything that does not stand on it.
 
 ## Refused calls
@@ -101,14 +105,14 @@ A child's file edit the classifier refuses goes to `main` as one question with i
 
 You stop when the ticket is ready for concluding, as ADR 0066 defines it: QA's walkthrough is
 posted, or everything left stands on an open blocking question, or the work
-is finished with nothing to walk. Then send `main` one table and stop:
+is finished with nothing to walk. The last is the plan's `surface: false`. Then send `main` one table and stop:
 
 | ticket | outcome: walkthrough, blocked, nothing to walk or paused | questions, by id | assumed, with defaults | blocked steps: command, why |
 
 When `main` sends you the pause, integrate the slice in flight through its
 gate and review, bring its rows current with `deck_status`, start nothing
 else, and hand back with outcome `paused`; the ticket stays implementing.
-On a yield, the pause `main` sends quotes the deck's `Paused <id>` line: your question went unanswered 20 minutes and the deck has already paused the ticket, so hand back with outcome `paused` the same way; the user's answer, or the pilot's `Moot:` close of a pausing `Blocked:` item, resumes it for your successor.
+On a yield, the pause `main` sends quotes the deck's `Paused <id>` line: your question went unanswered 20 minutes and the deck has already paused the ticket, so hand back with outcome `paused` the same way; the user's answer, or the pilot's close of the question, resumes it for your successor.
 
 At your context guard's advisory notice, pause as `main`'s pause does and
 start no slice, fix round or QA after it. Past the hard mark still undrained, wait
