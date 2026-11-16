@@ -24,9 +24,10 @@
     },
     {
       "slice": "S1 One module holds a gate2's evidence",
-      "state": "implementing",
+      "state": "draft PR #58",
       "branch": "slice/walkthrough-surface-s1",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s1"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s1",
+      "pr": 58
     },
     {
       "slice": "S2 A plan marks its surface; QA cannot walk a plan without one",
@@ -78,6 +79,14 @@
       ]
     }
   ],
-  "next": "S1, S4, S5 implementing from feat 8769a6a2; integrate each on its draft PR, then S2 after S1, S8 after S4+S5",
-  "updatedAt": "2026-11-16T05:23:11.623Z"
+  "next": "integrating S1 (#58, 4605dbed); then S2 from the new feat tip",
+  "updatedAt": "2026-11-16T05:31:07.359Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 first commit failed silently: git add named a path already moved by git mv, the backgrounded compound command hid the error, reviewer saw no commit",
+      "evidence": "S1 report, slice/walkthrough-surface-s1 re-commit",
+      "size": 1
+    }
+  ]
 }
