@@ -33,7 +33,7 @@
     },
     {
       "slice": "feature",
-      "state": "in QA: taking origin/pilot 6ea49cac into feat/handoff-prompt before QA's live runs; draft PR #28",
+      "state": "concluding: walkthrough itm_88ca7a73e757 open; tip 267503e1, Windows 1/1 and WSL 5/5 green, live hand-offs 5 of 5; draft PR #28",
       "branch": "feat/handoff-prompt",
       "pr": 28
     },
@@ -58,8 +58,8 @@
     "dropped: QA version-skew row (installed 0.9.5 vs worktree hooks is the test harness, not the feature)",
     "dropped: late evidence-runner complexity row (clearOnce 30, watch 17, holdFor 12, run 12 in run.mjs): largely pre-existing, past the fix limit; mutation timed out at 900 s, coverage not run"
   ],
-  "next": "handoff-prompt (yellow, taken 2026-11-16): co-pilot runs pilot integrate (base only) in the feat worktree, then spawns one fresh pilot-qa at the new tip for 5 live hand-offs, QA comment on #28, walkthrough.",
-  "updatedAt": "2026-11-16T00:13:16.214Z",
+  "next": "handoff-prompt (green, concluding lane): walkthrough itm_88ca7a73e757 waits on the user. On a reply resume QA af72324f7918b5958 (never a second QA); it posts the gate2; on the press spawn pilot-lander with the gate2 id. QA left running: scratch deck pid 8148 :62511, pilot run tab in qa-handoff-prompt-proj.",
+  "updatedAt": "2026-11-16T02:45:55.649Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -240,6 +240,48 @@
       "kind": "drain",
       "what": "auto mode gave no verdict on a Bash call batched with deck reads, twice; each posted a Blocked item and cost a re-issue",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "folder trust recorded under lower-case 'projects' but Claude Code reads 'Projects', so the earlier qa-proj sat on the trust dialog; two launches lost",
+      "evidence": "~/.claude.json trust key; dialog screenshot",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot run still loads the installed 0.9.5 hooks; the worktree's post-tool.js needed a scratch project settings.json",
+      "evidence": "deck/run-env.mjs:22",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the run session's pilot wait was refused by auto mode (classifier unavailable), so each live hand-off needed a typed line to wake the at-rest session",
+      "evidence": "scratch item itm_28fef646df4f",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the 5-minute /clear cooldown makes 5 live hand-offs take about 20 minutes, with no test or env knob",
+      "evidence": "deck/run.mjs CLEAR_COOLDOWN_MS",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "Git Bash expanded $HOME inside a quoted wsl bash -lc command; rerun as a script file",
+      "evidence": "first WSL gate call",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "over 60 leftover pilot-scratch-* dirs in %TEMP% from earlier runs",
+      "evidence": "ls %TEMP%",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the 08:04Z resume steps the record's next cited were not on PR #28 (0 comments); QA was briefed from the record's friction rows instead",
+      "evidence": "gh pr view 28 comments = 0 before QA",
+      "size": 1
     }
   ]
 }
