@@ -154,8 +154,7 @@ such with the reason, not fixed differently. Gates once on the final state,
 step 3's selection among them,
 one fresh reviewer as above, then push to the PR branch: fast-forward only,
 because the tip should be exactly where the brief said; if it has moved,
-stop and report. Update the feature PR body's findings section with what was done
-about each. Report with the tip SHA.
+stop and report. Report with the tip SHA and what was done about each finding.
 
 ## Scope discipline
 
