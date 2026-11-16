@@ -77,7 +77,7 @@
     },
     {
       "slice": "S9 Sweep: audit and deck report pins",
-      "state": "draft PR #51",
+      "state": "integrated at fef95a3b",
       "branch": "slice/crew-tests-behaviour-s9",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s9",
       "pr": 51
@@ -91,21 +91,26 @@
     },
     {
       "slice": "S11 Sweep: crew voice and gates",
-      "state": "draft PR #52",
+      "state": "integrated at 85491c4e",
       "branch": "slice/crew-tests-behaviour-s11",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s11",
       "pr": 52
     },
     {
       "slice": "S12 Sweep: QA, research, skills",
-      "state": "planned (sonnet)",
+      "state": "draft PR #53",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/crew-tests-behaviour-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s12",
+      "pr": 53
     },
     {
       "slice": "S13 Sweep: wording pins added since the census",
-      "state": "planned (added, sonnet)"
+      "state": "implementing",
+      "branch": "slice/crew-tests-behaviour-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s13"
     },
     {
       "slice": "S14 Sweep: re-classification and residue",
@@ -124,8 +129,8 @@
       ]
     }
   ],
-  "next": "integrating S9 (#51), S11 (#52); then S12, S13; S14 last; S4 waits on PR #8",
-  "updatedAt": "2026-11-16T03:48:49.113Z",
+  "next": "integrating S12 (#53); S13 implementing; then S14",
+  "updatedAt": "2026-11-16T03:55:20.953Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -204,6 +209,12 @@
       "what": "census line ranges drifted; blocks located by test name and files re-read in full",
       "evidence": "S9: about 15 Read calls",
       "size": 15
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the repo has no type check or lint script, so the gate's typecheck and lint steps are absent",
+      "evidence": "S12: npx tsc --noEmit prints usage; npm run lint: no such script",
+      "size": 0
     }
   ]
 }
