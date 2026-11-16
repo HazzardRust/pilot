@@ -588,6 +588,10 @@ pre { margin: 0 0 1rem; white-space: pre-wrap; word-wrap: break-word; }
 .steps li::before { color: var(--quiet); content: counter(step) "."; }
 .steps .result { color: var(--quiet); }
 .steps .step:only-child { grid-column: 2 / -1; }
+/* A command step's `<shell> · <dir>` is a line of its own above it (walkthrough-surface spec 8). */
+.steps .where { color: var(--quiet); font-size: 0.85em; grid-column: 2 / -1; }
+.steps .where + .do { grid-column: 2; }
+.steps .where + .do:last-child { grid-column: 2 / -1; }
 
 form { display: flex; flex-direction: column; gap: 0.6rem; }
 label { color: var(--quiet); }

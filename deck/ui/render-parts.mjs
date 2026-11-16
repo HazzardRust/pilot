@@ -47,6 +47,7 @@ import {
   OWNER_KINDS,
 } from '../items.mjs';
 import { escapeHtml, renderMarkdown, renderMarkdownLine, renderUrl } from './markdown.mjs';
+import { commandWord } from '../walkthrough-shape.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -166,12 +167,18 @@ function renderRow(label, value) {
  * The halves go through `renderMarkdownLine`, so a step naming a button as
  * `**Done**` or a command as `npm test` reads the way the body above it does. It
  * is the inline rules only: the shape here is the list's, not the pilot's.
+ *
+ * A command step (`commandWord`, the rule QA's refusal uses) opens with the line it runs in,
+ * `<shell> · <dir>`, whichever of the two the item carries (walkthrough-surface spec 8).
  */
-function renderSteps(screens) {
+function renderSteps(screens, { shell, dir } = {}) {
+  const where = [shell, dir].filter((part) => part !== undefined).join(' · ');
   const items = screens.map((screen) => {
     const { instruction, result } = stepParts(screen);
+    const isCommand = where !== '' && (commandWord(instruction, true) ?? commandWord(result ?? '', false)) !== null;
     return (
-      `<li><span class="step do">${renderMarkdownLine(instruction)}</span>` +
+      `<li>${isCommand ? `<span class="step where">${escapeHtml(where)}</span>` : ''}` +
+      `<span class="step do">${renderMarkdownLine(instruction)}</span>` +
       (result === null ? '' : `<span class="step result">${renderMarkdownLine(result)}</span>`) +
       '</li>'
     );
@@ -185,7 +192,7 @@ function renderWalkthroughDetail(item) {
     item.dir === undefined ? '' : renderRow('working directory:', code(item.dir)),
     item.url === undefined ? '' : renderRow('URL', renderUrl(item.url)),
     item.login === undefined ? '' : renderRow('Login', escapeHtml(item.login)),
-    item.screens === undefined ? '' : renderRow('Steps', renderSteps(item.screens)),
+    item.screens === undefined ? '' : renderRow('Steps', renderSteps(item.screens, item)),
   ].join('');
   return rows ? `<dl class="detail">${rows}</dl>` : '';
 }
