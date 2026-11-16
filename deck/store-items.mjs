@@ -46,7 +46,7 @@ import {
 import { LANDER_LINE } from '../scripts/merge-generated.mjs';
 import { sameRepo } from './runs.mjs';
 import { keptWorktree, landerDue, landingReply } from './landing-replies.mjs';
-import { blockedShapeGaps, isPilotClose, pilotCloseClaimed } from './blocked-shape.mjs';
+import { blockedShapeGaps, isPilotClose, isVetoed, mayPilotClose, pilotCloseClaimed } from './blocked-shape.mjs';
 import { questionShapeGaps } from './question-shape.mjs';
 import { reportAskGaps } from './report-shape.mjs';
 import { ticketShapeGaps } from './ticket-shape.mjs';
@@ -563,7 +563,7 @@ export function resolveItem(id, resolution, author) {
     // A blocking item is never answered for the user (S18), but for the pilot's close of a question (blocking-close L1, ADR NNNN).
     const [pilotClose, claimed] = [isPilotClose(item, resolution, author), pilotCloseClaimed(resolution)];
     if (isBlocking(item) && !messagesOf(item).some((message) => message?.from === 'user') && !pilotClose) {
-      throw new DeckRefusal(`item ${id} is a blocking ${item.kind} the user has not answered; it waits for their reply${item.kind === KIND_QUESTION ? ` or ${ASSUME_DEFAULT}, or the pilot's \`Moot: <why>\` / \`Assumed: <what>\`` : ''}`);
+      throw new DeckRefusal(`item ${id} is a blocking ${item.kind} the user has not answered; it waits for their reply${item.kind === KIND_QUESTION ? ` or ${ASSUME_DEFAULT}` : ''}${mayPilotClose(item) ? `, or the pilot's \`Moot: <why>\` / \`Assumed: <what>\`` : ''}${isVetoed(item) ? '; the user reopened your close, so only their answer clears it' : ''}`);
     }
     if (!pilotClose && claimed) throw new DeckRefusal(`item ${id}: \`${claimed}\` is a pilot close, which needs an open blocking question the user has neither answered nor vetoed, never this ${item.kind}; close it in plain words (spec 4, 6)`);
     // Read before the close: a closed thread chooses nothing. Only a Sign off moves a ticket (L11).

@@ -35,9 +35,15 @@ export const pilotCloseClaimed = (resolution) =>
  */
 export function isPilotClose(item, resolution, author) {
   const prefix = pilotCloseClaimed(resolution);
-  return item?.kind === KIND_QUESTION && item.blocking === true && item.proposal !== true
+  return mayPilotClose(item)
     && typeof author === 'string' && authorKind(author) === 'pilot'
-    && prefix !== undefined && resolution.slice(prefix.length).trim() !== ''
-    && !messagesOf(item).some((message) => typeof message?.text === 'string'
-      && PILOT_CLOSES.some((vetoed) => message.text.startsWith(`${CLOSED_WITH} ${vetoed}`)));
+    && prefix !== undefined && resolution.slice(prefix.length).trim() !== '';
 }
+
+/** Whether the user reopened a pilot close of `item` (spec 6, L4): its `Closed with:` line is in the thread. */
+export const isVetoed = (item) => messagesOf(item).some((message) => typeof message?.text === 'string'
+  && PILOT_CLOSES.some((vetoed) => message.text.startsWith(`${CLOSED_WITH} ${vetoed}`)));
+
+/** Whether `item` is one a pilot close may clear at all: a blocking question, never a proposal, the user has not vetoed. */
+export const mayPilotClose = (item) =>
+  item?.kind === KIND_QUESTION && item.blocking === true && item.proposal !== true && !isVetoed(item);

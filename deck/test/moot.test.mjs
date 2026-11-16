@@ -35,6 +35,7 @@ const aDesign = (ticket, extra = {}) => postItem({
 const aGate2 = (ticket) => postItem({ kind: KIND_GATE2, title: 'Gate 2', body: 'Walk it.', repo: REPO, pr: '#250', sha: '0305827', ticket: ticket.id });
 const reread = (id) => listItems().find((item) => item.id === id);
 const refusedNaming = (...words) => (error) => error instanceof DeckRefusal && words.every((word) => error.message.includes(word));
+const invitingNoPilotClose = (error) => error instanceof DeckRefusal && !error.message.includes(`${MOOT} <why>`) && !error.message.includes(`${ASSUMED} <what>`);
 
 /** A live ticket held by one blocking design question. */
 function heldByDesign(t) {
@@ -110,6 +111,7 @@ test('never a gate, walkthrough or proposal', (t) => {
     assert.throws(() => resolveItem(item.id, why, PILOT), DeckRefusal, `${item.kind}${item.proposal ? ' proposal' : ''}`);
     assert.equal(isOpen(reread(item.id)), true, item.kind);
   }
+  assert.throws(() => resolveItem(held[4].id, why, PILOT), invitingNoPilotClose, 'a proposal is never invited to a pilot close');
   const note = postStored({ kind: KIND_QUESTION, title: 'FYI', body: 'Noted?', repo: REPO, options: ['Yes'], ticket: ticket.id });
   assert.throws(() => resolveItem(note.id, `${ASSUMED} yes`, PILOT), refusedNaming(note.id, ASSUMED, 'plain words'), 'a prefix on a non-blocking question');
   resolveItem(note.id, 'Noted', PILOT);
@@ -143,7 +145,8 @@ test("the user's reopen restores the hold for good", (t) => {
   reopenItem(design.id);
 
   for (const close of [`${MOOT} still not needed`, `${ASSUMED} A`]) {
-    assert.throws(() => resolveItem(design.id, close, PILOT), refusedNaming(design.id, 'blocking'), close);
+    assert.throws(() => resolveItem(design.id, close, PILOT), refusedNaming(design.id, 'blocking', 'reopened'), close);
+    assert.throws(() => resolveItem(design.id, close, PILOT), invitingNoPilotClose, `${close}: the refusal never invites the close it refuses`);
   }
   assert.throws(() => aGate2(ticket), refusedNaming('gate2', design.id), 'the gate2 is held again');
   assert.equal(isOpen(reread(design.id)), true);
