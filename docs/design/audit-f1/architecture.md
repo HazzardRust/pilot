@@ -114,6 +114,7 @@ it earns its keep. `remotes.mjs` survives as is. No fold slice: nothing shallow 
   Default: the fixture (§9 item 3), the rest of L9 unchanged. Tradeoff: the live line is seen on a synthetic history,
   not this repo's. Rejected: lowering the bar to fire here (moves agreed spec 2). Deck down: sent to `main` to post.
   Verdict: stands
+  Answered by the user on itm_3c5ec5cddde7, 2026-11-16: "Keep 100, fixture QA". Locked as posted.
 
 ## 7. Out of scope
 
