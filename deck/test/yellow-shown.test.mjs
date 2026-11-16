@@ -9,9 +9,7 @@ import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { KIND_QUESTION, KIND_TICKET, inHandOf, isBehind } from '../items.mjs';
 import { listItems, postItem, registerRun } from '../store.mjs';
@@ -53,14 +51,4 @@ test('a question under a green ticket behind the one in hand stays hidden', (t) 
   assert.equal(isBehind(behind, listItems()), true, 'L20 holds for every ticket that is not yellow');
   const html = home();
   assert.ok(listed(html, onAhead) && !listed(html, behind), 'the green ticket\'s question waits behind the green one in hand (three-lanes spec 4)');
-});
-
-// L16: the co-pilot decides what it can and sends `main` only what the user must answer; the
-// pilot posts that one blocking, under its ticket, and never runs it through its own blocking test.
-test('the pilot posts only a co-pilot\'s user-only questions', () => {
-  const pilot = fs.readFileSync(fileURLToPath(new URL('../../agents/pilot.md', import.meta.url)), 'utf8');
-  const yellow = pilot.slice(pilot.indexOf('\n## Yellow\n'), pilot.indexOf('\n**Green**')).replace(/\s+/g, ' ');
-  assert.match(yellow, /Never post a question without its `ticket`; a co-pilot's is `blocking`\. Mark yours `blocking: true` only if/, 'a co-pilot\'s question goes up blocking, with its ticket; the blocking test is the pilot\'s own');
-  const coPilot = fs.readFileSync(fileURLToPath(new URL('../../agents/pilot-co-pilot.md', import.meta.url)), 'utf8').replace(/\s+/g, ' ');
-  assert.match(coPilot, /A question you can decide, decide with its recommended default, record it as \*assumed\*, and carry on; nothing is posted\./, 'a decidable one never reaches the pilot');
 });

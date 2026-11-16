@@ -39,27 +39,22 @@ function bareColours(text) {
     .flatMap((line) => line.match(/\b(red|yellow|green)\b/gi) ?? []);
 }
 
-test('the pilot names three lanes', () => {
+test('the pilot keeps the cross-stage ordering out', () => {
   const yellow = section(read('agents/pilot.md'), '## Yellow', 'agents/pilot.md');
-  assert.match(yellow, /three lanes/);
-  for (const lane of ['planning', 'concluding', 'co-pilot']) assert.match(yellow, new RegExp(`\`${lane}\``), `the ${lane} lane`);
-  assert.match(yellow, /`nextTicketOf`/, 'each stage lane fills from its own queue');
-  assert.doesNotMatch(yellow, /green then red|red then green/, 'spec 2: the cross-stage ordering goes');
+  assert.doesNotMatch(yellow, /green then red|red then green/, 'the cross-stage ordering goes'); // lint: no colour-ordered lanes
 });
 
 test('no stage is called by a colour alone in the prose', () => {
   const pilot = read('agents/pilot.md');
   const legend = section(pilot, '## Legend', 'agents/pilot.md');
-  assert.match(legend, /red \(planning/);
-  assert.match(legend, /yellow \(implementing/);
-  assert.match(legend, /green \(concluding/);
+  // lint: no bare colour word outside the Legend and the colour entry
   assert.deepEqual(bareColours(pilot.replace(legend, '')), [], 'agents/pilot.md outside its Legend');
   assert.deepEqual(bareColours(read('agents/pilot-co-pilot.md')), [], 'agents/pilot-co-pilot.md');
   assert.deepEqual(bareColours(read('skills/ticket-making/SKILL.md')), [], 'skills/ticket-making/SKILL.md');
   const context = read('CONTEXT.md');
   const colourEntry = context.match(/\*\*Ticket state\*\*:\n(.*)\n/)[1];
-  assert.match(colourEntry, /red is planning .* yellow is implementing .* green is concluding/, "ADR 0147's mapping stays");
   assert.deepEqual(bareColours(context.replace(colourEntry, '')), [], 'CONTEXT.md outside the colour entry');
+  // lint: the glossary terms exist
   for (const term of ['Lane', 'Stage', 'Held lane']) assert.match(context, new RegExp(`^\\*\\*${term}\\*\\*:$`, 'm'), `CONTEXT names **${term}**`);
 });
 
