@@ -11,24 +11,9 @@ function ending() {
   return flat(section);
 }
 
-test('the worktrees reply is the only one on a closing report', () => {
-  const text = ending();
-  assert.match(text, /worktrees reply[^.]*only reply on (?:a|the) closing report/i,
-    'the close never says the worktrees reply is the only reply on the report');
-  assert.match(text, /user's words on (?:a|the) report[^.]*never relayed or acted on/i,
-    "the close never says a user's words on a report are not relayed or acted on");
-  assert.match(text, /ADR 0148/, 'the clause never cites ADR 0148');
-});
-
-test('an ask goes up before the report', () => {
-  assert.match(ending(), /needing the user[^.]*question[^.]*walkthrough[^.]*before the report/i,
-    'the close never sends an ask up as its own question or walkthrough before the report');
-});
-
 test('the friction section is not picked by a reply', () => {
-  const text = ending();
-  assert.doesNotMatch(text, /for the user to pick from/i, 'the friction section is still picked from the report');
-  assert.match(text, /picked with Add on Tickets or in the chat/i, 'the friction section never names Add on Tickets or the chat');
+  // lint: the closing report never has the user pick friction from it
+  assert.doesNotMatch(ending(), /for the user to pick from/i, 'the friction section is still picked from the report');
 });
 
 test('the pin moved by the clause alone', () => {

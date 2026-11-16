@@ -90,6 +90,7 @@ const aWalkthrough = (over = {}) => ({
   url: 'http://localhost:3260/jobs',
   login: 'the seeded operator in .env.local',
   screens: ['open /jobs', 'set the status filter to Done', 'reload'],
+  dir: '/srv/jobs', // `set ` leads a command step, which names where it runs (walkthrough-surface spec 9)
   ...over,
 });
 
@@ -107,6 +108,7 @@ test('the deck knows its kinds, refuses posting any other, and still reads one a
     'url',
     'login',
     'screens',
+    'shell',
     'ticket',
     'longer',
     'blocking',

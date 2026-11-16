@@ -278,7 +278,6 @@ test('the install replaces the old orchestration rule', (t) => {
   const report = installRules({ target });
 
   assert.deepEqual(entries(report, 'updated'), ['orchestration.md']);
-  assert.match(fs.readFileSync(path.join(target, 'orchestration.md'), 'utf8').replace(/\s+/g, ' '), /three on the yellow lane: main, co-pilot, role agent, helper/);
 });
 
 test('a hand-edited file is left alone and named', (t) => {
@@ -967,7 +966,6 @@ test('a deny that names another tool does not stop the deck allow', (t) => {
 
 const README = () => read('README.md');
 const INSTALL = () => read('docs/INSTALL.md');
-const NOTICES = () => read('THIRD-PARTY-NOTICES.md');
 const EXCERPT = () => read('CLAUDE.excerpt.md');
 
 /** The text between one `## ` heading and the next. */
@@ -987,85 +985,38 @@ function stepNamed(source, title) {
   return end === -1 ? source.slice(start) : source.slice(start, end);
 }
 
+// lint: the Install section is one fenced block, and no bash block of commands to type
 test('the README hands a friend one prompt to paste, not a list of commands to type', () => {
   const install = section(README(), 'Install');
 
-  assert.match(install, /paste/i, 'L2: the install is a prompt, and the README has to say so');
-  assert.match(install, /docs\/INSTALL\.md/, 'and the prompt sends Claude to the instructions');
-  assert.equal(
-    (install.match(/```/g) || []).length,
-    2,
-    'exactly one fenced block: the thing to paste, and nothing that reads as a second step',
-  );
+  assert.equal((install.match(/```/g) || []).length, 2, 'exactly one fenced block: the thing to paste');
   assert.doesNotMatch(install, /```bash/, 'a bash block is a command list a friend will type');
 });
 
-test('the prompt a friend pastes names the pilot command as a step, and Use starts a run with it', () => {
-  // The prompt lists the steps by name, and Claude does what the list says: a step the
-  // list leaves out is one an install can skip, which is how `pilot run` came to be
-  // missing from a machine the install had finished on.
-  assert.match(section(README(), 'Install'), /global `pilot` command/);
-  assert.match(section(README(), 'Use'), /```bash\s+pilot run\s+```/);
-  assert.match(stepNamed(INSTALL(), 'Put the `pilot` command on the PATH'), /scripts\/install-command\.mjs/);
-});
-
+// lint: the install asks no profile question and writes no shell function
 test('the install still asks no question about the profile, and step 4 does not write a shell function', () => {
-  // S1 once wrote a `pilot` function into the profile and asked first; the launcher
-  // replaced that step. The PATH edit (ADR 0128) names the profile file in step 4, but it
-  // is announced, not asked: the questions (four since plain-session S6 asked the reach)
-  // gain none about a profile.
   assert.doesNotMatch(INSTALL(), /shell function/i);
   assert.doesNotMatch(section(INSTALL(), 'The four questions to ask'), /profile|PATH/);
-  assert.match(INSTALL(), /answers to the four questions below/);
 });
 
-test('step 4 says the install edits the PATH and never tells Claude not to', () => {
+// lint: step 4 never tells Claude not to edit the PATH
+test('step 4 never tells Claude not to edit the PATH', () => {
   const step = stepNamed(INSTALL(), 'Put the `pilot` command on the PATH');
 
-  assert.match(step, /open a new terminal/i);
   assert.doesNotMatch(step, /do not edit their PATH/i);
-  assert.match(step, /could not write the PATH/i);
 });
 
-test('the changes table names where the PATH is written', () => {
-  const table = section(INSTALL(), 'What this changes, and what it never touches');
-
-  assert.match(table, /^\| `HKCU\\Environment\\Path`/m);
-  assert.match(table, /^\| The shell profile file/m);
-  assert.match(table, /`~\/\.bash_profile`, `~\/\.bash_login` or `~\/\.profile`/, 'the darwin bash login files');
+// lint: the Install note adds no second fence
+test('the Install note adds no fence', () => {
+  assert.equal((section(README(), 'Install').match(/```/g) || []).length, 2, 'the note adds no fence');
 });
 
-test('README and INSTALL carry the note', () => {
-  const install = section(README(), 'Install');
-
-  assert.match(install, /Full Disk Access/);
-  assert.match(install, /windows.*macos.*ubuntu/i, 'the Install line names the CI OSes');
-  assert.equal((install.match(/```/g) || []).length, 2, 'the note adds no fence');
-  assert.match(stepNamed(INSTALL(), 'Put the `pilot` command on the PATH'), /Full Disk Access/);
-});
-
-test('INSTALL.md asks the deck-tools question and says why', () => {
-  const questions = section(INSTALL(), 'The four questions to ask');
-
-  assert.match(questions, /mcp__plugin_pilot_deck__\*/, 'the rule, named exactly');
-  assert.match(questions, /terminal prompt/i, 'why: a deck call would wait on one');
-  assert.match(questions, /auto[- ]mode\s+classifier/i, 'and auto mode may refuse it');
-  assert.match(questions, /--no-deck-tools/, 'and what a no runs');
-  assert.match(
-    section(INSTALL(), 'What this changes, and what it never touches'),
-    /mcp__plugin_pilot_deck__\*/,
-    'the settings row says the rule goes in',
-  );
-});
-
-test('updating is claude plugin update and nothing else, because the command follows the plugin', () => {
-  // The command once linked one version's directory, and the README told a friend to
-  // re-run the install after every update. The launcher made that step unnecessary.
-  assert.match(section(README(), 'Install'), /claude plugin update\s+pilot@pilot` is all there is/);
+// lint: the README never tells a friend to run the install again
+test('the README never tells a friend to run the install again after an update', () => {
   assert.doesNotMatch(README(), /run it again/i);
-  assert.match(stepNamed(INSTALL(), 'Put the `pilot` command on the PATH'), /never has to run again/);
 });
 
+// lint: the README's agents row names no stub, and the shipped agent count stays 25
 test('the README describes the crew that is here now, not the one that was', () => {
   // It said "in this slice, one stub pilot" five slices after the stub was replaced.
   // A layout table is read by exactly the person who has not looked in the directory.
@@ -1076,49 +1027,7 @@ test('the README describes the crew that is here now, not the one that was', () 
   assert.equal(shipped.length, 25, 'twenty-five agents: change the README row with this number');
 });
 
-test('the README and the instructions agree on what is being installed', () => {
-  for (const source of [README(), INSTALL()]) {
-    assert.match(source, /pilot@pilot/, 'the plugin id a friend installs');
-    assert.match(source, /HazzardRust\/pilot/, 'from the marketplace this repository is');
-  }
-});
-
-test('the README still says where the deck listens and what it refuses to hold', () => {
-  const source = README();
-
-  assert.match(source, /127\.0\.0\.1:4321/);
-  assert.match(source, /loopback/i, 'A6: it binds the loopback interface only');
-  assert.match(source, /key or a token|key or token/i, 'and refuses to store a credential');
-});
-
-test('both upstream notices are carried whole, not summarised', () => {
-  const notices = NOTICES();
-  const permission = notices.match(/Permission is hereby granted, free of charge/g) || [];
-  const warranty = notices.match(/THE SOFTWARE IS PROVIDED "AS IS"/g) || [];
-
-  assert.equal(permission.length, 3, 'L8: one full MIT text per upstream, verbatim');
-  assert.equal(warranty.length, 3);
-  assert.match(notices, /chrome-devtools-mcp/, 'and the one external dependency is named');
-  assert.match(notices, /Apache-2\.0/, 'L7: with its licence, which is not MIT');
-});
-
-test('the instructions carry every step the design says the install performs', () => {
-  const install = INSTALL();
-
-  for (const step of [
-    'claude plugin marketplace add',
-    'claude plugin install',
-    'npm install --omit=dev',
-    'scripts/install-command.mjs',
-    'scripts/install-settings.mjs',
-    'scripts/install-rules.mjs',
-    'CLAUDE.excerpt.md',
-    '127.0.0.1:4321',
-  ]) {
-    assert.ok(install.includes(step), `docs/INSTALL.md never mentions ${step}`);
-  }
-});
-
+// lint: every script the instructions name exists in this package
 test('every script the instructions tell Claude to run is one this package ships', () => {
   const named = new Set(INSTALL().match(/scripts\/[a-z-]+\.mjs/g) || []);
 
@@ -1128,37 +1037,20 @@ test('every script the instructions tell Claude to run is one this package ships
   }
 });
 
-test('the pinned browser dependency in the instructions is the pinned one in the manifest', () => {
+// lint: the manifest pins chrome-devtools-mcp
+test('the browser dependency the manifest declares is pinned', () => {
   const declared = JSON.parse(read('.mcp.json')).mcpServers['chrome-devtools'].args.join(' ');
   const pin = /chrome-devtools-mcp@[0-9.]+/.exec(declared)[0];
 
   assert.equal(pin, 'chrome-devtools-mcp@1.9.0', 'L7 pins the version');
-  assert.ok(INSTALL().includes(pin), `docs/INSTALL.md does not name ${pin}`);
-  assert.ok(NOTICES().includes(pin.split('@')[0]), 'and the notices name the package');
 });
 
-test('nothing is appended to a friend\'s CLAUDE.md without them saying yes', () => {
-  const install = INSTALL();
-  const excerptStep = install.slice(install.indexOf('CLAUDE.excerpt.md'));
-
-  assert.match(excerptStep, /consent|ask|say yes|permission/i, 'the excerpt is offered, never taken');
-  assert.match(excerptStep, /do not append|only .*(?:if|when) they/i, 'and the refusal path is explicit');
+// lint: the excerpt a friend may take stays short
+test('the excerpt a friend may take is short', () => {
+  assert.ok(EXCERPT().split('\n').length < 80, 'an excerpt that long is a document, not an excerpt');
 });
 
-test('the instructions say what a second run does, because a friend will run it twice', () => {
-  assert.match(INSTALL(), /again|second time|re-?run/i);
-  assert.match(INSTALL(), /never overwrit|without overwriting/i, 'L11: nothing already there is replaced');
-});
-
-test('the excerpt a friend may take is short, and is about how to use the pilot', () => {
-  const excerpt = EXCERPT();
-
-  assert.ok(excerpt.split('\n').length < 80, 'an excerpt that long is a document, not an excerpt');
-  assert.match(excerpt, /pilot/i);
-  assert.match(excerpt, /127\.0\.0\.1:4321/, 'it has to say where the deck is');
-  assert.match(excerpt, /worktree/i, 'and the one working rule the crew depends on');
-});
-
+// lint: nothing this package adds is named after an upstream project
 test('nothing this slice adds is named after an upstream project', () => {
   const upstream = new RegExp(['\b' + 'e' + 'cc\b', 'poc' + 'ock'].join('|'), 'i');
   const added = [
@@ -1179,6 +1071,7 @@ test('nothing this slice adds is named after an upstream project', () => {
   assert.ok(!upstream.test(EXCERPT()), 'the excerpt goes into a friend\'s CLAUDE.md and names no vendor');
 });
 
+// lint: the README keeps a "Your part" section between Use and Layout
 test('the README has a "Your part" section, after Use and before Layout', () => {
   const source = README();
   const use = source.indexOf('## Use');
@@ -1190,33 +1083,16 @@ test('the README has a "Your part" section, after Use and before Layout', () => 
   assert.ok(yourPart < layout, '"Your part" belongs before Layout');
 });
 
-test('the README names the three steps that stay the human\'s, and where each is enforced', () => {
+// lint: Your part keeps exactly three one-line steps, none a small-ticket exception to Gate 1
+test('Your part keeps three bullets and names no exception to Gate 1', () => {
   const yourPart = section(README(), 'Your part');
 
-  assert.match(yourPart, /spec design/i, 'spec §4: names spec design');
-  assert.match(yourPart, /Gate 1/, 'and where it is enforced');
-  assert.match(yourPart, /quality assurance/i, 'spec §4: names QA');
-  assert.match(yourPart, /Gate 2/, 'and where it is enforced');
-  assert.match(yourPart, /walkthrough/i, 'Gate 2 is the QA walkthrough, not just a name');
-  assert.match(yourPart, /code review/i, 'spec §4: names code review');
-  assert.match(yourPart, /mostly AI/i, 'code review is mostly AI, one human step among three');
-
+  assert.doesNotMatch(yourPart, /small ticket|skips it/i, 'no ticket skips Gate 1 (spec 10)');
   const bullets = yourPart.split('\n').filter((line) => /^\s*[-*]\s/.test(line));
   assert.equal(bullets.length, 3, 'exactly the three steps, one line each');
 });
 
-test("the README's Spec design bullet names no exception and Your part keeps three bullets", () => {
-  // S7 (spec 17, 20) gave the Spec design bullet a small-ticket clause; ticket-states S11
-  // (spec 10) retired the small ticket, so every run is signed off at Gate 1.
-  const yourPart = section(README(), 'Your part');
-
-  assert.match(yourPart, /sign off the architecture artefact at Gate 1, before a slice is built\./);
-  assert.doesNotMatch(yourPart, /small ticket|skips it/i, 'no ticket skips Gate 1 (spec 10)');
-
-  const bullets = yourPart.split('\n').filter((line) => /^\s*[-*]\s/.test(line));
-  assert.equal(bullets.length, 3, 'the three steps, one line each');
-});
-
+// lint: the README never claims the plugin merges on its own
 test('the README never claims the plugin merges on its own', () => {
   const yourPart = section(README(), 'Your part');
 
@@ -1224,12 +1100,6 @@ test('the README never claims the plugin merges on its own', () => {
     yourPart,
     /the plugin merges|merges (it|the (feature )?(pull request|PR)) (for you|itself|automatically)/i,
     'the plugin stops before merge; only an explicit ask merges',
-  );
-  assert.match(yourPart, /merge/i, 'it still has to say a merge is possible, and who asks for it');
-  assert.match(
-    yourPart,
-    /to have it merge its own PRs, say so as a standing rule in your own `CLAUDE\.md`/,
-    'a merge of its own is a standing rule the user writes, not a default or a one-off ask',
   );
 });
 
@@ -1860,36 +1730,6 @@ test('a provenance header cannot point the comparison outside the upstream root'
   const result = checkUpstream(root, { roots, scan: ['rules'] });
 
   assert.equal(onlyFile(result).state, 'gone', 'a path that climbs out of the root is not compared');
-});
-
-test('the instructions say what the rules copy means before they run it', () => {
-  const install = INSTALL();
-  const step = stepNamed(install, 'Choose the reach');
-
-  assert.match(step, /before\s+you\s+run\s+it/i, 'the consequence is stated first, not reported after');
-  assert.match(step, /every\s+session/i, 'and it says the files become loaded context');
-  assert.match(step, /skip this step|rather not/i, 'so a friend can decline it');
-});
-
-test('the rules step does not promise a file count the tree cannot keep', () => {
-  // It said "about a hundred and forty" while the tree held a hundred and twenty-four.
-  // A number in the step where a stranger consents to files landing in their home is a
-  // promise, and a promise that drifts with the tree is one nothing here was checking.
-  const install = INSTALL();
-  const step = stepNamed(install, 'Choose the reach');
-  const shipped = installRules({
-    source: rulesSource(),
-    target: path.join(os.tmpdir(), 'pilot-rules-never-written'),
-    dryRun: true,
-  }).written.length;
-
-  assert.match(step, /over a hundred/i, 'a friend deciding is entitled to the magnitude');
-  assert.match(step, /--dry-run/, 'and to the exact count, which only the script can give');
-  assert.ok(shipped > 100, `the tree is ${shipped} files, so "over a hundred" is no longer true`);
-});
-
-test('the instructions cover the subagent status line the plugin could not carry itself', () => {
-  assert.match(INSTALL(), /subagent status line/i);
 });
 
 // --- the command lines a friend's install actually runs --------------------

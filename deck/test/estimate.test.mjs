@@ -23,6 +23,7 @@ const GATE1 = {
   slices: '| S1 |',
   sliceCount: 11,
   branch: 'feat/ticket-states',
+  surface: false,
 };
 const reread = (id) => listItems().find((item) => item.id === id);
 const aTicket = () => takeLive(postItem({ kind: KIND_TICKET, title: 'Apple', body: shapedTicketBody(), repo: REPO, sliceCount: 180 }).id);
@@ -41,6 +42,7 @@ test('signing a gate1 writes the plan with slug and slice count and no estimate'
     slug: 'ticket-states',
     sliceCount: 11,
     gate1: gate.id,
+    surface: false,
   });
 });
 

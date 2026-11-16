@@ -142,6 +142,7 @@ test('the chain takes an auditor-posted ticket', (t) => {
   assert.equal(listItems().filter((item) => item.kind === 'handoff').length, 1);
 });
 
+// lint: the auditor's tools list, its Owning the thread heading, and the skill naming no deck tool
 test('pilot-auditor.md lists the three deck tools and the skill no longer posts the item', () => {
   const auditor = fs.readFileSync(path.join(ROOT, 'agents/pilot-auditor.md'), 'utf8');
   const skill = fs.readFileSync(path.join(ROOT, 'skills/audit/SKILL.md'), 'utf8');
@@ -155,7 +156,4 @@ test('pilot-auditor.md lists the three deck tools and the skill no longer posts 
   assert.match(auditor, /^## Owning the thread$/m);
   assert.ok(auditor.indexOf('## Owning the thread') < auditor.indexOf('## Report'), 'Owning the thread comes before Report');
   assert.doesNotMatch(skill, /deck_post|deck_wait|deck_reply|deck_resolve/, 'the skill touches no deck tool');
-  assert.match(skill, /audit-after\.txt/, 'the skill keeps the after snapshot');
-  assert.match(skill, /audit save/, 'and audit save');
-  assert.match(skill, /differs/, 'and hands the auditor the lines that differ');
 });

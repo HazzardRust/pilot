@@ -55,6 +55,7 @@ Each item:
 - `title`: `Stage n/N - <what this stage achieves>`, so the count the terminal used to show is in the title
 - `url`: the stage's locator (a URL, a file path, a host), rather than in the body
 - `dir`: the working directory, whenever the stage's step is a command
+- `shell`: where that command runs: PowerShell, cmd, Git Bash, WSL or a named cloud CLI; left out, the deck fills PowerShell on Windows, the login shell elsewhere. Write the command in that shell's syntax, and give a step needing another shell a stage of its own
 - `body`: the numbered clicks, then exactly what to reply with — the value, or `done` for a pure action
 
 Hold the bar the terminal version held. Give the URL before asking for the value that lives behind it. Say what a secret stage's command is rather than asking for the secret. Say plainly, in the body, when a stage is irreversible, and make that stage's reply a confirmation on its own — do not bundle an irreversible action with a value to copy, because the human will skim to the paste box. Keep a stage to one focused ticket.

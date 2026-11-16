@@ -1,0 +1,313 @@
+{
+  "slug": "crew-tests-behaviour",
+  "feature": "The crew tests behaviour, not wording",
+  "ticket": "itm_3a521d90b85f",
+  "branch": "feat/crew-tests-behaviour",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-tests-behaviour-r2",
+  "artefact": "docs/design/crew-tests-behaviour/architecture.md",
+  "slices": [
+    {
+      "slice": "crew-tests-behaviour",
+      "state": "concluding: gate2 itm_2fe42921c8db at 202da563; Windows 4210 pass 0 fail, WSL 5/5; QA comment on #5; no walkthrough",
+      "branch": "feat/crew-tests-behaviour",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-tests-behaviour-r2",
+      "pr": 5
+    },
+    {
+      "slice": "S1 Walking skeleton: test-design",
+      "state": "integrated at 5e7ac16b",
+      "branch": "slice/crew-tests-behaviour-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s1",
+      "pr": 44
+    },
+    {
+      "slice": "S2 Misses: line + check-slices",
+      "state": "integrated at 09d44ab9",
+      "branch": "slice/crew-tests-behaviour-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s2",
+      "pr": 45
+    },
+    {
+      "slice": "S3 Stuck red → ranked hypotheses",
+      "state": "integrated at dae27489",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/crew-tests-behaviour-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s3",
+      "pr": 46
+    },
+    {
+      "slice": "S4 Fundamentalist names the anti-pattern",
+      "state": "integrated at 3c8568d4",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/crew-tests-behaviour-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s4",
+      "pr": 56
+    },
+    {
+      "slice": "S5 Sweep: pilot-agents first half",
+      "state": "integrated at e1f58f97",
+      "branch": "slice/crew-tests-behaviour-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s5",
+      "pr": 43
+    },
+    {
+      "slice": "S6 Sweep: pilot-agents second half",
+      "state": "integrated at 1d0d7229",
+      "after": [
+        "S5"
+      ],
+      "branch": "slice/crew-tests-behaviour-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s6",
+      "pr": 47
+    },
+    {
+      "slice": "S7 Sweep: docs, README, install, rules, ADR",
+      "state": "integrated at 0732d30e",
+      "branch": "slice/crew-tests-behaviour-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s7",
+      "pr": 48
+    },
+    {
+      "slice": "S8 Sweep: lane and ticket pins",
+      "state": "integrated at 34fa9221",
+      "branch": "slice/crew-tests-behaviour-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s8",
+      "pr": 49
+    },
+    {
+      "slice": "S9 Sweep: audit and deck report pins",
+      "state": "integrated at fef95a3b",
+      "branch": "slice/crew-tests-behaviour-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s9",
+      "pr": 51
+    },
+    {
+      "slice": "S10 Sweep: architect, slicing, verdicts",
+      "state": "integrated at 2af77542",
+      "branch": "slice/crew-tests-behaviour-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s10",
+      "pr": 50
+    },
+    {
+      "slice": "S11 Sweep: crew voice and gates",
+      "state": "integrated at 85491c4e",
+      "branch": "slice/crew-tests-behaviour-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s11",
+      "pr": 52
+    },
+    {
+      "slice": "S12 Sweep: QA, research, skills",
+      "state": "integrated at d19a229c",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/crew-tests-behaviour-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s12",
+      "pr": 53
+    },
+    {
+      "slice": "S13 Sweep: wording pins added since the census",
+      "state": "integrated at 5c283472",
+      "branch": "slice/crew-tests-behaviour-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s13",
+      "pr": 54
+    },
+    {
+      "slice": "S14 Sweep: re-classification and residue",
+      "state": "integrated at 5fb7311e",
+      "after": [
+        "S2 Misses: line + check-slices",
+        "S5 Sweep: pilot-agents first half",
+        "S6 Sweep: pilot-agents second half",
+        "S7 Sweep: docs, README, install, rules, ADR",
+        "S8 Sweep: lane and ticket pins",
+        "S9 Sweep: audit and deck report pins",
+        "S10 Sweep: architect, slicing, verdicts",
+        "S11 Sweep: crew voice and gates",
+        "S12 Sweep: QA, research, skills",
+        "S13 Sweep: wording pins added since the census"
+      ],
+      "branch": "slice/crew-tests-behaviour-s14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s14",
+      "pr": 55
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated at fb1014dc",
+      "after": [
+        "S14"
+      ],
+      "branch": "fix/crew-tests-behaviour-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-crew-tests-behaviour-principles",
+      "pr": 57
+    }
+  ],
+  "findings": [
+    "kept: F1 'no security verdict, no integration' lost its only guard (S10 cut the pin) and scripts/integrate.mjs has no check: integrate refuses a slice whose Reviewers line names pilot:security-reviewer with no verdict trailer on its commits, one test; about +35",
+    "kept: F2 security-trigger list duplicated verbatim in agents/pilot-implementer.md:103-106 and skills/vertical-slicing/SKILL.md:73 with its agreement test cut: delete the implementer's copy, follow the slice's Reviewers line; -3",
+    "kept: F3 readme-flow 'every agent file is a node' read the filesystem, a lint under test-design's own rule, wrongly cut in S7: restored as // lint; +9",
+    "kept: F4 pilot-fundamentalist.md test pass: S4's bullet repeats the prose-pin bullet and the wording-pin exemption contradicts test-design's Prose pin: delete bullet 3 and 'a prompt's rule sentence,', back to 'Three kinds'; -4, and A6's merge with PR #8 loses its lead-in change",
+    "dropped: nit operating-commands 'moving subcommand': depends on a hand-kept list",
+    "dropped: nit operating-secret OPERATING.md assertions: three phrase pins on a doc, L5 says a PIN block goes; secretFile() is exercised in deck/test/deck-secret.test.mjs and four others",
+    "dropped: nit security-reviewer description trigger as a separate fix: F2 removes the duplicate it guarded",
+    "dropped: a test for the S4 bullet (spec 6): it would be a prose pin under the feature's own rule; its fundamentalist half goes to QA's fixture run. Evidence pass did not run (context reset): no coverage or mutation evidence"
+  ],
+  "next": "User owes gate2 itm_2fe42921c8db (crew-tests-behaviour, PR #5 at 202da563); on press spawn pilot-lander. A6: S4 bullet vs PR #8, second to land merges. Leftover worktrees: pilot-qa-crew-tests-behaviour, pilot-fix-crew-tests-behaviour-principles, pilot-slice-crew-tests-behaviour-s1..s14. Follow-up ticket to propose: installed plugin 0.9.5 makes spawned crew test old prompts.",
+  "updatedAt": "2026-11-16T05:20:02.967Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "no CLI/MCP deck read in a worktree without node_modules; read the ticket via deck/client.mjs from the main checkout",
+      "evidence": "architect report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "node -e scripts in double quotes mangled by the shell (backticks, \\b); three retries, fixed by writing scripts to the scratchpad",
+      "evidence": "S1.md:34",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "counting prose pins needed four Sonnet sweeps (~380k child tokens): no marker on pin tests across ~70 files",
+      "evidence": "architect report",
+      "size": 3
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "measure-prompt shows pins only for pilot, architect, explorer, QA; other agents' limits need reading pinsOf",
+      "evidence": "scripts/measure-prompt.mjs:117",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census line ranges stale by 100+ lines; S5's range ends at 612 and S6's starts at 858, leaving an unowned gap",
+      "evidence": "S5 report: block 'the inheritance finding is written down where it is acted on' at l.624 left unowned",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 test 3 (check-references, pilot:tdd grep) had no red of its own: check-references does not compare a skill's name: with its directory",
+      "evidence": "check-references exit 0 straight after the git mv; only methodology-skills.test.mjs went red",
+      "size": 0
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a preloaded skill counts toward the architect's pin; the brief did not say a skill edit must be paid for",
+      "evidence": "measure-prompt lists architect preloaded skills 4592 tokens inside its own share",
+      "size": 0
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 slice file numbers stale: QA pinned at 4990.75 in the slice, base measures 5070.5; fix-brief mention at l.149 not l.148",
+      "evidence": "measure-prompt on 58e6f5a0",
+      "size": 0
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "L5 has no line for a forbidden-pattern lint coupled to a phrase extraction; S6 had to call the bare-main test itself",
+      "evidence": "pilot-agents.test.mjs:988 addresseeRule asserts the exact addressee sentence",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shell node -e and heredoc edits of Markdown-heavy JS tests mangled backslashes and quotes",
+      "evidence": "S7: broken split regex in install.test.mjs, failed sed on a cut script",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-fact-sheet",
+      "what": "returned a 70-row table restating the slice file for a 10-file test-only sweep",
+      "evidence": "S8 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit refused as 'File has not been read yet' after other tools touched the file",
+      "evidence": "S10: about 7 extra Read calls",
+      "size": 7
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census line ranges drifted; blocks located by test name and files re-read in full",
+      "evidence": "S9: about 15 Read calls",
+      "size": 15
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the repo has no type check or lint script, so the gate's typecheck and lint steps are absent",
+      "evidence": "S12: npx tsc --noEmit prints usage; npm run lint: no such script",
+      "size": 0
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "heredoc to $TMP with TMP unset hung the shell 120 s and left a stray background process it could not stop",
+      "evidence": "S13: background task bj6p6iom1, TaskStop unavailable",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the census candidate list held 8 of the 16 files with pins; classifying 178 files by reading did not fit one context, so it used rewording probes; gate.mjs refuses to run until rebuilt ledgers are committed, costing a scratch commit per probe",
+      "evidence": "S14: two probes, about 6 min each, 48 then 11 failures read",
+      "size": 12
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4's named tests (a budget check and a reference lint) cannot fail before the edit, so the slice has no valid red step",
+      "evidence": "S4.md Tests 1-2 pass on the unedited base",
+      "size": 0
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4's two named tests could not fail before the edit: the slice had no real red step",
+      "evidence": "PR #56 report via main; spec 6 test question handed to the fundamentalist",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "three co-pilots on this ticket and its predecessor handed back early with a live child whose report had to be redirected to main; the pilot drives triage and QA directly",
+      "evidence": "hand-backs on itm_ff08c3e59cfa and itm_3a521d90b85f, 2026-11-16",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "deck_status rejects a row named by bare S<n> and a non-numeric friction size; both learned by refusal",
+      "evidence": "co-pilot hand-back: 'S4 ... and S4 are both S4'; 'friction[0].size must be a number'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix brief told it to move prompt pins for the implementer and fundamentalist, which have no pin in measure-prompt; a measure run and a grep to establish that",
+      "evidence": "PR #57 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context reset lost the evidence runner's result; no coverage or mutation evidence; and its definition sends the report to a co-pilot that had already handed back",
+      "evidence": "report on PR #5 at 3c8568d4, relayed by the paused co-pilot",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "installed plugin 0.9.5 runs crew definitions that predate the feature, so Agent(pilot:...) tests the old prompt; headless `claude -p --plugin-dir` workaround",
+      "evidence": "installed_plugins.json points at 0.9.5, which has skills/tdd and no test-design",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 5's per-pin table lived only on slice PRs and PR #5's body lacked S13 and S14; sampling started from git diff of each merge",
+      "evidence": "PR #5 body before QA's edit",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "S14's census did not count --help text as prose; 3 help-text phrase asserts survived to QA",
+      "evidence": "618ee7ec",
+      "size": 1
+    }
+  ]
+}

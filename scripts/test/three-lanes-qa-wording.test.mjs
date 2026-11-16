@@ -1,6 +1,6 @@
 /**
- * S8 of three-lanes (spec 8, 19; L6, L7, L12): QA carries concluding from the pilot's `need` to the
- * Gate 2 press, and the pilot keeps the landing and the closing report.
+ * S8 of three-lanes (spec 8, 19; L6, L7, L12): QA carries concluding to the Gate 2 press, and the
+ * pilot keeps the landing and the closing report. Only the structure and the forbidden claims are tested.
  */
 
 import { test } from 'node:test';
@@ -22,22 +22,15 @@ function section(text, heading, file) {
   return next < 0 ? rest : rest.slice(0, next);
 }
 
-test("QA's definition owns the gate2 post", () => {
-  const concluding = section(read('agents/pilot-qa.md'), '## Concluding', 'agents/pilot-qa.md');
-  assert.match(concluding, /`need`/, 'concluding starts from the pilot\'s `need`');
-  assert.match(concluding, /`pilot integrate --trial`/, 'one-integration-line S9: the gate2 posts after the trial on pilot');
-  assert.match(concluding, /`gate2`/);
-  assert.match(concluding, /`signed <id>`/, 'QA tells main the press landed');
-  assert.match(concluding, /one QA per ticket/i);
+test("the pilot does not post QA's gate2", () => {
+  // lint: QA keeps a Concluding heading, and no prompt hands the gate2 back to the pilot
+  section(read('agents/pilot-qa.md'), '## Concluding', 'agents/pilot-qa.md');
   assert.doesNotMatch(read('agents/pilot-qa.md'), /the pilot then posts `gate2`/, 'the pilot no longer posts QA\'s gate2');
 });
 
-test("the pilot's step 9 keeps landing and the report only", () => {
+test('step 9 has no second signature and no second QA', () => {
   const pilot = read('agents/pilot.md');
-  const step9 = section(pilot, '### 9. Gate 2 and ready', 'agents/pilot.md');
-  assert.match(step9, /the press frees the lane/, 'gate2-frees-lane S9: the deck lands it, no `pilot landing`');
-  assert.match(step9, /wake/i, 'step 9 names the landing line as a wake');
-  assert.doesNotMatch(step9, /signs again/, 'a refused landing no longer has the user sign again');
-  assert.match(pilot, /never two QA agents\s+on one ticket/i);
+  // lint: step 9 exists, a refused landing does not have the user sign again, and no prompt says two QA agents are never live
+  assert.doesNotMatch(section(pilot, '### 9. Gate 2 and ready', 'agents/pilot.md'), /signs again/, 'a refused landing no longer has the user sign again');
   assert.doesNotMatch(pilot, /Two QA agents are\s+never live at once/);
 });

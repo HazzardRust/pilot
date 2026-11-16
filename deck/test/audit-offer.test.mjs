@@ -143,19 +143,9 @@ const stepOne = () =>
     fs.readFileSync(path.join(ROOT, 'agents', 'pilot.md'), 'utf8').replace(/\r\n/g, '\n'),
   )[1].replace(/\s+/g, ' ');
 
-test('step 1 counts the run, then offers the audit beside the depth question when pilot audit due says so', () => {
-  const step = stepOne();
-  assert.match(
-    step,
-    /`pilot audit count <slug>` \(`<slug>#<n>`[^)]*\)[^.]*`pilot audit due` exits 0[^.]*beside the depth question a `question` offering the audit[^.]*`pilot audit offered <slug>`[^.]*on yes spawn `pilot:pilot-auditor` in the background[^.]*`\$\{CLAUDE_PLUGIN_ROOT\}\/skills\/audit\/SKILL\.md`/,
-  );
-});
-
-
 // pilot-branch S12 (spec 12): a sub-deck starts at step 4, so step 1 is the main deck's alone
 // and offers the audit on `pilot audit due` alone.
-test('step 1 offers the audit on pilot audit due alone, with no role in the condition', () => {
-  const step = stepOne();
-  assert.match(step, /when `pilot audit due` exits 0, post beside the depth question/);
-  assert.doesNotMatch(step, /sub-deck|main deck/i, 'no role conditions the offer');
+test('step 1 offers the audit with no role in the condition', () => {
+  // lint: step 1 never names a sub-deck or the main deck
+  assert.doesNotMatch(stepOne(), /sub-deck|main deck/i, 'no role conditions the offer');
 });

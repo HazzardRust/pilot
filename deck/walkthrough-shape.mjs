@@ -8,12 +8,13 @@
 
 import { stepParts } from './items.mjs';
 
-const COMMANDS = ['npm', 'npx', 'node', 'pilot', 'git', 'gh', 'curl', 'cd', 'set', 'export', 'bash', 'sh', 'pwsh', 'powershell', 'python', 'pip'];
+const COMMANDS = ['npm', 'npx', 'node', 'pilot', 'git', 'gh', 'curl', 'cd', 'set', 'export', 'bash', 'sh', 'pwsh', 'powershell', 'python', 'pip', 'grep', 'cat', 'ls', 'rg'];
 const CODE_SPAN = /`([^`\n]+)`/g;
 const SPAN_PREFIX = /^(\$env:|\$|\.\/|\.\\)/;
 const ENV_ASSIGNMENT = /(?<![\w$:])([A-Z][A-Z0-9_]*=)\S/;
 // `pilot:` (a colon) is a name, `pilot ` (a space) a command; case matters, so "Set the theme" is prose.
-const LEADING_COMMAND = new RegExp(`^(${COMMANDS.join('|')}) `);
+// An optional action label first, so `Check: grep -o x` is still a command and `Note: cat photos` prose.
+const LEADING_COMMAND = new RegExp(`^(?:(?:Check|Run|Try|Verify|Type|Then): )?((?:${COMMANDS.join('|')}) .*)`);
 
 /** The word that makes `half` a command, or null. Never the half's text (L5). */
 function commandWord(half, isInstruction) {
@@ -28,9 +29,20 @@ function commandWord(half, isInstruction) {
   if (assignment) return assignment[1];
   if (half.includes('$env:')) return '$env:';
   const leading = isInstruction ? LEADING_COMMAND.exec(half) : null;
-  if (leading) return leading[1];
+  if (leading) return leading[1].split(' ')[0];
   if (half.includes('&&')) return '&&';
   return null;
+}
+
+/** A step's instruction when it is itself a command outside any code span, its label dropped; else null. */
+export function bareCommand(step) {
+  return LEADING_COMMAND.exec(stepParts(step).instruction)?.[1] ?? null;
+}
+
+/** The word that makes a step a command, its instruction read first, or null: the one rule QA's refusal, the shell check and the prefix line use. */
+export function stepCommandWord(step) {
+  const { instruction, result } = stepParts(step);
+  return commandWord(instruction, true) ?? commandWord(result ?? '', false);
 }
 
 export const MAX_WALKTHROUGH_BODY_LINES = 10; // non-blank lines
@@ -38,8 +50,7 @@ export const MAX_WALKTHROUGH_BODY_LINES = 10; // non-blank lines
 /** The gaps in a QA walkthrough, each worded as the refusal says it; [] when shaped. */
 export function walkthroughShapeGaps(screens, body = '', longer = undefined) {
   const steps = screens.flatMap((step, index) => {
-    const { instruction, result } = stepParts(step);
-    const word = commandWord(instruction, true) ?? commandWord(result ?? '', false);
+    const word = stepCommandWord(step);
     return word === null ? [] : [`step ${index + 1} has a command: \`${word}\``];
   });
   const count = body.split(/[\r\n]/).filter((line) => line.trim() !== '').length;

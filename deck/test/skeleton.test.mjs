@@ -38,20 +38,6 @@ test('the plugin declares the deck MCP server and the pinned Chrome DevTools MCP
   );
 });
 
-test('the pilot agent locates its own package through ${CLAUDE_PLUGIN_ROOT}', () => {
-  // The stub this slice shipped pointed at the README, to prove the variable expands in
-  // agent content at all (A5). Slice 6 replaced the stub with the real pilot, which
-  // reaches its rules and skills the same way; the expansion is still what is asserted.
-  const agent = fs.readFileSync(path.join(ROOT, 'agents', 'pilot.md'), 'utf8');
-  assert.match(agent, /\$\{CLAUDE_PLUGIN_ROOT\}\/(?:rules|skills)\//);
-});
-
-test('the licence is MIT under the package owner', () => {
-  const licence = fs.readFileSync(path.join(ROOT, 'LICENSE'), 'utf8');
-  assert.match(licence, /MIT License/);
-  assert.match(licence, /Copyright \(c\) 2026 HazzardRust/);
-});
-
 // --- the store -------------------------------------------------------------
 
 const { DeckRefusal, MAX_TEXT_BYTES, addReply, defaultStoreDir, listItems, postItem, storeFile } =
