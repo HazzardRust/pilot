@@ -7,7 +7,7 @@ import { gitFixture } from './lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -66,7 +66,10 @@ test('a bad remote, no repo and no ref answer null', (t) => {
   git(work, 'config', 'pilot.remote', 'nowhere');
   assert.equal(pilotTip({ cwd: work }), null, 'a pilot.remote that is not a remote here');
 
-  assert.equal(pilotTip({ cwd: emptyDir(t) }), null, 'not a repository');
+  const plain = emptyDir(t);
+  assert.equal(pilotTip({ cwd: plain }), null, 'not a repository');
+  const cli = spawnSync(process.execPath, [CLI], { cwd: plain, encoding: 'utf8' });
+  assert.deepEqual([cli.status, cli.stdout, cli.stderr], [1, '', 'pilot-tip: no pilot ref and no HEAD commit here\n'], 'no line to cut at');
 
   const bare = emptyDir(t);
   const origin = path.join(bare, 'origin.git');
