@@ -37,7 +37,7 @@ until A4–A6 are answered; 2 follows L7' (*assumed*, awaiting itm_b69e08509bb5)
    the feature PR found by a hidden marker, so a lost id never posts twice. The "Non-additive migrations" section
    moves into it (A2). *Evidence: a daemon test over both posts and a verb test; bar: first text 1 POST, changed
    text 1 PATCH, same text 0 writes, a gate2 with no walkthrough 1 POST; `pilot-qa` names no `gh` write.*
-4. *Assumed (A6).* `pilot integrate --default` stays gone (removed by one-integration-line, a usage error at
+4. (A6, answered.) `pilot integrate --default` stays gone (removed by one-integration-line, a usage error at
    `scripts/integrate.mjs:545-561`): `check-references` refuses it in crew prose. *Evidence: `check-references`;
    bar: exits 1 on a fixture naming `pilot integrate --default`, 0 on the tree.*
 5. Every crew command that pushes or writes GitHub is one plain command with literal arguments: `pilot integrate
@@ -167,7 +167,7 @@ reappears in four files and a second host means editing each.
 - **A5** (re-cut, spec 3) `comment` on the walkthrough when there is one and on every gate2. Tradeoff: a run with no
   walkthrough comments only at gate2. Rejected: gate2 only. Thread itm_62acc0074933. **Assumed.**
 - **A6** (re-cut, spec 4) Spec 4 is the `--default` lint alone; the `pilot land` half is dropped (ADR 0161). Tradeoff:
-  no lint on descriptive `pilot land`. Rejected: dropping spec 4. Thread itm_958e79727604. **Assumed.**
+  no lint on descriptive `pilot land`. Rejected: dropping spec 4. Thread itm_958e79727604. **Answered** 2026-11-16: "Lint only", the default.
 - red team: (2026-10-20, stands) S2's trigger on every `deck_status` would spawn in ~100 daemon tests: L5 and the gate1
   condition keep them offline (S2 test 3). `callTool`'s third argument spreads into `startLanding` (:315): S2 renames
   it `deps` with `prWrite` beside the landing keys. A gate1 before `feat/<slug>` is pushed: L3's quiet `no PR yet`,
