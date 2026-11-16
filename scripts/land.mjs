@@ -22,9 +22,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { hostIn } from '../deck/host.mjs';
 import { deleteMerged } from './branches.mjs';
 import { assertPushable, firstLine, holds, PILOT_BRANCH } from './pilot-branch.mjs';
-import { baseOf, commitRecords, ghIn, git as gitAt, landingMessage } from './integrate.mjs';
+import { baseOf, commitRecords, git as gitAt, landingMessage } from './integrate.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
 import { releasePr } from './release.mjs';
 import { runRef, runRemote } from './remotes.mjs';
@@ -51,7 +52,7 @@ const reason = (err) =>
  * `gc`'s (process-gc L14): `() => string[]`, none by default, so only the CLI stops processes.
  * `holder` is `prune`'s (landing-keeps-worktrees L2): none by default, so nothing is held.
  */
-export function land({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args), gh = ghIn(cwd), test, gc = () => [], holder, remove = removeWorktree, wait, sleep } = {}) {
+export function land({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args), gh = hostIn(cwd), test, gc = () => [], holder, remove = removeWorktree, wait, sleep } = {}) {
   let head;
   try {
     head = git(['symbolic-ref', '--short', 'HEAD']);
