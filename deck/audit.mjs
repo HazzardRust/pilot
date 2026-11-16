@@ -185,6 +185,9 @@ export function renderReport(report) {
   const cuts = rows.filter(isCut);
   const unmeasured = report.unmeasured.length === 0 ? 'nothing' : report.unmeasured.map(oneLine).join('; ');
   const measured = measuredLine(report);
+  // audit-f1 spec 3: the revision measured, `<ref> <sha>`, when the report carries it.
+  const base = typeof report.base === 'string' && report.base.trim() ? oneLine(report.base) : null;
+  const atBase = base ? ` at ${base}` : '';
   const share = shareOf(report);
   const shareCell = (row) => (share ? ` ${share(row)} |` : '');
   const shareNote = (row) => (share ? ` (${share(row)} of a run)` : '');
@@ -192,7 +195,7 @@ export function renderReport(report) {
   const table = [
     `# Audit of ${report.repo}`,
     '',
-    `Started ${report.startedAt}, measured in the scratch worktree ${report.scratch}, since removed.`,
+    `Started ${report.startedAt}, measured in the scratch worktree ${report.scratch}${atBase}, since removed.`,
     ...(report.duringRun ? ['Measured during a piloted run: timings are noisier than on an idle machine.'] : []),
     ...measured,
     costLine(report),
@@ -217,6 +220,7 @@ export function renderReport(report) {
   const baselines = kept.filter((row) => !savesSomething(row));
   const unmeasuredCut = report.unmeasured.length === 0 ? 'nothing' : report.unmeasured.map((item) => cut(item, UNMEASURED_CHARS)).join('; ');
   const deckBody = [
+    ...(base ? [`Measured at ${base}.`] : []),
     ...(measured.length ? [...measured, ''] : []),
     ...findings.flatMap((row) => [
       `- **${row.id}** ${cut(row.finding, FINDING_CHARS)} · score ${Number(row.score.toPrecision(2))} · ` +

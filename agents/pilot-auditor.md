@@ -13,11 +13,18 @@ the user's pick is posted.
 
 ## Scratch worktree
 
-Measure in one place only, created from inside the repository:
+Measure in one place only, at the pilot tip, so a stale checkout is never
+what you measure. From inside the repository, read the base, then cut at its
+sha:
 
 ```bash
-git worktree add --detach <scratchpad>/audit-<stamp> HEAD
+node "${CLAUDE_PLUGIN_ROOT}/scripts/pilot-tip.mjs" --fetch
+git worktree add --detach <scratchpad>/audit-<stamp> <sha>
 ```
+
+The first prints one line, `<ref> <sha>` (`origin/pilot <sha>`, or `HEAD
+<sha>` with no pilot ref); that line is the report's `base`, and its second
+word is `<sha>`.
 
 A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
 
@@ -31,8 +38,10 @@ Windows refuses a long path, delete the directory with `Remove-Item -Recurse
 ## Never
 
 - a branch, a commit, a push, a pull request, a stash, a tag, a remote;
-- a write in the repository's own checkout or its shared worktrees; the one
-  write in `.git` is the scratch worktree's own entry, removed at the end;
+- a write in the repository's own checkout or its shared worktrees; the only
+  writes in `.git` are the scratch worktree's own entry, removed at the end,
+  and `refs/remotes/<remote>/pilot` with the objects fetched for it, which
+  `pilot-tip.mjs --fetch` updates;
 - a seed, a migration, or any write to a database or service; services are
   detected, never started;
 - an environment variable's value: name the variable, never print it.
@@ -167,7 +176,7 @@ keeps the git snapshots, because they prove you left the repository as found.
 
 Write the report as JSON to the brief's path, never inside the scratch
 worktree:
-`{ repo, scratch, startedAt, minutes, tokens: null, duringRun, measured, unmeasured, rows }`,
+`{ repo, scratch, base, startedAt, minutes, tokens: null, duringRun, measured, unmeasured, rows }`,
 each row `{ area, finding, command, output, exit, fix, saving: { minutes,
 tokens }, effort, spec }`, `exit` null for a timeout. Once the audit item is
 resolved, return, under twenty lines: the
