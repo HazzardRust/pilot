@@ -8,7 +8,7 @@
   "slices": [
     {
       "slice": "crew-tests-behaviour",
-      "state": "implementing; base taken at 8be8f3a0; feat at 1dd03de6",
+      "state": "implementing; feat at 5fb7311e; S1-S3, S5-S14 integrated",
       "branch": "feat/crew-tests-behaviour",
       "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-tests-behaviour",
       "pr": 5
@@ -39,10 +39,13 @@
     },
     {
       "slice": "S4 Fundamentalist names the anti-pattern",
-      "state": "planned; held on PR #8 (fundamentalist-decisions) not landed",
+      "state": "integrated",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/crew-tests-behaviour-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s4",
+      "pr": 56
     },
     {
       "slice": "S5 Sweep: pilot-agents first half",
@@ -115,7 +118,7 @@
     },
     {
       "slice": "S14 Sweep: re-classification and residue",
-      "state": "fixing (draft PR #55)",
+      "state": "integrated at 5fb7311e",
       "after": [
         "S2 Misses: line + check-slices",
         "S5 Sweep: pilot-agents first half",
@@ -133,8 +136,8 @@
       "pr": 55
     }
   ],
-  "next": "S14 #55 fixing (cut guard-notice pin in session-handoff.test.js); then integrate S14, brief S4 per A6, then fundamentalist + QA",
-  "updatedAt": "2026-11-16T04:23:36.457Z",
+  "next": "S4 integrating (PR #56, security APPROVE); then one pilot-fundamentalist on PR #5. Lander note (A6): S4 bullet is the last item under '## The test pass: depth' in agents/pilot-fundamentalist.md, lead-in 'Three kinds' -> 'Four kinds are findings'; PR #8 lands second merges it.",
+  "updatedAt": "2026-11-16T04:29:08.307Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -231,6 +234,18 @@
       "what": "the census candidate list held 8 of the 16 files with pins; classifying 178 files by reading did not fit one context, so it used rewording probes; gate.mjs refuses to run until rebuilt ledgers are committed, costing a scratch commit per probe",
       "evidence": "S14: two probes, about 6 min each, 48 then 11 failures read",
       "size": 12
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4's named tests (a budget check and a reference lint) cannot fail before the edit, so the slice has no valid red step",
+      "evidence": "S4.md Tests 1-2 pass on the unedited base",
+      "size": 0
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4's two named tests could not fail before the edit: the slice had no real red step",
+      "evidence": "PR #56 report via main; spec 6 test question handed to the fundamentalist",
+      "size": 1
     }
   ]
 }
