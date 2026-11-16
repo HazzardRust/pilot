@@ -15,7 +15,7 @@
     },
     {
       "slice": "S1 Walking skeleton: test-design",
-      "state": "draft PR #44",
+      "state": "integrated at 5e7ac16b",
       "branch": "slice/crew-tests-behaviour-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s1",
       "pr": 44
@@ -103,8 +103,8 @@
       ]
     }
   ],
-  "next": "integrating S1 (#44) then S2 (#45); then start S3, S6, S7, S13 per pilot ready",
-  "updatedAt": "2026-11-16T03:27:37.055Z",
+  "next": "S1 integrated at 5e7ac16b; integrating S2 (#45)",
+  "updatedAt": "2026-11-16T03:29:42.474Z",
   "friction": [
     {
       "agent": "pilot-architect",
