@@ -554,7 +554,7 @@ const DEFAULT_BRANCH_ASK = [
 // Erring towards "covered" is the safe direction: the deny wins whatever we add.
 const BASH_RULE = /^Bash(?:\((.*)\))?$/;
 
-function denyCovers(deny, rule) {
+export function denyCovers(deny, rule) {
   const match = BASH_RULE.exec(String(deny).trim());
   if (!match) return false;
   if (match[1] === undefined) return true; // a bare `Bash` denies every command
@@ -617,7 +617,7 @@ function defaultBranchAskStep(settingsPath) {
  * whatever this rule says (L23). A rule the user's deny or ask covers is named and left out,
  * since either beats an allow and the rule would read as a grant that never takes effect (L3).
  */
-const PILOT_MERGE_ALLOW = [
+export const PILOT_MERGE_ALLOW = [
   'Bash(pilot sync *)',
   'Bash(pilot integrate *)',
   'Bash(pilot land *)',
