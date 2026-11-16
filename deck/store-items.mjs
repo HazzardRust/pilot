@@ -50,6 +50,7 @@ import { questionShapeGaps } from './question-shape.mjs';
 import { reportAskGaps } from './report-shape.mjs';
 import { ticketShapeGaps } from './ticket-shape.mjs';
 import { walkthroughShapeGaps } from './walkthrough-shape.mjs';
+import { placeSteps } from './step-shell.mjs';
 import { enterStage } from './store-stage.mjs';
 import { gate2EvidenceGaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
 import { MAX_QUESTION_CHARS, POSTABLE_KINDS, andList } from './tools.mjs';
@@ -144,7 +145,7 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
     kind,
     title,
     body,
-    ...detail,
+    ...placeSteps(kind, detail), // a command step names its dir; a shell left out is the daemon's platform's (spec 9, A3)
     // A gate1 keeps `surface: false` too, so its plan tells it from one signed before the flag (L2).
     ...(kind === KIND_GATE1 ? { surface: given.surface } : {}),
     ...bylineOf(author),

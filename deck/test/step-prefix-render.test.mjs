@@ -32,7 +32,7 @@ test('a prose step renders no prefix', () => {
 test('a walkthrough keeps its shell', (t) => {
   tempDeck(t);
   const repo = path.join(os.tmpdir(), 'pilot-step-prefix-repo');
-  callTool('deck_post', { kind: KIND_WALKTHROUGH, title: 'Try it', body: 'Run it.', repo, shell: 'Git Bash', screens: ['Run `npm test`'] });
+  callTool('deck_post', { kind: KIND_WALKTHROUGH, title: 'Try it', body: 'Run it.', repo, dir: repo, shell: 'Git Bash', screens: ['Run `npm test`'] });
   const item = listItems().find((each) => each.kind === KIND_WALKTHROUGH);
   assert.equal(item.shell, 'Git Bash');
 });
