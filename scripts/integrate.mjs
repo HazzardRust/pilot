@@ -541,24 +541,54 @@ function pruneSlice(cwd, gh, slice, head) {
   }
 }
 
+/** The real path of the git common dir `cwd` belongs to, or null outside a repository. */
+function commonDir(cwd) {
+  const found = spawnSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd, encoding: 'utf8', windowsHide: true });
+  if (found.status !== 0) return null;
+  try {
+    return fs.realpathSync.native(found.stdout.trim());
+  } catch {
+    return null;
+  }
+}
+
 /**
  * `pilot integrate [<branch>] [--no-push] [--trailer "<line>"]...`, or `pilot integrate --trial`
- * alone (`trial`); any other flag, `--default` among them, is a usage error. `inject` is `integrate`'s options, for a test.
+ * alone (`trial`), either with `--dir <worktree>` anywhere to run there (deck-writes-github spec 5),
+ * so `Bash(pilot integrate *)` matches it with no `cd`; any other flag, `--default` among them, is a
+ * usage error, and so is a `--dir` that is not a directory or not a worktree of the repository it
+ * is run from. `inject` is `integrate`'s options, for a test.
  */
 export function main(argv, inject = {}) {
   const options = { trailers: [] };
   let branch;
+  let dir;
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === '--no-push') options.push = false;
     else if (argv[i] === '--trial') options.trial = true;
     else if (argv[i] === '--trailer') options.trailers.push(argv[++i]);
+    else if (argv[i] === '--dir' && dir === undefined) dir = argv[++i] ?? null;
     else if (argv[i].startsWith('-')) options.unknown = true;
     else branch ??= argv[i];
   }
   const trialMixed = options.trial && (branch !== undefined || options.push === false || options.trailers.length > 0);
-  if (options.unknown || options.trailers.includes(undefined) || trialMixed) {
+  if (options.unknown || options.trailers.includes(undefined) || dir === null || trialMixed) {
     process.stderr.write('usage: pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]... | pilot integrate --trial\n');
     return 1;
+  }
+  if (dir !== undefined) {
+    if (!fs.statSync(dir, { throwIfNoEntry: false })?.isDirectory()) {
+      process.stderr.write(`pilot integrate: --dir ${dir} is not a directory\n`);
+      return 1;
+    }
+    // Only a worktree of the repository it is run from: the rule that admits the command never
+    // reaches another repository's test command or push.
+    const here = commonDir(inject.cwd ?? process.cwd());
+    if (here === null || commonDir(dir) !== here) {
+      process.stderr.write(`pilot integrate: --dir ${dir} is not a worktree of this repository\n`);
+      return 1;
+    }
+    inject = { ...inject, cwd: path.resolve(dir) };
   }
   const result = options.trial ? trial(inject) : integrate(branch, { ...inject, ...options });
   // The red line names the first NAMED; each one past them once, below it.
