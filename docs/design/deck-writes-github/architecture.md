@@ -17,10 +17,10 @@ rule: no crew agent writes to GitHub; the deck performs each write from the run 
 
 ## 2. Spec
 
-Sharpened from the ticket's six lines; 7 is added (found), 8 by the user. Re-cut: 1, 3 and 4 move and are *assumed*
-until A4–A6 are answered; 2 follows L7' (the user, itm_b69e08509bb5, 2026-11-16); 6's bar is re-measured.
+Sharpened from the ticket's six lines; 7 is added (found), 8 by the user. Re-cut: 1, 3 and 4 moved, answered as A4–A6;
+2 follows L7' (the user, itm_b69e08509bb5, 2026-11-16); 6's bar is re-measured.
 
-1. *Assumed (A4).* No crew prompt names a GitHub write: `gh pr edit` (its `--base` retarget included),
+1. (A4, answered.) No crew prompt names a GitHub write: `gh pr edit` (its `--base` retarget included),
    `gh pr comment`, `gh pr ready`, `gh pr close`, `gh api` with `-X`/`--method` PATCH or POST, or `gh pr create`
    for the feature PR; `gh pr create --draft` stands only in the implementer's own slice PR (A1). A dropped base is
    `deck_status base: pilot`, which the deck applies. *Evidence: `check-references` carries them as forbidden
@@ -163,7 +163,7 @@ reappears in four files and a second host means editing each.
   2026-10-20: "writes only". Verdict: stands — re-cut: crew-tests-behaviour has landed; the reason holds.
 - **A4** (re-cut, spec 1) The ban adds `gh pr edit --base` and the feature PR's `gh pr create`; a dropped N is
   `deck_status base: pilot`, retargeted by the deck; the architect opens no PR. Tradeoff: retarget waits on the next
-  deck write. Rejected: the pilot keeps the retarget as the one exception. Thread itm_c647d4200652. **Assumed.**
+  deck write. Rejected: the pilot keeps the retarget as the one exception. Thread itm_c647d4200652. **Answered** 2026-11-16: "Deck retargets", the default.
 - **A5** (re-cut, spec 3) `comment` on the walkthrough when there is one and on every gate2. Tradeoff: a run with no
   walkthrough comments only at gate2. Rejected: gate2 only. Thread itm_62acc0074933. **Answered** 2026-11-16: "Gate2 always, walkthrough too", the default.
 - **A6** (re-cut, spec 4) Spec 4 is the `--default` lint alone; the `pilot land` half is dropped (ADR 0161). Tradeoff:
