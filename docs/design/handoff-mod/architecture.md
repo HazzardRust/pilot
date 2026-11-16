@@ -179,11 +179,13 @@ in the mod, untested), so it moves behind a CLI rather than going. `PILOT_PLUGIN
   at SessionStart as today, so nothing is lost but the clear, which a fresh session does not need. Rejected path:
   every main session whose mod event names agent `pilot:pilot` clears on any open hand-off (unproven payload, and a
   second pilot session in the repository would clear too).
+  Verdict: stands: it bounds L11's cost (a watched session cleared under the user) to the session that asked for the hand-off; no queued ticket touches `claims/`.
 - **A7 Chain at start only under `pilot run`** (`PILOT_RUN_REPO` set): the look's `start` op always writes the
   reported-in stamp and asks `/api/chain` only in a session `pilot run` started. Tradeoff: a plain pilot session
   does not start the head ticket by itself; the user asks it to. Rejected path: every pilot session chains at start
   (starts a ticket the user did not ask for in a session they opened by hand; chaining was asked of `pilot run`,
   run-chaining A5).
+  Verdict: stands: a session opened by hand starts no ticket unasked; its paths fork under L11, so it is posted to the user.
 
 ## 7. Out of scope
 
