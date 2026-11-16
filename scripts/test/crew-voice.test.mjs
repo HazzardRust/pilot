@@ -44,8 +44,8 @@ test("the pilot's question body asks for no evidence", () => {
   const start = source.indexOf('\n### 3. Grilling');
   assert.notEqual(start, -1, 'agents/pilot.md has no "### 3. Grilling" step');
   const step = flat(source.slice(start, source.indexOf('\n### ', start + 1)));
-  const body = sentences(step).find((sentence) => /^Its body is\b/.test(sentence));
-  assert.ok(body, 'step 3 has no "Its body is" sentence');
-  // lint: the grilling question body asks for no evidence (short-by-default A2)
-  assert.doesNotMatch(body, /\bthe evidence\b/i, 'the question body asks for no evidence (A2)');
+  // lint: no sentence giving the grilling question's body asks for evidence (short-by-default A2)
+  for (const body of sentences(step).filter((sentence) => /^Its body is\b/.test(sentence))) {
+    assert.doesNotMatch(body, /\bthe evidence\b/i, 'the question body asks for no evidence (A2)');
+  }
 });

@@ -27,14 +27,12 @@ const norm = (text) => text.replace(/\s+/g, ' ');
 const skillStep = (skill, n, next) =>
   section(skill, `### ${n}\\.[^\\n]*`, `### ${next}\\.`, `agents/pilot.md has no "### ${n}." step`);
 
+/** The implementer's body before its first heading, `## Where you work`. */
 const implementerOpening = () => {
-  const implementer = read('agents/pilot-implementer.md');
-  return section(
-    implementer,
-    'You are the implementer for one slice[^\\n]*',
-    '## Where you work',
-    'agents/pilot-implementer.md has no opening paragraph before "## Where you work"',
-  );
+  const body = read('agents/pilot-implementer.md').replace(/\r\n/g, '\n').split('\n---\n').slice(1).join('\n---\n');
+  const end = body.indexOf('\n## Where you work');
+  assert.ok(end >= 0, 'agents/pilot-implementer.md has no "## Where you work" heading');
+  return body.slice(0, end);
 };
 
 test('step 4 and the implementer opening do not paste a slice verbatim', () => {

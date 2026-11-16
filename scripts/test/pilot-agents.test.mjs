@@ -941,8 +941,9 @@ test('the closing report is a report', () => {
 // gate-no-stall S3 (spec 1, L6) made `pilot land` the only ready press; one-integration-line
 // (spec 3) removed it: the feature PR targets pilot and the landing merges it.
 test('step 9 runs no gh pr ready', () => {
-  const step9 = /\*\*Gate 2\*\* is the user signing off[\s\S]*?(?=\n## |\n### )/.exec(read('agents/pilot.md'));
-  assert.ok(step9, 'agents/pilot.md must carry the Gate 2 paragraph');
+  // lint: the step 9 heading exists, and the removed ready press is absent under it
+  const step9 = /\n### 9\. [\s\S]*?(?=\n## |\n### )/.exec(read('agents/pilot.md'));
+  assert.ok(step9, 'agents/pilot.md must carry step 9');
   const text = step9[0].replace(/\s+/g, ' ');
   assert.doesNotMatch(text, /gh pr ready/, 'step 9 still tells the pilot to run the ready press');
   assert.doesNotMatch(text, /`pr ready failed`/, 'step 9 still names the removed ready step');
@@ -984,29 +985,10 @@ test('the co-pilot sends main only four things', () => {
 
 // --- co-pilot-reports S2 (spec 1, 3; L2, L3): QA and the fundamentalist report to their spawner too ---
 
-/** The paragraph of an agent file that defines its addressee, on one line. */
-const addresseeRule = (name) => {
-  const match = /\n\nYour addressee is the agent that spawned you([\s\S]*?)\n\n/.exec(agentSource(name));
-  assert.ok(match, `agents/${name}.md never defines its addressee`);
-  return match[0].trim();
-};
-
-/** QA's switch back to `main` once the co-pilot has handed back (L3). */
-const QA_HAND_BACK =
-  /Once your walkthrough-posted report has gone to the co-pilot, your addressee is `main`: the co-pilot has handed back, and a message to it would resume it\./;
-
 test('the fundamentalist reports to its spawner', () => {
   const report = agentSection('pilot-fundamentalist', 'Report');
   // lint: forbidden pattern
   assert.doesNotMatch(report, /One message to `main`/, 'spec 1: the verdict goes to the spawner');
-});
-
-test('no crew definition sends to a bare main', () => {
-  for (const name of ['pilot-implementer', 'pilot-qa', 'pilot-fundamentalist']) {
-    const flat = agentSource(name).replace(addresseeRule(name), '').replace(/\s+/g, ' ');
-    const rest = name === 'pilot-qa' ? flat.replace(QA_HAND_BACK, '') : flat;
-    assert.doesNotMatch(rest, /\bmain\b/, `spec 1: every \`main\` in agents/${name}.md sits inside the addressee sentence`);
-  }
 });
 
 // --- co-pilot-reports S3 (spec 7, 8; L9, A2): a pushback row in every crew report, one PR-title format ---

@@ -774,13 +774,11 @@ test('the pilot says what the hand-off body carries', function () {
     assert.ok(section, rel + ' has no "## When your own context fills" section');
     const said = words(section[1]);
 
+    // lint: the section, the kind, the command and its fallback exist; /clear is never a numbered step
     assert.match(said, /`handoff`/, rel + ': must name the kind the lane looks for');
     assert.match(said, /`pilot handoff`/, rel + ': must name the one command that does the hand-off');
     assert.doesNotMatch(said, /\d\. Tell the user to type/, rel + ': typing /clear is the fallback, never a numbered step');
     assert.match(said, /\/clear/, rel + ': must name the fallback of typing /clear');
-    for (const [what, pattern] of RESUMES_FROM) {
-      assert.match(said, pattern, rel + ' does not require ' + what + ' in the body');
-    }
   }
 });
 

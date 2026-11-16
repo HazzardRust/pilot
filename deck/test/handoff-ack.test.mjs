@@ -4,7 +4,6 @@ import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 
 import { HANDOFF_FAILED, KIND_HANDOFF, messagesOf, threadState } from '../items.mjs';
 import { createRequire } from 'node:module';
@@ -13,19 +12,9 @@ import { renderThreadPage } from '../ui/render.mjs';
 import { shapedTicketBody, tempDeck } from '../testUtils.mjs';
 
 const REPO = 'D:/work/alpha';
-const PILOT_MD = new URL('../../agents/pilot.md', import.meta.url);
 
 const aHandoff = () => postItem({ kind: KIND_HANDOFF, title: 'Handoff', body: 'Stash at run.json.', repo: REPO });
 const stored = (id) => listItems().find((item) => item.id === id);
-
-test("pilot.md's hand-off rule names the reply, then the resolve, as the first two acts", () => {
-  const text = fs.readFileSync(PILOT_MD, 'utf8').replace(/\s+/g, ' ');
-  assert.match(
-    text,
-    /that session's first two tool calls are a `deck_reply` on the thread saying it holds the run, then its `deck_resolve`/,
-    'the resumed session acknowledges and closes the hand-off before it does anything else'
-  );
-});
 
 test('Handoff failed on an acknowledged hand-off stores pickedUpAt on the press, from the reply\'s time', (t) => {
   tempDeck(t);

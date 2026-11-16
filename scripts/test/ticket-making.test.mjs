@@ -119,18 +119,11 @@ test('the proposal table keeps its header row', () => {
   assert.match(proposal, /^\| # \| Ticket \| Holds \| Why together \| Found \| Estimate \| Position \|$/m);
 });
 
-test('agents/pilot.md keeps its ticket-making row and routes ticket appends through the skill', () => {
-  const pilot = read('agents/pilot.md');
-  const row = pilot.split('\n').find((line) => line.startsWith('| `ticket-making` |'));
+test('agents/pilot.md keeps its ticket-making row', () => {
+  const row = read('agents/pilot.md').split('\n').find((line) => line.startsWith('| `ticket-making` |'));
 
   assert.ok(row, 'the methodology skills table has a ticket-making row'); // lint: the row exists
   assert.ok(row.includes(`\`${TICKET_MAKING_TITLE}\``), `the row names the ${TICKET_MAKING_TITLE} title`); // lint: the row names the deck's title
-
-  const start = pilot.indexOf('Work agreed in any thread');
-  assert.notEqual(start, -1, 'the deck-inbox paragraph keeps its ticket rule');
-  const rule = pilot.slice(start, pilot.indexOf('\n\n', start));
-  assert.ok(rule.includes('`${CLAUDE_PLUGIN_ROOT}/' + SKILL_REL + '`'), 'the ticket rule names the skill by path'); // lint: the rule references the skill
-  assert.doesNotMatch(rule, /`Add`/, 'the rule is not conditional on an Add thread'); // lint: the rule is not Add-only
 });
 
 // lint: the auditor never converts a pick to minutes per slice

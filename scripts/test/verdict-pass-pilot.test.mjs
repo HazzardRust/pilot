@@ -12,9 +12,6 @@ import { flat, read } from './lib/area-file.mjs';
 const PILOT = read('agents/pilot.md');
 
 test('the gate1 read at sha names no git subcommand', () => {
-  const start = PILOT.indexOf('**Gate 1** is the user signing off');
-  assert.ok(start >= 0, 'agents/pilot.md has no Gate 1 paragraph');
-  const paragraph = flat(PILOT.slice(start, PILOT.indexOf('\n\n', start)));
-  // lint: the Gate 1 paragraph names no git show / cat-file
-  assert.doesNotMatch(paragraph, /git (show|cat-file)/, 'the read at sha names no git subcommand');
+  // lint: pilot.md, its Gate 1 paragraph included, names no git show / cat-file
+  assert.doesNotMatch(flat(PILOT), /git (show|cat-file)/, 'the read at sha names no git subcommand');
 });
