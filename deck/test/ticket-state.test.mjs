@@ -18,7 +18,7 @@ import { renderHomePage } from '../ui/render.mjs';
 import { postStored, shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
 
 const REPO = path.join('D:', 'work', 'pilot');
-const EVIDENCE = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x' };
+const EVIDENCE = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', surface: false };
 
 // The architect's resolved merge thread naming `ticket`: a gate1 waits for one while another red
 // ticket shares its repository (merge-first spec 5, L13), as a parked earlier ticket does here.

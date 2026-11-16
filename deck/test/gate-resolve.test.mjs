@@ -20,7 +20,7 @@ import { deckOnAPort, postStored, shapedTicketBody, takeLive, tempDeck } from '.
 const { callTool } = await import('../server.mjs');
 
 const REPO = path.join('D:', 'work', 'pilot');
-const GATE1 = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x' };
+const GATE1 = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', surface: false };
 const reread = (id) => listItems().find((item) => item.id === id);
 const aTicket = () => takeLive(postItem({ kind: KIND_TICKET, sliceCount: 60, title: 'Apple', body: shapedTicketBody(), repo: REPO }).id);
 const aGate1 = (ticket) => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, ...GATE1, ticket });

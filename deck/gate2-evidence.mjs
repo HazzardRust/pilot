@@ -19,3 +19,12 @@ export function gate2EvidenceGaps(ticket, { body, walkthrough }) {
   if (surface === true && walkthrough === undefined) return ['a short-path gate2 with a surface names its walkthrough'];
   return [];
 }
+
+/**
+ * The gaps in a walkthrough by `kind` on `ticket` (walkthrough-surface spec 5, 6; L2, L3): QA's on a plan marked
+ * `surface: false` is one; the pilot's wizard, a plan without `surface` (signed before it existed) or no plan, none.
+ */
+export function walkthroughPlanGaps(ticket, kind) {
+  if (kind !== 'qa' || ticket?.plan?.surface !== false) return [];
+  return [`the plan ${ticket.plan.artefact} marks no surface: no walkthrough; the checks table goes in the gate2`];
+}

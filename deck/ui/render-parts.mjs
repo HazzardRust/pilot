@@ -284,7 +284,7 @@ function renderAsked(item, items) {
 /** A gate's evidence, in its kind's SPECS order, as the block a walkthrough's fields are drawn in. */
 function renderGateDetail(item, items) {
   const rows = extraFieldsFor(item.kind)
-    .filter((name) => Object.hasOwn(GATE_ROWS, name) && item[name] !== undefined)
+    .filter((name) => Object.hasOwn(GATE_ROWS, name) && item[name] !== undefined && item[name] !== false)
     .map((name) => renderRow(GATE_ROWS[name][0], GATE_ROWS[name][1](item[name], items)))
     .join('');
   return (rows ? `<dl class="detail">${rows}</dl>` : '') + renderAsked(item, items);
