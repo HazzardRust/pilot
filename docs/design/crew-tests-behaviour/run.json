@@ -53,7 +53,7 @@
     },
     {
       "slice": "S6 Sweep: pilot-agents second half",
-      "state": "draft PR #47",
+      "state": "integrated at 1d0d7229",
       "after": [
         "S5"
       ],
@@ -63,9 +63,10 @@
     },
     {
       "slice": "S7 Sweep: docs, README, install, rules, ADR",
-      "state": "implementing",
+      "state": "draft PR #48",
       "branch": "slice/crew-tests-behaviour-s7",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s7"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s7",
+      "pr": 48
     },
     {
       "slice": "S8 Sweep: lane and ticket pins",
@@ -113,8 +114,8 @@
       ]
     }
   ],
-  "next": "integrating S6 (#47); S7, S8 implementing; then S9",
-  "updatedAt": "2026-11-16T03:37:54.773Z",
+  "next": "integrating S7 (#48); S8 implementing; then S9, S10",
+  "updatedAt": "2026-11-16T03:39:55.443Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -169,6 +170,12 @@
       "what": "L5 has no line for a forbidden-pattern lint coupled to a phrase extraction; S6 had to call the bare-main test itself",
       "evidence": "pilot-agents.test.mjs:988 addresseeRule asserts the exact addressee sentence",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shell node -e and heredoc edits of Markdown-heavy JS tests mangled backslashes and quotes",
+      "evidence": "S7: broken split regex in install.test.mjs, failed sed on a cut script",
+      "size": 4
     }
   ]
 }
