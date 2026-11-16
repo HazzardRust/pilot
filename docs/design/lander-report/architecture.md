@@ -69,11 +69,14 @@ The pins are tests, not modules. Nothing is shallow, so there is no fold slice.
   marker. Trades a run and its QA for 6 changed lines. Rejected: (b), close as delivered by lander-tail and
   0.9.6 (the user declined it). This replaces the old A1, itm_9faf1ca57766, which was superseded when 0.9.6
   landed in PR #35.
+  Verdict: stands
 - **A2** *assumed*, itm_661f5d3d7ffe. Depth: forks (default). Trades nothing for a 1-slice cut. Rejected: a
   deeper pass, since nothing is left to design.
+  Verdict: stands
 - **A3** *assumed*, itm_b0a0a27a3d2f. QA environment: the local gate only (default). Spec 2's live check (the
   update and the next landing) is the user's, after main. Rejected: a scratch deck walk at 0.9.7. Its health
   version is already covered by spec 1's pin.
+  Verdict: stands
 
 red team: I walked S1's red step against the files at 6ea49cac. Editing status-command.test.mjs:74 and
 store-upgrade.test.mjs:97 to 0.9.7 makes exactly those 2 tests red. toolbox.test.mjs:209 stays green because
