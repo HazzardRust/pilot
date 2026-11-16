@@ -33,7 +33,7 @@
     },
     {
       "slice": "feature",
-      "state": "in QA, paused for the S4 tip; feat/handoff-prompt at eded078d, gate 4522 pass 0 fail, smoke: prompt taken 7.6 s; draft PR #28",
+      "state": "in QA: taking origin/pilot 6ea49cac into feat/handoff-prompt before QA's live runs; draft PR #28",
       "branch": "feat/handoff-prompt",
       "pr": 28
     },
@@ -58,8 +58,8 @@
     "dropped: QA version-skew row (installed 0.9.5 vs worktree hooks is the test harness, not the feature)",
     "dropped: late evidence-runner complexity row (clearOnce 30, watch 17, holdFor 12, run 12 in run.mjs): largely pre-existing, past the fix limit; mutation timed out at 900 s, coverage not run"
   ],
-  "next": "handoff-prompt (yellow): pilot integrate fix/handoff-prompt-principles in the feat worktree with the brief's trailers, then spawn a fresh pilot-qa with the new tip (5 live hand-offs via qa-proj hook, trusted cwd).",
-  "updatedAt": "2026-10-21T07:56:16.025Z",
+  "next": "handoff-prompt (yellow, taken 2026-11-16): co-pilot runs pilot integrate (base only) in the feat worktree, then spawns one fresh pilot-qa at the new tip for 5 live hand-offs, QA comment on #28, walkthrough.",
+  "updatedAt": "2026-11-16T00:13:16.214Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -229,6 +229,17 @@
       "what": "live probe hangs on claude's 'N new MCP servers found' dialog when cwd is a fresh worktree with .mcp.json, writing stray 'not started' lines into the shared wrapper.log",
       "evidence": "S4 hand-back; wrapper.log 07:44:54-07:48:20, two 2-minute runs lost",
       "size": 4
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a hand-off posted from outside the session needs the session woken; the post 0.9 s after its turn ended left /clear untyped and voided live hand-off 1 at the tip",
+      "evidence": "itm_864a6504a40e posted 08:00:16.5, turn ended 08:00:15.7",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "auto mode gave no verdict on a Bash call batched with deck reads, twice; each posted a Blocked item and cost a re-issue",
+      "size": 2
     }
   ]
 }
