@@ -75,6 +75,7 @@ test('the route answers', async (t) => {
   assert.match(page, /data-live="tickets" data-name="Tickets"/);
 });
 
+// lint: the granted tools exist in the agents' tools fields
 test("Claude Code's names stay", () => {
   const granted = (agent) => /^tools:(.*)$/m.exec(fs.readFileSync(path.join(ROOT, 'agents', agent), 'utf8'))[1];
   for (const agent of ['pilot.md', 'pilot-implementer.md', 'pilot-qa.md']) {
@@ -84,6 +85,7 @@ test("Claude Code's names stay", () => {
   assert.match(granted('pilot-architect.md'), /mcp__plugin_pilot_deck__deck_ticket\b/);
 });
 
+// lint: the references resolve
 test('check-references binds the new names', () => {
   const { ok, failures } = checkReferences(ROOT);
   assert.deepEqual(failures, []);

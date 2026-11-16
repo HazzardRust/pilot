@@ -22,7 +22,6 @@ const { listItems, postItem, registerRun, setSlices } = await import('../store.m
 const { chainNext } = await import('../chain.mjs');
 const { callTool } = await import('../server.mjs');
 
-
 /** A scratch repository and a worktree of it, laid out as git lays one out. */
 const aWorktree = (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-par-'));

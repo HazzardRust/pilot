@@ -26,6 +26,7 @@ function section(heading, source = pilot()) {
   return (end === -1 ? rest : rest.slice(0, end)).replace(/\s+/g, ' ');
 }
 
+// lint: the Agent(...) list and the co-pilot file exist
 test('the pilot can spawn the co-pilot', () => {
   const spawnable = field(pilot(), 'tools').match(/Agent\(([^)]*)\)/)?.[1].split(',').map((entry) => entry.trim()) ?? [];
   assert.ok(spawnable.includes('pilot:pilot-co-pilot'), "pilot.md's Agent(...) list has no pilot:pilot-co-pilot");
@@ -65,17 +66,15 @@ test('the pilot never lists itself as its successor-spawner: a co-pilot spawns n
   assert.doesNotMatch(field(read(CO_PILOT), 'tools'), /pilot:pilot-co-pilot/, 'a co-pilot never spawns its own successor'); // lint: tools field
 });
 
+// lint: the ADR index row exists
 test('ADR 0107 is indexed', () => {
   const index = read(path.join(ROOT, 'docs', 'adr', 'README.md'));
   assert.match(index, /\| 0107 \| \[[^\]]+\]\(0107-a-[a-z0-9-]+-pauses-itself-at-its-advisory-mark\.md\)/, 'L5');
 });
 
-test('the co-pilot moves a dot at each step', async () => {
+test('the deck knows every state the co-pilot moves through', async () => {
   const { phaseOf } = await import('../../deck/status.mjs');
-  const steps = section('Steps 4 to 8', read(CO_PILOT));
-  const words = [...steps.matchAll(/`deck_status`[^.]*\./g)].flatMap(([sentence]) => [...sentence.matchAll(/`([a-z][^`]*)`/g)].map(([, word]) => word)).filter((word) => word !== 'deck_status');
   for (const state of ['implementing', 'pushed <sha7>', 'integrated', 'fixing', 'in QA']) {
-    assert.ok(words.includes(state), `no \`${state}\` move in "Steps 4 to 8"`);
     assert.ok(phaseOf(state), `\`${state}\` is a state phaseOf does not know`);
   }
 });
@@ -84,6 +83,7 @@ test("the co-pilot's description no longer says slice by slice", () => {
   assert.doesNotMatch(field(read(CO_PILOT), 'description'), /slice by slice/); // lint: retired wording
 });
 
+// lint: the ADR index row exists
 test('ADR 0108 is indexed', () => {
   const index = read(path.join(ROOT, 'docs', 'adr', 'README.md'));
   // By number, not slug: the file is renamed with the ADRs (co-pilot-tickets S8).

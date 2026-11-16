@@ -58,6 +58,7 @@ test('no stage is called by a colour alone in the prose', () => {
   for (const term of ['Lane', 'Stage', 'Held lane']) assert.match(context, new RegExp(`^\\*\\*${term}\\*\\*:$`, 'm'), `CONTEXT names **${term}**`);
 });
 
+// lint: the ADR index row exists
 test('ADR 0151 is indexed', () => {
   const adr = read('docs/adr/0151-three-lanes.md');
   assert.match(frontmatterOf(adr), /^status: \w+\ndate: \d{4}-\d{2}-\d{2}\ntags: \[.+\]$/m);
