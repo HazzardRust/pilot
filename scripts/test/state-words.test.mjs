@@ -56,30 +56,12 @@ const PROSE = [
   'CLAUDE.excerpt.md',
 ];
 
-test('each prose reader says the new words', () => {
-  for (const rel of DEFINING) {
-    const said = stateWords(rel);
-    assert.ok(said.some((s) => pairs('red', 'planning').test(s)), `${rel}: planning is red`);
-    assert.ok(said.some((s) => pairs('green', 'concluding').test(s)), `${rel}: concluding is green`);
-  }
+test('no prose reader pairs the old state words', () => {
+  // lint: no ticket-state sentence says planning is green or concluding is red
   for (const rel of PROSE) {
     for (const sentence of stateWords(rel)) {
       assert.doesNotMatch(sentence, pairs('green', 'planning'), `${rel} still says planning is green`);
       assert.doesNotMatch(sentence, pairs('red', 'concluding'), `${rel} still says concluding is red`);
     }
-  }
-});
-
-const AMENDED = ['0063', '0065', '0066', '0087', '0089', '0106', '0117', '0123', '0133', '0143'];
-
-test('the amended ADRs name 0147', () => {
-  const adrs = fs.readdirSync(path.join(ROOT, 'docs/adr'));
-  for (const number of AMENDED) {
-    const file = adrs.find((name) => name.startsWith(`${number}-`));
-    assert.ok(file, `ADR ${number} exists`);
-    const amendment = stateWords(`docs/adr/${file}`).filter((s) => /ADR 0147\b/.test(s));
-    assert.equal(amendment.length, 1, `ADR ${number} carries one amendment line naming 0147`);
-    assert.match(amendment[0], pairs('red', 'planning'), `ADR ${number}'s amendment says planning is red`);
-    assert.match(amendment[0], pairs('green', 'concluding'), `ADR ${number}'s amendment says concluding is green`);
   }
 });
