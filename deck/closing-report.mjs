@@ -12,6 +12,7 @@ import { runWorktrees } from '../scripts/worktrees.mjs';
 import { KIND_GATE2, KIND_REPORT, KIND_TICKET, authorKind, gate2Blockers, isOpen, ownerOf, sameRepo } from './items.mjs';
 import { REPORT_DUE } from './items-bounds.mjs';
 import { LANDING_KINDS } from './landing-replies.mjs';
+import { closedByPilotLines, pilotClosesOf } from './pilot-closes.mjs';
 import { reportAskGaps } from './report-shape.mjs';
 import { rankFriction, repoOf } from './runs.mjs';
 import { DeckRefusal } from './store-core.mjs';
@@ -56,7 +57,7 @@ const noneRecorded = (cause) => {
  * the gate2's landing and `left`; it asks nothing (report-shape, ADR 0148). `left` not a list is a git
  * that could not list (an Error says why): `none recorded`.
  */
-export function closingReportOf(record, gate, left) {
+export function closingReportOf(record, gate, left, closes = []) {
   const { sha, line } = gate?.landing ?? {};
   const name = record?.feature ?? record?.slug ?? 'the feature';
   const rows = (Array.isArray(record?.slices) ? record.slices : []).filter((row) => row?.slice !== record?.slug);
@@ -77,6 +78,8 @@ export function closingReportOf(record, gate, left) {
     // What is on disk when the report posts (lander-tail spec 5, L7), never land's earlier `kept` lines.
     'Worktrees left:',
     ...(Array.isArray(left) ? list(left.map(said), 'none') : [noneRecorded(left)]),
+    '',
+    ...closedByPilotLines(closes),
     '',
     'Friction:',
     ...list([
@@ -128,6 +131,8 @@ function worktreesLeft(repo, slug) {
 export function postFilled(fields) {
   const { kind, body, ticket, author, repo } = fields ?? {};
   const bodiless = body === undefined || (typeof body === 'string' && body.trim() === '');
+  const closes = typeof ticket === 'string' && (kind === KIND_GATE2 || kind === KIND_REPORT) ? pilotClosesOf(listItems(), ticket) : [];
+  if (kind === KIND_GATE2 && closes.length > 0 && typeof body === 'string') return postItem({ ...fields, body: `${body}\n\n${closedByPilotLines(closes).join('\n')}` });
   if (kind !== KIND_REPORT || !bodiless || typeof ticket !== 'string') return postItem(fields);
   // Only the lander, or the pilot unstamped, closes a ticket this way; any other writer gets the empty-body refusal.
   if (!LANDING_KINDS.includes(author === undefined ? 'pilot' : authorKind(author))) return postItem(fields);
@@ -143,7 +148,7 @@ export function postFilled(fields) {
   // A report built from no record would close the ticket on an empty one; the lander is told instead.
   if (!record) throw new DeckRefusal(`a report without a body is filled from the run record, and no run record names ${ticket}`);
   // Filed under the gate2's repository, as the deck's own report was, never the poster's worktree.
-  const report = postItem({ ...fields, repo: gate.repo, ...closingReportOf(record, gate, worktreesLeft(gate.repo, record.slug)) });
+  const report = postItem({ ...fields, repo: gate.repo, ...closingReportOf(record, gate, worktreesLeft(gate.repo, record.slug), closes) });
   noteDeck(report.id, REPORT_DUE);
   return report;
 }
