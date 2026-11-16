@@ -80,7 +80,8 @@ export function takeSlot({
   sleep = sleepFor,
   say = sayOnStderr,
 }) {
-  if (env.PILOT_GATE_SLOT) return { release: noop, slot: Number(env.PILOT_GATE_SLOT), waited: false };
+  // Passed on as inherited: under a selected gate it is `selected`, which a Number() made NaN.
+  if (env.PILOT_GATE_SLOT) return { release: noop, slot: env.PILOT_GATE_SLOT, waited: false };
   fs.mkdirSync(dir, { recursive: true });
   const mine = { pid: process.pid, dir: cwd, since: new Date().toISOString() };
   let waited = false;

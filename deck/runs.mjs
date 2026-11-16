@@ -236,13 +236,16 @@ export function freshRuns(runs) {
  * field that grows: the session-start hook clips the record at 16,000 characters, and
  * the clip falls on it rather than on `next`, `finished` or `report`.
  */
-const RECORD_ORDER = ['slug', 'feature', 'ticket', 'branch', 'worktree', 'qa', 'artefact', 'slices', 'findings', 'report', 'next', 'finished', 'finishedAt', 'updatedAt', 'friction'];
+const RECORD_ORDER = ['slug', 'feature', 'ticket', 'branch', 'base', 'worktree', 'qa', 'artefact', 'slices', 'findings', 'report', 'next', 'finished', 'finishedAt', 'updatedAt', 'friction'];
 
 /** The one spelling of a clean finish: the only `finished` that chains the next ticket (L3). */
 export const FINISHED_CLEAN = 'closing report posted';
 
 /** A slug names `docs/design/<slug>/`, so it is kebab-case and nothing a path could misread. */
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** A run's base (pilot-develop-line L6): `pilot`, or the concluding feature's `feat/<slug>` it is chained on. */
+export const RUN_BASE = new RegExp(`^(?:pilot|feat/${SLUG.source.slice(1, -1)})$`);
 
 const TICKET_ID = /^itm_[0-9a-f]+$/;
 
@@ -386,11 +389,11 @@ export function recordTicket(record) {
  * names no slug and so writes no record. Only the fields the call sent come back:
  * the store keeps the rest from the record it already holds.
  */
-export function recordFields({ slug, ticket, branch, worktree, qa, artefact, findings, friction, report, next, finished }) {
+export function recordFields({ slug, ticket, branch, base, worktree, qa, artefact, findings, friction, report, next, finished }) {
   if (slug === undefined) {
     // A record field with no slug has no record to go in; dropping it quietly would
     // lose the pilot's next move, so it is refused like every other bad cell.
-    const sent = Object.entries({ ticket, branch, worktree, qa, artefact, findings, friction, report, next, finished }).find(([, v]) => v !== undefined);
+    const sent = Object.entries({ ticket, branch, base, worktree, qa, artefact, findings, friction, report, next, finished }).find(([, v]) => v !== undefined);
     if (sent) throw new RunRefusal(`${sent[0]} belongs to the run record; send slug with it`);
     return null;
   }
@@ -408,6 +411,11 @@ export function recordFields({ slug, ticket, branch, worktree, qa, artefact, fin
     fields.ticket = ticket;
   }
   if (branch !== undefined) fields.branch = recordCell('branch', branch);
+  // The ref `pilot integrate` merges at every slice, so never anything git could read as an option.
+  if (base !== undefined) {
+    fields.base = recordCell('base', base);
+    if (!RUN_BASE.test(fields.base)) throw new RunRefusal(`base must be pilot or feat/<slug>, not ${JSON.stringify(fields.base)}`);
+  }
   if (worktree !== undefined) {
     // Where the daemon writes run.json (independence spec 22.2), so never a relative path.
     fields.worktree = recordCell('worktree', worktree);

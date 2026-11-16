@@ -71,7 +71,7 @@ test('health names the plugin version and start', async (t) => {
   const base = await deckOnAPort(t);
   const health = await (await fetch(`${base}/api/health`)).json();
 
-  assert.equal(health.version, '0.9.5');
+  assert.equal(health.version, '0.9.6');
   assert.equal(health.version, versionOf('package.json'));
   assert.equal(versionOf('.claude-plugin/plugin.json'), health.version);
   const lock = JSON.parse(fs.readFileSync(path.join(ROOT, 'package-lock.json'), 'utf8'));

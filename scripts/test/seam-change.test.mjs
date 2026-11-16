@@ -52,19 +52,20 @@ test("step 4 briefs the implementer with the slice file's path", () => {
   assert.doesNotMatch(opening, /verbatim/, 'the implementer\'s opening must not say "verbatim"');
 });
 
-test("the implementer's red steps are the slice's Tests, listed in the PR body", () => {
+// pilot-develop-line S4: no slice PR is opened, so the Tests names ride the report instead of a PR body.
+test("the implementer's red steps are the slice's Tests, listed in the report", () => {
   const implementer = read('agents/pilot-implementer.md');
-  const loop = norm(section(implementer, '## The loop', '## Commit, push, draft PR', 'agents/pilot-implementer.md has no "## The loop" section'));
+  const loop = norm(section(implementer, '## The loop', '## Commit, push, report', 'agents/pilot-implementer.md has no "## The loop" section'));
   assert.match(loop, /prohibited shortcuts are in the slice file; .+? The slice file's Tests field names the red steps, in order; write and run them in that order\./, '"The loop" must point at the slice file and run its Tests in order, once');
 
-  const prBody = norm(section(
+  const report = norm(section(
     implementer,
-    '## Commit, push, draft PR',
-    '## A fix brief',
-    'agents/pilot-implementer.md has no "## Commit, push, draft PR" section',
+    '## Report',
+    '## When the context notice arrives',
+    'agents/pilot-implementer.md has no "## Report" section',
   ));
-  assert.match(prBody, /Tests? name/i, 'the PR-body text must say the Tests names are listed, red then green');
-  assert.match(prBody, /red.*green|red,? then green/i, 'the PR-body text must say red then green');
+  assert.match(report, /Tests? name/i, 'the report must say the Tests names are listed, red then green');
+  assert.match(report, /red.*green|red,? then green/i, 'the report must say red then green');
 });
 
 // co-pilot-reports S1 moved the addressee from `main` to the spawner: the co-pilot when it spawned the implementer.

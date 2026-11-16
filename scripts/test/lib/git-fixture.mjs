@@ -11,6 +11,10 @@
  * valid. node:test runs a file's tests one after another, which is what makes restoring in
  * place safe. A second call for `key` inside one test builds fresh into a new directory.
  *
+ * Every directory, and the template, is a `fs.realpathSync.native` path, so the spelling git
+ * and the code under test print (macOS `/private/var`, Windows long names) is the one `build`
+ * and the tests see, whatever `os.tmpdir()` returns.
+ *
  * `build` must not call `t.after`, nor return closures over mutable in-memory state: its value
  * is shared by every test of the key. Every directory goes when the process exits.
  *
@@ -31,6 +35,10 @@ fs.writeFileSync(GLOBAL_CONFIG, [
   '[commit]', '\tgpgsign = false',
   // A restored file keeps its mtime and size but not its inode or ctime; compare only those two.
   '[core]', '\tcheckStat = minimal',
+  // No auto maintenance, detached or not: a detached run holds objects/maintenance.lock after the
+  // git that spawned it returns, and the snapshot's copy meets it vanishing (ENOENT on macOS).
+  '[maintenance]', '\tauto = false', '\tautoDetach = false',
+  '[gc]', '\tauto = 0', '\tautoDetach = false',
   '',
 ].join('\n'));
 process.env.GIT_CONFIG_GLOBAL = GLOBAL_CONFIG;
@@ -40,7 +48,7 @@ const fixtures = new Map();
 const made = [];
 
 function tempDir(prefix) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  const dir = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
   made.push(dir);
   return dir;
 }
