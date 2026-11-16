@@ -36,13 +36,14 @@
     },
     {
       "slice": "S4 `pilot integrate --dir`",
-      "state": "implementing",
+      "state": "draft PR #70",
       "branch": "slice/deck-writes-github-s4",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s4"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s4",
+      "pr": 70
     },
     {
       "slice": "S5 `pilot doctor` names a missing allow rule",
-      "state": "draft PR #69",
+      "state": "integrated at b973ee56 (#69 merged); feat 5131d143",
       "branch": "slice/deck-writes-github-s5",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s5",
       "pr": 69
@@ -70,8 +71,8 @@
       ]
     }
   ],
-  "next": "pilot integrate of S5 (#69) running; S1, S4, S7 implementing.",
-  "updatedAt": "2026-11-16T09:21:42.169Z",
+  "next": "Integrating S4 (#70); S1, S7 implementing; S8 after S1.",
+  "updatedAt": "2026-11-16T09:29:05.891Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -102,6 +103,24 @@
       "what": "npm run test:changed is the same as npm test (both run gate.mjs): the brief's red/green selection does not exist",
       "evidence": "S5 report, PR #69",
       "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "context compacted right after creating the worktree, before any edit; fact sheet lost, slice restarted (S1 the same)",
+      "evidence": "S4 report, PR #70; S1 status message",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4's slice file left --dir's reach open; a bare is-a-directory check would widen Bash(pilot integrate *) to every repository on disk; the security reviewer caught it",
+      "evidence": "PR #70 security-reviewer WARNING then APPROVE",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "integrate fixture tests take seconds each on Windows; 82 s cold for one",
+      "evidence": "S4 typescript-reviewer report",
+      "size": 2
     }
   ]
 }
