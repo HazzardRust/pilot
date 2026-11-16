@@ -1,0 +1,77 @@
+{
+  "slug": "walkthrough-surface",
+  "feature": "walkthrough only for a surface",
+  "ticket": "itm_9e228d2d345e",
+  "branch": "feat/walkthrough-surface",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-walkthrough-surface-r2",
+  "artefact": "docs/design/walkthrough-surface/architecture.md",
+  "slices": [
+    {
+      "slice": "walkthrough-surface",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8"
+      ],
+      "branch": "feat/walkthrough-surface",
+      "pr": 954
+    },
+    {
+      "slice": "S1 One module holds a gate2's evidence",
+      "state": "planned"
+    },
+    {
+      "slice": "S2 A plan marks its surface; QA cannot walk a plan without one",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3 A full-run gate2 without a walkthrough carries the checks table",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S4 The crew's prose says the walkthrough is for a surface",
+      "state": "planned"
+    },
+    {
+      "slice": "S5 A command step shows its shell and directory",
+      "state": "planned"
+    },
+    {
+      "slice": "S6 A command step without a directory is refused; shell defaults",
+      "state": "planned",
+      "after": [
+        "S2",
+        "S5"
+      ]
+    },
+    {
+      "slice": "S7 A command in another shell's syntax is refused",
+      "state": "planned",
+      "after": [
+        "S6"
+      ]
+    },
+    {
+      "slice": "S8 The crew names where every command runs",
+      "state": "planned",
+      "after": [
+        "S4",
+        "S5"
+      ]
+    }
+  ],
+  "next": "co-pilot checking S1-S8 anchors against pilot 6ea49cac; feat/walkthrough-surface at 4168ecad (pilot merged in)",
+  "updatedAt": "2026-11-16T05:21:40.729Z"
+}

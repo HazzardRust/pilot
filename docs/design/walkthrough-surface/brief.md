@@ -47,3 +47,11 @@ https://claude.ai/code/session_01Tek2jZXVh7dqjyqwApvNHq
 - Slice: `feat(walkthrough-surface): S<n> <title>`, the title lower-case first.
 - Fix round: `fix(walkthrough-surface): <what>`.
 - Feature: `feat(walkthrough-surface): a walkthrough only for a surface; every command step names where it runs`.
+
+## Seam changes (co-pilot, 2026-11-16)
+
+- Repository recreated as a fresh public repo after Gate 1: the plan is on `feat/walkthrough-surface` (71b16af0), `origin/pilot` 6ea49cac merged in at 4168ecad. #885 is on `pilot` (`docs/adr/0168-a-small-ticket-takes-the-short-path.md`, `deck/short-path-shape.mjs`): the precondition holds.
+- Line anchors in the slice files are from the old tree; re-read each before editing on it.
+- A new ADR is written as `docs/adr/NNNN-<title>.md`; the landing numbers it (`scripts/adr-allocate.mjs`).
+- No test reads a prompt or doc for a phrase (assumed, itm_16a37a996e52; `crew-tests-behaviour` makes a wording pin an anti-pattern): S4's and S8's prose pins are dropped; their evidence is `node scripts/check-references.mjs` and `node scripts/measure-prompt.mjs`.
+- Edits to `scripts/integrate.mjs`, `agents/pilot-implementer.md` and `agents/pilot-fundamentalist.md` stay minimal: `crew-tests-behaviour` changes them.
