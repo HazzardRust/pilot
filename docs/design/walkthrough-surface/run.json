@@ -8,7 +8,7 @@
   "slices": [
     {
       "slice": "walkthrough-surface",
-      "state": "implementing",
+      "state": "implementing: S1-S6, S8 integrated (feat 1a2aa34d); S7 PR #66 waits on base merge; then fundamentalist, QA",
       "after": [
         "S1",
         "S2",
@@ -65,7 +65,7 @@
     },
     {
       "slice": "S6 A command step without a directory is refused; shell defaults",
-      "state": "integrated",
+      "state": "integrated at 1a2aa34d",
       "after": [
         "S2",
         "S5"
@@ -76,10 +76,13 @@
     },
     {
       "slice": "S7 A command in another shell's syntax is refused",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S6"
-      ]
+      ],
+      "branch": "slice/walkthrough-surface-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s7",
+      "pr": 66
     },
     {
       "slice": "S8 The crew names where every command runs",
@@ -93,8 +96,8 @@
       "pr": 62
     }
   ],
-  "next": "handoff-prompt closed (report itm_6d4808b50fa3, Findings sent). Lander a283727ae2b654096 live on itm_0487393fa5b5 (#7). Signed gate2s awaiting a lander, one at a time, in order: itm_c14c4ea3b15f (#8), itm_2fe42921c8db (#5), itm_5c52090cb347 (#37); each report needs a Findings reply. Yellow: pilot integrating S6 (#64); then S7 (Sonnet), fundamentalist, QA.",
-  "updatedAt": "2026-11-16T06:53:55.811Z",
+  "next": "pilot integrate S7 (#66) running on feat 730953ff -> on pass: fundamentalist + QA on PR #3; on fail: send S7's real state, route the line. #8 landed c863b15, Findings sent. Lander a32b4a464dc78a334 on #5 itm_2fe42921c8db; on landed close itm_47b9b7122ca6 as Moot, Findings; then lander #37 itm_5c52090cb347. audit-f1 gate1 itm_a26686beeddb awaits press (short path, PR #67).",
+  "updatedAt": "2026-11-16T07:19:59.183Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -253,6 +256,33 @@
       "agent": "pilot:pilot-lander",
       "what": "pilot landing sent beside a deck reply got no verdict, posted a Blocked item the user then answered 'Skip it' while the retry was already running",
       "evidence": "itm_c7ca9d71097c, task b6cezwazi",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: fact-sheet helper returned only S6 call sites; a grep watcher on the gate log matched per-file 'fail' summaries and reported completion three times before the real exit",
+      "evidence": "PR #66 report",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot integrated four slices itself, relayed five gate2 presses, three stale Blocked items and two landings in one session; co-pilot unusable (forced hand-backs)",
+      "size": 8
+    },
+    {
+      "kind": "drain",
+      "what": "pilot resolved the feat base merge itself: the implementer waiting on the pin decision did not survive /clear (no transcript to resume)",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "gate1 refused: design branch not on pilot's tip after two landings; rebased and force-pushed design and feat branches, PR opened before the refusal",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-lander",
+      "what": "closing report posted with no body was refused again; lander handed back unfinished and needed a resume to post it with a body",
+      "evidence": "itm_af70d00eed9d; deck_post kind report: 'body must be a non-empty string'",
       "size": 2
     }
   ]
