@@ -79,3 +79,11 @@ test('a look that fails, a malformed id or a prompt that is not the literal clea
     assert.deepEqual(calls.map(({ call }) => call), expected, JSON.stringify(outcomes));
   }
 });
+
+test("a refused clear (the Stop hold) submits nothing and the turn's result stands", async () => {
+  const { $, calls } = host({ turn: { act: 'clear', id: ID }, cleared: { act: 'submit', id: ID, prompt: PROMPT } });
+  $.command.run = async () => { calls.push({ call: 'command.run' }); throw new Error('refused until the user types'); };
+
+  assert.equal(await hookOf()($, turnEnd, async () => 'the rest'), 'the rest');
+  assert.deepEqual(calls.map(({ call }) => call), ['process.run', 'command.run']);
+});

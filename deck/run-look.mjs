@@ -152,7 +152,7 @@ function parse(argv) {
   if (!OPS.includes(op)) return null;
   const args = {};
   for (let i = 0; i < rest.length; i += 2) {
-    const name = FLAGS[rest[i]];
+    const name = Object.hasOwn(FLAGS, rest[i]) ? FLAGS[rest[i]] : undefined;
     const value = rest[i + 1];
     if (!name || typeof value !== 'string' || value === '' || name in args) return null;
     args[name] = value;

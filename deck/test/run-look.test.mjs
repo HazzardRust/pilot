@@ -133,6 +133,7 @@ test('an id that is not itm_<hex> is refused before any read', async (t) => {
     ['cleared'],
     ['turn', '--id'],
     ['turn', '--bogus', 'x'],
+    ['turn', 'toString', 'x'], // an inherited key is no flag
     ['end'],
     [],
   ]) {

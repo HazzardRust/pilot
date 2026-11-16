@@ -50,7 +50,11 @@ export function register(on) {
   if (LOOK === null) return;
   on('turn.complete', async ($, e, next) => {
     const result = await next(e);
-    if (e.agentId === undefined) await handOff($);
+    try {
+      if (e.agentId === undefined) await handOff($);
+    } catch {
+      // A refused clear or submit (the Stop hold) leaves the claim taken: the hand-off fails closed, never twice.
+    }
     return result;
   });
 }
