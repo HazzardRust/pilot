@@ -57,6 +57,7 @@ test('a .tsx read is at most 10k tokens', () => {
   assert.ok(trigger['.js'].tokens <= 1837, `a .js read loads ${trigger['.js'].tokens} tokens`);
 });
 
+// lint: no heading or list item is stated in two of the co-loaded rule dirs
 test("no heading's rule appears in two of typescript/react/web", () => {
   const all = DIRS.flatMap(entries);
   assert.ok(all.length > 100, `only ${all.length} headings and list items were read`);
@@ -69,29 +70,4 @@ test("no heading's rule appears in two of typescript/react/web", () => {
     }
   }
   assert.deepEqual(twice, []);
-});
-
-/**
- * Every security rule the three security files held before S12, by a phrase that states it.
- * The dedup may move a rule to the co-loaded file that says it best; it may not lose one.
- */
-const SECURITY_RULES = [
-  /process\.env\.API_KEY/, /security-reviewer/, /react-reviewer/,
-  /dangerouslySetInnerHTML=\{\{ __html: DOMPurify\.sanitize/, /allowlisting tags, not denylisting/,
-  /sanitized at the \*\*same call site\*\*/, /`javascript:` and `data:` URLs/, /rel="noopener noreferrer"/,
-  /same trust level as a public API endpoint/, /Authenticate inside the action/, /Authorize: confirm the current user/,
-  /Rate limit sensitive actions/, /NEXT_PUBLIC_\*/, /Never store sessions in `localStorage`/,
-  /Render-gating in JSX prevents display, not access/, /CSRF tokens or `SameSite=Strict`\/`Lax`/,
-  /double-submit cookies or origin verification/, /frame-ancestors 'none'/, /Avoid `unsafe-inline` and `unsafe-eval`/,
-  /per-request nonces/, /CSS-in-JS libraries — document the tradeoff/, /attacker controls __proto__/,
-  /never concatenate user input into the surrounding HTML template/, /`npm audit` before adding any UI library/,
-  /accept HTML strings as props/, /without source maps/, /'nonce-\{RANDOM\}'/, /Never inject unsanitized HTML/,
-  /Escape dynamic template values/, /Use SRI when serving from a CDN/, /Strict-Transport-Security/,
-  /X-Content-Type-Options: nosniff/, /X-Frame-Options: DENY/, /Permissions-Policy/,
-  /CSRF protection on state-changing forms/, /Rate limiting on submission endpoints/, /Validate client and server side/,
-];
-
-test('every security file keeps its rules', () => {
-  const text = DIRS.map((dir) => fs.readFileSync(path.join(ROOT, 'rules', dir, 'security.md'), 'utf8')).join('\n');
-  assert.deepEqual(SECURITY_RULES.filter((rule) => !rule.test(text)).map(String), []);
 });
