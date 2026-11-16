@@ -8,9 +8,9 @@
   "slices": [
     {
       "slice": "crew-tests-behaviour",
-      "state": "implementing; feat at 5fb7311e; S1-S3, S5-S14 integrated",
+      "state": "concluding: gate2 itm_2fe42921c8db at 202da563; Windows 4210 pass 0 fail, WSL 5/5; QA comment on #5; no walkthrough",
       "branch": "feat/crew-tests-behaviour",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-tests-behaviour",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-tests-behaviour-r2",
       "pr": 5
     },
     {
@@ -137,7 +137,7 @@
     },
     {
       "slice": "fix round",
-      "state": "integrated",
+      "state": "integrated at fb1014dc",
       "after": [
         "S14"
       ],
@@ -156,8 +156,8 @@
     "dropped: nit security-reviewer description trigger as a separate fix: F2 removes the duplicate it guarded",
     "dropped: a test for the S4 bullet (spec 6): it would be a prose pin under the feature's own rule; its fundamentalist half goes to QA's fixture run. Evidence pass did not run (context reset): no coverage or mutation evidence"
   ],
-  "next": "Fix round F1-F4 (PR #57, 643d6c9b) integrating into feat. Then fresh pilot-qa in pilot-qa-crew-tests-behaviour on the new tip (L7 fixture run incl. fundamentalist half, spec 5 table, npm test, WSL x5), reports to main; then gate2. A6: S4 bullet vs PR #8 (lead-in back to Three kinds). No evidence pass ran.",
-  "updatedAt": "2026-11-16T04:51:16.600Z",
+  "next": "User owes gate2 itm_2fe42921c8db (crew-tests-behaviour, PR #5 at 202da563); on press spawn pilot-lander. A6: S4 bullet vs PR #8, second to land merges. Leftover worktrees: pilot-qa-crew-tests-behaviour, pilot-fix-crew-tests-behaviour-principles, pilot-slice-crew-tests-behaviour-s1..s14. Follow-up ticket to propose: installed plugin 0.9.5 makes spawned crew test old prompts.",
+  "updatedAt": "2026-11-16T05:20:02.967Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -277,6 +277,36 @@
       "agent": "pilot:pilot-co-pilot",
       "what": "deck_status rejects a row named by bare S<n> and a non-numeric friction size; both learned by refusal",
       "evidence": "co-pilot hand-back: 'S4 ... and S4 are both S4'; 'friction[0].size must be a number'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix brief told it to move prompt pins for the implementer and fundamentalist, which have no pin in measure-prompt; a measure run and a grep to establish that",
+      "evidence": "PR #57 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context reset lost the evidence runner's result; no coverage or mutation evidence; and its definition sends the report to a co-pilot that had already handed back",
+      "evidence": "report on PR #5 at 3c8568d4, relayed by the paused co-pilot",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "installed plugin 0.9.5 runs crew definitions that predate the feature, so Agent(pilot:...) tests the old prompt; headless `claude -p --plugin-dir` workaround",
+      "evidence": "installed_plugins.json points at 0.9.5, which has skills/tdd and no test-design",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 5's per-pin table lived only on slice PRs and PR #5's body lacked S13 and S14; sampling started from git diff of each merge",
+      "evidence": "PR #5 body before QA's edit",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "S14's census did not count --help text as prose; 3 help-text phrase asserts survived to QA",
+      "evidence": "618ee7ec",
       "size": 1
     }
   ]
