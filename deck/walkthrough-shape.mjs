@@ -13,8 +13,8 @@ const CODE_SPAN = /`([^`\n]+)`/g;
 const SPAN_PREFIX = /^(\$env:|\$|\.\/|\.\\)/;
 const ENV_ASSIGNMENT = /(?<![\w$:])([A-Z][A-Z0-9_]*=)\S/;
 // `pilot:` (a colon) is a name, `pilot ` (a space) a command; case matters, so "Set the theme" is prose.
-// An optional `Word: ` label first, so `Check: grep -o x` is still a command.
-const LEADING_COMMAND = new RegExp(`^(?:[A-Z][\\w-]*: )?((?:${COMMANDS.join('|')}) .*)`);
+// An optional action label first, so `Check: grep -o x` is still a command and `Note: cat photos` prose.
+const LEADING_COMMAND = new RegExp(`^(?:(?:Check|Run|Try|Verify|Type|Then): )?((?:${COMMANDS.join('|')}) .*)`);
 
 /** The word that makes `half` a command, or null. Never the half's text (L5). */
 function commandWord(half, isInstruction) {

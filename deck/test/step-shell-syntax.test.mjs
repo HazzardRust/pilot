@@ -60,6 +60,10 @@ test('a labelled command with no code span is a command: it needs dir, is shell-
   assert.equal(postItem({ kind: KIND_REPORT, title: 'Look', body: 'Look.', author: 'pilot', dir: DIR, screens: ['Check: ls -la -> the files'] }).shell, defaultShell());
 });
 
+test('a label that is not an action keeps its step prose', () => {
+  assert.equal(stepCommandWord('Note: cat photos are fine -> ok'), null);
+});
+
 test('grep, cat, ls and rg are command words', () => {
   for (const word of ['grep', 'cat', 'ls', 'rg']) assert.equal(stepCommandWord(`Run \`${word} x\` -> ok`), word, word);
 });
