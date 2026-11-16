@@ -85,10 +85,10 @@ const usage = () => `pilot — the deck for piloted runs
   pilot handoff [--trailer "<line>"]...
                  the pilot's hand-off, after its deck_status: commit and push run.json in
                  the feat worktree and post the handoff item; \`pilot run\` types the /clear
-  pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]...
-                 in the feat/<slug> worktree: take origin/pilot, merge the slice (if
+  pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]... [--dir <worktree>]
+                 in the feat/<slug> worktree (or the one --dir names): take origin/pilot, merge the slice (if
                  named), test the selection (the tests the diff touches), push, commit run.json; refuses on the default branch
-  pilot integrate --trial
+  pilot integrate --trial [--dir <worktree>]
                  in the feat/<slug> worktree, before the gate2: push the feature and try its
                  tip on pilot, merging nothing into it; prints on pilot: clean at <sha7>, the
                  sha the gate2 names, or exit 3 a conflict prepared for the lander
