@@ -565,7 +565,7 @@ export function resolveItem(id, resolution, author) {
     if (isBlocking(item) && !messagesOf(item).some((message) => message?.from === 'user') && !pilotClose) {
       throw new DeckRefusal(`item ${id} is a blocking ${item.kind} the user has not answered; it waits for their reply${item.kind === KIND_QUESTION ? ` or ${ASSUME_DEFAULT}, or the pilot's \`${PILOT_CLOSES[0]} <why>\` / \`${PILOT_CLOSES[1]} <what>\`` : ''}`);
     }
-    if (!pilotClose && pilotCloseClaimed(resolution)) throw new DeckRefusal(`item ${id}: \`${pilotCloseClaimed(resolution)}\` is the pilot's close of an open blocking question alone, never of a ${item.kind} like this one (spec 4, 6)`);
+    if (!pilotClose && pilotCloseClaimed(resolution)) throw new DeckRefusal(`item ${id}: \`${pilotCloseClaimed(resolution)}\` is the pilot's close of a blocking question the user has neither answered nor reopened, never of this ${item.kind}; close it in plain words (spec 4, 6)`);
     // Read before the close: a closed thread chooses nothing. Only a Sign off moves a ticket (L11).
     const signed = chosenOf(item) === SIGN_OFF;
     // A gate passes only on its Sign off press (merge-first spec 6, L12): typed approval closes nothing,

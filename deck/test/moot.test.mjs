@@ -113,6 +113,10 @@ test('never a gate, walkthrough or proposal', (t) => {
     assert.throws(() => resolveItem(item.id, why, PILOT), DeckRefusal, `${item.kind}${item.proposal ? ' proposal' : ''}`);
     assert.equal(isOpen(reread(item.id)), true, item.kind);
   }
+  const note = postStored({ kind: KIND_QUESTION, title: 'FYI', body: 'Noted?', repo: REPO, options: ['Yes'], ticket: ticket.id });
+  assert.throws(() => resolveItem(note.id, `${ASSUMED} yes`, PILOT), refusedNaming(note.id, ASSUMED, 'plain words'), 'a prefix on a non-blocking question');
+  resolveItem(note.id, 'Noted', PILOT);
+  assert.equal(isOpen(reread(note.id)), false, 'plain words still close it');
 });
 
 test('a pilot close resumes the ticket a design question paused', (t) => {
