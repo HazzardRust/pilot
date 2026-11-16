@@ -101,6 +101,20 @@ const MODULES = [
   PLAIN_PICKUP,
 ];
 
+/**
+ * The `pilot run` session at work (handoff-prompt S2): its own tool call is
+ * stamped for the wrapper before any lane runs. Not a lane, because it says
+ * nothing; a subagent's call (`agent_id`) and a payload too broken to carry a
+ * session are never the session's. It never throws: a tool call is not failed
+ * over a stamp.
+ */
+function stampToolRan(input) {
+  if (!input || input.agent_id || typeof input.session_id !== 'string') return;
+  try {
+    require('./lib/deck.js').markToolRan(process.env, input.cwd);
+  } catch (err) { /* the wrapper reads no stamp and waits as before */ }
+}
+
 const nonEmpty = function (text) { return typeof text === 'string' && text.trim() !== ''; };
 
 /** One lane. Absent, malformed, throwing or answering nothing all mean the same thing. */
@@ -171,6 +185,7 @@ function main() {
       input = {}; // a truncated payload is not a reason to fail a tool call
     }
 
+    stampToolRan(input);
     runModules(input).then(function (merged) {
       if (!merged) return;
       try {

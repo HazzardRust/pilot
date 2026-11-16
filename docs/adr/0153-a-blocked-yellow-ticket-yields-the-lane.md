@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: amended
 date: 2026-10-17
 tags: [tickets, deck, lanes, blocked]
 supersedes: []
-superseded_by: []
+superseded_by: [0178]
 paths: [deck/lanes.mjs, deck/store-tickets.mjs, deck/items.mjs, deck/blocked-shape.mjs, deck/lane-ticket.mjs, hooks/lib/blocked.js, agents/pilot.md]
 ---
 # A blocked yellow ticket yields the lane
