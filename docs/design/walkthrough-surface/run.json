@@ -31,12 +31,13 @@
     },
     {
       "slice": "S2 A plan marks its surface; QA cannot walk a plan without one",
-      "state": "implementing",
+      "state": "integrated",
       "after": [
         "S1"
       ],
       "branch": "slice/walkthrough-surface-s2",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s2"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s2",
+      "pr": 61
     },
     {
       "slice": "S3 A full-run gate2 without a walkthrough carries the checks table",
@@ -47,7 +48,7 @@
     },
     {
       "slice": "S4 The crew's prose says the walkthrough is for a surface",
-      "state": "draft PR #60",
+      "state": "integrated at 9be673ee",
       "branch": "slice/walkthrough-surface-s4",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s4",
       "pr": 60
@@ -76,15 +77,17 @@
     },
     {
       "slice": "S8 The crew names where every command runs",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S4",
         "S5"
-      ]
+      ],
+      "branch": "slice/walkthrough-surface-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s8"
     }
   ],
-  "next": "S5 integrated at fb0f775f; integrating S4 (#60); then S8; S2 implementing",
-  "updatedAt": "2026-11-16T05:52:49.753Z",
+  "next": "S2 integrating (PR #61); then spawn S3 and S6 from the new tip; integrate S8 after its security Verdict; S7 after S6; then fundamentalist, fix round, QA",
+  "updatedAt": "2026-11-16T06:02:54.260Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
