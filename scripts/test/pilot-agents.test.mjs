@@ -935,7 +935,6 @@ test('QA posts the checks table to the PR before the walkthrough', () => {
   assert.notEqual(comment, -1, 'QA posts its comment with `gh pr comment <pr>`');
   assert.ok(comment < text.indexOf('deck_post'), 'the QA comment comes before the walkthrough deck_post');
   assert.match(text, /\(spec line \| result \| evidence\)/, 'the comment carries the checks table');
-  assert.match(text, /one step at the closest observable thing/, 'no-surface shape');
   assert.match(text, /Never a command, script or env line in a step/, 'no step runs a command (spec 2)');
 });
 

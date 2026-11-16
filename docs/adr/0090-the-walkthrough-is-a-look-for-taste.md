@@ -1,9 +1,9 @@
 ---
-status: accepted
+status: amended
 date: 2026-10-08
 tags: [deck, qa]
 supersedes: []
-superseded_by: []
+superseded_by: [NNNN]
 paths: [deck/store.mjs, deck/walkthrough-shape.mjs]
 ---
 # The walkthrough is a look for taste

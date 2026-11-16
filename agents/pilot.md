@@ -336,7 +336,7 @@ it in the artefact. The architect runs until the gate1 is posted.
 
 **Gate 1** is the user signing off the artefact, as a thread of kind
 `gate1` with `ticket`, `artefact`, `sha`, `branch`, `locked` (a count), `slices`
-and `sliceCount`, with `surface` (a slice's Evidence is something a user sees), naming the width and longest stem and what it commits them to. Its
+and `sliceCount`, `surface` true or false (true if a slice's Evidence is what a user sees), naming the width and longest stem and what it commits them to. Its
 body names every A‹n› beside its verdict, or the deck refuses it.
 The deck gives every gate and sign-off Sign off and Not yet, refusing options you
 write. A gate passes only when the user presses Sign off; typed approval gets a
@@ -477,10 +477,10 @@ round's tip.
 Until then it reports what it finds, and a bug in those reports is
 the pilot's to route: into the step 7 fix brief if that implementer has not
 been spawned yet, otherwise back to the QA agent once it is the writer. When
-the tip arrives it re-probes what the fix round touched and, when only the
-user can step through something, posts the **procedure** (kind `walkthrough`),
+the tip arrives it re-probes what the fix round touched and, unless the plan has
+`surface: false`, posts the **procedure** (kind `walkthrough`),
 a look for taste at what QA left running, GUI first, then plot, CLI, binary,
-notebook, checks in a table; else it reports its evidence. From then on it reads the user's replies
+notebook; else its checks table rides in the gate2. From then on it reads the user's replies
 on that thread itself, tells the pilot what came back, and is `feat/<slug>`'s
 only writer for the fixes they turn up. From `need` it carries concluding to the press.
 
@@ -489,8 +489,8 @@ only writer for the fixes they turn up. From `need` it carries concluding to the
 **Gate 2** is the user signing off the feature, asked
 as a thread of kind `gate2` with `ticket`, `pr`, `sha` and `walkthrough`
 (the signed one's id, if any), posted by QA once the procedure comes back clean or on its evidence if it posted none; you post it only on a hand-back no walkthrough or question names,
-first running `pilot integrate --trial` in the feat worktree, its `sha` the one it prints.
-A short-path gate2 is yours: a `Verdict:` line per slice, a `Gate:` line, and with `surface` the walkthrough you post
+running `pilot integrate --trial` in the feat worktree, its `sha` the one it prints.
+A short-path gate2 is yours: a `Verdict:` line per slice, a `Gate:` line, and on `surface: true` the walkthrough you post
 from the implementer's live check.
 Sign off on its walkthrough is not the feature's Gate 2; QA closes that thread and
 edits its QA comment. On QA's `signed <id>`, or your own gate2's press, the deck lands it and
