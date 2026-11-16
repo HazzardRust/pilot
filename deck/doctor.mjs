@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
-import { defaultSettingsPath } from '../scripts/install-settings.mjs';
+import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, resolvePluginRoot } from '../scripts/install-settings.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
 import { probeDeck } from './probe.mjs';
 import { storeDir as defaultStoreDir } from './store-dir.mjs';
@@ -228,6 +228,39 @@ export function reachRow({ reach, enabled }) {
   return { name, verdict: 'pass', detail, steps: ['change with: pilot reach <level>'] };
 }
 
+/** The user settings object, `{}` when the file is absent, null when it cannot be read as one. */
+function defaultReadSettings() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(defaultSettingsPath(), 'utf8').replace(/^﻿/, '') || '{}');
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+  } catch (error) {
+    return error.code === 'ENOENT' ? {} : null;
+  }
+}
+
+/** Which of the pilot's own allow rules the user settings lack; a rule their deny or ask covers is not missing. Read-only. */
+export function allowRow({ readSettings = defaultReadSettings }) {
+  const name = 'pilot allow rules';
+  let settings;
+  try {
+    settings = readSettings();
+  } catch {
+    settings = null;
+  }
+  if (!settings) return { name, verdict: 'cannot tell', detail: 'the user settings file could not be read as JSON' };
+  const { allow, deny, ask } = settings.permissions ?? {};
+  const list = (value) => (Array.isArray(value) ? value : []);
+  const theirs = [...list(deny), ...list(ask)];
+  const missing = PILOT_MERGE_ALLOW.filter((rule) => !list(allow).includes(rule) && !theirs.some((t) => denyCovers(t, rule)));
+  if (!missing.length) return { name, verdict: 'pass', detail: 'every rule present' };
+  return {
+    name,
+    verdict: 'fail',
+    detail: `missing ${missing.join(', ')}`,
+    steps: [`node "${path.join(resolvePluginRoot(), 'scripts', 'install-settings.mjs')}"`],
+  };
+}
+
 function cliRow(cmd, onPath) {
   const name = `${cmd} on PATH`;
   const found = onPath(cmd);
@@ -337,6 +370,7 @@ export async function checkAll({
   probe = probeDeck,
   readReach = defaultReadReach,
   readEnabled = defaultReadEnabled,
+  readSettings = defaultReadSettings,
 } = {}) {
   const found = await probe(url);
   return [
@@ -346,6 +380,7 @@ export async function checkAll({
     storeRow({ storeDir, canWrite }),
     reachRow({ reach: readReach(), enabled: readEnabled() }),
     ...CLIS.map((cmd) => cliRow(cmd, onPath)),
+    allowRow({ readSettings }),
     ...deckRows({ found, port: new URL(url).port }),
   ];
 }
