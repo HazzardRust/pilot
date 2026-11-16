@@ -16,7 +16,7 @@ const ENV_ASSIGNMENT = /(?<![\w$:])([A-Z][A-Z0-9_]*=)\S/;
 const LEADING_COMMAND = new RegExp(`^(${COMMANDS.join('|')}) `);
 
 /** The word that makes `half` a command, or null. Never the half's text (L5). */
-function commandWord(half, isInstruction) {
+export function commandWord(half, isInstruction) {
   for (const [, span] of half.matchAll(CODE_SPAN)) {
     const code = span.trim();
     const first = code.split(/\s+/)[0];
