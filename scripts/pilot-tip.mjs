@@ -42,7 +42,8 @@ export function pilotTip({ cwd, fetch = false }) {
         git(
           ['-c', 'gc.auto=0', '-c', 'maintenance.auto=false', 'fetch', '-q', '--no-tags', '--no-write-fetch-head',
             '--no-recurse-submodules', runs, `+refs/heads/${PILOT}:${ref}`],
-          { timeout: FETCH_MS, killSignal: 'SIGKILL' },
+          // No pipes: a grandchild ssh holding them cannot keep the call past the timeout.
+          { timeout: FETCH_MS, killSignal: 'SIGKILL', stdio: ['ignore', 'ignore', 'ignore'] },
         );
       } catch {
         // Offline or refused: the tracking ref as it stands is the answer (A2).
