@@ -8,9 +8,10 @@ import './no-open.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { KIND_WALKTHROUGH } from '../items.mjs';
+import { KIND_REPORT, KIND_WALKTHROUGH } from '../items.mjs';
 import { listItems, postItem } from '../store.mjs';
-import { stepShellGaps } from '../step-shell.mjs';
+import { defaultShell, stepShellGaps } from '../step-shell.mjs';
+import { stepCommandWord } from '../walkthrough-shape.mjs';
 import { tempDeck } from '../testUtils.mjs';
 
 const DIR = process.platform === 'win32' ? 'C:\\work' : '/work';
@@ -46,4 +47,19 @@ test('a cloud CLI is not checked', () => {
 
 test('prose outside a code span is not checked', () => {
   assert.deepEqual(stepShellGaps(['Open ~/notes and read grep -o in the text'], { shell: 'PowerShell', dir: DIR }), []);
+});
+
+test('a labelled command with no code span is a command: it needs dir, is shell-checked, and its shell is stored', (t) => {
+  const step = 'Check: grep -o foo log.txt -> it prints foo';
+  assert.equal(stepCommandWord(step), 'grep');
+  assert.deepEqual(stepShellGaps([step], { shell: 'PowerShell' }), ['step 1 runs a command: name its directory as dir', 'step 1 is not PowerShell syntax: `grep -o`']);
+  assert.deepEqual(stepShellGaps([step], { shell: 'Git Bash', dir: DIR }), []);
+  tempDeck(t);
+  const stored = postItem({ kind: KIND_REPORT, title: 'Look', body: 'Look.', author: 'pilot', shell: 'Git Bash', dir: DIR, screens: ['Check: ls -la -> the files'] });
+  assert.equal(stored.shell, 'Git Bash');
+  assert.equal(postItem({ kind: KIND_REPORT, title: 'Look', body: 'Look.', author: 'pilot', dir: DIR, screens: ['Check: ls -la -> the files'] }).shell, defaultShell());
+});
+
+test('grep, cat, ls and rg are command words', () => {
+  for (const word of ['grep', 'cat', 'ls', 'rg']) assert.equal(stepCommandWord(`Run \`${word} x\` -> ok`), word, word);
 });

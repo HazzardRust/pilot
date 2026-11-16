@@ -9,7 +9,7 @@ import path from 'node:path';
 import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
 import { KIND_REPORT, KIND_WALKTHROUGH } from './items.mjs';
 import { DeckRefusal } from './store-core.mjs';
-import { stepCommandWord } from './walkthrough-shape.mjs';
+import { bareCommand, stepCommandWord } from './walkthrough-shape.mjs';
 
 /** PowerShell on Windows; elsewhere the login shell's name, `sh` when `SHELL` is unset. */
 export function defaultShell(platform = hostPlatform(), env = process.env) {
@@ -26,11 +26,13 @@ const CODE_SPAN = /`([^`\n]+)`/g;
 const FOREIGN_TO_POWERSHELL = [[/\bgrep\s+-\w*o/, 'grep -o'], [/(?:^|\s)~\//, '~/'], [/(?:^|;\s*|&&\s*)export\s/, 'export']];
 const FOREIGN_TO_UNIX = [[/\$env:/, '$env:']];
 
-/** The first token in a step's code spans that is another shell's syntax, or null; other shells are not checked. */
+/** The first token in a step's code spans, or in its bare command, that is another shell's syntax, or null; other shells are not checked. */
 function foreignToken(step, shell) {
   const table = POWERSHELL_FAMILY.test(shell) ? FOREIGN_TO_POWERSHELL : UNIX_FAMILY.test(shell) ? FOREIGN_TO_UNIX : [];
-  for (const [, span] of step.matchAll(CODE_SPAN)) {
-    for (const [pattern, token] of table) if (pattern.test(span.trim())) return token;
+  const code = [...step.matchAll(CODE_SPAN)].map(([, span]) => span.trim());
+  const bare = bareCommand(step);
+  for (const text of bare === null ? code : [...code, bare]) {
+    for (const [pattern, token] of table) if (pattern.test(text)) return token;
   }
   return null;
 }
