@@ -9,8 +9,9 @@
  *
  * The body is the artefact's §2, the record's slice table and the brief's PR footer, and always
  * goes through a file, never argv. The PR is found by its head every time; its number is never
- * stored (L3). A run remote other than origin, or a `feat/<slug>` origin does not have yet, prints
- * one line and exits 0. Any failure is one line naming the step, exit 1.
+ * stored (L3). The one local write is the fetch that refreshes `refs/remotes/origin/feat/<slug>`,
+ * the ref the artefact is read from. A run remote other than origin, or a `feat/<slug>` origin
+ * does not have yet, prints one line and exits 0. Any failure is one line naming the step, exit 1.
  */
 
 import fs from 'node:fs';
@@ -29,12 +30,21 @@ const USAGE = 'usage: pilot pr --ticket <itm_id>';
 const TICKET = /^itm_[0-9a-f]+$/;
 /** How long the deck has to answer before this calls it down. */
 const TIMEOUT_MS = 5000;
+/** The longest feature name a title carries. */
+const TITLE_MAX = 200;
+/** How many open PRs on the head are read, so a fork's PR of the same branch name cannot hide this repository's. */
+const LIST_LIMIT = '30';
 
 /** A failure that already names its step. */
 class StepError extends Error {}
 
+/** C0 and C1 controls and the Unicode line and paragraph separators (U+2028, U+2029). */
+const BREAKS = new RegExp(`[\\x00-\\x1f\\x7f-\\x9f${String.fromCharCode(0x2028, 0x2029)}]+`, 'g');
+/** Every line break and control character folded to one space: text that stays on one line. */
+const oneLine = (value) => String(value ?? '').replace(BREAKS, ' ').trim();
+
 /** One table cell: a pipe escaped, line breaks folded, so a row stays one row. */
-const cell = (value) => String(value ?? '').replace(/\r?\n/g, ' ').replace(/\|/g, '\\|').trim();
+const cell = (value) => oneLine(value).replace(/\|/g, '\\|');
 
 /**
  * The feature PR's body: `spec` (the artefact's §2) as it stands, the record's slices as a
@@ -118,7 +128,8 @@ function checked(record) {
   if (typeof artefact !== 'string' || !/^[\w./-]+$/.test(artefact) || artefact.split('/').includes('..')) {
     throw new StepError(`record: artefact ${JSON.stringify(artefact)} is not a repository path`);
   }
-  return { slug: record.slug, base, artefact, feature: typeof record.feature === 'string' && record.feature.trim() ? record.feature.trim() : record.slug };
+  const feature = typeof record.feature === 'string' ? oneLine(record.feature).slice(0, TITLE_MAX) : '';
+  return { slug: record.slug, base, artefact, feature: feature || record.slug };
 }
 
 /**
@@ -153,13 +164,15 @@ export function syncFeaturePr({ gh, git, record }) {
   const body = featureBody(spec, record, footer);
 
   let open;
-  const listed = step(gh, ['pr', 'list', '--head', head, '--state', 'open', '--json', 'number,body,baseRefName', '--limit', '1']);
+  const listed = step(gh, ['pr', 'list', '--head', head, '--state', 'open', '--json', 'number,body,baseRefName,isCrossRepository', '--limit', LIST_LIMIT]);
   try {
     open = JSON.parse(listed);
   } catch {
     throw new StepError('gh pr list: an answer that is not JSON');
   }
   if (!Array.isArray(open)) throw new StepError('gh pr list: an answer that is not a list');
+  // `--head` matches a branch name from any fork: only this repository's own PR is the feature PR.
+  open = open.filter((pr) => pr?.isCrossRepository === false);
 
   if (open.length === 0) {
     const out = withBodyFile(body, (file) =>
@@ -216,7 +229,7 @@ export async function main(argv, inject = {}) {
     say(`${syncFeaturePr({ gh, git, record }).line}\n`);
     return 0;
   } catch (err) {
-    say(`${err instanceof StepError ? err.message : `pilot pr: ${firstLine(err)}`}\n`);
+    say(`${oneLine(err instanceof StepError ? err.message : `pilot pr: ${firstLine(err)}`)}\n`);
     return 1;
   }
 }

@@ -69,7 +69,7 @@ function fakeGh({ open = [], fail } = {}) {
     }
     const at = args.indexOf('--body-file');
     if (at !== -1) bodies.push(fs.readFileSync(args[at + 1], 'utf8'));
-    if (args[0] === 'pr' && args[1] === 'list') return JSON.stringify(open);
+    if (args[0] === 'pr' && args[1] === 'list') return JSON.stringify(open.map((pr) => ({ isCrossRepository: false, ...pr })));
     if (args[0] === 'pr' && args[1] === 'create') return 'https://github.com/o/r/pull/42\n';
     return '';
   };
@@ -97,6 +97,11 @@ test('the first run opens one draft PR against the record\'s base', (t) => {
   const again = fakeGh({ open: [{ number: 7, body: 'the architect wrote this', baseRefName: 'pilot' }] });
   syncFeaturePr({ gh: again.gh, git: gitIn(cwd), record: record() });
   assert.equal(again.writes().filter((c) => c[1] === 'create').length, 0);
+
+  // A fork's PR from a branch of the same name is not the feature PR: never edited, and it hides nothing.
+  const fork = fakeGh({ open: [{ number: 9, body: 'a fork', baseRefName: 'pilot', isCrossRepository: true }] });
+  assert.equal(syncFeaturePr({ gh: fork.gh, git: gitIn(cwd), record: record() }).wrote, 'created');
+  assert.deepEqual(fork.writes().map((c) => c.slice(0, 2)), [['pr', 'create']]);
 });
 
 test('a changed row edits the body once', (t) => {
@@ -139,8 +144,8 @@ test('the body is the spec and the slice table', () => {
   assert.ok(body.trimEnd().endsWith(FOOTER), 'the footer last');
   assert.ok(!featureBody(SPEC, record()).includes('Generated with'), 'no footer, none written');
   // A cell cannot break the table: a pipe is escaped and a newline folded.
-  const odd = featureBody(SPEC, record({ slices: [{ slice: 'S9 a | b', state: 'one\ntwo' }] }));
-  assert.ok(odd.includes('| S9 a \\| b | one two |  |'));
+  const odd = featureBody(SPEC, record({ slices: [{ slice: 'S9 a | b', state: `one\ntwo\rthree${String.fromCharCode(0x2028)}four` }] }));
+  assert.ok(odd.includes('| S9 a \\| b | one two three four |  |'));
 });
 
 test('no branch on origin is quiet', async (t) => {
@@ -210,11 +215,19 @@ test('a verb outside the table is refused', (t) => {
   assert.throws(() => gh(['pr', 'merge', '7']), /pr merge/);
   assert.throws(() => gh(['api', 'user', '-X', 'DELETE']), /api/);
   assert.throws(() => gh(['api', 'user', '-f', 'name=x']), /api/);
+  assert.throws(() => gh(['api', '-X', 'POST', 'repos/../../issues/1/comments', '-f', 'body=x']), /api/);
+  assert.throws(() => gh(['api', '-X', 'POST', 'repos/o/r/issues/1/comments', '-F', 'body=@secret.txt']), /api/);
   assert.throws(() => gh(['api', '-X', 'PATCH', 'repos/o/r/pulls/7']), /api/);
   assert.equal(calls(), '', 'no process started for a refused verb');
 
   // The stub would have seen one: a verb in the table reaches it.
   gh(['pr', 'view', '7']);
   gh(['api', '-X', 'PATCH', 'repos/o/r/issues/comments/9', '-f', 'body=x']);
-  assert.equal(calls(), '["pr","view","7"]\n["api","-X","PATCH","repos/o/r/issues/comments/9","-f","body=x"]\n');
+  gh(['api', 'user', '-X', 'GET', '--jq', '.login']);
+  assert.equal(calls(), [
+    '["pr","view","7"]',
+    '["api","-X","PATCH","repos/o/r/issues/comments/9","-f","body=x"]',
+    '["api","user","-X","GET","--jq",".login"]',
+    '',
+  ].join('\n'));
 });

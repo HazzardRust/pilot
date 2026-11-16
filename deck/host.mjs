@@ -16,15 +16,19 @@ export const HOST_VERBS = Object.freeze([
 ]);
 
 const PR_VERBS = new Set(['create', 'edit', 'comment', 'view', 'list']);
-const SEGMENT = '[A-Za-z0-9_.-]+';
+/** One path segment, never `.` or `..`, so a path cannot climb out of `repos/<owner>/<repo>/`. */
+const SEGMENT = '(?!\\.{1,2}/)[A-Za-z0-9_.-]+';
 const COMMENT_PATH = {
   POST: new RegExp(`^repos/${SEGMENT}/${SEGMENT}/issues/\\d+/comments$`),
   PATCH: new RegExp(`^repos/${SEGMENT}/${SEGMENT}/issues/comments/\\d+$`),
 };
-/** `gh api` flags that take a value; any other flag is refused rather than guessed at. */
-const API_VALUE_FLAGS = new Set(['-X', '--method', '-f', '--raw-field', '-F', '--field', '--jq', '-q']);
+/**
+ * `gh api` flags that take a value; any other flag is refused rather than guessed at. Never `-F`,
+ * whose `@file` value reads a local file into the request.
+ */
+const API_VALUE_FLAGS = new Set(['-X', '--method', '-f', '--raw-field', '--jq', '-q']);
 /** Flags that make `gh api` send a body, and so turn a GET into a POST. */
-const BODY_FLAGS = new Set(['-f', '--raw-field', '-F', '--field', '--input']);
+const BODY_FLAGS = new Set(['-f', '--raw-field']);
 
 /** True when `args` is a `gh api` call in the table: `api user` with only `--jq`, or a comment POST or PATCH. */
 function apiAllowed(args) {
@@ -46,7 +50,7 @@ function apiAllowed(args) {
     }
     if (BODY_FLAGS.has(arg)) sendsBody = true;
   }
-  if (method === null) return target === 'user' && !sendsBody;
+  if (method === null || method === 'GET') return target === 'user' && !sendsBody;
   return Object.hasOwn(COMMENT_PATH, method) && COMMENT_PATH[method].test(target ?? '');
 }
 
