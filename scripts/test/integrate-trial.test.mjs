@@ -97,7 +97,7 @@ test('--default is a usage error', (t) => {
   process.stderr.write = (text) => said.push(String(text));
   t.after(() => { process.stderr.write = write; });
   const never = { get cwd() { return assert.fail('integrated on a usage error'); } };
-  const usage = 'usage: pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]... | pilot integrate --trial\n';
+  const usage = 'usage: pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]... [--dir <worktree>] | pilot integrate --trial [--dir <worktree>]\n';
   for (const argv of [['--default'], ['--trial', 'feat/x'], ['--trial', '--no-push'], ['--trial', '--trailer', 'A: b'], ['--trial', '--force']]) {
     said.length = 0;
     assert.equal(main(argv, never), 1, argv.join(' '));

@@ -13,8 +13,9 @@ import { chainNext, isSuperseded } from './chain.mjs';
 import { cleanOnPilot, cleanRefusal } from './gate2-base.mjs';
 import { startLanding } from './landing.mjs';
 import { LAND_AGAIN, LANDING_KINDS } from './landing-replies.mjs';
+import { startPrWrite } from './pr-writes.mjs';
 import {
-  KIND_GATE1, KIND_GATE2, KIND_TICKET, OWNER_KINDS, SIGN_OFF, authorKind, isChainHandoff, isGate, isRecord, liveTicketOf, messagesOf, ownerOf, stateOf, waiterKind,
+  KIND_GATE1, KIND_GATE2, KIND_TICKET, KIND_WALKTHROUGH, OWNER_KINDS, SIGN_OFF, authorKind, isChainHandoff, isGate, isOpen, isRecord, liveTicketOf, messagesOf, ownerOf, stateOf, waiterKind,
 } from './items.mjs';
 import { postFilled } from './closing-report.mjs';
 import { assertOnPilotTip, assertVerdicts } from './lineage.mjs';
@@ -25,7 +26,7 @@ import { announceChange, fallbackFor, handOff, waitForReplies } from './server-w
 import {
   DeckRefusal, addPilotMessage, coPilotFor, currentSeq, deckLanes, listItems, listStoredRuns, markDelivered, mergeTicket, moveTicket, needTicket,
   ownerFilter, parkedTicketOf, parkTicket, pivotTicket, recordFor, recordVerdicts, refusePoster, repliesSince, resolveItem,
-  setCoPilot, setSlices, takeTicket,
+  setCoPilot, setQaComment, setSlices, takeTicket,
 } from './store.mjs';
 
 import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_READ_ITEMS, MAX_READ_LIMIT, deckUrl } from './tools.mjs';
@@ -159,15 +160,17 @@ const repoOfRun = (id) => listStoredRuns().find((run) => run.id === id)?.repo;
 
 /**
  * Write the record into the feature worktree as `docs/design/<slug>/run.json`, in
- * exactly the stored bytes (L20), so the mirror is a copy and never a re-serialisation;
- * `pilot integrate` commits it. Says what happened, in a clause for the answer.
+ * exactly the stored bytes (L20) less `qaComment`, so the mirror is a copy and never a
+ * re-serialisation; `pilot integrate` commits it, and QA's PR comment is GitHub's text, never the
+ * repository's (deck-writes-github spec 3). Says what happened, in a clause for the answer.
  */
 function mirrorRecord(record, runRepo) {
   if (record?.worktree === undefined) return 'no worktree, so run.json not written';
   if (!isWorktree(record.worktree, runRepo)) return 'run.json not written: the recorded worktree is gone';
   const file = path.join(record.worktree, 'docs', 'design', record.slug, 'run.json');
+  const { qaComment, ...mirrored } = record;
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`);
+  fs.writeFileSync(file, `${JSON.stringify(mirrored, null, 2)}\n`);
   return 'run.json written';
 }
 
@@ -184,6 +187,18 @@ function assertCleanOnPilot(repo, sha) {
   if (!clean.ok) throw new DeckRefusal(cleanRefusal(sha, clean));
 }
 
+/**
+ * QA's `comment` becomes a public PR comment (deck-writes-github spec 3), so a walkthrough or gate2 carries one only
+ * from QA, naming an open ticket of the poster's own repository or a worktree of it. Another kind is the store's to refuse.
+ */
+function refuseComment(args) {
+  if (args?.comment === undefined || (args.kind !== KIND_WALKTHROUGH && args.kind !== KIND_GATE2)) return;
+  if (authorKind(args.author) !== 'qa') throw new DeckRefusal(`a comment is QA's to post, not ${authorKind(args.author)}'s`);
+  const ticket = listItems().find((item) => item.id === args.ticket && item.kind === KIND_TICKET && typeof item.repo === 'string');
+  const ours = ticket !== undefined && typeof args.repo === 'string' && (sameRepo(ticket.repo, args.repo) || isWorktree(args.repo, ticket.repo));
+  if (!ours || !isOpen(ticket)) throw new DeckRefusal('a comment names an open ticket of this repository');
+}
+
 /** The id of a thread, as the tool that names one is given it. */
 function threadId(args) {
   const id = args?.id;
@@ -198,9 +213,11 @@ function threadId(args) {
  * exception: it hands the replies it is about to return over to `handOff`, which writes
  * once when that hand-off is new (D4), and announces its own change rather than through
  * `WRITING_TOOLS` below. Synchronous, so a refusal is thrown where the caller stands and
- * nothing is half-written behind it. `land` is `startLanding`'s seams, for the tests.
+ * nothing is half-written behind it. `deps` is `startLanding`'s and `startPrWrite`'s seams, for the
+ * tests, and `prWrite(ticket, repo)`, the deck write a gate1 post and a status of its ticket start (spec 2).
  */
-export function callTool(name, args, land = {}) {
+export function callTool(name, args, deps = {}) {
+  const { prWrite = (ticket, repo) => startPrWrite(ticket, repo, deps), ...land } = deps;
   if (name === 'deck_post') {
     // `repo` is the caller's own directory, stamped by the stdio client; a ticket may be
     // filed under a worktree of it and nowhere else (run-chaining S6).
@@ -210,6 +227,7 @@ export function callTool(name, args, land = {}) {
     }
     // A gate's poster is refused before its lineage or base runs git (three-lanes spec 14).
     refusePoster(args?.kind, args?.author);
+    refuseComment(args);
     if (args?.kind === KIND_GATE1) {
       assertOnPilotTip(args.repo, args.branch);
       // The record is read off the gate's own ticket, in its own repository, whoever posts it (architect-runs-red A1).
@@ -221,6 +239,11 @@ export function callTool(name, args, land = {}) {
     const { run: _run, subdeck: _subdeck, ...fields } = args ?? {};
     // The lander's bodiless report is filled from the run record (lander S15).
     const item = postFilled(fields);
+    // A gate1 opens the feature PR, by a deck write the poster never waits on (spec 2, L1).
+    if (item.kind === KIND_GATE1) prWrite(item.ticket, item.repo);
+    // QA's comment goes to its ticket's record, the newest text winning, and the same write carries it to the PR (spec 3, A5).
+    const commented = typeof item.comment === 'string' ? setQaComment(item.ticket, item.comment) : null;
+    if (commented !== null) prWrite(item.ticket, commented);
     // In yellow (thread-types-phase L12): the item stays open for a later answer, and the
     // caller goes on with its own default now rather than waiting for one.
     if (item.away) {
@@ -358,6 +381,9 @@ export function callTool(name, args, land = {}) {
     // finishes do is the chain's to say.
     const runRepo = repoOfRun(args?.run);
     const chained = args?.finished !== undefined && typeof runRepo === 'string' ? chainNext(runRepo) : null;
+    // Every status of a ticket with a gate1 rewrites its feature PR from the record just saved (spec 2).
+    const gate1 = record?.ticket === undefined ? undefined : listItems().find((item) => item.kind === KIND_GATE1 && item.ticket === record.ticket);
+    if (gate1) prWrite(gate1.ticket, gate1.repo);
     // One line, never the record (spec 22.2): the answer is paid in the pilot's context
     // on every call, and the record is on disk for anything that needs it. A ticket taken
     // in place under the mark is named, so the same session knows it holds it (handoff-over-mark L2).

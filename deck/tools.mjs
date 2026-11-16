@@ -192,6 +192,8 @@ export const TOOLS = [
         pr: { type: 'string' },
         sha: { type: 'string' },
         walkthrough: { type: 'string' },
+        // QA's checks for the feature PR; its bound is the store's (MAX_QA_COMMENT_CHARS), unspent here (prompt pins).
+        comment: { type: 'string' },
       },
       // title and body are the store's to refuse (requireText): a report with a ticket comes without them (lander-tail spec 1).
       required: ['kind'],

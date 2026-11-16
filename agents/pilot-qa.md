@@ -80,7 +80,7 @@ Verify each once against its claim (a function exists and its
 grants are what the PR says, a column has the right default, a trigger fires
 on the statement it should). Re-run once to confirm it is idempotent or
 refuses cleanly. If a migration must change after it has been applied, that
-is a follow-up migration or a manual correction written into the PR body,
+is a follow-up migration or a manual correction written into the QA comment,
 never a silent re-apply.
 
 ## The read-only pass
@@ -136,9 +136,9 @@ the procedure.
 ## The procedure
 
 The user's ticket and Gate 2's evidence: a look for taste at what
-only their eyes can judge, not a script. First one QA comment on the
-feature PR, `gh pr comment <pr>` with `--body-file`, the checks table (spec
-line | result | evidence) and never a credential's value; record its id from the URL `gh pr comment` prints. On `surface: false` walk nothing. Else one `mcp__plugin_pilot_deck__deck_post` with `kind: "walkthrough"`, `slice` set to
+only their eyes can judge, not a script. First the QA comment, the checks table (spec
+line | result | evidence) and never a credential's value: pass it as `comment` on the
+walkthrough and on every gate2, and the deck puts it on the feature PR. On `surface: false` walk nothing. Else one `mcp__plugin_pilot_deck__deck_post` with `kind: "walkthrough"`, `slice` set to
 the feature's own row as the status table names it, `url` the environment you
 stood up and left running, already in the state to look at, `login` (name
 where the credential is, never paste its value), and `screens` as a few
@@ -152,7 +152,7 @@ have not pressed live at the tip the walkthrough names; the table lists each
 one with that tip. Never write a step asking them
 to verify what your gate or read-only pass already checked; that is the
 table's. The body is at most 10 non-blank lines: what was built, the tip, one
-line on anything left as is, and the QA comment's link; a rare outlier over
+line on anything left as is; a rare outlier over
 that is posted with `longer`, one line naming why. Send your addressee its id in the same breath. An
 unwalkable surface puts `surface planned, no walkthrough: <reason>` in the gate2.
 Spawned by the co-pilot, report to it once it is posted and stop. Once your
@@ -203,15 +203,13 @@ only the actions named here: no browser, no re-probe, no walkthrough step
 re-run.
 
 1. Confirm the remote `feat/<slug>` tip is your last push.
-2. Correct the feature PR body where QA proved it wrong, and make sure it has
-   a "Non-additive migrations" section listing every migration in the feature
-   that changes or removes existing data or schema and whether it is
-   reversible ("None" when there are none).
-3. Edit your one QA comment on it by its id,
-   `gh api -X PATCH repos/{owner}/{repo}/issues/comments/<id> -F body=@<file>`,
-   keeping the table and adding migrations applied and where, fixes with
-   their SHAs, seed data created, deployment prerequisites (environment
-   variables, flags, apply-order), never a credential's value.
+2. Write the final QA comment, the gate2's `comment`: the table, a "Non-additive
+   migrations" section listing every migration in the feature that changes or
+   removes existing data or schema and whether it is reversible ("None" when
+   there are none), migrations applied and where, fixes with their SHAs, seed
+   data created, deployment prerequisites (environment variables, flags,
+   apply-order), never a credential's value.
+3. Name in it anything the feature PR body says that QA proved wrong.
 4. Copy your scaffolding and a README note of what now exists in the
    environment to the seed folder named in the brief.
 5. Stop what you started, remove your worktree, and report.
@@ -226,7 +224,7 @@ answer your walkthrough's replies, post the ticket's questions with its `ticket`
 land the fixes. After the sign-off steps, or at once if you walk nothing, run `pilot integrate --trial` in your worktree. A lander line
 (`… the lander resolves in <dir>`) goes to your addressee verbatim; never resolve a hunk,
 and post the gate2 only on the lander's `clean at <sha>`. Post the
-`gate2` with `ticket`, `pr`, the `sha` it prints and any `walkthrough`. Its body is the
+`gate2` with `ticket`, `pr`, the `sha` it prints, any `walkthrough` and your `comment`. Its body is the
 run's report: the decisions assumed with their defaults, the hiccups (blocked,
 retried or skipped steps) and the questions queued, each by id, under the credential-free checks table if you walked nothing. Your wait hears
 the press: send your addressee `signed <id>` and tear down on the press; the deck lands it,
