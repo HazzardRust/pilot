@@ -22,7 +22,7 @@
     },
     {
       "slice": "S2 The deck runs `pilot pr` on gate1 and every status",
-      "state": "integrated",
+      "state": "integrated at 18a7d20c (#74)",
       "after": [
         "S1"
       ],
@@ -32,11 +32,14 @@
     },
     {
       "slice": "S3 QA's comment rides on its posts",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S1",
         "S2"
-      ]
+      ],
+      "branch": "slice/deck-writes-github-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s3",
+      "pr": 75
     },
     {
       "slice": "S4 `pilot integrate --dir`",
@@ -84,8 +87,8 @@
     "kept: weigh S1 security LOW: flags after `pr <verb>` (-R, --web, --editor) unrestricted",
     "kept: weigh S1 security LOW: @mentions in record text reach the PR body and notify people"
   ],
-  "next": "co-pilot itm_5f1725c876a7: S8 integrated b347b748; S2 (#74) integrating; then S3, S6, principles, QA on scratch deck (L9), WSL x5 on final tip BEFORE gate2.",
-  "updatedAt": "2026-11-16T10:10:58.214Z",
+  "next": "co-pilot itm_5f1725c876a7: S3 (#75) integrating; then S6 (owns pilot-qa.md's `comment`; fix architecture.md:93 pin 11864 stale), principles, QA on scratch deck (L9), WSL x5 on final tip BEFORE gate2.",
+  "updatedAt": "2026-11-16T10:40:59.765Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -294,6 +297,30 @@
       "what": "S2 implementer compacted right after creating its worktree again; early reads redone",
       "evidence": "S2 report, PR #74",
       "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate's selection exceeds the 24000-char argv cap on this feature (31350, 29696) and falls back to the full suite, ~4 min per integrate",
+      "evidence": "integrate lines for S8 b347b748, S2 18a7d20c",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3's slice file named neither the 800-line file limit (store-runs.mjs, items.mjs at it), the facade/field-list pins, the prompt-share pins, nor host.mjs refusing file bodies for gh api; first gate failed 8 tests, second gate run",
+      "evidence": "S3 report, PR #75",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-fact-sheet",
+      "what": "reported the walkthrough SPECS entry not found; it is at deck/items.mjs:259",
+      "evidence": "S3 report, PR #75",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate refused PR #75 again for a capital first letter (\"QA's\"); a second slice title this run copied from the artefact's own capitalised title; one gh pr edit retitle, the very crew GitHub write this feature removes",
+      "evidence": "NOT integrated line for slice/deck-writes-github-s3",
+      "size": 2
     }
   ]
 }
