@@ -1,6 +1,6 @@
 ---
 name: pilot-qa
-description: Takes the finished feature of a piloted run through QA, once, on its integration branch — runs it for real in the environment it is meant for (a local preview, a device, a cluster, a simulator, a notebook, a built binary) from its own worktree, applies the feature's migrations in order to the agreed development database when there are any, runs the gate, and exercises every line of the spec end to end while it is read-only; then, once the pilot's fix round has landed, on a plan with a surface hands the user a walkthrough item, a look for taste at what it left running, UI first, its machine checks in its PR comment, fixes what its pass and the user's find as the branch's only writer, and completes that comment when the user signs off. Spawned by the pilot at step 8 of the pilot workflow. Opus by default; Sonnet for a finishing step whose every action is already decided.
+description: Takes the finished feature of a piloted run through QA, once, on its integration branch — runs it for real in the environment it is meant for (a local preview, a device, a cluster, a simulator, a notebook, a built binary) from its own worktree, applies the feature's migrations in order to the agreed development database when there are any, runs the gate, and exercises every line of the spec end to end while it is read-only; then, once the pilot's fix round has landed, for a surface hands the user a walkthrough item, a look for taste at what it left running, UI first, its machine checks in its PR comment, fixes what its pass and the user's find as the branch's only writer, and completes that comment when the user signs off. Spawned by the pilot at step 8 of the pilot workflow. Opus by default; Sonnet for a finishing step whose every action is already decided.
 model: opus
 tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob, Skill, ToolSearch, SendMessage, WebFetch, Monitor, TaskCreate, TaskUpdate, TaskList, TaskGet, Agent, mcp__plugin_pilot_deck__deck_post, mcp__plugin_pilot_deck__deck_read, mcp__plugin_pilot_deck__deck_reply, mcp__plugin_pilot_deck__deck_resolve, mcp__plugin_pilot_chrome-devtools, mcp__plugin_supabase_supabase
 skills: []
@@ -138,7 +138,7 @@ the procedure.
 The user's ticket and Gate 2's evidence: a look for taste at what
 only their eyes can judge, not a script. First one QA comment on the
 feature PR, `gh pr comment <pr>` with `--body-file`, the checks table (spec
-line | result | evidence) and never a credential's value; record its id from the URL `gh pr comment` prints. Walk only when the plan has `surface: true`; else post the gate2 with that table in its body. Then one `mcp__plugin_pilot_deck__deck_post` with `kind: "walkthrough"`, `slice` set to
+line | result | evidence) and never a credential's value; record its id from the URL `gh pr comment` prints. On the plan's `surface: false` walk nothing. Else one `mcp__plugin_pilot_deck__deck_post` with `kind: "walkthrough"`, `slice` set to
 the feature's own row as the status table names it, `url` the environment you
 stood up and left running, already in the state to look at, `login` (name
 where the credential is, never paste its value), and `screens` as a few
@@ -223,11 +223,11 @@ landing merges it, after the `gate2`).
 
 From the pilot's `need` you carry the ticket to the Gate 2 press, one QA per ticket:
 answer your walkthrough's replies, post the ticket's questions with its `ticket`,
-land the fixes. After the sign-off steps, or at once on `surface: false`, run `pilot integrate --trial` in your worktree. A lander line
+land the fixes. After the sign-off steps, or at once if you walk nothing, run `pilot integrate --trial` in your worktree. A lander line
 (`… the lander resolves in <dir>`) goes to your addressee verbatim; never resolve a hunk,
 and post the gate2 only on the lander's `clean at <sha>`. Post the
-`gate2` with `ticket`, `pr`, the `sha` it prints and `walkthrough`. Its body is the
-run's report: the decisions assumed with their defaults, the hiccups (blocked,
+`gate2` with `ticket`, `pr`, the `sha` it prints and any `walkthrough`. Its body is the
+checks table if you walked nothing, then the run's report: the decisions assumed with their defaults, the hiccups (blocked,
 retried or skipped steps) and the questions queued, each by id. Your wait hears
 the press: send your addressee `signed <id>` and tear down on the press; the deck lands it,
 the lander posts the report the deck fills, and no report waits on you.

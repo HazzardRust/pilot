@@ -2,13 +2,13 @@
 status: proposed
 date: 2026-11-16
 tags: [qa, deck, gates, agents]
-supersedes: []
+supersedes: [0090]
 superseded_by: []
 paths: [agents/pilot-qa.md, agents/pilot.md, agents/pilot-co-pilot.md, docs/OPERATING.md, deck/store-items.mjs, deck/gate2-evidence.mjs, docs/design/walkthrough-surface/architecture.md]
 ---
 # A walkthrough only for a surface
 
-This amends ADR 0090: QA posts its walkthrough only when the ticket's signed plan has `surface: true`; on `surface: false` it posts the gate2 on its evidence, with its checks table in the body, and that gate2 is the user's one press.
+This amends ADR 0090. We decided that QA posts no walkthrough when the ticket's signed plan has `surface: false`, and a plan without `surface` (signed before this) walks as before; on `surface: false` QA posts the gate2 on its evidence, with its checks table in the body, and that gate2 is the user's one press.
 
 ## Context
 
