@@ -8,7 +8,7 @@ The facts every implementer of this feature shares. Read this first, then your s
 
 ## Base and PR target
 
-The base is `feat/blocking-close`, cut at Gate 1 from `origin/pilot` (a37673eb at design time). Every slice PR is a **draft** against `feat/blocking-close`, never marked ready; the pilot merges it. Branch: `slice/blocking-close-s<n>`. PR body via `gh pr create --body-file <file>`.
+The base is `feat/blocking-close`, cut at Gate 1 from `origin/pilot` (a37673eb at design time), rebased onto `origin/pilot` 6ea49cac at 9835ef08 before S1. Re-read every file:line the artefact and your slice file cite at the current tip before you edit on it. Every slice PR is a **draft** against `feat/blocking-close`, never marked ready; the pilot merges it. Branch: `slice/blocking-close-s<n>`. PR body via `gh pr create --body-file <file>`.
 
 ## Remote
 
@@ -25,8 +25,8 @@ Remote: origin
 Every commit ends with these two lines, copied exactly:
 
 ```
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01Tek2jZXVh7dqjyqwApvNHq
+Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NXgSFodNbTKqoJ71EpWMS5
 ```
 
 ## PR footer
@@ -36,7 +36,7 @@ Every PR body ends with these lines, copied exactly:
 ```
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-https://claude.ai/code/session_01Tek2jZXVh7dqjyqwApvNHq
+https://claude.ai/code/session_01NXgSFodNbTKqoJ71EpWMS5
 ```
 
 ## Gate command
@@ -59,4 +59,4 @@ https://claude.ai/code/session_01Tek2jZXVh7dqjyqwApvNHq
 - `docs/adr/README.md` is regenerated with `node scripts/adr-index.mjs`. ADR 0169-0171 are taken; this run's is 0172.
 - Overlaps: lander-tail (#959), deck-writes-github (#951), walkthrough-surface (#954) and other-host (#955) are queued against pilot and may touch `deck/closing-report.mjs` and `deck/server-tools.mjs`. Keep edits there minimal.
 - Tests never reach the live deck on 4321, GitHub or a real remote. Use `PILOT_DECK_DIR` on a temp dir; for live checks, `pilot deck --scratch`.
-- Diff limit: 150 changed lines per slice. Past it, stop and ask `main`.
+- Diff limit: 300 changed lines per slice (`main`, at implementation). Past it, stop and ask `main`.
