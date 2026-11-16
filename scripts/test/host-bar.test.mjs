@@ -33,7 +33,8 @@ function modules() {
   return found;
 }
 
-const GH_START = /\b(?:execFileSync|spawnSync|spawn)\(\s*['"`]gh['"`]/g;
+// A file-and-args start (`'gh'`) or a command string (`'gh pr …'`), through any child_process starter.
+const GH_START = /\b(?:exec|execSync|execFile|execFileSync|spawn|spawnSync)\(\s*['"`]gh(?:['"`]|\s)/g;
 
 /** A comment line, which names a call without making one. */
 const COMMENT = /^\s*(?:\/\/|\/\*|\*)/;
@@ -113,6 +114,7 @@ test("the release PR's label create is a host verb", (t) => {
   const gh = hostIn(stub.dir);
   assert.throws(() => gh(['label', 'delete', 'pilot-release']), /gh label delete: not a host verb/);
   assert.throws(() => gh(['label', 'create']), /not a host verb/, 'a label create with no name is refused');
+  assert.throws(() => gh(['label', 'create', '--force']), /not a host verb/, 'a flag is never the name');
   assert.deepEqual(stub.calls(), [], 'no process started for a refused verb');
   gh(['label', 'create', 'pilot-release', '--force']);
   assert.deepEqual(stub.calls(), [['label', 'create', 'pilot-release', '--force']]);
