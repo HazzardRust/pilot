@@ -25,7 +25,7 @@
     },
     {
       "slice": "blocking-close",
-      "state": "fixing: draft PR #42 (fix/blocking-close-principles at f32aa03b), Verdict pass, integrating",
+      "state": "concluding: walkthrough itm_e04802a72fee open; tip b67284bf, Windows 4518 pass 0 fail, WSL 5/5; QA comment on #7",
       "after": [
         "S1",
         "S2",
@@ -59,8 +59,8 @@
     "kept: security LOW, pilotClosesOf also matches the repository (sameRepo); +2",
     "dropped: security LOW, markdown links in a resolution: the same as any agent-written gate2 body, accepted by the reviewer"
   ],
-  "next": "pilot integrate fix/blocking-close-principles in pilot-feat-blocking-close-r2, then send QA the tip",
-  "updatedAt": "2026-11-16T02:23:21.754Z",
+  "next": "User owes: gate2 itm_5c52090cb347 (lander-report, press -> pilot-lander), walkthroughs itm_88ca7a73e757 (handoff-prompt, QA af72324f7918b5958) + itm_e04802a72fee (blocking-close, QA afaaf9748a541d081), A3 itm_3c5ec5cddde7 (audit-f1 -> gate1). Yellow empty: co-pilot itm_ff08c3e59cfa from its run.json on feat (3 slices in, fix round lost; PR #8 now on pilot; worktree path taken, use -r2).",
+  "updatedAt": "2026-11-16T02:46:01.871Z",
   "friction": [
     {
       "kind": "drain",
@@ -166,6 +166,30 @@
       "what": "context reset mid fix round; state re-derived from git status",
       "evidence": "PR #42 report",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "two co-pilots in a row handed back paused mid-run (the second at about 69k tokens), each leaving a live child whose report went to a dead address; the pilot drove QA directly",
+      "evidence": "hand-backs of both co-pilots on itm_809d3e826efc",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "no chrome-devtools tools in the QA session, so no rendered page was looked at in a browser",
+      "evidence": "ToolSearch found none",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the deck HTTP API returns refusals as {error}, not isError; first probe misread 10 rows",
+      "evidence": "QA hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a real pause needs a yellow ticket and a 20-minute-old question and no tool sets that up; fixtures seeded into the scratch store directly",
+      "evidence": "qa-fixture-seed.mjs",
+      "size": 2
     }
   ]
 }
