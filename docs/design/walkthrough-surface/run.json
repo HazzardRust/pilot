@@ -54,7 +54,7 @@
     },
     {
       "slice": "S5 A command step shows its shell and directory",
-      "state": "draft PR #59",
+      "state": "integrated at fb0f775f",
       "branch": "slice/walkthrough-surface-s5",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s5",
       "pr": 59
@@ -83,8 +83,8 @@
       ]
     }
   ],
-  "next": "S5 integrating; then integrate S4 (#60, 3c1d7792); then S8 (after S4+S5); S2 implementing",
-  "updatedAt": "2026-11-16T05:47:42.287Z",
+  "next": "S5 integrated at fb0f775f; integrating S4 (#60); then S8; S2 implementing",
+  "updatedAt": "2026-11-16T05:52:49.753Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
