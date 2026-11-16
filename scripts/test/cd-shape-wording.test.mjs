@@ -27,7 +27,7 @@ test('every shell-running crew agent names the cd shape', () => {
 
 test('the pilot owns Moot', () => {
   const pilot = flat(read('agents/pilot.md'));
-  assert.ok(pilot.includes('never by the refused agent'), 'the Moot paragraph does not keep the refused agent out');
+  assert.ok(pilot.includes('never by the agent that asked'), 'the Moot paragraph does not keep the asking agent out');
 });
 
 test('the pins move by the wording', () => {

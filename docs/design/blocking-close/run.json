@@ -1,0 +1,195 @@
+{
+  "slug": "blocking-close",
+  "feature": "Pilot clears a blocking thread",
+  "ticket": "itm_809d3e826efc",
+  "branch": "feat/blocking-close",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-blocking-close-r2",
+  "artefact": "docs/design/blocking-close/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Skeleton: the pilot closes any blocking question as Moot or Assumed",
+      "state": "integrated at 049cfebd",
+      "branch": "slice/blocking-close-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocking-close-s1",
+      "pr": 39
+    },
+    {
+      "slice": "S2 The gate2 and the closing report list the pilot closes",
+      "state": "integrated at e23f452d",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/blocking-close-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocking-close-s2",
+      "pr": 41
+    },
+    {
+      "slice": "blocking-close",
+      "state": "concluding: walkthrough itm_e04802a72fee open; tip b67284bf, Windows 4518 pass 0 fail, WSL 5/5; QA comment on #7",
+      "after": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "branch": "feat/blocking-close",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-blocking-close-r2",
+      "pr": 7
+    },
+    {
+      "slice": "S3 The pilot's rule and ADR 0177 widen Moot to every blocking question",
+      "state": "integrated at 053a3d2b",
+      "branch": "slice/blocking-close-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocking-close-s3",
+      "pr": 40
+    }
+  ],
+  "findings": [
+    "kept: F1 delete deck/pilot-closes.mjs, fold its query and section into closing-report.mjs on its existing `said` (duplicate said; lander-report #37 does not touch closing-report.mjs); -19",
+    "dropped: F2 remove `proposal !== true` from isPilotClose: the store refuses blocking proposals today, but this predicate is the trust boundary that lets the pilot answer for the user, and one clause keeps L1 local to it",
+    "kept: F3 stale ADR 0172 citations, widened: ADR 0177 becomes the NNNN placeholder the landing allocates, so it cannot collide again; 0",
+    "kept: F4 tests calling isPilotClose, resumeIn on a hand-built deck, and pilotClosesOf directly where a resolveItem/postFilled assert covers the fact; about -11",
+    "kept: F5 delete the ADR front-matter pin in yield-wording.test.mjs, adr-index already checks supersession; -4",
+    "kept: N1 literal `Moot: <why>` / `Assumed: <what>` in the refusal, one pilotCloseClaimed call; 0",
+    "kept: N2 reword the non-pilot-close refusal so it holds after a veto plus answer; 0",
+    "kept: N3 with the security MEDIUM: bound the section (about 300 chars per close, at most 20 closes then `- and N more`), so a long agent-written resolution cannot get every gate2 or the closing report refused; +4",
+    "kept: N4 compute the closes only on the paths that use them; 0",
+    "dropped: N5 cut 'never a gate, walkthrough or proposal' from agents/pilot.md: both S3 reviewers asked for it; the prompt states the boundary the deck enforces",
+    "kept: N6 ADR 0153 status amended (only A4 superseded); 0",
+    "kept: security LOW, append only to a non-blank gate2 body so the empty-body refusal still fires; 0",
+    "kept: security LOW, pilotClosesOf also matches the repository (sameRepo); +2",
+    "dropped: security LOW, markdown links in a resolution: the same as any agent-written gate2 body, accepted by the reviewer"
+  ],
+  "next": "User owes: gate2 itm_5c52090cb347 (lander-report, press -> pilot-lander), walkthroughs itm_88ca7a73e757 (handoff-prompt, QA af72324f7918b5958) + itm_e04802a72fee (blocking-close, QA afaaf9748a541d081), A3 itm_3c5ec5cddde7 (audit-f1 -> gate1). Yellow empty: co-pilot itm_ff08c3e59cfa from its run.json on feat (3 slices in, fix round lost; PR #8 now on pilot; worktree path taken, use -r2).",
+  "updatedAt": "2026-11-16T02:46:01.871Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "deck MCP tools absent in this session (plugin 0.9.4 vs running deck 0.9.5 with secret); every deck call made over loopback by hand, posts without repo stamp had to be reposted (gate2 #889, ticket)",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "pilot integrate --default gone in 0.9.5 (now --trial); gate1 verdict lines and slices field shapes learned by refusal",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "ADR number clash 0170 across landed runs turned #959 red; Land again refused on a red merge without a conflict dir",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test stops every scratch deck under the worktree, so the slice's live-check deck died in the gate's cleanup and was restarted",
+      "evidence": "S1: stopped 20300 daemon --leash-dir pilot-blocking-close-s1",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no browser tools and no deck MCP in the implementer session, so the slice's browser live check was not made; carried to QA",
+      "evidence": "S1 report: chrome-devtools tool search found nothing; deck MCP CONNECTION_CLOSED",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spec 4 evidence assumed signoff was already refused; it was not, so A5 was decided mid-slice",
+      "evidence": "architecture.md §3 Gate refusal row covers gate kinds only; A5 at 1698e317",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "context compacted mid-slice early on; worktree reread and npm ci rerun",
+      "evidence": "S1 and S3 both reported a summary before their first commit",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief's prompt headroom was stale (4.25 written, 0.25 at the base) and sibling wording tests outside the slice's owned files pinned the old rule",
+      "evidence": "S3: measure-prompt pilot 11692 vs pin 11692.25 at d9fbf3cd; 6 suite failures in 5 files on the first run",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice file said move the pin by the delta; three sibling tests require pin = measured",
+      "evidence": "cd-shape-wording, landing-wording, report-record-wording tests",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the plan hard-numbered its ADR (0172) instead of the NNNN placeholder the landing allocates; it collided and was renumbered",
+      "evidence": "agents/pilot-architect.md:208, scripts/adr-allocate.mjs; 0172-0176 taken at 6ea49cac",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2.md Interface named closingReportOf(record, gate, closes); the tree already had a third param, so closes went fourth",
+      "evidence": "deck/closing-report.mjs closingReportOf(record, gate, left, closes)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "`pilot deck --help` printed the live deck's 4321 address; it may touch the live deck",
+      "evidence": "S2 report: node bin/pilot.mjs deck --help -> The deck is up at http://127.0.0.1:4321",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context reset mid-run lost the evidence runner's state, so no coverage or mutation evidence came back",
+      "evidence": "report: EVIDENCE PASS NOT RUN",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "no chrome-devtools tools and a `deck` MCP reported CONNECTION_CLOSED in the QA session",
+      "evidence": "QA first message, a47553d9",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "deck MCP reported CONNECTION_CLOSED at the successor's start, then answered; one deck_status was the only probe",
+      "evidence": "session start notice: deck (CONNECTION_CLOSED); deck_status D3 saved afterwards",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix brief's F5 anchor pointed past the end of yield-wording.test.mjs, and its 'agents/*.md cite 0177' did not hold",
+      "evidence": "file 87 lines, pin at :63-66; grep found no agents file citing 0177",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the suite ran twice because the reviewer's fixes landed while the first run was in flight",
+      "evidence": "PR #42 report: first run 4518/0, final 4518/0",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "context reset mid fix round; state re-derived from git status",
+      "evidence": "PR #42 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "two co-pilots in a row handed back paused mid-run (the second at about 69k tokens), each leaving a live child whose report went to a dead address; the pilot drove QA directly",
+      "evidence": "hand-backs of both co-pilots on itm_809d3e826efc",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "no chrome-devtools tools in the QA session, so no rendered page was looked at in a browser",
+      "evidence": "ToolSearch found none",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the deck HTTP API returns refusals as {error}, not isError; first probe misread 10 rows",
+      "evidence": "QA hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a real pause needs a yellow ticket and a 20-minute-old question and no tool sets that up; fixtures seeded into the scratch store directly",
+      "evidence": "qa-fixture-seed.mjs",
+      "size": 2
+    }
+  ]
+}

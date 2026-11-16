@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-import { MOOT } from '../blocked-shape.mjs';
+import { PILOT_CLOSES } from '../blocked-shape.mjs';
 import { KIND_QUESTION, KIND_TICKET, ticketQueueOf } from '../items.mjs';
 import { YIELD_MS } from '../lanes.mjs';
 import { DeckRefusal, addReply, listItems, resolveItem, setCoPilot, yieldTicket } from '../store.mjs';
@@ -18,7 +18,8 @@ import { postStored, shapedTicketBody, tempDeck } from '../testUtils.mjs';
 
 const REPO = path.join('D:', 'work', 'pilot');
 const PILOT = ''; // the stamp `hooks/deck-author.js` writes for the main session
-const PAST = new Date(Date.now() - YIELD_MS - 60_000).toISOString();
+const [MOOT] = PILOT_CLOSES;
+const PAST =new Date(Date.now() - YIELD_MS - 60_000).toISOString();
 
 const stored = (id) => listItems().find((item) => item.id === id);
 const yellow = (title) => postStored({ kind: KIND_TICKET, title, body: shapedTicketBody(title), repo: REPO, sliceCount: 3, state: 'yellow' });
@@ -77,7 +78,7 @@ test('a plain close resumes nothing', (t) => {
   assert.equal(stored(ticket.id).paused.question, question.id);
 
   const design = blocking(ticket, 'Schema for it');
-  assert.throws(() => resolveItem(design.id, `${MOOT} no longer matters`, PILOT), DeckRefusal);
+  assert.throws(() => resolveItem(design.id, 'No longer matters', PILOT), DeckRefusal);
   assert.equal(stored(ticket.id).state, 'green');
 });
 
