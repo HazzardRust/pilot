@@ -18,14 +18,14 @@ rule: no crew agent writes to GitHub; the deck performs each write from the run 
 ## 2. Spec
 
 Sharpened from the ticket's six lines; 7 is added (found), 8 by the user. Re-cut: 1, 3 and 4 move and are *assumed*
-until A4–A6 are answered; 2 follows L7' (*assumed*, awaiting itm_b69e08509bb5); 6's bar is re-measured.
+until A4–A6 are answered; 2 follows L7' (the user, itm_b69e08509bb5, 2026-11-16); 6's bar is re-measured.
 
 1. *Assumed (A4).* No crew prompt names a GitHub write: `gh pr edit` (its `--base` retarget included),
    `gh pr comment`, `gh pr ready`, `gh pr close`, `gh api` with `-X`/`--method` PATCH or POST, or `gh pr create`
    for the feature PR; `gh pr create --draft` stands only in the implementer's own slice PR (A1). A dropped base is
    `deck_status base: pilot`, which the deck applies. *Evidence: `check-references` carries them as forbidden
    patterns; bar: exits 0 on the tree, 1 on a fixture prompt naming `gh pr edit 12 --base pilot`.*
-2. *Assumed (L7').* The deck owns the feature PR: on a gate1 post and on every `deck_status` of a ticket that has one,
+2. (L7'.) The deck owns the feature PR: on a gate1 post and on every `deck_status` of a ticket that has one,
    it spawns `pilot pr --ticket <id>` (the installed bin, a fixed argv like `pilot land`), which opens the draft PR
    (head `feat/<slug>`, base the record's `base`, `pilot` or `feat/<N>`) when none is open, else rewrites its body
    from the artefact's §2 and the record's slice table and retargets it when its base differs; the architect no
@@ -136,12 +136,12 @@ reappears in four files and a second host means editing each.
 - **L5** `PILOT_DECK_NO_LAND` also stops deck writes, so no daemon test reaches GitHub. Rejected: a second switch.
 - **L6** QA's comment rides on its own posts (`comment` on walkthrough and gate2), QA's tools unchanged. Rejected:
   giving QA `deck_status` (it could move rows).
-- **L7'** (re-cut; awaiting itm_b69e08509bb5, default taken) The base is the record's `base`, `pilot` or `feat/<N>`;
+- **L7'** (re-cut; the user, itm_b69e08509bb5, 2026-11-16: "base follows the record") The base is the record's `base`, `pilot` or `feat/<N>`;
   `pilot pr` retargets with `gh pr edit --base` when GitHub's differs; the title `feat(<slug>): <feature>` from the
   record. Was L7: the base is `pilot` (one-integration-line A1), overturned by stacked bases (`agents/pilot.md:364,
   504`). Rejected: keeping `pilot` and leaving a stacked PR's base to the pilot (a crew write spec 1 bans).
 - **L8** Grilling depth: forks (the user, itm_e8f2042663eb, 2026-10-20). Rejected: the thread's other depths.
-- **L9** (awaiting itm_558bd20de355, unchanged by default) QA runs on a scratch deck (`pilot deck --scratch`) with
+- **L9** (re-confirmed by the user, itm_558bd20de355, 2026-11-16: "Keep L9: real throwaway PRs") QA runs on a scratch deck (`pilot deck --scratch`) with
   fixture draft PRs on throwaway branches of HazzardRust/pilot, which QA closes after; never the user's deck on 4321;
   no database (the user, itm_adda0735a7fd). This run is the stated exception to ADR 0173's "never real GitHub"
   (`agents/pilot-qa.md:101`): only a real PR proves acceptance's read-back; the verb tests run under `pilot gh-stub`.
