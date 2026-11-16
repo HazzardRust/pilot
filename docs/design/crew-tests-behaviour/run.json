@@ -8,18 +8,22 @@
   "slices": [
     {
       "slice": "crew-tests-behaviour",
-      "state": "gate1 posted at 28764ba9 (verdict lines added by the pilot); feature PR #906 draft → pilot; feat at 28764ba9",
+      "state": "implementing; base taken at 8be8f3a0; feat at 1dd03de6",
       "branch": "feat/crew-tests-behaviour",
       "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-tests-behaviour",
-      "pr": 906
+      "pr": 5
     },
     {
       "slice": "S1 Walking skeleton: test-design",
-      "state": "planned"
+      "state": "implementing",
+      "branch": "slice/crew-tests-behaviour-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s1"
     },
     {
       "slice": "S2 Misses: line + check-slices",
-      "state": "planned (opus)"
+      "state": "implementing",
+      "branch": "slice/crew-tests-behaviour-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s2"
     },
     {
       "slice": "S3 Stuck red → ranked hypotheses",
@@ -37,7 +41,9 @@
     },
     {
       "slice": "S5 Sweep: pilot-agents first half",
-      "state": "planned (sonnet)"
+      "state": "implementing",
+      "branch": "slice/crew-tests-behaviour-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s5"
     },
     {
       "slice": "S6 Sweep: pilot-agents second half",
@@ -74,8 +80,8 @@
       ]
     }
   ],
-  "next": "co-pilot holds the run; base taken at 8be8f3a0 (pilot 6ea49cac); ADR to NNNN placeholder; starting slices per pilot ready",
-  "updatedAt": "2026-11-16T03:20:43.131Z",
+  "next": "S1, S2, S5 implementing from feat 1dd03de6; next: integrate each on its draft PR, then start S7-S10 per pilot ready; S4 waits on PR #8",
+  "updatedAt": "2026-11-16T03:22:17.400Z",
   "friction": [
     {
       "agent": "pilot-architect",

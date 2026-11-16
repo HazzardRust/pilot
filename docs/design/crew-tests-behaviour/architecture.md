@@ -126,6 +126,8 @@ Width 10; longest stem 2
 | S10 | Sweep: architect, slicing and verdict pins | 5 | `architect-deeper`, `deepening`, `slice-graph`, `slice-interface`, `seam-change`, `security-trigger`, `verdict-pass-architect`, `verdict-pass-pilot`, `bigger-jobs-*` (3), `test-depth`, `trivial-work`, `base` tests | – | `pilot:typescript-reviewer` | [S10](slices/S10.md) |
 | S11 | Sweep: crew prompt pins, voice and gates | 5 | `crew-voice`, `crew-waits`, `grilling-voice`, `handoff-wording`, `implementer-steps`, `suite-at-landing-wording`, `lander-wording`, `fundamentalist-case`, `cd-shape-wording`, `co-pilot-friction-wording` tests | – | `pilot:typescript-reviewer` | [S11](slices/S11.md) |
 | S12 | Sweep: crew prompt pins, QA, research and skills | 5 | `principles-sweep`, `qa-preview`, `qa-taste`, `read-window-wording`, `report-record-wording`, `report-format`, `research-first-crew`, `research-first`, `general-purpose`, `methodology-skills`, `run-remote-prose`, `state-words`, `toolbox` tests | S1 (`scripts/test/methodology-skills.test.mjs`) | `pilot:typescript-reviewer` | [S12](slices/S12.md) |
+| S13 | Sweep: wording pins added since the census (added) | 5 | the 12 `*-wording`, `*-prose`, `*-docs`, runbook tests in [S13](slices/S13.md) | – | `pilot:typescript-reviewer` | [S13](slices/S13.md) |
+| S14 | Sweep: the re-classification and its residue (added) | 5 | every test file still holding a PIN or MIXED block | S2, S5-S13 | `pilot:typescript-reviewer` | [S14](slices/S14.md) |
 
 All sweep files are under `scripts/test/` as `<name>.test.mjs` unless `deck/test/` is named. Models: S1-S4 opus (each hits the agent-configuration trigger); S5-S12 sonnet (precise: the census decides each block, only test files change). Width 10: once S1 and S5 are green, S2-S4 and S6-S12 have no unmet blocker.
 
@@ -158,4 +160,6 @@ In the order the user meets it:
 | S10 | planned | | | | – | 5 |
 | S11 | planned | | | | – | 5 |
 | S12 | planned | | | | S1 | 5 |
-| crew-tests-behaviour | planned | feat/crew-tests-behaviour | | | S1-S12 | 1-8 |
+| S13 | planned (added) | | | | – | 5 |
+| S14 | planned (added) | | | | S2, S5-S13 | 5 |
+| crew-tests-behaviour | implementing | feat/crew-tests-behaviour | #5 | pilot-feat-crew-tests-behaviour-r2 | S1-S14 | 1-8 |
