@@ -4,7 +4,7 @@ date: 2026-10-20
 tags: [pilot, co-pilot, gate, lanes, crew]
 supersedes: []
 superseded_by: []
-paths: [agents/pilot.md, deck/items.mjs, deck/lanes.mjs, deck/short-path-shape.mjs, deck/store-items.mjs, deck/ui/render-rail.mjs]
+paths: [agents/pilot.md, deck/items.mjs, deck/lanes.mjs, deck/gate2-evidence.mjs, deck/store-items.mjs, deck/ui/render-rail.mjs]
 ---
 # A small ticket takes the short path
 
