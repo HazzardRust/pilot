@@ -109,11 +109,10 @@ test('under pilot run: the record is committed and pushed, one handoff item is p
   const { origin, work } = scratchWorktree(t);
   const deck = await stubDeck(t, { feature: 'the thing', slug: 'x', worktree: work, next: 'merge S3, then QA' });
 
-  // The shell's directory may have drifted into a worktree; the wrapper's is the one it watches.
   const result = await handoff({ cwd: work, env: underWrapper, trailers: ['Claude-Session: s'] });
 
   assert.equal(result.ok, true, result.line);
-  assert.deepEqual(deck.asked, [REPO], 'the record is asked for the directory the wrapper watches');
+  assert.deepEqual(deck.asked.map((asked) => path.resolve(asked)), [path.resolve(work)], 'the record is asked for the checkout (L11)');
   assert.equal(git(work, 'status', '--porcelain'), '', 'nothing is left uncommitted');
   assert.equal(git(work, 'log', '-1', '--format=%s'), 'chore(x): run record');
   assert.match(git(work, 'log', '-1', '--format=%B'), /Claude-Session: s/);
@@ -123,7 +122,7 @@ test('under pilot run: the record is committed and pushed, one handoff item is p
   const [{ name, arguments: args }] = deck.posts;
   assert.equal(name, 'deck_post');
   assert.equal(args.kind, 'handoff');
-  assert.equal(args.repo, REPO, 'for the repository the wrapper watches, or no /clear is typed');
+  assert.equal(path.resolve(args.repo), path.resolve(work), 'for the checkout, or no /clear is typed');
   assert.match(args.title, /the thing/);
   assert.equal(args.body, 'merge S3, then QA');
 
@@ -288,6 +287,21 @@ test('a main session holding only a co-pilot hands off with nothing to land (yel
   assert.match(args.body, /no run of its own/);
   assert.match(args.body, /itm_00aa11bb22cc/);
   assert.doesNotMatch(JSON.stringify(args), /feat\/y|architecture|pilot-handoff-not-this-sessions/, 'only the ticket id and title are carried (L5)');
+});
+
+test('a hand-off from a worktree is posted for the checkout and stamped for the session', async (t) => {
+  const { work } = scratchWorktree(t);
+  const tree = path.join(path.dirname(work), 'tree');
+  git(work, 'worktree', 'add', '-q', '-b', 'feat/y', tree);
+  const deck = await stubDeck(t, RUN);
+  const stamp = path.join(os.homedir(), '.claude', 'pilot-inbox', 'claims', 'posted-4242.stamp');
+  fs.rmSync(stamp, { force: true });
+
+  const result = await handoff({ cwd: tree, env: { CLAUDE_PID: '4242' } });
+
+  assert.equal(result.ok, true, result.line);
+  assert.equal(path.resolve(deck.posts[0].arguments.repo), path.resolve(work), 'the main checkout, not the worktree (L11)');
+  assert.equal(fs.readFileSync(stamp, 'utf8'), 'itm_0123456789ab', 'the session that posted it is the one cleared (A6)');
 });
 
 test('neither a record nor a yellow ticket: refused as before, nothing posted', async (t) => {
