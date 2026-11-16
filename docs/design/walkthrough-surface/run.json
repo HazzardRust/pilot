@@ -41,7 +41,7 @@
     },
     {
       "slice": "S3 A full-run gate2 without a walkthrough carries the checks table",
-      "state": "integrated",
+      "state": "integrated at 4d172ae4; browser look at the rendered table owed (QA)",
       "after": [
         "S2"
       ],
@@ -65,7 +65,7 @@
     },
     {
       "slice": "S6 A command step without a directory is refused; shell defaults",
-      "state": "draft PR #64 at 23746e23; gate green, typescript + security Verdict: approve in body; queued behind S3's integrate",
+      "state": "integrated",
       "after": [
         "S2",
         "S5"
@@ -93,8 +93,8 @@
       "pr": 62
     }
   ],
-  "next": "Lander ac777750578399b3c on gate2 itm_4458f98a6b33 (#28) HELD: user to say finish/stop on itm_c7ca9d71097c. Landers queued, one at a time: itm_0487393fa5b5 (#7), itm_c14c4ea3b15f (#8). Unpressed gate2s: itm_2fe42921c8db, itm_5c52090cb347. Yellow: pilot integrating S3 (#63), then S6 (#64), S7 (Sonnet), fundamentalist, QA. Owed: spec 6/L7 amend in walkthrough-surface artefact.",
-  "updatedAt": "2026-11-16T06:47:01.077Z",
+  "next": "handoff-prompt closed (report itm_6d4808b50fa3, Findings sent). Lander a283727ae2b654096 live on itm_0487393fa5b5 (#7). Signed gate2s awaiting a lander, one at a time, in order: itm_c14c4ea3b15f (#8), itm_2fe42921c8db (#5), itm_5c52090cb347 (#37); each report needs a Findings reply. Yellow: pilot integrating S6 (#64); then S7 (Sonnet), fundamentalist, QA.",
+  "updatedAt": "2026-11-16T06:53:55.811Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -242,6 +242,18 @@
       "what": "S6: command detection treats prose starting with lower-case set/export as a command step, so it now needs a dir",
       "evidence": "deck/test/items.test.mjs fixture 'set the status filter to Done', PR #64 report",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-lander",
+      "what": "lander's rule posts the closing report with no body; the deck refuses an empty body, so the first report post fails on every landing",
+      "evidence": "deck_post kind report, ticket itm_04e5fe15f3f9: 'body must be a non-empty string'",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-lander",
+      "what": "pilot landing sent beside a deck reply got no verdict, posted a Blocked item the user then answered 'Skip it' while the retry was already running",
+      "evidence": "itm_c7ca9d71097c, task b6cezwazi",
+      "size": 2
     }
   ]
 }
