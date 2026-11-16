@@ -207,6 +207,7 @@ test('the pilot may spawn every agent its crew names, under the plugin-scoped ad
 
 test('the pilot asks through the deck and has no dialog to fall back on', () => {
   const pilot = agentSource('pilot');
+  // lint: forbidden pattern
   assert.doesNotMatch(pilot, /AskUserQuestion/, 'the deck is the only inbox (ADR 0004)');
   assert.match(fieldOf(pilot, 'tools'), /mcp__plugin_pilot_deck__/, 'the pilot must hold the deck tools');
 });
@@ -290,6 +291,7 @@ test('nothing the crew loads reaches for a user dialog instead of the deck', () 
     'rules/vertical-execution.md',
   ];
   for (const rel of surfaces) {
+    // lint: forbidden pattern
     assert.doesNotMatch(read(rel), /AskUserQuestion/, `${rel} still asks the user through a dialog`);
   }
 });
@@ -303,6 +305,7 @@ test('no swept file says a gate is "the user saying"', () => {
   // merge-first S5 (spec 6, §3 F6): typed words never pass a gate, so no swept line says they do.
   const rot = /user saying|sa(?:ys?|id) (?:they are|I am) satisfied|are you satisfied|on the user's word|pass neither on the user's|When the user is satisfied/i;
   for (const file of ['agents/pilot.md', 'agents/pilot-qa.md', 'CLAUDE.excerpt.md', 'CONTEXT.md', 'rules/vertical-execution.md', 'rules/orchestration.md']) {
+    // lint: forbidden pattern
     assert.doesNotMatch(read(file).replace(/\s+/g, ' '), rot, file);
   }
 });
@@ -326,6 +329,7 @@ test('no agent or skill file sends gate: "1" or gate: "2"', () => {
   walk('agents');
   walk('skills');
   for (const rel of files) {
+    // lint: forbidden pattern
     assert.ok(!/gate: ?"[12]"/.test(read(rel)), `${rel} still sends the retired gate tag`);
   }
 });
