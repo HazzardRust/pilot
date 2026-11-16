@@ -22,7 +22,7 @@
     },
     {
       "slice": "S2 The deck runs `pilot pr` on gate1 and every status",
-      "state": "draft PR #74",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -69,7 +69,7 @@
     },
     {
       "slice": "S8 Every `gh` call goes through `deck/host.mjs`",
-      "state": "integrated",
+      "state": "integrated at b347b748 (#73)",
       "after": [
         "S1",
         "S4"
@@ -84,8 +84,8 @@
     "kept: weigh S1 security LOW: flags after `pr <verb>` (-R, --web, --editor) unrestricted",
     "kept: weigh S1 security LOW: @mentions in record text reach the PR body and notify people"
   ],
-  "next": "co-pilot itm_5f1725c876a7: S8 integrating (#73), then S2 (#74, WARNs cleared: MEDIUM fixed in pr-writes.mjs:84-99, checked); then S3, S6, principles, QA on scratch deck (L9), WSL x5 on final tip BEFORE gate2.",
-  "updatedAt": "2026-11-16T10:08:28.403Z",
+  "next": "co-pilot itm_5f1725c876a7: S8 integrated b347b748; S2 (#74) integrating; then S3, S6, principles, QA on scratch deck (L9), WSL x5 on final tip BEFORE gate2.",
+  "updatedAt": "2026-11-16T10:10:58.214Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
