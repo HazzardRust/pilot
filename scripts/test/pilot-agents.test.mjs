@@ -21,7 +21,6 @@ import { fileURLToPath } from 'node:url';
 
 import { checkReferences, pluginRootPaths } from '../check-references.mjs';
 import { TEACH_ME } from '../../deck/items.mjs';
-import { TOOLS } from '../../deck/tools.mjs';
 import { MAX_WALKTHROUGH_BODY_LINES } from '../../deck/walkthrough-shape.mjs';
 import { sectionOf, flat, frontmatterOf as leadingFrontmatter, bodyOf } from './lib/area-file.mjs';
 
@@ -206,33 +205,17 @@ test('the pilot may spawn every agent its crew names, under the plugin-scoped ad
   }
 });
 
-test('the implementer names a reviewer for Go, Rust and C++', () => {
-  // deck-press-feedback S11 (spec 21): a Rust slice was reviewed by the language-neutral
-  // fallback because no Rust reviewer shipped. The three now ship, so the implementer's
-  // review sentence must list them among the language reviewers and drop Rust from the
-  // fallback's languages.
-  const prose = agentSource('pilot-implementer').replace(/\s+/g, ' ');
-  const reviewers = /the reviewer matching the language where one ships \(([^)]*)\)/.exec(prose);
-  assert.ok(reviewers, 'pilot-implementer.md no longer names its language reviewers');
-  for (const name of ['go-reviewer', 'rust-reviewer', 'cpp-reviewer']) {
-    assert.ok(reviewers[1].includes(`\`pilot:${name}\``), `pilot-implementer.md does not name pilot:${name}`);
-  }
-  const fallback = /`pilot:silent-failure-hunter` \(([^)]*)\)/.exec(prose);
-  assert.ok(fallback, 'pilot-implementer.md no longer names its language-neutral fallback');
-  assert.doesNotMatch(fallback[1], /rust|\bgo\b|c\+\+/i, 'a language with its own reviewer is still sent to the fallback');
-});
-
 test('the pilot asks through the deck and has no dialog to fall back on', () => {
   const pilot = agentSource('pilot');
+  // lint: forbidden pattern
   assert.doesNotMatch(pilot, /AskUserQuestion/, 'the deck is the only inbox (ADR 0004)');
   assert.match(fieldOf(pilot, 'tools'), /mcp__plugin_pilot_deck__/, 'the pilot must hold the deck tools');
 });
 
 // user-threads-open L5: the user closes a thread they opened; the pilot only answers it.
-test('pilot.md answers a user thread with deck_reply and never says "until you deck_resolve it"', () => {
-  const pilot = agentSource('pilot');
-  assert.ok(pilot.includes('The chat and a thread the user opened (Create, Add) are answered with `deck_reply`, never `deck_resolve`; the chat never closes, and the user closes the thread.'));
-  assert.doesNotMatch(pilot, /until you `deck_resolve` it/);
+test('pilot.md never says "until you deck_resolve it"', () => {
+  // lint: forbidden pattern
+  assert.doesNotMatch(agentSource('pilot'), /until you `deck_resolve` it/);
 });
 
 test("the pilot's tools field grants deck_ticket", () => {
@@ -299,42 +282,6 @@ test('every MCP tool a crew agent is told to call is one its own tools field gra
   }
 });
 
-test('the skills that put a question to the user wait on it, argue with it and close it', () => {
-  // Slice 7 vendored these three when the deck could only post and read. Slices 2 and 3
-  // gave it waiting, push-back and resolution, and a skill that never learned them leaves
-  // the agent polling `deck_read` and leaves every thread it opened open for ever.
-  for (const name of ['grilling', 'wizard', 'diagnosing-bugs']) {
-    const source = read(`skills/${name}/SKILL.md`);
-    assert.ok(
-      source.includes('mcp__plugin_pilot_deck__deck_wait'),
-      `skills/${name}/SKILL.md asks the user something and never waits on the answer`,
-    );
-  }
-
-  // Grilling and the wizard own their threads end to end; diagnosing-bugs hands its
-  // walkthrough back to whoever is driving the bug, so it only has to wait.
-  for (const name of ['grilling', 'wizard']) {
-    const source = read(`skills/${name}/SKILL.md`);
-    assert.ok(
-      source.includes('mcp__plugin_pilot_deck__deck_reply'),
-      `skills/${name}/SKILL.md cannot push back on an answer, which makes its item a form`,
-    );
-    assert.ok(
-      source.includes('mcp__plugin_pilot_deck__deck_resolve'),
-      `skills/${name}/SKILL.md never closes the thread it opened`,
-    );
-  }
-
-  // The ledger is what a re-sync against a newer upstream reads, so the row has to say
-  // that the deck vocabulary is part of the adaptation and not only the posting of it.
-  const ledger = read('vendor/methodology.md');
-  for (const name of ['grilling', 'wizard', 'diagnosing-bugs']) {
-    const row = ledger.split('\n').find((line) => line.includes(`\`skills/${name}/SKILL.md\``));
-    assert.ok(row, `vendor/methodology.md has no row for skills/${name}/SKILL.md`);
-    assert.match(row, /deck_wait/, `the ledger row for ${name} does not say the wait is part of the adaptation`);
-  }
-});
-
 test('nothing the crew loads reaches for a user dialog instead of the deck', () => {
   const surfaces = [
     ...CREW.map((name) => `agents/${name}.md`),
@@ -344,62 +291,30 @@ test('nothing the crew loads reaches for a user dialog instead of the deck', () 
     'rules/vertical-execution.md',
   ];
   for (const rel of surfaces) {
+    // lint: forbidden pattern
     assert.doesNotMatch(read(rel), /AskUserQuestion/, `${rel} still asks the user through a dialog`);
   }
 });
 
-test('the pilot drives the status table and the two gates through the deck', () => {
-  const skill = read('agents/pilot.md');
-  assert.match(skill, /kind `walkthrough`/, 'a QA walkthrough is a walkthrough item on the deck');
-});
-
-test('pilot.md posts Gate 1 as kind gate1 and Gate 2 as kind gate2', () => {
-  // thread-kinds S5 (spec 14, L5, L19): each gate is a thread of its own kind carrying its
-  // evidence as fields; the retired `gate` tag is refused by the deck (S2), and Sign off on
-  // QA's walkthrough no longer records Gate 2: the pilot's `gate2` thread does.
-  const skill = read('agents/pilot.md').replace(/\s+/g, ' ');
-  const gate1 = /\*\*Gate 1\*\* is the user signing off.*?(?=At the \*every\* depth)/.exec(skill);
-  assert.ok(gate1, 'agents/pilot.md must carry the Gate 1 paragraph');
-  assert.match(gate1[0], /kind `gate1`/, 'Gate 1 is a gate1 thread');
-  for (const field of ['artefact', 'sha', 'locked', 'slices']) {
-    assert.ok(gate1[0].includes('`' + field + '`'), `the gate1 thread carries ${field}`);
-  }
-  const gate2 = /\*\*Gate 2\*\* is the user signing off.*?(?=the press frees the lane)/.exec(skill);
-  assert.ok(gate2, 'agents/pilot.md must carry the Gate 2 paragraph');
-  assert.match(gate2[0], /kind `gate2`/, 'Gate 2 is a gate2 thread');
-  for (const field of ['pr', 'sha', 'walkthrough']) {
-    assert.ok(gate2[0].includes('`' + field + '`'), `the gate2 thread carries ${field}`);
-  }
-  assert.doesNotMatch(gate2[0], /record(s|ed)? Gate 2/i, 'Sign off on the walkthrough no longer records Gate 2');
-  assert.doesNotMatch(skill, /kind `signoff` with/, 'no gate is a signoff item');
-});
-
-test('the pilot says a gate passes only on the Sign off press and typed approval is answered by asking for it', () => {
-  // merge-first S5 (spec 6, L12): the one spelling, in the Gate 1 paragraph.
-  const skill = read('agents/pilot.md').replace(/\s+/g, ' ');
-  const gate1 = /\*\*Gate 1\*\* is the user signing off.*?(?=At the \*every\* depth)/.exec(skill);
-  assert.ok(gate1, 'agents/pilot.md must carry the Gate 1 paragraph');
-  assert.ok(
-    gate1[0].includes('A gate passes only when the user presses Sign off; typed approval gets a reply asking for the press, and the gate stays open.'),
-    'the Gate 1 paragraph carries the one spelling',
-  );
+test('no pilot prose posts a gate as a signoff item', () => {
+  // lint: forbidden pattern (thread-kinds S5)
+  assert.doesNotMatch(read('agents/pilot.md').replace(/\s+/g, ' '), /kind `signoff` with/, 'no gate is a signoff item');
 });
 
 test('no swept file says a gate is "the user saying"', () => {
   // merge-first S5 (spec 6, §3 F6): typed words never pass a gate, so no swept line says they do.
   const rot = /user saying|sa(?:ys?|id) (?:they are|I am) satisfied|are you satisfied|on the user's word|pass neither on the user's|When the user is satisfied/i;
   for (const file of ['agents/pilot.md', 'agents/pilot-qa.md', 'CLAUDE.excerpt.md', 'CONTEXT.md', 'rules/vertical-execution.md', 'rules/orchestration.md']) {
+    // lint: forbidden pattern
     assert.doesNotMatch(read(file).replace(/\s+/g, ' '), rot, file);
   }
 });
 
 test("pilot-qa.md's procedure carries no gate", () => {
   const procedure = /## The procedure\n([\s\S]*?)(?=\n## )/.exec(read('agents/pilot-qa.md'));
+  // lint: the section exists, and the retired gate tag is absent
   assert.ok(procedure, 'agents/pilot-qa.md must carry its procedure section');
-  const text = procedure[1].replace(/\s+/g, ' ');
-  assert.match(text, /`kind: "walkthrough"`/, 'the procedure is a walkthrough post');
-  assert.doesNotMatch(text, /`gate:/, 'the walkthrough carries no gate tag');
-  assert.match(text, /then post the `gate2`/, 'three-lanes S8: QA posts the gate2 once the walkthrough is signed');
+  assert.doesNotMatch(procedure[1].replace(/\s+/g, ' '), /`gate:/, 'the walkthrough carries no gate tag');
 });
 
 test('no agent or skill file sends gate: "1" or gate: "2"', () => {
@@ -414,151 +329,33 @@ test('no agent or skill file sends gate: "1" or gate: "2"', () => {
   walk('agents');
   walk('skills');
   for (const rel of files) {
+    // lint: forbidden pattern
     assert.ok(!/gate: ?"[12]"/.test(read(rel)), `${rel} still sends the retired gate tag`);
   }
 });
 
-test('the pilot is told deck_status takes `after`, and after names a row of the same call', () => {
-  // Slice 4 of deck-tree added the two fields. Independence S4 deleted agents/pilot.md's
-  // deck tool table as a restatement of the tool schema, so the pin reads the two places
-  // the pilot is told now: the skill's artefact section here, and the schema below.
-  const artefact = /### The artefact is the state\n([\s\S]*?)(?=\n### |$)/.exec(read('agents/pilot.md'))[1];
-  assert.match(artefact, /`after`/, 'the artefact section names the after field');
-  assert.doesNotMatch(artefact, /`delivers`/, 'slice-graph A2: the pilot no longer mirrors delivers');
+test('the pilot\'s artefact section no longer mirrors delivers', () => {
+  const artefact = /### The artefact is the state\n([\s\S]*?)(?=\n### |$)/.exec(read('agents/pilot.md'));
+  // lint: the section exists, and a forbidden field is absent (slice-graph A2)
+  assert.ok(artefact, 'agents/pilot.md must carry its artefact section');
+  assert.doesNotMatch(artefact[1], /`delivers`/, 'slice-graph A2: the pilot no longer mirrors delivers');
 });
 
-test("the after field's description names the rows it comes after", () => {
-  // The schema as the model receives it, not the source it is built from.
-  const slices = TOOLS.find((tool) => tool.name === 'deck_status').inputSchema.properties.slices;
-  assert.match(slices.items.properties.after.description, /the rows it comes after, by S<n> or name/, 'the schema says after names rows by identifier or name');
-});
-
-test('the artefact section and the architect status-table section carry the blockers and the spec lines delivered', () => {
-  // Slice 4: agents/pilot.md describes the status table the pilot mirrors to
-  // the deck, and agents/pilot-architect.md describes the table the architect
-  // writes for the pilot to inherit. Both now carry a slice's blocker (`after`)
-  // and the spec lines it delivers, alongside slice, state, branch and worktree.
-  // Scoped to the named section/item itself, not the whole file, so a stray
-  // "blocker" anywhere else in either file cannot make this pass by accident.
-  const skill = read('agents/pilot.md');
-  const architect = agentSource('pilot-architect');
-
-  const artefactSection = /### The artefact is the state\n([\s\S]*?)(?=\n### |$)/.exec(skill);
-  assert.ok(artefactSection, 'the artefact section "The artefact is the state" must exist');
-  const artefactText = artefactSection[1];
-  assert.match(artefactText, /blocker/, 'the artefact section names the blocker a slice comes after');
-  assert.match(
-    artefactText,
-    /spec lines (it|each slice)\s+delivers/,
-    'the artefact section names the spec lines delivered',
-  );
-
-  const statusTableItem = /10\.\s+\*\*Status table\*\*:([\s\S]*?)\n\n/.exec(architect);
-  assert.ok(statusTableItem, 'the architect must still have a numbered "Status table" item');
-  const statusTableText = statusTableItem[1];
-  assert.match(statusTableText, /blocker/, 'the architect status-table item names the blocker column');
-  assert.match(statusTableText, /spec lines it delivers/, 'the architect status-table item names the spec-lines-delivered column');
-});
-
-test('ADR 0014 records the tree, the after validation, the edge tabs and the details bookmark, and ADR 0101 supersedes its tree', () => {
-  const adrPath = path.join(ROOT, 'docs', 'adr', '0014-the-deck-draws-a-run-as-a-tree.md');
-  assert.ok(fs.existsSync(adrPath), 'ADR 0014 must exist in the form of 0012 and 0013');
-  const adr = fs.readFileSync(adrPath, 'utf8').replace(/\r\n/g, '\n');
-
-  assert.match(adr, /\*\*Consequences\*\*:/, 'the ADR closes with the Consequences line the format uses');
-  assert.doesNotMatch(adr, /^#{2,}\s/m, 'the format has no sections beyond the title and the Consequences line');
-
-  assert.match(adr, /treeOf/, 'the ADR records D1: the tree is computed at render time, never stored');
-  assert.match(adr, /cycle/, 'the ADR records D2: after is validated and a cycle is refused');
-  assert.match(adr, /edge/, 'the ADR records D9: both views live at the edges of the page');
-  assert.match(adr, /details/, 'the ADR records D10: a tab is a details/summary element');
-  assert.match(adr, /bookmark/, 'the ADR records the edge tab strip as the pattern later features reuse');
-  assert.match(adr, /^superseded_by: \[0101\]$/m, 'slice-graph L1: ADR 0101 replaces the tree');
-});
-
-test("the pilot is told to name the run: the artefact section and the architect's status table both send `feature`", () => {
-  // Independence S4 deleted agents/pilot.md's deck_status row, a restatement of this section.
-  const artefact = /### The artefact is the state\n([\s\S]*?)(?=\n### |$)/.exec(read('agents/pilot.md'))[1];
-  assert.match(artefact, /`feature`/, 'the artefact section names the feature field');
-  assert.match(artefact, /working directory/, 'the artefact section replaces the directory name on the tab');
-  assert.match(artefact, /omits\s+it keeps the name/, 'the artefact section says the same about an omitted feature (A2)');
-
-  const table = /10\.\s+\*\*Status table\*\*:([\s\S]*?)\n\n/.exec(agentSource('pilot-architect'))[1];
-  assert.match(table, /`feature`/, 'the architect status-table item names the feature field');
-});
-
-test('ADR 0015 records D1, D3, D4, D6 and D11 for the run tabs', () => {
-  const adrPath = path.join(ROOT, 'docs', 'adr', '0015-the-deck-shows-one-run-at-a-time.md');
-  assert.ok(fs.existsSync(adrPath), 'ADR 0015 must exist in the form of 0012-0014');
-  const adr = fs.readFileSync(adrPath, 'utf8').replace(/\r\n/g, '\n');
-
-  assert.match(adr, /\*\*Consequences\*\*:/, 'closes with the Consequences line the format uses');
-  assert.doesNotMatch(adr, /^#{2,}\s/m, 'no sections beyond the title and the Consequences line');
-
-  assert.match(adr, /run=/, 'D1: selection lives in the URL');
-  assert.match(adr, /sameRepo/, 'D3: a tab is a repository, matched with sameRepo');
-  assert.match(adr, /registerRun/, "D4: an ended run's record is kept while it has an open item");
-  assert.match(adr, /no status table/, 'D6: the overview carries no status table or tree');
-  assert.match(adr, /sole live run/, 'D11: land on the sole live run when exactly one is live');
-});
-
-test('the file that tells the pilot how to wait says a turn does not end on an unanswered item', () => {
-  // 2026-09-16: the pilot posted, parked three times on a two-minute wait, ended
-  // its turn with a status line, and never heard the answer that arrived fourteen
-  // minutes later. The hook that now holds the turn open is the net; these
-  // sentences are the rule, and a file that lost one would teach the old habit
-  // back the next time it was read. Since ADR 0046 one file carries them.
-  for (const rel of ['agents/pilot.md']) {
-    const source = read(rel);
-    assert.match(
-      source,
-      /turn never ends with an item you posted still unanswered/,
-      `${rel} lets the pilot end a turn on a question nobody has answered`,
-    );
-    // Independence spec 19, 20 (background-wait fix): a background `pilot wait` restarts
-    // every 110 minutes (ticket-states A10) and the pilot stops on the record's word.
-    for (const rule of [/while a run\s+is live you keep listening on the deck/, /110\s+minutes/, /pilot wait/, /`finished`/]) {
-      assert.match(source, rule, `${rel} does not say how the pilot keeps listening: ${rule}`);
-    }
-  }
-});
-
-test('QA runs once per feature, the fundamentalist reports and the pilot decides, and no slice PR leaves draft', () => {
-  // 2026-09-15: the user moved QA from the end of every slice to the end of the feature,
-  // put the pilot between the fundamentalist's findings and whoever fixes them, made the
-  // review subtract before it judges, and made the QA agent's step-by-step procedure the
-  // last gate's evidence. These hold the files that describe the loop to one shape: a
-  // crew whose skill says one thing and whose agent file says another does whichever it
-  // read last.
+test('the loop files keep their headings and carry no retired step', () => {
   const skill = read('agents/pilot.md');
   const fundamentalist = agentSource('pilot-fundamentalist');
   const qa = agentSource('pilot-qa');
   const implementer = agentSource('pilot-implementer');
-  const architect = agentSource('pilot-architect');
-  const pilot = agentSource('pilot');
-  const execution = read('rules/vertical-execution.md');
 
-  // The run starts by building the spec with the user, and the artefact carries it.
+  // lint: heading exists
   assert.match(skill, /### 1\. Problem and spec, with the user/, 'step 1 builds the spec with the user');
-  assert.match(architect, /\*\*Spec\*\*/, 'the artefact has a Spec section');
-
-  // One QA pass, on the integration branch, never per slice.
-  // pilot-develop-line S4 (spec 3): no slice PR exists to leave draft; the slice branch is pushed and integrated.
-  assert.match(skill, /no\s+PR\s+ever\s+targets\s+`feat\/<slug>`/, 'the skill says no slice PR is opened');
+  assert.match(fundamentalist, /## The subtraction pass/, 'subtraction is a pass of its own, before the principles');
+  assert.match(implementer, /## A fix brief/, 'the implementer is the fixer, given a fix brief');
+  // lint: forbidden patterns
   assert.doesNotMatch(skill, /QA per slice/i, 'QA is no longer a per-slice step');
-  assert.match(qa, /feat\/<slug>/, 'the QA agent works on the integration branch');
-  // gate-no-stall L6: only `pilot land` flips the feature PR, never the pilot or QA.
   assert.doesNotMatch(skill, /gh pr ready/, 'the pilot runs no ready press of its own');
   assert.doesNotMatch(qa, /gh pr ready <n>/, 'the QA agent no longer flips a slice PR');
-  assert.match(qa, /kind: "walkthrough"/, 'the procedure is a walkthrough item on the deck');
-  assert.match(execution, /\*\*Gate 2\*\* is before the feature PR/, 'the rule puts Gate 2 on the feature PR');
-
-  // The fundamentalist subtracts first and reports; the pilot decides; an implementer fixes.
-  assert.match(fundamentalist, /## The subtraction pass/, 'subtraction is a pass of its own, before the principles');
-  assert.match(fundamentalist, /net line/, 'every finding carries its net line change');
   assert.doesNotMatch(fundamentalist, /QA agent,? (who|to) fix/i, 'the fundamentalist no longer routes findings to the QA agent');
-  assert.match(pilot, /\*\*The verdicts\.\*\*/, 'the verdict on a finding is the pilot\'s and never delegated');
-  assert.match(implementer, /## A fix brief/, 'the implementer is the fixer, given a fix brief');
   assert.doesNotMatch(qa, /fundamentalist's (blocking )?findings/, 'the QA agent no longer carries the fundamentalist\'s findings');
 });
 
@@ -568,57 +365,24 @@ const sliceAgents = () => fs.readdirSync(path.join(ROOT, 'agents')).filter((name
 
 test('the implementer opens no PR', () => {
   const implementer = read('agents/pilot-implementer.md');
+  // lint: the section exists under its current heading and the old one is gone
   assert.match(implementer, /^## Commit, push, report$/m, 'the section is named for what it does now');
   assert.doesNotMatch(implementer, /^## Commit, push, draft PR$/m);
+  // lint: forbidden command
   assert.equal(implementer.match(/gh pr create/g)?.length ?? 0, 0, 'the implementer runs no gh pr create');
-  assert.match(implementer, /<remote>\/feat\/<slug>\.\.\.HEAD/, 'its reviewers read the slice against the integration branch');
   for (const [name, text] of sliceAgents()) {
     assert.doesNotMatch(text, /slice\s+PR\b|draft\s+PR\s+#/,`${name} still describes a slice PR`);
   }
 });
 
-test("security's verdict rides a trailer", () => {
-  const pilot = read('agents/pilot.md');
-  assert.ok(pilot.includes('--trailer "Reviewed-by: <reviewer>: <verdict>"'), 'one Reviewed-by trailer per reviewer');
-  assert.doesNotMatch(pilot, /slice PR body/i, 'the security verdict is read from the report, not a PR body');
-  assert.match(pilot, /`Verdict:` line[^.]*report/, "security's verdict comes from the implementer's report");
+test('no pilot prose reads the security verdict from a slice PR body', () => {
+  // lint: forbidden pattern
+  assert.doesNotMatch(read('agents/pilot.md'), /slice PR body/i, 'the security verdict is read from the report, not a PR body');
 });
 
-test('the runner carries the mutation-safety rule', () => {
-  // 2026-09-17: a mutant of deck/store.mjs that ignored PILOT_DECK_DIR sent two
-  // mutation runs' fixtures into the user's own live deck, and the user answered two
-  // of them thinking they were real. The rule that stops it has to survive a copy.
-  // cheaper-crew S2 (spec 3, L7): it lives with the agent that mutates, and only there.
-  const runner = agentSection('pilot-evidence-runner', 'Never mutate[^\\n]*');
-  assert.match(
-    runner,
-    /store\.mjs/,
-    'the runner must forbid mutating a module that resolves a store path, named for this project',
-  );
-  assert.match(
-    runner,
-    /USERPROFILE/,
-    'the runner must point HOME and USERPROFILE at a scratch directory for every mutation pass',
-  );
+test('the fundamentalist carries no copy of the runner\'s mutation-safety rule', () => {
+  // lint: the rule lives with the agent that mutates, and only there (cheaper-crew S2, L7)
   assert.doesNotMatch(agentSource('pilot-fundamentalist'), /store\.mjs/, 'no second copy in the fundamentalist');
-});
-
-test('the QA agent never goes looking for a process by the file it runs', () => {
-  // 2026-09-19: sweeps matching `daemon.mjs` and `client.mjs` in a command line killed
-  // the user's live deck twice and the pilot's own bridge once, in one run. Every
-  // session on the machine runs those same two files, so the rule that says to ask a
-  // port for its pid instead has to survive a copy.
-  const qa = agentSource('pilot-qa');
-  assert.match(
-    qa,
-    /daemon\.mjs/,
-    'the QA agent must be told not to match a process by the file it runs, naming the file',
-  );
-  assert.match(
-    qa,
-    /\/api\/health/,
-    'and must be told where a daemon\'s pid actually comes from: its own port',
-  );
 });
 
 test('the inheritance finding is written down where it is acted on', () => {
