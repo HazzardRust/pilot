@@ -24,17 +24,19 @@
     },
     {
       "slice": "S1 One module holds a gate2's evidence",
-      "state": "draft PR #58",
+      "state": "integrated at 433e8b2c",
       "branch": "slice/walkthrough-surface-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s1",
       "pr": 58
     },
     {
       "slice": "S2 A plan marks its surface; QA cannot walk a plan without one",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/walkthrough-surface-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s2"
     },
     {
       "slice": "S3 A full-run gate2 without a walkthrough carries the checks table",
@@ -51,9 +53,10 @@
     },
     {
       "slice": "S5 A command step shows its shell and directory",
-      "state": "implementing",
+      "state": "draft PR #59",
       "branch": "slice/walkthrough-surface-s5",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s5"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s5",
+      "pr": 59
     },
     {
       "slice": "S6 A command step without a directory is refused; shell defaults",
@@ -79,13 +82,19 @@
       ]
     }
   ],
-  "next": "integrating S1 (#58, 4605dbed); then S2 from the new feat tip",
-  "updatedAt": "2026-11-16T05:31:07.359Z",
+  "next": "S5 draft PR #59 awaiting its report, then integrate; S2, S4 implementing",
+  "updatedAt": "2026-11-16T05:45:40.444Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
       "what": "S1 first commit failed silently: git add named a path already moved by git mv, the backgrounded compound command hid the error, reviewer saw no commit",
       "evidence": "S1 report, slice/walkthrough-surface-s1 re-commit",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 implementer reported a compaction without a handoff minutes after spawn and restarted the slice from the brief; nothing had been committed",
+      "evidence": "S2 status message; worktree pilot-slice-walkthrough-surface-s2 clean at 433e8b2c",
       "size": 1
     }
   ]
