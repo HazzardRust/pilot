@@ -16,7 +16,7 @@ import { DeckRefusal, addReply, beginLanding, listItems, postItem, resolveItem, 
 import { postStored, shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
 
 const REPO = path.join('D:', 'work', 'pilot');
-const GATE1 = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x' };
+const GATE1 = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', surface: false };
 const SHA = '97b4833c0ffee0000000000000000000000000000';
 const reread = (id) => listItems().find((item) => item.id === id);
 

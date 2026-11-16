@@ -26,7 +26,7 @@ const { TOOLS } = await import('../tools.mjs');
 const AT = '2026-10-01T09:00:00.000Z';
 const MINE = path.join('D:', 'work', 'pilot');
 const THEIRS = path.join('D:', 'work', 'kettle');
-const GATE1 = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x' };
+const GATE1 = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', surface: false };
 
 const aRun = (over = {}) => ({ id: 'run_000000000001', repo: MINE, pid: process.pid, startedAt: AT, ...over });
 const exitedPid = () => spawnSync(process.execPath, ['-e', '0']).pid;

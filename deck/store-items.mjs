@@ -39,7 +39,6 @@ import {
   ownerOf,
   isPaused,
   pausedOn,
-  isShortPath,
   stateOf,
   waiterKind,
 } from './items.mjs';
@@ -52,7 +51,7 @@ import { reportAskGaps } from './report-shape.mjs';
 import { ticketShapeGaps } from './ticket-shape.mjs';
 import { walkthroughShapeGaps } from './walkthrough-shape.mjs';
 import { enterStage } from './store-stage.mjs';
-import { gate2EvidenceGaps } from './gate2-evidence.mjs';
+import { gate2EvidenceGaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
 import { MAX_QUESTION_CHARS, POSTABLE_KINDS, andList } from './tools.mjs';
 import {
   DeckRefusal,
@@ -127,8 +126,8 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   // A blank `longer` is no reason, so it counts as absent; a non-string is left for detailOf to refuse.
   const { dir, ...rest } = detailOf(kind, { ...given, longer: typeof longer === 'string' ? longer.trim() || undefined : longer });
   const detail = dir === undefined ? rest : kind === KIND_TICKET ? { ...rest, repo: dir } : { ...rest, dir };
-  // A short-path plan says whether it changes a screen (short-path A2): read off the raw argument, since a false flag is not stored.
-  if (kind === KIND_GATE1 && isShortPath({ plan: detail }) && given.surface === undefined) {
+  // Every plan says whether it has a surface (walkthrough-surface L1): read off the raw argument, since a false flag is not stored.
+  if (kind === KIND_GATE1 && given.surface === undefined) {
     throw new DeckRefusal(`a gate1 of ${detail.sliceCount} slices names surface: true or false`);
   }
   refuseCredentials('this item', `${title}\n${body}\n${wordsOf(detail)}`);
@@ -146,6 +145,8 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
     title,
     body,
     ...detail,
+    // A gate1 keeps `surface: false` too, so its plan tells it from one signed before the flag (L2).
+    ...(kind === KIND_GATE1 ? { surface: given.surface } : {}),
     ...bylineOf(author),
     // Whose replies these are (ADRs 0041, 0053): QA's and the teacher's own posts are theirs, the rest the pilot's (A1).
     owner: waiterKind(author) ?? 'pilot',
@@ -159,7 +160,9 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   refuseOverOpenQuestions(deck, item);
   const ticket = ticketNamedBy(deck, item);
   if (kind === KIND_GATE1 && ticket) refuseUnmerged(deck.items, ticket);
-  const unproven = kind === KIND_GATE2 ? gate2EvidenceGaps(ticket, item) : [];
+  // QA's walkthrough on a plan marked with no surface is refused naming it (L3); a walkthrough's ticket is optional.
+  const walked = kind === KIND_WALKTHROUGH ? deck.items.find((each) => each.id === item.ticket) : undefined;
+  const unproven = kind === KIND_GATE2 ? gate2EvidenceGaps(ticket, item) : walkthroughPlanGaps(walked, authorKind(author));
   if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
   // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves
   // it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
@@ -643,9 +646,9 @@ function refuseSignOffBlocked(items, gate2) {
   }
 }
 
-/** A signed gate1's plan: its references, the slug its artefact sits under (`docs/design/<slug>/`), the slice count, and `surface` when true. */
+/** A signed gate1's plan: its references, the slug its artefact sits under (`docs/design/<slug>/`), the slice count, and `surface` as a boolean, absent on a gate1 posted before it was required (L2). */
 function planOf({ artefact, branch, sha, sliceCount, surface, id }) {
-  return { artefact, branch, sha, slug: artefact.split(/[\\/]/).at(-2), sliceCount, gate1: id, ...(surface ? { surface } : {}) };
+  return { artefact, branch, sha, slug: artefact.split(/[\\/]/).at(-2), sliceCount, gate1: id, ...(typeof surface === 'boolean' ? { surface } : {}) };
 }
 
 /**

@@ -50,7 +50,7 @@ test('a small gate1 names its surface', (t) => {
   assert.equal(gate1(ticket, 2, { surface: false }).ticket, ticket.id);
 
   tempDeck(t);
-  assert.equal(gate1(redTicket(), 3).sliceCount, 3, 'a 3-slice gate1 needs no surface');
+  assert.equal(gate1(redTicket(), 3, { surface: false }).sliceCount, 3, 'a 3-slice gate1 posts with its surface');
 });
 
 test("a gate1's thread shows the surface flag only when it is set", (t) => {
