@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { flat, read } from './lib/area-file.mjs';
+import { flat, read, sectionOf } from './lib/area-file.mjs';
 
 const DEFINITIONS = [
   'pilot',
@@ -19,7 +19,15 @@ const DEFINITIONS = [
   'pilot-fundamentalist',
 ];
 
-const sentences = (text) => text.split(/(?<=[.!?])\s+/);
+test('every crew definition keeps its voice section', () => {
+  for (const name of DEFINITIONS) {
+    const heading = name === 'pilot' ? 'Writing to the user' : 'Voice';
+    // lint: voice section exists
+    assert.ok(sectionOf(read(`agents/${name}.md`), heading), `agents/${name}.md has no "## ${heading}" section`);
+  }
+});
+
+const sentences =(text) => text.split(/(?<=[.!?])\s+/);
 
 test('no crew definition phrases the rule as brevity or less thinking', () => {
   // lint: the voice rule is never written as brevity or less thinking (L3)

@@ -17,6 +17,11 @@ test('the lander never pushes pilot', () => {
   assert.doesNotMatch(text, /Bash\(git push/, 'no git push grant');
 });
 
+test('the lander keeps its Clean tail heading', () => {
+  // lint: ## Clean tail exists
+  assert.match(lander(), /\n## Clean tail\n/, 'agents/pilot-lander.md lost its ## Clean tail heading');
+});
+
 test('the lander is granted deck_post and deck_status', () => {
   // lint: the tools line grants the two deck tools the clean tail needs
   assert.match(lander(), /^tools:.*deck__deck_post\b.*deck__deck_status\b/m, 'the lander is not granted deck_post and deck_status');
