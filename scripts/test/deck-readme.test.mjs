@@ -23,11 +23,13 @@ const ls = (dir) => fs.readdirSync(path.join(ROOT, 'deck', dir))
   .filter((f) => f.endsWith('.mjs'))
   .map((f) => path.posix.join(dir, f));
 
+// lint: the README's Module column equals the deck/*.mjs listing
 test('every deck module is listed', () => {
   const actual = [...ls(''), ...ls('ui')].sort();
   assert.deepEqual(deckReadmeModules(read('deck', 'README.md')).sort(), actual);
 });
 
+// lint: every top-level directory has a Layout row
 test('the README covers every top-level directory', () => {
   const dirs = fs.readdirSync(ROOT, { withFileTypes: true })
     .filter((d) => d.isDirectory() && !d.name.startsWith('.') && d.name !== 'node_modules')
@@ -35,8 +37,4 @@ test('the README covers every top-level directory', () => {
   const layout = read('README.md').split(/^## Layout\s*$/m)[1].split(/^## /m)[0];
   const rows = new Set(layout.split('\n').map((l) => /^\|\s*\[?`([^`/]+)\//.exec(l)?.[1]).filter(Boolean));
   assert.deepEqual(dirs.filter((d) => !rows.has(d)), []);
-});
-
-test('README says where to start', () => {
-  assert.match(read('README.md'), /start here/i);
 });

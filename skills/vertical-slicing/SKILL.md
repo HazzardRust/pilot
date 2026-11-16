@@ -33,10 +33,9 @@ After this slice lands, what can a human do, see, or observe that they could not
 before?
 
 If that question has no answer, the slice is horizontal. Merge it into the slice
-it serves, or re-cut the boundary until an answer exists. The answer does not
-have to be impressive — "an admin can hit one endpoint and get back an empty
-list that came from a real table" is a perfectly good answer — but it has to be
-something a person could witness.
+it serves, or re-cut the boundary until an answer exists. The answer need not be
+impressive — "an admin can hit one endpoint and get back an empty list that
+came from a real table" is a good one — but a person must be able to witness it.
 
 A ticket should produce visible progress through the system, not merely complete
 one technical layer. Pocock's own example makes the contrast: "persist a draft,
@@ -75,7 +74,7 @@ and silently.
 | **Model** | A `Model: sonnet — <reason>` or `Model: opus — <reason>` line under the header: the implementer's model, chosen here so Gate 1 sees it and no brief re-derives it. Sonnet only for a **precise** slice: its Interface, Tests and Files owned leave no choice open, its estimated diff is within the small-diff limit, none of its spec lines is *assumed*, and it does not hit the security trigger above. Anything else is Opus. `check-slices` refuses a header without the line. |
 | **Files owned** | One line per file, as `` `<path>`: <role, one line> `` (`(new)` marks a created file), so two slices running in parallel cannot collide and scope creep is visible as an unlisted file. |
 | **Interface** | A fenced block with the seams this slice creates or changes — signatures, types, routes, CLI flags, hook payloads, or for a prompt file its headings and field names — as they stand after the slice, and the shapes crossing them, or a ubiquitous-language term that names one. |
-| **Tests** | The implementer's red steps, in order, each as `` `<name>`: `<Interface symbol>` → <observable result> `` with the symbol in this slice's Interface block, then one `Rewrite check:` line: what stays true if the implementation behind the interface were replaced. `node "${CLAUDE_PLUGIN_ROOT}/scripts/check-slices.mjs" <path>` checks the shape. |
+| **Tests** | The implementer's red steps, in order, each as `` `<name>`: `<Interface symbol>` → <observable result> `` with the symbol in this slice's Interface block, then one `Rewrite check:` line, what stays true if the implementation behind the interface were replaced, and one `Misses:` line, what the Tests cannot catch and who reads it instead. `node "${CLAUDE_PLUGIN_ROOT}/scripts/check-slices.mjs" <path>` checks the shape. |
 | **Expected behaviour** | States the observable outcome in user terms — the answer to the verticality question, written down so it can be checked rather than assumed. |
 | **Verification commands** | Gives the exact commands whose output proves the slice works, so "done" is a command result rather than a feeling. |
 | **Evidence required** | Says what must be produced and seen: test output, a command's output, a plan's diff, a plot, a screenshot, a browser flow exercised live. Evidence is what survives the agent forgetting. |
@@ -119,6 +118,7 @@ S2's session: the signed-in user both routes scope a draft to
 2. `reloading the editor restores exactly what was typed`: `DraftEditor` → the saved body after a reload.
 
 Rewrite check: replacing the `drafts` table with another store keeps both results above.
+Misses: how saving feels on a slow network; QA's walkthrough reads that.
 
 ## Done
 
@@ -142,8 +142,8 @@ what to do when a slice blows it are in `rules/vertical-execution.md`.
 Two further sizing constraints:
 
 - **One dominant risk per slice.** If a ticket carries both a schema-design risk
-  and an unfamiliar-third-party-API risk, it is two tickets. When it fails you
-  want one hypothesis to test, not two entangled ones.
+  and an unfamiliar-third-party-API risk, it is two tickets, so a failure has
+  one hypothesis to test.
 - **Independently reviewable by someone who did not write it.** If explaining the
   diff requires walking a reviewer through three other in-flight slices, the
   boundary is in the wrong place.
@@ -154,17 +154,15 @@ The first slice is the walking skeleton: the thinnest possible path that touches
 every layer end to end and proves the architecture holds. It is allowed to do
 almost nothing useful. A CLI that reads one real input and prints one computed
 number, or a route that reads one hard-coded row from a real table through the
-real client and renders it in a real page, has earned its place, because it
-has proved the pieces connect — in the web case that the migration runs, the
-client authenticates, the route resolves, and the component renders, four
-assumptions that are cheap to fix now
-and expensive to fix under five slices of dependent work. Every later slice
+real client and renders it in a real page, has earned its place: it proved the
+pieces connect (in the web case the migration, the client's auth, the route and
+the component), each cheap to fix now and expensive under five slices of
+dependent work. Every later slice
 thickens the skeleton.
 
 After that, dependencies are stated as explicit blockers on each slice rather
 than implied by position. A slice with no unmet blockers is grabbable
-immediately, which is what allows work to be picked up out of order and, later,
-safely parallelised across agents.
+immediately, so work can be picked up out of order and run in parallel.
 
 Draw no line between two slices that share no file and no seam: a line that
 only reflects the order you thought of them in serialises work that could run

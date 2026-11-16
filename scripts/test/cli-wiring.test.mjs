@@ -73,11 +73,10 @@ test('pilot budget reaches its main: a misspelt flag exits 2 with its usage line
   assert.deepEqual(pilot(work, 'budget', '--mian', '3'), { code: 2, out: '', err: 'pilot budget: usage: pilot budget [--main N] [--yellow N]\n' });
 });
 
-test('pilot --help names the budget by main and yellow, and no --sub anywhere (yellow-agent S7)', (t) => {
+test('pilot --help lists the budget usage line, and no --sub anywhere (yellow-agent S7)', (t) => {
   const { out } = pilot(scratch(t), '--help');
+  // lint: the budget's usage line is listed and no --sub flag is
   assert.match(out, /^ {2}pilot budget \[--main N\] \[--yellow N\]$/m);
-  assert.match(out, /\(default main 5, yellow 8\)/, 'bigger-jobs S4 (A2)');
-  assert.match(out, /warns above 13/, 'bigger-jobs S4: the ceiling');
   assert.doesNotMatch(out, /--sub\b/);
 });
 

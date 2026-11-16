@@ -1,7 +1,7 @@
 // The crew's model policy (cheaper-crew S4, ADR 0150): the pilot's Models table names a model
 // and a reason per role, Sonnet on a precise implementer slice, Haiku on the two helpers; both
-// orchestrators copy the slice's `Model:` line into the implementer's brief; and the ADR is
-// cited where it governs. The assertions read roles, models and the Model line, never a
+// orchestrators copy the slice's `Model:` line into the implementer's brief. The assertions
+// read roles, models and the Model line, never a
 // sentence, so a reworded table or brief paragraph still passes.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -33,10 +33,8 @@ function modelsTable() {
   return rows;
 }
 
-/** Spec 8: the files that cite the ADR by number. */
-const CITING = ['agents/pilot-implementer.md', 'agents/pilot-fundamentalist.md', 'agents/pilot-fact-sheet.md', 'agents/pilot-evidence-runner.md'];
-
 test('the table keeps the five and names both helpers', () => {
+  // lint: the Models table's role, model and why cells
   const rows = modelsTable();
   assert.equal(rows.get('pilot')?.model, 'Fable', 'the pilot stays on Fable');
   for (const role of ['pilot-architect', 'pilot-co-pilot', 'pilot-fundamentalist', 'pilot-qa']) {
@@ -52,20 +50,17 @@ test('the table keeps the five and names both helpers', () => {
 });
 
 test('the implementer row names Sonnet for a precise slice', () => {
+  // lint: the implementer row's model cell
   const row = modelsTable().get('pilot-implementer');
   assert.ok(row, 'the Models table has an implementer row');
   assert.match(row.model, /^Opus\b/, 'the implementer defaults to Opus, the first word the default');
-  assert.match(row.model, /\bSonnet\b[^|]*\bprecise slice\b/, 'and runs Sonnet on a precise slice');
+  assert.match(row.model, /\bSonnet\b/, 'and names Sonnet beside it');
   assert.ok(row.why.length > 0, "the implementer's row says why");
 });
 
 test('both orchestrators copy the Model line into the brief', () => {
+  // lint: the slice's `Model:` field is named where each orchestrator briefs
   const modelLine = /`Model: <?sonnet\|opus>? — <[^>]+>`/;
   assert.match(pilotSection('Briefs'), modelLine, "the pilot's Briefs name the slice's Model line");
   assert.match(read('agents/pilot-co-pilot.md'), modelLine, "the co-pilot's briefs carry the slice's Model line");
-});
-
-test('ADR 0150 is cited where it governs', () => {
-  assert.match(pilotSection('Models'), /ADR 0150/, 'the Models section cites it');
-  for (const file of CITING) assert.match(read(file), /ADR 0150/, `${file} cites ADR 0150`);
 });

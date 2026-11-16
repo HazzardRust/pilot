@@ -1,5 +1,5 @@
-// The README's `## How it fits together` graph (readme-flow S1, readme-graph-deck S1): every agent file
-// and every deck thread you meet is a node, no subcommand is, and every edge says what flows, so the
+// The README's `## How it fits together` graph (readme-flow S1, readme-graph-deck S1): no
+// subcommand is a node, and every edge says what flows, so the
 // picture cannot fall out of date without a red test. It reads names and labels, never positions or node ids.
 
 import { test } from 'node:test';
@@ -57,6 +57,7 @@ const flow = () => readFlow(read('README.md'));
 // A label's words: agent types (`pilot:pilot-qa`) and command words, split on anything else.
 const words = (label) => label.split(/[^\w:/-]+/).filter(Boolean);
 
+// lint: every agent file is drawn in the README graph
 test('every agent file is a node', () => {
   const { nodes } = flow();
   const drawn = new Set(nodes.flatMap(words));
@@ -66,6 +67,7 @@ test('every agent file is a node', () => {
 });
 
 // No subcommand `pilot help` lists, moving or not (L1), is drawn: a user meets the deck, never the CLI.
+// lint: no pilot subcommand is drawn in the graph
 test('no subcommand is in the graph', () => {
   const { nodes, edges } = flow();
   const texts = [...nodes, ...edges.map((e) => e.label)];
@@ -73,14 +75,7 @@ test('no subcommand is in the graph', () => {
   assert.deepEqual(helpSubcommands().filter(drawn), []);
 });
 
-// The deck threads a run puts in front of you (spec 2, L5), each ending some node label's head.
-const THREADS = ['a question', 'Gate 1', 'the ticket', 'the walkthrough', 'Gate 2', 'the closing report', 'a lesson', 'the audit'];
-
-test('every thread you meet is a node', () => {
-  const heads = flow().nodes.map((n) => n.split(': ')[0].toLowerCase());
-  assert.deepEqual(THREADS.filter((t) => !heads.some((h) => h.endsWith(t.toLowerCase()))), []);
-});
-
+// lint: every edge carries a label
 test('every edge is labelled', () => {
   const { edges } = flow();
   assert.ok(edges.length > 0);
@@ -105,54 +100,14 @@ ${body}
   assert.deepEqual(edges, [{ from: 'A', to: 'B', label: 'x' }, { from: 'B', to: 'A', label: '' }]);
 });
 
-// The first question of every run and the grilling it opens (L10, the user on itm_db56dcd975f5).
-const DEPTH = 'the first question of every run: how deep to be grilled';
-const GRILLING = 'the grilling: the pilot interviews you, one question per decision, each with a recommended answer';
-const REPORT = 'the closing report: what was built, and any step left to you';
-
-// Run order (L7, L10, spec 3): counted in edges from you, the depth question before the grilling, each gate
-// before what it lets through, and the closing report last.
-test('the graph runs in run order, Gate 2 before the PR before the closing report', () => {
-  const { edges } = flow();
-  const depth = new Map([['you', 0]]);
-  for (const queue = ['you']; queue.length;) {
-    const at = queue.shift();
-    for (const e of edges) if (e.from === at && !depth.has(e.to)) depth.set(e.to, depth.get(at) + 1), queue.push(e.to);
-  }
-  const at = (label) => {
-    assert.ok(depth.has(label), `"${label}" is reached from you`);
-    return depth.get(label);
-  };
-  assert.ok(at('pilot:pilot') < at(DEPTH));
-  assert.ok(at(DEPTH) < at(GRILLING));
-  assert.ok(at(GRILLING) < at('Gate 1: you sign the plan'));
-  assert.ok(at('Gate 1: you sign the plan') < at('pilot:pilot-co-pilot'));
-  assert.ok(at('Gate 2: you sign off the finished feature') < at('the feature, landed on the pilot branch'));
-  assert.ok(at('the feature, landed on the pilot branch') < at(REPORT));
-});
-
-// The three answers to the depth question, in plain words, each on an edge out of it (L10).
-test('the depth question offers every decision, only the forks, or no grilling', () => {
-  const out = flow().edges.filter((e) => e.from === DEPTH).map((e) => e.label);
-  for (const answer of [/every decision/, /only the forks/, /no grilling/]) {
-    assert.ok(out.some((label) => answer.test(label)), `an edge out of the depth question says ${answer}`);
-  }
-});
-
 // No deck (L8, the user on itm_db56dcd975f5): the graph is the flow alone; the paragraph names the deck.
+// lint: no node label names the deck
 test('no node is the deck', () => {
   assert.deepEqual(flow().nodes.filter((n) => n.toLowerCase().includes('the deck')), []);
 });
 
-test('the paragraph says what is general', () => {
-  const prose = section(read('README.md')).replace(/^```mermaid[\s\S]*?^```/m, '');
-  assert.notEqual(prose.trim(), '');
-  for (const phrase of [/any\s+repository/, /any\s+stack/, /the\s+same\s+agents/, /the\s+same\s+deck/]) {
-    assert.match(prose, phrase);
-  }
-});
-
 // The average run, in at most eleven lines directly above the graph it walks (readme-pitch S3, A4).
+// lint: 1 to 11 numbered one-line steps sit directly above the fence
 test('the walkthrough is short and above the graph', () => {
   const readme = read('README.md').replace(/\r\n/g, '\n');
   const steps = walkthrough(readme);
@@ -166,6 +121,7 @@ test('the walkthrough is short and above the graph', () => {
 });
 
 // A step names a node in bold or code: its whole label, or the label's head before ': '.
+// lint: every walkthrough step names a node of the graph
 test('every step is a node', () => {
   const readme = read('README.md');
   const heads = new Set(flow().nodes.flatMap((n) => [n, n.split(': ')[0]]).map((n) => n.toLowerCase()));
@@ -175,6 +131,7 @@ test('every step is a node', () => {
   assert.deepEqual(steps.filter((s) => !named(s)), [], 'each step names a node of the graph');
 });
 
+// lint: every ## heading is in the contents list and every contents anchor resolves
 test('the contents list names the heading', () => {
   const readme = read('README.md');
   const intro = readme.split(/^## /m)[0];

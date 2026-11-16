@@ -35,7 +35,8 @@ A brief that is a lander line instead, `… the lander resolves in <dir>`, is a 
    run no suite: wait on `pilot landing <gate2>` instead.
 6. Green: reply `Land again` on the gate2, and the deck lands that commit; for a gate2 not yet posted, send `main`
    `clean at <sha>`, the committed merge's sha, on which QA posts it. Red on a hunk you resolved:
-   fix it with the Edit tool and gate once more; red otherwise is a trade-off.
+   fix it with the Edit tool and gate once more, and if it is still red, load `pilot:diagnosing-bugs` with the
+   Skill tool before another fix; red otherwise is a trade-off.
 7. On `landed <sha7>` go to the clean tail; send `main` the `NOT landed` line the deck printed instead.
 
 ## Clean tail

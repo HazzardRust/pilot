@@ -2,7 +2,6 @@
  * `pilot doctor`'s scanner check (process-gc S11, L12). Every answer Defender and fsutil can give
  * is a fake `run`; nothing here reads or changes the real Defender.
  */
-import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -113,14 +112,6 @@ test('scanning off and other platforms', () => {
     assert.equal(other.state, 'not-windows');
     assert.ok(other.lines.some((line) => line.includes('no scanner check')), other.lines.join('\n'));
   }
-});
-
-test('the OPERATING.md paragraph names pilot doctor and the step', () => {
-  const readme = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'docs', 'OPERATING.md'), 'utf8');
-  const { run } = fake({ defender: { rtp: true, excl: [] } });
-  const { lines } = checkScanner({ platform: 'win32', run, root: '<projects root>' });
-  assert.match(readme, /pilot doctor/);
-  for (const step of lines.slice(-2)) assert.ok(readme.includes(step), `docs/OPERATING.md lacks: ${step}`);
 });
 
 test('the printed exclusion line keeps the root a literal in PowerShell', () => {

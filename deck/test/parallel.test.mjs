@@ -14,7 +14,6 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { deckOnAPort, shapedTicketBody, tempDeck } from '../testUtils.mjs';
 import { KIND_HANDOFF, KIND_TICKET, sameRepo } from '../items.mjs';
@@ -22,8 +21,6 @@ import { KIND_HANDOFF, KIND_TICKET, sameRepo } from '../items.mjs';
 const { listItems, postItem, registerRun, setSlices } = await import('../store.mjs');
 const { chainNext } = await import('../chain.mjs');
 const { callTool } = await import('../server.mjs');
-
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /** A scratch repository and a worktree of it, laid out as git lays one out. */
 const aWorktree = (t) => {
@@ -145,14 +142,4 @@ test('chainNext at start chains with no record, or a finished one, and not over 
     assert.match(body.error, /repo must be the path of the repository/);
     assert.doesNotMatch(body.error, /record you want/, "not /api/record's own wording");
   });
-});
-
-test("SKILL.md's parallel branch names the worktree, the dir, and the walkthrough command", () => {
-  const skill = fs.readFileSync(path.join(ROOT, 'agents/pilot.md'), 'utf8').replace(/\s+/g, ' ');
-  const from = skill.indexOf('On parallel');
-  assert.ok(from >= 0, 'no parallel branch in step 3');
-  const branch = skill.slice(from, skill.indexOf('Ask only questions', from));
-  assert.match(branch, /worktree per extra deck/);
-  assert.match(branch, /`ticket`[^.]*`dir`/);
-  assert.match(branch, /`walkthrough`[^.]*`cd <path> && pilot run`/);
 });

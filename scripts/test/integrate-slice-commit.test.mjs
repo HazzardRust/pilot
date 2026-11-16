@@ -131,6 +131,38 @@ test('a trailer with a line break or off the Key: value form is refused, naming 
   }
 });
 
+test('a slice whose Reviewers line names security integrates only with its Reviewed-by trailer', (t) => {
+  const { origin, work } = scratchRepos(t);
+  const file = path.join(work, 'docs', 'design', 'demo', 'slices', 'S1.md');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, '# S1 One thing\n\nReviewers: `pilot:typescript-reviewer`, `pilot:security-reviewer`\n');
+  git(work, 'add', '.');
+  git(work, 'commit', '-q', '-m', 'slice file');
+  git(work, 'push', '-q', 'origin', 'feat/demo');
+  const before = git(work, 'rev-parse', 'HEAD');
+  const typescript = 'Reviewed-by: pilot:typescript-reviewer: approve';
+
+  const refused = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, trailers: [typescript] });
+
+  assert.equal(refused.ok, false);
+  assert.equal(refused.line, 'NOT integrated slice/demo-s1: S1 names pilot:security-reviewer and no --trailer "Reviewed-by: pilot:security-reviewer: <verdict>"; nothing merged or pushed');
+  assert.equal(git(work, 'rev-parse', 'HEAD'), before, 'HEAD unmoved');
+  assert.equal(git(origin, 'rev-parse', 'feat/demo'), before, 'nothing pushed');
+
+  const blocked = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, trailers: [typescript, 'Reviewed-by: pilot:security-reviewer: Block, two HIGH'] });
+
+  assert.equal(blocked.ok, false);
+  assert.equal(blocked.line, "NOT integrated slice/demo-s1: S1: pilot:security-reviewer's verdict is block; nothing merged or pushed");
+  assert.equal(git(work, 'rev-parse', 'HEAD'), before, 'HEAD unmoved');
+  assert.equal(git(origin, 'rev-parse', 'feat/demo'), before, 'nothing pushed');
+
+  const trailers = [typescript, 'Reviewed-by: pilot:security-reviewer: approve'];
+  const passed = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, push: false, trailers });
+
+  assert.equal(passed.ok, true, passed.line);
+  assert.equal(git(work, 'log', '--first-parent', '-1', '--format=%s'), 'feat(demo): S1 one thing');
+});
+
 test('the subject lower-cases the title\'s first letter', () => {
   assert.equal(sliceSubject('demo', { slice: 'S2 The x', branch: 'slice/demo-s2' }), 'feat(demo): S2 the x');
 });

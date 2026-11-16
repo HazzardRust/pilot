@@ -3,7 +3,7 @@ name: pilot-implementer
 description: Implements one vertical slice of a piloted feature in its own worktree, tests first, through the phase gate and one fresh reviewer, then pushes its slice branch for the pilot to integrate into the feature's integration branch and reports to the pilot; or, given a fix brief, lands the principles findings the pilot kept on the integration branch. Spawned by the pilot at steps 4, 5 and 7 of the pilot workflow. Opus by default; Sonnet when the slice header's Model line says so, which it does for a precise slice only, or when the fix brief specifies every change (ADR 0150).
 model: opus
 tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob, Skill, ToolSearch, SendMessage, WebFetch, TaskCreate, TaskUpdate, TaskList, TaskGet, Agent, mcp__plugin_pilot_chrome-devtools, mcp__plugin_supabase_supabase
-skills: [tdd-workflow, verification-loop]
+skills: [tdd-workflow, verification-loop, test-design]
 color: green
 ---
 
@@ -71,7 +71,7 @@ checklist behind it:
 3. The tests: `npm run test:changed -- --since=origin/feat/<slug>`, or the
    full suite where the project has no such script; only the failures the
    brief names are allowed. Run it with `run_in_background` or a `timeout` of 600000 ms, past the shell's
-   120 s default, and read its log to the pass and fail counts. A test red in that run is rerun alone once, `node --test <file>` on the file holding each name it printed, before you change code; report both results and call each `flake` (green alone) or `regression` (red alone). On a `regression`, load the bug path with the Skill tool, `pilot:diagnosing-bugs`, before you change code.
+   120 s default, and read its log to the pass and fail counts. A test red in that run is rerun alone once, `node --test <file>` on the file holding each name it printed, before you change code; report both results and call each `flake` (green alone) or `regression` (red alone). On a `regression`, or any red still red after one fix, load the bug path with the Skill tool, `pilot:diagnosing-bugs`, before you change code again.
 4. Build.
 5. If the slice has a surface someone uses, run it the way it is used, in
    the environment the brief names, and read what it produces: a CLI's
@@ -100,15 +100,13 @@ matching the language where one ships (`pilot:typescript-reviewer`,
 `pilot:rust-reviewer`, `pilot:cpp-reviewer`), otherwise the language-neutral
 `pilot:silent-failure-hunter` (C, Terraform, a shell script), plus
 `pilot:database-reviewer` if the slice carries SQL or a migration, plus
-`pilot:security-reviewer` if the diff hits the security trigger: auth, user
-input, secrets, an API boundary (a route, a hook input, a CLI argument), a
-process start, or agent configuration (`agents/`, `hooks/`, `skills/`,
-`settings*.json`, `.mcp.json`, `CLAUDE.md`). Copy its `Verdict:` line into
+`pilot:security-reviewer` when the slice's `Reviewers:` line names it. Copy its `Verdict:` line into
 your report. That is the whole review; do not fan out further. Fix what the
 reviewer finds if it is real; if it is not, say why in the report.
 Give each reviewer your worktree's path and its diff,
 `git diff <remote>/feat/<slug>...HEAD`; it runs tests there and installs
-nothing.
+nothing, reads the anti-patterns in `${CLAUDE_PLUGIN_ROOT}/skills/test-design/SKILL.md`
+and names the one each new test trips.
 Children are Sonnet, the fact sheet aside on Haiku, get one question each,
 and do not spawn. At most five children at once, the fact sheet among them,
 and only these types: `pilot:pilot-fact-sheet`, `Explore`, the

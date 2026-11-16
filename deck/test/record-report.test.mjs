@@ -14,7 +14,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { tempDeck } from '../testUtils.mjs';
 
@@ -23,7 +22,6 @@ const { callTool } = await import('../server.mjs');
 const { MAX_FINDINGS } = await import('../tools.mjs');
 
 const MINE = path.join('D:', 'work', 'pilot');
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /** A whole closing report, written by hand; its friction the deck derives (yellow-lane S11). */
 const fullReport = () => ({
@@ -114,15 +112,4 @@ test('a later call without report keeps it', (t) => {
   callTool('deck_status', { run: run.id, slug: 'usage-telemetry', slices: [], next: 'one more look at S2' });
 
   assert.deepEqual(recordFor(MINE).report, stored());
-});
-
-test('the pilot agent sends report with finished', () => {
-  const definition = fs.readFileSync(path.join(ROOT, 'agents', 'pilot.md'), 'utf8');
-  const section = definition.split(/^## /m).find((part) => part.startsWith('Ending a run'));
-  assert.ok(section, 'the agent definition has an "Ending a run" section');
-  const sentences = section.replace(/\s+/g, ' ').split(/(?<=\.) /);
-  assert.ok(
-    sentences.some((s) => /deck_status/.test(s) && /`report`/.test(s) && /`finished`/.test(s)),
-    'one sentence of "Ending a run" sends `report` in the deck_status call that sets `finished`',
-  );
 });

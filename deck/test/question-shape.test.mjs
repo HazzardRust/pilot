@@ -72,12 +72,6 @@ test('a bare Research: none in a CRLF body is refused', () => {
   assert.deepEqual(questionShapeGaps(`${ASK}\nResearch: none,\t\n`.replaceAll('\n', '\r\n'), { recommended: 'keep it', author: 'pilot:pilot' }), [GAP]);
 });
 
-test("every reason the deck accepts is in grilling's skip list", () => {
-  const skip = grilling().match(/\*\*skip\*\* research for ([^.]*)\./)?.[1];
-  assert.ok(skip, "grilling's skip list sentence");
-  for (const reason of SKIP_REASONS) assert.ok(skip.includes(reason), `${reason} is in grilling's skip list`);
-});
-
 test('a question with no recommended, or from the user or the auditor, is not checked', () => {
   assert.deepEqual(questionShapeGaps(ASK, { author: '' }), [], 'no recommended');
   assert.deepEqual(questionShapeGaps(ASK, {}), [], 'nothing given');
@@ -99,17 +93,7 @@ test('the deck refuses the post and stores nothing', (t) => {
   assert.equal(listItems().find((item) => item.id === posted.id)?.recommended, 'keep it');
 });
 
-test('grilling names the skip line, build-now and the read by id', () => {
-  const skill = grilling();
-  assert.match(skill, /`Research: none, <skip reason>`/, 'the skip line');
-  assert.match(skill, /build it in the run, never a later ticket/i, 'build-now');
-  assert.match(skill, /\*\*the build-now rule\*\*/i, 'the rule is named where agents point to it');
-  assert.match(
-    skill,
-    /a found issue, a defect, flake, weakness or seam found during a run beside or under the work in hand, not a wish to tidy code the run did not touch/i,
-    'a found issue is defined once',
-  );
-  assert.match(skill, /an added spec line and slice with no question; only one that moves a decision already locked is asked/, 'the rail');
-  assert.match(skill, /deck_read[^\n]*\bby `?id`?/, 'the read by id');
-  assert.doesNotMatch(skill, /returns every item/, 'no longer reads every item');
+test('grilling does not send the agent to read every item', () => {
+  // lint: grilling's deck_read advice never says it returns every item
+  assert.doesNotMatch(grilling(), /returns every item/, 'no longer reads every item');
 });

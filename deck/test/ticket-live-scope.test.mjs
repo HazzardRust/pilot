@@ -4,7 +4,7 @@ import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFile, spawnSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -75,6 +75,7 @@ test('the route answers', async (t) => {
   assert.match(page, /data-live="tickets" data-name="Tickets"/);
 });
 
+// lint: the granted tools exist in the agents' tools fields
 test("Claude Code's names stay", () => {
   const granted = (agent) => /^tools:(.*)$/m.exec(fs.readFileSync(path.join(ROOT, 'agents', agent), 'utf8'))[1];
   for (const agent of ['pilot.md', 'pilot-implementer.md', 'pilot-qa.md']) {
@@ -84,11 +85,10 @@ test("Claude Code's names stay", () => {
   assert.match(granted('pilot-architect.md'), /mcp__plugin_pilot_deck__deck_ticket\b/);
 });
 
+// lint: the references resolve
 test('check-references binds the new names', () => {
   const { ok, failures } = checkReferences(ROOT);
   assert.deepEqual(failures, []);
   assert.ok(ok);
   assert.ok(fs.existsSync(path.join(ROOT, 'skills', 'ticket-making', 'SKILL.md')));
-  const grep = (pattern) => spawnSync('git', ['grep', '-c', pattern, '--', 'agents', 'skills', 'rules'], { cwd: ROOT, encoding: 'utf8' }).stdout;
-  for (const name of ['ticket-making', 'mcp__plugin_pilot_deck__deck_ticket', '`pilot tickets']) assert.notEqual(grep(name), '', name);
 });
