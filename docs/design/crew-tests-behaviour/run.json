@@ -39,7 +39,7 @@
     },
     {
       "slice": "S4 Fundamentalist names the anti-pattern",
-      "state": "integrated",
+      "state": "integrated at 3c8568d4",
       "after": [
         "S1"
       ],
@@ -134,10 +134,30 @@
       "branch": "slice/crew-tests-behaviour-s14",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s14",
       "pr": 55
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S14"
+      ],
+      "branch": "fix/crew-tests-behaviour-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-crew-tests-behaviour-principles",
+      "pr": 57
     }
   ],
-  "next": "S4 integrating (PR #56, security APPROVE); then one pilot-fundamentalist on PR #5. Lander note (A6): S4 bullet is the last item under '## The test pass: depth' in agents/pilot-fundamentalist.md, lead-in 'Three kinds' -> 'Four kinds are findings'; PR #8 lands second merges it.",
-  "updatedAt": "2026-11-16T04:29:08.307Z",
+  "findings": [
+    "kept: F1 'no security verdict, no integration' lost its only guard (S10 cut the pin) and scripts/integrate.mjs has no check: integrate refuses a slice whose Reviewers line names pilot:security-reviewer with no verdict trailer on its commits, one test; about +35",
+    "kept: F2 security-trigger list duplicated verbatim in agents/pilot-implementer.md:103-106 and skills/vertical-slicing/SKILL.md:73 with its agreement test cut: delete the implementer's copy, follow the slice's Reviewers line; -3",
+    "kept: F3 readme-flow 'every agent file is a node' read the filesystem, a lint under test-design's own rule, wrongly cut in S7: restored as // lint; +9",
+    "kept: F4 pilot-fundamentalist.md test pass: S4's bullet repeats the prose-pin bullet and the wording-pin exemption contradicts test-design's Prose pin: delete bullet 3 and 'a prompt's rule sentence,', back to 'Three kinds'; -4, and A6's merge with PR #8 loses its lead-in change",
+    "dropped: nit operating-commands 'moving subcommand': depends on a hand-kept list",
+    "dropped: nit operating-secret OPERATING.md assertions: three phrase pins on a doc, L5 says a PIN block goes; secretFile() is exercised in deck/test/deck-secret.test.mjs and four others",
+    "dropped: nit security-reviewer description trigger as a separate fix: F2 removes the duplicate it guarded",
+    "dropped: a test for the S4 bullet (spec 6): it would be a prose pin under the feature's own rule; its fundamentalist half goes to QA's fixture run. Evidence pass did not run (context reset): no coverage or mutation evidence"
+  ],
+  "next": "Fix round F1-F4 (PR #57, 643d6c9b) integrating into feat. Then fresh pilot-qa in pilot-qa-crew-tests-behaviour on the new tip (L7 fixture run incl. fundamentalist half, spec 5 table, npm test, WSL x5), reports to main; then gate2. A6: S4 bullet vs PR #8 (lead-in back to Three kinds). No evidence pass ran.",
+  "updatedAt": "2026-11-16T04:51:16.600Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -245,6 +265,18 @@
       "agent": "pilot:pilot-implementer",
       "what": "S4's two named tests could not fail before the edit: the slice had no real red step",
       "evidence": "PR #56 report via main; spec 6 test question handed to the fundamentalist",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "three co-pilots on this ticket and its predecessor handed back early with a live child whose report had to be redirected to main; the pilot drives triage and QA directly",
+      "evidence": "hand-backs on itm_ff08c3e59cfa and itm_3a521d90b85f, 2026-11-16",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "deck_status rejects a row named by bare S<n> and a non-numeric friction size; both learned by refusal",
+      "evidence": "co-pilot hand-back: 'S4 ... and S4 are both S4'; 'friction[0].size must be a number'",
       "size": 1
     }
   ]
