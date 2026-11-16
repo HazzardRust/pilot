@@ -1,27 +1,28 @@
 /**
- * The deck starts a session (start-end-session spec 2, L2–L4, L7; ADR 0050). The one
- * process the daemon starts besides the browser opener: a visible terminal window
- * running `pilot run` in a tab's own directory, only when the Start route asks.
+ * The deck starts a session (start-end-session spec 2, L2–L4, L7; ADR 0050; handoff-mod spec 11).
+ * The one process the daemon starts besides the browser opener: a visible terminal window
+ * running `claude` as the pilot in a tab's own directory, only when the Start route asks.
  *
- * The shape is fixed. `cmd.exe /d /c start "pilot run" "<node>" "<bin/pilot.mjs>" run`,
- * with no shell and the arguments passed verbatim, so the command line is exactly those
- * words. The directory is never on it: it reaches the child as `cwd` alone, so `&`,
- * `^` or `%` in a path has no command line to be parsed on. The two paths that are on
- * it are the daemon's own, quoted here; one holding `"` (which would end the quote) or
- * `%` (which `cmd` expands even inside one) is refused rather than escaped.
+ * The shape is fixed. `cmd.exe /d /c start "pilot" "<claude>" [--add-dir "<rules root>"]
+ * --agent pilot:pilot --settings "<settings file>"`, with no shell and the arguments passed
+ * verbatim, so the command line is exactly those words, with no prompt and no JSON on it (A9).
+ * The directory is never on it: it reaches the child as `cwd` alone, so `&`, `^` or `%` in a
+ * path has no command line to be parsed on. The paths that are on it are `claude` and two under
+ * the user's home, quoted here; one holding `"` (which would end the quote) or `%` (which `cmd`
+ * expands even inside one) is refused rather than escaped.
  */
 
 import { spawn as spawnChild } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-import { hostPlatform } from '../hooks/lib/platform.js';
+import { claudeBin, hostPlatform } from '../hooks/lib/platform.js';
 import { repoKey, sameRepo } from './items.mjs';
+import { runEnv, startArgs } from './run-env.mjs';
 import { DeckRefusal } from './store.mjs';
 import { unstrippedEnv } from '../scripts/pilot-branch.mjs';
-
-const PILOT_BIN = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'pilot.mjs');
+import { readReach } from '../scripts/reach.mjs';
 
 /**
  * The markers a Claude Code session leaves in its environment, which the daemon
@@ -96,49 +97,75 @@ function requireDirectory(repo) {
 }
 
 /**
- * Open a terminal window running `pilot run` in `repo`, which the caller has already
- * resolved to a tab's own spelling (L3). Refuses before any spawn under the suite
- * (`PILOT_DECK_NO_START`, L7), off Windows (A7), for a quoted or `%` path, for a
- * directory that is gone, and while an earlier Start in the same repo is in flight.
- * It starts nothing else: the sub-deck's `pilot run --sub` is gone (ADR 0088).
+ * A word `cmd` would end a quote on (`"`) or expand inside one (`%`, and `!` where the
+ * registry turns delayed expansion on) is refused, never escaped.
  */
-export function startSession(
+function requireOnTheLine(word) {
+  if (/["%!]/.test(word)) throw new DeckRefusal(`${word} cannot be put on a command line`, 400);
+}
+
+/**
+ * Open a terminal window running the pilot in `repo`, idle until the user types (L12): the one
+ * window builder behind the deck's Start and `pilot start`. Refuses before any spawn off Windows
+ * (A7), with no absolute `claude` on the PATH, and for a `claude` or a home whose path `cmd`
+ * cannot carry; the settings are written only once every word has passed. Answers the child,
+ * detached and unref'd, for the caller's `error` handler.
+ */
+export function openPilot(
   repo,
-  {
-    spawn = spawnChild,
-    platform = hostPlatform(),
-    env = process.env,
-    execPath = process.execPath,
-    bin = PILOT_BIN,
-    now = Date.now,
-  } = {},
+  { spawn = spawnChild, platform = hostPlatform(), env = process.env, claude = claudeBin(env, platform), home = os.homedir(), reach = readReach({ home }) } = {},
 ) {
-  // Any value at all, `0` included: the one reason to set it is to stop a window opening.
-  if (env.PILOT_DECK_NO_START) throw new DeckRefusal('starting a session is turned off on this deck', 403);
   if (platform !== 'win32') throw new DeckRefusal('Start opens a terminal window on Windows only', 400);
-  for (const onTheLine of [execPath, bin]) {
-    if (/["%]/.test(onTheLine)) throw new DeckRefusal(`${onTheLine} cannot be put on a command line`, 400);
+  // Never the bare name: `cwd` is the repo, and a `claude.exe` checked into it would be what runs.
+  if (!claude) throw new DeckRefusal('claude was not found on the PATH; install Claude Code or add it to the PATH', 500);
+  if (!path.win32.isAbsolute(claude)) throw new DeckRefusal(`${claude} is not an absolute path to claude`, 400);
+  // Every path on the line is `claude` or under `home` (the rules root, the settings file).
+  requireOnTheLine(claude);
+  requireOnTheLine(home);
+  let args;
+  try {
+    args = startArgs(reach, { home });
+  } catch (err) {
+    throw new DeckRefusal(`could not write the session settings: ${err.message}`, 500);
   }
-  requireDirectory(repo);
-  const pressedAt = now();
-  if (isStarting(repo, pressedAt)) throw new DeckRefusal('a session is already starting in this deck', 409);
+  // Every path quoted, since any may hold a space; the flags and `pilot:pilot` are constants.
+  const quoted = (word) => (path.win32.isAbsolute(word) ? `"${word}"` : word);
+  const words = ['"pilot"', `"${claude}"`, ...args.map(quoted)];
 
   // Absolute, because a bare `cmd.exe` is looked up in `cwd` first, and `cwd` is the repo:
   // a `cmd.exe` checked into it would be what runs.
   const cmd = path.win32.join(env.SystemRoot ?? 'C:/Windows', 'System32', 'cmd.exe');
-  const words = ['"pilot run"', `"${execPath}"`, `"${bin}"`, 'run'];
   const child = spawn(cmd, ['/d', '/c', 'start', ...words], {
     cwd: repo,
     shell: false,
     detached: true,
-    // Hides `cmd`'s own window only; `start` gives `pilot run` a console of its own.
+    // Hides `cmd`'s own window only; `start` gives `claude` a console of its own.
     windowsHide: true,
     // The words above are the command line, unquoted a second time by Node.
     windowsVerbatimArguments: true,
     stdio: 'ignore',
-    // As before the daemon's strip (spec 7 is git's): `pilot run` hands it on to `claude`.
-    env: sessionEnv(unstrippedEnv(env)),
+    // As before the daemon's strip (spec 7 is git's), less the parent's markers, plus the run's own.
+    env: runEnv(reach, sessionEnv(unstrippedEnv(env))),
   });
+  child.unref();
+  return child;
+}
+
+/**
+ * Start (spec 11): open the pilot's window in `repo`, which the caller has already resolved to a
+ * tab's own spelling (L3). Refuses before any spawn under the suite (`PILOT_DECK_NO_START`, L7),
+ * for a directory that is gone, and while an earlier Start in the same repo is in flight; then
+ * `openPilot`'s own refusals. It starts nothing else: the sub-deck's `pilot run --sub` is gone (ADR 0088).
+ */
+export function startSession(repo, { now = Date.now, ...deps } = {}) {
+  const env = deps.env ?? process.env;
+  // Any value at all, `0` included: the one reason to set it is to stop a window opening.
+  if (env.PILOT_DECK_NO_START) throw new DeckRefusal('starting a session is turned off on this deck', 403);
+  requireDirectory(repo);
+  const pressedAt = now();
+  if (isStarting(repo, pressedAt)) throw new DeckRefusal('a session is already starting in this deck', 409);
+
+  const child = openPilot(repo, deps);
   // Latched once the spawn has returned, so one that throws here leaves nothing behind;
   // its `error` event comes later, after the handler below is attached.
   starting.set(repo, pressedAt);
@@ -148,7 +175,6 @@ export function startSession(
     if (starting.get(repo) === pressedAt) starting.delete(repo);
     console.error(`[deck] could not start a session in ${repo}:`, err.message);
   });
-  child.unref();
 }
 
 /**

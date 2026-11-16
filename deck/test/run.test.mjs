@@ -1372,10 +1372,9 @@ test('startSession takes no sub option', (t) => {
     calls.push(args);
     return { on() {}, unref() {} };
   };
-  startSession(repo, { sub: true, spawn, platform: 'win32', env: {}, execPath: 'C:/node.exe', bin: 'C:/pilot.mjs' });
+  startSession(repo, { sub: true, spawn, platform: 'win32', env: {}, claude: 'C:/claude.exe', home: repo, reach: { level: 'everything' } });
   assert.equal(calls.length, 1);
-  assert.deepEqual(calls[0].slice(-2), ['"C:/pilot.mjs"', 'run'], 'a plain pilot run, whatever is passed');
-  assert.ok(calls[0].includes('"pilot run"'), 'titled as the one session there is');
+  assert.ok(!calls[0].includes('--sub'), 'the one session there is, whatever is passed');
 });
 
 test('pilot --help names no --sub', (t) => {
