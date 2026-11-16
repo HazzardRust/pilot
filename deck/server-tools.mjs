@@ -13,6 +13,7 @@ import { chainNext, isSuperseded } from './chain.mjs';
 import { cleanOnPilot, cleanRefusal } from './gate2-base.mjs';
 import { startLanding } from './landing.mjs';
 import { LAND_AGAIN, LANDING_KINDS } from './landing-replies.mjs';
+import { startPrWrite } from './pr-writes.mjs';
 import {
   KIND_GATE1, KIND_GATE2, KIND_TICKET, OWNER_KINDS, SIGN_OFF, authorKind, isChainHandoff, isGate, isRecord, liveTicketOf, messagesOf, ownerOf, stateOf, waiterKind,
 } from './items.mjs';
@@ -198,9 +199,11 @@ function threadId(args) {
  * exception: it hands the replies it is about to return over to `handOff`, which writes
  * once when that hand-off is new (D4), and announces its own change rather than through
  * `WRITING_TOOLS` below. Synchronous, so a refusal is thrown where the caller stands and
- * nothing is half-written behind it. `land` is `startLanding`'s seams, for the tests.
+ * nothing is half-written behind it. `deps` is `startLanding`'s and `startPrWrite`'s seams, for the
+ * tests, and `prWrite(ticket, repo)`, the deck write a gate1 post and a status of its ticket start (spec 2).
  */
-export function callTool(name, args, land = {}) {
+export function callTool(name, args, deps = {}) {
+  const { prWrite = (ticket, repo) => startPrWrite(ticket, repo, deps), ...land } = deps;
   if (name === 'deck_post') {
     // `repo` is the caller's own directory, stamped by the stdio client; a ticket may be
     // filed under a worktree of it and nowhere else (run-chaining S6).
@@ -221,6 +224,8 @@ export function callTool(name, args, land = {}) {
     const { run: _run, subdeck: _subdeck, ...fields } = args ?? {};
     // The lander's bodiless report is filled from the run record (lander S15).
     const item = postFilled(fields);
+    // A gate1 opens the feature PR, by a deck write the poster never waits on (spec 2, L1).
+    if (item.kind === KIND_GATE1) prWrite(item.ticket, item.repo);
     // In yellow (thread-types-phase L12): the item stays open for a later answer, and the
     // caller goes on with its own default now rather than waiting for one.
     if (item.away) {
@@ -358,6 +363,9 @@ export function callTool(name, args, land = {}) {
     // finishes do is the chain's to say.
     const runRepo = repoOfRun(args?.run);
     const chained = args?.finished !== undefined && typeof runRepo === 'string' ? chainNext(runRepo) : null;
+    // Every status of a ticket with a gate1 rewrites its feature PR from the record just saved (spec 2).
+    const gate1 = record?.ticket === undefined ? undefined : listItems().find((item) => item.kind === KIND_GATE1 && item.ticket === record.ticket);
+    if (gate1) prWrite(gate1.ticket, gate1.repo);
     // One line, never the record (spec 22.2): the answer is paid in the pilot's context
     // on every call, and the record is on disk for anything that needs it. A ticket taken
     // in place under the mark is named, so the same session knows it holds it (handoff-over-mark L2).
