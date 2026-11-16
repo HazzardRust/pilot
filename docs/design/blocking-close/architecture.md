@@ -78,6 +78,7 @@ Deletion test: `isMoot` alone would leave the veto and kind checks spread over t
   Verdict: stands — settled by the user
 - **A4** settled: spec 6 veto, added by the user (itm_f66a8772e2c4, "Yes, add it").
   Verdict: stands — settled by the user
+- **A5** (*assumed*, co-pilot, S1). Nothing refused a `Moot:` close of a signoff (not a gate, not blocking). Default: `resolveItem` refuses any resolution starting `Moot:` or `Assumed:` that is not a valid pilot close, so the prefixes mean only a pilot close of an open blocking question. Cost: a non-blocking question can no longer be closed with those prefixes; plain words still close it. Rejected: drop signoff from S1 test 5.
 - red team: S1's first red step (`Assumed:` on a design question) runs today against store-items.mjs:565 and is refused, so it is red. Checked: the `resumeIn` `answered` check passes the stored `resolvedBy: 'pilot'` back through `authorKind`, which returns 'pilot' ('pilot' is in AUTHOR_KINDS, items.mjs:351). So the widened resume works on a closed item, and S1 pins it with a paused design-question test beside `deck/test/moot-resume.test.mjs`, which must pass unedited. Found: the veto must not break the resume. After a reopen and a user answer, `isAnswered` is true first, so `isPilotClose` is never the only path. Risk: S2 and lander-tail (#959) on closing-report.mjs; S2 adds at most 10 lines there, the rest in the new module. No seam is half-built by two slices: S2 only reads S1's `isPilotClose`.
 
 ## 7. Out of scope
