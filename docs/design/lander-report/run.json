@@ -8,7 +8,7 @@
   "slices": [
     {
       "slice": "feature",
-      "state": "planned; draft PR #37",
+      "state": "at Gate 2 (itm_5c52090cb347): 9ce0484e, Windows 4505 pass 0 fail, WSL gate 5/5, trial merge clean",
       "branch": "feat/lander-report",
       "pr": 37
     },
@@ -20,8 +20,8 @@
       "pr": 38
     }
   ],
-  "next": "lander-report (yellow, short path): S1 PR #38 at 014ec6f4 verified (6 lines, Verdict pass); pilot integrate slice/lander-report-s1 in pilot-feat-lander-report, then full gate (Windows npm test once, WSL gate.mjs x5 on fresh clone), pilot integrate --trial, own gate2 on PR #37 with Verdict + Gate lines, no walkthrough. Then yellow next: blocking-close itm_809d3e826efc.",
-  "updatedAt": "2026-11-16T00:57:35.805Z",
+  "next": "lander-report: gate2 itm_5c52090cb347 posted at 9ce0484 (PR #37), waits on the user's Sign off; on the press spawn pilot-lander with that id, then Findings: on its report. Human steps after: open + merge pilot -> main (merge commit), claude plugin update. Worktrees: pilot-feat-lander-report, pilot-design-lander-report, pilot-slice-lander-report-s1; WSL ~/gate-lander-report-9ce0484e.",
+  "updatedAt": "2026-11-16T01:14:21.298Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -60,6 +60,11 @@
       "agent": "pilot:pilot-implementer",
       "what": "sha256 hashes in scripts/shipped-rules.json match `git grep 0.9.7`, so the slice file's 6-match check needs that file excluded",
       "evidence": "S1 hand-back: 5 extra hits",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot integrate refused the slice PR title (first letter after S<n> must be lower-case); the pilot's own brief gave the title; one retitle and rerun",
       "size": 1
     }
   ]
