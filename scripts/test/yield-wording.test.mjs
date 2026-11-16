@@ -43,14 +43,15 @@ test('the pilot closes any blocking question with a reason', () => {
   assert.match(rule, /`deck_resolve`/, 'the close is a deck_resolve');
   assert.match(rule, /blocking question/, 'L1: any blocking question, not only a `Blocked:` item');
   assert.doesNotMatch(rule, /`Blocked:` item/, 'no longer `Blocked:`-only');
-  assert.match(rule, /done another way[^;]*supersede[^;]*safe assumption/, 'spec 5: the three reasons');
-  assert.match(rule, /another agent owns[^;]*take[^;]*back/, 'L3: the owner rule stands; the pilot takes the thread back first');
+  for (const reason of [/done another way/, /supersede/, /safe assumption/]) assert.match(rule, reason, 'spec 5: the three reasons');
+  assert.match(rule, /never a gate[^;]*walkthrough[^;]*proposal/, 'spec 4, L1: a gate, walkthrough or proposal is never closed this way');
+  assert.match(rule, /(owns|owned)[^;]*take[^;]*back/, 'L3: the owner rule stands; the pilot takes the thread back first');
 });
 
 test('a needed answer still waits', () => {
   const rule = pilotRule();
-  assert.match(rule, /answer is still needed waits on the user/, 'spec 5: a needed answer waits');
-  assert.match(rule, /reopen/, 'spec 6: a reopened question waits on the user too');
+  assert.match(rule, /still needed[^;]*wait/, 'spec 5: a needed answer waits');
+  assert.match(rule, /waits on the user[^;]*reopen|reopen[^;]*waits on the user/, 'spec 6: a reopened question waits on the user too');
 });
 
 test('the co-pilot routes a moot question to main', () => {
