@@ -53,6 +53,21 @@ test('a walkthrough comment lands in the record', (t) => {
   assert.equal(record().qaComment, `${CHECKS}\n\nWalk pending.`);
 });
 
+test('the run.json mirror leaves the comment out', (t) => {
+  const { repo, ticket, run, deps, record } = aTicketWithRecord(t);
+  // A worktree of `repo`, laid out as git lays one out, so the daemon writes its mirror there.
+  const worktree = fs.mkdtempSync(path.join(os.tmpdir(), 'qa-comment-wt-'));
+  t.after(() => fs.rmSync(worktree, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(repo, '.git', 'worktrees', 'feat'), { recursive: true });
+  fs.writeFileSync(path.join(worktree, '.git'), `gitdir: ${path.join(repo, '.git', 'worktrees', 'feat')}\n`);
+  walkthrough(repo, ticket, CHECKS, deps);
+  callTool('deck_status', { run: run.id, slug: 'pear', ticket, worktree, slices: [] }, deps);
+  const mirror = JSON.parse(fs.readFileSync(path.join(worktree, 'docs', 'design', 'pear', 'run.json'), 'utf8'));
+  assert.equal(mirror.ticket, ticket, 'the mirror is written');
+  assert.equal(mirror.qaComment, undefined, 'without the comment');
+  assert.equal(record().qaComment, CHECKS, 'which the deck keeps');
+});
+
 test('a gate2 comment replaces it', (t) => {
   const { repo, ticket, deps, writes, record } = aTicketWithRecord(t);
   walkthrough(repo, ticket, 'Walk pending.', deps);

@@ -160,15 +160,17 @@ const repoOfRun = (id) => listStoredRuns().find((run) => run.id === id)?.repo;
 
 /**
  * Write the record into the feature worktree as `docs/design/<slug>/run.json`, in
- * exactly the stored bytes (L20), so the mirror is a copy and never a re-serialisation;
- * `pilot integrate` commits it. Says what happened, in a clause for the answer.
+ * exactly the stored bytes (L20) less `qaComment`, so the mirror is a copy and never a
+ * re-serialisation; `pilot integrate` commits it, and QA's PR comment is GitHub's text, never the
+ * repository's (deck-writes-github spec 3). Says what happened, in a clause for the answer.
  */
 function mirrorRecord(record, runRepo) {
   if (record?.worktree === undefined) return 'no worktree, so run.json not written';
   if (!isWorktree(record.worktree, runRepo)) return 'run.json not written: the recorded worktree is gone';
   const file = path.join(record.worktree, 'docs', 'design', record.slug, 'run.json');
+  const { qaComment, ...mirrored } = record;
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`);
+  fs.writeFileSync(file, `${JSON.stringify(mirrored, null, 2)}\n`);
   return 'run.json written';
 }
 

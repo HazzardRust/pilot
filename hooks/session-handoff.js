@@ -449,10 +449,16 @@ function openThreads(items, cwd) {
  */
 async function recordFor(cwd) {
   const isObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+  // QA's PR comment (up to 20,000 characters) is GitHub's text, not saved state: it never rides into a session start.
+  const saved = function (record) {
+    const kept = Object.assign({}, record);
+    delete kept.qaComment;
+    return kept;
+  };
   try {
     const answer = await deck.record(cwd);
     return {
-      record: isObject(answer && answer.record) ? answer.record : null,
+      record: isObject(answer && answer.record) ? saved(answer.record) : null,
       yellow: isObject(answer && answer.yellow) ? answer.yellow : null,
       lanes: isObject(answer && answer.lanes) ? answer.lanes : null,
       owed: Array.isArray(answer && answer.owed) ? answer.owed : null,

@@ -402,6 +402,17 @@ test('the hand-off carries the run record for this directory, and the open threa
   assert.ok(context.includes(stash.body), 'beside the hand-off item it came with');
 });
 
+test('QA\'s PR comment never rides into a session start (deck-writes-github spec 3)', async function (t) {
+  scratchHome(t);
+  const stash = item({ title: 'Handoff', body: 'At the mark.' });
+  await deckHolding(t, [stash], Object.assign({}, RECORD, { qaComment: 'the checks table' }));
+
+  const context = (await lane.run(starting())).payload.hookSpecificOutput.additionalContext;
+
+  assert.deepStrictEqual(handedRecord(context), Object.assign({}, RECORD, { openThreads: [stash.id] }));
+  assert.ok(!context.includes('the checks table'));
+});
+
 test('the chat is never one of the open thread ids handed over (S3, spec 6)', async function (t) {
   scratchHome(t);
   const question = item({ kind: 'question', title: 'Which colour?' });

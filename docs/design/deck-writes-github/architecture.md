@@ -99,7 +99,7 @@ body,baseRefName,comments` on the fixture PR confirms the body, the base and the
 
 | Seam | Interface | Folded behind it | Category |
 | --- | --- | --- | --- |
-| `deck/host.mjs` (new) | `HOST_VERBS`, `hostIn(cwd) -> (args) => string` | the one `gh` process start, the verb table, refusal of any other verb | true external (`gh`) |
+| `deck/host.mjs` (new) | `hostIn(cwd) -> (args) => string` | the one `gh` process start, the argv allowlist (`assertHostVerb`), refusal of any other call | true external (`gh`) |
 | `scripts/feature-pr.mjs` (new) | `featureBody(spec, record, footer)`, `syncFeaturePr({ gh, git, record })`, `main(argv)` | PR lookup by head, create-or-edit, base retarget, unchanged skip, QA comment marker, run-remote check | true external (`hostIn`, injected) |
 | `deck/pr-writes.mjs` (new) | `startPrWrite(ticketId, repo, deps)` | the spawn, one in flight per ticket plus one rerun, the note, credential withhold | true external (spawn, injected) |
 | `deck/server-tools.mjs` | `callTool(name, args, deps)` | the two triggers (gate1 post, `deck_status`), the `comment` → `qaComment` copy | in-process |
@@ -119,7 +119,7 @@ reappears in four files and a second host means editing each.
 - **Feature PR**: the one draft PR `feat/<slug>` → the record's `base`, opened, rewritten and retargeted only by a deck write.
 - **QA comment**: the one comment on the feature PR carrying `<!-- pilot:qa -->`, its text the record's `qaComment`.
 - **Trigger**: a gate1 post, a `deck_status`, or a walkthrough or gate2 post with `comment`, for a ticket with a gate1.
-- **Host**: `deck/host.mjs`, the one module that starts a `gh` process; a verb outside `HOST_VERBS` is refused.
+- **Host**: `deck/host.mjs`, the one module that starts a `gh` process; a call outside its allowlist (`assertHostVerb`) is refused.
 - **One plain command**: a single subcommand with literal arguments, no `&&`, `;`, `|` or shell variable.
 
 ## 5. Locked decisions
@@ -175,7 +175,7 @@ reappears in four files and a second host means editing each.
 - red team: (2026-10-20, stands) S2's trigger on every `deck_status` would spawn in ~100 daemon tests: L5 and the gate1
   condition keep them offline (S2 test 3). `callTool`'s third argument spreads into `startLanding` (:315): S2 renames
   it `deps` with `prWrite` beside the landing keys. A gate1 before `feat/<slug>` is pushed: L3's quiet `no PR yet`,
-  and the next `deck_status` retries. `HOST_VERBS` carries the reads (`pr list`, `api user`) and `pr edit --base`.
+  and the next `deck_status` retries. The host's allowlist carries the reads (`pr list`, `api user`) and `pr edit --base`.
 - red team: (re-cut) S6's old pin edits to `measure-prompt` and `qa-preview` met ADR 0180: S6 moves only token
   budgets by measured cost and asserts no phrase; its lint tests carry `// lint: forbidden pattern`.
 - red team: (re-cut) S7's old test 2 ("0154 reads amended") is green on the base (0154 is amended by 0161, 0167):

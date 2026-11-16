@@ -23,7 +23,10 @@ test('all present passes', () => {
 
 test('a covered rule is not missing', () => {
   const settings = settingsWith(without('Bash(pilot land *)'), { ask: ['Bash(pilot land *)'] });
-  assert.equal(allowRow({ readSettings: () => settings }).verdict, 'pass');
+  const row = allowRow({ readSettings: () => settings });
+  assert.equal(row.verdict, 'pass');
+  assert.equal(row.detail, 'every rule present or covered by your deny/ask');
+  assert.equal(allowRow({ readSettings: () => settingsWith([...PILOT_MERGE_ALLOW]) }).detail, 'every rule present', 'none covered, plain');
 });
 
 test('an unreadable settings file cannot tell', () => {

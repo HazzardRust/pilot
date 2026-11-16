@@ -24,7 +24,7 @@ Crew agents kept hitting denied commands: QA's `gh pr comment` and `gh api -X PA
 - **The base is the record's `base` (L7')**, `pilot` or `feat/<N>`; the deck retargets when GitHub's differs.
 - **QA runs against real throwaway PRs on a scratch deck (L9)**, the stated exception to ADR 0173.
 - **A1 Only feature-PR writes move**: slice PRs stay the implementer's. **A2 The PR body is the deck's alone**, QA's corrections and the non-additive migrations section move into the QA comment. **A3 "One plain command"** binds commands that push or write GitHub. **A4 The deck retargets a dropped base** from `deck_status base: pilot`. **A5 QA's comment on the walkthrough and on every gate2.** **A6 `pilot integrate --default` stays refused**, a lint only.
-- **Every `gh` call goes through `deck/host.mjs`**, whose `HOST_VERBS` is the whole list; a verb outside it is refused, so a second host is one adapter.
+- **Every `gh` call goes through `deck/host.mjs`**: one process start and one allowlist (`assertHostVerb`); a call outside it is refused before any process starts.
 
 ## Rejected
 
@@ -43,4 +43,4 @@ Crew agents kept hitting denied commands: QA's `gh pr comment` and `gh api -X PA
 - A failed deck write puts one line on the ticket's thread, `feature PR not updated: <line>`, once, and the next trigger retries; nothing blocks on the user.
 - A retarget waits on the next deck write (A4).
 - This amends ADR 0154: the daemon spawns a second fixed verb, `pilot pr`; ADR 0154's landing stays as it was.
-- A second host (GitLab, Gitea, plain git) is one adapter in `deck/host.mjs`; that adapter is a later ticket.
+- `deck/host.mjs` is an argv allowlist for `gh`, not a host abstraction: a second host (GitLab, Gitea, plain git) is a later ticket.
