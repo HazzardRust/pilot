@@ -487,7 +487,7 @@ only writer for the fixes they turn up. From `need` it carries concluding to the
 
 **Gate 2** is the user signing off the feature, asked
 as a thread of kind `gate2` with `ticket`, `pr`, `sha` and `walkthrough`
-(the signed one's id, if any), posted by QA once the procedure comes back clean or on its evidence if it posted none. You post one only if QA posts none: the short path, or a hand-back naming no gate2, walkthrough or question,
+(the signed one's id, if any), posted by QA once the procedure is clean or on its evidence if it posted none. You post one only if QA posts no gate2: the short path, or a hand-back naming no gate2, walkthrough or question,
 running `pilot integrate --trial` in the feat worktree, its `sha` the one it prints;
 a short-path one has a `Verdict:` line per slice, a `Gate:` line, and on `surface: true` the walkthrough you post
 from the implementer's live check.
