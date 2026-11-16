@@ -80,6 +80,23 @@ function subjectOf(cwd, head, slice) {
   return sliceSubject(found.slug, row);
 }
 
+const SECURITY = 'pilot:security-reviewer';
+
+/**
+ * Throws when `slice`'s file, `docs/design/<slug>/slices/S<n>.md` from its run record row, has a
+ * `Reviewers:` line naming `pilot:security-reviewer` and no trailer is that reviewer's
+ * `Reviewed-by:`: no security verdict, no integration. No record, row or slice file: no check.
+ */
+function assertSecurityVerdict(cwd, head, slice, trailers) {
+  const found = recordIn(cwd, head);
+  const n = /^S\d+\w*/.exec(found?.record.slices?.find((r) => r.branch === slice)?.slice ?? '')?.[0];
+  const file = n && path.join(cwd, 'docs', 'design', found.slug, 'slices', `${n}.md`);
+  if (!file || !fs.existsSync(file)) return;
+  if (!/^Reviewers:.*\bpilot:security-reviewer\b/m.test(fs.readFileSync(file, 'utf8'))) return;
+  if (trailers.some((line) => String(line).startsWith(`Reviewed-by: ${SECURITY}: `))) return;
+  throw new Error(`${n} names ${SECURITY} and no --trailer "Reviewed-by: ${SECURITY}: <verdict>"`);
+}
+
 /** The run record in `cwd` of `head`, a `feat/<slug>`: `{ slug, record }`, or null with no record there or another head. */
 function recordIn(cwd, head) {
   const slug = /^feat\/(.+)$/.exec(head ?? '')?.[1];
@@ -331,6 +348,7 @@ export function integrate(branch, options = {}) {
     assertPushable(head, { git: (args) => git(cwd, ...args) });
     // The merge's subject, from the run record before any merge: a slice it does not name is refused here.
     if (slice) subject = subjectOf(cwd, head, slice);
+    if (slice) assertSecurityVerdict(cwd, head, slice, trailers);
   } catch (err) {
     return { ok: false, line: `${not}: ${firstLine(err)}; nothing merged or pushed`, failing: [] };
   }
