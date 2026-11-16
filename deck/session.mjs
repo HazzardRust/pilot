@@ -96,9 +96,12 @@ function requireDirectory(repo) {
   if (!stat.isDirectory()) throw new DeckRefusal(`${repo} is not a directory`, 400);
 }
 
-/** A word `cmd` would end a quote on (`"`) or expand inside one (`%`) is refused, never escaped. */
+/**
+ * A word `cmd` would end a quote on (`"`) or expand inside one (`%`, and `!` where the
+ * registry turns delayed expansion on) is refused, never escaped.
+ */
 function requireOnTheLine(word) {
-  if (/["%]/.test(word)) throw new DeckRefusal(`${word} cannot be put on a command line`, 400);
+  if (/["%!]/.test(word)) throw new DeckRefusal(`${word} cannot be put on a command line`, 400);
 }
 
 /**
@@ -115,12 +118,19 @@ export function openPilot(
   if (platform !== 'win32') throw new DeckRefusal('Start opens a terminal window on Windows only', 400);
   // Never the bare name: `cwd` is the repo, and a `claude.exe` checked into it would be what runs.
   if (!claude) throw new DeckRefusal('claude was not found on the PATH; install Claude Code or add it to the PATH', 500);
+  if (!path.win32.isAbsolute(claude)) throw new DeckRefusal(`${claude} is not an absolute path to claude`, 400);
   // Every path on the line is `claude` or under `home` (the rules root, the settings file).
   requireOnTheLine(claude);
   requireOnTheLine(home);
+  let args;
+  try {
+    args = startArgs(reach, { home });
+  } catch (err) {
+    throw new DeckRefusal(`could not write the session settings: ${err.message}`, 500);
+  }
   // Every path quoted, since any may hold a space; the flags and `pilot:pilot` are constants.
   const quoted = (word) => (path.win32.isAbsolute(word) ? `"${word}"` : word);
-  const words = ['"pilot"', ...[claude, ...startArgs(reach, { home })].map(quoted)];
+  const words = ['"pilot"', `"${claude}"`, ...args.map(quoted)];
 
   // Absolute, because a bare `cmd.exe` is looked up in `cwd` first, and `cwd` is the repo:
   // a `cmd.exe` checked into it would be what runs.

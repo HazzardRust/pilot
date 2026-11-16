@@ -318,17 +318,19 @@ test('a claude path or rules root with a quote is refused before any spawn', (t)
   const { calls, spawn } = aRecorder();
   const repo = aDir(t);
 
-  for (const bad of ['C:/a"b/claude.exe', 'C:/%USERPROFILE%/claude.exe']) {
+  for (const bad of ['C:/a"b/claude.exe', 'C:/%USERPROFILE%/claude.exe', 'C:/a!b/claude.exe', 'bin/claude.exe']) {
     const refusal = refusalOf(repo, { spawn, claude: bad });
     assert.equal(refusal?.status, 400, bad);
     assert.ok(refusal.message.includes(bad), `the reason names ${bad}`);
   }
-  for (const bad of ['C:/Users/a"b', 'C:/Users/%USERNAME%']) {
+  // A home that exists, so a settings file written before the check would be seen.
+  const percent = aDir(t, '%USERNAME%');
+  for (const bad of ['C:/Users/a"b', percent]) {
     const refusal = refusalOf(repo, { spawn, home: bad });
     assert.equal(refusal?.status, 400, bad);
     assert.ok(refusal.message.includes(bad), `the reason names ${bad}`);
-    assert.ok(!fs.existsSync(settingsIn(bad)), 'nothing is written under it');
   }
+  assert.ok(!fs.existsSync(settingsIn(percent)), 'nothing is written under a refused home');
   assert.deepEqual(calls, []);
 });
 

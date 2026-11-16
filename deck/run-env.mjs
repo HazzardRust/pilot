@@ -79,8 +79,12 @@ export function startArgs(reach, { settingsFile, home } = {}) {
   const { settings, addDirs } = runSettings(reach.level, PLUGIN_ROOT, { home });
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const partial = `${file}.${process.pid}.tmp`;
-  fs.writeFileSync(partial, `${JSON.stringify(settings, null, 2)}\n`);
-  fs.renameSync(partial, file);
+  try {
+    fs.writeFileSync(partial, `${JSON.stringify(settings, null, 2)}\n`);
+    fs.renameSync(partial, file);
+  } finally {
+    fs.rmSync(partial, { force: true });
+  }
   return [...addDirs.flatMap((dir) => ['--add-dir', dir]), '--agent', 'pilot:pilot', '--settings', file];
 }
 
