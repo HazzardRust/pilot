@@ -20,7 +20,7 @@ test('the ADR format lists the allowed statuses', () => {
   assert.match(text, /status: proposed \| accepted \| superseded \| amended \| deprecated/);
 });
 
-test('the ADR format says a repository rule may replace the schema', () => {
+test('the ADR format carries no retired no-front-matter rule', () => {
   // lint: forbidden pattern, the retired no-front-matter rule
   assert.doesNotMatch(text, /No status frontmatter/);
 });

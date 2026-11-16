@@ -43,5 +43,10 @@ test('step 9 offers no second Sign off', () => {
   assert.doesNotMatch(step9, /`pilot land`/);
 });
 
+test('the merge-conflict skill has its row', () => {
+  // lint: the methodology table's resolving-merge-conflicts row exists
+  assert.match(pilot, /\| `resolving-merge-conflicts` \|/, 'L8');
+});
+
 // Test 5 of the slice, "the pilot prompt stays inside its measured budget", is the existing
 // pin in measure-prompt.test.mjs, which S5 lowers to its measured figure; one pin, not two.
