@@ -160,22 +160,26 @@ reappearing; the look survives (deleted, its logic would reappear untested in th
 
 ## 6. Assumed decisions
 
-- **A1 The mod acts only under `pilot run`.** Verdict: overturned: "i prefer the every pilot session"
-  (itm_092acdb3e41f). Replaced by L11.
+- **A1 The mod acts only under `pilot run`.**
+  Verdict: overturned: "i prefer the every pilot session" (itm_092acdb3e41f). Replaced by L11.
 - **A2 The minimum Claude Code is 2.1.325**, the version proven. Tradeoff: 2.1.287-2.1.324 type `/clear`.
   Verdict: stands
 - **A3 One deletion slice over the 400-line limit** (S7, about 2400 lines removed: `deck/run.mjs`, `run-prompt.mjs`,
-  their tests): no added lines outside import fix-ups. Tradeoff: one long diff. Verdict: stands
+  their tests): no added lines outside import fix-ups. Tradeoff: one long diff.
+  Verdict: stands
 - **A4 Security defaults** (`pilot:security-reviewer` on every slice but S11): a fixed argv from the mod's own
   `import.meta.url`, ids shape-checked `itm_[0-9a-f]+` before any argv or stamp; the submitted prompt a fixed
   literal plus the lander line; no `$.http.fetch` in the mod; spec 5's bound re-proved; Start's command line takes
-  no deck text and refuses `"` and `%` as today. Verdict: stands
-- **A5 The spec and the QA environment.** Verdict: stands. QA environment answered on itm_8b0364a9084f: "This
-  machine, scratch deck, 5 live hand-offs".
+  no deck text and refuses `"` and `%` as today.
+  Verdict: stands
+- **A5 The spec and the QA environment.** QA environment answered on itm_8b0364a9084f: "This machine, scratch
+  deck, 5 live hand-offs".
+  Verdict: stands
 - **A6 Only the session that posted the hand-off is cleared**, by `claims/posted-<session pid>.stamp`; `cleared`
   deletes it. Tradeoff: a hand-off whose poster died is cleared by nobody; the next session picks it up at
   SessionStart. Rejected: any session whose event names `pilot:pilot`.
-  Verdict: stands: it bounds L11's cost to the session that asked for the hand-off; no queued ticket touches `claims/`.
+  Verdict: stands
+  Why: it bounds L11's cost to the session that asked for the hand-off; no queued ticket touches `claims/`.
   red team: chain hand-offs carry no stamp; L14 adds it.
 - **A7 Chain at start only under `pilot run`.**
   Verdict: overturned: "that is true, but i dont want pilot run to even be a thing anymore. maybe we can just have the start of the session be normal, but as soon as it hits the handoff, it turns into auto. fyi the handoff is what injects the prompt, and the handoff doesnt just start the session anew. we can reconfigure how the whole system works i dont care, just whatever gets it the basic autonomy of running endlessly without me needing to intervene." (itm_6cb636583c2c, 2026-11-16). Replaced by L12.
@@ -189,7 +193,8 @@ reappearing; the look survives (deleted, its logic would reappear untested in th
   root> --agent pilot:pilot --settings <~/.claude/pilot/start-settings.json>`, the settings written at the press
   because a JSON string holds `"`. Tradeoff: Start and Resume open an idle pilot; the user types the first message.
   Rejected: `RESUME_PROMPT` on the line (a chain at start, which L12 removes); dropping Start.
-  Verdict: stands: the user accepted one typed line at a session's start (itm_6cb636583c2c), which is this tradeoff; not posted again.
+  Verdict: stands
+  Why: the user accepted one typed line at a session's start (itm_6cb636583c2c), which is this tradeoff; not posted again.
 - **A10 Below reach `everything`, the deck's Start is the way to a pilot session**; `pilot reach` and the README
   say so. Tradeoff: at `nothing` or `rules`, a hand-typed `claude --agent pilot:pilot` has no plugin, so no pilot
   and no mod. Rejected: a `pilot start` verb that spawns `claude` and waits (a launcher, L12).
