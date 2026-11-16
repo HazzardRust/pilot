@@ -109,10 +109,11 @@ function evaluate(source, context) {
   return value;
 }
 
-/** The context of one event: `event` is a name, `pr` a pull request's `draft` and `labels`. */
-function event(name, { draft = false, labels = [], isPrivate = true } = {}) {
+/** The context of one event: `event` is a name, `pr` a pull request's `draft`, `labels` and base branch. */
+function event(name, { draft = false, labels = [], isPrivate = true, baseRef = 'main' } = {}) {
   const pullRequest = name === 'pull_request' ? { draft, labels: labels.map((label) => ({ name: label })) } : undefined;
-  return { github: { event_name: name, event: { pull_request: pullRequest, repository: { private: isPrivate } } } };
+  const base = name === 'pull_request' ? baseRef : '';
+  return { github: { event_name: name, base_ref: base, event: { pull_request: pullRequest, repository: { private: isPrivate } } } };
 }
 
 /** The OSes the workflow starts a gate job on for `context`, from every job's `if`, `runs-on` and matrix. */
@@ -172,6 +173,18 @@ test('ubuntu keeps main-never-red\'s triggers', () => {
   for (const trigger of ['pull_request_target', 'issue_comment', 'workflow_run']) {
     assert.doesNotMatch(code(text), new RegExp(`\\b${trigger}\\b`), `no ${trigger}`);
   }
+});
+
+test('a PR to pilot runs the gate', () => {
+  const branches = block(block(block(workflowText(), 'on'), 'pull_request'), 'branches');
+  assert.match(branches, /(^|[\s[,'"-])pilot($|[\s\],'"])/, 'pull_request names pilot (L6)');
+  assert.deepEqual(osesFor(event('pull_request', { baseRef: 'pilot', isPrivate: false })), THREE, 'a public PR to pilot');
+});
+
+test('a draft PR to pilot runs the gate', () => {
+  assert.deepEqual(osesFor(event('pull_request', { draft: true, baseRef: 'pilot', isPrivate: false })), THREE, 'a public draft to pilot');
+  assert.deepEqual(osesFor(event('pull_request', { draft: true, baseRef: 'pilot' })), ['ubuntu-latest'], 'a private draft to pilot');
+  assert.deepEqual(osesFor(event('pull_request', { draft: true, baseRef: 'feat/x', isPrivate: false })), [], 'a draft slice PR still skips');
 });
 
 test('the gate workflow cancels a superseded run', () => {

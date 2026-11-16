@@ -11,7 +11,7 @@
  *
  * What it may change there is decided by one ledger, `shipped-rules.json`: the sha256
  * of every version of every file this package ever shipped under `rules/`, generated
- * from git history by `build-rules-ledger.mjs` (ADR 0055).
+ * from git history, append-only, by `build-rules-ledger.mjs` (ADR 0055, ADR 0174).
  *
  *   - a file whose bytes match a version we shipped, under that same path, is ours: it
  *     is replaced with the current one, or deleted when we no longer ship that path;

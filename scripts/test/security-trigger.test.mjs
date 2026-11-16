@@ -69,9 +69,11 @@ const pilotStep = (n) => {
 test('step 5 holds a slice named for security until its verdict is in', () => {
   const step = pilotStep(5);
   assert.match(step, /no security verdict, no integration/, 'step 5 must hold the slice without a verdict');
-  assert.match(step, /Reviewers line names `pilot:security-reviewer` with no `Verdict:` line from it in the slice PR body waits/, 'the named slice is held');
+  // pilot-develop-line S4: no slice PR, so the verdict is read from the implementer's report and rides a trailer.
+  assert.match(step, /Reviewers line names `pilot:security-reviewer` with no `Verdict:` line from it in the implementer's report waits/, 'the named slice is held');
   assert.doesNotMatch(step, /diff hits the security trigger/, 'step 5 holds on the Reviewers line alone');
-  assert.match(step, /spawn `pilot:security-reviewer` on the slice PR/, 'step 5 must spawn the reviewer, not skip it');
+  assert.match(step, /spawn `pilot:security-reviewer` on the slice branch/, 'step 5 must spawn the reviewer, not skip it');
+  assert.match(step, /--trailer "Reviewed-by: <reviewer>: <verdict>"/, 'the verdict rides the merge as a trailer');
 });
 
 test('the fundamentalist says to consider calling the security reviewer', () => {

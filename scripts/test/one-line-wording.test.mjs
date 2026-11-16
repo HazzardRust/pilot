@@ -40,6 +40,6 @@ test('the architect names the placeholder', () => {
 
 test('the feature PR targets pilot', () => {
   const gate1 = section('### 3. Grilling, with the user');
-  assert.ok(/opens the feature PR as a \*\*draft\*\* against `pilot`/.test(gate1), 'Gate 1 opens the feature PR against pilot');
+  assert.ok(/opens the feature PR as a \*\*draft\*\* against its base, `pilot` or `feat\/<N>`/.test(gate1), 'Gate 1 opens the feature PR against its base');
   assert.ok(!/feature PR[^.]*against the default branch/.test(pilot), 'no feature PR against the default branch');
 });

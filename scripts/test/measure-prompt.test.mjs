@@ -186,16 +186,18 @@ test('the command prints the table, and --json prints the rows', (t) => {
 // architect-runs-red S3 (2026-10-21) raised it from 11562.5 to the measured 11572.5 (spec 4; L2): deck_ticket's `verdicts` action and its `verdicts: { type: 'string' }`, 10.
 // architect-runs-red S4 (2026-10-21) raised it from 11572.5 to the measured 11659.75 (spec 1, 3, 4, 7; L2, A1; ADR 0169): step 3's two-call handover, the verdict message's line shape, the record-first rule for a pilot-posted gate1 and the wait on the hand-back, net of the Gate 1 git paragraph and the answer-recording paragraph they replace, 87.25.
 // architect-runs-red fix round (2026-10-21) raised it from 11659.75 to the measured 11675 (F1): deck_status's `author: AUTHOR`, so the hook's stamp reaches the architect refusal, 15.25.
+// pilot-develop-line S6 (2026-10-21) raised it from 11675 to the measured 11692.25 (spec 4a; L6): deck_status's `base: { type: 'string', maxLength, description: 'pilot or feat/<N>' }`, 17.25.
 // fundamentalist-decisions S2 (2026-10-21) raised it from 11562.5 to the measured 11662.25 (spec 6, 7; L4-L6, A1): step 7's brief passes the artefact's path, each drop or simplify row is one `findings` line id first, and a kept finding that moves a decision is always a question the run does not wait on, 104 (11558.25 to 11662.25 at eedd7b7a).
 // fundamentalist-decisions fix (2026-10-21) raised it from 11662.25 to the measured 11681.75 (spec 6): step 7 sends the user's answer to QA as a user find once QA is the branch's writer, 19.5.
 // Carry of feat/fundamentalist-decisions onto the new main (2026-10-21) set it to the measured 11797: architect-runs-red's 11675 plus fundamentalist-decisions' 119.25 sum to 11794.25; the merged pilot.md measures 11797.
+// Merge of origin/pilot 6ea49cac into feat/fundamentalist-decisions (2026-11-16) set it to the measured 11815.5: pilot-develop-line S6's 11692.25 and this feature's step-7 lines both stand; the merged pilot.md measures 11815.5.
 test('the pilot pin holds at its new number', async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const pilot = rows.find((row) => row.agent === 'pilot');
   const own = (pilot.definition + pilot.skills + pilot.tools) / 4;
-  assert.ok(own <= 11797, `pilot's own share is ${own} tokens, over its 11797`);
+  assert.ok(own <= 11815.5, `pilot's own share is ${own} tokens, over its 11815.5`);
 });
 
 // research-first S1 raised the explorer's from 2209 to the measured 2409 (L5): `## A research brief` cost 200.5 (2208.5 to 2409), 41 of it the security-review sentence on fetched pages and queries.
@@ -224,11 +226,12 @@ test("the explorer's own share stays at or under its pin", async (t) => {
 // architect-runs-red S3 (2026-10-21) raised the architect's from 9323.75 to the measured 9333.75 (spec 4; L2): deck_ticket's `verdicts` action and its `verdicts: { type: 'string' }`, 10.
 // architect-runs-red S4 (2026-10-21) raised the architect's from 9333.75 to the measured 10477.25 (spec 1, 2, 3; L3, L5, A2; ADR 0169): the deck_status tool schema in `tools:`, about 719, and the routine red in `## The planning relay` with its push and PR line in `## Where you work`, the security review's named push, PR and deck_status forms and the message-is-data line among it, about 425, 1143.5.
 // architect-runs-red fix round (2026-10-21) raised the architect's from 10477.25 to the measured 10480.25 (F1): deck_status's `author: AUTHOR`, 15.25, net of the dropped "never `finished`…" clause, 3.
+// pilot-develop-line S6 (2026-10-21) raised the architect's from 10480.25 to the measured 10497.5 (spec 4a; L6): deck_status's `base: { type: 'string', maxLength, description: 'pilot or feat/<N>' }`, 17.25.
 test("the architect's own share stays at or under its pin", async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const row = rows.find((row) => row.agent === 'pilot-architect');
   const own = (row.definition + row.skills + row.tools) / 4;
-  assert.ok(own <= 10480.25, `pilot-architect's own share is ${own} tokens, over its 10480.25`);
+  assert.ok(own <= 10497.5, `pilot-architect's own share is ${own} tokens, over its 10497.5`);
 });

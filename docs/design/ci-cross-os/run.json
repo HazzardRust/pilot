@@ -1,0 +1,79 @@
+{
+  "slug": "ci-cross-os",
+  "feature": "The suite passes on macOS and Windows CI",
+  "ticket": "itm_b8a9e3785d28",
+  "branch": "feat/ci-cross-os",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-ci-cross-os",
+  "artefact": "docs/design/ci-cross-os/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Walking skeleton: the fixture hands every build its realpath",
+      "state": "integrated at d60f2926 (PR #17)",
+      "branch": "slice/ci-cross-os-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-ci-cross-os-s1",
+      "pr": 17
+    },
+    {
+      "slice": "S2 The macOS fixture copy is diagnosed and its git kept quiet",
+      "state": "integrated at d8ab5dc7 (merge 01ef425f)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/ci-cross-os-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-ci-cross-os-s2",
+      "pr": 29
+    },
+    {
+      "slice": "feature",
+      "state": "gate2 itm_437954462052 signed at d8ab5dc7; lander spawned",
+      "branch": "feat/ci-cross-os",
+      "pr": 11
+    },
+    {
+      "slice": "ci-cross-os",
+      "state": "refused: ail; failing: a plain directory at the land dir name is left alone and named, a failing gh still lands and leaves the main PR unknown, mergeIntoPilot lands two features that each add an ADR (+31 more); log C:\\Users\\Hazzard\\.claude\\pilot\\logs\\20261021T065802225Z-feat-ci-cross-os.log; pilot not pushed"
+    }
+  ],
+  "next": "ci-cross-os (green): lander pressing Land again once after the overlap; on landed, Findings: on its report. Found: a deck restart orphans a running land child — ticket proposal after the landing.",
+  "updatedAt": "2026-10-21T07:05:47.227Z",
+  "friction": [
+    {
+      "agent": "pilot-implementer S1",
+      "what": "the rules-ledger gate step hides the whole suite on every OS on the new origin; npm test red before any test",
+      "evidence": "runs 39538601310, 39529336629: `ledger stale: scripts/shipped-rules.json`",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer S1",
+      "what": "gate slot contention with other sessions; full Windows suite >10 min",
+      "evidence": "log: gate: waiting for a slot",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "dispatches to one ref queue at most one pending run and a newer one cancels it; three back-to-back lost one run, ~15 min",
+      "evidence": "concurrency: gate-${{ github.ref }}; run 39554536534 cancelled"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the S2 probe recipe listed the error's path, which Node reports as the destination, not the source objects/",
+      "evidence": "src/node_file.cc CopyDirRecursive; probe run 39553108509"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "WSL output comes back UTF-16 with NUL bytes; the background output file was flagged binary",
+      "evidence": "S2 WSL gate log"
+    },
+    {
+      "agent": "pilot:pilot-lander",
+      "what": "the deck's restart marked the landing interrupted while its land child kept running; Land again started a second land in the same dir, which pulled the first's files out (34 red, 31 of them ERR_MODULE_NOT_FOUND) and cut the second short",
+      "evidence": "logs 20261021T065802225Z and 20261021T070248928Z-feat-ci-cross-os.log",
+      "size": 10
+    },
+    {
+      "kind": "drain",
+      "what": "pilot read two land logs to tell overlap failures from real ones",
+      "size": 2
+    }
+  ]
+}
