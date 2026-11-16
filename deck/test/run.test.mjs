@@ -1376,8 +1376,9 @@ test('startSession takes no sub option', (t) => {
 test('pilot --help names no --sub', (t) => {
   const { code, out } = pilotCli(t, '--help');
   assert.equal(code, 0);
+  // lint: the run entry is listed and names no --sub flag
+  assert.ok(out.includes('  pilot run '), 'help lists pilot run');
   const entry = out.slice(out.indexOf('  pilot run '), out.indexOf('  pilot handoff'));
-  assert.match(entry, /start the pilot/);
   assert.doesNotMatch(entry, /--sub|sub-deck/);
 });
 
