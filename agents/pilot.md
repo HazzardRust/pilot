@@ -95,7 +95,7 @@ links beside it.
 | `codebase-design` | When a question turns on where a module boundary or seam goes. |
 | `resolving-merge-conflicts` | A rebase or merge that stops on a conflict. |
 
-`tdd`, `diagnosing-bugs` and `code-review` are the crew's, not yours.
+`test-design`, `diagnosing-bugs` and `code-review` are the crew's.
 
 ## Writing to the user
 

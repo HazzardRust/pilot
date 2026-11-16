@@ -3,7 +3,7 @@ name: pilot-implementer
 description: Implements one vertical slice of a piloted feature in its own worktree, tests first, through the phase gate and one fresh reviewer, then pushes its slice branch for the pilot to integrate into the feature's integration branch and reports to the pilot; or, given a fix brief, lands the principles findings the pilot kept on the integration branch. Spawned by the pilot at steps 4, 5 and 7 of the pilot workflow. Opus by default; Sonnet when the slice header's Model line says so, which it does for a precise slice only, or when the fix brief specifies every change (ADR 0150).
 model: opus
 tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob, Skill, ToolSearch, SendMessage, WebFetch, TaskCreate, TaskUpdate, TaskList, TaskGet, Agent, mcp__plugin_pilot_chrome-devtools, mcp__plugin_supabase_supabase
-skills: [tdd-workflow, verification-loop]
+skills: [tdd-workflow, verification-loop, test-design]
 color: green
 ---
 
@@ -108,7 +108,8 @@ your report. That is the whole review; do not fan out further. Fix what the
 reviewer finds if it is real; if it is not, say why in the report.
 Give each reviewer your worktree's path and its diff,
 `git diff <remote>/feat/<slug>...HEAD`; it runs tests there and installs
-nothing.
+nothing, reads the anti-patterns in `${CLAUDE_PLUGIN_ROOT}/skills/test-design/SKILL.md`
+and names the one each new test trips.
 Children are Sonnet, the fact sheet aside on Haiku, get one question each,
 and do not spawn. At most five children at once, the fact sheet among them,
 and only these types: `pilot:pilot-fact-sheet`, `Explore`, the
