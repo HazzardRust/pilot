@@ -6,7 +6,7 @@ description: Diagnosis loop for hard bugs and performance regressions. Use when 
 upstream: mattpocock-skills 1.2.3 - skills/engineering/diagnosing-bugs/SKILL.md
 copyright: Copyright (c) 2026 Matt Pocock
 licence: MIT - see THIRD-PARTY-NOTICES.md
-adapted: the human in the loop is a deck walkthrough item waited on with the deck's own tools rather than a terminal script; the glossary is the artefact section 3; walkthrough steps are written `do this → correct result`, unlabelled, to match this package's convention
+adapted: the human in the loop is a deck walkthrough item waited on with the deck's own tools rather than a terminal script; the glossary is the artefact section 3; walkthrough steps are written `do this → correct result`, unlabelled, to match this package's convention; an agent without the deck sends its ranked hypotheses to its addressee, and two failed fixes end in that list rather than a third
 ledger: vendor/methodology.md
 -->
 
@@ -102,7 +102,9 @@ Each hypothesis must be **falsifiable**: state the prediction it makes.
 
 If you cannot state the prediction, the hypothesis is a vibe: discard or sharpen it.
 
-**Post the ranked list to the deck as a `question` item before testing.** The user often has domain knowledge that re-ranks it instantly ("we just deployed a change to #3"), or knows hypotheses they have already ruled out. Cheap checkpoint, big time saver. Don't block on it: post, then start testing your own top hypothesis, and re-rank if their reply has arrived by the time you need the next one.
+**Post the ranked list to the deck as a `question` item before testing.** The user often has domain knowledge that re-ranks it instantly ("we just deployed a change to #3"), or knows hypotheses they have already ruled out. Cheap checkpoint, big time saver. Don't block on it: post, then start testing your own top hypothesis, and re-rank if their reply has arrived by the time you need the next one. An agent without `deck_post` sends the list to its addressee with `SendMessage` instead and tests its top hypothesis meanwhile.
+
+**Two failed fixes end the guessing.** Make no third: send the ranked list, with what each fix showed, to your addressee (or post it), and carry on only with work that does not depend on the answer.
 
 ## Phase 4: Instrument
 
