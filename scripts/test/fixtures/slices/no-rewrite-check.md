@@ -19,4 +19,5 @@ S1's Entry: the shape a definition is stored in
 1. `a known word returns its entry`: `lookup` → the entry for "seam".
 2. `an unknown word returns null`: `lookup` → `null` for "zzz".
 3. `an entry carries its definition`: `S1's Entry` → a non-empty `definition`.
+Misses: whether a definition reads well; the reviewer reads that.
 

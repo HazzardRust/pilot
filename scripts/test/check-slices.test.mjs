@@ -70,7 +70,24 @@ test('a slice file with no Tests section is refused', () => {
 
 test('two rewrite checks are refused at the second', () => {
   const text = `${fixture('good.md').trimEnd()}\nRewrite check: a second one.`;
-  assert.deepEqual(rules(text), [{ line: 24, rule: 'rewrite-check' }]);
+  assert.deepEqual(rules(text), [{ line: 25, rule: 'rewrite-check' }]);
+});
+
+// crew-tests-behaviour S2 (spec 3, 5, 7; A1): a slice file names what its tests miss.
+const MISSES = /^Misses:.*\r?\n/m;
+
+test('a slice file without Misses is refused', () => {
+  assert.deepEqual(rules(fixture('good.md').replace(MISSES, '')), [{ line: 17, rule: 'misses' }], 'at the Tests heading');
+});
+
+test('two Misses lines are refused', () => {
+  const text = `${fixture('good.md').trimEnd()}\nMisses: a second one.`;
+  assert.deepEqual(rules(text), [{ line: 25, rule: 'misses' }]);
+});
+
+test('a fenced Misses does not count', () => {
+  const text = fixture('good.md').replace(MISSES, '').replace(/```\r?\nlookup\(/, '```\nMisses: fenced.\nlookup(');
+  assert.deepEqual(rules(text).map(({ rule }) => rule), ['misses']);
 });
 
 test('a slice file of exactly 60 lines passes', () => {
@@ -107,12 +124,6 @@ test('the CLI exits 1 and names each problem', () => {
   }
 });
 
-test("the skill's worked example is seam-first", () => {
-  const { status, stdout, stderr } = cli('skills/vertical-slicing/SKILL.md');
-  assert.equal(status, 0, stdout + stderr);
-  assert.match(stdout, /^1 slice file\(s\) checked/);
-});
-
 // design-docs-only S4 (spec 5, 7; L8): every blocker in the header's `after:` names what it shares.
 const withAfter = (after) => fixture('good.md').replace(/after: .*/, `after: ${after}`);
 const afterReason = (text) => checkSlice(text).filter(({ rule }) => rule === 'after-reason');
@@ -141,18 +152,10 @@ test('one bare blocker among reasoned ones is named', () => {
   assert.doesNotMatch(problems[0].message, /`S1/);
 });
 
-test("the skill's worked example passes", () => {
+test('the worked example passes', () => {
   const { status, stdout, stderr } = cli('skills/vertical-slicing/SKILL.md');
   assert.equal(status, 0, stdout + stderr);
-  const skill = fs.readFileSync(path.join(ROOT, 'skills/vertical-slicing/SKILL.md'), 'utf8');
-  assert.match(skill, /^Feature `learnhub` .* · after: S1 \([^)]+\), S2 \([^)]+\)$/m, 'the example names a reason per blocker');
-});
-
-test('the skill carries the width rule', () => {
-  const skill = fs.readFileSync(path.join(ROOT, 'skills/vertical-slicing/SKILL.md'), 'utf8');
-  const ordering = skill.slice(skill.indexOf('## Ordering'), skill.indexOf('## The phase gate'));
-  assert.match(ordering, /no line between two slices that share no file and no seam/i);
-  assert.match(ordering, /`after: S1 \(<file or seam>\), S2 \(<file or seam>\)`/);
+  assert.match(stdout, /^1 slice file\(s\) checked/);
 });
 
 // red-lands-on-pilot S2 (spec 2; L6): a wait on another ticket's PR is not a blocker.

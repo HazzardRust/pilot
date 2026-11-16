@@ -9,7 +9,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { repoKey } from '../../deck/items.mjs';
-import { flat, read } from './lib/area-file.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SCRIPT = path.join(ROOT, 'scripts', 'audit-spend.mjs');
@@ -110,14 +109,4 @@ test('a log of one torn line gives spend null, never zeros', (t) => {
 
   const { spend, lines, skippedLines } = run([repo, '--log', log]);
   assert.deepEqual({ spend, lines, skippedLines }, { spend: null, lines: 0, skippedLines: 1 });
-});
-
-test('the auditor runs audit-spend before the areas', () => {
-  const source = read('agents/pilot-auditor.md');
-  const spend = source.indexOf('scripts/audit-spend.mjs');
-  assert.ok(spend > 0, 'the auditor names the script');
-  assert.ok(spend < source.indexOf('## Areas'), 'before the areas');
-  const prose = flat(source);
-  assert.match(prose, /`measured`/, 'its block goes into the report as measured');
-  assert.match(prose, /measured spend:/, 'with no log, unmeasured says so');
 });

@@ -189,14 +189,20 @@ test('the command prints the table, and --json prints the rows', (t) => {
 // pilot-develop-line S6 (2026-10-21) raised it from 11675 to the measured 11692.25 (spec 4a; L6): deck_status's `base: { type: 'string', maxLength, description: 'pilot or feat/<N>' }`, 17.25.
 // walkthrough-surface S5 (2026-11-16) raised it from 11692.25 to the measured 11715 (spec 8): deck_post's `shell: { type: 'string', description }`, 22.75.
 // blocking-close S3 (2026-11-16) raised it from 11692.25 to the measured 11721.75 (spec 4, 5; L1-L3, ADR 0178): the close rule covers any blocking question, never a gate, walkthrough or proposal, with `Moot: <why>` or `Assumed: <what>`, takes another agent's thread back first, and leaves a needed or reopened answer to the user, 29.75 (measured 11692 to 11721.75).
+// fundamentalist-decisions S2 (2026-10-21) raised it from 11562.5 to the measured 11662.25 (spec 6, 7; L4-L6, A1): step 7's brief passes the artefact's path, each drop or simplify row is one `findings` line id first, and a kept finding that moves a decision is always a question the run does not wait on, 104 (11558.25 to 11662.25 at eedd7b7a).
+// fundamentalist-decisions fix (2026-10-21) raised it from 11662.25 to the measured 11681.75 (spec 6): step 7 sends the user's answer to QA as a user find once QA is the branch's writer, 19.5.
+// Carry of feat/fundamentalist-decisions onto the new main (2026-10-21) set it to the measured 11797: architect-runs-red's 11675 plus fundamentalist-decisions' 119.25 sum to 11794.25; the merged pilot.md measures 11797.
+// Merge of origin/pilot 6ea49cac into feat/fundamentalist-decisions (2026-11-16) set it to the measured 11815.5 (spec 6, 7): pilot-develop-line S6's 11692.25 and this feature's step-7 lines both stand; the merged pilot.md measures 11815.5.
 // Merge origin/pilot into feat/walkthrough-surface (2026-11-16) set it to the measured 11741.25 on top of the blocking-close landing: walkthrough-surface's `shell` field and blocking-close's close rule both stand, measured together.
+// Landing of feat/fundamentalist-decisions onto pilot 05074a62 (2026-11-16) set it to the measured 11845.25 (spec 6, 7): blocking-close S3's 29.75 and this feature's 123.25 over pilot-develop-line S6's 11692.25 sum to 11845; the merged pilot.md measures 11845.25.
+// Merge origin/pilot into feat/walkthrough-surface (2026-11-16) set it to the measured 11864 on top of the crew-tests-behaviour landing: the pilot's 11845.25 and walkthrough-surface's `shell` field both stand, measured together.
 test('the pilot pin holds at its new number', async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const pilot = rows.find((row) => row.agent === 'pilot');
   const own = (pilot.definition + pilot.skills + pilot.tools) / 4;
-  assert.ok(own <= 11741.25, `pilot's own share is ${own} tokens, over its 11741.25`);
+  assert.ok(own <= 11864, `pilot's own share is ${own} tokens, over its 11864`);
 });
 
 // research-first S1 raised the explorer's from 2209 to the measured 2409 (L5): `## A research brief` cost 200.5 (2208.5 to 2409), 41 of it the security-review sentence on fetched pages and queries.
