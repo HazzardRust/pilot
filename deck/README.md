@@ -33,6 +33,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `gate2-evidence.mjs` | the gate2 evidence check: a short-path ticket's gate2 carries a `Verdict:` per slice, a `Gate:` line and, for a surface, its walkthrough (short-path spec 2); a full run's gate2 naming no walkthrough carries the checks table and, on a plan with a surface, a `surface planned, no walkthrough:` reason line; a named walkthrough is a real one on the gate2's ticket; `walkthroughPlanGaps` refuses QA's walkthrough on a plan marked with no surface (walkthrough-surface spec 3-6) |
 | `health.mjs` | `GET /api/health`'s answer: pid, url, cursor, rss, and the plugin version with when this daemon started (daemon-lifecycle spec 3) |
 | `hold-route.mjs` | `POST /api/hold { id, ticket }`: `pilot run` marks a hand-off held for a live co-pilot, item state and no reply, written once (held-handoff L2) |
+| `host.mjs` | the host: the one `gh` process start, argv only, refusing any call off its argv allowlist before a process starts (deck-writes-github spec 8) |
 | `idle.mjs` | the user's deck's idle rule: it exits after 10 minutes with no session, no landing and no request, reading the process table only when the other two hold (process-gc L2, ADR 0136) |
 | `items.mjs` | the item vocabulary: kinds, fields, open or closed, whose turn |
 | `items-bounds.mjs` | the item vocabulary's bounds and field shapes: limits, the words the deck offers, `stepParts` |
@@ -49,6 +50,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `open.mjs` | opens the deck page in a browser when a run registers |
 | `owed.mjs` | the threads the pilot still owes a directory: unanswered, or promised with `deck_reply`'s `promise`; served on `/api/record` |
 | `pilot-state.mjs` | `pilotStateOf`: the pilot's state for a repository, read at render time from items, runs and held waits and stored nowhere, in the precedence ADR 0149 records |
+| `pr-writes.mjs` | `startPrWrite`: the deck write, `pilot pr --ticket <id>` spawned on a gate1 and each status of its ticket, one in flight per ticket plus one rerun, a failure one line on the ticket (deck-writes-github spec 2, 7) |
 | `probe.mjs` | `probeDeck`: the one answer to who holds a url, a deck by pid and version, nothing, or not a deck (daemon-lifecycle §3) |
 | `procs.mjs` | `pilot ps`: the process table (one PowerShell CIM or `ps` read), the pilot-owned daemons, waits and test roots, and which are orphans and why (process-gc L5-L6) |
 | `question-shape.mjs` | checks a crew question's recommended default carries a `Research:` line |

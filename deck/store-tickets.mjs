@@ -26,7 +26,7 @@ import {
   ticketQueueOf,
 } from './items.mjs';
 import { YIELD_MS, yieldsDue } from './lanes.mjs';
-import { repoKey, sameRepo } from './runs.mjs';
+import { nextRecord, repoKey, sameRepo } from './runs.mjs';
 import {
   DeckRefusal,
   bylineOf,
@@ -402,6 +402,23 @@ export function pivotTicket(id) {
   touchRuns(deck, ticket.repo);
   writeDeck(deck);
   return { ticket, gate2 };
+}
+
+/**
+ * QA's `comment` on the newest record of `ticketId`, in the ticket's own directory (deck-writes-github spec 3, L3):
+ * the newest text replaces the last, the walkthrough's or the gate2's. Returns that directory when it wrote, null
+ * when there is no such ticket or it has no record yet. Here and not beside `setSlices`: store-runs is at its bar.
+ */
+export function setQaComment(ticketId, comment) {
+  const deck = readDeck();
+  const ticket = deck.items.find((item) => item.id === ticketId && item.kind === KIND_TICKET && typeof item.repo === 'string');
+  if (!ticket) return null;
+  const records = Array.isArray(deck.records) ? deck.records : [];
+  const entry = records.findLast((each) => each?.repo === repoKey(ticket.repo) && each?.record?.ticket === ticketId);
+  if (!entry) return null;
+  entry.record = nextRecord(entry.record, { qaComment: comment, updatedAt: new Date().toISOString() });
+  writeDeck(deck);
+  return ticket.repo;
 }
 
 /** Every item on the deck, oldest first, each with whatever replies it has. */

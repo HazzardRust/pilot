@@ -181,7 +181,13 @@ const SHELL_FIELD = { name: 'shell', most: 40 };
 /** A gate's commit, case-blind; also the shape `deck/gate2-base.mjs` checks before git sees it. */
 const SHA_FIELD = { name: 'sha', required: true, shape: /^[0-9a-f]{7,40}$/i, means: 'a commit sha' };
 
+/** The most QA's comment on the feature PR carries (deck-writes-github spec 3), well inside GitHub's own 65536. */
+export const MAX_QA_COMMENT_CHARS = 20000;
+
+/** QA's checks on a walkthrough or a gate2: the deck copies it to the ticket's record and writes it to the PR (L3, A5). */
+const COMMENT_FIELD = { name: 'comment', most: MAX_QA_COMMENT_CHARS };
+
 /** A sign-off's second button (A6): the verdict that keeps a gate open (A9). */
 export const NOT_YET = 'Not yet';
 
-export { SHA_FIELD, URL_FIELD, LOGIN_FIELD, SCREENS_FIELD, SLICE_FIELD, REPO_FIELD, NEXT_FIELD, DIR_FIELD, WORKDIR_FIELD, SHELL_FIELD };
+export { SHA_FIELD, URL_FIELD, LOGIN_FIELD, SCREENS_FIELD, SLICE_FIELD, REPO_FIELD, NEXT_FIELD, DIR_FIELD, WORKDIR_FIELD, SHELL_FIELD, COMMENT_FIELD };

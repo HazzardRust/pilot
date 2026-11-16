@@ -196,13 +196,14 @@ test('the command prints the table, and --json prints the rows', (t) => {
 // Merge origin/pilot into feat/walkthrough-surface (2026-11-16) set it to the measured 11741.25 on top of the blocking-close landing: walkthrough-surface's `shell` field and blocking-close's close rule both stand, measured together.
 // Landing of feat/fundamentalist-decisions onto pilot 05074a62 (2026-11-16) set it to the measured 11845.25 (spec 6, 7): blocking-close S3's 29.75 and this feature's 123.25 over pilot-develop-line S6's 11692.25 sum to 11845; the merged pilot.md measures 11845.25.
 // Merge origin/pilot into feat/walkthrough-surface (2026-11-16) set it to the measured 11864 on top of the crew-tests-behaviour landing: the pilot's 11845.25 and walkthrough-surface's `shell` field both stand, measured together.
+// deck-writes-github S3 (2026-11-16) raised it from 11864 to the measured 11871 (spec 3): deck_post's bare `comment: { type: 'string' }`, 7.
 test('the pilot pin holds at its new number', async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const pilot = rows.find((row) => row.agent === 'pilot');
   const own = (pilot.definition + pilot.skills + pilot.tools) / 4;
-  assert.ok(own <= 11864, `pilot's own share is ${own} tokens, over its 11864`);
+  assert.ok(own <= 11871, `pilot's own share is ${own} tokens, over its 11871`);
 });
 
 // research-first S1 raised the explorer's from 2209 to the measured 2409 (L5): `## A research brief` cost 200.5 (2208.5 to 2409), 41 of it the security-review sentence on fetched pages and queries.
