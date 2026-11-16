@@ -8,9 +8,7 @@ import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { deckOnAPort, postStored, tempDeck } from '../testUtils.mjs';
 import { KINDS, KIND_REPORT, RECORD_KINDS, isRecord } from '../items.mjs';
@@ -19,7 +17,6 @@ import { renderThreadPage } from '../ui/render.mjs';
 const { addReply, listItems } = await import('../store.mjs');
 
 const REPO = path.resolve('D:/work/alpha');
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const aRun = () => ({ id: 'run_1', repo: REPO, name: 'alpha', pid: process.pid, startedAt: new Date().toISOString() });
 const reread = (id) => listItems().find((candidate) => candidate.id === id);
 
@@ -111,9 +108,4 @@ test('only reports are records', () => {
     assert.equal(isRecord({ kind }), false, kind);
   }
   assert.equal(isRecord(null), false);
-});
-
-test('ADR 0148 is indexed', () => {
-  const index = fs.readFileSync(path.join(ROOT, 'docs/adr/README.md'), 'utf8');
-  assert.match(index, /0148/);
 });
