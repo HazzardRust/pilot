@@ -15,7 +15,7 @@ Remote: origin
 
 ## Base and PR target
 
-The base is `feat/audit-f1`, cut at Gate 1 from `origin/pilot` (9dab4167 at design time). Every slice PR is a
+The base is `feat/audit-f1`, cut at Gate 1 from `origin/pilot` (6ea49cac at design time). Every slice PR is a
 **draft** against `feat/audit-f1`, never marked ready; the pilot merges it. Branch: `slice/audit-f1-s<n>`. Write
 the body with `gh pr create --body-file <file>`.
 
@@ -30,8 +30,8 @@ the body with `gh pr create --body-file <file>`.
 Every commit ends with these two lines, copied exactly:
 
 ```
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0131nxNBjfjGFLyrfajro9Wk
+Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NXgSFodNbTKqoJ71EpWMS5
 ```
 
 ## PR footer
@@ -41,7 +41,7 @@ Every PR body ends with these lines, copied exactly:
 ```
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-https://claude.ai/code/session_0131nxNBjfjGFLyrfajro9Wk
+https://claude.ai/code/session_01NXgSFodNbTKqoJ71EpWMS5
 ```
 
 ## Artefact
@@ -68,15 +68,17 @@ this account: a red or unstarted check is not evidence. One file: `node --test <
 
 ## Known flaky tests
 
-- The Windows worktrees test has failed `MODULE_NOT_FOUND` mid-run with no summary (twice, 2026-10-19).
-- The nested fixture gate once reported "powershell.exe not found" while three gates ran at once.
+- `deck/test/scratch-stop.test.mjs`: the symlink-registry test can fail `EEXIST` on a shared `%TEMP%` path; passes on rerun.
 
 ## Live verification
 
 S1: `node scripts/pilot-tip.mjs --fetch` in the shared checkout, its line against `git rev-parse origin/pilot`.
-S2: a SessionStart payload piped into `node scripts/pilot-tip.mjs --session-start` in the shared checkout, its JSON
-pasted in the PR. Neither moves the shared checkout.
+S2: a SessionStart payload piped into `node scripts/pilot-tip.mjs --session-start` in a fixture repo whose
+`origin/pilot` is 101 ahead (one line) and in the shared checkout, 97 behind (nothing). No checkout of this repo can be
+over 100 behind today (98 commits on pilot). Neither moves the shared checkout.
+QA: one real Claude Code session start in that fixture repo with the plugin loaded, its warning line read; one real
+`pilot audit` scratch cut, `git -C <scratch> rev-parse HEAD` read against `git rev-parse origin/pilot`.
 
 ## Diff limit
 
-40 changed lines per slice outside tests. Past that, stop and ask `main`.
+300 changed lines per slice. Past that, stop and ask `main`.

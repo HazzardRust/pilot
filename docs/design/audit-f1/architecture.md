@@ -1,66 +1,71 @@
 # audit-f1: the audit and a session start read the run's pilot, not a stale HEAD
 
 Ticket `itm_f997a8938bd4`, audit row F1 (`~/.claude/pilot/audits/c_users_hazzard_projects_pilot-01e1a5f943/2026-10-20T21-42-00-000Z.json`).
-Base `origin/pilot` at 9dab4167. No ADR: no structural decision outlives this run (§5).
+Base `origin/pilot` at 6ea49cac. No ADR: no structural decision outlives this run (§5).
 
 ## 1. Problem
 
-The shared checkout sits on `fix/claude-workflow-tools` at 8c90d170, 2259 commits behind `origin/pilot`. The
-housekeeping audit cuts its scratch worktree from that HEAD, so it measured stale code (17 dead-export rows already
-fixed on pilot), and any session started there acts on old code without being told.
+The audit and any session started in a stale checkout read old code: the audit cut its scratch worktree from the
+checkout's HEAD, so its dead-export rows were stale, and an agent started there acts on old code without being told.
+The ticket's "2259 behind" predates the fresh public repository; today the shared checkout sits on `main` at 18a5d2f0,
+97 behind `origin/pilot` (6ea49cac), and `origin/pilot` holds 98 commits in all.
 
 ## 2. Spec
 
-1. The auditor's scratch worktree is cut from the run's pilot ref when it resolves locally, else HEAD. Evidence:
-   `pilotTip` over a fixture whose `origin/pilot` is 3 commits ahead of HEAD answers origin/pilot's sha; the CLI
-   prints `origin/pilot <sha>`; with no pilot ref it prints `HEAD <sha>`; the auditor prompt's cut uses the CLI's sha.
-   Bar: 3 fixture cases, 3 exact outputs.
-2. A session start in a checkout whose HEAD is more than 100 commits behind the run's pilot ref prints one warning
-   line naming the count and the ref, to the user (`systemMessage`) and the agent (`additionalContext`). Evidence: hook
-   test: 101 behind prints the line, 100 and 99 print nothing, no pilot ref prints nothing. Bar: 4 cases, exactly one line.
-3. *assumed* (A1; practitioner: an auditor states the revision audited) The audit report carries
-   `base: "<ref> <sha>"`, and the deck's audit item shows it on its "measured in" line. Evidence: an audit-body test
-   renders `at origin/pilot <sha>`; a report without `base` renders as today. Bar: 2 cases.
-4. The hook never fetches and needs no deck: it counts against the local remote-tracking ref, and a deck that is down
-   changes nothing. Evidence: the hook test runs with no deck and no network remote; the source has no `fetch`. Bar:
-   0 network calls, under the hook's 5 s timeout.
-5. A bad `pilot.remote`, a directory that is not a repository, or a git failure is silent in the hook and falls back
-   to `HEAD` in the CLI; the hook exits 0 every time. Evidence: hook and CLI tests over those three fixtures. Bar: 3
-   cases, exit 0 each.
-6. Run remote honoured (practitioner: pilot-fork's run remote): `pilot.remote=<name>` reads `<name>/pilot`,
-   `pilot.remote=none` reads local `pilot`. Evidence: `pilotTip` over both fixtures names that ref. Bar: 2 cases.
-7. *assumed* (A2, main) The auditor's cut fetches first: `pilot-tip.mjs --fetch` runs `git fetch <remote> pilot`
-   when the tracking ref already exists (never in local mode), then answers the fetched tip; a failed fetch (offline)
-   answers the local tracking ref. Evidence: fixture whose bare remote's `pilot` is 2 ahead of the tracking ref
-   prints the remote's sha; an unreachable remote prints the old tracking sha, exit 0. Bar: 2 cases.
+1. (agreed, itm_1a700931ecce) The auditor's scratch worktree is cut from `origin/pilot` when it exists, else HEAD.
+   Evidence: a test over a fixture whose `origin/pilot` is 3 ahead of HEAD shows the cut at origin/pilot's tip; with
+   no pilot ref, a bad `pilot.remote` or a git failure, the cut is HEAD and nothing throws; this repo's next audit
+   worktree is at pilot's tip. Bar: 3 fixture cases, 3 exact `<ref> <sha>` lines; 1 real cut.
+2. (agreed, itm_1a700931ecce) A session start in a checkout whose HEAD is more than 100 commits behind `origin/pilot`
+   prints one warning line naming the count, to the user (`systemMessage`) and the agent (`additionalContext`).
+   Evidence: hook test: 101 behind prints the line; 100 and 99 print nothing; no `origin/pilot`, not a repository and
+   a bad `pilot.remote` print nothing; every case exits 0, makes no network call and needs no deck. Bar: 6 cases,
+   exactly one line in one of them, each under the hook's 5 s timeout.
+3. (locked, A1 answered "In", itm_6e5127455ca5; practitioner: an auditor states the revision audited) The audit report carries `base: "<ref> <sha>"`, and the deck audit
+   item's "measured in" line ends `at origin/pilot <sha>`. Evidence: an audit-body test renders it; a report without
+   `base` renders as today. Bar: 2 cases.
+4. *assumed* (A2; practitioner: an auditor measures the latest published revision) The auditor's cut fetches first: `pilot-tip.mjs --fetch` runs `git fetch <remote> pilot` when the
+   tracking ref already exists (never in local mode), then answers the fetched tip; a failed fetch answers the local
+   tracking ref. Evidence: a fixture whose bare remote's `pilot` is 2 ahead of the tracking ref prints the remote's
+   sha; an unreachable remote prints the old tracking sha, exit 0. Bar: 2 cases.
 
 ## 3. Findings
 
+Anchors re-checked on 6ea49cac.
+
 - `agents/pilot-auditor.md:19` cuts `git worktree add --detach <scratchpad>/audit-<stamp> HEAD`; its Never (:31-38)
-  forbids a branch or push, so `pilot base` (which can create and push `pilot`, `scripts/pilot-branch.mjs`
+  forbids a branch or push, so `pilot base` (which can create and push `pilot`, `scripts/pilot-branch.mjs:122`
   `ensurePilotBranch`) cannot be the cut. Report shape at `:170`.
 - `scripts/test/audit-agent.test.mjs:43` pins the literal `HEAD` cut: S1 changes that pin.
-- `scripts/remotes.mjs:19` `runRemote(git)` is the only reader of `pilot.remote` (origin / name / null for `none`,
-  throws on a bad value); `runRef(runs, branch)` and `shortRef(ref)` give the ref.
-- `hooks/hooks.json` SessionStart has 4 entries; `start:any:statusline-repair` already runs a `scripts/*.mjs`
-  directly, the precedent for a script as a hook. No test counts SessionStart entries.
-- `hooks/session-handoff.js` `run()` returns null when the deck read fails (:470-475), so a warning inside it would
-  vanish with no deck; it is also the busiest hook file.
-- `hooks/context-usage-alert.js:190-203` is the payload shape: `systemMessage` plus
+- `scripts/remotes.mjs:19` `runRemote(git)` is "the only reader of `pilot.remote`" (:15): origin, a name, or null for
+  `none`, throwing on a bad value; `runRef` (:35) and `shortRef` (:37) give the ref.
+- `hooks/hooks.json` SessionStart has 4 entries: `context-usage-alert`, `statusline-repair`, `rules-repair`,
+  `session-handoff`. `statusline-repair` runs `scripts/install-settings.mjs --repair` directly: the precedent for a
+  script as a hook. No test counts SessionStart entries.
+- `hooks/session-handoff.js` `run()` returns null when the deck read fails (:466-477), so a warning inside it would
+  vanish with no deck.
+- `hooks/context-usage-alert.js:192-203` is the payload shape: `systemMessage` plus
   `hookSpecificOutput { hookEventName: 'SessionStart', additionalContext }`.
-- `deck/audit.mjs:89` `validateReport` ignores unknown keys; `:195` renders "measured in the scratch worktree …".
+- `deck/audit.mjs:89` `validateReport` checks named keys and ignores others; `renderReport` (:182) writes
+  "measured in the scratch worktree …" at `:195`, and its `deckBody` is the posted item (:318).
+- `skills/audit/SKILL.md:19` snapshots `git branch -a` before and after: why A2 fetches only an existing tracking ref.
 - Real git fixtures with a bare remote: `deck/test/gate1-lineage.test.mjs`.
-- Open PRs #906 #954 #981 #951 #955 #982: none touches `hooks/hooks.json`, `agents/pilot-auditor.md`,
-  `scripts/test/audit-agent.test.mjs`, `scripts/remotes.mjs` or `deck/audit.mjs`. No `pilot` subcommand is added, so
-  `operating-commands.test.mjs` NON_MOVING is untouched.
+- Open PRs #3-#8, #28, #36, #37: none touches an owned file. No `pilot` subcommand is added.
+- **History depth**: `git rev-list --count origin/pilot` is 98. No checkout of this repository can be over 100
+  behind today, so the live check of spec 2 runs in a fixture repository (§9), and the shared checkout (97 behind)
+  correctly stays silent.
+- **Queue overlap, itm_97c9e8fdf1d2** (hand-off into a mod): it rewrites `hooks/session-handoff.js`, `deck/run*.mjs`
+  and likely drops `start:any:session-handoff` from `hooks/hooks.json`. Spec 2 lands in the new `scripts/pilot-tip.mjs`
+  and one new `hooks.json` entry, placed second (after `context-usage-alert`), not next to the entry that ticket
+  removes. Shared file: `hooks/hooks.json` only; no file it rewrites. Not merged.
 
 ### Seams
 
 | Seam | Interface | Folded behind it | Category |
 |---|---|---|---|
-| `scripts/pilot-tip.mjs` (new) | `pilotTip({ cwd })`, `staleNotice(tip)`, `BEHIND_BAR`, CLI `[--session-start]` | resolving the run's pilot ref (via `runRemote`, `runRef`), its sha, `rev-list --count HEAD..ref`, every failure as null | local-substitutable (real git in a temp repo) |
+| `scripts/pilot-tip.mjs` (new) | `pilotTip({ cwd, fetch })`, `staleNotice(tip)`, `BEHIND_BAR`, CLI `[--fetch \| --session-start]` | resolving the run's pilot ref (via `runRemote`, `runRef`, `shortRef`), its sha, `rev-list --count HEAD..ref`, every failure as null | local-substitutable (real git in a temp repo) |
 | `scripts/remotes.mjs` | `runRemote`, `runRef`, `shortRef` (unchanged) | `pilot.remote` parsing | in-process, kept as is |
-| `deck/audit.mjs` `renderReport` | renders `report.base` when present | the "measured in" line | in-process |
+| `deck/audit.mjs` | `renderReport(report)` renders `report.base` when present | the "measured in" line | in-process |
 
 Deletion test: deleting `pilot-tip.mjs` puts ref resolution and the behind count into a prompt and a hook twice;
 it earns its keep. `remotes.mjs` survives as is. No fold slice: nothing shallow exists today on this path.
@@ -75,33 +80,45 @@ it earns its keep. `remotes.mjs` survives as is. No fold slice: nothing shallow 
 ## 5. Locked decisions
 
 - L1 One seam, `scripts/pilot-tip.mjs`, serves the auditor's CLI and the hook. Rejected: a shell one-liner in the
-  prompt plus a CJS copy in the hook (two readers of `pilot.remote`, against `remotes.mjs:14`'s "only reader").
-- L2 A standalone SessionStart entry `start:any:stale-checkout` running `node "${CLAUDE_PLUGIN_ROOT}/scripts/pilot-tip.mjs" --session-start`.
-  Rejected: a clause in `session-handoff.js` (silent without a deck; the file is shared with open runs).
-- L3 No fetch at session start. Tradeoff: an old remote-tracking ref undercounts. Rejected: fetching on every
-  start (network, the 5 s timeout, offline sessions).
+  prompt plus a CJS copy in the hook (two readers of `pilot.remote`, against `remotes.mjs:15`).
+- L2 A standalone SessionStart entry `start:any:stale-checkout`, second in the list, running
+  `node "${CLAUDE_PLUGIN_ROOT}/scripts/pilot-tip.mjs" --session-start`, timeout 5. Rejected: a clause in
+  `session-handoff.js` (silent without a deck; itm_97c9e8fdf1d2 rewrites it).
+- L3 No fetch at session start. Tradeoff: an old remote-tracking ref undercounts. Rejected: fetching on every start
+  (network, the 5 s timeout, offline sessions).
 - L4 `BEHIND_BAR = 100`, strictly greater, a constant. Rejected: a config key (no ask for one).
-- L5 Every SessionStart source (startup, resume, clear, compact) gets the check; it is cheap and the checkout does not
-  move between them. Rejected: startup only (a `/clear` in a stale checkout is the same hazard).
-- L6 The CLI never creates a branch or pushes; it fetches only under `--fetch` (spec 7), which only the auditor
-  passes. The auditor's Never gains one allowed `.git` write, the fetched `pilot` tracking ref. Rejected: `pilot base`
-  (it can create and push `pilot`).
+- L5 Every SessionStart source (startup, resume, clear, compact) gets the check. Rejected: startup only (a `/clear`
+  in a stale checkout is the same hazard).
+- L6 The CLI never creates a branch or pushes; it fetches only under `--fetch`, which only the auditor passes.
+  Rejected: `pilot base` (it can create and push `pilot`).
+- L7 (A1, answered "In") the report's `base` and the item's `at <base>`, in S1.
+- L8 (depth "forks", itm_083d5a8044c2; practitioner: pilot-fork's run remote) the pilot tip is the run's pilot ref
+  through the existing `runRemote` seam: `pilot.remote=<name>` reads `<name>/pilot`, `none` reads local `pilot`, unset
+  reads `origin/pilot`. A design consequence of `remotes.mjs:15`, not a deliverable of its own; S1 test 2 pins it.
+  Rejected: hard-coding `origin/pilot` (a second reader of the remote, wrong on a fork).
+- L9 (QA environment, itm_717295b1c9c4; see A3) the local gate plus one real session start in a stale checkout and one real
+  `pilot audit` scratch cut read for its base. No deck, no migrations.
 
 ## 6. Assumed decisions
 
-- A1 Spec 3: the report records `base` and the deck item shows it. Default: in, in S1 (+3 lines). Tradeoff: a field
-  and a render line beyond the ticket's two lines. Rejected: leave the base unrecorded, so a stale audit is again
-  invisible in its own report. Posted on the ticket as itm_6e5127455ca5; answer recorded here.
-- A2 Spec 7 (from `main`, 2026-10-21): the audit cut fetches the pilot ref first, falling back to the tracking ref
-  offline. Default: in, in S1. Tradeoff: one network call per audit and one more `.git` write. Rejected: cut from
-  the tracking ref as is, which can itself be stale. Fetch only when the tracking ref already exists, so the audit
-  skill's `git branch -a` before/after snapshot (skills/audit/SKILL.md:17) stays identical.
+- A2 Spec 4 (from `main`, 2026-10-21): the audit cut fetches the pilot ref first, falling back to the tracking ref
+  offline; spec 2's hook stays no-fetch (L3). Default: in, in S1. Tradeoff: one network call per audit and one more
+  `.git` write (the tracking ref), which the auditor's Never gains as allowed. Rejected: no fetch, cutting from the
+  tracking ref as is: an audit of a stale tracking ref is the bug this ticket fixes.
+  Fetch only when the tracking ref already exists, so `skills/audit/SKILL.md:19`'s `git branch -a` snapshot holds.
+  Deck down: sent to `main` to post.
+- A3 (alters the QA environment picked on itm_717295b1c9c4) The live session start runs in a fixture repo 101 behind
+  with the plugin loaded, since no checkout of this repo can be more than 100 behind today (98 commits on pilot).
+  The warning will therefore never fire in this repository until pilot grows past 100 commits ahead of a checkout.
+  Default: the fixture (§9 item 3), the rest of L9 unchanged. Tradeoff: the live line is seen on a synthetic history,
+  not this repo's. Rejected: lowering the bar to fire here (moves agreed spec 2). Deck down: sent to `main` to post.
 
 ## 7. Out of scope
 
 - Fetching, switching or moving the shared checkout; any auto-fix of a stale checkout.
 - The installed plugin version versus branch code (friction row listener-worktree): a different surface.
 - Warning on being ahead of, or diverged from, pilot.
+- The hand-off hook and its move to a mod (itm_97c9e8fdf1d2).
 
 ## 8. Slices
 
@@ -109,31 +126,35 @@ Width 1; longest stem 2 (S1 → S2).
 
 | # | Title | Spec | Files owned | After | Reviewers | File |
 |---|---|---|---|---|---|---|
-| S1 | Walking skeleton: the audit cuts from the pilot tip and records it | 1, 3, 5, 6, 7 | `scripts/pilot-tip.mjs` (new), `scripts/test/pilot-tip.test.mjs` (new), `agents/pilot-auditor.md`, `scripts/test/audit-agent.test.mjs`, `deck/audit.mjs`, `deck/test/audit-body.test.mjs` | – | ts, security | [S1](slices/S1.md) |
-| S2 | A session start in a stale checkout warns once | 2, 4, 5 | `scripts/pilot-tip.mjs`, `hooks/hooks.json`, `hooks/test/stale-checkout.test.js` (new) | S1 (scripts/pilot-tip.mjs) | ts, security | [S2](slices/S2.md) |
+| S1 | Walking skeleton: the audit cuts from the pilot tip and records it | 1, 3, 4 | `scripts/pilot-tip.mjs` (new), `scripts/test/pilot-tip.test.mjs` (new), `agents/pilot-auditor.md`, `scripts/test/audit-agent.test.mjs`, `deck/audit.mjs`, `deck/test/audit-body.test.mjs` | – | ts, security | [S1](slices/S1.md) |
+| S2 | A session start in a stale checkout warns once | 2 | `scripts/pilot-tip.mjs`, `hooks/hooks.json`, `hooks/test/stale-checkout.test.js` (new) | S1 (scripts/pilot-tip.mjs) | ts, security | [S2](slices/S2.md) |
 
-Red team: (1) S1's prompt edit breaks `audit-agent.test.mjs:43`'s literal `HEAD` pin: the file is in S1's owned
-list and its first red step rewrites the pin. (2) `runRemote` throws on a bad `pilot.remote`: a hook crash at session
-start; spec 5 and S1 test 3 make `pilotTip` answer null. (3) S2 and S1 both write `pilot-tip.mjs`; running them side by
-side would half-build the seam, hence `after: S1`. (4) A hook test spawning `node` on Windows needs the plugin root
-path, not `${CLAUDE_PLUGIN_ROOT}`: S2 spawns the script by absolute path and pins the hooks.json command separately.
-(6) A fetch that creates a tracking ref adds a `git branch -a` line and fails the audit skill's
-before/after comparison: `--fetch` fetches only an existing tracking ref (A2). (5) Local mode (`none`) with HEAD on `pilot` itself: behind 0, silent; covered by spec 6's fixture.
+Red team, walked against 6ea49cac: (1) S1's prompt edit breaks `audit-agent.test.mjs:43`'s literal `HEAD` pin: the
+file is S1's and its red step rewrites the pin. (2) `runRemote` throws on a bad `pilot.remote`: a hook crash at
+session start; spec 2's bad-remote case and S1 test 3 make `pilotTip` answer null. (3) S2 and S1 both write
+`pilot-tip.mjs`; side by side they half-build the seam, hence `after: S1`. (4) A hook test cannot expand
+`${CLAUDE_PLUGIN_ROOT}`: S2 spawns the script by absolute path and pins the hooks.json command separately. (5) A
+fetch that creates a tracking ref adds a `git branch -a` line and fails the audit's before/after check: `--fetch`
+fetches only an existing ref (A2). (6) red team: the old §9 live check ("this stale checkout, 2259 behind") cannot
+happen on today's 98-commit history; §9 now uses a fixture repo 101 behind (A3). (7) `hooks.json` conflict with
+itm_97c9e8fdf1d2: the entry goes second, away from `session-handoff`.
 
 ## 9. Acceptance evidence
 
-1. In this stale checkout (8c90d170), start a Claude Code session: one line, `This checkout is 2259 commits behind
-   origin/pilot …` (the count `git rev-list --count HEAD..origin/pilot` prints), in the transcript and the agent's context.
-2. In a worktree cut from `origin/pilot`, start a session: no line.
-3. `node scripts/pilot-tip.mjs --fetch` in this checkout prints `origin/pilot <sha>` matching `git rev-parse origin/pilot`.
-4. One real audit scratch cut with the new prompt's command: `git -C <scratch> rev-parse HEAD` equals origin/pilot's sha;
-   the posted audit item reads `measured in the scratch worktree … at origin/pilot <sha>`.
+1. `node scripts/pilot-tip.mjs --fetch` in the shared checkout prints `origin/pilot <sha>` equal to
+   `git rev-parse origin/pilot`.
+2. One real audit scratch cut with the new prompt's command: `git -C <scratch> rev-parse HEAD` equals origin/pilot's
+   sha; the audit item reads `measured in the scratch worktree … at origin/pilot <sha>`.
+3. (A3) A fixture repository whose `origin/pilot` is 101 ahead of HEAD (a bare remote, 101 empty commits), plugin loaded:
+   start a Claude Code session there: one line, `This checkout is 101 commits behind origin/pilot …`, in the
+   transcript and the agent's context.
+4. A session start in the shared checkout (97 behind) and in a worktree at `origin/pilot`: no line.
 5. `npm test` once on Windows; `node scripts/gate.mjs` five times green on a fresh WSL clone at the feature tip.
 
 ## 10. Status
 
 | Slice | State | Branch | PR | Worktree | Blockers | Spec |
 |---|---|---|---|---|---|---|
-| S1 | planned | | | | – | 1, 3, 5, 6, 7 |
-| S2 | planned | | | | S1 | 2, 4, 5 |
-| audit-f1 | planned | feat/audit-f1 | | | S1, S2 | 1-7 |
+| S1 | planned | | | | – | 1, 3, 4 |
+| S2 | planned | | | | S1 | 2 |
+| audit-f1 | planned | feat/audit-f1 | | | S1, S2 | 1-4 |
