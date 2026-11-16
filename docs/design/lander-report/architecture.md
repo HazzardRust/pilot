@@ -59,6 +59,9 @@ The pins are tests, not modules. Nothing is shallow, so there is no fold slice.
 
 - **L1 Ship by a patch bump and change no deck code.** The fill and the schema are on `pilot` and tested; the defect is distribution. Rejected: re-editing `postFilled` or the schema.
 - **L2 Bump to the literal 0.9.7 (spec 1).** If `pilot` is past 0.9.6 at slice start, the implementer stops and asks `main`, because another bump has landed. *red team:* a concurrent bump would make 0.9.7 a downgrade or a 5-file conflict. Rejected: "one patch above whatever pilot says" (the spec names 0.9.7).
+- **L4 Grilling depth: forks** (the user, itm_661f5d3d7ffe). Was A2.
+- **L5 QA environment: the local gate only** (the user, itm_b0a0a27a3d2f): Windows `npm test` once, WSL
+  `node scripts/gate.mjs` 5/5 on a fresh clone at the sha. Spec 2's live check is the user's, after main. Was A3.
 - **L3 No ADR.** The bump follows e6defba3; nothing structural changes. Rejected: an ADR making every behaviour change bump the version.
 
 ## 6. Assumed decisions
@@ -70,10 +73,10 @@ The pins are tests, not modules. Nothing is shallow, so there is no fold slice.
   0.9.6 (the user declined it). This replaces the old A1, itm_9faf1ca57766, which was superseded when 0.9.6
   landed in PR #35.
   Verdict: stands
-- **A2** *assumed*, itm_661f5d3d7ffe. Depth: forks (default). Trades nothing for a 1-slice cut. Rejected: a
+- **A2** answered by the user, now L4, itm_661f5d3d7ffe. Depth: forks (default). Trades nothing for a 1-slice cut. Rejected: a
   deeper pass, since nothing is left to design.
   Verdict: stands
-- **A3** *assumed*, itm_b0a0a27a3d2f. QA environment: the local gate only (default). Spec 2's live check (the
+- **A3** answered by the user, now L5, itm_b0a0a27a3d2f. QA environment: the local gate only (default). Spec 2's live check (the
   update and the next landing) is the user's, after main. Rejected: a scratch deck walk at 0.9.7. Its health
   version is already covered by spec 1's pin.
   Verdict: stands
