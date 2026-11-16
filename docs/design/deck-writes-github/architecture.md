@@ -160,7 +160,8 @@ reappears in four files and a second host means editing each.
 - **A3** "One plain command" binds commands that push or write GitHub; `pilot integrate` takes `--dir`, so the
   existing `Bash(pilot integrate *)` matches; `cd <dir> && { …; }` stays for local reads and tests. Rejected: an
   allow rule `pilot --dir * integrate *`; banning `cd &&` everywhere. Thread itm_3b7bfdbafe55. **Answered**
-  2026-10-20: "writes only". Verdict: stands — re-cut: crew-tests-behaviour has landed; the reason holds.
+  2026-10-20: "writes only".
+  Verdict: stands — re-cut: crew-tests-behaviour has landed; the reason holds.
 - **A4** (re-cut, spec 1) The ban adds `gh pr edit --base` and the feature PR's `gh pr create`; a dropped N is
   `deck_status base: pilot`, retargeted by the deck; the architect opens no PR. Tradeoff: retarget waits on the next
   deck write. Rejected: the pilot keeps the retarget as the one exception. Thread itm_c647d4200652. **Answered** 2026-11-16: "Deck retargets", the default.
