@@ -41,9 +41,10 @@
     },
     {
       "slice": "S5 Sweep: pilot-agents first half",
-      "state": "implementing",
+      "state": "draft PR #43",
       "branch": "slice/crew-tests-behaviour-s5",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s5"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s5",
+      "pr": 43
     },
     {
       "slice": "S6 Sweep: pilot-agents second half",
@@ -78,10 +79,30 @@
       "after": [
         "S1"
       ]
+    },
+    {
+      "slice": "S13 Sweep: wording pins added since the census",
+      "state": "planned (added, sonnet)"
+    },
+    {
+      "slice": "S14 Sweep: re-classification and residue",
+      "state": "planned (added, opus)",
+      "after": [
+        "S2 Misses: line + check-slices",
+        "S5 Sweep: pilot-agents first half",
+        "S6 Sweep: pilot-agents second half",
+        "S7 Sweep: docs, README, install, rules, ADR",
+        "S8 Sweep: lane and ticket pins",
+        "S9 Sweep: audit and deck report pins",
+        "S10 Sweep: architect, slicing, verdicts",
+        "S11 Sweep: crew voice and gates",
+        "S12 Sweep: QA, research, skills",
+        "S13 Sweep: wording pins added since the census"
+      ]
     }
   ],
-  "next": "S1, S2, S5 implementing from feat 1dd03de6; next: integrate each on its draft PR, then start S7-S10 per pilot ready; S4 waits on PR #8",
-  "updatedAt": "2026-11-16T03:22:17.400Z",
+  "next": "integrating S5 (#43); S1, S2 implementing; then start S6 (owns the 612-858 gap), S7, S13",
+  "updatedAt": "2026-11-16T03:25:11.380Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -105,6 +126,12 @@
       "agent": "pilot-architect",
       "what": "measure-prompt shows pins only for pilot, architect, explorer, QA; other agents' limits need reading pinsOf",
       "evidence": "scripts/measure-prompt.mjs:117",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census line ranges stale by 100+ lines; S5's range ends at 612 and S6's starts at 858, leaving an unowned gap",
+      "evidence": "S5 report: block 'the inheritance finding is written down where it is acted on' at l.624 left unowned",
       "size": 1
     }
   ]
