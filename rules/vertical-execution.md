@@ -68,7 +68,7 @@ the slice touches auth, user input, or SQL.
 
 Under the pilot, `pilot-fundamentalist` gives the feature one **principles review**,
 subtraction first,
-run once, on Opus, when the last slice is integrated, never on a slice's own draft PR.
+run once, on Opus, when the last slice is integrated, never on a slice's own branch.
 The cost is real: a design problem one slice introduces is
 found only once later slices stand on it. It is paid because only the finished
 feature shows a helper a later slice made redundant or a seam two slices each built
@@ -92,8 +92,9 @@ step-by-step procedure on the whole feature, running where it is meant to run, a
 pressed Sign off, and only then does the feature land — every ticket has
 one. Main gets pilot by the one main PR, `pilot` → main, which only the user merges. The procedure walks them through whatever
 the feature is: a GUI first, then pictures, video, audio, plots, games, rendered
-documents, a CLI, a config applied to a cluster, a binary, a notebook. Slice PRs
-merge into the integration branch by the pilot's hand and are never marked ready.
+documents, a CLI, a config applied to a cluster, a binary, a notebook. A slice is a
+pushed branch, integrated as one `feat(<slug>): S<n> <title>` commit with
+`Reviewed-by:` lines, never a PR.
 An agent never passes either gate.
 
 Trivial work collapses to implement, review, commit, with grilling skipped; say so

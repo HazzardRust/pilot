@@ -36,7 +36,7 @@ test('pilot.md opens the feature PR against pilot and writes no Stands on line',
   assert.match(shape, /cut from[^.]*`pilot`/, 'every run is cut from it');
   assert.match(shape, /only the user merges/);
   assert.match(section('### 1. Problem and spec'), /run `pilot base`, then `pilot sync`/, 'taking a ticket bases, then syncs: sync refuses with no pilot branch (L20; FA F8)');
-  assert.match(pilot, /opens the feature PR as a \*\*draft\*\* against `pilot`/, 'one-integration-line S9 (A1): the feature PR targets pilot');
+  assert.match(pilot, /opens the feature PR as a \*\*draft\*\* against its base, `pilot` or `feat\/<N>`/, 'one-integration-line S9 (A1), pilot-develop-line A6: the feature PR targets its base');
   assert.doesNotMatch(pilot, /Stands on/);
   assert.doesNotMatch(pilot, /exit 3/, 'base and integrate no longer exit 3 for a stack');
   const architect = flat('agents/pilot-architect.md');

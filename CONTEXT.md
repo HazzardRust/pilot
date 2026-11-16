@@ -23,11 +23,11 @@ The numbered behaviours a feature must deliver, each with the evidence that show
 _Avoid_: Requirements, PRD, acceptance criteria, user stories
 
 **Slice**:
-One vertical cut of a design that a user can exercise end to end, implemented as one draft PR against the integration branch and merged there by the pilot; it is never marked ready.
+One vertical cut of a design that a user can exercise end to end, implemented on one pushed branch and integrated into the integration branch by the pilot as one `feat(<slug>): S<n> <title>` commit with `Reviewed-by:` lines; it opens no PR.
 _Avoid_: Ticket, ticket, step
 
 **Integration branch**:
-`feat/<slug>`, the branch every slice PR targets and the head of the one feature PR, which lands on `pilot` at the Gate 2 Sign off press.
+`feat/<slug>`, the branch every slice is integrated into and the head of the one feature PR, which lands on `pilot` at the Gate 2 Sign off press.
 _Avoid_: Feature branch, trunk, release branch
 
 **Pilot branch**:

@@ -167,8 +167,9 @@ test('the co-pilot moves a dot at each step', async () => {
   const steps = section('Steps 4 to 8', read(CO_PILOT));
   const words = [...steps.matchAll(/`deck_status`[^.]*\./g)].flatMap(([sentence]) => [...sentence.matchAll(/`([a-z][^`]*)`/g)].map(([, word]) => word)).filter((word) => word !== 'deck_status');
   assert.match(steps, /`integrated` only once `pilot integrate` prints `integrated …`/, "QA F4: the merge alone is not the move");
-  assert.match(steps, /`draft PR #n` with its `branch`/, "L12: a draft's branch is what pipelines");
-  for (const state of ['implementing', 'draft PR #n', 'integrated', 'fixing', 'in QA']) {
+  // pilot-develop-line S4: no slice PR, so the pipelining state is the pushed branch.
+  assert.match(steps, /`pushed <sha7>` with its `branch`/, "L12: a pushed slice's branch is what pipelines");
+  for (const state of ['implementing', 'pushed <sha7>', 'integrated', 'fixing', 'in QA']) {
     assert.ok(words.includes(state), `no \`${state}\` move in "Steps 4 to 8"`);
     assert.ok(phaseOf(state), `\`${state}\` is a state phaseOf does not know`);
   }

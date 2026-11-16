@@ -39,7 +39,7 @@ test('the added-slice rails carry no count', () => {
   assert.doesNotMatch(rails, /14 slices/, 'no slice ceiling');
   assert.doesNotMatch(rails, /traces to an agreed spec line/, 'an added slice brings its own spec line');
   assert.match(rails, /its own spec line, marked added/, 'rail: its own spec line, marked added');
-  assert.match(rails, /its own PR and reviewer/, 'rail: its own PR and reviewer');
+  assert.match(rails, /its own branch and reviewer/, 'rail: its own branch and reviewer (pilot-develop-line S4: no slice PR)');
   assert.match(rails, /within the per-slice diff limit/, 'rail: within the per-slice diff limit');
   assert.match(rails, /moves no locked decision/, 'rail: moves no locked decision');
   assert.match(rails, /would move a locked decision stays a question/, 'the locked-decision rail is the one that asks');
