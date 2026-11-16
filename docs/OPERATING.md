@@ -39,6 +39,10 @@ For looking under a run: `pilot budget` sets how many agents each lane holds, `p
 prints a run's tokens, tool calls and time per agent, `pilot ps` and `pilot gc` list and stop
 orphaned processes, and `pilot worktrees prune` removes merged-clean worktrees. `pilot help` lists the rest.
 
+## Who writes GitHub
+
+The deck does, by `pilot pr`, and the crew never does (ADR 0182). On a gate1 post, every `deck_status`, and a walkthrough or gate2 post with a comment, for a ticket with a gate1, the deck opens or rewrites the draft feature PR `feat/<slug>` (its body and its base) and posts QA's one comment on it. A failed write puts one line, `feature PR not updated: <line>`, on the ticket's thread and is retried on the next trigger. Agents push their own branches, and the implementer opens its own draft slice PR; nothing else they run writes to GitHub.
+
 ## Which tests run when
 
 The full suite (`npm test`, every test file) runs once per feature, at `pilot land`. Every step before it tests only the selection: the test files the diff touches, the tests that import a changed module (directly or through others), the tests that name a changed file, and the whole-tree tests. `npm run test:changed -- --since=<ref>` runs that selection and prints `selected <n> of <m> test files since <sha7>`; where the diff touches `package.json`, the lockfile, the gate, the selector, or a script no test reaches, it runs the full suite and prints `full suite: <reason>`. Only a full run takes a gate slot.
