@@ -21,7 +21,7 @@ const VENDORED_SKILLS = [
   'domain-modeling',
   'grilling',
   'resolving-merge-conflicts',
-  'tdd',
+  'test-design',
   'wizard',
 ];
 
@@ -138,7 +138,7 @@ test('a secret never travels through the deck, in either skill that handles one'
 test('every skill that names a sibling skill names it under the pilot namespace', () => {
   for (const name of VENDORED_SKILLS) {
     const body = readSkill(name).replace(/<!-- provenance[\s\S]*?-->/, '');
-    for (const match of body.matchAll(/`?\/?(?:pilot:)?(codebase-design|code-review|tdd|grilling|domain-modeling)`? skill/g)) {
+    for (const match of body.matchAll(/`?\/?(?:pilot:)?(codebase-design|code-review|test-design|grilling|domain-modeling)`? skill/g)) {
       assert.match(match[0], /pilot:/, `${name} refers to "${match[0]}" without the pilot: namespace`);
     }
   }

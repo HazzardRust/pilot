@@ -1,6 +1,6 @@
 ---
 name: tdd-workflow
-description: Use when writing a feature, fixing a bug, or refactoring. A test that fails before the change and passes after, the minimal implementation, then refactor. The RED gate is mandatory and is what makes the test evidence rather than decoration.
+description: Use when writing a feature or fixing a bug. A test that fails before the change and passes after, then the minimal implementation. The RED gate is mandatory and is what makes the test evidence rather than decoration.
 argument-hint: <path/to/*.plan.md>
 ---
 
@@ -8,11 +8,11 @@ argument-hint: <path/to/*.plan.md>
 upstream: ECC 2.2.0 - skills/tdd-workflow/SKILL.md
 copyright: Copyright (c) 2026 Affaan Mustafa
 licence: MIT - see THIRD-PARTY-NOTICES.md
-adapted: cut from 583 lines to the red-green-refactor mechanics an implementer preloads; the framework test patterns, mocking recipes, file-layout tree, CI snippets, the package-manager detector script and the coverage report are dropped, and the wider checks are the slice's phase gate instead (see vendor/toolbox.md); `When to activate` and `What this skill does not cover` dropped as restatements of the description and the opening (independence L8)
+adapted: cut from 583 lines to the red-green mechanics an implementer preloads; the framework test patterns, mocking recipes, file-layout tree, CI snippets, the package-manager detector script and the coverage report are dropped, and the wider checks are the slice's phase gate instead (see vendor/toolbox.md); `When to activate` and `What this skill does not cover` dropped as restatements of the description and the opening (independence L8); the in-loop clean-up step and its checkpoint dropped, since test-design keeps that work out of the loop, and the list of ways it goes wrong moved to test-design's anti-patterns (ADR NNNN)
 ledger: vendor/toolbox.md
 -->
 
-# Test-first: red, green, refactor
+# Test-first: red, green
 
 The inner loop of a slice. Everything wider than it — type check, lint, the full
 suite, build, and the live browser pass — is the slice's **phase gate**, run once
@@ -97,11 +97,6 @@ Re-run the same target and confirm the previously failing test passes.
 Run the rest of the file's tests too — the cheapest moment to find that the fix
 broke a sibling is now, not at the gate.
 
-## Step 5: refactor
-
-Only with the test green. Remove duplication, improve names, simplify the shape.
-Re-run after each step; a refactor that needs a test changed is not a refactor.
-
 ## Checkpoints
 
 Under git, commit at each stage on the current branch, and do not rewrite those
@@ -109,21 +104,9 @@ commits until the slice is done:
 
 - `test: add reproducer for <behaviour>` — after RED is validated
 - `fix:` / `feat: <behaviour>` — after GREEN is validated
-- `refactor: ...` — optional, after the refactor holds
 
 Two commits are enough; a separate evidence commit is not required when the test
 commit plainly corresponds to RED and the fix commit to GREEN. Count only commits
 reachable from the current `HEAD` on this branch — an old commit on another branch
 is not evidence of this ticket's RED. If they will be squashed, carry the RED/GREEN
 summary into the pull request body so a reviewer can still see what was proven.
-
-## The four ways this goes wrong
-
-1. **Testing the implementation.** Assert what a user observes, not internal
-   state: the rendered text, the returned value, the status code.
-2. **Brittle selectors.** `button:has-text("Submit")` or a `data-testid`, never a
-   generated class name.
-3. **Tests that depend on each other.** Each test builds its own fixture; a test
-   that only passes second is a test that will fail alone.
-4. **Only the happy path.** Empty, null, boundary, and the error branch — the
-   error branch especially, because that is the one nobody runs by hand.
