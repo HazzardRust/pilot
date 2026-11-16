@@ -1,0 +1,107 @@
+{
+  "slug": "deck-writes-github",
+  "feature": "The deck writes to GitHub",
+  "ticket": "itm_5f1725c876a7",
+  "branch": "feat/deck-writes-github",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deck-writes-github-r2",
+  "artefact": "docs/design/deck-writes-github/architecture.md",
+  "slices": [
+    {
+      "slice": "deck-writes-github",
+      "state": "re-cut gate1 signed as itm_37c47ae69a4a at 9796f2d1; feature PR #4 draft → pilot; implementing",
+      "branch": "feat/deck-writes-github",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deck-writes-github-r2",
+      "pr": 4
+    },
+    {
+      "slice": "S1 `pilot pr` writes the feature PR from the record",
+      "state": "implementing",
+      "branch": "slice/deck-writes-github-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s1"
+    },
+    {
+      "slice": "S2 The deck runs `pilot pr` on gate1 and every status",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3 QA's comment rides on its posts",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S2"
+      ]
+    },
+    {
+      "slice": "S4 `pilot integrate --dir`",
+      "state": "implementing",
+      "branch": "slice/deck-writes-github-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s4"
+    },
+    {
+      "slice": "S5 `pilot doctor` names a missing allow rule",
+      "state": "draft PR #69",
+      "branch": "slice/deck-writes-github-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s5",
+      "pr": 69
+    },
+    {
+      "slice": "S6 The crew names no GitHub write and one plain command",
+      "state": "planned",
+      "after": [
+        "S3",
+        "S4"
+      ]
+    },
+    {
+      "slice": "S7 ADR and OPERATING say the deck writes GitHub",
+      "state": "implementing",
+      "branch": "slice/deck-writes-github-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s7"
+    },
+    {
+      "slice": "S8 Every `gh` call goes through `deck/host.mjs`",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S4"
+      ]
+    }
+  ],
+  "next": "pilot integrate of S5 (#69) running; S1, S4, S7 implementing.",
+  "updatedAt": "2026-11-16T09:21:42.169Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "callTool's third argument is named `land` but is a deps bag (server-tools.mjs:205); cost a trace",
+      "evidence": "deck-writes-github architect report",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "pilot-co-pilot.md contradicts itself on `pilot land` (:47 vs :93); three places say who marks the feature PR ready (pilot.md:189, :496; pilot-qa.md:219)",
+      "evidence": "deck-writes-github architect report",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "no in-repo doc says why `cd && pilot` prompts; took a docs fetch, and docs-lookup returned unsearchable page dumps",
+      "evidence": "deck-writes-github architect report",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a fresh slice worktree has no node_modules; npm ci before pilot doctor runs, ~1 min",
+      "evidence": "S5 report, PR #69",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm run test:changed is the same as npm test (both run gate.mjs): the brief's red/green selection does not exist",
+      "evidence": "S5 report, PR #69",
+      "size": 3
+    }
+  ]
+}
