@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-import { KIND_GATE1, KIND_GATE2, KIND_TICKET, SIGN_OFF } from '../items.mjs';
+import { KIND_GATE1, KIND_GATE2, KIND_TICKET, KIND_WALKTHROUGH, SIGN_OFF } from '../items.mjs';
 import { DeckRefusal, addReply, listItems, postItem, resolveItem } from '../store.mjs';
 import { gate2EvidenceGaps } from '../gate2-evidence.mjs';
 import { shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
@@ -77,6 +77,28 @@ test('a surface gate2 without its walkthrough or a reason is refused', (t) => {
   assert.deepEqual(gate2EvidenceGaps(ticket, { body: `surface planned, no walkthrough:  \n\n${TABLE}` }), [WALKTHROUGH_GAP], 'a bare reason line is no reason');
   assert.deepEqual(gate2EvidenceGaps(ticket, { body: 'QA walked it.', walkthrough: 'itm_0a1b2c3d4e5f' }), [], 'a named walkthrough needs no table');
   assert.equal(gate2(ticket, `${REASON}\n\n${TABLE}`).ticket, ticket.id);
+});
+
+test('a hostile wide table is answered fast', (t) => {
+  tempDeck(t);
+  const ticket = signedPlan(false);
+  const body = [`|spec|result|evidence${'|'.repeat(30000)}`, '|-|', ...Array(7500).fill('|a|')].join('\n');
+  const started = Date.now();
+  assert.throws(() => gate2(ticket, body), refused('checks table row 1 has an empty cell'));
+  assert.ok(Date.now() - started < 1000, `answered in ${Date.now() - started} ms`);
+});
+
+test('a gate2 names a real walkthrough on its own ticket', (t) => {
+  tempDeck(t);
+  const ticket = signedPlan(true);
+  const named = (walkthrough) => postItem({ kind: KIND_GATE2, title: 'Gate 2', body: 'QA walked it.', repo: REPO, pr: '#250', sha: '0305827', ticket: ticket.id, walkthrough });
+  const unwalked = (error) => error instanceof DeckRefusal && /names a walkthrough on its ticket/.test(error.message) && !/itm_/.test(error.message);
+  assert.throws(() => named('itm_0a1b2c3d4e5f'), unwalked, 'a made-up id');
+  const elsewhere = postItem({ kind: KIND_WALKTHROUGH, title: 'Try it', body: 'Step one.', repo: REPO });
+  assert.throws(() => named(elsewhere.id), unwalked, 'a walkthrough on no ticket');
+  assert.equal(gate2s().length, 0, 'nothing stored');
+  const walk = postItem({ kind: KIND_WALKTHROUGH, title: 'Try it', body: 'Step one.', repo: REPO, ticket: ticket.id });
+  assert.equal(named(walk.id).walkthrough, walk.id);
 });
 
 test('a legacy full run is unchanged', () => {

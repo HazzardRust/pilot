@@ -219,7 +219,7 @@ const GATE1_FIELDS = [
   // The plan's design branch and its slice count (L7); `slices` stays the table.
   { name: 'sliceCount', required: true, count: true },
   { name: 'branch', required: true },
-  // Whether the plan changes a screen (short-path A2): named on a gate1 of `SHORT_PATH_MAX` slices or fewer.
+  // Whether the plan changes a screen (short-path A2): named on every gate1 (walkthrough-surface L1).
   { name: 'surface', flag: true },
   // The ticket it plans: an open red ticket.
   { ...TICKET_ID_FIELD, required: true },

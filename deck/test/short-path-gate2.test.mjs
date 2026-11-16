@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-import { KIND_GATE1, KIND_GATE2, KIND_TICKET, SIGN_OFF } from '../items.mjs';
+import { KIND_GATE1, KIND_GATE2, KIND_TICKET, KIND_WALKTHROUGH, SIGN_OFF } from '../items.mjs';
 import { DeckRefusal, addReply, beginLanding, coPilotFor, listItems, postItem, resolveItem, setCoPilot } from '../store.mjs';
 import { renderThreadPage } from '../ui/render.mjs';
 import { shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
@@ -56,7 +56,7 @@ test('a small gate1 names its surface', (t) => {
 test("a gate1's thread shows the surface flag only when it is set", (t) => {
   tempDeck(t);
   const withSurface = gate1(redTicket(), 2, { surface: true });
-  assert.match(renderThreadPage(withSurface, listItems(), []), /<dt>Surface<\/dt><dd>yes: a walkthrough is owed<\/dd>/);
+  assert.match(renderThreadPage(withSurface, listItems(), []), /<dt>Surface<\/dt><dd>yes: a walkthrough, or a reason line in the gate2<\/dd>/);
 
   tempDeck(t);
   const without = gate1(redTicket(), 2, { surface: false });
@@ -92,7 +92,8 @@ test('a surface needs its walkthrough', (t) => {
   assert.throws(() => gate2(ticket, body), refused('a short-path gate2 with a surface names its walkthrough'));
   assert.equal(gate2s().length, 0, 'nothing stored');
 
-  assert.equal(gate2(ticket, body, { walkthrough: 'itm_0a1b2c3d4e5f' }).walkthrough, 'itm_0a1b2c3d4e5f');
+  const walk = postItem({ kind: KIND_WALKTHROUGH, title: 'Try it', body: 'Step one.', repo: REPO, ticket: ticket.id });
+  assert.equal(gate2(ticket, body, { walkthrough: walk.id }).walkthrough, walk.id);
 });
 
 test('a short gate2 lands as any other', (t) => {

@@ -7,9 +7,9 @@
 import path from 'node:path';
 
 import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
-import { KIND_REPORT, KIND_WALKTHROUGH, stepParts } from './items.mjs';
+import { KIND_REPORT, KIND_WALKTHROUGH } from './items.mjs';
 import { DeckRefusal } from './store-core.mjs';
-import { commandWord } from './walkthrough-shape.mjs';
+import { stepCommandWord } from './walkthrough-shape.mjs';
 
 /** PowerShell on Windows; elsewhere the login shell's name, `sh` when `SHELL` is unset. */
 export function defaultShell(platform = hostPlatform(), env = process.env) {
@@ -17,11 +17,7 @@ export function defaultShell(platform = hostPlatform(), env = process.env) {
   return env.SHELL ? path.posix.basename(env.SHELL) : 'sh';
 }
 
-/** Whether a step is a command, by the rule QA's refusal and the prefix line use. */
-function isCommandStep(step) {
-  const { instruction, result } = stepParts(step);
-  return (commandWord(instruction, true) ?? commandWord(result ?? '', false)) !== null;
-}
+const isCommandStep = (step) => stepCommandWord(step) !== null;
 
 const POWERSHELL_FAMILY = /^(powershell|pwsh|cmd)$/i;
 const UNIX_FAMILY = /^(git bash|wsl|bash|zsh|sh)$/i;

@@ -4,7 +4,7 @@
  * with no walkthrough carries QA's checks table (walkthrough-surface spec 3, 4). Pure: the ticket and the gate2's fields in, the gaps out, so `postItem` refuses before it writes.
  */
 
-import { isShortPath } from './items.mjs';
+import { KIND_WALKTHROUGH, isShortPath } from './items.mjs';
 
 /** Lines of `body` that start with `label`, leading space aside. */
 const linesStarting = (body, label) => body.split('\n').filter((line) => line.trimStart().startsWith(label)).length;
@@ -20,7 +20,8 @@ function cellsOf(line) {
 
 /**
  * The checks table's data rows in `body` (walkthrough-surface spec 4, L11): the first head naming spec, result and
- * evidence (case-blind), its rule line, then every table line after it; `null` when there is no such table.
+ * evidence (case-blind), its rule line, then every table line after it, and the head's width; `null` when there is no
+ * such table. Rows are not padded to the width: a wide head over many short rows would cost rows × width.
  */
 function checksRows(lines) {
   const at = lines.findIndex((line, i) => {
@@ -35,9 +36,9 @@ function checksRows(lines) {
   for (const line of lines.slice(at + 2)) {
     const cells = cellsOf(line);
     if (!cells) break;
-    rows.push(Array.from({ length: width }, (_, i) => cells[i] ?? ''));
+    rows.push(cells);
   }
-  return rows.length > 0 ? rows : null;
+  return rows.length > 0 ? { rows, width } : null;
 }
 
 /**
@@ -49,9 +50,9 @@ function fullRunGaps(surface, body, walkthrough) {
   const lines = body.split('\n');
   const reasoned = lines.some((line) => line.trimStart().startsWith(REASON) && line.trimStart().slice(REASON.length).trim() !== '');
   if (surface && !reasoned) return [`a gate2 on a plan with a surface names its walkthrough or says why not: ${REASON} <reason>`];
-  const rows = checksRows(lines);
-  if (!rows) return ['a gate2 with no walkthrough carries the checks table: | spec line | result | evidence |'];
-  const empty = rows.findIndex((cells) => cells.includes(''));
+  const table = checksRows(lines);
+  if (!table) return ['a gate2 with no walkthrough carries the checks table: | spec line | result | evidence |'];
+  const empty = table.rows.findIndex((cells) => cells.length < table.width || cells.includes(''));
   return empty === -1 ? [] : [`checks table row ${empty + 1} has an empty cell`];
 }
 
@@ -67,6 +68,16 @@ export function gate2EvidenceGaps(ticket, { body, walkthrough }) {
   if (linesStarting(body, 'Gate:') === 0) return ["a short-path gate2 carries a Gate: line, the slice gate's pass and fail counts"];
   if (surface === true && walkthrough === undefined) return ['a short-path gate2 with a surface names its walkthrough'];
   return [];
+}
+
+/**
+ * The gap in the walkthrough a gate2 names among `items` (walkthrough-surface F1): it is a walkthrough on the gate2's
+ * own ticket, or a made-up id would skip the checks table. The refusal does not echo the id.
+ */
+export function namedWalkthroughGaps(items, { walkthrough, ticket }) {
+  if (walkthrough === undefined) return [];
+  const named = items.find((item) => item.id === walkthrough);
+  return named?.kind === KIND_WALKTHROUGH && named.ticket === ticket ? [] : ['a gate2 names a walkthrough on its ticket, and the walkthrough it names is not one'];
 }
 
 /**
