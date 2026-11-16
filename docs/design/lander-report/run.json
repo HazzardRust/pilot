@@ -1,0 +1,66 @@
+{
+  "slug": "lander-report",
+  "feature": "The lander's bodiless report is accepted",
+  "ticket": "itm_09a7f609e937",
+  "branch": "feat/lander-report",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-lander-report",
+  "artefact": "docs/design/lander-report/architecture.md",
+  "slices": [
+    {
+      "slice": "feature",
+      "state": "planned; draft PR #37",
+      "branch": "feat/lander-report",
+      "pr": 37
+    },
+    {
+      "slice": "S1 The plugin version moves to 0.9.7",
+      "state": "integrated",
+      "branch": "slice/lander-report-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-lander-report-s1",
+      "pr": 38
+    }
+  ],
+  "next": "lander-report (yellow, short path): S1 PR #38 at 014ec6f4 verified (6 lines, Verdict pass); pilot integrate slice/lander-report-s1 in pilot-feat-lander-report, then full gate (Windows npm test once, WSL gate.mjs x5 on fresh clone), pilot integrate --trial, own gate2 on PR #37 with Verdict + Gate lines, no walkthrough. Then yellow next: blocking-close itm_809d3e826efc.",
+  "updatedAt": "2026-11-16T00:57:35.805Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the brief's leads cited the installed copy's line numbers, not the repo's; the fix was already on pilot",
+      "evidence": "closing-report.mjs:108-128 vs repo :118-121",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "installed_plugins.json's gitCommitSha does not match the cache contents (7 deck files differ)",
+      "evidence": "sha 769cd877 vs cache/pilot/0.9.5",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "a bash heredoc holding a backtick-heavy markdown table failed to parse",
+      "evidence": "unexpected EOF while looking for matching '",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck MCP disconnected for the architect, so it could post no question; the pilot posts for it",
+      "evidence": "startup notice: deck CONNECTION_CLOSED"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the bump's file list is split across bump.mjs, two deck test pins and toolbox.test.mjs; three greps to prove it complete",
+      "evidence": "scripts/bump.mjs:18-22, toolbox.test.mjs:209"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "old design sat on an older base; rebased and every cited file:line re-checked",
+      "evidence": "closing-report.mjs 118 -> 130"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "sha256 hashes in scripts/shipped-rules.json match `git grep 0.9.7`, so the slice file's 6-match check needs that file excluded",
+      "evidence": "S1 hand-back: 5 extra hits",
+      "size": 1
+    }
+  ]
+}
