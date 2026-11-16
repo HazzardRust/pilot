@@ -4,11 +4,16 @@
   "ticket": "itm_9e228d2d345e",
   "branch": "feat/walkthrough-surface",
   "worktree": "C:/Users/Hazzard/Projects/pilot-feat-walkthrough-surface-r2",
+  "qa": {
+    "branch": "qa/walkthrough-surface",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-walkthrough-surface",
+    "url": "http://127.0.0.1:50179"
+  },
   "artefact": "docs/design/walkthrough-surface/architecture.md",
   "slices": [
     {
       "slice": "walkthrough-surface",
-      "state": "implementing: S1-S6, S8 integrated (feat 1a2aa34d); S7 PR #66 waits on base merge; then fundamentalist, QA",
+      "state": "in QA: S1-S8 integrated; merge of pilot daa08f3c committed and pushed (feat 3cbbdb0d, npm test 4273 pass 0 fail); fix PR #68 (779ec7b8) verified, NOT integrated; co-pilot live: integrating #68, then QA as writer",
       "after": [
         "S1",
         "S2",
@@ -76,7 +81,7 @@
     },
     {
       "slice": "S7 A command in another shell's syntax is refused",
-      "state": "integrated",
+      "state": "integrated at ea5d403b (4561 pass, 0 fail)",
       "after": [
         "S6"
       ],
@@ -94,10 +99,22 @@
       "branch": "slice/walkthrough-surface-s8",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s8",
       "pr": 62
+    },
+    {
+      "slice": "fix round",
+      "state": "draft PR #68 (integrating)",
+      "branch": "fix/walkthrough-surface-principles",
+      "pr": 68
     }
   ],
-  "next": "pilot integrate S7 (#66) running on feat 730953ff -> on pass: fundamentalist + QA on PR #3; on fail: send S7's real state, route the line. #8 landed c863b15, Findings sent. Lander a32b4a464dc78a334 on #5 itm_2fe42921c8db; on landed close itm_47b9b7122ca6 as Moot, Findings; then lander #37 itm_5c52090cb347. audit-f1 gate1 itm_a26686beeddb awaits press (short path, PR #67).",
-  "updatedAt": "2026-11-16T07:19:59.183Z",
+  "findings": [
+    "kept: QA B1 the incident's own step (\"Check: grep -o ...\" with no backticks) is accepted with no shell stored; spec 8-10 bypassed by one missing pair of backticks — QA fixes as writer: optional `Word: ` label, scan outside spans for a step already a command",
+    "kept: QA B2 a `grep` step shows no shell/dir prefix — grep, cat, ls, rg join COMMANDS (QA)",
+    "kept: QA T1 the gate1 page does not show Surface when false; the user signs blind — render the false case (QA)",
+    "dropped: QA T2 reason line renders as plain text, T3 dir shown three times — taste, put to the user in the walkthrough"
+  ],
+  "next": "co-pilot: pilot integrate fix/walkthrough-surface-principles (#68) running on feat 3cbbdb0d; then pilot-qa as writer on the new tip (B1, B2, T1, S3 browser look, walkthrough); Windows npm test + WSL gate x5 at that tip.",
+  "updatedAt": "2026-11-16T08:15:12.203Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -284,6 +301,54 @@
       "what": "closing report posted with no body was refused again; lander handed back unfinished and needed a resume to post it with a body",
       "evidence": "itm_af70d00eed9d; deck_post kind report: 'body must be a non-empty string'",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "all six evidence checks unusable: $FILES includes a file the diff deletes (deck/short-path-shape.mjs) so eslint, jscpd, madge and stryker abort; no node_modules in the review worktree fails stryker's dry run; knip is whole-repo; coverage command blocked by the classifier",
+      "evidence": "runner report on bd537ad6; itm_ff7f980ddaae",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "handed back before its evidence runner returned; the runner's table reached main instead; review worktree directory left on disk (remove refused while the runner held files)",
+      "evidence": "C:/Users/Hazzard/Projects/pilot-review-walkthrough-surface",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "Chrome DevTools MCP tools absent in QA's session; hand-written CDP driver for a headless Chrome",
+      "evidence": "ToolSearch found no mcp__plugin_pilot_chrome-devtools__*; QA report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "no fixture helper on a scratch deck: a gate1 needs a live ticket and a resolve, a legacy plan needs a store edit",
+      "evidence": "QA report, about 8 extra calls",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "harness forced QA's hand-back while it waited on main; a resume is needed for the writer phase",
+      "evidence": "handback-send-enforce, 07:33Z",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 10's evidence was tested with backticked input only, so the incident's verbatim step slipped through 8 slices",
+      "evidence": "step-shell-syntax.test.mjs:19; QA B1",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix round cut three times by classifier outages; brief's fixture list came from a grep and named 2 of 7 files; the deck's 800-line file limit was not in the brief",
+      "evidence": "PR #68 report; facades.test.mjs:68",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test files on pilot carry literal backspace bytes (0x08) where \\b was meant; Edit cannot match them and the regex silently matches nothing; deck/test/run.test.mjs still unfixed",
+      "evidence": "merge 3cbbdb0d report; scripts/test/pilot-rules.test.mjs old lines 243, 245",
+      "size": 1
     }
   ]
 }
