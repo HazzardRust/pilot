@@ -160,6 +160,12 @@ test('an @mention in what the deck writes notifies nobody', (t) => {
   fake.gh = ((inner) => (args) => (args[1] === 'view' ? JSON.stringify({ comments: [] }) : inner(args)))(fake.gh);
   syncFeaturePr({ gh: fake.gh, git: gitIn(cwd), record: record({ qaComment: 'thanks @reviewer' }) });
   assert.ok(fake.bodies.at(-1).includes(`thanks @${ZWJ}reviewer`));
+
+  // And the title, from the record's feature name.
+  const fresh = fakeGh();
+  syncFeaturePr({ gh: fresh.gh, git: gitIn(cwd), record: record({ feature: 'ask @octocat' }) });
+  const [create] = fresh.writes();
+  assert.equal(create[create.indexOf('--title') + 1], `feat(${SLUG}): ask @${ZWJ}octocat`);
 });
 
 test('no branch on origin is quiet', async (t) => {

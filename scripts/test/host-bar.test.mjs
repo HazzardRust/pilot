@@ -130,13 +130,13 @@ function refusesOnEveryPrVerb(t, flags) {
 }
 
 test('a pr verb never names another repository', (t) => {
-  refusesOnEveryPrVerb(t, [['-R', 'o/r'], ['-Ro/r'], ['--repo', 'o/r'], ['--repo=o/r']]);
+  refusesOnEveryPrVerb(t, [['-R', 'o/r'], ['-Ro/r'], ['--repo', 'o/r'], ['--repo=o/r'], ['-dRo/r']]);
 });
 
 test('a pr verb never opens a browser', (t) => {
-  refusesOnEveryPrVerb(t, [['--web'], ['--web=true'], ['-w']]);
+  refusesOnEveryPrVerb(t, [['--web'], ['--web=true'], ['-w'], ['-w=true'], ['-wR']]);
 });
 
 test('a pr verb never opens an editor', (t) => {
-  refusesOnEveryPrVerb(t, [['--editor'], ['--editor=true'], ['-e']]);
+  refusesOnEveryPrVerb(t, [['--editor'], ['--editor=true'], ['-e'], ['-e=1'], ['-we'], ['-ew']]);
 });

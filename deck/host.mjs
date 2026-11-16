@@ -12,9 +12,11 @@ import { execFileSync } from 'node:child_process';
 const PR_VERBS = new Set(['create', 'edit', 'comment', 'view', 'list']);
 /**
  * Flags no `pr <verb>` may carry, in any spelling: another repository (`-R`, `--repo`), a browser
- * (`-w`, `--web`) or an editor (`-e`, `--editor`).
+ * (`-w`, `--web`) or an editor (`-e`, `--editor`). A short-flag cluster holding R, w or e (`-wR`,
+ * `-w=true`) is refused whole. Values are tested too, so a value spelled like one of these is
+ * refused: no caller sends one, and the refusal fails closed.
  */
-const PR_REFUSED = /^(?:-R|--repo(?:=|$)|-w$|--web(?:=|$)|-e$|--editor(?:=|$))/;
+const PR_REFUSED = /^-[A-Za-z]*[Rwe]|^--(?:repo|web|editor)(?:=|$)/;
 /** One path segment, never `.` or `..`, so a path cannot climb out of `repos/<owner>/<repo>/`. */
 const SEGMENT = '(?!\\.{1,2}/)[A-Za-z0-9_.-]+';
 /** The one `gh api` write: a PATCH of an issue comment (`scripts/feature-pr.mjs`, QA's comment). */

@@ -187,7 +187,7 @@ export function syncFeaturePr({ gh, git, record }) {
   // `--head` matches a branch name from any fork: only this repository's own PR is the feature PR.
   open = open.filter((pr) => pr?.isCrossRepository === false);
 
-  const done = writePr(gh, open, { base, head, body, title: `feat(${slug}): ${feature}` });
+  const done = writePr(gh, open, { base, head, body, title: quiet(`feat(${slug}): ${feature}`) });
   const qa = typeof record.qaComment === 'string' && record.qaComment.trim() !== '' ? record.qaComment : null;
   if (qa === null) return done;
   const comment = syncQaComment(gh, done.number, qa, done.wrote === 'created');
