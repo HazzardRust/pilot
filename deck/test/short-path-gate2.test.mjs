@@ -53,14 +53,14 @@ test('a small gate1 names its surface', (t) => {
   assert.equal(gate1(redTicket(), 3, { surface: false }).sliceCount, 3, 'a 3-slice gate1 posts with its surface');
 });
 
-test("a gate1's thread shows the surface flag only when it is set", (t) => {
+test("a gate1's thread shows the surface flag, set or not", (t) => {
   tempDeck(t);
   const withSurface = gate1(redTicket(), 2, { surface: true });
   assert.match(renderThreadPage(withSurface, listItems(), []), /<dt>Surface<\/dt><dd>yes: a walkthrough, or a reason line in the gate2<\/dd>/);
 
   tempDeck(t);
   const without = gate1(redTicket(), 2, { surface: false });
-  assert.doesNotMatch(renderThreadPage(without, listItems(), []), /<dt>Surface<\/dt>/);
+  assert.match(renderThreadPage(without, listItems(), []), /<dt>Surface<\/dt><dd>no: its checks ride in the gate2<\/dd>/);
 });
 
 test('a short gate2 carries a Verdict per slice and a Gate line', (t) => {

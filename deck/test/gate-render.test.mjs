@@ -37,12 +37,12 @@ const labelsIn = (detail) => [...detail.matchAll(/<dt>([^<]*)<\/dt>/g)].map((mat
 const buttonsIn = (html) => [...html.matchAll(/name="choice" value="([^"]*)"(?![^>]*>Confirm<)/g)].map((match) => match[1]);
 const threadOf = (item) => renderThreadPage(item, listItems(), []);
 
-test("a gate1 card's detail lists artefact, sha, locked, slices, slice count, branch and ticket as dt/dd pairs", (t) => {
+test("a gate1 card's detail lists artefact, sha, locked, slices, slice count, branch, surface and ticket as dt/dd pairs", (t) => {
   tempDeck(t);
   const gate = post(KIND_GATE1, GATE1);
   const page = threadOf(gate);
   const detail = detailOf(page);
-  assert.deepEqual(labelsIn(detail), ['Artefact', 'SHA', 'Locked', 'Slices', 'Slice count', 'Branch', 'Ticket'], 'fields in SPECS order');
+  assert.deepEqual(labelsIn(detail), ['Artefact', 'SHA', 'Locked', 'Slices', 'Slice count', 'Branch', 'Surface', 'Ticket'], 'fields in SPECS order');
   assert.match(detail, /<dt>Slice count<\/dt><dd>3<\/dd>/);
   assert.match(detail, /<dd><code>feat\/x<\/code><\/dd>/);
   assert.match(detail, /<dd><code>docs\/design\/thread-kinds\/architecture\.md<\/code><\/dd>/);

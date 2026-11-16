@@ -257,7 +257,7 @@ const GATE_ROWS = {
   locked: ['Locked', (count) => escapeHtml(String(count))],
   slices: ['Slices', (table) => `<div class="md">${renderMarkdown(table)}</div>`],
   sliceCount: ['Slice count', (count) => escapeHtml(String(count))],
-  surface: ['Surface', () => 'yes: a walkthrough, or a reason line in the gate2'],
+  surface: ['Surface', (set) => (set ? 'yes: a walkthrough, or a reason line in the gate2' : 'no: its checks ride in the gate2')],
   branch: ['Branch', code],
   pr: ['PR', renderUrl],
   walkthrough: ['Walkthrough', threadLink],
@@ -284,7 +284,7 @@ function renderAsked(item, items) {
 /** A gate's evidence, in its kind's SPECS order, as the block a walkthrough's fields are drawn in. */
 function renderGateDetail(item, items) {
   const rows = extraFieldsFor(item.kind)
-    .filter((name) => Object.hasOwn(GATE_ROWS, name) && item[name] !== undefined && item[name] !== false)
+    .filter((name) => Object.hasOwn(GATE_ROWS, name) && item[name] !== undefined)
     .map((name) => renderRow(GATE_ROWS[name][0], GATE_ROWS[name][1](item[name], items)))
     .join('');
   return (rows ? `<dl class="detail">${rows}</dl>` : '') + renderAsked(item, items);
