@@ -8,17 +8,19 @@
   "slices": [
     {
       "slice": "S1 Skeleton: the pilot closes any blocking question as Moot or Assumed",
-      "state": "draft PR #39, integrating",
+      "state": "integrated at 049cfebd",
       "branch": "slice/blocking-close-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-blocking-close-s1",
       "pr": 39
     },
     {
       "slice": "S2 The gate2 and the closing report list the pilot closes",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/blocking-close-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocking-close-s2"
     },
     {
       "slice": "blocking-close",
@@ -34,14 +36,15 @@
     },
     {
       "slice": "S3 The pilot's rule and ADR 0177 widen Moot to every blocking question",
-      "state": "implementing",
+      "state": "draft PR #40",
       "branch": "slice/blocking-close-s3",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-blocking-close-s3"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocking-close-s3",
+      "pr": 40
     }
   ],
   "findings": [],
-  "next": "co-pilot: integrating S1 (#39 at d5a662b5); then S2 from the new tip; S3 implementing; S1 browser check carried to QA",
-  "updatedAt": "2026-11-16T01:38:31.815Z",
+  "next": "co-pilot: S2 implementing from 049cfebd; integrate S3 #40 now",
+  "updatedAt": "2026-11-16T01:45:23.320Z",
   "friction": [
     {
       "kind": "drain",
@@ -81,6 +84,24 @@
       "what": "context compacted mid-slice early on; worktree reread and npm ci rerun",
       "evidence": "S1 and S3 both reported a summary before their first commit",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief's prompt headroom was stale (4.25 written, 0.25 at the base) and sibling wording tests outside the slice's owned files pinned the old rule",
+      "evidence": "S3: measure-prompt pilot 11692 vs pin 11692.25 at d9fbf3cd; 6 suite failures in 5 files on the first run",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice file said move the pin by the delta; three sibling tests require pin = measured",
+      "evidence": "cd-shape-wording, landing-wording, report-record-wording tests",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the plan hard-numbered its ADR (0172) instead of the NNNN placeholder the landing allocates; it collided and was renumbered",
+      "evidence": "agents/pilot-architect.md:208, scripts/adr-allocate.mjs; 0172-0176 taken at 6ea49cac",
+      "size": 1
     }
   ]
 }
