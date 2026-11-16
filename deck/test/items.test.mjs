@@ -107,6 +107,7 @@ test('the deck knows its kinds, refuses posting any other, and still reads one a
     'url',
     'login',
     'screens',
+    'shell',
     'ticket',
     'longer',
     'blocking',

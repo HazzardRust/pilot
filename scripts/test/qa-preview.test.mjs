@@ -185,7 +185,7 @@ test('QA posts no gate2 over a lander line', () => {
 // Merge origin/pilot into feat/short-path (2026-10-20) set it to the measured 5006: both sides' changes to QA's prompt and tools, measured together.
 // audit-f2-f3 S1 (2026-10-21) raised it from 5006 to the measured 5022.25 (spec 4): the read-only pass's "Probe a PR command under `eval "$(pilot gh-stub)"`, never real GitHub.", 17.75.
 // audit-f2-f3 S2 (2026-10-21) raised it from 5022.25 to the measured 5083.5 (spec 2; L5): the read-only pass reruns a red alone once with `node --test <file>` and calls it `flake` or `regression` in the PR comment, 61.25.
-// walkthrough-surface S5 (2026-11-16) raised it from 5083.5 to 5106.25 (spec 8): deck_post's `shell: { type: 'string', description }`, the measured 22.75.
+// walkthrough-surface S5 (2026-11-16) raised it from 5083.5 to the measured 5106.25 (spec 8): deck_post's `shell: { type: 'string', description }`, 22.75.
 test('QA\'s own share of its prompt stays at or under 5106.25 tokens, with the checklists loaded on demand', async (t) => {
   const { measure } = await import('../measure-prompt.mjs');
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'qa-share-'));
