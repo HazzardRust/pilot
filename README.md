@@ -1,6 +1,6 @@
 `this project is built for Claude Code users and is intentionally built to fit with a max plan (yummy token subsidization) - not to say that it is token inefficient, but that it was built around large workloads and isn't the best fit at smaller scales. Not a swarm level orchestrator, just long horizon coding tasks.`
 
-# BETA 
+# ALPHA 
 ### UI unpolished, CPU intensive at times, still much token usage optimization potential, but autonomous workflows are really good, probably another week of work till polished when my exams are done
 
 # Pilot Deck Claude Code
