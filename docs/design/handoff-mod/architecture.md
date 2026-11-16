@@ -138,6 +138,7 @@ in the mod, untested), so it moves behind a CLI rather than going.
 - **A5 The spec and the QA environment** stand at main's defaults (Agree; this machine, 2.1.325, interactive
   `pilot run` against a scratch deck, 5 live hand-offs, plus the local gate) until the user answers.
   Verdict: stands
+  QA environment answered by the user on itm_8b0364a9084f, 2026-11-16: "This machine, scratch deck, 5 live hand-offs". Locked as posted.
 
 ## 7. Out of scope
 
