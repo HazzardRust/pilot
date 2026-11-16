@@ -164,10 +164,13 @@ reappears in four files and a second host means editing each.
 - **A4** (re-cut, spec 1) The ban adds `gh pr edit --base` and the feature PR's `gh pr create`; a dropped N is
   `deck_status base: pilot`, retargeted by the deck; the architect opens no PR. Tradeoff: retarget waits on the next
   deck write. Rejected: the pilot keeps the retarget as the one exception. Thread itm_c647d4200652. **Answered** 2026-11-16: "Deck retargets", the default.
+  Verdict: stands — the user's answer; the queued other-host ticket (itm_b18bcafffbce) wants no crew prompt naming `gh` either.
 - **A5** (re-cut, spec 3) `comment` on the walkthrough when there is one and on every gate2. Tradeoff: a run with no
   walkthrough comments only at gate2. Rejected: gate2 only. Thread itm_62acc0074933. **Answered** 2026-11-16: "Gate2 always, walkthrough too", the default.
+  Verdict: stands — the user's answer; walkthrough-surface landed today (b38de846), so a run with no walkthrough is real, and the pilot's short-path gate2 is covered.
 - **A6** (re-cut, spec 4) Spec 4 is the `--default` lint alone; the `pilot land` half is dropped (ADR 0161). Tradeoff:
   no lint on descriptive `pilot land`. Rejected: dropping spec 4. Thread itm_958e79727604. **Answered** 2026-11-16: "Lint only", the default.
+  Verdict: stands — the user's answer; the lander owns the landing (ADR 0161) and no queued ticket moves `pilot land` back to the crew. S2 exports `watch` from `deck/landing.mjs`, which the queued deck-restart ticket (itm_0a2eca54e2f7) also edits: it goes after this run.
 - red team: (2026-10-20, stands) S2's trigger on every `deck_status` would spawn in ~100 daemon tests: L5 and the gate1
   condition keep them offline (S2 test 3). `callTool`'s third argument spreads into `startLanding` (:315): S2 renames
   it `deps` with `prWrite` beside the landing keys. A gate1 before `feat/<slug>` is pushed: L3's quiet `no PR yet`,
