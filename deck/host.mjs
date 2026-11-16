@@ -9,9 +9,9 @@
 
 import { execFileSync } from 'node:child_process';
 
-/** What the host may run: `pr <verb>`, `api user` read, and an issue comment's `api` POST or PATCH. */
+/** What the host may run: `pr <verb>`, the release PR's `label create`, `api user` read, and an issue comment's `api` POST or PATCH. */
 export const HOST_VERBS = Object.freeze([
-  'pr create', 'pr edit', 'pr comment', 'pr view', 'pr list',
+  'pr create', 'pr edit', 'pr comment', 'pr view', 'pr list', 'label create',
   'api user', 'api POST repos/<owner>/<repo>/issues/<n>/comments', 'api PATCH repos/<owner>/<repo>/issues/comments/<id>',
 ]);
 
@@ -59,6 +59,8 @@ function assertHostVerb(args) {
   if (!Array.isArray(args) || !args.every((arg) => typeof arg === 'string')) throw new Error('gh: the host takes an argv of strings');
   const [group, verb] = args;
   if (group === 'pr' && PR_VERBS.has(verb)) return;
+  // `scripts/release.mjs` labels the release PR; a name must follow, never a flag.
+  if (group === 'label' && verb === 'create' && args.length > 2 && !args[2].startsWith('-')) return;
   if (group === 'api' && apiAllowed(args)) return;
   throw new Error(`gh ${[group, verb].filter((word) => word !== undefined).join(' ')}: not a host verb`);
 }

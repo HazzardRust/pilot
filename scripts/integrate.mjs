@@ -32,12 +32,13 @@
  * delete nothing.
  */
 
-import { execFileSync, execSync, spawnSync } from 'node:child_process';
+import { execSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 import { cleanOnPilot } from '../deck/gate2-base.mjs';
+import { hostIn } from '../deck/host.mjs';
 import { RUN_BASE } from '../deck/runs.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
 import { deleteMerged } from './branches.mjs';
@@ -54,9 +55,6 @@ const RECORDS = ':(glob)docs/design/*/run.json';
 export const TRAILER = /^[A-Za-z][A-Za-z-]*: \S.*$/;
 
 export { git };
-
-/** The real `gh`, argv only, run without a shell in `cwd`. */
-export const ghIn = (cwd) => (args) => execFileSync('gh', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 
 // A command string, not a file and arguments: `npm` is `npm.cmd` on Windows and needs a shell.
 export const installWithNpm = (cwd) => execSync('npm ci', { cwd, stdio: 'ignore', windowsHide: true });
@@ -326,7 +324,7 @@ export function integrate(branch, options = {}) {
     test,
     push = true,
     trailers = [],
-    gh = ghIn(cwd),
+    gh = hostIn(cwd),
     install = installWithNpm,
   } = options;
   const slice = branch?.replace(/^origin\//, '');
