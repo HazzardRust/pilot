@@ -8,7 +8,7 @@
   "slices": [
     {
       "slice": "walkthrough-surface",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1",
         "S2",
@@ -20,11 +20,13 @@
         "S8"
       ],
       "branch": "feat/walkthrough-surface",
-      "pr": 954
+      "pr": 3
     },
     {
       "slice": "S1 One module holds a gate2's evidence",
-      "state": "planned"
+      "state": "implementing",
+      "branch": "slice/walkthrough-surface-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s1"
     },
     {
       "slice": "S2 A plan marks its surface; QA cannot walk a plan without one",
@@ -42,11 +44,15 @@
     },
     {
       "slice": "S4 The crew's prose says the walkthrough is for a surface",
-      "state": "planned"
+      "state": "implementing",
+      "branch": "slice/walkthrough-surface-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s4"
     },
     {
       "slice": "S5 A command step shows its shell and directory",
-      "state": "planned"
+      "state": "implementing",
+      "branch": "slice/walkthrough-surface-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s5"
     },
     {
       "slice": "S6 A command step without a directory is refused; shell defaults",
@@ -72,6 +78,6 @@
       ]
     }
   ],
-  "next": "co-pilot checking S1-S8 anchors against pilot 6ea49cac; feat/walkthrough-surface at 4168ecad (pilot merged in)",
-  "updatedAt": "2026-11-16T05:21:40.729Z"
+  "next": "S1, S4, S5 implementing from feat 8769a6a2; integrate each on its draft PR, then S2 after S1, S8 after S4+S5",
+  "updatedAt": "2026-11-16T05:23:11.623Z"
 }
