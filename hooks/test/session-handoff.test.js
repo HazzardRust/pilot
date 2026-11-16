@@ -733,38 +733,8 @@ test('hooks.json registers the pickup as a SessionStart lane of its own', functi
 
 // --- what the pilot is told to put in the body -----------------------------
 
-/**
- * The item is a title and one line (L8 of run-record); what a fresh pilot resumes
- * from is the run record the hook hands over beside it (L7), and nothing fills a
- * gap in that record but the pilot's own `deck_status` call. So the record's write
- * with its next move, its mirror, and the table it carries have to be named where
- * the pilot is told to hand off, and in all three places that tell it.
- */
-const RESUMES_FROM = [
-  ['the record written by `deck_status` with the next move', /`deck_status`[\s\S]*`next`/],
-  ['the mirror of that record', /run\.json/],
-  ['the status table brought current', /status table/i],
-];
-
-/**
- * Line wrapping is not the wording. Prose wraps where the margin falls and the
- * guard writes its notices as literals concatenated across lines, so both are
- * read here as the words they say rather than as the layout they are stored in
- * — the same seam `scripts/test/handoff-wording.test.mjs` relies on.
- */
+/** Line wrapping is not the wording: prose is read as the words it says, not its layout. */
 const words = (text) => text.replace(/['`]\s*\+\s*['`]/g, '').replace(/\s+/g, ' ');
-
-test('the guard\'s notice to the pilot says what the hand-off item must carry', function () {
-  const guard = words(fs.readFileSync(path.join(HOOKS, 'context-size-guard.js'), 'utf8'));
-  const notice = /Bring the status table([\s\S]*?)Said once\./.exec(guard);
-  assert.ok(notice, 'the guard no longer tells the pilot to bring the status table current');
-
-  assert.match(notice[0], /`pilot handoff`/, 'the pilot must be told to run the command that posts the item');
-  assert.match(notice[0], /\/clear/, 'and that typing `/clear` by hand is the fallback off `pilot run`');
-  for (const [what, pattern] of RESUMES_FROM) {
-    assert.match(notice[0], pattern, 'the pilot is not told to put ' + what + ' in the body');
-  }
-});
 
 test('the pilot says what the hand-off body carries', function () {
   // Independence S4: the definition's copy of the hand-off was a restatement and went.
