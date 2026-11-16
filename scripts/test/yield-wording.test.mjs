@@ -26,13 +26,43 @@ test('the pilot names the yield and Moot', () => {
   assert.match(pilot, /send (its|the) co-pilot the pause/, 'L3: the pilot sends the pause, the deck stops no agent');
   assert.match(pilot, /`deck_ticket co-pilot` the next runnable/, 'spec 2: the lane takes the next runnable ticket');
   assert.match(pilot, /answer[^.]*resumes it/, 'spec 3: the answer resumes the ticket');
-  assert.match(pilot, /`Moot:` close of a pausing `Blocked:` item/, 'spec 11: a moot close resumes it too');
-  assert.match(pilot, /`deck_resolve` [^.]*`Moot: <why>`/, 'spec 6: the pilot closes a Blocked item as moot');
-  assert.match(pilot, /`Blocked:` item[^.]*done another way[^.]*another role's[^.]*no longer/, 'A4: which Blocked items are moot');
+  assert.match(pilot, /pilot close[^.]*resumes it/, 'spec 11: a pilot close resumes it too');
   const coPilot = read('agents/pilot-co-pilot.md');
   assert.match(coPilot, /`Paused <id>`/, 'the co-pilot knows the yield');
   assert.match(coPilot, /yield[^.]*hand back with outcome `paused`|hand back with outcome `paused`[^.]*yield/, 'L3: it hands back paused');
-  assert.match(coPilot, /`Moot:` close of a pausing `Blocked:` item/, 'spec 11 in the co-pilot too');
+  assert.match(coPilot, /pilot's close[^.]*resumes it/, 'spec 11 in the co-pilot too');
+});
+
+/** blocking-close S3 (spec 5; L1-L3, A2, ADR 0177): the pilot's close rule, one sentence of agents/pilot.md. */
+const pilotRule = () => read('agents/pilot.md').match(/[^.]*`Moot: <why>` or `Assumed: <what>`[^.]*\./)?.[0] ?? '';
+/** The co-pilot's routing of a question that stopped mattering, one sentence of agents/pilot-co-pilot.md. */
+const coPilotRule = () => read('agents/pilot-co-pilot.md').match(/[^.]*`moot <id>: <why>`[^.]*\./)?.[0] ?? '';
+
+test('the pilot closes any blocking question with a reason', () => {
+  const rule = pilotRule();
+  assert.match(rule, /`deck_resolve`/, 'the close is a deck_resolve');
+  assert.match(rule, /blocking question/, 'L1: any blocking question, not only a `Blocked:` item');
+  assert.doesNotMatch(rule, /`Blocked:` item/, 'no longer `Blocked:`-only');
+  for (const reason of [/done another way/, /supersede/, /safe assumption/]) assert.match(rule, reason, 'spec 5: the three reasons');
+  assert.match(rule, /never a gate[^;]*walkthrough[^;]*proposal/, 'spec 4, L1: a gate, walkthrough or proposal is never closed this way');
+  assert.match(rule, /(owns|owned)[^;]*take[^;]*back/, 'L3: the owner rule stands; the pilot takes the thread back first');
+});
+
+test('a needed answer still waits', () => {
+  const rule = pilotRule();
+  assert.match(rule, /still needed[^;]*wait/, 'spec 5: a needed answer waits');
+  assert.match(rule, /waits on the user[^;]*reopen|reopen[^;]*waits on the user/, 'spec 6: a reopened question waits on the user too');
+});
+
+test('the co-pilot routes a moot question to main', () => {
+  const rule = coPilotRule();
+  assert.match(rule, /send `main` `moot <id>: <why>`/, 'A2: the co-pilot names it to main');
+  assert.match(rule, /pilot closes it/, 'A2: the pilot, never the co-pilot, closes it');
+});
+
+test('the ADR records the supersession', () => {
+  assert.match(read('docs/adr/0177-the-pilot-closes-a-blocking-question.md'), /supersedes: \[0153\]/, 'ADR 0177 supersedes 0153');
+  assert.match(read('docs/adr/0153-a-blocked-yellow-ticket-yields-the-lane.md'), /superseded_by: \[0177\]/, '0153 names 0177');
 });
 
 test('the crew forbids the three shapes', () => {
