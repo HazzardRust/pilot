@@ -1,0 +1,105 @@
+{
+  "slug": "crew-tests-behaviour",
+  "feature": "The crew tests behaviour, not wording",
+  "ticket": "itm_3a521d90b85f",
+  "branch": "feat/crew-tests-behaviour",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-tests-behaviour-r2",
+  "artefact": "docs/design/crew-tests-behaviour/architecture.md",
+  "slices": [
+    {
+      "slice": "crew-tests-behaviour",
+      "state": "gate1 posted at 28764ba9 (verdict lines added by the pilot); feature PR #906 draft → pilot; feat at 28764ba9",
+      "branch": "feat/crew-tests-behaviour",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-tests-behaviour",
+      "pr": 906
+    },
+    {
+      "slice": "S1 Walking skeleton: test-design",
+      "state": "planned"
+    },
+    {
+      "slice": "S2 Misses: line + check-slices",
+      "state": "planned (opus)"
+    },
+    {
+      "slice": "S3 Stuck red → ranked hypotheses",
+      "state": "planned (opus)",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S4 Fundamentalist names the anti-pattern",
+      "state": "planned (opus)",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S5 Sweep: pilot-agents first half",
+      "state": "planned (sonnet)"
+    },
+    {
+      "slice": "S6 Sweep: pilot-agents second half",
+      "state": "planned (sonnet)",
+      "after": [
+        "S5"
+      ]
+    },
+    {
+      "slice": "S7 Sweep: docs, README, install, rules, ADR",
+      "state": "planned (sonnet)"
+    },
+    {
+      "slice": "S8 Sweep: lane and ticket pins",
+      "state": "planned (sonnet)"
+    },
+    {
+      "slice": "S9 Sweep: audit and deck report pins",
+      "state": "planned (sonnet)"
+    },
+    {
+      "slice": "S10 Sweep: architect, slicing, verdicts",
+      "state": "planned (sonnet)"
+    },
+    {
+      "slice": "S11 Sweep: crew voice and gates",
+      "state": "planned (sonnet)"
+    },
+    {
+      "slice": "S12 Sweep: QA, research, skills",
+      "state": "planned (sonnet)",
+      "after": [
+        "S1"
+      ]
+    }
+  ],
+  "next": "co-pilot holds the run; base taken at 8be8f3a0 (pilot 6ea49cac); ADR to NNNN placeholder; starting slices per pilot ready",
+  "updatedAt": "2026-11-16T03:20:43.131Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "no CLI/MCP deck read in a worktree without node_modules; read the ticket via deck/client.mjs from the main checkout",
+      "evidence": "architect report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "node -e scripts in double quotes mangled by the shell (backticks, \\b); three retries, fixed by writing scripts to the scratchpad",
+      "evidence": "S1.md:34",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "counting prose pins needed four Sonnet sweeps (~380k child tokens): no marker on pin tests across ~70 files",
+      "evidence": "architect report",
+      "size": 3
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "measure-prompt shows pins only for pilot, architect, explorer, QA; other agents' limits need reading pinsOf",
+      "evidence": "scripts/measure-prompt.mjs:117",
+      "size": 1
+    }
+  ]
+}

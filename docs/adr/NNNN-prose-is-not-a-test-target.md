@@ -8,8 +8,6 @@ paths: [skills/test-design/SKILL.md, skills/tdd-workflow/SKILL.md, skills/diagno
 ---
 # Prose is not a test target; `test-design` sits beside `tdd-workflow`; a stuck red hands back hypotheses
 
-> Numbered 0168 because 0167 is claimed by one-integration-line's S10, which also renumbers at its landing; if either lands out of order, the later one renumbers.
-
 We decided that no test asserts a phrase in prose, that Pocock's `tdd` skill is renamed `test-design` and preloaded by the implementer beside `tdd-workflow`, and that `diagnosing-bugs` ends a stuck red with a ranked hypothesis list to the agent's addressee after two failed fixes. Run `crew-tests-behaviour`, `docs/design/crew-tests-behaviour/architecture.md`.
 
 ## Context

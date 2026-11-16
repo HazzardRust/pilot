@@ -2,11 +2,11 @@
 
 ## Repository
 
-`C:/Users/Hazzard/projects/pilot` (HazzardRust/pilot), default branch `main`. Artefact: `docs/design/crew-tests-behaviour/architecture.md`; slices under `slices/`.
+`C:/Users/Hazzard/Projects/pilot` (HazzardRust/pilot, recreated public), default branch `main`. Artefact: `docs/design/crew-tests-behaviour/architecture.md`; slices under `slices/`.
 
 ## Base and PR target
 
-Base: `feat/crew-tests-behaviour`, cut from `pilot` at `1125a1ea`. Slice PRs target `feat/crew-tests-behaviour`; the feature PR targets `pilot`.
+Base: `feat/crew-tests-behaviour`, cut from `pilot`, base taken at `6ea49cac` (merge 8be8f3a0). Slice PRs target `feat/crew-tests-behaviour`; the feature PR targets `pilot`.
 
 ## Remote
 
@@ -27,15 +27,15 @@ Remote: origin
 ## Commit trailer
 
 ```
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01Cmu6QXexHes1EiTfHDYBgB
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NXgSFodNbTKqoJ71EpWMS5
 ```
 
 ## PR footer
 
 ```
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
-https://claude.ai/code/session_01Cmu6QXexHes1EiTfHDYBgB
+https://claude.ai/code/session_01NXgSFodNbTKqoJ71EpWMS5
 ```
 
 ## PR titles
@@ -43,3 +43,8 @@ https://claude.ai/code/session_01Cmu6QXexHes1EiTfHDYBgB
 - Slice: `feat(crew-tests-behaviour): S<n> <title>`, the title lower-case first, e.g. `feat(crew-tests-behaviour): S1 walking skeleton: the implementer writes its tests under tdd`
 - Fix round: `fix(crew-tests-behaviour): <what>`
 - Feature: `feat(crew-tests-behaviour): the crew tests behaviour, not wording`
+
+## Seam changes recorded by the co-pilot
+
+- The run's ADR is the placeholder `docs/adr/NNNN-prose-is-not-a-test-target.md`, cited `ADR NNNN`, no README row; the landing numbers it (`scripts/adr-allocate.mjs`). 0166-0176 are taken on `pilot`.
+- `npm ci` in every fresh worktree before any test.

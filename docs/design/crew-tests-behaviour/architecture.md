@@ -58,7 +58,7 @@ Deletion test: `tdd-workflow` survives (its runner table, RED validity and check
 
 ## 4. Ubiquitous language
 
-This run's glossary (domain-modeling's place for it is the artefact; ADR 0168 carries the repository-wide decision).
+This run's glossary (domain-modeling's place for it is the artefact; ADR NNNN carries the repository-wide decision).
 
 - **Prose pin** — a test that passes only while an agent prompt, skill, rule, README, runbook, ADR or help text contains a phrase. It is not a "wording test", a "doc test" or a "lint".
 - **Lint** — a structural check in code: a heading, step or field exists, or a pattern (a command, a word) is absent, marked `// lint: <rule>`. It is not a prose pin, because it requires no phrase.
