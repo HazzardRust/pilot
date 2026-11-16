@@ -4,8 +4,9 @@
  * slice declares: `` N. `<name>`: `<Interface symbol>` → <observable result> ``, the
  * symbol present in the slice's Interface block. The file also carries one
  * `Rewrite check:` line (what stays true if the implementation behind the interface were
- * replaced) and one `Misses:` line (what the Tests cannot catch; rule `misses`) and stays at or under 60 lines. ADR 0082; deep-modules L2-L4. Each blocker in the
- * header's `after:` field names what it shares, `S<n> (<file or seam>)` (design-docs-only L8).
+ * replaced) and one `Misses:` line (what the Tests cannot catch; rule `misses`), and
+ * stays at or under 60 lines. ADR 0082; deep-modules L2-L4. Each blocker in the header's
+ * `after:` field names what it shares, `S<n> (<file or seam>)` (design-docs-only L8).
  * The header, above the first `## ` section, states the implementer's model and why:
  * `Model: sonnet — <reason>` or `Model: opus — <reason>` (cheaper-crew L2); a slice whose
  * `Reviewers:` line names `pilot:security-reviewer` hits the security trigger and says opus (A2).

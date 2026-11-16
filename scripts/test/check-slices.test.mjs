@@ -77,7 +77,7 @@ test('two rewrite checks are refused at the second', () => {
 const MISSES = /^Misses:.*\r?\n/m;
 
 test('a slice file without Misses is refused', () => {
-  assert.deepEqual(rules(fixture('good.md').replace(MISSES, '')).map(({ rule }) => rule), ['misses']);
+  assert.deepEqual(rules(fixture('good.md').replace(MISSES, '')), [{ line: 17, rule: 'misses' }], 'at the Tests heading');
 });
 
 test('two Misses lines are refused', () => {
