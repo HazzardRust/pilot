@@ -10,7 +10,7 @@ import { isShortPath } from './items.mjs';
 const linesStarting = (body, label) => body.split('\n').filter((line) => line.trimStart().startsWith(label)).length;
 
 /** The gaps in a gate2 on `ticket`, `[]` unless that ticket is short path and the gate2 lacks its evidence. */
-export function shortGate2Gaps(ticket, { body, walkthrough }) {
+export function gate2EvidenceGaps(ticket, { body, walkthrough }) {
   if (!isShortPath(ticket)) return [];
   const { sliceCount, surface } = ticket.plan;
   const verdicts = linesStarting(body, 'Verdict:');

@@ -52,7 +52,7 @@ import { reportAskGaps } from './report-shape.mjs';
 import { ticketShapeGaps } from './ticket-shape.mjs';
 import { walkthroughShapeGaps } from './walkthrough-shape.mjs';
 import { enterStage } from './store-stage.mjs';
-import { shortGate2Gaps } from './short-path-shape.mjs';
+import { gate2EvidenceGaps } from './gate2-evidence.mjs';
 import { MAX_QUESTION_CHARS, POSTABLE_KINDS, andList } from './tools.mjs';
 import {
   DeckRefusal,
@@ -159,7 +159,7 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   refuseOverOpenQuestions(deck, item);
   const ticket = ticketNamedBy(deck, item);
   if (kind === KIND_GATE1 && ticket) refuseUnmerged(deck.items, ticket);
-  const unproven = kind === KIND_GATE2 ? shortGate2Gaps(ticket, item) : [];
+  const unproven = kind === KIND_GATE2 ? gate2EvidenceGaps(ticket, item) : [];
   if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
   // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves
   // it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
