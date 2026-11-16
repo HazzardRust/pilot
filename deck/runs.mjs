@@ -228,15 +228,17 @@ export function freshRuns(runs) {
  * The run record (L5, L19 of run-record, ADR 0028): the durable state of one
  * feature in one directory, which outlives every session that writes it. A run
  * is a session's registration and goes when the session does; a record is keyed
- * by the directory and the feature's slug, and is written only by `deck_status`.
+ * by the directory and the feature's slug, and is written by `deck_status`, and its
+ * `qaComment` by QA's walkthrough or gate2 (deck-writes-github spec 3).
  *
  * Its fields, in the order they are stored and mirrored. Open thread ids are not
  * among them: they are derived when the record is read (L6), because a stored
- * copy goes stale the moment a thread closes. `friction` is last because it is the
- * field that grows: the session-start hook clips the record at 16,000 characters, and
- * the clip falls on it rather than on `next`, `finished` or `report`.
+ * copy goes stale the moment a thread closes. `friction` is last but one because it
+ * grows: the session-start hook clips the record at 16,000 characters, and the clip
+ * falls on it rather than on `next`, `finished` or `report`. `qaComment` is last and
+ * stays on the deck: neither the run.json mirror nor the session-start hook carries it.
  */
-const RECORD_ORDER = ['slug', 'feature', 'ticket', 'branch', 'base', 'worktree', 'qa', 'artefact', 'slices', 'findings', 'report', 'next', 'finished', 'finishedAt', 'updatedAt', 'friction'];
+const RECORD_ORDER = ['slug', 'feature', 'ticket', 'branch', 'base', 'worktree', 'qa', 'artefact', 'slices', 'findings', 'report', 'next', 'finished', 'finishedAt', 'updatedAt', 'friction', 'qaComment'];
 
 /** The one spelling of a clean finish: the only `finished` that chains the next ticket (L3). */
 export const FINISHED_CLEAN = 'closing report posted';

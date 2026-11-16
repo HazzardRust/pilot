@@ -449,9 +449,11 @@ function requireText(field, value, mostChars) {
   // own bound as well, so a slice name that table would refuse cannot reach the
   // deck through an item and then sit there joining on nothing.
   if (mostChars !== undefined && value.trim().length > mostChars) {
+    // A slice is held to the table's cell; any other bounded field (a shell, QA's comment) to its own.
     throw new DeckRefusal(
-      `that ${field} is longer than a cell of the deck's table (${mostChars} characters). ` +
-        'Name the slice the way your status table names it.',
+      field === 'slice'
+        ? `that ${field} is longer than a cell of the deck's table (${mostChars} characters). Name the slice the way your status table names it.`
+        : `that ${field} is longer than the deck takes (${mostChars} characters).`,
     );
   }
   return value;

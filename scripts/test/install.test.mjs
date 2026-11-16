@@ -1128,13 +1128,18 @@ test('the settings module offers one composed merge, not a single per setting', 
 
   assert.deepEqual(Object.keys(surface).sort(), [
     // plain-session fix round: measure-plain reads the status line with the install's own test.
+    // deck-writes-github S5: doctor reads the allow list and the deny test, and keeps no copy.
+    'PILOT_MERGE_ALLOW',
     'STATUSLINE_SCRIPT',
     'defaultSettingsPath',
+    'denyCovers',
     'installSettings',
     'installStatusLine',
     'isInPluginCache',
     'ownCommandPath',
     'parseArgs',
+    // deck-writes-github principles round: doctor reads the settings file with the install's own reader.
+    'readSettings',
     // daemon-lifecycle S8: the uninstall's reversal of the merges, beside them on purpose.
     'removeOwnSettings',
     'repairSettings',

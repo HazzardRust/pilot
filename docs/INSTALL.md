@@ -157,6 +157,8 @@ pilot doctor defender advised install
 
 ## 5. Merge the settings
 
+Later, `pilot doctor` names any of the pilot's allow rules your settings lack, and the command that adds them.
+
 If they named documentation hosts:
 
 ```bash

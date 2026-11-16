@@ -47,6 +47,7 @@ test('checkAll reads the reach and the enabled plugin through its deps, after th
     probe: async () => ({ state: 'none' }),
     readReach: () => ({ level: 'nothing', chosen: true }),
     readEnabled: () => true,
+    readSettings: () => ({}),
   });
   const names = rows.map((r) => r.name);
   assert.equal(names[names.indexOf('store directory') + 1], 'Reach');

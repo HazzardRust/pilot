@@ -12,6 +12,7 @@
 import { execFileSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 
+import { hostIn } from '../deck/host.mjs';
 import { firstLine, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRemote } from './remotes.mjs';
 import { isRunBranch } from './worktrees.mjs';
@@ -146,7 +147,7 @@ const USAGE = 'usage: pilot branches prune --slug <slug> [--dry-run]\n';
 export function main(argv, inject = {}) {
   const { cwd = process.cwd(), write = (text) => process.stdout.write(text) } = inject;
   const git = inject.git ?? ((args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }));
-  const gh = inject.gh ?? ((args) => execFileSync('gh', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }));
+  const gh = inject.gh ?? hostIn(cwd);
   let flags = {};
   try {
     flags = parseArgs({ args: argv.slice(1), options: { slug: { type: 'string' }, 'dry-run': { type: 'boolean' } } }).values;

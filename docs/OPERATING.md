@@ -28,6 +28,7 @@ A run needs only `pilot run`; the rest is what the agents call under it. Who run
 | `pilot ready` | the co-pilot | to name the slices that can start |
 | `pilot integrate` | the co-pilot (and QA, or the pilot) | to merge each slice into `feat/<slug>` |
 | `pilot integrate --trial` | QA | before its gate2, to try the feature's tip on `pilot`; merges nothing into it |
+| `pilot pr --ticket <itm_id>` | the deck | after a gate1, each `deck_status` of its ticket, and QA's walkthrough or gate2 comment, to open or update the feature PR and QA's one comment on it |
 | `pilot land` | the deck | after your Gate 2 Sign off, to merge only the feature into `pilot` (no sync) and keep one open PR `pilot → main`: `main gets pilot: #<n>` |
 | `pilot sync` | the pilot | at a ticket's take (or by hand), never inside a landing, to take the default branch into `pilot` |
 | `pilot handoff` | the pilot | when its context is full |
@@ -38,6 +39,10 @@ A run needs only `pilot run`; the rest is what the agents call under it. Who run
 For looking under a run: `pilot budget` sets how many agents each lane holds, `pilot analytics <slug>`
 prints a run's tokens, tool calls and time per agent, `pilot ps` and `pilot gc` list and stop
 orphaned processes, and `pilot worktrees prune` removes merged-clean worktrees. `pilot help` lists the rest.
+
+## Who writes GitHub
+
+The deck does, by `pilot pr`, and the crew never does (ADR 0182). On a gate1 post, every `deck_status`, and a walkthrough or gate2 post with a comment, for a ticket with a gate1, the deck opens or rewrites the draft feature PR `feat/<slug>` (its body and its base) and posts QA's one comment on it. A failed write puts one line, `feature PR not updated: <line>`, on the ticket's thread and is retried on the next trigger. Agents push their own branches, and the implementer opens its own draft slice PR; nothing else they run writes to GitHub.
 
 ## Which tests run when
 
