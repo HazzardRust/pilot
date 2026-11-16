@@ -23,10 +23,30 @@ function isCommandStep(step) {
   return (commandWord(instruction, true) ?? commandWord(result ?? '', false)) !== null;
 }
 
-/** The gaps in where an item's command steps run, each worded as the refusal says it; [] when placed. */
-export function stepShellGaps(screens, { dir } = {}) {
-  if (dir) return [];
-  return screens.flatMap((step, index) => (isCommandStep(step) ? [`step ${index + 1} runs a command: name its directory as dir`] : []));
+const POWERSHELL_FAMILY = /^(powershell|pwsh|cmd)$/i;
+const UNIX_FAMILY = /^(git bash|wsl|bash|zsh|sh)$/i;
+const CODE_SPAN = /`([^`\n]+)`/g;
+// `&&` is left alone: PowerShell 7 takes it.
+const FOREIGN_TO_POWERSHELL = [[/\bgrep\s+-\w*o/, 'grep -o'], [/(?:^|\s)~\//, '~/'], [/(?:^|;\s*|&&\s*)export\s/, 'export']];
+const FOREIGN_TO_UNIX = [[/\$env:/, '$env:']];
+
+/** The first token in a step's code spans that is another shell's syntax, or null; other shells are not checked. */
+function foreignToken(step, shell) {
+  const table = POWERSHELL_FAMILY.test(shell) ? FOREIGN_TO_POWERSHELL : UNIX_FAMILY.test(shell) ? FOREIGN_TO_UNIX : [];
+  for (const [, span] of step.matchAll(CODE_SPAN)) {
+    for (const [pattern, token] of table) if (pattern.test(span.trim())) return token;
+  }
+  return null;
+}
+
+/** The gaps in where an item's command steps run and in their syntax, each worded as the refusal says it; [] when placed. */
+export function stepShellGaps(screens, { shell = defaultShell(), dir } = {}) {
+  return screens.flatMap((step, index) => {
+    const n = index + 1;
+    const gaps = isCommandStep(step) && !dir ? [`step ${n} runs a command: name its directory as dir`] : [];
+    const token = foreignToken(step, shell);
+    return token === null ? gaps : [...gaps, `step ${n} is not ${shell} syntax: \`${token}\``];
+  });
 }
 
 /** A walkthrough's or a report's detail with its shell filled when it has a command step; refused on a gap. Other kinds pass through. */
