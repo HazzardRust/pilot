@@ -87,7 +87,7 @@ reads.
 
 Tests aim at the design's seams: the artefact's Seams table and each slice's
 Interface block (ADR 0082). Read every test the diff adds or changes against
-them. Three kinds are findings, each with its fix and net lines:
+them. Four kinds are findings, each with its fix and net lines:
 
 - a test reaching past the interface (an internal import, internal state, a
   mock inside the module); the fix asserts the same result through the
@@ -100,6 +100,7 @@ them. Three kinds are findings, each with its fix and net lines:
   source, or on a prompt merely naming a command or tool; the fix runs the
   code, or leaves the name to `scripts/check-references.mjs` (this plugin's
   repository only)
+- a test tripping an anti-pattern in `${CLAUDE_PLUGIN_ROOT}/skills/test-design/SKILL.md`, by name
 
 A wording pin, on text whose wording is the product (a prompt's rule
 sentence, a sentence a hook injects, a token budget), is not a finding.
