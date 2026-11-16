@@ -98,7 +98,7 @@
     },
     {
       "slice": "S12 Sweep: QA, research, skills",
-      "state": "draft PR #53",
+      "state": "integrated at d19a229c",
       "after": [
         "S1"
       ],
@@ -108,9 +108,10 @@
     },
     {
       "slice": "S13 Sweep: wording pins added since the census",
-      "state": "implementing",
+      "state": "draft PR #54",
       "branch": "slice/crew-tests-behaviour-s13",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s13"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s13",
+      "pr": 54
     },
     {
       "slice": "S14 Sweep: re-classification and residue",
@@ -129,8 +130,8 @@
       ]
     }
   ],
-  "next": "integrating S12 (#53); S13 implementing; then S14",
-  "updatedAt": "2026-11-16T03:55:20.953Z",
+  "next": "integrating S13 (#54); then S14 re-classification; S4 waits on PR #8",
+  "updatedAt": "2026-11-16T03:58:19.501Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -215,6 +216,12 @@
       "what": "the repo has no type check or lint script, so the gate's typecheck and lint steps are absent",
       "evidence": "S12: npx tsc --noEmit prints usage; npm run lint: no such script",
       "size": 0
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "heredoc to $TMP with TMP unset hung the shell 120 s and left a stray background process it could not stop",
+      "evidence": "S13: background task bj6p6iom1, TaskStop unavailable",
+      "size": 1
     }
   ]
 }
