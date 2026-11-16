@@ -35,7 +35,7 @@ const aRow = (id, over = {}) => ({ id, kind: KIND_TICKET, title: id, body: 'b', 
 const aTicket = (words = 'fix the thing', repo = MINE) =>
   postItem({ kind: KIND_TICKET, sliceCount: 60, title: words, body: shapedTicketBody(words), repo });
 const aGate1 = (ticket, repo = MINE) => postItem({ kind: 'gate1', title: 'Gate 1', body: 'The design.', repo, ...GATE1, ticket });
-const aGate2 = (ticket) => postItem({ kind: 'gate2', title: 'Gate 2', body: 'Walk it.', repo: MINE, pr: '#1', sha: '0305827', ticket });
+const aGate2 = (ticket) => postItem({ kind: 'gate2', title: 'Gate 2', body: 'Walk it.', repo: MINE, pr: '#1', sha: '0305827', walkthrough: 'itm_0a1b2c3d4e5f', ticket });
 const reread = (id) => listItems().find((item) => item.id === id);
 const sign = (gate) => (addReply(gate.id, SIGN_OFF), resolveItem(gate.id, 'Signed off.'));
 const refusedNaming = (...words) => (error) =>
