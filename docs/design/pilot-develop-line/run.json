@@ -1,0 +1,251 @@
+{
+  "slug": "pilot-develop-line",
+  "feature": "The pilot branch reads as a develop line",
+  "ticket": "itm_ec448e2fd6f6",
+  "branch": "feat/pilot-develop-line",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-pilot-develop-line",
+  "artefact": "docs/design/pilot-develop-line/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A landing leaves a labelled release PR",
+      "state": "integrated",
+      "branch": "slice/pilot-develop-line-s1",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s1",
+      "pr": 14
+    },
+    {
+      "slice": "S2 The feature PR reads merged, never closed",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/pilot-develop-line-s2",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s2",
+      "pr": 16
+    },
+    {
+      "slice": "S3 A slice integrates as one subject with its verdicts",
+      "state": "integrated",
+      "branch": "slice/pilot-develop-line-s3",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s3",
+      "pr": 10
+    },
+    {
+      "slice": "S4 No slice PR is opened",
+      "state": "integrated",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/pilot-develop-line-s4",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s4",
+      "pr": 13
+    },
+    {
+      "slice": "S5 pilot base names the concluding feature",
+      "state": "integrated",
+      "branch": "slice/pilot-develop-line-s5",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s5",
+      "pr": 9
+    },
+    {
+      "slice": "S6 integrate takes the chained base until N lands",
+      "state": "integrated",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/pilot-develop-line-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-pilot-develop-line-s6",
+      "pr": 19
+    },
+    {
+      "slice": "S7 land guards the chain and retargets",
+      "state": "integrated",
+      "after": [
+        "S2",
+        "S6"
+      ],
+      "branch": "slice/pilot-develop-line-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-pilot-develop-line-s7",
+      "pr": 20
+    },
+    {
+      "slice": "S8 The take and the cut follow the base line",
+      "state": "integrated",
+      "after": [
+        "S4",
+        "S5"
+      ],
+      "branch": "slice/pilot-develop-line-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-pilot-develop-line-s8",
+      "pr": 21
+    },
+    {
+      "slice": "S9 ADR for the develop line",
+      "state": "integrated",
+      "branch": "slice/pilot-develop-line-s9",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s9",
+      "pr": 15
+    },
+    {
+      "slice": "S10 The shipped-rules ledger matches the public history (added)",
+      "state": "integrated",
+      "branch": "slice/pilot-develop-line-s10",
+      "worktree": "C:/Users/Hazzard/projects/pilot-slice-pilot-develop-line-s10",
+      "pr": 12
+    },
+    {
+      "slice": "S11 The standing rules describe slice commits (added)",
+      "state": "integrated",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/pilot-develop-line-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-pilot-develop-line-s11",
+      "pr": 22
+    }
+  ],
+  "findings": [
+    "kept: stale shipped-rules.json on the squashed history — added slice S10, integrated 60afb5f8",
+    "kept: PILOT_GATE_SLOT=selected NaN in takeSlot — fixed in S3's fix round",
+    "kept: unchecked --trailer can forge a Reviewed-by line — fixed in S3's fix round",
+    "kept: rules/orchestration.md, vertical-execution.md, CONTEXT.md still describe slice PRs — added slice S11",
+    "kept: pilot handoff --trailer unchecked — for the step-7 fix round",
+    "kept: agents/pilot.md step 3 'opens the feature PR as a draft against pilot' is wrong on a chained run (pins pilot-branch-rules:39, one-line-wording:43) — for the step-7 fix round",
+    "kept: scratch-stop.test.mjs EEXIST flake on a shared %TEMP% path — for the step-7 fix round"
+  ],
+  "next": "co-pilot: integrating S11 (#22), the last slice; then step 7 fundamentalist and QA read-only",
+  "updatedAt": "2026-10-21T04:29:58.088Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test stops before the suite on the base: the rules ledger is rebuilt from the squashed public history",
+      "evidence": "ledger stale: scripts/shipped-rules.json, rebuilt; commit it (113+/124-); a second ~10 min gate run on a local rebuild",
+      "size": 15
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the locally rebuilt ledger fails 9 unrelated install/rules tests, to be told apart from real failures",
+      "evidence": "install.test.mjs:185-348, rules-repair.test.mjs:71,84 pass on the committed ledger"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5's slice file missed that deck/test/gate2-base.test.mjs spawns pilot base and would reach the live deck",
+      "evidence": "deck/test/gate2-base.test.mjs:190"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3.md's refusal rule contradicted 'integrate-base.test.mjs passes unchanged': no fixture writes a run.json",
+      "evidence": "integrate-base/-landed/-prune/-remote/-select fixtures; one round with the co-pilot"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md's Claude-Session trailer and Actions billing note are stale",
+      "evidence": "brief.md lines 26 and 37"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "started a second gate run over the first, one log, and has no TaskStop; a third run was needed",
+      "evidence": "S10 scratchpad s10-gate2.log"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "build-rules-ledger.mjs leaves shipped-rules.json staged; it rode a by-name commit",
+      "evidence": "S4 first commit numstat 113 124 scripts/shipped-rules.json"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "prompt pins had 1.5 and 0 tokens headroom, so every prose edit to pilot.md / pilot-qa.md had to shrink them",
+      "evidence": "node scripts/measure-prompt.mjs at base"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot gh-stub silently fails under Git Bash when the stub dir is under /tmp: NODE_OPTIONS --require cannot resolve the path on Windows",
+      "evidence": "S1 needed cygpath -m for the scratch dir"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot land in a scratch repo needs a package-lock.json (runs npm ci) and the stub answers one fixed reply to every call",
+      "evidence": "three reruns of S1's scratch script"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "S3 integrated red on integrate-select.test.mjs:131 'full slot=NaN' though its own integrate* run was green",
+      "evidence": "~/.claude/pilot/logs/20261021T030756614Z-slice-pilot-develop-line-s3.log"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the gate selection sets PILOT_GATE_SLOT=selected; takeSlot's Number() gave NaN, so integrate-select failed only under pilot integrate",
+      "evidence": "gate.mjs:224, gate-slots.mjs:83; reproduced on the base"
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "reviewer's own test runs timed out at 110-120 s while a full gate ran in the same worktree",
+      "evidence": "S3 fix-round report"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "integrate refused S9 because 'ADR' after S<n> is not lower-case first; retitled by hand",
+      "evidence": "PR #15 title check"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a test pins an ADR's last line, breaking any later amendment",
+      "evidence": "one-line-docs.test.mjs:34"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node --test over four land files exceeds the 120 s foreground timeout on Windows",
+      "evidence": "S2 task be703k0ha"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6's slice file missed that deck/server-tools.mjs must pass base to setSlices; a one-line change outside the owned files",
+      "evidence": "PR #19 body; deck/server-tools.mjs"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "integrate's selection overflowed argv and fell back to the full suite (~10 min) for one slice",
+      "evidence": "pilot integrate s6: selection is 34561 characters of argv, over 24000"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the classifier refused a one-line prose edit to rules/orchestration.md as Instruction Poisoning",
+      "evidence": "S11: rules/orchestration.md:37 'push, draft PR' -> 'push the branch'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a review fix landed after the full gate had started; the ~300 s gate ran twice",
+      "evidence": "S7 report, 97c3aee2"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit lost the file's read state after a commit; three review-fix edits failed 'File has not been read yet'",
+      "evidence": "S7 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spec 4c's 'every open PR based on feat/<N>' would retarget slice PRs too; narrowed to feat/ heads",
+      "evidence": "PR #20 security-reviewer MEDIUM; S7.md seam note 9c9acf00"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "prompt pins at 0-18 tokens headroom forced trimming unrelated prose to add S8's lines; ~6 measure runs",
+      "evidence": "measure-prompt: pilot 11691.5/11692.25, pilot-architect 10497.5/10497.5"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a trimmed clause was pinned by a test the pin grep missed; a second ~300 s full run",
+      "evidence": "verdict-pass-architect 'do not wait'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck/test/scratch-stop.test.mjs symlink-registry test failed EEXIST on a shared %TEMP% path, passed on rerun",
+      "evidence": "S8 first gate at ce7bd767"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the always-loaded rules cap (3,500 tokens) sat within 17 tokens of its limit; the first S11 wording failed measure-rules",
+      "evidence": "measure-rules.test.mjs: 3,517 > 3,500"
+    }
+  ]
+}

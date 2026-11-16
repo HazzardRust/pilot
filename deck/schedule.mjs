@@ -14,12 +14,12 @@ import { listeningRepo } from './wait.mjs';
 /** A planned row: its state says so, or it has none yet. */
 const isPlanned = (row) => !row.state || phaseOf(row.state) === 'planned';
 
-/** A blocker with a draft PR and its branch, which a single-blocker slice may branch from (L12). */
-const isDraft = (row) => /^draft\b/i.test(row.state) && Boolean(row.branch);
+/** A blocker whose branch is pushed (`draft` in an older record), which a single-blocker slice may branch from (L12). */
+const isPushed = (row) => /^(?:pushed|draft)\b/i.test(row.state) && Boolean(row.branch);
 
 /**
  * The slices that may start now, at most `slots`, each `{ slice, from }`: `from` is `'feat'` (the
- * `feat/<slug>` tip) when every blocker is done, or the one blocker's branch when that blocker is a draft
+ * `feat/<slug>` tip) when every blocker is done, or the one blocker's branch when that blocker is pushed
  * (the pipeline, L12); a join waits for all its blockers done. Never row order: a slice's `S<n>` number,
  * then its name. The rows are as `deck_status` stored them, so every `after` names one row, once, and no
  * chain closes on itself (`requireGraph`).
@@ -32,7 +32,7 @@ export function startable(rows, slots) {
     if (!isPlanned(row)) return [];
     const before = blockersOf(row).map(resolve);
     if (before.every((from) => phaseOf(from.state) === 'done')) return [{ row, from: 'feat' }];
-    if (before.length === 1 && isDraft(before[0])) return [{ row, from: before[0].branch }];
+    if (before.length === 1 && isPushed(before[0])) return [{ row, from: before[0].branch }];
     return [];
   });
   // Two rows without a number subtract to NaN, which is falsy, so their names decide.

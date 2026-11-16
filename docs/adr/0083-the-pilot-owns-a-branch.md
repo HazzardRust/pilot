@@ -33,3 +33,5 @@ Rejected:
 Recorded in `docs/design/pilot-branch/architecture.md` (§2 spec 1 to 6; §5 L4, L5, L12, L14, L15, L20, L23).
 
 Amended 2026-10-19 by ADR 0167: `pilot` is the one integration line. L15's feature PR targets `pilot`, not the default branch, and reads merged once the landing pushes; L14's `gh pr ready` and L15's merge-first order are gone, and main gets pilot through one open PR `pilot → main`, which `pilot land` keeps open and the user merges with a merge commit, reversing the rejected "one combined `pilot`-to-default PR" because the per-feature unit is now the landing on `pilot`. L20's sync stays at the take but no longer runs inside `pilot land`. Every other line here stands.
+
+Amended 2026-10-21 by ADR 0176: `pilot` is a develop line, and the rejected "Keeping the stack as a fallback beside the pilot branch: two bases is the bug" no longer holds for a chain of depth 1: while one built feature waits unlanded in concluding, the next run is cut from its `feat/<slug>` and merges it at every slice, and the landing retargets the next feature PR to `pilot`. L5's deleted stack stays deleted; a chain is never deeper than one. Every other line here stands.

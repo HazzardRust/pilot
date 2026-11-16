@@ -6,14 +6,17 @@
  * The rules install reads it to tell a stale shipped copy, which it replaces, from a
  * file someone edited, which it leaves alone; and a file the package stopped shipping,
  * which it deletes, from one a person wrote there themselves, which it never touches.
- * It is generated from git history rather than kept by hand because a hash typed wrong
+ * It is generated rather than kept by hand because a hash typed wrong
  * fails safe in the worst way: the stale copy is never updated, and nobody notices.
  * `--check` turns that into a failing test.
  *
  * Every commit that touched `rules/` contributes its whole `rules/` tree, and the working
  * tree contributes the files as they stand, so a rules edit and its ledger entry land in
- * the same commit. `.gitattributes` pins `eol=lf`, so the bytes hashed are the bytes a
- * checkout holds and the install copies.
+ * the same commit. The ledger is append-only (ADR 0174): every committed version of it
+ * contributes its entries too, so a history that has lost versions, as after the fresh-repo
+ * move, never drops a hash or a path. The working-tree ledger is never read as input, so a
+ * hand edit to it fails `--check`. `.gitattributes` pins `eol=lf`, so the bytes hashed are
+ * the bytes a checkout holds and the install copies.
  *
  * Usage:
  *   node build-rules-ledger.mjs            write scripts/shipped-rules.json
@@ -70,8 +73,9 @@ function buildRulesLedger(root) {
   // Inside `git merge --no-commit` the incoming side's commits are reachable only from MERGE_HEAD.
   let mergeHead = [];
   try { git(root, ['rev-parse', '-q', '--verify', 'MERGE_HEAD']); mergeHead = ['MERGE_HEAD']; } catch { /* no merge in progress */ }
-  const commits = git(root, ['log', '--full-history', '--format=%H', 'HEAD', ...mergeHead, '--', 'rules/']).toString().split('\n').filter(Boolean);
-  for (const commit of commits) {
+  const commitsTouching = (where) =>
+    git(root, ['log', '--full-history', '--format=%H', 'HEAD', ...mergeHead, '--', where]).toString().split('\n').filter(Boolean);
+  for (const commit of commitsTouching('rules/')) {
     for (const entry of git(root, ['ls-tree', '-r', '-z', commit, '--', 'rules/']).toString('utf8').split('\0')) {
       const match = /^\d+ blob ([0-9a-f]+)\trules\/(.+)$/.exec(entry);
       if (!match) continue;
@@ -79,13 +83,29 @@ function buildRulesLedger(root) {
       blobsByPath.get(match[2]).add(match[1]);
     }
   }
-  const bytes = blobBytes(root, [...new Set([...blobsByPath.values()].flatMap((set) => [...set]))]);
-  const hashes = new Map([...blobsByPath].map(([rel, shas]) => [rel, new Set([...shas].map((s) => sha256(bytes.get(s))))]));
-  const rules = path.join(root, 'rules');
-  for (const rel of filesUnder(rules)) {
-    if (!hashes.has(rel)) hashes.set(rel, new Set());
-    hashes.get(rel).add(sha256(fs.readFileSync(path.join(rules, rel))));
+  // Every committed version of the ledger itself (ADR 0174): what history no longer holds stays recorded.
+  const ledgerBlobs = new Set();
+  for (const commit of commitsTouching(RULES_LEDGER_FILE)) {
+    const match = /^\d+ blob ([0-9a-f]+)\t/.exec(git(root, ['ls-tree', '-z', commit, '--', RULES_LEDGER_FILE]).toString('utf8'));
+    if (match) ledgerBlobs.add(match[1]);
   }
+  const bytes = blobBytes(root, [...new Set([...blobsByPath.values(), ledgerBlobs].flatMap((set) => [...set]))]);
+  const hashes = new Map([...blobsByPath].map(([rel, shas]) => [rel, new Set([...shas].map((s) => sha256(bytes.get(s))))]));
+  const add = (rel, hash) => {
+    if (!hashes.has(rel)) hashes.set(rel, new Set());
+    hashes.get(rel).add(hash);
+  };
+  // A malformed version would be carried forever, so it is an error naming the blob, never skipped.
+  for (const blob of ledgerBlobs) {
+    let recorded;
+    try { recorded = JSON.parse(bytes.get(blob).toString('utf8')); } catch (err) { recorded = err; }
+    const wellFormed = recorded?.constructor === Object && Object.values(recorded)
+      .every((list) => Array.isArray(list) && list.every((hash) => /^[0-9a-f]{64}$/.test(hash)));
+    if (!wellFormed) throw new Error(`${RULES_LEDGER_FILE} at blob ${blob} is malformed; it must map each path to sha256 hashes.`);
+    for (const [rel, list] of Object.entries(recorded)) for (const hash of list) add(rel, hash);
+  }
+  const rules = path.join(root, 'rules');
+  for (const rel of filesUnder(rules)) add(rel, sha256(fs.readFileSync(path.join(rules, rel))));
   const ledger = {};
   for (const rel of [...hashes.keys()].sort()) ledger[rel] = [...hashes.get(rel)].sort();
   return ledger;

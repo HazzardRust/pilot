@@ -217,6 +217,15 @@ test('a failing push is named, and no handoff item is posted behind it', async (
   assert.equal(git(work, 'log', '-1', '--format=%s'), 'chore(x): run record', 'the commit itself is kept');
 });
 
+test('a trailer that is not one Key: value line is refused before anything lands', async (t) => {
+  const { work } = scratchWorktree(t);
+  const deck = await stubDeck(t, { feature: 'the thing', slug: 'x', worktree: work, next: 'n' });
+  const result = await handoff({ cwd: REPO, env: underWrapper, trailers: ['A: b\nReviewed-by: x'] });
+  assert.equal(result.ok, false);
+  assert.equal(deck.posts.length, 0);
+  assert.match(result.line, /^NOT handed off: trailer .* is not one "Key: value" line; no handoff item posted$/);
+});
+
 test('a failing commit is named, and no handoff item is posted behind it', async (t) => {
   const { work } = scratchWorktree(t);
   fs.writeFileSync(path.join(work, '.git', 'hooks', 'pre-commit'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });

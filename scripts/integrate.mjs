@@ -8,7 +8,8 @@
  *   the deck wrote under docs/design/, and push again. With no branch it takes the base
  *   alone.
  *
- * The base is the pilot branch, always (pilot-branch spec 3; L5): no PR is read for it,
+ * The base is the pilot branch (pilot-branch spec 3; L5), or a chained run's `feat/<N>` until
+ * N lands (`baseOf`; pilot-develop-line spec 4a, L6): no PR is read for it,
  * and a missing pilot branch on the run remote (`runRemote`; the local `pilot` under
  * `none`) stops with nothing merged rather than falling back to the default branch. A
  * feature already landed on pilot (`landedOnPilot`) takes no base, so a later feature on
@@ -16,16 +17,17 @@
  * must not be `pilot` (`pilot land` is the only way onto it) and must pass
  * `assertPushable` before anything is merged, and every push names that branch, so a run
  * sitting on the default branch pushes nothing (spec 4; L4).
- * On `feat/<slug>` a slice whose PR title is off the one format (`titleProblem`; ADR 0100)
- * is refused next, before anything is merged; no PR, or no `gh`, skips the check. On red or a stop the branch is reset to where it started,
+ * On `feat/<slug>` the slice's merge is subjected `feat(<slug>): S<n> <title>` from the run
+ * record row whose `branch` is the slice (`sliceSubject`; pilot-develop-line spec 3), and no
+ * PR is read; a record naming no such row refuses the slice before anything is merged, and
+ * no record at all leaves `Merge <slice>`. On red or a stop the branch is reset to where it started,
  * so nothing is committed or pushed, and the failing tests are named. The answer is one
  * line: the tip, the pass and fail counts, and whether it was pushed. Written because the
  * pilot did these steps by hand for every slice, and the S3 merge of independence
  * reported ten false failures from a worktree with no node_modules.
  *
  * Once the push has succeeded, the slice goes through `deleteMerged` with `into` the feature
- * branch (pilot-fork spec 6, 8; L4, L5): a PR is polled up to `wait` ms for gh to read it
- * MERGED, a slice with none is judged by ancestry, and the line ends `; deleted <slice>` or
+ * branch (pilot-fork spec 6, 8; L4, L5): a slice whose PR does not read MERGED is kept, one with no PR is judged by ancestry, and the line ends `; deleted <slice>` or
  * `; kept <slice>: <why>`. Red, a stop, `--no-push`, local mode (A2) and a `feat/` branch
  * delete nothing.
  */
@@ -36,57 +38,54 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { cleanOnPilot } from '../deck/gate2-base.mjs';
+import { RUN_BASE } from '../deck/runs.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
 import { deleteMerged } from './branches.mjs';
 import { takeSlot } from './gate-slots.mjs';
 import { mergeIntoPilot } from './sync.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
 import { assertPushable, firstLine, git, holds, PILOT_BRANCH, pilotLineage } from './pilot-branch.mjs';
-import { runRef, runRemote, shortRef } from './remotes.mjs';
+import { remoteOf, runRef, runRemote, shortRef } from './remotes.mjs';
 import { scopeOf } from './select-tests.mjs';
+import { runRecord } from './worktrees.mjs';
 
 const RECORDS = ':(glob)docs/design/*/run.json';
-/** How long a slice's open PR is polled for GitHub to read it merged (L5). */
-const MERGE_WAIT_MS = 30_000;
+/** One trailer line: a key of letters and hyphens, a colon, a space, a value on the same line. */
+export const TRAILER = /^[A-Za-z][A-Za-z-]*: \S.*$/;
 
 export { git };
 
 /** The real `gh`, argv only, run without a shell in `cwd`. */
 export const ghIn = (cwd) => (args) => execFileSync('gh', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 
-/** The PR whose head is this branch, from `gh`, or null when there is none or no `gh`. */
-function prOf(branch, gh) {
-  try {
-    return JSON.parse(gh(['pr', 'list', '--head', branch, '--state', 'all', '--limit', '1', '--json', 'number,title']))[0] ?? null;
-  } catch {
-    return null;
-  }
-}
-
 // A command string, not a file and arguments: `npm` is `npm.cmd` on Windows and needs a shell.
 export const installWithNpm = (cwd) => execSync('npm ci', { cwd, stdio: 'ignore', windowsHide: true });
 
-/** "feat(x): S3 the slice" becomes "Merge S3: the slice (#12)", the way merges have read. */
-export function mergeMessage(branch, pr) {
-  if (!pr) return `Merge ${branch}`;
-  const title = String(pr.title ?? '').replace(/^\w+(\([^)]*\))?!?:\s*/, '');
-  const slice = /^(S\d+\w*)\s+(.+)$/.exec(title);
-  return `Merge ${slice ? `${slice[1]}: ${slice[2]}` : title || branch} (#${pr.number})`;
+/** A run record row's `S<n> <title>` as the slice merge's subject, `feat(<slug>): S<n> <title>`, the title lower-case first (A3). */
+export function sliceSubject(slug, row) {
+  return `feat(${slug}): ${String(row.slice).replace(/^(S\d+\w*\s+)(\S)/, (_, n, first) => n + first.toLowerCase())}`;
 }
 
-const escaped = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
 /**
- * Null when `title` fits the one PR title format for feature `slug` (co-pilot-reports L9),
- * otherwise the format it should match: a title starting `fix(` is held to the fix-round
- * format, any other to the slice format.
+ * The subject of `slice`'s merge onto `feat/<slug>`, from the row of the run record in `cwd`
+ * whose `branch` is the slice; never from a PR (pilot-develop-line spec 3). With no record
+ * there, or a head that is not `feat/`, the merge reads `Merge <slice>`. A record with no row
+ * naming the slice throws: the slice is not this run's.
  */
-export function titleProblem(title, slug) {
-  const s = escaped(slug);
-  if (title.startsWith('fix(')) {
-    return new RegExp(`^fix\\(${s}\\): \\S`).test(title) ? null : `fix(${slug}): <what>`;
-  }
-  return new RegExp(`^feat\\(${s}\\): S\\d+\\w* [^A-Z]`).test(title) ? null : `feat(${slug}): S<n> <title, first letter lower-case>`;
+function subjectOf(cwd, head, slice) {
+  const found = recordIn(cwd, head);
+  if (!found) return `Merge ${slice}`;
+  const row = found.record.slices?.find((r) => r.branch === slice);
+  if (!row) throw new Error('no run record row names it');
+  return sliceSubject(found.slug, row);
+}
+
+/** The run record in `cwd` of `head`, a `feat/<slug>`: `{ slug, record }`, or null with no record there or another head. */
+function recordIn(cwd, head) {
+  const slug = /^feat\/(.+)$/.exec(head ?? '')?.[1];
+  const file = slug && path.join(cwd, runRecord(slug));
+  if (!file || !fs.existsSync(file)) return null;
+  return { slug, record: JSON.parse(fs.readFileSync(file, 'utf8')) };
 }
 
 /**
@@ -239,12 +238,11 @@ export function commitRecords(cwd, trailers = []) {
 const gitIn = (cwd) => (args) => git(cwd, ...args);
 
 /**
- * The base every integration takes: the pilot branch on the run remote, or the local one in
- * local mode (pilot-branch spec 3; pilot-fork spec 4; L5). No PR is read for it. Throws naming
- * `pilot base` when there is no pilot branch there; there is no fallback to the default branch.
- * `runs` is `runRemote`'s answer, read here when not given.
+ * The pilot branch on the run remote, or the local one in local mode (pilot-branch spec 3;
+ * pilot-fork spec 4; L5): `{ ref }`. No PR is read for it. Throws naming `pilot base` when there
+ * is no pilot branch there; there is no fallback to the default branch.
  */
-export function baseOf(cwd, runs = runRemote(gitIn(cwd))) {
+function pilotBase(cwd, runs = runRemote(gitIn(cwd))) {
   const ref = runRef(runs, PILOT_BRANCH);
   if (!holds(cwd, ['rev-parse', '-q', '--verify', `${ref}^{commit}`])) {
     throw new Error(`no ${shortRef(ref)} (run pilot base first)`);
@@ -252,28 +250,54 @@ export function baseOf(cwd, runs = runRemote(gitIn(cwd))) {
   return { ref: shortRef(ref) }; // short, so an unset pilot.remote merges with today's argv (L3)
 }
 
+/**
+ * The base every integration takes (pilot-develop-line spec 4a; L6): with the checked-out
+ * `feat/<slug>`'s run record saying `base: feat/<N>` and no landing merge of N on pilot yet,
+ * N's tip on origin, `{ ref: 'origin/feat/<N>', chained: 'feat/<N>' }`; else `pilotBase`'s
+ * `{ ref }`. The base is the record's, never read from ancestry; a record base that is neither
+ * pilot nor `feat/<slug>` throws. `runs` is `runRemote`'s answer, read here when not given.
+ */
+export function baseOf(cwd, runs = runRemote(gitIn(cwd))) {
+  const pilot = pilotBase(cwd, runs);
+  let head;
+  try {
+    head = git(cwd, 'symbolic-ref', '-q', '--short', 'HEAD');
+  } catch {} // detached: no record to read, so pilot
+  const base = recordIn(cwd, head)?.record.base;
+  if (base === undefined || base === PILOT_BRANCH) return pilot;
+  if (typeof base !== 'string' || !RUN_BASE.test(base)) throw new Error(`run record base ${JSON.stringify(base)} is not ${PILOT_BRANCH} or feat/<slug>`);
+  // Any landing of N on pilot ends the chain, contained in HEAD or not, so it never comes back.
+  if (landingsOf(cwd, base, pilot.ref).length) return pilot;
+  return { ref: shortRef(runRef(remoteOf(runs, base), base)), chained: base };
+}
+
 /** The message of the merge `pilot land` writes onto the pilot branch. */
 export const landingMessage = (head) => `Merge ${head} into ${PILOT_BRANCH}`;
 
-/**
- * Whether `landingMessage(head)` is the subject of a two-parent commit on the pilot branch's (`ref`, default `baseOf`'s)
- * first-parent history that HEAD does not contain: the feature has landed (a landed feature
- * never holds its own landing, L6). Read from git alone, never the deck; a message reaching
- * pilot only as a second parent, a one-parent commit, or a branch cut after it does not count.
- */
-export function landedOnPilot(cwd, head, ref = baseOf(cwd).ref) {
+/** `head`'s landing merges on `ref`'s first-parent history: two-parent commits subjected `landingMessage(head)`. */
+function landingsOf(cwd, head, ref) {
   const subject = landingMessage(head);
   return git(cwd, 'log', '--first-parent', '--format=%H %P%x00%s', ref)
     .split('\n')
     .map((line) => line.split('\0'))
-    .some(([ids, s]) => s === subject && ids.split(' ').length === 3 && git(cwd, 'rev-list', '-n', '1', ids.split(' ')[0], '^HEAD') !== '');
+    .filter(([ids, s]) => s === subject && ids.split(' ').length === 3)
+    .map(([ids]) => ids.split(' ')[0]);
+}
+
+/**
+ * Whether `landingMessage(head)` is the subject of a two-parent commit on the pilot branch's (`ref`, default `pilotBase`'s)
+ * first-parent history that HEAD does not contain: the feature has landed (a landed feature
+ * never holds its own landing, L6). Read from git alone, never the deck; a message reaching
+ * pilot only as a second parent, a one-parent commit, or a branch cut after it does not count.
+ */
+export function landedOnPilot(cwd, head, ref = pilotBase(cwd).ref) {
+  return landingsOf(cwd, head, ref).some((id) => git(cwd, 'rev-list', '-n', '1', id, '^HEAD') !== '');
 }
 
 /**
  * Integrate one slice branch, or with none take the base alone. `test` is the shell
  * command, run as given (default the repository's own since the tip before the merge, `runChosen`), `push` false keeps origin untouched, `trailers` are
- * `Key: value` lines for every commit made, `wait` the ms a pushed slice's open PR is polled
- * before it is kept. `findPr`, `install` and `gh` are the calls
+ * `Key: value` lines for every commit made. `install` and `gh` are the calls
  * out to other tools, replaceable for a test. Answers `{ ok, line, failing }`, plus `code` 2 when it was refused for want of a test command.
  */
 export function integrate(branch, options = {}) {
@@ -283,9 +307,7 @@ export function integrate(branch, options = {}) {
     push = true,
     trailers = [],
     gh = ghIn(cwd),
-    findPr = (name) => prOf(name, gh),
     install = installWithNpm,
-    wait = MERGE_WAIT_MS,
   } = options;
   const slice = branch?.replace(/^origin\//, '');
   const not = slice ? `NOT integrated ${slice}` : 'base NOT taken';
@@ -294,27 +316,28 @@ export function integrate(branch, options = {}) {
   if (test === undefined && testCommand(cwd) === undefined) {
     return { ok: false, line: `${not}: ${NO_TEST}`, failing: [], code: 2 };
   }
+  // Each trailer is one `Key: value` line (`.` matches no CR or LF), so no value forges a second, such as a Reviewed-by.
+  const forged = trailers.map(String).find((line) => !TRAILER.test(line));
+  if (forged !== undefined) {
+    return { ok: false, line: `${not}: trailer ${forged.split(/[:\r\n]/)[0]} is not one "Key: value" line; nothing merged or pushed`, failing: [] };
+  }
 
   // The branch every push names, checked before anything is merged onto it.
   let head;
-  let pr = null;
+  let subject;
   try {
     head = git(cwd, 'symbolic-ref', '--short', 'HEAD');
     if (head.toLowerCase() === PILOT_BRANCH) throw new Error(`refusing to integrate onto ${PILOT_BRANCH}: pilot land is the only way onto it`);
     assertPushable(head, { git: (args) => git(cwd, ...args) });
-    // The one PR lookup: checked here, before any merge, and reused for the merge message.
-    if (slice) pr = findPr(slice);
+    // The merge's subject, from the run record before any merge: a slice it does not name is refused here.
+    if (slice) subject = subjectOf(cwd, head, slice);
   } catch (err) {
     return { ok: false, line: `${not}: ${firstLine(err)}; nothing merged or pushed`, failing: [] };
-  }
-  const slug = /^feat\/(.+)$/.exec(head)?.[1];
-  const format = pr && slug ? titleProblem(pr.title, slug) : null;
-  if (format) {
-    return { ok: false, line: `${not}: PR #${pr.number} title "${pr.title}" does not match ${format}; retitle with gh pr edit and rerun; nothing merged or pushed`, failing: [] };
   }
 
   let runs;
   let base;
+  let name;
   let taken;
   let landed;
   try {
@@ -324,8 +347,10 @@ export function integrate(branch, options = {}) {
     git(cwd, 'fetch', '-q', '--prune', 'origin');
     if (runs !== null && runs !== 'origin') git(cwd, 'fetch', '-q', '--prune', runs);
     base = baseOf(cwd, runs);
-    taken = `${PILOT_BRANCH}@${git(cwd, 'rev-parse', '--short', base.ref)}`;
-    landed = landedOnPilot(cwd, head, base.ref);
+    name = base.chained ?? PILOT_BRANCH;
+    taken = `${name}@${git(cwd, 'rev-parse', '--short', base.ref)}`;
+    // A chained run cannot have landed: its base N has not (L5).
+    landed = !base.chained && landedOnPilot(cwd, head, base.ref);
   } catch (err) {
     return { ok: false, line: `${not}: ${firstLine(err)}; nothing merged or pushed`, failing: [] };
   }
@@ -347,7 +372,7 @@ export function integrate(branch, options = {}) {
 
   try {
     // `git merge` has no --trailer: the trailers go in as the message's last paragraph.
-    if (!landed) git(cwd, 'merge', '-q', '--no-ff', '-m', `Merge base ${PILOT_BRANCH}`, ...(trailers.length ? ['-m', trailers.join('\n')] : []), base.ref);
+    if (!landed) git(cwd, 'merge', '-q', '--no-ff', '-m', `Merge base ${name}`, ...(trailers.length ? ['-m', trailers.join('\n')] : []), base.ref);
   } catch (err) {
     const stuck = reset();
     // A branch carrying pilot's commits as copies conflicts with their originals: say how
@@ -358,7 +383,7 @@ export function integrate(branch, options = {}) {
     } catch {}
     const are = copies === 1 ? 'commits is a copy' : 'commits are copies';
     const carried = copies ? `; ${copies} of ${head}'s ${are} of ${PILOT_BRANCH}'s` : '';
-    return { ok: false, line: `${not}: taking base ${PILOT_BRANCH} stopped (${firstLine(err)}); not pushed${carried}${stuck}`, failing: [] };
+    return { ok: false, line: `${not}: taking base ${name} stopped (${firstLine(err)}); not pushed${carried}${stuck}`, failing: [] };
   }
 
   if (slice) {
@@ -393,7 +418,7 @@ export function integrate(branch, options = {}) {
   const counts = summaryOf(run);
 
   try {
-    if (slice) commit(cwd, mergeMessage(slice, pr), trailers);
+    if (slice) commit(cwd, subject, trailers);
   } catch (err) {
     return fail(`${not}: the commit failed (${firstLine(err)}); not pushed`);
   }
@@ -423,7 +448,7 @@ export function integrate(branch, options = {}) {
   let said = 'not pushed (--no-push)';
   if (push) said = pushed ? 'pushed' : 'nothing to push';
   // A feature branch merged in is not a slice: only a run branch's is ever deleted here.
-  const pruned = slice && pushed && runs !== null && !/^feat\//i.test(slice) ? pruneSlice(cwd, gh, slice, head, wait) : '';
+  const pruned = slice && pushed && runs !== null && !/^feat\//i.test(slice) ? pruneSlice(cwd, gh, slice, head) : '';
   return { ok: true, line: `${what(`at ${tip}`)}: ${counts}; ${said}${pruned}`, failing: [] };
 }
 
@@ -485,9 +510,9 @@ export function trialOnPilot({ cwd, git = gitIn(cwd), head }) {
  * The pushed slice through `deleteMerged` into `head`: `; deleted <slice>`, `; kept <slice>: <why>`,
  * or nothing when the slice is not on its remote. A failure keeps it and names why.
  */
-function pruneSlice(cwd, gh, slice, head, wait) {
+function pruneSlice(cwd, gh, slice, head) {
   try {
-    const { deleted, kept } = deleteMerged({ git: gitIn(cwd), gh, select: (name) => name === slice, into: head, wait });
+    const { deleted, kept } = deleteMerged({ git: gitIn(cwd), gh, select: (name) => name === slice, into: head });
     if (deleted.includes(slice)) return `; deleted ${slice}`;
     return kept.length ? `; kept ${slice}: ${kept[0].why}` : '';
   } catch (err) {
