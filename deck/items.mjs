@@ -21,7 +21,7 @@
 import { pathKey as repoKey } from '../hooks/lib/platform.js';
 
 import {
-  DISMISSED_BY_USER, REPORT_DUE, SIGN_OFF, NOT_YET, SHA_FIELD, URL_FIELD, LOGIN_FIELD, SCREENS_FIELD, SLICE_FIELD, REPO_FIELD, NEXT_FIELD, DIR_FIELD, WORKDIR_FIELD, SHELL_FIELD,
+  DISMISSED_BY_USER, REPORT_DUE, SIGN_OFF, NOT_YET, SHA_FIELD, URL_FIELD, LOGIN_FIELD, SCREENS_FIELD, SLICE_FIELD, REPO_FIELD, NEXT_FIELD, DIR_FIELD, WORKDIR_FIELD, SHELL_FIELD, COMMENT_FIELD,
 } from './items-bounds.mjs';
 
 export {
@@ -227,7 +227,7 @@ const GATE1_FIELDS = [
 const GATE2_FIELDS = [
   { name: 'pr', required: true, shape: /^(#\d+|https?:\/\/\S+)$/, means: 'a PR url or #n' },
   SHA_FIELD,
-  { name: 'walkthrough', shape: /^itm_[0-9a-f]+$/, means: 'an item id' },
+  { name: 'walkthrough', shape: /^itm_[0-9a-f]+$/, means: 'an item id' }, COMMENT_FIELD,
   // The ticket it concludes: a green one after its walkthrough sign-off (overview-one-ticket L18); the post still turns a yellow one green.
   { ...TICKET_ID_FIELD, required: true },
 ];
@@ -256,7 +256,7 @@ const SPECS = {
   },
   // `longer`: one line on why a QA body needs more than its cap (short-by-default L3, overridden on itm_03d153719048).
   // `blocking` holds its ticket's gate2 until it closes (yellow-lane spec 4, L3).
-  [KIND_WALKTHROUGH]: { options: false, fields: [...WALKTHROUGH_FIELDS, TICKET_ID_FIELD, { name: 'longer' }, { name: 'blocking', flag: true }] },
+  [KIND_WALKTHROUGH]: { options: false, fields: [...WALKTHROUGH_FIELDS, TICKET_ID_FIELD, { name: 'longer' }, { name: 'blocking', flag: true }, COMMENT_FIELD] },
   // A report naming its green ticket is the closing report, and closes it (spec 1, A1).
   [KIND_REPORT]: { options: false, fields: [...WALKTHROUGH_FIELDS, TICKET_ID_FIELD] },
   // Its size in slices, the count a gate1 carries (slice-estimates L13); a merge sums it (L5).

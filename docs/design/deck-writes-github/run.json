@@ -1,0 +1,342 @@
+{
+  "slug": "deck-writes-github",
+  "feature": "The deck writes to GitHub",
+  "ticket": "itm_5f1725c876a7",
+  "branch": "feat/deck-writes-github",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deck-writes-github-r2",
+  "artefact": "docs/design/deck-writes-github/architecture.md",
+  "slices": [
+    {
+      "slice": "deck-writes-github",
+      "state": "in QA: walkthrough itm_554405ba9f7b posted, awaits the user's Sign off; feat f57afcc2 (all 8 slices + fix round #77 integrated); WSL x5 green at f57afcc2; integrate --trial clean",
+      "branch": "feat/deck-writes-github",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deck-writes-github-r2",
+      "pr": 4
+    },
+    {
+      "slice": "S1 `pilot pr` writes the feature PR from the record",
+      "state": "integrated at 06aa5fe1 (#71)",
+      "branch": "slice/deck-writes-github-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s1",
+      "pr": 71
+    },
+    {
+      "slice": "S2 The deck runs `pilot pr` on gate1 and every status",
+      "state": "integrated at 18a7d20c (#74)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/deck-writes-github-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s2",
+      "pr": 74
+    },
+    {
+      "slice": "S3 QA's comment rides on its posts",
+      "state": "integrated at 7342641d (#75)",
+      "after": [
+        "S1",
+        "S2"
+      ],
+      "branch": "slice/deck-writes-github-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s3",
+      "pr": 75
+    },
+    {
+      "slice": "S4 `pilot integrate --dir`",
+      "state": "integrated at b0fbdf22 (#70)",
+      "branch": "slice/deck-writes-github-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s4",
+      "pr": 70
+    },
+    {
+      "slice": "S5 `pilot doctor` names a missing allow rule",
+      "state": "integrated at b973ee56 (#69)",
+      "branch": "slice/deck-writes-github-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s5",
+      "pr": 69
+    },
+    {
+      "slice": "S6 The crew names no GitHub write and one plain command",
+      "state": "integrated at 58c46155 (#76)",
+      "after": [
+        "S3",
+        "S4"
+      ],
+      "branch": "slice/deck-writes-github-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s6",
+      "pr": 76
+    },
+    {
+      "slice": "S7 ADR and OPERATING say the deck writes GitHub",
+      "state": "integrated at ed40b634 (#72)",
+      "branch": "slice/deck-writes-github-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s7",
+      "pr": 72
+    },
+    {
+      "slice": "S8 Every `gh` call goes through `deck/host.mjs`",
+      "state": "integrated at b347b748 (#73)",
+      "after": [
+        "S1",
+        "S4"
+      ],
+      "branch": "slice/deck-writes-github-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s8",
+      "pr": 73
+    },
+    {
+      "slice": "feature",
+      "state": "in QA, walkthrough itm_554405ba9f7b posted",
+      "pr": 4
+    }
+  ],
+  "findings": [
+    "kept: OPERATING.md pilot pr row",
+    "kept: gh allowlist refuses -R/--repo, -w/--web, -e/--editor on PR verbs, clusters included",
+    "kept: @mentions neutralised in PR body, QA comment, title",
+    "kept: unused HOST_VERBS export and uncalled api POST comment path deleted",
+    "kept: doctor reuses readSettings from install-settings.mjs",
+    "kept: qaComment kept out of run.json and the session-start hook",
+    "kept: pilot integrate usage names --dir",
+    "dropped: moving qaComment off the record, would move spec 3",
+    "dropped: madge cycle integrate.mjs <-> sync.mjs, reported as already on origin/pilot b38de846",
+    "dropped: three fix-round LOWs (label create -R, --body-file any path, &#64; mentions), older than this diff",
+    "dropped: coverage and mutation evidence never produced (c8 red under scratch HOME, Stryker timed out)"
+  ],
+  "next": "dwg green: user walks itm_554405ba9f7b; on Sign off resume QA af0430e4cd7904b5d for gate2 (PR 4, f57afcc2), lander, QA teardown (scratch deck pid 18484, PRs #78 #79). Never press scratch gate2s. handoff-mod: A7 itm_6cb636583c2c, then gate1. other-host held: itm_9abc4a4cc562. User: merge #65 itm_cf8d745a9d84.",
+  "updatedAt": "2026-11-16T12:05:08.758Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot gh-stub answers every call with one reply.txt, so a live run cannot show create then unchanged in one pass; a reply per verb would let QA's L9 rehearsal be one run",
+      "evidence": "S1 report, PR #71",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "seeding a scratch deck's fixture ticket took three tries: deck_post refuses a ticket body not in ticket-making's shape",
+      "evidence": "S1 report, PR #71",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "hand-off dropped a landed ticket's closing report: lander-report stayed green and live with no open thread for 2.5 h; the record's next named it only as '#37'",
+      "evidence": "itm_09a7f609e937, gate2 itm_5c52090cb347 landed 07:07Z, report itm_43bcb2225ca9 posted 09:4xZ",
+      "size": 3
+    },
+    {
+      "agent": "pilot",
+      "what": "after a hand-off the planning lane read 'live' on handoff-mod with no architect running; nothing in the first prompt says to restart planning",
+      "evidence": "user chat 09:38Z; itm_97c9e8fdf1d2",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "harness handback enforcement made the co-pilot hand back 'paused' twice with two implementers live, against its own rule; the deck then showed everything paused",
+      "evidence": "co-pilot hand-backs for itm_5f1725c876a7; user chat 09:37Z",
+      "size": 3
+    },
+    {
+      "agent": "deck",
+      "what": "no move from yellow back to red: a signed ticket that needs a re-cut cannot take a second gate1, so Gate 1 went up as a signoff and the ticket's plan field stays stale",
+      "evidence": "gate1 refusal 'itm_5f1725c876a7 is yellow'; signoff itm_37c47ae69a4a",
+      "size": 2
+    },
+    {
+      "agent": "deck",
+      "what": "pilot wait exits at once while the yellow lane is empty and a signed ticket queues, so the pilot cannot listen without holding the lane on a ticket it is not building",
+      "evidence": "pilot wait output 'yellow lane empty; … co-pilot it first', three times",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "a gate2 was posted and pressed before the five WSL referee runs finished; the instruction to wait reached QA after its post",
+      "evidence": "gate2 itm_bf0aa294dfc8 pressed 08:35Z, runs 3-5 finished after",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 and S8 implementers were also compacted within minutes of spawn, the third and fourth this run; an implementer's context appears to fill before its first edit",
+      "evidence": "S1, S2, S4, S8 status messages",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: operating-commands.test.mjs fails on any OPERATING table command pilot help lacks, coupling a docs slice to the verb's slice; the slice file never named the test",
+      "evidence": "S7 report, PR #72",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate refused PR #72's title because S7's title starts with the acronym ADR; the co-pilot's brief copied the artefact title; one gh pr edit retitle",
+      "evidence": "NOT integrated line for slice/deck-writes-github-s7",
+      "size": 2
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "S1's security reviewer ran one real `gh api -X POST …/issues/1/comments` without the gh stub, against its brief; it failed and issue 1 has 0 comments",
+      "evidence": "co-pilot hand-back; gh api issues/1/comments length 0",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "four of six implementers were compacted within minutes of starting, before a first edit, and restarted",
+      "evidence": "co-pilot hand-back, S1 S2 S4 S8",
+      "size": 3
+    },
+    {
+      "agent": "pilot",
+      "what": "hand-off dropped lander-report's closing report: a green card with no thread on the deck",
+      "evidence": "chat itm_0bfcf27836de, 2026-11-16 09:39"
+    },
+    {
+      "agent": "pilot",
+      "what": "after a hand-off the red ticket held the planning lane with no architect running",
+      "evidence": "chat itm_0bfcf27836de, 2026-11-16 09:38; itm_97c9e8fdf1d2"
+    },
+    {
+      "agent": "co-pilot",
+      "what": "co-pilot forced to hand back paused while its implementers were still live",
+      "evidence": "chat itm_0bfcf27836de stop list (3)"
+    },
+    {
+      "agent": "lander",
+      "what": "a crew agent cannot reach the deck in a session whose deck MCP failed at start; seen again today on both handoff-mod architects, which could post or resolve nothing",
+      "evidence": "architect reports 2026-11-16: 'deck MCP failed to connect (CONNECTION_CLOSED)'"
+    },
+    {
+      "agent": "pilot",
+      "what": "a stale blocking question outlived its landing and hid from the user's list",
+      "evidence": "chat itm_0bfcf27836de stop list (5)"
+    },
+    {
+      "agent": "pilot",
+      "what": "no deck move from yellow back to red for a re-cut; Gate 1 of a re-cut had to go up as a signoff and the ticket's plan field still names a sha that no longer exists",
+      "evidence": "itm_37c47ae69a4a body; itm_5f1725c876a7 plan.sha 50e92503"
+    },
+    {
+      "agent": "pilot",
+      "what": "batched tool calls lose their auto-mode verdict and become Blocked items for the user",
+      "evidence": "itm_34edf8109808, itm_6c0ede6867af, and a third today on a git commit"
+    },
+    {
+      "agent": "architect",
+      "what": "an architect waited 110 minutes on a question the user had answered and the pilot had resolved, then reported it unanswered",
+      "evidence": "itm_092acdb3e41f resolved 08:05; architect report 'NO REPLY after 110 minutes'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8's slice file barred a HOST_VERBS verb without a caller but never listed the verbs its moved callers send; release.mjs's `label create` (via land) would have been dropped silently, caught only by the implementer",
+      "evidence": "S8 report, PR #73",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the bar's base count of 3 hinged on comment lines naming execFileSync('gh') that the slice file never mentioned; one red rerun",
+      "evidence": "S8 report, PR #73",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2's slice file named neither deck/README.md's module row (deck-readme lint) nor windowsHide: true on a deck spawn (console-hidden test); a second ~10 min full gate",
+      "evidence": "S2 report, PR #74",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "posting a gate1 through callTool in a test needs a red ticket, a resolved Merge? question and a non-git directory, documented only in architect-gate1.test.mjs:30-42",
+      "evidence": "S2 report, PR #74",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 implementer compacted right after creating its worktree again; early reads redone",
+      "evidence": "S2 report, PR #74",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate's selection exceeds the 24000-char argv cap on this feature (31350, 29696) and falls back to the full suite, ~4 min per integrate",
+      "evidence": "integrate lines for S8 b347b748, S2 18a7d20c",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3's slice file named neither the 800-line file limit (store-runs.mjs, items.mjs at it), the facade/field-list pins, the prompt-share pins, nor host.mjs refusing file bodies for gh api; first gate failed 8 tests, second gate run",
+      "evidence": "S3 report, PR #75",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-fact-sheet",
+      "what": "reported the walkthrough SPECS entry not found; it is at deck/items.mjs:259",
+      "evidence": "S3 report, PR #75",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate refused PR #75 again for a capital first letter (\"QA's\"); a second slice title this run copied from the artefact's own capitalised title; one gh pr edit retitle, the very crew GitHub write this feature removes",
+      "evidence": "NOT integrated line for slice/deck-writes-github-s3",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the repo's agents/pilot-implementer.md:128 says a slice report carries what a PR body would, while the loaded definition and brief open a draft PR",
+      "evidence": "S6 report, PR #76",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "first gate's log went to an unignored file one level above the worktree; and a gate ran before the reviewer fix, two ~5 min runs",
+      "evidence": "S6 report, PR #76",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "stopped twice on its own background work without returning a table to the fundamentalist (its report reached main instead); c8 run with scratch HOME red, Stryker timed out, so no coverage or mutation data for the feature",
+      "evidence": "fundamentalist report; main's relay",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "git worktree remove of its principles worktree failed Permission denied while the runner's processes held files; left for the co-pilot",
+      "evidence": "fundamentalist report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "install.test.mjs's export-surface pin was not among the pins named; one extra 5-min gate; gh-stub env-save boilerplate copied by hand per test file (host-bar, feature-pr)",
+      "evidence": "fix round report, PR #77",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the 800-line limit is not uniformly enforced: hooks/test/session-handoff.test.js is 1077 lines with nothing flagging it",
+      "evidence": "fix round report, PR #77",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "§9 step 0 (`claude plugin update`) cannot test a feature branch: the marketplace serves GitHub main; QA ran the feature's own daemon from its worktree instead",
+      "evidence": "QA report; claude plugin marketplace list",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the fixture gate path on a scratch deck is undocumented: gate2 needs #n, a yellow ticket (signed and resolved gate1), short-path Verdict:/Gate: lines; ~8 refusals",
+      "evidence": "QA report",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "Git Bash path conversion mangled /api/runs and the WSL script path (2 failed runs); fresh clones lack the noreply email (1 rejected push); integrate --trial refuses a detached HEAD (1 rerun)",
+      "evidence": "QA report",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a feature that changes deck_post's schema cannot use its own new field before landing: QA's comment on PR #4 waits for the landed deck",
+      "evidence": "QA 0.9.7 MCP schema lacks comment; user's deck 0.9.5",
+      "size": 1
+    }
+  ]
+}

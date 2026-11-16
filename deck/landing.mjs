@@ -167,7 +167,7 @@ export function landingSpawnOptions(cwd, env, platform) {
  * when it cannot run, `done({ timedOut: true })` past `timeoutMs`, its tree killed. Counted in
  * `running` while live, so the idle rule never closes the deck under it.
  */
-function watch(child, { clock, kill, timeoutMs, done }) {
+export function watch(child, { clock, kill, timeoutMs, done }) {
   let stdout = '';
   let stderr = '';
   // Only the tail is ever shown, so only a bounded tail is ever held.

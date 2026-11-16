@@ -41,6 +41,7 @@ import { run as runPilot } from '../deck/run.mjs';
 import { main as handoff } from '../scripts/handoff.mjs';
 import { main as deckStatus } from '../deck/status-command.mjs';
 import { main as integrate } from '../scripts/integrate.mjs';
+import { main as featurePr } from '../scripts/feature-pr.mjs';
 import { main as land } from '../scripts/land.mjs';
 import { main as landing } from '../deck/landing-wait.mjs';
 import { main as sync } from '../scripts/sync.mjs';
@@ -85,13 +86,17 @@ const usage = () => `pilot — the deck for piloted runs
   pilot handoff [--trailer "<line>"]...
                  the pilot's hand-off, after its deck_status: commit and push run.json in
                  the feat worktree and post the handoff item; \`pilot run\` types the /clear
-  pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]...
-                 in the feat/<slug> worktree: take origin/pilot, merge the slice (if
+  pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]... [--dir <worktree>]
+                 in the feat/<slug> worktree (or the one --dir names): take origin/pilot, merge the slice (if
                  named), test the selection (the tests the diff touches), push, commit run.json; refuses on the default branch
-  pilot integrate --trial
+  pilot integrate --trial [--dir <worktree>]
                  in the feat/<slug> worktree, before the gate2: push the feature and try its
                  tip on pilot, merging nothing into it; prints on pilot: clean at <sha7>, the
                  sha the gate2 names, or exit 3 a conflict prepared for the lander
+  pilot pr --ticket <itm_id>
+                 the deck's write of a run's feature PR: open the draft feat/<slug> PR on the
+                 record's base, or rewrite its body (spec and slice table) and base when they
+                 differ; prints one line, nothing written when GitHub already matches
   pilot base     print the ref the next run is cut from: origin's pilot branch and its
                  tip, created from the default branch's tip when origin has none
   pilot gh-stub [--dir <d>] [--powershell]
@@ -306,6 +311,11 @@ export async function run(argv) {
 
   if (command === 'integrate') {
     process.exitCode = integrate(argv.slice(1));
+    return undefined;
+  }
+
+  if (command === 'pr') {
+    process.exitCode = await featurePr(argv.slice(1));
     return undefined;
   }
 

@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 
 import { checkAll, checkScanner, main } from '../doctor.mjs';
+import { PILOT_MERGE_ALLOW } from '../../scripts/install-settings.mjs';
 
 const ROOT = 'C:\\Users\\dev\\Projects';
 const EXCLUSION_STEP = `one-time, as administrator: Add-MpPreference -ExclusionPath '${ROOT}' (reversible with Remove-MpPreference)`;
@@ -141,6 +142,7 @@ function passing(overrides = {}) {
     canWrite: () => true,
     onPath: () => true,
     probe: async () => ({ state: 'none' }),
+    readSettings: () => ({ permissions: { allow: PILOT_MERGE_ALLOW } }),
     ...overrides,
   };
 }

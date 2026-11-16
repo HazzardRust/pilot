@@ -16,12 +16,10 @@ import { execFileSync } from 'node:child_process';
 
 import { bearer } from '../hooks/lib/deck-secret.js';
 import { defaultBranch } from '../scripts/pilot-branch.mjs';
+import { hostIn } from './host.mjs';
 import { liveTicketOf, mergeDecisionOf, messagesOf, ticketQueueOf } from './items.mjs';
 import { laneTicketOf } from './lane-ticket.mjs';
 import { deckUrl } from './tools.mjs';
-
-/** The real `gh`, run without a shell in `cwd`. */
-const ghIn = (cwd) => (args) => execFileSync('gh', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 
 /**
  * The records of one directory whose `feat/` branch has an open PR of this repository that the account `gh` is
@@ -124,7 +122,7 @@ function formatRuns(records, { gh, git }) {
 const gitIn = (cwd) => (args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 
 /** The subcommand's work: ask the deck, print the queue, or with `open` every open ticket and run. Answers the exit code. */
-export async function tickets({ cwd = process.cwd(), say = (text) => process.stdout.write(text), open = false, gh = ghIn(cwd), git = gitIn(cwd) } = {}) {
+export async function tickets({ cwd = process.cwd(), say = (text) => process.stdout.write(text), open = false, gh = hostIn(cwd), git = gitIn(cwd) } = {}) {
   let view;
   let url = 'the deck';
   let headers;

@@ -361,9 +361,8 @@ nothing else. The deck refuses a gate1 whose Verdict lines differ from that
 record, whoever posts it; a gate1 you post yourself (trivial work, a re-cut)
 records first. The architect then writes the lines, commits and pushes
 `design/<slug>`, creates `feat/<slug>` from its tip and pushes that too, opens
-the feature PR as a **draft** against its base, `pilot` or `feat/<N>`, with the artefact's spec and
-slice table as its body, sends `deck_status` and posts the gate1, which is your
-thread. On its hand-back, `pilot wait` on the gate1; clear any refusal it sends you.
+no PR, sends `deck_status` and posts the gate1, which is your thread; the deck
+opens the draft feature PR. On its hand-back, `pilot wait` on the gate1; clear any refusal it sends you.
 
 On the Sign off press, `deck_status` `finished: "planned"` with `ticket`, and
 take the next ticket, same session.
@@ -396,7 +395,7 @@ with no `Verdict:` line from it in the implementer's report waits: no security v
 `pilot:security-reviewer` on the slice branch first. Then send `deck_status` with `slug`, the current `next` and the slice's row
 alone, state `integrated`, and the deck writes `docs/design/<slug>/run.json`
 into your `feat/<slug>` worktree once `worktree` has been named. Then
-one call: `cd "<worktree>" && pilot integrate <slice-branch>
+one call: `pilot integrate --dir "<worktree>" <slice-branch>
 --trailer "Reviewed-by: <reviewer>: <verdict>"` (one per reviewer, `<verdict>` only the `Verdict:` line's first word, never more of the report; set `git config pilot.test` once where there
 is no package.json); it takes the base first. On a pass it pushes and commits the run record as
 `chore(<slug>): run record`. On a failure it pushes nothing: send the row's real state and route its line.
@@ -501,7 +500,7 @@ Sign off on its walkthrough is not the feature's Gate 2; QA closes that thread a
 edits its QA comment. On QA's `signed <id>`, or your own gate2's press, the deck lands it and
 the press frees the lane: its line wakes you with what the deck took in place, and you run no `pilot landing`.
 On `landed` its `report due` line asks for your `Findings:` (Ending a run).
-A `NOT landed: built on feat/<N>` waits for N's lander while N's gate2 is pressed; for a dropped N it is a fix brief reverting N's own commits on `feat/<slug>`, `deck_status` `base: pilot`, `gh pr edit --base pilot` on the feature PR, then a fresh gate2.
+A `NOT landed: built on feat/<N>` waits for N's lander while N's gate2 is pressed; for a dropped N it is a fix brief reverting N's own commits on `feat/<slug>`, `deck_status` `base: pilot` alone (the deck retargets the feature PR), then a fresh gate2.
 Every press, a clean one too, and every `NOT landed` but that get one `pilot-lander` whose brief is the gate2 id: it resolves
 with `resolving-merge-conflicts`, says `Land again` and the deck lands, then prunes and hands you one line; its
 trade-off is one question from you. A `lander due` line asks for that spawn; with no room in `pilot budget`, spawn

@@ -112,6 +112,7 @@ test('the deck knows its kinds, refuses posting any other, and still reads one a
     'ticket',
     'longer',
     'blocking',
+    'comment',
   ]);
   assert.deepEqual(
     specFor('handoff').fields.map((field) => field.name),
