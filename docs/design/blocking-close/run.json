@@ -15,12 +15,13 @@
     },
     {
       "slice": "S2 The gate2 and the closing report list the pilot closes",
-      "state": "implementing",
+      "state": "draft PR #41",
       "after": [
         "S1"
       ],
       "branch": "slice/blocking-close-s2",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-blocking-close-s2"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-blocking-close-s2",
+      "pr": 41
     },
     {
       "slice": "blocking-close",
@@ -36,15 +37,15 @@
     },
     {
       "slice": "S3 The pilot's rule and ADR 0177 widen Moot to every blocking question",
-      "state": "draft PR #40",
+      "state": "integrated at 053a3d2b",
       "branch": "slice/blocking-close-s3",
       "worktree": "C:/Users/Hazzard/Projects/pilot-blocking-close-s3",
       "pr": 40
     }
   ],
   "findings": [],
-  "next": "co-pilot: S2 implementing from 049cfebd; integrate S3 #40 now",
-  "updatedAt": "2026-11-16T01:45:23.320Z",
+  "next": "co-pilot: S2 draft PR #41 awaits its verdict and report, then pilot integrate; then fundamentalist and QA",
+  "updatedAt": "2026-11-16T01:57:40.815Z",
   "friction": [
     {
       "kind": "drain",
