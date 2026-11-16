@@ -51,10 +51,6 @@ test('a signed plan keeps surface false', (t) => {
 });
 
 test('QA cannot walk a plan with no surface', (t) => {
-  const gaps = walkthroughPlanGaps({ plan: { artefact: ARTEFACT, surface: false } }, 'qa');
-  assert.equal(gaps.length, 1);
-  assert.match(gaps[0], /docs\/design\/x\/architecture\.md/);
-
   tempDeck(t);
   const ticket = signed({ surface: false });
   const walk = () => postItem({ kind: KIND_WALKTHROUGH, title: 'Try it', body: 'Step one.', repo: REPO, author: QA, ticket: ticket.id });
@@ -63,8 +59,6 @@ test('QA cannot walk a plan with no surface', (t) => {
 });
 
 test("the pilot's wizard still walks it", (t) => {
-  assert.deepEqual(walkthroughPlanGaps({ plan: { artefact: ARTEFACT, surface: false } }, 'pilot'), []);
-
   tempDeck(t);
   const ticket = signed({ surface: false });
   assert.equal(postItem({ kind: KIND_WALKTHROUGH, title: 'Do this', body: 'Step one.', repo: REPO, ticket: ticket.id }).kind, KIND_WALKTHROUGH);

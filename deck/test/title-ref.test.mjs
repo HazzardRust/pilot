@@ -55,7 +55,7 @@ test('Waits on wraps each blocking question title', (t) => {
   tempDeck(t);
   const gate = postItem({
     kind: KIND_GATE2, title: 'A gate2', body: 'The evidence.', repo: REPO,
-    ...withTicket({ pr: 'https://github.com/HazzardRust/pilot/pull/250', sha: '0305827', walkthrough: 'itm_0123456789ab' }, REPO, 'yellow'),
+    ...withTicket({ pr: 'https://github.com/HazzardRust/pilot/pull/250', sha: '0305827' }, REPO, 'yellow'),
   });
   const first = ask(gate.ticket, 'Which <b>store</b>?', { blocking: true });
   const second = ask(gate.ticket, 'Which port?', { blocking: true });

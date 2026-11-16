@@ -16,7 +16,7 @@ const ENV_ASSIGNMENT = /(?<![\w$:])([A-Z][A-Z0-9_]*=)\S/;
 const LEADING_COMMAND = new RegExp(`^(${COMMANDS.join('|')}) `);
 
 /** The word that makes `half` a command, or null. Never the half's text (L5). */
-export function commandWord(half, isInstruction) {
+function commandWord(half, isInstruction) {
   for (const [, span] of half.matchAll(CODE_SPAN)) {
     const code = span.trim();
     const first = code.split(/\s+/)[0];
@@ -33,13 +33,18 @@ export function commandWord(half, isInstruction) {
   return null;
 }
 
+/** The word that makes a step a command, its instruction read first, or null: the one rule QA's refusal, the shell check and the prefix line use. */
+export function stepCommandWord(step) {
+  const { instruction, result } = stepParts(step);
+  return commandWord(instruction, true) ?? commandWord(result ?? '', false);
+}
+
 export const MAX_WALKTHROUGH_BODY_LINES = 10; // non-blank lines
 
 /** The gaps in a QA walkthrough, each worded as the refusal says it; [] when shaped. */
 export function walkthroughShapeGaps(screens, body = '', longer = undefined) {
   const steps = screens.flatMap((step, index) => {
-    const { instruction, result } = stepParts(step);
-    const word = commandWord(instruction, true) ?? commandWord(result ?? '', false);
+    const word = stepCommandWord(step);
     return word === null ? [] : [`step ${index + 1} has a command: \`${word}\``];
   });
   const count = body.split(/[\r\n]/).filter((line) => line.trim() !== '').length;

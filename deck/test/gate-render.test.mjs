@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-import { KIND_GATE1, KIND_GATE2, KIND_QUESTION, NOT_YET, SIGN_OFF } from '../items.mjs';
+import { KIND_GATE1, KIND_GATE2, KIND_QUESTION, KIND_WALKTHROUGH, NOT_YET, SIGN_OFF } from '../items.mjs';
 import { addReply, listItems, postItem, resolveItem } from '../store.mjs';
 import { renderDeckPage, renderHomePage, renderThreadPage } from '../ui/render.mjs';
 import { tempDeck, withTicket } from '../testUtils.mjs';
@@ -26,8 +26,12 @@ const GATE1 = {
 const GATE2 = { pr: 'https://github.com/HazzardRust/pilot/pull/250', sha: '0305827', walkthrough: 'itm_0123456789ab' };
 
 // A gate1 names a red ticket and a gate2 a yellow one (ticket-states spec 2), put here first.
-const post = (kind, fields) =>
-  postItem({ kind, title: `A ${kind}`, body: 'The evidence.', repo: REPO, ...withTicket(fields, REPO, kind === KIND_GATE1 ? 'red' : 'yellow') });
+// A gate2 naming a walkthrough names a real one on its ticket (walkthrough-surface F1).
+const post = (kind, fields) => {
+  const evidence = withTicket(fields, REPO, kind === KIND_GATE1 ? 'red' : 'yellow');
+  const walk = evidence.walkthrough && postItem({ kind: KIND_WALKTHROUGH, title: 'Try it', body: 'Step one.', repo: REPO, ticket: evidence.ticket });
+  return postItem({ kind, title: `A ${kind}`, body: 'The evidence.', repo: REPO, ...evidence, ...(walk ? { walkthrough: walk.id } : {}) });
+};
 const detailOf = (page) => page.match(/<dl class="detail">.*?<\/dl>/s)?.[0] ?? '';
 const labelsIn = (detail) => [...detail.matchAll(/<dt>([^<]*)<\/dt>/g)].map((match) => match[1]);
 const buttonsIn = (html) => [...html.matchAll(/name="choice" value="([^"]*)"(?![^>]*>Confirm<)/g)].map((match) => match[1]);
@@ -50,10 +54,11 @@ test("a gate1 card's detail lists artefact, sha, locked, slices, slice count, br
 
 test("a gate2 card's detail links the walkthrough id to its thread and the PR", (t) => {
   tempDeck(t);
-  const detail = detailOf(threadOf(post(KIND_GATE2, GATE2)));
+  const gate = post(KIND_GATE2, GATE2);
+  const detail = detailOf(threadOf(gate));
   assert.deepEqual(labelsIn(detail), ['PR', 'SHA', 'Walkthrough', 'Ticket']);
   assert.match(detail, /<a href="https:\/\/github\.com\/HazzardRust\/pilot\/pull\/250"[^>]*>/);
-  assert.match(detail, /<a href="\/thread\/itm_0123456789ab">itm_0123456789ab<\/a>/);
+  assert.ok(detail.includes(`<a href="/thread/${gate.walkthrough}">${gate.walkthrough}</a>`), detail);
   const bare = detailOf(threadOf(post(KIND_GATE2, { pr: '#250', sha: '0305827' })));
   assert.deepEqual(labelsIn(bare), ['PR', 'SHA', 'Ticket'], 'no walkthrough row when QA posted none (L19)');
   assert.match(bare, /<dd>#250<\/dd>/);

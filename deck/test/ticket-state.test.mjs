@@ -29,7 +29,8 @@ const merged = (ticket) =>
 const aTicket = (words = 'fix the thing') =>
   postItem({ kind: KIND_TICKET, sliceCount: 60, title: words, body: shapedTicketBody(words), repo: REPO });
 const aGate1 = (ticket) => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, ...EVIDENCE, ticket });
-const aGate2 = (ticket) => postItem({ kind: KIND_GATE2, title: 'Gate 2', body: 'Walk it.', repo: REPO, pr: '#250', sha: '0305827', walkthrough: 'itm_0a1b2c3d4e5f', ticket });
+const CHECKS = 'Walk it.\n\n| spec | result | evidence |\n| --- | --- | --- |\n| 1 | pass | ok |';
+const aGate2 = (ticket) => postItem({ kind: KIND_GATE2, title: 'Gate 2', body: CHECKS, repo: REPO, pr: '#250', sha: '0305827', ticket });
 const aReport = (ticket) => postItem({ kind: KIND_REPORT, title: 'Closing report', body: 'Done.', repo: REPO, ticket });
 const stored = (title, state) => postStored({ kind: KIND_TICKET, title, body: shapedTicketBody(title), repo: REPO, state });
 const reread = (id) => listItems().find((item) => item.id === id);

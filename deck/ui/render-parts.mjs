@@ -47,7 +47,7 @@ import {
   OWNER_KINDS,
 } from '../items.mjs';
 import { escapeHtml, renderMarkdown, renderMarkdownLine, renderUrl } from './markdown.mjs';
-import { commandWord } from '../walkthrough-shape.mjs';
+import { stepCommandWord } from '../walkthrough-shape.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -168,14 +168,14 @@ function renderRow(label, value) {
  * `**Done**` or a command as `npm test` reads the way the body above it does. It
  * is the inline rules only: the shape here is the list's, not the pilot's.
  *
- * A command step (`commandWord`, the rule QA's refusal uses) opens with the line it runs in,
+ * A command step (`stepCommandWord`, the rule QA's refusal uses) opens with the line it runs in,
  * `<shell> · <dir>`, whichever of the two the item carries (walkthrough-surface spec 8).
  */
 function renderSteps(screens, { shell, dir } = {}) {
   const where = [shell, dir].filter((part) => part !== undefined).join(' · ');
   const items = screens.map((screen) => {
     const { instruction, result } = stepParts(screen);
-    const isCommand = where !== '' && (commandWord(instruction, true) ?? commandWord(result ?? '', false)) !== null;
+    const isCommand = where !== '' && stepCommandWord(screen) !== null;
     return (
       `<li>${isCommand ? `<span class="step where">${escapeHtml(where)}</span>` : ''}` +
       `<span class="step do">${renderMarkdownLine(instruction)}</span>` +
@@ -257,7 +257,7 @@ const GATE_ROWS = {
   locked: ['Locked', (count) => escapeHtml(String(count))],
   slices: ['Slices', (table) => `<div class="md">${renderMarkdown(table)}</div>`],
   sliceCount: ['Slice count', (count) => escapeHtml(String(count))],
-  surface: ['Surface', () => 'yes: a walkthrough is owed'],
+  surface: ['Surface', () => 'yes: a walkthrough, or a reason line in the gate2'],
   branch: ['Branch', code],
   pr: ['PR', renderUrl],
   walkthrough: ['Walkthrough', threadLink],
