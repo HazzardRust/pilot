@@ -46,7 +46,7 @@ https://claude.ai/code/session_01Cmu6QXexHes1EiTfHDYBgB
 
 - suite-at-landing (about to land) edits `agents/pilot-co-pilot.md:47` beside S2's section: land it first, rebase onto it.
 - short-path edits `agents/pilot.md` `## Yellow`; architect-runs-red edits Phase A and `agents/pilot-architect.md`: neither touches step 7. Both may raise the pilot pin in `scripts/test/measure-prompt.test.mjs:178`; whichever lands later re-measures on rebase and records the combined number.
-- ADR 0165-0169 are held by other design branches; this run takes 0171 (S3).
+- This run's ADR is ADR NNNN (S3), numbered by the landing (`scripts/adr-allocate.mjs`); pilot already holds 0171-0176.
 
 ## QA environment
 

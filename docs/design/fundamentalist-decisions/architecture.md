@@ -1,6 +1,6 @@
 # The fundamentalist attacks the big-picture decisions
 
-Ticket `itm_ff08c3e59cfa` · slug `fundamentalist-decisions` · base `pilot` at `7c987d3c` · ADR 0171
+Ticket `itm_ff08c3e59cfa` · slug `fundamentalist-decisions` · base `pilot` at `7c987d3c` · ADR NNNN
 
 ## 1. Problem
 
@@ -43,9 +43,9 @@ Agreed with `main` 2026-10-19 (lines 1 to 8 stand as proposed).
    user: the co-pilot sends it to `main` whatever its cost-of-a-wrong-guess bar, never drops it for moving a
    decision, and the run does not wait on it (A1). *Evidence: wording pins on `agents/pilot-co-pilot.md`
    `## What goes to main` and step 7; `node scripts/check-references.mjs` exits 0.*
-8. ADR 0171 records the fundamentalist as an adversarial decisions reviewer first and a code reviewer
-   second, and is 1 row in `docs/adr/README.md`. *Evidence: `node scripts/adr-index.mjs` leaves README
-   unchanged after S3; the row is present.*
+8. ADR NNNN records the fundamentalist as an adversarial decisions reviewer first and a code reviewer
+   second, and is 1 row in `docs/adr/README.md` once the landing numbers it. *Evidence: `node scripts/adr-index.mjs` leaves README
+   unchanged after S3; the row is present after the landing.*
 
 ## 3. Findings
 
@@ -105,7 +105,7 @@ decisions pass, so it stays and points there. No module is shallow enough to fol
 - **L6 A decision-moving finding always reaches the user.** The co-pilot's cost bar does not apply to it. Rejected: the
   co-pilot deciding it, which is how all 3 recorded decision findings were dropped.
 - **L7 No code change.** The deck, `verdicts.mjs`, the evidence runner and the auditor stay untouched.
-- **L8 ADR 0171** (0165-0169 are held by other design branches, 0170 by lander-tail).
+- **L8 ADR NNNN**, numbered by the landing (ADR 0167, `scripts/adr-allocate.mjs`); pilot already holds 0171-0176.
 - **L9 Grilling depth: forks** (itm_a53c3f12a800): only forking decisions were posted; A1-A3 stood assumed.
 - **L10 A process record is needed by definition.** A decision no line of the built diff carries (an ADR number, the grilling depth, a
   default the user took) gets verdict needed with evidence "no built line", never a decision finding. The user, itm_be9b1a864c4a
@@ -144,7 +144,7 @@ Width 3 (S1, S2, S3); longest stem 1.
 |---|---|---|---|---|---|---|---|
 | S1 | The fundamentalist leads with the decisions pass | 1, 2, 3, 4, 5 | `agents/pilot-fundamentalist.md`, `scripts/test/fundamentalist-decisions.test.mjs` (new) | – | ts, security | opus | [S1](slices/S1.md) |
 | S2 | Step 7 and the co-pilot take decision findings as findings | 6, 7 | `agents/pilot.md`, `agents/pilot-co-pilot.md`, `scripts/test/decision-triage.test.mjs` (new), `scripts/test/measure-prompt.test.mjs` | – | ts, security | opus | [S2](slices/S2.md) |
-| S3 | ADR 0171 and the glossary record the decisions reviewer | 8 | `docs/adr/0171-the-fundamentalist-attacks-decisions-first.md` (new), `docs/adr/README.md`, `CONTEXT.md` | – | ts | sonnet | [S3](slices/S3.md) |
+| S3 | ADR NNNN and the glossary record the decisions reviewer | 8 | `docs/adr/NNNN-the-fundamentalist-attacks-decisions-first.md` (new), `docs/adr/README.md`, `CONTEXT.md` | – | ts | sonnet | [S3](slices/S3.md) |
 
 Reviewers: ts = `pilot:typescript-reviewer`, security = `pilot:security-reviewer` (S1, S2 are agent configuration).
 
@@ -162,7 +162,7 @@ land re-measures on rebase (brief.md, Overlaps).
 2. `git diff --stat origin/pilot -- agents/pilot-evidence-runner.md agents/pilot-auditor.md` prints nothing (spec 3, 5).
 3. QA's replay on `architect-deeper` and `back-arrow`: 2 rows, rows against L+A+S count, the dropped decision's verdict (spec 4).
 4. Step 7 and `## What goes to main` carry the id-first findings line and the always-ask clause (spec 6, 7).
-5. ADR 0171 is in `docs/adr/README.md`; `check-references` exits 0; `npm test` green (spec 8).
+5. ADR NNNN is in `docs/adr/README.md` after the landing; `check-references` exits 0; `npm test` green (spec 8).
 
 ## 10. Status
 
