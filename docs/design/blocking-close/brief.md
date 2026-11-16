@@ -56,7 +56,7 @@ https://claude.ai/code/session_01NXgSFodNbTKqoJ71EpWMS5
 - `deck/test/facades.test.mjs` bars every deck module at 800 lines. `deck/store-items.mjs` is at 795: S1 adds no lines there.
 - `deck/README.md` lists each deck module. A new module gets its row.
 - The pilot prompt pin (`scripts/test/measure-prompt.test.mjs`) has 4.25 headroom. It moves by exactly the measured delta, with a history line.
-- `docs/adr/README.md` is regenerated with `node scripts/adr-index.mjs`. ADR 0169-0171 are taken; this run's is 0172.
+- `docs/adr/README.md` is regenerated with `node scripts/adr-index.mjs`. ADR 0172-0176 were taken at 6ea49cac; this run's is 0177 (seam, S3).
 - Overlaps: lander-tail (#959), deck-writes-github (#951), walkthrough-surface (#954) and other-host (#955) are queued against pilot and may touch `deck/closing-report.mjs` and `deck/server-tools.mjs`. Keep edits there minimal.
 - Tests never reach the live deck on 4321, GitHub or a real remote. Use `PILOT_DECK_DIR` on a temp dir; for live checks, `pilot deck --scratch`.
 - Diff limit: 300 changed lines per slice (`main`, at implementation). Past it, stop and ask `main`.

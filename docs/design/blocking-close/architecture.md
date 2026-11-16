@@ -1,6 +1,6 @@
 # The pilot clears a blocking thread it no longer needs
 
-Ticket `itm_809d3e826efc`, slug `blocking-close`. Base `origin/pilot` a37673eb. ADR 0172 (S3).
+Ticket `itm_809d3e826efc`, slug `blocking-close`. Base `origin/pilot` a37673eb. ADR 0177 (S3).
 
 ## 1. Problem
 
@@ -59,7 +59,7 @@ Deletion test: `isMoot` alone would leave the veto and kind checks spread over t
 
 | # | Decision | Rationale | Rejected |
 |---|---|---|---|
-| L1 | Pilot close covers any blocking **question**, never a walkthrough, proposal or gate kind. | The user asked for the pathway (proposal itm_88f74b002ec2, Yes). Walkthroughs and gates are presses. | ADR 0153 A4's `Blocked:`-only scope, superseded by ADR 0172 |
+| L1 | Pilot close covers any blocking **question**, never a walkthrough, proposal or gate kind. | The user asked for the pathway (proposal itm_88f74b002ec2, Yes). Walkthroughs and gates are presses. | ADR 0153 A4's `Blocked:`-only scope, superseded by ADR 0177 |
 | L2 | Two prefixes, `Moot:` and `Assumed:`, free text after; `Assumed:` need not match `recommended`. | The reason is the audit. Matching the default would refuse a better assumption. | One prefix (loses the why-kind); `Assumed:` pinned to `recommended` |
 | L3 | Only the pilot's stamped author (`authorKind === 'pilot'`); the owner rule stays. | Unchanged trust boundary; a co-pilot routes through `main` (*assumed*, A2, per `main`). | The co-pilot closes its crew's question |
 | L4 | The veto is read from the reopen's `Closed with: Moot:/Assumed:` reply, with no new field. | Reopen already writes it (store-items.mjs:684-691). No schema change. | A `vetoed` flag on the item |
@@ -74,7 +74,7 @@ Deletion test: `isMoot` alone would leave the veto and kind checks spread over t
   Verdict: stands — The fork is posted (itm_0f4c0a7f0105); nothing queued changes the gate2 post path, and the user has asked this month to see assumptions before a press.
 - **A2** (*assumed*, `main`'s fact). Default: the co-pilot sends `main` `moot <id>: <why>` and the pilot closes. Cost: one hop. Rejected: give the co-pilot `deck_resolve`.
   Verdict: stands — The co-pilot definition grants no deck_resolve and the queue holds no ticket that would.
-- **A3** settled: both prefixes, by the user (itm_e0a9f965d9c8, "Moot and Assumed"), overriding ADR 0153 A4; ADR 0172 records it (S3).
+- **A3** settled: both prefixes, by the user (itm_e0a9f965d9c8, "Moot and Assumed"), overriding ADR 0153 A4; ADR 0177 records it (S3).
   Verdict: stands — settled by the user
 - **A4** settled: spec 6 veto, added by the user (itm_f66a8772e2c4, "Yes, add it").
   Verdict: stands — settled by the user
@@ -92,7 +92,7 @@ Width 2; longest stem 2.
 |---|---|---|---|---|---|---|
 | S1 | Skeleton: the pilot closes any blocking question as Moot or Assumed | 1, 2, 4, 6 | `deck/blocked-shape.mjs`, `deck/store-items.mjs` (import and refusal line only), `deck/test/moot.test.mjs` | – | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S1](slices/S1.md) |
 | S2 | The gate2 and the closing report list the pilot's closes | 3 | `deck/pilot-closes.mjs` (new), `deck/closing-report.mjs`, `deck/README.md`, `deck/test/pilot-closes.test.mjs` (new) | S1 (`isPilotClose`) | `pilot:typescript-reviewer` | [S2](slices/S2.md) |
-| S3 | The pilot's rule and ADR 0172 widen Moot to every blocking question | 5 | `agents/pilot.md`, `agents/pilot-co-pilot.md`, `scripts/test/yield-wording.test.mjs`, `scripts/test/measure-prompt.test.mjs`, `docs/adr/0172-the-pilot-closes-a-blocking-question.md` (new), `docs/adr/0153-a-blocked-yellow-ticket-yields-the-lane.md` (`superseded_by`), `docs/adr/README.md` | – | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
+| S3 | The pilot's rule and ADR 0177 widen Moot to every blocking question | 5 | `agents/pilot.md`, `agents/pilot-co-pilot.md`, `scripts/test/yield-wording.test.mjs`, `scripts/test/measure-prompt.test.mjs`, `docs/adr/0177-the-pilot-closes-a-blocking-question.md` (new), `docs/adr/0153-a-blocked-yellow-ticket-yields-the-lane.md` (`superseded_by`), `docs/adr/README.md` | – | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
 
 Every spec line is delivered: 1, 2, 4 and 6 by S1; 3 by S2; 5 by S3. Security on S1 (who may answer for the user is a trust boundary) and S3 (agent configuration).
 
