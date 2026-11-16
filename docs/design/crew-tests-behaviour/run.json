@@ -15,15 +15,17 @@
     },
     {
       "slice": "S1 Walking skeleton: test-design",
-      "state": "implementing",
+      "state": "draft PR #44",
       "branch": "slice/crew-tests-behaviour-s1",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s1"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s1",
+      "pr": 44
     },
     {
       "slice": "S2 Misses: line + check-slices",
-      "state": "implementing",
+      "state": "draft PR #45",
       "branch": "slice/crew-tests-behaviour-s2",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s2"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s2",
+      "pr": 45
     },
     {
       "slice": "S3 Stuck red → ranked hypotheses",
@@ -41,7 +43,7 @@
     },
     {
       "slice": "S5 Sweep: pilot-agents first half",
-      "state": "draft PR #43",
+      "state": "integrated at e1f58f97",
       "branch": "slice/crew-tests-behaviour-s5",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s5",
       "pr": 43
@@ -101,8 +103,8 @@
       ]
     }
   ],
-  "next": "integrating S5 (#43); S1, S2 implementing; then start S6 (owns the 612-858 gap), S7, S13",
-  "updatedAt": "2026-11-16T03:25:11.380Z",
+  "next": "integrating S1 (#44) then S2 (#45); then start S3, S6, S7, S13 per pilot ready",
+  "updatedAt": "2026-11-16T03:27:37.055Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -133,6 +135,18 @@
       "what": "census line ranges stale by 100+ lines; S5's range ends at 612 and S6's starts at 858, leaving an unowned gap",
       "evidence": "S5 report: block 'the inheritance finding is written down where it is acted on' at l.624 left unowned",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 test 3 (check-references, pilot:tdd grep) had no red of its own: check-references does not compare a skill's name: with its directory",
+      "evidence": "check-references exit 0 straight after the git mv; only methodology-skills.test.mjs went red",
+      "size": 0
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a preloaded skill counts toward the architect's pin; the brief did not say a skill edit must be paid for",
+      "evidence": "measure-prompt lists architect preloaded skills 4592 tokens inside its own share",
+      "size": 0
     }
   ]
 }
