@@ -100,10 +100,7 @@ matching the language where one ships (`pilot:typescript-reviewer`,
 `pilot:rust-reviewer`, `pilot:cpp-reviewer`), otherwise the language-neutral
 `pilot:silent-failure-hunter` (C, Terraform, a shell script), plus
 `pilot:database-reviewer` if the slice carries SQL or a migration, plus
-`pilot:security-reviewer` if the diff hits the security trigger: auth, user
-input, secrets, an API boundary (a route, a hook input, a CLI argument), a
-process start, or agent configuration (`agents/`, `hooks/`, `skills/`,
-`settings*.json`, `.mcp.json`, `CLAUDE.md`). Copy its `Verdict:` line into
+`pilot:security-reviewer` when the slice's `Reviewers:` line names it. Copy its `Verdict:` line into
 your report. That is the whole review; do not fan out further. Fix what the
 reviewer finds if it is real; if it is not, say why in the report.
 Give each reviewer your worktree's path and its diff,

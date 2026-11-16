@@ -52,7 +52,20 @@ function walkthrough(readme) {
   return above.split('\n').filter((l) => /^\d+\. /.test(l));
 }
 
+const AGENT_FILES = fs.readdirSync(path.join(ROOT, 'agents')).filter((f) => f.endsWith('.md'));
 const flow = () => readFlow(read('README.md'));
+// A label's words: agent types (`pilot:pilot-qa`) and command words, split on anything else.
+const words = (label) => label.split(/[^\w:/-]+/).filter(Boolean);
+
+// lint: every agent file is drawn in the README graph
+test('every agent file is a node', () => {
+  const { nodes } = flow();
+  const drawn = new Set(nodes.flatMap(words));
+  const agents = AGENT_FILES.map((f) => `pilot:${f.slice(0, -3)}`);
+  assert.ok(agents.length > 0);
+  assert.deepEqual(agents.filter((a) => !drawn.has(a)), []);
+});
+
 // No subcommand `pilot help` lists, moving or not (L1), is drawn: a user meets the deck, never the CLI.
 // lint: no pilot subcommand is drawn in the graph
 test('no subcommand is in the graph', () => {
