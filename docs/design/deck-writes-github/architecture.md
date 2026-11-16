@@ -32,7 +32,7 @@ until A4–A6 are answered; 2 follows L7' (*assumed*, awaiting itm_b69e08509bb5)
    longer opens it (A2). practitioner: GitHub-bot maintainer: the write is idempotent. *Evidence: fake-gh verb tests
    and a daemon test over a fake spawn; bar: first run 1 create, a row change 1 edit, a base change 1 `--base`
    edit, the same record again 0 writes.*
-3. *Assumed (A5).* QA's comment is the record's `qaComment`, sent as a `comment` field on QA's walkthrough post when
+3. (A5, answered.) QA's comment is the record's `qaComment`, sent as a `comment` field on QA's walkthrough post when
    the run has one and on every gate2 post (QA's or the pilot's short-path one); the same verb upserts one comment on
    the feature PR found by a hidden marker, so a lost id never posts twice. The "Non-additive migrations" section
    moves into it (A2). *Evidence: a daemon test over both posts and a verb test; bar: first text 1 POST, changed
@@ -165,7 +165,7 @@ reappears in four files and a second host means editing each.
   `deck_status base: pilot`, retargeted by the deck; the architect opens no PR. Tradeoff: retarget waits on the next
   deck write. Rejected: the pilot keeps the retarget as the one exception. Thread itm_c647d4200652. **Assumed.**
 - **A5** (re-cut, spec 3) `comment` on the walkthrough when there is one and on every gate2. Tradeoff: a run with no
-  walkthrough comments only at gate2. Rejected: gate2 only. Thread itm_62acc0074933. **Assumed.**
+  walkthrough comments only at gate2. Rejected: gate2 only. Thread itm_62acc0074933. **Answered** 2026-11-16: "Gate2 always, walkthrough too", the default.
 - **A6** (re-cut, spec 4) Spec 4 is the `--default` lint alone; the `pilot land` half is dropped (ADR 0161). Tradeoff:
   no lint on descriptive `pilot land`. Rejected: dropping spec 4. Thread itm_958e79727604. **Answered** 2026-11-16: "Lint only", the default.
 - red team: (2026-10-20, stands) S2's trigger on every `deck_status` would spawn in ~100 daemon tests: L5 and the gate1
