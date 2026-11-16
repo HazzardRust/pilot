@@ -10,7 +10,7 @@ work in that checkout or another session's worktree; create your own beside it, 
 
 ## Base and PR target
 
-The base is `feat/handoff-mod`, cut at Gate 1 from `origin/pilot` (c863b15a at design time). Every slice PR is a
+The base is `feat/handoff-mod`, cut at Gate 1 from `origin/pilot` (b38de846 at the L11 re-cut). Every slice PR is a
 **draft** against `feat/handoff-mod`, never marked ready. Branch name: `slice/handoff-mod-s<n>`.
 
 ## Remote
@@ -46,9 +46,10 @@ npm test
 ```
 
 `npm test` once on Windows (about 9 minutes). One file: `node --test <file>`. GitHub Actions on this account is
-refused for billing and is not evidence; the Linux referee is `node scripts/gate.mjs` five times on a fresh WSL
-clone at the commit under test. No slice here edits `agents/*.md`; one that must lists the wording-pin tests it
-touches (`scripts/test/measure-prompt.test.mjs`, zero headroom; `landing-wording.test.mjs:42`).
+refused for billing, so a red or unstarted check is not evidence. The referee is `npm test` once on Windows and
+`node scripts/gate.mjs` five times in WSL on a fresh clone at the commit under test, finished before any gate2 is
+posted. No slice here edits `agents/*.md` (the pilot prompt pin is 11864, ADR 0180). No test asserts a phrase in
+prose; a test that greps code for an absence is a structural lint and carries `// lint: <rule>` (ADR 0180).
 
 ## Known flaky tests
 
