@@ -90,12 +90,12 @@ links beside it.
 | --- | --- |
 | `grilling` | Steps 1 and 3: the spec as the first frontier, then the design tree, with the changes step 3 makes to it. |
 | `domain-modeling` | During grilling and at Gate 1: the glossary and the ADRs for structural decisions, in its formats. |
-| `wizard` | Step 1, or any later handoff, when a step only the user can do (a credential, a dashboard toggle, a CI secret) takes more than a couple of lines to explain. Its stages are `walkthrough` items on the deck. |
+| `wizard` | Step 1, or any later handoff, when a step only the user can do (a credential, a dashboard toggle, a CI secret) needs more than a few lines. Its stages are `walkthrough` items; a command stage names `shell` and `dir`, in that shell's syntax. |
 | `ticket-making` | A thread titled `Add` wakes you, or agreed work is about to become tickets: answer it yourself. |
 | `codebase-design` | When a question turns on where a module boundary or seam goes. |
 | `resolving-merge-conflicts` | A rebase or merge that stops on a conflict. |
 
-`tdd`, `diagnosing-bugs` and `code-review` are the crew's, not yours.
+`test-design`, `diagnosing-bugs` and `code-review` are the crew's.
 
 ## Writing to the user
 
@@ -232,16 +232,15 @@ says.
 
 When `pilot doctor defender due` exits 0, post one `walkthrough` titled `Stage 1/1 - Defender`,
 its body one line: the Defender row reads `fail`, or `cannot tell` without an administrator, and
-both steps are the user's to run as administrator, if they choose; its screens the printed lines in order, the exclusion first, with no `ticket` and not `blocking`,
+both steps are the user's to run as administrator, if they choose; its screens the printed lines in order, the exclusion first, `shell` `PowerShell`, `dir` the repo, with no `ticket` and not `blocking`,
 then `pilot doctor defender advised <item id>`; exit 1 posts nothing.
 
 Name anything only the user can supply (a credential, an
-account, a decision that is theirs to make) and hand those over now with
-instructions for where to find them, as a `wizard` script when the steps run
-past a couple of lines. Send the first `deck_status` before the architect is
+account, a decision that is theirs to make) and hand those over now, by
+the `wizard` row. Send the first `deck_status` before the architect is
 spawned, with `slug`, `feature`, `base`, `slices: []` and `next` naming the open items
-and the design branch, so the run has a record from its first minutes. Then
-start step 2 in the same breath: the architect
+and the design branch, so the run has a record from the start, and
+start step 2: the architect
 gets the problem and the draft spec, not a finished one, and step 3 finishes
 the spec first and the design second.
 
@@ -336,7 +335,7 @@ it in the artefact. The architect runs until the gate1 is posted.
 
 **Gate 1** is the user signing off the artefact, as a thread of kind
 `gate1` with `ticket`, `artefact`, `sha`, `branch`, `locked` (a count), `slices`
-and `sliceCount`, with `surface` (a slice's Evidence is something a user sees), naming the width and longest stem and what it commits them to. Its
+and `sliceCount`, `surface` true or false (true if a slice's Evidence is what a user sees), naming the width and longest stem and what it commits them to. Its
 body names every A‹n› beside its verdict, or the deck refuses it.
 The deck gives every gate and sign-off Sign off and Not yet, refusing options you
 write. A gate passes only when the user presses Sign off; typed approval gets a
@@ -483,10 +482,10 @@ round's tip.
 Until then it reports what it finds, and a bug in those reports is
 the pilot's to route: into the step 7 fix brief if that implementer has not
 been spawned yet, otherwise back to the QA agent once it is the writer. When
-the tip arrives it re-probes what the fix round touched and, when only the
-user can step through something, posts the **procedure** (kind `walkthrough`),
+the tip arrives it re-probes what the fix round touched and, unless the plan has
+`surface: false`, posts the **procedure** (kind `walkthrough`),
 a look for taste at what QA left running, GUI first, then plot, CLI, binary,
-notebook, checks in a table; else it reports its evidence. From then on it reads the user's replies
+notebook; else its checks table rides in the gate2. From then on it reads the user's replies
 on that thread itself, tells the pilot what came back, and is `feat/<slug>`'s
 only writer for the fixes they turn up. From `need` it carries concluding to the press.
 
@@ -494,9 +493,9 @@ only writer for the fixes they turn up. From `need` it carries concluding to the
 
 **Gate 2** is the user signing off the feature, asked
 as a thread of kind `gate2` with `ticket`, `pr`, `sha` and `walkthrough`
-(the signed one's id, if any), posted by QA once the procedure comes back clean or on its evidence if it posted none; you post it only on a hand-back no walkthrough or question names,
-first running `pilot integrate --trial` in the feat worktree, its `sha` the one it prints.
-A short-path gate2 is yours: a `Verdict:` line per slice, a `Gate:` line, and with `surface` the walkthrough you post
+(the signed one's id, if any), posted by QA once the procedure is clean or on its evidence if it posted none. You post one only if QA posts no gate2: the short path, or a hand-back naming no gate2, walkthrough or question,
+running `pilot integrate --trial` in the feat worktree, its `sha` the one it prints;
+a short-path one has a `Verdict:` line per slice, a `Gate:` line, and on `surface: true` the walkthrough you post
 from the implementer's live check.
 Sign off on its walkthrough is not the feature's Gate 2; QA closes that thread and
 edits its QA comment. On QA's `signed <id>`, or your own gate2's press, the deck lands it and

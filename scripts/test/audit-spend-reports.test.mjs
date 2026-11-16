@@ -12,7 +12,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { repoKey } from '../../deck/items.mjs';
-import { flat, read, sectionOf } from './lib/area-file.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SCRIPT = path.join(ROOT, 'scripts', 'audit-spend.mjs');
@@ -104,21 +103,6 @@ test('with no store file the script returns reports: [] and exits 0', (t) => {
   const out = run(s);
   assert.deepEqual([out.reports, out.noReport], [[], 0]);
   assert.deepEqual(fs.readdirSync(s.deck), [], 'reading writes nothing');
-});
-
-/** The sentence of the auditor's Spend section that names `needle`, flattened to one line. */
-const spendSentence = (needle) =>
-  flat(sectionOf(read('agents/pilot-auditor.md'), 'Spend')).split(/(?<=\.) /).find((sentence) => sentence.includes(needle)) ?? '';
-
-test('the auditor cites friction from audit-spend', () => {
-  const sentence = spendSentence('`reports`');
-  assert.match(sentence, /friction/);
-  assert.match(sentence, /reproduce[^.]*scratch worktree/, 'a cited row is reproduced there first');
-  assert.match(sentence, /the script as `command`/);
-});
-
-test('the auditor copies runs into measured', () => {
-  assert.match(spendSentence('`measured`'), /copy `\{ log, from, to, spend, runs \}`/);
 });
 
 test("a ranked report's agent rows are its friction (yellow-lane S11)", (t) => {

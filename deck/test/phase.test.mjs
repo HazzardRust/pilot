@@ -26,7 +26,7 @@ const { TOOLS } = await import('../tools.mjs');
 const AT = '2026-10-01T09:00:00.000Z';
 const MINE = path.join('D:', 'work', 'pilot');
 const THEIRS = path.join('D:', 'work', 'kettle');
-const GATE1 = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x' };
+const GATE1 = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', surface: false };
 
 const aRun = (over = {}) => ({ id: 'run_000000000001', repo: MINE, pid: process.pid, startedAt: AT, ...over });
 const exitedPid = () => spawnSync(process.execPath, ['-e', '0']).pid;
@@ -35,7 +35,8 @@ const aRow = (id, over = {}) => ({ id, kind: KIND_TICKET, title: id, body: 'b', 
 const aTicket = (words = 'fix the thing', repo = MINE) =>
   postItem({ kind: KIND_TICKET, sliceCount: 60, title: words, body: shapedTicketBody(words), repo });
 const aGate1 = (ticket, repo = MINE) => postItem({ kind: 'gate1', title: 'Gate 1', body: 'The design.', repo, ...GATE1, ticket });
-const aGate2 = (ticket) => postItem({ kind: 'gate2', title: 'Gate 2', body: 'Walk it.', repo: MINE, pr: '#1', sha: '0305827', ticket });
+const CHECKS = 'Walk it.\n\n| spec | result | evidence |\n| --- | --- | --- |\n| 1 | pass | ok |';
+const aGate2 = (ticket) => postItem({ kind: 'gate2', title: 'Gate 2', body: CHECKS, repo: MINE, pr: '#1', sha: '0305827', ticket });
 const reread = (id) => listItems().find((item) => item.id === id);
 const sign = (gate) => (addReply(gate.id, SIGN_OFF), resolveItem(gate.id, 'Signed off.'));
 const refusedNaming = (...words) => (error) =>

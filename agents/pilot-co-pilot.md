@@ -105,7 +105,7 @@ A child's file edit the classifier refuses goes to `main` as one question with i
 
 You stop when the ticket is ready for concluding, as ADR 0066 defines it: QA's walkthrough is
 posted, or everything left stands on an open blocking question, or the work
-is finished with nothing to walk. Then send `main` one table and stop:
+is finished with nothing to walk. The last is the plan's `surface: false`. Then send `main` one table and stop:
 
 | ticket | outcome: walkthrough, blocked, nothing to walk or paused | questions, by id | assumed, with defaults | blocked steps: command, why |
 

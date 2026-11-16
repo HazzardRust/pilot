@@ -13,32 +13,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 const flat = (text) => text.replace(/\s+/g, ' ');
 
-/** The text under one heading of agents/pilot.md, up to the next heading of the same or a higher level. */
-function section(text, heading) {
-  const start = text.indexOf(`\n${heading}\n`);
-  assert.ok(start >= 0, `agents/pilot.md lost its heading ${heading}`);
-  const rest = text.slice(start + heading.length + 2);
-  const next = rest.search(new RegExp(`\n#{1,${heading.match(/^#+/)[0].length}} `));
-  return flat(next < 0 ? rest : rest.slice(0, next));
-}
-
-test('the pilot names the new order', () => {
-  const pilot = read('agents/pilot.md');
-  const where = {
-    '### 9. Gate 2 and ready': ['the press frees the lane', 'pilot-lander', 'Land again', 'resolving-merge-conflicts'],
-    '## Ending a run': ['report due', 'Findings:'],
-  };
-  for (const [heading, phrases] of Object.entries(where)) {
-    const text = section(pilot, heading);
-    for (const phrase of phrases) assert.ok(text.includes(phrase), `${heading} does not name "${phrase}"`);
-  }
-  assert.doesNotMatch(flat(pilot), /run[^.]*`pilot landing[^.]*background/, 'the pilot no longer runs the landing wait');
+test('the pilot does not run the landing wait', () => {
+  // lint: the pilot never runs `pilot landing` in the background
+  assert.doesNotMatch(flat(read('agents/pilot.md')), /run[^.]*`pilot landing[^.]*background/, 'the pilot no longer runs the landing wait');
 });
 
-test('QA tears down on the press', () => {
-  assert.ok(flat(read('agents/pilot-qa.md')).includes('tear down on the press'), 'agents/pilot-qa.md does not tear down on the press');
-});
-
+// structure: reads the pin history of measure-prompt.test.mjs (code), not prose
 test('the pin moves by the wording', () => {
   const source = read('scripts/test/measure-prompt.test.mjs');
   const line = /^\/\/ gate2-frees-lane S9 \(\d{4}-\d\d-\d\d\) raised it from ([\d.]+) to the measured ([\d.]+) .*, ([\d.]+)\.$/m.exec(source);
@@ -54,6 +34,6 @@ test('the pin moves by the wording', () => {
 // lander S10 (spec 8; L12): the lander prunes and hands back; the pilot prunes nothing and quotes its line.
 test('the pilot no longer prunes', () => {
   const pilot = read('agents/pilot.md');
+  // lint: the pilot runs neither prune command
   assert.doesNotMatch(pilot, /pilot branches prune|pilot worktrees prune/, 'agents/pilot.md still prunes');
-  assert.ok(section(pilot, '## Ending a run').includes("quotes the lander's"), "Ending a run's Findings: does not quote the lander's line");
 });

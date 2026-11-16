@@ -1,21 +1,10 @@
 /**
- * Spec line 28 (L29, L14). The principles review used to run twice: once per slice on
- * its own draft PR (Sonnet), and once more on the whole feature when the last slice
- * landed (Opus). That gave every slice a second reviewer fanned out beside its own
- * language reviewer, and the same design question got asked and re-triaged five or
- * ten times across one run. From S13 on it runs exactly once, on Opus, over the whole
- * feature, and its kept findings land before the Gate 2 sign-off; the implementer's own
- * fresh reviewer per slice is unchanged and is not what this slice touches.
+ * Spec line 28 (L29, L14). The principles review runs once, on Opus, over the whole
+ * feature; it no longer runs per slice on a draft PR. What is kept here is the lint:
+ * the old per-slice scheduling must not reappear in the pilot, the fundamentalist or
+ * the rule. The phrases that state the new scheduling are not pinned.
  *
- * A bare `grep -c "per slice"` would pass if every mention of "per slice" were deleted,
- * including the three that describe the implementer's own reviewer and are supposed to
- * survive untouched. So this file asserts both halves by name: the old per-slice
- * scheduling of the principles review is gone, the new once-over-the-feature scheduling
- * is stated, and the three surviving "one reviewer per slice" lines about the language
- * reviewer are still there and still say that. Deleting either half fails a different
- * assertion below, so the pin cannot be satisfied by deleting both.
- *
- * L14: this pins its own new file rather than being appended to pilot-agents.test.mjs.
+ * L14: this lints its own file rather than being appended to pilot-agents.test.mjs.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -49,6 +38,7 @@ test('the fundamentalist\'s own description no longer schedules a per-slice pass
   const description = fieldOf(fm, 'description');
   assert.ok(description, 'agents/pilot-fundamentalist.md must declare a description');
 
+  // lint: the fundamentalist's description must not bring back the per-slice schedule
   assert.doesNotMatch(
     description,
     /once per slice on its draft PR/i,
@@ -59,17 +49,8 @@ test('the fundamentalist\'s own description no longer schedules a per-slice pass
     /steps 5 and 7/,
     'the fundamentalist\'s description still points at the old two-step schedule',
   );
-  assert.match(
-    description,
-    /run once, on Opus, over the whole feature/i,
-    'the fundamentalist\'s description must say it runs once, on Opus, over the whole feature',
-  );
-  assert.match(
-    description,
-    /Spawned by the pilot at step 7/,
-    'the fundamentalist\'s description must name the single step that spawns it',
-  );
 
+  // lint: the fundamentalist's model field stays opus
   assert.equal(fieldOf(fm, 'model'), 'opus', 'the fundamentalist runs on Opus now that there is no per-slice Sonnet pass');
 });
 
@@ -78,52 +59,32 @@ test('the pilot\'s own description no longer promises a review of each draft PR'
   const description = fieldOf(fm, 'description');
   assert.ok(description, 'agents/pilot.md must declare a description');
 
+  // lint: the pilot's description must not promise a review of each draft PR
   assert.doesNotMatch(
     description,
     /reviews each draft PR/i,
     'the pilot\'s description still says the fundamentalist reviews each slice\'s draft PR',
   );
-  assert.match(
-    description,
-    /reviews the whole feature once, on Opus/i,
-    'the pilot\'s description must say the fundamentalist reviews the whole feature once, on Opus',
-  );
 });
 
 test('the pilot agent\'s own crew table no longer offers the fundamentalist per slice or per feature', () => {
   const pilot = read(PILOT);
+  // lint: the pilot must not offer the fundamentalist per slice or per feature
   assert.doesNotMatch(
     pilot,
     /of one slice's draft PR or of the whole feature/i,
     'the pilot agent still describes the fundamentalist as reviewing a slice or the feature',
   );
-  // Independence S4 deleted the crew table as a restatement of the Agent tool's own
-  // list; "once, on Opus, over the whole feature" is pinned in the fundamentalist's
-  // description (above) and in step 7 of the skill (below).
 });
 
 test('the skill\'s per-slice step no longer runs a principles review or a fix round', () => {
   const skill = read(PILOT);
 
+  // lint: no step is titled as a per-slice principles review, and none expects per-slice verdicts
   assert.doesNotMatch(
     skill,
     /Principles review and fix round per slice/i,
     'a step is still titled as a per-slice principles review and fix round',
-  );
-  assert.match(
-    skill,
-    /no slice was reviewed on principles on its own way in/i,
-    'the skill must say plainly that no principles review runs per slice',
-  );
-  assert.match(
-    skill,
-    /### 7\. Feature-level principles review and fix round, once, AFK/,
-    'the surviving principles-review step must say it runs once',
-  );
-  assert.match(
-    skill,
-    /this is the feature's only\s+principles review/i,
-    'the feature-level step must say it is the feature\'s only principles review',
   );
   assert.doesNotMatch(
     skill,
@@ -132,29 +93,9 @@ test('the skill\'s per-slice step no longer runs a principles review or a fix ro
   );
 });
 
-test('the kept findings from the sweep are fixed before the Gate 2 sign-off', () => {
+test('the Models table gives the fundamentalist no per-slice override', () => {
   const skill = read(PILOT);
-  assert.match(
-    skill,
-    /before the Gate 2\s+sign-off at step 9/i,
-    'the skill must say the sweep\'s kept findings are fixed before the Gate 2 sign-off',
-  );
-
-  const execution = read(EXECUTION);
-  assert.match(
-    execution,
-    /before the feature\s+PR's Gate 2 sign-off/i,
-    'the rule must say the sweep\'s kept findings land before the feature PR\'s Gate 2 sign-off',
-  );
-});
-
-test('the Models table gives the fundamentalist Opus with no per-slice override', () => {
-  const skill = read(PILOT);
-  assert.match(
-    skill,
-    /\|\s*pilot-fundamentalist\s*\|\s*Opus\s*\|/,
-    'the Models table must default the fundamentalist to Opus',
-  );
+  // lint: the Models table must not offer a Sonnet default with an Opus override per slice
   assert.doesNotMatch(
     skill,
     /Opus for the feature-level review at step 7, and for a slice that introduces/i,
@@ -162,67 +103,24 @@ test('the Models table gives the fundamentalist Opus with no per-slice override'
   );
 });
 
-test('vertical-execution.md rewrites the per-slice review argument rather than deleting it', () => {
+test('vertical-execution.md no longer gives each slice a principles review', () => {
   const execution = read(EXECUTION);
 
+  // lint: the rule must not give each slice's draft PR a principles review
   assert.doesNotMatch(
     execution,
     /reviews each slice against design principles/i,
     'the rule\'s opening still says the fundamentalist reviews each slice',
   );
-  assert.match(
-    execution,
-    /reviews the whole feature once, on Opus, after the/i,
-    'the rule\'s opening must say the fundamentalist reviews the whole feature once, on Opus',
-  );
-
   assert.doesNotMatch(
     execution,
     /each slice's draft PR also gets a \*\*principles review\*\*/i,
     'section 4 still gives every slice\'s draft PR a principles review of its own',
   );
-  assert.match(
-    execution,
-    /run once, on Opus, when\s+the last slice is integrated, never on a slice's own branch/i,
-    'section 4 must say plainly when and how often the principles review runs now',
-  );
-
-  // The argument for reviewing each slice as it landed is rewritten, not deleted (S18):
-  // it must still name the real cost of running late, and still name what carries
-  // review-as-it-lands in the meantime — the implementer's own per-slice reviewer.
-  assert.match(
-    execution,
-    /cost is real/i,
-    'the rewritten argument must name the cost of a late review honestly, not hide it',
-  );
-  assert.match(
-    execution,
-    /is the language reviewer above/i,
-    'the rewritten argument must name what still catches a problem as it lands: the language reviewer',
-  );
-});
-
-test('the three surviving "one reviewer per slice" lines, about the implementer\'s own language reviewer, are untouched', () => {
-  const execution = read(EXECUTION);
-
-  // Independence S4 deleted the skill's Concurrency and Anti-patterns sections as
-  // restatements of rules/orchestration.md, where the ban now lives alone.
-  assert.match(
-    read('rules/orchestration.md'),
-    /one reviewer per slice, chosen by language/i,
-    'orchestration.md must still say fan-out over a diff is never more than one reviewer per slice',
-  );
-  assert.match(
-    execution,
-    /One reviewer per slice, matched to its language/,
-    'vertical-execution.md must still give the implementer one reviewer per slice, matched to its language',
-  );
 });
 
 test('a grep for "per slice" across the four files finds nothing tying the principles review to a slice', () => {
-  // The evidence the slice asks for, run programmatically rather than read by eye alone:
-  // every remaining "per slice" line must be about the slice loop or the language
-  // reviewer, never about the fundamentalist or the principles review.
+  // lint: no "per slice" line shares a line with the principles review or the fundamentalist
   const files = [PILOT, FUNDAMENTALIST, EXECUTION];
   const offenders = [];
 

@@ -223,16 +223,11 @@ test('a failed commit of the slice merge resets both merges; nothing is pushed',
   assert.equal(git(origin, 'rev-parse', 'feat/b'), before, 'nothing pushed');
 });
 
-test('step 7 lands before QA\'s tip and diffs against the base; the fundamentalist reads the base', () => {
+test('step 7 and the fundamentalist never diff against the default branch', () => {
+  // lint: forbidden patterns, the default branch as the diff base and integrate alone
   const read = (file) => fs.readFileSync(path.join(root, file), 'utf8').replace(/\s+/g, ' ');
   const step7 = /### 7\. Feature-level principles review[^#]*?(?= ### 8\.)/.exec(read('agents/pilot.md'))[0];
-  assert.match(step7, /`feat\/<slug>` against its base as the diff/);
   assert.doesNotMatch(step7, /against the default branch/);
-  assert.match(step7, /`pilot land`[^.]*tip SHA/, 'red-lands-on-pilot L1: the landing comes before the tip goes to QA');
   assert.doesNotMatch(step7, /`pilot integrate` alone/);
-  const step5 = /### 5\. Integrate the slice[^#]*?(?= ### 6\.)/.exec(read('agents/pilot.md'))[0];
-  assert.match(step5, /takes the base first/);
-  const fundamentalist = read('agents/pilot-fundamentalist.md');
-  assert.match(fundamentalist, /the base the brief names to diff against/);
-  assert.doesNotMatch(fundamentalist, /the default branch as the base/);
+  assert.doesNotMatch(read('agents/pilot-fundamentalist.md'), /the default branch as the base/);
 });

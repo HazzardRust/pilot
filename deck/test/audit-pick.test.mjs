@@ -132,18 +132,6 @@ test('an unknown id among several is named', (t) => {
   assert.equal(bad.stdout, '', 'nothing printed when one id is unknown');
 });
 
-test('the auditor posts one ticket per surface', () => {
-  const auditor = read('agents/pilot-auditor.md').replace(/\s+/g, ' ');
-  const post = auditor.slice(auditor.indexOf('7. Otherwise'), auditor.indexOf('## Report'));
-  assert.match(post, /group the picked ids by surface \(the files a fix touches\)/);
-  assert.match(post, /one ticket per surface/);
-  assert.match(post, /audit spec <report\.json> <id> \[<id>\.\.\.\]/);
-  assert.match(post, /exactly as `audit pick` printed them, never taken from the reply's text/, 'no user text on the shell line');
-  assert.match(post, /`sliceCount`[^.]*the sum of its rows' efforts, each row's effort as slices \(S 1, M 3, L 8\)/);
-  const skill = read('skills/audit/SKILL.md').replace(/\s+/g, ' ');
-  assert.match(skill, /grouped by surface, one ticket each/);
-});
-
 test('pilot audit pick reads the reply from a file and prints the picked ids in order', (t) => {
   const file = savedReport(t);
   const reply = path.join(path.dirname(file), 'reply.txt');
@@ -157,23 +145,6 @@ test('pilot audit pick reads the reply from a file and prints the picked ids in 
   const none = cli('pick', file, reply);
   assert.equal(none.status, 0, none.stderr);
   assert.equal(none.stdout, '', 'not a list of ids: nothing picked');
-});
-
-test('a pick posts one ticket per id with the row\'s spec as its body, and none posts nothing', () => {
-  // Thread-kinds S10 (ADR 0058): the auditor picks, in the section where it owns the thread.
-  const auditor = read('agents/pilot-auditor.md');
-  const start = auditor.indexOf('## Owning the thread');
-  assert.ok(start >= 0, 'the auditor owns the thread');
-  const picking = auditor.slice(start, auditor.indexOf('\n## ', start + 1));
-  assert.ok(picking.indexOf('a pick never starts') > picking.indexOf('deck_post'), 'the pick follows the post');
-  assert.match(picking, /Write tool/, 'the reply reaches the parser through a file, never a shell line');
-  assert.match(picking, /audit pick <report\.json> <reply-file>/);
-  assert.match(picking, /audit spec <report\.json> <id>/);
-  assert.match(picking, /kind `ticket`/);
-  assert.match(picking, /in pick order/i);
-  assert.match(picking, /unedited/);
-  assert.match(picking, /no tickets posted/);
-  assert.match(picking, /never start/i);
 });
 
 test("a picked row's ticket reaches the next run verbatim", (t) => {

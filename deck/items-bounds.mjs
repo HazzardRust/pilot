@@ -175,10 +175,13 @@ const DIR_FIELD = { name: 'dir' };
 /** The same `dir` on a walkthrough or a report: the absolute working directory its steps run from (L10). */
 const WORKDIR_FIELD = { ...DIR_FIELD, shape: /^([/\\]|[A-Za-z]:[/\\])/, means: 'an absolute path' };
 
+/** The shell a walkthrough's or a report's command steps run in, drawn above each beside `dir` (walkthrough-surface spec 8). */
+const SHELL_FIELD = { name: 'shell', most: 40 };
+
 /** A gate's commit, case-blind; also the shape `deck/gate2-base.mjs` checks before git sees it. */
 const SHA_FIELD = { name: 'sha', required: true, shape: /^[0-9a-f]{7,40}$/i, means: 'a commit sha' };
 
 /** A sign-off's second button (A6): the verdict that keeps a gate open (A9). */
 export const NOT_YET = 'Not yet';
 
-export { SHA_FIELD, URL_FIELD, LOGIN_FIELD, SCREENS_FIELD, SLICE_FIELD, REPO_FIELD, NEXT_FIELD, DIR_FIELD, WORKDIR_FIELD };
+export { SHA_FIELD, URL_FIELD, LOGIN_FIELD, SCREENS_FIELD, SLICE_FIELD, REPO_FIELD, NEXT_FIELD, DIR_FIELD, WORKDIR_FIELD, SHELL_FIELD };
