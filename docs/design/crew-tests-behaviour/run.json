@@ -39,7 +39,7 @@
     },
     {
       "slice": "S4 Fundamentalist names the anti-pattern",
-      "state": "planned (opus)",
+      "state": "planned; held on PR #8 (fundamentalist-decisions) not landed",
       "after": [
         "S1"
       ]
@@ -108,14 +108,14 @@
     },
     {
       "slice": "S13 Sweep: wording pins added since the census",
-      "state": "draft PR #54",
+      "state": "integrated at 5c283472",
       "branch": "slice/crew-tests-behaviour-s13",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s13",
       "pr": 54
     },
     {
       "slice": "S14 Sweep: re-classification and residue",
-      "state": "planned (added, opus)",
+      "state": "fixing (draft PR #55)",
       "after": [
         "S2 Misses: line + check-slices",
         "S5 Sweep: pilot-agents first half",
@@ -127,11 +127,14 @@
         "S11 Sweep: crew voice and gates",
         "S12 Sweep: QA, research, skills",
         "S13 Sweep: wording pins added since the census"
-      ]
+      ],
+      "branch": "slice/crew-tests-behaviour-s14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s14",
+      "pr": 55
     }
   ],
-  "next": "integrating S13 (#54); then S14 re-classification; S4 waits on PR #8",
-  "updatedAt": "2026-11-16T03:58:19.501Z",
+  "next": "S14 #55 fixing (cut guard-notice pin in session-handoff.test.js); then integrate S14, brief S4 per A6, then fundamentalist + QA",
+  "updatedAt": "2026-11-16T04:23:36.457Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -222,6 +225,12 @@
       "what": "heredoc to $TMP with TMP unset hung the shell 120 s and left a stray background process it could not stop",
       "evidence": "S13: background task bj6p6iom1, TaskStop unavailable",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the census candidate list held 8 of the 16 files with pins; classifying 178 files by reading did not fit one context, so it used rewording probes; gate.mjs refuses to run until rebuilt ledgers are committed, costing a scratch commit per probe",
+      "evidence": "S14: two probes, about 6 min each, 48 then 11 failures read",
+      "size": 12
     }
   ]
 }
