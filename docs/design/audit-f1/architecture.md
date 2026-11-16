@@ -107,11 +107,13 @@ it earns its keep. `remotes.mjs` survives as is. No fold slice: nothing shallow 
   tracking ref as is: an audit of a stale tracking ref is the bug this ticket fixes.
   Fetch only when the tracking ref already exists, so `skills/audit/SKILL.md:19`'s `git branch -a` snapshot holds.
   Deck down: sent to `main` to post.
+  Verdict: stands
 - A3 (alters the QA environment picked on itm_717295b1c9c4) The live session start runs in a fixture repo 101 behind
   with the plugin loaded, since no checkout of this repo can be more than 100 behind today (98 commits on pilot).
   The warning will therefore never fire in this repository until pilot grows past 100 commits ahead of a checkout.
   Default: the fixture (§9 item 3), the rest of L9 unchanged. Tradeoff: the live line is seen on a synthetic history,
   not this repo's. Rejected: lowering the bar to fire here (moves agreed spec 2). Deck down: sent to `main` to post.
+  Verdict: stands
 
 ## 7. Out of scope
 
