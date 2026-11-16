@@ -4,7 +4,7 @@
  * slice declares: `` N. `<name>`: `<Interface symbol>` → <observable result> ``, the
  * symbol present in the slice's Interface block. The file also carries one
  * `Rewrite check:` line (what stays true if the implementation behind the interface were
- * replaced) and stays at or under 60 lines. ADR 0082; deep-modules L2-L4. Each blocker in the
+ * replaced) and one `Misses:` line (what the Tests cannot catch; rule `misses`) and stays at or under 60 lines. ADR 0082; deep-modules L2-L4. Each blocker in the
  * header's `after:` field names what it shares, `S<n> (<file or seam>)` (design-docs-only L8).
  * The header, above the first `## ` section, states the implementer's model and why:
  * `Model: sonnet — <reason>` or `Model: opus — <reason>` (cheaper-crew L2); a slice whose
@@ -99,10 +99,12 @@ export function checkSlice(text) {
     }
   }
 
-  const rewrites = lines.flatMap((t, i) => (!inFence[i] && /^Rewrite check:\s*\S/.test(t) ? [i + 1] : []));
-  if (rewrites.length !== 1) {
-    const at = rewrites[1] ?? (tests ? tests.line : 1);
-    problem(at, 'rewrite-check', `needs exactly one "Rewrite check:" line, found ${rewrites.length}`);
+  for (const [label, rule] of [['Rewrite check', 'rewrite-check'], ['Misses', 'misses']]) {
+    const marker = new RegExp(`^${label}:\\s*\\S`);
+    const found = lines.flatMap((t, i) => (!inFence[i] && marker.test(t) ? [i + 1] : []));
+    if (found.length !== 1) {
+      problem(found[1] ?? (tests ? tests.line : 1), rule, `needs exactly one "${label}:" line, found ${found.length}`);
+    }
   }
 
   const header = lines.findIndex((t, i) => !inFence[i] && AFTER_FIELD.test(t));
