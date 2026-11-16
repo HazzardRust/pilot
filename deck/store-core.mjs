@@ -534,7 +534,8 @@ function detailOf(kind, given) {
       continue;
     }
     if (field.flag) {
-      // Stored only when true: false is the default, and an item without it reads the same (S18).
+      // Stored only when true: false is the default, and an item without it reads the same (S18). A gate1's
+      // `surface` is the exception: postItem keeps its false too, so a plan tells it from one signed before the flag.
       if (typeof value !== 'boolean') throw new DeckRefusal(`a ${kind}'s ${field.name} is true or false`);
       if (value) detail[field.name] = true;
       continue;

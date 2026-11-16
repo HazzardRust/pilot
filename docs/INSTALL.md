@@ -320,6 +320,8 @@ reached it, the page rendered, and a reply typed in a browser came back to an ag
 The deck holds its state in `~/.claude/pilot/`, binds `127.0.0.1` only, has no
 authentication, and refuses to store anything matching a key or a token — say that while
 they are looking at it, because it is the reason a secret never goes in a deck item.
+A deck step that is a command shows its shell and directory above it: commands run in
+PowerShell on Windows, your login shell elsewhere, unless a step names another.
 
 If the deck reports the port is held, something else on the machine has 4321.
 `PILOT_DECK_PORT` moves it for a check, but the status line and the documentation both

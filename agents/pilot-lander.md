@@ -47,7 +47,7 @@ On `landed`, once QA has torn down (it does on the press), close the run in this
    every run worktree, the land dir included, and keeps only one with a tracked change (`kept merged-dirty <path>`)
    or a live holder (`kept live <pid> <path>`); you never kill a holder.
 2. `mcp__plugin_pilot_deck__deck_post` one `report` with the gate2's `ticket` and no body: the deck fills it from
-   the run record.
+   the run record. A command step it carries names `shell` and `dir`, in that shell's syntax, on the post.
 3. `mcp__plugin_pilot_deck__deck_status` with that `slug`, `slices: []` and `finished: "closing report posted"`.
 4. Send `main` one line, from land's `main gets pilot:` and `kept` lines on the gate2 and the report's id:
    `landed <sha7> · main gets pilot: <#n or its line> · kept: <paths> · report: <id>`.

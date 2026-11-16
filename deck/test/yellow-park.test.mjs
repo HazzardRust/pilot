@@ -17,7 +17,7 @@ import { addReply, listItems, pivotTicket, postItem, resolveItem, storeFile, tak
 import { postStored, shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
 
 const REPO = path.resolve('D:/work/pilot');
-const GATE1 = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x' };
+const GATE1 = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', surface: false };
 
 const aTicket = (title, state, extra = {}) =>
   postStored({ kind: KIND_TICKET, title, body: shapedTicketBody(title), repo: REPO, sliceCount: 3, state, ...extra });

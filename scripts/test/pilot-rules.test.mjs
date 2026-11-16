@@ -237,12 +237,11 @@ const part = (source, heading) => {
   return rest.split(/\n#{2,3} /)[0];
 };
 
-// lint: QA never posts its walkthrough only-when, and no agent file makes a walkthrough mandatory
-test('pilot-qa.md posts its walkthrough whatever is left, and none is mandatory elsewhere', () => {
-  const procedure = sentences(part(read('agents/pilot-qa.md'), '## The procedure'));
-  assert.ok(!procedure.some((s) => /only when[^.]*only the user can/i.test(s)), 'QA posts the walkthrough whatever is left');
+// lint: neither pilot.md nor pilot-qa.md makes a walkthrough mandatory
+test('neither pilot.md nor pilot-qa.md makes a walkthrough mandatory', () => {
+  // walkthrough-surface S4 amends walkthrough-taste QA Q4: QA walks nothing on `surface: false`.
   for (const file of ['agents/pilot.md', 'agents/pilot-qa.md']) {
-    const mandatory = sentences(read(file)).filter((s) => /walkthrough/i.test(s) && /(always|must)/i.test(s));
+    const mandatory = sentences(read(file)).filter((s) => /\bwalkthrough\b/i.test(s) && /\b(always|must)\b/i.test(s));
     assert.deepEqual(mandatory, [], `${file} makes a walkthrough mandatory`);
   }
 });

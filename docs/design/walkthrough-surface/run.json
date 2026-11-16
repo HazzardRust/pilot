@@ -1,0 +1,347 @@
+{
+  "slug": "walkthrough-surface",
+  "feature": "walkthrough only for a surface",
+  "ticket": "itm_9e228d2d345e",
+  "branch": "feat/walkthrough-surface",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-walkthrough-surface-r2",
+  "qa": {
+    "branch": "qa/walkthrough-surface",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-walkthrough-surface",
+    "url": "http://127.0.0.1:50338"
+  },
+  "artefact": "docs/design/walkthrough-surface/architecture.md",
+  "slices": [
+    {
+      "slice": "walkthrough-surface",
+      "state": "in QA: walkthrough itm_b01023ade3e6 signed off 08:33:46Z (T2, T3 as built); feat c72c3aa5; QA closing the thread and completing its PR #3 comment; Windows npm test and WSL gate x5 at c72c3aa5 in flight",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8"
+      ],
+      "branch": "feat/walkthrough-surface",
+      "pr": 3
+    },
+    {
+      "slice": "S1 One module holds a gate2's evidence",
+      "state": "integrated at 433e8b2c",
+      "branch": "slice/walkthrough-surface-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s1",
+      "pr": 58
+    },
+    {
+      "slice": "S2 A plan marks its surface; QA cannot walk a plan without one",
+      "state": "integrated at ae4f7793",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/walkthrough-surface-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s2",
+      "pr": 61
+    },
+    {
+      "slice": "S3 A full-run gate2 without a walkthrough carries the checks table",
+      "state": "integrated at 4d172ae4; QA read the rendered table HTML on the scratch deck (DevTools MCP absent); the browser look is walkthrough steps 3-4",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/walkthrough-surface-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s3",
+      "pr": 63
+    },
+    {
+      "slice": "S4 The crew's prose says the walkthrough is for a surface",
+      "state": "integrated at 9be673ee",
+      "branch": "slice/walkthrough-surface-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s4",
+      "pr": 60
+    },
+    {
+      "slice": "S5 A command step shows its shell and directory",
+      "state": "integrated at fb0f775f",
+      "branch": "slice/walkthrough-surface-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s5",
+      "pr": 59
+    },
+    {
+      "slice": "S6 A command step without a directory is refused; shell defaults",
+      "state": "integrated at 1a2aa34d",
+      "after": [
+        "S2",
+        "S5"
+      ],
+      "branch": "slice/walkthrough-surface-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s6",
+      "pr": 64
+    },
+    {
+      "slice": "S7 A command in another shell's syntax is refused",
+      "state": "integrated at ea5d403b (4561 pass, 0 fail)",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/walkthrough-surface-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s7",
+      "pr": 66
+    },
+    {
+      "slice": "S8 The crew names where every command runs",
+      "state": "integrated at 2affc216",
+      "after": [
+        "S4",
+        "S5"
+      ],
+      "branch": "slice/walkthrough-surface-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s8",
+      "pr": 62
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated at 3213ceff (run record d0b4e472); 4275 pass, 0 fail",
+      "branch": "fix/walkthrough-surface-principles",
+      "pr": 68
+    }
+  ],
+  "findings": [
+    "kept: QA B1 the incident's own step (\"Check: grep -o ...\" with no backticks) is accepted with no shell stored; spec 8-10 bypassed by one missing pair of backticks — QA fixes as writer: optional `Word: ` label, scan outside spans for a step already a command",
+    "kept: QA B2 a `grep` step shows no shell/dir prefix — grep, cat, ls, rg join COMMANDS (QA)",
+    "kept: QA T1 the gate1 page does not show Surface when false; the user signs blind — render the false case (QA)",
+    "dropped: QA T2 reason line renders as plain text, T3 dir shown three times — taste, put to the user in the walkthrough"
+  ],
+  "next": "main: call need on itm_9e228d2d345e; QA posts the gate2 at feat c72c3aa5. Gate results in flight: Windows log scratchpad/win-npmtest-c72c3aa5.log, WSL ~/gate-c72c3aa5-run1..5.log in ~/gate-walkthrough-surface-c72c3aa5.",
+  "updatedAt": "2026-11-16T08:34:17.398Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate piped into tail was moved to the background; its output file stayed empty and the shell reported exit 0 while the launcher ran on, so the integrated line was never read; merge and push confirmed from git and the PR state instead",
+      "evidence": "PID 5352 alive after task bwox8wsra completed; ae4f7793 on origin, PR #61 MERGED",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "both walkthrough-surface co-pilots were made to hand back early with children live; reports redirected to main",
+      "evidence": "hand-backs on itm_9e228d2d345e, 2026-11-16",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: context compacted early with no handoff, slice rebuilt; slice fixture grep covered only deck/test and missed hooks/test/inbox.test.js, one extra full gate; no browser so Sign off could not be pressed on a scratch deck",
+      "evidence": "PR #61 report",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "pilot drove triage, fix round and QA for crew-tests-behaviour directly, and relayed between orphaned children and three successor co-pilots",
+      "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "auto mode gave no verdict on Bash calls batched with other tool calls; each posted a Blocked item though the retry ran",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "third early hand-back on this ticket: handback enforcer fired while S3, S6 and S8 implementers were live; S3/S6 reports address the stopped co-pilot",
+      "evidence": "hand-back from a77f01f1411559e0d, 2026-11-16",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "TaskOutput unavailable to the co-pilot (ToolSearch no match); waited on children with a gh PR-poll Monitor",
+      "evidence": "co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8: zero measure-prompt headroom on pilot.md, a reviewer wording fix went 1 token over its pin; pilot-rules.test.mjs:479 pins 'posted none', found only by a 10-minute full gate; reviewer agents unresumable after compaction, two duplicate reviews",
+      "evidence": "PR #62 report",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8 slice file kept stale Tests/Evidence lines after a seam change dropped three red pins; superseded only by an appended note",
+      "evidence": "docs/design/walkthrough-surface/slices/S8.md, PR #62 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "fourth forced hand-back on this ticket; co-pilot resumed with S8 ready-to-integrate message and handed back without integrating",
+      "evidence": "hand-backs from a77f01f1411559e0d, 2026-11-16",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "pilot integrates S8 itself and takes S3/S6 reports because the co-pilot cannot hold a turn open",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "two pilot integrate runs of S8 shared the feat worktree: co-pilot started one on the ready message while handing back paused, pilot started its own; first failed on MERGE_HEAD, second ended red with a truncated log and no failing test",
+      "evidence": "logs 20261116T063028424Z and 20261116T063137862Z -slice-walkthrough-surface-s8.log; PIDs 11152/15204 vs 10768/16456",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "TaskStop on a backgrounded pilot integrate left its sh and node launcher alive; pilot stopped them by PID",
+      "evidence": "PIDs 11152, 15204 alive after TaskStop b29bh3kmr",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "co-pilot's integrate carried the brief's stale trailer (Fable 5.1, old session)",
+      "evidence": "command line of PID 15204",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: test:changed is the same full gate as npm test, so the 9-minute gate ran twice; phase and ticket-state fixtures post bare full-run gate2s the slice file did not list (4 failures); no lint/typecheck script, eslint has no config",
+      "evidence": "package.json:19-20; deck/test/phase.test.mjs, ticket-state.test.mjs; PR #63 report",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: no Chrome DevTools tools in the implementer's session, so the scratch-deck render was checked in HTML only",
+      "evidence": "PR #63 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: fresh worktree has no node_modules and nothing says to npm ci (one misleading red run); platform-reads.test.mjs enforces the process.platform seam that neither slice nor brief names (one extra full gate)",
+      "evidence": "PR #64 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: command detection treats prose starting with lower-case set/export as a command step, so it now needs a dir",
+      "evidence": "deck/test/items.test.mjs fixture 'set the status filter to Done', PR #64 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-lander",
+      "what": "lander's rule posts the closing report with no body; the deck refuses an empty body, so the first report post fails on every landing",
+      "evidence": "deck_post kind report, ticket itm_04e5fe15f3f9: 'body must be a non-empty string'",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-lander",
+      "what": "pilot landing sent beside a deck reply got no verdict, posted a Blocked item the user then answered 'Skip it' while the retry was already running",
+      "evidence": "itm_c7ca9d71097c, task b6cezwazi",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: fact-sheet helper returned only S6 call sites; a grep watcher on the gate log matched per-file 'fail' summaries and reported completion three times before the real exit",
+      "evidence": "PR #66 report",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot integrated four slices itself, relayed five gate2 presses, three stale Blocked items and two landings in one session; co-pilot unusable (forced hand-backs)",
+      "size": 8
+    },
+    {
+      "kind": "drain",
+      "what": "pilot resolved the feat base merge itself: the implementer waiting on the pin decision did not survive /clear (no transcript to resume)",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "gate1 refused: design branch not on pilot's tip after two landings; rebased and force-pushed design and feat branches, PR opened before the refusal",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-lander",
+      "what": "closing report posted with no body was refused again; lander handed back unfinished and needed a resume to post it with a body",
+      "evidence": "itm_af70d00eed9d; deck_post kind report: 'body must be a non-empty string'",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "all six evidence checks unusable: $FILES includes a file the diff deletes (deck/short-path-shape.mjs) so eslint, jscpd, madge and stryker abort; no node_modules in the review worktree fails stryker's dry run; knip is whole-repo; coverage command blocked by the classifier",
+      "evidence": "runner report on bd537ad6; itm_ff7f980ddaae",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "handed back before its evidence runner returned; the runner's table reached main instead; review worktree directory left on disk (remove refused while the runner held files)",
+      "evidence": "C:/Users/Hazzard/Projects/pilot-review-walkthrough-surface",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "Chrome DevTools MCP tools absent in QA's session; hand-written CDP driver for a headless Chrome",
+      "evidence": "ToolSearch found no mcp__plugin_pilot_chrome-devtools__*; QA report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "no fixture helper on a scratch deck: a gate1 needs a live ticket and a resolve, a legacy plan needs a store edit",
+      "evidence": "QA report, about 8 extra calls",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "harness forced QA's hand-back while it waited on main; a resume is needed for the writer phase",
+      "evidence": "handback-send-enforce, 07:33Z",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 10's evidence was tested with backticked input only, so the incident's verbatim step slipped through 8 slices",
+      "evidence": "step-shell-syntax.test.mjs:19; QA B1",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix round cut three times by classifier outages; brief's fixture list came from a grep and named 2 of 7 files; the deck's 800-line file limit was not in the brief",
+      "evidence": "PR #68 report; facades.test.mjs:68",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test files on pilot carry literal backspace bytes (0x08) where \\b was meant; Edit cannot match them and the regex silently matches nothing; deck/test/run.test.mjs still unfixed",
+      "evidence": "merge 3cbbdb0d report; scripts/test/pilot-rules.test.mjs old lines 243, 245",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate fell back to the full suite: its selection was 37152 characters of argv, over the 24000 cap",
+      "evidence": "pilot integrate fix/walkthrough-surface-principles output at d0b4e472: 'full suite: selection is 37152 characters of argv, over 24000'"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "deck/test/run.test.mjs carries literal backspace bytes (0x08) where \\b was meant (passed on by main)",
+      "evidence": "main's brief to the co-pilot of itm_9e228d2d345e"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "`node bin/pilot.mjs deck --help` is not a help flag: it reached the machine deck and wrote deck-open.html",
+      "evidence": "output 'The deck is up at http://127.0.0.1:4321 / open ...deck-open.html'"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "seeding a full-run gate2 on a scratch deck needs a yellow ticket with a signed plan; no seed helper over HTTP, so QA drove store + testUtils directly",
+      "evidence": "QA scratchpad seed.mjs, ~6 calls"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "thread pages need the key cookie (401) and live at /thread/<id>, not /item/",
+      "evidence": "curl 401 then 404, 3 calls"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "Chrome DevTools MCP absent in the QA session, so the S3 browser look fell to the user's walkthrough",
+      "evidence": "ToolSearch: no mcp__plugin_pilot_chrome-devtools__* match"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "deck MCP reports CONNECTION_CLOSED at session start yet its tools load and work through ToolSearch",
+      "evidence": "QA and co-pilot sessions, 2026-11-16"
+    }
+  ]
+}
