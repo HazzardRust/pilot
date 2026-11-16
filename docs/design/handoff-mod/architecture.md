@@ -119,11 +119,14 @@ in the mod, untested), so it moves behind a CLI rather than going.
 - **A1 The mod acts only under `pilot run`** (`PILOT_RUN_REPO` set). Tradeoff: the automatic cycle still needs
   `pilot run`. Rejected path: every main pilot session, which makes `pilot run` optional but can clear a session
   the user is typing in. Posted itm_092acdb3e41f.
+  Verdict: stands
 - **A2 The minimum Claude Code is 2.1.325**, the version proven, not the draft's 2.1.287. Tradeoff: users on
   2.1.287-2.1.324 get the line and type `/clear`. Rejected path: 2.1.287, unproven. Sent to `main` (moves spec 8).
+  Verdict: stands
 - **A3 One deletion slice over the 400-line limit** (S5, about 1300 lines removed): no added lines outside import
   fix-ups, every deleted test file named with the behaviour that no longer exists. Tradeoff: one long diff.
   Rejected path: four deletion slices that buy no review. Main's to rule.
+  Verdict: stands
 - **A4 Security defaults** (not posted at depth forks; `pilot:security-reviewer` on S1-S4, S6): (a) `$.process.run`
   gets a fixed argv built from `PILOT_PLUGIN_ROOT`, never text from a deck item; ids pass the `itm_[0-9a-f]+` shape
   check before they reach an argv; (b) the submitted prompt is the fixed literal plus the lander line, its id
@@ -131,8 +134,10 @@ in the mod, untested), so it moves behind a CLI rather than going.
   on 127.0.0.1 with the bearer; (d) spec 5's forged-hand-off bound is re-proved by tests against the look's claim
   and cooldown, not carried over. Tradeoff: one node process per main turn end under `pilot run`. Rejected path:
   deck calls from the mod's own fetch.
+  Verdict: stands
 - **A5 The spec and the QA environment** stand at main's defaults (Agree; this machine, 2.1.325, interactive
   `pilot run` against a scratch deck, 5 live hand-offs, plus the local gate) until the user answers.
+  Verdict: stands
 
 ## 7. Out of scope
 
