@@ -77,22 +77,24 @@
     },
     {
       "slice": "S9 Sweep: audit and deck report pins",
-      "state": "implementing",
+      "state": "draft PR #51",
       "branch": "slice/crew-tests-behaviour-s9",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s9"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s9",
+      "pr": 51
     },
     {
       "slice": "S10 Sweep: architect, slicing, verdicts",
-      "state": "draft PR #50",
+      "state": "integrated at 2af77542",
       "branch": "slice/crew-tests-behaviour-s10",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s10",
       "pr": 50
     },
     {
       "slice": "S11 Sweep: crew voice and gates",
-      "state": "implementing",
+      "state": "draft PR #52",
       "branch": "slice/crew-tests-behaviour-s11",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s11"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-tests-behaviour-s11",
+      "pr": 52
     },
     {
       "slice": "S12 Sweep: QA, research, skills",
@@ -122,8 +124,8 @@
       ]
     }
   ],
-  "next": "integrating S10 (#50); S9, S11 implementing; then S12",
-  "updatedAt": "2026-11-16T03:46:54.525Z",
+  "next": "integrating S9 (#51), S11 (#52); then S12, S13; S14 last; S4 waits on PR #8",
+  "updatedAt": "2026-11-16T03:48:49.113Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -196,6 +198,12 @@
       "what": "Edit refused as 'File has not been read yet' after other tools touched the file",
       "evidence": "S10: about 7 extra Read calls",
       "size": 7
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census line ranges drifted; blocks located by test name and files re-read in full",
+      "evidence": "S9: about 15 Read calls",
+      "size": 15
     }
   ]
 }
