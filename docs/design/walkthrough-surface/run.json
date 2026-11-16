@@ -31,7 +31,7 @@
     },
     {
       "slice": "S2 A plan marks its surface; QA cannot walk a plan without one",
-      "state": "integrated",
+      "state": "integrated at ae4f7793",
       "after": [
         "S1"
       ],
@@ -41,10 +41,13 @@
     },
     {
       "slice": "S3 A full-run gate2 without a walkthrough carries the checks table",
-      "state": "planned",
+      "state": "draft PR #63 at 8d948e3e; gate green, typescript-reviewer approve (implementer's report); render seen in HTML only, not in a browser; queued behind S8's integrate",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/walkthrough-surface-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s3",
+      "pr": 63
     },
     {
       "slice": "S4 The crew's prose says the walkthrough is for a surface",
@@ -62,11 +65,13 @@
     },
     {
       "slice": "S6 A command step without a directory is refused; shell defaults",
-      "state": "planned",
+      "state": "implementing: a0a9dedba011ea3a3 live, reports to co-pilot",
       "after": [
         "S2",
         "S5"
-      ]
+      ],
+      "branch": "slice/walkthrough-surface-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s6"
     },
     {
       "slice": "S7 A command in another shell's syntax is refused",
@@ -77,17 +82,18 @@
     },
     {
       "slice": "S8 The crew names where every command runs",
-      "state": "implementing",
+      "state": "draft PR #62 at 561780c5, verdicts in body; NOT integrated: two integrate runs overlapped in the feat worktree (co-pilot's and pilot's), both ended without a push; pilot re-running alone",
       "after": [
         "S4",
         "S5"
       ],
       "branch": "slice/walkthrough-surface-s8",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s8"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-walkthrough-surface-s8",
+      "pr": 62
     }
   ],
-  "next": "S2 integrating (PR #61); then spawn S3 and S6 from the new tip; integrate S8 after its security Verdict; S7 after S6; then fundamentalist, fix round, QA",
-  "updatedAt": "2026-11-16T06:02:54.260Z",
+  "next": "Pilot's `pilot integrate slice/walkthrough-surface-s8` live in feat worktree (PR #62); verify in git, set S8 integrated; then integrate S3 (PR #63, 8d948e3e; S3's browser look still owed, QA's). Pilot integrates all slices; co-pilot a77f01f1411559e0d only forwards S6 (a0a9dedba011ea3a3). S7 (Sonnet) after S6; then fundamentalist, QA.",
+  "updatedAt": "2026-11-16T06:37:48.360Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -129,6 +135,99 @@
       "agent": "pilot:pilot-co-pilot",
       "what": "co-pilot seam note said pilot-qa's 'nothing to look at' clause was gone; a one-line grep missed it across a line wrap",
       "evidence": "pilot-qa.md:156-157 on 6ea49cac",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate piped into tail was moved to the background; its output file stayed empty and the shell reported exit 0 while the launcher ran on, so the integrated line was never read; merge and push confirmed from git and the PR state instead",
+      "evidence": "PID 5352 alive after task bwox8wsra completed; ae4f7793 on origin, PR #61 MERGED",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "both walkthrough-surface co-pilots were made to hand back early with children live; reports redirected to main",
+      "evidence": "hand-backs on itm_9e228d2d345e, 2026-11-16",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: context compacted early with no handoff, slice rebuilt; slice fixture grep covered only deck/test and missed hooks/test/inbox.test.js, one extra full gate; no browser so Sign off could not be pressed on a scratch deck",
+      "evidence": "PR #61 report",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "pilot drove triage, fix round and QA for crew-tests-behaviour directly, and relayed between orphaned children and three successor co-pilots",
+      "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "auto mode gave no verdict on Bash calls batched with other tool calls; each posted a Blocked item though the retry ran",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "third early hand-back on this ticket: handback enforcer fired while S3, S6 and S8 implementers were live; S3/S6 reports address the stopped co-pilot",
+      "evidence": "hand-back from a77f01f1411559e0d, 2026-11-16",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "TaskOutput unavailable to the co-pilot (ToolSearch no match); waited on children with a gh PR-poll Monitor",
+      "evidence": "co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8: zero measure-prompt headroom on pilot.md, a reviewer wording fix went 1 token over its pin; pilot-rules.test.mjs:479 pins 'posted none', found only by a 10-minute full gate; reviewer agents unresumable after compaction, two duplicate reviews",
+      "evidence": "PR #62 report",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8 slice file kept stale Tests/Evidence lines after a seam change dropped three red pins; superseded only by an appended note",
+      "evidence": "docs/design/walkthrough-surface/slices/S8.md, PR #62 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "fourth forced hand-back on this ticket; co-pilot resumed with S8 ready-to-integrate message and handed back without integrating",
+      "evidence": "hand-backs from a77f01f1411559e0d, 2026-11-16",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "pilot integrates S8 itself and takes S3/S6 reports because the co-pilot cannot hold a turn open",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "two pilot integrate runs of S8 shared the feat worktree: co-pilot started one on the ready message while handing back paused, pilot started its own; first failed on MERGE_HEAD, second ended red with a truncated log and no failing test",
+      "evidence": "logs 20261116T063028424Z and 20261116T063137862Z -slice-walkthrough-surface-s8.log; PIDs 11152/15204 vs 10768/16456",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "TaskStop on a backgrounded pilot integrate left its sh and node launcher alive; pilot stopped them by PID",
+      "evidence": "PIDs 11152, 15204 alive after TaskStop b29bh3kmr",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "co-pilot's integrate carried the brief's stale trailer (Fable 5.1, old session)",
+      "evidence": "command line of PID 15204",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: test:changed is the same full gate as npm test, so the 9-minute gate ran twice; phase and ticket-state fixtures post bare full-run gate2s the slice file did not list (4 failures); no lint/typecheck script, eslint has no config",
+      "evidence": "package.json:19-20; deck/test/phase.test.mjs, ticket-state.test.mjs; PR #63 report",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: no Chrome DevTools tools in the implementer's session, so the scratch-deck render was checked in HTML only",
+      "evidence": "PR #63 report",
       "size": 1
     }
   ]
