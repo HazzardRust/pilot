@@ -551,5 +551,5 @@ function renderCardClose(item, back) {
 export {
   renderTime, renderByline, renderMessages, code, setOff, withTitles, titleOf, renderTicketOf,
   renderTicketStanding, renderAsked, renderChoice, renderChoiceRow, nothing, rendererFor, renderReplyForm,
-  renderReopenForm, renderDismissForm, renderCloseForm, renderCardClose,
+  renderReopenForm, renderDismissForm, renderCloseForm, renderCardClose, renderSteps,
 };
