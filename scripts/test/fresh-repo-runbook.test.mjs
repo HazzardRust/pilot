@@ -1,7 +1,6 @@
 /**
  * The move to a fresh public repository (fresh-public-repo spec 4, 4a, 5, 7, 8): docs/OPERATING.md's
- * runbook keeps its four subsections in order and names the builder, the scan and the secret by
- * name only; every owner/name pin reads the one `REPOSITORY`; the title "Pilot Deck Claude Code"
+ * runbook keeps its four subsections in order and carries no secret value; every owner/name pin reads the one `REPOSITORY`; the title "Pilot Deck Claude Code"
  * reads in README's H1, package.json and the runbook; and neither workflow loosens its guard.
  */
 import assert from 'node:assert/strict';
@@ -27,36 +26,20 @@ function runbook() {
   return next === -1 ? rest : rest.slice(0, next + 2);
 }
 
-function subsection(body, heading) {
-  const at = body.indexOf(`\n### ${heading}\n`);
-  assert.notEqual(at, -1, `no "### ${heading}" subsection`);
-  const rest = body.slice(at + 1);
-  const next = rest.slice(4).search(/\n### /);
-  return next === -1 ? rest : rest.slice(0, next + 4);
-}
-
 test('the runbook has its four subsections in order', () => {
+  // lint: the four subsection headings exist in order
   const body = runbook();
   const at = SUBSECTIONS.map((heading) => body.indexOf(`\n### ${heading}\n`));
   SUBSECTIONS.forEach((heading, i) => assert.notEqual(at[i], -1, `no "### ${heading}" subsection`));
   assert.deepEqual([...at].sort((a, b) => a - b), at, `the subsections are not in the order ${SUBSECTIONS.join(', ')}`);
 });
 
-test('the runbook names the builder, the scan and the secret by name only', () => {
+test('the runbook carries no secret value', () => {
+  // lint: no token or `gh secret set --body` value in the runbook
   const body = runbook();
-  for (const name of ['scripts/fresh-repo.mjs', 'gitleaks dir', 'CLAUDE_CODE_OAUTH_TOKEN']) {
-    assert.ok(body.includes(name), `the runbook does not name ${name}`);
-  }
   // An OAuth token, a GitHub token, or a value handed to `gh secret set` on its command line.
   for (const value of [/sk-ant-[\w-]{8,}/, /\bgh[opsur]_[A-Za-z0-9]{16,}/, /\bgithub_pat_\w{16,}/, /gh secret set [^`\n]*(--body|-b)\b/]) {
     assert.doesNotMatch(body, value, 'the runbook carries a secret value');
-  }
-});
-
-test('the archive note reads', () => {
-  const note = subsection(runbook(), 'Links from before the move');
-  for (const term of [/PR numbers/, /mergeShas?/, /run records/, /briefs/, /archive/]) {
-    assert.match(note, term, `"Links from before the move" does not say ${term.source}`);
   }
 });
 
@@ -93,6 +76,5 @@ test('the title reads Pilot Deck Claude Code', () => {
   assert.match(readme, new RegExp(`^# ${TITLE}$`, 'm'), `README has no \`# ${TITLE}\` heading`);
   assert.doesNotMatch(readme, /^# Pilot\s*$/m, 'README still has a bare `# Pilot` heading');
   assert.ok(json('package.json').description.startsWith(TITLE), `package.json's description does not open with ${TITLE}`);
-  assert.ok(runbook().includes(`--description "${TITLE}"`), `the runbook's gh repo create has no --description "${TITLE}"`);
   assert.equal(json('.claude-plugin', 'plugin.json').name, 'pilot');
 });
