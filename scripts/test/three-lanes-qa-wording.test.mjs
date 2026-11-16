@@ -30,7 +30,7 @@ test("the pilot does not post QA's gate2", () => {
 
 test('step 9 has no second signature and no second QA', () => {
   const pilot = read('agents/pilot.md');
-  // lint: step 9 exists, and a refused landing does not have the user sign again
+  // lint: step 9 exists, a refused landing does not have the user sign again, and no prompt says two QA agents are never live
   assert.doesNotMatch(section(pilot, '### 9. Gate 2 and ready', 'agents/pilot.md'), /signs again/, 'a refused landing no longer has the user sign again');
   assert.doesNotMatch(pilot, /Two QA agents are\s+never live at once/);
 });

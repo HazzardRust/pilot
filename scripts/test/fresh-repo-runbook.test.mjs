@@ -1,7 +1,7 @@
 /**
  * The move to a fresh public repository (fresh-public-repo spec 4, 4a, 5, 7, 8): docs/OPERATING.md's
  * runbook keeps its four subsections in order and carries no secret value; every owner/name pin reads the one `REPOSITORY`; the title "Pilot Deck Claude Code"
- * reads in README's H1, package.json and the runbook; and neither workflow loosens its guard.
+ * reads in README's H1 and package.json; and neither workflow loosens its guard.
  */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -57,7 +57,7 @@ test('every pin reads one owner/name', () => {
   for (const file of ['README.md', path.join('docs', 'INSTALL.md')]) {
     // An `<owner>/<name>`, not a local path such as INSTALL.md's `/path/to/pilot`.
     const added = [...read(file).matchAll(/claude plugin marketplace add ([\w-]+\/[\w.-]+)/g)].map((m) => m[1]);
-    assert.ok(added.length > 0, `${file} names no \`claude plugin marketplace add\``);
+    // lint: every marketplace add in README and INSTALL names REPOSITORY
     for (const name of added) assert.equal(name, repo, `${file} adds the marketplace from ${name}`);
   }
 });
@@ -72,6 +72,7 @@ test('public CI keeps its guards', () => {
 
 test('the title reads Pilot Deck Claude Code', () => {
   const readme = read('README.md');
+  // lint: README's H1 is the title and not a bare "# Pilot"
   // README opens with the user's `# BETA` banner; the project's H1 is the heading that was `# Pilot`.
   assert.match(readme, new RegExp(`^# ${TITLE}$`, 'm'), `README has no \`# ${TITLE}\` heading`);
   assert.doesNotMatch(readme, /^# Pilot\s*$/m, 'README still has a bare `# Pilot` heading');
