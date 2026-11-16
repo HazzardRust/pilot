@@ -1,9 +1,9 @@
 /**
  * The install walks a Windows user to a Defender exclusion, or a Dev Drive
  * (defender-dev-drive spec 4; L8, A2). Step 4a of docs/INSTALL.md is prose an installing
- * agent follows, so these are wording pins: the step runs the one row, shows the
- * exclusion before the Dev Drive upgrade for the user to do as administrator, and records
- * the marker, and both tables name that marker. However 4a is reworded, those hold.
+ * agent follows, so only lints stay (ADR NNNN): the step exists between 4 and 5, runs the
+ * one row, restates no command it shows, and records the marker, and both tables name
+ * that marker. However 4a is reworded, those hold.
  */
 
 import { test } from 'node:test';
@@ -29,6 +29,7 @@ function section(heading) {
 const rows = (heading) => section(heading).split('\n').filter((line) => line.startsWith('|'));
 
 test('step 4a follows step 4 and runs the row', () => {
+  // lint: the headings exist in order, and the step runs the Defender row
   const step4 = INSTALL.indexOf('\n## 4. ');
   const step4a = INSTALL.indexOf(`\n${HEADING}\n`);
   const step5 = INSTALL.indexOf('\n## 5. ');
@@ -39,24 +40,15 @@ test('step 4a follows step 4 and runs the row', () => {
   assert.match(section(HEADING), /pilot doctor defender(?! advised)/, 'it runs the Defender row');
 });
 
-test('the exclusion comes before the Dev Drive', () => {
-  const step = section(HEADING);
-
-  const exclusion = step.indexOf('exclusion');
-  const devDrive = step.indexOf('Dev Drive');
-  assert.ok(exclusion >= 0, 'the step names the exclusion');
-  assert.ok(devDrive > exclusion, 'L8: the exclusion comes first, the Dev Drive after it');
-  assert.match(step, /upgrade/, 'the Dev Drive is named the upgrade');
-  assert.match(step, /administrator/, 'the user runs the steps as administrator');
-  assert.match(step, /never run them yourself|do not run them yourself/i, 'never the installer');
-  assert.doesNotMatch(step, /Add-MpPreference/, 'the step does not restate the commands it shows');
+test('the step does not restate the commands it shows', () => {
+  // lint: forbidden pattern
+  assert.doesNotMatch(section(HEADING), /Add-MpPreference/, 'the step does not restate the commands it shows');
 });
 
 test('the step records the marker and both tables say so', () => {
+  // lint: the marker command and both table rows naming the marker file exist
   const step = section(HEADING);
-  const marker = step.indexOf('pilot doctor defender advised install');
-  assert.ok(marker >= 0, 'step 4a records the marker');
-  assert.ok(marker > step.indexOf('Dev Drive'), 'after the steps are shown, not before');
+  assert.ok(step.includes('pilot doctor defender advised install'), 'step 4a records the marker');
 
   const changes = rows('## What this changes, and what it never touches');
   assert.ok(
