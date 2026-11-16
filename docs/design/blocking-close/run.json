@@ -1,0 +1,57 @@
+{
+  "slug": "blocking-close",
+  "feature": "Pilot clears a blocking thread",
+  "ticket": "itm_809d3e826efc",
+  "branch": "feat/blocking-close",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-blocking-close-r2",
+  "artefact": "docs/design/blocking-close/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Skeleton: the pilot closes any blocking question as Moot or Assumed",
+      "state": "planned"
+    },
+    {
+      "slice": "S2 The gate2 and the closing report list the pilot closes",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3 The pilot rule and ADR 0172 widen Moot to every blocking question",
+      "state": "planned"
+    },
+    {
+      "slice": "blocking-close",
+      "state": "implementing (co-pilot), taking the base",
+      "after": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "branch": "feat/blocking-close",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-blocking-close-r2",
+      "pr": 7
+    }
+  ],
+  "findings": [],
+  "next": "co-pilot: take the base (pilot integrate, no slice) in feat worktree, correct brief.md trailer, then spawn S1 and S3",
+  "updatedAt": "2026-11-16T01:15:07.331Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "deck MCP tools absent in this session (plugin 0.9.4 vs running deck 0.9.5 with secret); every deck call made over loopback by hand, posts without repo stamp had to be reposted (gate2 #889, ticket)",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "pilot integrate --default gone in 0.9.5 (now --trial); gate1 verdict lines and slices field shapes learned by refusal",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "ADR number clash 0170 across landed runs turned #959 red; Land again refused on a red merge without a conflict dir",
+      "size": 2
+    }
+  ]
+}
