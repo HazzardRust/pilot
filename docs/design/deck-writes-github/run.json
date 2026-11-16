@@ -8,14 +8,14 @@
   "slices": [
     {
       "slice": "deck-writes-github",
-      "state": "fixing: fix round #77 integrating (security re-review APPROVE on 5c50d78b)",
+      "state": "in QA: walkthrough itm_554405ba9f7b posted, awaits the user's Sign off; feat f57afcc2 (all 8 slices + fix round #77 integrated); WSL x5 green at f57afcc2; integrate --trial clean",
       "branch": "feat/deck-writes-github",
       "worktree": "C:/Users/Hazzard/Projects/pilot-feat-deck-writes-github-r2",
       "pr": 4
     },
     {
       "slice": "S1 `pilot pr` writes the feature PR from the record",
-      "state": "integrated at 06aa5fe1 (#71 merged)",
+      "state": "integrated at 06aa5fe1 (#71)",
       "branch": "slice/deck-writes-github-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s1",
       "pr": 71
@@ -43,14 +43,14 @@
     },
     {
       "slice": "S4 `pilot integrate --dir`",
-      "state": "integrated at b0fbdf22 (#70 merged)",
+      "state": "integrated at b0fbdf22 (#70)",
       "branch": "slice/deck-writes-github-s4",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s4",
       "pr": 70
     },
     {
       "slice": "S5 `pilot doctor` names a missing allow rule",
-      "state": "integrated at b973ee56 (#69 merged); feat 5131d143",
+      "state": "integrated at b973ee56 (#69)",
       "branch": "slice/deck-writes-github-s5",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s5",
       "pr": 69
@@ -68,7 +68,7 @@
     },
     {
       "slice": "S7 ADR and OPERATING say the deck writes GitHub",
-      "state": "integrated at ed40b634 (#72 merged)",
+      "state": "integrated at ed40b634 (#72)",
       "branch": "slice/deck-writes-github-s7",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s7",
       "pr": 72
@@ -83,59 +83,29 @@
       "branch": "slice/deck-writes-github-s8",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-deck-writes-github-s8",
       "pr": 73
+    },
+    {
+      "slice": "feature",
+      "state": "in QA, walkthrough itm_554405ba9f7b posted",
+      "pr": 4
     }
   ],
   "findings": [
-    "kept: OPERATING's command table has no `pilot pr` row (S7)",
-    "kept: S1 security LOW: flags after `pr <verb>` (-R, --web, --editor) pass assertHostVerb (host.mjs:61)",
-    "kept: S1 security LOW: @mentions in record text reach the PR body and notify people",
-    "kept: HOST_VERBS export has 0 importers and drifts from PR_VERBS/COMMENT_PATH; delete it (host.mjs:13-16), -4",
-    "kept: api POST comment path has no caller (feature-pr uses gh pr comment + PATCH); delete COMMENT_PATH.POST and the unused -X GET/-q/--raw-field acceptance, -3",
-    "kept: doctor.mjs:231-239 duplicates install-settings readSettings untested; export and reuse it, -5",
-    "kept: narrowed, qaComment (20000 chars) rides into run.json, committed to pilot/main, and into the session-start injection; keep it on the deck's record (spec 3 names it) but out of run.json and the hook",
-    "dropped: move qaComment off the record entirely; spec 3 says the comment is the record's qaComment, a spec line",
-    "dropped: qa-comment tests assert record().qaComment; they stay valid under the narrowed fix",
-    "dropped: credential scrub of QA comment; store-items.mjs:134 already refuses it (qa-comment.test.mjs:72)",
-    "kept: integrate usage (integrate.mjs:574) omits --dir; spec 5 evidence names the help (QA found it too)",
-    "kept: feature-pr.mjs:13-14 header says the body never goes on argv; PATCH sends -f body=; correct the header",
-    "kept: host.mjs:2-4 and ADR 0182:27 'a second host is one adapter' overstates an argv allowlist; reword to one process start and one allowlist",
-    "kept: host-bar.test.mjs:73 typeof hostIn asserts nothing; remove, -1",
-    "dropped: S2.md:33 rewrite-check wording; plan text, no code consequence",
-    "dropped: setQaComment sits in store-tickets not store-runs; store-runs at its 800-line bar, recorded in PR #75",
-    "dropped: madge cycle integrate.mjs<->sync.mjs; present on origin/pilot b38de846, not this feature's",
-    "kept: consider row, security-reviewer APPROVE on doctor/install-settings; LOW: pass detail 'every rule present' also counts deny/ask-covered rules, reword",
-    "dropped: consider row LOW: denyCovers regex backtracking on the user's own settings strings; no attacker-reachable input",
-    "kept: fix-round security HIGH: -wR/-we/-w=true clusters bypassed the flag refusal; fixed in 5c50d78b, re-review APPROVE",
-    "dropped: fix-round LOWs: label create -R, --body-file any path, &#64; mentions; pre-existing or outside the kept set",
-    "dropped: re-review LOW: PR_REFUSED also refuses a value like -wip; fails closed, no caller sends one"
+    "kept: OPERATING.md pilot pr row",
+    "kept: gh allowlist refuses -R/--repo, -w/--web, -e/--editor on PR verbs, clusters included",
+    "kept: @mentions neutralised in PR body, QA comment, title",
+    "kept: unused HOST_VERBS export and uncalled api POST comment path deleted",
+    "kept: doctor reuses readSettings from install-settings.mjs",
+    "kept: qaComment kept out of run.json and the session-start hook",
+    "kept: pilot integrate usage names --dir",
+    "dropped: moving qaComment off the record, would move spec 3",
+    "dropped: madge cycle integrate.mjs <-> sync.mjs, reported as already on origin/pilot b38de846",
+    "dropped: three fix-round LOWs (label create -R, --body-file any path, &#64; mentions), older than this diff",
+    "dropped: coverage and mutation evidence never produced (c8 red under scratch HOME, Stryker timed out)"
   ],
-  "next": "co-pilot itm_5f1725c876a7: pilot integrate fix/deck-writes-github (#77), send QA the tip; QA: plugin update, scratch deck live (L9), walkthrough, WSL x5 on final tip BEFORE gate2.",
-  "updatedAt": "2026-11-16T11:36:43.581Z",
+  "next": "dwg green: user walks itm_554405ba9f7b; on Sign off resume QA af0430e4cd7904b5d for gate2 (PR 4, f57afcc2), lander, QA teardown (scratch deck pid 18484, PRs #78 #79). Never press scratch gate2s. handoff-mod: A7 itm_6cb636583c2c, then gate1. other-host held: itm_9abc4a4cc562. User: merge #65 itm_cf8d745a9d84.",
+  "updatedAt": "2026-11-16T12:05:08.758Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S4's slice file left --dir's reach open; a bare is-a-directory check would widen Bash(pilot integrate *) to every repository on disk; the security reviewer caught it",
-      "evidence": "PR #70 security-reviewer WARNING then APPROVE",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "integrate fixture tests take seconds each on Windows; 82 s cold for one",
-      "evidence": "S4 typescript-reviewer report",
-      "size": 2
-    },
-    {
-      "agent": "pilot:security-reviewer",
-      "what": "ran one real `gh api -X POST repos/../../issues/1/comments` without the gh stub while reviewing S1; it failed, nothing written as far as it could tell; the `..` path is now refused",
-      "evidence": "S1 report, PR #71",
-      "size": 5
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "Edit tool wrote   as the raw character and broke a regex literal; first gate showed 9 false failures",
-      "evidence": "S1 report, PR #71",
-      "size": 3
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "pilot gh-stub answers every call with one reply.txt, so a live run cannot show create then unchanged in one pass; a reply per verb would let QA's L9 rehearsal be one run",
@@ -342,6 +312,30 @@
       "agent": "pilot:pilot-implementer",
       "what": "the 800-line limit is not uniformly enforced: hooks/test/session-handoff.test.js is 1077 lines with nothing flagging it",
       "evidence": "fix round report, PR #77",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "§9 step 0 (`claude plugin update`) cannot test a feature branch: the marketplace serves GitHub main; QA ran the feature's own daemon from its worktree instead",
+      "evidence": "QA report; claude plugin marketplace list",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the fixture gate path on a scratch deck is undocumented: gate2 needs #n, a yellow ticket (signed and resolved gate1), short-path Verdict:/Gate: lines; ~8 refusals",
+      "evidence": "QA report",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "Git Bash path conversion mangled /api/runs and the WSL script path (2 failed runs); fresh clones lack the noreply email (1 rejected push); integrate --trial refuses a detached HEAD (1 rerun)",
+      "evidence": "QA report",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a feature that changes deck_post's schema cannot use its own new field before landing: QA's comment on PR #4 waits for the landed deck",
+      "evidence": "QA 0.9.7 MCP schema lacks comment; user's deck 0.9.5",
       "size": 1
     }
   ]
