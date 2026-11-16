@@ -190,7 +190,7 @@ test('the command prints the table, and --json prints the rows', (t) => {
 // fundamentalist-decisions S2 (2026-10-21) raised it from 11562.5 to the measured 11662.25 (spec 6, 7; L4-L6, A1): step 7's brief passes the artefact's path, each drop or simplify row is one `findings` line id first, and a kept finding that moves a decision is always a question the run does not wait on, 104 (11558.25 to 11662.25 at eedd7b7a).
 // fundamentalist-decisions fix (2026-10-21) raised it from 11662.25 to the measured 11681.75 (spec 6): step 7 sends the user's answer to QA as a user find once QA is the branch's writer, 19.5.
 // Carry of feat/fundamentalist-decisions onto the new main (2026-10-21) set it to the measured 11797: architect-runs-red's 11675 plus fundamentalist-decisions' 119.25 sum to 11794.25; the merged pilot.md measures 11797.
-// Merge of origin/pilot 6ea49cac into feat/fundamentalist-decisions (2026-11-16) set it to the measured 11815.5: pilot-develop-line S6's 11692.25 and this feature's step-7 lines both stand; the merged pilot.md measures 11815.5.
+// Merge of origin/pilot 6ea49cac into feat/fundamentalist-decisions (2026-11-16) set it to the measured 11815.5 (spec 6, 7): pilot-develop-line S6's 11692.25 and this feature's step-7 lines both stand; the merged pilot.md measures 11815.5.
 test('the pilot pin holds at its new number', async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
