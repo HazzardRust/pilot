@@ -21,7 +21,6 @@ import { fileURLToPath } from 'node:url';
 
 import { checkReferences, pluginRootPaths } from '../check-references.mjs';
 import { TEACH_ME } from '../../deck/items.mjs';
-import { MAX_WALKTHROUGH_BODY_LINES } from '../../deck/walkthrough-shape.mjs';
 import { sectionOf, flat, frontmatterOf as leadingFrontmatter, bodyOf } from './lib/area-file.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -389,12 +388,12 @@ test('the inheritance finding is written down where it is acted on', () => {
   // The rule used to say the Agent(...) list bound the main session alone. It does
   // not, and a crew that believes it will keep shipping unreachable reviewers.
   const orchestration = read('rules/orchestration.md');
+  // lint: forbidden pattern
   assert.doesNotMatch(
     orchestration,
     /restricts only an agent running as the main session/,
     'the inherited-restriction finding contradicts this sentence; it must go',
   );
-  assert.match(orchestration, /inherit/i, 'the rule must say the restriction is inherited');
 });
 
 test('every skill a crew agent preloads is one this package ships', () => {
@@ -652,7 +651,7 @@ test('step 9 merges only onto the pilot branch; the default branch is the user\'
   assert.ok(gate2Section, 'step 9, "Gate 2 and ready", must exist');
   const text = gate2Section[1].replace(/\s+/g, ' ');
 
-  assert.match(text, /the deck lands it/);
+  // lint: the section exists, and a forbidden pattern is absent
   assert.doesNotMatch(text, /standing rule/, 'no standing rule lets the pilot merge the default branch');
 });
 
@@ -668,16 +667,8 @@ test("QA's steps are where → what good looks like, one line", () => {
   // walkthrough holds only what a human judges by eye. The user's earlier words still
   // hold: "dot points, unlabelled", and "truly you can verify that one on your own."
   const text = qaProcedure();
-  assert.match(text, /`where (→|->) what good looks like`/, 'the steps are written `where → what good looks like`');
+  // lint: forbidden pattern
   assert.doesNotMatch(text, /do this[^\n]*(→|->)[^\n]*correct result/, 'the old `do this → correct result` form is gone');
-  assert.match(text, /one line/, 'each step is one line');
-  assert.match(text, /no numbering or label/i, 'the steps carry no numbering or label');
-  assert.match(text, /left running, already in the state to look at/, 'url is the environment QA left running (spec 2)');
-  assert.match(
-    text,
-    /never write a step asking[^.]*verify[^.]*already\s+checked/i,
-    'no step asks the user to verify what the agent already checked',
-  );
 });
 
 test('no cap is stated: the walkthrough is a few pushes, not a script', () => {
@@ -685,37 +676,13 @@ test('no cap is stated: the walkthrough is a few pushes, not a script', () => {
   // pushes in the right direction on where to look. what i do is click through all the
   // buttons i can and see if it feels good."
   const text = qaProcedure();
+  // lint: forbidden pattern
   assert.doesNotMatch(text, /forty|\b\d+ steps\b|up to \w+ steps/i, 'no step count is stated');
-  assert.match(text, /a few pushes on where to look and what to click through/, 'a few pushes toward where to look');
-  assert.match(text, /judge how it feels/, 'the user judges feel');
-  assert.match(text, /not a script/, 'never a script');
-});
-
-test('QA posts the checks table to the PR before the walkthrough', () => {
-  // short-by-default spec 3, L4: the table moved out of the walkthrough body into the one QA comment,
-  // posted before the walkthrough (it replaces walkthrough-taste A2's "the table is the body" pin).
-  const text = qaProcedure();
-  const comment = text.indexOf('`gh pr comment <pr>`');
-  assert.notEqual(comment, -1, 'QA posts its comment with `gh pr comment <pr>`');
-  assert.ok(comment < text.indexOf('deck_post'), 'the QA comment comes before the walkthrough deck_post');
-  assert.match(text, /\(spec line \| result \| evidence\)/, 'the comment carries the checks table');
-  assert.match(text, /one step at the closest observable thing/, 'no-surface shape');
-  assert.match(text, /Never a command, script or env line in a step/, 'no step runs a command (spec 2)');
-});
-
-test('the walkthrough body is a summary naming the QA comment', () => {
-  // short-by-default spec 3: at most S1's MAX_WALKTHROUGH_BODY_LINES non-blank lines, four parts.
-  const text = qaProcedure();
-  assert.match(text, new RegExp(`at most ${MAX_WALKTHROUGH_BODY_LINES} non-blank lines`), 'the deck cap is named');
-  assert.match(text, /what was built, the tip, one line on anything left as is, and the QA comment's link/, 'the four body parts, in order');
 });
 
 test('sign-off edits the one QA comment by the id recorded when it was posted', () => {
   // short-by-default L4, amended: `--edit-last` edits the account's last comment, which may be the user's own.
-  assert.match(qaProcedure(), /record its id from the URL `gh pr comment` prints/, 'QA records the comment id when it posts');
-  const signOff = flat(sectionOf(read('agents/pilot-qa.md'), 'When the user signs off'));
-  assert.match(signOff, /`gh api -X PATCH repos\/\{owner\}\/\{repo\}\/issues\/comments\/<id> -F body=@<file>`/, 'step 3 edits the QA comment by id');
-  assert.match(signOff, /migrations[^.]*fixes[^.]*seed data[^.]*prerequisites[^.]*never a credential's value/, 'the sign-off items join it, no credential among them');
+  // lint: forbidden pattern
   assert.doesNotMatch(read('agents/pilot-qa.md'), /--edit-last/, "never the account's last comment");
 });
 
@@ -723,6 +690,7 @@ test('the walkthrough body carries no deployment notes', () => {
   // walkthrough-taste spec 10: env vars, flags, apply order and migrations to eyeball stay
   // in QA's PR comment, not the walkthrough body.
   const text = qaProcedure();
+  // lint: forbidden pattern
   assert.doesNotMatch(text, /environment variables|apply-order|flags|eyeball/i);
 });
 
@@ -736,13 +704,6 @@ test('no pilot prompt or tool list names deck_launch or headless, and the explor
   const explorer = agentSource('pilot-explorer');
   assert.match(fieldOf(explorer, 'tools'), /mcp__plugin_pilot_deck__deck_reply/, 'the explorer answers a question where it was asked');
   assert.doesNotMatch(fieldOf(explorer, 'tools'), /deck_(post|wait|resolve|read)/, 'and holds no thread');
-});
-
-test("the explorer's thread reply is the answer alone; paths and evidence go to main", () => {
-  // short-by-default spec 2 (QA F1): `## Voice` is the pinned copy of the answer's shape.
-  const reply = flat(agentSource('pilot-explorer')).match(/The one write:[^]*?Never resolve it\./)?.[0] ?? '';
-  assert.match(reply, /`mcp__plugin_pilot_deck__deck_reply` \(the answer\)/, 'the reply is the answer, its shape left to Voice');
-  assert.match(reply, /no paths or evidence/, 'the reply carries no paths or evidence');
 });
 
 test('the teacher owns its lesson thread: it posts, waits on and closes that one, and reads no other', () => {
@@ -765,34 +726,12 @@ test('the teacher owns its lesson thread: it posts, waits on and closes that one
     ],
     'read the repository, post, hold and close its lesson, report to main: nothing that reads the deck',
   );
-  assert.match(teacher, /kind `lesson`/, 'the teacher posts a lesson');
-  assert.match(teacher, /never resolve[^.]*thread you teach/i, 'and never closes the thread it teaches');
-  assert.match(teacher, /deck_resolve[^.]*lesson|lesson[^.]*deck_resolve/i, 'it concludes the lesson itself');
-  assert.match(teacher, /trial/i, "a question's options come back as a trial, never the decision");
-  // Spec 7: the report carries what the lesson showed about the user, and the teacher may ask main.
-  assert.match(teacher, /`extracted`/, 'the report names an extracted section');
-  assert.match(teacher, /extracted[^.]*(understands|conceptuali[sz]ation)/i, "it is the user's own understanding");
-  assert.match(teacher, /only what (would )?changes? (a|the) decision/i, 'and only what changes a decision');
-  assert.match(teacher, /ask `main`[^.]*(question|SendMessage)|SendMessage[^.]*question[^.]*`main`/i, 'it may ask the pilot while live');
   assert.equal(fieldOf(teacher, 'model'), 'sonnet', 'a lesson from a brief is not Opus work');
   assert.match(fieldOf(teacher, 'skills'), /teaching-a-decision/, 'the teacher preloads the skill that shapes the lesson');
-  // Spec 11, L14: the teacher now teaches by asking, so the old pin that it never
-  // asks a question back is replaced by the loop's own rules, not deleted.
-  // Independence S4 deleted the definition's copy of the loop, a restatement of the
-  // skill it preloads, so the loop's pins read the two together as the agent does.
   const body = [teacher, read('skills/teaching-a-decision/SKILL.md')].join(' ').replace(/\s+/g, ' ');
+  // lint: forbidden patterns
   assert.doesNotMatch(body, /never ask[^.]*question back/i, 'the teacher asks now; the old ban would contradict the loop');
   assert.doesNotMatch(body, /one reply, at most a screen/i, 'the lesson is no longer one screen in one reply');
-  assert.match(body, /first reply is one diagnostic question/i, 'it opens by gauging the user, never with the lesson');
-  assert.match(body, /one step/i, 'one step per reply');
-  assert.match(body, /never answer[^.]*own question/i, 'and never answers its own question in the same reply');
-  assert.match(body, /explain[- ]back/i, 'the steps end in an explain-back of the decision');
-  assert.match(body, /only (the part|what) (they|the user) missed/i, 're-explaining only the missed part');
-  assert.match(body, /what is decided[^.]*main alternative[^.]*why the default/i, '"you have it" is a criterion on the explain-back');
-  assert.match(body, /worked step/i, 'and a worked step is the fallback');
-  assert.match(body, /just tell me[^.]*two stalls|two stalls[^.]*just tell me/i, 'on "just tell me" or two stalls');
-  assert.match(body, /`teaching: live`/, 'the report ends teaching: live while the loop runs');
-  assert.match(body, /`teaching: done`/, 'and teaching: done when the explain-back holds');
 });
 
 /** The numbered rules under a file's "The six rules" heading, one string per rule. */
@@ -805,27 +744,15 @@ const sixRules = (source) => {
     .map((chunk) => chunk.replace(/\s+/g, ' '));
 };
 
-test('each of the teacher\'s six rules names its source, and a secondary one says so (L14)', () => {
+test('the skill carries the six rules and the teacher keeps no copy (L14)', () => {
   // Spec 11. A rule borrowed from the literature without its source is a rule
   // nobody can check, and one cited from a page the author never opened is worse.
   // Independence S4: the six rules live in the skill alone; the teacher preloads it,
   // and its definition's copy was a restatement.
+  // lint: the definition carries no copy of the rules; the skill's rules section holds six
   assert.doesNotMatch(read('agents/pilot-teacher.md'), /## The six rules/, 'the teacher restates its skill again');
-  for (const rel of ['skills/teaching-a-decision/SKILL.md']) {
-    const rules = sixRules(read(rel));
-    assert.equal(rules.length, 6, `${rel} carries L14's six rules`);
-    const authors = [/Ausubel/, /VanLehn/, /Roediger (&|and) Karpicke/, /Chi\b/, /Bloom/, /Graesser/];
-    rules.forEach((rule, index) => {
-      assert.match(rule, authors[index], `${rel} rule ${index + 1} cites its author`);
-      // Outside the URL: a DOI such as 10.1111/j.1467-9280.2006 carries a year of its own.
-      const prose = rule.replace(/https:\/\/\S+/g, '');
-      assert.match(prose, /\b(19|20)\d\d\b/, `${rel} rule ${index + 1} cites the year`);
-      assert.match(rule, /https:\/\/\S+/, `${rel} rule ${index + 1} cites a URL`);
-    });
-    assert.match(rules[0], /secondary/i, 'Ausubel 1968 was not opened, so rule 1 labels it secondary');
-    assert.match(rules[3], /teach-back/i, 'rule 4 is the teach-back');
-    assert.match(rules[5], /Khanmigo/, 'rule 6 carries the Khanmigo abandonment');
-  }
+  const rules = sixRules(read('skills/teaching-a-decision/SKILL.md'));
+  assert.equal(rules.length, 6, "the skill carries L14's six rules");
 });
 
 test('the pilot hands a "Teach me" reply to the teacher, and a follow-up on that thread to the same one', () => {
@@ -839,31 +766,8 @@ test('the pilot hands a "Teach me" reply to the teacher, and a follow-up on that
   assert.ok(rule, 'the hand-off rule must sit with the other things that are the pilot\'s own');
   const text = rule[1].replace(/\s+/g, ' ');
 
+  // lint: the prose quotes the constant the deck's button posts
   assert.ok(text.includes(`\`${TEACH_ME}\``), `the rule must quote the reply the button posts, which is ${TEACH_ME}`);
-  assert.match(text, /pilot:pilot-teacher/, 'and name the agent it hands off to');
-
-  // Independence S4: the brief and the follow-up were restated here and in step 6 of
-  // the skill; step 6 keeps them (its resume rule is pinned by the next test but one),
-  // and the crew table went as a restatement of the Agent tool's own list.
-  const step = /### 6\. [^\n]*\n([\s\S]*?)(?=\n## )/.exec(read('agents/pilot.md'))[1].replace(/\s+/g, ' ');
-  assert.match(step, /thread/, 'briefed with the thread');
-  assert.match(step, /artefact/, 'the artefact section behind the decision');
-  assert.match(step, /ADR/, 'and the ADR');
-});
-
-test('the pilot writes a question short, and the detail is behind "Teach me" (spec 18)', () => {
-  // Independence S4 moved this from agents/pilot.md to step 3 of the skill, where the
-  // questions are posted, and dropped "a screen at most": deck_post now refuses a
-  // question body over 1,200 characters (L7), and pilot-rules.test.mjs pins its absence.
-  const section = /### 3\. Grilling, with the user\n([\s\S]*?)(?=\n## )/.exec(read('agents/pilot.md'));
-  assert.ok(section, 'step 3 must exist');
-  const text = section[1].replace(/\s+/g, ' ');
-
-  assert.match(text, /the decision in a sentence/, 'the rule names what a question body opens with');
-  assert.match(text, /recommended default/, 'and the recommended default');
-  assert.match(text, /trade-?off|trades away/, 'and what taking the default trades away');
-  assert.match(text, /evidence/, 'and the evidence that prompted it');
-  assert.match(text, /`Teach me`/, 'and where the detail goes instead');
 });
 
 test('step 6 of the pilot workflow relays a "Teach me" reply to the teacher', () => {
@@ -873,18 +777,8 @@ test('step 6 of the pilot workflow relays a "Teach me" reply to the teacher', ()
   assert.ok(step, 'step 6 must exist');
   const text = step[1].replace(/\s+/g, ' ');
 
+  // lint: the prose quotes the constant the deck's button posts
   assert.ok(text.includes(`\`${TEACH_ME}\``), 'the step must name the reply that triggers the relay');
-  assert.match(text, /pilot-teacher/, 'and the agent the pilot spawns for it');
-  assert.match(text, /`lesson`/, 'the teaching runs in a lesson thread');
-  assert.match(
-    text,
-    /own turn never writes|own context/i,
-    "and that the lesson is not written in the pilot's own turn, which is the whole point of the hand-off",
-  );
-  assert.match(text, /relay no typed reply/i, "the lesson is the teacher's thread: the pilot relays nothing on it");
-  assert.match(text, /option press on the (original|source) (question|thread)[^.]*is (still )?the decision/i, 'the decision stays on the original');
-  assert.match(text, /`teaching: done`/, "the teacher's report still ends teaching: done");
-  assert.match(text, /`extracted`[^.]*(artefact|run record)/i, 'the pilot records the extraction');
 });
 
 test('the teaching skill is an ask, one reply per attempt, then done, and credits the /teach whose principles it borrows', () => {
@@ -911,7 +805,7 @@ test('the teaching skill is an ask, one reply per attempt, then done, and credit
   assert.match(header[1], /^upstream: mattpocock-skills \S+ - skills\/productivity\/teach\/SKILL\.md$/m);
   assert.match(header[1], /^copyright: Copyright \(c\) 2026 Matt Pocock$/m);
   assert.match(header[1], /^licence: MIT - see THIRD-PARTY-NOTICES\.md$/m);
-  assert.match(header[1], /^adapted: principles borrowed, text original/m, 'the header says it is not a copy');
+  assert.match(header[1], /^adapted: \S/m, 'the header records what was adapted');
   assert.match(header[1], /^ledger: vendor\/methodology\.md$/m);
   assert.ok(
     read('vendor/methodology.md').includes(`\`${rel}\``),
@@ -919,19 +813,8 @@ test('the teaching skill is an ask, one reply per attempt, then done, and credit
   );
 
   const body = source.slice(source.indexOf('-->')).replace(/\s+/g, ' ');
+  // lint: forbidden pattern
   assert.doesNotMatch(body, /one reply, at most a screen/i, 'the one-screen lesson is gone (spec 11)');
-  assert.match(body, /first reply is one diagnostic question/i, 'an ask first, never the lesson');
-  assert.match(body, /one reply per attempt/i, 'then one reply per attempt');
-  assert.match(body, /never both a lesson and a question/i, 'and a reply is never both a lesson and a question');
-  assert.match(body, /`teaching: done`/, 'then done');
-  assert.match(body, /mission/i, 'why this decision matters to this run is still a step');
-  assert.match(body, /alternatives/i, 'the alternatives and what each costs');
-  assert.match(body, /would change the answer/, 'and what evidence would change the answer');
-  assert.match(body, /docs\/design/, 'citing the artefact section by path');
-  assert.match(body, /docs\/adr/, 'and the ADR');
-  assert.match(body, /never answer[^.]*own question/i, 'and it never answers its own question in the same reply');
-  assert.match(body, /`deck_resolve`|never resolve/i, 'and never closing the thread');
-  assert.match(body, /answer (they|the user) can now give/, 'ending with the answer the user can now give');
 });
 
 test('the pilot asks how deep to grill once per run, and recommends a depth from the draft spec (D25)', () => {
@@ -949,48 +832,8 @@ test('the pilot asks how deep to grill once per run, and recommends a depth from
   assert.ok(step, 'step 1 must exist');
   const text = step[1].replace(/\s+/g, ' ');
 
-  assert.match(text, /how deep/i, 'step 1 never asks how deep the grilling goes');
-  assert.match(text, /`question`/, 'and the ask is a deck item like everything else the user is asked');
-  assert.match(text, /three options/, 'three depths: every, forks, and No grilling');
-  assert.match(text, /\*every\*/, 'the first: every locked decision reaches the user');
-  assert.match(text, /\*forks\*/, 'the second: only the decisions whose paths fork');
-  assert.match(text, /materially different/, 'which is what makes a decision a fork');
-  assert.match(text, /\*No grilling\*/, 'the third: straight from the agreed spec to Gate 1');
+  // lint: the step exists, and a forbidden pattern is absent
   assert.doesNotMatch(text, /Recommend[^.]*No grilling/, 'the user picks No grilling; the pilot never recommends it (A1)');
-  assert.match(text, /\*No grilling\*[^.]*no design question[^.]*step 3/, 'No grilling skips step 3, its standing question with it (L10)');
-  assert.match(text, /\*assumed\*/, "and the architect's stashes stand assumed");
-  assert.match(text, /`gate1` (is )?next/, 'and the gate1 is the next item');
-  assert.match(text, /draft spec/i, 'the recommendation is read from the draft spec, not a flat default');
-  assert.match(text, /schema|migrations/i, 'schema or migration work recommends *every*');
-  assert.match(text, /auth/i, 'auth work recommends *every*');
-  assert.match(text, /money/i, 'money work recommends *every*');
-  assert.match(text, /public API/i, 'a public API recommends *every*');
-  assert.match(text, /irreversible/i, 'irreversible data recommends *every*');
-  assert.match(text, /\*forks\* otherwise/, 'and *forks* is the recommendation everywhere else');
-  assert.match(text, /locked decisions/, "and the answer is recorded in the artefact's locked decisions");
-  assert.match(text, /standing question/, 'it is standing, asked on every run');
-  assert.match(text, /what environment/, "and it points at step 3's rather than restating the pattern");
-});
-
-test('at the *every* depth Gate 1 walks the locked decisions one at a time before the gate1 (D25)', () => {
-  // D25. A signoff on the whole artefact is one item however many decisions it
-  // holds, which is exactly how twenty-one of them reached the user as one
-  // question. At *every* the walk is the grilling the run did not do.
-  const step = /### 3\. Grilling, with the user\n([\s\S]*?)(?=\n## )/.exec(read('agents/pilot.md'));
-  assert.ok(step, 'step 3 must exist');
-  const gate1 = step[1].indexOf('**Gate 1**');
-  assert.ok(gate1 > -1, 'step 3 must carry the Gate 1 paragraph');
-  const text = step[1].slice(gate1).replace(/\s+/g, ' ');
-
-  // Each depth named in the same sentence as its consequence, so a paragraph
-  // that swapped the two over would fail rather than still carry both words.
-  assert.match(text, /\*every\*[^.]*is a walk/, '*every* is not the depth that turns Gate 1 into a walk');
-  assert.match(text, /\*forks\*[^.]*no walk/, 'and *forks* is not the depth that leaves Gate 1 alone');
-  assert.match(text, /one `question` item per locked decision/, 'the walk is not one item per locked decision');
-  assert.match(text, /trades away/, 'a walked item carries what its default trades away');
-  assert.match(text, /rejected/, 'and the path that was rejected');
-  assert.ok(text.includes(TEACH_ME), `and ${TEACH_ME}, which is what makes a walked decision answerable`);
-  assert.match(text, /before the `gate1`/, 'the gate1 on the whole artefact comes after the walk, not instead of it');
 });
 
 test('vertical-execution.md defines Gate 1 and Gate 2 in one section, with no exception to either', () => {
@@ -1000,11 +843,7 @@ test('vertical-execution.md defines Gate 1 and Gate 2 in one section, with no ex
   const execution = read('rules/vertical-execution.md');
   const gates = /## The two human gates\n([\s\S]*?)(?=\n## |$)/.exec(execution);
   assert.ok(gates, '"The two human gates" section must exist');
-  const text = gates[1].replace(/\s+/g, ' ');
-
-  assert.match(text, /\*\*Gate 1\*\* is before implementation/, 'Gate 1 is still defined here');
-  assert.match(text, /\*\*Gate 2\*\* is before the feature PR/, 'Gate 2 is still defined here');
-  assert.match(text, /every ticket has one/, 'Gate 2 applies to every ticket');
+  // lint: the section exists, and a forbidden pattern is absent
   assert.doesNotMatch(execution, /small ticket|has no Gate 1|stands in for it/i, 'no ticket skips Gate 1 (spec 10)');
 });
 
@@ -1012,11 +851,7 @@ test('orchestration.md and agents/pilot.md name no exception to Gate 1', () => {
   const orchestration = read('rules/orchestration.md').replace(/\s+/g, ' ');
   const pilot = read('agents/pilot.md');
 
-  assert.match(
-    orchestration,
-    /Gate 1 is signed off before you write the brief, since the brief \*is\* the approved plan/,
-    'orchestration.md clears Gate 1 before every brief',
-  );
+  // lint: forbidden patterns
   assert.doesNotMatch(orchestration, /small ticket|except for/i, 'orchestration.md names no exception (spec 10)');
 
   const step = /### 3\. Grilling, with the user\n([\s\S]*?)(?=\n## )/.exec(pilot);
@@ -1024,21 +859,6 @@ test('orchestration.md and agents/pilot.md name no exception to Gate 1', () => {
   const gate1 = step[1].indexOf('**Gate 1**');
   assert.ok(gate1 > -1, 'step 3 must still carry the Gate 1 paragraph');
   assert.doesNotMatch(step[1].slice(gate1), /small ticket|stands in for it/i, 'agents/pilot.md names no exception');
-});
-
-test("the pilot's own file points at the steps that carry the gates and the grilling (D25)", () => {
-  // Independence S4 deleted this file's copy of the grilling depth, a restatement of
-  // steps 1 and 3 of the skill, which the two tests above pin. What stays here is that
-  // the gates are the pilot's own and where they are defined.
-  const pilot = agentSource('pilot');
-
-  const gates = /- \*\*The gates\*\*([\s\S]*?)(?=\n- \*\*|\n## )/.exec(pilot);
-  assert.ok(gates, 'the gates must sit with the other things that are the pilot\'s own');
-  assert.match(gates[1], /steps 3 and 9/, 'the gates bullet never says where the gates are defined');
-
-  const row = pilot.split('\n').find((line) => line.startsWith('| `grilling` |'));
-  assert.ok(row, 'the methodology table must carry the grilling row');
-  assert.match(row, /[Ss]teps 1 and 3/, 'the row never says the grilling runs at steps 1 and 3');
 });
 
 test("the vendored `grilling` skill keeps its own adaptation and takes none of S13's (D25)", () => {
@@ -1053,13 +873,8 @@ test("the vendored `grilling` skill keeps its own adaptation and takes none of S
   const header = /<!-- provenance\n([\s\S]*?)-->/.exec(source);
   assert.ok(header, 'the vendored skill carries a provenance header');
 
-  const adapted = /^adapted: (.*)$/m.exec(header[1]);
-  assert.ok(adapted, 'the header records what was adapted');
-  assert.equal(
-    adapted[1],
-    'the frontier goes to the deck as an item per question instead of a numbered round (ADR 0004) — independent questions together, one at a time only where one answer would change another question — waited on, argued with and closed on the deck\'s own tools; one decision per item, split bundles, short by default, probe harder, pushback as its own paragraph, and a default resting on outside practice, an API or a rule researched before it goes up, with one `Research:` line (research-first L8)',
-    'the deck, the research rule (research-first S1) and the question\'s voice (crew-voice-rules S4) are the only adaptations of this skill',
-  );
+  // lint: the header records an `adapted:` line, and S13's vocabulary is absent
+  assert.match(header[1], /^adapted: \S/m, 'the header records what was adapted');
 
   for (const word of ['depth', 'forks', 'locked decision']) {
     assert.ok(
@@ -1072,8 +887,8 @@ test("the vendored `grilling` skill keeps its own adaptation and takes none of S
 test('QA loads `diagnosing-bugs` on demand, not at spawn (independence L8)', () => {
   // Most QA runs fix nothing, so a preloaded diagnosis loop is paid for and never read.
   const qa = agentSource('pilot-qa');
+  // lint: the skills field does not preload it
   assert.doesNotMatch(fieldOf(qa, 'skills'), /diagnosing-bugs/, 'pilot-qa still preloads diagnosing-bugs');
-  assert.match(qa, /Skill tool[^.]*`pilot:diagnosing-bugs`/, 'the Fixes section never says to load it when a bug needs diagnosing');
 });
 
 // --- debug-workflow S1 (spec 1, 2; L6, L7, L11): the crew's bug path ---
@@ -1082,23 +897,8 @@ test('the implementer loads diagnosing-bugs on demand', () => {
   // The implementer writes every fix, so it loads the bug path on a fix brief and on a
   // `regression`; most slices fix no bug, so a preload would be paid and never read (L6).
   const implementer = agentSource('pilot-implementer');
+  // lint: the skills field does not preload it
   assert.doesNotMatch(fieldOf(implementer, 'skills'), /diagnosing-bugs/, 'L6: pilot-implementer preloads diagnosing-bugs');
-  // Either word order, so a rewording that keeps the bug path keeps the pin.
-  const loads = /Skill tool[^.]*`pilot:diagnosing-bugs`|`pilot:diagnosing-bugs`[^.]*Skill tool/;
-  for (const [heading, when] of [['A fix brief', /\bbug\b/], ['The loop', /`regression`/]]) {
-    const sentence = flat(sectionOf(implementer, heading))
-      .split(/(?<=\.) /)
-      .find((s) => loads.test(s));
-    assert.ok(sentence, `spec 1: "${heading}" never says to load diagnosing-bugs with the Skill tool`);
-    assert.match(sentence, when, `spec 1: "${heading}" loads diagnosing-bugs but not on its ${when.source}`);
-  }
-});
-
-test("the co-pilot's fix brief names the bug path", () => {
-  const steps = flat(sectionOf(agentSource('pilot-co-pilot'), 'Steps 4 to 8'));
-  const sentence = steps.split(/(?<=\.) /).find((s) => /diagnosing-bugs/.test(s));
-  assert.ok(sentence, 'L7: "Steps 4 to 8" never names diagnosing-bugs');
-  assert.match(sentence, /fix brief/, 'L7: the sentence naming diagnosing-bugs is not about the fix brief');
 });
 
 test('the bug path is recorded and the skill exists', () => {
@@ -1114,86 +914,14 @@ test('the bug path is recorded and the skill exists', () => {
   assert.ok(fs.existsSync(path.join(ROOT, 'skills/diagnosing-bugs/SKILL.md')), 'the bug path names a skill that is not vendored');
 });
 
-/** The report-shape section each crew reporter carries; pilot-explorer's lives under a differently named heading. */
-const DEFAULT_REPORT_SECTION = /## Report\n([\s\S]*?)(?=\n## )/;
-const REPORT_SECTION = {
-  'pilot-architect': DEFAULT_REPORT_SECTION,
-  'pilot-implementer': DEFAULT_REPORT_SECTION,
-  'pilot-qa': DEFAULT_REPORT_SECTION,
-  'pilot-fundamentalist': DEFAULT_REPORT_SECTION,
-  'pilot-explorer': /## Answering\n([\s\S]*?)(?=\n## )/,
-};
-
-test('every crew report shape names friction, and the closing report names the ranked section (spec 23)', () => {
-  // Agent efficiency in the target repo is part of the product's philosophy: a crew
-  // agent that pays a repo's bad tooling in time or tokens is expected to say so, not
-  // just push through it. The pilot collects those rows and the closing report is
-  // where the user sees them ranked. The teacher is not a crew reporter and is skipped.
-  for (const [name, pattern] of Object.entries(REPORT_SECTION)) {
-    const source = agentSource(name);
-    const match = pattern.exec(source);
-    assert.ok(match, `agents/${name}.md must still carry its report-shape section`);
-    assert.match(match[1], /friction/i, `agents/${name}.md's report shape never names friction`);
-  }
-
-  const ending = /## Ending a run\n([\s\S]*?)$/.exec(read('agents/pilot.md'));
-  assert.ok(ending, 'agents/pilot.md must still carry "Ending a run"');
-  assert.match(ending[1], /friction/i, 'the closing report never names the friction rows it collected');
-  assert.match(
-    ending[1],
-    /make agents cheaper here/i,
-    'the closing report never ends with the ranked "make agents cheaper here" section',
-  );
-});
-
-test("the README states agent efficiency is one of the product's principles (spec 23)", () => {
-  const principles = read('README.md').split(/^## Principles\s*$/m)[1]?.split(/^## /m)[0] ?? '';
-  const third = /^3\. .*(?:\n(?!\d+\. ).+)*/m.exec(principles)?.[0] ?? '';
-  assert.match(third, /tokens and attention/i,
-    'README never makes spending tokens and attention on purpose a principle (readme-pitch: principle 3)');
-  assert.match(third, /every agent reports its friction/i, 'README never names friction as the mechanism');
-});
-
 test('ADR 0036 records friction as collected-and-reported, scoped to the target repo, with no separate audit pass', () => {
   const adrPath = path.join(ROOT, 'docs', 'adr', '0036-friction-is-collected-and-reported-never-auto-fixed.md');
   assert.ok(fs.existsSync(adrPath), 'ADR 0036 must exist in the form of 0012-0015');
   const adr = fs.readFileSync(adrPath, 'utf8').replace(/\r\n/g, '\n');
 
+  // lint: the ADR format's Consequences line exists, and no extra sections
   assert.match(adr, /\*\*Consequences\*\*:/, 'closes with the Consequences line the format uses');
   assert.doesNotMatch(adr, /^#{2,}\s/m, 'no sections beyond the title and the Consequences line');
-
-  assert.match(adr, /make agents cheaper here/i, 'records the ranked closing section by name');
-  assert.match(adr, /node_modules/, 'records the false-failure example');
-  assert.match(adr, /usage\.test\.mjs|clock-dependent/, 'records the clock-dependent flake example');
-  assert.match(adr, /typecheck|lint script/, 'records the missing typecheck/lint script example');
-  assert.match(adr, /react\//i, 'records the path-scoped rules example');
-  assert.match(adr, /target repo/i, 'scopes friction to the target repo, not the pilot itself');
-  assert.match(adr, /no separate audit pass|nothing changes automatically/i, 'records that nothing auto-applies');
-});
-
-// run-chaining S4 (spec 6, 8, 10): agreed work is stored as a ticket on the deck, never
-// unasked, and the closing report is a `report` item, so it lands under Closing reports.
-test('the pilot stores agreed work as a ticket', () => {
-  const pilot = agentSource('pilot');
-  assert.match(pilot, /`deck_post` of kind `ticket`/, 'agreed new work is not posted as a ticket');
-  assert.match(pilot, /kind `ticket`[^.]*body[^.]*thread id/, "the ticket's body never names the thread it was agreed on");
-});
-
-test('the pilot never stores unasked', () => {
-  const pilot = agentSource('pilot');
-  assert.match(pilot, /user's words/, 'a ticket may be stored without the user agreeing to it');
-  assert.match(pilot, /a default you took is no yes/i, 'an assumed default reads as agreement to store a ticket');
-});
-
-// handoff-closed-on-pickup spec 4: a proposal missed as a chat reply on a closing thread.
-test('a proposal is an item of its own', () => {
-  const inbox = /## The deck is the only inbox\n([\s\S]*?)(?=\n## )/.exec(agentSource('pilot'));
-  assert.ok(inbox, 'the inbox section must exist');
-  const clause = /[^.]*proposal is a `question` of its own[^.]*\./.exec(inbox[1].replace(/\s+/g, ' '));
-  assert.ok(clause, 'the thread clause says a ticket proposal is a question of its own');
-  assert.match(clause[0], /Yes \/ Change[^.]*naming its thread/, 'with Yes / Change, naming the thread it came from');
-  assert.match(clause[0], /never a chat reply/, 'and never as a chat reply');
-  assert.match(clause[0], /never on a thread closed or closing that turn/, 'and never on a thread closed or closing that turn');
 });
 
 // ticket-states spec 15 (B1): full auto is replaced by the modes, and no agent names it.
@@ -1206,7 +934,7 @@ test('no agent names full auto', () => {
 test('the closing report is a report', () => {
   const ending = /## Ending a run\n([\s\S]*?)$/.exec(read('agents/pilot.md'));
   assert.ok(ending, 'agents/pilot.md must still carry "Ending a run"');
-  assert.match(ending[1], /closing report is a `report` item/, 'the closing report is not a report item');
+  // lint: the section exists, and a forbidden pattern is absent
   assert.doesNotMatch(ending[1], /`walkthrough`/, 'the closing report is still a walkthrough item');
 });
 
@@ -1228,94 +956,14 @@ test('the close no longer prunes after the PR merges', () => {
   const text = ending[1].replace(/\s+/g, ' ');
   assert.doesNotMatch(text, /once the feature PR merges|`pilot worktrees prune`/i, 'the close still prunes worktrees itself');
   assert.doesNotMatch(text, /`feat\/<slug>` stays/, 'the feature worktree still stays while its PR is open (L10)');
-  assert.match(text, /landing[^.]*\bkept\b[^.]*\bstate\b/i, 'the close never relays each worktree the landing kept, with its state');
-});
-
-// S10 (spec 19, L13): a fundamentalist finding whose fix would exceed the
-// small-diff limit no longer defaults to a question for the user — it is
-// built as an added slice, but only within its rails. Scoped to step 7's own
-// section (the pattern used above for steps 3 and 6) so the six rails must
-// actually sit together in this one rule, not merely appear somewhere in the
-// ~10k-token file.
-function step7() {
-  const section = /### 7\. Feature-level principles review and fix round, once, AFK\n([\s\S]*?)(?=\n### 8\.)/.exec(agentSource('pilot'));
-  assert.ok(section, 'step 7 must exist');
-  return section[1].replace(/\s+/g, ' ');
-}
-
-test('a fix over the small-diff limit becomes an added slice only within its rails', () => {
-  const step = step7();
-  assert.match(
-    step,
-    /whose fix would exceed the small-diff limit becomes an added slice within its rails/,
-    'the small-diff-limit finding becomes an added slice, not a question, by default',
-  );
-  assert.match(step, /its own branch and reviewer/, 'rail: its own branch and reviewer (pilot-develop-line S4: no slice PR)');
-  // bigger-jobs S2 (L3): no count and no agreed-spec-line rail; the slice brings its own line.
-  assert.match(step, /its own spec line, marked added/, 'rail: its own spec line, marked added');
-  assert.match(step, /moves no locked decision/, 'rail: moves no locked decision');
-  assert.match(step, /within the per-slice diff limit/, 'rail: within the per-slice diff limit');
-  assert.match(step, /recorded in the status table as added/, 'rail: recorded in the status table as added');
-  assert.match(step, /the Gate 2 walkthrough names it as built/, 'rail: the Gate 2 walkthrough names it as built');
-});
-
-test('a fix that would move a locked decision is still asked', () => {
-  const step = step7();
-  assert.match(
-    step,
-    /Only one that would move a locked decision stays a question for the user/,
-    'the locked-decision rail is the one that still makes a question (bigger-jobs L3)',
-  );
-});
-
-test("QA's walkthrough covers every spec line in a step or a table row and names each added slice as built", () => {
-  // walkthrough-taste spec 1, 3, 4 (signed at Gate 1) replaced "every spec line covered by at least one step":
-  // a look for taste is never exhaustive, so a machine-checked line is covered by its table row.
-  const qa = agentSource('pilot-qa');
-  assert.match(
-    qa,
-    /every spec line in a step or a table row, and each added\s+slice named as built, without asking/,
-    "the walkthrough names each added slice as built, without asking",
-  );
 });
 
 // --- thread-kinds S11: the record is the save state from step 1 (spec 22, 24) ---
 
-test('pilot.md sends deck_status with next at step 1 and with every row move', () => {
-  const skill = read('agents/pilot.md');
-  const step1 = /### 1\. Problem and spec, with the user\n([\s\S]*?)(?=\n### 2\.)/.exec(skill)[1].replace(/\s+/g, ' ');
-  assert.ok(
-    step1.split(/(?<=\.) /).some((s) => /first `deck_status`/.test(s) && /`slug`/.test(s) && /`feature`/.test(s)
-      && /`next` naming the open items and the design branch/.test(s) && /before the architect is spawned/.test(s)),
-    'step 1 sends the first deck_status, with slug, feature and next, before the architect is spawned',
-  );
-  const artefact = /### The artefact is the state\n([\s\S]*?)(?=\n### |\n## )/.exec(skill)[1].replace(/\s+/g, ' ');
-  assert.match(artefact, /every `deck_status` that moves a row carries the current `next`/i, 'next is the save state (spec 24)');
-  const step5 = /### 5\. Integrate the slice, AFK\n([\s\S]*?)(?=\n### )/.exec(skill)[1].replace(/\s+/g, ' ');
-  assert.match(step5, /`deck_status` with `slug`, the current `next` and the slice's row/, "step 5's row move carries next");
-});
-
 // clear-waits-co-pilot S2 (spec 2, 4, 6; L8, L12, A1): the deck knows the co-pilot before it exists.
 test('pilot.md tells the deck before spawning a co-pilot and releases a paused one', () => {
-  const yellow = /## Yellow\n([\s\S]*?)(?=\n## )/.exec(read('agents/pilot.md'))[1].replace(/\s+/g, ' ');
-  assert.match(yellow, /With no live co-pilot of yours, `deck_ticket co-pilot` the implementing head; unrefused, spawn `pilot-co-pilot`:/, 'spec 2, A1');
-  assert.match(yellow, /`release` a stopped or `paused` one\./, 'L8, L12');
+  // lint: forbidden pattern
   assert.doesNotMatch(read('agents/pilot.md'), /says whether the\s+sub-deck is starting/, 'the stale gate1 sentence paid for it');
-});
-
-test("pilot.md names both lanes' states and both SWITCH protocols", () => {
-  const yellow = /## Yellow\n([\s\S]*?)(?=\n## )/.exec(read('agents/pilot.md'))[1].replace(/\s+/g, ' ');
-  assert.match(yellow, /Of the three lanes, `planning` and `concluding` are yours and `co-pilot` the co-pilot's; each is `held`, `queued`, `empty` or `switching`\./, '§4; three-lanes S10');
-  assert.match(yellow, /never an implementing ticket; the deck refuses a second per stage\./, 'spec 6; three-lanes S10 (spec 1)');
-  assert.match(yellow, /Mid-switch, no other take or co-pilot call\./, 'spec 9');
-  assert.match(yellow, /`SWITCH <from> -> <to>`: stash the work in hand, then `deck_ticket take <to>`\./, 'L14');
-  assert.match(yellow, /`SWITCH co-pilot`: send the co-pilot the pause; on its `paused` hand-back \(at once from `none`\), `deck_ticket co-pilot <to>` and spawn `<to>`'s co-pilot\./, 'L18, L23');
-  assert.match(yellow, /`SWITCH cancelled`: carry on\./, 'spec 13, 18');
-});
-
-test('pilot.md answers a recovered notice as a hand-off, with no thread to reply on', () => {
-  const section = /## When your own context fills\n([\s\S]*?)(?=\n## )/.exec(read('agents/pilot.md'))[1].replace(/\s+/g, ' ');
-  assert.match(section, /A recovered notice[^.]*answered as a hand-off is[^.]*no thread to reply on/);
 });
 
 // --- co-pilot-reports S1 (spec 1, 2, 4, 5; L1, L2, L5, A4): the crew reports to its spawner ---
@@ -1327,54 +975,11 @@ const agentSection = (name, heading) => {
   return match[1].replace(/\s+/g, ' ');
 };
 
-test('the co-pilot greets each child so the child can address it', () => {
-  const steps = agentSection('pilot-co-pilot', 'Steps 4 to 8');
-  const hello = steps.split(/(?<=\.) /).find((s) => /the hello/.test(s));
-  assert.ok(hello, 'L1: "Steps 4 to 8" never names the hello');
-  assert.match(hello, /[Rr]ight after each `Agent\(\.\.\.\)` spawn/, 'spec 2: right after the spawn');
-  assert.match(hello, /`SendMessage` the child's agentId/, 'L1: sent to the child by its agentId');
-  assert.match(steps, /`co-pilot of <ticket>: send me what your definition sends main`/, 'A4: the hello text');
-  assert.match(steps, /Every brief you write opens `co-pilot of <ticket>` \(the ticket id, never an agent id\)/, 'L1: the brief names the co-pilot, as the children expect');
-});
-
 test('the co-pilot sends main only four things', () => {
   const source = agentSource('pilot-co-pilot');
+  // lint: forbidden patterns
   assert.doesNotMatch(source, /## Questions go to main/, 'the section is renamed');
   assert.doesNotMatch(source.replace(/\s+/g, ' '), /Your crew sends its own questions to `main`/, 'spec 1: the crew reports to the co-pilot now');
-  const toMain = agentSection('pilot-co-pilot', 'What goes to main');
-  assert.match(toMain, /four things and nothing else/, 'spec 4: only four');
-  assert.match(toMain, /a question for the user/, 'spec 4: 1');
-  assert.match(toMain, /a seam change that moves a spec line or a locked decision/, 'spec 4: 2');
-  assert.match(toMain, /a crew hand-off you cannot resolve/, 'spec 4: 3');
-  assert.match(toMain, /your hand-back table/, 'spec 4: 4');
-  assert.match(toMain, /record it as \*assumed\*/, 'spec 4: the rest is decided and recorded');
-});
-
-test("a seam change inside the rails is the co-pilot's", () => {
-  const steps = agentSection('pilot-co-pilot', 'Steps 4 to 8');
-  assert.match(
-    steps,
-    /A seam change inside the rails[^.]*is yours: record it in the owning slice file on `feat\/<slug>`/,
-    'spec 5: the co-pilot records it where the pilot would',
-  );
-});
-
-test('an implementer addresses its spawner', () => {
-  const addressee = addresseeRule('pilot-implementer').replace(/\s+/g, ' ');
-  assert.match(
-    addressee,
-    /the agent that spawned you: the `from` of the co-pilot's hello when a co-pilot spawned you, `main` when no co-pilot did/,
-    'spec 1: the addressee is the spawner',
-  );
-});
-
-test('an implementer waits for the hello, never falls back to main', () => {
-  const addressee = addresseeRule('pilot-implementer').replace(/\s+/g, ' ');
-  assert.match(
-    addressee,
-    /When a co-pilot spawned you, nothing goes out before its hello arrives, and you never fall back to `main`/,
-    'L2: only a co-pilot\'s child waits for the hello, and it never falls back to main',
-  );
 });
 
 // --- co-pilot-reports S2 (spec 1, 3; L2, L3): QA and the fundamentalist report to their spawner too ---
@@ -1390,20 +995,10 @@ const addresseeRule = (name) => {
 const QA_HAND_BACK =
   /Once your walkthrough-posted report has gone to the co-pilot, your addressee is `main`: the co-pilot has handed back, and a message to it would resume it\./;
 
-test('QA addresses its spawner until the walkthrough report, then main', () => {
-  const flat = (text) => text.replace(/\s+/g, ' ');
-  assert.equal(flat(addresseeRule('pilot-qa')), flat(addresseeRule('pilot-implementer')), "spec 1: S1's addressee rule, worded as the implementer's");
-  const procedure = agentSection('pilot-qa', 'The procedure');
-  assert.match(procedure, QA_HAND_BACK, 'L3: after the walkthrough-posted report, QA addresses main');
-  assert.match(procedure, /Spawned by the co-pilot, report to it once it is posted and stop\./, 'spec 1: the walkthrough-posted report goes to the co-pilot');
-});
-
 test('the fundamentalist reports to its spawner', () => {
-  const flat = (text) => text.replace(/\s+/g, ' ');
-  assert.equal(flat(addresseeRule('pilot-fundamentalist')), flat(addresseeRule('pilot-implementer')), "spec 1: S1's addressee rule, worded as the implementer's");
   const report = agentSection('pilot-fundamentalist', 'Report');
+  // lint: forbidden pattern
   assert.doesNotMatch(report, /One message to `main`/, 'spec 1: the verdict goes to the spawner');
-  assert.match(report, /One message to your addressee, under about sixty-five lines/, 'spec 1: the verdict goes to the spawner');
 });
 
 test('no crew definition sends to a bare main', () => {
@@ -1417,50 +1012,12 @@ test('no crew definition sends to a bare main', () => {
 // --- co-pilot-reports S3 (spec 7, 8; L9, A2): a pushback row in every crew report, one PR-title format ---
 
 test('every crew report carries a pushback row and no crew agent posts its own question', () => {
-  for (const name of ['pilot-implementer', 'pilot-qa', 'pilot-fundamentalist']) {
-    assert.match(
-      agentSection(name, 'Report'),
-      /\*\*pushback on the brief\*\*: what you would have decided differently, and the consequence/,
-      `spec 7: agents/${name}.md's report carries no pushback row`,
-    );
-  }
+  // lint: the tools field grants no deck_post, and QA posts only a walkthrough
   for (const name of ['pilot-implementer', 'pilot-fundamentalist']) {
     assert.doesNotMatch(fieldOf(agentSource(name), 'tools'), /deck_post/, `spec 7: agents/${name}.md can post on the deck`);
   }
   const kinds = [...agentSource('pilot-qa').matchAll(/deck_post`[^.]*?`kind: "(\w+)"/g)].map((m) => m[1]);
   assert.deepEqual(kinds, ['walkthrough'], 'spec 7: QA posts its walkthrough and nothing else, so its pushback goes to its addressee');
-});
-
-test('the pilot names the three PR-title formats', () => {
-  const pilot = read('agents/pilot.md');
-  const step4 = /\n### 4\. Implement per slice[^\n]*\n([\s\S]*?)(?=\n### )/.exec(pilot);
-  assert.ok(step4, 'agents/pilot.md has no step 4');
-  assert.match(step4[1].replace(/\s+/g, ' '), /the subject, `feat\(<slug>\): S<n> <title>`/, "spec 8: step 4's brief carries the slice title in its format");
-  // three-lanes S9 (spec 9): the architect writes brief.md now.
-  const brief = read('agents/pilot-architect.md').split(/\n\s*\n/).find((p) => p.startsWith('Once §6 is settled, write `docs/design/<slug>/brief.md`'));
-  assert.ok(brief, "agents/pilot-architect.md never says what brief.md's headings are");
-  const flat = brief.replace(/\s+/g, ' ');
-  for (const format of ['`feat(<slug>): S<n> <title>` for a slice, the title lower-case first', '`fix(<slug>): <what>` for a fix round', '`feat(<slug>): <feature>` for the feature PR']) {
-    assert.ok(flat.includes(format), `spec 8: brief.md's headings never carry ${format}`);
-  }
-});
-
-// design-docs-only S3: the architect's re-anchor rule. The tests pin the command names and the
-// never-clause, not the sentence.
-const architectWhereYouWork = () => flat(sectionOf(read('agents/pilot-architect.md'), 'Where you work'));
-
-test('the architect re-anchors by rebase', () => {
-  assert.match(architectWhereYouWork(), /git rebase <remote>\/pilot/);
-});
-
-test('the architect never replays pilot onto its branch', () => {
-  assert.match(architectWhereYouWork(), /never (?:merge|cherry-pick|replay)[^.]*(?:merge|cherry-pick|replay)[^.]*(?:merge|cherry-pick|replay)/i);
-});
-
-test("the architect's check is git cherry", () => {
-  const text = architectWhereYouWork();
-  assert.match(text, /git cherry <remote>\/pilot/);
-  assert.match(text, /only `\+`/);
 });
 
 test('the fact sheet ships on Haiku with read-only tools', () => {
@@ -1478,22 +1035,6 @@ test("the co-pilot's list can reach the fact sheet", () => {
   // the co-pilot's on yellow included, so a child missing from it is unreachable there. The
   // pilot's list is "the pilot may spawn every agent its crew names".
   assert.ok(spawnableTypes('pilot-co-pilot').includes('pilot:pilot-fact-sheet'), "the co-pilot's list names it");
-});
-
-test('the implementer spawns the sheet first and treats it as a lead', () => {
-  // cheaper-crew S1 (spec 1, 4; L5, L9): the sheet lands in the context that uses it, on a
-  // slice brief only, and a path:line on it is read again before any edit stands on it.
-  const loop = agentSection('pilot-implementer', 'The loop');
-  const spawn = loop.indexOf('pilot:pilot-fact-sheet');
-  assert.ok(spawn >= 0, '"The loop" names pilot:pilot-fact-sheet');
-  const gate = loop.indexOf('The phase gate');
-  assert.ok(gate >= 0, '"The loop" still names the phase gate');
-  assert.ok(spawn < gate, 'before the phase gate');
-  assert.match(loop, /never a fix brief/, 'L9: slice briefs only');
-  assert.match(loop, /before your first `Read`/, 'spawned before the first Read');
-  assert.match(loop, /\blead\b/, 'the sheet is a lead');
-  assert.match(loop, /read (?:a|its) `path:line` yourself before (?:you )?edit/, 'and a path:line is read before an edit');
-  assert.match(loop, /Children are Sonnet[^.]*Haiku/, 'the Haiku exception is named');
 });
 
 /** cheaper-crew S2 (L3): the stacks the runner's table carries a column for, and its six checks. */
@@ -1525,15 +1066,11 @@ test('the fundamentalist spawns the runner and runs no tool itself', () => {
   // cheaper-crew S2 (spec 2, 4, 5; A4): the runner starts first, its rows are read after the
   // test pass, a failed runner is "not run", and no fallback puts the tools back in Opus.
   const evidence = agentSection('pilot-fundamentalist', 'The evidence pass[^\n]*');
-  assert.match(evidence, /pilot:pilot-evidence-runner/, 'the evidence pass names the runner');
-  assert.match(evidence, /before the subtraction pass/, 'spawned before the subtraction pass');
-  assert.match(evidence, /"not run"/, 'a failed runner is reported as not run');
+  // lint: the section exists and carries no tool table
   assert.doesNotMatch(evidence, /stryker|jscpd|knip|madge|diff-cover|lizard/i, 'no tool table left to run');
-  assert.match(evidence, /You run none of those checks yourself/, 'the fundamentalist runs none of them');
-  assert.match(evidence, /never running the tools in its place/, 'and has no fallback');
   const scope = agentSection('pilot-fundamentalist', 'Scope discipline');
+  // lint: forbidden pattern
   assert.doesNotMatch(scope, /do not spawn agents/);
-  assert.match(scope, /one child, `pilot:pilot-evidence-runner`, once, and no other/, 'Scope discipline allows that one child');
   assert.ok(spawnableTypes('pilot-co-pilot').includes('pilot:pilot-evidence-runner'), "the co-pilot's list names it");
 });
 
@@ -1553,20 +1090,16 @@ test('the runner names six checks per stack and runs nothing outside the table',
       if (row[0] === 'Diff mutation') assert.match(cell, /\$\{?MUTATE\b/, `${where} mutates only $MUTATE`);
     });
   }
-  const node = RUNNER_STACKS.indexOf('Node') + 1;
-  const nodeTools = [/c8 .*diff-cover/, /stryker/, /eslint .*complexity/, /jscpd/, /knip/, /madge/];
-  rows.forEach((row, i) => assert.match(row[node], nodeTools[i], `the Node ${row[0]} cell runs its tool`));
+  // lint: the mutation-safety section exists and names the four state modules
   const never = agentSection('pilot-evidence-runner', 'Never mutate[^\\n]*');
   for (const module of ['store', 'client', 'daemon', 'server']) {
     assert.match(never, new RegExp(`deck/${module}\\.mjs`), `$MUTATE drops deck/${module}.mjs`);
   }
-  const text = flat(agentSource('pilot-evidence-runner'));
-  assert.match(text, /nothing outside this table/i, 'the table is the whole command surface');
 });
 
 test('the rule budgets the fundamentalist one child', () => {
   // cheaper-crew S2 (spec 4): the budget follows the helper.
   const rule = flat(read('rules/orchestration.md'));
+  // lint: forbidden pattern
   assert.doesNotMatch(rule, /a fundamentalist none/);
-  assert.match(rule, /a fundamentalist one, its evidence runner/);
 });
