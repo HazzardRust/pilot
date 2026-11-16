@@ -46,7 +46,7 @@ import {
 import { LANDER_LINE } from '../scripts/merge-generated.mjs';
 import { sameRepo } from './runs.mjs';
 import { keptWorktree, landerDue, landingReply } from './landing-replies.mjs';
-import { PILOT_CLOSES, blockedShapeGaps, isPilotClose, pilotCloseClaimed } from './blocked-shape.mjs';
+import { blockedShapeGaps, isPilotClose, pilotCloseClaimed } from './blocked-shape.mjs';
 import { questionShapeGaps } from './question-shape.mjs';
 import { reportAskGaps } from './report-shape.mjs';
 import { ticketShapeGaps } from './ticket-shape.mjs';
@@ -560,12 +560,12 @@ export function resolveItem(id, resolution, author) {
     if (item.kind === KIND_CHAT) throw new DeckRefusal(`item ${id} is the chat: ${NEVER_CLOSED}`);
     if (item.kind === KIND_USER) throw new DeckRefusal(`item ${id} is ${USER_CLOSES}`);
     if (writerKind(author) !== ownerOf(item)) throw notTheOwner(item);
-    // A blocking item is never answered for the user (S18), but for the pilot's close of a question (blocking-close L1, ADR 0172).
-    const pilotClose = isPilotClose(item, resolution, author);
+    // A blocking item is never answered for the user (S18), but for the pilot's close of a question (blocking-close L1, ADR NNNN).
+    const [pilotClose, claimed] = [isPilotClose(item, resolution, author), pilotCloseClaimed(resolution)];
     if (isBlocking(item) && !messagesOf(item).some((message) => message?.from === 'user') && !pilotClose) {
-      throw new DeckRefusal(`item ${id} is a blocking ${item.kind} the user has not answered; it waits for their reply${item.kind === KIND_QUESTION ? ` or ${ASSUME_DEFAULT}, or the pilot's \`${PILOT_CLOSES[0]} <why>\` / \`${PILOT_CLOSES[1]} <what>\`` : ''}`);
+      throw new DeckRefusal(`item ${id} is a blocking ${item.kind} the user has not answered; it waits for their reply${item.kind === KIND_QUESTION ? ` or ${ASSUME_DEFAULT}, or the pilot's \`Moot: <why>\` / \`Assumed: <what>\`` : ''}`);
     }
-    if (!pilotClose && pilotCloseClaimed(resolution)) throw new DeckRefusal(`item ${id}: \`${pilotCloseClaimed(resolution)}\` is the pilot's close of a blocking question the user has neither answered nor reopened, never of this ${item.kind}; close it in plain words (spec 4, 6)`);
+    if (!pilotClose && claimed) throw new DeckRefusal(`item ${id}: \`${claimed}\` is a pilot close, which needs an open blocking question the user has neither answered nor vetoed, never this ${item.kind}; close it in plain words (spec 4, 6)`);
     // Read before the close: a closed thread chooses nothing. Only a Sign off moves a ticket (L11).
     const signed = chosenOf(item) === SIGN_OFF;
     // A gate passes only on its Sign off press (merge-first spec 6, L12): typed approval closes nothing,

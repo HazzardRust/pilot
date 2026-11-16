@@ -47,7 +47,6 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `one-line.mjs` | `oneLine`: text from a peer or caller made one printable line, for logs and stderr |
 | `open.mjs` | opens the deck page in a browser when a run registers |
 | `owed.mjs` | the threads the pilot still owes a directory: unanswered, or promised with `deck_reply`'s `promise`; served on `/api/record` |
-| `pilot-closes.mjs` | the pilot's closes of a ticket's blocking questions, as the gate2 and the closing report list them |
 | `pilot-state.mjs` | `pilotStateOf`: the pilot's state for a repository, read at render time from items, runs and held waits and stored nowhere, in the precedence ADR 0149 records |
 | `probe.mjs` | `probeDeck`: the one answer to who holds a url, a deck by pid and version, nothing, or not a deck (daemon-lifecycle §3) |
 | `procs.mjs` | `pilot ps`: the process table (one PowerShell CIM or `ps` read), the pilot-owned daemons, waits and test roots, and which are orphans and why (process-gc L5-L6) |
