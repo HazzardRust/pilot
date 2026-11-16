@@ -71,7 +71,7 @@ checklist behind it:
 3. The tests: `npm run test:changed -- --since=origin/feat/<slug>`, or the
    full suite where the project has no such script; only the failures the
    brief names are allowed. Run it with `run_in_background` or a `timeout` of 600000 ms, past the shell's
-   120 s default, and read its log to the pass and fail counts. A test red in that run is rerun alone once, `node --test <file>` on the file holding each name it printed, before you change code; report both results and call each `flake` (green alone) or `regression` (red alone). On a `regression`, load the bug path with the Skill tool, `pilot:diagnosing-bugs`, before you change code.
+   120 s default, and read its log to the pass and fail counts. A test red in that run is rerun alone once, `node --test <file>` on the file holding each name it printed, before you change code; report both results and call each `flake` (green alone) or `regression` (red alone). On a `regression`, or any red still red after one fix, load the bug path with the Skill tool, `pilot:diagnosing-bugs`, before you change code again.
 4. Build.
 5. If the slice has a surface someone uses, run it the way it is used, in
    the environment the brief names, and read what it produces: a CLI's
