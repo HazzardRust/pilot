@@ -25,7 +25,7 @@
     },
     {
       "slice": "S3 version bump (added, user on gate2)",
-      "state": "implementing: Sonnet implementer a1fd40985eb3f3b3c committing on feat/audit-f1 directly, no PR",
+      "state": "integrated at 179274a9 (0.9.8); CI run 43874168112 green on 3 OSes; WSL 5/5",
       "after": [
         "S2"
       ],
@@ -39,8 +39,8 @@
     "dropped: unborn-HEAD try and auditor exit-1 clause, loud and safe as is",
     "kept: S1 test 5 as two marked lints after pilot 7454f5a0 deleted prose pins (assumed, decided by main)"
   ],
-  "next": "audit-f1: gate2 itm_3a29941f687e is at STALE sha c5ba16d6; bump lands on feat/audit-f1, then WSL x5 (scratchpad gate-audit-f1.sh), --trial, new sha on the gate2, lander on press. handoff-mod: gate1 itm_7ae5f3ca9a20 at cc2e8c01; on press create feat/handoff-mod + draft PR. other-host itm_b18bcafffbce: lane claim is a placeholder; architect re-cut on pilot bc75cc5. User: merge #81.",
-  "updatedAt": "2026-11-16T13:14:38.403Z",
+  "next": "audit-f1: gate2 itm_a45bf821cf00 at 179274a9 awaits Sign off; on press spawn pilot-lander with that id. Local-gate rule deleted (itm_35e04b5bae57): CI is referee. handoff-mod: co-pilot live, PR #83, S9 edit allowed. other-host itm_b18bcafffbce: architect re-cut owed. Open: itm_42b44bf83d2a (plan blocked-steps next?). User: merge #81.",
+  "updatedAt": "2026-11-16T13:30:40.557Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -116,6 +116,18 @@
       "what": "Stop hook demands deck_ticket co-pilot on a planned ticket whose signed plan no longer exists; the only way to end the turn was a placeholder lane claim with no co-pilot behind it",
       "evidence": "Stop hook: 'yellow lane empty; itm_b18bcafffbce is planned'; plan sha ecdd81f4 missing",
       "size": 3
+    },
+    {
+      "agent": "pilot",
+      "what": "auto-mode no-verdict on a Bash call batched with deck calls posted two Blocked threads the user had to read",
+      "evidence": "itm_5abec38c2ea0, itm_4a138a675b88",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "record's next named scratchpad gate-audit-f1.sh, which did not exist; the script was rewritten from gate5.sh",
+      "evidence": "ls of the old session's scratchpad",
+      "size": 1
     }
   ]
 }
