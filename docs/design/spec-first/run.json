@@ -64,7 +64,7 @@
     },
     {
       "slice": "S8 The fundamentalist judges tests on test behaviours and installs first",
-      "state": "pushed 604c5c7",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -87,8 +87,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s10"
     }
   ],
-  "next": "Co-pilot: S1, S2, S3, S4, S7, S9 integrated (d4dffcd5); integrating S8 604c5c7, then S10 be3dfcc; S5 implementing (respawned); S6 held for its base (handoff-books, blocked-steps, never-stuck on pilot).",
-  "updatedAt": "2026-11-17T11:30:51.011Z",
+  "next": "Co-pilot: S1, S2, S3, S4, S7, S8, S9 integrated (55764317); integrating S10 be3dfcc; S5 implementing; S6 held for its base (handoff-books, blocked-steps, never-stuck on pilot).",
+  "updatedAt": "2026-11-17T11:32:14.102Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
