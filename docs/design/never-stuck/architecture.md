@@ -150,12 +150,17 @@ ADR NNNN (`docs/adr/NNNN-never-stuck.md`) records L2-L7.
 - **A1 Line 8, yellow only.** Default: a blocking walkthrough yields like a question, on the held yellow ticket
   only. Trades away: a red or green ticket's blocking item still holds its stage lane (the main session works
   there). Rejected: all three lanes (parks the pilot's own ticket).
+  Verdict: stands (the planning and concluding lanes are the main session's; parking its own ticket would stop the session that answers the yield)
 - **A2 Line 10's exclusions.** Default: proposals, `Merging tickets` (a merge is irreversible), blocking items
   (they yield) and gates are never auto-answered. Trades away: an excluded question waits on the user.
+  Verdict: stands (the user's recorded rule: a default taken is no yes for a proposal, a merge or a gate)
 - **A3 Line 12's root.** Default `~/.claude/pilot/live`. Changes the request: a nested git repository under it
   still prompts, so live checks use a plain subdirectory or a worktree.
+  Verdict: stands (beside the other pilot state under ~/.claude/pilot; no queued ticket claims the path)
 - **A4 Line 4's refusal half dropped.** ToolSearch reconnects a failed MCP (seen this session).
+  Verdict: stands (seen again by the pilot this session: deck reported CONNECTION_CLOSED, ToolSearch loaded it and every call worked)
 - **A5 The runs.** Default: two runs in sequence on this deck, re-cut first (itm_b23ef1941624, the pilot's).
+  Verdict: stands (handoff-mod holds the yellow lane and handoff-books, blocked-steps are queued on the same files; in sequence keeps Run B behind them; the user's press on itm_b23ef1941624 decides)
 - red team: S2's first red step walked against `store-runs.mjs:369`: `setCoPilot` is synchronous and git is not,
   so the check sits in the `deck_ticket` handler (`server-tools.mjs:411`) before it, and S2 owns that handler after S1.
 - red team: S8's new lane shapes would make `lanesNotice` drop all three lanes silently (`session-handoff.js:370`);
