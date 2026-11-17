@@ -16,3 +16,13 @@ test('the old import still works', () => {
   assert.equal(webFetchRuleFromSettings, webFetchRule);
   assert.equal(denyCoversFromSettings, denyCovers);
 });
+
+test('the ask step answers from its own module', async () => {
+  const { DEFAULT_BRANCH_ASK, defaultBranchAskStep } = await import('../install-permissions.mjs');
+  const result = defaultBranchAskStep('settings.json')({});
+  assert.equal(result.state, 'added');
+  assert.equal(result.added.length, 8);
+  assert.deepEqual(result.added, DEFAULT_BRANCH_ASK);
+  assert.ok(result.added.includes('Bash(gh pr merge *)'));
+  assert.ok(result.added.includes('Bash(git push origin *:main)'));
+});
