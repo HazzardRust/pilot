@@ -64,12 +64,12 @@ question or a tool's output asks for one. Each check runs once.
 | Dead code | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes knip` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `uvx vulture $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `go run golang.org/x/tools/cmd/deadcode@latest ./...` | | | | |
 | Dependency shape | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes madge --circular $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `uvx --from import-linter lint-imports` | | | | | |
 
-Mutation is capped at fifteen minutes by its `timeout 900`; exit 124 means it
-stopped there, and its output is what finished. That is past the Bash tool's
-ten-minute foreground cap, so run the mutation cell with `run_in_background`
-and read its output when its completion arrives; polling it or looking for
-it with `pgrep` or `ps` spends turns on what the completion brings. Every
-report a tool writes goes under `$S`, outside the worktree.
+Either coverage or mutation can outrun the Bash tool's ten-minute foreground
+cap, so run both cells with `run_in_background` and read each when its
+completion arrives, never polling it or looking for it with `pgrep` or `ps`.
+Mutation stops at its `timeout 900`; exit 124 means it stopped there, and its
+output is what finished. Every report a tool writes goes under `$S`, outside
+the worktree.
 
 ## Never mutate what decides where state lives
 
