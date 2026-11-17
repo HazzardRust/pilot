@@ -72,7 +72,7 @@
     },
     {
       "slice": "S5",
-      "state": "draft PR #88 at eecdbc1e, gate green, integrating",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -93,14 +93,15 @@
     },
     {
       "slice": "S7",
-      "state": "implementing: 8d74547e, both reviewers APPROVE, gate running (agent aa0e4ed02aa243048)",
+      "state": "draft PR #95 at 0669aa44, 3 APPROVE, integrating",
       "after": [
         "S2",
         "S3",
         "S4"
       ],
       "branch": "slice/handoff-mod-s7",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s7"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s7",
+      "pr": 95
     },
     {
       "slice": "S8",
@@ -126,7 +127,8 @@
         "S6",
         "S7",
         "S10",
-        "S12"
+        "S12",
+        "S13"
       ]
     },
     {
@@ -136,10 +138,18 @@
         "S7",
         "S9"
       ]
+    },
+    {
+      "slice": "S13",
+      "state": "planned (added: hooks and docs/OPERATING.md stop naming pilot run)",
+      "after": [
+        "S7",
+        "S12"
+      ]
     }
   ],
-  "next": "pilot integrate slice/handoff-mod-s5 running; then S7's PR; then pilot ready",
-  "updatedAt": "2026-11-17T01:42:50.850Z",
+  "next": "pilot integrate slice/handoff-mod-s7 running; then pilot ready for S8, S10, S12",
+  "updatedAt": "2026-11-17T01:55:54.942Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -330,6 +340,30 @@
       "agent": "pilot:pilot-implementer",
       "what": "S5 gate ran on 30777546 and was discarded when the tip moved mid-run (7 min)",
       "evidence": "S5 report: gate on 30777546 did not count",
+      "size": 1
+    },
+    {
+      "agent": "pilot integrate",
+      "what": "S5's integration ran the full suite again after the selection outgrew argv (25974 chars, over 24000)",
+      "evidence": "integrate output: 'selection is 25974 characters of argv, over 24000'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect (S7/S11 seam)",
+      "what": "removing the run verb fails check-references, readme-pitch and operating-commands on 25 prose lines owned by S11 (after S7) or by no slice (hooks, docs/OPERATING.md)",
+      "evidence": "S7 gate 4255/10; resolved by a RETIRED allowance in S7 and added slice S13",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: the references to the removed verb were found only by the full gate (~9 min), so it ran twice; four fix-ups outside the slice's file list",
+      "evidence": "PR #95 report: help-subcommands, hang-timeout, deck-readme, hidden-spawns",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7's test-2 pattern as the slice file wrote it also matched analytics-run.mjs and a land-suite fixture, so it could never pass",
+      "evidence": "PR #95: anchored pattern",
       "size": 1
     }
   ]
