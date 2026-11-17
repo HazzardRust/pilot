@@ -38,6 +38,14 @@ test('the auditor names itself and carries the tools to own its thread', () => {
   );
 });
 
+test("the auditor cuts at the CLI's sha and records base", () => {
+  const source = auditor();
+  // lint: the Scratch worktree section runs the pilot-tip CLI with --fetch (audit-f1 spec 1, 4)
+  assert.match(sectionOf(source, 'Scratch worktree'), /^node "\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/pilot-tip\.mjs" --fetch$/m);
+  // lint: the report shape names base (audit-f1 spec 3)
+  assert.match(sectionOf(source, 'Report'), /`\{ repo, scratch, base, /);
+});
+
 test('the audit skill keeps its three steps, and its snapshot takes the four git states', () => {
   const source = skill();
   assert.equal(fieldOf(source, 'name'), 'audit');
