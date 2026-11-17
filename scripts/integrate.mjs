@@ -110,18 +110,18 @@ function assertSecurityVerdict(sliceFile, trailers) {
 
 /**
  * Throws naming the first behaviour of the slice file's `## Behaviours` (`behavioursOf`) that no
- * trailer `Evidence: B<k> <kind>: <what was seen>` covers, its number and kind both matching
- * (spec-first spec 2, 8): each behaviour is checked by its own number, never by a count. An old
+ * trailer `Evidence: B<k> <kind>: <what was seen>` covers, its number matching, whatever
+ * its kind (the implementer may raise or swap a kind) (spec-first spec 2, 8): each behaviour is checked by its own number, never by a count. An old
  * `## Tests` slice file has no behaviours and needs no evidence (L5); no slice file: no check.
  */
 function assertEvidence(sliceFile, trailers) {
   if (!sliceFile) return;
   const evidenced = new Set();
   for (const line of trailers.map(String)) {
-    const match = /^Evidence: B(\d+) (\w+): \S/.exec(line);
-    if (match) evidenced.add(`${Number(match[1])} ${match[2]}`);
+    const match = /^Evidence: B(\d+) \w+: \S/.exec(line);
+    if (match) evidenced.add(Number(match[1]));
   }
-  const missing = behavioursOf(sliceFile.text).find(({ n, kind }) => !evidenced.has(`${n} ${kind}`));
+  const missing = behavioursOf(sliceFile.text).find(({ n }) => !evidenced.has(n));
   if (missing) throw new Error(`${sliceFile.n}: B${missing.n} has no --trailer "Evidence: B${missing.n} ${missing.kind}: <what was seen>"`);
 }
 

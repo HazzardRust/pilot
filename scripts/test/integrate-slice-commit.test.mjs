@@ -202,6 +202,20 @@ test('every behaviour evidenced integrates', (t) => {
   for (const trailer of trailers.slice(1)) assert.ok(body.includes(trailer), `${trailer} in\n${body}`);
 });
 
+test('evidence of another kind than the slice file names still covers the behaviour', (t) => {
+  const { work } = scratchRepos(t);
+  sliceFile(work, BEHAVIOURS);
+  const trailers = [
+    'Reviewed-by: pilot:typescript-reviewer: approve',
+    'Evidence: B1 test: lookup red before, green after',
+    'Evidence: B2 test: a unit test of the list',
+  ];
+
+  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, push: false, trailers });
+
+  assert.equal(result.ok, true, result.line);
+});
+
 test('a missing behaviour refuses', (t) => {
   const { origin, work } = scratchRepos(t);
   const before = sliceFile(work, BEHAVIOURS);
@@ -209,8 +223,6 @@ test('a missing behaviour refuses', (t) => {
     ['Evidence: B1 test: lookup red before, green after'],
     // Two trailers for B1 are not evidence for B2: the count alone is not the check.
     ['Evidence: B1 test: lookup red before, green after', 'Evidence: B1 test: and again'],
-    // Evidence of another kind is not B2's.
-    ['Evidence: B1 test: lookup red before, green after', 'Evidence: B2 test: a unit test of the list'],
     // A trailer that says nothing was seen is not evidence.
     ['Evidence: B1 test: lookup red before, green after', 'Evidence: B2 look:  '],
   ];
