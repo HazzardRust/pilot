@@ -392,7 +392,8 @@ function advice(input, seen, marks, threshold, onDeck) {
         'SYSTEM NOTICE: you are at ' + full + ', past the ' +
         (hard ? tokens(marks.hard) + ' token mark, and your pause is overdue'
           : tokens(marks.advisory) + ' token advisory') +
-        ". Pause now as your definition's Hand-back says: start no slice, fix round or QA, and " +
+        ". Pause now as your definition's Hand-back says: start no slice, fix round or QA, send " +
+        'one `deck_status` call with your `friction` rows not yet sent, and only then ' +
         'hand back `paused`, no `wip:` commit. This is advice and never a block. Said once.',
     };
   }
@@ -437,7 +438,7 @@ function advice(input, seen, marks, threshold, onDeck) {
         "1. Bring the status table current with one `deck_status` call: every row as it " +
         "stands right now, with each slice's state, branch, worktree and PR, including what " +
         'is in flight, and `slug`, `branch`, `worktree`, `artefact`, `findings` and `next`, the ' +
-        'exact next move.\n' +
+        'exact next move, and `friction`: every crew row not yet sent and your own drains; a row is never a credential or a transcript.\n' +
         '2. Run `pilot handoff` once (Bash; `--trailer "<line>"` per commit trailer). It commits ' +
         'and pushes the `docs/design/<slug>/run.json` the deck wrote into your `feat/<slug>` ' +
         'worktree as `chore(<slug>): run record`, posts the one `handoff` item for this repository from the record, and answers ' +
@@ -463,7 +464,8 @@ function advice(input, seen, marks, threshold, onDeck) {
       'trailer, staging only the files you changed, by name. Never `git add -A`, and never ' +
       'a credential.\n' +
       '2. Write a handoff a fresh agent could be briefed from: what is done, what is not, ' +
-      'what you learned that is not written down in the code, and the exact next step.\n' +
+      'what you learned that is not written down in the code, the exact next step, and your ' +
+      'friction row {agent, what, evidence, size?}.\n' +
       '3. Send that handoff to `main` with SendMessage.\n' +
       '4. Stop there. Do not begin the next step.\n' +
       'This is advice and never a block — but the pilot has already been told on the deck, ' +

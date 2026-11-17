@@ -214,7 +214,7 @@ The ranked rows plus cost and what went unmeasured, saved in the deck store and 
 _Avoid_: Report
 
 **Offer**:
-The `question` beside the depth question asking whether to run the audit: on a repository's first piloted run, then every tenth counted run. Never an audit started unasked.
+The `question` beside the depth question asking whether to run the audit: on a repository's first piloted run, then every 20 hand-offs. Never an audit started unasked.
 _Avoid_: Prompt, nag
 
 **Pick**:
