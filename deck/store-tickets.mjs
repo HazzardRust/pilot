@@ -405,6 +405,35 @@ export function pivotTicket(id) {
 }
 
 /**
+ * Send a signed ticket back to planning (never-stuck spec 6, L7): an open yellow ticket no live co-pilot holds and
+ * no gate2 has named turns red at its red queue's head, not live, marked `recut: { from, why, files, at }`, `from`
+ * its plan's sha, in one write. The plan stays until a gate1 Sign off replaces it (store-items.mjs). Returns the ticket.
+ */
+export function recutTicket(id, why, files) {
+  requireText('why', why);
+  if (files !== undefined && !(Array.isArray(files) && files.every((file) => typeof file === 'string'))) {
+    throw new DeckRefusal('a re-cut names its files as a list of paths');
+  }
+  const deck = readDeck();
+  const ticket = openTicketOf(deck, id);
+  if (stateOf(ticket) !== 'yellow') throw new DeckRefusal(`item ${id} is ${stateOf(ticket)}; only a signed, yellow ticket is re-cut`);
+  // It joins the planning queue's head, so a pending planning switch holds it up as an arrow would; it never goes live,
+  // so the yellow lane's only lock is the co-pilot switch naming it.
+  refuseLaneSwitch(deck, ticket.repo, laneOfState('red'));
+  refuseCoPilotSwitch(deck, ticket.repo, 'recut', id);
+  const entry = storedCoPilot(deck, ticket.repo);
+  if (entry?.ticket === id && isLiveCoPilot(deck, entry)) throw new DeckRefusal(`a live co-pilot holds ${id}; release it before the re-cut`);
+  const gate2 = deck.items.find((item) => item?.kind === KIND_GATE2 && item.ticket === id);
+  if (gate2) throw new DeckRefusal(`gate2 ${gate2.id} was posted on ${id}; a part-built ticket is never re-cut`);
+  enterStage(deck, ticket, 'red', 'head');
+  delete ticket.live;
+  ticket.recut = { from: ticket.plan?.sha ?? null, why, ...(files === undefined ? {} : { files }), at: new Date().toISOString() };
+  touchRuns(deck, ticket.repo);
+  writeDeck(deck);
+  return ticket;
+}
+
+/**
  * QA's `comment` on the newest record of `ticketId`, in the ticket's own directory (deck-writes-github spec 3, L3):
  * the newest text replaces the last, the walkthrough's or the gate2's. Returns that directory when it wrote, null
  * when there is no such ticket or it has no record yet. Here and not beside `setSlices`: store-runs is at its bar.

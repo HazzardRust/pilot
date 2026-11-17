@@ -34,14 +34,14 @@ test('deck_post refuses size as an unknown field', (t) => {
 
 test('deck_ticket refuses start, small and regular by name', (t) => {
   tempDeck(t);
-  assert.deepEqual(toolNamed('deck_ticket').inputSchema.properties.action.enum, ['up', 'down', 'take', 'park', 'merge', 'need', 'pivot', 'co-pilot', 'release', 'verdicts'], 'take and park are ticket-states S4, merge S9, need and pivot overview-one-ticket S4, co-pilot and release clear-waits-co-pilot S2, verdicts architect-runs-red S3');
+  assert.deepEqual(toolNamed('deck_ticket').inputSchema.properties.action.enum, ['up', 'down', 'take', 'park', 'merge', 'need', 'pivot', 'recut', 'co-pilot', 'release', 'verdicts'], 'take and park are ticket-states S4, merge S9, need and pivot overview-one-ticket S4, recut never-stuck S1, co-pilot and release clear-waits-co-pilot S2, verdicts architect-runs-red S3');
   const ticket = postItem({ kind: KIND_TICKET, sliceCount: 60, title: 'flip', body: shapedTicketBody('flip'), repo: ALPHA });
   postItem({ kind: KIND_TICKET, sliceCount: 60, title: 'other', body: shapedTicketBody('other'), repo: ALPHA });
   const before = JSON.stringify(listItems());
   for (const action of ['start', 'small', 'regular']) {
     assert.throws(
       () => callTool('deck_ticket', { id: ticket.id, action }),
-      (error) => error instanceof DeckRefusal && error.message === `a ticket moves up, down, take, park, merge, need, pivot, co-pilot, release or verdicts, not ${action}`,
+      (error) => error instanceof DeckRefusal && error.message === `a ticket moves up, down, take, park, merge, need, pivot, recut, co-pilot, release or verdicts, not ${action}`,
       action,
     );
   }

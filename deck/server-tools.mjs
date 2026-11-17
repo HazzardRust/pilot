@@ -28,6 +28,7 @@ import {
   ownerFilter, parkedTicketOf, parkTicket, pivotTicket, recordFor, recordVerdicts, refusePoster, repliesSince, resolveItem,
   setCoPilot, setQaComment, setSlices, takeTicket,
 } from './store.mjs';
+import { recutTicket } from './store-tickets.mjs';
 
 import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_READ_ITEMS, MAX_READ_LIMIT, deckUrl } from './tools.mjs';
 
@@ -37,6 +38,8 @@ import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_READ_ITEMS, MAX_READ_LIMIT, deckUrl }
 // reaching the store (L3); this half is what happens when one is called.
 
 const asText = (text) => ({ content: [{ type: 'text', text }] });
+/** The `why` of a re-cut the pilot asks for by hand; the deck's own drift checks name theirs (never-stuck S2, S3). */
+const RECUT_BY_PILOT = 'sent back to planning by the pilot';
 
 function readLimit(args) {
   const asked = args?.limit;
@@ -409,6 +412,8 @@ export function callTool(name, args, deps = {}) {
       return `${lanes.yellowClause}. ${lanes.stageClause}.`;
     };
     if (args?.action === 'need') return asText(`Needed ${id}: ${stateOf(needTicket(id))}. ${both()}`);
+    // The pilot's re-cut sends a signed ticket back to planning (never-stuck spec 6, L7); a gate1 Sign off replaces its plan.
+    if (args?.action === 'recut') return asText(`Re-cut ${id}: ${stateOf(recutTicket(id, RECUT_BY_PILOT))}, planning next. ${both()}`);
     // The main session's co-pilot on a yellow ticket, set and released (clear-waits-co-pilot spec 2, L8).
     if (args?.action === 'co-pilot' || args?.action === 'release') {
       const entry = setCoPilot(id, args.action === 'co-pilot');
@@ -440,7 +445,7 @@ export function callTool(name, args, deps = {}) {
       return asText(`Recorded ${count} verdicts on ${id}.`);
     }
     // The tool's refusal names every action (QA F2); moveTicket's own names the page's two arrows.
-    if (args?.action !== 'up' && args?.action !== 'down') throw new DeckRefusal(`a ticket moves up, down, take, park, merge, need, pivot, co-pilot, release or verdicts, not ${args?.action}`);
+    if (args?.action !== 'up' && args?.action !== 'down') throw new DeckRefusal(`a ticket moves up, down, take, park, merge, need, pivot, recut, co-pilot, release or verdicts, not ${args?.action}`);
     // The arrow's own write (ticket-making L3): one store function, whichever hand moves it.
     const queue = moveTicket(id, args?.action);
     const place = queue.findIndex((item) => item.id === id) + 1;
