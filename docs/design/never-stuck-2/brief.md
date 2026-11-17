@@ -15,8 +15,8 @@ Remote: origin
 
 ## Base and PR target
 
-The base is `feat/never-stuck-2`, cut from `origin/pilot` only once Run A (`feat/never-stuck`, S1-S6) has landed
-there (artefact §6 A5, §8). Slice branch: `slice/never-stuck-2-s<n>`, pushed; the pilot integrates it into
+The base is `feat/never-stuck-2`, cut at Gate 1 from the design tip on `feat/never-stuck` (Run A, S1-S5; artefact §6
+A5, §8). It rebases onto `origin/pilot` when Run A lands; a slice needing S6 waits for that (§8). Slice branch: `slice/never-stuck-2-s<n>`, pushed; the pilot integrates it into
 `feat/never-stuck-2` as one commit. The feature PR targets `pilot`; the deck opens it as a draft.
 
 ## PR titles
