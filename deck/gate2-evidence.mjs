@@ -88,3 +88,13 @@ export function walkthroughPlanGaps(ticket, kind) {
   if (kind !== 'qa' || ticket?.plan?.surface !== false) return [];
   return [`the plan ${ticket.plan.artefact} marks no surface: no walkthrough; the checks table goes in the gate2`];
 }
+
+/**
+ * What a gate1 on `ticket` still owes when the ticket carries a re-cut mark (never-stuck spec 15, L5): a body line
+ * `Changed since <sha7>:` telling the user what moved since the plan they signed. An empty list for any other gate1.
+ */
+export function recutGate1Gaps(ticket, body) {
+  if (!ticket?.recut || /^Changed since [0-9a-f]{7}:/m.test(String(body))) return [];
+  const from = typeof ticket.recut.from === 'string' ? ticket.recut.from.slice(0, 7) : 'the signed plan';
+  return [`a re-cut's gate1 lists what changed since ${from}: add a line \`Changed since ${from}: <what>\` to its body`];
+}

@@ -44,7 +44,6 @@ import {
 } from './items.mjs';
 import { LANDER_LINE } from '../scripts/merge-generated.mjs';
 import { sameRepo } from './runs.mjs';
-import { recutGate1Gaps } from './recut.mjs';
 import { keptWorktree, landerDue, landingReply } from './landing-replies.mjs';
 import { blockedShapeGaps, isPilotClose, isVetoed, mayPilotClose, pilotCloseClaimed } from './blocked-shape.mjs';
 import { questionShapeGaps } from './question-shape.mjs';
@@ -53,7 +52,7 @@ import { ticketShapeGaps } from './ticket-shape.mjs';
 import { walkthroughShapeGaps } from './walkthrough-shape.mjs';
 import { placeSteps } from './step-shell.mjs';
 import { enterStage } from './store-stage.mjs';
-import { gate2EvidenceGaps, namedWalkthroughGaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
+import { gate2EvidenceGaps, namedWalkthroughGaps, recutGate1Gaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
 import { MAX_QUESTION_CHARS, POSTABLE_KINDS, andList } from './tools.mjs';
 import {
   DeckRefusal,
@@ -166,7 +165,8 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   const walked = kind === KIND_WALKTHROUGH ? deck.items.find((each) => each.id === item.ticket) : undefined;
   const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : kind === KIND_GATE1 ? recutGate1Gaps(ticket, body) : walkthroughPlanGaps(walked, authorKind(author));
   if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
-  // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
+  // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves
+  // it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
   if (kind === KIND_GATE2) {
     enterStage(deck, ticket, 'green');
     // A hand-back like `needTicket`'s, so it releases the ticket's co-pilot in the same write (clear-waits-co-pilot L8).

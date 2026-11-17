@@ -223,9 +223,11 @@ async function replanned(id, sha) {
     throw new DeckRefusal(`${id} carries no re-cut mark from a signed plan; only a re-cut ticket is replanned, any other takes a gate1`);
   }
   if (typeof sha !== 'string' || !/^[0-9a-f]{7,40}$/.test(sha)) throw new DeckRefusal('a replan names the new plan commit as its sha');
-  const slug = path.posix.basename(path.posix.dirname(ticket.plan.artefact.replaceAll('\\', '/')));
-  const changed = await planChanges(ticket.repo, from, sha, slug);
   const gate1 = `post a gate1 with a \`Changed since ${from.slice(0, 7)}:\` line`;
+  // Only a plan whose artefact sits at the top of `docs/design/<slug>/` names the dir to diff; any other is never proven unchanged (L5).
+  const slug = /^docs\/design\/([^/]+)\/[^/]+$/.exec(ticket.plan.artefact.replaceAll('\\', '/'))?.[1];
+  if (slug === undefined) throw new DeckRefusal(`replan ${id}: its plan's artefact ${ticket.plan.artefact} is not in docs/design/<slug>/; ${gate1}`);
+  const changed = await planChanges(ticket.repo, from, sha, slug);
   if (changed === null) throw new DeckRefusal(`replan ${id}: ${from.slice(0, 7)} or ${sha} cannot be read in ${ticket.repo}, so the plan is never proven unchanged; ${gate1}`);
   if (changed.length > 0) throw new DeckRefusal(`replan ${id}: ${changed.join(', ')} changed since ${from.slice(0, 7)}; ${gate1}`);
   replanTicket(id, sha);

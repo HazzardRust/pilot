@@ -15,7 +15,7 @@ import path from 'node:path';
 
 import { KIND_GATE1, KIND_TICKET, SIGN_OFF } from '../items.mjs';
 import { planUnchanged } from '../recut.mjs';
-import { DeckRefusal, addReply, listItems, postItem, resolveItem } from '../store.mjs';
+import { DeckRefusal, addReply, listItems, postItem, resolveItem, setCoPilot } from '../store.mjs';
 import { recutTicket, replanTicket } from '../store-tickets.mjs';
 import { shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
 
@@ -49,15 +49,18 @@ function repo(t) {
   });
 }
 
-/** A ticket in `dir` signed at `sha` through its own gate1, then re-cut: red, marked from `sha`. */
-function recut(dir, sha) {
+/** A ticket in `dir` signed at `sha` through its own gate1: yellow. */
+function signed(dir, sha, artefact = ARTEFACT) {
   const ticket = postItem({ kind: KIND_TICKET, sliceCount: 60, title: 'stale plan', body: shapedTicketBody('stale plan'), repo: dir });
   takeLive(ticket.id);
-  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: dir, artefact: ARTEFACT, sha, branch: 'feat/x', locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
+  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: dir, artefact, sha, branch: 'feat/x', locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
   addReply(gate.id, SIGN_OFF);
   resolveItem(gate.id, 'Signed off.');
-  return recutTicket(ticket.id, 're-cut check due: deck/lanes.mjs', ['deck/lanes.mjs']);
+  return reread(ticket.id);
 }
+
+/** That ticket re-cut: red, marked from `sha`. */
+const recut = (dir, sha, artefact) => recutTicket(signed(dir, sha, artefact).id, 're-cut check due: deck/lanes.mjs', ['deck/lanes.mjs']);
 
 const reread = (id) => listItems().find((item) => item.id === id);
 const gate1sOn = (id) => listItems().filter((item) => item.kind === KIND_GATE1 && item.ticket === id);
@@ -96,6 +99,37 @@ test('a gone old sha is never unchanged', async (t) => {
   const { work, same } = repo(t);
   assert.equal(await planUnchanged(work, 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef', same, 'x'), false);
   assert.equal(await planUnchanged(work, same, 'deadbee', 'x'), false, 'nor an unreadable new one');
+});
+
+test('a plan whose artefact is not under docs/design/<slug>/ is never unchanged', async (t) => {
+  tempDeck(t);
+  const { work, first, same } = repo(t);
+  const ticket = recut(work, first, 'docs/foo/PLAN.md');
+
+  await assert.rejects(async () => replan(ticket.id, same), refusedNaming('docs/foo/PLAN.md', 'gate1'));
+  assert.equal(reread(ticket.id).state, 'red');
+});
+
+test('a ticket never re-cut is never replanned', async (t) => {
+  tempDeck(t);
+  const { work, first, same } = repo(t);
+  const ticket = signed(work, first);
+
+  await assert.rejects(async () => replan(ticket.id, same), refusedNaming(ticket.id, 're-cut', 'gate1'));
+  assert.throws(() => replanTicket(ticket.id, same), refusedNaming(ticket.id, 're-cut', 'gate1'));
+  assert.equal(reread(ticket.id).plan.sha, first, 'the signed plan is untouched');
+});
+
+test('a replanned plan is granted afresh, so its next grant checks drift again', (t) => {
+  tempDeck(t);
+  const { work, first, same } = repo(t);
+  const ticket = signed(work, first);
+  setCoPilot(ticket.id, true);
+  setCoPilot(ticket.id, false);
+  assert.ok(reread(ticket.id).plan.grantedAt, 'the first grant stamped the plan');
+  recutTicket(ticket.id, 're-cut check due: deck/lanes.mjs');
+
+  assert.equal(replanTicket(ticket.id, same).plan.grantedAt, undefined);
 });
 
 test('a re-cut gate1 without the line is refused, with it accepted', (t) => {
