@@ -441,8 +441,8 @@ function advice(input, seen, marks, threshold, onDeck) {
         '2. Run `pilot handoff` once (Bash; `--trailer "<line>"` per commit trailer). It commits ' +
         'and pushes the `docs/design/<slug>/run.json` the deck wrote into your `feat/<slug>` ' +
         'worktree as `chore(<slug>): run record`, posts the one `handoff` item for this repository from the record, and answers ' +
-        'in one line. Under `pilot run` the `/clear` is typed for you: stop there. If the line ' +
-        'says it is not under `pilot run`, tell the user to type `/clear` — the fallback — and ' +
+        'in one line. Where the hand-off mod is loaded the `/clear` is typed for you: stop there. If the line ' +
+        'says it is not, tell the user to type `/clear` — the fallback — and ' +
         'stop there; if it names a failure, nothing was posted, so fix that and run it again.\n' +
         'No prose hand-off is written anywhere; the record is the hand-off. A session start ' +
         'hands the next session that item, the run record and the open threads by itself, and ' +
@@ -588,7 +588,7 @@ async function pilotRunFor(cwd) {
  * and the pilot reports to no one; what the pilot is told instead is to post
  * its *own* `handoff` item, whose body is the index a fresh session resumes
  * from. Two items would be one too many, and the wrong one would be the newer:
- * `deck/run.mjs` types `/clear` on the hand-off item appearing rather than on
+ * the hand-off mod types `/clear` on the hand-off item appearing rather than on
  * the hard-mark reading (L34), so an item posted here — at the reading, before the
  * pilot has stashed anything — is a `/clear` over a run that was never saved.
  *
@@ -615,8 +615,8 @@ async function announce(input, seen, marks, repo) {
       return;
     }
     await deck.tool('deck_post', {
-      // L17: a crew agent's own kind, not the pilot's `handoff` — the pilot's
-      // `pickup` (`deck/run.mjs`) and `session-handoff.js` match `handoff`
+      // L17: a crew agent's own kind, not the pilot's `handoff` — the
+      // hand-off mod and `session-handoff.js` match `handoff`
       // only and are left unchanged, so a crew agent's crossing never types
       // `/clear` and never reaches the next SessionStart's injection.
       kind: 'crew-handoff',

@@ -748,7 +748,7 @@ test('a subagent past the hard mark is told to stash to a wip: commit, hand off,
     post.arguments.kind,
     'crew-handoff',
     'a crew agent\'s notice is its own kind (L17), never the pilot\'s own `handoff`, ' +
-    'so `pilot run` and `session-handoff.js` — which match `handoff` only — cannot pick it up'
+    'so the hand-off mod and `session-handoff.js` — which match `handoff` only — cannot pick it up'
   );
   assert.match(post.arguments.title, /handoff/i);
   assert.strictEqual(post.arguments.repo, input.cwd);
@@ -1217,7 +1217,7 @@ test("the pilot's hard-mark advice is its own: bring the status table current, t
   assert.match(said, /status table/i);
   // S20 replaced "then compact" with a hand-off item and a `/clear`; the user then
   // asked for none of it to be manual (2026-09-28): one command commits the record,
-  // posts the item, and `pilot run` types the `/clear`.
+  // posts the item, and the hand-off mod types the `/clear`.
   assert.match(said, /`pilot handoff`/, 'the pilot runs the one command that does the hand-off');
   assert.match(said, /`handoff` item/, 'and is told what it posts, the index a fresh session is rebuilt from');
   assert.doesNotMatch(said, /Tell the user to type/, 'typing /clear by hand is the fallback, not the direction');
@@ -1749,7 +1749,7 @@ test("slice 9's alert emits the model-facing copy on the same run as the claim",
  * reporting to anybody, and what it is told to do is post its own `handoff`
  * item, whose body is the index a fresh session resumes from.
  *
- * Posting one here did more than read oddly. `deck/run.mjs` types `/clear` on
+ * Posting one here did more than read oddly. the hand-off mod types `/clear` on
  * *the hand-off item appearing*, deliberately and not on the 30% reading (L34),
  * so a guard that posted at the reading put the item there before the pilot had
  * stashed anything — and the only thing standing between that and a `/clear`

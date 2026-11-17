@@ -5,24 +5,21 @@ session: nothing here is an install step, and some of it runs as administrator.
 
 ## Starting a run by hand
 
-`pilot run` starts the pilot as the main session and types the `/clear` of a context
-hand-off for you, and the fresh session's first prompt after it, so the run resumes
-with nobody at the keyboard. It is the one way to start the pilot: it turns the plugin on
-for its own process, hands that process the rules, and starts it with
-`CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP=1` so Claude Code does not stop the pilot's
-listener when memory runs short. A `claude` you start yourself carries only what your reach
-says (`pilot reach` prints it, and `pilot reach <level>` changes it); below `everything` it
-has no pilot in it at all. `pilot deck` starts the deck in
+`pilot start` (or the deck's Start) opens a pilot session in a new window. The hand-off mod
+types the `/clear` of a context hand-off for you, and the fresh session's first prompt after it,
+so the run resumes with nobody at the keyboard. A `claude` you start yourself carries only what
+your reach says (`pilot reach` prints it, and `pilot reach <level>` changes it); below
+`everything` it has no pilot in it at all. `pilot deck` starts the deck in
 the background and returns, so closing that terminal leaves it running;
 `pilot deck --foreground` serves it in the terminal instead, for watching it.
 
 ## Commands under the hood
 
-A run needs only `pilot run`; the rest is what the agents call under it. Who runs each, and when:
+A run needs only `pilot start`; the rest is what the agents call under it. Who runs each, and when:
 
 | Command | Who runs it | When |
 | --- | --- | --- |
-| `pilot run` | you | once, to start a run |
+| `pilot start` | you | once, to start a run |
 | `pilot wait` | every agent that owns a thread | in the background, to hear your reply |
 | `pilot tickets` | the architect | at a run's start, to read the red queue |
 | `pilot ready` | the co-pilot | to name the slices that can start |
