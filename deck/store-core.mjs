@@ -694,7 +694,7 @@ export function listAdded() {
 
 /** The tab `repo` names among those the store alone draws, in any spelling of it, or null. */
 export function storedTabFor(repo, deck = readDeck()) {
-  return tabFor(tabsOf(freshRuns(runsOf(deck)), deck.items, {}, {}, addedOf(deck), {}), repo);
+  return tabFor(tabsOf(freshRuns(runsOf(deck)), deck.items, {}, {}, addedOf(deck)), repo);
 }
 
 /**

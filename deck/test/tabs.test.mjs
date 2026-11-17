@@ -273,7 +273,7 @@ test('a repository with a 0.7.19 sub run draws one tab and no Pause', () => {
 });
 
 test('the page has no /subdeck/pause form', () => {
-  const page = renderHomePage([], [aRun({ wrapped: true }), subRun()], SUB);
+  const page = renderHomePage([], [aRun(), subRun()], SUB);
   assert.doesNotMatch(page, /\/subdeck\/pause|class="subdeck"/);
 });
 
@@ -1215,12 +1215,14 @@ test('End is gone', async (t) => {
 
 test('the wrapper stream is gone', async (t) => {
   const base = await deckOnAPort(t);
-  const before = browserCount();
+  // An earlier test's stream is still closing; this one counts from none.
+  for (let tries = 0; browserCount() > 0 && tries < 100; tries++) await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(browserCount(), 0);
 
   const stream = await aWrapperStream(t, base, MINE);
 
   assert.equal(stream.status, 200);
-  assert.equal(browserCount(), before + 1, "served as the page's own stream, which ends nothing");
+  assert.equal(browserCount(), 1, "served as the page's own stream, which ends nothing");
 });
 
 test('a live tab renders no End', async (t) => {

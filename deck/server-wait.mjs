@@ -17,7 +17,6 @@ import { quietAt, watchAgents } from './agents.mjs';
 import { HANDOFF_ACK_MS, KIND_GATE2, KIND_HANDOFF, KIND_QUESTION, KIND_WALKTHROUGH, NOTE_SEPARATOR, PASS_KINDS, SIGN_OFF, isOpen } from './items.mjs';
 import { yieldsDue } from './lanes.mjs';
 import { PICKED_UP_MS, WORKING_MS } from './pilot-state.mjs';
-import { addWrapper } from './session.mjs';
 import {
   DeckRefusal, MAX_TEXT_BYTES, MAX_WAIT_REPLIES, deckLanes, fallBack, fallbackDue, listItems, listRuns, markDelivered, postItem,
   repliesSince, yieldTicket,
@@ -336,9 +335,6 @@ const refuseWithoutSecret = (response, pathname, file) =>
 // shut for exactly the session that wanted one.
 const CHANGED_FOR_BROWSER = 'deck-changed-browser';
 const CHANGED_FOR_WAITER = 'deck-changed-waiter';
-// A third, for `pilot run` wrappers (start-end-session L5): a wrapper is nobody looking at
-// the deck either, and counting it as a page kept the tab shut when a session registered (F6).
-const CHANGED_FOR_WRAPPER = 'deck-changed-wrapper';
 const changes = new EventEmitter();
 // One listener per parked `deck_wait`, and a machine may have several sessions waiting.
 changes.setMaxListeners(0);
@@ -362,7 +358,6 @@ export const waiterCount = () => changes.listenerCount(CHANGED_FOR_WAITER);
 function announceChange() {
   changes.emit(CHANGED_FOR_BROWSER);
   changes.emit(CHANGED_FOR_WAITER);
-  changes.emit(CHANGED_FOR_WRAPPER);
   armHandoffs();
 }
 
@@ -579,48 +574,7 @@ function watchForChanges(response) {
 }
 
 /**
- * When a closed wrapper's stream is announced again (spec 7). The close itself comes first,
- * and on a window closed by hand its session's MCP client (the registered pid, F2) outlives
- * it: seen dead within about 15 s on the live gate. So once soon, for a tree that dies fast,
- * and once past that, for one that does not. Two one-shot timers per close, never a poll.
- */
-const WRAPPER_GONE_MS = Object.freeze([3_000, 20_000]);
-
-/**
- * A `pilot run` wrapper's stream, `GET /events?wrapper=<cwd>` (L5). Refused with any
- * Origin at all, the deck's own included: a wrapper sends none, and a cross-site
- * `EventSource` always does. Registered under its repository for as long as it is open,
- * and its close is announced, because a wrapper whose stream drops is a window that has
- * closed: the pages re-render and find its session's pids gone (spec 7, F1).
- */
-function watchAsWrapper(request, response, repo, goneMs) {
-  // `Sec-Fetch-Site` as well: a page's no-cors GET (`<img src>`) sends no Origin, but every
-  // browser request carries it and no script can set it. Node's `fetch` sends
-  // `Sec-Fetch-Mode` but never this one, which is why it is this one.
-  if (request.headers.origin !== undefined || request.headers['sec-fetch-site'] !== undefined) {
-    return send(response, 403, 'text/plain; charset=utf-8', 'a wrapper stream is not for a page\n');
-  }
-  if (!repo) return send(response, 400, 'text/plain; charset=utf-8', 'a wrapper stream names its directory\n');
-
-  const stream = { send: (event) => response.write(`event: ${event}\ndata: 1\n\n`) };
-  const onChange = () => stream.send('changed');
-  changes.on(CHANGED_FOR_WRAPPER, onChange);
-  const remove = addWrapper(repo, stream);
-  // The open tells the pages only: its session registered before this stream opened, so its
-  // tab was drawn with no End on it (L6). The close and its two timers are `announceChange`,
-  // which wakes every page, wrapper and parked waiter, because a closed window is a change.
-  changes.emit(CHANGED_FOR_BROWSER);
-  response.on('close', () => {
-    changes.off(CHANGED_FOR_WRAPPER, onChange);
-    remove();
-    announceChange();
-    for (const ms of goneMs) setTimeout(announceChange, ms).unref();
-  });
-  return openStream(response);
-}
-
-/**
- * A Start or End refusal lands back on the tab it was pressed on, its reason drawn in that
+ * A Start refusal lands back on the tab it was pressed on, its reason drawn in that
  * control (L6), the way an Add's lands beside the + box; no tab at all is the overview.
  */
 function landRefusal(request, response, tab, err) {
@@ -765,5 +719,5 @@ function fallbackFor(repo) {
 export {
   UI_ASSETS, THREAD_PATH, threadIdIn, replyFrom, backPath, readFormBody, readJsonBody, UnsupportedMediaType, send,
   sendJson, isTrustedOrigin, isOwnHost, isAuthorized, deckGuard, refuseWithoutSecret, changes, announceChange, armHandoffs, handOff, watchForChanges,
-  WRAPPER_GONE_MS, watchAsWrapper, landRefusal, landRefusedPress, waitForReplies, fallbackFor,
+  landRefusal, landRefusedPress, waitForReplies, fallbackFor,
 };

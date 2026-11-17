@@ -249,7 +249,7 @@ test('a refusal landing on a tab with neither control draws nothing in the rail'
   // A live plain-`claude` tab: a stale page's End, or a Start raced by a registration.
   const live = registerRun({ repo: ALPHA, pid: process.pid });
   const strip = rightStrip(
-    renderHomePage(listItems(), [live], ALPHA, false, listDeckNumbers(), {}, Date.now(), [], null, {}, 'a session is already live in this deck'),
+    renderHomePage(listItems(), [live], ALPHA, false, listDeckNumbers(), {}, Date.now(), [], null, 'a session is already live in this deck'),
   );
 
   assert.doesNotMatch(strip, /refused/, 'a bare reason would widen the vertical rail past the page');
