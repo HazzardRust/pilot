@@ -68,6 +68,9 @@ test('a re-cut ticket card shows the re-cut mark with its why; a plain red one d
 
   assert.match(rowOf('other host'), /<span class="recut" title="landing 1a2b3c4">re-cut<\/span>/);
   assert.doesNotMatch(rowOf(plain.title), /class="recut"/);
+  // A mark left on a ticket that has since left planning is not drawn.
+  const moved = { ...reread(signed.id), state: 'green' };
+  assert.doesNotMatch(renderHomePage([moved], [], REPO), /class="recut"/);
 });
 
 test("a live co-pilot's ticket is refused", (t) => {
