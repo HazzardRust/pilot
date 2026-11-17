@@ -57,7 +57,7 @@ and write one evidence row for it, `B<k> <kind>: <what was seen>`:
   and quote the line that holds it.
 
 You may raise a behaviour to `test`, or swap one other kind for another,
-saying why in its row; lowering a `test` is a seam change. A test of prose
+saying why in its row (step 5 of the gate still runs on any surface); lowering a `test` is a seam change. A test of prose
 wording breaks on the next rewrite and catches nothing (ADR 0180), so prose is
 shown by a run or a read. A slice file with `## Tests` instead predates the
 shape: load `tdd-workflow`, write its red steps in that order through the
