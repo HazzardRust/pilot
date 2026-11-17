@@ -11,6 +11,7 @@ import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -98,6 +99,46 @@ test('render.mjs is a facade', () => {
 test("run's names are unchanged", async () => {
   const names = Object.keys(await import('../run.mjs')).sort();
   assert.deepEqual(names, FACADES['run.mjs']);
+});
+
+// handoff-mod S7: `pilot run` is gone, and with it the launcher and its native dependency.
+const ROOT = path.resolve(DECK, '..');
+const help = () => spawnSync(process.execPath, [path.join(ROOT, 'bin', 'pilot.mjs'), 'help'], { encoding: 'utf8', windowsHide: true });
+
+test('pilot run is an unknown command', () => {
+  const shown = help();
+  assert.equal(shown.status, 0, shown.stderr);
+  assert.doesNotMatch(shown.stdout, /pilot run/);
+  // Only once help no longer names it: before this slice `pilot run` started a real `claude`.
+  const ran = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'pilot.mjs'), 'run'], { encoding: 'utf8', windowsHide: true });
+  assert.equal(ran.status, 1);
+  assert.match(ran.stderr, /there is no "run" command/);
+  assert.match(ran.stderr, /pilot deck /, 'followed by the usage');
+});
+
+test('nothing imports the launcher', () => {
+  // lint: no-launcher (ADR 0180)
+  assert.equal(help().status, 0);
+  const importer = /(?:\.\/|deck\/|'deck',\s*')run(?:-prompt)?\.mjs['"]/;
+  const found = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${entry.name}`;
+      if (entry.isDirectory()) {
+        if (entry.name !== 'node_modules') walk(rel);
+      } else if (/\.(mjs|js|cjs)$/.test(entry.name) && importer.test(fs.readFileSync(path.join(ROOT, rel), 'utf8'))) found.push(rel);
+    }
+  };
+  for (const tree of ['bin', 'deck', 'hooks', 'scripts']) walk(tree);
+  assert.deepEqual(found, []);
+});
+
+test('node-pty is not a dependency', () => {
+  // lint: no-node-pty (ADR 0180)
+  assert.equal(help().status, 0);
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  const named = ['dependencies', 'optionalDependencies', 'devDependencies', 'peerDependencies'].filter((field) => 'node-pty' in (pkg[field] ?? {}));
+  assert.deepEqual(named, []);
 });
 
 test("items' names are unchanged", async () => {
