@@ -161,3 +161,16 @@ test('the .md table and specFor output are byte-identical to before', () => {
   assert.equal(sha(saved), JSON_SHA, 'the saved JSON');
   assert.equal(sha(ranked.map((row) => specFor(saved, [row.id])).join('\n')), SPECS_SHA, 'audit spec per row');
 });
+
+test('the audit item names its base', () => {
+  const base = 'origin/pilot 6ea49cac0123456789abcdef0123456789abcdef';
+  assert.deepEqual(validateReport({ ...report, base }), []);
+  const based = renderReport({ ...report, base });
+  assert.ok(
+    based.table.includes(`, measured in the scratch worktree ${report.scratch} at ${base}, since removed.\n`),
+    'spec 3: the .md line ends at the base',
+  );
+  assert.equal(based.deckBody.split('\n')[0], `Measured at ${base}.`, 'spec 3: the deck item names it first');
+  assert.ok(table.includes(`, measured in the scratch worktree ${report.scratch}, since removed.\n`), 'without base, as today');
+  assert.doesNotMatch(deckBody, /Measured at/, 'without base, no line');
+});
