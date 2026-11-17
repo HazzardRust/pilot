@@ -28,6 +28,7 @@ import {
   ownerFilter, parkedTicketOf, parkTicket, pivotTicket, recordFor, recordVerdicts, refusePoster, repliesSince, resolveItem,
   setCoPilot, setQaComment, setSlices, takeTicket,
 } from './store.mjs';
+import { planDrift } from './recut.mjs';
 import { recutTicket } from './store-tickets.mjs';
 
 import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_READ_ITEMS, MAX_READ_LIMIT, deckUrl } from './tools.mjs';
@@ -415,6 +416,21 @@ export function callTool(name, args, deps = {}) {
     // The pilot's re-cut sends a signed ticket back to planning (never-stuck spec 6, L7); a gate1 Sign off replaces its plan.
     if (args?.action === 'recut') return asText(`Re-cut ${id}: ${stateOf(recutTicket(id, RECUT_BY_PILOT))}, planning next. ${both()}`);
     // The main session's co-pilot on a yellow ticket, set and released (clear-waits-co-pilot spec 2, L8).
+    // A ticket's first grant checks its plan against origin first (never-stuck spec 13, L2, L4): a drift re-cuts it
+    // in this call (L7), and git that cannot answer grants with the reason (L10).
+    const granted = args?.action === 'co-pilot' ? listItems().find((item) => item.id === id && item.kind === KIND_TICKET) : undefined;
+    // Only an open yellow ticket is checked; any other is refused by `setCoPilot` below without running git.
+    if (granted?.plan && typeof granted.plan === 'object' && granted.plan.grantedAt === undefined && isOpen(granted) && stateOf(granted) === 'yellow' && typeof granted.repo === 'string') {
+      return planDrift(granted.repo, granted.plan).then((drift) => {
+        if (drift.state === 'gone' || drift.state === 'moved') {
+          const what = drift.state === 'gone' ? `${drift.sha.slice(0, 8)} gone` : drift.files.join(', ');
+          recutTicket(id, `re-cut check due: ${what}`, drift.state === 'moved' ? drift.files : undefined);
+          return asText(`Re-cut check due ${id}: ${what}; red, planning next. ${both()}`);
+        }
+        setCoPilot(id, true);
+        return asText(`Co-pilot ${id}: live.${drift.state === 'unchecked' ? ` drift unchecked: ${drift.reason}.` : ''} ${both()}`);
+      });
+    }
     if (args?.action === 'co-pilot' || args?.action === 'release') {
       const entry = setCoPilot(id, args.action === 'co-pilot');
       if (args.action === 'co-pilot') return asText(`Co-pilot ${id}: live. ${both()}`);
