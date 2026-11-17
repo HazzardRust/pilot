@@ -441,8 +441,8 @@ function advice(input, seen, marks, threshold, onDeck) {
         '2. Run `pilot handoff` once (Bash; `--trailer "<line>"` per commit trailer). It commits ' +
         'and pushes the `docs/design/<slug>/run.json` the deck wrote into your `feat/<slug>` ' +
         'worktree as `chore(<slug>): run record`, posts the one `handoff` item for this repository from the record, and answers ' +
-        'in one line. Under `pilot run` the `/clear` is typed for you: stop there. If the line ' +
-        'says it is not under `pilot run`, tell the user to type `/clear` — the fallback — and ' +
+        'in one line. Where the hand-off mod is loaded the `/clear` is typed for you: stop there. If the line ' +
+        'says the mod will not clear it, tell the user to type `/clear` — the fallback — and ' +
         'stop there; if it names a failure, nothing was posted, so fix that and run it again.\n' +
         'No prose hand-off is written anywhere; the record is the hand-off. A session start ' +
         'hands the next session that item, the run record and the open threads by itself, and ' +
@@ -507,7 +507,7 @@ function mainRepoOf(dir) {
 const MAX_ITEMS = 100;
 
 /**
- * The pilot run this session belongs to, or false.
+ * The piloted run this session belongs to, or false.
  *
  * Being a registered run is necessary and nowhere near sufficient, which is the
  * correction QA made to this: `deck/client.mjs` registers *every* session that
@@ -516,7 +516,7 @@ const MAX_ITEMS = 100;
  * session is a run, and a gate that stopped at registration would tell a
  * stranger's agent to commit `wip:` to a slice branch nobody ever briefed it on.
  *
- * What distinguishes a pilot run is that the deck is holding work for it. The
+ * What distinguishes a piloted run is that the deck is holding work for it. The
  * pilot posts its first item at intake, before any implementer exists, so every
  * crew agent that could ever cross a threshold is working under a run with at
  * least one item; a session that merely loaded the plugin has never posted and
@@ -550,7 +550,7 @@ async function pilotRunFor(cwd) {
   //
   // The cost is the window: `limit` counts back from the newest across every
   // run on the machine and the deck keeps every item for ever (L14), so a run
-  // whose only item is old enough can fall out of it and read as no pilot run.
+  // whose only item is old enough can fall out of it and read as no piloted run.
   // Asking for the most the tool allows is the whole of the mitigation, and
   // silence is the safe side of this question anyway.
   let read;
@@ -563,7 +563,7 @@ async function pilotRunFor(cwd) {
   // An item with no repository on it was posted by a session that never
   // registered, and belongs to no run in particular. The stop gate reads those
   // as everybody's, because showing one reply too many costs a glance; here the
-  // same item would promote a stranger to a pilot run, so it counts for nobody.
+  // same item would promote a stranger to a piloted run, so it counts for nobody.
   const items = Array.isArray(read && read.items) ? read.items : [];
   const ours = items.some(function (item) {
     return item && typeof item.repo === 'string' && deck.samePath(item.repo, repo);
@@ -576,7 +576,7 @@ async function pilotRunFor(cwd) {
  * agent most likely to ignore an advisory is the degraded one the guard exists
  * for. Its own claim, so a parallel turn's copies post one item between them.
  *
- * `repo` is the pilot run this session belongs to, or false — the join `run`
+ * `repo` is the piloted run this session belongs to, or false — the join `run`
  * has already made, because the same answer decides which words the agent is
  * given. A session that is not one is an ordinary Claude session that happens
  * to have this plugin installed, and posting unconditionally would drop an
@@ -588,7 +588,7 @@ async function pilotRunFor(cwd) {
  * and the pilot reports to no one; what the pilot is told instead is to post
  * its *own* `handoff` item, whose body is the index a fresh session resumes
  * from. Two items would be one too many, and the wrong one would be the newer:
- * `deck/run.mjs` types `/clear` on the hand-off item appearing rather than on
+ * the hand-off mod types `/clear` on the hand-off item appearing rather than on
  * the hard-mark reading (L34), so an item posted here — at the reading, before the
  * pilot has stashed anything — is a `/clear` over a run that was never saved.
  *
@@ -615,8 +615,8 @@ async function announce(input, seen, marks, repo) {
       return;
     }
     await deck.tool('deck_post', {
-      // L17: a crew agent's own kind, not the pilot's `handoff` — the pilot's
-      // `pickup` (`deck/run.mjs`) and `session-handoff.js` match `handoff`
+      // L17: a crew agent's own kind, not the pilot's `handoff` — the
+      // hand-off mod and `session-handoff.js` match `handoff`
       // only and are left unchanged, so a crew agent's crossing never types
       // `/clear` and never reaches the next SessionStart's injection.
       kind: 'crew-handoff',

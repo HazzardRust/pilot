@@ -18,7 +18,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { KIND_QUESTION, repoKey } from '../items.mjs';
+import { KIND_QUESTION } from '../items.mjs';
 import { addDeck, closeItem, listItems, listRuns, postItem, registerRun, requestSwitch } from '../store.mjs';
 import { aSandbox, aTicket, deckOnAPort, freePort, page, postStored, rowsOf, takeLive, tempDeck } from '../testUtils.mjs';
 import { aDocument, aPage as aWholePage } from './confirm-sandbox.mjs';
@@ -144,7 +144,7 @@ test('every press §8a fixes posts in place', (t) => {
   const note = postStored({ kind: 'note', title: 'Seen?', body: 'b', repo: REPO });
   const thread = (id) => renderThreadPage(listItems().find((item) => item.id === id), listItems());
   const live = registerRun({ repo: REPO, pid: process.pid });
-  const strip = (run, wrapped = {}) => renderHomePage(listItems(), [run], REPO, false, {}, {}, Date.now(), [], null, wrapped);
+  const strip = (run) => renderHomePage(listItems(), [run], REPO, false, {}, {}, Date.now());
 
   takeLive(aTicket('Live', 'red').id);
   const green = aTicket('Green', 'green');
@@ -160,7 +160,6 @@ test('every press §8a fixes posts in place', (t) => {
     'dismiss a run': formTag(renderDeckPage(listItems(), listRuns()), '/dismiss'),
     'Weekly alerts': formTag(strip(live), '/alerts'),
     Start: formTag(strip({ ...live, pid: 999999 }), '/start-session'),
-    End: formTag(strip(live, { [repoKey(REPO)]: true }), '/end-session'),
     'Switch Confirm': formTag(idle, '/switch'),
     'Switch cancel': formTag(pending, '/switch-cancel'),
   };
@@ -279,7 +278,7 @@ const post = (base, route, fields, headers = {}) =>
     request.end(String(new URLSearchParams(fields)));
   });
 
-test("a refused Start or End answers a page's fetch with its 400, and a navigation with the 303 carrying the reason", async (t) => {
+test("a refused Start answers a page's fetch with its 400, and a navigation with the 303 carrying the reason", async (t) => {
   const base = await deckOnAPort(t, { start: () => {} });
   const fetched = await post(base, '/start-session', { repo: REPO }, { 'sec-fetch-mode': 'cors', 'sec-fetch-dest': 'empty' });
   assert.equal(fetched.status, 400, 'not a redirect a fetch would read as taken');
@@ -288,8 +287,6 @@ test("a refused Start or End answers a page's fetch with its 400, and a navigati
     assert.equal(landed.status, 303);
     assert.match(landed.location, /sessionRefused=/);
   }
-  const ended = await post(base, '/end-session', { repo: REPO }, { 'sec-fetch-dest': 'empty' });
-  assert.equal(ended.status, 400, 'End the same');
 });
 
 /** A page's `/events` stream: how many `changed` events it has been sent. */

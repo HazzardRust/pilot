@@ -84,7 +84,7 @@ function numberOf(numbers, repo) {
  * the strip, so no ended tab can surface there; a page that grew one would have
  * to read stored runs to be honest about it.
  */
-export function tabsOf(runs, items, numbers = {}, agents = {}, added = [], wrapped = {}, lanes = { coPilots: {}, switches: {} }) {
+export function tabsOf(runs, items, numbers = {}, agents = {}, added = [], lanes = { coPilots: {}, switches: {} }) {
   const tabs = [];
   for (const run of runs) {
     // A run 0.7.19's sub-deck registered is no tab (yellow-agent L15), as the store drops it on read.
@@ -134,9 +134,6 @@ export function tabsOf(runs, items, numbers = {}, agents = {}, added = [], wrapp
     // page served before an agent has called a tool — gets a tab with nobody on
     // it, which is what an empty Agents panel says.
     tab.agents = agents[repoKey(tab.repo)] ?? [];
-    // Whether a `pilot run` wrapper's stream is open here (start-end-session L6): what
-    // End needs, looked up like the roster from a map the daemon holds in memory.
-    tab.wrapped = wrapped[repoKey(tab.repo)] === true;
     // The ticket this deck's live co-pilot builds and its lanes' switch records (ticket-state-accents L3), from `deckLanes()`'s one store read.
     tab.coPilot = lanes.coPilots[repoKey(tab.repo)] ?? null;
     tab.switching = lanes.switches[repoKey(tab.repo)] ?? {};

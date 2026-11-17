@@ -19,7 +19,7 @@ const NOW = Date.parse('2026-10-15T09:30:00.000Z');
 const aRun = () => ({ id: 'run_000000000001', repo: MINE, name: 'pilot', pid: process.pid, startedAt: AT, lastSeenAt: AT, slices: [] });
 const aHandoff = { id: 'itm_00000000000h', kind: 'handoff', title: 'Hand-off', body: 'b', repo: MINE, postedAt: AT, owner: 'pilot' };
 const homeOf = (items) =>
-  renderHomePage(items, [aRun()], MINE, false, {}, {}, NOW, [], null, {}, null, { weekly: true }, { coPilots: {}, switches: {} }, {});
+  renderHomePage(items, [aRun()], MINE, false, {}, {}, NOW, [], null, null, { weekly: true }, { coPilots: {}, switches: {} }, {});
 
 test('the line sits under the last card', () => {
   const page = homeOf([aHandoff]);

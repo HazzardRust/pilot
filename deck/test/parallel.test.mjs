@@ -1,10 +1,8 @@
 /**
- * S6 of run-chaining: parallel decks each chain their own runs (spec 5 via A5, 7, 10;
- * L3, L7). The pilot files a later run's ticket under a worktree with `deck_post`'s
- * `dir`, so the ticket belongs to that worktree's deck; `pilot run` there asks the
- * daemon to chain once at start, and `chainNext({ atStart })` starts the head ticket
- * when no run in that directory is unfinished. `deck/test/run.test.mjs` pins the
- * wrapper's one call. Every test takes its own store and port; nothing touches 4321.
+ * S6 of run-chaining: parallel decks each chain their own runs (spec 7, 10; L3, L7).
+ * The pilot files a later run's ticket under a worktree with `deck_post`'s `dir`, so
+ * the ticket belongs to that worktree's deck. A session's start chains nothing
+ * (handoff-mod L12). Every test takes its own store and port; nothing touches 4321.
  */
 
 import './no-open.mjs';
@@ -16,10 +14,9 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { deckOnAPort, shapedTicketBody, tempDeck } from '../testUtils.mjs';
-import { KIND_HANDOFF, KIND_TICKET, sameRepo } from '../items.mjs';
+import { KIND_TICKET, sameRepo } from '../items.mjs';
 
-const { listItems, postItem, registerRun, setSlices } = await import('../store.mjs');
-const { chainNext } = await import('../chain.mjs');
+const { listItems, registerRun } = await import('../store.mjs');
 const { callTool } = await import('../server.mjs');
 
 /** A scratch repository and a worktree of it, laid out as git lays one out. */
@@ -76,70 +73,4 @@ test('a dir that is not a worktree of this repository is refused', async (t) => 
   assert.throws(post(42), /dir must be/);
   assert.throws(post(worktree, 'question'), /a question item takes no dir/, 'dir is for a ticket only');
   assert.equal(listItems().length, 0, 'nothing is stored on a refusal');
-});
-
-test('chainNext at start chains with no record, or a finished one, and not over an unfinished run', async (t) => {
-  const REPO = path.resolve('D:/work/alpha');
-  const aTicket = () => postItem({ kind: KIND_TICKET, sliceCount: 60, title: 'Run 2', body: shapedTicketBody(), repo: REPO });
-  const report = (run, finished) => setSlices(run.id, [], undefined, { slug: 'feature-one', finished });
-
-  await t.test('no record', (inner) => {
-    tempDeck(inner);
-    const ticket = aTicket();
-    const { handoff } = chainNext(REPO, { atStart: true });
-    assert.equal(handoff?.kind, KIND_HANDOFF);
-    assert.equal(handoff.next, ticket.id);
-  });
-  await t.test('a finished record, even an abandoned one (A5)', (inner) => {
-    tempDeck(inner);
-    report(registerRun({ repo: REPO, pid: process.pid }), 'abandoned by the user');
-    aTicket();
-    assert.ok(chainNext(REPO, { atStart: true }).handoff);
-  });
-  await t.test('an unfinished run', (inner) => {
-    tempDeck(inner);
-    report(registerRun({ repo: REPO, pid: process.pid }), undefined);
-    aTicket();
-    assert.deepEqual(chainNext(REPO, { atStart: true }), { handoff: null, reason: 'a run is unfinished' });
-  });
-  await t.test('without atStart only a clean finish chains, as before', (inner) => {
-    tempDeck(inner);
-    aTicket();
-    assert.deepEqual(chainNext(REPO), { handoff: null, reason: 'not finished cleanly' });
-  });
-  await t.test('POST /api/chain runs it at start', async (inner) => {
-    const base = await deckOnAPort(inner);
-    aTicket();
-    const answer = await fetch(`${base}/api/chain`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ repo: REPO }),
-    });
-    assert.equal(answer.status, 200);
-    assert.equal((await answer.json()).handoff?.kind, KIND_HANDOFF);
-    const again = await (await fetch(`${base}/api/chain`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ repo: REPO }),
-    })).json();
-    assert.deepEqual(again, { handoff: null, reason: 'no ticket' }, 'the ticket was taken once');
-    const foreign = await fetch(`${base}/api/chain`, {
-      method: 'POST',
-      headers: { origin: 'http://evil.example' },
-      body: JSON.stringify({ repo: REPO }),
-    });
-    assert.equal(foreign.status, 403, 'a cross-site page cannot start a run');
-  });
-  await t.test('a bad body is refused with wording for the chain, not borrowed from /api/record (QA F5)', async (inner) => {
-    const base = await deckOnAPort(inner);
-    const answer = await fetch(`${base}/api/chain`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({}),
-    });
-    assert.equal(answer.status, 400);
-    const body = await answer.json();
-    assert.match(body.error, /repo must be the path of the repository/);
-    assert.doesNotMatch(body.error, /record you want/, "not /api/record's own wording");
-  });
 });

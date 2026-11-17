@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
+import { MIN_MODS_VERSION, claudeVersion } from '../scripts/handoff.mjs';
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
 import { probeDeck } from './probe.mjs';
@@ -255,6 +256,29 @@ export function allowRow({ readSettings = defaultReadSettings }) {
   };
 }
 
+/** A `CLAUDE_CODE_SAFE_MODE` that is set and not plainly off. */
+const safeMode = (value) => typeof value === 'string' && value !== '' && !/^(0|false)$/i.test(value);
+
+/**
+ * Whether this Claude Code runs the hand-off mod (handoff-mod spec 8): fail on a version below the
+ * minimum, `disableAllHooks` in the user settings, or `CLAUDE_CODE_SAFE_MODE`; cannot tell on an
+ * unreadable version. `settings` is the user settings object or null; read-only.
+ */
+export function modsRow({ version, settings, env }) {
+  const name = 'mods';
+  if (settings?.disableAllHooks === true) {
+    return { name, verdict: 'fail', detail: 'disableAllHooks is set in your user settings, so no mod runs', steps: [`remove "disableAllHooks" from ${defaultSettingsPath()}`] };
+  }
+  if (safeMode(env?.CLAUDE_CODE_SAFE_MODE)) {
+    return { name, verdict: 'fail', detail: 'CLAUDE_CODE_SAFE_MODE is set, so no mod runs', steps: ['start claude without --safe-mode'] };
+  }
+  if (!isVersion(version)) return { name, verdict: 'cannot tell', detail: '`claude --version` gave no version doctor can read' };
+  if (isOlder(version, MIN_MODS_VERSION)) {
+    return { name, verdict: 'fail', detail: `Claude Code ${version} is below ${MIN_MODS_VERSION}`, steps: ['claude update'] };
+  }
+  return { name, verdict: 'pass', detail: `Claude Code ${version} runs mods (${MIN_MODS_VERSION} or later)` };
+}
+
 function cliRow(cmd, onPath) {
   const name = `${cmd} on PATH`;
   const found = onPath(cmd);
@@ -365,8 +389,15 @@ export async function checkAll({
   readReach = defaultReadReach,
   readEnabled = defaultReadEnabled,
   readSettings = defaultReadSettings,
+  env = process.env,
 } = {}) {
   const found = await probe(url);
+  let settings;
+  try {
+    settings = readSettings();
+  } catch {
+    settings = null;
+  }
   return [
     defenderRow({ platform, run, root }),
     nodeRow({ nodeVersion, engines }),
@@ -375,6 +406,7 @@ export async function checkAll({
     reachRow({ reach: readReach(), enabled: readEnabled() }),
     ...CLIS.map((cmd) => cliRow(cmd, onPath)),
     allowRow({ readSettings }),
+    modsRow({ version: claudeVersion(run), settings, env }),
     ...deckRows({ found, port: new URL(url).port }),
   ];
 }

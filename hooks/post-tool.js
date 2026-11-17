@@ -62,7 +62,7 @@ const PILOT_AGENT_TYPES = ['pilot:pilot', 'pilot'];
  * it; the session's first tool call can, from `agent_type`. The marker is read
  * and deleted once, so the judgement is once; a subagent shares its main
  * session's id and is never the one judged. A plain session gets the warning
- * and the claim back to the deck, so `pilot run` is handed the same item.
+ * and the claim back to the deck, so the next pilot session is handed the same item.
  */
 function plainPickup(input) {
   if (!input || input.agent_id || typeof input.session_id !== 'string' || input.session_id === '') return null;
@@ -85,9 +85,9 @@ function plainPickup(input) {
   const item = typeof saved.item === 'string' && /^itm_\w{1,40}$/.test(saved.item) ? ' (' + saved.item + ')' : '';
   return {
     systemMessage: 'This session is not the pilot, so the hand-off it was given' + item + ' is ' +
-      'released back to the deck. Quit and run `pilot run` in this directory to pick the run up.',
+      'released back to the deck. Quit and run `pilot start` in this directory (or press Start on the deck) to pick the run up.',
     additionalContext: 'You are not the pilot session the hand-off' + item + ' was meant for. Do not ' +
-      'act on it, reply on it or resolve it: it has been released for `pilot run`. Tell the user so.',
+      'act on it, reply on it or resolve it: it has been released for the next pilot session (`pilot start` or the deck\'s Start). Tell the user so.',
   };
 }
 
@@ -100,20 +100,6 @@ const MODULES = [
   { file: './agent-roster.js' },
   PLAIN_PICKUP,
 ];
-
-/**
- * The `pilot run` session at work (handoff-prompt S2): its own tool call is
- * stamped for the wrapper before any lane runs. Not a lane, because it says
- * nothing; a subagent's call (`agent_id`) and a payload too broken to carry a
- * session are never the session's. It never throws: a tool call is not failed
- * over a stamp.
- */
-function stampToolRan(input) {
-  if (!input || input.agent_id || typeof input.session_id !== 'string') return;
-  try {
-    require('./lib/deck.js').markToolRan(process.env, input.cwd);
-  } catch (err) { /* the wrapper reads no stamp and waits as before */ }
-}
 
 const nonEmpty = function (text) { return typeof text === 'string' && text.trim() !== ''; };
 
@@ -185,7 +171,6 @@ function main() {
       input = {}; // a truncated payload is not a reason to fail a tool call
     }
 
-    stampToolRan(input);
     runModules(input).then(function (merged) {
       if (!merged) return;
       try {
