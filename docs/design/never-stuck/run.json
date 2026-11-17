@@ -3,7 +3,7 @@
   "feature": "a run never stops silently",
   "ticket": "itm_9b7008e91201",
   "branch": "feat/never-stuck",
-  "base": "feat/handoff-mod",
+  "base": "feat/blocked-steps",
   "worktree": "C:/Users/Hazzard/Projects/pilot-feat-never-stuck",
   "artefact": "docs/design/never-stuck/architecture.md",
   "slices": [
@@ -51,12 +51,14 @@
     },
     {
       "slice": "S6",
-      "state": "blocked: waits for blocked-steps S2 (feat 3e118261) and handoff-books S3 (feat 2b35021a) on pilot (d7569a49)",
+      "state": "implementing",
       "after": [
         "S3",
         "S4",
         "S5"
-      ]
+      ],
+      "branch": "slice/never-stuck-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s6"
     }
   ],
   "findings": [
@@ -67,8 +69,8 @@
     "dropped: S5-ts-3 MEDIUM - setCoPilot overwrite leaving yielding on the old holder; Run 2 S7 refuses a second co-pilot, which removes the route",
     "kept: S4-ts LOWs - recut.from not re-checked after await; sha regex in three places"
   ],
-  "next": "feat/never-stuck at c19395e7 (S1-S5 integrated); S6 blocked until blocked-steps S2 and handoff-books S3 reach pilot; then S6, fundamentalist, fix round (findings listed), QA.",
-  "updatedAt": "2026-11-17T10:04:24.216Z",
+  "next": "feat/never-stuck at 73ffdcbb local (chained base, gate running, push after); S6 implementing from 73ffdcbb; then fundamentalist, fix round (findings listed), QA.",
+  "updatedAt": "2026-11-17T15:16:17.539Z",
   "friction": [
     {
       "agent": "pilot-architect (never-stuck)",
