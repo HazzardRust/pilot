@@ -247,11 +247,11 @@ test('a claude session starts with the environment as it was before the strip', 
   const url = (file) => JSON.stringify(pathToFileURL(path.join(here, '..', '..', file)).href);
   const script = [
     `const { searchPathOnly } = await import(${url('scripts/pilot-branch.mjs')});`,
-    `const { startPlain } = await import(${url('deck/run.mjs')});`,
+    `const { runEnv } = await import(${url('deck/run-env.mjs')});`,
     `delete process.env.${FLAG};`,
     "searchPathOnly(process.env, 'win32');",
     `if (process.env.${FLAG} !== '1') throw new Error('not stripped');`,
-    `await startPlain(process.execPath, ['-e', 'process.stdout.write(process.env.${FLAG} ?? "unset")']);`,
+    `process.stdout.write(runEnv({ level: 'everything' }).${FLAG} ?? 'unset');`,
   ].join('\n');
   const out = spawnSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8' });
   assert.equal(out.status, 0, out.stderr);

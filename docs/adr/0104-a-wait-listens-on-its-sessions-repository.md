@@ -1,9 +1,10 @@
 ---
-status: accepted
+# Superseded by ADR 0183: `pilot run` is gone, so no session stamps a run repository and a wait listens on its main checkout again.
+status: superseded
 date: 2026-10-09
 tags: [threads, hooks]
 supersedes: []
-superseded_by: []
+superseded_by: [0183]
 paths: [deck/wait.mjs, docs/design/listener-worktree/architecture.md]
 ---
 # A wait listens on its session's repository

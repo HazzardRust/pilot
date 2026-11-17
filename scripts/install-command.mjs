@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Puts the `pilot` command on a friend's PATH, so `pilot run` and `pilot deck` work
+ * Puts the `pilot` command on a friend's PATH, so `pilot deck` works
  * from any terminal, and keep working across `claude plugin update`.
  *
  * The harness keeps each plugin version in its own directory, so a global command
@@ -171,7 +171,7 @@ function answers(prefix, env) {
   const result = isWindows()
     ? spawnSync(`"${path.join(binDir(prefix), 'pilot.cmd')}" help`, { encoding: 'utf8', shell: true, windowsHide: true, env })
     : spawnSync(path.join(binDir(prefix), 'pilot'), ['help'], { encoding: 'utf8', windowsHide: true, env });
-  return { answered: result.status === 0 && /pilot run/.test(result.stdout || ''), said: (result.stderr || '').trim() };
+  return { answered: result.status === 0 && /pilot deck/.test(result.stdout || ''), said: (result.stderr || '').trim() };
 }
 
 function pathNote({ action, where, why }, bin, windows) {

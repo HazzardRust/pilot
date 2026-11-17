@@ -74,7 +74,7 @@ function parseJson(text, what) {
 /**
  * A whole body, read and bounded. The deck is a local daemon that trusts any
  * loopback caller, so this refuses to read past what it is willing to hold,
- * the same ceiling `hooks/lib/deck.js` and `deck/run.mjs` put on the same answers.
+ * the same ceiling `hooks/lib/deck.js` and `deck/run-look.mjs` put on the same answers.
  */
 async function bodyOf(response, what) {
   const text = await response.text();
@@ -145,17 +145,6 @@ export function listeningRepo(cwd, git = runGit) {
 }
 
 /**
- * The repository a `pilot run` session stamps its own posts with
- * (`PILOT_RUN_REPO`), trimmed, or null outside one. A wait in such a session
- * listens there, not on its shell's cwd, so it hears the threads the session
- * posted from a worktree wherever the shell has drifted (ADR 0104).
- */
-function sessionRepo(env) {
-  const repo = typeof env?.PILOT_RUN_REPO === 'string' ? env.PILOT_RUN_REPO.trim() : '';
-  return repo || null;
-}
-
-/**
  * Whether anything can ever reach a wait on `repo`: a live run filed there, or an
  * open thread. Two reads, once per wait, never per poll (L5); rejects on any deck
  * failure. The read is asked as a kind that owns nothing, so it hands no reply
@@ -200,8 +189,7 @@ const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  */
 export async function wait({
   cwd = process.cwd(),
-  env = process.env,
-  repo = sessionRepo(env) ?? listeningRepo(cwd),
+  repo = listeningRepo(cwd),
   kind = 'pilot',
   item,
   timeoutMinutes = DEFAULT_TIMEOUT_MINUTES,
@@ -330,5 +318,5 @@ export async function main(argv, { env = process.env, alive } = {}) {
   }
   // Here and not in `wait()`, which the suite calls: a test wait writes no reading (L10).
   startMemoryLog('wait');
-  return wait({ ...parsed, env, session: sessionPid(env), alive });
+  return wait({ ...parsed, session: sessionPid(env), alive });
 }

@@ -694,7 +694,7 @@ export function listAdded() {
 
 /** The tab `repo` names among those the store alone draws, in any spelling of it, or null. */
 export function storedTabFor(repo, deck = readDeck()) {
-  return tabFor(tabsOf(freshRuns(runsOf(deck)), deck.items, {}, {}, addedOf(deck), {}), repo);
+  return tabFor(tabsOf(freshRuns(runsOf(deck)), deck.items, {}, {}, addedOf(deck)), repo);
 }
 
 /**
@@ -744,7 +744,7 @@ function storedCoPilot(deck, dir) {
   return typeof entry?.ticket === 'string' && typeof entry.at === 'string' ? entry : null;
 }
 
-/** Release `dir`'s live co-pilot if it names `ticketId` (any, when none), stamping `at` for the wrapper's turn wait (L5). */
+/** Release `dir`'s live co-pilot if it names `ticketId` (any, when none), stamping `at` for the look's turn-end check (L5). */
 function releaseIn(deck, dir, ticketId) {
   const entry = storedCoPilot(deck, dir);
   if (!entry || entry.live !== true || (ticketId !== undefined && entry.ticket !== ticketId)) return false;
