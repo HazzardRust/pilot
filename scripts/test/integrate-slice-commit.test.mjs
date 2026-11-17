@@ -211,6 +211,8 @@ test('a missing behaviour refuses', (t) => {
     ['Evidence: B1 test: lookup red before, green after', 'Evidence: B1 test: and again'],
     // Evidence of another kind is not B2's.
     ['Evidence: B1 test: lookup red before, green after', 'Evidence: B2 test: a unit test of the list'],
+    // A trailer that says nothing was seen is not evidence.
+    ['Evidence: B1 test: lookup red before, green after', 'Evidence: B2 look:  '],
   ];
   for (const evidence of cases) {
     const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, trailers: ['Reviewed-by: pilot:typescript-reviewer: approve', ...evidence] });
