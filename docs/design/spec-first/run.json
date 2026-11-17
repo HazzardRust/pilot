@@ -90,7 +90,7 @@
     },
     {
       "slice": "spec-first",
-      "state": "fix round done at 4b7f5f47; awaiting pilot land, then QA"
+      "state": "QA fixes in at e41a43a1; walkthrough itm_52c1e196e1ec awaiting Sign off, then QA posts gate2 (#104)"
     },
     {
       "slice": "S11 The builders' absolutes listed with their reasons",
@@ -112,92 +112,11 @@
     }
   ],
   "findings": [
-    "kept: F1 needed — fixed 07b40a22: integrate refused the kind swap L2 allows; Evidence keyed on B<k> alone",
-    "kept: N1 simplify — fixed ea8aeffe: behaviourAt returns only what production reads",
-    "kept: N2 needed — folded into S11: co-pilot text says single-quoted in Bash",
-    "dropped: N3 simplify — the absent-slice-file skip stays; failing closed refuses real added rows",
-    "dropped: S2-MEDIUM needed — same skip; the file is read before the merge",
-    "dropped: S5-LOW-newline needed — fails closed at TRAILER",
-    "dropped: S5-LOW-deferred simplify — 'built in the run' already rules out deferral"
+    "kept: J3b needed — fixed eabd3b7b + e41a43a1: deck/testUtils unsets a caller's PILOT_DECK_DIR for the suite; runner coverage cell exits 0 at e41a43a1 (386 s, 100% of 104 lines)"
   ],
-  "next": "feat/spec-first 4b7f5f47: S1-S12 + fix round integrated, in concluding, no agent live. Next: spawn pilot-qa as writer with tip 4b7f5f47 (check what `pilot land` does first): re-probe F1, spec 6 vs absolutes.md, spec-7 run on pilot-spec-first-scratch, spec 11 in its runner table, walkthrough. Old QA worktree: pilot-spec-first-qa.",
-  "updatedAt": "2026-11-17T12:35:08.898Z",
+  "next": "spec-first e41a43a1: QA ad61417eed1b3f94c waits on walkthrough itm_52c1e196e1ec, then trial+gate2 #104. blocked-steps b84479d0: QA a3c7b88fced2ee400 waits on itm_1d267c5a9a38. never-stuck 4897371a paused, base feat/blocked-steps: co-pilot it, send QA aeab65f8f3b4bbce2 the tip (see its record). Run 2 architect aacfbf3243a4088e8 waits on 3 questions. audit-f7 gate2 itm_79ca68a5deb6 unpressed.",
+  "updatedAt": "2026-11-17T16:08:23.664Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S1: the skill grew 32.5 tokens against 51 of architect headroom; fitting it meant cutting a restating paragraph",
-      "evidence": "measure-prompt 10469.25 -> 10501.75 -> 10457.5"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "node --test prints spec-style lines here, not TAP 'not ok', so red greps came back empty",
-      "evidence": "two empty grep runs on S1's red step"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "new fixtures in fixtures/slices change an unrelated test that counts CLI output lines over the directory",
-      "evidence": "check-slices.test.mjs 'the CLI exits 1 and names each problem' 4 -> 6"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "brief.md's trailer names Claude Fable 5.2, the co-pilot's names Claude Opus 5.5",
-      "evidence": "docs/design/spec-first/brief.md vs the S1 brief"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S4's slice file names measure-prompt for the rules size check, but measure-prompt reads ~/.claude/rules and cannot see a repo edit; measure-rules --rules rules is the real check",
-      "evidence": "scripts/measure-prompt.mjs:61-72"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "shipped rules sit exactly on the 3500-token pin: any added wording must be paid for by a cut",
-      "evidence": "measure-rules 3531 -> 3500 after two cuts"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "three-lanes-wording refuses 'red' in any case anywhere in CONTEXT.md, which a glossary about red steps trips: one gate red",
-      "evidence": "scripts/test/three-lanes-wording.test.mjs:39,47"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S9's absolute counts are not reproducible with its own verification command: the slice counts occurrences, git grep -c counts lines",
-      "evidence": "git grep -ciwE gives 26/11; slice file says 31/14"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "no way to know which QA phrases tests pin short of grepping 22 test files per phrase before cutting",
-      "evidence": "22 test files reference pilot-qa or pilot-lander"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "a 100-token headroom bar meant measuring after every edit and left 2.25 of margin once review fixes cost ~30 tokens",
-      "evidence": "9 measure-prompt runs; QA headroom 102.25"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S3's ledger edit forces a regenerated VENDOR.md and its named test lives in pilot-agents.test.mjs, two files the slice does not own",
-      "evidence": "build-vendor-ledger --check 'first difference at line 83'; S3.md Files owned"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "the absolutes count is ambiguous between lines and occurrences across slices",
-      "evidence": "git grep -ciwE gives 14; the artefact's 18 counts occurrences"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S8's first implementer was compacted after 3 tool calls (50k tokens) and its summary kept no progress; it handed back with nothing built, and a fresh one was spawned on the same worktree",
-      "evidence": "S8 hand-back: HEAD e054e91d, 0 commits ahead, clean tree"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S7's context reset after creating its worktree with nothing committed; it re-derived its state from git",
-      "evidence": "S7 report, friction row"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "no index of test-pinned phrases: finding what the architect's tests pin meant grepping 21 test files",
-      "evidence": "S7 report"
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "slice verification counts absolutes by line (git grep -c) while the slice's baseline counts occurrences",
@@ -307,6 +226,96 @@
       "kind": "drain",
       "what": "forced co-pilot hand-backs with a child live, 6 this session, each read in full by the pilot",
       "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "hand-off left 'check what pilot land does first': land.mjs read by the pilot; it merges feat into pilot, so pilot.md step 7's 'runs pilot land and sends QA the tip' cannot be followed before Gate 2",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "previous session's pilot wait exited into the fresh session with a lane notice, read by the pilot",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "blocked-steps: hand-back forced before either slice reported, two implementers still live; resumed by SendMessage rather than replaced",
+      "evidence": "co-pilot hand-back: handback-send-enforce notice after both task notifications said 'waiting on its own background work'"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "TaskOutput is named in the co-pilot definition but is not among its tools; it used a Monitor on git ls-remote",
+      "evidence": "co-pilot hand-back, friction table"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "deck MCP showed CONNECTION_CLOSED at start; tools worked once loaded",
+      "evidence": "co-pilot hand-back, friction table"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "claude -p stops background subagents 10 minutes after the last turn, killing the first spec-7 run mid-review",
+      "evidence": "spec7.err 'Background tasks still running 10m after the last turn'; fixed with CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a grandchild's output (the evidence runner) is unrecoverable once its parent's context is summarized, leaving spec 11 unprovable in-run",
+      "evidence": "no runner transcript under the scratch session's subagents/"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the spec-7 scratch run cost about $8 and 75 minutes for a 2-slice ticket",
+      "evidence": "spec7b result cost=8.03"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "scratch deck setup: --seed-run refuses a non-item ticket id, the HTTP ticket post needs repo and exact body shape, pilot ready --ticket cannot find a scratch ticket",
+      "evidence": "three 400s; 'no ticket itm_9fe2a8df7d55 in …pilot-spec-first-scratch'"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the A5 shell exports PILOT_DECK_* and 5 tests in the selection read them and go red; the scratch co-pilot spent an added Opus slice on it",
+      "evidence": "QA report J3"
+    },
+    {
+      "kind": "drain",
+      "what": "implementer and evidence-runner hand-backs delivered to main instead of their co-pilot or fundamentalist (blocked-steps runner, never-stuck S6, never-stuck fix round); each read in full and relayed by hand",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "no-verdict / classifier-unavailable Blocked items read and closed Moot by the pilot this session; two paused a live ticket after 20 min and one left it green, needing pivot + co-pilot",
+      "size": 10
+    },
+    {
+      "kind": "drain",
+      "what": "forced co-pilot hand-backs with children live, each resumed by SendMessage: blocked-steps 3, never-stuck 3",
+      "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exits at once while the yellow lane is empty, so the pilot cannot listen without holding a co-pilot ticket; never-stuck was chained on feat/blocked-steps partly to keep the lane held",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "background-agent 'waiting on its own background work' notifications with no report, about 60 this session, each a turn of the pilot",
+      "size": 60
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "a read-only reviewer tried git checkout origin/feat/never-stuck -- deck inside the fixer's worktree; auto mode refused it",
+      "evidence": "itm_cd4a8ef77eed, reason 'Destructive or Unwanted Actions'"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the fix-round integrate fell back to the full suite: the selection was 29833 characters of argv, over 24000",
+      "evidence": "never-stuck co-pilot hand-back, Gates"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "never-stuck QA has no chrome-devtools and its deck MCP is down; it reads the card through curl and sends main the walkthrough fields",
+      "evidence": "never-stuck co-pilot hand-back, A-c1"
     }
   ]
 }
