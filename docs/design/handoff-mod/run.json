@@ -93,7 +93,7 @@
     },
     {
       "slice": "S7",
-      "state": "draft PR #95 at 0669aa44, 3 APPROVE, integrating",
+      "state": "integrated",
       "after": [
         "S2",
         "S3",
@@ -105,20 +105,25 @@
     },
     {
       "slice": "S8",
-      "state": "planned",
+      "state": "draft PR #98",
       "after": [
         "S7",
         "S6"
-      ]
+      ],
+      "branch": "slice/handoff-mod-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s8",
+      "pr": 98
     },
     {
       "slice": "S10",
-      "state": "planned",
+      "state": "implementing: da743ad0 committed, no PR yet (agent a9d893385450f99c8)",
       "after": [
         "S4",
         "S7",
         "S9"
-      ]
+      ],
+      "branch": "slice/handoff-mod-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s10"
     },
     {
       "slice": "S11",
@@ -133,42 +138,28 @@
     },
     {
       "slice": "S12",
-      "state": "planned",
+      "state": "draft PR #97; integrate red on a load timeout (daemon-replace:329), passes alone; re-integrating",
       "after": [
         "S7",
         "S9"
-      ]
+      ],
+      "branch": "slice/handoff-mod-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s12",
+      "pr": 97
     },
     {
       "slice": "S13",
       "state": "planned (added: hooks and docs/OPERATING.md stop naming pilot run)",
       "after": [
         "S7",
+        "S8",
         "S12"
       ]
     }
   ],
-  "next": "pilot integrate slice/handoff-mod-s7 running; then pilot ready for S8, S10, S12",
-  "updatedAt": "2026-11-17T01:55:54.942Z",
+  "next": "re-integrate S12 once S10's npm test finishes, then S8 (#98), S10; then S13, S11, principles review (carry: deck/wait.mjs unused env arg, ADR 0104 PILOT_RUN_REPO sentence)",
+  "updatedAt": "2026-11-17T02:18:08.162Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "auto-mode classifier outage stopped the architect after 10 no-verdict responses, mid-spike; the fix implementer and the lander also stalled on it",
-      "evidence": "task a3f658ad5d2dabf36 killed 2026-11-16; fix implementer hand-back 'no verdict 7 in a row'",
-      "size": 4
-    },
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "mods docs page 404 and absent from llms.txt; API facts came from greps of the 370 MB claude.exe (about 60 s each) and five headless probes",
-      "evidence": "architect report, scratchpad/probe/",
-      "size": 4
-    },
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "classifier gave no verdict about 12 times in a row, ending one turn; the architect then stopped at its context limit with its A1 wait still running",
-      "evidence": "architect hand-back 2026-11-16",
-      "size": 2
-    },
     {
       "agent": "pilot:pilot-co-pilot",
       "what": "harness forces a co-pilot to hand back while its implementers still run; two co-pilots burned ~130k tokens and each hand-back orphans the children's report address",
@@ -364,6 +355,42 @@
       "agent": "pilot:pilot-implementer",
       "what": "S7's test-2 pattern as the slice file wrote it also matched analytics-run.mjs and a land-suite fixture, so it could never pass",
       "evidence": "PR #95: anchored pattern",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer S12",
+      "what": "agent shell closes a detached window when its call ends; live check sees the process, never the window",
+      "evidence": "S12 report, PR #97",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect S12",
+      "what": "S12 test 4 cannot be red before the change; brief.md trailer differed from the co-pilot's briefs",
+      "evidence": "co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "foreground waits move to background after 180 s and there is no TaskOutput, so each wait round needs a fresh waiter",
+      "evidence": "co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate went red on a 30 s test timeout while two implementers ran npm test at once; the test passes alone in 4.3 s",
+      "evidence": "deck/test/daemon-replace.test.mjs:329 timed out at 30020 ms; log 20261117T021349649Z-slice-handoff-mod-s12.log",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the gate run's background output file held only 'exit 0'; the log had to be found among ~140 files in the shared temp folder",
+      "evidence": "S8 report: scratchpad/s8-gate.log found by searching the worktree path",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md's fixed-model commit trailer is wrong whenever a slice runs on another model; S8's commits carry Opus 5.5",
+      "evidence": "S8 report; brief.md:29",
       "size": 1
     }
   ]
