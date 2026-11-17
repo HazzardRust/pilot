@@ -29,7 +29,7 @@
     },
     {
       "slice": "S4",
-      "state": "integrated",
+      "state": "integrated at 2d4f54c9",
       "branch": "slice/blocked-steps-s4",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s4"
     },
@@ -41,7 +41,7 @@
     },
     {
       "slice": "S6",
-      "state": "implementing",
+      "state": "pushed 32f4536",
       "after": [
         "S5"
       ],
@@ -50,11 +50,12 @@
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S6"
       ],
-      "branch": "slice/blocked-steps-s7"
+      "branch": "slice/blocked-steps-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s7"
     },
     {
       "slice": "S8",
@@ -108,7 +109,7 @@
     },
     {
       "slice": "S12",
-      "state": "pushed 88e4500",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -116,8 +117,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s12"
     }
   ],
-  "next": "S4 integrate running; then S12 (88e4500); S6, S9 implementing",
-  "updatedAt": "2026-11-17T13:19:04.562Z",
+  "next": "S12 integrate running; then integrate S6 (32f4536); S7 (pipelined from S6) and S9 implementing",
+  "updatedAt": "2026-11-17T13:26:39.237Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -183,6 +184,16 @@
       "agent": "pilot:pilot-co-pilot",
       "what": "a batched-call no-verdict on pilot integrate, reissued alone and run, still posted Blocked item itm_ccfca489d8b4 that paused the ticket after 20 min (the defect S1 fixes; installed plugin predates it)",
       "evidence": "coordinator message; item closed Moot by main"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 used the session attribution reminder's trailer, not brief.md's; gate ran before the final test-only fix",
+      "evidence": "S6 report assumed rows"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no pgrep in the shell; gate polled by log after the 180 s background move",
+      "evidence": "S6 report friction"
     }
   ]
 }
