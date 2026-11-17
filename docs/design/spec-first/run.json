@@ -1,0 +1,117 @@
+{
+  "slug": "spec-first",
+  "feature": "spec-first",
+  "ticket": "itm_6de487e1f2c4",
+  "branch": "feat/spec-first",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-spec-first",
+  "artefact": "docs/design/spec-first/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A slice file lists behaviours with an evidence kind",
+      "state": "pushed 2ae8018",
+      "branch": "slice/spec-first-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s1"
+    },
+    {
+      "slice": "S2 Integrate refuses a slice missing evidence",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3 The implementer builds to the behaviours",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S4 The gate text asks for evidence",
+      "state": "pushed dbd6f51",
+      "branch": "slice/spec-first-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s4"
+    },
+    {
+      "slice": "S5 The co-pilot carries evidence into the merge and checks its base",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S6 The pilot carries evidence into the merge",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S7 The architect cuts behaviours, not red steps",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S8 The fundamentalist judges tests on test behaviours and installs first",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S9 QA and the lander keep only reasoned absolutes; QA runs spec 7",
+      "state": "implementing",
+      "branch": "slice/spec-first-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s9"
+    },
+    {
+      "slice": "S10 The helpers keep only reasoned absolutes",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    }
+  ],
+  "next": "Co-pilot: integrating S1 at 2ae8018, then S4 at dbd6f51; S9 implementing; then S2, S3, S7, S8, S10 from the new tip; S6 last, only on a pilot carrying handoff-books, blocked-steps, never-stuck.",
+  "updatedAt": "2026-11-17T11:12:36.618Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: the skill grew 32.5 tokens against 51 of architect headroom; fitting it meant cutting a restating paragraph",
+      "evidence": "measure-prompt 10469.25 -> 10501.75 -> 10457.5"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node --test prints spec-style lines here, not TAP 'not ok', so red greps came back empty",
+      "evidence": "two empty grep runs on S1's red step"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "new fixtures in fixtures/slices change an unrelated test that counts CLI output lines over the directory",
+      "evidence": "check-slices.test.mjs 'the CLI exits 1 and names each problem' 4 -> 6"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md's trailer names Claude Fable 5.2, the co-pilot's names Claude Opus 5.5",
+      "evidence": "docs/design/spec-first/brief.md vs the S1 brief"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4's slice file names measure-prompt for the rules size check, but measure-prompt reads ~/.claude/rules and cannot see a repo edit; measure-rules --rules rules is the real check",
+      "evidence": "scripts/measure-prompt.mjs:61-72"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shipped rules sit exactly on the 3500-token pin: any added wording must be paid for by a cut",
+      "evidence": "measure-rules 3531 -> 3500 after two cuts"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "three-lanes-wording refuses 'red' in any case anywhere in CONTEXT.md, which a glossary about red steps trips: one gate red",
+      "evidence": "scripts/test/three-lanes-wording.test.mjs:39,47"
+    }
+  ]
+}
