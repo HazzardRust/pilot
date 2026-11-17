@@ -11,7 +11,24 @@ import path from 'node:path';
 import { runRef, runRemote } from './remotes.mjs';
 import { hostPlatform } from '../hooks/lib/platform.js';
 
-export const PILOT_BRANCH = 'pilot';
+/** A ref side git takes literally: no option, glob, revision syntax, `HEAD`, `@` or whitespace. */
+const PLAIN = /^(?!-)(?!.*\.\.)[A-Za-z0-9._/-]+$/;
+
+/**
+ * The pilot branch's name, read once from `PILOT_BRANCH` (default `pilot`), so a scratch clone
+ * lands on its own branch with no file edit (blocked-steps spec 7; A4). A name git would not
+ * take literally, or one spelled `refs/…`/`heads/…`, throws here, naming the env. The default
+ * branch is still refused at every push, by `assertPushable`.
+ */
+export const PILOT_BRANCH = pilotBranchFrom(process.env);
+
+function pilotBranchFrom(env) {
+  const name = env.PILOT_BRANCH || 'pilot';
+  if (!PLAIN.test(name) || /^(?:refs|heads)\//.test(name) || name === 'HEAD') {
+    throw new Error(`PILOT_BRANCH is ${JSON.stringify(name)}: not a plain branch name`);
+  }
+  return name;
+}
 
 /** `git` in `cwd`, argv only, its output trimmed; throws when git exits non-zero. */
 export const git = (cwd, ...args) =>
@@ -82,9 +99,6 @@ export function remoteDefaultBranch(git) {
   return name;
 }
 
-/** A ref side git takes literally: no option, glob, revision syntax, `HEAD`, `@` or whitespace. */
-const PLAIN = /^(?!-)(?!.*\.\.)[A-Za-z0-9._/-]+$/;
-
 /**
  * Throws, naming the ref, unless a push to `ref` lands on one branch that is not the
  * default one. An allowlist: `ref` is `<name>`, `refs/heads/<name>`, or `<src>:<dst>`
@@ -112,7 +126,8 @@ export function assertPushable(ref, { git }) {
 
 /**
  * Fetches origin (and a named run remote) and answers the pilot branch's tip on the run
- * remote, or the local `pilot` in local mode (pilot-fork spec 3; L7). When there is none,
+ * remote, or the local `pilot` in local mode (pilot-fork spec 3; L7); off local mode the name
+ * passes `assertPushable` first, found or not (blocked-steps spec 7). When there is none,
  * creates it, never forced: from origin's `pilot` when the run remote is not origin and
  * origin has one, else from origin's default tip; it is pushed through `assertPushable`, or
  * made a local branch in local mode. Answers `runs`, `runRemote`'s answer, and `created: true` and
@@ -123,6 +138,8 @@ export function ensurePilotBranch({ git }) {
   const runs = runRemote(git);
   step(git, ['fetch', '-q', 'origin'], 'git fetch failed');
   if (runs !== null && runs !== 'origin') step(git, ['fetch', '-q', runs], 'git fetch failed');
+  // Before an existing branch is answered, so a PILOT_BRANCH naming the default is never a base.
+  if (runs !== null) assertPushable(PILOT_BRANCH, { git });
   const tipOn = (remote) => step(git, ['ls-remote', remote, `refs/heads/${PILOT_BRANCH}`], 'git ls-remote failed').split(/\s/)[0];
   const existing = runs === null ? localTip(git, `refs/heads/${PILOT_BRANCH}`) : tipOn(runs);
   if (existing) return { sha: existing, created: false, runs };
@@ -135,7 +152,6 @@ export function ensurePilotBranch({ git }) {
   if (runs === null) {
     step(git, ['branch', '--no-track', PILOT_BRANCH, sha], 'git branch failed');
   } else {
-    assertPushable(PILOT_BRANCH, { git });
     step(git, ['push', '-q', runs, `${sha}:refs/heads/${PILOT_BRANCH}`], 'git push failed');
   }
   return { sha, created: true, from, runs };
