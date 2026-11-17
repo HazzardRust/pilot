@@ -21,7 +21,8 @@
  * its directory (gate-no-stall spec 4, L5, L10): a prompt mid-run is a terminal the
  * user is not watching, so it stalls the run the way a crew prompt stalls a lane.
  * Every refused prompt, the pilot's and a crew agent's, goes to `postBlocked` as a
- * blocked item (L9). With no live run, or a deck that does not answer, the pilot's
+ * blocked item (L9), save a file edit (`isFileTool`), which is refused and not posted
+ * (blocked-steps spec 4). With no live run, or a deck that does not answer, the pilot's
  * prompt is the user's: this hook never fails closed.
  *
  * The hook never approves anything: its one answer is a refusal, and a prompt
@@ -33,7 +34,7 @@
 const { readStdin } = require('./lib/stdin.js');
 const client = require('./lib/deck.js');
 const { postBlocked } = require('./lib/blocked.js');
-const { isPilotLane, commandOf } = require('./permission-denied.js');
+const { isPilotLane, commandOf, isFileTool } = require('./permission-denied.js');
 
 const MESSAGE =
   'Refused: a crew agent never waits on a permission prompt, so this call was not run. ' +
@@ -78,6 +79,8 @@ async function decide(payload, deps) {
     }
     output = denial(PILOT_MESSAGE);
   }
+  // A file edit is refused but never posted: the user cannot run it, so it is the agent's question (blocked-steps spec 4).
+  if (isFileTool(payload.tool_name)) return output;
   let timer;
   const budget = new Promise(function (resolve) { timer = setTimeout(resolve, POST_BUDGET_MS); });
   const posted = Promise.resolve()

@@ -35,15 +35,38 @@ const SKIP = 'Skip it';
 const WINDOW_MS = 10 * 60 * 1000; // how long one claim holds its step
 
 /** Why the step was not run, by its `source`: the caller says which, so the item never guesses. */
+const DENIED = 'Auto mode denied this call, so it was not run';
 const LEAD = {
-  denied: 'Auto mode denied this call, so it was not run',
+  denied: DENIED,
   refused: "Its permission prompt was refused by the pilot's hook, so this call was not run",
+  'no-verdict': DENIED, // a no-verdict that comes back is posted as the denial it is (blocked-steps L2)
 };
 
-/** The claim file for one step: a hash of session and command, so neither reaches a file name. */
-function claimPath(dir, session, command) {
-  const key = crypto.createHash('sha256').update(String(session) + '\0' + command).digest('hex').slice(0, 32);
-  return path.join(dir, key + '.claim');
+/** The claim file for one step: a hash of session and key, so neither reaches a file name. */
+function claimPath(dir, session, key, ext) {
+  const hash = crypto.createHash('sha256').update(String(session) + '\0' + key).digest('hex').slice(0, 32);
+  return path.join(dir, hash + (ext || '.claim'));
+}
+
+/**
+ * True the first time a no-verdict of this call is seen in a window (blocked-steps L1): its marker
+ * is written and nothing is posted, since the reissue usually runs. A marker older than the window
+ * is a first sight again. An unwritable dir errs towards posting, as a claim does.
+ */
+function firstSight(file, now) {
+  try {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.closeSync(fs.openSync(file, 'wx'));
+    return true;
+  } catch (err) {
+    if (err.code !== 'EEXIST' || !isExpired(file, now)) return false;
+    try {
+      fs.writeFileSync(file, ''); // a fresh window from this sight
+      return true;
+    } catch (_err) {
+      return false;
+    }
+  }
 }
 
 /** True when this step is newly claimed; false when it already was. An unwritable dir errs towards posting. */
@@ -108,7 +131,9 @@ function postedId(answer) {
 
 /**
  * Post one blocked step: the item id, or null when nothing was posted. `step.source` is
- * `denied` (auto mode denied the call) or `refused` (a hook refused its prompt).
+ * `denied` (auto mode denied the call), `refused` (a hook refused its prompt) or `no-verdict`
+ * (auto mode's classifier gave no verdict): a no-verdict posts only on its second sight within
+ * the window. `step.key`, when given, is what the step is claimed by in place of its command.
  * `deps.deck` is the deck client (`./deck.js` by default), `deps.claims` the claim directory,
  * `deps.now` the clock a claim is aged by, `deps.live` true when the caller already found a
  * live run in `step.repo`, so the deck is not asked twice.
@@ -119,6 +144,8 @@ async function postBlocked(step, deps) {
   const now = (deps && deps.now) || Date.now;
   if (!step || typeof step.repo !== 'string' || typeof step.session !== 'string' || step.session === '') return null;
   if (typeof step.command !== 'string' || step.command === '') return null;
+  const key = typeof step.key === 'string' && step.key !== '' ? step.key : step.command;
+  if (step.source === 'no-verdict' && firstSight(claimPath(claims, step.session, key, '.seen'), now)) return null;
 
   if (!(deps && deps.live)) {
     try {
@@ -128,7 +155,7 @@ async function postBlocked(step, deps) {
     }
   }
 
-  const file = claimPath(claims, step.session, step.command);
+  const file = claimPath(claims, step.session, key);
   if (!claim(file, now)) return null;
   try {
     // The deck names the denied lane's ticket by agent type (blocked-yellow-yields spec 7); none, or no answer,

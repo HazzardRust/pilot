@@ -13,6 +13,10 @@
  *
  * A refused file edit (`Edit`, `Write`, `NotebookEdit`) posts nothing either (blocked-yellow-yields A5): the user
  * cannot run it, so the agent sends `main` one question with its default instead.
+ *
+ * A no-verdict (`reason` exactly `Classifier unavailable`: the classifier never judged the call)
+ * posts nothing the first time, since the agent reissues it and the reissue usually runs; the
+ * same call no-verdicted again in the same session within the window posts (blocked-steps L1-L3).
  */
 
 'use strict';
@@ -25,6 +29,13 @@ const CREW_PREFIX = 'pilot:';
 const PILOT_SESSION = ['pilot:pilot', 'pilot'];
 /** The file tools whose denial is the agent's question to `main`, never a Blocked item (A5). */
 const FILE_TOOLS = ['Edit', 'Write', 'NotebookEdit'];
+/** The whole `reason` auto mode gives when its classifier gave no verdict (blocked-steps spec 1); matched exactly. */
+const NO_VERDICT = 'Classifier unavailable';
+
+/** Whether a tool is one of the file tools, whose refusal is never posted. */
+function isFileTool(toolName) {
+  return FILE_TOOLS.includes(toolName);
+}
 
 /** Whether this payload is a pilot lane's: the pilot session, or one of its crew agents. */
 function isPilotLane(payload) {
@@ -43,19 +54,22 @@ function commandOf(payload) {
 /** Post a pilot lane's denial; always null, so the hook says nothing. `deps`: `deck`, `claims`, `env`. */
 async function onDenied(payload, deps) {
   if (!payload || typeof payload !== 'object' || !isPilotLane(payload)) return null;
-  if (FILE_TOOLS.includes(payload.tool_name)) return null;
+  if (isFileTool(payload.tool_name)) return null;
   const repo = deck.projectDir(payload, (deps && deps.env) || process.env);
-  await postBlocked(
-    {
-      repo: repo,
-      command: commandOf(payload),
-      reason: typeof payload.reason === 'string' ? payload.reason : '',
-      agent: payload.agent_type,
-      session: payload.session_id,
-      source: 'denied',
-    },
-    deps,
-  );
+  const step = {
+    repo: repo,
+    command: commandOf(payload),
+    reason: typeof payload.reason === 'string' ? payload.reason : '',
+    agent: payload.agent_type,
+    session: payload.session_id,
+    source: 'denied',
+  };
+  if (step.reason === NO_VERDICT) {
+    // Keyed by the whole call, so one SendMessage's no-verdict never marks the next's (L3).
+    step.source = 'no-verdict';
+    step.key = String(payload.tool_name) + '\0' + JSON.stringify(payload.tool_input === undefined ? null : payload.tool_input);
+  }
+  await postBlocked(step, deps);
   return null;
 }
 
@@ -68,7 +82,7 @@ async function main() {
   process.exitCode = 0;
 }
 
-module.exports = { onDenied: onDenied, isPilotLane: isPilotLane, commandOf: commandOf };
+module.exports = { onDenied: onDenied, isPilotLane: isPilotLane, commandOf: commandOf, isFileTool: isFileTool, NO_VERDICT: NO_VERDICT };
 
 if (require.main === module) {
   main();
