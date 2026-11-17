@@ -1,0 +1,38 @@
+{
+  "slug": "audit-f7",
+  "feature": "audit-f7: hand-off bar test name",
+  "ticket": "itm_7f308083566b",
+  "branch": "feat/audit-f7",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f7",
+  "artefact": "docs/design/audit-f7/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/audit-f7-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f7-s1"
+    }
+  ],
+  "next": "Short path: pilot integrate slice/audit-f7-s1 (f73a28d7, typescript-reviewer APPROVE) into feat/audit-f7, then `pilot integrate --trial` and post gate2 (surface: false, PR #101) with the Verdict and Gate lines.",
+  "updatedAt": "2026-11-17T11:43:51.486Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "gate1 refused by an open blocked-step question another agent owned",
+      "evidence": "refusal naming itm_dc74acb28d3d",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot",
+      "what": "auto mode gives no verdict on batched calls; each posts a blocking Blocked item that then holds gates",
+      "evidence": "itm_60684118e563, itm_34653ebc5e6b, itm_90ab2fdea301, itm_dc74acb28d3d",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "open-items list read at limit 100 to find the red head; no lanes command",
+      "size": 3
+    }
+  ]
+}
