@@ -156,3 +156,15 @@ test('git failing grants with a reason', async (t) => {
   assert.equal(reread(ticket.id).state, 'yellow');
   assert.equal(coPilotFor(fixture.work)?.ticket, ticket.id);
 });
+
+test("a command the repo's own config names is never run", async (t) => {
+  const fixture = repos(t);
+  const marker = path.join(path.dirname(fixture.work), 'ran').replaceAll('\\', '/');
+  git(fixture.work, 'config', 'remote.origin.uploadpack', `echo ran > '${marker}'; git-upload-pack`);
+  const drift = await planDrift(fixture.work, fixture.plan);
+  assert.equal(fs.existsSync(marker), false, 'the planted upload-pack never ran');
+  assert.deepEqual(drift, { state: 'unchecked', reason: "the repo's own config sets remote.origin.uploadpack" });
+  git(fixture.work, 'config', '--unset', 'remote.origin.uploadpack');
+  git(fixture.work, 'config', 'core.alternateRefsCommand', `echo ran > '${marker}'`);
+  assert.equal((await planDrift(fixture.work, fixture.plan)).reason, "the repo's own config sets core.alternaterefscommand");
+});

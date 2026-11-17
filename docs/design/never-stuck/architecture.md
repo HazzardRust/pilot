@@ -91,8 +91,8 @@ None is shallow enough to fold, so no fold slice. One new module, `deck/recut.mj
 
 | Seam | Interface | Folded behind it | Category |
 |---|---|---|---|
-| `deck/recut.mjs` (new) | `planDrift(repoDir, plan)`, `planUnchanged(repoDir, fromSha, toSha, slug)`, `ownedFiles(text)` | git ancestry, merge-base, diff, slice parsing | local-substitutable (temp git repo) |
-| ticket transitions `deck/store-tickets.mjs` | `recutTicket`, `replanTicket`, `yieldTicket`, `finishYield` | state, mark and queue writes | in-process |
+| `deck/recut.mjs` (new) | `planDrift(repoDir, plan)`, `planChanges(repoDir, fromSha, toSha, slug)`, `ownedFiles(text)`, `neverGranted(ticket)`, `SHA` | git ancestry, merge-base, diff, slice parsing | local-substitutable (temp git repo) |
+| ticket transitions `deck/store-tickets.mjs` | `recutTicket`, `replanTicket`, `yieldTicket`, `finishYieldIn` (the release, through `setCoPilot(id, false)`) | state, mark and queue writes | in-process |
 | co-pilot slot `deck/store-runs.mjs` | `setCoPilot`, `fallbackDue` | holder rule, first-grant stamp, fallback timing | in-process |
 | lanes `deck/lanes.mjs` | `lanesFrom`, `yieldsDue`, `runnableYellowOf` | lane lines and reasons | in-process |
 | owed `deck/owed.mjs` | `owedThreadsOf` | the owed reasons | in-process |

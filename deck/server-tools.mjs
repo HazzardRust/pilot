@@ -28,7 +28,7 @@ import {
   ownerFilter, parkedTicketOf, parkTicket, pivotTicket, recordFor, recordVerdicts, refusePoster, repliesSince, resolveItem,
   setCoPilot, setQaComment, setSlices, takeTicket,
 } from './store.mjs';
-import { planChanges, planDrift } from './recut.mjs';
+import { SHA, neverGranted, planChanges, planDrift } from './recut.mjs';
 import { recutTicket, replanTicket } from './store-tickets.mjs';
 
 import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_READ_ITEMS, MAX_READ_LIMIT, deckUrl } from './tools.mjs';
@@ -222,7 +222,7 @@ async function replanned(id, sha) {
   if (typeof from !== 'string' || typeof ticket.repo !== 'string' || typeof ticket.plan?.artefact !== 'string') {
     throw new DeckRefusal(`${id} carries no re-cut mark from a signed plan; only a re-cut ticket is replanned, any other takes a gate1`);
   }
-  if (typeof sha !== 'string' || !/^[0-9a-f]{7,40}$/.test(sha)) throw new DeckRefusal('a replan names the new plan commit as its sha');
+  if (typeof sha !== 'string' || !SHA.test(sha)) throw new DeckRefusal('a replan names the new plan commit as its sha');
   const gate1 = `post a gate1 with a \`Changed since ${from.slice(0, 7)}:\` line`;
   // Only a plan whose artefact sits at the top of `docs/design/<slug>/` names the dir to diff; any other is never proven unchanged (L5).
   const slug = /^docs\/design\/([^/]+)\/[^/]+$/.exec(ticket.plan.artefact.replaceAll('\\', '/'))?.[1];
@@ -230,6 +230,8 @@ async function replanned(id, sha) {
   const changed = await planChanges(ticket.repo, from, sha, slug);
   if (changed === null) throw new DeckRefusal(`replan ${id}: ${from.slice(0, 7)} or ${sha} cannot be read in ${ticket.repo}, so the plan is never proven unchanged; ${gate1}`);
   if (changed.length > 0) throw new DeckRefusal(`replan ${id}: ${changed.join(', ')} changed since ${from.slice(0, 7)}; ${gate1}`);
+  // The diff proved the plan unchanged since `from`; a re-cut written while git ran moved the mark, so it proves nothing.
+  if (listItems().find((item) => item.id === id)?.recut?.from !== from) throw new DeckRefusal(`replan ${id}: it was re-cut again while its plan was read; replan it again`);
   replanTicket(id, sha);
   return asText(`Replanned ${id} at ${sha.slice(0, 7)}: signed plan kept.`);
 }
@@ -444,7 +446,7 @@ export function callTool(name, args, deps = {}) {
     // in this call (L7), and git that cannot answer grants with the reason (L10).
     const granted = args?.action === 'co-pilot' ? listItems().find((item) => item.id === id && item.kind === KIND_TICKET) : undefined;
     // Only an open yellow ticket is checked; any other is refused by `setCoPilot` below without running git.
-    if (granted?.plan && typeof granted.plan === 'object' && granted.plan.grantedAt === undefined && isOpen(granted) && stateOf(granted) === 'yellow' && typeof granted.repo === 'string') {
+    if (neverGranted(granted) && isOpen(granted) && stateOf(granted) === 'yellow' && typeof granted.repo === 'string') {
       return planDrift(granted.repo, granted.plan).then((drift) => {
         if (drift.state === 'gone' || drift.state === 'moved') {
           const what = drift.state === 'gone' ? `${drift.sha.slice(0, 8)} gone` : drift.files.join(', ');

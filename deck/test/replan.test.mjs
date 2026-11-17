@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { KIND_GATE1, KIND_TICKET, SIGN_OFF } from '../items.mjs';
-import { planUnchanged } from '../recut.mjs';
+import { planChanges } from '../recut.mjs';
 import { DeckRefusal, addReply, listItems, postItem, resolveItem, setCoPilot } from '../store.mjs';
 import { recutTicket, replanTicket } from '../store-tickets.mjs';
 import { shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
@@ -70,7 +70,7 @@ const refusedNaming = (...words) => (error) => error instanceof DeckRefusal && w
 test('an unchanged design dir keeps the signature', async (t) => {
   tempDeck(t);
   const { work, first, same } = repo(t);
-  assert.equal(await planUnchanged(work, first, same, 'x'), true);
+  assert.deepEqual(await planChanges(work, first, same, 'x'), []);
   const ticket = recut(work, first);
   const before = gate1sOn(ticket.id).length;
 
@@ -97,8 +97,8 @@ test('one changed slice file refuses the replan', async (t) => {
 
 test('a gone old sha is never unchanged', async (t) => {
   const { work, same } = repo(t);
-  assert.equal(await planUnchanged(work, 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef', same, 'x'), false);
-  assert.equal(await planUnchanged(work, same, 'deadbee', 'x'), false, 'nor an unreadable new one');
+  assert.equal(await planChanges(work, 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef', same, 'x'), null);
+  assert.equal(await planChanges(work, same, 'deadbee', 'x'), null, 'nor an unreadable new one');
 });
 
 test('a plan whose artefact is not under docs/design/<slug>/ is never unchanged', async (t) => {
@@ -130,6 +130,21 @@ test('a replanned plan is granted afresh, so its next grant checks drift again',
   recutTicket(ticket.id, 're-cut check due: deck/lanes.mjs');
 
   assert.equal(replanTicket(ticket.id, same).plan.grantedAt, undefined);
+});
+
+test('a re-cut written while the replan reads git refuses the replan', async (t) => {
+  tempDeck(t);
+  const { work, first, same, changed } = repo(t);
+  const ticket = recut(work, first);
+  const pending = replan(ticket.id, same);
+  takeLive(ticket.id);
+  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: `Re-cut.\n\nChanged since ${first.slice(0, 7)}: S1 owns deck/wait.mjs.`, repo: work, artefact: ARTEFACT, sha: changed, branch: 'feat/x', locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
+  addReply(gate.id, SIGN_OFF);
+  resolveItem(gate.id, 'Signed off.');
+  recutTicket(ticket.id, 're-cut check due: deck/wait.mjs');
+
+  await assert.rejects(pending, refusedNaming(ticket.id, 're-cut again'));
+  assert.deepEqual([reread(ticket.id).state, reread(ticket.id).recut.from], ['red', changed], 'the newer re-cut stands');
 });
 
 test('a re-cut gate1 without the line is refused, with it accepted', (t) => {
