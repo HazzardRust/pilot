@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed b845a9f (integrating)",
+      "state": "integrated",
       "after": [
         "S2"
       ],
@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4",
-      "state": "implementing (local 155c3708 after review round; not pushed)",
+      "state": "pushed 26f3ba5 (integrating)",
       "after": [
         "S2"
       ],
@@ -57,8 +57,8 @@
       ]
     }
   ],
-  "next": "feat/never-stuck at 311016e1; S3 integrating; S4 implementing; next: S3 integrated, then S4, spawn S5. Fix round carries S2 sec MEDIUM (recut.mjs:41 hardening) and S3's untested gone/refusal branches in driftAfterLanding.",
-  "updatedAt": "2026-11-17T09:22:13.066Z",
+  "next": "feat/never-stuck at 54379fab; S4 integrating (26f3ba5, ts+sec approve); next: spawn S5. Fix round: S2 sec MEDIUM (recut.mjs:41), S3 untested gone/refusal branches, S4 LOWs. S6: pilot prompt pin has ~10 tokens headroom (measure-prompt.mjs:84).",
+  "updatedAt": "2026-11-17T09:35:13.396Z",
   "friction": [
     {
       "agent": "pilot-architect (never-stuck)",
@@ -175,6 +175,12 @@
       "what": "a live landing on a scratch deck needs about 8 undocumented steps (artefact at sha, bearer + Origin header, deck_resolve after Sign off, slices: [], run on gate's repo, Verdict/Gate lines, package-lock, git identity)",
       "evidence": "S3 report; working script scratchpad/s3-live.mjs",
       "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced a fourth time while the S4 implementer was live",
+      "evidence": "S4 implementer a8cd8e0fa22a511cd, 186k tokens, unpushed",
+      "size": 1
     }
   ]
 }
