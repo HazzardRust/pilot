@@ -89,7 +89,8 @@ test('start takes no argument', async (t) => {
 });
 
 test('off Windows start prints a line a shell runs as the window would: the rules variable set, the paths quoted', async (t) => {
-  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot start home-'));
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), "pilot start's home-"));
+  const quoted = (p) => `'${p.replace("start's", "start'\\''s")}'`; // the one quote: closed, escaped, reopened
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const { calls, spawn } = aRecorder();
 
@@ -97,7 +98,7 @@ test('off Windows start prints a line a shell runs as the window would: the rule
 
   assert.equal(calls.length, 0, 'no window');
   assert.deepEqual(lines, [
-    `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir '${rulesRoot({ home })}' --agent pilot:pilot --settings '${path.join(home, '.claude', 'pilot', 'start-settings.json')}'`,
+    `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ${quoted(rulesRoot({ home }))} --agent pilot:pilot --settings ${quoted(path.join(home, '.claude', 'pilot', 'start-settings.json'))}`,
   ]);
 });
 

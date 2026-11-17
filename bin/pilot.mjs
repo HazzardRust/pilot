@@ -226,8 +226,8 @@ function start(args, { platform = hostPlatform(), home, ...deps } = {}) {
   try {
     if (platform !== 'win32') {
       // What the window's process gets (`runEnv`), as a POSIX shell line: the env first, every unsafe word single-quoted.
-      const env = Object.entries(runSettings(reach.level, undefined, { home }).env).map(([name, value]) => `${name}=${value}`);
-      console.log([...env, 'claude', ...startArgs(reach, { home })].map(shellWord).join(' '));
+      const env = Object.entries(runSettings(reach.level, undefined, { home }).env).map(([name, value]) => `${name}=${shellWord(value)}`);
+      console.log([...env, ...['claude', ...startArgs(reach, { home })].map(shellWord)].join(' '));
       return undefined;
     }
     const child = openPilot(process.cwd(), { ...deps, platform, home, reach });
