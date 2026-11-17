@@ -51,7 +51,7 @@
     },
     {
       "slice": "S7",
-      "state": "integrated",
+      "state": "integrated at f9283b1e",
       "after": [
         "S6"
       ],
@@ -75,7 +75,7 @@
     },
     {
       "slice": "S10",
-      "state": "pushed 560e015",
+      "state": "integrated",
       "after": [
         "S9"
       ],
@@ -120,8 +120,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s12"
     }
   ],
-  "next": "S7 integrate running; then S10, S8; S3 implementing (pipelined from S8); then S11",
-  "updatedAt": "2026-11-17T13:57:14.299Z",
+  "next": "integrate S10 (560e015), then S8 (c08e23e); S3 implementing; then S11",
+  "updatedAt": "2026-11-17T14:04:38.281Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
