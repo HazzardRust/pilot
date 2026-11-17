@@ -223,9 +223,8 @@ Record the answer in the artefact's locked decisions, where Gate 1 reads it.
 It is a standing question of every run, like step 3's "what environment does
 QA run against", posted, waited on and closed the same way.
 
-Run `pilot audit count <slug>` (`<slug>#<n>` for run n ≥ 2 of a split
-feature); when `pilot audit due` exits 0, post beside the
-depth question a `question` offering the audit (yes / no), record the offer
+When `pilot audit due` exits 0 here, or a hand-off's notice says AUDIT
+DUE, post a `question` offering the audit (yes / no), record the offer
 with `pilot audit offered <slug>`, and on yes spawn `pilot:pilot-auditor` in the
 background with "a run is live", as `${CLAUDE_PLUGIN_ROOT}/skills/audit/SKILL.md`
 says.
