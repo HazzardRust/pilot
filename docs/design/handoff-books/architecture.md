@@ -18,7 +18,8 @@ pilot or a crew agent had not yet sent is lost at `/clear`. The audit is offered
 
 ## 2. Spec
 
-Lines 1-5 accepted by main as sharpened (2026-11-17); 6 and 7 are with the user and not in the cut until answered.
+Lines 1-5 accepted by main as sharpened (2026-11-17); line 6 added by the user's "At the hand-off"
+(itm_3f291c03f1c1). A "+n rows" line on `pilot handoff` was dropped (itm_1ab20e272b77, "Drop it").
 
 | # | Behaviour | Evidence (bar) |
 | --- | --- | --- |
@@ -27,14 +28,13 @@ Lines 1-5 accepted by main as sharpened (2026-11-17); 6 and 7 are with the user 
 | 3 | Rows written before a hand-off survive it. | 1 test: a record with n rows, committed by the hand-off's record commit, has n rows in `run.json`; the next session's `deck_status` with 1 row leaves n+1. A pin: `deck/runs.mjs:464` already appends. |
 | 4 | Hand-offs are counted per repository, once per hand-off id, where the counting site (A4) sees it. | Tests: n distinct hand-offs leave the count at n; the same id claimed twice counts 1; a hand-off in another repository counts 0 here. |
 | 5 | The audit comes due every 20 hand-offs, not every 10 runs. | `pilot audit due` exits 1 at 19 counted hand-offs and 0 at the 20th; `pilot audit count` answers the usage (exit 2); an offer or a saved report re-arms to 0; a record.json holding only old `counted` runs reads without error and is not due. |
-| 6 | *assumed, itm_1ab20e272b77 (main's default Drop)*: `pilot handoff`'s line says how many friction rows the session added. | Not in the cut until answered; 1 notice line, 1 offer. |
-| 7 | *assumed, itm_3f291c03f1c1 (main's default At the hand-off)*: the hand-off that makes the audit due tells the fresh session so in one line, and the pilot offers it then. | Not in the cut until answered. |
+| 6 | The hand-off that makes the audit due tells the fresh session so in one line, and the pilot offers it then, not at the next run's start. | 1 lane test: the 20th claimed hand-off's notice carries exactly 1 audit-due line, the 19th's 0; pilot.md's audit paragraph names the notice, within the pin. |
 
 Cannot mean here: the deck writing the pilot's drains itself (it cannot see the context); a hand-off refused for
 missing rows (the hand-off fires at the hard mark and is never blocked).
 
-practitioner: a bookkeeper closing the books — the entry is made at the close, and checked at the commit point
-(line 6, posted by main).
+practitioner: a bookkeeper closing the books — the entry is made at the close; the check at the commit point was
+offered and dropped by the user.
 
 ## 3. Findings
 
@@ -46,8 +46,8 @@ practitioner: a bookkeeper closing the books — the entry is made at the close,
 | Crew and co-pilot hard text | `hooks/context-size-guard.js:456-471` (crew), `387-397` (co-pilot "pause, hand back paused") | spec 2 |
 | The audit record and verbs | `deck/audit.mjs:252-311, 416-434`: `countRun`, `auditDue`, `recordOffer`, `{offers, counted}` | spec 4, 5 |
 | Only caller of `audit count` | `agents/pilot.md:226-231`; usage `bin/pilot.mjs:132` | removed with the verb |
-| The hand-off lane claims each `handoff` item once | `hooks/session-handoff.js:490-495` (`handoff-<id>`, before chain and plain branches) | A4 default count site |
-| handoff-mod L9: count attaches to the look's `cleared` | `origin/feat/handoff-mod` `deck/run-look.mjs:141-152` | A4 would amend it |
+| The hand-off lane claims each `handoff` item once | `hooks/session-handoff.js:490-495` (`handoff-<id>`, before chain and plain branches) | A4 count site |
+| handoff-mod L9: count attaches to the look's `cleared` | `origin/feat/handoff-mod` `deck/run-look.mjs:141-152` | amended by A4 |
 | Store dir shared by hook and deck | `deck/store-dir.mjs:20` (`PILOT_DECK_DIR`), `hooks/lib/deck.js` | the lane can import `deck/audit.mjs` |
 | pilot.md own share 11850, pin 11871, headroom 21 | `node scripts/measure-prompt.mjs` in this worktree at d7569a49 | spec 1's words paid by spec 5's deleted sentence |
 | Guard split moves `advice` text | blocked-steps S10 → `hooks/lib/guard-advice.js` | S2's file is wherever `advice`'s text is on `pilot` |
@@ -57,7 +57,7 @@ practitioner: a bookkeeper closing the books — the entry is made at the close,
 | Seam | Interface | Folded behind it | Category |
 | --- | --- | --- | --- |
 | The audit record, `deck/audit.mjs` | `countHandoff(repo, id) -> number`, `auditDue(repo) -> 'first' \| 'every' \| null`, `recordOffer(repo, key)`, CLI `due \| offered` | run counting retired (`countRun`, `counted`); old records read | in-process (store dir by `PILOT_DECK_DIR`) |
-| The hand-off lane, `hooks/session-handoff.js` | `run(input) -> result \| null` | the count at the claim | local-substitutable (stub deck) |
+| The hand-off lane, `hooks/session-handoff.js` | `run(input) -> result \| null` | the count at the claim; the audit-due line | local-substitutable (stub deck) |
 | The guard's advice | `advice(input, seen, marks, threshold, onDeck) -> { systemMessage, additionalContext }` | the three hand-off texts | in-process |
 | The record across a hand-off | `nextRecord(previous, given)`, `commitRecords(dir, trailers)` | nothing new; pinned | local-substitutable (temp git repo) |
 
@@ -74,7 +74,7 @@ module is shallow enough to fold; no fold slice.
 
 ## 5. Locked decisions
 
-- **L1 Grilling depth**: awaiting itm_1d37b1424d2e; treated as *forks* until answered.
+- **L1 Grilling depth: forks** (itm_1d37b1424d2e).
 - **L2 The count lives in the audit record** as `handoffs: [id]`, reset by an offer or a saved report, as `counted` was.
   Rejected: a counter in the run record (per run, not per repository; lost when a run lands).
 - **L3 `pilot audit count` and `counted` go.** A record with `counted` and no `handoffs` reads as 0 hand-offs; the
@@ -86,7 +86,7 @@ module is shallow enough to fold; no fold slice.
   pilot.md's hand-off section; `pilot-co-pilot.md` is not edited (blocked-steps S2 owns it; the guard's co-pilot
   text names the step). Rejected: a deck check that refuses `pilot handoff` without rows (blocks at the hard mark).
 - **L6 ADR NNNN supersedes ADR 0146's last bullet** and records L2-L4 and the 20.
-- **L7 QA environment** (proposed; main posts it): this machine, a scratch deck (`pilot deck --scratch`) and a
+- **L7 QA environment** (itm_3dec402c588e, "This machine, scratch deck, 1 live hand-off"): this machine, a scratch deck (`pilot deck --scratch`) and a
   scratch `PILOT_DECK_DIR`; 20 hand-offs driven through the lane by script, 1 live pilot hand-off in a scratch repo
   reading its rows in `run.json` after `/clear`.
 
@@ -106,8 +106,12 @@ module is shallow enough to fold; no fold slice.
 - **A4 The count site is the SessionStart lane's claim** (itm_5f9645e90d42), amending handoff-mod L9. Default: lane,
   so a typed `/clear` with mods off counts too. Tradeoff: amends a signed plan's lock. Rejected: the look's
   `cleared` (L9 as signed: mods-off hand-offs uncounted).
-- **A5 Spec 6** (itm_1ab20e272b77, main's). Default Drop.
-- **A6 Spec 7** (itm_3f291c03f1c1, main's). Default At the hand-off; if taken, S1 grows one notice line in the lane.
+  Answer: "Lane (amend L9)" (itm_5f9645e90d42), the default. Edit owed to handoff-mod's artefact (main makes it on
+  `feat/handoff-mod`): L9's last sentence becomes "itm_b561a9d42212's count is made at the SessionStart lane's claim
+  instead (handoff-books A4, itm_5f9645e90d42); this run builds neither."
+- **A5 A "+n rows" line on `pilot handoff`** (itm_1ab20e272b77, main's). Answer: "Drop it". Not built.
+- **A6 The audit is offered at the hand-off that makes it due** (itm_3f291c03f1c1, main's). Answer: "At the hand-off";
+  spec 6, folded into S1 (the lane's notice line and pilot.md's audit paragraph).
 
 ## 7. Out of scope
 
@@ -115,6 +119,7 @@ module is shallow enough to fold; no fold slice.
 - What the auditor measures; the closing report's ranking of friction.
 - Splitting the guard (blocked-steps S9, S10); the mod and the look (handoff-mod).
 - Renaming `deck/test/handoff.test.mjs` (audit F7, itm_7f308083566b).
+- A count of friction rows on `pilot handoff`'s line (A5, dropped).
 
 ## 8. Slices
 
@@ -122,16 +127,13 @@ Width 2; longest stem 2 (S1 → S3).
 
 | Slice | Title | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- | --- |
-| S1 | Walking skeleton: a hand-off is counted and the 20th makes the audit due | 4, 5 | `deck/audit.mjs`, `deck/test/audit-offer.test.mjs`, `hooks/session-handoff.js`, `hooks/test/session-handoff-count.test.js` (new), `bin/pilot.mjs`, `agents/pilot.md` (the audit paragraph, 226-231), `docs/adr/NNNN-handoff-books.md` (new), `docs/adr/README.md` | – (waits: blocked-steps S2 on `pilot`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S1](slices/S1.md) |
+| S1 | Walking skeleton: a hand-off is counted and the 20th makes the audit due | 4, 5, 6 | `deck/audit.mjs`, `deck/test/audit-offer.test.mjs`, `hooks/session-handoff.js`, `hooks/test/session-handoff-count.test.js` (new), `bin/pilot.mjs`, `agents/pilot.md` (the audit paragraph, 226-231), `docs/adr/NNNN-handoff-books.md` (new), `docs/adr/README.md` | – (waits: blocked-steps S2 on `pilot`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S1](slices/S1.md) |
 | S2 | Crew and co-pilot keep their books before handing off, and the guard asks the pilot too | 1, 2, 3 | the guard's `advice` text (`hooks/context-size-guard.js`, or `hooks/lib/guard-advice.js` once blocked-steps S10 is on `pilot`), its test (`hooks/test/context-size.test.js` or `hooks/test/guard-advice.test.js`), `scripts/test/handoff-books.test.mjs` (new) | – (waits: handoff-mod on `pilot`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S2](slices/S2.md) |
 | S3 | The pilot's hand-off section asks for its books | 1 | `agents/pilot.md` (the hand-off section, 576-606), `scripts/test/yellow-lane-wording.test.mjs` (deleted), `scripts/test/measure-prompt.test.mjs` | S1 (`agents/pilot.md`: the tokens spec 5 frees) | `pilot:security-reviewer` | [S3](slices/S3.md) |
 
 What waits for another ticket's landing: S1 for blocked-steps S2 (`agents/pilot.md`, re-measure the pin); S2 for
 handoff-mod (the guard text and `scripts/handoff.mjs`'s commit, which its test drives), and reads `advice` wherever
 blocked-steps S10 left it; S3 for both through S1, and for handoff-mod S11 (pilot.md 592-593 reworded).
-
-If A6 is taken, S1 adds the notice line (`hooks/session-handoff.js`, already S1's). If A5 is taken, an S4 owns
-`scripts/handoff.mjs` after handoff-mod.
 
 Red team (assumed the cut failed and walked each first red step against the files):
 
@@ -155,12 +157,14 @@ Red team (assumed the cut failed and walked each first red step against the file
    fresh session's `run.json` holds those rows (spec 1, 3).
 3. In a scratch store, 19 hand-offs leave `pilot audit due` at exit 1 (`not due 19`), the 20th at exit 0
    (`due every 20`); a second `/clear` of the 20th leaves 20 (spec 4, 5).
+4. The fresh session after the 20th hand-off reads one line saying the audit is due, and the pilot posts the offer
+   then (spec 6).
 
 ## 10. Status
 
 | Slice | State | Branch | PR | Worktree | After | Spec |
 | --- | --- | --- | --- | --- | --- | --- |
-| S1 | planned | slice/handoff-books-s1 | – | – | – | 4, 5 |
+| S1 | planned | slice/handoff-books-s1 | – | – | – | 4, 5, 6 |
 | S2 | planned | slice/handoff-books-s2 | – | – | – | 1, 2, 3 |
 | S3 | planned | slice/handoff-books-s3 | – | – | S1 | 1 |
-| handoff-books | planned | feat/handoff-books | – | – | S1, S2, S3 | 1-5 |
+| handoff-books | planned | feat/handoff-books | – | – | S1, S2, S3 | 1-6 |
