@@ -144,7 +144,10 @@ ADR NNNN (`docs/adr/NNNN-never-stuck.md`) records L2-L7.
   `drift unchecked: <reason>`. Rejected: refusing the lane on a fetch error.
 - **L11 QA environment**: QA runs on a scratch deck (`pilot deck --scratch`) against temp git repos with a bare
   remote; the user's walkthrough opens that deck in a browser for the card and lane lines, runs one real
-  `pilot wait` against it, and sets up the live root once (line 12). The deck on 4321 is never written. *The pilot posts this question.*
+  `pilot wait` against it, and sets up the live root once (line 12). The deck on 4321 is never written. User: "Scratch deck + temp repos" (itm_25a65521c8dd).
+- **L12 The runs, in sequence on this deck** (user: "In sequence on this deck", itm_b23ef1941624, was A5): two
+  runs, re-cut first; §8's Runs table. Rejected: one run of 18; Run B on another deck.
+  Verdict: stands (handoff-mod holds the yellow lane and handoff-books, blocked-steps are queued on the same files; in sequence keeps Run B behind them; the user's press on itm_b23ef1941624 decides)
 
 ## 6. Assumed decisions
 
@@ -160,8 +163,6 @@ ADR NNNN (`docs/adr/NNNN-never-stuck.md`) records L2-L7.
   Verdict: stands (beside the other pilot state under ~/.claude/pilot; no queued ticket claims the path)
 - **A4 Line 4's refusal half dropped.** ToolSearch reconnects a failed MCP (seen this session).
   Verdict: stands (seen again by the pilot this session: deck reported CONNECTION_CLOSED, ToolSearch loaded it and every call worked)
-- **A5 The runs.** Default: two runs in sequence on this deck, re-cut first (itm_b23ef1941624, the pilot's).
-  Verdict: stands (handoff-mod holds the yellow lane and handoff-books, blocked-steps are queued on the same files; in sequence keeps Run B behind them; the user's press on itm_b23ef1941624 decides)
 - red team: S2's first red step walked against `store-runs.mjs:369`: `setCoPilot` is synchronous and git is not,
   so the check sits in the `deck_ticket` handler (`server-tools.mjs:411`) before it, and S2 owns that handler after S1.
 - red team: S8's new lane shapes would make `lanesNotice` drop all three lanes silently (`session-handoff.js:370`);
