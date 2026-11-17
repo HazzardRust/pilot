@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "integrated",
+      "state": "integrated at 8bf88495",
       "branch": "slice/blocked-steps-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s1"
     },
@@ -29,13 +29,13 @@
     },
     {
       "slice": "S4",
-      "state": "implementing",
+      "state": "pushed ba971d9",
       "branch": "slice/blocked-steps-s4",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s4"
     },
     {
       "slice": "S5",
-      "state": "implementing",
+      "state": "integrated",
       "branch": "slice/blocked-steps-s5",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s5"
     },
@@ -65,8 +65,9 @@
     },
     {
       "slice": "S9",
-      "state": "planned",
-      "branch": "slice/blocked-steps-s9"
+      "state": "implementing",
+      "branch": "slice/blocked-steps-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s9"
     },
     {
       "slice": "S10",
@@ -99,13 +100,23 @@
         "S8",
         "S9",
         "S10",
-        "S11"
+        "S11",
+        "S12"
       ],
       "branch": "feat/blocked-steps"
+    },
+    {
+      "slice": "S12",
+      "state": "pushed 88e4500",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/blocked-steps-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s12"
     }
   ],
-  "next": "S1 integrate running; S4, S5 implementing; then write added slice S12 (claim() mkdir EEXIST posts nothing) on feat and spawn it, then S9",
-  "updatedAt": "2026-11-17T12:58:20.441Z",
+  "next": "S5 integrate running; S9 implementing; then integrate S4, S12; spawn S6 from the S5 tip",
+  "updatedAt": "2026-11-17T13:17:55.768Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -136,6 +147,36 @@
       "agent": "pilot:pilot-implementer",
       "what": "gate run twice (~6.8 min each) because the first ran before review fixes",
       "evidence": "S1 report friction"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test ~9 min (535 s), past the 180 s foreground limit; no final summary line mid-run",
+      "evidence": "S5 report friction"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 reviewer saw the test file before a one-line assertion was added; gate ran before it",
+      "evidence": "S5 report assumed rows"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 slice file said assertPushable unchanged, but test 3 needed the guard on ensurePilotBranch's existing-branch path; implementer decided an extra ls-remote per pilot base",
+      "evidence": "S4 report pushback"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief and slice files live only on feat/blocked-steps; first Read from the shared checkout failed",
+      "evidence": "S4 report friction"
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "ran git stash / stash apply in the S12 implementer's worktree",
+      "evidence": "S12 report friction; tree intact"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate waits for a slot behind other worktrees' gates; output only at the end",
+      "evidence": "S12 report, ~385 s"
     }
   ]
 }
