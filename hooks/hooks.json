@@ -17,6 +17,17 @@
         "hooks": [
           {
             "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/pilot-tip.mjs\" --session-start",
+            "timeout": 5
+          }
+        ],
+        "description": "Warn once when this checkout is more than 100 commits behind the run's pilot, read from the local tracking ref with no fetch; silent otherwise",
+        "id": "start:any:stale-checkout"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/install-settings.mjs\" --repair",
             "timeout": 5
           }
