@@ -49,14 +49,20 @@ import atomicWrite from '../hooks/lib/atomic-write.js';
 import { pathKey } from '../hooks/lib/platform.js';
 import { PLUGIN_ID, readReach, rulesPlan } from './reach.mjs';
 import {
+  DECK_SERVER,
   DEFAULT_BRANCH_ASK,
+  PILOT_MERGE_ALLOW,
   coveringRule,
   defaultBranchAskStep,
   denyCovers,
   domainOf,
+  isOwnAllow,
+  pilotMergeStep,
   readablePermissions,
   webFetchRule,
 } from './install-permissions.mjs';
+
+export { PILOT_MERGE_ALLOW };
 
 const { atomicWriteFileSync } = atomicWrite;
 
@@ -403,12 +409,6 @@ function enablePluginStep(settingsPath, value) {
   };
 }
 
-/**
- * The deck server's tools, and nothing wider. A deck call that waits on a terminal
- * prompt stalls a background lane nobody is watching, and under auto mode the
- * classifier may refuse it outright; an allow rule is the one thing that settles both.
- */
-const DECK_SERVER = 'mcp__plugin_pilot_deck';
 const DECK_TOOLS_RULE = `${DECK_SERVER}__*`;
 
 // A deny that refuses any deck tool - the server, the wildcard, one tool, or a glob
@@ -467,74 +467,6 @@ function deckToolsStep(settingsPath) {
 }
 
 /**
- * ADR 0110, amending L22: the pilot's own merge commands are allowed, because the auto-mode
- * classifier reads only the command text and cannot see the gate the user signed. Written
- * `<cmd> *` with the space, which matches the bare command and not `pilot landfoo` (L2).
- * The push stays guarded in code: `land` and `integrate` refuse the default branch by name
- * whatever this rule says (L23). A rule the user's deny or ask covers is named and left out,
- * since either beats an allow and the rule would read as a grant that never takes effect (L3).
- */
-export const PILOT_MERGE_ALLOW = [
-  'Bash(pilot sync *)',
-  'Bash(pilot integrate *)',
-  'Bash(pilot land *)',
-  'Bash(pilot landing *)',
-  // process-gc (L14): list, reap and stop scratch decks. Never `pilot *`.
-  'Bash(pilot ps)',
-  'Bash(pilot gc)',
-  'Bash(pilot deck --stop *)',
-  // yellow-lane (L7): a QA nested under a co-pilot starts a scratch deck, and the classifier
-  // reads only the command text. The scratch deck is isolated from the live one on 4321.
-  'Bash(pilot deck --scratch *)',
-];
-
-function pilotMergeStep(settingsPath) {
-  return (settings) => {
-    const permissions = readablePermissions(settingsPath, settings);
-    const allow = permissions.allow ?? [];
-    const theirs = [...(permissions.deny ?? []), ...(permissions.ask ?? [])];
-
-    const covered = PILOT_MERGE_ALLOW.filter((rule) => theirs.some((t) => denyCovers(t, rule)));
-    const alreadyPresent = PILOT_MERGE_ALLOW.filter((r) => !covered.includes(r) && allow.includes(r));
-    const added = PILOT_MERGE_ALLOW.filter((r) => !covered.includes(r) && !allow.includes(r));
-
-    const notes = [];
-    if (added.length) {
-      notes.push(
-        `Added ${added.length} allow rule(s) to ${settingsPath}, so the pilot's own commands are not refused in auto mode:`,
-        ...added.map((rule) => `    ${rule}`),
-      );
-    }
-    if (alreadyPresent.length) {
-      notes.push(`Merge allow rules already present, left as they were: ${alreadyPresent.join(', ')}.`);
-    }
-    if (covered.length) {
-      notes.push(
-        'Covered by your deny or ask list, so not added to allow (yours wins either way):',
-        ...covered.map((rule) => `    ${rule}`),
-      );
-    }
-
-    return {
-      key: 'pilotMerge',
-      state: added.length ? 'added' : 'nothing-to-add',
-      added,
-      alreadyPresent,
-      covered,
-      notes,
-      ...(added.length
-        ? {
-            change: (draft) => ({
-              ...draft,
-              permissions: { ...draft.permissions, allow: [...(draft.permissions?.allow ?? []), ...added] },
-            }),
-          }
-        : {}),
-    };
-  };
-}
-
-/**
  * Read once, decide everything, write once. Two writes in one run would take two
  * backups, and the second would be a copy of the half-merged file while the report
  * still called it "the previous file" — pointing the friend at a backup that is not
@@ -555,13 +487,6 @@ function applyMerges(settingsPath, steps) {
 
   return { settingsPath, changed: changes.length > 0, backupPath, results };
 }
-
-/**
- * The allow rules only pilot writes (L10): the deck's tools and the `pilot` command's. Two
- * prefixes and nothing wider, so a rule the user wrote for anything else is never theirs to lose.
- */
-const OWN_ALLOW_PREFIXES = [`${DECK_SERVER}__`, 'Bash(pilot '];
-const isOwnAllow = (rule) => typeof rule === 'string' && OWN_ALLOW_PREFIXES.some((prefix) => rule.startsWith(prefix));
 
 /**
  * `pilot uninstall`'s half of the merges above: take out the status lines whose command is
