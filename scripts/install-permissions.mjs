@@ -248,9 +248,8 @@ export function pilotMergeStep(settingsPath) {
  * `node bin/pilot.mjs …` rule is theirs.
  */
 const OWN_ALLOW_PREFIXES = [`${DECK_SERVER}__`, 'Bash(pilot '];
-const OWN_ALLOW_EXACT = ['Bash(node bin/pilot.mjs deck --scratch *)'];
 export const isOwnAllow = (rule) =>
-  typeof rule === 'string' && (OWN_ALLOW_EXACT.includes(rule) || OWN_ALLOW_PREFIXES.some((prefix) => rule.startsWith(prefix)));
+  typeof rule === 'string' && (PILOT_MERGE_ALLOW.includes(rule) || OWN_ALLOW_PREFIXES.some((prefix) => rule.startsWith(prefix)));
 
 const DECK_TOOLS_RULE = `${DECK_SERVER}__*`;
 
