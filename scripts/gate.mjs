@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { syntaxErrors } from './check-syntax.mjs';
 import { spawnCount } from './count-spawns.mjs';
 import { hostPlatform } from '../hooks/lib/platform.js';
 import { deckPidNow, stopper } from '../deck/gc.mjs';
@@ -196,14 +197,34 @@ function ledgersCurrent(ledgers, cwd) {
 }
 
 /**
- * Rebuilds the ledgers first, red without the suite when one was stale or could not build; then
+ * Whether every checked file under `cwd` parsed (audit-f6 spec 1-3; L1, L4): `syntax` returns the
+ * faults, each printed on its own `syntax:` line; a throw is red too, so the check never passes by not running.
+ */
+function syntaxClean(syntax, cwd) {
+  let result;
+  try {
+    result = syntax(cwd);
+  } catch (err) {
+    process.stderr.write(`syntax: could not check (${firstLine(err)})\n`);
+    return false;
+  }
+  if (result === undefined) return true;
+  for (const fault of result.errors) process.stderr.write(`syntax: ${fault.file}:${fault.line} ${fault.message}\n`);
+  if (result.errors.length === 0) process.stdout.write(`syntax ok ${result.files} files in ${result.ms} ms\n`);
+  return result.errors.length === 0;
+}
+
+/**
+ * Checks every file's syntax first (audit-f6 L1), red without the ledgers or the suite on a fault.
+ * Rebuilds the ledgers next, red without the suite when one was stale or could not build; then
  * runs the suite, a full run in a gate slot, between two censuses and returns its exit status: 1 when it was
  * killed, could not start, left a process running, or started more than `ceiling` processes; a
  * process table that cannot be read is red. The count goes to `spawns`, or a temporary file.
  * With `--since=<ref>` (suite-at-landing S1; L7) it prints the scope line first and runs only the
  * selection, the flag kept from `node`; an empty selection runs nothing and passes, a null one runs full.
  */
-export function runGate(args, { ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, ...rest } = {}) {
+export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, ...rest } = {}) {
+  if (!syntaxClean(syntax, cwd)) return 1;
   const sinceArg = args.findLast((arg) => /^--since(=|$)/.test(arg));
   let selection;
   if (sinceArg === '--since') {
@@ -288,5 +309,5 @@ if (guard.error) {
   process.stderr.write('node_modules missing: run npm ci\n');
   process.exitCode = 1;
 } else if (guard.run) {
-  process.exitCode = runGate(process.argv.slice(2), { ledgers: rebuildLedgers });
+  process.exitCode = runGate(process.argv.slice(2), { syntax: syntaxErrors, ledgers: rebuildLedgers });
 }
