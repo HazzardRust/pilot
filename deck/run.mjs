@@ -59,7 +59,6 @@ import { StringDecoder } from 'node:string_decoder';
 // graph *cannot* reach rather than of what it chooses not to call.
 import { deckUrl } from './tools.mjs';
 import { isOpen, sameRepo } from './items.mjs';
-import { landerDue } from './landing-replies.mjs';
 import { readReach } from '../scripts/reach.mjs';
 import { RESUME_PROMPT, claudeArgs, runEnv } from './run-env.mjs';
 import { claudeBin } from '../hooks/lib/platform.js';
@@ -80,19 +79,10 @@ export { claimNameFor, takeClaim, RESUME_PROMPT, claudeArgs, runEnv };
  */
 const CLEAR = '/clear\r';
 
-/**
- * The fresh session's first prompt, typed straight after the `/clear`. A session
- * after `/clear` holds the lane's context but starts no turn until something is
- * typed, so without this the hand-off sat waiting for a person (S12). Beside the
- * body it names one thing only: the lander a press queued while the old session
- * handed off, the head of `landerDue` (lander spec 5, L5), so the fresh session
- * spawns it as its first act after the pick-up. A second write rather than part
- * of the first, typed only once the lane has marked the fresh session (spec 24).
- */
-export function firstPrompt(items, cwd) {
-  const [lander] = landerDue(items, cwd);
-  return `Pick up the hand-off on the deck.${lander ? ` Spawn pilot-lander ${lander}.` : ''}`;
-}
+// The fresh session's first prompt and the one hand-off a directory acts on live in the look now (handoff-mod S1).
+import { firstPrompt, pickup } from './run-look.mjs';
+
+export { firstPrompt };
 
 /** The pilot's own hand-off kind: known to the deck, never in `KINDS` (thread-types-phase L4). */
 const HANDOFF_KIND = 'handoff';
@@ -222,27 +212,6 @@ const openItems = async (signal) => {
   const read = await tool('deck_read', { open: true, limit: MAX_ITEMS, messages: 'all' }, signal);
   return Array.isArray(read?.items) ? read.items : [];
 };
-
-/**
- * The one hand-off this directory should act on, or null. Newest first, and the
- * newest is the only candidate: falling back to the one below it would replay a
- * finished run's hand-off, which is the loop the claim exists to prevent.
- *
- * Openness is checked even though the read asks for open threads only, so a
- * daemon older than that argument degrades to silence rather than to clearing a
- * session over a hand-off the user has already dismissed.
- */
-function pickup(items, cwd) {
-  for (let i = items.length - 1; i >= 0; i -= 1) {
-    const candidate = items[i];
-    if (!candidate || candidate.kind !== HANDOFF_KIND) continue;
-    if (!sameRepo(candidate.repo, cwd)) continue;
-    if (!isOpen(candidate)) continue;
-    if (typeof candidate.id !== 'string' || candidate.id === '') continue;
-    return candidate;
-  }
-  return null;
-}
 
 /**
  * Whether this look may type the `/clear` past this directory's co-pilot, and the moment a turn end must follow.

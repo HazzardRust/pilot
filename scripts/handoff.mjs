@@ -18,14 +18,20 @@
  *
  * Whether a `/clear` will be typed at all is read from `PILOT_RUN_PID`, which `pilot run`
  * sets on the session it starts, and checked against a live process: a session
- * backgrounded past its wrapper keeps the variable but has nobody typing. `PILOT_RUN_REPO`
- * is the directory that wrapper watches, and the item is posted for it rather than for
- * the shell's directory, which drifts into a worktree whenever the pilot integrates.
+ * backgrounded past its wrapper keeps the variable but has nobody typing. The item is posted
+ * for the main checkout (`listeningRepo`, handoff-mod L11) rather than for the shell's
+ * directory, which drifts into a worktree whenever the pilot integrates, and the session
+ * that posted it is stamped so its mod clears it (A6).
  */
 
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
+import { sessionPid } from '../deck/run-look.mjs';
 import { deckUrl } from '../deck/tools.mjs';
+import { listeningRepo } from '../deck/wait.mjs';
+import { privateDir } from '../hooks/lib/atomic-write.js';
 import { bearer } from '../hooks/lib/deck-secret.js';
 import { commitRecords, git, TRAILER } from './integrate.mjs';
 import { remoteOf, runRemote } from './remotes.mjs';
@@ -33,9 +39,24 @@ import { remoteOf, runRemote } from './remotes.mjs';
 /** A loopback deck answers in milliseconds or not at all. */
 const DEADLINE_MS = 5000;
 
-/** The wrapper's pid and the directory it watches, as `deck/run.mjs` sets them. */
+/** The wrapper's pid, as `deck/run.mjs` sets it. */
 const RUN_PID = 'PILOT_RUN_PID';
-const RUN_REPO = 'PILOT_RUN_REPO';
+
+/**
+ * The session's posted stamp (handoff-mod A6): `claims/posted-<session pid>.stamp` holds the id this session
+ * posted, so its mod, and no other session's, clears for it. A stamp that cannot be written leaves the hand-off
+ * posted and the session uncleared, the same as one with no mod.
+ */
+function notePosted(pid, id) {
+  const claims = path.join(os.homedir(), '.claude', 'pilot-inbox', 'claims');
+  try {
+    privateDir(path.dirname(claims));
+    privateDir(claims);
+    fs.writeFileSync(path.join(claims, `posted-${pid}.stamp`), id);
+  } catch {
+    /* the line still says posted; the user types /clear as without a mod */
+  }
+}
 
 class Refusal extends Error {}
 
@@ -140,7 +161,8 @@ export async function handoff({ cwd = process.cwd(), env = process.env, trailers
   const forged = trailers.find((trailer) => !TRAILER.test(String(trailer)));
   if (forged !== undefined) return { ok: false, line: `NOT handed off: trailer ${JSON.stringify(String(forged))} is not one "Key: value" line; no handoff item posted` };
   const typed = wrapperAlive(env);
-  const repo = typed && env[RUN_REPO] ? env[RUN_REPO] : cwd;
+  // The main checkout, so a hand-off from a worktree is the one the session's look reads (handoff-mod L11).
+  const repo = listeningRepo(cwd);
   let landed = null;
   try {
     const { record, yellow, coPilot, lanes, owed: served } = await ask(`/api/record?repo=${encodeURIComponent(repo)}`);
@@ -172,6 +194,7 @@ export async function handoff({ cwd = process.cwd(), env = process.env, trailers
     });
     const id = /\bitm_[0-9a-f]+\b/.exec(posted?.content?.[0]?.text ?? '')?.[0];
     if (!id) throw new Refusal('the deck took the handoff item but named no id');
+    notePosted(sessionPid(env, process.ppid), id);
     // A live co-pilot holds the /clear until its release (clear-waits-co-pilot spec 6, A3): the line repeats the pause.
     const paused = coPilot?.live === true && /^itm_[0-9a-f]+$/.test(coPilot.ticket)
       ? `the co-pilot on ${coPilot.ticket} is live: send it the pause, deck_ticket release it on its hand-back; `
