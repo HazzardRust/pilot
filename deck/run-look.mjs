@@ -24,7 +24,7 @@ import { pathToFileURL } from 'node:url';
 
 import { isOpen, repoKey, sameRepo } from './items.mjs';
 import { landerDue } from './landing-replies.mjs';
-import { claimDir, claimNameFor, laneMarked, postedFile, reportedFile, sessionPid, takeClaim } from './run-claim.mjs';
+import { claimDir, claimNameFor, laneMarked, postedFile, reportedFile, takeClaim } from './run-claim.mjs';
 import { deckUrl } from './tools.mjs';
 import { listeningRepo } from './wait.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
@@ -354,13 +354,14 @@ async function start(repo, pid) {
 }
 
 /**
- * One look. `deps` stand in for the deck read, the co-pilot read, the clock, the environment, the parent pid and
- * the marker wait in a test.
+ * One look. `deps` stand in for the deck read, the co-pilot read, the clock, the parent pid and the marker wait in
+ * a test. The session is the look's parent, the Claude Code process whose mod ran it, never `CLAUDE_PID`: the host
+ * does not set it for a mod's process, so there it is only ever inherited from an outer session (F15).
  */
 export async function look(op, args = {}, deps = {}) {
-  const { read = openItems, coPilot = coPilotAt, now = Date.now, env = process.env, ppid = process.ppid, settleMs = SETTLE_MS } = deps;
+  const { read = openItems, coPilot = coPilotAt, now = Date.now, ppid = process.ppid, settleMs = SETTLE_MS } = deps;
   const repo = args.repo ?? listeningRepo(process.cwd());
-  const pid = sessionPid(env, ppid);
+  const pid = ppid;
   if (op === 'start') return start(repo, pid);
   if (op === 'turn') return turn(repo, pid, Number.isFinite(args.turnEndedAt) ? args.turnEndedAt : 0, { read, coPilot, now });
   if (!ITEM_ID.test(args.id ?? '')) return none(`${op} needs an item id`);

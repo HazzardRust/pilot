@@ -107,7 +107,7 @@ function logLines(claims) {
 const claimed = (claims, id) => fs.existsSync(path.join(claims, `clear-typed-${id}.claim`));
 const MINUTE = 60 * 1000;
 const at = (ms) => new Date(ms).toISOString();
-const session = { env: { CLAUDE_PID: String(PID) }, ppid: 1 };
+const session = { ppid: PID };
 
 /** `main` with its one line caught. */
 async function cli(argv) {
@@ -121,13 +121,12 @@ test('turn in the session that posted the hand-off answers clear and takes the c
   const handoff = handoffItem();
   await deckHolding(t, [handoff]);
   stampPosted(claims, handoff.id);
-  process.env.CLAUDE_PID = String(PID);
 
-  const first = await look('turn', { repo: OURS });
+  const first = await look('turn', { repo: OURS }, session);
   assert.deepEqual(first, { act: 'clear', id: handoff.id });
   assert.ok(fs.existsSync(path.join(claims, `clear-typed-${handoff.id}.claim`)), 'the claim is taken');
 
-  const second = await look('turn', { repo: OURS });
+  const second = await look('turn', { repo: OURS }, session);
   assert.equal(second.act, 'none', 'one hand-off clears once');
 });
 
@@ -136,10 +135,27 @@ test('turn in a session that posted nothing clears nothing', async (t) => {
   const handoff = handoffItem();
   stampPosted(claims, handoff.id, PID + 1); // another session's post
 
-  const outcome = await look('turn', { repo: OURS }, { read: async () => [handoff], env: { CLAUDE_PID: String(PID) }, ppid: 1 });
+  const outcome = await look('turn', { repo: OURS }, { ...session, read: async () => [handoff] });
 
   assert.equal(outcome.act, 'none');
   assert.equal(fs.existsSync(path.join(claims, `clear-typed-${handoff.id}.claim`)), false, 'no claim taken');
+});
+
+test("a claude started inside the session that posted is its parent, not the outer CLAUDE_PID it inherits (F15)", async (t) => {
+  const claims = scratchHome(t);
+  const handoff = handoffItem();
+  const outer = PID + 1;
+  stampPosted(claims, handoff.id, outer);
+  process.env.CLAUDE_PID = String(outer); // inherited from the outer session; scratchHome restores it
+  const nested = { read: async () => [handoff], coPilot: async () => null, ppid: PID };
+
+  await look('start', { repo: OURS }, nested);
+  const outcome = await look('turn', { repo: OURS }, nested);
+
+  assert.equal(outcome.act, 'none', 'the nested session clears nothing');
+  assert.equal(fs.existsSync(path.join(claims, `clear-typed-${handoff.id}.claim`)), false, "the outer session's claim is left");
+  assert.equal(fs.existsSync(path.join(claims, `mod-${outer}.stamp`)), false, 'the outer session is not said to have reported in');
+  assert.ok(fs.existsSync(path.join(claims, `mod-${PID}.stamp`)), 'the nested session reports in as itself');
 });
 
 test("cleared with the lane's marker answers the prompt and drops the posted stamp", async (t) => {
@@ -148,7 +164,7 @@ test("cleared with the lane's marker answers the prompt and drops the posted sta
   stampPosted(claims, handoff.id);
   fs.writeFileSync(path.join(claims, `handoff-${handoff.id}.claim`), ''); // the SessionStart lane's marker
 
-  const outcome = await look('cleared', { repo: OURS, id: handoff.id }, { read: async () => [handoff], env: { CLAUDE_PID: String(PID) }, ppid: 1 });
+  const outcome = await look('cleared', { repo: OURS, id: handoff.id }, { ...session, read: async () => [handoff] });
 
   assert.deepEqual(outcome, { act: 'submit', id: handoff.id, prompt: 'Pick up the hand-off on the deck.' });
   assert.equal(fs.existsSync(path.join(claims, `posted-${PID}.stamp`)), false, 'the posted stamp is gone');
