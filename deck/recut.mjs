@@ -9,7 +9,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 const GIT_TIMEOUT_MS = 20_000;
-const SHA = /^[0-9a-f]{7,40}$/;
+/** A plan's commit sha, as a plan, a re-cut mark and a replan name it. */
+export const SHA = /^[0-9a-f]{7,40}$/;
 // A branch name git would accept that cannot be read as an option or a range.
 const BRANCH = /^(?!-)(?!.*\.\.)[A-Za-z0-9._/-]+$/;
 
@@ -22,7 +23,7 @@ export function ownedFiles(sliceText) {
   for (const line of lines.slice(start + 1)) {
     if (/^#{1,2}\s/.test(line)) break;
     const bullet = /^\s*[-*]\s+[^`]*`([^`]+)`/.exec(line);
-    if (bullet) files.push(bullet[1].replace(/\s+\(new\)$/, '').trim());
+    if (bullet) files.push(bullet[1].trim());
   }
   return files;
 }
@@ -35,6 +36,8 @@ class GitError extends Error {}
  * off and lazy fetches are barred, so its config runs no command of its own; no prompt can hold a fetch open.
  */
 const HARDENED = ['-c', 'core.fsmonitor=false', '-c', `core.hooksPath=${os.devNull}`, '-c', 'protocol.ext.allow=never', '-c', 'gc.auto=0', '-c', 'maintenance.auto=false'];
+// The config keys whose value a fetch runs as a command or routes its traffic through.
+const RUNS_A_COMMAND = '^(core\\.(sshcommand|gitproxy|askpass)|credential\\..*helper|remote\\..*\\.(uploadpack|proxy)|http\\..*proxy)$';
 
 function gitIn(repoDir) {
   const until = Date.now() + GIT_TIMEOUT_MS;
@@ -64,6 +67,9 @@ async function ownedAt(git, sha, artefact) {
   }
   return owned;
 }
+
+/** Whether `ticket` holds a signed plan no co-pilot was ever granted on (L4), the one whose first grant checks drift. */
+export const neverGranted = (ticket) => ticket?.plan !== null && typeof ticket?.plan === 'object' && ticket.plan.grantedAt === undefined;
 
 /**
  * The drift of `plan` ({ sha, branch, artefact }) in the git repository `repoDir`, against `origin`. Never throws, and
@@ -98,10 +104,6 @@ export async function planChanges(repoDir, fromSha, toSha, slug) {
   }
 }
 
-/** Sticky approval (L5): whether `docs/design/<slug>/` is textually the same at both shas; false when either is unreadable. */
-export async function planUnchanged(repoDir, fromSha, toSha, slug) {
-  return (await planChanges(repoDir, fromSha, toSha, slug))?.length === 0;
-}
 
 async function driftOf(repoDir, plan) {
   const sha = plan?.sha;
@@ -117,6 +119,11 @@ async function driftOf(repoDir, plan) {
     return run.stdout;
   };
   try {
+    // A command the repo's own config (or a file it includes) names for a fetch to run is refused, never run; the
+    // user's global and system helpers still run, so a private origin stays checkable.
+    const planted = await git(['config', '--show-scope', '--get-regexp', RUNS_A_COMMAND]);
+    const local = planted.stdout.split(/\r?\n/).find((line) => /^(local|worktree)\t/.test(line));
+    if (local) return { state: 'unchecked', reason: `the repo's own config sets ${local.split(/\s+/)[1]}` };
     // Origin's branches into its remote-tracking refs and nothing else, whatever `remote.origin.fetch` says; no submodule's remote.
     await must(['fetch', '--quiet', '--no-recurse-submodules', 'origin', '+refs/heads/*:refs/remotes/origin/*']);
     const remote = `refs/remotes/origin/${branch}`;

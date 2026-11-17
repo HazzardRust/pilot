@@ -26,6 +26,7 @@ import {
   ticketQueueOf,
 } from './items.mjs';
 import { YIELD_MS, yieldsDue } from './lanes.mjs';
+import { SHA } from './recut.mjs';
 import { nextRecord, repoKey, sameRepo } from './runs.mjs';
 import {
   DeckRefusal,
@@ -356,7 +357,7 @@ export function needTicket(id) {
  * The deck's yield (blocked-yellow-yields spec 1; L1, L2, L3; never-stuck L6), one write: the co-pilot's held ticket
  * stays yellow and held, marked `yielding: { question, at }`, with a `from: 'deck'` line with a `seq` on the question,
  * which wakes the pilot's parked wait to send the co-pilot the pause. The co-pilot drains its live slices, and its
- * release is `finishYield`. Refused unless `yieldsDue` still names this ticket and question now. Returns the ticket.
+ * release, `setCoPilot(id, false)`, hands it back paused. Refused unless `yieldsDue` still names this ticket and question now. Returns the ticket.
  */
 export function yieldTicket(id, questionId) {
   const deck = readDeck();
@@ -378,26 +379,15 @@ export function yieldTicket(id, questionId) {
 }
 
 /**
- * The drain's end (never-stuck L6) on the deck in hand: a `yielding` ticket turns green with `paused` its `yielding`,
- * as its co-pilot is released. False, and nothing written, unless it is yielding and its live co-pilot is released
- * now. `setCoPilot`'s release calls it.
+ * `setCoPilot`'s release of `ticket`'s live co-pilot on the deck in hand, and the drain's end (never-stuck L6): an open
+ * yellow ticket that was `yielding` turns green with `paused` its `yielding`; a closed one only loses the yield.
+ * False, and nothing written, unless its live co-pilot is released now.
  */
 export function finishYieldIn(deck, ticket) {
   const { yielding } = ticket;
-  if (!yielding || !releaseIn(deck, ticket.repo, ticket.id)) return false;
-  ticket.state = 'green';
-  ticket.paused = yielding;
+  if (!releaseIn(deck, ticket.repo, ticket.id)) return false;
+  if (yielding && isOpen(ticket) && stateOf(ticket) === 'yellow') Object.assign(ticket, { state: 'green', paused: yielding });
   return true;
-}
-
-/** `finishYieldIn` in one write on the open ticket `id`; refused unless it is yielding. Returns the ticket. */
-export function finishYield(id) {
-  const deck = readDeck();
-  const ticket = openTicketOf(deck, id);
-  if (!finishYieldIn(deck, ticket)) throw new DeckRefusal(`item ${id} is not yielding; only a draining ticket is handed back paused`);
-  touchRuns(deck, ticket.repo);
-  writeDeck(deck);
-  return ticket;
 }
 
 /**
@@ -414,8 +404,7 @@ export function pivotTicket(id) {
   const gate2 = deck.items.find((item) => item?.kind === KIND_GATE2 && item.ticket === id && isOpen(item));
   if (gate2 && chosenOf(gate2) === SIGN_OFF) throw new DeckRefusal(`gate2 ${gate2.id} is signed off; resolve it rather than pivot ${id}`);
   enterStage(deck, ticket, 'yellow', 'landed');
-  delete ticket.live;
-  delete ticket.paused;
+  for (const field of ['live', 'paused', 'yielding']) delete ticket[field];
   if (gate2) {
     gate2.resolution = 'superseded by pivot';
     gate2.resolvedAt = new Date().toISOString();
@@ -460,7 +449,7 @@ export function recutTicket(id, why, files) {
  * yet granted, the mark and liveness gone, in one write, as a gate1 Sign off leaves it. Returns the ticket.
  */
 export function replanTicket(id, sha) {
-  if (typeof sha !== 'string' || !/^[0-9a-f]{7,40}$/.test(sha)) throw new DeckRefusal('a replan names the new plan commit as its sha');
+  if (typeof sha !== 'string' || !SHA.test(sha)) throw new DeckRefusal('a replan names the new plan commit as its sha');
   const deck = readDeck();
   const ticket = openTicketOf(deck, id);
   if (stateOf(ticket) !== 'red' || !ticket.recut || !ticket.plan || typeof ticket.plan !== 'object') {

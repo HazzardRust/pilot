@@ -14,7 +14,7 @@ import path from 'node:path';
 import { KIND_QUESTION, KIND_TICKET, messagesOf } from '../items.mjs';
 import { YIELD_MS, lanesFrom, yieldsDue } from '../lanes.mjs';
 import { armYields } from '../server-wait.mjs';
-import { DeckRefusal, addReply, coPilotFor, finishYield, listItems, needTicket, pivotTicket, releaseCoPilot, requestSwitch, setCoPilot, takeTicket, yieldTicket } from '../store.mjs';
+import { DeckRefusal, addReply, coPilotFor, listItems, needTicket, pivotTicket, releaseCoPilot, resolveItem, requestSwitch, setCoPilot, takeTicket, yieldTicket } from '../store.mjs';
 import { postStored, shapedTicketBody, tempDeck } from '../testUtils.mjs';
 
 const REPO = path.join('D:', 'work', 'pilot');
@@ -94,7 +94,8 @@ test('the release after the drain pauses it', (t) => {
   assert.deepEqual(after.paused, { question: question.id, at }, 'paused on the question it yielded on');
   assert.equal(after.yielding, undefined);
   assert.equal(coPilotFor(REPO).live, false, 'only now is the slot free');
-  assert.throws(() => finishYield(ticket.id), DeckRefusal, 'a ticket no longer yielding has nothing to finish');
+  setCoPilot(ticket.id, false);
+  assert.deepEqual(stored(ticket.id), after, 'a ticket no longer yielding has nothing to finish');
 });
 
 test('a draining ticket never re-yields and is never refused idle', () => {
@@ -141,8 +142,29 @@ test('any other hand-back of a draining ticket drops its yield', (t) => {
   yieldTicket(restarted.id, blocking(restarted, 21).id);
   releaseCoPilot(OTHER);
   assert.equal(stored(restarted.id).yielding, undefined, 'a new pilot session frees the slot and the yield with it');
-  assert.throws(() => finishYield(restarted.id), DeckRefusal, 'nothing left to hand back paused');
-  assert.equal(stored(restarted.id).state, 'yellow');
+  releaseCoPilot(OTHER);
+  assert.deepEqual([stored(restarted.id).state, stored(restarted.id).paused], ['yellow', undefined], 'nothing left to hand back paused');
+});
+
+test('a pivot drops a yield its release never cleared', (t) => {
+  tempDeck(t);
+  const stale = held('stale');
+  yieldTicket(stale.id, blocking(stale, 21).id);
+  held('took the slot'); // the slot now names another ticket, so the hand-back below releases nothing
+  needTicket(stale.id);
+  pivotTicket(stale.id);
+  assert.deepEqual([stored(stale.id).state, stored(stale.id).yielding], ['yellow', undefined]);
+});
+
+test('a closed yielding ticket stays closed on its release', (t) => {
+  tempDeck(t);
+  const ticket = held('closed mid-drain');
+  yieldTicket(ticket.id, blocking(ticket, 21).id);
+  resolveItem(ticket.id, 'Closed.');
+  setCoPilot(ticket.id, false);
+  const after = stored(ticket.id);
+  assert.deepEqual([after.state, after.paused, after.yielding], ['yellow', undefined, undefined]);
+  assert.equal(coPilotFor(REPO).live, false);
 });
 
 test('a yield no longer due is refused', (t) => {

@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { isWindows, killTree } from '../hooks/lib/platform.js';
 import { closeLanded } from './closing-report.mjs';
 import { KIND_GATE2, KIND_TICKET, isOpen, stateOf } from './items.mjs';
-import { planDrift } from './recut.mjs';
+import { neverGranted, planDrift } from './recut.mjs';
 import { repoOf, sameRepo } from './runs.mjs';
 import { sessionEnv } from './session.mjs';
 import { DeckRefusal, beginLanding, findCredential, listItems, noteLanding, recordForTicket, settleLanding } from './store.mjs';
@@ -271,9 +271,6 @@ export function startLanding(gate2Id, deps = {}) {
   }
 }
 
-/** A signed plan no grant has stamped: the only plan a drift may re-cut (never-stuck L4). */
-const neverGranted = (ticket) => ticket?.plan !== null && typeof ticket?.plan === 'object' && ticket.plan.grantedAt === undefined;
-
 /**
  * The post-landing sweep (never-stuck spec 14; L2, L4, L7): each open, signed, never-granted yellow ticket of a landed
  * gate2's repository is checked with `planDrift`, one at a time; each drifted one goes red through `recutTicket` with
@@ -293,25 +290,21 @@ export async function driftAfterLanding(gate2Id, deps = {}) {
     const queued = items.filter((item) => item.kind === KIND_TICKET && item.id !== gate.ticket && typeof item.repo === 'string' &&
       sameRepo(item.repo, gate.repo) && isOpen(item) && stateOf(item) === 'yellow' && neverGranted(item));
     for (const { id, repo, plan } of queued) {
+      let what;
       try {
         const drift = await check(repo, plan);
         if (drift.state !== 'moved' && drift.state !== 'gone') continue;
         // Read again after the await: a grant in the meantime stamped the plan, and a granted plan is never re-cut (L4).
         const now = listItems().find((item) => item.id === id);
         if (!neverGranted(now) || !isOpen(now) || stateOf(now) !== 'yellow') continue;
-        const what = drift.state === 'moved' ? `${drift.files.length} files` : `plan ${drift.sha.slice(0, 8)} gone`;
-        try {
-          recutTicket(id, why, drift.state === 'moved' ? drift.files : undefined);
-        } catch (err) {
-          // A switch pending or a co-pilot taken since the read: the drift is still said, so the user sees the plan stayed.
-          if (!(err instanceof DeckRefusal)) throw err;
-          named.push(`${id} (${what}; not re-cut: ${err.message})`);
-          continue;
-        }
+        what = drift.state === 'gone' ? `plan ${drift.sha.slice(0, 8)} gone` : `${drift.files.length} file${drift.files.length === 1 ? '' : 's'}`;
+        recutTicket(id, why, drift.state === 'moved' ? drift.files : undefined);
         recut.push(id);
         named.push(`${id} (${what})`);
       } catch (err) {
-        console.error(`[deck] the landing ${gate2Id} could not re-cut ${id}:`, err?.message ?? err);
+        // A switch pending or a co-pilot taken since the read: the drift is still said, so the user sees the plan stayed.
+        if (err instanceof DeckRefusal) named.push(`${id} (${what}; not re-cut: ${err.message})`);
+        else console.error(`[deck] the landing ${gate2Id} could not re-cut ${id}:`, err?.message ?? err);
       }
     }
     if (named.length > 0) noteDeck(gate2Id, `Re-cut by this landing: ${named.join('; ')}`);

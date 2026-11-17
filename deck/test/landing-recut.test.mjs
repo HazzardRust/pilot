@@ -18,7 +18,7 @@ import path from 'node:path';
 
 import { KIND_GATE1, KIND_GATE2, KIND_TICKET, SIGN_OFF } from '../items.mjs';
 import { driftAfterLanding, startLanding } from '../landing.mjs';
-import { addReply, listItems, postItem, registerRun, resolveItem, setSlices, settleLanding, storeFile } from '../store.mjs';
+import { addReply, listItems, postItem, registerRun, requestSwitch, resolveItem, setCoPilot, setSlices, settleLanding } from '../store.mjs';
 import { shapedTicketBody, takeLive, tempDeck, withTicket } from '../testUtils.mjs';
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -85,12 +85,10 @@ function signed(repo, plan) {
   return reread(ticket.id);
 }
 
-/** Write `fields` onto a stored ticket's plan, straight into the store file, as a grant would have left it. */
-function stampPlan(id, fields) {
-  const file = storeFile();
-  const deck = JSON.parse(fs.readFileSync(file, 'utf8'));
-  Object.assign(deck.items.find((item) => item.id === id).plan, fields);
-  fs.writeFileSync(file, JSON.stringify(deck), 'utf8');
+/** A co-pilot granted on the ticket and released, as the pilot grants one: its plan is stamped granted. */
+function grant(id) {
+  setCoPilot(id, true);
+  setCoPilot(id, false);
 }
 
 test('a queued plan owning a landed file is re-cut and named', async (t) => {
@@ -107,7 +105,7 @@ test('a queued plan owning a landed file is re-cut and named', async (t) => {
   assert.equal(stored.recut.why, 'landing 1a2b3c4');
   assert.deepEqual(stored.recut.files, ['deck/store-items.mjs']);
   const line = reread(gate.id).replies.at(-1);
-  assert.equal(line.text, `Re-cut by this landing: ${ticket.id} (1 files)`);
+  assert.equal(line.text, `Re-cut by this landing: ${ticket.id} (1 file)`);
   assert.equal(line.from, 'deck');
   assert.ok(Number.isInteger(line.seq), 'the line wakes the pilot');
 });
@@ -116,7 +114,7 @@ test('a granted ticket is never re-cut', async (t) => {
   tempDeck(t);
   const gate = aLandedGate2(os.tmpdir());
   const ticket = signed(os.tmpdir(), { artefact: ARTEFACT, branch: 'feat/x', sha: '0123456789abcdef' });
-  stampPlan(ticket.id, { grantedAt: new Date().toISOString() });
+  grant(ticket.id);
   let checked = 0;
   const planDrift = async () => ((checked += 1), { state: 'moved', files: ['deck/store-items.mjs'] });
 
@@ -132,13 +130,38 @@ test('a ticket granted while its check runs is never re-cut', async (t) => {
   const gate = aLandedGate2(os.tmpdir());
   const ticket = signed(os.tmpdir(), { artefact: ARTEFACT, branch: 'feat/x', sha: '0123456789abcdef' });
   const planDrift = async () => {
-    stampPlan(ticket.id, { grantedAt: new Date().toISOString() });
+    grant(ticket.id);
     return { state: 'moved', files: ['deck/store-items.mjs'] };
   };
 
   assert.deepEqual(await driftAfterLanding(gate.id, { planDrift }), []);
 
   assert.equal(reread(ticket.id).state, 'yellow');
+});
+
+test('a plan gone from its branch is re-cut and named gone', async (t) => {
+  tempDeck(t);
+  const gate = aLandedGate2(os.tmpdir());
+  const ticket = signed(os.tmpdir(), { artefact: ARTEFACT, branch: 'feat/x', sha: '0123456789abcdef' });
+  const planDrift = async () => ({ state: 'gone', sha: '0123456789abcdef' });
+
+  assert.deepEqual(await driftAfterLanding(gate.id, { planDrift }), [ticket.id]);
+
+  assert.deepEqual([reread(ticket.id).state, reread(ticket.id).recut.files], ['red', undefined]);
+  assert.equal(deckLines(gate.id).at(-1), `Re-cut by this landing: ${ticket.id} (plan 01234567 gone)`);
+});
+
+test('a drift the store refuses to re-cut is still named', async (t) => {
+  tempDeck(t);
+  const gate = aLandedGate2(os.tmpdir());
+  const ticket = signed(os.tmpdir(), { artefact: ARTEFACT, branch: 'feat/x', sha: '0123456789abcdef' });
+  requestSwitch(os.tmpdir(), ticket.id); // a co-pilot switch to it is pending, so the store refuses its re-cut
+  const planDrift = async () => ({ state: 'moved', files: ['deck/store-items.mjs'] });
+
+  assert.deepEqual(await driftAfterLanding(gate.id, { planDrift }), []);
+
+  assert.equal(reread(ticket.id).state, 'yellow');
+  assert.ok(deckLines(gate.id).at(-1).startsWith(`Re-cut by this landing: ${ticket.id} (1 file; not re-cut: `), deckLines(gate.id).at(-1));
 });
 
 test('an unchecked drift moves nothing', async (t) => {
@@ -180,5 +203,5 @@ test('the landing writes its landed line before the sweep re-cuts', async (t) =>
   release();
   for (let tick = 0; tick < 50 && reread(ticket.id).state !== 'red'; tick += 1) await new Promise((resolve) => setImmediate(resolve));
   assert.equal(reread(ticket.id).state, 'red');
-  assert.deepEqual(deckLines(gate.id).slice(-2), [LANDED.trimEnd(), `Re-cut by this landing: ${ticket.id} (1 files)`]);
+  assert.deepEqual(deckLines(gate.id).slice(-2), [LANDED.trimEnd(), `Re-cut by this landing: ${ticket.id} (1 file)`]);
 });
