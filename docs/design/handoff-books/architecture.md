@@ -97,6 +97,7 @@ module is shallow enough to fold; no fold slice.
   real rows under the 40 cap).
 - **A2 The first-run offer stays** (itm_6ff1fe2b3fef). Default: `auditDue` still answers `first`. Tradeoff: one extra
   offer per repository, ever. Rejected: a new repository waits 20 hand-offs.
+  Answer: "Keep first-run offer" (itm_6ff1fe2b3fef), the default.
 - **A3 Only pilot hand-offs count** (itm_748a9402637b), chain hand-offs included; `crew-handoff` items and co-pilot
   pauses do not. Tradeoff: crew context pressure does not bring the audit sooner. Rejected: a second count site in
   the guard.
