@@ -142,8 +142,7 @@ test('any other hand-back of a draining ticket drops its yield', (t) => {
   yieldTicket(restarted.id, blocking(restarted, 21).id);
   releaseCoPilot(OTHER);
   assert.equal(stored(restarted.id).yielding, undefined, 'a new pilot session frees the slot and the yield with it');
-  releaseCoPilot(OTHER);
-  assert.deepEqual([stored(restarted.id).state, stored(restarted.id).paused], ['yellow', undefined], 'nothing left to hand back paused');
+  assert.deepEqual([stored(restarted.id).state, stored(restarted.id).paused], ['yellow', undefined], 'a restart hands nothing back paused');
 });
 
 test('a pivot drops a yield its release never cleared', (t) => {

@@ -37,7 +37,7 @@ class GitError extends Error {}
  */
 const HARDENED = ['-c', 'core.fsmonitor=false', '-c', `core.hooksPath=${os.devNull}`, '-c', 'protocol.ext.allow=never', '-c', 'gc.auto=0', '-c', 'maintenance.auto=false'];
 // The config keys whose value a fetch runs as a command or routes its traffic through.
-const RUNS_A_COMMAND = '^(core\\.(sshcommand|gitproxy|askpass)|credential\\..*helper|remote\\..*\\.(uploadpack|proxy)|http\\..*proxy)$';
+const RUNS_A_COMMAND = '^(core\\.(sshcommand|gitproxy|askpass|alternaterefscommand)|credential\\..*helper|remote\\..*\\.(uploadpack|proxy|vcs)|http\\..*proxy)$';
 
 function gitIn(repoDir) {
   const until = Date.now() + GIT_TIMEOUT_MS;

@@ -164,4 +164,7 @@ test("a command the repo's own config names is never run", async (t) => {
   const drift = await planDrift(fixture.work, fixture.plan);
   assert.equal(fs.existsSync(marker), false, 'the planted upload-pack never ran');
   assert.deepEqual(drift, { state: 'unchecked', reason: "the repo's own config sets remote.origin.uploadpack" });
+  git(fixture.work, 'config', '--unset', 'remote.origin.uploadpack');
+  git(fixture.work, 'config', 'core.alternateRefsCommand', `echo ran > '${marker}'`);
+  assert.equal((await planDrift(fixture.work, fixture.plan)).reason, "the repo's own config sets core.alternaterefscommand");
 });
