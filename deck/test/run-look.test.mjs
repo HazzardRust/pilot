@@ -58,7 +58,7 @@ function stampPosted(claims, id, pid = PID) {
  * A guarded deck holding `items`, answering as the daemon does: `deck_read` and `deck_reply` on `/api/tool`, the
  * directory's co-pilot on `GET /api/record`, and `POST /api/hold`. Every request is kept, in order, in `calls`.
  */
-async function deckHolding(t, items, { coPilot = null } = {}) {
+async function deckHolding(t, items, { coPilot = null, released = false } = {}) {
   const calls = [];
   const send = (response, body) => {
     response.writeHead(200, { 'content-type': 'application/json' });
@@ -83,6 +83,7 @@ async function deckHolding(t, items, { coPilot = null } = {}) {
       }
       if (request.method === 'GET' && route === '/api/record') return send(response, { coPilot });
       if (request.method === 'POST' && route === '/api/hold') return send(response, { held: true });
+      if (request.method === 'POST' && route === '/api/started') return send(response, { released });
       response.writeHead(404);
       return response.end();
     });
@@ -168,15 +169,28 @@ test('cleared waits for a lane marker that lands just after the clear', async (t
 
 // --- S2: the look carries the whole watch -----------------------------------------------------------------
 
-test('start writes the reported-in stamp and posts nothing', async (t) => {
+// handoff-mod S4 (L12, L13): the start releases this directory's co-pilot once and asks the deck for nothing else.
+test("the look's start releases once", async (t) => {
   const claims = scratchHome(t);
-  const calls = await deckHolding(t, [handoffItem()]);
+  const calls = await deckHolding(t, [handoffItem()], { released: true });
 
   const outcome = await look('start', { repo: OURS }, session);
 
-  assert.deepEqual(outcome, { act: 'none', why: 'reported in' });
+  assert.deepEqual(outcome, { act: 'none', why: 'released' });
   assert.ok(fs.existsSync(path.join(claims, `mod-${PID}.stamp`)), 'the reported-in stamp is written');
-  assert.deepEqual(calls, [], 'nothing asked of the deck, so nothing chains (L12)');
+  assert.deepEqual(calls, [{ method: 'POST', route: '/api/started', name: undefined, args: { repo: OURS } }], 'one release, no chain (L12)');
+});
+
+test('a start with no co-pilot to release, or no deck, still reports in', async (t) => {
+  const claims = scratchHome(t);
+  const calls = await deckHolding(t, []);
+  assert.deepEqual(await look('start', { repo: OURS }, session), { act: 'none', why: 'reported in' });
+  assert.equal(calls.length, 1);
+
+  fs.rmSync(path.join(claims, `mod-${PID}.stamp`));
+  process.env.PILOT_DECK_PORT = '1'; // nothing listens there
+  assert.deepEqual(await look('start', { repo: OURS }, session), { act: 'none', why: 'reported in' });
+  assert.ok(fs.existsSync(path.join(claims, `mod-${PID}.stamp`)), 'the stamp is written first, whatever the deck says');
 });
 
 test('a live co-pilot holds the clear and posts the hold', async (t) => {

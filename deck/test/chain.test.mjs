@@ -190,22 +190,18 @@ test('POST /subdeck/pause is not a route', async (t) => {
   assert.equal(answer.status, 404);
 });
 
-test('/api/chain refuses a foreign Origin and a non-JSON body', async (t) => {
-  const base = await deckOnAPort(t);
-  aTicket('Red', 'g');
-  const foreign = await fetch(`${base}/api/chain`, {
-    method: 'POST',
-    headers: { origin: 'http://evil.example', 'content-type': 'application/json' },
-    body: JSON.stringify({ repo: ALPHA }),
-  });
-  assert.equal(foreign.status, 403, 'a cross-site page cannot start a run');
-  const form = await fetch(`${base}/api/chain`, {
-    method: 'POST',
-    headers: { 'content-type': 'text/plain' },
-    body: JSON.stringify({ repo: ALPHA }),
-  });
-  assert.equal(form.status, 415, 'a body a cross-site form can send is refused');
-  assert.equal(handoffs().length, 0, 'neither took the ticket');
+// handoff-mod S4 (L12): nothing chains at a session's start, so a clean finish is the one way in.
+test('a clean finish still chains', (t) => {
+  tempDeck(t);
+  const ticket = aTicket('Head', 'spec');
+  assert.deepEqual(chainNext(ALPHA, { atStart: true }), { handoff: null, reason: 'not finished cleanly' }, 'no start chain without a record');
+
+  finish(registerRun({ repo: ALPHA, pid: process.pid }));
+  const { handoff, taken } = chainNext(ALPHA, { pastMark: () => true });
+
+  assert.equal(handoff.next, ticket.id, 'one chain hand-off naming the head ticket');
+  assert.deepEqual(taken, [ticket.id]);
+  assert.equal(handoffs().length, 1);
 });
 
 // three-lanes spec 7, A4: one chain fills both stage lanes, green first, then red.

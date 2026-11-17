@@ -17,7 +17,7 @@ import { createRequire } from 'node:module';
 import { CLOSED, CLOSED_WITH, KIND_HANDOFF, REOPENED, isChainHandoff, isOpen, nextTicketOf, repoKey } from './items.mjs';
 import { laneOf } from './lanes.mjs';
 import { FINISHED_CLEAN } from './runs.mjs';
-import { DeckRefusal, MAX_TEXT_BYTES, deckLanes, listItems, postItem, recordFor, releaseCoPilot, resumableRecordFor, takeTicket } from './store.mjs';
+import { DeckRefusal, MAX_TEXT_BYTES, deckLanes, listItems, postItem, recordFor, takeTicket } from './store.mjs';
 
 // The guard owns the mark (handoff-over-mark L3): asked, never copied into deck/.
 const { pastAdvisoryAt } = createRequire(import.meta.url)('../hooks/context-size-guard.js');
@@ -71,22 +71,15 @@ function handoffBody(ticket, tail = '') {
  * Only a clean finish chains (L3): `needed` does not (overview-one-ticket L18, A4), since the pilot takes
  * the next ticket itself and a chain too would `/clear` it mid-start; abandoned, stopped or crashed never
  * does (spec 5), and no run finishes `blocked` (L19).
- * `atStart` is `pilot run` starting (A5): no record, or any finish, is no unfinished run to talk over.
+ * A session's start chains nothing (handoff-mod L12): it only releases the directory's co-pilot, `POST /api/started`.
  * `pastMark` reads the context guard's own advisory mark for `repo`; tests inject it.
  */
-export function chainNext(repo, { atStart = false, pastMark = pastAdvisoryAt } = {}) {
-  // `recordFor` throws its own refusal, worded for `GET /api/record` (QA F5): "the
-  // directory whose record you want" reads as a lookup gone wrong on `/api/chain`,
-  // which is `pilot run` asking to start, not to read a record. Worded here instead.
+export function chainNext(repo, { pastMark = pastAdvisoryAt } = {}) {
+  // `recordFor` throws its own refusal, worded for `GET /api/record` (QA F5); worded here for the chain instead.
   if (typeof repo !== 'string' || repo.trim() === '') {
     throw new DeckRefusal('repo must be the path of the repository whose next ticket should chain');
   }
-  // A co-pilot does not outlive the wrapper that started its session (clear-waits-co-pilot spec 5, L8).
-  if (atStart) releaseCoPilot(repo);
-  // At start, a yellow ticket's run is not the main session's own to talk over (ADR 0087): the red head chains.
-  const record = atStart ? resumableRecordFor(repo) : recordFor(repo);
-  const mayChain = atStart ? record === null || typeof record.finished === 'string' : record?.finished === FINISHED_CLEAN;
-  if (!mayChain) return { handoff: null, reason: atStart ? 'a run is unfinished' : 'not finished cleanly' };
+  if (recordFor(repo)?.finished !== FINISHED_CLEAN) return { handoff: null, reason: 'not finished cleanly' };
   const items = listItems();
   if (!['red', 'green'].some((state) => nextTicketOf(items, repo, state))) return { handoff: null, reason: 'no ticket' };
   if (items.some((item) => isChainHandoff(item, repo) && isOpen(item))) return { handoff: null, reason: 'hand-off open' };
@@ -101,8 +94,8 @@ export function chainNext(repo, { atStart = false, pastMark = pastAdvisoryAt } =
   const taken = heads.map(({ id }) => id);
   // Under the guard's advisory mark the finishing session has room for the heads, so they are taken in place and
   // nothing is posted for `pilot run` to /clear on (handoff-over-mark L1, ADR 0117). Only `false` is under:
-  // no reading hands off as before (L9). A starting session has no context to measure (L5).
-  if (!atStart && pastMark(repo) === false) return { handoff: null, reason: 'under the mark', taken: fillLanes(repo) };
+  // no reading hands off as before (L9).
+  if (pastMark(repo) === false) return { handoff: null, reason: 'under the mark', taken: fillLanes(repo) };
 
   // One hand-off (A4): the first head's spec, naming every other ticket it took. A body with no room left to name
   // them takes the first head alone, and the rest stay queued rather than live and unnamed.

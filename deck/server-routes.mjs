@@ -29,7 +29,7 @@ import path from 'node:path';
 
 import { readAlertSwitch, setAlertSwitch } from './alert-switch.mjs';
 import { AgentRefusal, heldWaits, isAgentType, listAgents, noteAgent } from './agents.mjs';
-import { chainNext, fillLanes } from './chain.mjs';
+import { fillLanes } from './chain.mjs';
 import { KIND_GATE2, SIGN_OFF, chosenOf, isGate, ownerOf } from './items.mjs';
 import { startLanding } from './landing.mjs';
 import { lanesOf } from './lanes.mjs';
@@ -50,7 +50,7 @@ import {
   DeckRefusal, addDeck, addReply, archivedItem, budgetFor, coPilotFor, clearAllNotices, clearNotice, closeItem, createThread, currentSeq,
   dismissItem, dismissRun, listAdded, listDeckNumbers, listItems, listLiveRuns, listRuns, listStoredRuns, deckLanes,
   moveTicket, noteLaneFilled, cancelSwitch, refuseLaneSwitch, requestSwitch, resumableRecordFor, yellowHeadOf, recordForTicket,
-  recordsFor, registerRun, removeDeck, reopenItem, setBudget, storedTabFor,
+  recordsFor, registerRun, releaseCoPilot, removeDeck, reopenItem, setBudget, storedTabFor,
 } from './store.mjs';
 import { queueView } from './tickets.mjs';
 import { renderDeckPage, renderHomePage, renderThreadPage } from './ui/render.mjs';
@@ -712,14 +712,15 @@ async function route(request, response, open, start, wrapperGoneMs, land, exit, 
     return sendJson(response, 200, { ok: true });
   }
 
-  // `pilot run` starting in a directory (run-chaining A5, L3) or holding a hand-off (held-handoff L2): loopback only and
-  // `isTrustedOrigin` above, so a cross-site page can do neither; the wrapper, which sends no Origin, can.
-  if (isWrite && pathname === '/api/chain') {
+  // A pilot session starting (the look's `start`, handoff-mod L13) or holding a hand-off (held-handoff L2): loopback
+  // only and `isTrustedOrigin` above, so a cross-site page can do neither. A start releases the directory's co-pilot,
+  // whose session is gone, and chains nothing (L12); the blue mark on its ticket leaves live (ticket-state-accents 1).
+  if (isWrite && pathname === '/api/started') {
     const { repo } = await readJsonBody(request);
-    const chained = chainNext(repo, { atStart: true });
-    // Always: `atStart` released any co-pilot here, and the blue mark on its ticket must leave live (ticket-state-accents spec 1).
+    if (typeof repo !== 'string' || repo.trim() === '') throw new DeckRefusal('repo must be the path of the repository whose pilot session started');
+    const released = releaseCoPilot(repo);
     announceChange();
-    return sendJson(response, 200, chained);
+    return sendJson(response, 200, { released });
   }
   if (isWrite && pathname === '/api/hold') return holdRoute(request, response);
 

@@ -23,7 +23,8 @@ import { fileURLToPath } from 'node:url';
 import { deckOnAPort, tempDeck } from '../testUtils.mjs';
 
 const { LIVE_WINDOW_MS, forgetAgents, noteActive } = await import('../agents.mjs');
-const { addReply, currentSeq, listItems, postItem, registerRun } = await import('../store.mjs');
+const { addReply, currentSeq, listItems, postItem, registerRun, setSlices } = await import('../store.mjs');
+const { FINISHED_CLEAN } = await import('../runs.mjs');
 const { chainNext } = await import('../chain.mjs');
 const { ownerOf } = await import('../items.mjs');
 const { callTool, waiterCount } = await import('../server.mjs');
@@ -136,7 +137,8 @@ test('the chain takes an auditor-posted ticket', (t) => {
   tempDeck(t);
   const body = 'Problem: the suite is slow.\n\n1. `npm test` runs in under 60 s\n\nAudit report: D:/x/audits/alpha/2026-10-01T10-00-00-000Z.json';
   const ticket = postItem({ kind: 'ticket', sliceCount: 60, title: 'Audit F1: slow suite', body, repo: ALPHA, author: AUDITOR });
-  const { handoff } = chainNext(ALPHA, { atStart: true });
+  setSlices(registerRun({ repo: ALPHA, pid: process.pid }).id, [], undefined, { slug: 'audit', finished: FINISHED_CLEAN });
+  const { handoff } = chainNext(ALPHA, { pastMark: () => true });
   assert.ok(handoff, 'one hand-off is posted');
   assert.equal(stored(ticket.id).live, true, 'taken live, not resolved (ticket-states spec 13)');
   assert.equal(listItems().filter((item) => item.kind === 'handoff').length, 1);
