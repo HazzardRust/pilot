@@ -434,6 +434,27 @@ export function recutTicket(id, why, files) {
 }
 
 /**
+ * Restore a re-cut ticket's signature at `sha` (never-stuck spec 15, L5): the caller has proven its design dir
+ * unchanged since `recut.from`. Only an open red ticket carrying the re-cut mark; yellow, its plan at `sha` and never
+ * yet granted, the mark and liveness gone, in one write, as a gate1 Sign off leaves it. Returns the ticket.
+ */
+export function replanTicket(id, sha) {
+  if (typeof sha !== 'string' || !/^[0-9a-f]{7,40}$/.test(sha)) throw new DeckRefusal('a replan names the new plan commit as its sha');
+  const deck = readDeck();
+  const ticket = openTicketOf(deck, id);
+  if (stateOf(ticket) !== 'red' || !ticket.recut || !ticket.plan || typeof ticket.plan !== 'object') {
+    throw new DeckRefusal(`item ${id} carries no re-cut mark; only a re-cut ticket is replanned, any other takes a gate1`);
+  }
+  enterStage(deck, ticket, 'yellow');
+  ticket.plan = { ...ticket.plan, sha };
+  delete ticket.plan.grantedAt;
+  for (const field of ['live', 'recut']) delete ticket[field];
+  touchRuns(deck, ticket.repo);
+  writeDeck(deck);
+  return ticket;
+}
+
+/**
  * QA's `comment` on the newest record of `ticketId`, in the ticket's own directory (deck-writes-github spec 3, L3):
  * the newest text replaces the last, the walkthrough's or the gate2's. Returns that directory when it wrote, null
  * when there is no such ticket or it has no record yet. Here and not beside `setSlices`: store-runs is at its bar.

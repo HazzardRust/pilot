@@ -360,8 +360,9 @@ export const TOOLS = [
       type: 'object',
       properties: {
         id: { type: 'string' },
-        action: { enum: ['up', 'down', 'take', 'park', 'merge', 'need', 'pivot', 'recut', 'co-pilot', 'release', 'verdicts'] },
+        action: { enum: ['up', 'down', 'take', 'park', 'merge', 'need', 'pivot', 'recut', 'replan', 'co-pilot', 'release', 'verdicts'] },
         verdicts: { type: 'string' },
+        sha: { type: 'string' },
         author: AUTHOR,
       },
       required: ['id', 'action'],

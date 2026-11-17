@@ -52,7 +52,7 @@ import { ticketShapeGaps } from './ticket-shape.mjs';
 import { walkthroughShapeGaps } from './walkthrough-shape.mjs';
 import { placeSteps } from './step-shell.mjs';
 import { enterStage } from './store-stage.mjs';
-import { gate2EvidenceGaps, namedWalkthroughGaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
+import { gate2EvidenceGaps, namedWalkthroughGaps, recutGate1Gaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
 import { MAX_QUESTION_CHARS, POSTABLE_KINDS, andList } from './tools.mjs';
 import {
   DeckRefusal,
@@ -161,9 +161,9 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   refuseOverOpenQuestions(deck, item);
   const ticket = ticketNamedBy(deck, item);
   if (kind === KIND_GATE1 && ticket) refuseUnmerged(deck.items, ticket);
-  // QA's walkthrough on a plan marked with no surface is refused naming it (L3); a walkthrough's ticket is optional.
+  // QA's walkthrough on a plan marked with no surface is refused naming it (L3); a walkthrough's ticket is optional. A re-cut's gate1 says what changed (never-stuck L5).
   const walked = kind === KIND_WALKTHROUGH ? deck.items.find((each) => each.id === item.ticket) : undefined;
-  const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : walkthroughPlanGaps(walked, authorKind(author));
+  const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : kind === KIND_GATE1 ? recutGate1Gaps(ticket, body) : walkthroughPlanGaps(walked, authorKind(author));
   if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
   // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves
   // it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
