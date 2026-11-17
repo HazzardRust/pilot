@@ -133,22 +133,27 @@ Deletion test: `behavioursOf` earns its place (two callers, check-slices and int
   script parses) is `run` or `read` evidence, not a test. Rejected: the slice as a whole marked
   deterministic; the implementer deciding alone.
   User's answer: "Per behaviour, architect marks" (the default).
+  Verdict: stands — the user took the default on itm_7896680426aa
 - **A2** (deck itm_8d9195c330ce) The integrate refusal (L3) rather than the co-pilot's read alone.
   Trade: about 60 lines in `integrate.mjs` and a trailer per behaviour on every slice merge; presence,
   not truth. Rejected: the co-pilot's read (S2 drops, S5 and S6 lose their `after`).
   User's answer: "Integrate refuses" (the default).
+  Verdict: stands — the user took the default on itm_8d9195c330ce
 - **A3** The spec-7 ticket: the user's own case, a README concision ticket on a scratch clone of this
   repository plus one logic slice (audit F6, select-tests' tree guard), run by QA with
   `claude --plugin-dir`. Trade: QA time of one small run. Rejected: waiting for the next real ticket
   after landing (spec 7 says before).
+  Verdict: stands — a scratch-clone run moves nothing in the queue; the queued Audit F6 tickets stay queued
 - **A4** (the pilot's) Every slice that edits an agent definition, a skill or `pilot integrate`'s
   refusal names `pilot:security-reviewer`, and spec 6's kept-absolutes list for its files is that
   reviewer's input, so a safety, destructive-action or secret rule cannot leave in a sweep unseen.
   Trade: a second reviewer on 10 of 10 slices. Rejected: the language reviewer alone on prose slices.
+  Verdict: stands — the pilot's own, keeps safety rules in a reviewer's sight through the sweep
 - **A5** The QA environment (deck itm_d6f91e614d0d, the pilot's): `claude --plugin-dir <feat worktree>`
   on a scratch clone and a scratch deck, no database.
   User's answer: `claude --plugin-dir <feat worktree>` on a scratch clone of this repository with a
   scratch deck; the live deck and the installed plugin stay untouched; no database.
+  Verdict: stands — the user's answer on itm_d6f91e614d0d
 - red team: S1 changes `vertical-slicing`, which the architect preloads under a 51-token headroom; S1's
   bar is the architect's own share no larger. S1 also owns `slice-interface.test.mjs`, which pins
   "Tests" as an anatomy field and would go red under S1 alone otherwise. S7 and S3 both describe the
