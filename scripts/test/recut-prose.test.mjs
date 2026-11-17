@@ -21,27 +21,30 @@ test("the pilot's yield drains", () => {
   const yieldPara = paragraphs('agents/pilot.md').find((p) => p.startsWith('**Yield**'));
   assert.ok(yieldPara, 'pilot.md has a **Yield** paragraph');
   assert.match(yieldPara, /Yielding/, 'the yield is read off the deck line `Yielding <id>`');
-  assert.match(yieldPara, /paused`? hand-back[^.]*`?release/, '`release` follows the paused hand-back');
+  assert.match(yieldPara, /`paused`[^.]*`deck_ticket release`/, '`release` follows the `paused` hand-back');
   assert.doesNotMatch(yieldPara, /Paused <id>/, 'no lane is taken on a `Paused` line before the drain');
 });
 
 test('the pilot spawns an architect on re-cut', () => {
   const recut = paragraphs('agents/pilot.md').find((p) => p.includes('Re-cut check due'));
   assert.ok(recut, 'pilot.md reads the `Re-cut check due` line');
+  assert.match(recut, /Re-cut by this landing/, 'and on the landing line');
   assert.match(recut, /pilot-architect/, 'the same paragraph spawns the architect');
 });
 
 test('the architect keeps locked decisions and replans', () => {
-  const architect = read('agents/pilot-architect.md');
-  assert.match(architect, /replan/, 'an unchanged plan goes back through `deck_ticket replan`');
-  assert.match(architect, /Changed since/, 'a changed plan takes a gate1 naming what changed');
-  assert.match(architect, /re-post no locked/i, 'a locked decision is not asked again');
+  const section = /## Re-cut (.*?)(?: ## |$)/.exec(read('agents/pilot-architect.md'))?.[1];
+  assert.ok(section, 'pilot-architect.md has a ## Re-cut section');
+  assert.match(section, /deck_ticket replan/, 'an unchanged plan goes back through `deck_ticket replan`');
+  assert.match(section, /Changed since/, 'a changed plan takes a gate1 naming what changed');
+  assert.match(section, /re-post no locked/i, 'a locked decision is not asked again');
 });
 
 test('the co-pilot drains every slice', () => {
-  const coPilot = read('agents/pilot-co-pilot.md');
-  assert.match(coPilot, /every live/, 'the pause waits on every live child');
-  assert.doesNotMatch(coPilot, /the slice in flight/, 'not only the one slice in flight');
+  const pause = paragraphs('agents/pilot-co-pilot.md').find((p) => p.includes('sends you the pause'));
+  assert.ok(pause, 'pilot-co-pilot.md has the pause paragraph');
+  assert.match(pause, /every live/, 'the pause waits on every live child');
+  assert.doesNotMatch(pause, /the slice in flight/, 'not only the one slice in flight');
 });
 
 test('pins hold', async () => {

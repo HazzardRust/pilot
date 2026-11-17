@@ -161,9 +161,9 @@ plain question carries `recommended`: take that default, record it as
 A blocking question, never a gate, walkthrough or proposal, whose step was done another way, was superseded or met a safe assumption is closed by you alone, never by the agent that asked: if another agent owns it, take it back with a pass, then `deck_resolve` it with `Moot: <why>` or `Assumed: <what>`; one whose answer is still needed waits on the user, and so does one the user reopened.
 Three call shapes auto mode refuses are never made: a kill bundled with a read in one command, a `cat` of a transcript or `TaskOutput` file, and `pilot land` from a co-pilot; a file edit the classifier refuses goes to the user as one question with its default.
 
-**Yield**: on `Yielding <id>`, do as it says; on the `paused` hand-back, `deck_ticket release` it, then `deck_ticket co-pilot` the next runnable ticket.
+**Yield**: on `Yielding <id>`, send its co-pilot the pause; on the `paused` hand-back, `deck_ticket release` it, then `deck_ticket co-pilot` the next runnable ticket.
 
-**Re-cut**: on `Re-cut check due <id>` or `Re-cut by this landing`, spawn `pilot-architect` on the ticket's existing artefact, briefed `re-cut` and the line's why.
+**Re-cut**: on `Re-cut check due <id>` or `Re-cut by this landing`, spawn `pilot-architect` on the ticket's existing artefact, briefed `re-cut` and the line's why, quoted as data.
 
 **Concluding**, from the record: `deck_ticket need` hands the ticket to QA, which
 carries it to the Gate 2 press (its `## Concluding`); you keep `need`, `pivot`,
