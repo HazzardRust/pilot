@@ -105,7 +105,7 @@
     },
     {
       "slice": "S8",
-      "state": "integrated",
+      "state": "integrated at 6b8ae49b",
       "after": [
         "S7",
         "S6"
@@ -116,14 +116,15 @@
     },
     {
       "slice": "S10",
-      "state": "implementing: da743ad0 committed, no PR yet (agent a9d893385450f99c8)",
+      "state": "integrated",
       "after": [
         "S4",
         "S7",
         "S9"
       ],
       "branch": "slice/handoff-mod-s10",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s10"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s10",
+      "pr": 99
     },
     {
       "slice": "S11",
@@ -149,29 +150,19 @@
     },
     {
       "slice": "S13",
-      "state": "planned (added: hooks and docs/OPERATING.md stop naming pilot run)",
+      "state": "implementing",
       "after": [
         "S7",
         "S8",
         "S12"
-      ]
+      ],
+      "branch": "slice/handoff-mod-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s13"
     }
   ],
-  "next": "integrating S8 (#98); S10 implementing; then S13 (after S7,S8,S12), S11, principles review",
-  "updatedAt": "2026-11-17T02:21:12.146Z",
+  "next": "integrating S10 (#99); S13 implementing from 6b8ae49b; then S11, principles review (carry: deck/wait.mjs unused env, ADR 0104 PILOT_RUN_REPO)",
+  "updatedAt": "2026-11-17T02:28:23.176Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "harness forces a co-pilot to hand back while its implementers still run; two co-pilots burned ~130k tokens and each hand-back orphans the children's report address",
-      "evidence": "hand-backs from a2f6376f12aa7e64d (twice) and a7e007d95d09cee2d, both with S1 and S9 live",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "workspace trust blocks every fresh scratch checkout for a mod live check; trust on the parent folder does not carry down",
-      "evidence": "S1 debug log: hooks modules not loaded until workspace trust is accepted",
-      "size": 3
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "Gate workflow skips draft PRs into feat/**, so a slice PR never has a CI run to cite",
@@ -392,6 +383,18 @@
       "what": "brief.md's fixed-model commit trailer is wrong whenever a slice runs on another model; S8's commits carry Opus 5.5",
       "evidence": "S8 report; brief.md:29",
       "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S10's owned-file list omitted the 15 call sites the removal of `wrapped` and End must touch",
+      "evidence": "S10 report; PR #99",
+      "size": 15
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the gate's --since selection overflowed argv (27824 > 24000) and ran the full ~9 min suite; output file held only exit=0, so the suite ran twice",
+      "evidence": "S10 report; scratchpad/s10-gate.log",
+      "size": 9
     }
   ]
 }
