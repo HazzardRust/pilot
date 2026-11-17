@@ -452,7 +452,7 @@ export function beginLanding(gate2Id, { worktree }) {
  * What the press took live (gate2-frees-lane spec 1): one `from: 'deck'` line with a `seq` on the gate2, naming each
  * ticket `fillLanes` took, which wakes the pilot once, and the lander the press made due (lander spec 5, A1): the
  * pilot spawns `landerDue`'s head, or, with an open hand-off in the directory, it queues for the fresh session's first
- * prompt (`firstPrompt` in `deck/run.mjs`). An empty fill with no lander due writes nothing.
+ * prompt (`firstPrompt` in `deck/run-look.mjs`). An empty fill with no lander due writes nothing.
  */
 export function noteLaneFilled(gate2Id, taken) {
   const { items } = readDeck();

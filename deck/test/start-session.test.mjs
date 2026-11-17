@@ -15,7 +15,7 @@ import path from 'node:path';
 
 import { deckOnAPort, respelt, tempDeck } from '../testUtils.mjs';
 import { PARENT_MARKERS, STARTING_MS, openPilot, sessionEnv, startSession } from '../session.mjs';
-import { RESUME_PROMPT, runSettings, startArgs } from '../run-env.mjs';
+import { runSettings, startArgs } from '../run-env.mjs';
 import { rulesRoot } from '../../scripts/reach.mjs';
 import { renderHomePage } from '../ui/render.mjs';
 
@@ -296,7 +296,7 @@ test("Start opens claude with the reach's args and no prompt", (t) => {
   assert.deepEqual(everything, ['/d', '/c', 'start', '"pilot"', `"${CLAUDE}"`, '--agent', 'pilot:pilot', '--settings', `"${settingsIn(HOME)}"`]);
   for (const args of [below, everything]) {
     assert.ok(!args.includes('run'), 'no run verb on the line');
-    assert.ok(!args.some((arg) => arg.includes(RESUME_PROMPT) || arg.includes('{')), 'no prompt and no JSON on the line');
+    assert.ok(!args.some((arg) => /resume/i.test(arg) || arg.includes('{')), 'no prompt and no JSON on the line');
   }
 });
 

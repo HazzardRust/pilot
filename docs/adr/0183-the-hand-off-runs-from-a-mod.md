@@ -2,7 +2,7 @@
 status: proposed
 date: 2026-11-16
 tags: [handoff, mods, hooks, deck]
-supersedes: []
+supersedes: [0104]
 superseded_by: []
 paths: [hooks/handoff-mod.mjs, hooks/hooks.json, deck/run-look.mjs, scripts/handoff.mjs, docs/design/handoff-mod/architecture.md]
 ---

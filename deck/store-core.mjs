@@ -744,7 +744,7 @@ function storedCoPilot(deck, dir) {
   return typeof entry?.ticket === 'string' && typeof entry.at === 'string' ? entry : null;
 }
 
-/** Release `dir`'s live co-pilot if it names `ticketId` (any, when none), stamping `at` for the wrapper's turn wait (L5). */
+/** Release `dir`'s live co-pilot if it names `ticketId` (any, when none), stamping `at` for the look's turn-end check (L5). */
 function releaseIn(deck, dir, ticketId) {
   const entry = storedCoPilot(deck, dir);
   if (!entry || entry.live !== true || (ticketId !== undefined && entry.ticket !== ticketId)) return false;

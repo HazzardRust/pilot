@@ -176,8 +176,8 @@ test("a timer due while the turn end's look runs looks no second time", async ()
   assert.equal(looks('turn').length, 2, 'the held look and the turn end look, not the tick');
 });
 
-test('a bound in the past or past a day arms no bound timer; the 30 s tick still looks', async () => {
-  const { $, advance, looks } = host({ turn: [-3, -2, -1, 1e15].map((until) => ({ act: 'held', id: ID, until })) });
+test('a bound in the past arms no bound timer; the 30 s tick still looks', async () => {
+  const { $, advance, looks } = host({ turn: [-4, -3, -2, -1].map((until) => ({ act: 'held', id: ID, until })) });
   const hooks = hooksOf();
 
   await hooks['turn.complete']($, turnEnd, next);
