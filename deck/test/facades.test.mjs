@@ -95,15 +95,15 @@ test('render.mjs is a facade', () => {
   assert.ok(linesOf('ui/render.mjs') < 50, `render.mjs has ${linesOf('ui/render.mjs')} lines, a facade is under 50`);
 });
 
-// handoff-mod S7: `pilot run` is gone, and with it the launcher and its native dependency.
+// handoff-mod S7: the `run` verb is gone, and with it the launcher and its native dependency.
 const ROOT = path.resolve(DECK, '..');
 const help = () => spawnSync(process.execPath, [path.join(ROOT, 'bin', 'pilot.mjs'), 'help'], { encoding: 'utf8', windowsHide: true });
 
-test('pilot run is an unknown command', () => {
+test('run is an unknown command', () => {
   const shown = help();
   assert.equal(shown.status, 0, shown.stderr);
-  assert.doesNotMatch(shown.stdout, /pilot run/);
-  // Only once help no longer names it: before this slice `pilot run` started a real `claude`.
+  assert.doesNotMatch(shown.stdout, /pilot\s+run\b/);
+  // Only once help no longer names it: before this slice the `run` verb started a real `claude`.
   const ran = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'pilot.mjs'), 'run'], { encoding: 'utf8', windowsHide: true });
   assert.equal(ran.status, 1);
   assert.match(ran.stderr, /there is no "run" command/);

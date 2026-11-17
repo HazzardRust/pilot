@@ -52,10 +52,11 @@ repositories elsewhere, or give your terminal Full Disk Access in System Setting
 In the repository you want to work on:
 
 ```bash
-pilot run
+pilot start
 ```
 
-That is the one command you type. Everything after it waits for you on the deck, at <http://127.0.0.1:4321>,
+That is the one command you type; the deck's Start does the same, and at reach `everything` so does
+`claude --agent pilot:pilot`. Everything after it waits for you on the deck, at <http://127.0.0.1:4321>,
 bound to the loopback interface only. Its state lives in `~/.claude/pilot/`, never in your repository, and it
 refuses to store anything that looks like a key or a token.
 
@@ -120,7 +121,7 @@ it, so most news reaches the pilot as a conclusion, never as a file dump.
 
 An average run, then the same steps drawn:
 
-1. You give `pilot run` your idea, and `pilot:pilot` asks first how deep to be grilled.
+1. You give `pilot:pilot` your idea in the session `pilot start` opens, and it asks first how deep to be grilled.
 2. **The grilling** puts each decision to you on the deck, with a researched recommended answer.
 3. `pilot:pilot-architect` cuts the design into slices that each work end to end.
 4. You press **Gate 1** on the plan, and its ticket queues to be built.

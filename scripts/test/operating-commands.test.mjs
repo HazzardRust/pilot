@@ -7,7 +7,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { helpSubcommands } from './lib/help-subcommands.mjs';
-import { RETIRED } from '../check-references.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -18,7 +17,7 @@ const section = commandsSection(fs.readFileSync(path.join(ROOT, 'docs', 'OPERATI
 
 // lint: the section names no command `pilot help` does not list
 test('the section names only real commands', () => {
-  const real = [...helpSubcommands(), ...RETIRED, 'help'];
+  const real = [...helpSubcommands(), 'help'];
   const named = [...section.matchAll(/`pilot (\w+)/g)].map((m) => m[1]);
   assert.notEqual(named.length, 0);
   assert.deepEqual(named.filter((s) => !real.includes(s)), []);

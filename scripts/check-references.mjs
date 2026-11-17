@@ -232,14 +232,11 @@ const grantedTools = (source) => {
   return (/^tools:(.*)$/m.exec(frontmatter)?.[1] ?? '').split(',').map((entry) => entry.trim());
 };
 
-// retired by handoff-mod S7; S11 removes this allowance
-export const RETIRED = new Set(['run']);
-
 /** `shipped()` reads the dispatcher and the tool list on the first name, so a tree naming none needs neither. */
 function namedFailures(rel, source, shipped) {
   const failures = [];
   for (const match of source.matchAll(PILOT_COMMAND)) {
-    if (!shipped().commands.has(match[1]) && !RETIRED.has(match[1])) {
+    if (!shipped().commands.has(match[1])) {
       failures.push(`${rel}:${lineOf(source, match.index)}: \`pilot ${match[1]}\` is not a subcommand bin/pilot.mjs dispatches`);
     }
   }

@@ -8,7 +8,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { helpSubcommands } from './lib/help-subcommands.mjs';
-import { RETIRED } from '../check-references.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (...p) => fs.readFileSync(path.join(ROOT, ...p), 'utf8').replace(/\r\n/g, '\n');
@@ -133,7 +132,7 @@ test('every relative link resolves', () => {
 // lint: every command and agent the README names exists
 test('every command and agent named exists', () => {
   const readme = read('README.md');
-  const known = new Set([...helpSubcommands(), ...RETIRED]);
+  const known = new Set(helpSubcommands());
   const bash = [...readme.matchAll(/```bash\n([\s\S]*?)```/g)].map((m) => m[1]).join('\n');
   const commands = [
     ...[...readme.matchAll(/`pilot ([a-z][a-z0-9-]*)/g)].map((m) => m[1]),

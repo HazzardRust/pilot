@@ -300,7 +300,7 @@ function removeOwnCommandStep(settingsPath, config) {
     return {
       key: config.key,
       state: 'removed',
-      notes: [`Removed the pilot ${config.noun} from ${settingsPath}; \`pilot run\` carries it.`],
+      notes: [`Removed the pilot ${config.noun} from ${settingsPath}; \`pilot start\` carries it.`],
       change: (draft) => {
         const { [config.key]: _ours, ...rest } = draft;
         return rest;
@@ -803,7 +803,7 @@ export function installSettings(options = {}) {
     defaultBranchAskStep(settingsPath),
     ...(options.pilotMerge === true ? [pilotMergeStep(settingsPath)] : []),
     ...(typeof options.enablePlugin === 'boolean' ? [enablePluginStep(settingsPath, options.enablePlugin)] : []),
-    // L4: below `everything` the user's statusLine is not the pilot's; `pilot run` carries it.
+    // L4: below `everything` the user's statusLine is not the pilot's; the Start carries it.
     ...[COMMAND_SETTINGS.statusLine, COMMAND_SETTINGS.subagentStatusLine].map((config) =>
       options.statusLine === false
         ? removeOwnCommandStep(settingsPath, config)
@@ -873,7 +873,7 @@ export function repairSettings(options = {}) {
     };
   }
 
-  // L3, A5: below `everything` this hook runs inside `pilot run` too, and repointing the
+  // L3, A5: below `everything` this hook runs inside the Start's session too, and repointing the
   // user's status lines there would undo `pilot reach`; both are repaired only at `everything`.
   const steps = [
     ...(rulesPlan(readReach({ home: options.home }).level).user

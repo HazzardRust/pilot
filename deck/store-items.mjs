@@ -354,7 +354,7 @@ export function addReply(id, said) {
 const HOLD_TICKET = /^itm_[0-9a-f]{1,64}$/;
 
 /**
- * `pilot run` held this hand-off's `/clear` for the directory's live co-pilot (held-handoff L2): item state,
+ * The hand-off mod held this hand-off's `/clear` for the directory's live co-pilot (held-handoff L2): item state,
  * never a message, so no pick-up reader takes it for one. Written once, the first `at` kept; a closed item or one that is not a hand-off takes none. Answers whether it wrote.
  */
 export function markHold(id, ticket) {

@@ -534,7 +534,7 @@ test('a finish under the mark takes the head and posts nothing', (t) => {
 
   assert.deepEqual(result, { handoff: null, reason: 'under the mark', taken: [ticket.id] });
   assert.deepEqual(asked, [ALPHA], 'the mark is read for the finishing directory');
-  assert.deepEqual(handoffs(), [], 'no hand-off, so nothing for pilot run to /clear on');
+  assert.deepEqual(handoffs(), [], 'no hand-off, so nothing for the mod to /clear on');
   assert.equal(reread(ticket.id).live, true, 'the head is taken live in place');
 });
 

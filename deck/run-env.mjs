@@ -1,5 +1,5 @@
 /**
- * What `pilot run` starts the session with: its arguments and its environment.
+ * What the Start opens the session with: its arguments and its environment.
  * Split from `run.mjs` to keep that file under the deck's 800-line bar
  * (`deck/test/facades.test.mjs`); `run.mjs` re-exports every name here.
  */
@@ -16,7 +16,7 @@ import { statusLineSetting, subagentStatusLineSetting } from '../scripts/install
 const PLUGIN_ROOT = path.resolve(import.meta.dirname, '..');
 
 /**
- * What `pilot run` adds for its own process (L4's last column): the plugin enabled through
+ * What the Start adds for the session it opens (L4's last column): the plugin enabled through
  * `--settings`, which never touches user settings; below `everything` also the status lines, the
  * rules root as an extra directory, and the variable that makes Claude Code read its rules (A3).
  */
@@ -69,7 +69,7 @@ export function claudeArgs(reach, pluginRoot = PLUGIN_ROOT) {
 export const startSettingsFile = (home = os.homedir()) => path.join(home, '.claude', 'pilot', 'start-settings.json');
 
 /**
- * What the deck's Start (and `pilot start`) opens `claude` with: the same settings as `pilot run`,
+ * What the deck's Start (and `pilot start`) opens `claude` with: the run settings,
  * but in a file, because `cmd`'s `start` line cannot carry a JSON string intact (A9), and with no
  * prompt, so the pilot waits for the user (L12). Writes the file and answers the argv.
  * The file is written whole and renamed into place, so a session reading it never sees half.
@@ -89,7 +89,7 @@ export function startArgs(reach, { settingsFile, home } = {}) {
 }
 
 /**
- * What every session `pilot run` starts carries: Claude Code otherwise stops
+ * What every session the Start opens carries: Claude Code otherwise stops
  * background shells under memory pressure, the pilot's `pilot wait` among them,
  * and only the session's own environment can turn that off (Claude Code 2.1.284).
  */
