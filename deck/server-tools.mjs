@@ -388,9 +388,11 @@ export function callTool(name, args, deps = {}) {
     // on every call, and the record is on disk for anything that needs it. A ticket taken
     // in place under the mark is named, so the same session knows it holds it (handoff-over-mark L2).
     const count = `${slices.length} slice${slices.length === 1 ? '' : 's'}`;
+    // A chain hand-off is named so the finishing session's own client stamps it as posted, and its mod clears (handoff-mod L12, A6).
+    const posted = chained?.handoff ? `; chained ${chained.handoff.id}` : '';
     const taken = chained?.handoff === null && chained.taken ? `; took ${chained.taken.join(' and ')} live here` : '';
     const trimmed = args?.friction !== undefined && record?.friction?.length === MAX_FRICTION ? `; friction keeps the newest ${MAX_FRICTION}` : '';
-    return asText(`D${deckNumber}: ${count} saved; ${mirrorRecord(record, runRepo)}${trimmed}${taken}.`);
+    return asText(`D${deckNumber}: ${count} saved; ${mirrorRecord(record, runRepo)}${trimmed}${taken}${posted}.`);
   }
   if (name === 'deck_ticket') {
     const id = threadId(args);
