@@ -472,7 +472,7 @@ const aTicket = (id, state, over = {}) => ({ id, kind: 'ticket', state, title: `
 /** MINE's tab over `runs` and `items`, its co-pilot holding `co-pilot` and `records` its stored run records (S5 A-f6). */
 const tabOf = (runs, items, coPilot = null, records = []) =>
   tabFor(
-    tabsOf(runs, items, {}, {}, [], {}, { coPilots: coPilot ? { [repoKey(MINE)]: coPilot } : {}, switches: {}, records: records.map((record) => ({ repo: repoKey(MINE), record })) }),
+    tabsOf(runs, items, {}, {}, [], { coPilots: coPilot ? { [repoKey(MINE)]: coPilot } : {}, switches: {}, records: records.map((record) => ({ repo: repoKey(MINE), record })) }),
     MINE,
   );
 

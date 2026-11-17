@@ -42,6 +42,7 @@ import { startMemoryLog } from './memory.mjs';
 import { oneLine } from './one-line.mjs';
 import { probeDeck } from './probe.mjs';
 import { isDeckDaemon, processTable } from './procs.mjs';
+import { notePosted as writePosted, sessionPid } from './run-claim.mjs';
 import { spawnRoot } from './spawn-root.mjs';
 import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_WAIT_MS, TOOLS, deckPort, deckUrl } from './tools.mjs';
 import { PLUGIN_VERSION, isOlder } from './version.mjs';
@@ -497,7 +498,25 @@ async function forward(name, args, pollMs, onEmptyPoll) {
   const result = await post('/api/tool', { name, arguments: withSessionIdentity(name, args) ?? {} });
   const reader = name === 'deck_read' ? waiterKind(args?.author) : null;
   if (reader !== null && (args?.repo === undefined || args.repo === repo)) noteHanded(result.content[0].text, reader);
+  if (name === 'deck_status') notePosted(result.content[0].text);
   return result;
+}
+
+/**
+ * The chain hand-off a finish posted, as `deck_status`'s answer ends naming it: shape-checked as the deck mints
+ * an id (handoff-mod A4), so no other deck text reaches the stamp or a file name.
+ */
+const CHAINED = /; chained (itm_[0-9a-f]{1,40})\.$/;
+
+/**
+ * After a finish that chains, write S1's posted stamp, `claims/posted-<session pid>.stamp`, holding the id, so
+ * this session's mod, and no other session's, clears for it (handoff-mod L12, A6), by `deck/run-claim.mjs`'s
+ * one spelling. Any other answer writes nothing. Answers the id stamped, or null.
+ */
+export function notePosted(answer, { env = process.env, ppid = process.ppid, home = os.homedir() } = {}) {
+  const id = typeof answer === 'string' ? CHAINED.exec(answer)?.[1] : undefined;
+  if (id === undefined) return null;
+  return writePosted(sessionPid(env, ppid), id, home) ? id : null;
 }
 
 /**

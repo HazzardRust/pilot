@@ -7,7 +7,7 @@
 
 ## Pilot
 
-Feature-sized work runs through the pilot, started with `pilot run`. The main session
+Feature-sized work runs through the pilot, started with `pilot start`. The main session
 **is** the pilot. It builds the
 spec with me first, puts independent questions to me together and one at a time only
 where one answer would change another question, holds both gates itself, and spawns a

@@ -1,7 +1,7 @@
 /**
  * The reach (plain-session, L4, L5): how much of the pilot a plain `claude` session carries,
  * `nothing`, `rules` or `everything`. This module is the one reader of `reach.json` and the one
- * meaning of a level, for `pilot run`, the repair hooks, `pilot doctor` and `pilot reach`.
+ * meaning of a level, for the Start, the repair hooks, `pilot doctor` and `pilot reach`.
  *
  * Every path is under `os.homedir()` (or the `home` a test passes), never `storeDir()`, so a
  * scratch deck moves neither the stored reach nor the rules root.
@@ -11,12 +11,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-/** The plugin `pilot run` enables for its own process (L1). */
+/** The plugin the Start enables through `--settings` (L1). */
 export const PLUGIN_ID = 'pilot@pilot';
 
 /**
  * L4: where the 113 shipped rules go at each level. `home` is `~/.claude/rules`, `root` the rules
- * root `pilot run` adds with `--add-dir`; `scoped` is the rules with `paths:`, `always` the two without.
+ * root the Start adds with `--add-dir`; `scoped` is the rules with `paths:`, `always` the two without.
  * `user` is whether user settings carry the plugin and the pilot's status lines.
  */
 const PLANS = {
@@ -40,7 +40,7 @@ export function readReach({ home = os.homedir() } = {}) {
   }
 }
 
-/** The directory whose `.claude/rules` holds the rules `pilot run` loads below `everything`. */
+/** The directory whose `.claude/rules` holds the rules the Start loads below `everything`. */
 export function rulesRoot({ home = os.homedir() } = {}) {
   return path.join(pilotDir(home), 'rules-root');
 }

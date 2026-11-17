@@ -257,14 +257,13 @@ export function renderHomePage(
   now = Date.now(),
   added = [],
   refused = null,
-  wrapped = {},
   sessionRefused = null,
   alerts = { weekly: true },
   lanes = { coPilots: {}, switches: {} },
   held = {},
   ticket = null,
 ) {
-  const tabs = tabsOf(runs, items, numbers, agents, added, wrapped, lanes);
+  const tabs = tabsOf(runs, items, numbers, agents, added, lanes);
   const tab = selected === null ? landingFor(tabs) : tabFor(tabs, selected);
   const shown = (queue) => shownOf(queue, items);
   const queue = shown(queueOf(items));
@@ -307,7 +306,7 @@ export function renderHomePage(
  * the home page gives a bare URL (D11 of run-tabs): the sole live run's, or none.
  */
 export function renderDeckPage(items, runs = [], agents = {}, lanes = { coPilots: {}, switches: {} }) {
-  const theTabs = tabsOf(runs, items, {}, agents, [], {}, lanes);
+  const theTabs = tabsOf(runs, items, {}, agents, [], lanes);
   // One answer to "which deck is this page", read by the panels and by the
   // readout: whichever tab this page resolved. Asking it twice is how the two
   // would come to say different things.
@@ -413,7 +412,7 @@ function renderThreadNav(item, items, tab, all = false) {
  * `refused` is a refused press's reason (`landRefusedPress`), drawn above the reply slot.
  */
 export function renderThreadPage(item, items = [], runs = [], agents = {}, numbers = {}, all = false, added = [], refused = null, lanes = { coPilots: {}, switches: {} }, archived = false) {
-  const theTabs = tabsOf(runs, items, numbers, agents, added, {}, lanes);
+  const theTabs = tabsOf(runs, items, numbers, agents, added, lanes);
   // The same one answer the panels are drawn from, and the reason L32 puts the
   // deck token on the readout rather than reading it off the address: a thread
   // page has no `?run=` and is still a page of exactly one deck.
