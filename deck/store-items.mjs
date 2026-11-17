@@ -775,7 +775,6 @@ export function closeItem(id) {
   });
 }
 
-
 export { mayWrite };
 
 /**

@@ -14,7 +14,7 @@ import path from 'node:path';
 import { KIND_QUESTION, KIND_TICKET, messagesOf } from '../items.mjs';
 import { YIELD_MS, lanesFrom, yieldsDue } from '../lanes.mjs';
 import { armYields } from '../server-wait.mjs';
-import { DeckRefusal, addReply, coPilotFor, finishYield, listItems, pivotTicket, requestSwitch, setCoPilot, takeTicket, yieldTicket } from '../store.mjs';
+import { DeckRefusal, addReply, coPilotFor, finishYield, listItems, needTicket, pivotTicket, releaseCoPilot, requestSwitch, setCoPilot, takeTicket, yieldTicket } from '../store.mjs';
 import { postStored, shapedTicketBody, tempDeck } from '../testUtils.mjs';
 
 const REPO = path.join('D:', 'work', 'pilot');
@@ -124,6 +124,25 @@ test('an answer while draining cancels the yield', (t) => {
   setCoPilot(ticket.id, false);
   assert.equal(stored(ticket.id).state, 'yellow', 'so the release is a plain one, never a pause on an answered question');
   assert.equal(stored(ticket.id).paused, undefined);
+});
+
+test('any other hand-back of a draining ticket drops its yield', (t) => {
+  tempDeck(t);
+  const needed = held('needed');
+  const question = blocking(needed, 21);
+  yieldTicket(needed.id, question.id);
+  postStored({ kind: KIND_QUESTION, title: 'Other?', body: 'C or D', repo: REPO, ticket: needed.id });
+  needTicket(needed.id);
+  assert.equal(stored(needed.id).yielding, undefined, 'a need hands it back green, no yield left');
+  pivotTicket(needed.id);
+  assert.deepEqual([stored(needed.id).state, stored(needed.id).yielding, stored(needed.id).paused], ['yellow', undefined, undefined]);
+
+  const restarted = held('restarted', OTHER);
+  yieldTicket(restarted.id, blocking(restarted, 21).id);
+  releaseCoPilot(OTHER);
+  assert.equal(stored(restarted.id).yielding, undefined, 'a new pilot session frees the slot and the yield with it');
+  assert.throws(() => finishYield(restarted.id), DeckRefusal, 'nothing left to hand back paused');
+  assert.equal(stored(restarted.id).state, 'yellow');
 });
 
 test('a yield no longer due is refused', (t) => {

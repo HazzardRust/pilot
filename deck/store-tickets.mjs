@@ -379,14 +379,14 @@ export function yieldTicket(id, questionId) {
 
 /**
  * The drain's end (never-stuck L6) on the deck in hand: a `yielding` ticket turns green with `paused` its `yielding`,
- * and its co-pilot is released. False, and nothing written, for a ticket not yielding. `setCoPilot`'s release calls it.
+ * as its co-pilot is released. False, and nothing written, unless it is yielding and its live co-pilot is released
+ * now. `setCoPilot`'s release calls it.
  */
 export function finishYieldIn(deck, ticket) {
-  if (!ticket.yielding) return false;
+  const { yielding } = ticket;
+  if (!yielding || !releaseIn(deck, ticket.repo, ticket.id)) return false;
   ticket.state = 'green';
-  ticket.paused = ticket.yielding;
-  delete ticket.yielding;
-  releaseIn(deck, ticket.repo, ticket.id);
+  ticket.paused = yielding;
   return true;
 }
 

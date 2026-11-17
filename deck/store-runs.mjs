@@ -40,7 +40,6 @@ import {
   sameRepo,
 } from './runs.mjs';
 import { SliceRefusal, mergeSliceTable } from './status.mjs';
-import { finishYieldIn } from './store-tickets.mjs';
 import {
   DeckRefusal,
   MAX_WAIT_REPLIES,
@@ -65,6 +64,7 @@ import {
 } from './store-core.mjs';
 import {
   clearSwitch,
+  finishYieldIn,
   parkedTicketOf,
   refuseCoPilotSwitch,
 } from './store-tickets.mjs';
