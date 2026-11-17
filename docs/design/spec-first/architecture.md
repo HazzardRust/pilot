@@ -183,6 +183,8 @@ Width 7; longest stem 3
 | S8 | The fundamentalist judges tests on test behaviours and installs first | 4, 6, 11 | `agents/pilot-fundamentalist.md`, `agents/pilot-evidence-runner.md` | S1 (Behaviours grammar) | security | [S8](slices/S8.md) |
 | S9 | QA and the lander keep only reasoned absolutes; QA runs spec 7 | 6, 7, 9 | `agents/pilot-qa.md`, `agents/pilot-lander.md` | – | security | [S9](slices/S9.md) |
 | S10 | The helpers keep only reasoned absolutes | 6, 9 | `agents/pilot-fact-sheet.md`, `agents/pilot-explorer.md`, `agents/pilot-teacher.md`, `agents/pilot-auditor.md` | S1 (Behaviours grammar) | security | [S10](slices/S10.md) |
+| S11 | Every absolute left in the builders' definitions is listed with its reason (added, step 7) | 6 | `agents/pilot-co-pilot.md`, `pilot-implementer.md`, `pilot-architect.md`, `pilot-fundamentalist.md`, `pilot-evidence-runner.md`, `pilot-fact-sheet.md`, `docs/design/spec-first/absolutes.md` | S6 (`agents/pilot.md` kept list) | security | [S11](slices/S11.md) |
+| S12 | Every absolute left in QA, the lander and the helpers is listed with its reason (added, step 7) | 6 | `agents/pilot-qa.md`, `pilot-lander.md`, `pilot-explorer.md`, `pilot-teacher.md`, `pilot-auditor.md`, `docs/design/spec-first/absolutes.md` | S11 (`absolutes.md`) | security | [S12](slices/S12.md) |
 
 Walking skeleton: S1, the shape every other slice and the architect write to, checked by code.
 Headroom moves under us (handoff-books S3 left `pilot` at 28.25; blocked-steps and never-stuck add to
