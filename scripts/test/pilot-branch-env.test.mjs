@@ -41,7 +41,7 @@ test('the env names the pilot branch', () => {
 });
 
 test('a bad name is refused at start', () => {
-  for (const bad of ['--all', 'a..b', 'refs/heads/x', 'heads/x', 'HEAD', 'a b']) {
+  for (const bad of ['--all', 'a..b', 'refs/heads/x', 'heads/x', 'HEAD', 'a b', 'Qa-Scratch']) {
     const run = child(bad, 'process.stdout.write(mod.PILOT_BRANCH);');
     assert.notEqual(run.status, 0, `${bad} is refused`);
     assert.equal(run.stdout, '', `${bad} is never used`);

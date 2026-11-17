@@ -17,14 +17,15 @@ const PLAIN = /^(?!-)(?!.*\.\.)[A-Za-z0-9._/-]+$/;
 /**
  * The pilot branch's name, read once from `PILOT_BRANCH` (default `pilot`), so a scratch clone
  * lands on its own branch with no file edit (blocked-steps spec 7; A4). A name git would not
- * take literally, or one spelled `refs/…`/`heads/…`, throws here, naming the env. The default
- * branch is still refused at every push, by `assertPushable`.
+ * take literally, one spelled `refs/…`/`heads/…`, or one with an upper-case letter (so `HEAD`
+ * too: the guards keeping a run off this branch compare a lowered head with it) throws here,
+ * naming the env. The default branch is still refused at every push, by `assertPushable`.
  */
 export const PILOT_BRANCH = pilotBranchFrom(process.env);
 
 function pilotBranchFrom(env) {
   const name = env.PILOT_BRANCH || 'pilot';
-  if (!PLAIN.test(name) || /^(?:refs|heads)\//.test(name) || name === 'HEAD') {
+  if (!PLAIN.test(name) || /^(?:refs|heads)\//.test(name) || name !== name.toLowerCase()) {
     throw new Error(`PILOT_BRANCH is ${JSON.stringify(name)}: not a plain branch name`);
   }
   return name;
