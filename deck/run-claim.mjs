@@ -1,7 +1,6 @@
 /**
  * The wrapper's claim (feature audit-f1-f7, spec 13, ADR 0113): the exclusive-create
- * claim that makes the `/clear` happen once, the lane's marker and the turn stamp it
- * reads, and the two waits (`waitFor`, `pause`). Moved out of `deck/run.mjs` whole and
+ * claim that makes the `/clear` happen once, the lane's marker, and the two waits (`waitFor`, `pause`). Moved out of `deck/run.mjs` whole and
  * in order; `deck/run.mjs` imports what it uses from here and re-exports
  * `claimNameFor` and `takeClaim`, so no import of the old path changed.
  */
@@ -79,24 +78,6 @@ function releaseClaim(name) {
 const laneMarked = (itemId) => fs.existsSync(path.join(claimDir(), `handoff-${safeName(itemId)}.claim`));
 
 /**
- * When the session this wrapper started last wrote the stamp `name`, as
- * `stampRun` in `hooks/lib/deck.js` writes it, in ms, or 0 for never.
- */
-function stampAt(name) {
-  try {
-    return Number(fs.readFileSync(path.join(claimDir(), `${name}-${safeName(String(process.pid))}.stamp`), 'utf8')) || 0;
-  } catch (err) {
-    return 0;
-  }
-}
-
-/** When that session last ended a turn, as the Stop gate stamps it (`markTurnEnded`). */
-const lastTurnEnded = () => stampAt('turn-ended');
-
-/** When that session last ran a tool itself, as `post-tool.js` stamps it (`markToolRan`). */
-const lastToolRan = () => stampAt('tool-ran');
-
-/**
  * Wait until `done()` holds, or stop waiting. Answers whether it held: the
  * session ending, or the wait running out, is keys nobody types.
  */
@@ -121,4 +102,4 @@ const pause = (ms, signal) => new Promise((resolve) => {
   signal.addEventListener('abort', stop, { once: true });
 });
 
-export { releaseClaim, laneMarked, lastTurnEnded, lastToolRan, waitFor, pause, safeName };
+export { releaseClaim, laneMarked, waitFor, pause, safeName };
