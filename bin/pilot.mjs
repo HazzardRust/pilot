@@ -130,9 +130,9 @@ const usage = () => `pilot — the deck for piloted runs
                  naming an unknown id
   pilot audit pick <report.json> <reply-file>
                  print the ids a typed pick names, one per line; unknown ids on stderr
-  pilot audit count <run key> | due | offered <run key>
-                 count this repository's run once; whether the audit offer is due
-                 (exit 0) or not (exit 1); record that run's audit offer
+  pilot audit due | offered <run key>
+                 whether the audit offer is due (exit 0; every 20 hand-offs) or not
+                 (exit 1); record that run's audit offer
   pilot analytics <slug>
                  print the run's tokens, tool calls and time per agent, as Markdown
   pilot verdicts <artefact>
