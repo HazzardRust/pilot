@@ -12,7 +12,7 @@
  * `claims/posted-<session pid>.stamp`) and only once, by the `wx` claim `clear-typed-<id>` (L2). `cleared`
  * answers the fresh session's first prompt once the SessionStart lane has marked it (L3), drops the posted
  * stamp, and is the one place that logs the hand-off taken (L9). `start` writes the session's reported-in stamp
- * and asks the deck for nothing (L12). `turn` also holds the clear while the directory's co-pilot is live, and a
+ * and releases the directory's co-pilot, chaining nothing (L12, L13). `turn` also holds the clear while the directory's co-pilot is live, and a
  * clear starts the directory's 5-minute cooldown (L6). A hand-off that did not start is said aloud once per id.
  */
 
@@ -338,16 +338,35 @@ async function cleared(repo, pid, id, read, settleMs) {
   return { act: 'submit', id, prompt: firstPrompt(items, repo) };
 }
 
-/** Reported in: the stamp `pilot handoff` reads. Nothing is asked of the deck, so nothing chains at start (L12). */
-function start(pid) {
+/**
+ * Reported in: the stamp `pilot handoff` reads, written first. Then one `POST /api/started`, which releases the
+ * directory's co-pilot, whose session is gone (L13), and chains nothing (L12). A deck that does not answer is
+ * logged and costs the release only.
+ */
+async function start(repo, pid) {
   try {
     privateDir(path.dirname(claimDir()));
     privateDir(claimDir());
     fs.writeFileSync(reportedFile(pid), new Date().toISOString());
-    return none('reported in');
   } catch (err) {
     return none(`could not report in (${err?.message ?? err})`);
   }
+  try {
+    const response = await deckFetch('/api/started', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ repo }),
+      signal: deadline(),
+    });
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new Error(`the deck answered /api/started with ${response.status}`);
+    }
+    if ((await bodyOf(response, '/api/started'))?.released === true) return none('released');
+  } catch (err) {
+    log(`mod: could not release the co-pilot at start (${err?.cause?.code ?? err?.message ?? err})`);
+  }
+  return none('reported in');
 }
 
 /**
@@ -358,7 +377,7 @@ export async function look(op, args = {}, deps = {}) {
   const { read = openItems, coPilot = coPilotAt, now = Date.now, env = process.env, ppid = process.ppid, settleMs = SETTLE_MS } = deps;
   const repo = args.repo ?? listeningRepo(process.cwd());
   const pid = sessionPid(env, ppid);
-  if (op === 'start') return start(pid);
+  if (op === 'start') return start(repo, pid);
   if (op === 'turn') return turn(repo, pid, Number.isFinite(args.turnEndedAt) ? args.turnEndedAt : 0, { read, coPilot, now });
   if (!ITEM_ID.test(args.id ?? '')) return none(`${op} needs an item id`);
   if (op === 'cleared') return cleared(repo, pid, args.id, read, settleMs);
