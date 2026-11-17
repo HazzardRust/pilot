@@ -90,7 +90,7 @@
     },
     {
       "slice": "spec-first",
-      "state": "fixing: F1, N1 on feat at 148ed0e (approve); S11 implementing, S12 next"
+      "state": "fix round done at 4b7f5f47; awaiting pilot land, then QA"
     },
     {
       "slice": "S11 The builders' absolutes listed with their reasons",
@@ -103,7 +103,7 @@
     },
     {
       "slice": "S12 QA, lander and helper absolutes listed with their reasons",
-      "state": "implementing (pushed 143f9fc, gate/review running)",
+      "state": "integrated",
       "after": [
         "S11"
       ],
@@ -112,17 +112,16 @@
     }
   ],
   "findings": [
-    "kept: F1 simplify — integrate keys Evidence on B<k> alone, so a kind swap L2 allows is not refused (integrate.mjs:121-124, drop the 'another kind' test case)",
-    "kept: N1 simplify — behaviourAt drops unused name/line (check-slices.mjs:102)",
-    "kept: N2 simplify — co-pilot's Evidence trailer line says 'single-quoted in Bash' like pilot.md (folded into S11)",
-    "dropped: N3 needed — sliceFileOf returning null on an absent file stays: added fix-round rows have no slice file",
-    "dropped: S5-1b needed — a newline in an Evidence row fails closed at TRAILER (integrate.mjs:56)",
-    "dropped: S5-1c needed — 'built in the run as an added slice' already rules out deferral",
-    "dropped: S2-MEDIUM needed — failing closed on an absent slice file refuses real added rows in five past runs; file is read pre-merge so a branch cannot dodge it",
-    "dropped: spec9-headroom needed — all four at or over 100; QA re-measures at Gate 2 and the second lander re-measures"
+    "kept: F1 needed — fixed 07b40a22: integrate refused the kind swap L2 allows; Evidence keyed on B<k> alone",
+    "kept: N1 simplify — fixed ea8aeffe: behaviourAt returns only what production reads",
+    "kept: N2 needed — folded into S11: co-pilot text says single-quoted in Bash",
+    "dropped: N3 simplify — the absent-slice-file skip stays; failing closed refuses real added rows",
+    "dropped: S2-MEDIUM needed — same skip; the file is read before the merge",
+    "dropped: S5-LOW-newline needed — fails closed at TRAILER",
+    "dropped: S5-LOW-deferred simplify — 'built in the run' already rules out deferral"
   ],
-  "next": "feat/spec-first 13549894: S11 integrated; forced hand-back with S12 live at 143f9fc7 (gate/security review). Next: on S12's report check Verdict and four headrooms (architect >=100), integrate with Reviewed-by + Evidence B1-B4; main runs pilot land; successor QA.",
-  "updatedAt": "2026-11-17T12:31:38.183Z",
+  "next": "feat/spec-first 4b7f5f47: S1-S12 + fix round integrated, in concluding, no agent live. Next: spawn pilot-qa as writer with tip 4b7f5f47 (check what `pilot land` does first): re-probe F1, spec 6 vs absolutes.md, spec-7 run on pilot-spec-first-scratch, spec 11 in its runner table, walkthrough. Old QA worktree: pilot-spec-first-qa.",
+  "updatedAt": "2026-11-17T12:35:08.898Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -288,6 +287,26 @@
       "agent": "pilot:pilot-implementer",
       "what": "S11: phrase pins turned red on rewordings (decision-triage:41, pilot-agents:1085); architect pin left no slack for added reasons",
       "evidence": "S11 report; architect headroom 101.5 -> 100"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12: QA headroom ~9 bytes over the bar, every added reason paid by a cut in the same file; measure-prompt cannot report base shares, measured in a temp worktree",
+      "evidence": "S12 report, 4 measure rounds"
+    },
+    {
+      "kind": "drain",
+      "what": "seven classifier-unavailable Blocked items read and closed Moot by the pilot; two paused spec-first and left it green, needing pivot + co-pilot each time",
+      "size": 7
+    },
+    {
+      "kind": "drain",
+      "what": "evidence runner's hand-back delivered to main instead of the fundamentalist; relayed by hand",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "forced co-pilot hand-backs with a child live, 6 this session, each read in full by the pilot",
+      "size": 6
     }
   ]
 }
