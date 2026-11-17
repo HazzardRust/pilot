@@ -113,7 +113,8 @@ reappearing; the look survives (deleted, its logic would reappear untested in th
 - **Hand-off**: an open `handoff` item for this repository, by `pilot handoff` or a chain; the newest only.
 - **Look**: one decision over the deck for one repository, answering an `Outcome`; it never waits.
 - **Outcome**: `{ act: 'none' | 'held' | 'clear' | 'submit' | 'said', id?, prompt?, until?, why? }`.
-- **Session pid**: the Claude Code process: `CLAUDE_PID`, else the caller's `process.ppid`.
+- **Session pid**: the Claude Code process: `CLAUDE_PID`, else the caller's `process.ppid`. The look, run by a
+  mod's `$.process.run`, which the host gives no `CLAUDE_PID` of its own, takes its parent pid only (F15).
 - **Posted**: `claims/posted-<session pid>.stamp`, the hand-off id that session posted; the only session cleared.
 - **Reported in**: `claims/mod-<session pid>.stamp`, written by the look's `start`; `pilot handoff` reads it.
 - **Plain start**: a pilot session opened with no first prompt and no launcher; it chains nothing.
