@@ -62,14 +62,16 @@
     },
     {
       "slice": "S8 The fundamentalist judges tests on test behaviours and installs first",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/spec-first-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s8"
     },
     {
       "slice": "S9 QA and the lander keep only reasoned absolutes; QA runs spec 7",
-      "state": "pushed 1dd0a6e",
+      "state": "integrated",
       "branch": "slice/spec-first-s9",
       "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s9"
     },
@@ -81,8 +83,8 @@
       ]
     }
   ],
-  "next": "Co-pilot: S1, S4 integrated (9be8c969); integrating S9 1dd0a6e then S3 d3dde4e; S2, S7 implementing; then S8, S10 as slots free; S6 last, only on a pilot carrying handoff-books, blocked-steps, never-stuck.",
-  "updatedAt": "2026-11-17T11:20:00.240Z",
+  "next": "Co-pilot: S1, S4, S9 integrated (e054e91d); integrating S3 d3dde4e; S2, S7, S8 (respawned) implementing; then S10; S6 last, only on a pilot carrying handoff-books, blocked-steps, never-stuck.",
+  "updatedAt": "2026-11-17T11:21:05.613Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -143,6 +145,11 @@
       "agent": "pilot:pilot-implementer",
       "what": "the absolutes count is ambiguous between lines and occurrences across slices",
       "evidence": "git grep -ciwE gives 14; the artefact's 18 counts occurrences"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8's first implementer was compacted after 3 tool calls (50k tokens) and its summary kept no progress; it handed back with nothing built, and a fresh one was spawned on the same worktree",
+      "evidence": "S8 hand-back: HEAD e054e91d, 0 commits ahead, clean tree"
     }
   ]
 }
