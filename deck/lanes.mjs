@@ -18,10 +18,11 @@ export const YIELD_MS = 20 * 60_000;
  * The yields due in `repo` by `now` (blocked-yellow-yields spec 1; L2, L5, A1), pure: only `coPilotTicket`, the live
  * co-pilot's open yellow ticket, and only on an open blocking question naming it with no message from the user on it,
  * `YIELD_MS` past its `postedAt`. Each is `{ ticket, question, at }`; the timer passes `Infinity` to arm every one ahead.
+ * A ticket already `yielding` is draining (never-stuck L6) and yields nothing more.
  */
 export function yieldsDue(items, repo, coPilotTicket, now) {
   const ticket = items.find((item) => item?.id === coPilotTicket && item.kind === KIND_TICKET);
-  if (!ticket || !isOpen(ticket) || stateOf(ticket) !== 'yellow' || !sameRepo(ticket.repo, repo)) return [];
+  if (!ticket || ticket.yielding || !isOpen(ticket) || stateOf(ticket) !== 'yellow' || !sameRepo(ticket.repo, repo)) return [];
   return items
     .filter((item) => item.kind === KIND_QUESTION && isBlocking(item) && item.ticket === ticket.id && sameRepo(item.repo, repo))
     .filter((item) => !isAnswered(item))

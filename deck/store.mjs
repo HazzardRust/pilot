@@ -34,7 +34,7 @@ export {
 export { archiveOld, archivedItem } from './store-archive.mjs';
 export {
   cancelSwitch, mergeTicket, moveTicket, needTicket, parkTicket, parkedTicketOf, pivotTicket, recordVerdicts, refuseLaneSwitch, requestSwitch,
-  setQaComment, takeTicket, yieldTicket,
+  finishYield, setQaComment, takeTicket, yieldTicket,
 } from './store-tickets.mjs';
 export {
   budgetFor, createThread, currentSeq, deckLanes, dismissRun, fallBack, fallbackDue, coPilotFor, listItems,
