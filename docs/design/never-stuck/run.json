@@ -9,16 +9,18 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed bfbbc1c",
+      "state": "integrated",
       "branch": "slice/never-stuck-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s1"
     },
     {
       "slice": "S2",
-      "state": "",
+      "state": "pushed c99a0ea (security re-review in flight)",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/never-stuck-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s2"
     },
     {
       "slice": "S3",
@@ -51,8 +53,8 @@
       ]
     }
   ],
-  "next": "feat/never-stuck at e259feec; S1 pushed bfbbc1c, both approve; next: pilot integrate S1, seam notes in S4.md, spawn S2.",
-  "updatedAt": "2026-11-17T08:32:28.376Z",
+  "next": "feat/never-stuck at 2f979183; S2 pushed c99a0ea, ts approve, security re-review running; next: on approve, pilot integrate S2, then S3/S4.",
+  "updatedAt": "2026-11-17T08:56:53.260Z",
   "friction": [
     {
       "agent": "pilot-architect (never-stuck)",
@@ -108,6 +110,42 @@
       "agent": "pilot-implementer",
       "what": "S1 implementer reported a context compaction with no summary minutes after spawn and restarted S1",
       "evidence": "its message to the co-pilot; 144k tokens, 94 tool uses at its first notification",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the co-pilot's hello, arriving early in a fresh implementer, is read as a post-compaction resume: it reports lost context and 'restarts' a slice it had not started (S1 and S2 both)",
+      "evidence": "S1 and S2 implementers' first messages to the co-pilot, each minutes after spawn, worktree clean at the base",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced by handback-send-enforce a second time while an implementer was live (spec line 3)",
+      "evidence": "S2 implementer acd999a7aba4b576d live at 80619604 unpushed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a new deck/ module silently owes a deck/README.md row; only the full gate shows it",
+      "evidence": "S2 report: scripts/test/deck-readme.test.mjs red until recut.mjs row added",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the 800-line facade bar counts one more line than wc -l; store-runs.mjs and store-items.mjs both sit at the bar",
+      "evidence": "S2 report: a 2-line stamp read 801 in facades.test.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "pilot deck --scratch does not say a live POST needs <dir>/deck.secret",
+      "evidence": "S2 report: first live POST answered 'the deck wants its secret'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md says draft slice PRs; the implementer definition opens none",
+      "evidence": "never-stuck brief.md:18-19 vs S2 report",
       "size": 1
     }
   ]
