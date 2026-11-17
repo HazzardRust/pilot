@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed c99a0ea (security re-review in flight)",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -24,17 +24,21 @@
     },
     {
       "slice": "S3",
-      "state": "",
+      "state": "pushed b845a9f (integrating)",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/never-stuck-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s3"
     },
     {
       "slice": "S4",
-      "state": "",
+      "state": "implementing (local 155c3708 after review round; not pushed)",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/never-stuck-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s4"
     },
     {
       "slice": "S5",
@@ -53,8 +57,8 @@
       ]
     }
   ],
-  "next": "feat/never-stuck at 2f979183; S2 pushed c99a0ea, ts approve, security re-review running; next: on approve, pilot integrate S2, then S3/S4.",
-  "updatedAt": "2026-11-17T08:56:53.260Z",
+  "next": "feat/never-stuck at 311016e1; S3 integrating; S4 implementing; next: S3 integrated, then S4, spawn S5. Fix round carries S2 sec MEDIUM (recut.mjs:41 hardening) and S3's untested gone/refusal branches in driftAfterLanding.",
+  "updatedAt": "2026-11-17T09:22:13.066Z",
   "friction": [
     {
       "agent": "pilot-architect (never-stuck)",
@@ -147,6 +151,30 @@
       "what": "brief.md says draft slice PRs; the implementer definition opens none",
       "evidence": "never-stuck brief.md:18-19 vs S2 report",
       "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "third fresh implementer reads the co-pilot's hello as a compaction with lost work (a 'tools used before summary' line rides on it) and stops to ask before starting",
+      "evidence": "S4 implementer's first message: clean worktree at 311016e1, reflog 'reset: moving to HEAD' from worktree add",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced a third time by handback-send-enforce while two implementers were live (spec line 3)",
+      "evidence": "S3 implementer a05bd7ec09b1cccd8 at c1988343, S4 implementer a8cd8e0fa22a511cd at 155c3708, both unpushed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the gate's leftover-process sweep kills a scratch deck started from the same worktree, so a live check run beside npm test dies",
+      "evidence": "S3 report: 'stopped 25720 daemon ... --leash-dir ...pilot-never-stuck-s3'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a live landing on a scratch deck needs about 8 undocumented steps (artefact at sha, bearer + Origin header, deck_resolve after Sign off, slices: [], run on gate's repo, Verdict/Gate lines, package-lock, git identity)",
+      "evidence": "S3 report; working script scratchpad/s3-live.mjs",
+      "size": 2
     }
   ]
 }
