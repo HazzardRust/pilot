@@ -18,7 +18,6 @@ test('the status rows render from their own module', function () {
         id: 't1',
         name: 'pilot-implementer',
         description: 'Slice 9',
-        model: 'claude-sonnet-5',
         contextWindowSize: 200000,
         tokenCount: 100000,
       },
