@@ -1,0 +1,59 @@
+{
+  "slug": "handoff-books",
+  "feature": "handoff-books",
+  "ticket": "itm_b561a9d42212",
+  "branch": "feat/handoff-books",
+  "base": "feat/handoff-mod",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-books",
+  "artefact": "docs/design/handoff-books/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "planned",
+      "branch": "slice/handoff-books-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "branch": "slice/handoff-books-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/handoff-books-s3"
+    },
+    {
+      "slice": "handoff-books",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "branch": "feat/handoff-books",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-books"
+    }
+  ],
+  "next": "take base feat/handoff-mod into feat/handoff-books, then spawn S1 and S2 from the feat tip",
+  "updatedAt": "2026-11-17T10:06:42.326Z",
+  "friction": [
+    {
+      "agent": "pilot-architect (handoff-books)",
+      "what": "measure-prompt run in the shared checkout reads main, not pilot; gave a wrong headroom number",
+      "evidence": "1.5 vs 21 tokens for pilot.md at d7569a49"
+    },
+    {
+      "agent": "pilot-architect (handoff-books)",
+      "what": "an in-flight run's design lives only on origin/feat/<slug>, read via git show",
+      "evidence": "handoff-mod architecture.md"
+    },
+    {
+      "kind": "drain",
+      "what": "gate1 refused four times on format: branch not on pilot tip, verdict line form, pr field, an open Blocked item",
+      "size": 4
+    }
+  ]
+}
