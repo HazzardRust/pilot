@@ -242,12 +242,15 @@ export function pilotMergeStep(settingsPath) {
 }
 
 /**
- * The allow rules only pilot writes (L10): the deck's tools, the `pilot` command's and its
- * source-tree spelling (blocked-steps). Three prefixes and nothing wider, so a rule the user
- * wrote for anything else is never theirs to lose.
+ * The allow rules only pilot writes (L10): the deck's tools and the `pilot` command's, by two
+ * prefixes and nothing wider, so a rule the user wrote for anything else is never theirs to lose.
+ * The source-tree spelling (blocked-steps) is matched exactly: a user's own
+ * `node bin/pilot.mjs …` rule is theirs.
  */
-const OWN_ALLOW_PREFIXES = [`${DECK_SERVER}__`, 'Bash(pilot ', 'Bash(node bin/pilot.mjs '];
-export const isOwnAllow = (rule) => typeof rule === 'string' && OWN_ALLOW_PREFIXES.some((prefix) => rule.startsWith(prefix));
+const OWN_ALLOW_PREFIXES = [`${DECK_SERVER}__`, 'Bash(pilot '];
+const OWN_ALLOW_EXACT = ['Bash(node bin/pilot.mjs deck --scratch *)'];
+export const isOwnAllow = (rule) =>
+  typeof rule === 'string' && (OWN_ALLOW_EXACT.includes(rule) || OWN_ALLOW_PREFIXES.some((prefix) => rule.startsWith(prefix)));
 
 const DECK_TOOLS_RULE = `${DECK_SERVER}__*`;
 

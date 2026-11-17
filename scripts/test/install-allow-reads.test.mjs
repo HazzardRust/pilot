@@ -110,7 +110,16 @@ test('uninstall removes the node-spelling rule', (t) => {
   removeOwnSettings({ settingsPath: file });
 
   const allow = readJson(file).permissions.allow;
-  assert.ok(!allow.some((r) => r.startsWith('Bash(node bin/pilot.mjs')), 'no node-spelling rule remains');
+  assert.ok(!allow.includes(NODE_SCRATCH), 'the node-spelling rule is gone');
   assert.ok(!allow.some((r) => READS.includes(r)), 'none of the five remains');
   assert.ok(allow.includes('Bash(node foo.js)'), "the user's own node rule stays");
+});
+
+test("a user's own bin/pilot.mjs rule survives uninstall", (t) => {
+  const BUILD = 'Bash(node bin/pilot.mjs build)';
+  const file = settingsFile(t, JSON.stringify({ permissions: { allow: [NODE_SCRATCH, BUILD] } }));
+
+  removeOwnSettings({ settingsPath: file });
+
+  assert.deepEqual(readJson(file).permissions.allow, [BUILD]);
 });

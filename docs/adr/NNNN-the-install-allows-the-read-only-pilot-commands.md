@@ -17,7 +17,7 @@ An auto-mode session's classifier sometimes returns no verdict, and a command it
 ## Decision
 
 - The five rules join `PILOT_MERGE_ALLOW` in `scripts/install-permissions.mjs`, under ADR 0110's rules: one written only where absent, one the user's deny or ask covers named and left out, and the doctor's `pilot allow rules` row naming any missing (L4).
-- `Bash(node bin/pilot.mjs ` joins the own-rule prefixes behind `isOwnAllow`, so `pilot uninstall` takes the node-spelling rule back with the rest.
+- `isOwnAllow` claims the node-spelling rule by its exact text, never by the `Bash(node bin/pilot.mjs ` prefix, so `pilot uninstall` takes it back with the rest and a user's own `node bin/pilot.mjs …` rule stays.
 - The source-tree scratch rule is written at the user's word (A3, 2026-11-17).
 - No `git` rule (A6), and nothing wider than the five: no `Bash(pilot *)`, no `Bash(node *)`.
 
@@ -30,4 +30,4 @@ An auto-mode session's classifier sometimes returns no verdict, and a command it
 
 ## Consequences
 
-`pilot wait`, `pilot budget`, `pilot tickets` and the source-tree scratch deck never reach the classifier after `pilot install`. The node rule trusts the file: in any repository on the machine with a `bin/pilot.mjs`, that file runs unreviewed when called with `deck --scratch`. A user's `Bash(pilot *)` ask or deny does not cover that rule, since it is a `node` command; they deny it by its own text. Uninstall reclaims by prefix, as it does for `Bash(pilot `, so a rule of the user's own that begins `Bash(node bin/pilot.mjs ` goes with ours. Recorded in `docs/design/blocked-steps/architecture.md` §5 L4 and §6 A3, A6.
+`pilot wait`, `pilot budget`, `pilot tickets` and the source-tree scratch deck never reach the classifier after `pilot install`. The node rule trusts the file: in any repository on the machine with a `bin/pilot.mjs`, that file runs unreviewed when called with `deck --scratch`. A user's `Bash(pilot *)` ask or deny does not cover that rule, since it is a `node` command; they deny it by its own text. Recorded in `docs/design/blocked-steps/architecture.md` §5 L4 and §6 A3, A6.

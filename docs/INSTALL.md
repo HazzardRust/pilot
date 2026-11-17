@@ -193,7 +193,7 @@ any `gh pr merge`. A rule their deny list already covers is reported and left ou
 them, four allow rules let the pilot run its own `pilot sync`, `pilot integrate`,
 `pilot land` and `pilot landing` (ADR 0110), and four more let an agent run `pilot ps`, `pilot gc`,
 `pilot deck --stop *` and `pilot deck --scratch *` to list, reap, stop and start scratch decks (process-gc, yellow-lane).
-Five more cover the read-only commands and the source-tree scratch deck (ADR 0184): `pilot wait`,
+Five more cover the read-only commands and the source-tree scratch deck (ADR NNNN): `pilot wait`,
 `pilot wait *`, `pilot budget`, `pilot tickets` and `node bin/pilot.mjs deck --scratch *`. The last
 runs whatever `bin/pilot.mjs` the current repository holds, so deny it by that text if you do not
 want it; a `Bash(pilot *)` rule of yours does not reach it. No `git` rule is written.
