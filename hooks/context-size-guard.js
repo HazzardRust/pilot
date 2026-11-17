@@ -442,7 +442,7 @@ function advice(input, seen, marks, threshold, onDeck) {
         'and pushes the `docs/design/<slug>/run.json` the deck wrote into your `feat/<slug>` ' +
         'worktree as `chore(<slug>): run record`, posts the one `handoff` item for this repository from the record, and answers ' +
         'in one line. Where the hand-off mod is loaded the `/clear` is typed for you: stop there. If the line ' +
-        'says it is not, tell the user to type `/clear` — the fallback — and ' +
+        'says the mod will not clear it, tell the user to type `/clear` — the fallback — and ' +
         'stop there; if it names a failure, nothing was posted, so fix that and run it again.\n' +
         'No prose hand-off is written anywhere; the record is the hand-off. A session start ' +
         'hands the next session that item, the run record and the open threads by itself, and ' +
