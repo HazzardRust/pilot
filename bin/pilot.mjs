@@ -53,6 +53,10 @@ import { main as collectGarbage, deckPidNow, landSweep } from '../deck/gc.mjs';
 import { main as doctor } from '../deck/doctor.mjs';
 import { main as restoreStore } from '../deck/store-restore.mjs';
 import { main as waitForReply } from '../deck/wait.mjs';
+import { openPilot } from '../deck/session.mjs';
+import { startArgs } from '../deck/run-env.mjs';
+import { readReach } from '../scripts/reach.mjs';
+import { hostPlatform } from '../hooks/lib/platform.js';
 
 // Before any git runs: no git this CLI spawns in a repository is one planted there (spec 7).
 searchPathOnly();
@@ -64,6 +68,7 @@ const usage = () => `pilot — the deck for piloted runs
 
   pilot deck     start the deck at ${deckUrl()} in the background and return; prints the
                  open file, which a browser opens to get in
+  pilot start   open a pilot session in a new window (any reach)
   pilot deck --rotate
                  replace the deck's secret and its open file, and open the deck through it
   pilot deck --from <dir>
@@ -203,7 +208,36 @@ hand when you want to watch it. Four environment variables change how it behaves
   PILOT_STOP_HOLD_MS   how long the Stop hook holds for a reply (default 570000 ms; raise it with the hook timeout in hooks/hooks.json)
 `;
 
-export async function run(argv) {
+/**
+ * `pilot start` (spec 13, L12, L15): one detached window through S9's `openPilot`, the one window
+ * builder, and back to the prompt at once, holding no child. Off Windows it prints the `claude`
+ * argv instead. `deps` is `openPilot`'s, for a test's recorder and scratch home.
+ */
+function start(args, { platform = hostPlatform(), home, ...deps } = {}) {
+  if (args.length) {
+    process.stderr.write('usage: pilot start\n');
+    process.exitCode = 2;
+    return undefined;
+  }
+  const reach = deps.reach ?? readReach({ home });
+  try {
+    if (platform !== 'win32') {
+      console.log(['claude', ...startArgs(reach, { home })].join(' '));
+      return undefined;
+    }
+    const child = openPilot(process.cwd(), { ...deps, platform, home, reach });
+    // A spawn that fails does so after this returns; said, never thrown at a prompt already given back.
+    child.on('error', (err) => {
+      process.stderr.write(`pilot start: could not open the window: ${err.message}\n`);
+      process.exitCode = 1;
+    });
+  } catch (err) {
+    return refuse(`pilot start: ${err.message}\n`);
+  }
+  return undefined;
+}
+
+export async function run(argv, deps) {
   // `--dir <path>` first: every verb runs there, so a sub-deck reaches a sibling worktree with no
   // `cd`, which its allowlist refuses (pilot-branch L25; QA's real run, F).
   if (argv[0] === '--dir') {
@@ -215,9 +249,11 @@ export async function run(argv) {
     } catch (err) {
       return refuse(`pilot: --dir ${dir}: ${err.message}\n`);
     }
-    return run(argv.slice(2));
+    return run(argv.slice(2), deps);
   }
   const [command, flag] = argv;
+
+  if (command === 'start') return start(argv.slice(1), deps);
 
   if (command === 'deck' && flag === '--foreground') return serveDeck();
 
