@@ -176,6 +176,17 @@ test("a timer due while the turn end's look runs looks no second time", async ()
   assert.equal(looks('turn').length, 2, 'the held look and the turn end look, not the tick');
 });
 
+test('a bound in the past or past a day arms no bound timer; the 30 s tick still looks', async () => {
+  const { $, advance, looks } = host({ turn: [-3, -2, -1, 1e15].map((until) => ({ act: 'held', id: ID, until })) });
+  const hooks = hooksOf();
+
+  await hooks['turn.complete']($, turnEnd, next);
+  await advance(1_000);
+  assert.equal(looks('turn').length, 1, 'no look loop on a stale bound');
+  await advance(90_000);
+  assert.deepEqual(looks('turn').map(({ at }) => at), [0, 30_000, 60_000, 90_000]);
+});
+
 test('a release ends the timers', async () => {
   for (const release of [{ act: 'clear', id: ID }, { act: 'none', why: 'the hand-off is closed' }]) {
     const { $, advance, timers, looks } = host({
