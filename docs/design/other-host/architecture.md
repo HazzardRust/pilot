@@ -136,18 +136,23 @@ Accepted by `main` on 2026-11-17 as defaults; the user sees them at Gate 1.
   review". Trade: one `host === null` check at six call sites. Rejected: October's L4, a `none` adapter returning
   `[]`/`null` (a write returning `null` trips `feature-pr`'s "no PR url" refusal, and `land` would print
   `comment failed: no open or merged PR`).
+  Verdict: stands
 - **A2** One field set per verb: the GitHub adapter's `reviews` asks one `--json` set for every caller, so argv
   pins move; each slice names the tests it moves. Trade: a wider read per call. Rejected: a field set per caller
   (the interface leaks gh's field names). October A5.
+  Verdict: stands
 - **A3** The GitLab adapter uses `glab api` REST v4 on `projects/:id/…` with a JSON body by `--input -`, a draft as
   a `Draft: ` title prefix, a note upsert by `GET`/`PUT …/notes/:note_id`; its fixtures are written from the REST
   docs and replaced by recorded ones in QA's live run. Trade: unverified until QA runs it. Rejected: `glab mr`
   porcelain (flags differ by version; `-F` means `--output` there and `--field` in `glab api`). October A6.
+  Verdict: stands
 - **A4** `hostIn` is retired in its own slice (S6) once every caller takes a **Host**, not in each caller.
   Trade: one more slice, ~60 lines. Rejected: each caller slice deleting its part (they run in parallel and
   would each edit `host.mjs`).
+  Verdict: stands
 - **A5** The crew ban covers `agents/pilot*.md` only; vendored reviewers, `skills/wizard` (the user's own CI)
   and the evidence runner's Go module paths stay. Rejected: banning `gh ` repo-wide. October A7.
+  Verdict: stands
 - red team: S2's first red step pins `deleteMerged({ host })`, but `land.mjs:138` and `integrate.mjs:534` pass
   `gh`: S2 owns both call lines, so S3 and S4 come after S2 on `land.mjs`.
 - red team: `releasePr` takes its `gh` from `land.mjs:241`; S3 owns that line, so S4 (the rest of `land.mjs`)
