@@ -68,6 +68,7 @@ Deletion test: removing `check-syntax.mjs` would push the file list, the flagged
   corpus test is the guard if the API's behaviour drifts, and L4 makes the gate red if the API is removed. Rejected: `node --check` once
   per file, as the ticket words it (21.9 s at width 8, which misses spec 5).
   Verdict: stands - the ticket's own 10 s line rules out the per-file path; the user's press on itm_d5b0659bc203 decides
+  Answer (user, itm_d5b0659bc203): In-process (default). Locked as written.
 - **A2** *assumed*, asked by main as itm_aa6fcd1df4cc: name every fault. Default: all of them, at no extra cost in process. Trade: a long list when a tree is badly broken.
   Rejected: stopping at the first fault, as drafted.
   Verdict: stands - no queued ticket depends on first-fault-only; the user's press on itm_aa6fcd1df4cc decides
