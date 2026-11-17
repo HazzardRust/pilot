@@ -39,7 +39,7 @@
     },
     {
       "slice": "S5 The co-pilot carries evidence into the merge and checks its base",
-      "state": "pushed 2e16509",
+      "state": "integrated",
       "after": [
         "S2"
       ],
@@ -48,10 +48,12 @@
     },
     {
       "slice": "S6 The pilot carries evidence into the merge",
-      "state": "planned: waits for handoff-books, blocked-steps, never-stuck on pilot",
+      "state": "pushed 77dd555",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/spec-first-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s6"
     },
     {
       "slice": "S7 The architect cuts behaviours, not red steps",
@@ -87,8 +89,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s10"
     }
   ],
-  "next": "Co-pilot: S1-S4, S7-S10 integrated (0a862b5e); S5 pushed 2e16509, security re-review of its quoting fix before integrate; S6 held for its base (handoff-books, blocked-steps, never-stuck on pilot).",
-  "updatedAt": "2026-11-17T11:38:21.840Z",
+  "next": "feat/spec-first 789f9081: S6 pushed 77dd5551 (security approve, headroom 118.5 checked); integrating, then step 7 fundamentalist and QA.",
+  "updatedAt": "2026-11-17T11:59:48.122Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -224,6 +226,16 @@
       "agent": "pilot:pilot-implementer",
       "what": "a push failed with no reason and went through on retry",
       "evidence": "'failed to push some refs', then ee688e04..5d499780"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: 37 test files read agents/pilot.md and several pin phrases; three phrase pins broke on the first sweep and were found only by running all 37",
+      "evidence": "decision-triage.test.mjs:36, pilot-agents.test.mjs:303, pilot-rules.test.mjs:142; 3 runs of ~1 min"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 implementer's context reset early, state rebuilt from git",
+      "evidence": "S6 report"
     }
   ]
 }
