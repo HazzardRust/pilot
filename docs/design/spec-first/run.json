@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2 Integrate refuses a slice missing evidence",
-      "state": "implementing",
+      "state": "pushed c112fd7",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3 The implementer builds to the behaviours",
-      "state": "pushed d3dde4e",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -53,7 +53,7 @@
     },
     {
       "slice": "S7 The architect cuts behaviours, not red steps",
-      "state": "implementing",
+      "state": "pushed de55f3b",
       "after": [
         "S1"
       ],
@@ -77,14 +77,16 @@
     },
     {
       "slice": "S10 The helpers keep only reasoned absolutes",
-      "state": "planned",
+      "state": "implementing (restarted after a context reset)",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/spec-first-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s10"
     }
   ],
-  "next": "Co-pilot: S1, S4, S9 integrated (e054e91d); integrating S3 d3dde4e; S2, S7, S8 (respawned) implementing; then S10; S6 last, only on a pilot carrying handoff-books, blocked-steps, never-stuck.",
-  "updatedAt": "2026-11-17T11:21:05.613Z",
+  "next": "Co-pilot: S1, S3, S4, S9 integrated (37bfdf5e); integrating S7 de55f3b, then S2 c112fd7 after recording its seam in S2.md; S8, S10 implementing; S5 after S2; S6 last, only on a pilot carrying handoff-books, blocked-steps, never-stuck.",
+  "updatedAt": "2026-11-17T11:24:25.077Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -150,6 +152,36 @@
       "agent": "pilot:pilot-implementer",
       "what": "S8's first implementer was compacted after 3 tool calls (50k tokens) and its summary kept no progress; it handed back with nothing built, and a fresh one was spawned on the same worktree",
       "evidence": "S8 hand-back: HEAD e054e91d, 0 commits ahead, clean tree"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7's context reset after creating its worktree with nothing committed; it re-derived its state from git",
+      "evidence": "S7 report, friction row"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no index of test-pinned phrases: finding what the architect's tests pin meant grepping 21 test files",
+      "evidence": "S7 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice verification counts absolutes by line (git grep -c) while the slice's baseline counts occurrences",
+      "evidence": "-ciwE 19/7 vs the slice file's 20"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "third implementer this run (S7, S8, S10) compacted early with no summary of its progress and restarted from git state; S10 lost track of its own children",
+      "evidence": "S10 message: branch at base 37bfdf5e, children spawned before the reset"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "feat moved twice under S2, once between its fetch and push, costing a second rebase and a lease push",
+      "evidence": "S2 rebased onto e054e91d, already behind 37bfdf5e at push"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2's Interface typed sliceFileOf as string|null though both readers need the slice number; its Prohibited line was ambiguous where a row exists but the slice file does not",
+      "evidence": "slices/S2.md:18, :37"
     }
   ]
 }
