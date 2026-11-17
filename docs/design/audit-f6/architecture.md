@@ -12,8 +12,8 @@ test imports, such as the browser modules under `deck/ui/js/`, is never checked.
 | # | Behaviour | Evidence | Bar |
 | --- | --- | --- | --- |
 | 1 | A syntax error in a `.mjs` or `.js` file makes `npm test` exit 1 before the ledgers and before any test runs, in a full run and in a `--since` run. Stderr prints `syntax: <path>:<line> <message>`. | A gate test with a planted fault; a CLI run in a scratch clone (§9). | Exit 1; the path and line named; 0 tests run; 0 ledger rebuilds. |
-| 2 | *assumed (A2), pending itm_aa6fcd1df4cc*: every failing file is named, not only the first. practitioner: tsc/eslint, which report every fault in a pass. | A temp repo with two broken files. | 2 faults give 2 lines. |
-| 3 | *assumed (A3), pending itm_d77ac7d026ec*: the files checked are the tracked ones plus untracked files git does not ignore, including files no test imports. A clean tree prints `syntax ok <n> files in <ms> ms`. | The ok line beside `git ls-files -co --exclude-standard -- '*.mjs' '*.js' \| wc -l`. | n equals that count (666 on d7569a49); an ignored broken file is not named. |
+| 2 | Every failing file is named, not only the first. practitioner: tsc/eslint, which report every fault in a pass. | A temp repo with two broken files. | 2 faults give 2 lines. |
+| 3 | The files checked are the tracked ones plus untracked files git does not ignore, including files no test imports. A clean tree prints `syntax ok <n> files in <ms> ms`. | The ok line beside `git ls-files -co --exclude-standard -- '*.mjs' '*.js' \| wc -l`. | n equals that count (666 on d7569a49); an ignored broken file is not named. |
 | 4 | The check's verdict matches `node --check`: a `.mjs` file is parsed as ESM only, and a `.js` file as ESM or else CJS, the way Node detects it. practitioner: Node itself, as the outside reader. | A corpus test that runs both over the same planted files. | 0 disagreements over at least 6 cases. |
 | 5 | The check takes under 10 s on this repository. | The ms in the ok line; the test asserts it. | < 10 000 ms (0.4 s measured for 666 files). |
 | 6 | A clean gate is otherwise unchanged: one added stdout line, the same spawn count, and a failing check stops the gate (it never passes silently). | The existing gate tests, unchanged and green; a test where the child cannot start. | Spawn line within today's ceiling; a check that cannot run exits 1. |
@@ -60,21 +60,21 @@ Deletion test: removing `check-syntax.mjs` would push the file list, the flagged
 - **L4** It fails closed. A child that cannot start or that prints no result exits 1 with `syntax: could not check (<reason>)`.
   Rejected: skipping with a warning.
 - **L5** No new dependency and no linter. The audit's fix says "no new dependency", and a linter is out of scope (§7).
-
-## 6. Assumed decisions
-
-- **A1** *assumed*, question itm_d5b0659bc203: how files are parsed. Default: one child `node --experimental-vm-modules --disable-warning=ExperimentalWarning
+- **L6** Grilling depth: forks (user, itm_20436ad3cda8). Only the design forks were put to the user.
+- **A1** (locked, user, itm_d5b0659bc203: "In-process (default)") How files are parsed: one child `node --experimental-vm-modules --disable-warning=ExperimentalWarning
   scripts/check-syntax.mjs`, which parses with V8 in process (0.4 s). Trade: it depends on an experimental Node API. Spec 4's
   corpus test is the guard if the API's behaviour drifts, and L4 makes the gate red if the API is removed. Rejected: `node --check` once
   per file, as the ticket words it (21.9 s at width 8, which misses spec 5).
   Verdict: stands - the ticket's own 10 s line rules out the per-file path; the user's press on itm_d5b0659bc203 decides
-  Answer (user, itm_d5b0659bc203): In-process (default). Locked as written.
-- **A2** *assumed*, asked by main as itm_aa6fcd1df4cc: name every fault. Default: all of them, at no extra cost in process. Trade: a long list when a tree is badly broken.
+- **A2** (locked, user, itm_aa6fcd1df4cc: "Name every failing file") Every fault is named, at no extra cost in process. Trade: a long list when a tree is badly broken.
   Rejected: stopping at the first fault, as drafted.
   Verdict: stands - no queued ticket depends on first-fault-only; the user's press on itm_aa6fcd1df4cc decides
-- **A3** *assumed*, asked by main as itm_d77ac7d026ec: include untracked files git does not ignore. Default: yes, because an implementer's uncommitted new file is the likeliest
+- **A3** (locked, user, itm_d77ac7d026ec: "Tracked + untracked not ignored") Untracked files git does not ignore are included, because an implementer's uncommitted new file is the likeliest
   one to be broken. Trade: a scratch file someone left lying around can make the gate red. Rejected: tracked files only, as drafted.
   Verdict: stands - crews gate uncommitted work in their worktrees, where a new file is the likeliest broken one; the user's press on itm_d77ac7d026ec decides
+
+## 6. Assumed decisions
+
 - **A4** *assumed*: QA environment. Default: a CLI run of the gate in a scratch clone (§9).
   Verdict: stands - a 1-slice plan takes the short path, which has no QA agent; the implementer's live check is this CLI run and the pilot posts the walkthrough from it
 - red team: the spawn count was first written as "+1". The counter preload only reaches the suite's children, so spec 6 now says "the same".
