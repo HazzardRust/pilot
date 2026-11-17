@@ -9,7 +9,9 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "planned"
+      "state": "pushed bfbbc1c",
+      "branch": "slice/never-stuck-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s1"
     },
     {
       "slice": "S2",
@@ -49,8 +51,8 @@
       ]
     }
   ],
-  "next": "Co-pilot live on Run 1 (S1-S6). feat/never-stuck at bad7c6d4 chains on feat/handoff-mod 3bf4e4c6 (pilot base); next: take the base, spawn S1.",
-  "updatedAt": "2026-11-17T08:11:56.998Z",
+  "next": "feat/never-stuck at e259feec; S1 pushed bfbbc1c, both approve; next: pilot integrate S1, seam notes in S4.md, spawn S2.",
+  "updatedAt": "2026-11-17T08:32:28.376Z",
   "friction": [
     {
       "agent": "pilot-architect (never-stuck)",
@@ -95,6 +97,18 @@
       "what": "full suite 460-762 s, past the tool timeout; 300 s queued behind two live gates",
       "evidence": "auditor report",
       "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced by handback-send-enforce while the S1 implementer was live (spec line 3 again)",
+      "evidence": "co-pilot of itm_9b7008e91201, S1 implementer ae81e4a418d7f23cf live at 02168e00 unpushed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1 implementer reported a context compaction with no summary minutes after spawn and restarted S1",
+      "evidence": "its message to the co-pilot; 144k tokens, 94 tool uses at its first notification",
+      "size": 1
     }
   ]
 }
