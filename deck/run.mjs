@@ -58,7 +58,7 @@ import { StringDecoder } from 'node:string_decoder';
 // server loads the store, and L3's "one writer" is a property of what a module
 // graph *cannot* reach rather than of what it chooses not to call.
 import { deckUrl } from './tools.mjs';
-import { isOpen, sameRepo } from './items.mjs';
+import { sameRepo } from './items.mjs';
 import { readReach } from '../scripts/reach.mjs';
 import { RESUME_PROMPT, claudeArgs, runEnv } from './run-env.mjs';
 import { claudeBin } from '../hooks/lib/platform.js';
@@ -79,13 +79,14 @@ export { claimNameFor, takeClaim, RESUME_PROMPT, claudeArgs, runEnv };
  */
 const CLEAR = '/clear\r';
 
-// The fresh session's first prompt and the one hand-off a directory acts on live in the look now (handoff-mod S1).
-import { firstPrompt, pickup } from './run-look.mjs';
+// The fresh session's first prompt and the one hand-off a directory acts on live in the look now (handoff-mod S1),
+// and the hold, the co-pilot read and the notices (S2); the wrapper's lines keep their `run:` prefix.
+import { coPilotAt, firstPrompt, holdFor, pickup, sayAloud as sayAloudAs, sayHeld as sayHeldAs } from './run-look.mjs';
 
-export { firstPrompt };
+export { firstPrompt, holdFor };
 
-/** The pilot's own hand-off kind: known to the deck, never in `KINDS` (thread-types-phase L4). */
-const HANDOFF_KIND = 'handoff';
+const sayHeld = (handoff, coPilot, signal) => sayHeldAs(handoff, coPilot, signal, { as: 'run' });
+const sayAloud = (handoff, cwd, read, text, signal, { both = false } = {}) => sayAloudAs(handoff, cwd, read, text, signal, { both, as: 'run' });
 
 /** The deck's own default window, which is also the lane's and the stop gate's. */
 const MAX_ITEMS = 20;
@@ -124,8 +125,6 @@ const MAX_EVENT_LINE_CHARS = 4096;
  * trust boundary, which is the daemon's to close.
  */
 const CLEAR_COOLDOWN_MS = 5 * 60 * 1000;
-/** How long a live co-pilot holds a hand-off's `/clear`, from the directory's first hold (held-handoff L4). */
-const HOLD_BOUND_MS = 20 * 60 * 1000;
 
 /** How often to look for the lane's marker once the `/clear` is in. */
 const LANE_POLL_MS = 250;
@@ -212,27 +211,6 @@ const openItems = async (signal) => {
   const read = await tool('deck_read', { open: true, limit: MAX_ITEMS, messages: 'all' }, signal);
   return Array.isArray(read?.items) ? read.items : [];
 };
-
-/**
- * Whether this look may type the `/clear` past this directory's co-pilot, and the moment a turn end must follow.
- * Handoff failed on any open hand-off of the directory re-arms it, whatever the co-pilot says (held-handoff L3),
- * and the `/clear` then waits for a turn end after the press, never mid-turn; an unreadable press time reads as
- * `now`. Otherwise a live co-pilot holds it `until` 20 minutes past the directory's earliest `hold.at`, read
- * from the items so a restarted wrapper keeps the same clock; a hold not yet written counts from `now` (L4).
- * Either way a released co-pilot's `/clear` waits for the turn after its release, since that release's
- * hand-back turn may still be running.
- */
-export function holdFor(items, cwd, coPilot, now) {
-  const open = items.filter((item) => item?.kind === HANDOFF_KIND && sameRepo(item.repo, cwd) && isOpen(item));
-  const from = coPilot?.live === true ? Date.parse(coPilot.at) || 0 : 0; // a hold or press from before this co-pilot went live is not its own
-  const presses = open.filter((item) => item.hold?.rearmedAt).map((item) => Date.parse(item.hold.rearmedAt) || now).filter((time) => time >= from);
-  const released = coPilot?.live === true ? 0 : Date.parse(coPilot?.at) || 0;
-  if (presses.length > 0) return { clear: true, why: 'rearmed', since: Math.max(...presses, released) };
-  if (coPilot?.live !== true) return { clear: true, why: 'free', since: released };
-  // A hold from before the go-live counts from the go-live, never dropped: dropped, `until` would slide with `now` (QA F4).
-  const until = Math.min(now, ...open.map((item) => Date.parse(item.hold?.at)).filter(Number.isFinite).map((time) => Math.max(time, from))) + HOLD_BOUND_MS;
-  return now >= until ? { clear: true, why: 'bound', since: released } : { clear: false, ticket: coPilot.ticket, until };
-}
 
 /**
  * Look once, and if this is the moment type `/clear` and then the fresh session's
@@ -349,80 +327,6 @@ export async function clearOnce({
     await sayAloud(handoff, cwd, read, text, signal);
   }
   return true;
-}
-
-/**
- * This directory's co-pilot, `{ ticket, live, at }` or null, from `GET /api/record?repo=` (clear-waits-co-pilot L7):
- * a read that marks nothing delivered, never `deck_read` with a `repo`. A daemon older than the field answers null.
- */
-async function coPilotAt(cwd, signal) {
-  const response = await deckFetch(`/api/record?repo=${encodeURIComponent(cwd)}`, { signal: deadline(signal) });
-  if (!response.ok) throw new Error(`the deck answered /api/record with ${response.status}`);
-  return (await bodyOf(response, '/api/record'))?.coPilot ?? null;
-}
-
-/**
- * A held hand-off is marked held on the item, never by a reply, so nothing takes the hold for a pick-up
- * (held-handoff L2, A1). Every look marks it; the deck keeps the first and answers `held` only then, which is
- * when the line is logged. A deck that will not take the hold is logged and left.
- */
-async function sayHeld(handoff, coPilot, signal) {
-  try {
-    const response = await deckFetch('/api/hold', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id: handoff.id, ticket: coPilot.ticket }),
-      signal: deadline(signal),
-    });
-    if (!response.ok) {
-      await response.body?.cancel();
-      throw new Error(`the deck answered /api/hold with ${response.status}`);
-    }
-    if ((await bodyOf(response, '/api/hold'))?.held === true) {
-      logLine(`run: held ${handoff.id} for the co-pilot on ${coPilot.ticket}`);
-    }
-  } catch (err) {
-    logLine(`run: could not post the hold on ${handoff.id} (${err?.message ?? err})`);
-  }
-}
-
-/**
- * A hand-off that went wrong, told to the user rather than left as an idle session: a
- * reply on the hand-off's thread, and a line in this directory's chat when the thread
- * refuses it, as a closed one does (handoff-prompt spec 3), or always when `both`, as
- * for a `/clear` no lane answered (S17, A8 option B). Never a prompt: nothing says
- * which session it would land in. A deck that will not take a reply is logged and left;
- * the claim stays either way.
- */
-async function sayAloud(handoff, cwd, read, text, signal, { both = false } = {}) {
-  // Each post on its own: a thread the user closed during the wait refuses its reply, and
-  // the chat line is then the only notice left.
-  const say = async (where, post) => {
-    try {
-      await post();
-      return true;
-    } catch (err) {
-      logLine(`run: could not post the notice for ${handoff.id} on the ${where} (${err?.message ?? err})`);
-      return false;
-    }
-  };
-  if ((await say('thread', () => reply(handoff.id, text, signal))) && !both) return;
-  await say('chat', async () => {
-    const chat = (await read()).find((i) => i?.kind === 'chat' && sameRepo(i.repo, cwd) && typeof i.id === 'string');
-    if (chat) await reply(chat.id, text, signal);
-  });
-}
-
-/** One `deck_reply`, whose answer is prose rather than JSON, so `tool` cannot read it. */
-async function reply(id, text, signal) {
-  const response = await deckFetch('/api/tool', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ name: 'deck_reply', arguments: { id, text } }),
-    signal: deadline(signal),
-  });
-  await response.body?.cancel();
-  if (!response.ok) throw new Error(`the deck answered deck_reply with ${response.status}`);
 }
 
 /**
