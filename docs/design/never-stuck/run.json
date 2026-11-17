@@ -1,0 +1,100 @@
+{
+  "slug": "never-stuck",
+  "feature": "a run never stops silently",
+  "ticket": "itm_9b7008e91201",
+  "branch": "feat/never-stuck",
+  "base": "feat/handoff-mod",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-never-stuck",
+  "artefact": "docs/design/never-stuck/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "planned"
+    },
+    {
+      "slice": "S2",
+      "state": "",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "",
+      "after": [
+        "S4"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "",
+      "after": [
+        "S3",
+        "S4",
+        "S5"
+      ]
+    }
+  ],
+  "next": "Co-pilot live on Run 1 (S1-S6). feat/never-stuck at bad7c6d4 chains on feat/handoff-mod 3bf4e4c6 (pilot base); next: take the base, spawn S1.",
+  "updatedAt": "2026-11-17T08:11:56.998Z",
+  "friction": [
+    {
+      "agent": "pilot-architect (never-stuck)",
+      "what": "ticket grew to 24 lines and 17 slices after two merges; cut stopped for a runs decision",
+      "evidence": "architect's first findings, 16-slice cut over the 14 bound"
+    },
+    {
+      "kind": "drain",
+      "what": "S2 implementer's full report delivered to the pilot because the co-pilot was paused with children live",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "two Add threads answered and one ticket proposal cut in the pilot",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "gate1 refused 'Verdict: stands (why)'; only 'stands', 'stands - why' accepted, found by grepping the deck's tests",
+      "evidence": "deck/lineage.mjs:74; one extra commit bad7c6d4",
+      "size": 1
+    },
+    {
+      "agent": "pilot",
+      "what": "gate1 refused a pr field after the full body was written; one repost",
+      "evidence": "deck_post error: a gate1 item takes no pr",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "five Blocked items from no-verdict calls, all reissued or done, closed after the user's press",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "pilot.md has 21 tokens of headroom contested by 3 tickets; pilot tickets listed four unrelated merge candidates",
+      "evidence": "never-stuck architect report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-auditor",
+      "what": "full suite 460-762 s, past the tool timeout; 300 s queued behind two live gates",
+      "evidence": "auditor report",
+      "size": 2
+    }
+  ]
+}
