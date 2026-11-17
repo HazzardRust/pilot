@@ -355,7 +355,7 @@ export const TOOLS = [
   },
   {
     name: 'deck_ticket',
-    description: 'need: user needed; pivot: back to yellow; recut: signed back to red; replan: re-cut, design unchanged at sha, yellow',
+    description: 'need: user needed; pivot: back to yellow; recut: signed back to red',
     inputSchema: {
       type: 'object',
       properties: {
