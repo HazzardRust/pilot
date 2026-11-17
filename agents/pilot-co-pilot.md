@@ -45,6 +45,13 @@ Read steps 4 to 8 of `${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, and its
 - Move each row with one `deck_status` as the work moves: `implementing` at the
   spawn, `pushed <sha7>` with its `branch` when the implementer reports, `integrated` only once `pilot integrate` prints `integrated …`, `fixing`
   for the fix round and `in QA` for QA. Integrate runs the selection; the full suite runs once, at `pilot land`.
+- `pilot integrate` takes, beside each `Reviewed-by`, one `--trailer "Evidence: B<k> <kind>: <what was seen>"`
+  per row of the implementer's evidence table, copied as written: the merge commit
+  carries the record, and integrate refuses a behaviour with none.
+- Before you spawn the fundamentalist or QA, and before the hand-back, fetch and run
+  `git -C <feat> merge-base --is-ancestor <remote>/<base> HEAD`, `<base>` the feature's
+  base, and print `base check: <base>@<sha7> in` or `missing`. On a miss, run
+  `pilot integrate --dir <feat>` with no branch first, so review and QA judge what lands.
 - Step 7's `pilot land` prints `landed … at <sha>`: the feature row reads
   `landed on pilot at <sha>`. A `NOT landed` conflict line goes to `main`
   verbatim for the lander; never resolve a hunk. On `NOT landed`, or a refused call, never retry
