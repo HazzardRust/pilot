@@ -1,0 +1,124 @@
+{
+  "slug": "blocked-steps",
+  "feature": "Fewer blocked steps for the user",
+  "ticket": "itm_a2aeb8349afc",
+  "branch": "feat/blocked-steps",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-blocked-steps",
+  "artefact": "docs/design/blocked-steps/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "implementing",
+      "branch": "slice/blocked-steps-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "branch": "slice/blocked-steps-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S8"
+      ],
+      "branch": "slice/blocked-steps-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "branch": "slice/blocked-steps-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "branch": "slice/blocked-steps-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S5"
+      ],
+      "branch": "slice/blocked-steps-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/blocked-steps-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "planned",
+      "after": [
+        "S7"
+      ],
+      "branch": "slice/blocked-steps-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "planned",
+      "branch": "slice/blocked-steps-s9"
+    },
+    {
+      "slice": "S10",
+      "state": "planned",
+      "after": [
+        "S9"
+      ],
+      "branch": "slice/blocked-steps-s10"
+    },
+    {
+      "slice": "S11",
+      "state": "planned",
+      "after": [
+        "S8",
+        "S10"
+      ],
+      "branch": "slice/blocked-steps-s11"
+    },
+    {
+      "slice": "feature",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11"
+      ],
+      "branch": "feat/blocked-steps"
+    }
+  ],
+  "next": "pilot integrate S2 (eed2e29) into feat; S1 implementing; then pilot ready, start S4/S5/S9",
+  "updatedAt": "2026-11-17T12:52:01.056Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 slice anchors off: co-pilot heading at :90 not :94, QA Blockers at :233 not :239",
+      "evidence": "S2 report, fact sheet mismatch rows"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "full npm test 404 s, 11334 processes for a 5-line prose diff",
+      "evidence": "S2 report gate row"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "QA pin headroom down to 5.75 tokens after S2; overlapping runs touching pilot-qa.md must cut",
+      "evidence": "measure-prompt pilot-qa 5107.5 / 5113.25"
+    }
+  ]
+}
