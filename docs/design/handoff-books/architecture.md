@@ -95,6 +95,7 @@ module is shallow enough to fold; no fold slice.
 - **A1 No friction row for the hand-off itself** (itm_3a9ab2d90372). Default: no row; the count records it.
   Tradeoff: the closing report does not show how many hand-offs a run took. Rejected: a row per hand-off (evicts
   real rows under the 40 cap).
+  Answer: "No row" (itm_3a9ab2d90372), the default.
 - **A2 The first-run offer stays** (itm_6ff1fe2b3fef). Default: `auditDue` still answers `first`. Tradeoff: one extra
   offer per repository, ever. Rejected: a new repository waits 20 hand-offs.
   Answer: "Keep first-run offer" (itm_6ff1fe2b3fef), the default.
