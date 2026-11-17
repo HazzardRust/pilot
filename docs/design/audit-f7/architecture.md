@@ -64,6 +64,8 @@ run depends on it. Nothing shallow sits nearby to fold, so there is no fold slic
 - **L3 Leave landed design records as written.** They record what a past run did, under the names of that time.
   Rejected: rewriting `docs/design/deck-usability` and `thread-ownership`, which rewrites history for no reader's gain.
 - **L4 No ADR.** A rename sets no structural decision.
+- **L5 Grilling depth: forks.** The user chose it on itm_857dcf0f69a4. This rename had no fork left once the tree was
+  read, so the spec went through `main` with no assumed lines.
 
 ## 6. Assumed decisions
 
