@@ -130,7 +130,8 @@ reappearing; the look survives (deleted, its logic would reappear untested in th
 - **L7 No pty fallback.** Mods off is a plain session and spec 8's line.
 - **L8 Grilling depth "forks"** (itm_f6ffe52105fa): only decisions with materially different deliverables go out.
 - **L9 One place knows a hand-off was taken**: the look's `cleared`, logging `mod: cleared <id>` once.
-  itm_b561a9d42212's count and friction step attach there; this run builds neither.
+  itm_b561a9d42212's count is made at the SessionStart lane's claim instead (handoff-books A4, the user's press on
+  itm_5f9645e90d42, 2026-11-17); this run builds neither.
 - **L10** Superseded by L12: every prompt and guard line that names `pilot run` is reworded (S11) within the pins;
   lines that say "types `/clear`" without naming it stay, true in effect.
 - **L11** (A1 overturned, itm_092acdb3e41f) The mod acts in every main pilot session while the plugin is enabled.
