@@ -354,7 +354,7 @@ export function addReply(id, said) {
 const HOLD_TICKET = /^itm_[0-9a-f]{1,64}$/;
 
 /**
- * `pilot run` held this hand-off's `/clear` for the directory's live co-pilot (held-handoff L2): item state,
+ * The hand-off mod held this hand-off's `/clear` for the directory's live co-pilot (held-handoff L2): item state,
  * never a message, so no pick-up reader takes it for one. Written once, the first `at` kept; a closed item or one that is not a hand-off takes none. Answers whether it wrote.
  */
 export function markHold(id, ticket) {
@@ -452,7 +452,7 @@ export function beginLanding(gate2Id, { worktree }) {
  * What the press took live (gate2-frees-lane spec 1): one `from: 'deck'` line with a `seq` on the gate2, naming each
  * ticket `fillLanes` took, which wakes the pilot once, and the lander the press made due (lander spec 5, A1): the
  * pilot spawns `landerDue`'s head, or, with an open hand-off in the directory, it queues for the fresh session's first
- * prompt (`firstPrompt` in `deck/run.mjs`). An empty fill with no lander due writes nothing.
+ * prompt (`firstPrompt` in `deck/run-look.mjs`). An empty fill with no lander due writes nothing.
  */
 export function noteLaneFilled(gate2Id, taken) {
   const { items } = readDeck();

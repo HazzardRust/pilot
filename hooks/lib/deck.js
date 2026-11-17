@@ -695,36 +695,6 @@ function release(name) {
   }
 }
 
-/**
- * Stamp the end of a turn of the session `pilot run` started, for `deck/run.mjs`,
- * which types nothing into that session until it has ended a turn since the
- * hand-off was posted: keys written while a permission prompt was open answered
- * the prompt instead (2026-09-29). Keyed on the wrapper's pid, and only in its
- * directory, because every session started from inside this one inherits both;
- * the project's, since the shell's drifts into a worktree while the pilot integrates.
- */
-function markTurnEnded(env, cwd) {
-  stampRun(env, cwd, 'turn-ended');
-}
-
-/**
- * Stamp a tool call of the session `pilot run` started (handoff-prompt S2), on
- * `markTurnEnded`'s terms, so the wrapper can tell that session at work from one
- * at rest. `post-tool.js` calls it for the main session's calls only.
- */
-function markToolRan(env, cwd) {
-  stampRun(env, cwd, 'tool-ran');
-}
-
-/** `claims/<name>-<PILOT_RUN_PID>.stamp` = now, only in the wrapper's directory; never throws. */
-function stampRun(env, cwd, name) {
-  if (!env || !env.PILOT_RUN_PID || !samePath(env.PILOT_RUN_REPO, projectDir({ cwd: cwd }, env))) return;
-  try {
-    privateInbox('claims');
-    fs.writeFileSync(path.join(claimDir(), name + '-' + sessionKey(env.PILOT_RUN_PID) + '.stamp'), String(Date.now()));
-  } catch (err) { /* the wrapper waits, then gives up and types nothing */ }
-}
-
 /** Claims and session state outlive their session; drop what is plainly stale. */
 function sweep(maxAgeMs) {
   const cutoff = Date.now() - (maxAgeMs || 7 * 24 * 60 * 60 * 1000);
@@ -779,8 +749,6 @@ module.exports = {
   lastMessage: lastMessage,
   isStanding: isStanding,
   isRecord: isRecord,
-  markToolRan: markToolRan,
-  markTurnEnded: markTurnEnded,
   pickupPath: pickupPath,
   privateInbox: privateInbox,
   projectDir: projectDir,

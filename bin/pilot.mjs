@@ -9,9 +9,7 @@
  * up. `pilot deck --foreground` serves it in this process instead, for watching stderr
  * while debugging and stopping it with Ctrl-C.
  *
- * `pilot run` is the second subcommand: the pilot, started inside a terminal this process
- * owns so that the `/clear` of a hand-off can be typed for the user (`deck/run.mjs`).
- * `pilot integrate` is the third, the pilot's one call to land a slice on its feature
+ * `pilot integrate` is the second, the pilot's one call to land a slice on its feature
  * branch (`scripts/integrate.mjs`); `pilot handoff` its one call to hand the run to a fresh
  * session (`scripts/handoff.mjs`). A dispatcher and nothing else — each subcommand is one module
  * under `deck/`, and the exit code it answers with is this process's.
@@ -37,7 +35,6 @@ import { openDeck } from '../deck/open.mjs';
 import { main as serveDeck } from '../deck/daemon.mjs';
 import { storeDir } from '../deck/store.mjs';
 import { readUsageSwitch, setUsageSwitch } from '../deck/usage-switch.mjs';
-import { run as runPilot } from '../deck/run.mjs';
 import { main as handoff } from '../scripts/handoff.mjs';
 import { main as deckStatus } from '../deck/status-command.mjs';
 import { main as integrate } from '../scripts/integrate.mjs';
@@ -56,6 +53,10 @@ import { main as collectGarbage, deckPidNow, landSweep } from '../deck/gc.mjs';
 import { main as doctor } from '../deck/doctor.mjs';
 import { main as restoreStore } from '../deck/store-restore.mjs';
 import { main as waitForReply } from '../deck/wait.mjs';
+import { openPilot } from '../deck/session.mjs';
+import { runSettings, startArgs } from '../deck/run-env.mjs';
+import { readReach } from '../scripts/reach.mjs';
+import { hostPlatform } from '../hooks/lib/platform.js';
 
 // Before any git runs: no git this CLI spawns in a repository is one planted there (spec 7).
 searchPathOnly();
@@ -82,10 +83,10 @@ const usage = () => `pilot — the deck for piloted runs
   pilot deck --stop <pid>
                  stop a scratch deck by the pid --scratch printed and remove its dir;
                  refuses any other pid, the user's deck included
-  pilot run      start the pilot, and type the \`/clear\` of a hand-off for you
+  pilot start    open a pilot session in a new window (any reach)
   pilot handoff [--trailer "<line>"]...
                  the pilot's hand-off, after its deck_status: commit and push run.json in
-                 the feat worktree and post the handoff item; \`pilot run\` types the /clear
+                 the feat worktree and post the handoff item
   pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]... [--dir <worktree>]
                  in the feat/<slug> worktree (or the one --dir names): take origin/pilot, merge the slice (if
                  named), test the selection (the tests the diff touches), push, commit run.json; refuses on the default branch
@@ -129,9 +130,9 @@ const usage = () => `pilot — the deck for piloted runs
                  naming an unknown id
   pilot audit pick <report.json> <reply-file>
                  print the ids a typed pick names, one per line; unknown ids on stderr
-  pilot audit count <run key> | due | offered <run key>
-                 count this repository's run once; whether the audit offer is due
-                 (exit 0) or not (exit 1); record that run's audit offer
+  pilot audit due | offered <run key>
+                 whether the audit offer is due (exit 0; every 20 hand-offs) or not
+                 (exit 1); record that run's audit offer
   pilot analytics <slug>
                  print the run's tokens, tool calls and time per agent, as Markdown
   pilot verdicts <artefact>
@@ -207,7 +208,41 @@ hand when you want to watch it. Four environment variables change how it behaves
   PILOT_STOP_HOLD_MS   how long the Stop hook holds for a reply (default 570000 ms; raise it with the hook timeout in hooks/hooks.json)
 `;
 
-export async function run(argv) {
+/** One word of a POSIX shell line: as it is when it is plain, else single-quoted with each `'` closed and escaped. */
+const shellWord = (word) => (/^[\w@%+=:,./-]+$/.test(word) ? word : `'${word.replaceAll("'", "'\\''")}'`);
+
+/**
+ * `pilot start` (spec 13, L12, L15): one detached window through S9's `openPilot`, the one window
+ * builder, and back to the prompt at once, holding no child. Off Windows it prints the `claude`
+ * line to run instead. `deps` is `openPilot`'s, for a test's recorder and scratch home.
+ */
+function start(args, { platform = hostPlatform(), home, ...deps } = {}) {
+  if (args.length) {
+    process.stderr.write('usage: pilot start\n');
+    process.exitCode = 2;
+    return undefined;
+  }
+  const reach = deps.reach ?? readReach({ home });
+  try {
+    if (platform !== 'win32') {
+      // What the window's process gets (`runEnv`), as a POSIX shell line: the env first, every unsafe word single-quoted.
+      const env = Object.entries(runSettings(reach.level, undefined, { home }).env).map(([name, value]) => `${name}=${shellWord(value)}`);
+      console.log([...env, ...['claude', ...startArgs(reach, { home })].map(shellWord)].join(' '));
+      return undefined;
+    }
+    const child = openPilot(process.cwd(), { ...deps, platform, home, reach });
+    // A spawn that fails does so after this returns; said, never thrown at a prompt already given back.
+    child.on('error', (err) => {
+      process.stderr.write(`pilot start: could not open the window: ${err.message}\n`);
+      process.exitCode = 1;
+    });
+  } catch (err) {
+    return refuse(`pilot start: ${err.message}\n`);
+  }
+  return undefined;
+}
+
+export async function run(argv, deps) {
   // `--dir <path>` first: every verb runs there, so a sub-deck reaches a sibling worktree with no
   // `cd`, which its allowlist refuses (pilot-branch L25; QA's real run, F).
   if (argv[0] === '--dir') {
@@ -219,9 +254,11 @@ export async function run(argv) {
     } catch (err) {
       return refuse(`pilot: --dir ${dir}: ${err.message}\n`);
     }
-    return run(argv.slice(2));
+    return run(argv.slice(2), deps);
   }
   const [command, flag] = argv;
+
+  if (command === 'start') return start(argv.slice(1), deps);
 
   if (command === 'deck' && flag === '--foreground') return serveDeck();
 
@@ -294,13 +331,6 @@ export async function run(argv) {
     const open = existsSync(openFile()) ? `open ${openFile()}` : 'no open file: `pilot deck --rotate` writes one';
     console.log(up ? `The deck is up at ${deckUrl()}\n${open}` : `No deck answered at ${deckUrl()}`);
     process.exitCode = up ? 0 : 1;
-    return undefined;
-  }
-
-  if (command === 'run') {
-    // `--sub` is gone (ADR 0088), refused by name rather than read as a plain run.
-    if (flag !== undefined) return refuse(`pilot run: unknown option ${flag}\n`);
-    process.exitCode = await runPilot();
     return undefined;
   }
 

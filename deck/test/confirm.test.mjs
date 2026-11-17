@@ -15,7 +15,6 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 
 import { aSandbox, tempDeck } from '../testUtils.mjs';
-import { repoKey } from '../items.mjs';
 import { renderDeckPage, renderHomePage, renderThreadPage } from '../ui/render.mjs';
 import { install as installConfirm } from '../ui/js/confirm.mjs';
 import { aPage } from './confirm-sandbox.mjs';
@@ -215,7 +214,7 @@ const fivePresses = (t) => {
   const run = registerRun({ repo: REPO, pid: process.pid });
   const question = postItem({ kind: 'question', title: 'Which port?', body: '4321?', repo: REPO });
   const thread = createThread({ name: 'Tidy the docs', repo: REPO });
-  const strip = (runs, wrapped = {}) => rightStrip(renderHomePage(listItems(), runs, REPO, false, listDeckNumbers(), {}, Date.now(), [], null, wrapped));
+  const strip = (runs) => rightStrip(renderHomePage(listItems(), runs, REPO, false, listDeckNumbers(), {}, Date.now()));
   const ended = { ...run, pid: 999999 };
   return [
     ['Close on a thread page', closeOf(renderThreadPage(question, listItems())), '/close'],
@@ -223,11 +222,10 @@ const fivePresses = (t) => {
     ['dismiss a run', cut(renderDeckPage(listItems(), listRuns()), /<li[^>]*>(?:(?!<li).)*?<form class="dismiss".*?<\/li>/s), '/dismiss'],
     ['Remove deck', cut(strip([ended]), panel('remove')), '/remove-deck'],
     ['Start', cut(strip([ended]), panel('session')), '/start-session'],
-    ['End', cut(strip([run], { [repoKey(REPO)]: true }), panel('session')), '/end-session'],
   ];
 };
 
-test('Close, dismiss, Remove, Start and End each render a trigger and one .sure', (t) => {
+test('Close, dismiss, Remove and Start each render a trigger and one .sure', (t) => {
   for (const [press, html] of fivePresses(t)) {
     assert.ok(html, `${press}: drawn`);
     assert.equal(html.match(/ data-confirm[ >]/g)?.length, 1, `${press}: one trigger`);

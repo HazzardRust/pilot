@@ -1,4 +1,5 @@
-// The audit offer (housekeeping-audit spec 3, 4; L13, L15, A9): first use, then every tenth counted run.
+// The audit offer (housekeeping-audit spec 3, 4; L13, A9; handoff-books spec 4-5, L2, L3): first use,
+// then every twentieth counted hand-off.
 
 import './no-open.mjs';
 
@@ -11,15 +12,22 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { tempDeck } from '../testUtils.mjs';
-import { OFFER_EVERY_RUNS, auditDue, countRun, recordOffer, saveReport } from '../audit.mjs';
+import { OFFER_EVERY_HANDOFFS, auditDue, countHandoff, recordOffer, saveReport } from '../audit.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const REPO = 'D:/work/alpha';
 
-const countRuns = (repo, n, prefix = 'run') => {
+const countHandoffs = (repo, n, prefix = 'itm_h') => {
   let count = 0;
-  for (let i = 1; i <= n; i += 1) count = countRun(repo, `${prefix}-${i}`);
+  for (let i = 1; i <= n; i += 1) count = countHandoff(repo, `${prefix}${i}`);
   return count;
+};
+
+/** The record file of `repo`, made by an offer so the directory exists. */
+const recordPath = (store, repo) => {
+  recordOffer(repo, 'make-the-dir');
+  const [dir] = fs.readdirSync(path.join(store, 'audits'));
+  return path.join(store, 'audits', dir, 'record.json');
 };
 
 test('a repository with no offer and no report is due', (t) => {
@@ -30,42 +38,50 @@ test('a repository with no offer and no report is due', (t) => {
 
 test('a fresh repository counts before its first due, and a record.json with no report is still first (P10)', (t) => {
   tempDeck(t);
-  assert.equal(countRun(REPO, 'run-1'), 1, 'step 1 counts before checking due');
+  assert.equal(countHandoff(REPO, 'itm_h1'), 1);
   assert.equal(auditDue(REPO), 'first', "only record.json exists; hasReport's pattern does not match it");
 });
 
-test('recording an offer makes it not due until ten more runs are counted', (t) => {
+test('twenty hand-offs make the audit due, nineteen do not', (t) => {
   tempDeck(t);
-  countRuns(REPO, 3, 'before');
-  const record = recordOffer(REPO, 'before-3');
-  assert.deepEqual(record.counted, [], 'an offer re-arms the count');
-  assert.equal(record.offers.at(-1).run, 'before-3');
+  recordOffer(REPO, 'slug');
+  assert.equal(OFFER_EVERY_HANDOFFS, 20);
+  assert.equal(countHandoffs(REPO, 19), 19);
+  assert.equal(auditDue(REPO), null, 'nineteen counted hand-offs');
+  assert.equal(countHandoff(REPO, 'itm_h20'), 20);
+  assert.equal(auditDue(REPO), 'every', 'the twentieth');
+  assert.equal(auditDue('D:/work/beta'), 'first', 'a hand-off in another repository counts nothing there');
+});
+
+test('the same hand-off counted twice counts once', (t) => {
+  tempDeck(t);
+  assert.equal(countHandoff(REPO, 'itm_same'), 1);
+  assert.equal(countHandoff(REPO, 'itm_same'), 1, 'claimed twice');
+  assert.equal(countHandoff(REPO, 'itm_other'), 2);
+});
+
+test('an offer re-arms the count', (t) => {
+  tempDeck(t);
+  countHandoffs(REPO, 3);
+  const record = recordOffer(REPO, 'slug');
+  assert.deepEqual(record.handoffs, [], 'an offer re-arms the count');
+  assert.equal(record.offers.at(-1).run, 'slug');
   assert.equal(auditDue(REPO), null, 'offered: not due');
-
-  assert.equal(OFFER_EVERY_RUNS, 10);
-  assert.equal(countRuns(REPO, 9), 9);
-  assert.equal(auditDue(REPO), null, 'nine counted runs');
-  assert.equal(countRun(REPO, 'run-10'), 10);
-  assert.equal(auditDue(REPO), 'every', 'the tenth');
 });
 
-test('counting one run key twice counts it once', (t) => {
-  tempDeck(t);
-  assert.equal(countRun(REPO, 'feature'), 1);
-  assert.equal(countRun(REPO, 'feature'), 1, 'step 1 run twice');
-  assert.equal(countRun(REPO, 'feature#2'), 2, 'run 2 of a split feature is its own run');
-});
-
-test('a resume of the run just offered the audit does not count again (B2)', (t) => {
-  tempDeck(t);
-  assert.equal(countRun(REPO, 'run-a'), 1);
-  recordOffer(REPO, 'run-a');
-  assert.equal(countRun(REPO, 'run-a'), 0, 'the answered run resuming does not recount itself');
+test('an old record of counted runs is read and not due', (t) => {
+  const store = tempDeck(t);
+  const file = recordPath(store, REPO);
+  const runs = Array.from({ length: 10 }, (_, i) => `run-${i + 1}`);
+  fs.writeFileSync(file, JSON.stringify({ offers: [{ run: 'old', at: '2026-10-01T00:00:00.000Z' }], counted: runs }));
+  assert.equal(auditDue(REPO), null, 'ten old counted runs are not hand-offs');
+  assert.equal(countHandoff(REPO, 'itm_h1'), 1, 'the old record reads as no hand-offs');
+  assert.equal(Object.hasOwn(JSON.parse(fs.readFileSync(file, 'utf8')), 'counted'), false, 'the next write drops counted (L3)');
 });
 
 test('a saved report resets the count', (t) => {
   tempDeck(t);
-  countRuns(REPO, OFFER_EVERY_RUNS);
+  countHandoffs(REPO, OFFER_EVERY_HANDOFFS);
   saveReport(REPO, {
     repo: REPO,
     scratch: 'D:/tmp/audit',
@@ -76,12 +92,12 @@ test('a saved report resets the count', (t) => {
     rows: [],
   });
   assert.equal(auditDue(REPO), null, 'an audit ran: neither first nor every');
-  assert.equal(countRun(REPO, 'after'), 1);
+  assert.equal(countHandoff(REPO, 'itm_after'), 1);
 });
 
 test('an unreadable record is refused with its path, never parsed as a fresh repository', (t) => {
   const store = tempDeck(t);
-  countRun(REPO, 'one');
+  countHandoff(REPO, 'itm_one');
   const [dir] = fs.readdirSync(path.join(store, 'audits'));
   const file = path.join(store, 'audits', dir, 'record.json');
   for (const bad of ['{"offers": [', '"a string"']) {
@@ -103,35 +119,41 @@ const tempRepo = (t) => {
   return repo;
 };
 
-test('pilot audit due exits 0 then 1 across an offer, and 0 again on the tenth count', (t) => {
+test('pilot audit due exits 0 then 1 across an offer, and 0 again on the twentieth hand-off', (t) => {
   const store = tempDeck(t);
   const repo = tempRepo(t);
 
-  assert.equal(cli(repo, store, 'count', 'slug').stdout.trim(), '1', "step 1's real order: count before the first due");
   const first = cli(repo, store, 'due');
   assert.equal(first.status, 0, first.stderr);
   assert.equal(first.stdout.trim(), 'due first');
 
   assert.equal(cli(repo, store, 'offered', 'slug').status, 0);
-  assert.equal(cli(repo, store, 'count', 'slug').stdout.trim(), '0', 'the offered run does not recount itself (B2)');
   const answered = cli(repo, store, 'due');
   assert.equal(answered.status, 1);
   assert.equal(answered.stdout.trim(), 'not due 0');
 
-  for (let i = 1; i <= 9; i += 1) assert.equal(cli(repo, store, 'count', `slug-${i}`).stdout.trim(), String(i));
-  assert.equal(cli(repo, store, 'count', 'slug-9').stdout.trim(), '9', 'a doubled count does not move');
-  assert.equal(cli(repo, store, 'due').status, 1);
-  assert.equal(cli(repo, store, 'count', 'slug-10').stdout.trim(), '10');
-  const tenth = cli(repo, store, 'due');
-  assert.equal(tenth.status, 0);
-  assert.equal(tenth.stdout.trim(), 'due every 10');
+  countHandoffs(repo, 19);
+  assert.equal(cli(repo, store, 'due').stdout.trim(), 'not due 19');
+  countHandoff(repo, 'itm_h20');
+  const twentieth = cli(repo, store, 'due');
+  assert.equal(twentieth.status, 0);
+  assert.equal(twentieth.stdout.trim(), 'due every 20');
   assert.deepEqual(fs.readdirSync(repo), [], 'nothing written in the repository');
 });
 
-test('pilot audit offered takes a run key like count, rejecting only an empty one (P15)', (t) => {
+test('audit count is gone', (t) => {
   const store = tempDeck(t);
   const repo = tempRepo(t);
-  for (const args of [['offered', ''], ['offered', '  '], ['offered'], ['count', ''], ['count', '  '], ['count']]) {
+  const result = cli(repo, store, 'count', 'slug');
+  assert.equal(result.status, 2, result.stdout);
+  assert.match(result.stderr, /^usage: pilot audit /);
+  assert.equal(cli(repo, store, 'due').stdout.trim(), 'due first', 'nothing was counted');
+});
+
+test('pilot audit offered takes a run key, rejecting only an empty one (P15)', (t) => {
+  const store = tempDeck(t);
+  const repo = tempRepo(t);
+  for (const args of [['offered', ''], ['offered', '  '], ['offered']]) {
     const result = cli(repo, store, ...args);
     assert.equal(result.status, 2, `${args.join(' ')}: ${result.stderr}`);
   }

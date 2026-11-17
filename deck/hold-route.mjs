@@ -1,5 +1,5 @@
 /**
- * `POST /api/hold { id, ticket } -> { held }` (held-handoff L2): `pilot run` holding a hand-off's `/clear` for the
+ * `POST /api/hold { id, ticket } -> { held }` (held-handoff L2): the mod holding a hand-off's `/clear` for the
  * directory's live co-pilot. Item state, never a reply, so nothing takes the hold for a pick-up. The page is told
  * only when the hold was written, so a repeat is silent. Behind `isTrustedOrigin` and the secret like every write,
  * which the route table checks before this is reached; its own module so that table stays under the line bar.

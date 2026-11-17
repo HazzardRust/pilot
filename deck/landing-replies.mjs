@@ -69,7 +69,7 @@ export function landingReply(item, text, kind, at) {
   return true;
 }
 
-/** An item id as the deck mints it: `firstPrompt` types it into the terminal, so nothing else gets that far. */
+/** An item id as the deck mints it: the look's `firstPrompt` puts it in a session's first prompt, so nothing else gets that far. */
 const ITEM_ID = /^itm_[0-9a-f]{12}$/;
 
 /** The lander's `Resolving` on this gate2, as `landingReply` stored it (L9). */
