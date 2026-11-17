@@ -375,7 +375,6 @@ async function route(request, response, open, start, land, exit, guard) {
     return response.end();
   }
 
-
   // A ticket's arrows (ticket-making spec 7, L3): behind Create's stricter Origin
   // check, because it rewrites a queue the chain reads. `moveTicket` refuses a head
   // going up, a tail going down, and anything not an open ticket; that refusal is
