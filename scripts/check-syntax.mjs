@@ -29,6 +29,8 @@ export function syntaxErrors(cwd, { spawn = spawnSync } = {}) {
     encoding: 'utf8',
     windowsHide: true,
     maxBuffer: 64 * 1024 * 1024,
+    // A hung child is red, not a hung gate (L4).
+    timeout: 60_000,
   });
   if (child.error) throw child.error;
   let result;
@@ -98,8 +100,8 @@ function scriptLine(err, file) {
 /** The fault in `file` under `cwd`, or undefined when it parses as Node would load it. */
 function faultIn(cwd, file) {
   // Node strips a byte-order mark; a hashbang becomes a comment so the line numbers stay.
-  const source = fs.readFileSync(`${cwd}/${file}`, 'utf8').replace(/^﻿/, '').replace(/^#!/, '//');
-  const esm = moduleError(source);
+  const text = fs.readFileSync(`${cwd}/${file}`, 'utf8');
+  const source = (text.charCodeAt(0) === 0xfeff ? text.slice(1) : text).replace(/^#!/, '//');  const esm = moduleError(source);
   const asModule = () => ({ file, line: moduleLine(source, esm), message: `SyntaxError: ${esm.message}` });
   if (!esm) return undefined;
   if (file.endsWith('.mjs')) return asModule();

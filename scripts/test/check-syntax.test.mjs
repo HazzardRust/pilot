@@ -81,6 +81,7 @@ test('its verdict matches node --check', (t) => {
     'shebang.mjs': '#!/usr/bin/env node\nexport const s = 1;\n',
     'await.js': 'await Promise.resolve(1);\n',
     'cjs-error.js': 'const x = 1;\nconst y = {;\n',
+    'bom.mjs': `${String.fromCharCode(0xfeff)}export const b = 1;\n`,
   };
   // `node --check` passes a `.js` it detects as ESM without parsing it as ESM (Node 26.1), so this
   // case is judged by loading it, which is what the gate guards: `node mixed.js` throws at parse.
