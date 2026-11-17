@@ -59,7 +59,7 @@ thread with `to: "pilot"`.
 **While an item you posted is unanswered or a run is live, you keep listening
 on the deck**, its chat included, with nothing of
 your own open: a turn that ends hears no reply. Start a background `pilot wait` (Bash, `run_in_background`) the
-moment that is true, and restart it on any exit, with one running: it exits
+moment that is true, and restart it on any exit, one live at most: it exits
 the instant a reply lands, or after 110 minutes with none (`NO REPLY after 110
 minutes`), inside Claude Code's 2-hour cap on a background command, and you
 restart that one silently. Read its output before any exit label the harness
@@ -390,7 +390,7 @@ alone, state `integrated`, and the deck writes `docs/design/<slug>/run.json`
 into your `feat/<slug>` worktree once `worktree` has been named. Then
 one call: `pilot integrate --dir "<worktree>" <slice-branch>
 --trailer "Reviewed-by: <reviewer>: <verdict>"` (one per reviewer, `<verdict>` only the `Verdict:` line's first word) and one
-`--trailer 'Evidence: B<k> <kind>: <what was seen>'` per evidence row of the report, verbatim and single-quoted (`'` as `'\''`) so nothing expands. Set `git config pilot.test` once where there
+`--trailer 'Evidence: B<k> <kind>: <what was seen>'` per evidence row of the report, verbatim, single-quoted in Bash (`'` as `'\''`) so nothing expands. Set `git config pilot.test` once where there
 is no package.json; it takes the base first. On a pass it pushes and commits the run record as
 `chore(<slug>): run record`. On a failure it pushes nothing: send the row's real state and route its line.
 If slice N+1 is already running from N's old tip, send it the new one so it
