@@ -25,7 +25,7 @@ const CLAUDE = 'C:/Program Files/Claude/claude.exe';
 const aRecorder = () => {
   const calls = [];
   const spawn = (command, args, options) => {
-    const child = { command, args, options, unrefed: false, exited: false, on() {}, unref() { child.unrefed = true; } };
+    const child = { command, args, options, unrefed: false, events: [], on(event) { child.events.push(event); }, unref() { child.unrefed = true; } };
     calls.push(child);
     return child;
   };
@@ -62,7 +62,8 @@ test('start opens one window and returns', async (t) => {
   assert.equal(child.options.stdio, 'ignore');
   assert.equal(child.options.cwd, process.cwd());
   assert.equal(child.unrefed, true);
-  assert.equal(child.exited, false, 'returned with the child still running');
+  // The child never exits, and `run` has returned: nothing waits on it.
+  assert.deepEqual(child.events.filter((e) => e === 'exit' || e === 'close'), [], 'no wait on the child');
 });
 
 test("start passes the reach's plugin and rules", async (t) => {
