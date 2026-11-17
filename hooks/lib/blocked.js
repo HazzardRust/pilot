@@ -56,6 +56,10 @@ function claimPath(dir, session, key, ext) {
 function firstSight(file, now) {
   try {
     fs.mkdirSync(path.dirname(file), { recursive: true });
+  } catch (_err) {
+    return false; // the dir is unusable: no marker, so the no-verdict posts
+  }
+  try {
     fs.closeSync(fs.openSync(file, 'wx'));
     return true;
   } catch (err) {
@@ -69,6 +73,10 @@ function firstSight(file, now) {
 function claim(file, now) {
   try {
     fs.mkdirSync(path.dirname(file), { recursive: true });
+  } catch (_err) {
+    return true; // the dir is unusable (a file in its place): nothing can be claimed, so post
+  }
+  try {
     fs.closeSync(fs.openSync(file, 'wx'));
     return true;
   } catch (err) {
