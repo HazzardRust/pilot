@@ -9,13 +9,13 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "implementing",
+      "state": "integrated",
       "branch": "slice/blocked-steps-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s1"
     },
     {
       "slice": "S2",
-      "state": "integrated",
+      "state": "integrated at a11bf87c",
       "branch": "slice/blocked-steps-s2",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s2"
     },
@@ -29,13 +29,15 @@
     },
     {
       "slice": "S4",
-      "state": "planned",
-      "branch": "slice/blocked-steps-s4"
+      "state": "implementing",
+      "branch": "slice/blocked-steps-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s4"
     },
     {
       "slice": "S5",
-      "state": "planned",
-      "branch": "slice/blocked-steps-s5"
+      "state": "implementing",
+      "branch": "slice/blocked-steps-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s5"
     },
     {
       "slice": "S6",
@@ -102,8 +104,8 @@
       "branch": "feat/blocked-steps"
     }
   ],
-  "next": "pilot integrate S2 (eed2e29) into feat; S1 implementing; then pilot ready, start S4/S5/S9",
-  "updatedAt": "2026-11-17T12:52:01.056Z",
+  "next": "S1 integrate running; S4, S5 implementing; then write added slice S12 (claim() mkdir EEXIST posts nothing) on feat and spawn it, then S9",
+  "updatedAt": "2026-11-17T12:58:20.441Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -119,6 +121,21 @@
       "agent": "pilot:pilot-implementer",
       "what": "QA pin headroom down to 5.75 tokens after S2; overlapping runs touching pilot-qa.md must cut",
       "evidence": "measure-prompt pilot-qa 5107.5 / 5113.25"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck MCP CONNECTION_CLOSED in the S1 implementer's session; could not quote itm_4a138a675b88",
+      "evidence": "S1 report friction"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 slice Evidence asked tests 2 and 4 red before; they pin kept behaviour and cannot be",
+      "evidence": "S1 report pushback"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate run twice (~6.8 min each) because the first ran before review fixes",
+      "evidence": "S1 report friction"
     }
   ]
 }
