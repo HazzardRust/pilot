@@ -252,12 +252,12 @@ function postedBy(pid) {
 
 const none = (why) => ({ act: 'none', why });
 
-/** When this directory last cleared, or -Infinity. */
+/** When this directory last cleared: -Infinity for never, +Infinity (held) for a stamp that cannot be read. */
 function clearedAt(repo) {
   try {
     return fs.statSync(cooldownFile(repo)).mtimeMs;
-  } catch {
-    return -Infinity;
+  } catch (err) {
+    return err?.code === 'ENOENT' ? -Infinity : Infinity;
   }
 }
 
@@ -279,7 +279,7 @@ async function turn(repo, pid, turnEndedAt, { read, coPilot, now }) {
   const items = await read();
   const handoff = pickup(items, repo);
   if (!handoff) return none(`${posted} was closed before the turn ended`);
-  if (handoff.id !== posted) return none(`${posted} is superseded by ${handoff.id}`);
+  if (handoff.id !== posted) return none(`${posted} is superseded`); // the newer id is deck text, never echoed
   if (laneMarked(handoff.id)) return none(`${handoff.id} is already picked up`);
   const live = await coPilot(repo);
   const hold = holdFor(items, repo, live, at);
