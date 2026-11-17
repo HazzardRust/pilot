@@ -245,15 +245,14 @@ test('a Rewrite check is needed only beside a test behaviour', () => {
 
 test('behaviours are read in order with their kind', () => {
   assert.deepEqual(
-    behavioursOf(fixture('behaviours.md')).map(({ n, kind, symbol, line }) => ({ n, kind, symbol, line })),
+    behavioursOf(fixture('behaviours.md')),
     [
-      { n: 1, kind: 'test', symbol: 'lookup', line: 18 },
-      { n: 2, kind: 'look', symbol: undefined, line: 19 },
-      { n: 3, kind: 'run', symbol: undefined, line: 20 },
-      { n: 4, kind: 'read', symbol: undefined, line: 21 },
+      { n: 1, kind: 'test', symbol: 'lookup' },
+      { n: 2, kind: 'look', symbol: undefined },
+      { n: 3, kind: 'run', symbol: undefined },
+      { n: 4, kind: 'read', symbol: undefined },
     ],
   );
-  assert.equal(behavioursOf(fixture('behaviours.md'))[0].name, 'a known word returns its entry');
   assert.deepEqual(behavioursOf(fixture('good.md')), [], 'the old shape has no behaviours');
   assert.deepEqual(behavioursOf(''), []);
 });

@@ -92,12 +92,12 @@ function parse(text) {
 }
 
 /** One well-formed `## Behaviours` line read, or null. */
-function behaviourAt({ line, text }) {
+function behaviourAt({ text }) {
   const match = BEHAVIOUR.exec(text.trim());
   if (!match) return null;
-  const [, n, name, kind, evidence] = match;
+  const [, n, , kind, evidence] = match;
   const symbol = kind === 'test' ? TEST_EVIDENCE.exec(evidence)?.[1] : undefined;
-  return { n: Number(n), name, kind, symbol, line };
+  return { n: Number(n), kind, symbol };
 }
 
 /** The slice's behaviours in file order; [] for an old-shape file or none. */
