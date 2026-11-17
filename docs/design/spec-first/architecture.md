@@ -147,6 +147,8 @@ Deletion test: `behavioursOf` earns its place (two callers, check-slices and int
   Trade: a second reviewer on 10 of 10 slices. Rejected: the language reviewer alone on prose slices.
 - **A5** The QA environment (deck itm_d6f91e614d0d, the pilot's): `claude --plugin-dir <feat worktree>`
   on a scratch clone and a scratch deck, no database.
+  User's answer: `claude --plugin-dir <feat worktree>` on a scratch clone of this repository with a
+  scratch deck; the live deck and the installed plugin stay untouched; no database.
 - red team: S1 changes `vertical-slicing`, which the architect preloads under a 51-token headroom; S1's
   bar is the architect's own share no larger. S1 also owns `slice-interface.test.mjs`, which pins
   "Tests" as an anatomy field and would go red under S1 alone otherwise. S7 and S3 both describe the
