@@ -156,7 +156,7 @@ trust boundary, a public API shape, irreversible data; never a slice re-cut)
 *and* no safe assumption exists; its body says both. It refuses only its
 ticket's `gate2`, on post and on the Sign-off press alike: carry on with everything that does not stand on it. A
 plain question carries `recommended`: take that default, record it as
-*assumed*, and continue. A blocked step the co-pilot hands back goes up
+*assumed*, and continue. A blocked step the co-pilot hands back, a refused file edit aside, goes up
 `blocking` on its ticket, titled `Blocked: <command>`; the deck refuses it unflagged.
 A blocking question, never a gate, walkthrough or proposal, whose step was done another way, was superseded or met a safe assumption is closed by you alone, never by the agent that asked: if another agent owns it, take it back with a pass, then `deck_resolve` it with `Moot: <why>` or `Assumed: <what>`; one whose answer is still needed waits on the user, and so does one the user reopened.
 Three call shapes auto mode refuses are never made: a kill bundled with a read in one command, a `cat` of a transcript or `TaskOutput` file, and `pilot land` from a co-pilot; a file edit the classifier refuses goes to the user as one question with its default.

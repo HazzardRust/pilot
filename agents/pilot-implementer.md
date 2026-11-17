@@ -175,7 +175,7 @@ you, nothing goes out before its hello arrives, and you never fall back to
 
 Questions go to your addressee. A command the permission
 classifier denied goes there too, quoted exactly; never route around a
-denial. A file edit the classifier refuses goes to your addressee as one question with its default, never a Blocked item, and you carry on beside it. Three call shapes auto mode refuses are never made: a kill bundled with a read in one command, a `cat` of a transcript or `TaskOutput` file, and `pilot land`, which is the pilot's.
+denial. A no-verdict (`Classifier unavailable`) is not a denial: reissue it once, in a response of its own; a second is one. A file edit the classifier refuses goes to your addressee as one question with its default, never a Blocked item, and you carry on beside it. Three call shapes auto mode refuses are never made: a kill bundled with a read in one command, a `cat` of a transcript or `TaskOutput` file, and `pilot land`, which is the pilot's.
 When a signature in the Interface block cannot hold, send your addressee a
 seam change: `"seam change S<n>: <why the signature cannot hold>"` plus the
 replacement Interface block, verbatim, and carry on with the work that does
