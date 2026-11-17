@@ -186,8 +186,8 @@ ADR NNNN (`docs/adr/NNNN-never-stuck.md`) records L2-L7.
 - **A4 Line 4's refusal half dropped.** ToolSearch reconnects a failed MCP (seen this session).
   Verdict: stands - seen again by the pilot this session: deck reported CONNECTION_CLOSED, ToolSearch loaded it and every call worked
 - **A5 Run 2's base is Run 1** (main's call): `design/never-stuck-2` is cut from `feat/never-stuck` c19395e7 (the only
-  branch with this artefact) and rebases onto `origin/pilot` once Run 1 lands; `feat/never-stuck-2` is cut only from a
-  base containing Run 1. Trades away: Run 2 waits on S6's wait (handoff-books S3, blocked-steps S2 on pilot).
+  branch with this artefact) and `feat/never-stuck-2` is cut from the design tip at Gate 1, base `feat/never-stuck` (built on feat/<N>);
+  both rebase onto `origin/pilot` once Run 1 lands. Trades away: a rebase when Run 1 lands; slices citing S6 wait for it (§8).
   Rejected: `pilot base`'s `feat/handoff-books`, which holds neither the artefact nor S1-S5.
 - **A6 Line 25 releases at once** (itm_fca79242f7ff): no grace wait. Trades away: the `/clear` may kill the slice in
   flight (ADR 0089's reason); the fresh session re-adopts the ticket. Rejected: a 5-minute grace for the hand-back.
@@ -227,7 +227,7 @@ Width 8; longest stem 4 (S1 → S2 → S5 → S6). Runs in sequence; Run B start
 Run B's base (A5): Run B's slices stand on Run A's S1-S5 code and S6's names, so its real base is `origin/pilot`
 after `feat/never-stuck` lands, which waits on handoff-books S3 and blocked-steps S2 reaching pilot. S19 also needs
 handoff-mod's `deck/run-look.mjs` and handoff-books' guard on pilot (both there, or concluding, today).
-`design/never-stuck-2` rebases onto that pilot; `feat/never-stuck-2` is cut only from it. Run B alone: width 8
+`feat/never-stuck-2` is cut from the design tip on `feat/never-stuck` and rebases onto that pilot. Run B alone: width 8
 (S7, S8, S10, S11, S13, S15, S17, S19), longest stem 3 (S10 → S16 → S18). Line 27 has no slice (shipped).
 
 | # | Title | Spec | Files owned | After | Reviewers | File |
