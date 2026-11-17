@@ -56,21 +56,20 @@ async function onDenied(payload, deps) {
   if (!payload || typeof payload !== 'object' || !isPilotLane(payload)) return null;
   if (isFileTool(payload.tool_name)) return null;
   const repo = deck.projectDir(payload, (deps && deps.env) || process.env);
+  const reason = typeof payload.reason === 'string' ? payload.reason : '';
+  const noVerdict = reason === NO_VERDICT;
   const step = {
     repo: repo,
     command: commandOf(payload),
-    reason: typeof payload.reason === 'string' ? payload.reason : '',
+    reason: reason,
     agent: payload.agent_type,
     session: payload.session_id,
-    source: 'denied',
+    source: noVerdict ? 'no-verdict' : 'denied',
   };
-  if (step.reason === NO_VERDICT) {
-    // Keyed by the call's input, so one SendMessage's no-verdict never marks the next's (L3); a Bash
-    // call by its command alone, so a reissue with another description or timeout is the same call.
-    step.source = 'no-verdict';
-    if (payload.tool_name !== 'Bash') {
-      step.key = String(payload.tool_name) + '\0' + JSON.stringify(payload.tool_input === undefined ? null : payload.tool_input);
-    }
+  // Keyed by the call's input, so one SendMessage's no-verdict never marks the next's (L3); a Bash
+  // call by its command alone, so a reissue with another description or timeout is the same call.
+  if (noVerdict && payload.tool_name !== 'Bash') {
+    step.key = String(payload.tool_name) + '\0' + JSON.stringify(payload.tool_input === undefined ? null : payload.tool_input);
   }
   await postBlocked(step, deps);
   return null;
@@ -85,7 +84,7 @@ async function main() {
   process.exitCode = 0;
 }
 
-module.exports = { onDenied: onDenied, isPilotLane: isPilotLane, commandOf: commandOf, isFileTool: isFileTool, NO_VERDICT: NO_VERDICT };
+module.exports = { onDenied: onDenied, isPilotLane: isPilotLane, commandOf: commandOf, isFileTool: isFileTool };
 
 if (require.main === module) {
   main();

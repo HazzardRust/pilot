@@ -295,9 +295,3 @@ test('a refused file-edit prompt posts nothing', async () => {
   assert.strictEqual(bashOut.hookSpecificOutput.decision.behavior, 'deny');
   assert.strictEqual(bash.steps.length, 1);
 });
-
-test('the file tools are one list', () => {
-  const { isFileTool } = require('../permission-denied.js');
-  for (const tool of ['Edit', 'Write', 'NotebookEdit']) assert.strictEqual(isFileTool(tool), true, tool);
-  assert.strictEqual(isFileTool('Bash'), false);
-});

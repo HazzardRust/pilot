@@ -49,42 +49,39 @@ function claimPath(dir, session, key, ext) {
 }
 
 /**
- * True the first time a no-verdict of this call is seen in a window (blocked-steps L1): its marker
- * is written and nothing is posted, since the reissue usually runs. A marker older than the window
- * is a first sight again. An unwritable dir errs towards posting, as a claim does.
+ * Make the marker file: true when newly made, false when it exists and is within the window, null
+ * when the directory is unusable (a file in its place) or the open fails for another reason. An
+ * expired marker is unlinked and made afresh, once, never written through a planted link.
  */
-function firstSight(file, now) {
+function take(file, now) {
   try {
     fs.mkdirSync(path.dirname(file), { recursive: true });
   } catch (_err) {
-    return false; // the dir is unusable: no marker, so the no-verdict posts
+    return null;
   }
   try {
     fs.closeSync(fs.openSync(file, 'wx'));
     return true;
   } catch (err) {
-    if (err.code !== 'EEXIST' || !isExpired(file, now)) return false;
-    release(file); // unlinked and made afresh, as a claim is: never written through a planted link
-    return firstSight(file, function () { return -Infinity; }); // once: a fresh marker never expires
+    if (err.code !== 'EEXIST') return null;
+    if (!isExpired(file, now)) return false;
+    release(file);
+    return take(file, function () { return -Infinity; }); // once: a fresh marker never expires
   }
+}
+
+/**
+ * True the first time a no-verdict of this call is seen in a window (blocked-steps L1): its marker
+ * is written and nothing is posted, since the reissue usually runs. An unwritable dir errs towards
+ * posting, as a claim does.
+ */
+function firstSight(file, now) {
+  return take(file, now) === true;
 }
 
 /** True when this step is newly claimed; false when it already was. An unwritable dir errs towards posting. */
 function claim(file, now) {
-  try {
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-  } catch (_err) {
-    return true; // the dir is unusable (a file in its place): nothing can be claimed, so post
-  }
-  try {
-    fs.closeSync(fs.openSync(file, 'wx'));
-    return true;
-  } catch (err) {
-    if (err.code !== 'EEXIST') return true;
-    if (!isExpired(file, now)) return false;
-    release(file);
-    return claim(file, function () { return -Infinity; }); // once: a fresh claim never expires
-  }
+  return take(file, now) !== false;
 }
 
 /** Whether a claim is older than one window. */

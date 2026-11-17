@@ -68,7 +68,7 @@ finds nothing on `pilot`. It is not cut (A5). The ticket's `PILOT_DEFAULT_BRANCH
 | `onDenied` (`hooks/permission-denied.js`) | `onDenied(payload, deps) -> null`; exports `isPilotLane`, `commandOf`, `isFileTool` | the reason → source mapping; the file-tool test both hooks share | in-process |
 | `decide` (`hooks/permission-refuse.js`) | `decide(payload, deps) -> hook output \| null` | the file-tool skip of the post (the refusal stands) | in-process |
 | `install-permissions` (`scripts/install-permissions.mjs`, new) | `readablePermissions`, `denyCovers`, `webFetchRule`, `coveringRule`, `defaultBranchAskStep`, `pilotMergeStep`, `deckToolsStep`, `PILOT_MERGE_ALLOW`, `isOwnAllow`; each step `(settingsPath) => (settings) => result` | the permission steps out of `install-settings.mjs`, which imports and re-exports them; the read rules and the source-tree scratch rule | local-substitutable (settings file) |
-| `guard-status` (`hooks/lib/guard-status.js`, new) | `statusRows(payload)`, `colourFor(used, size)` | the subagent status-line rendering | in-process |
+| `guard-status` (`hooks/lib/guard-status.js`, new) | `statusRows(payload)` | the subagent status-line rendering | in-process |
 | `guard-advice` (`hooks/lib/guard-advice.js`, new) | `advice(input, seen, marks, threshold, onDeck)`'s text helpers: `howFull`, `whatComesNext`, `handoffNowIfIdle`, `workAdvice` | the advice prose | in-process |
 | `lineBar` (`scripts/test/line-bar.test.mjs`, new) | `overBar(dir, glob, bar) -> string[]` | one bar over `scripts/` and `hooks/` | in-process |
 | `pilotBranch` (`scripts/pilot-branch.mjs`) | `PILOT_BRANCH` export, read once from `process.env.PILOT_BRANCH` | the env read and its `PLAIN` check | in-process |

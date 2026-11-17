@@ -94,7 +94,6 @@ function statusRows(payload) {
 }
 
 module.exports = {
-  colourFor: colourFor,
   MAX_STATUS_INPUT_CHARS: MAX_STATUS_INPUT_CHARS,
   statusRows: statusRows,
   tokens: tokens,
