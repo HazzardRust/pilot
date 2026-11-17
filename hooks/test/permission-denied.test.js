@@ -353,3 +353,46 @@ test('a refused edit is a question', async (t) => {
   assert.strictEqual(deck.posts.length, 1, 'a Bash denial still posts');
   assert.strictEqual(deck.posts[0].title, 'Blocked: gh pr ready 576');
 });
+
+// blocked-steps S1, spec 1 (L1-L3): a no-verdict posts only when the same call meets it twice in a window.
+
+/** The reason auto mode gives when its classifier gave no verdict, as a deck item (itm_4a138a675b88) quotes it. */
+function noVerdict(extra) {
+  return denial({ agent_id: 'a1', agent_type: 'pilot:pilot-co-pilot', reason: 'Classifier unavailable', ...extra });
+}
+
+test('a no-verdict whose reissue ran posts nothing', async (t) => {
+  const deck = fakeDeck();
+  const out = await onDenied(noVerdict(), { deck, claims: scratchClaims(t), env: {} });
+  assert.strictEqual(out, null, 'a denial stays a denial');
+  assert.strictEqual(deck.posts.length, 0);
+});
+
+test('a second no-verdict of the same call posts once', async (t) => {
+  const deck = fakeDeck();
+  const claims = scratchClaims(t);
+  await onDenied(noVerdict(), { deck, claims, env: {} });
+  await onDenied(noVerdict(), { deck, claims, env: {} });
+  assert.strictEqual(deck.posts.length, 1);
+  assert.match(deck.posts[0].body, /^Auto mode denied this call, so it was not run/);
+  assert.match(deck.posts[0].body, /Reason: Classifier unavailable/);
+});
+
+test('two different SendMessage no-verdicts are two calls', async (t) => {
+  const deck = fakeDeck();
+  const claims = scratchClaims(t);
+  await onDenied(noVerdict({ tool_name: 'SendMessage', tool_input: { to: 'main', message: 'first question' } }), { deck, claims, env: {} });
+  await onDenied(noVerdict({ tool_name: 'SendMessage', tool_input: { to: 'main', message: 'second question' } }), { deck, claims, env: {} });
+  assert.strictEqual(deck.posts.length, 0);
+});
+
+test('a refusal with a verdict still posts at once', async (t) => {
+  for (const reason of [
+    '[Merge Without Review]',
+    'The server-side auto mode classifier judged this action dangerous (it gave no explanation)',
+  ]) {
+    const deck = fakeDeck();
+    await onDenied(noVerdict({ reason }), { deck, claims: scratchClaims(t), env: {} });
+    assert.strictEqual(deck.posts.length, 1, reason);
+  }
+});
