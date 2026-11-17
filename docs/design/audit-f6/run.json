@@ -1,0 +1,54 @@
+{
+  "slug": "audit-f6",
+  "feature": "audit-f6",
+  "ticket": "itm_50652e3e4f6f",
+  "branch": "feat/audit-f6",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f6",
+  "artefact": "docs/design/audit-f6/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/audit-f6-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f6-s1"
+    }
+  ],
+  "next": "S1 pushed 8ee4b85c, both reviewers approve; pilot integrate into feat/audit-f6, then walkthrough + pilot integrate --trial + gate2 (short path). Assumed: ESM .js faulted, node --check quirk not copied; name at Gate 2.",
+  "updatedAt": "2026-11-17T17:11:21.834Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "Git Bash rewrites origin/pilot:path into a Windows path; needs MSYS_NO_PATHCONV=1",
+      "evidence": "audit-f6 architect report, 2 calls",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "audit JSON is one line, grep -o cannot read it",
+      "evidence": "audit-f6 architect report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "harness forced a third hand-back with S5 and S7 implementers live; successor spawned, ~80k tokens per co-pilot",
+      "evidence": "hand-back from a7c07124d1bd86e0e",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Write/Edit turned a ﻿ escape into a literal BOM byte; an Edit with the escape reported no changes",
+      "evidence": "od -c showed 357 273 277 in the regex"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "TREE_TESTS not named in the brief: a new tree-reading test fails a census test only in the full suite, a 5-minute rerun",
+      "evidence": "select-tests.test.mjs:133"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spec 4's oracle node --check is laxer than Node's loader for ESM .js; one question round-trip",
+      "evidence": "Node 26.1: node --check e.js exits 0 on import + syntax error"
+    }
+  ]
+}
