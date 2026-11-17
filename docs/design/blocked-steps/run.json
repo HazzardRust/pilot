@@ -84,7 +84,7 @@
     },
     {
       "slice": "S11",
-      "state": "integrated",
+      "state": "integrated at 5084e504",
       "after": [
         "S8",
         "S10"
@@ -94,7 +94,7 @@
     },
     {
       "slice": "feature",
-      "state": "planned",
+      "state": "integrating principles fix round",
       "after": [
         "S1",
         "S2",
@@ -109,7 +109,8 @@
         "S11",
         "S12"
       ],
-      "branch": "feat/blocked-steps"
+      "branch": "feat/blocked-steps",
+      "pr": 87
     },
     {
       "slice": "S12",
@@ -119,10 +120,46 @@
       ],
       "branch": "slice/blocked-steps-s12",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s12"
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11",
+        "S12"
+      ],
+      "branch": "fix/blocked-steps",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-blocked-steps"
     }
   ],
-  "next": "integrate S11 (0fad7c4); then spawn fundamentalist on PR #87 and QA (read-only)",
-  "updatedAt": "2026-11-17T14:39:16.144Z",
+  "findings": [
+    "kept: F1 simplify — firstSight copies claim's mkdir/wx/expiry/retry; one take() returning true/false/null, -12",
+    "kept: F2 simplify — OWN_ALLOW_EXACT repeats the PILOT_MERGE_ALLOW scratch rule; isOwnAllow reads PILOT_MERGE_ALLOW, -1",
+    "kept: F3 drop — NO_VERDICT exported with no outside caller",
+    "kept: F4 drop — colourFor exported, only caller in its own file, -1",
+    "kept: F5 drop — 'the file tools are one list' test duplicates the decide test over all three tools, -5",
+    "dropped: N1 nit — coPilotTicketOf's deck read in guard-advice is recorded in the S10 seam; moving it back costs the 780 bar",
+    "dropped: N2 nit (QA concurs, low) — PILOT_BRANCH import-time throw fails loud and closed on an operator-set env; cosmetic stack trace, not worth a catch or lazy validation",
+    "kept: N3 nit — S10.md Interface misstates workAdvice's signature, 0",
+    "kept: N4 nit — onDenied computes source before building the step, 0",
+    "dropped: check-slices Misses:/S12 shape — a lint rule newer than the artefact; no code consequence",
+    "dropped: E-cycle guard -> guard-advice -> guard-status -> guard (new, S9 seam) — call-time require only, both reviewers verified either load order; a second fix round for a removable but harmless cycle costs more than its consequence",
+    "dropped: E-complexity postBlocked 24, decide 15, statusRows 12, onDenied 11 — F1 and N4 already cut the new branches; the rest predates this diff or is a moved function",
+    "dropped: E-duplication 15 clones / 114 lines (1.81%) — not attributed to this diff's lines; the one new copy (F1) is fixed",
+    "dropped: E-coverage/mutation/dead-code — not measured (runner env reds from spec-first's files, mutation timed out at 900 s, knip not diff-scoped); no verdict rests on them"
+  ],
+  "next": "fix round integrate running; then resume QA with the tip; teardown: remove /tmp/tmp.8roEdMN4C7 and pilot-fund-blocked-steps worktree",
+  "updatedAt": "2026-11-17T15:06:40.527Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -253,6 +290,26 @@
       "agent": "pilot:pilot-implementer",
       "what": "gate output watcher matched test names containing 'passed' and declared done early; reran with an EXIT marker",
       "evidence": "S11 report friction"
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "rejects a bare-SHA base (^origin/ only); evidence pass never returned before the fundamentalist's hand-back",
+      "evidence": "fundamentalist report §3"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S12 brief said 'firstSight shares the shape: check it the same way', which led to a copied primitive (F1)",
+      "evidence": "fundamentalist pushback"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP CONNECTION_CLOSED in QA's session: no deck_post for the walkthrough or gate2",
+      "evidence": "QA report blocker"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 1 and 6 live rows unprovable: installed plugin's hooks run, not the branch's; real settings barred",
+      "evidence": "QA report pushback"
     }
   ]
 }
