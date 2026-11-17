@@ -236,7 +236,7 @@ test('a hand-off closed or superseded before the turn ended is not cleared', asy
   const ours = handoffItem();
   const newer = handoffItem();
   stampPosted(claims, ours.id);
-  const outcome = await look('turn', { repo: OURS, turnEndedAt: Date.now() }, { ...session, read: async () => [ours, newer] });
+  const outcome = await look('turn', { repo: OURS, turnEndedAt: Date.now() }, { ...session, read: async () => [ours, newer], coPilot: async () => null });
   assert.equal(outcome.act, 'none', 'superseded');
   assert.equal(claimed(claims, ours.id) || claimed(claims, newer.id), false, 'no claim kept for either');
 });
@@ -246,7 +246,7 @@ test('a forged hand-off inside the cooldown clears nothing', async (t) => {
   const first = handoffItem();
   const forged = handoffItem();
   const items = [first];
-  const deps = (now) => ({ ...session, read: async () => items, now: () => now });
+  const deps = (now) => ({ ...session, read: async () => items, coPilot: async () => null, now: () => now });
   const clearedAt = Date.now();
   stampPosted(claims, first.id);
   assert.deepEqual(await look('turn', { repo: OURS, turnEndedAt: clearedAt }, deps(clearedAt)), { act: 'clear', id: first.id });

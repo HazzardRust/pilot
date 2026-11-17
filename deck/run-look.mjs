@@ -11,19 +11,24 @@
  * `turn` answers `clear` only in the session that posted the newest open hand-off (A6, its
  * `claims/posted-<session pid>.stamp`) and only once, by the `wx` claim `clear-typed-<id>` (L2). `cleared`
  * answers the fresh session's first prompt once the SessionStart lane has marked it (L3), drops the posted
- * stamp, and is the one place that logs the hand-off taken (L9). `start` and `unstarted` are S2's.
+ * stamp, and is the one place that logs the hand-off taken (L9). `start` writes the session's reported-in stamp
+ * and asks the deck for nothing (L12). `turn` also holds the clear while the directory's co-pilot is live, and a
+ * clear starts the directory's 5-minute cooldown (L6). A hand-off that did not start is said aloud once per id.
  */
 
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { StringDecoder } from 'node:string_decoder';
 import { pathToFileURL } from 'node:url';
 
-import { isOpen, sameRepo } from './items.mjs';
+import { isOpen, repoKey, sameRepo } from './items.mjs';
 import { landerDue } from './landing-replies.mjs';
 import { claimNameFor, laneMarked, takeClaim } from './run-claim.mjs';
 import { deckUrl } from './tools.mjs';
 import { listeningRepo } from './wait.mjs';
+import { privateDir } from '../hooks/lib/atomic-write.js';
 import { bearer } from '../hooks/lib/deck-secret.js';
 import { log } from '../hooks/lib/wrapper-log.js';
 
@@ -48,6 +53,30 @@ const MAX_RESPONSE_CHARS = 2 * 1024 * 1024;
 const claimDir = () => path.join(os.homedir(), '.claude', 'pilot-inbox', 'claims');
 
 const postedFile = (pid) => path.join(claimDir(), `posted-${pid}.stamp`);
+
+/** Reported in: the mod ran `start` in this session (S6's `pilot handoff` reads it). */
+const reportedFile = (pid) => path.join(claimDir(), `mod-${pid}.stamp`);
+
+/** The directory's cooldown, one per repository so a restarted session keeps it (L6); its mtime is the clear. */
+const cooldownFile = (repo) => path.join(claimDir(), `cleared-${crypto.createHash('sha256').update(repoKey(repo)).digest('hex').slice(0, 16)}.stamp`);
+
+/**
+ * How long after a clear no hand-off of the directory is cleared, whatever the deck says. The claim makes one
+ * hand-off clear once; it is silent about a stream of fresh ids, and the deck mints one for any loopback poster.
+ * A genuine hand-off takes tens of minutes of context to reach, so five costs the honest case nothing.
+ */
+const CLEAR_COOLDOWN_MS = 5 * 60 * 1000;
+
+/** How long a live co-pilot holds a hand-off's clear, from the directory's first hold (held-handoff L4). */
+const HOLD_BOUND_MS = 20 * 60 * 1000;
+
+/** What `unstarted` may be told, and what `cleared` adds; nothing else reaches a log line or a reply (A4). */
+const CAUSES = {
+  'no marker': 'the fresh session was not handed the body (no lane marker)',
+  refused: 'the first prompt was refused (a Stop hold?)',
+  'no turn': 'no turn started within 60 s of the first prompt',
+};
+const UNSTARTED_WHY = ['refused', 'no turn'];
 
 /**
  * The fresh session's first prompt: the fixed literal, and the lander a press queued while the old session
@@ -81,22 +110,134 @@ export function sessionPid(env, ppid) {
   return pid > 0 ? pid : ppid;
 }
 
+/** A request's own deadline, plus the caller's reason for giving up when it has one. */
+const deadline = (signal) =>
+  (signal ? AbortSignal.any([signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]) : AbortSignal.timeout(REQUEST_TIMEOUT_MS));
+
+/** A whole JSON body, or a refusal past `MAX_RESPONSE_CHARS`: the deck's port trusts any loopback caller. */
+async function bodyOf(response, what) {
+  const decoder = new StringDecoder('utf8');
+  let text = '';
+  for await (const chunk of response.body ?? []) {
+    text += decoder.write(chunk);
+    if (text.length > MAX_RESPONSE_CHARS) throw new Error(`the deck answered ${what} with more than this will read`);
+  }
+  return JSON.parse(text);
+}
+
+/** One request to the deck, the secret read first and each time (deck-token L6). */
+function deckFetch(route, { headers, ...init }) {
+  const authorization = bearer();
+  return fetch(`${deckUrl()}${route}`, { ...init, headers: { ...headers, ...authorization } });
+}
+
 /**
  * The open threads, asked for **without** a `repo`: a read naming one marks the user's replies delivered
  * (`deck/server.mjs`) and would switch off the Stop gate. The join is made on the item's own `repo`.
  */
-async function openItems() {
-  const response = await fetch(`${deckUrl()}/api/tool`, {
+async function openItems(signal) {
+  const response = await deckFetch('/api/tool', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', ...bearer() },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ name: 'deck_read', arguments: { open: true, limit: MAX_ITEMS, messages: 'all' } }),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: deadline(signal),
   });
   if (!response.ok) throw new Error(`the deck answered deck_read with ${response.status}`);
-  const body = await response.text();
-  if (body.length > MAX_RESPONSE_CHARS) throw new Error('the deck answered deck_read with more than this will read');
-  const read = JSON.parse(JSON.parse(body)?.content?.[0]?.text ?? 'null');
+  const read = JSON.parse((await bodyOf(response, 'deck_read'))?.content?.[0]?.text ?? 'null');
   return Array.isArray(read?.items) ? read.items : [];
+}
+
+/**
+ * Whether this look may clear past this directory's co-pilot, and the moment a turn end must follow.
+ * Handoff failed on any open hand-off of the directory re-arms it, whatever the co-pilot says (held-handoff L3),
+ * and the clear then waits for a turn end after the press, never mid-turn; an unreadable press time reads as
+ * `now`. Otherwise a live co-pilot holds it `until` 20 minutes past the directory's earliest `hold.at`, read
+ * from the items so a restarted session keeps the same clock; a hold not yet written counts from `now` (L4).
+ * Either way a released co-pilot's clear waits for the turn after its release, since that release's
+ * hand-back turn may still be running.
+ */
+export function holdFor(items, cwd, coPilot, now) {
+  const open = items.filter((item) => item?.kind === HANDOFF_KIND && sameRepo(item.repo, cwd) && isOpen(item));
+  const from = coPilot?.live === true ? Date.parse(coPilot.at) || 0 : 0; // a hold or press from before this co-pilot went live is not its own
+  const presses = open.filter((item) => item.hold?.rearmedAt).map((item) => Date.parse(item.hold.rearmedAt) || now).filter((time) => time >= from);
+  const released = coPilot?.live === true ? 0 : Date.parse(coPilot?.at) || 0;
+  if (presses.length > 0) return { clear: true, why: 'rearmed', since: Math.max(...presses, released) };
+  if (coPilot?.live !== true) return { clear: true, why: 'free', since: released };
+  // A hold from before the go-live counts from the go-live, never dropped: dropped, `until` would slide with `now` (QA F4).
+  const until = Math.min(now, ...open.map((item) => Date.parse(item.hold?.at)).filter(Number.isFinite).map((time) => Math.max(time, from))) + HOLD_BOUND_MS;
+  return now >= until ? { clear: true, why: 'bound', since: released } : { clear: false, ticket: coPilot.ticket, until };
+}
+
+/**
+ * This directory's co-pilot, `{ ticket, live, at }` or null, from `GET /api/record?repo=` (clear-waits-co-pilot L7):
+ * a read that marks nothing delivered, never `deck_read` with a `repo`. A daemon older than the field answers null.
+ */
+export async function coPilotAt(cwd, signal) {
+  const response = await deckFetch(`/api/record?repo=${encodeURIComponent(cwd)}`, { signal: deadline(signal) });
+  if (!response.ok) throw new Error(`the deck answered /api/record with ${response.status}`);
+  return (await bodyOf(response, '/api/record'))?.coPilot ?? null;
+}
+
+/**
+ * A held hand-off is marked held on the item, never by a reply, so nothing takes the hold for a pick-up
+ * (held-handoff L2, A1). Every look marks it; the deck keeps the first and answers `held` only then, which is
+ * when the line is logged, under `as`. A deck that will not take the hold is logged and left.
+ */
+export async function sayHeld(handoff, coPilot, signal, { as = 'mod' } = {}) {
+  try {
+    const response = await deckFetch('/api/hold', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: handoff.id, ticket: coPilot.ticket }),
+      signal: deadline(signal),
+    });
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new Error(`the deck answered /api/hold with ${response.status}`);
+    }
+    if ((await bodyOf(response, '/api/hold'))?.held === true) {
+      log(`${as}: held ${handoff.id} for the co-pilot on ${coPilot.ticket}`);
+    }
+  } catch (err) {
+    log(`${as}: could not post the hold on ${handoff.id} (${err?.message ?? err})`);
+  }
+}
+
+/**
+ * A hand-off that went wrong, told to the user rather than left as an idle session: a reply on the hand-off's
+ * thread, and a line in this directory's chat when the thread refuses it, as a closed one does (handoff-prompt
+ * spec 3), or always when `both`. Never a prompt: nothing says which session it would land in. A deck that will
+ * not take a reply is logged, under `as`, and left.
+ */
+export async function sayAloud(handoff, cwd, read, text, signal, { both = false, as = 'mod' } = {}) {
+  // Each post on its own: a thread the user closed during the wait refuses its reply, and
+  // the chat line is then the only notice left.
+  const say = async (where, post) => {
+    try {
+      await post();
+      return true;
+    } catch (err) {
+      log(`${as}: could not post the notice for ${handoff.id} on the ${where} (${err?.message ?? err})`);
+      return false;
+    }
+  };
+  if ((await say('thread', () => reply(handoff.id, text, signal))) && !both) return;
+  await say('chat', async () => {
+    const chat = (await read()).find((i) => i?.kind === 'chat' && sameRepo(i.repo, cwd) && typeof i.id === 'string');
+    if (chat) await reply(chat.id, text, signal);
+  });
+}
+
+/** One `deck_reply`, whose answer is prose rather than JSON. */
+async function reply(id, text, signal) {
+  const response = await deckFetch('/api/tool', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ name: 'deck_reply', arguments: { id, text } }),
+    signal: deadline(signal),
+  });
+  await response.body?.cancel();
+  if (!response.ok) throw new Error(`the deck answered deck_reply with ${response.status}`);
 }
 
 /** The id this session's `pilot handoff` posted, or null. */
@@ -111,15 +252,59 @@ function postedBy(pid) {
 
 const none = (why) => ({ act: 'none', why });
 
-async function turn(repo, pid, read) {
+/** When this directory last cleared, or -Infinity. */
+function clearedAt(repo) {
+  try {
+    return fs.statSync(cooldownFile(repo)).mtimeMs;
+  } catch {
+    return -Infinity;
+  }
+}
+
+/** The cooldown starts at `now`; a stamp that cannot be written costs the bound, never the clear. */
+function stampCleared(repo, now) {
+  try {
+    fs.writeFileSync(cooldownFile(repo), '');
+    fs.utimesSync(cooldownFile(repo), new Date(now), new Date(now));
+  } catch (err) {
+    log(`mod: could not stamp the cooldown (${err?.message ?? err})`);
+  }
+}
+
+async function turn(repo, pid, turnEndedAt, { read, coPilot, now }) {
   const posted = postedBy(pid); // asked first: a session that posted nothing reads nothing
   if (!posted) return none('this session posted no hand-off');
-  const handoff = pickup(await read(), repo);
-  if (!handoff) return none('no open hand-off');
-  if (handoff.id !== posted) return none(`the newest hand-off ${handoff.id} is not this session's`);
+  const at = now();
+  if (at - clearedAt(repo) < CLEAR_COOLDOWN_MS) return none('cleared less than 5 minutes ago'); // asked before the deck
+  const items = await read();
+  const handoff = pickup(items, repo);
+  if (!handoff) return none(`${posted} was closed before the turn ended`);
+  if (handoff.id !== posted) return none(`${posted} is superseded by ${handoff.id}`);
   if (laneMarked(handoff.id)) return none(`${handoff.id} is already picked up`);
+  const live = await coPilot(repo);
+  const hold = holdFor(items, repo, live, at);
+  if (!hold.clear) {
+    await sayHeld(handoff, live);
+    return { act: 'held', id: handoff.id, until: hold.until };
+  }
+  // A re-arm or a release while the turn ran: the clear waits for a turn end after it, never mid-turn.
+  if (turnEndedAt < hold.since) return none(`${handoff.id} waits for a turn end after ${new Date(hold.since).toISOString()}`);
   if (!takeClaim(claimNameFor(handoff.id))) return none(`${handoff.id} is already cleared`);
+  stampCleared(repo, at);
+  if (hold.why === 'bound') log(`mod: hold on ${handoff.id} past 20 min, clearing with the co-pilot on ${live.ticket} live`);
   return { act: 'clear', id: handoff.id };
+}
+
+/**
+ * Says once per id, whatever the cause, that a hand-off did not start: a reply on its thread (and the chat when
+ * `both`, or when the thread refuses) and one log line. The `wx` claim `said-<id>` is the once.
+ */
+async function unstarted(repo, id, why, read, { both = false } = {}) {
+  if (takeClaim(`said-${id}`)) {
+    log(`mod: not started ${id} (${why})`);
+    await sayAloud({ id }, repo, read, `hand-off ${id} not started: ${CAUSES[why]}; look at the terminal`, undefined, { both });
+  }
+  return { act: 'said', id, why };
 }
 
 /**
@@ -140,7 +325,8 @@ async function markedWithin(id, settleMs) {
 
 async function cleared(repo, pid, id, read, settleMs) {
   if (postedBy(pid) === id) fs.rmSync(postedFile(pid), { force: true });
-  if (!(await markedWithin(id, settleMs))) return none(`no lane marker for ${id}`);
+  // A clear no lane answered is said in the chat too (S17, A8 option B): the thread may be the body nobody got.
+  if (!(await markedWithin(id, settleMs))) return unstarted(repo, id, 'no marker', read, { both: true });
   log(`mod: cleared ${id}`);
   let items = [];
   try {
@@ -148,20 +334,39 @@ async function cleared(repo, pid, id, read, settleMs) {
   } catch {
     items = [];
   }
+  log(`mod: submitted ${id}`);
   return { act: 'submit', id, prompt: firstPrompt(items, repo) };
 }
 
-/** One look. `deps` stand in for the deck, the environment, the parent pid and the marker wait in a test. */
-export async function look(op, args = {}, deps = {}) {
-  const { read = openItems, env = process.env, ppid = process.ppid, settleMs = SETTLE_MS } = deps;
-  const repo = args.repo ?? listeningRepo(process.cwd());
-  const pid = sessionPid(env, ppid);
-  if (op === 'turn') return turn(repo, pid, read);
-  if (op === 'cleared' && ITEM_ID.test(args.id ?? '')) return cleared(repo, pid, args.id, read, settleMs);
-  return none(`${op} is not built yet`);
+/** Reported in: the stamp `pilot handoff` reads. Nothing is asked of the deck, so nothing chains at start (L12). */
+function start(pid) {
+  try {
+    privateDir(path.dirname(claimDir()));
+    privateDir(claimDir());
+    fs.writeFileSync(reportedFile(pid), new Date().toISOString());
+    return none('reported in');
+  } catch (err) {
+    return none(`could not report in (${err?.message ?? err})`);
+  }
 }
 
-const FLAGS = { '--repo': 'repo', '--id': 'id', '--turn-ended': 'turnEnded', '--why': 'why' };
+/**
+ * One look. `deps` stand in for the deck read, the co-pilot read, the clock, the environment, the parent pid and
+ * the marker wait in a test.
+ */
+export async function look(op, args = {}, deps = {}) {
+  const { read = openItems, coPilot = coPilotAt, now = Date.now, env = process.env, ppid = process.ppid, settleMs = SETTLE_MS } = deps;
+  const repo = args.repo ?? listeningRepo(process.cwd());
+  const pid = sessionPid(env, ppid);
+  if (op === 'start') return start(pid);
+  if (op === 'turn') return turn(repo, pid, Number.isFinite(args.turnEndedAt) ? args.turnEndedAt : 0, { read, coPilot, now });
+  if (!ITEM_ID.test(args.id ?? '')) return none(`${op} needs an item id`);
+  if (op === 'cleared') return cleared(repo, pid, args.id, read, settleMs);
+  if (op === 'unstarted' && UNSTARTED_WHY.includes(args.why)) return unstarted(repo, args.id, args.why, read);
+  return none(`${op} is not a look`);
+}
+
+const FLAGS = { '--repo': 'repo', '--id': 'id', '--turn-ended': 'turnEndedAt', '--why': 'why' };
 
 /** The op and its arguments, or null for anything refused. */
 function parse(argv) {
@@ -175,10 +380,11 @@ function parse(argv) {
     args[name] = value;
   }
   if (args.id !== undefined && !ITEM_ID.test(args.id)) return null;
-  if (op === 'cleared' && args.id === undefined) return null;
-  if (args.turnEnded !== undefined) {
-    if (!/^\d+$/.test(args.turnEnded)) return null;
-    args.turnEnded = Number(args.turnEnded);
+  if ((op === 'cleared' || op === 'unstarted') && args.id === undefined) return null;
+  if (args.why !== undefined ? op !== 'unstarted' || !UNSTARTED_WHY.includes(args.why) : op === 'unstarted') return null;
+  if (args.turnEndedAt !== undefined) {
+    if (!/^\d{1,16}$/.test(args.turnEndedAt)) return null;
+    args.turnEndedAt = Number(args.turnEndedAt);
   }
   return { op, args };
 }
