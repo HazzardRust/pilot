@@ -53,7 +53,7 @@
     },
     {
       "slice": "S7 The architect cuts behaviours, not red steps",
-      "state": "pushed de55f3b",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -62,7 +62,7 @@
     },
     {
       "slice": "S8 The fundamentalist judges tests on test behaviours and installs first",
-      "state": "implementing",
+      "state": "pushed 604c5c7",
       "after": [
         "S1"
       ],
@@ -85,8 +85,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s10"
     }
   ],
-  "next": "Co-pilot: S1, S3, S4, S9 integrated (37bfdf5e); integrating S7 de55f3b, then S2 c112fd7 after recording its seam in S2.md; S8, S10 implementing; S5 after S2; S6 last, only on a pilot carrying handoff-books, blocked-steps, never-stuck.",
-  "updatedAt": "2026-11-17T11:24:25.077Z",
+  "next": "Co-pilot: S1, S3, S4, S7, S9 integrated; integrating S2 c112fd7, then S8 604c5c7; S10 implementing; S5 after S2; S6 last, only on a pilot carrying handoff-books, blocked-steps, never-stuck.",
+  "updatedAt": "2026-11-17T11:28:27.748Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -182,6 +182,16 @@
       "agent": "pilot:pilot-implementer",
       "what": "S2's Interface typed sliceFileOf as string|null though both readers need the slice number; its Prohibited line was ambiguous where a row exists but the slice file does not",
       "evidence": "slices/S2.md:18, :37"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the co-pilot's rebase message named c1d13ce6 before origin had it: the seam commit sat local while S2's integrate ran",
+      "evidence": "origin/feat/spec-first at aca9fac0 when S8 rebased"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "an own-share bar with zero margin on a slice that must add an install step forced cutting non-rule prose (why Clean Code, KISS, SOLID are left off)",
+      "evidence": "fundamentalist 5693.25 -> 5679.5 after three measure-and-cut loops"
     }
   ]
 }
