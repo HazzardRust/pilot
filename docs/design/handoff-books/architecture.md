@@ -96,22 +96,28 @@ module is shallow enough to fold; no fold slice.
   Tradeoff: the closing report does not show how many hand-offs a run took. Rejected: a row per hand-off (evicts
   real rows under the 40 cap).
   Answer: "No row" (itm_3a9ab2d90372), the default.
+  Verdict: stands — the user's press, read on the deck by the pilot.
 - **A2 The first-run offer stays** (itm_6ff1fe2b3fef). Default: `auditDue` still answers `first`. Tradeoff: one extra
   offer per repository, ever. Rejected: a new repository waits 20 hand-offs.
   Answer: "Keep first-run offer" (itm_6ff1fe2b3fef), the default.
+  Verdict: stands — the user's press, read on the deck by the pilot.
 - **A3 Only pilot hand-offs count** (itm_748a9402637b), chain hand-offs included; `crew-handoff` items and co-pilot
   pauses do not. Tradeoff: crew context pressure does not bring the audit sooner. Rejected: a second count site in
   the guard.
   Answer: "Pilot hand-offs only" (itm_748a9402637b), the default.
+  Verdict: stands — a co-pilot's forced pause happened again today with its implementers live; counting those would bring audits on harness noise, not on the pilot's context.
 - **A4 The count site is the SessionStart lane's claim** (itm_5f9645e90d42), amending handoff-mod L9. Default: lane,
   so a typed `/clear` with mods off counts too. Tradeoff: amends a signed plan's lock. Rejected: the look's
   `cleared` (L9 as signed: mods-off hand-offs uncounted).
   Answer: "Lane (amend L9)" (itm_5f9645e90d42), the default. Edit owed to handoff-mod's artefact (main makes it on
   `feat/handoff-mod`): L9's last sentence becomes "itm_b561a9d42212's count is made at the SessionStart lane's claim
   instead (handoff-books A4, itm_5f9645e90d42); this run builds neither."
+  Verdict: stands — the user's press, read on the deck by the pilot; the L9 edit is made on `feat/handoff-mod`.
 - **A5 A "+n rows" line on `pilot handoff`** (itm_1ab20e272b77, main's). Answer: "Drop it". Not built.
+  Verdict: stands — the user's press; nobody acts on the number.
 - **A6 The audit is offered at the hand-off that makes it due** (itm_3f291c03f1c1, main's). Answer: "At the hand-off";
   spec 6, folded into S1 (the lane's notice line and pilot.md's audit paragraph).
+  Verdict: stands — the user's press.
 
 ## 7. Out of scope
 
