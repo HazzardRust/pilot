@@ -26,6 +26,7 @@ const READS = [
   'Bash(node bin/pilot.mjs deck --scratch *)',
 ];
 const WAIT = 'Bash(pilot wait *)';
+const NODE_SCRATCH = 'Bash(node bin/pilot.mjs deck --scratch *)';
 
 function settingsFile(t, contents) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-reads-'));
@@ -71,6 +72,15 @@ test("a user's deny on pilot wait wins", (t) => {
   assert.ok(!readJson(file).permissions.allow.includes(WAIT), 'the rule is not written');
   assert.deepEqual(report.pilotMerge.covered, [WAIT]);
   assert.match(report.pilotMerge.notes.join('\n'), /Bash\(pilot wait \*\)/, 'the report says so');
+});
+
+test("a user's deny on node wins over the source-tree rule", (t) => {
+  const file = settingsFile(t, JSON.stringify({ permissions: { deny: ['Bash(node *)'] } }));
+
+  const report = install(file);
+
+  assert.ok(!readJson(file).permissions.allow.includes(NODE_SCRATCH), 'the rule is not written');
+  assert.deepEqual(report.pilotMerge.covered, [NODE_SCRATCH]);
 });
 
 test('a second install adds nothing', (t) => {

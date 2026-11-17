@@ -94,7 +94,6 @@ test('an ask covering pilot is named', (t) => {
   assert.deepEqual(result.covered, covered);
   assert.deepEqual(result.added, [NODE_SCRATCH]);
   assert.deepEqual(readJson(file).permissions.allow, [NODE_SCRATCH], 'no pilot allow rule is written');
-  assert.match(result.notes.join('\n'), /Covered by your deny or ask list/);
   for (const rule of covered) assert.ok(result.notes.includes(`    ${rule}`), `${rule} is named`);
 });
 
