@@ -26,3 +26,10 @@ test('the ask step answers from its own module', async () => {
   assert.ok(result.added.includes('Bash(gh pr merge *)'));
   assert.ok(result.added.includes('Bash(git push origin *:main)'));
 });
+
+test('the own-rule test answers from its own module', async () => {
+  const { isOwnAllow } = await import('../install-permissions.mjs');
+  assert.equal(isOwnAllow('Bash(pilot land *)'), true);
+  assert.equal(isOwnAllow('mcp__plugin_pilot_deck__*'), true);
+  assert.equal(isOwnAllow('Bash(npm test)'), false);
+});
