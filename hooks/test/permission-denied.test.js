@@ -378,6 +378,17 @@ test('a second no-verdict of the same call posts once', async (t) => {
   assert.match(deck.posts[0].body, /Reason: Classifier unavailable/);
 });
 
+test('a claims path that is a file still posts', async (t) => {
+  const claims = path.join(scratchClaims(t), 'a-file');
+  fs.writeFileSync(claims, '');
+  const denied = fakeDeck();
+  await onDenied(denial(), { deck: denied, claims, env: {} });
+  assert.strictEqual(denied.posts.length, 1, 'a denied step posts');
+  const unsure = fakeDeck();
+  await onDenied(noVerdict(), { deck: unsure, claims, env: {} });
+  assert.strictEqual(unsure.posts.length, 1, 'a first no-verdict posts: its marker cannot be written');
+});
+
 test('two different SendMessage no-verdicts are two calls', async (t) => {
   const deck = fakeDeck();
   const claims = scratchClaims(t);
