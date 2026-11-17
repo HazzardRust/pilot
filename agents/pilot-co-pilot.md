@@ -38,19 +38,19 @@ Read steps 4 to 8 of `${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, and its
   before you spawn.
 - A found issue is built in the run as an added slice, the grilling skill's
   build-now rule.
-- After every spawn and every integration, run `pilot ready --ticket <id> --slots <n>`:
+- After each spawn and integration, run `pilot ready --ticket <id> --slots <n>`:
   <n> is your `yellow` budget less every live agent, you included; start each slice
   it prints, from the tip it names.
 - Move each row with one `deck_status` as the work moves: `implementing` at the
   spawn, `pushed <sha7>` with its `branch` when the implementer reports, `integrated` only once `pilot integrate` prints `integrated …`, `fixing`
   for the fix round and `in QA` for QA. Integrate runs the selection; the full suite runs once, at `pilot land`.
 - Beside each `Reviewed-by`, `pilot integrate` takes one
-  `--trailer "Evidence: B<k> <kind>: <what was seen>"` per evidence row of the
-  report, as written; it refuses a behaviour with none.
+  `--trailer 'Evidence: B<k> <kind>: <what was seen>'` per evidence row of
+  the report verbatim, single-quoted (`'` as `'\''`) so nothing expands.
 - Before the fundamentalist, QA and hand-back, fetch, run
   `git -C <feat> merge-base --is-ancestor <remote>/<base> HEAD` and print
   `base check: in` or `missing`; on a miss, `pilot integrate --dir <feat>` with no
-  branch first, so review and QA judge what lands.
+  branch first, so review and QA see the base.
 - Step 7's `pilot land` prints `landed … at <sha>`: the feature row reads
   `landed on pilot at <sha>`. A `NOT landed` conflict line goes to `main`
   verbatim for the lander; never resolve a hunk. On `NOT landed`, or a refused call, never retry
