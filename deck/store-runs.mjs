@@ -39,10 +39,7 @@ import {
   repoKey,
   sameRepo,
 } from './runs.mjs';
-import {
-  SliceRefusal,
-  mergeSliceTable,
-} from './status.mjs';
+import { SliceRefusal, mergeSliceTable } from './status.mjs';
 import {
   DeckRefusal,
   MAX_WAIT_REPLIES,
@@ -67,6 +64,7 @@ import {
 } from './store-core.mjs';
 import {
   clearSwitch,
+  finishYieldIn,
   parkedTicketOf,
   refuseCoPilotSwitch,
 } from './store-tickets.mjs';
@@ -380,7 +378,7 @@ export function setCoPilot(ticketId, live) {
     const coPilots = deck.coPilots !== null && typeof deck.coPilots === 'object' && !Array.isArray(deck.coPilots) ? deck.coPilots : {};
     deck.coPilots = { ...coPilots, [repoKey(ticket.repo)]: { ticket: ticketId, live: true, at: new Date().toISOString() } };
     if (ticket.plan && typeof ticket.plan === 'object' && ticket.plan.grantedAt === undefined) ticket.plan.grantedAt = deck.coPilots[repoKey(ticket.repo)].at; // first grant, never-stuck L4
-  } else if (!releaseIn(deck, ticket.repo, ticketId)) {
+  } else if (!(ticket.yielding ? finishYieldIn(deck, ticket) : releaseIn(deck, ticket.repo, ticketId))) { // a drained yield hands back paused (never-stuck L6)
     return storedCoPilot(deck, ticket.repo);
   }
   writeDeck(deck);

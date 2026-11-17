@@ -775,8 +775,6 @@ export function closeItem(id) {
   });
 }
 
-/** The open ticket named, or the refusal a queue write gives for anything else. */
-
 export { mayWrite };
 
 /**
@@ -787,9 +785,10 @@ export { mayWrite };
  */
 export function resumeIn(deck, question) {
   const ticket = question?.kind === KIND_QUESTION && deck.items.find((item) => item?.id === question.ticket && item.kind === KIND_TICKET);
-  if (!isPaused(ticket) || !sameRepo(ticket.repo, question.repo)) return undefined;
   const answered = (item) =>
     isAnswered(item) || (!isOpen(item) && isPilotClose(item, item.resolution, item.resolvedBy));
+  if (ticket?.yielding?.question === question.id && answered(question)) delete ticket.yielding; // an answer cancels a drain (never-stuck L6)
+  if (!isPaused(ticket) || !sameRepo(ticket.repo, question.repo)) return undefined;
   const naming = (item) =>
     item === question || item?.id === pausedOn(ticket) || (isBlocking(item) && item.ticket === ticket.id && sameRepo(item.repo, ticket.repo));
   if (deck.items.some((item) => naming(item) && !answered(item))) return undefined;

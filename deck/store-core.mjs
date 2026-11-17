@@ -744,11 +744,12 @@ function storedCoPilot(deck, dir) {
   return typeof entry?.ticket === 'string' && typeof entry.at === 'string' ? entry : null;
 }
 
-/** Release `dir`'s live co-pilot if it names `ticketId` (any, when none), stamping `at` for the look's turn-end check (L5). */
+/** Release `dir`'s live co-pilot if it names `ticketId` (any, when none), stamping `at` for the turn-end check (L5); a drain outlives no release (never-stuck L6). */
 function releaseIn(deck, dir, ticketId) {
   const entry = storedCoPilot(deck, dir);
   if (!entry || entry.live !== true || (ticketId !== undefined && entry.ticket !== ticketId)) return false;
   deck.coPilots[repoKey(dir)] = { ticket: entry.ticket, live: false, at: new Date().toISOString() };
+  delete deck.items.find((item) => item?.id === entry.ticket && item.kind === KIND_TICKET)?.yielding;
   return true;
 }
 

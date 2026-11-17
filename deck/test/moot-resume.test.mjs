@@ -37,6 +37,7 @@ function pausedOn(title) {
   setCoPilot(ticket.id, true);
   const question = blocking(ticket, title);
   yieldTicket(ticket.id, question.id);
+  setCoPilot(ticket.id, false); // the drain is over (never-stuck L6)
   assert.equal(stored(ticket.id).state, 'green');
   return { ticket, question };
 }
