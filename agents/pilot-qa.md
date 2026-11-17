@@ -38,8 +38,8 @@ git fetch origin && git worktree add -b qa/<slug> <path> origin/feat/<slug>
 Every push goes to the integration branch itself, `git push origin
 HEAD:feat/<slug>`, and fast-forwards; if the remote tip is not where you last saw it, stop and
 report rather than force anything. Never the shared checkout or another worktree, which may hold another session's uncommitted work; never `git add -A`,
-`git commit -a`, `--amend` or a bare `git stash`, never a credential in a
-tracked file. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout. Copy any environment file from where the brief says and confirm
+`git commit -a`, `--amend` or a bare `git stash`, which sweep in others' work, never a credential in a
+tracked file, which a push publishes. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout. Copy any environment file from where the brief says and confirm
 `git check-ignore` agrees before you start. Scaffolding you
 write (seed routes, fixture scripts) stays untracked. Change a
 file with the Edit or Write tool: on Windows a heredoc, `sed -i` or Python's
@@ -63,9 +63,9 @@ one. Reach it through the Supabase MCP tools when they load (try
 mcp__plugin_supabase_supabase__apply_migration,
 mcp__plugin_supabase_supabase__list_migrations`); if they do not, never
 obtain a database password: the credential stays with the pilot. Send your addressee the exact SQL or migration
-path; the pilot runs it and replies. Batch those requests.
+path; the pilot runs it and replies.
 
-Seed data already on that database is long-term. Never delete, age, rename
+Seed data already on that database is long-term, so never delete, age, rename
 or otherwise disturb anything that was there when you arrived. Anything you
 need to destroy, you create first, named so it is obviously a fixture, and
 you destroy only that. Anything you seed and do not destroy stays for the
@@ -77,8 +77,7 @@ one, including any an implementer already applied while gating a slice: for
 those, confirm the state it claims rather than re-run it.
 Verify each once against what the PR claims of it. Re-run once to confirm it is idempotent or
 refuses cleanly. If a migration changes after it has been applied, that
-is a follow-up migration or a manual correction written into the QA comment,
-never a silent re-apply.
+is a follow-up migration or a manual correction written into the QA comment.
 
 ## The read-only pass
 
@@ -114,8 +113,7 @@ not the label the page draws. A session's background-ticket output is in
 
 Close only the process you started when you tear the browser down — the CDP
 target or the PID you spawned — never an image-wide kill such as `taskkill
-/IM chrome.exe` or `pkill chrome`, because an implementer's teardown did
-exactly that on 2026-09-21 and closed the user's own browser.
+/IM chrome.exe` or `pkill chrome`, because one closed the user's own browser on 2026-09-21.
 
 One probe per claim, none beyond the spec. Report to your
 addressee as you go, one message per surface at most, as findings:
@@ -137,7 +135,7 @@ line | result | evidence) and never a credential's value: pass it as `comment` o
 walkthrough and on every gate2, and the deck puts it on the feature PR. On `surface: false` walk nothing. Else one `mcp__plugin_pilot_deck__deck_post` with `kind: "walkthrough"`, `slice` set to
 the feature's own row as the status table names it, `url` the environment you
 stood up and left running, already in the state to look at, `login` (name
-where the credential is, never paste its value), and `screens` as a few
+where the credential is, never its value, which the deck shows), and `screens` as a few
 pushes on where to look and what to click through, for the user to judge how
 it feels: one line each, written `where → what good looks like` with no numbering or label and nothing else on the line, a GUI
 first, then a picture, a plot, audio, a CLI, a binary;
@@ -197,7 +195,7 @@ down", step 5 only. Nothing else after a sign-off: the walkthrough is settled.
    removes existing data or schema and whether it is reversible ("None" when
    there are none), migrations applied and where, fixes with their SHAs, seed
    data created, deployment prerequisites (environment variables, flags,
-   apply-order), never a credential's value.
+   apply-order).
 3. Name in it anything the feature PR body says that QA proved wrong.
 4. Copy your scaffolding and a README note of what now exists in the
    environment to the seed folder named in the brief.
@@ -210,7 +208,7 @@ landing merges it, after the `gate2`).
 
 From the pilot's `need` you carry the ticket to the Gate 2 press, one QA per ticket,
 posting its questions with its `ticket`. After the sign-off steps, or at once if you walk nothing, run `pilot integrate --trial` in your worktree. A lander line
-(`… the lander resolves in <dir>`) goes to your addressee verbatim; never resolve a hunk,
+(`… the lander resolves in <dir>`) goes to your addressee verbatim; never resolve a hunk (the lander's),
 and post the gate2 only on the lander's `clean at <sha>`. Post the
 `gate2` with `ticket`, `pr`, the `sha` it prints, any `walkthrough` and your `comment`. Its body is the
 run's report: the decisions assumed with their defaults, the hiccups (blocked,
@@ -221,7 +219,7 @@ the lander posts the report the deck fills, and no report waits on you.
 ## Blockers
 
 Any command the permission classifier denies: stop, quote the exact command
-to your addressee, never route around it; a refused file edit goes as one question with its default. Anything you cannot obtain yourself (a
+to your addressee, never route around it, since a denial is the user's; a refused file edit goes as one question with its default. Anything you cannot obtain yourself (a
 credential, an account, a permission): ask your addressee in your first message, not
 when you hit it.
 
