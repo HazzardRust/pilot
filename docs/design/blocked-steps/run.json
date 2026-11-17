@@ -21,7 +21,7 @@
     },
     {
       "slice": "S3",
-      "state": "implementing",
+      "state": "integrated",
       "after": [
         "S8"
       ],
@@ -60,7 +60,7 @@
     },
     {
       "slice": "S8",
-      "state": "integrated",
+      "state": "integrated at 00e022fa",
       "after": [
         "S7"
       ],
@@ -84,12 +84,13 @@
     },
     {
       "slice": "S11",
-      "state": "planned",
+      "state": "pushed 0fad7c4",
       "after": [
         "S8",
         "S10"
       ],
-      "branch": "slice/blocked-steps-s11"
+      "branch": "slice/blocked-steps-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s11"
     },
     {
       "slice": "feature",
@@ -120,8 +121,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s12"
     }
   ],
-  "next": "integrate S8 (c08e23e, verdict WARN judged non-blocking); S3 implementing; then S11",
-  "updatedAt": "2026-11-17T14:11:37.718Z",
+  "next": "S3 integrate running; then S11 (0fad7c4); then fundamentalist + QA",
+  "updatedAt": "2026-11-17T14:35:30.107Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -227,6 +228,31 @@
       "agent": "pilot:pilot-implementer",
       "what": "/tmp/s8gate.log shared with another session's output",
       "evidence": "S8 report friction"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 owned-files list omitted install.test.mjs, install-allow-merge.test.mjs and the ADR index, which pin the full rule list",
+      "evidence": "S3 first gate: 4 reds, all from those pins"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test wrapped in background exited 0 with 4 reds",
+      "evidence": "S3 report friction"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "co-pilot brief said take the next free ADR number, against ADR 0167's NNNN-until-landing rule",
+      "evidence": "S3 assumed: ADR 0184"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "rebase left a duplicate ADR index row; only npm run adr-index removed it",
+      "evidence": "S3 fix round report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate output watcher matched test names containing 'passed' and declared done early; reran with an EXIT marker",
+      "evidence": "S11 report friction"
     }
   ]
 }
