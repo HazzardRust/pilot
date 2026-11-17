@@ -49,7 +49,9 @@ import atomicWrite from '../hooks/lib/atomic-write.js';
 import { pathKey } from '../hooks/lib/platform.js';
 import { PLUGIN_ID, readReach, rulesPlan } from './reach.mjs';
 import {
+  DEFAULT_BRANCH_ASK,
   coveringRule,
+  defaultBranchAskStep,
   denyCovers,
   domainOf,
   readablePermissions,
@@ -460,65 +462,6 @@ function deckToolsStep(settingsPath) {
           allow: [...(draft.permissions?.allow ?? []), DECK_TOOLS_RULE],
         },
       }),
-    };
-  };
-}
-
-/**
- * L22: every session on the machine asks before a push or a merge to the default branch,
- * in the forms people write. Ask rules only - an allow would grant the push, and a deny
- * would block the user's own pushes to main in every project. Bash rules match the text
- * as written, so `git -C . push`, `HEAD:refs/heads/main` or a push with an upstream set
- * slip past; the guard in code and branch protection are the real controls (L23).
- */
-const DEFAULT_BRANCH_ASK = [
-  'Bash(git push origin main)', 'Bash(git push origin main *)', 'Bash(git push origin *:main)',
-  'Bash(git push origin master)', 'Bash(git push origin master *)', 'Bash(git push origin *:master)',
-  'Bash(gh pr merge)', 'Bash(gh pr merge *)',
-];
-
-function defaultBranchAskStep(settingsPath) {
-  return (settings) => {
-    const permissions = readablePermissions(settingsPath, settings);
-    const ask = permissions.ask ?? [];
-    const deny = permissions.deny ?? [];
-
-    const denied = DEFAULT_BRANCH_ASK.filter((rule) => deny.some((d) => denyCovers(d, rule)));
-    const alreadyPresent = DEFAULT_BRANCH_ASK.filter((r) => !denied.includes(r) && ask.includes(r));
-    const added = DEFAULT_BRANCH_ASK.filter((r) => !denied.includes(r) && !ask.includes(r));
-
-    const notes = [];
-    if (added.length) {
-      notes.push(
-        `Added ${added.length} ask rule(s) to ${settingsPath}, so a session asks before a push or merge to the default branch:`,
-        ...added.map((rule) => `    ${rule}`),
-      );
-    }
-    if (alreadyPresent.length) {
-      notes.push(`Ask rules already present, left as they were: ${alreadyPresent.join(', ')}.`);
-    }
-    if (denied.length) {
-      notes.push(
-        'Covered by your deny list, so left alone rather than added to ask:',
-        ...denied.map((rule) => `    ${rule}`),
-      );
-    }
-
-    return {
-      key: 'ask',
-      state: added.length ? 'added' : 'nothing-to-add',
-      added,
-      alreadyPresent,
-      denied,
-      notes,
-      ...(added.length
-        ? {
-            change: (draft) => ({
-              ...draft,
-              permissions: { ...draft.permissions, ask: [...ask, ...added] },
-            }),
-          }
-        : {}),
     };
   };
 }
