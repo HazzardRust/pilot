@@ -39,7 +39,7 @@
     },
     {
       "slice": "S5 The co-pilot carries evidence into the merge and checks its base",
-      "state": "implementing (respawned after a context loss)",
+      "state": "pushed 2e16509",
       "after": [
         "S2"
       ],
@@ -79,7 +79,7 @@
     },
     {
       "slice": "S10 The helpers keep only reasoned absolutes",
-      "state": "pushed be3dfcc",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -87,8 +87,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s10"
     }
   ],
-  "next": "Co-pilot: S1, S2, S3, S4, S7, S8, S9 integrated (55764317); integrating S10 be3dfcc; S5 implementing; S6 held for its base (handoff-books, blocked-steps, never-stuck on pilot).",
-  "updatedAt": "2026-11-17T11:32:14.102Z",
+  "next": "Co-pilot: S1-S4, S7-S10 integrated (0a862b5e); S5 pushed 2e16509, security re-review of its quoting fix before integrate; S6 held for its base (handoff-books, blocked-steps, never-stuck on pilot).",
+  "updatedAt": "2026-11-17T11:38:21.840Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -209,6 +209,21 @@
       "agent": "pilot:pilot-implementer",
       "what": "S5's first implementer, like S8's, handed back after 3 tool calls and ~26 s at ~50k tokens, its context summarised away with nothing built; both were spawned then sent the co-pilot hello at once",
       "evidence": "S5 usage 50294 tokens / 3 tools / 25.9 s; S8 50582 / 3 / 27.8 s; reflog 'reset: moving to HEAD'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the co-pilot's 2832.5 own-share limit leaves no headroom: S5's additions were paid for with byte-level cuts",
+      "evidence": "7 measure-and-cut rounds, 2983 -> 2832.5"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the fact sheet could not find the pilot integrate --trailer parser",
+      "evidence": "scripts/integrate.mjs:598, outside its search"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a push failed with no reason and went through on retry",
+      "evidence": "'failed to push some refs', then ee688e04..5d499780"
     }
   ]
 }
