@@ -58,7 +58,7 @@ export function takeClaim(name) {
 /**
  * Give a claim back. The file's name is a claim that the `/clear` *was typed*,
  * so a claim taken for a write that then failed is a lie that would stop every
- * later attempt — including a fresh `pilot run` — from typing it. `unclaim` in
+ * later attempt — including a fresh session's mod — from typing it. `unclaim` in
  * `hooks/lib/deck.js` is the same idiom, spelled here for the same reason as
  * the rest of this section.
  */

@@ -1,6 +1,6 @@
 /**
  * S5 of audit-f1-f7: the gate carries a per-test timeout (spec 6, 7; L5). Its hung-fake
- * test copied `deck/test/run.test.mjs`, which left with `pilot run` (handoff-mod S7).
+ * test copied `deck/test/run.test.mjs`, which left with the `run` verb (handoff-mod S7).
  */
 
 import { test } from 'node:test';

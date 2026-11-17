@@ -388,7 +388,7 @@ function renderSession(tab, refused = null) {
   // Resume when the deck holds a ticket, Start when it does not (FF).
   if (tab?.ended && isWindows()) {
     const verb = tab.holding ? 'Resume' : 'Start';
-    return renderSessionForm(tab, verb, 'A terminal window opens running pilot run.', reason);
+    return renderSessionForm(tab, verb, 'A terminal window opens running the pilot.', reason);
   }
   return '';
 }

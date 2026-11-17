@@ -8,7 +8,7 @@
  * about what reaches git and the deck, and what the one line says when it did not.
  *
  * Every case runs against a scratch bare origin and a stub deck on a port the operating
- * system hands out. Nothing here may post to the real deck: a live `pilot run` watching
+ * system hands out. Nothing here may post to the real deck: a live hand-off mod watching
  * a real repository would clear a real session on a `handoff` item.
  */
 

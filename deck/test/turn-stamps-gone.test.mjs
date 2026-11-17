@@ -1,6 +1,6 @@
 /**
- * handoff-mod S8 (spec 3, 7): nothing writes or reads a turn stamp, and nothing reads a `pilot run`
- * env name; the mod's `turn.complete` is the only turn signal. The scans read code under bin, deck,
+ * handoff-mod S8 (spec 3, 7): nothing writes or reads a turn stamp, and nothing reads the retired
+ * wrapper's env name; the mod's `turn.complete` is the only turn signal. The scans read code under bin, deck,
  * hooks and scripts, never a test directory, where these names appear as fixtures.
  */
 import { test } from 'node:test';

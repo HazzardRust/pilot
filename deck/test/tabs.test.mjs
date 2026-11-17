@@ -1191,7 +1191,7 @@ test('Esc follows the arrow a move in place drew, and not one it took away (hand
 
 // --- End and the wrapper streams leave the deck (handoff-mod S10, spec 12) ----------
 
-/** `GET /events?wrapper=` as `pilot run`'s wrapper opened it: no Origin; closed when the test ends. */
+/** `GET /events?wrapper=` as the retired wrapper opened it: no Origin; closed when the test ends. */
 const aWrapperStream = async (t, base, repo) => {
   const aborter = new AbortController();
   t.after(() => aborter.abort());

@@ -129,7 +129,7 @@ function subagentInput(home, over, pct) {
  * A deck that records what was asked of it, on a port of this test's own.
  *
  * `runs` is which repositories it believes are on it and `items` is what it is
- * holding for them — together, the join a session has to pass to be a pilot run
+ * holding for them — together, the join a session has to pass to be a piloted run
  * rather than an ordinary session that happens to have this plugin installed.
  * `items` defaults to one item per run, because that is the ordinary case and
  * saying so here keeps it out of every test; a test that wants a session which
@@ -960,10 +960,10 @@ test('a session whose repository is not on the deck never posts to it', async fu
  * under its own working directory, and starts a deck when none is answering —
  * so "is a registered run" is true of every session on a machine with this
  * installed, and the wording gate would let through exactly the agent it was
- * added to protect. A pilot run has posted something: intake comes before any
+ * added to protect. A piloted run has posted something: intake comes before any
  * implementer exists. A session that merely loaded the plugin never posts.
  */
-test('a registered run the deck is holding nothing for is not a pilot run', async function (t) {
+test('a registered run the deck is holding nothing for is not a piloted run', async function (t) {
   const home = scratchHome(t);
   const input = subagentInput(home, null, 44);
   const posted = await stubDeck(t, { runs: [input.cwd], items: [] });
@@ -978,7 +978,7 @@ test('a registered run the deck is holding nothing for is not a pilot run', asyn
   assert.deepStrictEqual(postsOf(posted), [], 'and nothing is put on a deck that has no run for it');
 });
 
-test("another run's work on the same deck does not make this session a pilot run", async function (t) {
+test("another run's work on the same deck does not make this session a piloted run", async function (t) {
   const home = scratchHome(t);
   const input = subagentInput(home, null, 44);
   // One deck serves every repository on this machine, so the item has to be
@@ -1053,7 +1053,7 @@ test('a busy deck cannot bury the run’s own items, because the read asks for t
   assert.strictEqual(postsOf(posted).length, 1);
 });
 
-test('a deck that cannot answer for its items is not a pilot run either', async function (t) {
+test('a deck that cannot answer for its items is not a piloted run either', async function (t) {
   const home = scratchHome(t);
   const input = subagentInput(home, null, 44);
   const posted = await stubDeck(t, { runs: [input.cwd], failRead: true });
@@ -1069,7 +1069,7 @@ test('a deck that cannot answer for its items is not a pilot run either', async 
   assert.deepStrictEqual(postsOf(posted), []);
 });
 
-test('a registered run with one item on the deck is the pilot run it looks like', async function (t) {
+test('a registered run with one item on the deck is the piloted run it looks like', async function (t) {
   const home = scratchHome(t);
   const input = subagentInput(home, null, 44);
   const posted = await stubDeck(t, {
@@ -1104,7 +1104,7 @@ test('an advisory off the deck does not promise a stash that will never be asked
 test('with no deck running at all the agent is still told, in the same generic words', async function (t) {
   // `scratchHome` points PILOT_DECK_PORT at a port nothing is listening on, so
   // this is the shape of most sessions on this machine: the plugin installed,
-  // no pilot run, nothing to ask.
+  // no piloted run, nothing to ask.
   const home = scratchHome(t);
   const input = subagentInput(home, null, 41);
 
@@ -1479,7 +1479,7 @@ test('a map that is not a map, or an entry that is not a reading, is no reading'
   }
 });
 
-test('a main session that is not a pilot run is not told to bring an artefact current', async function (t) {
+test('a main session that is not a piloted run is not told to bring an artefact current', async function (t) {
   const home = scratchHome(t);
   await stubDeck(t, { runs: [path.join(home, 'somebody-elses-project')] });
   seedSnapshot(home, 43);

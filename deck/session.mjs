@@ -155,7 +155,7 @@ export function openPilot(
  * Start (spec 11): open the pilot's window in `repo`, which the caller has already resolved to a
  * tab's own spelling (L3). Refuses before any spawn under the suite (`PILOT_DECK_NO_START`, L7),
  * for a directory that is gone, and while an earlier Start in the same repo is in flight; then
- * `openPilot`'s own refusals. It starts nothing else: the sub-deck's `pilot run --sub` is gone (ADR 0088).
+ * `openPilot`'s own refusals. It starts nothing else: the sub-deck's `--sub` launch is gone (ADR 0088).
  */
 export function startSession(repo, { now = Date.now, ...deps } = {}) {
   const env = deps.env ?? process.env;

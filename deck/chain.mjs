@@ -6,7 +6,7 @@
  * The hand-off carries the ticket's spec as its body, and the ticket is taken live in the
  * same tick (L4, as ticket-states L16 amends it: taken, not resolved; it stays open
  * until its run closes it): a ticket is started exactly once, and a `/clear` that never came
- * leaves the spec in an open hand-off rather than nowhere. `pilot run` types the
+ * leaves the spec in an open hand-off rather than nowhere. The hand-off mod types the
  * `/clear`; `hooks/session-handoff.js` gives the fresh session the next-run frame
  * and resolves the hand-off. Store calls are synchronous and the daemon is one
  * process, so nothing can land between the checks and the writes.
@@ -93,7 +93,7 @@ export function chainNext(repo, { pastMark = pastAdvisoryAt } = {}) {
   if (heads.length === 0) return { handoff: null, reason: lanes.some(({ state }) => state === 'switching') ? 'switch pending' : 'ticket live' };
   const taken = heads.map(({ id }) => id);
   // Under the guard's advisory mark the finishing session has room for the heads, so they are taken in place and
-  // nothing is posted for `pilot run` to /clear on (handoff-over-mark L1, ADR 0117). Only `false` is under:
+  // nothing is posted for the mod to /clear on (handoff-over-mark L1, ADR 0117). Only `false` is under:
   // no reading hands off as before (L9).
   if (pastMark(repo) === false) return { handoff: null, reason: 'under the mark', taken: fillLanes(repo) };
 

@@ -1,5 +1,5 @@
 /**
- * S1 of start-end-session: Start opens a `pilot run` window on an ended tab (spec 1,
+ * S1 of start-end-session: Start opens a pilot window on an ended tab (spec 1,
  * 2, 6; L2–L4, L6–L8). Nothing here ever starts a process: `startSession` is handed a
  * recorder for `spawn`, the route is handed a recorder for `startSession`, and
  * `PILOT_DECK_NO_START` (set by `./no-open.mjs`) refuses before any spawn otherwise.
@@ -234,7 +234,7 @@ test('an ended tab draws Start and a live one does not', (t) => {
   assert.match(start, /<details class="session"><summary>Start<\/summary>/);
   assert.match(start, /<form class="session" method="post" action="\/start-session" data-confirm-row data-in-place>/);
   assert.ok(start.includes(`name="repo" value="${live.repo.replace('&', '&amp;')}"`), 'the repo, escaped');
-  assert.match(start, /<div class="step sure" hidden><p>Start D\d+\? A terminal window opens running pilot run\.<\/p>/, 'the confirm names the tab, not its path, hidden until asked');
+  assert.match(start, /<div class="step sure" hidden><p>Start D\d+\? A terminal window opens running the pilot\.<\/p>/, 'the confirm names the tab, not its path, hidden until asked');
   assert.match(start, /<button type="submit" data-confirm>Start<\/button>/, 'Start, the trigger');
   assert.match(start, /<button type="submit">Confirm<\/button>/);
   assert.ok(start.indexOf('class="session"') < start.indexOf('class="remove"'), 'Start sits beside Close, above it');
@@ -295,7 +295,7 @@ test("Start opens claude with the reach's args and no prompt", (t) => {
   ]);
   assert.deepEqual(everything, ['/d', '/c', 'start', '"pilot"', `"${CLAUDE}"`, '--agent', 'pilot:pilot', '--settings', `"${settingsIn(HOME)}"`]);
   for (const args of [below, everything]) {
-    assert.ok(!args.includes('run'), 'no pilot run on the line');
+    assert.ok(!args.includes('run'), 'no run verb on the line');
     assert.ok(!args.some((arg) => arg.includes(RESUME_PROMPT) || arg.includes('{')), 'no prompt and no JSON on the line');
   }
 });
