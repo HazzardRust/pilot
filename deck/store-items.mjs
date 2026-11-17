@@ -597,6 +597,8 @@ export function resolveItem(id, resolution, author) {
       enterStage(deck, ticket, 'yellow');
       ticket.plan = planOf(item);
       delete ticket.live;
+      // A re-cut's mark goes with the plan it re-cut (never-stuck spec 6).
+      delete ticket.recut;
     }
     // The pilot's close of the question that paused a ticket resumes it, in this same write (blocking-close spec 2; A3).
     if (pilotClose) resumeIn(deck, item);
