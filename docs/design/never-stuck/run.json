@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 26f3ba5 (integrating)",
+      "state": "integrated",
       "after": [
         "S2"
       ],
@@ -42,10 +42,12 @@
     },
     {
       "slice": "S5",
-      "state": "",
+      "state": "pushed 14bdb9d (ts re-review after BLOCK in flight)",
       "after": [
         "S4"
-      ]
+      ],
+      "branch": "slice/never-stuck-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s5"
     },
     {
       "slice": "S6",
@@ -57,8 +59,8 @@
       ]
     }
   ],
-  "next": "feat/never-stuck at 54379fab; S4 integrating (26f3ba5, ts+sec approve); next: spawn S5. Fix round: S2 sec MEDIUM (recut.mjs:41), S3 untested gone/refusal branches, S4 LOWs. S6: pilot prompt pin has ~10 tokens headroom (measure-prompt.mjs:84).",
-  "updatedAt": "2026-11-17T09:35:13.396Z",
+  "next": "feat/never-stuck at 1c3040de; S5 pushed 14bdb9d, fresh ts re-review running after BLOCK; next: integrate S5 on approve (second BLOCK goes to main), then hand back blocked on S6 (blocked-steps 3e118261, handoff-books 2b35021a).",
+  "updatedAt": "2026-11-17T09:57:24.675Z",
   "friction": [
     {
       "agent": "pilot-architect (never-stuck)",
@@ -180,6 +182,12 @@
       "agent": "pilot-co-pilot",
       "what": "hand-back forced a fourth time while the S4 implementer was live",
       "evidence": "S4 implementer a8cd8e0fa22a511cd, 186k tokens, unpushed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced a fifth time while the S5 implementer was live",
+      "evidence": "S5 implementer ad01921cd61649a1a at 55c6803e unpushed",
       "size": 1
     }
   ]
