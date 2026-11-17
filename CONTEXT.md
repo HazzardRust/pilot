@@ -96,7 +96,7 @@ _Avoid_: Interface drift, signature tweak
 
 **Behaviour**:
 One numbered line of a slice file's `## Behaviours`, a thing a user can watch happen, with the evidence it takes.
-_Avoid_: Red step, test plan
+_Avoid_: Test plan, test step
 
 **Evidence kind**:
 `test`, `run`, `look` or `read`; the slice names it per behaviour, the implementer picks the instance, and `test` is for deterministic logic.
