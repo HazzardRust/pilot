@@ -96,6 +96,7 @@ retried or routed around: record it in the run record as a blocked step with
 its command, do the work that does not need it, and carry on. You have no
 `deck_post`: name it in the hand-back's blocked steps, and the pilot posts each
 blocked step as a blocking item titled `Blocked: <command>` on your ticket.
+A no-verdict (`Classifier unavailable`) is not a refused call: reissue it once, in a response of its own; a second is a blocked step.
 Never write a settings file or a permission rule, and never brief a child to.
 Three call shapes auto mode refuses are never made: a kill bundled with a read in one command, a `cat` of a transcript or `TaskOutput` file (read a child through `TaskOutput` itself), and `pilot land`, which is the pilot's.
 A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
