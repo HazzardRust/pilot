@@ -49,8 +49,9 @@ const claimDir = () => path.join(os.homedir(), '.claude', 'pilot-inbox', 'claims
 
 /**
  * `claude --version`'s x.y.z, or null when it gives none. By argv array, never a shell, and never
- * `~/.claude.json`, which holds secrets. The bare name is safe because bin/pilot.mjs runs
- * `searchPathOnly()` first; `run` is injected by `pilot doctor`'s tests.
+ * `~/.claude.json`, which holds secrets. On Windows the bare name is safe from a command planted
+ * in the cwd only because bin/pilot.mjs runs `searchPathOnly()` first; a caller importing this
+ * module directly must do the same. `run` is injected by `pilot doctor`'s tests.
  */
 export function claudeVersion(run = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8', windowsHide: true, timeout: 15000, killSignal: 'SIGKILL', stdio: ['ignore', 'pipe', 'ignore'] })) {
   try {
