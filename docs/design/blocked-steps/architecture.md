@@ -98,19 +98,19 @@ Deepening: deleting `onDenied` puts payload parsing into the harness entry, so i
 Answered by the user on the default (2026-11-17): A3 `itm_c1ce6cc0018c` "Allow it", A4 `itm_b125f439a47b` "Build PILOT_BRANCH", A6 `itm_ad209e413535` "No git rules". Closed on their default at *forks* depth: A2 `itm_73786b7070e5`, A7 `itm_b60519b57037`. A1, A5 not posted (no fork).
 
 - **A1 The "issue alone" line is not built as a cause fix.** Default: spec 2 tells an agent to reissue a no-verdict once, alone; no rule bans batching. Tradeoff: if batching does raise the no-verdict rate, the first call still fails and costs a turn (no thread). Rejected: a batching ban in five definitions with no source behind it (§3 Cause).
-  Verdict: stands. Its reason is corrected by the pilot: a source does tie batching to no-verdicts (§3 Cause, the harness's denial text), but once S1 lands a first no-verdict costs one turn and no thread, so the ticket's "when a no-verdict would cost a Blocked item" never holds, and a ban would spend pilot.md's 21 tokens of headroom (L6).
+  Verdict: stands — Its reason is corrected by the pilot: a source does tie batching to no-verdicts (§3 Cause, the harness's denial text), but once S1 lands a first no-verdict costs one turn and no thread, so the ticket's "when a no-verdict would cost a Blocked item" never holds, and a ban would spend pilot.md's 21 tokens of headroom (L6).
 - **A2 Agents reissue a no-verdict once.** Default: spec 2's sentence. Tradeoff: an agent retries a call the classifier never saw, which `co-pilot.md:94`'s "never retried" forbade; the classifier still reviews the reissue, so nothing runs unreviewed. Rejected: leave the prose, so a co-pilot hands a no-verdict back and the pilot posts it by hand.
-  Verdict: stands. The harness's denial text itself asks for the reissue in a response of its own.
+  Verdict: stands — The harness's denial text itself asks for the reissue in a response of its own.
 - **A3 The source-tree scratch rule is written (security).** Default: `Bash(node bin/pilot.mjs deck --scratch *)` in the user's settings. Tradeoff: in any repository with a `bin/pilot.mjs`, that file runs with no review when called with those words. Rejected: no rule, so QA's branch deck stays one item per run; or `PILOT_PLUGIN_ROOT=<dir> pilot deck --scratch`, which no allow rule matches by its prefix.
-  Verdict: stands. The user pressed "Allow it" on `itm_c1ce6cc0018c`.
+  Verdict: stands — The user pressed "Allow it" on `itm_c1ce6cc0018c`.
 - **A4 `PILOT_BRANCH` is built.** Default: env, default `pilot`, checked by `PLAIN`, the push guard unchanged. Tradeoff: an env in a lane's shell picks which branch `land` writes. Rejected: QA edits the constant in its clone (one item per run).
-  Verdict: stands. The user pressed "Build PILOT_BRANCH" on `itm_b125f439a47b`.
+  Verdict: stands — The user pressed "Build PILOT_BRANCH" on `itm_b125f439a47b`.
 - **A5 Draft line 2 is dropped as delivered.** No agent spells `node bin/pilot.mjs`. Tradeoff: nothing pins it. Rejected: a pin for an absent string.
-  Verdict: stands. The pilot's own grep of `agents/` on this branch finds no `node bin/pilot.mjs`.
+  Verdict: stands — The pilot's own grep of `agents/` on this branch finds no `node bin/pilot.mjs`.
 - **A6 No `git` allow rule (security).** Default: allow only the four `pilot` reads. Tradeoff: a `git` read with no verdict still costs a reissue turn (no thread). Rejected: the draft's `git status/log/diff` rules: a user-level rule covers every repository on the machine, and those commands run a repository's configured fsmonitor, diff drivers and pager.
-  Verdict: stands. The user pressed "No git rules" on `itm_ad209e413535`.
+  Verdict: stands — The user pressed "No git rules" on `itm_ad209e413535`.
 - **A7 The guard split stays in this run, after handoff-mod lands.** Default: S9, S10 wait for handoff-mod (`itm_97c9e8fdf1d2`) on `pilot`. Tradeoff: the feature PR can wait on that landing. Rejected: split now (conflicts), or a later ticket (F4 half done).
-  Verdict: stands. handoff-mod's S1 spike stood at 0 of 3 on 2026-11-17 and a failed spike stops that run; if it stops, S9 starts from `pilot` as it is, with nothing to wait for.
+  Verdict: stands — handoff-mod's S1 spike passed 3 of 3 on 2026-11-17 and is integrated, so that run goes on; if it is ever abandoned, S9 starts from `pilot` as it is, with nothing to wait for.
 
 ## 7. Out of scope
 
