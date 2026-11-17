@@ -18,7 +18,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { claudeBin, hostPlatform } from '../hooks/lib/platform.js';
-import { repoKey, sameRepo } from './items.mjs';
+import { sameRepo } from './items.mjs';
 import { runEnv, startArgs } from './run-env.mjs';
 import { DeckRefusal } from './store.mjs';
 import { unstrippedEnv } from '../scripts/pilot-branch.mjs';
@@ -175,45 +175,4 @@ export function startSession(repo, { now = Date.now, ...deps } = {}) {
     if (starting.get(repo) === pressedAt) starting.delete(repo);
     console.error(`[deck] could not start a session in ${repo}:`, err.message);
   });
-}
-
-/**
- * A `pilot run` wrapper's change stream (L5): the one process that can end its session
- * cleanly (F4), reached by what the daemon writes on it.
- *
- * @typedef {{ send(event: 'changed' | 'end'): void }} WrapperStream
- */
-
-/** The wrapper streams open now, each with the repository it named. In memory only (L5). */
-const wrappers = new Set();
-
-/** Register `stream` under `repo`; answers its removal, which the stream's close calls. */
-export function addWrapper(repo, stream) {
-  const entry = { repo, stream };
-  wrappers.add(entry);
-  return () => {
-    wrappers.delete(entry);
-  };
-}
-
-/** The streams of the wrappers running in `repo`, in any spelling of it. */
-export function wrappersOf(repo) {
-  return [...wrappers].filter((entry) => sameRepo(entry.repo, repo)).map((entry) => entry.stream);
-}
-
-/** The repositories with a wrapper stream open, keyed as a tab's `repoKey` (L6): `tab.wrapped`. */
-export function listWrapped() {
-  return Object.fromEntries([...wrappers].map((entry) => [repoKey(entry.repo), true]));
-}
-
-/**
- * End (spec 5, L1, A3, A6): an `end` event on the streams of `repo`'s wrappers, and on no
- * other. Each wrapper stops its own pty; the daemon kills nothing, so no pid it holds is
- * ever trusted. Every wrapper on the repository is told, because a tab is a repository.
- * None at all is a 409: a plain `claude` session has nobody to tell (spec 8).
- */
-export function endSession(repo) {
-  const streams = wrappersOf(repo);
-  if (streams.length === 0) throw new DeckRefusal('no pilot run is live in this deck to end', 409);
-  for (const stream of streams) stream.send('end');
 }

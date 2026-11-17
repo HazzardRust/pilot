@@ -41,11 +41,11 @@ import { selectItems } from './read.mjs';
 import { sameRepo } from './runs.mjs';
 import { WRITING_TOOLS, readLimit, runTool } from './server-tools.mjs';
 import {
-  THREAD_PATH, UI_ASSETS, UnsupportedMediaType, WRAPPER_GONE_MS, announceChange, armHandoffs, backPath, browserCount,
+  THREAD_PATH, UI_ASSETS, UnsupportedMediaType, announceChange, armHandoffs, backPath, browserCount,
   deckGuard, isAuthorized, isOwnHost, isTrustedOrigin, landRefusal, landRefusedPress, readFormBody, readJsonBody,
-  refuseWithoutSecret, replyFrom, send, sendJson, threadIdIn, watchAsWrapper, watchForChanges,
+  refuseWithoutSecret, replyFrom, send, sendJson, threadIdIn, watchForChanges,
 } from './server-wait.mjs';
-import { clearStarting, endSession, listWrapped, startSession } from './session.mjs';
+import { clearStarting, startSession } from './session.mjs';
 import {
   DeckRefusal, addDeck, addReply, archivedItem, budgetFor, coPilotFor, clearAllNotices, clearNotice, closeItem, createThread, currentSeq,
   dismissItem, dismissRun, listAdded, listDeckNumbers, listItems, listLiveRuns, listRuns, listStoredRuns, deckLanes,
@@ -74,7 +74,7 @@ const fromOwnPage = (request) => request.headers.origin === `http://${request.he
 /** The guard's exemptions, by name and never by prefix (deck-token L4): `/open` checks its own key, the UI's files and health hold no deck data. */
 export const OPEN_ROUTES = (request, pathname) => request.method === 'GET' && (pathname === '/open' || pathname === '/api/health' || UI_ASSETS.has(pathname));
 
-async function route(request, response, open, start, wrapperGoneMs, land, exit, guard) {
+async function route(request, response, open, start, land, exit, guard) {
   if (!isOwnHost(request)) {
     return send(
       response,
@@ -141,9 +141,7 @@ async function route(request, response, open, start, wrapperGoneMs, land, exit, 
       listAdded(),
       // An /add-deck refusal's reason, drawn beside the + box it came from.
       query.get('refused'),
-      // Which tabs have a `pilot run` wrapper to end (L6), from the daemon's memory (L5).
-      listWrapped(),
-      // A Start or End refusal's reason, drawn in that control on its tab.
+      // A Start refusal's reason, drawn in that control on its tab.
       query.get('sessionRefused'),
       readAlertSwitch(),
       // Both lanes per deck, its live co-pilot and its switch records (ticket-state-accents L3), one store read.
@@ -231,7 +229,6 @@ async function route(request, response, open, start, wrapperGoneMs, land, exit, 
   }
 
   if (request.method === 'GET' && pathname === '/events') {
-    if (query.has('wrapper')) return watchAsWrapper(request, response, query.get('wrapper'), wrapperGoneMs);
     return watchForChanges(response);
   }
 
@@ -364,35 +361,9 @@ async function route(request, response, open, start, wrapperGoneMs, land, exit, 
     try {
       if (!tab) throw new DeckRefusal('that directory is not a deck tab', 404);
       if (!tab.ended) throw new DeckRefusal('a session is already live in this deck', 409);
-      // Neither Start nor End runs mid-switch (ticket-state-accents spec 14, L12): Cancel or the take ends it first.
+      // Start does not run mid-switch (ticket-state-accents spec 14, L12): Cancel or the take ends it first.
       refuseLaneSwitch(null, tab.repo, 'main');
       start(tab.repo);
-    } catch (err) {
-      return landRefusal(request, response, tab, err);
-    }
-    announceChange();
-    response.writeHead(303, {
-      location: backPath(form.get('back')) ?? `/?run=${encodeURIComponent(tab.repo)}`,
-      'cache-control': 'no-store',
-    });
-    return response.end();
-  }
-
-  // End (start-end-session spec 5, L1, L6): behind the same Origin check as Start, because
-  // it stops a session. The posted repo is only a key to a stored tab, whose own spelling
-  // is what `endSession` is told; it writes `end` on that repository's wrapper streams
-  // and kills nothing. No wrapper there is its 409. Lands on the tab, which reads ended
-  // once the wrapper's stream closes.
-  if (isWrite && pathname === '/end-session') {
-    if (!fromOwnPage(request)) {
-      return send(response, 403, 'text/plain; charset=utf-8', "End is only taken from the deck's own page\n");
-    }
-    const form = await readFormBody(request, 'that end');
-    const tab = storedTabFor(form.get('repo'));
-    try {
-      if (!tab) throw new DeckRefusal('that directory is not a deck tab', 404);
-      refuseLaneSwitch(null, tab.repo, 'main');
-      endSession(tab.repo);
     } catch (err) {
       return landRefusal(request, response, tab, err);
     }
@@ -772,12 +743,12 @@ const isApi = (request) => {
  * press on Start asks for (ADR 0050, superseding ADR 0039 in part). `land` is the seam for a
  * gate2's Sign off, which starts `pilot land` (ADR 0111); tests inject a spawn through it. `exit` is the daemon's shutdown, which `POST /api/exit` runs (L3).
  */
-export function createDeckHttpServer({ secret, open = openDeck, start = startSession, land = startLanding, wrapperGoneMs = WRAPPER_GONE_MS, exit = () => {} } = {}) {
+export function createDeckHttpServer({ secret, open = openDeck, start = startSession, land = startLanding, exit = () => {} } = {}) {
   const guard = deckGuard(secret);
   // A hand-off posted before the daemon started still crosses on a page that is open now.
   armHandoffs();
   return http.createServer((request, response) => {
-    route(request, response, open, start, wrapperGoneMs, land, exit, guard).catch((err) => {
+    route(request, response, open, start, land, exit, guard).catch((err) => {
       logRefusal(request, err);
       if (err instanceof UnsupportedMediaType) {
         return sendJson(response, 415, { error: err.message });

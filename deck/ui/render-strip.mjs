@@ -376,12 +376,12 @@ function renderRemove(tab) {
 }
 
 /**
- * Start or End, above Close (start-end-session spec 1, 2, 5, 8; L6, A7): one control.
- * Start for an ended tab on Windows, where `start` can open the window. End for a live
- * tab with a `pilot run` wrapper to tell (`tab.wrapped`); a plain `claude` session has
- * none, so its tab draws nothing. Confirmed in place, as Close is. A refused press
- * lands back here with its reason (`refused`), drawn in the control, opened (L6). With no
- * control to draw it in, the tab's own state is the answer: a bare line would widen the rail.
+ * Start, above Close (start-end-session spec 1, 2, 8; L6, A7): one control, for an ended tab
+ * on Windows, where `start` can open the window. A live tab draws nothing: a session is
+ * stopped by closing its window (handoff-mod spec 12). Confirmed in place, as Close is. A
+ * refused press lands back here with its reason (`refused`), drawn in the control, opened
+ * (L6). With no control to draw it in, the tab's own state is the answer: a bare line would
+ * widen the rail.
  */
 function renderSession(tab, refused = null) {
   const reason = refused ? `<p class="refused" role="alert">${escapeHtml(refused)}</p>` : '';
@@ -390,17 +390,14 @@ function renderSession(tab, refused = null) {
     const verb = tab.holding ? 'Resume' : 'Start';
     return renderSessionForm(tab, verb, 'A terminal window opens running pilot run.', reason);
   }
-  if (tab && !tab.ended && tab.wrapped) {
-    return renderSessionForm(tab, 'End', 'Its pilot run window closes, mid-turn or not.', reason);
-  }
   return '';
 }
 
-/** The one shape Start and End share: a verb, what pressing it does, and a refusal. */
+/** Start's shape: a verb, what pressing it does, and a refusal. */
 function renderSessionForm(tab, verb, what, reason) {
   return [
     `<details class="session"${reason ? ' open' : ''}><summary>${verb}</summary>`,
-    `<form class="session" method="post" action="/${verb === 'End' ? 'end' : 'start'}-session" data-confirm-row data-in-place>`,
+    '<form class="session" method="post" action="/start-session" data-confirm-row data-in-place>',
     reason,
     `<input type="hidden" name="repo" value="${escapeHtml(tab.repo)}" />`,
     `<button type="submit" data-confirm>${verb}</button>`,

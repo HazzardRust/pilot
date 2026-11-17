@@ -71,7 +71,7 @@ test('the rail labels a paused ticket paused', (t) => {
   tempDeck(t);
   const repo = 'D:/work/rail';
   postStored({ kind: 'ticket', title: 'Paused', body: shapedTicketBody('Paused'), repo, sliceCount: 3, state: 'green', paused: { question: 'itm_q1', at: 'x' } });
-  const html = renderHomePage(listItems(), [], repo, false, {}, {}, Date.now(), [], null, {}, null, { weekly: true }, deckLanes());
+  const html = renderHomePage(listItems(), [], repo, false, {}, {}, Date.now(), [], null, null, { weekly: true }, deckLanes());
   assert.match(html, /<span class="ticket-state" data-state="green">paused<\/span>/);
   assert.doesNotMatch(html, /needs you/);
 });
@@ -83,7 +83,7 @@ test('the rail offers no Continue on a paused ticket', (t) => {
   postStored({ kind: 'ticket', title: 'Paused', body: shapedTicketBody('Paused'), repo, sliceCount: 3, state: 'green', paused: { question: 'itm_q1', at: 'x' } });
   postStored({ kind: 'ticket', title: 'In hand', body: shapedTicketBody('In hand'), repo, sliceCount: 3, state: 'green' });
   const plain = postStored({ kind: 'ticket', title: 'Plain', body: shapedTicketBody('Plain'), repo, sliceCount: 3, state: 'green' });
-  const html = renderHomePage(listItems(), [], repo, false, {}, {}, Date.now(), [], null, {}, null, { weekly: true }, deckLanes());
+  const html = renderHomePage(listItems(), [], repo, false, {}, {}, Date.now(), [], null, null, { weekly: true }, deckLanes());
   const tos = [...html.matchAll(/action="\/switch"[^>]*>.*?name="to" value="(itm_\w+)"/g)].map((match) => match[1]);
   assert.deepEqual(tos, [plain.id], 'only the green row not in hand and not paused');
 });
@@ -95,7 +95,7 @@ test("the rail's yellow next skips a blocked head", (t) => {
   const head = postStored({ kind: 'ticket', title: 'Blocked head', body: shapedTicketBody('Blocked head'), repo, sliceCount: 3, state: 'yellow' });
   const runnable = postStored({ kind: 'ticket', title: 'Runnable', body: shapedTicketBody('Runnable'), repo, sliceCount: 3, state: 'yellow' });
   postStored({ kind: 'question', title: 'Which?', body: 'A or B', repo, ticket: head.id, blocking: true });
-  const html = renderHomePage(listItems(), [], repo, false, {}, {}, Date.now(), [], null, {}, null, { weekly: true }, deckLanes());
+  const html = renderHomePage(listItems(), [], repo, false, {}, {}, Date.now(), [], null, null, { weekly: true }, deckLanes());
   const marked = [...html.matchAll(/<span class="next" data-lane="co-pilot">next<\/span>.*?\/thread\/(itm_\w+)/g)].map((match) => match[1]);
   assert.deepEqual(marked, [runnable.id]);
 });

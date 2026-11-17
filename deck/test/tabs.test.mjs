@@ -38,6 +38,7 @@ const { renderDeckPage, renderHomePage, renderThreadPage, OVERVIEW_HREF } = awai
 );
 const { postItem, registerRun, resolveItem, setSlices } = await import('../store.mjs');
 const { TOOLS } = await import('../tools.mjs');
+const { browserCount } = await import('../server-wait.mjs');
 
 const deckStatus = TOOLS.find((tool) => tool.name === 'deck_status');
 
@@ -272,7 +273,7 @@ test('a repository with a 0.7.19 sub run draws one tab and no Pause', () => {
 });
 
 test('the page has no /subdeck/pause form', () => {
-  const page = renderHomePage([], [aRun({ wrapped: true }), subRun()], SUB);
+  const page = renderHomePage([], [aRun(), subRun()], SUB);
   assert.doesNotMatch(page, /\/subdeck\/pause|class="subdeck"/);
 });
 
@@ -1186,4 +1187,57 @@ test('Esc follows the arrow a move in place drew, and not one it took away (hand
   clicked.draw(true);
   assert.equal(clicked.click(), true, 'and a click on the arrow it drew is one way off as well (ADR 0118)');
   assert.deepEqual(clicked.went.assigned, [OWNER]);
+});
+
+// --- End and the wrapper streams leave the deck (handoff-mod S10, spec 12) ----------
+
+/** `GET /events?wrapper=` as `pilot run`'s wrapper opened it: no Origin; closed when the test ends. */
+const aWrapperStream = async (t, base, repo) => {
+  const aborter = new AbortController();
+  t.after(() => aborter.abort());
+  return fetch(`${base}/events?wrapper=${encodeURIComponent(repo)}`, { signal: aborter.signal });
+};
+
+test('End is gone', async (t) => {
+  const base = await deckOnAPort(t);
+  registerRun({ repo: MINE, pid: process.pid });
+  await aWrapperStream(t, base, MINE);
+
+  const response = await fetch(`${base}/end-session`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', origin: base },
+    body: new URLSearchParams({ repo: MINE }),
+    redirect: 'manual',
+  });
+
+  assert.equal(response.status, 404);
+});
+
+test('the wrapper stream is gone', async (t) => {
+  const base = await deckOnAPort(t);
+  // An earlier test's stream is still closing; this one counts from none.
+  for (let tries = 0; browserCount() > 0 && tries < 100; tries++) await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(browserCount(), 0);
+
+  const stream = await aWrapperStream(t, base, MINE);
+
+  assert.equal(stream.status, 200);
+  assert.equal(browserCount(), 1, "served as the page's own stream, which ends nothing");
+});
+
+test('a live tab renders no End', async (t) => {
+  const base = await deckOnAPort(t);
+  registerRun({ repo: MINE, pid: process.pid });
+  await aWrapperStream(t, base, MINE);
+
+  const page = await (await fetch(`${base}/?run=${encodeURIComponent(MINE)}`)).text();
+
+  assert.ok(page.includes('class="strip right"'), 'the rail is drawn');
+  assert.doesNotMatch(page, /end-session|<summary>End</, 'a session is stopped by closing its window');
+});
+
+test('a tab carries no wrapped', () => {
+  const [tab] = tabsOf([aRun({ pid: process.pid })], []);
+
+  assert.ok(!('wrapped' in tab));
 });

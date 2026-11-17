@@ -28,7 +28,7 @@ const aRun = (over = {}) => ({ id: 'run_000000000001', repo: MINE, name: 'pilot'
 /** MINE's tab, its co-pilot holding `co-pilot` and `records` its stored run records (S5 A-f6). */
 const tabOf = (items, coPilot = null, records = [], runs = [aRun()]) =>
   tabFor(
-    tabsOf(runs, items, {}, {}, [], {}, { coPilots: coPilot ? { [repoKey(MINE)]: coPilot } : {}, switches: {}, records: records.map((record) => ({ repo: repoKey(MINE), record })) }),
+    tabsOf(runs, items, {}, {}, [], { coPilots: coPilot ? { [repoKey(MINE)]: coPilot } : {}, switches: {}, records: records.map((record) => ({ repo: repoKey(MINE), record })) }),
     MINE,
   );
 
