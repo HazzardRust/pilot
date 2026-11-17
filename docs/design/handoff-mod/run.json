@@ -42,7 +42,7 @@
     },
     {
       "slice": "S2",
-      "state": "integrated",
+      "state": "integrated at 4e7ef619",
       "after": [
         "S1"
       ],
@@ -52,19 +52,22 @@
     },
     {
       "slice": "S3",
-      "state": "implementing (green locally, gate+reviewers+live check running)",
+      "state": "integrated",
       "after": [
         "S1"
       ],
       "branch": "slice/handoff-mod-s3",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s3"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s3",
+      "pr": 91
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/handoff-mod-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s4"
     },
     {
       "slice": "S5",
@@ -78,11 +81,13 @@
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1",
         "S2"
-      ]
+      ],
+      "branch": "slice/handoff-mod-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s6"
     },
     {
       "slice": "S7",
@@ -129,8 +134,8 @@
       ]
     }
   ],
-  "next": "S2 integrating onto feat@ba8882b1; S3 running gate/reviewers/live; then S5 rebase+live, S4 and S6 after S2.",
-  "updatedAt": "2026-11-17T01:02:58.569Z",
+  "next": "S3 integrating; then resume S5 implementer aeb8b6b51f9c10de0 with the new tip for rebase + live check; S4, S6 implementing; QA carries the open spike (turn.complete on a Stop-blocked turn).",
+  "updatedAt": "2026-11-17T01:12:01.995Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -235,6 +240,24 @@
       "what": "harness forced the co-pilot's hand-back again with S2 and S3 implementers live, orphaning their report address",
       "evidence": "handback-send-enforce while a1c747e47c49093a0 and ae451aa3734ee9e54 ran",
       "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "claude plugin validate refuses $ passed to a nested closure; not in brief.md's Mods section",
+      "evidence": "S3: '$ is passed to \"decide\", which is not a function declared at the top of this file'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3's live check needed S2's held outcome, which the DAG ran in parallel; proven against a probe stand-in",
+      "evidence": "S2 test-only at 1c4b81e4 when S3 went live",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "guessed pilot deck stop flag; || fallback ran a bare pilot against the user's deck on 4321 (not restarted, may have opened a browser tab)",
+      "evidence": "S3 report: 'The deck is up at http://127.0.0.1:4321'",
+      "size": 1
     }
   ]
 }
