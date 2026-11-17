@@ -127,6 +127,20 @@ test('a granted ticket is never re-cut', async (t) => {
   assert.ok(!deckLines(gate.id).some((text) => text.startsWith('Re-cut by this landing')));
 });
 
+test('a ticket granted while its check runs is never re-cut', async (t) => {
+  tempDeck(t);
+  const gate = aLandedGate2(os.tmpdir());
+  const ticket = signed(os.tmpdir(), { artefact: ARTEFACT, branch: 'feat/x', sha: '0123456789abcdef' });
+  const planDrift = async () => {
+    stampPlan(ticket.id, { grantedAt: new Date().toISOString() });
+    return { state: 'moved', files: ['deck/store-items.mjs'] };
+  };
+
+  assert.deepEqual(await driftAfterLanding(gate.id, { planDrift }), []);
+
+  assert.equal(reread(ticket.id).state, 'yellow');
+});
+
 test('an unchecked drift moves nothing', async (t) => {
   tempDeck(t);
   const gate = aLandedGate2(os.tmpdir());
@@ -164,8 +178,7 @@ test('the landing writes its landed line before the sweep re-cuts', async (t) =>
   assert.equal(reread(gate.id).landing.state, 'landed', 'the landed line is written before the sweep settles');
   assert.equal(reread(ticket.id).state, 'yellow');
   release();
-  await new Promise((resolve) => setImmediate(resolve));
-  await new Promise((resolve) => setImmediate(resolve));
+  for (let tick = 0; tick < 50 && reread(ticket.id).state !== 'red'; tick += 1) await new Promise((resolve) => setImmediate(resolve));
   assert.equal(reread(ticket.id).state, 'red');
   assert.deepEqual(deckLines(gate.id).slice(-2), [LANDED.trimEnd(), `Re-cut by this landing: ${ticket.id} (1 files)`]);
 });
