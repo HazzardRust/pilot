@@ -105,7 +105,7 @@
     },
     {
       "slice": "S8",
-      "state": "draft PR #98",
+      "state": "integrated",
       "after": [
         "S7",
         "S6"
@@ -138,7 +138,7 @@
     },
     {
       "slice": "S12",
-      "state": "draft PR #97; integrate red on a load timeout (daemon-replace:329), passes alone; re-integrating",
+      "state": "integrated at 18f0b421",
       "after": [
         "S7",
         "S9"
@@ -157,8 +157,8 @@
       ]
     }
   ],
-  "next": "re-integrate S12 once S10's npm test finishes, then S8 (#98), S10; then S13, S11, principles review (carry: deck/wait.mjs unused env arg, ADR 0104 PILOT_RUN_REPO sentence)",
-  "updatedAt": "2026-11-17T02:18:08.162Z",
+  "next": "integrating S8 (#98); S10 implementing; then S13 (after S7,S8,S12), S11, principles review",
+  "updatedAt": "2026-11-17T02:21:12.146Z",
   "friction": [
     {
       "agent": "pilot:pilot-co-pilot",
