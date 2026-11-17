@@ -46,7 +46,31 @@
 'use strict';
 
 const fs = require('node:fs');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 const deck = require('./lib/deck.js');
+
+/** handoff-books L4: the audit record, an ES module, reached from this CommonJS hook by `import()`. */
+const AUDIT_URL = pathToFileURL(path.join(__dirname, '..', 'deck', 'audit.mjs')).href;
+
+/** handoff-books spec 6: the one line a hand-off that makes the audit due adds to its notice. */
+const AUDIT_DUE = 'AUDIT DUE: `pilot audit due` exits 0 on this hand-off; offer the audit now, as pilot.md says.';
+
+/**
+ * Counts a claimed hand-off in this repository's audit record (A4: the lane is the count site) and
+ * answers the audit-due line when the count makes it `every`, else null. A count that fails costs
+ * the hand-off nothing: it is a log line (L4).
+ */
+async function countAndDue(cwd, id) {
+  try {
+    const audit = await import(AUDIT_URL);
+    audit.countHandoff(cwd, id);
+    return audit.auditDue(cwd) === 'every' ? AUDIT_DUE : null;
+  } catch (err) {
+    deck.log('lane: hand-off not counted (' + (err && err.message ? err.message : String(err)) + ')');
+    return null;
+  }
+}
 
 /** The pilot's own hand-off kind: known to the deck, never in `KINDS` (thread-types-phase L4). */
 const HANDOFF_KIND = 'handoff';
@@ -499,6 +523,8 @@ async function run(input) {
     return null;
   }
   deck.log('lane: handed ' + item.id);
+  const due = await countAndDue(cwd, item.id);
+  const withDue = function (text) { return due ? text + '\n\n' + due : text; };
   const { record: stored, yellow, lanes, owed, coPilot } = await recordFor(cwd);
   const lane = await yellowLane(yellow, cwd, source, true, coPilot);
 
@@ -509,11 +535,11 @@ async function run(input) {
     // (see `deliver` below) while its thread stays closed and its ticket already
     // taken — the spec lost for good. So this only marks it to be resolved once
     // delivery actually succeeds.
-    return withLanes(withOwed(withLane({ claimed: [name], payload: payloadFor(pickedUp(item), nextRunNotice(item)), resolveId: item.id }, lane), owed), lanes);
+    return withLanes(withOwed(withLane({ claimed: [name], payload: payloadFor(pickedUp(item), withDue(nextRunNotice(item))), resolveId: item.id }, lane), owed), lanes);
   }
 
   const record = stored && Object.assign({}, stored, { openThreads: openThreads(items, cwd) });
-  const result = { claimed: [name], payload: payloadFor(pickedUp(item), notice(item, record)) };
+  const result = { claimed: [name], payload: payloadFor(pickedUp(item), withDue(notice(item, record))) };
   // Who is picking this up is unknown here (no `agent_type` at SessionStart): say so to post-tool (S5).
   if (typeof input.session_id === 'string' && input.session_id !== '') {
     result.pickup = { session: input.session_id, claim: name, item: item.id };
@@ -645,6 +671,7 @@ module.exports = {
   claimFor: claimFor,
   HANDOFF_KIND: HANDOFF_KIND,
   MAX_ITEMS: MAX_ITEMS,
+  AUDIT_DUE: AUDIT_DUE,
 };
 
 if (require.main === module) main();
