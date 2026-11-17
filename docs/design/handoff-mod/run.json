@@ -15,7 +15,7 @@
     },
     {
       "slice": "S9",
-      "state": "integrated at fac45d87",
+      "state": "integrated",
       "branch": "slice/handoff-mod-s9",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s9",
       "pr": 84
@@ -42,7 +42,7 @@
     },
     {
       "slice": "S2",
-      "state": "integrated at 4e7ef619",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -62,16 +62,17 @@
     },
     {
       "slice": "S4",
-      "state": "implementing",
+      "state": "draft PR #93, reviewed; integrates after S6",
       "after": [
         "S2"
       ],
       "branch": "slice/handoff-mod-s4",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s4"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s4",
+      "pr": 93
     },
     {
       "slice": "S5",
-      "state": "draft PR #88 at db10574b; live check pending S2+S3",
+      "state": "implementing (rebase + live check, agent a3f4f008450352246)",
       "after": [
         "S1"
       ],
@@ -81,13 +82,14 @@
     },
     {
       "slice": "S6",
-      "state": "implementing",
+      "state": "draft PR #92, reviewed; integrating",
       "after": [
         "S1",
         "S2"
       ],
       "branch": "slice/handoff-mod-s6",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s6"
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s6",
+      "pr": 92
     },
     {
       "slice": "S7",
@@ -134,8 +136,8 @@
       ]
     }
   ],
-  "next": "S3 integrating; then resume S5 implementer aeb8b6b51f9c10de0 with the new tip for rebase + live check; S4, S6 implementing; QA carries the open spike (turn.complete on a Stop-blocked turn).",
-  "updatedAt": "2026-11-17T01:12:01.995Z",
+  "next": "integrating S6 (#92); then S4 (#93, e16c4193); S5 a3f4f008450352246 rebases onto the new tip; then S7.",
+  "updatedAt": "2026-11-17T01:27:32.566Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -258,6 +260,45 @@
       "what": "guessed pilot deck stop flag; || fallback ran a bare pilot against the user's deck on 4321 (not restarted, may have opened a browser tab)",
       "evidence": "S3 report: 'The deck is up at http://127.0.0.1:4321'",
       "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot (handoff-mod)",
+      "what": "forced to hand back paused while its implementers ran; children's reports then went to the pilot",
+      "evidence": "hand-back with S2, S3 live; S2's report delivered to main",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer (S2)",
+      "what": "slice file's run.mjs line anchors stale by ~31 lines; a stamp the slice assumed S1 wrote did not exist",
+      "evidence": "S2.md:11 vs 92efaae5"
+    },
+    {
+      "agent": "pilot-implementer (S2)",
+      "what": "no TaskStop: an 8-minute npm test could not be stopped, gate ran twice",
+      "evidence": "S2 report"
+    },
+    {
+      "kind": "drain",
+      "what": "five Blocked items this session, four of them no-verdicts or read-only, each closed Moot by the pilot",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S5's implementer did not survive the main session's /clear (no transcript), so a fresh implementer was spawned only for the rebase and live check",
+      "evidence": "SendMessage aeb8b6b51f9c10de0: No transcript found",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: the first TS reviewer's hand-back never arrived and had to be re-run; the classifier gave no verdict twice",
+      "evidence": "S6 report, PR #92",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: the context reset lost the gate's state, so npm test (~9 min) ran again; its counts have to be grepped out of a 5000-line spawn-accounting tail",
+      "evidence": "S4 report, PR #93",
+      "size": 2
     }
   ]
 }
