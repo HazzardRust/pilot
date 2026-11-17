@@ -13,6 +13,7 @@ import path from 'node:path';
 import { KIND_GATE1, KIND_GATE2, KIND_TICKET, SIGN_OFF, ticketQueueOf } from '../items.mjs';
 import { DeckRefusal, addReply, listItems, pivotTicket, postItem, resolveItem, setCoPilot } from '../store.mjs';
 import { recutTicket } from '../store-tickets.mjs';
+import { renderHomePage } from '../ui/render.mjs';
 import { deckOnAPort, postStored, shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
 
 const REPO = path.join('D:', 'work', 'pilot');
@@ -51,6 +52,22 @@ test('a signed ticket re-cuts to red with its mark', (t) => {
   assert.deepEqual(stored.plan, signed.plan, 'the plan is kept until a gate1 replaces it');
   assert.deepEqual(ticket.recut, stored.recut, 'returned as stored');
   assert.deepEqual(ticketQueueOf(listItems(), REPO, 'red').map((item) => item.id), [signed.id, queued.id], 'at the red queue head');
+});
+
+test('a re-cut ticket card shows the re-cut mark with its why; a plain red one does not (S6a, §9 item 1)', (t) => {
+  tempDeck(t);
+  const signed = aSigned('other host');
+  const plain = aTicket('plain red');
+  recutTicket(signed.id, 'landing 1a2b3c4', ['deck/lanes.mjs']);
+  const page = renderHomePage(listItems(), [{ id: 'run_1', repo: REPO, name: 'pilot', pid: process.pid, startedAt: new Date().toISOString() }], REPO);
+  const rowOf = (title) => {
+    const end = page.indexOf(`>${title}</a>`);
+    assert.notEqual(end, -1, `${title} is on the tab`);
+    return page.slice(page.lastIndexOf('<li', end), page.indexOf('</li>', end));
+  };
+
+  assert.match(rowOf('other host'), /<span class="recut" title="landing 1a2b3c4">re-cut<\/span>/);
+  assert.doesNotMatch(rowOf(plain.title), /class="recut"/);
 });
 
 test("a live co-pilot's ticket is refused", (t) => {
