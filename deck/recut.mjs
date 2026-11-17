@@ -72,6 +72,17 @@ async function ownedAt(git, sha, artefact) {
 export const neverGranted = (ticket) => ticket?.plan !== null && typeof ticket?.plan === 'object' && ticket.plan.grantedAt === undefined;
 
 /**
+ * A deck from before `plan.grantedAt` existed (QA-F1) cannot say which plans a co-pilot was granted on, so on a store
+ * without `grantsStamped` each unstamped ticket plan reads granted, `'legacy'`, and is never re-cut part-built (L4).
+ * In place, at read; the store's next write keeps the stamps and the mark, so a plan signed after reads unstamped.
+ */
+export function stampLegacyGrants(deck) {
+  if (deck.grantsStamped === true) return;
+  for (const item of deck.items) if (item?.kind === 'ticket' && neverGranted(item)) item.plan.grantedAt = 'legacy';
+  deck.grantsStamped = true;
+}
+
+/**
  * The drift of `plan` ({ sha, branch, artefact }) in the git repository `repoDir`, against `origin`. Never throws, and
  * answers within the deadline even when a transport helper git started outlives git's own kill.
  */

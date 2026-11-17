@@ -59,7 +59,8 @@ test('a stored plan with estimate reads back without it, idempotently', (t) => {
   tempDeck(t);
   const plan = { ...GATE1, slug: 'ticket-states', estimate: 330, gate1: 'itm_abc123' };
   const stored = postStored({ kind: KIND_TICKET, title: 'Apple', body: shapedTicketBody(), repo: REPO, state: 'yellow', plan });
-  const { estimate: _, ...without } = plan;
+  // postStored writes a store from before grant stamps, so its plan reads granted (never-stuck QA-F1).
+  const { estimate: _, ...without } = { ...plan, grantedAt: 'legacy' };
   assert.deepEqual(stored.plan, without);
   assert.deepEqual(reread(stored.id).plan, without, 'a second read changes nothing');
   aTicket();
