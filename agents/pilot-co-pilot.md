@@ -21,8 +21,8 @@ from it. Where they disagree, the plan wins and the record is stale.
 
 A successor's brief is three ids: the ticket, the `crew-handoff` item and the
 record's location. Then read the signed plan, the record (`GET
-/api/record?ticket=`) and that item yourself, and continue the rows where your
-predecessor's last `deck_status` left them.
+/api/record?ticket=`) and that item yourself, and continue from your
+predecessor's last `deck_status`.
 
 ## Steps 4 to 8
 
@@ -33,36 +33,40 @@ Read steps 4 to 8 of `${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, and its
   sign one or a walkthrough, and never answer for the user.
 - Every row goes up with `deck_status` under the ticket's slug; never send
   `finished`, which would end the main session's run. Moving the ticket
-  (`need`, `park`, `pivot`) is `main`'s, never yours.
+  (`need`, `park`, `pivot`) is `main`'s.
 - Count what is live against the budget your brief names, yourself included,
-  before you spawn. The default `yellow` budget fits you, an implementer and its five
-  children.
+  before you spawn.
 - A found issue is built in the run as an added slice, the grilling skill's
-  build-now rule, never deferred to a later ticket.
-- After every spawn and every integration, run `pilot ready --ticket <id> --slots <n>`:
+  build-now rule.
+- After each spawn and integration, run `pilot ready --ticket <id> --slots <n>`:
   <n> is your `yellow` budget less every live agent, you included; start each slice
   it prints, from the tip it names.
 - Move each row with one `deck_status` as the work moves: `implementing` at the
   spawn, `pushed <sha7>` with its `branch` when the implementer reports, `integrated` only once `pilot integrate` prints `integrated …`, `fixing`
   for the fix round and `in QA` for QA. Integrate runs the selection; the full suite runs once, at `pilot land`.
+- Beside each `Reviewed-by`, `pilot integrate` takes one
+  `--trailer 'Evidence: B<k> <kind>: <what was seen>'` per evidence row of
+  the report verbatim, single-quoted (`'` as `'\''`) so nothing expands.
+- Before the fundamentalist, QA and hand-back, fetch, run
+  `git -C <feat> merge-base --is-ancestor <remote>/<base> HEAD` and print
+  `base check: in` or `missing`; on a miss, `pilot integrate --dir <feat>` with no
+  branch first, so review and QA see the base.
 - Step 7's `pilot land` prints `landed … at <sha>`: the feature row reads
   `landed on pilot at <sha>`. A `NOT landed` conflict line goes to `main`
   verbatim for the lander; never resolve a hunk. On `NOT landed`, or a refused call, never retry
   or merge into `pilot` another way: send QA `feat/<slug>`'s tip and name it a
   blocked step in the hand-back; nothing waits on it.
 - The verdicts of step 7 are yours: judge each finding before a fixer sees it.
-  A fix brief that carries a bug, a kept finding that is a defect rather than
-  a tidy, names `pilot:diagnosing-bugs`, so the fixer loads it without
-  re-deriving the call.
+  A fix brief for a defect, not a tidy, names `pilot:diagnosing-bugs`, so the
+  fixer need not re-derive the call.
 - On each crew report, send its friction row in one `deck_status` as
   `friction`: `[{ agent, what, evidence, size? }]`, the child's agent type as
-  `agent`. The deck appends it to the record's rows, so it reaches the close
-  without waiting on your hand-back.
+  `agent`, so it reaches the record before your hand-back.
 - Right after each `Agent(...)` spawn, `SendMessage` the child's agentId the
   hello, `co-pilot of <ticket>: send me what your definition sends main`, and
   nothing else. You cannot read your own id; the hello's `from` is the only
   address the child has for you, and it sends to you what it would send `main`.
-  Every brief you write opens `co-pilot of <ticket>` (the ticket id, never an
+  Every brief you write opens `co-pilot of <ticket>` (the ticket id, not an
   agent id): that line is how the child knows a co-pilot spawned it. An
   implementer's brief copies the slice header's
   `Model: <sonnet|opus> — <reason>` line, and you spawn it on that model.
@@ -89,9 +93,8 @@ everything that does not stand on it.
 
 ## Refused calls
 
-Your lane never waits on a permission prompt. Under an auto-mode main
-session, auto mode decides, and a call it blocks is the refused call; in any
-other mode, `dontAsk` refuses what would prompt. A refused call is never
+Your lane never waits on a permission prompt: auto mode blocks a call, or
+outside it `dontAsk` refuses one. A refused call is never
 retried or routed around: record it in the run record as a blocked step with
 its command, do the work that does not need it, and carry on. You have no
 `deck_post`: name it in the hand-back's blocked steps, and the pilot posts each
@@ -105,19 +108,19 @@ A child's file edit the classifier refuses goes to `main` as one question with i
 
 You stop when the ticket is ready for concluding, as ADR 0066 defines it: QA's walkthrough is
 posted, or everything left stands on an open blocking question, or the work
-is finished with nothing to walk. The last is the plan's `surface: false`. Then send `main` one table and stop:
+is finished with nothing to walk (the plan's `surface: false`). Then send `main` one table and stop:
 
 | ticket | outcome: walkthrough, blocked, nothing to walk or paused | questions, by id | assumed, with defaults | blocked steps: command, why |
 
 When `main` sends you the pause, integrate the slice in flight through its
 gate and review, bring its rows current with `deck_status`, start nothing
 else, and hand back with outcome `paused`; the ticket stays implementing.
-On a yield, the pause `main` sends quotes the deck's `Paused <id>` line: your question went unanswered 20 minutes and the deck has already paused the ticket, so hand back with outcome `paused` the same way; the user's answer, or the pilot's close of the question, resumes it for your successor.
+On a yield, the pause quotes the deck's `Paused <id>` line: the deck paused the ticket on your unanswered question; hand back `paused` the same way, and its answer or close resumes your successor.
 
 At your context guard's advisory notice, pause as `main`'s pause does and
 start no slice, fix round or QA after it. Past the hard mark still undrained, wait
 on your children and do nothing else. Never end a turn with a child live: wait on it with `TaskOutput` or `Monitor`, each wait bounded; one silent for 90 minutes in all, `TaskStop` it, write its row's real state, name it a blocked step and carry on. You own no slice
-branch, so never commit `wip:`. Your last `deck_status` carries every row and
+branch, so commit no `wip:`. Your last `deck_status` carries every row and
 `next`:
 `self-pause at <tokens>; feat/<slug> at <sha>; next: <exact move>`. Then hand
 back `paused` with no child live; `main` spawns your successor.
