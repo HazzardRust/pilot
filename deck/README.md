@@ -60,8 +60,6 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `run-claim.mjs` | `pilot run`'s claim: the once-only `/clear` claim, the lane's marker, the turn stamp and the waits |
 | `run-env.mjs` | `pilot run`'s start: the session's arguments (`claudeArgs`, `RESUME_PROMPT`) and environment (`runEnv`) |
 | `run-look.mjs` | the hand-off mod's look: one `Outcome` per op (`turn`, `cleared`) as a CLI the mod runs, the posted stamp and the session pid |
-| `run-prompt.mjs` | `pilot run`'s first prompt: one bracketed paste (`pasted`), then Enter alone after a settle, then the check that the fresh session took it, with one retyped Enter, all in one call (`handPrompt`) |
-| `run.mjs` | `pilot run`: types `/clear` and the first prompt at the hand-off |
 | `runs.mjs` | what a run is and whether its session is still there |
 | `schedule.mjs` | the co-pilot's scheduler: which slices of a run's record may start now, and from which tip |
 | `scratch.mjs` | `pilot deck --scratch`: an agent's own deck on a free port, its store under the temp directory |

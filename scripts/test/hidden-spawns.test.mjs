@@ -40,15 +40,6 @@ function childStarts(source, declared = []) {
   return calls;
 }
 
-const EXEMPT = [
-  {
-    file: 'deck/run.mjs',
-    callee: 'spawn',
-    inside: 'startPlain',
-    why: "the user's interactive `claude`, started with inherited stdio in their own terminal (L3)",
-  },
-];
-
 function scanned() {
   const files = [];
   const walk = (dir) => {
@@ -67,19 +58,6 @@ const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 
 /** Every function name the sources declare: `spawnCount` counts spawns, it starts none. */
 const declaredIn = (sources) => sources.flatMap((source) => [...source.matchAll(/\bfunction\s*\*?\s*([\w$]+)\s*\(/g)].map((m) => m[1]));
-
-/** The text of a top-level function, from its declaration to its closing brace. */
-function body(source, name) {
-  const start = source.indexOf(`function ${name}(`);
-  if (start < 0) return '';
-  const end = source.indexOf('\n}\n', start);
-  return source.slice(start, end < 0 ? source.length : end + 2);
-}
-
-const exempted = (file, source) =>
-  EXEMPT.filter((entry) => entry.file === file).flatMap(({ callee, inside }) =>
-    childStarts(body(source, inside)).filter((call) => call.startsWith(`${callee}(`)),
-  );
 
 test('childStarts finds multi-line and injected calls', () => {
   const fixture = [
@@ -117,9 +95,8 @@ test('every child the pilot starts has its console hidden', () => {
   const declared = declaredIn([...sources.values()]);
   const unhidden = [];
   for (const [file, source] of sources) {
-    const exempt = exempted(file, source);
     for (const call of childStarts(source, declared)) {
-      if (exempt.includes(call) || /windowsHide: true/.test(call)) continue;
+      if (/windowsHide: true/.test(call)) continue;
       unhidden.push(`${file}: ${call.split('\n')[0]}`);
     }
   }
@@ -147,12 +124,4 @@ test('no scanned file reaches child_process by a name the scan cannot see', () =
     return imported.test(source) || renamed.test(source) || [...source.matchAll(bound)].some((m) => !callee.test(m[1]));
   });
   assert.deepEqual(aliased, [], `use child_process names directly, without renaming:\n${aliased.join('\n')}`);
-});
-
-test('the one exemption is the interactive session', () => {
-  assert.equal(EXEMPT.length, 1);
-  const [{ file, callee }] = EXEMPT;
-  const calls = exempted(file, read(file));
-  assert.equal(calls.length, 1, `${file} no longer starts its interactive session with ${callee}(`);
-  assert.match(calls[0], /stdio: 'inherit'/);
 });

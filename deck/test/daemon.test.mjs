@@ -1114,45 +1114,7 @@ test('pilot answers when started through a link, as a global npm install starts 
   });
 
   assert.equal(cli.status, 0, cli.stderr);
-  assert.match(cli.stdout, /pilot run/);
-});
-
-test('pilot run is the wrapper, and answers with the code the wrapper answers with', async () => {
-  // `pilot run` starts a real terminal running a real `claude`, so the one thing
-  // the dispatcher does with it — hand over, and make its code this process's —
-  // is asked with the wrapper replaced. A load hook in a child process swaps the
-  // module out before `bin/pilot.mjs` resolves it, the same way the probe below
-  // watches the client's imports: stubbing where the two modules meet, rather
-  // than anywhere inside either of them.
-  const probe = `
-    import { registerHooks } from 'node:module';
-    const wrapper = ${JSON.stringify(pathToFileURL(path.join(ROOT, 'deck', 'run.mjs')).href)};
-    const called = [];
-    registerHooks({
-      load(url, context, next) {
-        if (url !== wrapper) return next(url, context);
-        return { format: 'module', shortCircuit: true, source: 'export const run = async () => { console.log("the wrapper ran"); return 7; };' };
-      },
-    });
-    const { run } = await import(${JSON.stringify(pathToFileURL(CLI).href)});
-    await run(['run']);
-  `;
-  const child = spawn(process.execPath, ['--input-type=module', '-e', probe], {
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  let out = '';
-  let err = '';
-  child.stdout.on('data', (chunk) => {
-    out += chunk;
-  });
-  child.stderr.on('data', (chunk) => {
-    err += chunk;
-  });
-
-  const code = await exited(child);
-
-  assert.match(out, /the wrapper ran/, `\`pilot run\` did not reach the wrapper: ${err}`);
-  assert.equal(code, 7, 'and the code the wrapper answered with is the one this process exits on');
+  assert.match(cli.stdout, /pilot deck/);
 });
 
 // --- the stdio client, driven in this process ------------------------------

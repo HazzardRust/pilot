@@ -9,9 +9,7 @@
  * up. `pilot deck --foreground` serves it in this process instead, for watching stderr
  * while debugging and stopping it with Ctrl-C.
  *
- * `pilot run` is the second subcommand: the pilot, started inside a terminal this process
- * owns so that the `/clear` of a hand-off can be typed for the user (`deck/run.mjs`).
- * `pilot integrate` is the third, the pilot's one call to land a slice on its feature
+ * `pilot integrate` is the second, the pilot's one call to land a slice on its feature
  * branch (`scripts/integrate.mjs`); `pilot handoff` its one call to hand the run to a fresh
  * session (`scripts/handoff.mjs`). A dispatcher and nothing else — each subcommand is one module
  * under `deck/`, and the exit code it answers with is this process's.
@@ -37,7 +35,6 @@ import { openDeck } from '../deck/open.mjs';
 import { main as serveDeck } from '../deck/daemon.mjs';
 import { storeDir } from '../deck/store.mjs';
 import { readUsageSwitch, setUsageSwitch } from '../deck/usage-switch.mjs';
-import { run as runPilot } from '../deck/run.mjs';
 import { main as handoff } from '../scripts/handoff.mjs';
 import { main as deckStatus } from '../deck/status-command.mjs';
 import { main as integrate } from '../scripts/integrate.mjs';
@@ -82,10 +79,9 @@ const usage = () => `pilot — the deck for piloted runs
   pilot deck --stop <pid>
                  stop a scratch deck by the pid --scratch printed and remove its dir;
                  refuses any other pid, the user's deck included
-  pilot run      start the pilot, and type the \`/clear\` of a hand-off for you
   pilot handoff [--trailer "<line>"]...
                  the pilot's hand-off, after its deck_status: commit and push run.json in
-                 the feat worktree and post the handoff item; \`pilot run\` types the /clear
+                 the feat worktree and post the handoff item
   pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]... [--dir <worktree>]
                  in the feat/<slug> worktree (or the one --dir names): take origin/pilot, merge the slice (if
                  named), test the selection (the tests the diff touches), push, commit run.json; refuses on the default branch
@@ -294,13 +290,6 @@ export async function run(argv) {
     const open = existsSync(openFile()) ? `open ${openFile()}` : 'no open file: `pilot deck --rotate` writes one';
     console.log(up ? `The deck is up at ${deckUrl()}\n${open}` : `No deck answered at ${deckUrl()}`);
     process.exitCode = up ? 0 : 1;
-    return undefined;
-  }
-
-  if (command === 'run') {
-    // `--sub` is gone (ADR 0088), refused by name rather than read as a plain run.
-    if (flag !== undefined) return refuse(`pilot run: unknown option ${flag}\n`);
-    process.exitCode = await runPilot();
     return undefined;
   }
 

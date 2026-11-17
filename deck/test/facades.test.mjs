@@ -38,7 +38,6 @@ const FACADES = {
     'openQuestionsOf', 'ownerOf', 'pausedOn', 'pilotWrites', 'replyPrompt', 'repoKey', 'sameRepo', 'specFor', 'standingOf',
     'stateOf', 'stepParts', 'switchOf', 'threadState', 'ticketQueueOf', 'ticketWornBy', 'unansweredBlockers', 'waiterKind', 'waitingOn',
   ],
-  'run.mjs': ['RESUME_PROMPT', 'claimNameFor', 'claudeArgs', 'clearOnce', 'firstPrompt', 'holdFor', 'loadPty', 'logLine', 'run', 'runEnv', 'startPlain', 'takeClaim', 'watch'],
   'store.mjs': [
     'DeckRefusal', 'KINDS', 'LANDING_INTERRUPTED', 'MAX_TEXT_BYTES', 'MAX_WAIT_REPLIES', 'addDeck', 'addPilotMessage',
     'addReply', 'archiveOld', 'archivedItem', 'beginLanding', 'budgetFor', 'cancelSwitch', 'clearAllNotices', 'clearNotice', 'closeItem', 'coPilotFor', 'createThread', 'currentSeq',
@@ -94,11 +93,6 @@ test("render's names are unchanged", async () => {
 
 test('render.mjs is a facade', () => {
   assert.ok(linesOf('ui/render.mjs') < 50, `render.mjs has ${linesOf('ui/render.mjs')} lines, a facade is under 50`);
-});
-
-test("run's names are unchanged", async () => {
-  const names = Object.keys(await import('../run.mjs')).sort();
-  assert.deepEqual(names, FACADES['run.mjs']);
 });
 
 // handoff-mod S7: `pilot run` is gone, and with it the launcher and its native dependency.
