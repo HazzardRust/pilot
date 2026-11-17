@@ -42,7 +42,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 14bdb9d (ts re-review after BLOCK in flight)",
+      "state": "integrated",
       "after": [
         "S4"
       ],
@@ -51,7 +51,7 @@
     },
     {
       "slice": "S6",
-      "state": "",
+      "state": "blocked: waits for blocked-steps S2 (feat 3e118261) and handoff-books S3 (feat 2b35021a) on pilot (d7569a49)",
       "after": [
         "S3",
         "S4",
@@ -59,8 +59,16 @@
       ]
     }
   ],
-  "next": "feat/never-stuck at 1c3040de; S5 pushed 14bdb9d, fresh ts re-review running after BLOCK; next: integrate S5 on approve (second BLOCK goes to main), then hand back blocked on S6 (blocked-steps 3e118261, handoff-books 2b35021a).",
-  "updatedAt": "2026-11-17T09:57:24.675Z",
+  "findings": [
+    "kept: S2-sec-1 MEDIUM - repo config can still run commands in fetch; add core.sshCommand/gitProxy/credential.helper/uploadpack/proxy overrides to HARDENED, deck/recut.mjs:41",
+    "kept: S3-ts-1 LOW - driftAfterLanding's gone and refused-recut branches untested, deck/landing.mjs",
+    "kept: S5-ts-1 MEDIUM - pivotTicket leaves a stale yielding; delete ticket.yielding beside paused, deck/store-tickets.mjs:418, with a test",
+    "kept: S5-ts-2 LOW - report close and direct close leave yielding, deck/store-items.mjs:178,593",
+    "dropped: S5-ts-3 MEDIUM - setCoPilot overwrite leaving yielding on the old holder; Run 2 S7 refuses a second co-pilot, which removes the route",
+    "kept: S4-ts LOWs - recut.from not re-checked after await; sha regex in three places"
+  ],
+  "next": "feat/never-stuck at c19395e7 (S1-S5 integrated); S6 blocked until blocked-steps S2 and handoff-books S3 reach pilot; then S6, fundamentalist, fix round (findings listed), QA.",
+  "updatedAt": "2026-11-17T10:04:24.216Z",
   "friction": [
     {
       "agent": "pilot-architect (never-stuck)",
