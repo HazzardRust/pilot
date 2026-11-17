@@ -22,7 +22,7 @@
     },
     {
       "slice": "handoff-mod",
-      "state": "implementing",
+      "state": "fix round implementing; in QA (read-only, gate green 4265/0)",
       "after": [
         "S1",
         "S2",
@@ -128,7 +128,7 @@
     },
     {
       "slice": "S11",
-      "state": "pushed ffcf568",
+      "state": "integrated at a14c434c",
       "after": [
         "S6",
         "S7",
@@ -160,28 +160,24 @@
       ],
       "branch": "slice/handoff-mod-s13",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s13"
+    },
+    {
+      "slice": "fix",
+      "state": "implementing (F1-F8, F10-F14; gate/review running, unpushed)",
+      "after": [
+        "S11",
+        "S13"
+      ],
+      "branch": "slice/handoff-mod-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-fix"
     }
   ],
-  "next": "pilot integrate slice/handoff-mod-s11 (seam note reverted at 1c787ae4, re-add after); then fundamentalist (carry: deck/wait.mjs unused env, ADR 0104 PILOT_RUN_REPO, pilot --help start row misaligned) and QA",
-  "updatedAt": "2026-11-17T07:24:41.508Z",
+  "findings": [
+    "kept: F15 needed — QA: a nested claude inherits CLAUDE_PID, so its mod writes mod-<outer>.stamp and can clear in the outer's place (spec 2, 8, A6); QA fixes it as writer, after the fix round"
+  ],
+  "next": "forced hand-back; feat/handoff-mod at 2b08c4ef; next: on fix report check fixes vs diff, pilot integrate slice/handoff-mod-fix with its Verdict trailers, then resume QA (a66d4e90ed307de93) with the tip: ff-merge, fix F15 (CLAUDE_PID inheritance) red first, restart scratch deck, post walkthrough",
+  "updatedAt": "2026-11-17T07:43:12.072Z",
   "friction": [
-    {
-      "agent": "pilot",
-      "what": "read a walkthrough's Sign off as workspace trust accepted without checking ~/.claude.json; one implementer relaunch wasted",
-      "evidence": "ad195021811f20ea6 report: live-1.log line 99, no projects entry",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "scratch checkout with no remote makes pilot handoff refuse (push failed) unless pilot.remote is none",
-      "evidence": "scripts/remotes.mjs:24",
-      "size": 1
-    },
-    {
-      "agent": "pilot-implementer (S1 live check)",
-      "what": "launcher PATH entry C:/... split on the drive colon, installed pilot ran instead of the branch's",
-      "evidence": "shim log empty; 2 wasted live runs"
-    },
     {
       "agent": "pilot-implementer (S1 live check)",
       "what": "startup lane hands an older open hand-off to every new session on one scratch deck",
@@ -396,6 +392,24 @@
       "agent": "pilot:pilot-implementer",
       "what": "brief.md's fixed commit trailer names a model and session other than the run's",
       "evidence": "S11 report: commits carry Fable 5.2, session_01NXgSFodNbTKqoJ71EpWMS5",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner could not run coverage or mutation: detached worktree had no node_modules and its table forbids npm ci",
+      "evidence": "fundamentalist addendum: 'node_modules missing: run npm ci'; Stryker ERR_MODULE_NOT_FOUND",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the gate's spawn census killed QA's scratch deck, started outside the suite, as a leftover",
+      "evidence": "census: 'stopped 12368 daemon … --leash 14756'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "Chrome DevTools MCP not available in QA's session; the deck page was probed over HTTP, not a browser",
+      "evidence": "QA report: no tools match",
       "size": 1
     }
   ]
