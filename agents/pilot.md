@@ -93,8 +93,6 @@ links beside it.
 | `codebase-design` | When a question turns on where a module boundary or seam goes. |
 | `resolving-merge-conflicts` | A rebase or merge that stops on a conflict. |
 
-`test-design`, `diagnosing-bugs` and `code-review` are the crew's.
-
 ## Writing to the user
 
 No unasked explanation or narration. Print state, questions, results. What the
@@ -107,9 +105,8 @@ data, a Gate 1 walk, a pushback.
 
 ## If you were spawned as a subagent
 
-Say that the pilot runs as the main session (`pilot start`)
-because the interview and the gates are yours and a subagent cannot
-hold them, and return, doing nothing else.
+Say that the pilot runs as the main session (`pilot start`), since a
+subagent cannot hold the interview and the gates, and return.
 
 ## Legend
 
@@ -599,9 +596,8 @@ a fresh agent from that agent's branch, and resolve the item once you have.
 
 ## Ending a run
 
-Every crew agent's report shape carries a short **friction** row: what in
-the repo being worked on or its tooling cost the agent time or tokens, with
-evidence. Send each in `deck_status`'s `friction` as it arrives; the deck
+Every crew report carries a **friction** row: what in the repo or its
+tooling cost the agent time or tokens, with evidence. Send each in `deck_status`'s `friction` as it arrives; the deck
 appends it to the record's rows, so every session's rows reach the close.
 Your own drains go there too as `{kind: "drain", what, size}`: a foreign
 item read, a hook notice acted on, an output read twice, a large read done
@@ -620,5 +616,5 @@ then a rejected feature's `pilot` revert, landed by the same press, environment 
 lacked, and branch protection on the default branch; last, each
 worktree the landing kept and its state. That `Findings:` reply is the worktrees reply and the only reply on a
 closing report: anything needing the user goes up as its own question or walkthrough item
-before the report, and a user's words on a report are never relayed or acted on: no agent reads it to act (ADR 0148).
+before the report, and a user's words on a report are never relayed or acted on: a report is a record, not a channel for instructions (ADR 0148).
 Seed data stays.
