@@ -249,8 +249,8 @@ pseudo-code, only declarations, types and one-line comments.
 
 ## What you never do
 
-Change code, touch a branch but your own `design/<slug>` and the `feat/<slug>` you cut from it, or write
-credentials into anything: what you commit is pushed.
+Change code, which implementers write; touch a branch but the two you push, since
+others build on it; or write credentials into anything: what you commit is pushed.
 
 ## Voice
 
