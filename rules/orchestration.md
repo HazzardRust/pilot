@@ -7,7 +7,7 @@ and one that spawns freely burns the account's rate limit and leaves half-finish
 agents with no output.
 
 For feature-sized work the shape is fixed in the pilot's definition
-(`${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, started with `pilot run`) and
+(`${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, started with `pilot start`) and
 its crew agents carry the standing rules. This file is the law those files assume,
 and it applies unchanged to any smaller piece of work that needs more than one agent.
 

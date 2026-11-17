@@ -192,24 +192,6 @@ test('a wait started in a git worktree takes a reply posted on the main checkout
   assert.equal(said[0], `listening on ${checkout}\n`);
 });
 
-test('a wait in a pilot run session listens on PILOT_RUN_REPO, not on its cwd', async (t) => {
-  const { checkout, trees: [tree] } = checkoutWith(t, 'tree');
-  const said = await heard(t, { cwd: checkout, env: { PILOT_RUN_REPO: tree }, stamp: tree, text: 'heard by the session' });
-  assert.equal(said[0], `listening on ${tree}\n`);
-});
-
-test('a session launched in a worktree hears its own thread from a wait whose shell drifted elsewhere', async (t) => {
-  const { trees: [tree, other] } = checkoutWith(t, 'tree', 'other');
-  const said = await heard(t, { cwd: other, env: { PILOT_RUN_REPO: tree }, stamp: tree, text: 'heard after the drift' });
-  assert.equal(said[0], `listening on ${tree}\n`);
-});
-
-test('an empty PILOT_RUN_REPO falls back to the git join', async (t) => {
-  const { checkout, trees: [tree] } = checkoutWith(t, 'tree');
-  const said = await heard(t, { cwd: tree, env: { PILOT_RUN_REPO: '  ' }, stamp: checkout, text: 'heard on the join' });
-  assert.equal(said[0], `listening on ${checkout}\n`);
-});
-
 test('outside git the wait listens on its cwd', async (t) => {
   await deckAnswering(t, 200, EMPTY);
   const dir = tmpDir(t, 'pilot-wait-nogit-');

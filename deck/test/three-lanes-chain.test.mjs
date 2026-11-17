@@ -1,5 +1,5 @@
 /**
- * S4 of three-lanes: a chained start fills each empty stage lane from its own head (spec 7; A4), concluding first,
+ * S4 of three-lanes: a chain fills each empty stage lane from its own head (spec 7; A4), concluding first,
  * and the one hand-off names every ticket it took. A lane with a live ticket, or a switch pending, is skipped alone.
  */
 
@@ -18,13 +18,19 @@ const { chainNext } = await import('../chain.mjs');
 
 const ALPHA = path.resolve('D:/work/alpha');
 const reread = (id) => listItems().find((item) => item.id === id);
+const finishClean = () => setSlices(registerRun({ repo: ALPHA, pid: process.pid }).id, [], undefined, { slug: 'feature-one', finished: FINISHED_CLEAN });
+/** A clean finish over the mark: the one chain left once a session's start chains nothing (handoff-mod L12). */
+const chained = () => {
+  finishClean();
+  return chainNext(ALPHA, { pastMark: () => true });
+};
 
 test('a start with a red and a green queued takes both', (t) => {
   tempDeck(t);
   const red = aTicket('Plan it', 'red', ALPHA);
   const green = aTicket('Conclude it', 'green', ALPHA);
 
-  const { handoff, taken } = chainNext(ALPHA, { atStart: true });
+  const { handoff, taken } = chained();
 
   assert.deepEqual(taken, [green.id, red.id], 'concluding first, then planning');
   assert.equal(reread(green.id).live, true);
@@ -39,7 +45,7 @@ test('Handoff failed on a two-ticket hand-off puts both tickets down', (t) => {
   tempDeck(t);
   const red = aTicket('Plan it', 'red', ALPHA);
   const green = aTicket('Conclude it', 'green', ALPHA);
-  const { handoff } = chainNext(ALPHA, { atStart: true });
+  const { handoff } = chained();
 
   addReply(handoff.id, HANDOFF_FAILED);
 
@@ -54,7 +60,7 @@ test('a live planning ticket leaves the chain taking the green head only', (t) =
   const waiting = aTicket('Plan next', 'red', ALPHA);
   const green = aTicket('Conclude it', 'green', ALPHA);
 
-  const { handoff, taken } = chainNext(ALPHA, { atStart: true });
+  const { handoff, taken } = chained();
 
   assert.deepEqual(taken, [green.id]);
   assert.equal(handoff.next, green.id);
@@ -68,7 +74,7 @@ test('a hand-off with no room to name the planning head leaves that head queued'
   const body = 'x'.repeat(MAX_TEXT_BYTES - 10);
   const green = postStored({ kind: 'ticket', title: 'Conclude it', body, repo: ALPHA, sliceCount: 3, state: 'green' });
 
-  const { handoff, taken } = chainNext(ALPHA, { atStart: true });
+  const { handoff, taken } = chained();
 
   assert.deepEqual(taken, [green.id], 'only what the hand-off can name is taken');
   assert.equal(handoff.body, body);
@@ -92,7 +98,7 @@ test('a switching lane is skipped, not the whole chain', (t) => {
   requestSwitch(ALPHA, to.id);
   const green = aTicket('Conclude it', 'green', ALPHA);
 
-  const { handoff, taken } = chainNext(ALPHA, { atStart: true });
+  const { handoff, taken } = chained();
 
   assert.deepEqual(taken, [green.id], 'the concluding head is taken');
   assert.equal(handoff.next, green.id);

@@ -375,17 +375,14 @@ function main() {
       return; // a payload that cannot be read is never a reason to hold the turn open
     }
 
-    // A turn this gate does not hold has ended: `pilot run` may type into it now.
-    const ended = function () { if (!input.agent_id) deck.markTurnEnded(process.env, input.cwd); };
     run(input).then(
       function (said) {
-        if (!said || said.decision !== 'block') ended();
         if (!said) return;
         try {
           process.stdout.write(JSON.stringify(said));
         } catch (err) { /* EPIPE: the harness stopped reading, and the turn ends */ }
       },
-      ended // never trap the pilot over this
+      function () { /* never trap the pilot over this */ }
     );
   }
 

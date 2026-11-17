@@ -13,7 +13,8 @@ import { tempDeck } from '../testUtils.mjs';
 import { parsePicks, saveReport, specFor } from '../audit.mjs';
 import { chainNext } from '../chain.mjs';
 import { KIND_TICKET } from '../items.mjs';
-import { postItem } from '../store.mjs';
+import { FINISHED_CLEAN } from '../runs.mjs';
+import { postItem, registerRun, setSlices } from '../store.mjs';
 import { ticketShapeGaps } from '../ticket-shape.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -151,7 +152,8 @@ test("a picked row's ticket reaches the next run verbatim", (t) => {
   const file = savedReport(t);
   const body = cli('spec', file, 'F1').stdout;
   const ticket = postItem({ kind: KIND_TICKET, sliceCount: 60, repo: REPO, title: 'Audit F1: slow suite', body });
-  const { handoff } = chainNext(REPO, { atStart: true });
+  setSlices(registerRun({ repo: REPO, pid: process.pid }).id, [], undefined, { slug: 'audit', finished: FINISHED_CLEAN });
+  const { handoff } = chainNext(REPO, { pastMark: () => true });
   assert.equal(handoff.next, ticket.id);
   assert.equal(handoff.body, `${ODD_SPEC}\n\nAudit report: ${file}`);
 });

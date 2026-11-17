@@ -8,7 +8,10 @@ import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import http from 'node:http';
+import os from 'node:os';
+import path from 'node:path';
 import { spawn } from 'node:child_process';
 
 import { deckOnAPort } from '../testUtils.mjs';
@@ -16,7 +19,7 @@ import { deckOnAPort } from '../testUtils.mjs';
 const { forgetAgents } = await import('../agents.mjs');
 const { postItem } = await import('../store.mjs');
 const { waiterCount } = await import('../server.mjs');
-const { main } = await import('../wait.mjs');
+const { main, wait, listeningRepo } = await import('../wait.mjs');
 
 const OURS = 'D:/work/pilot-wait-session-repo';
 
@@ -86,7 +89,24 @@ async function parked() {
   assert.equal(waiterCount(), 1, 'the wait is parked');
 }
 
-const question = () => postItem({ kind: 'question', title: 'A question from the deck', body: 'A or B', repo: OURS, author: '' });
+/** Where `main` listens: the git join of this process's cwd, since no env names a repository (handoff-mod S8). */
+const HERE = listeningRepo(process.cwd());
+
+const question = () => postItem({ kind: 'question', title: 'A question from the deck', body: 'A or B', repo: HERE, author: '' });
+
+test('no run env is read', async (t) => {
+  const dir = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-wait-run-env-')));
+  const port = process.env.PILOT_DECK_PORT;
+  process.env.PILOT_DECK_PORT = '1'; // closed: the wait says where it listens, then finds no deck
+  t.after(() => {
+    if (port === undefined) delete process.env.PILOT_DECK_PORT;
+    else process.env.PILOT_DECK_PORT = port;
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+  const said = [];
+  await wait({ cwd: dir, env: { PILOT_RUN_REPO: OURS }, say: (line) => said.push(line), warn: () => {} });
+  assert.equal(said[0], `listening on ${dir}\n`, 'PILOT_RUN_REPO names nothing a wait listens on');
+});
 
 test('a wait under a killed session exits with NO SESSION', async (t) => {
   await silentDeck(t);
@@ -94,7 +114,7 @@ test('a wait under a killed session exits with NO SESSION', async (t) => {
   const session = sleeper(t);
   await new Promise((resolve) => session.once('spawn', resolve));
 
-  const waiting = main(['--timeout', '0.5'], { env: { CLAUDE_PID: String(session.pid), PILOT_RUN_REPO: OURS } });
+  const waiting = main(['--timeout', '0.5'], { env: { CLAUDE_PID: String(session.pid) } });
   await sleep(500);
   session.kill();
   await new Promise((resolve) => session.once('exit', resolve));
@@ -112,7 +132,7 @@ test('a wait with no CLAUDE_PID waits as today', async (t) => {
   const said = stdoutOf(t);
 
   let done = false;
-  const waiting = main(['--timeout', '1'], { env: { PILOT_RUN_REPO: OURS } }).finally(() => { done = true; });
+  const waiting = main(['--timeout', '1'], { env: {} }).finally(() => { done = true; });
   await parked();
   await sleep(3000);
   assert.equal(done, false, 'still parked after 3 s');
@@ -130,7 +150,7 @@ test('a reply before the session goes is printed once', async (t) => {
   const said = stdoutOf(t);
   let up = true;
 
-  const waiting = main(['--timeout', '1'], { env: { CLAUDE_PID: '424242', PILOT_RUN_REPO: OURS }, alive: () => up });
+  const waiting = main(['--timeout', '1'], { env: { CLAUDE_PID: '424242' }, alive: () => up });
   await parked();
   await reply(base, asked.id, 'go ahead');
   assert.equal(await waiting, 0);

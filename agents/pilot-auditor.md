@@ -169,8 +169,8 @@ keeps the git snapshots, because they prove you left the repository as found.
    efforts, each row's effort as slices (S 1, M 3, L 8). Then one
    `deck_reply` on the audit item listing each ticket's id and naming any
    unknown ids back, and resolve it with
-   `mcp__plugin_pilot_deck__deck_resolve`. The chain starts each ticket later,
-   one run at a time, when the user runs `pilot run` there.
+   `mcp__plugin_pilot_deck__deck_resolve`. The chain starts each ticket after
+   a clean finish, one run at a time.
 
 ## Report
 
