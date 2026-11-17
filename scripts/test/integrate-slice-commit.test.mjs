@@ -163,6 +163,92 @@ test('a slice whose Reviewers line names security integrates only with its Revie
   assert.equal(git(work, 'log', '--first-parent', '-1', '--format=%s'), 'feat(demo): S1 one thing');
 });
 
+/** Commits `docs/design/demo/slices/S1.md` holding `text` on `feat/demo` and pushes it; answers the tip. */
+function sliceFile(work, text) {
+  const file = path.join(work, 'docs', 'design', 'demo', 'slices', 'S1.md');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, text);
+  git(work, 'add', '.');
+  git(work, 'commit', '-q', '-m', 'slice file');
+  git(work, 'push', '-q', 'origin', 'feat/demo');
+  return git(work, 'rev-parse', 'HEAD');
+}
+
+const BEHAVIOURS = [
+  '# S1 One thing',
+  '',
+  'Reviewers: `pilot:typescript-reviewer`',
+  '',
+  '## Behaviours',
+  '',
+  '1. `a known word returns its entry` (test): `lookup` → the entry',
+  '2. `the page lists the words` (look): the list renders in a browser',
+  '',
+].join('\n');
+
+test('every behaviour evidenced integrates', (t) => {
+  const { work } = scratchRepos(t);
+  sliceFile(work, BEHAVIOURS);
+  const trailers = [
+    'Reviewed-by: pilot:typescript-reviewer: approve',
+    'Evidence: B1 test: lookup red before, green after',
+    'Evidence: B2 look: the list showed three words',
+  ];
+
+  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, push: false, trailers });
+
+  assert.equal(result.ok, true, result.line);
+  const body = git(work, 'log', '--first-parent', '-1', '--format=%b');
+  for (const trailer of trailers.slice(1)) assert.ok(body.includes(trailer), `${trailer} in\n${body}`);
+});
+
+test('a missing behaviour refuses', (t) => {
+  const { origin, work } = scratchRepos(t);
+  const before = sliceFile(work, BEHAVIOURS);
+  const cases = [
+    ['Evidence: B1 test: lookup red before, green after'],
+    // Two trailers for B1 are not evidence for B2: the count alone is not the check.
+    ['Evidence: B1 test: lookup red before, green after', 'Evidence: B1 test: and again'],
+    // Evidence of another kind is not B2's.
+    ['Evidence: B1 test: lookup red before, green after', 'Evidence: B2 test: a unit test of the list'],
+  ];
+  for (const evidence of cases) {
+    const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, trailers: ['Reviewed-by: pilot:typescript-reviewer: approve', ...evidence] });
+
+    assert.equal(result.ok, false, JSON.stringify(evidence));
+    assert.equal(result.line, 'NOT integrated slice/demo-s1: S1: B2 has no --trailer "Evidence: B2 look: <what was seen>"; nothing merged or pushed');
+    assert.equal(git(work, 'rev-parse', 'HEAD'), before, 'HEAD unmoved');
+    assert.equal(git(origin, 'rev-parse', 'feat/demo'), before, 'nothing pushed');
+  }
+});
+
+test('an old-shape slice needs no evidence', (t) => {
+  const { work } = scratchRepos(t);
+  sliceFile(work, '# S1 One thing\n\nReviewers: `pilot:typescript-reviewer`\n\n## Tests\n\n1. `a known word returns its entry`: `lookup` → the entry\n');
+
+  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, push: false, trailers: ['Reviewed-by: pilot:typescript-reviewer: approve'] });
+
+  assert.equal(result.ok, true, result.line);
+  assert.doesNotMatch(git(work, 'log', '--first-parent', '-1', '--format=%b'), /^Evidence:/m);
+});
+
+test('the security refusal still holds', (t) => {
+  const { origin, work } = scratchRepos(t);
+  const before = sliceFile(work, BEHAVIOURS.replace('`pilot:typescript-reviewer`', '`pilot:typescript-reviewer`, `pilot:security-reviewer`'));
+  const trailers = [
+    'Reviewed-by: pilot:typescript-reviewer: approve',
+    'Evidence: B1 test: lookup red before, green after',
+    'Evidence: B2 look: the list showed three words',
+  ];
+
+  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, trailers });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.line, 'NOT integrated slice/demo-s1: S1 names pilot:security-reviewer and no --trailer "Reviewed-by: pilot:security-reviewer: <verdict>"; nothing merged or pushed');
+  assert.equal(git(work, 'rev-parse', 'HEAD'), before, 'HEAD unmoved');
+  assert.equal(git(origin, 'rev-parse', 'feat/demo'), before, 'nothing pushed');
+});
+
 test('the subject lower-cases the title\'s first letter', () => {
   assert.equal(sliceSubject('demo', { slice: 'S2 The x', branch: 'slice/demo-s2' }), 'feat(demo): S2 the x');
 });
