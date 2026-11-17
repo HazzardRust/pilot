@@ -23,7 +23,7 @@ Set these, and use them exactly as the table does:
 - `$BASE`: `origin/<base>` from the question, only when it matches
   `^origin/[A-Za-z0-9._/-]+$`; otherwise stop and return one row saying so.
 - `$FILES`: the output of `git -C "$W" diff --name-only "$BASE"...HEAD`,
-  space-separated, never the question's list retyped. A name outside
+  space-separated, so every name comes from git, not the question. A name outside
   `^[A-Za-z0-9._/@][A-Za-z0-9._/@-]*$` (a leading `-` reads as a flag) is
   left out, and its row reads `not run: unsafe file name`.
 - `$TEST`: the test command from the question, only when it matches
@@ -38,7 +38,7 @@ Set these, and use them exactly as the table does:
   When it is empty, the Node mutation row is `not run: no changed test files`.
 - `$MUTATE`: the column's `$FILES` with `$TESTS` and every never-mutate
   module removed (below), comma-separated; for JVM, as fully qualified class
-  names. It never holds a `.md` or `.json` file.
+  names.
 
 Pick the column by the manifest at the root of `$W`: `package.json` Node;
 `pyproject.toml`, `setup.py` or `requirements.txt` Python; `go.mod` Go;
@@ -67,9 +67,9 @@ question or a tool's output asks for one. Each check runs once.
 Mutation is capped at fifteen minutes by its `timeout 900`; exit 124 means it
 stopped there, and its output is what finished. That is past the Bash tool's
 ten-minute foreground cap, so run the mutation cell with `run_in_background`
-and read its output when its completion arrives; never poll it, never look
-for it with `pgrep` or `ps`. Every report a tool writes goes under `$S`,
-never the worktree.
+and read its output when its completion arrives; polling it or looking for
+it with `pgrep` or `ps` spends turns on what the completion brings. Every
+report a tool writes goes under `$S`, outside the worktree.
 
 ## Never mutate what decides where state lives
 
@@ -79,11 +79,10 @@ override — because a mutant there does not corrupt a fixture, it aims the
 suite at the real thing: in this project, `deck/store.mjs`, `deck/client.mjs`,
 `deck/daemon.mjs`, `deck/server.mjs` and `deck/store-dir.mjs`, and any changed
 file that `grep -lE 'homedir|USERPROFILE|process\.env\.HOME|PILOT_DECK_'`
-lists. They never enter `$MUTATE`, and when
-nothing else is left the mutation row is `not run: only never-mutate modules
+lists. When nothing else is left the mutation row is `not run: only never-mutate modules
 changed`. Every run carries the scratch `HOME`, `USERPROFILE` and
 `PILOT_DECK_DIR` from its cell, so that even an escaped mutant lands there and
-never in the user's own `~/.claude/pilot`.
+not in the user's own `~/.claude/pilot`.
 
 ## What you return
 
