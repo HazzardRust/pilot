@@ -49,10 +49,10 @@ import atomicWrite from '../hooks/lib/atomic-write.js';
 import { pathKey } from '../hooks/lib/platform.js';
 import { PLUGIN_ID, readReach, rulesPlan } from './reach.mjs';
 import {
-  DECK_SERVER,
   DEFAULT_BRANCH_ASK,
   PILOT_MERGE_ALLOW,
   coveringRule,
+  deckToolsStep,
   defaultBranchAskStep,
   denyCovers,
   domainOf,
@@ -405,63 +405,6 @@ function enablePluginStep(settingsPath, value) {
       state: 'set',
       notes: [`Set enabledPlugins["${PLUGIN_ID}"] to ${value} in ${settingsPath}.`],
       change: (draft) => ({ ...draft, enabledPlugins: { ...draft.enabledPlugins, [PLUGIN_ID]: value } }),
-    };
-  };
-}
-
-const DECK_TOOLS_RULE = `${DECK_SERVER}__*`;
-
-// A deny that refuses any deck tool - the server, the wildcard, one tool, or a glob
-// that reaches one. A glob is probed with a deck tool name ending in its own literal
-// tail, so `*__deck_read` counts as well as `mcp__*`. Erring towards "covered" is the
-// safe direction: a deny wins whatever we add, and an allow beside it would read as a
-// grant and behave as a refusal.
-function deckDenyCovers(rule) {
-  const text = String(rule).trim().toLowerCase();
-  if (text === DECK_SERVER || text.startsWith(`${DECK_SERVER}__`)) return true;
-  if (!text.includes('*')) return false;
-  const parts = text.split('*');
-  const tail = parts.at(-1);
-  const glob = new RegExp(`^${parts.map((p) => p.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('.*')}$`);
-  return [`${DECK_SERVER}__x`, `${DECK_SERVER}${tail}`, `${DECK_SERVER}__${tail}`].some((probe) =>
-    glob.test(probe),
-  );
-}
-
-/** Allow `mcp__plugin_pilot_deck__*`, unless their deny list refuses a deck tool. */
-function deckToolsStep(settingsPath) {
-  return (settings) => {
-    const permissions = readablePermissions(settingsPath, settings);
-    const allow = (permissions.allow ?? []).map(String);
-    const denyRule = (permissions.deny ?? []).find(deckDenyCovers);
-    const allowed = allow.some((rule) => [DECK_SERVER, DECK_TOOLS_RULE].includes(rule.trim()));
-
-    if (denyRule !== undefined) {
-      return {
-        key: 'deckTools',
-        state: 'denied',
-        notes: [
-          `Your deny list refuses the deck tools (${denyRule}), so ${DECK_TOOLS_RULE} was not`,
-          'added to allow: a deny wins, and the rule would have read as a grant. Each deck',
-          'call will be refused until you remove that deny.',
-        ],
-      };
-    }
-    if (allowed) {
-      const notes = ['The deck tools are already allowed, left as they were.'];
-      return { key: 'deckTools', state: 'already-allowed', notes };
-    }
-    return {
-      key: 'deckTools',
-      state: 'added',
-      notes: [`Added ${DECK_TOOLS_RULE} to permissions.allow in ${settingsPath}.`],
-      change: (draft) => ({
-        ...draft,
-        permissions: {
-          ...draft.permissions,
-          allow: [...(draft.permissions?.allow ?? []), DECK_TOOLS_RULE],
-        },
-      }),
     };
   };
 }

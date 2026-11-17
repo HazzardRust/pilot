@@ -33,3 +33,9 @@ test('the own-rule test answers from its own module', async () => {
   assert.equal(isOwnAllow('mcp__plugin_pilot_deck__*'), true);
   assert.equal(isOwnAllow('Bash(npm test)'), false);
 });
+
+test('the deck-tools step answers from its own module', async () => {
+  const { deckToolsStep } = await import('../install-permissions.mjs');
+  const result = deckToolsStep('settings.json')({ permissions: { deny: ['mcp__*'] } });
+  assert.equal(result.state, 'denied');
+});
