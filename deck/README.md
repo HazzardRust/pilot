@@ -57,9 +57,9 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `read.mjs` | which items a `deck_read` returns: one by id, or the newest |
 | `refusal-log.mjs` | `logRefusal`: one deck.log line per refused or failed request (400, 415, 500), `[deck] <status> <METHOD> <path>: <message>`, a 500's stack frames under it, never the query or body (daemon-lifecycle spec 2) |
 | `report-shape.mjs` | checks a closing report asks the user nothing (ADR 0148) |
-| `run-claim.mjs` | the hand-off mod's claim: the once-only `/clear` claim, the lane's marker, the turn stamp and the waits |
-| `run-env.mjs` | a pilot session's start: its arguments (`claudeArgs`, `RESUME_PROMPT`) and environment (`runEnv`) |
-| `run-look.mjs` | the hand-off mod's look: one `Outcome` per op (`turn`, `cleared`) as a CLI the mod runs, the posted stamp and the session pid |
+| `run-claim.mjs` | the hand-off mod's claims and stamps: the once-only `/clear` claim, the lane's marker, the posted and reported-in stamps and the session pid |
+| `run-env.mjs` | a pilot session's start: its settings and arguments (`runSettings`, `startArgs`) and environment (`runEnv`) |
+| `run-look.mjs` | the hand-off mod's look: one `Outcome` per op (`turn`, `cleared`) as a CLI the mod runs |
 | `runs.mjs` | what a run is and whether its session is still there |
 | `schedule.mjs` | the co-pilot's scheduler: which slices of a run's record may start now, and from which tip |
 | `scratch.mjs` | `pilot deck --scratch`: an agent's own deck on a free port, its store under the temp directory |

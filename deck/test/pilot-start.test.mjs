@@ -32,18 +32,19 @@ const aRecorder = () => {
   return { calls, spawn };
 };
 
-/** Runs `pilot <argv>` on a recorder at reach `nothing`, answering the exit code and stderr, both restored after. */
+/** Runs `pilot <argv>` on a recorder at reach `nothing`, answering the exit code, stderr and stdout's lines, all restored after. */
 const pilot = async (t, argv, deps) => {
   let stderr = '';
+  const lines = [];
   t.mock.method(process.stderr, 'write', (chunk) => {
     stderr += chunk;
     return true;
   });
-  t.mock.method(console, 'log', () => {});
+  t.mock.method(console, 'log', (line) => lines.push(line));
   const before = process.exitCode;
   try {
     await run(argv, { platform: 'win32', env: { PATH: 'C:/Windows' }, claude: CLAUDE, home: HOME, reach: { level: 'nothing', chosen: true }, ...deps });
-    return { code: process.exitCode ?? 0, stderr };
+    return { code: process.exitCode ?? 0, stderr, lines };
   } finally {
     process.exitCode = before;
     t.mock.restoreAll();
@@ -85,6 +86,20 @@ test('start takes no argument', async (t) => {
   assert.equal(code, 2);
   assert.match(stderr, /usage: pilot start/);
   assert.equal(calls.length, 0);
+});
+
+test('off Windows start prints a line a shell runs as the window would: the rules variable set, the paths quoted', async (t) => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), "pilot start's home-"));
+  const quoted = (p) => `'${p.replace("start's", "start'\\''s")}'`; // the one quote: closed, escaped, reopened
+  t.after(() => fs.rmSync(home, { recursive: true, force: true }));
+  const { calls, spawn } = aRecorder();
+
+  const { lines } = await pilot(t, ['start'], { spawn, platform: 'linux', home });
+
+  assert.equal(calls.length, 0, 'no window');
+  assert.deepEqual(lines, [
+    `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ${quoted(rulesRoot({ home }))} --agent pilot:pilot --settings ${quoted(path.join(home, '.claude', 'pilot', 'start-settings.json'))}`,
+  ]);
 });
 
 // lint: start-is-not-mechanics (ADR 0180). The file `pilot start` writes is read by the window it opens, never by the hand-off.

@@ -576,7 +576,7 @@ async function route(request, response, open, start, land, exit, guard) {
       ? { record: resumableRecordFor(query.get('repo')), yellow: yellowHeadOf(query.get('repo')) }
       : recordForTicket(query.get('repo'), ticket);
     // And how many agents this session holds, itself included (pilot-branch L27): the main half of the split.
-    // And whether this directory's co-pilot is live (clear-waits-co-pilot L7): the wrapper holds its /clear on it.
+    // And whether this directory's co-pilot is live (clear-waits-co-pilot L7): the hand-off mod's look holds its /clear on it.
     // And the directory's lanes (idle-main-lane L3): the refusal and lane lines every client prints as spelled.
     // And the threads the pilot still owes it (yellow-lane L6), so the hooks need not compute them,
     // and the gates it has signed since its last hand-off (yellow-lane A5), for the guard's work lane.

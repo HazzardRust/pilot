@@ -36,13 +36,13 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
-import { privateDir } from '../hooks/lib/atomic-write.js';
 import { bearer, secretFile } from '../hooks/lib/deck-secret.js';
 import { handsTo, waiterKind } from './items.mjs';
 import { startMemoryLog } from './memory.mjs';
 import { oneLine } from './one-line.mjs';
 import { probeDeck } from './probe.mjs';
 import { isDeckDaemon, processTable } from './procs.mjs';
+import { notePosted as writePosted, sessionPid } from './run-claim.mjs';
 import { spawnRoot } from './spawn-root.mjs';
 import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_WAIT_MS, TOOLS, deckPort, deckUrl } from './tools.mjs';
 import { PLUGIN_VERSION, isOlder } from './version.mjs';
@@ -510,25 +510,13 @@ const CHAINED = /; chained (itm_[0-9a-f]{1,40})\.$/;
 
 /**
  * After a finish that chains, write S1's posted stamp, `claims/posted-<session pid>.stamp`, holding the id, so
- * this session's mod, and no other session's, clears for it (handoff-mod L12, A6). The session pid is the
- * look's rule (`deck/run-look.mjs` `sessionPid`), restated here because that module's graph reaches the store.
- * Any other answer writes nothing. A stamp that cannot be written leaves the hand-off posted and the session
- * uncleared, as with no mod. Answers the id stamped, or null.
+ * this session's mod, and no other session's, clears for it (handoff-mod L12, A6), by `deck/run-claim.mjs`'s
+ * one spelling. Any other answer writes nothing. Answers the id stamped, or null.
  */
 export function notePosted(answer, { env = process.env, ppid = process.ppid, home = os.homedir() } = {}) {
   const id = typeof answer === 'string' ? CHAINED.exec(answer)?.[1] : undefined;
   if (id === undefined) return null;
-  const pid = /^\d+$/.test(env?.CLAUDE_PID ?? '') && Number(env.CLAUDE_PID) > 0 ? Number(env.CLAUDE_PID) : ppid;
-  const claims = path.join(home, '.claude', 'pilot-inbox', 'claims');
-  try {
-    privateDir(path.dirname(claims));
-    privateDir(claims);
-    fs.writeFileSync(path.join(claims, `posted-${pid}.stamp`), id);
-    return id;
-  } catch (err) {
-    console.error('[deck] the posted stamp was not written:', err.message);
-    return null;
-  }
+  return writePosted(sessionPid(env, ppid), id, home) ? id : null;
 }
 
 /**

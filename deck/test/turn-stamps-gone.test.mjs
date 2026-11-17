@@ -40,10 +40,7 @@ function hits(pattern) {
   return out;
 }
 
-test('no stamp is read', async () => {
-  const claim = await import('../run-claim.mjs');
-  assert.equal('lastTurnEnded' in claim, false);
-  assert.equal('lastToolRan' in claim, false);
+test('no stamp is read', () => {
   // lint: no-turn-stamps. `--turn-ended` is run-look's flag for the mod's turn.complete time, not a stamp.
   assert.deepEqual(hits(/(?<!-)\b(turn-ended|tool-ran)\b/), []);
 });

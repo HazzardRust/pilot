@@ -26,14 +26,11 @@
 
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 
-import { sessionPid } from '../deck/run-look.mjs';
+import { notePosted, reportedFile, sessionPid } from '../deck/run-claim.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { isOlder, isVersion } from '../deck/version.mjs';
 import { listeningRepo } from '../deck/wait.mjs';
-import { privateDir } from '../hooks/lib/atomic-write.js';
 import { bearer } from '../hooks/lib/deck-secret.js';
 import { commitRecords, git, TRAILER } from './integrate.mjs';
 import { remoteOf, runRemote } from './remotes.mjs';
@@ -43,9 +40,6 @@ const DEADLINE_MS = 5000;
 
 /** The first Claude Code that runs a mod (handoff-mod A2, assumed). */
 export const MIN_MODS_VERSION = '2.1.325';
-
-/** Where the hooks keep their claims, `deck/run-look.mjs`'s spelling; read when asked, so a test's home works. */
-const claimDir = () => path.join(os.homedir(), '.claude', 'pilot-inbox', 'claims');
 
 /**
  * `claude --version`'s x.y.z, or null when it gives none. By argv array, never a shell, and never
@@ -68,25 +62,9 @@ export function claudeVersion(run = (cmd, args) => execFileSync(cmd, args, { enc
  * Code when `version` is readable and below the minimum, else that the mod never reported in.
  */
 export function reportedIn(env, { version } = {}) {
-  if (fs.existsSync(path.join(claimDir(), `mod-${sessionPid(env, process.ppid)}.stamp`))) return { in: true };
+  if (fs.existsSync(reportedFile(sessionPid(env, process.ppid)))) return { in: true };
   if (isVersion(version) && isOlder(version, MIN_MODS_VERSION)) return { in: false, why: `Claude Code ${version} is below ${MIN_MODS_VERSION}` };
   return { in: false, why: 'not reported in' };
-}
-
-/**
- * The session's posted stamp (handoff-mod A6): `claims/posted-<session pid>.stamp` holds the id this session
- * posted, so its mod, and no other session's, clears for it. A stamp that cannot be written leaves the hand-off
- * posted and the session uncleared, the same as one with no mod.
- */
-function notePosted(pid, id) {
-  const claims = claimDir();
-  try {
-    privateDir(path.dirname(claims));
-    privateDir(claims);
-    fs.writeFileSync(path.join(claims, `posted-${pid}.stamp`), id);
-  } catch {
-    /* the line still says posted; the user types /clear as without a mod */
-  }
 }
 
 class Refusal extends Error {}

@@ -4,7 +4,7 @@
  * `SETTLE_MS`; the mod does the clearing
  * and the submitting, and this file decides whether to.
  *
- *   node <root>/deck/run-look.mjs <op> [--repo <dir>] [--id itm_<hex>] [--turn-ended <ms>] [--why <text>]
+ *   node <root>/deck/run-look.mjs <op> [--id itm_<hex>] [--turn-ended <ms>] [--why <text>]
  *
  * prints one JSON `Outcome` line and exits 0; a refused argument exits 2 with no line, before anything is read.
  *
@@ -18,14 +18,13 @@
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { StringDecoder } from 'node:string_decoder';
 import { pathToFileURL } from 'node:url';
 
 import { isOpen, repoKey, sameRepo } from './items.mjs';
 import { landerDue } from './landing-replies.mjs';
-import { claimNameFor, laneMarked, takeClaim } from './run-claim.mjs';
+import { claimDir, claimNameFor, laneMarked, postedFile, reportedFile, sessionPid, takeClaim } from './run-claim.mjs';
 import { deckUrl } from './tools.mjs';
 import { listeningRepo } from './wait.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
@@ -48,14 +47,6 @@ const REQUEST_TIMEOUT_MS = 1500;
 
 /** What this is willing to read from a deck it cannot vouch for. */
 const MAX_RESPONSE_CHARS = 2 * 1024 * 1024;
-
-/** Where the hooks keep their claims, `deck/run-claim.mjs`'s spelling. Read when asked, so a test's home works. */
-const claimDir = () => path.join(os.homedir(), '.claude', 'pilot-inbox', 'claims');
-
-const postedFile = (pid) => path.join(claimDir(), `posted-${pid}.stamp`);
-
-/** Reported in: the mod ran `start` in this session (S6's `pilot handoff` reads it). */
-const reportedFile = (pid) => path.join(claimDir(), `mod-${pid}.stamp`);
 
 /** The directory's cooldown, one per repository so a restarted session keeps it (L6); its mtime is the clear. */
 const cooldownFile = (repo) => path.join(claimDir(), `cleared-${crypto.createHash('sha256').update(repoKey(repo)).digest('hex').slice(0, 16)}.stamp`);
@@ -82,7 +73,7 @@ const UNSTARTED_WHY = ['refused', 'no turn'];
  * The fresh session's first prompt: the fixed literal, and the lander a press queued while the old session
  * handed off, the head of `landerDue` (lander spec 5, L5), so the fresh session spawns it first.
  */
-export function firstPrompt(items, cwd) {
+function firstPrompt(items, cwd) {
   const [lander] = landerDue(items, cwd);
   return `Pick up the hand-off on the deck.${lander ? ` Spawn pilot-lander ${lander}.` : ''}`;
 }
@@ -92,7 +83,7 @@ export function firstPrompt(items, cwd) {
  * falling back to the one below it would replay a finished run's hand-off. Openness is checked even though the
  * read asks for open threads only, so an older daemon degrades to silence.
  */
-export function pickup(items, cwd) {
+function pickup(items, cwd) {
   for (let i = items.length - 1; i >= 0; i -= 1) {
     const candidate = items[i];
     if (!candidate || candidate.kind !== HANDOFF_KIND) continue;
@@ -104,15 +95,8 @@ export function pickup(items, cwd) {
   return null;
 }
 
-/** The Claude Code process: `CLAUDE_PID` when it is a positive integer, else the caller's parent. */
-export function sessionPid(env, ppid) {
-  const pid = /^\d+$/.test(env?.CLAUDE_PID ?? '') ? Number(env.CLAUDE_PID) : 0;
-  return pid > 0 ? pid : ppid;
-}
-
-/** A request's own deadline, plus the caller's reason for giving up when it has one. */
-const deadline = (signal) =>
-  (signal ? AbortSignal.any([signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]) : AbortSignal.timeout(REQUEST_TIMEOUT_MS));
+/** A request's own deadline. */
+const deadline = () => AbortSignal.timeout(REQUEST_TIMEOUT_MS);
 
 /** A whole JSON body, or a refusal past `MAX_RESPONSE_CHARS`: the deck's port trusts any loopback caller. */
 async function bodyOf(response, what) {
@@ -135,12 +119,12 @@ function deckFetch(route, { headers, ...init }) {
  * The open threads, asked for **without** a `repo`: a read naming one marks the user's replies delivered
  * (`deck/server.mjs`) and would switch off the Stop gate. The join is made on the item's own `repo`.
  */
-async function openItems(signal) {
+async function openItems() {
   const response = await deckFetch('/api/tool', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ name: 'deck_read', arguments: { open: true, limit: MAX_ITEMS, messages: 'all' } }),
-    signal: deadline(signal),
+    signal: deadline(),
   });
   if (!response.ok) throw new Error(`the deck answered deck_read with ${response.status}`);
   const read = JSON.parse((await bodyOf(response, 'deck_read'))?.content?.[0]?.text ?? 'null');
@@ -156,7 +140,7 @@ async function openItems(signal) {
  * Either way a released co-pilot's clear waits for the turn after its release, since that release's
  * hand-back turn may still be running.
  */
-export function holdFor(items, cwd, coPilot, now) {
+function holdFor(items, cwd, coPilot, now) {
   const open = items.filter((item) => item?.kind === HANDOFF_KIND && sameRepo(item.repo, cwd) && isOpen(item));
   const from = coPilot?.live === true ? Date.parse(coPilot.at) || 0 : 0; // a hold or press from before this co-pilot went live is not its own
   const presses = open.filter((item) => item.hold?.rearmedAt).map((item) => Date.parse(item.hold.rearmedAt) || now).filter((time) => time >= from);
@@ -172,8 +156,8 @@ export function holdFor(items, cwd, coPilot, now) {
  * This directory's co-pilot, `{ ticket, live, at }` or null, from `GET /api/record?repo=` (clear-waits-co-pilot L7):
  * a read that marks nothing delivered, never `deck_read` with a `repo`. A daemon older than the field answers null.
  */
-export async function coPilotAt(cwd, signal) {
-  const response = await deckFetch(`/api/record?repo=${encodeURIComponent(cwd)}`, { signal: deadline(signal) });
+async function coPilotAt(cwd) {
+  const response = await deckFetch(`/api/record?repo=${encodeURIComponent(cwd)}`, { signal: deadline() });
   if (!response.ok) throw new Error(`the deck answered /api/record with ${response.status}`);
   return (await bodyOf(response, '/api/record'))?.coPilot ?? null;
 }
@@ -181,25 +165,25 @@ export async function coPilotAt(cwd, signal) {
 /**
  * A held hand-off is marked held on the item, never by a reply, so nothing takes the hold for a pick-up
  * (held-handoff L2, A1). Every look marks it; the deck keeps the first and answers `held` only then, which is
- * when the line is logged, under `as`. A deck that will not take the hold is logged and left.
+ * when the line is logged. A deck that will not take the hold is logged and left.
  */
-export async function sayHeld(handoff, coPilot, signal, { as = 'mod' } = {}) {
+async function sayHeld(handoff, coPilot) {
   try {
     const response = await deckFetch('/api/hold', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ id: handoff.id, ticket: coPilot.ticket }),
-      signal: deadline(signal),
+      signal: deadline(),
     });
     if (!response.ok) {
       await response.body?.cancel();
       throw new Error(`the deck answered /api/hold with ${response.status}`);
     }
     if ((await bodyOf(response, '/api/hold'))?.held === true) {
-      log(`${as}: held ${handoff.id} for the co-pilot on ${coPilot.ticket}`);
+      log(`mod: held ${handoff.id} for the co-pilot on ${coPilot.ticket}`);
     }
   } catch (err) {
-    log(`${as}: could not post the hold on ${handoff.id} (${err?.message ?? err})`);
+    log(`mod: could not post the hold on ${handoff.id} (${err?.message ?? err})`);
   }
 }
 
@@ -207,9 +191,9 @@ export async function sayHeld(handoff, coPilot, signal, { as = 'mod' } = {}) {
  * A hand-off that went wrong, told to the user rather than left as an idle session: a reply on the hand-off's
  * thread, and a line in this directory's chat when the thread refuses it, as a closed one does (handoff-prompt
  * spec 3), or always when `both`. Never a prompt: nothing says which session it would land in. A deck that will
- * not take a reply is logged, under `as`, and left.
+ * not take a reply is logged and left.
  */
-export async function sayAloud(handoff, cwd, read, text, signal, { both = false, as = 'mod' } = {}) {
+async function sayAloud(handoff, cwd, read, text, { both = false } = {}) {
   // Each post on its own: a thread the user closed during the wait refuses its reply, and
   // the chat line is then the only notice left.
   const say = async (where, post) => {
@@ -217,24 +201,24 @@ export async function sayAloud(handoff, cwd, read, text, signal, { both = false,
       await post();
       return true;
     } catch (err) {
-      log(`${as}: could not post the notice for ${handoff.id} on the ${where} (${err?.message ?? err})`);
+      log(`mod: could not post the notice for ${handoff.id} on the ${where} (${err?.message ?? err})`);
       return false;
     }
   };
-  if ((await say('thread', () => reply(handoff.id, text, signal))) && !both) return;
+  if ((await say('thread', () => reply(handoff.id, text))) && !both) return;
   await say('chat', async () => {
     const chat = (await read()).find((i) => i?.kind === 'chat' && sameRepo(i.repo, cwd) && typeof i.id === 'string');
-    if (chat) await reply(chat.id, text, signal);
+    if (chat) await reply(chat.id, text);
   });
 }
 
 /** One `deck_reply`, whose answer is prose rather than JSON. */
-async function reply(id, text, signal) {
+async function reply(id, text) {
   const response = await deckFetch('/api/tool', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ name: 'deck_reply', arguments: { id, text } }),
-    signal: deadline(signal),
+    signal: deadline(),
   });
   await response.body?.cancel();
   if (!response.ok) throw new Error(`the deck answered deck_reply with ${response.status}`);
@@ -302,7 +286,7 @@ async function turn(repo, pid, turnEndedAt, { read, coPilot, now }) {
 async function unstarted(repo, id, why, read, { both = false } = {}) {
   if (takeClaim(`said-${id}`)) {
     log(`mod: not started ${id} (${why})`);
-    await sayAloud({ id }, repo, read, `hand-off ${id} not started: ${CAUSES[why]}; look at the terminal`, undefined, { both });
+    await sayAloud({ id }, repo, read, `hand-off ${id} not started: ${CAUSES[why]}; look at the terminal`, { both });
   }
   return { act: 'said', id, why };
 }
@@ -385,7 +369,7 @@ export async function look(op, args = {}, deps = {}) {
   return none(`${op} is not a look`);
 }
 
-const FLAGS = { '--repo': 'repo', '--id': 'id', '--turn-ended': 'turnEndedAt', '--why': 'why' };
+const FLAGS = { '--id': 'id', '--turn-ended': 'turnEndedAt', '--why': 'why' };
 
 /** The op and its arguments, or null for anything refused. */
 function parse(argv) {
@@ -412,7 +396,7 @@ function parse(argv) {
 export async function main(argv, { out = (line) => process.stdout.write(`${line}\n`) } = {}) {
   const parsed = parse(argv);
   if (!parsed) {
-    process.stderr.write('usage: run-look.mjs <start|turn|cleared|unstarted> [--repo <dir>] [--id itm_<hex>] [--turn-ended <ms>] [--why <text>]\n');
+    process.stderr.write('usage: run-look.mjs <start|turn|cleared|unstarted> [--id itm_<hex>] [--turn-ended <ms>] [--why <text>]\n');
     return 2;
   }
   let outcome;

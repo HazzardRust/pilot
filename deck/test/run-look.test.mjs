@@ -15,7 +15,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 import './no-open.mjs';
-import { look, main, sessionPid } from '../run-look.mjs';
+import { sessionPid } from '../run-claim.mjs';
+import { look, main } from '../run-look.mjs';
 import { isAuthorized } from '../server-wait.mjs';
 import { ensureSecret, readSecret } from '../../hooks/lib/deck-secret.js';
 
@@ -122,14 +123,12 @@ test('turn in the session that posted the hand-off answers clear and takes the c
   stampPosted(claims, handoff.id);
   process.env.CLAUDE_PID = String(PID);
 
-  const first = await cli(['turn', '--repo', OURS]);
-  assert.equal(first.code, 0);
-  assert.equal(first.lines.length, 1, 'one line');
-  assert.deepEqual(JSON.parse(first.lines[0]), { act: 'clear', id: handoff.id });
+  const first = await look('turn', { repo: OURS });
+  assert.deepEqual(first, { act: 'clear', id: handoff.id });
   assert.ok(fs.existsSync(path.join(claims, `clear-typed-${handoff.id}.claim`)), 'the claim is taken');
 
-  const second = await cli(['turn', '--repo', OURS]);
-  assert.equal(JSON.parse(second.lines[0]).act, 'none', 'one hand-off clears once');
+  const second = await look('turn', { repo: OURS });
+  assert.equal(second.act, 'none', 'one hand-off clears once');
 });
 
 test('turn in a session that posted nothing clears nothing', async (t) => {
@@ -344,6 +343,7 @@ test('an id that is not itm_<hex> is refused before any read', async (t) => {
     ['cleared'],
     ['turn', '--id'],
     ['turn', '--bogus', 'x'],
+    ['turn', '--repo', OURS], // the look's repository is always its own listening one
     ['turn', 'toString', 'x'], // an inherited key is no flag
     ['end'],
     [],

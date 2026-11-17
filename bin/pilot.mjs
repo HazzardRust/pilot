@@ -54,7 +54,7 @@ import { main as doctor } from '../deck/doctor.mjs';
 import { main as restoreStore } from '../deck/store-restore.mjs';
 import { main as waitForReply } from '../deck/wait.mjs';
 import { openPilot } from '../deck/session.mjs';
-import { startArgs } from '../deck/run-env.mjs';
+import { runSettings, startArgs } from '../deck/run-env.mjs';
 import { readReach } from '../scripts/reach.mjs';
 import { hostPlatform } from '../hooks/lib/platform.js';
 
@@ -68,7 +68,6 @@ const usage = () => `pilot — the deck for piloted runs
 
   pilot deck     start the deck at ${deckUrl()} in the background and return; prints the
                  open file, which a browser opens to get in
-  pilot start   open a pilot session in a new window (any reach)
   pilot deck --rotate
                  replace the deck's secret and its open file, and open the deck through it
   pilot deck --from <dir>
@@ -84,6 +83,7 @@ const usage = () => `pilot — the deck for piloted runs
   pilot deck --stop <pid>
                  stop a scratch deck by the pid --scratch printed and remove its dir;
                  refuses any other pid, the user's deck included
+  pilot start    open a pilot session in a new window (any reach)
   pilot handoff [--trailer "<line>"]...
                  the pilot's hand-off, after its deck_status: commit and push run.json in
                  the feat worktree and post the handoff item
@@ -208,10 +208,13 @@ hand when you want to watch it. Four environment variables change how it behaves
   PILOT_STOP_HOLD_MS   how long the Stop hook holds for a reply (default 570000 ms; raise it with the hook timeout in hooks/hooks.json)
 `;
 
+/** One word of a POSIX shell line: as it is when it is plain, else single-quoted with each `'` closed and escaped. */
+const shellWord = (word) => (/^[\w@%+=:,./-]+$/.test(word) ? word : `'${word.replaceAll("'", "'\\''")}'`);
+
 /**
  * `pilot start` (spec 13, L12, L15): one detached window through S9's `openPilot`, the one window
  * builder, and back to the prompt at once, holding no child. Off Windows it prints the `claude`
- * argv instead. `deps` is `openPilot`'s, for a test's recorder and scratch home.
+ * line to run instead. `deps` is `openPilot`'s, for a test's recorder and scratch home.
  */
 function start(args, { platform = hostPlatform(), home, ...deps } = {}) {
   if (args.length) {
@@ -222,7 +225,9 @@ function start(args, { platform = hostPlatform(), home, ...deps } = {}) {
   const reach = deps.reach ?? readReach({ home });
   try {
     if (platform !== 'win32') {
-      console.log(['claude', ...startArgs(reach, { home })].join(' '));
+      // What the window's process gets (`runEnv`), as a POSIX shell line: the env first, every unsafe word single-quoted.
+      const env = Object.entries(runSettings(reach.level, undefined, { home }).env).map(([name, value]) => `${name}=${shellWord(value)}`);
+      console.log([...env, ...['claude', ...startArgs(reach, { home })].map(shellWord)].join(' '));
       return undefined;
     }
     const child = openPilot(process.cwd(), { ...deps, platform, home, reach });

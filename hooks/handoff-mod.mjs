@@ -32,8 +32,6 @@ const LOOK = lookPath(import.meta.url);
 const HOLD_LOOK_MS = 30_000;
 /** How long the submitted prompt has to start its turn before the hand-off is said not to have started. */
 const STARTED_MS = 60_000;
-/** The furthest bound the mod arms a timer for; the look's own is 20 minutes. */
-const MAX_BOUND_MS = 24 * 60 * 60_000;
 
 /** The look's one `Outcome` line, or null for a look that failed. Every flag is a literal or a checked id. */
 async function look($, op, ...flags) {
@@ -59,14 +57,14 @@ function endHold(mod) {
 }
 
 /**
- * One timer at the bound and one every 30 s while held; a new bound replaces the old one. A bound already past,
- * or more than a day off, arms no timer of its own (no look loop, no timer overflow): the tick looks instead.
+ * One timer at the bound and one every 30 s while held; a new bound replaces the old one. A bound already past
+ * arms no timer of its own (no look loop): the tick looks instead. The look's bound is at most 20 minutes off.
  */
 function hold($, mod, until, now) {
   mod.tick ??= $.clock.every(HOLD_LOOK_MS, () => onTimer($, mod));
   if (mod.held?.until !== until) {
     mod.bound?.cancel();
-    mod.bound = until > now && until - now <= MAX_BOUND_MS ? $.clock.after(until - now, () => onTimer($, mod)) : null;
+    mod.bound = until > now ? $.clock.after(until - now, () => onTimer($, mod)) : null;
   }
   mod.held = { until };
 }
