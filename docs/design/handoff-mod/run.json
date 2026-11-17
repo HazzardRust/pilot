@@ -62,7 +62,7 @@
     },
     {
       "slice": "S4",
-      "state": "draft PR #93, reviewed; integrates after S6",
+      "state": "draft PR #93, reviewed; integrating",
       "after": [
         "S2"
       ],
@@ -72,7 +72,7 @@
     },
     {
       "slice": "S5",
-      "state": "implementing (rebase + live check, agent a3f4f008450352246)",
+      "state": "draft PR #88; rebase clean at local 0020405c, awaits post-S4 tip + gate; live check deferred to QA (assumed)",
       "after": [
         "S1"
       ],
@@ -82,7 +82,7 @@
     },
     {
       "slice": "S6",
-      "state": "draft PR #92, reviewed; integrating",
+      "state": "integrated",
       "after": [
         "S1",
         "S2"
@@ -136,8 +136,8 @@
       ]
     }
   ],
-  "next": "integrating S6 (#92); then S4 (#93, e16c4193); S5 a3f4f008450352246 rebases onto the new tip; then S7.",
-  "updatedAt": "2026-11-17T01:27:32.566Z",
+  "next": "integrating S4 (#93); then resume S5 a3f4f008450352246 with the new tip; then S7.",
+  "updatedAt": "2026-11-17T01:33:37.367Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -299,6 +299,18 @@
       "what": "S4: the context reset lost the gate's state, so npm test (~9 min) ran again; its counts have to be grepped out of a 5000-line spawn-accounting tail",
       "evidence": "S4 report, PR #93",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "an interactive live check cannot run from an agent shell: with no TTY, claude falls back to --print, so the mod's clear cannot be exercised; the global pilot and the plugin cache 0.9.5 also predate the feature",
+      "evidence": "S5: 'Input must be provided either through stdin or as a prompt argument when using --print'",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md exists only on the feature branch, not in the shared checkout, so the first Read failed",
+      "evidence": "S5 report",
+      "size": 1
     }
   ]
 }
