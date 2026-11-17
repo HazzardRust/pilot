@@ -94,9 +94,13 @@ _Avoid_: Defining slice, source slice
 An implementer's request to alter an Interface block, sent to `main` as the replacement block; the pilot decides it and edits the owning slice file.
 _Avoid_: Interface drift, signature tweak
 
-**Red steps**:
-The slice file's Tests names, in order; each fails before the implementer writes the code it pins.
-_Avoid_: Test plan, test list
+**Behaviour**:
+One numbered line of a slice file's `## Behaviours`, a thing a user can watch happen, with the evidence it takes.
+_Avoid_: Test plan, test step
+
+**Evidence kind**:
+`test`, `run`, `look` or `read`; the slice names it per behaviour, the implementer picks the instance, and `test` is for deterministic logic.
+_Avoid_: Proof type, verification mode
 
 **Gate 1**:
 The user approving the artefact, on the pilot's `gate1` thread.
