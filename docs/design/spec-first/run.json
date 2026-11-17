@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3 The implementer builds to the behaviours",
-      "state": "implementing",
+      "state": "pushed d3dde4e",
       "after": [
         "S1"
       ],
@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4 The gate text asks for evidence",
-      "state": "pushed dbd6f51",
+      "state": "integrated",
       "branch": "slice/spec-first-s4",
       "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s4"
     },
@@ -53,10 +53,12 @@
     },
     {
       "slice": "S7 The architect cuts behaviours, not red steps",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/spec-first-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s7"
     },
     {
       "slice": "S8 The fundamentalist judges tests on test behaviours and installs first",
@@ -79,8 +81,8 @@
       ]
     }
   ],
-  "next": "Co-pilot: S1 integrated (0d810dae); integrating S4 dbd6f51 then S9 1dd0a6e; S2, S3 implementing; then S7, S8, S10; S6 last, only on a pilot carrying handoff-books, blocked-steps, never-stuck.",
-  "updatedAt": "2026-11-17T11:15:21.630Z",
+  "next": "Co-pilot: S1, S4 integrated (9be8c969); integrating S9 1dd0a6e then S3 d3dde4e; S2, S7 implementing; then S8, S10 as slots free; S6 last, only on a pilot carrying handoff-books, blocked-steps, never-stuck.",
+  "updatedAt": "2026-11-17T11:20:00.240Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -131,6 +133,16 @@
       "agent": "pilot:pilot-implementer",
       "what": "a 100-token headroom bar meant measuring after every edit and left 2.25 of margin once review fixes cost ~30 tokens",
       "evidence": "9 measure-prompt runs; QA headroom 102.25"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3's ledger edit forces a regenerated VENDOR.md and its named test lives in pilot-agents.test.mjs, two files the slice does not own",
+      "evidence": "build-vendor-ledger --check 'first difference at line 83'; S3.md Files owned"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the absolutes count is ambiguous between lines and occurrences across slices",
+      "evidence": "git grep -ciwE gives 14; the artefact's 18 counts occurrences"
     }
   ]
 }
