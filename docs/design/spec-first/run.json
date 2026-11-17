@@ -48,7 +48,7 @@
     },
     {
       "slice": "S6 The pilot carries evidence into the merge",
-      "state": "pushed 77dd555",
+      "state": "integrated",
       "after": [
         "S2"
       ],
@@ -87,10 +87,40 @@
       ],
       "branch": "slice/spec-first-s10",
       "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s10"
+    },
+    {
+      "slice": "spec-first",
+      "state": "fixing: F1, N1 on feat at 148ed0e (approve); S11 implementing, S12 next"
+    },
+    {
+      "slice": "S11 The builders' absolutes listed with their reasons",
+      "state": "implementing (pushed 556c87d, gate/review running)",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/spec-first-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s11"
+    },
+    {
+      "slice": "S12 QA, lander and helper absolutes listed with their reasons",
+      "state": "planned",
+      "after": [
+        "S11"
+      ]
     }
   ],
-  "next": "feat/spec-first 789f9081: S6 pushed 77dd5551 (security approve, headroom 118.5 checked); integrating, then step 7 fundamentalist and QA.",
-  "updatedAt": "2026-11-17T11:59:48.122Z",
+  "findings": [
+    "kept: F1 simplify — integrate keys Evidence on B<k> alone, so a kind swap L2 allows is not refused (integrate.mjs:121-124, drop the 'another kind' test case)",
+    "kept: N1 simplify — behaviourAt drops unused name/line (check-slices.mjs:102)",
+    "kept: N2 simplify — co-pilot's Evidence trailer line says 'single-quoted in Bash' like pilot.md (folded into S11)",
+    "dropped: N3 needed — sliceFileOf returning null on an absent file stays: added fix-round rows have no slice file",
+    "dropped: S5-1b needed — a newline in an Evidence row fails closed at TRAILER (integrate.mjs:56)",
+    "dropped: S5-1c needed — 'built in the run as an added slice' already rules out deferral",
+    "dropped: S2-MEDIUM needed — failing closed on an absent slice file refuses real added rows in five past runs; file is read pre-merge so a branch cannot dodge it",
+    "dropped: spec9-headroom needed — all four at or over 100; QA re-measures at Gate 2 and the second lander re-measures"
+  ],
+  "next": "feat/spec-first 8c068698: forced hand-back with S11 implementer live (branch slice/spec-first-s11 at 556c87d0, waiting on its gate/security review). Next: on S11's report integrate it (security Verdict required, Evidence B1-B4 trailers), spawn S12, integrate; then main runs pilot land; successor QA from its report's 'Not done' list (spec-7 run staged at pilot-spec-first-scratch).",
+  "updatedAt": "2026-11-17T12:18:58.671Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -236,6 +266,21 @@
       "agent": "pilot:pilot-implementer",
       "what": "S6 implementer's context reset early, state rebuilt from git",
       "evidence": "S6 report"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "its evidence runner returned no table before hand-back: coverage, mutation, complexity, duplication, dead code and dependency shape unmeasured; its review worktree could not be removed (runner held files)",
+      "evidence": "fundamentalist report, tools table; C:/Users/Hazzard/Projects/pilot-spec-first-review"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP showed CONNECTION_CLOSED at start; loading the tools through ToolSearch worked",
+      "evidence": "QA first message"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA was forced to hand back at the end of its read-only pass while held for the fix tip; the spec-7 run needs a successor QA",
+      "evidence": "QA hand-back 'harness required the hand-back now'"
     }
   ]
 }
