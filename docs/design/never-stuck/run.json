@@ -59,6 +59,26 @@
       ],
       "branch": "slice/never-stuck-s6",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s6"
+    },
+    {
+      "slice": "never-stuck",
+      "state": "fixing (principles round); QA read-only done 6/6, waits for tip"
+    },
+    {
+      "slice": "S6a re-cut card",
+      "state": "planned (added: QA-F2, §9.1; QA writes it after the fix tip)",
+      "after": [
+        "S6"
+      ]
+    },
+    {
+      "slice": "fix round",
+      "state": "pushed ab58f08 (security re-review of 74859600..ab58f089 running)",
+      "after": [
+        "S6"
+      ],
+      "branch": "fix/never-stuck-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-fix"
     }
   ],
   "findings": [
@@ -67,10 +87,22 @@
     "kept: S5-ts-1 MEDIUM - pivotTicket leaves a stale yielding; delete ticket.yielding beside paused, deck/store-tickets.mjs:418, with a test",
     "kept: S5-ts-2 LOW - report close and direct close leave yielding, deck/store-items.mjs:178,593",
     "dropped: S5-ts-3 MEDIUM - setCoPilot overwrite leaving yielding on the old holder; Run 2 S7 refuses a second co-pilot, which removes the route",
-    "kept: S4-ts LOWs - recut.from not re-checked after await; sha regex in three places"
+    "kept: S4-ts LOWs - recut.from not re-checked after await; sha regex in three places",
+    "kept: F1 simplify - finishYield is test-only (yield.test.mjs:97,144); delete it, its store.mjs export and facades entry, test via releaseCoPilot/setCoPilot; S5 Interface updated",
+    "kept: F2 simplify - planUnchanged is test-only (replan.test.mjs); delete, assert planChanges; S4 Interface and deck/README row updated",
+    "kept: F3 simplify - the never-granted rule written 3 times (landing.mjs:275, server-tools.mjs:447, store-runs.mjs:380); one export",
+    "kept: F4 simplify - landing-recut.test stampPlan writes grantedAt past the interface; grant via setCoPilot",
+    "kept: F5 simplify - landing.mjs:293-311 three nested try (complexity 24); fold the inner DeckRefusal try into the per-ticket catch",
+    "kept: N1 - dead (new) strip, deck/recut.mjs:25",
+    "kept: N4 - '(1 files)' on a deck line, landing.mjs:303",
+    "kept: F6 - ADR NNNN says it amends 0153 L3 but lists supersedes [0153]; record it as an amendment, not a supersession",
+    "dropped: N2 - inlining a one-use constant buys nothing",
+    "dropped: N3 - moving a gate1 check out of gate2-evidence.mjs is outside Run A's files",
+    "dropped: N5 - store-items.mjs sits 2 lines under the facade bar; no fix named",
+    "dropped: N6 - import reformat only"
   ],
-  "next": "S6 integrate running (pilot integrate); then fundamentalist on PR #94 feat/never-stuck vs feat/blocked-steps, fix round, QA.",
-  "updatedAt": "2026-11-17T15:35:29.365Z",
+  "next": "draining for pause: security re-review of 74859600..ab58f089 running; on its verdict, pilot integrate fix/never-stuck-principles with ts 'approve' + security trailer; then hand back paused.",
+  "updatedAt": "2026-11-17T16:02:04.800Z",
   "friction": [
     {
       "agent": "pilot-architect (never-stuck)",
@@ -222,6 +254,48 @@
       "agent": "pilot:pilot-implementer",
       "what": "S6 review findings fixed in 2c835d6c with no second review",
       "evidence": "S6 report: both WARN verdicts on fc51c03e",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "Stryker's dry run fails the 800-line facades bar on its instrumented copies, so diff mutation can never run on deck/ while store files sit at 797-798",
+      "evidence": "ConfigError: failed tests in the initial run, facades.test.mjs:70",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "knip is project-wide (581 unused files), noise for this repo",
+      "evidence": "fundamentalist tools table",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "chrome-devtools MCP tools do not load in QA's session; the card look goes by curl, the browser look moves to the walkthrough",
+      "evidence": "QA message: ToolSearch finds none",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "standing up a landable gate2 on a scratch deck took 8 trial-and-error calls",
+      "evidence": "merge thread, Verdict/Gate lines, run record worktree, git config pilot.test, lander-only Land again",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "no way to age a question on a running scratch deck; the yield probe rewrote deck.json",
+      "evidence": "QA read-only report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix-round implementer handed back to main, not the co-pilot (no hello sent, per main's rule)",
+      "evidence": "main relayed fix/never-stuck-principles ab58f089 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "fix-round reviewer tried a destructive `git checkout origin/feat/never-stuck -- deck` in the implementer's worktree; refused (itm_cd4a8ef77eed)",
+      "evidence": "worktree clean at ab58f089 afterwards",
       "size": 1
     }
   ]
