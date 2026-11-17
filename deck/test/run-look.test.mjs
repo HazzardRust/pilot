@@ -54,27 +54,58 @@ function stampPosted(claims, id, pid = PID) {
   fs.writeFileSync(path.join(claims, `posted-${pid}.stamp`), id);
 }
 
-/** A guarded deck holding `items`, answering `deck_read` as the daemon does. */
-async function deckHolding(t, items) {
+/**
+ * A guarded deck holding `items`, answering as the daemon does: `deck_read` and `deck_reply` on `/api/tool`, the
+ * directory's co-pilot on `GET /api/record`, and `POST /api/hold`. Every request is kept, in order, in `calls`.
+ */
+async function deckHolding(t, items, { coPilot = null } = {}) {
+  const calls = [];
+  const send = (response, body) => {
+    response.writeHead(200, { 'content-type': 'application/json' });
+    response.end(JSON.stringify(body));
+  };
   const server = http.createServer((request, response) => {
     if (!isAuthorized(request, readSecret())) {
       response.writeHead(401);
       return response.end();
     }
-    if (request.method !== 'POST' || request.url !== '/api/tool') {
+    let text = '';
+    request.on('data', (chunk) => { text += chunk; });
+    request.on('end', () => {
+      const body = text ? JSON.parse(text) : null;
+      const route = request.url.split('?')[0];
+      calls.push({ method: request.method, route, name: body?.name, args: body?.arguments ?? body });
+      if (request.method === 'POST' && route === '/api/tool' && body?.name === 'deck_read') {
+        return send(response, { content: [{ type: 'text', text: JSON.stringify({ items }) }] });
+      }
+      if (request.method === 'POST' && route === '/api/tool' && body?.name === 'deck_reply') {
+        return send(response, { content: [{ type: 'text', text: 'replied' }] });
+      }
+      if (request.method === 'GET' && route === '/api/record') return send(response, { coPilot });
+      if (request.method === 'POST' && route === '/api/hold') return send(response, { held: true });
       response.writeHead(404);
       return response.end();
-    }
-    request.resume();
-    request.on('end', () => {
-      response.writeHead(200, { 'content-type': 'application/json' });
-      response.end(JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ items }) }] }));
     });
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise((resolve) => { server.closeAllConnections(); server.close(resolve); }));
   process.env.PILOT_DECK_PORT = String(server.address().port);
+  return calls;
 }
+
+/** The lines this test's home holds in `wrapper.log`. */
+function logLines(claims) {
+  try {
+    return fs.readFileSync(path.join(claims, '..', '..', 'pilot', 'wrapper.log'), 'utf8').split('\n').filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+const claimed = (claims, id) => fs.existsSync(path.join(claims, `clear-typed-${id}.claim`));
+const MINUTE = 60 * 1000;
+const at = (ms) => new Date(ms).toISOString();
+const session = { env: { CLAUDE_PID: String(PID) }, ppid: 1 };
 
 /** `main` with its one line caught. */
 async function cli(argv) {
@@ -123,20 +154,170 @@ test("cleared with the lane's marker answers the prompt and drops the posted sta
   assert.equal(fs.existsSync(path.join(claims, `posted-${PID}.stamp`)), false, 'the posted stamp is gone');
 });
 
-test("cleared waits for a lane marker that lands just after the clear, and gives up on one that never does", async (t) => {
+test('cleared waits for a lane marker that lands just after the clear', async (t) => {
   const claims = scratchHome(t);
   const handoff = handoffItem();
   stampPosted(claims, handoff.id);
-  const deps = { read: async () => [handoff], env: { CLAUDE_PID: String(PID) }, ppid: 1 };
   // Live: `$.command.run` only queues the clear, so the look ran 5 ms before the SessionStart lane marked it.
   const marker = setTimeout(() => fs.writeFileSync(path.join(claims, `handoff-${handoff.id}.claim`), ''), 150);
   t.after(() => clearTimeout(marker));
 
-  const late = await look('cleared', { repo: OURS, id: handoff.id }, deps);
+  const late = await look('cleared', { repo: OURS, id: handoff.id }, { ...session, read: async () => [handoff] });
   assert.equal(late.act, 'submit', 'the marker 150 ms late is waited for');
+});
 
-  const never = await look('cleared', { repo: OURS, id: 'itm_0bad' }, { ...deps, settleMs: 200 });
-  assert.equal(never.act, 'none', 'no marker at all is still no prompt');
+// --- S2: the look carries the whole watch -----------------------------------------------------------------
+
+test('start writes the reported-in stamp and posts nothing', async (t) => {
+  const claims = scratchHome(t);
+  const calls = await deckHolding(t, [handoffItem()]);
+
+  const outcome = await look('start', { repo: OURS }, session);
+
+  assert.deepEqual(outcome, { act: 'none', why: 'reported in' });
+  assert.ok(fs.existsSync(path.join(claims, `mod-${PID}.stamp`)), 'the reported-in stamp is written');
+  assert.deepEqual(calls, [], 'nothing asked of the deck, so nothing chains (L12)');
+});
+
+test('a live co-pilot holds the clear and posts the hold', async (t) => {
+  const claims = scratchHome(t);
+  const handoff = handoffItem();
+  stampPosted(claims, handoff.id);
+  const now = Date.now();
+  const calls = await deckHolding(t, [handoff], { coPilot: { ticket: 'itm_c0c0c0c0c0c0', live: true, at: at(now - MINUTE) } });
+
+  const outcome = await look('turn', { repo: OURS, turnEndedAt: now }, { ...session, now: () => now });
+
+  assert.deepEqual(outcome, { act: 'held', id: handoff.id, until: now + 20 * MINUTE });
+  assert.deepEqual(calls.filter((call) => call.route === '/api/hold').map((call) => call.args), [{ id: handoff.id, ticket: 'itm_c0c0c0c0c0c0' }], 'one hold posted');
+  assert.equal(claimed(claims, handoff.id), false, 'the claim is given back');
+  assert.ok(calls.filter((call) => call.name === 'deck_read').every((call) => call.args.repo === undefined), 'no read names a repo');
+});
+
+test('a re-arm press clears with the co-pilot live, after a turn end past the press', async (t) => {
+  const claims = scratchHome(t);
+  const now = Date.now();
+  const press = now - MINUTE;
+  const handoff = { ...handoffItem(), hold: { at: at(now - 5 * MINUTE), rearmedAt: at(press) } };
+  stampPosted(claims, handoff.id);
+  await deckHolding(t, [handoff], { coPilot: { ticket: 'itm_c0c0c0c0c0c0', live: true, at: at(now - 10 * MINUTE) } });
+  const deps = { ...session, now: () => now };
+
+  const before = await look('turn', { repo: OURS, turnEndedAt: press - 1 }, deps);
+  assert.equal(before.act, 'none', 'a turn that ended before the press does not clear');
+  assert.equal(claimed(claims, handoff.id), false);
+
+  assert.deepEqual(await look('turn', { repo: OURS, turnEndedAt: press }, deps), { act: 'clear', id: handoff.id });
+});
+
+test('the hold clears at 20 minutes', async (t) => {
+  const claims = scratchHome(t);
+  const heldAt = Date.now() - 30 * MINUTE;
+  const handoff = { ...handoffItem(), hold: { at: at(heldAt) } };
+  stampPosted(claims, handoff.id);
+  await deckHolding(t, [handoff], { coPilot: { ticket: 'itm_c0c0c0c0c0c0', live: true, at: at(heldAt - MINUTE) } });
+
+  const early = await look('turn', { repo: OURS, turnEndedAt: heldAt }, { ...session, now: () => heldAt + 19 * MINUTE });
+  assert.deepEqual(early, { act: 'held', id: handoff.id, until: heldAt + 20 * MINUTE }, 'held a minute before the bound');
+
+  const bound = await look('turn', { repo: OURS, turnEndedAt: heldAt }, { ...session, now: () => heldAt + 20 * MINUTE });
+  assert.deepEqual(bound, { act: 'clear', id: handoff.id }, 'cleared at the bound');
+});
+
+test('a hand-off closed or superseded before the turn ended is not cleared', async (t) => {
+  const claims = scratchHome(t);
+  const closed = { ...handoffItem(), resolvedAt: new Date().toISOString() };
+  stampPosted(claims, closed.id);
+  await deckHolding(t, [closed]);
+
+  assert.equal((await look('turn', { repo: OURS, turnEndedAt: Date.now() }, session)).act, 'none', 'closed');
+  assert.equal(claimed(claims, closed.id), false, 'no claim kept for the closed one');
+
+  const ours = handoffItem();
+  const newer = handoffItem();
+  stampPosted(claims, ours.id);
+  const outcome = await look('turn', { repo: OURS, turnEndedAt: Date.now() }, { ...session, read: async () => [ours, newer] });
+  assert.equal(outcome.act, 'none', 'superseded');
+  assert.equal(claimed(claims, ours.id) || claimed(claims, newer.id), false, 'no claim kept for either');
+});
+
+test('a forged hand-off inside the cooldown clears nothing', async (t) => {
+  const claims = scratchHome(t);
+  const first = handoffItem();
+  const forged = handoffItem();
+  const items = [first];
+  const deps = (now) => ({ ...session, read: async () => items, now: () => now });
+  const clearedAt = Date.now();
+  stampPosted(claims, first.id);
+  assert.deepEqual(await look('turn', { repo: OURS, turnEndedAt: clearedAt }, deps(clearedAt)), { act: 'clear', id: first.id });
+
+  items.push(forged); // a fresh id, posted a minute after the clear and stamped as this session's
+  stampPosted(claims, forged.id);
+  const inside = await look('turn', { repo: OURS, turnEndedAt: clearedAt + MINUTE }, deps(clearedAt + MINUTE));
+  assert.equal(inside.act, 'none', '0 clears inside the cooldown');
+  assert.equal(claimed(claims, forged.id), false);
+
+  const after = await look('turn', { repo: OURS, turnEndedAt: clearedAt + 5 * MINUTE }, deps(clearedAt + 5 * MINUTE));
+  assert.deepEqual(after, { act: 'clear', id: forged.id }, 'cleared once 5 minutes have passed');
+});
+
+test('cleared names the oldest due lander', async (t) => {
+  const claims = scratchHome(t);
+  const handoff = handoffItem();
+  const gate = (id) => ({ id, kind: 'gate2', title: 'Gate 2', repo: OURS, options: ['Sign off'], postedAt: new Date().toISOString(), replies: [{ from: 'user', text: 'Sign off', repliedAt: new Date().toISOString() }] });
+  const oldest = gate('itm_0123456789ab');
+  stampPosted(claims, handoff.id);
+  fs.writeFileSync(path.join(claims, `handoff-${handoff.id}.claim`), '');
+  await deckHolding(t, [oldest, gate('itm_ba9876543210'), handoff]);
+
+  const outcome = await look('cleared', { repo: OURS, id: handoff.id }, session);
+
+  assert.equal(outcome.act, 'submit');
+  assert.ok(outcome.prompt.endsWith(` Spawn pilot-lander ${oldest.id}.`), outcome.prompt);
+  assert.equal(logLines(claims).filter((line) => line.endsWith(`mod: cleared ${handoff.id}`)).length, 1, 'cleared logged once');
+});
+
+test('no marker, a refused submit and no turn each say it once', async (t) => {
+  const claims = scratchHome(t);
+  const [unmarked, refused, idle] = [handoffItem(), handoffItem(), handoffItem()];
+  stampPosted(claims, unmarked.id);
+  const calls = await deckHolding(t, [unmarked, refused, idle]);
+  const replies = (id) => calls.filter((call) => call.name === 'deck_reply' && call.args.id === id);
+  const lines = (id) => logLines(claims).filter((line) => line.includes(`mod: not started ${id}`));
+  const cases = [
+    [unmarked, () => look('cleared', { repo: OURS, id: unmarked.id }, { ...session, settleMs: 50 }), 'no marker'],
+    [refused, () => look('unstarted', { repo: OURS, id: refused.id, why: 'refused' }, session), 'refused'],
+    [idle, () => look('unstarted', { repo: OURS, id: idle.id, why: 'no turn' }, session), 'no turn'],
+  ];
+
+  for (const [handoff, call, why] of cases) {
+    assert.deepEqual(await call(), { act: 'said', id: handoff.id, why }, why);
+    assert.equal(replies(handoff.id).length, 1, `${why}: one reply on the hand-off`);
+    assert.ok(replies(handoff.id)[0].args.text.includes(handoff.id), `${why}: the reply names the hand-off`);
+    assert.deepEqual(lines(handoff.id).map((line) => line.slice(line.indexOf(' ') + 1)), [`mod: not started ${handoff.id} (${why})`], `${why}: one log line naming the cause`);
+
+    await call();
+    assert.equal(replies(handoff.id).length, 1, `${why}: a second call says nothing more`);
+    assert.equal(lines(handoff.id).length, 1, `${why}: and logs nothing more`);
+  }
+  assert.equal(fs.existsSync(path.join(claims, `posted-${PID}.stamp`)), false, 'the posted stamp is gone after no marker');
+  assert.equal(logLines(claims).some((line) => line.includes(`mod: cleared ${unmarked.id}`)), false, 'no marker is not a hand-off taken');
+});
+
+test('unstarted takes only a known cause and an item id', async (t) => {
+  scratchHome(t);
+  process.env.PILOT_DECK_PORT = '1';
+  for (const argv of [
+    ['unstarted', '--id', 'itm_0bad', '--why', 'no marker'],
+    ['unstarted', '--id', 'itm_0bad', '--why', 'x\nmod: cleared itm_0bad'],
+    ['unstarted', '--why', 'refused'],
+    ['unstarted', '--id', 'itm_0bad'],
+    ['turn', '--turn-ended', '-1'],
+  ]) {
+    const { code, lines } = await cli(argv);
+    assert.equal(code, 2, `${JSON.stringify(argv)} is refused`);
+    assert.deepEqual(lines, []);
+  }
 });
 
 test('an id that is not itm_<hex> is refused before any read', async (t) => {
