@@ -5,6 +5,11 @@
   "branch": "feat/handoff-books",
   "base": "pilot",
   "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-books",
+  "qa": {
+    "branch": "qa/handoff-books",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-handoff-books",
+    "url": "http://127.0.0.1:49549"
+  },
   "artefact": "docs/design/handoff-books/architecture.md",
   "slices": [
     {
@@ -31,7 +36,7 @@
     },
     {
       "slice": "handoff-books",
-      "state": "fixing: principles round 5c70fa8 pushed, verified; S4 in flight",
+      "state": "in QA",
       "after": [
         "S1",
         "S2",
@@ -43,7 +48,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed b743057 (added: version bump)",
+      "state": "integrated (added)",
       "after": [
         "S3"
       ],
@@ -61,8 +66,8 @@
     "dropped: fix-review LOW ADR 0040 / adr README 'every tenth run' — ADRs are history; NNNN-handoff-books records the change to 20",
     "dropped: fix-review LOW S2.md:30,36 still name test 4 — the slice file records the plan as built at S2; the gate ran it then"
   ],
-  "next": "pilot integrate S4 (b743057) onto feat 5c70fa8; then resume QA with the new tip",
-  "updatedAt": "2026-11-17T10:57:09.039Z",
+  "next": "feat/handoff-books 291d4301, walkthrough itm_4dd337df3bd3 posted, held by the pilot, QA parked (its deck MCP dropped). On the user's reply or Sign off: spawn a fresh pilot-qa on the qa refs to write the final PR comment, run `pilot integrate --trial`, post gate2, then stop scratch deck pid 26952 (`pilot deck --stop 26952`) and remove the QA worktree. The live /clear step is the user's.",
+  "updatedAt": "2026-11-17T12:59:57.180Z",
   "friction": [
     {
       "agent": "pilot-architect (handoff-books)",
@@ -160,6 +165,21 @@
       "what": "S4: npm test output buffered over 3 min; a foreground wait was moved to the background at 180 s, so it polled the log with an until-loop",
       "evidence": "S4 implementer report",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "handoff-books QA survived the /clear and was still waiting on its walkthrough when the fresh pilot took the thread as the first-turn rule says: two owners for one thread, QA handed back",
+      "evidence": "QA hand-back: wait woke on the pilot's 12:37 reply"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP dropped mid-ticket, QA could no longer post, reply or resolve",
+      "evidence": "CONNECTION_CLOSED after 12:37; deck still answering on :4321"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "npm test stops a scratch deck started from inside the worktree",
+      "evidence": "first scratch deck died during the suite; restarted from the scratchpad"
     }
   ]
 }
