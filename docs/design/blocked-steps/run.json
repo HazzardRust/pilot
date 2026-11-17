@@ -21,7 +21,7 @@
     },
     {
       "slice": "S3",
-      "state": "integrated",
+      "state": "integrated at 86aa73b1",
       "after": [
         "S8"
       ],
@@ -84,7 +84,7 @@
     },
     {
       "slice": "S11",
-      "state": "pushed 0fad7c4",
+      "state": "integrated",
       "after": [
         "S8",
         "S10"
@@ -121,8 +121,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s12"
     }
   ],
-  "next": "S3 integrate running; then S11 (0fad7c4); then fundamentalist + QA",
-  "updatedAt": "2026-11-17T14:35:30.107Z",
+  "next": "integrate S11 (0fad7c4); then spawn fundamentalist on PR #87 and QA (read-only)",
+  "updatedAt": "2026-11-17T14:39:16.144Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
