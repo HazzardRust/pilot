@@ -146,7 +146,7 @@ keeps the git snapshots, because they prove you left the repository as found.
 4. A reply that asks about a row: answer it with `deck_reply` from the
    report, and wait again.
 5. A reply that picks. The typed reply is the user's words a ticket needs: no
-   ticket is posted without one, and a pick never starts a session. Write its
+   ticket is posted without one. Write its
    text, exactly as typed, to `<scratchpad>/audit-pick.txt` with the
    Write tool, never through a shell line: it is the user's text. Run
    `node "${CLAUDE_PLUGIN_ROOT}/bin/pilot.mjs" audit pick <report.json> <reply-file>`
@@ -175,7 +175,7 @@ keeps the git snapshots, because they prove you left the repository as found.
 ## Report
 
 Write the report as JSON to the brief's path, never inside the scratch
-worktree:
+worktree, which you remove:
 `{ repo, scratch, base, startedAt, minutes, tokens: null, duringRun, measured, unmeasured, rows }`,
 each row `{ area, finding, command, output, exit, fix, saving: { minutes,
 tokens }, effort, spec }`, `exit` null for a timeout. Once the audit item is
