@@ -67,11 +67,15 @@ Deletion test: removing `check-syntax.mjs` would push the file list, the flagged
   scripts/check-syntax.mjs`, which parses with V8 in process (0.4 s). Trade: it depends on an experimental Node API. Spec 4's
   corpus test is the guard if the API's behaviour drifts, and L4 makes the gate red if the API is removed. Rejected: `node --check` once
   per file, as the ticket words it (21.9 s at width 8, which misses spec 5).
+  Verdict: stands - the ticket's own 10 s line rules out the per-file path; the user's press on itm_d5b0659bc203 decides
 - **A2** *assumed*, asked by main as itm_aa6fcd1df4cc: name every fault. Default: all of them, at no extra cost in process. Trade: a long list when a tree is badly broken.
   Rejected: stopping at the first fault, as drafted.
+  Verdict: stands - no queued ticket depends on first-fault-only; the user's press on itm_aa6fcd1df4cc decides
 - **A3** *assumed*, asked by main as itm_d77ac7d026ec: include untracked files git does not ignore. Default: yes, because an implementer's uncommitted new file is the likeliest
   one to be broken. Trade: a scratch file someone left lying around can make the gate red. Rejected: tracked files only, as drafted.
+  Verdict: stands - crews gate uncommitted work in their worktrees, where a new file is the likeliest broken one; the user's press on itm_d77ac7d026ec decides
 - **A4** *assumed*: QA environment. Default: a CLI run of the gate in a scratch clone (§9).
+  Verdict: stands - a 1-slice plan takes the short path, which has no QA agent; the implementer's live check is this CLI run and the pilot posts the walkthrough from it
 - red team: the spawn count was first written as "+1". The counter preload only reaches the suite's children, so spec 6 now says "the same".
 - red team: a `.js` file that is valid only as sloppy CJS would fail an ESM-only parse. Detection (§4) keeps the CJS fallback for `.js`
   and never for `.mjs`, and spec 4's corpus covers both.
