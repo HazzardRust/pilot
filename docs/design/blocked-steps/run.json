@@ -1,0 +1,315 @@
+{
+  "slug": "blocked-steps",
+  "feature": "Fewer blocked steps for the user",
+  "ticket": "itm_a2aeb8349afc",
+  "branch": "feat/blocked-steps",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-blocked-steps",
+  "artefact": "docs/design/blocked-steps/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated at 8bf88495",
+      "branch": "slice/blocked-steps-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at a11bf87c",
+      "branch": "slice/blocked-steps-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at 86aa73b1",
+      "after": [
+        "S8"
+      ],
+      "branch": "slice/blocked-steps-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at 2d4f54c9",
+      "branch": "slice/blocked-steps-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at 06cf5d37",
+      "branch": "slice/blocked-steps-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated at ad0db96d",
+      "after": [
+        "S5"
+      ],
+      "branch": "slice/blocked-steps-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "integrated at f9283b1e",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/blocked-steps-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "integrated at 00e022fa",
+      "after": [
+        "S7"
+      ],
+      "branch": "slice/blocked-steps-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "integrated at 0dc6ba36",
+      "branch": "slice/blocked-steps-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s9"
+    },
+    {
+      "slice": "S10",
+      "state": "integrated at a432512f",
+      "after": [
+        "S9"
+      ],
+      "branch": "slice/blocked-steps-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s10"
+    },
+    {
+      "slice": "S11",
+      "state": "integrated at 5084e504",
+      "after": [
+        "S8",
+        "S10"
+      ],
+      "branch": "slice/blocked-steps-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s11"
+    },
+    {
+      "slice": "feature",
+      "state": "integrating principles fix round",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11",
+        "S12"
+      ],
+      "branch": "feat/blocked-steps",
+      "pr": 87
+    },
+    {
+      "slice": "S12",
+      "state": "integrated at 9907cc2d",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/blocked-steps-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s12"
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11",
+        "S12"
+      ],
+      "branch": "fix/blocked-steps",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-blocked-steps"
+    }
+  ],
+  "findings": [
+    "kept: F1 simplify — firstSight copies claim's mkdir/wx/expiry/retry; one take() returning true/false/null, -12",
+    "kept: F2 simplify — OWN_ALLOW_EXACT repeats the PILOT_MERGE_ALLOW scratch rule; isOwnAllow reads PILOT_MERGE_ALLOW, -1",
+    "kept: F3 drop — NO_VERDICT exported with no outside caller",
+    "kept: F4 drop — colourFor exported, only caller in its own file, -1",
+    "kept: F5 drop — 'the file tools are one list' test duplicates the decide test over all three tools, -5",
+    "dropped: N1 nit — coPilotTicketOf's deck read in guard-advice is recorded in the S10 seam; moving it back costs the 780 bar",
+    "dropped: N2 nit (QA concurs, low) — PILOT_BRANCH import-time throw fails loud and closed on an operator-set env; cosmetic stack trace, not worth a catch or lazy validation",
+    "kept: N3 nit — S10.md Interface misstates workAdvice's signature, 0",
+    "kept: N4 nit — onDenied computes source before building the step, 0",
+    "dropped: check-slices Misses:/S12 shape — a lint rule newer than the artefact; no code consequence",
+    "dropped: E-cycle guard -> guard-advice -> guard-status -> guard (new, S9 seam) — call-time require only, both reviewers verified either load order; a second fix round for a removable but harmless cycle costs more than its consequence",
+    "dropped: E-complexity postBlocked 24, decide 15, statusRows 12, onDenied 11 — F1 and N4 already cut the new branches; the rest predates this diff or is a moved function",
+    "dropped: E-duplication 15 clones / 114 lines (1.81%) — not attributed to this diff's lines; the one new copy (F1) is fixed",
+    "dropped: E-coverage/mutation/dead-code — not measured (runner env reds from spec-first's files, mutation timed out at 900 s, knip not diff-scoped); no verdict rests on them"
+  ],
+  "next": "fix round integrate running; then resume QA with the tip; teardown: remove /tmp/tmp.8roEdMN4C7 and pilot-fund-blocked-steps worktree",
+  "updatedAt": "2026-11-17T15:06:40.527Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 slice anchors off: co-pilot heading at :90 not :94, QA Blockers at :233 not :239",
+      "evidence": "S2 report, fact sheet mismatch rows"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "full npm test 404 s, 11334 processes for a 5-line prose diff",
+      "evidence": "S2 report gate row"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "QA pin headroom down to 5.75 tokens after S2; overlapping runs touching pilot-qa.md must cut",
+      "evidence": "measure-prompt pilot-qa 5107.5 / 5113.25"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck MCP CONNECTION_CLOSED in the S1 implementer's session; could not quote itm_4a138a675b88",
+      "evidence": "S1 report friction"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 slice Evidence asked tests 2 and 4 red before; they pin kept behaviour and cannot be",
+      "evidence": "S1 report pushback"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate run twice (~6.8 min each) because the first ran before review fixes",
+      "evidence": "S1 report friction"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test ~9 min (535 s), past the 180 s foreground limit; no final summary line mid-run",
+      "evidence": "S5 report friction"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 reviewer saw the test file before a one-line assertion was added; gate ran before it",
+      "evidence": "S5 report assumed rows"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 slice file said assertPushable unchanged, but test 3 needed the guard on ensurePilotBranch's existing-branch path; implementer decided an extra ls-remote per pilot base",
+      "evidence": "S4 report pushback"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief and slice files live only on feat/blocked-steps; first Read from the shared checkout failed",
+      "evidence": "S4 report friction"
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "ran git stash / stash apply in the S12 implementer's worktree",
+      "evidence": "S12 report friction; tree intact"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate waits for a slot behind other worktrees' gates; output only at the end",
+      "evidence": "S12 report, ~385 s"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a batched-call no-verdict on pilot integrate, reissued alone and run, still posted Blocked item itm_ccfca489d8b4 that paused the ticket after 20 min (the defect S1 fixes; installed plugin predates it)",
+      "evidence": "coordinator message; item closed Moot by main"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 used the session attribution reminder's trailer, not brief.md's; gate ran before the final test-only fix",
+      "evidence": "S6 report assumed rows"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no pgrep in the shell; gate polled by log after the 180 s background move",
+      "evidence": "S6 report friction"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9 slice file named six moved names but the code also needs marksFor, tokens, ROUND; implementer chose a call-time require cycle",
+      "evidence": "S9 report pushback"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7 slice file line anchors stale (cited install-settings.mjs:612-678, :481; code at 477-535, 563 after S5-S6)",
+      "evidence": "S7 report friction"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate queued behind other worktrees' gates (S9, spec-first-scratch)",
+      "evidence": "S7 report friction"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10 slice named symbols/ranges predating S9; 780-line bar unreachable with them alone, so coPilotTicketOf and coPilotItem moved too; 196 of 200 changed lines used",
+      "evidence": "S10 report pushback"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8 left a redundant second npm test queued in the shared gate after handing back; co-pilot cannot TaskStop a child's task",
+      "evidence": "S8 report assumed; TaskStop error 'agent cannot stop it'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "/tmp/s8gate.log shared with another session's output",
+      "evidence": "S8 report friction"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 owned-files list omitted install.test.mjs, install-allow-merge.test.mjs and the ADR index, which pin the full rule list",
+      "evidence": "S3 first gate: 4 reds, all from those pins"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test wrapped in background exited 0 with 4 reds",
+      "evidence": "S3 report friction"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "co-pilot brief said take the next free ADR number, against ADR 0167's NNNN-until-landing rule",
+      "evidence": "S3 assumed: ADR 0184"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "rebase left a duplicate ADR index row; only npm run adr-index removed it",
+      "evidence": "S3 fix round report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate output watcher matched test names containing 'passed' and declared done early; reran with an EXIT marker",
+      "evidence": "S11 report friction"
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "rejects a bare-SHA base (^origin/ only); evidence pass never returned before the fundamentalist's hand-back",
+      "evidence": "fundamentalist report §3"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S12 brief said 'firstSight shares the shape: check it the same way', which led to a copied primitive (F1)",
+      "evidence": "fundamentalist pushback"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP CONNECTION_CLOSED in QA's session: no deck_post for the walkthrough or gate2",
+      "evidence": "QA report blocker"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 1 and 6 live rows unprovable: installed plugin's hooks run, not the branch's; real settings barred",
+      "evidence": "QA report pushback"
+    }
+  ]
+}
