@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2 Integrate refuses a slice missing evidence",
-      "state": "pushed c112fd7",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -39,14 +39,16 @@
     },
     {
       "slice": "S5 The co-pilot carries evidence into the merge and checks its base",
-      "state": "planned",
+      "state": "implementing (respawned after a context loss)",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/spec-first-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s5"
     },
     {
       "slice": "S6 The pilot carries evidence into the merge",
-      "state": "planned",
+      "state": "planned: waits for handoff-books, blocked-steps, never-stuck on pilot",
       "after": [
         "S2"
       ]
@@ -77,7 +79,7 @@
     },
     {
       "slice": "S10 The helpers keep only reasoned absolutes",
-      "state": "implementing (restarted after a context reset)",
+      "state": "pushed be3dfcc",
       "after": [
         "S1"
       ],
@@ -85,8 +87,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s10"
     }
   ],
-  "next": "Co-pilot: S1, S3, S4, S7, S9 integrated; integrating S2 c112fd7, then S8 604c5c7; S10 implementing; S5 after S2; S6 last, only on a pilot carrying handoff-books, blocked-steps, never-stuck.",
-  "updatedAt": "2026-11-17T11:28:27.748Z",
+  "next": "Co-pilot: S1, S2, S3, S4, S7, S9 integrated (d4dffcd5); integrating S8 604c5c7, then S10 be3dfcc; S5 implementing (respawned); S6 held for its base (handoff-books, blocked-steps, never-stuck on pilot).",
+  "updatedAt": "2026-11-17T11:30:51.011Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -192,6 +194,21 @@
       "agent": "pilot:pilot-implementer",
       "what": "an own-share bar with zero margin on a slice that must add an install step forced cutting non-rule prose (why Clean Code, KISS, SOLID are left off)",
       "evidence": "fundamentalist 5693.25 -> 5679.5 after three measure-and-cut loops"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the gate failed silently in a fresh worktree on missing node_modules, its exit swallowed; per-file node --test runs did not show it",
+      "evidence": "S10 gate log: 'node_modules missing: run npm ci' only"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a slice adding text to a capped prompt does not name the cut that pays for it: three measure-and-cut rounds for a 30-byte clause",
+      "evidence": "pilot-fact-sheet cap 266.25"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5's first implementer, like S8's, handed back after 3 tool calls and ~26 s at ~50k tokens, its context summarised away with nothing built; both were spawned then sent the co-pilot hello at once",
+      "evidence": "S5 usage 50294 tokens / 3 tools / 25.9 s; S8 50582 / 3 / 27.8 s; reflog 'reset: moving to HEAD'"
     }
   ]
 }
