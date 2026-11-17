@@ -128,14 +128,16 @@
     },
     {
       "slice": "S11",
-      "state": "planned",
+      "state": "pushed ffcf568",
       "after": [
         "S6",
         "S7",
         "S10",
         "S12",
         "S13"
-      ]
+      ],
+      "branch": "slice/handoff-mod-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s11"
     },
     {
       "slice": "S12",
@@ -150,7 +152,7 @@
     },
     {
       "slice": "S13",
-      "state": "implementing",
+      "state": "integrated at 62288663",
       "after": [
         "S7",
         "S8",
@@ -160,27 +162,9 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s13"
     }
   ],
-  "next": "integrating S10 (#99); S13 implementing from 6b8ae49b; then S11, principles review (carry: deck/wait.mjs unused env, ADR 0104 PILOT_RUN_REPO)",
-  "updatedAt": "2026-11-17T02:28:23.176Z",
+  "next": "pilot integrate slice/handoff-mod-s11 (seam note reverted at 1c787ae4, re-add after); then fundamentalist (carry: deck/wait.mjs unused env, ADR 0104 PILOT_RUN_REPO, pilot --help start row misaligned) and QA",
+  "updatedAt": "2026-11-17T07:24:41.508Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "Gate workflow skips draft PRs into feat/**, so a slice PR never has a CI run to cite",
-      "evidence": ".github/workflows/gate.yml:26; runs 43877902477, 43877934888 skipped",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "pilot deck --help prints no help and touches the live deck on 4321",
-      "evidence": "S9 report: node bin/pilot.mjs deck --help",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "400-line limit counts tests and ADRs, so a walking skeleton with 8 tests exceeds it by construction",
-      "evidence": "S1: 633 lines, about 320 code",
-      "size": 2
-    },
     {
       "agent": "pilot",
       "what": "read a walkthrough's Sign off as workspace trust accepted without checking ~/.claude.json; one implementer relaunch wasted",
@@ -395,6 +379,24 @@
       "what": "the gate's --since selection overflowed argv (27824 > 24000) and ran the full ~9 min suite; output file held only exit=0, so the suite ran twice",
       "evidence": "S10 report; scratchpad/s10-gate.log",
       "size": 9
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "harness forced the co-pilot's hand-back a third time with the S11 implementer live mid-gate, orphaning its report address",
+      "evidence": "handback-send-enforce while a191ccc4181f04da1 ran npm test and its reviewer",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "previous S11 implementer committed without the full suite; S11.md's prescribed wording broke the existing install-reach-wording lint",
+      "evidence": "gate.log 4263/4275: install-reach-wording.test.mjs:29, select-tests.test.mjs:137",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md's fixed commit trailer names a model and session other than the run's",
+      "evidence": "S11 report: commits carry Fable 5.2, session_01NXgSFodNbTKqoJ71EpWMS5",
+      "size": 1
     }
   ]
 }
