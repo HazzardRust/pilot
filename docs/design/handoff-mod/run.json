@@ -42,17 +42,22 @@
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/handoff-mod-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s2",
+      "pr": 90
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "implementing (green locally, gate+reviewers+live check running)",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/handoff-mod-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s3"
     },
     {
       "slice": "S4",
@@ -63,10 +68,13 @@
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "draft PR #88 at db10574b; live check pending S2+S3",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/handoff-mod-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s5",
+      "pr": 88
     },
     {
       "slice": "S6",
@@ -121,8 +129,8 @@
       ]
     }
   ],
-  "next": "S1 reviewed (approve with nits) at 4723d39f; pilot integrate slice/handoff-mod-s1 in pilot-feat-handoff-mod, then spawn co-pilot S2,S3,S5. blocked-steps: verdicts design/blocked-steps dad8b047; after itm_2dec98752ac9: push, feat branch, draft PR, gate1. other-host signoff (3116339c) once questions close. User: merge #86.",
-  "updatedAt": "2026-11-17T00:26:29.315Z",
+  "next": "S2 integrating onto feat@ba8882b1; S3 running gate/reviewers/live; then S5 rebase+live, S4 and S6 after S2.",
+  "updatedAt": "2026-11-17T01:02:58.569Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -203,6 +211,30 @@
       "kind": "drain",
       "what": "two no-verdict Blocked items from calls batched with deck reads, closed Moot",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5.md names a deck_record tool that does not exist; the tool is deck_status",
+      "evidence": "S5 fact sheet: deck_record found nowhere",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "importing S1's sessionPid into deck/client.mjs pulls the store into the client graph and breaks the no-store graph test, so the rule is duplicated",
+      "evidence": "deck/run-look.mjs -> landing-replies.mjs -> runs.mjs; daemon.test.mjs:1571",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate started before the review fix, ran twice (~7 min each)",
+      "evidence": "s5-gate.log, s5-gate2.log",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "harness forced the co-pilot's hand-back again with S2 and S3 implementers live, orphaning their report address",
+      "evidence": "handback-send-enforce while a1c747e47c49093a0 and ae451aa3734ee9e54 ran",
+      "size": 3
     }
   ]
 }
