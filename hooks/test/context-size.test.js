@@ -1936,3 +1936,57 @@ test('the guard says under and past its own advisory', function (t) {
   scratchHome(t);
   assert.strictEqual(guard.pastAdvisoryAt(REPO_ROOT), null, 'no snapshot file is no reading');
 });
+
+// --- the books before a hand-off (handoff-books S2, spec 1-3) -------------------
+
+/** The numbered step `n` of a hard text: its one line, or '' when there is none. */
+function stepOf(said, n) {
+  const line = said.split('\n').find(function (text) { return text.startsWith(n + '. '); });
+  return line || '';
+}
+
+test("the pilot's hard text asks for friction in step 1", async function (t) {
+  const home = scratchHome(t);
+  await stubDeck(t, { runs: [path.join(home, 'repo')] });
+  seedSnapshot(home, 33);
+
+  const result = await throughPostTool(pilotInput(home));
+  const said = result.payload.hookSpecificOutput.additionalContext;
+  result.commit();
+  assert.match(stepOf(said, 1), /`deck_status`/);
+  assert.match(stepOf(said, 1), /friction/, 'the rows go into the status call the record is written from');
+  assert.match(stepOf(said, 2), /`pilot handoff`/, 'and only then is the record committed');
+});
+
+test('the crew hard text asks for the friction row in the handoff', async function (t) {
+  const home = scratchHome(t);
+  const input = subagentInput(home, null, 26);
+  await stubDeck(t, { runs: [input.cwd] });
+
+  const result = await throughPostTool(input);
+  const said = result.payload.hookSpecificOutput.additionalContext;
+  result.commit();
+  assert.match(stepOf(said, 2), /friction/);
+});
+
+test('the co-pilot text asks for its rows before paused', async function (t) {
+  const home = scratchHome(t);
+  const advisory = coPilotInput(home, null, 22.5);
+  await stubDeck(t, { runs: [advisory.cwd], coPilot: CO_PILOT });
+
+  const first = await throughPostTool(advisory);
+  const atAdvisory = first.payload.hookSpecificOutput.additionalContext;
+  first.commit();
+  const second = await throughPostTool(coPilotInput(home, { agent_id: advisory.agent_id }, 26));
+  const atHard = second.payload.hookSpecificOutput.additionalContext;
+  second.commit();
+
+  for (const said of [atAdvisory, atHard]) {
+    const paused = said.indexOf('`paused`');
+    assert.ok(paused >= 0, 'the text still ends in the hand-back');
+    const rows = said.indexOf('`deck_status`');
+    assert.ok(rows >= 0 && rows < paused, 'one deck_status call comes before the hand-back');
+    const friction = said.indexOf('friction');
+    assert.ok(friction >= 0 && friction < paused, 'and it carries the unsent friction rows');
+  }
+});
