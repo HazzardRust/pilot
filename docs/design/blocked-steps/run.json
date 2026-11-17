@@ -29,23 +29,24 @@
     },
     {
       "slice": "S4",
-      "state": "pushed ba971d9",
+      "state": "integrated",
       "branch": "slice/blocked-steps-s4",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s4"
     },
     {
       "slice": "S5",
-      "state": "integrated",
+      "state": "integrated at 06cf5d37",
       "branch": "slice/blocked-steps-s5",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s5"
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S5"
       ],
-      "branch": "slice/blocked-steps-s6"
+      "branch": "slice/blocked-steps-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s6"
     },
     {
       "slice": "S7",
@@ -115,8 +116,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s12"
     }
   ],
-  "next": "S5 integrate running; S9 implementing; then integrate S4, S12; spawn S6 from the S5 tip",
-  "updatedAt": "2026-11-17T13:17:55.768Z",
+  "next": "S4 integrate running; then S12 (88e4500); S6, S9 implementing",
+  "updatedAt": "2026-11-17T13:19:04.562Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -177,6 +178,11 @@
       "agent": "pilot:pilot-implementer",
       "what": "gate waits for a slot behind other worktrees' gates; output only at the end",
       "evidence": "S12 report, ~385 s"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a batched-call no-verdict on pilot integrate, reissued alone and run, still posted Blocked item itm_ccfca489d8b4 that paused the ticket after 20 min (the defect S1 fixes; installed plugin predates it)",
+      "evidence": "coordinator message; item closed Moot by main"
     }
   ]
 }
