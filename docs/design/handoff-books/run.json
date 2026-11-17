@@ -9,13 +9,16 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "planned",
-      "branch": "slice/handoff-books-s1"
+      "state": "implementing",
+      "branch": "slice/handoff-books-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-books-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
-      "branch": "slice/handoff-books-s2"
+      "state": "integrated",
+      "branch": "slice/handoff-books-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-books-s2",
+      "pr": 102
     },
     {
       "slice": "S3",
@@ -37,8 +40,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-books"
     }
   ],
-  "next": "take base feat/handoff-mod into feat/handoff-books, then spawn S1 and S2 from the feat tip",
-  "updatedAt": "2026-11-17T10:06:42.326Z",
+  "next": "integrate S2 (07b8cb4); S1 still implementing; S3 after S1 is integrated",
+  "updatedAt": "2026-11-17T10:21:12.096Z",
   "friction": [
     {
       "agent": "pilot-architect (handoff-books)",
@@ -54,6 +57,12 @@
       "kind": "drain",
       "what": "gate1 refused four times on format: branch not on pilot tip, verdict line form, pr field, an open Blocked item",
       "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the full gate takes over five minutes, outrunning the 180 s foreground limit, so it finished in the background",
+      "evidence": "npm test: duration_ms 317818, 11338 spawns (10368 git)",
+      "size": 5
     }
   ]
 }
