@@ -8,14 +8,14 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "draft PR #85 at 4bb42e70; tests green, both verdicts approve; live spike 0/3 pending trust itm_056242cf4239",
+      "state": "integrated",
       "branch": "slice/handoff-mod-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s1",
       "pr": 85
     },
     {
       "slice": "S9",
-      "state": "integrated",
+      "state": "integrated at fac45d87",
       "branch": "slice/handoff-mod-s9",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s9",
       "pr": 84
@@ -121,8 +121,8 @@
       ]
     }
   ],
-  "next": "handoff-mod: S9 integrate running (main); then add deck/ui/render.mjs to S11's files. S1 PR #85 waits on trust itm_056242cf4239: on \"done\" brief a FRESH implementer for the live check (live.sh in scratchpad 6678d407, S1 agent at 150k), 3/3 then integrate S1, then spawn co-pilot for S2,S3,S5. Slice PRs get no CI (gate.yml:26); integrate's suite + CI on feat is the referee.",
-  "updatedAt": "2026-11-16T13:40:45.555Z",
+  "next": "S1 reviewed (approve with nits) at 4723d39f; pilot integrate slice/handoff-mod-s1 in pilot-feat-handoff-mod, then spawn co-pilot S2,S3,S5. blocked-steps: verdicts design/blocked-steps dad8b047; after itm_2dec98752ac9: push, feat branch, draft PR, gate1. other-host signoff (3116339c) once questions close. User: merge #86.",
+  "updatedAt": "2026-11-17T00:26:29.315Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -170,6 +170,38 @@
       "agent": "pilot:pilot-implementer",
       "what": "400-line limit counts tests and ADRs, so a walking skeleton with 8 tests exceeds it by construction",
       "evidence": "S1: 633 lines, about 320 code",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "read a walkthrough's Sign off as workspace trust accepted without checking ~/.claude.json; one implementer relaunch wasted",
+      "evidence": "ad195021811f20ea6 report: live-1.log line 99, no projects entry",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "scratch checkout with no remote makes pilot handoff refuse (push failed) unless pilot.remote is none",
+      "evidence": "scripts/remotes.mjs:24",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer (S1 live check)",
+      "what": "launcher PATH entry C:/... split on the drive colon, installed pilot ran instead of the branch's",
+      "evidence": "shim log empty; 2 wasted live runs"
+    },
+    {
+      "agent": "pilot-implementer (S1 live check)",
+      "what": "startup lane hands an older open hand-off to every new session on one scratch deck",
+      "evidence": "lane: handed itm_7c033aa0e6cc at next session start; a fresh deck per run"
+    },
+    {
+      "agent": "pilot-architect (blocked-steps)",
+      "what": "no item reader: grepped deck.json (32k lines) and wrote a scratch classifier",
+      "evidence": "architect report"
+    },
+    {
+      "kind": "drain",
+      "what": "two no-verdict Blocked items from calls batched with deck reads, closed Moot",
       "size": 2
     }
   ]
