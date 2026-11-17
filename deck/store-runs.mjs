@@ -379,6 +379,7 @@ export function setCoPilot(ticketId, live) {
     if (switchOf(deck.items, ticket.repo, switchesOf(deck, ticket.repo).lanes, 'coPilot')?.to === ticketId) clearSwitch(deck, ticket.repo, 'coPilot');
     const coPilots = deck.coPilots !== null && typeof deck.coPilots === 'object' && !Array.isArray(deck.coPilots) ? deck.coPilots : {};
     deck.coPilots = { ...coPilots, [repoKey(ticket.repo)]: { ticket: ticketId, live: true, at: new Date().toISOString() } };
+    if (ticket.plan && typeof ticket.plan === 'object' && ticket.plan.grantedAt === undefined) ticket.plan.grantedAt = deck.coPilots[repoKey(ticket.repo)].at; // first grant, never-stuck L4
   } else if (!releaseIn(deck, ticket.repo, ticketId)) {
     return storedCoPilot(deck, ticket.repo);
   }
