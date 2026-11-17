@@ -62,7 +62,7 @@
     },
     {
       "slice": "S4",
-      "state": "draft PR #93, reviewed; integrating",
+      "state": "integrated",
       "after": [
         "S2"
       ],
@@ -72,7 +72,7 @@
     },
     {
       "slice": "S5",
-      "state": "draft PR #88; rebase clean at local 0020405c, awaits post-S4 tip + gate; live check deferred to QA (assumed)",
+      "state": "draft PR #88 at eecdbc1e, gate green, integrating",
       "after": [
         "S1"
       ],
@@ -93,12 +93,14 @@
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "implementing: 8d74547e, both reviewers APPROVE, gate running (agent aa0e4ed02aa243048)",
       "after": [
         "S2",
         "S3",
         "S4"
-      ]
+      ],
+      "branch": "slice/handoff-mod-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s7"
     },
     {
       "slice": "S8",
@@ -136,8 +138,8 @@
       ]
     }
   ],
-  "next": "integrating S4 (#93); then resume S5 a3f4f008450352246 with the new tip; then S7.",
-  "updatedAt": "2026-11-17T01:33:37.367Z",
+  "next": "pilot integrate slice/handoff-mod-s5 running; then S7's PR; then pilot ready",
+  "updatedAt": "2026-11-17T01:42:50.850Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -310,6 +312,24 @@
       "agent": "pilot:pilot-implementer",
       "what": "brief.md exists only on the feature branch, not in the shared checkout, so the first Read failed",
       "evidence": "S5 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot integrate",
+      "what": "S4's integration ran the full suite after the selection outgrew argv (28034 chars, over 24000)",
+      "evidence": "integrate output: 'full suite: selection is 28034 characters of argv, over 24000'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the harness forced the co-pilot to hand back again with S5 and S7 implementers live, orphaning their report address",
+      "evidence": "handback-send-enforce while a3f4f008450352246 and aa0e4ed02aa243048 ran",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 gate ran on 30777546 and was discarded when the tip moved mid-run (7 min)",
+      "evidence": "S5 report: gate on 30777546 did not count",
       "size": 1
     }
   ]
