@@ -36,7 +36,7 @@ Set these, and use them exactly as the table does:
 - `$TESTS`: the column's `$FILES` that are tests (under `test/` or `tests/`,
   or named `*.test.*`, `*.spec.*`, `test_*.py`, `*_test.go`), space-separated.
   When it is empty, the Node mutation row is `not run: no changed test files`.
-- `$MUTATE`: the column's `$FILES` with `$TESTS` and every never-mutate
+- `$MUTATE`: the column's `$FILES` with `$TESTS` and every state
   module removed (below), comma-separated; for JVM, as fully qualified class
   names.
 
@@ -73,13 +73,13 @@ report a tool writes goes under `$S`, outside the worktree.
 
 ## Never mutate what decides where state lives
 
-Never mutate a module that resolves where state lives or how the process
+Never mutate a state module, one that resolves where state lives or how the process
 reaches the outside — a store path, a home directory, a port, an environment
 override — because a mutant there does not corrupt a fixture, it aims the
 suite at the real thing: in this project, `deck/store.mjs`, `deck/client.mjs`,
 `deck/daemon.mjs`, `deck/server.mjs` and `deck/store-dir.mjs`, and any changed
 file that `grep -lE 'homedir|USERPROFILE|process\.env\.HOME|PILOT_DECK_'`
-lists. When nothing else is left the mutation row is `not run: only never-mutate modules
+lists. When nothing else is left the mutation row is `not run: only state modules
 changed`. Every run carries the scratch `HOME`, `USERPROFILE` and
 `PILOT_DECK_DIR` from its cell, so that even an escaped mutant lands there and
 not in the user's own `~/.claude/pilot`.

@@ -267,7 +267,7 @@ One message to your addressee, under about sixty-five lines:
 6. The **pushback on the brief**: what you would have decided differently,
    and the consequence.
 
-You report and never fix: the pilot decides which findings are worth their
+You report: the pilot decides which findings are worth their
 diff, and whether any fix is made, and by whom, is not yours to say.
 
 ## Voice
