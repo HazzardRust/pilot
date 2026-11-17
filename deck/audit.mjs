@@ -252,23 +252,28 @@ function directoryFor(repo) {
 const auditDir = (repo) => path.join(storeDir(), 'audits', directoryFor(repo));
 const recordFile = (repo) => path.join(auditDir(repo), 'record.json');
 
-/** L15: the offer repeats after this many counted runs since the last offer or report. */
-export const OFFER_EVERY_RUNS = 10;
+/** handoff-books L2: the offer repeats after this many counted hand-offs since the last offer or report. */
+export const OFFER_EVERY_HANDOFFS = 20;
 
-/** The audit record of one repository: `{ offers: [{ run, at }], counted: [run key] }`. */
+/**
+ * The audit record of one repository: `{ offers: [{ run, at }], handoffs: [hand-off id] }`. A record
+ * from before handoff-books holds `counted` runs and no `handoffs`: it reads as no hand-offs, and
+ * the next write drops `counted` (L3).
+ */
 function readRecord(repo) {
   const file = recordFile(repo);
   let record;
   try {
     record = JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch (err) {
-    if (err.code === 'ENOENT') return { offers: [], counted: [] };
+    if (err.code === 'ENOENT') return { offers: [], handoffs: [] };
     throw new Error(`the audit record ${file} is not readable JSON (${err.message}); move it aside to start over`);
   }
-  if (!Array.isArray(record?.offers) || !Array.isArray(record?.counted)) {
+  const handoffs = record?.handoffs ?? (Array.isArray(record?.counted) ? [] : undefined);
+  if (!Array.isArray(record?.offers) || !Array.isArray(handoffs)) {
     throw new Error(`the audit record ${file} is not an audit record; move it aside to start over`);
   }
-  return record;
+  return { offers: record.offers, handoffs };
 }
 
 function writeRecord(repo, record) {
@@ -282,32 +287,29 @@ const hasReport = (repo) =>
   fs.existsSync(auditDir(repo)) && fs.readdirSync(auditDir(repo)).some((file) => /^\d.*\.json$/.test(file));
 
 /**
- * Adds a run key once (L15: step 1 run twice counts once) and returns the count since the last
- * offer or report. A run key already offered is a no-op too (B2): a resume of the run just
- * offered the audit must not count it a second time, or the next offer would come a run early.
+ * Adds a picked-up hand-off's id once (spec 4: claimed twice counts once) and returns the count
+ * since the last offer or report. The SessionStart lane is its one caller (A4).
  */
-export function countRun(repo, runKey) {
+export function countHandoff(repo, id) {
   const record = readRecord(repo);
-  if (record.counted.includes(runKey) || record.offers.some((offer) => offer.run === runKey)) {
-    return record.counted.length;
-  }
-  return writeRecord(repo, { ...record, counted: [...record.counted, runKey] }).counted.length;
+  if (record.handoffs.includes(id)) return record.handoffs.length;
+  return writeRecord(repo, { ...record, handoffs: [...record.handoffs, id] }).handoffs.length;
 }
 
-/** Reads only: 'first' when never offered nor audited (A9), 'every' on the tenth counted run, else null. */
+/** Reads only: 'first' when never offered nor audited (A9), 'every' on the twentieth counted hand-off, else null. */
 export function auditDue(repo) {
   const record = readRecord(repo);
   if (record.offers.length === 0 && !hasReport(repo)) return 'first';
-  return record.counted.length >= OFFER_EVERY_RUNS ? 'every' : null;
+  return record.handoffs.length >= OFFER_EVERY_HANDOFFS ? 'every' : null;
 }
 
 /**
  * Records that this run was offered the audit, whatever the user answers (P15: the answer itself
- * is never read); re-arms the count for ten more runs.
+ * is never read); re-arms the count for twenty more hand-offs.
  */
 export function recordOffer(repo, runKey) {
   const record = readRecord(repo);
-  return writeRecord(repo, { offers: [...record.offers, { run: runKey, at: new Date().toISOString() }], counted: [] });
+  return writeRecord(repo, { offers: [...record.offers, { run: runKey, at: new Date().toISOString() }], handoffs: [] });
 }
 
 /** L3: the report in the deck store, beside its json and the deck's body. Throws with every problem. */
@@ -325,7 +327,7 @@ export function saveReport(repo, report) {
   fs.writeFileSync(saved.json, `${JSON.stringify({ ...report, rows: rankRows(report.rows) }, null, 2)}\n`);
   fs.writeFileSync(saved.markdown, table);
   fs.writeFileSync(saved.deck, `${deckBody}\n\nFull report: ${saved.markdown}\n`);
-  writeRecord(repo, { ...readRecord(repo), counted: [] });
+  writeRecord(repo, { ...readRecord(repo), handoffs: [] });
   return saved;
 }
 
@@ -410,20 +412,16 @@ function rowVerb(command, file, args) {
 
 const USAGE =
   'usage: pilot audit save <report.json> | spec <report.json> <id> [<id>...] | pick <report.json> <reply-file>\n' +
-  '       | count <run key> | due | offered <run key>\n';
+  '       | due | offered <run key>\n';
 
-/** L15's three verbs on the repository in the working directory; exit 2 on a word they do not take. */
+/** L15's two verbs on the repository in the working directory; exit 2 on a word they do not take. */
 function offerVerb(command, word) {
   const repo = process.cwd();
   if (command === 'due') {
     const due = auditDue(repo);
-    const count = readRecord(repo).counted.length;
+    const count = readRecord(repo).handoffs.length;
     process.stdout.write(due === null ? `not due ${count}\n` : `due ${due === 'first' ? 'first' : `every ${count}`}\n`);
     return due === null ? 1 : 0;
-  }
-  if (command === 'count' && isText(word)) {
-    process.stdout.write(`${countRun(repo, word.trim())}\n`);
-    return 0;
   }
   if (command === 'offered' && isText(word)) {
     recordOffer(repo, word.trim());
@@ -436,7 +434,7 @@ function offerVerb(command, word) {
 /** `pilot audit save <report.json>`: prints the three paths, or exits 1 with the problems on stderr. */
 export function main(argv) {
   const [command, file] = argv;
-  if (['count', 'due', 'offered'].includes(command)) return offerVerb(command, file);
+  if (['due', 'offered'].includes(command)) return offerVerb(command, file);
   if (command === 'spec' || command === 'pick') return rowVerb(command, file, argv.slice(2));
   if (command !== 'save' || !file) {
     process.stderr.write(USAGE);

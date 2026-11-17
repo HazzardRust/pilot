@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: amended
 date: 2026-10-14
 tags: [deck, record, friction, pilot]
 supersedes: []
-superseded_by: []
+superseded_by: [NNNN]
 paths: [deck/runs.mjs, agents/pilot.md, agents/pilot-co-pilot.md]
 ---
 # Friction rows survive every session
