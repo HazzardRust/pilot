@@ -41,7 +41,7 @@
     },
     {
       "slice": "S6",
-      "state": "integrated",
+      "state": "integrated at ad0db96d",
       "after": [
         "S5"
       ],
@@ -50,7 +50,7 @@
     },
     {
       "slice": "S7",
-      "state": "implementing",
+      "state": "pushed 446b5c6",
       "after": [
         "S6"
       ],
@@ -59,15 +59,16 @@
     },
     {
       "slice": "S8",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S7"
       ],
-      "branch": "slice/blocked-steps-s8"
+      "branch": "slice/blocked-steps-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s8"
     },
     {
       "slice": "S9",
-      "state": "pushed a6d8013",
+      "state": "integrated",
       "branch": "slice/blocked-steps-s9",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s9"
     },
@@ -118,8 +119,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-blocked-steps-s12"
     }
   ],
-  "next": "S6 integrate running; then S9 (a6d8013) and record S9 seam in S9.md; S7, S10 implementing",
-  "updatedAt": "2026-11-17T13:33:20.924Z",
+  "next": "S9 integrate running; then S7 (446b5c6); S8 (pipelined from S7) and S10 implementing",
+  "updatedAt": "2026-11-17T13:39:40.242Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -200,6 +201,16 @@
       "agent": "pilot:pilot-implementer",
       "what": "S9 slice file named six moved names but the code also needs marksFor, tokens, ROUND; implementer chose a call-time require cycle",
       "evidence": "S9 report pushback"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7 slice file line anchors stale (cited install-settings.mjs:612-678, :481; code at 477-535, 563 after S5-S6)",
+      "evidence": "S7 report friction"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate queued behind other worktrees' gates (S9, spec-first-scratch)",
+      "evidence": "S7 report friction"
     }
   ]
 }
