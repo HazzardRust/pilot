@@ -22,7 +22,7 @@
     },
     {
       "slice": "handoff-mod",
-      "state": "fix round implementing; in QA (read-only, gate green 4265/0)",
+      "state": "gate2 itm_e3e21ad55f9d signed 10:20Z at 3bf4e4c6; lander not spawned",
       "after": [
         "S1",
         "S2",
@@ -163,7 +163,7 @@
     },
     {
       "slice": "fix",
-      "state": "implementing (F1-F8, F10-F14; gate/review running, unpushed)",
+      "state": "integrated at 53830cf9",
       "after": [
         "S11",
         "S13"
@@ -173,26 +173,11 @@
     }
   ],
   "findings": [
-    "kept: F15 needed — QA: a nested claude inherits CLAUDE_PID, so its mod writes mod-<outer>.stamp and can clear in the outer's place (spec 2, 8, A6); QA fixes it as writer, after the fix round"
+    "kept: F15 needed — fixed by QA at a6f263e4: the look takes its parent pid only, never an inherited CLAUDE_PID"
   ],
-  "next": "forced hand-back; feat/handoff-mod at 2b08c4ef; next: on fix report check fixes vs diff, pilot integrate slice/handoff-mod-fix with its Verdict trailers, then resume QA (a66d4e90ed307de93) with the tip: ff-merge, fix F15 (CLAUDE_PID inheritance) red first, restart scratch deck, post walkthrough",
-  "updatedAt": "2026-11-17T07:43:12.072Z",
+  "next": "gate2 itm_e3e21ad55f9d pressed; lander spawn DENIED by auto mode (itm_dfd837401551): next session spawns pilot-lander. feat worktree 2 behind, dirty run.json. handoff-books co-pilot sent pause: release, re-grant, respawn. never-stuck S1-S5 c19395e7; S6 waits blocked-steps S2 + handoff-books S3. audit-f7 planned, short path.",
+  "updatedAt": "2026-11-17T10:22:47.288Z",
   "friction": [
-    {
-      "agent": "pilot-implementer (S1 live check)",
-      "what": "startup lane hands an older open hand-off to every new session on one scratch deck",
-      "evidence": "lane: handed itm_7c033aa0e6cc at next session start; a fresh deck per run"
-    },
-    {
-      "agent": "pilot-architect (blocked-steps)",
-      "what": "no item reader: grepped deck.json (32k lines) and wrote a scratch classifier",
-      "evidence": "architect report"
-    },
-    {
-      "kind": "drain",
-      "what": "two no-verdict Blocked items from calls batched with deck reads, closed Moot",
-      "size": 2
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S5.md names a deck_record tool that does not exist; the tool is deck_status",
@@ -411,6 +396,24 @@
       "what": "Chrome DevTools MCP not available in QA's session; the deck page was probed over HTTP, not a browser",
       "evidence": "QA report: no tools match",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot",
+      "what": "deck 0.9.5 pauses a yellow ticket on every stale Blocked item; pilot close did not resume it, pivot needed",
+      "evidence": "never-stuck paused 6 times",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot",
+      "what": "co-pilot hand-back forced while a child is live; child reports land on main and are relayed by hand",
+      "evidence": "handoff-mod x5, never-stuck x5",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot",
+      "what": "auto mode denied the pilot-lander spawn on a signed gate2",
+      "evidence": "itm_dfd837401551, reason Destructive or Unwanted Actions",
+      "size": 2
     }
   ]
 }
