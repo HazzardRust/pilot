@@ -3,7 +3,7 @@
   "feature": "handoff-books",
   "ticket": "itm_b561a9d42212",
   "branch": "feat/handoff-books",
-  "base": "feat/handoff-mod",
+  "base": "pilot",
   "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-books",
   "artefact": "docs/design/handoff-books/architecture.md",
   "slices": [
@@ -22,15 +22,16 @@
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "pushed a9b7838",
       "after": [
         "S1"
       ],
-      "branch": "slice/handoff-books-s3"
+      "branch": "slice/handoff-books-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-books-s3"
     },
     {
       "slice": "handoff-books",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1",
         "S2",
@@ -40,8 +41,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-books"
     }
   ],
-  "next": "integrate S1 (19f2dd6) on feat d0993795; then paused: next co-pilot spawns S3 from feat tip",
-  "updatedAt": "2026-11-17T10:29:49.728Z",
+  "next": "pilot integrate S3 (a9b7838) onto feat 0923d6e9 with security + typescript Reviewed-by; then step 7: fundamentalist and QA",
+  "updatedAt": "2026-11-17T10:41:16.327Z",
   "friction": [
     {
       "agent": "pilot-architect (handoff-books)",
@@ -69,6 +70,11 @@
       "what": "S1's README row cannot exist before landing (adr-index never indexes an NNNN ADR) and the both-sides supersession check needs an edit to ADR 0146, outside the slice's files",
       "evidence": "scripts/adr-index.mjs:88 PLACEHOLDER = 'NNNN'; superseded_by check 120-133",
       "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "context compacted before the first commit on S3; restarted the slice from the slice file, losing its fact sheet and reads",
+      "evidence": "implementer message: worktree clean at 0923d6e9, earlier fact-sheet and read results gone"
     }
   ]
 }
