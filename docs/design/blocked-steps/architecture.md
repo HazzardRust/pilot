@@ -91,7 +91,7 @@ Deepening: deleting `onDenied` puts payload parsing into the harness entry, so i
 - **L4 New allow rules join `PILOT_MERGE_ALLOW`**, under the same deny/ask-wins rule and the same doctor check. Rejected: a second list and step. ADR NNNN amends ADR 0110 with the read rules.
 - **L5 Folds move code and re-export it**; no fold renames or rewrites a function. Rejected: one 600-line move slice.
 - **L6 Prompt lines are evidenced by `measure-prompt` and `check-references`**, not phrase pins, as audit-f2-f3 A1. Every pin holds: pilot 21, QA 29.5 tokens of headroom on `pilot`.
-- **L7 QA environment** (proposed): this machine, a scratch deck (`pilot deck --scratch`), a real auto-mode session.
+- **L7 QA environment** (the user, `itm_2dec98752ac9`): this machine, a scratch deck (`pilot deck --scratch`), a real auto-mode session.
 
 ## 6. Assumed decisions
 
