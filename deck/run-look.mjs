@@ -1,6 +1,7 @@
 /**
  * The look (handoff-mod L1): one decision over the deck for one repository, answering one `Outcome`, run as a
- * CLI by the mod (`hooks/handoff-mod.mjs`) through `$.process.run`. It never waits; the mod does the clearing
+ * CLI by the mod (`hooks/handoff-mod.mjs`) through `$.process.run`. It waits only for the lane's marker, at most
+ * `SETTLE_MS`; the mod does the clearing
  * and the submitting, and this file decides whether to.
  *
  *   node <root>/deck/run-look.mjs <op> [--repo <dir>] [--id itm_<hex>] [--turn-ended <ms>] [--why <text>]
@@ -121,9 +122,25 @@ async function turn(repo, pid, read) {
   return { act: 'clear', id: handoff.id };
 }
 
-async function cleared(repo, pid, id, read) {
+/**
+ * How long `cleared` waits for the lane's marker. The host's `$.command.run` only queues the clear, so the mod's
+ * `cleared` starts beside the SessionStart lane, not after it (live: 5 ms early); the lane's own timeout is 5 s.
+ */
+const SETTLE_MS = 3000;
+const MARKER_POLL_MS = 50;
+
+/** Whether the lane has marked `id`, polled until `settleMs` has passed. */
+async function markedWithin(id, settleMs) {
+  for (const end = Date.now() + settleMs; !laneMarked(id); ) {
+    if (Date.now() >= end) return false;
+    await new Promise((resolve) => setTimeout(resolve, MARKER_POLL_MS));
+  }
+  return true;
+}
+
+async function cleared(repo, pid, id, read, settleMs) {
   if (postedBy(pid) === id) fs.rmSync(postedFile(pid), { force: true });
-  if (!laneMarked(id)) return none(`no lane marker for ${id}`);
+  if (!(await markedWithin(id, settleMs))) return none(`no lane marker for ${id}`);
   log(`mod: cleared ${id}`);
   let items = [];
   try {
@@ -134,13 +151,13 @@ async function cleared(repo, pid, id, read) {
   return { act: 'submit', id, prompt: firstPrompt(items, repo) };
 }
 
-/** One look. `deps` stand in for the deck, the environment and the parent pid in a test. */
+/** One look. `deps` stand in for the deck, the environment, the parent pid and the marker wait in a test. */
 export async function look(op, args = {}, deps = {}) {
-  const { read = openItems, env = process.env, ppid = process.ppid } = deps;
+  const { read = openItems, env = process.env, ppid = process.ppid, settleMs = SETTLE_MS } = deps;
   const repo = args.repo ?? listeningRepo(process.cwd());
   const pid = sessionPid(env, ppid);
   if (op === 'turn') return turn(repo, pid, read);
-  if (op === 'cleared' && ITEM_ID.test(args.id ?? '')) return cleared(repo, pid, args.id, read);
+  if (op === 'cleared' && ITEM_ID.test(args.id ?? '')) return cleared(repo, pid, args.id, read, settleMs);
   return none(`${op} is not built yet`);
 }
 

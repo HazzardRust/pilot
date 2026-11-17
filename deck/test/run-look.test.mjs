@@ -123,6 +123,22 @@ test("cleared with the lane's marker answers the prompt and drops the posted sta
   assert.equal(fs.existsSync(path.join(claims, `posted-${PID}.stamp`)), false, 'the posted stamp is gone');
 });
 
+test("cleared waits for a lane marker that lands just after the clear, and gives up on one that never does", async (t) => {
+  const claims = scratchHome(t);
+  const handoff = handoffItem();
+  stampPosted(claims, handoff.id);
+  const deps = { read: async () => [handoff], env: { CLAUDE_PID: String(PID) }, ppid: 1 };
+  // Live: `$.command.run` only queues the clear, so the look ran 5 ms before the SessionStart lane marked it.
+  const marker = setTimeout(() => fs.writeFileSync(path.join(claims, `handoff-${handoff.id}.claim`), ''), 150);
+  t.after(() => clearTimeout(marker));
+
+  const late = await look('cleared', { repo: OURS, id: handoff.id }, deps);
+  assert.equal(late.act, 'submit', 'the marker 150 ms late is waited for');
+
+  const never = await look('cleared', { repo: OURS, id: 'itm_0bad' }, { ...deps, settleMs: 200 });
+  assert.equal(never.act, 'none', 'no marker at all is still no prompt');
+});
+
 test('an id that is not itm_<hex> is refused before any read', async (t) => {
   const claims = scratchHome(t);
   process.env.PILOT_DECK_PORT = '1'; // a read would be refused loudly, never answered
