@@ -39,7 +39,7 @@ const deck = require('../lib/deck.js');
 const HOOKS = path.join(__dirname, '..');
 const REPO_ROOT = path.join(HOOKS, '..');
 
-/** Two directories that are not each other, as a pilot run and a stranger. */
+/** Two directories that are not each other, as a piloted run and a stranger. */
 const OURS = path.join(os.tmpdir(), 'pilot-s20-repo');
 const THEIRS = path.join(os.tmpdir(), 'pilot-s20-elsewhere');
 

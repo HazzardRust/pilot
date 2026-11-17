@@ -3,8 +3,8 @@
  * S20's pickup lane: the third thing `SessionStart` runs.
  *
  * A pilot that fills its context is told to bring its record current and run
- * `pilot handoff`, which posts a `handoff` item to the deck; `pilot run` then
- * types `/clear` (by hand only off the wrapper). This lane is what makes that
+ * `pilot handoff`, which posts a `handoff` item to the deck; the hand-off mod then
+ * types `/clear` (by hand only where the mod is not loaded). This lane is what makes that
  * enough. It asks the deck for
  * an open `handoff` item posted from this working directory and answers with
  * the item's body as `hookSpecificOutput.additionalContext`, so the fresh

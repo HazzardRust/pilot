@@ -25,7 +25,7 @@ const asked = (ticket) => postStored({ kind: KIND_QUESTION, title: 'Q', body: 'Q
 const runs = () => [{ ...registerRun({ repo: REPO, pid: process.pid }), feature: 'x' }];
 const lanesWith = (switches = {}) => ({ ...deckLanes(), switches: { [repoKey(REPO)]: switches } });
 const tabPage = (lanes = deckLanes()) =>
-  renderHomePage(listItems(), runs(), REPO, false, {}, {}, Date.now(), [], null, {}, null, { weekly: true }, lanes);
+  renderHomePage(listItems(), runs(), REPO, false, {}, {}, Date.now(), [], null, null, { weekly: true }, lanes);
 const main = (switches) => switchOf(listItems(), REPO, switches, 'main');
 const coPilot = (switches = {}) => coPilotStateOf(listItems(), REPO, deckLanes().coPilots[repoKey(REPO)] ?? null, switches);
 
@@ -135,7 +135,7 @@ test("deckLanes reads the stored switches and the live co-pilots, keyed per repo
   fs.writeFileSync(storeFile(), JSON.stringify({ ...JSON.parse(fs.readFileSync(storeFile(), 'utf8')), switches: { [repoKey(REPO)]: switches } }), 'utf8');
   const lanes = deckLanes();
   assert.deepEqual(lanes, { coPilots: { [repoKey(REPO)]: built.id }, switches: { [repoKey(REPO)]: switches }, records: [] });
-  const tab = tabsOf(runs(), listItems(), {}, {}, [], {}, lanes).find((each) => each.repo === REPO);
+  const tab = tabsOf(runs(), listItems(), {}, {}, [], lanes).find((each) => each.repo === REPO);
   assert.equal(tab.coPilot, built.id);
   assert.deepEqual(tab.switching, switches);
   assert.deepEqual(tabsOf(runs(), listItems())[0].switching, {}, 'no lanes, no switch');

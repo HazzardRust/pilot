@@ -1,7 +1,7 @@
 /**
  * S1 of clear-waits-co-pilot (spec 2, 5; L3, L4, L8): the deck's `co-pilots` entry. The main session says
  * `deck_ticket co-pilot` before it spawns its co-pilot and `release` when one stops; `needTicket`, the gate2
- * post that turns the yellow ticket green, and `pilot run` starting release it too. Every test takes its
+ * post that turns the yellow ticket green, and a pilot session's start (`POST /api/started`, `deck/test/started-route.test.mjs`) release it too. Every test takes its
  * own store; nothing touches 4321.
  */
 
@@ -12,7 +12,6 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { chainNext } from '../chain.mjs';
 import { KIND_GATE2, KIND_HANDOFF, KIND_TICKET, KIND_WALKTHROUGH } from '../items.mjs';
 import { coPilotFor, needTicket, postItem, resolveItem, setCoPilot, storeFile } from '../store.mjs';
 import { deckOnAPort, postStored, shapedTicketBody, tempDeck } from '../testUtils.mjs';
@@ -79,15 +78,6 @@ test('another ticket\'s need leaves it live', async (t) => {
 
   needTicket(other.id);
   assert.deepEqual({ ticket: coPilotFor(REPO).ticket, live: coPilotFor(REPO).live }, { ticket: building.id, live: true });
-});
-
-test('a pilot run start releases the directory\'s co-pilot', async (t) => {
-  tempDeck(t);
-  const ticket = yellow('building');
-  setCoPilot(ticket.id, true);
-
-  chainNext(REPO, { atStart: true });
-  assert.equal(coPilotFor(REPO).live, false);
 });
 
 test('the stored deck gains co-pilots and no other key', async (t) => {

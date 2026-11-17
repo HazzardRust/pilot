@@ -25,7 +25,7 @@ const OTHER = path.resolve('D:/work/other');
 const aTicket = (title, state, repo = REPO) => postStored({ kind: KIND_TICKET, title, body: shapedTicketBody(title), repo, sliceCount: 60, state });
 const runs = () => [{ ...registerRun({ repo: REPO, pid: process.pid }), feature: 'x' }];
 const tabPage = () =>
-  renderHomePage(listItems(), runs(), REPO, false, {}, {}, Date.now(), [], null, {}, null, { weekly: true }, deckLanes());
+  renderHomePage(listItems(), runs(), REPO, false, {}, {}, Date.now(), [], null, null, { weekly: true }, deckLanes());
 
 /** Each Tickets row as `{ id, open tag, the markup before its link }`, in page order. */
 const rows = (html) =>
@@ -116,7 +116,7 @@ test("another repository's co-pilot marks nothing on this tab", (t) => {
   const html = tabPage();
   assert.ok(rowOf(html, here.id), 'this tab lists its own ticket');
   assert.deepEqual(coPilotHeld(html), []);
-  const tabs = tabsOf(runs(), listItems(), {}, {}, [], {}, deckLanes());
+  const tabs = tabsOf(runs(), listItems(), {}, {}, [], deckLanes());
   assert.equal(tabs.find((tab) => tab.repo === REPO).coPilot, null);
   assert.equal(tabs.find((tab) => tab.repo === OTHER).coPilot, there.id);
 });

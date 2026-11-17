@@ -21,7 +21,7 @@ const REPO = path.resolve('D:/work/pilot');
 const aTicket = (title, state) => postStored({ kind: KIND_TICKET, title, body: shapedTicketBody(title), repo: REPO, sliceCount: 60, state, ...(state === 'yellow' ? {} : { live: true }) });
 const runs = () => [{ ...registerRun({ repo: REPO, pid: process.pid }), feature: 'x' }];
 // renderHomePage's arguments that matter: items, runs, repo, lanes (last).
-const tabPage = () => renderHomePage(listItems(), runs(), REPO, false, {}, {}, Date.now(), [], null, {}, null, { weekly: true }, deckLanes());
+const tabPage = () => renderHomePage(listItems(), runs(), REPO, false, {}, {}, Date.now(), [], null, null, { weekly: true }, deckLanes());
 
 test('each state carries its label and class', (t) => {
   tempDeck(t);
