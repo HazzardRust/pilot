@@ -20,7 +20,9 @@ const PLUGIN_ROOT = '/opt/pilot';
 
 // Written out rather than imported, so a rule dropped or widened in the script fails here.
 const GC = ['Bash(pilot ps)', 'Bash(pilot gc)', 'Bash(pilot deck --stop *)', 'Bash(pilot deck --scratch *)']; // install-allow-gc.test.mjs pins these
-const MERGE = ['Bash(pilot sync *)', 'Bash(pilot integrate *)', 'Bash(pilot land *)', 'Bash(pilot landing *)', ...GC];
+const NODE_SCRATCH = 'Bash(node bin/pilot.mjs deck --scratch *)';
+const READS = ['Bash(pilot wait)', 'Bash(pilot wait *)', 'Bash(pilot budget)', 'Bash(pilot tickets)', NODE_SCRATCH]; // install-allow-reads.test.mjs pins these
+const MERGE = ['Bash(pilot sync *)', 'Bash(pilot integrate *)', 'Bash(pilot land *)', 'Bash(pilot landing *)', ...GC, ...READS];
 
 function settingsFile(t, contents) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-merge-'));
@@ -87,14 +89,13 @@ test('an ask covering pilot is named', (t) => {
 
   const { pilotMerge: result } = install(file);
 
-  assert.deepEqual(result.covered, MERGE);
-  assert.deepEqual(result.added, []);
-  assert.equal(result.state, 'nothing-to-add');
-  assert.equal(readJson(file).permissions.allow, undefined, 'no allow rule is written');
-  assert.deepEqual(result.notes, [
-    'Covered by your deny or ask list, so not added to allow (yours wins either way):',
-    ...MERGE.map((rule) => `    ${rule}`),
-  ]);
+  // `pilot *` does not reach the source-tree spelling, which is a `node` command.
+  const covered = MERGE.filter((rule) => rule !== NODE_SCRATCH);
+  assert.deepEqual(result.covered, covered);
+  assert.deepEqual(result.added, [NODE_SCRATCH]);
+  assert.deepEqual(readJson(file).permissions.allow, [NODE_SCRATCH], 'no pilot allow rule is written');
+  assert.match(result.notes.join('\n'), /Covered by your deny or ask list/);
+  for (const rule of covered) assert.ok(result.notes.includes(`    ${rule}`), `${rule} is named`);
 });
 
 test("the user's rules survive byte for byte", (t) => {

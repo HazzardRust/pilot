@@ -186,6 +186,13 @@ export const PILOT_MERGE_ALLOW = [
   // yellow-lane (L7): a QA nested under a co-pilot starts a scratch deck, and the classifier
   // reads only the command text. The scratch deck is isolated from the live one on 4321.
   'Bash(pilot deck --scratch *)',
+  // blocked-steps (A3, A6): the read-only commands an agent waits and reads the queue with,
+  // and the scratch deck spelt from the source tree. Never `pilot *`, `node *` or a `git` rule.
+  'Bash(pilot wait)',
+  'Bash(pilot wait *)',
+  'Bash(pilot budget)',
+  'Bash(pilot tickets)',
+  'Bash(node bin/pilot.mjs deck --scratch *)',
 ];
 
 export function pilotMergeStep(settingsPath) {
@@ -235,10 +242,11 @@ export function pilotMergeStep(settingsPath) {
 }
 
 /**
- * The allow rules only pilot writes (L10): the deck's tools and the `pilot` command's. Two
- * prefixes and nothing wider, so a rule the user wrote for anything else is never theirs to lose.
+ * The allow rules only pilot writes (L10): the deck's tools, the `pilot` command's and its
+ * source-tree spelling (blocked-steps). Three prefixes and nothing wider, so a rule the user
+ * wrote for anything else is never theirs to lose.
  */
-const OWN_ALLOW_PREFIXES = [`${DECK_SERVER}__`, 'Bash(pilot '];
+const OWN_ALLOW_PREFIXES = [`${DECK_SERVER}__`, 'Bash(pilot ', 'Bash(node bin/pilot.mjs '];
 export const isOwnAllow = (rule) => typeof rule === 'string' && OWN_ALLOW_PREFIXES.some((prefix) => rule.startsWith(prefix));
 
 const DECK_TOOLS_RULE = `${DECK_SERVER}__*`;
