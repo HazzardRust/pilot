@@ -9,23 +9,27 @@
   "slices": [
     {
       "slice": "S1 A slice file lists behaviours with an evidence kind",
-      "state": "pushed 2ae8018",
+      "state": "integrated",
       "branch": "slice/spec-first-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s1"
     },
     {
       "slice": "S2 Integrate refuses a slice missing evidence",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/spec-first-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s2"
     },
     {
       "slice": "S3 The implementer builds to the behaviours",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/spec-first-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s3"
     },
     {
       "slice": "S4 The gate text asks for evidence",
@@ -63,7 +67,7 @@
     },
     {
       "slice": "S9 QA and the lander keep only reasoned absolutes; QA runs spec 7",
-      "state": "implementing",
+      "state": "pushed 1dd0a6e",
       "branch": "slice/spec-first-s9",
       "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s9"
     },
@@ -75,8 +79,8 @@
       ]
     }
   ],
-  "next": "Co-pilot: integrating S1 at 2ae8018, then S4 at dbd6f51; S9 implementing; then S2, S3, S7, S8, S10 from the new tip; S6 last, only on a pilot carrying handoff-books, blocked-steps, never-stuck.",
-  "updatedAt": "2026-11-17T11:12:36.618Z",
+  "next": "Co-pilot: S1 integrated (0d810dae); integrating S4 dbd6f51 then S9 1dd0a6e; S2, S3 implementing; then S7, S8, S10; S6 last, only on a pilot carrying handoff-books, blocked-steps, never-stuck.",
+  "updatedAt": "2026-11-17T11:15:21.630Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -112,6 +116,21 @@
       "agent": "pilot:pilot-implementer",
       "what": "three-lanes-wording refuses 'red' in any case anywhere in CONTEXT.md, which a glossary about red steps trips: one gate red",
       "evidence": "scripts/test/three-lanes-wording.test.mjs:39,47"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9's absolute counts are not reproducible with its own verification command: the slice counts occurrences, git grep -c counts lines",
+      "evidence": "git grep -ciwE gives 26/11; slice file says 31/14"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no way to know which QA phrases tests pin short of grepping 22 test files per phrase before cutting",
+      "evidence": "22 test files reference pilot-qa or pilot-lander"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a 100-token headroom bar meant measuring after every edit and left 2.25 of margin once review fixes cost ~30 tokens",
+      "evidence": "9 measure-prompt runs; QA headroom 102.25"
     }
   ]
 }
