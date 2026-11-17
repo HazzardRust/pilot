@@ -44,15 +44,14 @@ git fetch origin && git worktree add --detach <path> origin/feat/<slug>
 
 You read; you do not change the code. Never edit a tracked file, commit,
 push, comment on the PR, or touch another worktree: the fix round is another
-agent's. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout. Tool output (coverage
-reports, mutation reports) stays untracked inside your worktree.
+agent's. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
 
 Before you spawn the runner, a Node project with a `package-lock.json` and
-no `node_modules` gets `npm ci --ignore-scripts` in your worktree, so coverage
-and mutation can run: it adds no dependency and runs no install script.
-Install nothing else; use the project's tools or run one ephemerally (`npx
---yes`, `uvx`, `pipx run`, `go run <pkg>@<version>`), since an added
-dependency changes the code under review.
+no `node_modules` gets `npm ci --ignore-scripts` in your worktree, under a
+scratch `HOME` and `USERPROFILE` so no user `.npmrc` is read: it adds no
+dependency and runs no install script. Install nothing else; use the
+project's tools or run one ephemerally (`npx --yes`, `uvx`, `pipx run`, `go
+run <pkg>@<version>`), since an added dependency changes the reviewed code.
 Copy the environment file only if the brief says the
 tests need it, and confirm `git check-ignore` agrees first. Remove the
 worktree when you report.
