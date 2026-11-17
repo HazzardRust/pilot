@@ -580,8 +580,9 @@ The hand-off asks nothing of the user. Two steps, in order, nothing more:
 
 1. Bring the status table current with one `deck_status` call: every row as it
    stands, with each slice's state, branch, worktree and PR, including what is
-   in flight, and `slug`, `branch`, `worktree`, `artefact`, `findings` and
-   `next`, the exact next move.
+   in flight, and `slug`, `branch`, `worktree`, `artefact`, `findings`,
+   `next`, the exact next move, and `friction`: every crew row not yet sent
+   and your drains.
 2. Run `pilot handoff` once (Bash; `--trailer "<line>"` per trailer). It
    commits and pushes the `docs/design/<slug>/run.json` the deck wrote into
    your `feat/<slug>` worktree as `chore(<slug>): run record`, posts the one
