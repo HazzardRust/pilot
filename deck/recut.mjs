@@ -78,6 +78,41 @@ export function planDrift(repoDir, plan) {
   return Promise.race([driftOf(repoDir, plan), late]).finally(() => clearTimeout(timer));
 }
 
+/**
+ * What a gate1 on `ticket` still owes when the ticket carries a re-cut mark (never-stuck spec 15, L5): a body line
+ * `Changed since <sha7>:` telling the user what moved since the plan they signed. An empty list for any other gate1.
+ */
+export function recutGate1Gaps(ticket, body) {
+  if (!ticket?.recut || /^Changed since [0-9a-f]{7}:/m.test(String(body))) return [];
+  const from = typeof ticket.recut.from === 'string' ? ticket.recut.from.slice(0, 7) : 'the signed plan';
+  return [`a re-cut's gate1 lists what changed since ${from}: add a line \`Changed since ${from}: <what>\` to its body`];
+}
+
+const SLUG = /^(?!\.{1,2}$)[A-Za-z0-9._-]+$/;
+
+/**
+ * The paths under `docs/design/<slug>/` that differ between two plan commits in `repoDir`, sorted, or null when either
+ * sha names no commit there or git cannot answer: an unreadable plan is never proven unchanged (L5). Local objects
+ * only; nothing is fetched.
+ */
+export async function planChanges(repoDir, fromSha, toSha, slug) {
+  if (![fromSha, toSha].every((sha) => typeof sha === 'string' && SHA.test(sha)) || typeof slug !== 'string' || !SLUG.test(slug)) return null;
+  const git = gitIn(repoDir);
+  try {
+    for (const sha of [fromSha, toSha]) if ((await git(['rev-parse', '--verify', '--quiet', `${sha}^{commit}`])).code !== 0) return null;
+    const diff = await git(['diff', '-z', '--name-only', '--no-renames', fromSha, toSha, '--', `docs/design/${slug}/`]);
+    return diff.code === 0 ? diff.stdout.split('\0').filter(Boolean).sort() : null;
+  } catch (error) {
+    if (error instanceof GitError) return null;
+    throw error;
+  }
+}
+
+/** Sticky approval (L5): whether `docs/design/<slug>/` is textually the same at both shas; false when either is unreadable. */
+export async function planUnchanged(repoDir, fromSha, toSha, slug) {
+  return (await planChanges(repoDir, fromSha, toSha, slug))?.length === 0;
+}
+
 async function driftOf(repoDir, plan) {
   const sha = plan?.sha;
   const branch = plan?.branch;

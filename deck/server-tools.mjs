@@ -28,8 +28,8 @@ import {
   ownerFilter, parkedTicketOf, parkTicket, pivotTicket, recordFor, recordVerdicts, refusePoster, repliesSince, resolveItem,
   setCoPilot, setQaComment, setSlices, takeTicket,
 } from './store.mjs';
-import { planDrift } from './recut.mjs';
-import { recutTicket } from './store-tickets.mjs';
+import { planChanges, planDrift } from './recut.mjs';
+import { recutTicket, replanTicket } from './store-tickets.mjs';
 
 import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_READ_ITEMS, MAX_READ_LIMIT, deckUrl } from './tools.mjs';
 
@@ -210,6 +210,26 @@ function threadId(args) {
     throw new DeckRefusal('id must be the item id deck_post gave you');
   }
   return id;
+}
+
+/**
+ * `deck_ticket replan`: a re-cut ticket goes back to yellow at `sha` only when `docs/design/<slug>/` is the same there
+ * as at the sha it was re-cut from (L5); a change, or a sha git cannot read, is refused, so the plan takes a gate1.
+ */
+async function replanned(id, sha) {
+  const ticket = listItems().find((item) => item.id === id && item.kind === KIND_TICKET);
+  const from = ticket?.recut?.from;
+  if (typeof from !== 'string' || typeof ticket.repo !== 'string' || typeof ticket.plan?.artefact !== 'string') {
+    throw new DeckRefusal(`${id} carries no re-cut mark from a signed plan; only a re-cut ticket is replanned, any other takes a gate1`);
+  }
+  if (typeof sha !== 'string' || !/^[0-9a-f]{7,40}$/.test(sha)) throw new DeckRefusal('a replan names the new plan commit as its sha');
+  const slug = path.posix.basename(path.posix.dirname(ticket.plan.artefact.replaceAll('\\', '/')));
+  const changed = await planChanges(ticket.repo, from, sha, slug);
+  const gate1 = `post a gate1 with a \`Changed since ${from.slice(0, 7)}:\` line`;
+  if (changed === null) throw new DeckRefusal(`replan ${id}: ${from.slice(0, 7)} or ${sha} cannot be read in ${ticket.repo}, so the plan is never proven unchanged; ${gate1}`);
+  if (changed.length > 0) throw new DeckRefusal(`replan ${id}: ${changed.join(', ')} changed since ${from.slice(0, 7)}; ${gate1}`);
+  replanTicket(id, sha);
+  return asText(`Replanned ${id} at ${sha.slice(0, 7)}: signed plan kept.`);
 }
 
 /**
@@ -403,9 +423,11 @@ export function callTool(name, args, deps = {}) {
     // A ticket moves by the pilot's hand, but for the architect's merge step (three-lanes spec 14, L14):
     // refused on the hook's stamp, an unstamped call being the pilot's.
     const mover = args?.author === undefined ? 'pilot' : authorKind(args.author);
-    if (mover !== 'pilot' && !(mover === 'architect' && args?.action === 'merge')) {
-      throw new DeckRefusal(`deck_ticket ${args?.action} is the pilot's, not ${args.author}`);
+    if (mover !== 'pilot' && !(mover === 'architect' && (args?.action === 'merge' || args?.action === 'replan'))) {
+      throw new DeckRefusal(`deck_ticket ${args?.action} is the pilot's${args?.action === 'replan' ? ' or the architect\'s' : ''}, not ${args.author}`);
     }
+    // A re-cut whose design dir is textually unchanged keeps its signature, with no press (never-stuck spec 15, L5).
+    if (args?.action === 'replan') return replanned(id, args?.sha);
     // Need and pivot are the pilot's two state writes (overview-one-ticket spec 15, 18; L7, L8).
     // The pilot reads both lanes on the line that moves one (idle-main-lane spec 5; yellow-lane spec 2), read only by the answers that say them.
     const both = () => {
@@ -461,7 +483,7 @@ export function callTool(name, args, deps = {}) {
       return asText(`Recorded ${count} verdicts on ${id}.`);
     }
     // The tool's refusal names every action (QA F2); moveTicket's own names the page's two arrows.
-    if (args?.action !== 'up' && args?.action !== 'down') throw new DeckRefusal(`a ticket moves up, down, take, park, merge, need, pivot, recut, co-pilot, release or verdicts, not ${args?.action}`);
+    if (args?.action !== 'up' && args?.action !== 'down') throw new DeckRefusal(`a ticket moves up, down, take, park, merge, need, pivot, recut, replan, co-pilot, release or verdicts, not ${args?.action}`);
     // The arrow's own write (ticket-making L3): one store function, whichever hand moves it.
     const queue = moveTicket(id, args?.action);
     const place = queue.findIndex((item) => item.id === id) + 1;

@@ -44,6 +44,7 @@ import {
 } from './items.mjs';
 import { LANDER_LINE } from '../scripts/merge-generated.mjs';
 import { sameRepo } from './runs.mjs';
+import { recutGate1Gaps } from './recut.mjs';
 import { keptWorktree, landerDue, landingReply } from './landing-replies.mjs';
 import { blockedShapeGaps, isPilotClose, isVetoed, mayPilotClose, pilotCloseClaimed } from './blocked-shape.mjs';
 import { questionShapeGaps } from './question-shape.mjs';
@@ -161,12 +162,11 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   refuseOverOpenQuestions(deck, item);
   const ticket = ticketNamedBy(deck, item);
   if (kind === KIND_GATE1 && ticket) refuseUnmerged(deck.items, ticket);
-  // QA's walkthrough on a plan marked with no surface is refused naming it (L3); a walkthrough's ticket is optional.
+  // QA's walkthrough on a plan marked with no surface is refused naming it (L3); a walkthrough's ticket is optional. A re-cut's gate1 says what changed (never-stuck L5).
   const walked = kind === KIND_WALKTHROUGH ? deck.items.find((each) => each.id === item.ticket) : undefined;
-  const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : walkthroughPlanGaps(walked, authorKind(author));
+  const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : kind === KIND_GATE1 ? recutGate1Gaps(ticket, body) : walkthroughPlanGaps(walked, authorKind(author));
   if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
-  // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves
-  // it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
+  // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
   if (kind === KIND_GATE2) {
     enterStage(deck, ticket, 'green');
     // A hand-back like `needTicket`'s, so it releases the ticket's co-pilot in the same write (clear-waits-co-pilot L8).

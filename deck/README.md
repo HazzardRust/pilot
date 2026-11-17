@@ -55,7 +55,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `procs.mjs` | `pilot ps`: the process table (one PowerShell CIM or `ps` read), the pilot-owned daemons, waits and test roots, and which are orphans and why (process-gc L5-L6) |
 | `question-shape.mjs` | checks a crew question's recommended default carries a `Research:` line |
 | `read.mjs` | which items a `deck_read` returns: one by id, or the newest |
-| `recut.mjs` | `planDrift`: whether a signed plan still stands on `origin` (`ok`, `gone`, `moved`, `unchecked`), and `ownedFiles`, a slice file's owned paths (never-stuck spec 13) |
+| `recut.mjs` | `planDrift`: whether a signed plan still stands on `origin` (`ok`, `gone`, `moved`, `unchecked`), and `ownedFiles`, a slice file's owned paths (never-stuck spec 13); `planUnchanged` and `planChanges`, whether a re-cut's design dir moved between two shas, and `recutGate1Gaps`, a re-cut gate1's `Changed since` line (spec 15) |
 | `refusal-log.mjs` | `logRefusal`: one deck.log line per refused or failed request (400, 415, 500), `[deck] <status> <METHOD> <path>: <message>`, a 500's stack frames under it, never the query or body (daemon-lifecycle spec 2) |
 | `report-shape.mjs` | checks a closing report asks the user nothing (ADR 0148) |
 | `run-claim.mjs` | the hand-off mod's claims and stamps: the once-only `/clear` claim, the lane's marker, the posted and reported-in stamps and the session pid |

@@ -21,7 +21,7 @@ const reread = (id) => listItems().find((item) => item.id === id);
 const refusedNaming = (...words) => (error) => error instanceof DeckRefusal && words.every((word) => error.message.includes(word));
 
 const aTicket = (title) => postItem({ kind: KIND_TICKET, sliceCount: 60, title, body: shapedTicketBody(title), repo: REPO });
-const aGate1 = (ticket, sha) => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, ...EVIDENCE, sha, ticket });
+const aGate1 = (ticket, sha, body = 'The design.') => postItem({ kind: KIND_GATE1, title: 'Gate 1', body, repo: REPO, ...EVIDENCE, sha, ticket });
 
 /** A ticket signed through its own gate1, as the user signs one: yellow, its plan at `sha`. */
 function aSigned(title, sha = '0305827') {
@@ -105,7 +105,7 @@ test('a gate1 on the re-cut ticket is accepted and its press replaces the plan',
   recutTicket(signed.id, 'owned file moved');
   takeLive(signed.id);
 
-  const gate = aGate1(signed.id, 'abc1234');
+  const gate = aGate1(signed.id, 'abc1234', 'The design.\n\nChanged since 0305827: S1 owns deck/lanes.mjs.');
   addReply(gate.id, SIGN_OFF);
   assert.equal(reread(signed.id).plan.sha, '0305827', 'the old plan stands until the gate closes on its press');
   resolveItem(gate.id, 'Signed off.');
