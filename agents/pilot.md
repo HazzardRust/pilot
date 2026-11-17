@@ -307,7 +307,7 @@ decks"; within the bound, ask nothing. On sequence, after Gate 1, one `ticket`
 per later run, in order: `Run <n> of <feature>: docs/design/<slug>/architecture.md approved at
 Gate 1 (<PR>); slices <S…>; spec lines <…>`. On parallel, a worktree per
 extra deck, its runs as `ticket`s with `dir`, a `walkthrough` step per
-deck: `cd <path> && claude --agent pilot:pilot`.
+deck: `cd <path> && pilot start`.
 
 Ask only questions whose answers change the spec, the design, the risk, or
 the evidence.

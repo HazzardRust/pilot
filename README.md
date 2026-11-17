@@ -55,8 +55,8 @@ In the repository you want to work on:
 pilot start
 ```
 
-That is the one command you type; the deck's Start does the same, and at reach `everything` so does
-`claude --agent pilot:pilot`. Everything after it waits for you on the deck, at <http://127.0.0.1:4321>,
+That is the one command you type; the deck's Start does the same. Everything after it waits for you on the
+deck, at <http://127.0.0.1:4321>,
 bound to the loopback interface only. Its state lives in `~/.claude/pilot/`, never in your repository, and it
 refuses to store anything that looks like a key or a token.
 

@@ -66,6 +66,7 @@ export const TREE_TESTS = Object.freeze([
   'scripts/test/install.test.mjs',
   'scripts/test/line-endings.test.mjs',
   'scripts/test/methodology-skills.test.mjs',
+  'scripts/test/no-pilot-run.test.mjs',
   'scripts/test/one-line-wording.test.mjs',
   'scripts/test/path-length.test.mjs',
   'scripts/test/pilot-agents.test.mjs',
