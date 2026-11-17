@@ -114,8 +114,9 @@ None is shallow enough to fold, so no fold slice. One new module, `deck/recut.mj
 ADR NNNN (`docs/adr/NNNN-never-stuck.md`) records L2-L7.
 
 - **L1 Depth is forks** (itm_5ad979d05f47, the user's press): only forking decisions were posted, each alone.
-- **L2 The deck checks drift, at the first grant and after every landing** (F1). Rationale: the check costs no
-  agent tokens and can't be skipped. Rejected: the co-pilot's first act or the architect per landing. *Pending: itm_73468bff78b8.*
+- **L2 The deck checks drift, at the first grant and after every landing** (F1, user: "The deck, at grant and
+  landing", itm_73468bff78b8). Rationale: the check costs no agent tokens and can't be skipped. Rejected: the
+  co-pilot's first act or the architect per landing.
 - **L3 Files trigger, the architect judges** (F2, itm_62728409062c, resolved by the pilot). The user typed: "it has to
   be conceptual, we cant be deterministic with this one. if the nature of the functionality changes, then that is
   probably gonna be a re-cut". After the pilot's one pushback they pressed "Any file a slice owns". The press was
