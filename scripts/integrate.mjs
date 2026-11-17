@@ -110,9 +110,10 @@ function assertSecurityVerdict(sliceFile, trailers) {
 
 /**
  * Throws naming the first behaviour of the slice file's `## Behaviours` (`behavioursOf`) that no
- * trailer `Evidence: B<k> <kind>: <what was seen>` covers, its number matching, whatever
- * its kind (the implementer may raise or swap a kind) (spec-first spec 2, 8): each behaviour is checked by its own number, never by a count. An old
- * `## Tests` slice file has no behaviours and needs no evidence (L5); no slice file: no check.
+ * trailer `Evidence: B<k> <kind>: <what was seen>` covers, by number alone: the implementer may
+ * raise or swap a kind (spec-first spec 2, 8). Each behaviour is checked by its own number, never
+ * by a count. An old `## Tests` slice file has no behaviours and needs no evidence (L5); no slice
+ * file: no check.
  */
 function assertEvidence(sliceFile, trailers) {
   if (!sliceFile) return;
