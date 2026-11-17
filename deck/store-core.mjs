@@ -133,7 +133,20 @@ export function storeFile() {
 }
 
 function emptyDeck() {
-  return { version: STORE_VERSION, items: [], runs: [], seq: 0, deckSeq: 0, decks: {} };
+  return { version: STORE_VERSION, items: [], runs: [], seq: 0, deckSeq: 0, decks: {}, grantsStamped: true };
+}
+
+/**
+ * Once per store (never-stuck QA-F1): a deck from before `plan.grantedAt` existed cannot say which of its plans a
+ * co-pilot was granted on, so each unstamped plan reads granted, `grantedAt: 'legacy'`, and is never re-cut part-built
+ * (L4). A plan signed after this has no stamp until its first grant.
+ */
+function stampLegacyGrants(deck) {
+  for (const item of deck.items) {
+    if (item?.kind === KIND_TICKET && item.plan !== null && typeof item.plan === 'object' && item.plan.grantedAt === undefined) item.plan.grantedAt = 'legacy';
+  }
+  deck.grantsStamped = true;
+  return deck;
 }
 
 /**
@@ -195,6 +208,7 @@ function readDeck(recovered = false) {
     backUp(file, raw, deck.version);
     writeDeck(upgradeStore(deck));
   }
+  if (deck.grantsStamped !== true) writeDeck(stampLegacyGrants(deck));
   deck.items = deck.items.map((item) => notLiveYellow(withoutEstimate(asUserThread(item))));
   // The sub-deck is gone (yellow-agent L10): a run 0.7.19 stored under a `parent` is not this deck's, live or
   // not, so it reads absent and the next write drops it.

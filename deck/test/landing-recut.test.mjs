@@ -19,6 +19,7 @@ import path from 'node:path';
 import { KIND_GATE1, KIND_GATE2, KIND_TICKET, SIGN_OFF } from '../items.mjs';
 import { driftAfterLanding, startLanding } from '../landing.mjs';
 import { addReply, listItems, postItem, registerRun, requestSwitch, resolveItem, setCoPilot, setSlices, settleLanding } from '../store.mjs';
+import { storeFile } from '../store-core.mjs';
 import { shapedTicketBody, takeLive, tempDeck, withTicket } from '../testUtils.mjs';
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -123,6 +124,29 @@ test('a granted ticket is never re-cut', async (t) => {
   assert.equal(checked, 0, 'a granted plan is never checked');
   assert.equal(reread(ticket.id).state, 'yellow');
   assert.ok(!deckLines(gate.id).some((text) => text.startsWith('Re-cut by this landing')));
+});
+
+test('a plan signed before grants were stamped reads granted, and is never re-cut (QA-F1)', async (t) => {
+  tempDeck(t);
+  const gate = aLandedGate2(os.tmpdir());
+  const ticket = signed(os.tmpdir(), { artefact: ARTEFACT, branch: 'feat/x', sha: '0123456789abcdef' });
+  // The store as the deck before this one left it: no stamp marker, so no plan on it can say whether it was granted.
+  const stored = JSON.parse(fs.readFileSync(storeFile(), 'utf8'));
+  delete stored.grantsStamped;
+  fs.writeFileSync(storeFile(), JSON.stringify(stored));
+  const planDrift = async () => ({ state: 'moved', files: ['deck/store-items.mjs'] });
+
+  assert.deepEqual(await driftAfterLanding(gate.id, { planDrift }), []);
+
+  assert.equal(reread(ticket.id).plan.grantedAt, 'legacy');
+  assert.equal(reread(ticket.id).state, 'yellow');
+});
+
+test('a plan signed on a stamped store stays never granted', (t) => {
+  tempDeck(t);
+  const ticket = signed(os.tmpdir(), { artefact: ARTEFACT, branch: 'feat/x', sha: '0123456789abcdef' });
+
+  assert.equal(reread(ticket.id).plan.grantedAt, undefined);
 });
 
 test('a ticket granted while its check runs is never re-cut', async (t) => {
