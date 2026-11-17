@@ -142,6 +142,25 @@ test('a held outcome looks again at its bound and every 30 s, idle only', async 
   assert.deepEqual(looks('turn').map(({ at }) => at), [0, 30_000, 70_000, 90_000, 100_000]);
 });
 
+test('a clear answered to a timer look a turn overtook waits for that turn to end', async () => {
+  const { $, calls, advance } = host({ turn: [{ act: 'held', id: ID, until: 1_200_000 }, { act: 'clear', id: ID }], cleared: { act: 'submit', id: ID, prompt: PROMPT } });
+  const hooks = hooksOf();
+  await hooks['turn.complete']($, turnEnd, next);
+  const run = $.process.run;
+  $.process.run = async (argv) => {
+    const answer = await run(argv);
+    if (argv[2] === 'turn') await hooks['turn.start']($, turnStart, next); // the user typed while the look ran
+    return answer;
+  };
+
+  await advance(30_000);
+  assert.equal(calls.filter(({ call }) => call === 'command.run').length, 0, 'no clear mid-turn');
+  $.process.run = run;
+  await hooks['turn.complete']($, turnEnd, next);
+
+  assert.deepEqual(calls.map(({ call, argv }) => argv?.[2] ?? call), ['turn', 'turn', 'command.run', 'cleared', 'prompt.submit']);
+});
+
 test('a release ends the timers', async () => {
   for (const release of [{ act: 'clear', id: ID }, { act: 'none', why: 'the hand-off is closed' }]) {
     const { $, advance, timers, looks } = host({
