@@ -108,7 +108,7 @@ test('deck_ticket refuses what moveTicket refuses, and an unknown action', async
 
   assert.match(await refusal({ id: head.id, action: 'up' }), /already the head/);
   assert.match(await refusal({ id: tail.id, action: 'down' }), /already the tail/);
-  assert.match(await refusal({ id: head.id, action: 'sideways' }), /a ticket moves up, down, take, park, merge, need, pivot, co-pilot, release or verdicts, not sideways/);
+  assert.match(await refusal({ id: head.id, action: 'sideways' }), /a ticket moves up, down, take, park, merge, need, pivot, recut, co-pilot, release or verdicts, not sideways/);
   assert.match(await refusal({ id: 'itm_nothing', action: 'up' }), /no item itm_nothing/);
   assert.match(await refusal({ action: 'up' }), /id must be/);
   assert.equal(JSON.stringify(listItems()), before, 'the store is unchanged');

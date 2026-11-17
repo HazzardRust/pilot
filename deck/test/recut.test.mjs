@@ -63,10 +63,14 @@ test("a live co-pilot's ticket is refused", (t) => {
   assert.equal(reread(signed.id).recut, undefined);
 });
 
-test('a red ticket, or one whose gate2 was posted, is refused', (t) => {
+test('a red ticket, one whose gate2 was posted, or a bad why or files list is refused', (t) => {
   tempDeck(t);
+  const signed = aSigned('signed');
   const red = aTicket('planning');
   assert.throws(() => recutTicket(red.id, 'stale'), refusedNaming(red.id, 'red', 'yellow'));
+  assert.throws(() => recutTicket(signed.id, ' '), refusedNaming('why'));
+  assert.throws(() => recutTicket(signed.id, 'stale', 'deck/lanes.mjs'), refusedNaming('files'));
+  assert.equal(reread(signed.id).state, 'yellow', 'a refused re-cut writes nothing');
 
   const built = postStored({ kind: KIND_TICKET, title: 'built', body: shapedTicketBody('built'), repo: REPO, state: 'yellow' });
   const gate2 = postItem({ kind: KIND_GATE2, title: 'Gate 2', body: 'Walk it.', repo: REPO, pr: '#250', sha: '0305827', ticket: built.id });
@@ -79,14 +83,18 @@ test('a red ticket, or one whose gate2 was posted, is refused', (t) => {
 test('the action answers with the lane line', async (t) => {
   const base = await deckOnAPort(t);
   const signed = aSigned('other host');
-  const answer = await fetch(`${base}/api/tool`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ name: 'deck_ticket', arguments: { id: signed.id, action: 'recut' } }),
-  });
-  const said = await answer.json();
-  const text = said.content?.[0]?.text ?? said.error;
-  assert.ok(text.startsWith(`Re-cut ${signed.id}: red, planning next. Yellow: `), text);
+  const deckTicket = async (args) => {
+    const said = await (await fetch(`${base}/api/tool`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'deck_ticket', arguments: { id: signed.id, action: 'recut', ...args } }),
+    })).json();
+    return said.content?.[0]?.text ?? said.error;
+  };
+  assert.match(await deckTicket({ author: 'pilot:pilot-architect' }), /is the pilot's/, "an agent's stamp is refused");
+  assert.equal(reread(signed.id).state, 'yellow');
+  const text = await deckTicket({});
+  assert.ok(text.startsWith(`Re-cut ${signed.id}: red`), text);
   assert.equal(reread(signed.id).state, 'red');
   assert.equal(reread(signed.id).recut.from, '0305827');
 });

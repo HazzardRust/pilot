@@ -416,10 +416,11 @@ export function recutTicket(id, why, files) {
   }
   const deck = readDeck();
   const ticket = openTicketOf(deck, id);
-  // It joins the planning queue's head, so a pending planning switch holds it up as an arrow would.
+  if (stateOf(ticket) !== 'yellow') throw new DeckRefusal(`item ${id} is ${stateOf(ticket)}; only a signed, yellow ticket is re-cut`);
+  // It joins the planning queue's head, so a pending planning switch holds it up as an arrow would; it never goes live,
+  // so the yellow lane's only lock is the co-pilot switch naming it.
   refuseLaneSwitch(deck, ticket.repo, laneOfState('red'));
   refuseCoPilotSwitch(deck, ticket.repo, 'recut', id);
-  if (stateOf(ticket) !== 'yellow') throw new DeckRefusal(`item ${id} is ${stateOf(ticket)}; only a signed, yellow ticket is re-cut`);
   const entry = storedCoPilot(deck, ticket.repo);
   if (entry?.ticket === id && isLiveCoPilot(deck, entry)) throw new DeckRefusal(`a live co-pilot holds ${id}; release it before the re-cut`);
   const gate2 = deck.items.find((item) => item?.kind === KIND_GATE2 && item.ticket === id);

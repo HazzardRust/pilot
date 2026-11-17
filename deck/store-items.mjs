@@ -592,13 +592,11 @@ export function resolveItem(id, resolution, author) {
     // A ticket closed outright is no longer live (L9).
     if (item.kind === KIND_TICKET) delete item.live;
     const ticket = item.ticket === undefined ? undefined : deck.items.find((candidate) => candidate.id === item.ticket);
-    // Signing a gate1 turns its ticket yellow and writes its plan by reference, in this same write (ticket-states spec 1, 7; L3, L5, L7).
+    // Signing a gate1 turns its ticket yellow and writes its plan by reference, in this same write (ticket-states spec 1, 7; L3, L5, L7); a re-cut's mark goes with the plan it re-cut (never-stuck spec 6).
     if (item.kind === KIND_GATE1 && signed && ticket?.kind === KIND_TICKET && stateOf(ticket) === 'red') {
       enterStage(deck, ticket, 'yellow');
       ticket.plan = planOf(item);
-      delete ticket.live;
-      // A re-cut's mark goes with the plan it re-cut (never-stuck spec 6).
-      delete ticket.recut;
+      for (const field of ['live', 'recut']) delete ticket[field];
     }
     // The pilot's close of the question that paused a ticket resumes it, in this same write (blocking-close spec 2; A3).
     if (pilotClose) resumeIn(deck, item);
