@@ -386,6 +386,20 @@ test('two different SendMessage no-verdicts are two calls', async (t) => {
   assert.strictEqual(deck.posts.length, 0);
 });
 
+test('a no-verdict is one call per command and per window', async (t) => {
+  const deck = fakeDeck();
+  const claims = scratchClaims(t);
+  const past = () => Date.now() + WINDOW_MS + 1000;
+  await onDenied(noVerdict({ tool_input: { command: 'pilot wait', description: 'wait' } }), { deck, claims, env: {} });
+  // The reissue names the same command with another description: the same call, so it posts.
+  await onDenied(noVerdict({ tool_input: { command: 'pilot wait', description: 'wait again' } }), { deck, claims, env: {} });
+  assert.strictEqual(deck.posts.length, 1);
+  await onDenied(noVerdict({ tool_input: { command: 'pilot wait' } }), { deck, claims, env: {} });
+  assert.strictEqual(deck.posts.length, 1, 'a third sight in the window is held by the claim');
+  await onDenied(noVerdict({ tool_input: { command: 'pilot wait' } }), { deck, claims, env: {}, now: past });
+  assert.strictEqual(deck.posts.length, 1, 'past the window it is a first sight again');
+});
+
 test('a refusal with a verdict still posts at once', async (t) => {
   for (const reason of [
     '[Merge Without Review]',

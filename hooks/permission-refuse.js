@@ -46,6 +46,12 @@ const PILOT_MESSAGE =
   'It is posted to the deck as a blocked item with its exact command; do not retry it and do not route around it, ' +
   'and carry on with the work that does not need it.';
 
+/** A refused file edit is posted nowhere, so its message says the edit is the agent's own question (blocked-steps spec 4). */
+const EDIT_MESSAGE =
+  'Refused: a pilot lane never waits on a permission prompt, so this file edit was not made, and it is not posted to the deck. ' +
+  'Ask it as one question, with the change and your default: a crew agent to its addressee, the pilot to the user. ' +
+  'Do not retry it and do not route around it, and carry on with the work that does not need it.';
+
 /** How long a refusal waits on its post: the hook has 5 s, and a deck that stalls must not spend them. */
 const POST_BUDGET_MS = 2000;
 
@@ -80,7 +86,7 @@ async function decide(payload, deps) {
     output = denial(PILOT_MESSAGE);
   }
   // A file edit is refused but never posted: the user cannot run it, so it is the agent's question (blocked-steps spec 4).
-  if (isFileTool(payload.tool_name)) return output;
+  if (isFileTool(payload.tool_name)) return denial(EDIT_MESSAGE);
   let timer;
   const budget = new Promise(function (resolve) { timer = setTimeout(resolve, POST_BUDGET_MS); });
   const posted = Promise.resolve()

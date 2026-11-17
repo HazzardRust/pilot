@@ -60,12 +60,8 @@ function firstSight(file, now) {
     return true;
   } catch (err) {
     if (err.code !== 'EEXIST' || !isExpired(file, now)) return false;
-    try {
-      fs.writeFileSync(file, ''); // a fresh window from this sight
-      return true;
-    } catch (_err) {
-      return false;
-    }
+    release(file); // unlinked and made afresh, as a claim is: never written through a planted link
+    return firstSight(file, function () { return -Infinity; }); // once: a fresh marker never expires
   }
 }
 

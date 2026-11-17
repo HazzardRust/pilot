@@ -65,9 +65,12 @@ async function onDenied(payload, deps) {
     source: 'denied',
   };
   if (step.reason === NO_VERDICT) {
-    // Keyed by the whole call, so one SendMessage's no-verdict never marks the next's (L3).
+    // Keyed by the call's input, so one SendMessage's no-verdict never marks the next's (L3); a Bash
+    // call by its command alone, so a reissue with another description or timeout is the same call.
     step.source = 'no-verdict';
-    step.key = String(payload.tool_name) + '\0' + JSON.stringify(payload.tool_input === undefined ? null : payload.tool_input);
+    if (payload.tool_name !== 'Bash') {
+      step.key = String(payload.tool_name) + '\0' + JSON.stringify(payload.tool_input === undefined ? null : payload.tool_input);
+    }
   }
   await postBlocked(step, deps);
   return null;
