@@ -166,10 +166,6 @@ test('pilot tickets is exit 1 when the deck answers non-OK', async (t) => {
 
 test('pilot tickets with no deck secret says so alone, and never asks the deck', async (t) => {
   snapshotAt(t, ALPHA, 0); // a home with no deck.secret
-  // and no caller's PILOT_DECK_DIR, whose secret would be found in place of the home's
-  const callerDir = process.env.PILOT_DECK_DIR;
-  delete process.env.PILOT_DECK_DIR;
-  t.after(() => { if (callerDir !== undefined) process.env.PILOT_DECK_DIR = callerDir; });
   let asked = 0;
   const deck = http.createServer((request, response) => { asked += 1; response.writeHead(500).end(); });
   await new Promise((resolve) => deck.listen(0, '127.0.0.1', resolve));

@@ -26,6 +26,8 @@ import { renderHomePage } from './ui/render.mjs';
 const suiteHome = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-home-'));
 process.env.HOME = suiteHome;
 process.env.USERPROFILE = suiteHome;
+// A caller's store (a pilot session, the evidence runner's scratch) would hide the suite home's secret.
+delete process.env.PILOT_DECK_DIR;
 // The suite home's own deck secret, so a client under test pointed at a stub finds one to send (deck-token L5).
 ensureSecret(path.join(suiteHome, '.claude', 'pilot'));
 process.on('exit', () => {
