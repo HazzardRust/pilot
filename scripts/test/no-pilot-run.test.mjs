@@ -10,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const RETIRED_VERB = new RegExp(String.raw`\bpilot ${'r' + 'un'}\b`);
+const RETIRED_VERB = new RegExp(String.raw`\bpilot\s+${'r' + 'un'}\b`);
 
 // lint: no-pilot-run (ADR 0180), the tracked files outside docs/ and the changelog
 test('no user-facing text names the retired verb', () => {
@@ -36,7 +36,6 @@ test('pilot reach names pilot start, not the retired verb', (t) => {
     encoding: 'utf8',
     env: { ...process.env, HOME: home, USERPROFILE: home },
   });
-  const nothing = out.split('\n').find((line) => line.trimStart().startsWith('nothing'));
-  assert.match(nothing, /pilot start/);
+  assert.match(out, /^\s*nothing\b.*pilot start/m);
   assert.doesNotMatch(out, RETIRED_VERB);
 });

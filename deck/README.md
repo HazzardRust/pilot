@@ -58,7 +58,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `refusal-log.mjs` | `logRefusal`: one deck.log line per refused or failed request (400, 415, 500), `[deck] <status> <METHOD> <path>: <message>`, a 500's stack frames under it, never the query or body (daemon-lifecycle spec 2) |
 | `report-shape.mjs` | checks a closing report asks the user nothing (ADR 0148) |
 | `run-claim.mjs` | the hand-off mod's claim: the once-only `/clear` claim, the lane's marker, the turn stamp and the waits |
-| `run-env.mjs` | the Start's session: its arguments (`claudeArgs`, `RESUME_PROMPT`) and environment (`runEnv`) |
+| `run-env.mjs` | a pilot session's start: its arguments (`claudeArgs`, `RESUME_PROMPT`) and environment (`runEnv`) |
 | `run-look.mjs` | the hand-off mod's look: one `Outcome` per op (`turn`, `cleared`) as a CLI the mod runs, the posted stamp and the session pid |
 | `runs.mjs` | what a run is and whether its session is still there |
 | `schedule.mjs` | the co-pilot's scheduler: which slices of a run's record may start now, and from which tip |

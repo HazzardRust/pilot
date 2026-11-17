@@ -1,5 +1,5 @@
 /**
- * What the Start opens the session with: its arguments and its environment.
+ * What a pilot session starts with: its arguments and its environment.
  * Split from `run.mjs` to keep that file under the deck's 800-line bar
  * (`deck/test/facades.test.mjs`); `run.mjs` re-exports every name here.
  */
