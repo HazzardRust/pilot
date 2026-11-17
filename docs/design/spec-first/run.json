@@ -94,7 +94,7 @@
     },
     {
       "slice": "S11 The builders' absolutes listed with their reasons",
-      "state": "implementing (pushed 556c87d, gate/review running)",
+      "state": "integrated",
       "after": [
         "S6"
       ],
@@ -103,10 +103,12 @@
     },
     {
       "slice": "S12 QA, lander and helper absolutes listed with their reasons",
-      "state": "planned",
+      "state": "implementing (pushed 143f9fc, gate/review running)",
       "after": [
         "S11"
-      ]
+      ],
+      "branch": "slice/spec-first-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s12"
     }
   ],
   "findings": [
@@ -119,8 +121,8 @@
     "dropped: S2-MEDIUM needed — failing closed on an absent slice file refuses real added rows in five past runs; file is read pre-merge so a branch cannot dodge it",
     "dropped: spec9-headroom needed — all four at or over 100; QA re-measures at Gate 2 and the second lander re-measures"
   ],
-  "next": "feat/spec-first 8c068698: forced hand-back with S11 implementer live (branch slice/spec-first-s11 at 556c87d0, waiting on its gate/security review). Next: on S11's report integrate it (security Verdict required, Evidence B1-B4 trailers), spawn S12, integrate; then main runs pilot land; successor QA from its report's 'Not done' list (spec-7 run staged at pilot-spec-first-scratch).",
-  "updatedAt": "2026-11-17T12:18:58.671Z",
+  "next": "feat/spec-first 13549894: S11 integrated; forced hand-back with S12 live at 143f9fc7 (gate/security review). Next: on S12's report check Verdict and four headrooms (architect >=100), integrate with Reviewed-by + Evidence B1-B4; main runs pilot land; successor QA.",
+  "updatedAt": "2026-11-17T12:31:38.183Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -281,6 +283,11 @@
       "agent": "pilot:pilot-qa",
       "what": "QA was forced to hand back at the end of its read-only pass while held for the fix tip; the spec-7 run needs a successor QA",
       "evidence": "QA hand-back 'harness required the hand-back now'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11: phrase pins turned red on rewordings (decision-triage:41, pilot-agents:1085); architect pin left no slack for added reasons",
+      "evidence": "S11 report; architect headroom 101.5 -> 100"
     }
   ]
 }
