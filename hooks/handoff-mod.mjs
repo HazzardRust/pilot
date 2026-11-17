@@ -66,16 +66,21 @@ function hold($, mod, until, now) {
   mod.held = { until };
 }
 
-/** A timer's look: never mid-turn (the turn's own end looks instead), never two at once. */
+/** A timer's look: never mid-turn (the turn's own end looks instead), never beside another look and its acts. */
 async function onTimer($, mod) {
-  if (mod.busy || mod.looking) return;
-  mod.looking = true;
+  if (mod.busy || mod.looking > 0) return;
+  await lookAndAct($, mod, () => lookTurn($, mod));
+}
+
+/** The `turn` outcome `ask` resolves, acted on, with `looking` counted so no timer looks meanwhile. */
+async function lookAndAct($, mod, ask) {
+  mod.looking += 1;
   try {
-    await decide($, mod, await lookTurn($, mod));
+    await decide($, mod, await ask());
   } catch {
-    // As at a turn end: a refused clear fails closed.
+    // A refused clear (the Stop hold) leaves the claim taken: the hand-off fails closed, never twice.
   } finally {
-    mod.looking = false;
+    mod.looking -= 1;
   }
 }
 
@@ -85,7 +90,8 @@ async function decide($, mod, due) {
   if (due.act === 'held' && Number.isFinite(due.until)) return hold($, mod, due.until, await $.clock.now());
   endHold(mod);
   if (due.act !== 'clear' || !ITEM_ID.test(due.id ?? '')) return;
-  // The claim is taken: a clear answered to a timer look that a turn overtook waits for that turn's end.
+  // The claim is taken: a clear answered to a timer look that a turn overtook waits for that turn's end. A turn
+  // that never ends (the session closed) loses it, failing closed like a refused clear.
   if (mod.busy) mod.due = due;
   else await handOff($, mod, due.id);
 }
@@ -95,6 +101,7 @@ async function handOff($, mod, id) {
   await $.command.run({ command: 'clear' });
   const taken = await look($, 'cleared', '--id', id);
   if (taken?.act !== 'submit' || taken.id !== id || !PROMPT.test(taken.prompt ?? '')) return;
+  endSubmitted(mod);
   mod.submitted = { id };
   mod.noTurn = $.clock.after(STARTED_MS, () => unstarted($, mod, id, 'no turn'));
   try {
@@ -121,7 +128,7 @@ export function register(on) {
   if (LOOK === null) return;
   // One session's state: `register` runs once per session (and again on a reload, which drops the timers too).
   const mod = {
-    busy: false, turnEndedAt: 0, held: null, submitted: null, started: false, looking: false, due: null,
+    busy: false, turnEndedAt: 0, held: null, submitted: null, started: false, looking: 0, due: null,
     bound: null, tick: null, noTurn: null,
   };
 
@@ -146,15 +153,13 @@ export function register(on) {
   on('turn.complete', async ($, e, next) => {
     const result = await next(e);
     if (e.agentId !== undefined) return result;
-    try {
-      mod.busy = false;
+    mod.busy = false;
+    await lookAndAct($, mod, async () => {
       mod.turnEndedAt = await $.clock.now();
       const due = mod.due ?? await lookTurn($, mod);
       mod.due = null;
-      await decide($, mod, due);
-    } catch {
-      // A refused clear (the Stop hold) leaves the claim taken: the hand-off fails closed, never twice.
-    }
+      return due;
+    });
     return result;
   });
 }

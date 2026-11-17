@@ -161,6 +161,21 @@ test('a clear answered to a timer look a turn overtook waits for that turn to en
   assert.deepEqual(calls.map(({ call, argv }) => argv?.[2] ?? call), ['turn', 'turn', 'command.run', 'cleared', 'prompt.submit']);
 });
 
+test("a timer due while the turn end's look runs looks no second time", async () => {
+  const { $, advance, looks } = host({ turn: { act: 'held', id: ID, until: 1_200_000 } });
+  const hooks = hooksOf();
+  await hooks['turn.complete']($, turnEnd, next); // held: the timers are armed
+  const run = $.process.run;
+  $.process.run = async (argv) => {
+    if (argv[2] === 'turn') await advance(30_000); // the tick falls due while this look runs
+    return run(argv);
+  };
+
+  await hooks['turn.complete']($, turnEnd, next);
+
+  assert.equal(looks('turn').length, 2, 'the held look and the turn end look, not the tick');
+});
+
 test('a release ends the timers', async () => {
   for (const release of [{ act: 'clear', id: ID }, { act: 'none', why: 'the hand-off is closed' }]) {
     const { $, advance, timers, looks } = host({
@@ -204,18 +219,19 @@ test('a refused submit is said', async () => {
 });
 
 test('no turn.start within 60 s is said; one inside it is not', async () => {
-  for (const startedAt of [null, 30_000]) {
+  // A subagent's turn start is not the submitted turn's.
+  for (const [startedAt, start] of [[null, null], [30_000, turnStart], [30_000, { ...turnStart, agentId: 'a1' }]]) {
     const { $, advance, looks } = host({ turn: { act: 'clear', id: ID }, cleared: { act: 'submit', id: ID, prompt: PROMPT }, unstarted: { act: 'said', id: ID, why: 'no turn' } });
     const hooks = hooksOf();
 
     await hooks['turn.complete']($, turnEnd, next);
     if (startedAt !== null) {
       await advance(startedAt);
-      await hooks['turn.start']($, turnStart, next);
+      await hooks['turn.start']($, start, next);
     }
     await advance(120_000);
 
-    const expected = startedAt === null ? [['unstarted', '--id', ID, '--why', 'no turn']] : [];
+    const expected = start?.agentId === undefined && start !== null ? [] : [['unstarted', '--id', ID, '--why', 'no turn']];
     assert.deepEqual(looks('unstarted').map(({ argv }) => argv.slice(2)), expected, `turn.start at ${startedAt}`);
   }
 });
