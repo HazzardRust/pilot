@@ -21,8 +21,9 @@ import { shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
 const { callTool } = await import('../server.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-// A slice file the architect wrote, so the parser reads the real producer's format: three owned paths, one `(new)`.
-const SLICE = path.resolve(import.meta.dirname, '../../docs/design/never-stuck/slices/S10.md');
+// A copy of a slice file the architect wrote (never-stuck S10), so the parser reads the real producer's format:
+// three owned paths, one `(new)`. A copy, so editing the design doc never turns this red.
+const SLICE = path.resolve(import.meta.dirname, 'fixtures/slice-owned.md');
 const ARTEFACT = 'docs/design/x/architecture.md';
 
 /**
@@ -143,6 +144,10 @@ test('git failing grants with a reason', async (t) => {
   const drift = await planDrift(fixture.work, fixture.plan);
   assert.equal(drift.state, 'unchecked');
   assert.match(drift.reason, /^git fetch: /);
+  // A plan field git could read as an option or a range never reaches git.
+  for (const [field, value] of [['sha', '--all'], ['branch', '--upload-pack=x'], ['branch', 'a..b'], ['artefact', '-x']]) {
+    assert.equal((await planDrift(fixture.work, { ...fixture.plan, [field]: value })).reason, `the plan has no ${field}`);
+  }
 
   const ticket = signed(fixture.work, fixture.plan);
   const said = await ticketCall(ticket.id, 'co-pilot');

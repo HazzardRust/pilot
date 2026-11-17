@@ -5,6 +5,7 @@
  * caller grants on (L10). Git runs through `execFile`, never a shell, and fetches nothing but `origin`.
  */
 import { execFile } from 'node:child_process';
+import os from 'node:os';
 import path from 'node:path';
 
 const GIT_TIMEOUT_MS = 20_000;
@@ -30,16 +31,18 @@ class GitError extends Error {}
 
 /**
  * Git in `repoDir` under one deadline shared by every call: `run(args)` resolves `{ code, stdout }` for exit 0 or 1
- * and throws a GitError otherwise. The repo's `core.fsmonitor` is off and lazy fetches are barred, so its config
- * runs no command; no prompt can hold a fetch open.
+ * and throws a GitError otherwise. The repo's `core.fsmonitor`, hooks, `ext::` transport, auto gc and maintenance are
+ * off and lazy fetches are barred, so its config runs no command of its own; no prompt can hold a fetch open.
  */
+const HARDENED = ['-c', 'core.fsmonitor=false', '-c', `core.hooksPath=${os.devNull}`, '-c', 'protocol.ext.allow=never', '-c', 'gc.auto=0', '-c', 'maintenance.auto=false'];
+
 function gitIn(repoDir) {
   const until = Date.now() + GIT_TIMEOUT_MS;
-  const env = { ...process.env, GIT_NO_LAZY_FETCH: '1', GIT_TERMINAL_PROMPT: '0' };
+  const env = { ...process.env, GIT_NO_LAZY_FETCH: '1', GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never' };
   return (args) => new Promise((resolve, reject) => {
     const left = until - Date.now();
     if (left <= 0) return reject(new GitError(`git ${args[0]}: timed out after ${GIT_TIMEOUT_MS / 1000} s`));
-    execFile('git', ['-c', 'core.fsmonitor=false', ...args], { cwd: repoDir, env, timeout: left, windowsHide: true, maxBuffer: 16 * 1024 * 1024 }, (error, stdout, stderr) => {
+    execFile('git', [...HARDENED, ...args], { cwd: repoDir, env, timeout: left, windowsHide: true, maxBuffer: 16 * 1024 * 1024 }, (error, stdout, stderr) => {
       const code = error ? error.code : 0;
       if (code === 0 || code === 1) return resolve({ code, stdout: String(stdout) });
       const why = error.killed ? `timed out after ${GIT_TIMEOUT_MS / 1000} s` : String(stderr).trim().split(/\r?\n/)[0] || error.message;
@@ -51,10 +54,10 @@ function gitIn(repoDir) {
 /** Every path a slice file of the plan owns, read from the plan's own commit. */
 async function ownedAt(git, sha, artefact) {
   const slices = `${path.posix.join(path.posix.dirname(artefact.replaceAll('\\', '/')), 'slices')}/`;
-  const listed = await git(['ls-tree', '--name-only', `${sha}:${slices}`]);
+  const listed = await git(['ls-tree', '-z', '--name-only', `${sha}:${slices}`]);
   if (listed.code !== 0) throw new GitError(`git ls-tree: no ${slices} at ${sha}`);
   const owned = new Set();
-  for (const name of listed.stdout.split('\n').filter((entry) => entry.endsWith('.md'))) {
+  for (const name of listed.stdout.split('\0').filter((entry) => entry.endsWith('.md'))) {
     const slice = await git(['show', `${sha}:${slices}${name}`]);
     if (slice.code !== 0) throw new GitError(`git show: ${slices}${name} at ${sha}`);
     for (const file of ownedFiles(slice.stdout)) owned.add(file);
@@ -62,8 +65,20 @@ async function ownedAt(git, sha, artefact) {
   return owned;
 }
 
-/** The drift of `plan` ({ sha, branch, artefact }) in the git repository `repoDir`, against `origin`. Never throws. */
-export async function planDrift(repoDir, plan) {
+/**
+ * The drift of `plan` ({ sha, branch, artefact }) in the git repository `repoDir`, against `origin`. Never throws, and
+ * answers within the deadline even when a transport helper git started outlives git's own kill.
+ */
+export function planDrift(repoDir, plan) {
+  let timer;
+  const late = new Promise((resolve) => {
+    timer = setTimeout(() => resolve({ state: 'unchecked', reason: `git timed out after ${GIT_TIMEOUT_MS / 1000} s` }), GIT_TIMEOUT_MS + 1000);
+    timer.unref();
+  });
+  return Promise.race([driftOf(repoDir, plan), late]).finally(() => clearTimeout(timer));
+}
+
+async function driftOf(repoDir, plan) {
   const sha = plan?.sha;
   const branch = plan?.branch;
   const artefact = plan?.artefact;
@@ -77,7 +92,8 @@ export async function planDrift(repoDir, plan) {
     return run.stdout;
   };
   try {
-    await must(['fetch', '--quiet', 'origin']);
+    // Origin's branches into its remote-tracking refs and nothing else, whatever `remote.origin.fetch` says; no submodule's remote.
+    await must(['fetch', '--quiet', '--no-recurse-submodules', 'origin', '+refs/heads/*:refs/remotes/origin/*']);
     const remote = `refs/remotes/origin/${branch}`;
     const pilot = 'refs/remotes/origin/pilot';
     // A branch deleted on origin, or a sha no object here names, leaves the plan nowhere on its branch.
@@ -85,7 +101,7 @@ export async function planDrift(repoDir, plan) {
     if ((await git(['rev-parse', '--verify', '--quiet', `${sha}^{commit}`])).code !== 0) return { state: 'gone', sha };
     if ((await git(['merge-base', '--is-ancestor', sha, remote])).code !== 0) return { state: 'gone', sha };
     const base = (await must(['merge-base', sha, pilot])).trim();
-    const changed = new Set((await must(['diff', '--name-only', '--no-renames', base, pilot, '--'])).split('\n').filter(Boolean));
+    const changed = new Set((await must(['diff', '-z', '--name-only', '--no-renames', base, pilot, '--'])).split('\0').filter(Boolean));
     const owned = await ownedAt(git, sha, artefact);
     const files = [...owned].filter((file) => changed.has(file)).sort();
     return files.length ? { state: 'moved', files } : { state: 'ok' };
