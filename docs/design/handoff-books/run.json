@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "implementing",
+      "state": "integrated",
       "branch": "slice/handoff-books-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-books-s1"
     },
@@ -40,8 +40,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-books"
     }
   ],
-  "next": "integrate S2 (07b8cb4); S1 still implementing; S3 after S1 is integrated",
-  "updatedAt": "2026-11-17T10:21:12.096Z",
+  "next": "integrate S1 (19f2dd6) on feat d0993795; then paused: next co-pilot spawns S3 from feat tip",
+  "updatedAt": "2026-11-17T10:29:49.728Z",
   "friction": [
     {
       "agent": "pilot-architect (handoff-books)",
@@ -63,6 +63,12 @@
       "what": "the full gate takes over five minutes, outrunning the 180 s foreground limit, so it finished in the background",
       "evidence": "npm test: duration_ms 317818, 11338 spawns (10368 git)",
       "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1's README row cannot exist before landing (adr-index never indexes an NNNN ADR) and the both-sides supersession check needs an edit to ADR 0146, outside the slice's files",
+      "evidence": "scripts/adr-index.mjs:88 PLACEHOLDER = 'NNNN'; superseded_by check 120-133",
+      "size": 1
     }
   ]
 }
