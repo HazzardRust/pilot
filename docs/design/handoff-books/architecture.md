@@ -100,6 +100,7 @@ module is shallow enough to fold; no fold slice.
 - **A3 Only pilot hand-offs count** (itm_748a9402637b), chain hand-offs included; `crew-handoff` items and co-pilot
   pauses do not. Tradeoff: crew context pressure does not bring the audit sooner. Rejected: a second count site in
   the guard.
+  Answer: "Pilot hand-offs only" (itm_748a9402637b), the default.
 - **A4 The count site is the SessionStart lane's claim** (itm_5f9645e90d42), amending handoff-mod L9. Default: lane,
   so a typed `/clear` with mods off counts too. Tradeoff: amends a signed plan's lock. Rejected: the look's
   `cleared` (L9 as signed: mods-off hand-offs uncounted).
