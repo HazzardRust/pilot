@@ -51,7 +51,7 @@
     },
     {
       "slice": "S6",
-      "state": "implementing",
+      "state": "integrated",
       "after": [
         "S3",
         "S4",
@@ -69,8 +69,8 @@
     "dropped: S5-ts-3 MEDIUM - setCoPilot overwrite leaving yielding on the old holder; Run 2 S7 refuses a second co-pilot, which removes the route",
     "kept: S4-ts LOWs - recut.from not re-checked after await; sha regex in three places"
   ],
-  "next": "feat/never-stuck at 73ffdcbb local (chained base, gate running, push after); S6 implementing from 73ffdcbb; then fundamentalist, fix round (findings listed), QA.",
-  "updatedAt": "2026-11-17T15:16:17.539Z",
+  "next": "S6 integrate running (pilot integrate); then fundamentalist on PR #94 feat/never-stuck vs feat/blocked-steps, fix round, QA.",
+  "updatedAt": "2026-11-17T15:35:29.365Z",
   "friction": [
     {
       "agent": "pilot-architect (never-stuck)",
@@ -198,6 +198,30 @@
       "agent": "pilot-co-pilot",
       "what": "hand-back forced a fifth time while the S5 implementer was live",
       "evidence": "S5 implementer ad01921cd61649a1a at 55c6803e unpushed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced a sixth time by handback-send-enforce while the S6 implementer was live",
+      "evidence": "S6 implementer afebdb20a83506afb, unpushed; enforce fired twice after a one-line note to main",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "TaskOutput is not in the co-pilot's tool list although its definition says to wait with it; waits ran through Monitor and background Bash",
+      "evidence": "No such tool available: TaskOutput",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 implementer handed back to main, not the co-pilot: with no hello (main's rule: none before first report) the child has no co-pilot address",
+      "evidence": "main relayed S6's report; slice/never-stuck-s6 2c835d6c",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 review findings fixed in 2c835d6c with no second review",
+      "evidence": "S6 report: both WARN verdicts on fc51c03e",
       "size": 1
     }
   ]
