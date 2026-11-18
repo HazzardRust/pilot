@@ -38,6 +38,8 @@ A brief that is a lander line instead, `… the lander resolves in <dir>`, is a 
    fix it with the Edit tool and gate once more, and if it is still red, load `pilot:diagnosing-bugs` with the
    Skill tool before another fix; red otherwise is a trade-off.
 7. On `landed <sha7>` go to the clean tail; send `main` the `NOT landed` line the deck printed instead.
+   A landing the deck restarted under may still be running: `Land again` only once that land has exited, its pid
+   gone, which `pilot landing <gate2>` waits on; while it lives the deck refuses the reply and runs nothing.
 
 ## Clean tail
 

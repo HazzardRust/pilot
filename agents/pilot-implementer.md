@@ -90,7 +90,8 @@ checklist behind it:
 4. Build.
 5. If the slice has a surface someone uses, run it the way it is used, in
    the environment the brief names, and read what it produces: a CLI's
-   output, a plan, a benchmark, a notebook's cells. Where it makes something
+   output, a plan, a benchmark, a notebook's cells. It runs in your worktree or the folder
+   `pilot live-root --dir <slug>-s<n>` prints, never a fresh repository. Where it makes something
    to see, hear or play — a GUI, a picture, video, audio, a plot, a game —
    look at it: a web page in a real browser against
    a local dev server through the Chrome DevTools MCP tools

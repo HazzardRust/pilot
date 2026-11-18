@@ -33,3 +33,5 @@ Twice on 2026-10-11 the deck showed no yellow ticket active while one was planne
 **Consequences**: an idle lane, a slipped blocked step and a proposal holding a press each become a refusal or a non-event instead of a habit the pilot must remember.
 
 **Amended 2026-10-14 (yellow-lane S17, ADR 0147):** the ticket states kept their meaning and swapped colours, so planning is now red and concluding is now green, with yellow unchanged; read this ADR's green ticket as red and its red ticket as green.
+
+**Amended 2026-11-18 (never-stuck S13, S18; L8, ADR 0187):** L2's exit becomes a printed refusal: `pilot wait` prints the idle-lane refusal once and keeps listening, and the Stop hook stays the enforcer.
