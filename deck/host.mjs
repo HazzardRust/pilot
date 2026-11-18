@@ -1,8 +1,9 @@
 /**
  * The host (other-host spec 1-3; L1-L3, A1): the forge `pilot.host` names, and the **Host** verb interface every
  * host call goes through. `hostOf` is the one reader of the setting; `hostFor` hands back its adapter, or null at
- * `none`, where no host CLI starts and a caller reads null as "no review". Each adapter is the one module that
- * starts its CLI (`deck/host-github.mjs` for `gh`, `deck/host-gitlab.mjs` for `glab`).
+ * `none`, where no host CLI starts and a caller reads null as "no review". The two adapters are the only modules
+ * that start a host CLI (`deck/host-github.mjs` for `gh`, `deck/host-gitlab.mjs` for `glab`), and every caller
+ * reaches one through `hostFor` (S6; `scripts/test/host-bar.test.mjs` is the bar).
  *
  * @typedef {{ number: number, state: 'open'|'merged'|'closed', base: string, head: string, headSha: string,
  *   title: string, body: string, url: string, crossRepo: boolean }} Review
@@ -46,6 +47,3 @@ export function hostFor(cwd, { git = (args) => gitAt(cwd, ...args), run } = {}) 
   if (name === 'gitlab') return gitlabHost(run ?? glabRun(cwd));
   throw new Error(`${HOST_KEY} names ${JSON.stringify(name)}: no adapter`);
 }
-
-/** Today's callers' argv runner, until each takes a **Host** (S6). */
-export { ghRun as hostIn };
