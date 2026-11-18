@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S7",
-      "state": "implementing (committed ec9a6420, holding push for post-S10 tip)",
+      "state": "implementing (f90112d4 green, holding push for post-S10 tip)",
       "branch": "slice/never-stuck-2-s7",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s7"
     },
@@ -36,20 +36,24 @@
     },
     {
       "slice": "S11",
-      "state": "pushed 11a79a5",
+      "state": "integrated 2e2de07d",
       "branch": "slice/never-stuck-2-s11",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s11"
     },
     {
       "slice": "S12",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S8"
-      ]
+      ],
+      "branch": "slice/never-stuck-2-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s12"
     },
     {
       "slice": "S13",
-      "state": "planned"
+      "state": "pushed 6a30348",
+      "branch": "slice/never-stuck-2-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s13"
     },
     {
       "slice": "S14",
@@ -107,8 +111,8 @@
     }
   ],
   "findings": [],
-  "next": "S11 integrating; then S10, S7 (on post-S10 tip), S9; ready next S12, S13, S19",
-  "updatedAt": "2026-11-18T08:39:05.204Z",
+  "next": "S10 integrating; then resume S7 with tip, S9, S13; S14, S16 from S10 tip; S15 when slots free",
+  "updatedAt": "2026-11-18T08:52:35.955Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -217,6 +221,42 @@
       "what": "gate buffers all output to the end (388 s); a pre-fix gate run was wasted",
       "evidence": "S9 report",
       "size": 388
+    },
+    {
+      "agent": "pilot integrate",
+      "what": "selection over the 24000-char argv limit fell back to the full suite (4383 pass)",
+      "evidence": "S11 integrate: selection is 27233 characters of argv"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "facades 800-line bar not named in brief or slice; store-runs.mjs was 4 lines under it; cost one full gate run",
+      "evidence": "S7 report: store-runs.mjs 805 > 800, compacted in f90112d4",
+      "size": 600
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice missed yield.test.mjs and co-pilot-switch-complete.test.mjs pinning the overwrite S7 removes",
+      "evidence": "S7 gate run 1: 2 regressions"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate queues behind other worktrees' runs (waiting for a slot)",
+      "evidence": "S7 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S13 slice cited stale wait.mjs line numbers and missed exit pins in wait-idle-lane and wait tests; 9 tests red on first run",
+      "evidence": "S13 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit tool wrote U+2028/U+2029 raw inside a regex literal, breaking the module",
+      "evidence": "SyntaxError at wait.mjs:190"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "seeding a scratch deck took about 10 calls (registered run, bearer, Origin header)",
+      "evidence": "S13 live check"
     }
   ]
 }
