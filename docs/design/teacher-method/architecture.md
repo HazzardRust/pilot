@@ -90,6 +90,11 @@ the codebase's pattern. No fold slice: nothing shallow is touched.
 - **L6 The size call is the teacher's, made once after the diagnostic**, bar "background outside the
   decision, more than 5 steps". Rejected: a mid-lesson switch by step count (a stalled small lesson
   already has rule 6's worked step).
+- **L7 Grilling depth is forks** (user, itm_99d009266614). Only a question whose paths give
+  materially different deliverables went to the deck. Rejected: every stash on the deck.
+- **L8 QA environment** (user, itm_170035f73349): a scratch deck on the feature worktree with
+  seeded questions; the user uploads the report md to a claude.ai chat with teach-me, so the report
+  links nothing local and inlines everything (spec 4's `local-link` rule). Rejected: the live deck.
 
 ## 6. Assumed decisions
 
