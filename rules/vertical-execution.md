@@ -7,7 +7,7 @@ How an agreed design becomes merged code. Under the pilot
 slice is integrated, and
 `pilot-qa` carries the finished feature through Gate 2. Outside a piloted feature,
 the same loop applies to any change that spans more than one slice. A pipeline
-command from some other plugin is superseded by this and is not used.
+command from some other plugin is superseded by this.
 
 ## 1. Grill before designing
 
@@ -33,18 +33,19 @@ slice:
 
 ```
 for each slice in the DAG (blockers first):
-    red  ->  green  ->  refactor  ->  PHASE GATE  ->  fresh-context review
+    build  ->  show each behaviour  ->  PHASE GATE  ->  fresh-context review
 ```
 
 The next slice does not begin until the current one has passed its gate. How to cut
-the slices is the `vertical-slicing` skill; the red-green-refactor inner loop is
-`tdd-workflow`.
+the slices is the `vertical-slicing` skill; deterministic logic is built red then
+green with `tdd-workflow`.
 
 ## 3. The phase gate
 
 A slice is finished when all of these are true:
 
-- the new behaviour has a test that **failed before the change and passes after**
+- each behaviour has the evidence its slice names, and deterministic logic a test
+  that **failed before the change and passes after**
 - the project's own checks are green: its type check or compiler, lint, full test
   suite and build, whatever the stack calls them (`npx tsc --noEmit`, `cargo
   clippy`, `terraform validate`)
@@ -67,8 +68,7 @@ what the agreement said). One reviewer per slice, matched to its language (the
 the slice touches auth, user input, or SQL.
 
 Under the pilot, `pilot-fundamentalist` gives the feature one **principles review**,
-subtraction first,
-run once, on Opus, when the last slice is integrated, never on a slice's own branch.
+subtraction first, never on a slice's own branch.
 The cost is real: a design problem one slice introduces is
 found only once later slices stand on it. It is paid because only the finished
 feature shows a helper a later slice made redundant or a seam two slices each built

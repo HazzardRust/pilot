@@ -94,7 +94,7 @@
     },
     {
       "slice": "feature",
-      "state": "integrating principles fix round",
+      "state": "in QA: walkthrough itm_1d267c5a9a38 posted at b84479d0",
       "after": [
         "S1",
         "S2",
@@ -123,7 +123,7 @@
     },
     {
       "slice": "fix round",
-      "state": "integrated",
+      "state": "integrated at b84479d0",
       "after": [
         "S1",
         "S2",
@@ -140,6 +140,10 @@
       ],
       "branch": "fix/blocked-steps",
       "worktree": "C:/Users/Hazzard/Projects/pilot-fix-blocked-steps"
+    },
+    {
+      "slice": "blocked-steps",
+      "state": "in QA at b84479d0; walkthrough itm_1d267c5a9a38 posted, awaiting Sign off"
     }
   ],
   "findings": [
@@ -158,8 +162,8 @@
     "dropped: E-duplication 15 clones / 114 lines (1.81%) — not attributed to this diff's lines; the one new copy (F1) is fixed",
     "dropped: E-coverage/mutation/dead-code — not measured (runner env reds from spec-first's files, mutation timed out at 900 s, knip not diff-scoped); no verdict rests on them"
   ],
-  "next": "fix round integrate running; then resume QA with the tip; teardown: remove /tmp/tmp.8roEdMN4C7 and pilot-fund-blocked-steps worktree",
-  "updatedAt": "2026-11-17T15:06:40.527Z",
+  "next": "feat/blocked-steps b84479d0 (12 slices + fix round), PR #87, concluding. Walkthrough itm_1d267c5a9a38 unsigned; QA agent a3c7b88fced2ee400 waits on it in pilot-qa-blocked-steps (scratch deck pid 34988 leashed to it). On any reply: SendMessage QA, else spawn fresh pilot-qa: trial + gate2. Spec 1 live row is the user's step 3. After landing: co-pilot never-stuck itm_9b7008e91201 for S6.",
+  "updatedAt": "2026-11-17T15:14:18.548Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -310,6 +314,11 @@
       "agent": "pilot:pilot-qa",
       "what": "spec 1 and 6 live rows unprovable: installed plugin's hooks run, not the branch's; real settings barred",
       "evidence": "QA report pushback"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "scratch deck the walkthrough points at is leashed to QA's session and may stop when QA does",
+      "evidence": "QA report: pid 34988, port 61213"
     }
   ]
 }

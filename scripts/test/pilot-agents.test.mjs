@@ -901,6 +901,15 @@ test('the implementer loads diagnosing-bugs on demand', () => {
   assert.doesNotMatch(fieldOf(implementer, 'skills'), /diagnosing-bugs/, 'L6: pilot-implementer preloads diagnosing-bugs');
 });
 
+test('no tdd-workflow preload', () => {
+  // spec-first S3 (spec 5, L4): only a slice with a `test` behaviour reads the red-green loop,
+  // so the implementer loads it with the Skill tool rather than paying for it on every slice.
+  const implementer = agentSource('pilot-implementer');
+  // lint: the skills field does not preload it, and the skill still ships
+  assert.doesNotMatch(fieldOf(implementer, 'skills'), /tdd-workflow/, 'L4: pilot-implementer preloads tdd-workflow');
+  assert.ok(fs.existsSync(path.join(ROOT, 'skills/tdd-workflow/SKILL.md')), 'spec 5: tdd-workflow no longer ships');
+});
+
 test('the bug path is recorded and the skill exists', () => {
   // The landing numbers the NNNN placeholder and refreshes the index (adr-allocate), so on the
   // feature branch the ADR exists unnumbered and `adr-index --check` holds the README.

@@ -1020,10 +1020,11 @@ const GATE_SENTENCE = 'A gate passes only on its Sign off press: reply with deck
 /** A live ticket and the gate1 naming it, made through the store the way `seedUserThread` is. */
 async function seedGate1(deck, repo) {
   const previous = process.env.PILOT_DECK_DIR;
+  // Loaded before the store is pointed at the deck: loading testUtils unsets PILOT_DECK_DIR.
+  const { shapedTicketBody, takeLive } = await import('../../deck/testUtils.mjs');
   process.env.PILOT_DECK_DIR = deck.dir;
   try {
     const store = await import('../../deck/store.mjs');
-    const { shapedTicketBody, takeLive } = await import('../../deck/testUtils.mjs');
     const ticket = store.postItem({ kind: 'ticket', title: 'The ticket', body: shapedTicketBody(), repo: repo, sliceCount: 60 });
     takeLive(ticket.id);
     return store.postItem({

@@ -133,7 +133,7 @@ Run 2 deepening: run-look and handoff.mjs pass the deletion test; the bound move
 
 ## 5. Locked decisions
 
-ADR NNNN (`docs/adr/NNNN-never-stuck.md`) records L2-L7.
+ADR 0187 (`docs/adr/0187-never-stuck.md`) records L2-L7.
 
 - **L1 Depth is forks** (itm_5ad979d05f47, the user's press): only forking decisions were posted, each alone. Run 2: forks again (itm_2ad862b30840, the user's press 2026-11-18); A7 was the one forking assumption posted.
 - **L2 The deck checks drift, at the first grant and after every landing** (F1, user: "The deck, at grant and
@@ -237,7 +237,7 @@ S10, S11, S13, S15, S17, S19), longest stem 3 (S10 → S16 → S18). Line 27 has
 | S3 | A landing re-cuts the plans it drifted | 14 | `deck/landing.mjs`, `deck/test/landing-recut.test.mjs` (new) | S2 (`planDrift`) | ts | [S3](slices/S3.md) |
 | S4 | The re-cut gate1 says what changed; an unchanged plan keeps its signature | 15 | `deck/store-items.mjs`, `deck/recut.mjs`, `deck/store-tickets.mjs`, `deck/server-tools.mjs`, `deck/tools.mjs`, `deck/test/replan.test.mjs` (new) | S2 (`recut.mjs`, `server-tools.mjs`) | ts, security | [S4](slices/S4.md) |
 | S5 | A yield drains its co-pilot before it frees the lane | 3 | `deck/store-tickets.mjs`, `deck/store-runs.mjs`, `deck/lanes.mjs`, `deck/test/yield.test.mjs` | S4 (`store-tickets.mjs`) | ts | [S5](slices/S5.md) |
-| S6 | Prose: the re-cut and the drain | 16 | `agents/pilot.md`, `agents/pilot-architect.md`, `agents/pilot-co-pilot.md`, `docs/adr/NNNN-never-stuck.md` (new), `docs/adr/README.md`, `docs/adr/0153-*.md`, `scripts/test/recut-prose.test.mjs` (new) | S3, S4, S5 (the names it cites) | ts, security | [S6](slices/S6.md) |
+| S6 | Prose: the re-cut and the drain | 16 | `agents/pilot.md`, `agents/pilot-architect.md`, `agents/pilot-co-pilot.md`, `docs/adr/0187-never-stuck.md` (new), `docs/adr/README.md`, `docs/adr/0153-*.md`, `scripts/test/recut-prose.test.mjs` (new) | S3, S4, S5 (the names it cites) | ts, security | [S6](slices/S6.md) |
 | S7 | A second co-pilot is refused | 17, 18 | `deck/store-runs.mjs`, `deck/server-tools.mjs`, `deck/test/co-pilot-holder.test.mjs` (new) | – | ts, security | [S7](slices/S7.md) |
 | S8 | Lane lines say why nothing runs | 9, 19 | `deck/lanes.mjs`, `hooks/session-handoff.js`, `deck/test/lanes-why.test.mjs` (new) | – | ts, security | [S8](slices/S8.md) |
 | S9 | A blocking walkthrough yields too | 8 | `deck/lanes.mjs`, `deck/test/yield-walkthrough.test.mjs` (new) | S8 (`lanes.mjs`) | ts | [S9](slices/S9.md) |

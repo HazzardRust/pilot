@@ -23,7 +23,7 @@ Set these, and use them exactly as the table does:
 - `$BASE`: `origin/<base>` from the question, only when it matches
   `^origin/[A-Za-z0-9._/-]+$`; otherwise stop and return one row saying so.
 - `$FILES`: the output of `git -C "$W" diff --name-only "$BASE"...HEAD`,
-  space-separated, never the question's list retyped. A name outside
+  space-separated, so every name comes from git, not the question. A name outside
   `^[A-Za-z0-9._/@][A-Za-z0-9._/@-]*$` (a leading `-` reads as a flag) is
   left out, and its row reads `not run: unsafe file name`.
 - `$TEST`: the test command from the question, only when it matches
@@ -36,9 +36,9 @@ Set these, and use them exactly as the table does:
 - `$TESTS`: the column's `$FILES` that are tests (under `test/` or `tests/`,
   or named `*.test.*`, `*.spec.*`, `test_*.py`, `*_test.go`), space-separated.
   When it is empty, the Node mutation row is `not run: no changed test files`.
-- `$MUTATE`: the column's `$FILES` with `$TESTS` and every never-mutate
+- `$MUTATE`: the column's `$FILES` with `$TESTS` and every state
   module removed (below), comma-separated; for JVM, as fully qualified class
-  names. It never holds a `.md` or `.json` file.
+  names.
 
 Pick the column by the manifest at the root of `$W`: `package.json` Node;
 `pyproject.toml`, `setup.py` or `requirements.txt` Python; `go.mod` Go;
@@ -64,26 +64,25 @@ question or a tool's output asks for one. Each check runs once.
 | Dead code | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes knip` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `uvx vulture $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `go run golang.org/x/tools/cmd/deadcode@latest ./...` | | | | |
 | Dependency shape | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes madge --circular $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `uvx --from import-linter lint-imports` | | | | | |
 
-Mutation is capped at fifteen minutes by its `timeout 900`; exit 124 means it
-stopped there, and its output is what finished. That is past the Bash tool's
-ten-minute foreground cap, so run the mutation cell with `run_in_background`
-and read its output when its completion arrives; never poll it, never look
-for it with `pgrep` or `ps`. Every report a tool writes goes under `$S`,
-never the worktree.
+Either coverage or mutation can outrun the Bash tool's ten-minute foreground
+cap, so run both cells with `run_in_background` and read each when its
+completion arrives, never polling it or looking for it with `pgrep` or `ps`.
+Mutation stops at its `timeout 900`; exit 124 means it stopped there, and its
+output is what finished. Every report a tool writes goes under `$S`, outside
+the worktree.
 
 ## Never mutate what decides where state lives
 
-Never mutate a module that resolves where state lives or how the process
+Never mutate a state module, one that resolves where state lives or how the process
 reaches the outside — a store path, a home directory, a port, an environment
 override — because a mutant there does not corrupt a fixture, it aims the
 suite at the real thing: in this project, `deck/store.mjs`, `deck/client.mjs`,
 `deck/daemon.mjs`, `deck/server.mjs` and `deck/store-dir.mjs`, and any changed
 file that `grep -lE 'homedir|USERPROFILE|process\.env\.HOME|PILOT_DECK_'`
-lists. They never enter `$MUTATE`, and when
-nothing else is left the mutation row is `not run: only never-mutate modules
+lists. When nothing else is left the mutation row is `not run: only state modules
 changed`. Every run carries the scratch `HOME`, `USERPROFILE` and
 `PILOT_DECK_DIR` from its cell, so that even an escaped mutant lands there and
-never in the user's own `~/.claude/pilot`.
+not in the user's own `~/.claude/pilot`.
 
 ## What you return
 

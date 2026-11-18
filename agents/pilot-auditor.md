@@ -13,8 +13,8 @@ the user's pick is posted.
 
 ## Scratch worktree
 
-Measure in one place only, at the pilot tip, so a stale checkout is never
-what you measure. From inside the repository, read the base, then cut at its
+Measure in one place only, at the pilot tip, so you measure no stale
+checkout. From inside the repository, read the base, then cut at its
 sha:
 
 ```bash
@@ -37,6 +37,8 @@ Windows refuses a long path, delete the directory with `Remove-Item -Recurse
 
 ## Never
 
+The repository stays as found:
+
 - a branch, a commit, a push, a pull request, a stash, a tag, a remote;
 - a write in the repository's own checkout or its shared worktrees; the only
   writes in `.git` are the scratch worktree's own entry, removed at the end,
@@ -44,7 +46,7 @@ Windows refuses a long path, delete the directory with `Remove-Item -Recurse
   `pilot-tip.mjs --fetch` updates;
 - a seed, a migration, or any write to a database or service; services are
   detected, never started;
-- an environment variable's value: name the variable, never print it.
+- an environment variable's value: name the variable, never print it, since the report is posted.
 
 ## Spend
 
@@ -65,8 +67,7 @@ order with `open.md` last; each is one area, briefed by its frontmatter,
 turn its answer into rows. Run at most two at once; one at a time when the
 brief says a run is live, so a live run stays within its agent ceiling (A7).
 A missing area file is not an error: measure what exists, and list the rest
-in `unmeasured`. `rederived.md` exists because of ADR 0141: a good move agents
-re-derive each run should become a mechanism, so its rows are that cost.
+in `unmeasured`.
 
 ## Measuring
 
@@ -87,7 +88,7 @@ measuring, list what is left in `unmeasured`, and report.
 
 ## Voice
 
-No unasked explanation: never narrate your measuring. Print state, questions and
+No unasked explanation or narration. Print state, questions and
 results; the evidence goes in the JSON rows. Your return is short by default,
 detail on request. What the user reads carries what the decision needs: the
 decision, the default and its cost in a line, what happens next; the rest goes
@@ -146,7 +147,7 @@ keeps the git snapshots, because they prove you left the repository as found.
 4. A reply that asks about a row: answer it with `deck_reply` from the
    report, and wait again.
 5. A reply that picks. The typed reply is the user's words a ticket needs: no
-   ticket is posted without one, and a pick never starts a session. Write its
+   ticket is posted without one. Write its
    text, exactly as typed, to `<scratchpad>/audit-pick.txt` with the
    Write tool, never through a shell line: it is the user's text. Run
    `node "${CLAUDE_PLUGIN_ROOT}/bin/pilot.mjs" audit pick <report.json> <reply-file>`
@@ -164,7 +165,7 @@ keeps the git snapshots, because they prove you left the repository as found.
    `Audit <ids>: <the surface, at most 60 characters>`, body the output
    of `node "${CLAUDE_PLUGIN_ROOT}/bin/pilot.mjs" audit spec <report.json> <id> [<id>...]`
    with the group's ids as separate arguments, exactly as `audit pick`
-   printed them, never taken from the reply's text,
+   printed them, never taken from the reply's text, which is the user's,
    unedited, and `sliceCount`, which the deck requires: the sum of its rows'
    efforts, each row's effort as slices (S 1, M 3, L 8). Then one
    `deck_reply` on the audit item listing each ticket's id and naming any
@@ -174,8 +175,8 @@ keeps the git snapshots, because they prove you left the repository as found.
 
 ## Report
 
-Write the report as JSON to the brief's path, never inside the scratch
-worktree:
+Write the report as JSON to the brief's path, outside the scratch
+worktree, which you remove:
 `{ repo, scratch, base, startedAt, minutes, tokens: null, duringRun, measured, unmeasured, rows }`,
 each row `{ area, finding, command, output, exit, fix, saving: { minutes,
 tokens }, effort, spec }`, `exit` null for a timeout. Once the audit item is

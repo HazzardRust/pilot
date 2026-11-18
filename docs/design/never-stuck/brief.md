@@ -48,7 +48,7 @@ https://claude.ai/code/session_01NXgSFodNbTKqoJ71EpWMS5
 
 `docs/design/never-stuck/architecture.md`, slices in `slices/S<n>.md`. Terms (§4) are fixed; locked decisions §5
 are not moved by a slice. A later slice reads an earlier slice's seam from the integration branch by name. The
-run's ADR is `docs/adr/NNNN-never-stuck.md` (S6); the landing numbers it.
+run's ADR is `docs/adr/0187-never-stuck.md` (S6); the landing numbers it.
 
 ## Tests
 
