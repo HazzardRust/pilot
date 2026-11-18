@@ -8,11 +8,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { hostIn } from '../../deck/host.mjs';
+import { githubHost } from '../../deck/host-github.mjs';
 import { openRuns } from '../../deck/tickets.mjs';
 import { ghStub } from '../gh-stub.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HOST = path.join(ROOT, 'deck', 'host.mjs');
+// other-host S1: the GitHub adapter is the one module that starts gh.
+const HOST = path.join(ROOT, 'deck', 'host-github.mjs');
 const SKIP_DIRS = new Set(['test', 'node_modules']);
 
 /** Every non-test module under `deck/` and `scripts/`. */
@@ -86,26 +88,25 @@ test('the old callers keep their reads', (t) => {
     { branch: 'feat/c', finished: 'abandoned', updatedAt: '2026-11-16T11:00:00.000Z' },
     { branch: 'main' },
   ];
-  const API_USER = ['api', 'user', '--jq', '.login'];
-  const PR_LIST = ['pr', 'list', '--state', 'open', '--author', '@me', '--json', 'number,headRefName,state,isCrossRepository,author', '--limit', '100'];
+  // A2: the one field set every review read asks; `--author @me` is gh's own signed-in account.
+  const PR_LIST = ['pr', 'list', '--state', 'open', '--author', '@me', '--json', 'number,state,baseRefName,headRefName,headRefOid,title,body,url,isCrossRepository', '--limit', '100'];
 
   // The runs, over a fake gh that answers each argv as gh would.
   const seen = [];
   const fake = (args) => {
     seen.push(args);
-    if (args[0] === 'api') return 'me\n';
     return JSON.stringify([
-      { number: 5, headRefName: 'feat/a', state: 'OPEN', isCrossRepository: false, author: { login: 'me' } },
-      { number: 6, headRefName: 'feat/b', state: 'OPEN', isCrossRepository: false, author: { login: 'someone' } },
+      { number: 5, headRefName: 'feat/a', state: 'OPEN', isCrossRepository: false },
+      { number: 6, headRefName: 'feat/b', state: 'OPEN', isCrossRepository: true },
     ]);
   };
-  assert.deepEqual(openRuns(records, { gh: fake }), [{ branch: 'feat/a', pr: 5, updatedAt: '2026-11-16T09:00:00.000Z' }]);
-  assert.deepEqual(seen, [API_USER, PR_LIST]);
+  assert.deepEqual(openRuns(records, { host: githubHost(fake) }), [{ branch: 'feat/a', pr: 5, updatedAt: '2026-11-16T09:00:00.000Z' }]);
+  assert.deepEqual(seen, [PR_LIST]);
 
-  // The same two argv pass the host's verb check and reach a gh process unchanged.
+  // The same argv passes the host's verb check and reaches a gh process unchanged.
   const stub = stubbed(t, '[]');
-  assert.deepEqual(openRuns(records, { gh: hostIn(stub.dir) }), []);
-  assert.deepEqual(stub.calls(), [API_USER, PR_LIST]);
+  assert.deepEqual(openRuns(records, { host: githubHost(hostIn(stub.dir)) }), []);
+  assert.deepEqual(stub.calls(), [PR_LIST]);
 });
 
 test("the release PR's label create is a host verb", (t) => {

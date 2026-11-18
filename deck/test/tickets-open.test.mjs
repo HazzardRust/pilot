@@ -18,22 +18,24 @@ import { deckOnAPort, postStored, shapedTicketBody, takeLive } from '../testUtil
 const { postItem, resolveItem, storeFile } = await import('../store.mjs');
 const { repoKey } = await import('../items.mjs');
 const { tickets } = await import('../tickets.mjs');
+const { hostFor } = await import('../host.mjs');
+const { githubHost } = await import('../host-github.mjs');
 
 const ALPHA = 'D:/work/alpha';
 const BETA = 'D:/work/beta';
 
 const ticket = (title, extra = {}) => postStored({ kind: 'ticket', title, body: shapedTicketBody(title), repo: ALPHA, sliceCount: 3, ...extra });
 
-/** A fake `gh`: `alice` is signed in and PR #12 is open on `feat/a`. */
+/** The GitHub host over a fake `gh`: `alice` is signed in and PR #12 is open on `feat/a`. */
 function fakeGh(calls) {
-  return (args) => {
+  return githubHost((args) => {
     calls.push(args);
     if (args[0] === 'api') return 'alice\n';
     if (args[0] === 'pr' && args[1] === 'list') {
       return JSON.stringify([{ number: 12, headRefName: 'feat/a', state: 'OPEN', isCrossRepository: false, author: { login: 'alice' }, body: '' }]);
     }
     throw new Error(`unexpected gh ${args.join(' ')}`);
-  };
+  });
 }
 
 /** A fake `git` whose default branch is main and whose feat/a changes two files. */
@@ -70,7 +72,7 @@ test('--open lists red, yellow and green tickets of this directory and no closed
   assert.equal(view.open.find((item) => item.id === yellow.id).body, shapedTicketBody('yellow one'));
 
   const gh = [];
-  const { code, text } = await printed(base, { open: true, gh: fakeGh(gh), git: fakeGit([]) });
+  const { code, text } = await printed(base, { open: true, host: fakeGh(gh), git: fakeGit([]) });
   assert.equal(code, 0);
   for (const item of [red, yellow, green]) assert.ok(text.includes(`## ${item.id} — ${item.title} (${item.state ?? 'red'})\n\n${item.body}`), item.title);
   assert.doesNotMatch(text, /closed one|foreign one/);
@@ -89,7 +91,7 @@ test("--open lists each open run's PR with the files it changes", async (t) => {
 
   const gh = [];
   const git = [];
-  const { code, text } = await printed(base, { open: true, gh: fakeGh(gh), git: fakeGit(git) });
+  const { code, text } = await printed(base, { open: true, host: fakeGh(gh), git: fakeGit(git) });
   assert.equal(code, 0);
   assert.ok(text.includes('## #12 feat/a\n\n- deck/a.mjs\n- docs/a.md'), text);
   assert.doesNotMatch(text, /feat\/b/, 'a record with no open PR is no open run');
@@ -107,7 +109,7 @@ test('--open is exit 1 naming the cause when gh cannot answer, after the tickets
   process.stderr.write = (chunk) => errors.push(String(chunk));
   t.after(() => { process.stderr.write = write; });
 
-  const { code, text } = await printed(base, { open: true, gh: () => { throw new Error('gh: not logged in'); }, git: fakeGit([]) });
+  const { code, text } = await printed(base, { open: true, host: githubHost(() => { throw new Error('gh: not logged in'); }), git: fakeGit([]) });
   process.stderr.write = write;
   assert.equal(code, 1);
   assert.ok(text.includes(held.id), 'the tickets are still printed');
@@ -126,7 +128,7 @@ test('plain pilot tickets prints what it printed before', async (t) => {
   await fetch(`${base}/api/tickets?repo=${encodeURIComponent(ALPHA)}&open=1`);
   assert.equal(fs.readFileSync(storeFile(), 'utf8'), before, 'neither read writes the store');
   const calls = [];
-  const { code, text } = await printed(base, { gh: fakeGh(calls), git: fakeGit(calls) });
+  const { code, text } = await printed(base, { host: fakeGh(calls), git: fakeGit(calls) });
   assert.equal(code, 0);
   assert.doesNotMatch(text, /parked|\((red|yellow|green)\)|## #|no open run/);
   assert.match(text, /no other red ticket/);
@@ -146,15 +148,31 @@ test('an open run is a feat/ record of this directory with an open PR of the sig
     pr(5, 'feat/fork', { isCrossRepository: true }),
     pr(6, 'feat/elsewhere'),
   ];
-  const gh = (args) => {
+  // gh answers `--author @me` with the signed-in account's PRs only, in every state asked.
+  const host = githubHost((args) => {
     calls.push(args);
-    return args[0] === 'api' ? 'alice\n' : JSON.stringify(prs);
-  };
+    assert.deepEqual(args.slice(args.indexOf('--author'), args.indexOf('--author') + 2), ['--author', '@me']);
+    return JSON.stringify(prs.filter((p) => p.author.login === 'alice'));
+  });
   const records = ['a', 'merged', 'theirs', 'fork'].map((slug) => record(slug)).concat(record('gone', { finished: 'abandoned by the user' }));
 
-  assert.deepEqual(openRuns(records, { gh }), [{ branch: 'feat/a', pr: 1, updatedAt: 't' }]);
+  assert.deepEqual(openRuns(records, { host }), [{ branch: 'feat/a', pr: 1, updatedAt: 't' }]);
   assert.equal(calls.filter((args) => args[1] === 'list').length, 1);
-  assert.deepEqual(openRuns([{ slug: 'x', branch: 'docs/x' }], { gh: () => assert.fail('gh asked') }), [], 'no feat/ record, no gh');
+  assert.deepEqual(openRuns([{ slug: 'x', branch: 'docs/x' }], { host: githubHost(() => assert.fail('gh asked')) }), [], 'no feat/ record, no gh');
+});
+
+test('no CLI at none', async (t) => {
+  const base = await deckOnAPort(t);
+  const records = [{ repo: repoKey(ALPHA), record: { slug: 'a', branch: 'feat/a', finished: null, updatedAt: '2026-10-04T09:00:00.000Z' } }];
+  fs.writeFileSync(storeFile(), JSON.stringify({ version: 1, items: [], runs: [], seq: 0, deckSeq: 0, decks: {}, records }));
+  const held = ticket('held');
+  const run = () => assert.fail('a host CLI started at none');
+  const host = hostFor(ALPHA, { git: () => 'none\n', run });
+
+  const { code, text } = await printed(base, { open: true, host, git: fakeGit([]) });
+  assert.equal(code, 0);
+  assert.ok(text.includes(`## ${held.id} — held (red)`), 'the queue prints');
+  assert.match(text, /no open run/);
 });
 
 test('pilot tickets accepts --open and nothing else', async () => {
