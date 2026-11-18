@@ -28,15 +28,14 @@ function whatComesNext(isPilot, onDeck) {
  * waiting for it. Only the pilot: a `handoff` item is the pilot's kind. A live
  * co-pilot holds the hand-off's /clear, so it is paused now, while the buffer to
  * the hard mark is whole (clear-waits-co-pilot spec 6, A3). A pause that only
- * queued holds the clear for nothing, so it is released at once (never-stuck S19).
+ * queued is released at once, the bound as backstop (never-stuck S19, A7).
  */
 function handoffNowIfIdle(isPilot, onDeck) {
   if (!isPilot || !onDeck) return '';
   return ' If nothing is in flight — no live agent, no open run — the cheapest move is the ' +
     'handoff now: one `deck_status` call, then run `pilot handoff`. If your co-pilot is live, ' +
     'send it the pause now: it integrates the slice in flight and hands back `paused`; ' +
-    '`deck_ticket release` it then. If SendMessage answers queued, nothing is reading it: ' +
-    '`deck_ticket release` it at once.';
+    '`deck_ticket release` it then; if SendMessage answers queued, `deck_ticket release` it at once.';
 }
 
 /**
