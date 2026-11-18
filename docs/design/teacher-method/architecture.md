@@ -101,7 +101,7 @@ the codebase's pattern. No fold slice: nothing shallow is touched.
   report's last section carries its question and options verbatim, so the user comes back and
   presses. Tradeoff: the pilot learns nothing from the off-deck lesson beyond the diagnostic in
   `extracted`. Rejected: teach-me ending with a summary the user pastes back (a step for the user
-  and a reply shape for the pilot). Deck: itm_41a9952d5a1d.
+  and a reply shape for the pilot). Deck: itm_41a9952d5a1d. User answered: "Nothing returns".
 
 ## 7. Out of scope
 
