@@ -3,16 +3,17 @@
  * (pilot-fork spec 6, 7, 8; L4, L5, L13). `refusal` is the deletion guard, apart from
  * `assertPushable`, which stays the only push guard. `deleteMerged` is the only caller of
  * `git push <remote> --delete`, leased, never forced: `feat/` branches on origin, the other run
- * branches on the run remote, none in local mode (A2). Merged: gh reads its PR MERGED at
- * the current tip, or, with no PR, its tip is a proper ancestor of `origin/<into>`. A gh
- * failure, an open or closed PR, or any doubt keeps the branch and names why. `git` and `gh`
- * are `(args) => string`, argv only; each throws on a non-zero exit, git with `status`.
+ * branches on the run remote, none in local mode (A2). Merged: the **Host** reads its review
+ * merged at the current tip, or, with no review (or no host, at `none`), its tip is a proper
+ * ancestor of `origin/<into>`. A failed host read, an open or closed review, or any doubt keeps
+ * the branch and names why. `git` is `(args) => string`, argv only, and throws on a non-zero
+ * exit with `status`; `host` is `hostFor`'s answer, null at `none`.
  */
 
 import { execFileSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 
-import { hostIn } from '../deck/host.mjs';
+import { hostFor } from '../deck/host.mjs';
 import { firstLine, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRemote } from './remotes.mjs';
 import { isRunBranch } from './worktrees.mjs';
@@ -53,13 +54,18 @@ function tipsOn(git, remote) {
   return tips;
 }
 
-/** Every same-repository PR, any state, by head branch, in one gh call; an Error when gh fails or the list may be cut short. */
-function prsByHead(gh) {
+/**
+ * Every same-repository review, any state, by head branch, in one host read; none at all when `host` is null
+ * (`none`, A1), so every branch is judged by ancestry. An Error when the read fails or the list may be cut short.
+ */
+function prsByHead(host) {
+  if (host === null) return new Map();
   try {
-    const prs = JSON.parse(gh(['pr', 'list', '--state', 'all', '--limit', String(PR_LIMIT), '--json', 'number,state,headRefName,headRefOid,isCrossRepository']));
-    if (prs.length >= PR_LIMIT) throw new Error(`gh listed ${PR_LIMIT} PRs, so one may be missing`);
+    const prs = host.reviews({ state: 'all', limit: PR_LIMIT });
+    if (!Array.isArray(prs)) throw new Error('reviews answered no list');
+    if (prs.length >= PR_LIMIT) throw new Error(`${host.cli} listed ${PR_LIMIT} reviews, so one may be missing`);
     const by = new Map();
-    for (const pr of prs.filter((p) => p.isCrossRepository !== true)) by.set(pr.headRefName, [...(by.get(pr.headRefName) ?? []), pr]);
+    for (const pr of prs.filter((p) => p.crossRepo !== true)) by.set(pr.head, [...(by.get(pr.head) ?? []), pr]);
     return by;
   } catch (err) {
     return err;
@@ -71,12 +77,12 @@ function prsByHead(gh) {
  * the run remote, each listed here), with one `git push <remote> --delete` per remote, and
  * answers `{ deleted, kept }`: the names deleted, and `{ branch, why }` for each one kept.
  * `into` (default origin's default branch) is what a branch with no PR must be an ancestor
- * of; `wait` (ms, default 0) is how long an open PR is polled for GitHub to read it merged
+ * of; `wait` (ms, default 0) is how long an open PR is polled for the host to read it merged
  * (L5). With `dryRun`, `deleted` is what would be deleted and nothing is pushed. A failed
  * push throws with `deleted`, what went before it, and `kept`. Throws, deleting nothing,
  * when the run remote, origin's default branch or a remote's branch list cannot be read.
  */
-export function deleteMerged({ git, gh, select, into, wait = 0, dryRun = false }) {
+export function deleteMerged({ git, host, select, into, wait = 0, dryRun = false }) {
   const runs = runRemote(git);
   const defaultName = remoteDefaultBranch(git);
   const target = into ?? defaultName;
@@ -88,7 +94,7 @@ export function deleteMerged({ git, gh, select, into, wait = 0, dryRun = false }
   const deleted = [];
   const kept = [];
   const doomed = new Map();
-  const pr = { list: null, read: () => (pr.list = prsByHead(gh)) }; // one gh call, again only to poll
+  const pr = { list: null, read: () => (pr.list = prsByHead(host)) }; // one host read, again only to poll
   for (const { remote, branch, tip } of candidates) {
     const why = whyKept({ git, pr, branch, tip, into: target, wait, refused: refusal(branch, defaultName) });
     if (why) {
@@ -117,15 +123,15 @@ function whyKept({ git, pr, branch, tip, into, wait, refused }) {
   const until = Date.now() + wait;
   let prs;
   for (let list = pr.list ?? pr.read(); ; list = pr.read()) {
-    if (list instanceof Error) return `gh failed: ${firstLine(list)}`;
+    if (list instanceof Error) return `host failed: ${firstLine(list)}`;
     prs = list.get(branch) ?? [];
-    if (!prs.some((p) => p.state === 'OPEN') || Date.now() >= until) break;
+    if (!prs.some((p) => p.state === 'open') || Date.now() >= until) break;
     sleep(Math.min(POLL_MS, until - Date.now()));
   }
-  const open = prs.find((pr) => pr.state === 'OPEN');
+  const open = prs.find((pr) => pr.state === 'open');
   if (open) return `PR #${open.number} open`;
-  const merged = prs.find((pr) => pr.state === 'MERGED');
-  if (merged) return merged.headRefOid === tip ? null : `tip moved after PR #${merged.number} merged`;
+  const merged = prs.find((pr) => pr.state === 'merged');
+  if (merged) return merged.headSha === tip ? null : `tip moved after PR #${merged.number} merged`;
   if (prs.length) return `PR #${prs[0].number} closed unmerged`;
   try {
     // A fresh branch whose tip is the into tip has nothing of its own, so it is kept.
@@ -147,7 +153,6 @@ const USAGE = 'usage: pilot branches prune --slug <slug> [--dry-run]\n';
 export function main(argv, inject = {}) {
   const { cwd = process.cwd(), write = (text) => process.stdout.write(text) } = inject;
   const git = inject.git ?? ((args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }));
-  const gh = inject.gh ?? hostIn(cwd);
   let flags = {};
   try {
     flags = parseArgs({ args: argv.slice(1), options: { slug: { type: 'string' }, 'dry-run': { type: 'boolean' } } }).values;
@@ -159,7 +164,8 @@ export function main(argv, inject = {}) {
   }
   const said = (kept) => kept.map(({ branch, why }) => `kept ${branch}: ${why}`);
   try {
-    const { deleted, kept } = deleteMerged({ git, gh, select: (name) => isRunBranch(name, slug), dryRun });
+    const host = 'host' in inject ? inject.host : hostFor(cwd, { git }); // a bad pilot.host is NOT pruned, below
+    const { deleted, kept } = deleteMerged({ git, host, select: (name) => isRunBranch(name, slug), dryRun });
     const lines = [...deleted.map((branch) => `${dryRun ? 'would delete' : 'deleted'} ${branch}`), ...said(kept)];
     const count = `${dryRun ? 'dry run: would delete' : 'deleted'} ${deleted.length}, kept ${kept.length}${dryRun ? '; nothing deleted' : ''}`;
     write(`${[...lines, count].join('\n')}\n`);

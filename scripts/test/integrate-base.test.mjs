@@ -17,6 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const { integrate } = await import('../integrate.mjs');
+const { githubHost } = await import('../../deck/host-github.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 const short = (cwd, ref) => git(cwd, 'rev-parse', '--short', ref);
@@ -67,14 +68,14 @@ function buildPilotRepos(dir, pilot) {
   return { origin, work };
 }
 
-/** A `gh` that records every call and answers none. */
+/** The GitHub **Host** over a `gh` that records every call and answers none. */
 function recordingGh() {
   const calls = [];
   const gh = (args) => {
     calls.push(args);
     throw new Error(`unexpected gh ${args.join(' ')}`);
   };
-  return Object.assign(gh, { calls });
+  return Object.assign(githubHost(gh), { calls });
 }
 
 const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
@@ -86,11 +87,11 @@ test('integrate merges origin/pilot before the slice', (t) => {
   pushTo(work, 'pilot', 'p2.txt', 'p2\n');
   const pilotTip = git(work, 'rev-parse', 'origin/pilot');
 
-  const result = integrate('slice/b-s1', { cwd: work, gh: recordingGh(), trailers: ['Claude-Session: s'], ...quiet });
+  const result = integrate('slice/b-s1', { cwd: work, host: recordingGh(), trailers: ['Claude-Session: s'], ...quiet });
 
   assert.equal(result.ok, true, result.line);
   // S7's suffix after the push: this gh fails every call, so the slice is kept.
-  assert.equal(result.line.replace(/; kept slice\/b-s1: gh failed: .*$/, ''), `integrated slice/b-s1 at ${short(work, 'HEAD')} (base pilot@${short(work, pilotTip)}): 3 pass, 0 fail; pushed`);
+  assert.equal(result.line.replace(/; kept slice\/b-s1: host failed: .*$/, ''), `integrated slice/b-s1 at ${short(work, 'HEAD')} (base pilot@${short(work, pilotTip)}): 3 pass, 0 fail; pushed`);
   assert.equal(git(work, 'rev-parse', 'HEAD^1^2'), pilotTip, 'the base is the first merge, in its own commit');
   assert.equal(git(work, 'log', '-1', '--format=%s', 'HEAD^1'), 'Merge base pilot');
   assert.match(git(work, 'log', '-1', '--format=%B', 'HEAD^1'), /\n\nClaude-Session: s\s*$/, 'the trailer rides on it');
@@ -103,7 +104,7 @@ test('integrate with no branch takes pilot alone', (t) => {
   pushTo(work, 'pilot', 'p2.txt', 'p2\n');
   const pilotTip = git(work, 'rev-parse', 'origin/pilot');
 
-  const result = integrate(undefined, { cwd: work, gh: recordingGh(), ...quiet });
+  const result = integrate(undefined, { cwd: work, host: recordingGh(), ...quiet });
 
   assert.equal(result.ok, true, result.line);
   assert.equal(result.line, `took base pilot@${short(work, pilotTip)} at ${short(work, 'HEAD')}: 3 pass, 0 fail; pushed`);
@@ -115,14 +116,14 @@ test('the base is pilot even when main moved, and no PR is read for it', (t) => 
   const { work } = pilotRepos(t);
   pushTo(work, 'main', 'm2.txt', 'm2\n');
   const pilotTip = git(work, 'rev-parse', 'origin/pilot');
-  const gh = recordingGh();
+  const host = recordingGh();
 
-  const result = integrate('slice/b-s1', { cwd: work, gh, ...quiet });
+  const result = integrate('slice/b-s1', { cwd: work, host, ...quiet });
 
   assert.equal(result.ok, true, result.line);
   assert.match(result.line, new RegExp(`\\(base pilot@${short(work, pilotTip)}\\)`));
   assert.ok(!fs.existsSync(path.join(work, 'm2.txt')), 'main\'s new commit is not taken');
-  const forBase = gh.calls.filter((args) => !args.includes('number,state,headRefName,headRefOid,isCrossRepository'));
+  const forBase = host.calls.filter((args) => !args.includes('number,state,baseRefName,headRefName,headRefOid,title,body,url,isCrossRepository'));
   assert.deepEqual(forBase, [], 'gh is never asked about a PR body for the base, only whether the slice merged');
 });
 
@@ -130,7 +131,7 @@ test('a missing origin/pilot exits 1 naming pilot base', (t) => {
   const { origin, work } = pilotRepos(t, { pilot: false });
   const before = git(work, 'rev-parse', 'HEAD');
 
-  const result = integrate('slice/b-s1', { cwd: work, gh: recordingGh(), ...quiet });
+  const result = integrate('slice/b-s1', { cwd: work, host: recordingGh(), ...quiet });
 
   assert.equal(result.ok, false);
   assert.equal(result.line, 'NOT integrated slice/b-s1: no origin/pilot (run pilot base first); nothing merged or pushed');
@@ -142,7 +143,7 @@ test('a pilot branch deleted on origin is missing, though the clone still has it
   const { origin, work } = pilotRepos(t);
   git(origin, 'branch', '-D', 'pilot');
 
-  const result = integrate('slice/b-s1', { cwd: work, gh: recordingGh(), ...quiet });
+  const result = integrate('slice/b-s1', { cwd: work, host: recordingGh(), ...quiet });
 
   assert.equal(result.line, 'NOT integrated slice/b-s1: no origin/pilot (run pilot base first); nothing merged or pushed');
 });
@@ -154,7 +155,7 @@ test('a conflict taking the base aborts, resets to the start and names the base'
   pushTo(work, 'pilot', 'shared.txt', 'p\n');
   const before = git(work, 'rev-parse', 'HEAD');
 
-  const result = integrate('slice/b-s1', { cwd: work, gh: recordingGh(), ...quiet });
+  const result = integrate('slice/b-s1', { cwd: work, host: recordingGh(), ...quiet });
 
   assert.equal(result.ok, false);
   assert.match(result.line, /^NOT integrated slice\/b-s1: taking base pilot stopped \(/);
@@ -170,7 +171,7 @@ test('a slice conflict after the base is taken resets the base merge too', (t) =
   pushTo(work, 'feat/b', 's.txt', 'not the slice\n');
   const before = git(work, 'rev-parse', 'HEAD');
 
-  const result = integrate('slice/b-s1', { cwd: work, gh: recordingGh(), ...quiet });
+  const result = integrate('slice/b-s1', { cwd: work, host: recordingGh(), ...quiet });
 
   assert.equal(result.ok, false);
   assert.match(result.line, /^NOT integrated slice\/b-s1: the merge stopped \(/);
@@ -185,7 +186,7 @@ test('red tests reset both merges; nothing is pushed', (t) => {
   pushTo(work, 'pilot', 'p2.txt', 'p2\n');
   const before = git(work, 'rev-parse', 'HEAD');
 
-  const result = integrate('slice/b-s1', { cwd: work, gh: recordingGh(), ...quiet, test: failing });
+  const result = integrate('slice/b-s1', { cwd: work, host: recordingGh(), ...quiet, test: failing });
 
   assert.equal(result.ok, false);
   assert.match(result.line, /^NOT integrated slice\/b-s1: slice\/b-s1 merged red: 2 pass, 1 fail; failing: broken thing; log .+\.log; not pushed$/);
@@ -201,7 +202,7 @@ test('a lockfile moved by the base merge alone runs npm ci', (t) => {
   pushTo(work, 'pilot', 'package-lock.json', '{}\n');
   const installs = [];
 
-  const result = integrate('slice/b-s1', { cwd: work, gh: recordingGh(), ...quiet, install: (cwd) => installs.push(cwd), push: false });
+  const result = integrate('slice/b-s1', { cwd: work, host: recordingGh(), ...quiet, install: (cwd) => installs.push(cwd), push: false });
 
   assert.equal(result.ok, true, result.line);
   assert.deepEqual(installs, [work], 'judged against where the call began, not the base merge');
@@ -214,7 +215,7 @@ test('a failed commit of the slice merge resets both merges; nothing is pushed',
   // pre-commit runs for the slice's `git commit`, not for the base's `git merge`.
   fs.writeFileSync(path.join(work, '.git', 'hooks', 'pre-commit'), '#!/bin/sh\necho refused >&2\nexit 1\n', { mode: 0o755 });
 
-  const result = integrate('slice/b-s1', { cwd: work, gh: recordingGh(), ...quiet });
+  const result = integrate('slice/b-s1', { cwd: work, host: recordingGh(), ...quiet });
 
   assert.equal(result.ok, false);
   assert.match(result.line, /^NOT integrated slice\/b-s1: the commit failed \(.+\); not pushed$/);

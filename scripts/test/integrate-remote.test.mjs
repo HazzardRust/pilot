@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const { integrate } = await import('../integrate.mjs');
+const { githubHost } = await import('../../deck/host-github.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
@@ -74,7 +75,7 @@ const listed = (bare) => git(bare, 'for-each-ref', '--format=%(refname:short)', 
 test('integrate merges a slice from the second remote and pushes feat to origin', (t) => {
   const { origin, second, work } = scratchRepos(t, 'second');
 
-  const result = integrate('slice/x-s1', { cwd: work, test: passing, install: () => {}, gh: noPr() });
+  const result = integrate('slice/x-s1', { cwd: work, test: passing, install: () => {}, host: githubHost(noPr()) });
 
   assert.equal(result.ok, true, result.line);
   assert.equal(git(origin, 'rev-parse', 'feat/x'), git(work, 'rev-parse', 'HEAD'), 'feat/x pushed to origin');
@@ -88,7 +89,7 @@ test('integrate merges a slice from the second remote and pushes feat to origin'
 test('integrate under none merges a local slice', (t) => {
   const { origin, work } = scratchRepos(t, 'none');
 
-  const result = integrate('slice/x-s1', { cwd: work, test: passing, install: () => {}, gh: noPr() });
+  const result = integrate('slice/x-s1', { cwd: work, test: passing, install: () => {}, host: githubHost(noPr()) });
 
   assert.equal(result.ok, true, result.line);
   assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge slice/x-s1');
@@ -107,7 +108,7 @@ test('with the setting unset the argv is today\'s', (t) => {
   process.env.GIT_TRACE = trace;
   let result;
   try {
-    result = integrate('slice/x-s1', { cwd: work, test: passing, install: () => {}, gh: noPr(asked) });
+    result = integrate('slice/x-s1', { cwd: work, test: passing, install: () => {}, host: githubHost(noPr(asked)) });
   } finally {
     if (before === undefined) delete process.env.GIT_TRACE;
     else process.env.GIT_TRACE = before;
@@ -115,7 +116,7 @@ test('with the setting unset the argv is today\'s', (t) => {
 
   assert.equal(result.ok, true, result.line);
   assert.deepEqual(asked, [
-    ['pr', 'list', '--state', 'all', '--limit', '1000', '--json', 'number,state,headRefName,headRefOid,isCrossRepository'],
+    ['pr', 'list', '--state', 'all', '--json', 'number,state,baseRefName,headRefName,headRefOid,title,body,url,isCrossRepository', '--limit', '1000'],
   ]);
   const argv = fs.readFileSync(trace, 'utf8')
     .split(/\r?\n/)
