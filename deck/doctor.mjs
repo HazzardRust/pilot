@@ -26,6 +26,8 @@ import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
 import { MIN_MODS_VERSION, claudeVersion } from '../scripts/handoff.mjs';
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
+import { git as gitAt } from '../scripts/pilot-branch.mjs';
+import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { probeDeck } from './probe.mjs';
 import { storeDir as defaultStoreDir } from './store-dir.mjs';
 import { DECK_PORT, deckUrl } from './tools.mjs';
@@ -135,7 +137,37 @@ export function projectsRoot(cwd = process.cwd()) {
 /** The plugin's own root, where its package.json and node_modules sit. */
 const PLUGIN_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DECK_DEP = '@modelcontextprotocol/sdk';
-const CLIS = ['gh', 'git', 'claude'];
+const CLIS = ['git', 'claude'];
+
+/**
+ * The host row: `pilot.host`'s forge and, at github or gitlab, its CLI on PATH and signed in. At `none` no
+ * host CLI is touched. `signedIn` reads an exit status, so no token reaches a row.
+ */
+function hostRow({ git, hostFor, onPath, cwd }) {
+  const name = 'host';
+  let host;
+  try {
+    host = hostFor(cwd, { git });
+  } catch (error) {
+    return { name, verdict: 'fail', detail: error.message, steps: [`git config pilot.host ${HOST_NAMES.join('|')}`] };
+  }
+  if (host === null) return { name, verdict: 'pass', detail: 'none: no host CLI is used' };
+  // The forge as the setting names it; **Host** carries only its `cli` (itm_6eca66849bdb).
+  const which = hostOf(git);
+  const { cli } = host;
+  const found = onPath(cli);
+  if (found === false) return { name, verdict: 'fail', detail: `${which}: ${cli} is not on PATH`, steps: [`install ${cli} and put it on PATH`] };
+  if (found !== true) return { name, verdict: 'cannot tell', detail: `${which}: \`${cli} --version\` gave no answer doctor can read` };
+  let signedIn;
+  try {
+    signedIn = host.signedIn();
+  } catch (error) {
+    return { name, verdict: 'fail', detail: `${which}: ${error.message}` };
+  }
+  return signedIn
+    ? { name, verdict: 'pass', detail: `${which}: ${cli} signed in` }
+    : { name, verdict: 'fail', detail: `${which}: ${cli} is not signed in`, steps: [`run \`${cli} auth login\``] };
+}
 
 /** The scanner states that need nothing done; `not-excluded` needs the admin step; `unknown` cannot tell. */
 const SCANNER_VERDICT = { off: 'pass', excluded: 'pass', 'dev-drive': 'pass', 'not-windows': 'pass', 'not-excluded': 'fail' };
@@ -390,6 +422,9 @@ export async function checkAll({
   readEnabled = defaultReadEnabled,
   readSettings = defaultReadSettings,
   env = process.env,
+  cwd = process.cwd(),
+  git = (args) => gitAt(cwd, ...args),
+  hostFor = hostForDefault,
 } = {}) {
   const found = await probe(url);
   let settings;
@@ -404,6 +439,7 @@ export async function checkAll({
     dependencyRow({ resolveDep }),
     storeRow({ storeDir, canWrite }),
     reachRow({ reach: readReach(), enabled: readEnabled() }),
+    hostRow({ git, hostFor, onPath, cwd }),
     ...CLIS.map((cmd) => cliRow(cmd, onPath)),
     allowRow({ readSettings }),
     modsRow({ version: claudeVersion(run), settings, env }),

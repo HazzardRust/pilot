@@ -27,6 +27,7 @@ function passing(overrides = {}) {
     storeDir: '/home/dev/.claude/pilot',
     canWrite: () => true,
     onPath: () => true,
+    git: () => 'none',
     readSettings: () => ({}),
     ...overrides,
   };

@@ -17,6 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const { integrate } = await import('../integrate.mjs');
+const { githubHost } = await import('../../deck/host-github.mjs');
 const { mergeIntoPilot, sync } = await import('../sync.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -93,7 +94,7 @@ function echoed(work) {
 const NO_SLOT = `slot=${process.env.PILOT_GATE_SLOT ?? '-'}`;
 
 const gh = (args) => (args[0] === 'pr' && args[1] === 'view' ? JSON.stringify({ mergeable: 'MERGEABLE' }) : args[0] === 'pr' ? '[]' : 'me\n');
-const quiet = { install: () => {}, gh };
+const quiet = { install: () => {}, host: githubHost(gh) };
 
 test('a slice merge runs the selection since the tip before it', (t) => {
   const { work } = repos(t);

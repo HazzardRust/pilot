@@ -17,9 +17,9 @@ const { comment } = await import('../land.mjs');
 const bodyOf = (calls) => calls.find((args) => args[1] === 'comment')?.[4];
 
 test('no counts, the old comment', () => {
-  const { gh, calls } = fakeGh([{ number: 7, headRefName: 'feat/a' }]);
+  const { host, calls } = fakeGh([{ number: 7, headRefName: 'feat/a' }]);
 
-  comment({ gh, head: 'feat/a', sha: 'abc1234', counts: null });
+  comment({ host, head: 'feat/a', sha: 'abc1234', counts: null });
 
   assert.equal(bodyOf(calls), 'landed on pilot at abc1234');
 });
@@ -33,9 +33,9 @@ test('the feature merge is the full run', (t) => {
   commitFile(work, 'package.json', `${JSON.stringify(pkg, null, 2)}\n`, 'package');
   commitFile(work, 'package-lock.json', `${JSON.stringify({ name: 'fixture', version: '1.0.0', lockfileVersion: 3, requires: true, packages: { '': { name: 'fixture', version: '1.0.0' } } }, null, 2)}\n`, 'lock');
   git(work, 'push', '-q', 'origin', 'feat/a');
-  const { gh, calls } = fakeGh([{ number: 7, headRefName: 'feat/a' }]);
+  const { host, calls } = fakeGh([{ number: 7, headRefName: 'feat/a' }]);
 
-  const result = land({ cwd: work, git: gitIn(work), gh });
+  const result = land({ cwd: work, git: gitIn(work), host });
 
   assert.equal(result.commentFailed, undefined);
   const runs = fs.readFileSync(trace, 'utf8').trim().split('\n');

@@ -16,25 +16,23 @@ import { execFileSync } from 'node:child_process';
 
 import { bearer } from '../hooks/lib/deck-secret.js';
 import { defaultBranch } from '../scripts/pilot-branch.mjs';
-import { hostIn } from './host.mjs';
+import { hostFor } from './host.mjs';
 import { liveTicketOf, mergeDecisionOf, messagesOf, ticketQueueOf } from './items.mjs';
 import { laneTicketOf } from './lane-ticket.mjs';
 import { deckUrl } from './tools.mjs';
 
 /**
- * The records of one directory whose `feat/` branch has an open PR of this repository that the account `gh` is
- * signed in as authored (runs-build-on-each-other spec 5, L13), as `{ branch, pr, updatedAt }`. One `gh pr list`
- * for all of them; a branch name never reaches `gh`.
+ * The records of one directory whose `feat/` branch has an open review of this repository that the signed-in
+ * account authored (runs-build-on-each-other spec 5, L13), as `{ branch, pr, updatedAt }`. One `reviews` read
+ * for all of them; a branch name never reaches the host. A null `host` (`pilot.host none`) has no review.
  */
-export function openRuns(records, { gh }) {
+export function openRuns(records, { host }) {
   const candidates = records.filter((r) => String(r?.branch ?? '').startsWith('feat/') && !/^abandoned/.test(r.finished ?? ''));
-  if (candidates.length === 0) return [];
-  const login = gh(['api', 'user', '--jq', '.login']).trim();
-  const prs = JSON.parse(gh(['pr', 'list', '--state', 'open', '--author', '@me', '--json', 'number,headRefName,state,isCrossRepository,author', '--limit', '100']));
-  const ours = (p) => p.state === 'OPEN' && p.isCrossRepository === false && p.author?.login === login;
+  if (candidates.length === 0 || host === null) return [];
+  const reviews = host.reviews({ state: 'open', mine: true, limit: 100 });
   return candidates.flatMap((r) => {
-    const pr = prs.find((p) => ours(p) && p.headRefName === r.branch);
-    return pr ? [{ branch: r.branch, pr: pr.number, updatedAt: r.updatedAt }] : [];
+    const review = reviews.find((p) => p.state === 'open' && p.crossRepo === false && p.head === r.branch);
+    return review ? [{ branch: r.branch, pr: review.number, updatedAt: r.updatedAt }] : [];
   });
 }
 
@@ -104,10 +102,10 @@ const formatOpen = (open) =>
 
 /**
  * Each open run's PR with the files its feature branch changes against the default branch, or the line
- * saying there is none (runs-build-on-each-other spec 10). `gh` and `git` take argv arrays, never a shell string (L10).
+ * saying there is none (runs-build-on-each-other spec 10). `git` takes argv arrays, never a shell string (L10).
  */
-function formatRuns(records, { gh, git }) {
-  const runs = openRuns(records, { gh });
+function formatRuns(records, { host, git }) {
+  const runs = openRuns(records, { host });
   if (runs.length === 0) return 'no open run';
   git(['fetch', '-q', 'origin']);
   const main = `origin/${defaultBranch(git)}`;
@@ -122,7 +120,7 @@ function formatRuns(records, { gh, git }) {
 const gitIn = (cwd) => (args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 
 /** The subcommand's work: ask the deck, print the queue, or with `open` every open ticket and run. Answers the exit code. */
-export async function tickets({ cwd = process.cwd(), say = (text) => process.stdout.write(text), open = false, gh = hostIn(cwd), git = gitIn(cwd) } = {}) {
+export async function tickets({ cwd = process.cwd(), say = (text) => process.stdout.write(text), open = false, host, git = gitIn(cwd) } = {}) {
   let view;
   let url = 'the deck';
   let headers;
@@ -150,7 +148,8 @@ export async function tickets({ cwd = process.cwd(), say = (text) => process.std
   }
   say(`${formatOpen(view.open ?? [])}\n\n`);
   try {
-    say(`${formatRuns(view.records ?? [], { gh, git })}\n`);
+    // Read here, not as a default: a bad `pilot.host` is "open runs unknown", after the tickets.
+    say(`${formatRuns(view.records ?? [], { host: host === undefined ? hostFor(cwd, { git }) : host, git })}\n`);
   } catch (err) {
     // Never "no open run" when it could not tell: that is an answer ticket-making acts on.
     process.stderr.write(`pilot tickets: open runs unknown: ${String(err.stderr?.trim() || err.message).split('\n')[0]}\n`);
