@@ -35,7 +35,7 @@
     },
     {
       "slice": "S2",
-      "state": "implementing",
+      "state": "pushed 2545a11, both reviewers APPROVE, awaiting integrate",
       "after": [
         "S1"
       ],
@@ -74,7 +74,7 @@
     },
     {
       "slice": "S7",
-      "state": "implementing",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -104,13 +104,13 @@
     },
     {
       "slice": "S11",
-      "state": "pushed 2be3c09",
+      "state": "integrated 2766f42",
       "branch": "slice/other-host-s11",
       "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s11"
     }
   ],
-  "next": "S11 integrating; S2 and S7 implementing from fa215559; S5, S9, S10 start as budget frees (8: me + 2 implementers + up to 4 children)",
-  "updatedAt": "2026-11-18T05:03:31.136Z",
+  "next": "Co-pilot a8cd2055d71a8d0af live: integrate S7 then S2 (S2 rulings sent, queued: confirm by feat tip moving), amend S7.md seam, pilot ready: S5, S9, S10; S3 after S2. Both implementers finished. S7 q itm_7e8d9b33fb35 open. Plan design/other-host @ 3116339c, feat wt pilot-feat-other-host-r2, limit 400.",
+  "updatedAt": "2026-11-18T05:28:04.733Z",
   "friction": [
     {
       "agent": "pilot",
@@ -147,6 +147,66 @@
       "what": "each selected-test run (test:changed) takes about 377 s and spawns about 11,000 processes",
       "evidence": "S11 gate after merging feat 115ca034: 4290 pass in ~377 s",
       "size": 377
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "third forced hand-back in a row on other-host with children live and nothing to do but wait; each co-pilot about 55k tokens for no integration; pilot now holds the wait itself",
+      "evidence": "hand-back from a59999df775eff6dd, 57k tokens, 19 tool calls",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "curl of the deck's /api/record with the deck secret denied by auto mode (Unauthorized Access); read run.json in the feat worktree instead",
+      "evidence": "third co-pilot's blocked-steps column",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "400-line limit does not budget the fixture JSON a slice requires: S7 at 527 with 158 fixture lines, pushed before counting",
+      "evidence": "S7 report; git diff --shortstat 527 insertions",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck-readme 'every deck module is listed' test not in the slice's verification list; caught only by the full gate",
+      "evidence": "S7 gate run 1",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "context reset mid-slice plus three report addressees in one slice (two co-pilot hand-offs, then main)",
+      "evidence": "S7 report friction",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "scripts/gh-stub.mjs hard-codes gh; S7's test carries its own ~25-line glab stub",
+      "evidence": "scripts/gh-stub.mjs:19",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice owned-files list missed five integrate tests injecting the renamed `gh` option; they stayed green while starting the real gh CLI; reviewer caught it, the gate did not",
+      "evidence": "S2 report: integrate-slice-commit, -chain, -dir, -select, integrate.test.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice line anchors off (integrate :327/:534 are :355/:566)",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "`pilot` on PATH is the installed package, not the worktree's; live check needs node <worktree>/bin/pilot.mjs",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gh-stub prints nothing until reply.txt is written: first run read 'host failed: not JSON'",
+      "evidence": "S2 report",
+      "size": 1
     }
   ]
 }
