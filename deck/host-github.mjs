@@ -126,7 +126,7 @@ export function githubHost(run) {
       return { flags: [flag, label] };
     } catch (err) {
       // `gh` says why on stderr; the error's own first line is only the command that failed.
-      return { flags: [], why: String(err?.stderr?.trim() || err?.message || err).split('\n')[0] || 'label refused' };
+      return { flags: [], why: String(err?.stderr?.trim() || (err?.message ?? err)).split('\n')[0] || 'label refused' };
     }
   };
   const withBody = (args, body) => (body === undefined ? run(args) : withBodyFile(body, (file) => run([...args, '--body-file', file])));
