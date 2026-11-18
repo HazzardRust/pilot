@@ -23,6 +23,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { hostIn } from '../deck/host.mjs';
+import { githubHost } from '../deck/host-github.mjs';
 import { deleteMerged } from './branches.mjs';
 import { assertPushable, firstLine, holds, PILOT_BRANCH } from './pilot-branch.mjs';
 import { baseOf, commitRecords, git as gitAt, landingMessage } from './integrate.mjs';
@@ -135,7 +136,7 @@ function deleteRunBranches({ git, gh, head }) {
   const numbered = (prefix, name) => name.startsWith(prefix) && /^\d+$/.test(name.slice(prefix.length));
   const ours = (name) => name === `design/${slug}` || name === `qa/${slug}` || numbered(`fix/${slug}-s`, name) || numbered(`slice/${slug}-s`, name);
   try {
-    return deleteMerged({ git, gh, select: ours, into: head });
+    return deleteMerged({ git, host: githubHost(gh), select: ours, into: head });
   } catch (err) {
     return { deleted: err.deleted ?? [], kept: err.kept ?? [], deleteFailed: firstLine(err) };
   }

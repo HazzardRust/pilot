@@ -38,7 +38,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { cleanOnPilot } from '../deck/gate2-base.mjs';
-import { hostIn } from '../deck/host.mjs';
+import { hostFor } from '../deck/host.mjs';
 import { RUN_BASE } from '../deck/runs.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
 import { deleteMerged } from './branches.mjs';
@@ -343,7 +343,7 @@ export function landedOnPilot(cwd, head, ref = pilotBase(cwd).ref) {
 /**
  * Integrate one slice branch, or with none take the base alone. `test` is the shell
  * command, run as given (default the repository's own since the tip before the merge, `runChosen`), `push` false keeps origin untouched, `trailers` are
- * `Key: value` lines for every commit made. `install` and `gh` are the calls
+ * `Key: value` lines for every commit made. `install` and `host` are the calls
  * out to other tools, replaceable for a test. Answers `{ ok, line, failing }`, plus `code` 2 when it was refused for want of a test command.
  */
 export function integrate(branch, options = {}) {
@@ -352,7 +352,7 @@ export function integrate(branch, options = {}) {
     test,
     push = true,
     trailers = [],
-    gh = hostIn(cwd),
+    host, // the **Host**, null at none; unset, `hostFor(cwd)` when the prune asks
     install = installWithNpm,
   } = options;
   const slice = branch?.replace(/^origin\//, '');
@@ -499,7 +499,7 @@ export function integrate(branch, options = {}) {
   let said = 'not pushed (--no-push)';
   if (push) said = pushed ? 'pushed' : 'nothing to push';
   // A feature branch merged in is not a slice: only a run branch's is ever deleted here.
-  const pruned = slice && pushed && runs !== null && !/^feat\//i.test(slice) ? pruneSlice(cwd, gh, slice, head) : '';
+  const pruned = slice && pushed && runs !== null && !/^feat\//i.test(slice) ? pruneSlice(cwd, host, slice, head) : '';
   return { ok: true, line: `${what(`at ${tip}`)}: ${counts}; ${said}${pruned}`, failing: [] };
 }
 
@@ -561,9 +561,10 @@ export function trialOnPilot({ cwd, git = gitIn(cwd), head }) {
  * The pushed slice through `deleteMerged` into `head`: `; deleted <slice>`, `; kept <slice>: <why>`,
  * or nothing when the slice is not on its remote. A failure keeps it and names why.
  */
-function pruneSlice(cwd, gh, slice, head) {
+function pruneSlice(cwd, host, slice, head) {
   try {
-    const { deleted, kept } = deleteMerged({ git: gitIn(cwd), gh, select: (name) => name === slice, into: head });
+    const git = gitIn(cwd);
+    const { deleted, kept } = deleteMerged({ git, host: host === undefined ? hostFor(cwd, { git }) : host, select: (name) => name === slice, into: head });
     if (deleted.includes(slice)) return `; deleted ${slice}`;
     return kept.length ? `; kept ${slice}: ${kept[0].why}` : '';
   } catch (err) {
