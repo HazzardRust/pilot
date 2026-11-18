@@ -52,7 +52,7 @@ import { ticketShapeGaps } from './ticket-shape.mjs';
 import { walkthroughShapeGaps } from './walkthrough-shape.mjs';
 import { placeSteps } from './step-shell.mjs';
 import { enterStage } from './store-stage.mjs';
-import { gate2EvidenceGaps, namedWalkthroughGaps, recutGate1Gaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
+import { gate2EvidenceGaps, namedWalkthroughGaps, ownBranchGaps, recutGate1Gaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
 import { MAX_QUESTION_CHARS, POSTABLE_KINDS, andList } from './tools.mjs';
 import {
   DeckRefusal,
@@ -228,6 +228,7 @@ function ticketNamedBy(deck, item) {
   // One open gate of a kind per ticket: a second is the same card twice.
   const twin = deck.items.find((other) => other.kind === item.kind && other.ticket === ticket.id && isOpen(other));
   if (twin) throw new DeckRefusal(`${item.ticket} already has an open ${item.kind}, ${twin.id}; resolve it before posting another`);
+  for (const stray of item.kind === KIND_GATE2 ? ownBranchGaps(deck.records, ticket, item.pr) : []) throw new DeckRefusal(stray);
   return ticket;
 }
 

@@ -11,10 +11,12 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { githubHost } from '../../deck/host-github.mjs';
+
 const { land } = await import('../land.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-const gh = (args) => (args[1] === 'list' ? '[]' : '');
+const host = githubHost((args) => (args[1] === 'list' ? '[]' : ''));
 const record = '{"slug":"a","next":"land"}\n';
 
 function repos(t) {
@@ -44,7 +46,7 @@ test('the landing merge carries the run record', (t) => {
   fs.mkdirSync(path.join(work, 'docs', 'design', 'a'), { recursive: true });
   fs.writeFileSync(path.join(work, 'docs', 'design', 'a', 'run.json'), record);
 
-  land({ cwd: work, git: (args) => git(work, ...args), gh, test: 'node -e "0"' });
+  land({ cwd: work, git: (args) => git(work, ...args), host, test: 'node -e "0"' });
 
   assert.equal(git(origin, 'show', 'pilot^2:docs/design/a/run.json') + '\n', record);
   assert.equal(Number(git(origin, 'rev-list', '--first-parent', '--count', 'pilot')), Number(before) + 1, 'one merge, no second commit');

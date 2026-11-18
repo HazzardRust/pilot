@@ -23,6 +23,7 @@ import { main as audit } from '../deck/audit.mjs';
 import { main as base } from '../scripts/base.mjs';
 import { main as branches } from '../scripts/branches.mjs';
 import { main as ghStub } from '../scripts/gh-stub.mjs';
+import { main as host } from '../scripts/host-setting.mjs';
 import { main as uninstall } from '../scripts/uninstall.mjs';
 import { main as reach } from '../scripts/apply-reach.mjs';
 import { budget } from '../deck/budget.mjs';
@@ -143,6 +144,9 @@ const usage = () => `pilot — the deck for piloted runs
                  with the pilot's verdict message on stdin, one A<n> Verdict: line per
                  assumed decision: write each under its A<n> in the artefact's §6, in place;
                  exit 1 naming the bad line or the ids on one side only, file unchanged
+  pilot host [github|gitlab|none] [--local]
+                 print the host in force (unset is github), or write it as pilot.host to
+                 your global git config, --local to this repository's; exit 1 any other name
   pilot uninstall [--yes]
                  print what would be stopped, removed and left, changing nothing; --yes
                  stops the deck, removes the pilot command, its launcher and the marked PATH
@@ -418,6 +422,11 @@ export async function run(argv, deps) {
     } catch (err) {
       return refuse(`pilot verdicts: ${err.message}\n`);
     }
+    return undefined;
+  }
+
+  if (command === 'host') {
+    process.exitCode = host(argv.slice(1));
     return undefined;
   }
 

@@ -28,9 +28,9 @@ function titleOf(slugs) {
 
 /**
  * The release PR's title, body and rows from git (L3). `git` is `(args) => string`; `pilotRef`
- * and `mainRef` are refs git takes literally; `prs` is `gh pr list --base pilot --state merged`'s
- * `{ number, headRefName, isCrossRepository }` list (the newest 200; an older one reads `–`), the
- * feature PR of each row, never a fork's, the highest number when several.
+ * and `mainRef` are refs git takes literally; `prs` is the host's merged **Review**s into pilot
+ * (the newest 200; an older one reads `–`), the feature PR of each row, never a fork's, the
+ * highest number when several.
  */
 export function releaseNotes({ git, pilotRef, mainRef, prs }) {
   const log = git(['log', '--first-parent', '--reverse', '--format=%H%x09%P%x09%s', `${mainRef}..${pilotRef}`]);
@@ -39,7 +39,7 @@ export function releaseNotes({ git, pilotRef, mainRef, prs }) {
     const [sha, parents, ...subject] = line.split('\t');
     const slug = LANDING.exec(subject.join('\t'))?.[1];
     if (!slug || parents.split(' ').length !== 2) continue;
-    const numbers = prs.filter((pr) => pr?.headRefName === `feat/${slug}` && pr.isCrossRepository !== true && Number.isSafeInteger(pr.number) && pr.number > 0).map((pr) => pr.number);
+    const numbers = prs.filter((pr) => pr?.head === `feat/${slug}` && pr.crossRepo !== true && Number.isSafeInteger(pr.number) && pr.number > 0).map((pr) => pr.number);
     rows.push({ slug, pr: numbers.length ? Math.max(...numbers) : null, sha });
   }
   const table = ['| Feature | PR | Landing |', '| --- | --- | --- |', ...rows.map(({ slug, pr, sha }) => `| ${slug} | ${pr === null ? '–' : `#${pr}`} | ${sha} |`)];
@@ -49,62 +49,51 @@ export function releaseNotes({ git, pilotRef, mainRef, prs }) {
 /**
  * Main gets pilot through the release PR (A1, A6): the open one from this repository's pilot to
  * the default branch, rewritten with `releaseNotes` and labelled, else one opened ready with them
- * and the label, which is created first (`--force`, so an existing one stands). Answers
- * `{ number, opened }`, with `why` too when gh could not make the label and the PR went without it; under a run remote other than origin, or `none`, `{ number: null, byHand }`,
- * the pilot to open one from, with no gh call; when git or gh cannot answer, `{ number: null, why }`.
- * `already`, the feature on pilot before this landing, rewrites an open one but opens none: with
- * none, `{ number: null, none: true }`. Never merges and never throws: the feature is already landed.
+ * and the label; a label the host cannot make costs the label, never the PR (the adapter drops it).
+ * Answers `{ number, opened }`; under a run remote other than origin, or with no host (`none`),
+ * `{ number: null, byHand }`, the pilot to open one from, with no host call; when git or the host
+ * cannot answer, `{ number: null, why }`. `already`, the feature on pilot before this landing,
+ * rewrites an open one but opens none: with none, `{ number: null, none: true }`. Never merges and
+ * never throws: the feature is already landed.
+ * @param {{ git: (args: string[]) => string, host: import('../deck/host.mjs').Host | null, already?: boolean }} options
  */
-export function releasePr({ git, gh, already = false }) {
+export function releasePr({ git, host, already = false }) {
   const unknown = (why) => ({ number: null, opened: false, why });
   let runs;
   let base;
   try {
     runs = runRemote(git);
-    if (runs === 'origin') base = remoteDefaultBranch(git);
+    if (runs === 'origin' && host !== null) base = remoteDefaultBranch(git);
   } catch (err) {
     return unknown(firstLine(err));
   }
-  if (runs !== 'origin') return { number: null, opened: false, byHand: runs === null ? PILOT_BRANCH : `${runs}/${PILOT_BRANCH}` };
-  const listed = (args) => {
-    const said = JSON.parse(gh(args));
-    if (!Array.isArray(said)) throw new Error('did not answer a list');
-    return said;
-  };
+  if (host === null || runs !== 'origin') return { number: null, opened: false, byHand: runs === null || runs === 'origin' ? PILOT_BRANCH : `${runs}/${PILOT_BRANCH}` };
   let open;
   try {
-    const prs = listed(['pr', 'list', '--head', PILOT_BRANCH, '--base', base, '--state', 'open', '--json', 'number,headRefName,baseRefName,isCrossRepository']);
     // A fork's branch named pilot is never the release PR.
-    open = prs.find((pr) => pr?.headRefName === PILOT_BRANCH && pr.baseRefName === base && pr.isCrossRepository === false && Number.isSafeInteger(pr.number) && pr.number > 0);
+    open = host.reviews({ head: PILOT_BRANCH, base, state: 'open' })
+      .find((pr) => pr.head === PILOT_BRANCH && pr.base === base && pr.crossRepo === false && Number.isSafeInteger(pr.number) && pr.number > 0);
   } catch (err) {
-    return unknown(`gh pr list failed: ${firstLine(err)}`);
+    return unknown(`${host.cli} pr list failed: ${firstLine(err)}`);
   }
   if (!open && already) return { number: null, opened: false, none: true };
   let notes;
   try {
-    const features = listed(['pr', 'list', '--base', PILOT_BRANCH, '--state', 'merged', '--limit', '200', '--json', 'number,headRefName,isCrossRepository']);
+    const features = host.reviews({ base: PILOT_BRANCH, state: 'merged', limit: 200 });
     notes = releaseNotes({ git, pilotRef: runRef(runs, PILOT_BRANCH), mainRef: runRef(runs, base), prs: features });
   } catch (err) {
     return unknown(`release notes failed: ${firstLine(err)}`);
   }
-  const step = (args) => {
-    try {
-      return { said: gh(args) };
-    } catch (err) {
-      return { why: `gh ${args.slice(0, 2).join(' ')} failed: ${firstLine(err)}` };
+  const { title, body } = notes;
+  const verb = open ? 'edit' : 'create';
+  try {
+    if (open) {
+      const { why } = host.edit(open.number, { title, body, label: LABEL });
+      return { number: open.number, opened: false, ...(why === undefined ? {} : { labelWhy: why }) };
     }
-  };
-  // A label gh cannot make costs the label, never the PR: its why rides on the answer.
-  const label = step(['label', 'create', LABEL, '--force']);
-  const labelled = (flag) => (label.why ? [] : [flag, LABEL]);
-  const answer = (number, opened) => ({ number, opened, ...(label.why && { why: label.why }) });
-  if (open) {
-    const edit = step(['pr', 'edit', String(open.number), '--title', notes.title, '--body', notes.body, ...labelled('--add-label')]);
-    return edit.why ? unknown(edit.why) : answer(open.number, false);
+    const { number, why } = host.open({ base, head: PILOT_BRANCH, title, body, label: LABEL });
+    return { number, opened: true, ...(why === undefined ? {} : { labelWhy: why }) };
+  } catch (err) {
+    return unknown(`${host.cli} pr ${verb} failed: ${firstLine(err)}`);
   }
-  const create = step(['pr', 'create', '--base', base, '--head', PILOT_BRANCH, '--title', notes.title, '--body', notes.body, ...labelled('--label')]);
-  if (create.why) return unknown(create.why);
-  const number = Number(/\/pull\/(\d+)\s*$/.exec(String(create.said))?.[1]);
-  if (!Number.isSafeInteger(number) || number <= 0) return unknown('gh pr create printed no PR URL');
-  return answer(number, true);
 }

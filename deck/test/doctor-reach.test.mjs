@@ -44,6 +44,7 @@ test('checkAll reads the reach and the enabled plugin through its deps, after th
     resolveDep: () => true,
     canWrite: () => true,
     onPath: () => true,
+    git: () => 'none',
     probe: async () => ({ state: 'none' }),
     readReach: () => ({ level: 'nothing', chosen: true }),
     readEnabled: () => true,

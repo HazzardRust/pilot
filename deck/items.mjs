@@ -225,7 +225,7 @@ const GATE1_FIELDS = [
   { ...TICKET_ID_FIELD, required: true },
 ];
 const GATE2_FIELDS = [
-  { name: 'pr', required: true, shape: /^(#\d+|https?:\/\/\S+)$/, means: 'a PR url or #n' },
+  { name: 'pr', required: true, shape: /^(#\d+|https?:\/\/\S+|feat\/[A-Za-z0-9._-]+)$/, means: 'a PR url, #n or feat/<slug>' },
   SHA_FIELD,
   { name: 'walkthrough', shape: /^itm_[0-9a-f]+$/, means: 'an item id' }, COMMENT_FIELD,
   // The ticket it concludes: a green one after its walkthrough sign-off (overview-one-ticket L18); the post still turns a yellow one green.

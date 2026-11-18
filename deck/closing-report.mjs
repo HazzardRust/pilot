@@ -49,11 +49,14 @@ export const closedByPilotLines = (closes) => [
  * Land's main line, in S2's `mainLine` shapes only (one-integration-line A1): `main gets pilot: #<n>`, with
  * ` (opened)` or not; `… open a PR from <x> to main by hand`; `… no open PR`; `… unknown (<why>)`. The last one land printed.
  */
-const MAIN_LINE = /^main gets pilot: (?:#(\d+)(?: \(opened\))?|open a PR from (\S+) to main by hand|no open PR|unknown \(.*\))$/gm;
+const MAIN_LINE = /^main gets pilot: (?:#(\d+)(?: \(opened\))?|open a PR from (\S+) to main by hand|merge (\S+) into main by hand|no open PR|unknown \(.*\))$/gm;
 
 /** The closing report's first human step, from land's main line (spec 3): the one PR the user merges for main. */
-function mainStep(number, byHand) {
-  if (number !== undefined) return `Human step: Merge #${number} into main with a merge commit, when you want main to have it.`;
+function mainStep(number, byHand, merged) {
+  // No branch named: the PR's base is the host's default branch, which land does not print (QA F3).
+  if (number !== undefined) return `Human step: Merge #${number} with a merge commit, when you want main to have it.`;
+  // Run host `none` (other-host spec 3): no PR exists to open, so the branch itself is merged by hand.
+  if (merged !== undefined) return `Human step: Merge ${said(merged)} into main by hand, with a merge commit.`;
   // A bare branch is on no remote yet (run remote `none`): it is pushed before a PR can name it.
   if (byHand === 'pilot') return 'Human step: Push pilot, then open a PR from pilot to main by hand, and merge it with a merge commit.';
   if (byHand !== undefined) return `Human step: Open a PR from ${said(byHand)} to main by hand, and merge it with a merge commit.`;
@@ -82,11 +85,11 @@ export function closingReportOf(record, gate, left, closes = []) {
   const { agents, drains } = rankFriction(record?.friction);
   const list = (entries, none) => (entries.length > 0 ? entries.map((entry) => `- ${entry}`) : [`- ${none}`]);
   // Land's main line, whole, and the PR or the by-hand branch it names.
-  const [mainLine, number, byHand] = [...String(line ?? '').matchAll(MAIN_LINE)].at(-1) ?? [];
+  const [mainLine, number, byHand, merged] = [...String(line ?? '').matchAll(MAIN_LINE)].at(-1) ?? [];
   const body = [
     `Landed ${said(gate?.pr ?? 'the feature PR')} at ${said(sha ?? 'an unknown SHA')}.`,
     mainLine === undefined ? 'main gets pilot: not printed by land' : said(mainLine),
-    mainStep(number, byHand),
+    mainStep(number, byHand, merged),
     // The lander leaves other runs' branches to the user (lander S10 took the prune out of the pilot's tail).
     PRUNE_STEP,
     '',

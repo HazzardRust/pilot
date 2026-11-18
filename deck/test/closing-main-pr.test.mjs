@@ -26,11 +26,12 @@ const reportFor = (line) => closingReportOf(record, { pr: '#590', landing: { sta
 test("the report's first step is the main PR", () => {
   const body = reportFor('landed feat/x on pilot at 1a2b3c4\nmain gets pilot: #901');
   const steps = body.split('\n').filter((line) => line.startsWith('Human step:'));
-  assert.equal(steps[0], 'Human step: Merge #901 into main with a merge commit, when you want main to have it.');
+  // No branch name: the PR's base is the host's default branch, which land never printed (QA F3: GitLab's was master).
+  assert.equal(steps[0], 'Human step: Merge #901 with a merge commit, when you want main to have it.');
   assert.match(body, /^main gets pilot: #901$/m, 'the main line is shown');
   assert.doesNotMatch(body, /merge first|ready/i, 'no merge-first or ready step');
 
-  assert.ok(reportFor('landed feat/x on pilot at 1a2b3c4\nmain gets pilot: #901 (opened)').includes('Human step: Merge #901 into main'));
+  assert.ok(reportFor('landed feat/x on pilot at 1a2b3c4\nmain gets pilot: #901 (opened)').includes('Human step: Merge #901 with a merge commit'));
   assert.match(reportFor('landed feat/x on pilot at 1a2b3c4'), /^main gets pilot: not printed by land$/m);
   assert.doesNotMatch(reportFor('landed feat/x on pilot at 1a2b3c4\nmain gets pilot: #9x'), /Merge #9/, 'no looser match than mainLine');
 });

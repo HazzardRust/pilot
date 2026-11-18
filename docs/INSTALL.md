@@ -3,7 +3,7 @@
 You are Claude, and someone has pasted the install prompt from the README. These are the
 instructions it sent you to. Follow them in order, run the commands yourself, and tell
 the person at the keyboard what changed when you are done. They should not have to type
-anything except the answers to the four questions below.
+anything except the answers to the five questions below.
 
 You are writing into someone else's Claude Code configuration. Three rules hold over
 everything here: **nothing already on this machine is overwritten**, **nothing goes into
@@ -25,11 +25,12 @@ rather than counted. A silent skip is how a friend loses a file they wrote.
 | npm's global directory | A `pilot` command linked to that launcher, so `pilot run` works from any terminal and follows plugin updates. A `pilot` that belongs to another package is left alone. |
 | `HKCU\Environment\Path` (Windows) | npm's global directory is appended to the user PATH, with the value's kind kept, only when it is not already there (ADR 0128). |
 | The shell profile file (macOS, Linux) | One block that puts npm's global directory on the PATH is appended to the profile of the user's `$SHELL` (`~/.zshrc`, `~/.bashrc` or `~/.config/fish/conf.d/pilot.fish`; for bash on macOS, the first of `~/.bash_profile`, `~/.bash_login` or `~/.profile` that exists, else a new `~/.bash_profile`), only when the directory is not already on the PATH (ADR 0128). |
+| The global git config (`~/.gitconfig`) | One key, `pilot.host`, set by step 6b to their answer to question 5 with `pilot host <name>`: `github`, `gitlab` or `none`. Nothing else in it is touched; `pilot uninstall --yes` unsets it. |
 | Anything else | Nothing. |
 
 Run branches go to `origin` unless the person sets `pilot.remote`; see "Where run branches live" in [`OPERATING.md`](OPERATING.md), which is for the person: run nothing in it. Install writes no such setting.
 
-## The four questions to ask
+## The five questions to ask
 
 Ask these one at a time, in your own words, and wait for the answer before acting on it:
 
@@ -56,6 +57,14 @@ Ask these one at a time, in your own words, and wait for the answer before actin
    changes it later. On a run over an earlier install, `pilot reach` with no level prints
    the level in force: offer that as the default unless it says *not chosen*, and never
    run step 6 without their answer, since a lower level removes what the higher one placed.
+5. **Where do their repositories live?** The pilot opens its pull requests, reads their
+   state and posts its comments on the host the repository is on. `github` is the default
+   and needs `gh`; `gitlab` opens merge requests with `glab`; `none` is plain git with no
+   host: no host CLI starts, a feature is a branch landed on `pilot`, and they merge `pilot`
+   into their main branch by hand. The
+   answer is the name step 6b writes; `pilot host <name>` changes it later, and
+   `pilot host <name> --local` sets one repository apart. On a run over an earlier install,
+   `pilot host` with no name prints the host in force: offer that as the default.
 
 ## 1. Install the plugin
 
@@ -274,6 +283,18 @@ then the directory if nothing else is left in it, and prints each path it remove
 else there is kept and named, and a link is never followed; repeat the kept lines to them.
 On a machine that never had it, it prints that there is nothing to remove.
 
+## 6b. Set the host
+
+```bash
+pilot host <name>
+```
+
+`<name>` is their answer to question 5: `github`, `gitlab` or `none`. It writes
+`pilot.host` to their global git config and prints the key, the value and `global`; any
+other name exits 1 naming `pilot.host` and writes nothing, so ask again rather than
+guessing. A repository with a `pilot.host` of its own keeps it: the repository's value
+wins over the global one.
+
 ## 7. Offer the `CLAUDE.excerpt.md` excerpt
 
 Offer it only if the reach is `everything`. Below it, skip this step and say so in the
@@ -359,6 +380,7 @@ All of it is safe to run twice, and a second run should change nothing:
 | Settings merge | Reports both status lines as already set, adds no ask rule and no merge allow rule, and reports any `WebFetch` host already allowed or already covered by a deny rule. Writes nothing, backs up nothing. |
 | Reach | At the same level, reports every rule as already there and names again the files it left alone. Writes nothing but `reach.json`, deletes nothing. |
 | Leftovers | Reports there is nothing to remove, or names again what it kept. |
+| Host | Writes the same value again; `pilot host` first prints the one in force. |
 | Excerpt | Ask again; append only on a fresh yes, and check it is not already in the file. |
 
 If a second run reports files as *written* rather than *already present*, something has
@@ -378,6 +400,7 @@ stop, remove and leave, and changes nothing. Then `pilot uninstall --yes`, which
   WebFetch hosts stay and are named;
 - removes each rules file under `~/.claude/rules` that is byte-identical to a copy pilot
   shipped; an edited one stays and is named, and a file of their own is not touched;
+- unsets `pilot.host` in their global git config; a repository's own `--local` value stays;
 - leaves, and names, the store `~/.claude/pilot` and the audits in it, the Windows PATH entry
   (pilot cannot tell it from their own) and the `CLAUDE.md` excerpt (added with no marker);
 - ends with `last: claude plugin uninstall pilot@pilot`, the one command left for them.

@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { githubHost } from '../../deck/host-github.mjs';
 import { QA_MARKER, featureBody, syncFeaturePr } from '../feature-pr.mjs';
 import { git as gitAt } from '../pilot-branch.mjs';
 
@@ -47,13 +48,13 @@ function fakeGh(comments = []) {
     const at = args.indexOf('--body-file');
     if (at !== -1) files.push(fs.readFileSync(args[at + 1], 'utf8'));
     if (args[0] === 'pr' && args[1] === 'list') {
-      return JSON.stringify([{ number: 7, body: featureBody(SPEC, record(), ''), baseRefName: 'pilot', isCrossRepository: false }]);
+      return JSON.stringify([{ number: 7, state: 'OPEN', body: featureBody(SPEC, record(), ''), baseRefName: 'pilot', isCrossRepository: false }]);
     }
     if (args[0] === 'pr' && args[1] === 'view') return JSON.stringify({ comments });
     return '';
   };
   const writes = () => calls.filter((call) => (call[0] === 'pr' && ['create', 'edit', 'comment'].includes(call[1])) || call[0] === 'api');
-  return { gh, calls, files, writes };
+  return { host: githubHost(gh), calls, files, writes };
 }
 
 const marked = (text, over = {}) => ({
@@ -67,7 +68,7 @@ test('first text posts one comment', (t) => {
   const cwd = repo(t);
   // A stranger's comment carrying the marker is not this account's: never edited, never counted.
   const fake = fakeGh([marked('planted', { viewerDidAuthor: false, url: 'https://github.com/o/r/pull/7#issuecomment-9' })]);
-  const out = syncFeaturePr({ gh: fake.gh, git: gitIn(cwd), record: record() });
+  const out = syncFeaturePr({ host: fake.host, git: gitIn(cwd), record: record() });
   const writes = fake.writes();
   assert.equal(writes.length, 1, 'one write');
   assert.deepEqual(writes[0].slice(0, 4), ['pr', 'comment', '7', '--body-file']);
@@ -79,7 +80,7 @@ test('first text posts one comment', (t) => {
 test('changed text edits it once', (t) => {
   const cwd = repo(t);
   const fake = fakeGh([{ body: 'a reviewer said hi', viewerDidAuthor: true, url: 'https://github.com/o/r/pull/7#issuecomment-1' }, marked('the old checks')]);
-  syncFeaturePr({ gh: fake.gh, git: gitIn(cwd), record: record() });
+  syncFeaturePr({ host: fake.host, git: gitIn(cwd), record: record() });
   const writes = fake.writes();
   assert.equal(writes.length, 1, 'one write');
   const [api] = writes;
@@ -88,20 +89,44 @@ test('changed text edits it once', (t) => {
   assert.equal(api[api.indexOf('-f') + 1], `body=${QA_MARKER}\n${CHECKS}\n`);
   // The same text: nothing written.
   const same = fakeGh([marked(CHECKS)]);
-  const out = syncFeaturePr({ gh: same.gh, git: gitIn(cwd), record: record() });
+  const out = syncFeaturePr({ host: same.host, git: gitIn(cwd), record: record() });
   assert.equal(same.writes().length, 0, '0 writes for the same text');
   assert.doesNotMatch(out.line, /QA comment/);
 
   // No comment on the record: the comments are not even read.
   const none = fakeGh([marked('the old checks')]);
-  syncFeaturePr({ gh: none.gh, git: gitIn(cwd), record: record({ qaComment: undefined }) });
+  syncFeaturePr({ host: none.host, git: gitIn(cwd), record: record({ qaComment: undefined }) });
   assert.equal(none.calls.filter((call) => call[1] === 'view').length, 0);
   assert.equal(none.writes().length, 0);
+});
+
+test('one QA comment', (t) => {
+  const cwd = repo(t);
+  // One fake GitHub across two runs: the comment `pr comment` posts is what `pr view` answers next.
+  const comments = [];
+  const calls = [];
+  const run = (args) => {
+    calls.push(args);
+    if (args[1] === 'list') return JSON.stringify([{ number: 7, state: 'OPEN', body: featureBody(SPEC, record(), ''), baseRefName: 'pilot', isCrossRepository: false }]);
+    if (args[1] === 'view') return JSON.stringify({ comments });
+    if (args[1] === 'comment') {
+      // GitHub hands a comment back with CRLF line ends.
+      const body = fs.readFileSync(args[args.indexOf('--body-file') + 1], 'utf8').replace(/\n/g, '\r\n');
+      comments.push({ body, viewerDidAuthor: true, url: 'https://github.com/o/r/pull/7#issuecomment-555' });
+    }
+    return '';
+  };
+  const host = githubHost(run);
+  syncFeaturePr({ host, git: gitIn(cwd), record: record() });
+  syncFeaturePr({ host, git: gitIn(cwd), record: record() });
+  syncFeaturePr({ host, git: gitIn(cwd), record: record({ qaComment: `${CHECKS}\n| 2 | pass | a look |` }) });
+  const writes = calls.filter((call) => call[1] === 'comment' || call[0] === 'api');
+  assert.deepEqual(writes.map((call) => call.slice(0, 2)), [['pr', 'comment'], ['api', 'repos/o/r/issues/comments/555']]);
 });
 
 test('a marked comment whose url names no comment id is a failure naming the step', (t) => {
   const cwd = repo(t);
   const fake = fakeGh([marked('old', { url: 'https://github.com/o/r/pull/7' })]);
-  assert.throws(() => syncFeaturePr({ gh: fake.gh, git: gitIn(cwd), record: record() }), /gh pr view: /);
+  assert.throws(() => syncFeaturePr({ host: fake.host, git: gitIn(cwd), record: record() }), /gh pr view: /);
   assert.equal(fake.writes().length, 0);
 });

@@ -1,0 +1,370 @@
+{
+  "slug": "other-host",
+  "feature": "The pilot runs on other hosts",
+  "ticket": "itm_b18bcafffbce",
+  "branch": "feat/other-host",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-other-host-r2",
+  "artefact": "docs/design/other-host/architecture.md",
+  "slices": [
+    {
+      "slice": "other-host",
+      "state": "principles fix round; in QA (read-only) at 62140d88",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11"
+      ],
+      "branch": "feat/other-host",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-other-host-r2",
+      "pr": 106
+    },
+    {
+      "slice": "S1",
+      "state": "integrated fa21555",
+      "branch": "slice/other-host-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/other-host-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/other-host-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/other-host-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/other-host-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated",
+      "after": [
+        "S4",
+        "S5",
+        "S7",
+        "S12"
+      ],
+      "branch": "slice/other-host-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/other-host-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "integrated",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/other-host-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/other-host-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s9"
+    },
+    {
+      "slice": "S10",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/other-host-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s10"
+    },
+    {
+      "slice": "S11",
+      "state": "integrated 2766f42",
+      "branch": "slice/other-host-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s11"
+    },
+    {
+      "slice": "S12",
+      "state": "integrated",
+      "after": [
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "branch": "slice/other-host-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s12"
+    },
+    {
+      "slice": "principles fix",
+      "state": "pushed 4af2aac",
+      "branch": "fix/other-host-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-fix"
+    }
+  ],
+  "findings": [
+    "kept: P1 added-slice — S3 took seam option A: a failed label create is swallowed by githubHost.labelled (host-github.mjs:121-129) and land no longer prints its label warning; after S5 integrates, Host open/edit return `why` and land prints it again (spec 2: moved, not rewritten)",
+    "kept: F1 finding — gitlab reviews caps every list at 100 silently (host-gitlab.mjs:134), so prune's PR_LIMIT guard (branches.mjs:66) never fires and release's 200 is cut to 100; throw when a full page comes back and more was asked, plus a contract row",
+    "kept: F2 simplify — release.mjs:83 maps a Review back to gh field names; releaseNotes reads head/crossRepo, the map line goes",
+    "kept: F3 simplify — Review.title and Review.url are read by no production caller; removed from the typedef, adapters and contract rows (whoami and name are L1's: asked of the user, itm_6eca66849bdb)",
+    "kept: F5 simplify — doctor.mjs HOST_CLI repeats the adapters' cli and pilot.host is read twice; one hostFor call, HOST_CLI and the hostOf import go",
+    "kept: F4 simplify — caller guards the adapter contract already enforces (non-list, non-integer number, state filter) go, each only where host-contract.test pins the guarantee",
+    "dropped: F6 nit — moving the fork filter into the adapters changes retarget's behaviour (fork reviews on a dropped base were retargeted before) and every caller's Review; the five explicit filters cost reading only",
+    "dropped: N1 nit — land carrying host to mainLine is 0 lines either way; no consequence worth the diff",
+    "dropped: N2 nit — homeGit's env scrub is the security reviewer's guard against a scratch-home run unsetting the real global key; deleting it needs a git seam in uninstall, an addition",
+    "dropped: N3 nit — one extra comments read after a create, accepted at S5",
+    "dropped: lint check-slices Misses: line — slice-format drift in the checker, not the feature; recorded as friction",
+    "dropped: consider S8/S9 security — security-reviewer APPROVE; its one LOW (gate2 pr accepts feat/..) reaches only closing-report.mjs:89's said(), display text, no argv, URL or ref"
+  ],
+  "next": "integrate the fix round, then send QA the tip",
+  "updatedAt": "2026-11-18T07:16:09.283Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice owned-files list missed five integrate tests injecting the renamed `gh` option; they stayed green while starting the real gh CLI; reviewer caught it, the gate did not",
+      "evidence": "S2 report: integrate-slice-commit, -chain, -dir, -select, integrate.test.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice line anchors off (integrate :327/:534 are :355/:566)",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "`pilot` on PATH is the installed package, not the worktree's; live check needs node <worktree>/bin/pilot.mjs",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gh-stub prints nothing until reply.txt is written: first run read 'host failed: not JSON'",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 and S5 implementers each reported a context reset/compaction before writing any code, minutes after spawn, and restarted from the slice file",
+      "evidence": "S5 and S3 status messages to the co-pilot, worktrees at 88780dda with no commits"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "TaskOutput not in the co-pilot's toolset; waits on background commands by Bash polling loops",
+      "evidence": "4th co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "co-pilot run as integrate-then-hand-back bursts with the pilot holding the wait: 4th co-pilot integrated 2 slices and started 2 before pausing, the first 3 integrated 2 between them",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: pilot deck --scratch --seed-run seeds no ticket, so pilot pr --ticket needed a hand-posted ticket",
+      "evidence": "record: no ticket itm_... in <clone>"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: gh stub prints only reply.txt, so every pr list read as not JSON until hand-written",
+      "evidence": "pilot gh-stub reply.txt"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 and S3: no npm run lint script; the gate step costs a failed call",
+      "evidence": "npm run lint: missing script"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: live pilot land in a fixture repo needs a package-lock.json for npm ci",
+      "evidence": "first live run failed on npm ci"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10 reported a context compaction minutes after spawn, before any commit, and restarted from the slice file: third slice in a row (S3, S5, S10)",
+      "evidence": "S10 status message; worktree clean at 0b15d63b"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 also reported a compaction before any commit, minutes after spawn; with S10 that is two of three slices spawned together, so the compaction looks tied to spawn, not slice size",
+      "evidence": "S4 status message; worktree clean at 0b15d63b"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: the passing() helper is copy-pasted in four doctor test files, so one new dep cost four Read+Edit pairs",
+      "evidence": "deck/test/doctor{,-deck,-reach,-mods}.test.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: a sleep 100 wait was blocked by the shell hook",
+      "evidence": "S9 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: install.test pins a doc heading's exact words, so renaming 'four questions' to 'five' broke it",
+      "evidence": "scripts/test/install.test.mjs:1001"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: scripts/uninstall.mjs had no git seam; its scratch-home tests could unset pilot.host in the developer's real global config",
+      "evidence": "security-reviewer MEDIUM, fixed in 6335fcad"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10 slice lists docs/adr/README.md as owned, but adr-index skips NNNN files, so the slice cannot change it",
+      "evidence": "scripts/adr-index.mjs:87-88"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 owned-files list missed ~13 land* tests that inject gh into land (three call-site shapes); one question round and 3 files found on a second grep",
+      "evidence": "S4 report: land-clear, land-gc, land-offline beyond the 10 in 2c942c10"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 slice anchors off by 1-3 lines and named hostFor/githubHost as scripts/ when they are in deck/",
+      "evidence": "land :56 not :55; readsMerged :347 not :350"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: gh stub answers every call with one reply.txt, so a live github landing cannot show a realistic main line",
+      "evidence": "S4 live check: main line unknown, no PR url"
+    },
+    {
+      "kind": "drain",
+      "what": "a co-pilot's Blocked: SendMessage (classifier unavailable, sent on reissue) sat 20 min and paused other-host with its co-pilot live; pilot closed it Moot and re-claimed the lane, second time",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8 slice Interface names mainStep(line) -> string, but the code has an unexported mainStep(number, byHand), so the test went through closingReportOf",
+      "evidence": "deck/closing-report.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8: test:changed ran past 180 s and went to the background, so the gate was waited on by polling its log",
+      "evidence": "S8 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a slice-file edit via node String.replace with a $` in the replacement spliced the file's head into the middle (S12.md garbled); repaired in b1a13ad7",
+      "evidence": "S12 implementer report; S12.md lines 16-31 at b7412fab"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12: gh-stub always exits 0 and answers one reply.txt, so a refused label create cannot be run live",
+      "evidence": "scripts/gh-stub.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12: a 10-file diff ran the full suite (4420 tests, ~6 min) because the selection was over the 24000-character argv limit",
+      "evidence": "S12 gate"
+    },
+    {
+      "kind": "drain",
+      "what": "third stale Blocked item (pilot ready, classifier unavailable, done on reissue) paused other-host after 20 min and left the ticket green with its co-pilot live; pilot closed it Moot, pivoted the ticket back to yellow and re-claimed the lane",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 also reported its context summarised minutes after spawn, before any commit, and restarted; every implementer this run (S3, S4, S5, S6, S10) has done this, which suggests the hello SendMessage arriving at spawn triggers it",
+      "evidence": "S6 status message; worktree clean at bed926a6"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: the handback hook ended the implementer's run before it could spawn the re-review the co-pilot asked for; the co-pilot spawned it instead",
+      "evidence": "S6 report, open item 1"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 slice file's 'every host call goes through an adapter' did not name doctor's --version PATH probe; a Gate 1 seam note would have saved a BLOCK and a re-review round",
+      "evidence": "typescript-reviewer BLOCK on S6; S6.md seam 390b9ad7"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "a context summary mid-run dropped every finding; a read-only reviewer has nothing on disk to fall back on; respawned with the instruction to write each table to its scratchpad as it goes",
+      "evidence": "first fundamentalist hand-back, 37.8k tokens, no report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "check-slices.mjs 0.9.8 requires a Misses: line no slice file carries, so the rewrite-check lint is noise",
+      "evidence": "check-slices exit 1 on all 12 slices"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the evidence runner did not report before hand-back, so diff coverage and mutation stay unknown; worktree pilot-fund-other-host-2 left on disk (Permission denied on remove)",
+      "evidence": "second fundamentalist report, tools table"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the record's feature row carried pr 955 while the open feature PR is #106; the fundamentalist, the evidence runner and QA were briefed with #955 (only QA uses it; corrected)",
+      "evidence": "gh pr list --head feat/other-host: #106 OPEN",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "diff coverage denied by the classifier (c8 + diff-cover); mutation dry run failed 2 tests in Stryker's sandbox copy (missing @modelcontextprotocol/sdk; host-bar's positive control on instrumented source)",
+      "evidence": "evidence runner hand-back to main, a1864b297234e132f"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "fix brief's live step `git config pilot.host none` would write the .git/config every worktree shares; the implementer used GIT_CONFIG_COUNT env instead",
+      "evidence": "fix round report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the Chrome DevTools MCP never loaded and the deck MCP is down in QA's session; Sign off pressed by POST /reply on scratch decks",
+      "evidence": "QA read-only report"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a fixture ticket cannot move red to yellow without a gate1; set directly in the scratch deck.json",
+      "evidence": "QA read-only report"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the gate run in a worktree stops a scratch deck started from the same worktree; run the gate before starting a scratch deck",
+      "evidence": "stopped 20612 daemon"
+    }
+  ]
+}
