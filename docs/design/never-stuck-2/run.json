@@ -98,7 +98,7 @@
     },
     {
       "slice": "S19",
-      "state": "pushed a125c1c (NOT integrated: S15's crew-toolsearch test missing from TREE_TESTS; fix on feat running)",
+      "state": "integrated c7786ee6",
       "branch": "slice/never-stuck-2-s19",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s19"
     },
@@ -119,8 +119,8 @@
     }
   ],
   "findings": [],
-  "next": "fixer lists crew-toolsearch in TREE_TESTS + S14/S16 seam notes on feat; then integrate S19, S14, S16; then S18",
-  "updatedAt": "2026-11-18T09:54:22.518Z",
+  "next": "integrating S14, S16; then S18",
+  "updatedAt": "2026-11-18T10:00:22.759Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
