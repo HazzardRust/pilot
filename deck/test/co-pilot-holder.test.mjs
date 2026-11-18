@@ -9,11 +9,13 @@ import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 
+import { repoKey } from '../items.mjs';
 import { aTicket, deckOnAPort, tempDeck } from '../testUtils.mjs';
 
-const { coPilotFor, requestSwitch, setCoPilot } = await import('../store.mjs');
+const { coPilotFor, requestSwitch, resolveItem, setCoPilot, storeFile } = await import('../store.mjs');
 
 /** `aTicket`'s repository. */
 const LANE_REPO = path.resolve('D:/work/pilot');
@@ -51,6 +53,23 @@ test('the holder and the switch\'s to are allowed', (t) => {
   requestSwitch(LANE_REPO, to.id);
   setCoPilot(to.id, true);
   assert.deepEqual(slot(), { ticket: to.id, live: true }, 'the switch\'s to is granted');
+  assert.equal(JSON.parse(fs.readFileSync(storeFile(), 'utf8')).switches?.[repoKey(LANE_REPO)]?.coPilot, undefined, 'the switch is cleared');
+});
+
+test('a released or closed holder, or one in another repository, leaves the lane free', (t) => {
+  tempDeck(t);
+  const released = aTicket('Released', 'yellow');
+  setCoPilot(released.id, true);
+  setCoPilot(released.id, false);
+  const closed = aTicket('Closed', 'yellow');
+  setCoPilot(closed.id, true);
+  resolveItem(closed.id, 'Done.');
+  const elsewhere = aTicket('Elsewhere', 'yellow', path.resolve('D:/work/other'));
+  setCoPilot(elsewhere.id, true);
+
+  const next = aTicket('Next', 'yellow');
+  setCoPilot(next.id, true);
+  assert.deepEqual(slot(), { ticket: next.id, live: true });
 });
 
 test('a switch names what it replaced', async (t) => {

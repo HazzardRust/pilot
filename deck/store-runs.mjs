@@ -360,14 +360,14 @@ export function deckLanes() {
 
 /**
  * `deck_ticket co-pilot` / `release` (spec 2, L8) on the open yellow ticket `ticketId`; another ticket's release changes nothing.
- * `co-pilot` on the pending co-pilot switch's `to` completes it (spec 18, L18): the record cleared in the same write,
- * and the entry returned names the holder it `replaced`. Any other ticket is refused while a live holder has the lane.
+ * `co-pilot` on the pending co-pilot switch's `to` completes it (spec 18, L18), clearing the record, returning the holder it `replaced`.
  */
 export function setCoPilot(ticketId, live) {
   const deck = readDeck();
-  let replaced;
   const ticket = deck.items.find((item) => item.id === ticketId && item.kind === KIND_TICKET && typeof item.repo === 'string');
   if (!ticket) throw new DeckRefusal(`no ticket ${ticketId} on the deck`);
+  const holder = storedCoPilot(deck, ticket.repo); // a live holder goes only to its switch's `to`, never overwritten (never-stuck spec 17)
+  const replaced = live && holder && holder.ticket !== ticketId && isLiveCoPilot(deck, holder) ? holder.ticket : undefined;
   refuseCoPilotSwitch(deck, ticket.repo, live ? 'co-pilot' : 'release', ticketId);
   if (live) {
     if (!isOpen(ticket) || stateOf(ticket) !== 'yellow') throw new DeckRefusal(`item ${ticketId} is ${isOpen(ticket) ? stateOf(ticket) : 'closed'}; a co-pilot builds an open yellow ticket`);
@@ -375,12 +375,7 @@ export function setCoPilot(ticketId, live) {
     const chain = deck.items.find((item) => isChainHandoff(item, ticket.repo) && isOpen(item));
     if (chain) throw new DeckRefusal(`a /clear is due for ${chain.id}; spawn no co-pilot, the session after it will`);
     const switching = switchOf(deck.items, ticket.repo, switchesOf(deck, ticket.repo).lanes, 'coPilot')?.to === ticketId;
-    // A live holder is replaced only by its pending switch's `to`, never overwritten (never-stuck spec 17, 18).
-    const holder = storedCoPilot(deck, ticket.repo);
-    if (holder && holder.ticket !== ticketId && isLiveCoPilot(deck, holder)) {
-      if (!switching) throw new DeckRefusal(`co-pilot lane held by ${holder.ticket}: \`deck_ticket release ${holder.ticket}\` or a SWITCH to ${ticketId}`);
-      replaced = holder.ticket;
-    }
+    if (replaced && !switching) throw new DeckRefusal(`co-pilot lane held by ${replaced}: \`deck_ticket release ${replaced}\` or a SWITCH to ${ticketId}`);
     if (switching) clearSwitch(deck, ticket.repo, 'coPilot');
     const coPilots = deck.coPilots !== null && typeof deck.coPilots === 'object' && !Array.isArray(deck.coPilots) ? deck.coPilots : {};
     deck.coPilots = { ...coPilots, [repoKey(ticket.repo)]: { ticket: ticketId, live: true, at: new Date().toISOString() } };
