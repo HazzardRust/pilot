@@ -1,0 +1,116 @@
+{
+  "slug": "never-stuck-2",
+  "feature": "never-stuck run 2",
+  "ticket": "itm_4be94a7ae00a",
+  "branch": "feat/never-stuck-2",
+  "base": "feat/never-stuck",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-never-stuck-2",
+  "artefact": "docs/design/never-stuck/architecture.md",
+  "slices": [
+    {
+      "slice": "S7",
+      "state": "planned"
+    },
+    {
+      "slice": "S8",
+      "state": "planned"
+    },
+    {
+      "slice": "S9",
+      "state": "planned",
+      "after": [
+        "S8"
+      ]
+    },
+    {
+      "slice": "S10",
+      "state": "planned"
+    },
+    {
+      "slice": "S11",
+      "state": "planned"
+    },
+    {
+      "slice": "S12",
+      "state": "planned",
+      "after": [
+        "S8"
+      ]
+    },
+    {
+      "slice": "S13",
+      "state": "planned"
+    },
+    {
+      "slice": "S14",
+      "state": "planned",
+      "after": [
+        "S10"
+      ]
+    },
+    {
+      "slice": "S15",
+      "state": "planned"
+    },
+    {
+      "slice": "S16",
+      "state": "planned",
+      "after": [
+        "S10"
+      ]
+    },
+    {
+      "slice": "S17",
+      "state": "planned"
+    },
+    {
+      "slice": "S18",
+      "state": "planned",
+      "after": [
+        "S7",
+        "S13",
+        "S15",
+        "S16",
+        "S17"
+      ]
+    },
+    {
+      "slice": "S19",
+      "state": "planned"
+    }
+  ],
+  "next": "Gate 1 itm_887dbf9d45aa signed 2026-11-18T04:48Z: plan design/never-stuck-2 @ 19a334c7, S7-S19 (13 slices), PR #107. Builds when the yellow lane frees after other-host; rebase feat/never-stuck-2 onto pilot once Run A (feat/never-stuck, #94) lands.",
+  "finished": "planned",
+  "finishedAt": "2026-11-18T04:49:44.311Z",
+  "updatedAt": "2026-11-18T04:49:44.311Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "artefact lives only on feat/never-stuck while pilot base printed feat/handoff-books; one round trip to main before cutting",
+      "evidence": "git log per ref",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck_post refuses a question without a Research: line, which the architect's definition does not name",
+      "evidence": "2 refused posts",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "the cause of a queued SendMessage lives only in the session jsonl, not in wrapper.log",
+      "evidence": "grep of 8 transcripts",
+      "size": 8
+    },
+    {
+      "kind": "drain",
+      "what": "repeat forced hand-backs from the handoff-books co-pilot while its QA child was live, each read by the pilot",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "whole wrapper.log hold/typed history returned by one unbounded grep in the pilot",
+      "size": 130
+    }
+  ]
+}
