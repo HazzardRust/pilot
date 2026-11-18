@@ -44,10 +44,12 @@
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "pushed 7cef150",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/other-host-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s3"
     },
     {
       "slice": "S4",
@@ -58,10 +60,12 @@
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "pushed 760d9b8",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/other-host-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s5"
     },
     {
       "slice": "S6",
@@ -109,8 +113,11 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s11"
     }
   ],
-  "next": "integrate S2 (2545a11f) onto feat ce533d15, then pilot ready and start S5/S9/S10 two at a time",
-  "updatedAt": "2026-11-18T05:32:52.391Z",
+  "findings": [
+    "kept: P1 added-slice — S3 took seam option A: a failed label create is swallowed by githubHost.labelled (host-github.mjs:121-129) and land no longer prints its label warning; after S5 integrates, Host open/edit return `why` and land prints it again (spec 2: moved, not rewritten)"
+  ],
+  "next": "integrate S5 (running), re-review S3 fix commit 7cef150 then integrate, then pilot ready for S4 S9 S10",
+  "updatedAt": "2026-11-18T05:53:06.633Z",
   "friction": [
     {
       "agent": "pilot",
@@ -207,6 +214,42 @@
       "what": "gh-stub prints nothing until reply.txt is written: first run read 'host failed: not JSON'",
       "evidence": "S2 report",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 and S5 implementers each reported a context reset/compaction before writing any code, minutes after spawn, and restarted from the slice file",
+      "evidence": "S5 and S3 status messages to the co-pilot, worktrees at 88780dda with no commits"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "TaskOutput not in the co-pilot's toolset; waits on background commands by Bash polling loops",
+      "evidence": "4th co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "co-pilot run as integrate-then-hand-back bursts with the pilot holding the wait: 4th co-pilot integrated 2 slices and started 2 before pausing, the first 3 integrated 2 between them",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: pilot deck --scratch --seed-run seeds no ticket, so pilot pr --ticket needed a hand-posted ticket",
+      "evidence": "record: no ticket itm_... in <clone>"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: gh stub prints only reply.txt, so every pr list read as not JSON until hand-written",
+      "evidence": "pilot gh-stub reply.txt"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 and S3: no npm run lint script; the gate step costs a failed call",
+      "evidence": "npm run lint: missing script"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: live pilot land in a fixture repo needs a package-lock.json for npm ci",
+      "evidence": "first live run failed on npm ci"
     }
   ]
 }
