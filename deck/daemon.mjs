@@ -27,12 +27,13 @@ import { ensureSecret } from '../hooks/lib/deck-secret.js';
 import { writeOpenFile } from './launch.mjs';
 import { createDeckHttpServer, DECK_HOST, deckPort, deckUrl } from './server.mjs';
 import { holdIdle } from './idle.mjs';
-import { closeLandedAtStart, landingsRunning, startQueued } from './landing.mjs';
+import { adoptLandings, closeLandedAtStart, landingsRunning, startQueued } from './landing.mjs';
+import { announceChange } from './server-wait.mjs';
 import { oneLine } from './one-line.mjs';
 import { holdLeash, leashFrom } from './leash.mjs';
 import { probeDeck } from './probe.mjs';
 import { processTable } from './procs.mjs';
-import { archiveOld, interruptLandings, storeDir } from './store.mjs';
+import { archiveOld, storeDir } from './store.mjs';
 import { startMemoryLog } from './memory.mjs';
 import { startUsageLog } from './telemetry.mjs';
 import { readUsageSwitch } from './usage-switch.mjs';
@@ -213,12 +214,9 @@ export async function main() {
   // Here and not in `startDaemon`, which the suite calls: a test daemon must never tick (L1).
   startUsageLog();
   startMemoryLog('daemon');
-  // Before any press is read: a landing left running had its child die with the last daemon (spec 7).
-  try {
-    interruptLandings();
-  } catch (err) {
-    console.error('[deck] the landings a restart interrupted could not be settled:', err.message);
-  }
+  // Before any press is read: a live land child is re-adopted (never-stuck spec 21) and every other landing reads
+  // interrupted (spec 7), in adoptLandings' one sweep, so no second sweep can interrupt a child that exits between them.
+  void adoptLandings({ announce: announceChange });
   // Old closed items move to the month archive here and daily, never from writeDeck or startDaemon (store-durability L4).
   const archive = () => {
     try {

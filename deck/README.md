@@ -39,6 +39,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `idle.mjs` | the user's deck's idle rule: it exits after 10 minutes with no session, no landing and no request, reading the process table only when the other two hold (process-gc L2, ADR 0136) |
 | `items.mjs` | the item vocabulary: kinds, fields, open or closed, whose turn |
 | `items-bounds.mjs` | the item vocabulary's bounds and field shapes: limits, the words the deck offers, `stepParts` |
+| `land-child.mjs` | a landing's land child: its land dir, its recorded pid, and whether that pid is still the deck's land |
 | `landing-replies.mjs` | the pilot's `Resolving` and `Land again` on a gate2 whose landing stopped on a conflict, and the check that the worktree land kept still holds |
 | `landing-wait.mjs` | `pilot landing`: polls the deck until a gate2's landing settles and exits with its outcome |
 | `landing.mjs` | lands the feature when a gate2 is signed: starts `pilot land` in the run's worktree and records the outcome; counts the landings running; at start, retries or reports what a restart left owed |

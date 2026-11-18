@@ -45,6 +45,7 @@ import {
 import { LANDER_LINE } from '../scripts/merge-generated.mjs';
 import { sameRepo } from './runs.mjs';
 import { keptWorktree, landerDue, landingReply } from './landing-replies.mjs';
+import { landDir, pidAlive } from './land-child.mjs';
 import { blockedShapeGaps, isPilotClose, isVetoed, mayPilotClose, pilotCloseClaimed } from './blocked-shape.mjs';
 import { questionShapeGaps } from './question-shape.mjs';
 import { reportAskGaps } from './report-shape.mjs';
@@ -441,9 +442,9 @@ function writeLanding(gate2Id, text, landing, short) {
   return item;
 }
 
-/** A landing started: `running`, and the worktree it runs in on the thread (gate2-frees-lane spec 2). */
-export function beginLanding(gate2Id, { worktree }) {
-  return writeLanding(gate2Id, `landing started in ${worktree}`, (_, at) => ({ state: 'running', startedAt: at }));
+/** A landing started: `running`, the worktree it runs in on the thread (gate2-frees-lane spec 2), its child's pid and the land dir it writes to (never-stuck spec 21). */
+export function beginLanding(gate2Id, { worktree, pid }) {
+  return writeLanding(gate2Id, `landing started in ${worktree}`, (_, at) => ({ state: 'running', startedAt: at, ...(Number.isInteger(pid) ? { pid } : {}), dir: landDir(gate2Id) }));
 }
 
 /**
@@ -484,11 +485,12 @@ function conflictOf({ code, line }, gate2) {
   return keptWorktree(dir, gate2);
 }
 
-/** A settled landing: `landed` with its SHA, or `refused`, with an exit 3's kept worktree; `line` is land's own words, or the deck's refusal. */
+/** A settled landing: `landed` with its SHA, or `refused`, with an exit 3's kept worktree; `line` is land's own words, or the deck's refusal; its child's pid and land dir stay, so `Land again` is refused while that child lives (never-stuck spec 22). */
 const settled = (outcome) => (previous, at, gate2) => {
   const { ok, sha, line } = outcome;
   const dir = ok ? undefined : conflictOf(outcome, gate2);
-  return { state: ok ? 'landed' : 'refused', startedAt: previous?.startedAt ?? at, at, ...(ok && sha ? { sha } : {}), ...(dir ? { conflict: { dir, at } } : {}), line };
+  const held = previous?.pid === undefined ? {} : { pid: previous.pid, dir: previous.dir };
+  return { state: ok ? 'landed' : 'refused', startedAt: previous?.startedAt ?? at, at, ...(ok && sha ? { sha } : {}), ...(dir ? { conflict: { dir, at } } : {}), ...held, line };
 };
 
 export function settleLanding(gate2Id, outcome) {
@@ -499,13 +501,11 @@ export function settleLanding(gate2Id, outcome) {
 export const LANDING_INTERRUPTED = 'landing interrupted: the deck restarted; check origin/pilot';
 
 /**
- * The daemon's start-up sweep (spec 7, A3): a landing still `running` belonged to a daemon that
- * is gone, and its child with it (ADR 0035: a pid is never killed), so each reads interrupted, in
- * one write, before this daemon takes a press. Answers how many it settled.
- */
-export function interruptLandings() {
+ * The daemon's start-up sweep (spec 7, A3): each landing still `running` reads interrupted, in one write, before this daemon takes a press, but one `spare`
+ * names: by default one whose pid lives, which `adoptLandings` adopted or interrupted already (never-stuck spec 21). Answers how many it settled. */
+export function interruptLandings(spare = (item) => pidAlive(item.landing.pid)) {
   const deck = readDeck();
-  const running = deck.items.filter((item) => item.kind === KIND_GATE2 && item.landing?.state === 'running');
+  const running = deck.items.filter((item) => item.kind === KIND_GATE2 && item.landing?.state === 'running' && !spare(item));
   for (const item of running) landOn(deck, item, LANDING_INTERRUPTED, settled({ ok: false, line: LANDING_INTERRUPTED }), true);
   if (running.length) writeDeck(deck);
   return running.length;
