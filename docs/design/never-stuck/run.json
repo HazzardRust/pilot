@@ -1,127 +1,124 @@
 {
   "slug": "never-stuck",
   "feature": "a run never stops silently",
-  "ticket": "itm_4be94a7ae00a",
-  "branch": "feat/never-stuck-2",
-  "base": "pilot",
-  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-never-stuck-2",
+  "ticket": "itm_9b7008e91201",
+  "branch": "feat/never-stuck",
+  "base": "feat/blocked-steps",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-never-stuck",
   "artefact": "docs/design/never-stuck/architecture.md",
   "slices": [
     {
-      "slice": "never-stuck",
-      "state": "planned (run 2, PR #107)",
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/never-stuck-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
       "after": [
-        "S18",
-        "S19",
-        "S9",
-        "S11",
-        "S12",
-        "S14"
+        "S1"
       ],
-      "branch": "feat/never-stuck-2",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-never-stuck-2",
-      "pr": 107
+      "branch": "slice/never-stuck-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s2"
     },
     {
-      "slice": "S7",
-      "state": "planned"
-    },
-    {
-      "slice": "S8",
-      "state": "planned"
-    },
-    {
-      "slice": "S9",
-      "state": "planned",
+      "slice": "S3",
+      "state": "integrated",
       "after": [
-        "S8"
+        "S2"
+      ],
+      "branch": "slice/never-stuck-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/never-stuck-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/never-stuck-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated",
+      "after": [
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "branch": "slice/never-stuck-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s6"
+    },
+    {
+      "slice": "never-stuck",
+      "state": "fixing (principles round); QA read-only done 6/6, waits for tip"
+    },
+    {
+      "slice": "S6a re-cut card",
+      "state": "planned (added: QA-F2, §9.1; QA writes it after the fix tip)",
+      "after": [
+        "S6"
       ]
     },
     {
-      "slice": "S10",
-      "state": "planned"
-    },
-    {
-      "slice": "S11",
-      "state": "planned"
-    },
-    {
-      "slice": "S12",
-      "state": "planned",
+      "slice": "fix round",
+      "state": "pushed ab58f08 (security re-review of 74859600..ab58f089 running)",
       "after": [
-        "S8"
-      ]
-    },
-    {
-      "slice": "S13",
-      "state": "planned"
-    },
-    {
-      "slice": "S14",
-      "state": "planned",
-      "after": [
-        "S10"
-      ]
-    },
-    {
-      "slice": "S15",
-      "state": "planned"
-    },
-    {
-      "slice": "S16",
-      "state": "planned",
-      "after": [
-        "S10"
-      ]
-    },
-    {
-      "slice": "S17",
-      "state": "planned"
-    },
-    {
-      "slice": "S18",
-      "state": "planned",
-      "after": [
-        "S7",
-        "S13",
-        "S15",
-        "S16",
-        "S17"
-      ]
-    },
-    {
-      "slice": "S19",
-      "state": "planned"
+        "S6"
+      ],
+      "branch": "fix/never-stuck-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-fix"
     }
   ],
   "findings": [
-    "kept: S2-sec-1 MEDIUM - fetch under repo config; done as planDrift 'unchecked' naming the key (RUNS_A_COMMAND, deck/recut.mjs:40)",
-    "kept: S3-ts-1 LOW - driftAfterLanding gone/refused branches tested",
-    "kept: S5-ts-1 MEDIUM - pivotTicket stale yielding",
-    "kept: S5-ts-2 LOW - report/direct close stale yielding, fixed at finishYieldIn",
-    "dropped: S5-ts-3 MEDIUM - Run 2 S7 refuses a second co-pilot, which removes the route",
-    "kept: S4-ts LOWs - recut.from re-check; one sha regex",
-    "kept: F1 simplify - finishYield deleted",
-    "kept: F2 simplify - planUnchanged deleted",
-    "kept: F3 simplify - one neverGranted",
-    "kept: F4 simplify - stampPlan deleted",
-    "kept: F5 simplify - landing try blocks folded",
-    "kept: N1 - dead (new) strip",
-    "kept: N4 - '(1 files)' pluralised",
-    "dropped: F6 - repo convention records an amendment as supersedes with the amended ADR at status amended (0045/0041); NNNN/0153 already follow it",
-    "dropped: N2 - one-use constant",
-    "dropped: N3 - outside Run A's files",
-    "dropped: N5 - facade bar, no fix named",
-    "dropped: N6 - import reformat",
-    "kept: QA-F1 HIGH - pre-deploy granted plans lack grantedAt and get re-cut part-built; QA stamps grantedAt 'legacy' (6 live tickets exposed)",
-    "kept: QA-F2 MEDIUM - re-cut card shows no mark; added slice S6a",
-    "kept: QA-F3 LOW - pilot.md:166 Re-cut line must take the ticket first",
-    "kept: QA-F4 NIT - same as N4",
-    "kept: QA-F5 MEDIUM - a gate test writes the live home store (100 plans stamped grantedAt 'legacy'); stamps left, test isolated by QA"
+    "kept: S2-sec-1 MEDIUM - repo config can still run commands in fetch; add core.sshCommand/gitProxy/credential.helper/uploadpack/proxy overrides to HARDENED, deck/recut.mjs:41",
+    "kept: S3-ts-1 LOW - driftAfterLanding's gone and refused-recut branches untested, deck/landing.mjs",
+    "kept: S5-ts-1 MEDIUM - pivotTicket leaves a stale yielding; delete ticket.yielding beside paused, deck/store-tickets.mjs:418, with a test",
+    "kept: S5-ts-2 LOW - report close and direct close leave yielding, deck/store-items.mjs:178,593",
+    "dropped: S5-ts-3 MEDIUM - setCoPilot overwrite leaving yielding on the old holder; Run 2 S7 refuses a second co-pilot, which removes the route",
+    "kept: S4-ts LOWs - recut.from not re-checked after await; sha regex in three places",
+    "kept: F1 simplify - finishYield is test-only (yield.test.mjs:97,144); delete it, its store.mjs export and facades entry, test via releaseCoPilot/setCoPilot; S5 Interface updated",
+    "kept: F2 simplify - planUnchanged is test-only (replan.test.mjs); delete, assert planChanges; S4 Interface and deck/README row updated",
+    "kept: F3 simplify - the never-granted rule written 3 times (landing.mjs:275, server-tools.mjs:447, store-runs.mjs:380); one export",
+    "kept: F4 simplify - landing-recut.test stampPlan writes grantedAt past the interface; grant via setCoPilot",
+    "kept: F5 simplify - landing.mjs:293-311 three nested try (complexity 24); fold the inner DeckRefusal try into the per-ticket catch",
+    "kept: N1 - dead (new) strip, deck/recut.mjs:25",
+    "kept: N4 - '(1 files)' on a deck line, landing.mjs:303",
+    "kept: F6 - ADR 0187 says it amends 0153 L3 but lists supersedes [0153]; record it as an amendment, not a supersession",
+    "dropped: N2 - inlining a one-use constant buys nothing",
+    "dropped: N3 - moving a gate1 check out of gate2-evidence.mjs is outside Run A's files",
+    "dropped: N5 - store-items.mjs sits 2 lines under the facade bar; no fix named",
+    "dropped: N6 - import reformat only"
   ],
-  "next": "Run 2: co-pilot ad0f013acd3536b73 live on feat/never-stuck-2 (PR #107, base pilot), S7-S19 from signed plan 19a334c7; takes pilot in first. Run 1 landed bb6be759.",
-  "updatedAt": "2026-11-18T07:34:51.159Z",
+  "next": "draining for pause: security re-review of 74859600..ab58f089 running; on its verdict, pilot integrate fix/never-stuck-principles with ts 'approve' + security trailer; then hand back paused.",
+  "updatedAt": "2026-11-17T16:02:04.800Z",
   "friction": [
+    {
+      "agent": "pilot-architect (never-stuck)",
+      "what": "ticket grew to 24 lines and 17 slices after two merges; cut stopped for a runs decision",
+      "evidence": "architect's first findings, 16-slice cut over the 14 bound"
+    },
+    {
+      "kind": "drain",
+      "what": "S2 implementer's full report delivered to the pilot because the co-pilot was paused with children live",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "two Add threads answered and one ticket proposal cut in the pilot",
+      "size": 2
+    },
     {
       "agent": "pilot",
       "what": "gate1 refused 'Verdict: stands (why)'; only 'stands', 'stands - why' accepted, found by grepping the deck's tests",
@@ -300,62 +297,6 @@
       "what": "fix-round reviewer tried a destructive `git checkout origin/feat/never-stuck -- deck` in the implementer's worktree; refused (itm_cd4a8ef77eed)",
       "evidence": "worktree clean at ab58f089 afterwards",
       "size": 1
-    },
-    {
-      "agent": "pilot-qa",
-      "what": "store-shape tests deep-equal the store root, so one additive top-level field means edits in three test files (~3 lines each)",
-      "evidence": "store-archive:117, co-pilot:91, records-for no-write check; gate run 1: 4 fails",
-      "size": 9
-    },
-    {
-      "agent": "pilot-qa",
-      "what": "deck MCP flapped: CONNECTION_CLOSED at start, answered later",
-      "evidence": "ToolSearch error, then deck_read OK at 16:3xZ",
-      "size": 1
-    },
-    {
-      "agent": "pilot-qa",
-      "what": "no chrome-devtools: the browser look became a user step, checked over HTTP",
-      "evidence": "ToolSearch: no match"
-    },
-    {
-      "agent": "pilot-qa",
-      "what": "nothing guards the home store against a write from tests or QA tooling; a leak showed only because QA-F1 added a visible field",
-      "evidence": "~/.claude/pilot/deck.json mtime 16:31:48Z, 100 plans stamped legacy; bisect cleared every test file"
-    },
-    {
-      "agent": "pilot:pilot-qa",
-      "what": "pilot integrate --trial in the feat worktree failed with 'trial NOT run: To https://github.com/...' and no reason; worktree 6 behind origin with a dirty run.json; trial run from the QA worktree instead",
-      "evidence": "never-stuck Run A finishing step",
-      "size": 1
-    },
-    {
-      "kind": "drain",
-      "what": "three presses in 12 s (gate2, walkthrough, gate1) on stacked features: second feature's trial conflicts until the first lands, QA spawned and parked",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-lander",
-      "what": "land worktree has no node_modules: gate failed until npm ci ran there",
-      "evidence": "node_modules missing: run npm ci (scripts/gate.mjs), blocked-steps landing",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-lander",
-      "what": "second landing in a row where the last deck_status after prune cannot write run.json",
-      "evidence": "run.json not written: the recorded worktree is gone",
-      "size": 1
-    },
-    {
-      "kind": "drain",
-      "what": "QA's scratch deck from a lost session (pid 34988) held the qa worktree through the landing; pilot found and stopped it",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-qa",
-      "what": "pilot moved mid-gate (sync landed): first full gate superseded, second run about 15 min; TaskStop unavailable to stop the first",
-      "evidence": "never-stuck Run A QA report",
-      "size": 2
     }
   ]
 }
