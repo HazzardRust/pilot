@@ -66,7 +66,8 @@ test('signed in prints no token', async () => {
   const rows = await checkAll(passing({ git: gitConfigured(null), hostFor: hostOver(TOKEN_LINE) }));
   const host = rows.find((r) => r.name === 'host');
   assert.equal(host.verdict, 'pass');
-  assert.match(host.detail, /signed in/);
+  // The forge by name, never `undefined` (QA: the row read the adapter's dropped `name`).
+  assert.equal(host.detail, 'github: gh signed in');
   assert.ok(!JSON.stringify(rows).includes('ghp_'), JSON.stringify(host));
 });
 

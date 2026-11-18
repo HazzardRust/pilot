@@ -136,9 +136,7 @@ export function githubHost(run) {
     return said;
   };
   return {
-    name: 'github',
     cli: 'gh',
-    whoami: () => run(['api', 'user', '--jq', '.login']).trim(),
     reviews({ head, base, state, mine = false, limit = 100 }) {
       const args = ['pr', 'list', ...(head === undefined ? [] : ['--head', head]), ...(base === undefined ? [] : ['--base', base]), '--state', state];
       const said = json(run([...args, ...(mine ? ['--author', '@me'] : []), '--json', FIELDS, '--limit', String(limit)]), 'pr list');

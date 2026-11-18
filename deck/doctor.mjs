@@ -27,7 +27,7 @@ import { MIN_MODS_VERSION, claudeVersion } from '../scripts/handoff.mjs';
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
 import { git as gitAt } from '../scripts/pilot-branch.mjs';
-import { HOST_NAMES, hostFor as hostForDefault } from './host.mjs';
+import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { probeDeck } from './probe.mjs';
 import { storeDir as defaultStoreDir } from './store-dir.mjs';
 import { DECK_PORT, deckUrl } from './tools.mjs';
@@ -152,7 +152,9 @@ function hostRow({ git, hostFor, onPath, cwd }) {
     return { name, verdict: 'fail', detail: error.message, steps: [`git config pilot.host ${HOST_NAMES.join('|')}`] };
   }
   if (host === null) return { name, verdict: 'pass', detail: 'none: no host CLI is used' };
-  const { name: which, cli } = host;
+  // The forge as the setting names it; **Host** carries only its `cli` (itm_6eca66849bdb).
+  const which = hostOf(git);
+  const { cli } = host;
   const found = onPath(cli);
   if (found === false) return { name, verdict: 'fail', detail: `${which}: ${cli} is not on PATH`, steps: [`install ${cli} and put it on PATH`] };
   if (found !== true) return { name, verdict: 'cannot tell', detail: `${which}: \`${cli} --version\` gave no answer doctor can read` };

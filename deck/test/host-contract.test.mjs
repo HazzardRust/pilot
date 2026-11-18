@@ -23,7 +23,7 @@ const gitWith = (value) => (args) => {
 test('unset reads as github, none as null', () => {
   const run = () => assert.fail('no CLI starts while choosing the host');
   assert.deepEqual(HOST_NAMES, ['github', 'gitlab', 'none']);
-  assert.equal(hostFor('.', { git: gitWith(undefined), run }).name, 'github');
+  assert.equal(hostFor('.', { git: gitWith(undefined), run }).cli, 'gh');
   assert.equal(hostFor('.', { git: gitWith('github'), run }).cli, 'gh');
   assert.equal(hostFor('.', { git: gitWith('none'), run }), null);
   assert.throws(() => hostFor('.', { git: gitWith('gitea'), run }), /pilot\.host.*"gitea"/);
@@ -67,8 +67,10 @@ const isReview = (review) => {
   assert.ok(Number.isSafeInteger(review.number));
 };
 
+/** The **Host** surface, whole: no `whoami` and no `name` (user answer itm_6eca66849bdb). */
+const HOST_KEYS = ['cli', 'comment', 'edit', 'open', 'review', 'reviews', 'signedIn', 'upsertComment'];
+
 const CONTRACT = [
-  ['whoami', (host) => host.whoami(), (said) => assert.equal(said, 'alice')],
   ['reviews', (host) => host.reviews({ state: 'all' }), (said) => { assert.equal(said.length, 3); said.forEach(isReview); assert.deepEqual(said.map((r) => r.state), ['open', 'merged', 'closed']); }],
   ['reviews mine by head', (host) => host.reviews({ head: 'feat/1', state: 'open', mine: true, limit: 5 }), (said) => said.forEach(isReview)],
   ['review', (host) => host.review(7), (said) => { isReview(said); assert.equal(said.number, 7); }],
@@ -99,7 +101,8 @@ test('every verb returns its shape', (t) => {
   for (const [, call, check] of CONTRACT) {
     const { run, calls } = fakeGh();
     const host = githubHost(run);
-    assert.equal(host.name, 'github');
+    assert.deepEqual(Object.keys(host).sort(), HOST_KEYS);
+    assert.equal(host.cli, 'gh');
     check(call(host));
     sent.push(...calls);
   }
@@ -219,7 +222,8 @@ test('every verb returns its shape on gitlab', (t) => {
   for (const [verb, call, check] of CONTRACT) {
     const { run, calls } = fakeGlab();
     const host = gitlabHost(run);
-    assert.equal(host.name, 'gitlab');
+    assert.deepEqual(Object.keys(host).sort(), HOST_KEYS);
+    assert.equal(host.cli, 'glab');
     check(call(host));
     sent.push(...calls);
     if (verb === 'reviews') assert.deepEqual(call(host).map((r) => [r.number, r.body, r.crossRepo]), [[1, 'b', false], [2, '', true], [3, '', false]]);

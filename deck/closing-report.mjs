@@ -53,7 +53,8 @@ const MAIN_LINE = /^main gets pilot: (?:#(\d+)(?: \(opened\))?|open a PR from (\
 
 /** The closing report's first human step, from land's main line (spec 3): the one PR the user merges for main. */
 function mainStep(number, byHand, merged) {
-  if (number !== undefined) return `Human step: Merge #${number} into main with a merge commit, when you want main to have it.`;
+  // No branch named: the PR's base is the host's default branch, which land does not print (QA F3).
+  if (number !== undefined) return `Human step: Merge #${number} with a merge commit, when you want main to have it.`;
   // Run host `none` (other-host spec 3): no PR exists to open, so the branch itself is merged by hand.
   if (merged !== undefined) return `Human step: Merge ${said(merged)} into main by hand, with a merge commit.`;
   // A bare branch is on no remote yet (run remote `none`): it is pushed before a PR can name it.

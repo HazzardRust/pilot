@@ -16,7 +16,7 @@ ADR 0182 put every `gh` process start behind one allowlist in `deck/host.mjs` an
 
 ## Decision
 
-- **L1 Host takes verbs, not argv**: `whoami`, `reviews`, `review`, `open`, `edit`, `comment`, `upsertComment`, `signedIn`, with `name` and `cli`. Each adapter (`deck/host-github.mjs`, `deck/host-gitlab.mjs`) is the one module that starts its CLI.
+- **L1 Host takes verbs, not argv**: `reviews`, `review`, `open`, `edit`, `comment`, `upsertComment`, `signedIn`, with `cli` (`whoami` and `name` dropped, user answer itm_6eca66849bdb). Each adapter (`deck/host-github.mjs`, `deck/host-gitlab.mjs`) is the one module that starts its CLI.
 - **L2 One reader, `hostOf(git)`**, validates the value against `HOST_NAMES`; a bad value stops the command naming `pilot.host`. `pilot host` refuses any other name before git is called, and writes the list's own string, so nothing off `HOST_NAMES` reaches git's argv.
 - **L3 `pilot.host` is git config**: the install asks for it and writes it `--global` with `pilot host <name>`; a repository may override it with `--local`; `pilot uninstall --yes` unsets the global key and leaves a repository's; unset reads as `github`, so an install from before this decision behaves as it did.
 - **L4 The pilot never touches a host token**: each CLI keeps its own login (`gh auth`, `glab auth`); adapters inherit the environment and `signedIn()` reads only the CLI's exit status.

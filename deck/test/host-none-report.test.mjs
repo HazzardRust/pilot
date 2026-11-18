@@ -7,11 +7,12 @@ import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 
 import { closingReportOf } from '../closing-report.mjs';
 import { KIND_GATE2, KIND_TICKET } from '../items.mjs';
-import { DeckRefusal, listItems, postItem } from '../store.mjs';
+import { DeckRefusal, listItems, postItem, storeFile } from '../store.mjs';
 import { mainLine } from '../../scripts/land.mjs';
 import { postStored, shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
 
@@ -26,6 +27,15 @@ test('a gate2 at none is accepted', (t) => {
   for (const bad of ['feat/../x', 'feat/', 'feat/a b', 'feat/x;rm']) {
     assert.throws(() => gate2(bad), DeckRefusal, `${bad} is refused`);
   }
+  // No run record yet: no branch is the ticket's own.
+  assert.throws(() => gate2('feat/other-host'), /names none, not feat\/other-host/);
+  const file = storeFile();
+  const deck = JSON.parse(fs.readFileSync(file, 'utf8'));
+  deck.records = [{ repo: REPO, record: { slug: 'other-host', ticket: ticket.id, branch: 'feat/other-host' } }];
+  fs.writeFileSync(file, JSON.stringify(deck), 'utf8');
+  // Another run's branch, or a shape-only `feat/..`, is not this ticket's (QA F1).
+  assert.throws(() => gate2('feat/someone-else'), /names feat\/other-host, not feat\/someone-else/);
+  assert.throws(() => gate2('feat/..'), /names feat\/other-host, not feat\/\.\./);
   const posted = gate2('feat/other-host');
   const stored = listItems().find((item) => item.id === posted.id);
   assert.deepEqual([stored.pr, stored.sha], ['feat/other-host', '0305827']);

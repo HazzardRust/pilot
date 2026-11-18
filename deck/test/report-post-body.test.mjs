@@ -47,7 +47,7 @@ for (const author of [undefined, 'pilot:pilot-lander', 'pilot-lander']) {
     const { record } = recordForTicket(repo, ticket);
     // The fixture repository is no git repository, so the worktrees left are not compared (lander-tail spec 5).
     assert.equal(withoutLeft(reports[0].body), withoutLeft(closingReportOf(record, gate, []).body), "its body is the closing report");
-    assert.match(reports[0].body, /Merge #901 into main/);
+    assert.match(reports[0].body, /Merge #901 with a merge commit/);
   });
 }
 

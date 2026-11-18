@@ -108,10 +108,11 @@ adapters whole. `hostIn` fails the deletion test once every caller takes a **Hos
 
 ## 5. Locked decisions
 
-- **L1** **Host** takes verbs, not argv: `whoami`, `reviews({ head?, base?, state, mine? })`, `review(n)`,
+- **L1** **Host** takes verbs, not argv: `reviews({ head?, base?, state, mine? })`, `review(n)`,
   `open({ base, head, title, body, draft?, label? })`, `edit(n, { base?, title?, body?, label? })`,
-  `comment(n, body)`, `upsertComment(n, marker, body)`, `signedIn()`, with `name` and `cli`. Rejected: per-host
-  argv translation under `hostIn` (every caller still speaks gh). October L2, unchanged.
+  `comment(n, body)`, `upsertComment(n, marker, body)`, `signedIn()`, with `cli`. Rejected: per-host
+  argv translation under `hostIn` (every caller still speaks gh). October L2, unchanged. `whoami` and `name`
+  dropped, user answer itm_6eca66849bdb: no caller read them; GitLab's upsert asks its username itself.
 - **L2** One reader, `hostOf(git)`, validates against `HOST_NAMES` as `runRemote` does; a bad value stops the
   command naming `pilot.host`. Rejected: reading the origin URL (a mirror or self-hosted forge switches silently).
 - **L3** `pilot.host` is git config; the install writes it `--global`, a repository may override it, uninstall

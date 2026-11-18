@@ -8,7 +8,7 @@
  *
  * @typedef {{ number: number, state: 'open'|'merged'|'closed', base: string, head: string, headSha: string,
  *   body: string, crossRepo: boolean }} Review
- * @typedef {{ name: string, cli: string, whoami(): string,
+ * @typedef {{ cli: string,
  *   reviews(query: { head?: string, base?: string, state: 'open'|'merged'|'closed'|'all', mine?: boolean, limit?: number }): Review[],
  *   review(n: number): Review,
  *   open(pr: { base: string, head: string, title: string, body: string, draft?: boolean, label?: string }): { number: number, why?: string },

@@ -111,16 +111,9 @@ export function gitlabHost(run) {
   const get = (target, what) => json(run(['api', target]), what);
   const send = (method, target, body, what) =>
     json(run(['api', '-X', method, '-H', JSON_HEADER, '--input', '-', target], JSON.stringify(body)), what);
-  const whoami = () => {
-    const name = get('user', 'api user')?.username;
-    if (typeof name !== 'string' || name === '') throw new Error('glab api user: no username');
-    return name;
-  };
   const review = (n) => reviewOf(get(`${MRS}/${numbered(n)}`, 'merge request'));
   return {
-    name: 'gitlab',
     cli: 'glab',
-    whoami,
     reviews({ head, base, state, mine = false, limit = 100 }) {
       if (!Object.hasOwn(ASKED, state)) throw new Error(`glab: no merge request state ${JSON.stringify(state)}`);
       const query = new URLSearchParams({ state: ASKED[state] });
@@ -165,7 +158,9 @@ export function gitlabHost(run) {
     /** One note of this account per `marker` on review `n`: posted, edited in place, or left. Answers which. */
     upsertComment(n, marker, body) {
       const text = `${marker}\n${body}`;
-      const me = whoami();
+      // This account's username, so only its own note is edited.
+      const me = get('user', 'api user')?.username;
+      if (typeof me !== 'string' || me === '') throw new Error('glab api user: no username');
       const ours = (note) => note?.system !== true && note?.author?.username === me && typeof note.body === 'string' && note.body.startsWith(marker);
       let mine;
       // GitLab answers at most 100 notes a page; read on until the note is found or a page comes back short.
