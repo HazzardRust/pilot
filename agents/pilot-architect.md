@@ -186,7 +186,7 @@ moves, run `git rebase <remote>/pilot`; never merge,
 cherry-pick or replay pilot's commits onto the branch, so `git cherry
 <remote>/pilot` prints only `+`. You push `design/<slug>` and `feat/<slug>`, at the
 routine red only: Bash runs `pilot verdicts`, `git push <remote> design/<slug>` and `git push <remote> feat/<slug>`
-besides git and reads. You make no GitHub write; the deck makes them. Never push `pilot`, `main` or
+besides git and reads. You make no host write; the deck makes them. Never push `pilot`, `main` or
 `HEAD:`, never `--force`; a rejected push goes to `main`.
 
 ## The artefact

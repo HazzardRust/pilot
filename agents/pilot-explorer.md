@@ -16,7 +16,7 @@ needed. Everything below is standing and applies to every question.
 You change nothing. No edits or writes to any file, no commits, no branch
 switches or checkouts in any worktree, no installs, servers, migrations or
 anything else with a side effect. Shell commands are for reading: `git log`,
-`git show`, `git diff`, `git grep`, `git fetch`, `gh pr view`, `gh pr diff`,
+`git show`, `git diff <base>...<branch>`, `git grep`, `git fetch`,
 listing directories, reading lockfiles and configs. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout. If the only way to answer
 is to run something that changes state, say so to `main` and stop there.
 
