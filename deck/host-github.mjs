@@ -165,7 +165,8 @@ export function githubHost(run) {
         withBody(['pr', 'comment', numbered(n)], text);
         return 'posted';
       }
-      if (mine.body.trimEnd() === text.trimEnd()) return 'none';
+      // GitHub hands a comment back with CRLF line ends: the same text all the same.
+      if (mine.body.replace(/\r\n/g, '\n').trimEnd() === text.replace(/\r\n/g, '\n').trimEnd()) return 'none';
       const [, owner, repo, id] = COMMENT_URL.exec(String(mine.url ?? '')) ?? [];
       if (id === undefined) throw new Error('gh pr view: the comment has no comment url');
       // `-f`, a raw string: the allowlist refuses `--input` and `-F`, whose `@file` reads a local file into the request.

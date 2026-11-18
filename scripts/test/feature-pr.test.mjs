@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { hostIn } from '../../deck/host.mjs';
+import { ghRun, githubHost } from '../../deck/host-github.mjs';
 import { featureBody, main, syncFeaturePr } from '../feature-pr.mjs';
 import { ghStub } from '../gh-stub.mjs';
 import { git as gitAt } from '../pilot-branch.mjs';
@@ -69,11 +69,11 @@ function fakeGh({ open = [], fail } = {}) {
     }
     const at = args.indexOf('--body-file');
     if (at !== -1) bodies.push(fs.readFileSync(args[at + 1], 'utf8'));
-    if (args[0] === 'pr' && args[1] === 'list') return JSON.stringify(open.map((pr) => ({ isCrossRepository: false, ...pr })));
+    if (args[0] === 'pr' && args[1] === 'list') return JSON.stringify(open.map((pr) => ({ state: 'OPEN', isCrossRepository: false, ...pr })));
     if (args[0] === 'pr' && args[1] === 'create') return 'https://github.com/o/r/pull/42\n';
     return '';
   };
-  return { gh, calls, bodies, writes: () => calls.filter(WRITES) };
+  return { gh, host: githubHost(gh), calls, bodies, writes: () => calls.filter(WRITES) };
 }
 
 /** The body the deck writes for `record()` on the fixture: what an up-to-date PR reads. */
@@ -82,7 +82,7 @@ const bodyOf = (rec = record()) => featureBody(SPEC, rec, FOOTER);
 test('the first run opens one draft PR against the record\'s base', (t) => {
   const cwd = repo(t);
   const fake = fakeGh();
-  const out = syncFeaturePr({ gh: fake.gh, git: gitIn(cwd), record: record() });
+  const out = syncFeaturePr({ host: fake.host, git: gitIn(cwd), record: record() });
   const [create, ...more] = fake.writes();
   assert.deepEqual(more, []);
   assert.deepEqual(create.slice(0, 2), ['pr', 'create']);
@@ -95,12 +95,12 @@ test('the first run opens one draft PR against the record\'s base', (t) => {
 
   // A PR already open for the head (the architect's, before S6): never a second one.
   const again = fakeGh({ open: [{ number: 7, body: 'the architect wrote this', baseRefName: 'pilot' }] });
-  syncFeaturePr({ gh: again.gh, git: gitIn(cwd), record: record() });
+  syncFeaturePr({ host: again.host, git: gitIn(cwd), record: record() });
   assert.equal(again.writes().filter((c) => c[1] === 'create').length, 0);
 
   // A fork's PR from a branch of the same name is not the feature PR: never edited, and it hides nothing.
   const fork = fakeGh({ open: [{ number: 9, body: 'a fork', baseRefName: 'pilot', isCrossRepository: true }] });
-  assert.equal(syncFeaturePr({ gh: fork.gh, git: gitIn(cwd), record: record() }).wrote, 'created');
+  assert.equal(syncFeaturePr({ host: fork.host, git: gitIn(cwd), record: record() }).wrote, 'created');
   assert.deepEqual(fork.writes().map((c) => c.slice(0, 2)), [['pr', 'create']]);
 });
 
@@ -108,7 +108,7 @@ test('a changed row edits the body once', (t) => {
   const cwd = repo(t);
   const fake = fakeGh({ open: [{ number: 7, body: bodyOf(), baseRefName: 'pilot' }] });
   const changed = record({ slices: [{ slice: 'S1 the first slice', state: 'pushed', pr: 11 }, record().slices[1]] });
-  const out = syncFeaturePr({ gh: fake.gh, git: gitIn(cwd), record: changed });
+  const out = syncFeaturePr({ host: fake.host, git: gitIn(cwd), record: changed });
   const edits = fake.writes();
   assert.equal(edits.length, 1);
   assert.deepEqual(edits[0].slice(0, 3), ['pr', 'edit', '7']);
@@ -121,7 +121,7 @@ test('a changed row edits the body once', (t) => {
 test('a changed base retargets once', (t) => {
   const cwd = repo(t);
   const fake = fakeGh({ open: [{ number: 7, body: bodyOf(), baseRefName: 'feat/earlier-run' }] });
-  const out = syncFeaturePr({ gh: fake.gh, git: gitIn(cwd), record: record() });
+  const out = syncFeaturePr({ host: fake.host, git: gitIn(cwd), record: record() });
   assert.deepEqual(fake.writes(), [['pr', 'edit', '7', '--base', 'pilot']]);
   assert.deepEqual(out, { line: 'feature PR #7 updated', number: 7, wrote: 'edited' });
 });
@@ -130,9 +130,9 @@ test('the same record writes nothing', (t) => {
   const cwd = repo(t);
   // GitHub hands a body back with CRLF line ends and no final newline: still the same body.
   const fake = fakeGh({ open: [{ number: 7, body: bodyOf().replace(/\n/g, '\r\n').trimEnd(), baseRefName: 'pilot' }] });
-  const out = syncFeaturePr({ gh: fake.gh, git: gitIn(cwd), record: record() });
+  const out = syncFeaturePr({ host: fake.host, git: gitIn(cwd), record: record() });
   assert.deepEqual(fake.writes(), []);
-  assert.deepEqual(out, { line: 'feature PR #7 unchanged', number: 7, wrote: 'none' });
+  assert.deepEqual(out, { line: 'feature PR #7 unchanged', number: 7, wrote: 'unchanged' });
 });
 
 test('the body is the spec and the slice table', () => {
@@ -157,13 +157,13 @@ test('an @mention in what the deck writes notifies nobody', (t) => {
   // QA's comment is rendered the same way, through the one PR write.
   const cwd = repo(t);
   const fake = fakeGh({ open: [{ number: 7, body: bodyOf(), baseRefName: 'pilot' }] });
-  fake.gh = ((inner) => (args) => (args[1] === 'view' ? JSON.stringify({ comments: [] }) : inner(args)))(fake.gh);
-  syncFeaturePr({ gh: fake.gh, git: gitIn(cwd), record: record({ qaComment: 'thanks @reviewer' }) });
+  const host = githubHost((args) => (args[1] === 'view' ? JSON.stringify({ comments: [] }) : fake.gh(args)));
+  syncFeaturePr({ host, git: gitIn(cwd), record: record({ qaComment: 'thanks @reviewer' }) });
   assert.ok(fake.bodies.at(-1).includes(`thanks @${ZWJ}reviewer`));
 
   // And the title, from the record's feature name.
   const fresh = fakeGh();
-  syncFeaturePr({ gh: fresh.gh, git: gitIn(cwd), record: record({ feature: 'ask @octocat' }) });
+  syncFeaturePr({ host: fresh.host, git: gitIn(cwd), record: record({ feature: 'ask @octocat' }) });
   const [create] = fresh.writes();
   assert.equal(create[create.indexOf('--title') + 1], `feat(${SLUG}): ask @${ZWJ}octocat`);
 });
@@ -171,12 +171,12 @@ test('an @mention in what the deck writes notifies nobody', (t) => {
 test('no branch on origin is quiet', async (t) => {
   const cwd = unpushed(t);
   const fake = fakeGh();
-  const out = syncFeaturePr({ gh: fake.gh, git: gitIn(cwd), record: record() });
+  const out = syncFeaturePr({ host: fake.host, git: gitIn(cwd), record: record() });
   assert.deepEqual(out, { line: `no PR yet: origin has no feat/${SLUG}`, wrote: 'none' });
   assert.deepEqual(fake.writes(), []);
 
   const said = [];
-  const code = await main(['--ticket', 'itm_0123abcd'], { gh: fake.gh, git: gitIn(cwd), readRecord: async () => record(), say: (s) => said.push(s) });
+  const code = await main(['--ticket', 'itm_0123abcd'], { host: fake.host, git: gitIn(cwd), readRecord: async () => record(), say: (s) => said.push(s) });
   assert.equal(code, 0);
   assert.deepEqual(said, [`no PR yet: origin has no feat/${SLUG}\n`]);
 });
@@ -186,12 +186,12 @@ test('a run remote other than origin opens nothing', (t) => {
   gitAt(cwd, 'remote', 'add', 'fork', gitAt(cwd, 'remote', 'get-url', 'origin'));
   gitAt(cwd, 'config', 'pilot.remote', 'fork');
   const fake = fakeGh();
-  const out = syncFeaturePr({ gh: fake.gh, git: gitIn(cwd), record: record() });
+  const out = syncFeaturePr({ host: fake.host, git: gitIn(cwd), record: record() });
   assert.deepEqual(out, { line: 'no PR: run remote fork', wrote: 'none' });
   assert.deepEqual(fake.calls, []);
 
   gitAt(cwd, 'config', 'pilot.remote', 'none');
-  assert.equal(syncFeaturePr({ gh: fake.gh, git: gitIn(cwd), record: record() }).line, 'no PR: run remote none');
+  assert.equal(syncFeaturePr({ host: fake.host, git: gitIn(cwd), record: record() }).line, 'no PR: run remote none');
   assert.deepEqual(fake.calls, []);
 });
 
@@ -199,17 +199,52 @@ test('a gh failure is one line and exit 1', async (t) => {
   const cwd = repo(t);
   const fake = fakeGh({ fail: ['pr', 'list'] });
   const said = [];
-  const code = await main(['--ticket', 'itm_0123abcd'], { gh: fake.gh, git: gitIn(cwd), readRecord: async () => record(), say: (s) => said.push(s) });
+  const code = await main(['--ticket', 'itm_0123abcd'], { host: fake.host, git: gitIn(cwd), readRecord: async () => record(), say: (s) => said.push(s) });
   assert.equal(code, 1);
-  assert.deepEqual(said, ['gh pr list: HTTP 401: Bad credentials\n']);
+  assert.deepEqual(said, ['gh reviews: HTTP 401: Bad credentials\n']);
 
   // A malformed ticket or a record the deck does not have is one line too, and starts nothing.
   const none = [];
-  assert.equal(await main(['--ticket', '--draft'], { gh: fake.gh, git: gitIn(cwd), readRecord: async () => record(), say: (s) => none.push(s) }), 1);
-  assert.equal(await main(['--ticket', 'itm_0123abcd'], { gh: fake.gh, git: gitIn(cwd), readRecord: async () => null, say: (s) => none.push(s) }), 1);
+  assert.equal(await main(['--ticket', '--draft'], { host: fake.host, git: gitIn(cwd), readRecord: async () => record(), say: (s) => none.push(s) }), 1);
+  assert.equal(await main(['--ticket', 'itm_0123abcd'], { host: fake.host, git: gitIn(cwd), readRecord: async () => null, say: (s) => none.push(s) }), 1);
   assert.equal(none.length, 2);
   assert.ok(none.every((line) => line.split('\n').length === 2));
   assert.equal(fake.calls.length, 1);
+});
+
+test('none writes nothing', (t) => {
+  const cwd = repo(t);
+  const calls = [];
+  const git = (args) => {
+    calls.push(args);
+    return gitAt(cwd, ...args);
+  };
+  assert.deepEqual(syncFeaturePr({ host: null, git, record: record() }), { line: 'no PR: host none', wrote: 'none' });
+  assert.deepEqual(calls.filter((args) => args[0] === 'ls-remote' || args[0] === 'fetch'), [], 'not even origin is asked');
+});
+
+test('create then edit', (t) => {
+  const cwd = repo(t);
+  // One fake GitHub across three runs: what `pr create` and `pr edit` write is what `pr list` answers next.
+  let pr = null;
+  const calls = [];
+  const run = (args) => {
+    calls.push(args);
+    const at = args.indexOf('--body-file');
+    const body = at === -1 ? undefined : fs.readFileSync(args[at + 1], 'utf8');
+    if (args[1] === 'list') return JSON.stringify(pr ? [pr] : []);
+    if (args[1] === 'create') {
+      pr = { number: 42, state: 'OPEN', body, baseRefName: args[args.indexOf('--base') + 1], isCrossRepository: false };
+      return 'https://github.com/o/r/pull/42\n';
+    }
+    if (args[1] === 'edit' && body !== undefined) pr.body = body;
+    return '';
+  };
+  const host = githubHost(run);
+  const sync = (rec) => syncFeaturePr({ host, git: gitIn(cwd), record: rec }).wrote;
+  const changed = record({ slices: [{ slice: 'S1 the first slice', state: 'pushed', pr: 11 }] });
+  assert.deepEqual([sync(record()), sync(changed), sync(changed)], ['created', 'edited', 'unchanged']);
+  assert.deepEqual(calls.filter(WRITES).map((c) => c.slice(0, 3)), [['pr', 'create', '--draft'], ['pr', 'edit', '42']]);
 });
 
 const stubs = [];
@@ -230,7 +265,7 @@ test('a verb outside the table is refused', (t) => {
     const file = path.join(stub.dir, 'calls.jsonl');
     return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
   };
-  const gh = hostIn(stub.dir);
+  const gh = ghRun(stub.dir);
 
   assert.throws(() => gh(['pr', 'merge', '7']), /pr merge/);
   assert.throws(() => gh(['api', 'user', '-X', 'DELETE']), /api/);
