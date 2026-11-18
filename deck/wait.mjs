@@ -50,8 +50,8 @@ const MAX_RESPONSE_CHARS = 2 * 1024 * 1024;
 const MAX_REPLY_CHARS = 2000;
 const MAX_TITLE_CHARS = 200;
 
-/** Well inside Claude Code's 2-hour cap on a background command (ticket-states A10), in minutes. */
-export const DEFAULT_TIMEOUT_MINUTES = 110;
+/** Inside the one-hour prompt cache lifetime, so an idle wake reads from cache; well inside Claude Code's 2-hour cap on a background command (ticket-states A10). In minutes. */
+export const DEFAULT_TIMEOUT_MINUTES = 50;
 
 const KINDS = `${OWNER_KINDS.slice(0, -1).join(', ')} or ${OWNER_KINDS.at(-1)}`;
 

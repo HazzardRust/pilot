@@ -62,8 +62,8 @@ thread with `to: "pilot"`.
 is live you keep listening on the deck**, its chat included, with nothing of
 your own open. Start a background `pilot wait` (Bash, `run_in_background`) the
 moment that is true, and restart it on any exit, never two at once: it exits
-the instant a reply lands, or after 110 minutes with none (`NO REPLY after 110
-minutes`), inside Claude Code's 2-hour cap on a background command, and you
+the instant a reply lands, or after 50 minutes with none (`NO REPLY after 50
+minutes`), inside the one-hour prompt cache, and you
 restart that one silently. Read its output before any exit label the harness
 gives. A user's reply is answered first with one line on its
 thread saying what happens next, before any other work. Set
