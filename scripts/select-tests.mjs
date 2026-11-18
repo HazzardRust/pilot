@@ -58,6 +58,7 @@ export const TREE_TESTS = Object.freeze([
   'deck/test/tickets-region.test.mjs',
   'deck/test/ui-route.test.mjs',
   'scripts/test/audit-agent.test.mjs',
+  'scripts/test/check-syntax.test.mjs',
   'scripts/test/crew-waits.test.mjs',
   'scripts/test/deck-readme.test.mjs',
   'scripts/test/frontmatter-crlf.test.mjs',
