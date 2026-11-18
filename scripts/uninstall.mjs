@@ -15,12 +15,14 @@
 import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
 
 import { globalPrefix, removeCommand } from './install-command.mjs';
 import { BASH_LOGIN, profileFor, removeProfileBlock } from './install-path.mjs';
 import { defaultSettingsPath, removeOwnSettings } from './install-settings.mjs';
 import { defaultRulesTarget, removeShippedRules } from './install-rules.mjs';
 import { rootRules } from './reach.mjs';
+import { HOST_KEY } from '../deck/host.mjs';
 import { probeDeck } from '../deck/probe.mjs';
 import { isDeckDaemon, processTable } from '../deck/procs.mjs';
 import { deckUrl } from '../deck/tools.mjs';
@@ -43,6 +45,10 @@ function stopDeckProcess(pid) {
   }
   process.kill(pid);
 }
+
+/** git as argv with `home` as its HOME, so the global config read and unset is the one under `home`. */
+const homeGit = (home) => (args) =>
+  execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, env: { ...process.env, HOME: home, USERPROFILE: home } });
 
 // Each planner returns the steps for one thing install wrote: stop, remove or leave.
 const PLANNERS = [
@@ -140,6 +146,27 @@ const PLANNERS = [
       return [{ what: 'the rules directory', path: target, action: 'leave', why: `nothing was planned for it: ${err.code || err.message}` }];
     }
   },
+  // The host `pilot host` wrote (other-host spec 1): only the global value; a repository's own is that repository's.
+  ({ git }) => {
+    let value;
+    try {
+      value = git(['config', '--global', '--get', HOST_KEY]).trim();
+    } catch (err) {
+      if (err.status === 1) return [];
+      return [{ what: `the ${HOST_KEY} setting`, path: 'your global git config', action: 'leave', why: `it could not be read (${err.message.split('\n')[0]}); run git config --global --unset ${HOST_KEY} yourself` }];
+    }
+    const what = `the ${HOST_KEY} setting`;
+    return [{
+      what,
+      path: 'your global git config',
+      action: 'remove',
+      why: value,
+      run: () => {
+        git(['config', '--global', '--unset', HOST_KEY]);
+        return `unset ${HOST_KEY} (${value}) in your global git config`;
+      },
+    }];
+  },
   ({ home, platform, prefix, store }) => {
     const excerpt = path.join(home, '.claude', 'CLAUDE.md');
     return [
@@ -164,6 +191,7 @@ export async function planUninstall(home, deps = {}) {
     prefix: deps.prefix || globalPrefix(),
     platform: deps.platform || hostPlatform(),
     deckPid: deps.deckPid || answeringDeck,
+    git: deps.git || homeGit(home),
     // The store the deck uses, as `storeDir()` reads it: PILOT_DECK_DIR when set, else the one under `home`.
     store: deps.storeDir || (process.env.PILOT_DECK_DIR ? path.resolve(process.env.PILOT_DECK_DIR) : path.join(home, '.claude', 'pilot')),
   };
