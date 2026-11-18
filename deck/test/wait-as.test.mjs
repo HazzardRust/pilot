@@ -214,8 +214,8 @@ test('a pilot wait still prints an owner-fallback reply with its note', async (t
 });
 
 test('--as with an unknown kind is refused by name, exit 1', async (t) => {
-  assert.deepEqual(parseArgs(['--as', 'qa', '--item', 'itm_1']), { timeoutMinutes: 110, kind: 'qa', item: 'itm_1' });
-  assert.deepEqual(parseArgs([]), { timeoutMinutes: 110, kind: 'pilot' });
+  assert.deepEqual(parseArgs(['--as', 'qa', '--item', 'itm_1']), { timeoutMinutes: 50, kind: 'qa', item: 'itm_1' });
+  assert.deepEqual(parseArgs([]), { timeoutMinutes: 50, kind: 'pilot' });
   assert.match(parseArgs(['--as', 'explorer']).error, /"explorer".*pilot, qa, teacher, auditor or architect/);
 
   const stderr = [];
@@ -236,7 +236,7 @@ test('a crew wait without its thread is refused', () => {
 });
 
 test("the pilot's wait is unchanged", () => {
-  assert.deepEqual(parseArgs([]), { timeoutMinutes: 110, kind: 'pilot' });
-  assert.deepEqual(parseArgs(['--as', 'pilot']), { timeoutMinutes: 110, kind: 'pilot' });
-  assert.deepEqual(parseArgs(['--as', 'qa', '--item', 'itm_x']), { timeoutMinutes: 110, kind: 'qa', item: 'itm_x' });
+  assert.deepEqual(parseArgs([]), { timeoutMinutes: 50, kind: 'pilot' });
+  assert.deepEqual(parseArgs(['--as', 'pilot']), { timeoutMinutes: 50, kind: 'pilot' });
+  assert.deepEqual(parseArgs(['--as', 'qa', '--item', 'itm_x']), { timeoutMinutes: 50, kind: 'qa', item: 'itm_x' });
 });
