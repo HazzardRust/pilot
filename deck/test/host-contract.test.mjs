@@ -126,6 +126,17 @@ test('a refused label is said', () => {
   assert.ok(writes.every((args) => !args.includes('--label') && !args.includes('--add-label')), 'no label it could not make');
 });
 
+test('a refusal reads from stderr, and an empty one still says something', () => {
+  const { run } = fakeGh();
+  const refusing = (err) => githubHost((args) => {
+    if (args[0] === 'label') throw err;
+    return run(args);
+  });
+  const real = Object.assign(new Error('Command failed: gh label create release --force'), { stderr: 'HTTP 403: Resource not accessible\n' });
+  assert.equal(refusing(real).edit(7, { label: 'release' }).why, 'HTTP 403: Resource not accessible');
+  assert.equal(refusing(new Error('')).edit(7, { label: 'release' }).why, 'label refused');
+});
+
 test('the upsert edits its own comment', () => {
   const { run, calls } = fakeGh();
   const host = githubHost(run);
