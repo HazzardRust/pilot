@@ -34,6 +34,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `health.mjs` | `GET /api/health`'s answer: pid, url, cursor, rss, and the plugin version with when this daemon started (daemon-lifecycle spec 3) |
 | `hold-route.mjs` | `POST /api/hold { id, ticket }`: the hand-off mod marks a hand-off held for a live co-pilot, item state and no reply, written once (held-handoff L2) |
 | `host-github.mjs` | the GitHub adapter: **Host** over `gh`, and the one `gh` process start, argv only, refusing any call off its argv allowlist before a process starts (other-host spec 2, L5) |
+| `host-gitlab.mjs` | the GitLab adapter: **Host** over `glab api` REST v4 on the current project's merge requests, and the one `glab` process start, argv only, refusing any call off its own allowlist before a process starts (other-host spec 4, 6, A3) |
 | `host.mjs` | the host: reads `pilot.host` (unset is `github`) and hands back its **Host** adapter, or null at `none` (other-host spec 1-3) |
 | `idle.mjs` | the user's deck's idle rule: it exits after 10 minutes with no session, no landing and no request, reading the process table only when the other two hold (process-gc L2, ADR 0136) |
 | `items.mjs` | the item vocabulary: kinds, fields, open or closed, whose turn |
