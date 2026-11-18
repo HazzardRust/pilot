@@ -30,18 +30,32 @@ export function yieldsDue(items, repo, coPilotTicket, now) {
     .filter(({ at }) => at <= now);
 }
 
-/** The most blocked yellow tickets the co-pilot lane names, the bound `hooks/session-handoff.js` echoes (spec 2). */
+/** The most skipped yellow tickets the co-pilot lane names, the bound `hooks/session-handoff.js` echoes (spec 2; never-stuck spec 9). */
 const MAX_BLOCKED = 5;
 const BLOCKED_PAIR = String.raw`itm_\w{1,40} on itm_\w{1,40}`;
 /** The blocked list's shape, one to `MAX_BLOCKED` `itm_ on itm_` pairs, which `pilot wait` prints only when it holds (spec 2). */
 export const BLOCKED_LIST = new RegExp(`^${BLOCKED_PAIR}(; ${BLOCKED_PAIR}){0,${MAX_BLOCKED - 1}}$`);
 
 /**
- * The yellow tickets of `repo` the co-pilot lane may take (blocked-yellow-yields spec 2; L5, L6), pure: open, in deck
- * order, none with an open blocking item of its own the user has not answered (spec 3). A blocked one is skipped, never flipped.
+ * Why the co-pilot lane skips a queued yellow ticket (never-stuck spec 9, 19), or null for a runnable one: `draining`
+ * while it yields, `orphaned` once a co-pilot was granted on its plan and none holds it (a `'legacy'` stamp cannot say
+ * so), else `blocked on` its first unanswered blocking item. Ids and fixed words only: the hook echoes this verbatim.
+ */
+function skipReasonOf(items, ticket) {
+  if (ticket.yielding) return 'draining';
+  const grantedAt = ticket.plan?.grantedAt;
+  if (typeof grantedAt === 'string' && grantedAt !== 'legacy') return 'orphaned';
+  const [blocker] = unansweredBlockers(items, ticket.id);
+  return blocker ? `blocked on ${blocker}` : null;
+}
+
+/**
+ * The yellow tickets of `repo` the co-pilot lane may take (blocked-yellow-yields spec 2; L5, L6; never-stuck spec 19),
+ * pure: open, in deck order, none draining, orphaned, or with an open blocking item the user has not answered (spec 3).
+ * A skipped one is never flipped. Read only while no live co-pilot holds a ticket, so a granted plan here is an orphan.
  */
 export function runnableYellowOf(items, repo) {
-  return ticketQueueOf(items, repo, 'yellow').filter((ticket) => unansweredBlockers(items, ticket.id).length === 0);
+  return ticketQueueOf(items, repo, 'yellow').filter((ticket) => skipReasonOf(items, ticket) === null);
 }
 
 /**
@@ -65,8 +79,9 @@ export function laneOf(items, repo, lane, { switching } = {}) {
  * lane's line, concluding first (A4), else the idle yellow lane's (`coPilotStateOf` 'queued': a yellow ticket open, no
  * live co-pilot holds it; yellow-lane L2), and null while the directory has an open hand-off (L7): the session told
  * to stop for its `/clear` must stop. Each lane is spelled alike: its ticket, else its next. The yellow next is the
- * first runnable ticket; with yellow queued and none runnable, `blocked` names each on its question (blocked-yellow-yields
- * spec 2), else it is null.
+ * first runnable ticket; with yellow queued and none runnable, the co-pilot line names each skipped one with its reason
+ * (never-stuck spec 9, 19) and `blocked` the blocked ones on their question for `pilot wait` (blocked-yellow-yields
+ * spec 2), else it is null. A held ticket that yields reads `draining`; a re-cut planning pick reads `(re-cut)`.
  */
 export function lanesFrom(items, repo, { switching, coPilot } = {}) {
   const planning = laneOf(items, repo, 'planning', { switching });
@@ -76,12 +91,17 @@ export function lanesFrom(items, repo, { switching, coPilot } = {}) {
   const queued = coPilotStateOf(items, repo, held, switching) === 'queued';
   const planned = queued ? runnableYellowOf(items, repo)[0] : undefined;
   const short = planned ? isShortPath(planned) : false;
-  // Every yellow ticket blocked (spec 2): each named with its first open blocking item, and nothing refused.
-  const blocked = queued && !planned
-    ? ticketQueueOf(items, repo, 'yellow').slice(0, MAX_BLOCKED).map((ticket) => `${ticket.id} on ${unansweredBlockers(items, ticket.id)[0]}`).join('; ')
-    : null;
+  // No yellow ticket runnable (spec 2; never-stuck spec 9): each skipped one named with why, and nothing refused.
+  const skipped = queued && !planned
+    ? ticketQueueOf(items, repo, 'yellow').slice(0, MAX_BLOCKED).map((ticket) => ({ id: ticket.id, why: skipReasonOf(items, ticket) }))
+    : [];
+  const pairs = skipped.filter(({ why }) => why?.startsWith('blocked on ')).map(({ id, why }) => `${id} ${why.slice('blocked '.length)}`);
+  const blocked = pairs.length ? pairs.join('; ') : null;
+  const reasons = skipped.map(({ id, why }) => `${id} ${why}`).join('; ');
+  const draining = held !== undefined && items.some((item) => item?.id === held && item.kind === KIND_TICKET && item.yielding);
   const hand = (lane) => lane.ticket?.id ?? lane.pending;
-  const line = (name, lane) => (lane.next ? `${name}: empty → next ${lane.next.id}` : hand(lane) ? `${name}: ${hand(lane)}` : `${name}: empty`);
+  const recut = (lane) => (lane.next.recut ? ' (re-cut)' : '');
+  const line = (name, lane) => (lane.next ? `${name}: empty → next ${lane.next.id}${name === 'planning' ? recut(lane) : ''}` : hand(lane) ? `${name}: ${hand(lane)}` : `${name}: empty`);
   const clause = (name, lane) =>
     lane.next ? `${name}: empty, next ${lane.next.id}` : lane.ticket ? `${name}: ${lane.ticket.id} live` : lane.pending ? `${name}: ${lane.pending}` : `${name}: empty`;
   const idle = [['concluding', concluding], ['planning', planning]].find(([, lane]) => lane.next);
@@ -93,7 +113,9 @@ export function lanesFrom(items, repo, { switching, coPilot } = {}) {
   return {
     planning: line('planning', planning),
     concluding: line('concluding', concluding),
-    coPilot: held ? `co-pilot: ${held}` : planned ? `co-pilot: empty → next ${planned.id}${short ? ' (short path)' : ''}` : blocked ? `co-pilot: empty, blocked: ${blocked}` : 'co-pilot: none',
+    coPilot: held
+      ? `co-pilot: ${held}${draining ? ' draining' : ''}`
+      : planned ? `co-pilot: empty → next ${planned.id}${short ? ' (short path)' : ''}` : reasons ? `co-pilot: none runnable: ${reasons}` : 'co-pilot: none',
     stageClause: `${clause('Planning', planning)}. ${clause('Concluding', concluding)}`,
     yellowClause: held ? `Yellow: ${held}` : planned ? `Yellow: empty, next ${planned.id}` : 'Yellow: empty',
     refusal: handedOff ? null : refusal,
