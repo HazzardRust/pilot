@@ -21,7 +21,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed 76f3305",
+      "state": "integrated 8abd1ae5",
       "after": [
         "S8"
       ],
@@ -119,8 +119,8 @@
     }
   ],
   "findings": [],
-  "next": "S9 integrating; then S7, S12, S15, S19, S14, S16; then S18 when ready, then fundamentalist + QA",
-  "updatedAt": "2026-11-18T09:31:17.224Z",
+  "next": "integrate S7, then S12, S15, S19, S14, S16; then S18",
+  "updatedAt": "2026-11-18T09:35:30.172Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
