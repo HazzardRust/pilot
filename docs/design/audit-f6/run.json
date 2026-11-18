@@ -12,10 +12,15 @@
       "state": "integrated",
       "branch": "slice/audit-f6-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f6-s1"
+    },
+    {
+      "slice": "audit-f6",
+      "state": "feat 3614c05f; walkthrough itm_ab39b4603222 awaiting Sign off, then pilot integrate --trial + gate2 by the pilot (short path)"
     }
   ],
-  "next": "S1 pushed 8ee4b85c, both reviewers approve; pilot integrate into feat/audit-f6, then walkthrough + pilot integrate --trial + gate2 (short path). Assumed: ESM .js faulted, node --check quirk not copied; name at Gate 2.",
-  "updatedAt": "2026-11-17T17:11:21.834Z",
+  "findings": [],
+  "next": "Spawn pilot-lander for spec-first gate2 itm_9de791b5b143 (signed, queued). other-host paused+released: co-pilot it; implementers S1 a492c7a2aa70694d6, S11 aa2a6dc99c767985d may be live; feat wt pilot-feat-other-host-r2. audit-f6: itm_ab39b4603222 then trial+gate2. User owes: gate1 itm_887dbf9d45aa, gate2 itm_a9ab81e5ae4f (QA a99b0065f94af0203), itm_629c53e3f908, PR #105. Wait with --timeout 50.",
+  "updatedAt": "2026-11-18T04:33:27.255Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -49,6 +54,31 @@
       "agent": "pilot:pilot-implementer",
       "what": "spec 4's oracle node --check is laxer than Node's loader for ESM .js; one question round-trip",
       "evidence": "Node 26.1: node --check e.js exits 0 on import + syntax error"
+    },
+    {
+      "kind": "drain",
+      "what": "classifier no-verdict on batched calls posted blocking Blocked items for the pilot's own pilot wait / pilot budget / SendMessage; each closed Moot by hand, one held a gate1",
+      "size": 8
+    },
+    {
+      "kind": "drain",
+      "what": "110-min pilot wait outlives the 1 h prompt cache: 4 cold wakes of ~131k tokens each this session; --timeout 50 used since, PR #105 changes the default",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "short path: pilot posted a walkthrough on a yellow ticket and nothing moved it to green; user found it yellow and idle after a night",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "planned integration worktree path belongs to another clone's stale worktree; brief.md names no small-diff limit though main's brief said so",
+      "evidence": "pilot-feat-other-host .git points into pilot-archive; grep 'limit' in docs/design/other-host finds nothing"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "a rebase asked by main made the design push non-fast-forward; force push refused by auto mode, worked around with merge -s ours",
+      "evidence": "design/never-stuck-2 19a334c7"
     }
   ]
 }
