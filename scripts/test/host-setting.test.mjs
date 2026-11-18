@@ -1,11 +1,15 @@
 /**
  * `pilot host [<name>] [--local]` (other-host spec 1, L2, L3): a name on `HOST_NAMES` is written to git config as
  * `pilot.host`, any other is refused before git is called, and no name prints the host in force. Every test runs
- * over an in-memory git, so none reads or writes this machine's git config.
+ * over an in-memory git but the last, which runs real git on a scratch home, so none reads or writes this
+ * machine's git config.
  */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 const { main } = await import('../host-setting.mjs');
 const { planUninstall, applyPlan } = await import('../uninstall.mjs');
@@ -107,4 +111,39 @@ test('uninstall unsets the global host and leaves an unset one alone', async () 
     throw Object.assign(new Error('fatal: bad config line 1'), { status: 128 });
   };
   assert.deepEqual(host(await planUninstall('/nowhere-home', { ...deps, git: broken })).map((step) => step.action), ['leave'], 'an unreadable config is left, never unset');
+});
+
+test('a failed write exits 1 naming what git said', () => {
+  const git = () => {
+    throw Object.assign(new Error('Command failed'), { status: 128, stderr: 'fatal: --local can only be used inside a git repository\n' });
+  };
+  const { code, err } = run(['gitlab', '--local'], git);
+  assert.equal(code, 1);
+  assert.match(err.join('\n'), /inside a git repository/);
+});
+
+test('uninstall on a scratch home unsets only that home\'s global host, whatever GIT_CONFIG_GLOBAL names', async (t) => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-host-'));
+  t.after(() => fs.rmSync(home, { recursive: true, force: true }));
+  const elsewhere = path.join(home, 'elsewhere.gitconfig');
+  fs.writeFileSync(path.join(home, '.gitconfig'), '[pilot]\n\thost = gitlab\n[user]\n\tname = kept\n');
+  fs.writeFileSync(elsewhere, '[pilot]\n\thost = none\n');
+  const saved = { GIT_CONFIG_GLOBAL: process.env.GIT_CONFIG_GLOBAL, XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME };
+  process.env.GIT_CONFIG_GLOBAL = elsewhere;
+  process.env.XDG_CONFIG_HOME = home;
+  t.after(() => {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+
+  const steps = (await planUninstall(home, { prefix: home, platform: 'linux', deckPid: async () => null, storeDir: home }))
+    .filter((step) => /pilot\.host/.test(step.what));
+  assert.deepEqual(steps.map((step) => step.action), ['remove']);
+  applyPlan(steps);
+
+  assert.doesNotMatch(fs.readFileSync(path.join(home, '.gitconfig'), 'utf8'), /host/, "the scratch home's host is unset");
+  assert.match(fs.readFileSync(path.join(home, '.gitconfig'), 'utf8'), /name = kept/, 'nothing else in it is touched');
+  assert.equal(fs.readFileSync(elsewhere, 'utf8'), '[pilot]\n\thost = none\n', 'the config GIT_CONFIG_GLOBAL names is untouched');
 });

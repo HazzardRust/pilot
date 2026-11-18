@@ -46,9 +46,19 @@ function stopDeckProcess(pid) {
   process.kill(pid);
 }
 
-/** git as argv with `home` as its HOME, so the global config read and unset is the one under `home`. */
-const homeGit = (home) => (args) =>
-  execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, env: { ...process.env, HOME: home, USERPROFILE: home } });
+/**
+ * git as argv whose `--global` is the config under `home`. The user's own home keeps their environment, so a
+ * `GIT_CONFIG_GLOBAL` of theirs is the config `pilot host` wrote; any other home (a test's) drops the variables
+ * that would redirect `--global` to the caller's config.
+ */
+function homeGit(home) {
+  let env = process.env;
+  if (path.resolve(home) !== path.resolve(os.homedir())) {
+    const { GIT_CONFIG_GLOBAL, XDG_CONFIG_HOME, ...rest } = process.env;
+    env = { ...rest, HOME: home, USERPROFILE: home, XDG_CONFIG_HOME: path.join(home, '.config') };
+  }
+  return (args) => execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, env });
+}
 
 // Each planner returns the steps for one thing install wrote: stop, remove or leave.
 const PLANNERS = [
@@ -160,10 +170,10 @@ const PLANNERS = [
       what,
       path: 'your global git config',
       action: 'remove',
-      why: value,
+      why: JSON.stringify(value),
       run: () => {
         git(['config', '--global', '--unset', HOST_KEY]);
-        return `unset ${HOST_KEY} (${value}) in your global git config`;
+        return `unset ${HOST_KEY} (${JSON.stringify(value)}) in your global git config`;
       },
     }];
   },
