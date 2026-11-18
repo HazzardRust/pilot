@@ -128,6 +128,21 @@ test('an adopted land past 40 minutes is stopped and reads timed out', async (t)
   assert.equal(itemOf(gate.id).landing.line, `NOT landed: timed out after 40 min; the deck stopped land ${child.pid}`);
 });
 
+test('a pid reused when 40 minutes are up stops nothing and settles from the land dir', async (t) => {
+  tempDeck(t);
+  const { gate, worktree } = aGate2(t);
+  const rows = [...processTable()];
+  aLiveLand(t, gate, worktree);
+  let fire;
+  const clock = { setInterval: () => undefined, clearInterval: () => undefined, setTimeout: (fn) => (fire = fn), clearTimeout: () => undefined };
+  const stopped = [];
+  const adopted = adoptLandings({ table: () => (fire ? rows : processTable()), clock, stop: (pid) => stopped.push(pid) });
+  fire();
+  await adopted;
+  assert.deepEqual(stopped, []);
+  assert.doesNotMatch(itemOf(gate.id).landing.line, /timed out/);
+});
+
 test('a dead pid is interrupted as today', async (t) => {
   tempDeck(t);
   const { gate, worktree } = aGate2(t);

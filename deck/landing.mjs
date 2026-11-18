@@ -176,9 +176,10 @@ function outputIn(dir) {
     let fd;
     try {
       fd = fs.openSync(path.join(dir, name), 'r');
-      const length = Math.min(fs.fstatSync(fd).size, 16 * MAX_LANDING_CHARS);
+      const { size } = fs.fstatSync(fd);
+      const length = Math.min(size, 16 * MAX_LANDING_CHARS);
       const buffer = Buffer.alloc(length);
-      fs.readSync(fd, buffer, 0, length, fs.fstatSync(fd).size - length);
+      fs.readSync(fd, buffer, 0, length, size - length);
       return keep('', buffer.toString('utf8'));
     } catch {
       return '';
@@ -226,11 +227,6 @@ export function watch(child, { clock, kill, timeoutMs, done, dir }) {
   timer?.unref?.();
 }
 
-/**
- * Land the feature a gate2 signs. Never throws: a refusal, a spawn that fails and land's exit
- * are each a line on the gate2's thread, and a land past LANDING_TIMEOUT_MS is killed and settles timed out
- * (A3). `spawn`, `env`, `clock` and `kill` are seams for the tests; `announce` repaints the pages once it settles.
- */
 // Every outcome is a line on the gate2's thread and the note on the ticket's feature row (clean-landing spec 12).
 // A recreated worktree opens every line after it (three-lanes spec 16).
 function writerFor(gate, deps, opened = () => '') {
@@ -251,6 +247,11 @@ function writerFor(gate, deps, opened = () => '') {
   };
 }
 
+/**
+ * Land the feature a gate2 signs. Never throws: a refusal, a spawn that fails and land's exit
+ * are each a line on the gate2's thread, and a land past LANDING_TIMEOUT_MS is killed and settles timed out
+ * (A3). `spawn`, `env`, `clock` and `kill` are seams for the tests; `announce` repaints the pages once it settles.
+ */
 export function startLanding(gate2Id, deps = {}) {
   const { spawn = spawnChild, env = process.env, announce = () => {}, clock = { setTimeout, clearTimeout }, kill = killHeld } = deps;
   try {
@@ -350,17 +351,19 @@ function follow(gate, deps, { table, clock, pollMs, now, stop }) {
         resolve();
       }
     };
-    poll = clock.setInterval(() => {
-      if (pidAlive(pid)) return;
+    const exited = () => {
       const { stdout, stderr } = outputIn(dir);
       const line = landingLine(undefined, stdout, stderr);
       const sha = shaOf(line);
       finish({ ok: sha !== undefined, sha, line });
-    }, pollMs);
+    };
+    poll = clock.setInterval(() => pidAlive(pid) || exited(), pollMs);
     limit = clock.setTimeout(() => {
-      let stopped = 'its pid is no longer the land, so nothing was stopped';
+      let stopped;
       try {
-        if (landChildOf(gate.landing, { table, now: now() })) stopped = (stop(pid), `the deck stopped land ${pid}`);
+        // A pid no longer the land's is one reused after it exited: its line is in its land dir, and nothing is stopped.
+        if (!landChildOf(gate.landing, { table, now: now() })) return exited();
+        stopped = (stop(pid), `the deck stopped land ${pid}`);
       } catch (err) {
         stopped = `land ${pid} could not be stopped (${err?.message ?? err})`;
       }
