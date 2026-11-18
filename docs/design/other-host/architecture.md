@@ -87,7 +87,7 @@ review page. A fixture feature runs to a landing at `none` and at `gitlab`, and 
 | --- | --- | --- | --- |
 | `deck/host.mjs` | `hostOf(git)`, `hostFor(cwd, deps?)`, `HOST_NAMES`, types `Host`, `Review` | the `pilot.host` read and check; adapter choice; `none` as `null` | local-substitutable (git) |
 | `deck/host-github.mjs` (new) | `githubHost(run) -> Host`, `ghRun(cwd)` | `assertHostVerb`, every `gh` argv and its JSON mapping to `Review`, the label, the comment upsert by marker | true external (`gh`, injected `run`) |
-| `deck/host-gitlab.mjs` (new) | `gitlabHost(run) -> Host`, `glabRun(cwd)` | `glab api` REST v4 calls, `opened→open`, `Draft:` title, note upsert by marker | true external (`glab`, injected `run`) |
+| `deck/host-gitlab.mjs` (new) | `gitlabHost(run) -> Host`, `glabRun(cwd)`; its `run(args, input?)` takes a JSON body on stdin (`--input -`) | `glab api` REST v4 calls, `opened→open`, `Draft:` title, note upsert by marker | true external (`glab`, injected `run`) |
 | `deck/doctor.mjs` | `checkAll(deps)`'s `host` row | host CLI choice, `signedIn()` | local-substitutable |
 | `scripts/host-setting.mjs` (new) | `main(argv, inject?)` for `pilot host <name>` | the `git config --global pilot.host` write, name check | local-substitutable (git) |
 | `deck/closing-report.mjs` | `MAIN_LINE`, `mainStep` | the `merge pilot into main by hand` line | in-process |
@@ -102,7 +102,7 @@ adapters whole. `hostIn` fails the deletion test once every caller takes a **Hos
 
 - **Host**: the forge `pilot.host` names, and the verb interface every host call goes through.
 - **Review**: one PR or MR as **Host** returns it: `{ number, state, base, head, headSha, title, body, url, crossRepo }`.
-- **Adapter**: one host's **Host** over an injected `run(args) -> string`.
+- **Adapter**: one host's **Host** over an injected `run(args, input?) -> string`; `input`, when given, is written to the CLI's stdin (GitLab's JSON bodies, `--input -`).
 - **none**: no host: `hostFor` returns `null`, no CLI starts, merged is judged by ancestry.
 - **PR**: the crew's word for a review on any host (October A4: no rename).
 
