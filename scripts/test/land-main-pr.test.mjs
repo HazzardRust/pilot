@@ -6,11 +6,13 @@
 
 import { repos, passing, fakeGh, mainSays, land } from './lib/land-repos.mjs';
 
+import fs from 'node:fs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 const { mainLine } = await import('../land.mjs');
 const { releasePr } = await import('../release.mjs');
+const { githubHost } = await import('../../deck/host-github.mjs');
 
 /** A git with `pilot.remote` set to `remote` (unset when undefined), remotes origin and fork, and main as origin's HEAD. */
 function stubGit(remote) {
@@ -32,23 +34,30 @@ const creates = (calls) => calls.filter((args) => args[0] === 'pr' && args[1] ==
 
 test('the first landing opens the main PR', () => {
   const { gh, calls } = fakeGh([], undefined, { created: 901 });
+  const bodies = [];
+  const host = githubHost((args) => {
+    const at = args.indexOf('--body-file');
+    if (at >= 0) bodies.push(fs.readFileSync(args[at + 1], 'utf8'));
+    return gh(args);
+  });
 
-  const main = releasePr({ git: stubGit(), gh });
+  const main = releasePr({ git: stubGit(), host });
 
   assert.equal(creates(calls).length, 1);
-  assert.deepEqual(creates(calls)[0], ['pr', 'create', '--base', 'main', '--head', 'pilot', '--title', 'Release: a', '--body', `| Feature | PR | Landing |\n| --- | --- | --- |\n| a | – | ${'a'.repeat(40)} |`, '--label', 'release']);
+  assert.deepEqual(creates(calls)[0].filter((arg, i, all) => all[i - 1] !== '--body-file'), ['pr', 'create', '--base', 'main', '--head', 'pilot', '--title', 'Release: a', '--label', 'release', '--body-file']);
+  assert.deepEqual(bodies, [`| Feature | PR | Landing |\n| --- | --- | --- |\n| a | – | ${'a'.repeat(40)} |`]);
   assert.deepEqual(main, { number: 901, opened: true });
   assert.equal(mainLine(main), 'main gets pilot: #901 (opened)');
 });
 
 test('a later landing reuses it', () => {
   const { gh, calls } = fakeGh([
-    { number: 901, headRefName: 'pilot', state: 'OPEN' },
-    // A fork's branch named pilot is never the main PR.
+    // A fork's branch named pilot is never the main PR, even listed first.
     { number: 950, headRefName: 'pilot', state: 'OPEN', isCrossRepository: true },
+    { number: 901, headRefName: 'pilot', state: 'OPEN' },
   ]);
 
-  const main = releasePr({ git: stubGit('origin'), gh });
+  const main = releasePr({ git: stubGit('origin'), host: githubHost(gh) });
 
   assert.equal(creates(calls).length, 0);
   assert.deepEqual(main, { number: 901, opened: false });
@@ -60,10 +69,50 @@ test('a gh that fails reads unknown, with why', () => {
     throw new Error('no GitHub host');
   };
 
-  const main = releasePr({ git: stubGit(), gh });
+  const main = releasePr({ git: stubGit(), host: githubHost(gh) });
 
   assert.equal(main.number, null);
   assert.equal(mainLine(main), 'main gets pilot: unknown (gh pr list failed: no GitHub host)');
+});
+
+/** `fakeGh`'s answer, but a throw on `pr <verb>`, or `said` printed in its place. */
+function failing(verb, open, said) {
+  const { gh } = fakeGh(open, undefined, { created: 905 });
+  return (args) => {
+    if (args[0] !== 'pr' || args[1] !== verb) return gh(args);
+    if (said !== undefined) return said;
+    throw new Error('HTTP 502');
+  };
+}
+
+test('a host write that fails reads unknown, with why', () => {
+  const open = [{ number: 901, headRefName: 'pilot', state: 'OPEN' }];
+  const cases = [
+    [failing('edit', open), /^gh pr edit failed: .*HTTP 502/],
+    [failing('create', []), /^gh pr create failed: .*HTTP 502/],
+    [failing('create', [], 'created\n'), /^gh pr create failed: /],
+  ];
+  for (const [gh, why] of cases) {
+    const main = releasePr({ git: stubGit(), host: githubHost(gh) });
+
+    assert.equal(main.number, null);
+    assert.equal(main.opened, false);
+    assert.match(main.why, why);
+  }
+});
+
+test('an unreadable merged list reads unknown, with why', () => {
+  const { gh: answer } = fakeGh([]);
+  const gh = (args) => (args.includes('merged') ? 'not json' : answer(args));
+
+  const main = releasePr({ git: stubGit(), host: githubHost(gh) });
+
+  assert.equal(main.number, null);
+  assert.match(main.why, /^release notes failed: /);
+});
+
+test('no host under a fork run remote hands the fork branch over', () => {
+  assert.deepEqual(releasePr({ git: stubGit('fork'), host: null }), { number: null, opened: false, byHand: 'fork/pilot' });
 });
 
 test('an open feature PR takes the landing comment, never a close', (t) => {

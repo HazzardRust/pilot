@@ -239,7 +239,7 @@ function landCaughtUp({ cwd, git, gh, test, head, wait, sleep }) {
     // on GitHub's origin only, where pilot is.
     const retargeted = runs === 'origin' ? retarget({ gh, head }) : [];
     // Only now, pilot pushed, and on an already-landed feature too: main gets pilot through one PR (A1).
-    return { ...landed, retargeted, main: releasePr({ git, gh, already: !merge.merged }) };
+    return { ...landed, retargeted, main: releasePr({ git, host: githubHost(gh), already: !merge.merged }) };
   }
 }
 
