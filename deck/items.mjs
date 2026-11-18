@@ -323,6 +323,7 @@ export function noteFor(item) {
   // The hand-off mod holds the `/clear` for a live co-pilot (held-handoff spec 1, L2): the card says so, not "picks this up".
   // Handoff failed re-arms it (spec 3, L3), and the card says that until the pick-up ends the hold.
   if (isHeld(item)) return item.hold.rearmedAt ? 're-armed: /clear at the next turn end' : `held: /clear waits on ${item.hold.ticket}'s co-pilot`;
+  if (item?.kind === KIND_HANDOFF && /^superseded by itm_\w+$/.test(item.resolution ?? '')) return item.resolution; // not "press Handoff failed" (QA Q3)
   const { note, buttons } = specFor(item?.kind);
   if (!note) return null;
   return buttons?.includes(HANDOFF_FAILED) && !item.options?.includes(HANDOFF_FAILED) ? null : note;

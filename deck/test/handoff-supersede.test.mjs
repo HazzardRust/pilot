@@ -15,7 +15,7 @@ import path from 'node:path';
 import { tempDeck } from '../testUtils.mjs';
 
 const { listItems, postItem } = await import('../store.mjs');
-const { isOpen } = await import('../items.mjs');
+const { isOpen, noteFor } = await import('../items.mjs');
 
 const A = path.join('D:', 'work', 'alpha');
 const B = path.join('D:', 'work', 'beta');
@@ -32,6 +32,7 @@ test('a new hand-off closes the older open one of its directory, and no other', 
   assert.ok(isOpen(reread(newer.id)), 'the new one stays open');
   assert.ok(isOpen(reread(elsewhere.id)), "another directory's hand-off is untouched");
   assert.equal(reread(older.id).notice, undefined, 'a hand-off closes silently');
+  assert.equal(noteFor(reread(older.id)), `superseded by ${newer.id}`, 'its card no longer says to press Handoff failed');
 });
 
 test("a chain hand-off is never superseded: only its Handoff failed hands its tickets back", (t) => {
