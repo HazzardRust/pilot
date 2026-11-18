@@ -75,8 +75,6 @@ export const glabRun = (cwd) => (args, input) => {
 const MRS = 'projects/:id/merge_requests';
 const STATES = { opened: 'open', merged: 'merged', closed: 'closed' };
 const ASKED = { open: 'opened', merged: 'merged', closed: 'closed', all: 'all' };
-/** GitLab's draft title prefixes; a **Review**'s title is the title without one, as on GitHub. */
-const DRAFT = /^(?:\[draft\]|\(draft\)|draft:)\s*/i;
 /** The most pages of notes `upsertComment` reads, so a misbehaving answer cannot loop it for ever. */
 const PAGES = 100;
 
@@ -86,8 +84,7 @@ function reviewOf(mr) {
   if (state === undefined) throw new Error(`glab: a merge request in state ${JSON.stringify(mr?.state)}`);
   return {
     number: mr.iid, state, base: mr.target_branch, head: mr.source_branch, headSha: mr.sha,
-    title: String(mr.title ?? '').replace(DRAFT, ''), body: mr.description ?? '', url: mr.web_url,
-    crossRepo: mr.source_project_id !== mr.target_project_id,
+    body: mr.description ?? '', crossRepo: mr.source_project_id !== mr.target_project_id,
   };
 }
 
@@ -130,11 +127,18 @@ export function gitlabHost(run) {
       if (head !== undefined) query.set('source_branch', head);
       if (base !== undefined) query.set('target_branch', base);
       if (mine) query.set('scope', 'created_by_me');
-      // GitLab's page holds at most 100; today's callers ask 100 or fewer.
-      query.set('per_page', String(Number.isFinite(limit) ? Math.min(Math.max(1, Math.trunc(limit)), 100) : 100));
-      const said = get(`${MRS}?${query}`, 'merge requests');
-      if (!Array.isArray(said)) throw new Error('glab merge requests: an answer that is not a list');
-      return said.map(reviewOf);
+      const want = Number.isFinite(limit) ? Math.max(1, Math.trunc(limit)) : 100;
+      query.set('per_page', String(Math.min(want, 100)));
+      // GitLab's page holds at most 100: read on until a page comes back short or `want` are in.
+      const found = [];
+      for (let page = 1; found.length < want; page++) {
+        query.set('page', String(page));
+        const said = get(`${MRS}?${query}`, 'merge requests');
+        if (!Array.isArray(said)) throw new Error('glab merge requests: an answer that is not a list');
+        found.push(...said.map(reviewOf));
+        if (said.length < 100) break;
+      }
+      return found.slice(0, want);
     },
     review,
     open({ base, head, title, body, draft = false, label }) {

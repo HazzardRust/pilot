@@ -70,7 +70,7 @@ export const ghRun = (cwd) => (args) => {
 };
 
 /** The one field set every review read asks for (A2), whoever the caller. */
-const FIELDS = 'number,state,baseRefName,headRefName,headRefOid,title,body,url,isCrossRepository';
+const FIELDS = 'number,state,baseRefName,headRefName,headRefOid,body,isCrossRepository';
 const STATES = { OPEN: 'open', MERGED: 'merged', CLOSED: 'closed' };
 /** A comment's url as GitHub gives it: the repository and the comment's own id. */
 const COMMENT_URL = /^https:\/\/[^/\s]+\/([\w.-]+)\/([\w.-]+)\/pull\/\d+#issuecomment-(\d+)$/;
@@ -81,7 +81,7 @@ function reviewOf(pr) {
   if (state === undefined) throw new Error(`gh: a PR in state ${JSON.stringify(pr?.state)}`);
   return {
     number: pr.number, state, base: pr.baseRefName, head: pr.headRefName, headSha: pr.headRefOid,
-    title: pr.title, body: pr.body, url: pr.url, crossRepo: pr.isCrossRepository,
+    body: pr.body, crossRepo: pr.isCrossRepository,
   };
 }
 

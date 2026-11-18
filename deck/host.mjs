@@ -7,7 +7,7 @@
  * `deck/doctor.mjs`'s PATH presence probe, a fixed `<cli> --version` (S6 seam): not a host call, no repo data.
  *
  * @typedef {{ number: number, state: 'open'|'merged'|'closed', base: string, head: string, headSha: string,
- *   title: string, body: string, url: string, crossRepo: boolean }} Review
+ *   body: string, crossRepo: boolean }} Review
  * @typedef {{ name: string, cli: string, whoami(): string,
  *   reviews(query: { head?: string, base?: string, state: 'open'|'merged'|'closed'|'all', mine?: boolean, limit?: number }): Review[],
  *   review(n: number): Review,

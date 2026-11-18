@@ -62,7 +62,6 @@ function prsByHead(host) {
   if (host === null) return new Map();
   try {
     const prs = host.reviews({ state: 'all', limit: PR_LIMIT });
-    if (!Array.isArray(prs)) throw new Error('reviews answered no list');
     if (prs.length >= PR_LIMIT) throw new Error(`${host.cli} listed ${PR_LIMIT} reviews, so one may be missing`);
     const by = new Map();
     for (const pr of prs.filter((p) => p.crossRepo !== true)) by.set(pr.head, [...(by.get(pr.head) ?? []), pr]);

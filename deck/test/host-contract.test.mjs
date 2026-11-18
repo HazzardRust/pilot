@@ -62,7 +62,7 @@ function fakeGh() {
 }
 
 const isReview = (review) => {
-  assert.deepEqual(Object.keys(review).sort(), ['base', 'body', 'crossRepo', 'head', 'headSha', 'number', 'state', 'title', 'url']);
+  assert.deepEqual(Object.keys(review).sort(), ['base', 'body', 'crossRepo', 'head', 'headSha', 'number', 'state']);
   assert.ok(['open', 'merged', 'closed'].includes(review.state), review.state);
   assert.ok(Number.isSafeInteger(review.number));
 };
@@ -222,10 +222,10 @@ test('every verb returns its shape on gitlab', (t) => {
     assert.equal(host.name, 'gitlab');
     check(call(host));
     sent.push(...calls);
-    if (verb === 'reviews') assert.deepEqual(call(host).map((r) => [r.number, r.title, r.body, r.crossRepo]), [[1, 't1', 'b', false], [2, 't2', '', true], [3, 't3', '', false]]);
+    if (verb === 'reviews') assert.deepEqual(call(host).map((r) => [r.number, r.body, r.crossRepo]), [[1, 'b', false], [2, '', true], [3, '', false]]);
   }
   const mineByHead = sent.find(({ args }) => args.at(-1).includes('source_branch'));
-  assert.equal(mineByHead.args.at(-1), 'projects/:id/merge_requests?state=opened&source_branch=feat%2F1&scope=created_by_me&per_page=5');
+  assert.equal(mineByHead.args.at(-1), 'projects/:id/merge_requests?state=opened&source_branch=feat%2F1&scope=created_by_me&per_page=5&page=1');
   const opened = sent.find(({ args }) => args.includes('POST') && args.at(-1) === 'projects/:id/merge_requests');
   assert.deepEqual(JSON.parse(opened.input), { source_branch: 'feat/x', target_branch: 'pilot', title: 'Draft: T', description: 'B', labels: 'release' });
   // Every argv the adapter sent passes the real allowlist: a refused one throws here, before any process starts.
@@ -235,6 +235,28 @@ test('every verb returns its shape on gitlab', (t) => {
   assert.equal(signedOut.signedIn(), false);
   const odd = gitlabHost(() => JSON.stringify([{ ...fixture('merge_request'), state: 'locked' }]));
   assert.throws(() => odd.reviews({ state: 'open' }), /locked/, 'a state off the three is refused, never guessed');
+});
+
+test('reviews reads on past a full page of 100, up to the limit', () => {
+  /** A gitlab over pages of `sizes` merge requests, recording the page each call asked for. */
+  const paged = (sizes) => {
+    const pages = [];
+    const host = gitlabHost((args) => {
+      const page = Number(new URLSearchParams(args.at(-1).split('?')[1]).get('page'));
+      pages.push(page);
+      return JSON.stringify(Array.from({ length: sizes[page - 1] ?? 0 }, (_, at) => ({ ...fixture('merge_request'), iid: page * 1000 + at })));
+    });
+    return { host, pages };
+  };
+  const short = paged([100, 100, 50]);
+  assert.equal(short.host.reviews({ state: 'all', limit: 1000 }).length, 250);
+  assert.deepEqual(short.pages, [1, 2, 3], 'a short page is the last');
+  const full = paged([100, 100, 100]);
+  assert.equal(full.host.reviews({ state: 'all', limit: 150 }).length, 150);
+  assert.deepEqual(full.pages, [1, 2], 'no page past the limit');
+  const one = paged([100, 100]);
+  assert.equal(one.host.reviews({ state: 'all', limit: 100 }).length, 100);
+  assert.deepEqual(one.pages, [1]);
 });
 
 test('the upsert edits its own note', () => {
@@ -276,7 +298,6 @@ test('a title edit keeps a draft a draft', () => {
       if (args.includes('PUT')) puts.push(JSON.parse(input));
       return JSON.stringify({ ...fixture('merge_request'), title: draft ? '[Draft] old' : 'old', draft });
     });
-    assert.equal(host.review(7).title, 'old', 'the Review title carries no draft prefix, as on GitHub');
     host.edit(7, { title: 'T' });
     assert.deepEqual(puts, [{ title }]);
   }
