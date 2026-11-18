@@ -20,7 +20,7 @@ import path from 'node:path';
 import { deckOnAPort } from '../testUtils.mjs';
 
 const { LIVE_WINDOW_MS, forgetAgents, noteActive } = await import('../agents.mjs');
-const { addReply, listItems, postItem } = await import('../store.mjs');
+const { addReply, currentSeq, listItems, postItem } = await import('../store.mjs');
 const { ownerOf } = await import('../items.mjs');
 const { waiterCount } = await import('../server.mjs');
 const { announceChange, fallbackFor, parkedOn } = await import('../server-wait.mjs');
@@ -107,6 +107,16 @@ test('a parked architect wait keeps it', async (t) => {
   t.mock.timers.tick(PICK_UP);
   assert.deepEqual(fallbackFor(ALPHA).claim(), [], 'and the pilot is handed none of it');
   assert.equal(ownerOf(stored(item.id)), 'architect');
+
+  // A reply still undelivered while a wait is parked on its item: only the parked wait keeps it.
+  addReply(other.id, 'Keep them apart');
+  architectBusy();
+  const past = await park(base, { since: currentSeq(), timeout: 120_000, repo: ALPHA, author: 'architect', item: other.id });
+  t.mock.timers.tick(PICK_UP);
+  architectBusy();
+  assert.deepEqual(fallbackFor(ALPHA).claim(), [], 'a wait parked on the item keeps an answer it has not taken');
+  assert.equal(past.done(), false);
+  assert.equal(ownerOf(stored(other.id)), 'architect');
 });
 
 test("today's quiet-owner fallback is unchanged", async (t) => {
