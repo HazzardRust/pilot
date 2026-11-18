@@ -93,7 +93,7 @@ test('the old callers keep their reads', (t) => {
     { branch: 'main' },
   ];
   // A2: the one field set every review read asks; `--author @me` is gh's own signed-in account.
-  const PR_LIST = ['pr', 'list', '--state', 'open', '--author', '@me', '--json', 'number,state,baseRefName,headRefName,headRefOid,title,body,url,isCrossRepository', '--limit', '100'];
+  const PR_LIST = ['pr', 'list', '--state', 'open', '--author', '@me', '--json', 'number,state,baseRefName,headRefName,headRefOid,body,isCrossRepository', '--limit', '100'];
 
   // The runs, over a fake gh that answers each argv as gh would.
   const seen = [];
