@@ -1,0 +1,39 @@
+{
+  "slug": "tree-tests-guard",
+  "feature": "tree-tests-guard",
+  "ticket": "itm_da45ed4593f8",
+  "branch": "feat/tree-tests-guard",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-tree-tests-guard",
+  "artefact": "docs/design/tree-tests-guard/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed b079bda, integration red: ADR 0189 collides with pilot's; implementer renumbering",
+      "branch": "slice/tree-tests-guard-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-tree-tests-guard-s1"
+    }
+  ],
+  "next": "S1 implementer ac71ef456bb922904 merges origin/pilot into the slice and renumbers its ADR; on its report rerun pilot integrate (Reviewed-by: pilot:typescript-reviewer: APPROVE), then integrate --trial and gate2 on #111 (surface false). Before landing check the \"[remote rejected] 4253c484 -> pilot\" line from its push.",
+  "updatedAt": "2026-11-18T11:49:00.448Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a new ADR needs npm run adr-index before the gate; neither slice file nor brief says so, found only on the 282 s full gate, and docs/adr/README.md was not in Files owned",
+      "evidence": "tree-tests-guard S1 report: first full run red on adr-index and one-line-docs",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief says the narrow loop runs the full suite on a select-tests.mjs diff; true only uncommitted, so the live check needed a commit first",
+      "evidence": "tree-tests-guard S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot",
+      "what": "slice ADR numbered at design time collided with an ADR landed on pilot meanwhile; pilot integrate went red after a full suite run",
+      "evidence": "integrate log 20261118T114336119Z: 4413 pass, 2 fail; origin/pilot has 0189-the-host-is-a-setting.md",
+      "size": 1
+    }
+  ]
+}
