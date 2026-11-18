@@ -53,7 +53,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 85f8ae2",
+      "state": "integrating 85f8ae2",
       "after": [
         "S3"
       ],
@@ -106,7 +106,7 @@
     },
     {
       "slice": "S10",
-      "state": "pushed 6335fca",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -132,8 +132,8 @@
   "findings": [
     "kept: P1 added-slice — S3 took seam option A: a failed label create is swallowed by githubHost.labelled (host-github.mjs:121-129) and land no longer prints its label warning; after S5 integrates, Host open/edit return `why` and land prints it again (spec 2: moved, not rewritten)"
   ],
-  "next": "integrate S10 (running), then S4, then pilot ready for S12 S8",
-  "updatedAt": "2026-11-18T06:15:19.007Z",
+  "next": "integrate S4 on feat/other-host 278a9606, then pilot ready for S12 S8",
+  "updatedAt": "2026-11-18T06:18:54.236Z",
   "friction": [
     {
       "agent": "pilot",
@@ -316,6 +316,11 @@
       "agent": "pilot:pilot-implementer",
       "what": "S4: gh stub answers every call with one reply.txt, so a live github landing cannot show a realistic main line",
       "evidence": "S4 live check: main line unknown, no PR url"
+    },
+    {
+      "kind": "drain",
+      "what": "a co-pilot's Blocked: SendMessage (classifier unavailable, sent on reissue) sat 20 min and paused other-host with its co-pilot live; pilot closed it Moot and re-claimed the lane, second time",
+      "size": 2
     }
   ]
 }
