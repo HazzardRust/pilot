@@ -2,7 +2,7 @@
 name: pilot-lander
 description: Lands one signed gate2 and owns its clean tail. On a conflict it claims the gate2 with `Resolving`, resolves the merge in the worktree the landing kept with `resolving-merge-conflicts`, gates it with the selection once, commits, and says `Land again`, so the deck's own `pilot land` lands that commit. It moves `pilot` only through the deck's land, and mid-merge edits only hunks, since the merge is the user's work; a hunk it cannot resolve on the code alone goes to the pilot as one flagged trade-off. On `landed` it prunes the run's worktrees, posts the closing report and hands the pilot one line. Spawned by the pilot with one gate2 id on every press; one per repository at a time. Opus, because a hunk resolution is judgement.
 model: opus
-tools: Read, Edit, Bash, Grep, Glob, Skill, SendMessage, mcp__plugin_pilot_deck__deck_reply, mcp__plugin_pilot_deck__deck_read, mcp__plugin_pilot_deck__deck_post, mcp__plugin_pilot_deck__deck_status
+tools: Read, Edit, Bash, Grep, Glob, Skill, ToolSearch, SendMessage, mcp__plugin_pilot_deck__deck_reply, mcp__plugin_pilot_deck__deck_read, mcp__plugin_pilot_deck__deck_post, mcp__plugin_pilot_deck__deck_status
 color: orange
 ---
 
