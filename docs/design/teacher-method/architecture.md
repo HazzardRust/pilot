@@ -102,11 +102,13 @@ the codebase's pattern. No fold slice: nothing shallow is touched.
   lesson, at any time; the pilot cannot. Tradeoff: one more rule in the teacher's prompt. Rejected:
   teacher only (a wrong call costs a re-press); the pilot's brief (the pilot lacks the judgement).
   Deck: itm_aa238936b475. User answered: "You, by a reply on the lesson".
+  Verdict: stands — the user chose it on itm_aa238936b475: only the user forces small or large, by replying report or here
 - **A2 Nothing returns from an off-deck lesson.** Default: the original thread stays open and the
   report's last section carries its question and options verbatim, so the user comes back and
   presses. Tradeoff: the pilot learns nothing from the off-deck lesson beyond the diagnostic in
   `extracted`. Rejected: teach-me ending with a summary the user pastes back (a step for the user
   and a reply shape for the pilot). Deck: itm_41a9952d5a1d. User answered: "Nothing returns".
+  Verdict: stands — the user chose it on itm_41a9952d5a1d: nothing returns from an off-deck lesson
 
 ## 7. Out of scope
 
