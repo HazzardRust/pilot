@@ -90,7 +90,7 @@
     },
     {
       "slice": "S8",
-      "state": "pushed d3a35c7",
+      "state": "integrated",
       "after": [
         "S4"
       ],
@@ -123,7 +123,7 @@
     },
     {
       "slice": "S12",
-      "state": "implementing",
+      "state": "pushed 5be8bc7",
       "after": [
         "S3",
         "S4",
@@ -136,8 +136,8 @@
   "findings": [
     "kept: P1 added-slice — S3 took seam option A: a failed label create is swallowed by githubHost.labelled (host-github.mjs:121-129) and land no longer prints its label warning; after S5 integrates, Host open/edit return `why` and land prints it again (spec 2: moved, not rewritten)"
   ],
-  "next": "integrate S8; S12 implementing",
-  "updatedAt": "2026-11-18T06:28:59.458Z",
+  "next": "integrate S12, then pilot ready for S6",
+  "updatedAt": "2026-11-18T06:42:27.508Z",
   "friction": [
     {
       "agent": "pilot",
@@ -335,6 +335,26 @@
       "agent": "pilot:pilot-implementer",
       "what": "S8: test:changed ran past 180 s and went to the background, so the gate was waited on by polling its log",
       "evidence": "S8 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a slice-file edit via node String.replace with a $` in the replacement spliced the file's head into the middle (S12.md garbled); repaired in b1a13ad7",
+      "evidence": "S12 implementer report; S12.md lines 16-31 at b7412fab"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12: gh-stub always exits 0 and answers one reply.txt, so a refused label create cannot be run live",
+      "evidence": "scripts/gh-stub.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12: a 10-file diff ran the full suite (4420 tests, ~6 min) because the selection was over the 24000-character argv limit",
+      "evidence": "S12 gate"
+    },
+    {
+      "kind": "drain",
+      "what": "third stale Blocked item (pilot ready, classifier unavailable, done on reissue) paused other-host after 20 min and left the ticket green with its co-pilot live; pilot closed it Moot, pivoted the ticket back to yellow and re-claimed the lane",
+      "size": 3
     }
   ]
 }
