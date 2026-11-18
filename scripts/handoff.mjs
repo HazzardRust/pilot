@@ -27,6 +27,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 
+import { OWED_WHY } from '../deck/owed.mjs';
 import { HOLD_BOUND_MS, notePosted, reportedFile, sessionPid } from '../deck/run-claim.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { isOlder, isVersion } from '../deck/version.mjs';
@@ -130,13 +131,13 @@ function yellowTicket(yellow) {
 
 /**
  * The threads the deck says are owed (yellow-lane spec 9, 10; A3), read exactly as served on
- * `/api/record` `owed`: whatever the deck's rule, an `unanswered` one refuses the hand-off and a
- * `promised` one rides the item. A deck that sends no `owed` (one older than yellow-lane) owes
+ * `/api/record` `owed`: whatever the deck's rule, an `unanswered` one refuses the hand-off and every
+ * other reason (`OWED_WHY`) rides the item. A deck that sends no `owed` (one older than yellow-lane) owes
  * nothing; one that sends a list this cannot read refuses, so no thread slips through unread.
  */
 const readable = (thread) =>
   typeof thread?.id === 'string' && /^itm_\w{1,40}$/.test(thread.id) && typeof thread.line === 'string' &&
-  (thread.why === 'unanswered' || thread.why === 'promised');
+  OWED_WHY.includes(thread.why);
 
 function owedOf(owed) {
   if (owed === undefined) return [];
@@ -184,7 +185,7 @@ export async function handoff({ cwd = process.cwd(), env = process.env, trailers
           title: `Handoff: co-pilot on ${ticket.title}`,
           body: `The main session holds no run of its own. A co-pilot may be live on ticket ${ticket.id}.`,
         };
-    for (const thread of owedAs(owed, 'promised')) item.body += `\nOwed: ${thread.id} promised: ${thread.line}`;
+    for (const thread of owed.filter(({ why }) => why !== 'unanswered')) item.body += `\nOwed: ${thread.id} ${thread.why}: ${thread.line}`;
     // The deck spells the lanes (idle-main-lane L2); a deck that sends none leaves the body as it was.
     const lines = [lanes?.planning, lanes?.concluding, lanes?.coPilot];
     if (lines.every((line) => typeof line === 'string')) item.body += `\n${lines.join('\n')}`;

@@ -57,7 +57,7 @@ function buildScratchWorktree(root) {
 }
 
 /** A deck that answers the two calls the command makes, and remembers every post. */
-async function stubDeck(t, record, { refusePost = false, yellow = null, coPilot = null } = {}) {
+async function stubDeck(t, record, { refusePost = false, yellow = null, coPilot = null, owed } = {}) {
   const posts = [];
   const asked = [];
   const server = http.createServer((request, response) => {
@@ -74,7 +74,7 @@ async function stubDeck(t, record, { refusePost = false, yellow = null, coPilot 
       response.setHeader('content-type', 'application/json');
       if (request.method === 'GET' && url.pathname === '/api/record') {
         asked.push(url.searchParams.get('repo'));
-        return response.end(JSON.stringify({ record, yellow, coPilot }));
+        return response.end(JSON.stringify({ record, yellow, coPilot, owed }));
       }
       if (request.method === 'POST' && url.pathname === '/api/tool') {
         posts.push(JSON.parse(raw));
@@ -357,6 +357,20 @@ test('a hand-off from a worktree is posted for the checkout and stamped for the 
   assert.equal(result.ok, true, result.line);
   assert.equal(path.resolve(deck.posts[0].arguments.repo), path.resolve(work), 'the main checkout, not the worktree (L11)');
   assert.equal(fs.readFileSync(stamp, 'utf8'), 'itm_0123456789ab', 'the session that posted it is the one cleared (A6)');
+});
+
+// never-stuck S12's reasons (deck/owed.mjs): a ticket owed its report or its architect rides the item, never refuses.
+test('an owed list with a report owed row hands off', async (t) => {
+  const owed = [
+    { id: 'itm_aaaa11112222', line: 'the shipped feature', why: 'report owed' },
+    { id: 'itm_bbbb33334444', line: 'the next design', why: 'architect owed' },
+  ];
+  const deck = await stubDeck(t, RUN, { owed });
+
+  const result = await handoff({ cwd: REPO, env: reported });
+
+  assert.equal(result.ok, true, result.line);
+  assert.equal(deck.posts[0].arguments.body, 'write the artefact\nOwed: itm_aaaa11112222 report owed: the shipped feature\nOwed: itm_bbbb33334444 architect owed: the next design');
 });
 
 test('neither a record nor a yellow ticket: refused as before, nothing posted', async (t) => {

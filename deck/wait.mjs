@@ -32,9 +32,10 @@ import path from 'node:path';
 
 import { bearer } from '../hooks/lib/deck-secret.js';
 import { OWNER_KINDS, sameRepo } from './items.mjs';
-import { BLOCKED_LIST } from './lanes.mjs';
+import { BLOCKED_LIST, LANE_LINES } from './lanes.mjs';
 import { holdLeash, sessionPid } from './leash.mjs';
 import { startMemoryLog } from './memory.mjs';
+import { OWED_WHY } from './owed.mjs';
 import { MAX_POLL_MS, deckUrl } from './tools.mjs';
 
 /** How long one `deck_wait` request parks: the daemon's own cap on one request. */
@@ -159,20 +160,7 @@ async function isKnownRepo(repo, timeoutMs) {
   return Array.isArray(read?.items) && read.items.length > 0;
 }
 
-/**
- * The lane lines `deck/lanes.mjs` spells and no others, the shapes `hooks/session-handoff.js` echoes (it is CommonJS
- * and cannot share them): ids and fixed words, never prose, because what this prints is read by a model.
- */
-const ID = String.raw`itm_\w{1,40}`;
-const SKIPPED = `${ID} (blocked on ${ID}|orphaned|draining)`;
-const LANE_LINES = [
-  ['planning', new RegExp(`^planning: (empty( → next ${ID}( \\(re-cut\\))?)?|${ID})$`)],
-  ['concluding', new RegExp(`^concluding: (empty( → next ${ID})?|${ID})$`)],
-  ['coPilot', new RegExp(`^co-pilot: (none|empty → next ${ID}( \\(short path\\))?|none runnable: ${SKIPPED}(; ${SKIPPED}){0,4}|${ID}( draining)?)$`)],
-];
-const OWED_ID = new RegExp(`^${ID}$`);
-/** `owedThreadsOf`'s reasons (never-stuck S12 adds the last two), fixed words said as they are. */
-const OWED_WHY = ['unanswered', 'promised', 'report owed', 'architect owed'];
+const OWED_ID = /^itm_\w{1,40}$/;
 const MAX_OWED = 20;
 const SEPARATORS = new RegExp('[\\u2028\\u2029]', 'g');
 

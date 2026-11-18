@@ -194,7 +194,7 @@ ADR 0187 (`docs/adr/0187-never-stuck.md`) records L2-L7.
   flight (ADR 0089's reason); the fresh session re-adopts the ticket. Rejected: a 5-minute grace for the hand-back. User: "Release at once" (itm_fca79242f7ff, 2026-11-18).
   Verdict: stands — the user chose Release at once on itm_fca79242f7ff
 - **A7 Line 25 is a prose rule, not a hook**: the guard's advisory and `pilot handoff`'s line say it; `agents/pilot.md`
-  is not edited (28 tokens of headroom). Trades away: a pilot ignoring the line waits out the bound. Rejected: a
+  carries it in one line (S18), within its 28 tokens of headroom. Trades away: a pilot ignoring the line waits out the bound. Rejected: a
   PostToolUse hook releasing on a queued SendMessage (wider; the user said "the pilot releases"). User: "Prose rule, bound as backstop" (itm_b3f95cb4736d, 2026-11-18).
   Verdict: stands — the user chose the prose rule with the bound as backstop on itm_b3f95cb4736d
 - **A8 QA environment for Run 2** (itm_ca7057034e89): L11's scratch deck and temp repos, plus `pilot handoff` there

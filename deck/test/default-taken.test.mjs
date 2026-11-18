@@ -15,7 +15,7 @@ import http from 'node:http';
 import { KIND_QUESTION, messagesOf } from '../items.mjs';
 import { armDefaults } from '../server-wait.mjs';
 import { DeckRefusal, addReply, listItems, registerRun, reopenItem, resolveItem } from '../store.mjs';
-import { DEFAULT_MS, defaultsDue, takeDefault } from '../store-items.mjs';
+import { DEFAULT_MS, defaultsDue, takeDefault } from '../store-defaults.mjs';
 import { deckOnAPort, postStored, tempDeck } from '../testUtils.mjs';
 
 const REPO = 'D:/work/alpha';

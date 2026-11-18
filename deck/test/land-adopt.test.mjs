@@ -14,6 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { KIND_GATE2, SIGN_OFF } from '../items.mjs';
+import { holdLanding, landDir } from '../land-child.mjs';
 import { adoptLandings, startLanding } from '../landing.mjs';
 import { processTable } from '../procs.mjs';
 import { callTool } from '../server-tools.mjs';
@@ -79,11 +80,11 @@ test('a restart re-adopts a live child and reads its line', async (t) => {
   const stub = aStubLand(t);
   const old = aDeadDaemonSpawn(t, stub.file);
   startLanding(gate.id, { spawn: old.spawn, env: landing, clock: never });
-  const { pid, dir } = itemOf(gate.id).landing;
+  const { pid } = itemOf(gate.id).landing;
+  const dir = landDir(gate.id);
   assert.equal(pid, old.pid, 'the pid is on the landing');
 
   const adopted = adoptLandings({ pollMs: 50 });
-  interruptLandings();
   stub.release();
   await adopted;
 
@@ -97,7 +98,8 @@ test('a restart re-adopts a live child and reads its line', async (t) => {
 function aLiveLand(t, gate, worktree) {
   const child = spawnChild(process.execPath, [aStubLand(t).file, 'land'], { stdio: 'ignore' });
   t.after(() => child.kill());
-  beginLanding(gate.id, { worktree, pid: child.pid });
+  beginLanding(gate.id, { worktree });
+  holdLanding(gate.id, child.pid);
   return child;
 }
 
@@ -147,7 +149,8 @@ test('a dead pid is interrupted as today', async (t) => {
   tempDeck(t);
   const { gate, worktree } = aGate2(t);
   const { pid } = spawnSync(process.execPath, ['-e', '']);
-  beginLanding(gate.id, { worktree, pid });
+  beginLanding(gate.id, { worktree });
+  holdLanding(gate.id, pid);
 
   await adoptLandings({ pollMs: 50 });
 
@@ -160,7 +163,8 @@ test('a reused pid that is not a land is never adopted or stopped', async (t) =>
   const { gate, worktree } = aGate2(t);
   const other = spawnChild(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
   t.after(() => other.kill());
-  beginLanding(gate.id, { worktree, pid: other.pid });
+  beginLanding(gate.id, { worktree });
+  holdLanding(gate.id, other.pid);
 
   await adoptLandings({ pollMs: 50 });
 
@@ -175,7 +179,7 @@ test('Land again is refused while the child lives', async (t) => {
   const stub = aStubLand(t);
   const old = aDeadDaemonSpawn(t, stub.file);
   startLanding(gate.id, { spawn: old.spawn, env: landing, clock: never });
-  const { dir } = itemOf(gate.id).landing;
+  const dir = landDir(gate.id);
   // The child outlived a restart that could not adopt it.
   interruptLandings(() => false);
 

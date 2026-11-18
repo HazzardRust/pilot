@@ -17,6 +17,8 @@ export const LANDING_KINDS = Object.freeze(['pilot', 'lander']);
 const RESOLVING = /^Resolving\b/;
 /** The pilot's or the lander's word that a resolution is committed and the feature lands again. */
 export const LAND_AGAIN = /^Land again\b/;
+/** The deck's own conflict question's title before its worktree: posted with no author, the title is what names it. */
+export const CONFLICT_TITLE = 'Resolve the landing conflict in ';
 
 /**
  * `dir` when it is an absolute, linked worktree of the gate2's repository, never the checkout itself, because it is

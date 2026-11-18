@@ -11,6 +11,9 @@ import { KIND_CHAT, KIND_GATE1, KIND_GATE2, KIND_TICKET, KIND_USER, isOpen, live
 
 const LINE_CHARS = 120;
 
+/** Every reason `owedThreadsOf` gives, fixed words, the only ones `pilot wait` echoes. */
+export const OWED_WHY = ['unanswered', 'promised', 'report owed', 'architect owed'];
+
 /** A message as one line of at most 120 characters. */
 const oneLine = (text) => {
   const line = [...String(text ?? '').replace(/\s+/g, ' ').trim()];

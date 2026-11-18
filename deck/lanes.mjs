@@ -37,6 +37,18 @@ const BLOCKED_PAIR = String.raw`itm_\w{1,40} on itm_\w{1,40}`;
 export const BLOCKED_LIST = new RegExp(`^${BLOCKED_PAIR}(; ${BLOCKED_PAIR}){0,${MAX_BLOCKED - 1}}$`);
 
 /**
+ * The shapes of `lanesFrom`'s three lane lines and no others, keyed by its field, which `pilot wait` echoes only when
+ * they hold and `hooks/session-handoff.js` repeats (it is CommonJS and cannot import them): ids and fixed words.
+ */
+const ID = String.raw`itm_\w{1,40}`;
+const SKIPPED = `${ID} (blocked on ${ID}|orphaned|draining)`;
+export const LANE_LINES = [
+  ['planning', new RegExp(`^planning: (empty( → next ${ID}( \\(re-cut\\))?)?|${ID})$`)],
+  ['concluding', new RegExp(`^concluding: (empty( → next ${ID})?|${ID})$`)],
+  ['coPilot', new RegExp(`^co-pilot: (none|empty → next ${ID}( \\(short path\\))?|none runnable: ${SKIPPED}(; ${SKIPPED}){0,${MAX_BLOCKED - 1}}|${ID}( draining)?)$`)],
+];
+
+/**
  * Why the co-pilot lane skips a queued yellow ticket (never-stuck spec 9, 19), or null for a runnable one: `draining`
  * while it yields, `orphaned` once a co-pilot was granted on its plan and none holds it (a `'legacy'` stamp cannot say
  * so), else `blocked on` its first unanswered blocking item. Ids and fixed words only: the hook echoes this verbatim.
@@ -117,7 +129,7 @@ export function lanesFrom(items, repo, { switching, coPilot } = {}) {
       ? `co-pilot: ${held}${draining ? ' draining' : ''}`
       : planned ? `co-pilot: empty → next ${planned.id}${short ? ' (short path)' : ''}` : reasons ? `co-pilot: none runnable: ${reasons}` : 'co-pilot: none',
     stageClause: `${clause('Planning', planning)}. ${clause('Concluding', concluding)}`,
-    yellowClause: held ? `Yellow: ${held}` : planned ? `Yellow: empty, next ${planned.id}` : 'Yellow: empty',
+    yellowClause: held ? `Yellow: held by ${held}` : planned ? `Yellow: empty, next ${planned.id}` : 'Yellow: empty',
     refusal: handedOff ? null : refusal,
     blocked,
   };

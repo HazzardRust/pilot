@@ -12,7 +12,7 @@ import { runWorktrees } from '../scripts/worktrees.mjs';
 import { isPilotClose, mayPilotClose } from './blocked-shape.mjs';
 import { KIND_GATE2, KIND_REPORT, KIND_TICKET, authorKind, gate2Blockers, isAnswered, isBlocking, isOpen, ownerOf, sameRepo } from './items.mjs';
 import { REPORT_DUE } from './items-bounds.mjs';
-import { LANDING_KINDS } from './landing-replies.mjs';
+import { CONFLICT_TITLE, LANDING_KINDS } from './landing-replies.mjs';
 import { reportAskGaps } from './report-shape.mjs';
 import { rankFriction, repoOf } from './runs.mjs';
 import { DeckRefusal } from './store-core.mjs';
@@ -111,12 +111,9 @@ export function closingReportOf(record, gate, left, closes = []) {
   return { title: `Closing report: ${said(name)}`, body };
 }
 
-/** The deck's own conflict question is posted with no author, so its title is what names it. */
-const CONFLICT_TITLE = 'Resolve the landing conflict in ';
-
 /** An open blocking question on `ticketId` the deck or the lander posted about the landing, and a pilot close may clear. */
 const isLandingQuestion = (item, ticketId) => isBlocking(item) && item.ticket === ticketId && mayPilotClose(item)
-  && (item.author === 'lander' || item.author === 'deck' || (item.author === undefined && String(item.title).startsWith(CONFLICT_TITLE)));
+  && (item.author === 'lander' || (item.author === undefined && String(item.title).startsWith(CONFLICT_TITLE)));
 
 /**
  * Resolve a landed gate2 (spec 4, lander S15): the gate2 only, if it is open. It posts no report and

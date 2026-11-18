@@ -35,7 +35,7 @@ test('the queued yellow lane names its next', () => {
 
   const held = lanesFrom(items, REPO, { coPilot: { ticket: 'itm_y1', live: true } });
   assert.equal(held.coPilot, 'co-pilot: itm_y1');
-  assert.equal(held.yellowClause, 'Yellow: itm_y1');
+  assert.equal(held.yellowClause, 'Yellow: held by itm_y1', 'spec 20: the held lane names its holder');
 
   const none = lanesFrom([], REPO, { coPilot: null });
   assert.equal(none.coPilot, 'co-pilot: none');
@@ -58,6 +58,6 @@ test('co-pilot and need answer both lanes', async (t) => {
   const needed = aTicket('needs the user', 'yellow', REPO);
   postItem({ kind: KIND_WALKTHROUGH, title: 'Walk it', body: 'Steps.', repo: REPO, ticket: needed.id });
 
-  assert.equal(await deckTicket(base, { id: building.id, action: 'co-pilot' }), `Co-pilot ${building.id}: live. Yellow: ${building.id}. Planning: empty, next ${queued.id}. Concluding: empty.`);
-  assert.equal(await deckTicket(base, { id: needed.id, action: 'need' }), `Needed ${needed.id}: green. Yellow: ${building.id}. Planning: empty, next ${queued.id}. Concluding: empty, next ${needed.id}.`);
+  assert.equal(await deckTicket(base, { id: building.id, action: 'co-pilot' }), `Co-pilot ${building.id}: live. Yellow: held by ${building.id}. Planning: empty, next ${queued.id}. Concluding: empty.`);
+  assert.equal(await deckTicket(base, { id: needed.id, action: 'need' }), `Needed ${needed.id}: green. Yellow: held by ${building.id}. Planning: empty, next ${queued.id}. Concluding: empty, next ${needed.id}.`);
 });
