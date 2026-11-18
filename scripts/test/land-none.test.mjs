@@ -40,3 +40,15 @@ test('none lands quietly', (t) => {
   assert.doesNotMatch(said.out, /comment failed/);
   assert.equal(said.out.trimEnd().split('\n').at(-1), 'main gets pilot: merge pilot into main by hand');
 });
+
+test('a bad pilot.host refuses the landing before anything is pushed', (t) => {
+  const { origin, gitIn, a } = repos(t, 'a');
+  git(a, 'config', 'pilot.host', 'bogus');
+  const pilotBefore = git(origin, 'rev-parse', 'pilot');
+
+  const said = mainSays([], { cwd: a, git: gitIn(a), test: passing, wait: 0 });
+
+  assert.equal(said.code, 1);
+  assert.equal(said.out, 'NOT landed: pilot.host names "bogus": not one of github, gitlab, none; nothing pushed\n');
+  assert.equal(git(origin, 'rev-parse', 'pilot'), pilotBefore);
+});
