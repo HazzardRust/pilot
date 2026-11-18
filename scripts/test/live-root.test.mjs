@@ -1,7 +1,7 @@
 // S17 (never-stuck spec 12): one trusted live root under a temp HOME; the user's own ~/.claude.json is never read.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -37,7 +37,8 @@ test('a trusted root says so and makes a plain subdir', (t) => {
 
 test('a name with a separator or dots is refused', (t) => {
   const { home, root } = fakeHome(t, () => ({}));
-  for (const dir of ['../escape', 'a/b', 'a\\b', '..', '.', 'A', '', 'x'.repeat(41), 123]) {
+  const odd = ['-x', '-', 'con', 'nul', 'aux', 'prn', 'com1', 'lpt9'];
+  for (const dir of ['../escape', 'a/b', 'a\\b', '..', '.', 'A', '', 'x'.repeat(41), 123, ...odd]) {
     assert.throws(() => liveRoot({ home, dir }), /live-root/, `refuses ${JSON.stringify(dir)}`);
   }
   assert.equal(existsSync(root), false, 'nothing is made');
@@ -55,6 +56,22 @@ test('the command prints one line, exit 0, and exits 1 on a bad name having made
   assert.equal(existsSync(root), false, 'nothing is made');
   assert.equal(main(['--dir', 'check'], deps), 0);
   assert.deepEqual(out, [`${root} untrusted ${path.join(root, 'check')}\n`]);
+  for (const argv of [['--dir'], ['check'], ['--dir', 'a', 'b']]) {
+    assert.equal(main(argv, deps), 1, `usage on ${JSON.stringify(argv)}`);
+  }
+  assert.equal(out.length, 1, 'a usage error prints nothing to stdout');
+});
+
+test('a link in place of the subdir is refused and its target stays empty', (t) => {
+  const { home, root } = fakeHome(t, () => ({}));
+  const outside = mkdtempSync(path.join(tmpdir(), 'pilot-live-root-outside-'));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  mkdirSync(root, { recursive: true });
+  symlinkSync(outside, path.join(root, 'linked'), 'junction');
+  writeFileSync(path.join(root, 'afile'), '');
+  assert.throws(() => liveRoot({ home, dir: 'linked' }), /not a plain directory/);
+  assert.throws(() => liveRoot({ home, dir: 'afile' }), Error);
+  assert.deepEqual(readdirSync(outside), [], 'nothing lands outside the root');
 });
 
 test('on Windows another spelling of the root never masks a refusal', (t) => {

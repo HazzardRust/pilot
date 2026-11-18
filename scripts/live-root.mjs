@@ -15,8 +15,11 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import { hostPlatform } from '../hooks/lib/platform.js';
 
-/** One path segment: no separator, no dot, so `--dir` can never leave the root. */
-const DIR_NAME = /^[a-z0-9-]{1,40}$/;
+/**
+ * One path segment: no separator, no dot, so `--dir` can never leave the root; no leading `-`, read as a flag by a
+ * later command; never a Windows device name, which makes a folder Explorer cannot delete.
+ */
+const DIR_NAME = /^(?!(?:con|prn|aux|nul|com[1-9]|lpt[1-9])$)[a-z0-9][a-z0-9-]{0,39}$/;
 
 /** A project key as Claude Code may write it; on Windows either slash and any case name one folder. */
 function keyOf(p, platform) {
@@ -44,7 +47,7 @@ function trustedIn(home, root, platform) {
 /** The live root, its trust, and with `dir` a plain subdirectory made under it. Throws on a bad `dir`, having made nothing. */
 export function liveRoot({ home = homedir(), dir, platform = hostPlatform() } = {}) {
   if (dir !== undefined && (typeof dir !== 'string' || !DIR_NAME.test(dir))) {
-    throw new Error(`pilot live-root: --dir takes one name of a-z, 0-9 and -, at most 40 characters, not ${JSON.stringify(dir)}`);
+    throw new Error(`pilot live-root: --dir takes one name of a-z, 0-9 and -, at most 40 characters, not starting with - and not a device name, not ${JSON.stringify(dir)}`);
   }
   const root = path.join(home, '.claude', 'pilot', 'live');
   mkdirSync(root, { recursive: true });
