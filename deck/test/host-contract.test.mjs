@@ -237,6 +237,13 @@ test('every verb returns its shape on gitlab', (t) => {
   assert.throws(() => odd.reviews({ state: 'open' }), /locked/, 'a state off the three is refused, never guessed');
 });
 
+test('a full page of 100 is never read as the whole list', () => {
+  const page = (count) => gitlabHost(() => JSON.stringify(Array.from({ length: count }, (_, at) => ({ ...fixture('merge_request'), iid: at + 1 }))));
+  assert.throws(() => page(100).reviews({ state: 'all', limit: 1000 }), /glab listed 100 merge requests, so one may be missing/);
+  assert.equal(page(99).reviews({ state: 'all', limit: 1000 }).length, 99);
+  assert.equal(page(100).reviews({ state: 'all', limit: 100 }).length, 100, 'asked 100, a full page is the whole answer');
+});
+
 test('the upsert edits its own note', () => {
   const { run, calls } = fakeGlab();
   const host = gitlabHost(run);

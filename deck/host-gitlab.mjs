@@ -130,10 +130,11 @@ export function gitlabHost(run) {
       if (head !== undefined) query.set('source_branch', head);
       if (base !== undefined) query.set('target_branch', base);
       if (mine) query.set('scope', 'created_by_me');
-      // GitLab's page holds at most 100; today's callers ask 100 or fewer.
+      // GitLab's page holds at most 100: asked for more, a full page may not be the whole list, so it throws.
       query.set('per_page', String(Number.isFinite(limit) ? Math.min(Math.max(1, Math.trunc(limit)), 100) : 100));
       const said = get(`${MRS}?${query}`, 'merge requests');
       if (!Array.isArray(said)) throw new Error('glab merge requests: an answer that is not a list');
+      if (limit > 100 && said.length >= 100) throw new Error('glab listed 100 merge requests, so one may be missing');
       return said.map(reviewOf);
     },
     review,
