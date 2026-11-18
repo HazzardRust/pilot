@@ -475,6 +475,7 @@ export function noteDeck(id, text) {
   return item;
 }
 
+export { DEFAULT_MS, defaultsDue, takeDefault } from './store-defaults.mjs'; // never-stuck S10, beside this file at the size bar
 /** How long a conflict waits for the pilot's `Resolving` before it is the user's (gate2-frees-lane A1). */
 export const CONFLICT_TURN_MS = 15 * 60_000;
 

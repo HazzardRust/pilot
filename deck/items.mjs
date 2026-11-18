@@ -400,8 +400,8 @@ export function waiterKind(author) {
   return author === undefined ? 'pilot' : asOwner(authorKind(author));
 }
 
-/** A message a wait or a read hands `to` (three-lanes L7): the user's, and a short landing's `deck` line to the pilot alone. */
-export const handsTo = (reply, to) => reply?.from === 'user' || (reply?.from === 'deck' && to === 'pilot');
+/** A message a wait or a read hands `to` (three-lanes L7): the user's, a short landing's `deck` line to the pilot alone, and a taken default to whoever owns it (never-stuck spec 10). */
+export const handsTo = (reply, to) => reply?.from === 'user' || (reply?.from === 'deck' && (to === 'pilot' || reply.default === true));
 
 /**
  * Whose thread this is. A chat and a user thread are the pilot's whoever
