@@ -37,12 +37,17 @@ const answeredThread = (owner) => ({
   replies: [{ from: 'user', seq: 5, text: 'Step two fails.' }],
 });
 
-/** `deck_read` hands back `items`; the session arrived at seq 1 and posted nothing. */
+/**
+ * `deck_read` hands back `items`; the session arrived at seq 1 and posted nothing. The record
+ * read (the lane's refusal, a named ticket) is a deck that does not answer, so a pilot session's
+ * PILOT_DECK_PORT never puts the live deck's queue into the verdict.
+ */
 function stubDeck(t, items) {
-  const saved = { tool: deck.tool, readState: deck.readState, readPosted: deck.readPosted };
+  const saved = { tool: deck.tool, readState: deck.readState, readPosted: deck.readPosted, record: deck.record };
   deck.tool = async () => ({ items: items });
   deck.readState = () => ({ baseline: 1, cursor: 1 });
   deck.readPosted = () => [];
+  deck.record = async () => { throw new Error('no deck in this test'); };
   t.after(() => Object.assign(deck, saved));
 }
 

@@ -55,10 +55,11 @@ function installedHome(home) {
   return home;
 }
 
-/** `main` over a scratch home and prefix, its printed lines captured. */
+/** `main` over a scratch home, its store and prefix (never a caller's PILOT_DECK_DIR), its printed lines captured. */
 async function runMain(argv, home, prefix, extra = {}) {
   const lines = [];
-  const code = await main(argv, { home, prefix, platform: 'linux', deckPid: async () => null, log: (line) => lines.push(line), ...extra });
+  const storeDir = path.join(home, '.claude', 'pilot');
+  const code = await main(argv, { home, prefix, storeDir, platform: 'linux', deckPid: async () => null, log: (line) => lines.push(line), ...extra });
   return { code, lines };
 }
 

@@ -1,6 +1,6 @@
 ---
 name: tdd-workflow
-description: Use when writing a feature or fixing a bug. A test that fails before the change and passes after, then the minimal implementation. The RED gate is mandatory and is what makes the test evidence rather than decoration.
+description: Use for deterministic logic, a result a program can decide (a parse, a computed value, a state change, an exit code, a refusal), or a bug in it; prose, prompt wording, layout and taste are shown by a run, a look or a read instead. A test that fails before the change and passes after, then the minimal implementation; the RED gate is what makes the test evidence rather than decoration.
 argument-hint: <path/to/*.plan.md>
 ---
 
@@ -8,7 +8,7 @@ argument-hint: <path/to/*.plan.md>
 upstream: ECC 2.2.0 - skills/tdd-workflow/SKILL.md
 copyright: Copyright (c) 2026 Affaan Mustafa
 licence: MIT - see THIRD-PARTY-NOTICES.md
-adapted: cut from 583 lines to the red-green mechanics an implementer preloads; the framework test patterns, mocking recipes, file-layout tree, CI snippets, the package-manager detector script and the coverage report are dropped, and the wider checks are the slice's phase gate instead (see vendor/toolbox.md); `When to activate` and `What this skill does not cover` dropped as restatements of the description and the opening (independence L8); the in-loop clean-up step and its checkpoint dropped, since test-design keeps that work out of the loop, and the list of ways it goes wrong moved to test-design's anti-patterns (ADR 0180)
+adapted: description scoped to deterministic logic, the only slices the implementer loads it for (spec-first L4); cut from 583 lines to the red-green mechanics an implementer loads; the framework test patterns, mocking recipes, file-layout tree, CI snippets, the package-manager detector script and the coverage report are dropped, and the wider checks are the slice's phase gate instead (see vendor/toolbox.md); `When to activate` and `What this skill does not cover` dropped as restatements of the description and the opening (independence L8); the in-loop clean-up step and its checkpoint dropped, since test-design keeps that work out of the loop, and the list of ways it goes wrong moved to test-design's anti-patterns (ADR 0180)
 ledger: vendor/toolbox.md
 -->
 

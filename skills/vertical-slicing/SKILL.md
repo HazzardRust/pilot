@@ -1,6 +1,6 @@
 ---
 name: vertical-slicing
-description: Cuts an agreed design into thin vertical slices — tickets that cross every layer a behaviour needs together (schema, service, API and UI in a web app; module, policy and pipeline in cloud configuration; loader, model and figure in research code) and produce visible progress — instead of horizontal layers built one at a time. Produces an ordered DAG of independently grabbable tickets, each in its own slice file naming its spec, blockers, owned files, interface, tests, expected behaviour, verification commands, required evidence, prohibited shortcuts and completion condition, and enforces a per-slice phase gate so each slice is proven green before the next begins. Use after a design is agreed and before implementation, whenever a plan or ticket list is being written for a multi-file change, when an existing plan reads as "phase 1 database, phase 2 API, phase 3 UI", or when the user says vertical slices, slice this up, break this down, or walking skeleton.
+description: Cuts an agreed design into thin vertical slices — tickets that cross every layer a behaviour needs together (schema, service, API and UI in a web app; module, policy and pipeline in cloud configuration; loader, model and figure in research code) and produce visible progress — instead of horizontal layers built one at a time. Produces an ordered DAG of independently grabbable tickets, each in its own slice file naming its spec, blockers, owned files, interface, behaviours, expected behaviour, verification commands, required evidence, prohibited shortcuts and completion condition, and enforces a per-slice phase gate so each slice is proven green before the next begins. Use after a design is agreed and before implementation, whenever a plan or ticket list is being written for a multi-file change, when an existing plan reads as "phase 1 database, phase 2 API, phase 3 UI", or when the user says vertical slices, slice this up, break this down, or walking skeleton.
 metadata:
   origin: hazzard
   tags: [planning, decomposition, tickets, tdd, orchestration, workflow]
@@ -54,10 +54,6 @@ Supabase and Postgres, API routes under `app/api/`) as the worked example:
 | Add the `feedback_runs` schema; write the Gemini client; wire up the results page | **A teacher can submit one document and see a single returned comment** — the narrowest end-to-end path, one model call, one rendered comment |
 | Add `role` to profiles; write the authorisation middleware; build the admin nav | **A non-admin is refused the admin page and an admin is let in** — the column, the guard, and one page that visibly proves the guard works both ways |
 
-Each rewrite touches every layer and a test together, and each has an answer to
-the verticality question a human can check: in a plan, under an emulator, in a
-figure, in a browser.
-
 ## Anatomy of a slice
 
 Every ticket names twelve things, and they live together in the ticket's own file,
@@ -71,10 +67,10 @@ and silently.
 | **Source spec** | Points at the design or ADR section this slice implements, so the agent resolves ambiguity by reading the spec rather than inventing an answer. |
 | **Dependencies** | Names the slices that must be green first, each with the file or seam it shares, which is what makes the list a DAG and lets a ticket be picked up independently. |
 | **Reviewers** | A `Reviewers:` line under the header naming every reviewer the implementer spawns: the language reviewer, `pilot:database-reviewer` for SQL or a migration, and `pilot:security-reviewer` for a slice that hits the security trigger: auth, user input, secrets, an API boundary (a route, a hook input, a CLI argument), a process start, or agent configuration (`agents/`, `hooks/`, `skills/`, `settings*.json`, `.mcp.json`, `CLAUDE.md`). Gate 1 then shows who reviews each slice. |
-| **Model** | A `Model: sonnet — <reason>` or `Model: opus — <reason>` line under the header: the implementer's model, chosen here so Gate 1 sees it and no brief re-derives it. Sonnet only for a **precise** slice: its Interface, Tests and Files owned leave no choice open, its estimated diff is within the small-diff limit, none of its spec lines is *assumed*, and it does not hit the security trigger above. Anything else is Opus. `check-slices` refuses a header without the line. |
+| **Model** | A `Model: sonnet — <reason>` or `Model: opus — <reason>` line under the header: the implementer's model, chosen here so Gate 1 sees it and no brief re-derives it. Sonnet only for a **precise** slice: its Interface, Behaviours and Files owned leave no choice open, its estimated diff is within the small-diff limit, none of its spec lines is *assumed*, and it does not hit the security trigger above. Anything else is Opus. `check-slices` refuses a header without the line. |
 | **Files owned** | One line per file, as `` `<path>`: <role, one line> `` (`(new)` marks a created file), so two slices running in parallel cannot collide and scope creep is visible as an unlisted file. |
 | **Interface** | A fenced block with the seams this slice creates or changes — signatures, types, routes, CLI flags, hook payloads, or for a prompt file its headings and field names — as they stand after the slice, and the shapes crossing them, or a ubiquitous-language term that names one. |
-| **Tests** | The implementer's red steps, in order, each as `` `<name>`: `<Interface symbol>` → <observable result> `` with the symbol in this slice's Interface block, then one `Rewrite check:` line, what stays true if the implementation behind the interface were replaced, and one `Misses:` line, what the Tests cannot catch and who reads it instead. `node "${CLAUDE_PLUGIN_ROOT}/scripts/check-slices.mjs" <path>` checks the shape. |
+| **Behaviours** | What a user can watch happen, in order, each as `` <k>. `<name>` (<kind>): <evidence> ``, the kind being the evidence it takes: `test`, `run`, `look` or `read`. A `test` line reads `` `<Interface symbol>` → <observable result> `` with the symbol in this slice's Interface block and brings one `Rewrite check:` line, what stays true if the implementation were replaced. Every slice has one `Misses:` line, what the behaviours cannot catch and who reads it instead. `node "${CLAUDE_PLUGIN_ROOT}/scripts/check-slices.mjs" <path>` checks the shape. |
 | **Expected behaviour** | States the observable outcome in user terms — the answer to the verticality question, written down so it can be checked rather than assumed. |
 | **Verification commands** | Gives the exact commands whose output proves the slice works, so "done" is a command result rather than a feeling. |
 | **Evidence required** | Says what must be produced and seen: test output, a command's output, a plan's diff, a plot, a screenshot, a browser flow exercised live. Evidence is what survives the agent forgetting. |
@@ -112,12 +108,12 @@ DraftEditor(props: { draftId?: string }): JSX.Element
 S2's session: the signed-in user both routes scope a draft to
 ```
 
-## Tests
+## Behaviours
 
-1. `a signed-in student's draft is scoped to their user_id under RLS`: `GET /api/drafts` → 404 for a second student.
-2. `reloading the editor restores exactly what was typed`: `DraftEditor` → the saved body after a reload.
+1. `a student's draft is scoped to their user_id under RLS` (test): `GET /api/drafts` → 404 for a second student.
+2. `reloading the editor restores exactly what was typed` (look): the saved body after a reload, in a browser.
 
-Rewrite check: replacing the `drafts` table with another store keeps both results above.
+Rewrite check: replacing the `drafts` table with another store keeps the 404 above.
 Misses: how saving feels on a slow network; QA's walkthrough reads that.
 
 ## Done

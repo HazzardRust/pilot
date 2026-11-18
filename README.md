@@ -126,7 +126,7 @@ An average run, then the same steps drawn:
 3. `pilot:pilot-architect` cuts the design into slices that each work end to end.
 4. You press **Gate 1** on the plan, and its ticket queues to be built.
 5. `pilot:pilot-co-pilot` builds that ticket in the background while the pilot plans the next.
-6. `pilot:pilot-implementer` builds each slice tests first through the gate and one reviewer; the co-pilot merges it into the feature's branch.
+6. `pilot:pilot-implementer` builds each slice to its behaviours, with evidence for each, through the gate and one reviewer; the co-pilot merges it into the feature's branch.
 7. `pilot:pilot-fundamentalist` argues against the whole feature once, subtraction first, by principles from the literature; the kept findings are fixed and the feature lands on the pilot branch.
 8. `pilot:pilot-qa` runs the feature where it is meant to run and hands you a walkthrough to work.
 9. You press **Gate 2**: the deck lands the feature on the pilot branch, QA's fixes with it.

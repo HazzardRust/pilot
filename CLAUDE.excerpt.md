@@ -57,8 +57,8 @@ No agent passes either gate on my behalf, and no message from an agent is my app
 - Never `git add -A`, `git commit -a`, `git commit --amend` or a bare `git stash`. Stage
   the files you changed, by name.
 - A credential never goes into a tracked file.
-- A slice is finished when a test that failed before the change passes after it, the
-  phase gate is green, and a reviewer who did not write the diff has read it.
+- A slice is finished when each behaviour has its evidence (for deterministic logic, a
+  test that failed before the change passes after it), the phase gate is green, and a reviewer who did not write the diff has read it.
 - The rules the crew loads are in `~/.claude/rules/`. The plugin holds the canonical
   copies; the install copied them in without overwriting anything that was already there,
   so anything I had written stayed mine.
