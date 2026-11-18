@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "other-host",
-      "state": "planned",
+      "state": "principles fix round; in QA (read-only) at 62140d88",
       "after": [
         "S1",
         "S2",
@@ -25,7 +25,7 @@
       ],
       "branch": "feat/other-host",
       "worktree": "C:/Users/Hazzard/Projects/pilot-feat-other-host-r2",
-      "pr": 955
+      "pr": 106
     },
     {
       "slice": "S1",
@@ -71,7 +71,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 017a2fb, typescript re-review running",
+      "state": "integrated",
       "after": [
         "S4",
         "S5",
@@ -133,68 +133,31 @@
       ],
       "branch": "slice/other-host-s12",
       "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s12"
+    },
+    {
+      "slice": "principles fix",
+      "state": "pushed 4af2aac",
+      "branch": "fix/other-host-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-fix"
     }
   ],
   "findings": [
-    "kept: P1 added-slice — S3 took seam option A: a failed label create is swallowed by githubHost.labelled (host-github.mjs:121-129) and land no longer prints its label warning; after S5 integrates, Host open/edit return `why` and land prints it again (spec 2: moved, not rewritten)"
+    "kept: P1 added-slice — S3 took seam option A: a failed label create is swallowed by githubHost.labelled (host-github.mjs:121-129) and land no longer prints its label warning; after S5 integrates, Host open/edit return `why` and land prints it again (spec 2: moved, not rewritten)",
+    "kept: F1 finding — gitlab reviews caps every list at 100 silently (host-gitlab.mjs:134), so prune's PR_LIMIT guard (branches.mjs:66) never fires and release's 200 is cut to 100; throw when a full page comes back and more was asked, plus a contract row",
+    "kept: F2 simplify — release.mjs:83 maps a Review back to gh field names; releaseNotes reads head/crossRepo, the map line goes",
+    "kept: F3 simplify — Review.title and Review.url are read by no production caller; removed from the typedef, adapters and contract rows (whoami and name are L1's: asked of the user, itm_6eca66849bdb)",
+    "kept: F5 simplify — doctor.mjs HOST_CLI repeats the adapters' cli and pilot.host is read twice; one hostFor call, HOST_CLI and the hostOf import go",
+    "kept: F4 simplify — caller guards the adapter contract already enforces (non-list, non-integer number, state filter) go, each only where host-contract.test pins the guarantee",
+    "dropped: F6 nit — moving the fork filter into the adapters changes retarget's behaviour (fork reviews on a dropped base were retargeted before) and every caller's Review; the five explicit filters cost reading only",
+    "dropped: N1 nit — land carrying host to mainLine is 0 lines either way; no consequence worth the diff",
+    "dropped: N2 nit — homeGit's env scrub is the security reviewer's guard against a scratch-home run unsetting the real global key; deleting it needs a git seam in uninstall, an addition",
+    "dropped: N3 nit — one extra comments read after a create, accepted at S5",
+    "dropped: lint check-slices Misses: line — slice-format drift in the checker, not the feature; recorded as friction",
+    "dropped: consider S8/S9 security — security-reviewer APPROVE; its one LOW (gate2 pr accepts feat/..) reaches only closing-report.mjs:89's said(), display text, no argv, URL or ref"
   ],
-  "next": "S6 typescript re-review; integrate S6 (integrate runs the selection), then the principles review",
-  "updatedAt": "2026-11-18T06:51:45.643Z",
+  "next": "integrate the fix round, then send QA the tip",
+  "updatedAt": "2026-11-18T07:16:09.283Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "deck README ledger lint only surfaces in a full gate run; a new module costs one ~10 min run to find its missing row",
-      "evidence": "S1 gate on 8ce03726: 'every deck module is listed' red, fixed in e331f336",
-      "size": 10
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "context reset mid-slice dropped the reviewers' verbatim Verdict lines, forcing a re-review before integration",
-      "evidence": "S1 report: verdict lines not retained",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "each selected-test run (test:changed) takes about 377 s and spawns about 11,000 processes",
-      "evidence": "S11 gate after merging feat 115ca034: 4290 pass in ~377 s",
-      "size": 377
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "third forced hand-back in a row on other-host with children live and nothing to do but wait; each co-pilot about 55k tokens for no integration; pilot now holds the wait itself",
-      "evidence": "hand-back from a59999df775eff6dd, 57k tokens, 19 tool calls",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "curl of the deck's /api/record with the deck secret denied by auto mode (Unauthorized Access); read run.json in the feat worktree instead",
-      "evidence": "third co-pilot's blocked-steps column",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "400-line limit does not budget the fixture JSON a slice requires: S7 at 527 with 158 fixture lines, pushed before counting",
-      "evidence": "S7 report; git diff --shortstat 527 insertions",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "deck-readme 'every deck module is listed' test not in the slice's verification list; caught only by the full gate",
-      "evidence": "S7 gate run 1",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "context reset mid-slice plus three report addressees in one slice (two co-pilot hand-offs, then main)",
-      "evidence": "S7 report friction",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "scripts/gh-stub.mjs hard-codes gh; S7's test carries its own ~25-line glab stub",
-      "evidence": "scripts/gh-stub.mjs:19",
-      "size": 1
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "slice owned-files list missed five integrate tests injecting the renamed `gh` option; they stayed green while starting the real gh CLI; reviewer caught it, the gate did not",
@@ -354,6 +317,54 @@
       "agent": "pilot:pilot-implementer",
       "what": "S6 slice file's 'every host call goes through an adapter' did not name doctor's --version PATH probe; a Gate 1 seam note would have saved a BLOCK and a re-review round",
       "evidence": "typescript-reviewer BLOCK on S6; S6.md seam 390b9ad7"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "a context summary mid-run dropped every finding; a read-only reviewer has nothing on disk to fall back on; respawned with the instruction to write each table to its scratchpad as it goes",
+      "evidence": "first fundamentalist hand-back, 37.8k tokens, no report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "check-slices.mjs 0.9.8 requires a Misses: line no slice file carries, so the rewrite-check lint is noise",
+      "evidence": "check-slices exit 1 on all 12 slices"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the evidence runner did not report before hand-back, so diff coverage and mutation stay unknown; worktree pilot-fund-other-host-2 left on disk (Permission denied on remove)",
+      "evidence": "second fundamentalist report, tools table"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the record's feature row carried pr 955 while the open feature PR is #106; the fundamentalist, the evidence runner and QA were briefed with #955 (only QA uses it; corrected)",
+      "evidence": "gh pr list --head feat/other-host: #106 OPEN",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "diff coverage denied by the classifier (c8 + diff-cover); mutation dry run failed 2 tests in Stryker's sandbox copy (missing @modelcontextprotocol/sdk; host-bar's positive control on instrumented source)",
+      "evidence": "evidence runner hand-back to main, a1864b297234e132f"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "fix brief's live step `git config pilot.host none` would write the .git/config every worktree shares; the implementer used GIT_CONFIG_COUNT env instead",
+      "evidence": "fix round report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the Chrome DevTools MCP never loaded and the deck MCP is down in QA's session; Sign off pressed by POST /reply on scratch decks",
+      "evidence": "QA read-only report"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a fixture ticket cannot move red to yellow without a gate1; set directly in the scratch deck.json",
+      "evidence": "QA read-only report"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the gate run in a worktree stops a scratch deck started from the same worktree; run the gate before starting a scratch deck",
+      "evidence": "stopped 20612 daemon"
     }
   ]
 }
