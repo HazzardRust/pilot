@@ -18,6 +18,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const { main } = await import('../integrate.mjs');
+const { githubHost } = await import('../../deck/host-github.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
@@ -50,7 +51,7 @@ function scratchRepos(t) {
 }
 
 const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
-const quiet = { test: passing, install: () => {}, gh: (args) => (args[0] === 'pr' ? '[]' : 'me\n') };
+const quiet = { test: passing, install: () => {}, host: githubHost((args) => (args[0] === 'pr' ? '[]' : 'me\n')) };
 
 /**
  * `main(argv, inject)` with its stdout and stderr captured: `{ code, out, err }`. `from` is the

@@ -20,6 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const { integrate, main } = await import('../integrate.mjs');
+const { githubHost } = await import('../../deck/host-github.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
@@ -56,8 +57,8 @@ function buildScratchRepos(root, sliceFiles) {
 const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
 const failing = `node -e "console.log('✖ broken thing (1.2ms)'); console.log('ℹ pass 2'); console.log('ℹ fail 1'); process.exit(1)"`;
 // The base is pilot, which feat/x already holds; gh knows no PR.
-const gh = (args) => (args[0] === 'pr' ? '[]' : 'me\n');
-const quiet = { install: () => {}, gh };
+const host = githubHost((args) => (args[0] === 'pr' ? '[]' : 'me\n'));
+const quiet = { install: () => {}, host };
 
 test('green: a no-ff merge naming the slice, pushed, reported in one line', (t) => {
   const { origin, work } = scratchRepos(t);
@@ -146,7 +147,7 @@ test('a failed npm ci aborts the merge and answers in one line, rather than thro
     throw new Error('npm ci exited 1');
   };
 
-  const result = integrate('slice/a', { cwd: work, test: passing, install, gh });
+  const result = integrate('slice/a', { cwd: work, test: passing, install, host });
 
   assert.equal(result.ok, false);
   assert.equal(result.line, 'NOT integrated slice/a: npm ci failed (npm ci exited 1); not pushed');
@@ -219,23 +220,23 @@ test('npm ci runs when the lockfile changed or node_modules is missing, and not 
   const locked = scratchRepos(t, { 'package-lock.json': '{}\n' });
   fs.writeFileSync(path.join(locked.work, 'package.json'), '{}\n');
   fs.mkdirSync(path.join(locked.work, 'node_modules'));
-  integrate('slice/a', { cwd: locked.work, test: passing, install, gh, push: false });
+  integrate('slice/a', { cwd: locked.work, test: passing, install, host, push: false });
   assert.equal(installs.length, 1, 'the slice changed the lockfile');
 
   const plain = scratchRepos(t);
   fs.writeFileSync(path.join(plain.work, 'package.json'), '{}\n');
-  integrate('slice/a', { cwd: plain.work, test: passing, install, gh, push: false });
+  integrate('slice/a', { cwd: plain.work, test: passing, install, host, push: false });
   assert.equal(installs.length, 2, 'a package.json and no node_modules');
 
   const none = scratchRepos(t);
-  integrate('slice/a', { cwd: none.work, test: passing, install, gh, push: false });
+  integrate('slice/a', { cwd: none.work, test: passing, install, host, push: false });
   assert.equal(installs.length, 2, 'no package.json, nothing to install');
 });
 
 test('with no run record the merge names the branch alone', (t) => {
   const { work } = scratchRepos(t);
 
-  integrate('slice/a', { cwd: work, test: passing, install: () => {}, gh, push: false });
+  integrate('slice/a', { cwd: work, test: passing, install: () => {}, host, push: false });
 
   assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge slice/a');
 });
@@ -314,7 +315,7 @@ test('npm ci never runs without package.json, even when the slice moves a lockfi
   const installs = [];
   const { work } = scratchRepos(t, { 'package-lock.json': '{}\n' });
 
-  const result = integrate('slice/a', { cwd: work, test: passing, install: (cwd) => installs.push(cwd), gh, push: false });
+  const result = integrate('slice/a', { cwd: work, test: passing, install: (cwd) => installs.push(cwd), host, push: false });
 
   assert.equal(result.ok, true);
   assert.deepEqual(installs, []);

@@ -141,6 +141,7 @@ function passing(overrides = {}) {
     storeDir: '/home/dev/.claude/pilot',
     canWrite: () => true,
     onPath: () => true,
+    git: () => 'none',
     probe: async () => ({ state: 'none' }),
     readSettings: () => ({ permissions: { allow: PILOT_MERGE_ALLOW } }),
     ...overrides,
@@ -178,11 +179,10 @@ test('an unwritable store fails its row', async () => {
 });
 
 test('a CLI not on PATH fails, an unreadable answer cannot tell', async () => {
-  const answers = { gh: false, git: null, claude: true };
+  const answers = { git: null, claude: false };
   const rows = await checkAll(passing({ onPath: (cmd) => answers[cmd] }));
-  assert.equal(row(rows, 'gh on PATH').verdict, 'fail');
+  assert.equal(row(rows, 'claude on PATH').verdict, 'fail');
   assert.equal(row(rows, 'git on PATH').verdict, 'cannot tell');
-  assert.equal(row(rows, 'claude on PATH').verdict, 'pass');
 });
 
 test('Defender keeps its states as a row', async () => {
@@ -205,8 +205,8 @@ test('Defender keeps its states as a row', async () => {
 test('doctor exits 1 on a fail and 0 otherwise', async () => {
   const printed = [];
   const log = (line) => printed.push(line);
-  assert.equal(await main({ deps: passing({ onPath: (cmd) => (cmd === 'gh' ? null : true) }), log }), 0);
-  assert.ok(printed.some((line) => line.startsWith('cannot tell  gh on PATH: ')), printed.join('\n'));
+  assert.equal(await main({ deps: passing({ onPath: (cmd) => (cmd === 'git' ? null : true) }), log }), 0);
+  assert.ok(printed.some((line) => line.startsWith('cannot tell  git on PATH: ')), printed.join('\n'));
   printed.length = 0;
   assert.equal(await main({ deps: passing({ canWrite: () => false }), log }), 1);
   assert.ok(printed.some((line) => line.startsWith('fail  store directory: ')), printed.join('\n'));

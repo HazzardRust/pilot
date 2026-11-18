@@ -12,12 +12,14 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { githubHost } from '../../deck/host-github.mjs';
+
 const { catchUp, main } = await import('../land.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 const gitIn = (repo) => (args) => git(repo, ...args);
 const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
-const gh = (args) => (args[1] === 'list' ? '[]' : '');
+const host = githubHost((args) => (args[1] === 'list' ? '[]' : ''));
 
 function commitFile(repo, file, text, message) {
   fs.writeFileSync(path.join(repo, file), text);
@@ -83,7 +85,7 @@ test("a worktree one commit behind origin lands with origin's commit", (t) => {
   const { origin, work, fix } = repos(t);
   const fixed = fix(1);
 
-  const said = mainSays([], { cwd: work, git: gitIn(work), gh });
+  const said = mainSays([], { cwd: work, git: gitIn(work), host });
 
   assert.equal(said.code, 0, said.out);
   assert.match(said.out, /^caught up 1 commits from origin\/feat\/a\nlanded feat\/a on pilot at [0-9a-f]{7}\n/);
@@ -105,7 +107,7 @@ test('a diverged worktree is refused with both SHAs', (t) => {
   const message = `NOT landed: feat/a has diverged from origin/feat/a (local ${ours.slice(0, 7)}, origin ${theirs.slice(0, 7)}); nothing pushed`;
 
   assert.throws(() => catchUp({ cwd: work, git: gitIn(work), head: 'feat/a' }), (err) => err.exitCode === 1 && err.message === message);
-  const said = mainSays([], { cwd: work, git: gitIn(work), gh });
+  const said = mainSays([], { cwd: work, git: gitIn(work), host });
   assert.equal(said.code, 1);
   assert.equal(said.out, `${message}\n`);
   assert.equal(git(work, 'rev-parse', 'HEAD'), ours, 'the worktree unmoved');
@@ -193,7 +195,7 @@ test('no origin branch yet lands as today', (t) => {
   const tip = git(work, 'rev-parse', 'HEAD');
 
   assert.deepEqual(catchUp({ cwd: work, git: gitIn(work), head: 'feat/a' }), { moved: 0 });
-  const said = mainSays([], { cwd: work, git: gitIn(work), gh });
+  const said = mainSays([], { cwd: work, git: gitIn(work), host });
   assert.equal(said.code, 0, said.out);
   assert.match(said.out, /^landed feat\/a on pilot/);
   assert.equal(git(origin, 'rev-parse', 'feat/a'), tip, 'the first push creates it');
@@ -209,7 +211,7 @@ test('pilot land --test is a usage error', (t) => {
   const command = `node -e "require('fs').writeFileSync('ran.txt', '')"`;
 
   for (const argv of [['--test', command], ['--test'], ['now']]) {
-    const said = mainSays(argv, { cwd: work, git: gitIn(work), gh });
+    const said = mainSays(argv, { cwd: work, git: gitIn(work), host });
     assert.deepEqual(said, { code: 1, out: '', err: 'usage: pilot land\n' }, argv.join(' '));
   }
   assert.ok(!fs.existsSync(ran), 'the command never runs');

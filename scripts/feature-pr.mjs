@@ -1,30 +1,26 @@
 /**
  * `pilot pr --ticket <id>`: the deck's one writer of a run's feature PR (deck-writes-github spec 2;
  * L1, L2, L3, L7'). It reads the ticket's run record from the deck (`/api/record`, as `pilot ready`
- * does) and the artefact from `origin/feat/<slug>`, then makes GitHub match them:
+ * does) and the artefact from `origin/feat/<slug>`, then makes the host match them through its
+ * **Host** (`deck/host.mjs`; other-host spec 2, 3):
  *
- *   no open PR for `feat/<slug>`  -> one `gh pr create --draft` on the record's base
- *   a body or a base that differs -> one `gh pr edit <n>` carrying only what differs
- *   both the same                 -> nothing
+ *   no open review for `feat/<slug>` -> one `open({ draft: true })` on the record's base
+ *   a body or a base that differs    -> one `edit(n)` carrying only what differs
+ *   both the same                    -> nothing
  *
  * With `record.qaComment` set it then upserts QA's one comment, the one of this account's starting with
- * `QA_MARKER` (spec 3): posted once, edited when the text differs, its id read off GitHub every time.
+ * `QA_MARKER` (spec 3), through `upsertComment`: posted once, edited when the text differs.
  *
- * The body is the artefact's §2, the record's slice table and the brief's PR footer, and goes
- * through a file for `pr create`, `pr edit` and `pr comment`; the one exception is the QA comment's
- * PATCH, whose body rides on argv as `-f body=`. Every @mention in it is written so GitHub notifies
- * nobody (`quiet`). The PR is found by its head every time; its number is never
- * stored (L3). The one local write is the fetch that refreshes `refs/remotes/origin/feat/<slug>`,
- * the ref the artefact is read from. A run remote other than origin, or a `feat/<slug>` origin
- * does not have yet, prints one line and exits 0. Any failure is one line naming the step, exit 1.
+ * The body is the artefact's §2, the record's slice table and the brief's PR footer. Every @mention
+ * in it is written so GitHub notifies nobody (`quiet`). The PR is found by its head every time; its
+ * number is never stored (L3). The one local write is the fetch that refreshes
+ * `refs/remotes/origin/feat/<slug>`, the ref the artefact is read from. `pilot.host` at `none`, a run
+ * remote other than origin, or a `feat/<slug>` origin does not have yet, prints one line and exits 0.
+ * Any failure is one line naming the step, exit 1.
  */
 
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-
 import { bearer } from '../hooks/lib/deck-secret.js';
-import { hostIn } from '../deck/host.mjs';
+import { hostFor } from '../deck/host.mjs';
 import { RUN_BASE, SLUG } from '../deck/runs.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { listeningRepo } from '../deck/wait.mjs';
@@ -38,7 +34,7 @@ const TIMEOUT_MS = 5000;
 /** The longest feature name a title carries. */
 const TITLE_MAX = 200;
 /** How many open PRs on the head are read, so a fork's PR of the same branch name cannot hide this repository's. */
-const LIST_LIMIT = '30';
+const LIST_LIMIT = 30;
 
 /** The first line of QA's one comment on the feature PR, the only comment the deck edits (deck-writes-github spec 3). */
 export const QA_MARKER = '<!-- pilot:qa -->';
@@ -101,12 +97,12 @@ function footerOf(brief) {
 /** Line ends and trailing space aside, the same text: GitHub hands a body back with CRLF. */
 const sameText = (a, b) => String(a ?? '').replace(/\r\n/g, '\n').trimEnd() === String(b ?? '').replace(/\r\n/g, '\n').trimEnd();
 
-/** Runs a gh call, rethrowing a failure as `gh <group> <verb>: <first line>`. */
-function step(gh, args) {
+/** Runs one **Host** verb, rethrowing a failure as `<cli> <verb>: <first line>`. */
+function step(host, verb, call) {
   try {
-    return gh(args);
+    return call();
   } catch (err) {
-    throw new StepError(`gh ${args[0]} ${args[1]}: ${firstLine(err)}`);
+    throw new StepError(`${host.cli} ${verb}: ${firstLine(err)}`);
   }
 }
 
@@ -116,18 +112,6 @@ function gitStep(git, args) {
     return git(args);
   } catch (err) {
     throw new StepError(`git ${args[0]}: ${firstLine(err)}`);
-  }
-}
-
-/** Writes `body` to a file in a fresh private temp dir, hands its path to `use`, and removes the dir. */
-function withBodyFile(body, use) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-pr-'));
-  try {
-    const file = path.join(dir, 'body.md');
-    fs.writeFileSync(file, body, { mode: 0o600 });
-    return use(file);
-  } finally {
-    fs.rmSync(dir, { recursive: true, force: true });
   }
 }
 
@@ -147,12 +131,13 @@ function checked(record) {
 
 /**
  * Makes the feature PR of `record` match it: `{ line, number?, wrote }`, `wrote` one of `created`,
- * `edited`, `none`. `gh` is the host's runner and `git` is `(args) => string` in the repository,
- * both argv only. Throws, naming the step, on a failure.
+ * `edited`, `unchanged`, `none`. `host` is the repository's **Host**, null at `none` (A1), and `git`
+ * is `(args) => string` in the repository, argv only. Throws, naming the step, on a failure.
  */
-export function syncFeaturePr({ gh, git, record }) {
+export function syncFeaturePr({ host, git, record }) {
   const { slug, base, artefact, feature } = checked(record);
   const head = `feat/${slug}`;
+  if (host === null) return { line: 'no PR: host none', wrote: 'none' };
 
   let runs;
   try {
@@ -176,77 +161,33 @@ export function syncFeaturePr({ gh, git, record }) {
   const footer = hasBrief ? footerOf(gitStep(git, ['show', `${tip}:${briefPath}`])) : '';
   const body = featureBody(spec, record, footer);
 
-  let open;
-  const listed = step(gh, ['pr', 'list', '--head', head, '--state', 'open', '--json', 'number,body,baseRefName,isCrossRepository', '--limit', LIST_LIMIT]);
-  try {
-    open = JSON.parse(listed);
-  } catch {
-    throw new StepError('gh pr list: an answer that is not JSON');
-  }
-  if (!Array.isArray(open)) throw new StepError('gh pr list: an answer that is not a list');
-  // `--head` matches a branch name from any fork: only this repository's own PR is the feature PR.
-  open = open.filter((pr) => pr?.isCrossRepository === false);
+  // `head` matches a branch name from any fork: only this repository's own PR is the feature PR.
+  const open = step(host, 'reviews', () => host.reviews({ head, state: 'open', limit: LIST_LIMIT })).filter((pr) => pr?.crossRepo === false);
 
-  const done = writePr(gh, open, { base, head, body, title: quiet(`feat(${slug}): ${feature}`) });
+  const done = writePr(host, open, { base, head, body, title: quiet(`feat(${slug}): ${feature}`) });
   const qa = typeof record.qaComment === 'string' && record.qaComment.trim() !== '' ? record.qaComment : null;
   if (qa === null) return done;
-  const comment = syncQaComment(gh, done.number, qa, done.wrote === 'created');
+  // QA's one comment (spec 3; L3, A2): the host finds this account's comment carrying the marker every time.
+  const comment = step(host, 'upsertComment', () => host.upsertComment(done.number, QA_MARKER, `${quiet(qa.trimEnd())}\n`));
   return comment === 'none' ? done : { ...done, line: `${done.line}; QA comment ${comment}` };
 }
 
 /** Opens the feature PR when none is `open`, or edits the open one where it differs from `body` and `base`. */
-function writePr(gh, open, { base, head, body, title }) {
+function writePr(host, open, { base, head, body, title }) {
   if (open.length === 0) {
-    const out = withBodyFile(body, (file) => step(gh, ['pr', 'create', '--draft', '--base', base, '--head', head, '--title', title, '--body-file', file]));
-    const number = Number(/\/pull\/(\d+)\s*$/.exec(String(out).trim())?.[1]);
-    if (!Number.isInteger(number)) throw new StepError('gh pr create: no PR url in its answer');
+    const { number } = step(host, 'open', () => host.open({ base, head, title, body, draft: true }));
     return { line: `feature PR #${number} opened`, number, wrote: 'created' };
   }
 
   const pr = open[0];
-  if (!Number.isInteger(pr?.number) || pr.number < 1) throw new StepError('gh pr list: a PR with no number');
-  const flags = pr.baseRefName === base ? [] : ['--base', base];
-  const bodyChanged = !sameText(pr.body, body);
-  if (!bodyChanged && flags.length === 0) return { line: `feature PR #${pr.number} unchanged`, number: pr.number, wrote: 'none' };
-  const edit = ['pr', 'edit', String(pr.number), ...flags];
-  if (bodyChanged) withBodyFile(body, (file) => step(gh, [...edit, '--body-file', file]));
-  else step(gh, edit);
+  if (!Number.isInteger(pr?.number) || pr.number < 1) throw new StepError(`${host.cli} reviews: a PR with no number`);
+  const change = {
+    ...(pr.base === base ? {} : { base }),
+    ...(sameText(pr.body, body) ? {} : { body }),
+  };
+  if (Object.keys(change).length === 0) return { line: `feature PR #${pr.number} unchanged`, number: pr.number, wrote: 'unchanged' };
+  step(host, 'edit', () => host.edit(pr.number, change));
   return { line: `feature PR #${pr.number} updated`, number: pr.number, wrote: 'edited' };
-}
-
-/** A comment's url as GitHub gives it: the repository and the comment's own id. */
-const COMMENT_URL = /^https:\/\/[^/\s]+\/([\w.-]+)\/([\w.-]+)\/pull\/\d+#issuecomment-(\d+)$/;
-
-/**
- * Upserts QA's one comment on PR `number` from `text` (spec 3; L3, A2): the first of this account's comments
- * that starts with `QA_MARKER` is it, found every time and its id never stored. None -> one `gh pr comment`;
- * a different text -> one PATCH of that comment; the same -> nothing. Another account's comment carrying the
- * marker is never edited. A PR just `created` has no comments to read. Answers `posted`, `edited` or `none`.
- */
-function syncQaComment(gh, number, text, created) {
-  const body = `${QA_MARKER}\n${quiet(text.trimEnd())}\n`;
-  let mine;
-  if (!created) {
-    let comments;
-    try {
-      comments = JSON.parse(step(gh, ['pr', 'view', String(number), '--json', 'comments'])).comments;
-    } catch (err) {
-      if (err instanceof StepError) throw err;
-      throw new StepError('gh pr view: an answer that is not JSON');
-    }
-    if (!Array.isArray(comments)) throw new StepError('gh pr view: no comments list');
-    mine = comments.find((each) => each?.viewerDidAuthor === true && typeof each.body === 'string' && each.body.startsWith(QA_MARKER));
-  }
-  if (!mine) {
-    withBodyFile(body, (file) => step(gh, ['pr', 'comment', String(number), '--body-file', file]));
-    return 'posted';
-  }
-  if (sameText(mine.body, body)) return 'none';
-  const [, owner, repo, id] = COMMENT_URL.exec(String(mine.url ?? '')) ?? [];
-  if (id === undefined) throw new StepError('gh pr view: the QA comment has no comment url');
-  // `-f`, a raw string: the host refuses `--input` and `-F`, whose `@file` reads a local file into the request.
-  step(gh, ['api', `repos/${owner}/${repo}/issues/comments/${id}`, '--method', 'PATCH', '-f', `body=${body}`]);
-  return 'edited';
 }
 
 /** The deck's record for `ticket`, read as `pilot ready` reads it; null when the deck has none. */
@@ -271,10 +212,15 @@ export async function main(argv, inject = {}) {
     say(`${USAGE}\n`);
     return 1;
   }
-  const gh = inject.gh ?? hostIn(cwd);
   const git = inject.git ?? ((args) => gitAt(cwd, ...args));
   const readRecord = inject.readRecord ?? deckRecord(cwd);
   try {
+    let host;
+    try {
+      host = 'host' in inject ? inject.host : hostFor(cwd, { git });
+    } catch (err) {
+      throw new StepError(`host: ${firstLine(err)}`);
+    }
     let record;
     try {
       record = await readRecord(argv[1]);
@@ -282,7 +228,7 @@ export async function main(argv, inject = {}) {
       throw new StepError(`record: ${firstLine(err)}`);
     }
     if (!record) throw new StepError(`record: ticket ${argv[1]} has none`);
-    say(`${syncFeaturePr({ gh, git, record }).line}\n`);
+    say(`${syncFeaturePr({ host, git, record }).line}\n`);
     return 0;
   } catch (err) {
     say(`${oneLine(err instanceof StepError ? err.message : `pilot pr: ${firstLine(err)}`)}\n`);
