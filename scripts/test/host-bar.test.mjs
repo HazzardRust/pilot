@@ -1,5 +1,6 @@
-// deck-writes-github S8, spec 8: `deck/host.mjs` is the one place a `gh` process starts. A scan of
-// `deck/` and `scripts/` (tests excluded) is the bar; the moved callers keep the argv they sent.
+// other-host S6, spec 2: the two adapters are the only places a host CLI starts, `gh` in
+// `deck/host-github.mjs` and `glab` in `deck/host-gitlab.mjs`. A scan of `deck/` and `scripts/` (tests
+// excluded) is the bar; every caller reaches an adapter through `hostFor`, and no module exports `hostIn`.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -7,14 +8,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { hostIn } from '../../deck/host.mjs';
-import { githubHost } from '../../deck/host-github.mjs';
+import { ghRun, githubHost } from '../../deck/host-github.mjs';
 import { openRuns } from '../../deck/tickets.mjs';
 import { ghStub } from '../gh-stub.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-// other-host S1: the GitHub adapter is the one module that starts gh.
-const HOST = path.join(ROOT, 'deck', 'host-github.mjs');
+const ADAPTERS = [path.join(ROOT, 'deck', 'host-github.mjs'), path.join(ROOT, 'deck', 'host-gitlab.mjs')];
 const SKIP_DIRS = new Set(['test', 'node_modules']);
 
 /** Every non-test module under `deck/` and `scripts/`. */
@@ -35,17 +34,17 @@ function modules() {
   return found;
 }
 
-// A file-and-args start (`'gh'`) or a command string (`'gh pr …'`), through any child_process starter.
-const GH_START = /\b(?:exec|execSync|execFile|execFileSync|spawn|spawnSync)\(\s*['"`]gh(?:['"`]|\s)/g;
+// A file-and-args start (`'gh'`, `'glab'`) or a command string (`'gh pr …'`), through any child_process starter.
+const HOST_START = /\b(?:exec|execSync|execFile|execFileSync|spawn|spawnSync)\(\s*['"`](?:gh|glab)(?:['"`]|\s)/g;
 
 /** A comment line, which names a call without making one. */
 const COMMENT = /^\s*(?:\/\/|\/\*|\*)/;
 
-/** `path:line` for every `gh` process start in `files`. */
-function ghStarts(files) {
+/** `path:line` for every `gh` or `glab` process start in `files`. */
+function hostStarts(files) {
   return files.flatMap((file) => fs.readFileSync(file, 'utf8').split('\n').flatMap((line, at) => {
-    GH_START.lastIndex = 0;
-    return !COMMENT.test(line) && GH_START.test(line) ? [`${path.relative(ROOT, file)}:${at + 1}`] : [];
+    HOST_START.lastIndex = 0;
+    return !COMMENT.test(line) && HOST_START.test(line) ? [`${path.relative(ROOT, file)}:${at + 1}`] : [];
   }));
 }
 
@@ -69,16 +68,21 @@ function stubbed(t, reply) {
   return { dir: stub.dir, calls };
 }
 
-test('no gh process starts outside the host', () => {
+test('no host CLI starts outside the adapters', () => {
   const files = modules();
-  assert.ok(files.includes(HOST), 'the scan reaches deck/host.mjs');
-  assert.ok(ghStarts([HOST]).length > 0, 'the host itself starts gh, so the scan is not blind');
-  assert.deepEqual(ghStarts(files.filter((file) => file !== HOST)), []);
+  for (const adapter of ADAPTERS) {
+    assert.ok(files.includes(adapter), `the scan reaches ${path.relative(ROOT, adapter)}`);
+    assert.ok(hostStarts([adapter]).length > 0, `${path.relative(ROOT, adapter)} starts its CLI, so the scan is not blind`);
+  }
+  assert.deepEqual(hostStarts(files.filter((file) => !ADAPTERS.includes(file))), []);
 });
 
-test('no module exports ghIn', () => {
-  const exportsGhIn = /export\s+(?:const|let|var|(?:async\s+)?function\*?)\s+ghIn\b|export\s*\{[^}]*\bghIn\b[^}]*\}/;
-  assert.deepEqual(modules().filter((file) => exportsGhIn.test(fs.readFileSync(file, 'utf8'))).map((file) => path.relative(ROOT, file)), []);
+test('no module exports hostIn', () => {
+  // A declared export, an export list naming it (`{ hostIn }`, `{ ghRun as hostIn }`), or a re-export from elsewhere.
+  const exportsHostIn = /export\s+(?:const|let|var|(?:async\s+)?function\*?)\s+hostIn\b|export\s*\{[^}]*\bhostIn\b[^}]*\}/;
+  // The base's own alias, so the pattern is not blind.
+  assert.match('export { ghRun as hostIn };', exportsHostIn);
+  assert.deepEqual(modules().filter((file) => exportsHostIn.test(fs.readFileSync(file, 'utf8'))).map((file) => path.relative(ROOT, file)), []);
 });
 
 test('the old callers keep their reads', (t) => {
@@ -105,13 +109,13 @@ test('the old callers keep their reads', (t) => {
 
   // The same argv passes the host's verb check and reaches a gh process unchanged.
   const stub = stubbed(t, '[]');
-  assert.deepEqual(openRuns(records, { host: githubHost(hostIn(stub.dir)) }), []);
+  assert.deepEqual(openRuns(records, { host: githubHost(ghRun(stub.dir)) }), []);
   assert.deepEqual(stub.calls(), [PR_LIST]);
 });
 
 test("the release PR's label create is a host verb", (t) => {
   const stub = stubbed(t);
-  const gh = hostIn(stub.dir);
+  const gh = ghRun(stub.dir);
   assert.throws(() => gh(['label', 'delete', 'pilot-release']), /gh label delete: not a host verb/);
   assert.throws(() => gh(['label', 'create']), /not a host verb/, 'a label create with no name is refused');
   assert.throws(() => gh(['label', 'create', '--force']), /not a host verb/, 'a flag is never the name');
@@ -123,7 +127,7 @@ test("the release PR's label create is a host verb", (t) => {
 /** Asserts every pr verb refuses each of `flags`, before any process starts. */
 function refusesOnEveryPrVerb(t, flags) {
   const stub = stubbed(t);
-  const gh = hostIn(stub.dir);
+  const gh = ghRun(stub.dir);
   for (const verb of ['create', 'edit', 'comment', 'view', 'list']) {
     for (const flag of flags) assert.throws(() => gh(['pr', verb, '7', ...flag]), /not a host verb/, `pr ${verb} ${flag.join(' ')}`);
   }
