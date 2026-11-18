@@ -27,7 +27,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 
-import { notePosted, reportedFile, sessionPid } from '../deck/run-claim.mjs';
+import { HOLD_BOUND_MS, notePosted, reportedFile, sessionPid } from '../deck/run-claim.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { isOlder, isVersion } from '../deck/version.mjs';
 import { listeningRepo } from '../deck/wait.mjs';
@@ -196,9 +196,11 @@ export async function handoff({ cwd = process.cwd(), env = process.env, trailers
     const id = /\bitm_[0-9a-f]+\b/.exec(posted?.content?.[0]?.text ?? '')?.[0];
     if (!id) throw new Refusal('the deck took the handoff item but named no id');
     notePosted(sessionPid(env, process.ppid), id);
-    // A live co-pilot holds the /clear until its release (clear-waits-co-pilot spec 6, A3): the line repeats the pause.
+    // A live co-pilot holds the /clear until its release, at most the bound (clear-waits-co-pilot spec 6, A3): the
+    // line says so and repeats the pause. A pause SendMessage only queued is released at once (never-stuck S19).
     const paused = coPilot?.live === true && /^itm_[0-9a-f]+$/.test(coPilot.ticket)
-      ? `the co-pilot on ${coPilot.ticket} is live: send it the pause, deck_ticket release it on its hand-back; `
+      ? `/clear held for the co-pilot on ${coPilot.ticket}, up to ${HOLD_BOUND_MS / 60000} minutes: send it the pause; ` +
+        'if SendMessage answers queued, deck_ticket release it now, else on its hand-back; '
       : '';
     // The hand-off is posted either way; only who clears differs (spec 8: no refusal to hand off).
     const mod = modState(env, version);

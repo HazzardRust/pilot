@@ -11,6 +11,12 @@ import path from 'node:path';
 
 import { privateDir } from '../hooks/lib/atomic-write.js';
 
+/**
+ * How long a live co-pilot holds a hand-off's clear, from the directory's first hold (held-handoff L4). Its one
+ * owner: the look enforces it and `pilot handoff` says it (never-stuck S19).
+ */
+export const HOLD_BOUND_MS = 20 * 60 * 1000;
+
 // --- the claim's spelling ---------------------------------------------------
 
 /** Where the hooks keep their claims. Read when asked, so a test's home works. */
