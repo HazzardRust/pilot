@@ -140,6 +140,8 @@ function renderTicketRow(item, index, count, isHead, isInHand, back, items, isCo
     `<li data-state="${state}"${mark}>${isCoPilot ? '<span class="lane-label">co-pilot</span>' : ''}${isHead ? '<span class="next">next</span>' : ''}${isYellowHead ? '<span class="next" data-lane="co-pilot">next</span>' : ''}${renderStandingLink(item)}` +
     `${item.live === true && !isLanding(item, items) ? '<span class="live">live</span>' : ''}` +
     `<span class="ticket-state" data-state="${state}">${ticketLabelOf(item, state, items)}</span>` +
+    // A signed plan sent back to planning (never-stuck §9 item 1): the mark, its why on hover.
+    `${item.recut && state === 'red' ? `<span class="recut" title="${escapeHtml(String(item.recut.why ?? ''))}">re-cut</span>` : ''}` +
     renderQuestionCount(asked) +
     `${item.plan ? renderPlan(item) : renderSlices(item.sliceCount)}` +
     `${isShortPath(item) ? '<span class="short-path">short path</span>' : ''}` +

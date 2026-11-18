@@ -88,7 +88,8 @@ test('the stored deck gains co-pilots and no other key', async (t) => {
   setCoPilot(ticket.id, false);
 
   const after = Object.keys(JSON.parse(fs.readFileSync(storeFile(), 'utf8')));
-  assert.deepEqual(after.filter((key) => !before.includes(key)), ['coPilots']);
+  // A store written before grant stamps gains their mark on its first write too (never-stuck QA-F1).
+  assert.deepEqual(after.filter((key) => !before.includes(key)).sort(), ['coPilots', 'grantsStamped']);
   assert.deepEqual(before.filter((key) => !after.includes(key)), []);
 });
 

@@ -114,7 +114,7 @@ test('seq, runs and records stay live', (t) => {
   const { items, ...rest } = live(dir);
   const { items: _, ...before } = planted;
   assert.deepEqual(items, []);
-  assert.deepEqual(rest, before);
+  assert.deepEqual(rest, { ...before, grantsStamped: true }, 'the first write keeps the grant mark (never-stuck QA-F1)');
 });
 
 test('an archived item reads back by id', (t) => {

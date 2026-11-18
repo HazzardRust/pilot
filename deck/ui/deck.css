@@ -345,7 +345,8 @@ body[data-item] [data-live='reply'] {
 .artefact { overflow-wrap: anywhere; }
 .questions { color: var(--state-waiting); }
 /* A blocking question, on its card, its page and its ticket's row (ticket-states spec 17, S18). */
-.blocking { border: 1px solid currentColor; border-radius: 0.25rem; color: light-dark(#b91c1c, #fca5a5); font-size: 0.8em; margin-left: 0.6ch; padding: 0 0.4ch; }
+/* A signed plan sent back to planning wears the same outlined red mark (never-stuck §9 item 1). */
+.blocking, .recut { border: 1px solid currentColor; border-radius: 0.25rem; color: light-dark(#b91c1c, #fca5a5); font-size: 0.8em; margin-left: 0.6ch; padding: 0 0.4ch; }
 .choices .assume { border-style: dashed; }
 /* The red ticket the tab opens on: its questions and its gate2, one per line (ticket-states spec 20). */
 .previews p { border-left: 1px solid var(--rule); margin: 0; padding: 0.1rem 0 0.1rem 1ch; }

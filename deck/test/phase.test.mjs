@@ -199,7 +199,7 @@ test('gate1 and gate2 must name the live ticket', (t) => {
 test('deck_ticket takes and parks', (t) => {
   tempDeck(t);
   const { inputSchema } = TOOLS.find(({ name }) => name === 'deck_ticket');
-  assert.deepEqual(inputSchema.properties.action.enum, ['up', 'down', 'take', 'park', 'merge', 'need', 'pivot', 'co-pilot', 'release', 'verdicts']);
+  assert.deepEqual(inputSchema.properties.action.enum, ['up', 'down', 'take', 'park', 'merge', 'need', 'pivot', 'recut', 'replan', 'co-pilot', 'release', 'verdicts']);
   const ticket = aTicket();
   assert.match(callTool('deck_ticket', { id: ticket.id, action: 'take' }).content[0].text, new RegExp(`Took ${ticket.id}: live.*red`));
   assert.equal(livePhaseOf(listItems(), MINE), 'red');

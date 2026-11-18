@@ -109,10 +109,11 @@ is finished with nothing to walk (the plan's `surface: false`). Then send `main`
 
 | ticket | outcome: walkthrough, blocked, nothing to walk or paused | questions, by id | assumed, with defaults | blocked steps: command, why |
 
-When `main` sends you the pause, integrate the slice in flight through its
-gate and review, bring its rows current with `deck_status`, start nothing
-else, and hand back with outcome `paused`; the ticket stays implementing.
-On a yield, the pause quotes the deck's `Paused <id>` line: the deck paused the ticket on your unanswered question; hand back `paused` the same way, and its answer or close resumes your successor.
+When `main` sends you the pause, start nothing, wait on every live child and
+integrate each slice it finishes through its gate and review, bring its rows
+current with `deck_status`, and hand back with outcome `paused`, no child live;
+the ticket stays implementing. A yield's pause quotes the deck's `Yielding <id>`
+line and drains the same way: the deck paused the ticket on your unanswered question, and its answer or close resumes your successor.
 
 At your context guard's advisory notice, pause as `main`'s pause does and
 start no slice, fix round or QA after it. Past the hard mark still undrained, wait
