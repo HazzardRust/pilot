@@ -130,7 +130,8 @@ function readItem(args) {
  */
 function untakenBy(kind) {
   return (reply) => {
-    if (!reply.deliveredAt) return reply.open === true;
+    // A taken default closes its question in the same write, and is still its owner's to take (never-stuck spec 10).
+    if (!reply.deliveredAt) return reply.open === true || reply.default === true;
     return reply.text === SIGN_OFF && typeof reply.deliveredTo === 'string' && reply.deliveredTo !== kind;
   };
 }

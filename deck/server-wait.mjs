@@ -21,7 +21,7 @@ import {
   DeckRefusal, MAX_TEXT_BYTES, MAX_WAIT_REPLIES, deckLanes, fallBack, fallbackDue, listItems, listRuns, markDelivered, postItem,
   repliesSince, yieldTicket,
 } from './store.mjs';
-import { CONFLICT_TURN_MS } from './store-items.mjs';
+import { CONFLICT_TURN_MS, defaultsDue, takeDefault } from './store-items.mjs';
 import { cookieName, deckDir, ensureSecret, secretFile } from '../hooks/lib/deck-secret.js';
 import { DECK_HOST } from './tools.mjs';
 import { capRefusal } from './ui/render.mjs';
@@ -394,6 +394,7 @@ function armHandoffs() {
   }
   armStateTimers(items, runs);
   armYields();
+  armDefaults();
   armConflicts();
 }
 
@@ -509,6 +510,46 @@ export function armYields() {
     yieldTimers.set(question, { ticket, timer: setTimeout(fire, Math.max(0, at - Date.now())).unref() });
   };
   for (const [question, { ticket, at }] of due) if (!yieldTimers.has(question)) arm(question, ticket, at);
+}
+
+/** Each due default's one timer, by question id, with the moment it was armed for. */
+const defaultTimers = new Map();
+
+/**
+ * One unref'd one-shot timer per default `defaultsDue` names, at its `dueAt` (never-stuck spec 10), beside the
+ * yields: one already past fires at once, so a restart takes an overdue default; armed again on every change
+ * through `armHandoffs`, and a timer whose question stopped being due is cleared. On fire `takeDefault` checks the
+ * rule again and refuses a default that stopped being due.
+ */
+export function armDefaults() {
+  let due;
+  try {
+    due = new Map(defaultsDue(listItems(), Infinity).map(({ id, dueAt }) => [id, dueAt]));
+  } catch (err) {
+    console.error('[deck] the default timers could not read the store:', err.message);
+    return;
+  }
+  for (const [id, armed] of defaultTimers) {
+    if (due.get(id) === armed.dueAt) continue;
+    clearTimeout(armed.timer);
+    defaultTimers.delete(id);
+  }
+  const arm = (id, dueAt) => {
+    const fire = () => {
+      // A timer may wake a millisecond short of `dueAt`: that default is still ahead, not refused.
+      if (Date.now() < dueAt) return arm(id, dueAt);
+      defaultTimers.delete(id);
+      try {
+        takeDefault(id);
+      } catch (err) {
+        if (!(err instanceof DeckRefusal)) console.error(`[deck] the default on ${id} could not be written:`, err.message);
+        return;
+      }
+      announceChange();
+    };
+    defaultTimers.set(id, { dueAt, timer: setTimeout(fire, Math.max(0, dueAt - Date.now())).unref() });
+  };
+  for (const [id, dueAt] of due) if (!defaultTimers.has(id)) arm(id, dueAt);
 }
 
 /** Each pending state lapse's one timer, by what lapses: a handoff's id or a run's id. */

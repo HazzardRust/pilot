@@ -129,8 +129,8 @@ export function ownerFilter(kind) {
     // A parked green ticket's walkthrough: its QA agent has ended, so the reply is the live pilot's.
     const parked = parkedTicketOf(items, reply) !== undefined;
     if (parked && kind !== 'pilot') return false;
-    // A short landing's line is the pilot's whoever owns the gate2 (three-lanes L7).
-    if (reply?.from === 'deck') return kind === 'pilot';
+    // A short landing's line is the pilot's whoever owns the gate2 (three-lanes L7); a taken default is its owner's (never-stuck spec 10).
+    if (reply?.from === 'deck' && reply.default !== true) return kind === 'pilot';
     // The Sign off is the pilot's Gate 2 too, whoever owns the thread, and handing it to
     // one of the two hides it from neither (L2).
     if (isGateReply(item, reply)) return kind === 'pilot' || ownerOf(item) === kind;
@@ -185,8 +185,8 @@ export function markDelivered(handedOver, to) {
     for (const reply of messagesOf(item)) {
       if (!handsTo(reply, to) || !fresh.has(reply.seq)) continue;
       // A closed thread's reply is not handed over for the first time; the Sign off's second
-      // recipient still is, because QA closes its walkthrough on the press (A6).
-      if (!reply.deliveredAt && isOpen(item)) {
+      // recipient still is, because QA closes its walkthrough on the press (A6), and so is a taken default, closed in its own write.
+      if (!reply.deliveredAt && (isOpen(item) || reply.default === true)) {
         reply.deliveredAt = deliveredAt;
         reply.deliveredTo = to;
       } else if (isGateReply(item, reply) && typeof reply.deliveredTo === 'string' && reply.deliveredTo !== to) {
