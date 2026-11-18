@@ -3,7 +3,7 @@
 Ticket itm_9b7008e91201, with itm_8d89d2230e03 and itm_0a2eca54e2f7 merged in (merge thread itm_452048a4e404,
 "Merge these"). Base `origin/pilot` d7569a49. Slug `never-stuck`.
 Run 2 (Run B): ticket itm_4be94a7ae00a, slug `never-stuck-2`, merge thread itm_7f1a5d64c8d6 ("merged none"); adds
-spec 25-27 (itm_99b65de1e279) and S19. Branch `design/never-stuck-2`, cut from `feat/never-stuck` c19395e7 (A5).
+spec 25-27 (itm_99b65de1e279) and S19. Branch `design/never-stuck-2`, cut from `feat/never-stuck`, rebased onto 0a95356d (A5).
 
 ## 1. Problem
 
@@ -135,7 +135,7 @@ Run 2 deepening: run-look and handoff.mjs pass the deletion test; the bound move
 
 ADR NNNN (`docs/adr/NNNN-never-stuck.md`) records L2-L7.
 
-- **L1 Depth is forks** (itm_5ad979d05f47, the user's press): only forking decisions were posted, each alone.
+- **L1 Depth is forks** (itm_5ad979d05f47, the user's press): only forking decisions were posted, each alone. Run 2: forks again (itm_2ad862b30840, the user's press 2026-11-18); A7 was the one forking assumption posted.
 - **L2 The deck checks drift, at the first grant and after every landing** (F1, user: "The deck, at grant and
   landing", itm_73468bff78b8). Rationale: the check costs no agent tokens and can't be skipped. Rejected: the
   co-pilot's first act or the architect per landing.
@@ -185,18 +185,18 @@ ADR NNNN (`docs/adr/NNNN-never-stuck.md`) records L2-L7.
   Verdict: stands - beside the other pilot state under ~/.claude/pilot; no queued ticket claims the path
 - **A4 Line 4's refusal half dropped.** ToolSearch reconnects a failed MCP (seen this session).
   Verdict: stands - seen again by the pilot this session: deck reported CONNECTION_CLOSED, ToolSearch loaded it and every call worked
-- **A5 Run 2's base is Run 1** (main's call): `design/never-stuck-2` is cut from `feat/never-stuck` c19395e7 (the only
+- **A5 Run 2's base is Run 1** (main's call): `design/never-stuck-2` is cut from `feat/never-stuck` (c19395e7, rebased onto 0a95356d; the only
   branch with this artefact) and `feat/never-stuck-2` is cut from the design tip at Gate 1, base `feat/never-stuck` (built on feat/<N>);
   both rebase onto `origin/pilot` once Run 1 lands. Trades away: a rebase when Run 1 lands; slices citing S6 wait for it (§8).
   Rejected: `pilot base`'s `feat/handoff-books`, which holds neither the artefact nor S1-S5.
 - **A6 Line 25 releases at once** (itm_fca79242f7ff): no grace wait. Trades away: the `/clear` may kill the slice in
-  flight (ADR 0089's reason); the fresh session re-adopts the ticket. Rejected: a 5-minute grace for the hand-back.
+  flight (ADR 0089's reason); the fresh session re-adopts the ticket. Rejected: a 5-minute grace for the hand-back. User: "Release at once" (itm_fca79242f7ff, 2026-11-18).
 - **A7 Line 25 is a prose rule, not a hook**: the guard's advisory and `pilot handoff`'s line say it; `agents/pilot.md`
   is not edited (28 tokens of headroom). Trades away: a pilot ignoring the line waits out the bound. Rejected: a
-  PostToolUse hook releasing on a queued SendMessage (wider; the user said "the pilot releases").
+  PostToolUse hook releasing on a queued SendMessage (wider; the user said "the pilot releases"). User: "Prose rule, bound as backstop" (itm_b3f95cb4736d, 2026-11-18).
 - **A8 QA environment for Run 2** (itm_ca7057034e89): L11's scratch deck and temp repos, plus `pilot handoff` there
   with a co-pilot granted and the held card looked at; no real `/clear`. Trades away: the wrapper's real `/clear`
-  after a release is seen only at the next real hand-off. Rejected: the live deck.
+  after a release is seen only at the next real hand-off. Rejected: the live deck. User: "Scratch deck + temp repos" (itm_ca7057034e89, 2026-11-18).
 - red team (run 2): S19's first red step meets `scripts/test/handoff.test.mjs:179, :198`, pinning today's clause
   word for word; S19 owns that file. Importing the bound from `run-look.mjs` would pull the look's CLI into
   `pilot handoff`; it moves to `run-claim.mjs`, which both import. S19 shares no file or seam with S7-S18.
