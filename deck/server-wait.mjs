@@ -14,7 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { quietAt, watchAgents } from './agents.mjs';
-import { HANDOFF_ACK_MS, KIND_GATE2, KIND_HANDOFF, KIND_QUESTION, KIND_WALKTHROUGH, NOTE_SEPARATOR, PASS_KINDS, SIGN_OFF, isOpen } from './items.mjs';
+import { HANDOFF_ACK_MS, KIND_GATE2, KIND_HANDOFF, KIND_QUESTION, KIND_WALKTHROUGH, NOTE_SEPARATOR, PASS_KINDS, SIGN_OFF, isOpen, sameRepo } from './items.mjs';
 import { yieldsDue } from './lanes.mjs';
 import { PICKED_UP_MS, WORKING_MS } from './pilot-state.mjs';
 import {
@@ -350,6 +350,14 @@ export const browserCount = () => changes.listenerCount(CHANGED_FOR_BROWSER);
 export const waiterCount = () => changes.listenerCount(CHANGED_FOR_WAITER);
 
 /**
+ * The `deck_wait` calls parked right now, each `{ kind, repo, item }` (`null` for any), in
+ * memory like the roster (never-stuck L9): whether a wait of `kind` would hear `itemId` in `repo`.
+ */
+const parkedWaits = new Set();
+export const parkedOn = (kind, itemId, repo) =>
+  [...parkedWaits].some((wait) => wait.kind === kind && (wait.item ?? itemId) === itemId && (wait.repo === null || sameRepo(wait.repo, repo)));
+
+/**
  * Called after every write: the named writing tools below call it after every one of
  * theirs, `handOff` calls it for `deck_read`, and every `deck_wait`'s `take` calls it
  * from inside `waitForReplies`, each only on the call that actually marked a reply
@@ -660,7 +668,7 @@ function openStream(response) {
  * what it says. The seq still counts the whole deck, so a reply read past is not
  * waited on again.
  */
-function waitForReplies({ since, timeoutMs, signal, heard, take, untaken = false, fallback = null }) {
+function waitForReplies({ since, timeoutMs, signal, heard, take, untaken = false, fallback = null, parked = null }) {
   const heardSince = () => {
     // Overdue first (A7): claimed off the cursor, so the page below may hold them too.
     const overdue = fallback?.claim() ?? [];
@@ -684,6 +692,7 @@ function waitForReplies({ since, timeoutMs, signal, heard, take, untaken = false
     const settle = (value) => {
       clearTimeout(timer);
       clearTimeout(due);
+      parkedWaits.delete(parked);
       changes.off(CHANGED_FOR_WAITER, onChange);
       signal?.removeEventListener('abort', onAbort);
       resolve(value);
@@ -715,6 +724,7 @@ function waitForReplies({ since, timeoutMs, signal, heard, take, untaken = false
     const onAbort = () => settle({ replies: [], seq: since });
 
     timer = setTimeout(() => settle(look() ?? { replies: [], seq: since }), timeoutMs);
+    if (parked) parkedWaits.add(parked);
     changes.on(CHANGED_FOR_WAITER, onChange);
     signal?.addEventListener('abort', onAbort, { once: true });
     arm();
@@ -742,7 +752,17 @@ const fellBackNote = (owner) =>
 function fallbackFor(repo) {
   let nextAt = null;
   const claim = () => {
-    const due = fallbackDue(repo, Date.now(), (kind) => quietAt(repo, kind));
+    const now = Date.now();
+    // A reply its owner never picked up, with no wait of the owner parked on it, is unheard:
+    // the owner counts as quiet now, however busy (never-stuck spec 24, L9). Seqs are deck-wide.
+    const unheard = new Set();
+    const quiet = (kind, itemId, reply) => {
+      const at = quietAt(repo, kind, now);
+      if (at <= now || reply.deliveredAt || parkedOn(kind, itemId, repo)) return at;
+      unheard.add(reply.seq);
+      return now;
+    };
+    const due = fallbackDue(repo, now, quiet);
     nextAt = due.nextAt;
     const taken = new Set();
     for (const id of new Set(due.overdue.map((reply) => reply.itemId))) {
@@ -752,7 +772,7 @@ function fallbackFor(repo) {
     if (taken.size) queueMicrotask(announceChange);
     return due.overdue
       .filter((reply) => taken.has(reply.itemId))
-      .map((reply) => ({ ...reply, fallback: fellBackNote(reply.owner) }));
+      .map((reply) => ({ ...reply, fallback: unheard.has(reply.seq) ? `unheard by ${reply.owner}` : fellBackNote(reply.owner) }));
   };
   return { claim, next: () => nextAt };
 }

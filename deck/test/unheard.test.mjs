@@ -23,7 +23,7 @@ const { LIVE_WINDOW_MS, forgetAgents, noteActive } = await import('../agents.mjs
 const { addReply, listItems, postItem } = await import('../store.mjs');
 const { ownerOf } = await import('../items.mjs');
 const { waiterCount } = await import('../server.mjs');
-const { fallbackFor, parkedOn } = await import('../server-wait.mjs');
+const { announceChange, fallbackFor, parkedOn } = await import('../server-wait.mjs');
 
 const ALPHA = path.join(os.tmpdir(), 'work', 'alpha');
 const ARCHITECT = 'pilot:pilot-architect';
@@ -98,8 +98,9 @@ test('a parked architect wait keeps it', async (t) => {
   assert.equal(parkedOn('qa', item.id, ALPHA), false, 'and for no other kind');
 
   addReply(item.id, 'Merge these');
+  announceChange(); // what the reply route does after its write
   await settleLoop();
-  assert.equal(wait.done(), true);
+  assert.equal(wait.done(), true, 'the parked wait wakes with the reply');
   assert.deepEqual((await wait.reply).replies.map((reply) => reply.text), ['Merge these'], "the architect's wait gets it");
   assert.equal(parkedOn('architect', item.id, ALPHA), false, 'a wait that has returned is parked on nothing');
 

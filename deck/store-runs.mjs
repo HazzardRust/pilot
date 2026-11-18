@@ -233,7 +233,7 @@ function waitingOnForeign(repo, quietAt) {
     messagesOf(item).forEach((reply, index) => {
       const timeUp = ownersTimeUp(item, index, owner);
       if (timeUp === null) return;
-      const dueAt = Math.max(timeUp, quietAt(owner));
+      const dueAt = Math.max(timeUp, quietAt(owner, item.id, reply));
       waiting.push({ reply: { itemId: item.id, title: item.title, repo: item.repo, owner, ...reply }, dueAt });
     });
   }
@@ -243,7 +243,7 @@ function waitingOnForeign(repo, quietAt) {
 /**
  * One read for the fallback: the replies the pilot is to be handed now, oldest first,
  * and the earliest moment one of the rest becomes overdue, or null while none waits.
- * `quietAt(kind)` is when that kind counts as quiet in `repo`.
+ * `quietAt(kind, itemId, reply)` is when that kind counts as quiet in `repo` for that reply.
  */
 export function fallbackDue(repo, now, quietAt) {
   const waiting = waitingOnForeign(repo, quietAt);

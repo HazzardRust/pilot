@@ -587,7 +587,7 @@ async function runTool(name, args, signal) {
   };
   let waited;
   try {
-    waited = await waitForReplies({ since, timeoutMs, signal, heard, take, untaken, fallback });
+    waited = await waitForReplies({ since, timeoutMs, signal, heard, take, untaken, fallback, parked: { kind, repo, item: only } });
   } finally {
     release();
     if (repo !== null) noteActive({ cwd: repo, kind });
