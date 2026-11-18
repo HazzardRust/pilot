@@ -11,7 +11,7 @@ metadata:
 upstream: mattpocock-skills 1.2.3 - skills/productivity/teach/SKILL.md
 copyright: Copyright (c) 2026 Matt Pocock
 licence: MIT - see THIRD-PARTY-NOTICES.md
-adapted: principles borrowed, text original - five principles of the upstream `/teach` are used by name (why this matters before what it is, teach inside what the learner already knows, one tangible win, small enough to hold in working memory, cite the source rather than memory); none of its text, its MISSION.md workspace, its per-session lesson files or its retention schedule is here, because a thread wants one decision taught now and not a curriculum; the turn-by-turn loop is this project's, from the tutoring sources the body cites (ADR 0032)
+adapted: principles borrowed, text original - five principles of the upstream `/teach` are used by name (why this matters before what it is, teach inside what the learner already knows, one tangible win, small enough to hold in working memory, cite the source rather than memory); none of its text, its MISSION.md workspace, its per-session lesson files or its retention schedule is here, because a thread wants one decision taught now and not a curriculum; the turn-by-turn loop is this project's, from the tutoring sources the body cites (ADR 0032); the Teaching moves are the user's own teach-me skill's section 2 moves, credited not vendored, reworded for one decision, with nothing it keeps across sessions
 ledger: vendor/methodology.md
 -->
 
@@ -80,6 +80,34 @@ question under a lesson is answered by scrolling up rather than by thinking.
    largely stopped using a tutor that offered guiding questions and never the
    answer.
 
+## Teaching moves
+
+How each reply teaches, inside the six rules:
+
+1. **Why before what.** Open a step with the principle it serves, what goes
+   wrong without it, before its mechanics.
+2. **An analogy from their own trade.** A new idea maps onto one they already
+   hold; drop the analogy once it has done its work.
+3. **A concrete case over the rule again.** Stuck on a rule, they get one real
+   instance: a file, a value, a failure. Never the rule restated.
+4. **Least help first.** Ask the question whole, with no hint in its wording;
+   when they are stuck, the smallest piece that unblocks them, gone again by
+   the next question.
+5. **One question, its key link left out.** A question that holds its own
+   answer teaches nothing.
+6. **No lists up front.** No outline of the steps to come, no background dump;
+   a step arrives when their last answer calls for it.
+7. **Right once, move on.** A step they have used correctly is done; the next
+   asks something else, not a near-copy of it.
+8. **"Not sure why" means from scratch.** Teach the step again from its
+   principle, by another route; do not quiz again.
+9. **A slip is fixed, a misconception is pointed at.** Correct a slip at once;
+   for a wrong idea, name the flaw and let them repair it.
+10. **Gloss a term only the item used**, in half a line, the first time; one
+    they have used themselves needs none.
+11. **Concise over grammatical.** Fragments are fine; a reply is at most three
+    sentences.
+
 ## What the steps are made of
 
 The steps are the pieces the user needs in order to answer, taken in whatever
@@ -125,11 +153,9 @@ decision.
 
 ## Teach inside what they already know
 
-The thread is your evidence about the reader, and so are their answers: what
-the item says, what they have replied, the words they used. Teach from inside
-that. A term they have used themselves needs no gloss; a term only the item used
-needs one, in half a line, the first time. Assume a competent developer who has
-not read this part of the codebase and was not in the design conversation.
+The thread and their answers, in the words they used, are your evidence about
+the reader; teach from inside that. Assume a competent developer who has not
+read this part of the codebase and was not in the design conversation.
 
 ## Cite, never remember
 
