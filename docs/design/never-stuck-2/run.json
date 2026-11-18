@@ -3,7 +3,7 @@
   "feature": "never-stuck run 2",
   "ticket": "itm_4be94a7ae00a",
   "branch": "feat/never-stuck-2",
-  "base": "feat/never-stuck",
+  "base": "pilot",
   "worktree": "C:/Users/Hazzard/Projects/pilot-feat-never-stuck-2",
   "artefact": "docs/design/never-stuck/architecture.md",
   "slices": [
@@ -13,7 +13,9 @@
     },
     {
       "slice": "S8",
-      "state": "planned"
+      "state": "integrated",
+      "branch": "slice/never-stuck-2-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s8"
     },
     {
       "slice": "S9",
@@ -24,7 +26,9 @@
     },
     {
       "slice": "S10",
-      "state": "planned"
+      "state": "implementing (agent a7a04fd7a7b5c45c7)",
+      "branch": "slice/never-stuck-2-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s10"
     },
     {
       "slice": "S11",
@@ -61,7 +65,9 @@
     },
     {
       "slice": "S17",
-      "state": "planned"
+      "state": "implementing (agent a7d1d7f6e85084d2a)",
+      "branch": "slice/never-stuck-2-s17",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s17"
     },
     {
       "slice": "S18",
@@ -77,12 +83,25 @@
     {
       "slice": "S19",
       "state": "planned"
+    },
+    {
+      "slice": "never-stuck-2",
+      "state": "implementing (base pilot@d27abc48 taken)",
+      "after": [
+        "S18",
+        "S19",
+        "S9",
+        "S11",
+        "S12",
+        "S14"
+      ],
+      "branch": "feat/never-stuck-2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-never-stuck-2",
+      "pr": 107
     }
   ],
-  "next": "Gate 1 itm_887dbf9d45aa signed 2026-11-18T04:48Z: plan design/never-stuck-2 @ 19a334c7, S7-S19 (13 slices), PR #107. Builds when the yellow lane frees after other-host; rebase feat/never-stuck-2 onto pilot once Run A (feat/never-stuck, #94) lands.",
-  "finished": "planned",
-  "finishedAt": "2026-11-18T04:49:44.311Z",
-  "updatedAt": "2026-11-18T04:49:44.311Z",
+  "next": "S8 integrating at 55cbdc04 (record moved to slug never-stuck-2: pilot integrate keys on feat/<slug>); then pilot ready; S11, S13, S15, S19, S9, S12 as slots allow; S7 after S10",
+  "updatedAt": "2026-11-18T07:56:52.091Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
