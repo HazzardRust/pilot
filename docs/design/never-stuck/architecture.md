@@ -258,7 +258,8 @@ red team: S16 and S10 both write `store-items.mjs`; S16 moved after S10 instead 
 
 ## 9. Acceptance evidence
 
-On a scratch deck with temp repos (L11), in the order a user meets it:
+On a scratch deck with temp repos (L11), in the order a user meets it. Recipe: `pilot deck --scratch`, and every probe
+run with `CLAUDE_PID` set to a dummy and `HOME`/`USERPROFILE` to a temp dir, or its claims stamp the live session.
 1. A ticket signed, an owned file landed on pilot: its card turns red with `re-cut` (13, 14), the planning line
    reads `(re-cut)` (9); an unchanged re-plan goes yellow with no press (15); a changed one shows `Changed since`.
 2. A yield at 20 min with 2 stub slices live: the ticket stays implementing until release (3); a walkthrough yields
