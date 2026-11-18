@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S7",
-      "state": "implementing (f90112d4 green, holding push for post-S10 tip)",
+      "state": "pushed 0331681",
       "branch": "slice/never-stuck-2-s7",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s7"
     },
@@ -21,7 +21,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed f2b1095",
+      "state": "pushed 76f3305",
       "after": [
         "S8"
       ],
@@ -30,7 +30,7 @@
     },
     {
       "slice": "S10",
-      "state": "pushed 87b2a54 (re-review approve)",
+      "state": "integrated 8c7c9604",
       "branch": "slice/never-stuck-2-s10",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s10"
     },
@@ -42,7 +42,7 @@
     },
     {
       "slice": "S12",
-      "state": "implementing",
+      "state": "pushed a709b61",
       "after": [
         "S8"
       ],
@@ -51,27 +51,33 @@
     },
     {
       "slice": "S13",
-      "state": "pushed 6a30348",
+      "state": "pushed 6a30348 (integrating on 4d38e7d)",
       "branch": "slice/never-stuck-2-s13",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s13"
     },
     {
       "slice": "S14",
-      "state": "planned",
+      "state": "pushed 5742550",
       "after": [
         "S10"
-      ]
+      ],
+      "branch": "slice/never-stuck-2-s14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s14"
     },
     {
       "slice": "S15",
-      "state": "planned"
+      "state": "pushed a090c05",
+      "branch": "slice/never-stuck-2-s15",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s15"
     },
     {
       "slice": "S16",
-      "state": "planned",
+      "state": "implementing (dec1781d pushed; re-review and gate by a fresh implementer)",
       "after": [
         "S10"
-      ]
+      ],
+      "branch": "slice/never-stuck-2-s16",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s16"
     },
     {
       "slice": "S17",
@@ -92,7 +98,9 @@
     },
     {
       "slice": "S19",
-      "state": "planned"
+      "state": "pushed a125c1c",
+      "branch": "slice/never-stuck-2-s19",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s19"
     },
     {
       "slice": "never-stuck-2",
@@ -111,8 +119,8 @@
     }
   ],
   "findings": [],
-  "next": "S10 integrating; then resume S7 with tip, S9, S13; S14, S16 from S10 tip; S15 when slots free",
-  "updatedAt": "2026-11-18T08:52:35.955Z",
+  "next": "S13 integrating; then S9, S7, S12, S15, S19, S14; S16 re-review+gate",
+  "updatedAt": "2026-11-18T09:26:00.234Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -257,6 +265,65 @@
       "agent": "pilot:pilot-implementer",
       "what": "seeding a scratch deck took about 10 calls (registered run, bearer, Origin header)",
       "evidence": "S13 live check"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Chrome DevTools MCP unavailable; S12 card checked over HTTP only, browser look left to QA",
+      "evidence": "S12 report: ToolSearch found no chrome-devtools tools"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no scratch-deck seeding for a landed gate2; deck.json written by hand",
+      "evidence": "S12 live check"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12 slice line anchors stale (OWED_WHY :395 is :423)",
+      "evidence": "S12 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S15 slice omitted pilot-agents.test.mjs, which pins the teacher's exact tools list; found via a 7-minute gate, run twice",
+      "evidence": "pilot-agents.test.mjs:709-728",
+      "size": 420
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S19 slice named hooks/context-size-guard.js for handoffNowIfIdle, which lives in hooks/lib/guard-advice.js:32",
+      "evidence": "S19 report; architecture.md:98"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a one-sentence reword after review cost a second 7-minute gate",
+      "evidence": "S19 gate runs d318f4f0 and a125c1cf",
+      "size": 420
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S16 hit the context advisory at 225k before re-review and gate; a fresh implementer finishes",
+      "evidence": "S16 hand-back at dec1781d",
+      "size": 470
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck/testUtils.mjs moves HOME and drops PILOT_DECK_DIR on import; a live-check seed went to a temp home",
+      "evidence": "S16 live check"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S14 slice did not say spec 24 overrides the busy-owner fallback rule nor name the fallback tests it obsoletes; cost a mid-slice question",
+      "evidence": "fallback.test.mjs: 1 deleted, 3 moved"
+    },
+    {
+      "agent": "pilot integrate",
+      "what": "base merge of origin/pilot (other-host) with feat puts store-items.mjs at 801 by split, failing facades on every integration",
+      "evidence": "S13 integrate log 20261118T090243279Z"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "facades fix on feat: merged origin/pilot and joined 4 comments; store-items.mjs 797 by split; store-core.mjs sits at 800 and items.mjs at 799 with no headroom",
+      "evidence": "fix 4d38e7d7 on feat/never-stuck-2",
+      "size": 12
     }
   ]
 }
