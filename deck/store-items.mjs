@@ -132,8 +132,7 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
     throw new DeckRefusal(`a gate1 of ${detail.sliceCount} slices names surface: true or false`);
   }
   refuseCredentials('this item', `${title}\n${body}\n${wordsOf(detail)}`);
-  // QA's walkthrough is a look, not a script (walkthrough-taste L3, L5): after the credential
-  // check, so a secret is refused as one before a gap could name it. The pilot's wizard is not checked.
+  // QA's walkthrough is a look, not a script (walkthrough-taste L3, L5): after the credential check, so a secret is refused as one before a gap could name it. The pilot's wizard is not checked.
   const scripted = kind === KIND_WALKTHROUGH && authorKind(author) === 'qa' ? walkthroughShapeGaps(detail.screens ?? [], body, detail.longer) : [];
   // The body-length gap, alone, is the body's own refusal, not a script's.
   if (scripted.length > 0) throw new DeckRefusal(scripted[0].startsWith('step ') ? `a QA walkthrough is a look, not a script; ${scripted.join('; ')}` : scripted[0]);
@@ -165,8 +164,7 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   const walked = kind === KIND_WALKTHROUGH ? deck.items.find((each) => each.id === item.ticket) : undefined;
   const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : kind === KIND_GATE1 ? recutGate1Gaps(ticket, body) : walkthroughPlanGaps(walked, authorKind(author));
   if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
-  // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves
-  // it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
+  // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
   if (kind === KIND_GATE2) {
     enterStage(deck, ticket, 'green');
     // A hand-back like `needTicket`'s, so it releases the ticket's co-pilot in the same write (clear-waits-co-pilot L8).
@@ -296,8 +294,7 @@ export function addReply(id, said) {
   const thread = threadIn(read, id);
   // Before the repeat check and any reopen (report-record L1, L6): a record takes no reply, whoever sends it.
   if (isRecord(thread)) refuseRecordReply(read.items, thread);
-  // Assume the default on a blocking question is the user's answer with its recommended
-  // option, anything typed beside it kept, and makes it plain (ticket-states spec 17, S18).
+  // Assume the default on a blocking question is the user's answer with its recommended option, anything typed beside it kept, and makes it plain (ticket-states spec 17, S18).
   const pressed = thread.kind === KIND_QUESTION && typeof thread.recommended === 'string' &&
     chosenOf({ options: [ASSUME_DEFAULT], replies: [{ from: 'user', text: said }] }) === ASSUME_DEFAULT;
   const answer = pressed ? thread.recommended + said.slice(ASSUME_DEFAULT.length) : said;
@@ -574,8 +571,7 @@ export function resolveItem(id, resolution, author) {
     if (!pilotClose && claimed) throw new DeckRefusal(`item ${id}: \`${claimed}\` is a pilot close, which needs an open blocking question the user has neither answered nor vetoed, never this ${item.kind}; close it in plain words (spec 4, 6)`);
     // Read before the close: a closed thread chooses nothing. Only a Sign off moves a ticket (L11).
     const signed = chosenOf(item) === SIGN_OFF;
-    // A gate passes only on its Sign off press (merge-first spec 6, L12): typed approval closes nothing,
-    // and the user's Dismiss is a stale gate's exit (L8).
+    // A gate passes only on its Sign off press (merge-first spec 6, L12): typed approval closes nothing, and the user's Dismiss is a stale gate's exit (L8).
     if (isGate(item.kind) && !signed) {
       throw new DeckRefusal(
         `${item.id} is a ${item.kind} the user has not signed: ask them to press Sign off on it, or to Dismiss it there; typed approval does not pass a gate`,
