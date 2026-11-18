@@ -96,7 +96,7 @@ the codebase's pattern. No fold slice: nothing shallow is touched.
 - **A1 Who forces small or large.** Default: the user, by replying `report` or `here` on the
   lesson, at any time; the pilot cannot. Tradeoff: one more rule in the teacher's prompt. Rejected:
   teacher only (a wrong call costs a re-press); the pilot's brief (the pilot lacks the judgement).
-  Deck: itm_aa238936b475.
+  Deck: itm_aa238936b475. User answered: "You, by a reply on the lesson".
 - **A2 Nothing returns from an off-deck lesson.** Default: the original thread stays open and the
   report's last section carries its question and options verbatim, so the user comes back and
   presses. Tradeoff: the pilot learns nothing from the off-deck lesson beyond the diagnostic in
