@@ -18,10 +18,12 @@ import { fileURLToPath } from 'node:url';
 import { isWindows, killTree } from '../hooks/lib/platform.js';
 import { closeLanded } from './closing-report.mjs';
 import { KIND_GATE2, KIND_TICKET, isOpen, stateOf } from './items.mjs';
+import { holdLanding, landChildOf, landDir, pidAlive } from './land-child.mjs';
+import { processTable } from './procs.mjs';
 import { neverGranted, planDrift } from './recut.mjs';
 import { repoOf, sameRepo } from './runs.mjs';
 import { sessionEnv } from './session.mjs';
-import { DeckRefusal, beginLanding, findCredential, listItems, noteLanding, recordForTicket, settleLanding } from './store.mjs';
+import { DeckRefusal, beginLanding, findCredential, interruptLandings, listItems, noteLanding, recordForTicket, settleLanding } from './store.mjs';
 import { noteDeck, queueLanding } from './store-items.mjs';
 import { recutTicket } from './store-tickets.mjs';
 
@@ -118,7 +120,7 @@ export function worktreeFor(gate) {
 /** What the thread says land said: stdout, stderr only when stdout is empty, its tail, and never a credential (L9). */
 function landingLine(code, stdout, stderr) {
   const held = stdout.trim() || stderr.trim();
-  const exited = code === null ? 'was killed' : `exited ${code}`;
+  const exited = code === null ? 'was killed' : code === undefined ? 'exited under the last deck' : `exited ${code}`;
   if (held === '') return `${code === 0 ? 'landed' : 'NOT landed'}: pilot land ${exited} and printed nothing`;
   // Read over all that is held, not the tail alone, so a secret cut in half at the tail's edge is still found.
   const credential = findCredential(held);
@@ -164,22 +166,36 @@ export function landingSpawnOptions(cwd, env, platform) {
   };
 }
 
+/** Only the tail is ever shown, so only a bounded tail is ever held. */
+const keep = (held, chunk) => (held + chunk).slice(-4 * MAX_LANDING_CHARS);
+
+/** What a child wrote to its land dir (never-stuck spec 21): `out` and `err`, each its tail, empty when unreadable. */
+function outputIn(dir) {
+  const tail = (name) => {
+    try {
+      return keep('', fs.readFileSync(path.join(dir, name), 'utf8'));
+    } catch {
+      return '';
+    }
+  };
+  return { stdout: tail('out'), stderr: tail('err') };
+}
+
 /**
  * Watch a spawned child to its one settle: `done({ code, stdout, stderr })` on close, `done({ error })`
  * when it cannot run, `done({ timedOut: true })` past `timeoutMs`, its tree killed. Counted in
- * `running` while live, so the idle rule never closes the deck under it.
+ * `running` while live, so the idle rule never closes the deck under it; a pipeless child's `dir` is read on close.
  */
-export function watch(child, { clock, kill, timeoutMs, done }) {
+export function watch(child, { clock, kill, timeoutMs, done, dir }) {
   let stdout = '';
   let stderr = '';
-  // Only the tail is ever shown, so only a bounded tail is ever held.
-  const keep = (held, chunk) => (held + chunk).slice(-4 * MAX_LANDING_CHARS);
-  for (const stream of [child.stdout, child.stderr]) {
+  const piped = child.stdout != null;
+  for (const stream of piped ? [child.stdout, child.stderr] : []) {
     stream.setEncoding('utf8');
     stream.on('error', (err) => console.error('[deck] a landing stream failed:', err.message));
   }
-  child.stdout.on('data', (chunk) => (stdout = keep(stdout, chunk)));
-  child.stderr.on('data', (chunk) => (stderr = keep(stderr, chunk)));
+  child.stdout?.on('data', (chunk) => (stdout = keep(stdout, chunk)));
+  child.stderr?.on('data', (chunk) => (stderr = keep(stderr, chunk)));
   // `error` and `close` can both arrive for one child; the first settles, once.
   let settled = false;
   let timer;
@@ -193,7 +209,7 @@ export function watch(child, { clock, kill, timeoutMs, done }) {
   // Counted only once every settle path is attached, so each child counted is uncounted exactly once.
   running += 1;
   child.on('error', (error) => settle({ error }));
-  child.on('close', (code) => settle({ code, stdout, stderr }));
+  child.on('close', (code) => settle({ code, ...(piped ? { stdout, stderr } : outputIn(dir)) }));
   // Settled at once, not on the killed child's close, so a kill that fails still frees it.
   timer = clock.setTimeout(() => {
     logged(() => kill(child));
@@ -207,26 +223,31 @@ export function watch(child, { clock, kill, timeoutMs, done }) {
  * are each a line on the gate2's thread, and a land past LANDING_TIMEOUT_MS is killed and settles timed out
  * (A3). `spawn`, `env`, `clock` and `kill` are seams for the tests; `announce` repaints the pages once it settles.
  */
+// Every outcome is a line on the gate2's thread and the note on the ticket's feature row (clean-landing spec 12).
+// A recreated worktree opens every line after it (three-lanes spec 16).
+function writerFor(gate, deps, opened = () => '') {
+  const { announce = () => {} } = deps;
+  return (outcome) => {
+    const said = { ...outcome, line: opened() + outcome.line };
+    logged(() => settleLanding(gate.id, said));
+    logged(() => noteLanding(gate.repo, gate.ticket, said));
+    // A landed feature's gate2 is resolved, no session present (gate2-frees-lane spec 4, L3); the closing report
+    // is the lander's (lander S15), its first human step land's main PR (one-integration-line spec 3).
+    if (said.ok) logged(() => closeLanded(gate.id));
+    // The codebase moved: every unbuilt plan it touched goes back to planning (never-stuck spec 14), after the landed line, never awaited.
+    if (said.ok) void driftAfterLanding(gate.id, deps).then((ids) => ids.length > 0 && logged(announce));
+    // The settle frees the repository: the oldest press queued there starts (spec 7).
+    logged(() => startQueued(deps));
+  };
+}
+
 export function startLanding(gate2Id, deps = {}) {
   const { spawn = spawnChild, env = process.env, announce = () => {}, clock = { setTimeout, clearTimeout }, kill = killHeld } = deps;
   try {
     const gate = listItems().find((item) => item.id === gate2Id);
     if (gate?.kind !== KIND_GATE2) return;
-    // Every outcome is a line on the gate2's thread and the note on the ticket's feature row (clean-landing spec 12).
-    // A recreated worktree opens every line after it (three-lanes spec 16).
     let opened = '';
-    const write = (outcome) => {
-      const said = { ...outcome, line: opened + outcome.line };
-      logged(() => settleLanding(gate2Id, said));
-      logged(() => noteLanding(gate.repo, gate.ticket, said));
-      // A landed feature's gate2 is resolved, no session present (gate2-frees-lane spec 4, L3); the closing report
-      // is the lander's (lander S15), its first human step land's main PR (one-integration-line spec 3).
-      if (said.ok) logged(() => closeLanded(gate2Id));
-      // The codebase moved: every unbuilt plan it touched goes back to planning (never-stuck spec 14), after the landed line, never awaited.
-      if (said.ok) void driftAfterLanding(gate2Id, deps).then((ids) => ids.length > 0 && logged(announce));
-      // The settle frees the repository: the oldest press queued there starts (spec 7).
-      logged(() => startQueued(deps));
-    };
+    const write = writerFor(gate, deps, () => opened);
     // Any value at all: the one reason to set it is to stop a push (L10).
     if (env.PILOT_DECK_NO_LAND) return write({ ok: false, line: 'landing is turned off on this deck' });
     // One land per repository at a time (A4): a press while another runs there is queued, once, and spawns nothing.
@@ -243,18 +264,34 @@ export function startLanding(gate2Id, deps = {}) {
     }
 
     const couldNotStart = (err) => ({ ok: false, line: `NOT landed: pilot land could not start (${err?.message ?? err})` });
-    // Running is stored before anything runs: a write that fails throws to the catch below, and nothing is spawned.
-    beginLanding(gate2Id, { worktree: cwd });
-    logged(() => noteLanding(gate.repo, gate.ticket, { ok: null, line: `landing started in ${cwd}` }));
-    let child;
+    // Land writes to its land dir, not to a pipe of this daemon, so it outlives a restart and its line is still read (never-stuck spec 21).
+    const dir = landDir(gate2Id);
+    let fds;
     try {
-      child = spawn(process.execPath, [PILOT_BIN, 'land'], { ...landingSpawnOptions(cwd, env), windowsHide: true });
+      fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+      fds = ['out', 'err'].map((name) => fs.openSync(path.join(dir, name), 'w', 0o600));
     } catch (err) {
       return write(couldNotStart(err));
     }
+    let child;
+    try {
+      // Running is stored before anything runs: a write that fails throws to the catch below, and nothing is spawned.
+      beginLanding(gate2Id, { worktree: cwd });
+      logged(() => noteLanding(gate.repo, gate.ticket, { ok: null, line: `landing started in ${cwd}` }));
+      try {
+        child = spawn(process.execPath, [PILOT_BIN, 'land'], { ...landingSpawnOptions(cwd, env), stdio: ['ignore', ...fds], windowsHide: true });
+      } catch (err) {
+        return write(couldNotStart(err));
+      }
+    } finally {
+      for (const fd of fds) fs.closeSync(fd);
+    }
+    // Its pid on the landing, so a restarted deck finds it; a write that fails leaves the landing to read interrupted then.
+    logged(() => holdLanding(gate2Id, child.pid));
     watch(child, {
       clock,
       kill,
+      dir,
       timeoutMs: LANDING_TIMEOUT_MS,
       done: ({ code, stdout, stderr, error, timedOut }) => {
         if (error) write(couldNotStart(error));
@@ -269,6 +306,76 @@ export function startLanding(gate2Id, deps = {}) {
   } catch (err) {
     console.error('[deck] a landing could not start:', err.message);
   }
+}
+
+/** How long from its start an adopted land may run before the deck stops it: past a live one's 30, so its own wait ran out first. */
+export const ADOPTED_LIMIT_MS = 40 * 60_000;
+
+/**
+ * Follow one adopted child, counted in `running`, to one settle of a landing still running on its pid: on its exit, the line
+ * in its land dir; past ADOPTED_LIMIT_MS from its start, timed out, its tree stopped only while its pid is still the deck's land.
+ */
+function follow(gate, deps, { table, clock, pollMs, now, stop }) {
+  const { pid, dir, startedAt } = gate.landing;
+  running += 1;
+  return new Promise((resolve) => {
+    let poll;
+    let limit;
+    let done = false;
+    const finish = (outcome) => {
+      if (done) return;
+      done = true;
+      running -= 1;
+      clock.clearInterval(poll);
+      clock.clearTimeout(limit);
+      try {
+        const current = listItems().find((item) => item.id === gate.id)?.landing;
+        if (current?.state === 'running' && current.pid === pid) writerFor(gate, deps)(outcome);
+        if (deps.announce) logged(deps.announce);
+      } catch (err) {
+        console.error(`[deck] the adopted landing ${gate.id} could not be settled:`, err?.message ?? err);
+      } finally {
+        resolve();
+      }
+    };
+    poll = clock.setInterval(() => {
+      if (pidAlive(pid)) return;
+      const { stdout, stderr } = outputIn(dir);
+      const line = landingLine(undefined, stdout, stderr);
+      const sha = shaOf(line);
+      finish({ ok: sha !== undefined, sha, line });
+    }, pollMs);
+    limit = clock.setTimeout(() => {
+      logged(() => landChildOf(gate.landing, { table, now: now() }) && stop(pid));
+      finish({ ok: false, line: `NOT landed: timed out after ${ADOPTED_LIMIT_MS / 60_000} min; the deck stopped land ${pid}` });
+    }, Math.max(0, Date.parse(startedAt) + ADOPTED_LIMIT_MS - now()));
+  });
+}
+
+/**
+ * The daemon's re-adoption at start (never-stuck spec 21): each running landing whose pid is still the deck's land child
+ * (`landChildOf`) is followed to its exit; every other reads interrupted, its process left as it is (ADR 0035), and so does
+ * every one when the process table cannot be read. Resolves once every adopted child has settled; never rejects.
+ */
+export function adoptLandings(deps = {}) {
+  const { table = processTable, clock = { setInterval, clearInterval, setTimeout, clearTimeout }, pollMs = 2_000, now = Date.now } = deps;
+  const stop = deps.stop ?? ((pid) => killTree(pid, { group: !isWindows() }));
+  let adopted = [];
+  try {
+    let rows;
+    const once = () => (rows ??= table());
+    const running = listItems().filter((item) => item.kind === KIND_GATE2 && item.landing?.state === 'running');
+    adopted = running.filter((item) => item.landing.pid !== undefined && landChildOf(item.landing, { table: once, now: now() }));
+  } catch (err) {
+    console.error('[deck] the land children a restart left could not be read; their landings read interrupted:', err?.message ?? err);
+  }
+  const ids = new Set(adopted.map((item) => item.id));
+  try {
+    interruptLandings((item) => ids.has(item.id));
+  } catch (err) {
+    console.error('[deck] the landings a restart interrupted could not be settled:', err?.message ?? err);
+  }
+  return Promise.all(adopted.map((gate) => follow(gate, deps, { table, clock, pollMs, now, stop }))).then(() => undefined);
 }
 
 /**

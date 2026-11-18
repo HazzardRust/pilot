@@ -27,7 +27,8 @@ import { ensureSecret } from '../hooks/lib/deck-secret.js';
 import { writeOpenFile } from './launch.mjs';
 import { createDeckHttpServer, DECK_HOST, deckPort, deckUrl } from './server.mjs';
 import { holdIdle } from './idle.mjs';
-import { closeLandedAtStart, landingsRunning, startQueued } from './landing.mjs';
+import { adoptLandings, closeLandedAtStart, landingsRunning, startQueued } from './landing.mjs';
+import { announceChange } from './server-wait.mjs';
 import { oneLine } from './one-line.mjs';
 import { holdLeash, leashFrom } from './leash.mjs';
 import { probeDeck } from './probe.mjs';
@@ -213,7 +214,8 @@ export async function main() {
   // Here and not in `startDaemon`, which the suite calls: a test daemon must never tick (L1).
   startUsageLog();
   startMemoryLog('daemon');
-  // Before any press is read: a landing left running had its child die with the last daemon (spec 7).
+  // Before any press is read: a live land child is re-adopted (never-stuck spec 21); every other landing reads interrupted (spec 7).
+  void adoptLandings({ announce: announceChange });
   try {
     interruptLandings();
   } catch (err) {

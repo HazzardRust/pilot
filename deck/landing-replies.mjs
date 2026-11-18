@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { KIND_GATE2, KIND_TICKET, SIGN_OFF, chosenOf, isOpen, messagesOf } from './items.mjs';
+import { landChildOf } from './land-child.mjs';
 import { repoOf, sameRepo } from './runs.mjs';
 import { DeckRefusal } from './store-core.mjs';
 
@@ -57,6 +58,8 @@ export function landingReply(item, text, kind, at) {
     if (landing?.conflict) landing.conflict.resolving ??= at;
     return true;
   }
+  // One land at a time in a land dir: never a second while the first's child lives (never-stuck spec 22).
+  if (landing?.pid !== undefined && landChildOf(landing)) throw new DeckRefusal(`landing ${landing.pid} still holds ${landing.dir}; nothing run`);
   // A refusal with no conflict (a red gate, an interrupted landing) is the lander's alone, and lands fresh (lander L7).
   const fresh = landing?.state === 'refused' && !landing.conflict && kind === 'lander';
   if (landing?.state !== 'refused' || (!landing.conflict && !fresh)) {
