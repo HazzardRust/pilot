@@ -420,7 +420,7 @@ function withLanes(result, lanes) {
   return result;
 }
 
-const OWED_WHY = ['unanswered', 'promised'];
+const OWED_WHY = ['unanswered', 'promised', 'report owed', 'architect owed'];
 
 /**
  * The threads this directory owes (yellow-lane spec 9) as the daemon listed them on `GET /api/record`

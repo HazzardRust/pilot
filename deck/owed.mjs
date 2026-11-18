@@ -1,12 +1,13 @@
 /**
  * The threads the pilot still owes a directory (yellow-lane spec 11; L6, A2, A3): an open chat or
  * user thread whose last message is the user's (`unanswered`), or a pilot reply sent with
- * `promise: true` (`promised`, discharged by the pilot's next reply). The promise is the stored
+ * `promise: true` (`promised`, discharged by the pilot's next reply); and a ticket owed its closing
+ * report (`report owed`) or an architect (`architect owed`), never-stuck spec 1, 2. The promise is the stored
  * flag, never a phrase in the text. Computed here once and served on `GET /api/record`, because
  * the hooks are CommonJS and cannot import it.
  */
 
-import { KIND_CHAT, KIND_USER, isOpen, sameRepo } from './items.mjs';
+import { KIND_CHAT, KIND_GATE1, KIND_GATE2, KIND_TICKET, KIND_USER, isOpen, liveTicketOf, sameRepo } from './items.mjs';
 
 const LINE_CHARS = 120;
 
@@ -16,9 +17,24 @@ const oneLine = (text) => {
   return line.length > LINE_CHARS ? `${line.slice(0, LINE_CHARS - 1).join('')}…` : line.join('');
 };
 
-/** `repo`'s owed threads, `[{ id, line, why }]` in store order, pure. */
+/** An open ticket whose gate2 landed (never-stuck spec 1): its closing report, which closes it, is owed. */
+export function isReportOwed(ticket, items) {
+  return ticket?.kind === KIND_TICKET && isOpen(ticket) &&
+    items.some((item) => item?.kind === KIND_GATE2 && item.ticket === ticket.id && item.landing?.state === 'landed');
+}
+
+/** The live red ticket with no gate1 open on it (never-stuck spec 2): an architect is owed. Read off the items, never a guess at agents. */
+const isArchitectOwed = (ticket, items) =>
+  ticket === liveTicketOf(items, ticket.repo, 'red') &&
+  !items.some((item) => item?.kind === KIND_GATE1 && isOpen(item) && item.ticket === ticket.id);
+
+/** `repo`'s owed threads, `[{ id, line, why }]` in store order, pure; a ticket's line is its title. */
 export function owedThreadsOf(items, repo) {
   return items.flatMap((item) => {
+    if (item?.kind === KIND_TICKET && sameRepo(item.repo, repo)) {
+      const why = isReportOwed(item, items) ? 'report owed' : isArchitectOwed(item, items) ? 'architect owed' : null;
+      return why ? [{ id: item.id, line: oneLine(item.title), why }] : [];
+    }
     if ((item?.kind !== KIND_CHAT && item?.kind !== KIND_USER) || !isOpen(item) || !sameRepo(item.repo, repo)) return [];
     const last = Array.isArray(item.replies) ? item.replies.at(-1) : undefined;
     const why = last?.from === 'user' ? 'unanswered' : last?.from === 'pilot' && last.promise === true ? 'promised' : null;

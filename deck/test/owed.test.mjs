@@ -84,6 +84,61 @@ test('a closed or answered thread is not owed', () => {
   assert.deepEqual(owedThreadsOf(items, REPO), []);
 });
 
+// never-stuck S12 (spec 1, 2): a ticket is owed its closing report once its gate2 landed, and an
+// architect while it is the live red ticket with no gate1 open on it; both by the ticket's id and title.
+const ticket = (id, more = {}) => ({ id, kind: 'ticket', title: `Ticket ${id}`, body: 'spec', repo: REPO, postedAt: AT, sliceCount: 2, replies: [], ...more });
+const gate = (id, kind, ticketId, more = {}) => ({ id, kind, title: id, body: 'gate', repo: REPO, postedAt: AT, ticket: ticketId, replies: [], ...more });
+const LANDED = { state: 'landed', startedAt: AT, at: AT, sha: '0123456789abcdef', line: 'landed' };
+
+test('a landed gate2 with no report is owed', () => {
+  const green = ticket('itm_t1', { state: 'green', title: 'Never\n  stuck' });
+  const items = [
+    green,
+    gate('itm_g2', 'gate2', 'itm_t1', { landing: LANDED, resolvedAt: AT, resolution: 'landed at 0123456' }),
+    // Not landed yet, refused, or another directory's: nothing owed.
+    ticket('itm_t2', { state: 'green' }),
+    gate('itm_g3', 'gate2', 'itm_t2', { landing: { ...LANDED, state: 'running' } }),
+    ticket('itm_t3', { state: 'green' }),
+    gate('itm_g4', 'gate2', 'itm_t3', { landing: { ...LANDED, state: 'refused' } }),
+    ticket('itm_t4', { state: 'green', repo: OTHER }),
+    gate('itm_g5', 'gate2', 'itm_t4', { landing: LANDED, repo: OTHER }),
+  ];
+
+  assert.deepEqual(owedThreadsOf(items, REPO), [{ id: 'itm_t1', line: 'Never stuck', why: 'report owed' }]);
+
+  // The closing report closes its ticket, and that discharges it.
+  const reported = items.map((item) => (item === green ? { ...green, resolvedAt: AT, resolution: 'reported' } : item));
+  assert.deepEqual(owedThreadsOf(reported, REPO), []);
+});
+
+test('a live red ticket with no gate1 is owed an architect', () => {
+  const red = ticket('itm_r1', { state: 'red', live: true, title: 'Re-cut the plan' });
+  const items = [
+    red,
+    // Red but not live, or live in another directory: no architect is owed on it.
+    ticket('itm_r2', { state: 'red' }),
+    ticket('itm_r3', { state: 'red', live: true, repo: OTHER }),
+    gate('itm_q1', 'gate1', 'itm_r1', { resolvedAt: AT, resolution: 'Not yet, withdrawn' }),
+  ];
+
+  assert.deepEqual(owedThreadsOf(items, REPO), [{ id: 'itm_r1', line: 'Re-cut the plan', why: 'architect owed' }], 'a closed gate1 is no open one');
+
+  const planned = [...items, gate('itm_q2', 'gate1', 'itm_r1')];
+  assert.deepEqual(owedThreadsOf(planned, REPO), [], 'an open gate1 is the architect at work');
+});
+
+test('the card reads report owed', async () => {
+  const { renderCard } = await import('../ui/render-cards.mjs');
+  const green = ticket('itm_c1', { state: 'green' });
+  const landed = gate('itm_c2', 'gate2', 'itm_c1', { landing: LANDED });
+  const label = /<span class="owed">report owed<\/span>/;
+
+  assert.match(renderCard(green, { items: [green, landed] }), label);
+  assert.doesNotMatch(renderCard(green, { items: [green, { ...landed, landing: { ...LANDED, state: 'running' } }] }), label, 'not before it lands');
+  const closed = { ...green, resolvedAt: AT, resolution: 'reported' };
+  assert.doesNotMatch(renderCard(closed, { items: [closed, landed] }), label, 'not once the report closed it');
+});
+
 test('the record route serves it', async (t) => {
   const base = await deckOnAPort(t);
   postStored({ kind: 'user', title: 'ask', body: 'opened', repo: REPO, replies: [user('where is S7?')] });
