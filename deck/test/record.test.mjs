@@ -22,9 +22,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { deckOnAPort, postStored, tempDeck } from '../testUtils.mjs';
+import { deckOnAPort, guard, postStored, shapedTicketBody, snapshotAt, tempDeck } from '../testUtils.mjs';
+import { KIND_HANDOFF, KIND_TICKET } from '../items.mjs';
+import { FINISHED_CLEAN } from '../runs.mjs';
 
-const { listRuns, recordFor, registerRun, setSlices } = await import('../store.mjs');
+const { listItems, listRuns, postItem, recordFor, registerRun, setSlices } = await import('../store.mjs');
 const { nextRecord, recordFields } = await import('../runs.mjs');
 const { mergeSliceTable } = await import('../status.mjs');
 const { callTool, TOOLS } = await import('../server.mjs');
@@ -429,4 +431,29 @@ test('an unknown ticket id is refused by name', async (t) => {
   const noRepo = await fetch(`${base}/api/record?ticket=${encodeURIComponent(ticket.id)}`);
   assert.equal(noRepo.status, 400, 'a ticket asked for with no repo');
   assert.match((await noRepo.json()).error, /repo must be the path/);
+});
+
+// handoff-mod S5, spec 9 (L12): the finishing session's MCP client learns from the answer which hand-off it posted.
+test('a finish that chains names the hand-off in its answer', (t) => {
+  tempDeck(t);
+  snapshotAt(t, MINE, guard.marksFor(guard.PILOT_REFERENCE_WINDOW).advisory + 1);
+  const run = registerRun({ repo: MINE, pid: process.pid });
+  postItem({ kind: KIND_TICKET, sliceCount: 60, title: 'Next', body: shapedTicketBody('spec'), repo: MINE });
+
+  const [{ text }] = callTool('deck_status', { run: run.id, slug: 'feature-one', slices: [], finished: FINISHED_CLEAN }).content;
+
+  const handoff = listItems().find((item) => item.kind === KIND_HANDOFF);
+  assert.ok(handoff, 'the finish posted a chain hand-off');
+  assert.match(text, new RegExp(`; chained ${handoff.id}\\.$`));
+});
+
+test('a finish that does not chain names none', (t) => {
+  tempDeck(t);
+  snapshotAt(t, MINE, guard.marksFor(guard.PILOT_REFERENCE_WINDOW).advisory + 1);
+  const run = registerRun({ repo: MINE, pid: process.pid });
+
+  const [{ text }] = callTool('deck_status', { run: run.id, slug: 'feature-one', slices: [], finished: FINISHED_CLEAN }).content;
+
+  assert.match(text, /^D\d+: /);
+  assert.doesNotMatch(text, /chained/);
 });

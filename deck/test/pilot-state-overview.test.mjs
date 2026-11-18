@@ -23,7 +23,7 @@ const RUNS = [aRun(1, BRAVO, 'bravo'), aRun(2, ALPHA, 'alpha')];
 const STRIP = ['pilot-state-bravo', 'pilot-state-alpha'];
 const aHandoff = { id: 'itm_00000000000h', kind: 'handoff', title: 'Hand-off', body: 'b', repo: BRAVO, postedAt: AT, owner: 'pilot' };
 const homeOf = (items, selected = null) =>
-  renderHomePage(items, RUNS, selected, false, {}, {}, NOW, [], null, {}, null, { weekly: true }, { coPilots: {}, switches: {} }, {});
+  renderHomePage(items, RUNS, selected, false, {}, {}, NOW, [], null, null, { weekly: true }, { coPilots: {}, switches: {} }, {});
 const linesOf = (page) => [...page.matchAll(/<p class="pilot-state" data-pilot-state="([^"]+)">([^<]*)/g)];
 
 test('the Overview shows a named line per tab', () => {

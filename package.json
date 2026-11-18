@@ -1,6 +1,6 @@
 {
   "name": "pilot",
-  "version": "0.9.8",
+  "version": "0.9.9",
   "private": true,
   "description": "Pilot Deck Claude Code: pilot orchestration and its deck.",
   "license": "MIT",
@@ -25,8 +25,5 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0"
-  },
-  "optionalDependencies": {
-    "node-pty": "1.1.0"
   }
 }

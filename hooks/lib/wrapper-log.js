@@ -1,6 +1,6 @@
 /**
  * One line per decision, appended to `~/.claude/pilot/wrapper.log` (S17) by the
- * SessionStart lane (`hooks/lib/deck.js`) and by `pilot run` (`deck/run.mjs`).
+ * SessionStart lane (`hooks/lib/deck.js`) and by the hand-off mod (`hooks/handoff-mod.mjs`).
  * A hand-off that left a session idle on 2026-10-02 had no line anywhere saying
  * which half stopped, or why. Control characters become a space so a value from
  * the deck cannot forge a line; past half a megabyte the file is moved aside to

@@ -1,0 +1,321 @@
+{
+  "slug": "spec-first",
+  "feature": "spec-first",
+  "ticket": "itm_6de487e1f2c4",
+  "branch": "feat/spec-first",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-spec-first",
+  "artefact": "docs/design/spec-first/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A slice file lists behaviours with an evidence kind",
+      "state": "integrated",
+      "branch": "slice/spec-first-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s1"
+    },
+    {
+      "slice": "S2 Integrate refuses a slice missing evidence",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/spec-first-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s2"
+    },
+    {
+      "slice": "S3 The implementer builds to the behaviours",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/spec-first-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s3"
+    },
+    {
+      "slice": "S4 The gate text asks for evidence",
+      "state": "integrated",
+      "branch": "slice/spec-first-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s4"
+    },
+    {
+      "slice": "S5 The co-pilot carries evidence into the merge and checks its base",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/spec-first-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s5"
+    },
+    {
+      "slice": "S6 The pilot carries evidence into the merge",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/spec-first-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s6"
+    },
+    {
+      "slice": "S7 The architect cuts behaviours, not red steps",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/spec-first-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s7"
+    },
+    {
+      "slice": "S8 The fundamentalist judges tests on test behaviours and installs first",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/spec-first-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s8"
+    },
+    {
+      "slice": "S9 QA and the lander keep only reasoned absolutes; QA runs spec 7",
+      "state": "integrated",
+      "branch": "slice/spec-first-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s9"
+    },
+    {
+      "slice": "S10 The helpers keep only reasoned absolutes",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/spec-first-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s10"
+    },
+    {
+      "slice": "spec-first",
+      "state": "QA fixes in at e41a43a1; walkthrough itm_52c1e196e1ec awaiting Sign off, then QA posts gate2 (#104)"
+    },
+    {
+      "slice": "S11 The builders' absolutes listed with their reasons",
+      "state": "integrated",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/spec-first-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s11"
+    },
+    {
+      "slice": "S12 QA, lander and helper absolutes listed with their reasons",
+      "state": "integrated",
+      "after": [
+        "S11"
+      ],
+      "branch": "slice/spec-first-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-spec-first-s12"
+    }
+  ],
+  "findings": [
+    "kept: J3b needed — fixed eabd3b7b + e41a43a1: deck/testUtils unsets a caller's PILOT_DECK_DIR for the suite; runner coverage cell exits 0 at e41a43a1 (386 s, 100% of 104 lines)"
+  ],
+  "next": "spec-first: QA ad61417eed1b3f94c live on itm_52c1e196e1ec, then gate2 #104. blocked-steps: itm_1d267c5a9a38 (pilot holds). never-stuck Run A 0a95356d: itm_629c53e3f908 (pilot holds), resume QA on reply; scratch deck pid 4560. other-host: released, blocked on itm_6d934173510d; then co-pilot from 3116339c. Run 2: 3 questions open, then architect. audit-f7 gate2 unpressed.",
+  "updatedAt": "2026-11-17T16:55:48.006Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the co-pilot's rebase message named c1d13ce6 before origin had it: the seam commit sat local while S2's integrate ran",
+      "evidence": "origin/feat/spec-first at aca9fac0 when S8 rebased"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "an own-share bar with zero margin on a slice that must add an install step forced cutting non-rule prose (why Clean Code, KISS, SOLID are left off)",
+      "evidence": "fundamentalist 5693.25 -> 5679.5 after three measure-and-cut loops"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the gate failed silently in a fresh worktree on missing node_modules, its exit swallowed; per-file node --test runs did not show it",
+      "evidence": "S10 gate log: 'node_modules missing: run npm ci' only"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a slice adding text to a capped prompt does not name the cut that pays for it: three measure-and-cut rounds for a 30-byte clause",
+      "evidence": "pilot-fact-sheet cap 266.25"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5's first implementer, like S8's, handed back after 3 tool calls and ~26 s at ~50k tokens, its context summarised away with nothing built; both were spawned then sent the co-pilot hello at once",
+      "evidence": "S5 usage 50294 tokens / 3 tools / 25.9 s; S8 50582 / 3 / 27.8 s; reflog 'reset: moving to HEAD'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the co-pilot's 2832.5 own-share limit leaves no headroom: S5's additions were paid for with byte-level cuts",
+      "evidence": "7 measure-and-cut rounds, 2983 -> 2832.5"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the fact sheet could not find the pilot integrate --trailer parser",
+      "evidence": "scripts/integrate.mjs:598, outside its search"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a push failed with no reason and went through on retry",
+      "evidence": "'failed to push some refs', then ee688e04..5d499780"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: 37 test files read agents/pilot.md and several pin phrases; three phrase pins broke on the first sweep and were found only by running all 37",
+      "evidence": "decision-triage.test.mjs:36, pilot-agents.test.mjs:303, pilot-rules.test.mjs:142; 3 runs of ~1 min"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 implementer's context reset early, state rebuilt from git",
+      "evidence": "S6 report"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "its evidence runner returned no table before hand-back: coverage, mutation, complexity, duplication, dead code and dependency shape unmeasured; its review worktree could not be removed (runner held files)",
+      "evidence": "fundamentalist report, tools table; C:/Users/Hazzard/Projects/pilot-spec-first-review"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP showed CONNECTION_CLOSED at start; loading the tools through ToolSearch worked",
+      "evidence": "QA first message"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA was forced to hand back at the end of its read-only pass while held for the fix tip; the spec-7 run needs a successor QA",
+      "evidence": "QA hand-back 'harness required the hand-back now'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11: phrase pins turned red on rewordings (decision-triage:41, pilot-agents:1085); architect pin left no slack for added reasons",
+      "evidence": "S11 report; architect headroom 101.5 -> 100"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12: QA headroom ~9 bytes over the bar, every added reason paid by a cut in the same file; measure-prompt cannot report base shares, measured in a temp worktree",
+      "evidence": "S12 report, 4 measure rounds"
+    },
+    {
+      "kind": "drain",
+      "what": "seven classifier-unavailable Blocked items read and closed Moot by the pilot; two paused spec-first and left it green, needing pivot + co-pilot each time",
+      "size": 7
+    },
+    {
+      "kind": "drain",
+      "what": "evidence runner's hand-back delivered to main instead of the fundamentalist; relayed by hand",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "forced co-pilot hand-backs with a child live, 6 this session, each read in full by the pilot",
+      "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "hand-off left 'check what pilot land does first': land.mjs read by the pilot; it merges feat into pilot, so pilot.md step 7's 'runs pilot land and sends QA the tip' cannot be followed before Gate 2",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "previous session's pilot wait exited into the fresh session with a lane notice, read by the pilot",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "blocked-steps: hand-back forced before either slice reported, two implementers still live; resumed by SendMessage rather than replaced",
+      "evidence": "co-pilot hand-back: handback-send-enforce notice after both task notifications said 'waiting on its own background work'"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "TaskOutput is named in the co-pilot definition but is not among its tools; it used a Monitor on git ls-remote",
+      "evidence": "co-pilot hand-back, friction table"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "deck MCP showed CONNECTION_CLOSED at start; tools worked once loaded",
+      "evidence": "co-pilot hand-back, friction table"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "claude -p stops background subagents 10 minutes after the last turn, killing the first spec-7 run mid-review",
+      "evidence": "spec7.err 'Background tasks still running 10m after the last turn'; fixed with CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a grandchild's output (the evidence runner) is unrecoverable once its parent's context is summarized, leaving spec 11 unprovable in-run",
+      "evidence": "no runner transcript under the scratch session's subagents/"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the spec-7 scratch run cost about $8 and 75 minutes for a 2-slice ticket",
+      "evidence": "spec7b result cost=8.03"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "scratch deck setup: --seed-run refuses a non-item ticket id, the HTTP ticket post needs repo and exact body shape, pilot ready --ticket cannot find a scratch ticket",
+      "evidence": "three 400s; 'no ticket itm_9fe2a8df7d55 in …pilot-spec-first-scratch'"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the A5 shell exports PILOT_DECK_* and 5 tests in the selection read them and go red; the scratch co-pilot spent an added Opus slice on it",
+      "evidence": "QA report J3"
+    },
+    {
+      "kind": "drain",
+      "what": "implementer and evidence-runner hand-backs delivered to main instead of their co-pilot or fundamentalist (blocked-steps runner, never-stuck S6, never-stuck fix round); each read in full and relayed by hand",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "no-verdict / classifier-unavailable Blocked items read and closed Moot by the pilot this session; two paused a live ticket after 20 min and one left it green, needing pivot + co-pilot",
+      "size": 10
+    },
+    {
+      "kind": "drain",
+      "what": "forced co-pilot hand-backs with children live, each resumed by SendMessage: blocked-steps 3, never-stuck 3",
+      "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exits at once while the yellow lane is empty, so the pilot cannot listen without holding a co-pilot ticket; never-stuck was chained on feat/blocked-steps partly to keep the lane held",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "background-agent 'waiting on its own background work' notifications with no report, about 60 this session, each a turn of the pilot",
+      "size": 60
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "a read-only reviewer tried git checkout origin/feat/never-stuck -- deck inside the fixer's worktree; auto mode refused it",
+      "evidence": "itm_cd4a8ef77eed, reason 'Destructive or Unwanted Actions'"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the fix-round integrate fell back to the full suite: the selection was 29833 characters of argv, over 24000",
+      "evidence": "never-stuck co-pilot hand-back, Gates"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "never-stuck QA has no chrome-devtools and its deck MCP is down; it reads the card through curl and sends main the walkthrough fields",
+      "evidence": "never-stuck co-pilot hand-back, A-c1"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a leftover feat/<slug> from an earlier plan blocks the start of the run",
+      "evidence": "origin/feat/other-host baa0d2cb has parent 18a5d2f0, not 3116339c; open PR #6"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "deck MCP CONNECTION_CLOSED for the other-host co-pilot; no rows sent",
+      "evidence": "co-pilot hand-back"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "store-shape tests pin the store root, so any new top-level field breaks three test files",
+      "evidence": "store-archive:117, co-pilot:91, records-for no-write check; gate run 1: 4 fails"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the home store has no guard against a write during QA; writer of the 16:31:48Z stamp not found",
+      "evidence": "~/.claude/pilot/deck.json: 100 plans stamped legacy; tests, gate and scratch deck ruled out"
+    }
+  ]
+}

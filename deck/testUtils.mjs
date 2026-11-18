@@ -26,6 +26,8 @@ import { renderHomePage } from './ui/render.mjs';
 const suiteHome = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-home-'));
 process.env.HOME = suiteHome;
 process.env.USERPROFILE = suiteHome;
+// A caller's store (a pilot session, the evidence runner's scratch) would hide the suite home's secret.
+delete process.env.PILOT_DECK_DIR;
 // The suite home's own deck secret, so a client under test pointed at a stub finds one to send (deck-token L5).
 ensureSecret(path.join(suiteHome, '.claude', 'pilot'));
 process.on('exit', () => {
@@ -195,7 +197,7 @@ export const aTicket = (title, state, repo = LANE_REPO) => postStored({ kind: 't
 
 /** The home page with a live run in the lane tests' repository, its Tickets panel drawn from `deckLanes()`. */
 export const page = () =>
-  renderHomePage(listItems(), [{ ...registerRun({ repo: LANE_REPO, pid: process.pid }), feature: 'x' }], LANE_REPO, false, {}, {}, Date.now(), [], null, {}, null, { weekly: true }, deckLanes());
+  renderHomePage(listItems(), [{ ...registerRun({ repo: LANE_REPO, pid: process.pid }), feature: 'x' }], LANE_REPO, false, {}, {}, Date.now(), [], null, null, { weekly: true }, deckLanes());
 
 /** Each Tickets row's whole markup by its ticket id. */
 export const rowsOf = (html) =>

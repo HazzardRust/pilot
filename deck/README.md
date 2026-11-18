@@ -32,7 +32,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `gate2-base.mjs` | the gate2 base check: refuses a gate2 whose sha does not merge clean onto pilot, local git only |
 | `gate2-evidence.mjs` | the gate2 evidence check: a short-path ticket's gate2 carries a `Verdict:` per slice, a `Gate:` line and, for a surface, its walkthrough (short-path spec 2); a full run's gate2 naming no walkthrough carries the checks table and, on a plan with a surface, a `surface planned, no walkthrough:` reason line; a named walkthrough is a real one on the gate2's ticket; `walkthroughPlanGaps` refuses QA's walkthrough on a plan marked with no surface (walkthrough-surface spec 3-6) |
 | `health.mjs` | `GET /api/health`'s answer: pid, url, cursor, rss, and the plugin version with when this daemon started (daemon-lifecycle spec 3) |
-| `hold-route.mjs` | `POST /api/hold { id, ticket }`: `pilot run` marks a hand-off held for a live co-pilot, item state and no reply, written once (held-handoff L2) |
+| `hold-route.mjs` | `POST /api/hold { id, ticket }`: the hand-off mod marks a hand-off held for a live co-pilot, item state and no reply, written once (held-handoff L2) |
 | `host-github.mjs` | the GitHub adapter: **Host** over `gh`, and the one `gh` process start, argv only, refusing any call off its argv allowlist before a process starts (other-host spec 2, L5) |
 | `host.mjs` | the host: reads `pilot.host` (unset is `github`) and hands back its **Host** adapter, or null at `none` (other-host spec 1-3) |
 | `idle.mjs` | the user's deck's idle rule: it exits after 10 minutes with no session, no landing and no request, reading the process table only when the other two hold (process-gc L2, ADR 0136) |
@@ -58,10 +58,9 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `read.mjs` | which items a `deck_read` returns: one by id, or the newest |
 | `refusal-log.mjs` | `logRefusal`: one deck.log line per refused or failed request (400, 415, 500), `[deck] <status> <METHOD> <path>: <message>`, a 500's stack frames under it, never the query or body (daemon-lifecycle spec 2) |
 | `report-shape.mjs` | checks a closing report asks the user nothing (ADR 0148) |
-| `run-claim.mjs` | `pilot run`'s claim: the once-only `/clear` claim, the lane's marker, the turn stamp and the waits |
-| `run-env.mjs` | `pilot run`'s start: the session's arguments (`claudeArgs`, `RESUME_PROMPT`) and environment (`runEnv`) |
-| `run-prompt.mjs` | `pilot run`'s first prompt: one bracketed paste (`pasted`), then Enter alone after a settle, then the check that the fresh session took it, with one retyped Enter, all in one call (`handPrompt`) |
-| `run.mjs` | `pilot run`: types `/clear` and the first prompt at the hand-off |
+| `run-claim.mjs` | the hand-off mod's claims and stamps: the once-only `/clear` claim, the lane's marker, the posted and reported-in stamps and the session pid |
+| `run-env.mjs` | a pilot session's start: its settings and arguments (`runSettings`, `startArgs`) and environment (`runEnv`) |
+| `run-look.mjs` | the hand-off mod's look: one `Outcome` per op (`turn`, `cleared`) as a CLI the mod runs |
 | `runs.mjs` | what a run is and whether its session is still there |
 | `schedule.mjs` | the co-pilot's scheduler: which slices of a run's record may start now, and from which tip |
 | `scratch.mjs` | `pilot deck --scratch`: an agent's own deck on a free port, its store under the temp directory |

@@ -49,7 +49,7 @@ const unstripped = new WeakMap();
 
 /**
  * `env` as it was before `searchPathOnly` stripped it, or `env` itself when it never was: for
- * the `claude` sessions the deck starts (`deck/run.mjs`, `deck/session.mjs`), since spec 7
+ * the `claude` sessions the deck starts (`deck/run-env.mjs`, `deck/session.mjs`), since spec 7
  * guards git and a session's own tools are the user's.
  */
 export const unstrippedEnv = (env = process.env) => unstripped.get(env) ?? env;

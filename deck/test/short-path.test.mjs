@@ -35,7 +35,7 @@ function signedPlan(title, sliceCount) {
 
 const page = () => {
   const runs = [{ ...registerRun({ repo: REPO, pid: process.pid }), feature: 'x' }];
-  return renderHomePage(listItems(), runs, REPO, false, {}, {}, Date.now(), [], null, {}, null, { weekly: true });
+  return renderHomePage(listItems(), runs, REPO, false, {}, {}, Date.now(), [], null, null, { weekly: true });
 };
 
 test('a plan of 2 or fewer is short path', () => {

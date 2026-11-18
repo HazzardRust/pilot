@@ -81,7 +81,7 @@ test('the completing take is not refused', (t) => {
   assert.equal(stored().switches[repoKey(REPO)].planning, undefined);
 });
 
-test('Start and End are refused while switching', async (t) => {
+test('Start is refused while switching', async (t) => {
   const started = [];
   const base = await deckOnAPort(t, { start: (repo) => started.push(repo) });
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-lock-'));
@@ -99,11 +99,9 @@ test('Start and End are refused while switching', async (t) => {
     });
   const reason = `a switch to ${to.id} is pending in this directory; complete or cancel it first`;
 
-  for (const route of ['/start-session', '/end-session']) {
-    const response = await press(route);
-    assert.equal(response.status, 303, route);
-    assert.equal(new URL(response.headers.get('location'), base).searchParams.get('sessionRefused'), reason, route);
-  }
+  const response = await press('/start-session');
+  assert.equal(response.status, 303);
+  assert.equal(new URL(response.headers.get('location'), base).searchParams.get('sessionRefused'), reason);
   assert.deepEqual(started, [], 'no window was opened');
   assert.equal((await press('/switch')).status, 400, 'a second switch is the usual refusal');
 });

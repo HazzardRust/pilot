@@ -7,7 +7,7 @@ and one that spawns freely burns the account's rate limit and leaves half-finish
 agents with no output.
 
 For feature-sized work the shape is fixed in the pilot's definition
-(`${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, started with `pilot run`) and
+(`${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, started with `pilot start`) and
 its crew agents carry the standing rules. This file is the law those files assume,
 and it applies unchanged to any smaller piece of work that needs more than one agent.
 
@@ -33,7 +33,7 @@ say so plainly and carry on directly. Going solo *silently* is what is not
 acceptable: state the reasoning either way.
 
 As an **implementing agent you own the whole slice loop for your workstream**: plan,
-vertical slices, tests first, implement, gate, one fresh review per slice, commit,
+vertical slices, built to the behaviours, gate, one fresh review per slice, commit,
 push the branch, a report per slice. You may load this package's skills and spawn
 children for review and exploration.
 
