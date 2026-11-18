@@ -28,9 +28,9 @@ function titleOf(slugs) {
 
 /**
  * The release PR's title, body and rows from git (L3). `git` is `(args) => string`; `pilotRef`
- * and `mainRef` are refs git takes literally; `prs` is `gh pr list --base pilot --state merged`'s
- * `{ number, headRefName, isCrossRepository }` list (the newest 200; an older one reads `–`), the
- * feature PR of each row, never a fork's, the highest number when several.
+ * and `mainRef` are refs git takes literally; `prs` is the host's merged **Review**s into pilot
+ * (the newest 200; an older one reads `–`), the feature PR of each row, never a fork's, the
+ * highest number when several.
  */
 export function releaseNotes({ git, pilotRef, mainRef, prs }) {
   const log = git(['log', '--first-parent', '--reverse', '--format=%H%x09%P%x09%s', `${mainRef}..${pilotRef}`]);
@@ -39,7 +39,7 @@ export function releaseNotes({ git, pilotRef, mainRef, prs }) {
     const [sha, parents, ...subject] = line.split('\t');
     const slug = LANDING.exec(subject.join('\t'))?.[1];
     if (!slug || parents.split(' ').length !== 2) continue;
-    const numbers = prs.filter((pr) => pr?.headRefName === `feat/${slug}` && pr.isCrossRepository !== true && Number.isSafeInteger(pr.number) && pr.number > 0).map((pr) => pr.number);
+    const numbers = prs.filter((pr) => pr?.head === `feat/${slug}` && pr.crossRepo !== true && Number.isSafeInteger(pr.number) && pr.number > 0).map((pr) => pr.number);
     rows.push({ slug, pr: numbers.length ? Math.max(...numbers) : null, sha });
   }
   const table = ['| Feature | PR | Landing |', '| --- | --- | --- |', ...rows.map(({ slug, pr, sha }) => `| ${slug} | ${pr === null ? '–' : `#${pr}`} | ${sha} |`)];
@@ -79,8 +79,7 @@ export function releasePr({ git, host, already = false }) {
   if (!open && already) return { number: null, opened: false, none: true };
   let notes;
   try {
-    const features = host.reviews({ base: PILOT_BRANCH, state: 'merged', limit: 200 })
-      .map((pr) => ({ number: pr.number, headRefName: pr.head, isCrossRepository: pr.crossRepo }));
+    const features = host.reviews({ base: PILOT_BRANCH, state: 'merged', limit: 200 });
     notes = releaseNotes({ git, pilotRef: runRef(runs, PILOT_BRANCH), mainRef: runRef(runs, base), prs: features });
   } catch (err) {
     return unknown(`release notes failed: ${firstLine(err)}`);

@@ -40,7 +40,7 @@ test('two landings name both slugs', (t) => {
   land(a, gitIn);
   land(b, gitIn);
 
-  const notes = releaseNotes({ git: gitIn(b), pilotRef: PILOT, mainRef: MAIN, prs: [{ number: 7, headRefName: 'feat/a' }] });
+  const notes = releaseNotes({ git: gitIn(b), pilotRef: PILOT, mainRef: MAIN, prs: [{ number: 7, head: 'feat/a' }] });
 
   assert.equal(notes.title, 'Release: a, b');
   assert.deepEqual(notes.rows.map(({ slug, pr }) => ({ slug, pr })), [{ slug: 'a', pr: 7 }, { slug: 'b', pr: null }]);
