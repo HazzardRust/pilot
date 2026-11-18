@@ -176,36 +176,38 @@ ADR NNNN (`docs/adr/NNNN-never-stuck.md`) records L2-L7.
 - **A1 Line 8, yellow only.** Default: a blocking walkthrough yields like a question, on the held yellow ticket
   only. Trades away: a red or green ticket's blocking item still holds its stage lane (the main session works
   there). Rejected: all three lanes (parks the pilot's own ticket).
-  Verdict: stands - the planning and concluding lanes are the main session's; parking its own ticket would stop the session that answers the yield
+  Verdict: stands — the planning and concluding lanes are the main session's; parking its own ticket would stop the session that answers the yield
 - **A2 Line 10's exclusions.** Default: proposals, `Merging tickets` (a merge is irreversible), blocking items
   (they yield) and gates are never auto-answered. Trades away: an excluded question waits on the user.
-  Verdict: stands - the user's recorded rule: a default taken is no yes for a proposal, a merge or a gate
+  Verdict: stands — the user's recorded rule: a default taken is no yes for a proposal, a merge or a gate
 - **A3 Line 12's root.** Default `~/.claude/pilot/live`. Changes the request: a nested git repository under it
   still prompts, so live checks use a plain subdirectory or a worktree.
-  Verdict: stands - beside the other pilot state under ~/.claude/pilot; no queued ticket claims the path
+  Verdict: stands — beside the other pilot state under ~/.claude/pilot; no queued ticket claims the path
 - **A4 Line 4's refusal half dropped.** ToolSearch reconnects a failed MCP (seen this session).
-  Verdict: stands - seen again by the pilot this session: deck reported CONNECTION_CLOSED, ToolSearch loaded it and every call worked
+  Verdict: stands — seen again by the pilot this session: deck reported CONNECTION_CLOSED, ToolSearch loaded it and every call worked
 - **A5 Run 2's base is Run 1** (main's call): `design/never-stuck-2` is cut from `feat/never-stuck` (c19395e7, rebased onto 0a95356d; the only
   branch with this artefact) and `feat/never-stuck-2` is cut from the design tip at Gate 1, base `feat/never-stuck` (built on feat/<N>);
   both rebase onto `origin/pilot` once Run 1 lands. Trades away: a rebase when Run 1 lands; slices citing S6 wait for it (§8).
   Rejected: `pilot base`'s `feat/handoff-books`, which holds neither the artefact nor S1-S5.
+  Verdict: stands — Run 1 is green at 0a95356d awaiting its walkthrough; no other branch holds the artefact and S1-S6
 - **A6 Line 25 releases at once** (itm_fca79242f7ff): no grace wait. Trades away: the `/clear` may kill the slice in
   flight (ADR 0089's reason); the fresh session re-adopts the ticket. Rejected: a 5-minute grace for the hand-back. User: "Release at once" (itm_fca79242f7ff, 2026-11-18).
+  Verdict: stands — the user chose Release at once on itm_fca79242f7ff
 - **A7 Line 25 is a prose rule, not a hook**: the guard's advisory and `pilot handoff`'s line say it; `agents/pilot.md`
   is not edited (28 tokens of headroom). Trades away: a pilot ignoring the line waits out the bound. Rejected: a
   PostToolUse hook releasing on a queued SendMessage (wider; the user said "the pilot releases"). User: "Prose rule, bound as backstop" (itm_b3f95cb4736d, 2026-11-18).
+  Verdict: stands — the user chose the prose rule with the bound as backstop on itm_b3f95cb4736d
 - **A8 QA environment for Run 2** (itm_ca7057034e89): L11's scratch deck and temp repos, plus `pilot handoff` there
   with a co-pilot granted and the held card looked at; no real `/clear`. Trades away: the wrapper's real `/clear`
   after a release is seen only at the next real hand-off. Rejected: the live deck. User: "Scratch deck + temp repos" (itm_ca7057034e89, 2026-11-18).
+  Verdict: stands — the user chose the scratch deck and temp repos on itm_ca7057034e89
 - red team (run 2): S19's first red step meets `scripts/test/handoff.test.mjs:179, :198`, pinning today's clause
   word for word; S19 owns that file. Importing the bound from `run-look.mjs` would pull the look's CLI into
   `pilot handoff`; it moves to `run-claim.mjs`, which both import. S19 shares no file or seam with S7-S18.
 - red team: S2's first red step walked against `store-runs.mjs:369`: `setCoPilot` is synchronous and git is not,
   so the check sits in the `deck_ticket` handler (`server-tools.mjs:411`) before it, and S2 owns that handler after S1.
-- red team: S8's new lane shapes would make `lanesNotice` drop all three lanes silently (`session-handoff.js:370`);
-  S8 now owns the regexes.
-- red team: S5's `yielding` ticket would re-fire `yieldsDue` every tick and be refused as idle; S5 owns both
-  skips in `lanes.mjs`, and Run B's S8, S9 come after it.
+- red team: S8's new lane shapes would make `lanesNotice` drop all three lanes silently (`session-handoff.js:370`); S8 now owns the regexes.
+- red team: S5's `yielding` ticket would re-fire `yieldsDue` every tick and be refused as idle; S5 owns both skips in `lanes.mjs`, and Run B's S8, S9 come after it.
 - red team: S4's replan on other-host (old sha ecdd81f4 gone) can't diff; L5 makes that a gate1, never a silent restore.
 
 ## 7. Out of scope
@@ -224,11 +226,9 @@ Width 8; longest stem 4 (S1 → S2 → S5 → S6). Runs in sequence; Run B start
 | A re-cut | S1-S6 | 3, 6, 13, 14, 15, 16 | – | 6 slices, about 1 day |
 | B never stuck | S7-S19 | 1, 2, 4, 5, 7-12, 16-27 | A (`lanes.mjs`, `store-tickets.mjs`, prose) | 13 slices, about 2 days |
 
-Run B's base (A5): Run B's slices stand on Run A's S1-S5 code and S6's names, so its real base is `origin/pilot`
-after `feat/never-stuck` lands, which waits on handoff-books S3 and blocked-steps S2 reaching pilot. S19 also needs
-handoff-mod's `deck/run-look.mjs` and handoff-books' guard on pilot (both there, or concluding, today).
-`feat/never-stuck-2` is cut from the design tip on `feat/never-stuck` and rebases onto that pilot. Run B alone: width 8
-(S7, S8, S10, S11, S13, S15, S17, S19), longest stem 3 (S10 → S16 → S18). Line 27 has no slice (shipped).
+Run B's base (A5): its slices stand on Run A's S1-S5 code and S6's names, so `feat/never-stuck-2` is cut from the design
+tip on `feat/never-stuck` (0a95356d) and rebases onto `origin/pilot` once Run A lands. Run B alone: width 8 (S7, S8,
+S10, S11, S13, S15, S17, S19), longest stem 3 (S10 → S16 → S18). Line 27 has no slice (shipped).
 
 | # | Title | Spec | Files owned | After | Reviewers | File |
 |---|---|---|---|---|---|---|
