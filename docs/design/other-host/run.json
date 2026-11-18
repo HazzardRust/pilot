@@ -44,7 +44,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed 7cef150",
+      "state": "integrating 7cef150",
       "after": [
         "S2"
       ],
@@ -60,7 +60,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 760d9b8",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -116,8 +116,8 @@
   "findings": [
     "kept: P1 added-slice — S3 took seam option A: a failed label create is swallowed by githubHost.labelled (host-github.mjs:121-129) and land no longer prints its label warning; after S5 integrates, Host open/edit return `why` and land prints it again (spec 2: moved, not rewritten)"
   ],
-  "next": "integrate S5 (running), re-review S3 fix commit 7cef150 then integrate, then pilot ready for S4 S9 S10",
-  "updatedAt": "2026-11-18T05:53:06.633Z",
+  "next": "integrate S3 on feat/other-host bcf49564, then pilot ready for S4 S9 S10",
+  "updatedAt": "2026-11-18T05:55:18.763Z",
   "friction": [
     {
       "agent": "pilot",
