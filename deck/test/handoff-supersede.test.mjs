@@ -33,3 +33,10 @@ test('a new hand-off closes the older open one of its directory, and no other', 
   assert.ok(isOpen(reread(elsewhere.id)), "another directory's hand-off is untouched");
   assert.equal(reread(older.id).notice, undefined, 'a hand-off closes silently');
 });
+
+test("a chain hand-off is never superseded: only its Handoff failed hands its tickets back", (t) => {
+  tempDeck(t);
+  const chain = postItem({ kind: 'handoff', title: 'Next run: x', body: 'b', repo: A, next: 'itm_t1' });
+  postItem({ kind: 'handoff', title: 'Handoff: manual', body: 'b', repo: A });
+  assert.ok(isOpen(reread(chain.id)));
+});

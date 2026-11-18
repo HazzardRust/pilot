@@ -32,6 +32,7 @@ import {
   isAnswered,
   isBlocking,
   isGate,
+  isChainHandoff,
   isOpen,
   isRecord,
   lastSaid,
@@ -177,8 +178,8 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
     ticket.resolution = `closed by ${item.id}`;
     ticket.resolvedAt = item.postedAt;
   }
-  // A hand-off supersedes its directory's older open one, closed in this same write so only one offers Handoff failed.
-  const superseded = kind === KIND_HANDOFF ? deck.items.filter((each) => each.kind === KIND_HANDOFF && isOpen(each) && sameRepo(each.repo, item.repo)) : [];
+  // A hand-off supersedes its directory's older open one, closed in this same write so only one offers Handoff failed; a chain one stays, its failed press hands its tickets back.
+  const superseded = kind === KIND_HANDOFF ? deck.items.filter((each) => each.kind === KIND_HANDOFF && isOpen(each) && sameRepo(each.repo, item.repo) && !isChainHandoff(each, item.repo)) : [];
   for (const older of superseded) Object.assign(older, { resolution: `superseded by ${item.id}`, resolvedAt: item.postedAt });
   deck.items.push(item);
   touchRuns(deck, item.repo);
