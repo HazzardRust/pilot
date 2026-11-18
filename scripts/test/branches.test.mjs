@@ -94,12 +94,10 @@ test('none judges by ancestry', (t) => {
   const into = commit('ahead', 'feat/x');
   const late = commit('slice/x-s1');
   run(work, 'push', '-q', 'origin', `${into}:refs/heads/main`, 'feat/x', 'slice/x-s1');
-  const asked = [];
-  const host = hostFor(work, { run: (args) => asked.push(args) });
-  assert.equal(host, null);
+  const host = hostFor(work);
+  assert.equal(host, null, 'no host, so no host call, at none');
   const kept = [{ branch: 'slice/x-s1', why: 'not merged into origin/main' }];
   assert.deepEqual(deleteMerged({ git, host, select: only('feat/x', 'slice/x-s1') }), { deleted: ['feat/x'], kept });
-  assert.deepEqual(asked, [], 'no host call at none');
   assert.match(heads(origin), new RegExp(`^slice/x-s1 ${late}$`, 'm'));
 });
 

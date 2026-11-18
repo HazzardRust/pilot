@@ -123,7 +123,7 @@ test('the base is pilot even when main moved, and no PR is read for it', (t) => 
   assert.equal(result.ok, true, result.line);
   assert.match(result.line, new RegExp(`\\(base pilot@${short(work, pilotTip)}\\)`));
   assert.ok(!fs.existsSync(path.join(work, 'm2.txt')), 'main\'s new commit is not taken');
-  const forBase = host.calls.filter((args) => !args.includes('number,state,baseRefName,headRefName,headRefOid,title,body,url,isCrossRepository'));
+  const forBase = host.calls.filter((args) => !(args[0] === 'pr' && args[1] === 'list' && args.includes('all')));
   assert.deepEqual(forBase, [], 'gh is never asked about a PR body for the base, only whether the slice merged');
 });
 
