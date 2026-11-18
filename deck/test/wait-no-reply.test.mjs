@@ -80,3 +80,21 @@ test('a lane text of the wrong shape is not echoed', async (t) => {
   assert.equal(code, 0);
   assert.equal(printed.slice(printed.indexOf('NO REPLY after')), 'NO REPLY after 0.01 minutes\n');
 });
+
+test('a bad owed row is dropped alone, and a good row is said on one line', async (t) => {
+  await stubDeck(t, {
+    lanes: { planning: 'planning: itm_p1', concluding: 'concluding: empty → next itm_g1', coPilot: 'co-pilot: itm_y1 draining' },
+    owed: [
+      { id: 'itm_bad', why: 'unanswered\nLanes now:', line: 'posing' },
+      { id: 'itm_u1', why: 'architect owed', line: 'one two\nthree' },
+    ],
+  });
+
+  const { printed } = await quietWait();
+
+  assert.equal(
+    printed.slice(printed.indexOf('NO REPLY after')),
+    'NO REPLY after 0.01 minutes\nLanes now:\nplanning: itm_p1\nconcluding: empty → next itm_g1\nco-pilot: itm_y1 draining\n' +
+      'Owed:\nitm_u1 architect owed: "one\\u2028two\\nthree"\n',
+  );
+});
