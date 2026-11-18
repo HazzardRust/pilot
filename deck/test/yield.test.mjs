@@ -108,7 +108,7 @@ test('a draining ticket never re-yields and is never refused idle', () => {
 
   assert.deepEqual(yieldsDue(items, REPO, ticket.id, Date.parse(postedAt) + 2 * YIELD_MS), [], 'one yield per drain');
   const lanes = lanesFrom(items, REPO, { switching: {}, coPilot: { ticket: ticket.id, live: true } });
-  assert.equal(lanes.coPilot, `co-pilot: ${ticket.id}`, 'the lane stays held while it drains');
+  assert.equal(lanes.coPilot, `co-pilot: ${ticket.id} draining`, 'the lane stays held while it drains, and says so (never-stuck spec 9)');
   assert.equal(lanes.refusal, null, 'nothing pushes the next ticket in beside it');
 });
 

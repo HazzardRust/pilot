@@ -391,10 +391,14 @@ function withLane(result, lane) {
  * The lane lines `deck/lanes.mjs` can spell and no others: an empty lane, a ticket id, or an empty
  * lane's pick. A word or an id, never prose, because these are said outside every fence.
  */
-const PLANNING_LINE = /^planning: (empty( → next itm_\w{1,40})?|itm_\w{1,40})$/;
+const PLANNING_LINE = /^planning: (empty( → next itm_\w{1,40}( \(re-cut\))?)?|itm_\w{1,40})$/;
 const CONCLUDING_LINE = /^concluding: (empty( → next itm_\w{1,40})?|itm_\w{1,40})$/;
-// The blocked shape is bounded at five pairs, `deck/lanes.mjs`'s MAX_BLOCKED (blocked-yellow-yields spec 2).
-const CO_PILOT_LINE = /^co-pilot: (none|empty → next itm_\w{1,40}|empty, blocked: itm_\w{1,40} on itm_\w{1,40}(; itm_\w{1,40} on itm_\w{1,40}){0,4}|itm_\w{1,40})$/;
+// One skipped ticket and its reason, a fixed word or a question id (never-stuck spec 9); the list is bounded at five,
+// `deck/lanes.mjs`'s MAX_BLOCKED.
+const SKIPPED = 'itm_\\w{1,40} (blocked on itm_\\w{1,40}|orphaned|draining)';
+const CO_PILOT_LINE = new RegExp(
+  '^co-pilot: (none|empty → next itm_\\w{1,40}( \\(short path\\))?|none runnable: ' + SKIPPED + '(; ' + SKIPPED + '){0,4}|itm_\\w{1,40}( draining)?)$'
+);
 
 /**
  * The directory's three lanes (idle-main-lane spec 4, A2; three-lanes spec 3) as the daemon spelled them, or null

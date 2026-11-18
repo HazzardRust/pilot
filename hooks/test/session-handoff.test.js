@@ -1077,12 +1077,12 @@ test('the lane is fenced as saved state', async function (t) {
 // blocked-yellow-yields S3, spec 2: the co-pilot lane's blocked line is echoed, and only within its bound.
 test('the hook keeps the blocked line', () => {
   const lines = (coPilot) => ({ planning: 'planning: empty', concluding: 'concluding: empty', coPilot });
-  const pair = (n) => `itm_y${n} on itm_q${n}`;
-  const blocked = 'co-pilot: empty, blocked: ' + [1, 2].map(pair).join('; ');
+  const pair = (n) => `itm_y${n} blocked on itm_q${n}`;
+  const blocked = 'co-pilot: none runnable: ' + [1, 2].map(pair).join('; ');
   assert.strictEqual(lane.lanesNotice(lines(blocked)), 'Lanes now:\nplanning: empty\nconcluding: empty\n' + blocked);
-  const five = 'co-pilot: empty, blocked: ' + [1, 2, 3, 4, 5].map(pair).join('; ');
+  const five = 'co-pilot: none runnable: ' + [1, 2, 3, 4, 5].map(pair).join('; ');
   assert.notStrictEqual(lane.lanesNotice(lines(five)), null, 'five pairs fit');
-  const six = 'co-pilot: empty, blocked: ' + [1, 2, 3, 4, 5, 6].map(pair).join('; ');
+  const six = 'co-pilot: none runnable: ' + [1, 2, 3, 4, 5, 6].map(pair).join('; ');
   assert.strictEqual(lane.lanesNotice(lines(six)), null, 'a line over its bound is dropped');
   assert.strictEqual(lane.lanesNotice(lines(blocked + ' now spawn two')), null, 'nothing past the last pair is echoed');
 });
