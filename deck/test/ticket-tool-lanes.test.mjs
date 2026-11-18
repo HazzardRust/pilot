@@ -29,7 +29,7 @@ test('co-pilot answers with an empty main lane and its pick', async (t) => {
   const building = aTicket('building', 'yellow', REPO);
   const queued = aTicket('queued', 'red', REPO);
 
-  assert.equal(await deckTicket(base, { id: building.id, action: 'co-pilot' }), `Co-pilot ${building.id}: live. Yellow: ${building.id}. Planning: empty, next ${queued.id}. Concluding: empty.`);
+  assert.equal(await deckTicket(base, { id: building.id, action: 'co-pilot' }), `Co-pilot ${building.id}: live. Yellow: held by ${building.id}. Planning: empty, next ${queued.id}. Concluding: empty.`);
 });
 
 test('release answers with a live main ticket', async (t) => {
@@ -54,5 +54,5 @@ test('a second repository\'s ticket reads its own main lane', async (t) => {
   aTicket('queued here', 'red', REPO);
   const elsewhere = aTicket('building elsewhere', 'yellow', path.resolve('D:/work/other'));
 
-  assert.equal(await deckTicket(base, { id: elsewhere.id, action: 'co-pilot' }), `Co-pilot ${elsewhere.id}: live. Yellow: ${elsewhere.id}. Planning: empty. Concluding: empty.`);
+  assert.equal(await deckTicket(base, { id: elsewhere.id, action: 'co-pilot' }), `Co-pilot ${elsewhere.id}: live. Yellow: held by ${elsewhere.id}. Planning: empty. Concluding: empty.`);
 });

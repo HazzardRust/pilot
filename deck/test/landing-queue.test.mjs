@@ -140,7 +140,7 @@ test('a restart starts a queued landing', (t) => {
   startLanding(second.id, { spawn: aSpawn().spawn, env: {} });
 
   // The daemon's start-up sweep, in its order: the dead daemon's landing settles, then the queue is read.
-  interruptLandings();
+  interruptLandings(() => false);
   closeLandedAtStart();
   recorded(second, checkout);
   startQueued({ spawn: fake.spawn, env: {} });

@@ -540,7 +540,7 @@ A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd 
 `Message queued for delivery to <id> at its next tool round` is not
 `Resuming agent <id>`: check the expected effect (a PR state, a deck item, a
 report) after a few minutes; if absent, stop the agent and do the step
-yourself or re-brief it. The hand-off pause is the exception: queued, `deck_ticket release` it at once (A7).
+yourself or re-brief it. The hand-off pause is the exception: queued, `deck_ticket release` it at once.
 
 ### The artefact is the state
 
