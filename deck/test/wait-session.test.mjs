@@ -1,7 +1,7 @@
 /**
  * `pilot wait` under a session (process-gc spec 2, L1, L3): `main` holds a leash on the session's
  * `CLAUDE_PID` and, when that pid exits, says `NO SESSION: <pid> has exited` and exits 0, instead of
- * parking on until its 110-minute timeout. With no `CLAUDE_PID` there is no leash and it waits as
+ * parking on until its 50-minute timeout. With no `CLAUDE_PID` there is no leash and it waits as
  * before. The deck is a stub of this file's own or a daemon on an ephemeral port, never 4321.
  */
 import './no-open.mjs';
