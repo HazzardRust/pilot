@@ -121,7 +121,7 @@ test('the human step names the main PR', (t) => {
   const { record } = recordForTicket(repo, ticket);
   const landedWith = (line) => closingReportOf(record, { ...gate, landing: { state: 'landed', sha: '1a2b3c4', line } }, []).body;
 
-  assert.ok(landedWith(LAND_LINE).includes('Human step: Merge #600 into main with a merge commit, when you want main to have it.'));
+  assert.ok(landedWith(LAND_LINE).includes('Human step: Merge #600 with a merge commit, when you want main to have it.'));
   assert.ok(landedWith(LAND_LINE).includes("Human step: Prune other runs' branches: pilot branches prune --dry-run first."), 'the prune step');
   assert.deepEqual(reportAskGaps(landedWith(LAND_LINE)), []);
   const byHand = landedWith(LAND_LINE.replace('main gets pilot: #600', 'main gets pilot: open a PR from fork/pilot to main by hand'));

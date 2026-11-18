@@ -16,6 +16,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { githubHost } from '../../deck/host-github.mjs';
+
 const { main, pushFeature } = await import('../land.mjs');
 const { remoteDefaultBranch } = await import('../pilot-branch.mjs');
 
@@ -86,7 +88,7 @@ test('a tip already on origin reads landed', (t) => {
   process.stdout.write = (text) => said.push(String(text));
   let code;
   try {
-    code = main([], { cwd: work, git: inWork, gh: ghDown, test: green });
+    code = main([], { cwd: work, git: inWork, host: githubHost(ghDown), test: green });
   } finally {
     process.stdout.write = write;
   }

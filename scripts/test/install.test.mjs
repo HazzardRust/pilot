@@ -998,7 +998,7 @@ test('the README hands a friend one prompt to paste, not a list of commands to t
 // lint: the install asks no profile question and writes no shell function
 test('the install still asks no question about the profile, and step 4 does not write a shell function', () => {
   assert.doesNotMatch(INSTALL(), /shell function/i);
-  assert.doesNotMatch(section(INSTALL(), 'The four questions to ask'), /profile|PATH/);
+  assert.doesNotMatch(section(INSTALL(), 'The five questions to ask'), /profile|PATH/);
 });
 
 // lint: step 4 never tells Claude not to edit the PATH

@@ -13,13 +13,14 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 
 import { gc } from '../../deck/gc.mjs';
+import { githubHost } from '../../deck/host-github.mjs';
 import { pilotProcesses } from '../../deck/procs.mjs';
 
 const { main } = await import('../land.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 const green = 'node -e "0"';
-const gh = (args) => (args[0] === 'pr' && args[1] === 'list' ? '[]' : '');
+const host = githubHost((args) => (args[0] === 'pr' && args[1] === 'list' ? '[]' : ''));
 
 /** origin.git with main, pilot and feat/x one commit ahead of pilot; `work` is on feat/x. */
 function scratchRun(t) {
@@ -64,7 +65,7 @@ test("land prints gc's lines and still lands", (t) => {
   const stopped = [];
   const sweep = () => gc(pilotProcesses(table, { userDeckPid: 10, exists: () => true }), { kill: (pid) => stopped.push(pid) });
 
-  const { code, out } = landed(t, { cwd: work, git: inWork, gh, test: green, gc: sweep });
+  const { code, out } = landed(t, { cwd: work, git: inWork, host, test: green, gc: sweep });
 
   assert.equal(code, 0, out);
   assert.deepEqual(stopped, [40]);
@@ -77,7 +78,7 @@ test('a gc that throws is a line and the landing still lands', (t) => {
     throw new Error('table unreadable\nstack');
   };
 
-  const { code, out } = landed(t, { cwd: work, git: inWork, gh, test: green, gc: sweep });
+  const { code, out } = landed(t, { cwd: work, git: inWork, host, test: green, gc: sweep });
 
   assert.equal(code, 0, out);
   assert.match(out, /^gc failed: table unreadable\nlanded feat\/x on pilot at /m);

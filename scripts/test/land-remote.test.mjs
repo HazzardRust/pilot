@@ -14,6 +14,8 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { githubHost } from '../../deck/host-github.mjs';
+
 const { land } = await import('../land.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -50,16 +52,21 @@ function feature(work, name, from) {
   return git(work, 'rev-parse', 'HEAD');
 }
 
-/** A fake `gh` answering `pr list --head` with `heads`, any other `pr list` with `prs`, `pr comment` with '', and recording its argv. */
+/**
+ * `githubHost` over a fake `gh` answering `pr list --head` with `heads`, any other `pr list` with `prs`, `pr comment`
+ * with '', and recording its argv, a `--body-file <f>` as `--body <text>`, read at the call.
+ */
 function fakeGh(prs = [], heads = []) {
   const calls = [];
-  const gh = (args) => {
+  const gh = (given) => {
+    const at = given.indexOf('--body-file');
+    const args = at < 0 ? given : [...given.slice(0, at), '--body', fs.readFileSync(given[at + 1], 'utf8'), ...given.slice(at + 2)];
     calls.push(args);
     if (args[0] === 'pr' && args[1] === 'list') return JSON.stringify(args.includes('--head') ? heads : prs);
     if (args[0] === 'pr' && args[1] === 'comment') return '';
     throw new Error(`unexpected gh ${args.join(' ')}`);
   };
-  return { gh, calls };
+  return { host: githubHost(gh), calls };
 }
 
 test("land pushes the landing to the second remote's pilot", (t) => {
@@ -73,9 +80,9 @@ test("land pushes the landing to the second remote's pilot", (t) => {
   const xTip = feature(work, 'x', 'second/pilot');
   git(work, 'config', 'pilot.remote', 'second');
   const pilotBefore = git(origin, 'rev-parse', 'refs/heads/pilot');
-  const { gh, calls } = fakeGh([], [{ number: 9, state: 'MERGED', baseRefName: 'pilot', isCrossRepository: false }]);
+  const { host, calls } = fakeGh([], [{ number: 9, state: 'MERGED', baseRefName: 'pilot', isCrossRepository: false }]);
 
-  const result = land({ cwd: work, git: inWork, gh, test: green });
+  const result = land({ cwd: work, git: inWork, host, test: green });
 
   const tip = git(second, 'rev-parse', 'refs/heads/pilot');
   assert.equal(git(second, 'log', '-1', '--format=%s', tip), 'Merge feat/x into pilot');
@@ -100,7 +107,7 @@ test('land under none lands on the local pilot', (t) => {
   const moved = git(work, 'commit-tree', `${pilotTip}^{tree}`, '-p', pilotTip, '-m', 'moved');
   const moving = `git update-ref refs/heads/pilot ${moved} ${pilotTip} || ${green}`;
 
-  const result = land({ cwd: work, git: inWork, gh: fakeGh().gh, test: moving });
+  const result = land({ cwd: work, git: inWork, host: fakeGh().host, test: moving });
 
   const tip = git(work, 'rev-parse', 'refs/heads/pilot');
   assert.equal(git(work, 'log', '-1', '--format=%s', tip), 'Merge feat/x into pilot');
@@ -125,7 +132,7 @@ test("a second remote's pilot that moved meanwhile is fetched and merged again o
   const moved = git(work, 'commit-tree', `${pilotTip}^{tree}`, '-p', pilotTip, '-m', 'moved');
   const moving = `git push -q "${second}" ${moved}:refs/heads/pilot`;
 
-  const result = land({ cwd: work, git: inWork, gh: fakeGh().gh, test: moving });
+  const result = land({ cwd: work, git: inWork, host: fakeGh().host, test: moving });
 
   const tip = git(second, 'rev-parse', 'refs/heads/pilot');
   assert.equal(git(second, 'log', '-1', '--format=%s', tip), 'Merge feat/x into pilot');

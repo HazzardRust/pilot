@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const { integrate } = await import('../integrate.mjs');
+const { githubHost } = await import('../../deck/host-github.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
@@ -73,7 +74,7 @@ function ghWith(state, tip, asked = []) {
 }
 
 const listed = (bare) => git(bare, 'for-each-ref', '--format=%(refname:short)', 'refs/heads/').split('\n');
-const options = (work, gh, more = {}) => ({ cwd: work, test: passing, install: () => {}, gh, wait: 0, ...more });
+const options = (work, gh, more = {}) => ({ cwd: work, test: passing, install: () => {}, host: githubHost(gh), wait: 0, ...more });
 
 test('a merged slice is deleted after the push', (t) => {
   const { origin, work, tip } = scratchRepos(t, 'origin');
@@ -105,7 +106,7 @@ test('a red integration deletes nothing', (t) => {
   assert.equal(result.ok, false);
   assert.doesNotMatch(result.line, /deleted|kept/);
   assert.ok(listed(origin).includes('slice/x-s1'), 'the slice is still on origin');
-  assert.ok(!asked.some((args) => args.includes('number,state,headRefName,headRefOid,isCrossRepository')), 'gh is not asked whether it merged');
+  assert.deepEqual(asked, [], 'gh is not asked whether it merged');
 });
 
 test('a PR-less slice on the second remote is deleted by ancestry', (t) => {
@@ -138,7 +139,7 @@ test('local mode deletes nothing and asks gh nothing about a merge', (t) => {
   assert.equal(result.ok, true, result.line);
   assert.match(result.line, /; pushed$/);
   assert.equal(git(work, 'rev-parse', 'slice/x-s1'), tip, 'the local slice is still there');
-  assert.ok(!asked.some((args) => args.includes('number,state,headRefName,headRefOid,isCrossRepository')));
+  assert.deepEqual(asked, []);
 });
 
 test('a feat/ branch integrated as a slice is never deleted', (t) => {

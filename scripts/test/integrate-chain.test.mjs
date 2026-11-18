@@ -21,6 +21,7 @@ import path from 'node:path';
 import { tempDeck } from '../../deck/testUtils.mjs';
 
 const { baseOf, integrate } = await import('../integrate.mjs');
+const { githubHost } = await import('../../deck/host-github.mjs');
 const { recordFor, registerRun } = await import('../../deck/store.mjs');
 const { recordFields } = await import('../../deck/runs.mjs');
 const { callTool, TOOLS } = await import('../../deck/server.mjs');
@@ -82,7 +83,7 @@ function landN(seed) {
   git(seed, 'push', '-q', 'origin', 'pilot');
 }
 
-const quiet = { install: () => {}, test: `node -e "console.log('ℹ pass 1'); console.log('ℹ fail 0')"`, gh: () => { throw new Error('no gh'); } };
+const quiet = { install: () => {}, test: `node -e "console.log('ℹ pass 1'); console.log('ℹ fail 0')"`, host: githubHost(() => { throw new Error('no gh'); }) };
 
 test('a chained run merges N\'s tip', (t) => {
   const { work } = chainRepos(t);
