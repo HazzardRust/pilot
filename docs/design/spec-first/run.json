@@ -114,29 +114,9 @@
   "findings": [
     "kept: J3b needed — fixed eabd3b7b + e41a43a1: deck/testUtils unsets a caller's PILOT_DECK_DIR for the suite; runner coverage cell exits 0 at e41a43a1 (386 s, 100% of 104 lines)"
   ],
-  "next": "spec-first e41a43a1: QA ad61417eed1b3f94c waits on walkthrough itm_52c1e196e1ec, then trial+gate2 #104. blocked-steps b84479d0: QA a3c7b88fced2ee400 waits on itm_1d267c5a9a38. never-stuck 4897371a paused, base feat/blocked-steps: co-pilot it, send QA aeab65f8f3b4bbce2 the tip (see its record). Run 2 architect aacfbf3243a4088e8 waits on 3 questions. audit-f7 gate2 itm_79ca68a5deb6 unpressed.",
-  "updatedAt": "2026-11-17T16:08:23.664Z",
+  "next": "spec-first: QA ad61417eed1b3f94c live on itm_52c1e196e1ec, then gate2 #104. blocked-steps: itm_1d267c5a9a38 (pilot holds). never-stuck Run A 0a95356d: itm_629c53e3f908 (pilot holds), resume QA on reply; scratch deck pid 4560. other-host: released, blocked on itm_6d934173510d; then co-pilot from 3116339c. Run 2: 3 questions open, then architect. audit-f7 gate2 unpressed.",
+  "updatedAt": "2026-11-17T16:55:48.006Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "slice verification counts absolutes by line (git grep -c) while the slice's baseline counts occurrences",
-      "evidence": "-ciwE 19/7 vs the slice file's 20"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "third implementer this run (S7, S8, S10) compacted early with no summary of its progress and restarted from git state; S10 lost track of its own children",
-      "evidence": "S10 message: branch at base 37bfdf5e, children spawned before the reset"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "feat moved twice under S2, once between its fetch and push, costing a second rebase and a lease push",
-      "evidence": "S2 rebased onto e054e91d, already behind 37bfdf5e at push"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S2's Interface typed sliceFileOf as string|null though both readers need the slice number; its Prohibited line was ambiguous where a row exists but the slice file does not",
-      "evidence": "slices/S2.md:18, :37"
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "the co-pilot's rebase message named c1d13ce6 before origin had it: the seam commit sat local while S2's integrate ran",
@@ -316,6 +296,26 @@
       "agent": "pilot:pilot-qa",
       "what": "never-stuck QA has no chrome-devtools and its deck MCP is down; it reads the card through curl and sends main the walkthrough fields",
       "evidence": "never-stuck co-pilot hand-back, A-c1"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a leftover feat/<slug> from an earlier plan blocks the start of the run",
+      "evidence": "origin/feat/other-host baa0d2cb has parent 18a5d2f0, not 3116339c; open PR #6"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "deck MCP CONNECTION_CLOSED for the other-host co-pilot; no rows sent",
+      "evidence": "co-pilot hand-back"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "store-shape tests pin the store root, so any new top-level field breaks three test files",
+      "evidence": "store-archive:117, co-pilot:91, records-for no-write check; gate run 1: 4 fails"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the home store has no guard against a write during QA; writer of the 16:31:48Z stamp not found",
+      "evidence": "~/.claude/pilot/deck.json: 100 plans stamped legacy; tests, gate and scratch deck ruled out"
     }
   ]
 }
