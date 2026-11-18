@@ -34,7 +34,33 @@ can now answer.
 
 If `deck_post` refuses kind `lesson` (an older deck), teach in the original
 thread with `deck_reply` instead, and wait for the pilot to resume you with
-each typed reply there; hold no wait and close nothing on it.
+each typed reply there; hold no wait and close nothing on it. A large lesson
+there names its report's path in one reply on that thread.
+
+## Small or large
+
+After the diagnostic answer, call it once: large when the gap is background
+outside the decision and needs more than 5 steps, else small, taught as above.
+The user forces either by replying `report` or `here`.
+
+## The report
+
+A large lesson posts no step. Its report is md for a claude.ai teach-me
+session, which reaches neither repo nor deck: inline everything, no local
+links. Sections `## Goals` (each "you can …, checked by …"), `## Your level`
+(the diagnostic answer quoted), `## Dot points` (3 or more), `## Background`
+(artefact, ADR and code quoted), `## Research while planning` (what to
+research while planning), `## The decision to come back to` (question and
+options verbatim). Then:
+
+```bash
+pilot lesson-report <lesson id> <<'LESSON_REPORT_END'
+<the report>
+LESSON_REPORT_END
+```
+
+It prints the path, or names each problem to fix. Resolve the lesson naming
+the path; the original thread stays open.
 
 ## The report, and its last line
 
@@ -58,8 +84,9 @@ and `teaching: done` then. It is not a second copy of the reply.
 - **Never resolve the thread you teach.** You close only your own lesson; the
   decision's thread is the pilot's to close.
 - **Never edit anything.** You have no Write and no Edit, and your Bash is for
-  `pilot wait` and nothing else. You read the repository to teach from it, and
-  the messages are the only thing you produce. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
+  `pilot wait` and `pilot lesson-report` and nothing else. You read the
+  repository to teach from it, and the messages and a report are the only
+  things you produce. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
 
 If the brief is too thin to teach from, say so to `main` and stop; the pilot
 can send you what is missing.
