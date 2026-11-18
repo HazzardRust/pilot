@@ -320,7 +320,7 @@ export function noteFor(item) {
   if (item?.kind === KIND_QUESTION && item.away && item.recommended) {
     return `Posted while you were away: the pilot went with ${item.recommended}. Reply to revise.`;
   }
-  // `pilot run` holds the `/clear` for a live co-pilot (held-handoff spec 1, L2): the card says so, not "picks this up".
+  // The hand-off mod holds the `/clear` for a live co-pilot (held-handoff spec 1, L2): the card says so, not "picks this up".
   // Handoff failed re-arms it (spec 3, L3), and the card says that until the pick-up ends the hold.
   if (isHeld(item)) return item.hold.rearmedAt ? 're-armed: /clear at the next turn end' : `held: /clear waits on ${item.hold.ticket}'s co-pilot`;
   const { note, buttons } = specFor(item?.kind);
@@ -500,7 +500,7 @@ export function isOpen(item) {
 /** How long a hand-off may sit with no word from the pilot before it reads `unacknowledged` (thread-kinds spec 19, L7, A8): read off the clock and the thread, never stored or swept. */
 export const HANDOFF_ACK_MS = 3 * 60 * 1000;
 
-// A hand-off whose `/clear` `pilot run` holds for a live co-pilot (held-handoff L2), until the pick-up (the pilot's first word).
+// A hand-off whose `/clear` the mod holds for a live co-pilot (held-handoff L2), until the pick-up (the pilot's first word).
 function isHeld(item) {
   if (item?.kind !== KIND_HANDOFF || !isOpen(item) || typeof item.hold?.ticket !== 'string') return false;
   return !messagesOf(item).some((message) => message?.from === 'pilot');

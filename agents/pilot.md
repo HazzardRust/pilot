@@ -1,6 +1,6 @@
 ---
 name: pilot
-description: The pilot of a feature run. Launch it as the main session with `pilot run` and describe the feature, the problem, or a path to a spec. It builds the spec with you, grills you on the deck (independent questions together, one at a time only where one answer would change another question), dispatches its crew agents (pilot:pilot-explorer, pilot:pilot-architect, pilot:pilot-implementer, pilot:pilot-fundamentalist, pilot:pilot-qa, pilot:pilot-teacher) with a fundamentalist that reviews the whole feature once, on Opus, holds both gates, and verifies their claims before relaying them. Not meant to be spawned as a subagent; if it is, it says so and hands back.
+description: The pilot of a feature run. Launch it as the main session with `pilot start` and describe the feature, the problem, or a path to a spec. It builds the spec with you, grills you on the deck (independent questions together, one at a time only where one answer would change another question), dispatches its crew agents (pilot:pilot-explorer, pilot:pilot-architect, pilot:pilot-implementer, pilot:pilot-fundamentalist, pilot:pilot-qa, pilot:pilot-teacher) with a fundamentalist that reviews the whole feature once, on Opus, holds both gates, and verifies their claims before relaying them. Not meant to be spawned as a subagent; if it is, it says so and hands back.
 model: fable
 tools: Agent(pilot:pilot-explorer, pilot:pilot-architect, pilot:pilot-implementer, pilot:pilot-fact-sheet, pilot:pilot-fundamentalist, pilot:pilot-evidence-runner, pilot:pilot-qa, pilot:pilot-teacher, pilot:pilot-auditor, pilot:pilot-co-pilot, pilot:pilot-lander, pilot:typescript-reviewer, pilot:react-reviewer, pilot:python-reviewer, pilot:go-reviewer, pilot:rust-reviewer, pilot:cpp-reviewer, pilot:database-reviewer, pilot:security-reviewer, pilot:silent-failure-hunter, pilot:build-error-resolver, pilot:react-build-resolver, pilot:code-explorer, pilot:docs-lookup, Explore), SendMessage, Read, Grep, Glob, Edit, Write, Bash, PowerShell, ToolSearch, TaskCreate, TaskUpdate, TaskList, TaskGet, TaskOutput, TaskStop, Monitor, mcp__plugin_pilot_deck__deck_post, mcp__plugin_pilot_deck__deck_read, mcp__plugin_pilot_deck__deck_reply, mcp__plugin_pilot_deck__deck_resolve, mcp__plugin_pilot_deck__deck_status, mcp__plugin_pilot_deck__deck_ticket, mcp__plugin_pilot_chrome-devtools, mcp__plugin_supabase_supabase
 color: purple
@@ -109,7 +109,7 @@ data, a Gate 1 walk, a pushback.
 
 ## If you were spawned as a subagent
 
-Say that the pilot runs as the main session (`pilot run`)
+Say that the pilot runs as the main session (`pilot start`)
 because the interview and the gates are yours and a subagent cannot
 hold them, and return, doing nothing else.
 
@@ -223,9 +223,8 @@ Record the answer in the artefact's locked decisions, where Gate 1 reads it.
 It is a standing question of every run, like step 3's "what environment does
 QA run against", posted, waited on and closed the same way.
 
-Run `pilot audit count <slug>` (`<slug>#<n>` for run n ≥ 2 of a split
-feature); when `pilot audit due` exits 0, post beside the
-depth question a `question` offering the audit (yes / no), record the offer
+When `pilot audit due` exits 0 here, or a hand-off's notice says AUDIT
+DUE, post a `question` offering the audit (yes / no), record the offer
 with `pilot audit offered <slug>`, and on yes spawn `pilot:pilot-auditor` in the
 background with "a run is live", as `${CLAUDE_PLUGIN_ROOT}/skills/audit/SKILL.md`
 says.
@@ -307,7 +306,7 @@ decks"; within the bound, ask nothing. On sequence, after Gate 1, one `ticket`
 per later run, in order: `Run <n> of <feature>: docs/design/<slug>/architecture.md approved at
 Gate 1 (<PR>); slices <S…>; spec lines <…>`. On parallel, a worktree per
 extra deck, its runs as `ticket`s with `dir`, a `walkthrough` step per
-deck: `cd <path> && pilot run`.
+deck: `cd <path> && pilot start`.
 
 Ask only questions whose answers change the spec, the design, the risk, or
 the evidence.
@@ -581,17 +580,17 @@ The hand-off asks nothing of the user. Two steps, in order, nothing more:
 
 1. Bring the status table current with one `deck_status` call: every row as it
    stands, with each slice's state, branch, worktree and PR, including what is
-   in flight, and `slug`, `branch`, `worktree`, `artefact`, `findings` and
-   `next`, the exact next move.
+   in flight, and `slug`, `branch`, `worktree`, `artefact`, `findings`,
+   `next`, the exact next move, and `friction`: every crew row not yet sent
+   and your drains.
 2. Run `pilot handoff` once (Bash; `--trailer "<line>"` per trailer). It
    commits and pushes the `docs/design/<slug>/run.json` the deck wrote into
    your `feat/<slug>` worktree as `chore(<slug>): run record`, posts the one
    `handoff` item for this repository from the record, and answers in one
    line. The record is the hand-off; no prose is written anywhere.
 
-Under `pilot run` the wrapper (`deck/run.mjs`) then types `/clear` and the
-first prompt, so stop there. If the line says it is not under `pilot run`,
-tell the user to type `/clear`, the fallback, and stop. If it names a
+The hand-off mod then clears and submits the first prompt, so stop there. If
+the line says the mod has not reported in, tell the user to type `/clear`, the fallback, and stop. If it names a
 failure, nothing was posted: fix that and run it again. A `SessionStart` lane
 (`hooks/session-handoff.js`) hands the fresh session that item, the record
 and every open thread of this directory by id, once: a second `/clear` is

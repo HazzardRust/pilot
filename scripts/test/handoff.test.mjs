@@ -3,12 +3,12 @@
  *
  * The user asked for the hand-off not to be manual at all (2026-09-28): the pilot runs
  * one command that commits and pushes the run record in the feat worktree, posts the
- * one `handoff` item for this repository, and answers in one line; `pilot run` then types
- * `/clear` and the fresh session's first prompt as it already did. So the claims here are
+ * one `handoff` item for this repository, and answers in one line; the hand-off mod then
+ * clears the session, or, where it never reported in, the line has the user type `/clear`. So the claims here are
  * about what reaches git and the deck, and what the one line says when it did not.
  *
  * Every case runs against a scratch bare origin and a stub deck on a port the operating
- * system hands out. Nothing here may post to the real deck: a live `pilot run` watching
+ * system hands out. Nothing here may post to the real deck: a live hand-off mod watching
  * a real repository would clear a real session on a `handoff` item.
  */
 
@@ -33,7 +33,7 @@ ensureSecret();
 // A port of this file's own, never one a scratch deck might hold.
 const PORT = await freePort();
 
-const { handoff } = await import('../handoff.mjs');
+const { handoff, reportedIn, MIN_MODS_VERSION } = await import('../handoff.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
@@ -103,17 +103,27 @@ async function stubDeck(t, record, { refusePost = false, yellow = null, coPilot 
   return { posts, asked };
 }
 
-const underWrapper = { PILOT_RUN_PID: String(process.pid), PILOT_RUN_REPO: REPO };
+const CLAIMS = path.join(os.homedir(), '.claude', 'pilot-inbox', 'claims');
 
-test('under pilot run: the record is committed and pushed, one handoff item is posted, one line says so', async (t) => {
+// S2's look writes `claims/mod-<session pid>.stamp` when the mod starts; its existence is the reported-in fact.
+const REPORTED_PID = '5151';
+fs.mkdirSync(CLAIMS, { recursive: true });
+fs.writeFileSync(path.join(CLAIMS, `mod-${REPORTED_PID}.stamp`), '2026-11-17T10:00:00.000Z');
+
+/** A session whose mod reported in. */
+const reported = { CLAUDE_PID: REPORTED_PID };
+
+/** A session whose mod never reported in, on a Claude Code new enough to run one. */
+const silent = { env: { CLAUDE_PID: '5252' }, version: '2.1.326' };
+
+test('reported in: the record is committed and pushed, one handoff item is posted, one line says so', async (t) => {
   const { origin, work } = scratchWorktree(t);
   const deck = await stubDeck(t, { feature: 'the thing', slug: 'x', worktree: work, next: 'merge S3, then QA' });
 
-  // The shell's directory may have drifted into a worktree; the wrapper's is the one it watches.
-  const result = await handoff({ cwd: work, env: underWrapper, trailers: ['Claude-Session: s'] });
+  const result = await handoff({ cwd: work, env: reported, trailers: ['Claude-Session: s'] });
 
   assert.equal(result.ok, true, result.line);
-  assert.deepEqual(deck.asked, [REPO], 'the record is asked for the directory the wrapper watches');
+  assert.deepEqual(deck.asked.map((asked) => path.resolve(asked)), [path.resolve(work)], 'the record is asked for the checkout (L11)');
   assert.equal(git(work, 'status', '--porcelain'), '', 'nothing is left uncommitted');
   assert.equal(git(work, 'log', '-1', '--format=%s'), 'chore(x): run record');
   assert.match(git(work, 'log', '-1', '--format=%B'), /Claude-Session: s/);
@@ -123,20 +133,20 @@ test('under pilot run: the record is committed and pushed, one handoff item is p
   const [{ name, arguments: args }] = deck.posts;
   assert.equal(name, 'deck_post');
   assert.equal(args.kind, 'handoff');
-  assert.equal(args.repo, REPO, 'for the repository the wrapper watches, or no /clear is typed');
+  assert.equal(path.resolve(args.repo), path.resolve(work), 'for the checkout, or no /clear is typed');
   assert.match(args.title, /the thing/);
   assert.equal(args.body, 'merge S3, then QA');
 
   assert.doesNotMatch(result.line, /\n/, 'one line');
   assert.match(result.line, /itm_0123456789ab/);
   assert.match(result.line, /pushed/);
-  assert.match(result.line, /pilot run/);
+  assert.match(result.line, /the hand-off mod clears this session/);
 });
 
 test('pilot handoff is taken by a guarded deck', async (t) => {
   const deck = await stubDeck(t, { feature: 'the thing', slug: 'x', next: 'write the artefact' });
 
-  const result = await handoff({ cwd: REPO, env: underWrapper });
+  const result = await handoff({ cwd: REPO, env: reported });
 
   assert.equal(result.ok, true, result.line);
   assert.deepEqual(deck.asked, [REPO], 'the record read was let through');
@@ -147,7 +157,7 @@ test('pilot handoff is taken by a guarded deck', async (t) => {
 test('a record naming no worktree skips the commit cleanly and still hands off', async (t) => {
   const deck = await stubDeck(t, { feature: 'the thing', slug: 'x', next: 'write the artefact' });
 
-  const result = await handoff({ cwd: REPO, env: underWrapper });
+  const result = await handoff({ cwd: REPO, env: reported });
 
   assert.equal(result.ok, true, result.line);
   assert.equal(deck.posts.length, 1);
@@ -161,45 +171,62 @@ const RUN = { feature: 'the thing', slug: 'x', next: 'write the artefact' };
 test('a hand-off with a live co-pilot says to pause it', async (t) => {
   await stubDeck(t, RUN, { coPilot: { ticket: 'itm_7a5c0ffee123', live: true, at: '2026-10-07T10:00:00.000Z' } });
 
-  const result = await handoff({ cwd: REPO, env: underWrapper });
+  const result = await handoff({ cwd: REPO, env: reported });
 
   assert.equal(result.ok, true, result.line);
   assert.equal(
     result.line,
-    'handed off: no worktree in the run record, so nothing committed; posted itm_0123456789ab; the co-pilot on itm_7a5c0ffee123 is live: send it the pause, deck_ticket release it on its hand-back; `pilot run` types `/clear` after that; stop here',
+    'handed off: no worktree in the run record, so nothing committed; posted itm_0123456789ab; the co-pilot on itm_7a5c0ffee123 is live: send it the pause, deck_ticket release it on its hand-back; the hand-off mod clears this session after that; stop here',
   );
 });
 
-test('with none, the line is as today', async (t) => {
+test('a reported-in session gets the mod\'s line', async (t) => {
+  assert.deepEqual(reportedIn(reported, { version: '2.1.326' }), { in: true });
   await stubDeck(t, RUN, { coPilot: { ticket: 'itm_7a5c0ffee123', live: false, at: '2026-10-07T10:00:00.000Z' } });
 
-  const result = await handoff({ cwd: REPO, env: underWrapper });
+  const result = await handoff({ cwd: REPO, env: reported });
 
-  assert.match(result.line, /; posted itm_0123456789ab; `pilot run` types `\/clear` and the first prompt now; stop here$/);
+  assert.equal(
+    result.line,
+    'handed off: no worktree in the run record, so nothing committed; posted itm_0123456789ab; the hand-off mod clears this session and submits the first prompt; stop here',
+  );
 });
 
-test('a live co-pilot off the wrapper: pause it, then the user types /clear; a malformed ticket id is never repeated', async (t) => {
+test('a live co-pilot with no mod: pause it, then the user types /clear; a malformed ticket id is never repeated', async (t) => {
   await stubDeck(t, RUN, { coPilot: { ticket: 'itm_7a5c0ffee123', live: true, at: '2026-10-07T10:00:00.000Z' } });
-  const off = await handoff({ cwd: REPO, env: {} });
-  assert.match(off.line, /; posted itm_0123456789ab; the co-pilot on itm_7a5c0ffee123 is live: send it the pause, deck_ticket release it on its hand-back; not under `pilot run`, so nothing will type it: after that tell the user to type `\/clear`, and stop$/);
+  const off = await handoff({ cwd: REPO, ...silent });
+  assert.match(off.line, /; posted itm_0123456789ab; the co-pilot on itm_7a5c0ffee123 is live: send it the pause, deck_ticket release it on its hand-back; the hand-off mod has not reported in \(not reported in\): after that tell the user to type \/clear, and stop$/);
 
   await stubDeck(t, RUN, { coPilot: { ticket: 'x`; run rm', live: true, at: '2026-10-07T10:00:00.000Z' } });
-  const bad = await handoff({ cwd: REPO, env: underWrapper });
-  assert.match(bad.line, /; posted itm_0123456789ab; `pilot run` types `\/clear` and the first prompt now; stop here$/);
+  const bad = await handoff({ cwd: REPO, env: reported });
+  assert.match(bad.line, /; posted itm_0123456789ab; the hand-off mod clears this session and submits the first prompt; stop here$/);
 });
 
-test('with nothing owning the terminal the line says so, so the user types /clear', async (t) => {
-  for (const env of [{}, { PILOT_RUN_PID: '999999999', PILOT_RUN_REPO: REPO }]) {
-    const deck = await stubDeck(t, { feature: 'the thing', slug: 'x', next: 'n' });
+test('a session with no reported-in stamp is told to type /clear', async (t) => {
+  assert.deepEqual(reportedIn(silent.env, { version: silent.version }), { in: false, why: 'not reported in' });
+  const deck = await stubDeck(t, { feature: 'the thing', slug: 'x', next: 'n' });
 
-    const result = await handoff({ cwd: REPO, env });
+  const result = await handoff({ cwd: REPO, ...silent });
 
-    assert.equal(result.ok, true, result.line);
-    assert.equal(deck.posts.length, 1, 'the item is posted either way; the lane still hands it over');
-    assert.equal(deck.posts[0].arguments.repo, REPO, 'off the wrapper the directory is the shell\'s own');
-    assert.match(result.line, /not under `pilot run`/);
-    assert.match(result.line, /type `\/clear`/);
-  }
+  assert.equal(result.ok, true, result.line);
+  assert.equal(deck.posts.length, 1, 'the item is posted either way; the lane still hands it over');
+  assert.equal(deck.posts[0].arguments.repo, REPO);
+  assert.equal(
+    result.line,
+    'handed off: no worktree in the run record, so nothing committed; posted itm_0123456789ab; the hand-off mod has not reported in (not reported in): tell the user to type /clear, and stop',
+  );
+});
+
+test('an old claude is named as the cause', async (t) => {
+  assert.deepEqual(reportedIn(silent.env, { version: '2.1.324' }), { in: false, why: `Claude Code 2.1.324 is below ${MIN_MODS_VERSION}` });
+  assert.equal(MIN_MODS_VERSION, '2.1.325');
+  assert.deepEqual(reportedIn(silent.env, { version: 'not a version' }), { in: false, why: 'not reported in' }, 'an unreadable version is not blamed');
+  await stubDeck(t, { feature: 'the thing', slug: 'x', next: 'n' });
+
+  const result = await handoff({ cwd: REPO, env: silent.env, version: '2.1.324' });
+
+  assert.equal(result.ok, true, result.line);
+  assert.match(result.line, /; the hand-off mod has not reported in \(Claude Code 2\.1\.324 is below 2\.1\.325\): tell the user to type \/clear, and stop$/);
 });
 
 test('a failing push is named, and no handoff item is posted behind it', async (t) => {
@@ -207,7 +234,7 @@ test('a failing push is named, and no handoff item is posted behind it', async (
   git(work, 'remote', 'set-url', 'origin', path.join(os.tmpdir(), 'pilot-handoff-no-such-origin.git'));
   const deck = await stubDeck(t, { feature: 'the thing', slug: 'x', worktree: work, next: 'n' });
 
-  const result = await handoff({ cwd: REPO, env: underWrapper });
+  const result = await handoff({ cwd: REPO, env: reported });
 
   assert.equal(result.ok, false);
   assert.equal(deck.posts.length, 0, 'a /clear after a lost record is the one thing this must not cause');
@@ -220,7 +247,7 @@ test('a failing push is named, and no handoff item is posted behind it', async (
 test('a trailer that is not one Key: value line is refused before anything lands', async (t) => {
   const { work } = scratchWorktree(t);
   const deck = await stubDeck(t, { feature: 'the thing', slug: 'x', worktree: work, next: 'n' });
-  const result = await handoff({ cwd: REPO, env: underWrapper, trailers: ['A: b\nReviewed-by: x'] });
+  const result = await handoff({ cwd: REPO, env: reported, trailers: ['A: b\nReviewed-by: x'] });
   assert.equal(result.ok, false);
   assert.equal(deck.posts.length, 0);
   assert.match(result.line, /^NOT handed off: trailer .* is not one "Key: value" line; no handoff item posted$/);
@@ -231,7 +258,7 @@ test('a failing commit is named, and no handoff item is posted behind it', async
   fs.writeFileSync(path.join(work, '.git', 'hooks', 'pre-commit'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
   const deck = await stubDeck(t, { feature: 'the thing', slug: 'x', worktree: work, next: 'n' });
 
-  const result = await handoff({ cwd: REPO, env: underWrapper });
+  const result = await handoff({ cwd: REPO, env: reported });
 
   assert.equal(result.ok, false);
   assert.equal(deck.posts.length, 0);
@@ -242,7 +269,7 @@ test('a refused post after the record landed says the record landed', async (t) 
   const { work } = scratchWorktree(t);
   await stubDeck(t, { feature: 'the thing', slug: 'x', worktree: work, next: 'n' }, { refusePost: true });
 
-  const result = await handoff({ cwd: REPO, env: underWrapper });
+  const result = await handoff({ cwd: REPO, env: reported });
 
   assert.equal(result.ok, false);
   assert.match(result.line, /^NOT handed off/);
@@ -252,19 +279,19 @@ test('a refused post after the record landed says the record landed', async (t) 
 
 test('no record, a gone worktree, or no deck: named, and nothing posted', async (t) => {
   const none = await stubDeck(t, null);
-  const noRecord = await handoff({ cwd: REPO, env: underWrapper });
+  const noRecord = await handoff({ cwd: REPO, env: reported });
   assert.equal(noRecord.ok, false);
   assert.match(noRecord.line, /no run record/);
   assert.equal(none.posts.length, 0);
 
   const gone = await stubDeck(t, { slug: 'x', worktree: path.join(os.tmpdir(), 'pilot-handoff-gone'), next: 'n' });
-  const goneWorktree = await handoff({ cwd: REPO, env: underWrapper });
+  const goneWorktree = await handoff({ cwd: REPO, env: reported });
   assert.equal(goneWorktree.ok, false);
   assert.match(goneWorktree.line, /worktree .* is gone/);
   assert.equal(gone.posts.length, 0);
 
   process.env.PILOT_DECK_PORT = String(PORT);
-  const noDeck = await handoff({ cwd: REPO, env: underWrapper });
+  const noDeck = await handoff({ cwd: REPO, env: reported });
   assert.equal(noDeck.ok, false);
   assert.match(noDeck.line, /^NOT handed off: the deck/);
 });
@@ -277,10 +304,10 @@ test('a main session holding only a co-pilot hands off with nothing to land (yel
   };
   const deck = await stubDeck(t, null, { yellow });
 
-  const result = await handoff({ cwd: REPO, env: underWrapper });
+  const result = await handoff({ cwd: REPO, env: reported });
 
   assert.equal(result.ok, true, result.line);
-  assert.match(result.line, /^handed off: no run of this session's own, so nothing committed; posted itm_0123456789ab; `pilot run` types/);
+  assert.match(result.line, /^handed off: no run of this session's own, so nothing committed; posted itm_0123456789ab; the hand-off mod clears/);
   assert.equal(deck.posts.length, 1);
   const [{ arguments: args }] = deck.posts;
   assert.equal(args.kind, 'handoff');
@@ -290,9 +317,24 @@ test('a main session holding only a co-pilot hands off with nothing to land (yel
   assert.doesNotMatch(JSON.stringify(args), /feat\/y|architecture|pilot-handoff-not-this-sessions/, 'only the ticket id and title are carried (L5)');
 });
 
+test('a hand-off from a worktree is posted for the checkout and stamped for the session', async (t) => {
+  const { work } = scratchWorktree(t);
+  const tree = path.join(path.dirname(work), 'tree');
+  git(work, 'worktree', 'add', '-q', '-b', 'feat/y', tree);
+  const deck = await stubDeck(t, RUN);
+  const stamp = path.join(os.homedir(), '.claude', 'pilot-inbox', 'claims', 'posted-4242.stamp');
+  fs.rmSync(stamp, { force: true });
+
+  const result = await handoff({ cwd: tree, env: { CLAUDE_PID: '4242' }, version: '2.1.326' });
+
+  assert.equal(result.ok, true, result.line);
+  assert.equal(path.resolve(deck.posts[0].arguments.repo), path.resolve(work), 'the main checkout, not the worktree (L11)');
+  assert.equal(fs.readFileSync(stamp, 'utf8'), 'itm_0123456789ab', 'the session that posted it is the one cleared (A6)');
+});
+
 test('neither a record nor a yellow ticket: refused as before, nothing posted', async (t) => {
   const deck = await stubDeck(t, null, { yellow: { ticket: { id: 'not a ticket id', title: 't' } } });
-  const result = await handoff({ cwd: REPO, env: underWrapper });
+  const result = await handoff({ cwd: REPO, env: reported });
   assert.equal(result.ok, false);
   assert.equal(result.line, `NOT handed off: no run record for ${REPO}; call deck_status first; no handoff item posted`);
   assert.equal(deck.posts.length, 0);

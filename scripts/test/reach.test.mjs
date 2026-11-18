@@ -1,7 +1,7 @@
 /**
  * plain-session S1 (spec 3, 4, 9; L1, L4, L5, A2, A3): `scripts/reach.mjs` is the one reader of
- * `reach.json`, and it turns a level into what each place holds. `pilot run`'s settings are
- * `claudeArgs`'s, tested in `deck/test/run.test.mjs`.
+ * `reach.json`, and it turns a level into what each place holds. The Start's settings are
+ * `startArgs`'s, tested in `deck/test/start-session.test.mjs`.
  */
 
 import { test } from 'node:test';
@@ -25,7 +25,7 @@ function writeReach(home, text) {
   fs.writeFileSync(path.join(dir, 'reach.json'), text);
 }
 
-test('the plugin id and the rules root sit where pilot run names them', (t) => {
+test('the plugin id and the rules root sit where the Start names them', (t) => {
   const home = fakeHome(t);
   assert.equal(PLUGIN_ID, 'pilot@pilot');
   assert.equal(rulesRoot({ home }), path.join(home, '.claude', 'pilot', 'rules-root'));

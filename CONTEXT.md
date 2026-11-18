@@ -164,7 +164,7 @@ A lane with a live ticket, or for `co-pilot` a live co-pilot's ticket. The Statu
 _Avoid_: Busy lane, open lane
 
 **Chain hand-off**:
-The `handoff` item the daemon posts when a run's record finishes with "closing report posted" and a ticket is open; `pilot run` types `/clear` on it and the fresh session starts the head ticket. Never a headless session.
+The `handoff` item the daemon posts when a run's record finishes with "closing report posted" and a ticket is open; the hand-off mod clears the session on it and the fresh session starts the head ticket. Never a headless session.
 _Avoid_: Launch, spawn, auto-start
 
 **Main deck**:
@@ -214,7 +214,7 @@ The ranked rows plus cost and what went unmeasured, saved in the deck store and 
 _Avoid_: Report
 
 **Offer**:
-The `question` beside the depth question asking whether to run the audit: on a repository's first piloted run, then every tenth counted run. Never an audit started unasked.
+The `question` beside the depth question asking whether to run the audit: on a repository's first piloted run, then every 20 hand-offs. Never an audit started unasked.
 _Avoid_: Prompt, nag
 
 **Pick**:
