@@ -33,7 +33,7 @@ say so plainly and carry on directly. Going solo *silently* is what is not
 acceptable: state the reasoning either way.
 
 As an **implementing agent you own the whole slice loop for your workstream**: plan,
-vertical slices, tests first, implement, gate, one fresh review per slice, commit,
+vertical slices, built to the behaviours, gate, one fresh review per slice, commit,
 push the branch, a report per slice. You may load this package's skills and spawn
 children for review and exploration.
 

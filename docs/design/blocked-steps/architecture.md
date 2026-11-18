@@ -88,7 +88,7 @@ Deepening: deleting `onDenied` puts payload parsing into the harness entry, so i
 - **L1 The fix is in the hooks, not the deck.** A no-verdict never reaches the deck the first time. Rejected: post, then close the item when the call runs (a `PostToolUse` lane): a thread the user saw and a deck write per call on the hottest hook path.
 - **L2 A second no-verdict of the same call posts.** The window and claim stay `postBlocked`'s. Rejected: never post a no-verdict, which hides a classifier outage that lasts.
 - **L3 The no-verdict key is the tool input, not the tool name**, so two different `SendMessage` calls are two calls. Rejected: tool-name keys, where one call's no-verdict would make the next one's post.
-- **L4 New allow rules join `PILOT_MERGE_ALLOW`**, under the same deny/ask-wins rule and the same doctor check. Rejected: a second list and step. ADR NNNN amends ADR 0110 with the read rules.
+- **L4 New allow rules join `PILOT_MERGE_ALLOW`**, under the same deny/ask-wins rule and the same doctor check. Rejected: a second list and step. ADR 0186 amends ADR 0110 with the read rules.
 - **L5 Folds move code and re-export it**; no fold renames or rewrites a function. Rejected: one 600-line move slice.
 - **L6 Prompt lines are evidenced by `measure-prompt` and `check-references`**, not phrase pins, as audit-f2-f3 A1. Every pin holds: pilot 21, QA 29.5 tokens of headroom on `pilot`.
 - **L7 QA environment** (the user, `itm_2dec98752ac9`): this machine, a scratch deck (`pilot deck --scratch`), a real auto-mode session.

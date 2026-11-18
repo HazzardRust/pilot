@@ -30,7 +30,7 @@ One Markdown definition per agent: the pilot and its crew (explorer, architect, 
 
 ## `skills/`
 
-The methodology the crew loads, one directory per skill with a `SKILL.md`: slicing, test-first, grilling, review, design.
+The methodology the crew loads, one directory per skill with a `SKILL.md`: slicing, red-green for logic, grilling, review, design.
 
 ## `rules/`
 
