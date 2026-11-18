@@ -77,10 +77,12 @@ const STATES = { opened: 'open', merged: 'merged', closed: 'closed' };
 const ASKED = { open: 'opened', merged: 'merged', closed: 'closed', all: 'all' };
 /** GitLab's draft title prefixes; a **Review**'s title is the title without one, as on GitHub. */
 const DRAFT = /^(?:\[draft\]|\(draft\)|draft:)\s*/i;
+/** The most pages of notes `upsertComment` reads, so a misbehaving answer cannot loop it for ever. */
+const PAGES = 100;
 
 /** A GitLab MR as a **Review**; a state off the three (`locked`) throws rather than being guessed at. */
 function reviewOf(mr) {
-  const state = STATES[mr?.state];
+  const state = Object.hasOwn(STATES, mr?.state ?? '') ? STATES[mr.state] : undefined;
   if (state === undefined) throw new Error(`glab: a merge request in state ${JSON.stringify(mr?.state)}`);
   return {
     number: mr.iid, state, base: mr.target_branch, head: mr.source_branch, headSha: mr.sha,
@@ -110,7 +112,8 @@ function numbered(n) {
  */
 export function gitlabHost(run) {
   const get = (target, what) => json(run(['api', target]), what);
-  const send = (method, target, body, what) => json(run(['api', '-X', method, '-H', 'Content-Type: application/json', '--input', '-', target], JSON.stringify(body)), what);
+  const send = (method, target, body, what) =>
+    json(run(['api', '-X', method, '-H', JSON_HEADER, '--input', '-', target], JSON.stringify(body)), what);
   const whoami = () => {
     const name = get('user', 'api user')?.username;
     if (typeof name !== 'string' || name === '') throw new Error('glab api user: no username');
@@ -122,12 +125,13 @@ export function gitlabHost(run) {
     cli: 'glab',
     whoami,
     reviews({ head, base, state, mine = false, limit = 100 }) {
-      if (ASKED[state] === undefined) throw new Error(`glab: no merge request state ${JSON.stringify(state)}`);
+      if (!Object.hasOwn(ASKED, state)) throw new Error(`glab: no merge request state ${JSON.stringify(state)}`);
       const query = new URLSearchParams({ state: ASKED[state] });
       if (head !== undefined) query.set('source_branch', head);
       if (base !== undefined) query.set('target_branch', base);
       if (mine) query.set('scope', 'created_by_me');
-      query.set('per_page', String(Math.min(Math.max(1, Math.trunc(limit)), 100)));
+      // GitLab's page holds at most 100; today's callers ask 100 or fewer.
+      query.set('per_page', String(Number.isFinite(limit) ? Math.min(Math.max(1, Math.trunc(limit)), 100) : 100));
       const said = get(`${MRS}?${query}`, 'merge requests');
       if (!Array.isArray(said)) throw new Error('glab merge requests: an answer that is not a list');
       return said.map(reviewOf);
@@ -156,9 +160,16 @@ export function gitlabHost(run) {
     upsertComment(n, marker, body) {
       const text = `${marker}\n${body}`;
       const me = whoami();
-      const notes = get(`${MRS}/${numbered(n)}/notes?sort=asc&order_by=created_at&per_page=100`, 'notes');
-      if (!Array.isArray(notes)) throw new Error('glab notes: an answer that is not a list');
-      const mine = notes.find((note) => note?.system !== true && note?.author?.username === me && typeof note.body === 'string' && note.body.startsWith(marker));
+      const ours = (note) => note?.system !== true && note?.author?.username === me && typeof note.body === 'string' && note.body.startsWith(marker);
+      let mine;
+      // GitLab answers at most 100 notes a page; read on until the note is found or a page comes back short.
+      for (let page = 1; mine === undefined; page++) {
+        if (page > PAGES) throw new Error(`glab notes: more than ${PAGES * 100} notes`);
+        const notes = get(`${MRS}/${numbered(n)}/notes?sort=asc&order_by=created_at&per_page=100&page=${page}`, 'notes');
+        if (!Array.isArray(notes)) throw new Error('glab notes: an answer that is not a list');
+        mine = notes.find(ours);
+        if (notes.length < 100) break;
+      }
       if (!mine) {
         send('POST', `${MRS}/${numbered(n)}/notes`, { body: text }, 'note create');
         return 'posted';

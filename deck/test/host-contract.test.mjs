@@ -225,6 +225,38 @@ test('the upsert edits its own note', () => {
   assert.deepEqual(writes.map(({ input }) => JSON.parse(input)), [{ body: '<!-- pilot:qa -->\nfirst' }, { body: '<!-- pilot:qa -->\nsecond' }]);
 });
 
+test('the upsert finds its note past the first page', () => {
+  // 120 notes, this account's marker note the last: GitLab answers 100 a page, so it sits on page 2.
+  const others = Array.from({ length: 119 }, (_, at) => ({ ...fixture('note'), id: 1000 + at, body: 'added 1 commit', system: true }));
+  const all = [...others, { ...fixture('note'), id: 2000, body: '<!-- pilot:qa -->\nfirst' }];
+  const writes = [];
+  const host = gitlabHost((args) => {
+    const target = args.at(-1);
+    if (target === 'user') return JSON.stringify(fixture('user'));
+    if (args.includes('-X')) {
+      writes.push([args[2], target]);
+      return JSON.stringify(fixture('note'));
+    }
+    const page = Number(new URLSearchParams(target.split('?')[1]).get('page') ?? 1);
+    return JSON.stringify(all.slice((page - 1) * 100, page * 100));
+  });
+  assert.equal(host.upsertComment(7, '<!-- pilot:qa -->', 'second'), 'edited');
+  assert.deepEqual(writes, [['PUT', 'projects/:id/merge_requests/7/notes/2000']]);
+});
+
+test('a title edit keeps a draft a draft', () => {
+  for (const [draft, title] of [[true, 'Draft: T'], [false, 'T']]) {
+    const puts = [];
+    const host = gitlabHost((args, input) => {
+      if (args.includes('PUT')) puts.push(JSON.parse(input));
+      return JSON.stringify({ ...fixture('merge_request'), title: draft ? '[Draft] old' : 'old', draft });
+    });
+    assert.equal(host.review(7).title, 'old', 'the Review title carries no draft prefix, as on GitHub');
+    host.edit(7, { title: 'T' });
+    assert.deepEqual(puts, [{ title }]);
+  }
+});
+
 test('off the list is refused', (t) => {
   const dir = glabStubbed(t);
   const glab = glabRun(dir);

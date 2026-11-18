@@ -43,7 +43,8 @@ export function hostFor(cwd, { git = (args) => gitAt(cwd, ...args), run } = {}) 
   const name = hostOf(git);
   if (name === 'none') return null;
   if (name === 'github') return githubHost(run ?? ghRun(cwd));
-  return gitlabHost(run ?? glabRun(cwd));
+  if (name === 'gitlab') return gitlabHost(run ?? glabRun(cwd));
+  throw new Error(`${HOST_KEY} names ${JSON.stringify(name)}: no adapter`);
 }
 
 /** Today's callers' argv runner, until each takes a **Host** (S6). */
