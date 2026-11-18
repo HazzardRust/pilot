@@ -1,0 +1,142 @@
+{
+  "slug": "other-host",
+  "feature": "The pilot runs on other hosts",
+  "ticket": "itm_b18bcafffbce",
+  "branch": "feat/other-host",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-other-host-r2",
+  "artefact": "docs/design/other-host/architecture.md",
+  "slices": [
+    {
+      "slice": "other-host",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11"
+      ],
+      "branch": "feat/other-host",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-other-host-r2",
+      "pr": 955
+    },
+    {
+      "slice": "S1",
+      "state": "pushed e331f33 (re-review for verdict lines)",
+      "branch": "slice/other-host-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S3"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S4",
+        "S5",
+        "S7"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S8",
+      "state": "planned",
+      "after": [
+        "S4"
+      ]
+    },
+    {
+      "slice": "S9",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S10",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S11",
+      "state": "pushed a06ae90 (conflicts with origin/pilot in agents/pilot-implementer.md, pilot-qa.md, pilot-architect.md)",
+      "branch": "slice/other-host-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s11"
+    }
+  ],
+  "next": "S1 pushed, fresh typescript and security reviewers for verbatim verdicts; feat taking origin/pilot; S11 conflicts with new pilot in agents/*.md, rebase it; then integrate S1, S11, start S2, S5, S7, S9, S10",
+  "updatedAt": "2026-11-18T04:48:02.750Z",
+  "friction": [
+    {
+      "agent": "pilot",
+      "what": "a re-cut's gate cannot be posted: gate1 refuses a yellow ticket, signoff refuses while any question in the directory is open, including another ticket's blocking one",
+      "evidence": "deck refusals on itm_b18bcafffbce, 2026-11-17",
+      "size": 3
+    },
+    {
+      "agent": "pilot",
+      "what": "gate1 demands the design branch on pilot's tip after any landing; rebase needs a force push, which auto mode denies; a merge of pilot was the way through",
+      "evidence": "deck: 'not on pilot's tip'; classifier denial of --force-with-lease",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "brief's worktree path was taken by another repository's worktree",
+      "evidence": "pilot-archive/.git/worktrees/pilot-design-other-host",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck README ledger lint only surfaces in a full gate run; a new module costs one ~10 min run to find its missing row",
+      "evidence": "S1 gate on 8ce03726: 'every deck module is listed' red, fixed in e331f336",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "context reset mid-slice dropped the reviewers' verbatim Verdict lines, forcing a re-review before integration",
+      "evidence": "S1 report: verdict lines not retained",
+      "size": 2
+    }
+  ]
+}
