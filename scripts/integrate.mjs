@@ -42,6 +42,7 @@ import { hostIn } from '../deck/host.mjs';
 import { RUN_BASE } from '../deck/runs.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
 import { deleteMerged } from './branches.mjs';
+import { behavioursOf } from './check-slices.mjs';
 import { takeSlot } from './gate-slots.mjs';
 import { mergeIntoPilot } from './sync.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
@@ -81,21 +82,48 @@ function subjectOf(cwd, head, slice) {
 const SECURITY = 'pilot:security-reviewer';
 
 /**
- * Throws when `slice`'s file, `docs/design/<slug>/slices/S<n>.md` from its run record row, has a
- * `Reviewers:` line naming `pilot:security-reviewer` and no trailer is that reviewer's
- * `Reviewed-by:`, or its verdict starts `block`: no security verdict, no integration. No record,
- * row or slice file: no check.
+ * `slice`'s file, `docs/design/<slug>/slices/S<n>.md` from its run record row, as `{ n, text }`;
+ * null with no record, row or slice file. Every check that reads the slice file reads it here.
  */
-function assertSecurityVerdict(cwd, head, slice, trailers) {
+function sliceFileOf(cwd, head, slice) {
   const found = recordIn(cwd, head);
   const n = /^S\d+\w*/.exec(found?.record.slices?.find((r) => r.branch === slice)?.slice ?? '')?.[0];
   const file = n && path.join(cwd, 'docs', 'design', found.slug, 'slices', `${n}.md`);
-  if (!file || !fs.existsSync(file)) return;
-  if (!/^Reviewers:.*\bpilot:security-reviewer\b/m.test(fs.readFileSync(file, 'utf8'))) return;
+  if (!file || !fs.existsSync(file)) return null;
+  return { n, text: fs.readFileSync(file, 'utf8') };
+}
+
+/**
+ * Throws when the slice file has a `Reviewers:` line naming `pilot:security-reviewer` and no
+ * trailer is that reviewer's `Reviewed-by:`, or its verdict starts `block`: no security verdict,
+ * no integration. No slice file: no check.
+ */
+function assertSecurityVerdict(sliceFile, trailers) {
+  if (!sliceFile) return;
+  const { n, text } = sliceFile;
+  if (!/^Reviewers:.*\bpilot:security-reviewer\b/m.test(text)) return;
   const prefix = `Reviewed-by: ${SECURITY}: `;
   const verdicts = trailers.map(String).filter((line) => line.startsWith(prefix)).map((line) => line.slice(prefix.length));
   if (!verdicts.length) throw new Error(`${n} names ${SECURITY} and no --trailer "${prefix}<verdict>"`);
   if (verdicts.some((v) => /^block/i.test(v))) throw new Error(`${n}: ${SECURITY}'s verdict is block`);
+}
+
+/**
+ * Throws naming the first behaviour of the slice file's `## Behaviours` (`behavioursOf`) that no
+ * trailer `Evidence: B<k> <kind>: <what was seen>` covers, by number alone: the implementer may
+ * raise or swap a kind (spec-first spec 2, 8). Each behaviour is checked by its own number, never
+ * by a count. An old `## Tests` slice file has no behaviours and needs no evidence (L5); no slice
+ * file: no check.
+ */
+function assertEvidence(sliceFile, trailers) {
+  if (!sliceFile) return;
+  const evidenced = new Set();
+  for (const line of trailers.map(String)) {
+    const match = /^Evidence: B(\d+) \w+: \S/.exec(line);
+    if (match) evidenced.add(Number(match[1]));
+  }
+  const missing = behavioursOf(sliceFile.text).find(({ n }) => !evidenced.has(n));
+  if (missing) throw new Error(`${sliceFile.n}: B${missing.n} has no --trailer "Evidence: B${missing.n} ${missing.kind}: <what was seen>"`);
 }
 
 /** The run record in `cwd` of `head`, a `feat/<slug>`: `{ slug, record }`, or null with no record there or another head. */
@@ -349,7 +377,11 @@ export function integrate(branch, options = {}) {
     assertPushable(head, { git: (args) => git(cwd, ...args) });
     // The merge's subject, from the run record before any merge: a slice it does not name is refused here.
     if (slice) subject = subjectOf(cwd, head, slice);
-    if (slice) assertSecurityVerdict(cwd, head, slice, trailers);
+    if (slice) {
+      const sliceFile = sliceFileOf(cwd, head, slice);
+      assertSecurityVerdict(sliceFile, trailers);
+      assertEvidence(sliceFile, trailers);
+    }
   } catch (err) {
     return { ok: false, line: `${not}: ${firstLine(err)}; nothing merged or pushed`, failing: [] };
   }

@@ -3,7 +3,7 @@
  *
  * `installSettings` writes `enabledPlugins["pilot@pilot"]` when told to and skips the status
  * line when told to; `repairSettings` below `everything` never writes `statusLine`, so a
- * session started by `pilot run` cannot put back what `pilot reach nothing` took out.
+ * session started by `pilot start` cannot put back what `pilot reach nothing` took out.
  *
  * Every test runs over a settings fixture in a scratch directory, with the home itself moved
  * by `lib/fake-home.mjs` first, so nothing here can reach a real `~/.claude`.

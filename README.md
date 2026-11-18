@@ -52,10 +52,11 @@ repositories elsewhere, or give your terminal Full Disk Access in System Setting
 In the repository you want to work on:
 
 ```bash
-pilot run
+pilot start
 ```
 
-That is the one command you type. Everything after it waits for you on the deck, at <http://127.0.0.1:4321>,
+That is the one command you type; the deck's Start does the same. Everything after it waits for you on the
+deck, at <http://127.0.0.1:4321>,
 bound to the loopback interface only. Its state lives in `~/.claude/pilot/`, never in your repository, and it
 refuses to store anything that looks like a key or a token.
 
@@ -78,7 +79,7 @@ In the order they matter, each with what delivers it today:
 4. **Keep a long memory.** Each run's record lives on the deck and mirrors into the repository, its decisions become ADRs,
    and friction rows survive every session.
 5. **Optimise on its own.** Each closing report ranks the crew's friction into "make agents cheaper here", and
-   the audit (`/pilot:audit`), offered every ten runs, measures what slows agents in your repository; you pick what lands.
+   the audit (`/pilot:audit`), offered every 20 hand-offs, measures what slows agents in your repository; you pick what lands.
 6. **The system wayfinds on its own.** Nothing to memorise: once the idea is in, the deck's questions, the three lanes and the
    slice chain grill, architect, schedule, build, review and merge each slice into the feature's branch, and you just answer the questions.
 
@@ -97,7 +98,7 @@ Model and harness agnosticity is the intent for later; today Pilot is built on C
 - **Slice graph**: each run draws its slices as a git graph whose dots fill as a slice goes from planned to in progress to integrated.
 - **Yours column**: the status table names your next action on each slice, and every tab counts the threads waiting behind it.
 - **Usage at a glance**: the deck's header and Claude Code's status line show how full the context is and how much of the five-hour and weekly limits is gone.
-- **Audit, offered on its own**: on a repository's first run and every ten runs after, the pilot asks whether to audit it for what slows agents; on yes it runs in the background.
+- **Audit, offered on its own**: on a repository's first run and every 20 hand-offs after, the pilot asks whether to audit it for what slows agents; on yes it runs in the background.
 - **Permission refusal**: a crew permission prompt never stalls a run; it is refused and posted to the deck as a blocked item.
 - **Hand-off and recovery**: a context hands off at specific token caps (e.g. 230k tokens) to a fresh session rather than compact, and a crashed run recovers from its record.
 - **Observability**: CLI remains open on the terminal to inspect agents at the lower level whilst they work,
@@ -120,12 +121,12 @@ it, so most news reaches the pilot as a conclusion, never as a file dump.
 
 An average run, then the same steps drawn:
 
-1. You give `pilot run` your idea, and `pilot:pilot` asks first how deep to be grilled.
+1. You give `pilot:pilot` your idea in the session `pilot start` opens, and it asks first how deep to be grilled.
 2. **The grilling** puts each decision to you on the deck, with a researched recommended answer.
 3. `pilot:pilot-architect` cuts the design into slices that each work end to end.
 4. You press **Gate 1** on the plan, and its ticket queues to be built.
 5. `pilot:pilot-co-pilot` builds that ticket in the background while the pilot plans the next.
-6. `pilot:pilot-implementer` builds each slice tests first through the gate and one reviewer; the co-pilot merges it into the feature's branch.
+6. `pilot:pilot-implementer` builds each slice to its behaviours, with evidence for each, through the gate and one reviewer; the co-pilot merges it into the feature's branch.
 7. `pilot:pilot-fundamentalist` argues against the whole feature once, subtraction first, by principles from the literature; the kept findings are fixed and the feature lands on the pilot branch.
 8. `pilot:pilot-qa` runs the feature where it is meant to run and hands you a walkthrough to work.
 9. You press **Gate 2**: the deck lands the feature on the pilot branch, QA's fixes with it.

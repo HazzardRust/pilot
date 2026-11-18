@@ -386,10 +386,12 @@ export function setCoPilot(ticketId, live) {
   return storedCoPilot(deck, ticket.repo);
 }
 
-/** `pilot run` starting in `dir` (spec 5): whatever co-pilot the deck holds there is released. */
+/** A pilot session starting in `dir` (spec 5): whatever co-pilot the deck holds there is released; true if one was. */
 export function releaseCoPilot(dir) {
   const deck = readDeck();
-  if (releaseIn(deck, dir)) writeDeck(deck);
+  if (!releaseIn(deck, dir)) return false;
+  writeDeck(deck);
+  return true;
 }
 
 /** `{ main, yellow }` for the deck in `dir`; the default for a directory with no setting. */

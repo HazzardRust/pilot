@@ -5,7 +5,8 @@
  * symbol present in the slice's Interface block. The file also carries one
  * `Rewrite check:` line (what stays true if the implementation behind the interface were
  * replaced) and one `Misses:` line (what the Tests cannot catch; rule `misses`), and
- * stays at or under 60 lines. ADR 0082; deep-modules L2-L4. Each blocker in the header's
+ * stays at or under 60 lines. ADR 0082; deep-modules L2-L4. A `## Behaviours` section takes
+ * the place of `## Tests` (spec-first L1, L5); `checkSlice` says what it checks. Each blocker in the header's
  * `after:` field names what it shares, `S<n> (<file or seam>)` (design-docs-only L8).
  * The header, above the first `## ` section, states the implementer's model and why:
  * `Model: sonnet — <reason>` or `Model: opus — <reason>` (cheaper-crew L2); a slice whose
@@ -78,33 +79,81 @@ function blockers(field) {
   return parts.map((part) => part.trim());
 }
 
-/** Problems with one slice file's text; [] when it is seam-first. */
-export function checkSlice(text) {
+/** A `## Behaviours` line: `` <k>. `<name>` (<kind>): <evidence> `` (spec-first L1). */
+const BEHAVIOUR = /^(\d+)\.\s+`([^`]+)`\s+\((test|run|look|read)\):\s+(\S.*)$/;
+/** A `test` behaviour's evidence: `` `<Interface symbol>` → <observable result> ``. */
+const TEST_EVIDENCE = /^`([^`]+)`\s+→\s+\S/;
+
+/** The text's lines, its fence map and its `## Behaviours` section (null for the old `## Tests` shape). */
+function parse(text) {
   const lines = text.replace(/(?:\r?\n)+$/, '').split(/\r?\n/);
   const inFence = fenced(lines);
+  return { lines, inFence, behaviours: section(lines, inFence, 'Behaviours') };
+}
+
+/** One well-formed `## Behaviours` line read, or null. */
+function behaviourAt({ text }) {
+  const match = BEHAVIOUR.exec(text.trim());
+  if (!match) return null;
+  const [, n, , kind, evidence] = match;
+  const symbol = kind === 'test' ? TEST_EVIDENCE.exec(evidence)?.[1] : undefined;
+  return { n: Number(n), kind, symbol };
+}
+
+/** The slice's behaviours in file order; [] for an old-shape file or none. */
+export function behavioursOf(text) {
+  const { behaviours } = parse(text);
+  return behaviours ? behaviours.body.map(behaviourAt).filter(Boolean) : [];
+}
+
+/**
+ * Problems with one slice file's text; [] when it is seam-first. A `## Behaviours` section takes
+ * the place of `## Tests` (spec-first L1): each line names a kind (rule `behaviour-kind`), a `test`
+ * line names its Interface symbol (`behaviour-symbol`), and `Rewrite check:` is needed only beside a
+ * `test` line. The old `## Tests` shape stays valid (L5).
+ */
+export function checkSlice(text) {
+  const { lines, inFence, behaviours } = parse(text);
   const problems = [];
   const problem = (line, rule, message) => problems.push({ line, rule, message });
 
-  const tests = section(lines, inFence, 'Tests');
+  const listed = behaviours ?? section(lines, inFence, 'Tests');
   const iface = section(lines, inFence, 'Interface');
   const interfaceText = iface ? iface.body.map(({ text: t }) => t).join('\n') : '';
-  const items = tests ? tests.body.filter(({ text: t }) => TEST_ITEM.test(t)) : [];
-  const shape = '`<name>`: `<Interface symbol>` → <observable result>';
+  const requireInInterface = (line, symbol) => {
+    if (!names(interfaceText, symbol)) problem(line, 'symbol-not-in-interface', `\`${symbol}\` is not in the Interface block`);
+  };
+  const items = listed ? listed.body.filter(({ text: t }) => TEST_ITEM.test(t)) : [];
+  let seamTested = true;
 
-  if (items.length === 0) problem(tests ? tests.line : 1, 'tests-shape', `no numbered Tests lines reading ${shape}`);
-  for (const { line, text: item } of items) {
-    const match = SEAM_FIRST.exec(item);
-    if (!match) problem(line, 'tests-shape', `does not read ${shape}`);
-    else if (!names(interfaceText, match[1])) {
-      problem(line, 'symbol-not-in-interface', `\`${match[1]}\` is not in the Interface block`);
+  if (behaviours) {
+    const shape = '`<name>` (test|run|look|read): <evidence>';
+    if (items.length === 0) problem(behaviours.line, 'behaviour-kind', `no numbered Behaviours lines reading ${shape}`);
+    const read = items.map(behaviourAt);
+    seamTested = read.some((b) => b?.kind === 'test');
+    items.forEach(({ line }, i) => {
+      const behaviour = read[i];
+      if (!behaviour) problem(line, 'behaviour-kind', `does not read ${shape}`);
+      else if (behaviour.kind === 'test' && !behaviour.symbol) {
+        problem(line, 'behaviour-symbol', 'a test behaviour reads `<Interface symbol>` → <observable result>');
+      } else if (behaviour.kind === 'test') requireInInterface(line, behaviour.symbol);
+    });
+  } else {
+    const shape = '`<name>`: `<Interface symbol>` → <observable result>';
+    if (items.length === 0) problem(listed ? listed.line : 1, 'tests-shape', `no numbered Tests lines reading ${shape}`);
+    for (const { line, text: item } of items) {
+      const match = SEAM_FIRST.exec(item);
+      if (!match) problem(line, 'tests-shape', `does not read ${shape}`);
+      else requireInInterface(line, match[1]);
     }
   }
 
   for (const [label, rule] of [['Rewrite check', 'rewrite-check'], ['Misses', 'misses']]) {
+    if (rule === 'rewrite-check' && !seamTested) continue;
     const marker = new RegExp(`^${label}:\\s*\\S`);
     const found = lines.flatMap((t, i) => (!inFence[i] && marker.test(t) ? [i + 1] : []));
     if (found.length !== 1) {
-      problem(found[1] ?? (tests ? tests.line : 1), rule, `needs exactly one "${label}:" line, found ${found.length}`);
+      problem(found[1] ?? (listed ? listed.line : 1), rule, `needs exactly one "${label}:" line, found ${found.length}`);
     }
   }
 

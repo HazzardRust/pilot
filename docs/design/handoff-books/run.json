@@ -1,0 +1,185 @@
+{
+  "slug": "handoff-books",
+  "feature": "handoff-books",
+  "ticket": "itm_b561a9d42212",
+  "branch": "feat/handoff-books",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-books",
+  "qa": {
+    "branch": "qa/handoff-books",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-qa-handoff-books",
+    "url": "http://127.0.0.1:49549"
+  },
+  "artefact": "docs/design/handoff-books/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/handoff-books-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-books-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "branch": "slice/handoff-books-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-books-s2",
+      "pr": 102
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/handoff-books-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-books-s3"
+    },
+    {
+      "slice": "handoff-books",
+      "state": "in QA",
+      "after": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "branch": "feat/handoff-books",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-books",
+      "pr": 89
+    },
+    {
+      "slice": "S4",
+      "state": "integrated (added)",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/handoff-books-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-books-s4"
+    }
+  ],
+  "findings": [
+    "kept: F1 simplify — delete scripts/test/handoff-books.test.mjs; spec 3 cites handoff-friction.test.mjs and record-friction.test.mjs 'rows append across calls' (-50) — fixed 5c70fa8",
+    "kept: F2 finding — CONTEXT.md:217, README.md:82,101 cadence now every 20 hand-offs — fixed 5c70fa8",
+    "kept: N1 nit — S1.md rewrite check excludes test 6 — fixed 5c70fa8",
+    "kept: N2 nit — guard pilot step 1: a row is never a credential or a transcript (+1) — fixed 5c70fa8",
+    "dropped: carried deck-down clause — the guard's co-pilot branch fires only onDeck (context-size-guard.js:387); refused calls are already blocked steps in pilot-co-pilot.md",
+    "dropped: NNNN placeholder — scripts/adr-allocate.mjs numbers it at land; adr-index accepts it",
+    "dropped: fix-review LOW ADR 0040 / adr README 'every tenth run' — ADRs are history; 0184-handoff-books records the change to 20",
+    "dropped: fix-review LOW S2.md:30,36 still name test 4 — the slice file records the plan as built at S2; the gate ran it then"
+  ],
+  "next": "feat/handoff-books 291d4301, walkthrough itm_4dd337df3bd3 posted, held by the pilot, QA parked (its deck MCP dropped). On the user's reply or Sign off: spawn a fresh pilot-qa on the qa refs to write the final PR comment, run `pilot integrate --trial`, post gate2, then stop scratch deck pid 26952 (`pilot deck --stop 26952`) and remove the QA worktree. The live /clear step is the user's.",
+  "updatedAt": "2026-11-17T12:59:57.180Z",
+  "friction": [
+    {
+      "agent": "pilot-architect (handoff-books)",
+      "what": "measure-prompt run in the shared checkout reads main, not pilot; gave a wrong headroom number",
+      "evidence": "1.5 vs 21 tokens for pilot.md at d7569a49"
+    },
+    {
+      "agent": "pilot-architect (handoff-books)",
+      "what": "an in-flight run's design lives only on origin/feat/<slug>, read via git show",
+      "evidence": "handoff-mod architecture.md"
+    },
+    {
+      "kind": "drain",
+      "what": "gate1 refused four times on format: branch not on pilot tip, verdict line form, pr field, an open Blocked item",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the full gate takes over five minutes, outrunning the 180 s foreground limit, so it finished in the background",
+      "evidence": "npm test: duration_ms 317818, 11338 spawns (10368 git)",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1's README row cannot exist before landing (adr-index never indexes an NNNN ADR) and the both-sides supersession check needs an edit to ADR 0146, outside the slice's files",
+      "evidence": "scripts/adr-index.mjs:88 PLACEHOLDER = 'NNNN'; superseded_by check 120-133",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "context compacted before the first commit on S3; restarted the slice from the slice file, losing its fact sheet and reads",
+      "evidence": "implementer message: worktree clean at 0923d6e9, earlier fact-sheet and read results gone"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "context compacted before S3's first commit; restarted the slice from the slice file, losing its fact sheet and reads",
+      "evidence": "implementer message: worktree clean at 0923d6e9, earlier fact-sheet and read results gone"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "evidence pass ran no coverage or mutation: the reviewer's worktree had no node_modules",
+      "evidence": "c8: node_modules missing: run npm ci; stryker: Cannot find package '@modelcontextprotocol/sdk'"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "the evidence runner's file list included a deleted file, failing eslint, jscpd and madge outright",
+      "evidence": "No files matching the pattern scripts/test/yellow-lane-wording.test.mjs"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "check-slices.mjs 0.9.8 rejects all three slice files for a missing Misses: line, a format newer than the slices",
+      "evidence": "misses needs exactly one \"Misses:\" line, found 0"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "context compacted partway; re-ran the review on the final state",
+      "evidence": "fundamentalist report preamble"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "npm test teardown stopped QA's scratch deck, which was leashed to its worktree dir",
+      "evidence": "stopped 20040 daemon ... --leash-dir pilot-qa-handoff-books"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "driving the lane by script needs the deck secret, a run registered via /api/runs, slices: [] and a numeric friction size",
+      "evidence": "errors in order: the deck wants its secret; friction[2].size must be a number; slices must be a list of rows",
+      "size": 3
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "measure-prompt prints two tables; QA read the Definition column for the own share",
+      "evidence": "reported 10047, corrected to 11842.75",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "QA handed back while waiting on the fix tip instead of holding; resumed by message",
+      "evidence": "QA hand-back at 23731d98 with walkthrough not posted"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fix round: a batch of Edits refused because the files had not been read first; a Monitor call to a tool it lacks",
+      "evidence": "File has not been read yet x4; Monitor rejected",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fix round reported pilot own share as 10047, the Definition column; the own share is 11842.75",
+      "evidence": "measure-prompt own-share table at 5c70fa8",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4: npm test output buffered over 3 min; a foreground wait was moved to the background at 180 s, so it polled the log with an until-loop",
+      "evidence": "S4 implementer report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "handoff-books QA survived the /clear and was still waiting on its walkthrough when the fresh pilot took the thread as the first-turn rule says: two owners for one thread, QA handed back",
+      "evidence": "QA hand-back: wait woke on the pilot's 12:37 reply"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP dropped mid-ticket, QA could no longer post, reply or resolve",
+      "evidence": "CONNECTION_CLOSED after 12:37; deck still answering on :4321"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "npm test stops a scratch deck started from inside the worktree",
+      "evidence": "first scratch deck died during the suite; restarted from the scratchpad"
+    }
+  ]
+}
