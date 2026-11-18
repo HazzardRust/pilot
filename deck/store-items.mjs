@@ -780,12 +780,11 @@ export { mayWrite };
 
 /**
  * The user's answer resumes a paused ticket (blocked-yellow-yields spec 3; §2, A3), pure on the deck in hand, so it is
- * part of `addReply`'s one write: once the question naming the ticket, the question that paused it, open or closed, and
+ * part of `addReply`'s one write: once the question or walkthrough (never-stuck spec 8) naming the ticket, the item that paused it, open or closed, and
  * every other open blocking item naming it carry a message from the user (or, for a question, the pilot's close, blocking-close spec 2), the ticket turns yellow, loses `paused`, and moves in `deck.items` before its
  * repository's first yellow ticket. Returns the ticket, or undefined when nothing resumed.
  */
 export function resumeIn(deck, question) {
-  // A walkthrough yields too (never-stuck spec 8), so the user doing it resumes the ticket like an answer.
   const ticket = (question?.kind === KIND_QUESTION || question?.kind === KIND_WALKTHROUGH) && deck.items.find((item) => item?.id === question.ticket && item.kind === KIND_TICKET);
   const answered = (item) =>
     isAnswered(item) || (!isOpen(item) && isPilotClose(item, item.resolution, item.resolvedBy));
