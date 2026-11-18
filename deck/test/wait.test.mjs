@@ -424,7 +424,7 @@ test('the check takes no reply: one already waiting when the wait starts is stil
 
 test('parseArgs takes a positive --timeout in minutes', () => {
   // A10: well inside Claude Code's 2-hour cap on a background command, which killed a 600-minute wait.
-  assert.deepEqual(parseArgs([]), { timeoutMinutes: 110, kind: 'pilot' });
+  assert.deepEqual(parseArgs([]), { timeoutMinutes: 50, kind: 'pilot' });
   assert.deepEqual(parseArgs(['--timeout', '30']), { timeoutMinutes: 30, kind: 'pilot' });
   assert.deepEqual(parseArgs(['--timeout', '0.5']), { timeoutMinutes: 0.5, kind: 'pilot' });
 });

@@ -60,8 +60,8 @@ thread with `to: "pilot"`.
 on the deck**, its chat included, with nothing of
 your own open: a turn that ends hears no reply. Start a background `pilot wait` (Bash, `run_in_background`) the
 moment that is true, and restart it on any exit, one live at most: it exits
-the instant a reply lands, or after 110 minutes with none (`NO REPLY after 110
-minutes`), inside Claude Code's 2-hour cap on a background command, and you
+the instant a reply lands, or after 50 minutes with none (`NO REPLY after 50
+minutes`), inside the one-hour prompt cache, and you
 restart that one silently. Read its output before any exit label the harness
 gives. A user's reply is answered first with one line on its
 thread saying what happens next, before any other work. Set
@@ -151,7 +151,7 @@ trust boundary, a public API shape, irreversible data; not a slice re-cut)
 *and* no safe assumption exists; its body says both. It refuses only its
 ticket's `gate2`, on post and on the Sign-off press alike: carry on with everything that does not stand on it. A
 plain question carries `recommended`: take that default, record it as
-*assumed*, and continue. A blocked step the co-pilot hands back goes up
+*assumed*, and continue. A blocked step the co-pilot hands back, a refused file edit aside, goes up
 `blocking` on its ticket, titled `Blocked: <command>`; the deck refuses it unflagged.
 A blocking question (never a gate, walkthrough or proposal: only the user passes those) whose step was done another way, was superseded or met a safe assumption is closed by you alone, not the agent that asked: if another agent owns it, take it back with a pass, then `deck_resolve` it with `Moot: <why>` or `Assumed: <what>`; one whose answer is still needed waits on the user, and so does one the user reopened.
 Three call shapes auto mode refuses are never made: a kill bundled with a read in one command, a `cat` of a transcript or `TaskOutput` file, and `pilot land` from a co-pilot; a file edit the classifier refuses goes to the user as one question with its default.

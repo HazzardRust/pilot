@@ -95,7 +95,7 @@
             "timeout": 5
           }
         ],
-        "description": "Refuse a permission prompt raised by this plugin's own crew agents (L17), and the pilot session's while a run is live in its directory (gate-no-stall L10), with the blocked-step instruction, and post every refusal to the deck as a blocked item; other sessions' and other agents' prompts are left to the user",
+        "description": "Refuse a permission prompt raised by this plugin's own crew agents (L17), and the pilot session's while a run is live in its directory (gate-no-stall L10), with the blocked-step instruction, and post every refusal but a file edit's to the deck as a blocked item; other sessions' and other agents' prompts are left to the user",
         "id": "permission:any:crew-refuse"
       }
     ],
@@ -108,7 +108,7 @@
             "timeout": 5
           }
         ],
-        "description": "Post a call auto mode denied to the pilot or its crew during a live run as one blocking question on the live ticket, once per session and command, so a blocked step reaches the deck within the hook turn; never answers retry",
+        "description": "Post a call auto mode denied to the pilot or its crew during a live run as one blocking question on the live ticket, once per session and command, so a blocked step reaches the deck within the hook turn; a no-verdict (Classifier unavailable) posts only when the same call meets it twice in the window; never answers retry",
         "id": "denied:any:blocked-item"
       }
     ],

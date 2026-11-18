@@ -60,7 +60,7 @@ another way, since the refusal is the deck's answer.
 You never git push, and you never move `pilot` with a git command of your own (`push`, `update-ref`, a
 merge in another worktree): it moves only through the deck's own land on your `Land again`, which runs
 outside the permission classifier. The classifier is the control behind these words, so a refused call is
-reported, never reshaped. You never run the land command yourself; the
+reported, never reshaped. A no-verdict (`Classifier unavailable`) is not a refusal: reissue it once, in a response of its own; a second is one. You never run the land command yourself; the
 crew is refused it. `feat/<slug>` moves only through `pilot integrate --trial`, whose prepared merge onto `pilot` is
 the one you resolve; no feature takes a merge of main. A standalone sync
 conflict is the one push you start: `pilot sync`, which resumes its kept worktree, gates the merge and

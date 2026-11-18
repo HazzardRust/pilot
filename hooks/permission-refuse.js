@@ -21,7 +21,8 @@
  * its directory (gate-no-stall spec 4, L5, L10): a prompt mid-run is a terminal the
  * user is not watching, so it stalls the run the way a crew prompt stalls a lane.
  * Every refused prompt, the pilot's and a crew agent's, goes to `postBlocked` as a
- * blocked item (L9). With no live run, or a deck that does not answer, the pilot's
+ * blocked item (L9), save a file edit (`isFileTool`), which is refused and not posted
+ * (blocked-steps spec 4). With no live run, or a deck that does not answer, the pilot's
  * prompt is the user's: this hook never fails closed.
  *
  * The hook never approves anything: its one answer is a refusal, and a prompt
@@ -33,7 +34,7 @@
 const { readStdin } = require('./lib/stdin.js');
 const client = require('./lib/deck.js');
 const { postBlocked } = require('./lib/blocked.js');
-const { isPilotLane, commandOf } = require('./permission-denied.js');
+const { isPilotLane, commandOf, isFileTool } = require('./permission-denied.js');
 
 const MESSAGE =
   'Refused: a crew agent never waits on a permission prompt, so this call was not run. ' +
@@ -44,6 +45,12 @@ const PILOT_MESSAGE =
   'Refused: while a run is live the pilot never waits on a permission prompt, so this call was not run. ' +
   'It is posted to the deck as a blocked item with its exact command; do not retry it and do not route around it, ' +
   'and carry on with the work that does not need it.';
+
+/** A refused file edit is posted nowhere, so its message says the edit is the agent's own question (blocked-steps spec 4). */
+const EDIT_MESSAGE =
+  'Refused: a pilot lane never waits on a permission prompt, so this file edit was not made, and it is not posted to the deck. ' +
+  'Ask it as one question, with the change and your default: a crew agent to its addressee, the pilot to the user. ' +
+  'Do not retry it and do not route around it, and carry on with the work that does not need it.';
 
 /** How long a refusal waits on its post: the hook has 5 s, and a deck that stalls must not spend them. */
 const POST_BUDGET_MS = 2000;
@@ -78,6 +85,8 @@ async function decide(payload, deps) {
     }
     output = denial(PILOT_MESSAGE);
   }
+  // A file edit is refused but never posted: the user cannot run it, so it is the agent's question (blocked-steps spec 4).
+  if (isFileTool(payload.tool_name)) return denial(EDIT_MESSAGE);
   let timer;
   const budget = new Promise(function (resolve) { timer = setTimeout(resolve, POST_BUDGET_MS); });
   const posted = Promise.resolve()

@@ -273,3 +273,25 @@ test("a refused prompt's item does not say auto mode denied it", async (t) => {
     assert.match(posts[0].body, /^Its permission prompt was refused by the pilot's hook, so this call was not run/, payload.agent_type);
   }
 });
+
+// blocked-steps S1, spec 4: a refused file edit is the agent's question to its addressee, never a Blocked item.
+
+test('a refused file-edit prompt posts nothing', async () => {
+  for (const tool of ['Edit', 'Write', 'NotebookEdit']) {
+    for (const lane of [{ agent_id: 'a1b2', agent_type: 'pilot:pilot-implementer' }, { agent_type: 'pilot:pilot' }]) {
+      const edit = fakePost();
+      const editPrompt = event({ cwd: REPO, ...lane, tool_name: tool, tool_input: { file_path: path.join(REPO, 'agents', 'pilot.md') } });
+      const out = await decide(editPrompt, { deck: fakeDeck(), post: edit.post, env: {} });
+      const label = tool + ' ' + lane.agent_type;
+      assert.strictEqual(out.hookSpecificOutput.decision.behavior, 'deny', label + ': the prompt is still refused');
+      assert.strictEqual(edit.steps.length, 0, label);
+      // Nothing was posted, so the lane is not told it was.
+      assert.doesNotMatch(out.hookSpecificOutput.decision.message, /posted to the deck as a blocked|record it as a blocked step/i, label);
+    }
+  }
+
+  const bash = fakePost();
+  const bashOut = await decide(event({ cwd: REPO, agent_id: 'a1b2', agent_type: 'pilot:pilot-implementer' }), { deck: fakeDeck(), post: bash.post, env: {} });
+  assert.strictEqual(bashOut.hookSpecificOutput.decision.behavior, 'deny');
+  assert.strictEqual(bash.steps.length, 1);
+});

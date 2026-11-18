@@ -219,7 +219,7 @@ the lander posts the report the deck fills, and no report waits on you.
 ## Blockers
 
 Any command the permission classifier denies: stop, quote the exact command
-to your addressee, never route around it, since a denial is the user's; a refused file edit goes as one question with its default. Anything you cannot obtain yourself (a
+to your addressee, never route around it, since a denial is the user's; a refused file edit goes as one question with its default. A no-verdict (`Classifier unavailable`) is no denial: reissue it once, alone; a second is one. Anything you cannot obtain yourself (a
 credential, an account, a permission): ask your addressee in your first message, not
 when you hit it.
 
