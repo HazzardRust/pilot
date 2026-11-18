@@ -175,7 +175,7 @@ export function syncFeaturePr({ host, git, record }) {
 /** Opens the feature PR when none is `open`, or edits the open one where it differs from `body` and `base`. */
 function writePr(host, open, { base, head, body, title }) {
   if (open.length === 0) {
-    const number = step(host, 'open', () => host.open({ base, head, title, body, draft: true }));
+    const { number } = step(host, 'open', () => host.open({ base, head, title, body, draft: true }));
     return { line: `feature PR #${number} opened`, number, wrote: 'created' };
   }
 

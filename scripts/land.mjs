@@ -377,6 +377,12 @@ export function mainLine({ number, opened, why, byHand, none, host }) {
   return `main gets pilot: unknown (${String(why).slice(0, 200)})`;
 }
 
+/** The line before `mainLine` when the release label was refused (S12): its own line, so `mainLine` stays as parsed. */
+export function labelLine({ number, labelWhy }) {
+  if (number === null || number === undefined || labelWhy === undefined) return '';
+  return `release label: ${String(labelWhy).slice(0, 200)}\n`;
+}
+
 /** `read` called at most once: every later call answers, or throws, what the first did. */
 function once(read) {
   let got;
@@ -422,7 +428,7 @@ export function main(argv, inject = {}) {
       ...(pushSkipped === undefined ? [] : [pushSkipped]),
       ...retargeted,
     ];
-    process.stdout.write(`${caughtUp}${[...branches, ...cleared].map((line) => `${line}\n`).join('')}${said} at ${sha.slice(0, 7)}${retried ? ' (pilot moved; merged again once)' : ''}\n${above}${mainLine({ ...mainPr, host })}\n`);
+    process.stdout.write(`${caughtUp}${[...branches, ...cleared].map((line) => `${line}\n`).join('')}${said} at ${sha.slice(0, 7)}${retried ? ' (pilot moved; merged again once)' : ''}\n${above}${labelLine(mainPr)}${mainLine({ ...mainPr, host })}\n`);
     return 0;
   } catch (err) {
     process.stdout.write(`${err.caughtUp ?? ''}${err.message}\n`);

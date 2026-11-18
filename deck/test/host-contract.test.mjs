@@ -72,8 +72,8 @@ const CONTRACT = [
   ['reviews', (host) => host.reviews({ state: 'all' }), (said) => { assert.equal(said.length, 3); said.forEach(isReview); assert.deepEqual(said.map((r) => r.state), ['open', 'merged', 'closed']); }],
   ['reviews mine by head', (host) => host.reviews({ head: 'feat/1', state: 'open', mine: true, limit: 5 }), (said) => said.forEach(isReview)],
   ['review', (host) => host.review(7), (said) => { isReview(said); assert.equal(said.number, 7); }],
-  ['open', (host) => host.open({ base: 'pilot', head: 'feat/x', title: 'T', body: 'B', draft: true, label: 'release' }), (said) => assert.equal(said, 41)],
-  ['edit', (host) => host.edit(7, { base: 'pilot', title: 'T', body: 'B', label: 'release' }), (said) => assert.equal(said, undefined)],
+  ['open', (host) => host.open({ base: 'pilot', head: 'feat/x', title: 'T', body: 'B', draft: true, label: 'release' }), (said) => assert.deepEqual(said, { number: 41 })],
+  ['edit', (host) => host.edit(7, { base: 'pilot', title: 'T', body: 'B', label: 'release' }), (said) => assert.deepEqual(said, {})],
   ['comment', (host) => host.comment(7, 'landed'), (said) => assert.equal(said, undefined)],
   ['upsertComment', (host) => host.upsertComment(7, '<!-- m -->', 'text'), (said) => assert.equal(said, 'posted')],
   ['signedIn', (host) => host.signedIn(), (said) => assert.equal(said, true)],
@@ -110,6 +110,31 @@ test('every verb returns its shape', (t) => {
   assert.equal(signedOut.signedIn(), false);
   const odd = githubHost(() => JSON.stringify([ghPr(1, 'DRAFT')]));
   assert.throws(() => odd.reviews({ state: 'open' }), /DRAFT/, 'a state off the three is refused, never guessed');
+});
+
+test('a refused label is said', () => {
+  const { run, calls } = fakeGh();
+  const refusing = (args) => {
+    if (args[0] === 'label') throw new Error('HTTP 403: Resource not accessible\nsecond line');
+    return run(args);
+  };
+  const host = githubHost(refusing);
+  assert.deepEqual(host.open({ base: 'pilot', head: 'feat/x', title: 'T', body: 'B', label: 'release' }), { number: 41, why: 'HTTP 403: Resource not accessible' });
+  assert.deepEqual(host.edit(7, { title: 'T', label: 'release' }), { why: 'HTTP 403: Resource not accessible' });
+  const writes = calls.filter((args) => args[0] === 'pr');
+  assert.equal(writes.length, 2);
+  assert.ok(writes.every((args) => !args.includes('--label') && !args.includes('--add-label')), 'no label it could not make');
+});
+
+test('a refusal reads from stderr, and an empty one still says something', () => {
+  const { run } = fakeGh();
+  const refusing = (err) => githubHost((args) => {
+    if (args[0] === 'label') throw err;
+    return run(args);
+  });
+  const real = Object.assign(new Error('Command failed: gh label create release --force'), { stderr: 'HTTP 403: Resource not accessible\n' });
+  assert.equal(refusing(real).edit(7, { label: 'release' }).why, 'HTTP 403: Resource not accessible');
+  assert.equal(refusing(new Error('')).edit(7, { label: 'release' }).why, 'label refused');
 });
 
 test('the upsert edits its own comment', () => {

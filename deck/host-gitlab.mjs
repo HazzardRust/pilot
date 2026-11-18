@@ -142,7 +142,8 @@ export function gitlabHost(run) {
       if (label !== undefined) asked.labels = label;
       const number = send('POST', MRS, asked, 'merge request create')?.iid;
       if (!Number.isSafeInteger(number) || number < 1) throw new Error('glab merge request create: no iid in its answer');
-      return number;
+      // The label rides in the same request, so GitLab has no separate refusal to say.
+      return { number };
     },
     edit(n, { base, title, body, label } = {}) {
       const change = {};
@@ -152,6 +153,7 @@ export function gitlabHost(run) {
       if (body !== undefined) change.description = body;
       if (label !== undefined) change.add_labels = label;
       if (Object.keys(change).length > 0) send('PUT', `${MRS}/${numbered(n)}`, change, 'merge request edit');
+      return {};
     },
     comment(n, body) {
       send('POST', `${MRS}/${numbered(n)}/notes`, { body }, 'note create');
