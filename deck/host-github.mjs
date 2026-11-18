@@ -93,6 +93,12 @@ function json(said, what) {
   }
 }
 
+/** A review number as its argv word; anything but a positive integer throws, so no flag rides in its slot. */
+function numbered(n) {
+  if (!Number.isSafeInteger(n) || n < 1) throw new Error(`gh: ${JSON.stringify(n)} is not a PR number`);
+  return String(n);
+}
+
 /** Calls `use(file)` with `body` in a temporary file, so a long body never rides on the command line. */
 function withBodyFile(body, use) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-pr-'));
@@ -123,7 +129,7 @@ export function githubHost(run) {
   };
   const withBody = (args, body) => (body === undefined ? run(args) : withBodyFile(body, (file) => run([...args, '--body-file', file])));
   const comments = (n) => {
-    const said = json(run(['pr', 'view', String(n), '--json', 'comments']), 'pr view').comments;
+    const said = json(run(['pr', 'view', numbered(n), '--json', 'comments']), 'pr view').comments;
     if (!Array.isArray(said)) throw new Error('gh pr view: no comments list');
     return said;
   };
@@ -137,7 +143,7 @@ export function githubHost(run) {
       if (!Array.isArray(said)) throw new Error('gh pr list: an answer that is not a list');
       return said.map(reviewOf);
     },
-    review: (n) => reviewOf(json(run(['pr', 'view', String(n), '--json', FIELDS]), 'pr view')),
+    review: (n) => reviewOf(json(run(['pr', 'view', numbered(n), '--json', FIELDS]), 'pr view')),
     open({ base, head, title, body, draft = false, label }) {
       const args = ['pr', 'create', ...(draft ? ['--draft'] : []), '--base', base, '--head', head, '--title', title, ...labelled(label, '--label')];
       const number = Number(/\/pull\/(\d+)\s*$/.exec(String(withBody(args, body)).trim())?.[1]);
@@ -146,17 +152,17 @@ export function githubHost(run) {
     },
     edit(n, { base, title, body, label } = {}) {
       const flags = [...(base === undefined ? [] : ['--base', base]), ...(title === undefined ? [] : ['--title', title]), ...labelled(label, '--add-label')];
-      withBody(['pr', 'edit', String(n), ...flags], body);
+      withBody(['pr', 'edit', numbered(n), ...flags], body);
     },
     comment(n, body) {
-      withBody(['pr', 'comment', String(n)], body);
+      withBody(['pr', 'comment', numbered(n)], body);
     },
     /** One comment of this account per `marker` on review `n`: posted, edited in place, or left. Answers which. */
     upsertComment(n, marker, body) {
       const text = `${marker}\n${body}`;
       const mine = comments(n).find((each) => each?.viewerDidAuthor === true && typeof each.body === 'string' && each.body.startsWith(marker));
       if (!mine) {
-        withBody(['pr', 'comment', String(n)], text);
+        withBody(['pr', 'comment', numbered(n)], text);
         return 'posted';
       }
       if (mine.body.trimEnd() === text.trimEnd()) return 'none';

@@ -11,7 +11,7 @@
  *   review(n: number): Review,
  *   open(pr: { base: string, head: string, title: string, body: string, draft?: boolean, label?: string }): number,
  *   edit(n: number, change: { base?: string, title?: string, body?: string, label?: string }): void,
- *   comment(n: number, body: string): void, upsertComment(n: number, marker: string, body: string): string,
+ *   comment(n: number, body: string): void, upsertComment(n: number, marker: string, body: string): 'posted'|'edited'|'none',
  *   signedIn(): boolean }} Host
  */
 

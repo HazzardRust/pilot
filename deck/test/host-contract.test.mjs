@@ -77,15 +77,33 @@ const CONTRACT = [
   ['signedIn', (host) => host.signedIn(), (said) => assert.equal(said, true)],
 ];
 
-test('every verb returns its shape', () => {
-  for (const [verb, call, check] of CONTRACT) {
+/** Puts a fresh gh stub first on PATH for this test, so a process start is recorded; answers its dir. */
+function stubbed(t) {
+  const stub = ghStub();
+  const saved = { PATH: process.env.PATH, NODE_OPTIONS: process.env.NODE_OPTIONS };
+  t.after(() => {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    fs.rmSync(stub.dir, { recursive: true, force: true });
+  });
+  Object.assign(process.env, stub.env);
+  return stub.dir;
+}
+
+test('every verb returns its shape', (t) => {
+  const sent = [];
+  for (const [, call, check] of CONTRACT) {
     const { run, calls } = fakeGh();
     const host = githubHost(run);
     assert.equal(host.name, 'github');
     check(call(host));
-    assert.ok(calls.length > 0, `${verb} asks the CLI`);
-    assert.ok(calls.every((args) => Array.isArray(args) && args.every((arg) => typeof arg === 'string')), `${verb}: argv only`);
+    sent.push(...calls);
   }
+  // Every argv the adapter sent passes the real allowlist: a refused one throws here, before any process starts.
+  const gh = ghRun(stubbed(t));
+  for (const args of sent) gh(args);
   const signedOut = githubHost(() => { throw Object.assign(new Error('not logged in'), { status: 1 }); });
   assert.equal(signedOut.signedIn(), false);
   const odd = githubHost(() => JSON.stringify([ghPr(1, 'DRAFT')]));
@@ -97,24 +115,19 @@ test('the upsert edits its own comment', () => {
   const host = githubHost(run);
   assert.equal(host.upsertComment(7, '<!-- pilot:qa -->', 'first'), 'posted');
   assert.equal(host.upsertComment(7, '<!-- pilot:qa -->', 'second'), 'edited');
+  // The fake's PATCH stores nothing, so it still holds `first`: the same text again writes nothing.
+  assert.equal(host.upsertComment(7, '<!-- pilot:qa -->', 'first'), 'none');
   const writes = calls.filter((args) => args[1] !== 'view');
   assert.deepEqual(writes.map((args) => args.slice(0, 2)), [['pr', 'comment'], ['api', 'repos/o/r/issues/comments/900']]);
   assert.deepEqual(writes[1].slice(2), ['--method', 'PATCH', '-f', 'body=<!-- pilot:qa -->\nsecond']);
 });
 
 test('the allowlist still refuses', (t) => {
-  const stub = ghStub();
-  const saved = { PATH: process.env.PATH, NODE_OPTIONS: process.env.NODE_OPTIONS };
-  t.after(() => {
-    for (const [key, value] of Object.entries(saved)) {
-      if (value === undefined) delete process.env[key];
-      else process.env[key] = value;
-    }
-    fs.rmSync(stub.dir, { recursive: true, force: true });
-  });
-  Object.assign(process.env, stub.env);
-  const gh = ghRun(stub.dir);
+  const dir = stubbed(t);
+  const gh = ghRun(dir);
   assert.throws(() => gh(['pr', 'merge', '7']), /gh pr merge: not a host verb/);
   assert.throws(() => gh(['auth', 'token']), /gh auth token: not a host verb/);
-  assert.equal(fs.existsSync(path.join(stub.dir, 'calls.jsonl')), false, '0 processes started');
+  assert.equal(fs.existsSync(path.join(dir, 'calls.jsonl')), false, '0 processes started');
+  gh(['pr', 'view', '7']);
+  assert.ok(fs.existsSync(path.join(dir, 'calls.jsonl')), 'an allowed verb does start one, so the 0 above is seen');
 });

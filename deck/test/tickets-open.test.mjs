@@ -12,13 +12,14 @@ import './no-open.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
 
+import { ghStub } from '../../scripts/gh-stub.mjs';
 import { deckOnAPort, postStored, shapedTicketBody, takeLive } from '../testUtils.mjs';
 
 const { postItem, resolveItem, storeFile } = await import('../store.mjs');
 const { repoKey } = await import('../items.mjs');
 const { tickets } = await import('../tickets.mjs');
-const { hostFor } = await import('../host.mjs');
 const { githubHost } = await import('../host-github.mjs');
 
 const ALPHA = 'D:/work/alpha';
@@ -148,7 +149,7 @@ test('an open run is a feat/ record of this directory with an open PR of the sig
     pr(5, 'feat/fork', { isCrossRepository: true }),
     pr(6, 'feat/elsewhere'),
   ];
-  // gh answers `--author @me` with the signed-in account's PRs only, in every state asked.
+  // gh filters `--author @me` itself, so the fake answers alice's PRs only; openRuns filters state, fork and branch.
   const host = githubHost((args) => {
     calls.push(args);
     assert.deepEqual(args.slice(args.indexOf('--author'), args.indexOf('--author') + 2), ['--author', '@me']);
@@ -166,13 +167,27 @@ test('no CLI at none', async (t) => {
   const records = [{ repo: repoKey(ALPHA), record: { slug: 'a', branch: 'feat/a', finished: null, updatedAt: '2026-10-04T09:00:00.000Z' } }];
   fs.writeFileSync(storeFile(), JSON.stringify({ version: 1, items: [], runs: [], seq: 0, deckSeq: 0, decks: {}, records }));
   const held = ticket('held');
-  const run = () => assert.fail('a host CLI started at none');
-  const host = hostFor(ALPHA, { git: () => 'none\n', run });
+  // No host injected: `tickets` reads `pilot.host` through its own git, and a gh stub on PATH sees any start.
+  const stub = ghStub();
+  const saved = { PATH: process.env.PATH, NODE_OPTIONS: process.env.NODE_OPTIONS };
+  t.after(() => {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    fs.rmSync(stub.dir, { recursive: true, force: true });
+  });
+  Object.assign(process.env, stub.env);
+  const git = (args) => {
+    if (args.join(' ') === 'config --get pilot.host') return 'none\n';
+    throw new Error(`unexpected git ${args.join(' ')}`);
+  };
 
-  const { code, text } = await printed(base, { open: true, host, git: fakeGit([]) });
+  const { code, text } = await printed(base, { open: true, git });
   assert.equal(code, 0);
   assert.ok(text.includes(`## ${held.id} — held (red)`), 'the queue prints');
   assert.match(text, /no open run/);
+  assert.equal(fs.existsSync(path.join(stub.dir, 'calls.jsonl')), false, 'no gh process started');
 });
 
 test('pilot tickets accepts --open and nothing else', async () => {
