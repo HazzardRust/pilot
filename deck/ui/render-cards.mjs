@@ -19,6 +19,7 @@ import {
   lastSaidAt,
   threadState,
 } from '../items.mjs';
+import { isReportOwed } from '../owed.mjs';
 import { escapeHtml, renderMarkdown } from './markdown.mjs';
 import { renderTime, code, titleOf, renderTicketOf, renderAsked, renderChoice, renderChoiceRow, rendererFor, renderReplyForm, renderDismissForm, renderCloseForm, renderCardClose } from './render-parts.mjs';
 
@@ -280,6 +281,9 @@ function renderKind(item) {
   return escapeHtml(item.kind) + (isBlocking(item) ? BLOCKING_BADGE : '');
 }
 
+/** A ticket whose gate2 landed and whose closing report has not closed it says so on its card (never-stuck spec 1). */
+const renderReportOwed = (item, items) => (Array.isArray(items) && isReportOwed(item, items) ? ' · <span class="owed">report owed</span>' : '');
+
 /** A gate's kind line says the gate as its note does (thread-kinds QA 5). */
 const GATE_NAMES = { [KIND_GATE1]: 'Gate 1', [KIND_GATE2]: 'Gate 2' };
 
@@ -311,7 +315,7 @@ function renderCard(item, { tab = null, back = OVERVIEW_HREF, all = false, items
     // Its ticket's accent (ticket-state-accents spec 3, L11): the stripe. The card sits inside the queue region, never one.
     `<article${isOpen(item) ? '' : ' class="settled"'} data-accent="${accentOf(item, items)}">`,
     `<span class="kind">${renderThreadState(item)} · ` +
-      `${renderCardRun(tab, all)}${renderKind(item)} · ${renderTime(lastSaidAt(item))}${renderTicketOf(item, items)}</span>`,
+      `${renderCardRun(tab, all)}${renderKind(item)} · ${renderTime(lastSaidAt(item))}${renderTicketOf(item, items)}${renderReportOwed(item, items)}</span>`,
     `<h2><a href="/thread/${encodeURIComponent(item.id)}">${titleOf(item, items)}</a></h2>`,
     renderChainNote(item),
     renderTypeNote(item),
