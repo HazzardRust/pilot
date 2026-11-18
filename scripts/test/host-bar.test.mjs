@@ -80,6 +80,8 @@ test('no host CLI starts outside the adapters', () => {
 test('no module exports hostIn', () => {
   // A declared export, an export list naming it (`{ hostIn }`, `{ ghRun as hostIn }`), or a re-export from elsewhere.
   const exportsHostIn = /export\s+(?:const|let|var|(?:async\s+)?function\*?)\s+hostIn\b|export\s*\{[^}]*\bhostIn\b[^}]*\}/;
+  // The base's own alias, so the pattern is not blind.
+  assert.match('export { ghRun as hostIn };', exportsHostIn);
   assert.deepEqual(modules().filter((file) => exportsHostIn.test(fs.readFileSync(file, 'utf8'))).map((file) => path.relative(ROOT, file)), []);
 });
 
