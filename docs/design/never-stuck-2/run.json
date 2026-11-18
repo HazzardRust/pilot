@@ -66,7 +66,7 @@
     },
     {
       "slice": "S15",
-      "state": "pushed a090c05",
+      "state": "integrated 71f3167f",
       "branch": "slice/never-stuck-2-s15",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s15"
     },
@@ -98,7 +98,7 @@
     },
     {
       "slice": "S19",
-      "state": "pushed a125c1c",
+      "state": "pushed a125c1c (NOT integrated: S15's crew-toolsearch test missing from TREE_TESTS; fix on feat running)",
       "branch": "slice/never-stuck-2-s19",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s19"
     },
@@ -119,15 +119,9 @@
     }
   ],
   "findings": [],
-  "next": "integrating S15, S19, S14, S16 in turn; then S18",
-  "updatedAt": "2026-11-18T09:46:56.187Z",
+  "next": "fixer lists crew-toolsearch in TREE_TESTS + S14/S16 seam notes on feat; then integrate S19, S14, S16; then S18",
+  "updatedAt": "2026-11-18T09:54:22.518Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "artefact lives only on feat/never-stuck while pilot base printed feat/handoff-books; one round trip to main before cutting",
-      "evidence": "git log per ref",
-      "size": 1
-    },
     {
       "agent": "pilot:pilot-architect",
       "what": "deck_post refuses a question without a Research: line, which the architect's definition does not name",
@@ -335,6 +329,11 @@
       "what": "S16 needed two cap raises (400 to 480 to 490) for review fixes with tests",
       "evidence": "489 changed lines",
       "size": 489
+    },
+    {
+      "agent": "pilot integrate",
+      "what": "S15 integrated on a 60-file selection that skipped select-tests.test.mjs, leaving feat red on 'every tree walker is listed'; caught only at S19's full-suite merge",
+      "evidence": "S19 integrate log 20261118T094848967Z"
     }
   ]
 }
