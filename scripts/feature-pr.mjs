@@ -172,14 +172,11 @@ export function syncFeaturePr({ host, git, record }) {
   return comment === 'none' ? done : { ...done, line: `${done.line}; QA comment ${comment}` };
 }
 
-/** A refused label as its own `label: <why>` line after the PR's, never a failure. */
-const labelNote = (why) => (why === undefined ? '' : `\nlabel: ${String(why).slice(0, 200)}`);
-
 /** Opens the feature PR when none is `open`, or edits the open one where it differs from `body` and `base`. */
 function writePr(host, open, { base, head, body, title }) {
   if (open.length === 0) {
-    const { number, why } = step(host, 'open', () => host.open({ base, head, title, body, draft: true }));
-    return { line: `feature PR #${number} opened${labelNote(why)}`, number, wrote: 'created' };
+    const { number } = step(host, 'open', () => host.open({ base, head, title, body, draft: true }));
+    return { line: `feature PR #${number} opened`, number, wrote: 'created' };
   }
 
   const pr = open[0];
@@ -189,8 +186,8 @@ function writePr(host, open, { base, head, body, title }) {
     ...(sameText(pr.body, body) ? {} : { body }),
   };
   if (Object.keys(change).length === 0) return { line: `feature PR #${pr.number} unchanged`, number: pr.number, wrote: 'unchanged' };
-  const { why } = step(host, 'edit', () => host.edit(pr.number, change));
-  return { line: `feature PR #${pr.number} updated${labelNote(why)}`, number: pr.number, wrote: 'edited' };
+  step(host, 'edit', () => host.edit(pr.number, change));
+  return { line: `feature PR #${pr.number} updated`, number: pr.number, wrote: 'edited' };
 }
 
 /** The deck's record for `ticket`, read as `pilot ready` reads it; null when the deck has none. */
