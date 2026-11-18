@@ -1,0 +1,44 @@
+{
+  "slug": "teacher-method",
+  "feature": "teacher-method",
+  "ticket": "itm_41555e898d37",
+  "branch": "feat/teacher-method",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-teacher-method",
+  "artefact": "docs/design/teacher-method/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "implementing",
+      "branch": "slice/teacher-method-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-teacher-method-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "branch": "slice/teacher-method-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-teacher-method-s2"
+    }
+  ],
+  "next": "Short path, no co-pilot. S2 pushed ff23f2e9 (ts APPROVE, security APPROVE), integrating. S1 a6113246002c35da3 reports to main; integrate on Verdict lines. Then integrate --trial, walkthrough, gate2 from main. never-stuck-2 green: walkthrough itm_3fdcde0269b2 (QA). audit-f11 architect a906a7c3ab665f5fd holds for itm_0d83fa6154c6.",
+  "updatedAt": "2026-11-18T11:15:38.718Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "plugin-cache check-slices (0.9.8) refuses the new ## Behaviours slice shape; only the repo's scripts/check-slices.mjs passes it, and the architect's prompt names the cached path",
+      "evidence": "teacher-method architect report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck_post refuses a question with a recommended default and no Research: line; not in the architect's prompt (nor the pilot's), one refused post each",
+      "evidence": "teacher-method architect report; pilot's S7 question",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot and architect both posted the ticket's two left-for-grilling questions; pilot closed its pair as duplicates",
+      "size": 1
+    }
+  ]
+}
