@@ -14,8 +14,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f7-s1"
     }
   ],
-  "next": "Short path: pilot integrate slice/audit-f7-s1 (f73a28d7, typescript-reviewer APPROVE) into feat/audit-f7, then `pilot integrate --trial` and post gate2 (surface: false, PR #101) with the Verdict and Gate lines.",
-  "updatedAt": "2026-11-17T11:43:51.486Z",
+  "next": "feat/audit-f7 at 4b282580, S1 integrated; gate2 itm_79ca68a5deb6 posted (PR #101, short path, surface: false). On the Sign off press: the deck lands it; spawn pilot-lander with that gate2 id; then the Findings reply on its closing report.",
+  "updatedAt": "2026-11-17T11:49:51.833Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
