@@ -51,7 +51,7 @@
     },
     {
       "slice": "S13",
-      "state": "pushed 6a30348 (integrating on 4d38e7d)",
+      "state": "integrated 7f4612d1",
       "branch": "slice/never-stuck-2-s13",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s13"
     },
@@ -72,7 +72,7 @@
     },
     {
       "slice": "S16",
-      "state": "implementing (dec1781d pushed; re-review and gate by a fresh implementer)",
+      "state": "pushed 91c94cf",
       "after": [
         "S10"
       ],
@@ -119,8 +119,8 @@
     }
   ],
   "findings": [],
-  "next": "S13 integrating; then S9, S7, S12, S15, S19, S14; S16 re-review+gate",
-  "updatedAt": "2026-11-18T09:26:00.234Z",
+  "next": "S9 integrating; then S7, S12, S15, S19, S14, S16; then S18 when ready, then fundamentalist + QA",
+  "updatedAt": "2026-11-18T09:31:17.224Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -324,6 +324,17 @@
       "what": "facades fix on feat: merged origin/pilot and joined 4 comments; store-items.mjs 797 by split; store-core.mjs sits at 800 and items.mjs at 799 with no headroom",
       "evidence": "fix 4d38e7d7 on feat/never-stuck-2",
       "size": 12
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S16 slice did not own deck/README.md; a new deck module always trips the readme lint",
+      "evidence": "deck-readme.test.mjs every deck module is listed"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S16 needed two cap raises (400 to 480 to 490) for review fixes with tests",
+      "evidence": "489 changed lines",
+      "size": 489
     }
   ]
 }
