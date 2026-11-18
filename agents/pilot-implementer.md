@@ -101,8 +101,8 @@ checklist behind it:
    tear it down — the CDP target or the PID you spawned — never an
    image-wide kill such as `taskkill /IM chrome.exe` or `pkill chrome`,
    because an implementer's teardown did exactly that on 2026-09-21 and
-   closed the user's own browser. A live probe of a PR command (`gh pr …`)
-   runs under `eval "$(pilot gh-stub)"` in the same Bash call, never against real GitHub, where it would act on a real PR.
+   closed the user's own browser. A host command's live probe
+   runs under `eval "$(pilot gh-stub)"` in the same Bash call, never a real host, where it would act on a real PR.
 6. If the slice carries a migration, apply it to the development database the
    brief names — `mcp__plugin_supabase_supabase__*` when that is the project's
    database — and say in the report whether it is additive. A migration that
