@@ -81,7 +81,7 @@ function reviewOf(pr) {
   if (state === undefined) throw new Error(`gh: a PR in state ${JSON.stringify(pr?.state)}`);
   return {
     number: pr.number, state, base: pr.baseRefName, head: pr.headRefName, headSha: pr.headRefOid,
-    title: pr.title, body: pr.body, url: pr.url, crossRepo: pr.isCrossRepository,
+    body: pr.body, crossRepo: pr.isCrossRepository,
   };
 }
 

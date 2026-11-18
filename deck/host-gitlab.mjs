@@ -75,8 +75,6 @@ export const glabRun = (cwd) => (args, input) => {
 const MRS = 'projects/:id/merge_requests';
 const STATES = { opened: 'open', merged: 'merged', closed: 'closed' };
 const ASKED = { open: 'opened', merged: 'merged', closed: 'closed', all: 'all' };
-/** GitLab's draft title prefixes; a **Review**'s title is the title without one, as on GitHub. */
-const DRAFT = /^(?:\[draft\]|\(draft\)|draft:)\s*/i;
 /** The most pages of notes `upsertComment` reads, so a misbehaving answer cannot loop it for ever. */
 const PAGES = 100;
 
@@ -86,8 +84,7 @@ function reviewOf(mr) {
   if (state === undefined) throw new Error(`glab: a merge request in state ${JSON.stringify(mr?.state)}`);
   return {
     number: mr.iid, state, base: mr.target_branch, head: mr.source_branch, headSha: mr.sha,
-    title: String(mr.title ?? '').replace(DRAFT, ''), body: mr.description ?? '', url: mr.web_url,
-    crossRepo: mr.source_project_id !== mr.target_project_id,
+    body: mr.description ?? '', crossRepo: mr.source_project_id !== mr.target_project_id,
   };
 }
 
