@@ -95,7 +95,7 @@ stub, so the live deck, installed plugin and GitHub stay untouched; the walkthro
 to end the way it is used — a web surface in a real browser through the
 Chrome DevTools MCP tools (`mcp__plugin_pilot_chrome-devtools__*`; a "browser
 already running" error is transient: retry). Probe a PR command under
-`eval "$(pilot gh-stub)"`, never real GitHub: a probe can write to a live PR. When the feature has a GUI or web surface, first load, with the
+`eval "$(pilot gh-stub)"`, never a real host: a probe can write to a live PR. When the feature has a GUI or web surface, first load, with the
 Skill tool, `pilot:browser-qa` (the checklist) and `pilot:design-review` (the
 taste pass); otherwise load neither. Cover:
 

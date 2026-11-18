@@ -33,6 +33,7 @@ const CHECKED_EXTENSIONS = new Set(['.md', '.json', '.mjs', '.js']);
  * breaks, because the fix differs: an address is rewritten, a path becomes a variable.
  * A `prompt` pattern is an instruction to the crew, so it is read in markdown only: a
  * hook's test fixture naming a denied `gh pr ready` is data, not an ask (deck-writes-github S6).
+ * A `scope` row is read only in the files it matches: the vendored reviewers keep upstream text.
  */
 const FORBIDDEN = [
   {
@@ -79,6 +80,12 @@ const FORBIDDEN = [
     prompt: true,
     pattern: /&&\s*pilot integrate\b/g,
     why: 'a compound cd call auto mode refuses; use pilot integrate --dir <worktree>',
+  },
+  {
+    prompt: true,
+    scope: /^agents\/pilot[^/]*\.md$/,
+    pattern: /\b(?:gh\s+(?:pr|api)|glab)\b/g,
+    why: 'names a host command in a crew prompt; the crew reads git and the deck speaks to the host (other-host S11)',
   },
 ];
 
@@ -269,8 +276,9 @@ export function checkReferences(root, paths = SURFACE) {
 
   for (const rel of checked) {
     const source = fs.readFileSync(path.join(root, rel), 'utf8');
-    for (const { prompt, pattern, why } of FORBIDDEN) {
+    for (const { prompt, scope, pattern, why } of FORBIDDEN) {
       if (prompt && path.extname(rel) !== '.md') continue;
+      if (scope && !scope.test(rel)) continue;
       for (const match of source.matchAll(pattern)) {
         failures.push(`${rel}:${lineOf(source, match.index)}: ${JSON.stringify(match[0])} ${why}`);
       }
