@@ -5,7 +5,7 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSy
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { liveRoot } from '../live-root.mjs';
+import { liveRoot, main } from '../live-root.mjs';
 
 /** A temp HOME whose `.claude.json` lists `projects`; answers the home and the config's bytes. */
 function fakeHome(t, projectsFor) {
@@ -37,11 +37,37 @@ test('a trusted root says so and makes a plain subdir', (t) => {
 
 test('a name with a separator or dots is refused', (t) => {
   const { home, root } = fakeHome(t, () => ({}));
-  for (const dir of ['../escape', 'a/b', 'a\\b', '..', '.', 'A', '', 'x'.repeat(41)]) {
+  for (const dir of ['../escape', 'a/b', 'a\\b', '..', '.', 'A', '', 'x'.repeat(41), 123]) {
     assert.throws(() => liveRoot({ home, dir }), /live-root/, `refuses ${JSON.stringify(dir)}`);
   }
   assert.equal(existsSync(root), false, 'nothing is made');
   assert.deepEqual(readdirSync(home), ['.claude.json']);
+});
+
+test('the command prints one line, exit 0, and exits 1 on a bad name having made nothing', (t) => {
+  const { home, root } = fakeHome(t, () => ({}));
+  const out = [];
+  const err = [];
+  const deps = { home, say: (s) => out.push(s), warn: (s) => err.push(s) };
+  assert.equal(main(['--dir', '../x'], deps), 1);
+  assert.deepEqual(out, []);
+  assert.match(err.join(''), /live-root/);
+  assert.equal(existsSync(root), false, 'nothing is made');
+  assert.equal(main(['--dir', 'check'], deps), 0);
+  assert.deepEqual(out, [`${root} untrusted ${path.join(root, 'check')}\n`]);
+});
+
+test('on Windows another spelling of the root never masks a refusal', (t) => {
+  const cases = [
+    [(r) => ({ [r.toUpperCase().replaceAll('\\', '/')]: { hasTrustDialogAccepted: true } }), true],
+    [(r) => ({ [r.toUpperCase()]: { hasTrustDialogAccepted: true }, [r]: { hasTrustDialogAccepted: false } }), false],
+    [(r) => ({ [`${r}/`]: { hasTrustDialogAccepted: true }, [r.replaceAll('\\', '/')]: {} }), false],
+    [(r) => ({ [r]: { hasTrustDialogAccepted: 'true' } }), false],
+  ];
+  for (const [projectsFor, trusted] of cases) {
+    const { home } = fakeHome(t, projectsFor);
+    assert.equal(liveRoot({ home, platform: 'win32' }).trusted, trusted, JSON.stringify(projectsFor('<root>')));
+  }
 });
 
 test('a missing or unreadable .claude.json reads untrusted', (t) => {
