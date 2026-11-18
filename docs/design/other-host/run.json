@@ -44,7 +44,7 @@
     },
     {
       "slice": "S3",
-      "state": "integrating 7cef150",
+      "state": "integrated",
       "after": [
         "S2"
       ],
@@ -53,10 +53,12 @@
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "implementing (restarted after a context compaction)",
       "after": [
         "S3"
-      ]
+      ],
+      "branch": "slice/other-host-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s4"
     },
     {
       "slice": "S5",
@@ -73,7 +75,8 @@
       "after": [
         "S4",
         "S5",
-        "S7"
+        "S7",
+        "S12"
       ]
     },
     {
@@ -94,30 +97,43 @@
     },
     {
       "slice": "S9",
-      "state": "planned",
+      "state": "pushed 5a7a286",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/other-host-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s9"
     },
     {
       "slice": "S10",
-      "state": "planned",
+      "state": "implementing (restarted after a context compaction)",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/other-host-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s10"
     },
     {
       "slice": "S11",
       "state": "integrated 2766f42",
       "branch": "slice/other-host-s11",
       "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s11"
+    },
+    {
+      "slice": "S12",
+      "state": "planned",
+      "after": [
+        "S3",
+        "S4",
+        "S5"
+      ]
     }
   ],
   "findings": [
     "kept: P1 added-slice — S3 took seam option A: a failed label create is swallowed by githubHost.labelled (host-github.mjs:121-129) and land no longer prints its label warning; after S5 integrates, Host open/edit return `why` and land prints it again (spec 2: moved, not rewritten)"
   ],
-  "next": "integrate S3 on feat/other-host bcf49564, then pilot ready for S4 S9 S10",
-  "updatedAt": "2026-11-18T05:55:18.763Z",
+  "next": "integrate S9; S4 S10 implementing",
+  "updatedAt": "2026-11-18T06:03:54.412Z",
   "friction": [
     {
       "agent": "pilot",
@@ -250,6 +266,26 @@
       "agent": "pilot:pilot-implementer",
       "what": "S3: live pilot land in a fixture repo needs a package-lock.json for npm ci",
       "evidence": "first live run failed on npm ci"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10 reported a context compaction minutes after spawn, before any commit, and restarted from the slice file: third slice in a row (S3, S5, S10)",
+      "evidence": "S10 status message; worktree clean at 0b15d63b"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 also reported a compaction before any commit, minutes after spawn; with S10 that is two of three slices spawned together, so the compaction looks tied to spawn, not slice size",
+      "evidence": "S4 status message; worktree clean at 0b15d63b"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: the passing() helper is copy-pasted in four doctor test files, so one new dep cost four Read+Edit pairs",
+      "evidence": "deck/test/doctor{,-deck,-reach,-mods}.test.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: a sleep 100 wait was blocked by the shell hook",
+      "evidence": "S9 report"
     }
   ]
 }
