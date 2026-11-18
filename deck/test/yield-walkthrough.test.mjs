@@ -1,8 +1,11 @@
 /**
  * never-stuck S9 (spec 8; A1): a blocking walkthrough the user has not done holds the co-pilot's yellow lane
- * `YIELD_MS` at most, like a blocking question. `yieldsDue` is pure, so each test builds its own items and passes
- * the clock; nothing touches a store or 4321.
+ * `YIELD_MS` at most, like a blocking question, and the user doing it resumes the ticket it paused. `yieldsDue` is
+ * pure, so those tests build their own items and pass the clock; the resume test takes its own store; nothing
+ * touches 4321.
  */
+
+import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,6 +13,8 @@ import path from 'node:path';
 
 import { KIND_TICKET, KIND_WALKTHROUGH } from '../items.mjs';
 import { yieldsDue } from '../lanes.mjs';
+import { addReply, listItems, setCoPilot, yieldTicket } from '../store.mjs';
+import { postStored, shapedTicketBody, tempDeck } from '../testUtils.mjs';
 
 const REPO = path.join('D:', 'work', 'pilot');
 const MINUTE = 60_000;
@@ -48,6 +53,25 @@ test('a non-blocking walkthrough never is', () => {
   const walk = walkthrough({ blocking: undefined });
 
   assert.deepEqual(yieldsDue([ticket, walk], REPO, ticket.id, POSTED + 60 * MINUTE), []);
+});
+
+test('the user doing the walkthrough that paused a ticket resumes it', (t) => {
+  tempDeck(t);
+  const ticket = postStored({ kind: KIND_TICKET, title: 'building', body: shapedTicketBody('building'), repo: REPO, sliceCount: 3, state: 'yellow' });
+  setCoPilot(ticket.id, true);
+  const walk = postStored({
+    kind: KIND_WALKTHROUGH, title: 'Walk the new card', body: '1. open the deck', repo: REPO, ticket: ticket.id, blocking: true,
+    postedAt: new Date(Date.now() - 21 * MINUTE).toISOString(),
+  });
+  yieldTicket(ticket.id, walk.id);
+  setCoPilot(ticket.id, false); // the drain is over (never-stuck L6)
+  assert.equal(listItems().find((item) => item.id === ticket.id).state, 'green', 'the walkthrough paused it');
+
+  addReply(walk.id, '- step 1 worked');
+
+  const resumed = listItems().find((item) => item.id === ticket.id);
+  assert.equal(resumed.state, 'yellow');
+  assert.equal(Object.hasOwn(resumed, 'paused'), false);
 });
 
 test('a walkthrough on a red or green ticket never is', () => {

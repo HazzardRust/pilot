@@ -785,7 +785,8 @@ export { mayWrite };
  * repository's first yellow ticket. Returns the ticket, or undefined when nothing resumed.
  */
 export function resumeIn(deck, question) {
-  const ticket = question?.kind === KIND_QUESTION && deck.items.find((item) => item?.id === question.ticket && item.kind === KIND_TICKET);
+  // A walkthrough yields too (never-stuck spec 8), so the user doing it resumes the ticket like an answer.
+  const ticket = (question?.kind === KIND_QUESTION || question?.kind === KIND_WALKTHROUGH) && deck.items.find((item) => item?.id === question.ticket && item.kind === KIND_TICKET);
   const answered = (item) =>
     isAnswered(item) || (!isOpen(item) && isPilotClose(item, item.resolution, item.resolvedBy));
   if (ticket?.yielding?.question === question.id && answered(question)) delete ticket.yielding; // an answer cancels a drain (never-stuck L6)
