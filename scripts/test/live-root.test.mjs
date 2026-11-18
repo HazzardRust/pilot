@@ -1,0 +1,96 @@
+// S17 (never-stuck spec 12): one trusted live root under a temp HOME; the user's own ~/.claude.json is never read.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
+import { liveRoot, main } from '../live-root.mjs';
+
+/** A temp HOME whose `.claude.json` lists `projects`; answers the home and the config's bytes. */
+function fakeHome(t, projectsFor) {
+  const home = mkdtempSync(path.join(tmpdir(), 'pilot-live-root-'));
+  t.after(() => rmSync(home, { recursive: true, force: true }));
+  const root = path.join(home, '.claude', 'pilot', 'live');
+  const text = `${JSON.stringify({ numStartups: 3, projects: projectsFor(root) }, null, 2)}\n`;
+  writeFileSync(path.join(home, '.claude.json'), text);
+  return { home, root, text };
+}
+
+test('an untrusted root says so', (t) => {
+  const { home, root, text } = fakeHome(t, (r) => ({ [r]: { hasTrustDialogAccepted: false }, other: { hasTrustDialogAccepted: true } }));
+  const result = liveRoot({ home });
+  assert.deepEqual(result, { root, trusted: false });
+  assert.ok(existsSync(root), 'the root is made');
+  assert.equal(readFileSync(path.join(home, '.claude.json'), 'utf8'), text, '.claude.json is unchanged');
+});
+
+test('a trusted root says so and makes a plain subdir', (t) => {
+  // Claude Code keys projects by the forward-slash path on Windows.
+  const { home, root, text } = fakeHome(t, (r) => ({ [r.replaceAll('\\', '/')]: { hasTrustDialogAccepted: true } }));
+  const result = liveRoot({ home, dir: 's17-check' });
+  assert.deepEqual(result, { root, trusted: true, path: path.join(root, 's17-check') });
+  assert.ok(existsSync(result.path), 'the subdir exists');
+  assert.equal(existsSync(path.join(result.path, '.git')), false, 'no git repository is made');
+  assert.equal(readFileSync(path.join(home, '.claude.json'), 'utf8'), text, '.claude.json is unchanged');
+});
+
+test('a name with a separator or dots is refused', (t) => {
+  const { home, root } = fakeHome(t, () => ({}));
+  const odd = ['-x', '-', 'con', 'nul', 'aux', 'prn', 'com1', 'lpt9'];
+  for (const dir of ['../escape', 'a/b', 'a\\b', '..', '.', 'A', '', 'x'.repeat(41), 123, ...odd]) {
+    assert.throws(() => liveRoot({ home, dir }), /live-root/, `refuses ${JSON.stringify(dir)}`);
+  }
+  assert.equal(existsSync(root), false, 'nothing is made');
+  assert.deepEqual(readdirSync(home), ['.claude.json']);
+});
+
+test('the command prints one line, exit 0, and exits 1 on a bad name having made nothing', (t) => {
+  const { home, root } = fakeHome(t, () => ({}));
+  const out = [];
+  const err = [];
+  const deps = { home, say: (s) => out.push(s), warn: (s) => err.push(s) };
+  assert.equal(main(['--dir', '../x'], deps), 1);
+  assert.deepEqual(out, []);
+  assert.match(err.join(''), /live-root/);
+  assert.equal(existsSync(root), false, 'nothing is made');
+  assert.equal(main(['--dir', 'check'], deps), 0);
+  assert.deepEqual(out, [`${root} untrusted ${path.join(root, 'check')}\n`]);
+  for (const argv of [['--dir'], ['check'], ['--dir', 'a', 'b']]) {
+    assert.equal(main(argv, deps), 1, `usage on ${JSON.stringify(argv)}`);
+  }
+  assert.equal(out.length, 1, 'a usage error prints nothing to stdout');
+});
+
+test('a link in place of the subdir is refused and its target stays empty', (t) => {
+  const { home, root } = fakeHome(t, () => ({}));
+  const outside = mkdtempSync(path.join(tmpdir(), 'pilot-live-root-outside-'));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  mkdirSync(root, { recursive: true });
+  symlinkSync(outside, path.join(root, 'linked'), 'junction');
+  writeFileSync(path.join(root, 'afile'), '');
+  assert.throws(() => liveRoot({ home, dir: 'linked' }), /not a plain directory/);
+  assert.throws(() => liveRoot({ home, dir: 'afile' }), Error);
+  assert.deepEqual(readdirSync(outside), [], 'nothing lands outside the root');
+});
+
+test('on Windows another spelling of the root never masks a refusal', (t) => {
+  const cases = [
+    [(r) => ({ [r.toUpperCase().replaceAll('\\', '/')]: { hasTrustDialogAccepted: true } }), true],
+    [(r) => ({ [r.toUpperCase()]: { hasTrustDialogAccepted: true }, [r]: { hasTrustDialogAccepted: false } }), false],
+    [(r) => ({ [`${r}/`]: { hasTrustDialogAccepted: true }, [r.replaceAll('\\', '/')]: {} }), false],
+    [(r) => ({ [r]: { hasTrustDialogAccepted: 'true' } }), false],
+  ];
+  for (const [projectsFor, trusted] of cases) {
+    const { home } = fakeHome(t, projectsFor);
+    assert.equal(liveRoot({ home, platform: 'win32' }).trusted, trusted, JSON.stringify(projectsFor('<root>')));
+  }
+});
+
+test('a missing or unreadable .claude.json reads untrusted', (t) => {
+  const home = mkdtempSync(path.join(tmpdir(), 'pilot-live-root-'));
+  t.after(() => rmSync(home, { recursive: true, force: true }));
+  assert.equal(liveRoot({ home }).trusted, false);
+  writeFileSync(path.join(home, '.claude.json'), '{ not json');
+  assert.equal(liveRoot({ home }).trusted, false);
+});

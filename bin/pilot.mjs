@@ -44,6 +44,7 @@ import { main as landing } from '../deck/landing-wait.mjs';
 import { main as sync } from '../scripts/sync.mjs';
 import { searchPathOnly } from '../scripts/pilot-branch.mjs';
 import { main as worktrees } from '../scripts/worktrees.mjs';
+import { main as liveRoot } from '../scripts/live-root.mjs';
 import { parseVerdictMessage, writeVerdicts } from '../scripts/verdicts.mjs';
 import { DECK_PORT, deckPort, deckUrl } from '../deck/server.mjs';
 import { PLUGIN_VERSION } from '../deck/version.mjs';
@@ -120,6 +121,9 @@ const usage = () => `pilot — the deck for piloted runs
                  against the fetched base (default origin/main); prune removes only the
                  merged-clean ones and their local branches, never forced; --run, only
                  run <slug>'s
+  pilot live-root [--dir <name>]
+                 print the trusted live root ~/.claude/pilot/live and whether Claude Code
+                 trusts it; --dir makes a plain subdirectory there for a live check
   pilot branches prune --slug <slug> [--dry-run]
                  delete run <slug>'s merged branches: feat/ on origin, slice/ design/ fix/ qa/
                  on the run remote; names each one kept and why; --dry-run only lists
@@ -379,6 +383,11 @@ export async function run(argv, deps) {
 
   if (command === 'worktrees') {
     process.exitCode = worktrees(argv.slice(1));
+    return undefined;
+  }
+
+  if (command === 'live-root') {
+    process.exitCode = liveRoot(argv.slice(1));
     return undefined;
   }
 
