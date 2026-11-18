@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { checkSlice } from '../check-slices.mjs';
+import { behavioursOf, checkSlice } from '../check-slices.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const FIXTURES = 'scripts/test/fixtures/slices';
@@ -18,7 +18,7 @@ const fixture = (name) => fs.readFileSync(path.join(ROOT, FIXTURES, name), 'utf8
 const cli = (...args) =>
   spawnSync(process.execPath, ['scripts/check-slices.mjs', ...args], { cwd: ROOT, encoding: 'utf8' });
 
-test('a seam-first slice file has no problems', () => {
+test('the old shape still passes', () => {
   assert.deepEqual(checkSlice(fixture('good.md')), []);
 });
 
@@ -110,10 +110,12 @@ test('the CLI exits 1 and names each problem', () => {
   const { status, stdout } = cli(FIXTURES);
   assert.equal(status, 1, stdout);
   const lines = stdout.trim().split(/\r?\n/);
-  assert.equal(lines.length, 4, stdout);
+  assert.equal(lines.length, 6, stdout);
   for (const [file, rule] of [
     ['missing-symbol.md:20', 'symbol-not-in-interface'],
+    ['no-kind.md:19', 'behaviour-kind'],
     ['no-rewrite-check.md:', 'rewrite-check'],
+    ['test-no-symbol.md:18', 'behaviour-symbol'],
     ['no-symbol.md:20', 'tests-shape'],
     ['too-long.md:61', 'length'],
   ]) {
@@ -152,7 +154,7 @@ test('one bare blocker among reasoned ones is named', () => {
   assert.doesNotMatch(problems[0].message, /`S1/);
 });
 
-test('the worked example passes', () => {
+test("the skill's worked example passes", () => {
   const { status, stdout, stderr } = cli('skills/vertical-slicing/SKILL.md');
   assert.equal(status, 0, stdout + stderr);
   assert.match(stdout, /^1 slice file\(s\) checked/);
@@ -210,4 +212,47 @@ test('a security-reviewed slice on sonnet is refused', () => {
   assert.match(problems[0].message, /pilot:security-reviewer/);
   assert.deepEqual(checkSlice(reviewed('`pilot:typescript-reviewer`, `pilot:security-reviewer`', 'opus')), []);
   assert.deepEqual(checkSlice(reviewed('`pilot:typescript-reviewer`', 'sonnet')), []);
+});
+
+// spec-first S1 (spec 3, 8; L1, L5): a slice file lists behaviours, each with the kind of evidence it takes.
+const TEST_LINE = /^1\. .*\(test\).*\r?\n/m;
+
+test('a behaviours slice passes', () => {
+  assert.deepEqual(checkSlice(fixture('behaviours.md')), []);
+});
+
+test('a behaviour with no kind is refused', () => {
+  const problems = checkSlice(fixture('no-kind.md'));
+  assert.deepEqual(problems.map(({ line, rule }) => ({ line, rule })), [{ line: 19, rule: 'behaviour-kind' }]);
+  const unknown = fixture('behaviours.md').replace('(look)', '(screenshot)');
+  assert.deepEqual(rules(unknown), [{ line: 19, rule: 'behaviour-kind' }], 'a kind outside test, run, look, read');
+  const empty = fixture('behaviours.md').replace(/^\d\. .*\r?\n/gm, '');
+  assert.deepEqual(rules(empty), [{ line: 16, rule: 'behaviour-kind' }], 'a Behaviours section with no lines');
+});
+
+test('a test behaviour names an Interface symbol', () => {
+  assert.deepEqual(rules(fixture('test-no-symbol.md')), [{ line: 18, rule: 'behaviour-symbol' }]);
+  const absent = fixture('behaviours.md').replace('(test): `lookup`', '(test): `search`');
+  assert.deepEqual(rules(absent), [{ line: 18, rule: 'symbol-not-in-interface' }], 'the symbol must stand in the Interface block');
+});
+
+test('a Rewrite check is needed only beside a test behaviour', () => {
+  const REWRITE = /^Rewrite check:.*\r?\n/m;
+  assert.deepEqual(rules(fixture('behaviours.md').replace(TEST_LINE, '').replace(REWRITE, '')), []);
+  assert.deepEqual(rules(fixture('behaviours.md').replace(REWRITE, '')).map(({ rule }) => rule), ['rewrite-check']);
+  assert.deepEqual(rules(fixture('behaviours.md').replace(MISSES, '')).map(({ rule }) => rule), ['misses'], 'Misses stays on every slice');
+});
+
+test('behaviours are read in order with their kind', () => {
+  assert.deepEqual(
+    behavioursOf(fixture('behaviours.md')),
+    [
+      { n: 1, kind: 'test', symbol: 'lookup' },
+      { n: 2, kind: 'look', symbol: undefined },
+      { n: 3, kind: 'run', symbol: undefined },
+      { n: 4, kind: 'read', symbol: undefined },
+    ],
+  );
+  assert.deepEqual(behavioursOf(fixture('good.md')), [], 'the old shape has no behaviours');
+  assert.deepEqual(behavioursOf(''), []);
 });

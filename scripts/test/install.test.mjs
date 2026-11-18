@@ -900,6 +900,7 @@ test('answered yes, the rule is in permissions.allow', (t) => {
   assert.equal(run.status, 0, run.stderr);
   assert.deepEqual(readJson(file).permissions.allow, [
     'Bash(git status)', DECK_TOOLS, 'Bash(pilot sync *)', 'Bash(pilot integrate *)', 'Bash(pilot land *)', 'Bash(pilot landing *)', 'Bash(pilot ps)', 'Bash(pilot gc)', 'Bash(pilot deck --stop *)', 'Bash(pilot deck --scratch *)',
+    'Bash(pilot wait)', 'Bash(pilot wait *)', 'Bash(pilot budget)', 'Bash(pilot tickets)', 'Bash(node bin/pilot.mjs deck --scratch *)',
   ]);
   assert.match(run.stdout, /mcp__plugin_pilot_deck__\*/, 'the report quotes what it granted');
 });
@@ -912,6 +913,7 @@ test('answered no, no deck rule is written', (t) => {
   assert.equal(run.status, 0, run.stderr);
   assert.deepEqual(readJson(file).permissions.allow, [
     'Bash(git status)', 'Bash(pilot sync *)', 'Bash(pilot integrate *)', 'Bash(pilot land *)', 'Bash(pilot landing *)', 'Bash(pilot ps)', 'Bash(pilot gc)', 'Bash(pilot deck --stop *)', 'Bash(pilot deck --scratch *)',
+    'Bash(pilot wait)', 'Bash(pilot wait *)', 'Bash(pilot budget)', 'Bash(pilot tickets)', 'Bash(node bin/pilot.mjs deck --scratch *)',
   ]);
   assert.doesNotMatch(run.stdout, /mcp__plugin_pilot_deck/, 'not written, and not mentioned');
 });

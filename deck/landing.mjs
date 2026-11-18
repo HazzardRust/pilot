@@ -17,11 +17,13 @@ import { fileURLToPath } from 'node:url';
 
 import { isWindows, killTree } from '../hooks/lib/platform.js';
 import { closeLanded } from './closing-report.mjs';
-import { KIND_GATE2 } from './items.mjs';
+import { KIND_GATE2, KIND_TICKET, isOpen, stateOf } from './items.mjs';
+import { neverGranted, planDrift } from './recut.mjs';
 import { repoOf, sameRepo } from './runs.mjs';
 import { sessionEnv } from './session.mjs';
 import { DeckRefusal, beginLanding, findCredential, listItems, noteLanding, recordForTicket, settleLanding } from './store.mjs';
-import { queueLanding } from './store-items.mjs';
+import { noteDeck, queueLanding } from './store-items.mjs';
+import { recutTicket } from './store-tickets.mjs';
 
 const PILOT_BIN = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'pilot.mjs');
 
@@ -220,6 +222,8 @@ export function startLanding(gate2Id, deps = {}) {
       // A landed feature's gate2 is resolved, no session present (gate2-frees-lane spec 4, L3); the closing report
       // is the lander's (lander S15), its first human step land's main PR (one-integration-line spec 3).
       if (said.ok) logged(() => closeLanded(gate2Id));
+      // The codebase moved: every unbuilt plan it touched goes back to planning (never-stuck spec 14), after the landed line, never awaited.
+      if (said.ok) void driftAfterLanding(gate2Id, deps).then((ids) => ids.length > 0 && logged(announce));
       // The settle frees the repository: the oldest press queued there starts (spec 7).
       logged(() => startQueued(deps));
     };
@@ -265,6 +269,49 @@ export function startLanding(gate2Id, deps = {}) {
   } catch (err) {
     console.error('[deck] a landing could not start:', err.message);
   }
+}
+
+/**
+ * The post-landing sweep (never-stuck spec 14; L2, L4, L7): each open, signed, never-granted yellow ticket of a landed
+ * gate2's repository is checked with `planDrift`, one at a time; each drifted one goes red through `recutTicket` with
+ * why `landing <sha7>`, and one deck line on the gate2 names them all, with any the store refused and why. An unchecked
+ * drift moves nothing (L10), and a ticket granted while its check ran is left. Resolves the re-cut ids; never rejects,
+ * since nobody awaits it.
+ */
+export async function driftAfterLanding(gate2Id, deps = {}) {
+  const { planDrift: check = planDrift } = deps;
+  const recut = [];
+  const named = [];
+  try {
+    const items = listItems();
+    const gate = items.find((item) => item.id === gate2Id && item.kind === KIND_GATE2);
+    if (gate?.landing?.state !== 'landed') return [];
+    const why = `landing ${String(gate.landing.sha ?? 'unknown').slice(0, 7)}`;
+    const queued = items.filter((item) => item.kind === KIND_TICKET && item.id !== gate.ticket && typeof item.repo === 'string' &&
+      sameRepo(item.repo, gate.repo) && isOpen(item) && stateOf(item) === 'yellow' && neverGranted(item));
+    for (const { id, repo, plan } of queued) {
+      let what;
+      try {
+        const drift = await check(repo, plan);
+        if (drift.state !== 'moved' && drift.state !== 'gone') continue;
+        // Read again after the await: a grant in the meantime stamped the plan, and a granted plan is never re-cut (L4).
+        const now = listItems().find((item) => item.id === id);
+        if (!neverGranted(now) || !isOpen(now) || stateOf(now) !== 'yellow') continue;
+        what = drift.state === 'gone' ? `plan ${drift.sha.slice(0, 8)} gone` : `${drift.files.length} file${drift.files.length === 1 ? '' : 's'}`;
+        recutTicket(id, why, drift.state === 'moved' ? drift.files : undefined);
+        recut.push(id);
+        named.push(`${id} (${what})`);
+      } catch (err) {
+        // A switch pending or a co-pilot taken since the read: the drift is still said, so the user sees the plan stayed.
+        if (err instanceof DeckRefusal) named.push(`${id} (${what}; not re-cut: ${err.message})`);
+        else console.error(`[deck] the landing ${gate2Id} could not re-cut ${id}:`, err?.message ?? err);
+      }
+    }
+    if (named.length > 0) noteDeck(gate2Id, `Re-cut by this landing: ${named.join('; ')}`);
+  } catch (err) {
+    console.error(`[deck] the re-cut sweep after landing ${gate2Id} failed:`, err?.message ?? err);
+  }
+  return recut;
 }
 
 /**

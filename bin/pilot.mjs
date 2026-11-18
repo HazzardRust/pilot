@@ -200,8 +200,9 @@ const usage = () => `pilot — the deck for piloted runs
 Any command can be given as \`pilot --dir <path> <command> …\` to run it in <path>.
 
 The deck is normally started by the first Claude session that needs it; run it by
-hand when you want to watch it. Four environment variables change how it behaves:
+hand when you want to watch it. Five environment variables change how it behaves:
 
+  PILOT_BRANCH         the pilot branch base, integrate and land use (default pilot; never the default branch)
   PILOT_DECK_DIR       where the deck keeps its store (default ~/.claude/pilot)
   PILOT_DECK_PORT      the port it serves on (default ${DECK_PORT}; only for tests and hand checks)
   PILOT_DECK_NO_OPEN   set it to stop the deck opening a browser when a session starts

@@ -12,9 +12,9 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 
 import { KIND_QUESTION, KIND_TICKET, messagesOf } from '../items.mjs';
-import { YIELD_MS, yieldsDue } from '../lanes.mjs';
+import { YIELD_MS, lanesFrom, yieldsDue } from '../lanes.mjs';
 import { armYields } from '../server-wait.mjs';
-import { DeckRefusal, addReply, coPilotFor, listItems, pivotTicket, requestSwitch, setCoPilot, takeTicket, yieldTicket } from '../store.mjs';
+import { DeckRefusal, addReply, coPilotFor, listItems, needTicket, pivotTicket, releaseCoPilot, resolveItem, requestSwitch, setCoPilot, takeTicket, yieldTicket } from '../store.mjs';
 import { postStored, shapedTicketBody, tempDeck } from '../testUtils.mjs';
 
 const REPO = path.join('D:', 'work', 'pilot');
@@ -60,27 +60,110 @@ test('a question 20 minutes unanswered is due', () => {
   assert.deepEqual(yieldsDue([ticket, plain], REPO, ticket.id, at), [], 'a question that does not block never yields');
 });
 
-test('the yield writes green, paused and released in one write', (t) => {
+test('a yield keeps the ticket implementing and the slot held', (t) => {
   tempDeck(t);
-  const ticket = held('building');
+  const ticket = held('draining');
   const question = blocking(ticket, 21);
 
-  const paused = yieldTicket(ticket.id, question.id);
-  assert.equal(paused.id, ticket.id);
+  assert.equal(yieldTicket(ticket.id, question.id).id, ticket.id);
   const after = stored(ticket.id);
-  assert.equal(after.state, 'green', 'paused is green (L1)');
-  assert.equal(after.paused.question, question.id);
-  assert.ok(Number.isFinite(Date.parse(after.paused.at)), 'the pause is stamped');
-  assert.equal(coPilotFor(REPO).live, false, 'the co-pilot lane is released');
-
+  assert.equal(after.state, 'yellow', 'implementing while its live slices finish (L6)');
+  assert.equal(after.paused, undefined, 'not paused until the co-pilot hands back');
+  assert.equal(after.yielding.question, question.id);
+  assert.ok(Number.isFinite(Date.parse(after.yielding.at)), 'the yield is stamped');
+  assert.deepEqual([coPilotFor(REPO).ticket, coPilotFor(REPO).live], [ticket.id, true], 'the slot stays held');
   const line = messagesOf(stored(question.id)).at(-1);
-  assert.equal(line.from, 'deck');
-  assert.equal(line.author, 'deck');
+  assert.deepEqual([line.from, line.author], ['deck', 'deck']);
   assert.ok(Number.isInteger(line.seq), 'a seq, so a parked pilot wait wakes on it');
   assert.equal(
     line.text,
-    `Paused ${ticket.id}: ${question.id} unanswered 20 min; send the co-pilot the pause, then deck_ticket co-pilot the next runnable ticket`,
+    `Yielding ${ticket.id}: ${question.id} unanswered 20 min; send the co-pilot the pause: it drains every live slice, then hands back paused`,
   );
+});
+
+test('the release after the drain pauses it', (t) => {
+  tempDeck(t);
+  const ticket = held('drained');
+  const question = blocking(ticket, 21);
+  yieldTicket(ticket.id, question.id);
+  const { at } = stored(ticket.id).yielding;
+
+  setCoPilot(ticket.id, false);
+  const after = stored(ticket.id);
+  assert.equal(after.state, 'green', 'handed back paused, for the user (L1)');
+  assert.deepEqual(after.paused, { question: question.id, at }, 'paused on the question it yielded on');
+  assert.equal(after.yielding, undefined);
+  assert.equal(coPilotFor(REPO).live, false, 'only now is the slot free');
+  setCoPilot(ticket.id, false);
+  assert.deepEqual(stored(ticket.id), after, 'a ticket no longer yielding has nothing to finish');
+});
+
+test('a draining ticket never re-yields and is never refused idle', () => {
+  const postedAt = '2026-10-17T10:00:00.000Z';
+  const yielding = { question: 'itm_q', at: '2026-10-17T10:20:00.000Z' };
+  const ticket = { id: 'itm_held', kind: KIND_TICKET, repo: REPO, state: 'yellow', yielding, replies: [] };
+  const queued = { id: 'itm_next', kind: KIND_TICKET, repo: REPO, state: 'yellow', replies: [] };
+  const question = { id: 'itm_q', kind: KIND_QUESTION, repo: REPO, ticket: ticket.id, blocking: true, postedAt, replies: [] };
+  const items = [ticket, queued, question];
+
+  assert.deepEqual(yieldsDue(items, REPO, ticket.id, Date.parse(postedAt) + 2 * YIELD_MS), [], 'one yield per drain');
+  const lanes = lanesFrom(items, REPO, { switching: {}, coPilot: { ticket: ticket.id, live: true } });
+  assert.equal(lanes.coPilot, `co-pilot: ${ticket.id}`, 'the lane stays held while it drains');
+  assert.equal(lanes.refusal, null, 'nothing pushes the next ticket in beside it');
+});
+
+test('an answer while draining cancels the yield', (t) => {
+  tempDeck(t);
+  const ticket = held('answered mid-drain');
+  const question = blocking(ticket, 21);
+  yieldTicket(ticket.id, question.id);
+
+  addReply(question.id, 'A');
+  const after = stored(ticket.id);
+  assert.equal(after.state, 'yellow');
+  assert.equal(after.yielding, undefined, 'the answer cancels the yield');
+  setCoPilot(ticket.id, false);
+  assert.equal(stored(ticket.id).state, 'yellow', 'so the release is a plain one, never a pause on an answered question');
+  assert.equal(stored(ticket.id).paused, undefined);
+});
+
+test('any other hand-back of a draining ticket drops its yield', (t) => {
+  tempDeck(t);
+  const needed = held('needed');
+  const question = blocking(needed, 21);
+  yieldTicket(needed.id, question.id);
+  postStored({ kind: KIND_QUESTION, title: 'Other?', body: 'C or D', repo: REPO, ticket: needed.id });
+  needTicket(needed.id);
+  assert.equal(stored(needed.id).yielding, undefined, 'a need hands it back green, no yield left');
+  pivotTicket(needed.id);
+  assert.deepEqual([stored(needed.id).state, stored(needed.id).yielding, stored(needed.id).paused], ['yellow', undefined, undefined]);
+
+  const restarted = held('restarted', OTHER);
+  yieldTicket(restarted.id, blocking(restarted, 21).id);
+  releaseCoPilot(OTHER);
+  assert.equal(stored(restarted.id).yielding, undefined, 'a new pilot session frees the slot and the yield with it');
+  assert.deepEqual([stored(restarted.id).state, stored(restarted.id).paused], ['yellow', undefined], 'a restart hands nothing back paused');
+});
+
+test('a pivot drops a yield its release never cleared', (t) => {
+  tempDeck(t);
+  const stale = held('stale');
+  yieldTicket(stale.id, blocking(stale, 21).id);
+  held('took the slot'); // the slot now names another ticket, so the hand-back below releases nothing
+  needTicket(stale.id);
+  pivotTicket(stale.id);
+  assert.deepEqual([stored(stale.id).state, stored(stale.id).yielding], ['yellow', undefined]);
+});
+
+test('a closed yielding ticket stays closed on its release', (t) => {
+  tempDeck(t);
+  const ticket = held('closed mid-drain');
+  yieldTicket(ticket.id, blocking(ticket, 21).id);
+  resolveItem(ticket.id, 'Closed.');
+  setCoPilot(ticket.id, false);
+  const after = stored(ticket.id);
+  assert.deepEqual([after.state, after.paused, after.yielding], ['yellow', undefined, undefined]);
+  assert.equal(coPilotFor(REPO).live, false);
 });
 
 test('a yield no longer due is refused', (t) => {
@@ -117,14 +200,13 @@ test('an overdue yield fires on start', (t) => {
 
   armYields();
   t.mock.timers.tick(0);
-  assert.equal(stored(overdue.id).state, 'green', 'a yield 25 minutes old fires at once');
-  assert.equal(stored(later.id).state, 'yellow');
+  assert.ok(stored(overdue.id).yielding, 'a yield 25 minutes old fires at once');
+  assert.equal(stored(later.id).yielding, undefined);
 
   t.mock.timers.tick(10 * MINUTE - 1);
-  assert.equal(stored(later.id).state, 'yellow', 'not before its 20 minutes');
+  assert.equal(stored(later.id).yielding, undefined, 'not before its 20 minutes');
   t.mock.timers.tick(1);
-  assert.equal(stored(later.id).state, 'green', 'a 10-minute one yields 10 minutes later');
-  assert.equal(stored(later.id).paused.at, new Date(START + 10 * MINUTE).toISOString());
+  assert.equal(stored(later.id).yielding.at, new Date(START + 10 * MINUTE).toISOString(), 'a 10-minute one yields 10 minutes later');
 });
 
 test('a reply before the 20 minutes clears its timer, and a second arm adds none', (t) => {
@@ -140,8 +222,8 @@ test('a reply before the 20 minutes clears its timer, and a second arm adds none
   addReply(asked.id, 'A');
   armYields();
   t.mock.timers.tick(10 * MINUTE);
-  assert.equal(stored(answered.id).state, 'yellow', 'the user answered, so nothing yields');
-  assert.equal(stored(waiting.id).state, 'green');
+  assert.equal(stored(answered.id).yielding, undefined, 'the user answered, so nothing yields');
+  assert.ok(stored(waiting.id).yielding);
   const deckLines = (id) => messagesOf(stored(id)).filter((message) => message.from === 'deck').length;
   assert.equal(deckLines(asked.id), 0);
   assert.equal(deckLines(unanswered.id), 1, 'one timer per yield, however often it is armed');
@@ -152,6 +234,7 @@ test('a paused ticket is never taken or continued, and a pivot drops its pause',
   const ticket = held('paused');
   const question = blocking(ticket, 21);
   yieldTicket(ticket.id, question.id);
+  setCoPilot(ticket.id, false);
 
   const onQuestion = (err) => err instanceof DeckRefusal && err.message.includes(question.id);
   assert.throws(() => takeTicket(ticket.id), onQuestion, 'take names the question it waits on');
@@ -174,7 +257,7 @@ test('a timer that fires after the user answered is refused quietly and yields n
   armYields();
   addReply(question.id, 'A'); // straight to the store: no announceChange, so the armed timer stands
   t.mock.timers.tick(10 * MINUTE);
-  assert.equal(stored(ticket.id).state, 'yellow', 'the refused yield wrote nothing');
+  assert.equal(stored(ticket.id).yielding, undefined, 'the refused yield wrote nothing');
   assert.equal(messagesOf(stored(question.id)).filter((message) => message.from === 'deck').length, 0);
   assert.equal(errors.mock.callCount(), 0, 'a refusal is expected, not an error');
 });

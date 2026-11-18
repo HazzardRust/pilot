@@ -20,7 +20,7 @@ const ANATOMY_FIELDS = [
   'Model',
   'Files owned',
   'Interface',
-  'Tests',
+  'Behaviours',
   'Expected behaviour',
   'Verification commands',
   'Evidence required',
@@ -42,7 +42,7 @@ const architectItem8 = () => {
   return match[1];
 };
 
-test('vertical-slicing names twelve fields, Interface and Tests among them, in order', () => {
+test('vertical-slicing names twelve fields, Interface and Behaviours among them, in order', () => {
   const section = anatomySection();
   const rows = [...section.matchAll(/^\|\s*\*\*(.+?)\*\*\s*\|/gm)].map((m) => m[1]);
   // lint: the anatomy table lists these fields, in this order

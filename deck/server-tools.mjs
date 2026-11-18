@@ -28,6 +28,8 @@ import {
   ownerFilter, parkedTicketOf, parkTicket, pivotTicket, recordFor, recordVerdicts, refusePoster, repliesSince, resolveItem,
   setCoPilot, setQaComment, setSlices, takeTicket,
 } from './store.mjs';
+import { SHA, neverGranted, planChanges, planDrift } from './recut.mjs';
+import { recutTicket, replanTicket } from './store-tickets.mjs';
 
 import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_READ_ITEMS, MAX_READ_LIMIT, deckUrl } from './tools.mjs';
 
@@ -37,6 +39,8 @@ import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_READ_ITEMS, MAX_READ_LIMIT, deckUrl }
 // reaching the store (L3); this half is what happens when one is called.
 
 const asText = (text) => ({ content: [{ type: 'text', text }] });
+/** The `why` of a re-cut the pilot asks for by hand; the deck's own drift checks name theirs (never-stuck S2, S3). */
+const RECUT_BY_PILOT = 'sent back to planning by the pilot';
 
 function readLimit(args) {
   const asked = args?.limit;
@@ -206,6 +210,30 @@ function threadId(args) {
     throw new DeckRefusal('id must be the item id deck_post gave you');
   }
   return id;
+}
+
+/**
+ * `deck_ticket replan`: a re-cut ticket goes back to yellow at `sha` only when `docs/design/<slug>/` is the same there
+ * as at the sha it was re-cut from (L5); a change, or a sha git cannot read, is refused, so the plan takes a gate1.
+ */
+async function replanned(id, sha) {
+  const ticket = listItems().find((item) => item.id === id && item.kind === KIND_TICKET);
+  const from = ticket?.recut?.from;
+  if (typeof from !== 'string' || typeof ticket.repo !== 'string' || typeof ticket.plan?.artefact !== 'string') {
+    throw new DeckRefusal(`${id} carries no re-cut mark from a signed plan; only a re-cut ticket is replanned, any other takes a gate1`);
+  }
+  if (typeof sha !== 'string' || !SHA.test(sha)) throw new DeckRefusal('a replan names the new plan commit as its sha');
+  const gate1 = `post a gate1 with a \`Changed since ${from.slice(0, 7)}:\` line`;
+  // Only a plan whose artefact sits at the top of `docs/design/<slug>/` names the dir to diff; any other is never proven unchanged (L5).
+  const slug = /^docs\/design\/([^/]+)\/[^/]+$/.exec(ticket.plan.artefact.replaceAll('\\', '/'))?.[1];
+  if (slug === undefined) throw new DeckRefusal(`replan ${id}: its plan's artefact ${ticket.plan.artefact} is not in docs/design/<slug>/; ${gate1}`);
+  const changed = await planChanges(ticket.repo, from, sha, slug);
+  if (changed === null) throw new DeckRefusal(`replan ${id}: ${from.slice(0, 7)} or ${sha} cannot be read in ${ticket.repo}, so the plan is never proven unchanged; ${gate1}`);
+  if (changed.length > 0) throw new DeckRefusal(`replan ${id}: ${changed.join(', ')} changed since ${from.slice(0, 7)}; ${gate1}`);
+  // The diff proved the plan unchanged since `from`; a re-cut written while git ran moved the mark, so it proves nothing.
+  if (listItems().find((item) => item.id === id)?.recut?.from !== from) throw new DeckRefusal(`replan ${id}: it was re-cut again while its plan was read; replan it again`);
+  replanTicket(id, sha);
+  return asText(`Replanned ${id} at ${sha.slice(0, 7)}: signed plan kept.`);
 }
 
 /**
@@ -399,9 +427,11 @@ export function callTool(name, args, deps = {}) {
     // A ticket moves by the pilot's hand, but for the architect's merge step (three-lanes spec 14, L14):
     // refused on the hook's stamp, an unstamped call being the pilot's.
     const mover = args?.author === undefined ? 'pilot' : authorKind(args.author);
-    if (mover !== 'pilot' && !(mover === 'architect' && args?.action === 'merge')) {
-      throw new DeckRefusal(`deck_ticket ${args?.action} is the pilot's, not ${args.author}`);
+    if (mover !== 'pilot' && !(mover === 'architect' && (args?.action === 'merge' || args?.action === 'replan'))) {
+      throw new DeckRefusal(`deck_ticket ${args?.action} is the pilot's${args?.action === 'replan' ? ' or the architect\'s' : ''}, not ${args.author}`);
     }
+    // A re-cut whose design dir is textually unchanged keeps its signature, with no press (never-stuck spec 15, L5).
+    if (args?.action === 'replan') return replanned(id, args?.sha);
     // Need and pivot are the pilot's two state writes (overview-one-ticket spec 15, 18; L7, L8).
     // The pilot reads both lanes on the line that moves one (idle-main-lane spec 5; yellow-lane spec 2), read only by the answers that say them.
     const both = () => {
@@ -409,7 +439,24 @@ export function callTool(name, args, deps = {}) {
       return `${lanes.yellowClause}. ${lanes.stageClause}.`;
     };
     if (args?.action === 'need') return asText(`Needed ${id}: ${stateOf(needTicket(id))}. ${both()}`);
+    // The pilot's re-cut sends a signed ticket back to planning (never-stuck spec 6, L7); a gate1 Sign off replaces its plan.
+    if (args?.action === 'recut') return asText(`Re-cut ${id}: ${stateOf(recutTicket(id, RECUT_BY_PILOT))}, planning next. ${both()}`);
     // The main session's co-pilot on a yellow ticket, set and released (clear-waits-co-pilot spec 2, L8).
+    // A ticket's first grant checks its plan against origin first (never-stuck spec 13, L2, L4): a drift re-cuts it
+    // in this call (L7), and git that cannot answer grants with the reason (L10).
+    const granted = args?.action === 'co-pilot' ? listItems().find((item) => item.id === id && item.kind === KIND_TICKET) : undefined;
+    // Only an open yellow ticket is checked; any other is refused by `setCoPilot` below without running git.
+    if (neverGranted(granted) && isOpen(granted) && stateOf(granted) === 'yellow' && typeof granted.repo === 'string') {
+      return planDrift(granted.repo, granted.plan).then((drift) => {
+        if (drift.state === 'gone' || drift.state === 'moved') {
+          const what = drift.state === 'gone' ? `${drift.sha.slice(0, 8)} gone` : drift.files.join(', ');
+          recutTicket(id, `re-cut check due: ${what}`, drift.state === 'moved' ? drift.files : undefined);
+          return asText(`Re-cut check due ${id}: ${what}; red, planning next. ${both()}`);
+        }
+        setCoPilot(id, true);
+        return asText(`Co-pilot ${id}: live.${drift.state === 'unchecked' ? ` drift unchecked: ${drift.reason}.` : ''} ${both()}`);
+      });
+    }
     if (args?.action === 'co-pilot' || args?.action === 'release') {
       const entry = setCoPilot(id, args.action === 'co-pilot');
       if (args.action === 'co-pilot') return asText(`Co-pilot ${id}: live. ${both()}`);
@@ -440,7 +487,7 @@ export function callTool(name, args, deps = {}) {
       return asText(`Recorded ${count} verdicts on ${id}.`);
     }
     // The tool's refusal names every action (QA F2); moveTicket's own names the page's two arrows.
-    if (args?.action !== 'up' && args?.action !== 'down') throw new DeckRefusal(`a ticket moves up, down, take, park, merge, need, pivot, co-pilot, release or verdicts, not ${args?.action}`);
+    if (args?.action !== 'up' && args?.action !== 'down') throw new DeckRefusal(`a ticket moves up, down, take, park, merge, need, pivot, recut, replan, co-pilot, release or verdicts, not ${args?.action}`);
     // The arrow's own write (ticket-making L3): one store function, whichever hand moves it.
     const queue = moveTicket(id, args?.action);
     const place = queue.findIndex((item) => item.id === id) + 1;

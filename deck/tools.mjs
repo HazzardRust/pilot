@@ -355,13 +355,14 @@ export const TOOLS = [
   },
   {
     name: 'deck_ticket',
-    description: 'need: user needed; pivot: back to yellow',
+    description: 'need: user needed; pivot: back to yellow; recut: signed back to red',
     inputSchema: {
       type: 'object',
       properties: {
         id: { type: 'string' },
-        action: { enum: ['up', 'down', 'take', 'park', 'merge', 'need', 'pivot', 'co-pilot', 'release', 'verdicts'] },
+        action: { enum: ['up', 'down', 'take', 'park', 'merge', 'need', 'pivot', 'recut', 'replan', 'co-pilot', 'release', 'verdicts'] },
         verdicts: { type: 'string' },
+        sha: { type: 'string' },
         author: AUTHOR,
       },
       required: ['id', 'action'],
