@@ -171,11 +171,19 @@ const keep = (held, chunk) => (held + chunk).slice(-4 * MAX_LANDING_CHARS);
 
 /** What a child wrote to its land dir (never-stuck spec 21): `out` and `err`, each its tail, empty when unreadable. */
 function outputIn(dir) {
+  // Only the tail's bytes are read, so a land that printed without end cannot fill this daemon.
   const tail = (name) => {
+    let fd;
     try {
-      return keep('', fs.readFileSync(path.join(dir, name), 'utf8'));
+      fd = fs.openSync(path.join(dir, name), 'r');
+      const length = Math.min(fs.fstatSync(fd).size, 16 * MAX_LANDING_CHARS);
+      const buffer = Buffer.alloc(length);
+      fs.readSync(fd, buffer, 0, length, fs.fstatSync(fd).size - length);
+      return keep('', buffer.toString('utf8'));
     } catch {
       return '';
+    } finally {
+      if (fd !== undefined) fs.closeSync(fd);
     }
   };
   return { stdout: tail('out'), stderr: tail('err') };
@@ -230,6 +238,8 @@ function writerFor(gate, deps, opened = () => '') {
   return (outcome) => {
     const said = { ...outcome, line: opened() + outcome.line };
     logged(() => settleLanding(gate.id, said));
+    // Land's raw output is on the thread, withheld where it holds a credential, and never left on disk (never-stuck spec 21).
+    logged(() => fs.rmSync(landDir(gate.id), { recursive: true, force: true }));
     logged(() => noteLanding(gate.repo, gate.ticket, said));
     // A landed feature's gate2 is resolved, no session present (gate2-frees-lane spec 4, L3); the closing report
     // is the lander's (lander S15), its first human step land's main PR (one-integration-line spec 3).
@@ -266,11 +276,12 @@ export function startLanding(gate2Id, deps = {}) {
     const couldNotStart = (err) => ({ ok: false, line: `NOT landed: pilot land could not start (${err?.message ?? err})` });
     // Land writes to its land dir, not to a pipe of this daemon, so it outlives a restart and its line is still read (never-stuck spec 21).
     const dir = landDir(gate2Id);
-    let fds;
+    const fds = [];
     try {
       fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
-      fds = ['out', 'err'].map((name) => fs.openSync(path.join(dir, name), 'w', 0o600));
+      for (const name of ['out', 'err']) fds.push(fs.openSync(path.join(dir, name), 'w', 0o600));
     } catch (err) {
+      for (const fd of fds) fs.closeSync(fd);
       return write(couldNotStart(err));
     }
     let child;
@@ -316,7 +327,8 @@ export const ADOPTED_LIMIT_MS = 40 * 60_000;
  * in its land dir; past ADOPTED_LIMIT_MS from its start, timed out, its tree stopped only while its pid is still the deck's land.
  */
 function follow(gate, deps, { table, clock, pollMs, now, stop }) {
-  const { pid, dir, startedAt } = gate.landing;
+  const { pid, startedAt } = gate.landing;
+  const dir = landDir(gate.id);
   running += 1;
   return new Promise((resolve) => {
     let poll;
@@ -346,8 +358,13 @@ function follow(gate, deps, { table, clock, pollMs, now, stop }) {
       finish({ ok: sha !== undefined, sha, line });
     }, pollMs);
     limit = clock.setTimeout(() => {
-      logged(() => landChildOf(gate.landing, { table, now: now() }) && stop(pid));
-      finish({ ok: false, line: `NOT landed: timed out after ${ADOPTED_LIMIT_MS / 60_000} min; the deck stopped land ${pid}` });
+      let stopped = 'its pid is no longer the land, so nothing was stopped';
+      try {
+        if (landChildOf(gate.landing, { table, now: now() })) stopped = (stop(pid), `the deck stopped land ${pid}`);
+      } catch (err) {
+        stopped = `land ${pid} could not be stopped (${err?.message ?? err})`;
+      }
+      finish({ ok: false, line: `NOT landed: timed out after ${ADOPTED_LIMIT_MS / 60_000} min; ${stopped}` });
     }, Math.max(0, Date.parse(startedAt) + ADOPTED_LIMIT_MS - now()));
   });
 }
@@ -364,8 +381,8 @@ export function adoptLandings(deps = {}) {
   try {
     let rows;
     const once = () => (rows ??= table());
-    const running = listItems().filter((item) => item.kind === KIND_GATE2 && item.landing?.state === 'running');
-    adopted = running.filter((item) => item.landing.pid !== undefined && landChildOf(item.landing, { table: once, now: now() }));
+    const live = listItems().filter((item) => item.kind === KIND_GATE2 && item.landing?.state === 'running');
+    adopted = live.filter((item) => item.landing.pid !== undefined && landChildOf(item.landing, { table: once, now: now() }));
   } catch (err) {
     console.error('[deck] the land children a restart left could not be read; their landings read interrupted:', err?.message ?? err);
   }

@@ -15,6 +15,7 @@ import path from 'node:path';
 
 import { KIND_GATE2, SIGN_OFF } from '../items.mjs';
 import { adoptLandings, startLanding } from '../landing.mjs';
+import { processTable } from '../procs.mjs';
 import { callTool } from '../server-tools.mjs';
 import { LANDING_INTERRUPTED, addReply, beginLanding, interruptLandings, listItems, postItem, registerRun, setSlices } from '../store.mjs';
 import { tempDeck, withTicket } from '../testUtils.mjs';
@@ -42,13 +43,14 @@ function aGate2(t) {
   return { gate, worktree };
 }
 
-/** A stub `<dir>/bin/pilot.mjs`, a land by its command line, that prints `LANDED` and exits 0 once `release` is called. */
+/** A stub `<dir>/bin/pilot.mjs`, a land by its command line, that prints 100 kB, then `LANDED`, and exits 0 once `release` is called. */
 function aStubLand(t) {
   const bin = path.join(scratch(t, 'pilot'), 'bin');
   fs.mkdirSync(bin);
   const file = path.join(bin, 'pilot.mjs');
   const go = path.join(bin, 'go');
-  const wait = `const tick = () => require('fs').existsSync(${JSON.stringify(go)}) ? console.log(${JSON.stringify(LANDED)}) : setTimeout(tick, 50); tick();`;
+  const print = `console.log('x'.repeat(100000)), console.log(${JSON.stringify(LANDED)})`;
+  const wait = `const tick = () => require('fs').existsSync(${JSON.stringify(go)}) ? (${print}) : setTimeout(tick, 50); tick();`;
   fs.writeFileSync(file, `import { createRequire } from 'node:module';\nconst require = createRequire(import.meta.url);\n${wait}\n`);
   return { file, release: () => fs.writeFileSync(go, '') };
 }
@@ -77,7 +79,8 @@ test('a restart re-adopts a live child and reads its line', async (t) => {
   const stub = aStubLand(t);
   const old = aDeadDaemonSpawn(t, stub.file);
   startLanding(gate.id, { spawn: old.spawn, env: landing, clock: never });
-  assert.equal(itemOf(gate.id).landing.pid, old.pid, 'the pid is on the landing');
+  const { pid, dir } = itemOf(gate.id).landing;
+  assert.equal(pid, old.pid, 'the pid is on the landing');
 
   const adopted = adoptLandings({ pollMs: 50 });
   interruptLandings();
@@ -85,8 +88,44 @@ test('a restart re-adopts a live child and reads its line', async (t) => {
   await adopted;
 
   assert.equal(itemOf(gate.id).landing.state, 'landed');
-  assert.equal(itemOf(gate.id).landing.sha, '1a2b3c4', "the line is the child's own");
+  assert.equal(itemOf(gate.id).landing.sha, '1a2b3c4', "the line is the child's own, read from the tail of 100 kB");
   assert.equal(interruptedLines(gate.id).length, 0);
+  assert.equal(fs.existsSync(dir), false, "land's raw output is not left on disk");
+});
+
+/** A real stub land the test spawned, recorded on the gate2's landing as its child; killed by its handle in teardown. */
+function aLiveLand(t, gate, worktree) {
+  const child = spawnChild(process.execPath, [aStubLand(t).file, 'land'], { stdio: 'ignore' });
+  t.after(() => child.kill());
+  beginLanding(gate.id, { worktree, pid: child.pid });
+  return child;
+}
+
+test('an unreadable process table adopts nothing and stops nothing', async (t) => {
+  tempDeck(t);
+  const { gate, worktree } = aGate2(t);
+  const child = aLiveLand(t, gate, worktree);
+
+  await adoptLandings({ table: () => { throw new Error('no table'); } });
+
+  assert.equal(interruptedLines(gate.id).length, 1);
+  assert.ok(processTable().some((row) => row.pid === child.pid), 'the child still runs');
+});
+
+test('an adopted land past 40 minutes is stopped and reads timed out', async (t) => {
+  tempDeck(t);
+  const { gate, worktree } = aGate2(t);
+  const child = aLiveLand(t, gate, worktree);
+  let fire;
+  const clock = { setInterval: () => undefined, clearInterval: () => undefined, setTimeout: (fn) => (fire = fn), clearTimeout: () => undefined };
+  const stopped = [];
+
+  const adopted = adoptLandings({ clock, stop: (pid) => stopped.push(pid) });
+  fire();
+  await adopted;
+
+  assert.deepEqual(stopped, [child.pid]);
+  assert.equal(itemOf(gate.id).landing.line, `NOT landed: timed out after 40 min; the deck stopped land ${child.pid}`);
 });
 
 test('a dead pid is interrupted as today', async (t) => {
@@ -112,8 +151,7 @@ test('a reused pid that is not a land is never adopted or stopped', async (t) =>
 
   assert.equal(itemOf(gate.id).landing.state, 'refused');
   assert.equal(interruptedLines(gate.id).length, 1);
-  assert.equal(other.exitCode, null, 'the process is untouched');
-  assert.doesNotThrow(() => process.kill(other.pid, 0), 'it still runs');
+  assert.ok(processTable().some((row) => row.pid === other.pid), 'the process is untouched: it is still in the table');
 });
 
 test('Land again is refused while the child lives', async (t) => {
