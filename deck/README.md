@@ -33,7 +33,8 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `gate2-evidence.mjs` | the gate2 evidence check: a short-path ticket's gate2 carries a `Verdict:` per slice, a `Gate:` line and, for a surface, its walkthrough (short-path spec 2); a full run's gate2 naming no walkthrough carries the checks table and, on a plan with a surface, a `surface planned, no walkthrough:` reason line; a named walkthrough is a real one on the gate2's ticket; `walkthroughPlanGaps` refuses QA's walkthrough on a plan marked with no surface (walkthrough-surface spec 3-6) |
 | `health.mjs` | `GET /api/health`'s answer: pid, url, cursor, rss, and the plugin version with when this daemon started (daemon-lifecycle spec 3) |
 | `hold-route.mjs` | `POST /api/hold { id, ticket }`: `pilot run` marks a hand-off held for a live co-pilot, item state and no reply, written once (held-handoff L2) |
-| `host.mjs` | the host: the one `gh` process start, argv only, refusing any call off its argv allowlist before a process starts (deck-writes-github spec 8) |
+| `host-github.mjs` | the GitHub adapter: **Host** over `gh`, and the one `gh` process start, argv only, refusing any call off its argv allowlist before a process starts (other-host spec 2, L5) |
+| `host.mjs` | the host: reads `pilot.host` (unset is `github`) and hands back its **Host** adapter, or null at `none` (other-host spec 1-3) |
 | `idle.mjs` | the user's deck's idle rule: it exits after 10 minutes with no session, no landing and no request, reading the process table only when the other two hold (process-gc L2, ADR 0136) |
 | `items.mjs` | the item vocabulary: kinds, fields, open or closed, whose turn |
 | `items-bounds.mjs` | the item vocabulary's bounds and field shapes: limits, the words the deck offers, `stepParts` |
