@@ -29,7 +29,7 @@
     },
     {
       "slice": "S1",
-      "state": "pushed e331f33 (re-review for verdict lines)",
+      "state": "pushed 0eb8cac",
       "branch": "slice/other-host-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s1"
     },
@@ -100,13 +100,13 @@
     },
     {
       "slice": "S11",
-      "state": "pushed a06ae90 (conflicts with origin/pilot in agents/pilot-implementer.md, pilot-qa.md, pilot-architect.md)",
+      "state": "pushed 2be3c09",
       "branch": "slice/other-host-s11",
       "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s11"
     }
   ],
-  "next": "S1 pushed, fresh typescript and security reviewers for verbatim verdicts; feat taking origin/pilot; S11 conflicts with new pilot in agents/*.md, rebase it; then integrate S1, S11, start S2, S5, S7, S9, S10",
-  "updatedAt": "2026-11-18T04:48:02.750Z",
+  "next": "integrating S1 (0eb8cac), then S11 (2be3c09); then pilot ready and S2, S5, S7, S9, S10 from the new feat tip",
+  "updatedAt": "2026-11-18T04:57:58.580Z",
   "friction": [
     {
       "agent": "pilot",
@@ -137,6 +137,12 @@
       "what": "context reset mid-slice dropped the reviewers' verbatim Verdict lines, forcing a re-review before integration",
       "evidence": "S1 report: verdict lines not retained",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "each selected-test run (test:changed) takes about 377 s and spawns about 11,000 processes",
+      "evidence": "S11 gate after merging feat 115ca034: 4290 pass in ~377 s",
+      "size": 377
     }
   ]
 }
