@@ -53,7 +53,7 @@
     },
     {
       "slice": "S4",
-      "state": "integrating 85f8ae2",
+      "state": "integrated",
       "after": [
         "S3"
       ],
@@ -90,10 +90,12 @@
     },
     {
       "slice": "S8",
-      "state": "planned",
+      "state": "pushed d3a35c7",
       "after": [
         "S4"
-      ]
+      ],
+      "branch": "slice/other-host-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s8"
     },
     {
       "slice": "S9",
@@ -121,19 +123,21 @@
     },
     {
       "slice": "S12",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S3",
         "S4",
         "S5"
-      ]
+      ],
+      "branch": "slice/other-host-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s12"
     }
   ],
   "findings": [
     "kept: P1 added-slice — S3 took seam option A: a failed label create is swallowed by githubHost.labelled (host-github.mjs:121-129) and land no longer prints its label warning; after S5 integrates, Host open/edit return `why` and land prints it again (spec 2: moved, not rewritten)"
   ],
-  "next": "integrate S4 on feat/other-host 278a9606, then pilot ready for S12 S8",
-  "updatedAt": "2026-11-18T06:18:54.236Z",
+  "next": "integrate S8; S12 implementing",
+  "updatedAt": "2026-11-18T06:28:59.458Z",
   "friction": [
     {
       "agent": "pilot",
@@ -321,6 +325,16 @@
       "kind": "drain",
       "what": "a co-pilot's Blocked: SendMessage (classifier unavailable, sent on reissue) sat 20 min and paused other-host with its co-pilot live; pilot closed it Moot and re-claimed the lane, second time",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8 slice Interface names mainStep(line) -> string, but the code has an unexported mainStep(number, byHand), so the test went through closingReportOf",
+      "evidence": "deck/closing-report.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8: test:changed ran past 180 s and went to the background, so the gate was waited on by polling its log",
+      "evidence": "S8 report"
     }
   ]
 }
