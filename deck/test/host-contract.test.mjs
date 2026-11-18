@@ -225,7 +225,7 @@ test('every verb returns its shape on gitlab', (t) => {
     if (verb === 'reviews') assert.deepEqual(call(host).map((r) => [r.number, r.body, r.crossRepo]), [[1, 'b', false], [2, '', true], [3, '', false]]);
   }
   const mineByHead = sent.find(({ args }) => args.at(-1).includes('source_branch'));
-  assert.equal(mineByHead.args.at(-1), 'projects/:id/merge_requests?state=opened&source_branch=feat%2F1&scope=created_by_me&per_page=5');
+  assert.equal(mineByHead.args.at(-1), 'projects/:id/merge_requests?state=opened&source_branch=feat%2F1&scope=created_by_me&per_page=5&page=1');
   const opened = sent.find(({ args }) => args.includes('POST') && args.at(-1) === 'projects/:id/merge_requests');
   assert.deepEqual(JSON.parse(opened.input), { source_branch: 'feat/x', target_branch: 'pilot', title: 'Draft: T', description: 'B', labels: 'release' });
   // Every argv the adapter sent passes the real allowlist: a refused one throws here, before any process starts.
@@ -237,11 +237,26 @@ test('every verb returns its shape on gitlab', (t) => {
   assert.throws(() => odd.reviews({ state: 'open' }), /locked/, 'a state off the three is refused, never guessed');
 });
 
-test('a full page of 100 is never read as the whole list', () => {
-  const page = (count) => gitlabHost(() => JSON.stringify(Array.from({ length: count }, (_, at) => ({ ...fixture('merge_request'), iid: at + 1 }))));
-  assert.throws(() => page(100).reviews({ state: 'all', limit: 1000 }), /glab listed 100 merge requests, so one may be missing/);
-  assert.equal(page(99).reviews({ state: 'all', limit: 1000 }).length, 99);
-  assert.equal(page(100).reviews({ state: 'all', limit: 100 }).length, 100, 'asked 100, a full page is the whole answer');
+test('reviews reads on past a full page of 100, up to the limit', () => {
+  /** A gitlab over pages of `sizes` merge requests, recording the page each call asked for. */
+  const paged = (sizes) => {
+    const pages = [];
+    const host = gitlabHost((args) => {
+      const page = Number(new URLSearchParams(args.at(-1).split('?')[1]).get('page'));
+      pages.push(page);
+      return JSON.stringify(Array.from({ length: sizes[page - 1] ?? 0 }, (_, at) => ({ ...fixture('merge_request'), iid: page * 1000 + at })));
+    });
+    return { host, pages };
+  };
+  const short = paged([100, 100, 50]);
+  assert.equal(short.host.reviews({ state: 'all', limit: 1000 }).length, 250);
+  assert.deepEqual(short.pages, [1, 2, 3], 'a short page is the last');
+  const full = paged([100, 100, 100]);
+  assert.equal(full.host.reviews({ state: 'all', limit: 150 }).length, 150);
+  assert.deepEqual(full.pages, [1, 2], 'no page past the limit');
+  const one = paged([100, 100]);
+  assert.equal(one.host.reviews({ state: 'all', limit: 100 }).length, 100);
+  assert.deepEqual(one.pages, [1]);
 });
 
 test('the upsert edits its own note', () => {
