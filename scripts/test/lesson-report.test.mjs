@@ -93,10 +93,22 @@ test('each shape rule refuses its case', () => {
   }
 });
 
+test('a goal wrapped onto a second line keeps its check', () => {
+  const wrapped = WHOLE.replace(', checked by naming', ',\n  checked by naming');
+  assert.deepEqual(reportProblems(wrapped), []);
+});
+
+test('a refusal never echoes a credential', () => {
+  const secret = 'sk-abcdefghijklmnopqrstuv';
+  const problems = reportProblems(WHOLE.replace('See https://example.com/adr.', `See [key](${secret}).`));
+  assert.deepEqual(problems.map((problem) => problem.rule), ['local-link', 'credential']);
+  for (const { message } of problems) assert.doesNotMatch(message, new RegExp(secret));
+});
+
 test('a bad id writes nothing', (t) => {
   const store = tempStore(t);
   for (const id of ['../x', 'itm_1']) {
-    assert.throws(() => writeLessonReport(id, WHOLE, { store }), /itm_/, `${id} is refused`);
+    assert.throws(() => writeLessonReport(id, WHOLE, { store }), /lesson id is itm_/, `${id} is refused`);
   }
   assert.equal(filesUnder(store).length, 0, '0 files in the store');
   assert.throws(() => writeLessonReport(ID, WHOLE.replace(/## Goals[\s\S]*?## Your level/, '## Your level'), { store }), /Goals/);

@@ -51,7 +51,7 @@ links. Sections `## Goals` (each "you can …, checked by …"), `## Your level`
 (the diagnostic answer quoted), `## Dot points` (3 or more), `## Background`
 (artefact, ADR and code quoted), `## Research while planning` (what to
 research while planning), `## The decision to come back to` (question and
-options verbatim). Then:
+options verbatim). No line of it may be `LESSON_REPORT_END`. Then:
 
 ```bash
 pilot lesson-report <lesson id> <<'LESSON_REPORT_END'

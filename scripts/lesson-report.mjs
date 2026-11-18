@@ -47,6 +47,19 @@ function sections(lines) {
 
 const filled = (body) => body !== undefined && body.some((line) => line.trim() !== '');
 
+/** A section's list items, each joined with its indented continuation lines. */
+function listItems(body) {
+  const items = [];
+  for (const line of body) {
+    if (LIST_ITEM.test(line)) items.push(line.trim());
+    else if (items.length > 0 && /^\s+\S/.test(line)) items[items.length - 1] += ` ${line.trim()}`;
+  }
+  return items;
+}
+
+/** Up to 80 characters of `text` for a refusal, withheld when it holds a credential shape. */
+const shown = (text) => (findCredential(text) ? '(withheld: a credential shape)' : text.slice(0, 80) || '(empty)');
+
 /** What is wrong with the report, one `{ rule, message }` per problem; none for a whole report. */
 export function reportProblems(markdown) {
   const text = String(markdown);
@@ -61,7 +74,7 @@ export function reportProblems(markdown) {
 
   const dots = found.get('Dot points');
   if (filled(dots)) {
-    const count = dots.filter((line) => LIST_ITEM.test(line)).length;
+    const count = listItems(dots).length;
     if (count < MIN_DOT_POINTS) {
       problems.push({ rule: 'dot-points', message: `${count} dot points; at least ${MIN_DOT_POINTS}` });
     }
@@ -69,11 +82,11 @@ export function reportProblems(markdown) {
 
   const goals = found.get('Goals');
   if (filled(goals)) {
-    const items = goals.filter((line) => LIST_ITEM.test(line));
+    const items = listItems(goals);
     if (items.length === 0) problems.push({ rule: 'goal-check', message: 'Goals lists no goal' });
     for (const item of items) {
       if (!/checked by/i.test(item)) {
-        problems.push({ rule: 'goal-check', message: `a goal without "checked by": ${item.trim().slice(0, 80)}` });
+        problems.push({ rule: 'goal-check', message: `a goal without "checked by": ${shown(item)}` });
       }
     }
   }
@@ -81,7 +94,7 @@ export function reportProblems(markdown) {
   for (const pattern of LINK_TARGETS) {
     for (const [, target] of text.matchAll(pattern)) {
       if (!HTTP.test(target)) {
-        problems.push({ rule: 'local-link', message: `a link to a non-http target: ${target.slice(0, 80) || '(empty)'}` });
+        problems.push({ rule: 'local-link', message: `a link to a non-http target: ${shown(target)}` });
       }
     }
   }
