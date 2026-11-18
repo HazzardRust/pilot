@@ -11,12 +11,14 @@ readme-graph-deck, architect-deeper). The census that should have caught the omi
 
 ## 2. Spec
 
+Agreed with the user: "All 4" on `itm_2a16f080261d`.
+
 | # | Behaviour | Evidence | Bar |
 | --- | --- | --- | --- |
 | 1 | A diff touching only a `.md` file runs the vocabulary guard in `npm run test:changed -- --since=HEAD`. | CLI run in a worktree after appending a line to a `.md` file (§9 step 1). | scope line `selected <n> of <m>`, not `full suite`; the guard's 14 tests reported; 0 fail. |
 | 2 | A select-tests test pins it: a fixture `.md`-only diff selects `scripts/test/vocabulary-guard.test.mjs`. | `node --test scripts/test/select-tests.test.mjs` | 1 new test, failing on d27abc48; 0 fail after. |
-| 3 | *assumed* (A1) The census ("every tree walker is listed") rides every selection, so a new tree-reading test missing from `TREE_TESTS` goes red in the narrow loop. practitioner: build-system maintainer (a selection's own guard must run inside the selection). | CLI run: add an unlisted test file containing `'ls-files'`, run `test:changed` (§9 step 2). | exit 1; the new file's path in the output. |
-| 4 | *assumed* The narrow loop stays narrow: the two added tree tests each run in under 3 s alone. practitioner: build-system maintainer. | `node --test` on each file, timed. | each < 3 s (measured at design: guard 1.0 s, census 1.3 s; all of `select-tests.test.mjs` is 12 s). |
+| 3 | (A1) The census ("every tree walker is listed") rides every selection, so a new tree-reading test missing from `TREE_TESTS` goes red in the narrow loop. practitioner: build-system maintainer (a selection's own guard must run inside the selection). | CLI run: add an unlisted test file containing `'ls-files'`, run `test:changed` (§9 step 2). | exit 1; the new file's path in the output. |
+| 4 | (A2) The narrow loop stays narrow: the two added tree tests each run in under 3 s alone. practitioner: build-system maintainer. | `node --test` on each file, timed. | each < 3 s (measured at design: guard 1.0 s, census 1.3 s; all of `select-tests.test.mjs` is 12 s). |
 
 ## 3. Findings
 
@@ -63,6 +65,8 @@ No fold: the change is one list entry, one comment, and one test moved between f
   while selection broke.
 - **L3** Name the third hand-added kind in the `TREE_TESTS` comment. Rationale: the next reader of the list learns why
   the census misses it. Rejected: nothing; one line.
+- **L4** No grilling past the spec: the user chose "No grilling" on `itm_b249e0f9290f`. Rationale: one slice, the
+  spec agreed whole. Rejected: a design round on L1-L3.
 - ADR: `docs/adr/0189-tree-tests-guard.md` (ADR 0189), on L1 and A1; the landing numbers it.
 
 ## 6. Assumed decisions
@@ -71,9 +75,12 @@ No fold: the change is one list entry, one comment, and one test moved between f
   `TREE_TESTS`. Default: move it. Tradeoff: about 1.3 s on every narrow run and about 25 lines. Rejected: listing all
   of `select-tests.test.mjs` (12 s per run); leaving the census full-gate only (the friction recurs). Asked as spec
   line 3 in `itm_2a16f080261d` (`itm_400c4f3d2c70` closed as covered by it).
+  Verdict: stands — the user chose "All 4" on itm_2a16f080261d, spec line 3 included
 - **A2** Spec 4's bar of 3 s per added tree test. Default: 3 s, twice the measured times. Tradeoff: a slow machine may
   need more headroom. Rejected: no bar. Part of `itm_2a16f080261d`.
+  Verdict: stands — the user chose "All 4" on itm_2a16f080261d, spec line 4 included
 - **A3** QA environment: the CLI in a worktree, no database. Default from the pilot's brief.
+  Verdict: stands — no surface but a CLI and no database; the user chose No grilling on itm_b249e0f9290f
 
 ## 7. Out of scope
 
