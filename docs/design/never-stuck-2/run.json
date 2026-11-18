@@ -9,30 +9,36 @@
   "slices": [
     {
       "slice": "S7",
-      "state": "planned"
+      "state": "implementing (committed ec9a6420, holding push for post-S10 tip)",
+      "branch": "slice/never-stuck-2-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s7"
     },
     {
       "slice": "S8",
-      "state": "integrated",
+      "state": "integrated at 93d7937",
       "branch": "slice/never-stuck-2-s8",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s8"
     },
     {
       "slice": "S9",
-      "state": "planned",
+      "state": "implementing (committed f2b10956, not pushed)",
       "after": [
         "S8"
-      ]
+      ],
+      "branch": "slice/never-stuck-2-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s9"
     },
     {
       "slice": "S10",
-      "state": "implementing (agent a7a04fd7a7b5c45c7)",
+      "state": "implementing (committed 87b2a54f, not pushed)",
       "branch": "slice/never-stuck-2-s10",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s10"
     },
     {
       "slice": "S11",
-      "state": "planned"
+      "state": "implementing (uncommitted)",
+      "branch": "slice/never-stuck-2-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s11"
     },
     {
       "slice": "S12",
@@ -65,7 +71,7 @@
     },
     {
       "slice": "S17",
-      "state": "implementing (agent a7d1d7f6e85084d2a)",
+      "state": "pushed 0a92729 (report not yet received)",
       "branch": "slice/never-stuck-2-s17",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s17"
     },
@@ -100,8 +106,9 @@
       "pr": 107
     }
   ],
-  "next": "S8 integrating at 55cbdc04 (record moved to slug never-stuck-2: pilot integrate keys on feat/<slug>); then pilot ready; S11, S13, S15, S19, S9, S12 as slots allow; S7 after S10",
-  "updatedAt": "2026-11-18T07:56:52.091Z",
+  "findings": [],
+  "next": "co-pilot paused (forced hand-back); feat/never-stuck-2 at 93d79371; next: successor hellos S7 a7457ece, S9 a3c6d229, S10 a7a04fd7, S11 a53cdf94, S17 a7d1d7f6; S17 pushed 0a92729, integrate on its report's verdicts; S10 before S7.",
+  "updatedAt": "2026-11-18T08:24:25.040Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -130,6 +137,44 @@
       "kind": "drain",
       "what": "whole wrapper.log hold/typed history returned by one unbounded grep in the pilot",
       "size": 130
+    },
+    {
+      "agent": "pilot integrate",
+      "what": "selection over argv limit, so integrate ran the full suite",
+      "evidence": "S8 integrate line: selection is 30941 characters of argv, over 24000",
+      "size": 1
+    },
+    {
+      "agent": "pilot integrate",
+      "what": "integrate reads docs/design/<feat-branch-slug>/run.json; a run on feat/never-stuck-2 sent as slug never-stuck was refused 'no run record row names it'",
+      "evidence": "scripts/integrate.mjs:130-135 recordIn; S8 first integrate refused 07:56Z",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "stale Blocked items from classifier no-verdict calls: 16 closed Moot by hand this session, 5 paused other-host with its co-pilot live and 3 flipped the ticket green",
+      "size": 8
+    },
+    {
+      "kind": "drain",
+      "what": "a grep for host.name missed doctor's destructured read; pilot told the user no production caller existed, QA's live probe caught host: undefined",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced by handback-send-enforce a seventh time while five implementers were live and none had reported",
+      "evidence": "S7, S9, S10, S11, S17 implementers live, nothing pushed; monitors armed on slice pushes",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced by handback-send-enforce with 5 implementers live; fired again after the report was delivered",
+      "evidence": "two identical PAUSED reports from one co-pilot, none of S7 S9 S10 S11 S17 pushed"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "surviving implementers still addressed a dead co-pilot after /clear",
+      "evidence": "S10 and S17 status messages went to ad0f013acd3536b73"
     }
   ]
 }
