@@ -144,8 +144,8 @@ test('a failed label still opens', (t) => {
 
   const release = releasePr({ git: gitIn(a), host: githubHost(inlined(gh)) });
 
-  // The adapter drops a label it cannot make (deck/host-github.mjs `labelled`), and says nothing of it.
-  assert.deepEqual(release, { number: 903, opened: true });
+  // The adapter drops a label it cannot make (deck/host-github.mjs `labelled`) and hands back why.
+  assert.deepEqual(release, { number: 903, opened: true, labelWhy: 'HTTP 403: Resource not accessible by integration' });
   const creates = called(calls, 'pr', 'create');
   assert.equal(creates.length, 1);
   assert.ok(!creates[0].includes('--label'), 'no label it could not make');

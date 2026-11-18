@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-const { mainLine } = await import('../land.mjs');
+const { mainLine, labelLine } = await import('../land.mjs');
 const { releasePr } = await import('../release.mjs');
 const { githubHost } = await import('../../deck/host-github.mjs');
 
@@ -49,6 +49,15 @@ test('the first landing opens the main PR', () => {
   assert.deepEqual(bodies, [`| Feature | PR | Landing |\n| --- | --- | --- |\n| a | – | ${'a'.repeat(40)} |`]);
   assert.deepEqual(main, { number: 901, opened: true });
   assert.equal(mainLine(main), 'main gets pilot: #901 (opened)');
+});
+
+test('a refused label is its own line before the main line', () => {
+  assert.equal(labelLine({ number: 903, opened: true, labelWhy: 'HTTP 403: nope' }), 'release label: HTTP 403: nope\n');
+  assert.equal(labelLine({ number: 903, opened: true, labelWhy: 'x'.repeat(300) }), `release label: ${'x'.repeat(200)}\n`);
+  // A made label says nothing, and the main line is the one the closing report parses.
+  assert.equal(labelLine({ number: 903, opened: true }), '');
+  assert.equal(labelLine({ number: null, opened: false, labelWhy: 'unreachable' }), '');
+  assert.equal(mainLine({ number: 903, opened: true, labelWhy: 'HTTP 403: nope' }), 'main gets pilot: #903 (opened)');
 });
 
 test('a later landing reuses it', () => {

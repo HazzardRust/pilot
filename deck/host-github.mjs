@@ -118,13 +118,14 @@ function withBodyFile(body, use) {
  * @returns {import('./host.mjs').Host}
  */
 export function githubHost(run) {
+  // `flags` are the write's label flags, `why` the first line of the refusal that dropped them (else absent).
   const labelled = (label, flag) => {
-    if (label === undefined) return [];
+    if (label === undefined) return { flags: [] };
     try {
       run(['label', 'create', label, '--force']);
-      return [flag, label];
-    } catch {
-      return [];
+      return { flags: [flag, label] };
+    } catch (err) {
+      return { flags: [], why: String(err?.message ?? err).split('\n')[0] };
     }
   };
   const withBody = (args, body) => (body === undefined ? run(args) : withBodyFile(body, (file) => run([...args, '--body-file', file])));
@@ -145,14 +146,17 @@ export function githubHost(run) {
     },
     review: (n) => reviewOf(json(run(['pr', 'view', numbered(n), '--json', FIELDS]), 'pr view')),
     open({ base, head, title, body, draft = false, label }) {
-      const args = ['pr', 'create', ...(draft ? ['--draft'] : []), '--base', base, '--head', head, '--title', title, ...labelled(label, '--label')];
+      const { flags, why } = labelled(label, '--label');
+      const args = ['pr', 'create', ...(draft ? ['--draft'] : []), '--base', base, '--head', head, '--title', title, ...flags];
       const number = Number(/\/pull\/(\d+)\s*$/.exec(String(withBody(args, body)).trim())?.[1]);
       if (!Number.isSafeInteger(number) || number < 1) throw new Error('gh pr create: no PR url in its answer');
-      return number;
+      return why === undefined ? { number } : { number, why };
     },
     edit(n, { base, title, body, label } = {}) {
-      const flags = [...(base === undefined ? [] : ['--base', base]), ...(title === undefined ? [] : ['--title', title]), ...labelled(label, '--add-label')];
+      const { flags: labels, why } = labelled(label, '--add-label');
+      const flags = [...(base === undefined ? [] : ['--base', base]), ...(title === undefined ? [] : ['--title', title]), ...labels];
       withBody(['pr', 'edit', numbered(n), ...flags], body);
+      return why === undefined ? {} : { why };
     },
     comment(n, body) {
       withBody(['pr', 'comment', numbered(n)], body);

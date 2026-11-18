@@ -104,6 +104,14 @@ test('the first run opens one draft PR against the record\'s base', (t) => {
   assert.deepEqual(fork.writes().map((c) => c.slice(0, 2)), [['pr', 'create']]);
 });
 
+test('a refused label is one label line, never a failure', (t) => {
+  const cwd = repo(t);
+  const fake = fakeGh();
+  const host = { ...fake.host, open: (pr) => ({ ...fake.host.open(pr), why: 'HTTP 403: nope' }) };
+  const out = syncFeaturePr({ host, git: gitIn(cwd), record: record() });
+  assert.deepEqual(out, { line: 'feature PR #42 opened\nlabel: HTTP 403: nope', number: 42, wrote: 'created' });
+});
+
 test('a changed row edits the body once', (t) => {
   const cwd = repo(t);
   const fake = fakeGh({ open: [{ number: 7, body: bodyOf(), baseRefName: 'pilot' }] });

@@ -89,10 +89,11 @@ export function releasePr({ git, host, already = false }) {
   const verb = open ? 'edit' : 'create';
   try {
     if (open) {
-      host.edit(open.number, { title, body, label: LABEL });
-      return { number: open.number, opened: false };
+      const { why } = host.edit(open.number, { title, body, label: LABEL });
+      return { number: open.number, opened: false, ...(why === undefined ? {} : { labelWhy: why }) };
     }
-    return { number: host.open({ base, head: PILOT_BRANCH, title, body, label: LABEL }), opened: true };
+    const { number, why } = host.open({ base, head: PILOT_BRANCH, title, body, label: LABEL });
+    return { number, opened: true, ...(why === undefined ? {} : { labelWhy: why }) };
   } catch (err) {
     return unknown(`${host.cli} pr ${verb} failed: ${firstLine(err)}`);
   }
