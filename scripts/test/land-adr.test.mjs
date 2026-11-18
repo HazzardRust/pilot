@@ -78,5 +78,6 @@ test('pilot land says the number above the main line', (t) => {
   const said = mainSays([], { cwd: x, git: (args) => git(x, ...args), host, test: passing });
 
   assert.equal(said.code, 0, said.out);
-  assert.match(said.out, /\nADR NNNN-x is 0168\nmain gets pilot: #901\n$/);
+  // N{4}, not the placeholder spelled out: the landing rewrites a plain citation of it in a changed file.
+  assert.match(said.out, /\nADR N{4}-x is 0168\nmain gets pilot: #901\n$/);
 });
