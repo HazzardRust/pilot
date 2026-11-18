@@ -21,7 +21,7 @@
     },
     {
       "slice": "S9",
-      "state": "implementing (committed f2b10956, not pushed)",
+      "state": "pushed f2b1095",
       "after": [
         "S8"
       ],
@@ -30,13 +30,13 @@
     },
     {
       "slice": "S10",
-      "state": "implementing (committed 87b2a54f, not pushed)",
+      "state": "pushed 87b2a54 (re-review approve)",
       "branch": "slice/never-stuck-2-s10",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s10"
     },
     {
       "slice": "S11",
-      "state": "implementing (uncommitted)",
+      "state": "pushed 11a79a5",
       "branch": "slice/never-stuck-2-s11",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s11"
     },
@@ -71,7 +71,7 @@
     },
     {
       "slice": "S17",
-      "state": "pushed 0a92729 (report not yet received)",
+      "state": "integrated d90e1586",
       "branch": "slice/never-stuck-2-s17",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s17"
     },
@@ -107,8 +107,8 @@
     }
   ],
   "findings": [],
-  "next": "co-pilot paused (forced hand-back); feat/never-stuck-2 at 93d79371; next: successor hellos S7 a7457ece, S9 a3c6d229, S10 a7a04fd7, S11 a53cdf94, S17 a7d1d7f6; S17 pushed 0a92729, integrate on its report's verdicts; S10 before S7.",
-  "updatedAt": "2026-11-18T08:24:25.040Z",
+  "next": "S11 integrating; then S10, S7 (on post-S10 tip), S9; ready next S12, S13, S19",
+  "updatedAt": "2026-11-18T08:39:05.204Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -175,6 +175,48 @@
       "agent": "pilot-implementer",
       "what": "surviving implementers still addressed a dead co-pilot after /clear",
       "evidence": "S10 and S17 status messages went to ad0f013acd3536b73"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "platform-reads rule (only hooks/lib/platform.js reads process.platform) is test-enforced but absent from slice and brief; cost one full gate run",
+      "evidence": "S17 report: platform-reads regression before hostPlatform()",
+      "size": 435
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice regex [a-z0-9-]{1,40} admitted a leading dash and Windows device names; both reviewers caught it, one fix commit and re-review",
+      "evidence": "S17 fix 0a92729c; live --dir con made a real con folder"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "flake: daemon-replace.test.mjs:329 timed out at 30s in the selection, 11/11 alone",
+      "evidence": "S17 selection 817 pass 1 red"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate script writes no summary to the background task output; counts had to be dug out of a scratchpad log",
+      "evidence": "S10 report: output file held only exit=0"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "three agents in turn claimed to direct the run; confirming the real one cost several rounds",
+      "evidence": "S10 report: ad0f013a, ab6bc93c, a563d0ba"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief's commit trailer names a model that did not write the code",
+      "evidence": "S10 used Opus 5.5 over the brief's Fable 5.2"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9 slice file missed resumeIn in store-items.mjs; as cut a walkthrough-paused ticket would never resume",
+      "evidence": "S9 reviewer HIGH, fix at store-items.mjs:787"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate buffers all output to the end (388 s); a pre-fix gate run was wasted",
+      "evidence": "S9 report",
+      "size": 388
     }
   ]
 }
