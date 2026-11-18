@@ -71,13 +71,15 @@
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "pushed 017a2fb, typescript re-review running",
       "after": [
         "S4",
         "S5",
         "S7",
         "S12"
-      ]
+      ],
+      "branch": "slice/other-host-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s6"
     },
     {
       "slice": "S7",
@@ -123,7 +125,7 @@
     },
     {
       "slice": "S12",
-      "state": "pushed 5be8bc7",
+      "state": "integrated",
       "after": [
         "S3",
         "S4",
@@ -136,27 +138,9 @@
   "findings": [
     "kept: P1 added-slice — S3 took seam option A: a failed label create is swallowed by githubHost.labelled (host-github.mjs:121-129) and land no longer prints its label warning; after S5 integrates, Host open/edit return `why` and land prints it again (spec 2: moved, not rewritten)"
   ],
-  "next": "integrate S12, then pilot ready for S6",
-  "updatedAt": "2026-11-18T06:42:27.508Z",
+  "next": "S6 typescript re-review; integrate S6 (integrate runs the selection), then the principles review",
+  "updatedAt": "2026-11-18T06:51:45.643Z",
   "friction": [
-    {
-      "agent": "pilot",
-      "what": "a re-cut's gate cannot be posted: gate1 refuses a yellow ticket, signoff refuses while any question in the directory is open, including another ticket's blocking one",
-      "evidence": "deck refusals on itm_b18bcafffbce, 2026-11-17",
-      "size": 3
-    },
-    {
-      "agent": "pilot",
-      "what": "gate1 demands the design branch on pilot's tip after any landing; rebase needs a force push, which auto mode denies; a merge of pilot was the way through",
-      "evidence": "deck: 'not on pilot's tip'; classifier denial of --force-with-lease",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "brief's worktree path was taken by another repository's worktree",
-      "evidence": "pilot-archive/.git/worktrees/pilot-design-other-host",
-      "size": 1
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "deck README ledger lint only surfaces in a full gate run; a new module costs one ~10 min run to find its missing row",
@@ -355,6 +339,21 @@
       "kind": "drain",
       "what": "third stale Blocked item (pilot ready, classifier unavailable, done on reissue) paused other-host after 20 min and left the ticket green with its co-pilot live; pilot closed it Moot, pivoted the ticket back to yellow and re-claimed the lane",
       "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 also reported its context summarised minutes after spawn, before any commit, and restarted; every implementer this run (S3, S4, S5, S6, S10) has done this, which suggests the hello SendMessage arriving at spawn triggers it",
+      "evidence": "S6 status message; worktree clean at bed926a6"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: the handback hook ended the implementer's run before it could spawn the re-review the co-pilot asked for; the co-pilot spawned it instead",
+      "evidence": "S6 report, open item 1"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 slice file's 'every host call goes through an adapter' did not name doctor's --version PATH probe; a Gate 1 seam note would have saved a BLOCK and a re-review round",
+      "evidence": "typescript-reviewer BLOCK on S6; S6.md seam 390b9ad7"
     }
   ]
 }
