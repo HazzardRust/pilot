@@ -39,6 +39,13 @@ import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_READ_ITEMS, MAX_READ_LIMIT, deckUrl }
 // reaching the store (L3); this half is what happens when one is called.
 
 const asText = (text) => ({ content: [{ type: 'text', text }] });
+
+/** A grant's `, replaced <from>` when a switch took the lane from a live holder, with its one deck.log line (never-stuck spec 18). */
+function replacedClause(id, entry) {
+  if (!entry?.replaced) return '';
+  console.error(`[deck] co-pilot ${entry.replaced} -> ${id}`);
+  return `, replaced ${entry.replaced}`;
+}
 /** The `why` of a re-cut the pilot asks for by hand; the deck's own drift checks name theirs (never-stuck S2, S3). */
 const RECUT_BY_PILOT = 'sent back to planning by the pilot';
 
@@ -454,13 +461,13 @@ export function callTool(name, args, deps = {}) {
           recutTicket(id, `re-cut check due: ${what}`, drift.state === 'moved' ? drift.files : undefined);
           return asText(`Re-cut check due ${id}: ${what}; red, planning next. ${both()}`);
         }
-        setCoPilot(id, true);
-        return asText(`Co-pilot ${id}: live.${drift.state === 'unchecked' ? ` drift unchecked: ${drift.reason}.` : ''} ${both()}`);
+        const entry = setCoPilot(id, true);
+        return asText(`Co-pilot ${id}: live${replacedClause(id, entry)}.${drift.state === 'unchecked' ? ` drift unchecked: ${drift.reason}.` : ''} ${both()}`);
       });
     }
     if (args?.action === 'co-pilot' || args?.action === 'release') {
       const entry = setCoPilot(id, args.action === 'co-pilot');
-      if (args.action === 'co-pilot') return asText(`Co-pilot ${id}: live. ${both()}`);
+      if (args.action === 'co-pilot') return asText(`Co-pilot ${id}: live${replacedClause(id, entry)}. ${both()}`);
       // A release naming another ticket leaves the live one holding the /clear, so it never reads "released".
       if (entry?.ticket === id && !entry.live) return asText(`Co-pilot ${id}: released. ${both()}`);
       return asText(`Co-pilot ${id}: ${entry?.live ? `not the live one; ${entry.ticket} is live` : 'no co-pilot is live here'}.`);

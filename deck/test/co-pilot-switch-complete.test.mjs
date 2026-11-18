@@ -69,14 +69,14 @@ test('release from, then co-pilot to, also completes', (t) => {
   assert.equal(lanes().coPilot, undefined);
 });
 
-test('co-pilot <to> with no pending switch behaves as today', (t) => {
+test('co-pilot <to> with no pending switch is refused while from holds the lane', (t) => {
   tempDeck(t);
   const from = aTicket('From', 'yellow');
   setCoPilot(from.id, true);
   const other = aTicket('Other', 'yellow');
 
-  setCoPilot(other.id, true);
-  assert.equal(stored().coPilots[repoKey(REPO)].ticket, other.id);
+  assert.throws(() => setCoPilot(other.id, true), /co-pilot lane held by/);
+  assert.equal(stored().coPilots[repoKey(REPO)].ticket, from.id, 'never-stuck S7: no silent overwrite');
   assert.equal(lanes().coPilot, undefined, 'no switch record is written');
 });
 
