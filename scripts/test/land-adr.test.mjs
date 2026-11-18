@@ -73,9 +73,9 @@ test('the prepared trial allocates nothing', (t) => {
 
 test('pilot land says the number above the main line', (t) => {
   const { x } = adrRepos(t);
-  const { gh } = fakeGh([{ number: 7, headRefName: 'feat/x' }, { number: 901, headRefName: 'pilot', state: 'OPEN' }]);
+  const { host } = fakeGh([{ number: 7, headRefName: 'feat/x' }, { number: 901, headRefName: 'pilot', state: 'OPEN' }]);
 
-  const said = mainSays([], { cwd: x, git: (args) => git(x, ...args), gh, test: passing });
+  const said = mainSays([], { cwd: x, git: (args) => git(x, ...args), host, test: passing });
 
   assert.equal(said.code, 0, said.out);
   assert.match(said.out, /\nADR NNNN-x is 0168\nmain gets pilot: #901\n$/);

@@ -10,6 +10,8 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { githubHost } from '../../../deck/host-github.mjs';
+
 const { land, main } = await import('../../land.mjs');
 export { land };
 
@@ -95,12 +97,16 @@ export const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fai
  * with PR `created`'s URL, and `pr view <n> --json state` with the next of `views` (the last
  * repeats), else the PR's listed state. A PR's state defaults to MERGED, as GitHub
  * reads a feature PR once pilot holds its head (one-integration-line A5); its base to main.
- * `pr close` is not stubbed: the landing never closes a PR (pilot-develop-line A1).
+ * `pr close` is not stubbed: the landing never closes a PR (pilot-develop-line A1). Each
+ * `--body-file <f>` is recorded, and passed on, as `--body <text>`, read at the call since the
+ * adapter removes the file after. `host` is `githubHost` over this `gh`, as `land` takes it.
  */
 export function fakeGh(prs = [], comment = () => '', { created = 900, views = [] } = {}) {
   const calls = [];
   let viewed = 0;
-  const gh = (args) => {
+  const gh = (given) => {
+    const at = given.indexOf('--body-file');
+    const args = at < 0 ? given : [...given.slice(0, at), '--body', fs.readFileSync(given[at + 1], 'utf8'), ...given.slice(at + 2)];
     calls.push(args);
     if (args[0] === 'pr' && args[1] === 'list') {
       const flag = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
@@ -121,7 +127,7 @@ export function fakeGh(prs = [], comment = () => '', { created = 900, views = []
     if (args[0] === 'pr' && args[1] === 'create') return `https://github.com/o/r/pull/${created}\n`;
     throw new Error(`unexpected gh ${args.join(' ')}`);
   };
-  return { gh, calls };
+  return { gh, calls, host: githubHost(gh) };
 }
 
 /** `git log` of `rev` in `repo`, first parents only, as "<subject> <parents>" lines. */
