@@ -87,7 +87,7 @@
     },
     {
       "slice": "S18",
-      "state": "integrated",
+      "state": "integrated at 24cf694f",
       "after": [
         "S7",
         "S13",
@@ -106,7 +106,7 @@
     },
     {
       "slice": "never-stuck-2",
-      "state": "implementing (base pilot@d27abc48 taken)",
+      "state": "QA read-only pass done at 24cf694f (QA handed back mid-run); fix round in flight",
       "after": [
         "S18",
         "S19",
@@ -118,87 +118,43 @@
       "branch": "feat/never-stuck-2",
       "worktree": "C:/Users/Hazzard/Projects/pilot-feat-never-stuck-2",
       "pr": 107
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S18"
+      ],
+      "branch": "fix/never-stuck-2-step7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-fix"
     }
   ],
-  "findings": [],
-  "next": "S18 integrating; then spawn the fundamentalist (step 7) and QA (step 8) on feat/never-stuck-2.",
-  "updatedAt": "2026-11-18T10:17:23.549Z",
+  "findings": [
+    "kept: F1 simplify — wait.mjs imports lane shapes from lanes.mjs and reasons from owed.mjs (-4)",
+    "kept: F2 simplify — drop interruptLandings' default spare and the test's second sweep (-3)",
+    "kept: F3 simplify — drop beginLanding's pid param and dir field; record holdLanding in S16 seam changes (-3)",
+    "kept: F4 simplify — one armOneShots helper for armYields/armConflicts/armDefaults (-18)",
+    "kept: F5 simplify — export conflict title prefix from landing-replies.mjs; drop dead author 'deck' branch (-2)",
+    "kept: F6 simplify — owed notice explains report owed and architect owed (0)",
+    "kept: F7 consider — build spec 20's `Yellow: held by <id>` with an assert (+2)",
+    "kept: F8 nit — delete '(A7)' from agents/pilot.md:543; amend A7 text (itm_f627fc20f1d8) (-1)",
+    "kept: F9 nit — import store-defaults directly, drop the re-export (-1)",
+    "kept: F13 QA HIGH — handoff.mjs readable refuses 'report owed'/'architect owed' rows; pilot handoff exits 1 (+5)",
+    "dropped: F10 nit — reverting comment joins is churn at 0 net against an unlocated line limit",
+    "dropped: F11 nit — 0 net reshuffle of logging; consequence below its diff",
+    "dropped: F12 nit — kind sets of resumeIn and isBlocking not shown equal; 0 net",
+    "dropped: S10 timer-drop note — held: armHandoffs re-arms the due default",
+    "dropped: SEC1 LOW parkedOn repo null — explicit by design (server-wait.mjs:358), only delays the fallback",
+    "dropped: SEC2 LOW parkedOn ignores since — only delays the 10-min fallback",
+    "dropped: SEC3 LOW default reply text unmarked — from:'deck'/default set server-side only; resolution names it",
+    "dropped: SEC4 LOW ownersTimeUp on default replies — not in diff, fails closed",
+    "dropped: E1 knip deck/run-look.mjs unused — false positive: imported by run-claim.mjs, wait.mjs, store-items.mjs",
+    "dropped: E2 madge cycle guard-status — pre-existing lazy require at guard-status.js:31, file untouched by this diff",
+    "dropped: E3 complexity and coverage/mutation — hits pre-existing; coverage and mutation NOT measured (no node_modules; stryker timeout 900)"
+  ],
+  "next": "Fix round integrating (9c678615). Then spawn the successor QA with the tip: re-probe 20, F6, F13; write Q2, Q3 and the section 9 recipe line; walkthrough.",
+  "updatedAt": "2026-11-18T10:42:41.441Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "the cause of a queued SendMessage lives only in the session jsonl, not in wrapper.log",
-      "evidence": "grep of 8 transcripts",
-      "size": 8
-    },
-    {
-      "kind": "drain",
-      "what": "repeat forced hand-backs from the handoff-books co-pilot while its QA child was live, each read by the pilot",
-      "size": 4
-    },
-    {
-      "kind": "drain",
-      "what": "whole wrapper.log hold/typed history returned by one unbounded grep in the pilot",
-      "size": 130
-    },
-    {
-      "agent": "pilot integrate",
-      "what": "selection over argv limit, so integrate ran the full suite",
-      "evidence": "S8 integrate line: selection is 30941 characters of argv, over 24000",
-      "size": 1
-    },
-    {
-      "agent": "pilot integrate",
-      "what": "integrate reads docs/design/<feat-branch-slug>/run.json; a run on feat/never-stuck-2 sent as slug never-stuck was refused 'no run record row names it'",
-      "evidence": "scripts/integrate.mjs:130-135 recordIn; S8 first integrate refused 07:56Z",
-      "size": 1
-    },
-    {
-      "kind": "drain",
-      "what": "stale Blocked items from classifier no-verdict calls: 16 closed Moot by hand this session, 5 paused other-host with its co-pilot live and 3 flipped the ticket green",
-      "size": 8
-    },
-    {
-      "kind": "drain",
-      "what": "a grep for host.name missed doctor's destructured read; pilot told the user no production caller existed, QA's live probe caught host: undefined",
-      "size": 2
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "hand-back forced by handback-send-enforce a seventh time while five implementers were live and none had reported",
-      "evidence": "S7, S9, S10, S11, S17 implementers live, nothing pushed; monitors armed on slice pushes",
-      "size": 1
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "hand-back forced by handback-send-enforce with 5 implementers live; fired again after the report was delivered",
-      "evidence": "two identical PAUSED reports from one co-pilot, none of S7 S9 S10 S11 S17 pushed"
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "surviving implementers still addressed a dead co-pilot after /clear",
-      "evidence": "S10 and S17 status messages went to ad0f013acd3536b73"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "platform-reads rule (only hooks/lib/platform.js reads process.platform) is test-enforced but absent from slice and brief; cost one full gate run",
-      "evidence": "S17 report: platform-reads regression before hostPlatform()",
-      "size": 435
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "slice regex [a-z0-9-]{1,40} admitted a leading dash and Windows device names; both reviewers caught it, one fix commit and re-review",
-      "evidence": "S17 fix 0a92729c; live --dir con made a real con folder"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "flake: daemon-replace.test.mjs:329 timed out at 30s in the selection, 11/11 alone",
-      "evidence": "S17 selection 817 pass 1 red"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "gate script writes no summary to the background task output; counts had to be dug out of a scratchpad log",
-      "evidence": "S10 report: output file held only exit=0"
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "three agents in turn claimed to direct the run; confirming the real one cost several rounds",
@@ -335,6 +291,76 @@
       "agent": "pilot:pilot-implementer",
       "what": "S18 report reached main, not the successor co-pilot",
       "evidence": "coordinator relayed S18 Verdict lines; successor hello sent after"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S18 slice file's pilot.md line anchors stale (:140/:144 now :135/:139; :65-67 now :63-65)",
+      "evidence": "S18 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "context reset mid-run; S18 restarted from a clean worktree",
+      "evidence": "S18 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot landing has no doc comment on what it waits for",
+      "evidence": "needed deck/landing-wait.mjs to word the lander line"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner went quiet on its own background work; review has no tool evidence",
+      "evidence": "fundamentalist report section 3"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "store-items.mjs line limit enforcement not found, yet comments joined to stay under it",
+      "evidence": "store-items.mjs at 796 lines"
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "report carried no Verdict: line though the brief asked for one",
+      "evidence": "step-7 security consider hand-back"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix implementer compacted before its first edit; restarted F1-F9",
+      "evidence": "fix-round status message"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "cross-slice gap: S12 widened owed whys, S19's handoff.mjs not updated, no test",
+      "evidence": "scripts/handoff.mjs:137-139"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "scratch pilot handoff probe stamped the live session's claim in the real home (claimDir ignores PILOT_DECK_DIR); QA removed its two fixture files",
+      "evidence": "deck/run-claim.mjs:73-93; ~/.claude/pilot-inbox/claims/posted-14756.stamp"
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "coverage not run (worktree had no node_modules), stryker timed out at 900 s with 7829 mutants, report reached main after the fundamentalist had finished, scratch dir left behind",
+      "evidence": "evidence runner hand-back via main"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "chrome-devtools MCP unavailable; QA wrote its own CDP script; headless --screenshot crashed twice",
+      "evidence": "ToolSearch select:mcp__plugin_pilot_chrome-devtools__* found none"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "report owed ticket cards render only on /items, not the run tab; 3 probes to find",
+      "evidence": "render-pages.mjs:283 vs :317"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "harness forced QA hand-back before the fix tip; a successor QA is needed for the writer phase",
+      "evidence": "QA hand-back 10:39:14Z"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "dropping interruptLandings' default broke 4 test call sites the fix brief did not list; landing.dir asserted via destructuring",
+      "evidence": "landing-guard.test.mjs:174,231; landing-queue.test.mjs:143; landing-wait.test.mjs:98; land-adopt.test.mjs:82,178"
     }
   ]
 }
