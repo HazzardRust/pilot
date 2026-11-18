@@ -5,6 +5,11 @@
   "branch": "feat/never-stuck-2",
   "base": "pilot",
   "worktree": "C:/Users/Hazzard/Projects/pilot-feat-never-stuck-2",
+  "qa": {
+    "branch": "feat/never-stuck-2",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-qa",
+    "url": "http://127.0.0.1:55398"
+  },
   "artefact": "docs/design/never-stuck/architecture.md",
   "slices": [
     {
@@ -106,7 +111,7 @@
     },
     {
       "slice": "never-stuck-2",
-      "state": "QA read-only pass done at 24cf694f (QA handed back mid-run); fix round in flight",
+      "state": "in QA: walkthrough itm_3fdcde0269b2 posted at 0dede3d9",
       "after": [
         "S18",
         "S19",
@@ -121,7 +126,7 @@
     },
     {
       "slice": "fix round",
-      "state": "integrated",
+      "state": "integrated at 3f7faee4",
       "after": [
         "S18"
       ],
@@ -152,24 +157,9 @@
     "dropped: E2 madge cycle guard-status — pre-existing lazy require at guard-status.js:31, file untouched by this diff",
     "dropped: E3 complexity and coverage/mutation — hits pre-existing; coverage and mutation NOT measured (no node_modules; stryker timeout 900)"
   ],
-  "next": "Fix round integrating (9c678615). Then spawn the successor QA with the tip: re-probe 20, F6, F13; write Q2, Q3 and the section 9 recipe line; walkthrough.",
-  "updatedAt": "2026-11-18T10:42:41.441Z",
+  "next": "User walks itm_3fdcde0269b2 and signs off; QA (addressee main) runs pilot integrate --trial and posts the gate2.",
+  "updatedAt": "2026-11-18T11:10:26.911Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "three agents in turn claimed to direct the run; confirming the real one cost several rounds",
-      "evidence": "S10 report: ad0f013a, ab6bc93c, a563d0ba"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "brief's commit trailer names a model that did not write the code",
-      "evidence": "S10 used Opus 5.5 over the brief's Fable 5.2"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S9 slice file missed resumeIn in store-items.mjs; as cut a walkthrough-paused ticket would never resume",
-      "evidence": "S9 reviewer HIGH, fix at store-items.mjs:787"
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "gate buffers all output to the end (388 s); a pre-fix gate run was wasted",
@@ -361,6 +351,21 @@
       "agent": "pilot:pilot-implementer",
       "what": "dropping interruptLandings' default broke 4 test call sites the fix brief did not list; landing.dir asserted via destructuring",
       "evidence": "landing-guard.test.mjs:174,231; landing-queue.test.mjs:143; landing-wait.test.mjs:98; land-adopt.test.mjs:82,178"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP dropped twice (spawn and mid-run)",
+      "evidence": "ToolSearch refused deck tools mid-run"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "800-line facade bar on store-items.mjs/items.mjs forces one-line fixes",
+      "evidence": "facades.test failed twice at 801 lines"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot deck --stop deletes the store; restart from a new tip needs a manual deck.json copy",
+      "evidence": "QA hand-back"
     }
   ]
 }
