@@ -13,12 +13,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { githubHost } from '../../deck/host-github.mjs';
+
 test('land merges the feature into pilot', (t) => {
   const { origin, gitIn, a: work } = repos(t, 'a');
-  const { gh, calls } = fakeGh();
+  const { host, calls } = fakeGh();
   const before = git(origin, 'rev-parse', 'pilot');
 
-  const result = land({ cwd: work, git: gitIn(work), gh, test: passing });
+  const result = land({ cwd: work, git: gitIn(work), host, test: passing });
 
   const tip = git(work, 'rev-parse', 'feat/a');
   assert.equal(merges(origin, 'pilot')[0], `Merge feat/a into pilot ${before} ${tip}`, 'a merge with the feature tip as second parent');
@@ -37,7 +39,7 @@ test('a pilot that moved while the merge was tested is merged again once and lan
   const aTip = git(a, 'rev-parse', 'feat/a');
 
   // Feature a lands while b's merge is tested: b's first push to pilot is no longer a fast-forward.
-  const result = land({ cwd: b, git: gitIn(b), gh: fakeGh().gh, test: mover(a, 'feat/a', 1) });
+  const result = land({ cwd: b, git: gitIn(b), host: fakeGh().host, test: mover(a, 'feat/a', 1) });
 
   const pilot = git(origin, 'rev-parse', 'pilot');
   assert.equal(result.retried, true);
@@ -54,7 +56,7 @@ test('a conflict merging into pilot exits 3 and leaves pilot unchanged', (t) => 
   git(seed, 'push', '-q', 'origin', 'pilot');
   const pilotTip = git(origin, 'rev-parse', 'pilot');
 
-  assert.throws(() => land({ cwd: b, git: gitIn(b), gh: fakeGh().gh, test: passing }), (err) => err.exitCode === 3);
+  assert.throws(() => land({ cwd: b, git: gitIn(b), host: fakeGh().host, test: passing }), (err) => err.exitCode === 3);
   assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip);
 });
 
@@ -64,7 +66,7 @@ test('a failing gh still lands and leaves the main PR unknown', (t) => {
     throw new Error('no GitHub host');
   };
 
-  const result = land({ cwd: a, git: gitIn(a), gh, test: passing });
+  const result = land({ cwd: a, git: gitIn(a), host: githubHost(gh), test: passing });
 
   assert.equal(git(origin, 'rev-parse', 'pilot'), result.sha);
   assert.equal(result.main.number, null);
@@ -75,7 +77,7 @@ test('still moving after one retry exits 1 and pushes nothing to pilot', (t) => 
   const { origin, seed, mover, gitIn, b } = repos(t, 'b');
 
   assert.throws(
-    () => land({ cwd: b, git: gitIn(b), gh: fakeGh().gh, test: mover(seed, 'new', 2) }),
+    () => land({ cwd: b, git: gitIn(b), host: fakeGh().host, test: mover(seed, 'new', 2) }),
     (err) => err.exitCode === 1 && /after one retry/.test(err.message),
   );
   assert.ok(!isAncestor(origin, git(b, 'rev-parse', 'feat/b'), 'pilot'), 'feat/b is not on pilot');
@@ -89,7 +91,7 @@ test('a push to pilot refused while pilot stays put fails once, with no retry', 
   const pilotTip = git(origin, 'rev-parse', 'pilot');
 
   assert.throws(
-    () => land({ cwd: a, git: gitIn(a), gh: fakeGh().gh, test: passing }),
+    () => land({ cwd: a, git: gitIn(a), host: fakeGh().host, test: passing }),
     (err) => err.exitCode === 1 && /^NOT landed: the push failed \(.+\); pilot not pushed$/.test(err.message),
   );
   assert.equal(fs.readFileSync(log, 'utf8'), 'x\n', 'one push to pilot, no retry');
@@ -104,7 +106,7 @@ test('land refuses outside a feat/ branch', (t) => {
   for (const branch of ['main', 'pilot']) {
     git(seed, 'checkout', '-q', '-B', branch, `origin/${branch}`);
     assert.throws(
-      () => land({ cwd: seed, git: gitIn(seed), gh: fakeGh().gh, test: passing }),
+      () => land({ cwd: seed, git: gitIn(seed), host: fakeGh().host, test: passing }),
       (err) => err.exitCode === 1 && err.message.includes(branch) && /feat\//.test(err.message),
     );
   }
@@ -119,7 +121,7 @@ test('land takes nothing from main', (t) => {
   const mainTip = git(origin, 'rev-parse', 'main');
   const pilotTip = git(origin, 'rev-parse', 'pilot');
 
-  land({ cwd: work, git: gitIn(work), gh: fakeGh().gh, test: passing });
+  land({ cwd: work, git: gitIn(work), host: fakeGh().host, test: passing });
 
   assert.equal(git(origin, 'rev-list', '--first-parent', '--count', pilotTip + '..pilot'), '1', 'pilot gains one first-parent commit');
   assert.equal(git(origin, 'log', '-1', '--format=%s', 'pilot'), 'Merge feat/a into pilot');
@@ -134,7 +136,7 @@ test('a red main does not stop the landing', (t) => {
   // Red only if main's file is present, as it would be had main been merged.
   const redIfMain = 'node -e "process.exit(require(\'fs\').existsSync(\'m2.txt\') ? 1 : 0)"';
 
-  land({ cwd: work, git: gitIn(work), gh: fakeGh().gh, test: redIfMain });
+  land({ cwd: work, git: gitIn(work), host: fakeGh().host, test: redIfMain });
 
   assert.equal(git(origin, 'rev-parse', 'pilot^2'), git(work, 'rev-parse', 'feat/a'));
 });
@@ -146,7 +148,7 @@ test('an unusable pilot.remote stops land before anything is pushed', (t) => {
   const featTip = git(origin, 'rev-parse', 'feat/a');
   git(work, 'config', 'pilot.remote', 'nowhere');
 
-  assert.throws(() => land({ cwd: work, git: gitIn(work), gh: fakeGh().gh, test: passing }), (err) =>
+  assert.throws(() => land({ cwd: work, git: gitIn(work), host: fakeGh().host, test: passing }), (err) =>
     err.exitCode === 1 && /^NOT landed: .*; nothing pushed$/.test(err.message));
   assert.equal(git(origin, 'rev-parse', 'feat/a'), featTip, 'feat/a was not pushed');
   assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip);
@@ -157,22 +159,22 @@ test('a red run leaves pilot unmoved and says why', (t) => {
   const pilotTip = git(origin, 'rev-parse', 'pilot');
   const red = 'node -e "process.exit(1)"';
 
-  const said = mainSays([], { cwd: work, git: gitIn(work), gh: fakeGh().gh, test: red });
+  const said = mainSays([], { cwd: work, git: gitIn(work), host: fakeGh().host, test: red });
   assert.equal(said.code, 1);
   assert.match(said.out, /^NOT landed: feat\/a merged red: exit 1; log .+\.log; pilot not pushed\n$/);
   // An empty command is not a green one: mergeIntoPilot runs the repository's own instead.
   git(work, 'config', 'pilot.test', red);
-  assert.equal(mainSays([], { cwd: work, git: gitIn(work), gh: fakeGh().gh, test: '' }).code, 1);
+  assert.equal(mainSays([], { cwd: work, git: gitIn(work), host: fakeGh().host, test: '' }).code, 1);
   assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip);
 });
 
 test('a feature already on pilot merges nothing', (t) => {
   const { origin, gitIn, a } = repos(t, 'a');
-  land({ cwd: a, git: gitIn(a), gh: fakeGh().gh, test: passing });
+  land({ cwd: a, git: gitIn(a), host: fakeGh().host, test: passing });
   const pilotTip = git(origin, 'rev-parse', 'pilot');
 
   const seen = fakeGh([{ number: 11, headRefName: 'feat/a', headRefOid: git(a, 'rev-parse', 'HEAD') }]);
-  const again = mainSays([], { cwd: a, git: gitIn(a), gh: seen.gh, test: passing });
+  const again = mainSays([], { cwd: a, git: gitIn(a), host: seen.host, test: passing });
   assert.equal(again.code, 0);
   assert.ok(!seen.calls.some((args) => args[1] === 'comment'), 'no second comment for a feature already on pilot');
   assert.equal(again.out, `feat/a already on pilot at ${pilotTip.slice(0, 7)}\nmain gets pilot: no open PR\n`);
@@ -182,7 +184,7 @@ test('a feature already on pilot merges nothing', (t) => {
 test('main prints the main line, and unknown with the reason when gh fails', (t) => {
   const { clone, gitIn, a } = repos(t, 'a');
   git(a, 'config', 'pilot.test', passing);
-  const none = mainSays([], { cwd: a, git: gitIn(a), gh: fakeGh([{ number: 11, headRefName: 'feat/a', headRefOid: git(a, 'rev-parse', 'HEAD') }]).gh });
+  const none = mainSays([], { cwd: a, git: gitIn(a), host: fakeGh([{ number: 11, headRefName: 'feat/a', headRefOid: git(a, 'rev-parse', 'HEAD') }]).host });
   assert.equal(none.code, 0);
   assert.match(none.out, /^landed feat\/a on pilot at [0-9a-f]{7}\nmain gets pilot: #900 \(opened\)\n$/);
 
@@ -191,7 +193,7 @@ test('main prints the main line, and unknown with the reason when gh fails', (t)
     throw new Error('no GitHub host');
   };
   git(b, 'config', 'pilot.test', passing);
-  const unknown = mainSays([], { cwd: b, git: gitIn(b), gh: failing });
+  const unknown = mainSays([], { cwd: b, git: gitIn(b), host: githubHost(failing) });
   assert.equal(unknown.code, 0);
   assert.match(unknown.out, /\npr comment failed: no GitHub host\nmain gets pilot: unknown \(gh pr list failed: no GitHub host\)\n$/);
 });

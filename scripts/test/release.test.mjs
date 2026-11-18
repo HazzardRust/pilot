@@ -174,5 +174,5 @@ function inlined(gh) {
 
 /** `pilot land` in `repo`, with `gh` faked (a feature PR on pilot by default). */
 function land(repo, gitIn, gh = fakeGh([{ number: 7, headRefName: 'feat/' + repo.split(/[\\/]/).pop(), baseRefName: 'pilot' }]).gh) {
-  return landFeature({ cwd: repo, git: gitIn(repo), gh: inlined(gh), test: passing });
+  return landFeature({ cwd: repo, git: gitIn(repo), host: githubHost(inlined(gh)), test: passing });
 }

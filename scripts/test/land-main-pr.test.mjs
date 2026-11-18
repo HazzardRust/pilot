@@ -44,7 +44,8 @@ test('the first landing opens the main PR', () => {
   const main = releasePr({ git: stubGit(), host });
 
   assert.equal(creates(calls).length, 1);
-  assert.deepEqual(creates(calls)[0].filter((arg, i, all) => all[i - 1] !== '--body-file'), ['pr', 'create', '--base', 'main', '--head', 'pilot', '--title', 'Release: a', '--label', 'release', '--body-file']);
+  // The fake records the adapter's `--body-file <f>` as `--body <text>`.
+  assert.deepEqual(creates(calls)[0].filter((arg, i, all) => all[i - 1] !== '--body'), ['pr', 'create', '--base', 'main', '--head', 'pilot', '--title', 'Release: a', '--label', 'release', '--body']);
   assert.deepEqual(bodies, [`| Feature | PR | Landing |\n| --- | --- | --- |\n| a | – | ${'a'.repeat(40)} |`]);
   assert.deepEqual(main, { number: 901, opened: true });
   assert.equal(mainLine(main), 'main gets pilot: #901 (opened)');
@@ -118,9 +119,9 @@ test('no host under a fork run remote hands the fork branch over', () => {
 test('an open feature PR takes the landing comment, never a close', (t) => {
   const { gitIn, a } = repos(t, 'a');
   // The feature PR targets pilot; GitHub left it open.
-  const { gh, calls } = fakeGh([{ number: 7, headRefName: 'feat/a', baseRefName: 'pilot', state: 'OPEN' }]);
+  const { host, calls } = fakeGh([{ number: 7, headRefName: 'feat/a', baseRefName: 'pilot', state: 'OPEN' }]);
 
-  const result = land({ cwd: a, git: gitIn(a), gh, test: passing, wait: 0 });
+  const result = land({ cwd: a, git: gitIn(a), host, test: passing, wait: 0 });
 
   const comments = calls.filter((args) => args[0] === 'pr' && args[1] === 'comment');
   assert.equal(comments.length, 1);
@@ -132,12 +133,12 @@ test('an open feature PR takes the landing comment, never a close', (t) => {
 
 test('a re-landing comments on nothing', (t) => {
   const { gitIn, a } = repos(t, 'a');
-  land({ cwd: a, git: gitIn(a), gh: fakeGh().gh, test: passing });
+  land({ cwd: a, git: gitIn(a), host: fakeGh().host, test: passing });
   const called = (calls, verb) => calls.filter((args) => args[0] === 'pr' && args[1] === verb);
 
   // Already on pilot, its PR still open against pilot: neither closed nor commented.
   const open = fakeGh([{ number: 7, headRefName: 'feat/a', baseRefName: 'pilot', state: 'OPEN' }]);
-  const again = land({ cwd: a, git: gitIn(a), gh: open.gh, test: passing, wait: 0 });
+  const again = land({ cwd: a, git: gitIn(a), host: open.host, test: passing, wait: 0 });
   assert.equal(again.already, true);
   assert.equal(called(open.calls, 'close').length, 0);
   assert.equal(called(open.calls, 'comment').length, 0);
@@ -151,16 +152,16 @@ test('a re-landing comments on nothing', (t) => {
     { number: 7, headRefName: 'feat/a', baseRefName: 'pilot', state: 'CLOSED' },
     { number: 8, headRefName: 'feat/a', baseRefName: 'main', state: 'OPEN' },
   ]);
-  land({ cwd: a, git: gitIn(a), gh: closed.gh, test: passing });
+  land({ cwd: a, git: gitIn(a), host: closed.host, test: passing });
   assert.equal(called(closed.calls, 'close').length, 0);
   assert.equal(called(closed.calls, 'comment').length, 0);
 });
 
 test("the landing's last line is the main line", (t) => {
   const { gitIn, a } = repos(t, 'a');
-  const { gh } = fakeGh([{ number: 7, headRefName: 'feat/a' }, { number: 901, headRefName: 'pilot', state: 'OPEN' }]);
+  const { host } = fakeGh([{ number: 7, headRefName: 'feat/a' }, { number: 901, headRefName: 'pilot', state: 'OPEN' }]);
 
-  const said = mainSays([], { cwd: a, git: gitIn(a), gh, test: passing });
+  const said = mainSays([], { cwd: a, git: gitIn(a), host, test: passing });
 
   assert.equal(said.code, 0, said.out);
   assert.match(said.out, /\nmain gets pilot: #901\n$/);

@@ -13,6 +13,8 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { githubHost } from '../../deck/host-github.mjs';
+
 const { main } = await import('../land.mjs');
 const { landingMessage } = await import('../integrate.mjs');
 const { autoResolves } = await import('../merge-generated.mjs');
@@ -51,7 +53,7 @@ function buildConflicting(dir) {
   git(seed, 'checkout', '-q', '-B', 'pilot', 'origin/pilot');
   commitFile(seed, 'shared.txt', 'pilot\n', 'pilot edits shared');
   git(seed, 'push', '-q', 'origin', 'pilot');
-  const land = (testCommand = passing) => mainSays({ cwd: b, git: (args) => git(b, ...args), gh: () => '[]', test: testCommand });
+  const land = (testCommand = passing) => mainSays({ cwd: b, git: (args) => git(b, ...args), host: githubHost(() => '[]'), test: testCommand });
   return { dir, origin, seed, b, land };
 }
 
