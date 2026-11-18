@@ -29,16 +29,18 @@
     },
     {
       "slice": "S1",
-      "state": "pushed 0eb8cac",
+      "state": "integrated fa21555",
       "branch": "slice/other-host-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/other-host-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s2"
     },
     {
       "slice": "S3",
@@ -72,10 +74,12 @@
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/other-host-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s7"
     },
     {
       "slice": "S8",
@@ -105,8 +109,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s11"
     }
   ],
-  "next": "integrating S1 (0eb8cac), then S11 (2be3c09); then pilot ready and S2, S5, S7, S9, S10 from the new feat tip",
-  "updatedAt": "2026-11-18T04:57:58.580Z",
+  "next": "S11 integrating; S2 and S7 implementing from fa215559; S5, S9, S10 start as budget frees (8: me + 2 implementers + up to 4 children)",
+  "updatedAt": "2026-11-18T05:03:31.136Z",
   "friction": [
     {
       "agent": "pilot",
