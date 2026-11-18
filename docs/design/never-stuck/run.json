@@ -1,0 +1,302 @@
+{
+  "slug": "never-stuck",
+  "feature": "a run never stops silently",
+  "ticket": "itm_9b7008e91201",
+  "branch": "feat/never-stuck",
+  "base": "feat/blocked-steps",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-never-stuck",
+  "artefact": "docs/design/never-stuck/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/never-stuck-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/never-stuck-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/never-stuck-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/never-stuck-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/never-stuck-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated",
+      "after": [
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "branch": "slice/never-stuck-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-s6"
+    },
+    {
+      "slice": "never-stuck",
+      "state": "fixing (principles round); QA read-only done 6/6, waits for tip"
+    },
+    {
+      "slice": "S6a re-cut card",
+      "state": "planned (added: QA-F2, §9.1; QA writes it after the fix tip)",
+      "after": [
+        "S6"
+      ]
+    },
+    {
+      "slice": "fix round",
+      "state": "pushed ab58f08 (security re-review of 74859600..ab58f089 running)",
+      "after": [
+        "S6"
+      ],
+      "branch": "fix/never-stuck-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-fix"
+    }
+  ],
+  "findings": [
+    "kept: S2-sec-1 MEDIUM - repo config can still run commands in fetch; add core.sshCommand/gitProxy/credential.helper/uploadpack/proxy overrides to HARDENED, deck/recut.mjs:41",
+    "kept: S3-ts-1 LOW - driftAfterLanding's gone and refused-recut branches untested, deck/landing.mjs",
+    "kept: S5-ts-1 MEDIUM - pivotTicket leaves a stale yielding; delete ticket.yielding beside paused, deck/store-tickets.mjs:418, with a test",
+    "kept: S5-ts-2 LOW - report close and direct close leave yielding, deck/store-items.mjs:178,593",
+    "dropped: S5-ts-3 MEDIUM - setCoPilot overwrite leaving yielding on the old holder; Run 2 S7 refuses a second co-pilot, which removes the route",
+    "kept: S4-ts LOWs - recut.from not re-checked after await; sha regex in three places",
+    "kept: F1 simplify - finishYield is test-only (yield.test.mjs:97,144); delete it, its store.mjs export and facades entry, test via releaseCoPilot/setCoPilot; S5 Interface updated",
+    "kept: F2 simplify - planUnchanged is test-only (replan.test.mjs); delete, assert planChanges; S4 Interface and deck/README row updated",
+    "kept: F3 simplify - the never-granted rule written 3 times (landing.mjs:275, server-tools.mjs:447, store-runs.mjs:380); one export",
+    "kept: F4 simplify - landing-recut.test stampPlan writes grantedAt past the interface; grant via setCoPilot",
+    "kept: F5 simplify - landing.mjs:293-311 three nested try (complexity 24); fold the inner DeckRefusal try into the per-ticket catch",
+    "kept: N1 - dead (new) strip, deck/recut.mjs:25",
+    "kept: N4 - '(1 files)' on a deck line, landing.mjs:303",
+    "kept: F6 - ADR 0187 says it amends 0153 L3 but lists supersedes [0153]; record it as an amendment, not a supersession",
+    "dropped: N2 - inlining a one-use constant buys nothing",
+    "dropped: N3 - moving a gate1 check out of gate2-evidence.mjs is outside Run A's files",
+    "dropped: N5 - store-items.mjs sits 2 lines under the facade bar; no fix named",
+    "dropped: N6 - import reformat only"
+  ],
+  "next": "draining for pause: security re-review of 74859600..ab58f089 running; on its verdict, pilot integrate fix/never-stuck-principles with ts 'approve' + security trailer; then hand back paused.",
+  "updatedAt": "2026-11-17T16:02:04.800Z",
+  "friction": [
+    {
+      "agent": "pilot-architect (never-stuck)",
+      "what": "ticket grew to 24 lines and 17 slices after two merges; cut stopped for a runs decision",
+      "evidence": "architect's first findings, 16-slice cut over the 14 bound"
+    },
+    {
+      "kind": "drain",
+      "what": "S2 implementer's full report delivered to the pilot because the co-pilot was paused with children live",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "two Add threads answered and one ticket proposal cut in the pilot",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "gate1 refused 'Verdict: stands (why)'; only 'stands', 'stands - why' accepted, found by grepping the deck's tests",
+      "evidence": "deck/lineage.mjs:74; one extra commit bad7c6d4",
+      "size": 1
+    },
+    {
+      "agent": "pilot",
+      "what": "gate1 refused a pr field after the full body was written; one repost",
+      "evidence": "deck_post error: a gate1 item takes no pr",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "five Blocked items from no-verdict calls, all reissued or done, closed after the user's press",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "pilot.md has 21 tokens of headroom contested by 3 tickets; pilot tickets listed four unrelated merge candidates",
+      "evidence": "never-stuck architect report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-auditor",
+      "what": "full suite 460-762 s, past the tool timeout; 300 s queued behind two live gates",
+      "evidence": "auditor report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced by handback-send-enforce while the S1 implementer was live (spec line 3 again)",
+      "evidence": "co-pilot of itm_9b7008e91201, S1 implementer ae81e4a418d7f23cf live at 02168e00 unpushed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1 implementer reported a context compaction with no summary minutes after spawn and restarted S1",
+      "evidence": "its message to the co-pilot; 144k tokens, 94 tool uses at its first notification",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the co-pilot's hello, arriving early in a fresh implementer, is read as a post-compaction resume: it reports lost context and 'restarts' a slice it had not started (S1 and S2 both)",
+      "evidence": "S1 and S2 implementers' first messages to the co-pilot, each minutes after spawn, worktree clean at the base",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced by handback-send-enforce a second time while an implementer was live (spec line 3)",
+      "evidence": "S2 implementer acd999a7aba4b576d live at 80619604 unpushed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a new deck/ module silently owes a deck/README.md row; only the full gate shows it",
+      "evidence": "S2 report: scripts/test/deck-readme.test.mjs red until recut.mjs row added",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the 800-line facade bar counts one more line than wc -l; store-runs.mjs and store-items.mjs both sit at the bar",
+      "evidence": "S2 report: a 2-line stamp read 801 in facades.test.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "pilot deck --scratch does not say a live POST needs <dir>/deck.secret",
+      "evidence": "S2 report: first live POST answered 'the deck wants its secret'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md says draft slice PRs; the implementer definition opens none",
+      "evidence": "never-stuck brief.md:18-19 vs S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "third fresh implementer reads the co-pilot's hello as a compaction with lost work (a 'tools used before summary' line rides on it) and stops to ask before starting",
+      "evidence": "S4 implementer's first message: clean worktree at 311016e1, reflog 'reset: moving to HEAD' from worktree add",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced a third time by handback-send-enforce while two implementers were live (spec line 3)",
+      "evidence": "S3 implementer a05bd7ec09b1cccd8 at c1988343, S4 implementer a8cd8e0fa22a511cd at 155c3708, both unpushed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the gate's leftover-process sweep kills a scratch deck started from the same worktree, so a live check run beside npm test dies",
+      "evidence": "S3 report: 'stopped 25720 daemon ... --leash-dir ...pilot-never-stuck-s3'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a live landing on a scratch deck needs about 8 undocumented steps (artefact at sha, bearer + Origin header, deck_resolve after Sign off, slices: [], run on gate's repo, Verdict/Gate lines, package-lock, git identity)",
+      "evidence": "S3 report; working script scratchpad/s3-live.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced a fourth time while the S4 implementer was live",
+      "evidence": "S4 implementer a8cd8e0fa22a511cd, 186k tokens, unpushed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced a fifth time while the S5 implementer was live",
+      "evidence": "S5 implementer ad01921cd61649a1a at 55c6803e unpushed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back forced a sixth time by handback-send-enforce while the S6 implementer was live",
+      "evidence": "S6 implementer afebdb20a83506afb, unpushed; enforce fired twice after a one-line note to main",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "TaskOutput is not in the co-pilot's tool list although its definition says to wait with it; waits ran through Monitor and background Bash",
+      "evidence": "No such tool available: TaskOutput",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 implementer handed back to main, not the co-pilot: with no hello (main's rule: none before first report) the child has no co-pilot address",
+      "evidence": "main relayed S6's report; slice/never-stuck-s6 2c835d6c",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 review findings fixed in 2c835d6c with no second review",
+      "evidence": "S6 report: both WARN verdicts on fc51c03e",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "Stryker's dry run fails the 800-line facades bar on its instrumented copies, so diff mutation can never run on deck/ while store files sit at 797-798",
+      "evidence": "ConfigError: failed tests in the initial run, facades.test.mjs:70",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "knip is project-wide (581 unused files), noise for this repo",
+      "evidence": "fundamentalist tools table",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "chrome-devtools MCP tools do not load in QA's session; the card look goes by curl, the browser look moves to the walkthrough",
+      "evidence": "QA message: ToolSearch finds none",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "standing up a landable gate2 on a scratch deck took 8 trial-and-error calls",
+      "evidence": "merge thread, Verdict/Gate lines, run record worktree, git config pilot.test, lander-only Land again",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "no way to age a question on a running scratch deck; the yield probe rewrote deck.json",
+      "evidence": "QA read-only report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix-round implementer handed back to main, not the co-pilot (no hello sent, per main's rule)",
+      "evidence": "main relayed fix/never-stuck-principles ab58f089 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "fix-round reviewer tried a destructive `git checkout origin/feat/never-stuck -- deck` in the implementer's worktree; refused (itm_cd4a8ef77eed)",
+      "evidence": "worktree clean at ab58f089 afterwards",
+      "size": 1
+    }
+  ]
+}

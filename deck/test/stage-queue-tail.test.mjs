@@ -152,6 +152,7 @@ test('the first green entry stamps greenAt once', (t) => {
     postedAt: new Date(Date.now() - 21 * 60_000).toISOString(),
   });
   yieldTicket(held.id, question.id);
+  setCoPilot(held.id, false); // the drain is over (never-stuck L6)
   assert.equal(reread(held.id).state, 'green');
   assert.equal(reread(held.id).greenAt, undefined, 'a yield writes none');
 });
@@ -201,6 +202,7 @@ test('a resumed ticket returns to the yellow head', (t) => {
     postedAt: new Date(Date.now() - 21 * 60_000).toISOString(),
   });
   yieldTicket(held.id, question.id);
+  setCoPilot(held.id, false); // the drain is over (never-stuck L6)
   assert.equal(reread(held.id).state, 'green');
   assert.deepEqual(yellows(), [other.id]);
 

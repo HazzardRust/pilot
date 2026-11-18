@@ -37,6 +37,7 @@ function pausedBehindTwo() {
   setCoPilot(ticket.id, true);
   const question = blocking(ticket);
   yieldTicket(ticket.id, question.id);
+  setCoPilot(ticket.id, false); // the drain is over (never-stuck L6)
   return { ticket, question };
 }
 

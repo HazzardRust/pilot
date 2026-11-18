@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
+import { stampLegacyGrants } from './recut.mjs';
 import { storeDir } from './store-dir.mjs';
 import { isDeck, keepBackup, localDay, noteParsed, recoverStore } from './store-recovery.mjs';
 
@@ -133,7 +134,7 @@ export function storeFile() {
 }
 
 function emptyDeck() {
-  return { version: STORE_VERSION, items: [], runs: [], seq: 0, deckSeq: 0, decks: {} };
+  return { version: STORE_VERSION, items: [], runs: [], seq: 0, deckSeq: 0, decks: {}, grantsStamped: true };
 }
 
 /**
@@ -195,6 +196,7 @@ function readDeck(recovered = false) {
     backUp(file, raw, deck.version);
     writeDeck(upgradeStore(deck));
   }
+  stampLegacyGrants(deck); // read-time; the next write keeps it (never-stuck QA-F1)
   deck.items = deck.items.map((item) => notLiveYellow(withoutEstimate(asUserThread(item))));
   // The sub-deck is gone (yellow-agent L10): a run 0.7.19 stored under a `parent` is not this deck's, live or
   // not, so it reads absent and the next write drops it.
@@ -744,11 +746,12 @@ function storedCoPilot(deck, dir) {
   return typeof entry?.ticket === 'string' && typeof entry.at === 'string' ? entry : null;
 }
 
-/** Release `dir`'s live co-pilot if it names `ticketId` (any, when none), stamping `at` for the look's turn-end check (L5). */
+/** Release `dir`'s live co-pilot if it names `ticketId` (any, when none), stamping `at` for the turn-end check (L5); a drain outlives no release (never-stuck L6). */
 function releaseIn(deck, dir, ticketId) {
   const entry = storedCoPilot(deck, dir);
   if (!entry || entry.live !== true || (ticketId !== undefined && entry.ticket !== ticketId)) return false;
   deck.coPilots[repoKey(dir)] = { ticket: entry.ticket, live: false, at: new Date().toISOString() };
+  delete deck.items.find((item) => item?.id === entry.ticket && item.kind === KIND_TICKET)?.yielding;
   return true;
 }
 

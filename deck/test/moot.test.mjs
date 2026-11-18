@@ -128,6 +128,7 @@ test('a pilot close resumes the ticket a design question paused', (t) => {
     options: ['A', 'B'], recommended: 'A', postedAt: PAST,
   });
   yieldTicket(ticket.id, design.id);
+  setCoPilot(ticket.id, false); // the drain is over (never-stuck L6)
   assert.equal(reread(ticket.id).state, 'green', 'paused');
 
   resolveItem(design.id, `${ASSUMED} A`, PILOT);

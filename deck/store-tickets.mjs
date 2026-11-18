@@ -26,6 +26,7 @@ import {
   ticketQueueOf,
 } from './items.mjs';
 import { YIELD_MS, yieldsDue } from './lanes.mjs';
+import { SHA } from './recut.mjs';
 import { nextRecord, repoKey, sameRepo } from './runs.mjs';
 import {
   DeckRefusal,
@@ -353,10 +354,10 @@ export function needTicket(id) {
 }
 
 /**
- * The deck's yield (blocked-yellow-yields spec 1; L1, L2, L3), one write: the co-pilot's held ticket turns green with
- * `paused: { question, at }`, its co-pilot released as `needTicket` releases it, and a `from: 'deck'` line with a `seq`
- * on the question, which wakes the pilot's parked wait to send the co-pilot the pause. Refused unless `yieldsDue`
- * still names this ticket and question now. Returns the ticket.
+ * The deck's yield (blocked-yellow-yields spec 1; L1, L2, L3; never-stuck L6), one write: the co-pilot's held ticket
+ * stays yellow and held, marked `yielding: { question, at }`, with a `from: 'deck'` line with a `seq` on the question,
+ * which wakes the pilot's parked wait to send the co-pilot the pause. The co-pilot drains its live slices, and its
+ * release, `setCoPilot(id, false)`, hands it back paused. Refused unless `yieldsDue` still names this ticket and question now. Returns the ticket.
  */
 export function yieldTicket(id, questionId) {
   const deck = readDeck();
@@ -368,15 +369,25 @@ export function yieldTicket(id, questionId) {
     throw new DeckRefusal(`no yield of ${id} on ${questionId} is due: the co-pilot holds ${holder ?? 'nothing'} here, and the question must block it unanswered ${YIELD_MS / 60_000} min`);
   }
   const at = new Date(now).toISOString();
-  ticket.state = 'green';
-  ticket.paused = { question: questionId, at };
-  releaseIn(deck, ticket.repo, id);
+  ticket.yielding = { question: questionId, at };
   const question = deck.items.find((item) => item.id === questionId);
-  const text = `Paused ${id}: ${questionId} unanswered ${YIELD_MS / 60_000} min; send the co-pilot the pause, then deck_ticket co-pilot the next runnable ticket`;
+  const text = `Yielding ${id}: ${questionId} unanswered ${YIELD_MS / 60_000} min; send the co-pilot the pause: it drains every live slice, then hands back paused`;
   question.replies = [...messagesOf(question), { from: 'deck', author: 'deck', text, repliedAt: at, seq: (deck.seq = seqOf(deck) + 1) }];
   touchRuns(deck, ticket.repo);
   writeDeck(deck);
   return ticket;
+}
+
+/**
+ * `setCoPilot`'s release of `ticket`'s live co-pilot on the deck in hand, and the drain's end (never-stuck L6): an open
+ * yellow ticket that was `yielding` turns green with `paused` its `yielding`; a closed one only loses the yield.
+ * False, and nothing written, unless its live co-pilot is released now.
+ */
+export function finishYieldIn(deck, ticket) {
+  const { yielding } = ticket;
+  if (!releaseIn(deck, ticket.repo, ticket.id)) return false;
+  if (yielding && isOpen(ticket) && stateOf(ticket) === 'yellow') Object.assign(ticket, { state: 'green', paused: yielding });
+  return true;
 }
 
 /**
@@ -393,8 +404,7 @@ export function pivotTicket(id) {
   const gate2 = deck.items.find((item) => item?.kind === KIND_GATE2 && item.ticket === id && isOpen(item));
   if (gate2 && chosenOf(gate2) === SIGN_OFF) throw new DeckRefusal(`gate2 ${gate2.id} is signed off; resolve it rather than pivot ${id}`);
   enterStage(deck, ticket, 'yellow', 'landed');
-  delete ticket.live;
-  delete ticket.paused;
+  for (const field of ['live', 'paused', 'yielding']) delete ticket[field];
   if (gate2) {
     gate2.resolution = 'superseded by pivot';
     gate2.resolvedAt = new Date().toISOString();
@@ -402,6 +412,56 @@ export function pivotTicket(id) {
   touchRuns(deck, ticket.repo);
   writeDeck(deck);
   return { ticket, gate2 };
+}
+
+/**
+ * Send a signed ticket back to planning (never-stuck spec 6, L7): an open yellow ticket no live co-pilot holds and
+ * no gate2 has named turns red at its red queue's head, not live, marked `recut: { from, why, files, at }`, `from`
+ * its plan's sha, in one write. The plan stays until a gate1 Sign off replaces it (store-items.mjs). Returns the ticket.
+ */
+export function recutTicket(id, why, files) {
+  requireText('why', why);
+  if (files !== undefined && !(Array.isArray(files) && files.every((file) => typeof file === 'string'))) {
+    throw new DeckRefusal('a re-cut names its files as a list of paths');
+  }
+  const deck = readDeck();
+  const ticket = openTicketOf(deck, id);
+  if (stateOf(ticket) !== 'yellow') throw new DeckRefusal(`item ${id} is ${stateOf(ticket)}; only a signed, yellow ticket is re-cut`);
+  // It joins the planning queue's head, so a pending planning switch holds it up as an arrow would; it never goes live,
+  // so the yellow lane's only lock is the co-pilot switch naming it.
+  refuseLaneSwitch(deck, ticket.repo, laneOfState('red'));
+  refuseCoPilotSwitch(deck, ticket.repo, 'recut', id);
+  const entry = storedCoPilot(deck, ticket.repo);
+  if (entry?.ticket === id && isLiveCoPilot(deck, entry)) throw new DeckRefusal(`a live co-pilot holds ${id}; release it before the re-cut`);
+  const gate2 = deck.items.find((item) => item?.kind === KIND_GATE2 && item.ticket === id);
+  if (gate2) throw new DeckRefusal(`gate2 ${gate2.id} was posted on ${id}; a part-built ticket is never re-cut`);
+  enterStage(deck, ticket, 'red', 'head');
+  delete ticket.live;
+  ticket.recut = { from: ticket.plan?.sha ?? null, why, ...(files === undefined ? {} : { files }), at: new Date().toISOString() };
+  touchRuns(deck, ticket.repo);
+  writeDeck(deck);
+  return ticket;
+}
+
+/**
+ * Restore a re-cut ticket's signature at `sha` (never-stuck spec 15, L5): the caller has proven its design dir
+ * unchanged since `recut.from`. Only an open red ticket carrying the re-cut mark; yellow, its plan at `sha` and never
+ * yet granted, the mark and liveness gone, in one write, as a gate1 Sign off leaves it. Returns the ticket.
+ */
+export function replanTicket(id, sha) {
+  if (typeof sha !== 'string' || !SHA.test(sha)) throw new DeckRefusal('a replan names the new plan commit as its sha');
+  const deck = readDeck();
+  const ticket = openTicketOf(deck, id);
+  if (stateOf(ticket) !== 'red' || !ticket.recut || !ticket.plan || typeof ticket.plan !== 'object') {
+    throw new DeckRefusal(`item ${id} carries no re-cut mark; only a re-cut ticket is replanned, any other takes a gate1`);
+  }
+  enterStage(deck, ticket, 'yellow');
+  ticket.plan = { ...ticket.plan, sha };
+  delete ticket.plan.grantedAt;
+  for (const field of ['live', 'recut']) delete ticket[field];
+  touchRuns(deck, ticket.repo);
+  writeDeck(deck);
+  return ticket;
 }
 
 /**
