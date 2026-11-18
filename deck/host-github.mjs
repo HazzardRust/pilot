@@ -104,7 +104,7 @@ function withBodyFile(body, use) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-pr-'));
   try {
     const file = path.join(dir, 'body.md');
-    fs.writeFileSync(file, body);
+    fs.writeFileSync(file, body, { mode: 0o600 });
     return use(file);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

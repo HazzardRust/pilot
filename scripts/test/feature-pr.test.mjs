@@ -223,6 +223,20 @@ test('none writes nothing', (t) => {
   assert.deepEqual(calls.filter((args) => args[0] === 'ls-remote' || args[0] === 'fetch'), [], 'not even origin is asked');
 });
 
+test('pilot pr reads pilot.host: none is exit 0, an unknown name one line and exit 1', async (t) => {
+  const cwd = repo(t);
+  const said = [];
+  const run = () => main(['--ticket', 'itm_0123abcd'], { git: gitIn(cwd), readRecord: async () => record(), say: (s) => said.push(s) });
+
+  gitAt(cwd, 'config', 'pilot.host', 'none');
+  assert.equal(await run(), 0);
+  assert.deepEqual(said, ['no PR: host none\n']);
+
+  gitAt(cwd, 'config', 'pilot.host', 'bogus');
+  assert.equal(await run(), 1);
+  assert.match(said[1], /^host: .*"bogus".*\n$/);
+});
+
 test('create then edit', (t) => {
   const cwd = repo(t);
   // One fake GitHub across three runs: what `pr create` and `pr edit` write is what `pr list` answers next.
