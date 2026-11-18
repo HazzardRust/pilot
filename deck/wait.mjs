@@ -160,15 +160,49 @@ async function isKnownRepo(repo, timeoutMs) {
 }
 
 /**
- * The refusal line of an idle main lane in `repo` (idle-main-lane spec 1, L3, L6; ADR 0123) and the co-pilot lane's
- * blocked list (blocked-yellow-yields spec 2), each a line or null: read off `/api/record`, which marks nothing
- * delivered, so the wait that follows still takes every reply. Rejects on any deck failure, which is the wait's own
- * exit 1; a deck that answers no lanes refuses nothing.
+ * The lane lines `deck/lanes.mjs` spells and no others, the shapes `hooks/session-handoff.js` echoes (it is CommonJS
+ * and cannot share them): ids and fixed words, never prose, because what this prints is read by a model.
  */
-async function refusalFor(repo, timeoutMs) {
+const ID = String.raw`itm_\w{1,40}`;
+const SKIPPED = `${ID} (blocked on ${ID}|orphaned|draining)`;
+const LANE_LINES = [
+  ['planning', new RegExp(`^planning: (empty( → next ${ID}( \\(re-cut\\))?)?|${ID})$`)],
+  ['concluding', new RegExp(`^concluding: (empty( → next ${ID})?|${ID})$`)],
+  ['coPilot', new RegExp(`^co-pilot: (none|empty → next ${ID}( \\(short path\\))?|none runnable: ${SKIPPED}(; ${SKIPPED}){0,4}|${ID}( draining)?)$`)],
+];
+const OWED_ID = new RegExp(`^${ID}$`);
+/** `owedThreadsOf`'s reasons (never-stuck S12 adds the last two), fixed words said as they are. */
+const OWED_WHY = ['unanswered', 'promised', 'report owed', 'architect owed'];
+const MAX_OWED = 20;
+const SEPARATORS = new RegExp('[\\u2028\\u2029]', 'g');
+
+/**
+ * What could run in `repo` (never-stuck spec 11), the text `NO REPLY` appends, or '': the three lanes when all three
+ * are of a lane line's shape, and each owed row of an entry's shape, its line JSON-quoted (a user's words: a newline is
+ * written `\n`, so no line it prints can pose as another). Nothing of any other shape is echoed.
+ */
+function runnableText(lanes, owed) {
+  const lines = LANE_LINES.map(([key, shape]) => (typeof lanes?.[key] === 'string' && shape.test(lanes[key]) ? lanes[key] : null));
+  const said = lines.every((line) => line !== null) ? `Lanes now:\n${lines.join('\n')}\n` : '';
+  const rows = (Array.isArray(owed) ? owed : [])
+    .filter((o) => typeof o?.id === 'string' && OWED_ID.test(o.id) && OWED_WHY.includes(o.why) && typeof o.line === 'string')
+    .slice(0, MAX_OWED)
+    // JSON leaves U+2028 and U+2029 literal, and a reader may break a line on either: escaped too.
+    .map((o) => `${o.id} ${o.why}: ${JSON.stringify(clip(o.line, MAX_TITLE_CHARS)).replace(SEPARATORS, (c) => `\\u${c.charCodeAt(0).toString(16)}`)}`);
+  return rows.length ? `${said}Owed:\n${rows.join('\n')}\n` : said;
+}
+
+/**
+ * The refusal line of an idle lane in `repo` (idle-main-lane spec 1, L3, L6; ADR 0123), the co-pilot lane's blocked
+ * list (blocked-yellow-yields spec 2), each a line or null, and what could run (`runnableText`): read off
+ * `/api/record`, which marks nothing delivered, so the wait that follows still takes every reply. Rejects on any deck
+ * failure, which is the wait's own exit 1; a deck that answers no lanes refuses nothing.
+ */
+async function recordFor(repo, timeoutMs) {
   const response = await fetch(`${deckUrl()}/api/record?repo=${encodeURIComponent(repo)}`, { headers: bearer(), signal: AbortSignal.timeout(timeoutMs) });
   if (!response.ok) throw new Error(`the deck answered /api/record with ${response.status}`);
-  const lanes = (await bodyOf(response, '/api/record'))?.lanes;
+  const record = await bodyOf(response, '/api/record');
+  const lanes = record?.lanes;
   // One line, bounded and free of control characters, whatever a deck it cannot vouch for sends.
   const oneLine = (text) => {
     const line = typeof text === 'string' ? text.replace(/[\s\u0000-\u001f\u007f-\u009f]+/g, ' ').trim() : '';
@@ -176,7 +210,7 @@ async function refusalFor(repo, timeoutMs) {
   };
   // The blocked list is ids only, the shape `lanesFrom` spells and the session-start hook echoes; any other text is dropped.
   const blocked = typeof lanes?.blocked === 'string' && BLOCKED_LIST.test(lanes.blocked) ? lanes.blocked : null;
-  return { refusal: oneLine(lanes?.refusal), blocked };
+  return { refusal: oneLine(lanes?.refusal), blocked, runnable: runnableText(lanes, record?.owed) };
 }
 
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -226,16 +260,20 @@ export async function wait({
     return unreachable(err);
   }
 
-  // Only the pilot holds the main lane (L4): an idle one ends its wait, read before the park and after each empty poll (L5).
-  // Beside it, a co-pilot lane whose every yellow ticket is blocked says which, once per change, and the wait goes on.
+  // Only the pilot holds the lanes (L4), read before the park and after each empty poll (L5). An idle one's refusal is
+  // said once per distinct text and the wait goes on listening (never-stuck L8, amending ADR 0143 L2): the Stop hook is
+  // what refuses idling. Beside it, a co-pilot lane whose every yellow ticket is blocked says which, once per change.
   let saidBlocked = null;
-  const refused = async () => {
-    if (kind !== 'pilot') return false;
-    const { refusal, blocked } = await refusalFor(repo, REQUEST_SLACK_MS);
-    if (blocked !== null && blocked !== saidBlocked) say(`co-pilot lane blocked: ${blocked}\n`);
-    saidBlocked = blocked;
-    if (refusal !== null) say(`${refusal}\n`);
-    return refusal !== null;
+  let saidRefusal = null;
+  let runnable = '';
+  const readLanes = async () => {
+    if (kind !== 'pilot') return;
+    const record = await recordFor(repo, REQUEST_SLACK_MS);
+    if (record.blocked !== null && record.blocked !== saidBlocked) say(`co-pilot lane blocked: ${record.blocked}\n`);
+    saidBlocked = record.blocked;
+    if (record.refusal !== null && record.refusal !== saidRefusal) say(`${record.refusal}\n`);
+    saidRefusal = record.refusal;
+    runnable = record.runnable;
   };
 
   // The session's leash (L1, L3): its pid exiting hangs up the parked request, so the deck takes nothing for it.
@@ -250,13 +288,14 @@ export async function wait({
     for (;;) {
       if (gone.signal.aborted) return noSession();
       try {
-        if (await refused()) return 0;
+        await readLanes();
       } catch (err) {
         return unreachable(err);
       }
       const left = deadline - Date.now();
       if (left <= 0) {
-        say(`NO REPLY after ${timeoutMinutes} minutes\n`);
+        // What could run, as read a moment ago (spec 11): a quiet timeout is never a bare exit.
+        say(`NO REPLY after ${timeoutMinutes} minutes\n${runnable}`);
         return 0;
       }
       const timeout = Math.max(1, Math.ceil(Math.min(pollMs, left)));
