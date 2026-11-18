@@ -53,7 +53,7 @@
     },
     {
       "slice": "S4",
-      "state": "implementing (restarted after a context compaction)",
+      "state": "pushed 85f8ae2",
       "after": [
         "S3"
       ],
@@ -97,7 +97,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed 5a7a286",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -106,7 +106,7 @@
     },
     {
       "slice": "S10",
-      "state": "implementing (restarted after a context compaction)",
+      "state": "pushed 6335fca",
       "after": [
         "S1"
       ],
@@ -132,8 +132,8 @@
   "findings": [
     "kept: P1 added-slice — S3 took seam option A: a failed label create is swallowed by githubHost.labelled (host-github.mjs:121-129) and land no longer prints its label warning; after S5 integrates, Host open/edit return `why` and land prints it again (spec 2: moved, not rewritten)"
   ],
-  "next": "integrate S9; S4 S10 implementing",
-  "updatedAt": "2026-11-18T06:03:54.412Z",
+  "next": "integrate S10 (running), then S4, then pilot ready for S12 S8",
+  "updatedAt": "2026-11-18T06:15:19.007Z",
   "friction": [
     {
       "agent": "pilot",
@@ -286,6 +286,36 @@
       "agent": "pilot:pilot-implementer",
       "what": "S9: a sleep 100 wait was blocked by the shell hook",
       "evidence": "S9 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: install.test pins a doc heading's exact words, so renaming 'four questions' to 'five' broke it",
+      "evidence": "scripts/test/install.test.mjs:1001"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: scripts/uninstall.mjs had no git seam; its scratch-home tests could unset pilot.host in the developer's real global config",
+      "evidence": "security-reviewer MEDIUM, fixed in 6335fcad"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10 slice lists docs/adr/README.md as owned, but adr-index skips NNNN files, so the slice cannot change it",
+      "evidence": "scripts/adr-index.mjs:87-88"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 owned-files list missed ~13 land* tests that inject gh into land (three call-site shapes); one question round and 3 files found on a second grep",
+      "evidence": "S4 report: land-clear, land-gc, land-offline beyond the 10 in 2c942c10"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 slice anchors off by 1-3 lines and named hostFor/githubHost as scripts/ when they are in deck/",
+      "evidence": "land :56 not :55; readsMerged :347 not :350"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: gh stub answers every call with one reply.txt, so a live github landing cannot show a realistic main line",
+      "evidence": "S4 live check: main line unknown, no PR url"
     }
   ]
 }
