@@ -396,8 +396,10 @@ const CONCLUDING_LINE = /^concluding: (empty( → next itm_\w{1,40})?|itm_\w{1,4
 // One skipped ticket and its reason, a fixed word or a question id (never-stuck spec 9); the list is bounded at five,
 // `deck/lanes.mjs`'s MAX_BLOCKED.
 const SKIPPED = 'itm_\\w{1,40} (blocked on itm_\\w{1,40}|orphaned|draining)';
+// A released ticket owed a successor co-pilot is named ahead of the next planned one.
+const NEXT = 'next itm_\\w{1,40}( \\(short path\\))?';
 const CO_PILOT_LINE = new RegExp(
-  '^co-pilot: (none|empty → next itm_\\w{1,40}( \\(short path\\))?|none runnable: ' + SKIPPED + '(; ' + SKIPPED + '){0,4}|itm_\\w{1,40}( draining)?)$'
+  '^co-pilot: (none|empty → (successor itm_\\w{1,40}(; ' + NEXT + ')?|' + NEXT + ')|none runnable: ' + SKIPPED + '(; ' + SKIPPED + '){0,4}|itm_\\w{1,40}( draining)?)$'
 );
 
 /**

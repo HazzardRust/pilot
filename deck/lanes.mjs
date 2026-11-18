@@ -42,10 +42,11 @@ export const BLOCKED_LIST = new RegExp(`^${BLOCKED_PAIR}(; ${BLOCKED_PAIR}){0,${
  */
 const ID = String.raw`itm_\w{1,40}`;
 const SKIPPED = `${ID} (blocked on ${ID}|orphaned|draining)`;
+const NEXT = `next ${ID}( \\(short path\\))?`;
 export const LANE_LINES = [
   ['planning', new RegExp(`^planning: (empty( → next ${ID}( \\(re-cut\\))?)?|${ID})$`)],
   ['concluding', new RegExp(`^concluding: (empty( → next ${ID})?|${ID})$`)],
-  ['coPilot', new RegExp(`^co-pilot: (none|empty → next ${ID}( \\(short path\\))?|none runnable: ${SKIPPED}(; ${SKIPPED}){0,${MAX_BLOCKED - 1}}|${ID}( draining)?)$`)],
+  ['coPilot', new RegExp(`^co-pilot: (none|empty → (successor ${ID}(; ${NEXT})?|${NEXT})|none runnable: ${SKIPPED}(; ${SKIPPED}){0,${MAX_BLOCKED - 1}}|${ID}( draining)?)$`)],
 ];
 
 /**
@@ -103,9 +104,15 @@ export function lanesFrom(items, repo, { switching, coPilot } = {}) {
   const queued = coPilotStateOf(items, repo, held, switching) === 'queued';
   const planned = queued ? runnableYellowOf(items, repo)[0] : undefined;
   const short = planned ? isShortPath(planned) : false;
+  // A released co-pilot's ticket, still open and yellow, is owed a successor ahead of any other next (the re-brief names
+  // it); one that is itself the next runnable reads `next` as before.
+  const successor = queued && coPilot?.live === false && coPilot.ticket !== planned?.id
+    ? items.find((item) => item?.id === coPilot.ticket && item.kind === KIND_TICKET && isOpen(item) && stateOf(item) === 'yellow' && sameRepo(item.repo, repo))
+    : undefined;
+  const plannedLine = planned ? `next ${planned.id}${short ? ' (short path)' : ''}` : '';
   // No yellow ticket runnable (spec 2; never-stuck spec 9): each skipped one named with why, and nothing refused.
   const skipped = queued && !planned
-    ? ticketQueueOf(items, repo, 'yellow').slice(0, MAX_BLOCKED).map((ticket) => ({ id: ticket.id, why: skipReasonOf(items, ticket) }))
+    ? ticketQueueOf(items, repo, 'yellow').filter((ticket) => ticket !== successor).slice(0, MAX_BLOCKED).map((ticket) => ({ id: ticket.id, why: skipReasonOf(items, ticket) }))
     : [];
   const pairs = skipped.filter(({ why }) => why?.startsWith('blocked on ')).map(({ id, why }) => `${id} ${why.slice('blocked '.length)}`);
   const blocked = pairs.length ? pairs.join('; ') : null;
@@ -119,7 +126,9 @@ export function lanesFrom(items, repo, { switching, coPilot } = {}) {
   const idle = [['concluding', concluding], ['planning', planning]].find(([, lane]) => lane.next);
   const refusal = idle
     ? `${idle[0]} lane empty; ${idle[1].next.id} is queued — deck_ticket take it first`
-    : planned
+    : successor
+      ? `yellow lane empty; ${successor.id} is released — deck_ticket co-pilot it and spawn its successor first`
+      : planned
       ? `yellow lane empty; ${planned.id} is ${short ? 'short path — deck_ticket co-pilot it and spawn its implementer' : 'planned — deck_ticket co-pilot it first'}`
       : null;
   return {
@@ -127,9 +136,10 @@ export function lanesFrom(items, repo, { switching, coPilot } = {}) {
     concluding: line('concluding', concluding),
     coPilot: held
       ? `co-pilot: ${held}${draining ? ' draining' : ''}`
-      : planned ? `co-pilot: empty → next ${planned.id}${short ? ' (short path)' : ''}` : reasons ? `co-pilot: none runnable: ${reasons}` : 'co-pilot: none',
+      : successor ? `co-pilot: empty → successor ${successor.id}${planned ? `; ${plannedLine}` : ''}`
+        : planned ? `co-pilot: empty → ${plannedLine}` : reasons ? `co-pilot: none runnable: ${reasons}` : 'co-pilot: none',
     stageClause: `${clause('Planning', planning)}. ${clause('Concluding', concluding)}`,
-    yellowClause: held ? `Yellow: held by ${held}` : planned ? `Yellow: empty, next ${planned.id}` : 'Yellow: empty',
+    yellowClause: held ? `Yellow: held by ${held}` : successor ? `Yellow: empty, successor ${successor.id}` : planned ? `Yellow: empty, next ${planned.id}` : 'Yellow: empty',
     refusal: handedOff ? null : refusal,
     blocked,
   };

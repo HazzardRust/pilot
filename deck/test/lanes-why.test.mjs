@@ -49,6 +49,20 @@ test('each reason reads on the line, at most 5', () => {
   assert.equal(lanes([granted('itm_y1')], { ticket: 'itm_y1', live: true }).coPilot, 'co-pilot: itm_y1', 'a held ticket is never an orphan');
 });
 
+test('a released ticket is owed a successor, named ahead of the next planned one', () => {
+  const released = { ticket: 'itm_y1', live: false };
+  const both = lanes([granted('itm_y1'), ticket('itm_y2', 'yellow', { plan: { ...SIGNED } })], released);
+  assert.equal(both.coPilot, 'co-pilot: empty → successor itm_y1; next itm_y2');
+  assert.equal(both.yellowClause, 'Yellow: empty, successor itm_y1');
+  assert.match(both.refusal, /^yellow lane empty; itm_y1 is released — /);
+  assert.equal(echoed(both), `Lanes now:\n${both.planning}\n${both.concluding}\n${both.coPilot}`);
+  const alone = lanes([granted('itm_y1')], released);
+  assert.equal(alone.coPilot, 'co-pilot: empty → successor itm_y1');
+  assert.equal(echoed(alone), `Lanes now:\n${alone.planning}\n${alone.concluding}\n${alone.coPilot}`);
+  // A release that flipped its ticket green (a drained yield) owes nobody a successor.
+  assert.equal(lanes([granted('itm_y1', { state: 'green' })], released).coPilot, 'co-pilot: none');
+});
+
 test('a re-cut ticket reads (re-cut)', () => {
   const recut = ticket('itm_r1', 'red', { recut: { from: 'b'.repeat(40), why: 're-cut check due: b gone' } });
   assert.equal(lanes([recut]).planning, 'planning: empty → next itm_r1 (re-cut)');
