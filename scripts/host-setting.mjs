@@ -14,7 +14,7 @@ const USAGE = `usage: pilot host [${HOST_NAMES.join('|')}] [--local]`;
 export function main(argv, { git = (args) => gitAt(process.cwd(), ...args), log = console.log, error = console.error } = {}) {
   const local = argv.includes('--local');
   const names = argv.filter((arg) => arg !== '--local');
-  if (names.length > 1 || names.some((arg) => arg.startsWith('-')) || argv.filter((arg) => arg === '--local').length > 1) {
+  if (names.length > 1 || (local && !names.length) || names.some((arg) => arg.startsWith('-')) || argv.filter((arg) => arg === '--local').length > 1) {
     error(USAGE);
     return 2;
   }

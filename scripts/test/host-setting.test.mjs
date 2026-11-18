@@ -81,7 +81,8 @@ test('no name prints the host in force', () => {
   const { code, out } = run([], unset.git);
   assert.equal(code, 0);
   assert.deepEqual(out, ['github']);
-  assert.ok(unset.calls.every((args) => !args.includes('--unset') && args.length <= 4 && args.includes('--get')), 'printing writes nothing');
+  assert.deepEqual(unset.scopes, { global: {}, local: {} }, 'printing writes nothing');
+  assert.equal(run(['--local'], unset.git).code, 2, '--local with no name is a usage error');
 
   assert.deepEqual(run([], fakeGit({ global: { 'pilot.host': 'gitlab' } }).git).out, ['gitlab']);
   assert.deepEqual(run([], fakeGit({ global: { 'pilot.host': 'gitlab' }, local: { 'pilot.host': 'none' } }).git).out, ['none']);
@@ -94,13 +95,16 @@ test('no name prints the host in force', () => {
 test('uninstall unsets the global host and leaves an unset one alone', async () => {
   const set = fakeGit({ global: { 'pilot.host': 'gitlab' }, local: { 'pilot.host': 'none' } });
   const deps = { prefix: '/nowhere', platform: 'linux', deckPid: async () => null, storeDir: '/nowhere', git: set.git };
-  const steps = (await planUninstall('/nowhere-home', deps)).filter((step) => step.what === 'the pilot.host setting');
-  assert.equal(steps.length, 1);
-  assert.equal(steps[0].action, 'remove');
-  assert.deepEqual(applyPlan(steps), ['unset pilot.host (gitlab) in your global git config']);
+  const host = (steps) => steps.filter((step) => /pilot\.host/.test(step.what));
+  const steps = host(await planUninstall('/nowhere-home', deps));
+  assert.deepEqual(steps.map((step) => step.action), ['remove']);
+  assert.ok(applyPlan(steps).every((line) => !line.startsWith('could not')));
   assert.deepEqual(set.scopes, { global: {}, local: { 'pilot.host': 'none' } }, 'only the global value goes');
 
-  const none = fakeGit();
-  const planned = await planUninstall('/nowhere-home', { ...deps, git: none.git });
-  assert.deepEqual(planned.filter((step) => step.what === 'the pilot.host setting'), []);
+  assert.deepEqual(host(await planUninstall('/nowhere-home', { ...deps, git: fakeGit().git })), [], 'an unset host plans nothing');
+
+  const broken = () => {
+    throw Object.assign(new Error('fatal: bad config line 1'), { status: 128 });
+  };
+  assert.deepEqual(host(await planUninstall('/nowhere-home', { ...deps, git: broken })).map((step) => step.action), ['leave'], 'an unreadable config is left, never unset');
 });
