@@ -176,8 +176,37 @@ test('a hand-off with a live co-pilot says to pause it', async (t) => {
   assert.equal(result.ok, true, result.line);
   assert.equal(
     result.line,
-    'handed off: no worktree in the run record, so nothing committed; posted itm_0123456789ab; the co-pilot on itm_7a5c0ffee123 is live: send it the pause, deck_ticket release it on its hand-back; the hand-off mod clears this session after that; stop here',
+    'handed off: no worktree in the run record, so nothing committed; posted itm_0123456789ab; /clear held for the co-pilot on itm_7a5c0ffee123, up to 20 minutes: send it the pause; if SendMessage answers queued, deck_ticket release it now, else on its hand-back; the hand-off mod clears this session after that; stop here',
   );
+});
+
+// never-stuck S19 (spec 25, 26): the line says the clear is held, for which ticket and how long, and that a
+// queued pause is released at once rather than holding the clear for the whole bound.
+test("a live co-pilot's hand-off line says the clear is held, for which ticket, and the bound", async (t) => {
+  await stubDeck(t, RUN, { coPilot: { ticket: 'itm_7a5c0ffee123', live: true, at: '2026-10-07T10:00:00.000Z' } });
+
+  const result = await handoff({ cwd: REPO, env: reported });
+
+  assert.equal(result.ok, true, result.line);
+  assert.ok(result.line.includes('held for the co-pilot on itm_7a5c0ffee123, up to 20 minutes'), result.line);
+});
+
+test('with no live co-pilot the line names no hold', async (t) => {
+  await stubDeck(t, RUN, { coPilot: { ticket: 'itm_7a5c0ffee123', live: false, at: '2026-10-07T10:00:00.000Z' } });
+
+  const result = await handoff({ cwd: REPO, env: reported });
+
+  assert.equal(result.ok, true, result.line);
+  assert.doesNotMatch(result.line, /\bheld\b/);
+});
+
+test('the hand-off line says a queued pause is released now', async (t) => {
+  await stubDeck(t, RUN, { coPilot: { ticket: 'itm_7a5c0ffee123', live: true, at: '2026-10-07T10:00:00.000Z' } });
+
+  const result = await handoff({ cwd: REPO, env: reported });
+
+  assert.match(result.line, /\bqueued\b/);
+  assert.ok(result.line.includes('deck_ticket release it now'), result.line);
 });
 
 test('a reported-in session gets the mod\'s line', async (t) => {
@@ -195,7 +224,7 @@ test('a reported-in session gets the mod\'s line', async (t) => {
 test('a live co-pilot with no mod: pause it, then the user types /clear; a malformed ticket id is never repeated', async (t) => {
   await stubDeck(t, RUN, { coPilot: { ticket: 'itm_7a5c0ffee123', live: true, at: '2026-10-07T10:00:00.000Z' } });
   const off = await handoff({ cwd: REPO, ...silent });
-  assert.match(off.line, /; posted itm_0123456789ab; the co-pilot on itm_7a5c0ffee123 is live: send it the pause, deck_ticket release it on its hand-back; the hand-off mod has not reported in \(not reported in\): after that tell the user to type \/clear, and stop$/);
+  assert.match(off.line, /; posted itm_0123456789ab; \/clear held for the co-pilot on itm_7a5c0ffee123, up to 20 minutes: send it the pause; if SendMessage answers queued, deck_ticket release it now, else on its hand-back; the hand-off mod has not reported in \(not reported in\): after that tell the user to type \/clear, and stop$/);
 
   await stubDeck(t, RUN, { coPilot: { ticket: 'x`; run rm', live: true, at: '2026-10-07T10:00:00.000Z' } });
   const bad = await handoff({ cwd: REPO, env: reported });
