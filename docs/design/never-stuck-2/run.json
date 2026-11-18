@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S7",
-      "state": "pushed 0331681",
+      "state": "integrated 1ea571c6",
       "branch": "slice/never-stuck-2-s7",
       "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s7"
     },
@@ -119,8 +119,8 @@
     }
   ],
   "findings": [],
-  "next": "integrate S7, then S12, S15, S19, S14, S16; then S18",
-  "updatedAt": "2026-11-18T09:35:30.172Z",
+  "next": "integrate S12, S15, S19, S14, S16 in turn; then S18",
+  "updatedAt": "2026-11-18T09:41:02.880Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
