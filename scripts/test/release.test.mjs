@@ -8,10 +8,12 @@
 import { gitFixture } from './lib/git-fixture.mjs';
 import { repos, passing, fakeGh, git, commitFile, land as landFeature } from './lib/land-repos.mjs';
 
+import fs from 'node:fs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 const { releaseNotes, releasePr } = await import('../release.mjs');
+const { githubHost } = await import('../../deck/host-github.mjs');
 
 const PILOT = 'refs/remotes/origin/pilot';
 const MAIN = 'refs/remotes/origin/main';
@@ -38,7 +40,7 @@ test('two landings name both slugs', (t) => {
   land(a, gitIn);
   land(b, gitIn);
 
-  const notes = releaseNotes({ git: gitIn(b), pilotRef: PILOT, mainRef: MAIN, prs: [{ number: 7, headRefName: 'feat/a' }] });
+  const notes = releaseNotes({ git: gitIn(b), pilotRef: PILOT, mainRef: MAIN, prs: [{ number: 7, head: 'feat/a' }] });
 
   assert.equal(notes.title, 'Release: a, b');
   assert.deepEqual(notes.rows.map(({ slug, pr }) => ({ slug, pr })), [{ slug: 'a', pr: 7 }, { slug: 'b', pr: null }]);
@@ -87,7 +89,7 @@ test('every landing rewrites and labels', (t) => {
   assert.deepEqual(edits[0].slice(0, 5), ['pr', 'edit', '901', '--title', 'Release: a']);
   assert.ok(edits[0].includes('--body'));
   assert.match(edits[0][edits[0].indexOf('--body') + 1], new RegExp(`\\| a \\| #7 \\| ${result.sha} \\|`));
-  assert.deepEqual(edits[0].slice(-2), ['--add-label', 'release']);
+  assert.equal(edits[0][edits[0].indexOf('--add-label') + 1], 'release');
 });
 
 test('the first landing opens it labelled', (t) => {
@@ -105,7 +107,30 @@ test('the first landing opens it labelled', (t) => {
   assert.ok(calls.findIndex((args) => args[0] === 'label') < calls.findIndex((args) => args[1] === 'create' && args[0] === 'pr'));
 });
 
-test('a label gh refuses still leaves the release PR, with why', (t) => {
+test('the main PR opens labelled', (t) => {
+  const { gitIn, a } = repos(t, 'a');
+  land(a, gitIn);
+  const { gh, calls } = fakeGh([], undefined, { created: 904 });
+
+  const release = releasePr({ git: gitIn(a), host: githubHost(inlined(gh)) });
+
+  assert.deepEqual(release, { number: 904, opened: true });
+  const creates = called(calls, 'pr', 'create');
+  assert.equal(creates.length, 1);
+  assert.equal(creates[0][creates[0].indexOf('--label') + 1], 'release');
+  assert.match(creates[0][creates[0].indexOf('--body') + 1], /^\| Feature \| PR \| Landing \|\n/);
+  assert.ok(calls.findIndex((args) => args[0] === 'label') < calls.findIndex((args) => args[0] === 'pr' && args[1] === 'create'));
+});
+
+test('none hands it to the user', (t) => {
+  const { gitIn, a } = repos(t, 'a');
+  land(a, gitIn);
+
+  assert.deepEqual(releasePr({ git: gitIn(a), host: null }), { number: null, opened: false, byHand: 'pilot' });
+  assert.deepEqual(releasePr({ git: gitIn(a), host: null, already: true }), { number: null, opened: false, byHand: 'pilot' });
+});
+
+test('a failed label still opens', (t) => {
   const { gitIn, a } = repos(t, 'a');
   land(a, gitIn);
   const { gh: answer, calls } = fakeGh([], undefined, { created: 903 });
@@ -117,11 +142,10 @@ test('a label gh refuses still leaves the release PR, with why', (t) => {
     return answer(args);
   };
 
-  const release = releasePr({ git: gitIn(a), gh });
+  const release = releasePr({ git: gitIn(a), host: githubHost(inlined(gh)) });
 
-  assert.equal(release.number, 903);
-  assert.equal(release.opened, true);
-  assert.equal(release.why, 'gh label create failed: HTTP 403: Resource not accessible by integration');
+  // The adapter drops a label it cannot make (deck/host-github.mjs `labelled`) and hands back why.
+  assert.deepEqual(release, { number: 903, opened: true, labelWhy: 'HTTP 403: Resource not accessible by integration' });
   const creates = called(calls, 'pr', 'create');
   assert.equal(creates.length, 1);
   assert.ok(!creates[0].includes('--label'), 'no label it could not make');
@@ -133,14 +157,22 @@ test('a fork run remote opens none', (t) => {
   git(a, 'config', 'pilot.remote', 'fork');
   const { gh, calls } = fakeGh();
 
-  const release = releasePr({ git: gitIn(a), gh });
+  const release = releasePr({ git: gitIn(a), host: githubHost(gh) });
 
   assert.equal(release.number, null);
   assert.equal(release.byHand, 'fork/pilot');
   assert.equal(calls.length, 0);
 });
 
+/** `gh` with each `--body-file <f>` read at the call into `--body <text>`, since the adapter removes the file after. */
+function inlined(gh) {
+  return (args) => {
+    const at = args.indexOf('--body-file');
+    return gh(at < 0 ? args : [...args.slice(0, at), '--body', fs.readFileSync(args[at + 1], 'utf8'), ...args.slice(at + 2)]);
+  };
+}
+
 /** `pilot land` in `repo`, with `gh` faked (a feature PR on pilot by default). */
 function land(repo, gitIn, gh = fakeGh([{ number: 7, headRefName: 'feat/' + repo.split(/[\\/]/).pop(), baseRefName: 'pilot' }]).gh) {
-  return landFeature({ cwd: repo, git: gitIn(repo), gh, test: passing });
+  return landFeature({ cwd: repo, git: gitIn(repo), host: githubHost(inlined(gh)), test: passing });
 }

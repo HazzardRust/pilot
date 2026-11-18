@@ -4,7 +4,7 @@
  * with no walkthrough carries QA's checks table (walkthrough-surface spec 3, 4). Pure: the ticket and the gate2's fields in, the gaps out, so `postItem` refuses before it writes.
  */
 
-import { KIND_WALKTHROUGH, isShortPath } from './items.mjs';
+import { KIND_WALKTHROUGH, isShortPath, sameRepo } from './items.mjs';
 
 /** Lines of `body` that start with `label`, leading space aside. */
 const linesStarting = (body, label) => body.split('\n').filter((line) => line.trimStart().startsWith(label)).length;
@@ -87,4 +87,22 @@ export function namedWalkthroughGaps(items, { walkthrough, ticket }) {
 export function walkthroughPlanGaps(ticket, kind) {
   if (kind !== 'qa' || ticket?.plan?.surface !== false) return [];
   return [`the plan ${ticket.plan.artefact} marks no surface: no walkthrough; the checks table goes in the gate2`];
+}
+
+/**
+ * What a gate1 on `ticket` still owes when the ticket carries a re-cut mark (never-stuck spec 15, L5): a body line
+ * `Changed since <sha7>:` telling the user what moved since the plan they signed. An empty list for any other gate1.
+ */
+export function recutGate1Gaps(ticket, body) {
+  if (!ticket?.recut || /^Changed since [0-9a-f]{7}:/m.test(String(body))) return [];
+  const from = typeof ticket.recut.from === 'string' ? ticket.recut.from.slice(0, 7) : 'the signed plan';
+  return [`a re-cut's gate1 lists what changed since ${from}: add a line \`Changed since ${from}: <what>\` to its body`];
+}
+
+/** A gate2 naming a branch (host none, other-host spec 3) names its ticket's own, from its run record (QA F1). */
+export function ownBranchGaps(records, ticket, pr) {
+  if (typeof pr !== 'string' || !pr.startsWith('feat/')) return [];
+  const record = (Array.isArray(records) ? records : []).findLast((entry) => sameRepo(entry?.repo, ticket.repo) && entry?.record?.ticket === ticket.id)?.record;
+  const own = record?.branch ?? (typeof record?.slug === 'string' ? `feat/${record.slug}` : 'none');
+  return pr === own ? [] : [`a gate2's pr is its ticket's own branch, and ${ticket.id}'s run record names ${own}, not ${pr}`];
 }

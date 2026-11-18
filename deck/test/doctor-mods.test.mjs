@@ -38,6 +38,7 @@ test('checkAll reads the version from `claude --version` through its run, never 
     resolveDep: () => true,
     canWrite: () => true,
     onPath: () => true,
+    git: () => 'none',
     probe: async () => ({ state: 'none' }),
     readReach: () => ({ level: 'everything', chosen: true }),
     readEnabled: () => true,

@@ -14,6 +14,8 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { githubHost } from '../../deck/host-github.mjs';
+
 const { land, main } = await import('../land.mjs');
 const { main: pruneMain } = await import('../branches.mjs');
 
@@ -71,11 +73,12 @@ const gh = (args) => {
   if (args[0] === 'pr' && (args[1] === 'comment' || args[1] === 'ready')) return '';
   throw new Error(`unexpected gh ${args.join(' ')}`);
 };
+const host = githubHost(gh);
 
 test("land deletes the run's merged slice branches", (t) => {
   const { origin, work, inWork } = scratchRun(t);
 
-  const result = land({ cwd: work, git: inWork, gh, test: green });
+  const result = land({ cwd: work, git: inWork, host,test: green });
 
   assert.deepEqual([...result.deleted].sort(), ['design/x', 'fix/x-s1', 'qa/x', 'slice/x-s1']);
   assert.deepEqual(result.kept, []);
@@ -90,7 +93,7 @@ test('a planted unmerged fix branch survives and is named', (t) => {
     return true;
   });
 
-  const code = main([], { cwd: work, git: inWork, gh, test: green });
+  const code = main([], { cwd: work, git: inWork, host,test: green });
 
   t.mock.restoreAll();
   assert.equal(code, 0, out);
@@ -102,7 +105,7 @@ test('a planted unmerged fix branch survives and is named', (t) => {
 test('the gate1 and slice merge shas still resolve', (t) => {
   const { root, work, origin, inWork, gate1, sliceMerge } = scratchRun(t);
 
-  land({ cwd: work, git: inWork, gh, test: green });
+  land({ cwd: work, git: inWork, host,test: green });
 
   const fresh = path.join(root, 'fresh');
   git(root, 'clone', '-q', origin, fresh);
@@ -115,7 +118,7 @@ test("another run's branches are untouched", (t) => {
   const others = ['slice/y-s1', 'slice/xx-s1', 'design/x-y', 'fix/x-y-s1'];
   const tips = others.map(tipOf);
 
-  const result = land({ cwd: work, git: inWork, gh, test: green });
+  const result = land({ cwd: work, git: inWork, host,test: green });
 
   assert.deepEqual(others.map(tipOf), tips, 'still on origin at the same tips');
   const passed = [...result.deleted, ...result.kept.map(({ branch: b }) => b)];
@@ -128,7 +131,7 @@ test('under none, land lists and deletes nothing', (t) => {
   git(work, 'config', 'pilot.remote', 'none');
   const before = heads(origin);
 
-  const result = land({ cwd: work, git: inWork, gh, test: green });
+  const result = land({ cwd: work, git: inWork, host,test: green });
 
   assert.deepEqual([result.deleted, result.kept], [[], []]);
   assert.deepEqual(heads(origin), before);
@@ -138,7 +141,7 @@ test('a landing that fails deletes nothing', (t) => {
   const { origin, work, inWork } = scratchRun(t);
   const before = heads(origin);
 
-  assert.throws(() => land({ cwd: work, git: inWork, gh, test: 'node -e "process.exit(1)"' }), /NOT landed/);
+  assert.throws(() => land({ cwd: work, git: inWork, host,test: 'node -e "process.exit(1)"' }), /NOT landed/);
 
   assert.deepEqual(heads(origin), before);
 });
@@ -153,7 +156,7 @@ test('a refused deletion is named after the landing, with what was kept', (t) =>
     return true;
   });
 
-  const code = main([], { cwd: work, git: inWork, gh, test: green });
+  const code = main([], { cwd: work, git: inWork, host,test: green });
 
   t.mock.restoreAll();
   assert.equal(code, 0, out);
@@ -164,10 +167,10 @@ test('a refused deletion is named after the landing, with what was kept', (t) =>
 
 test('after a landing the dry run lists only the feature branch', (t) => {
   const { work, inWork } = scratchRun(t);
-  land({ cwd: work, git: inWork, gh, test: green });
+  land({ cwd: work, git: inWork, host,test: green });
   let out = '';
 
-  const code = pruneMain(['prune', '--slug', 'x', '--dry-run'], { cwd: work, gh, write: (text) => (out += text) });
+  const code = pruneMain(['prune', '--slug', 'x', '--dry-run'], { cwd: work, host, write: (text) => (out += text) });
 
   assert.equal(code, 0, out);
   const named = out.split('\n').filter((line) => /^(would delete|kept) /.test(line));

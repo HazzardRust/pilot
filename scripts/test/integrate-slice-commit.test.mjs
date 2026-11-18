@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const { integrate, sliceSubject } = await import('../integrate.mjs');
+const { githubHost } = await import('../../deck/host-github.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
@@ -57,20 +58,20 @@ function scratchRepos(t) {
 }
 
 const passing = `node -e "console.log('ℹ pass 1'); console.log('ℹ fail 0')"`;
-/** A fake gh that records every call and knows no PR. */
+/** The GitHub **Host** over a fake gh that records every call and knows no PR. */
 const recordingGh = () => {
   const calls = [];
   const gh = (args) => {
     calls.push(args);
     return args[0] === 'pr' ? '[]' : 'me\n';
   };
-  return { gh, calls };
+  return { host: githubHost(gh), calls };
 };
 
 test('the slice merge carries the record\'s subject', (t) => {
   const { work } = scratchRepos(t);
 
-  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, push: false });
+  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, push: false });
 
   assert.equal(result.ok, true, result.line);
   assert.equal(git(work, 'log', '--first-parent', '-1', '--format=%s'), 'feat(demo): S1 one thing');
@@ -81,7 +82,7 @@ test('every trailer rides the slice commit', (t) => {
   const { work } = scratchRepos(t);
   const trailers = ['Reviewed-by: pilot:typescript-reviewer: approve', 'Reviewed-by: pilot:security-reviewer: approve'];
 
-  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, push: false, trailers });
+  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, push: false, trailers });
 
   assert.equal(result.ok, true, result.line);
   const body = git(work, 'log', '--first-parent', '-1', '--format=%b');
@@ -92,7 +93,7 @@ test('a slice no row names is refused', (t) => {
   const { origin, work } = scratchRepos(t);
   const before = git(work, 'rev-parse', 'HEAD');
 
-  const result = integrate('slice/demo-s9', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh });
+  const result = integrate('slice/demo-s9', { cwd: work, test: passing, install: () => {}, host: recordingGh().host });
 
   assert.equal(result.ok, false);
   assert.equal(result.line, 'NOT integrated slice/demo-s9: no run record row names it; nothing merged or pushed');
@@ -102,9 +103,9 @@ test('a slice no row names is refused', (t) => {
 
 test('no PR is read', (t) => {
   const { work } = scratchRepos(t);
-  const { gh, calls } = recordingGh();
+  const { host, calls } = recordingGh();
 
-  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh, push: false });
+  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host, push: false });
 
   assert.equal(result.ok, true, result.line);
   assert.equal(calls.filter((args) => args[0] === 'pr' && args[1] === 'list').length, 0);
@@ -122,7 +123,7 @@ test('a trailer with a line break or off the Key: value form is refused, naming 
     const before = git(work, 'rev-parse', 'HEAD');
     const trailers = ['Reviewed-by: pilot:typescript-reviewer: approve', bad];
 
-    const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, trailers });
+    const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, trailers });
 
     assert.equal(result.ok, false, JSON.stringify(bad));
     assert.equal(result.line, `NOT integrated slice/demo-s1: trailer ${key} is not one "Key: value" line; nothing merged or pushed`);
@@ -142,14 +143,14 @@ test('a slice whose Reviewers line names security integrates only with its Revie
   const before = git(work, 'rev-parse', 'HEAD');
   const typescript = 'Reviewed-by: pilot:typescript-reviewer: approve';
 
-  const refused = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, trailers: [typescript] });
+  const refused = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, trailers: [typescript] });
 
   assert.equal(refused.ok, false);
   assert.equal(refused.line, 'NOT integrated slice/demo-s1: S1 names pilot:security-reviewer and no --trailer "Reviewed-by: pilot:security-reviewer: <verdict>"; nothing merged or pushed');
   assert.equal(git(work, 'rev-parse', 'HEAD'), before, 'HEAD unmoved');
   assert.equal(git(origin, 'rev-parse', 'feat/demo'), before, 'nothing pushed');
 
-  const blocked = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, trailers: [typescript, 'Reviewed-by: pilot:security-reviewer: Block, two HIGH'] });
+  const blocked = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, trailers: [typescript, 'Reviewed-by: pilot:security-reviewer: Block, two HIGH'] });
 
   assert.equal(blocked.ok, false);
   assert.equal(blocked.line, "NOT integrated slice/demo-s1: S1: pilot:security-reviewer's verdict is block; nothing merged or pushed");
@@ -157,7 +158,7 @@ test('a slice whose Reviewers line names security integrates only with its Revie
   assert.equal(git(origin, 'rev-parse', 'feat/demo'), before, 'nothing pushed');
 
   const trailers = [typescript, 'Reviewed-by: pilot:security-reviewer: approve'];
-  const passed = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, push: false, trailers });
+  const passed = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, push: false, trailers });
 
   assert.equal(passed.ok, true, passed.line);
   assert.equal(git(work, 'log', '--first-parent', '-1', '--format=%s'), 'feat(demo): S1 one thing');
@@ -195,7 +196,7 @@ test('every behaviour evidenced integrates', (t) => {
     'Evidence: B2 look: the list showed three words',
   ];
 
-  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, push: false, trailers });
+  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, push: false, trailers });
 
   assert.equal(result.ok, true, result.line);
   const body = git(work, 'log', '--first-parent', '-1', '--format=%b');
@@ -211,7 +212,7 @@ test('evidence of another kind than the slice file names still covers the behavi
     'Evidence: B2 test: a unit test of the list',
   ];
 
-  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, push: false, trailers });
+  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, push: false, trailers });
 
   assert.equal(result.ok, true, result.line);
 });
@@ -227,7 +228,7 @@ test('a missing behaviour refuses', (t) => {
     ['Evidence: B1 test: lookup red before, green after', 'Evidence: B2 look:  '],
   ];
   for (const evidence of cases) {
-    const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, trailers: ['Reviewed-by: pilot:typescript-reviewer: approve', ...evidence] });
+    const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, trailers: ['Reviewed-by: pilot:typescript-reviewer: approve', ...evidence] });
 
     assert.equal(result.ok, false, JSON.stringify(evidence));
     assert.equal(result.line, 'NOT integrated slice/demo-s1: S1: B2 has no --trailer "Evidence: B2 look: <what was seen>"; nothing merged or pushed');
@@ -240,7 +241,7 @@ test('an old-shape slice needs no evidence', (t) => {
   const { work } = scratchRepos(t);
   sliceFile(work, '# S1 One thing\n\nReviewers: `pilot:typescript-reviewer`\n\n## Tests\n\n1. `a known word returns its entry`: `lookup` → the entry\n');
 
-  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, push: false, trailers: ['Reviewed-by: pilot:typescript-reviewer: approve'] });
+  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, push: false, trailers: ['Reviewed-by: pilot:typescript-reviewer: approve'] });
 
   assert.equal(result.ok, true, result.line);
   assert.doesNotMatch(git(work, 'log', '--first-parent', '-1', '--format=%b'), /^Evidence:/m);
@@ -255,7 +256,7 @@ test('the security refusal still holds', (t) => {
     'Evidence: B2 look: the list showed three words',
   ];
 
-  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, gh: recordingGh().gh, trailers });
+  const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, trailers });
 
   assert.equal(result.ok, false);
   assert.equal(result.line, 'NOT integrated slice/demo-s1: S1 names pilot:security-reviewer and no --trailer "Reviewed-by: pilot:security-reviewer: <verdict>"; nothing merged or pushed');

@@ -13,6 +13,8 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { githubHost } from '../../deck/host-github.mjs';
+
 const { main } = await import('../land.mjs');
 const { sync } = await import('../sync.mjs');
 const { checkIndex, renderIndex } = await import('../adr-index.mjs');
@@ -69,7 +71,7 @@ function buildScratch(dir, { feature, pilotSide }) {
   git(seed, 'checkout', '-q', '-B', 'pilot', 'origin/pilot');
   pilotSide(seed);
   git(seed, 'push', '-q', 'origin', 'pilot');
-  const land = () => mainSays({ cwd: b, git: (args) => git(b, ...args), gh: () => '[]', test: passing });
+  const land = () => mainSays({ cwd: b, git: (args) => git(b, ...args), host: githubHost(() => '[]'), test: passing });
   return { dir, origin, seed, b, land };
 }
 

@@ -1,0 +1,149 @@
+{
+  "slug": "audit-f6",
+  "feature": "audit-f6",
+  "ticket": "itm_50652e3e4f6f",
+  "branch": "feat/audit-f6",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f6",
+  "artefact": "docs/design/audit-f6/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/audit-f6-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f6-s1"
+    },
+    {
+      "slice": "audit-f6",
+      "state": "trial clean at 700f465; gate2 itm_c3ea24773957 (#96) awaiting Sign off (short path)"
+    }
+  ],
+  "findings": [],
+  "next": "User owes: gate2 audit-f6 itm_c3ea24773957 (press: spawn lander), gate1 teacher-method itm_f0951c4a84da (press: deck_status planned, slug teacher-method), #105, #108. other-host itm_b18bcafffbce: lane held, no co-pilot; S3 ad3fe0eb79aab411a, S5 adf2868869e12a0e9 report to main; on a push spawn co-pilot from other-host run.json next. never-stuck A landed bb6be759; run 2 after.",
+  "updatedAt": "2026-11-18T05:41:10.005Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "Git Bash rewrites origin/pilot:path into a Windows path; needs MSYS_NO_PATHCONV=1",
+      "evidence": "audit-f6 architect report, 2 calls",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "audit JSON is one line, grep -o cannot read it",
+      "evidence": "audit-f6 architect report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "harness forced a third hand-back with S5 and S7 implementers live; successor spawned, ~80k tokens per co-pilot",
+      "evidence": "hand-back from a7c07124d1bd86e0e",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Write/Edit turned a ﻿ escape into a literal BOM byte; an Edit with the escape reported no changes",
+      "evidence": "od -c showed 357 273 277 in the regex"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "TREE_TESTS not named in the brief: a new tree-reading test fails a census test only in the full suite, a 5-minute rerun",
+      "evidence": "select-tests.test.mjs:133"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spec 4's oracle node --check is laxer than Node's loader for ESM .js; one question round-trip",
+      "evidence": "Node 26.1: node --check e.js exits 0 on import + syntax error"
+    },
+    {
+      "kind": "drain",
+      "what": "classifier no-verdict on batched calls posted blocking Blocked items for the pilot's own pilot wait / pilot budget / SendMessage; each closed Moot by hand, one held a gate1",
+      "size": 8
+    },
+    {
+      "kind": "drain",
+      "what": "110-min pilot wait outlives the 1 h prompt cache: 4 cold wakes of ~131k tokens each this session; --timeout 50 used since, PR #105 changes the default",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "short path: pilot posted a walkthrough on a yellow ticket and nothing moved it to green; user found it yellow and idle after a night",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "planned integration worktree path belongs to another clone's stale worktree; brief.md names no small-diff limit though main's brief said so",
+      "evidence": "pilot-feat-other-host .git points into pilot-archive; grep 'limit' in docs/design/other-host finds nothing"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "a rebase asked by main made the design push non-fast-forward; force push refused by auto mode, worked around with merge -s ours",
+      "evidence": "design/never-stuck-2 19a334c7"
+    },
+    {
+      "agent": "pilot:pilot-lander",
+      "what": "clean tail order: prune removes the feat worktree before the last deck_status, so the finished run.json never reaches docs/design/<slug>/",
+      "evidence": "deck_status reply: run.json not written: the recorded worktree is gone",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-lander",
+      "what": "pilot landing batched with a deck_reply got classifier no-verdict; ran when sent alone",
+      "evidence": "tool error on the first call",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "deck posts 'feature PR not updated: gh pr create ... No commits between pilot and feat/<slug>' as a landing ended short after a clean landing; the gate2 is already closed so the asked-for reply is refused",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "ticket plan field stale after a re-cut (ecdd81f4/9 slices vs signed 3116339c/11): the SessionStart yellow notice handed the stale plan and the co-pilot was briefed from it, one correction round",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "harness forced a hand-back with S2 and S7 implementers live; their reports are addressed to the dead co-pilot and the hand-back names no agent ids, so the successor watches origin instead",
+      "evidence": "hand-back from ab41fa6fd92ec24dc, 107k tokens",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate refuses an unprefixed Reviewed-by trailer; needs pilot:<reviewer>",
+      "evidence": "other-host co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot sync conflict (main vs pilot, agents/pilot.md) had no gate2 id; lander briefed off-shape to resolve it",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "a co-pilot's Blocked curl item, done another way, sat 20 min and paused other-host with a live co-pilot; pilot closed it Moot and re-claimed the lane",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "short-path gate2 refused until the slice line starts with 'Verdict:'; 'S1 Verdict:' not counted",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "architect forced to hand back at 129k tokens while waiting for the verdict message; resumed by SendMessage",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-lander",
+      "what": "lander's fixed order (prune, report, status) means the closing run.json is never written; third landing in a row",
+      "evidence": "deck_status: run.json not written: the recorded worktree is gone",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "second leftover QA scratch deck from a lost session (pid 36160) held a qa worktree through a landing; pilot stopped it by hand",
+      "size": 1
+    }
+  ]
+}

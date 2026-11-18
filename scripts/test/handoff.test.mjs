@@ -30,9 +30,6 @@ import { ensureSecret, readSecret } from '../../hooks/lib/deck-secret.js';
 // This home's deck secret, which `pilot handoff` sends and the stub's guard reads (deck-token S2).
 ensureSecret();
 
-// A port of this file's own, never one a scratch deck might hold.
-const PORT = await freePort();
-
 const { handoff, reportedIn, MIN_MODS_VERSION } = await import('../handoff.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
@@ -290,7 +287,8 @@ test('no record, a gone worktree, or no deck: named, and nothing posted', async 
   assert.match(goneWorktree.line, /worktree .* is gone/);
   assert.equal(gone.posts.length, 0);
 
-  process.env.PILOT_DECK_PORT = String(PORT);
+  // Taken now, while this test's stubs hold their ports, so the OS cannot have handed it to one of them.
+  process.env.PILOT_DECK_PORT = String(await freePort());
   const noDeck = await handoff({ cwd: REPO, env: reported });
   assert.equal(noDeck.ok, false);
   assert.match(noDeck.line, /^NOT handed off: the deck/);

@@ -3,7 +3,7 @@ status: amended
 date: 2026-10-17
 tags: [tickets, deck, lanes, blocked]
 supersedes: []
-superseded_by: [0178]
+superseded_by: [0178, 0187]
 paths: [deck/lanes.mjs, deck/store-tickets.mjs, deck/items.mjs, deck/blocked-shape.mjs, deck/lane-ticket.mjs, hooks/lib/blocked.js, agents/pilot.md]
 ---
 # A blocked yellow ticket yields the lane
@@ -19,6 +19,7 @@ The user's words: "why not move onto the next task if i have not answered the bl
 - **A paused ticket is green with a `paused: { question, at }` mark**, not a new state (L1).
 - **The deck pauses on a timer** (L2): `armYields` arms one timer per due yield; on fire `yieldTicket` writes the flip, the release and a `from: 'deck'` line with a `seq` on the question, which wakes the pilot. A restart fires an overdue yield at once.
 - **The deck never stops an agent** (L3): the line tells the pilot to send today's pause; the co-pilot integrates its slice in flight and hands back `paused`.
+  Amended by ADR 0187 (L6): the co-pilot drains every live slice, and the lane frees only on the pilot's `release` after the `paused` hand-back.
 - **`YIELD_MS` is one constant in `deck/lanes.mjs`, 20 minutes** (L4).
 - **Only the co-pilot's held ticket yields** (L5): a queued yellow ticket with a blocking item is skipped as not runnable, never flipped.
 - **Lane changes stay narrow** (L6): `YIELD_MS`, `yieldsDue`, `runnableYellowOf` and the yellow `next`; `laneTicketOf` lives in `deck/lane-ticket.mjs`.

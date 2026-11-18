@@ -30,10 +30,12 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `exit-route.mjs` | `POST /api/exit { version }`: 202 and the daemon's shutdown only for a newer caller, 409 for one not newer or while a landing runs (daemon-lifecycle L3, ADR 0156) |
 | `gc.mjs` | `pilot gc`: stops each orphan `procs.mjs` names and nothing else, a test root as a tree; one line per stop, and `pilot land` runs it once landed (process-gc L11, L14) |
 | `gate2-base.mjs` | the gate2 base check: refuses a gate2 whose sha does not merge clean onto pilot, local git only |
-| `gate2-evidence.mjs` | the gate2 evidence check: a short-path ticket's gate2 carries a `Verdict:` per slice, a `Gate:` line and, for a surface, its walkthrough (short-path spec 2); a full run's gate2 naming no walkthrough carries the checks table and, on a plan with a surface, a `surface planned, no walkthrough:` reason line; a named walkthrough is a real one on the gate2's ticket; `walkthroughPlanGaps` refuses QA's walkthrough on a plan marked with no surface (walkthrough-surface spec 3-6) |
+| `gate2-evidence.mjs` | the gate2 evidence check: a short-path ticket's gate2 carries a `Verdict:` per slice, a `Gate:` line and, for a surface, its walkthrough (short-path spec 2); a full run's gate2 naming no walkthrough carries the checks table and, on a plan with a surface, a `surface planned, no walkthrough:` reason line; a named walkthrough is a real one on the gate2's ticket; `walkthroughPlanGaps` refuses QA's walkthrough on a plan marked with no surface (walkthrough-surface spec 3-6); `recutGate1Gaps` refuses a re-cut ticket's gate1 without a `Changed since <sha7>:` line (never-stuck spec 15) |
 | `health.mjs` | `GET /api/health`'s answer: pid, url, cursor, rss, and the plugin version with when this daemon started (daemon-lifecycle spec 3) |
 | `hold-route.mjs` | `POST /api/hold { id, ticket }`: the hand-off mod marks a hand-off held for a live co-pilot, item state and no reply, written once (held-handoff L2) |
-| `host.mjs` | the host: the one `gh` process start, argv only, refusing any call off its argv allowlist before a process starts (deck-writes-github spec 8) |
+| `host-github.mjs` | the GitHub adapter: **Host** over `gh`, and the one `gh` process start, argv only, refusing any call off its argv allowlist before a process starts (other-host spec 2, L5) |
+| `host-gitlab.mjs` | the GitLab adapter: **Host** over `glab api` REST v4 on the current project's merge requests, and the one `glab` process start, argv only, refusing any call off its own allowlist before a process starts (other-host spec 4, 6, A3) |
+| `host.mjs` | the host: reads `pilot.host` (unset is `github`) and hands back its **Host** adapter, or null at `none` (other-host spec 1-3) |
 | `idle.mjs` | the user's deck's idle rule: it exits after 10 minutes with no session, no landing and no request, reading the process table only when the other two hold (process-gc L2, ADR 0136) |
 | `items.mjs` | the item vocabulary: kinds, fields, open or closed, whose turn |
 | `items-bounds.mjs` | the item vocabulary's bounds and field shapes: limits, the words the deck offers, `stepParts` |
@@ -55,6 +57,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `procs.mjs` | `pilot ps`: the process table (one PowerShell CIM or `ps` read), the pilot-owned daemons, waits and test roots, and which are orphans and why (process-gc L5-L6) |
 | `question-shape.mjs` | checks a crew question's recommended default carries a `Research:` line |
 | `read.mjs` | which items a `deck_read` returns: one by id, or the newest |
+| `recut.mjs` | `planDrift`: whether a signed plan still stands on `origin` (`ok`, `gone`, `moved`, `unchecked`), and `ownedFiles`, a slice file's owned paths, and `neverGranted`, the plan whose first grant checks it (never-stuck spec 13); `planChanges`, what moved in a re-cut's design dir between two shas (spec 15); `SHA`, a plan sha's shape |
 | `refusal-log.mjs` | `logRefusal`: one deck.log line per refused or failed request (400, 415, 500), `[deck] <status> <METHOD> <path>: <message>`, a 500's stack frames under it, never the query or body (daemon-lifecycle spec 2) |
 | `report-shape.mjs` | checks a closing report asks the user nothing (ADR 0148) |
 | `run-claim.mjs` | the hand-off mod's claims and stamps: the once-only `/clear` claim, the lane's marker, the posted and reported-in stamps and the session pid |

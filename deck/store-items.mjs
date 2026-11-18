@@ -52,7 +52,7 @@ import { ticketShapeGaps } from './ticket-shape.mjs';
 import { walkthroughShapeGaps } from './walkthrough-shape.mjs';
 import { placeSteps } from './step-shell.mjs';
 import { enterStage } from './store-stage.mjs';
-import { gate2EvidenceGaps, namedWalkthroughGaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
+import { gate2EvidenceGaps, namedWalkthroughGaps, ownBranchGaps, recutGate1Gaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
 import { MAX_QUESTION_CHARS, POSTABLE_KINDS, andList } from './tools.mjs';
 import {
   DeckRefusal,
@@ -161,9 +161,9 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   refuseOverOpenQuestions(deck, item);
   const ticket = ticketNamedBy(deck, item);
   if (kind === KIND_GATE1 && ticket) refuseUnmerged(deck.items, ticket);
-  // QA's walkthrough on a plan marked with no surface is refused naming it (L3); a walkthrough's ticket is optional.
+  // QA's walkthrough on a plan marked with no surface is refused naming it (L3); a walkthrough's ticket is optional. A re-cut's gate1 says what changed (never-stuck L5).
   const walked = kind === KIND_WALKTHROUGH ? deck.items.find((each) => each.id === item.ticket) : undefined;
-  const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : walkthroughPlanGaps(walked, authorKind(author));
+  const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : kind === KIND_GATE1 ? recutGate1Gaps(ticket, body) : walkthroughPlanGaps(walked, authorKind(author));
   if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
   // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves
   // it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
@@ -228,6 +228,7 @@ function ticketNamedBy(deck, item) {
   // One open gate of a kind per ticket: a second is the same card twice.
   const twin = deck.items.find((other) => other.kind === item.kind && other.ticket === ticket.id && isOpen(other));
   if (twin) throw new DeckRefusal(`${item.ticket} already has an open ${item.kind}, ${twin.id}; resolve it before posting another`);
+  for (const stray of item.kind === KIND_GATE2 ? ownBranchGaps(deck.records, ticket, item.pr) : []) throw new DeckRefusal(stray);
   return ticket;
 }
 
@@ -592,11 +593,11 @@ export function resolveItem(id, resolution, author) {
     // A ticket closed outright is no longer live (L9).
     if (item.kind === KIND_TICKET) delete item.live;
     const ticket = item.ticket === undefined ? undefined : deck.items.find((candidate) => candidate.id === item.ticket);
-    // Signing a gate1 turns its ticket yellow and writes its plan by reference, in this same write (ticket-states spec 1, 7; L3, L5, L7).
+    // Signing a gate1 turns its ticket yellow and writes its plan by reference, in this same write (ticket-states spec 1, 7; L3, L5, L7); a re-cut's mark goes with the plan it re-cut (never-stuck spec 6).
     if (item.kind === KIND_GATE1 && signed && ticket?.kind === KIND_TICKET && stateOf(ticket) === 'red') {
       enterStage(deck, ticket, 'yellow');
       ticket.plan = planOf(item);
-      delete ticket.live;
+      for (const field of ['live', 'recut']) delete ticket[field];
     }
     // The pilot's close of the question that paused a ticket resumes it, in this same write (blocking-close spec 2; A3).
     if (pilotClose) resumeIn(deck, item);
@@ -775,8 +776,6 @@ export function closeItem(id) {
   });
 }
 
-/** The open ticket named, or the refusal a queue write gives for anything else. */
-
 export { mayWrite };
 
 /**
@@ -787,9 +786,10 @@ export { mayWrite };
  */
 export function resumeIn(deck, question) {
   const ticket = question?.kind === KIND_QUESTION && deck.items.find((item) => item?.id === question.ticket && item.kind === KIND_TICKET);
-  if (!isPaused(ticket) || !sameRepo(ticket.repo, question.repo)) return undefined;
   const answered = (item) =>
     isAnswered(item) || (!isOpen(item) && isPilotClose(item, item.resolution, item.resolvedBy));
+  if (ticket?.yielding?.question === question.id && answered(question)) delete ticket.yielding; // an answer cancels a drain (never-stuck L6)
+  if (!isPaused(ticket) || !sameRepo(ticket.repo, question.repo)) return undefined;
   const naming = (item) =>
     item === question || item?.id === pausedOn(ticket) || (isBlocking(item) && item.ticket === ticket.id && sameRepo(item.repo, ticket.repo));
   if (deck.items.some((item) => naming(item) && !answered(item))) return undefined;
