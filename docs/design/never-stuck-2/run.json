@@ -72,7 +72,7 @@
     },
     {
       "slice": "S16",
-      "state": "pushed 91c94cf",
+      "state": "integrated bcc6490b",
       "after": [
         "S10"
       ],
@@ -87,14 +87,16 @@
     },
     {
       "slice": "S18",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S7",
         "S13",
         "S15",
         "S16",
         "S17"
-      ]
+      ],
+      "branch": "slice/never-stuck-2-s18",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s18"
     },
     {
       "slice": "S19",
@@ -119,15 +121,9 @@
     }
   ],
   "findings": [],
-  "next": "integrating S16; then S18",
-  "updatedAt": "2026-11-18T10:05:45.471Z",
+  "next": "S18 integrating; then spawn the fundamentalist (step 7) and QA (step 8) on feat/never-stuck-2.",
+  "updatedAt": "2026-11-18T10:17:23.549Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "deck_post refuses a question without a Research: line, which the architect's definition does not name",
-      "evidence": "2 refused posts",
-      "size": 2
-    },
     {
       "agent": "pilot:pilot-architect",
       "what": "the cause of a queued SendMessage lives only in the session jsonl, not in wrapper.log",
@@ -334,6 +330,11 @@
       "agent": "pilot integrate",
       "what": "S15 integrated on a 60-file selection that skipped select-tests.test.mjs, leaving feat red on 'every tree walker is listed'; caught only at S19's full-suite merge",
       "evidence": "S19 integrate log 20261118T094848967Z"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S18 report reached main, not the successor co-pilot",
+      "evidence": "coordinator relayed S18 Verdict lines; successor hello sent after"
     }
   ]
 }
