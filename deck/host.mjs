@@ -3,7 +3,8 @@
  * host call goes through. `hostOf` is the one reader of the setting; `hostFor` hands back its adapter, or null at
  * `none`, where no host CLI starts and a caller reads null as "no review". The two adapters are the only modules
  * that start a host CLI (`deck/host-github.mjs` for `gh`, `deck/host-gitlab.mjs` for `glab`), and every caller
- * reaches one through `hostFor` (S6; `scripts/test/host-bar.test.mjs` is the bar).
+ * reaches one through `hostFor` (S6; `scripts/test/host-bar.test.mjs` is the bar). The one other start is
+ * `deck/doctor.mjs`'s PATH presence probe, a fixed `<cli> --version` (S6 seam): not a host call, no repo data.
  *
  * @typedef {{ number: number, state: 'open'|'merged'|'closed', base: string, head: string, headSha: string,
  *   title: string, body: string, url: string, crossRepo: boolean }} Review
