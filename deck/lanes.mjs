@@ -6,7 +6,7 @@
  */
 
 import {
-  KIND_HANDOFF, KIND_QUESTION, KIND_TICKET, LANE_STATES, coPilotStateOf, isAnswered, isBlocking, isOpen, isShortPath, liveTicketOf, nextTicketOf,
+  KIND_HANDOFF, KIND_TICKET, LANE_STATES, coPilotStateOf, isAnswered, isBlocking, isOpen, isShortPath, liveTicketOf, nextTicketOf,
   sameRepo, stateOf, switchOf, ticketQueueOf, unansweredBlockers,
 } from './items.mjs';
 import { isLiveCoPilot, readDeck, storedCoPilot, switchesOf } from './store-core.mjs';
@@ -16,7 +16,7 @@ export const YIELD_MS = 20 * 60_000;
 
 /**
  * The yields due in `repo` by `now` (blocked-yellow-yields spec 1; L2, L5, A1), pure: only `coPilotTicket`, the live
- * co-pilot's open yellow ticket, and only on an open blocking question naming it with no message from the user on it,
+ * co-pilot's open yellow ticket, and only on an open blocking question or walkthrough (never-stuck spec 8) naming it with no message from the user on it,
  * `YIELD_MS` past its `postedAt`. Each is `{ ticket, question, at }`; the timer passes `Infinity` to arm every one ahead.
  * A ticket already `yielding` is draining (never-stuck L6) and yields nothing more.
  */
@@ -24,7 +24,7 @@ export function yieldsDue(items, repo, coPilotTicket, now) {
   const ticket = items.find((item) => item?.id === coPilotTicket && item.kind === KIND_TICKET);
   if (!ticket || ticket.yielding || !isOpen(ticket) || stateOf(ticket) !== 'yellow' || !sameRepo(ticket.repo, repo)) return [];
   return items
-    .filter((item) => item.kind === KIND_QUESTION && isBlocking(item) && item.ticket === ticket.id && sameRepo(item.repo, repo))
+    .filter((item) => isBlocking(item) && item.ticket === ticket.id && sameRepo(item.repo, repo))
     .filter((item) => !isAnswered(item))
     .map((item) => ({ ticket: ticket.id, question: item.id, at: Date.parse(item.postedAt) + YIELD_MS }))
     .filter(({ at }) => at <= now);
