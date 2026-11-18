@@ -35,7 +35,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed 2545a11, both reviewers APPROVE, awaiting integrate",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -109,8 +109,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-other-host-s11"
     }
   ],
-  "next": "Co-pilot a8cd2055d71a8d0af live: integrate S7 then S2 (S2 rulings sent, queued: confirm by feat tip moving), amend S7.md seam, pilot ready: S5, S9, S10; S3 after S2. Both implementers finished. S7 q itm_7e8d9b33fb35 open. Plan design/other-host @ 3116339c, feat wt pilot-feat-other-host-r2, limit 400.",
-  "updatedAt": "2026-11-18T05:28:04.733Z",
+  "next": "integrate S2 (2545a11f) onto feat ce533d15, then pilot ready and start S5/S9/S10 two at a time",
+  "updatedAt": "2026-11-18T05:32:52.391Z",
   "friction": [
     {
       "agent": "pilot",
