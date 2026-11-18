@@ -140,7 +140,7 @@ Once §6 is settled, write `docs/design/<slug>/brief.md` beside the artefact and
 the facts every implementer shares, from the pilot's brief and the repository: the
 repository, the base (`feat/<slug>`) and PR target, the run remote (`Remote: <name>`
 from `pilot base`'s line, `origin` when it names none, or `Remote: local`), the gate command, the known
-flaky tests, the commit trailer, the PR footer and the PR titles
+flaky tests, the commit trailer, the PR footer, `pilot live-root`'s line (`## Live root`) and the PR titles
 (`feat(<slug>): S<n> <title>` for a slice, the title lower-case first,
 `fix(<slug>): <what>` for a fix round, `feat(<slug>): <feature>` for the
 feature PR), each under its own heading and copied exactly.
