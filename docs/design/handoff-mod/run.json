@@ -1,0 +1,416 @@
+{
+  "slug": "handoff-mod",
+  "feature": "the hand-off runs from a mod",
+  "ticket": "itm_97c9e8fdf1d2",
+  "branch": "feat/handoff-mod",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-mod",
+  "artefact": "docs/design/handoff-mod/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/handoff-mod-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s1",
+      "pr": 85
+    },
+    {
+      "slice": "S9",
+      "state": "integrated",
+      "branch": "slice/handoff-mod-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s9",
+      "pr": 84
+    },
+    {
+      "slice": "handoff-mod",
+      "state": "fix round implementing; in QA (read-only, gate green 4265/0)",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11",
+        "S12"
+      ],
+      "branch": "feat/handoff-mod",
+      "pr": 83
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/handoff-mod-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s2",
+      "pr": 90
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/handoff-mod-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s3",
+      "pr": 91
+    },
+    {
+      "slice": "S4",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/handoff-mod-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s4",
+      "pr": 93
+    },
+    {
+      "slice": "S5",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/handoff-mod-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s5",
+      "pr": 88
+    },
+    {
+      "slice": "S6",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S2"
+      ],
+      "branch": "slice/handoff-mod-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s6",
+      "pr": 92
+    },
+    {
+      "slice": "S7",
+      "state": "integrated",
+      "after": [
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "branch": "slice/handoff-mod-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s7",
+      "pr": 95
+    },
+    {
+      "slice": "S8",
+      "state": "integrated at 6b8ae49b",
+      "after": [
+        "S7",
+        "S6"
+      ],
+      "branch": "slice/handoff-mod-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s8",
+      "pr": 98
+    },
+    {
+      "slice": "S10",
+      "state": "integrated",
+      "after": [
+        "S4",
+        "S7",
+        "S9"
+      ],
+      "branch": "slice/handoff-mod-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s10",
+      "pr": 99
+    },
+    {
+      "slice": "S11",
+      "state": "integrated at a14c434c",
+      "after": [
+        "S6",
+        "S7",
+        "S10",
+        "S12",
+        "S13"
+      ],
+      "branch": "slice/handoff-mod-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s11"
+    },
+    {
+      "slice": "S12",
+      "state": "integrated at 18f0b421",
+      "after": [
+        "S7",
+        "S9"
+      ],
+      "branch": "slice/handoff-mod-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s12",
+      "pr": 97
+    },
+    {
+      "slice": "S13",
+      "state": "integrated at 62288663",
+      "after": [
+        "S7",
+        "S8",
+        "S12"
+      ],
+      "branch": "slice/handoff-mod-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-s13"
+    },
+    {
+      "slice": "fix",
+      "state": "implementing (F1-F8, F10-F14; gate/review running, unpushed)",
+      "after": [
+        "S11",
+        "S13"
+      ],
+      "branch": "slice/handoff-mod-fix",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-mod-fix"
+    }
+  ],
+  "findings": [
+    "kept: F15 needed — QA: a nested claude inherits CLAUDE_PID, so its mod writes mod-<outer>.stamp and can clear in the outer's place (spec 2, 8, A6); QA fixes it as writer, after the fix round"
+  ],
+  "next": "forced hand-back; feat/handoff-mod at 2b08c4ef; next: on fix report check fixes vs diff, pilot integrate slice/handoff-mod-fix with its Verdict trailers, then resume QA (a66d4e90ed307de93) with the tip: ff-merge, fix F15 (CLAUDE_PID inheritance) red first, restart scratch deck, post walkthrough",
+  "updatedAt": "2026-11-17T07:43:12.072Z",
+  "friction": [
+    {
+      "agent": "pilot-implementer (S1 live check)",
+      "what": "startup lane hands an older open hand-off to every new session on one scratch deck",
+      "evidence": "lane: handed itm_7c033aa0e6cc at next session start; a fresh deck per run"
+    },
+    {
+      "agent": "pilot-architect (blocked-steps)",
+      "what": "no item reader: grepped deck.json (32k lines) and wrote a scratch classifier",
+      "evidence": "architect report"
+    },
+    {
+      "kind": "drain",
+      "what": "two no-verdict Blocked items from calls batched with deck reads, closed Moot",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5.md names a deck_record tool that does not exist; the tool is deck_status",
+      "evidence": "S5 fact sheet: deck_record found nowhere",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "importing S1's sessionPid into deck/client.mjs pulls the store into the client graph and breaks the no-store graph test, so the rule is duplicated",
+      "evidence": "deck/run-look.mjs -> landing-replies.mjs -> runs.mjs; daemon.test.mjs:1571",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate started before the review fix, ran twice (~7 min each)",
+      "evidence": "s5-gate.log, s5-gate2.log",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "harness forced the co-pilot's hand-back again with S2 and S3 implementers live, orphaning their report address",
+      "evidence": "handback-send-enforce while a1c747e47c49093a0 and ae451aa3734ee9e54 ran",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "claude plugin validate refuses $ passed to a nested closure; not in brief.md's Mods section",
+      "evidence": "S3: '$ is passed to \"decide\", which is not a function declared at the top of this file'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3's live check needed S2's held outcome, which the DAG ran in parallel; proven against a probe stand-in",
+      "evidence": "S2 test-only at 1c4b81e4 when S3 went live",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "guessed pilot deck stop flag; || fallback ran a bare pilot against the user's deck on 4321 (not restarted, may have opened a browser tab)",
+      "evidence": "S3 report: 'The deck is up at http://127.0.0.1:4321'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot (handoff-mod)",
+      "what": "forced to hand back paused while its implementers ran; children's reports then went to the pilot",
+      "evidence": "hand-back with S2, S3 live; S2's report delivered to main",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer (S2)",
+      "what": "slice file's run.mjs line anchors stale by ~31 lines; a stamp the slice assumed S1 wrote did not exist",
+      "evidence": "S2.md:11 vs 92efaae5"
+    },
+    {
+      "agent": "pilot-implementer (S2)",
+      "what": "no TaskStop: an 8-minute npm test could not be stopped, gate ran twice",
+      "evidence": "S2 report"
+    },
+    {
+      "kind": "drain",
+      "what": "five Blocked items this session, four of them no-verdicts or read-only, each closed Moot by the pilot",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S5's implementer did not survive the main session's /clear (no transcript), so a fresh implementer was spawned only for the rebase and live check",
+      "evidence": "SendMessage aeb8b6b51f9c10de0: No transcript found",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: the first TS reviewer's hand-back never arrived and had to be re-run; the classifier gave no verdict twice",
+      "evidence": "S6 report, PR #92",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: the context reset lost the gate's state, so npm test (~9 min) ran again; its counts have to be grepped out of a 5000-line spawn-accounting tail",
+      "evidence": "S4 report, PR #93",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "an interactive live check cannot run from an agent shell: with no TTY, claude falls back to --print, so the mod's clear cannot be exercised; the global pilot and the plugin cache 0.9.5 also predate the feature",
+      "evidence": "S5: 'Input must be provided either through stdin or as a prompt argument when using --print'",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md exists only on the feature branch, not in the shared checkout, so the first Read failed",
+      "evidence": "S5 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot integrate",
+      "what": "S4's integration ran the full suite after the selection outgrew argv (28034 chars, over 24000)",
+      "evidence": "integrate output: 'full suite: selection is 28034 characters of argv, over 24000'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the harness forced the co-pilot to hand back again with S5 and S7 implementers live, orphaning their report address",
+      "evidence": "handback-send-enforce while a3f4f008450352246 and aa0e4ed02aa243048 ran",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 gate ran on 30777546 and was discarded when the tip moved mid-run (7 min)",
+      "evidence": "S5 report: gate on 30777546 did not count",
+      "size": 1
+    },
+    {
+      "agent": "pilot integrate",
+      "what": "S5's integration ran the full suite again after the selection outgrew argv (25974 chars, over 24000)",
+      "evidence": "integrate output: 'selection is 25974 characters of argv, over 24000'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect (S7/S11 seam)",
+      "what": "removing the run verb fails check-references, readme-pitch and operating-commands on 25 prose lines owned by S11 (after S7) or by no slice (hooks, docs/OPERATING.md)",
+      "evidence": "S7 gate 4255/10; resolved by a RETIRED allowance in S7 and added slice S13",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: the references to the removed verb were found only by the full gate (~9 min), so it ran twice; four fix-ups outside the slice's file list",
+      "evidence": "PR #95 report: help-subcommands, hang-timeout, deck-readme, hidden-spawns",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7's test-2 pattern as the slice file wrote it also matched analytics-run.mjs and a land-suite fixture, so it could never pass",
+      "evidence": "PR #95: anchored pattern",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer S12",
+      "what": "agent shell closes a detached window when its call ends; live check sees the process, never the window",
+      "evidence": "S12 report, PR #97",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect S12",
+      "what": "S12 test 4 cannot be red before the change; brief.md trailer differed from the co-pilot's briefs",
+      "evidence": "co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "foreground waits move to background after 180 s and there is no TaskOutput, so each wait round needs a fresh waiter",
+      "evidence": "co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate went red on a 30 s test timeout while two implementers ran npm test at once; the test passes alone in 4.3 s",
+      "evidence": "deck/test/daemon-replace.test.mjs:329 timed out at 30020 ms; log 20261117T021349649Z-slice-handoff-mod-s12.log",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the gate run's background output file held only 'exit 0'; the log had to be found among ~140 files in the shared temp folder",
+      "evidence": "S8 report: scratchpad/s8-gate.log found by searching the worktree path",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md's fixed-model commit trailer is wrong whenever a slice runs on another model; S8's commits carry Opus 5.5",
+      "evidence": "S8 report; brief.md:29",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S10's owned-file list omitted the 15 call sites the removal of `wrapped` and End must touch",
+      "evidence": "S10 report; PR #99",
+      "size": 15
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the gate's --since selection overflowed argv (27824 > 24000) and ran the full ~9 min suite; output file held only exit=0, so the suite ran twice",
+      "evidence": "S10 report; scratchpad/s10-gate.log",
+      "size": 9
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "harness forced the co-pilot's hand-back a third time with the S11 implementer live mid-gate, orphaning its report address",
+      "evidence": "handback-send-enforce while a191ccc4181f04da1 ran npm test and its reviewer",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "previous S11 implementer committed without the full suite; S11.md's prescribed wording broke the existing install-reach-wording lint",
+      "evidence": "gate.log 4263/4275: install-reach-wording.test.mjs:29, select-tests.test.mjs:137",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md's fixed commit trailer names a model and session other than the run's",
+      "evidence": "S11 report: commits carry Fable 5.2, session_01NXgSFodNbTKqoJ71EpWMS5",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner could not run coverage or mutation: detached worktree had no node_modules and its table forbids npm ci",
+      "evidence": "fundamentalist addendum: 'node_modules missing: run npm ci'; Stryker ERR_MODULE_NOT_FOUND",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the gate's spawn census killed QA's scratch deck, started outside the suite, as a leftover",
+      "evidence": "census: 'stopped 12368 daemon … --leash 14756'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "Chrome DevTools MCP not available in QA's session; the deck page was probed over HTTP, not a browser",
+      "evidence": "QA report: no tools match",
+      "size": 1
+    }
+  ]
+}

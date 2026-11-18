@@ -866,33 +866,23 @@ test('a stop already blocked once is never blocked again', async function (t) {
   assert.equal(again.out, '', 'a gate that fires twice in a row is a trap');
 });
 
-test('a turn of a `pilot run` session that ends is stamped for its wrapper, and a held one is not', async function (t) {
-  // What `deck/run.mjs` waits on before it types a /clear (2026-09-29).
+test('no stamp is written at a turn end', async function (t) {
+  // handoff-mod S8: the mod's `turn.complete` is the only turn signal; the gate still holds and releases as before.
+  assert.equal('markTurnEnded' in require('../lib/deck.js'), false, 'the stamp writer is gone');
   const home = makeHome(t);
   const deck = await deckFor(t);
   const id = await postItem(deck.port);
   await establish(home, deck);
   await replyInBrowser(deck.port, id, 'use 4322');
   const run = { PILOT_RUN_PID: '4242', PILOT_RUN_REPO: home, CLAUDE_PROJECT_DIR: '' };
-  const stamp = path.join(home, '.claude', 'pilot-inbox', 'claims', 'turn-ended-4242.stamp');
+  const claims = path.join(home, '.claude', 'pilot-inbox', 'claims');
+  const stamps = function () {
+    return fs.existsSync(claims) ? fs.readdirSync(claims).filter(function (name) { return name.endsWith('.stamp'); }) : [];
+  };
 
-  assert.equal((await stopping(home, deck.port, {}, run)).json.decision, 'block');
-  assert.equal(fs.existsSync(stamp), false, 'a held turn has not ended');
-
-  const before = Date.now();
-  await stopping(home, deck.port, { stop_hook_active: true }, run);
-  assert.ok(Number(fs.readFileSync(stamp, 'utf8')) >= before, 'the turn that ends is stamped with when');
-
-  // The shell drifts into a worktree while the pilot integrates; the project does not.
-  fs.rmSync(stamp);
-  const drifted = { stop_hook_active: true, cwd: path.join(home, 'elsewhere') };
-  await stopping(home, deck.port, drifted, Object.assign({}, run, { CLAUDE_PROJECT_DIR: home }));
-  assert.ok(fs.existsSync(stamp), 'the session is known by its project, not its shell\'s directory');
-
-  fs.rmSync(stamp);
-  await stopping(home, deck.port, drifted, run);
-  await stopping(home, deck.port, { stop_hook_active: true }, {});
-  assert.equal(fs.existsSync(stamp), false, 'a session elsewhere, or not under `pilot run`, is not the wrapper\'s');
+  assert.equal((await stopping(home, deck.port, {}, run)).json.decision, 'block', 'a held turn is held');
+  assert.equal((await stopping(home, deck.port, { stop_hook_active: true }, run)).out, '', 'a released turn is released');
+  assert.deepEqual(stamps(), [], 'neither turn left a stamp');
 });
 
 test('an answer that predates the session does not block its stop', async function (t) {
@@ -1030,10 +1020,11 @@ const GATE_SENTENCE = 'A gate passes only on its Sign off press: reply with deck
 /** A live ticket and the gate1 naming it, made through the store the way `seedUserThread` is. */
 async function seedGate1(deck, repo) {
   const previous = process.env.PILOT_DECK_DIR;
+  // Loaded before the store is pointed at the deck: loading testUtils unsets PILOT_DECK_DIR.
+  const { shapedTicketBody, takeLive } = await import('../../deck/testUtils.mjs');
   process.env.PILOT_DECK_DIR = deck.dir;
   try {
     const store = await import('../../deck/store.mjs');
-    const { shapedTicketBody, takeLive } = await import('../../deck/testUtils.mjs');
     const ticket = store.postItem({ kind: 'ticket', title: 'The ticket', body: shapedTicketBody(), repo: repo, sliceCount: 60 });
     takeLive(ticket.id);
     return store.postItem({

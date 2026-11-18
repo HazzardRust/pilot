@@ -79,7 +79,7 @@ function postToolUse(input) {
   return postTool.runModules(input, [postTool.PLAIN_PICKUP]);
 }
 
-test('a plain session\'s first tool call after a pickup warns, naming pilot run', async function (t) {
+test('a plain session\'s first tool call after a pickup warns, naming pilot start', async function (t) {
   scratchHome(t);
   const stash = await deckWithHandoff(t);
   assert.ok(await startAndDeliver(), 'the hand-off is delivered');
@@ -88,7 +88,7 @@ test('a plain session\'s first tool call after a pickup warns, naming pilot run'
 
   assert.ok(merged, 'the plain session is told');
   assert.match(merged.payload.systemMessage, /not the pilot/);
-  assert.match(merged.payload.systemMessage, /`pilot run`/);
+  assert.match(merged.payload.systemMessage, /`pilot start`/);
   assert.ok(merged.payload.systemMessage.includes(stash.id), 'and which hand-off it was');
   assert.match(merged.payload.hookSpecificOutput.additionalContext, /do not act on it/i);
 });

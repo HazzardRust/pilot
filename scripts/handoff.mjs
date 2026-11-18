@@ -12,20 +12,25 @@
  *   (skipped when the record names no worktree); post one `handoff` item titled from the
  *   record's feature and carrying its `next` and any thread the pilot `promised`.
  *
- * Nothing is posted until the record is safely on origin, because under `pilot run` the
- * post is what types `/clear` (`deck/run.mjs`), and a `/clear` over a record that failed
+ * Nothing is posted until the record is safely on origin, because the post is what the
+ * hand-off mod clears the session on, and a `/clear` over a record that failed
  * to land is the one outcome worse than stopping to say so.
  *
- * Whether a `/clear` will be typed at all is read from `PILOT_RUN_PID`, which `pilot run`
- * sets on the session it starts, and checked against a live process: a session
- * backgrounded past its wrapper keeps the variable but has nobody typing. `PILOT_RUN_REPO`
- * is the directory that wrapper watches, and the item is posted for it rather than for
- * the shell's directory, which drifts into a worktree whenever the pilot integrates.
+ * Whether a `/clear` will come at all is read from the session's reported-in stamp, which the
+ * hand-off mod writes when it starts (handoff-mod spec 8, A2): with none, the line says why
+ * (an old Claude Code, or a mod that never ran) and has the user type `/clear`. The item is posted
+ * for the main checkout (`listeningRepo`, handoff-mod L11) rather than for the shell's
+ * directory, which drifts into a worktree whenever the pilot integrates, and the session
+ * that posted it is stamped so its mod clears it (A6).
  */
 
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 
+import { notePosted, reportedFile, sessionPid } from '../deck/run-claim.mjs';
 import { deckUrl } from '../deck/tools.mjs';
+import { isOlder, isVersion } from '../deck/version.mjs';
+import { listeningRepo } from '../deck/wait.mjs';
 import { bearer } from '../hooks/lib/deck-secret.js';
 import { commitRecords, git, TRAILER } from './integrate.mjs';
 import { remoteOf, runRemote } from './remotes.mjs';
@@ -33,9 +38,34 @@ import { remoteOf, runRemote } from './remotes.mjs';
 /** A loopback deck answers in milliseconds or not at all. */
 const DEADLINE_MS = 5000;
 
-/** The wrapper's pid and the directory it watches, as `deck/run.mjs` sets them. */
-const RUN_PID = 'PILOT_RUN_PID';
-const RUN_REPO = 'PILOT_RUN_REPO';
+/** The first Claude Code that runs a mod (handoff-mod A2, assumed). */
+export const MIN_MODS_VERSION = '2.1.325';
+
+/**
+ * `claude --version`'s x.y.z, or null when it gives none. By argv array, never a shell, and never
+ * `~/.claude.json`, which holds secrets. On Windows the bare name is safe from a command planted
+ * in the cwd only because bin/pilot.mjs runs `searchPathOnly()` first; a caller importing this
+ * module directly must do the same. `run` is injected by `pilot doctor`'s tests.
+ */
+export function claudeVersion(run = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8', windowsHide: true, timeout: 15000, killSignal: 'SIGKILL', stdio: ['ignore', 'pipe', 'ignore'] })) {
+  try {
+    const found = /^\s*(\d+\.\d+\.\d+)\b/.exec(String(run('claude', ['--version'])))?.[1];
+    return isVersion(found) ? found : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Whether this session's hand-off mod reported in: S2's `claims/mod-<session pid>.stamp`, whose existence is
+ * what counts. Not a heartbeat: a mod that started and then died still reads as in. `why` names an old Claude
+ * Code when `version` is readable and below the minimum, else that the mod never reported in.
+ */
+export function reportedIn(env, { version } = {}) {
+  if (fs.existsSync(reportedFile(sessionPid(env, process.ppid)))) return { in: true };
+  if (isVersion(version) && isOlder(version, MIN_MODS_VERSION)) return { in: false, why: `Claude Code ${version} is below ${MIN_MODS_VERSION}` };
+  return { in: false, why: 'not reported in' };
+}
 
 class Refusal extends Error {}
 
@@ -51,19 +81,6 @@ async function ask(pathname, init = {}) {
   const body = await response.json().catch(() => null);
   if (!response.ok) throw new Refusal(`the deck refused ${pathname}: ${body?.error ?? response.status}`);
   return body;
-}
-
-/** Whether `pilot run` is alive and typing into this session. */
-function wrapperAlive(env) {
-  const pid = Number(env[RUN_PID]);
-  if (!Number.isInteger(pid) || pid <= 0) return false;
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (err) {
-    // EPERM is a process that exists and is not ours to signal; alive all the same.
-    return err.code === 'EPERM';
-  }
 }
 
 /**
@@ -131,16 +148,22 @@ const owedAs = (owed, why) => owed.filter((thread) => thread.why === why);
 
 const firstLine = (err) => (err.stderr?.toString().trim() || err.message).split('\n')[0];
 
+/** The mod's state; `claude --version` runs only for a session that did not report in and was given no version. */
+function modState(env, version) {
+  const mod = reportedIn(env, { version });
+  return mod.in || version !== undefined ? mod : reportedIn(env, { version: claudeVersion() });
+}
+
 /**
- * Hand off. `env` is where the wrapper's variables are read, `trailers` are `Key: value`
- * lines for the record's commit. Answers `{ ok, line }`; never throws.
+ * Hand off. `env` is where the session's pid is read, `trailers` are `Key: value` lines for the
+ * record's commit, `version` stands in for `claude --version`. Answers `{ ok, line }`; never throws.
  */
-export async function handoff({ cwd = process.cwd(), env = process.env, trailers = [] } = {}) {
+export async function handoff({ cwd = process.cwd(), env = process.env, trailers = [], version } = {}) {
   // A trailer reaches `git commit --trailer`: one with a newline would forge a second line.
   const forged = trailers.find((trailer) => !TRAILER.test(String(trailer)));
   if (forged !== undefined) return { ok: false, line: `NOT handed off: trailer ${JSON.stringify(String(forged))} is not one "Key: value" line; no handoff item posted` };
-  const typed = wrapperAlive(env);
-  const repo = typed && env[RUN_REPO] ? env[RUN_REPO] : cwd;
+  // The main checkout, so a hand-off from a worktree is the one the session's look reads (handoff-mod L11).
+  const repo = listeningRepo(cwd);
   let landed = null;
   try {
     const { record, yellow, coPilot, lanes, owed: served } = await ask(`/api/record?repo=${encodeURIComponent(repo)}`);
@@ -172,13 +195,16 @@ export async function handoff({ cwd = process.cwd(), env = process.env, trailers
     });
     const id = /\bitm_[0-9a-f]+\b/.exec(posted?.content?.[0]?.text ?? '')?.[0];
     if (!id) throw new Refusal('the deck took the handoff item but named no id');
+    notePosted(sessionPid(env, process.ppid), id);
     // A live co-pilot holds the /clear until its release (clear-waits-co-pilot spec 6, A3): the line repeats the pause.
     const paused = coPilot?.live === true && /^itm_[0-9a-f]+$/.test(coPilot.ticket)
       ? `the co-pilot on ${coPilot.ticket} is live: send it the pause, deck_ticket release it on its hand-back; `
       : '';
-    const then = typed
-      ? `${paused}\`pilot run\` types \`/clear\` ${paused ? 'after that' : 'and the first prompt now'}; stop here`
-      : `${paused}not under \`pilot run\`, so nothing will type it: ${paused ? 'after that ' : ''}tell the user to type \`/clear\`, and stop`;
+    // The hand-off is posted either way; only who clears differs (spec 8: no refusal to hand off).
+    const mod = modState(env, version);
+    const then = mod.in
+      ? `${paused}the hand-off mod clears this session ${paused ? 'after that' : 'and submits the first prompt'}; stop here`
+      : `${paused}the hand-off mod has not reported in (${mod.why}): ${paused ? 'after that ' : ''}tell the user to type /clear, and stop`;
     return { ok: true, line: `handed off: ${landed}; posted ${id}; ${then}` };
   } catch (err) {
     const why = err instanceof Refusal ? err.message : firstLine(err);

@@ -2,8 +2,7 @@
  * S3 of yellow-agent (spec 8; L11, ADR 0087): the main slot is never yellow. A main session
  * starting where the newest run record belongs to an open yellow ticket is not handed that run
  * as its own: `GET /api/record` without `ticket` serves no record, so the SessionStart hook says
- * no "Recovering an unfinished run", and `pilot run` at start chains the red head instead of
- * refusing. Never the record before it (old L4). `recordFor` itself is unchanged: the paused
+ * no "Recovering an unfinished run". Never the record before it (old L4). `recordFor` itself is unchanged: the paused
  * stop and the green conclude still read the newest record.
  *
  * Every test takes its own store and port; nothing here touches 4321 or the real home.
@@ -15,10 +14,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-import { KIND_HANDOFF, KIND_TICKET } from '../items.mjs';
-import { listItems, recordFor, registerRun } from '../store.mjs';
+import { KIND_TICKET } from '../items.mjs';
+import { recordFor, registerRun } from '../store.mjs';
 import { callTool } from '../server.mjs';
-import { chainNext } from '../chain.mjs';
 import { deckOnAPort, postStored, shapedTicketBody } from '../testUtils.mjs';
 
 const MAIN = path.resolve('D:/work/pilot');
@@ -80,14 +78,4 @@ test('a directory with no yellow ticket is served yellow null (S6)', async (t) =
   const base = await deckOnAPort(t);
   aTicket('Build it', 'green');
   assert.equal((await served(base)).yellow, null);
-});
-
-test('a main start beside a yellow unfinished record chains the red head', async (t) => {
-  await deckOnAPort(t);
-  anUnfinishedRecord(aTicket('Build it', 'yellow'));
-  const red = aTicket('Next thing');
-
-  const { handoff } = chainNext(MAIN, { atStart: true });
-  assert.equal(handoff?.next, red.id, 'the red head is handed over, not "a run is unfinished"');
-  assert.equal(listItems().filter((item) => item.kind === KIND_HANDOFF).length, 1);
 });
