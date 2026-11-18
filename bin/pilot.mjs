@@ -195,7 +195,7 @@ const usage = () => `pilot — the deck for piloted runs
   pilot wait [--as pilot|qa|teacher|auditor|architect] [--item <id>] [--timeout <minutes>]
                  run in the background; exit the moment a user reply this kind owns
                  (default pilot) is waiting for this repository, take it, print it,
-                 and exit 0 (default timeout 110 minutes)
+                 and exit 0 (default timeout 50 minutes)
 
 Any command can be given as \`pilot --dir <path> <command> …\` to run it in <path>.
 
