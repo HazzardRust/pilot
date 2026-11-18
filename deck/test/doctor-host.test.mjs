@@ -70,6 +70,38 @@ test('signed in prints no token', async () => {
   assert.ok(!JSON.stringify(rows).includes('ghp_'), JSON.stringify(host));
 });
 
+test('a failing probe whose error carries a token prints none of it', async () => {
+  const leaky = (cwd, { git }) =>
+    hostFor(cwd, {
+      git,
+      run: () => {
+        throw Object.assign(new Error(TOKEN_LINE), { stderr: TOKEN_LINE });
+      },
+    });
+  const rows = await checkAll(passing({ git: gitConfigured('gitlab'), hostFor: leaky }));
+  assert.equal(rows.find((r) => r.name === 'host').verdict, 'fail');
+  assert.ok(!JSON.stringify(rows).includes('ghp_'));
+});
+
+test('github off PATH fails naming gh', async () => {
+  const rows = await checkAll(passing({ git: gitConfigured('github'), onPath: (cmd) => cmd !== 'gh' }));
+  const host = rows.find((r) => r.name === 'host');
+  assert.equal(host.verdict, 'fail');
+  assert.match(host.detail, /gh/);
+});
+
+test('an unreadable PATH answer cannot tell', async () => {
+  const rows = await checkAll(passing({ git: gitConfigured('github'), onPath: (cmd) => (cmd === 'gh' ? null : true) }));
+  assert.equal(rows.find((r) => r.name === 'host').verdict, 'cannot tell');
+});
+
+test('a bad pilot.host value fails the row and names the key', async () => {
+  const rows = await checkAll(passing({ git: gitConfigured('bitbucket') }));
+  const host = rows.find((r) => r.name === 'host');
+  assert.equal(host.verdict, 'fail');
+  assert.match(host.detail, /pilot\.host/);
+});
+
 test('not signed in fails and names the CLI', async () => {
   const rows = await checkAll(passing({ git: gitConfigured('github'), hostFor: hostOver('', false) }));
   const host = rows.find((r) => r.name === 'host');
