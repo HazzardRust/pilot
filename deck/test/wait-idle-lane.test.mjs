@@ -3,7 +3,8 @@
  *
  * `GET /api/record` carries the directory's lanes, and the pilot's `pilot wait` reads them before
  * it parks and after each empty poll: an idle main lane (no live ticket, no main switch, a green or
- * red pick) ends the wait at once with the refusal line. Any other kind's wait never reads them.
+ * red pick) is said once as the refusal line, and the wait goes on listening (never-stuck L8). Any
+ * other kind's wait never reads them.
  *
  * Every test runs the real daemon on its own store and an ephemeral port, never 4321.
  */
@@ -59,14 +60,14 @@ test('the record route carries the lanes', async (t) => {
 });
 
 for (const state of ['green', 'red']) {
-  test(`the pilot's wait ends at once on an idle stage lane: ${state} queued`, async (t) => {
+  test(`the pilot's wait says an idle stage lane and parks: ${state} queued`, async (t) => {
     await deck(t);
     const queued = aTicket('Waiting', state);
     const calls = toolCalls(t);
-    const { code, printed } = await waitAs('pilot', { timeoutMinutes: 0.05 });
+    const { code, printed } = await waitAs('pilot');
     assert.equal(code, 0);
     assert.match(printed, new RegExp(`^${state === 'red' ? 'planning' : 'concluding'} lane empty; ${queued.id} is queued — deck_ticket take it first$`, 'm'));
-    assert.equal(calls.includes('deck_wait'), false, 'no deck_wait posted');
+    assert.equal(calls.includes('deck_wait'), true, 'it parked');
   });
 }
 
@@ -80,16 +81,15 @@ test('the pilot\'s wait ends at once on an idle main lane: none queued parks', a
   assert.equal(calls.includes('deck_wait'), true, 'it parked');
 });
 
-test('the pilot\'s wait ends one poll after a ticket is queued mid-wait', async (t) => {
+test('the pilot\'s wait says a ticket queued mid-wait one poll later', async (t) => {
   await deck(t);
-  const pending = waitAs('pilot', { timeoutMinutes: 0.2 });
+  const pending = waitAs('pilot', { timeoutMinutes: 0.05 });
   for (let i = 0; i < 400 && waiterCount() < 1; i += 1) await new Promise((resolve) => setTimeout(resolve, 5));
   assert.equal(waiterCount(), 1, 'the wait is parked before the ticket is queued');
   const queued = aTicket('Late', 'red');
   const { code, printed } = await pending;
   assert.equal(code, 0);
-  assert.match(printed, new RegExp(`planning lane empty; ${queued.id} is queued`));
-  assert.doesNotMatch(printed, /NO REPLY/);
+  assert.match(printed, new RegExp(`planning lane empty; ${queued.id} is queued[^]*NO REPLY after`));
 });
 
 /** A stand-in deck on an ephemeral port that answers the start-up check and `/api/record` with `status` and `body`. */
@@ -111,7 +111,7 @@ test('a refusal is printed as one line with no control characters, whatever the 
   await stubDeck(t, 200, JSON.stringify({ lanes: { refusal: 'main lane empty;\u001b[2J itm_x\nis queued\u0007 red' } }));
   const { code, printed } = await waitAs('pilot');
   assert.equal(code, 0);
-  assert.match(printed, /^main lane empty; \[2J itm_x is queued red\n$/m);
+  assert.match(printed, /^main lane empty; \[2J itm_x is queued red$/m);
   assert.doesNotMatch(printed, /[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/);
 });
 
@@ -126,7 +126,7 @@ test('a long refusal is clipped to 200 characters', async (t) => {
   await stubDeck(t, 200, JSON.stringify({ lanes: { refusal: 'x'.repeat(500) } }));
   const { code, printed } = await waitAs('pilot');
   assert.equal(code, 0);
-  assert.match(printed, /^x{200}\n$/m);
+  assert.match(printed, /^x{200}$/m);
 });
 
 test('a lane read the deck will not answer refuses nothing and is the wait\'s exit 1', async (t) => {

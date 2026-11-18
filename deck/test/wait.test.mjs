@@ -254,13 +254,16 @@ test('a reply the pilot was already handed is ignored', async (t) => {
 
 // --- the timeout, and a deck that will not answer ---------------------------
 
+/** The pilot's quiet timeout on a directory with nothing queued: the line, then its lanes (never-stuck spec 11). */
+const QUIET = 'NO REPLY after 0.001 minutes\nLanes now:\nplanning: empty\nconcluding: empty\nco-pilot: none\n';
+
 test('a timeout prints NO REPLY after <n> minutes', async (t) => {
   await deck(t);
   const said = [];
   const code = await wait({ env: {}, cwd: OURS, pollMs: 10, timeoutMinutes: 0.001, say: (l) => said.push(l) });
 
   assert.equal(code, 0);
-  assert.equal(said.at(-1), 'NO REPLY after 0.001 minutes\n');
+  assert.equal(said.at(-1), QUIET);
 });
 
 test('a deck that is not there is one line on stderr and exit 1, never a silent hang', async () => {
@@ -368,7 +371,7 @@ test('a wait on a directory no run and no open thread names says NO DECK on line
   await deck(t);
   const said = [];
   assert.equal(await wait({ env: {}, cwd: OURS, pollMs: 10, timeoutMinutes: 0.001, say: (l) => said.push(l) }), 0);
-  assert.deepEqual(said, [`listening on ${OURS}\n`, NO_DECK, 'NO REPLY after 0.001 minutes\n']);
+  assert.deepEqual(said, [`listening on ${OURS}\n`, NO_DECK, QUIET]);
 });
 
 test('a wait on a repository with a run prints no NO DECK line', async (t) => {
@@ -376,7 +379,7 @@ test('a wait on a repository with a run prints no NO DECK line', async (t) => {
   registerRun({ repo: OURS, pid: process.pid });
   const said = [];
   await wait({ env: {}, cwd: OURS, pollMs: 10, timeoutMinutes: 0.001, say: (l) => said.push(l) });
-  assert.deepEqual(said, [`listening on ${OURS}\n`, 'NO REPLY after 0.001 minutes\n']);
+  assert.deepEqual(said, [`listening on ${OURS}\n`, QUIET]);
 });
 
 test('a wait on a repository with an open thread and no run prints no NO DECK line', async (t) => {
@@ -384,7 +387,7 @@ test('a wait on a repository with an open thread and no run prints no NO DECK li
   question();
   const said = [];
   await wait({ env: {}, cwd: OURS, pollMs: 10, timeoutMinutes: 0.001, say: (l) => said.push(l) });
-  assert.deepEqual(said, [`listening on ${OURS}\n`, 'NO REPLY after 0.001 minutes\n']);
+  assert.deepEqual(said, [`listening on ${OURS}\n`, QUIET]);
 });
 
 test('a deck that does not answer the check is the unreachable line and exit 1', async (t) => {
