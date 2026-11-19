@@ -64,21 +64,21 @@ async function onDenied(payload, deps) {
   const reason = typeof payload.reason === 'string' ? payload.reason : '';
   const noVerdict = reason === NO_VERDICT;
   // Every session's denial is logged, the lane check after it (crew-refusals A4); the ticket is the one the post resolved.
-  const entry = {
-    repo: repo,
-    ticket: null,
-    agent: typeof payload.agent_type === 'string' ? payload.agent_type : 'main',
-    reason: reason,
-    tool: typeof payload.tool_name === 'string' ? payload.tool_name : '',
-    command: commandOf(payload),
-    verdict: noVerdict ? 'no-verdict' : 'refused',
-  };
+  let filed = null;
   try {
     await laneDenied(payload, repo, reason, noVerdict, Object.assign({}, deps, {
-      onTicket: function (ticket) { entry.ticket = ticket && typeof ticket.id === 'string' ? ticket.id : null; },
+      onTicket: function (found) { filed = found && typeof found.id === 'string' ? found.id : null; },
     }));
   } finally {
-    await logRefusal(entry, deps && deps.logDir);
+    await logRefusal({
+      repo: repo,
+      ticket: filed,
+      agent: typeof payload.agent_type === 'string' ? payload.agent_type : 'main',
+      reason: reason,
+      tool: typeof payload.tool_name === 'string' ? payload.tool_name : '',
+      command: commandOf(payload),
+      verdict: noVerdict ? 'no-verdict' : 'refused',
+    }, deps && deps.logDir);
   }
   return null;
 }

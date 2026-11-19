@@ -437,7 +437,7 @@ test('a refusal with a verdict still posts at once', async (t) => {
 
 const readLog = async (dir) => (await import('../../deck/classifier-log.mjs')).readRefusals({ dir });
 
-test('a denial outside a pilot run is logged', async (t) => {
+test('a denial with no live run, outside a pilot lane, is logged', async (t) => {
   const logDir = scratchClaims(t);
   const deck = fakeDeck({ live: false });
   const out = await onDenied(denial({ agent_type: undefined }), { deck, claims: scratchClaims(t), env: {}, logDir });
