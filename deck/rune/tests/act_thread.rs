@@ -3,68 +3,9 @@
 
 mod support;
 
-use std::sync::Mutex;
-
 use pilot_deck::act::{Acted, Action};
-use pilot_deck::client::Client;
 use serde_json::{Value, json};
-
-/// The client reads its address from the environment, which every test in this binary shares.
-static ENV: Mutex<()> = Mutex::new(());
-
-fn client_for(deck: &support::Scratch) -> Client {
-    let _held = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    let port = deck.port.to_string();
-    let vars = [
-        ("PILOT_DECK_DIR", deck.dir.to_str().expect("a utf-8 dir")),
-        ("PILOT_DECK_PORT", port.as_str()),
-    ];
-    // SAFETY: every test in this binary that touches the environment holds `ENV`.
-    unsafe {
-        vars.iter()
-            .for_each(|(name, value)| std::env::set_var(name, value))
-    };
-    let made = Client::from_env();
-    unsafe { vars.iter().for_each(|(name, _)| std::env::remove_var(name)) };
-    made.expect("a loopback client")
-}
-
-fn secret(deck: &support::Scratch) -> String {
-    std::fs::read_to_string(deck.dir.join("deck.secret"))
-        .expect("the scratch deck's secret")
-        .trim()
-        .to_string()
-}
-
-/// A session's tool call, as an agent makes it; answers the tool's text.
-fn tool(deck: &support::Scratch, name: &str, arguments: Value) -> String {
-    let mut response = ureq::post(format!("{}/api/tool", deck.url))
-        .header("Authorization", format!("Bearer {}", secret(deck)))
-        .send_json(json!({ "name": name, "arguments": arguments }))
-        .expect("the scratch deck takes the tool call");
-    let body: Value = response.body_mut().read_json().expect("json");
-    body["content"][0]["text"]
-        .as_str()
-        .unwrap_or_else(|| panic!("{name} was refused: {body}"))
-        .to_string()
-}
-
-fn id_in(text: &str) -> String {
-    let at = text.find("itm_").expect("an item id in the tool's answer");
-    let hex: String = text[at + 4..]
-        .chars()
-        .take_while(char::is_ascii_hexdigit)
-        .collect();
-    format!("itm_{hex}")
-}
-
-fn question(deck: &support::Scratch, repo: &str) -> String {
-    id_in(&tool(
-        deck,
-        "deck_post",
-        json!({ "kind": "question", "title": "Which?", "body": "A or B", "repo": repo, "author": "", "options": ["A", "B"] }),
-    ))
-}
+use support::{client_for, id_in, item, question, read, secret, taken, tool};
 
 /// A gate1 on a live ticket, the way the pilot posts one.
 fn gate1(deck: &support::Scratch, repo: &str) -> String {
@@ -88,33 +29,11 @@ fn gate1(deck: &support::Scratch, repo: &str) -> String {
     ))
 }
 
-fn read(deck: &support::Scratch, path: &str) -> Value {
-    ureq::get(format!("{}{path}", deck.url))
-        .header("Authorization", format!("Bearer {}", secret(deck)))
-        .call()
-        .expect("the read route answers")
-        .body_mut()
-        .read_json()
-        .expect("json")
-}
-
-/// The item as `/api/items?id=` serves it.
-fn item(deck: &support::Scratch, id: &str) -> Value {
-    read(deck, &format!("/api/items?id={id}"))["items"][0].clone()
-}
-
 fn newest(deck: &support::Scratch, id: &str) -> Value {
     item(deck, id)["replies"]
         .as_array()
         .and_then(|replies| replies.last().cloned())
         .unwrap_or(Value::Null)
-}
-
-fn taken(acted: Acted) -> String {
-    match acted {
-        Acted::Taken { location } => location,
-        Acted::Refused { reason } => panic!("refused: {reason}"),
-    }
 }
 
 fn reply(id: &str, text: &str, choice: Option<&str>) -> Action {

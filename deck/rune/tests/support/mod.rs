@@ -6,6 +6,11 @@
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::Mutex;
+
+use pilot_deck::act::Acted;
+use pilot_deck::client::Client;
+use serde_json::{Value, json};
 
 pub struct Scratch {
     pub url: String,
@@ -93,5 +98,89 @@ impl Scratch {
 impl Drop for Scratch {
     fn drop(&mut self) {
         pilot(&["deck", "--stop", &self.pid.to_string()]);
+    }
+}
+
+/// The client reads its address from the environment, which every test in a binary shares.
+static ENV: Mutex<()> = Mutex::new(());
+
+/// A Rune client on `deck`, read from the environment as the window reads it.
+pub fn client_for(deck: &Scratch) -> Client {
+    let _held = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    let port = deck.port.to_string();
+    let vars = [
+        ("PILOT_DECK_DIR", deck.dir.to_str().expect("a utf-8 dir")),
+        ("PILOT_DECK_PORT", port.as_str()),
+    ];
+    // SAFETY: every test that touches the environment does it here, holding `ENV`.
+    unsafe {
+        vars.iter()
+            .for_each(|(name, value)| std::env::set_var(name, value))
+    };
+    let made = Client::from_env();
+    unsafe { vars.iter().for_each(|(name, _)| std::env::remove_var(name)) };
+    made.expect("a loopback client")
+}
+
+pub fn secret(deck: &Scratch) -> String {
+    std::fs::read_to_string(deck.dir.join("deck.secret"))
+        .expect("the scratch deck's secret")
+        .trim()
+        .to_string()
+}
+
+/// A session's tool call, as an agent makes it; answers the tool's text.
+pub fn tool(deck: &Scratch, name: &str, arguments: Value) -> String {
+    let mut response = ureq::post(format!("{}/api/tool", deck.url))
+        .header("Authorization", format!("Bearer {}", secret(deck)))
+        .send_json(json!({ "name": name, "arguments": arguments }))
+        .expect("the scratch deck takes the tool call");
+    let body: Value = response.body_mut().read_json().expect("json");
+    body["content"][0]["text"]
+        .as_str()
+        .unwrap_or_else(|| panic!("{name} was refused: {body}"))
+        .to_string()
+}
+
+pub fn id_in(text: &str) -> String {
+    let at = text.find("itm_").expect("an item id in the tool's answer");
+    let hex: String = text[at + 4..]
+        .chars()
+        .take_while(char::is_ascii_hexdigit)
+        .collect();
+    format!("itm_{hex}")
+}
+
+/// An open question with two options on `repo`; answers its id.
+pub fn question(deck: &Scratch, repo: &str) -> String {
+    id_in(&tool(
+        deck,
+        "deck_post",
+        json!({ "kind": "question", "title": "Which?", "body": "A or B", "repo": repo, "author": "", "options": ["A", "B"] }),
+    ))
+}
+
+/// A read route's answer, behind the secret.
+pub fn get(deck: &Scratch, path: &str) -> ureq::http::Response<ureq::Body> {
+    ureq::get(format!("{}{path}", deck.url))
+        .header("Authorization", format!("Bearer {}", secret(deck)))
+        .call()
+        .expect("the read route answers")
+}
+
+pub fn read(deck: &Scratch, path: &str) -> Value {
+    get(deck, path).body_mut().read_json().expect("json")
+}
+
+/// The item as `/api/items?id=` serves it.
+pub fn item(deck: &Scratch, id: &str) -> Value {
+    read(deck, &format!("/api/items?id={id}"))["items"][0].clone()
+}
+
+/// A write's 303 Location; a refusal fails the test with the deck's own words.
+pub fn taken(acted: Acted) -> String {
+    match acted {
+        Acted::Taken { location } => location,
+        Acted::Refused { reason } => panic!("refused: {reason}"),
     }
 }
