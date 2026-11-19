@@ -43,7 +43,7 @@
     },
     {
       "slice": "S5",
-      "state": "implementing",
+      "state": "pushed 409a677 (re-review approve; integrating)",
       "after": [
         "S4"
       ],
@@ -70,7 +70,7 @@
     },
     {
       "slice": "S8",
-      "state": "pushed 0e086bc",
+      "state": "integrated",
       "after": [
         "S7"
       ],
@@ -105,8 +105,8 @@
     "kept: S3-R3 LOW — gone-and-unlanded lower branch fails with a bare git error, name it",
     "kept: S7-R1 security LOW — scripts/merge-generated.mjs:36-47: a committed docs/adr directory symlink lets refreshIndex write outside the worktree, and restack runs it unattended; fix: a realpathSync check that stays inside dir"
   ],
-  "next": "audit-f14 co-pilot: S8 pushed 0e086bc (ts WARNING, MEDIUM fixed; security APPROVE), integrating; S5 implementing; then fundamentalist, fix round, QA",
-  "updatedAt": "2026-11-19T15:47:08.643Z",
+  "next": "audit-f14 co-pilot: base pilot 6b3ce534 in at 69f3146a; integrating S5; then fundamentalist (kept for the fix brief: land-adr origin vs runRemote, retry re-number rejected, architect.md:170 <base> + pin :59)",
+  "updatedAt": "2026-11-19T16:09:26.547Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -281,6 +281,28 @@
       "what": "four slices' full suites share one machine; a 3-file run piped through grep sat 10+ minutes with an empty log and was stopped, then passed alone in 109 s",
       "evidence": "S8 report: sync.test.mjs 14/14 in 109 s alone; full gate 471 s",
       "size": 600
+    },
+    {
+      "kind": "drain",
+      "what": "S5 implementer's report was delivered to main instead of its co-pilot; pilot read 100 lines and relayed it by hand",
+      "size": 4000
+    },
+    {
+      "kind": "drain",
+      "what": "landing sweep named 4 signed tickets drifted; pilot merged pilot into 4 feat branches and replanned by hand (installed deck predates recut-decision)",
+      "size": 3000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "single-file node --test runs of the land tests take over 120 s and print nothing until done; the S5 report reached main instead of the co-pilot",
+      "evidence": "S5 report relayed by main",
+      "size": 120
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a prose-pin test (recut-prose.test.mjs) turned a clean base generalisation into a red gate, found only after a 5.5-minute suite",
+      "evidence": "base merge 69f3146a: 4694 tests, 1 fail on the pin, fixed by one regex line",
+      "size": 330
     }
   ]
 }
