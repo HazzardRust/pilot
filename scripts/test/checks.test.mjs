@@ -117,7 +117,8 @@ test('the gate fails closed', () => {
   assert.deepEqual([gate(answering([])).ok, gate(answering([])).line], [false, 'checks none at 5fef2ab']);
   assert.deepEqual([gate(answering([]), BARE).ok, gate(answering([]), BARE).line], [true, 'checks none at 5fef2ab: no CI configured']);
   assert.deepEqual([gate(null, BARE).ok, gate(null, BARE).line], [true, 'checks none at 5fef2ab: no host']);
-  assert.equal(gate(answering([]), () => { throw new Error('git broke'); }).ok, false, 'an unreadable tree counts as CI configured');});
+  assert.equal(gate(answering([]), () => { throw new Error('git broke'); }).ok, false, 'an unreadable tree counts as CI configured');
+});
 
 test('CI configured is a workflow file or .gitlab-ci.yml in the tree', () => {
   for (const file of ['.github/workflows/gate.yml', '.github/workflows/release.yaml', '.gitlab-ci.yml', '.github/workflows/prüfung.yml']) assert.equal(ciConfigured(treeOf([file]), SHA), true, file);

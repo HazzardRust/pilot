@@ -105,6 +105,8 @@ test('wait waits on none while CI is configured at the sha, and not where it is 
   const bare = fakeHost('none', 'green');
   const noCi = await runChecks(t, ['--wait'], bare, fakeGit(''));
   assert.deepEqual([noCi.code, noCi.slept, bare.asked.length], [5, [], 1], 'no CI configured returns at once');
+  const noHost = await runChecks(t, ['--wait'], null);
+  assert.deepEqual([noHost.code, noHost.slept, noHost.git.calls.length], [5, [], 1], 'no host returns at once, no tree read');
 });
 
 test('an unread mid-wait ends the wait, unread', async (t) => {
