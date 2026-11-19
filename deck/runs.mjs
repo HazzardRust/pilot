@@ -249,9 +249,9 @@ export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 /**
  * A run's base (pilot-develop-line L6; audit-f14 A7): `pilot`, the concluding feature's `feat/<slug>` it is chained
  * on, or the default branch's own name. It reaches git as an argument, so it never starts with `-`, holds no `..` or
- * `//`, is never `HEAD`, and ends in no `/`, `.` or `.lock`.
+ * `//`, is never `HEAD`, and ends in no `/`, `.` or `.lock`; a `feat/` segment is only ever the slug form.
  */
-export const RUN_BASE = new RegExp(`^(?:pilot|feat/${SLUG.source.slice(1, -1)}|(?!HEAD$)(?!.*(?:\\.\\.|//|\\.lock$|[./]$))[A-Za-z0-9_][A-Za-z0-9._/-]*)$`);
+export const RUN_BASE = new RegExp(`^(?:pilot|feat/${SLUG.source.slice(1, -1)}|(?!HEAD$)(?!(?:.*/)?feat/)(?!.*(?:\\.\\.|//|\\.lock$|[./]$))[A-Za-z0-9_][A-Za-z0-9._/-]*)$`);
 
 const TICKET_ID = /^itm_[0-9a-f]+$/;
 
