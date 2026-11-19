@@ -28,7 +28,7 @@ bundled kill 3 times.
 | 1 | The evidence runner's table runs with no `HOME`, `USERPROFILE` or `PILOT_DECK_DIR` in any cell, and none of its six Node checks is refused by auto mode. | `grep -c 'HOME=' agents/pilot-evidence-runner.md`; QA's run of the table in the scratch repo (L7). | 0 lines; 0 blocked steps of 6 checks. |
 | 2 | Inside a `node --test` run, the deck store refuses to resolve the user's real store (`<os.userInfo().homedir>/.claude/pilot`, which no env var moves) and throws, naming it; a test's own store still resolves. *assumed (A1)* *practitioner: a test engineer makes tests hermetic by construction and fail-closed, not by the caller's environment.* | `hooks/test/deck-dir-guard.test.js` on `deckDir`. | 1 throw on the real path; 0 on a temp `PILOT_DECK_DIR` or a redirected home. |
 | 3 | No crew agent writes, checks out, stashes, resets or restores a tracked file in a worktree it did not create; a red-then-green proof runs in a detached throwaway worktree the agent creates and removes. *assumed (A2)* | `missingShellRules(agents/)` → `[]`; the implementer's reviewer brief says it; QA's reviewer proof leaves the writer's `git status --short` unchanged. | 22 of 22 shell agents; 0 changed status lines. |
-| 4 | No crew agent kills by name or pattern (`pkill -f`, `taskkill /IM`) or bundles a stop with another command; it stops only what it started, by its id (a background task's id with `TaskStop`, or the PID it started), in a call of its own. *assumed (A3)* | `missingShellRules(agents/)` → `[]`; `pilot.md:159` and `pilot-co-pilot.md:100` carry the rule, not a second wording; QA's implementer test stop. | 22 of 22; 0 blocked steps for the stop. |
+| 4 | No crew agent kills by name or pattern (`pkill -f`, `taskkill /IM`) or bundles a stop with another command; it stops only what it started, by its id (a background run's id with `TaskStop`, or the PID it started), in a call of its own. *assumed (A3)* | `missingShellRules(agents/)` → `[]`; `pilot.md:159` and `pilot-co-pilot.md:100` carry the rule, not a second wording; QA's implementer test stop. | 22 of 22; 0 blocked steps for the stop. |
 | 5 | The closing report counts the ticket's blocked steps by agent and reason, so a new habit shows up; it reads them from the classifier log (spec 6). | `deck/test/closing-report.test.mjs`: two log entries for the ticket from two agents → `Blocked steps: 2` and two rows; none → `Blocked steps: none`. | 2 rows; 1 line at 0. |
 | 6 | "there should be logging for the classifier and how many times it fired and what for" (the user, on gate1 `itm_7d7acc69e969`): every auto-mode denial is appended durably to the classifier log with when, repo, ticket, agent, reason, tool and command, in any session on this machine; a no-verdict is tagged; a command holding a credential is withheld. *assumed (A4, A5)* | `deck/test/classifier-log.test.mjs` on `appendRefusal`/`readRefusals`; `hooks/test/permission-denied.test.js`: a main-session denial outside a run → 1 log line, 0 posts. | 1 line per denial; 0 credential values on disk. |
 | 7 | "so that the audit agent is able to pick up on the stuff we did and make changes to the codebase": the audit counts the repo's refusals by agent and reason, groups recurring command shapes, and reports each recurring habit as a row with the command that measured it and a ticket-ready spec, so the user can pick it as a ticket. *assumed (A5)* *practitioner: an SRE turns a recurring alert into a ranked toil ticket, from the raw log.* | `scripts/test/audit-refusals.test.mjs` on `refusalRows`: the 3 refused shapes of §1 seeded 3 times each → 3 rows; `skills/audit/areas/refusals.md` names the command. | ≥3 of one shape = 1 row; 2 = none. |
@@ -61,9 +61,9 @@ writer's worktree (`git show … > file`, `git checkout -- deck`, `git stash`, `
 
 **Kills.** `agents/pilot-implementer.md:101-105` and `agents/pilot-qa.md:113-116` ban image-wide kills for a browser
 only; `agents/pilot.md:159` and `agents/pilot-co-pilot.md:100` ban "a kill bundled with a read". The implementer has no
-`TaskStop`; the co-pilot does (`:120`). `TaskStop` reaches only the caller's own tasks: "Task … is owned by …; agent …
+`TaskStop`; the co-pilot does (`:120`). `TaskStop` reaches only the caller's own background runs, refusing another's as "… is owned by …; agent …
 cannot stop it" (`docs/design/architect-deeper/run.json:121-122`, `blocked-steps/run.json:265-266`); a detached
-process's task exits at once (`co-pilot-tickets-history/run.json:141`), so it is stopped by its PID.
+process's background run exits at once (`co-pilot-tickets-history/run.json:141`), so it is stopped by its PID.
 `deck/test/ticket-live-scope.test.mjs:84` pins the pilot's and co-pilot's tool lines.
 
 **Closing report.** `deck/closing-report.mjs:81` `closingReportOf(record, gate, left, closes)`; body lines `:89-110`;
@@ -158,10 +158,10 @@ is a function of the report module: one caller. No fold changes code beyond thes
   Answer: the user pressed "Throwaway worktree" on `itm_cdddd4d75a58` (the default).
   Verdict: stands — the user took the default on itm_cdddd4d75a58: the proof in a throwaway worktree
 - **A3 Implementer and QA gain `TaskStop`** (`itm_d649b66f4053`). Default: both tool lines add it; it reaches only the
-  agent's own tasks (§3). Tradeoff: two agents' tools widen. Rejected: no tool, every background run under its own
+  agent's own background runs (§3). Tradeoff: two agents' tools widen. Rejected: no tool, every background run under its own
   `timeout`, and spec 4 reads "never kills; waits or times out" (a hung run holds the agent up to 10 min).
   Answer: the user pressed "Add TaskStop" on `itm_d649b66f4053` (the default).
-  Verdict: stands — the user chose "Add TaskStop" on itm_d649b66f4053, own tasks only
+  Verdict: stands — the user chose "Add TaskStop" on itm_d649b66f4053, own background runs only
 - **A4 The classifier log is a file of its own, written for every denial in every session** (`itm_a1c2fae51b9f`).
   Default: `onDenied` appends before its lane check, so a main session or a run-less session is caught, file tools
   and no-verdicts included (tagged); `ticket` is the lane's filed ticket when a run is live, else null. The closing
