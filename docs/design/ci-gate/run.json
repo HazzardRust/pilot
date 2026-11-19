@@ -43,7 +43,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed de3b771 (10 land test stubs wrap greenChecks)",
+      "state": "pushed de3b771 (integrating)",
       "after": [
         "S1"
       ],
@@ -52,7 +52,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 89fcd57 (integrating; 3 recording tests filter the check-runs read)",
+      "state": "integrated (3 recording tests filter the check-runs read)",
       "after": [
         "S1"
       ],
@@ -70,7 +70,7 @@
     },
     {
       "slice": "S8",
-      "state": "implementing",
+      "state": "pushed 9ae8fd3",
       "after": [
         "S1"
       ],
@@ -96,8 +96,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s10"
     }
   ],
-  "next": "ci-gate: feat 18629613; integrating S4, then S3 (trailers in co-pilot scratchpad); S7, S8 implementing; then the fundamentalist. Note: land with gh down now refuses as unread (spec 9).",
-  "updatedAt": "2026-11-19T18:50:48.900Z",
+  "next": "ci-gate: feat a0349237; integrating S3, then S8 (trailers in co-pilot scratchpad); S7 implementing; then the fundamentalist.",
+  "updatedAt": "2026-11-19T18:51:28.297Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -264,6 +264,12 @@
       "agent": "pilot-implementer",
       "what": "three-lanes-wording bans bare red/yellow/green anywhere in CONTEXT.md; only the full gate showed it",
       "evidence": "scripts/test/three-lanes-wording.test.mjs:54-56",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate runs 7-9 min, ran twice because review fixes followed the first run",
+      "evidence": "S8 report: 401898 and 518847 ms",
       "size": 1
     }
   ]
