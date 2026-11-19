@@ -1,0 +1,77 @@
+{
+  "slug": "yellow-never-idle",
+  "feature": "yellow-never-idle",
+  "ticket": "itm_74926a1687c5",
+  "branch": "feat/yellow-never-idle",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-yellow-never-idle",
+  "artefact": "docs/design/yellow-never-idle/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 walkthrough turns a yellow ticket green",
+      "state": "pushed 3fe417d; security review of the gate2 exemption owed before integrate",
+      "branch": "slice/yellow-never-idle-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-s1"
+    },
+    {
+      "slice": "S2 idle yellow ticket refuses the lane",
+      "state": "integrated (pilot integrate was still running at hand-off: confirm on origin, else rerun)",
+      "branch": "slice/yellow-never-idle-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-s2"
+    },
+    {
+      "slice": "S3 idle line wakes a parked wait",
+      "state": "planned",
+      "after": [
+        "S2 idle yellow ticket refuses the lane"
+      ]
+    }
+  ],
+  "next": "PR #114. Read C:/Users/Hazzard/Projects/pilot-yellow-never-idle-s1.report.md (S1 verdicts, evidence trailers, owed steps). 1) confirm S2 (49e40741) is on origin/feat/yellow-never-idle, else rerun integrate. 2) security-reviewer on S1, seam into S1.md, integrate S1. 3) deck_ticket co-pilot itm_74926a1687c5, spawn co-pilot for S3, then fundamentalist and QA (scratch deck).",
+  "updatedAt": "2026-11-19T01:46:59.685Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "co-pilot and reviewers read as `other` in authorKind, so owner-kind activity cannot name the crew",
+      "evidence": "deck/items.mjs:352, agents.mjs:180"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "crew list private to lane-ticket.mjs",
+      "evidence": "lane-ticket.mjs:10"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck MCP failed to connect at start, recovered on ToolSearch",
+      "evidence": "session notice"
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "a deck_status under slug never-stuck wrote Run 2's record over Run 1's run.json in the feat worktree; lander brief named the wrong file",
+      "evidence": "git diff docs/design/never-stuck/run.json: ticket itm_9b7008e91201 -> itm_4be94a7ae00a"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the 800-line facades cap and 8 tests pinning the old rule were in neither brief nor slice file; found only in the full gate",
+      "evidence": "S1 report: 10 reds on an intermediate run, store-items.mjs 815 then 798",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a whole-suite run on a stale state could not be stopped (TaskStop not loadable) and ran 6 min for nothing",
+      "evidence": "S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "no testUtils helper for a held co-pilot; three hops to build one",
+      "evidence": "S2 report: aTicket, store.setCoPilot (deck/store-runs.mjs:365), heartbeat",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "implementer reports landed in the pilot after the co-pilot paused; S1's saved to a file because next holds 400 chars",
+      "size": 15
+    }
+  ]
+}
