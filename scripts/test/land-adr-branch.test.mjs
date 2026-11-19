@@ -112,6 +112,40 @@ test('a retry after pilot moved pushes the same numbered commit', (t) => {
   assert.ok(git(origin, 'ls-tree', '--name-only', 'pilot', 'moved0.txt'), 'the move is kept');
 });
 
+test('a retry after pilot took the number renumbers feat by a fast-forward', (t) => {
+  const { origin, seed, dir, x } = adrRepos(t);
+  // The suite's first run lands ADR 0193 on pilot, after feat/x was numbered 0193 and before pilot's push.
+  const count = path.join(dir, 'taker-count');
+  const script = path.join(dir, 'taker.mjs');
+  fs.writeFileSync(
+    script,
+    `import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+const at = (...args) => execFileSync('git', args, { cwd: ${JSON.stringify(seed)} });
+if (!fs.existsSync(${JSON.stringify(count)})) {
+  fs.writeFileSync(${JSON.stringify(count)}, '1');
+  at('fetch', '-q', 'origin');
+  at('checkout', '-q', '-B', 'taker', 'origin/pilot');
+  fs.writeFileSync(${JSON.stringify(seed)} + '/docs/adr/0193-other.md', 'other');
+  at('add', '.');
+  at('commit', '-q', '-m', 'adr 0193');
+  at('push', '-q', 'origin', 'taker:pilot');
+}
+console.log('ℹ pass 1'); console.log('ℹ fail 0');
+`,
+  );
+
+  const landed = land({ cwd: x, git: (args) => git(x, ...args), host: host('x'), test: `node "${script}"` });
+
+  assert.equal(landed.retried, true);
+  assert.deepEqual(landed.adr, { from: 'NNNN-x', to: '0194' });
+  const files = featFiles(origin, 'x');
+  assert.ok(files.includes('docs/adr/0194-x.md'), files.join(', '));
+  assert.ok(!files.includes('docs/adr/0193-x.md'), files.join(', '));
+  assert.equal(git(origin, 'rev-parse', 'feat/x^^'), git(x, 'rev-parse', 'HEAD'), 'the renumber sits on the first number');
+  assert.equal(git(origin, 'rev-parse', 'pilot^2'), git(origin, 'rev-parse', 'feat/x'));
+});
+
 test('a feature with no placeholder gets no commit on feat', (t) => {
   const { origin, bare } = adrRepos(t);
   const tip = git(origin, 'rev-parse', 'feat/bare');

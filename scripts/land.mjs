@@ -215,7 +215,7 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
     throw fail(`${firstLine(err)}; nothing pushed`);
   }
   chainGuard({ cwd });
-  // A record base of pilot, or none, is a legacy run: it keeps the release PR (audit-f14 A3).
+  // A record base of pilot is a legacy run, and so is a record with no base, or no record: it keeps the release PR (audit-f14 A3).
   const recorded = recordBase(cwd, head);
   const legacy = recorded === undefined || recorded === PILOT_BRANCH;
   // The deck's run record rides in the landing merge (lander L10): committed, not discarded.
@@ -246,8 +246,8 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
     // A1). Landed already: neither a refused comment nor an unreadable PR list reads as a failed landing.
     if (host !== null) {
       try {
-        // Only a legacy run's PR targets pilot, so only it can read merged from the push (A3).
-        const stillOpen = comment({ host, head, sha: merge.sha, counts: merge.counts, already: !merge.merged, wait, sleep, poll: legacy });
+        // Only a legacy run's PR targets pilot, so only it is polled to read merged from the push (A3).
+        const stillOpen = comment({ host, head, sha: merge.sha, counts: merge.counts, already: !merge.merged, wait, sleep });
         if (stillOpen.length) landed.stillOpen = stillOpen;
       } catch (err) {
         landed.commentFailed = firstLine(err);
@@ -263,23 +263,14 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
   }
 }
 
-/** The `base` of `head`'s run record in `cwd`, undefined with no record; a record `chainGuard` read already. */
+/**
+ * The `base` of `head`'s run record in `cwd`, undefined with no record. `chainGuard` parsed it
+ * already and refuses an unreadable one, so it parses here.
+ */
 function recordBase(cwd, head) {
   const file = path.join(cwd, runRecord(head.slice('feat/'.length)));
-  if (!fs.existsSync(file)) return undefined;
-  try {
-    return JSON.parse(fs.readFileSync(file, 'utf8')).base;
-  } catch (err) {
-    throw fail(`run record ${runRecord(head.slice('feat/'.length))} unreadable (${firstLine(err)}); nothing pushed`);
-  }
+  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')).base : undefined;
 }
-
-/**
- * A main-cut run's hook once the landing merge's suite is green, before anything is pushed
- * (audit-f14 S5 fills it, L7): passed to `mergeIntoPilot` for a non-legacy run. Answers the ADR
- * `{ from, to }` it allocated, or null; its body is `land-adr.mjs`'s.
- */
-export { afterGreen };
 
 /**
  * The feature's own PR after a main-cut landing (audit-f14 spec 4): `{ number, base, below? }`, `base`
@@ -393,14 +384,14 @@ const conflict = (head, paths, dir, why) => fail(conflictLine({ head, onto: PILO
  * such PR. `already`, the feature on pilot before this landing, comments on nothing (spec 2).
  * Answers the numbers still reading open after the wait, commented all the same.
  */
-export function comment({ host, head, sha, counts, already = false, wait = 30_000, sleep = pause, poll = true }) {
+export function comment({ host, head, sha, counts, already = false, wait = 30_000, sleep = pause }) {
   if (already) return [];
   const ours = host.reviews({ head, state: 'all' }).filter((review) => Number.isSafeInteger(review.number) && review.crossRepo === false && (review.state === 'open' || review.state === 'merged'));
   if (!ours.length) throw new Error(`no open or merged PR has head ${head}`);
   const body = `landed on pilot at ${sha}${counts ? `; full suite ${counts}` : ''}`;
   const stillOpen = [];
   for (const { number, state, base } of ours) {
-    if (poll && state === 'open' && base === PILOT_BRANCH && !readsMerged({ host, number, wait, sleep })) stillOpen.push(number);
+    if (state === 'open' && base === PILOT_BRANCH && !readsMerged({ host, number, wait, sleep })) stillOpen.push(number);
     host.comment(number, body);
   }
   return stillOpen;

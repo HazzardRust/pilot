@@ -167,7 +167,7 @@ resolve the gate1.
 
 ## Re-cut
 
-On a re-cut, `git merge <remote>/pilot` (never rebase a pushed branch) and judge the landed change against the plan. Nature unchanged:
+On a re-cut, `git merge <remote>/<base>` (never rebase a pushed branch) and judge the landed change against the plan. Nature unchanged:
 `deck_ticket replan`. Changed: keep every L‹n›, re-post no locked question, re-cut only touched slices, then a gate1
 with `Changed since <sha7>:`.
 

@@ -311,19 +311,19 @@ export function baseOf(cwd, runs = runRemote(gitIn(cwd))) {
   } catch {} // detached: no record to read, so pilot
   const base = recordIn(cwd, head)?.record.base;
   if (base === undefined || base === PILOT_BRANCH) return pilotBase(cwd, runs);
-  if (typeof base !== 'string' || !RUN_BASE.test(base)) throw new Error(`run record base ${JSON.stringify(base)} is not ${PILOT_BRANCH} or feat/<slug>`);
+  if (typeof base !== 'string' || !RUN_BASE.test(base)) throw new Error(`run record base ${JSON.stringify(base)} is not ${PILOT_BRANCH}, the default branch or feat/<slug>`);
   const main = remoteDefaultBranch(gitIn(cwd));
   const trunk = { ref: `origin/${main}` };
   if (base === main) return trunk;
   if (!/^feat\//.test(base)) throw new Error(`run record base ${JSON.stringify(base)} is not ${PILOT_BRANCH}, ${main} or feat/<slug>`);
   const ref = shortRef(runRef(remoteOf(runs, base), base));
   // N's branch gone (deleted on merge, then pruned): no tip to test, so the chain ends only once N has landed on pilot.
-  if (!holds(cwd, ['rev-parse', '-q', '--verify', `${ref}^{commit}`])) return chainLanded(cwd, base) ? trunk : { ref, chained: base };
+  if (!holds(cwd, ['rev-parse', '-q', '--verify', `${ref}^{commit}`])) return chainLanded(cwd, base, runs) ? trunk : { ref, chained: base };
   return holds(cwd, ['merge-base', '--is-ancestor', ref, trunk.ref]) ? trunk : { ref, chained: base };
 }
 
 /** Whether `feat/<N>`'s landing merge is on the pilot branch's first-parent history, contained in HEAD or not: `chainGuard`'s end of a chain (L5). */
-export const chainLanded = (cwd, head) => landingsOf(cwd, head, pilotBase(cwd).ref).length > 0;
+export const chainLanded = (cwd, head, runs) => landingsOf(cwd, head, pilotBase(cwd, runs).ref).length > 0;
 
 /** The branch name a base is merged as: `chained`, the pilot branch (`pilotBase`'s exact ref on `runs`), or the default branch of `origin/<default>`. */
 const nameOf = (base, runs) => base.chained ?? (base.ref === shortRef(runRef(runs, PILOT_BRANCH)) ? PILOT_BRANCH : base.ref.replace(/^origin\//, ''));
@@ -410,6 +410,7 @@ export function integrate(branch, options = {}) {
     if (runs !== null && runs !== 'origin') git(cwd, 'fetch', '-q', '--prune', runs);
     base = baseOf(cwd, runs);
     name = nameOf(base, runs);
+    if (base.chained && !holds(cwd, ['rev-parse', '-q', '--verify', `${base.ref}^{commit}`])) throw new Error(`${base.chained} is gone from origin and has not landed on ${PILOT_BRANCH}`);
     taken = `${name}@${git(cwd, 'rev-parse', '--short', base.ref)}`;
     // Only a run based on pilot can have landed on it: a chained run's base N has not (L5).
     landed = name === PILOT_BRANCH && landedOnPilot(cwd, head, base.ref);

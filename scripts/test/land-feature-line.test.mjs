@@ -64,6 +64,49 @@ test('no wait for a PR that cannot read merged', (t) => {
   assert.equal(result.stillOpen, undefined);
 });
 
+/** feat/x pushed from `seed` and landed on origin's pilot, so a run based on it passes the chain guard. */
+function landedLower(seed) {
+  git(seed, 'fetch', '-q', 'origin');
+  git(seed, 'checkout', '-q', '-B', 'feat/x', 'origin/main');
+  fs.writeFileSync(path.join(seed, 'x.txt'), 'x\n');
+  git(seed, 'add', 'x.txt');
+  git(seed, 'commit', '-q', '-m', 'x');
+  git(seed, 'push', '-q', 'origin', 'feat/x');
+  git(seed, 'checkout', '-q', '-B', 'landing', 'origin/pilot');
+  git(seed, 'merge', '-q', '--no-ff', '-m', 'Merge feat/x into pilot', 'feat/x');
+  git(seed, 'push', '-q', 'origin', 'landing:pilot');
+}
+
+test('a landing based on feat/x names the PR below', (t) => {
+  const { gitIn, seed, a } = repos(t, 'a');
+  landedLower(seed);
+  recordBase(a, 'feat/x');
+  git(a, 'fetch', '-q', 'origin');
+  const { host } = fakeGh([
+    { number: 12, headRefName: 'feat/x', baseRefName: 'main', state: 'OPEN' },
+    { number: 13, headRefName: 'feat/a', baseRefName: 'feat/x', state: 'OPEN' },
+  ]);
+
+  const result = land({ cwd: a, git: gitIn(a), host, test: passing });
+
+  assert.deepEqual(result.feature, { number: 13, base: 'feat/x', below: 12 });
+});
+
+test('a host that throws reads number null, with why', (t) => {
+  const { gitIn, a } = repos(t, 'a');
+  recordBase(a, 'main');
+  const host = {
+    reviews: () => {
+      throw new Error('gh is down');
+    },
+    comment: () => {},
+  };
+
+  const result = land({ cwd: a, git: gitIn(a), host, test: passing });
+
+  assert.deepEqual(result.feature, { number: null, why: 'gh is down' });
+});
+
 test('a feature whose PR cannot be found reads unknown', (t) => {
   const { gitIn, a } = repos(t, 'a');
   recordBase(a, 'main');

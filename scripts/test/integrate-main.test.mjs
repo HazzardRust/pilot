@@ -131,6 +131,9 @@ test('a chain whose lower branch is gone ends only once that branch landed', (t)
   git(work, 'fetch', '-q', '--prune', 'origin');
   assert.deepEqual(baseOf(work, 'origin'), { ref: 'origin/feat/a', chained: 'feat/a' }, 'gone unlanded: still chained');
   assert.throws(() => chainGuard({ cwd: work }), /built on feat\/a, which has not landed/);
+  const gone = integrate(undefined, { cwd: work, ...quiet });
+  assert.equal(gone.ok, false);
+  assert.match(gone.line, /: feat\/a is gone from origin and has not landed on pilot; nothing merged or pushed$/);
 
   // a's landing, from seed's own feat/a, which outlives the delete on origin.
   git(seed, 'checkout', '-q', 'pilot');
