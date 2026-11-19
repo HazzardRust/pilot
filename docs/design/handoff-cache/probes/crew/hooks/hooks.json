@@ -1,0 +1,11 @@
+{
+  "modules": ["./crew-mod.mjs"],
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "clear",
+        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/probe-io.mjs\" clearing", "timeout": 180 }]
+      }
+    ]
+  }
+}

@@ -9,6 +9,7 @@ import path from 'node:path';
 import { main } from '../analytics.mjs';
 import { readRun } from '../transcripts.mjs';
 import { ROOT, analytics, blocks, tables } from './analytics-run.mjs';
+import { tempDeck } from '../testUtils.mjs';
 
 /** The widest a table line may be (itm_96731cecb9ef). */
 const MAX_WIDTH = 120;
@@ -68,6 +69,7 @@ test('any argument after the slug is refused with the usage, never ignored', (t)
 });
 
 test('outside any git repository the transcripts read are the cwd\'s own', (t) => {
+  tempDeck(t);
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-no-git-'));
   t.after(() => fs.rmSync(cwd, { recursive: true, force: true }));
   const out = { stderr: '' };

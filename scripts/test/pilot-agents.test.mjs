@@ -1099,8 +1099,8 @@ test('the fundamentalist spawns the runner and runs no tool itself', () => {
 
 test('the runner names six checks per stack and runs nothing outside the table', () => {
   // cheaper-crew S2 (L3 as amended on itm_16a6e9ba75e4): one command per check per stack,
-  // each with its cwd and a scratch HOME and USERPROFILE, and mutation never on the four
-  // modules that decide where state lives.
+  // each with its cwd and no environment override (crew-refusals spec 1: the store's guard
+  // replaced the scratch home), and mutation never on the four modules that decide where state lives.
   const { header, rows } = runnerTable();
   assert.deepEqual(header, ['Check', ...RUNNER_STACKS], 'a column per stack');
   assert.deepEqual(rows.map((row) => row[0]), RUNNER_CHECKS, 'six check rows');
@@ -1109,7 +1109,8 @@ test('the runner names six checks per stack and runs nothing outside the table',
     row.slice(1).forEach((cell, i) => {
       if (!cell) return;
       const where = `${row[0]} on ${RUNNER_STACKS[i]}`;
-      assert.match(cell, /^`\$W` · `HOME=\$S USERPROFILE=\$S PILOT_DECK_DIR=\$S\/deck` · `[^`]+`$/, `${where} names its cwd, env and command`);
+      assert.match(cell, /^`\$W` · `[^`]+`$/, `${where} names its cwd and command`);
+      assert.doesNotMatch(cell, /HOME=|USERPROFILE=|PILOT_DECK_DIR=/, `${where} overrides no environment`);
       if (row[0] === 'Diff mutation') assert.match(cell, /\$\{?MUTATE\b/, `${where} mutates only $MUTATE`);
     });
   }

@@ -7,6 +7,9 @@
  * `agent_type` `pilot:pilot` or `pilot`) or a crew agent (`agent_id`, `agent_type` starting
  * `pilot:`); its denial goes to `postBlocked`, which posts it on the live run's ticket.
  *
+ * Every denial, a pilot lane's or not, is first appended to the classifier log
+ * (`deck/classifier-log.mjs`, crew-refusals A4), a record no hook reads back (L9).
+ *
  * The hook never outputs: its only possible output is `retry`, and a denial stays a denial.
  * Another plugin's agent, a session that is not the pilot's, and any payload it cannot read
  * get nothing, and the denial reaches the model exactly as it would have without the hook.
@@ -51,13 +54,48 @@ function commandOf(payload) {
   return typeof payload.tool_name === 'string' ? payload.tool_name : '';
 }
 
-/** Post a pilot lane's denial; always null, so the hook says nothing. `deps`: `deck`, `claims`, `env`. */
+/**
+ * Log every denial, then post a pilot lane's; always null, so the hook says nothing.
+ * `deps`: `deck`, `claims`, `env`, `logDir` (the classifier log's directory, `deckDir()` by default).
+ */
 async function onDenied(payload, deps) {
-  if (!payload || typeof payload !== 'object' || !isPilotLane(payload)) return null;
-  if (isFileTool(payload.tool_name)) return null;
+  if (!payload || typeof payload !== 'object') return null;
   const repo = deck.projectDir(payload, (deps && deps.env) || process.env);
   const reason = typeof payload.reason === 'string' ? payload.reason : '';
   const noVerdict = reason === NO_VERDICT;
+  // Every session's denial is logged, the lane check after it (crew-refusals A4); the ticket is the one the post resolved.
+  let filed = null;
+  try {
+    await laneDenied(payload, repo, reason, noVerdict, Object.assign({}, deps, {
+      onTicket: function (found) { filed = found && typeof found.id === 'string' ? found.id : null; },
+    }));
+  } finally {
+    await logRefusal({
+      repo: repo,
+      ticket: filed,
+      agent: typeof payload.agent_type === 'string' ? payload.agent_type : 'main',
+      reason: reason,
+      tool: typeof payload.tool_name === 'string' ? payload.tool_name : '',
+      command: commandOf(payload),
+      verdict: noVerdict ? 'no-verdict' : 'refused',
+    }, deps && deps.logDir);
+  }
+  return null;
+}
+
+/** Append to the classifier log; a log that cannot load or be written changes nothing (fails open). */
+async function logRefusal(entry, dir) {
+  try {
+    const { appendRefusal } = await import('../deck/classifier-log.mjs');
+    appendRefusal(entry, { dir: dir });
+  } catch (_err) {
+    // The credential check loads with the log, so a log that cannot load writes nothing raw.
+  }
+}
+
+/** Post a pilot lane's denial as a blocked step; any other denial posts nothing. */
+async function laneDenied(payload, repo, reason, noVerdict, deps) {
+  if (!isPilotLane(payload) || isFileTool(payload.tool_name)) return;
   const step = {
     repo: repo,
     command: commandOf(payload),
@@ -72,7 +110,6 @@ async function onDenied(payload, deps) {
     step.key = String(payload.tool_name) + '\0' + JSON.stringify(payload.tool_input === undefined ? null : payload.tool_input);
   }
   await postBlocked(step, deps);
-  return null;
 }
 
 async function main() {
