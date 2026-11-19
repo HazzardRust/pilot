@@ -200,13 +200,14 @@ test('the command prints the table, and --json prints the rows', (t) => {
 // crew-refusals S2 (2026-11-19) raised it from 11871 to the measured 11914.5 (spec 3, 4; L4, L5): the two SHELL_RULES sentences, net of the "a kill bundled with a read in one command" clause they replace, 76 measured from 11838.5.
 // recut-decision S3 (2026-11-20) raised it from 11914.5 to the measured 11936.25 (spec 1, 4; L3): the **Drift** paragraph, net of the **Re-cut** one it replaces, 21.75.
 // recut-decision principles round (2026-11-20) raised it from 11936.25 to the measured 11942.75 (F4): the Drift paragraph names `git merge <remote>/pilot`, never a rebase, 6.5.
+// ci-gate S5 (2026-11-20) raised it from 11942.75 to the measured 11949.5 (spec 4; L6): deck_post's bare `checks: { type: 'string' }`, 6.75.
 test('the pilot pin holds at its new number', async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const pilot = rows.find((row) => row.agent === 'pilot');
   const own = (pilot.definition + pilot.skills + pilot.tools) / 4;
-  assert.ok(own <= 11942.75, `pilot's own share is ${own} tokens, over its 11942.75`);
+  assert.ok(own <= 11949.5, `pilot's own share is ${own} tokens, over its 11949.5`);
 });
 
 // research-first S1 raised the explorer's from 2209 to the measured 2409 (L5): `## A research brief` cost 200.5 (2208.5 to 2409), 41 of it the security-review sentence on fetched pages and queries.
@@ -239,11 +240,12 @@ test("the explorer's own share stays at or under its pin", async (t) => {
 // walkthrough-surface S5 (2026-11-16) raised the architect's from 10497.5 to the measured 10520.25 (spec 8): deck_post's `shell: { type: 'string', description }`, 22.75.
 // crew-refusals S2 (2026-11-19) raised the architect's from 10520.25 to the measured 10581.25 (spec 3, 4; L4, L5): the two SHELL_RULES sentences, 87.25 measured from 10494.
 // recut-decision S3 (2026-11-20) raised the architect's from 10581.25 to the measured 10609 (spec 4; L3): a pushed branch takes pilot by `git merge` in §Re-cut and §Where you work, 27.75.
+// ci-gate S5 (2026-11-20) raised the architect's from 10609 to the measured 10615.75 (spec 4; L6): deck_post's bare `checks: { type: 'string' }`, 6.75.
 test("the architect's own share stays at or under its pin", async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const row = rows.find((row) => row.agent === 'pilot-architect');
   const own = (row.definition + row.skills + row.tools) / 4;
-  assert.ok(own <= 10609, `pilot-architect's own share is ${own} tokens, over its 10609`);
+  assert.ok(own <= 10615.75, `pilot-architect's own share is ${own} tokens, over its 10615.75`);
 });
