@@ -2,7 +2,9 @@
  * `pilot base` — the ref the next run is cut from, in one line (pilot-branch spec 1; L12).
  * Run in the repository the run is for:
  *
- *   base pilot <sha>                          origin's pilot branch and its tip
+ *   base <default> <sha>                      a run on origin with a host: the default branch and its tip
+ *                                             (audit-f14 L9); pilot is still ensured, since Gate 2 lands there
+ *   base pilot <sha>                          origin's pilot branch and its tip, under `pilot.host none`
  *   base pilot <sha> (created from <default>) origin had none: the default tip, pushed
  *   ... on <remote> / ... local               the run remote is not origin (pilot-fork spec 2,
  *                                             3; L7), and a new pilot is "created from origin pilot"
@@ -22,9 +24,10 @@
 
 import { execFileSync } from 'node:child_process';
 import { bearer } from '../hooks/lib/deck-secret.js';
+import { hostOf } from '../deck/host.mjs';
 import { RUN_BASE } from '../deck/runs.mjs';
 import { deckUrl } from '../deck/tools.mjs';
-import { ensurePilotBranch, firstLine, PILOT_BRANCH } from './pilot-branch.mjs';
+import { ensurePilotBranch, firstLine, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
 
 /** How long the deck has to answer before `pilot base` calls it not reached. */
 const TIMEOUT_MS = 5000;
@@ -66,7 +69,9 @@ export async function base({ cwd = process.cwd(), say = (text) => process.stdout
     return 1;
   }
   let pilot;
+  let host;
   try {
+    host = hostOf(git);
     pilot = ensurePilotBranch({ git });
   } catch (err) {
     warn(`pilot base: ${firstLine(err)}\n`);
@@ -88,6 +93,18 @@ export async function base({ cwd = process.cwd(), say = (text) => process.stdout
     } catch {
       deck = ' (deck not reached)';
     }
+  }
+  if (runs === 'origin' && host !== 'none') {
+    // An unchained run on origin with a host is cut from the default branch, whose PR it opens (audit-f14 L9).
+    let main;
+    try {
+      main = remoteDefaultBranch(git);
+    } catch (err) {
+      warn(`pilot base: ${firstLine(err)}\n`);
+      return 1;
+    }
+    say(`base ${main} ${git(['rev-parse', '--short', '--verify', `refs/remotes/origin/${main}^{commit}`])}${deck}\n`);
+    return 0;
   }
   say(`base ${PILOT_BRANCH} ${git(['rev-parse', '--short', pilot.sha])}${from}${where}${deck}\n`);
   return 0;

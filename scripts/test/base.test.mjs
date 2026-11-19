@@ -55,11 +55,11 @@ async function printed(cwd) {
   return { code, out: said.join(''), err: warned.join('') };
 }
 
-test('base prints the pilot branch even with open feat/ branches', async (t) => {
+test('base prints the default branch even with open feat/ branches', async (t) => {
   const { work } = scratchRepos(t);
   const { code, out } = await printed(work);
   assert.equal(code, 0);
-  assert.equal(out, `base pilot ${git(work, 'rev-parse', '--short', 'origin/pilot')}\n`);
+  assert.equal(out, `base main ${git(work, 'rev-parse', '--short', 'origin/main')}\n`);
 });
 
 test('base exits 1 and says why when origin is unreachable', async (t) => {

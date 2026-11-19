@@ -246,8 +246,12 @@ export const FINISHED_CLEAN = 'closing report posted';
 /** A slug names `docs/design/<slug>/`, so it is kebab-case and nothing a path could misread. */
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-/** A run's base (pilot-develop-line L6): `pilot`, or the concluding feature's `feat/<slug>` it is chained on. */
-export const RUN_BASE = new RegExp(`^(?:pilot|feat/${SLUG.source.slice(1, -1)})$`);
+/**
+ * A run's base (pilot-develop-line L6; audit-f14 A7): `pilot`, the concluding feature's `feat/<slug>` it is chained
+ * on, or the default branch's own name. It reaches git as an argument, so it never starts with `-`, holds no `..`, and
+ * is never `HEAD`.
+ */
+export const RUN_BASE = new RegExp(`^(?:pilot|feat/${SLUG.source.slice(1, -1)}|(?!HEAD$)(?!.*\\.\\.)[A-Za-z0-9_][A-Za-z0-9._/-]*)$`);
 
 const TICKET_ID = /^itm_[0-9a-f]+$/;
 
@@ -416,7 +420,7 @@ export function recordFields({ slug, ticket, branch, base, worktree, qa, artefac
   // The ref `pilot integrate` merges at every slice, so never anything git could read as an option.
   if (base !== undefined) {
     fields.base = recordCell('base', base);
-    if (!RUN_BASE.test(fields.base)) throw new RunRefusal(`base must be pilot or feat/<slug>, not ${JSON.stringify(fields.base)}`);
+    if (!RUN_BASE.test(fields.base)) throw new RunRefusal(`base must be pilot, feat/<slug> or a branch name, not ${JSON.stringify(fields.base)}`);
   }
   if (worktree !== undefined) {
     // Where the daemon writes run.json (independence spec 22.2), so never a relative path.
