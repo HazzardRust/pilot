@@ -55,3 +55,7 @@ S6 read the verdict above against its bar (architecture.md §5 L1) and built not
 rerun. Line 7a's row for S11's ledger:
 
 ruled out: no loss in 15 runs
+
+## QA: a send between the clear and the submit
+
+3 runs, sonnet, each RECEIVED, mod.jsonl order clear-end < sent < submitted. Run by QA on 2026-11-19 from the crew probe with a `between` point.

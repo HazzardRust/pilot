@@ -7,11 +7,11 @@ came from. Claude Code 2.1.328; the numbers are copied from the files named, not
 | --- | --- | --- | --- |
 | 1 | built | 36 transcripts on disk, 27 after-handoff and 7 cold first turns (2 not yet at a first turn); the median after-handoff turn reads 24,419 cached and writes 15,869 (1h), cached share 0.6, against a cold turn's 0 read, 36,363 written, share 0 | `measurements.md` |
 | 2 | built, accounting short of its bar | 29 sections in both starts, the same 29 names; 8 carry a size and hash (7 identical, `memory` differs by per-session paths), 21 are named only, so the bar of 0 unaccounted is not met | `probes/sections.md` |
-| 3 | built | the reordered frame shares 752 bytes (about 190 tokens) between two hand-offs, up from 130 bytes; the gain is the frame's, not the 15,871-token first-turn miss; the live re-measure of the cache read (B4) is QA's | `measurements.md` (the 15,871 miss); the 752 and 130 bytes are in commit 962af8c5's message, and `hooks/test/session-handoff.test.js:933` asserts at least 700 |
+| 3 | ruled out | the reordered frame would share 752 bytes (about 190 tokens) between hand-offs, under the 1,000 bar; the prompt cache matches whole blocks, so the live gain is likely 0; reverted at step 7 | `measurements.md`; commit 962af8c5 |
 | 4 | ruled out | `/clear` stays: kept head +1,578 / -1,683 / +1,579 against 5,506 (pickup 3 of 3); compact refused headless; branch absent | `probes/restart.md` |
 | 5 | ruled out | trimming all 8 sized sections moves the first turn +1 / 0 / +10 / +5 tokens (one unrepeated -1,375) against the 1,000 bar; `deck_status` 0 of 3 trimmed and 0 of 3 untrimmed | `probes/sections.md` |
 | 6 | built | this ledger: 8 rows, 0 without a number | `ledger.md` |
 | 7 | built | the crew survived and received the message in 15 of 15 runs, before, during and after the clear, 5 runs at each point | `probes/crew.md` |
-| 7a | ruled out | no loss in 15 runs; not covered: an interactive TTY, an agent life past 70 s, a send between the clear and the submit (QA's check) | `probes/crew.md` |
+| 7a | ruled out | no loss in 15 runs, and QA's run, 3 of 3 received when the send lands between the clear and the submit; not covered: an interactive TTY, an agent life past 70 s | `probes/crew.md` (incl. the section `QA: a send between the clear and the submit`) |
 
 Misses: whether the numbers are enough is the user's to read at Gate 2.
