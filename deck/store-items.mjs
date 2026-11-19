@@ -169,7 +169,7 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   if (concludes(item, author) && walked?.kind === KIND_TICKET && stateOf(walked) === 'yellow' && sameRepo(walked.repo, item.repo)) concludeOn(deck, walked, item.id);
   if (kind === KIND_REPORT && ticket) {
     // Closing ends its liveness too (L9).
-    delete ticket.live;
+    delete ticket.live; delete ticket.concludedBy;
     ticket.state = 'closed';
     ticket.resolution = `closed by ${item.id}`;
     ticket.resolvedAt = item.postedAt;
