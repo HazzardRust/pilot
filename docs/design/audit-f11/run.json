@@ -1,0 +1,67 @@
+{
+  "slug": "audit-f11",
+  "feature": "Fixture git stops printing CRLF warnings",
+  "ticket": "itm_9e6eb292dcf7",
+  "branch": "feat/audit-f11",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f11",
+  "artefact": "docs/design/audit-f11/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/audit-f11-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f11-s1"
+    }
+  ],
+  "next": "PR #115. S1 integrated 0cb675d8, trial clean on pilot. gate2 itm_d955db6a0d92 posted, waiting on the user's Sign off press; on the press spawn pilot-lander with that gate2 id.",
+  "updatedAt": "2026-11-19T02:01:57.943Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "brief.md PR footer copied from another run carries that run's session URL, so footer and commit trailer name different sessions",
+      "evidence": "docs/design/audit-f11/brief.md vs the trailer in the brief",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "a finishing architect has no step-3 text for the gate1 body",
+      "evidence": "architect report: body is its own summary",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "a paused co-pilot cannot stop its implementers (TaskStop refused) and is forced to hand back before the drain ends; their reports go to an agent that is gone",
+      "evidence": "co-pilot hand-back: S1 local 84b041ca unpushed, S2 staged uncommitted",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "deck_ticket co-pilot for a short-path ticket was accepted while another ticket's co-pilot was live, taking its lane silently",
+      "evidence": "\"Co-pilot itm_9e6eb292dcf7: live\" after itm_74926a1687c5; release then says \"not the live one\"",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "session ran 3 landings' tails, 2 gate1s, 3 inquiry threads and 3 tickets after a cold recovery",
+      "size": 230
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test takes 424 s and a foreground wait is backgrounded after 180 s; several turns spent on notifications",
+      "evidence": "audit-f11 S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "spec 4 names a worktree's .git/config, which is a file there; the common-dir path is the one to hash",
+      "evidence": "audit-f11 S1 report",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "gate2 post refused twice (pr shape, Verdict: line prefix) before it took",
+      "size": 3
+    }
+  ]
+}
