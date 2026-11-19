@@ -21,7 +21,8 @@ const REPO = path.join('D:', 'work', 'pilot');
 
 const stored = (title, state, extra = {}) =>
   postStored({ kind: KIND_TICKET, title, body: shapedTicketBody(title), repo: REPO, sliceCount: 60, state, ...extra });
-const aWalkthrough = (ticket) => postItem({ kind: KIND_WALKTHROUGH, title: 'Walk it', body: 'Steps.', repo: REPO, ticket });
+// Stored, not posted: a posted one would conclude its yellow ticket itself (yellow-never-idle spec 1).
+const aWalkthrough = (ticket) => postStored({ kind: KIND_WALKTHROUGH, title: 'Walk it', body: 'Steps.', repo: REPO, ticket });
 const aGate2 = (ticket) => postItem({ kind: KIND_GATE2, title: 'Gate 2', body: 'Walk it.', repo: REPO, pr: '#250', sha: '0305827', ticket });
 const reread = (id) => listItems().find((item) => item.id === id);
 const refusedNaming = (...words) => (error) =>
@@ -69,13 +70,6 @@ test('need is refused on a ticket that is not yellow', (t) => {
     assert.equal(reread(ticket.id).state, state);
   }
   assert.throws(() => needTicket('itm_0123456789ab'), refusedNaming('itm_0123456789ab'));
-});
-
-test('posting a walkthrough leaves its ticket yellow', (t) => {
-  tempDeck(t);
-  const ticket = stored('qa still fixing', 'yellow', { live: true });
-  aWalkthrough(ticket.id);
-  assert.equal(reread(ticket.id).state, 'yellow');
 });
 
 test('pivot turns a green ticket yellow and supersedes its open gate2', async (t) => {
