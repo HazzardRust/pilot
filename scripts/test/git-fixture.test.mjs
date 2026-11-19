@@ -8,7 +8,7 @@ import { gitFixture } from './lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -122,4 +122,13 @@ test('identity comes from the global file', (t) => {
   assert.match(sha, /^[0-9a-f]{40}$/, 'git commit succeeded with no git config call');
   assert.equal(git(dir, 'config', 'user.email'), 't@example.com');
   assert.equal(git(dir, 'config', '--local', '--list').includes('user.'), false, 'no identity in the repository config');
+});
+
+test('fixture git converts no line endings', (t) => {
+  const { dir } = gitFixture(t, 'eol', oneCommit);
+  assert.equal(git(dir, 'config', '--get', 'core.autocrlf'), 'false');
+  fs.writeFileSync(path.join(dir, 'lf.txt'), 'one\ntwo\n');
+  const add = spawnSync('git', ['add', 'lf.txt'], { cwd: dir, encoding: 'utf8' });
+  assert.equal(add.status, 0);
+  assert.equal(add.stderr, '', 'adding an LF file prints no CRLF warning');
 });
