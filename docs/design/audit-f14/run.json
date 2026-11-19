@@ -43,21 +43,25 @@
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S4"
-      ]
+      ],
+      "branch": "slice/audit-f14-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s5"
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "pushed 120c5ed",
       "after": [
         "S4"
-      ]
+      ],
+      "branch": "slice/audit-f14-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s6"
     },
     {
       "slice": "S7",
-      "state": "implementing",
+      "state": "integrated",
       "after": [
         "S3"
       ],
@@ -66,18 +70,22 @@
     },
     {
       "slice": "S8",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S7"
-      ]
+      ],
+      "branch": "slice/audit-f14-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s8"
     },
     {
       "slice": "S9",
-      "state": "planned",
+      "state": "pushed e395837",
       "after": [
         "S4",
         "S7"
-      ]
+      ],
+      "branch": "slice/audit-f14-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s9"
     },
     {
       "slice": "audit-f14",
@@ -94,10 +102,11 @@
     "kept: S4-R4 LOW — a record with no base is legacy: one-line comment",
     "kept: S3-R1 LOW — chainLanded re-reads runRemote instead of baseOf's runs",
     "kept: S3-R2 LOW — RUN_BASE error text still says pilot or feat/<slug>",
-    "kept: S3-R3 LOW — gone-and-unlanded lower branch fails with a bare git error, name it"
+    "kept: S3-R3 LOW — gone-and-unlanded lower branch fails with a bare git error, name it",
+    "kept: S7-R1 security LOW — scripts/merge-generated.mjs:36-47: a committed docs/adr directory symlink lets refreshIndex write outside the worktree, and restack runs it unattended; fix: a realpathSync check that stays inside dir"
   ],
-  "next": "pausing: S1-S4 integrated, feat/audit-f14 at eeefa270; S7 draining from 45581cf3; on its report integrate S7, then hand back paused. Resume: pilot ready (S5, S6, S8); fix round holds the kept findings",
-  "updatedAt": "2026-11-19T13:04:30.600Z",
+  "next": "audit-f14 co-pilot: S6 integrating; S9 pushed e395837 (security APPROVE) integrates next; S5, S8 implementing; then fundamentalist, fix round, QA",
+  "updatedAt": "2026-11-19T15:35:15.535Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -236,6 +245,36 @@
       "agent": "typescript-reviewer",
       "what": "reviewer's node --test hit EPERM in the suite gate slot dir, so it could not confirm the tests",
       "evidence": "mkdir ...Temp\\pilot-gate-slots\\slot-1.json.takeover EPERM at land.test.mjs:23"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a node -e / heredoc patch script mangled backslashes and $-patterns in three files; the Edit tool avoided it",
+      "evidence": "S6 report: about 6 extra calls incl. a git checkout and node --check passes",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test takes about 7 minutes, easy to start before a late fix",
+      "evidence": "S6 full suite ran before the reviewer-driven fix; only the two closing tests re-ran",
+      "size": 7
+    },
+    {
+      "agent": "co-pilot",
+      "what": "harness forces a SubagentHandback each time the co-pilot idles on live children; it reported 'paused' while still holding the ticket, twice",
+      "evidence": "two interim hand-backs from the audit-f14 co-pilot with 5 children live, feat still 5e418205",
+      "size": 3000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test is the only gate for a pure base merge; no changed-only selection applies",
+      "evidence": "base-pilot merge b487ad4: npm test 424 s, spawn count 12720 under 13450",
+      "size": 424
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "agents/pilot.md's token pin has 0 headroom on base; only the 7-minute npm test revealed it, costing a second full run; the two-second measure-prompt and pilot-branch-rules tests would have caught it",
+      "evidence": "S9 report: share 12070 vs pin 11914.5, then trimmed to 11914",
+      "size": 420
     }
   ]
 }
