@@ -9,36 +9,46 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "planned"
+      "state": "integrated c38a3e8",
+      "branch": "slice/crew-refusals-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-refusals-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/crew-refusals-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-refusals-s2"
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S4"
-      ]
+      ],
+      "branch": "slice/crew-refusals-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-refusals-s3"
     },
     {
       "slice": "S4",
-      "state": "planned"
+      "state": "pushed 5bffb3b",
+      "branch": "slice/crew-refusals-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-refusals-s4"
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S4"
-      ]
+      ],
+      "branch": "slice/crew-refusals-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-refusals-s5"
     }
   ],
-  "next": "Re-cut 47a24160 pushed, 5 slices, A1-A5 recorded. Old gate1 itm_7d7acc69e969 open unsigned; deck refuses a second. User asked to Dismiss it, or press Sign off, then `deck_ticket recut`. Then architect a034e74be6c995ded posts gate1 \"Changed since 512f5006:\". Never resolve it unsigned. Stashed: Rune itm_0dcd9aa67146, 2 questions open.",
-  "updatedAt": "2026-11-19T03:47:52.506Z",
+  "next": "co-pilot: S2, S3, S5 implementing; integrating S4 (5bffb3b), then send S3/S5 the new tip",
+  "updatedAt": "2026-11-19T06:09:57.691Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -67,6 +77,40 @@
       "kind": "drain",
       "what": "five architect hand-backs duplicated as message plus forced interim hand-back plus task notification on each resume",
       "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "architect id from the hand-off record could not be resumed after /clear (no transcript), so the pilot read artefact sections 5-8 and posted the re-cut gate1 itself",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait bundled with reads got no classifier verdict and was reissued alone; first exit only said to co-pilot the planned ticket",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "the run's own design docs shipped red on the vocabulary guard",
+      "evidence": "vocabulary.mjs check docs/design/crew-refusals: 7 hits of task/tasks at architecture.md:31,64,66,161,164 and S2.md:27 on gate1 sha 47a24160; fixed at 7e6cd95c",
+      "size": 7
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1's slice file omitted two test files its change breaks (runner-cell pin, platform-reads rule), and the vocabulary guard rejected 'tasks' in the new ADR",
+      "evidence": "scripts/test/pilot-agents.test.mjs:1100-1114 edited outside owned files; gate-s1b.log docs/adr/NNNN-crew-refusals.md:39:tasks, one 7-minute gate run lost",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4's slice file named none of the three repo guards its change trips, costing a second full gate run",
+      "evidence": "join.test.js:191 /\\.ticket\\b/, no-pilot-run.test.mjs:13, deck-readme.test.mjs:27 red on first gate; diff 311 lines vs 300 limit from the README row the guard requires",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate's push failed on a GitHub server error and the run record was not committed; a manual push succeeded",
+      "evidence": "integrate printed 'push or record failed (remote: fatal error in commit_refs_rules)'; git push 7e6cd95c..c38a3e82 ok. Also 'selection is 36300 characters of argv, over 24000'",
+      "size": 1
     }
   ]
 }
