@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed 1778899",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -24,11 +24,13 @@
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "fixing (integrate red on base merge: architect pin +10 tokens)",
       "after": [
         "S1",
         "S2"
-      ]
+      ],
+      "branch": "slice/audit-f14-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s3"
     },
     {
       "slice": "S4",
@@ -81,8 +83,8 @@
       "pr": 119
     }
   ],
-  "next": "integrate S2 (1778899) into feat/audit-f14 at a861cccd, then S3",
-  "updatedAt": "2026-11-19T11:57:29.633Z",
+  "next": "feat/audit-f14 at 99a9e3b0; S3 integrate red: S2's architect wording + pilot's two new lines over the architect pin by 10 tokens; fixer trims S2's base line on feat; then re-run pilot integrate S3 (typescript APPROVE on f1019a28, security APPROVE), then pilot ready (S4, S7)",
+  "updatedAt": "2026-11-19T12:37:25.947Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -171,6 +173,31 @@
       "what": "Monitor not available to the implementer, so it polled its gate log with until-grep loops",
       "evidence": "S2 fix report",
       "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot forced to hand back by handback-send-enforce while its S3 implementer was live, against the never-end-with-a-child-live rule; TaskOutput absent from the co-pilot's toolset, so waits ran as bounded git ls-remote loops",
+      "evidence": "TaskOutput: No such tool available; [handback-send-enforce] after S3 pushed f1019a2 with its report pending"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice file names integrate-base.test.mjs as new but it already exists (other-host S2); implementer used integrate-main.test.mjs",
+      "evidence": "scripts/test/integrate-base.test.mjs from 83d1ecab"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "context compacted mid-slice at about 160k tokens, past the two-thirds re-cut mark; lost worktree state",
+      "evidence": "subagent_tokens 165923; re-ran git status and npm ci after the summary"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "bare fixture origin with no pushed default branch makes remoteDefaultBranch throw",
+      "evidence": "no default branch known: origin's HEAD names no branch"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce forced a hand-back with S3 unintegrated; TaskOutput absent from the co-pilot toolset, so waits ran as git ls-remote loops",
+      "evidence": "No such tool available: TaskOutput; [handback-send-enforce] while S3 report was pending"
     }
   ]
 }
