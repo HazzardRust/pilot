@@ -14,9 +14,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { REPORT_DUE, blockedStepLines, closeLanded, closingReportOf } from '../closing-report.mjs';
+import { REPORT_DUE, blockedStepLines, closeLanded, closingReportOf, stepsOf } from '../closing-report.mjs';
 import { appendRefusal } from '../classifier-log.mjs';
-import { KIND_GATE2, KIND_HANDOFF, KIND_QUESTION, KIND_REPORT, SIGN_OFF } from '../items.mjs';
+import { KIND_GATE2, KIND_HANDOFF, KIND_QUESTION, KIND_REPORT, KIND_STEPS, SIGN_OFF } from '../items.mjs';
 import { closeLandedAtStart, startLanding } from '../landing.mjs';
 import { reportAskGaps } from '../report-shape.mjs';
 import { callTool } from '../server-tools.mjs';
@@ -152,26 +152,27 @@ test('a slice or friction row that asks is quoted, so the report still asks noth
   assert.ok(body.includes('S3 does it fit?'));
 });
 
-test('the human step names the main PR', (t) => {
+test('the human steps name the main PR, and the report none', (t) => {
   tempDeck(t);
   const repo = scratch(t, 'repo');
   const { ticket, gate } = aSignedGate2(repo);
   const { record } = recordForTicket(repo, ticket);
-  const landedWith = (line) => closingReportOf(record, { ...gate, landing: { state: 'landed', sha: '1a2b3c4', line } }, []).body;
+  const landing = (line) => ({ ...gate, landing: { state: 'landed', sha: '1a2b3c4', line } });
+  const stepsWith = (line) => stepsOf(record, landing(line), []).map((step) => step.text);
 
-  assert.ok(landedWith(LAND_LINE).includes('Human step: Merge #600 with a merge commit, when you want main to have it.'));
-  assert.ok(landedWith(LAND_LINE).includes("Human step: Prune other runs' branches: pilot branches prune --dry-run first."), 'the prune step');
-  assert.deepEqual(reportAskGaps(landedWith(LAND_LINE)), []);
-  const byHand = landedWith(LAND_LINE.replace('main gets pilot: #600', 'main gets pilot: open a PR from fork/pilot to main by hand'));
-  assert.ok(byHand.includes('Human step: Open a PR from fork/pilot to main by hand, and merge it with a merge commit.'));
+  assert.deepEqual(stepsWith(LAND_LINE), [
+    'Merge #600 with a merge commit, when you want main to have it.',
+    "Prune other runs' branches: pilot branches prune --dry-run first.",
+  ]);
+  assert.doesNotMatch(closingReportOf(record, landing(LAND_LINE), []).body, /Human step/);
+  const byHand = stepsWith(LAND_LINE.replace('main gets pilot: #600', 'main gets pilot: open a PR from fork/pilot to main by hand'));
+  assert.equal(byHand[0], 'Open a PR from fork/pilot to main by hand, and merge it with a merge commit.');
   // With no run remote, pilot is on no remote to open a PR from.
-  const local = landedWith(LAND_LINE.replace('main gets pilot: #600', 'main gets pilot: open a PR from pilot to main by hand'));
-  assert.ok(local.includes('Human step: Push pilot, then open a PR from pilot to main by hand, and merge it with a merge commit.'), local);
-  assert.deepEqual(reportAskGaps(local), []);
-  const unknown = landedWith(LAND_LINE.replace('main gets pilot: #600', 'main gets pilot: unknown (gh failed)'));
-  assert.ok(unknown.includes('Human step: land named no main PR, so check which PR brings pilot to main.'));
-  assert.deepEqual(reportAskGaps(byHand), []);
-  assert.deepEqual(reportAskGaps(unknown), []);
+  const local = stepsWith(LAND_LINE.replace('main gets pilot: #600', 'main gets pilot: open a PR from pilot to main by hand'));
+  assert.equal(local[0], 'Push pilot, then open a PR from pilot to main by hand, and merge it with a merge commit.');
+  const unknown = stepsWith(LAND_LINE.replace('main gets pilot: #600', 'main gets pilot: unknown (gh failed)'));
+  assert.equal(unknown[0], 'land named no main PR, so check which PR brings pilot to main.');
+  for (const steps of [stepsWith(LAND_LINE), byHand, local, unknown]) assert.deepEqual(reportAskGaps(steps.join('\n')), []);
 });
 
 /** Land `gate` through a fake child that prints `line` and exits 0. */
@@ -223,7 +224,8 @@ test("the lander's bodiless report is filled from the record", (t) => {
   assert.ok(report.body.includes('main gets pilot: #600'), 'the main line');
   // The fixture repository is no git repository: git cannot list, and the post goes on.
   assert.match(report.body, /Worktrees left:\n- none recorded: \S/, 'a git that cannot list, and why');
-  assert.equal(itemOf(ticket).state, 'closed', 'it closes the ticket');
+  assert.equal(listItems().filter((item) => item.kind === KIND_STEPS && item.ticket === ticket).length, 1, 'its steps thread');
+  assert.equal(itemOf(ticket).state, 'green', 'left green under its open steps thread');
   assert.equal(report.replies.filter((reply) => reply.text === REPORT_DUE).length, 1, 'one report due line');
   assert.equal(reportsOn(ticket).length, 1, 'the only closing report');
 });
