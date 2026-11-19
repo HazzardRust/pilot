@@ -42,12 +42,13 @@ export function assertOnPilotTip(repo, branch, { timeout = LINEAGE_MS, base = PI
     const fix = lineage.upstream.startsWith('refs/heads/') ? 'run pilot base' : `git fetch ${upstream.split('/')[0]} ${base}`;
     throw new DeckRefusal(`a gate1 needs the ${base} base: ${repo} has no ${upstream}; ${fix} and post again`);
   }
-  const rebase = `rebase its docs commits onto ${base} (git rebase ${upstream}) and post again`;
   if (lineage.copies > 0) {
+    // A merge keeps the copies, so only a rebase drops them.
     const copies = lineage.copies === 1 ? '1 copy' : `${lineage.copies} copies`;
-    throw new DeckRefusal(`a gate1's branch ${branch} carries ${copies} of ${base}'s commits; ${rebase}`);
+    throw new DeckRefusal(`a gate1's branch ${branch} carries ${copies} of ${base}'s commits; rebase its docs commits onto ${base} (git rebase ${upstream}) and post again`);
   }
-  throw new DeckRefusal(`a gate1's branch ${branch} is not on ${base}'s tip; ${rebase}`);
+  // A merge of the base is on its tip (pilotLineage) and needs no force-push of a pushed branch.
+  throw new DeckRefusal(`a gate1's branch ${branch} is not on ${base}'s tip; merge ${upstream} into it (git merge ${upstream}) and post again`);
 }
 
 /**

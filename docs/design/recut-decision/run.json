@@ -1,0 +1,110 @@
+{
+  "slug": "recut-decision",
+  "feature": "re-cut is the crew's decision",
+  "ticket": "itm_5807aa39f833",
+  "branch": "feat/recut-decision",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-recut-decision",
+  "artefact": "docs/design/recut-decision/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A landing over an owned file leaves the ticket yellow with one drift line",
+      "state": "integrated",
+      "branch": "slice/recut-decision-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-recut-decision-s1"
+    },
+    {
+      "slice": "S2 A yellow ticket is replanned at a merge commit with no press",
+      "state": "pushed e6d2fac",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/recut-decision-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-recut-decision-s2"
+    },
+    {
+      "slice": "S3 The crew puts a plan on pilot by a merge and decides the re-cut",
+      "state": "integrated",
+      "branch": "slice/recut-decision-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-recut-decision-s3"
+    }
+  ],
+  "next": "co-pilot: integrate S2 e6d2fac into feat/recut-decision (ee3c7459), then base check and fundamentalist",
+  "updatedAt": "2026-11-19T14:37:24.363Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "landing sweep re-cut two signed tickets to red with the user leaving; pilot grepped the installed deck for the replan path, merged pilot into two feat branches and replanned by hand; one architect spawn stopped unused",
+      "size": 9
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back hook forced a paused hand-back at idle with S3 pushed but unintegrated; TaskOutput missing from its toolset so it waited with ls-remote loops",
+      "evidence": "audit-f14 hand-back, 25 tool uses"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 slice file named an existing test file as new; context compacted near 160k and lost worktree state, npm ci run twice",
+      "evidence": "scripts/test/integrate-base.test.mjs from 83d1ecab; S3 report"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck/lineage.mjs:42-47 refusal text says rebase though the lineage check accepts a merge of pilot; that wording caused today's force-push question",
+      "evidence": "scripts/pilot-branch.mjs:227"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fact sheet read the worktree after the implementer's edits, so its 'already present' notes described the implementer's own changes",
+      "evidence": "S1 report, friction row",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot and architect prompt pins sit at 0 headroom on the base, so any prose slice must edit scripts/test/measure-prompt.test.mjs outside its owned files",
+      "evidence": "node scripts/measure-prompt.mjs: pilot -21.75, architect -27 after first draft",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate1 refusal text pinned in two test files; slice file named only one",
+      "evidence": "scripts/test/handoff-lineage-remote.test.mjs:156 failed in first full run",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node --test summary lines start with info/cross glyphs, not TAP '# pass', so a grep printed nothing",
+      "evidence": "first red run showed only 'Caught error'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot forced to hand back as paused while its S2 implementer was still running; main had to resume it",
+      "evidence": "recut-decision co-pilot hand-back: S2 uncommitted in pilot-recut-decision-s2",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "integrate's selection overflowed argv (over 24000 characters), so the full suite ran in place of the selection, twice",
+      "evidence": "recut-decision S1 and S3 integrations: 4626 and 4628 pass, spawns 12090",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spawn ceiling left at the measured count (S1 12090 vs 12100) so the next slice with fixture commits tripped it; raised to 13355 in S2",
+      "evidence": "first S2 gate: spawns over 12100 at 12141",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate2 test fixture needs short-path body lines (Verdict per slice, Gate:), found by two refusals",
+      "evidence": "deck/gate2-evidence.mjs:67-68",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "second ticket in one store makes signed() gate1 refuse; test order matters",
+      "evidence": "store-core.mjs:588",
+      "size": 1
+    }
+  ]
+}

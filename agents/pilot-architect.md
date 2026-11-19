@@ -167,7 +167,7 @@ resolve the gate1.
 
 ## Re-cut
 
-On a re-cut, rebase and judge the landed change against the plan. Nature unchanged:
+On a re-cut, `git merge <remote>/pilot` (never rebase a pushed branch) and judge the landed change against the plan. Nature unchanged:
 `deck_ticket replan`. Changed: keep every L‹n›, re-post no locked question, re-cut only touched slices, then a gate1
 with `Changed since <sha7>:`.
 
@@ -188,8 +188,8 @@ Never write, check out, stash, reset or restore a tracked file in a worktree you
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 
 Commit the artefact there, a commit per revision. When `<base>`
-moves, run `git rebase <remote>/<base>`; never merge,
-cherry-pick or replay its commits onto the branch, so `git cherry
+moves, run `git rebase <remote>/<base>` until it is pushed, then `git merge <remote>/<base>`, at step 2 too;
+never cherry-pick or replay its commits onto the branch, so `git cherry
 <remote>/<base>` prints only `+`. You push `design/<slug>` and `feat/<slug>`, at the
 routine red only: Bash runs `pilot verdicts`, `git push <remote> design/<slug>` and `git push <remote> feat/<slug>`
 besides git and reads. You make no host write; the deck makes them. Never push `pilot`, `main`,
