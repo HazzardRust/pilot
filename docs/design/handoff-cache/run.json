@@ -81,7 +81,7 @@
     },
     {
       "slice": "S11",
-      "state": "pushed 2fed9f6; re-review approve",
+      "state": "integrated",
       "after": [
         "S3",
         "S7",
@@ -89,30 +89,72 @@
       ],
       "branch": "slice/handoff-cache-s11",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s11"
+    },
+    {
+      "slice": "feature",
+      "state": "QA read-only pass done (all lines pass bar the found issues); step-7 fix round running",
+      "branch": "feat/handoff-cache",
+      "pr": 120
+    },
+    {
+      "slice": "fix1",
+      "state": "pushed c66f7a4; integrating",
+      "after": [
+        "S11"
+      ],
+      "branch": "slice/handoff-cache-fix1"
+    },
+    {
+      "slice": "S12",
+      "state": "implementing (audit gap, N3; split at 209 lines)",
+      "after": [
+        "S1",
+        "S9",
+        "S10"
+      ],
+      "branch": "slice/handoff-cache-s12"
+    },
+    {
+      "slice": "S13",
+      "state": "pushed c7316f5; security re-review of its review-fix commit",
+      "after": [
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "branch": "slice/handoff-cache-s13"
+    },
+    {
+      "slice": "S14",
+      "state": "implementing (split from S12: update no-op, local-clone strip)",
+      "after": [
+        "S9",
+        "S10"
+      ],
+      "branch": "slice/handoff-cache-s14"
     }
   ],
-  "findings": [],
-  "next": "Co-pilot live: S11 re-review running on 67dd3c8c...2fed9f6; then integrate S11, base check, fundamentalist + QA on PR #120.",
-  "updatedAt": "2026-11-19T09:59:26.486Z",
+  "findings": [
+    "kept: F1 drop — revert S3's frame reorder: gain ~190 tokens is under spec 3's 1,000 bar, so L1 closes it with a ledger row; L1 and A4 unchanged",
+    "kept: F2 simplify, reversed to build — spec 1's gap measured across files (S12)",
+    "kept: F3 — 0 `plugin update` calls with nothing to update (S14)",
+    "kept: N1 — pickup() checks item.id against /^itm_[0-9a-f]{12}$/ (fix1)",
+    "kept: N2 — goes with F1",
+    "kept: N3 — count unreadable transcripts (S12)",
+    "kept: N4 — rename the statusLine test (S14)",
+    "kept: N5 — doctor step names a real reach level (fix1)",
+    "kept: N6 — S10.md Interface lists configDir (S14)",
+    "dropped: N7 — no consequence at 40 files",
+    "kept: C1-a..f — probes inside L8 (S13)",
+    "dropped: C1-g — env allow-list: sessions allow only deck tools or one node script",
+    "dropped: C1-h — POSIX sweep ownership: the probes run on win32",
+    "kept: QA find — local-clone install stripped before the cache refusal (S14)",
+    "dropped: S13 pushback — restart's env keeps ANTHROPIC*/PILOT_*: restart copies no login and its documented login is ANTHROPIC_API_KEY, so L8's copy terms do not reach it",
+    "kept: S13 size — 194 changed lines accepted: net +40, the rest a move into probes/lib.mjs its slice file requires"
+  ],
+  "next": "fix1, S12, S13, S14 running; feat at b9e70740; integrate each on report, base check, resume QA with the tip.",
+  "updatedAt": "2026-11-19T10:33:20.483Z",
   "friction": [
-    {
-      "agent": "pilot-fundamentalist",
-      "what": "handed back twice while its evidence runner was still running, so the runner's table was lost and five checks never reached the review; a fresh runner is needed after the fix round",
-      "evidence": "yellow-never-idle co-pilot report",
-      "size": 3
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "mods API undocumented (docs URL 404), researcher grepped the 379 MB claude.exe for strings; hooks cannot tell a pilot session from a plain one except by agent_type",
-      "evidence": "handoff-cache architect hand-back; permission-denied.js:29",
-      "size": 2
-    },
-    {
-      "agent": "pilot:typescript-reviewer",
-      "what": "auto mode denied a red-then-green proof that overwrote a tracked file and restored it with git checkout",
-      "evidence": "itm_5ba0526f7455",
-      "size": 1
-    },
     {
       "agent": "pilot-architect",
       "what": "nothing checks that /clear starts a new transcript file; audit-session-start.mjs takes the first usage per file",
@@ -315,6 +357,42 @@
       "what": "full npm test (scripts/gate.mjs) ran past 2 minutes and the reviewer stopped waiting; only the adr-index check confirmed",
       "evidence": "S11 re-review report: 'Full npm test did not finish'",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "handed back after 3 tool uses and 30s claiming its context was reset, with no report; no earlier hand-back reached the co-pilot; respawned",
+      "evidence": "hand-back: 'My context was reset partway through the run'; usage 3 tool uses, 30538 ms",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "rerun lost its evidence-runner output to a context reset and did not respawn it; co-pilot ran the evidence checks itself",
+      "evidence": "report §3: 'not run: output lost in the context reset'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a directory-source marketplace runs hooks from the clone, so the first S9 run gave a false fail; marketplace add file:/// is rejected so known_marketplaces.json was hand-written; a failed plugin install blanked installLocation",
+      "evidence": "QA hand-back friction rows; scratchpad/qa3/km.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "diff coverage failed on missing node_modules (its table forbids npm ci) and diff mutation hit the 900 s cap with no mutant result; knip output truncated",
+      "evidence": "runner report: 'node_modules missing: run npm ci'; stryker exit 124",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test runs over 10 minutes with an interleaved tail, so reds were found by grepping for the failure mark; a hand-off fixture id in a second test file broke under N1; a bare git stash run and popped at once",
+      "evidence": "fix1 report: FRICTION rows; session-handoff-owed.test.js:99,105",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S13's first gate died on missing node_modules (a new worktree needs npm ci); a move-shaped slice counts moved lines twice against the 150 limit",
+      "evidence": "S13 report: 'node_modules missing: run npm ci'; 117+/77- net +40",
+      "size": 2
     }
   ]
 }
