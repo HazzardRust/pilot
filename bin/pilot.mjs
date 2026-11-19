@@ -44,6 +44,7 @@ import { main as featurePr } from '../scripts/feature-pr.mjs';
 import { main as land } from '../scripts/land.mjs';
 import { main as landing } from '../deck/landing-wait.mjs';
 import { main as sync } from '../scripts/sync.mjs';
+import { main as restack } from '../scripts/stack.mjs';
 import { searchPathOnly } from '../scripts/pilot-branch.mjs';
 import { main as worktrees } from '../scripts/worktrees.mjs';
 import { main as liveRoot } from '../scripts/live-root.mjs';
@@ -114,7 +115,12 @@ const usage = () => `pilot — the deck for piloted runs
   pilot land
                  in the feat/<slug> worktree: push the feature, merge only it into pilot
                  in a temporary worktree (no sync), run the full suite (the only full run), push pilot (merged again once if it moved),
-                 and keep one open PR from pilot to main, printing main gets pilot: #<n> or why not; exit 3 a conflict
+                 and print the feature PR last, feature PR: #<n> into <base> or why not (a run based
+                 on pilot keeps its PR from pilot to main); exit 3 a conflict
+  pilot restack
+                 after a feature PR merges, or by hand: retarget each open feat/ PR whose lower feature merged,
+                 merge a lower branch or a clashing default branch into it, push never forced; one line per PR;
+                 exit 1 failed, 3 a conflict (naming each path)
   pilot landing <gate2-id>
                  run in the background after a gate2's Sign off: wait for the landing the
                  deck runs, print its line; exit 0 landed, 1 not, 2 no deck or no such gate2
@@ -376,6 +382,11 @@ export async function run(argv, deps) {
     // The deck's pid is read at the sweep, not before the landing: a deck restarted meanwhile is not an orphan.
     // `read` is the one table read clear's holder and the sweep share (landing-keeps-worktrees L4).
     process.exitCode = land(argv.slice(1), { read: processTable, gc: (read) => landSweep({ userDeckPid: deckPidNow(), read }) });
+    return undefined;
+  }
+
+  if (command === 'restack') {
+    process.exitCode = restack(argv.slice(1));
     return undefined;
   }
 
