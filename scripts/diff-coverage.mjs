@@ -15,6 +15,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import platform from '../hooks/lib/platform.js';
 
 const BASE = /^[A-Za-z0-9._/][A-Za-z0-9._/-]*$/;
 const MEASURED = /\.(js|mjs|cjs)$/;
@@ -23,11 +24,8 @@ const UNCOUNTED = /^(\/\/|\/\*|\*\/|\*(\s|$))/;
 
 class Usage extends Error {}
 
-/** A path as one key across `file:///C:/…`, `C:\…` and git's `c:/…`. */
-const key = (p) => {
-  const abs = path.resolve(p).replaceAll('\\', '/');
-  return process.platform === 'win32' ? abs.toLowerCase() : abs;
-};
+/** A path as one key across `file:///c:/…`, `C:\…` and git's `C:/…`: the platform seam's (mac-linux L3). */
+const key = (p) => platform.pathKey(p);
 
 /** The changed, counted lines per file of `git diff -U0 base...HEAD`, and the unmeasured files. */
 function changedLines(cwd, base) {
