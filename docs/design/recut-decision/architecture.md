@@ -16,7 +16,7 @@ what the user signed comes back to them.
 | --- | --- | --- | --- |
 | 1 | After a landing touches a file a signed plan owns, the pilot or co-pilot puts the plan on the new pilot by a merge, and `deck_ticket replan` moves the yellow ticket's plan to the merge commit with no press. | `deck/test/replan.test.mjs`: a yellow signed ticket replanned at a merge sha | state `yellow`, `plan.sha` the new sha, 0 gate1 items |
 | 2 | Every drift and every replan is recorded on the ticket thread: what changed, why, by whom. | test reads the ticket's deck lines | 1 line per drift naming the landing sha7, the files and the slices owning them; 1 line per replan naming the sha7 and the author kind |
-| 3 | A re-cut that moves a spec line, a locked decision or the slice graph still comes to the user as a Gate 1; a change confined to slice files or the brief does not. *assumed* A1 | replan test each way | `architecture.md` unchanged + `slices/S2.md` reworded: replanned; `architecture.md` changed: refused naming it and the gate1 path |
+| 3 | A re-cut that moves a spec line, a locked decision or the slice graph still comes to the user as a Gate 1; a change confined to slice files or the brief does not. *assumed* A1 | replan test each way | a §3 or slice-file reword: replanned, named on the line; a changed §2, §5 or §8 of `architecture.md`: refused naming the section and the gate1 path |
 | 4 | Putting a pushed plan on current pilot asks no force-push question. | prose pins on the three agent files; the gate1 lineage refusal text | the Rune case (itm_43233104ddcc) replayed by the prose: merge, 0 questions; refusal text names `git merge`, not only `rebase` |
 | 5 | A landing never turns a signed ticket red on its own, and neither does a first grant; the drift is noted and the ticket stays yellow. | `deck/test/landing-recut.test.mjs`, `deck/test/plan-drift.test.mjs` | the 2026-11-19 case (landings ffeb730, 3586886 over itm_7d3455d28cd6, itm_0dcd9aa67146) replayed in a scratch store: both yellow, 0 items posted, 0 `recutTicket` calls |
 
@@ -43,7 +43,7 @@ practitioner: release engineer — a moved base is a merge-and-retest, never a r
 | --- | --- | --- | --- |
 | `recut.mjs` drift | `planDrift(repoDir, plan)`, `driftLine(drift, why)` | the two drift sentences the sweep and the grant each built by hand | local-substitutable (git in a temp repo) |
 | landing sweep | `driftAfterLanding(gate2Id, deps)` | – | in-process |
-| replan | `replanTicket(id, sha, { kept })`, `deck_ticket replan` | red re-cut replan and yellow move behind one call | in-process + local-substitutable |
+| replan | `replanTicket(id, sha)`, `deck_ticket replan`, `signedSections(text)` | red re-cut replan and yellow move behind one call; the §2/§5/§8 read | in-process + local-substitutable |
 | gate1 lineage | `assertOnPilotTip(repo, branch)` | – | local-substitutable |
 
 Deletion test: `recutTicket` survives (the pilot's `recut` action, spec 3's gate1 path); `neverGranted` survives (the
@@ -73,12 +73,16 @@ sweep's filter and the grant stamp). Nothing else is deleted; one fold, `driftLi
   `docs/design/<slug>/` (slice files, brief) passes and is named on the line. Default leans on L8 (everything Gate 1
   needs is in `architecture.md`). Trades away: a wording-only edit to `architecture.md` still takes a gate1.
   Rejected: the deck parsing §2/§5/§8 out of the artefact (fragile), and trusting a free-text why (no floor).
+  Verdict: overturned: the user's spec line 3 says a wording-only change passes unasked, and the anchor fixes a landing forces live in architecture.md §3, so byte-equality sends the common case to a Gate 1; replan passes when §2 spec, §5 locked decisions and §8 slices are unchanged, any other edit passes and is named on the ticket line
 - **A2** Tickets already red from the old sweep are not migrated; the pilot replans each by hand once S2 lands.
   Trades away: one manual step per such ticket. Rejected: a store migration (irreversible, tiny population).
+  Verdict: stands — no ticket is red from the old sweep now; both were replanned by hand today
 - **A3** The co-pilot gets no `deck_ticket`; it merges pilot into `feat/<slug>`, pushes, and reports the sha; the
   pilot replans. Trades away: one relay. Rejected: widening the co-pilot's tool list (agent configuration).
+  Verdict: stands — the co-pilot's tool list has no deck_ticket, and it still makes the call; the pilot only records it
 - **A4** QA runs the deck tests on a scratch store and replays spec 5's case there; no live deck walkthrough beyond
   one `pilot tickets` read. Trades away: the user's own look at a live landing. Rejected: landing a real PR to test.
+  Verdict: stands — the plan has no surface a user looks at
 
 ## 7. Out of scope
 
@@ -92,12 +96,12 @@ Width 2; longest stem 2
 | Slice | Title | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- | --- |
 | S1 | A landing over an owned file leaves the ticket yellow with one drift line | 2, 5 | `deck/recut.mjs`, `deck/landing.mjs`, `deck/server-tools.mjs`, `deck/test/landing-recut.test.mjs`, `deck/test/plan-drift.test.mjs` | – | typescript | [S1](slices/S1.md) |
-| S2 | A yellow ticket is replanned at a merge commit with no press | 1, 2, 3 | `deck/store-tickets.mjs`, `deck/server-tools.mjs`, `deck/test/replan.test.mjs` | S1 (`deck/server-tools.mjs`) | typescript | [S2](slices/S2.md) |
+| S2 | A yellow ticket is replanned at a merge commit with no press | 1, 2, 3 | `deck/store-tickets.mjs`, `deck/server-tools.mjs`, `deck/recut.mjs`, `deck/test/replan.test.mjs` | S1 (`deck/server-tools.mjs`, `deck/recut.mjs`) | typescript | [S2](slices/S2.md) |
 | S3 | The crew puts a plan on pilot by a merge and decides the re-cut | 1, 3, 4 | `agents/pilot.md`, `agents/pilot-co-pilot.md`, `agents/pilot-architect.md`, `deck/lineage.mjs`, `deck/test/gate1-lineage.test.mjs`, `scripts/test/recut-prose.test.mjs`, `docs/adr/NNNN-recut-decision.md` | – | typescript, security | [S3](slices/S3.md) |
 
 Walking skeleton: S1, the express stop; landed alone it already keeps every ticket yellow (spec 5).
 
-red team: S2 first behaviour walked against `replanned` (server-tools.mjs:227-245): it reads `recut.from`, absent on a
+red team: A1's overturn makes S2 read headings; an artefact without `## 2.`, `## 5.` or `## 8.` at either sha is never proven unchanged and is refused (S2 behaviour 4). S2 first behaviour walked against `replanned` (server-tools.mjs:227-245): it reads `recut.from`, absent on a
 yellow ticket, so S2 must take `from` as `plan.sha` when yellow; written into S2's Interface. S1 and S2 both edit
 `server-tools.mjs` (grant block vs `replanned`), so S2 comes after S1. S3's prose pins `Drift after this landing`,
 S1's line text: S3 reads the string from S1's slice file, not from code, so the two can run side by side.
