@@ -213,7 +213,7 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
   }
   chainGuard({ cwd });
   // The caught-up tip's checks, before the record commit or any push (ci-gate L4, A2): red, pending, unread refuse.
-  const checks = checksGate({ host, git, sha: git(['rev-parse', 'HEAD']), at: 'land' });
+  const checks = checksGate({ host, git, sha: git(['rev-parse', 'HEAD']) });
   if (!checks.ok) throw fail(`${checks.line}; nothing pushed`);
   // The deck's run record rides in the landing merge (lander L10): committed, not discarded.
   commitRecords(cwd);

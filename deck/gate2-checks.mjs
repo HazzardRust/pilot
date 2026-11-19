@@ -5,7 +5,7 @@
  */
 
 import path from 'node:path';
-import { ciConfigured, parseCheckLine } from '../scripts/checks.mjs';
+import { ciConfigured, parseCheckLine, passes } from '../scripts/checks.mjs';
 import { gitUnder } from '../scripts/pilot-branch.mjs';
 import { CHECKS_FIELD, SHA_FIELD } from './items-bounds.mjs';
 import { repoOf } from './runs.mjs';
@@ -50,6 +50,6 @@ export function checksRefusal(repo, sha, checks) {
   const read = line.length <= CHECKS_FIELD.most && CHECKS_FIELD.shape.test(line) ? parseCheckLine(line) : null;
   if (read === null) return 'NOT posted: checks must be one line, as `pilot checks <sha>` printed it';
   if (!(full ?? at).startsWith(read.sha7)) return `NOT posted: checks at ${read.sha7}, the gate2 is ${sha7}`;
-  if (read.state === 'green' || (read.state === 'none' && read.names.join(', ') === 'no host')) return null;
+  if (passes({ state: read.state, why: read.names.join(', ') })) return null;
   return `NOT posted: checks ${read.state} at ${read.sha7}${read.names.length > 0 ? `: ${read.names.join(', ')}` : ''}; post the gate2 once they are green`;
 }

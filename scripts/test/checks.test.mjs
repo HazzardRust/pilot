@@ -102,9 +102,9 @@ const WORKFLOW = treeOf(['.github/workflows/gate.yml']);
 const BARE = treeOf([]);
 
 test('the gate fails closed', () => {
-  const gate = (host, git = WORKFLOW, at = 'land') => checksGate({ host, git, sha: SHA, at });
-  const green = gate(answering([runAs(0, 'completed', 'success')]), WORKFLOW, 'gate2');
-  assert.deepEqual([green.ok, green.line, green.verdict.state], [true, 'checks green at 5fef2ab', 'green']);
+  const gate = (host, git = WORKFLOW) => checksGate({ host, git, sha: SHA });
+  const green = gate(answering([runAs(0, 'completed', 'success')]));
+  assert.deepEqual([green.ok, green.line], [true, 'checks green at 5fef2ab']);
   assert.equal(gate(githubHost(() => JSON.stringify(PR121))).ok, false);
   assert.deepEqual([gate(answering([runAs(2, 'in_progress', null)])).ok, gate(answering([runAs(2, 'in_progress', null)])).line], [false, 'checks pending at 5fef2ab: gate (macos-latest)']);
   const timedOut = Object.assign(new Error('spawnSync gh ETIMEDOUT'), { code: 'ETIMEDOUT' });
@@ -117,9 +117,7 @@ test('the gate fails closed', () => {
   assert.deepEqual([gate(answering([])).ok, gate(answering([])).line], [false, 'checks none at 5fef2ab']);
   assert.deepEqual([gate(answering([]), BARE).ok, gate(answering([]), BARE).line], [true, 'checks none at 5fef2ab: no CI configured']);
   assert.deepEqual([gate(null, BARE).ok, gate(null, BARE).line], [true, 'checks none at 5fef2ab: no host']);
-  assert.equal(gate(answering([]), () => { throw new Error('git broke'); }).ok, false, 'an unreadable tree counts as CI configured');
-  assert.throws(() => gate(null, BARE, 'integrate'), /land.*gate2/);
-});
+  assert.equal(gate(answering([]), () => { throw new Error('git broke'); }).ok, false, 'an unreadable tree counts as CI configured');});
 
 test('CI configured is a workflow file or .gitlab-ci.yml in the tree', () => {
   for (const file of ['.github/workflows/gate.yml', '.github/workflows/release.yaml', '.gitlab-ci.yml', '.github/workflows/prüfung.yml']) assert.equal(ciConfigured(treeOf([file]), SHA), true, file);
