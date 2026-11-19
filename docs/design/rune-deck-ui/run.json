@@ -51,7 +51,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 7b677ce — production +66/-1, tests waived; rust approve with nits, security approve",
+      "state": "integrated at 599c883 — rust approve, security approve",
       "after": [
         "S5"
       ],
@@ -60,7 +60,7 @@
     },
     {
       "slice": "S7",
-      "state": "implementing — fresh finisher on cae0a6a: trim production 452 to under 400, gate, 2 reviews",
+      "state": "pushed c9c2154 — production 397, tests 307 waived; rust Block (HIGH: co-pilot's trim dropped the page's confirm-in-place on options; sync act on press), typescript WARN; reviews read pre-rebase head; NOT integrated",
       "after": [
         "S5"
       ],
@@ -164,8 +164,8 @@
       ]
     }
   ],
-  "next": "draining at 225k: integrate S6, wait on S7 finisher and integrate it, then hand back paused",
-  "updatedAt": "2026-11-19T23:16:10.672Z",
+  "next": "self-pause at ~240k; feat/rune-deck-ui at 599c883b; next: S7 fix brief on c9c2154 restoring confirm-in-place on card options (~412 production: main waives), rust re-read, integrate S7; pilot ready (S9 S11 S13 S19); added slices: Escape without focus, overview status per tab. Step 7 carry: sync act/fetch on press, ask stale feed, S2 nits 2-3, excerpt markdown",
+  "updatedAt": "2026-11-19T23:33:40.523Z",
   "friction": [
     {
       "agent": "pilot-implementer",
@@ -296,6 +296,12 @@
       "what": "S6: context summarized right after worktree creation, slice rebuilt from scratch; TaskStop unreachable so a 7.5-min npm test on a stale base was wasted; tests/support and pilot deck --scratch did not set the Start guard (PILOT_DECK_NO_START) so a Start press in a Rust test would open a real terminal",
       "evidence": "S6 report; tests/support/mod.rs now sets it",
       "size": 8
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7 finisher: installed pilot on PATH is plugin 0.9.9 without /api/view, so snaps drew 'deck not running' until the worktree CLI was used; --snap cannot capture arrival frames; a soft reset onto a moved feat silently reverts newer content",
+      "evidence": "S7 finisher report; node bin/pilot.mjs deck --scratch",
+      "size": 3
     }
   ]
 }
