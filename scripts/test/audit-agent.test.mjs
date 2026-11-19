@@ -24,6 +24,7 @@ const EXPECT = {
   'navigability.md': { spec: '[7]', model: 'sonnet' }, // L14: navigability runs on Sonnet
   'open.md': { spec: '[15]' },
   'rederived.md': { spec: '[8]', model: 'sonnet' }, // verdict-pass A4: an explorer on Sonnet
+  'refusals.md': { spec: '[7]' }, // crew-refusals spec 7: the auditor's own area
   'setup.md': { spec: '[5, 10]' },
 };
 
