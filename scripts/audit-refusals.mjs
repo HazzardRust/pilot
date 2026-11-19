@@ -8,10 +8,9 @@
  *   node scripts/audit-refusals.mjs <repo> [--log <dir>/classifier.log]
  *   -> { log, total, byAgentReason: [{ agent, reason, count }], rows: AuditRow[] }
  *
- * A row's text comes from the log as S4 stored it (a credential already withheld, each field
- * clipped); a no-verdict is counted, never a habit. `<repo>` is matched by `repoOf`, so a
- * worktree's refusals count under its main checkout. Exit 0 whatever the log holds; a log that
- * cannot be read is named on stderr and answered as none; a `--log` of another name exits 2.
+ * Row text is the log's as S4 stored it (credentials withheld, fields clipped). `<repo>` is matched
+ * by `repoOf`, so a worktree counts under its main checkout. Exit 0 whatever the log holds (an
+ * unreadable one is named on stderr and read as none); a bad argument exits 2.
  */
 
 import path from 'node:path';
@@ -24,6 +23,8 @@ import { pathKey } from '../hooks/lib/platform.js';
 
 /** A recurring habit (A5): this many refusals of one shape in the repository. */
 const MIN_HABIT = 3;
+/** How S4 stores a field that held a credential. */
+const WITHHELD = '<withheld: credential>';
 const OPERATORS = ['&&', '||', ';', '|', '\n'];
 
 /** The command's parts, split on `&&`, `||`, `;`, `|` and newlines outside quotes. */
@@ -90,7 +91,8 @@ export function refusalRows(refusals, opts) {
   const min = (opts && opts.min) || MIN_HABIT;
   const groups = new Map();
   for (const refusal of refusals) {
-    if (refusal.verdict !== 'refused') continue;
+    // A withheld command has no shape to fix: counted by the caller, never grouped into a habit.
+    if (refusal.verdict !== 'refused' || refusal.command === WITHHELD) continue;
     const shape = commandShape(refusal.command) || refusal.tool;
     groups.set(shape, [...(groups.get(shape) ?? []), refusal]);
   }
@@ -105,22 +107,21 @@ function byAgentReason(refusals) {
   const counts = new Map();
   for (const { agent, reason } of refusals) {
     const key = JSON.stringify([agent, reason]);
-    counts.set(key, (counts.get(key) ?? 0) + 1);
+    counts.set(key, { agent, reason, count: (counts.get(key)?.count ?? 0) + 1 });
   }
-  return [...counts]
-    .map(([key, count]) => {
-      const [agent, reason] = JSON.parse(key);
-      return { agent, reason, count };
-    })
-    .sort((a, b) => b.count - a.count);
+  return [...counts.values()].sort((a, b) => b.count - a.count);
 }
 
 async function main() {
-  const { values, positionals } = parseArgs({ options: { log: { type: 'string' } }, allowPositionals: true });
-  if (values.log !== undefined && path.basename(values.log) !== LOG_FILENAME) {
-    process.stderr.write(`audit-refusals: --log names a ${LOG_FILENAME}, not ${values.log}\n`);
+  let args;
+  try {
+    args = parseArgs({ options: { log: { type: 'string' } }, allowPositionals: true });
+    if (args.values.log !== undefined && path.basename(args.values.log) !== LOG_FILENAME) throw new Error(`--log names a ${LOG_FILENAME}`);
+  } catch (err) {
+    process.stderr.write(`audit-refusals: ${err.message}\n`);
     process.exit(2);
   }
+  const { values, positionals } = args;
   // Loaded here, not at the top: `repoOf` reaches the deck store, which the pure functions above never need.
   const { repoOf } = await import('../deck/telemetry.mjs');
   // One repository is one key however a session spelled its directory; a blank or withheld repo is no one's.
@@ -135,8 +136,10 @@ async function main() {
   } catch (err) {
     process.stderr.write(`audit-refusals: the classifier log is not readable (${err.code ?? err.message})\n`);
   }
-  const mine = [];
-  for (const refusal of all) if ((await keyOf(refusal.repo)) === repo) mine.push(refusal);
+  // Each spelling once: a removed worktree is not cached by `repoOf`, and the log holds up to 10,000 lines.
+  const spellings = [...new Set(all.map((refusal) => refusal.repo))];
+  const keys = new Map(await Promise.all(spellings.map(async (dir) => [dir, await keyOf(dir)])));
+  const mine = all.filter((refusal) => keys.get(refusal.repo) === repo);
   process.stdout.write(`${JSON.stringify({ log, total: mine.length, byAgentReason: byAgentReason(mine), rows: refusalRows(mine) })}\n`);
 }
 

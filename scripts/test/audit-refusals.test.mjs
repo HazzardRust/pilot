@@ -73,6 +73,12 @@ test('no-verdicts are counted, never a habit', (t) => {
   assert.deepEqual(refusalRows(refusals), []);
 });
 
+test('withheld commands share no shape, so they are never a habit', (t) => {
+  const { refusals } = seeded(t, [1, 2, 3].map((n) => ({ command: `curl -H "Authorization: Bearer ghp_${'a'.repeat(35)}${n}" x` })));
+  assert.equal(refusals[0].command, '<withheld: credential>');
+  assert.deepEqual(refusalRows(refusals), []);
+});
+
 test('the three habits of this run are three rows', (t) => {
   const { refusals } = seeded(t, [COVERAGE, PROOF, KILL].flatMap((command) => times(3, { command })));
   const rows = refusalRows(refusals);
