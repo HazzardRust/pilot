@@ -114,3 +114,24 @@ test('the region is the view\'s status', () => {
 
   assert.deepEqual(view.regions.status, statusView(reads(), { run: MINE, ticket: green.id }));
 });
+
+test('a run naming no tab has no table, and no run named takes the landing tab', () => {
+  assert.deepEqual(statusView(reads(), { run: path.join('D:', 'work', 'elsewhere') }), { tickets: [], rows: [] });
+
+  const landed = statusView(reads(), {});
+
+  assert.deepEqual(landed.rows.map((row) => row.slice), ['S1 the yellow slice', 'S2 the second']);
+});
+
+test('with no held lane the newest run that posted a table is drawn', () => {
+  const posted = { ...aRun(), slices: [{ slice: 'S1 posted', state: 'doing', after: 'S0' }, { slice: 'S2 next', state: '' }] };
+  const bare = { ...reads([]), runs: [aRun(), posted], lanes: { coPilots: {}, switches: {}, records: [] } };
+
+  const { tickets, rows } = statusView(bare, { run: MINE });
+
+  assert.deepEqual(tickets, []);
+  assert.deepEqual(rows.map(({ slice, state, after }) => ({ slice, state, after })), [
+    { slice: 'S1 posted', state: 'doing', after: ['S0'] },
+    { slice: 'S2 next', state: '', after: [] },
+  ]);
+});

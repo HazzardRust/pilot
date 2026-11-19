@@ -26,17 +26,19 @@ pub enum Feed {
     Down,
 }
 
-/// The newest `Feed` the reader left for the window; an older one it replaces is never drawn.
 /// The reader's view of what the window is asking for, so a region that changes the query (a chosen
 /// ticket) is followed rather than undone by the next `changed`.
 type Asked = Arc<Mutex<Query>>;
 
+/// The newest `Feed` the reader left for the window; an older one it replaces is never drawn.
 #[derive(Debug, Clone, Default)]
 pub struct Inbox(Arc<Mutex<Option<Feed>>>, Asked);
 
 impl Inbox {
-    /// The query every later refetch is made for.
+    /// The query every later refetch is made for. A feed already left was read for the old one, so
+    /// it is dropped: the window never draws a view that is not for what it last asked.
     pub fn ask(&self, query: &Query) {
+        self.0.lock().unwrap_or_else(PoisonError::into_inner).take();
         *self.1.lock().unwrap_or_else(PoisonError::into_inner) = query.clone();
     }
 
@@ -119,5 +121,28 @@ fn follow(
         put(slot, Feed::Down, wake)?;
         std::thread::sleep(BACKOFF[failures]);
         failures = (failures + 1).min(BACKOFF.len() - 1);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn asking_drops_a_feed_read_for_the_old_query() {
+        let inbox = Inbox::default();
+        *inbox.0.lock().unwrap() = Some(Feed::Down);
+
+        inbox.ask(&Query {
+            ticket: Some("itm_g".into()),
+            ..Query::default()
+        });
+
+        assert!(inbox.take().is_none());
+        assert_eq!(
+            inbox.1.lock().unwrap().ticket.as_deref(),
+            Some("itm_g"),
+            "later refetches are for the new query"
+        );
     }
 }

@@ -11,7 +11,7 @@ import { heldTicketsOf } from '../ui/render-rail.mjs';
 const hasTable = (record) => Array.isArray(record?.slices) && record.slices.length > 0;
 
 /** `query` is `{ run, ticket }`; the overview (no tab) has no table and no selector (A6). */
-export function statusView(reads, query) {
+export function statusView(reads, query = {}) {
   const { run = null, ticket: asked = null } = query;
   const tabs = tabsOf(reads.runs, reads.items, reads.numbers, reads.agents, reads.added, reads.lanes);
   const tab = run === null ? landingFor(tabs) : tabFor(tabs, run);
