@@ -21,7 +21,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PICKUP } from './mod.mjs';
 
 const PLUGIN = path.dirname(fileURLToPath(import.meta.url));
 const MODES = ['clear', 'compact', 'compact-keep-head', 'branch'];
@@ -59,7 +58,8 @@ function scratchEnv(config, mode, logFile) {
 
 function readLog(file) {
   if (!fs.existsSync(file)) return [];
-  return fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map((line) => JSON.parse(line));
+  // A line io.mjs is still appending is skipped, not thrown out of the poll's timer.
+  return fs.readFileSync(file, 'utf8').split('\n').flatMap((line) => { try { return [JSON.parse(line)]; } catch { return []; } });
 }
 
 function textOf(event) {
@@ -115,6 +115,7 @@ async function once(opts, version) {
       '-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose',
       '--model', opts.model, '--plugin-dir', PLUGIN, '--strict-mcp-config', '--debug-file', path.join(tmp, 'debug.log'),
     ], { cwd: repo, env: scratchEnv(config, opts.mode, logFile), stdio: ['pipe', 'pipe', 'pipe'] });
+    child.stdin.on('error', () => {}); // EPIPE from an early exit: the close handler records it, the finally drops the login.
     let stderr = '';
     child.stderr.on('data', (d) => { stderr += d; });
     const exited = new Promise((resolve) => {
