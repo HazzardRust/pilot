@@ -44,4 +44,16 @@ uncached input + cache read + cache write. Before the restart the context stood 
 Spend: 12 scratch sessions (clear 3, compact 2, kept head 5, branch 2), each about 60k cache write and 65k cache
 read on Sonnet, about $4.50 API-equivalent in all, inside A5's 12 for S4.
 
+- **Plugin check**: `claude plugin validate docs/design/handoff-cache/probes/restart` (run from the repository root)
+  ended `Validation passed with warnings`: one warning, `ICON_MISSING` (no plugin icon, which a scratch probe does
+  not need), and two notes (README and LICENSE taken from the repository root; the hooks module is not checked
+  against the directory's rules).
+- **Known gap**: the `PROBE_CONFIG_DIR` and `ANTHROPIC_API_KEY` login routes have not run live; all 12 sessions
+  used the copied login described at the top. Not a rerun: the recorded runs stand.
+- **No copy left (L8)**: `Get-ChildItem $env:TEMP -Recurse -Force -Filter '.credentials*'`, over the 12
+  `restartprobe-*` dirs and then all of `%TEMP%`, printing only the count: 0 matches in the `restartprobe-*` dirs and
+  0 TEMP-wide. The 12 leftover `%TEMP%\restartprobe-*` dirs from the recorded runs
+  were then removed (0 left). `run.mjs` now removes its own temp dir in a `finally`, and ends the child's whole
+  tree there and on SIGINT/SIGTERM.
+
 verdict: /clear stays, compact-keep-head saves 1,000 tokens in 1 of 3 runs (L7 measure 7,084 / 3,823 / 7,085 vs 5,506, pickup 3 of 3); compact refused headless; branch absent

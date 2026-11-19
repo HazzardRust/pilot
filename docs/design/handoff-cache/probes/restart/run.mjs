@@ -19,6 +19,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+// The platform seam: the one place a platform is read, and the one tree-kill (taskkill /T /F on win32).
+const { isWindows, killTree } = createRequire(import.meta.url)('../../../../../hooks/lib/platform.js');
 
 const PLUGIN = path.dirname(fileURLToPath(import.meta.url));
 const MODES = ['clear', 'compact', 'compact-keep-head', 'branch'];
@@ -39,9 +43,34 @@ function args(argv) {
 function loginConfig() {
   const dir = process.env.PROBE_CONFIG_DIR;
   // The real config dir is never a scratch one: the probe must not run on, or write into, the user's own home.
-  if (dir && path.resolve(dir) === path.resolve(os.homedir(), '.claude')) return null;
+  if (dir && touchesRealHome(dir)) throw new Error(`PROBE_CONFIG_DIR ${dir} is, is inside, or contains the real ~/.claude: refusing to run on the real home`);
   if (dir) return fs.existsSync(dir) ? dir : null;
   return process.env.ANTHROPIC_API_KEY ? '' : null;
+}
+
+/** A path as the filesystem sees it: symlinks resolved when it exists, case folded on win32. */
+function canon(p) {
+  let r = path.resolve(p);
+  try { r = fs.realpathSync.native(r); } catch { /* not there yet: the resolved spelling stands */ }
+  return isWindows() ? r.toLowerCase() : r;
+}
+
+function within(parent, child) {
+  const rel = path.relative(parent, child);
+  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+}
+
+/** True when dir equals, lies inside, or contains ~/.claude, in any case or symlink spelling. */
+export function touchesRealHome(dir, home = path.join(os.homedir(), '.claude')) {
+  const d = canon(dir);
+  const h = canon(home);
+  return within(h, d) || within(d, h);
+}
+
+/** Ends the child, and on win32 its whole tree (the mod's `node io.mjs` children too). */
+export function endChild(child) {
+  if (child.exitCode !== null || child.signalCode !== null || child.pid === undefined) return;
+  try { killTree(child.pid); } catch (err) { process.stderr.write(`run.mjs: could not end pid ${child.pid}: ${err.message}\n`); }
 }
 
 function filler(lines) {
@@ -100,13 +129,34 @@ function total(usage) {
   return usage ? usage.input + usage.cacheRead + usage.cacheWrite : null;
 }
 
-async function once(opts, version, login) {
+export async function once(opts, version, login) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'restartprobe-'));
   const repo = path.join(tmp, 'repo');
   const config = login || path.join(tmp, 'config');
   const logFile = path.join(tmp, 'mod.log');
   fs.mkdirSync(repo);
   if (!login) fs.mkdirSync(config);
+  let child = null;
+  const cleanup = () => {
+    if (child) endChild(child);
+    // win32 releases a killed child's log handles a beat late: retry, and never let a failed removal replace the run's row.
+    try { fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch (err) {
+      process.stderr.write(`run.mjs: could not remove ${tmp}: ${err.message}\n`);
+    }
+  };
+  const onSignal = () => { cleanup(); process.exit(130); };
+  process.once('SIGINT', onSignal);
+  process.once('SIGTERM', onSignal);
+  try {
+    return await run(opts, version, login, { tmp, repo, config, logFile }, (c) => { child = c; });
+  } finally {
+    process.off('SIGINT', onSignal);
+    process.off('SIGTERM', onSignal);
+    cleanup();
+  }
+}
+
+async function run(opts, version, login, { tmp, repo, config, logFile }, hold) {
   const started = Date.now();
   const events = [];
   let spawnError = null;
@@ -114,6 +164,7 @@ async function once(opts, version, login) {
     '-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose',
     '--model', opts.model, '--plugin-dir', PLUGIN, '--strict-mcp-config', '--debug-file', path.join(tmp, 'debug.log'),
   ], { cwd: repo, env: scratchEnv(config, opts.mode, logFile), stdio: ['pipe', 'pipe', 'pipe'] });
+  hold(child);
   child.stdin.on('error', () => {}); // EPIPE from an early exit: the close handler records the exit.
   let stderr = '';
   child.stderr.on('data', (d) => { stderr += d; });
@@ -200,15 +251,21 @@ async function once(opts, version, login) {
     exit: code,
     seconds: Math.round((Date.now() - started) / 1000),
     stderr: stderr.trim().slice(-400) || undefined,
-    scratch: tmp,
+    scratch: 'removed',
   };
 }
 
-const opts = args(process.argv.slice(2));
-const login = loginConfig();
-if (login === null) {
-  process.stderr.write('run.mjs: no login: set PROBE_CONFIG_DIR to an existing scratch config dir (not ~/.claude) you logged into, or ANTHROPIC_API_KEY\n');
-  process.exit(2);
+if (process.argv[1] && canon(process.argv[1]) === canon(fileURLToPath(import.meta.url))) {
+  const opts = args(process.argv.slice(2));
+  let login;
+  try { login = loginConfig(); } catch (err) {
+    process.stderr.write(`run.mjs: ${err.message}\n`);
+    process.exit(2);
+  }
+  if (login === null) {
+    process.stderr.write('run.mjs: no login: set PROBE_CONFIG_DIR to an existing scratch config dir (not ~/.claude) you logged into, or ANTHROPIC_API_KEY\n');
+    process.exit(2);
+  }
+  const version = (spawnSync('claude', ['--version'], { encoding: 'utf8', timeout: 15_000 }).stdout ?? '').trim() || 'unknown';
+  for (let i = 0; i < opts.runs; i += 1) process.stdout.write(`${JSON.stringify(await once(opts, version, login))}\n`);
 }
-const version = (spawnSync('claude', ['--version'], { encoding: 'utf8', timeout: 15_000 }).stdout ?? '').trim() || 'unknown';
-for (let i = 0; i < opts.runs; i += 1) process.stdout.write(`${JSON.stringify(await once(opts, version, login))}\n`);
