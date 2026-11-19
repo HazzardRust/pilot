@@ -25,7 +25,7 @@ import {
   switchOf,
   ticketQueueOf,
 } from './items.mjs';
-import { IDLE_MS, YIELD_MS, idleYellowOf, yieldsDue } from './lanes.mjs';
+import { CREW_IDLE_MS, YIELD_MS, idleYellowOf, yieldsDue } from './lanes.mjs';
 import { SHA } from './recut.mjs';
 import { nextRecord, repoKey, sameRepo } from './runs.mjs';
 import {
@@ -43,7 +43,7 @@ import {
   writeDeck,
 } from './store-core.mjs';
 import { resolveItem } from './store-items.mjs';
-import { enterStage } from './store-stage.mjs';
+import { deckLine, enterStage } from './store-stage.mjs';
 
 /**
  * The parked green ticket whose walkthrough a reply is on, by id, or undefined (ticket-states spec
@@ -372,7 +372,7 @@ export function yieldTicket(id, questionId) {
   ticket.yielding = { question: questionId, at };
   const question = deck.items.find((item) => item.id === questionId);
   const text = `Yielding ${id}: ${questionId} unanswered ${YIELD_MS / 60_000} min; send the co-pilot the pause: it drains every live slice, then hands back paused`;
-  question.replies = [...messagesOf(question), { from: 'deck', author: 'deck', text, repliedAt: at, seq: (deck.seq = seqOf(deck) + 1) }];
+  question.replies = [...messagesOf(question), deckLine(deck, text, at)];
   touchRuns(deck, ticket.repo);
   writeDeck(deck);
   return ticket;
@@ -390,13 +390,13 @@ export function noteIdle(ticketId, crewSeenAt) {
   const entry = storedCoPilot(deck, ticket.repo);
   const holder = entry && isLiveCoPilot(deck, entry) ? entry.ticket : undefined;
   const now = Date.now();
-  const idle = idleYellowOf(deck.items, ticket.repo, holder, crewSeenAt, now);
+  const idle = idleYellowOf(deck.items, ticket.repo, holder, crewSeenAt);
   if (idle?.ticket !== ticketId || idle.at > now || ticket.idleNoted === crewSeenAt) {
-    throw new DeckRefusal(`${ticketId} is not newly idle: the co-pilot holds ${holder ?? 'nothing'} here, and its crew must be quiet ${IDLE_MS / 60_000} min since a moment not yet noted`);
+    throw new DeckRefusal(`${ticketId} is not newly idle: the co-pilot holds ${holder ?? 'nothing'} here, and its crew must be quiet ${CREW_IDLE_MS / 60_000} min since a moment not yet noted`);
   }
   ticket.idleNoted = crewSeenAt;
-  const text = `Idle ${ticketId}: no crew tool call for ${IDLE_MS / 60_000} min and nothing blocks it — need it, or release it and spawn its successor`;
-  ticket.replies = [...messagesOf(ticket), { from: 'deck', author: 'deck', text, repliedAt: new Date(now).toISOString(), seq: (deck.seq = seqOf(deck) + 1) }];
+  const text = `Idle ${ticketId}: no crew tool call for ${CREW_IDLE_MS / 60_000} min and nothing blocks it — need it, or release it and spawn its successor`;
+  ticket.replies = [...messagesOf(ticket), deckLine(deck, text, new Date(now).toISOString())];
   writeDeck(deck);
   return ticket;
 }
