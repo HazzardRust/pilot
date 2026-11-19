@@ -2,8 +2,10 @@
 
 Claude Code 2.1.328, 2026-11-19, `--model sonnet` (claude-sonnet-5-5). Scratch headless sessions only (A5): `node
 probes/restart/run.mjs --mode <MODE>` starts `claude -p --input-format stream-json --plugin-dir probes/restart
---strict-mcp-config` in a temp repository with a temp `CLAUDE_CONFIG_DIR` (a copy of the login, removed after the
-run). The driver sends a short opening turn, then about 44k tokens of numbered filler; on the second main
+--strict-mcp-config` in a temp repository. **All 12 sessions below ran on the copied login**: a temp
+`CLAUDE_CONFIG_DIR` holding a copy of `~/.claude/.credentials.json`, removed after each run. The runner no longer
+does that: a rerun needs `PROBE_CONFIG_DIR` (a scratch config dir the user logged into) or `ANTHROPIC_API_KEY`,
+and stops without one. The driver sends a short opening turn, then about 44k tokens of numbered filler; on the second main
 `turn.complete` the mod runs the mode's call, then `$.prompt.submit`s `Probe pickup: reply with the single word
 PICKED.` Usage is the pickup turn's own `assistant` usage from stream-json, checked equal to the mod's
 `turn.complete` `usage`.
