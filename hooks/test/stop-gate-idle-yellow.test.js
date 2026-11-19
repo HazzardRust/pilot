@@ -22,6 +22,7 @@ test('the Stop hook blocks on an idle yellow ticket, and not on one whose crew w
   const utils = await import('../../deck/testUtils.mjs');
   const agents = await import('../../deck/agents.mjs');
   const store = await import('../../deck/store.mjs');
+  const lanes = await import('../../deck/lanes.mjs');
   const base = await utils.deckOnAPort(t);
   const before = { PILOT_DECK_PORT: process.env.PILOT_DECK_PORT, CLAUDE_PROJECT_DIR: process.env.CLAUDE_PROJECT_DIR };
   process.env.PILOT_DECK_PORT = new URL(base).port;
@@ -42,6 +43,8 @@ test('the Stop hook blocks on an idle yellow ticket, and not on one whose crew w
   const stopping = { session_id: session, cwd: repo, hook_event_name: 'Stop', stop_hook_active: false };
 
   agents.noteAgent({ agentId: 'crew1', agentType: 'pilot:pilot-co-pilot', cwd: repo }, Date.now() - 21 * MIN);
+  const refusal = lanes.lanesOf(repo).refusal;
+  assert.ok(refusal && refusal.startsWith(`yellow lane idle; ${yellow.id}`), `the lane itself refuses: ${refusal}`);
   const said = await stopGate.run(stopping);
 
   assert.strictEqual(said && said.decision, 'block');

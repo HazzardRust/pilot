@@ -539,7 +539,7 @@ export function armIdle() {
   for (const held of Object.values(coPilots)) {
     const ticket = items.find((item) => item.id === held);
     const seenAt = ticket ? crewSeenAt(ticket.repo) : undefined;
-    const idle = ticket ? idleYellowOf(items, ticket.repo, held, seenAt, Date.now()) : null;
+    const idle = ticket ? idleYellowOf(items, ticket.repo, held, seenAt) : null;
     if (idle && ticket.idleNoted !== seenAt) due.set(held, { key: seenAt, at: idle.at, repo: ticket.repo });
   }
   const seenNow = (id) => crewSeenAt(due.get(id).repo);

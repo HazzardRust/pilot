@@ -52,7 +52,7 @@ import { reportAskGaps } from './report-shape.mjs';
 import { ticketShapeGaps } from './ticket-shape.mjs';
 import { walkthroughShapeGaps } from './walkthrough-shape.mjs';
 import { placeSteps } from './step-shell.mjs';
-import { concludeOn, enterStage } from './store-stage.mjs';
+import { concludeOn, deckLine, enterStage } from './store-stage.mjs';
 import { gate2EvidenceGaps, namedWalkthroughGaps, ownBranchGaps, recutGate1Gaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
 import { MAX_QUESTION_CHARS, POSTABLE_KINDS, andList } from './tools.mjs';
 import {
@@ -472,7 +472,7 @@ export function noteLaneFilled(gate2Id, taken) {
 export function noteDeck(id, text) {
   const deck = readDeck();
   const item = threadIn(deck, id);
-  item.replies.push({ from: 'deck', author: 'deck', text, repliedAt: new Date().toISOString(), seq: (deck.seq = seqOf(deck) + 1) });
+  item.replies.push(deckLine(deck, text, new Date().toISOString()));
   writeDeck(deck);
   return item;
 }

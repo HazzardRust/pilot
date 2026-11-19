@@ -179,7 +179,7 @@ export function noteAgent(heartbeat, now = Date.now()) {
 
   // Activity counts for the repository a worktree belongs to, which is where its threads are.
   noteActive({ cwd: repoOf(key) ?? key, kind: authorKind(heartbeat.agentType) }, now);
-  if (isYellowCrew(agentType)) noteCrew(repoOf(key) ?? key, now);
+  noteCrew(agentType, repoOf(key) ?? key, now);
   if (joined) announce();
   schedule(now);
   return joined;
@@ -217,9 +217,11 @@ export function crewSeenAt(repo) {
   return crewSeen.get(repoKey(repo)) ?? startedAt;
 }
 
-function noteCrew(repo, now) {
+function noteCrew(agentType, repo, now) {
+  if (!isYellowCrew(agentType)) return;
   const key = repoKey(repo);
-  if (!crewSeen.has(key) && crewSeen.size >= MAX_AGENTS) return;
+  crewSeen.delete(key);
+  if (crewSeen.size >= MAX_AGENTS) crewSeen.delete(crewSeen.keys().next().value);
   crewSeen.set(key, now);
 }
 

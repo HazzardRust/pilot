@@ -32,27 +32,26 @@ export function yieldsDue(items, repo, coPilotTicket, now) {
 }
 
 /** How long a held yellow ticket's crew may make no tool call before the ticket reads idle (yellow-never-idle spec 5, A2). */
-export const IDLE_MS = 20 * 60_000;
+export const CREW_IDLE_MS = 20 * 60_000;
 
 /**
  * The idle rule (yellow-never-idle spec 5, 8; L4, L5), pure, for the refusal and the wake timer alike: `held`, the live
  * co-pilot's ticket, open and yellow in `repo`, not draining and with no unanswered blocking item, goes idle at
- * `seenAt + IDLE_MS`, `seenAt` being `crewSeenAt(repo)`. `at` is returned even while it is ahead of `now`, so a timer
- * can arm on it; else null.
+ * `seenAt + CREW_IDLE_MS`, `seenAt` being `crewSeenAt(repo)`. `at` may be ahead of now, so a timer can arm on it; else null.
  */
-export function idleYellowOf(items, repo, held, seenAt, now) {
+export function idleYellowOf(items, repo, held, seenAt) {
   const ticket = items.find((item) => item?.id === held && item.kind === KIND_TICKET);
   if (!ticket || ticket.yielding || !isOpen(ticket) || stateOf(ticket) !== 'yellow' || !sameRepo(ticket.repo, repo)) return null;
   if (unansweredBlockers(items, ticket.id).length) return null;
-  return { ticket: ticket.id, at: seenAt + IDLE_MS };
+  return { ticket: ticket.id, at: seenAt + CREW_IDLE_MS };
 }
 
 /** The idle yellow ticket's refusal line, or null; a caller that passes no crew-seen moment never reads idle (red team, A-8 callers). */
 function idleRefusal(items, repo, held, seenAt, now) {
   if (typeof seenAt !== 'number') return null;
-  const idle = idleYellowOf(items, repo, held, seenAt, now);
+  const idle = idleYellowOf(items, repo, held, seenAt);
   return idle && idle.at <= now
-    ? `yellow lane idle; ${idle.ticket} has had no crew for ${IDLE_MS / 60_000} min — deck_ticket need it if its walkthrough or gate2 is up, else release it and spawn its successor`
+    ? `yellow lane idle; ${idle.ticket} has had no crew for ${CREW_IDLE_MS / 60_000} min — deck_ticket need it if its walkthrough or gate2 is up, else release it and spawn its successor`
     : null;
 }
 

@@ -4,7 +4,12 @@
  */
 
 import { stateOf, ticketQueueOf } from './items.mjs';
-import { releaseIn } from './store-core.mjs';
+import { releaseIn, seqOf } from './store-core.mjs';
+
+/** One `from: 'deck'` line with the next `seq`, for the caller to store: it wakes the pilot once and never reads as the user (L7). */
+export function deckLine(deck, text, at) {
+  return { from: 'deck', author: 'deck', text, repliedAt: at, seq: (deck.seq = seqOf(deck) + 1) };
+}
 
 /**
  * `ticket` turns `state`; already in it, nothing changes (L4). Its place: 'tail' after the queue's last ticket, or where
@@ -31,8 +36,7 @@ export function enterStage(deck, ticket, state, place = 'tail') {
  * concluding walkthrough's id, kept as `concludedBy` while the ticket stays green (a gate2 passes none).
  */
 export function concludeOn(deck, ticket, by) {
-  const moved = stateOf(ticket) === 'yellow';
   enterStage(deck, ticket, 'green');
-  if (by !== undefined && moved) ticket.concludedBy = by;
+  if (by !== undefined) ticket.concludedBy = by;
   releaseIn(deck, ticket.repo, ticket.id);
 }
