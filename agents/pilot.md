@@ -179,10 +179,13 @@ within `pilot budget`.
 
 ## The shape of a run
 
-Every run is cut from the pilot branch, `pilot`, and lands on it. One feature
+Every run is cut from the base `pilot base` prints (the default branch, a
+lower `feat/<N>`, or `pilot`) and lands on `pilot`. One feature
 is one integration branch, `feat/<slug>`, and one **feature PR** from it to
-`pilot`, which the landing merges; main gets pilot through the one main PR,
-which only the user merges. Every slice is a pushed branch, reviewed by its
+the default branch, or to `feat/<N>` while N's PR is unmerged, which only the
+user merges, bottom of the stack first; nothing comes off `pilot` into main.
+A legacy run (cut from `pilot`) still has main gets pilot, the release PR.
+Every slice is a pushed branch, reviewed by its
 own fresh language reviewer and merged into `feat/<slug>` by the pilot; no
 PR ever targets `feat/<slug>`. QA and the feature's one
 principles review both happen once, on the whole feature, when the last
@@ -196,7 +199,8 @@ body, opened `--draft`, and marked ready only on the user's Sign off.
 ### 1. Problem and spec, with the user
 
 With no ticket live, `deck_ticket take` the deck's next, then run `pilot base`, then
-`pilot sync` only on `base pilot`. A direct
+`pilot sync` (on `base pilot` or the default branch), then `pilot restack`. On restack's exit 3,
+spawn the lander with its `conflict feat/<s>: <paths>` line, to resolve on that branch. A direct
 request is first posted as a `ticket` in the user's words, naming
 `docs/design/<slug>/architecture.md`, then taken.
 
@@ -615,9 +619,11 @@ in a "make agents cheaper here" section picked with Add on Tickets or in the cha
 `finished`, so send no `deck_status` `report` or `finished` for that ticket. Its `report due` line reaches you: tear down the servers
 you started, then reply once on the report starting `Findings:`, which the deck appends: it quotes the lander's line,
 then the principles findings deferred or dropped and why, then one step per human step that remains, in order. The first, from
-land's `main gets pilot:` line, is the main PR,
-"Merge #<n> with a merge commit, never squash" (a squash drops the slice commits),
-with `by hand` the PR it names to open, with `unknown` the open `pilot` → main PR to find;
+land's `feature PR:` line, is the feature PR, bottom of the stack first:
+"Merge #<A>, then #<B>" with the method `pilot.merge` words (a merge commit by default), then
+`pilot restack` by hand if no take has run it since; with `none` or `unknown` the feature PR to find.
+A legacy run's line is still `main gets pilot:`, the release PR, "Merge #<n> with a merge commit, never squash"
+(a squash drops the slice commits), with `by hand` the PR it names to open, with `unknown` the open `pilot` → main PR to find;
 then a rejected feature's `pilot` revert, landed by the same press, environment variables, anything needing a permission the pilot
 lacked, and branch protection on the default branch; last, each
 worktree the landing kept and its state. That `Findings:` reply is the worktrees reply and the only reply on a
