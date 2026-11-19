@@ -90,6 +90,7 @@ a build on any probe that does not meet its bar (L1).
 ## 6. Assumed decisions
 
 - **A1 Absent `reach.json` reads `nothing` for every install** (posted itm_26a410398bc2). Trade: a user who relied on pilot in plain sessions loses it until `pilot reach everything`. Rejected: code unchanged, the user runs `pilot reach nothing` (S9 becomes a doctor line).
+  User's answer (itm_26a410398bc2): Every install.
 - **A2 A lost crew message is held via the deck.** Asked only if S5 proves a loss: then S5 stops and main posts the question before S6. Default: each crew report to main is also posted on the deck, which the fresh session reads. Trade: every crew prompt changes and adds one deck write per report. Rejected: the hand-off mod holding messages through the undocumented `session.receive` hook.
 - **A3 Line 1 measures transcripts already on disk**, not a newly run session. Trade: the sample is whatever hand-offs happened lately, unpaired. Rejected: a staged pair of sessions, which costs a live run.
 - **A4 Line 3 is built only for a miss of 1,000 tokens or more.** Trade: a smaller saving is left unbuilt. Rejected: building at any positive gain.
