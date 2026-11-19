@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed dbdc2ce — +421/-11, limit waived by co-pilot (overage is tests); rust approve with nits on dbdc2ce; seam change recorded in S2.md",
+      "state": "integrated at c58cd53 — 432 lines waived (tests); rust approve with nits; seam in S2.md",
       "after": [
         "S1"
       ],
@@ -42,7 +42,7 @@
     },
     {
       "slice": "S5",
-      "state": "implementing",
+      "state": "pushed 909b29e — 368 lines; rust APPROVE, security APPROVE; B4 re-pinned (seam in S5.md)",
       "after": [
         "S1"
       ],
@@ -65,7 +65,7 @@
     },
     {
       "slice": "S8",
-      "state": "implementing",
+      "state": "wip at 1af1748 — B1-B4 green, 524 lines waived (tests); awaits S12 tip, Inbox::ask in thread.rs fn go, gate, 2 reviewers, squash; a fresh implementer finishes it",
       "after": [
         "S1"
       ],
@@ -95,7 +95,7 @@
     },
     {
       "slice": "S12",
-      "state": "implementing",
+      "state": "pushed 3ab8d1c — 547 lines waived (tests); rust WARNING, typescript WARN on pre-fix head; rust re-review + cargo on final head running",
       "after": [
         "S1"
       ],
@@ -160,8 +160,8 @@
       ]
     }
   ],
-  "next": "integrate S2, then send S5/S8/S12 the new tip; then pilot ready",
-  "updatedAt": "2026-11-19T22:22:37.977Z",
+  "next": "integrate S5 (running); S12 after its re-review; fresh S8 finisher on S12's tip; pilot ready. Step 7 carry: S2 nits 2-3, S12 sync fetch on press (up to 5 s block); found issue: Rune overview shows only the landing tab's status table, the page one per tab (spec 2) -> added slice",
+  "updatedAt": "2026-11-19T22:39:54.767Z",
   "friction": [
     {
       "agent": "pilot-implementer",
@@ -250,6 +250,30 @@
       "what": "S2: Rune's AppHandle is untestable from outside the crate (headless_runtime drops the update queue), costing a seam change; three behaviours named S1 stubs; the slice assumed a post advances seq, only a reply does",
       "evidence": "rune playground/testing.rs:16; deck/store-items.mjs:326",
       "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8: run ended by the hand-back hook at ~188k tokens while waiting on another slice's tip; gate and reviews left for a successor",
+      "evidence": "slice/rune-deck-ui-s8 1af1748, three wip commits",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8: posting a gate thread on a scratch deck took 8 calls through the store's guards; a thread snap needed a throwaway example since State::load opens on home",
+      "evidence": "S8 report",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: a minimal gate1 fixture on a scratch deck cost ~6 probes through the store's guards; nothing documents the recipe outside deck/testUtils.mjs; B4 described a refusal the daemon does not make",
+      "evidence": "deck/store-items.mjs:281-323; S5 report",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12: npm test ~8 min and flaked once under concurrent load; no recipe for held lanes on a scratch deck; --snap loads the default query only",
+      "evidence": "daemon.test.mjs 'a reply on an item older than deck_read...' red once, 75/75 alone",
+      "size": 8
     }
   ]
 }
