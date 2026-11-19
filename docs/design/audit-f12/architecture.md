@@ -13,7 +13,7 @@ run reports, lander and prose-concision after the rule; 18 of them read here as 
 
 | # | Behaviour | Evidence | Bar |
 | --- | --- | --- | --- |
-| 1 | A pilot-lane Bash `sed -i` / `sed --in-place` on a git-tracked file is refused before it runs; the reason names the file and the Edit and Write tools. | Unit fixtures; one live call in a scratch clone, the file's hash unchanged after. | 4 of 4 sed fixtures refused (relative, `C:/` absolute, Git Bash `/c/` absolute, `--in-place`); hash equal. |
+| 1 | A pilot-lane Bash `sed -i` / `sed --in-place` on a git-tracked file is refused before it runs; the reason names the file and the Edit and Write tools. | Unit fixtures; one live call in a scratch clone, the file's hash unchanged after. | 5 of 5 sed fixtures refused (relative, `C:/` absolute, Git Bash `/c/` absolute, `--in-place`, relative after a leading `cd <dir> &&`); hash equal. |
 | 2 | A pilot-lane Bash call that writes a tracked file from a heredoc (`cat > f <<EOF`, `cat <<EOF > f`, `tee f <<EOF`) or from `echo`/`printf` redirected (`>`, `>>`) into it is refused the same way. | Unit fixtures, shaped on the forms the 18 reports name. | 6 of 6 refused. |
 | 3 | Everything else still runs, with no output from the hook: a heredoc fed to a command (`pilot verdicts`, `pilot lesson-report`, `git commit -F -`), `>/dev/null`, `2>&1`, a program's output redirected (`node gen.mjs > f`), `tee` to a log, any write to an untracked or ignored path (scratch, temp), `>` inside quotes or a heredoc body. | Unit fixtures, the two crew-definition heredocs (`agents/pilot-architect.md:152`, `agents/pilot-teacher.md:53`) verbatim among them. | >=10 pass fixtures, 0 refused. |
 | 4 | A refusal is not a blocked step: its reason says so and tells the agent to redo the change with Edit/Write; nothing is posted to the deck. | Test on the reason text; the hook has no deck import. PermissionDenied does not fire on a PreToolUse deny (hooks docs). | Reason contains `not a blocked step`; 0 deck calls. |
@@ -78,6 +78,8 @@ is a seam with two adapters (git, the test's fake). No fold slice: no shallow mo
   closed, which turns a git hiccup into a lost round, the cost the hook exists to remove.
 - **L5** Quoted strings and heredoc bodies are stripped before redirections are scanned; Git Bash `/x/…` paths map
   to `X:/…` on win32. (red team)
+- **L7** A relative target after a leading literal `cd <dir> &&` resolves against `<dir>` (itself resolved against
+  the payload's `cwd`); a non-literal or later `cd` resolves against `cwd` and passes. From A4's overturn.
 - **L6** Grilling depth: No grilling (user, itm_723c21644a7b). overridden: the hook's refusal line is first seen at
   Gate 1; a Not yet there costs a re-cut. No question thread is posted; every stash stands as an A‹n›.
 - ADR NNNN, `docs/adr/NNNN-audit-f12.md`, records L1-L4; the landing numbers it.
@@ -87,19 +89,25 @@ is a seam with two adapters (git, the test's fake). No fold slice: no shallow mo
 - **A1** *assumed*: Only the pilot and its crew agents are refused; a plain Claude session's shell write still runs.
   Default: `isPilotLane`. Trade: the user's own sessions stay unguarded. Rejected: every session, which cuts against
   itm_93cdec375a75 (plain sessions carry nothing of pilot).
+  Verdict: stands — queued ticket itm_93cdec375a75 wants a plain session untouched by any pilot hook
 - **A2** *assumed*: Only Bash calls are checked; a PowerShell `Set-Content`, `Out-File` or `>` into a tracked file
   still runs. Default: matcher `Bash`. Trade: PowerShell 5.1's UTF-16 `Out-File` stays unguarded. Rejected:
   `Bash|PowerShell` with a second parser, a third slice, on 0 of 18 reports.
+  Verdict: stands — the ticket's words are "a Bash call"; 0 of 18 reports name PowerShell
 - **A3** *assumed*: `python -c`, `node -e`, `perl -pi` and a heredoc fed to an interpreter that writes a tracked
   file still run. Default: pass. Trade: 6 + 4 + 1 of the 18 reports name these. Rejected: parsing interpreter
   source, which cannot be done reliably.
+  Verdict: stands — the ticket names sed -i and heredoc redirection only; the gate1 body must say interpreter writers (11 of 18 report mentions) stay uncaught
 - **A4** *assumed*: A shell write whose relative path depends on an earlier `cd` in the same command still runs.
   Default: resolve against the payload's `cwd`. Trade: that form is missed. Rejected: tracking `cd` through the
   command. The crew's own rule (`cd <dir> && { …; }`) makes absolute paths the common form, which is caught.
+  Verdict: overturned: the pilot's own brief rule makes `cd <dir> && { …; }` the standard form for a command outside the cwd, so a relative path after a leading literal `cd <dir> &&` is the common case in crew worktrees and must be resolved against that dir; only a non-literal or later cd still passes
 - **A5** *assumed*: QA checks this with the hook's unit tests plus one live Bash call in a scratch clone session:
   a `sed -i` on a tracked file refused, a `pilot verdicts`-style heredoc run.
+  Verdict: stands — a hook unit suite plus one live Bash call in a scratch clone session; no database
 - **A6** *assumed*: the spec of §2 as proposed to `main`. Default: as written. Trade: spec 6's latency bar and
   spec 7's lane fixtures are additions the ticket did not name.
+  Verdict: stands — no queued ticket claims the hook's spec; the latency bar guards every Bash call the crew makes
 - red team: absolute paths are the crew's habit and point into worktrees outside the session's `cwd`; one
   `git -C <cwd> ls-files` would fatal "outside repository" and fail open on every one. Changed L2: one spawn per
   target dir.
