@@ -64,16 +64,25 @@ test('heredoc and echo writes into a tracked file are refused', () => {
     'echo x > f.md',
     "printf '%s' x >> f.md",
     'cd sub && echo x > f.md',
-    // S1 findings #3, #4: a prefix or compound keyword in front of the writer.
-    "command sed -i 's/a/b/' f.md", "env LC_ALL=C sed -i 's/a/b/' f.md", "time sed -i 's/a/b/' f.md",
-    "nohup sed -i 's/a/b/' f.md", "sudo -u root sed -i 's/a/b/' f.md", 'env -i echo x > f.md',
-    "if true; then sed -i 's/a/b/' f.md; fi", "for x in 1; do echo x > f.md; done", "! sed -i 's/a/b/' f.md",
   ];
   for (const command of forms) {
     const out = call(command);
     assert.strictEqual(out && out.hookSpecificOutput.permissionDecision, 'deny', command);
     for (const word of ['f.m', 'Edit', 'Write', 'not a blocked step']) assert.ok(reasonOf(out).includes(word), `${command}: ${word}`);
   }
+  assert.ok(reasonOf(call(forms[0])).includes('(heredoc)'), 'the reason names the form');
+  assert.ok(reasonOf(call('echo x > f.md && sed -i s/a/b/ f.md')).includes('(echo, sed -i)'), 'and each form');
+});
+
+test('a prefix, keyword, comment or shift in front of a writer does not hide it', () => {
+  // S1 findings #3, #4; a `<<` in arithmetic or a comment is no heredoc and hides no line after it.
+  const forms = [
+    "command sed -i 's/a/b/' f.md", "env LC_ALL=C sed -i 's/a/b/' f.md", "time sed -i 's/a/b/' f.md",
+    "nohup sed -i 's/a/b/' f.md", "sudo -u root sed -i 's/a/b/' f.md", 'env -i echo x > f.md',
+    "if true; then sed -i 's/a/b/' f.md; fi", 'for x in 1; do echo x > f.md; done', "! sed -i 's/a/b/' f.md",
+    "x=$((1<<4))\nsed -i 's/a/b/' f.md", "echo $((1 << 2))\nsed -i 's/a/b/' f.md", "# see <<EOF\nsed -i 's/a/b/' f.md",
+  ];
+  for (const command of forms) assert.strictEqual(call(command)?.hookSpecificOutput.permissionDecision, 'deny', command);
 });
 
 test('read-only heredocs and other writes run', () => {
@@ -89,6 +98,7 @@ test('read-only heredocs and other writes run', () => {
     'git commit -m "a > b.md"', "echo 'x > f.md'", 'ls > /dev/null', 'npm test 2>&1', 'node gen.mjs > f.md',
     'npm test | tee gate.log', 'echo x > scratch.txt', 'echo x > junk.md',
     `node -e "require('fs').writeFileSync('f.mjs', 'x')"`, 'cat f.md > loose.md', 'command -v sed',
+    'echo hi # > f.md',
   ];
   for (const command of forms) assert.strictEqual(call(command), null, command);
 });

@@ -34,5 +34,6 @@ definitions and did not hold. No hook in the repository denied a call through Pr
 ## Consequences
 
 The forms the reports name most are refused before they run. Interpreter writers (`python -c`, `node -e`,
-`perl -pi`), PowerShell, ANSI-C quoting, nested `bash -c`/`eval`, a heredoc piped into `tee`, and a relative path
-after a non-literal or later `cd` still run; the prose rule stays as their guard.
+`perl -pi`), PowerShell, ANSI-C quoting, nested `bash -c`/`eval`, a heredoc piped into `tee`, a bare `> f`, a
+group's redirection (`{ echo x; } > f`), and a relative path after a non-literal or later `cd` still run; the prose
+rule stays as their guard. An `echo` whose stderr is redirected into a tracked file (`2> f`) is refused.

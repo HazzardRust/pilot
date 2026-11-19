@@ -31,7 +31,9 @@ const PREFIXES = new Set(['command', 'env', 'exec', 'nohup', 'sudo', 'time']);
 /** The index past the heredoc bodies starting at `i`, one per pending delimiter, in order (L5). */
 function skipBodies(command, i, pending) {
   for (const { delim, tabs } of pending) {
-    while (i < command.length) {
+    const start = i;
+    for (;;) {
+      if (i >= command.length) return start; // no terminator: scan its lines rather than hide them
       const nl = command.indexOf('\n', i);
       const stop = nl < 0 ? command.length : nl;
       const line = command.slice(i, stop).replace(/\r$/, '');
@@ -79,6 +81,14 @@ function tokens(command) {
     } else if (c === ' ' || c === '\t' || c === '\r') {
       end();
       i++;
+    } else if (c === '#' && word === null) {
+      const nl = command.indexOf('\n', i); // a comment runs to the end of its line
+      i = nl < 0 ? command.length : nl;
+    } else if (/^\$?\(\(/.test(command.slice(i, i + 3))) {
+      const close = command.indexOf('))', i); // arithmetic: its `<<` is a shift, not a heredoc
+      word = (word || '') + command.slice(i, close < 0 ? command.length : close + 2);
+      lit = false;
+      i = close < 0 ? command.length : close + 2;
     } else {
       const op = OPERATOR.exec(command.slice(i));
       if (op) {
