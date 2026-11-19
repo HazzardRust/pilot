@@ -1,12 +1,12 @@
 /**
  * `pilot checks [<ref>] [--wait <min>]` (ci-gate spec 7; L1, L10): the CI on one commit as S1's **Check line**, its
- * state as the exit code, or a bounded wait while it is pending. The ref is resolved by git to a full sha and only
+ * state as the exit code, or a bounded wait while it is pending or not yet registered. The ref is resolved by git to a full sha and only
  * that sha reaches the host, so no ref text is ever a host CLI argument (spec 10).
  */
 
 import { git as gitAt } from './pilot-branch.mjs';
 import { hostFor } from '../deck/host.mjs';
-import { checkLine, checksAt } from './checks.mjs';
+import { checkLine, checksAt, ciConfigured } from './checks.mjs';
 
 const USAGE = 'usage: pilot checks [<ref>] [--wait <min>]   (min 1..60, default 20)\n';
 const EXIT = { green: 0, red: 1, pending: 4, none: 5, unread: 6 };
@@ -31,6 +31,15 @@ function parse(argv) {
     else ref = arg;
   }
   return { ref: ref ?? 'HEAD', wait: wait ?? 0 };
+}
+
+/** `ciConfigured`, or true when the tree cannot be read. */
+function configuredAt(git, sha) {
+  try {
+    return ciConfigured(git, sha);
+  } catch {
+    return true;
+  }
 }
 
 /** The exit code of `pilot checks`; prints one Check line on stdout, or the usage on stderr (exit 2). */
@@ -58,8 +67,11 @@ export async function main(argv, {
     const reader = host === undefined ? hostFor(cwd, { git }) : host;
     const deadline = now() + args.wait * 60_000;
     verdict = checksAt({ host: reader, sha });
-    // Only pending waits: an unread mid-wait ends it at once, never retried and never read as green.
-    while (verdict.state === 'pending' && now() + POLL_MS < deadline) {
+    // Pending waits, and none where CI is configured at the sha (runs not yet registered; an unreadable tree counts
+    // as configured, as at the gate). No host, unread or a settled state ends it at once; unread is never green.
+    let configured;
+    const waits = (said) => said.state === 'pending' || (said.state === 'none' && said.why === undefined && (configured ??= configuredAt(git, sha)));
+    while (now() + POLL_MS < deadline && waits(verdict)) {
       await sleep(POLL_MS);
       verdict = checksAt({ host: reader, sha });
     }
