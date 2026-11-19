@@ -6,22 +6,9 @@
 
 import path from 'node:path';
 import { ciConfigured, parseCheckLine, passes } from '../scripts/checks.mjs';
-import { gitUnder } from '../scripts/pilot-branch.mjs';
+import { checkGit } from './gate2-base.mjs';
 import { CHECKS_FIELD, SHA_FIELD } from './items-bounds.mjs';
 import { repoOf } from './runs.mjs';
-
-const CHECK_MS = 5000;
-
-/** `git` in `repo` under the one deadline, answering stdout; throws on a timeout or a non-zero exit. */
-function checkGit(repo) {
-  const git = gitUnder(repo, { timeout: CHECK_MS });
-  return (args) => {
-    const out = git(args);
-    if (out.error) throw out.error;
-    if (out.status !== 0) throw new Error(out.stderr.trim() || `git ${args[0]} exited ${out.status}`);
-    return out.stdout;
-  };
-}
 
 /**
  * `NOT posted: <why>` for a gate2 at `sha` in `repo` whose `checks` is missing, at another sha, or not green;
@@ -37,7 +24,8 @@ export function checksRefusal(repo, sha, checks) {
   let full = null;
   let configured = true;
   try {
-    const git = checkGit(repo);
+    const run = checkGit(repo);
+    const git = (args) => run(repo, args);
     full = git(['rev-parse', '--verify', '-q', `${at}^{commit}`]).trim();
     configured = ciConfigured(git, full);
   } catch {
