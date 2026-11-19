@@ -101,7 +101,7 @@ test('every verb returns its shape', (t) => {
   for (const [, call, check] of CONTRACT) {
     const { run, calls } = fakeGh();
     const host = githubHost(run);
-    assert.deepEqual(Object.keys(host).sort(), HOST_KEYS);
+    assert.deepEqual(Object.keys(host).sort(), [...HOST_KEYS, 'checks'].sort(), 'gitlab answers checks at ci-gate S8');
     assert.equal(host.cli, 'gh');
     check(call(host));
     sent.push(...calls);
@@ -345,6 +345,46 @@ test('no token is read', () => {
   // Signed out, glab's own failure text (which may hold the line) is dropped, not carried into a throw.
   const out = gitlabHost(() => { throw Object.assign(new Error(`Command failed: glab auth status\n${line}`), { status: 1, stderr: line }); });
   assert.strictEqual(out.signedIn(), false);
+});
+
+// ci-gate S1, spec 10; L2. The one GET of a commit's check runs, by full sha.
+const SHA = '5fef2abeeab467094301df1737d521b3898d1739';
+const CHECK_RUNS = `repos/{owner}/{repo}/commits/${SHA}/check-runs?filter=latest&per_page=100`;
+
+test('only the one GET reaches gh', (t) => {
+  const calls = [];
+  const host = githubHost((args) => {
+    calls.push(args);
+    return JSON.stringify({ total_count: 2, check_runs: [
+      { name: 'gate (ubuntu-latest)', status: 'completed', conclusion: 'failure', html_url: 'https://github.com/o/r/actions/runs/1/job/2' },
+      { name: 'gate (macos-latest)', status: 'in_progress', conclusion: null, html_url: 'https://github.com/o/r/actions/runs/1/job/3' },
+    ] });
+  });
+  assert.deepEqual(host.checks(SHA), [
+    { name: 'gate (ubuntu-latest)', outcome: 'fail', url: 'https://github.com/o/r/actions/runs/1/job/2' },
+    { name: 'gate (macos-latest)', outcome: 'pending', url: 'https://github.com/o/r/actions/runs/1/job/3' },
+  ]);
+  assert.deepEqual(calls, [['api', CHECK_RUNS]]);
+  for (const sha of ['5fef2ab', SHA.toUpperCase(), `${SHA}/../x`, 'pilot']) assert.throws(() => host.checks(sha), /not a full commit sha/, sha);
+  assert.equal(calls.length, 1, 'a short sha starts no run');
+  const dir = stubbed(t);
+  const gh = ghRun(dir);
+  const refused = [
+    ['api', CHECK_RUNS.replace(SHA, '5fef2ab')],
+    ['api', '-X', 'POST', CHECK_RUNS],
+    ['api', '--method', 'GET', CHECK_RUNS],
+    ['api', CHECK_RUNS, '-f', 'name=x'],
+    ['api', CHECK_RUNS, '-F', 'name=@/etc/passwd'],
+    ['api', CHECK_RUNS.replace('check-runs', 'statuses')],
+    ['api', CHECK_RUNS.replace('{owner}/{repo}', 'other/repo')],
+    ['api', CHECK_RUNS.replace('filter=latest', 'filter=all')],
+    ['api', `${CHECK_RUNS}&page=2`],
+    ['api', CHECK_RUNS, 'user'],
+  ];
+  for (const args of refused) assert.throws(() => gh(args), /^Error: gh api .*: not a host verb$/, args.join(' '));
+  assert.equal(fs.existsSync(path.join(dir, 'calls.jsonl')), false, '0 processes started');
+  gh(['api', CHECK_RUNS]);
+  assert.ok(fs.existsSync(path.join(dir, 'calls.jsonl')), 'the one GET does start one, so the 0 above is seen');
 });
 
 test('the allowlist still refuses', (t) => {
