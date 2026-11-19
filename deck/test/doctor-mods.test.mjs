@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { checkAll, modsRow } from '../doctor.mjs';
+import { tempDeck } from '../testUtils.mjs';
 
 test('doctor fails an old version and disableAllHooks, passes 2.1.325', () => {
   const pass = modsRow({ version: '2.1.325', settings: {}, env: {} });
@@ -30,7 +31,8 @@ test('doctor fails an old version and disableAllHooks, passes 2.1.325', () => {
   assert.equal(modsRow({ version: '2.1.326', settings: { disableAllHooks: false }, env: { CLAUDE_CODE_SAFE_MODE: '' } }).verdict, 'pass');
 });
 
-test('checkAll reads the version from `claude --version` through its run, never a shell', async () => {
+test('checkAll reads the version from `claude --version` through its run, never a shell', async (t) => {
+  tempDeck(t);
   const calls = [];
   const rows = await checkAll({
     platform: 'linux',
