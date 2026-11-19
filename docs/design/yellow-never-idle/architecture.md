@@ -28,6 +28,12 @@ refusal fired, and the pilot was parked in `pilot wait`, which the Stop hook nev
 | 8 | practitioner: SRE (a dead-man's switch counts a restart as a heartbeat) — a deck restart never reads a ticket idle before 20 min after the restart. | Lanes and timer tests: crew unseen since start gives no line and no refusal at 19 min, both at 21 min. |
 | 9 | practitioner: incident replay — the post shape of `itm_ab39b4603222` (author pilot, non-blocking, short-path yellow ticket) reads green in the same call. | Deck test fixture copied from that item's fields: green after 1 post, where the incident took 9 h. |
 
+Agreed: the user took all 6 proposed lines (`itm_f4b60134c37c`, "All 6"), 3 slices; they are 1, 2, 3, 5 with 6
+(the Stop hook half of proposed line 4), 7 and 8. Lines 4 and 9 are *assumed*: 4 is L3's trust rule, 9 the incident's
+replay as a test; both sharpen line 1 and add no slice.
+QA environment (`itm_ee6677a81961`, "Scratch deck"): a scratch deck with a temp repository, a real parked `pilot wait`,
+and the Stop hook run with a payload; the live deck is not touched.
+
 The draft's "holds the turn until the ticket is moved" cannot mean a hold loop here: the existing lane refusal blocks
 once per stop (`stop_hook_active`), and a loop would trap a pilot whose crew is merely quiet (spec 6).
 
@@ -91,12 +97,14 @@ Deletion test: `needTicket` survives (the pilot's `need` for a question-only han
 - **A1** On an idle yellow ticket the deck tells the pilot (line, refusal); it never releases the co-pilot itself.
   Trades: one pilot action. Rejected: auto-release, which after a rate-limit stall or a long test leaves the
   original co-pilot waking beside a successor, two writers on one branch. Posted as `itm_b2779ef0011f`.
+  User answer: "Tell the pilot (default)".
 - **A2** `IDLE_MS` is 20 min, the yield's bound, twice the 10-min foreground tool cap. Trades: a dead crew is found
   20 min late. Rejected: 90 s (`LIVE_WINDOW_MS`), which fires on every long test run.
 - **A3** The co-pilot lane line stays `co-pilot: <id>`; idle shows as the deck line on the ticket's card and the
   refusal. Trades: no idle word in the rail. Rejected: a new line shape, which touches two regex copies
   (`deck/lanes.mjs:46`, `hooks/session-handoff.js:402`).
 - **A4** 3 slices, not the 2 sized: spec 7 is the wake the draft lacked; without it a parked pilot never stops.
+  User answer: "All 6" on the spec, 3 slices (`itm_f4b60134c37c`).
 - red team: S3's timer, armed only on store writes, would never fire for a crew that went quiet without a write
   after a not-yet-due check. Changed: `idleYellowOf` returns the future `at` and `armIdle` re-arms on a not-due fire.
 - red team: a walkthrough's ticket is read through `walked`, not `ticketNamedBy`, which skips walkthroughs; S1 owns it.
