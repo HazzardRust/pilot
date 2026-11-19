@@ -25,7 +25,7 @@ import path from 'node:path';
 import { hostFor } from '../deck/host.mjs';
 import { deleteMerged } from './branches.mjs';
 import { assertPushable, firstLine, holds, PILOT_BRANCH } from './pilot-branch.mjs';
-import { baseOf, commitRecords, git as gitAt, landingMessage } from './integrate.mjs';
+import { baseOf, chainLanded, commitRecords, git as gitAt, landingMessage } from './integrate.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
 import { releasePr } from './release.mjs';
 import { runRef, runRemote } from './remotes.mjs';
@@ -260,12 +260,15 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
  */
 export function chainGuard({ cwd }) {
   let base;
+  let landed;
   try {
     base = baseOf(cwd);
+    // The chain outlives N's landing for integrate (audit-f14 L5); the guard's end is still that landing.
+    landed = base.chained !== undefined && chainLanded(cwd, base.chained);
   } catch (err) {
     throw fail(`${firstLine(err)}; nothing pushed`);
   }
-  if (base.chained) throw fail(`built on ${base.chained}, which has not landed; land it first, or revert it (fix round); nothing pushed`);
+  if (base.chained && !landed) throw fail(`built on ${base.chained}, which has not landed; land it first, or revert it (fix round); nothing pushed`);
 }
 
 /**
