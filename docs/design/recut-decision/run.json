@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2 A yellow ticket is replanned at a merge commit with no press",
-      "state": "implementing",
+      "state": "pushed e6d2fac",
       "after": [
         "S1"
       ],
@@ -24,13 +24,13 @@
     },
     {
       "slice": "S3 The crew puts a plan on pilot by a merge and decides the re-cut",
-      "state": "pushed fdb0cd8",
+      "state": "integrated",
       "branch": "slice/recut-decision-s3",
       "worktree": "C:/Users/Hazzard/Projects/pilot-recut-decision-s3"
     }
   ],
-  "next": "co-pilot: integrate S3 fdb0cd8 into feat/recut-decision; S2 implementing",
-  "updatedAt": "2026-11-19T14:22:33.384Z",
+  "next": "co-pilot: integrate S2 e6d2fac into feat/recut-decision (ee3c7459), then base check and fundamentalist",
+  "updatedAt": "2026-11-19T14:37:24.363Z",
   "friction": [
     {
       "kind": "drain",
@@ -74,6 +74,36 @@
       "agent": "pilot:pilot-implementer",
       "what": "node --test summary lines start with info/cross glyphs, not TAP '# pass', so a grep printed nothing",
       "evidence": "first red run showed only 'Caught error'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot forced to hand back as paused while its S2 implementer was still running; main had to resume it",
+      "evidence": "recut-decision co-pilot hand-back: S2 uncommitted in pilot-recut-decision-s2",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "integrate's selection overflowed argv (over 24000 characters), so the full suite ran in place of the selection, twice",
+      "evidence": "recut-decision S1 and S3 integrations: 4626 and 4628 pass, spawns 12090",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spawn ceiling left at the measured count (S1 12090 vs 12100) so the next slice with fixture commits tripped it; raised to 13355 in S2",
+      "evidence": "first S2 gate: spawns over 12100 at 12141",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate2 test fixture needs short-path body lines (Verdict per slice, Gate:), found by two refusals",
+      "evidence": "deck/gate2-evidence.mjs:67-68",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "second ticket in one store makes signed() gate1 refuse; test order matters",
+      "evidence": "store-core.mjs:588",
       "size": 1
     }
   ]
