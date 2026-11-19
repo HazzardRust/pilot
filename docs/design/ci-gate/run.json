@@ -33,7 +33,7 @@
     },
     {
       "slice": "S7",
-      "state": "implementing",
+      "state": "pushed 08e1b21 (integrating; its third commit, a code span and the pin bump, read by no reviewer)",
       "after": [
         "S2",
         "S5"
@@ -70,7 +70,7 @@
     },
     {
       "slice": "S8",
-      "state": "pushed 9ae8fd3 (integrating)",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -96,8 +96,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s10"
     }
   ],
-  "next": "ci-gate: S3 integrated (feat 2da654c0); integrating S8; S7 implementing; then base check, fundamentalist and QA.",
-  "updatedAt": "2026-11-19T18:55:13.130Z",
+  "next": "ci-gate: feat 15f27a73; integrating S7 (last); then base check, fundamentalist on PR #128 and QA.",
+  "updatedAt": "2026-11-19T19:04:26.426Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -270,6 +270,24 @@
       "agent": "pilot-implementer",
       "what": "gate runs 7-9 min, ran twice because review fixes followed the first run",
       "evidence": "S8 report: 401898 and 518847 ms",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "token pin headroom was 0 at S7's base (pilot 11949.5 against 11949.5)",
+      "evidence": "scripts/test/measure-prompt.test.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "three-lanes-wording not in S7's verify list; cost a second ~20 min gate",
+      "evidence": "scripts/test/three-lanes-wording.test.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "S7's report went to main, not the co-pilot, despite the hello",
+      "evidence": "main relay of S7",
       "size": 1
     }
   ]
