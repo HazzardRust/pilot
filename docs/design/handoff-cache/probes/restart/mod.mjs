@@ -80,7 +80,7 @@ async function restart($, mode) {
 }
 
 export function register(on) {
-  const probe = { mode: null, turns: 0, restarted: false, keepHead: false };
+  const probe = { mode: null, turns: 0, restarted: false, submitted: false, keepHead: false };
 
   on('session.compact', async ($, e, next) => {
     if (!probe.keepHead) return next(e);
@@ -94,7 +94,10 @@ export function register(on) {
     const result = await next(e);
     if (e?.agentId !== undefined) return result;
     probe.turns += 1;
-    await log($, { ev: 'turn', n: probe.turns, restarted: probe.restarted, keys: brief(e).keys, usage: e?.usage ?? null });
+    await log($, {
+      ev: 'turn', n: probe.turns, restarted: probe.restarted, submitted: probe.submitted, keys: brief(e).keys,
+      usage: e?.usage ?? null,
+    });
     if (probe.restarted || probe.turns !== DRIVER_TURNS) return result;
     probe.restarted = true;
     probe.mode = await readMode($);
@@ -105,8 +108,10 @@ export function register(on) {
     probe.keepHead = probe.mode === 'compact-keep-head';
     const before = await countMessages($);
     const outcome = await restart($, probe.mode);
+    probe.keepHead = false;
     const after = await countMessages($);
     await log($, { ev: 'restart', mode: probe.mode, ...outcome, messagesBefore: before, messagesAfter: after });
+    probe.submitted = true;
     try {
       await $.prompt.submit({ text: PICKUP });
       await log($, { ev: 'submit', result: 'resolved' });

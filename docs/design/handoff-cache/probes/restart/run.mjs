@@ -9,8 +9,11 @@
  * compact keeps is the session's opening, as a hand-off's would be, not its bulk; the mod restarts after the
  * second and submits the pickup prompt. One JSON line per run on stdout:
  *   {mode, version, date, result, detail, contextAfter, firstTurn: {input, cacheRead, cacheWrite}, pickupRan, ...}
- * result: works (resolved, and the pickup turn's usage was read), refused (threw), absent (no such call or
- * command), unmeasured (resolved, but no pickup usage to read).
+ * result: works (resolved, the PICKED turn's usage read, the context cut below the one before, and for the kept
+ * head the hook fired), refused (threw), absent (no such call or command), unmeasured (anything short of works).
+ *
+ * The login copy is removed after each run and on SIGINT/SIGTERM. A run long enough for the CLI to refresh the
+ * OAuth token would rotate it inside the copy; each run here lasts about 12 s, well inside a token's life.
  */
 
 import { spawn, spawnSync } from 'node:child_process';
@@ -73,12 +76,21 @@ function usageRow(usage) {
   };
 }
 
-function classify(restart, firstTurn) {
+/**
+ * works needs the pickup turn's own usage (the PICKED reply), a context cut below the one before the call, and
+ * for the kept head the hook to have fired; a resolved call short of any of them is unmeasured.
+ */
+function classify(restart, firstTurn, cut, hook, mode) {
   if (!restart || restart.result === 'no mode') return 'unmeasured';
   if (restart.result === 'threw') {
     return /no command named|is not a function|undefined is not|cannot read prop/i.test(restart.error) ? 'absent' : 'refused';
   }
-  return firstTurn ? 'works' : 'unmeasured';
+  if (!firstTurn || (mode !== 'branch' && !cut) || (mode === 'compact-keep-head' && hook === null)) return 'unmeasured';
+  return 'works';
+}
+
+function total(usage) {
+  return usage ? usage.input + usage.cacheRead + usage.cacheWrite : null;
 }
 
 async function once(opts, version) {
@@ -91,8 +103,13 @@ async function once(opts, version) {
   const login = path.join(process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), '.claude'), '.credentials.json');
   const loginCopy = path.join(config, '.credentials.json');
   if (fs.existsSync(login)) fs.copyFileSync(login, loginCopy);
+  const dropLogin = () => fs.rmSync(loginCopy, { force: true });
+  const onSignal = () => { dropLogin(); process.exit(130); };
+  process.once('SIGINT', onSignal);
+  process.once('SIGTERM', onSignal);
   const started = Date.now();
   const events = [];
+  let spawnError = null;
   try {
     const child = spawn('claude', [
       '-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose',
@@ -100,7 +117,10 @@ async function once(opts, version) {
     ], { cwd: repo, env: scratchEnv(config, opts.mode, logFile), stdio: ['pipe', 'pipe', 'pipe'] });
     let stderr = '';
     child.stderr.on('data', (d) => { stderr += d; });
-    const exited = new Promise((resolve) => child.on('close', resolve));
+    const exited = new Promise((resolve) => {
+      child.on('close', resolve);
+      child.on('error', (err) => { spawnError = String(err.message); resolve(null); });
+    });
     let buffer = '';
     let results = 0;
     const done = new Promise((resolve) => {
@@ -111,6 +131,7 @@ async function once(opts, version) {
       }, 2000);
       const finish = () => { clearTimeout(timer); clearInterval(poll); resolve(); };
       child.on('close', finish);
+      child.on('error', finish);
       child.stdout.on('data', (chunk) => {
         buffer += chunk;
         let nl;
@@ -125,7 +146,8 @@ async function once(opts, version) {
             results += 1;
             if (results === 1) child.stdin.write(userLine(`${filler(opts.lines)}\n\nRead the lines above. Reply with OK2 and nothing else.`));
           }
-          if (results >= 2 && event.type === 'assistant' && /PICKED/.test(textOf(event))) finish();
+          // No driver turn asks for PICKED, so it marks the pickup whatever order the result events take.
+          if (event.type === 'assistant' && /PICKED/.test(textOf(event))) finish();
         }
       });
     });
@@ -144,23 +166,29 @@ async function once(opts, version) {
     const hook = log.find((r) => r.ev === 'compact-hook') ?? null;
     const secondResult = events.findIndex((e, i) => e.type === 'result' && events.slice(0, i).some((p) => p.type === 'result'));
     const after = secondResult >= 0 ? events.slice(secondResult + 1) : [];
-    const pickupEvent = after.find((e) => e.type === 'assistant' && /PICKED/.test(textOf(e))) ?? null;
-    const firstAfter = after.find((e) => e.type === 'assistant') ?? null;
-    const firstTurn = usageRow((pickupEvent ?? firstAfter)?.message?.usage);
-    const modTurnAfter = log.find((r) => r.ev === 'turn' && r.restarted) ?? null;
+    const pickupEvent = events.find((e) => e.type === 'assistant' && /PICKED/.test(textOf(e))) ?? null;
+    const firstTurn = usageRow(pickupEvent?.message?.usage);
+    const driverTurns = log.filter((r) => r.ev === 'turn' && !r.restarted).map((r) => usageRow(r.usage) ?? r.usage);
+    const contextBefore = total(driverTurns[1] ?? null);
+    const contextAfter = total(firstTurn);
+    const cut = contextAfter !== null && contextBefore !== null && contextAfter < contextBefore;
+    const modTurnAfter = log.find((r) => r.ev === 'turn' && r.submitted) ?? null;
     return {
       mode: opts.mode,
       version,
       date: new Date(started).toISOString(),
-      result: classify(restart, firstTurn),
+      result: classify(restart, firstTurn, cut, hook, opts.mode),
       detail: restart,
       submit,
       compactHook: hook,
-      contextAfter: firstTurn ? firstTurn.input + firstTurn.cacheRead + firstTurn.cacheWrite : null,
+      contextBefore,
+      contextAfter,
+      cut,
       firstTurn,
       modUsageAfter: modTurnAfter?.usage ?? null,
       pickupRan: pickupEvent !== null,
-      driverTurns: log.filter((r) => r.ev === 'turn' && !r.restarted).map((r) => usageRow(r.usage) ?? r.usage),
+      driverTurns,
+      spawnError: spawnError ?? undefined,
       afterEvents: after.map((e) => (e.type === 'system' ? `system:${e.subtype}` : e.type)),
       exit: code,
       seconds: Math.round((Date.now() - started) / 1000),
@@ -168,7 +196,9 @@ async function once(opts, version) {
       scratch: tmp,
     };
   } finally {
-    fs.rmSync(loginCopy, { force: true });
+    dropLogin();
+    process.off('SIGINT', onSignal);
+    process.off('SIGTERM', onSignal);
   }
 }
 
