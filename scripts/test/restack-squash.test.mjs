@@ -160,6 +160,33 @@ test('an unlanded run is never rewritten', (t) => {
   assert.equal(tip(origin, 'feat/b'), before);
 });
 
+test('a rebase that conflicts is a failure, not a hand conflict', (t) => {
+  const { origin, seed, work, aTip } = repos(t);
+  commit(seed, { 'b.txt': 'main\n' }, 'main takes b.txt');
+  run(seed, 'push', '-q', 'origin', 'main');
+  const before = tip(origin, 'feat/b');
+
+  const out = restackIn(work, squashed(aTip));
+
+  assert.deepEqual(out.lines, ['not rebased feat/b: conflict rebasing onto main']);
+  assert.equal(out.exitCode, 1);
+  assert.equal(tip(origin, 'feat/b'), before);
+});
+
+test('a squashed lower that is no plain feat/ branch is refused', (t) => {
+  const { origin, work, aTip } = repos(t);
+  const before = tip(origin, 'feat/b');
+  const lower = 'feat/a..x';
+  const host = stubHost([pr({ number: 1, head: lower, state: 'merged', headSha: aTip }), pr({ number: 2, head: 'feat/b', base: lower })]);
+
+  const out = restackIn(work, host);
+
+  assert.equal(out.exitCode, 1);
+  assert.match(out.lines[0], /^restack failed for #2: /);
+  assert.deepEqual(host.edits, []);
+  assert.equal(tip(origin, 'feat/b'), before);
+});
+
 test('a branch already rebased is only retargeted', (t) => {
   const { origin, work, aTip } = repos(t);
   restackIn(work, squashed(aTip));

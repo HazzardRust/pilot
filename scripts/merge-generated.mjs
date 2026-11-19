@@ -31,6 +31,8 @@ function generatedIndex(dir) {
   const file = path.join(dir, INDEX);
   // A committed symlink is never followed: the regenerated index would land wherever it points.
   if (!fs.existsSync(file) || fs.lstatSync(file).isSymbolicLink()) return null;
+  // Nor is a symlinked `docs/adr`: the index must resolve inside the worktree (S7-R1).
+  if (fs.realpathSync(file) !== path.join(fs.realpathSync(dir), INDEX)) return null;
   const text = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
   return text.split('\n').includes(GENERATED_HEADER) ? { file, text } : null;
 }

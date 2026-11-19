@@ -150,7 +150,11 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
       else git(['push', '-q', runs, `${pushed}:${TARGET}`]);
     } catch (err) {
       // A kept resolution goes back to the tested merge, so the retry resumes it, not afterGreen's remerge.
-      if (pushed !== sha) gitAt(dir, 'reset', '-q', '--hard', sha);
+      try {
+        if (pushed !== sha) gitAt(dir, 'reset', '-q', '--hard', sha);
+      } catch {
+        // A failed reset must not mask the rejection: land retries on `pushRejected` (F9).
+      }
       throw Object.assign(fail(`the push failed (${firstLine(err)})`), { pushRejected: true });
     }
     kept = false;

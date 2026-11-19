@@ -93,7 +93,7 @@ const usage = () => `pilot — the deck for piloted runs
                  the pilot's hand-off, after its deck_status: commit and push run.json in
                  the feat worktree and post the handoff item
   pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]... [--dir <worktree>]
-                 in the feat/<slug> worktree (or the one --dir names): take origin/pilot, merge the slice (if
+                 in the feat/<slug> worktree (or the one --dir names): take the run's base (the default branch, feat/<N>, or pilot for a legacy run), merge the slice (if
                  named), test the selection (the tests the diff touches), push, commit run.json; refuses on the default branch
   pilot integrate --trial [--dir <worktree>]
                  in the feat/<slug> worktree, before the gate2: push the feature and try its
@@ -103,8 +103,9 @@ const usage = () => `pilot — the deck for piloted runs
                  the deck's write of a run's feature PR: open the draft feat/<slug> PR on the
                  record's base, or rewrite its body (spec and slice table) and base when they
                  differ; prints one line, nothing written when GitHub already matches
-  pilot base     print the ref the next run is cut from: origin's pilot branch and its
-                 tip, created from the default branch's tip when origin has none
+  pilot base     print the ref the next run is cut from and its tip: the default branch, or
+                 the feat/<N> it chains on; pilot under pilot.host none or another run remote,
+                 pilot itself created from the default branch's tip when origin has none
   pilot gh-stub [--dir <d>] [--powershell]
                  print the lines that put a stub gh first on PATH, answering reply.txt and logging calls.jsonl
   pilot sync

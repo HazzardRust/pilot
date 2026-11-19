@@ -40,7 +40,7 @@ export function prBase({ git, host, base }) {
 
 /**
  * Brings each open own-repository feature PR (head `feat/`) level with its base (audit-f14 spec 6, 10; L2, L4, A5):
- * a PR whose `prBase` differs from its base is retargeted (`host.edit`); then a branch behind a lower `feat/<N>` takes
+ * a PR whose `prBase` differs from its base is retargeted (`host.edit`); then a branch landed on pilot and behind a lower `feat/<N>` takes
  * N's tip, and one that no longer merges clean onto the default branch takes it, each merged in a temporary worktree
  * (generated paths regenerated, the branch's own run record kept) and pushed to origin, never forced. A `pilot` base
  * (A3) is only retargeted. `git` is `(args) => string` run in `cwd`. Answers `{ lines, exitCode }`: one line per change,
@@ -73,12 +73,12 @@ export function restack({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...arg
       if (base !== PILOT_BRANCH && base !== main && !FEATURE.test(base)) throw new Error(`base ${JSON.stringify(base)} is not a plain feat/ branch`);
       // A squash of the lower branch: rebased first, retargeted only once rebased, so a refused rebase keeps the
       // lower name for the next restack to try again.
+      if (base === main && base !== review.base && !FEATURE.test(review.base)) throw new Error(`lower ${JSON.stringify(review.base)} is not a plain feat/ branch`);
       const lowerTip = base === main && base !== review.base ? squashOf({ cwd, git, host, lower: review.base, main }) : null;
       const rebase = lowerTip && rebaseAfterSquash({ cwd, git, head, lower: review.base, lowerTip, main });
       if (rebase) {
         lines.push(rebase.line);
         failed ||= rebase.failed === true;
-        conflicted ||= rebase.conflict === true;
         if (!rebase.rebased) continue;
       }
       if (base !== review.base) {
@@ -86,7 +86,8 @@ export function restack({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...arg
         lines.push(`retargeted #${number} to ${base}`);
       }
       if (rebase) continue;
-      const forward = base === PILOT_BRANCH ? 'level' : mergeForward({ cwd, git, head, base, main });
+      // Only a feature landed on pilot is merged forward (A5): an unlanded one is left as its author pushed it.
+      const forward = base === PILOT_BRANCH || !landedOnOriginPilot(cwd, git, head) ? 'level' : mergeForward({ cwd, git, head, base, main });
       if (forward === 'level') {
         if (base === review.base) lines.push(`level #${number}`);
       } else {
@@ -121,7 +122,7 @@ function mergeForward({ cwd, git, head, base, main }) {
     git(['worktree', 'add', '-q', '--detach', dir, ours]);
     // The branch's own run record is the writer side: `ours` (merge-generated L3).
     const { left, why } = mergeResolved(dir, theirs, `Merge ${base} into ${head}`, { side: 'ours' });
-    if (left.length) return { line: `conflict ${head}: ${conflictPaths(left, why)}`, conflict: true };
+    if (left.length) return { line: `conflict ${head} with ${base}: ${conflictPaths(left, why)}`, conflict: true };
     const sha = gitAt(dir, 'rev-parse', 'HEAD');
     const refspec = `${sha}:refs/heads/${head}`;
     assertPushable(refspec, { git });
@@ -164,7 +165,7 @@ function landedOnOriginPilot(cwd, git, head) {
  * The one forced push (L3): `head` rebased in a temporary worktree onto origin's `main`, dropping what `lowerTip`
  * (the squashed lower branch) holds, and pushed leased on the tip fetched in this restack. Only for a feature landed on
  * pilot. Answers `null` when `head` holds none of `lowerTip` (nothing to drop: retarget only), else `{ line, rebased }`,
- * with `failed` for a refusal the pilot must act on and `conflict` for a rebase that stopped; nothing is pushed unless
+ * with `failed` for a refusal the pilot must act on, a rebase that stopped included; nothing is pushed unless
  * `rebased`. Throws on any other failure.
  */
 function rebaseAfterSquash({ cwd, git, head, lower, lowerTip, main }) {
@@ -181,7 +182,8 @@ function rebaseAfterSquash({ cwd, git, head, lower, lowerTip, main }) {
     if (tried.error || tried.status === null) throw new Error(`git rebase could not run: ${tried.error?.message ?? `signal ${tried.signal}`}`);
     if (tried.status !== 0) {
       spawnSync('git', ['rebase', '--abort'], { cwd: dir, windowsHide: true });
-      return refuse(`conflict rebasing onto ${main}`, { conflict: true });
+      // No `conflict <head> with <base>:` line for the lander to merge: the pilot acts on it (F2).
+      return refuse(`conflict rebasing onto ${main}`, { failed: true });
     }
     const refspec = `${gitAt(dir, 'rev-parse', 'HEAD')}:refs/heads/${head}`;
     assertPushable(refspec, { git });

@@ -28,7 +28,7 @@ export function afterGreen(dir) {
       at('checkout', '-q', '--detach', merge);
       return null;
     }
-    const numbered = at('rev-parse', 'HEAD');
+    const numbered = onOrigin(dir, head, tip, adr);
     // Pilot's merge keeps its tested tree, a lander's resolution included, with the same allocation.
     at('checkout', '-q', '--detach', merge);
     const same = allocateAdr(dir, { since: pilotTip });
@@ -44,6 +44,24 @@ export function afterGreen(dir) {
     at('reset', '-q', '--hard', merge);
     throw err;
   }
+}
+
+/**
+ * The numbered commit to push, HEAD's tree. A retry after pilot took the number finds origin's
+ * `head` already carrying an earlier attempt's `docs(adr)` commits above `tip`: the renumber is built
+ * on them, so the push stays a fast-forward (F7). Any other origin tip is left to the push to refuse.
+ */
+function onOrigin(dir, head, tip, adr) {
+  const numbered = git(dir, 'rev-parse', 'HEAD');
+  git(dir, 'fetch', '-q', 'origin', `refs/heads/${head}`);
+  const theirs = git(dir, 'rev-parse', 'FETCH_HEAD');
+  if (theirs === tip || theirs === numbered) return numbered;
+  const above = git(dir, 'rev-list', '--format=%s', '--no-commit-header', `${tip}..${theirs}`).split('\n').filter(Boolean);
+  const descends = git(dir, 'merge-base', tip, theirs) === tip;
+  if (!descends || !above.every((subject) => subject.startsWith('docs(adr): '))) return numbered;
+  const tree = git(dir, 'rev-parse', 'HEAD^{tree}');
+  if (git(dir, 'rev-parse', `${theirs}^{tree}`) === tree) return theirs;
+  return git(dir, 'commit-tree', tree, '-p', theirs, '-m', `docs(adr): ${adr.from} is ${adr.to}`);
 }
 
 /**
