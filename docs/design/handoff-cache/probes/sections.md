@@ -33,7 +33,7 @@ Claude Code 2.1.328, runs of 2026-11-19 (08:30 to 08:49 UTC), `--model sonnet`, 
 | deferred_tools_delta | 1,010 / 1,014 | present | 1,804 / 1,732 | differs: the chrome-devtools MCP server connects about 7 s late and its tools arrive as a delta; the after-clear start is logged with more of them |
 | mcp_instructions_delta | 2,049 | absent in 1 of 2 | present in 2 of 2 | differs: same late MCP connection (same hash 720be1 whenever present) |
 
-## First-turn tokens (`turn.complete` usage)
+## First-turn tokens (usage of the first API call; `turn.complete` sums the whole turn)
 
 | start | run | input + cache read + cache write = total |
 |---|---|---|
@@ -53,14 +53,14 @@ The after-clear first call reads 25,329 from cache, which is the `/context` rows
 | untrimmed, no deck tools (f-ac) | 2 | 31,153; 31,163 | baseline |
 | all 8 sized sections trimmed (f-trim) | 1 | 31,159 | +1 against the mean 31,158 |
 | untrimmed, deck tools logged (final-ac) | 3 | 33,920; 33,909; 33,915 | baseline |
-| 4 sections trimmed: memory, pronouns, context_management, session_guidance (ac-sub) | 1 | 33,930 | +15 |
+| 5 sections trimmed: memory, pronouns, context_management, session_guidance, env_info_model (ac-sub) | 1 | 33,930 | +15 |
 | 3 sections trimmed: action_caution, user_privacy, env_info_simple (ac-three) | 1 | 33,917 | +2 |
 | all trimmed (ac-trim2) | 1 | 33,915 | 0 |
 | all trimmed (ft) | 3 | 33,925; 32,540; 33,920 | +10, then -1,375, then +5 |
 
 The one early -1,394 (32,540, against the 33.9k of its neighbours) did not repeat (the next run is -10); it reads as about 1.4k of between-session noise, not a saving. In a `--agent pilot:pilot` session these sections are not in the request at all (the predecessor's observation; no record in `runs.jsonl` holds it).
 
-Saves 0 tokens against the 1,000-token bar.
+Saves 0 tokens against the 1,000-token bar. The 10 in the verdict line is the size of the repeatable delta (+1, +2, +5, +10; the largest repeated one), far under the bar. Caveat: the runs prove only that returning `text: null` did not change the request (`changed: false`); two records (ac-three, ac-trim2) have `exit: null` (killed after their measurement).
 
 ## Does a pilot first turn still run `deck_status`? (assumed, see below)
 

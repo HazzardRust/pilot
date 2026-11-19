@@ -12,3 +12,4 @@ docs/adr/0157-
 docs/design/architect-deeper/
 docs/adr/0159-
 scripts/test/fixtures/init-
+docs/design/handoff-cache/probes/
