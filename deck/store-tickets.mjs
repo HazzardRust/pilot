@@ -467,21 +467,28 @@ export function recutTicket(id, why, files) {
 }
 
 /**
- * Restore a re-cut ticket's signature at `sha` (never-stuck spec 15, L5): the caller has proven its design dir
- * unchanged since `recut.from`. Only an open red ticket carrying the re-cut mark; yellow, its plan at `sha` and never
- * yet granted, the mark and liveness gone, in one write, as a gate1 Sign off leaves it. Returns the ticket.
+ * Move a signed plan to `sha` (never-stuck spec 15, L5; recut-decision L4): the caller has proven its signed sections
+ * unchanged since `recut.from`, else `plan.sha`. An open red ticket carrying the re-cut mark goes yellow, its plan at
+ * `sha` and never yet granted, the mark and liveness gone, as a gate1 Sign off leaves it; an open yellow signed ticket
+ * keeps its state, liveness and grant, its plan at `sha`. One write; never a ticket a gate2 names. Returns the ticket.
  */
 export function replanTicket(id, sha) {
   if (typeof sha !== 'string' || !SHA.test(sha)) throw new DeckRefusal('a replan names the new plan commit as its sha');
   const deck = readDeck();
   const ticket = openTicketOf(deck, id);
-  if (stateOf(ticket) !== 'red' || !ticket.recut || !ticket.plan || typeof ticket.plan !== 'object') {
-    throw new DeckRefusal(`item ${id} carries no re-cut mark; only a re-cut ticket is replanned, any other takes a gate1`);
+  const signed = ticket.plan !== null && typeof ticket.plan === 'object';
+  const recut = signed && stateOf(ticket) === 'red' && Boolean(ticket.recut);
+  if (!recut && !(signed && stateOf(ticket) === 'yellow' && !ticket.recut && typeof ticket.plan.sha === 'string')) {
+    throw new DeckRefusal(`item ${id} is neither re-cut nor a signed yellow ticket; only those are replanned, any other takes a gate1`);
   }
-  enterStage(deck, ticket, 'yellow');
+  const gate2 = deck.items.find((item) => item?.kind === KIND_GATE2 && item.ticket === id);
+  if (gate2) throw new DeckRefusal(`gate2 ${gate2.id} was posted on ${id}; a part-built ticket is never replanned`);
   ticket.plan = { ...ticket.plan, sha };
-  delete ticket.plan.grantedAt;
-  for (const field of ['live', 'recut']) delete ticket[field];
+  if (recut) {
+    enterStage(deck, ticket, 'yellow');
+    delete ticket.plan.grantedAt;
+    for (const field of ['live', 'recut']) delete ticket[field];
+  }
   touchRuns(deck, ticket.repo);
   writeDeck(deck);
   return ticket;
