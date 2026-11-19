@@ -85,3 +85,14 @@ Behaviour 1 asked for every section accounted against the first turn's input tok
 2026-11-19T08:49:06Z: no `sectionsprobe-*` directory under `%TEMP%`, 0 `.credentials.json` under `%TEMP%`, and every record in `runs.jsonl` has `scrubbed: true`. `run.mjs` never prints or logs the copied login (it reads only `claudeAiOauth.expiresAt` from the copy, and its errors name no token); its cleanup runs on `exit`, on SIGINT, SIGTERM and SIGHUP, and on an uncaught exception, and the next run sweeps what a SIGKILL left.
 
 verdict: ruled out, 10
+
+## after S8
+
+S8 read the verdict above against its bar (architecture.md §5 L1, line 5: the start drops 1,000 tokens or more, and
+the pilot's first-turn steps run 3 of 3) and built nothing: no `hooks/prompt-mod.mjs`, `hooks/hooks.json` unchanged,
+no rerun. No trim saved tokens repeatably: the all-8 runs moved the first turn by +1, 0, +10 and +5 (one `ft` run's
+-1,375 did not repeat) and the partial trims by +15 and +2, so the token half fails and alone closes the slice.
+`deck_status` ran 0 of 3 with the trim and 0 of 3 without it on a scratch hand-off, so the steps half is unmeasured.
+Line 5's row for S11's ledger:
+
+line 5, probes/sections.md, ruled out: trimming all 8 sized sections moves the first turn +1 / 0 / +10 / +5 tokens (one unrepeated -1,375) against the 1,000 bar (verdict 10); `deck_status` 0 of 3 trimmed and untrimmed
