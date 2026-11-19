@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "implementing",
+      "state": "pushed a9dacfc",
       "after": [
         "S4"
       ],
@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 5bffb3b",
+      "state": "integrated 2401e3b",
       "branch": "slice/crew-refusals-s4",
       "worktree": "C:/Users/Hazzard/Projects/pilot-crew-refusals-s4"
     },
@@ -47,8 +47,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-crew-refusals-s5"
     }
   ],
-  "next": "co-pilot: S2, S3, S5 implementing; integrating S4 (5bffb3b), then send S3/S5 the new tip",
-  "updatedAt": "2026-11-19T06:09:57.691Z",
+  "next": "co-pilot: integrate S3 (a9dacfc); S2, S5 implementing",
+  "updatedAt": "2026-11-19T06:20:02.037Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -110,6 +110,12 @@
       "agent": "pilot-co-pilot",
       "what": "pilot integrate's push failed on a GitHub server error and the run record was not committed; a manual push succeeded",
       "evidence": "integrate printed 'push or record failed (remote: fatal error in commit_refs_rules)'; git push 7e6cd95c..c38a3e82 ok. Also 'selection is 36300 characters of argv, over 24000'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the co-pilot's rebase message arrived mid-gate, so S3's first gate ran on stale, partly edited files and was discarded",
+      "evidence": "s3-gate.log stale run, s3-gate2.log final; rebase onto 2401e3b5 sent while S3 was gating",
       "size": 1
     }
   ]
