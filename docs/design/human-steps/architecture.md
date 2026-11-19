@@ -91,16 +91,21 @@ S2 moves them). `postFilled` survives: it is the one place a lander's report bec
   on the record; `stepsOf` reads them. Trades: the pilot must send them before the press; a step found after the
   report has no way in. Rejected: the pilot posting or replying steps after `REPORT_DUE` (two writers, unenforced).
   Not posted (main).
+  Verdict: stands — the user asked for steps "posted by whoever writes the closing report"; one writer, the deck's fill from the record
 - **A2** One Done per thread, not a tick per step. Trades: no partial progress shown. Rejected: a stored tick per step
   (a route and a write per press). Posted by main as itm_c5aaa6a3e9b3; L5 keeps the shape able to take a tick.
+  Verdict: stands — the user chose "One Done" on itm_c5aaa6a3e9b3
 - **A3** A new `steps` kind, not a report or walkthrough reused. Trades: one more kind in the mirrors and renderer.
   Rejected: a walkthrough (it waits on the user and holds the Stop gate). Not posted (main).
+  Verdict: stands — the user asked for it "schematised"; no queued ticket claims a steps kind
 - **A4** The thread is standing and a record: not in Yours, not counted on the tab; the reminder is the ticket in
   the green group labelled `human steps`, and the thread under it. Trades: no Yours card. Rejected: a Yours card that
   holds nothing (a third predicate beside standing and queued; the Stop gate holds pilot-posted queued items).
   Not posted (main). Changed from the first findings' default (Yours), on the Stop-gate evidence.
+  Verdict: stands — the user said nothing waits on it and it needs no monitoring; a Yours card would hold the Stop gate (hooks/stop-gate.js:102)
 - **A5** Worktrees left stay listed in the report as record lines and each also becomes a step `Remove <path> when
   you are done with it.` Rejected: steps only (the record loses what was on disk).
+  Verdict: stands — worktrees left as steps is the reminder the user asked for; the report keeps them as record
 
 ## 7. Out of scope
 
