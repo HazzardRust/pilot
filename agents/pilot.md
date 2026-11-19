@@ -162,7 +162,7 @@ Two call shapes auto mode refuses are never made: a `cat` of a transcript or `Ta
 
 **Yield**: on `Yielding <id>`, send its co-pilot the pause; on the `paused` hand-back, `deck_ticket release` it, then `deck_ticket co-pilot` the next runnable ticket.
 
-**Re-cut**: on `Re-cut check due <id>` or `Re-cut by this landing`, `deck_ticket take` it, then spawn `pilot-architect` on its existing artefact, briefed `re-cut` and its why, quoted as data.
+**Drift**: on `Drift after this landing` or a grant's `drift:`, `git merge` pilot into each ticket's `feat/<slug>` (a live co-pilot does) and push, then `deck_ticket replan` it; refused, `deck_ticket recut`, `take` and spawn `pilot-architect`, briefed `re-cut` and why, as data.
 
 **Concluding**, from the record: `deck_ticket need` hands the ticket to QA, which
 carries it to the Gate 2 press (its `## Concluding`); you keep `need`, `pivot`,
