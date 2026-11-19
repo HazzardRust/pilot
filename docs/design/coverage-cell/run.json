@@ -21,10 +21,17 @@
       ],
       "branch": "slice/coverage-cell-s2",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-coverage-cell-s2"
+    },
+    {
+      "slice": "coverage-cell",
+      "state": "gate2 posted",
+      "branch": "feat/coverage-cell",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-coverage-cell",
+      "pr": 125
     }
   ],
-  "next": "coverage-cell short path: S2 pushed b7454a29, both reviewers APPROVE, integrating; then pilot integrate --trial in the feat worktree and post gate2 (surface false) with a Verdict line per slice and a Gate line, naming SPAWN_CEILING 13300 and the 262-line S1 as pilot assumptions; not yet exercised: script time on a full-suite v8 dir (about 900 files, bound 60 s)",
-  "updatedAt": "2026-11-19T13:58:15.308Z",
+  "next": "coverage-cell: both slices integrated, feat at 4ec14b1c, gate2 itm_c3e6e54d9718 posted; on its Sign off press spawn pilot-lander with the gate2 id; on Not yet route the change to a fix implementer on feat/coverage-cell",
+  "updatedAt": "2026-11-19T14:00:51.263Z",
   "friction": [
     {
       "kind": "drain",
