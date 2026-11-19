@@ -42,7 +42,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 909b29e — 368 lines; rust APPROVE, security APPROVE; B4 re-pinned (seam in S5.md)",
+      "state": "integrated at 8a4af5c — rust APPROVE, security APPROVE",
       "after": [
         "S1"
       ],
@@ -51,17 +51,21 @@
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S5"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s6"
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S5"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s7"
     },
     {
       "slice": "S8",
@@ -160,8 +164,8 @@
       ]
     }
   ],
-  "next": "integrate S5 (running); S12 after its re-review; fresh S8 finisher on S12's tip; pilot ready. Step 7 carry: S2 nits 2-3, S12 sync fetch on press (up to 5 s block); found issue: Rune overview shows only the landing tab's status table, the page one per tab (spec 2) -> added slice",
-  "updatedAt": "2026-11-19T22:39:54.767Z",
+  "next": "S6, S7 implementing from 8a4af5c; S12 re-review running, then integrate S12 and brief a fresh S8 finisher on its tip; send S6/S7 the tip",
+  "updatedAt": "2026-11-19T22:42:31.058Z",
   "friction": [
     {
       "agent": "pilot-implementer",
