@@ -179,6 +179,8 @@ export const PILOT_MERGE_ALLOW = [
   'Bash(pilot integrate *)',
   'Bash(pilot land *)',
   'Bash(pilot landing *)',
+  // ci-gate (spec 7): read one commit's CI and wait on it; the ref reaches git only, never gh.
+  'Bash(pilot checks *)',
   // process-gc (L14): list, reap and stop scratch decks. Never `pilot *`.
   'Bash(pilot ps)',
   'Bash(pilot gc)',

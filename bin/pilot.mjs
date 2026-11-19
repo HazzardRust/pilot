@@ -43,6 +43,7 @@ import { main as integrate } from '../scripts/integrate.mjs';
 import { main as featurePr } from '../scripts/feature-pr.mjs';
 import { main as land } from '../scripts/land.mjs';
 import { main as landing } from '../deck/landing-wait.mjs';
+import { main as checks } from '../scripts/checks-cli.mjs';
 import { main as sync } from '../scripts/sync.mjs';
 import { searchPathOnly } from '../scripts/pilot-branch.mjs';
 import { main as worktrees } from '../scripts/worktrees.mjs';
@@ -119,6 +120,10 @@ const usage = () => `pilot — the deck for piloted runs
                  run in the background after a gate2's Sign off: wait for the landing the
                  deck runs, print its line; exit 0 landed, 1 not, 2 no deck or no such gate2
                  (gives up after 40 minutes)
+  pilot checks [<ref>] [--wait <min>]
+                 print the CI on <ref> (default HEAD) as one check line; exit 0 green, 1 red,
+                 4 pending, 5 none, 6 unread, 2 usage; --wait polls every 30 s while pending,
+                 up to <min> minutes (default 20, 1..60)
   pilot worktrees [prune] [--repo <dir>] [--base <ref>] [--dry-run] [--run <slug>]
                  list every worktree as main, merged-clean, merged-dirty, open or locked
                  against the fetched base (default origin/main); prune removes only the
@@ -381,6 +386,11 @@ export async function run(argv, deps) {
 
   if (command === 'landing') {
     process.exitCode = await landing(argv.slice(1));
+    return undefined;
+  }
+
+  if (command === 'checks') {
+    process.exitCode = await checks(argv.slice(1));
     return undefined;
   }
 
