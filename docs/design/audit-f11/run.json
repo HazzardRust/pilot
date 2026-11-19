@@ -1,0 +1,50 @@
+{
+  "slug": "audit-f11",
+  "feature": "Fixture git stops printing CRLF warnings",
+  "ticket": "itm_9e6eb292dcf7",
+  "branch": "feat/audit-f11",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f11",
+  "artefact": "docs/design/audit-f11/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/audit-f11-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f11-s1"
+    }
+  ],
+  "next": "Short path, PR #115. S1 pushed fc686e43, typescript-reviewer approve; pilot integrate slice/audit-f11-s1 running in C:/Users/Hazzard/Projects/pilot-feat-audit-f11. On pass: pilot integrate --trial, post gate2 (surface false, Verdict + Gate lines). On fail: send the row's real state and route its line.",
+  "updatedAt": "2026-11-19T01:53:42.640Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "brief.md PR footer copied from another run carries that run's session URL, so footer and commit trailer name different sessions",
+      "evidence": "docs/design/audit-f11/brief.md vs the trailer in the brief",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "a finishing architect has no step-3 text for the gate1 body",
+      "evidence": "architect report: body is its own summary",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "a paused co-pilot cannot stop its implementers (TaskStop refused) and is forced to hand back before the drain ends; their reports go to an agent that is gone",
+      "evidence": "co-pilot hand-back: S1 local 84b041ca unpushed, S2 staged uncommitted",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "deck_ticket co-pilot for a short-path ticket was accepted while another ticket's co-pilot was live, taking its lane silently",
+      "evidence": "\"Co-pilot itm_9e6eb292dcf7: live\" after itm_74926a1687c5; release then says \"not the live one\"",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "session ran 3 landings' tails, 2 gate1s, 3 inquiry threads and 3 tickets after a cold recovery",
+      "size": 230
+    }
+  ]
+}
