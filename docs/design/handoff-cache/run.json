@@ -106,7 +106,7 @@
     },
     {
       "slice": "S12",
-      "state": "implementing (audit gap, N3; split at 209 lines)",
+      "state": "pushed 52759fe; integrating",
       "after": [
         "S1",
         "S9",
@@ -116,7 +116,7 @@
     },
     {
       "slice": "S13",
-      "state": "pushed c7316f5; integrating",
+      "state": "integrated",
       "after": [
         "S2",
         "S4",
@@ -126,7 +126,7 @@
     },
     {
       "slice": "S14",
-      "state": "implementing (split from S12: update no-op, local-clone strip)",
+      "state": "pushed 70e275e",
       "after": [
         "S9",
         "S10"
@@ -152,26 +152,9 @@
     "dropped: S13 pushback — restart's env keeps ANTHROPIC*/PILOT_*: restart copies no login and its documented login is ANTHROPIC_API_KEY, so L8's copy terms do not reach it",
     "kept: S13 size — 194 changed lines accepted: net +40, the rest a move into probes/lib.mjs its slice file requires"
   ],
-  "next": "fix1 integrated at 08249c52; S13 integrating; S12/S14 running; then base check, resume QA with the tip.",
-  "updatedAt": "2026-11-19T10:34:45.529Z",
+  "next": "S13 integrated at 73e4f818; S12/S14 running (send them the tip to rebase); then base check, resume QA with the tip.",
+  "updatedAt": "2026-11-19T10:54:40.333Z",
   "friction": [
-    {
-      "agent": "pilot-architect",
-      "what": "nothing checks that /clear starts a new transcript file; audit-session-start.mjs takes the first usage per file",
-      "evidence": "scripts/audit-session-start.mjs:95",
-      "size": 1
-    },
-    {
-      "kind": "drain",
-      "what": "deck labels the gate1 'feature PR opened' note as 'a landing ended short' and holds the turn until the ticket thread is replied to, twice",
-      "size": 1
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "the gate is red on the base from a design doc: vocabulary-guard finds the retired word 'task' at slices/S5.md:21, costing a 6-8 minute run and a rerun alone to rule out the slice",
-      "evidence": "scripts/test/vocabulary-guard.test.mjs:67 on slice/handoff-cache-s1 52a0a4c",
-      "size": 2
-    },
     {
       "agent": "pilot-implementer",
       "what": "tokenCounts was not exported though S1 needs it, forcing a 3-line edit outside the slice's files",
@@ -392,6 +375,23 @@
       "agent": "pilot:pilot-implementer",
       "what": "S13's first gate died on missing node_modules (a new worktree needs npm ci); a move-shaped slice counts moved lines twice against the 150 limit",
       "evidence": "S13 report: 'node_modules missing: run npm ci'; 117+/77- net +40",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "harness forces a SubagentHandback each time the co-pilot idles on live children; it labels each 'paused' and re-sends identical tables",
+      "evidence": "5 hand-backs from one co-pilot in one fix round, 3 identical, each read in full by the pilot",
+      "size": 8000
+    },
+    {
+      "kind": "drain",
+      "what": "duplicate co-pilot hand-backs read in the pilot",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12 gated the combined pre-split state once for nothing (about 7 minutes, no TaskStop); brief.md's commit trailer names a different model than the spawn brief",
+      "evidence": "S12/S14 report: Friction and Pushback rows",
       "size": 2
     }
   ]
