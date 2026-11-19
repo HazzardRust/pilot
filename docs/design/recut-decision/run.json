@@ -1,0 +1,61 @@
+{
+  "slug": "recut-decision",
+  "feature": "re-cut is the crew's decision",
+  "ticket": "itm_5807aa39f833",
+  "branch": "feat/recut-decision",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-recut-decision",
+  "artefact": "docs/design/recut-decision/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 A landing over an owned file leaves the ticket yellow with one drift line",
+      "state": "pushed 268c4b7",
+      "branch": "slice/recut-decision-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-recut-decision-s1"
+    },
+    {
+      "slice": "S2 A yellow ticket is replanned at a merge commit with no press",
+      "state": "planned",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/recut-decision-s2"
+    },
+    {
+      "slice": "S3 The crew puts a plan on pilot by a merge and decides the re-cut",
+      "state": "implementing",
+      "branch": "slice/recut-decision-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-recut-decision-s3"
+    }
+  ],
+  "next": "co-pilot: integrate S1 268c4b7 into feat/recut-decision, then pilot ready for S2; S3 implementing",
+  "updatedAt": "2026-11-19T14:11:15.622Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "landing sweep re-cut two signed tickets to red with the user leaving; pilot grepped the installed deck for the replan path, merged pilot into two feat branches and replanned by hand; one architect spawn stopped unused",
+      "size": 9
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back hook forced a paused hand-back at idle with S3 pushed but unintegrated; TaskOutput missing from its toolset so it waited with ls-remote loops",
+      "evidence": "audit-f14 hand-back, 25 tool uses"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 slice file named an existing test file as new; context compacted near 160k and lost worktree state, npm ci run twice",
+      "evidence": "scripts/test/integrate-base.test.mjs from 83d1ecab; S3 report"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck/lineage.mjs:42-47 refusal text says rebase though the lineage check accepts a merge of pilot; that wording caused today's force-push question",
+      "evidence": "scripts/pilot-branch.mjs:227"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fact sheet read the worktree after the implementer's edits, so its 'already present' notes described the implementer's own changes",
+      "evidence": "S1 report, friction row",
+      "size": 1
+    }
+  ]
+}
