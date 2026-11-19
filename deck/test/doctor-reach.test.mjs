@@ -6,6 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { checkAll, reachRow } from '../doctor.mjs';
+import { tempDeck } from '../testUtils.mjs';
 
 const CHANGE = 'change with: pilot reach <level>';
 
@@ -38,7 +39,8 @@ test('drift fails', () => {
   assert.match(everything.detail, /reach everything but pilot@pilot is not enabled/);
 });
 
-test('checkAll reads the reach and the enabled plugin through its deps, after the store row', async () => {
+test('checkAll reads the reach and the enabled plugin through its deps, after the store row', async (t) => {
+  tempDeck(t);
   const rows = await checkAll({
     platform: 'linux',
     resolveDep: () => true,
