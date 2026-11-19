@@ -73,7 +73,7 @@ test('a base the repository does not hold is refused, naming it', (t) => {
 });
 
 test('an option-shaped base is refused', (t) => {
-  for (const bad of ['--upload-pack=x', '-x', 'a..b', 'HEAD', '']) assert.equal(RUN_BASE.test(bad), false, bad);
+  for (const bad of ['--upload-pack=x', '-x', 'a..b', 'HEAD', '', 'main/', 'main.', 'a//b', 'main.lock']) assert.equal(RUN_BASE.test(bad), false, bad);
   for (const good of ['pilot', 'feat/x', 'main', 'trunk', 'release/1.2']) assert.equal(RUN_BASE.test(good), true, good);
   const { work } = scratch(t);
   assert.throws(() => assertOnPilotTip(work, 'origin/main', { base: '--upload-pack=x' }), refused('--upload-pack=x'));

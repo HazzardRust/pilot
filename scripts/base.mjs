@@ -25,7 +25,7 @@
 import { execFileSync } from 'node:child_process';
 import { bearer } from '../hooks/lib/deck-secret.js';
 import { hostOf } from '../deck/host.mjs';
-import { RUN_BASE } from '../deck/runs.mjs';
+import { RUN_BASE, SLUG } from '../deck/runs.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { ensurePilotBranch, firstLine, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
 
@@ -46,8 +46,8 @@ const deckConcluding = (cwd) => async () => {
 async function chainedOn(concluding, git) {
   const feature = await concluding();
   const branch = feature?.branch;
-  // A branch and a ticket from the deck reach git and the parsed line: only a run base and an item id, never an option.
-  if (typeof branch !== 'string' || !RUN_BASE.test(branch)) return null;
+  // A branch and a ticket from the deck reach git and the parsed line: only a feature branch and an item id, never an option.
+  if (typeof branch !== 'string' || !branch.startsWith('feat/') || !SLUG.test(branch.slice('feat/'.length))) return null;
   if (typeof feature.ticket !== 'string' || !/^itm_[0-9a-f]+$/.test(feature.ticket)) return null;
   try {
     git(['fetch', '-q', 'origin', `+refs/heads/${branch}:refs/remotes/origin/${branch}`]);
@@ -69,9 +69,7 @@ export async function base({ cwd = process.cwd(), say = (text) => process.stdout
     return 1;
   }
   let pilot;
-  let host;
   try {
-    host = hostOf(git);
     pilot = ensurePilotBranch({ git });
   } catch (err) {
     warn(`pilot base: ${firstLine(err)}\n`);
@@ -94,17 +92,24 @@ export async function base({ cwd = process.cwd(), say = (text) => process.stdout
       deck = ' (deck not reached)';
     }
   }
-  if (runs === 'origin' && host !== 'none') {
+  if (runs === 'origin') {
     // An unchained run on origin with a host is cut from the default branch, whose PR it opens (audit-f14 L9).
-    let main;
+    let line;
     try {
-      main = remoteDefaultBranch(git);
+      if (hostOf(git) !== 'none') {
+        const main = remoteDefaultBranch(git);
+        // The remote's name for it is printed for an agent to cut from: a run base or nothing.
+        if (!RUN_BASE.test(main)) throw new Error(`origin's default branch ${JSON.stringify(main)} is not a plain branch name`);
+        line = `base ${main} ${git(['rev-parse', '--short', '--verify', `refs/remotes/origin/${main}^{commit}`])}${deck}\n`;
+      }
     } catch (err) {
       warn(`pilot base: ${firstLine(err)}\n`);
       return 1;
     }
-    say(`base ${main} ${git(['rev-parse', '--short', '--verify', `refs/remotes/origin/${main}^{commit}`])}${deck}\n`);
-    return 0;
+    if (line) {
+      say(line);
+      return 0;
+    }
   }
   say(`base ${PILOT_BRANCH} ${git(['rev-parse', '--short', pilot.sha])}${from}${where}${deck}\n`);
   return 0;

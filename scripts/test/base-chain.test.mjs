@@ -43,6 +43,15 @@ test('a green ticket itself chained on a feature is not concluding', (t) => {
   assert.equal(queueView(listItems(), green.repo, records).concluding, null);
 });
 
+test('a green ticket cut from main is the concluding feature', (t) => {
+  tempDeck(t);
+  const green = aTicket('Cut from main', 'green');
+  aTicket('Planning', 'red');
+  takeTicket(green.id);
+  const records = [{ slug: 'n', ticket: green.id, branch: 'feat/n', base: 'main' }];
+  assert.deepEqual(queueView(listItems(), green.repo, records).concluding, { ticket: green.id, slug: 'n', branch: 'feat/n' });
+});
+
 test('no green ticket, no chain', (t) => {
   tempDeck(t);
   const red = aTicket('Planning', 'red');
@@ -88,7 +97,7 @@ test('a concluding branch origin lacks falls back', async (t) => {
   const gone = await printed(work, async () => ({ ticket: 'itm_1', slug: 'gone', branch: 'feat/gone' }));
   // Unchained, a run on origin with a host is cut from the default branch (audit-f14 L9).
   assert.equal(gone.out, `base main ${git(work, 'rev-parse', '--short', 'origin/main')} (feat/gone not on origin)\n`);
-  for (const feature of [{ ticket: 'itm_1', branch: '--upload-pack=x' }, { ticket: 'itm_1) (x', branch: 'feat/n' }]) {
+  for (const feature of [{ ticket: 'itm_1', branch: '--upload-pack=x' }, { ticket: 'itm_1) (x', branch: 'feat/n' }, { ticket: 'itm_1', branch: 'main' }]) {
     const { code, out } = await printed(work, async () => ({ slug: 'gone', ...feature }));
     assert.equal(code, 0);
     assert.equal(out, `base main ${git(work, 'rev-parse', '--short', 'origin/main')}\n`, feature.ticket);

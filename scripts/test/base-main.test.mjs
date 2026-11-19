@@ -67,4 +67,6 @@ test('a bad pilot.host stops the base, naming the key', async (t) => {
   const { code, out, err } = await printed(work);
   assert.deepEqual({ code, out }, { code: 1, out: '' });
   assert.match(err, /^pilot base: pilot\.host names "--upload-pack=x"/);
+  git(work, 'config', 'pilot.remote', 'fork');
+  assert.equal((await printed(work)).code, 0, 'a fork run reads no host');
 });
