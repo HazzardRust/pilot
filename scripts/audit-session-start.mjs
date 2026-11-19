@@ -16,7 +16,8 @@
  *   node scripts/audit-session-start.mjs <repo> [--first-turn] [--home <dir>] [--limit <n>]
  *
  * `--first-turn` instead prints one Markdown row per kind of fresh context, a hand-off's and a
- * cold start's: the median first turn's four input counts, its cached share and the gap before it.
+ * cold start's: the median first turn's four input counts, its cached share and the gap before it,
+ * then how many transcripts could not be read.
  */
 
 import fs from 'node:fs';
@@ -78,7 +79,9 @@ function scanLines(file, onEntry, maxBytes = MAX_SCAN_BYTES) {
     // otherwise decode as two replacement characters and skew every size after it.
     const decoder = new StringDecoder('utf8');
     let rest = '';
-    for (let at = 0; at < maxBytes;) {
+    let parsed = 0;
+    let at = 0;
+    while (at < maxBytes) {
       const read = fs.readSync(fd, chunk, 0, CHUNK_BYTES, at);
       if (read === 0) break;
       at += read;
@@ -87,10 +90,14 @@ function scanLines(file, onEntry, maxBytes = MAX_SCAN_BYTES) {
       for (const line of lines) {
         let entry;
         try { entry = JSON.parse(line); } catch { continue; }
+        parsed += 1;
         if (onEntry(entry)) return;
       }
     }
-    try { onEntry(JSON.parse(rest)); } catch { /* a partial or broken last line is skipped */ }
+    try { onEntry(JSON.parse(rest)); parsed += 1; } catch { /* a partial or broken last line is skipped */ }
+    // A file with bytes and not one line of JSON (blank lines only, or one line past `maxBytes`, too)
+    // is not a transcript: said, never counted as an empty one.
+    if (at > 0 && parsed === 0) throw new Error(`${path.basename(file)}: no line parses`);
   } finally {
     fs.closeSync(fd);
   }
@@ -150,14 +157,16 @@ function turnCounts(entry) {
 /**
  * The fresh contexts in one transcript, the whole file read: a segment opens at the top and again at
  * each clear after a first turn (A3 assumes a clear starts a new file; this does not rely on it).
- * `gapMs` runs from the last entry of the segment before to this one's first turn.
+ * `gapMs` runs from the last entry of the segment before to this one's first turn; the file's
+ * opening segment has none here, and `withGaps` measures it across files. `atMs` is the first
+ * turn's time and `lastMs` the file's last entry's, both for that.
  */
 function segmentsOf(file) {
   const segments = [];
   let current = null;
   let lastMs = null;
   const open = (byClear) => {
-    current = { byClear, pickup: false, gapMs: null, firstTurn: null, sinceMs: segments.length ? lastMs : null };
+    current = { byClear, pickup: false, gapMs: null, firstTurn: null, atMs: null, sinceMs: segments.length ? lastMs : null };
     segments.push(current);
   };
   open(false);
@@ -171,12 +180,32 @@ function segmentsOf(file) {
     const counts = current.firstTurn ? null : turnCounts(entry);
     if (counts) {
       current.firstTurn = counts;
-      current.gapMs = current.sinceMs !== null && Number.isFinite(when) ? when - current.sinceMs : null;
+      current.atMs = Number.isFinite(when) ? when : null;
+      current.gapMs = current.sinceMs !== null && current.atMs !== null ? when - current.sinceMs : null;
     }
     if (Number.isFinite(when)) lastMs = when;
     return false;
   }, Infinity);
-  return segments.map(({ sinceMs, ...segment }) => segment);
+  return { segments: segments.map(({ sinceMs, ...segment }) => segment), lastMs };
+}
+
+/**
+ * Each readable session's segments, the opening one's gap measured from the newest other
+ * transcript that ended by its first turn: a clear opens a new file (F2), so the session before
+ * it is another transcript of the same project directory. One that cannot be read is marked.
+ */
+function withGaps(sessions, files) {
+  const read = sessions.map((s, i) => {
+    if (s.unreadable) return null;
+    try { return segmentsOf(files[i]); } catch { s.unreadable = true; return null; }
+  });
+  read.forEach((own, i) => {
+    if (!own) return;
+    const [opening] = own.segments;
+    const ends = read.filter((other) => other && other !== own && other.lastMs !== null && opening.atMs !== null && other.lastMs <= opening.atMs);
+    if (ends.length) opening.gapMs = opening.atMs - Math.max(...ends.map((other) => other.lastMs));
+    sessions[i].segments = own.segments.map(({ atMs, ...segment }) => segment);
+  });
 }
 
 const median = (values) => {
@@ -243,12 +272,7 @@ export async function measureSessionStarts({ repo, home = os.homedir(), limit = 
 
   const opening = pilotOpening();
   const sessions = files.map((file) => measureOne(file, opening));
-  if (firstTurn) {
-    sessions.forEach((s, i) => {
-      if (s.unreadable) return;
-      try { s.segments = segmentsOf(files[i]); } catch { s.unreadable = true; }
-    });
-  }
+  if (firstTurn) withGaps(sessions, files);
   return {
     repo,
     transcripts: dir,
@@ -274,7 +298,9 @@ async function main(argv) {
   }
   const firstTurn = rest.includes('--first-turn');
   const result = await measureSessionStarts({ repo, home: flag('--home') ?? os.homedir(), limit, firstTurn });
-  process.stdout.write((firstTurn ? rowsTable(firstTurnRows(result.sessions)) : JSON.stringify(result, null, 2)) + '\n');
+  // N3: a transcript that cannot be read is out of every row's n, so the count of them is said.
+  const unreadable = () => `unreadable: ${result.sessions.filter((s) => s.unreadable).length} of ${result.sessions.length} transcripts`;
+  process.stdout.write((firstTurn ? `${rowsTable(firstTurnRows(result.sessions))}\n\n${unreadable()}` : JSON.stringify(result, null, 2)) + '\n');
   return 0;
 }
 
