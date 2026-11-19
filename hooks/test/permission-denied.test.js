@@ -22,6 +22,17 @@ const path = require('node:path');
 const { onDenied } = require('../permission-denied.js');
 const { postBlocked } = require('../lib/blocked.js');
 
+// Every denial is logged under `deckDir()` (crew-refusals S4): this file's logs go to a scratch store,
+// set before any test runs, so neither an in-process hook nor a spawned one reaches the user's.
+const STORE = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-denied-store-'));
+const STORE_BEFORE = process.env.PILOT_DECK_DIR;
+process.env.PILOT_DECK_DIR = STORE;
+test.after(() => {
+  if (STORE_BEFORE === undefined) delete process.env.PILOT_DECK_DIR;
+  else process.env.PILOT_DECK_DIR = STORE_BEFORE;
+  fs.rmSync(STORE, { recursive: true, force: true });
+});
+
 const REPO = path.join(os.tmpdir(), 'pilot-blocked-repo');
 /** A claim holds its step this long (L3). */
 const WINDOW_MS = 10 * 60 * 1000;
@@ -420,4 +431,50 @@ test('a refusal with a verdict still posts at once', async (t) => {
     await onDenied(noVerdict({ reason }), { deck, claims: scratchClaims(t), env: {} });
     assert.strictEqual(deck.posts.length, 1, reason);
   }
+});
+
+// crew-refusals S4, spec 6 (A4, L9): every denial lands in the classifier log; the post is unchanged.
+
+const readLog = async (dir) => (await import('../../deck/classifier-log.mjs')).readRefusals({ dir });
+
+test('a denial outside a pilot run is logged', async (t) => {
+  const logDir = scratchClaims(t);
+  const deck = fakeDeck({ live: false });
+  const out = await onDenied(denial({ agent_type: undefined }), { deck, claims: scratchClaims(t), env: {}, logDir });
+  assert.strictEqual(out, null);
+  assert.strictEqual(deck.posts.length, 0);
+  const log = await readLog(logDir);
+  assert.strictEqual(log.length, 1);
+  assert.strictEqual(log[0].agent, 'main');
+  assert.strictEqual(log[0].reason, 'Marking a PR ready is outside the ticket the user gave');
+  assert.strictEqual(log[0].command, 'gh pr ready 576');
+  assert.strictEqual(log[0].tool, 'Bash');
+  assert.strictEqual(log[0].repo, REPO);
+  assert.strictEqual(log[0].ticket, null);
+});
+
+test("a pilot lane's posted denial is logged under its ticket", async (t) => {
+  const logDir = scratchClaims(t);
+  const deck = fakeDeck({ ticket: { id: 'itm_filed' } });
+  await onDenied(denial({ agent_id: 'a1', agent_type: 'pilot:pilot-qa' }), { deck, claims: scratchClaims(t), env: {}, logDir });
+  assert.strictEqual(deck.posts.length, 1);
+  const log = await readLog(logDir);
+  assert.deepStrictEqual(log.map((r) => [r.agent, r.ticket]), [['pilot:pilot-qa', 'itm_filed']]);
+});
+
+test('a no-verdict is tagged, a refusal is not', async (t) => {
+  const logDir = scratchClaims(t);
+  await onDenied(noVerdict(), { deck: fakeDeck(), claims: scratchClaims(t), env: {}, logDir });
+  await onDenied(denial({ tool_name: 'Edit', tool_input: { file_path: 'x' }, agent_type: undefined }), { deck: fakeDeck(), claims: scratchClaims(t), env: {}, logDir });
+  const log = await readLog(logDir);
+  assert.deepStrictEqual(log.map((r) => [r.tool, r.verdict]), [['Bash', 'no-verdict'], ['Edit', 'refused']]);
+});
+
+test('a log that cannot be written changes nothing else', async (t) => {
+  const logDir = path.join(scratchClaims(t), 'a-file');
+  fs.writeFileSync(logDir, '');
+  const deck = fakeDeck();
+  const out = await onDenied(denial(), { deck, claims: scratchClaims(t), env: {}, logDir });
+  assert.strictEqual(out, null);
+  assert.strictEqual(deck.posts.length, 1, "a lane's refusal still posts");
 });
