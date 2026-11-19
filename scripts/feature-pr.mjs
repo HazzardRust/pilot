@@ -4,7 +4,7 @@
  * does) and the artefact from `origin/feat/<slug>`, then makes the host match them through its
  * **Host** (`deck/host.mjs`; other-host spec 2, 3):
  *
- *   no open review for `feat/<slug>` -> one `open({ draft: true })` on the record's base
+ *   no open review for `feat/<slug>` -> one `open({ draft: true })` on `prBase` of the record's base
  *   a body or a base that differs    -> one `edit(n)` carrying only what differs
  *   both the same                    -> nothing
  *
@@ -26,6 +26,7 @@ import { deckUrl } from '../deck/tools.mjs';
 import { listeningRepo } from '../deck/wait.mjs';
 import { firstLine, git as gitAt, PILOT_BRANCH } from './pilot-branch.mjs';
 import { runRemote } from './remotes.mjs';
+import { prBase } from './stack.mjs';
 
 const USAGE = 'usage: pilot pr --ticket <itm_id>';
 const TICKET = /^itm_[0-9a-f]+$/;
@@ -164,7 +165,14 @@ export function syncFeaturePr({ host, git, record }) {
   // `head` matches a branch name from any fork: only this repository's own PR is the feature PR.
   const open = step(host, 'reviews', () => host.reviews({ head, state: 'open', limit: LIST_LIMIT })).filter((pr) => pr?.crossRepo === false);
 
-  const done = writePr(host, open, { base, head, body, title: quiet(`feat(${slug}): ${feature}`) });
+  // The PR's base is worked out on every write, so a write never undoes a retarget (audit-f14 L6).
+  let prOn;
+  try {
+    prOn = prBase({ git, host, base });
+  } catch (err) {
+    throw new StepError(`base: ${firstLine(err)}`);
+  }
+  const done = writePr(host, open, { base: prOn, head, body, title: quiet(`feat(${slug}): ${feature}`) });
   const qa = typeof record.qaComment === 'string' && record.qaComment.trim() !== '' ? record.qaComment : null;
   if (qa === null) return done;
   // QA's one comment (spec 3; L3, A2): the host finds this account's comment carrying the marker every time.

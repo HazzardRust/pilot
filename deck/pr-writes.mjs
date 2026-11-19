@@ -24,7 +24,7 @@ const PILOT_BIN = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 
 const TICKET = /^itm_[0-9a-f]+$/;
 
 /** How long a `pilot pr` may run before its tree is killed and the write reads timed out. */
-export const PR_WRITE_TIMEOUT_MS = 5 * 60_000;
+const PR_WRITE_TIMEOUT_MS = 5 * 60_000;
 
 /** The most of the verb's line a note keeps. */
 const MAX_LINE_CHARS = 500;

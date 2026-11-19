@@ -25,7 +25,7 @@ export function exemptPaths() {
 }
 
 /** Section 7, closed: Claude Code's names, other languages' own word, and vendored upstream text (A7, A10). */
-export const EXCEPTIONS = Object.freeze([
+const EXCEPTIONS = Object.freeze([
   // A regex's word-boundary escape before a name is not a letter that joins it to another word.
   { pattern: new RegExp(String.raw`(?<!\w(?<!\\[bntr]))(?:${T}(?:Create|Update|List|Get|Output|Stop)\b|${T} tool\b|${t}-notification\b)`, 'g') },
   { pattern: new RegExp(String.raw`\b(?:${t}kill|${t}list|queueMicro${t}|micro${t})\b`, 'g') },

@@ -40,6 +40,22 @@ export function hostOf(git) {
   return value;
 }
 
+export const MERGE_KEY = 'pilot.merge';
+export const MERGE_METHODS = Object.freeze(['merge', 'squash']);
+
+/** How a feature PR is merged, from `git config pilot.merge`: unset is `merge`. Throws, naming the key, on any other value (audit-f14 A8). */
+export function mergeMethodOf(git) {
+  let value;
+  try {
+    value = git(['config', '--get', MERGE_KEY]).replace(/\r?\n$/, '');
+  } catch (err) {
+    if (err.status === 1) return 'merge';
+    throw err;
+  }
+  if (!MERGE_METHODS.includes(value)) throw new Error(`${MERGE_KEY} names ${JSON.stringify(value)}: not one of ${MERGE_METHODS.join(', ')}`);
+  return value;
+}
+
 /** The **Host** of the repository in `cwd`, or null at `none` (A1). `run` replaces the adapter's CLI runner. */
 export function hostFor(cwd, { git = (args) => gitAt(cwd, ...args), run } = {}) {
   const name = hostOf(git);

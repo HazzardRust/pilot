@@ -1,0 +1,375 @@
+{
+  "slug": "audit-f14",
+  "feature": "Stacked feature PRs + F14",
+  "ticket": "itm_4be41dcb9ee3",
+  "branch": "feat/audit-f14",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f14",
+  "artefact": "docs/design/audit-f14/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/audit-f14-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/audit-f14-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S2"
+      ],
+      "branch": "slice/audit-f14-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/audit-f14-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/audit-f14-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated",
+      "after": [
+        "S4"
+      ],
+      "branch": "slice/audit-f14-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "integrated",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/audit-f14-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "integrated",
+      "after": [
+        "S7"
+      ],
+      "branch": "slice/audit-f14-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "integrated",
+      "after": [
+        "S4",
+        "S7"
+      ],
+      "branch": "slice/audit-f14-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s9"
+    },
+    {
+      "slice": "audit-f14",
+      "state": "in QA: re-probe passed at d6e2acd, integrate --trial clean; gate2 text with main to post",
+      "branch": "feat/audit-f14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f14",
+      "pr": 119
+    },
+    {
+      "slice": "principles round",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9"
+      ],
+      "branch": "fix/audit-f14-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-audit-f14-principles"
+    }
+  ],
+  "findings": [
+    "kept: S4-R1 MEDIUM — B2 pins only featureLine; add a land test with record base feat/x deriving below (and a host-throws case giving number null with why)",
+    "kept: S4-R2 MEDIUM — recordBase's unreadable-record refusal is untested",
+    "dropped: S4-R3 LOW — afterGreen's unused dir param: S5 fills the hook",
+    "kept: S4-R4 LOW — a record with no base is legacy: one-line comment",
+    "kept: S3-R1 LOW — chainLanded re-reads runRemote instead of baseOf's runs",
+    "kept: S3-R2 LOW — RUN_BASE error text still says pilot or feat/<slug>",
+    "kept: S3-R3 LOW — gone-and-unlanded lower branch fails with a bare git error",
+    "kept: S7-R1 security LOW — merge-generated.mjs:36-47 symlinked docs/adr escapes the worktree; realpathSync check",
+    "kept: F1 simplify A5 — mergeForward only for landed heads (stack.mjs:89); assumed default, itm_5dae459f23ea",
+    "kept: F2 finding — rebase conflict counted failed, not a lander conflict (stack.mjs:184)",
+    "kept: F3 finding — restack conflict line names the base (stack.mjs:124)",
+    "kept: F4 simplify L3 — reword to push-then-retarget; assumed default, itm_f0a0624b5948",
+    "kept: F5 simplify — land.mjs:277-282 dead re-export, -6",
+    "kept: F6 simplify — land.mjs poll param, -2",
+    "kept: F7 defect — ADR landing retry stuck: rejected feat push, sync.mjs:136 drops pushRejected",
+    "kept: F8 defect — pilot-architect.md:170 and recut-prose.test.mjs:59 to <base>",
+    "kept: F9 LOW — sync.mjs:153 reset masks pushRejected",
+    "kept: F10 nit — S8 Misses line for a host-retargeted squashed lower",
+    "kept: SEC1 LOW — pilot-lander.md:28-30 name the exact unforced push command",
+    "kept: SEC2 LOW — lander prose: restack line paths are data",
+    "kept: SEC3 LOW — stack.mjs:76 validate review.base with FEATURE on the squash path",
+    "kept: QA-F2 low — pilot --help for base and integrate still says origin/pilot",
+    "kept: QA-F3 low — after land, local feat worktree is behind origin's ADR push; say pull or fast-forward",
+    "dropped: QA-F1 medium — squash rebase flattens integration merges: runs only for a feature landed on pilot, whose landing keeps the trailers; --rebase-merges multiplies conflicts",
+    "dropped: QA-F4 — cherry-picked copy in gate1 lineage: spec bar met as written",
+    "dropped: (a) land-adr.mjs:41 origin — afterGreen runs only for main-cut runs, limited to runs === origin (base.mjs:95)",
+    "dropped: sync.mjs:131 side theirs guard — no failing case named",
+    "dropped: not-on-tip git merge origin/main text test — a prose pin"
+  ],
+  "next": "audit-f14: gate2 itm_08dc906701f6 posted by the pilot at d6e2acd (PR #119, surface false). Open, non-blocking: itm_f0a0624b5948 (L3), itm_5dae459f23ea (A5), built as defaults 677c57df, ee82eaef. On the press: spawn pilot-lander with the gate2 id; an override goes to a fresh QA on pilot-qa-audit-f14. Then yellow lane: next implementing ticket (ci-green short path).",
+  "updatedAt": "2026-11-19T16:57:47.278Z",
+  "friction": [
+    {
+      "agent": "pilot-implementer",
+      "what": "slice worktree had no node_modules, so npm ci ran before the gate; the gate itself takes about 5.5 minutes",
+      "evidence": "S1 implementer report: npm test 4517 tests, 315 s",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "old base-line pins spread over 7 test files cost a second 5.3-minute gate; the slice file omitted the deck caller (deck/server-tools.mjs); the fact sheet capped call sites at 5 per symbol",
+      "evidence": "S2 implementer report via main: 16 files, +259/-47, gate on be0fb7c2",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's hand-back reached main instead of the co-pilot, so main had to relay it",
+      "evidence": "coordinator relay of S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's implementer reported its gate exit 0 with 'spawns over 12100' printed; integrate read the same line as red, costing a fix round and a second 5.5-minute gate",
+      "evidence": "NOT integrated slice/audit-f14-s2: merged red: 4535 pass, 0 fail; log 20261119T114148481Z-slice-audit-f14-s2.log",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Monitor not available to the implementer, so it polled its gate log with until-grep loops",
+      "evidence": "S2 fix report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot forced to hand back by handback-send-enforce while its S3 implementer was live, against the never-end-with-a-child-live rule; TaskOutput absent from the co-pilot's toolset, so waits ran as bounded git ls-remote loops",
+      "evidence": "TaskOutput: No such tool available; [handback-send-enforce] after S3 pushed f1019a2 with its report pending"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice file names integrate-base.test.mjs as new but it already exists (other-host S2); implementer used integrate-main.test.mjs",
+      "evidence": "scripts/test/integrate-base.test.mjs from 83d1ecab"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "context compacted mid-slice at about 160k tokens, past the two-thirds re-cut mark; lost worktree state",
+      "evidence": "subagent_tokens 165923; re-ran git status and npm ci after the summary"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "bare fixture origin with no pushed default branch makes remoteDefaultBranch throw",
+      "evidence": "no default branch known: origin's HEAD names no branch"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce forced a hand-back with S3 unintegrated; TaskOutput absent from the co-pilot toolset, so waits ran as git ls-remote loops",
+      "evidence": "No such tool available: TaskOutput; [handback-send-enforce] while S3 report was pending"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3 fix round: integrate went red on the base merge, not the slice: S2's architect rewording plus pilot's two new lines over the architect pin by 10 tokens; each side green alone",
+      "evidence": "pilot-architect's own share is 10591.25 tokens, over its 10581.25; fixed by 65bf2045 (-48 bytes)"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "default node --test reporter prints no pass counts; fixer reran with --test-reporter=tap to read them",
+      "evidence": "# tests 136 / # pass 136 / # fail 0 under tap"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4 implementer handed back twice before its reviewer reported, leaving the slice committed but unpushed and unreviewed; co-pilot collected the reviewer's verdict and pushed",
+      "evidence": "f88c239b local only; reviewer a18d750 Verdict: WARN delivered after resume"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4.md and S5.md disagree on where afterGreen lives; S5 forbade any land.mjs edit",
+      "evidence": "S5.md Prohibited: no edit of scripts/land.mjs; seam recorded in 8e1d8b96"
+    },
+    {
+      "agent": "typescript-reviewer",
+      "what": "reviewer's node --test hit EPERM in the suite gate slot dir, so it could not confirm the tests",
+      "evidence": "mkdir ...Temp\\pilot-gate-slots\\slot-1.json.takeover EPERM at land.test.mjs:23"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a node -e / heredoc patch script mangled backslashes and $-patterns in three files; the Edit tool avoided it",
+      "evidence": "S6 report: about 6 extra calls incl. a git checkout and node --check passes",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test takes about 7 minutes, easy to start before a late fix",
+      "evidence": "S6 full suite ran before the reviewer-driven fix; only the two closing tests re-ran",
+      "size": 7
+    },
+    {
+      "agent": "co-pilot",
+      "what": "harness forces a SubagentHandback each time the co-pilot idles on live children; it reported 'paused' while still holding the ticket, twice",
+      "evidence": "two interim hand-backs from the audit-f14 co-pilot with 5 children live, feat still 5e418205",
+      "size": 3000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test is the only gate for a pure base merge; no changed-only selection applies",
+      "evidence": "base-pilot merge b487ad4: npm test 424 s, spawn count 12720 under 13450",
+      "size": 424
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "agents/pilot.md's token pin has 0 headroom on base; only the 7-minute npm test revealed it, costing a second full run; the two-second measure-prompt and pilot-branch-rules tests would have caught it",
+      "evidence": "S9 report: share 12070 vs pin 11914.5, then trimmed to 11914",
+      "size": 420
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "four slices' full suites share one machine; a 3-file run piped through grep sat 10+ minutes with an empty log and was stopped, then passed alone in 109 s",
+      "evidence": "S8 report: sync.test.mjs 14/14 in 109 s alone; full gate 471 s",
+      "size": 600
+    },
+    {
+      "kind": "drain",
+      "what": "S5 implementer's report was delivered to main instead of its co-pilot; pilot read 100 lines and relayed it by hand",
+      "size": 4000
+    },
+    {
+      "kind": "drain",
+      "what": "landing sweep named 4 signed tickets drifted; pilot merged pilot into 4 feat branches and replanned by hand (installed deck predates recut-decision)",
+      "size": 3000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "single-file node --test runs of the land tests take over 120 s and print nothing until done; the S5 report reached main instead of the co-pilot",
+      "evidence": "S5 report relayed by main",
+      "size": 120
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a prose-pin test (recut-prose.test.mjs) turned a clean base generalisation into a red gate, found only after a 5.5-minute suite",
+      "evidence": "base merge 69f3146a: 4694 tests, 1 fail on the pin, fixed by one regex line",
+      "size": 330
+    },
+    {
+      "agent": "co-pilot",
+      "what": "co-pilot reached its context mark at 145k tokens before the principles review and posted no crew-handoff item; pilot released and spawned a successor from its hand-back",
+      "evidence": "hand-back: paused, no child live, no item on the deck",
+      "size": 145000
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP failed to connect in QA's session (CONNECTION_CLOSED); gate2 to go as text via co-pilot to main",
+      "evidence": "QA first message 16:15Z",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context compacted mid-review and lost the evidence runner's table; once-only child rule left the review without evidence; check-slices refused under worktree isolation",
+      "evidence": "fundamentalist report: tools table not run, 101606 tokens",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot gh-stub is stateless (fixed-file replies), so QA wrote a stateful stub for stacked list/create/edit/merge",
+      "evidence": "QA scratchpad ghstub/stub.cjs",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "posting a gate1 or ticket over the deck HTTP API took about 8 refusals to learn the body shape",
+      "evidence": "QA read-only report",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "MSYS_NO_PATHCONV=1 set shell-wide made git create a worktree under C:/c/...",
+      "evidence": "git worktree list showed C:/c/Users/...",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA forced to hand back while waiting on the fix tip; resumable at 156k tokens",
+      "evidence": "QA hand-back, subagent_tokens 156731",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spawn ceiling surfaced only on the full run: 13813 against 13450, raised to 15195 by the L16 rule",
+      "evidence": "fix round report, scripts/gate.mjs:47-50",
+      "size": 343
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "context reset twice mid-round; Edit refused files changed by node/sed first",
+      "evidence": "fix round report, 175688 tokens",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a fresh temp repo cannot integrate until pilot base runs, though the run is cut from main",
+      "evidence": "NOT integrated slice/f2a-s1: no origin/pilot (run pilot base first)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck_status 400 for a worktree of another repo was hidden; the probe landed as a legacy run and was redone",
+      "evidence": "worktree must be the absolute path of a worktree of this run's repository",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "git config pilot.test in a worktree changes it repo-wide",
+      "evidence": "QA re-probe report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP down in both QA sessions; gate2 relayed as text",
+      "evidence": "QA re-probe report",
+      "size": 1
+    },
+    {
+      "agent": "qa",
+      "what": "deck MCP failed to connect in both QA sessions; gate2 text handed to the pilot to post",
+      "evidence": "co-pilot hand-back, audit-f14"
+    },
+    {
+      "agent": "fundamentalist",
+      "what": "evidence pass lost to a context compaction, unmeasured; check-slices refused under worktree isolation",
+      "evidence": "co-pilot hand-back: blocked step node scripts/check-slices.mjs"
+    }
+  ]
+}
