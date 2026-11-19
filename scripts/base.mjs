@@ -30,7 +30,7 @@ import { ensurePilotBranch, firstLine, PILOT_BRANCH } from './pilot-branch.mjs';
 const TIMEOUT_MS = 5000;
 
 /** The deck's concluding feature for the repository at `cwd`, `{ ticket, slug, branch }` or null; throws when the deck does not answer. */
-export const deckConcluding = (cwd) => async () => {
+const deckConcluding = (cwd) => async () => {
   const response = await fetch(`${deckUrl()}/api/tickets?repo=${encodeURIComponent(cwd)}`, { headers: bearer(), signal: AbortSignal.timeout(TIMEOUT_MS) });
   if (!response.ok) throw new Error(`it answered ${response.status}`);
   return (await response.json()).concluding ?? null;
