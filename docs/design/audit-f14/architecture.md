@@ -132,6 +132,11 @@ Reviewer short names are `pilot:<name>-reviewer`. S2 is the walking skeleton: `p
 6. Temp-repo tests show B on A: retarget after a merge commit, a leased rebase after a squash, a fix merged forward, and a conflict exiting 3 (spec 6, 10). Pilot's push log holds no forced update (spec 8).
 7. F14's greps and `npm test` (spec 1-3). The legacy release tests stay green (spec 12).
 
+**QA environment** (pending itm_fb7a2155c9c1; one of these two is kept at the verdict):
+
+- *Default, local*: steps 1 and 3-6 run in temp repositories, with a bare repository as origin, a stub host recording every `open`/`edit`, and a scratch deck on a spare port. Steps 2 and 4 then read the stub host's recorded PR base and range, not GitHub's page. Cost: nothing on GitHub is seen.
+- *Alt, throwaway GitHub repository*: a private repository created for QA, with `pilot.host github`. The B-on-A stack runs end to end. The user merges #A (once with a merge commit, once with a squash), runs `pilot restack`, and looks at #B's base and commits tab. The repository is deleted after Gate 2. Cost: one repository create and delete, and the user's merges are real ones.
+
 ## 10. Status
 
 | Slice | State | Branch | PR | Worktree | After | Spec |
