@@ -1,8 +1,4 @@
-/**
- * The queue region (rune-deck-ui S7, L2): the cards `renderHomePage` draws for a scope, in its order, and the
- * state lines under them, every display string resolved here from the HTML deck's own renderers so the Rune
- * deck draws a new kind with no Rust change (spec 11).
- */
+/** The queue region (S7, L2): the page's cards and state lines, every string from the page's renderers (spec 11). */
 import { accentOf, coPilotStateOf, isOpen, lastSaidAt, livePhaseOf, threadState } from '../items.mjs';
 import { pilotStateOf } from '../pilot-state.mjs';
 import { queueOf, shownOf } from '../status.mjs';
@@ -23,11 +19,7 @@ const plain = (html) => unescape(html.replace(/<[^>]*>/g, '')).trim();
 /** The confirm step a trigger's row shows in place (`confirm.mjs`): the next `.step.sure`'s sentence and button. */
 const SURE = /<div class="step sure" hidden><p>([\s\S]*?)<\/p><button\b[^>]*>([\s\S]*?)<\/button>/;
 
-/**
- * The options the card's `/reply` form posts, read off the page's own form so the two never differ: each
- * `choice` value once, `confirm` when the page confirms it in place, with that step's `ask` and `yes` words.
- * Another form (an unknown kind's Dismiss posts `/dismiss-item`) is no option of a reply.
- */
+/** The `choice` values the card's `/reply` form posts, read off the page's own form, each once; no other form's. */
 function optionsOf(item, back) {
   const form = renderCardAnswers(item, back);
   if (!form.startsWith('<form method="post" action="/reply">')) return [];

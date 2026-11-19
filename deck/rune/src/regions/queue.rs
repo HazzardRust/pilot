@@ -1,7 +1,5 @@
-//! The queue: one card per waiting thread and the state lines under them, as the view resolved them
-//! (`deck/view/queue.mjs`). Every word drawn is the view's, never a kind matched here (L2, spec 11); an option
-//! press posts the card's `/reply` through `act` once, off the UI thread, and a card arrives on `motion::card`
-//! (spec 5).
+//! The queue's cards and state lines as `deck/view/queue.mjs` resolved them: every word drawn is the view's,
+//! never a kind matched here (L2, spec 11).
 
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex, PoisonError};
@@ -18,9 +16,7 @@ use crate::theme::{self, Tokens, motion, space};
 /// A monospace glyph's advance as a share of the font size: how wide one `ch` of a status column is.
 const MONO_ADVANCE: f32 = 0.6;
 
-/// The queue's own view state: which card's option was sent, what the deck refused, the one card
-/// option asking to be confirmed in place (card id, label), the client presses post through (the
-/// window's own address when unset), and where a post's refusal waits for `settle`.
+/// The queue's window state; `confirming` is (card id, label), `deck` the window's own address when unset.
 #[derive(Debug, Default)]
 pub struct Local {
     pub sent: BTreeMap<String, String>,
@@ -30,8 +26,7 @@ pub struct Local {
     pub inbox: Inbox,
 }
 
-/// The refusals posting threads leave for the window (card id, the deck's reason), and the window's
-/// waker, set by `app::setup`, so a refusal shows without waiting on the next frame.
+/// Refusals (card id, reason) the posting threads leave, and the waker `app::setup` sets.
 #[derive(Default)]
 pub struct Inbox {
     pub refusals: Arc<Mutex<Vec<(String, String)>>>,
@@ -46,8 +41,7 @@ impl std::fmt::Debug for Inbox {
     }
 }
 
-/// Takes the refusals the posting threads left: each lets its card be pressed again with the reason shown.
-/// Answers whether anything changed, for `app::poll`.
+/// Takes the posting threads' refusals into `refused` for `app::poll`; true when there were any.
 pub fn settle(s: &mut State) -> bool {
     let q = &mut s.regions.queue;
     let mut left = q
@@ -69,7 +63,6 @@ pub struct TabRef {
     pub href: String,
 }
 
-/// One option; a `confirm` one asks the view's `ask` with a `yes` button before it posts, as the page does.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 pub struct Opt {
@@ -144,8 +137,7 @@ fn hhmm(iso: Option<&str>) -> String {
         .to_string()
 }
 
-/// An option pressed on card `id`: a card sends once, shown sent in this frame while the post runs on
-/// its own thread; a refusal comes back through `settle` and lets it be pressed again with the reason shown.
+/// A card sends once, shown sent at once; the post runs on its own thread and a refusal returns via `settle`.
 fn press(s: &mut State, id: &str, label: &str) {
     let q = &mut s.regions.queue;
     q.confirming = None;
@@ -192,8 +184,7 @@ fn press(s: &mut State, id: &str, label: &str) {
     }
 }
 
-/// One card: its accent stripe, the kind line (state, tab, kind, time), the title, the excerpt, its options
-/// and any refusal. Reused by the history region (S18).
+/// One card, reused by the history region (S18).
 pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
     let (t, ui) = (theme::tokens(dark), tok::theme(dark));
@@ -245,8 +236,7 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
         .iter()
         .find(|opt| !spent && opt.confirm && c.confirming.as_deref() == Some(opt.label.as_str()));
     if let Some(opt) = asking {
-        // The confirm step in place of the row (`confirm.mjs`): only its button posts; a press anywhere
-        // else, or Escape, puts the options back with nothing sent.
+        // The page's confirm in place (`confirm.mjs`): a press elsewhere, or Escape, backs out.
         let (id, label) = (c.id.clone(), opt.label.clone());
         let yes = button("yes".into(), &opt.yes, ui.card)
             .autofocus()
