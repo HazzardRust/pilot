@@ -42,9 +42,12 @@ const POLL_MS = 1_000;
  * 2026-10-19, suite-at-landing S10: 10922 (node 732, git 9985, other 205) on Windows; the replay test's fixture merges.
  * 2026-10-19, suite-at-landing fix round: 10995 (node 732, git 10055, other 208) on Windows; about 10% headroom restored.
  * 2026-11-19, coverage-cell S1: 12107 (node 788, git 11060, other 259) on Windows; diff-coverage's fixture repo and CLI runs, 19 spawns; base was at 12088.
+ * 2026-11-19, audit-f14 S2: 12224 (node 775, git 11188, other 261) on Windows; the base-main and lineage-base fixture repos.
  * 2026-11-20, recut-decision S2: 12141 (node 781, git 11101, other 259) on Windows; the replan fixture's plan commits.
+ * 2026-11-20, audit-f14 principles round: 13813 (node 788, git 12749, other 276) on Windows; the whole feature's fixture
+ *   tests, this round's landing retry, stacked and unlanded restack fixtures among them.
  */
-export const SPAWN_CEILING = 13355;
+export const SPAWN_CEILING = 15195;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 

@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: superseded
 date: 2026-10-19
 tags: [git, landing, gate2, integrate, adr]
 supersedes: [0140]
-superseded_by: []
+superseded_by: [0200]
 paths: [scripts/land.mjs, scripts/sync.mjs, scripts/integrate.mjs, scripts/merge-generated.mjs, scripts/adr-index.mjs, deck/gate2-base.mjs, deck/server-tools.mjs, deck/closing-report.mjs, deck/landing.mjs, bin/pilot.mjs, docs/design/one-integration-line/architecture.md]
 ---
 # Pilot is the one integration line
@@ -41,3 +41,5 @@ A feature crossed four merge lines: main into pilot (`pilot sync`, also inside `
 Recorded in `docs/design/one-integration-line/architecture.md` (§2 spec 1 to 7; §5 L2, L4, L5, L6; §6 A1 to A8).
 
 Amended 2026-10-21 by ADR 0176: "main gets pilot" becomes the release PR. The one open `pilot → main` PR is titled `Release: <slug>, <slug> +N more`, labelled `release`, its body one row per landed feature derived from git and rewritten on every landing; the line `main gets pilot: #<n>` stays. A feature merges onto `pilot` once, at its landing, as before, but a run may be cut from a concluding `feat/<N>` (a chain of depth 1) until N lands. Every other line here stands.
+
+Superseded 2026-11-20 by ADR 0200: a run on origin with a host is cut from the default branch and reaches it through its own feature PR; only a run based on `pilot` (A3 there) keeps the release PR.

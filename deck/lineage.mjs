@@ -6,11 +6,11 @@
 
 import path from 'node:path';
 
-import { gitUnder, pilotLineage } from '../scripts/pilot-branch.mjs';
+import { gitUnder, PILOT_BRANCH, pilotLineage } from '../scripts/pilot-branch.mjs';
 import { shortRef } from '../scripts/remotes.mjs';
 import { assumedIds, unverdicted, verdictsOf } from '../scripts/verdicts.mjs';
 import { SHA_FIELD } from './items-bounds.mjs';
-import { repoOf } from './runs.mjs';
+import { RUN_BASE, repoOf } from './runs.mjs';
 import { DeckRefusal } from './store.mjs';
 
 // One 5 s deadline covers every git call S1's `pilotLineage` makes (L4).
@@ -22,30 +22,33 @@ const LINEAGE_MS = 5000;
  * refs have it, with no fetch, against the run remote's `pilot` (pilot-fork spec 4). A
  * `repo` that is not a git repository is not checked. Git gets the branch name, a caller's
  * string, as an argument, never through a shell, and the repo's own `core.fsmonitor` is off
- * for every git call. `timeout` is the deadline in ms, injectable for tests.
+ * for every git call. `timeout` is the deadline in ms, injectable for tests. `base` is the run record's base
+ * (audit-f14 S2): unset or `pilot` reads the run remote's pilot as before; any other run base is read as
+ * origin's, where L9 puts every run cut from another base, and a base `RUN_BASE` refuses is refused here.
  */
-export function assertOnPilotTip(repo, branch, { timeout = LINEAGE_MS } = {}) {
+export function assertOnPilotTip(repo, branch, { timeout = LINEAGE_MS, base = PILOT_BRANCH } = {}) {
   if (typeof repo !== 'string' || !path.isAbsolute(repo) || repoOf(repo) === null || typeof branch !== 'string') return;
+  if (typeof base !== 'string' || !RUN_BASE.test(base)) throw new DeckRefusal(`a gate1's run base ${JSON.stringify(base)} is not a branch name`);
   let lineage;
   try {
-    lineage = pilotLineage(repo, branch, { timeout });
+    lineage = pilotLineage(repo, branch, { timeout, ...(base !== PILOT_BRANCH && { base: `refs/remotes/origin/${base}` }) });
   } catch (err) {
     if (err.code === 'ETIMEDOUT') throw new DeckRefusal(`git did not answer on a gate1's branch ${branch} within 5 s; post again`);
     throw new DeckRefusal(`a gate1's branch ${branch} could not be read in ${repo}: ${err.message}`);
   }
   if (lineage.copies === 0 && lineage.tip) return;
-  const base = shortRef(lineage.upstream);
+  const upstream = shortRef(lineage.upstream);
   if (!('tip' in lineage)) {
-    const fix = lineage.upstream.startsWith('refs/heads/') ? 'run pilot base' : `git fetch ${base.split('/')[0]} pilot`;
-    throw new DeckRefusal(`a gate1 needs the pilot base: ${repo} has no ${base}; ${fix} and post again`);
+    const fix = lineage.upstream.startsWith('refs/heads/') ? 'run pilot base' : `git fetch ${upstream.split('/')[0]} ${base}`;
+    throw new DeckRefusal(`a gate1 needs the ${base} base: ${repo} has no ${upstream}; ${fix} and post again`);
   }
   if (lineage.copies > 0) {
     // A merge keeps the copies, so only a rebase drops them.
     const copies = lineage.copies === 1 ? '1 copy' : `${lineage.copies} copies`;
-    throw new DeckRefusal(`a gate1's branch ${branch} carries ${copies} of pilot's commits; rebase its docs commits onto pilot (git rebase ${base}) and post again`);
+    throw new DeckRefusal(`a gate1's branch ${branch} carries ${copies} of ${base}'s commits; rebase its docs commits onto ${base} (git rebase ${upstream}) and post again`);
   }
-  // A merge of pilot is on its tip (pilotLineage) and needs no force-push of a pushed branch.
-  throw new DeckRefusal(`a gate1's branch ${branch} is not on pilot's tip; merge ${base} into it (git merge ${base}) and post again`);
+  // A merge of the base is on its tip (pilotLineage) and needs no force-push of a pushed branch.
+  throw new DeckRefusal(`a gate1's branch ${branch} is not on ${base}'s tip; merge ${upstream} into it (git merge ${upstream}) and post again`);
 }
 
 /**

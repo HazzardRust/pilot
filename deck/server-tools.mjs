@@ -25,7 +25,7 @@ import { MAX_FRICTION, repoKey, repoOf, sameRepo } from './runs.mjs';
 import { announceChange, fallbackFor, handOff, waitForReplies } from './server-wait.mjs';
 import {
   DeckRefusal, addPilotMessage, coPilotFor, currentSeq, deckLanes, listItems, listStoredRuns, markDelivered, mergeTicket, moveTicket, needTicket,
-  ownerFilter, parkedTicketOf, parkTicket, pivotTicket, recordFor, recordVerdicts, refusePoster, repliesSince, resolveItem,
+  ownerFilter, parkedTicketOf, parkTicket, pivotTicket, recordFor, recordForTicket, recordVerdicts, refusePoster, repliesSince, resolveItem,
   setCoPilot, setQaComment, setSlices, takeTicket,
 } from './store.mjs';
 import { SHA, driftLine, fileAt, neverGranted, numberedSections, planChanges, planDrift } from './recut.mjs';
@@ -290,9 +290,10 @@ export function callTool(name, args, deps = {}) {
     refusePoster(args?.kind, args?.author);
     refuseComment(args);
     if (args?.kind === KIND_GATE1) {
-      assertOnPilotTip(args.repo, args.branch);
       // The record is read off the gate's own ticket, in its own repository, whoever posts it (architect-runs-red A1).
       const ticket = listItems().find((item) => item.id === args.ticket && item.kind === KIND_TICKET && sameRepo(item.repo, args.repo));
+      // Its run base, when the record names one, is the ref the design branch is cut from (audit-f14 S2).
+      assertOnPilotTip(args.repo, args.branch, { base: ticket ? recordForTicket(args.repo, ticket.id).record?.base : undefined });
       assertVerdicts(args.repo, args, { record: ticket?.verdicts });
     }
     if (args?.kind === KIND_GATE2) assertCleanOnPilot(args.repo, args.sha);
