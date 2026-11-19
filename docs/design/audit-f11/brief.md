@@ -14,7 +14,7 @@ Remote: origin
 
 ## Base and PR target
 
-The base is `feat/audit-f11`, cut at Gate 1 from `origin/pilot` (200a74b8 at design time). Branch:
+The base is `feat/audit-f11`, cut at Gate 1 from `origin/pilot` (655a49d8 at design time). Branch:
 `slice/audit-f11-s1`, pushed for the pilot to integrate; no slice PR.
 
 ## PR titles
@@ -28,8 +28,8 @@ The base is `feat/audit-f11`, cut at Gate 1 from `origin/pilot` (200a74b8 at des
 Every commit ends with these two lines, copied exactly:
 
 ```
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01NXgSFpzgnD51HokpbABUPw
+Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NXgSFppeY5pzVQLciH5swh
 ```
 
 ## PR footer
@@ -39,7 +39,7 @@ Every PR body ends with these lines, copied exactly:
 ```
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-https://claude.ai/code/session_01NXgSFpzgnD51HokpbABUPw
+https://claude.ai/code/session_01NXgSFodNbTKqoJ71EpWMS5
 ```
 
 ## Artefact

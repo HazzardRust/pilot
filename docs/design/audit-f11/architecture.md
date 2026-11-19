@@ -1,6 +1,6 @@
 # audit-f11: fixture git stops printing CRLF warnings
 
-Ticket itm_9e6eb292dcf7 · audit 2026-11-17T00-56-45-000Z F11 · base `origin/pilot` 200a74b8 · merge: none (itm_a3043e599942)
+Ticket itm_9e6eb292dcf7 · audit 2026-11-17T00-56-45-000Z F11 · base `origin/pilot` 655a49d8 · merge: none (itm_a3043e599942)
 
 ## 1. Problem
 
@@ -17,7 +17,7 @@ lines in two full runs on this Windows machine.
 | 4 | Nothing outside the suite's temp dirs is written: the real `~/.gitconfig` and the checkout's `.git/config` are unchanged by a run. | Their hashes before and after the §9 run. | 2 of 2 hashes equal. |
 | 5 | The gate is otherwise unchanged: suite green, no added spawn. | The gate's `spawns` line and exit code. | Exit 0; spawn total within the ceiling and no `git config` spawn added. |
 
-Every line of the 5 is *assumed* (A1) until the pilot's spec question returns.
+All 5 lines agreed by the user on itm_0d83fa6154c6 ("All 4", read there as these 5).
 
 ## 3. Findings
 
@@ -69,10 +69,13 @@ Deletion test: removing the helper puts identity and the config back into 69 fil
 
 - **A1** *assumed*: the spec lines of §2 as proposed to `main`. Default: as written. Trade: spec 4 and 5 add QA checks
   the ticket did not name.
+  Verdict: stands — the user agreed every proposed spec line on itm_0d83fa6154c6
 - **A2** *assumed*: no guard against a future test that makes a repo without the helper. Default: none; the warning
   is noise, not a fault. Rejected: a gate check grepping the suite's stderr, which would make noise a red.
+  Verdict: stands — no queued ticket adds a fixture-repo guard; the spec's grep count catches a regression
 - **A3** *assumed*: QA environment. Default: a CLI run of the gate in a scratch clone on this Windows machine (§9);
   a 1-slice plan takes the short path.
+  Verdict: stands — a CLI gate run in a scratch clone on this machine; no database, and the user's git config is checked byte-identical by spec 4
 - red team: switching fixtures from CRLF to LF checkouts could break a test that reads a checked-out file. Attacked:
   CI on Linux already runs every test with no conversion and is green, and `line-endings.test.mjs` forces `false`
   already. Not broken.
