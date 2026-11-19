@@ -9,13 +9,13 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed b079bda, integration red: ADR 0189 collides with pilot's; implementer renumbering",
+      "state": "integrated",
       "branch": "slice/tree-tests-guard-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-tree-tests-guard-s1"
     }
   ],
-  "next": "S1 implementer ac71ef456bb922904 merges origin/pilot into the slice and renumbers its ADR; on its report rerun pilot integrate (Reviewed-by: pilot:typescript-reviewer: APPROVE), then integrate --trial and gate2 on #111 (surface false). Before landing check the \"[remote rejected] 4253c484 -> pilot\" line from its push.",
-  "updatedAt": "2026-11-18T11:49:00.448Z",
+  "next": "S1 integrated at db09452 (4415 pass), trial clean, gate2 posted on #111; on its press spawn pilot-lander with the gate2 id. Design files still say ADR 0189 (it is 0190). The \"[remote rejected] 4253c484 -> pilot\" line: that sha is not an object in this repo, so likely a test fixture's output; unconfirmed.",
+  "updatedAt": "2026-11-18T12:00:16.507Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
