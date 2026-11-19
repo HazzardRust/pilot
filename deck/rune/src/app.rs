@@ -59,9 +59,11 @@ pub fn setup(s: &mut State, wake: Waker) {
 
 /// Takes what the reader last left: a view replaces the whole `view` and nothing else, so a
 /// draft, a scroll and the open panels stay (spec 4); `Down` keeps the last view under the banner.
-pub fn poll(s: &mut State, _: f64, _: &mut Tx) -> bool {
+pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
     match s.live.as_ref().and_then(live::Inbox::take) {
         Some(Feed::View(view)) => {
+            // Data the server brought lands instantly unless asked: a card arriving live springs in (spec 5).
+            tx.animated();
             s.view = view;
             s.down = false;
             true
