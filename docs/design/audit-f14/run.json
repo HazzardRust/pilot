@@ -52,7 +52,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 120c5ed",
+      "state": "integrated",
       "after": [
         "S4"
       ],
@@ -105,8 +105,8 @@
     "kept: S3-R3 LOW — gone-and-unlanded lower branch fails with a bare git error, name it",
     "kept: S7-R1 security LOW — scripts/merge-generated.mjs:36-47: a committed docs/adr directory symlink lets refreshIndex write outside the worktree, and restack runs it unattended; fix: a realpathSync check that stays inside dir"
   ],
-  "next": "audit-f14 co-pilot: S6 integrating; S9 pushed e395837 (security APPROVE) integrates next; S5, S8 implementing; then fundamentalist, fix round, QA",
-  "updatedAt": "2026-11-19T15:35:15.535Z",
+  "next": "audit-f14 co-pilot: S6 integrated at 09885046; integrating S9 (e395837); S5, S8 implementing; then fundamentalist, fix round, QA",
+  "updatedAt": "2026-11-19T15:38:40.633Z",
   "friction": [
     {
       "agent": "pilot-architect",
