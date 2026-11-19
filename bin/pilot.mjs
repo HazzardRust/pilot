@@ -45,7 +45,9 @@ import { main as landing } from '../deck/landing-wait.mjs';
 import { main as sync } from '../scripts/sync.mjs';
 import { searchPathOnly } from '../scripts/pilot-branch.mjs';
 import { main as worktrees } from '../scripts/worktrees.mjs';
+import { main as liveRoot } from '../scripts/live-root.mjs';
 import { parseVerdictMessage, writeVerdicts } from '../scripts/verdicts.mjs';
+import { writeLessonReport } from '../scripts/lesson-report.mjs';
 import { DECK_PORT, deckPort, deckUrl } from '../deck/server.mjs';
 import { PLUGIN_VERSION } from '../deck/version.mjs';
 import { main as listTickets } from '../deck/tickets.mjs';
@@ -121,6 +123,9 @@ const usage = () => `pilot — the deck for piloted runs
                  against the fetched base (default origin/main); prune removes only the
                  merged-clean ones and their local branches, never forced; --run, only
                  run <slug>'s
+  pilot live-root [--dir <name>]
+                 print the trusted live root ~/.claude/pilot/live and whether Claude Code
+                 trusts it; --dir makes a plain subdirectory there for a live check
   pilot branches prune --slug <slug> [--dry-run]
                  delete run <slug>'s merged branches: feat/ on origin, slice/ design/ fix/ qa/
                  on the run remote; names each one kept and why; --dry-run only lists
@@ -143,6 +148,10 @@ const usage = () => `pilot — the deck for piloted runs
   pilot host [github|gitlab|none] [--local]
                  print the host in force (unset is github), or write it as pilot.host to
                  your global git config, --local to this repository's; exit 1 any other name
+  pilot lesson-report <lesson id>
+                 with a large lesson's report md on stdin: shape-check it and write it to
+                 <store>/lessons/<lesson id>.md, printing the path; exit 1 naming each
+                 problem, nothing written
   pilot uninstall [--yes]
                  print what would be stopped, removed and left, changing nothing; --yes
                  stops the deck, removes the pilot command, its launcher and the marked PATH
@@ -386,6 +395,11 @@ export async function run(argv, deps) {
     return undefined;
   }
 
+  if (command === 'live-root') {
+    process.exitCode = liveRoot(argv.slice(1));
+    return undefined;
+  }
+
   if (command === 'branches') {
     process.exitCode = branches(argv.slice(1));
     return undefined;
@@ -418,6 +432,19 @@ export async function run(argv, deps) {
 
   if (command === 'host') {
     process.exitCode = host(argv.slice(1));
+    return undefined;
+  }
+
+  if (command === 'lesson-report') {
+    if (argv.length !== 2 || flag.startsWith('-')) return refuse('usage: pilot lesson-report <lesson id> (the report md on stdin)\n');
+    if (process.stdin.isTTY) return refuse('pilot lesson-report: pipe the report md on stdin\n');
+    let markdown = '';
+    for await (const chunk of process.stdin.setEncoding('utf8')) markdown += chunk;
+    try {
+      console.log(writeLessonReport(flag, markdown));
+    } catch (err) {
+      return refuse(`pilot lesson-report: ${err.message}\n`);
+    }
     return undefined;
   }
 

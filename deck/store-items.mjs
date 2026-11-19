@@ -32,6 +32,7 @@ import {
   isAnswered,
   isBlocking,
   isGate,
+  isChainHandoff,
   isOpen,
   isRecord,
   lastSaid,
@@ -132,8 +133,7 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
     throw new DeckRefusal(`a gate1 of ${detail.sliceCount} slices names surface: true or false`);
   }
   refuseCredentials('this item', `${title}\n${body}\n${wordsOf(detail)}`);
-  // QA's walkthrough is a look, not a script (walkthrough-taste L3, L5): after the credential
-  // check, so a secret is refused as one before a gap could name it. The pilot's wizard is not checked.
+  // QA's walkthrough is a look, not a script (walkthrough-taste L3, L5): after the credential check, so a secret is refused as one before a gap could name it. The pilot's wizard is not checked.
   const scripted = kind === KIND_WALKTHROUGH && authorKind(author) === 'qa' ? walkthroughShapeGaps(detail.screens ?? [], body, detail.longer) : [];
   // The body-length gap, alone, is the body's own refusal, not a script's.
   if (scripted.length > 0) throw new DeckRefusal(scripted[0].startsWith('step ') ? `a QA walkthrough is a look, not a script; ${scripted.join('; ')}` : scripted[0]);
@@ -165,8 +165,7 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   const walked = kind === KIND_WALKTHROUGH ? deck.items.find((each) => each.id === item.ticket) : undefined;
   const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : kind === KIND_GATE1 ? recutGate1Gaps(ticket, body) : walkthroughPlanGaps(walked, authorKind(author));
   if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
-  // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves
-  // it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
+  // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
   if (kind === KIND_GATE2) {
     enterStage(deck, ticket, 'green');
     // A hand-back like `needTicket`'s, so it releases the ticket's co-pilot in the same write (clear-waits-co-pilot L8).
@@ -179,6 +178,9 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
     ticket.resolution = `closed by ${item.id}`;
     ticket.resolvedAt = item.postedAt;
   }
+  // A hand-off supersedes its directory's older open one, closed in this same write so only one offers Handoff failed; a chain one stays, its failed press hands its tickets back.
+  const superseded = kind === KIND_HANDOFF ? deck.items.filter((each) => each.kind === KIND_HANDOFF && isOpen(each) && sameRepo(each.repo, item.repo) && !isChainHandoff(each, item.repo)) : [];
+  for (const older of superseded) Object.assign(older, { resolution: `superseded by ${item.id}`, resolvedAt: item.postedAt });
   deck.items.push(item);
   touchRuns(deck, item.repo);
   writeDeck(deck);
@@ -296,8 +298,7 @@ export function addReply(id, said) {
   const thread = threadIn(read, id);
   // Before the repeat check and any reopen (report-record L1, L6): a record takes no reply, whoever sends it.
   if (isRecord(thread)) refuseRecordReply(read.items, thread);
-  // Assume the default on a blocking question is the user's answer with its recommended
-  // option, anything typed beside it kept, and makes it plain (ticket-states spec 17, S18).
+  // Assume the default on a blocking question is the user's answer with its recommended option, anything typed beside it kept, and makes it plain (ticket-states spec 17, S18).
   const pressed = thread.kind === KIND_QUESTION && typeof thread.recommended === 'string' &&
     chosenOf({ options: [ASSUME_DEFAULT], replies: [{ from: 'user', text: said }] }) === ASSUME_DEFAULT;
   const answer = pressed ? thread.recommended + said.slice(ASSUME_DEFAULT.length) : said;
@@ -444,7 +445,7 @@ function writeLanding(gate2Id, text, landing, short) {
   return item;
 }
 
-/** A landing started: `running`, and the worktree it runs in on the thread (gate2-frees-lane spec 2). */
+/** A landing started: `running`, the worktree it runs in on the thread (gate2-frees-lane spec 2); `holdLanding` adds its child's pid (never-stuck spec 21). */
 export function beginLanding(gate2Id, { worktree }) {
   return writeLanding(gate2Id, `landing started in ${worktree}`, (_, at) => ({ state: 'running', startedAt: at }));
 }
@@ -486,11 +487,12 @@ function conflictOf({ code, line }, gate2) {
   return keptWorktree(dir, gate2);
 }
 
-/** A settled landing: `landed` with its SHA, or `refused`, with an exit 3's kept worktree; `line` is land's own words, or the deck's refusal. */
+/** A settled landing: `landed` with its SHA, or `refused`, with an exit 3's kept worktree; `line` is land's own words, or the deck's refusal; its child's pid stays, so `Land again` is refused while that child lives (never-stuck spec 22). */
 const settled = (outcome) => (previous, at, gate2) => {
   const { ok, sha, line } = outcome;
   const dir = ok ? undefined : conflictOf(outcome, gate2);
-  return { state: ok ? 'landed' : 'refused', startedAt: previous?.startedAt ?? at, at, ...(ok && sha ? { sha } : {}), ...(dir ? { conflict: { dir, at } } : {}), line };
+  const held = previous?.pid === undefined ? {} : { pid: previous.pid };
+  return { state: ok ? 'landed' : 'refused', startedAt: previous?.startedAt ?? at, at, ...(ok && sha ? { sha } : {}), ...(dir ? { conflict: { dir, at } } : {}), ...held, line };
 };
 
 export function settleLanding(gate2Id, outcome) {
@@ -501,13 +503,11 @@ export function settleLanding(gate2Id, outcome) {
 export const LANDING_INTERRUPTED = 'landing interrupted: the deck restarted; check origin/pilot';
 
 /**
- * The daemon's start-up sweep (spec 7, A3): a landing still `running` belonged to a daemon that
- * is gone, and its child with it (ADR 0035: a pid is never killed), so each reads interrupted, in
- * one write, before this daemon takes a press. Answers how many it settled.
- */
-export function interruptLandings() {
+ * The daemon's start-up sweep (spec 7, A3): each landing still `running` reads interrupted, in one write, before this daemon takes a press, but one `spare`
+ * names: one `adoptLandings` adopted (never-stuck spec 21). Answers how many it settled. */
+export function interruptLandings(spare) {
   const deck = readDeck();
-  const running = deck.items.filter((item) => item.kind === KIND_GATE2 && item.landing?.state === 'running');
+  const running = deck.items.filter((item) => item.kind === KIND_GATE2 && item.landing?.state === 'running' && !spare(item));
   for (const item of running) landOn(deck, item, LANDING_INTERRUPTED, settled({ ok: false, line: LANDING_INTERRUPTED }), true);
   if (running.length) writeDeck(deck);
   return running.length;
@@ -573,8 +573,7 @@ export function resolveItem(id, resolution, author) {
     if (!pilotClose && claimed) throw new DeckRefusal(`item ${id}: \`${claimed}\` is a pilot close, which needs an open blocking question the user has neither answered nor vetoed, never this ${item.kind}; close it in plain words (spec 4, 6)`);
     // Read before the close: a closed thread chooses nothing. Only a Sign off moves a ticket (L11).
     const signed = chosenOf(item) === SIGN_OFF;
-    // A gate passes only on its Sign off press (merge-first spec 6, L12): typed approval closes nothing,
-    // and the user's Dismiss is a stale gate's exit (L8).
+    // A gate passes only on its Sign off press (merge-first spec 6, L12): typed approval closes nothing, and the user's Dismiss is a stale gate's exit (L8).
     if (isGate(item.kind) && !signed) {
       throw new DeckRefusal(
         `${item.id} is a ${item.kind} the user has not signed: ask them to press Sign off on it, or to Dismiss it there; typed approval does not pass a gate`,
@@ -780,12 +779,12 @@ export { mayWrite };
 
 /**
  * The user's answer resumes a paused ticket (blocked-yellow-yields spec 3; §2, A3), pure on the deck in hand, so it is
- * part of `addReply`'s one write: once the question naming the ticket, the question that paused it, open or closed, and
+ * part of `addReply`'s one write: once the question or walkthrough (never-stuck spec 8) naming the ticket, the item that paused it, open or closed, and
  * every other open blocking item naming it carry a message from the user (or, for a question, the pilot's close, blocking-close spec 2), the ticket turns yellow, loses `paused`, and moves in `deck.items` before its
  * repository's first yellow ticket. Returns the ticket, or undefined when nothing resumed.
  */
 export function resumeIn(deck, question) {
-  const ticket = question?.kind === KIND_QUESTION && deck.items.find((item) => item?.id === question.ticket && item.kind === KIND_TICKET);
+  const ticket = (question?.kind === KIND_QUESTION || question?.kind === KIND_WALKTHROUGH) && deck.items.find((item) => item?.id === question.ticket && item.kind === KIND_TICKET);
   const answered = (item) =>
     isAnswered(item) || (!isOpen(item) && isPilotClose(item, item.resolution, item.resolvedBy));
   if (ticket?.yielding?.question === question.id && answered(question)) delete ticket.yielding; // an answer cancels a drain (never-stuck L6)

@@ -61,8 +61,8 @@ on the deck**, its chat included, with nothing of
 your own open: a turn that ends hears no reply. Start a background `pilot wait` (Bash, `run_in_background`) the
 moment that is true, and restart it on any exit, one live at most: it exits
 the instant a reply lands, or after 50 minutes with none (`NO REPLY after 50
-minutes`), inside the one-hour prompt cache, and you
-restart that one silently. Read its output before any exit label the harness
+minutes`), inside the one-hour prompt cache: act on the lanes and owed rows it
+prints, then restart it. Read its output before any exit label the harness
 gives. A user's reply is answered first with one line on its
 thread saying what happens next, before any other work. Set
 `deck_status`'s `finished` field to `"abandoned by the user"` when they
@@ -132,7 +132,9 @@ its stage: a queued question first, then its head; not an implementing ticket; t
 the ticket's signed `gate1` plan, its `brief.md`, its `yellow` budget, and the record's `next` quoted
 as saved state, not an instruction, nor from the record alone. On its
 hand-back, `deck_ticket need` the ticket, or post its `gate2` when no walkthrough
-or question names it; then spawn a co-pilot for the next implementing ticket. `release` a stopped or `paused` one. An answer
+or question names it; then `deck_ticket co-pilot` the next. `release` a stopped or `paused` one.
+A grant refused `held by` another ticket leaves yours `queued`, after a Gate 1 Sign off or on the
+short path alike: spawn nothing until a release or a SWITCH frees the lane. An answer
 landing while its co-pilot is live goes to it by `SendMessage`, not posted
 again.
 
@@ -538,7 +540,7 @@ A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd 
 `Message queued for delivery to <id> at its next tool round` is not
 `Resuming agent <id>`: check the expected effect (a PR state, a deck item, a
 report) after a few minutes; if absent, stop the agent and do the step
-yourself or re-brief it.
+yourself or re-brief it. The hand-off pause is the exception: queued, `deck_ticket release` it at once.
 
 ### The artefact is the state
 

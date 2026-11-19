@@ -1,0 +1,60 @@
+{
+  "slug": "teacher-method",
+  "feature": "teacher-method",
+  "ticket": "itm_41555e898d37",
+  "branch": "feat/teacher-method",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-teacher-method",
+  "artefact": "docs/design/teacher-method/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/teacher-method-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-teacher-method-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "branch": "slice/teacher-method-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-teacher-method-s2"
+    }
+  ],
+  "findings": [],
+  "next": "User owes: teacher-method walkthrough itm_c682cea8df58 + gate2 itm_eebab57dec8a (5e87427, #109; on press spawn pilot-lander); never-stuck-2 walkthrough itm_3fdcde0269b2 (QA posts gate2; A7 q itm_f627fc20f1d8, Remove goes to QA); audit-f11 spec q itm_0d83fa6154c6 (then verdicts A1-A3 to architect a906a7c3ab665f5fd, gate1); merge #112. No agent live but that architect.",
+  "updatedAt": "2026-11-18T11:29:06.054Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "plugin-cache check-slices (0.9.8) refuses the new ## Behaviours slice shape; only the repo's scripts/check-slices.mjs passes it, and the architect's prompt names the cached path",
+      "evidence": "teacher-method architect report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck_post refuses a question with a recommended default and no Research: line; not in the architect's prompt (nor the pilot's), one refused post each",
+      "evidence": "teacher-method architect report; pilot's S7 question",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot and architect both posted the ticket's two left-for-grilling questions; pilot closed its pair as duplicates",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "7 Blocked: items from classifier no-verdict on bundled calls, each read and closed Moot by the pilot",
+      "size": 7
+    },
+    {
+      "kind": "drain",
+      "what": "paused co-pilot re-sent the same hand-back 8 times via handback-send-enforce",
+      "size": 8
+    },
+    {
+      "agent": "pilot",
+      "what": "short path: two slices each under spec 1's prompt bar alone, over it together; needed a rebase-and-cut round",
+      "evidence": "teacher share 4876.5 after rebase, 4634.5 after cut, bar 4640"
+    }
+  ]
+}

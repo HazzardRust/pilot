@@ -95,7 +95,7 @@ test('pilot landing exits 1 on a landing a restarted deck read as interrupted', 
   await deck(t);
   const gate = aGate2();
   beginLanding(gate.id, { worktree: 'D:/work/feat-x' });
-  interruptLandings();
+  interruptLandings(() => false);
 
   const { code, out } = await run(gate.id, { timeoutMinutes: 0.002 });
   assert.equal(code, 1);

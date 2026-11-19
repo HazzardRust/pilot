@@ -634,7 +634,16 @@ test("the pilot's advisory names the pause", async function (t) {
   assert.match(said, /co-pilot is live, send it the pause now/);
   assert.match(said, /hands back `paused`/);
   assert.match(said, /`deck_ticket release`/);
+  assert.match(said, /queued/, 'never-stuck S19: a queued pause is released at once');
   result.commit();
+});
+
+// never-stuck S19 (spec 25, 26): a pause SendMessage only queued does not hold the clear for the whole bound.
+test("the pilot's advisory releases a queued pause at once", function () {
+  const said = require('../lib/guard-advice.js').handoffNowIfIdle(true, true);
+  assert.match(said, /queued/);
+  assert.match(said, /deck_ticket release/);
+  assert.match(said, /`deck_ticket release` it at once/);
 });
 
 test("a crew agent's does not", async function (t) {

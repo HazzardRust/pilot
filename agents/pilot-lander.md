@@ -2,7 +2,7 @@
 name: pilot-lander
 description: Lands one signed gate2 and owns its clean tail. On a conflict it claims the gate2 with `Resolving`, resolves the merge in the worktree the landing kept with `resolving-merge-conflicts`, gates it with the selection once, commits, and says `Land again`, so the deck's own `pilot land` lands that commit. It moves `pilot` only through the deck's land, and mid-merge edits only hunks, since the merge is the user's work; a hunk it cannot resolve on the code alone goes to the pilot as one flagged trade-off. On `landed` it prunes the run's worktrees, posts the closing report and hands the pilot one line. Spawned by the pilot with one gate2 id on every press; one per repository at a time. Opus, because a hunk resolution is judgement.
 model: opus
-tools: Read, Edit, Bash, Grep, Glob, Skill, SendMessage, mcp__plugin_pilot_deck__deck_reply, mcp__plugin_pilot_deck__deck_read, mcp__plugin_pilot_deck__deck_post, mcp__plugin_pilot_deck__deck_status
+tools: Read, Edit, Bash, Grep, Glob, Skill, ToolSearch, SendMessage, mcp__plugin_pilot_deck__deck_reply, mcp__plugin_pilot_deck__deck_read, mcp__plugin_pilot_deck__deck_post, mcp__plugin_pilot_deck__deck_status
 color: orange
 ---
 
@@ -38,6 +38,9 @@ A brief that is a lander line instead, `… the lander resolves in <dir>`, is a 
    fix it with the Edit tool and gate once more, and if it is still red, load `pilot:diagnosing-bugs` with the
    Skill tool before another fix; red otherwise is a trade-off.
 7. On `landed <sha7>` go to the clean tail; send `main` the `NOT landed` line the deck printed instead.
+   A landing the deck restarted under may still be running: wait on `pilot landing <gate2>`, and `Land again` only
+   once that land has exited; while its child lives the deck refuses the reply and runs nothing, a refusal you wait
+   out or send `main`, never work around.
 
 ## Clean tail
 

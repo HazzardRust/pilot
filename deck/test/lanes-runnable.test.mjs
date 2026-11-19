@@ -42,7 +42,7 @@ test('every candidate blocked', () => {
   const read = lanes([ticket('itm_y1'), ticket('itm_y2'), blocking('itm_q1', 'itm_y1'), blocking('itm_q2', 'itm_y2')]);
   assert.equal(read.refusal, null);
   assert.equal(read.blocked, 'itm_y1 on itm_q1; itm_y2 on itm_q2');
-  assert.equal(read.coPilot, 'co-pilot: empty, blocked: itm_y1 on itm_q1; itm_y2 on itm_q2');
+  assert.equal(read.coPilot, 'co-pilot: none runnable: itm_y1 blocked on itm_q1; itm_y2 blocked on itm_q2');
   // A held ticket is the co-pilot's whatever blocks it: the yield is S1's, not the lane line's.
   assert.equal(lanesFrom([ticket('itm_y1'), blocking('itm_q1', 'itm_y1')], REPO, { coPilot: { ticket: 'itm_y1', live: true } }).blocked, null);
 });

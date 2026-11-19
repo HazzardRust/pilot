@@ -129,8 +129,8 @@ export function ownerFilter(kind) {
     // A parked green ticket's walkthrough: its QA agent has ended, so the reply is the live pilot's.
     const parked = parkedTicketOf(items, reply) !== undefined;
     if (parked && kind !== 'pilot') return false;
-    // A short landing's line is the pilot's whoever owns the gate2 (three-lanes L7).
-    if (reply?.from === 'deck') return kind === 'pilot';
+    // A short landing's line is the pilot's whoever owns the gate2 (three-lanes L7); a taken default is its owner's (never-stuck spec 10).
+    if (reply?.from === 'deck' && reply.default !== true) return kind === 'pilot';
     // The Sign off is the pilot's Gate 2 too, whoever owns the thread, and handing it to
     // one of the two hides it from neither (L2).
     if (isGateReply(item, reply)) return kind === 'pilot' || ownerOf(item) === kind;
@@ -185,8 +185,8 @@ export function markDelivered(handedOver, to) {
     for (const reply of messagesOf(item)) {
       if (!handsTo(reply, to) || !fresh.has(reply.seq)) continue;
       // A closed thread's reply is not handed over for the first time; the Sign off's second
-      // recipient still is, because QA closes its walkthrough on the press (A6).
-      if (!reply.deliveredAt && isOpen(item)) {
+      // recipient still is, because QA closes its walkthrough on the press (A6), and so is a taken default, closed in its own write.
+      if (!reply.deliveredAt && (isOpen(item) || reply.default === true)) {
         reply.deliveredAt = deliveredAt;
         reply.deliveredTo = to;
       } else if (isGateReply(item, reply) && typeof reply.deliveredTo === 'string' && reply.deliveredTo !== to) {
@@ -233,7 +233,7 @@ function waitingOnForeign(repo, quietAt) {
     messagesOf(item).forEach((reply, index) => {
       const timeUp = ownersTimeUp(item, index, owner);
       if (timeUp === null) return;
-      const dueAt = Math.max(timeUp, quietAt(owner));
+      const dueAt = Math.max(timeUp, quietAt(owner, item.id, reply));
       waiting.push({ reply: { itemId: item.id, title: item.title, repo: item.repo, owner, ...reply }, dueAt });
     });
   }
@@ -243,7 +243,7 @@ function waitingOnForeign(repo, quietAt) {
 /**
  * One read for the fallback: the replies the pilot is to be handed now, oldest first,
  * and the earliest moment one of the rest becomes overdue, or null while none waits.
- * `quietAt(kind)` is when that kind counts as quiet in `repo`.
+ * `quietAt(kind, itemId, reply)` is when that kind counts as quiet in `repo` for that reply.
  */
 export function fallbackDue(repo, now, quietAt) {
   const waiting = waitingOnForeign(repo, quietAt);
@@ -360,19 +360,23 @@ export function deckLanes() {
 
 /**
  * `deck_ticket co-pilot` / `release` (spec 2, L8) on the open yellow ticket `ticketId`; another ticket's release changes nothing.
- * `co-pilot` on the pending co-pilot switch's `to` completes it (spec 18, L18): the record cleared in the same write.
+ * `co-pilot` on the pending co-pilot switch's `to` completes it (spec 18, L18), clearing the record, returning the holder it `replaced`.
  */
 export function setCoPilot(ticketId, live) {
   const deck = readDeck();
   const ticket = deck.items.find((item) => item.id === ticketId && item.kind === KIND_TICKET && typeof item.repo === 'string');
   if (!ticket) throw new DeckRefusal(`no ticket ${ticketId} on the deck`);
+  const holder = storedCoPilot(deck, ticket.repo); // a live holder goes only to its switch's `to`, never overwritten (never-stuck spec 17)
+  const replaced = live && holder && holder.ticket !== ticketId && isLiveCoPilot(deck, holder) ? holder.ticket : undefined;
   refuseCoPilotSwitch(deck, ticket.repo, live ? 'co-pilot' : 'release', ticketId);
   if (live) {
     if (!isOpen(ticket) || stateOf(ticket) !== 'yellow') throw new DeckRefusal(`item ${ticketId} is ${isOpen(ticket) ? stateOf(ticket) : 'closed'}; a co-pilot builds an open yellow ticket`);
     // While a chain hand-off is open here, the session after its /clear spawns the next co-pilot (A1).
     const chain = deck.items.find((item) => isChainHandoff(item, ticket.repo) && isOpen(item));
     if (chain) throw new DeckRefusal(`a /clear is due for ${chain.id}; spawn no co-pilot, the session after it will`);
-    if (switchOf(deck.items, ticket.repo, switchesOf(deck, ticket.repo).lanes, 'coPilot')?.to === ticketId) clearSwitch(deck, ticket.repo, 'coPilot');
+    const switching = switchOf(deck.items, ticket.repo, switchesOf(deck, ticket.repo).lanes, 'coPilot')?.to === ticketId;
+    if (replaced && !switching) throw new DeckRefusal(`co-pilot lane held by ${replaced}: \`deck_ticket release ${replaced}\` or a SWITCH to ${ticketId}`);
+    if (switching) clearSwitch(deck, ticket.repo, 'coPilot');
     const coPilots = deck.coPilots !== null && typeof deck.coPilots === 'object' && !Array.isArray(deck.coPilots) ? deck.coPilots : {};
     deck.coPilots = { ...coPilots, [repoKey(ticket.repo)]: { ticket: ticketId, live: true, at: new Date().toISOString() } };
     if (neverGranted(ticket)) ticket.plan.grantedAt = deck.coPilots[repoKey(ticket.repo)].at; // first grant, never-stuck L4
@@ -380,7 +384,7 @@ export function setCoPilot(ticketId, live) {
     return storedCoPilot(deck, ticket.repo);
   }
   writeDeck(deck);
-  return storedCoPilot(deck, ticket.repo);
+  return replaced ? { ...storedCoPilot(deck, ticket.repo), replaced } : storedCoPilot(deck, ticket.repo);
 }
 
 /** A pilot session starting in `dir` (spec 5): whatever co-pilot the deck holds there is released; true if one was. */

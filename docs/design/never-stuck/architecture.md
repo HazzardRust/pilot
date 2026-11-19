@@ -2,6 +2,8 @@
 
 Ticket itm_9b7008e91201, with itm_8d89d2230e03 and itm_0a2eca54e2f7 merged in (merge thread itm_452048a4e404,
 "Merge these"). Base `origin/pilot` d7569a49. Slug `never-stuck`.
+Run 2 (Run B): ticket itm_4be94a7ae00a, slug `never-stuck-2`, merge thread itm_7f1a5d64c8d6 ("merged none"); adds
+spec 25-27 (itm_99b65de1e279) and S19. Branch `design/never-stuck-2`, cut from `feat/never-stuck`, rebased onto 0a95356d (A5).
 
 ## 1. Problem
 
@@ -17,6 +19,8 @@ A piloted run keeps ending up stopped or idle with nobody told. A landed gate2 w
 A planning ticket reads live with no architect. A co-pilot is told to hand back `paused` while its implementers
 still run. An unanswered item holds a lane for hours. `pilot wait` exits without saying what could run. A signed
 plan goes stale and nothing notices until the build. Each of these must be said aloud or resolved by the system.
+Run 2 adds (2026-11-17): "did we catch why the last session didnt /clear on it's own? we need to make sure it doesnt
+happen again": a hand-off sat held 8.5 minutes for a co-pilot whose pause was only queued.
 
 ## 2. Spec
 
@@ -48,7 +52,13 @@ Status column: what `origin/pilot` d7569a49 already does (read in code, §3). Ba
 | 22 | `Land again` is refused while a process holds the land dir, naming the pid and the dir, in 1 line. | Deck test: refused with a live stub; lands after its exit. | no |
 | 23 | pilot-lander.md: after "the deck restarted", confirm the old land has exited before `Land again`. | Lander prompt test; 1 line. | no |
 | 24 | A user's answer on an agent-owned thread that no wait of the owner is parked on is handed to the pilot within 30 seconds and named `unheard by <owner>`, however busy the owner is. | Fallback test: architect active, no parked wait, the reply is the pilot's at 30 s. itm_f923919ee292: 2 answers sat "not picked up yet". | no |
+| 25 | *Added.* When the pilot's pause to a live co-pilot answers `Message queued for delivery`, the pilot runs `deck_ticket release` at once; the hand-off's `/clear` follows the next turn end, never the 20-minute bound. | run-look test: hold, release, turn reads `clear` at 1 min, 0 `past 20 min` lines; the guard's advisory and `pilot handoff`'s line each name "queued" and the release (2 pins). Held 8.5 min on 2026-11-17. | no: both texts say "release it on its hand-back" only |
+| 26 | *Added.* `pilot handoff` with a live co-pilot prints, in its one line, that the `/clear` is held, for which ticket, and the bound (`up to 20 minutes`, read from `HOLD_BOUND_MS`); with none, no held clause. | handoff test reads both lines. | partly: names the ticket, not the hold or the bound |
+| 27 | *Added.* The deck shows the hand-off held on the hand-off item while it is held: `held: /clear waits on <ticket>'s co-pilot`, with the ask "Stop waiting for the co-pilot". | Existing test, 2 asserts (note, ask) in `deck/test/handoff-hold.test.mjs`; QA sees 1 held card. | yes: `deck/items.mjs:311, :325`, in 0.9.8; no slice |
 
+practitioner: SRE on-call: a hold is shown with its owner and its deadline, and a page that cannot be delivered is
+escalated at once, not after its timeout (lines 25, 26). Raw material: the pilot transcript's own SendMessage
+answer, the string line 25's rule keys on.
 practitioner: release engineer (GitHub merge queue, Gerrit, Mergify): staleness is checked by the system on every
 base move, never by a person, and an approval survives a trivial rebase (lines 13-15).
 practitioner: SRE on-call: an unacknowledged page escalates on a timer, and a silent stop is an incident (lines 1, 8, 10, 24).
@@ -83,6 +93,13 @@ practitioner: SRE on-call: an unacknowledged page escalates on a timer, and a si
   This session's deck MCP reported CONNECTION_CLOSED at start and loaded through ToolSearch.
 - Trust (permissions docs): in a repository trust keys on its root; outside one it covers subdirectories except
   a nested git repository; `projects[<path>].hasTrustDialogAccepted` in `~/.claude.json` records it.
+- Held `/clear` (run 2, on `origin/feat/handoff-books` 291d4301): `holdFor` (`deck/run-look.mjs:143`) holds while
+  `coPilot.live`, up to `HOLD_BOUND_MS` (:62); a released co-pilot reads `free`. Card note `noteFor` (`deck/items.mjs:325`).
+  The pause: `handoffNowIfIdle` (`hooks/context-size-guard.js:355`), `scripts/handoff.mjs:199-202`, both "release it on
+  its hand-back"; `agents/pilot.md:542` reads queued as undelivered but says check back "after a few minutes".
+- Cause of 2026-11-17 (was unproven): the pause at 10:22:14 answered `Message queued for delivery to a7c834c628e241cca
+  at its next tool round` (pilot transcript dd5757d8, line 2079): the co-pilot was in its full-gate call (done 10:23:35)
+  with a slice to integrate. wrapper.log:617-618: held 10:23:14, `/clear` 10:31:51 after the pilot's release.
 
 ### Seams
 
@@ -99,6 +116,10 @@ None is shallow enough to fold, so no fold slice. One new module, `deck/recut.mj
 | landing `deck/landing.mjs` | `startLanding`, `adoptLandings` | child pid, re-adopt, post-landing sweep | local-substitutable (stub child) |
 | wait `deck/wait.mjs` | `waitForReply` | refusal, `NO REPLY` lines | remote but owned (deck HTTP) |
 | timers `deck/server-wait.mjs` | `armYields`, `armDefaults` | 20-minute clocks | in-process |
+| hand-off claims `deck/run-claim.mjs` | `HOLD_BOUND_MS`, `notePosted`, `postedFile` | the bound's one owner, read by the look and `pilot handoff` (run 2) | in-process |
+| hand-off line `scripts/handoff.mjs` | `handoff(opts) -> { ok, line }` | the held clause (run 2) | remote but owned (deck HTTP) |
+
+Run 2 deepening: run-look and handoff.mjs pass the deletion test; the bound moves to `run-claim.mjs`. No fold slice.
 
 ## 4. Ubiquitous language
 
@@ -107,13 +128,14 @@ None is shallow enough to fold, so no fold slice. One new module, `deck/recut.mj
 - **First grant**: a ticket's first `deck_ticket co-pilot`, stamped `plan.grantedAt`; drift is checked only there and at landings.
 - **Sticky approval**: a re-cut whose `docs/design/<slug>/` is textually unchanged keeps its signature through `replan`.
 - **Drain**: a yielded ticket's co-pilot starts nothing and waits on every live child before handing back `paused`.
+- **Held clear**: a hand-off whose `/clear` the mod holds for a live co-pilot, up to `HOLD_BOUND_MS`; a queued pause ends it by `release`.
 - **Owed row**: one `/api/record` `owed` entry the SessionStart notice and the NO REPLY exit both print.
 
 ## 5. Locked decisions
 
 ADR 0187 (`docs/adr/0187-never-stuck.md`) records L2-L7.
 
-- **L1 Depth is forks** (itm_5ad979d05f47, the user's press): only forking decisions were posted, each alone.
+- **L1 Depth is forks** (itm_5ad979d05f47, the user's press): only forking decisions were posted, each alone. Run 2: forks again (itm_2ad862b30840, the user's press 2026-11-18); A7 was the one forking assumption posted.
 - **L2 The deck checks drift, at the first grant and after every landing** (F1, user: "The deck, at grant and
   landing", itm_73468bff78b8). Rationale: the check costs no agent tokens and can't be skipped. Rejected: the
   co-pilot's first act or the architect per landing.
@@ -154,37 +176,59 @@ ADR 0187 (`docs/adr/0187-never-stuck.md`) records L2-L7.
 - **A1 Line 8, yellow only.** Default: a blocking walkthrough yields like a question, on the held yellow ticket
   only. Trades away: a red or green ticket's blocking item still holds its stage lane (the main session works
   there). Rejected: all three lanes (parks the pilot's own ticket).
-  Verdict: stands - the planning and concluding lanes are the main session's; parking its own ticket would stop the session that answers the yield
+  Verdict: stands — the planning and concluding lanes are the main session's; parking its own ticket would stop the session that answers the yield
 - **A2 Line 10's exclusions.** Default: proposals, `Merging tickets` (a merge is irreversible), blocking items
   (they yield) and gates are never auto-answered. Trades away: an excluded question waits on the user.
-  Verdict: stands - the user's recorded rule: a default taken is no yes for a proposal, a merge or a gate
+  Verdict: stands — the user's recorded rule: a default taken is no yes for a proposal, a merge or a gate
 - **A3 Line 12's root.** Default `~/.claude/pilot/live`. Changes the request: a nested git repository under it
   still prompts, so live checks use a plain subdirectory or a worktree.
-  Verdict: stands - beside the other pilot state under ~/.claude/pilot; no queued ticket claims the path
+  Verdict: stands — beside the other pilot state under ~/.claude/pilot; no queued ticket claims the path
 - **A4 Line 4's refusal half dropped.** ToolSearch reconnects a failed MCP (seen this session).
-  Verdict: stands - seen again by the pilot this session: deck reported CONNECTION_CLOSED, ToolSearch loaded it and every call worked
+  Verdict: stands — seen again by the pilot this session: deck reported CONNECTION_CLOSED, ToolSearch loaded it and every call worked
+- **A5 Run 2's base is Run 1** (main's call): `design/never-stuck-2` is cut from `feat/never-stuck` (c19395e7, rebased onto 0a95356d; the only
+  branch with this artefact) and `feat/never-stuck-2` is cut from the design tip at Gate 1, base `feat/never-stuck` (built on feat/<N>);
+  both rebase onto `origin/pilot` once Run 1 lands. Trades away: a rebase when Run 1 lands; slices citing S6 wait for it (§8).
+  Rejected: `pilot base`'s `feat/handoff-books`, which holds neither the artefact nor S1-S5.
+  Verdict: stands — Run 1 is green at 0a95356d awaiting its walkthrough; no other branch holds the artefact and S1-S6
+- **A6 Line 25 releases at once** (itm_fca79242f7ff): no grace wait. Trades away: the `/clear` may kill the slice in
+  flight (ADR 0089's reason); the fresh session re-adopts the ticket. Rejected: a 5-minute grace for the hand-back. User: "Release at once" (itm_fca79242f7ff, 2026-11-18).
+  Verdict: stands — the user chose Release at once on itm_fca79242f7ff
+- **A7 Line 25 is a prose rule, not a hook**: the guard's advisory and `pilot handoff`'s line say it; `agents/pilot.md`
+  carries it in one line (S18), within its 28 tokens of headroom. Trades away: a pilot ignoring the line waits out the bound. Rejected: a
+  PostToolUse hook releasing on a queued SendMessage (wider; the user said "the pilot releases"). User: "Prose rule, bound as backstop" (itm_b3f95cb4736d, 2026-11-18).
+  Verdict: stands — the user chose the prose rule with the bound as backstop on itm_b3f95cb4736d
+- **A8 QA environment for Run 2** (itm_ca7057034e89): L11's scratch deck and temp repos, plus `pilot handoff` there
+  with a co-pilot granted and the held card looked at; no real `/clear`. Trades away: the wrapper's real `/clear`
+  after a release is seen only at the next real hand-off. Rejected: the live deck. User: "Scratch deck + temp repos" (itm_ca7057034e89, 2026-11-18).
+  Verdict: stands — the user chose the scratch deck and temp repos on itm_ca7057034e89
+- red team (run 2): S19's first red step meets `scripts/test/handoff.test.mjs:179, :198`, pinning today's clause
+  word for word; S19 owns that file. Importing the bound from `run-look.mjs` would pull the look's CLI into
+  `pilot handoff`; it moves to `run-claim.mjs`, which both import. S19 shares no file or seam with S7-S18.
 - red team: S2's first red step walked against `store-runs.mjs:369`: `setCoPilot` is synchronous and git is not,
   so the check sits in the `deck_ticket` handler (`server-tools.mjs:411`) before it, and S2 owns that handler after S1.
-- red team: S8's new lane shapes would make `lanesNotice` drop all three lanes silently (`session-handoff.js:370`);
-  S8 now owns the regexes.
-- red team: S5's `yielding` ticket would re-fire `yieldsDue` every tick and be refused as idle; S5 owns both
-  skips in `lanes.mjs`, and Run B's S8, S9 come after it.
+- red team: S8's new lane shapes would make `lanesNotice` drop all three lanes silently (`session-handoff.js:370`); S8 now owns the regexes.
+- red team: S5's `yielding` ticket would re-fire `yieldsDue` every tick and be refused as idle; S5 owns both skips in `lanes.mjs`, and Run B's S8, S9 come after it.
 - red team: S4's replan on other-host (old sha ecdd81f4 gone) can't diff; L5 makes that a gate1, never a silent restore.
 
 ## 7. Out of scope
 
 Re-cutting a part-built ticket (L4). Stage-lane yields (A1). A deck-side MCP fallback (A4). Repairing other-host's
 record by hand: its first grant after Run A answers `re-cut check due: ecdd81f4 gone`. Interface-level drift. The
-spec-driven crew rewrite (itm_6de487e1f2c4) follows this run's prose.
+spec-driven crew rewrite (itm_6de487e1f2c4) follows this run's prose. Run 2: a hook that releases on a queued
+pause (A7); saving a slice the `/clear` kills (A6); line 27's card, already shipped; the hold's bound itself.
 
 ## 8. Slices
 
-Width 7; longest stem 4 (S1 → S2 → S5 → S6). Runs in sequence; Run B starts after Run A lands.
+Width 8; longest stem 4 (S1 → S2 → S5 → S6). Runs in sequence; Run B starts after Run A lands.
 
 | Run | Slices | Spec lines | After | Estimate |
 |---|---|---|---|---|
 | A re-cut | S1-S6 | 3, 6, 13, 14, 15, 16 | – | 6 slices, about 1 day |
-| B never stuck | S7-S18 | 1, 2, 4, 5, 7-12, 16-24 | A (`lanes.mjs`, `store-tickets.mjs`, prose) | 12 slices, about 2 days |
+| B never stuck | S7-S19 | 1, 2, 4, 5, 7-12, 16-27 | A (`lanes.mjs`, `store-tickets.mjs`, prose) | 13 slices, about 2 days |
+
+Run B's base (A5): its slices stand on Run A's S1-S5 code and S6's names, so `feat/never-stuck-2` is cut from the design
+tip on `feat/never-stuck` (0a95356d) and rebases onto `origin/pilot` once Run A lands. Run B alone: width 8 (S7, S8,
+S10, S11, S13, S15, S17, S19), longest stem 3 (S10 → S16 → S18). Line 27 has no slice (shipped).
 
 | # | Title | Spec | Files owned | After | Reviewers | File |
 |---|---|---|---|---|---|---|
@@ -206,6 +250,7 @@ Width 7; longest stem 4 (S1 → S2 → S5 → S6). Runs in sequence; Run B start
 | S16 | A deck restart re-adopts its land child | 21, 22 | `deck/store-items.mjs`, `deck/landing.mjs`, `deck/daemon.mjs`, `deck/test/land-adopt.test.mjs` (new) | S10 (`store-items.mjs`) | ts, security | [S16](slices/S16.md) |
 | S17 | One trusted live root | 12 | `scripts/live-root.mjs` (new), `bin/pilot.mjs`, `scripts/test/live-root.test.mjs` (new) | – | ts, security | [S17](slices/S17.md) |
 | S18 | Prose: the lane holder, the wait, the land, the live root | 11, 16, 20, 23 | `agents/pilot.md`, `agents/pilot-lander.md` (body), `agents/pilot-implementer.md`, `agents/pilot-architect.md`, `docs/adr/0143-*.md`, `scripts/test/stuck-prose.test.mjs` (new) | S7, S13, S15, S16, S17 (the names it cites) | ts, security | [S18](slices/S18.md) |
+| S19 | A queued pause does not hold the hand-off | 25, 26 | `deck/run-claim.mjs`, `deck/run-look.mjs`, `hooks/context-size-guard.js` (`handoffNowIfIdle`), `scripts/handoff.mjs`, `scripts/test/handoff.test.mjs`, `hooks/test/context-size.test.js`, `deck/test/run-look.test.mjs` | – | ts, security | [S19](slices/S19.md) |
 
 Outside this ticket: S8, S12 wait for handoff-books S1 and handoff-mod on pilot (`session-handoff.js`); S13 waits
 for handoff-mod (`wait.mjs`); S6, S15, S18 wait for blocked-steps S2 and handoff-books S3 (`agents/*.md`).
@@ -213,7 +258,8 @@ red team: S16 and S10 both write `store-items.mjs`; S16 moved after S10 instead 
 
 ## 9. Acceptance evidence
 
-On a scratch deck with temp repos (L11), in the order a user meets it:
+On a scratch deck with temp repos (L11), in the order a user meets it. Recipe: `pilot deck --scratch`, and every probe
+run with `CLAUDE_PID` set to a dummy and `HOME`/`USERPROFILE` to a temp dir, or its claims stamp the live session.
 1. A ticket signed, an owned file landed on pilot: its card turns red with `re-cut` (13, 14), the planning line
    reads `(re-cut)` (9); an unchanged re-plan goes yellow with no press (15); a changed one shows `Changed since`.
 2. A yield at 20 min with 2 stub slices live: the ticket stays implementing until release (3); a walkthrough yields
@@ -224,6 +270,9 @@ On a scratch deck with temp repos (L11), in the order a user meets it:
 5. A second `deck_ticket co-pilot` is refused naming the holder (17-20). A deck restart mid-landing re-adopts the
    stub child; `Land again` is refused while it lives (21-23). An unheard answer reaches the pilot at 30 s (24).
 6. `pilot live-root` reads `trusted` after the walkthrough (12); the lander loads the deck by ToolSearch (4).
+7. Run 2: `pilot handoff` on the scratch deck with a co-pilot granted prints `/clear held for the co-pilot on
+   <ticket>, up to 20 minutes` and the queued rule (25, 26); the hand-off card reads `held: /clear waits on
+   <ticket>'s co-pilot` (27); after `deck_ticket release` the look answers `clear` well inside the bound (25).
 
 ## 10. Status
 
@@ -247,4 +296,5 @@ On a scratch deck with temp repos (L11), in the order a user meets it:
 | S16 | planned | | | | S10 | 21, 22 |
 | S17 | planned | | | | – | 12 |
 | S18 | planned | | | | S7, S13, S15, S16, S17 | 11, 16, 20, 23 |
-| never-stuck | planned | feat/never-stuck | | | S1-S18 | 1-24 |
+| S19 | planned | | | | – | 25, 26 |
+| never-stuck | planned | feat/never-stuck | | | S1-S19 | 1-27 |

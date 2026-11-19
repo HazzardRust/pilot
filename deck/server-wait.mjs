@@ -14,7 +14,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { quietAt, watchAgents } from './agents.mjs';
-import { HANDOFF_ACK_MS, KIND_GATE2, KIND_HANDOFF, KIND_QUESTION, KIND_WALKTHROUGH, NOTE_SEPARATOR, PASS_KINDS, SIGN_OFF, isOpen } from './items.mjs';
+import { HANDOFF_ACK_MS, KIND_GATE2, KIND_HANDOFF, KIND_QUESTION, KIND_WALKTHROUGH, NOTE_SEPARATOR, PASS_KINDS, SIGN_OFF, isOpen, sameRepo } from './items.mjs';
+import { CONFLICT_TITLE } from './landing-replies.mjs';
 import { yieldsDue } from './lanes.mjs';
 import { PICKED_UP_MS, WORKING_MS } from './pilot-state.mjs';
 import {
@@ -22,6 +23,7 @@ import {
   repliesSince, yieldTicket,
 } from './store.mjs';
 import { CONFLICT_TURN_MS } from './store-items.mjs';
+import { defaultsDue, takeDefault } from './store-defaults.mjs';
 import { cookieName, deckDir, ensureSecret, secretFile } from '../hooks/lib/deck-secret.js';
 import { DECK_HOST } from './tools.mjs';
 import { capRefusal } from './ui/render.mjs';
@@ -350,6 +352,14 @@ export const browserCount = () => changes.listenerCount(CHANGED_FOR_BROWSER);
 export const waiterCount = () => changes.listenerCount(CHANGED_FOR_WAITER);
 
 /**
+ * The `deck_wait` calls parked right now, each `{ kind, repo, item }` (`null` for any), in
+ * memory like the roster (never-stuck L9): whether a wait of `kind` would hear `itemId` in `repo`.
+ */
+const parkedWaits = new Set();
+export const parkedOn = (kind, itemId, repo) =>
+  [...parkedWaits].some((wait) => wait.kind === kind && (wait.item ?? itemId) === itemId && (wait.repo === null || sameRepo(wait.repo, repo)));
+
+/**
  * Called after every write: the named writing tools below call it after every one of
  * theirs, `handOff` calls it for `deck_read`, and every `deck_wait`'s `take` calls it
  * from inside `waitForReplies`, each only on the call that actually marked a reply
@@ -394,13 +404,14 @@ function armHandoffs() {
   }
   armStateTimers(items, runs);
   armYields();
+  armDefaults();
   armConflicts();
 }
 
 /** Each waiting conflict's one timer, by gate2 id, with the conflict's moment it was armed for. */
 const conflictTimers = new Map();
 
-const conflictTitle = (dir) => `Resolve the landing conflict in ${dir}`;
+const conflictTitle = (dir) => `${CONFLICT_TITLE}${dir}`;
 
 /**
  * A gate2 whose stored conflict waits on the pilot (spec 5): not marked `resolving` by the pilot's `Resolving` (L7)
@@ -427,12 +438,8 @@ export function armConflicts() {
     console.error('[deck] the conflict timers could not read the store:', err.message);
     return;
   }
-  const due = new Map(items.filter((item) => conflictWaits(item, items)).map((gate) => [gate.id, gate.landing.conflict.at]));
-  for (const [id, armed] of conflictTimers) {
-    if (due.get(id) === armed.conflictAt) continue;
-    clearTimeout(armed.timer);
-    conflictTimers.delete(id);
-  }
+  const due = new Map(items.filter((item) => conflictWaits(item, items)).map(({ id, landing: { conflict } }) =>
+    [id, { key: conflict.at, at: Date.parse(conflict.at) + CONFLICT_TURN_MS }]));
   const ask = (id) => {
     const now = listItems();
     const gate = now.find((item) => item.id === id);
@@ -445,23 +452,37 @@ export function armConflicts() {
       options: ['Done', 'Leave it unlanded'], recommended: 'Done',
     });
   };
-  const arm = (id, conflictAt) => {
-    const at = Date.parse(conflictAt) + CONFLICT_TURN_MS;
-    const fire = () => {
-      // A timer may wake a millisecond short of `at`: that conflict is still the pilot's.
-      if (Date.now() < at) return arm(id, conflictAt);
-      conflictTimers.delete(id);
+  armOneShots(conflictTimers, due, ask, (err, id) => console.error(`[deck] the conflict on ${id} could not be handed over:`, err.message));
+}
+
+/**
+ * One unref'd one-shot timer in `timers` per entry of `due`, id → `{ key, at }`: the rule the conflict, yield and default
+ * timers share. A timer whose entry left `due` or changed `key` is cleared; one already past fires at once, so a restart
+ * takes what is overdue; one that wakes a millisecond short of `at` is armed again, since that entry is still ahead. On
+ * fire `fire(id, key)` writes and the change is announced; a throw goes to `failed(err, id, key)` and drops the timer,
+ * which `armHandoffs` arms again on the next change.
+ */
+function armOneShots(timers, due, fire, failed) {
+  for (const [id, armed] of timers) {
+    if (due.has(id) && due.get(id).key === armed.key) continue;
+    clearTimeout(armed.timer);
+    timers.delete(id);
+  }
+  const arm = (id, entry) => {
+    const wake = () => {
+      if (Date.now() < entry.at) return arm(id, entry);
+      timers.delete(id);
       try {
-        ask(id);
+        fire(id, entry.key);
       } catch (err) {
-        console.error(`[deck] the conflict on ${id} could not be handed over:`, err.message);
+        failed(err, id, entry.key);
         return;
       }
       announceChange();
     };
-    conflictTimers.set(id, { conflictAt, timer: setTimeout(fire, Math.max(0, at - Date.now())).unref() });
+    timers.set(id, { key: entry.key, timer: setTimeout(wake, Math.max(0, entry.at - Date.now())).unref() });
   };
-  for (const [id, conflictAt] of due) if (!conflictTimers.has(id)) arm(id, conflictAt);
+  for (const [id, entry] of due) if (!timers.has(id)) arm(id, entry);
 }
 
 /** Each due yield's one timer, by question id, with the ticket and moment it was armed for. */
@@ -486,29 +507,33 @@ export function armYields() {
   const due = new Map();
   for (const held of Object.values(coPilots)) {
     const ticket = items.find((item) => item.id === held);
-    for (const entry of yieldsDue(items, ticket?.repo, held, Infinity)) due.set(entry.question, entry);
+    for (const { question, ticket: key, at } of yieldsDue(items, ticket?.repo, held, Infinity)) due.set(question, { key, at });
   }
-  for (const [question, armed] of yieldTimers) {
-    if (due.get(question)?.ticket === armed.ticket) continue;
-    clearTimeout(armed.timer);
-    yieldTimers.delete(question);
+  armOneShots(yieldTimers, due, (question, ticket) => yieldTicket(ticket, question), (err, _, ticket) => {
+    if (!(err instanceof DeckRefusal)) console.error(`[deck] the yield of ${ticket} could not be written:`, err.message);
+  });
+}
+
+/** Each due default's one timer, by question id, with the moment it was armed for. */
+const defaultTimers = new Map();
+
+/**
+ * One unref'd one-shot timer per default `defaultsDue` names, at its `dueAt` (never-stuck spec 10), beside the
+ * yields: one already past fires at once, so a restart takes an overdue default; armed again on every change
+ * through `armHandoffs`, and a timer whose question stopped being due is cleared. On fire `takeDefault` checks the
+ * rule again and refuses a default that stopped being due.
+ */
+export function armDefaults() {
+  let due;
+  try {
+    due = new Map(defaultsDue(listItems(), Infinity).map(({ id, dueAt }) => [id, { key: dueAt, at: dueAt }]));
+  } catch (err) {
+    console.error('[deck] the default timers could not read the store:', err.message);
+    return;
   }
-  const arm = (question, ticket, at) => {
-    const fire = () => {
-      // A timer may wake a millisecond short of `at`: that yield is still ahead, not refused.
-      if (Date.now() < at) return arm(question, ticket, at);
-      yieldTimers.delete(question);
-      try {
-        yieldTicket(ticket, question);
-      } catch (err) {
-        if (!(err instanceof DeckRefusal)) console.error(`[deck] the yield of ${ticket} could not be written:`, err.message);
-        return;
-      }
-      announceChange();
-    };
-    yieldTimers.set(question, { ticket, timer: setTimeout(fire, Math.max(0, at - Date.now())).unref() });
-  };
-  for (const [question, { ticket, at }] of due) if (!yieldTimers.has(question)) arm(question, ticket, at);
+  armOneShots(defaultTimers, due, takeDefault, (err, id) => {
+    if (!(err instanceof DeckRefusal)) console.error(`[deck] the default on ${id} could not be written:`, err.message);
+  });
 }
 
 /** Each pending state lapse's one timer, by what lapses: a handoff's id or a run's id. */
@@ -619,7 +644,7 @@ function openStream(response) {
  * what it says. The seq still counts the whole deck, so a reply read past is not
  * waited on again.
  */
-function waitForReplies({ since, timeoutMs, signal, heard, take, untaken = false, fallback = null }) {
+function waitForReplies({ since, timeoutMs, signal, heard, take, untaken = false, fallback = null, parked = null }) {
   const heardSince = () => {
     // Overdue first (A7): claimed off the cursor, so the page below may hold them too.
     const overdue = fallback?.claim() ?? [];
@@ -643,6 +668,7 @@ function waitForReplies({ since, timeoutMs, signal, heard, take, untaken = false
     const settle = (value) => {
       clearTimeout(timer);
       clearTimeout(due);
+      parkedWaits.delete(parked);
       changes.off(CHANGED_FOR_WAITER, onChange);
       signal?.removeEventListener('abort', onAbort);
       resolve(value);
@@ -674,6 +700,7 @@ function waitForReplies({ since, timeoutMs, signal, heard, take, untaken = false
     const onAbort = () => settle({ replies: [], seq: since });
 
     timer = setTimeout(() => settle(look() ?? { replies: [], seq: since }), timeoutMs);
+    if (parked) parkedWaits.add(parked);
     changes.on(CHANGED_FOR_WAITER, onChange);
     signal?.addEventListener('abort', onAbort, { once: true });
     arm();
@@ -701,7 +728,17 @@ const fellBackNote = (owner) =>
 function fallbackFor(repo) {
   let nextAt = null;
   const claim = () => {
-    const due = fallbackDue(repo, Date.now(), (kind) => quietAt(repo, kind));
+    const now = Date.now();
+    // A reply its owner never picked up, with no wait of the owner parked on it, is unheard:
+    // the owner counts as quiet now, however busy (never-stuck spec 24, L9). Seqs are deck-wide.
+    const unheard = new Set();
+    const quiet = (kind, itemId, reply) => {
+      const at = quietAt(repo, kind, now);
+      if (at <= now || reply.deliveredAt || parkedOn(kind, itemId, repo)) return at;
+      unheard.add(reply.seq);
+      return now;
+    };
+    const due = fallbackDue(repo, now, quiet);
     nextAt = due.nextAt;
     const taken = new Set();
     for (const id of new Set(due.overdue.map((reply) => reply.itemId))) {
@@ -711,7 +748,7 @@ function fallbackFor(repo) {
     if (taken.size) queueMicrotask(announceChange);
     return due.overdue
       .filter((reply) => taken.has(reply.itemId))
-      .map((reply) => ({ ...reply, fallback: fellBackNote(reply.owner) }));
+      .map((reply) => ({ ...reply, fallback: unheard.has(reply.seq) ? `unheard by ${reply.owner}` : fellBackNote(reply.owner) }));
   };
   return { claim, next: () => nextAt };
 }

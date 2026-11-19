@@ -83,10 +83,11 @@ async function deckWithHandoff(t) {
     assert.ok(response.ok, name + ' refused: ' + response.status);
     return (await response.json()).content[0].text;
   };
-  const post = async function (title) {
-    return /Posted (itm_[0-9a-f]+)/.exec(await tool('deck_post', { kind: 'handoff', title: title, body: 'Stash at docs/x.md.', repo: home }))[1];
+  // Another open item is a question: a second hand-off would supersede (close) the first.
+  const post = async function (title, kind) {
+    return /Posted (itm_[0-9a-f]+)/.exec(await tool('deck_post', { kind: kind || 'question', title: title, body: 'Stash at docs/x.md.', repo: home }))[1];
   };
-  const id = await post('Handoff');
+  const id = await post('Handoff', 'handoff');
   return { home: home, id: id, post: post, resolve: function () { return tool('deck_resolve', { id: id, resolution: 'holding it' }); } };
 }
 

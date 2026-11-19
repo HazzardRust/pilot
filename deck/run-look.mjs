@@ -24,7 +24,7 @@ import { pathToFileURL } from 'node:url';
 
 import { isOpen, repoKey, sameRepo } from './items.mjs';
 import { landerDue } from './landing-replies.mjs';
-import { claimDir, claimNameFor, laneMarked, postedFile, reportedFile, takeClaim } from './run-claim.mjs';
+import { claimDir, claimNameFor, HOLD_BOUND_MS, laneMarked, postedFile, reportedFile, takeClaim } from './run-claim.mjs';
 import { deckUrl } from './tools.mjs';
 import { listeningRepo } from './wait.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
@@ -57,9 +57,6 @@ const cooldownFile = (repo) => path.join(claimDir(), `cleared-${crypto.createHas
  * A genuine hand-off takes tens of minutes of context to reach, so five costs the honest case nothing.
  */
 const CLEAR_COOLDOWN_MS = 5 * 60 * 1000;
-
-/** How long a live co-pilot holds a hand-off's clear, from the directory's first hold (held-handoff L4). */
-const HOLD_BOUND_MS = 20 * 60 * 1000;
 
 /** What `unstarted` may be told, and what `cleared` adds; nothing else reaches a log line or a reply (A4). */
 const CAUSES = {

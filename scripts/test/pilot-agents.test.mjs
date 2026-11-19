@@ -720,7 +720,7 @@ test('the teacher owns its lesson thread: it posts, waits on and closes that one
   assert.deepEqual(
     tools,
     [
-      'Read', 'Grep', 'Glob', 'Bash', 'SendMessage',
+      'Read', 'Grep', 'Glob', 'Bash', 'ToolSearch', 'SendMessage',
       'mcp__plugin_pilot_deck__deck_post', 'mcp__plugin_pilot_deck__deck_reply',
       'mcp__plugin_pilot_deck__deck_resolve',
     ],
@@ -753,6 +753,38 @@ test('the skill carries the six rules and the teacher keeps no copy (L14)', () =
   assert.doesNotMatch(read('agents/pilot-teacher.md'), /## The six rules/, 'the teacher restates its skill again');
   const rules = sixRules(read('skills/teaching-a-decision/SKILL.md'));
   assert.equal(rules.length, 6, "the skill carries L14's six rules");
+});
+
+/** The numbered items under a file's "Teaching moves" heading, one string per move; [] without it. */
+const teachingMoves = (source) => {
+  const section = /^## Teaching moves[^\n]*\n([\s\S]*?)(?=\n## |$(?![\s\S]))/m.exec(source);
+  if (!section) return [];
+  return section[1]
+    .split(/\n(?=\d+\. )/)
+    .filter((chunk) => /^\d+\. /.test(chunk))
+    .map((chunk) => chunk.replace(/\s+/g, ' '));
+};
+
+/** What is kept across sessions, which the teacher never carries (teacher-method spec 2). */
+const LONG_HORIZON =
+  /lesson plan|knowledge (tracker|sheet)|mastery (level|tracker)|psychology log|experiment|whiteboard|Teaching Notes|session log/i;
+
+test('the skill carries the teaching moves', () => {
+  // teacher-method spec 1, L3: the in-the-moment moves sit beside the six rules,
+  // not in place of them. Structural only (ADR 0180): the heading and the count.
+  assert.deepEqual(teachingMoves('# A skill\n\n## The six rules\n\n1. one\n'), [], 'no section, no moves');
+  const moves = teachingMoves(read('skills/teaching-a-decision/SKILL.md'));
+  assert.ok(moves.length >= 9, `the skill carries at least 9 teaching moves, found ${moves.length}`);
+});
+
+test('nothing long-horizon in the teacher', () => {
+  // teacher-method spec 2: a lesson is one decision taught now; nothing is kept
+  // across sessions, so neither the definition nor its skill names such a record.
+  // lint: forbidden patterns
+  for (const rel of ['agents/pilot-teacher.md', 'skills/teaching-a-decision/SKILL.md']) {
+    const hit = LONG_HORIZON.exec(read(rel));
+    assert.equal(hit, null, `${rel} names a long-horizon record: ${hit?.[0]}`);
+  }
 });
 
 test('the pilot hands a "Teach me" reply to the teacher, and a follow-up on that thread to the same one', () => {

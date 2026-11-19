@@ -54,5 +54,10 @@ test('the landing spawns with the shape the parity test uses', (t) => {
   startLanding(gate.id, { spawn: fake.spawn, env });
 
   assert.equal(fake.calls.length, 1);
-  assert.deepEqual(fake.calls[0].options, landingSpawnOptions(worktree, env));
+  // Its output goes to its land dir, not a pipe, so it outlives a deck restart (never-stuck spec 21); both are non-TTY.
+  const { stdio, ...shape } = fake.calls[0].options;
+  const { stdio: piped, ...parity } = landingSpawnOptions(worktree, env);
+  assert.deepEqual(shape, parity);
+  assert.equal(stdio[0], piped[0]);
+  assert.ok(stdio.slice(1).every(Number.isInteger), 'stdout and stderr are files');
 });

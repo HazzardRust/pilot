@@ -1,0 +1,371 @@
+{
+  "slug": "never-stuck-2",
+  "feature": "never-stuck run 2",
+  "ticket": "itm_4be94a7ae00a",
+  "branch": "feat/never-stuck-2",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-never-stuck-2",
+  "qa": {
+    "branch": "feat/never-stuck-2",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-qa",
+    "url": "http://127.0.0.1:55398"
+  },
+  "artefact": "docs/design/never-stuck/architecture.md",
+  "slices": [
+    {
+      "slice": "S7",
+      "state": "integrated 1ea571c6",
+      "branch": "slice/never-stuck-2-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "integrated at 93d7937",
+      "branch": "slice/never-stuck-2-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "integrated 8abd1ae5",
+      "after": [
+        "S8"
+      ],
+      "branch": "slice/never-stuck-2-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s9"
+    },
+    {
+      "slice": "S10",
+      "state": "integrated 8c7c9604",
+      "branch": "slice/never-stuck-2-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s10"
+    },
+    {
+      "slice": "S11",
+      "state": "integrated 2e2de07d",
+      "branch": "slice/never-stuck-2-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s11"
+    },
+    {
+      "slice": "S12",
+      "state": "integrated 17e77475",
+      "after": [
+        "S8"
+      ],
+      "branch": "slice/never-stuck-2-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s12"
+    },
+    {
+      "slice": "S13",
+      "state": "integrated 7f4612d1",
+      "branch": "slice/never-stuck-2-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s13"
+    },
+    {
+      "slice": "S14",
+      "state": "integrated e27a884f",
+      "after": [
+        "S10"
+      ],
+      "branch": "slice/never-stuck-2-s14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s14"
+    },
+    {
+      "slice": "S15",
+      "state": "integrated 71f3167f",
+      "branch": "slice/never-stuck-2-s15",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s15"
+    },
+    {
+      "slice": "S16",
+      "state": "integrated bcc6490b",
+      "after": [
+        "S10"
+      ],
+      "branch": "slice/never-stuck-2-s16",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s16"
+    },
+    {
+      "slice": "S17",
+      "state": "integrated d90e1586",
+      "branch": "slice/never-stuck-2-s17",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s17"
+    },
+    {
+      "slice": "S18",
+      "state": "integrated at 24cf694f",
+      "after": [
+        "S7",
+        "S13",
+        "S15",
+        "S16",
+        "S17"
+      ],
+      "branch": "slice/never-stuck-2-s18",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s18"
+    },
+    {
+      "slice": "S19",
+      "state": "integrated c7786ee6",
+      "branch": "slice/never-stuck-2-s19",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-s19"
+    },
+    {
+      "slice": "never-stuck-2",
+      "state": "in QA: walkthrough itm_3fdcde0269b2 posted at 0dede3d9",
+      "after": [
+        "S18",
+        "S19",
+        "S9",
+        "S11",
+        "S12",
+        "S14"
+      ],
+      "branch": "feat/never-stuck-2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-never-stuck-2",
+      "pr": 107
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated at 3f7faee4",
+      "after": [
+        "S18"
+      ],
+      "branch": "fix/never-stuck-2-step7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-never-stuck-2-fix"
+    }
+  ],
+  "findings": [
+    "kept: F1 simplify — wait.mjs imports lane shapes from lanes.mjs and reasons from owed.mjs (-4)",
+    "kept: F2 simplify — drop interruptLandings' default spare and the test's second sweep (-3)",
+    "kept: F3 simplify — drop beginLanding's pid param and dir field; record holdLanding in S16 seam changes (-3)",
+    "kept: F4 simplify — one armOneShots helper for armYields/armConflicts/armDefaults (-18)",
+    "kept: F5 simplify — export conflict title prefix from landing-replies.mjs; drop dead author 'deck' branch (-2)",
+    "kept: F6 simplify — owed notice explains report owed and architect owed (0)",
+    "kept: F7 consider — build spec 20's `Yellow: held by <id>` with an assert (+2)",
+    "kept: F8 nit — delete '(A7)' from agents/pilot.md:543; amend A7 text (itm_f627fc20f1d8) (-1)",
+    "kept: F9 nit — import store-defaults directly, drop the re-export (-1)",
+    "kept: F13 QA HIGH — handoff.mjs readable refuses 'report owed'/'architect owed' rows; pilot handoff exits 1 (+5)",
+    "dropped: F10 nit — reverting comment joins is churn at 0 net against an unlocated line limit",
+    "dropped: F11 nit — 0 net reshuffle of logging; consequence below its diff",
+    "dropped: F12 nit — kind sets of resumeIn and isBlocking not shown equal; 0 net",
+    "dropped: S10 timer-drop note — held: armHandoffs re-arms the due default",
+    "dropped: SEC1 LOW parkedOn repo null — explicit by design (server-wait.mjs:358), only delays the fallback",
+    "dropped: SEC2 LOW parkedOn ignores since — only delays the 10-min fallback",
+    "dropped: SEC3 LOW default reply text unmarked — from:'deck'/default set server-side only; resolution names it",
+    "dropped: SEC4 LOW ownersTimeUp on default replies — not in diff, fails closed",
+    "dropped: E1 knip deck/run-look.mjs unused — false positive: imported by run-claim.mjs, wait.mjs, store-items.mjs",
+    "dropped: E2 madge cycle guard-status — pre-existing lazy require at guard-status.js:31, file untouched by this diff",
+    "dropped: E3 complexity and coverage/mutation — hits pre-existing; coverage and mutation NOT measured (no node_modules; stryker timeout 900)"
+  ],
+  "next": "User walks itm_3fdcde0269b2 and signs off; QA (addressee main) runs pilot integrate --trial and posts the gate2.",
+  "updatedAt": "2026-11-18T11:10:26.911Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate buffers all output to the end (388 s); a pre-fix gate run was wasted",
+      "evidence": "S9 report",
+      "size": 388
+    },
+    {
+      "agent": "pilot integrate",
+      "what": "selection over the 24000-char argv limit fell back to the full suite (4383 pass)",
+      "evidence": "S11 integrate: selection is 27233 characters of argv"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "facades 800-line bar not named in brief or slice; store-runs.mjs was 4 lines under it; cost one full gate run",
+      "evidence": "S7 report: store-runs.mjs 805 > 800, compacted in f90112d4",
+      "size": 600
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice missed yield.test.mjs and co-pilot-switch-complete.test.mjs pinning the overwrite S7 removes",
+      "evidence": "S7 gate run 1: 2 regressions"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate queues behind other worktrees' runs (waiting for a slot)",
+      "evidence": "S7 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S13 slice cited stale wait.mjs line numbers and missed exit pins in wait-idle-lane and wait tests; 9 tests red on first run",
+      "evidence": "S13 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit tool wrote U+2028/U+2029 raw inside a regex literal, breaking the module",
+      "evidence": "SyntaxError at wait.mjs:190"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "seeding a scratch deck took about 10 calls (registered run, bearer, Origin header)",
+      "evidence": "S13 live check"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Chrome DevTools MCP unavailable; S12 card checked over HTTP only, browser look left to QA",
+      "evidence": "S12 report: ToolSearch found no chrome-devtools tools"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no scratch-deck seeding for a landed gate2; deck.json written by hand",
+      "evidence": "S12 live check"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12 slice line anchors stale (OWED_WHY :395 is :423)",
+      "evidence": "S12 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S15 slice omitted pilot-agents.test.mjs, which pins the teacher's exact tools list; found via a 7-minute gate, run twice",
+      "evidence": "pilot-agents.test.mjs:709-728",
+      "size": 420
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S19 slice named hooks/context-size-guard.js for handoffNowIfIdle, which lives in hooks/lib/guard-advice.js:32",
+      "evidence": "S19 report; architecture.md:98"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a one-sentence reword after review cost a second 7-minute gate",
+      "evidence": "S19 gate runs d318f4f0 and a125c1cf",
+      "size": 420
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S16 hit the context advisory at 225k before re-review and gate; a fresh implementer finishes",
+      "evidence": "S16 hand-back at dec1781d",
+      "size": 470
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck/testUtils.mjs moves HOME and drops PILOT_DECK_DIR on import; a live-check seed went to a temp home",
+      "evidence": "S16 live check"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S14 slice did not say spec 24 overrides the busy-owner fallback rule nor name the fallback tests it obsoletes; cost a mid-slice question",
+      "evidence": "fallback.test.mjs: 1 deleted, 3 moved"
+    },
+    {
+      "agent": "pilot integrate",
+      "what": "base merge of origin/pilot (other-host) with feat puts store-items.mjs at 801 by split, failing facades on every integration",
+      "evidence": "S13 integrate log 20261118T090243279Z"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "facades fix on feat: merged origin/pilot and joined 4 comments; store-items.mjs 797 by split; store-core.mjs sits at 800 and items.mjs at 799 with no headroom",
+      "evidence": "fix 4d38e7d7 on feat/never-stuck-2",
+      "size": 12
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S16 slice did not own deck/README.md; a new deck module always trips the readme lint",
+      "evidence": "deck-readme.test.mjs every deck module is listed"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S16 needed two cap raises (400 to 480 to 490) for review fixes with tests",
+      "evidence": "489 changed lines",
+      "size": 489
+    },
+    {
+      "agent": "pilot integrate",
+      "what": "S15 integrated on a 60-file selection that skipped select-tests.test.mjs, leaving feat red on 'every tree walker is listed'; caught only at S19's full-suite merge",
+      "evidence": "S19 integrate log 20261118T094848967Z"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S18 report reached main, not the successor co-pilot",
+      "evidence": "coordinator relayed S18 Verdict lines; successor hello sent after"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S18 slice file's pilot.md line anchors stale (:140/:144 now :135/:139; :65-67 now :63-65)",
+      "evidence": "S18 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "context reset mid-run; S18 restarted from a clean worktree",
+      "evidence": "S18 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot landing has no doc comment on what it waits for",
+      "evidence": "needed deck/landing-wait.mjs to word the lander line"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner went quiet on its own background work; review has no tool evidence",
+      "evidence": "fundamentalist report section 3"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "store-items.mjs line limit enforcement not found, yet comments joined to stay under it",
+      "evidence": "store-items.mjs at 796 lines"
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "report carried no Verdict: line though the brief asked for one",
+      "evidence": "step-7 security consider hand-back"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix implementer compacted before its first edit; restarted F1-F9",
+      "evidence": "fix-round status message"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "cross-slice gap: S12 widened owed whys, S19's handoff.mjs not updated, no test",
+      "evidence": "scripts/handoff.mjs:137-139"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "scratch pilot handoff probe stamped the live session's claim in the real home (claimDir ignores PILOT_DECK_DIR); QA removed its two fixture files",
+      "evidence": "deck/run-claim.mjs:73-93; ~/.claude/pilot-inbox/claims/posted-14756.stamp"
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "coverage not run (worktree had no node_modules), stryker timed out at 900 s with 7829 mutants, report reached main after the fundamentalist had finished, scratch dir left behind",
+      "evidence": "evidence runner hand-back via main"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "chrome-devtools MCP unavailable; QA wrote its own CDP script; headless --screenshot crashed twice",
+      "evidence": "ToolSearch select:mcp__plugin_pilot_chrome-devtools__* found none"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "report owed ticket cards render only on /items, not the run tab; 3 probes to find",
+      "evidence": "render-pages.mjs:283 vs :317"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "harness forced QA hand-back before the fix tip; a successor QA is needed for the writer phase",
+      "evidence": "QA hand-back 10:39:14Z"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "dropping interruptLandings' default broke 4 test call sites the fix brief did not list; landing.dir asserted via destructuring",
+      "evidence": "landing-guard.test.mjs:174,231; landing-queue.test.mjs:143; landing-wait.test.mjs:98; land-adopt.test.mjs:82,178"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP dropped twice (spawn and mid-run)",
+      "evidence": "ToolSearch refused deck tools mid-run"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "800-line facade bar on store-items.mjs/items.mjs forces one-line fixes",
+      "evidence": "facades.test failed twice at 801 lines"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot deck --stop deletes the store; restart from a new tip needs a manual deck.json copy",
+      "evidence": "QA hand-back"
+    }
+  ]
+}
