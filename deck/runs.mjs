@@ -238,7 +238,7 @@ export function freshRuns(runs) {
  * falls on it rather than on `next`, `finished` or `report`. `qaComment` is last and
  * stays on the deck: neither the run.json mirror nor the session-start hook carries it.
  */
-const RECORD_ORDER = ['slug', 'feature', 'ticket', 'branch', 'base', 'worktree', 'qa', 'artefact', 'slices', 'findings', 'report', 'next', 'finished', 'finishedAt', 'updatedAt', 'friction', 'qaComment'];
+const RECORD_ORDER = ['slug', 'feature', 'ticket', 'branch', 'base', 'worktree', 'qa', 'artefact', 'slices', 'findings', 'humanSteps', 'report', 'next', 'finished', 'finishedAt', 'updatedAt', 'friction', 'qaComment'];
 
 /** The one spelling of a clean finish: the only `finished` that chains the next ticket (L3). */
 export const FINISHED_CLEAN = 'closing report posted';

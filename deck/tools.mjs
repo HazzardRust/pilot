@@ -312,6 +312,7 @@ export const TOOLS = [
             'assumed [{id: A<n>, decision, taken}], humanSteps [], worktreesLeft []; ' +
             "never friction, which the deck ranks from the record's rows",
         },
+        step: { type: 'string', maxLength: 300, description: 'a human step, one line, never a secret' },
         next: { type: 'string', maxLength: MAX_STATE_CHARS, description: 'the next move, one line' },
         finished: {
           type: 'string',
