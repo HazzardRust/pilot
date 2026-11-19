@@ -23,9 +23,9 @@ test('each chosen level passes with its change step', () => {
 });
 
 test('not chosen says so', () => {
-  const row = reachRow({ reach: { level: 'everything', chosen: false }, enabled: true });
+  const row = reachRow({ reach: { level: 'nothing', chosen: false }, enabled: undefined });
   assert.equal(row.verdict, 'cannot tell');
-  assert.equal(row.detail, 'not chosen; reads as everything');
+  assert.equal(row.detail, 'not chosen; reads as nothing');
   assert.deepEqual(row.steps, ['pilot reach nothing']);
 });
 

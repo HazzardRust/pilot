@@ -410,6 +410,29 @@ function enablePluginStep(settingsPath, value) {
 }
 
 /**
+ * The repair's half of `enablePluginStep`: drop an `enabledPlugins["pilot@pilot"]` that is
+ * `true`, leaving a `false` the user or `pilot reach` wrote. An `enabledPlugins` that is not an
+ * object is left alone, since this runs unattended and must not throw on it.
+ */
+function unsetPluginStep(settingsPath) {
+  return (settings) => {
+    const current = settings.enabledPlugins;
+    if (!current || typeof current !== 'object' || Array.isArray(current) || current[PLUGIN_ID] !== true) {
+      return { key: 'enabledPlugins', state: null, notes: [] };
+    }
+    return {
+      key: 'enabledPlugins',
+      state: 'removed',
+      notes: [`Removed enabledPlugins["${PLUGIN_ID}"] from ${settingsPath}; \`pilot start\` carries it.`],
+      change: (draft) => {
+        const { [PLUGIN_ID]: _ours, ...rest } = draft.enabledPlugins;
+        return { ...draft, enabledPlugins: rest };
+      },
+    };
+  };
+}
+
+/**
  * Read once, decide everything, write once. Two writes in one run would take two
  * backups, and the second would be a copy of the half-merged file while the report
  * still called it "the previous file" — pointing the friend at a backup that is not
@@ -575,15 +598,18 @@ export function isInPluginCache(dir) {
  * directory that is gone. Prints one line per command it actually repaired and
  * nothing otherwise — see `repairCommandStep` for why silence is the default.
  *
- * Refuses when `pluginRoot` is outside `pluginCacheRoot()` (S11): this path
+ * At `everything`, refuses when `pluginRoot` is outside `pluginCacheRoot()` (S11): this path
  * runs unattended, so it must never repoint a friend's status lines at a
  * worktree that can vanish out from under them.
  */
 export function repairSettings(options = {}) {
   const settingsPath = options.settingsPath || defaultSettingsPath(options.home);
   const pluginRoot = options.pluginRoot || resolvePluginRoot();
+  const everything = rulesPlan(readReach({ home: options.home }).level).user;
 
-  if (!isInPluginCache(pluginRoot)) {
+  // Only a repoint writes `pluginRoot` into settings; the A1 strip below `everything` takes the
+  // pilot's own entries out wherever the hook runs from, a marketplace added from a local clone too.
+  if (everything && !isInPluginCache(pluginRoot)) {
     return {
       settingsPath,
       pluginRoot,
@@ -600,14 +626,12 @@ export function repairSettings(options = {}) {
 
   // L3, A5: below `everything` this hook runs inside the Start's session too, and repointing the
   // user's status lines there would undo `pilot reach`; both are repaired only at `everything`.
-  const steps = [
-    ...(rulesPlan(readReach({ home: options.home }).level).user
-      ? [
-          repairCommandStep(settingsPath, COMMAND_SETTINGS.statusLine, pluginRoot),
-          repairCommandStep(settingsPath, COMMAND_SETTINGS.subagentStatusLine, pluginRoot),
-        ]
-      : []),
-  ];
+  // handoff-cache A1: below it, an install from before the reach still has the plugin and the
+  // pilot's status lines in user settings, so they are taken out (the Start carries its own).
+  const statusLines = [COMMAND_SETTINGS.statusLine, COMMAND_SETTINGS.subagentStatusLine];
+  const steps = everything
+    ? statusLines.map((config) => repairCommandStep(settingsPath, config, pluginRoot))
+    : [...statusLines.map((config) => removeOwnCommandStep(settingsPath, config)), unsetPluginStep(settingsPath)];
 
   // Read-only, and read again inside `applyMerges` below: this call exists only to
   // let the catch see just the read/parse failure `readSettings` raises. Wrapping

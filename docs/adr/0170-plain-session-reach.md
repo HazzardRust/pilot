@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: amended
 date: 2026-10-20
 tags: [install, plugin, rules, settings, adr]
 supersedes: []
-superseded_by: []
+superseded_by: [0197]
 paths: [scripts/reach.mjs, scripts/apply-reach.mjs, scripts/install-rules.mjs, scripts/install-settings.mjs, deck/run.mjs, deck/doctor.mjs, .claude-plugin/marketplace.json, docs/INSTALL.md, docs/design/plain-session/architecture.md]
 ---
 # A plain session carries only the reach the install chose

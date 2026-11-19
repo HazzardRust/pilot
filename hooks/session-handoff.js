@@ -152,7 +152,7 @@ function pickup(items, cwd) {
     if (!item || item.kind !== HANDOFF_KIND) continue;
     if (!deck.samePath(item.repo, cwd)) continue;
     if (deck.isClosed(item)) continue;
-    if (typeof item.id !== 'string' || item.id === '') continue;
+    if (typeof item.id !== 'string' || !/^itm_[0-9a-f]{12}$/.test(item.id)) continue;
     if (typeof item.body !== 'string' || item.body.trim() === '') continue;
     return item;
   }

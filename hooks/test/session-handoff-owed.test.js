@@ -96,13 +96,13 @@ test('no run record still lists them', async function (t) {
 });
 
 test('the picked-up hand-off lists them', async function (t) {
-  const handoff = { id: 'itm_handoff00001', kind: 'handoff', title: 'Handoff', body: 'Stash at docs/x.md.', repo: OURS, replies: [] };
+  const handoff = { id: 'itm_0123456789ef', kind: 'handoff', title: 'Handoff', body: 'Stash at docs/x.md.', repo: OURS, replies: [] };
   const record = { slug: 'owed-run', next: 'Integrate S2.', updatedAt: '2026-10-14T10:00:00.000Z' };
   await aStubDeck(t, [handoff], { record: record, yellow: null, lanes: null, owed: OWED });
 
   const said = contextOf(await lane.run(starting()));
 
-  const handed = said.indexOf('--- end itm_handoff00001 ---');
+  const handed = said.indexOf('--- end itm_0123456789ef ---');
   assert.ok(handed > 0, 'the hand-off and its record are still delivered');
   assert.ok(said.includes('"slug": "owed-run"'), 'the record is beside it');
   assert.ok(said.indexOf('Owed threads:') > handed, 'the owed block follows the hand-off fence');
