@@ -26,8 +26,8 @@ on most runs on a machine where the crew posts during a gate.
   and `sync.mjs` separately, three places to drift.
 - **L2**: the change signal is `exists`, `mtimeMs` and `size` from `fs.statSync`. Rejected: a content hash, since the
   live deck changes content just as it changes mtime, so a hash adds no signal and costs a full read.
-- **L3**: the live deck is probed once (`deckPidNow`), after the suite, and only when the stat changed. Rejected: a
-  probe before and after, a node spawn on every clean run.
+- **L3**: the home store check probes the live deck (`deckPidNow`) after the suite, and only when the stat changed;
+  the census keeps its own probe for leftovers. Rejected: a probe before and after, a node spawn on every clean run.
 - **L4**: the write guard (S2) adds no line to `store-core.mjs`: its `store-dir.mjs` import grows a name and
   `storeFile()` becomes `refuseGateHomeWrite(storeFile())`. Rejected: splitting `store-core.mjs`.
 - **A1** (assumed, then answered by the user as the default): a stray write is told from the live deck's own by a
