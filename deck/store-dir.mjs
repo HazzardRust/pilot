@@ -35,6 +35,7 @@ export function refuseGateHomeWrite(file) {
   if (!guarded || comparable(file) !== comparable(guarded)) return file;
   const log = process.env.PILOT_GATE_HOME_LOG;
   // A log that cannot be written throws its own error: the write is still refused.
-  if (log) fs.appendFileSync(log, `${process.pid}\t${process.argv.join(' ')}\t${file}\n`);
+  // Line breaks and tabs in argv become spaces, so one write is one line with three fields.
+  if (log) fs.appendFileSync(log, `${process.pid}\t${process.argv.join(' ').replace(/[\r\n\t]/g, ' ')}\t${file}\n`);
   throw new Error(`home store write refused under the gate: ${file}`);
 }

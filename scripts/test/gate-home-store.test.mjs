@@ -12,6 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const { runGate } = await import('../gate.mjs');
+const { refuseGateHomeWrite } = await import('../../deck/store-dir.mjs');
 
 const slot = () => ({ slot: 1, waited: false, release: () => {} });
 
@@ -94,14 +95,23 @@ test("the live deck's write stays green", (t) => {
 
 test('the gate names the writer', (t) => {
   const { dir, file } = store(t, true);
-  // The suite's refused write, as `refuseGateHomeWrite` logs it in the process the gate gave the env to.
+  // The suite's write, refused by the real guard under the env the gate hands the suite.
   const refused = (env) => {
-    assert.equal(env.PILOT_GATE_HOME_STORE, file);
-    fs.appendFileSync(env.PILOT_GATE_HOME_LOG, `4242\tnode --test a b.test.mjs\t${file}\n`);
+    const saved = [process.env.PILOT_GATE_HOME_STORE, process.env.PILOT_GATE_HOME_LOG];
+    process.env.PILOT_GATE_HOME_STORE = env.PILOT_GATE_HOME_STORE;
+    process.env.PILOT_GATE_HOME_LOG = env.PILOT_GATE_HOME_LOG;
+    try {
+      assert.throws(() => refuseGateHomeWrite(file));
+    } finally {
+      for (const [name, value] of [['PILOT_GATE_HOME_STORE', saved[0]], ['PILOT_GATE_HOME_LOG', saved[1]]]) {
+        if (value === undefined) delete process.env[name];
+        else process.env[name] = value;
+      }
+    }
   };
   const { code, out } = gate(t, { cwd: dir, homeStore: file, suite: refused, pid: 9999 });
   assert.equal(code, 1);
-  assert.deepEqual(homeLines(out), [`home store written: ${file} by 4242 node --test a b.test.mjs`]);
+  assert.deepEqual(homeLines(out), [`home store written: ${file} by ${process.pid} ${process.argv.join(' ')}`]);
 });
 
 test('an untouched store adds nothing', (t) => {
