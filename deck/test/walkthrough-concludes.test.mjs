@@ -16,7 +16,7 @@ import path from 'node:path';
 import { KIND_GATE2, KIND_TICKET, KIND_WALKTHROUGH } from '../items.mjs';
 import { lanesOf } from '../lanes.mjs';
 import { coPilotFor, listItems, postItem, setCoPilot } from '../store.mjs';
-import { postStored, shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
+import { postStored, shapedTicketBody, tempDeck } from '../testUtils.mjs';
 
 const { callTool } = await import('../server.mjs');
 
@@ -52,20 +52,31 @@ test('a pilot walkthrough on a yellow ticket concludes it', (t) => {
   assert.equal(lanesOf(repo).yellowClause, 'Yellow: empty');
 });
 
-test('the answer says so once', (t) => {
+const NO_PR = { prWrite: () => {} };
+const gate2 = (repo, ticket, extra = {}) => ({ kind: KIND_GATE2, title: 'Gate 2', body: 'Walk it.', repo, pr: '#4', sha: '18a7d20', ticket: ticket.id, ...extra });
+
+test('the answer says so once for a walkthrough that moved its ticket', (t) => {
   const { repo, ticket } = heldYellow(t);
-  const walked = answerOf(callTool('deck_post', walkthrough(repo, ticket), { prWrite: () => {} }));
-  assert.equal(count(walked, CLAUSE(ticket.id)), 1, 'a walkthrough that moved its ticket');
+  const walked = answerOf(callTool('deck_post', walkthrough(repo, ticket), NO_PR));
+  assert.equal(count(walked, CLAUSE(ticket.id)), 1);
   assert.ok(walked.endsWith(CLAUSE(ticket.id)), 'after the existing text');
+});
 
-  // A gate2 on that now-green ticket moves nothing, so its answer has no clause.
-  takeLive(ticket.id);
-  const onGreen = answerOf(callTool('deck_post', { kind: KIND_GATE2, title: 'Gate 2', body: 'Walk it.', repo, pr: '#4', sha: '18a7d20', ticket: ticket.id }, { prWrite: () => {} }));
-  assert.equal(count(onGreen, 'is now green'), 0, 'a gate2 on an already-green ticket');
+test('the answer says so once for a gate2 that moved its ticket', (t) => {
+  const { repo, ticket } = heldYellow(t);
+  const gated = answerOf(callTool('deck_post', gate2(repo, ticket), NO_PR));
+  assert.equal(count(gated, CLAUSE(ticket.id)), 1);
+});
 
-  const second = heldYellow(t);
-  const gated = answerOf(callTool('deck_post', { kind: KIND_GATE2, title: 'Gate 2', body: 'Walk it.', repo: second.repo, pr: '#4', sha: '18a7d20', ticket: second.ticket.id }, { prWrite: () => {} }));
-  assert.equal(count(gated, CLAUSE(second.ticket.id)), 1, 'a gate2 that moved its ticket');
+test('a gate2 naming the walkthrough that concluded its ticket posts, and says nothing of green', (t) => {
+  // The co-pilot's ticket is never live in the main slot (ADR 0087); the walkthrough has already turned it green.
+  const { repo, ticket } = heldYellow(t);
+  const walk = postItem(walkthrough(repo, ticket));
+
+  const onGreen = answerOf(callTool('deck_post', gate2(repo, ticket, { walkthrough: walk.id }), NO_PR));
+
+  assert.equal(count(onGreen, 'is now green'), 0);
+  assert.equal(listItems().filter((item) => item.kind === KIND_GATE2 && item.ticket === ticket.id).length, 1, 'the gate2 is stored');
 });
 
 test('a blocking walkthrough leaves it yellow', (t) => {

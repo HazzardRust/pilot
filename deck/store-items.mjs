@@ -194,13 +194,12 @@ function concludeOn(deck, ticket) {
   releaseIn(deck, ticket.repo, ticket.id);
 }
 
-/** A walkthrough concludes its ticket only when it is not blocking, its poster is gate2's (L3), and the ticket is an open yellow ticket of its repository. */
+/** A walkthrough that may conclude: not blocking, and posted by one of gate2's posters (L3). */
+const concludes = (walk, author) => walk.blocking !== true && POSTERS[KIND_GATE2].includes(writerKind(author));
+
+/** It concludes its ticket when that is an open yellow ticket of its repository. */
 const concludesOn = (ticket, item, author) =>
-  item.blocking !== true &&
-  POSTERS[KIND_GATE2].includes(writerKind(author)) &&
-  ticket?.kind === KIND_TICKET &&
-  stateOf(ticket) === 'yellow' &&
-  sameRepo(ticket.repo, item.repo);
+  concludes(item, author) && ticket?.kind === KIND_TICKET && stateOf(ticket) === 'yellow' && sameRepo(ticket.repo, item.repo);
 
 /** The states a ticket may be in for each kind that names one (ticket-states spec 2, L6). */
 const TICKET_STATES_FOR = {
@@ -228,7 +227,9 @@ function ticketNamedBy(deck, item) {
   }
   // A gate is posted on the ticket in hand (ticket-states L9): the live one, never a parked one. A gate2 on a
   // yellow ticket is the exception: that ticket is the co-pilot's, never in the main slot (ADR 0087), and the post turns it green.
-  const coPilots = item.kind === KIND_GATE2 && state === 'yellow';
+  // So is a green one whose named walkthrough was a concluding one (yellow-never-idle L2): the same co-pilot's ticket, one post later.
+  const concludedBy = (id) => deck.items.some((other) => other.id === id && other.kind === KIND_WALKTHROUGH && other.ticket === ticket.id && concludes(other, other.author));
+  const coPilots = item.kind === KIND_GATE2 && (state === 'yellow' || (state === 'green' && concludedBy(item.walkthrough)));
   if (item.kind !== KIND_REPORT && !coPilots && ticket.live !== true) {
     throw new DeckRefusal(`a ${item.kind}'s ticket is the live ticket, and ${item.ticket} is not live; deck_ticket take it first`);
   }

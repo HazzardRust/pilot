@@ -43,3 +43,6 @@ tries harder.
 - `deck_ticket need` stays for a hand-back that is only a question.
 - A dead crew is found 20 minutes late at worst; the deck tells the pilot and never releases the co-pilot itself,
   so a stalled co-pilot cannot wake beside a successor on one branch.
+- Who may conclude follows the hook's author stamp, as a gate2's poster does: an unstamped post counts as the pilot's.
+- The gate2 that follows names the walkthrough that concluded its ticket, and is taken on that green ticket as on
+  the yellow one, since the co-pilot's ticket is never live in the main slot (ADR 0087).
