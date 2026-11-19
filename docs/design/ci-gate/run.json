@@ -43,7 +43,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed de3b771 (integrating)",
+      "state": "integrated (10 land test stubs wrap greenChecks)",
       "after": [
         "S1"
       ],
@@ -70,7 +70,7 @@
     },
     {
       "slice": "S8",
-      "state": "pushed 9ae8fd3",
+      "state": "pushed 9ae8fd3 (integrating)",
       "after": [
         "S1"
       ],
@@ -96,8 +96,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s10"
     }
   ],
-  "next": "ci-gate: feat a0349237; integrating S3, then S8 (trailers in co-pilot scratchpad); S7 implementing; then the fundamentalist.",
-  "updatedAt": "2026-11-19T18:51:28.297Z",
+  "next": "ci-gate: S3 integrated (feat 2da654c0); integrating S8; S7 implementing; then base check, fundamentalist and QA.",
+  "updatedAt": "2026-11-19T18:55:13.130Z",
   "friction": [
     {
       "agent": "pilot-architect",
