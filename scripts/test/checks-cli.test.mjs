@@ -1,0 +1,144 @@
+/**
+ * `pilot checks [<ref>] [--wait <min>]` (ci-gate S2, spec 7): one exit code per **Verdict**, a bounded wait, and a
+ * ref that is a commit or a usage error. Fake host, fake git and a fake clock: nothing here starts a process.
+ */
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+import { main } from '../checks-cli.mjs';
+
+const SHA = '5fef2ab0123456789abcdef0123456789abcdef0';
+const check = (name, outcome) => ({ name, outcome, url: `https://example.test/${name}` });
+const ANSWERS = {
+  green: [check('test', 'pass')],
+  red: [check('test', 'fail'), check('lint', 'pass')],
+  pending: [check('test', 'pending')],
+  none: [],
+};
+
+/** A host answering `states` in turn (the last one repeats); `unread` throws. Records every sha it is asked. */
+function fakeHost(...states) {
+  const asked = [];
+  return {
+    asked,
+    checks(sha) {
+      asked.push(sha);
+      const state = states[Math.min(asked.length, states.length) - 1];
+      if (state === 'unread') throw Object.assign(new Error('gh failed'), { stderr: 'HTTP 502: bad gateway' });
+      return ANSWERS[state];
+    },
+  };
+}
+
+/** A git that verifies only `HEAD` and `5fef2ab`, recording its argv. */
+function fakeGit() {
+  const calls = [];
+  const git = (args) => {
+    calls.push(args);
+    if (args[0] === 'rev-parse' && ['HEAD^{commit}', '5fef2ab^{commit}'].includes(args.at(-1))) return SHA;
+    throw Object.assign(new Error('git failed'), { stderr: 'fatal: Needed a single revision' });
+  };
+  return Object.assign(git, { calls });
+}
+
+/** A clock that only moves when slept on. */
+function fakeClock() {
+  let at = 0;
+  const slept = [];
+  return { slept, now: () => at, sleep: async (ms) => { slept.push(ms); at += ms; } };
+}
+
+async function runChecks(t, argv, host) {
+  const out = [];
+  const err = [];
+  t.mock.method(process.stdout, 'write', (chunk) => out.push(String(chunk)));
+  t.mock.method(process.stderr, 'write', (chunk) => err.push(String(chunk)));
+  const clock = fakeClock();
+  const git = fakeGit();
+  const code = await main(argv, { cwd: '.', host, git, sleep: clock.sleep, now: clock.now });
+  t.mock.restoreAll();
+  return { code, out: out.join(''), err: err.join(''), slept: clock.slept, git };
+}
+
+test('each state has its exit code', async (t) => {
+  const want = {
+    green: [0, 'checks green at 5fef2ab\n'],
+    red: [1, 'checks red at 5fef2ab: test\n'],
+    pending: [4, 'checks pending at 5fef2ab: test\n'],
+    none: [5, 'checks none at 5fef2ab\n'],
+    unread: [6, 'checks unread at 5fef2ab: HTTP 502: bad gateway\n'],
+  };
+  for (const [state, [code, line]] of Object.entries(want)) {
+    const host = fakeHost(state);
+    const run = await runChecks(t, [], host);
+    assert.deepEqual([run.code, run.out], [code, line], state);
+    assert.deepEqual(host.asked, [SHA], `${state}: the full sha HEAD resolves to, read once`);
+  }
+});
+
+test('no host (pilot.host none) is none, exit 5', async (t) => {
+  const run = await runChecks(t, ['5fef2ab'], null);
+  assert.deepEqual([run.code, run.out], [5, 'checks none at 5fef2ab: no host\n']);
+});
+
+test('wait ends when it stops pending', async (t) => {
+  const host = fakeHost('pending', 'pending', 'red');
+  const run = await runChecks(t, ['--wait', '5'], host);
+  assert.deepEqual([run.code, run.out], [1, 'checks red at 5fef2ab: test\n'], 'the last line only');
+  assert.deepEqual(run.slept, [30_000, 30_000]);
+  assert.equal(host.asked.length, 3);
+});
+
+test('wait is bounded', async (t) => {
+  const host = fakeHost('pending');
+  const run = await runChecks(t, ['5fef2ab', '--wait', '1'], host);
+  assert.equal(run.code, 4);
+  assert.equal(run.out, 'checks pending at 5fef2ab: test\n');
+  assert.ok(host.asked.length <= 2, `${host.asked.length} polls`);
+});
+
+test('a bare --wait waits up to 20 minutes, and the word after it is the ref', async (t) => {
+  const host = fakeHost('pending');
+  const run = await runChecks(t, ['--wait', '5fef2ab'], host);
+  assert.equal(run.code, 4);
+  assert.equal(host.asked.length, 40, 'polls at 0 s to 19.5 min, every 30 s');
+  assert.deepEqual(run.git.calls, [['rev-parse', '--verify', '--quiet', '5fef2ab^{commit}']]);
+});
+
+test('without --wait, pending is read once', async (t) => {
+  const host = fakeHost('pending', 'green');
+  const run = await runChecks(t, [], host);
+  assert.equal(run.code, 4);
+  assert.deepEqual([host.asked.length, run.slept], [1, []]);
+});
+
+test('a ref is a commit or usage', async (t) => {
+  const usage = [
+    ['--wait', '0'],
+    ['--wait', '61'],
+    ['--wait', '1.5'],
+    ['--wait', '1', '--wait', '2'],
+    ['-x'],
+    ['--output=/tmp/x'],
+    ['nosuchref'],
+    ['HEAD', '5fef2ab'],
+  ];
+  for (const argv of usage) {
+    const host = fakeHost('green');
+    const run = await runChecks(t, argv, host);
+    assert.equal(run.code, 2, argv.join(' '));
+    assert.equal(run.out, '', `${argv.join(' ')}: nothing on stdout`);
+    assert.match(run.err, /pilot checks/, `${argv.join(' ')}: names itself on stderr`);
+    assert.deepEqual(host.asked, [], `${argv.join(' ')}: no host call`);
+    assert.ok(run.git.calls.every((args) => !args.some((arg) => arg.startsWith('-') && argv.includes(arg))), 'no flag-shaped ref reaches git');
+  }
+});
+
+test('the ref reaches git as one argv entry suffixed ^{commit}, never gh', async (t) => {
+  const host = fakeHost('red');
+  const run = await runChecks(t, ['5fef2ab'], host);
+  assert.equal(run.code, 1);
+  assert.deepEqual(run.git.calls, [['rev-parse', '--verify', '--quiet', '5fef2ab^{commit}']]);
+  assert.deepEqual(host.asked, [SHA]);
+});
