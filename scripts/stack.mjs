@@ -40,7 +40,7 @@ export function prBase({ git, host, base }) {
 
 /**
  * Brings each open own-repository feature PR (head `feat/`) level with its base (audit-f14 spec 6, 10; L2, L4, A5):
- * a PR whose `prBase` differs from its base is retargeted (`host.edit`); then a branch behind a lower `feat/<N>` takes
+ * a PR whose `prBase` differs from its base is retargeted (`host.edit`); then a branch landed on pilot and behind a lower `feat/<N>` takes
  * N's tip, and one that no longer merges clean onto the default branch takes it, each merged in a temporary worktree
  * (generated paths regenerated, the branch's own run record kept) and pushed to origin, never forced. A `pilot` base
  * (A3) is only retargeted. `git` is `(args) => string` run in `cwd`. Answers `{ lines, exitCode }`: one line per change,
@@ -86,7 +86,8 @@ export function restack({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...arg
         lines.push(`retargeted #${number} to ${base}`);
       }
       if (rebase) continue;
-      const forward = base === PILOT_BRANCH ? 'level' : mergeForward({ cwd, git, head, base, main });
+      // Only a feature landed on pilot is merged forward (A5): an unlanded one is left as its author pushed it.
+      const forward = base === PILOT_BRANCH || !landedOnOriginPilot(cwd, git, head) ? 'level' : mergeForward({ cwd, git, head, base, main });
       if (forward === 'level') {
         if (base === review.base) lines.push(`level #${number}`);
       } else {

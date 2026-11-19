@@ -51,9 +51,9 @@ function adr(repo, number) {
 /**
  * Origin with main holding ADR 0001, its index and src/x.mjs; `seed` moves branches; `work` is the checkout restack
  * runs in. `stacked`: feat/a off main, feat/b off feat/a. Otherwise siblings: feat/a and feat/b both off main, each
- * adding an ADR (so the index clashes), feat/a also changing src/x.mjs.
+ * adding an ADR (so the index clashes), feat/a also changing src/x.mjs. Both land on pilot unless `landed` is false.
  */
-function build(dir, stacked) {
+function build(dir, stacked, landed) {
   const origin = path.join(dir, 'origin.git');
   run(dir, 'init', '-q', '--bare', '-b', 'main', origin);
   run(origin, 'config', 'core.logAllRefUpdates', 'always');
@@ -69,12 +69,18 @@ function build(dir, stacked) {
   if (stacked) commit(seed, { 'b.txt': 'b\n' }, 'feat b');
   else commit(seed, adr(seed, '0003'), 'feat b');
   run(seed, 'push', '-q', 'origin', 'feat/a', 'feat/b');
+  if (landed) {
+    // Landings as their two-parent commits only: what restack reads of pilot is its first-parent subjects.
+    let pilot = run(seed, 'rev-parse', 'main');
+    for (const branch of ['feat/a', 'feat/b']) pilot = run(seed, 'commit-tree', 'main^{tree}', '-p', pilot, '-p', branch, '-m', `Merge ${branch} into pilot`);
+    run(seed, 'push', '-q', 'origin', `${pilot}:refs/heads/pilot`);
+  }
   const work = path.join(dir, 'work');
   run(dir, 'clone', '-q', origin, work);
   return { origin, seed, work };
 }
 
-const repos = (t, stacked) => gitFixture(t, `restack:${stacked ? 'stacked' : 'siblings'}`, (dir) => build(dir, stacked));
+const repos = (t, stacked, landed = true) => gitFixture(t, `restack:${stacked ? 'stacked' : 'siblings'}:${landed}`, (dir) => build(dir, stacked, landed));
 
 /** A host whose `reviews` filters `prs` by the query's head, base and state; every edit is kept. */
 function stubHost(prs) {
@@ -138,6 +144,20 @@ test('a fix on A reaches B', (t) => {
   const pushes = out.calls.filter((args) => args[0] === 'push');
   assert.equal(pushes.length, 1);
   assert.ok(pushes[0].every((arg) => !/^--force|^-f$|^\+/.test(arg)), `no force: ${pushes[0].join(' ')}`);
+});
+
+test('an unlanded feature PR is never merged forward', (t) => {
+  const { origin, seed, work } = repos(t, false, false);
+  mergeIntoMain(seed, 'feat/a');
+  const before = tip(origin, 'feat/b');
+  const { host } = stubHost([pr({ number: 1, head: 'feat/a', state: 'merged' }), pr({ number: 2, head: 'feat/b' })]);
+
+  const out = restackIn(work, host);
+
+  assert.deepEqual(out.lines, ['level #2']);
+  assert.equal(out.exitCode, 0);
+  assert.equal(tip(origin, 'feat/b'), before);
+  assert.deepEqual(out.calls.filter((args) => args[0] === 'push'), []);
 });
 
 test('a sibling\'s generated clash heals', (t) => {
