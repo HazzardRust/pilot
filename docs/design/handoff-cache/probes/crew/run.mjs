@@ -2,19 +2,22 @@
 /**
  * The crew probe's runner (handoff-cache S5): `node run.mjs --at before|during|after --runs <n> --model sonnet`.
  * Each run is one scratch headless session in a fresh temp repository, user settings and MCP servers skipped, with a
- * copy of this plugin as its only plugin (see ../crew.md). Prints one JSON line per run, `{run, at, agentAlive,
+ * copy of this plugin as its only plugin (see ../crew.md), in a temp config dir holding a copy of the login (L8,
+ * ../lib.mjs) that goes with the run's scratch root. Prints one JSON line per run, `{run, at, agentAlive,
  * agentId, sent, receivedByNewContext, endedBy, ...detail}`; `agentAlive` is listed after the clear and finished.
  */
 
 import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { platform, tmpdir } from 'node:os';
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { platform } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { copyLogin, left, scratchEnv, scratchRoot, scrub, scrubAll, sweep } from '../lib.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+const PREFIX = 'crew-probe-';
 const SETTLE_MS = 25_000;
 const TIMEOUT_MS = 480_000;
 const POINTS = ['before', 'during', 'after'];
@@ -22,13 +25,8 @@ const POINTS = ['before', 'during', 'after'];
 const slash = (p) => p.replaceAll('\\', '/');
 const sleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
 
-const live = new Map(); // child -> its scratch root
+const live = new Set(); // the sessions still running
 let handlersOn = false;
-
-/** Removes the debug log of a session on the real login; a held handle (Windows) is retried and never thrown. */
-function dropDebugLog(root) {
-  try { rmSync(join(root, 'debug.log'), { force: true, maxRetries: 5, retryDelay: 200 }); } catch { /* left for the OS temp sweep */ }
-}
 
 /**
  * Ends a spawned session for certain, and never throws: the whole tree on Windows (`child.kill()` ends no tree there),
@@ -52,11 +50,10 @@ export async function endChild(child, graceMs = 5_000) {
 function onSignals() {
   if (handlersOn) return;
   handlersOn = true;
+  // The sessions first, then the scratch roots and the login copies in them (L8).
+  process.on('exit', scrubAll);
   for (const sig of ['SIGINT', 'SIGTERM']) {
-    process.on(sig, () => {
-      Promise.all([...live].map(async ([c, root]) => { await endChild(c); dropDebugLog(root); }))
-        .finally(() => process.exit(130));
-    });
+    process.on(sig, () => { Promise.all([...live].map((c) => endChild(c))).finally(() => process.exit(130)); });
   }
 }
 
@@ -118,12 +115,14 @@ function settled(sig, log) {
 }
 
 async function oneRun(run, at, model) {
-  const root = mkdtempSync(join(tmpdir(), 'crew-probe-'));
+  onSignals();
+  const root = scratchRoot(PREFIX);
   const repo = join(root, 'repo');
   const sig = slash(join(root, 'sig'));
   const plugin = join(root, 'plugin');
-  mkdirSync(repo);
-  mkdirSync(sig);
+  const config = join(root, 'config');
+  for (const dir of [repo, sig, config]) mkdirSync(dir);
+  copyLogin(config);
   spawnSync('git', ['init', '-q'], { cwd: repo });
   cpSync(HERE, plugin, { recursive: true, filter: (src) => !src.endsWith('run.mjs') });
   writeFileSync(join(plugin, 'hooks', 'config.mjs'),
@@ -134,12 +133,12 @@ async function oneRun(run, at, model) {
   const args = [
     '-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose',
     '--model', model, '--plugin-dir', plugin, '--setting-sources', 'project', '--strict-mcp-config',
-    '--allowedTools', 'Bash(node *)', 'Agent', 'SendMessage', 'ToolSearch',
+    // Only the probe's own io script, spelled as agentPrompt has the agent run it.
+    '--allowedTools', `Bash(node "${io}" *)`, 'Agent', 'SendMessage', 'ToolSearch',
     '--max-budget-usd', '2', '--debug-file', join(root, 'debug.log'),
   ];
-  const child = spawn('claude', args, { cwd: repo, stdio: ['pipe', 'pipe', 'pipe'] });
-  onSignals();
-  live.set(child, root);
+  const child = spawn('claude', args, { cwd: repo, env: scratchEnv({ CLAUDE_CONFIG_DIR: config }), stdio: ['pipe', 'pipe', 'pipe'] });
+  live.add(child);
   let stdout = '';
   let exited = null;
   let failed = null;
@@ -164,11 +163,9 @@ async function oneRun(run, at, model) {
     child.stdin.end();
     for (let i = 0; i < 30 && exited === null && failed === null; i += 1) await sleep(1_000);
   } finally {
-    try { writeFileSync(join(root, 'out.jsonl'), stdout); } catch { /* the run result still returns */ }
     await endChild(child);
     live.delete(child);
     await sleep(500); // taskkill returns before the handles are released
-    dropDebugLog(root); // out.jsonl and stderr.log stay
   }
 
   const events = jsonLines(stdout);
@@ -177,13 +174,15 @@ async function oneRun(run, at, model) {
   const afterClear = log.find((e) => e.ev === 'agents-after-clear');
   const ids = listedIds(afterClear?.agents);
   const finished = existsSync(join(sig, 'done'));
+  const sent = existsSync(join(sig, 'sent'));
   const listedAfterClear = ids === null ? null : ids.length > 0;
+  scrub(root); // the row is read: the scratch root and the login copy in it go
   return {
     run,
     at,
     agentAlive: listedAfterClear === true && finished,
     agentId: ids?.[0] ?? null,
-    sent: existsSync(join(sig, 'sent')),
+    sent,
     receivedByNewContext: texts.some((t) => t.includes('RECEIVED') && t.includes(token)),
     endedBy,
     listedAfterClear,
@@ -193,7 +192,6 @@ async function oneRun(run, at, model) {
     tokenInStream: stdout.includes(token),
     costUsd: events.filter((ev) => ev.type === 'result').reduce((most, ev) => Math.max(most, ev.total_cost_usd ?? 0), 0),
     seconds: Math.round((Date.now() - start) / 1000),
-    scratch: slash(root),
   };
 }
 
@@ -205,7 +203,12 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     process.stderr.write('usage: node run.mjs --at before|during|after --runs <n> --model sonnet\n');
     process.exit(2);
   }
+  sweep(PREFIX);
   for (let run = 1; run <= Number(values.runs); run += 1) {
     process.stdout.write(`${JSON.stringify(await oneRun(run, values.at, values.model))}\n`);
   }
+  // On stderr, so stdout stays one JSON line per run.
+  const n = left(PREFIX);
+  process.stderr.write(`left: ${n}\n`);
+  if (n > 0) process.exitCode = 1;
 }
