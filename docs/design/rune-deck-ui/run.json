@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "implementing",
+      "state": "pushed dbdc2ce — +421/-11, limit waived by co-pilot (overage is tests); rust approve with nits on dbdc2ce; seam change recorded in S2.md",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed 4d8ce86 — +122/-13; typescript APPROVE, security APPROVE",
+      "state": "integrated at 0c2d42e — typescript APPROVE, security APPROVE",
       "after": [
         "S1"
       ],
@@ -42,10 +42,12 @@
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s5"
     },
     {
       "slice": "S6",
@@ -63,10 +65,12 @@
     },
     {
       "slice": "S8",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s8"
     },
     {
       "slice": "S9",
@@ -91,10 +95,12 @@
     },
     {
       "slice": "S12",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s12",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s12"
     },
     {
       "slice": "S13",
@@ -154,8 +160,8 @@
       ]
     }
   ],
-  "next": "integrate S3 then S4; S2 finishing (432 lines waived, tests); then pilot ready",
-  "updatedAt": "2026-11-19T22:13:18.472Z",
+  "next": "integrate S4 then S2, send S5/S8/S12 the new tip; then pilot ready",
+  "updatedAt": "2026-11-19T22:20:25.371Z",
   "friction": [
     {
       "agent": "pilot-implementer",
@@ -237,6 +243,12 @@
       "agent": "pilot:pilot-implementer",
       "what": "S3: slice names a test file that does not exist; release build 3 min per worktree",
       "evidence": "deck/test/no-open.test.mjs not found; cargo build --release 3m06s",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: Rune's AppHandle is untestable from outside the crate (headless_runtime drops the update queue), costing a seam change; three behaviours named S1 stubs; the slice assumed a post advances seq, only a reply does",
+      "evidence": "rune playground/testing.rs:16; deck/store-items.mjs:326",
       "size": 3
     }
   ]
