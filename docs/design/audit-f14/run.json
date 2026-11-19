@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "fixing (integrate red on base merge: architect pin +10 tokens)",
+      "state": "integrated",
       "after": [
         "S1",
         "S2"
@@ -34,10 +34,12 @@
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "pushed f88c239",
       "after": [
         "S3"
-      ]
+      ],
+      "branch": "slice/audit-f14-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s4"
     },
     {
       "slice": "S5",
@@ -55,10 +57,12 @@
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S3"
-      ]
+      ],
+      "branch": "slice/audit-f14-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s7"
     },
     {
       "slice": "S8",
@@ -83,8 +87,8 @@
       "pr": 119
     }
   ],
-  "next": "feat/audit-f14 at 99a9e3b0; S3 integrate red: S2's architect wording + pilot's two new lines over the architect pin by 10 tokens; fixer trims S2's base line on feat; then re-run pilot integrate S3 (typescript APPROVE on f1019a28, security APPROVE), then pilot ready (S4, S7)",
-  "updatedAt": "2026-11-19T12:37:25.947Z",
+  "next": "pausing: integrating S4 (f88c239b, typescript WARN) into feat at 8e1d8b96; S7 draining; then hand back paused",
+  "updatedAt": "2026-11-19T12:59:37.191Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -198,6 +202,16 @@
       "agent": "pilot-co-pilot",
       "what": "handback-send-enforce forced a hand-back with S3 unintegrated; TaskOutput absent from the co-pilot toolset, so waits ran as git ls-remote loops",
       "evidence": "No such tool available: TaskOutput; [handback-send-enforce] while S3 report was pending"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3 fix round: integrate went red on the base merge, not the slice: S2's architect rewording plus pilot's two new lines over the architect pin by 10 tokens; each side green alone",
+      "evidence": "pilot-architect's own share is 10591.25 tokens, over its 10581.25; fixed by 65bf2045 (-48 bytes)"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "default node --test reporter prints no pass counts; fixer reran with --test-reporter=tap to read them",
+      "evidence": "# tests 136 / # pass 136 / # fail 0 under tap"
     }
   ]
 }
