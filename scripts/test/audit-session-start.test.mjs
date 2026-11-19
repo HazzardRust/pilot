@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..', '..');
 const SCRIPT = path.join(ROOT, 'scripts', 'audit-session-start.mjs');
-const { measureSessionStarts, projectSlug, PICKUP_MARK } = await import('../audit-session-start.mjs');
+const { measureSessionStarts, firstTurnRows, projectSlug, PICKUP_MARK } = await import('../audit-session-start.mjs');
 const { notice } = createRequire(import.meta.url)('../../hooks/session-handoff.js');
 
 const REPO = 'C:\\Users\\someone\\Projects\\demo';
@@ -162,6 +162,77 @@ test('a repository with no transcripts gives no sessions, not an error', async (
 test('the hand-off notice opens with the pickup mark', () => {
   const item = { id: 'itm_handoff1', kind: 'handoff', title: 'Handoff', body: 'the run record is the hand-off' };
   assert.ok(notice(item, null).startsWith(PICKUP_MARK), 'a pending hand-off is handed over under the mark the audit counts');
+});
+
+const at = (second, entry) => ({ ...entry, timestamp: new Date(Date.UTC(2026, 10, 19, 12, 0, second)).toISOString() });
+const call = (model, u) => ({ type: 'assistant', message: { id: `msg_${Math.random()}`, model, usage: u } });
+const clearHook = attachment({ type: 'hook_success', hookName: 'SessionStart:clear' });
+const pickup = attachment({ type: 'hook_additional_context', content: [PICKUP_MARK + ' the rest'] });
+
+test('a clear mid-file starts a new segment', async (t) => {
+  const home = tempHome(t);
+  transcript(home, 'gggg7777', [
+    at(0, { type: 'user', message: { content: 'build me a thing' } }),
+    at(1, usage(30000)),
+    at(5, usage(31000)),
+    at(20, clearHook),
+    at(20, { type: 'user', message: { content: '<command-name>/clear</command-name>' } }),
+    at(20, pickup),
+    at(25, usage(32000)),
+    // A tool result quoting the command is not a clear.
+    at(30, { type: 'user', message: { content: [{ type: 'tool_result', content: '<command-name>/clear</command-name>' }] } }),
+    at(31, usage(40000)),
+  ]);
+
+  const [s] = (await measureSessionStarts({ repo: REPO, home, firstTurn: true })).sessions;
+  assert.equal(s.segments.length, 2);
+  assert.deepEqual(s.segments.map((g) => [g.byClear, g.pickup]), [[false, false], [true, true]]);
+  assert.equal(s.segments[0].gapMs, null, 'a file\'s first segment has nothing before it to measure from');
+  assert.equal(s.segments[1].gapMs, 25000 - 5000, 'from the last entry of the segment before to the first turn');
+  assert.equal(s.segments[1].firstTurn.cacheRead, 1000);
+
+  const [plain] = (await measureSessionStarts({ repo: REPO, home })).sessions;
+  assert.equal(plain.segments, undefined, 'the default output is unchanged without --first-turn');
+});
+
+test('the first turn keeps its four counts apart', async (t) => {
+  const home = tempHome(t);
+  const split = { input_tokens: 2, cache_read_input_tokens: 30000, cache_creation_input_tokens: 500, cache_creation: { ephemeral_5m_input_tokens: 0, ephemeral_1h_input_tokens: 500 } };
+  transcript(home, 'hhhh8888', [
+    at(0, clearHook),
+    at(0, pickup),
+    at(1, call('<synthetic>', { input_tokens: 9, cache_read_input_tokens: 9 })),
+    at(2, call('claude-opus-5-5', { input_tokens: 0, cache_read_input_tokens: 0 })),
+    at(3, call('claude-opus-5-5', split)),
+  ]);
+  transcript(home, 'iiii9999', [at(0, { type: 'user', message: { content: 'hello' } }), at(1, call('claude-opus-5-5', { input_tokens: 10, cache_creation_input_tokens: 990 }))]);
+
+  const rows = firstTurnRows((await measureSessionStarts({ repo: REPO, home, firstTurn: true })).sessions);
+  assert.deepEqual(rows, [
+    { kind: 'after-handoff', n: 1, input: 2, cacheRead: 30000, cacheWrite5m: 0, cacheWrite1h: 500, cachedShare: 0.98, medianGapMs: null },
+    { kind: 'cold', n: 1, input: 10, cacheRead: 0, cacheWrite5m: 990, cacheWrite1h: 0, cachedShare: 0, medianGapMs: null },
+  ]);
+});
+
+test('with no segment of a kind, its row says n 0 and no numbers', () => {
+  assert.deepEqual(firstTurnRows([]), [
+    { kind: 'after-handoff', n: 0, input: null, cacheRead: null, cacheWrite5m: null, cacheWrite1h: null, cachedShare: null, medianGapMs: null },
+    { kind: 'cold', n: 0, input: null, cacheRead: null, cacheWrite5m: null, cacheWrite1h: null, cachedShare: null, medianGapMs: null },
+  ]);
+});
+
+test('the CLI with --first-turn prints one row per kind and never a transcript\'s content', (t) => {
+  const home = tempHome(t);
+  transcript(home, 'jjjj0000', [
+    attachment({ type: 'instructions', files: [{ path: 'C:\\x.md', content: 'SECRET-CONTENT-sk-123' }] }),
+    usage(30000),
+  ]);
+  const run = spawnSync(process.execPath, [SCRIPT, REPO, '--first-turn', '--home', home], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
+  const lines = run.stdout.trim().split('\n');
+  assert.equal(lines.filter((l) => l.startsWith('| after-handoff |')).length, 1);
+  assert.match(lines.find((l) => l.startsWith('| cold |')), /^\| cold \| 1 \| 2 \| 1000 \| 28998 \| 0 \|/);
+  assert.ok(!run.stdout.includes('SECRET-CONTENT'));
 });
 
 test('the CLI prints JSON and never a transcript\'s content', (t) => {
