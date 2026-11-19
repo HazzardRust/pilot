@@ -48,14 +48,16 @@ During the never-stuck run's QA, the live deck store `~/.claude/pilot/deck.json`
 - **L2** The stat is `exists`, `mtimeMs` and `size`, read with `fs.statSync`. Rejected: a content hash, because the live deck changes content just as it changes mtime, so a hash adds no signal and costs a full read.
 - **L3** The live deck is probed once, after the suite, and only when the stat changed. Rejected: a probe before and after, which spends a node spawn on every clean run.
 - **L4** `store-core.mjs` gets no added line: the existing `store-dir.mjs` import grows a name, and `const file = storeFile()` becomes `refuseGateHomeWrite(storeFile())`. Rejected: splitting `store-core.mjs`, which is a tidy-up this ticket does not need.
-- **L5** Grilling depth: forks (thread `itm_4ccf604677fb`, the user's answer). Only decisions with more than one defensible design go to the user.
+- **L5** Grilling depth: No grilling, the user's last answer on `itm_4ccf604677fb` (after an earlier "forks"). A1 and A2 had been answered by the user before it.
 
 ## 6. Assumed decisions
 
 - **A1** (thread `itm_be4f2a4009b2`) How a stray write is told from the live deck's own. Default taken: write guard + stat backstop (spec 1, 2, 3). The backstop is red with no live deck, and only prints a line while a deck is up, `deckPidNow()` undefined counting as up. Trade: a raw `fs` write by a test while the deck is up only warns, and the feature is 2 slices, not 1. Rejected: a stat check alone, which is red on most runs here. Also rejected: a fake HOME for the whole suite, which breaks git's global config for fixtures and changes every test.
   User's answer: "Tripwire + mtime backstop (default)", the default as written.
+  Verdict: stands — the user chose "Tripwire + mtime backstop (default)" on itm_be4f2a4009b2; no queued ticket touches scripts/gate.mjs or store-dir.mjs
 - **A2** (thread `itm_49cb9033a918`) QA environment. Default taken: a CLI gate in a scratch clone with HOME and USERPROFILE set to a temp dir, a planted home store, and no database. Trade: never run against the user's live deck.
   User's answer: "CLI gate in scratch clone, fake HOME (default)", the default as written.
+  Verdict: stands — the user chose "CLI gate in scratch clone, fake HOME (default)" on itm_49cb9033a918
 - red team: walked S1's first behaviour against `scripts/test/gate*.test.mjs`. Those six files call `runGate` with no fake HOME. A default `homeStore` would have them stat the real store while the live deck writes it, which flakes spec 4. Hence L1: `homeStore` is opt-in, passed only by the CLI entry. Also walked S2 against `facades.test.mjs`: store-core at 799 lines, a new import line plus a call would reach 801, hence L4. Also walked S2 against `tempDeck` and `testUtils`: their store paths differ from the guarded one, so the guard never trips on them, and a nested gate re-arms with its own `homedir`.
 
 ## 7. Out of scope
