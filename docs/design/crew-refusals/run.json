@@ -48,13 +48,13 @@
     },
     {
       "slice": "crew-refusals",
-      "state": "in QA: read-only pass done at ff18087; blocked step: pilot integrate --dir <feat> (base merge) refused by auto mode",
+      "state": "in QA: gate2 itm_e8662688e58f posted at 37df744; walkthrough itm_336ac1927f88 signed and closed",
       "branch": "feat/crew-refusals",
       "pr": 121
     },
     {
       "slice": "fix round",
-      "state": "pushed c5fdf92 — security APPROVE; integrating",
+      "state": "integrated",
       "after": [
         "S1",
         "S2",
@@ -74,8 +74,8 @@
     "dropped: SEC5 — all-letter Basic value: unchanged by this diff and the all-letter-is-prose rule is the module's stated design",
     "dropped: SEC6 — raw / in a URL password is not valid userinfo"
   ],
-  "next": "co-pilot: pilot integrate of fix c5fdf92 into feat running; then fresh pilot-qa; base merge into feat is a blocked step for main",
-  "updatedAt": "2026-11-19T09:29:43.004Z",
+  "next": "crew-refusals: gate2 itm_e8662688e58f awaits the user's press; QA (agent ab5d01c516205971e) reports to main",
+  "updatedAt": "2026-11-19T11:56:46.679Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -252,6 +252,31 @@
       "agent": "pilot:security-reviewer",
       "what": "first probe failed with ERR_UNSUPPORTED_ESM_URL_SCHEME: a bare C:/ import path needs a file:/// URL on Windows",
       "evidence": "re-review of c5fdf92, Verdict: APPROVE"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA has no TaskStop tool, yet A3's rule (stop only what you started, by id) needs one; its npm test outlived the pause",
+      "evidence": "ToolSearch select:TaskStop found nothing in the QA session; background run bzparpmh0"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP showed CONNECTION_CLOSED at start but worked after ToolSearch loaded the tools",
+      "evidence": "deck_read itm_64084fb89990 answered from 127.0.0.1:4321"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "fundamentalist findings F3-F6 and F8 are written in no file or PR comment, so QA could not evidence them",
+      "evidence": "grep of run.json, architecture.md, PR #121 comments"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the diff-mutation cell cannot finish 2765 mutants in 900 s on a feature this size, so it always reads unmeasured",
+      "evidence": "Stryker exit 124 at 900 s"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "knip with no config reports 617 unused files, so the dead-code cell is noise for a diff",
+      "evidence": "runner table at 37df744"
     }
   ]
 }
