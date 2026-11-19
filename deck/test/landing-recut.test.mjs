@@ -1,7 +1,7 @@
 /**
- * A landing re-cuts the plans it drifted (never-stuck S3, spec 14; L2, L4, L7): once a gate2 has landed, every open,
- * signed, never-granted yellow ticket of its repository is checked with S2's `planDrift`, each drifted one goes red
- * through `recutTicket`, and one deck line on the gate2 names them. The drift check runs in a real clone of a local
+ * A landing notes the plans it drifted (never-stuck S3, spec 14; recut-decision spec 2): once a gate2 has landed, every
+ * open, signed, never-granted yellow ticket of its repository is checked with `planDrift`; each drifted one stays
+ * yellow with one drift line on its own thread, and one deck line on the gate2 names them. The drift check runs in a real clone of a local
  * bare origin; the land child is a stub. Nothing reaches GitHub.
  */
 
@@ -92,21 +92,23 @@ function grant(id) {
   setCoPilot(id, false);
 }
 
-test('a queued plan owning a landed file is re-cut and named', async (t) => {
+test('a landing over an owned file leaves the ticket yellow', async (t) => {
   tempDeck(t);
   const { work, plan } = repos(t);
   const gate = aLandedGate2(work);
   const ticket = signed(work, plan);
   landOn(work, 'deck/store-items.mjs');
+  const items = listItems().length;
 
   assert.deepEqual(await driftAfterLanding(gate.id), [ticket.id]);
 
   const stored = reread(ticket.id);
-  assert.equal(stored.state, 'red');
-  assert.equal(stored.recut.why, 'landing 1a2b3c4');
-  assert.deepEqual(stored.recut.files, ['deck/store-items.mjs']);
+  assert.equal(stored.state, 'yellow');
+  assert.equal(stored.recut, undefined, 'no re-cut mark');
+  assert.equal(listItems().length, items, 'no item posted');
+  assert.deepEqual(deckLines(ticket.id), ['Drift (landing 1a2b3c4): deck/store-items.mjs owned by S1; plan kept, ticket yellow']);
   const line = reread(gate.id).replies.at(-1);
-  assert.equal(line.text, `Re-cut by this landing: ${ticket.id} (1 file)`);
+  assert.equal(line.text, `Drift after this landing: ${ticket.id} (1 file)`);
   assert.equal(line.from, 'deck');
   assert.ok(Number.isInteger(line.seq), 'the line wakes the pilot');
 });
@@ -123,7 +125,7 @@ test('a granted ticket is never re-cut', async (t) => {
 
   assert.equal(checked, 0, 'a granted plan is never checked');
   assert.equal(reread(ticket.id).state, 'yellow');
-  assert.ok(!deckLines(gate.id).some((text) => text.startsWith('Re-cut by this landing')));
+  assert.ok(!deckLines(gate.id).some((text) => text.startsWith('Drift after this landing')));
 });
 
 test('a plan signed before grants were stamped reads granted, and is never re-cut (QA-F1)', async (t) => {
@@ -163,7 +165,7 @@ test('a ticket granted while its check runs is never re-cut', async (t) => {
   assert.equal(reread(ticket.id).state, 'yellow');
 });
 
-test('a plan gone from its branch is re-cut and named gone', async (t) => {
+test('a plan gone from its branch is noted gone, the ticket yellow', async (t) => {
   tempDeck(t);
   const gate = aLandedGate2(os.tmpdir());
   const ticket = signed(os.tmpdir(), { artefact: ARTEFACT, branch: 'feat/x', sha: '0123456789abcdef' });
@@ -171,21 +173,23 @@ test('a plan gone from its branch is re-cut and named gone', async (t) => {
 
   assert.deepEqual(await driftAfterLanding(gate.id, { planDrift }), [ticket.id]);
 
-  assert.deepEqual([reread(ticket.id).state, reread(ticket.id).recut.files], ['red', undefined]);
-  assert.equal(deckLines(gate.id).at(-1), `Re-cut by this landing: ${ticket.id} (plan 01234567 gone)`);
+  assert.equal(reread(ticket.id).state, 'yellow');
+  assert.deepEqual(deckLines(ticket.id), ['Drift (landing 1a2b3c4): plan 01234567 gone; plan kept, ticket yellow']);
+  assert.equal(deckLines(gate.id).at(-1), `Drift after this landing: ${ticket.id} (plan 01234567 gone)`);
 });
 
-test('a drift the store refuses to re-cut is still named', async (t) => {
+test('the 2026-11-19 case: two drifted tickets both stay yellow and both are named', async (t) => {
   tempDeck(t);
   const gate = aLandedGate2(os.tmpdir());
-  const ticket = signed(os.tmpdir(), { artefact: ARTEFACT, branch: 'feat/x', sha: '0123456789abcdef' });
-  requestSwitch(os.tmpdir(), ticket.id); // a co-pilot switch to it is pending, so the store refuses its re-cut
-  const planDrift = async () => ({ state: 'moved', files: ['deck/store-items.mjs'] });
+  const first = signed(os.tmpdir(), { artefact: ARTEFACT, branch: 'feat/x', sha: '0123456789abcdef' });
+  const second = signed(os.tmpdir(), { artefact: ARTEFACT, branch: 'feat/x', sha: '0123456789abcdef' });
+  const planDrift = async () => ({ state: 'moved', files: ['deck/store-items.mjs'], slices: ['S1'] });
 
-  assert.deepEqual(await driftAfterLanding(gate.id, { planDrift }), []);
+  assert.deepEqual((await driftAfterLanding(gate.id, { planDrift })).sort(), [first.id, second.id].sort());
 
-  assert.equal(reread(ticket.id).state, 'yellow');
-  assert.ok(deckLines(gate.id).at(-1).startsWith(`Re-cut by this landing: ${ticket.id} (1 file; not re-cut: `), deckLines(gate.id).at(-1));
+  assert.deepEqual([reread(first.id).state, reread(second.id).state], ['yellow', 'yellow']);
+  const said = deckLines(gate.id).at(-1);
+  assert.ok(said.startsWith('Drift after this landing: ') && said.includes(first.id) && said.includes(second.id), said);
 });
 
 test('an unchecked drift moves nothing', async (t) => {
@@ -201,7 +205,7 @@ test('an unchecked drift moves nothing', async (t) => {
   assert.equal(reread(gate.id).replies.length, before, 'no line');
 });
 
-test('the landing writes its landed line before the sweep re-cuts', async (t) => {
+test('the landing writes its landed line before the sweep notes', async (t) => {
   tempDeck(t);
   // A repository (a `.git` directory) and a linked worktree of it (a `.git` file naming it), as landing.test.mjs builds one.
   const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-landing-recut-'));
@@ -213,7 +217,7 @@ test('the landing writes its landed line before the sweep re-cuts', async (t) =>
   const gate = aGate2(repo, worktree);
   let release;
   const held = new Promise((resolve) => (release = resolve));
-  const planDrift = async () => (await held, { state: 'moved', files: ['deck/store-items.mjs'] });
+  const planDrift = async () => (await held, { state: 'moved', files: ['deck/store-items.mjs'], slices: ['S1'] });
   const child = Object.assign(new EventEmitter(), { pid: 9001, kill: () => true });
   child.stdout = Object.assign(new EventEmitter(), { setEncoding() {} });
   child.stderr = Object.assign(new EventEmitter(), { setEncoding() {} });
@@ -223,9 +227,8 @@ test('the landing writes its landed line before the sweep re-cuts', async (t) =>
   child.emit('close', 0);
 
   assert.equal(reread(gate.id).landing.state, 'landed', 'the landed line is written before the sweep settles');
-  assert.equal(reread(ticket.id).state, 'yellow');
   release();
-  for (let tick = 0; tick < 50 && reread(ticket.id).state !== 'red'; tick += 1) await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(reread(ticket.id).state, 'red');
-  assert.deepEqual(deckLines(gate.id).slice(-2), [LANDED.trimEnd(), `Re-cut by this landing: ${ticket.id} (1 file)`]);
+  for (let tick = 0; tick < 50 && deckLines(ticket.id).length === 0; tick += 1) await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(reread(ticket.id).state, 'yellow');
+  assert.deepEqual(deckLines(gate.id).slice(-2), [LANDED.trimEnd(), `Drift after this landing: ${ticket.id} (1 file)`]);
 });
