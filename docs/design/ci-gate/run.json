@@ -24,7 +24,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 1048071 (integrating; review fixes after the reviewers' read)",
+      "state": "integrated (review fixes after the reviewers' read)",
       "after": [
         "S1"
       ],
@@ -33,11 +33,13 @@
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S2",
         "S5"
-      ]
+      ],
+      "branch": "slice/ci-gate-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s7"
     },
     {
       "slice": "S3",
@@ -50,7 +52,7 @@
     },
     {
       "slice": "S4",
-      "state": "implementing (seam: 2 integrate tests filter the check-runs read)",
+      "state": "pushed 89fcd57 (3 recording tests filter the check-runs read)",
       "after": [
         "S1"
       ],
@@ -59,7 +61,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 6c6e2f6",
+      "state": "pushed 6c6e2f6 (integrating)",
       "after": [
         "S1"
       ],
@@ -77,7 +79,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed 99fb126 (WARN fixes after the reviewer's read)",
+      "state": "pushed 99fb126 (integrating after S6)",
       "after": [
         "S1"
       ],
@@ -94,8 +96,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s10"
     }
   ],
-  "next": "ci-gate: integrating S5, then S6, S9 (trailers in co-pilot scratchpad); S3, S4, S8 implementing; S7 after S5 integrates.",
-  "updatedAt": "2026-11-19T18:34:54.143Z",
+  "next": "ci-gate: integrating S6 then S9, then S4 (trailers in co-pilot scratchpad); S3, S7, S8 implementing; then the fundamentalist.",
+  "updatedAt": "2026-11-19T18:40:33.252Z",
   "friction": [
     {
       "agent": "pilot-architect",
