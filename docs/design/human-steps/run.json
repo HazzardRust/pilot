@@ -1,0 +1,88 @@
+{
+  "slug": "human-steps",
+  "feature": "Human steps are a green thread",
+  "ticket": "itm_7d3455d28cd6",
+  "branch": "feat/human-steps",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-human-steps",
+  "artefact": "docs/design/human-steps/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed 08c1bdf (post-review nit fixes read by no reviewer)",
+      "branch": "slice/human-steps-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S3"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "pushed a081ce4 (second commit a081ce4 read by no reviewer)",
+      "branch": "slice/human-steps-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S3"
+      ]
+    }
+  ],
+  "next": "co-pilot: integrating S3 (a081ce4), then S1 (08c1bdf); then S2 and S4 per pilot ready",
+  "updatedAt": "2026-11-19T20:09:44.258Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "store-items.mjs postItem is ~100 lines of interleaved refusals; finding where a report closes its ticket took a dedicated explorer",
+      "evidence": "deck/store-items.mjs:174",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "STANDING/RECORD kinds duplicated in hooks/lib/deck.js (CJS) beside items.mjs; every new kind touches both plus join.test.js",
+      "evidence": "hooks/lib/deck.js, deck/items.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck MCP reported CONNECTION_CLOSED at start, then worked on first call",
+      "evidence": "human-steps architect hand-back",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "a QA agent of the previous session survived /clear unknown to the record, so the fresh co-pilot spawned a second pilot-qa on the same ticket",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck MCP server did not connect in a second architect session in a row; the pilot posted deck_status and the gate1 for it",
+      "evidence": "human-steps re-cut report: deck (CONNECTION_CLOSED) at session start; same in the audit-f14 re-cut",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "re-cut gate1 refused for an 8-char sha in its 'Changed since' line; the deck wants exactly 7",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: deck/store-runs.mjs already at its 800-line bar though the slice owns it; validation moved to deck/runs.mjs",
+      "evidence": "one 7-minute gate plus a refactor; Edit turned   in a regex into the raw character",
+      "size": 7
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: items.mjs and store-items.mjs at the 800-line cap forced a module move (deck/store-steps.mjs); kind and export lists pinned in five test files no slice names",
+      "evidence": "one 7-minute gate plus a module move; non-test diff 158 lines, over the 150 limit",
+      "size": 7
+    }
+  ]
+}
