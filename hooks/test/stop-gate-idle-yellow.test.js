@@ -46,8 +46,10 @@ test('the Stop hook blocks on an idle yellow ticket, and not on one whose crew w
 
   assert.strictEqual(said && said.decision, 'block');
   assert.ok(said.reason.includes(yellow.id), said.reason);
-  assert.ok(said.reason.startsWith('yellow lane idle; '), said.reason);
+  // The arrival above arms S3's idle wake, whose deck line on the ticket can block ahead of the lane refusal.
+  assert.ok(said.reason.startsWith('yellow lane idle; ') || said.reason.includes(`Idle ${yellow.id}: `), said.reason);
 
+  if (store.listItems().find((item) => item.id === yellow.id).idleNoted !== undefined) store.addPilotMessage(yellow.id, 'Kept it.');
   agents.noteAgent({ agentId: 'crew1', agentType: 'pilot:pilot-co-pilot', cwd: repo }, Date.now() - MIN);
   assert.strictEqual(await stopGate.run(stopping), null);
 });
