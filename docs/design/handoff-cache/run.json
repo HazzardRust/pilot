@@ -92,7 +92,7 @@
     },
     {
       "slice": "feature",
-      "state": "QA read-only pass done (all lines pass bar the found issues); step-7 fix round running",
+      "state": "in QA: fix round done at e578f942, QA is the writer, walkthrough next",
       "branch": "feat/handoff-cache",
       "pr": 120
     },
@@ -126,7 +126,7 @@
     },
     {
       "slice": "S14",
-      "state": "pushed 70e275e; integrating",
+      "state": "integrated",
       "after": [
         "S9",
         "S10"
@@ -152,27 +152,9 @@
     "dropped: S13 pushback — restart's env keeps ANTHROPIC*/PILOT_*: restart copies no login and its documented login is ANTHROPIC_API_KEY, so L8's copy terms do not reach it",
     "kept: S13 size — 194 changed lines accepted: net +40, the rest a move into probes/lib.mjs its slice file requires"
   ],
-  "next": "S12 integrated at c8ca5e54; S14 integrating; then base check, resume QA with the tip.",
-  "updatedAt": "2026-11-19T10:57:38.412Z",
+  "next": "Gate2 itm_be0df7dc9b48 signed at e578f942, PR #120; QA torn down. Lander NOT spawned (crew-refusals lander live, pilot at context limit): spawn pilot-lander itm_be0df7dc9b48 when free. Findings: owe: 2 dropped security findings (scratchEnv tokens, restart env) the user's; coverage, mutation unmeasured; human step: pilot update after landing.",
+  "updatedAt": "2026-11-19T12:04:22.146Z",
   "friction": [
-    {
-      "agent": "pilot-implementer",
-      "what": "tokenCounts was not exported though S1 needs it, forcing a 3-line edit outside the slice's files",
-      "evidence": "deck/transcripts.mjs:62",
-      "size": 1
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "probe login not settled in the brief, so S2 could not run its probes",
-      "evidence": "brief.md Probes names scratch sessions and no auth route; itm_41847d20a6a6",
-      "size": 3
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "mod API documented only in the bundled skill's d.ts; the brief's handoff-mod §3 has neither prompt.section nor text:null",
-      "evidence": "types/claude-code.d.ts:5061-5093; S2 fact sheet rows not found",
-      "size": 2
-    },
     {
       "agent": "pilot-implementer",
       "what": "400-line diff limit took two trimming passes: probe plugin plus runner is ~300 lines before the record",
@@ -393,6 +375,21 @@
       "what": "S12 gated the combined pre-split state once for nothing (about 7 minutes, no TaskStop); brief.md's commit trailer names a different model than the spawn brief",
       "evidence": "S12/S14 report: Friction and Pushback rows",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "directory marketplace runs hooks from the clone, so a QA home built that way does not test the cache path; file:/// marketplace add rejected, known_marketplaces.json hand-written",
+      "evidence": "first S9 run failed; first install attempts failed"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "the gate stops a scratch deck started from the worktree it runs in",
+      "evidence": "gate log: stopped 35304 --leash-dir <worktree>"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "auto mode gives no verdict when one response holds several calls",
+      "evidence": "4 times in QA, about 8 in the pilot; each ran reissued alone"
     }
   ]
 }
