@@ -27,10 +27,19 @@ pub enum Feed {
 }
 
 /// The newest `Feed` the reader left for the window; an older one it replaces is never drawn.
+/// The reader's view of what the window is asking for, so a region that changes the query (a chosen
+/// ticket) is followed rather than undone by the next `changed`.
+type Asked = Arc<Mutex<Query>>;
+
 #[derive(Debug, Clone, Default)]
-pub struct Inbox(Arc<Mutex<Option<Feed>>>);
+pub struct Inbox(Arc<Mutex<Option<Feed>>>, Asked);
 
 impl Inbox {
+    /// The query every later refetch is made for.
+    pub fn ask(&self, query: &Query) {
+        *self.1.lock().unwrap_or_else(PoisonError::into_inner) = query.clone();
+    }
+
     pub fn take(&self) -> Option<Feed> {
         self.0.lock().unwrap_or_else(PoisonError::into_inner).take()
     }
@@ -40,10 +49,12 @@ impl Inbox {
 /// thread that cannot start leaves the window on the view it opened with, and says so.
 pub fn start(client: Client, query: Query, wake: Waker) -> Inbox {
     let inbox = Inbox::default();
+    inbox.ask(&query);
+    let asked = inbox.1.clone();
     let slot = Arc::downgrade(&inbox.0);
     let spawned = std::thread::Builder::new()
         .name("pilot-deck-live".into())
-        .spawn(move || follow(&client, &query, &slot, &*wake));
+        .spawn(move || follow(&client, &asked, &slot, &*wake));
     if let Err(err) = spawned {
         eprintln!("pilot-deck: the live reader did not start: {err}");
     }
@@ -65,11 +76,12 @@ fn put(slot: &Slot, feed: Feed, wake: &(dyn Fn() + Send + Sync)) -> Option<()> {
 /// One whole view, or `Down` when it cannot be read; `Some(true)` when the view came.
 fn refetch(
     client: &Client,
-    query: &Query,
+    asked: &Asked,
     slot: &Slot,
     wake: &(dyn Fn() + Send + Sync),
 ) -> Option<bool> {
-    match client.view(query) {
+    let query = asked.lock().unwrap_or_else(PoisonError::into_inner).clone();
+    match client.view(&query) {
         Ok(view) => put(slot, Feed::View(view), wake).map(|()| true),
         Err(err) => {
             eprintln!("pilot-deck: {err}");
@@ -80,7 +92,7 @@ fn refetch(
 
 fn follow(
     client: &Client,
-    query: &Query,
+    asked: &Asked,
     slot: &Slot,
     wake: &(dyn Fn() + Send + Sync),
 ) -> Option<()> {
@@ -88,13 +100,13 @@ fn follow(
     loop {
         if let Ok(events) = client.events() {
             // Connected: what changed while the stream was away is read now, then once per change.
-            if refetch(client, query, slot, wake)? {
+            if refetch(client, asked, slot, wake)? {
                 failures = 0;
             }
             for line in events.lines() {
                 match line {
                     Ok(line) if line.trim_end() == "event: changed" => {
-                        if refetch(client, query, slot, wake)? {
+                        if refetch(client, asked, slot, wake)? {
                             failures = 0;
                         }
                     }

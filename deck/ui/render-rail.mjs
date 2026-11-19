@@ -445,7 +445,7 @@ function renderChat(tab, items) {
  * the implementing ticket its live co-pilot holds, then the concluding lane's, then the planning lane's. Held lanes only:
  * a queued or switching lane names none.
  */
-function heldTicketsOf(tab, items) {
+export function heldTicketsOf(tab, items) {
   if (!tab) return [];
   const implementing =
     coPilotStateOf(items, tab.repo, tab.coPilot, tab.switching) === 'held'
