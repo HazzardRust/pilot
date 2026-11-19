@@ -12,8 +12,7 @@ import path from 'node:path';
 
 import { KIND_WALKTHROUGH } from '../items.mjs';
 import { lanesFrom } from '../lanes.mjs';
-import { postItem } from '../store.mjs';
-import { aTicket, deckOnAPort, takeLive } from '../testUtils.mjs';
+import { aTicket, deckOnAPort, postStored, takeLive } from '../testUtils.mjs';
 
 const REPO = path.resolve('D:/work/pilot');
 
@@ -56,7 +55,7 @@ test('co-pilot and need answer both lanes', async (t) => {
   const building = aTicket('building', 'yellow', REPO);
   const queued = aTicket('queued', 'red', REPO);
   const needed = aTicket('needs the user', 'yellow', REPO);
-  postItem({ kind: KIND_WALKTHROUGH, title: 'Walk it', body: 'Steps.', repo: REPO, ticket: needed.id });
+  postStored({ kind: KIND_WALKTHROUGH, title: 'Walk it', body: 'Steps.', repo: REPO, ticket: needed.id }); // posted, it would conclude the ticket itself
 
   assert.equal(await deckTicket(base, { id: building.id, action: 'co-pilot' }), `Co-pilot ${building.id}: live. Yellow: held by ${building.id}. Planning: empty, next ${queued.id}. Concluding: empty.`);
   assert.equal(await deckTicket(base, { id: needed.id, action: 'need' }), `Needed ${needed.id}: green. Yellow: held by ${building.id}. Planning: empty, next ${queued.id}. Concluding: empty, next ${needed.id}.`);

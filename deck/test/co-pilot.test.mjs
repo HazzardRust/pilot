@@ -54,7 +54,7 @@ test('needTicket releases its ticket\'s co-pilot', async (t) => {
   tempDeck(t);
   const ticket = yellow('walking');
   setCoPilot(ticket.id, true);
-  postItem({ kind: KIND_WALKTHROUGH, title: 'Walk it', body: 'Steps.', repo: REPO, ticket: ticket.id });
+  postStored({ kind: KIND_WALKTHROUGH, title: 'Walk it', body: 'Steps.', repo: REPO, ticket: ticket.id }); // posted, it would conclude the ticket itself
 
   needTicket(ticket.id);
   assert.equal(coPilotFor(REPO).live, false);
@@ -74,7 +74,7 @@ test('another ticket\'s need leaves it live', async (t) => {
   const building = yellow('building');
   const other = yellow('other');
   setCoPilot(building.id, true);
-  postItem({ kind: KIND_WALKTHROUGH, title: 'Walk it', body: 'Steps.', repo: REPO, ticket: other.id });
+  postStored({ kind: KIND_WALKTHROUGH, title: 'Walk it', body: 'Steps.', repo: REPO, ticket: other.id });
 
   needTicket(other.id);
   assert.deepEqual({ ticket: coPilotFor(REPO).ticket, live: coPilotFor(REPO).live }, { ticket: building.id, live: true });
