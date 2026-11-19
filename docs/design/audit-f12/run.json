@@ -23,8 +23,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f12-s2"
     }
   ],
-  "next": "S2 4904255e (202 lines, both verdicts on tip) integrating; then pilot integrate --trial, real-session sed check owed (artefact §9 step 1) or said plainly in gate2, post gate2 myself (surface false, checks table). Known misses listed in ADR: `((` subshell hides later lines, redirect after $(…), quadratic rescan. Owed: re-cut checks itm_4be41dcb9ee3, itm_7d3455d28cd6.",
-  "updatedAt": "2026-11-19T05:02:43.882Z",
+  "next": "Both slices in, feat bc055125, trial clean. gate2 itm_e7330b8b1aac posted by pilot (real-session run + latency named as not done); on press spawn pilot-lander with it. Also waiting: home-store-guard walkthrough itm_dae597d9a7a6 then its gate2 by me. Co-pilot a07ee57e306b87795 live on handoff-cache itm_3997fa784e4b. Owed: re-cut checks itm_4be41dcb9ee3, itm_7d3455d28cd6.",
+  "updatedAt": "2026-11-19T05:05:46.854Z",
   "friction": [
     {
       "agent": "pilot-architect",
