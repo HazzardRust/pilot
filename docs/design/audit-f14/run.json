@@ -70,7 +70,7 @@
     },
     {
       "slice": "S8",
-      "state": "implementing",
+      "state": "pushed 0e086bc",
       "after": [
         "S7"
       ],
@@ -79,7 +79,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed e395837",
+      "state": "integrated",
       "after": [
         "S4",
         "S7"
@@ -105,8 +105,8 @@
     "kept: S3-R3 LOW — gone-and-unlanded lower branch fails with a bare git error, name it",
     "kept: S7-R1 security LOW — scripts/merge-generated.mjs:36-47: a committed docs/adr directory symlink lets refreshIndex write outside the worktree, and restack runs it unattended; fix: a realpathSync check that stays inside dir"
   ],
-  "next": "audit-f14 co-pilot: S6 integrated at 09885046; integrating S9 (e395837); S5, S8 implementing; then fundamentalist, fix round, QA",
-  "updatedAt": "2026-11-19T15:38:40.633Z",
+  "next": "audit-f14 co-pilot: S8 pushed 0e086bc (ts WARNING, MEDIUM fixed; security APPROVE), integrating; S5 implementing; then fundamentalist, fix round, QA",
+  "updatedAt": "2026-11-19T15:47:08.643Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -275,6 +275,12 @@
       "what": "agents/pilot.md's token pin has 0 headroom on base; only the 7-minute npm test revealed it, costing a second full run; the two-second measure-prompt and pilot-branch-rules tests would have caught it",
       "evidence": "S9 report: share 12070 vs pin 11914.5, then trimmed to 11914",
       "size": 420
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "four slices' full suites share one machine; a 3-file run piped through grep sat 10+ minutes with an empty log and was stopped, then passed alone in 109 s",
+      "evidence": "S8 report: sync.test.mjs 14/14 in 109 s alone; full gate 471 s",
+      "size": 600
     }
   ]
 }
