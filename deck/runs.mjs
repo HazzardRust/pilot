@@ -448,6 +448,26 @@ export function recordFields({ slug, ticket, branch, base, worktree, qa, artefac
   return fields;
 }
 
+/** The most human steps one record keeps, and the longest one may be (human-steps L5). */
+const MAX_HUMAN_STEPS = 20;
+const MAX_HUMAN_STEP_CHARS = 300;
+
+/**
+ * `fields` with `step` appended to the record's human steps `kept`, as `{ text }` (human-steps L5,
+ * A1): one trimmed line of 1-300 characters, at most 20 a record, and only beside a slug, since
+ * only a record keeps them. A line or paragraph separator is a line break to a renderer too.
+ */
+export function withHumanStep(fields, kept, step) {
+  if (fields === null) throw new RunRefusal('step belongs to the run record; send slug with it');
+  const text = typeof step === 'string' ? step.trim() : '';
+  if (text === '' || text.length > MAX_HUMAN_STEP_CHARS || /[\r\n\x85\p{Zl}\p{Zp}]/u.test(text)) {
+    throw new RunRefusal(`step must be one line of 1 to ${MAX_HUMAN_STEP_CHARS} characters`);
+  }
+  const humanSteps = [...(Array.isArray(kept) ? kept : []), { text }];
+  if (humanSteps.length > MAX_HUMAN_STEPS) throw new RunRefusal(`the record keeps at most ${MAX_HUMAN_STEPS} human steps, and it has them`);
+  return { ...fields, humanSteps };
+}
+
 /**
  * The record as it is stored and mirrored: the one it replaces, overwritten by
  * what this call sent, in `RECORD_ORDER`, so the mirror's bytes do not move

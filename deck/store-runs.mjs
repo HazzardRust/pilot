@@ -35,6 +35,7 @@ import {
   recordFields,
   repoKey,
   sameRepo,
+  withHumanStep,
 } from './runs.mjs';
 import { neverGranted } from './recut.mjs';
 import { SliceRefusal, mergeSliceTable } from './status.mjs';
@@ -525,19 +526,6 @@ export function createThread({ name, repo }) {
   return item;
 }
 
-/** The most human steps one record keeps, and the longest one may be (human-steps L5). */
-const MAX_HUMAN_STEPS = 20;
-const MAX_HUMAN_STEP_CHARS = 300;
-
-/** One human step as the record keeps it: one trimmed line, 1-300 characters, or refused. */
-function humanStep(step) {
-  const text = typeof step === 'string' ? step.trim() : '';
-  if (text === '' || text.length > MAX_HUMAN_STEP_CHARS || /[\r\n]/.test(text)) {
-    throw new DeckRefusal(`step must be one line of 1 to ${MAX_HUMAN_STEP_CHARS} characters`);
-  }
-  return text;
-}
-
 /**
  * Update one run's slice table — the rows the home screen renders. The call's rows are
  * merged over the stored table (`mergeSliceTable`, independence spec 22.2): wholesale
@@ -585,13 +573,7 @@ export function setSlices(runId, slices, feature, given = {}) {
     const previous = fields === null ? undefined : recordsOf(deck).find(recordOf(run, fields.slug))?.record;
     const under = fields === null ? run.slices : (previous?.slices ?? []);
     table = mergeSliceTable(under, slices);
-    if (given.step !== undefined) {
-      if (fields === null) throw new DeckRefusal('step belongs to the run record; send slug with it');
-      fields.humanSteps = [...(previous?.humanSteps ?? []), { text: humanStep(given.step) }];
-      if (fields.humanSteps.length > MAX_HUMAN_STEPS) {
-        throw new DeckRefusal(`the record keeps at most ${MAX_HUMAN_STEPS} human steps, and it has them`);
-      }
-    }
+    if (given.step !== undefined) fields = withHumanStep(fields, previous?.humanSteps, given.step);
   } catch (err) {
     // Same shape as a malformed run: the caller's mistake comes back as the refusal
     // every other bad input does, so one path answers the client.
@@ -600,11 +582,9 @@ export function setSlices(runId, slices, feature, given = {}) {
     }
     throw err;
   }
-  // Every string the call carries, walked rather than listed: the name, every
-  // cell of every row, every record field and finding line, so a field added
-  // later is read without anyone remembering to add it. `after` is read too,
-  // though it must match another row: it matches through `sliceKey`, which
-  // lower-cases, and these patterns do not. A6 is only true if it reads every cell.
+  // Every string the call carries, walked rather than listed: the name, every cell of every row, every
+  // record field, finding line and human step, before any is stored, so a field added later is read
+  // without anyone remembering to add it. `after` too: it matches through `sliceKey`, which lower-cases.
   refuseCredentials('this status', stringsIn({ name, table, fields }).join('\n'));
 
   // The closing call empties the tab and its tree; the record below keeps the table.

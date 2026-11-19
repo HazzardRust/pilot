@@ -46,7 +46,9 @@ test('the schema bounds hold', (t) => {
   tempDeck(t);
   const run = registerRun({ repo: REPO, pid: process.pid });
 
-  for (const step of ['', '   ', 'x'.repeat(301), 'one line\nand another', 7]) {
+  // A line separator (U+2028) is a line break to a renderer, so it is two lines here too.
+  const separated = `one line${String.fromCharCode(0x2028)}and another`;
+  for (const step of ['', '   ', 'x'.repeat(301), 'one line\nand another', separated, 7]) {
     assert.throws(() => send(run, step), DeckRefusal, JSON.stringify(step));
   }
   assert.equal(recordFor(REPO), null, 'nothing was stored');
