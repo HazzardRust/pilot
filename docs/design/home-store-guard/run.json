@@ -1,0 +1,51 @@
+{
+  "slug": "home-store-guard",
+  "feature": "home store guard",
+  "ticket": "itm_8bee042932cd",
+  "branch": "feat/home-store-guard",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-home-store-guard",
+  "artefact": "docs/design/home-store-guard/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 gate stats the home store",
+      "state": "integrated",
+      "branch": "slice/home-store-guard-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-home-store-guard-s1"
+    },
+    {
+      "slice": "S2 deck store refuses a gate process's home write",
+      "state": "planned",
+      "after": [
+        "S1 gate stats the home store"
+      ]
+    }
+  ],
+  "next": "S1 aa7f6ac2 approved, integrating into feat/home-store-guard; then S2 implementer (opus, typescript + security-reviewer verdict required) from new feat tip, integrate, pilot integrate --trial, post gate2 myself with walkthrough (surface true). Owed: re-cut checks itm_4be41dcb9ee3 (1 file) and itm_7d3455d28cd6 (2 files) from #114 landing, when planning lane/budget frees.",
+  "updatedAt": "2026-11-19T04:13:58.999Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "the 800-line facades cap was found only by wc; store-core.mjs (799) does not say how near it is",
+      "evidence": "architect report, home-store-guard",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot posted the signal and QA-environment questions the architect then posted itself; two duplicates closed Moot",
+      "size": 4
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a live deck on a fixed port makes the gate's no-deck red unreachable in the real CLI on this machine; no test override for the deck port",
+      "evidence": "deck/tools.mjs:40 DECK_PORT = 4321",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "an uncommitted change to deck/tools.mjs makes test:changed --since=HEAD~1 select almost the whole suite",
+      "evidence": "4489 tests ~3 min vs 541 tests 25 s",
+      "size": 1
+    }
+  ]
+}
