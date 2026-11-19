@@ -384,6 +384,6 @@ function renderRuns(runs) {
 }
 
 export {
-  BLOCKING_BADGE, renderReplySlot, renderResolution, hrefFor, renderThreadState, renderKind, renderChainNote, renderTypeNote,
+  BLOCKING_BADGE, GATE_NAMES, STATE_BUCKETS, renderReplySlot, renderResolution, hrefFor, renderThreadState, renderKind, renderChainNote, renderTypeNote,
   renderCard, renderRuns,
 };

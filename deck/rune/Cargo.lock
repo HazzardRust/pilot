@@ -2351,6 +2351,7 @@ name = "pilot-deck"
 version = "0.1.0"
 dependencies = [
  "rune",
+ "rune-kit",
  "serde",
  "serde_json",
  "ureq",
@@ -2521,6 +2522,17 @@ checksum = "4dcd034599e63b970727f70d79e02d62390a4a84f7c6b827c27c46d5ac3fa622"
 dependencies = [
  "ar_archive_writer",
  "cc",
+]
+
+[[package]]
+name = "pulldown-cmark"
+version = "0.13.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3db2be46835f013dd3f4fa7f5f7402c537787b54ebb6fe2b94bbdd7e2669bb7b"
+dependencies = [
+ "bitflags 2.13.2",
+ "memchr",
+ "unicase",
 ]
 
 [[package]]
@@ -2800,6 +2812,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rune-highlights"
+version = "0.0.1"
+source = "git+https://github.com/anomalyco/rune?rev=7cba77c86b7c203bcf68c5ca539640cb81ec50ad#7cba77c86b7c203bcf68c5ca539640cb81ec50ad"
+dependencies = [
+ "unicode-ident",
+ "wasmparser",
+]
+
+[[package]]
 name = "rune-image"
 version = "0.0.1"
 source = "git+https://github.com/anomalyco/rune?rev=7cba77c86b7c203bcf68c5ca539640cb81ec50ad#7cba77c86b7c203bcf68c5ca539640cb81ec50ad"
@@ -2814,6 +2835,19 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "rune-kit"
+version = "0.0.1"
+source = "git+https://github.com/anomalyco/rune?rev=7cba77c86b7c203bcf68c5ca539640cb81ec50ad#7cba77c86b7c203bcf68c5ca539640cb81ec50ad"
+dependencies = [
+ "icu_normalizer",
+ "pulldown-cmark",
+ "rune",
+ "rune-highlights",
+ "rune-motion",
+ "unicode-segmentation",
 ]
 
 [[package]]
@@ -3659,6 +3693,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "unicase"
+version = "2.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "357cc3acc6a036009fd6c973ed009037c732d60d0b4f6c673e9041497482a28f"
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3854,6 +3894,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b1f9c3798725016c6ee5f2f57869ec0831e8bbc0ab0310a86e787e97f41389e"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "wasmparser"
+version = "0.245.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f08c9adee0428b7bddf3890fc27e015ac4b761cc608c822667102b8bfd6995e"
+dependencies = [
+ "bitflags 2.13.2",
+ "indexmap",
 ]
 
 [[package]]
