@@ -4,7 +4,7 @@ date: 2026-11-19
 tags: [handoff, cache, plain-session, install]
 supersedes: [0170]
 superseded_by: []
-paths: [docs/design/handoff-cache/architecture.md, docs/design/handoff-cache/ledger.md, hooks/session-handoff.js, scripts/audit-session-start.mjs, scripts/reach.mjs]
+paths: [docs/design/handoff-cache/architecture.md, docs/design/handoff-cache/ledger.md, scripts/audit-session-start.mjs, scripts/reach.mjs]
 ---
 # A hand-off is measured before it is changed, and a plain session reads nothing by default
 
@@ -42,8 +42,8 @@ Assumed decisions and their verdicts:
   runs, so nothing was built on it.
 - **A3** Line 1 measures transcripts already on disk. Verdict: stands; QA's scratch hand-off confirms live.
 - **A4** Line 3 is built only for a miss of 1,000 tokens or more. Verdict: stands as a rule for the ledger; S3's bar
-  read the whole 15,871-token miss while the frame it reorders is about 190 tokens, so the ledger takes the frame's
-  752 shared bytes (S3's commit message) as the gain.
+  read the whole 15,871-token miss while the frame it reorders gains about 190 tokens (752 shared bytes), under the
+  bar, so line 3 reads ruled out and S3's code was reverted at step 7.
 - **A5** Probes run headless on `--model sonnet`, about 30 scratch sessions. Verdict: stands, the user chose scratch
   sessions on itm_5556a16a5dec.
 
@@ -51,5 +51,5 @@ Assumed decisions and their verdicts:
 
 ADR 0170 stands for the reach levels and `pilot run`; its two lines that an absent reach reads everything, and that
 an upgraded machine keeps everything until `pilot reach` runs, no longer hold: such a machine reads `nothing`, and
-a user who relied on pilot in plain sessions runs `pilot reach everything`. Lines 4, 5 and 7a closed with their
+a user who relied on pilot in plain sessions runs `pilot reach everything`. Lines 3, 4, 5 and 7a closed with their
 numbers and no code; the next such question starts from `ledger.md`.
