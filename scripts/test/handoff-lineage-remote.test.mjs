@@ -153,7 +153,7 @@ test('the gate1 lineage reads the local pilot under none', (t) => {
 
   git(work, 'checkout', '-q', 'pilot');
   git(work, 'commit', '-q', '--allow-empty', '-m', 'pilot moves');
-  assert.throws(() => assertOnPilotTip(work, 'design/x'), refused('design/x', "is not on pilot's tip", 'git rebase pilot)'));
+  assert.throws(() => assertOnPilotTip(work, 'design/x'), refused('design/x', "is not on pilot's tip", 'git merge pilot)'));
 
   git(work, 'checkout', '-q', 'design/x');
   git(work, 'branch', '-D', 'pilot');
