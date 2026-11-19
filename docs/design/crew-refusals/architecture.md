@@ -169,10 +169,12 @@ is a function of the report module: one caller. No fold changes code beyond thes
   (credential withheld, 300 chars). Rejected: the deck's `Blocked:` items through a parser (pilot lanes with a live
   run only; misses the main session and first no-verdicts).
   Answer: the user pressed "Own log, every session" on `itm_a1c2fae51b9f` (the default).
+  Verdict: stands — the user chose "Own log, every session" on itm_a1c2fae51b9f
 - **A5 Retention and recurrence** (not posted, within the forks depth). Default: newest 10,000 lines kept, trimmed on
   append; a shape is a recurring habit at 3 or more refusals in the repo; no-verdicts are counted but never a habit
   row (they are the classifier's outage, blocked-steps). Tradeoff: an older habit ages out after ~10,000 denials.
   Rejected: unbounded file; a time window (the audit runs weekly and would lose a slow habit).
+  Verdict: stands — bounds only: 10,000 lines kept, a habit at 3 refusals, no-verdicts counted but never a habit; no queued ticket claims them
 
 ## 7. Out of scope
 
