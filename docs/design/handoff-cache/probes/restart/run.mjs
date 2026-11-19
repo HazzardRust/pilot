@@ -38,6 +38,8 @@ function args(argv) {
 /** The login's config dir: PROBE_CONFIG_DIR if it exists, else null when no ANTHROPIC_API_KEY stands in for it. */
 function loginConfig() {
   const dir = process.env.PROBE_CONFIG_DIR;
+  // The real config dir is never a scratch one: the probe must not run on, or write into, the user's own home.
+  if (dir && path.resolve(dir) === path.resolve(os.homedir(), '.claude')) return null;
   if (dir) return fs.existsSync(dir) ? dir : null;
   return process.env.ANTHROPIC_API_KEY ? '' : null;
 }
@@ -122,12 +124,14 @@ async function once(opts, version, login) {
   let buffer = '';
   let results = 0;
   const done = new Promise((resolve) => {
-    const timer = setTimeout(resolve, WAIT_MS);
+    let timer = null;
+    let poll = null;
+    const finish = () => { clearTimeout(timer); clearInterval(poll); resolve(); };
+    timer = setTimeout(finish, WAIT_MS);
     // A submit that threw, or no mode, means no pickup turn is coming.
-    const poll = setInterval(() => {
+    poll = setInterval(() => {
       if (readLog(logFile).some((r) => (r.ev === 'submit' && r.result === 'threw') || r.result === 'no mode')) finish();
     }, 2000);
-    const finish = () => { clearTimeout(timer); clearInterval(poll); resolve(); };
     child.on('close', finish);
     child.on('error', finish);
     child.stdout.on('data', (chunk) => {
@@ -154,9 +158,14 @@ async function once(opts, version, login) {
   // Let the mod's last log land, then end the session the way a closed stdin does.
   await new Promise((r) => setTimeout(r, 3000));
   child.stdin.end();
+  // SIGTERM after 30 s, SIGKILL after 40 s, and stop waiting on close at 50 s: a held pipe cannot hang the run.
   const killer = setTimeout(() => child.kill(), 30_000);
-  const code = await exited;
+  const hardKiller = setTimeout(() => child.kill('SIGKILL'), 40_000);
+  let giveUp = null;
+  const code = await Promise.race([exited, new Promise((r) => { giveUp = setTimeout(() => r('unclosed'), 50_000); })]);
   clearTimeout(killer);
+  clearTimeout(hardKiller);
+  clearTimeout(giveUp);
 
   const log = readLog(logFile);
   const restart = log.find((r) => r.ev === 'restart') ?? null;
@@ -198,8 +207,8 @@ async function once(opts, version, login) {
 const opts = args(process.argv.slice(2));
 const login = loginConfig();
 if (login === null) {
-  process.stderr.write('run.mjs: no login: set PROBE_CONFIG_DIR to an existing scratch config dir you logged into, or ANTHROPIC_API_KEY\n');
+  process.stderr.write('run.mjs: no login: set PROBE_CONFIG_DIR to an existing scratch config dir (not ~/.claude) you logged into, or ANTHROPIC_API_KEY\n');
   process.exit(2);
 }
-const version = spawnSync('claude', ['--version'], { encoding: 'utf8' }).stdout.trim();
+const version = (spawnSync('claude', ['--version'], { encoding: 'utf8', timeout: 15_000 }).stdout ?? '').trim() || 'unknown';
 for (let i = 0; i < opts.runs; i += 1) process.stdout.write(`${JSON.stringify(await once(opts, version, login))}\n`);

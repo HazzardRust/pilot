@@ -5,7 +5,8 @@ probes/restart/run.mjs --mode <MODE>` starts `claude -p --input-format stream-js
 --strict-mcp-config` in a temp repository. **All 12 sessions below ran on the copied login**: a temp
 `CLAUDE_CONFIG_DIR` holding a copy of `~/.claude/.credentials.json`, removed after each run. The runner no longer
 does that: a rerun needs `PROBE_CONFIG_DIR` (a scratch config dir the user logged into) or `ANTHROPIC_API_KEY`,
-and stops without one. The driver sends a short opening turn, then about 44k tokens of numbered filler; on the second main
+and stops without one. That login code has not run live: only its no-login stop has, and the empty-config
+`ANTHROPIC_API_KEY` route may meet first-run prompts headless. The driver sends a short opening turn, then about 44k tokens of numbered filler; on the second main
 `turn.complete` the mod runs the mode's call, then `$.prompt.submit`s `Probe pickup: reply with the single word
 PICKED.` Usage is the pickup turn's own `assistant` usage from stream-json, checked equal to the mod's
 `turn.complete` `usage`.
