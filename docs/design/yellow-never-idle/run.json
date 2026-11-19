@@ -27,10 +27,28 @@
       ],
       "branch": "slice/yellow-never-idle-s3",
       "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-s3"
+    },
+    {
+      "slice": "yellow-never-idle",
+      "state": "fixing",
+      "branch": "feat/yellow-never-idle",
+      "pr": 114
+    },
+    {
+      "slice": "fix round (principles)",
+      "state": "integrated",
+      "after": [
+        "S3 idle line wakes a parked wait"
+      ],
+      "branch": "fix/yellow-never-idle-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-fix"
     }
   ],
-  "next": "Integrate S3 fae9f794 onto feat 53801289, then base merge, fundamentalist, QA.",
-  "updatedAt": "2026-11-19T02:44:30.417Z",
+  "findings": [
+    "dropped: QA-F1 — the Stop hook frames the deck's Idle line as 'the user has answered'; the line it points at says what to do, blocking until answered is intended, and the wording lives in stop-gate.js, which L4 keeps unedited; noted in the QA comment"
+  ],
+  "next": "Integrating the fix round 6d7deb15 onto feat 88029164; then send QA the fix tip (resume QA, re-probe, walkthrough).",
+  "updatedAt": "2026-11-19T03:24:53.157Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -121,6 +139,46 @@
       "kind": "drain",
       "what": "S3 implementer report (long) landed in the pilot after its co-pilot was forced to pause; saved to a file",
       "size": 12
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "a context reset lost the evidence runner's table; its definition forbids re-running the checks itself, so the first report had no tool evidence",
+      "evidence": "principles report section 3: six checks 'not run: output lost in the reset'"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "deck MCP reported CONNECTION_CLOSED at spawn; recovered for the co-pilot on ToolSearch",
+      "evidence": "QA's first message"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "resumed to re-run the evidence runner, it was handed back before the runner reported; the feature's six tool checks never reached the review",
+      "evidence": "addendum: mutation, complexity, duplication, dead code, dependency shape 'not returned before hand-off'"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "the agent_type probe needed the live deck the environment forbids; Chrome DevTools MCP not loaded, so the card was read from the store, not seen",
+      "evidence": "QA findings 1/2 rows 'roster agent_type' and 'card look'"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "deckLine beside noteDeck pushed store-items.mjs to 804 lines and failed facades.test's 800 cap; moved to store-stage.mjs after a failed full gate",
+      "evidence": "fix report deviations"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "no TaskStop in the implementer session; a stale gate run could only be waited out, and the pkill attempt was refused",
+      "evidence": "itm_2a1383d712e2"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "the Stop hook writes session state to the real home ~/.claude; QA had to point USERPROFILE at a scratch home",
+      "evidence": "hooks/lib/deck.js:420 stateDir uses os.homedir"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "QA was handed back before the fix tip arrived, so the walkthrough needs a resume or a fresh QA agent",
+      "evidence": "QA hand-back 03:21:31Z"
     }
   ]
 }
