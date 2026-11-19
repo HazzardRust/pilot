@@ -37,7 +37,8 @@ test('an entry reads back with its time, oldest first', (t) => {
   const read = readRefusals({ dir });
   assert.deepStrictEqual(read.map((r) => r.command), ['first', 'second']);
   assert.strictEqual(read[0].when, '2026-11-19T10:00:00.000Z');
-  assert.deepStrictEqual(readRefusals({ dir, ticket: 'itm_t1' }).map((r) => r.command), ['second']);});
+  assert.deepStrictEqual(readRefusals({ dir, ticket: 'itm_t1' }).map((r) => r.command), ['second']);
+});
 
 test('a credential never reaches the log', (t) => {
   const dir = scratch(t);
@@ -58,6 +59,8 @@ const JWT = 'eyJhbGciOiJIUzI1NiJ9' + '.eyJzdWIiOiIxMjM0In0' + '.c2lnbmF0dXJlLXZh
 for (const [shape, command] of [
   ['curl -u user:pass', 'curl -u ci-bot:' + SECRET + ' https://api.example.com/v1'],
   ['curl --user user:pass', 'curl --user=ci-bot:' + SECRET + ' https://api.example.com/v1'],
+  ['curl -uuser:pass', 'curl -uci-bot:' + SECRET + ' https://api.example.com/v1'],
+  ['curl -fsSLu user:pass', 'curl -fsSLu ci-bot:' + SECRET + ' https://api.example.com/v1'],
   ['a URL with user:pass', 'git clone https://ci-bot:' + SECRET + '@git.example.com/o/r.git'],
   ['--password <x>', 'mysql -h db --password ' + SECRET + ' -e "select 1"'],
   ['--password=<x>', 'psql --password=' + SECRET + ' -c "select 1"'],
@@ -72,6 +75,13 @@ for (const [shape, command] of [
   });
 }
 
+test('a long field of repeated curl flags is checked without a backtracking stall', (t) => {
+  const dir = scratch(t);
+  const started = process.hrtime.bigint();
+  appendRefusal(entry({ command: 'curl x -u '.repeat(20000) }), { dir });
+  assert.ok(process.hrtime.bigint() - started < 1_000_000_000n, 'checked in under a second');
+});
+
 test('a plain command with no credential reads back as it was', (t) => {
   const dir = scratch(t);
   const plain = [
@@ -83,6 +93,9 @@ test('a plain command with no credential reads back as it was', (t) => {
     'curl -u "$USER:$TOKEN" https://api.example.com',
     'git clone https://ci-bot:$TOKEN@git.example.com/o/r.git',
     'echo "Basic auth is set in the Authorization header"',
+    'echo "the --password flag is unsafe; use --password to set it"',
+    'echo "Authorization: Basic authentication scheme"',
+    'curl -sSu "$USER:$TOKEN" https://api.example.com',
   ];
   for (const command of plain) appendRefusal(entry({ command }), { dir });
   assert.deepStrictEqual(readRefusals({ dir }).map((r) => r.command), plain);
