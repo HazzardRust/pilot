@@ -80,7 +80,7 @@ function habitRow(shape, group) {
     example: group[group.length - 1].command,
     spec:
       `Auto mode refused \`${shape}\` ${group.length} times from ${agents.join(', ')}, each a blocked step.\n` +
-      `1. None of ${agents.join(', ')} issues \`${shape}\` any more`: the risky action is removed from the habit, never reworded, ` +
+      `1. None of ${agents.join(', ')} issues \`${shape}\` any more: the risky action is removed from the habit, never reworded, ` +
       'split or allowed past auto mode. Evidence: the next audit of this repository has no refusals row for this shape.',
   };
 }
