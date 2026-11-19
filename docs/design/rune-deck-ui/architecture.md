@@ -18,7 +18,7 @@ that other people's projects are pushed onto.
 | 3 | Every action the HTML deck offers works from the Rune deck and ends in the same store change as its form POST. | one scripted replay per action against a scratch daemon | 17 of 17 (§3 Actions) |
 | 4 | A post made by a tool call appears without input; a half-typed reply, the scroll and the open panels survive it. | headless replay on a scratch daemon | shown within 1 s; draft, scroll offset and open set unchanged |
 | 5 | It no longer feels blocky: springs on panel open and close and on card arrival, press feedback in the same frame, no flash on a live update. | the user's look on the walkthrough; the headless tree shows the transition tracks | press shown within 16 ms (one frame); each spring settles under 300 ms; the taste call is the user's |
-| 6a | State updates are neither slow nor out of step: every region is drawn from one view of one `seq`, the agents panel included (the user's named case). | S2 replay: a heartbeat to `/api/agents` and a post on a scratch daemon | each region changed within spec 4's 1 s; 0 regions on an older `seq` |
+| 6a | State updates are neither slow nor out of step: every region is drawn from one view of one `seq`, the agents panel included (the user's named case); each agents row shows seconds since its last tool call and dims once quiet (L11). | S2 replay: a heartbeat to `/api/agents` and a post on a scratch daemon; S14 view test on a fixture roster | each region changed within spec 4's 1 s; 0 regions on an older `seq`; age within 30 s, dim after 30 s quiet, gone at 90 s |
 | 6b | One spacing and grouping system across regions: a 4 px scale, gaps between groups at least twice those within, fixed row heights, and status lines as aligned columns (state, name, time), the overview's lane lines the first case. *practitioner: design-system engineer (Carbon, Atlassian, Primer)* | S4 scan of `src/regions/*.rs`; S7 replay of the three lane lines; the user's look | 0 spacing literals outside `theme::space`; state, name and time each start at one x across the lines |
 | 6c | The two recorded bugs: a refused typed reply keeps its words (ADR 0096), and two quick ticket-arrow presses move once. | S9, S15 replays | each red before, green after |
 | 6d | Dragging a left-strip panel's resize handle tracks the pointer, with no lag or snap near the default size (the user's named bug). | S20 scripted drag across the default | frame positions monotonic; each frame within 1 px of the pointer |
@@ -110,32 +110,44 @@ Deletion test: `render-*.mjs` survive (the HTML deck stays, A2). `renderHomePage
   Atlassian (atlassian.design/foundations/spacing: small within, large between) and Primer
   (primer.style/foundations/primitives/size: 8/16 stack gaps). The 2× rule and the phase order are ours; Material 3
   and Apple were not readable. Rejected: keeping deck.css's ad hoc rem gaps.
+- **L11** (A7 overturned, itm_671096e1253c) The 90 s window (`LIVE_WINDOW_MS`, ADR 0024) is kept; each agents-panel
+  row shows seconds since the agent's last tool call and dims once it goes quiet. An agent reports in at most once
+  per 30 s (`HEARTBEAT_MS`, `hooks/agent-roster.js:43`), so the age is accurate to 30 s: a quiet agent dims after
+  about 30 s and leaves at 90 s. `listAgents` (`deck/agents.mjs:333`) holds `lastSeen` but drops it; S14 adds it.
+  Rejected: a shorter window (reopens ADR 0024; an agent in one long tool call vanishes); the roster as it is.
 
 ## 6. Assumed decisions
 
 - **A1** Native window, not a browser tab. Trade: no Rune deck in a browser; Rune's web target is unproven.
   Rejected: Rune web build at 4321.
   Answer: the user pressed "Native window" (itm_d184d1341214).
+  Verdict: stands — the user pressed "Native window" on itm_d184d1341214
 - **A2** The HTML deck stays as the fallback and what other installers get; where the Rune deck is built (locally,
   cargo, no shipped binaries) it is the primary and what every pilot open shows (itm_6aa2534e84f0: "HTML stays,
   Rune opt-in" then "lets have rune as the primary", read by main). Trade: two UIs; a new kind draws in both (eased
   by L2). Rejected: Rune only.
+  Verdict: stands — the user's words on itm_6aa2534e84f0: HTML stays, Rune primary where built
 - **A3** `npm test` runs `cargo test --manifest-path deck/rune/Cargo.toml` only where cargo is on PATH, else one
   skip line; CI adds one `windows-latest` job with Rust that builds and runs the client tests, and runs the paint
   tests only if the runner paints headless. Trade: a machine without Rust catches a broken screen only in CI.
+  Verdict: stands — S19 shares scripts/gate.mjs with the two landings in concluding; a rebase, not a re-cut
 - **A4** Prefs start empty in `~/.claude/pilot/rune-deck.json`; the browser's localStorage (seen threads, panel
   sizes, folds) is not migrated. Trade: one reset of folds and seen marks. Rejected: a server-side prefs route.
+  Verdict: stands — no queued ticket claims deck prefs; one reset of folds and seen marks accepted
 - **A5** Bugs (itm_b7272bb6e63c): the user named slow, inconsistent state updates (the agents panel) and weird
   separation between objects (the three lane lines), and asked to pull ideas from elsewhere: spec 6a, 6b, L10. The
   two recorded bugs are built too (6c). Answer: "small things everywhere, mostly to do with state updates being
   slow/inconsistent, such as the agents panel … the seperatio between different objects can be weird"; then
   "dragging around the resizing of the different panels on the left side feels laggy near the default position, and
   when the notifications hit 3 digits, it creates a new line and resizes and puts the panels misaligned" (6d, 6e).
+  Verdict: stands — the user's words on itm_b7272bb6e63c: spec 6a-6e
 - **A7** An agent leaves the agents panel only after 90 s without a tool call (`LIVE_WINDOW_MS`, ADR 0024); the
   Rune deck shows that roster as it is. Trade: a finished agent lingers up to 90 s. Rejected here: a stop hook, which
   moves ADR 0024 (killed agents never fire one); sent to `main` as a question.
+  Verdict: overturned: the user chose "Keep 90 s, show last-seen age" on itm_671096e1253c, not the roster as it is
 - **A6** Depth: Forks.
   Answer: the user pressed "forks" (itm_af9e1f649d17).
+  Verdict: stands — the user pressed "forks" on itm_af9e1f649d17
 
 Red team (each a change to §8):
 - red team: S1 cannot build until the user installs rustup and the C++ Build Tools: every slice is blocked on it,
@@ -176,7 +188,7 @@ Width 15; longest stem 5
 | S11 | The chat panel | 2, 3, 4 | `deck/view/chat.mjs`, `deck/test/view-chat.test.mjs`, `deck/rune/src/regions/chat.rs`, `tests/chat.rs` | S5 (`Action::Reply`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S11](slices/S11.md) |
 | S12 | The status table and its ticket selector | 2 | `deck/view/status.mjs`, `deck/test/view-status.test.mjs`, `deck/rune/src/regions/status.rs`, `tests/status.rs` | S1 (`viewOf`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S12](slices/S12.md) |
 | S13 | The run's git graph | 2 | `deck/view/graph.mjs`, `deck/test/view-graph.test.mjs`, `deck/rune/src/regions/graph.rs`, `tests/graph.rs` | S1 (`viewOf`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S13](slices/S13.md) |
-| S14 | The agents and reports panels | 2 | `deck/view/agents.mjs`, `deck/view/reports.mjs`, `deck/test/view-agents-reports.test.mjs`, `deck/rune/src/regions/agents.rs`, `src/regions/reports.rs`, `tests/agents_reports.rs` | S10 (`Prefs`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S14](slices/S14.md) |
+| S14 | The agents and reports panels | 2, 6a | `deck/agents.mjs` (`listAgents` adds `lastSeen`), `deck/view/agents.mjs`, `deck/view/reports.mjs`, `deck/test/view-agents-reports.test.mjs`, `deck/rune/src/regions/agents.rs`, `src/regions/reports.rs`, `tests/agents_reports.rs` | S10 (`Prefs`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S14](slices/S14.md) |
 | S15 | The tickets panel: folds, move, switch | 2, 3, 6c | `deck/view/tickets.mjs`, `deck/test/view-tickets.test.mjs`, `deck/rune/src/regions/tickets.rs`, `tests/tickets.rs` | S6 (`Action::Move`), S10 (`Prefs`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S15](slices/S15.md) |
 | S16 | The header: usage readout, tab strip, add deck | 2, 3 | `deck/view/usage.mjs`, `deck/test/view-usage.test.mjs`, `deck/rune/src/regions/usage.rs`, `src/regions/tabs.rs`, `tests/header.rs` | S6 (`Action::AddDeck`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S16](slices/S16.md) |
 | S17 | The right strip: toggle, create, start, close deck, alerts | 2, 3 | `deck/view/strip.mjs`, `deck/test/view-strip.test.mjs`, `deck/rune/src/regions/strip.rs`, `tests/strip.rs` | S6 (`Action::Create`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S17](slices/S17.md) |
@@ -217,7 +229,7 @@ other slice's plan changes. Then S5 (the write seam nine actions share), then th
 | S11 | planned | | | | S5 | 2, 3, 4 |
 | S12 | planned | | | | S1 | 2 |
 | S13 | planned | | | | S1 | 2 |
-| S14 | planned | | | | S10 | 2 |
+| S14 | planned | | | | S10 | 2, 6a |
 | S15 | planned | | | | S6, S10 | 2, 3, 6c |
 | S16 | planned | | | | S6 | 2, 3 |
 | S17 | planned | | | | S6 | 2, 3 |
