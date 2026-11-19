@@ -1,0 +1,152 @@
+{
+  "slug": "audit-f14",
+  "feature": "Stacked feature PRs + F14",
+  "ticket": "itm_4be41dcb9ee3",
+  "branch": "feat/audit-f14",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f14",
+  "artefact": "docs/design/audit-f14/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed 931d534",
+      "branch": "slice/audit-f14-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "implementing",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/audit-f14-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S2"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S3"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S4"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S4"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S3"
+      ]
+    },
+    {
+      "slice": "S8",
+      "state": "planned",
+      "after": [
+        "S7"
+      ]
+    },
+    {
+      "slice": "S9",
+      "state": "planned",
+      "after": [
+        "S4",
+        "S7"
+      ]
+    },
+    {
+      "slice": "audit-f14",
+      "state": "implementing",
+      "branch": "feat/audit-f14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f14",
+      "pr": 119
+    }
+  ],
+  "next": "S1 integrating; S2 implementing from S1's tip 931d534, rebases on feat once S1 lands there",
+  "updatedAt": "2026-11-19T11:22:01.927Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "a 1-slice mechanical ticket briefed to a Sonnet architect grew to 11 slices by a merge the user approved mid-design; the model choice no longer fits",
+      "evidence": "audit-f14 architect first findings",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck MCP listed as failed-to-connect in the environment header though its tools loaded and worked; deck_post refuses a question with recommended and no Research: line, one retry",
+      "evidence": "audit-f14 Sonnet architect hand-back",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "re-read merge thread, origin thread and ticket to verify the hand-off's UNVERIFIED merge claim",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "inherited S2-S11 scratch slices failed check-slices and were rewritten from scratch; `main gets pilot` pinned as fixtures in about 9 deck test files",
+      "evidence": "audit-f14 Opus architect hand-back",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "standing QA-environment question posted late, after the design questions, costing the architect one extra park and resume",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "gate1 post refused twice: body must name every A<n>, and the surface field is required; neither is in the architect's brief",
+      "evidence": "audit-f14 architect hand-back, gate1 itm_a29be6f63f92",
+      "size": 1
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "auto mode denied the diff-coverage command (HOME/USERPROFILE/PILOT_DECK_DIR exported to a temp dir before npx c8 npm test), reason Undermining Oversight",
+      "evidence": "itm_e558b897c6e5",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "re-cut brief said rebase then push: a rebased design branch cannot be pushed without a force push; pilot redid it as a base merge",
+      "evidence": "git push origin design/audit-f14 rejected non-fast-forward; fixed at 54996f86",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck MCP server failed to connect in the architect's session, so it could not send deck_status or post the gate1",
+      "evidence": "audit-f14 re-cut report: Connection closed",
+      "size": 2
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "mutation run hit the 900 s cap before any mutant ran; coverage run never reported; table handed to main instead of the fundamentalist",
+      "evidence": "crew-refusals evidence report: stryker exit 124, 1822 mutants instrumented, 0 run",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice worktree had no node_modules, so npm ci ran before the gate; the gate itself takes about 5.5 minutes",
+      "evidence": "S1 implementer report: npm test 4517 tests, 315 s",
+      "size": 1
+    }
+  ]
+}
