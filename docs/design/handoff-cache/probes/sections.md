@@ -91,8 +91,8 @@ verdict: ruled out, 10
 S8 read the verdict above against its bar (architecture.md §5 L1, line 5: the start drops 1,000 tokens or more, and
 the pilot's first-turn steps run 3 of 3) and built nothing: no `hooks/prompt-mod.mjs`, `hooks/hooks.json` unchanged,
 no rerun. No trim saved tokens repeatably: the all-8 runs moved the first turn by +1, 0, +10 and +5 (one `ft` run's
--1,375 did not repeat), the partial trims by +15 and +2, and
-`deck_status` ran 0 of 3 with the trim and 0 of 3 without it on a scratch hand-off, so both halves of the bar fail.
+-1,375 did not repeat) and the partial trims by +15 and +2, so the token half fails and alone closes the slice.
+`deck_status` ran 0 of 3 with the trim and 0 of 3 without it on a scratch hand-off, so the steps half is unmeasured.
 Line 5's row for S11's ledger:
 
-line 5, probes/sections.md, ruled out: trimming all 8 sized sections moves the first turn +1 / 0 / +10 / +5 tokens (one unrepeated -1,375) against the 1,000 bar; `deck_status` 0 of 3 trimmed and untrimmed
+line 5, probes/sections.md, ruled out: trimming all 8 sized sections moves the first turn +1 / 0 / +10 / +5 tokens (one unrepeated -1,375) against the 1,000 bar (verdict 10); `deck_status` 0 of 3 trimmed and untrimmed
