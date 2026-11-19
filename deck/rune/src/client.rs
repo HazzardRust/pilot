@@ -3,6 +3,7 @@
 //! ships does, and appears in no error, log or panic: an error names the file only.
 
 use std::fmt;
+use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -156,6 +157,25 @@ impl Client {
             .body_mut()
             .read_json::<View>()
             .map_err(|err| Error::Http(err.to_string()))
+    }
+
+    /// `GET /events`, the daemon's change stream, line by line. It is quiet until something
+    /// changes, so only the connect is timed; the stream ends when the daemon does.
+    pub fn events(&self) -> Result<impl BufRead + Send + 'static> {
+        let response = self
+            .agent
+            .get(format!("{}/events", self.base))
+            .header("Authorization", format!("Bearer {}", self.read_secret()?))
+            .config()
+            .timeout_global(None)
+            .timeout_connect(Some(Duration::from_secs(5)))
+            .build()
+            .call()
+            .map_err(|err| Error::Http(err.to_string()))?;
+        if response.status() != 200 {
+            return Err(Error::Status(response.status().as_u16()));
+        }
+        Ok(BufReader::new(response.into_body().into_reader()))
     }
 
     /// The store's secret, 64 hex characters, read now so a replaced file is taken at once.

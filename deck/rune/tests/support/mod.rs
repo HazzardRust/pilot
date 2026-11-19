@@ -1,6 +1,9 @@
 //! A scratch daemon (L7): started and stopped through `pilot deck --scratch` and `--stop`, the CLI
 //! over `deck/scratch.mjs`, on its own store dir and port; never the user's deck on 4321.
 
+// Each test binary compiles this module whole and uses only part of it.
+#![allow(dead_code)]
+
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -28,7 +31,17 @@ fn pilot(args: &[&str]) -> String {
 
 impl Scratch {
     pub fn start() -> Scratch {
-        let out = pilot(&["deck", "--scratch"]);
+        Scratch::start_on(None)
+    }
+
+    /// A scratch deck on `port` when given, as a restarted daemon comes back where it was.
+    pub fn start_on(port: Option<u16>) -> Scratch {
+        let port = port.map(|p| p.to_string());
+        let mut args = vec!["deck", "--scratch"];
+        if let Some(port) = &port {
+            args.extend(["--port", port]);
+        }
+        let out = pilot(&args);
         let field = |name: &str| {
             out.lines()
                 .find_map(|line| line.strip_prefix(name)?.strip_prefix(' '))
@@ -58,6 +71,19 @@ impl Scratch {
             .header("Authorization", format!("Bearer {}", secret.trim()))
             .send_json(serde_json::json!({ "name": "deck_post", "arguments": args }))
             .expect("the scratch deck takes the post");
+        assert_eq!(response.status(), 200);
+    }
+
+    /// An agent's first heartbeat from `cwd`, as `hooks/agent-roster.js` sends it.
+    pub fn heartbeat(&self, agent_id: &str, cwd: &str) {
+        let secret = std::fs::read_to_string(self.dir.join("deck.secret"))
+            .expect("the scratch deck's secret");
+        let response = ureq::post(format!("{}/api/agents", self.url))
+            .header("Authorization", format!("Bearer {}", secret.trim()))
+            .send_json(
+                serde_json::json!({ "agentId": agent_id, "agentType": "Explore", "cwd": cwd }),
+            )
+            .expect("the scratch deck takes the heartbeat");
         assert_eq!(response.status(), 200);
     }
 }
