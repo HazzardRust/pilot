@@ -9,26 +9,28 @@
   "slices": [
     {
       "slice": "S1 walkthrough turns a yellow ticket green",
-      "state": "pushed 3fe417d; security review of the gate2 exemption owed before integrate",
+      "state": "integrated",
       "branch": "slice/yellow-never-idle-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-s1"
     },
     {
       "slice": "S2 idle yellow ticket refuses the lane",
-      "state": "integrated (pilot integrate was still running at hand-off: confirm on origin, else rerun)",
+      "state": "integrated",
       "branch": "slice/yellow-never-idle-s2",
       "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-s2"
     },
     {
       "slice": "S3 idle line wakes a parked wait",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S2 idle yellow ticket refuses the lane"
-      ]
+      ],
+      "branch": "slice/yellow-never-idle-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-s3"
     }
   ],
-  "next": "PR #114. Read C:/Users/Hazzard/Projects/pilot-yellow-never-idle-s1.report.md (S1 verdicts, evidence trailers, owed steps). 1) confirm S2 (49e40741) is on origin/feat/yellow-never-idle, else rerun integrate. 2) security-reviewer on S1, seam into S1.md, integrate S1. 3) deck_ticket co-pilot itm_74926a1687c5, spawn co-pilot for S3, then fundamentalist and QA (scratch deck).",
-  "updatedAt": "2026-11-19T01:46:59.685Z",
+  "next": "PR #114. S2 integrated. S1 head 05f6f668: security re-review approve; pilot integrate slice/yellow-never-idle-s1 running in the feat worktree (main). On pass SendMessage the co-pilot the new feat tip; on fail send the row's real state. Co-pilot live on S3, then fundamentalist and QA. Open LOW for step 7: concludedBy never consumed (store-items.mjs:216).",
+  "updatedAt": "2026-11-19T02:02:42.236Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -72,6 +74,12 @@
       "kind": "drain",
       "what": "implementer reports landed in the pilot after the co-pilot paused; S1's saved to a file because next holds 400 chars",
       "size": 15
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test prints sub-suite pass/fail lines before the overall summary, so a wait loop matched early; 8 min a run",
+      "evidence": "S1 fix report",
+      "size": 1
     }
   ]
 }
