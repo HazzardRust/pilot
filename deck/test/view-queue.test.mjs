@@ -71,6 +71,20 @@ test('labels come from the server', (t) => {
   assert.equal(card(asked.id).tab.href, `/?run=${encodeURIComponent(ALPHA)}`, 'the overview names the card\'s tab');
 });
 
+test('a verdict\'s option carries the page\'s confirm step', (t) => {
+  tempDeck(t);
+  registerRun({ repo: ALPHA, pid: process.pid });
+  const signoff = postItem({ kind: 'signoff', title: 'Ship it?', body: 'Ready?', repo: ALPHA, author: '' });
+
+  const card = queueView(readDeck(), { run: ALPHA }).cards.find((each) => each.id === signoff.id);
+
+  // The page's own confirm row for a verdict's option: `Send “Sign off”?` and a Confirm (render-parts.mjs).
+  assert.deepEqual(card.options.find((option) => option.label === 'Sign off'),
+    { label: 'Sign off', confirm: true, ask: 'Send “Sign off”?', yes: 'Confirm' });
+  assert.deepEqual(card.options.find((option) => option.label === 'Teach me'), { label: 'Teach me', confirm: false },
+    'Teach me never confirms');
+});
+
 test('the lane lines are in phase order', (t) => {
   tempDeck(t);
   // Strip order is concluding, planning, implementing; the lines read planning, implementing, concluding.

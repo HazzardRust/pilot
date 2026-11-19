@@ -20,21 +20,25 @@ const unescape = (text) => text.replace(/&(amp|lt|gt|quot|#39|#x27);/g, (_, name
 /** The words a renderer's HTML shows, tags dropped: the label the page's reader sees. */
 const plain = (html) => unescape(html.replace(/<[^>]*>/g, '')).trim();
 
+/** The confirm step a trigger's row shows in place (`confirm.mjs`): the next `.step.sure`'s sentence and button. */
+const SURE = /<div class="step sure" hidden><p>([\s\S]*?)<\/p><button\b[^>]*>([\s\S]*?)<\/button>/;
+
 /**
  * The options the card's `/reply` form posts, read off the page's own form so the two never differ: each
- * `choice` value once, `confirm` when the page confirms it in place. Another form (an unknown kind's Dismiss
- * posts `/dismiss-item`) is no option of a reply.
+ * `choice` value once, `confirm` when the page confirms it in place, with that step's `ask` and `yes` words.
+ * Another form (an unknown kind's Dismiss posts `/dismiss-item`) is no option of a reply.
  */
 function optionsOf(item, back) {
   const form = renderCardAnswers(item, back);
   if (!form.startsWith('<form method="post" action="/reply">')) return [];
   const options = new Map();
-  for (const [, attrs] of form.matchAll(/<button\b([^>]*)>/g)) {
+  for (const { 1: attrs, index } of form.matchAll(/<button\b([^>]*)>/g)) {
     const value = attrs.match(/\bname="choice" value="([^"]*)"/)?.[1];
     if (value === undefined) continue;
     const label = unescape(value);
-    const confirm = /\bdata-confirm\b/.test(attrs);
-    options.set(label, { label, confirm: (options.get(label)?.confirm ?? false) || confirm });
+    if (options.get(label)?.confirm) continue;
+    const sure = /\bdata-confirm\b/.test(attrs) && form.slice(index).match(SURE);
+    options.set(label, sure ? { label, confirm: true, ask: plain(sure[1]), yes: plain(sure[2]) } : { label, confirm: false });
   }
   return [...options.values()];
 }

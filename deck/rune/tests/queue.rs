@@ -3,7 +3,7 @@
 
 mod support;
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use pilot_deck::app::{self, State};
@@ -51,11 +51,19 @@ fn secret(deck: &Scratch) -> String {
 
 /// A question with options on `repo`, posted by a session's tool call; answers its id.
 fn question(deck: &Scratch, title: &str, repo: &str) -> String {
+    post(
+        deck,
+        json!({
+        "kind": "question", "title": title, "body": "Port 4321 or 4322?", "repo": repo, "author": "",
+        "options": ["4321", "4322"] }),
+    )
+}
+
+/// One `deck_post` by a session's tool call; answers the new item's id.
+fn post(deck: &Scratch, arguments: Value) -> String {
     let mut response = ureq::post(format!("{}/api/tool", deck.url))
         .header("Authorization", format!("Bearer {}", secret(deck)))
-        .send_json(json!({ "name": "deck_post", "arguments": {
-            "kind": "question", "title": title, "body": "Port 4321 or 4322?", "repo": repo, "author": "",
-            "options": ["4321", "4322"] } }))
+        .send_json(json!({ "name": "deck_post", "arguments": arguments }))
         .expect("the scratch deck takes the post");
     let body: Value = response.body_mut().read_json().expect("json");
     let text = body["content"][0]["text"].as_str().expect("posted");
@@ -81,6 +89,18 @@ fn replies(deck: &Scratch, id: &str) -> Vec<Value> {
         .unwrap_or_default()
 }
 
+/// The replies once the press's post has landed: it runs on its own thread, so the frame does not wait on it.
+fn replied(deck: &Scratch, id: &str) -> Vec<Value> {
+    let start = Instant::now();
+    loop {
+        let said = replies(deck, id);
+        if !said.is_empty() || start.elapsed() > BUDGET * 3 {
+            return said;
+        }
+        std::thread::sleep(Duration::from_millis(20));
+    }
+}
+
 /// The window over the deck's overview as it stands now, drawn once.
 fn drawn(deck: &Scratch) -> Runtime<State> {
     let client = client_for(deck);
@@ -91,7 +111,7 @@ fn drawn(deck: &Scratch) -> Runtime<State> {
         view,
         ..State::default()
     };
-    state.regions.queue.deck = Some(client);
+    state.regions.queue.deck = Some(Arc::new(client));
     let mut rt = Runtime::new(state, app::view, (1280.0, 800.0), Env::new(true, 1.0));
     rt.frame(0.0);
     rt
@@ -151,7 +171,7 @@ fn an_option_press_is_sent_once() {
     }
     rt.frame(1.0 / 60.0);
 
-    let said = replies(&deck, &id);
+    let said = replied(&deck, &id);
     assert_eq!(said.len(), 1, "one reply posted: {said:?}");
     assert_eq!(said[0]["text"], "4321", "the option is the reply: {said:?}");
     let sent = find(&rt, &format!("card-{id}-opt-0"));
@@ -163,6 +183,111 @@ fn an_option_press_is_sent_once() {
     assert!(
         !find(&rt, &format!("card-{id}-opt-1")).focusable,
         "the row is spent once one option is sent"
+    );
+}
+
+fn click(rt: &mut Runtime<State>, key: &str) {
+    let at = find(rt, key).rect;
+    let (x, y) = (at[0] + at[2] / 2.0, at[1] + at[3] / 2.0);
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(1.0 / 60.0);
+}
+
+fn shown(rt: &Runtime<State>, key: &str) -> bool {
+    rt.elements()
+        .iter()
+        .any(|element| element.key.as_deref() == Some(key))
+}
+
+#[test]
+fn a_confirmed_option_asks_in_place_before_it_posts() {
+    let deck = Scratch::start();
+    let id = post(
+        &deck,
+        json!({ "kind": "signoff", "title": "Ship it?", "body": "Ready?", "repo": "C:/work/alpha", "author": "" }),
+    );
+    let mut rt = drawn(&deck);
+    let (trigger, sure, yes) = (
+        format!("card-{id}-opt-0"),
+        format!("card-{id}-sure"),
+        format!("card-{id}-yes"),
+    );
+
+    click(&mut rt, &trigger);
+    assert!(
+        rt.state.regions.queue.sent.is_empty(),
+        "the first press sends nothing"
+    );
+    assert_eq!(
+        find(&rt, &sure).text.as_deref(),
+        Some("Send “Sign off”?"),
+        "the page's confirm step, in place"
+    );
+    assert!(
+        !shown(&rt, &trigger),
+        "the step stands where the options were"
+    );
+
+    // A press anywhere but Confirm puts the options back, with nothing sent.
+    let (x, y) = (2.0, 798.0);
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(1.0 / 60.0);
+    assert!(!shown(&rt, &sure), "a press elsewhere backs out");
+    assert!(
+        rt.state.regions.queue.sent.is_empty(),
+        "backing out sends nothing"
+    );
+
+    click(&mut rt, &trigger);
+    click(&mut rt, &yes);
+    let said = replied(&deck, &id);
+    assert_eq!(said.len(), 1, "the confirm press posts once: {said:?}");
+    assert_eq!(
+        said[0]["text"], "Sign off",
+        "the option is the reply: {said:?}"
+    );
+}
+
+#[test]
+fn a_failed_post_comes_back_through_settle() {
+    let deck = Scratch::start();
+    let id = question(&deck, "Which port?", "C:/work/alpha");
+    let mut rt = drawn(&deck);
+    let gone = Scratch::start();
+    rt.state.regions.queue.deck = Some(Arc::new(client_for(&gone)));
+    drop(gone);
+    let option = format!("card-{id}-opt-0");
+
+    click(&mut rt, &option);
+    assert_eq!(
+        find(&rt, &option).fill,
+        theme::tokens(true).state.pilot,
+        "shown sent in the frame of the press"
+    );
+    let start = Instant::now();
+    let mut settled = false;
+    while !settled {
+        assert!(
+            start.elapsed() < BUDGET * 5,
+            "the failed post never came back"
+        );
+        std::thread::sleep(Duration::from_millis(20));
+        rt.update(|s, _| settled = pilot_deck::regions::queue::settle(s));
+    }
+    rt.frame(1.0 / 60.0);
+
+    assert!(
+        shown(&rt, &format!("card-{id}-refused")),
+        "the failure is shown on the card"
+    );
+    assert_ne!(
+        find(&rt, &option).fill,
+        theme::tokens(true).state.pilot,
+        "the option is no longer sent, so it can be pressed again"
     );
 }
 
