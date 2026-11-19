@@ -720,7 +720,7 @@ test('the teacher owns its lesson thread: it posts, waits on and closes that one
   assert.deepEqual(
     tools,
     [
-      'Read', 'Grep', 'Glob', 'Bash', 'SendMessage',
+      'Read', 'Grep', 'Glob', 'Bash', 'ToolSearch', 'SendMessage',
       'mcp__plugin_pilot_deck__deck_post', 'mcp__plugin_pilot_deck__deck_reply',
       'mcp__plugin_pilot_deck__deck_resolve',
     ],

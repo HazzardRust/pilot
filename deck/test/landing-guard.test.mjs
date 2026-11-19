@@ -171,7 +171,7 @@ test('the start-up sweep settles every running landing interrupted, and a second
   beginLanding(other.id, { worktree: elsewhere.worktree });
   settleLanding(landed.id, { ok: true, sha: '1a2b3c4', line: 'landed feat/x on pilot at 1a2b3c4' });
 
-  interruptLandings();
+  interruptLandings(() => false);
   for (const gate of [pressed, other]) {
     assert.equal(reread(gate.id).landing.state, 'refused');
     assert.equal(reread(gate.id).landing.line, LANDING_INTERRUPTED);
@@ -228,6 +228,6 @@ test('the page offers no Sign off after NOT landed or an interrupted landing, no
 
   const orphan = signed(aGate2({ repo, worktree }));
   beginLanding(orphan.id, { worktree });
-  interruptLandings();
+  interruptLandings(() => false);
   assert.equal(offered(orphan), false, 'a landing the restart interrupted');
 });

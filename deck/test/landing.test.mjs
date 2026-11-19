@@ -129,7 +129,7 @@ test('the thread reads running at once and land\'s two lines on exit 0', (t) => 
   startLanding(gate.id, { spawn: fake.spawn, env: {} });
   assert.deepEqual(deckLines(gate.id), [`landing started in ${worktree}`]);
   assert.equal(reread(gate.id).landing.state, 'running');
-  assert.ok(!('pid' in reread(gate.id).landing), 'no pid: a restart settles it, not a pid check (F1)');
+  assert.equal(reread(gate.id).landing.pid, fake.children[0].pid, 'the pid: a restart re-adopts a live child (never-stuck spec 21)');
 
   fake.exit(0, LANDED);
   const { landing } = reread(gate.id);

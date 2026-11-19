@@ -5,7 +5,8 @@
  * the thread, and is handed the reply, when the reply has sat unclaimed for 30 s (L6),
  * or when the owner picked it up and has not answered on the thread in 5 min (L7), and
  * either way only once the owner kind has made no tool call and held no wait for
- * `LIVE_WINDOW_MS`. What fires it is a timer in the pilot's own parked wait, never a
+ * `LIVE_WINDOW_MS` — except a reply never picked up that no wait of the owner is parked on,
+ * which goes at 30 s however busy the owner (never-stuck L9, `unheard.test.mjs`). What fires it is a timer in the pilot's own parked wait, never a
  * daemon-wide sweep.
  *
  * The clock is each test's own (`mock.timers`, `setTimeout` and `Date`), and every
@@ -145,25 +146,7 @@ test('L6: an unclaimed reply with qa quiet goes to the pilot 30 s after it arriv
   assert.equal(threadState(item), 'the pilot has it');
 });
 
-test('L6: a qa that made a tool call inside the window keeps its reply until it has been quiet 90 s', async (t) => {
-  const base = await deckAtStart(t);
-  qaQuiet();
-  const walk = walkthrough();
-  const before = currentSeq();
-  addReply(walk.id, 'looks wrong');
-
-  const wait = await pilotWait(base);
-  await tickBy(t, 20 * SECOND);
-  noteAgent({ agentId: 'qa1', agentType: QA, cwd: ALPHA });
-  assert.equal(lastActive(ALPHA, 'qa'), START + 20 * SECOND, "a roster heartbeat is its kind's activity");
-  await tickBy(t, LIVE_WINDOW_MS - 1);
-  assert.equal(wait.done(), false, 'a busy owner keeps its thread past 30 s');
-  assert.equal(ownerOf(stored(walk.id)), 'qa');
-
-  t.mock.timers.tick(1);
-  assert.deepEqual(saidIn(await answer(wait)), ['looks wrong'], 'quiet for 90 s, it goes to the pilot');
-  assert.deepEqual(saidIn(await poll(t, qaWait(base, before, 1))), [], 'and not to qa as well');
-});
+// A busy owner keeping a reply it never picked up is gone: never-stuck L9, `unheard.test.mjs`.
 
 test("a heartbeat from a worktree keeps its kind's thread", async (t) => {
   const base = await deckAtStart(t);
@@ -173,8 +156,11 @@ test("a heartbeat from a worktree keeps its kind's thread", async (t) => {
 `);
   qaQuiet();
   const walk = walkthrough();
+  const before = currentSeq();
   addReply(walk.id, 'looks wrong');
+  await qaPicksUp(t, base, before, walk.id);
 
+  t.mock.timers.tick(ANSWER);
   noteAgent({ agentId: 'qa1', agentType: QA, cwd: tree });
   t.mock.timers.tick(LIVE_WINDOW_MS - 2);
   assert.deepEqual(saidIn(await poll(t, pilotWait(base, 1))), [], 'QA at work in a worktree of the repository is QA at work');
@@ -184,7 +170,10 @@ test("a heartbeat from a worktree keeps its kind's thread", async (t) => {
 test('a qa holding a wait is at work for as long as it holds it', async (t) => {
   const base = await deckAtStart(t);
   const walk = walkthrough();
+  const before = currentSeq();
   addReply(walk.id, 'where is step three?');
+  await qaPicksUp(t, base, before, walk.id);
+  t.mock.timers.tick(4 * MINUTE); // its 5 min to answer run out inside the wait below
   // QA's cursor sits past the reply, so nothing but its activity can keep the reply from the pilot.
   const qa = await qaWait(base, currentSeq(), 2 * MINUTE);
   const pilot = await pilotWait(base, 2 * MINUTE);
@@ -351,7 +340,9 @@ test('fallback writes once', async (t) => {
 test('a restarted daemon counts an unseen kind from its own start', async (t) => {
   const base = await deckAtStart(t);
   const walk = walkthrough();
+  const before = currentSeq();
   addReply(walk.id, 'from before the restart');
+  await qaPicksUp(t, base, before, walk.id);
   t.mock.timers.tick(60 * MINUTE);
   forgetAgents(); // the daemon restarts: `lastActive` is gone and counts from now
 

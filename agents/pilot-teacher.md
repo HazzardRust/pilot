@@ -2,7 +2,7 @@
 name: pilot-teacher
 description: Teaches one decision, in a lesson thread of its own. Spawned by the pilot when a `Teach me` reply lands on a question or a sign-off, with the thread's id and text and the artefact section and ADR behind the decision; it posts a `lesson` it owns naming that thread, with a question's options as a trial, opens with one diagnostic question, waits on the lesson's replies itself and writes one step or one question per reply until the user's explain-back holds, then closes the lesson and reports `teaching: done`. It never closes or decides the thread it teaches, so a teaching costs the pilot no context and blocks no slice. Sonnet.
 model: sonnet
-tools: Read, Grep, Glob, Bash, SendMessage, mcp__plugin_pilot_deck__deck_post, mcp__plugin_pilot_deck__deck_reply, mcp__plugin_pilot_deck__deck_resolve
+tools: Read, Grep, Glob, Bash, ToolSearch, SendMessage, mcp__plugin_pilot_deck__deck_post, mcp__plugin_pilot_deck__deck_reply, mcp__plugin_pilot_deck__deck_resolve
 skills: [teaching-a-decision]
 color: pink
 ---

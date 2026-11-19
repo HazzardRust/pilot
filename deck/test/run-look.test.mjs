@@ -253,6 +253,21 @@ test('the hold clears at 20 minutes', async (t) => {
   assert.deepEqual(bound, { act: 'clear', id: handoff.id }, 'cleared at the bound');
 });
 
+// never-stuck S19 (spec 25): a co-pilot released on a queued pause frees the clear at the next turn end, not at the bound.
+test('a released hold clears before the bound', async (t) => {
+  const claims = scratchHome(t);
+  const heldAt = Date.now() - 5 * MINUTE;
+  const releasedAt = heldAt + 2 * MINUTE;
+  const handoff = { ...handoffItem(), hold: { at: at(heldAt) } };
+  stampPosted(claims, handoff.id);
+  await deckHolding(t, [handoff], { coPilot: { ticket: 'itm_c0c0c0c0c0c0', live: false, at: at(releasedAt) } });
+
+  const outcome = await look('turn', { repo: OURS, turnEndedAt: releasedAt + MINUTE }, { ...session, now: () => releasedAt + MINUTE });
+
+  assert.deepEqual(outcome, { act: 'clear', id: handoff.id });
+  assert.deepEqual(logLines(claims).filter((line) => line.includes('past 20 min')), [], 'not cleared as the bound');
+});
+
 test('a hand-off closed or superseded before the turn ended is not cleared', async (t) => {
   const claims = scratchHome(t);
   const closed = { ...handoffItem(), resolvedAt: new Date().toISOString() };
