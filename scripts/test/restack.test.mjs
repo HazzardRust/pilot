@@ -167,7 +167,7 @@ test('a hand conflict stops', (t) => {
 
   const out = restackIn(work, host);
 
-  assert.deepEqual(out.lines, ['conflict feat/b: src/x.mjs']);
+  assert.deepEqual(out.lines, ['conflict feat/b with main: src/x.mjs']);
   assert.equal(out.exitCode, 3);
   assert.equal(tip(origin, 'feat/b'), before);
   assert.deepEqual(out.calls.filter((args) => args[0] === 'push'), []);
