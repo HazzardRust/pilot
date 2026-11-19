@@ -65,14 +65,25 @@ export function runClaude(argv, { env = process.env } = {}) {
   const bin = claudeBin(env);
   if (!bin) return Promise.reject(new Error('claude is not on PATH'));
   return new Promise((resolve, reject) => {
-    const child = spawn(bin, argv, { env, windowsHide: true, timeout: CLAUDE_TIMEOUT_MS, killSignal: 'SIGKILL', stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(bin, argv, { env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
+    // Our own timer, not spawn's `timeout`: a grandchild (git) holding the pipes would keep `close` from firing.
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      child.stdout.destroy();
+      child.stderr.destroy();
+      reject(new Error(`claude ${argv.join(' ')} gave no answer in ${CLAUDE_TIMEOUT_MS / 1000}s`));
+    }, CLAUDE_TIMEOUT_MS);
     child.stdout.setEncoding('utf8').on('data', (chunk) => (stdout += chunk));
     child.stderr.setEncoding('utf8').on('data', (chunk) => (stderr += chunk));
-    child.on('error', (err) => reject(new Error(`could not start ${bin}: ${err.message}`)));
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      reject(new Error(`could not start ${bin}: ${err.message}`));
+    });
     child.on('close', (code, signal) => {
-      if (signal) reject(new Error(`claude ${argv.join(' ')} gave no answer in ${CLAUDE_TIMEOUT_MS / 1000}s (${signal})`));
+      clearTimeout(timer);
+      if (signal) reject(new Error(`claude ${argv.join(' ')} was stopped (${signal})`));
       else resolve({ exitCode: code, stdout, stderr });
     });
   });

@@ -48,7 +48,8 @@ function runner(home, { next, failOn } = {}) {
 async function cli(args, deps) {
   const out = [];
   const err = [];
-  const code = await main(args, { ...deps, stdout: (s) => out.push(s), stderr: (s) => err.push(s) });
+  // An empty env: a CLAUDE_CONFIG_DIR in the caller's would point main at another install record.
+  const code = await main(args, { env: {}, ...deps, stdout: (s) => out.push(s), stderr: (s) => err.push(s) });
   return { code, out: out.join(''), err: err.join('') };
 }
 
