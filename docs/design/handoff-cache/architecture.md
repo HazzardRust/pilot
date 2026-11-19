@@ -86,6 +86,7 @@ a build on any probe that does not meet its bar (L1).
 - **L5 Section trims touch the main pilot session only.** S8's `prompt.section` hook changes nothing in a crew agent or a plain session. Rejected: a trim for every session the plugin loads in, which would starve the crew of what it reads.
 - **L6 `pilot update` wraps the `claude plugin` CLI.** `marketplace update pilot`, then `update pilot@pilot`; no downloader of its own. A live run is a deck session with an open run record. Rejected: copying files into the plugin cache.
 - **L7 A restart replaces `/clear` only on two bars.** First-turn uncached input plus cache write drops by 1,000 tokens or more, and the pickup prompt runs 3 of 3.
+- **L8 A probe may copy the login, for its run only.** The user chose this on itm_41847d20a6a6: a probe that needs a login copies `~/.claude/.credentials.json` into a per-run temp config dir, deleted when each run ends (a crash included), never committed, logged, printed or posted, and checked after the runs that no copy is left. A refusal of the copy is a blocked step for the user, never routed around. Rejected: a scratch login, the recommended default, which the user declined. overridden: real token readable in temp for a run's length; auto mode may refuse the copy again.
 
 ## 6. Assumed decisions
 
