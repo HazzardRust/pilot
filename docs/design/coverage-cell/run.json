@@ -1,0 +1,146 @@
+{
+  "slug": "coverage-cell",
+  "feature": "coverage-cell",
+  "ticket": "itm_e3120951f457",
+  "branch": "feat/coverage-cell",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-coverage-cell",
+  "artefact": "docs/design/coverage-cell/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/coverage-cell-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-coverage-cell-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/coverage-cell-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-coverage-cell-s2"
+    },
+    {
+      "slice": "coverage-cell",
+      "state": "gate2 posted",
+      "branch": "feat/coverage-cell",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-coverage-cell",
+      "pr": 125
+    }
+  ],
+  "next": "coverage-cell: both slices integrated, feat at 4ec14b1c, gate2 itm_c3e6e54d9718 posted; on its Sign off press spawn pilot-lander with the gate2 id; on Not yet route the change to a fix implementer on feat/coverage-cell",
+  "updatedAt": "2026-11-19T14:00:51.263Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "co-pilot hand-backs forced at every idle, read in full by the pilot across 4 co-pilots",
+      "size": 14
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 called its gate green while it printed spawns over the ceiling; integrate refused the merge and a fix round raised SPAWN_CEILING",
+      "evidence": "audit-f14 integrate log 20261119T114148481Z; gate.mjs ceiling 12100 -> 13450"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck MCP CONNECTION_CLOSED for the whole re-cut session; rebase onto pilot rewrote signed design commits and forced a lease push question",
+      "evidence": "itm_43233104ddcc"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck_post refused 3 questions for a missing Research: line the architect definition does not mention",
+      "evidence": "ADR 0119 refusal text; re-posted"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "pilot wait --as architect without --item exits 1: no way to wait on a message from main, so it handed back while waiting for verdicts",
+      "evidence": "exit 1, usage text"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "first Bash of a parallel batch gets no classifier verdict and is re-issued alone",
+      "evidence": "worktree add, pilot wait; pilot saw the same twice"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot tickets --open prints every unmerged PR's full file list",
+      "size": 12
+    },
+    {
+      "kind": "drain",
+      "what": "gate2 read twice with its full QA comment to see the landing lines",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "brief named a chained base but pilot base printed pilot once the parent's gate2 was pressed; gate1 refused and the design branch needed a second rebase",
+      "evidence": "gate1 refusal: feat/coverage-cell is not on pilot's tip"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck refuses worktree and base on an architect's deck_status, so run.json was not written until the pilot re-sent them",
+      "evidence": "refusal: ticket, slices and feature only"
+    },
+    {
+      "agent": "pilot:pilot-explorer",
+      "what": "WebFetch summarised the upstream skill instead of returning it; origin/pilot only readable via git show because the main checkout is 950 commits stale",
+      "evidence": "curl on raw.githubusercontent.com used instead"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "150-line slice limit did not fit a new module plus its test list; S1 came in at 262 lines without stopping to ask",
+      "evidence": "S1 report: +262 -0, 2 files",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "check-syntax.mjs needs --experimental-vm-modules and a cwd argument its usage line omits; failed twice",
+      "evidence": "S1 report friction row",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice B3 assumed git lowercases the drive letter; the mismatch is Node's invoked case, two probes",
+      "evidence": "S1 report friction row",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "recut-decision architect's hand-back arrived after the /clear and its report never reached the new pilot session",
+      "evidence": "task-notification with no message body",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "short-path slice ran only its own test file, so the repo-wide platform-reads pin went red at integrate, costing a full gate run and a fix round",
+      "evidence": "NOT integrated slice/coverage-cell-s1: 4631 pass, 1 fail; log 20261119T132557252Z-slice-coverage-cell-s1.log",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the gate's spawn ceiling (12100) has about 60 spawns of headroom on pilot; a new fixture-repo test of about 100 spawns goes red with 0 failing tests, a second 5.5-minute gate lost",
+      "evidence": "spawns 12141 over 12100; log 20261119T133304657Z-slice-coverage-cell-s1.log; base runs 12033-12037",
+      "size": 3
+    },
+    {
+      "agent": "pilot",
+      "what": "pilot's suite sits 12 spawns under SPAWN_CEILING, so any slice adding a fixture test goes red at integrate; three 5.5-minute gates lost on coverage-cell S1 before the ceiling was raised by its own L16 rule",
+      "evidence": "logs 20261119T132557252Z, 133304657Z, 134133813Z-slice-coverage-cell-s1.log: 12142, 12141, 12107",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md names no typecheck or lint because the repo has none; S2 lost a call finding that out",
+      "evidence": "S2 report: tsc TS5057, package.json scripts",
+      "size": 1
+    },
+    {
+      "agent": "security-reviewer",
+      "what": "S2 security reviewer reported that a base starting with - reaches git; the script's BASE regex already refuses it",
+      "evidence": "scripts/diff-coverage.mjs BASE = /^[A-Za-z0-9._/][A-Za-z0-9._/-]*$/",
+      "size": 1
+    }
+  ]
+}
