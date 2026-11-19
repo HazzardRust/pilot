@@ -1,5 +1,7 @@
 // ci-gate S8, spec 8; L1, L3. GitLab answers the same **Check**s: `checks(sha)` reads the commit's latest statuses
-// over the one allowed `glab api` GET. Every run here is a fake or refused before a process starts: 0 spawns.
+// over the one allowed `glab api` GET. Every run here is a fake, refused before `execFileSync`, or started in a cwd
+// that does not exist, so no `glab` process starts. The statuses fixture is written from GitLab's docs example, not
+// captured: no GitLab remote exists here (S8 Misses).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -54,6 +56,10 @@ test('a full page reads on to the next', () => {
   assert.equal(checks.length, 101);
   assert.deepEqual(checks.at(-1), { name: 'last', outcome: 'fail', url: fixture[0].target_url });
   assert.deepEqual(calls.map(({ args }) => args.at(-1)), [STATUSES, STATUSES.replace('&page=1', '&page=2')]);
+  let pages = 0;
+  const endless = gitlabHost(() => (pages += 1, JSON.stringify(full)));
+  assert.throws(() => endless.checks(SHA), /more than 99900 statuses/);
+  assert.equal(pages, 999, 'no page past the allowlist is asked for');
 });
 
 test('the verdict is the same', () => {

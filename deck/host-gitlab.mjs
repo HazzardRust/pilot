@@ -1,7 +1,7 @@
 /**
  * The GitLab adapter (other-host spec 4, 6; L1, L4, A3): **Host** over `glab api`, REST v4 on the current
- * project's `projects/:id/merge_requests…` and one commit's statuses (ci-gate S8), never `glab mr` porcelain, whose flags move between versions. A JSON
- * body rides on stdin (`--input -`). `glabRun` is the one place a `glab` process starts; the call is
+ * project's `projects/:id/merge_requests…` and one commit's statuses (ci-gate S8), never `glab mr` porcelain,
+ * whose flags move between versions. A JSON body rides on stdin (`--input -`). `glabRun` is the one place a `glab` process starts; the call is
  * `execFileSync('glab', argv)`, no shell, and it inherits the environment: the pilot never reads a token, and
  * `signedIn` reads only `glab auth status`'s exit status.
  */
@@ -25,8 +25,8 @@ const STATUSES_PATH = new RegExp(`^projects/:id/repository/commits/${FULL_SHA.so
 const JSON_HEADER = 'Content-Type: application/json';
 
 /**
- * True when `args` is a `glab api` call on the list: `api user`, a bare GET of `STATUSES_PATH`, a GET under `MR_PATH`, a POST of a merge request
- * or a note, a PUT of a merge request or a note. A write's body comes only from stdin (`--input -`); `-F` and
+ * True when `args` is a `glab api` call on the list: `api user`, a bare GET of `STATUSES_PATH`, a GET under
+ * `MR_PATH`, a POST of a merge request or a note, a PUT of a merge request or a note. A write's body comes only from stdin (`--input -`); `-F` and
  * `-f` are refused (`-F`'s `@file` reads a local file into the request), as are `--hostname` and any other flag.
  */
 function apiAllowed(args) {
