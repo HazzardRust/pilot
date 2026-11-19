@@ -31,12 +31,12 @@ function fakeHost(...states) {
   };
 }
 
-/** A git that verifies only `HEAD` and `5fef2ab`, recording its argv. */
+/** A git that verifies only `HEAD`, `5fef2ab` and the all-digit `1234567`, recording its argv. */
 function fakeGit() {
   const calls = [];
   const git = (args) => {
     calls.push(args);
-    if (args[0] === 'rev-parse' && ['HEAD^{commit}', '5fef2ab^{commit}'].includes(args.at(-1))) return SHA;
+    if (args[0] === 'rev-parse' && ['HEAD^{commit}', '5fef2ab^{commit}', '1234567^{commit}'].includes(args.at(-1))) return SHA;
     throw Object.assign(new Error('git failed'), { stderr: 'fatal: Needed a single revision' });
   };
   return Object.assign(git, { calls });
@@ -95,7 +95,20 @@ test('wait is bounded', async (t) => {
   const run = await runChecks(t, ['5fef2ab', '--wait', '1'], host);
   assert.equal(run.code, 4);
   assert.equal(run.out, 'checks pending at 5fef2ab: test\n');
-  assert.ok(host.asked.length <= 2, `${host.asked.length} polls`);
+  assert.deepEqual([host.asked.length, run.slept], [2, [30_000]], 'reads at 0 s and 30 s; a third would be at the bound');
+});
+
+test('an unread mid-wait ends the wait, unread', async (t) => {
+  const host = fakeHost('pending', 'unread');
+  const run = await runChecks(t, ['--wait', '5'], host);
+  assert.deepEqual([run.code, run.slept], [6, [30_000]]);
+});
+
+test('after a bare --wait an all-digit short sha is the ref, not minutes', async (t) => {
+  const host = fakeHost('green');
+  const run = await runChecks(t, ['--wait', '1234567'], host);
+  assert.equal(run.code, 0);
+  assert.deepEqual(run.git.calls, [['rev-parse', '--verify', '--quiet', '1234567^{commit}']]);
 });
 
 test('a bare --wait waits up to 20 minutes, and the word after it is the ref', async (t) => {
@@ -131,7 +144,9 @@ test('a ref is a commit or usage', async (t) => {
     assert.equal(run.out, '', `${argv.join(' ')}: nothing on stdout`);
     assert.match(run.err, /pilot checks/, `${argv.join(' ')}: names itself on stderr`);
     assert.deepEqual(host.asked, [], `${argv.join(' ')}: no host call`);
-    assert.ok(run.git.calls.every((args) => !args.some((arg) => arg.startsWith('-') && argv.includes(arg))), 'no flag-shaped ref reaches git');
+    // Only a ref-shaped word git then fails to verify reaches git; every flag and bad minutes is refused first.
+    const reachesGit = argv.includes('nosuchref') || argv.includes('1.5');
+    assert.equal(run.git.calls.length, reachesGit ? 1 : 0, `${argv.join(' ')}: git calls`);
   }
 });
 

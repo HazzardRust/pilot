@@ -21,8 +21,9 @@ function parse(argv) {
     const arg = argv[i];
     if (arg === '--wait') {
       if (wait !== undefined) return null;
-      // The next word is the minutes when it is number-shaped, else a bare --wait and the word is the ref.
-      if (/^[0-9.]+$/.test(argv[i + 1] ?? '')) {
+      // The next word is the minutes when it is one or two digits, else a bare --wait and the word is the ref
+      // (git abbreviates to at least four characters, so an all-digit short sha is still a ref).
+      if (/^\d{1,2}$/.test(argv[i + 1] ?? '')) {
         wait = Number(argv[(i += 1)]);
         if (!Number.isInteger(wait) || wait < 1 || wait > 60) return null;
       } else wait = DEFAULT_WAIT_MIN;
@@ -57,6 +58,7 @@ export async function main(argv, {
     const reader = host === undefined ? hostFor(cwd, { git }) : host;
     const deadline = now() + args.wait * 60_000;
     verdict = checksAt({ host: reader, sha });
+    // Only pending waits: an unread mid-wait ends it at once, never retried and never read as green.
     while (verdict.state === 'pending' && now() + POLL_MS < deadline) {
       await sleep(POLL_MS);
       verdict = checksAt({ host: reader, sha });

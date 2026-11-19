@@ -688,7 +688,7 @@ const USAGE = [
   '',
   '  Always: ask rules before a push or merge to main or master, and allow rules for the',
   "  pilot's own Bash(pilot sync *), Bash(pilot integrate *), Bash(pilot land *), Bash(pilot landing *),",
-  '  Bash(pilot checks *), Bash(pilot ps), Bash(pilot gc),Bash(pilot deck --stop *) and Bash(pilot deck --scratch *).',
+  '  Bash(pilot checks *), Bash(pilot ps), Bash(pilot gc), Bash(pilot deck --stop *) and Bash(pilot deck --scratch *).',
 ].join('\n');
 
 const OPTION_OF = { '--settings': 'settingsPath', '--plugin-root': 'pluginRoot' };
