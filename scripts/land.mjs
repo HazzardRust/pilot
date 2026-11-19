@@ -24,6 +24,7 @@ import path from 'node:path';
 
 import { hostFor } from '../deck/host.mjs';
 import { deleteMerged } from './branches.mjs';
+import { checksGate } from './checks.mjs';
 import { assertPushable, firstLine, holds, PILOT_BRANCH } from './pilot-branch.mjs';
 import { baseOf, commitRecords, git as gitAt, landingMessage } from './integrate.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
@@ -211,6 +212,9 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
     throw fail(`${firstLine(err)}; nothing pushed`);
   }
   chainGuard({ cwd });
+  // The caught-up tip's checks, before the record commit or any push (ci-gate L4, A2): red, pending, unread refuse.
+  const checks = checksGate({ host, git, sha: git(['rev-parse', 'HEAD']), at: 'land' });
+  if (!checks.ok) throw fail(`${checks.line}; nothing pushed`);
   // The deck's run record rides in the landing merge (lander L10): committed, not discarded.
   commitRecords(cwd);
   const source = git(['rev-parse', 'HEAD']);
