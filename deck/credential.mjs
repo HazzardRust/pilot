@@ -22,16 +22,22 @@ const CREDENTIAL_SHAPES = [
     'a secret assigned to a name',
     /\b(?:api[_-]?key|secret|token|password|passwd|pwd)\b\s*[:=]\s*["']?[A-Za-z0-9/+_-]{16,}/i,
   ],
-  // A shell reference (`$TOKEN`) or a placeholder (`<token>`) names a credential and stays postable. The gaps and
-  // runs are bounded so a 64 KiB field cannot backtrack for seconds; a plain word after `--password` or `Basic` is prose.
+  // A shell reference (`$TOKEN`) or a placeholder (`<token>`) names a credential and stays postable; a plain word
+  // after `--password` or `Basic` is prose. No run may fail open at a bound, and none may backtrack for seconds on
+  // 64 KiB: the gap after `curl` is unbounded but stops at the next `curl`, so each character is scanned from one
+  // `curl` only; the user run is unbounded, since it cannot hold the whitespace that starts the next flag; the flag
+  // cluster stays bounded, and one of 11+ letters with a `u` past them is flagged outright. That over-flags an
+  // absurd cluster such as `-abcdefghijklu`, deliberately: failing closed is the accepted cost.
   [
     'a password in a curl -u',
-    /\bcurl\b[^\n|;&]{0,500}\s(?:--(?:proxy-)?user|-[A-Za-z]{0,10}[uU])(?:\s+|=|(?=[^\s-]))["']?[^\s"':$<]{1,200}:(?![$<{])[^\s"']{1,500}/,
+    /\bcurl\b(?:(?!\bcurl\b)[^\n|;&])*?\s(?:-[A-Za-z]{11}[A-Za-z]*[uU]|(?:--(?:proxy-)?user|-[A-Za-z]{0,10}[uU])(?:\s+|=|(?=[^\s-]))["']?[^\s"':$<]+:(?![$<{])[^\s"'])/,
   ],
-  // A loopback host's userinfo is a local dev stack's (a Supabase local database), never a shared credential.
+  // A loopback host's userinfo is a local dev stack's (a Supabase local database), never a shared credential. The
+  // user and password runs are unbounded so a long one cannot fail open; neither can hold `/`, so a run is scanned
+  // from one `://` only.
   [
     'a password in a URL',
-    /\b[a-z][a-z0-9+.-]{0,30}:\/\/[^\s/:@$<]{1,200}:(?![$<{])[^\s/@]{1,500}@(?!(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?(?:[/?#\s"']|$))/i,
+    /\b[a-z][a-z0-9+.-]{0,30}:\/\/[^\s/:@$<]+:(?![$<{])[^\s/@]+@(?!(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?(?:[/?#\s"']|$))/i,
   ],
   ['a --password value', /(?:^|\s)--password(?:\s+|=)["']?(?![$<{-])(?=[^\s"']*[^A-Za-z\s"'])[^\s"']{6,}/],
   ['a Basic authorization', /\bAuthorization:\s*Basic\s+(?=[A-Za-z0-9+/=]*[0-9+/=])[A-Za-z0-9+/]{8,}={0,2}/i],

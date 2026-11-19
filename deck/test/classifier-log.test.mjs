@@ -90,6 +90,15 @@ for (const [name, command] of [
   ['an alternating uA run after curl -', 'curl -' + 'uA'.repeat(32768)],
   ['many curls before a run of u', 'curl '.repeat(500) + ' -' + 'u'.repeat(65536)],
   ['a long eyJ run', 'eyJ' + 'a'.repeat(65536)],
+  ['a curl with no -u', 'curl ' + 'x '.repeat(32768)],
+  ['a run of curls', 'curl '.repeat(13108)],
+  ['a flag cluster with no u', 'curl -' + 'A'.repeat(65536)],
+  ['a run of flag clusters with no u', 'curl' + ' -AAAAAAAAAAAA'.repeat(5041)],
+  ['a curl -u user with no colon', 'curl -u ' + 'a'.repeat(65536)],
+  ['a run of curl -u users with no colon', 'curl' + ' -uuuuuuuuuu0'.repeat(5041)],
+  ['a URL user with no colon', 'x://' + 'a'.repeat(65536)],
+  ['a URL password with no @', 'x://u:' + 'p'.repeat(65536)],
+  ['a run of URL schemes', 'a.'.repeat(15) + 'a://' + 'b:'.repeat(32768)],
 ]) {
   test(`${name} is checked in under 200 ms`, (t) => {
     const dir = scratch(t);
@@ -98,6 +107,30 @@ for (const [name, command] of [
     assert.ok(process.hrtime.bigint() - started < 200_000_000n, 'checked in under 200 ms');
   });
 }
+
+// A run longer than a pattern's old bound must fail closed, never let the credential through.
+for (const [name, command] of [
+  ['a curl -u user of 201 characters', 'curl -u ' + 'a'.repeat(201) + ':pw12345'],
+  ['a URL user of 201 characters', 'psql postgres://' + 'a'.repeat(201) + ':pw@evil.com/db'],
+  ['a URL password of 501 characters', 'psql postgres://bob:' + 'p'.repeat(501) + '@evil.com/db'],
+  ['a curl flag cluster of 11 letters before u', 'curl -abcdefghijku bob:pw12345'],
+  ['a curl with 501 characters before -u', 'curl ' + 'x'.repeat(501) + ' -u bob:pw12345'],
+]) {
+  test(`${name} reads back withheld`, (t) => {
+    const dir = scratch(t);
+    appendRefusal(entry({ command }), { dir });
+    assert.strictEqual(readRefusals({ dir })[0].command, '<withheld: credential>');
+  });
+}
+
+test('a long sentence about curl and a URL with no userinfo reads back as it was', (t) => {
+  const dir = scratch(t);
+  const sentence =
+    'Run curl against https://api.example.com/v1/items to list the items, then read the response headers ' +
+    'for a cache hit, and if the request was slow, retry it with a longer timeout before you open a ticket. '.repeat(4);
+  appendRefusal(entry({ reason: sentence }), { dir });
+  assert.strictEqual(readRefusals({ dir })[0].reason, sentence.slice(0, 300));
+});
 
 test('a JWT whose first segment is longer than 3000 characters reads back withheld', (t) => {
   const dir = scratch(t);
