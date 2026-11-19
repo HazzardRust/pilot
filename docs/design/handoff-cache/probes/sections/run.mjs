@@ -26,7 +26,7 @@ import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 // The platform seam: the one place a platform is read, and the one tree-kill (taskkill /T /F on win32).
 const { killTree } = createRequire(import.meta.url)('../../../../../hooks/lib/platform.js');
@@ -68,12 +68,13 @@ export function track(child) {
 }
 
 /** Ends each live session, and on win32 its whole tree, before the login copy goes. */
-function endChildren() {
-  for (const child of children) {
-    if (child.exitCode !== null || child.signalCode !== null || child.pid === undefined) continue;
-    try { killTree(child.pid); } catch (err) { process.stderr.write(`run.mjs: could not end pid ${child.pid}: ${err.message}\n`); }
-  }
+function endChild(child) {
+  if (child.exitCode !== null || child.signalCode !== null || child.pid === undefined) return;
+  try { killTree(child.pid); } catch (err) { process.stderr.write(`run.mjs: could not end pid ${child.pid}: ${err.message}\n`); }
 }
+
+// Off win32 killTree reaches the root only (the session is not spawned detached); the probe is run on win32.
+function endChildren() { for (const child of children) endChild(child); }
 
 /** The copied login first, then the whole scratch tree; a tree still locked keeps its entry for the exit sweep. */
 function scrub(tmp) {
@@ -284,8 +285,9 @@ async function once(opts, version) {
   // Let the mod's last log land, then end the session the way a closed stdin does; SIGTERM, SIGKILL, give up.
   await new Promise((r) => setTimeout(r, 3000));
   child.stdin.end();
-  const killer = setTimeout(() => child.kill(), 10_000);
-  const hardKiller = setTimeout(() => child.kill('SIGKILL'), 15_000);
+  // Both end the tree (the root's close would drop it from `children`, leaving its descendants to the run's end).
+  const killer = setTimeout(() => endChild(child), 10_000);
+  const hardKiller = setTimeout(() => endChild(child), 15_000);
   let giveUp = null;
   const code = await Promise.race([exited, new Promise((r) => { giveUp = setTimeout(() => r('unclosed'), 20_000); })]);
   clearTimeout(killer);
@@ -322,7 +324,7 @@ async function once(opts, version) {
   };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
   const opts = args(process.argv.slice(2));
   sweep();
   const version = (spawnSync('claude', ['--version'], { encoding: 'utf8', timeout: 15_000 }).stdout ?? '').trim() || 'unknown';
