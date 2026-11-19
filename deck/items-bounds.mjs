@@ -100,6 +100,13 @@ export const CLOSED_BY_USER = 'Closed by you.';
 export const CLOSED = 'Closed.';
 
 /**
+ * A ticket's human steps (human-steps L3, ADR NNNN): what the user does by hand after a landing, under
+ * its green ticket until their Done closes both. Known but kept out of `POSTABLE_KINDS`, like the chat:
+ * only `postSteps` makes one. Standing and a record, so nothing waits on it. Here for `items.mjs`'s bar.
+ */
+export const KIND_STEPS = 'steps';
+
+/**
  * Either arrow, because the pilot writes whichever its keyboard reaches: a step
  * is "do this → this should happen" or "do this -> this should happen" (D9).
  * Matched without `g`, so it is the *leftmost* arrow of either kind that splits

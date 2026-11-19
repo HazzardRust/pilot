@@ -101,8 +101,8 @@ test("a report's page has no reply box, a question's keeps one", () => {
   assert.match(questionPage, /action="\/reply"/);
 });
 
-test('only reports are records', () => {
-  assert.deepEqual(RECORD_KINDS, [KIND_REPORT]);
+test('only reports and steps threads are records', () => {
+  assert.deepEqual(RECORD_KINDS, [KIND_REPORT, 'steps']);
   assert.equal(isRecord({ kind: KIND_REPORT }), true);
   for (const kind of [...KINDS.filter((k) => k !== KIND_REPORT), 'chat', 'user']) {
     assert.equal(isRecord({ kind }), false, kind);

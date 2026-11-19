@@ -31,6 +31,7 @@ export {
   LANDING_INTERRUPTED, addPilotMessage, addReply, beginLanding, clearAllNotices, clearNotice, closeItem, dismissItem,
   interruptLandings, noteLaneFilled, postItem, refusePoster, reopenItem, resolveItem, settleLanding,
 } from './store-items.mjs';
+export { closeTicket, postSteps } from './store-steps.mjs';
 export { archiveOld, archivedItem } from './store-archive.mjs';
 export {
   cancelSwitch, mergeTicket, moveTicket, needTicket, parkTicket, parkedTicketOf, pivotTicket, recordVerdicts, refuseLaneSwitch, requestSwitch,
