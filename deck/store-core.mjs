@@ -11,7 +11,7 @@ import path from 'node:path';
 
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { stampLegacyGrants } from './recut.mjs';
-import { storeDir } from './store-dir.mjs';
+import { refuseGateHomeWrite, storeDir } from './store-dir.mjs';
 import { isDeck, keepBackup, localDay, noteParsed, recoverStore } from './store-recovery.mjs';
 
 import {
@@ -320,7 +320,7 @@ function withoutEstimate(item) {
 }
 
 function writeDeck(deck) {
-  const file = storeFile();
+  const file = refuseGateHomeWrite(storeFile());
   const dir = path.dirname(file);
   privateDir(dir, {
     onKept: (err) => console.error(`[deck] store dir ${dir} keeps the mode its owner set: ${err.message}`),
