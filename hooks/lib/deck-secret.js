@@ -19,7 +19,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const { isWindows } = require('./platform.js');
+const { pathKey } = require('./platform.js');
 
 const SECRET_FILENAME = 'deck.secret';
 const SECRET_SHAPE = /^[0-9a-f]{64}$/;
@@ -27,12 +27,6 @@ const SECRET_SHAPE = /^[0-9a-f]{64}$/;
 // the daemon's guard reads through here on every request, and the wait blocks its event loop.
 const SETTLE_TRIES = 3;
 const SETTLE_MS = 5;
-
-/** The same path to the host: resolved, and case-folded on win32, where the file system folds it. */
-const samePath = (a, b) => {
-  const [x, y] = [path.resolve(a), path.resolve(b)];
-  return isWindows() ? x.toLowerCase() === y.toLowerCase() : x === y;
-};
 
 /**
  * The directory in use: `PILOT_DECK_DIR`, or `~/.claude/pilot` when nothing overrides it.
@@ -43,7 +37,8 @@ function deckDir() {
   const dir = process.env.PILOT_DECK_DIR || path.join(os.homedir(), '.claude', 'pilot');
   if (process.env.NODE_TEST_CONTEXT) {
     const real = path.join(os.userInfo().homedir, '.claude', 'pilot');
-    if (samePath(dir, real)) throw new Error('a test run may not use the real deck store: ' + real);
+    // pathKey, not the spelling: a link or another case naming the real store is the real store.
+    if (pathKey(dir) === pathKey(real)) throw new Error('a test run may not use the real deck store: ' + real);
   }
   return dir;
 }

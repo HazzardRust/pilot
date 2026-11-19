@@ -36,7 +36,7 @@ an escaped mutant out of `~/.claude/pilot`; `deck/testUtils.mjs` already redirec
   `node --test` directly and would miss it); a throwaway worktree (isolates the repository, not the store).
 - **A2 A reviewer proves a red in a throwaway worktree** it creates detached and removes, never in a writer's
   worktree (`itm_cdddd4d75a58`). Tradeoff: about a minute per proof.
-- **A3 The implementer and QA gain `TaskStop`**, which reaches only the agent's own tasks, so a stop is by id and never
+- **A3 The implementer and QA gain `TaskStop`**, which reaches only what the agent itself started in the background, so a stop is by id and never
   by name or pattern (`itm_d649b66f4053`). Tradeoff: two agents' tools widen.
 
 ## Consequences

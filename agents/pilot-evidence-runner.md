@@ -80,9 +80,9 @@ suite at the real thing: in this project, `deck/store.mjs`, `deck/client.mjs`,
 `deck/daemon.mjs`, `deck/server.mjs` and `deck/store-dir.mjs`, and any changed
 file that `grep -lE 'homedir|USERPROFILE|process\.env\.HOME|PILOT_DECK_'`
 lists. When nothing else is left the mutation row is `not run: only state modules
-changed`. Even an escaped mutant cannot reach the user's own `~/.claude/pilot`:
-inside a test run the store's `deckDir()` throws rather than resolve it, so no
-cell sets a home or a store of its own.
+changed`. In this project an escaped mutant cannot reach the user's own
+`~/.claude/pilot`: inside a `node --test` run the store's `deckDir()` throws
+rather than resolve it, so no cell sets a home or a store of its own.
 
 ## What you return
 
