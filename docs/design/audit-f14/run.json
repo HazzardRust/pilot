@@ -89,7 +89,7 @@
     },
     {
       "slice": "audit-f14",
-      "state": "fixing: fix/audit-f14-principles pushed 36ef9bb; report pending",
+      "state": "in QA: re-probe passed at d6e2acd, integrate --trial clean; gate2 text with main to post",
       "branch": "feat/audit-f14",
       "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f14",
       "pr": 119
@@ -142,44 +142,9 @@
     "dropped: sync.mjs:131 side theirs guard — no failing case named",
     "dropped: not-on-tip git merge origin/main text test — a prose pin"
   ],
-  "next": "audit-f14: integrating fix/audit-f14-principles 36ef9bb onto feat/audit-f14; then send QA the tip for re-probe, npm test once, integrate --trial and gate2 text.",
-  "updatedAt": "2026-11-19T16:40:26.950Z",
+  "next": "audit-f14: gate2 itm_08dc906701f6 posted by the pilot at d6e2acd (PR #119, surface false). Open, non-blocking: itm_f0a0624b5948 (L3), itm_5dae459f23ea (A5), built as defaults 677c57df, ee82eaef. On the press: spawn pilot-lander with the gate2 id; an override goes to a fresh QA on pilot-qa-audit-f14. Then yellow lane: next implementing ticket (ci-green short path).",
+  "updatedAt": "2026-11-19T16:57:47.278Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "standing QA-environment question posted late, after the design questions, costing the architect one extra park and resume",
-      "size": 1
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "gate1 post refused twice: body must name every A<n>, and the surface field is required; neither is in the architect's brief",
-      "evidence": "audit-f14 architect hand-back, gate1 itm_a29be6f63f92",
-      "size": 1
-    },
-    {
-      "agent": "pilot-evidence-runner",
-      "what": "auto mode denied the diff-coverage command (HOME/USERPROFILE/PILOT_DECK_DIR exported to a temp dir before npx c8 npm test), reason Undermining Oversight",
-      "evidence": "itm_e558b897c6e5",
-      "size": 2
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "re-cut brief said rebase then push: a rebased design branch cannot be pushed without a force push; pilot redid it as a base merge",
-      "evidence": "git push origin design/audit-f14 rejected non-fast-forward; fixed at 54996f86",
-      "size": 2
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "deck MCP server failed to connect in the architect's session, so it could not send deck_status or post the gate1",
-      "evidence": "audit-f14 re-cut report: Connection closed",
-      "size": 2
-    },
-    {
-      "agent": "pilot-evidence-runner",
-      "what": "mutation run hit the 900 s cap before any mutant ran; coverage run never reported; table handed to main instead of the fundamentalist",
-      "evidence": "crew-refusals evidence report: stryker exit 124, 1822 mutants instrumented, 0 run",
-      "size": 3
-    },
     {
       "agent": "pilot-implementer",
       "what": "slice worktree had no node_modules, so npm ci ran before the gate; the gate itself takes about 5.5 minutes",
@@ -371,6 +336,40 @@
       "what": "context reset twice mid-round; Edit refused files changed by node/sed first",
       "evidence": "fix round report, 175688 tokens",
       "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a fresh temp repo cannot integrate until pilot base runs, though the run is cut from main",
+      "evidence": "NOT integrated slice/f2a-s1: no origin/pilot (run pilot base first)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck_status 400 for a worktree of another repo was hidden; the probe landed as a legacy run and was redone",
+      "evidence": "worktree must be the absolute path of a worktree of this run's repository",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "git config pilot.test in a worktree changes it repo-wide",
+      "evidence": "QA re-probe report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP down in both QA sessions; gate2 relayed as text",
+      "evidence": "QA re-probe report",
+      "size": 1
+    },
+    {
+      "agent": "qa",
+      "what": "deck MCP failed to connect in both QA sessions; gate2 text handed to the pilot to post",
+      "evidence": "co-pilot hand-back, audit-f14"
+    },
+    {
+      "agent": "fundamentalist",
+      "what": "evidence pass lost to a context compaction, unmeasured; check-slices refused under worktree isolation",
+      "evidence": "co-pilot hand-back: blocked step node scripts/check-slices.mjs"
     }
   ]
 }
