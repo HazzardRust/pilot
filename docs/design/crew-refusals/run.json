@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed f252b56",
+      "state": "integrated 032780a",
       "after": [
         "S1"
       ],
@@ -47,8 +47,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-crew-refusals-s5"
     }
   ],
-  "next": "co-pilot: integrate S2 (f252b56), then S5 (bd92bc8); then fundamentalist + QA",
-  "updatedAt": "2026-11-19T06:41:34.914Z",
+  "next": "co-pilot: S2 integrated 032780a; integrate S5 (bd92bc8); then fundamentalist + QA",
+  "updatedAt": "2026-11-19T06:44:05.933Z",
   "friction": [
     {
       "agent": "pilot-architect",
