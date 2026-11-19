@@ -27,6 +27,7 @@ import { deleteMerged } from './branches.mjs';
 import { assertPushable, firstLine, holds, PILOT_BRANCH } from './pilot-branch.mjs';
 import { baseOf, chainLanded, commitRecords, git as gitAt, landingMessage } from './integrate.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
+import { afterGreen } from './land-adr.mjs';
 import { releasePr } from './release.mjs';
 import { runRef, runRemote } from './remotes.mjs';
 import { prBase } from './stack.mjs';
@@ -276,9 +277,9 @@ function recordBase(cwd, head) {
 /**
  * A main-cut run's hook once the landing merge's suite is green, before anything is pushed
  * (audit-f14 S5 fills it, L7): passed to `mergeIntoPilot` for a non-legacy run. Answers the ADR
- * `{ from, to }` it allocated, or null; here it does nothing.
+ * `{ from, to }` it allocated, or null; its body is `land-adr.mjs`'s.
  */
-export const afterGreen = (dir) => null;
+export { afterGreen };
 
 /**
  * The feature's own PR after a main-cut landing (audit-f14 spec 4): `{ number, base, below? }`, `base`

@@ -10,6 +10,7 @@
  * (ADR-FORMAT.md, pilot-architect.md), never a citation, and is kept.
  */
 
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -28,23 +29,26 @@ const FRONT_MATTER = /^---\r?\n[\s\S]*?\r?\n---(?=\r?\n|$)/;
 const BARE = new RegExp(`\\b${PLACEHOLDER}\\b`, 'g');
 
 /**
- * Allocates the placeholder ADR of the merge checked out in the worktree `dir` (HEAD, a merge
- * whose second parent is the feature). `since` is pilot's tip the merge went onto; the feature's
- * files are `git diff --name-only since...HEAD^2`. Answers `{ from, to }`, `from` the placeholder's
- * name without `.md` and `to` its number, or null when the tree holds no placeholder. Two or more
- * throw with `exitCode` 1 before anything is changed.
+ * Allocates the placeholder ADR checked out in the worktree `dir`. `since` is pilot's tip.
+ * `onto` 'merge' (a legacy run): HEAD is the landing merge, its second parent the feature, whose
+ * files are `since...HEAD^2`, and the merge is amended. `onto` 'branch' (audit-f14 L7): HEAD is the
+ * feature's tip, its files `since...HEAD`, the number is past `since`'s ADRs too, and the rename is
+ * a new commit on HEAD, dated as HEAD, so the same allocation makes the same commit. Answers
+ * `{ from, to }`, `from` the placeholder's name without `.md` and `to` its number, or null when
+ * the tree holds no placeholder. Two or more throw with `exitCode` 1 before anything is changed.
  */
-export function allocateAdr(dir, { since }) {
+export function allocateAdr(dir, { since, onto = 'merge' }) {
   const adrs = path.join(dir, ADRS);
   const found = fs.existsSync(adrs) ? fs.readdirSync(adrs).filter((f) => PLACEHOLDER_FILE.test(f)).sort() : [];
   if (!found.length) return null;
   if (found.length > 1) throw Object.assign(new Error(`two placeholder ADRs: ${found.join(', ')}; one per feature`), { exitCode: 1 });
   const from = found[0].slice(0, -'.md'.length);
   const slug = from.slice(PLACEHOLDER.length + 1);
-  const to = nextNumber(adrs);
-  const changed = git(dir, 'diff', '--name-only', '-z', `${since}...HEAD^2`).split('\0').filter(Boolean);
+  const branch = onto === 'branch';
+  const to = branch ? pastPilot(dir, adrs, since) : nextNumber(adrs);
+  const changed = git(dir, 'diff', '--name-only', '-z', `${since}...${branch ? 'HEAD' : 'HEAD^2'}`).split('\0').filter(Boolean);
   try {
-    amend(dir, { placeholder: found[0], slug, to, changed });
+    amend(dir, { placeholder: found[0], slug, to, changed, branch, from });
   } catch (err) {
     // A half-made allocation is undone: a kept worktree must not reach the next landing dirty.
     git(dir, 'reset', '-q', '--hard', 'HEAD');
@@ -53,8 +57,16 @@ export function allocateAdr(dir, { since }) {
   return { from, to };
 }
 
-/** Renames `placeholder` to `<to>-<slug>.md`, rewrites the citations in `changed`, refreshes the index and amends HEAD. */
-function amend(dir, { placeholder, slug, to, changed }) {
+/** The next number past both the feature's ADRs in `adrs` and those of pilot's tip `since`. */
+function pastPilot(dir, adrs, since) {
+  const theirs = git(dir, 'ls-tree', '--name-only', since, '--', `${ADRS}/`).split('\n').map((f) => path.posix.basename(f)).filter((f) => /^\d{4}-/.test(f));
+  const ours = Number(nextNumber(adrs)) - 1;
+  const highest = Math.max(ours, ...theirs.map((f) => Number(f.slice(0, 4))));
+  return String(highest + 1).padStart(4, '0');
+}
+
+/** Renames `placeholder` to `<to>-<slug>.md`, rewrites the citations in `changed`, refreshes the index and amends HEAD, or commits on it when `branch`. */
+function amend(dir, { placeholder, slug, to, changed, branch, from }) {
   git(dir, 'mv', '--', `${ADRS}/${placeholder}`, `${ADRS}/${to}-${slug}.md`);
   const rename = (file) => (file === `${ADRS}/${placeholder}` ? `${ADRS}/${to}-${slug}.md` : file);
   const rewritten = [];
@@ -74,5 +86,7 @@ function amend(dir, { placeholder, slug, to, changed }) {
   }
   if (rewritten.length) git(dir, 'add', '--', ...rewritten);
   refreshIndex(dir);
-  git(dir, 'commit', '-q', '--amend', '--no-edit');
+  if (!branch) return git(dir, 'commit', '-q', '--amend', '--no-edit');
+  const date = `@${git(dir, 'log', '-1', '--format=%ct', 'HEAD')} +0000`;
+  execFileSync('git', ['commit', '-q', '-m', `docs(adr): ${from} is ${to}`], { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, env: { ...process.env, GIT_AUTHOR_DATE: date, GIT_COMMITTER_DATE: date } });
 }
