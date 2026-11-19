@@ -68,7 +68,7 @@ const isReview = (review) => {
 };
 
 /** The **Host** surface, whole: no `whoami` and no `name` (user answer itm_6eca66849bdb). */
-const HOST_KEYS = ['cli', 'comment', 'edit', 'open', 'review', 'reviews', 'signedIn', 'upsertComment'];
+const HOST_KEYS = ['checks', 'cli', 'comment', 'edit', 'open', 'review', 'reviews', 'signedIn', 'upsertComment'];
 
 const CONTRACT = [
   ['reviews', (host) => host.reviews({ state: 'all' }), (said) => { assert.equal(said.length, 3); said.forEach(isReview); assert.deepEqual(said.map((r) => r.state), ['open', 'merged', 'closed']); }],
@@ -101,7 +101,7 @@ test('every verb returns its shape', (t) => {
   for (const [, call, check] of CONTRACT) {
     const { run, calls } = fakeGh();
     const host = githubHost(run);
-    assert.deepEqual(Object.keys(host).sort(), [...HOST_KEYS, 'checks'].sort(), 'gitlab answers checks at ci-gate S8');
+    assert.deepEqual(Object.keys(host).sort(), HOST_KEYS);
     assert.equal(host.cli, 'gh');
     check(call(host));
     sent.push(...calls);

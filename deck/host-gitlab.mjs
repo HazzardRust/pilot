@@ -1,12 +1,14 @@
 /**
  * The GitLab adapter (other-host spec 4, 6; L1, L4, A3): **Host** over `glab api`, REST v4 on the current
- * project's `projects/:id/merge_requests…`, never `glab mr` porcelain, whose flags move between versions. A JSON
- * body rides on stdin (`--input -`). `glabRun` is the one place a `glab` process starts; the call is
+ * project's `projects/:id/merge_requests…` and one commit's statuses (ci-gate S8), never `glab mr` porcelain,
+ * whose flags move between versions. A JSON body rides on stdin (`--input -`). `glabRun` is the one place a `glab` process starts; the call is
  * `execFileSync('glab', argv)`, no shell, and it inherits the environment: the pilot never reads a token, and
  * `signedIn` reads only `glab auth status`'s exit status.
  */
 
 import { execFileSync } from 'node:child_process';
+
+import { FULL_SHA } from './host-github.mjs';
 
 /**
  * The current project's merge requests, one by iid, its notes, or one note by id, with an optional query of
@@ -14,12 +16,17 @@ import { execFileSync } from 'node:child_process';
  * Groups: 1 the iid, 2 `/notes`, 3 the note id, 4 the query.
  */
 const MR_PATH = /^projects\/:id\/merge_requests(?:\/(\d+)(\/notes(?:\/(\d+))?)?)?(\?[A-Za-z0-9_.%=&+*-]*)?$/;
+/**
+ * The one read of CI (ci-gate L1, spec 8): the current project's latest statuses on one full sha, a page of 100 by
+ * number. GET only, no flag: no `all=true` (every retry), no other project.
+ */
+const STATUSES_PATH = new RegExp(`^projects/:id/repository/commits/${FULL_SHA.source.slice(1, -1)}/statuses\\?per_page=100&page=[1-9]\\d{0,2}$`);
 /** The one header the adapter sends, so a body on stdin reads as JSON; any other header is refused. */
 const JSON_HEADER = 'Content-Type: application/json';
 
 /**
- * True when `args` is a `glab api` call on the list: `api user`, a GET under `MR_PATH`, a POST of a merge request
- * or a note, a PUT of a merge request or a note. A write's body comes only from stdin (`--input -`); `-F` and
+ * True when `args` is a `glab api` call on the list: `api user`, a bare GET of `STATUSES_PATH`, a GET under
+ * `MR_PATH`, a POST of a merge request or a note, a PUT of a merge request or a note. A write's body comes only from stdin (`--input -`); `-F` and
  * `-f` are refused (`-F`'s `@file` reads a local file into the request), as are `--hostname` and any other flag.
  */
 function apiAllowed(args) {
@@ -27,6 +34,7 @@ function apiAllowed(args) {
   let methods = 0;
   let input = false;
   let target = null;
+  if (args.length === 2 && STATUSES_PATH.test(args[1])) return true;
   for (let at = 1; at < args.length; at++) {
     const arg = args[at];
     if (!arg.startsWith('-')) {
@@ -63,12 +71,16 @@ function assertHostVerb(args) {
   throw new Error(`glab ${[group, verb].filter((word) => word !== undefined).join(' ')}: not a host verb`);
 }
 
-/** The `glab` runner in `cwd`: `(args, input?) => stdout`, argv only, no shell; `input` is the request body on stdin. */
-export const glabRun = (cwd) => (args, input) => {
+/**
+ * The `glab` runner in `cwd`: `(args, input?, { timeout }?) => stdout`, argv only, no shell; `input` is the request
+ * body on stdin, `timeout` the milliseconds before the process is killed and the call throws.
+ */
+export const glabRun = (cwd) => (args, input, { timeout } = {}) => {
   assertHostVerb(args);
   if (input !== undefined && typeof input !== 'string') throw new Error('glab: a request body is a string');
   return execFileSync('glab', args, {
     cwd, encoding: 'utf8', input, stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'], windowsHide: true,
+    ...(timeout === undefined ? {} : { timeout }),
   });
 };
 
@@ -77,6 +89,24 @@ const STATES = { opened: 'open', merged: 'merged', closed: 'closed' };
 const ASKED = { open: 'opened', merged: 'merged', closed: 'closed', all: 'all' };
 /** The most pages of notes `upsertComment` reads, so a misbehaving answer cannot loop it for ever. */
 const PAGES = 100;
+/** How long the checks read waits on `glab`, as GitHub's does: a hung read throws, which `checksAt` reads as unread. */
+const CHECKS_TIMEOUT_MS = 30_000;
+/** The most pages of statuses `checks` reads; `STATUSES_PATH` allows no page past it. */
+const STATUS_PAGES = 999;
+/** GitLab's commit status states (ci-gate L3); a state off the table throws, never read as pass. */
+const OUTCOMES = {
+  success: 'pass', skipped: 'pass', failed: 'fail', canceled: 'fail',
+  created: 'pending', pending: 'pending', running: 'pending', manual: 'pending',
+  waiting_for_resource: 'pending', preparing: 'pending', scheduled: 'pending',
+};
+
+/** A GitLab commit status as a **Check**. */
+function checkOf(status) {
+  if (typeof status?.name !== 'string') throw new Error('glab api statuses: a status with no name');
+  const outcome = Object.hasOwn(OUTCOMES, status.status ?? '') ? OUTCOMES[status.status] : undefined;
+  if (outcome === undefined) throw new Error(`glab api statuses: ${status.name} has status ${JSON.stringify(status.status)}`);
+  return { name: status.name, outcome, url: String(status.target_url ?? '') };
+}
 
 /** A GitLab MR as a **Review**; a state off the three (`locked`) throws rather than being guessed at. */
 function reviewOf(mr) {
@@ -179,6 +209,19 @@ export function gitlabHost(run) {
       if (!Number.isSafeInteger(mine.id) || mine.id < 1) throw new Error('glab notes: the note has no id');
       send('PUT', `${MRS}/${numbered(n)}/notes/${mine.id}`, { body: text }, 'note edit');
       return 'edited';
+    },
+    /** The latest status of each job on one full sha, every page read; GitLab keeps only a retry's last by default. */
+    checks(sha) {
+      if (typeof sha !== 'string' || !FULL_SHA.test(sha)) throw new Error(`glab: ${JSON.stringify(sha)} is not a full commit sha`);
+      const found = [];
+      for (let page = 1; ; page++) {
+        if (page > STATUS_PAGES) throw new Error(`glab api statuses: more than ${STATUS_PAGES * 100} statuses`);
+        const target = `projects/:id/repository/commits/${sha}/statuses?per_page=100&page=${page}`;
+        const said = json(run(['api', target], undefined, { timeout: CHECKS_TIMEOUT_MS }), 'api statuses');
+        if (!Array.isArray(said)) throw new Error('glab api statuses: an answer that is not a list');
+        found.push(...said.map(checkOf));
+        if (said.length < 100) return found;
+      }
     },
     signedIn() {
       try {
