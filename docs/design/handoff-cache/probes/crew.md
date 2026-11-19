@@ -44,6 +44,7 @@ does. Main spawns one background agent that waits for the mod's signal, `SendMes
 - Main replied `SPAWNED`, `NONE YET`, `RECEIVED: <token>`, then a completion note, in all 15: a message sent before
   or during the clear missed the fresh first turn, and the host delivered it as the next turn.
 - The `session.receive` hook never fired (0 of 15): a delivery shows only as a turn.
+- `claude plugin validate docs/design/handoff-cache/probes/crew` passes, with two warnings.
 - Not covered: an interactive TTY, an agent life past 70 s, a send between the clear and the submit (QA's §9 check).
 
 verdict: no loss, 15 of 15

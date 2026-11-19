@@ -8,8 +8,8 @@
 
 import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { platform, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -21,6 +21,44 @@ const POINTS = ['before', 'during', 'after'];
 
 const slash = (p) => p.replaceAll('\\', '/');
 const sleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
+
+const live = new Map(); // child -> its scratch root
+let handlersOn = false;
+
+/** Removes the debug log of a session on the real login; a held handle (Windows) is retried and never thrown. */
+function dropDebugLog(root) {
+  try { rmSync(join(root, 'debug.log'), { force: true, maxRetries: 5, retryDelay: 200 }); } catch { /* left for the OS temp sweep */ }
+}
+
+/**
+ * Ends a spawned session for certain, and never throws: the whole tree on Windows (`child.kill()` ends no tree there),
+ * SIGTERM then SIGKILL after `graceMs` elsewhere (the direct child only: this probe's host is Windows). A child that
+ * already exited is left alone.
+ */
+export async function endChild(child, graceMs = 5_000) {
+  const gone = () => child.exitCode !== null || child.signalCode !== null;
+  if (gone() || child.pid === undefined) return;
+  try {
+    if (platform() === 'win32') {
+      spawnSync('taskkill', ['/T', '/F', '/PID', String(child.pid)], { stdio: 'ignore' });
+      return;
+    }
+    child.kill('SIGTERM');
+    for (let waited = 0; waited < graceMs && !gone(); waited += 100) await sleep(100);
+    if (!gone()) child.kill('SIGKILL');
+  } catch { /* the child is already gone */ }
+}
+
+function onSignals() {
+  if (handlersOn) return;
+  handlersOn = true;
+  for (const sig of ['SIGINT', 'SIGTERM']) {
+    process.on(sig, () => {
+      Promise.all([...live].map(async ([c, root]) => { await endChild(c); dropDebugLog(root); }))
+        .finally(() => process.exit(130));
+    });
+  }
+}
 
 function agentPrompt(io, sig, token) {
   return [
@@ -100,26 +138,38 @@ async function oneRun(run, at, model) {
     '--max-budget-usd', '2', '--debug-file', join(root, 'debug.log'),
   ];
   const child = spawn('claude', args, { cwd: repo, stdio: ['pipe', 'pipe', 'pipe'] });
+  onSignals();
+  live.set(child, root);
   let stdout = '';
   let exited = null;
-  child.stdout.on('data', (chunk) => { stdout += chunk; });
-  child.stderr.on('data', (chunk) => { writeFileSync(join(root, 'stderr.log'), chunk, { flag: 'a' }); });
-  child.on('exit', (code) => { exited = code; });
-  child.stdin.write(`${JSON.stringify({
-    type: 'user', message: { role: 'user', content: [{ type: 'text', text: mainPrompt(agentPrompt(io, sig, token)) }] },
-  })}\n`);
-
+  let failed = null;
   const start = Date.now();
   let endedBy = 'timeout';
-  while (Date.now() - start < TIMEOUT_MS) {
-    await sleep(1_000);
-    if (exited !== null) { endedBy = `exit ${exited}`; break; }
-    if (settled(sig, readLog(sig))) { endedBy = 'settled'; break; }
+  try {
+    child.on('error', (err) => { failed = err; });
+    child.stdin.on('error', () => {});
+    child.stdout.on('data', (chunk) => { stdout += chunk; });
+    child.stderr.on('data', (chunk) => { writeFileSync(join(root, 'stderr.log'), chunk, { flag: 'a' }); });
+    child.on('exit', (code) => { exited = code; });
+    child.stdin.write(`${JSON.stringify({
+      type: 'user', message: { role: 'user', content: [{ type: 'text', text: mainPrompt(agentPrompt(io, sig, token)) }] },
+    })}\n`);
+
+    while (Date.now() - start < TIMEOUT_MS) {
+      await sleep(1_000);
+      if (failed !== null) { endedBy = `error ${failed.code ?? failed.message}`; break; }
+      if (exited !== null) { endedBy = `exit ${exited}`; break; }
+      if (settled(sig, readLog(sig))) { endedBy = 'settled'; break; }
+    }
+    child.stdin.end();
+    for (let i = 0; i < 30 && exited === null && failed === null; i += 1) await sleep(1_000);
+  } finally {
+    try { writeFileSync(join(root, 'out.jsonl'), stdout); } catch { /* the run result still returns */ }
+    await endChild(child);
+    live.delete(child);
+    await sleep(500); // taskkill returns before the handles are released
+    dropDebugLog(root); // out.jsonl and stderr.log stay
   }
-  child.stdin.end();
-  for (let i = 0; i < 30 && exited === null; i += 1) await sleep(1_000);
-  if (exited === null) child.kill();
-  writeFileSync(join(root, 'out.jsonl'), stdout);
 
   const events = jsonLines(stdout);
   const log = readLog(sig);
@@ -147,13 +197,15 @@ async function oneRun(run, at, model) {
   };
 }
 
-const { values } = parseArgs({
-  options: { at: { type: 'string' }, runs: { type: 'string', default: '1' }, model: { type: 'string', default: 'sonnet' } },
-});
-if (!POINTS.includes(values.at) || !(Number(values.runs) > 0)) {
-  process.stderr.write('usage: node run.mjs --at before|during|after --runs <n> --model sonnet\n');
-  process.exit(2);
-}
-for (let run = 1; run <= Number(values.runs); run += 1) {
-  process.stdout.write(`${JSON.stringify(await oneRun(run, values.at, values.model))}\n`);
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  const { values } = parseArgs({
+    options: { at: { type: 'string' }, runs: { type: 'string', default: '1' }, model: { type: 'string', default: 'sonnet' } },
+  });
+  if (!POINTS.includes(values.at) || !(Number(values.runs) > 0)) {
+    process.stderr.write('usage: node run.mjs --at before|during|after --runs <n> --model sonnet\n');
+    process.exit(2);
+  }
+  for (let run = 1; run <= Number(values.runs); run += 1) {
+    process.stdout.write(`${JSON.stringify(await oneRun(run, values.at, values.model))}\n`);
+  }
 }
