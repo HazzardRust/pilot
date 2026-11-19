@@ -149,6 +149,8 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
       if (runs === null) git(['update-ref', TARGET, pushed, pilotTip]);
       else git(['push', '-q', runs, `${pushed}:${TARGET}`]);
     } catch (err) {
+      // A kept resolution goes back to the tested merge, so the retry resumes it, not afterGreen's remerge.
+      if (pushed !== sha) gitAt(dir, 'reset', '-q', '--hard', sha);
       throw Object.assign(fail(`the push failed (${firstLine(err)})`), { pushRejected: true });
     }
     kept = false;

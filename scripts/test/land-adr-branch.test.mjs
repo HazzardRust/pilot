@@ -99,6 +99,19 @@ test('a red suite pushes no number', (t) => {
   assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip, 'pilot not pushed');
 });
 
+test('a retry after pilot moved pushes the same numbered commit', (t) => {
+  const { origin, seed, mover, x } = adrRepos(t);
+
+  // The suite's first run moves pilot, so the pilot push after feat's is rejected and land retries.
+  const landed = land({ cwd: x, git: (args) => git(x, ...args), host: host('x'), test: mover(seed, 'new', 1) });
+
+  assert.equal(landed.retried, true);
+  assert.deepEqual(landed.adr, { from: 'NNNN-x', to: '0193' });
+  assert.equal(git(origin, 'rev-parse', 'feat/x^'), git(x, 'rev-parse', 'HEAD'), 'still one commit on the landed tip');
+  assert.equal(git(origin, 'rev-parse', 'pilot^2'), git(origin, 'rev-parse', 'feat/x'));
+  assert.ok(git(origin, 'ls-tree', '--name-only', 'pilot', 'moved0.txt'), 'the move is kept');
+});
+
 test('a feature with no placeholder gets no commit on feat', (t) => {
   const { origin, bare } = adrRepos(t);
   const tip = git(origin, 'rev-parse', 'feat/bare');
