@@ -58,7 +58,7 @@ The after-clear first call reads 25,329 from cache, which is the `/context` rows
 | all trimmed (ac-trim2) | 1 | 33,915 | 0 |
 | all trimmed (ft) | 3 | 33,925; 32,540; 33,920 | +10, then -1,375, then +5 |
 
-The one early -1,394 (32,540, against the 33.9k of its neighbours) did not repeat (the next run is -10); it reads as about 1.4k of between-session noise, not a saving. In a `--agent pilot:pilot` session these sections are not in the request at all (the predecessor's observation; no record in `runs.jsonl` holds it).
+The one early -1,375 (32,540, against the 33.9k of its neighbours) did not repeat (the next run is +5); it reads as about 1.4k of between-session noise, not a saving. In a `--agent pilot:pilot` session these sections are not in the request at all (the predecessor's observation; no record in `runs.jsonl` holds it).
 
 Saves 0 tokens against the 1,000-token bar. The 10 in the verdict line is the size of the repeatable delta (+1, +2, +5, +10; the largest repeated one), far under the bar. Caveat: the runs prove only that returning `text: null` did not change the request (`changed: false`); two records (ac-three, ac-trim2) have `exit: null` (killed after their measurement).
 
