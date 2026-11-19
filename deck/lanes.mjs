@@ -9,6 +9,7 @@ import {
   KIND_HANDOFF, KIND_TICKET, LANE_STATES, coPilotStateOf, isAnswered, isBlocking, isOpen, isShortPath, liveTicketOf, nextTicketOf,
   sameRepo, stateOf, switchOf, ticketQueueOf, unansweredBlockers,
 } from './items.mjs';
+import { crewSeenAt } from './agents.mjs';
 import { isLiveCoPilot, readDeck, storedCoPilot, switchesOf } from './store-core.mjs';
 
 /** How long the co-pilot's held ticket waits on an unanswered blocking question before the deck pauses it (blocked-yellow-yields spec 5, L4). */
@@ -28,6 +29,30 @@ export function yieldsDue(items, repo, coPilotTicket, now) {
     .filter((item) => !isAnswered(item))
     .map((item) => ({ ticket: ticket.id, question: item.id, at: Date.parse(item.postedAt) + YIELD_MS }))
     .filter(({ at }) => at <= now);
+}
+
+/** How long a held yellow ticket's crew may make no tool call before the ticket reads idle (yellow-never-idle spec 5, A2). */
+export const CREW_IDLE_MS = 20 * 60_000;
+
+/**
+ * The idle rule (yellow-never-idle spec 5, 8; L4, L5), pure, for the refusal and the wake timer alike: `held`, the live
+ * co-pilot's ticket, open and yellow in `repo`, not draining and with no unanswered blocking item, goes idle at
+ * `seenAt + CREW_IDLE_MS`, `seenAt` being `crewSeenAt(repo)`. `at` may be ahead of now, so a timer can arm on it; else null.
+ */
+export function idleYellowOf(items, repo, held, seenAt) {
+  const ticket = items.find((item) => item?.id === held && item.kind === KIND_TICKET);
+  if (!ticket || ticket.yielding || !isOpen(ticket) || stateOf(ticket) !== 'yellow' || !sameRepo(ticket.repo, repo)) return null;
+  if (unansweredBlockers(items, ticket.id).length) return null;
+  return { ticket: ticket.id, at: seenAt + CREW_IDLE_MS };
+}
+
+/** The idle yellow ticket's refusal line, or null; a caller that passes no crew-seen moment never reads idle (red team, A-8 callers). */
+function idleRefusal(items, repo, held, seenAt, now) {
+  if (typeof seenAt !== 'number') return null;
+  const idle = idleYellowOf(items, repo, held, seenAt);
+  return idle && idle.at <= now
+    ? `yellow lane idle; ${idle.ticket} has had no crew for ${CREW_IDLE_MS / 60_000} min — deck_ticket need it if its walkthrough or gate2 is up, else release it and spawn its successor`
+    : null;
 }
 
 /** The most skipped yellow tickets the co-pilot lane names, the bound `hooks/session-handoff.js` echoes (spec 2; never-stuck spec 9). */
@@ -95,8 +120,10 @@ export function laneOf(items, repo, lane, { switching } = {}) {
  * first runnable ticket; with yellow queued and none runnable, the co-pilot line names each skipped one with its reason
  * (never-stuck spec 9, 19) and `blocked` the blocked ones on their question for `pilot wait` (blocked-yellow-yields
  * spec 2), else it is null. A held ticket that yields reads `draining`; a re-cut planning pick reads `(re-cut)`.
+ * Last, a held ticket `idleYellowOf` finds idle by `now` is refused (yellow-never-idle spec 5); `crewSeenAt` is
+ * optional, and a caller without it never reads idle.
  */
-export function lanesFrom(items, repo, { switching, coPilot } = {}) {
+export function lanesFrom(items, repo, { switching, coPilot, crewSeenAt, now = Date.now() } = {}) {
   const planning = laneOf(items, repo, 'planning', { switching });
   const concluding = laneOf(items, repo, 'concluding', { switching });
   const handedOff = items.some((item) => item?.kind === KIND_HANDOFF && isOpen(item) && sameRepo(item.repo, repo));
@@ -130,7 +157,7 @@ export function lanesFrom(items, repo, { switching, coPilot } = {}) {
       ? `yellow lane empty; ${successor.id} is released — deck_ticket co-pilot it and spawn its successor first`
       : planned
       ? `yellow lane empty; ${planned.id} is ${short ? 'short path — deck_ticket co-pilot it and spawn its implementer' : 'planned — deck_ticket co-pilot it first'}`
-      : null;
+      : idleRefusal(items, repo, held, crewSeenAt, now);
   return {
     planning: line('planning', planning),
     concluding: line('concluding', concluding),
@@ -150,5 +177,5 @@ export function lanesOf(repo) {
   const deck = readDeck();
   const entry = storedCoPilot(deck, repo);
   const coPilot = entry ? { ticket: entry.ticket, live: isLiveCoPilot(deck, entry) } : null;
-  return lanesFrom(deck.items, repo, { switching: switchesOf(deck, repo).lanes, coPilot });
+  return lanesFrom(deck.items, repo, { switching: switchesOf(deck, repo).lanes, coPilot, crewSeenAt: crewSeenAt(repo), now: Date.now() });
 }

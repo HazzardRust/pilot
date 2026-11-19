@@ -28,6 +28,7 @@
  */
 
 import { OWNER_KINDS, authorKind } from './items.mjs';
+import { isYellowCrew } from './lane-ticket.mjs';
 import { repoKey, repoOf } from './runs.mjs';
 
 /**
@@ -178,6 +179,7 @@ export function noteAgent(heartbeat, now = Date.now()) {
 
   // Activity counts for the repository a worktree belongs to, which is where its threads are.
   noteActive({ cwd: repoOf(key) ?? key, kind: authorKind(heartbeat.agentType) }, now);
+  noteCrew(agentType, repoOf(key) ?? key, now);
   if (joined) announce();
   schedule(now);
   return joined;
@@ -203,6 +205,24 @@ export function noteActive({ cwd, kind }, now = Date.now()) {
 
 export function lastActive(repo, kind) {
   return activity.get(repoKey(repo))?.[kind] ?? startedAt;
+}
+
+/**
+ * When the yellow crew last made a tool call, per repository (yellow-never-idle L5): observed, never the stored
+ * `live` flag. In memory and bounded like `activity`; a restart counts as a heartbeat, so unseen reads `startedAt`.
+ */
+const crewSeen = new Map();
+
+export function crewSeenAt(repo) {
+  return crewSeen.get(repoKey(repo)) ?? startedAt;
+}
+
+function noteCrew(agentType, repo, now) {
+  if (!isYellowCrew(agentType)) return;
+  const key = repoKey(repo);
+  crewSeen.delete(key);
+  if (crewSeen.size >= MAX_AGENTS) crewSeen.delete(crewSeen.keys().next().value);
+  crewSeen.set(key, now);
 }
 
 /**
@@ -331,6 +351,7 @@ export function listAgents(now = Date.now()) {
 export function forgetAgents() {
   decks.clear();
   activity.clear();
+  crewSeen.clear();
   held.clear();
   startedAt = Date.now();
   if (sweeping) clearTimeout(sweeping);
