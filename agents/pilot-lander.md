@@ -54,9 +54,8 @@ On `landed`, once QA has torn down (it does on the press), close the run in this
 2. `mcp__plugin_pilot_deck__deck_post` one `report` with the gate2's `ticket` and no body: the deck fills it from
    the run record. A command step it carries names `shell` and `dir`, in that shell's syntax, on the post.
 3. `mcp__plugin_pilot_deck__deck_status` with that `slug`, `slices: []` and `finished: "closing report posted"`.
-4. Send `main` one line, from land's `main gets pilot:` and `kept` lines on the gate2, the report's id and the
-   ticket's steps thread the same post opened, `none` when it opened none:
-   `landed <sha7> · main gets pilot: <#n or its line> · kept: <paths> · report: <id> · steps: <id or none>`.
+4. Send `main` one line, from land's `main gets pilot:` and `kept` lines on the gate2 and the report's id:
+   `landed <sha7> · main gets pilot: <#n or its line> · kept: <paths> · report: <id>`.
 
 A refused post or status goes to `main` as that line with the refusal in place of `report: <id>`; never retry it
 another way, since the refusal is the deck's answer.

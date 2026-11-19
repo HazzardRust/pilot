@@ -705,13 +705,13 @@ export function accentOf(item, items) {
 
 /**
  * Where a ticket stands (ticket-state-accents spec 8): `closed`, `co-pilot` when it is the ticket this
- * repository's live co-pilot builds, `landing` once its gate2 is pressed (gate2-frees-lane spec 1), `in hand` on the main slot (live or next, L21), else `parked`.
+ * repository's live co-pilot builds, `landing` once its gate2 is pressed (gate2-frees-lane spec 1) and `human steps` once landed while an open steps thread names it (human-steps spec 3), `in hand` on the main slot (live or next, L21), else `parked`.
  */
 export function standingOf(ticket, items, coPilotTicket) {
   if (!isOpen(ticket)) return 'closed';
   if (ticket.id === coPilotTicket) return 'co-pilot';
   if (isPaused(ticket)) return 'paused';
-  if (isLanding(ticket, items)) return 'landing';
+  if (isLanding(ticket, items)) return items.some((each) => each?.kind === KIND_STEPS && each.ticket === ticket.id && isOpen(each)) ? 'human steps' : 'landing';
   // In hand on its own stage's lane (three-lanes spec 4); a yellow ticket off the co-pilot is never in hand.
   const state = stateOf(ticket);
   return state !== 'yellow' && inHandOf(items, ticket.repo, state)?.id === ticket.id ? 'in hand' : 'parked';

@@ -34,6 +34,7 @@ import {
   renderTypeNote,
   renderCard,
   renderRuns,
+  renderHumanSteps,
 } from './render-cards.mjs';
 import { renderLink, tabCode, renderStrip, renderEverything, renderToggle } from './render-strip.mjs';
 import { renderStrips, renderUsage, ENDED_NOTE } from './render-rail.mjs';
@@ -461,8 +462,8 @@ export function renderThreadPage(item, items = [], runs = [], agents = {}, numbe
     ].join(''),
     REFUSED: renderRefusal(refused, items),
     // An archived thread is read-only (store-durability spec 8): it says so, and offers no press to refuse.
-    // A steps thread's Done closed its ticket too, so `reopenItem` always refuses it (human-steps L4): no press to offer.
-    REPLY: archived ? '' : isOpen(item) ? renderReplySlot(item) : item.kind === KIND_STEPS ? '' : renderReopenForm(item),
+    // A steps thread's Done closed its ticket too, so `reopenItem` always refuses it (human-steps L4): its steps, no press.
+    REPLY: archived ? '' : isOpen(item) ? renderReplySlot(item) : item.kind === KIND_STEPS ? renderHumanSteps(item) : renderReopenForm(item),
   });
 }
 

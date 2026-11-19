@@ -387,7 +387,7 @@ export function addPilotMessage(id, text, author, to, promise) {
     // The pilot's Resolving and Land again on a landing conflict are its whoever owns the gate2 (L7).
     const landingWord = to === undefined && landingReply(item, text, writerKind(author), repliedAt);
     if (!landingWord && !mayWrite(item, writerKind(author), to)) throw notTheOwner(item);
-    // The pilot's one reply on a record, its worktrees reply, asks nothing either (ADR 0148, A3).
+    // The pilot's one reply on a record, the Findings: reply, asks nothing either (ADR 0148, A3).
     if (isRecord(item)) refuseAsks(reportAskGaps(text, [], 'reply'));
     // The pilot's findings on its report go into the report itself (gate2-frees-lane spec 4); the user's reply is still refused.
     if (isRecord(item) && writerKind(author) === 'pilot' && text.startsWith('Findings:')) {

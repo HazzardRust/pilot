@@ -35,7 +35,6 @@ const report = (rows) => ({
   slices: [],
   assumed: [],
   friction: rows,
-  humanSteps: [],
   worktreesLeft: [],
 });
 
