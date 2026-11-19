@@ -59,11 +59,11 @@ async function ownedAt(git, sha, artefact) {
   const slices = `${path.posix.join(path.posix.dirname(artefact.replaceAll('\\', '/')), 'slices')}/`;
   const listed = await git(['ls-tree', '-z', '--name-only', `${sha}:${slices}`]);
   if (listed.code !== 0) throw new GitError(`git ls-tree: no ${slices} at ${sha}`);
-  const owned = new Set();
+  const owned = new Map();
   for (const name of listed.stdout.split('\0').filter((entry) => entry.endsWith('.md'))) {
     const slice = await git(['show', `${sha}:${slices}${name}`]);
     if (slice.code !== 0) throw new GitError(`git show: ${slices}${name} at ${sha}`);
-    for (const file of ownedFiles(slice.stdout)) owned.add(file);
+    for (const file of ownedFiles(slice.stdout)) owned.set(file, [...(owned.get(file) ?? []), name.replace(/\.md$/, '')]);
   }
   return owned;
 }
@@ -116,6 +116,12 @@ export async function planChanges(repoDir, fromSha, toSha, slug) {
 }
 
 
+/** The one line a drift is said in, wherever it is noted: the plan is kept and the ticket stays yellow. */
+export function driftLine(drift, why) {
+  const what = drift.state === 'gone' ? `plan ${drift.sha.slice(0, 8)} gone` : `${drift.files.join(', ')} owned by ${drift.slices.join(', ')}`;
+  return `Drift (${why}): ${what}; plan kept, ticket yellow`;
+}
+
 async function driftOf(repoDir, plan) {
   const sha = plan?.sha;
   const branch = plan?.branch;
@@ -146,8 +152,9 @@ async function driftOf(repoDir, plan) {
     const base = (await must(['merge-base', sha, pilot])).trim();
     const changed = new Set((await must(['diff', '-z', '--name-only', '--no-renames', base, pilot, '--'])).split('\0').filter(Boolean));
     const owned = await ownedAt(git, sha, artefact);
-    const files = [...owned].filter((file) => changed.has(file)).sort();
-    return files.length ? { state: 'moved', files } : { state: 'ok' };
+    const files = [...owned.keys()].filter((file) => changed.has(file)).sort();
+    const slices = [...new Set(files.flatMap((file) => owned.get(file)))].sort();
+    return files.length ? { state: 'moved', files, slices } : { state: 'ok' };
   } catch (error) {
     // L10: git that cannot answer grants; anything else thrown here is a bug and is said as the reason, never swallowed silently.
     return { state: 'unchecked', reason: error instanceof GitError ? error.message : `planDrift: ${error?.message ?? error}` };
