@@ -51,7 +51,7 @@
     },
     {
       "slice": "S6",
-      "state": "implementing",
+      "state": "pushed 7b677ce — production +66/-1, tests waived; rust approve with nits, security approve",
       "after": [
         "S5"
       ],
@@ -60,7 +60,7 @@
     },
     {
       "slice": "S7",
-      "state": "implementing",
+      "state": "implementing — fresh finisher on cae0a6a: trim production 452 to under 400, gate, 2 reviews",
       "after": [
         "S5"
       ],
@@ -69,7 +69,7 @@
     },
     {
       "slice": "S8",
-      "state": "wip at 1af1748 — B1-B4 green, 524 lines waived (tests); awaits S12 tip, Inbox::ask in thread.rs fn go, gate, 2 reviewers, squash; a fresh implementer finishes it",
+      "state": "pushed ea09d22 — 524+ lines waived (tests); rust Warning (on head before the +3-line go/ask change, which the co-pilot read), typescript APPROVE; Escape needs Tab first -> added slice",
       "after": [
         "S1"
       ],
@@ -99,7 +99,7 @@
     },
     {
       "slice": "S12",
-      "state": "pushed 3ab8d1c — 547 lines waived (tests); rust WARNING, typescript WARN on pre-fix head; rust re-review + cargo on final head running",
+      "state": "integrated at 1fd78fd — 547 lines waived (tests); rust warning (re-read final head, cargo green), typescript WARN",
       "after": [
         "S1"
       ],
@@ -164,8 +164,8 @@
       ]
     }
   ],
-  "next": "S6, S7 implementing from 8a4af5c; S12 re-review running, then integrate S12 and brief a fresh S8 finisher on its tip; send S6/S7 the tip",
-  "updatedAt": "2026-11-19T22:42:31.058Z",
+  "next": "self-pausing for context: integrate S8 (running) and S6, drain S7 finisher and integrate it, then hand back paused",
+  "updatedAt": "2026-11-19T23:11:15.903Z",
   "friction": [
     {
       "agent": "pilot-implementer",
@@ -277,6 +277,24 @@
       "agent": "pilot:pilot-implementer",
       "what": "S12: npm test ~8 min and flaked once under concurrent load; no recipe for held lanes on a scratch deck; --snap loads the default query only",
       "evidence": "daemon.test.mjs 'a reply on an item older than deck_read...' red once, 75/75 alone",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: reached its context notice at ~230k before the trim; Rune's motion cause rule and instant press fill are documented only in rune's el/motion.rs; slice too big for the line limit (card, options, columns, spring)",
+      "evidence": "cae0a6a, production 452 lines",
+      "size": 452
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8 finisher: no Monitor tool, waited on an 8-min npm test through blocked sleeps; Python heredoc broke on cp1252",
+      "evidence": "S8 finisher report",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: context summarized right after worktree creation, slice rebuilt from scratch; TaskStop unreachable so a 7.5-min npm test on a stale base was wasted; tests/support and pilot deck --scratch did not set the Start guard (PILOT_DECK_NO_START) so a Start press in a Rust test would open a real terminal",
+      "evidence": "S6 report; tests/support/mod.rs now sets it",
       "size": 8
     }
   ]
