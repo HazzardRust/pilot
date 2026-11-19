@@ -5,6 +5,11 @@
   "branch": "feat/yellow-never-idle",
   "base": "pilot",
   "worktree": "C:/Users/Hazzard/Projects/pilot-feat-yellow-never-idle",
+  "qa": {
+    "branch": "qa/yellow-never-idle",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-qa",
+    "url": "http://127.0.0.1:60786"
+  },
   "artefact": "docs/design/yellow-never-idle/architecture.md",
   "slices": [
     {
@@ -30,7 +35,7 @@
     },
     {
       "slice": "yellow-never-idle",
-      "state": "fixing",
+      "state": "in QA: walkthrough itm_f656751ff13c posted; 60-min check of spec 7 at 04:37:40Z pending",
       "branch": "feat/yellow-never-idle",
       "pr": 114
     },
@@ -47,8 +52,8 @@
   "findings": [
     "dropped: QA-F1 — the Stop hook frames the deck's Idle line as 'the user has answered'; the line it points at says what to do, blocking until answered is intended, and the wording lives in stop-gate.js, which L4 keeps unedited; noted in the QA comment"
   ],
-  "next": "Integrating the fix round 6d7deb15 onto feat 88029164; then send QA the fix tip (resume QA, re-probe, walkthrough).",
-  "updatedAt": "2026-11-19T03:24:53.157Z",
+  "next": "Walkthrough itm_f656751ff13c up, QA comment on #114 posted by the deck; main runs `need`. QA a86e6d5724424a63a stays live: 60-min count of spec 7 at 04:37:40Z, then the user's replies, reporting to main.",
+  "updatedAt": "2026-11-19T04:00:44.945Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -179,6 +184,41 @@
       "agent": "pilot-qa",
       "what": "QA was handed back before the fix tip arrived, so the walkthrough needs a resume or a fresh QA agent",
       "evidence": "QA hand-back 03:21:31Z"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "a blocking-question fixture needs recommended plus options; two 400s before it posted",
+      "evidence": "QA writer hand-back, q.mjs"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "spec 5-8 need 20 real minutes from the scratch deck's start and the pause landed inside the window; past ~03:59Z a successor restarts the deck and pays another 20",
+      "evidence": "QA writer hand-back"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "brief.md's PR footer session URL differs from the commit trailer's",
+      "evidence": "docs/design/yellow-never-idle/brief.md:43 vs :33"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "two spawn/send calls returned classifier no-verdict when batched with a deck_status; reissued alone, both passed",
+      "evidence": "Agent QA writer, SendMessage triage"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "a QA writer survived the session's /clear unrecorded, so a second pilot-qa was spawned on the same ticket and scratch deck; it stood down after posting two scratch fixtures",
+      "evidence": "a86e6d5724424a63a live with timed probe; a87be542505ca426b spawned 03:51Z, stood down 03:58Z"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "a co-pilot cannot TaskStop a child of a previous co-pilot or its own spawn; only main or the agent can",
+      "evidence": "TaskStop a87be542505ca426b refused for agent acd9f6ef0c5aac512"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "deck MCP dropped and QA's context reset mid-run; SEC3 is defined nowhere in docs/design/yellow-never-idle, so QA inferred it from a scratch script",
+      "evidence": "QA a86e6d5724424a63a report; grep of the artefact for SEC3: none"
     }
   ]
 }
