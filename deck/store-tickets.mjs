@@ -25,7 +25,7 @@ import {
   switchOf,
   ticketQueueOf,
 } from './items.mjs';
-import { YIELD_MS, yieldsDue } from './lanes.mjs';
+import { IDLE_MS, YIELD_MS, idleYellowOf, yieldsDue } from './lanes.mjs';
 import { SHA } from './recut.mjs';
 import { nextRecord, repoKey, sameRepo } from './runs.mjs';
 import {
@@ -374,6 +374,29 @@ export function yieldTicket(id, questionId) {
   const text = `Yielding ${id}: ${questionId} unanswered ${YIELD_MS / 60_000} min; send the co-pilot the pause: it drains every live slice, then hands back paused`;
   question.replies = [...messagesOf(question), { from: 'deck', author: 'deck', text, repliedAt: at, seq: (deck.seq = seqOf(deck) + 1) }];
   touchRuns(deck, ticket.repo);
+  writeDeck(deck);
+  return ticket;
+}
+
+/**
+ * The deck's idle wake (yellow-never-idle spec 7, 8; L7), one write: the co-pilot's held ticket, which `idleYellowOf`
+ * finds idle now with the crew last seen at `crewSeenAt`, is stamped `idleNoted: crewSeenAt` and given one `from: 'deck'`
+ * line with a `seq`, which wakes the pilot's parked wait. Refused unless it is due now and not yet noted for this
+ * `crewSeenAt`, so an idle episode is noted once; it releases nothing (A1). Returns the ticket.
+ */
+export function noteIdle(ticketId, crewSeenAt) {
+  const deck = readDeck();
+  const ticket = openTicketOf(deck, ticketId);
+  const entry = storedCoPilot(deck, ticket.repo);
+  const holder = entry && isLiveCoPilot(deck, entry) ? entry.ticket : undefined;
+  const now = Date.now();
+  const idle = idleYellowOf(deck.items, ticket.repo, holder, crewSeenAt, now);
+  if (idle?.ticket !== ticketId || idle.at > now || ticket.idleNoted === crewSeenAt) {
+    throw new DeckRefusal(`${ticketId} is not newly idle: the co-pilot holds ${holder ?? 'nothing'} here, and its crew must be quiet ${IDLE_MS / 60_000} min since a moment not yet noted`);
+  }
+  ticket.idleNoted = crewSeenAt;
+  const text = `Idle ${ticketId}: no crew tool call for ${IDLE_MS / 60_000} min and nothing blocks it — need it, or release it and spawn its successor`;
+  ticket.replies = [...messagesOf(ticket), { from: 'deck', author: 'deck', text, repliedAt: new Date(now).toISOString(), seq: (deck.seq = seqOf(deck) + 1) }];
   writeDeck(deck);
   return ticket;
 }

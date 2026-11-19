@@ -13,16 +13,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { quietAt, watchAgents } from './agents.mjs';
+import { crewSeenAt, quietAt, watchAgents } from './agents.mjs';
 import { HANDOFF_ACK_MS, KIND_GATE2, KIND_HANDOFF, KIND_QUESTION, KIND_WALKTHROUGH, NOTE_SEPARATOR, PASS_KINDS, SIGN_OFF, isOpen, sameRepo } from './items.mjs';
 import { CONFLICT_TITLE } from './landing-replies.mjs';
-import { yieldsDue } from './lanes.mjs';
+import { idleYellowOf, yieldsDue } from './lanes.mjs';
 import { PICKED_UP_MS, WORKING_MS } from './pilot-state.mjs';
 import {
   DeckRefusal, MAX_TEXT_BYTES, MAX_WAIT_REPLIES, deckLanes, fallBack, fallbackDue, listItems, listRuns, markDelivered, postItem,
   repliesSince, yieldTicket,
 } from './store.mjs';
 import { CONFLICT_TURN_MS } from './store-items.mjs';
+import { noteIdle } from './store-tickets.mjs';
 import { defaultsDue, takeDefault } from './store-defaults.mjs';
 import { cookieName, deckDir, ensureSecret, secretFile } from '../hooks/lib/deck-secret.js';
 import { DECK_HOST } from './tools.mjs';
@@ -404,6 +405,7 @@ function armHandoffs() {
   }
   armStateTimers(items, runs);
   armYields();
+  armIdle();
   armDefaults();
   armConflicts();
 }
@@ -511,6 +513,40 @@ export function armYields() {
   }
   armOneShots(yieldTimers, due, (question, ticket) => yieldTicket(ticket, question), (err, _, ticket) => {
     if (!(err instanceof DeckRefusal)) console.error(`[deck] the yield of ${ticket} could not be written:`, err.message);
+  });
+}
+
+/** Each held ticket's one idle timer, by ticket id, with the crew moment it was armed for. */
+const idleTimers = new Map();
+
+/**
+ * One unref'd one-shot timer per live co-pilot's ticket `idleYellowOf` names, at its `at` (yellow-never-idle spec 7, 8;
+ * L7), beside the yields; none once `noteIdle` has noted that crew moment. A crew heartbeat moves `at` without a write,
+ * so a fire `noteIdle` refuses as not due is armed again at the new `at`; an arrival after a quiet spell announces
+ * itself, which arms the next episode. On fire `noteIdle` checks the rule again.
+ */
+export function armIdle() {
+  let items;
+  let coPilots;
+  try {
+    items = listItems();
+    ({ coPilots } = deckLanes());
+  } catch (err) {
+    console.error('[deck] the idle timers could not read the store:', err.message);
+    return;
+  }
+  const due = new Map();
+  for (const held of Object.values(coPilots)) {
+    const ticket = items.find((item) => item.id === held);
+    const seenAt = ticket ? crewSeenAt(ticket.repo) : undefined;
+    const idle = ticket ? idleYellowOf(items, ticket.repo, held, seenAt, Date.now()) : null;
+    if (idle && ticket.idleNoted !== seenAt) due.set(held, { key: seenAt, at: idle.at, repo: ticket.repo });
+  }
+  const seenNow = (id) => crewSeenAt(due.get(id).repo);
+  armOneShots(idleTimers, due, (id) => noteIdle(id, seenNow(id)), (err, id, seenAt) => {
+    if (!(err instanceof DeckRefusal)) console.error(`[deck] the idle note on ${id} could not be written:`, err.message);
+    // The roster's departure announce usually re-arms first; only a moved crew moment arms again, so no refusal spins.
+    else if (seenNow(id) !== seenAt) armIdle();
   });
 }
 
