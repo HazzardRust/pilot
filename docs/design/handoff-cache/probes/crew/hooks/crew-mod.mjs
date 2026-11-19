@@ -1,15 +1,7 @@
 /**
- * The crew probe's mod (handoff-cache S5). At the main session's first turn end it clears the way
- * `hooks/handoff-mod.mjs` does, `$.command.run({ command: 'clear' })` then `$.prompt.submit`, and lets the
- * background agent send main its message at one point of that clear, read from `config.mjs`:
- *
- *   before  the agent's send returns before `command.run` is called (main idle, the mod holding its turn end)
- *   during  the send happens inside the `SessionStart:clear` hook, which runs before `command.run` resolves
- *   after   the send happens once the fresh context's first turn has ended
- *
- * It logs every turn, the clear, `$.agent.list()` after the clear and at each fresh turn end, and any
- * `session.receive`, to `<dir>/mod.jsonl` through `probe-io.mjs`. A mod may import nothing of Node's, so the
- * helper's path is worked out from `import.meta.url` by hand, as the hand-off mod does.
+ * The crew probe's mod (handoff-cache S5). At main's first turn end it clears as `hooks/handoff-mod.mjs` does and
+ * lets the agent send at `config.at`: before `command.run`, inside the `SessionStart:clear` hook (`probe-io.mjs`),
+ * or after the fresh context's first turn. It logs turns, the clear and `$.agent.list()` to `<dir>/mod.jsonl`.
  */
 
 import { config } from './config.mjs';
@@ -115,7 +107,5 @@ export function register(on) {
       await log($, { ev: 'receive', origin: e?.origin ?? null, agentId: e?.agentId ?? null, phase: mod.phase });
       return next(e);
     });
-  } catch {
-    // An event this host does not know: the probe runs without the receive log.
-  }
+  } catch { /* an event this host does not know: no receive log */ }
 }

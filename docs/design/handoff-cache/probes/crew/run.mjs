@@ -1,19 +1,9 @@
 #!/usr/bin/env node
 /**
- * The crew probe's runner (handoff-cache S5, spec 7):
- *
- *   node run.mjs --at before|during|after --runs <n> --model sonnet
- *
- * Each run starts one scratch headless session in a fresh temp repository, never the user's live session: user
- * settings are skipped (`--setting-sources project`, so no installed plugin loads), no MCP server loads, and the
- * only plugin is a copy of this directory with its `hooks/config.mjs` naming the run's signal directory and send
- * point. Main spawns one background agent, told to wait for the mod's signal, `SendMessage` main a token, then
- * work 20 s more and finish. The mod clears main at its first turn end and submits a fresh prompt asking for any
- * message received. Prints one JSON line per run:
- *
- *   {run, at, agentAlive, agentId, sent, receivedByNewContext, endedBy, ...detail}
- *
- * `agentAlive` is listed by `$.agent.list()` after the clear and finished its task; the detail fields split it.
+ * The crew probe's runner (handoff-cache S5): `node run.mjs --at before|during|after --runs <n> --model sonnet`.
+ * Each run is one scratch headless session in a fresh temp repository, user settings and MCP servers skipped, with a
+ * copy of this plugin as its only plugin (see ../crew.md). Prints one JSON line per run, `{run, at, agentAlive,
+ * agentId, sent, receivedByNewContext, endedBy, ...detail}`; `agentAlive` is listed after the clear and finished.
  */
 
 import { spawn, spawnSync } from 'node:child_process';
@@ -57,10 +47,14 @@ function mainPrompt(agent) {
   ].join('\n');
 }
 
+/** The parsed lines of a JSON-lines text; a line still being written is skipped. */
+const jsonLines = (text) => text.split('\n').filter(Boolean).flatMap((line) => {
+  try { return [JSON.parse(line)]; } catch { return []; }
+});
+
 function readLog(sig) {
   const file = join(sig, 'mod.jsonl');
-  if (!existsSync(file)) return [];
-  return readFileSync(file, 'utf8').split('\n').filter(Boolean).map((line) => JSON.parse(line));
+  return existsSync(file) ? jsonLines(readFileSync(file, 'utf8')) : [];
 }
 
 /** The main session's text replies, a subagent's own events left out. */
@@ -127,9 +121,7 @@ async function oneRun(run, at, model) {
   if (exited === null) child.kill();
   writeFileSync(join(root, 'out.jsonl'), stdout);
 
-  const events = stdout.split('\n').filter(Boolean).flatMap((line) => {
-    try { return [JSON.parse(line)]; } catch { return []; }
-  });
+  const events = jsonLines(stdout);
   const log = readLog(sig);
   const texts = mainTexts(events);
   const afterClear = log.find((e) => e.ev === 'agents-after-clear');

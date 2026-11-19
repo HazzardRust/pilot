@@ -1,16 +1,6 @@
 /**
- * The probe's file signals, shared by the mod (through `$.process.run`, since a mod may import nothing of
- * Node's), the background agent (through its Bash tool) and the `SessionStart:clear` hook. Every op works on the
- * run's own scratch directory and prints one line.
- *
- *   go <dir>             the agent may send now
- *   wait <dir>           the agent's wait for `go`, at most 90 s a call (exit 1: call again)
- *   sent <dir>           the agent's SendMessage returned
- *   work <dir>           the rest of the agent's task: 20 s
- *   done <dir>           the agent finished its task
- *   waitsent <dir> <ms>  the mod's wait for `sent` (exit 1: not within <ms>)
- *   log <dir> <json>     one line of the mod's log, stamped
- *   clearing             the SessionStart:clear hook: logs, and at `during` lets the agent send and waits for it
+ * The probe's file signals in the run's scratch directory, for the mod (`$.process.run`), the agent (Bash) and the
+ * `SessionStart:clear` hook (`clearing`, which at `during` lets the agent send and waits for it). One line out.
  */
 
 import { appendFileSync, existsSync, writeFileSync } from 'node:fs';
