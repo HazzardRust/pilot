@@ -426,9 +426,10 @@ export async function driftAfterLanding(gate2Id, deps = {}) {
         const now = listItems().find((item) => item.id === id);
         if (!neverGranted(now) || !isOpen(now) || stateOf(now) !== 'yellow') continue;
         // planDrift is cumulative, so a drift already noted reads the same at every later landing: one line per drift
-        // (spec 2). A replan since moved the plan, so the same text after it is a new drift.
+        // (spec 2). A replan or a gate1 re-sign since moved the plan, so the same text after either is a new drift.
         const line = driftLine(drift, why);
-        const last = now.replies?.findLast((reply) => reply.author === 'deck' && /^(Drift \(|Replanned at )/.test(reply.text ?? ''))?.text;
+        const signedAt = listItems().find((item) => item.id === now.plan.gate1)?.resolvedAt ?? '';
+        const last = now.replies?.findLast((reply) => reply.author === 'deck' && /^(Drift \(|Replanned at )/.test(reply.text ?? '') && String(reply.repliedAt) > signedAt)?.text;
         if (last?.startsWith('Drift (') && withoutWhy(last) === withoutWhy(line)) continue;
         noteDeck(id, line);
         noted.push(id);

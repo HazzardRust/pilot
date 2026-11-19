@@ -43,7 +43,7 @@ practitioner: release engineer — a moved base is a merge-and-retest, never a r
 | --- | --- | --- | --- |
 | `recut.mjs` drift | `planDrift(repoDir, plan)`, `driftLine(drift, why)` | the two drift sentences the sweep and the grant each built by hand | local-substitutable (git in a temp repo) |
 | landing sweep | `driftAfterLanding(gate2Id, deps)` | – | in-process |
-| replan | `replanTicket(id, sha)`, `deck_ticket replan`, `signedSections(text)` | red re-cut replan and yellow move behind one call; the §2/§5/§8 read | in-process + local-substitutable |
+| replan | `replanTicket(id, sha)`, `deck_ticket replan`, `numberedSections(text)` | red re-cut replan and yellow move behind one call; the §2/§5/§8 read | in-process + local-substitutable |
 | gate1 lineage | `assertOnPilotTip(repo, branch)` | – | local-substitutable |
 
 Deletion test: `recutTicket` survives (the pilot's `recut` action, spec 3's gate1 path); `neverGranted` survives (the

@@ -161,6 +161,30 @@ test('after a replan the same drift is a new one, and is noted', async (t) => {
   assert.equal(deckLines(ticket.id).at(-1), 'Drift (landing 5e6f7a8): deck/store-items.mjs owned by S1; plan kept, ticket yellow');
 });
 
+test('after a re-cut and a gate1 re-sign the same drift is a new one, and is noted', async (t) => {
+  tempDeck(t);
+  const { work, plan } = repos(t);
+  const first = aLandedGate2(work);
+  const ticket = signed(work, plan);
+  landOn(work, 'deck/store-items.mjs');
+  await driftAfterLanding(first.id);
+  await callTool('deck_ticket', { id: ticket.id, action: 'recut' });
+  git(work, 'checkout', '-q', 'feat/x');
+  git(work, 'merge', '-q', '--no-edit', 'origin/pilot');
+  git(work, 'push', '-q', 'origin', 'feat/x');
+  takeLive(ticket.id);
+  const gate1 = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: `Changed since ${plan.sha.slice(0, 7)}: pilot merged`, repo: work, ...plan, sha: git(work, 'rev-parse', 'HEAD'), locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
+  addReply(gate1.id, SIGN_OFF);
+  resolveItem(gate1.id, 'Signed off.');
+  assert.equal(reread(ticket.id).state, 'yellow');
+  const second = aGate2(work);
+  settleLanding(second.id, { ok: true, sha: '5e6f7a8', line: 'landed feat/z on pilot at 5e6f7a8' });
+  landOn(work, 'deck/store-items.mjs', 'changed again\n');
+
+  assert.deepEqual(await driftAfterLanding(second.id), [ticket.id]);
+  assert.equal(deckLines(ticket.id).at(-1), 'Drift (landing 5e6f7a8): deck/store-items.mjs owned by S1; plan kept, ticket yellow');
+});
+
 test('a granted ticket is never re-cut', async (t) => {
   tempDeck(t);
   const gate = aLandedGate2(os.tmpdir());
