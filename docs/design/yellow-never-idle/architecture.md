@@ -1,6 +1,6 @@
 # yellow-never-idle: a built ticket waiting on the user can never stay yellow
 
-Ticket `itm_74926a1687c5` · base `feat/never-stuck-2` (0dede3d9) · origin thread `itm_1f10574ff8b3` · ADR NNNN
+Ticket `itm_74926a1687c5` · base `pilot` (655a49d8) · origin thread `itm_1f10574ff8b3` · ADR NNNN
 
 ## 1. Problem
 
@@ -29,8 +29,9 @@ refusal fired, and the pilot was parked in `pilot wait`, which the Stop hook nev
 | 9 | practitioner: incident replay — the post shape of `itm_ab39b4603222` (author pilot, non-blocking, short-path yellow ticket) reads green in the same call. | Deck test fixture copied from that item's fields: green after 1 post, where the incident took 9 h. |
 
 Agreed: the user took all 6 proposed lines (`itm_f4b60134c37c`, "All 6"), 3 slices; they are 1, 2, 3, 5 with 6
-(the Stop hook half of proposed line 4), 7 and 8. Lines 4 and 9 are *assumed*: 4 is L3's trust rule, 9 the incident's
-replay as a test; both sharpen line 1 and add no slice.
+(the Stop hook half of proposed line 4), 7 and 8. Line 4 is agreed (`itm_db72fd8d7683`, "Pilot or QA only") and
+replaces the agreed line 1's "any author". Line 9 is *assumed*: the incident's replay as a test, which sharpens line 1
+and adds no slice.
 QA environment (`itm_ee6677a81961`, "Scratch deck"): a scratch deck with a temp repository, a real parked `pilot wait`,
 and the Stop hook run with a payload; the live deck is not touched.
 
@@ -82,7 +83,7 @@ Deletion test: `needTicket` survives (the pilot's `need` for a question-only han
 - **L1** Depth: forks (user, `itm_54daee7f93a5`).
 - **L2** The walkthrough's post is the concluding move, in `postItem`'s write beside gate2's (ADR 0066: ready for
   concluding is "QA's walkthrough is posted"). Rejected: a hook forcing `need`, which still depends on the pilot.
-- **L3** Only a non-blocking walkthrough by `pilot` or `qa` moves the ticket. Rejected: QA only, which misses the
+- **L3** Only a non-blocking walkthrough by `pilot` or `qa` moves the ticket (user, `itm_db72fd8d7683`). Rejected: QA only, which misses the
   incident (the pilot posted it, short path has no QA); any author, which lets an explorer or teacher move a ticket.
 - **L4** The idle rule lives in `deck/lanes.mjs` and reaches the Stop hook as `lanes.refusal`; `hooks/stop-gate.js`
   is not edited. Rejected: the hook reading the roster, a second copy of the rule in CommonJS.
@@ -98,13 +99,17 @@ Deletion test: `needTicket` survives (the pilot's `need` for a question-only han
   Trades: one pilot action. Rejected: auto-release, which after a rate-limit stall or a long test leaves the
   original co-pilot waking beside a successor, two writers on one branch. Posted as `itm_b2779ef0011f`.
   User answer: "Tell the pilot (default)".
+  Verdict: stands — the user chose "Tell the pilot (default)" on itm_b2779ef0011f
 - **A2** `IDLE_MS` is 20 min, the yield's bound, twice the 10-min foreground tool cap. Trades: a dead crew is found
   20 min late. Rejected: 90 s (`LIVE_WINDOW_MS`), which fires on every long test run.
+  Verdict: stands — 20 min is the yield's bound already in use; no queued ticket touches the threshold
 - **A3** The co-pilot lane line stays `co-pilot: <id>`; idle shows as the deck line on the ticket's card and the
   refusal. Trades: no idle word in the rail. Rejected: a new line shape, which touches two regex copies
   (`deck/lanes.mjs:46`, `hooks/session-handoff.js:402`).
+  Verdict: stands — no queued ticket claims the lane line's shape; the idle shows on the ticket and in the refusal
 - **A4** 3 slices, not the 2 sized: spec 7 is the wake the draft lacked; without it a parked pilot never stops.
   User answer: "All 6" on the spec, 3 slices (`itm_f4b60134c37c`).
+  Verdict: stands — the user chose "All 6" on itm_f4b60134c37c, 3 slices
 - red team: S3's timer, armed only on store writes, would never fire for a crew that went quiet without a write
   after a not-yet-due check. Changed: `idleYellowOf` returns the future `at` and `armIdle` re-arms on a not-due fire.
 - red team: a walkthrough's ticket is read through `walked`, not `ticketNamedBy`, which skips walkthroughs; S1 owns it.

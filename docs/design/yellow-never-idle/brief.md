@@ -14,10 +14,9 @@ Remote: origin
 
 ## Base and PR target
 
-The base is `feat/yellow-never-idle`, cut from `design/yellow-never-idle`, itself cut from `origin/feat/never-stuck-2`
-(0dede3d9, never-stuck Run 2, concluding `itm_4be94a7ae00a`). A slice is a pushed branch
-`slice/yellow-never-idle-s<n>`, integrated by the co-pilot into `feat/yellow-never-idle`; the feature PR targets
-`feat/never-stuck-2` while that base stands, else `pilot`, as `pilot base` names it.
+The base is `feat/yellow-never-idle`, cut from `design/yellow-never-idle`, itself on `origin/pilot`
+(655a49d8, after never-stuck Run 2 landed as 37c7504). A slice is a pushed branch `slice/yellow-never-idle-s<n>`,
+integrated by the co-pilot into `feat/yellow-never-idle`; the feature PR targets `pilot`.
 
 ## PR titles
 
