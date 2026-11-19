@@ -24,7 +24,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 1048071 (review fixes, pins and README after the reviewers' read)",
+      "state": "pushed 1048071 (integrating; review fixes after the reviewers' read)",
       "after": [
         "S1"
       ],
@@ -50,7 +50,7 @@
     },
     {
       "slice": "S4",
-      "state": "implementing",
+      "state": "implementing (seam: 2 integrate tests filter the check-runs read)",
       "after": [
         "S1"
       ],
@@ -59,7 +59,7 @@
     },
     {
       "slice": "S6",
-      "state": "implementing",
+      "state": "pushed 6c6e2f6",
       "after": [
         "S1"
       ],
@@ -77,7 +77,7 @@
     },
     {
       "slice": "S9",
-      "state": "implementing",
+      "state": "pushed 99fb126 (WARN fixes after the reviewer's read)",
       "after": [
         "S1"
       ],
@@ -86,7 +86,7 @@
     },
     {
       "slice": "S10",
-      "state": "pushed 8592905 (integrating)",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -94,8 +94,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s10"
     }
   ],
-  "next": "ci-gate: integrating S10, then S5; S3, S4, S6, S8, S9 implementing; S7 after S5 integrates.",
-  "updatedAt": "2026-11-19T18:20:13.742Z",
+  "next": "ci-gate: integrating S5, then S6, S9 (trailers in co-pilot scratchpad); S3, S4, S8 implementing; S7 after S5 integrates.",
+  "updatedAt": "2026-11-19T18:34:54.143Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -221,6 +221,48 @@
       "what": "S5 owned files omit deck/tools.mjs schema, deck/README.md row and prompt pins a new deck_post field needs; two full gates",
       "evidence": "S5 report",
       "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "parallel slices queue on the shared gate slots (%TEMP%/pilot-gate-slots): ~8 min waits, three integrate test files killed at 500 s, an EPERM on slot-0.json.takeover",
+      "evidence": "S4 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "scratchRepos lives inside integrate.test.mjs and is not importable; fixture copied",
+      "evidence": "scripts/test/integrate.test.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4's slice note claimed existing integrate tests stay green with 0 edits; two record gh calls exactly",
+      "evidence": "integrate-prune.test.mjs:109, integrate-remote.test.mjs:116",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a scripted node string-replace silently missed two edits through backslash escaping; tests caught it",
+      "evidence": "S6 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6 gate waited for a slot behind S5 and the feat worktree; Monitor unavailable, polled with until-loops",
+      "evidence": "S6 gate log line 7",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate slot takeover crashed with EPERM on mkdir while other worktrees queued; one wasted full run",
+      "evidence": "scripts/gate-slots.mjs:55, S9 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "three-lanes-wording bans bare red/yellow/green anywhere in CONTEXT.md; only the full gate showed it",
+      "evidence": "scripts/test/three-lanes-wording.test.mjs:54-56",
+      "size": 1
     }
   ]
 }
