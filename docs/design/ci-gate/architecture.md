@@ -65,7 +65,7 @@ Deletion test: without **Checks**, land, integrate, base, the CLI and the gate2 
 
 ## 4. Ubiquitous language
 
-- **Check**: one host CI result on one commit, `{ name, outcome: pass | fail | pending, url }`.
+- **Check**: one host CI result on one commit, `{ name, outcome: pass | fail | pending }`.
 - **Verdict**: the commit's checks read as one state: green, red, pending, none, unread.
 - **CI configured**: the tree at the sha holds `.github/workflows/*.yml|yaml` or `.gitlab-ci.yml`.
 - **Check line**: `checks <state> at <sha7>[: <names>]`, the one string every step prints and a gate2 carries.
