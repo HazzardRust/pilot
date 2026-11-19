@@ -1,7 +1,7 @@
 /**
  * S6 of pilot-develop-line: `pilot integrate` takes the chained base until N lands (spec 4a, 5; L6).
- * A run whose record says `base: feat/<N>` merges N's tip at every slice while N waits, and pilot
- * from the first integration after N's landing merge `Merge feat/<N> into pilot` is on pilot. The
+ * A run whose record says `base: feat/<N>` merges N's tip at every slice while N waits, and the
+ * default branch once N's tip is in it, not at N's landing on pilot (audit-f14 L5). The
  * base is read from the record, never from ancestry. Every git case runs against a scratch bare
  * "origin" and a clone of it; the deck case runs on this test's own store.
  */
@@ -91,14 +91,6 @@ test('a chained run merges N\'s tip', (t) => {
   assert.deepEqual(baseOf(work, 'origin'), { ref: 'origin/feat/n', chained: 'feat/n' });
 });
 
-test('once N lands the base is pilot', (t) => {
-  const { seed, work } = chainRepos(t);
-  landN(seed);
-  git(work, 'fetch', '-q', 'origin');
-
-  assert.deepEqual(baseOf(work, 'origin'), { ref: 'origin/pilot' });
-});
-
 test('a record without base is pilot', (t) => {
   const { work } = chainRepos(t);
   writeRecord(work, { slug: 'm', branch: 'feat/m' });
@@ -113,9 +105,9 @@ test('a record base that is neither pilot nor feat/<slug> is refused, never merg
   assert.throws(() => baseOf(work, 'origin'), /base/);
 });
 
-test('the base switches exactly at N\'s landing merge, and stays pilot after it is taken', (t) => {
+test('the base switches once N\'s tip is in the default branch, not at its landing, and stays there', (t) => {
   const { origin, seed, work } = chainRepos(t);
-  pushTo(seed, 'pilot', 'p2.txt', 'p2\n');
+  pushTo(seed, 'main', 'p2.txt', 'p2\n');
   pushTo(seed, 'feat/n', 'n-fix.txt', 'fix\n'); // N's fix round while it waits in concluding
 
   const first = integrate(undefined, { cwd: work, ...quiet });
@@ -125,21 +117,31 @@ test('the base switches exactly at N\'s landing merge, and stays pilot after it 
   assert.equal(git(work, 'log', '-1', '--format=%s', merge), 'Merge base feat/n');
   assert.equal(git(work, 'rev-parse', `${merge}^2`), git(work, 'rev-parse', 'origin/feat/n'), 'N\'s tip, not pilot');
   assert.ok(fs.existsSync(path.join(work, 'n-fix.txt')), 'N\'s fix round is taken');
-  assert.ok(!fs.existsSync(path.join(work, 'p2.txt')), 'pilot is not taken while N waits');
+  assert.ok(!fs.existsSync(path.join(work, 'p2.txt')), 'main is not taken while N waits');
 
+  // N's landing on pilot does not end the chain (audit-f14 L5).
   landN(seed);
+  const landed = integrate(undefined, { cwd: work, ...quiet });
+  assert.equal(landed.ok, true, landed.line);
+  assert.match(landed.line, /^took base feat\/n@/);
+
+  // N's PR merged into main: N's tip is in main by ancestry.
+  git(seed, 'checkout', '-q', 'main');
+  git(seed, 'reset', '-q', '--hard', 'origin/main');
+  git(seed, 'merge', '-q', '--no-ff', '-m', 'Merge pull request #1 from feat/n', 'origin/feat/n');
+  git(seed, 'push', '-q', 'origin', 'main');
   const second = integrate(undefined, { cwd: work, ...quiet });
   assert.equal(second.ok, true, second.line);
-  assert.match(second.line, /^took base pilot@[0-9a-f]+ at /);
+  assert.match(second.line, /^took base main@[0-9a-f]+ at /);
   const taken = git(work, 'log', '-1', '--merges', '--format=%H');
-  assert.equal(git(work, 'log', '-1', '--format=%s', taken), 'Merge base pilot');
-  assert.equal(git(work, 'rev-parse', `${taken}^2`), git(work, 'rev-parse', 'origin/pilot'));
-  assert.ok(fs.existsSync(path.join(work, 'p2.txt')), 'pilot is taken once N lands');
+  assert.equal(git(work, 'log', '-1', '--format=%s', taken), 'Merge base main');
+  assert.equal(git(work, 'rev-parse', `${taken}^2`), git(work, 'rev-parse', 'origin/main'));
+  assert.ok(fs.existsSync(path.join(work, 'p2.txt')), 'main is taken once N is in it');
 
-  pushTo(seed, 'pilot', 'p3.txt', 'p3\n');
+  pushTo(seed, 'main', 'p3.txt', 'p3\n');
   const third = integrate(undefined, { cwd: work, ...quiet });
   assert.equal(third.ok, true, third.line);
-  assert.match(third.line, /^took base pilot@/, 'N\'s landing inside feat/m does not bring the chain back');
+  assert.match(third.line, /^took base main@/, 'the chain does not come back');
   assert.ok(fs.existsSync(path.join(work, 'p3.txt')));
   assert.equal(git(origin, 'rev-parse', 'feat/m'), git(work, 'rev-parse', 'HEAD'), 'pushed');
 });

@@ -8,8 +8,8 @@
  *   the deck wrote under docs/design/, and push again. With no branch it takes the base
  *   alone.
  *
- * The base is the pilot branch (pilot-branch spec 3; L5), or a chained run's `feat/<N>` until
- * N lands (`baseOf`; pilot-develop-line spec 4a, L6): no PR is read for it,
+ * The base is the pilot branch (pilot-branch spec 3; L5), the default branch for a run cut from it,
+ * or a chained run's `feat/<N>` until N's tip is in the default branch (`baseOf`; audit-f14 L5): no PR is read for it,
  * and a missing pilot branch on the run remote (`runRemote`; the local `pilot` under
  * `none`) stops with nothing merged rather than falling back to the default branch. A
  * feature already landed on pilot (`landedOnPilot`) takes no base, so a later feature on
@@ -46,7 +46,7 @@ import { behavioursOf } from './check-slices.mjs';
 import { takeSlot } from './gate-slots.mjs';
 import { mergeIntoPilot } from './sync.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
-import { assertPushable, firstLine, git, holds, PILOT_BRANCH, pilotLineage } from './pilot-branch.mjs';
+import { assertPushable, firstLine, git, holds, PILOT_BRANCH, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRef, runRemote, shortRef } from './remotes.mjs';
 import { scopeOf } from './select-tests.mjs';
 import { runRecord } from './worktrees.mjs';
@@ -297,25 +297,36 @@ function pilotBase(cwd, runs = runRemote(gitIn(cwd))) {
 }
 
 /**
- * The base every integration takes (pilot-develop-line spec 4a; L6): with the checked-out
- * `feat/<slug>`'s run record saying `base: feat/<N>` and no landing merge of N on pilot yet,
- * N's tip on origin, `{ ref: 'origin/feat/<N>', chained: 'feat/<N>' }`; else `pilotBase`'s
- * `{ ref }`. The base is the record's, never read from ancestry; a record base that is neither
- * pilot nor `feat/<slug>` throws. `runs` is `runRemote`'s answer, read here when not given.
+ * The base every integration takes (pilot-develop-line spec 4a; audit-f14 L5, A7), from the
+ * checked-out `feat/<slug>`'s run record: no base or `pilot` (a legacy run, A3) is `pilotBase`'s
+ * `{ ref }`; the default branch's own name, as origin says it now, is `{ ref: 'origin/<default>' }`;
+ * `feat/<N>` is N's tip on origin, `{ ref: 'origin/feat/<N>', chained: 'feat/<N>' }`, until that tip
+ * is in the default branch by ancestry, then the default branch. N's landing on pilot does not end
+ * the chain. Any other record base throws. `runs` is `runRemote`'s answer, read here when not given.
  */
 export function baseOf(cwd, runs = runRemote(gitIn(cwd))) {
-  const pilot = pilotBase(cwd, runs);
   let head;
   try {
     head = git(cwd, 'symbolic-ref', '-q', '--short', 'HEAD');
   } catch {} // detached: no record to read, so pilot
   const base = recordIn(cwd, head)?.record.base;
-  if (base === undefined || base === PILOT_BRANCH) return pilot;
+  if (base === undefined || base === PILOT_BRANCH) return pilotBase(cwd, runs);
   if (typeof base !== 'string' || !RUN_BASE.test(base)) throw new Error(`run record base ${JSON.stringify(base)} is not ${PILOT_BRANCH} or feat/<slug>`);
-  // Any landing of N on pilot ends the chain, contained in HEAD or not, so it never comes back.
-  if (landingsOf(cwd, base, pilot.ref).length) return pilot;
-  return { ref: shortRef(runRef(remoteOf(runs, base), base)), chained: base };
+  const main = remoteDefaultBranch(gitIn(cwd));
+  const trunk = { ref: `origin/${main}` };
+  if (base === main) return trunk;
+  if (!/^feat\//.test(base)) throw new Error(`run record base ${JSON.stringify(base)} is not ${PILOT_BRANCH}, ${main} or feat/<slug>`);
+  const ref = shortRef(runRef(remoteOf(runs, base), base));
+  // N's branch gone (deleted on merge, then pruned): no tip to test, so the chain ends only once N has landed on pilot.
+  if (!holds(cwd, ['rev-parse', '-q', '--verify', `${ref}^{commit}`])) return chainLanded(cwd, base) ? trunk : { ref, chained: base };
+  return holds(cwd, ['merge-base', '--is-ancestor', ref, trunk.ref]) ? trunk : { ref, chained: base };
 }
+
+/** Whether `feat/<N>`'s landing merge is on the pilot branch's first-parent history, contained in HEAD or not: `chainGuard`'s end of a chain (L5). */
+export const chainLanded = (cwd, head) => landingsOf(cwd, head, pilotBase(cwd).ref).length > 0;
+
+/** The branch name a base is merged as: `chained`, the pilot branch (`pilotBase`'s exact ref on `runs`), or the default branch of `origin/<default>`. */
+const nameOf = (base, runs) => base.chained ?? (base.ref === shortRef(runRef(runs, PILOT_BRANCH)) ? PILOT_BRANCH : base.ref.replace(/^origin\//, ''));
 
 /** The message of the merge `pilot land` writes onto the pilot branch. */
 export const landingMessage = (head) => `Merge ${head} into ${PILOT_BRANCH}`;
@@ -398,10 +409,10 @@ export function integrate(branch, options = {}) {
     git(cwd, 'fetch', '-q', '--prune', 'origin');
     if (runs !== null && runs !== 'origin') git(cwd, 'fetch', '-q', '--prune', runs);
     base = baseOf(cwd, runs);
-    name = base.chained ?? PILOT_BRANCH;
+    name = nameOf(base, runs);
     taken = `${name}@${git(cwd, 'rev-parse', '--short', base.ref)}`;
-    // A chained run cannot have landed: its base N has not (L5).
-    landed = !base.chained && landedOnPilot(cwd, head, base.ref);
+    // Only a run based on pilot can have landed on it: a chained run's base N has not (L5).
+    landed = name === PILOT_BRANCH && landedOnPilot(cwd, head, base.ref);
   } catch (err) {
     return { ok: false, line: `${not}: ${firstLine(err)}; nothing merged or pushed`, failing: [] };
   }
