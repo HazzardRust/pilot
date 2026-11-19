@@ -540,7 +540,7 @@ export function trial({ cwd = process.cwd() } = {}) {
  * `push` false), left mid-merge on pilot's tip for the lander: `{ paths, dir }`. A dir already
  * there is the lander's and is not touched. Pilot never moves. Throws when git could not answer.
  */
-export function trialOnPilot({ cwd, git = gitIn(cwd), head }) {
+function trialOnPilot({ cwd, git = gitIn(cwd), head }) {
   const tip = git(['rev-parse', 'HEAD']);
   // This worktree's own git, not the deck post path's 5 s deadline: integrate waits on its gate anyway.
   const clean = cleanOnPilot(cwd, tip, { git: (_repo, args) => git(args) });

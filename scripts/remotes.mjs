@@ -7,7 +7,7 @@
  * git exits non-zero, with git's exit code as `status`.
  */
 
-export const RUN_REMOTE_KEY = 'pilot.remote';
+const RUN_REMOTE_KEY = 'pilot.remote';
 const LOCAL = 'none';
 const NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
