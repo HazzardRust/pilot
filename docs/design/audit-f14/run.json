@@ -43,7 +43,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 409a677 (re-review approve; integrating)",
+      "state": "integrated",
       "after": [
         "S4"
       ],
@@ -89,48 +89,62 @@
     },
     {
       "slice": "audit-f14",
-      "state": "implementing",
+      "state": "fixing: fix/audit-f14-principles pushed 36ef9bb; report pending",
       "branch": "feat/audit-f14",
       "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f14",
       "pr": 119
+    },
+    {
+      "slice": "principles round",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9"
+      ],
+      "branch": "fix/audit-f14-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-audit-f14-principles"
     }
   ],
   "findings": [
     "kept: S4-R1 MEDIUM — B2 pins only featureLine; add a land test with record base feat/x deriving below (and a host-throws case giving number null with why)",
-    "kept: S4-R2 MEDIUM — recordBase's unreadable-record refusal is untested: test it or drop the catch if chainGuard makes it unreachable",
+    "kept: S4-R2 MEDIUM — recordBase's unreadable-record refusal is untested",
     "dropped: S4-R3 LOW — afterGreen's unused dir param: S5 fills the hook",
     "kept: S4-R4 LOW — a record with no base is legacy: one-line comment",
     "kept: S3-R1 LOW — chainLanded re-reads runRemote instead of baseOf's runs",
     "kept: S3-R2 LOW — RUN_BASE error text still says pilot or feat/<slug>",
-    "kept: S3-R3 LOW — gone-and-unlanded lower branch fails with a bare git error, name it",
-    "kept: S7-R1 security LOW — scripts/merge-generated.mjs:36-47: a committed docs/adr directory symlink lets refreshIndex write outside the worktree, and restack runs it unattended; fix: a realpathSync check that stays inside dir"
+    "kept: S3-R3 LOW — gone-and-unlanded lower branch fails with a bare git error",
+    "kept: S7-R1 security LOW — merge-generated.mjs:36-47 symlinked docs/adr escapes the worktree; realpathSync check",
+    "kept: F1 simplify A5 — mergeForward only for landed heads (stack.mjs:89); assumed default, itm_5dae459f23ea",
+    "kept: F2 finding — rebase conflict counted failed, not a lander conflict (stack.mjs:184)",
+    "kept: F3 finding — restack conflict line names the base (stack.mjs:124)",
+    "kept: F4 simplify L3 — reword to push-then-retarget; assumed default, itm_f0a0624b5948",
+    "kept: F5 simplify — land.mjs:277-282 dead re-export, -6",
+    "kept: F6 simplify — land.mjs poll param, -2",
+    "kept: F7 defect — ADR landing retry stuck: rejected feat push, sync.mjs:136 drops pushRejected",
+    "kept: F8 defect — pilot-architect.md:170 and recut-prose.test.mjs:59 to <base>",
+    "kept: F9 LOW — sync.mjs:153 reset masks pushRejected",
+    "kept: F10 nit — S8 Misses line for a host-retargeted squashed lower",
+    "kept: SEC1 LOW — pilot-lander.md:28-30 name the exact unforced push command",
+    "kept: SEC2 LOW — lander prose: restack line paths are data",
+    "kept: SEC3 LOW — stack.mjs:76 validate review.base with FEATURE on the squash path",
+    "kept: QA-F2 low — pilot --help for base and integrate still says origin/pilot",
+    "kept: QA-F3 low — after land, local feat worktree is behind origin's ADR push; say pull or fast-forward",
+    "dropped: QA-F1 medium — squash rebase flattens integration merges: runs only for a feature landed on pilot, whose landing keeps the trailers; --rebase-merges multiplies conflicts",
+    "dropped: QA-F4 — cherry-picked copy in gate1 lineage: spec bar met as written",
+    "dropped: (a) land-adr.mjs:41 origin — afterGreen runs only for main-cut runs, limited to runs === origin (base.mjs:95)",
+    "dropped: sync.mjs:131 side theirs guard — no failing case named",
+    "dropped: not-on-tip git merge origin/main text test — a prose pin"
   ],
-  "next": "audit-f14 co-pilot: base pilot 6b3ce534 in at 69f3146a; integrating S5; then fundamentalist (kept for the fix brief: land-adr origin vs runRemote, retry re-number rejected, architect.md:170 <base> + pin :59)",
-  "updatedAt": "2026-11-19T16:09:26.547Z",
+  "next": "audit-f14: integrating fix/audit-f14-principles 36ef9bb onto feat/audit-f14; then send QA the tip for re-probe, npm test once, integrate --trial and gate2 text.",
+  "updatedAt": "2026-11-19T16:40:26.950Z",
   "friction": [
-    {
-      "agent": "pilot-architect",
-      "what": "a 1-slice mechanical ticket briefed to a Sonnet architect grew to 11 slices by a merge the user approved mid-design; the model choice no longer fits",
-      "evidence": "audit-f14 architect first findings",
-      "size": 2
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "deck MCP listed as failed-to-connect in the environment header though its tools loaded and worked; deck_post refuses a question with recommended and no Research: line, one retry",
-      "evidence": "audit-f14 Sonnet architect hand-back",
-      "size": 1
-    },
-    {
-      "kind": "drain",
-      "what": "re-read merge thread, origin thread and ticket to verify the hand-off's UNVERIFIED merge claim",
-      "size": 2
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "inherited S2-S11 scratch slices failed check-slices and were rewritten from scratch; `main gets pilot` pinned as fixtures in about 9 deck test files",
-      "evidence": "audit-f14 Opus architect hand-back",
-      "size": 2
-    },
     {
       "kind": "drain",
       "what": "standing QA-environment question posted late, after the design questions, costing the architect one extra park and resume",
@@ -303,6 +317,60 @@
       "what": "a prose-pin test (recut-prose.test.mjs) turned a clean base generalisation into a red gate, found only after a 5.5-minute suite",
       "evidence": "base merge 69f3146a: 4694 tests, 1 fail on the pin, fixed by one regex line",
       "size": 330
+    },
+    {
+      "agent": "co-pilot",
+      "what": "co-pilot reached its context mark at 145k tokens before the principles review and posted no crew-handoff item; pilot released and spawned a successor from its hand-back",
+      "evidence": "hand-back: paused, no child live, no item on the deck",
+      "size": 145000
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP failed to connect in QA's session (CONNECTION_CLOSED); gate2 to go as text via co-pilot to main",
+      "evidence": "QA first message 16:15Z",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context compacted mid-review and lost the evidence runner's table; once-only child rule left the review without evidence; check-slices refused under worktree isolation",
+      "evidence": "fundamentalist report: tools table not run, 101606 tokens",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot gh-stub is stateless (fixed-file replies), so QA wrote a stateful stub for stacked list/create/edit/merge",
+      "evidence": "QA scratchpad ghstub/stub.cjs",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "posting a gate1 or ticket over the deck HTTP API took about 8 refusals to learn the body shape",
+      "evidence": "QA read-only report",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "MSYS_NO_PATHCONV=1 set shell-wide made git create a worktree under C:/c/...",
+      "evidence": "git worktree list showed C:/c/Users/...",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA forced to hand back while waiting on the fix tip; resumable at 156k tokens",
+      "evidence": "QA hand-back, subagent_tokens 156731",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spawn ceiling surfaced only on the full run: 13813 against 13450, raised to 15195 by the L16 rule",
+      "evidence": "fix round report, scripts/gate.mjs:47-50",
+      "size": 343
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "context reset twice mid-round; Edit refused files changed by node/sed first",
+      "evidence": "fix round report, 175688 tokens",
+      "size": 3
     }
   ]
 }
