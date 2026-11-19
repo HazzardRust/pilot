@@ -33,7 +33,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed 08e1b21 (integrating; its third commit, a code span and the pin bump, read by no reviewer)",
+      "state": "integrated (its third commit read by no reviewer)",
       "after": [
         "S2",
         "S5"
@@ -94,17 +94,27 @@
       ],
       "branch": "slice/ci-gate-s10",
       "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s10"
+    },
+    {
+      "slice": "ci-gate",
+      "state": "in QA (read-only pass done at 8ac2db3a; waits on main's fix tip); gate2 waits on ci-green"
+    },
+    {
+      "slice": "Principles fix round",
+      "state": "integrated",
+      "after": [
+        "S7"
+      ],
+      "branch": "fix/ci-gate-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-ci-gate-principles"
     }
   ],
-  "next": "ci-gate: feat 15f27a73; integrating S7 (last); then base check, fundamentalist on PR #128 and QA.",
-  "updatedAt": "2026-11-19T19:04:26.426Z",
+  "findings": [
+    "dropped: S2 simplify — `--wait <min>` is signed spec 7 (default 20, max 60); it works and is tested, the removal would move a spec line for -6 lines (QA's catch, overturns the pilot's first keep)"
+  ],
+  "next": "ci-gate: fix round pushed 9b2de68b (8 rows done, S2 dropped; last test-only commit unreviewed, suite not rerun on it), checked against the diff; pilot integrate running. Then send co-pilot the tip for QA's re-probe. Gate2 held until ci-green lands and pilot is merged in. Left over: architecture.md:68 glossary still names Check.url.",
+  "updatedAt": "2026-11-19T19:36:09.417Z",
   "friction": [
-    {
-      "agent": "pilot-architect",
-      "what": "deck MCP header said CONNECTION_CLOSED while the plugin's deck tools worked; architect stalled until main told it to load them",
-      "evidence": "ci-gate architect first message",
-      "size": 2
-    },
     {
       "agent": "pilot-architect",
       "what": "question post refused for a missing Research: line; the rule is not in the architect's definition (main hit it too)",
@@ -289,6 +299,48 @@
       "what": "S7's report went to main, not the co-pilot, despite the hello",
       "evidence": "main relay of S7",
       "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "auto-mode classifier refused the diff-coverage run; Stryker timed out at 900 s on 4814 mutants, none scored; knip has no config and reports 640 unused files",
+      "evidence": "principles report §3, ci-gate"
+    },
+    {
+      "kind": "drain",
+      "what": "S7 implementer and fundamentalist reports misrouted to main, read and relayed or judged by the pilot",
+      "size": 9000
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "hooks/test/inbox.test.js:1150 flaked once in the full gate (undefined == 'block'), 66/66 alone; file untouched by the feature",
+      "evidence": "QA gate at 8ac2db3a",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "full gate 18.4 min; the live deck store changed mid-run (other sessions)",
+      "evidence": "gate note: home store changed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "`test:changed` alias runs the full gate, 18 min instead of a selected run",
+      "evidence": "package.json: \"test:changed\": \"node scripts/gate.mjs\""
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "posting a fixture gate2 needs a valid ticket whose shape is found by trial and error; 4 refusals",
+      "evidence": "scratch deck refusals: body shape, italics evidence, sliceCount"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "gh-stub gives one reply to every gh call, so the clean path prints a stray error",
+      "evidence": "`gh pr list: an answer that is not a list` after green integrate/land"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "flake in the full gate: hooks/test/inbox.test.js:1150, green alone 66/66",
+      "evidence": "QA gate.log, 4687 pass 1 fail at 8ac2db3a"
     }
   ]
 }
