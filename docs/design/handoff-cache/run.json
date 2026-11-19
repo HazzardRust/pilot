@@ -36,7 +36,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed d00c85c; fix in review",
+      "state": "integrated",
       "branch": "slice/handoff-cache-s5",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s5"
     },
@@ -86,8 +86,8 @@
     }
   ],
   "findings": [],
-  "next": "Integrate queue on feat: S5 (running, merge staged), S6 9db54b0, S3 962af8c, S9 c3430df. Then seams on S9.md and S11.md. S4 fix, S2, S10 running. Then S7 (closes per L1) after S4, S8 after S2, S11.",
-  "updatedAt": "2026-11-19T08:41:15.867Z",
+  "next": "feat at c88058a4 (S1, S5 integrated). Integrating S6, S3, S9 in turn. Then seams on S9.md and S11.md. S4 fix, S2, S10 running. Then S7 (closes per L1) after S4, S8 after S2, S11.",
+  "updatedAt": "2026-11-19T08:44:02.073Z",
   "friction": [
     {
       "agent": "pilot-fundamentalist",
