@@ -468,7 +468,7 @@ export function main(argv, inject = {}) {
     const { head, sha, retried, already, adr, host, main: mainPr, feature, pushSkipped, commentFailed, stillOpen = [], retargeted = [], deleted, kept, deleteFailed, caughtUp, cleared } = land({ ...inject, ...shared });
     const said = already ? `${head} already on ${PILOT_BRANCH}` : `landed ${head} on ${PILOT_BRANCH}`;
     // Above the main line: the comment that failed, then the number the landing allocated (S8).
-    const above = `${commentFailed === undefined ? '' : `pr comment failed: ${commentFailed}\n`}${stillOpen.map((number) => `feature PR #${number} still reads open\n`).join('')}${adr ? `ADR ${adr.from} is ${adr.to}\n` : ''}`;
+    const above = `${commentFailed === undefined ? '' : `pr comment failed: ${commentFailed}\n`}${stillOpen.map((number) => `feature PR #${number} still reads open\n`).join('')}${adr ? `ADR ${adr.from} is ${adr.to}\n` : ''}${adr && feature ? `${head} moved on origin: git pull --ff-only before a fix\n` : ''}`;
     // The deck's row keeps only the output's tail (S8): the branch and clear lines go first, so
     // the SHA stays in it, and the main line last, bounded.
     const branches = [

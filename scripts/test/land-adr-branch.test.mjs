@@ -5,7 +5,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
-import { buildRepos, commitFile, fakeGh, git, land, passing } from './lib/land-repos.mjs';
+import { buildRepos, commitFile, fakeGh, git, land, mainSays, passing } from './lib/land-repos.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -53,6 +53,15 @@ test('the PR carries the number', (t) => {
   assert.deepEqual(landed.adr, { from: 'NNNN-x', to: '0193' });
   assert.equal(git(origin, 'rev-parse', 'pilot^2'), git(origin, 'rev-parse', 'feat/x'), 'pilot merges the numbered feature');
   assert.equal(git(origin, 'rev-parse', 'feat/x^'), git(x, 'rev-parse', 'HEAD'), 'one commit on top of the landed tip');
+});
+
+test('the landed lines say feat moved on origin', (t) => {
+  const { x } = adrRepos(t);
+
+  const said = mainSays([], { cwd: x, git: (args) => git(x, ...args), host: host('x'), test: passing });
+
+  assert.equal(said.code, 0, said.out);
+  assert.match(said.out, /\nADR NNNN-x is 0193\nfeat\/x moved on origin: git pull --ff-only before a fix\nfeature PR: #12 into main\n$/);
 });
 
 /** One landing of `work`'s feature by hand: merge onto pilot, allocate on the feature, merge that, move pilot. */
