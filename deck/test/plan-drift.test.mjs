@@ -84,10 +84,10 @@ test("a slice's owned paths are read", () => {
   assert.deepEqual(ownedFiles(fs.readFileSync(SLICE, 'utf8')), ['deck/server-wait.mjs', 'deck/store-items.mjs', 'deck/test/default-taken.test.mjs']);
 });
 
-test('an owned file moved on pilot is drift', async (t) => {
+test('an owned file moved on pilot is drift, naming its slice', async (t) => {
   const fixture = repos(t);
   land(fixture, 'deck/store-items.mjs');
-  assert.deepEqual(await planDrift(fixture.work, fixture.plan), { state: 'moved', files: ['deck/store-items.mjs'] });
+  assert.deepEqual(await planDrift(fixture.work, fixture.plan), { state: 'moved', files: ['deck/store-items.mjs'], slices: ['S1'] });
 });
 
 test('a force-pushed plan sha is gone', async (t) => {
@@ -103,7 +103,7 @@ test('an untouched plan is ok; a non-owned change is ok', async (t) => {
   assert.deepEqual(await planDrift(fixture.work, fixture.plan), { state: 'ok' });
 });
 
-test('the first grant re-cuts a drifted plan', async (t) => {
+test('a first grant over drift goes live naming the drift', async (t) => {
   tempDeck(t);
   const fixture = repos(t);
   const ticket = signed(fixture.work, fixture.plan);
@@ -111,13 +111,14 @@ test('the first grant re-cuts a drifted plan', async (t) => {
 
   const said = await ticketCall(ticket.id, 'co-pilot');
 
-  assert.ok(said.startsWith(`Re-cut check due ${ticket.id}: deck/store-items.mjs; red, planning next.`), said);
+  const line = 'Drift (first grant): deck/store-items.mjs owned by S1; plan kept, ticket yellow';
+  assert.ok(said.startsWith(`Co-pilot ${ticket.id}: live. drift: ${line}.`), said);
   const stored = reread(ticket.id);
-  assert.equal(stored.state, 'red');
-  assert.deepEqual(stored.recut.files, ['deck/store-items.mjs']);
-  assert.equal(stored.recut.from, fixture.plan.sha);
-  assert.equal(coPilotFor(fixture.work), null, 'no co-pilot slot was written');
-  assert.equal(stored.plan.grantedAt, undefined, 'a re-cut plan was never granted');
+  assert.equal(stored.state, 'yellow');
+  assert.equal(stored.recut, undefined);
+  assert.equal(coPilotFor(fixture.work)?.ticket, ticket.id);
+  assert.deepEqual(stored.replies.filter((message) => message.author === 'deck').map((message) => message.text), [line]);
+  assert.ok(!Number.isNaN(Date.parse(stored.plan.grantedAt)), 'the grant is stamped');
 });
 
 test("a successor's grant skips the check", async (t) => {
