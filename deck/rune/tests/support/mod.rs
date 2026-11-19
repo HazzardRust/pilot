@@ -1,6 +1,9 @@
 //! A scratch daemon (L7): started and stopped through `pilot deck --scratch` and `--stop`, the CLI
 //! over `deck/scratch.mjs`, on its own store dir and port; never the user's deck on 4321.
 
+// Each test binary compiles this module whole and uses only part of it.
+#![allow(dead_code)]
+
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -77,7 +80,9 @@ impl Scratch {
             .expect("the scratch deck's secret");
         let response = ureq::post(format!("{}/api/agents", self.url))
             .header("Authorization", format!("Bearer {}", secret.trim()))
-            .send_json(serde_json::json!({ "agentId": agent_id, "agentType": "Explore", "cwd": cwd }))
+            .send_json(
+                serde_json::json!({ "agentId": agent_id, "agentType": "Explore", "cwd": cwd }),
+            )
             .expect("the scratch deck takes the heartbeat");
         assert_eq!(response.status(), 200);
     }

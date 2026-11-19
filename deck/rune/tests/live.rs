@@ -27,7 +27,10 @@ fn with_deck<T>(dir: &str, port: u16, make: impl FnOnce() -> T) -> T {
     let port = port.to_string();
     let vars = [("PILOT_DECK_DIR", dir), ("PILOT_DECK_PORT", port.as_str())];
     // SAFETY: every test in this binary that touches the environment holds `ENV`.
-    unsafe { vars.iter().for_each(|(name, value)| std::env::set_var(name, value)) };
+    unsafe {
+        vars.iter()
+            .for_each(|(name, value)| std::env::set_var(name, value))
+    };
     let made = make();
     unsafe { vars.iter().for_each(|(name, _)| std::env::remove_var(name)) };
     made
@@ -43,7 +46,11 @@ fn window(dir: &str, port: u16) -> Runtime<State> {
 }
 
 /// Frames the window until `done` holds, or fails naming `what` once the budget is spent.
-fn frame_until(rt: &mut Runtime<State>, what: &str, done: impl Fn(&Runtime<State>) -> bool) -> Duration {
+fn frame_until(
+    rt: &mut Runtime<State>,
+    what: &str,
+    done: impl Fn(&Runtime<State>) -> bool,
+) -> Duration {
     let start = Instant::now();
     loop {
         rt.frame(1.0 / 60.0);
@@ -61,7 +68,10 @@ fn frame_until(rt: &mut Runtime<State>, what: &str, done: impl Fn(&Runtime<State
 }
 
 fn texts(rt: &Runtime<State>) -> Vec<String> {
-    rt.elements().into_iter().filter_map(|element| element.text).collect()
+    rt.elements()
+        .into_iter()
+        .filter_map(|element| element.text)
+        .collect()
 }
 
 /// A store dir the test owns, holding only the secret a deck answers to, as a restarted daemon's
@@ -95,12 +105,13 @@ impl Drop for Keys {
 fn a_post_shows_without_input() {
     let deck = Scratch::start();
     let mut rt = window(deck.dir.to_str().unwrap(), deck.port);
-    let before = rt.state.view.seq;
+    assert!(!texts(&rt).iter().any(|text| text == "beta"));
 
+    // A post bumps no `seq` (only a reply does), so the new tab is what shows it arrived.
     deck.post("Which port?", "C:/work/beta");
 
     let took = frame_until(&mut rt, "the post's tab", |rt| {
-        rt.state.view.seq > before && texts(rt).iter().any(|text| text == "beta")
+        texts(rt).iter().any(|text| text == "beta")
     });
     eprintln!("a post shows without input: {took:?}");
 }
@@ -109,11 +120,12 @@ fn a_post_shows_without_input() {
 fn a_refresh_keeps_the_users_place() {
     let deck = Scratch::start();
     let mut rt = window(deck.dir.to_str().unwrap(), deck.port);
-    let before = rt.state.view.seq;
     rt.update(|s, _| s.regions.reply.draft = TextEdit::new("half a repl"));
 
     deck.post("Which port?", "C:/work/beta");
-    frame_until(&mut rt, "the refresh", |rt| rt.state.view.seq > before);
+    frame_until(&mut rt, "the refresh", |rt| {
+        texts(rt).iter().any(|text| text == "beta")
+    });
 
     assert_eq!(rt.state.regions.reply.draft, TextEdit::new("half a repl"));
 }
@@ -149,13 +161,19 @@ fn a_heartbeat_refreshes_every_region_from_one_view() {
     let client = with_deck(deck.dir.to_str().unwrap(), deck.port, Client::from_env)
         .expect("a loopback client");
     let (woke, wakes) = mpsc::channel();
-    let inbox = live::start(client, Query::default(), Arc::new(move || {
-        let _ = woke.send(());
-    }));
+    let inbox = live::start(
+        client,
+        Query::default(),
+        Arc::new(move || {
+            let _ = woke.send(());
+        }),
+    );
     let next_view = || {
         let start = Instant::now();
         loop {
-            let left = BUDGET.checked_sub(start.elapsed()).expect("a view within the budget");
+            let left = BUDGET
+                .checked_sub(start.elapsed())
+                .expect("a view within the budget");
             wakes.recv_timeout(left).expect("a view within the budget");
             match inbox.take() {
                 Some(Feed::View(view)) => return (view, start.elapsed()),
@@ -178,8 +196,20 @@ fn a_heartbeat_refreshes_every_region_from_one_view() {
     assert_eq!(
         regions,
         [
-            "agents", "chat", "graph", "history", "notifications", "queue", "reply", "reports",
-            "status", "strip", "tabs", "thread", "tickets", "usage"
+            "agents",
+            "chat",
+            "graph",
+            "history",
+            "notifications",
+            "queue",
+            "reply",
+            "reports",
+            "status",
+            "strip",
+            "tabs",
+            "thread",
+            "tickets",
+            "usage"
         ]
     );
 }

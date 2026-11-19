@@ -1,9 +1,10 @@
 //! The window's state and its one view: every region drawn from one `View` (spec 6a).
 
 use rune::tok::{self, type_};
-use rune::{AppSpec, Cx, El, col, text};
+use rune::{AppSpec, Cx, El, Tx, Waker, col, text};
 
 use crate::client::{Client, Query, View};
+use crate::live::{self, Feed};
 use crate::regions::{self, Locals};
 
 #[derive(Debug, Default)]
@@ -13,6 +14,8 @@ pub struct State {
     pub regions: Locals,
     /// No view could be read: the daemon is down, or the client refused its address.
     pub down: bool,
+    /// What the live reader leaves for `poll`; none until `setup` starts it.
+    pub live: Option<live::Inbox>,
 }
 
 impl State {
@@ -37,9 +40,35 @@ impl State {
     }
 }
 
-/// The window as `main` runs it.
+/// The window as `main` runs it: the first view, then the live reader feeding `poll`.
 pub fn spec() -> AppSpec<State> {
-    AppSpec::new("pilot deck", (1280.0, 800.0), State::load, view)
+    AppSpec {
+        setup: Some(setup),
+        poll: Some(poll),
+        ..AppSpec::new("pilot deck", (1280.0, 800.0), State::load, view)
+    }
+}
+
+/// Starts the live reader on the window's query; a client refused here leaves `load`'s word.
+pub fn setup(s: &mut State, wake: Waker) {
+    match Client::from_env() {
+        Ok(client) => s.live = Some(live::start(client, s.query.clone(), wake)),
+        Err(err) => eprintln!("pilot-deck: no live view: {err}"),
+    }
+}
+
+/// Takes what the reader last left: a view replaces the whole `view` and nothing else, so a
+/// draft, a scroll and the open panels stay (spec 4); `Down` keeps the last view under the banner.
+pub fn poll(s: &mut State, _: f64, _: &mut Tx) -> bool {
+    match s.live.as_ref().and_then(live::Inbox::take) {
+        Some(Feed::View(view)) => {
+            s.view = view;
+            s.down = false;
+            true
+        }
+        Some(Feed::Down) => !std::mem::replace(&mut s.down, true),
+        None => false,
+    }
 }
 
 /// The screen's region slots, top to bottom; a stub region draws nothing until its slice.
