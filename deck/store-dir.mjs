@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { deckDir } from '../hooks/lib/deck-secret.js';
+import { hostPlatform } from '../hooks/lib/platform.js';
 
 /** Where the deck keeps its state when nothing overrides it (L5). */
 export function defaultStoreDir() {
@@ -23,7 +24,7 @@ export function storeDir() {
 }
 
 /** `file` resolved, lower-cased on Windows, whose paths ignore case. */
-const comparable = (file) => (process.platform === 'win32' ? path.resolve(file).toLowerCase() : path.resolve(file));
+const comparable = (file) => (hostPlatform() === 'win32' ? path.resolve(file).toLowerCase() : path.resolve(file));
 
 /**
  * `file`, unless the gate named it as the home store (home-store-guard spec 1; L1, L4): the gate's
