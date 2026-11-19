@@ -168,6 +168,7 @@ is a function of the report module: one caller. No fold changes code beyond thes
   report and the audit read it through `readRefusals`. Tradeoff: commands from non-pilot sessions sit in a local file
   (credential withheld, 300 chars). Rejected: the deck's `Blocked:` items through a parser (pilot lanes with a live
   run only; misses the main session and first no-verdicts).
+  Answer: the user pressed "Own log, every session" on `itm_a1c2fae51b9f` (the default).
 - **A5 Retention and recurrence** (not posted, within the forks depth). Default: newest 10,000 lines kept, trimmed on
   append; a shape is a recurring habit at 3 or more refusals in the repo; no-verdicts are counted but never a habit
   row (they are the classifier's outage, blocked-steps). Tradeoff: an older habit ages out after ~10,000 denials.
