@@ -9,13 +9,13 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "integrated c38a3e8",
+      "state": "integrated",
       "branch": "slice/crew-refusals-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-crew-refusals-s1"
     },
     {
       "slice": "S2",
-      "state": "integrated 032780a",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "integrated 2bb0786",
+      "state": "integrated",
       "after": [
         "S4"
       ],
@@ -33,22 +33,49 @@
     },
     {
       "slice": "S4",
-      "state": "integrated 2401e3b",
+      "state": "integrated",
       "branch": "slice/crew-refusals-s4",
       "worktree": "C:/Users/Hazzard/Projects/pilot-crew-refusals-s4"
     },
     {
       "slice": "S5",
-      "state": "pushed bd92bc8",
+      "state": "integrated",
       "after": [
         "S4"
       ],
       "branch": "slice/crew-refusals-s5",
       "worktree": "C:/Users/Hazzard/Projects/pilot-crew-refusals-s5"
+    },
+    {
+      "slice": "crew-refusals",
+      "state": "in QA: read-only pass done at ff18087; blocked step: pilot integrate --dir <feat> (base merge) refused by auto mode",
+      "branch": "feat/crew-refusals",
+      "pr": 121
+    },
+    {
+      "slice": "fix round",
+      "state": "pushed c5fdf92 — security APPROVE; integrating",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "branch": "fix/crew-refusals-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-crew-refusals-fix"
     }
   ],
-  "next": "co-pilot: S2 integrated 032780a; integrate S5 (bd92bc8); then fundamentalist + QA",
-  "updatedAt": "2026-11-19T06:44:05.933Z",
+  "findings": [
+    "kept: SEC1 fix — curl -u with a quoted password (user:\"pw\") not flagged, credential.mjs:33",
+    "kept: SEC2 fix — curl gap stops at & ; | inside quotes, so -u after a quoted query URL is missed, credential.mjs:33",
+    "kept: SEC3 fix — a digit in the flag cluster (-1u) not flagged, credential.mjs:33",
+    "kept: SEC4 fix — CURL in caps not flagged, credential.mjs:33",
+    "dropped: SEC5 — all-letter Basic value: unchanged by this diff and the all-letter-is-prose rule is the module's stated design",
+    "dropped: SEC6 — raw / in a URL password is not valid userinfo"
+  ],
+  "next": "co-pilot: pilot integrate of fix c5fdf92 into feat running; then fresh pilot-qa; base merge into feat is a blocked step for main",
+  "updatedAt": "2026-11-19T09:29:43.004Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -129,6 +156,102 @@
       "what": "S2's signed phrase red-then-green collided with the colour-word guard, and a context reset made Edit demand a fresh Read of 23 files for one phrase",
       "evidence": "three-lanes-wording.test.mjs red on first gate (about 7 min lost); 23 'File has not been read yet' errors in one turn, replaced by a node script",
       "size": 2
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "the fundamentalist reported before its evidence runner returned and again on resume; diff coverage and mutation stayed unmeasured, and the runner's worktree was left with a possibly live child no one can stop",
+      "evidence": "first report 188 s with runner 'not run'; addendum: runner 231 s, 'waiting on its own background work' twice, no table; C:/Users/Hazzard/Projects/pilot-crew-refusals-fundamentalist left in place",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "QA's taskkill of its own orphaned fixture tree was refused by auto mode, after TaskStop left npm's children running on Windows; also, Agent-spawned children run the installed 0.9.9 definitions, not the branch's, so QA had to drive headless claude --plugin-dir sessions",
+      "evidence": "taskkill //PID 43832 //T //F refused [Destructive or Unwanted Actions]; cmd 43832 -> node 18500 -> node 42484 left running after TaskStop biecwuf4t",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the fix round's first gate waited behind QA's sessions, then hit an 800-line cap on store-core.mjs that only the full suite checks",
+      "evidence": "gate.log 'waiting for a slot: pid 45360 ... pid 8116'; facades.test.mjs:68 'store-core.mjs has 810 lines'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the fix round shipped with the security reviewer at REQUEST CHANGES and its ReDoS fixes un-re-reviewed, and widened the deck-post credential check to refuse local dev database URLs until the co-pilot caught it",
+      "evidence": "fix report: 'The reviewer did not re-review after these fixes'; 'refuses deck posts holding postgres://postgres:postgres@localhost'; loopback exemption at 14d42488",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "QA's run ended at a forced hand-back before the fix tip arrived, so no walkthrough was posted and a fresh QA must re-probe",
+      "evidence": "QA hand-back at 07:13:53 UTC with Walkthrough post: none; Stryker runs and scratch deck pid 19080 left running",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate's S1 push failed on a GitHub server error and the run record was not committed; one manual push went through",
+      "evidence": "fatal error in commit_refs_rules; git push 7e6cd95c..c38a3e82",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot reached the context advisory at 226k before QA got the fix tip; QA posted nothing and a successor was needed",
+      "evidence": "crew-refusals hand-back: paused, 234k tokens, 165 tool uses",
+      "size": 3
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "first probe run blocked on the quadratic case and a node kill was refused by auto mode; it re-ran each case under timeout 15 and left a background probe it could not stop",
+      "evidence": "case 5 of 40 stalled; node p1.mjs pid 45832 alive after its report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "deck MCP CONNECTION_CLOSED at start for the third agent session running; rows and waits went through main; successor was made to hand back after 34 tool uses with its fixer still live",
+      "evidence": "daemon pid 5472 answered 401 on 4321 while the MCP showed Connection closed",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "no Monitor or TaskStop for the implementer, so gate waits were until-loops in background Bash; node --test default reporter gave nothing to grep, rerun with tap",
+      "evidence": "crew-refusals SR fix report, 64f1a447",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "full gate takes over 120 s and spawns about 12,000 processes, 11,000 of them git, so every gate run moves to the background",
+      "evidence": "crew-refusals SR4-SR8 fix report, eedd126: npm run -s test:quiet backgrounded at 180 s",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "one session took a hand-off, two Gate 1s, two re-cuts, two landings, two co-pilot hand-backs and three security rounds on one file; reached the context advisory at 230k",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "auto mode gave no verdict whenever a Bash, Agent or SendMessage call shared a response with other calls; each had to be reissued alone",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "auto mode refused the base merge `pilot integrate --dir C:/Users/Hazzard/Projects/pilot-feat-crew-refusals` (no branch) as [Destructive or Unwanted Actions]; feat holds an uncommitted deck-written run.json",
+      "evidence": "base check: missing, 29 origin/pilot commits not in feat c1a717be"
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "the brief did not say deck/credential.mjs was new at ff180873, so old and new regex lines could not be told apart; the 11 s bounded-log test cost a poll cycle",
+      "evidence": "report on eedd126, Verdict: BLOCK"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test takes about 5 minutes in the background; tailing its output showed only the first command's totals until it finished",
+      "evidence": "fix c5fdf92, 4590 pass 0 fail"
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "first probe failed with ERR_UNSUPPORTED_ESM_URL_SCHEME: a bare C:/ import path needs a file:/// URL on Windows",
+      "evidence": "re-review of c5fdf92, Verdict: APPROVE"
     }
   ]
 }
