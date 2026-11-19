@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "fixing (75440fd review WARN: child not ended on exit; exemption too broad)",
+      "state": "pushed 90cc960; fix APPROVE; integrate refused (ran beside S6's merge), re-queued after S7",
       "branch": "slice/handoff-cache-s2",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s2"
     },
@@ -51,7 +51,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed 5cb8bfc; closed by L1 (/clear stays), ledger row only; integrating after S4",
+      "state": "pushed 5cb8bfc; re-integrating with not-built evidence rows",
       "after": [
         "S4"
       ],
@@ -60,10 +60,12 @@
     },
     {
       "slice": "S8",
-      "state": "planned",
+      "state": "pushed f31cbc9; closed by L1 (ruled out, 10), ledger row only; integrating after S2",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/handoff-cache-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s8"
     },
     {
       "slice": "S9",
@@ -73,7 +75,7 @@
     },
     {
       "slice": "S10",
-      "state": "pushed c63d9d2; fix commit read by co-pilot; integrating after S7",
+      "state": "integrated",
       "branch": "slice/handoff-cache-s10",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s10"
     },
@@ -88,8 +90,8 @@
     }
   ],
   "findings": [],
-  "next": "feat at 517ecc1c (S1, S3, S4, S5, S9 integrated). S10 integrating, then S6 and S7 again with not-built evidence rows. S2 fix round running, then S2, then S8 (closes per L1). Then seams on S9.md and S11.md; S11 last; base check; fundamentalist; QA.",
-  "updatedAt": "2026-11-19T09:05:23.863Z",
+  "next": "feat at 7cc9b460. S6, S7 integrating; then S2 90cc960, then S8 f31cbc9. Then seams on S9.md and S11.md; S11 (note sections.md:61 prose -1,394/-10 vs table -1,375/+5); base check; fundamentalist; QA.",
+  "updatedAt": "2026-11-19T09:11:03.627Z",
   "friction": [
     {
       "agent": "pilot-fundamentalist",
@@ -287,6 +289,18 @@
       "what": "vocabulary-guard fails on any probe record naming Claude Code's own task_continuity section, shown only by the full npm test",
       "evidence": "S2 gate, scripts/vocabulary-exempt.txt",
       "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "sed -i with backslash patterns silently does nothing in Git Bash; a stub child dies with its parent unless detached, hiding the orphan bug",
+      "evidence": "S2 fix round report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "chained integrates keyed on grepping an earlier output matched a stale line, so two pilot integrate runs overlapped in one feat worktree; integrate has no lock of its own",
+      "evidence": "S2 'taking base pilot stopped (MERGE_HEAD exists)' while S6 integrated",
+      "size": 1
     }
   ]
 }
