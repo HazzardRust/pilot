@@ -43,7 +43,7 @@
     },
     {
       "slice": "S3",
-      "state": "implementing (stubbing check-runs green in 10 land test files)",
+      "state": "pushed de3b771 (10 land test stubs wrap greenChecks)",
       "after": [
         "S1"
       ],
@@ -52,7 +52,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 89fcd57 (3 recording tests filter the check-runs read)",
+      "state": "pushed 89fcd57 (integrating; 3 recording tests filter the check-runs read)",
       "after": [
         "S1"
       ],
@@ -61,7 +61,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 6c6e2f6 (integrating)",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -79,7 +79,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed 99fb126 (integrating after S6)",
+      "state": "integrated (WARN fixes after the reviewer's read)",
       "after": [
         "S1"
       ],
@@ -96,8 +96,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s10"
     }
   ],
-  "next": "ci-gate: integrating S6 then S9, then S4 (trailers in co-pilot scratchpad); S3, S7, S8 implementing; then the fundamentalist.",
-  "updatedAt": "2026-11-19T18:40:33.252Z",
+  "next": "ci-gate: feat 18629613; integrating S4, then S3 (trailers in co-pilot scratchpad); S7, S8 implementing; then the fundamentalist. Note: land with gh down now refuses as unread (spec 9).",
+  "updatedAt": "2026-11-19T18:50:48.900Z",
   "friction": [
     {
       "agent": "pilot-architect",
