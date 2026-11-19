@@ -32,12 +32,29 @@ function writeInstalled(home, version) {
   fs.writeFileSync(path.join(dir, 'installed_plugins.json'), JSON.stringify({ version: 2, plugins: { 'pilot@pilot': [entry] } }));
 }
 
-/** A runner that records each argv and, on `plugin update`, installs `next` the way the real CLI does. */
-function runner(home, { next, failOn } = {}) {
+/**
+ * The pilot marketplace's clone offering `version`, recorded where Claude Code 2.1.328 records it: the
+ * `known_marketplaces.json` entry is copied from a real one, its `installLocation` moved to the scratch home.
+ */
+function writeMarketplace(home, version) {
+  const plugins = path.join(home, '.claude', 'plugins');
+  const clone = path.join(plugins, 'marketplaces', 'pilot');
+  fs.mkdirSync(path.join(clone, '.claude-plugin'), { recursive: true });
+  fs.writeFileSync(path.join(clone, '.claude-plugin', 'plugin.json'), JSON.stringify({ name: 'pilot', version }));
+  const known = { pilot: { source: { source: 'github', repo: 'HazzardRust/pilot' }, installLocation: clone, lastUpdated: '2026-11-18T23:53:11.147Z' } };
+  fs.writeFileSync(path.join(plugins, 'known_marketplaces.json'), JSON.stringify(known));
+}
+
+/**
+ * A runner that records each argv; on `marketplace update` the clone offers `offer`, and on
+ * `plugin update` it installs `next`, the way the real CLI does.
+ */
+function runner(home, { next, offer = next, failOn } = {}) {
   const calls = [];
   const run = async (argv) => {
     calls.push(argv);
     if (failOn && argv.join(' ') === failOn) return { exitCode: 1, stdout: '', stderr: 'Failed to update plugin "pilot@pilot": network unreachable\n' };
+    if (offer && argv.join(' ') === 'plugin marketplace update pilot') writeMarketplace(home, offer);
     if (next && argv.join(' ') === 'plugin update pilot@pilot') writeInstalled(home, next);
     return { exitCode: 0, stdout: '', stderr: '' };
   };
@@ -68,6 +85,13 @@ test('nothing to update says so', async (t) => {
   const home = homeAt(t, '0.9.9');
   const { run } = runner(home);
   assert.deepEqual(await cli([], { run, home, deckLive: false }), { code: 0, out: 'pilot 0.9.9 is up to date\n', err: '' });
+});
+
+test('nothing to update makes no update call', async (t) => {
+  const home = homeAt(t, '0.9.9');
+  const { run, calls } = runner(home, { offer: '0.9.9' });
+  assert.deepEqual(await cli([], { run, home, deckLive: false }), { code: 0, out: 'pilot 0.9.9 is up to date\n', err: '' });
+  assert.deepEqual(calls, [['plugin', 'marketplace', 'update', 'pilot']], 'the marketplace only: its version is the installed one');
 });
 
 test('a live run refuses', async (t) => {

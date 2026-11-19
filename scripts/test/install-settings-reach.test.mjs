@@ -70,7 +70,7 @@ test('statusLine false removes the pilots own status line and subagent status li
   assert.equal(report.subagentStatusLine, 'removed');
 });
 
-test('repair at nothing never writes statusLine', (t) => {
+test('repair at nothing leaves a settings file with nothing of the pilot\'s byte for byte', (t) => {
   // At `nothing` the user's statusLine is not the pilot's to write: a fixture without one gains none.
   const bare = fixture(t, '{}\n', 'nothing');
   const report = repairSettings({ home: bare.home, settingsPath: bare.settingsPath, pluginRoot: PLUGIN_ROOT });
@@ -141,6 +141,23 @@ test('repair at everything keeps the plugin and repoints the status lines', (t) 
   repairSettings({ home, settingsPath, pluginRoot: PLUGIN_ROOT });
   assert.equal(readJson(settingsPath).enabledPlugins['pilot@pilot'], true);
   assert.deepEqual(readJson(settingsPath).statusLine, statusLineSetting(PLUGIN_ROOT));
+});
+
+test('a local-clone install is stripped below everything, and still refused at everything', (t) => {
+  // A marketplace added from a directory runs its hooks from the clone, outside the plugin cache.
+  const clone = path.join(os.tmpdir(), 'pilot-clone');
+  const below = fixture(t, oldInstall());
+  const report = repairSettings({ home: below.home, settingsPath: below.settingsPath, pluginRoot: clone });
+  const after = readJson(below.settingsPath);
+  assert.equal(report.refused, undefined);
+  assert.deepEqual(after.enabledPlugins, { 'other@market': true });
+  assert.equal(Object.hasOwn(after, 'statusLine'), false);
+  assert.equal(Object.hasOwn(after, 'subagentStatusLine'), false);
+
+  const at = fixture(t, oldInstall(), 'everything');
+  const refused = repairSettings({ home: at.home, settingsPath: at.settingsPath, pluginRoot: clone });
+  assert.match(refused.refused, /not inside the plugin cache/);
+  assert.equal(fs.readFileSync(at.settingsPath, 'utf8'), oldInstall(), 'repointing at a clone stays refused');
 });
 
 test('an enabledPlugins that is not an object is refused and left byte for byte', (t) => {

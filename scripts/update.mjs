@@ -1,7 +1,8 @@
 /**
  * `pilot update` (handoff-cache spec 11, 12; L6): update the plugin from a terminal, with no
  * Claude Code session open. It wraps the `claude plugin` CLI and has no downloader of its own:
- * `claude plugin marketplace update pilot`, then `claude plugin update pilot@pilot`, with the
+ * `claude plugin marketplace update pilot`, then `claude plugin update pilot@pilot` unless the
+ * marketplace offers the installed version, with the
  * installed version read from Claude Code's install record before and after. A live run (a deck
  * session with an open run record) refuses before any call, since its agents run from the cache
  * an update would replace.
@@ -17,10 +18,8 @@ import path from 'node:path';
 import { claudeBin } from '../hooks/lib/platform.js';
 
 const PLUGIN_ID = 'pilot@pilot';
-const CALLS = [
-  ['plugin', 'marketplace', 'update', 'pilot'],
-  ['plugin', 'update', PLUGIN_ID],
-];
+const MARKETPLACE_UPDATE = ['plugin', 'marketplace', 'update', 'pilot'];
+const PLUGIN_UPDATE = ['plugin', 'update', PLUGIN_ID];
 // A marketplace update is a git fetch: long enough for a slow one, short enough that a hung one says so.
 const CLAUDE_TIMEOUT_MS = 120_000;
 
@@ -43,19 +42,41 @@ function installedVersion(configDir) {
 }
 
 /**
- * Read the version, refuse on a live run, run the two `claude plugin` calls, read the version again.
+ * The version the pilot marketplace's clone offers, its `plugin.json` at the install location
+ * `known_marketplaces.json` records; null when either is missing or unreadable, so the plugin
+ * update still runs and its own answer is what is said.
+ */
+function offeredVersion(configDir) {
+  try {
+    const known = JSON.parse(fs.readFileSync(path.join(configDir, 'plugins', 'known_marketplaces.json'), 'utf8'));
+    const clone = known?.pilot?.installLocation;
+    if (typeof clone !== 'string' || !clone) return null;
+    const { version } = JSON.parse(fs.readFileSync(path.join(clone, '.claude-plugin', 'plugin.json'), 'utf8'));
+    return typeof version === 'string' && version ? version : null;
+  } catch {
+    return null;
+  }
+}
+
+/** One `claude` call through `run`; a non-zero exit throws the last lines it said. */
+async function call(run, argv) {
+  const { exitCode, stdout, stderr } = await run(argv);
+  if (exitCode !== 0) {
+    const said = (String(stderr).trim() || String(stdout).trim() || 'no output').split(/\r?\n/).slice(-3).join('\n');
+    throw new Error(`claude ${argv.join(' ')} failed (exit ${exitCode}): ${said}`);
+  }
+}
+
+/**
+ * Read the version, refuse on a live run, update the marketplace, and update the plugin only when
+ * the marketplace now offers another version (spec 12); then read the version again.
  * `run(argv)` answers `{ exitCode, stdout, stderr }`; a call that exits non-zero throws its stderr.
  */
 export async function update({ run, home, deckLive, configDir = path.join(home, '.claude') }) {
   const before = installedVersion(configDir);
   if (deckLive) return { before, after: before, changed: false, refused: 'live run' };
-  for (const argv of CALLS) {
-    const { exitCode, stdout, stderr } = await run(argv);
-    if (exitCode !== 0) {
-      const said = (String(stderr).trim() || String(stdout).trim() || 'no output').split(/\r?\n/).slice(-3).join('\n');
-      throw new Error(`claude ${argv.join(' ')} failed (exit ${exitCode}): ${said}`);
-    }
-  }
+  await call(run, MARKETPLACE_UPDATE);
+  if (offeredVersion(configDir) !== before) await call(run, PLUGIN_UPDATE);
   const after = installedVersion(configDir);
   return { before, after, changed: after !== before };
 }

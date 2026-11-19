@@ -598,15 +598,18 @@ export function isInPluginCache(dir) {
  * directory that is gone. Prints one line per command it actually repaired and
  * nothing otherwise — see `repairCommandStep` for why silence is the default.
  *
- * Refuses when `pluginRoot` is outside `pluginCacheRoot()` (S11): this path
+ * At `everything`, refuses when `pluginRoot` is outside `pluginCacheRoot()` (S11): this path
  * runs unattended, so it must never repoint a friend's status lines at a
  * worktree that can vanish out from under them.
  */
 export function repairSettings(options = {}) {
   const settingsPath = options.settingsPath || defaultSettingsPath(options.home);
   const pluginRoot = options.pluginRoot || resolvePluginRoot();
+  const everything = rulesPlan(readReach({ home: options.home }).level).user;
 
-  if (!isInPluginCache(pluginRoot)) {
+  // Only a repoint writes `pluginRoot` into settings; the A1 strip below `everything` takes the
+  // pilot's own entries out wherever the hook runs from, a marketplace added from a local clone too.
+  if (everything && !isInPluginCache(pluginRoot)) {
     return {
       settingsPath,
       pluginRoot,
@@ -626,7 +629,7 @@ export function repairSettings(options = {}) {
   // handoff-cache A1: below it, an install from before the reach still has the plugin and the
   // pilot's status lines in user settings, so they are taken out (the Start carries its own).
   const statusLines = [COMMAND_SETTINGS.statusLine, COMMAND_SETTINGS.subagentStatusLine];
-  const steps = rulesPlan(readReach({ home: options.home }).level).user
+  const steps = everything
     ? statusLines.map((config) => repairCommandStep(settingsPath, config, pluginRoot))
     : [...statusLines.map((config) => removeOwnCommandStep(settingsPath, config)), unsetPluginStep(settingsPath)];
 
