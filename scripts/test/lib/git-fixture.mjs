@@ -35,6 +35,8 @@ fs.writeFileSync(GLOBAL_CONFIG, [
   '[commit]', '\tgpgsign = false',
   // A restored file keeps its mtime and size but not its inode or ctime; compare only those two.
   '[core]', '\tcheckStat = minimal',
+  // Fixtures never convert line endings, whatever the system gitconfig says: no CRLF warning.
+  '\tautocrlf = false',
   // No auto maintenance, detached or not: a detached run holds objects/maintenance.lock after the
   // git that spawned it returns, and the snapshot's copy meets it vanishing (ENOENT on macOS).
   '[maintenance]', '\tauto = false', '\tautoDetach = false',

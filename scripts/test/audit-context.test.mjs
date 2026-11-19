@@ -6,7 +6,7 @@
  * test; the real `~/.claude` is never read.
  */
 
-import '../../scripts/test/lib/fake-home.mjs';
+import './lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
