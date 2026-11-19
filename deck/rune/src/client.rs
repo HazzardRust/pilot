@@ -77,9 +77,10 @@ impl Default for Query {
 }
 
 pub struct Client {
-    base: String,
+    // The write half (`act.rs`) posts with the same base, agent and secret.
+    pub(crate) base: String,
     secret: PathBuf,
-    agent: ureq::Agent,
+    pub(crate) agent: ureq::Agent,
 }
 
 impl Client {
@@ -179,7 +180,7 @@ impl Client {
     }
 
     /// The store's secret, 64 hex characters, read now so a replaced file is taken at once.
-    fn read_secret(&self) -> Result<String> {
+    pub(crate) fn read_secret(&self) -> Result<String> {
         let text = std::fs::read_to_string(&self.secret)
             .map_err(|_| Error::Secret(self.secret.clone(), "could not be read"))?;
         let secret = text.trim();

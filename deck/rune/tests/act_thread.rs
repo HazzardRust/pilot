@@ -20,7 +20,10 @@ fn client_for(deck: &support::Scratch) -> Client {
         ("PILOT_DECK_PORT", port.as_str()),
     ];
     // SAFETY: every test in this binary that touches the environment holds `ENV`.
-    unsafe { vars.iter().for_each(|(name, value)| std::env::set_var(name, value)) };
+    unsafe {
+        vars.iter()
+            .for_each(|(name, value)| std::env::set_var(name, value))
+    };
     let made = Client::from_env();
     unsafe { vars.iter().for_each(|(name, _)| std::env::remove_var(name)) };
     made.expect("a loopback client")
@@ -128,7 +131,11 @@ fn a_reply_lands() {
     let id = question(&deck, "C:/work/alpha");
     let client = client_for(&deck);
 
-    let location = taken(client.act(&reply(&id, "Neither, C", None)).expect("an answer"));
+    let location = taken(
+        client
+            .act(&reply(&id, "Neither, C", None))
+            .expect("an answer"),
+    );
 
     // The 303's own Location, not a followed redirect.
     assert_eq!(location, format!("/thread/{id}#reply"));
@@ -144,7 +151,11 @@ fn an_option_press_lands_as_the_choice() {
     let gate = gate1(&deck, "C:/work/beta");
     let client = client_for(&deck);
 
-    taken(client.act(&reply(&asked, "", Some("B"))).expect("an answer"));
+    taken(
+        client
+            .act(&reply(&asked, "", Some("B")))
+            .expect("an answer"),
+    );
     assert_eq!(newest(&deck, &asked)["text"], "B");
 
     // A gate's Sign off is the page's own press: refused (403) without `Origin: http://<Host>`.
@@ -165,13 +176,25 @@ fn close_reopen_dismiss_and_dismiss_run_land() {
     let gate = gate1(&deck, "C:/work/beta");
     let client = client_for(&deck);
 
-    taken(client.act(&Action::Close { id: asked.clone() }).expect("an answer"));
+    taken(
+        client
+            .act(&Action::Close { id: asked.clone() })
+            .expect("an answer"),
+    );
     assert!(item(&deck, &asked)["resolution"].is_string(), "closed");
 
-    taken(client.act(&Action::Reopen { id: asked.clone() }).expect("an answer"));
+    taken(
+        client
+            .act(&Action::Reopen { id: asked.clone() })
+            .expect("an answer"),
+    );
     assert!(item(&deck, &asked)["resolution"].is_null(), "open again");
 
-    taken(client.act(&Action::DismissItem { id: gate.clone() }).expect("an answer"));
+    taken(
+        client
+            .act(&Action::DismissItem { id: gate.clone() })
+            .expect("an answer"),
+    );
     assert!(item(&deck, &gate)["resolution"].is_string(), "dismissed");
 
     let registered = ureq::post(format!("{}/api/runs", deck.url))
@@ -181,10 +204,17 @@ fn close_reopen_dismiss_and_dismiss_run_land() {
         .body_mut()
         .read_json::<Value>()
         .expect("json");
-    let run = registered["run"]["id"].as_str().expect("a run id").to_string();
+    let run = registered["run"]["id"]
+        .as_str()
+        .expect("a run id")
+        .to_string();
     assert_eq!(read(&deck, "/api/runs")["runs"][0]["id"], run.as_str());
 
-    let location = taken(client.act(&Action::DismissRun { id: run }).expect("an answer"));
+    let location = taken(
+        client
+            .act(&Action::DismissRun { id: run })
+            .expect("an answer"),
+    );
     assert_eq!(location, "/");
     assert_eq!(read(&deck, "/api/runs")["runs"], json!([]));
 }
@@ -194,10 +224,17 @@ fn a_refusal_comes_back_with_its_reason() {
     let deck = support::Scratch::start();
     let asked = question(&deck, "C:/work/alpha");
     let client = client_for(&deck);
-    taken(client.act(&Action::Close { id: asked.clone() }).expect("an answer"));
+    taken(
+        client
+            .act(&Action::Close { id: asked.clone() })
+            .expect("an answer"),
+    );
 
     // A reply reopens a closed thread (store-items `addReply`); a second Close is what a closed item refuses.
-    match client.act(&Action::Close { id: asked.clone() }).expect("an answer") {
+    match client
+        .act(&Action::Close { id: asked.clone() })
+        .expect("an answer")
+    {
         Acted::Refused { reason } => {
             assert!(
                 reason.starts_with(&format!("item {asked} is closed")),
