@@ -209,9 +209,35 @@ test('the first turn keeps its four counts apart', async (t) => {
 
   const rows = firstTurnRows((await measureSessionStarts({ repo: REPO, home, firstTurn: true })).sessions);
   assert.deepEqual(rows, [
-    { kind: 'after-handoff', n: 1, input: 2, cacheRead: 30000, cacheWrite5m: 0, cacheWrite1h: 500, cachedShare: 0.98, medianGapMs: null },
+    // The hand-off's gap runs from the other transcript's last entry (second 1) to its first turn (second 3).
+    { kind: 'after-handoff', n: 1, input: 2, cacheRead: 30000, cacheWrite5m: 0, cacheWrite1h: 500, cachedShare: 0.98, medianGapMs: 2000 },
     { kind: 'cold', n: 1, input: 10, cacheRead: 0, cacheWrite5m: 990, cacheWrite1h: 0, cachedShare: 0, medianGapMs: null },
   ]);
+});
+
+test('the gap is measured across a clear that opens a new transcript', async (t) => {
+  const home = tempHome(t);
+  transcript(home, 'kkkk1111', [at(0, { type: 'user', message: { content: 'build me a thing' } }), at(1, usage(30000)), at(10, usage(31000))], 60);
+  // Another session that ended later than the clear's first turn is not the one before it.
+  transcript(home, 'llll2222', [at(2, { type: 'user', message: { content: 'hello' } }), at(3, usage(30000)), at(59, usage(31000))], 30);
+  transcript(home, 'mmmm3333', [at(40, clearHook), at(40, pickup), at(45, usage(32000))]);
+
+  const { sessions } = await measureSessionStarts({ repo: REPO, home, firstTurn: true });
+  assert.equal(sessions.find((s) => s.id === 'mmmm3333').segments[0].gapMs, 45000 - 10000, 'from the last entry of the newest transcript that ended before');
+  assert.equal(firstTurnRows(sessions)[0].medianGapMs, 35000);
+
+  const run = spawnSync(process.execPath, [SCRIPT, REPO, '--first-turn', '--home', home], { encoding: 'utf8' });
+  assert.match(run.stdout, /^\| after-handoff \| 1 \|.* \| 35000 \|$/m);
+});
+
+test('an unreadable file is counted in the --first-turn output', (t) => {
+  const home = tempHome(t);
+  transcript(home, 'nnnn4444', [usage(30000)]);
+  fs.writeFileSync(path.join(home, '.claude', 'projects', projectSlug(REPO), 'oooo5555.jsonl'), 'not a transcript\n\u0000\u0001');
+
+  const run = spawnSync(process.execPath, [SCRIPT, REPO, '--first-turn', '--home', home], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
+  assert.match(run.stdout, /^unreadable: 1 of 2 transcripts$/m);
 });
 
 test('with no segment of a kind, its row says n 0 and no numbers', () => {

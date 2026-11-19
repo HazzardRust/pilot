@@ -5,7 +5,7 @@ came from. Claude Code 2.1.328; the numbers are copied from the files named, not
 
 | line | built or ruled out | number | source file |
 | --- | --- | --- | --- |
-| 1 | built | 36 transcripts on disk, 27 after-handoff and 7 cold first turns (2 not yet at a first turn); the median after-handoff turn reads 24,419 cached and writes 15,869 (1h), cached share 0.6, against a cold turn's 0 read, 36,363 written, share 0 | `measurements.md` |
+| 1 | built | 38 transcripts on disk, 0 unreadable, 29 after-handoff and 7 cold first turns; the median after-handoff turn reads 24,419 cached and writes 15,865 (1h), cached share 0.61, 5,085 ms after the session before it ended, against a cold turn's 0 read, 36,363 written, share 0 | `measurements.md` |
 | 2 | built, accounting short of its bar | 29 sections in both starts, the same 29 names; 8 carry a size and hash (7 identical, `memory` differs by per-session paths), 21 are named only, so the bar of 0 unaccounted is not met | `probes/sections.md` |
 | 3 | ruled out | the reordered frame would share 752 bytes (about 190 tokens) between hand-offs, under the 1,000 bar; the prompt cache matches whole blocks, so the live gain is likely 0; reverted at step 7 | `measurements.md`; commit 962af8c5 |
 | 4 | ruled out | `/clear` stays: kept head +1,578 / -1,683 / +1,579 against 5,506 (pickup 3 of 3); compact refused headless; branch absent | `probes/restart.md` |
