@@ -273,8 +273,15 @@ export function callTool(name, args, deps = {}) {
     if (args?.kind === KIND_GATE2) assertCleanOnPilot(args.repo, args.sha);
     // Neither the run nor a `subdeck` argument is stored on the item: a caller stamps nothing.
     const { run: _run, subdeck: _subdeck, ...fields } = args ?? {};
+    // Whether this post is the concluding move is read off the ticket's state either side of it (yellow-never-idle spec 2).
+    const stateOfNamed = () => {
+      const named = listItems().find((each) => each.id === fields.ticket && each.kind === KIND_TICKET);
+      return named ? stateOf(named) : undefined;
+    };
+    const before = fields.kind === KIND_WALKTHROUGH || fields.kind === KIND_GATE2 ? stateOfNamed() : undefined;
     // The lander's bodiless report is filled from the run record (lander S15).
     const item = postFilled(fields);
+    const concluded = before === 'yellow' && stateOfNamed() === 'green' ? ` ${item.ticket} is now green (concluding); the yellow lane is free.` : '';
     // A gate1 opens the feature PR, by a deck write the poster never waits on (spec 2, L1).
     if (item.kind === KIND_GATE1) prWrite(item.ticket, item.repo);
     // QA's comment goes to its ticket's record, the newest text winning, and the same write carries it to the PR (spec 3, A5).
@@ -304,7 +311,7 @@ export function callTool(name, args, deps = {}) {
         : 'you close it with deck_resolve.';
     return asText(
       `Posted ${item.id} to the deck. The human answers it at ${deckUrl()}/thread/${item.id}. ` +
-        `They reply, you may push back with deck_reply, and ${close}`,
+        `They reply, you may push back with deck_reply, and ${close}${concluded}`,
     );
   }
   if (name === 'deck_read') {
