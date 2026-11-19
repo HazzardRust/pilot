@@ -109,6 +109,13 @@ export const CLOSED = 'Closed.';
  */
 export const KIND_STEPS = 'steps';
 
+/** The most human steps a record keeps and a steps thread carries, and the longest one may be (human-steps L5). */
+export const MAX_HUMAN_STEPS = 20;
+export const MAX_HUMAN_STEP_CHARS = 300;
+
+/** A step is one line: no line or paragraph separator, each a line break to a renderer too (human-steps L5). */
+export const isOneLine = (text) => !/[\r\n\x85\p{Zl}\p{Zp}]/u.test(text);
+
 /**
  * Either arrow, because the pilot writes whichever its keyboard reaches: a step
  * is "do this → this should happen" or "do this -> this should happen" (D9).

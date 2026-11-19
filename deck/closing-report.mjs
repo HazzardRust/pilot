@@ -12,7 +12,8 @@ import { runWorktrees } from '../scripts/worktrees.mjs';
 import { readRefusals } from './classifier-log.mjs';
 import { isPilotClose, mayPilotClose } from './blocked-shape.mjs';
 import { KIND_GATE2, KIND_REPORT, KIND_STEPS, KIND_TICKET, authorKind, gate2Blockers, isAnswered, isBlocking, isOpen, ownerOf, sameRepo } from './items.mjs';
-import { REPORT_DUE } from './items-bounds.mjs';
+import { findCredential } from './credential.mjs';
+import { MAX_HUMAN_STEPS, MAX_HUMAN_STEP_CHARS, REPORT_DUE } from './items-bounds.mjs';
 import { CONFLICT_TITLE, LANDING_KINDS } from './landing-replies.mjs';
 import { reportAskGaps } from './report-shape.mjs';
 import { rankFriction, repoOf } from './runs.mjs';
@@ -96,23 +97,32 @@ function mainStep(number, byHand, merged) {
 /** A landing's last human step: other runs' branches are the user's to prune (lander S10, S15). */
 const PRUNE_STEP = "Prune other runs' branches: pilot branches prune --dry-run first.";
 
-/** The most steps one thread carries (human-steps L5), so a full record still posts one thread, never a refusal. */
-const MAX_THREAD_STEPS = 20;
+/** What stands in for a step or a worktree path that looks like a credential, so the thread and report still post and store none. */
+const REMOVE_WITHHELD = 'Remove a worktree the closing report lists when you are done with it.';
+const STEP_WITHHELD = 'A step is in the run record; it named a credential-shaped value.';
+const LEFT_WITHHELD = 'a worktree whose path looks like a credential (withheld)';
+
+/** A step as the thread may store it: one line of at most `MAX_HUMAN_STEP_CHARS`, or `STEP_WITHHELD`. */
+const stepText = (text) => {
+  const line = text.replace(/\s+/g, ' ');
+  return findCredential(line) ? STEP_WITHHELD : line.length > MAX_HUMAN_STEP_CHARS ? `${line.slice(0, MAX_HUMAN_STEP_CHARS - 1)}…` : line;
+};
 
 /**
  * A landing's human steps (human-steps spec 1, A5): the main-PR step, the record's recorded steps, one
  * `Remove <path>` per worktree `left`, the prune step. Past 20 the removes fold into one and the
- * recorded steps' overflow into a pointer to the record. Each one line of at most 300 characters.
+ * recorded steps' overflow into a pointer to the record. Each one line of at most 300 characters; one
+ * naming a credential-shaped value is a neutral pointer, since `postSteps` would refuse the thread.
  */
 export function stepsOf(record, gate, left) {
   const [, number, byHand, merged] = mainLineOf(gate);
   const recorded = (Array.isArray(record?.humanSteps) ? record.humanSteps : []).map((step) => String(step?.text ?? '').trim()).filter(Boolean);
-  const removes = (Array.isArray(left) ? left : []).map((dir) => `Remove ${said(dir)} when you are done with it.`);
-  const over = 2 + recorded.length + removes.length > MAX_THREAD_STEPS;
+  const removes = (Array.isArray(left) ? left : []).map((dir) => (findCredential(dir) ? REMOVE_WITHHELD : `Remove ${said(dir)} when you are done with it.`));
+  const over = 2 + recorded.length + removes.length > MAX_HUMAN_STEPS;
   const tail = over && removes.length > 1 ? [`Remove the ${removes.length} worktrees the closing report lists when you are done with them.`] : removes;
-  const room = MAX_THREAD_STEPS - 2 - tail.length;
+  const room = MAX_HUMAN_STEPS - 2 - tail.length;
   const kept = recorded.length > room ? [...recorded.slice(0, room - 1), `${recorded.length - room + 1} more steps are in the run record's humanSteps.`] : recorded;
-  return [mainStep(number, byHand, merged), ...kept, ...tail, PRUNE_STEP].map((text) => ({ text: clipped(text.replace(/\s+/g, ' ')) }));
+  return [mainStep(number, byHand, merged), ...kept, ...tail, PRUNE_STEP].map((text) => ({ text: stepText(text) }));
 }
 
 /** The `left` line of a git that could not list: the cause's first line when there is one. */
@@ -144,7 +154,7 @@ export function closingReportOf(record, gate, left, closes = [], blocked = block
     '',
     // What is on disk when the report posts (lander-tail spec 5, L7), never land's earlier `kept` lines.
     'Worktrees left:',
-    ...(Array.isArray(left) ? list(left.map(said), 'none') : [noneRecorded(left)]),
+    ...(Array.isArray(left) ? list(left.map((dir) => (findCredential(dir) ? LEFT_WITHHELD : said(dir))), 'none') : [noneRecorded(left)]),
     '',
     ...closedByPilotLines(closes),
     '',

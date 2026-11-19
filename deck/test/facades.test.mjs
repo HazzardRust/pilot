@@ -40,7 +40,7 @@ const FACADES = {
   ],
   'store.mjs': [
     'DeckRefusal', 'KINDS', 'LANDING_INTERRUPTED', 'MAX_TEXT_BYTES', 'MAX_WAIT_REPLIES', 'addDeck', 'addPilotMessage',
-    'addReply', 'archiveOld', 'archivedItem', 'beginLanding', 'budgetFor', 'cancelSwitch', 'clearAllNotices', 'clearNotice', 'closeItem', 'closeTicket', 'coPilotFor', 'createThread', 'currentSeq',
+    'addReply', 'archiveOld', 'archivedItem', 'beginLanding', 'budgetFor', 'cancelSwitch', 'clearAllNotices', 'clearNotice', 'closeItem', 'coPilotFor', 'createThread', 'currentSeq',
     'deckLanes', 'defaultStoreDir', 'dismissItem', 'dismissRun', 'fallBack', 'fallbackDue', 'findCredential',
     'interruptLandings', 'listAdded', 'listDeckNumbers', 'listItems', 'listLiveRuns', 'listRuns',
     'listStoredRuns', 'markDelivered', 'mergeTicket', 'moveTicket', 'namedWorktrees', 'needTicket', 'noteLanding', 'noteLaneFilled', 'ownerFilter', 'parkTicket',

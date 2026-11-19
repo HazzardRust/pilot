@@ -14,6 +14,7 @@
 const CREDENTIAL_SHAPES = [
   ['a private key block', /-----BEGIN (?:[A-Z]+ )*PRIVATE KEY-----/],
   ['an sk- API key', /\bsk-[A-Za-z0-9_-]{16,}/],
+  ['a Stripe secret or restricted key', /\b[sr]k_(?:live|test)_[A-Za-z0-9]{16,}/],
   ['a GitHub token', /\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})/],
   ['an AWS access key id', /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/],
   ['a Slack token', /\bxox[baprs]-[A-Za-z0-9-]{10,}/],

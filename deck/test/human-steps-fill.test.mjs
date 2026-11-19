@@ -23,22 +23,22 @@ const MAIN = 'Merge #901 with a merge commit, when you want main to have it.';
 const PRUNE = "Prune other runs' branches: pilot branches prune --dry-run first.";
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
-/** A repository with one run worktree (`qa/x`) on disk. */
-function aRepo(t) {
-  return gitFixture(t, 'human-steps-fill', (root) => {
+/** A repository with one run worktree (`qa/x`) on disk, at `<root>/<dir>`. */
+function aRepo(t, dir) {
+  return gitFixture(t, `human-steps-fill-${dir}`, (root) => {
     const repo = path.join(root, 'work');
     git(root, 'init', '-q', '-b', 'main', repo);
     git(repo, 'commit', '-q', '--allow-empty', '-m', 'root');
-    const qa = path.join(root, 'work-qa');
+    const qa = path.join(root, dir);
     git(repo, 'worktree', 'add', '-q', '-b', `qa/${SLUG}`, qa);
     return { repo, qa };
   });
 }
 
 /** A ticket whose signed gate2 has landed, its record holding one recorded human step. */
-function aLanded(t) {
+function aLanded(t, dir = 'work-qa') {
   tempDeck(t);
-  const { repo, qa } = aRepo(t);
+  const { repo, qa } = aRepo(t, dir);
   const evidence = withTicket({ pr: '#590', sha: '0305827' }, repo, 'yellow');
   const run = registerRun({ repo, pid: process.pid });
   setSlices(run.id, [{ slice: 'S1', state: 'merged', pr: 12 }], undefined, { slug: SLUG, ticket: evidence.ticket, step: 'Set STRIPE_KEY in Vercel' });
@@ -109,6 +109,45 @@ test('a full record still fits one thread', () => {
   assert.equal(steps[16], 'step 16');
   assert.equal(steps[17], "4 more steps are in the run record's humanSteps.");
   assert.equal(steps[18], 'Remove the 2 worktrees the closing report lists when you are done with them.');
+});
+
+test('exactly 20 steps fold nothing', () => {
+  const record = { slug: SLUG, humanSteps: Array.from({ length: 17 }, (_, i) => ({ text: `step ${i + 1}` })) };
+  const steps = stepsOf(record, { landing: { line: 'main gets pilot: #901' } }, ['C:/w/a']).map((step) => step.text);
+
+  assert.equal(steps.length, 20);
+  assert.equal(steps[17], 'step 17');
+  assert.equal(steps[18], 'Remove C:/w/a when you are done with it.');
+});
+
+test('past 20 with one Remove keeps it and folds the recorded steps', () => {
+  const record = { slug: SLUG, humanSteps: Array.from({ length: 18 }, (_, i) => ({ text: `step ${i + 1}` })) };
+  const steps = stepsOf(record, { landing: { line: 'main gets pilot: #901' } }, ['C:/w/a']).map((step) => step.text);
+
+  assert.equal(steps.length, 20);
+  assert.equal(steps[16], 'step 16');
+  assert.equal(steps[17], "2 more steps are in the run record's humanSteps.");
+  assert.equal(steps[18], 'Remove C:/w/a when you are done with it.');
+});
+
+test('a step past 300 characters is clipped to 300', () => {
+  const steps = stepsOf({ slug: SLUG }, { landing: { line: 'main gets pilot: #901' } }, [`C:/${'a'.repeat(400)}`]).map((step) => step.text);
+
+  assert.equal(steps[1].length, 300);
+  assert.equal(steps[1].at(-1), '…');
+});
+
+test('a worktree path shaped like a credential still lets the thread and the report post', (t) => {
+  const key = 'sk-abcdefghijklmnopqrstu';
+  const { repo, ticket } = aLanded(t, `work-${key}`);
+
+  lander(repo, ticket);
+
+  const [thread] = ofKind(KIND_STEPS, ticket);
+  const [report] = ofKind(KIND_REPORT, ticket);
+  assert.ok(thread && report, 'both posted');
+  assert.ok(!JSON.stringify([thread, report]).includes(key), 'no credential stored');
+  assert.ok(thread.steps.some((step) => /^Remove a worktree the closing report lists/.test(step.text)), 'a neutral pointer');
 });
 
 test('every main-line shape still yields its step', () => {

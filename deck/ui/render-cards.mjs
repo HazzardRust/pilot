@@ -43,14 +43,19 @@ function renderReplySlot(item) {
   return renderReplyForm(item) + (dismissable ? renderDismissForm(item) : '');
 }
 
+/** A steps thread's numbered steps, open or closed (human-steps spec 1). */
+export function renderHumanSteps(item) {
+  const steps = (Array.isArray(item.steps) ? item.steps : []).map((step) => `<li>${escapeHtml(step?.text ?? '')}</li>`).join('');
+  return `<ol class="human-steps">${steps}</ol>`;
+}
+
 /**
  * A steps thread's numbered steps and its one Done (human-steps A2, L4): a plain post to `/close`, which
  * closes the thread and its ticket. It takes no reply: it is a record.
  */
 function renderStepsDone(item) {
-  const steps = (Array.isArray(item.steps) ? item.steps : []).map((step) => `<li>${escapeHtml(step?.text ?? '')}</li>`).join('');
   return (
-    `<ol class="human-steps">${steps}</ol>` +
+    renderHumanSteps(item) +
     '<form class="close" method="post" action="/close" data-in-place>' +
     `<input type="hidden" name="id" value="${escapeHtml(item.id)}" /><button type="submit">Done</button></form>`
   );

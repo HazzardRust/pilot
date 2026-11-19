@@ -22,6 +22,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { MAX_HUMAN_STEPS, MAX_HUMAN_STEP_CHARS, isOneLine } from './items-bounds.mjs';
 import { MAX_STATE_CHARS } from './status.mjs';
 import { MAX_FEATURE_CHARS, MAX_FINDINGS, MAX_SLUG_CHARS } from './tools.mjs';
 
@@ -352,7 +353,6 @@ const REPORT = {
   featurePr: (field, value) => reportObject(field, value, { number: reportPr, state: reportText, mergeSha: reportSha }, ['mergeSha']),
   slices: rowsOf({ slice: reportText, pr: reportPr, mergeSha: reportSha }),
   assumed: rowsOf({ id: reportId, decision: reportText, taken: reportText }),
-  humanSteps: (field, value) => reportList(field, value, reportText),
   worktreesLeft: (field, value) => reportList(field, value, reportText),
 };
 
@@ -448,10 +448,6 @@ export function recordFields({ slug, ticket, branch, base, worktree, qa, artefac
   return fields;
 }
 
-/** The most human steps one record keeps, and the longest one may be (human-steps L5). */
-const MAX_HUMAN_STEPS = 20;
-const MAX_HUMAN_STEP_CHARS = 300;
-
 /**
  * `fields` with `step` appended to the record's human steps `kept`, as `{ text }` (human-steps L5,
  * A1): one trimmed line of 1-300 characters, at most 20 a record, and only beside a slug, since
@@ -460,7 +456,7 @@ const MAX_HUMAN_STEP_CHARS = 300;
 export function withHumanStep(fields, kept, step) {
   if (fields === null) throw new RunRefusal('step belongs to the run record; send slug with it');
   const text = typeof step === 'string' ? step.trim() : '';
-  if (text === '' || text.length > MAX_HUMAN_STEP_CHARS || /[\r\n\x85\p{Zl}\p{Zp}]/u.test(text)) {
+  if (text === '' || text.length > MAX_HUMAN_STEP_CHARS || !isOneLine(text)) {
     throw new RunRefusal(`step must be one line of 1 to ${MAX_HUMAN_STEP_CHARS} characters`);
   }
   const humanSteps = [...(Array.isArray(kept) ? kept : []), { text }];
