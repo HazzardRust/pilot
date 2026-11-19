@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "implementing (successor finishing sections.md from 152eec0; probes done, verdict ruled out, 10)",
+      "state": "fixing (75440fd review WARN: child not ended on exit; exemption too broad)",
       "branch": "slice/handoff-cache-s2",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s2"
     },
@@ -30,7 +30,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 8abafd2; fix reviewed WARNING (findings dropped), integrating next",
+      "state": "integrated",
       "branch": "slice/handoff-cache-s4",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s4"
     },
@@ -42,7 +42,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 9db54b0; NOT integrated: security verdict missing, in review",
+      "state": "pushed 9db54b0; NOT integrated: unbuilt B2, B3 need evidence trailers; re-integrating",
       "after": [
         "S5"
       ],
@@ -88,8 +88,8 @@
     }
   ],
   "findings": [],
-  "next": "feat at bdd3e224 (S1, S5, S3, S9 integrated). Chain: S4, S6, S7, S10. S2 successor finishing; then S8 (closes per L1). Then seams on S9.md and S11.md; S11 last; base check; fundamentalist; QA.",
-  "updatedAt": "2026-11-19T08:57:59.355Z",
+  "next": "feat at 517ecc1c (S1, S3, S4, S5, S9 integrated). S10 integrating, then S6 and S7 again with not-built evidence rows. S2 fix round running, then S2, then S8 (closes per L1). Then seams on S9.md and S11.md; S11 last; base check; fundamentalist; QA.",
+  "updatedAt": "2026-11-19T09:05:23.863Z",
   "friction": [
     {
       "agent": "pilot-fundamentalist",
@@ -281,6 +281,12 @@
       "what": "each npm test run ends 'home store changed: ~/.claude/pilot/deck.json; live deck up' while the live deck writes during the 7-minute gate",
       "evidence": "S10 report, both gate runs",
       "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "vocabulary-guard fails on any probe record naming Claude Code's own task_continuity section, shown only by the full npm test",
+      "evidence": "S2 gate, scripts/vocabulary-exempt.txt",
+      "size": 2
     }
   ]
 }
