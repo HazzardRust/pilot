@@ -105,7 +105,7 @@ function checkOf(status) {
   if (typeof status?.name !== 'string') throw new Error('glab api statuses: a status with no name');
   const outcome = Object.hasOwn(OUTCOMES, status.status ?? '') ? OUTCOMES[status.status] : undefined;
   if (outcome === undefined) throw new Error(`glab api statuses: ${status.name} has status ${JSON.stringify(status.status)}`);
-  return { name: status.name, outcome, url: String(status.target_url ?? '') };
+  return { name: status.name, outcome };
 }
 
 /** A GitLab MR as a **Review**; a state off the three (`locked`) throws rather than being guessed at. */

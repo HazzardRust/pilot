@@ -30,9 +30,9 @@ const status = (name, state) => ({ ...fixture[0], name, status: state });
 test('statuses map to outcomes', () => {
   const { host, calls } = answering(fixture);
   assert.deepEqual(host.checks(SHA), [
-    { name: 'test', outcome: 'fail', url: 'https://gitlab.example.com/janedoe/gitlab-foss/builds/93' },
-    { name: 'lint', outcome: 'pending', url: 'https://gitlab.example.com/janedoe/gitlab-foss/builds/92' },
-    { name: 'build', outcome: 'pass', url: '' },
+    { name: 'test', outcome: 'fail' },
+    { name: 'lint', outcome: 'pending' },
+    { name: 'build', outcome: 'pass' },
   ]);
   assert.deepEqual(calls, [{ args: ['api', STATUSES], input: undefined, opts: { timeout: 30000 } }], 'one GET, with the checks timeout');
   const table = {
@@ -54,7 +54,7 @@ test('a full page reads on to the next', () => {
   const { host, calls } = answering(full, [status('last', 'failed')]);
   const checks = host.checks(SHA);
   assert.equal(checks.length, 101);
-  assert.deepEqual(checks.at(-1), { name: 'last', outcome: 'fail', url: fixture[0].target_url });
+  assert.deepEqual(checks.at(-1), { name: 'last', outcome: 'fail' });
   assert.deepEqual(calls.map(({ args }) => args.at(-1)), [STATUSES, STATUSES.replace('&page=1', '&page=2')]);
   let pages = 0;
   const endless = gitlabHost(() => (pages += 1, JSON.stringify(full)));

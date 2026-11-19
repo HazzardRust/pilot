@@ -113,7 +113,7 @@ _Avoid_: Acceptance, QA pass
 ### CI checks
 
 **Check**:
-One host CI result on one commit, `{ name, outcome: pass | fail | pending, url }`.
+One host CI result on one commit, `{ name, outcome: pass | fail | pending }`.
 
 **Verdict**:
 The commit's checks read as one state: `green`, `red`, `pending`, `none`, `unread`.

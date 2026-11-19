@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { main } from '../checks-cli.mjs';
 
 const SHA = '5fef2ab0123456789abcdef0123456789abcdef0';
-const check = (name, outcome) => ({ name, outcome, url: `https://example.test/${name}` });
+const check = (name, outcome) => ({ name, outcome });
 const ANSWERS = {
   green: [check('test', 'pass')],
   red: [check('test', 'fail'), check('lint', 'pass')],
