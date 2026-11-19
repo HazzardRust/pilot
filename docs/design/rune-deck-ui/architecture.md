@@ -163,6 +163,10 @@ Red team (each a change to §8):
 - red team: S1 is the widest diff (crate, route, harness, stubs): `Cargo.lock` is generated and outside the
   300-line limit; the stubs are one line each; past the limit the implementer stops and asks `main` to split the
   harness (`tests/support`) into its own slice before S2.
+- red team (re-cut, landing 7b2a4f5): `runGate` now stats the home store around the suite and passes the guard
+  env (`scripts/gate.mjs` `gateEnv` 4th arg, `homeStoreLine`, `writerLines`); a cargo step outside that window
+  would let a Rust test's scratch daemon write the home store unseen. S19's `cargoStep` seam, behaviours and DAG
+  stand; its Files owned role and Prohibited now pin the window. No other slice owns a landed file.
 
 ## 7. Out of scope
 
