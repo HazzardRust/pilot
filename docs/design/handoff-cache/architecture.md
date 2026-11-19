@@ -124,6 +124,8 @@ Width 6; longest stem 3
 | S9 | A plain `claude` carries no pilot | 8, 9, 10, 13 | `scripts/reach.mjs`, `scripts/install-settings.mjs`, `scripts/test/reach.test.mjs`, `scripts/test/install-settings-reach.test.mjs` | – | typescript, security | [S9](slices/S9.md) |
 | S10 | `pilot update` updates from the terminal | 11, 12 | `bin/pilot.mjs`, `scripts/update.mjs` (new), `scripts/test/update.test.mjs` (new) | – | typescript, security | [S10](slices/S10.md) |
 | S11 | The ledger closes each measured line with its number | 6 | `docs/design/handoff-cache/ledger.md` (new), `docs/adr/NNNN-handoff-cache.md` (new) | S3 (ledger row), S7 (ledger row), S8 (ledger row) | typescript | [S11](slices/S11.md) |
+| S12 (added) | The audit measures the gap, the update skips a no-op, a local-clone install is stripped | 1, 8, 12 | `scripts/audit-session-start.mjs`, `scripts/update.mjs`, `scripts/install-settings.mjs`, their tests, `measurements.md`, `ledger.md` row 1, `slices/S10.md` | S1, S9, S10 | typescript, security | [S12](slices/S12.md) |
+| S13 (added) | Every probe runs inside L8 | L8 | `docs/design/handoff-cache/probes/lib.mjs` (new), `probes/{sections,restart,crew}/run.mjs`, `probes/crew.md` | S2, S4, S5 | typescript, security | [S13](slices/S13.md) |
 
 Walking skeleton: S1, real transcripts in, two measured rows out. The ready set by risk: S5 (its loss decides A2 and
 S6), S4, S2, S1, then S9 and S10.
