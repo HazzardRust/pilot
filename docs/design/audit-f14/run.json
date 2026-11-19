@@ -9,13 +9,13 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed 931d534",
+      "state": "integrated",
       "branch": "slice/audit-f14-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-audit-f14-s1"
     },
     {
       "slice": "S2",
-      "state": "implementing",
+      "state": "pushed 1778899",
       "after": [
         "S1"
       ],
@@ -81,8 +81,8 @@
       "pr": 119
     }
   ],
-  "next": "S1 integrating; S2 implementing from S1's tip 931d534, rebases on feat once S1 lands there",
-  "updatedAt": "2026-11-19T11:22:01.927Z",
+  "next": "integrate S2 (1778899) into feat/audit-f14 at a861cccd, then S3",
+  "updatedAt": "2026-11-19T11:57:29.633Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -146,6 +146,30 @@
       "agent": "pilot-implementer",
       "what": "slice worktree had no node_modules, so npm ci ran before the gate; the gate itself takes about 5.5 minutes",
       "evidence": "S1 implementer report: npm test 4517 tests, 315 s",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "old base-line pins spread over 7 test files cost a second 5.3-minute gate; the slice file omitted the deck caller (deck/server-tools.mjs); the fact sheet capped call sites at 5 per symbol",
+      "evidence": "S2 implementer report via main: 16 files, +259/-47, gate on be0fb7c2",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's hand-back reached main instead of the co-pilot, so main had to relay it",
+      "evidence": "coordinator relay of S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's implementer reported its gate exit 0 with 'spawns over 12100' printed; integrate read the same line as red, costing a fix round and a second 5.5-minute gate",
+      "evidence": "NOT integrated slice/audit-f14-s2: merged red: 4535 pass, 0 fail; log 20261119T114148481Z-slice-audit-f14-s2.log",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Monitor not available to the implementer, so it polled its gate log with until-grep loops",
+      "evidence": "S2 fix report",
       "size": 1
     }
   ]
