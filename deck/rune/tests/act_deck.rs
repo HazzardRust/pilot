@@ -1,0 +1,321 @@
+//! rune-deck-ui S6: every deck-wide write the page makes, the Rune deck makes through the same form
+//! route, read back through the daemon's read routes only (`/api/items`, `/api/runs`, `/api/view`, `/`).
+//! Every scratch daemon runs under the deck's own Start guard (`support::pilot`), so no test opens a terminal.
+
+mod support;
+
+use std::sync::Mutex;
+
+use pilot_deck::act::Acted;
+use pilot_deck::act_deck::DeckAction;
+use pilot_deck::client::{Client, Query};
+use serde_json::{Value, json};
+
+/// The client reads its address from the environment, which every test in this binary shares.
+static ENV: Mutex<()> = Mutex::new(());
+
+fn client_for(deck: &support::Scratch) -> Client {
+    let _held = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    let port = deck.port.to_string();
+    let vars = [
+        ("PILOT_DECK_DIR", deck.dir.to_str().expect("a utf-8 dir")),
+        ("PILOT_DECK_PORT", port.as_str()),
+    ];
+    // SAFETY: every test in this binary that touches the environment holds `ENV`.
+    unsafe {
+        vars.iter()
+            .for_each(|(name, value)| std::env::set_var(name, value))
+    };
+    let made = Client::from_env();
+    unsafe { vars.iter().for_each(|(name, _)| std::env::remove_var(name)) };
+    made.expect("a loopback client")
+}
+
+fn secret(deck: &support::Scratch) -> String {
+    std::fs::read_to_string(deck.dir.join("deck.secret"))
+        .expect("the scratch deck's secret")
+        .trim()
+        .to_string()
+}
+
+/// A session's tool call, as an agent makes it; answers the tool's text.
+fn tool(deck: &support::Scratch, name: &str, arguments: Value) -> String {
+    let mut response = ureq::post(format!("{}/api/tool", deck.url))
+        .header("Authorization", format!("Bearer {}", secret(deck)))
+        .send_json(json!({ "name": name, "arguments": arguments }))
+        .expect("the scratch deck takes the tool call");
+    let body: Value = response.body_mut().read_json().expect("json");
+    body["content"][0]["text"]
+        .as_str()
+        .unwrap_or_else(|| panic!("{name} was refused: {body}"))
+        .to_string()
+}
+
+fn id_in(text: &str) -> String {
+    let at = text.find("itm_").expect("an item id in the tool's answer");
+    let hex: String = text[at + 4..]
+        .chars()
+        .take_while(char::is_ascii_hexdigit)
+        .collect();
+    format!("itm_{hex}")
+}
+
+fn question(deck: &support::Scratch, repo: &str) -> String {
+    id_in(&tool(
+        deck,
+        "deck_post",
+        json!({ "kind": "question", "title": "Which?", "body": "A or B", "repo": repo, "author": "" }),
+    ))
+}
+
+/// An open red ticket, the way the pilot posts one.
+fn ticket(deck: &support::Scratch, repo: &str, title: &str) -> String {
+    let body = "> fix the thing\n\n1. It is done. *The test shows it.*\n\nThread itm_d2f9ed260436.";
+    id_in(&tool(
+        deck,
+        "deck_post",
+        json!({ "kind": "ticket", "title": title, "body": body, "repo": repo, "author": "", "sliceCount": 1 }),
+    ))
+}
+
+fn get(deck: &support::Scratch, path: &str) -> ureq::http::Response<ureq::Body> {
+    ureq::get(format!("{}{path}", deck.url))
+        .header("Authorization", format!("Bearer {}", secret(deck)))
+        .call()
+        .expect("the read route answers")
+}
+
+fn read(deck: &support::Scratch, path: &str) -> Value {
+    get(deck, path).body_mut().read_json().expect("json")
+}
+
+/// The item as `/api/items?id=` serves it.
+fn item(deck: &support::Scratch, id: &str) -> Value {
+    read(deck, &format!("/api/items?id={id}"))["items"][0].clone()
+}
+
+fn newest_text(deck: &support::Scratch, id: &str) -> Value {
+    item(deck, id)["replies"]
+        .as_array()
+        .and_then(|replies| replies.last())
+        .map_or(Value::Null, |reply| reply["text"].clone())
+}
+
+/// The open tickets of `repo`, in deck order.
+fn tickets_of(deck: &support::Scratch, repo: &str) -> Vec<String> {
+    read(deck, "/api/items?open=1")["items"]
+        .as_array()
+        .expect("items")
+        .iter()
+        .filter(|one| one["kind"] == "ticket" && one["repo"] == repo)
+        .map(|one| one["id"].as_str().expect("an id").to_string())
+        .collect()
+}
+
+/// Each tab's href, as the Rune deck's own read draws the strip.
+fn tab_hrefs(client: &Client) -> Vec<String> {
+    let view = client
+        .view(&Query::default())
+        .expect("a view");
+    view.regions["tabs"]["tabs"]
+        .as_array()
+        .expect("tabs")
+        .iter()
+        .map(|tab| tab["href"].as_str().expect("an href").to_string())
+        .collect()
+}
+
+fn register_run(deck: &support::Scratch, repo: &str) {
+    ureq::post(format!("{}/api/runs", deck.url))
+        .header("Authorization", format!("Bearer {}", secret(deck)))
+        .send_json(json!({ "repo": repo, "pid": deck.pid }))
+        .expect("the run registers");
+}
+
+fn taken(acted: Acted) -> String {
+    match acted {
+        Acted::Taken { location } => location,
+        Acted::Refused { reason } => panic!("refused: {reason}"),
+    }
+}
+
+fn act(client: &Client, a: DeckAction) -> String {
+    taken(client.act(&a).expect("an answer"))
+}
+
+/// A directory of the scratch deck's own, removed with it by `--stop`.
+fn a_repo(deck: &support::Scratch, name: &str) -> String {
+    let dir = deck.dir.join(name);
+    std::fs::create_dir_all(&dir).expect("a directory");
+    dir.to_str().expect("a utf-8 path").to_string()
+}
+
+#[test]
+fn create_lands() {
+    let deck = support::Scratch::start();
+    let client = client_for(&deck);
+
+    let location = act(
+        &client,
+        DeckAction::Create {
+            name: "Try the strip".into(),
+            repo: "C:/work/alpha".into(),
+        },
+    );
+
+    let id = location
+        .strip_prefix("/thread/")
+        .expect("Create lands on its new thread");
+    let made = item(&deck, id);
+    assert_eq!(made["title"], "Try the strip");
+    assert_eq!(made["repo"], "C:/work/alpha");
+}
+
+#[test]
+fn move_lands() {
+    let deck = support::Scratch::start();
+    let repo = "C:/work/alpha";
+    let first = ticket(&deck, repo, "First");
+    let second = ticket(&deck, repo, "Second");
+    let client = client_for(&deck);
+
+    act(
+        &client,
+        DeckAction::Move {
+            id: second.clone(),
+            up: true,
+        },
+    );
+    assert_eq!(tickets_of(&deck, repo), [second.clone(), first.clone()]);
+
+    act(
+        &client,
+        DeckAction::Move {
+            id: second.clone(),
+            up: false,
+        },
+    );
+    assert_eq!(tickets_of(&deck, repo), [first, second]);
+}
+
+#[test]
+fn switch_and_cancel_land() {
+    let deck = support::Scratch::start();
+    let repo = "C:/work/alpha";
+    ticket(&deck, repo, "In hand");
+    let to = ticket(&deck, repo, "Next");
+    // A live session there, so the switch waits for its take rather than completing at once.
+    register_run(&deck, repo);
+    let client = client_for(&deck);
+
+    act(
+        &client,
+        DeckAction::Switch {
+            repo: repo.into(),
+            to: to.clone(),
+        },
+    );
+    assert_eq!(newest_text(&deck, &to), "Continue this ticket");
+
+    act(
+        &client,
+        DeckAction::CancelSwitch {
+            repo: repo.into(),
+            to: to.clone(),
+        },
+    );
+    assert_eq!(newest_text(&deck, &to), "switch cancelled");
+    // The record is gone: a second Cancel is the deck's own refusal.
+    match client
+        .act(&DeckAction::CancelSwitch {
+            repo: repo.into(),
+            to: to.clone(),
+        })
+        .expect("an answer")
+    {
+        Acted::Refused { reason } => assert!(reason.starts_with(&format!("no switch to {to}"))),
+        Acted::Taken { location } => panic!("taken, to {location}"),
+    }
+}
+
+#[test]
+fn add_and_remove_deck_land() {
+    let deck = support::Scratch::start();
+    let repo = a_repo(&deck, "added");
+    let client = client_for(&deck);
+
+    let location = act(&client, DeckAction::AddDeck { path: repo.clone() });
+    assert!(location.starts_with("/?run="), "lands on the new tab: {location}");
+    assert!(tab_hrefs(&client).contains(&location), "a tab is added");
+
+    assert_eq!(act(&client, DeckAction::RemoveDeck { repo }), "/");
+    assert!(!tab_hrefs(&client).contains(&location), "the ended tab is removed");
+}
+
+#[test]
+fn alerts_land() {
+    let deck = support::Scratch::start();
+    let client = client_for(&deck);
+    let page = |deck: &support::Scratch| {
+        get(deck, "/")
+            .body_mut()
+            .read_to_string()
+            .expect("the home page")
+    };
+    assert!(page(&deck).contains("Weekly alerts on"));
+
+    act(&client, DeckAction::Alerts { weekly: false });
+    assert!(page(&deck).contains("Weekly alerts off"), "reads back off");
+
+    act(&client, DeckAction::Alerts { weekly: true });
+    assert!(page(&deck).contains("Weekly alerts on"), "and on again");
+}
+
+#[test]
+fn clear_notice_and_clear_notices_land() {
+    let deck = support::Scratch::start();
+    let ids: Vec<String> = ["C:/work/alpha", "C:/work/alpha", "C:/work/beta"]
+        .iter()
+        .map(|repo| {
+            let id = question(&deck, repo);
+            tool(
+                &deck,
+                "deck_resolve",
+                json!({ "id": id, "resolution": "decided", "author": "" }),
+            );
+            assert_eq!(item(&deck, &id)["notice"], true, "an agent's close leaves a notice");
+            id
+        })
+        .collect();
+    let client = client_for(&deck);
+
+    act(&client, DeckAction::ClearNotice { id: ids[0].clone() });
+    assert!(item(&deck, &ids[0])["notice"].is_null(), "that notice is cleared");
+    assert_eq!(item(&deck, &ids[1])["notice"], true, "and only that one");
+
+    act(&client, DeckAction::ClearNotices);
+    for id in &ids {
+        assert!(item(&deck, id)["notice"].is_null(), "{id}'s notice is cleared");
+    }
+}
+
+#[test]
+fn start_is_refused_in_the_suite() {
+    let deck = support::Scratch::start();
+    let repo = a_repo(&deck, "ended");
+    let client = client_for(&deck);
+    act(&client, DeckAction::AddDeck { path: repo.clone() });
+
+    match client
+        .act(&DeckAction::StartSession { repo })
+        .expect("an answer")
+    {
+        // The page's navigation: back on the tab with the guard's reason (`landRefusal`).
+        Acted::Taken { location } => assert!(
+            location.contains("sessionRefused=starting%20a%20session%20is%20turned%20off"),
+            "the guard refused it: {location}"
+        ),
+        Acted::Refused { reason } => assert!(reason.contains("turned off"), "{reason}"),
+    }
+    assert_eq!(read(&deck, "/api/runs")["runs"], json!([]), "no session started");
+}

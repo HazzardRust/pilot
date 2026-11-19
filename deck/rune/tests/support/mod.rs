@@ -19,6 +19,8 @@ fn pilot(args: &[&str]) -> String {
     let out = Command::new("node")
         .arg(cli)
         .args(args)
+        // The deck's own test guard (`deck/session.mjs`): a scratch daemon refuses Start before any spawn.
+        .env("PILOT_DECK_NO_START", "1")
         .output()
         .expect("node is on PATH");
     assert!(
