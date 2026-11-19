@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "implementing",
+      "state": "pushed f252b56",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed a9dacfc",
+      "state": "integrated 2bb0786",
       "after": [
         "S4"
       ],
@@ -39,7 +39,7 @@
     },
     {
       "slice": "S5",
-      "state": "implementing",
+      "state": "pushed bd92bc8",
       "after": [
         "S4"
       ],
@@ -47,8 +47,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-crew-refusals-s5"
     }
   ],
-  "next": "co-pilot: integrate S3 (a9dacfc); S2, S5 implementing",
-  "updatedAt": "2026-11-19T06:20:02.037Z",
+  "next": "co-pilot: integrate S2 (f252b56), then S5 (bd92bc8); then fundamentalist + QA",
+  "updatedAt": "2026-11-19T06:41:34.914Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -117,6 +117,18 @@
       "what": "the co-pilot's rebase message arrived mid-gate, so S3's first gate ran on stale, partly edited files and was discarded",
       "evidence": "s3-gate.log stale run, s3-gate2.log final; rebase onto 2401e3b5 sent while S3 was gating",
       "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5 shipped with both reviewers at REQUEST CHANGES and no re-review of the fixes, so the co-pilot spawned two re-reviewers; the slice also moved three pins the architecture said no slice would move",
+      "evidence": "report: both Verdict lines REQUEST CHANGES, 'Neither reviewer was sent back'; deck/audit.mjs AREAS, audit-agent.test EXPECT, fixtures/audit-repo/PLANTED.md vs architecture section 8 'no pin moves'; diff 298 of 300 after trimming",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's signed phrase red-then-green collided with the colour-word guard, and a context reset made Edit demand a fresh Read of 23 files for one phrase",
+      "evidence": "three-lanes-wording.test.mjs red on first gate (about 7 min lost); 23 'File has not been read yet' errors in one turn, replaced by a node script",
+      "size": 2
     }
   ]
 }
