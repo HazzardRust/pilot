@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed ed01f72 — 444 lines, limit waived by co-pilot (overage is tests: tests/theme.rs 253); rust approve on ed01f72; --snap cannot show the palette until a region draws from theme",
+      "state": "integrated at 0dc6f5f — 444 lines, limit waived by co-pilot (tests); rust approve; palette look waits on a region drawing from theme",
       "after": [
         "S1"
       ],
@@ -160,8 +160,8 @@
       ]
     }
   ],
-  "next": "integrate S4 then S2, send S5/S8/S12 the new tip; then pilot ready",
-  "updatedAt": "2026-11-19T22:20:25.371Z",
+  "next": "integrate S2, then send S5/S8/S12 the new tip; then pilot ready",
+  "updatedAt": "2026-11-19T22:22:37.977Z",
   "friction": [
     {
       "agent": "pilot-implementer",
