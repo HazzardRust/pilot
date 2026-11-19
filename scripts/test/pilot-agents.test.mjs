@@ -1121,6 +1121,17 @@ test('the runner names six checks per stack and runs nothing outside the table',
   }
 });
 
+test('the Node coverage cell fetches nothing', () => {
+  // coverage-cell S2 (spec 2; L2, A1, A4): Node's own coverage and the plugin's script, no run-time
+  // fetch; the six other columns keep diff-cover.
+  const { rows } = runnerTable();
+  const [, node, ...others] = rows.find((row) => row[0] === 'Diff coverage');
+  assert.doesNotMatch(node, /\b(npx|uvx)\b/, 'the Node cell fetches nothing');
+  assert.match(node, /NODE_V8_COVERAGE=/, "it measures with Node's own coverage");
+  assert.match(node, /scripts\/diff-coverage\.mjs/, "it counts with the plugin's script");
+  others.forEach((cell, i) => assert.match(cell, /diff-cover\b/, `${RUNNER_STACKS[i + 1]} keeps its cell`));
+});
+
 test('the rule budgets the fundamentalist one child', () => {
   // cheaper-crew S2 (spec 4): the budget follows the helper.
   const rule = flat(read('rules/orchestration.md'));
