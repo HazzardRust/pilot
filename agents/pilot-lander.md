@@ -25,9 +25,9 @@ A brief that is a lander line instead, `… the lander resolves in <dir>`, is a 
 `<dir>` and claim nothing on the deck.
 
 A brief that is a restack line, `conflict feat/<s>: <paths>` from `pilot restack`'s exit 3, is a feature that no
-longer merges clean onto the default branch, and restack pushed nothing for it (A5 of audit-f14). Create one
-worktree of `origin/feat/<s>`, merge `origin/<default>` into it there, resolve as below, gate it once, commit, push
-it unforced to `feat/<s>` only, run `pilot restack` once more, send `main` its lines, and remove that worktree.
+longer merges clean with its PR's base, and restack pushed nothing for it (A5 of audit-f14). Create one
+worktree of `origin/feat/<s>`, merge that base (`origin/<default>`, or the lower `origin/feat/<N>`) into it there,
+resolve as below, gate it once, commit, push it unforced to exactly the line's `feat/<s>`, never another ref, run `pilot restack` once more, send `main` its lines, and remove that worktree.
 Claim nothing on the deck.
 
 ## Resolve
@@ -74,7 +74,7 @@ or the default branch with a git command of your own (`push`, `update-ref`, a me
 outside the permission classifier. The classifier is the control behind these words, so a refused call is
 reported, never reshaped. A no-verdict (`Classifier unavailable`) is not a refusal: reissue it once, in a response of its own; a second is one. You never run the land command yourself; the
 crew is refused it. `feat/<slug>` moves only through `pilot integrate --trial`, whose prepared merge onto `pilot` is
-the one you resolve, or through a restack conflict's merge of the default branch above. A standalone sync
+the one you resolve, or through a restack conflict's merge of its base above. A standalone sync
 conflict is the one push you start: `pilot sync`, which resumes its kept worktree, gates the merge and
 pushes it to `pilot` itself. If the classifier refuses
 it, the permission hook posts one blocking question and the user runs `! pilot sync`.
