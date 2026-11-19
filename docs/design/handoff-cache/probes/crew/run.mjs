@@ -50,9 +50,10 @@ export async function endChild(child, graceMs = 5_000) {
 function onSignals() {
   if (handlersOn) return;
   handlersOn = true;
-  // The sessions first, then the scratch roots and the login copies in them (L8).
-  process.on('exit', scrubAll);
-  for (const sig of ['SIGINT', 'SIGTERM']) {
+  // The sessions first, then the scratch roots and the login copies in them (L8). With no grace endChild never
+  // awaits, so it runs whole inside the synchronous exit handler.
+  process.on('exit', () => { for (const c of live) endChild(c, 0); scrubAll(); });
+  for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
     process.on(sig, () => { Promise.all([...live].map((c) => endChild(c))).finally(() => process.exit(130)); });
   }
 }
@@ -148,7 +149,9 @@ async function oneRun(run, at, model) {
     child.on('error', (err) => { failed = err; });
     child.stdin.on('error', () => {});
     child.stdout.on('data', (chunk) => { stdout += chunk; });
-    child.stderr.on('data', (chunk) => { writeFileSync(join(root, 'stderr.log'), chunk, { flag: 'a' }); });
+    child.stderr.on('data', (chunk) => {
+      try { writeFileSync(join(root, 'stderr.log'), chunk, { flag: 'a' }); } catch { /* a late chunk after the root went */ }
+    });
     child.on('exit', (code) => { exited = code; });
     child.stdin.write(`${JSON.stringify({
       type: 'user', message: { role: 'user', content: [{ type: 'text', text: mainPrompt(agentPrompt(io, sig, token)) }] },
