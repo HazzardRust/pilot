@@ -417,11 +417,11 @@ export function addPilotMessage(id, text, author, to, promise) {
 
 /**
  * A landing that ends short (three-lanes spec 15, L7): refused, or its main PR unknown (`mainLine`'s
- * `main gets pilot: unknown (<why>)`, one-integration-line spec 3). Its line is the pilot's to act on,
+ * `main gets pilot: unknown (<why>)`, one-integration-line spec 3; `featureLine`'s `feature PR: unknown (<why>)`). Its line is the pilot's to act on,
  * whoever owns the gate2.
  */
 export function isShortLanding({ ok, line }) {
-  return !ok || /^main gets pilot: unknown \(.*\)$/m.test(String(line ?? ''));
+  return !ok || /^(?:main gets pilot|feature PR): unknown \(.*\)$/m.test(String(line ?? ''));
 }
 
 /** A landing's state and its thread line, set on the item in hand. A short landing's line is `from: 'deck'` with a `seq`, which wakes the pilot and never reads as the user (L7). */

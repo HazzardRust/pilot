@@ -8,6 +8,7 @@
 
 import fs from 'node:fs';
 
+import { git as gitAt } from '../scripts/pilot-branch.mjs';
 import { runWorktrees } from '../scripts/worktrees.mjs';
 import { readRefusals } from './classifier-log.mjs';
 import { isPilotClose, mayPilotClose } from './blocked-shape.mjs';
@@ -15,6 +16,7 @@ import { KIND_GATE2, KIND_REPORT, KIND_TICKET, authorKind, gate2Blockers, isAnsw
 import { REPORT_DUE } from './items-bounds.mjs';
 import { CONFLICT_TITLE, LANDING_KINDS } from './landing-replies.mjs';
 import { reportAskGaps } from './report-shape.mjs';
+import { mergeMethodOf } from './host.mjs';
 import { rankFriction, repoOf } from './runs.mjs';
 import { DeckRefusal } from './store-core.mjs';
 import { noteDeck, postItem, resolveItem } from './store-items.mjs';
@@ -59,6 +61,15 @@ export function blockedStepLines(refusals) {
   return [`Blocked steps: ${refusals.length}`, ...rows.map((row) => `- ${said(row.agent)} ${said(row.reason)}: ${row.count}`)];
 }
 
+/** The repository's `pilot.merge`, or the Error that says why it cannot be read: the step names it and never hides it. */
+function methodAt(repo) {
+  try {
+    return mergeMethodOf((args) => gitAt(repo, ...args));
+  } catch (err) {
+    return err instanceof Error ? err : new Error(String(err));
+  }
+}
+
 /**
  * The ticket's blocked-step lines from the classifier log, by ticket id alone: a crew session logs its own
  * worktree's spelling of the repo, never the gate's. A log that cannot be read says so and never stops the report.
@@ -76,6 +87,28 @@ function blockedStepsOf(ticket) {
  * ` (opened)` or not; `… open a PR from <x> to main by hand`; `… no open PR`; `… unknown (<why>)`. The last one land printed.
  */
 const MAIN_LINE = /^main gets pilot: (?:#(\d+)(?: \(opened\))?|open a PR from (\S+) to main by hand|merge (\S+) into main by hand|no open PR|unknown \(.*\))$/gm;
+
+/**
+ * Land's feature line, in S4's `featureLine` shapes (audit-f14): `feature PR: #<n> into <base>` with ` (after #<below>)`
+ * for a stack, `none (no host)`, or `unknown (<why>)`.
+ */
+const FEATURE_LINE = /^feature PR: (?:#(\d+) into (\S+?)(?: \(after #(\d+)\))?|none \(.*\)|unknown \((.*)\))$/gm;
+
+/** The step's method words: `pilot.merge`'s `merge` is a merge commit, `squash` a squash. */
+const METHOD_WORDS = { merge: 'a merge commit', squash: 'a squash' };
+
+/**
+ * The human step for a main-cut feature, from land's last `feature PR:` line: "Merge #<below>, then #<n> with a <method>",
+ * or "Merge #<n> with a <method>". A line that names no PR asks the pilot; no feature line at all is undefined.
+ */
+export function humanStep({ line, method }) {
+  const [, number, , below, why] = [...String(line ?? '').matchAll(FEATURE_LINE)].at(-1) ?? [];
+  if (number === undefined && why === undefined && !/^feature PR: none/m.test(String(line ?? ''))) return undefined;
+  if (number === undefined) return why === undefined ? 'Land opened no feature PR (no host): merge the feature branch by hand' : `Land named no feature PR (${said(why)}): check which PR brings this feature in`;
+  // A setting that cannot be read still gets the default words, with the cause beside them.
+  const how = method instanceof Error ? `${METHOD_WORDS.merge} (${said(String(method.message).split('\n')[0])})` : (METHOD_WORDS[method] ?? METHOD_WORDS.merge);
+  return below === undefined ? `Merge #${number} with ${how}` : `Merge #${below}, then #${number} with ${how}`;
+}
 
 /** The closing report's first human step, from land's main line (spec 3): the one PR the user merges for main. */
 function mainStep(number, byHand, merged) {
@@ -104,7 +137,7 @@ const noneRecorded = (cause) => {
  * the gate2's landing and `left`; it asks nothing (report-shape, ADR 0148). `left` not a list is a git
  * that could not list (an Error says why): `none recorded`.
  */
-export function closingReportOf(record, gate, left, closes = [], blocked = blockedStepLines([])) {
+export function closingReportOf(record, gate, left, closes = [], blocked = blockedStepLines([]), method = 'merge') {
   const { sha, line } = gate?.landing ?? {};
   const name = record?.feature ?? record?.slug ?? 'the feature';
   const rows = (Array.isArray(record?.slices) ? record.slices : []).filter((row) => row?.slice !== record?.slug);
@@ -112,10 +145,11 @@ export function closingReportOf(record, gate, left, closes = [], blocked = block
   const list = (entries, none) => (entries.length > 0 ? entries.map((entry) => `- ${entry}`) : [`- ${none}`]);
   // Land's main line, whole, and the PR or the by-hand branch it names.
   const [mainLine, number, byHand, merged] = [...String(line ?? '').matchAll(MAIN_LINE)].at(-1) ?? [];
+  const featureLine = [...String(line ?? '').matchAll(FEATURE_LINE)].at(-1)?.[0];
+  const feature = featureLine === undefined ? undefined : humanStep({ line: featureLine, method });
   const body = [
     `Landed ${said(gate?.pr ?? 'the feature PR')} at ${said(sha ?? 'an unknown SHA')}.`,
-    mainLine === undefined ? 'main gets pilot: not printed by land' : said(mainLine),
-    mainStep(number, byHand, merged),
+    ...(feature === undefined ? [mainLine === undefined ? 'main gets pilot: not printed by land' : said(mainLine), mainStep(number, byHand, merged)] : [said(featureLine), `Human step: ${feature}.`]),
     // The lander leaves other runs' branches to the user (lander S10 took the prune out of the pilot's tail).
     PRUNE_STEP,
     '',
@@ -207,7 +241,7 @@ export function postFilled(fields) {
   // A report built from no record would close the ticket on an empty one; the lander is told instead.
   if (!record) throw new DeckRefusal(`a report without a body is filled from the run record, and no run record names ${ticket}`);
   // Filed under the gate2's repository, as the deck's own report was, never the poster's worktree.
-  const report = postItem({ ...fields, repo: gate.repo, ...closingReportOf(record, gate, worktreesLeft(gate.repo, record.slug), pilotClosesOf(listItems(), ticket, gate.repo), blockedStepsOf(ticket)) });
+  const report = postItem({ ...fields, repo: gate.repo, ...closingReportOf(record, gate, worktreesLeft(gate.repo, record.slug), pilotClosesOf(listItems(), ticket, gate.repo), blockedStepsOf(ticket), methodAt(gate.repo)) });
   noteDeck(report.id, REPORT_DUE);
   return report;
 }
