@@ -1,6 +1,6 @@
 # Human steps are a green thread
 
-Ticket `itm_7d3455d28cd6` · slug `human-steps` · base `origin/pilot` fa28b73b · ADR NNNN (`docs/adr/NNNN-human-steps.md`, S1)
+Ticket `itm_7d3455d28cd6` · slug `human-steps` · base `origin/pilot` d2358d9f (re-cut from d03db508) · ADR NNNN (`docs/adr/NNNN-human-steps.md`, S1)
 
 ## 1. Problem
 
@@ -27,8 +27,9 @@ is the guard. Taken as the user's intent (main, 2026-11-19).
 
 ## 3. Findings
 
-- `deck/store-items.mjs:174-180`: posting a `report` with a ticket closes the ticket in the post's write. Spec 3 adds
-  one condition there.
+- `deck/store-items.mjs:170-175`: posting a `report` with a ticket closes the ticket in the post's write, clearing
+  `live` and `concludedBy` (yellow-never-idle, d2358d9f; `concludedBy` lets a gate2 post on a green ticket,
+  `:216`). Spec 3 adds one condition there; Done must clear the same fields, so S1 folds the close into `closeTicket`.
 - `deck/closing-report.mjs:54-67,81-112`: `mainStep` and `PRUNE_STEP` are the only `Human step:` lines; `postFilled`
   (159-185) fills the lander's bodiless report from the run record and notes `REPORT_DUE`. crew-refusals S3 (#121)
   adds `blockedStepLines` here: S2 rebases after it.
@@ -43,7 +44,7 @@ is the guard. Taken as the user's intent (main, 2026-11-19).
   forever (`pilot wait`, `render-cards.mjs:285`). Red team find, fixed in S1.
 - `deck/ui/render-rail.mjs:79-87` `ticketLabelOf`: a landing ticket reads `landing`; S1 reads `human steps` while a
   steps thread is open.
-- `deck/server-tools.mjs:402-415` `deck_status` passes `friction` to `setSlices` (`store-runs.mjs:551`), which
+- `deck/server-tools.mjs:409-422` `deck_status` passes `friction` to `setSlices` (`store-runs.mjs:551`), which
   appends it to the record: the pattern S3's `step` copies.
 - `agents/pilot.md:610-623` "Ending a run": the pilot's `Findings:` reply lists the human steps; `REPORT_DUE`
   (`items-bounds.mjs:45`) asks for them. S4 moves both.
@@ -55,6 +56,7 @@ is the guard. Taken as the user's intent (main, 2026-11-19).
 | Steps thread store | `postSteps`, `closeItem` (steps branch), `resolveItem` refusal | the kind's lifecycle: post, close with ticket, refuse agents, leave the report's close off | in-process |
 | Steps of a landing | `stepsOf(record, gate, left)` | `mainStep`, `PRUNE_STEP`, worktree lines, recorded steps, the schema | in-process (pure) |
 | Recorded steps | `deck_status` `step` → `record.humanSteps` | append, bound, credential refusal | in-process |
+| Ticket close | `closeTicket(ticket, by, at)` | state, resolution, `resolvedAt`, clearing `live` and `concludedBy`: the report's and Done's one path | in-process |
 | Report owed | `isReportOwed(ticket, items)` | reads a posted report, not only the landed gate2 | in-process (pure) |
 
 Deletion test: `mainStep`/`PRUNE_STEP` as report lines vanish into `stepsOf` (one caller each, folded, no fold slice:
@@ -140,8 +142,10 @@ shape). S2 after both; S4 after S3. S2 also rebases after crew-refusals S3 lands
 - red team: crash between S2's two posts leaves a thread and no report; the lander's retry finds an open steps thread
   and posts only the report (S2 behaviour 3). Seams half-built by two slices: none; `record.humanSteps` is written
   whole in S3 and read whole in S2.
-- red team: yellow-never-idle (#114) edits `store-items.mjs` and `server-tools.mjs`; S1 and S3 rebase on `pilot`
-  before their gate. Their hunks are disjoint (gate2/walkthrough post vs report close; `deck_status` arg list).
+- red team (re-cut, d2358d9f): yellow-never-idle landed a `concludedBy` the report clears on close. Left open by a
+  steps thread, a ticket would keep it and take a second gate2 (`store-items.mjs:216`), and Done would close without
+  clearing it. S1: the report clears `live` and `concludedBy` whether or not it closes; report and Done close through
+  one `closeTicket` (behaviours 1, 3). S3: only line anchors moved; the `deck_status` arg list is untouched.
 
 ## 9. Acceptance evidence
 

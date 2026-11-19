@@ -63,8 +63,8 @@ None recorded.
 ## Overlaps
 
 crew-refusals S3 (#121) owns `deck/closing-report.mjs` and `deck/test/closing-report.test.mjs`: S2 rebases on `pilot`
-after it lands. yellow-never-idle (#114) edits `deck/store-items.mjs` and `deck/server-tools.mjs`: S1 and S3 rebase on
-`pilot` before their gate. Never edit around another run's hunks.
+after it lands. yellow-never-idle landed on `pilot` (d2358d9f): `feat/human-steps` carries it; S1 builds on its
+`concludeOn` and `concludedBy`. Never edit around another run's hunks.
 
 ## Diff limit
 
