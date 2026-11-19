@@ -16,7 +16,7 @@ import path from 'node:path';
 import { split, listOf } from './measure-prompt.mjs';
 
 export const SHELL_RULES = Object.freeze([
-  'Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a red-then-green proof runs in a detached throwaway worktree you create and remove.',
+  'Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.',
   'Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).',
 ]);
 
@@ -31,7 +31,9 @@ function definitions(dir) {
     .map((file) => ({ agent: file.slice(0, -3), text: fs.readFileSync(path.join(dir, file), 'utf8') }));
 }
 
-const hasShell = ({ text }) => listOf(split(text).front, 'tools').some((tool) => SHELLS.has(tool));
+// A scoped grant, `Bash(git:*)`, is still a shell: the name is read up to its `(`.
+const hasShell = ({ text }) =>
+  listOf(split(text).front, 'tools').some((tool) => SHELLS.has(tool.replace(/\(.*$/, '').trim()));
 
 export function shellAgents(dir) {
   return definitions(dir).filter(hasShell).map(({ agent }) => agent);

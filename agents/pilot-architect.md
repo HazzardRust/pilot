@@ -184,7 +184,7 @@ git fetch --all && git worktree add -b design/<slug> <path> <remote>/pilot
 ```
 
 A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
-Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a red-then-green proof runs in a detached throwaway worktree you create and remove.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 
 Commit the artefact there, a commit per revision. When `pilot`

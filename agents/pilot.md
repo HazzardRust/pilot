@@ -156,7 +156,7 @@ plain question carries `recommended`: take that default, record it as
 *assumed*, and continue. A blocked step the co-pilot hands back, a refused file edit aside, goes up
 `blocking` on its ticket, titled `Blocked: <command>`; the deck refuses it unflagged.
 A blocking question (never a gate, walkthrough or proposal: only the user passes those) whose step was done another way, was superseded or met a safe assumption is closed by you alone, not the agent that asked: if another agent owns it, take it back with a pass, then `deck_resolve` it with `Moot: <why>` or `Assumed: <what>`; one whose answer is still needed waits on the user, and so does one the user reopened.
-Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a red-then-green proof runs in a detached throwaway worktree you create and remove.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 Two call shapes auto mode refuses are never made: a `cat` of a transcript or `TaskOutput` file, and `pilot land` from a co-pilot; a file edit the classifier refuses goes to the user as one question with its default.
 

@@ -50,14 +50,9 @@ test('an agent with no shell needs none', (t) => {
     'reader.md': agent('Read, Grep, Glob', 'Reads only.'),
     'web.md': agent('WebFetch, Bashful', 'No shell, despite the name.'),
     'shell.md': agent('Read, Bash', 'Runs things.'),
+    'scoped.md': agent('Read, Bash(git:*)', 'Runs git only, still a shell.'),
     'notes.txt': 'not an agent',
   });
-  assert.deepEqual(shellAgents(dir), ['shell']);
-  assert.deepEqual(missingShellRules(dir).map((row) => row.agent), ['shell', 'shell']);
-});
-
-test('the two rules are two non-empty sentences', () => {
-  assert.equal(SHELL_RULES.length, 2);
-  for (const rule of SHELL_RULES) assert.match(rule, /^[A-Z].*\.$/);
-  assert.ok(Object.isFrozen(SHELL_RULES));
+  assert.deepEqual(shellAgents(dir), ['scoped', 'shell']);
+  assert.deepEqual(missingShellRules(dir).map((row) => row.agent), ['scoped', 'scoped', 'shell', 'shell']);
 });

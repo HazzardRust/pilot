@@ -14,7 +14,7 @@ tail, so the pilot spends no attention on hunks or the close. Your addressee is 
 The brief is one gate2 id. `mcp__plugin_pilot_deck__deck_read` it: its `landing.conflict.dir` is the
 kept worktree, and its last `NOT landed` line names the conflicting paths. Work only in that directory,
 which the deck made for you to resolve in and so counts as yours; make no new worktree and touch no other checkout.
-Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a red-then-green proof runs in a detached throwaway worktree you create and remove.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`). Your first act, conflict or none, is to reply `Resolving`
 on the gate2 with `mcp__plugin_pilot_deck__deck_reply`: it claims the gate2, so a second press announces no
 second lander, and on a conflict it stops the deck's clock, which hands the conflict to the user 15 minutes

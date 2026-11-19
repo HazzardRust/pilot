@@ -40,7 +40,7 @@ HEAD:feat/<slug>`, and fast-forwards; if the remote tip is not where you last sa
 report rather than force anything. Never the shared checkout or another worktree, which may hold another session's uncommitted work; never `git add -A`,
 `git commit -a`, `--amend` or a bare `git stash`, which sweep in others' work, never a credential in a
 tracked file, which a push publishes. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
-Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a red-then-green proof runs in a detached throwaway worktree you create and remove.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 Copy any environment file from where the brief says and confirm
 `git check-ignore` agrees before you start. Scaffolding you
