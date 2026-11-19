@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed 46eec0e (integrating; its WARN-fix commit was read by no reviewer)",
+      "state": "integrated (its WARN-fix commit read by no reviewer)",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S5",
-      "state": "implementing",
+      "state": "pushed 1048071 (review fixes, pins and README after the reviewers' read)",
       "after": [
         "S1"
       ],
@@ -59,28 +59,34 @@
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/ci-gate-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s6"
     },
     {
       "slice": "S8",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/ci-gate-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s8"
     },
     {
       "slice": "S9",
-      "state": "planned (added)",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/ci-gate-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s9"
     },
     {
       "slice": "S10",
-      "state": "implementing",
+      "state": "pushed 8592905 (integrating)",
       "after": [
         "S1"
       ],
@@ -88,8 +94,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s10"
     }
   ],
-  "next": "ci-gate: integrating S2; S3 resumed (wip 8f6defdc, stubbing 10 land tests); S4, S5, S10 implementing; S6, S8, S9 as slots free; S7 after S2+S5.",
-  "updatedAt": "2026-11-19T18:06:23.494Z",
+  "next": "ci-gate: integrating S10, then S5; S3, S4, S6, S8, S9 implementing; S7 after S5 integrates.",
+  "updatedAt": "2026-11-19T18:20:13.742Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -191,6 +197,30 @@
       "what": "implementer hand-back forced mid-slice (wip 8f6defdc) before it could act on the co-pilot's answer",
       "evidence": "S3 report",
       "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Monitor unavailable to the implementer; polled a 400 s gate with background shell loops",
+      "evidence": "S10 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Edit wrote a   escape as a literal U+2028, breaking a regex literal; every gate2 test failed",
+      "evidence": "S5 report; od -c bytes 342 200 250",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief says deck/items.mjs at 798 lines; it was 799, edit hit the 800 cap",
+      "evidence": "docs/design/ci-gate/brief.md:65",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5 owned files omit deck/tools.mjs schema, deck/README.md row and prompt pins a new deck_post field needs; two full gates",
+      "evidence": "S5 report",
+      "size": 2
     }
   ]
 }
