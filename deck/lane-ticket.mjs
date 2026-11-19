@@ -28,6 +28,9 @@ const CO_PILOT_CREW = Object.freeze([
 
 const QA = 'pilot:pilot-qa';
 
+/** The yellow crew (yellow-never-idle §4): the co-pilot's crew and QA, the agents whose tool calls say a yellow ticket is worked. */
+export const isYellowCrew = (agentType) => agentType === QA || CO_PILOT_CREW.includes(agentType);
+
 /** An open yellow ticket of `repo`: what a live co-pilot holds, checked again so a stale entry files nothing. */
 const isYellowTicketIn = (item, repo) => item.kind === KIND_TICKET && sameRepo(item.repo, repo) && stateOf(item) === 'yellow';
 
