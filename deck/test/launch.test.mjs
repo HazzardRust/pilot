@@ -19,6 +19,7 @@ import { tempDeck } from '../testUtils.mjs';
 
 const { createDeckHttpServer } = await import('../server.mjs');
 const { openCookie, openFile, rotateSecret, writeOpenFile } = await import('../launch.mjs');
+const { PACKAGE_ROOT, runeBinary } = await import('../open.mjs');
 
 const CLI = fileURLToPath(new URL('../../bin/pilot.mjs', import.meta.url));
 const run = promisify(execFile);
@@ -159,12 +160,14 @@ test('pilot deck prints the open line, not the secret', async (t) => {
   const secret = ensureSecret(dir);
 
   // A deck older than its open file: the line says how to get one, not a path to nothing.
+  // Where this checkout has the Rune deck built, that is what opens instead (rune-deck-ui S3).
+  const rune = runeBinary(PACKAGE_ROOT, process.platform);
   const older = await pilot(['deck'], dir, port);
-  assert.deepEqual(older.stdout.trim().split(/\r?\n/), [`The deck is up at ${base}`, 'no open file: `pilot deck --rotate` writes one']);
+  assert.deepEqual(older.stdout.trim().split(/\r?\n/), [`The deck is up at ${base}`, rune ? `open ${rune}` : 'no open file: `pilot deck --rotate` writes one']);
 
   writeOpenFile(dir, base, secret);
   const { stdout } = await pilot(['deck'], dir, port);
-  assert.deepEqual(stdout.trim().split(/\r?\n/), [`The deck is up at ${base}`, `open ${openFile(dir)}`]);
+  assert.deepEqual(stdout.trim().split(/\r?\n/), [`The deck is up at ${base}`, `open ${rune ?? openFile(dir)}`]);
   assert.ok(!stdout.includes(secret), 'stdout holds no secret');
 
   const scratch = await pilot(['deck', '--scratch'], dir, port);

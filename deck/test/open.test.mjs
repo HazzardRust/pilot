@@ -296,8 +296,8 @@ test('two registrations in a row open one browser, not two', async (t) => {
   const spawns = recorder();
   asTheRealDeck(t);
 
-  assert.equal(openDeck(spawns.spawn), true, 'the first session gets a tab');
-  assert.equal(openDeck(spawns.spawn), false, 'the second finds the guard still up');
+  assert.equal(openDeck(spawns.spawn, process.platform, null), true, 'the first session gets a tab');
+  assert.equal(openDeck(spawns.spawn, process.platform, null), false, 'the second finds the guard still up');
 
   assert.equal(spawns.calls.length, 1);
   assert.ok(
@@ -315,7 +315,7 @@ test('the deck opener follows an injected platform', async (t) => {
   for (const [platform, command] of [['darwin', 'open'], ['linux', 'xdg-open']]) {
     const { openDeck } = await freshOpener();
     const spawns = recorder();
-    assert.equal(openDeck(spawns.spawn, platform), true, `${platform}: the opener started`);
+    assert.equal(openDeck(spawns.spawn, platform, null), true, `${platform}: the opener started`);
     assert.equal(spawns.calls[0].command, command, `${platform} opens with ${command}`);
     assert.deepEqual(spawns.calls[0].args, [openFile()], `${platform}: the open file is the one argument`);
   }
@@ -332,7 +332,7 @@ test('an opener that reports failure through its `error` event, not a throw, is 
   const said = [];
   t.mock.method(console, 'error', (...args) => said.push(args.join(' ')));
 
-  assert.equal(openDeck(spawns.spawn), true, 'the daemon started the opener');
+  assert.equal(openDeck(spawns.spawn, process.platform, null), true, 'the daemon started the opener');
   const { listeners } = spawns.calls[0];
   assert.equal(typeof listeners.error, 'function', 'an error listener is attached to the child');
 
@@ -349,13 +349,96 @@ test('openDeck never puts the key in argv', async (t) => {
   asTheRealDeck(t);
   const secret = ensureSecret();
 
-  assert.equal(openDeck(spawns.spawn), true);
+  assert.equal(openDeck(spawns.spawn, process.platform, null), true);
   const { command, args } = spawns.calls[0];
   assert.deepEqual(args, openerFor(process.platform, openFile()).args, 'the opener names the open file');
   assert.equal(args.at(-1), openFile(), 'whole, as the last argument');
   for (const part of [command, ...args]) {
     assert.ok(!part.includes(secret) && !part.includes('key=') && !part.startsWith('http'), 'and no argument holds the key or a URL');
   }
+});
+
+// --- the Rune deck (rune-deck-ui S3) ---------------------------------------
+
+const { runeBinary } = await import('../open.mjs');
+
+/** A package root of its own, holding a file at `deck/rune/target/<profile>/<name>` when named. */
+const rootWith = (t, profile, name) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-rune-root-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  if (profile) {
+    const dir = path.join(root, 'deck', 'rune', 'target', profile);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, name), '');
+  }
+  return root;
+};
+
+test('a built binary is opened', async (t) => {
+  // The Rune deck finds its own deck (secret file, port), so it is started bare: no `cmd /c start`, no URL.
+  const rune = 'C:\\pilot\\deck\\rune\\target\\release\\pilot-deck.exe';
+  for (const platform of ['win32', 'darwin', 'linux']) {
+    assert.deepEqual(openerFor(platform, openFile(), rune), { command: rune, args: [] }, `${platform} runs the binary`);
+  }
+
+  const { openDeck } = await freshOpener();
+  const spawns = recorder();
+  asTheRealDeck(t);
+  assert.equal(openDeck(spawns.spawn, 'win32', rune), true);
+  const [call] = spawns.calls;
+  assert.equal(call.command, rune);
+  assert.deepEqual(call.args, []);
+  assert.deepEqual(
+    { detached: call.options.detached, stdio: call.options.stdio, windowsHide: call.options.windowsHide, shell: call.options.shell },
+    { detached: true, stdio: 'ignore', windowsHide: true, shell: undefined },
+    'started the way the browser is: detached, no pipes, no console, no shell',
+  );
+});
+
+test('no binary opens the browser', () => {
+  const file = openFile();
+  assert.deepEqual(openerFor('win32', file, null), { command: 'cmd', args: ['/c', 'start', '', file] });
+  assert.deepEqual(openerFor('darwin', file, null), { command: 'open', args: [file] });
+  assert.deepEqual(openerFor('linux', file, null), { command: 'xdg-open', args: [file] });
+});
+
+test('only the release binary counts', (t) => {
+  assert.equal(runeBinary(rootWith(t), 'win32'), null, 'nothing built');
+  assert.equal(runeBinary(rootWith(t, 'debug', 'pilot-deck.exe'), 'win32'), null, 'a debug build is not the deck');
+  assert.equal(runeBinary(rootWith(t, 'release', 'pilot-deck'), 'win32'), null, 'Windows wants the .exe');
+
+  const built = rootWith(t, 'release', 'pilot-deck.exe');
+  assert.equal(runeBinary(built, 'win32'), path.join(built, 'deck', 'rune', 'target', 'release', 'pilot-deck.exe'));
+  const posix = rootWith(t, 'release', 'pilot-deck');
+  assert.equal(runeBinary(posix, 'linux'), path.join(posix, 'deck', 'rune', 'target', 'release', 'pilot-deck'));
+
+  const folder = rootWith(t);
+  fs.mkdirSync(path.join(folder, 'deck', 'rune', 'target', 'release', 'pilot-deck.exe'), { recursive: true });
+  assert.equal(runeBinary(folder, 'win32'), null, 'a directory of that name is not a binary');
+});
+
+test('pilot deck names what opens', async (t) => {
+  const base = await deckOnAPort(t);
+  withEnv(t, 'PILOT_DECK_PORT', new URL(base).port);
+  withEnv(t, 'PILOT_DECK_NO_OPEN', '1');
+  const { writeOpenFile } = await import('../launch.mjs');
+  writeOpenFile(process.env.PILOT_DECK_DIR, base, ensureSecret());
+  const { run: pilot } = await import('../../bin/pilot.mjs');
+  const said = [];
+  t.mock.method(console, 'log', (...args) => said.push(args.join(' ')));
+  t.after(() => {
+    process.exitCode = undefined;
+  });
+
+  const name = process.platform === 'win32' ? 'pilot-deck.exe' : 'pilot-deck';
+  const built = rootWith(t, 'release', name);
+  await pilot(['deck'], { root: built });
+  await pilot(['deck'], { root: rootWith(t) });
+  t.mock.restoreAll();
+
+  const [withRune, withoutRune] = said.map((line) => line.split(/\r?\n/));
+  assert.deepEqual(withRune, [`The deck is up at ${base}`, `open ${path.join(built, 'deck', 'rune', 'target', 'release', name)}`]);
+  assert.deepEqual(withoutRune, [`The deck is up at ${base}`, `open ${openFile()}`]);
 });
 
 test('an opener that will not start leaves the daemon serving', async (t) => {
