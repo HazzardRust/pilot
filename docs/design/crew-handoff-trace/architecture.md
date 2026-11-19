@@ -125,14 +125,18 @@ No fold slice is needed.
 
 ## 6. Assumed decisions
 
-| ID | Default taken | Tradeoff | Rejected |
-| --- | --- | --- | --- |
-| A1 | The trace lives in `~/.claude/pilot/handoff-trace.jsonl`, beside `wrapper.log`, as one JSON row per line. Past 512 KB it is rotated to one `.old`, which keeps roughly the last 6,000 steps, weeks of runs. | Kept apart from the deck, so a hook row survives a deck that is down. The Archive page (itm_2fe34eca6f66) reads a file, not an API. | Rows on the deck item: lost on the guard's fail-open path, and they grow the 4.3 MB deck.json. Extending `wrapper.log` text: unstructured, clipped at 300 characters. |
-| A2 | Spec 7 and 8 bars as written. | They are the architect's bars, not the user's. | — |
-| A3 | The wake fires at 10 minutes, not the idle wake's 20. | A crew-handoff with no grant has nothing working on it, so waiting longer buys nothing. 10 minutes still lets a pilot mid-turn grant first. | 20: the 11-19 gap would have woken at 07:49 either way, but 10 halves the dead time. |
-| A4 | (was L2) Fix and logging in one run: spec 4, 5 and 6 are built whatever else is found, the trace alongside. Line 3 found causes, so the ticket's "logging first if no cause" fork does not arise. | The run is 7 slices, not 4. The fix ships before the trace has caught a second failure. | Logging first, fixing after another failure: the user's preference puts hand-off fixes in the cycle. |
-| A5 | QA runs on a scratch deck (`pilot deck --scratch`, a free port, a temporary home) with hook payload replays, and spec 4's live leg is a paused co-pilot in a scratch pilot session. | Payload replays do not cover the harness delivering SubagentStop, which S3's probe covers once. | Driving a real co-pilot to 226k tokens. |
-| A6 | Grilling depth: the user pressed "No grilling" on itm_3e146bf9a2f8. That is not locked, so A1 and A4 are stashed here and not posted. | Defaults stand unasked. | Posting A1 and A4 as forks. |
+- **A1** The trace lives in `~/.claude/pilot/handoff-trace.jsonl`, beside `wrapper.log`, as one JSON row per line. Past 512 KB it is rotated to one `.old`, which keeps roughly the last 6,000 steps, weeks of runs. *Tradeoff:* Kept apart from the deck, so a hook row survives a deck that is down. The Archive page (itm_2fe34eca6f66) reads a file, not an API. *Rejected:* Rows on the deck item: lost on the guard's fail-open path, and they grow the 4.3 MB deck.json. Extending `wrapper.log` text: unstructured, clipped at 300 characters.
+  Verdict: stands — no queued ticket claims a trace file; the Archive page ticket (itm_2fe34eca6f66) reads local records and can read this one
+- **A2** Spec 7 and 8 bars as written. *Tradeoff:* They are the architect's bars, not the user's.
+  Verdict: stands — the user saw both bars on itm_c044bfef3e60 and did not object
+- **A3** The wake fires at 10 minutes, not the idle wake's 20. *Tradeoff:* A crew-handoff with no grant has nothing working on it, so waiting longer buys nothing. 10 minutes still lets a pilot mid-turn grant first. *Rejected:* 20: the 11-19 gap would have woken at 07:49 either way, but 10 halves the dead time.
+  Verdict: stands — the user accepted "after 10 min" with line 6 on itm_c044bfef3e60
+- **A4** (was L2) Fix and logging in one run: spec 4, 5 and 6 are built whatever else is found, the trace alongside. Line 3 found causes, so the ticket's "logging first if no cause" fork does not arise. *Tradeoff:* The run is 7 slices, not 4. The fix ships before the trace has caught a second failure. *Rejected:* Logging first, fixing after another failure: the user's preference puts hand-off fixes in the cycle.
+  Verdict: stands — the user's recorded preference: hand-off fixes belong in the automatic cycle
+- **A5** QA runs on a scratch deck (`pilot deck --scratch`, a free port, a temporary home) with hook payload replays, and spec 4's live leg is a paused co-pilot in a scratch pilot session. *Tradeoff:* Payload replays do not cover the harness delivering SubagentStop, which S3's probe covers once. *Rejected:* Driving a real co-pilot to 226k tokens.
+  Verdict: stands — no hosted environment or migration; the spec's evidence names the scratch deck and a hook test
+- **A6** Grilling depth: the user pressed "No grilling" on itm_3e146bf9a2f8. That is not locked, so A1 and A4 are stashed here and not posted. *Tradeoff:* Defaults stand unasked. *Rejected:* Posting A1 and A4 as forks.
+  Verdict: stands — the user answered "No grilling" twice on itm_3e146bf9a2f8; overridden: the log home and fix scope are first seen at Gate 1
 
 ## 7. Out of scope
 
