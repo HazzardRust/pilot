@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "implementing",
+      "state": "pushed f51b161 (typescript approve)",
       "after": [
         "S1",
         "S3"
@@ -31,7 +31,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 2126dfa; integrating (verdicts from co-pilot rerun: typescript APPROVE, security APPROVE; B1/B4 rerun 16 pass, red-before confirmed)",
+      "state": "integrated 4717f11 (verdicts from co-pilot rerun: typescript APPROVE, security APPROVE)",
       "after": [
         "S3"
       ],
@@ -48,8 +48,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s5"
     }
   ],
-  "next": "S4 integrating (pilot integrate running); S5 pushed 75a4c64, integrate after S4; S2 implementing; then base check, fundamentalist, QA",
-  "updatedAt": "2026-11-19T20:34:20.412Z",
+  "next": "S4 integrated 4717f11; integrating S5 75a4c64 then S2 f51b161; then base check, fundamentalist, QA",
+  "updatedAt": "2026-11-19T20:37:11.051Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -140,6 +140,24 @@
       "agent": "pilot:pilot-implementer",
       "what": "S5: python3 absent in the shell and a heredoc fallback silently wrote nothing; Edit needs a Read first, two retries",
       "evidence": "S5 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: a context summary between turns dropped all built work; rebuilt from the slice file",
+      "evidence": "git status clean at 865817cb after the summary",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: gate took 392 s",
+      "evidence": "duration_ms 391683",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate's full-suite selection exceeds argv limit and falls back",
+      "evidence": "full suite: selection is 39007 characters of argv, over 24000 (S4 integrate)",
       "size": 1
     }
   ]
