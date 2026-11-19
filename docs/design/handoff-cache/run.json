@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed 52a0a4c; in review (fresh, verdict lost)",
+      "state": "integrated",
       "branch": "slice/handoff-cache-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s1"
     },
@@ -21,10 +21,12 @@
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "pushed 962af8c; B4 (real hand-off re-measure) to QA",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/handoff-cache-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s3"
     },
     {
       "slice": "S4",
@@ -34,16 +36,18 @@
     },
     {
       "slice": "S5",
-      "state": "fixing (review WARNING: runner exit path, debug log)",
+      "state": "pushed d00c85c; fix in review",
       "branch": "slice/handoff-cache-s5",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s5"
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "pushed 9db54b0; closed by L1 (no loss, 15 of 15), ledger row only",
       "after": [
         "S5"
-      ]
+      ],
+      "branch": "slice/handoff-cache-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s6"
     },
     {
       "slice": "S7",
@@ -61,13 +65,15 @@
     },
     {
       "slice": "S9",
-      "state": "implementing",
+      "state": "pushed c3430df; B4 (plain claude look) to QA",
       "branch": "slice/handoff-cache-s9",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s9"
     },
     {
       "slice": "S10",
-      "state": "planned"
+      "state": "implementing",
+      "branch": "slice/handoff-cache-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s10"
     },
     {
       "slice": "S11",
@@ -80,8 +86,8 @@
     }
   ],
   "findings": [],
-  "next": "S1 integrating (52a0a4c, APPROVE). S4 and S5 fix rounds running on their slice branches; integrate each on its fix reviewer's verdict. S2, S9 implementing. Then S10, S3 from feat, S6 from S5 (crew verdict no loss), S7 closes per L1 (/clear stays). Record S4.md seam: compaction via command.run('compact').",
-  "updatedAt": "2026-11-19T08:14:01.158Z",
+  "next": "Integrate queue on feat: S5 (running, merge staged), S6 9db54b0, S3 962af8c, S9 c3430df. Then seams on S9.md and S11.md. S4 fix, S2, S10 running. Then S7 (closes per L1) after S4, S8 after S2, S11.",
+  "updatedAt": "2026-11-19T08:41:15.867Z",
   "friction": [
     {
       "agent": "pilot-fundamentalist",
@@ -176,6 +182,54 @@
       "agent": "pilot:typescript-reviewer",
       "what": "a live-transcript rerun of S1's audit drifts from measurements.md within minutes (27 to 29 rows), so a reviewer cannot byte-compare",
       "evidence": "S1 review B3",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a repo-wide pin (platform-reads.test.mjs) fails on a docs probe that reads process.platform, and only the 6-minute full suite shows it",
+      "evidence": "S5 fix round, slice/handoff-cache-s5 d00c85c2",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "no unbilled way to exercise the probe's oneRun cleanup without a fake claude, so the finally ordering stays unproven",
+      "evidence": "S5 fix round report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test queues across worktrees through gate.mjs's slot lock; one run took ~451 s plus queueing while S4 and S9 gated",
+      "evidence": "S3 report: 'gate: waiting for a slot: pid ... pilot-handoff-cache-s9, -s4'",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3's bar (L1) read the whole first-turn miss, 15,871 tokens, while the frame it reorders is ~190 tokens; the bar could not rule the slice out",
+      "evidence": "S3 report pushback 1; measurements.md:11",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S9's owned-file list missed the files encoding the old reach default (install-rules-reach.test.mjs:78, install.test.mjs, doctor-reach.test.mjs, two strings); a grep for readReach( finds them, a red full gate cost 7.5 min",
+      "evidence": "S9 report; slices/S9.md Files owned",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S9.md names removeOwnSettings, which would also strip the deck allow rules; followed literally it breaks pilot start's crew",
+      "evidence": "S9 report pushback; scripts/install-settings.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6's Interface names a pickup step in agents/pilot.md that does not exist; a loss verdict would have meant writing it from scratch",
+      "evidence": "S6 fact sheet, agents/pilot.md",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a brief told a slice to rebase on a tip not yet landed before it reports, which its report ends; the co-pilot rebases instead",
+      "evidence": "S6 report pushback",
       "size": 1
     }
   ]
