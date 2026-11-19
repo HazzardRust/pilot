@@ -28,7 +28,11 @@ const CREDENTIAL_SHAPES = [
     'a password in a curl -u',
     /\bcurl\b[^\n|;&]{0,500}\s(?:--(?:proxy-)?user|-[A-Za-z]*[uU])(?:\s+|=|(?=[^\s-]))["']?[^\s"':$<]+:(?![$<{])[^\s"']+/,
   ],
-  ['a password in a URL', /\b[a-z][a-z0-9+.-]{0,30}:\/\/[^\s/:@$<]{1,200}:(?![$<{])[^\s/@]{1,500}@/i],
+  // A loopback host's userinfo is a local dev stack's (a Supabase local database), never a shared credential.
+  [
+    'a password in a URL',
+    /\b[a-z][a-z0-9+.-]{0,30}:\/\/[^\s/:@$<]{1,200}:(?![$<{])[^\s/@]{1,500}@(?!(?:localhost|127\.0\.0\.1|\[::1\])(?:[:/?#\s"']|$))/i,
+  ],
   ['a --password value', /(?:^|\s)--password(?:\s+|=)["']?(?![$<{-])(?=[^\s"']*[^A-Za-z\s"'])[^\s"']{6,}/],
   ['a Basic authorization', /\bAuthorization:\s*Basic\s+(?=[A-Za-z0-9+/=]*[0-9+/=])[A-Za-z0-9+/]{8,}={0,2}/i],
   ['a JWT', /\beyJ[A-Za-z0-9_-]{8,2000}\.eyJ[A-Za-z0-9_-]{8,2000}\.[A-Za-z0-9_-]*/],

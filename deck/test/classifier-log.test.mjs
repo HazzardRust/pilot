@@ -62,6 +62,8 @@ for (const [shape, command] of [
   ['curl -uuser:pass', 'curl -uci-bot:' + SECRET + ' https://api.example.com/v1'],
   ['curl -fsSLu user:pass', 'curl -fsSLu ci-bot:' + SECRET + ' https://api.example.com/v1'],
   ['a URL with user:pass', 'git clone https://ci-bot:' + SECRET + '@git.example.com/o/r.git'],
+  ['a database URL off this machine', 'psql postgres://u:p@db.example.com'],
+  ['a URL to a host named after localhost', 'psql postgres://u:' + SECRET + '@localhost.example.com:5432/app'],
   ['--password <x>', 'mysql -h db --password ' + SECRET + ' -e "select 1"'],
   ['--password=<x>', 'psql --password=' + SECRET + ' -c "select 1"'],
   ['Authorization: Basic', 'curl -H "Authorization: Basic ' + B64 + '" https://api.example.com'],
@@ -80,6 +82,18 @@ test('a long field of repeated curl flags is checked without a backtracking stal
   const started = process.hrtime.bigint();
   appendRefusal(entry({ command: 'curl x -u '.repeat(20000) }), { dir });
   assert.ok(process.hrtime.bigint() - started < 1_000_000_000n, 'checked in under a second');
+});
+
+test('a dev database URL on this machine reads back as it was', (t) => {
+  const dir = scratch(t);
+  const local = [
+    'psql postgres://postgres:postgres@localhost:54322/postgres',
+    'psql postgresql://postgres:postgres@127.0.0.1:54322/postgres',
+    'redis-cli -u redis://default:devpass@[::1]:6379',
+    'psql postgres://app:app@localhost/app',
+  ];
+  for (const command of local) appendRefusal(entry({ command }), { dir });
+  assert.deepStrictEqual(readRefusals({ dir }).map((r) => r.command), local);
 });
 
 test('a plain command with no credential reads back as it was', (t) => {
