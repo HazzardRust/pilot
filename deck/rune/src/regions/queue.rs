@@ -146,9 +146,6 @@ fn press(s: &mut State, id: &str, label: &str) {
     }
     q.refused.remove(id);
     q.sent.insert(id.into(), label.into());
-    if q.deck.is_none() {
-        q.deck = Client::from_env().ok().map(Arc::new);
-    }
     let reply = Action::Reply {
         id: id.into(),
         text: String::new(),
@@ -161,6 +158,7 @@ fn press(s: &mut State, id: &str, label: &str) {
         id.to_string(),
     );
     let post = move || {
+        let deck = deck.or_else(|| Client::from_env().ok().map(Arc::new));
         let refused = match deck.map(|deck| deck.act(&reply)) {
             Some(Ok(Acted::Taken { .. })) => return,
             Some(Ok(Acted::Refused { reason })) => reason,

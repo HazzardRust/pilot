@@ -8,7 +8,7 @@ import './no-open.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { KIND_TICKET } from '../items.mjs';
+import { HANDOFF_FAILED, KIND_HANDOFF, KIND_TICKET, askFor } from '../items.mjs';
 import { postStored, tempDeck } from '../testUtils.mjs';
 
 const { postItem, registerRun, setCoPilot } = await import('../store.mjs');
@@ -83,6 +83,18 @@ test('a verdict\'s option carries the page\'s confirm step', (t) => {
     { label: 'Sign off', confirm: true, ask: 'Send “Sign off”?', yes: 'Confirm' });
   assert.deepEqual(card.options.find((option) => option.label === 'Teach me'), { label: 'Teach me', confirm: false },
     'Teach me never confirms');
+});
+
+test('a handoff confirms Handoff failed with its kind\'s sentence', (t) => {
+  tempDeck(t);
+  registerRun({ repo: ALPHA, pid: process.pid });
+  const handoff = postItem({ kind: KIND_HANDOFF, title: 'Handoff', body: 'Stash at run.json.', repo: ALPHA });
+
+  const { options } = queueView(readDeck(), { run: ALPHA }).cards.find((each) => each.id === handoff.id);
+
+  // The row's one shared step comes after every button (render-parts.mjs `renderHandoffChoices`).
+  assert.deepEqual(options.find((option) => option.label === HANDOFF_FAILED),
+    { label: HANDOFF_FAILED, confirm: true, ask: askFor(KIND_HANDOFF, handoff), yes: 'Confirm' });
 });
 
 test('the lane lines are in phase order', (t) => {

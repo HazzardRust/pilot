@@ -29,8 +29,9 @@ function optionsOf(item, back) {
     if (value === undefined) continue;
     const label = unescape(value);
     if (options.get(label)?.confirm) continue;
-    const sure = /\bdata-confirm\b/.test(attrs) && form.slice(index).match(SURE);
-    options.set(label, sure ? { label, confirm: true, ask: plain(sure[1]), yes: plain(sure[2]) } : { label, confirm: false });
+    // A trigger whose step cannot be read still confirms (fails closed), on the page's own Confirm word.
+    const sure = /\bdata-confirm\b/.test(attrs) && (form.slice(index).match(SURE) ?? []);
+    options.set(label, sure ? { label, confirm: true, ask: plain(sure[1] ?? ''), yes: plain(sure[2] ?? 'Confirm') } : { label, confirm: false });
   }
   return [...options.values()];
 }
