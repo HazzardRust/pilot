@@ -147,9 +147,9 @@ Deletion test: `render-*.mjs` survive (the HTML deck stays, A2). `renderHomePage
   Verdict: overturned: the user chose "Keep 90 s, show last-seen age" on itm_671096e1253c, not the roster as it is
 - **A6** Depth: Forks.
   Answer: the user pressed "forks" (itm_af9e1f649d17).
-  Verdict: stands — the user pressed "forks" on itm_af9e1f649d17
 
 Red team (each a change to §8):
+  Verdict: stands — the user pressed "forks" on itm_af9e1f649d17
 - red team: S1 cannot build until the user installs rustup and the C++ Build Tools: every slice is blocked on it,
   so the brief names it as the first human step and S1's Done needs `cargo --version` output.
 - red team: region slices would each need a field on one `State` in `app.rs`: each region file now owns a `Local`
