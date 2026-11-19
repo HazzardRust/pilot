@@ -115,6 +115,48 @@ export async function planChanges(repoDir, fromSha, toSha, slug) {
   }
 }
 
+/**
+ * Each `## <n>.` section of an architecture artefact: its number to its body, the lines up to the next `## ` heading
+ * outside a code fence. A number headed twice maps to null, so neither copy is read as the signed one.
+ */
+export function numberedSections(text) {
+  const sections = new Map();
+  let body;
+  let fenced = false;
+  for (const line of String(text).split(/\r?\n/)) {
+    if (/^\s*(```|~~~)/.test(line)) fenced = !fenced;
+    const heading = fenced || !/^##\s/.test(line) ? undefined : (/^##\s+(\d+)\./.exec(line)?.[1] ?? null);
+    if (heading === undefined) body?.push(line);
+    else if (heading !== null && !sections.has(heading)) sections.set(heading, (body = []));
+    else {
+      if (heading !== null) sections.set(heading, null);
+      body = undefined;
+    }
+  }
+  return new Map([...sections].map(([n, lines]) => [n, lines === null ? null : lines.join('\n').trim()]));
+}
+
+/**
+ * The signed sections of architecture.md (recut-decision A1, overturned): §2 spec, §5 locked decisions and §8 slices,
+ * or null when any is missing or headed twice, since a headless artefact is never proven unchanged (L5).
+ */
+export function signedSections(text) {
+  const sections = numberedSections(text);
+  const [spec, locked, slices] = ['2', '5', '8'].map((n) => sections.get(n));
+  return [spec, locked, slices].every((one) => typeof one === 'string') ? { spec, locked, slices } : null;
+}
+
+/** The text of `file` at commit `sha` in `repoDir`, or null when git cannot show it. Local objects only. */
+export async function fileAt(repoDir, sha, file) {
+  if (typeof sha !== 'string' || !SHA.test(sha) || typeof file !== 'string') return null;
+  try {
+    const shown = await gitIn(repoDir)(['show', `${sha}:${file.replaceAll('\\', '/')}`]);
+    return shown.code === 0 ? shown.stdout : null;
+  } catch (error) {
+    if (error instanceof GitError) return null;
+    throw error;
+  }
+}
 
 /** The one line a drift is said in, wherever it is noted: the plan is kept and the ticket stays yellow. */
 export function driftLine(drift, why) {
