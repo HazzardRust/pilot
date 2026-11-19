@@ -1,0 +1,129 @@
+{
+  "slug": "ci-gate",
+  "feature": "CI is a gate at every step",
+  "ticket": "itm_e5e0bc09827d",
+  "branch": "feat/ci-gate",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-ci-gate",
+  "artefact": "docs/design/ci-gate/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed 71b6a5e",
+      "branch": "slice/ci-gate-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S2",
+        "S5"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S8",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S9",
+      "state": "planned (added)",
+      "after": [
+        "S1"
+      ]
+    }
+  ],
+  "next": "ci-gate: integrating S1 (71b6a5e); then S2-S6, S8, S9 from its tip; S7 after S2 and S5.",
+  "updatedAt": "2026-11-19T17:48:39.352Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "deck MCP header said CONNECTION_CLOSED while the plugin's deck tools worked; architect stalled until main told it to load them",
+      "evidence": "ci-gate architect first message",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "question post refused for a missing Research: line; the rule is not in the architect's definition (main hit it too)",
+      "evidence": "itm_8677fb5e6e5e first attempt; itm_db635f8bd508 first attempt",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "test stubs that throw on unknown host verbs make any new Host verb a cross-file change",
+      "evidence": "scripts/test/lib/land-repos.mjs:128",
+      "size": 1
+    },
+    {
+      "agent": "architect",
+      "what": "gate1 body rules live only in the pilot's definition; architect had to grep for them",
+      "evidence": "agents/pilot.md:334-337"
+    },
+    {
+      "agent": "architect",
+      "what": "deck_status requires slug, architect definition says send only ticket, slices, feature",
+      "evidence": "tool schema lists slug as required"
+    },
+    {
+      "agent": "architect",
+      "what": "glossary ownership assigned to no slice by the predecessor",
+      "evidence": "CONTEXT.md missing from §8 until this pass"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1 estimate of ~150 lines incl. ADR and glossary was low: code 113 + tests 148 before the ADR; cost a round trip and a re-cut to added S9",
+      "evidence": "S1 report; feat/ci-gate c1f6670c",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "edited during the first full npm test, so the multi-minute gate ran twice",
+      "evidence": "first S1 gate log, 3 reds all in-flight tests",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md's commit trailer names Claude Fable 5.2 while implementers run on Opus/Sonnet",
+      "evidence": "docs/design/ci-gate/brief.md:32",
+      "size": 1
+    }
+  ]
+}
