@@ -41,8 +41,9 @@ const POLL_MS = 1_000;
  * 2026-10-18, lander S6: 9912 (node 715, git 9014, other 183) on Windows; the lander feature's fixture tests.
  * 2026-10-19, suite-at-landing S10: 10922 (node 732, git 9985, other 205) on Windows; the replay test's fixture merges.
  * 2026-10-19, suite-at-landing fix round: 10995 (node 732, git 10055, other 208) on Windows; about 10% headroom restored.
+ * 2026-11-19, coverage-cell S1: 12107 (node 788, git 11060, other 259) on Windows; diff-coverage's fixture repo and CLI runs, 19 spawns; base was at 12088.
  */
-export const SPAWN_CEILING = 12100;
+export const SPAWN_CEILING = 13300;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 
