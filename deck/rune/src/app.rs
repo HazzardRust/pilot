@@ -1,7 +1,7 @@
 //! The window's state and its one view: every region drawn from one `View` (spec 6a).
 
 use rune::tok::{self, type_};
-use rune::{Cx, El, col, text};
+use rune::{AppSpec, Cx, El, col, text};
 
 use crate::client::{Client, Query, View};
 use crate::regions::{self, Locals};
@@ -35,6 +35,11 @@ impl State {
             }
         }
     }
+}
+
+/// The window as `main` runs it.
+pub fn spec() -> AppSpec<State> {
+    AppSpec::new("pilot deck", (1280.0, 800.0), State::load, view)
 }
 
 /// The screen's region slots, top to bottom; a stub region draws nothing until its slice.
