@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed 08c1bdf (post-review nit fixes read by no reviewer)",
+      "state": "pushed 08c1bdf; integrate refused: B7 look owed, no browser in crew, with main (post-review nit fixes read by no reviewer)",
       "branch": "slice/human-steps-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s1"
     },
@@ -23,20 +23,22 @@
     },
     {
       "slice": "S3",
-      "state": "pushed a081ce4 (second commit a081ce4 read by no reviewer)",
+      "state": "integrated (second commit a081ce4 read by no reviewer)",
       "branch": "slice/human-steps-s3",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s3"
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S3"
-      ]
+      ],
+      "branch": "slice/human-steps-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s4"
     }
   ],
-  "next": "co-pilot: integrating S3 (a081ce4), then S1 (08c1bdf); then S2 and S4 per pilot ready",
-  "updatedAt": "2026-11-19T20:09:44.258Z",
+  "next": "human-steps: co-pilot aabb85124eb74b4d0 live, feat/human-steps: S3 integrated 25e02ba; S1 pushed 08c1bdf, pilot did its B7 look and sent the trailer, co-pilot integrating; S4 implementing; S2 after S1. Child reports land on main: relay to the co-pilot (trailer files in scratchpad). Principles verdicts are the pilot's. Seen: closed steps thread shows a dead Reopen button.",
+  "updatedAt": "2026-11-19T20:13:16.261Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -83,6 +85,27 @@
       "what": "S1: items.mjs and store-items.mjs at the 800-line cap forced a module move (deck/store-steps.mjs); kind and export lists pinned in five test files no slice names",
       "evidence": "one 7-minute gate plus a module move; non-test diff 158 lines, over the 150 limit",
       "size": 7
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "B7 look: the implementer definition lists chrome-devtools but a co-pilot-spawned session has no such tools; integrate refuses S1 without a look trailer",
+      "evidence": "3 ToolSearch calls, 'No matching deferred tools'; NOT integrated slice/human-steps-s1: S1: B7 has no --trailer",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "no agent in the crew had a browser tool for a `look` evidence row; integrate refused S1 until the pilot took headless Edge screenshots itself",
+      "evidence": "NOT integrated slice/human-steps-s1: S1: B7 has no --trailer \"Evidence: B7 look\""
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "deck source files sit at the 800-line cap and kind/export lists are pinned in five test files no slice names; one extra 7-minute gate each for S1 and S3",
+      "evidence": "S1 and S3 reports, human-steps"
+    },
+    {
+      "kind": "drain",
+      "what": "S1 and S3 reports misrouted to main, relayed; B7 look done in the pilot with five screenshots read",
+      "size": 14000
     }
   ]
 }
