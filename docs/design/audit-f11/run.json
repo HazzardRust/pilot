@@ -14,8 +14,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f11-s1"
     }
   ],
-  "next": "Short path, PR #115. S1 pushed fc686e43, typescript-reviewer approve; pilot integrate slice/audit-f11-s1 running in C:/Users/Hazzard/Projects/pilot-feat-audit-f11. On pass: pilot integrate --trial, post gate2 (surface false, Verdict + Gate lines). On fail: send the row's real state and route its line.",
-  "updatedAt": "2026-11-19T01:53:42.640Z",
+  "next": "PR #115. S1 integrated 0cb675d8, trial clean on pilot. gate2 itm_d955db6a0d92 posted, waiting on the user's Sign off press; on the press spawn pilot-lander with that gate2 id.",
+  "updatedAt": "2026-11-19T02:01:57.943Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -45,6 +45,23 @@
       "kind": "drain",
       "what": "session ran 3 landings' tails, 2 gate1s, 3 inquiry threads and 3 tickets after a cold recovery",
       "size": 230
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test takes 424 s and a foreground wait is backgrounded after 180 s; several turns spent on notifications",
+      "evidence": "audit-f11 S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "spec 4 names a worktree's .git/config, which is a file there; the common-dir path is the one to hash",
+      "evidence": "audit-f11 S1 report",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "gate2 post refused twice (pr shape, Verdict: line prefix) before it took",
+      "size": 3
     }
   ]
 }
