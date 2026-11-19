@@ -131,6 +131,7 @@ own: one caller. No fold changes code beyond these; no fold slice.
 - **A3 Implementer and QA gain `TaskStop`** (`itm_d649b66f4053`). Default: both tool lines add it; it reaches only the
   agent's own tasks (§3). Tradeoff: two agents' tools widen. Rejected: no tool, every background run under its own
   `timeout`, and spec 4 reads "never kills; waits or times out" (a hung run holds the agent up to 10 min).
+  Answer: the user pressed "Add TaskStop" on `itm_d649b66f4053` (the default).
 
 ## 7. Out of scope
 
