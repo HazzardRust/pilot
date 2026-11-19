@@ -94,7 +94,7 @@ export function refusalRows(refusals, opts) {
   for (const refusal of refusals) {
     // A withheld command has no shape to fix: counted by the caller, never grouped into a habit.
     if (refusal.verdict !== 'refused' || refusal.command === WITHHELD) continue;
-    const shape = commandShape(refusal.command) || refusal.tool;
+    const shape = commandShape(refusal.command) || (/^[A-Za-z][\w.-]*$/.test(refusal.tool) ? refusal.tool : 'unshaped command');
     groups.set(shape, [...(groups.get(shape) ?? []), refusal]);
   }
   return [...groups]
