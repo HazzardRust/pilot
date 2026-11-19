@@ -9,6 +9,8 @@
  * It counts every process the suite starts, grandchildren included (spec 6; L10, L16), prints
  * `spawns <total> (node <n>, git <g>, other <o>)`, and is red above `SPAWN_CEILING`. Before
  * all of that it rebuilds the ledgers (main-never-red spec 1) and is red, the suite unrun, on a stale one.
+ * Given `homeStore` (home-store-guard; the CLI entry passes it), it stats that file before the suite
+ * and after the census, and is red naming it when it changed with no live deck up.
  */
 
 import { spawnSync } from 'node:child_process';
@@ -214,6 +216,25 @@ function syntaxClean(syntax, cwd) {
   return result.errors.length === 0;
 }
 
+/** The home store's stat (home-store-guard L2): absent is a state; a stat that fails otherwise throws, so the gate is never green by not looking. */
+function storeStat(file) {
+  const stat = fs.statSync(file, { throwIfNoEntry: false });
+  return stat ? { exists: true, mtimeMs: stat.mtimeMs, size: stat.size } : { exists: false };
+}
+
+/**
+ * The home store's line after the suite (home-store-guard spec 2, 3; L3, A1), or undefined when its
+ * stat is unchanged, the deck then unprobed. Changed with no live deck is red; with a deck up, or one
+ * the probe cannot tell, the line names it and the status is the suite's.
+ */
+function homeStoreLine(file, before, deckPid) {
+  const now = storeStat(file);
+  if (now.exists === before.exists && now.mtimeMs === before.mtimeMs && now.size === before.size) return undefined;
+  const deck = deckPid();
+  if (deck === null) return { red: true, line: `home store changed: ${file}` };
+  return { red: false, line: `home store changed: ${file}; live deck ${deck ?? 'unknown'} up` };
+}
+
 /**
  * Checks every file's syntax first (audit-f6 L1), red without the ledgers or the suite on a fault.
  * Rebuilds the ledgers next, red without the suite when one was stale or could not build; then
@@ -222,8 +243,9 @@ function syntaxClean(syntax, cwd) {
  * process table that cannot be read is red. The count goes to `spawns`, or a temporary file.
  * With `--since=<ref>` (suite-at-landing S1; L7) it prints the scope line first and runs only the
  * selection, the flag kept from `node`; an empty selection runs nothing and passes, a null one runs full.
+ * With `homeStore` it is red too when that file's stat changed and `deckPid()` names no deck.
  */
-export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, ...rest } = {}) {
+export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, ...rest } = {}) {
   if (!syntaxClean(syntax, cwd)) return 1;
   const sinceArg = args.findLast((arg) => /^--since(=|$)/.test(arg));
   let selection;
@@ -254,6 +276,7 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
     } catch (err) {
       before = err;
     }
+    const storeBefore = homeStore === undefined ? undefined : storeStat(homeStore);
     const run = spawn(process.execPath, gateArgv(args, os.availableParallelism(), cwd), {
       cwd,
       env: gateEnv(process.env, held.slot, file),
@@ -264,13 +287,14 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
     let after;
     try {
       if (before instanceof Error) throw before;
-      after = census(before, { cwd, read, ...rest });
+      after = census(before, { cwd, read, deckPid, ...rest });
     } catch (err) {
       after = { red: true, lines: [`left running: cannot tell, the process table did not read (${firstLine(err)})`] };
     }
     const counted = spawnLines(spawnCount(file), ceiling);
-    process.stdout.write(`${[...after.lines, ...counted].join('\n')}\n`);
-    return after.red || counted.length > 1 ? 1 : (run.status ?? 1);
+    const home = homeStore === undefined ? undefined : homeStoreLine(homeStore, storeBefore, deckPid);
+    process.stdout.write(`${[...after.lines, ...counted, ...(home ? [home.line] : [])].join('\n')}\n`);
+    return after.red || counted.length > 1 || home?.red ? 1 : (run.status ?? 1);
   } finally {
     held.release();
     if (scratch) fs.rmSync(scratch, { recursive: true, force: true });
@@ -309,5 +333,7 @@ if (guard.error) {
   process.stderr.write('node_modules missing: run npm ci\n');
   process.exitCode = 1;
 } else if (guard.run) {
-  process.exitCode = runGate(process.argv.slice(2), { syntax: syntaxErrors, ledgers: rebuildLedgers });
+  // home-store-guard L1: only this entry arms the home store check, so the gate's own tests never stat the real store.
+  const homeStore = path.join(os.homedir(), '.claude', 'pilot', 'deck.json');
+  process.exitCode = runGate(process.argv.slice(2), { syntax: syntaxErrors, ledgers: rebuildLedgers, homeStore });
 }
