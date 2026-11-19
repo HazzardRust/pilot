@@ -2,8 +2,9 @@
  * suite-at-landing S1 and S2 (spec 1; L5, L6, L10, A1, A2): `selectTests` answers the test files a
  * diff touches, from merge-base(since, HEAD) to the working tree: the changed tests, the tests
  * reaching a changed module through any chain of relative imports, the tests naming a changed
- * file's basename, and every whole-tree test; `treeWalkers` is the census that keeps `TREE_TESTS`
- * whole; `scopeLine` and `scopeOf` write and read back the line the gate prints.
+ * file's basename, and every whole-tree test; `scopeLine` and `scopeOf` write and read back the line
+ * the gate prints. `treeWalkers`, the census that keeps `TREE_TESTS` whole, is pinned in
+ * `tree-census.test.mjs`, which rides every selection itself.
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
@@ -13,9 +14,8 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const { selectTests, scopeLine, scopeOf, TREE_TESTS, TEST_GLOB, treeWalkers } = await import('../select-tests.mjs');
+const { selectTests, scopeLine, scopeOf, TREE_TESTS, TEST_GLOB } = await import('../select-tests.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
@@ -130,11 +130,16 @@ test('a deleted test file is not listed', (t) => {
   assert.equal(total, 3);
 });
 
-test('every tree walker is listed', () => {
-  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-  const walkers = treeWalkers(root);
-  assert.ok(walkers.includes('scripts/test/path-length.test.mjs'), 'the census finds a known walker');
-  assert.deepEqual(walkers.filter((rel) => !TREE_TESTS.includes(rel)), [], 'a test walking the tree is missing from TREE_TESTS');
+test('a prose-only diff selects the vocabulary guard', (t) => {
+  // The stub never names `note.md`, so only the whole-tree list can select it.
+  const guard = 'scripts/test/vocabulary-guard.test.mjs';
+  const { dir } = gitFixture(t, 'select:prose', repoOf({
+    'docs/note.md': '# note\n',
+    [guard]: "import { test } from 'node:test';\n",
+    'test/other.test.mjs': "import { test } from 'node:test';\n",
+  }));
+  fs.appendFileSync(path.join(dir, 'docs/note.md'), 'more\n');
+  assert.deepEqual(selectTests({ cwd: dir, since: 'main' }).files, [path.resolve(dir, guard)]);
 });
 
 test('a changed test file is selected alone', (t) => {

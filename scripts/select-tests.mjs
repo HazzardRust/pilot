@@ -44,8 +44,9 @@ export const ARGV_LIMIT = 24000;
  * The whole-tree tests (A2): each reads every tracked file of a kind, so a file added or changed
  * anywhere can break it without being imported or named. Every selection runs the ones that exist.
  * `treeWalkers` finds the walkers it can see and a pin fails when one is missing here; the rest
- * (a walk inside a local helper, a listing of a local variable holding a root path) are added by
- * hand, and a new one of those is missed until someone adds it.
+ * (a walk inside a local helper, a listing of a local variable holding a root path, a walk inside a
+ * non-test module the test imports, as `scripts/vocabulary.mjs` does) are added by hand, and a new
+ * one of those is missed until someone adds it.
  */
 export const TREE_TESTS = Object.freeze([
   'deck/test/audit-pick.test.mjs',
@@ -81,6 +82,8 @@ export const TREE_TESTS = Object.freeze([
   'scripts/test/run-remote-readme.test.mjs',
   'scripts/test/state-words.test.mjs',
   'scripts/test/ticket-states.test.mjs',
+  'scripts/test/tree-census.test.mjs',
+  'scripts/test/vocabulary-guard.test.mjs',
 ]);
 
 /**
