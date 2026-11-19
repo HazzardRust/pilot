@@ -72,11 +72,17 @@ Read steps 4 to 8 of `${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, and its
   is yours: record it in the owning slice file on `feat/<slug>`, as step 6
   does, and answer the child.
 
+**Drift**: on `drift:` in your grant, or a drift line from `main`, put the plan on
+the new pilot before the next spawn: `git merge <remote>/pilot` in `<feat>`, never a
+rebase, push `feat/<slug>` and send `main` the merge sha, which replans the ticket.
+A drift that moves a spec line, a locked decision or the slice graph goes to `main`
+as the re-cut it is; you spawn nothing on that plan until `main` answers.
+
 ## What goes to main
 
-You send `main` five things and nothing else: a question for the user, a seam
+You send `main` six things and nothing else: a question for the user, a seam
 change that moves a spec line or a locked decision, a crew hand-off you cannot
-resolve, a moot question, and your hand-back table. A blocking question that
+resolve, a moot question, a drift's merge sha, and your hand-back table. A blocking question that
 stopped mattering, its step done another way, superseded or met by a safe
 assumption: send `main` `moot <id>: <why>`, and the pilot closes it. A seam change that breaks a later slice's
 files or tests is a hand-off you cannot resolve, because only `main` resumes
