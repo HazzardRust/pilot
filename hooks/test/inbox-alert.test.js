@@ -10,9 +10,16 @@ const assert = require('node:assert');
 
 const inbox = require('../inbox-alert.js');
 
-const REPORT_DUE = 'report due: add the findings and the human steps with a Findings: reply';
+/** The deck's own line, imported, so this pin follows its wording rather than a copy of it. */
+const reportDue = import('../../deck/items-bounds.mjs').then(function (bounds) { return bounds.REPORT_DUE; });
 
-test('the next tool call shows report due', () => {
+test('the report-due line asks for findings only', async () => {
+  // Human steps reach the user's steps thread as they arise (human-steps S4), never through the report.
+  assert.doesNotMatch(await reportDue, /human step/i);
+});
+
+test('the next tool call shows report due', async () => {
+  const REPORT_DUE = await reportDue;
   const line = { itemId: 'itm_r', title: 'Closing report: x', owner: 'pilot', kind: 'report', from: 'deck', author: 'deck', text: REPORT_DUE, seq: 7 };
   const told = inbox.notice([line], null);
   const said = told.systemMessage + '\n' + told.additionalContext;

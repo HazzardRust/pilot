@@ -41,8 +41,11 @@ export const MAX_SCREENS = 40;
  */
 export const SIGN_OFF = 'Sign off';
 
-/** The deck's line on its own report (gate2-frees-lane spec 4): it wakes the pilot to add what only the pilot knows. */
-export const REPORT_DUE = 'report due: add the findings and the human steps with a Findings: reply';
+/**
+ * The deck's line on its own report (gate2-frees-lane spec 4): it wakes the pilot to add what only the pilot knows.
+ * Findings only: human steps went to the run's steps thread as they arose (human-steps S4).
+ */
+export const REPORT_DUE = 'report due: add the findings with a Findings: reply';
 
 /**
  * What a question and a sign-off offer beyond their answers: one click that asks
