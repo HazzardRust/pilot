@@ -6,7 +6,7 @@
  * becomes an `href` only when it is `http` or `https` (the rules `render-parts.mjs` states for the deck).
  */
 
-import { accentOf, authorKind, isOpen, lastSaidAt, newestSaidFirst, ownerOf } from '../items.mjs';
+import { KIND_STEPS, accentOf, authorKind, isOpen, lastSaidAt, newestSaidFirst, ownerOf } from '../items.mjs';
 import { queueOf, shownOf } from '../status.mjs';
 import { landingFor, tabFor, tabsOf } from '../tabs.mjs';
 import { pilotStateOf } from '../pilot-state.mjs';
@@ -461,7 +461,8 @@ export function renderThreadPage(item, items = [], runs = [], agents = {}, numbe
     ].join(''),
     REFUSED: renderRefusal(refused, items),
     // An archived thread is read-only (store-durability spec 8): it says so, and offers no press to refuse.
-    REPLY: archived ? '' : isOpen(item) ? renderReplySlot(item) : renderReopenForm(item),
+    // A steps thread's Done closed its ticket too, so `reopenItem` always refuses it (human-steps L4): no press to offer.
+    REPLY: archived ? '' : isOpen(item) ? renderReplySlot(item) : item.kind === KIND_STEPS ? '' : renderReopenForm(item),
   });
 }
 
