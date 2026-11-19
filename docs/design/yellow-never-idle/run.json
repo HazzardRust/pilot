@@ -21,7 +21,7 @@
     },
     {
       "slice": "S3 idle line wakes a parked wait",
-      "state": "implementing",
+      "state": "integrated",
       "after": [
         "S2 idle yellow ticket refuses the lane"
       ],
@@ -29,8 +29,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-s3"
     }
   ],
-  "next": "PR #114. S2 integrated. S1 head 05f6f668: security re-review approve; pilot integrate slice/yellow-never-idle-s1 running in the feat worktree (main). On pass SendMessage the co-pilot the new feat tip; on fail send the row's real state. Co-pilot live on S3, then fundamentalist and QA. Open LOW for step 7: concludedBy never consumed (store-items.mjs:216).",
-  "updatedAt": "2026-11-19T02:02:42.236Z",
+  "next": "Integrate S3 fae9f794 onto feat 53801289, then base merge, fundamentalist, QA.",
+  "updatedAt": "2026-11-19T02:44:30.417Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -80,6 +80,47 @@
       "what": "npm test prints sub-suite pass/fail lines before the overall summary, so a wait loop matched early; 8 min a run",
       "evidence": "S1 fix report",
       "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "the harness forced the co-pilot to hand back while its S3 implementer was still live; its report has no live parent",
+      "evidence": "co-pilot hand-back, implementer a644e1a8ed175ed28",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3 had to edit a test S2 owns (stop-gate-idle-yellow.test.js, +3) because S2's slice file did not foresee S3's line landing first",
+      "evidence": "co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the scratch-deck live check takes 20 real minutes because IDLE_MS is a constant",
+      "evidence": "co-pilot hand-back",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the gate stops scratch decks leashed to the worktree; the first live wait failed with the deck not answering",
+      "evidence": "S3 report: stopped 35108 daemon --leash-dir <worktree>",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "another ticket's landing stopped the leak fixture daemon in the S3 worktree mid-gate; one flake red",
+      "evidence": "S3 report; audit-f11 land line: stopped 27640 daemon",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "server-wait.mjs at 796 of 800 lines; the next timer needs its own module",
+      "evidence": "S3 report",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "S3 implementer report (long) landed in the pilot after its co-pilot was forced to pause; saved to a file",
+      "size": 12
     }
   ]
 }
