@@ -426,6 +426,9 @@ test('pilot deck names what opens', async (t) => {
   const { run: pilot } = await import('../../bin/pilot.mjs');
   const said = [];
   t.mock.method(console, 'log', (...args) => said.push(args.join(' ')));
+  t.after(() => {
+    process.exitCode = undefined;
+  });
 
   const name = process.platform === 'win32' ? 'pilot-deck.exe' : 'pilot-deck';
   const built = rootWith(t, 'release', name);
@@ -436,7 +439,6 @@ test('pilot deck names what opens', async (t) => {
   const [withRune, withoutRune] = said.map((line) => line.split(/\r?\n/));
   assert.deepEqual(withRune, [`The deck is up at ${base}`, `open ${path.join(built, 'deck', 'rune', 'target', 'release', name)}`]);
   assert.deepEqual(withoutRune, [`The deck is up at ${base}`, `open ${openFile()}`]);
-  process.exitCode = undefined;
 });
 
 test('an opener that will not start leaves the daemon serving', async (t) => {
