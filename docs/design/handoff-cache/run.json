@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed 90cc960; fix APPROVE; integrate refused (ran beside S6's merge), re-queued after S7",
+      "state": "integrated",
       "branch": "slice/handoff-cache-s2",
       "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s2"
     },
@@ -42,7 +42,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 9db54b0; commit failed beside S2's overlap; re-integrating",
+      "state": "integrated",
       "after": [
         "S5"
       ],
@@ -60,7 +60,7 @@
     },
     {
       "slice": "S8",
-      "state": "pushed f31cbc9; closed by L1 (ruled out, 10), ledger row only; integrating after S2",
+      "state": "integrated",
       "after": [
         "S2"
       ],
@@ -81,17 +81,19 @@
     },
     {
       "slice": "S11",
-      "state": "planned",
+      "state": "pushed 2fed9f6; re-review approve",
       "after": [
         "S3",
         "S7",
         "S8"
-      ]
+      ],
+      "branch": "slice/handoff-cache-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s11"
     }
   ],
   "findings": [],
-  "next": "feat at c1cb19fc (S1, S3, S4, S5, S7, S9, S10 integrated). Integrating S6, S2, S8 in one sequence. Then seams on S9.md and S11.md; S11; base check; fundamentalist; QA.",
-  "updatedAt": "2026-11-19T09:12:06.390Z",
+  "next": "Co-pilot live: S11 re-review running on 67dd3c8c...2fed9f6; then integrate S11, base check, fundamentalist + QA on PR #120.",
+  "updatedAt": "2026-11-19T09:59:26.486Z",
   "friction": [
     {
       "agent": "pilot-fundamentalist",
@@ -300,6 +302,18 @@
       "agent": "pilot-co-pilot",
       "what": "chained integrates keyed on grepping an earlier output matched a stale line, so two pilot integrate runs overlapped in one feat worktree; integrate has no lock of its own",
       "evidence": "S2 'taking base pilot stopped (MERGE_HEAD exists)' while S6 integrated",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3's measured gain lives only in a commit message, not a measurements file, so the ledger had to cite the commit",
+      "evidence": "S11 report; 962af8c5 message; ledger.md row 3",
+      "size": 1
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "full npm test (scripts/gate.mjs) ran past 2 minutes and the reviewer stopped waiting; only the adr-index check confirmed",
+      "evidence": "S11 re-review report: 'Full npm test did not finish'",
       "size": 1
     }
   ]
