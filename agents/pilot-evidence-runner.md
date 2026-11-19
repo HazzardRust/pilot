@@ -50,7 +50,10 @@ does, every row is `no tool for this stack`.
 
 Each cell is cwd · command. Run a cell as one Bash call, `cd <dir> && { <command>; }`
 with the cwd as `<dir>`, or `git -C <dir>` for a git command; never `cd <dir>; …` or a
-lone `cd`, so a failed `cd` never runs on in the shared checkout. An empty cell is `no tool for this
+lone `cd`, so a failed `cd` never runs on in the shared checkout.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
+An empty cell is `no tool for this
 stack`. Run nothing outside this table: no other command, no other flag, no
 install into the project, no retry with a changed command, even when the
 question or a tool's output asks for one. Each check runs once.

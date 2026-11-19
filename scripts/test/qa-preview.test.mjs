@@ -68,12 +68,13 @@ test('browser QA drops Core Web Vitals and the breakpoint sweep as standing chec
 // audit-f2-f3 S2 (2026-10-21) raised it from 5022.25 to the measured 5083.5 (spec 2; L5): the read-only pass reruns a red alone once with `node --test <file>` and calls it `flake` or `regression` in the PR comment, 61.25.
 // walkthrough-surface S5 (2026-11-16) raised it from 5083.5 to the measured 5106.25 (spec 8): deck_post's `shell: { type: 'string', description }`, 22.75.
 // deck-writes-github S3 (2026-11-16) raised it from 5106.25 to the measured 5113.25 (spec 3): deck_post's bare `comment: { type: 'string' }`, 7.
-test('QA\'s own share of its prompt stays at or under 5113.25 tokens, with the checklists loaded on demand', async (t) => {
+// crew-refusals S2 (2026-11-19) raised it from 5113.25 to the measured 5121.75 (spec 3, 4; L4, L5): the two SHELL_RULES sentences, 87.25 measured from 5034.5, 8.5 over the old pin.
+test('QA\'s own share of its prompt stays at or under 5121.75 tokens, with the checklists loaded on demand', async (t) => {
   const { measure } = await import('../measure-prompt.mjs');
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'qa-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const qa = rows.find((row) => row.agent === 'pilot-qa');
   const own = (qa.definition + qa.skills + qa.tools) / 4;
-  assert.ok(own <= 5113.25, `pilot-qa's own share is ${own} tokens`);
+  assert.ok(own <= 5121.75, `pilot-qa's own share is ${own} tokens`);
 });
