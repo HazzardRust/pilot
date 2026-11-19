@@ -92,7 +92,7 @@ const oldInstall = () =>
     2,
   );
 
-test('an old install with no reach file is cleaned once (handoff-cache A1)', (t) => {
+test('an old install with no reach file is cleaned once', (t) => {
   const { home, settingsPath } = fixture(t, oldInstall());
 
   const report = repairSettings({ home, settingsPath, pluginRoot: PLUGIN_ROOT });
@@ -113,12 +113,14 @@ test('an old install with no reach file is cleaned once (handoff-cache A1)', (t)
   assert.equal(fs.readFileSync(settingsPath, 'utf8'), cleaned, 'a second run changes 0 bytes');
 });
 
-test('a chosen nothing cleans the same way, and leaves a written false alone', (t) => {
+test('a chosen nothing cleans an old install the same way', (t) => {
   const { home, settingsPath } = fixture(t, oldInstall(), 'nothing');
   repairSettings({ home, settingsPath, pluginRoot: PLUGIN_ROOT });
   assert.equal(Object.hasOwn(readJson(settingsPath), 'statusLine'), false);
   assert.equal(Object.hasOwn(readJson(settingsPath).enabledPlugins, 'pilot@pilot'), false);
+});
 
+test('a written false for the plugin is left byte for byte', (t) => {
   const off = JSON.stringify({ enabledPlugins: { 'pilot@pilot': false } }, null, 2);
   const chosen = fixture(t, off, 'nothing');
   const report = repairSettings({ home: chosen.home, settingsPath: chosen.settingsPath, pluginRoot: PLUGIN_ROOT });
@@ -149,4 +151,3 @@ test('an enabledPlugins that is not an object is refused and left byte for byte'
     assert.deepEqual(fs.readdirSync(path.dirname(settingsPath)), ['settings.json'], 'no backup either');
   }
 });
-

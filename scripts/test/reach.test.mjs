@@ -32,7 +32,7 @@ test('the plugin id and the rules root sit where the Start names them', (t) => {
   assert.equal(rootRules({ home }), path.join(home, '.claude', 'pilot', 'rules-root', '.claude', 'rules'));
 });
 
-test('no reach file reads nothing, not chosen (handoff-cache A1)', (t) => {
+test('no reach file reads nothing, not chosen', (t) => {
   const home = fakeHome(t);
   assert.deepEqual(readReach({ home }), { level: 'nothing', chosen: false });
 
