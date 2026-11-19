@@ -41,8 +41,8 @@ function gate(t, options) {
       cwd,
       slot,
       read: () => [],
-      spawn: () => {
-        suite();
+      spawn: (_node, _argv, { env }) => {
+        suite(env);
         return { status };
       },
       homeStore,
@@ -90,6 +90,18 @@ test("the live deck's write stays green", (t) => {
   const unknown = gate(t, { cwd: dir, homeStore: file, suite: touch, pid: undefined });
   assert.equal(unknown.code, 0);
   assert.deepEqual(homeLines(unknown.out), [`home store changed: ${file}; live deck unknown up`]);
+});
+
+test('the gate names the writer', (t) => {
+  const { dir, file } = store(t, true);
+  // The suite's refused write, as `refuseGateHomeWrite` logs it in the process the gate gave the env to.
+  const refused = (env) => {
+    assert.equal(env.PILOT_GATE_HOME_STORE, file);
+    fs.appendFileSync(env.PILOT_GATE_HOME_LOG, `4242\tnode --test a b.test.mjs\t${file}\n`);
+  };
+  const { code, out } = gate(t, { cwd: dir, homeStore: file, suite: refused, pid: 9999 });
+  assert.equal(code, 1);
+  assert.deepEqual(homeLines(out), [`home store written: ${file} by 4242 node --test a b.test.mjs`]);
 });
 
 test('an untouched store adds nothing', (t) => {

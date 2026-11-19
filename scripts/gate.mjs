@@ -69,9 +69,10 @@ export function gateArgv(args, cores, root) {
 
 /**
  * `env` with every inherited heap cap in `NODE_OPTIONS` replaced by ours, and the slot held named
- * for the suite (none when `slot` is undefined); given `spawns`, the counter preloaded and writing there.
+ * for the suite (none when `slot` is undefined); given `spawns`, the counter preloaded and writing there;
+ * given `guard`, the home store the deck store refuses to write and the log it names each writer in (home-store-guard L4).
  */
-export function gateEnv(env, slot, spawns) {
+export function gateEnv(env, slot, spawns, guard) {
   const cap = `--max-old-space-size=${CHILD_HEAP_MB}`;
   const options = [];
   const inherited = (env.NODE_OPTIONS ?? '').split(/\s+/).filter(Boolean);
@@ -80,7 +81,10 @@ export function gateEnv(env, slot, spawns) {
     else if (!inherited[i].startsWith('--max-old-space-size=')) options.push(inherited[i]);
   }
   options.push(cap);
-  const named = slot === undefined ? {} : { PILOT_GATE_SLOT: String(slot) };
+  const named = {
+    ...(slot === undefined ? {} : { PILOT_GATE_SLOT: String(slot) }),
+    ...(guard === undefined ? {} : { PILOT_GATE_HOME_STORE: guard.store, PILOT_GATE_HOME_LOG: guard.log }),
+  };
   if (spawns === undefined) return { ...env, NODE_OPTIONS: options.join(' '), ...named };
   options.push(`--import=${COUNTER}`);
   return { ...env, NODE_OPTIONS: options.join(' '), ...named, PILOT_GATE_SPAWNS: spawns };
@@ -236,6 +240,22 @@ function homeStoreLine(file, before, deckPid) {
 }
 
 /**
+ * One `home store written: <file> by <pid> <argv>` line per write the deck store refused under the
+ * gate (home-store-guard spec 1; L4), from the log `refuseGateHomeWrite` appends `<pid>\t<argv>\t<file>` to.
+ */
+function writerLines(log) {
+  return fs
+    .readFileSync(log, 'utf8')
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => {
+      const pid = line.slice(0, line.indexOf('\t'));
+      const argv = line.slice(line.indexOf('\t') + 1, line.lastIndexOf('\t'));
+      return `home store written: ${line.slice(line.lastIndexOf('\t') + 1)} by ${pid} ${argv}`;
+    });
+}
+
+/**
  * Checks every file's syntax first (audit-f6 L1), red without the ledgers or the suite on a fault.
  * Rebuilds the ledgers next, red without the suite when one was stale or could not build; then
  * runs the suite, a full run in a gate slot, between two censuses and returns its exit status: 1 when it was
@@ -267,9 +287,11 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
   const held = selection?.files ? { slot: process.env.PILOT_GATE_SLOT || 'selected', release() {} } : slot({ cwd, env: process.env });
   let scratch;
   try {
-    if (spawns === undefined) scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-gate-spawns-'));
+    if (spawns === undefined || homeStore !== undefined) scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-gate-spawns-'));
     const file = spawns ?? path.join(scratch, 'spawns.txt');
     fs.writeFileSync(file, '');
+    const guard = homeStore === undefined ? undefined : { store: homeStore, log: path.join(scratch, 'home-writes.txt') };
+    if (guard) fs.writeFileSync(guard.log, '');
     let before;
     try {
       before = pilotProcesses(read(), {});
@@ -279,7 +301,7 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
     const storeBefore = homeStore === undefined ? undefined : storeStat(homeStore);
     const run = spawn(process.execPath, gateArgv(args, os.availableParallelism(), cwd), {
       cwd,
-      env: gateEnv(process.env, held.slot, file),
+      env: gateEnv(process.env, held.slot, file, guard),
       stdio: 'inherit',
       windowsHide: true,
     });
@@ -293,8 +315,9 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
     }
     const counted = spawnLines(spawnCount(file), ceiling);
     const home = homeStore === undefined ? undefined : homeStoreLine(homeStore, storeBefore, deckPid);
-    process.stdout.write(`${[...after.lines, ...counted, ...(home ? [home.line] : [])].join('\n')}\n`);
-    return after.red || counted.length > 1 || home?.red ? 1 : (run.status ?? 1);
+    const written = guard ? writerLines(guard.log) : [];
+    process.stdout.write(`${[...after.lines, ...counted, ...(home ? [home.line] : []), ...written].join('\n')}\n`);
+    return after.red || counted.length > 1 || home?.red || written.length > 0 ? 1 : (run.status ?? 1);
   } finally {
     held.release();
     if (scratch) fs.rmSync(scratch, { recursive: true, force: true });
