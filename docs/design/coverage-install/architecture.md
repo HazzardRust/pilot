@@ -43,7 +43,7 @@ What the design leans on:
 
 - `agents/pilot-fundamentalist.md:51-56`: the install paragraph, scratch `HOME` and `USERPROFILE`, `--ignore-scripts`.
 - `agents/pilot-evidence-runner.md:17-47` "Before the first run" sets `$W`, `$S`; `:57-60` forbids any install; `:93-106` the return table.
-- `scripts/gate.mjs:350-357`: `missingInstall` and `node_modules missing: run npm ci`, the message a missing install prints through `$TEST`.
+- `scripts/gate.mjs:351-361`: `missingInstall` and `node_modules missing: run npm ci`, the message a missing install prints through `$TEST`.
 - `scripts/test/pilot-agents.test.mjs:1100-1122`: the table has exactly six check rows, no cell overrides `HOME`; so the install goes in the section before the table.
 - `.gitignore:1` ignores `node_modules/`, so the install writes no tracked file.
 - `scripts/measure-prompt.mjs` `pinsOf`: no pin for the runner, fundamentalist or co-pilot; no prompt budget binds.
