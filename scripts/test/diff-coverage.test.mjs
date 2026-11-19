@@ -73,6 +73,18 @@ test('only lines no process ran are uncovered', (t) => {
   assert.equal(result.covered, 5);
 });
 
+test('only lines no process ran are uncovered: several hunks, a deletion, a ++ line, an odd name', (t) => {
+  const before = ['let n = 0;', 'const a = 1;', 'const b = 2;', 'const gone = 3;', 'globalThis.k = n;', ''].join('\n');
+  const after = ['let n = 0;', 'const a = 10;', 'const b = 2;', 'globalThis.k = n;', '++ n;', 'function never() { return n; }', ''].join('\n');
+  const r = repo(t, { 'lib.mjs': before, 'a b.mjs': 'const x = 1;\n' }, { 'lib.mjs': after, 'a b.mjs': 'const x = 2;\n' });
+  r.run('lib.mjs');
+  const result = diffCoverage({ cwd: r.dir, v8Dir: r.v8Dir, base: 'base' });
+  assert.deepEqual(result.files, [
+    { file: 'a b.mjs', covered: 0, total: 1, uncovered: [1] },
+    { file: 'lib.mjs', covered: 2, total: 3, uncovered: [6] },
+  ]);
+});
+
 test('paths match across file URLs on Windows', (t) => {
   const r = repo(t, { 'x.mjs': 'const a = 1;\n' }, { 'x.mjs': 'const a = 1;\nglobalThis.b = a;\n', 'y.ts': 'const z: number = 1;\n' });
   // Node's file URL keeps the case the script was named with; git answers its own (`C:/Users/…`).
@@ -99,6 +111,7 @@ test('a bad base is refused before git runs', (t) => {
   assert.equal(cli(r.v8Dir, '--output=x').status, 2);
   assert.equal(cli(path.join(r.dir, 'missing'), 'base').status, 2);
   assert.equal(cli().status, 2);
+  assert.equal(cli(r.v8Dir, 'no-such-ref').status, 1, 'a well-formed but unknown ref fails loudly, not 0');
   const ok = cli(r.v8Dir, 'base');
   assert.equal(ok.status, 0, ok.stderr);
   assert.match(ok.stdout.trimEnd(), /Diff coverage: 0% \(0 of 1 changed lines\)$/);

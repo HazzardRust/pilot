@@ -47,7 +47,9 @@ function changedLines(cwd, base) {
       if (lines && text && !UNCOUNTED.test(text)) lines.push(next);
       next++;
     } else if (line.startsWith('+++ ')) {
-      const name = line.slice(4).replace(/^b\//, '');
+      // Git ends a name holding a space with a tab, and C-quotes one holding `"` or `\`.
+      const raw = line.slice(4).replace(/\t$/, '');
+      const name = (raw.startsWith('"') ? JSON.parse(raw) : raw).replace(/^b\//, '');
       lines = null;
       if (name === '/dev/null') continue;
       if (MEASURED.test(name)) files.set(name, lines = []);
@@ -99,7 +101,8 @@ export function diffCoverage({ cwd, v8Dir, base }) {
   const files = [];
   for (const [k, file] of paths) {
     const counted = changed.get(file);
-    if (!counted.length) continue;
+    // A symlinked source could point outside the worktree; it is not read.
+    if (!counted.length || fs.lstatSync(path.join(root, file)).isSymbolicLink()) continue;
     const source = fs.readFileSync(path.join(root, file), 'utf8');
     const starts = [0];
     for (let i = source.indexOf('\n'); i !== -1; i = source.indexOf('\n', i + 1)) starts.push(i + 1);
