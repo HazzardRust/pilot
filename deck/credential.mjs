@@ -27,10 +27,13 @@ const CREDENTIAL_SHAPES = [
   // 64 KiB: the gap after `curl` is unbounded but stops at the next `curl`, so each character is scanned from one
   // `curl` only; the user run is unbounded, since it cannot hold the whitespace that starts the next flag; the flag
   // cluster stays bounded, and one of 11+ letters with a `u` past them is flagged outright. That over-flags an
-  // absurd cluster such as `-abcdefghijklu`, deliberately: failing closed is the accepted cost.
+  // absurd cluster such as `-abcdefghijklu`, deliberately: failing closed is the accepted cost. The gap steps over a
+  // quoted string on one line as a single unit, so an `&`, `;` or `|` inside quotes does not end it; a quote with no
+  // partner later on its line is a plain character, so the units never overlap and none backtracks. The password may
+  // open with a quote, and curl is matched in any case.
   [
     'a password in a curl -u',
-    /\bcurl\b(?:(?!\bcurl\b)[^\n|;&])*?\s(?:-[A-Za-z]{11}[A-Za-z]*[uU]|(?:--(?:proxy-)?user|-[A-Za-z]{0,10}[uU])(?:\s+|=|(?=[^\s-]))["']?[^\s"':$<]+:(?![$<{])[^\s"'])/,
+    /\bcurl\b(?:(?!\bcurl\b)(?:"[^"\n]*"|'[^'\n]*'|"(?![^"\n]*")|'(?![^'\n]*')|[^\n|;&"']))*?\s(?:-[A-Z0-9]{11}[A-Z0-9]*U|(?:--(?:proxy-)?user|-[A-Z0-9]{0,10}U)(?:\s+|=|(?=[^\s-]))["']?[^\s"':$<]+:["']?(?![$<{])[^\s"'])/i,
   ],
   // A loopback host's userinfo is a local dev stack's (a Supabase local database), never a shared credential. The
   // user and password runs are unbounded so a long one cannot fail open; neither can hold `/`, so a run is scanned
