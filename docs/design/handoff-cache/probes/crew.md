@@ -1,5 +1,7 @@
 # Probe: the crew across the mod's clear (S5, spec 7)
 
+Since S13 the runner spawns each session in a temp config dir holding a copy of the login (L8); the counts below were taken before, on the real config.
+
 Claude Code 2.1.328 · 2026-11-19 · `--model sonnet` · Windows 11 · 15 scratch headless sessions, $1.52 in all.
 
 ## How it ran

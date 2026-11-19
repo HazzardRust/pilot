@@ -23,10 +23,10 @@
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
-import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { copyLogin, left, scratchEnv, scratchRoot, scrub, scrubAll, sweep } from '../lib.mjs';
 
 // The platform seam: the one place a platform is read, and the one tree-kill (taskkill /T /F on win32).
 const { killTree } = createRequire(import.meta.url)('../../../../../hooks/lib/platform.js');
@@ -36,7 +36,6 @@ const PILOT = path.resolve(PROBE, '..', '..', '..', '..', '..');
 const PREFIX = 'sectionsprobe-';
 const STARTS = ['cold', 'after-clear'];
 const WAIT_MS = 300_000;
-const REAL_CLAUDE = path.join(os.homedir(), '.claude');
 const DECK_TOOLS = ['deck_status', 'deck_read', 'deck_post', 'deck_reply', 'deck_resolve', 'deck_ticket']
   .map((name) => `mcp__plugin_pilot_deck__${name}`);
 const USAGE = 'usage: node run.mjs --start cold|after-clear [--trim <a,b>|*] [--model sonnet] [--runs 1] [--first-turn]';
@@ -55,9 +54,8 @@ function args(argv) {
   return out;
 }
 
-// --- the login copy and its removal (L8) ---
+// --- the login copy and its removal (L8, ../lib.mjs) ---
 
-const live = new Set();
 const children = new Set();
 
 /** Registers a spawned session so every exit path ends it: its memory holds the token the login copy carries (L8). */
@@ -76,45 +74,13 @@ function endChild(child) {
 // Off win32 killTree reaches the root only (the session is not spawned detached); the probe is run on win32.
 function endChildren() { for (const child of children) endChild(child); }
 
-/** The copied login first, then the whole scratch tree; a tree still locked keeps its entry for the exit sweep. */
-function scrub(tmp) {
-  fs.rmSync(path.join(tmp, 'config', '.credentials.json'), { force: true });
-  try {
-    fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 20, retryDelay: 500 });
-  } catch {
-    // The exit sweep and the next run's sweep try again; the login copy above is already gone.
-  }
-  if (!fs.existsSync(tmp)) live.delete(tmp);
-}
-
-/** Every scratch dir an earlier runner left, a killed one included. */
-function sweep() {
-  for (const name of fs.readdirSync(os.tmpdir())) if (name.startsWith(PREFIX)) scrub(path.join(os.tmpdir(), name));
-}
-
 // Every exit path (the signals and uncaughtException below end in process.exit) runs this: the sessions first, then the copies.
-process.on('exit', () => { endChildren(); for (const tmp of live) scrub(tmp); });
+process.on('exit', () => { endChildren(); scrubAll(); });
 for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => process.exit(130));
 process.on('uncaughtException', (err) => {
   process.stderr.write(`run.mjs: ${err?.message ?? err}\n`);
   process.exit(1);
 });
-
-/** Copies the login into `config`; refuses one close to expiry. Nothing of it is printed. */
-function copyLogin(config) {
-  const copy = path.join(config, '.credentials.json');
-  fs.copyFileSync(path.join(REAL_CLAUDE, '.credentials.json'), copy);
-  let expires = null;
-  try {
-    expires = Number(JSON.parse(fs.readFileSync(copy, 'utf8'))?.claudeAiOauth?.expiresAt);
-  } catch {
-    // Unreadable: refused below like an expiring one.
-  }
-  if (!(expires > Date.now() + 45 * 60_000)) {
-    fs.rmSync(copy, { force: true });
-    throw new Error('the login expires within 45 minutes or has no expiry; refresh it in a live session first');
-  }
-}
 
 // --- the scratch session ---
 
@@ -139,8 +105,7 @@ function git(cwd, ...argv) {
  * the real `~/.claude/rules` (read-only), as a pilot start does.
  */
 async function scratch() {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), PREFIX));
-  live.add(tmp);
+  const tmp = scratchRoot(PREFIX);
   const dirs = Object.fromEntries(['repo', 'home', 'config', 'deck'].map((name) => [name, path.join(tmp, name)]));
   for (const dir of Object.values(dirs)) fs.mkdirSync(dir);
   fs.writeFileSync(path.join(dirs.repo, 'README.md'), '# probe\n');
@@ -151,15 +116,13 @@ async function scratch() {
   return { tmp, ...dirs, port: await freePort(), log: path.join(tmp, 'mod.log') };
 }
 
-/** This session's CLAUDE*, PILOT_* and ANTHROPIC* variables dropped; the scratch home, config, deck and probe set. */
-function scratchEnv(s, opts) {
-  const env = {};
-  for (const [key, value] of Object.entries(process.env)) if (!/^(CLAUDE|PILOT_|ANTHROPIC)/i.test(key)) env[key] = value;
-  return {
-    ...env, HOME: s.home, USERPROFILE: s.home, CLAUDE_CONFIG_DIR: s.config,
+/** The shared scratch env with the scratch home, config, deck and probe set. */
+function sessionEnv(s, opts) {
+  return scratchEnv({
+    HOME: s.home, USERPROFILE: s.home, CLAUDE_CONFIG_DIR: s.config,
     PILOT_DECK_DIR: s.deck, PILOT_DECK_PORT: String(s.port), PILOT_DECK_NO_OPEN: '1',
     PROBE_LOG: s.log, PROBE_START: opts.start, PROBE_TRIM: opts.trim, PROBE_REPO: s.repo, PROBE_PILOT_ROOT: PILOT,
-  };
+  });
 }
 
 function readLog(file) {
@@ -229,7 +192,7 @@ async function once(opts, version) {
     '-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose', '--model', opts.model,
     '--plugin-dir', PILOT, '--plugin-dir', PROBE, '--agent', 'pilot:pilot', '--settings', JSON.stringify({ agent: 'pilot:pilot' }),
     '--allowedTools', DECK_TOOLS.join(','), '--debug-file', path.join(s.tmp, 'debug.log'),
-  ], { cwd: s.repo, env: scratchEnv(s, opts), stdio: ['pipe', 'pipe', 'pipe'] }));
+  ], { cwd: s.repo, env: sessionEnv(s, opts), stdio: ['pipe', 'pipe', 'pipe'] }));
   child.stdin.on('error', () => {}); // EPIPE from an early exit: the close handler records the exit.
   let stderr = '';
   child.stderr.on('data', (d) => { stderr += d; });
@@ -326,7 +289,11 @@ async function once(opts, version) {
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
   const opts = args(process.argv.slice(2));
-  sweep();
+  sweep(PREFIX);
   const version = (spawnSync('claude', ['--version'], { encoding: 'utf8', timeout: 15_000 }).stdout ?? '').trim() || 'unknown';
   for (let i = 0; i < opts.runs; i += 1) process.stdout.write(`${JSON.stringify(await once(opts, version))}\n`);
+  // On stderr, so stdout stays one JSON line per run.
+  const n = left(PREFIX);
+  process.stderr.write(`left: ${n}\n`);
+  if (n > 0) process.exitCode = 1;
 }

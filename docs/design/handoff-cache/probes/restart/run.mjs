@@ -209,9 +209,9 @@ async function run(opts, version, login, { tmp, repo, config, logFile }, hold) {
   // Let the mod's last log land, then end the session the way a closed stdin does.
   await new Promise((r) => setTimeout(r, 3000));
   child.stdin.end();
-  // SIGTERM after 30 s, SIGKILL after 40 s, and stop waiting on close at 50 s: a held pipe cannot hang the run.
-  const killer = setTimeout(() => child.kill(), 30_000);
-  const hardKiller = setTimeout(() => child.kill('SIGKILL'), 40_000);
+  // End the tree at 30 s, again at 40 s, and stop waiting on close at 50 s: a held pipe cannot hang the run.
+  const killer = setTimeout(() => endChild(child), 30_000);
+  const hardKiller = setTimeout(() => endChild(child), 40_000);
   let giveUp = null;
   const code = await Promise.race([exited, new Promise((r) => { giveUp = setTimeout(() => r('unclosed'), 50_000); })]);
   clearTimeout(killer);
