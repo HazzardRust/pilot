@@ -45,6 +45,8 @@ git fetch origin && git worktree add --detach <path> origin/feat/<slug>
 You read; you do not change the code. Never edit a tracked file, commit,
 push, comment on the PR, or touch another worktree: the fix round is another
 agent's. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a red-then-green proof runs in a detached throwaway worktree you create and remove.
+Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 
 Before you spawn the runner, a Node project with a `package-lock.json` and
 no `node_modules` gets `npm ci --ignore-scripts` in your worktree, under a
