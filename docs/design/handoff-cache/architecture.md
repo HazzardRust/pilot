@@ -93,7 +93,7 @@ a build on any probe that does not meet its bar (L1).
 - **A2 A lost crew message is held via the deck.** Asked only if S5 proves a loss: then S5 stops and main posts the question before S6. Default: each crew report to main is also posted on the deck, which the fresh session reads. Trade: every crew prompt changes and adds one deck write per report. Rejected: the hand-off mod holding messages through the undocumented `session.receive` hook.
 - **A3 Line 1 measures transcripts already on disk**, not a newly run session. Trade: the sample is whatever hand-offs happened lately, unpaired. Rejected: a staged pair of sessions, which costs a live run.
 - **A4 Line 3 is built only for a miss of 1,000 tokens or more.** Trade: a smaller saving is left unbuilt. Rejected: building at any positive gain.
-- **A5 Probes run headless by implementers on `--model sonnet`**, about 30 scratch sessions in all; the live confirmation of 4 and 7 is QA's walkthrough on a real hand-off. Trade: real token spend, and headless timing may differ from an interactive clear. Rejected: probes only in the user's live sessions.
+- **A5 Probes run headless by implementers on `--model sonnet`**, about 30 scratch sessions in all (S2 3, S4 4 modes at 3 each, S5 10 or more, S6/S7/S8 reruns): 1.5M-4.5M tokens, mostly cache write and read, about $5-$20 API-equivalent at Sonnet prices; the 6 first-turn checks in S2 and S8 run on the pilot agent's own model (Opus), about 250k tokens more. The live confirmation of 4 and 7 is QA's hand-off (§9). Trade: real token spend, and headless timing may differ from an interactive clear. Rejected: probes only in the user's live sessions.
 
 ## 7. Out of scope
 
@@ -130,12 +130,19 @@ Red team (the cut assumed failed, each slice's first behaviour walked against th
 
 ## 9. Acceptance evidence
 
+Where QA runs follows the QA-environment answer (itm_5556a16a5dec). Default, scratch: headless scratch sessions in a
+temp repository, a scratch deck on a spare port, a temp config dir for `pilot update` and the plain session, the
+user's transcripts read-only, never the real `~/.claude`. Real install: the same steps on the user's machine. The
+hand-off with a live crew agent (4, 7) is, under scratch, a scratch pilot session's own hand-off with a scratch
+implementer; under real install, one hand-off of a live run.
+
 1. `node scripts/audit-session-start.mjs <repo> --first-turn` prints the two rows, and `measurements.md` holds them (1).
 2. `probes/sections.md`, `probes/restart.md` and `probes/crew.md`, each with its counted rows (2, 4, 5, 7).
 3. For each build slice, either its before and after rows or its ledger row saying it was ruled out (3, 5, 7a, 4).
-4. A plain `claude` opened by the user: no deck, no pilot status line, 0 pilot sections in its first-turn row (8, 9, 13).
-5. `pilot start` opens the deck as today (10); `pilot update` prints the two versions, or says nothing to update (11, 12).
-6. `ledger.md`: 1 row per line 1-7a (6).
+4. One hand-off with a live crew agent: the agent is alive after it and its report reaches the fresh context; the restart is the adopted one or `/clear` (4, 7, 7a).
+5. A plain `claude` in the QA config: no deck, no pilot status line, 0 pilot sections in its first-turn row (8, 9, 13).
+6. `pilot start` opens the deck as today (10); `pilot update` in the QA config prints the two versions, or says nothing to update (11, 12).
+7. `ledger.md`: 1 row per line 1-7a (6).
 
 ## 10. Status
 
