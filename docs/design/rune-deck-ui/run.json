@@ -9,30 +9,36 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed 7cae771 — re-committed for the trailer, tree identical to reviewed 4ea7320 (058d093f both); 821 lines, limit waived by main",
+      "state": "integrated at 8c4cc3a — s1b 7cae771 re-committed for the trailer, tree identical to reviewed 4ea7320; 821 lines, limit waived by main",
       "branch": "slice/rune-deck-ui-s1b",
       "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s2"
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "pushed 4d8ce86 — +122/-13; typescript APPROVE, security APPROVE",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s3"
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "pushed ed01f72 — 444 lines, limit waived by co-pilot (overage is tests: tests/theme.rs 253); rust approve on ed01f72; --snap cannot show the palette until a region draws from theme",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s4"
     },
     {
       "slice": "S5",
@@ -148,8 +154,8 @@
       ]
     }
   ],
-  "next": "integrate slice/rune-deck-ui-s1b (Reviewed-by rust+security approve, Evidence B1-B6, brief's 2 lines) once B1-B6 text is in hand; then pilot ready --slots 7",
-  "updatedAt": "2026-11-19T21:49:07.608Z",
+  "next": "integrate S3 then S4; S2 finishing (432 lines waived, tests); then pilot ready",
+  "updatedAt": "2026-11-19T22:13:18.472Z",
   "friction": [
     {
       "agent": "pilot-implementer",
@@ -208,6 +214,30 @@
       "what": "none (S1 re-commit for trailer)",
       "evidence": "7cae771, tree 058d093f = 4ea7320's",
       "size": 0
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: a fresh worktree has no node_modules, so the skeleton test fails until npm ci; npm test 8.3 min",
+      "evidence": "S4 report; 496 s",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: diff over the limit noticed only at commit; a test that parses deck.css by hand is ~250 lines",
+      "evidence": "deck/rune/tests/theme.rs 253 lines",
+      "size": 444
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: a scratch deck never opens anything, so checking the open path forced a hand-made probe that opened a read-only tab of the user's 4321 deck",
+      "evidence": "deck/open.mjs refuses on PILOT_DECK_DIR/PORT; scratchpad s3-open.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: slice names a test file that does not exist; release build 3 min per worktree",
+      "evidence": "deck/test/no-open.test.mjs not found; cargo build --release 3m06s",
+      "size": 3
     }
   ]
 }
