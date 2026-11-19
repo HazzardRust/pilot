@@ -15,14 +15,16 @@
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/coverage-cell-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-coverage-cell-s2"
     }
   ],
-  "next": "coverage-cell short path: S1 at 98967a69 (SPAWN_CEILING 13300 per gate.mjs L16, assumed by pilot, name it on gate2), integrating; then spawn S2 implementer (opus) from the new feat tip; after S2: pilot integrate --trial and post gate2 with a Verdict line per slice",
-  "updatedAt": "2026-11-19T13:48:19.566Z",
+  "next": "coverage-cell short path: S2 pushed b7454a29, both reviewers APPROVE, integrating; then pilot integrate --trial in the feat worktree and post gate2 (surface false) with a Verdict line per slice and a Gate line, naming SPAWN_CEILING 13300 and the 262-line S1 as pilot assumptions; not yet exercised: script time on a full-suite v8 dir (about 900 files, bound 60 s)",
+  "updatedAt": "2026-11-19T13:58:15.308Z",
   "friction": [
     {
       "kind": "drain",
@@ -120,6 +122,18 @@
       "what": "pilot's suite sits 12 spawns under SPAWN_CEILING, so any slice adding a fixture test goes red at integrate; three 5.5-minute gates lost on coverage-cell S1 before the ceiling was raised by its own L16 rule",
       "evidence": "logs 20261119T132557252Z, 133304657Z, 134133813Z-slice-coverage-cell-s1.log: 12142, 12141, 12107",
       "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md names no typecheck or lint because the repo has none; S2 lost a call finding that out",
+      "evidence": "S2 report: tsc TS5057, package.json scripts",
+      "size": 1
+    },
+    {
+      "agent": "security-reviewer",
+      "what": "S2 security reviewer reported that a base starting with - reaches git; the script's BASE regex already refuses it",
+      "evidence": "scripts/diff-coverage.mjs BASE = /^[A-Za-z0-9._/][A-Za-z0-9._/-]*$/",
+      "size": 1
     }
   ]
 }
