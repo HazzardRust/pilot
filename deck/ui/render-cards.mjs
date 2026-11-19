@@ -8,6 +8,7 @@ import {
   KIND_GATE1,
   KIND_GATE2,
   KIND_HANDOFF,
+  KIND_STEPS,
   KIND_USER,
   accentOf,
   isBlocking,
@@ -34,11 +35,25 @@ const BLOCKING_BADGE = '<span class="blocking">blocking</span>';
  * user's word (L11). A record offers nothing at all: it takes no reply (ADR 0148).
  */
 function renderReplySlot(item) {
+  if (item.kind === KIND_STEPS) return renderStepsDone(item);
   if (isRecord(item)) return '';
   if (CLOSABLE_KINDS.includes(item.kind)) return renderReplyForm(item) + renderCloseForm(item);
   // A gate also offers Dismiss: deck_resolve refuses it unsigned, so this is a stale gate's exit (merge-first L8).
   const dismissable = !isKnownKind(item.kind) || isGate(item.kind);
   return renderReplyForm(item) + (dismissable ? renderDismissForm(item) : '');
+}
+
+/**
+ * A steps thread's numbered steps and its one Done (human-steps A2, L4): a plain post to `/close`, which
+ * closes the thread and its ticket. It takes no reply: it is a record.
+ */
+function renderStepsDone(item) {
+  const steps = (Array.isArray(item.steps) ? item.steps : []).map((step) => `<li>${escapeHtml(step?.text ?? '')}</li>`).join('');
+  return (
+    `<ol class="human-steps">${steps}</ol>` +
+    '<form class="close" method="post" action="/close" data-in-place>' +
+    `<input type="hidden" name="id" value="${escapeHtml(item.id)}" /><button type="submit">Done</button></form>`
+  );
 }
 
 /**

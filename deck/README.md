@@ -85,6 +85,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `store-items.mjs` | the store's items: posting, replies, the gates, resolving, reopening and closing |
 | `store-recovery.mjs` | the store's backup: `deck.json.bak` kept before each write, and a corrupt store set aside and recovered from it |
 | `store-restore.mjs` | `pilot store restore`: the backup swapped in by hand, refused while a deck serves the store on any port |
+| `store-steps.mjs` | a ticket's human steps: the steps thread's one writer, the user's Done, and the ticket's one close the report shares |
 | `store-stage.mjs` | a ticket entering a stage: its state, its place in that stage's queue, and its first green entry |
 | `store-tickets.mjs` | the store's ticket queue: moving, taking and merging tickets, the lane switches |
 | `store-runs.mjs` | the store's reads and delivery, runs, co-pilot, budget, threads, slices and records |

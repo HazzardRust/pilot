@@ -21,12 +21,12 @@
 import { pathKey as repoKey } from '../hooks/lib/platform.js';
 
 import {
-  DISMISSED_BY_USER, REPORT_DUE, SIGN_OFF, NOT_YET, SHA_FIELD, URL_FIELD, LOGIN_FIELD, SCREENS_FIELD, SLICE_FIELD, REPO_FIELD, NEXT_FIELD, DIR_FIELD, WORKDIR_FIELD, SHELL_FIELD, COMMENT_FIELD,
+  DISMISSED_BY_USER, KIND_STEPS, REPORT_DUE, SIGN_OFF, NOT_YET, SHA_FIELD, URL_FIELD, LOGIN_FIELD, SCREENS_FIELD, SLICE_FIELD, REPO_FIELD, NEXT_FIELD, DIR_FIELD, WORKDIR_FIELD, SHELL_FIELD, COMMENT_FIELD,
 } from './items-bounds.mjs';
 
 export {
   MAX_OPTIONS, MAX_SCREENS, SIGN_OFF, TEACH_ME, ASSUME_DEFAULT, CLOSED_WITH, REOPENED,
-  DISMISSED_BY_USER, CLOSED_BY_USER, CLOSED, NOT_YET, stepParts, MAX_SLICE_CHARS,
+  DISMISSED_BY_USER, CLOSED_BY_USER, CLOSED, NOT_YET, stepParts, MAX_SLICE_CHARS, KIND_STEPS,
 } from './items-bounds.mjs';
 
 export const KIND_QUESTION = 'question';
@@ -120,18 +120,17 @@ export const POSTABLE_KINDS = [...KINDS, KIND_LESSON, KIND_HANDOFF, KIND_CREW_HA
  * and never holding a turn at the Stop gate. The daemon's
  * one spelling; `hooks/lib/deck.js` is the hooks', and `join.test.js` pins both.
  */
-export const STANDING_KINDS = [KIND_TICKET, KIND_REPORT];
+export const STANDING_KINDS = [KIND_TICKET, KIND_REPORT, KIND_STEPS];
 
 export function isStanding(item) {
   return STANDING_KINDS.includes(item?.kind);
 }
 
 /**
- * The record kinds (report-record L2, ADR 0148): a record takes no reply from the user, so
- * `addReply` refuses one, its page draws no reply box and no pilot is handed a reply stored on
- * one. Only the closing report; a ticket still takes the comments ticket-making's Add acts on.
+ * The record kinds (report-record L2, ADR 0148): a record takes no reply from the user, so `addReply` refuses one, its page draws
+ * no reply box and no pilot is handed one stored on it. The closing report and a steps thread (human-steps); a ticket still takes Add's comments.
  */
-export const RECORD_KINDS = [KIND_REPORT];
+export const RECORD_KINDS = [KIND_REPORT, KIND_STEPS];
 
 export function isRecord(item) {
   return RECORD_KINDS.includes(item?.kind);
@@ -266,6 +265,7 @@ const SPECS = {
   [KIND_CHAT]: { options: false, fields: [REPO_FIELD] },
   // Known for the same reason: no Dismiss, and a card in Yours while open. Only Create makes one.
   [KIND_USER]: { options: false, fields: [REPO_FIELD] },
+  [KIND_STEPS]: { options: false, fields: [REPO_FIELD, TICKET_ID_FIELD] }, // known, so no Dismiss: Done is its one close (human-steps L3)
   // Both handoffs carry the deck's own button, stored as options at post (L2), and a note.
   [KIND_HANDOFF]: {
     options: false,
@@ -532,8 +532,8 @@ export function isQueued(item) {
   return item?.kind !== KIND_CHAT;
 }
 
-/** The kinds the user may close from the thread page (spec 7; a user thread since 2026-09-28). */
-export const CLOSABLE_KINDS = [KIND_QUESTION, KIND_USER];
+/** The kinds the user may close from the thread page (spec 7; a user thread since 2026-09-28; a steps thread's Done, human-steps). */
+export const CLOSABLE_KINDS = [KIND_QUESTION, KIND_USER, KIND_STEPS];
 
 /**
  * Whether two paths name one repository: the daemon's one spelling, and

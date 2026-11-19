@@ -72,7 +72,7 @@ test("a slice's Yours joins on the deck's key for the repository", async () => {
 
 test('the daemon and the hooks agree on the standing kinds', async () => {
   const items = await deckModule('items.mjs');
-  for (const kind of [...items.KINDS, items.KIND_CHAT, items.KIND_USER, items.KIND_HANDOFF, 'made-up', undefined]) {
+  for (const kind of [...items.KINDS, items.KIND_CHAT, items.KIND_USER, items.KIND_HANDOFF, items.KIND_STEPS, 'made-up', undefined]) {
     const item = { id: 'a', kind };
     assert.equal(hook.isStanding(item), items.isStanding(item), `${kind}: the hooks and the deck disagree`);
   }
@@ -80,17 +80,18 @@ test('the daemon and the hooks agree on the standing kinds', async () => {
   // A user thread (a created chat until 2026-09-28) is not the chat on either side.
   assert.equal(hook.isChat({ kind: items.KIND_USER }), false);
   assert.equal(hook.isChat({ kind: items.KIND_CHAT }), true);
-  assert.deepEqual(items.KINDS.filter((kind) => hook.isStanding({ kind })).sort(), [...items.STANDING_KINDS].sort());
+  // A steps thread is known but not in KINDS (human-steps L3), so it is listed beside them.
+  assert.deepEqual([...items.KINDS, items.KIND_STEPS].filter((kind) => hook.isStanding({ kind })).sort(), [...items.STANDING_KINDS].sort());
 });
 
 test('the daemon and the hooks agree on the record kinds', async () => {
   const items = await deckModule('items.mjs');
-  for (const kind of [...items.KINDS, items.KIND_CHAT, items.KIND_USER, items.KIND_HANDOFF, 'made-up', undefined]) {
+  for (const kind of [...items.KINDS, items.KIND_CHAT, items.KIND_USER, items.KIND_HANDOFF, items.KIND_STEPS, 'made-up', undefined]) {
     const item = { id: 'a', kind };
     assert.equal(hook.isRecord(item), items.isRecord(item), `${kind}: the hooks and the deck disagree`);
   }
   assert.equal(hook.isRecord(null), items.isRecord(null));
-  assert.deepEqual(items.KINDS.filter((kind) => hook.isRecord({ kind })).sort(), [...items.RECORD_KINDS].sort());
+  assert.deepEqual([...items.KINDS, items.KIND_STEPS].filter((kind) => hook.isRecord({ kind })).sort(), [...items.RECORD_KINDS].sort());
 });
 
 test('the hooks read a gate as signed exactly when the deck does', async () => {
