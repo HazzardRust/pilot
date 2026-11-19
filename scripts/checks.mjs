@@ -49,15 +49,17 @@ export function ciConfigured(git, sha) {
   return files.split('\0').some((file) => CI_FILE.test(file));
 }
 
+/** True on green, or on none with no host (A2): the pass rule land and a gate2 share before the CI-configured read. */
+export const passes = ({ state, why }) => state === 'green' || (state === 'none' && why === 'no host');
+
 /**
- * The land and gate2 gate (L4, A2): ok on green, and on none only with no host or where CI is not configured,
+ * The land gate (L4, A2): ok on green, and on none only with no host or where CI is not configured,
  * noted in the line. An unreadable tree counts as configured, so the gate stays shut.
  */
-export function checksGate({ host, git, sha, at }) {
-  if (at !== 'land' && at !== 'gate2') throw new TypeError(`checks: a gate at ${JSON.stringify(at)}, not land or gate2`);
+export function checksGate({ host, git, sha }) {
   const verdict = checksAt({ host, sha });
-  const pass = (said) => ({ ok: true, line: checkLine(said), verdict: said });
-  if (verdict.state === 'green' || (verdict.state === 'none' && verdict.why === 'no host')) return pass(verdict);
+  const pass = (said) => ({ ok: true, line: checkLine(said) });
+  if (passes(verdict)) return pass(verdict);
   if (verdict.state === 'none') {
     let configured = true;
     try {
@@ -67,7 +69,7 @@ export function checksGate({ host, git, sha, at }) {
     }
     if (!configured) return pass({ ...verdict, why: 'no CI configured' });
   }
-  return { ok: false, line: checkLine(verdict), verdict };
+  return { ok: false, line: checkLine(verdict) };
 }
 
 /** The **Check line**: `checks <state> at <sha7>[: <names>]`, the failed or pending names, else the why. */

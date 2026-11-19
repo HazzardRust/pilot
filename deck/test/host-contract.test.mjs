@@ -361,8 +361,8 @@ test('only the one GET reaches gh', (t) => {
     ] });
   });
   assert.deepEqual(host.checks(SHA), [
-    { name: 'gate (ubuntu-latest)', outcome: 'fail', url: 'https://github.com/o/r/actions/runs/1/job/2' },
-    { name: 'gate (macos-latest)', outcome: 'pending', url: 'https://github.com/o/r/actions/runs/1/job/3' },
+    { name: 'gate (ubuntu-latest)', outcome: 'fail' },
+    { name: 'gate (macos-latest)', outcome: 'pending' },
   ]);
   assert.deepEqual(calls, [['api', CHECK_RUNS]]);
   for (const sha of ['5fef2ab', SHA.toUpperCase(), `${SHA}/../x`, 'pilot']) assert.throws(() => host.checks(sha), /not a full commit sha/, sha);

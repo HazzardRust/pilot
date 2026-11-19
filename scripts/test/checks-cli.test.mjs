@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { main } from '../checks-cli.mjs';
 
 const SHA = '5fef2ab0123456789abcdef0123456789abcdef0';
-const check = (name, outcome) => ({ name, outcome, url: `https://example.test/${name}` });
+const check = (name, outcome) => ({ name, outcome });
 const ANSWERS = {
   green: [check('test', 'pass')],
   red: [check('test', 'fail'), check('lint', 'pass')],
@@ -31,12 +31,13 @@ function fakeHost(...states) {
   };
 }
 
-/** A git that verifies only `HEAD`, `5fef2ab` and the all-digit `1234567`, recording its argv. */
-function fakeGit() {
+/** A git that verifies only `HEAD`, `5fef2ab` and the all-digit `1234567`, and lists `tree`, recording its argv. */
+function fakeGit(tree = '.github/workflows/ci.yml\0') {
   const calls = [];
   const git = (args) => {
     calls.push(args);
     if (args[0] === 'rev-parse' && ['HEAD^{commit}', '5fef2ab^{commit}', '1234567^{commit}'].includes(args.at(-1))) return SHA;
+    if (args[0] === 'ls-tree') return tree;
     throw Object.assign(new Error('git failed'), { stderr: 'fatal: Needed a single revision' });
   };
   return Object.assign(git, { calls });
@@ -49,13 +50,12 @@ function fakeClock() {
   return { slept, now: () => at, sleep: async (ms) => { slept.push(ms); at += ms; } };
 }
 
-async function runChecks(t, argv, host) {
+async function runChecks(t, argv, host, git = fakeGit()) {
   const out = [];
   const err = [];
   t.mock.method(process.stdout, 'write', (chunk) => out.push(String(chunk)));
   t.mock.method(process.stderr, 'write', (chunk) => err.push(String(chunk)));
   const clock = fakeClock();
-  const git = fakeGit();
   const code = await main(argv, { cwd: '.', host, git, sleep: clock.sleep, now: clock.now });
   t.mock.restoreAll();
   return { code, out: out.join(''), err: err.join(''), slept: clock.slept, git };
@@ -96,6 +96,17 @@ test('wait is bounded', async (t) => {
   assert.equal(run.code, 4);
   assert.equal(run.out, 'checks pending at 5fef2ab: test\n');
   assert.deepEqual([host.asked.length, run.slept], [2, [30_000]], 'reads at 0 s and 30 s; a third would be at the bound');
+});
+
+test('wait waits on none while CI is configured at the sha, and not where it is not', async (t) => {
+  const host = fakeHost('none', 'none', 'green');
+  const run = await runChecks(t, ['--wait'], host);
+  assert.deepEqual([run.code, run.out, run.slept], [0, 'checks green at 5fef2ab\n', [30_000, 30_000]], 'runs not yet registered');
+  const bare = fakeHost('none', 'green');
+  const noCi = await runChecks(t, ['--wait'], bare, fakeGit(''));
+  assert.deepEqual([noCi.code, noCi.slept, bare.asked.length], [5, [], 1], 'no CI configured returns at once');
+  const noHost = await runChecks(t, ['--wait'], null);
+  assert.deepEqual([noHost.code, noHost.slept, noHost.git.calls.length], [5, [], 1], 'no host returns at once, no tree read');
 });
 
 test('an unread mid-wait ends the wait, unread', async (t) => {

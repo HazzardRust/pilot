@@ -39,6 +39,7 @@ import path from 'node:path';
 
 import { cleanOnPilot } from '../deck/gate2-base.mjs';
 import { hostFor } from '../deck/host.mjs';
+import { FULL_SHA } from '../deck/host-github.mjs';
 import { RUN_BASE } from '../deck/runs.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
 import { deleteMerged } from './branches.mjs';
@@ -191,9 +192,6 @@ export function redLine(label, run) {
   const failing = run.failing.length ? `; failing: ${names}${more}` : '';
   return `${label} merged red: ${run.counts ?? `exit ${run.status}`}${failing}; log ${run.log}`;
 }
-
-/** A full object name, sha-1 or sha-256, as `git rev-parse` prints it: the only text composed into a command. */
-const FULL_SHA = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 
 /**
  * The repository's own test command, `{ command, selected }`: with `since` and a package.json

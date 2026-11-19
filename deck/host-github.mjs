@@ -107,7 +107,7 @@ function checkOf(run) {
   if (typeof run?.name !== 'string') throw new Error('gh api check-runs: a run with no name');
   const outcome = run.status !== 'completed' ? 'pending' : FAILED.has(run.conclusion) ? 'fail' : PASSED.has(run.conclusion) ? 'pass' : null;
   if (outcome === null) throw new Error(`gh api check-runs: ${run.name} concluded ${JSON.stringify(run.conclusion)}`);
-  return { name: run.name, outcome, url: String(run.html_url ?? '') };
+  return { name: run.name, outcome };
 }
 
 /** A review number as its argv word; anything but a positive integer throws, so no flag rides in its slot. */

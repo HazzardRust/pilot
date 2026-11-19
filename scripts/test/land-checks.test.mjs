@@ -16,7 +16,7 @@ const PR121 = [
   { conclusion: 'failure', html_url: 'https://github.com/HazzardRust/pilot/actions/runs/44519608298/job/135544546237', name: 'gate (macos-latest)', status: 'completed' },
 ];
 const SHA = '5fef2abeeab467094301df1737d521b3898d1739';
-const gate = (host) => checksGate({ host, git: () => assert.fail('no tree read'), sha: SHA, at: 'land' });
+const gate = (host) => checksGate({ host, git: () => assert.fail('no tree read'), sha: SHA });
 
 test('a red feature does not land', (t) => {
   const { origin, gitIn, a: work } = repos(t, 'a');
