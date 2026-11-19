@@ -24,7 +24,7 @@ const SHORTEST_LINE = 110;
 const VERDICTS = ['refused', 'no-verdict'];
 const TEXT_FIELDS = ['when', 'repo', 'agent', 'reason', 'tool', 'command'];
 
-/** A free-text field as it may be stored: a credential withheld whole, then clipped. */
+/** A text field as it may be stored: a credential withheld whole, else clipped. */
 function stored(value) {
   const text = typeof value === 'string' ? value : '';
   return findCredential(text) ? WITHHELD : text.slice(0, FIELD_MOST);
@@ -36,8 +36,14 @@ function trim(file) {
   const lines = fs.readFileSync(file, 'utf8').split('\n').filter((line) => line !== '');
   if (lines.length <= MAX_LINES) return;
   const next = file + '.' + process.pid + '.tmp';
-  fs.writeFileSync(next, lines.slice(-MAX_LINES).join('\n') + '\n', { mode: 0o600 });
-  fs.renameSync(next, file);
+  fs.rmSync(next, { force: true }); // a leftover of a killed trim, never written through
+  try {
+    fs.writeFileSync(next, lines.slice(-MAX_LINES).join('\n') + '\n', { mode: 0o600, flag: 'wx' });
+    fs.renameSync(next, file);
+  } catch (err) {
+    fs.rmSync(next, { force: true });
+    throw err;
+  }
 }
 
 /**
@@ -50,11 +56,11 @@ export function appendRefusal(entry, opts) {
     const now = (opts && opts.now) || (() => new Date());
     const line = {
       when: now().toISOString(),
-      repo: typeof entry.repo === 'string' ? entry.repo : '',
-      ticket: typeof entry.ticket === 'string' ? entry.ticket : null,
-      agent: typeof entry.agent === 'string' ? entry.agent : '',
+      repo: stored(entry.repo),
+      ticket: typeof entry.ticket === 'string' ? entry.ticket.slice(0, FIELD_MOST) : null,
+      agent: stored(entry.agent),
       reason: stored(entry.reason),
-      tool: typeof entry.tool === 'string' ? entry.tool.slice(0, FIELD_MOST) : '',
+      tool: stored(entry.tool),
       command: stored(entry.command),
       verdict: entry.verdict === 'no-verdict' ? 'no-verdict' : 'refused',
     };
@@ -75,7 +81,10 @@ function isRefusal(value) {
   return VERDICTS.includes(value.verdict);
 }
 
-/** The logged refusals, oldest first, the newest `MAX_LINES` at most; a torn or foreign line is skipped. */
+/**
+ * The logged refusals, oldest first, the newest `MAX_LINES` at most; a torn or foreign line is
+ * skipped, and no log yet reads as none. A log that exists and cannot be read throws.
+ */
 export function readRefusals(filter) {
   const dir = (filter && filter.dir) || deckDir();
   let text;

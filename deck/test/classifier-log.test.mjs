@@ -44,10 +44,11 @@ test('an entry reads back with its time, oldest first', (t) => {
 test('a credential never reaches the log', (t) => {
   const dir = scratch(t);
   const token = 'ghp_' + 'A1b2C3d4E5f6G7h8I9j0K1l2';
-  appendRefusal(entry({ command: 'git push https://x:' + token + '@github.com/o/r', reason: 'pushes with ' + token }), { dir });
+  appendRefusal(entry({ command: 'git push https://x:' + token + '@github.com/o/r', reason: 'pushes with ' + token, repo: 'C:/' + token }), { dir });
   const [read] = readRefusals({ dir });
   assert.strictEqual(read.command, '<withheld: credential>');
   assert.strictEqual(read.reason, '<withheld: credential>');
+  assert.strictEqual(read.repo, '<withheld: credential>');
   assert.ok(!fs.readFileSync(path.join(dir, 'classifier.log'), 'utf8').includes(token), 'not on disk either');
 });
 
