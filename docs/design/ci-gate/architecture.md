@@ -73,21 +73,21 @@ Deletion test: without **Checks**, land, integrate, base, the CLI and the gate2 
 
 ## 5. Locked decisions
 
-- **L1** One reader by commit sha: every step calls `checksAt` on a full sha, never `gh pr checks` or a branch.
+- **L1** (`itm_256e82e76009`, default) One reader by commit sha: every step calls `checksAt` on a full sha, never `gh pr checks` or a branch.
   Rejected: per-PR reads, since `pilot base` has no PR and audit-f14 moves feature PR bases.
-- **L2** GitHub reads `repos/{owner}/{repo}/commits/<sha>/check-runs?filter=latest&per_page=100`, one fixed GET
+- **L2** (`itm_616e231df8ec`, default) GitHub reads `repos/{owner}/{repo}/commits/<sha>/check-runs?filter=latest&per_page=100`, one fixed GET
   in the allowlist with the sha checked full hex. Rejected: any GET under `repos/`, which widens the allowlist.
-- **L3** Verdict rules: red if any outcome is fail (failure, cancelled, timed_out, action_required, stale); else
+- **L3** (`itm_ae9b15006e02`, default) Verdict rules: red if any outcome is fail (failure, cancelled, timed_out, action_required, stale); else
   pending if any is not completed; else green when at least one; none at zero; unread when `run` throws or the
   answer is not the shape. Red wins over pending. Neutral and skipped pass.
-- **L4** Gates by step: land and gate2 pass green only (none passes only where CI is not configured, noted);
+- **L4** (`itm_e3c214c8c20b`, default) Gates by step: land and gate2 pass green only (none passes only where CI is not configured, noted);
   integrate refuses red only and says nothing otherwise, since the co-pilot's `--wait` reads pending and land is
   the hard gate; base only reports.
-- **L5** Land reads HEAD after `catchUp` and before `commitRecords`: a run.json-only commit takes its parent's checks.
-- **L6** The daemon starts no host CLI: the gate2 field is QA's line, checked for shape, sha and CI-configured
+- **L5** (`itm_c92cb0ee11b0`, default) Land reads HEAD after `catchUp` and before `commitRecords`: a run.json-only commit takes its parent's checks.
+- **L6** (`itm_5ed96e38b7be`, default) The daemon starts no host CLI: the gate2 field is QA's line, checked for shape, sha and CI-configured
   locally in `deck/gate2-checks.mjs`; land's own read is the enforcement.
-- **L7** Gate runs on push to `pilot` (`gate.yml`), so a base tip has checks to read.
-- **L8** Tests stay under the spawn ceiling: verdict and gate logic tested pure over fake runs (0 spawns); one
+- **L7** (`itm_9a4f1e7e7bd9`, default) Gate runs on push to `pilot` (`gate.yml`), so a base tip has checks to read.
+- **L8** (`itm_4931415fcf47`, default) Tests stay under the spawn ceiling: verdict and gate logic tested pure over fake runs (0 spawns); one
   fixture test each for land, integrate and base, reusing the cached fixtures (about 35 spawns each).
 - **L9** Nothing a Gate 1 sign-off needs lives only in a slice file.
 - **L10** Pending (`itm_db635f8bd508`, "Refuse, lander waits"): land and gate2 refuse pending; the lander and
@@ -102,18 +102,31 @@ Deletion test: without **Checks**, land, integrate, base, the CLI and the gate2 
 
 ## 6. Assumed decisions
 
-- **A2** No CI: `none` refuses at land and gate2 where CI is configured, passes noted where not; `pilot.host none`
+- **A1** Pending (answered on `itm_db635f8bd508`, "Refuse, lander waits"): now L10.
+  Verdict: stands — the user chose "Refuse, lander waits" on itm_db635f8bd508
+- **A2** No CI (`itm_2d7a27c628fd`, default): `none` refuses at land and gate2 where CI is configured, passes noted where not; `pilot.host none`
   passes noted (`checks none at <sha7>: no host`). Trades: a repo whose workflow never triggers on PRs is blocked.
   Rejected: none always passes, which reopens the incident when a trigger is dropped.
+  Verdict: stands — none passing everywhere would reopen the incident when a workflow trigger is dropped; walked with the user as its own item
+- **A3** Override (answered on `itm_be1089fc71d0`, "No override"): now L11.
+  Verdict: stands — the user chose "No override" on itm_be1089fc71d0
+- **A4** Spec 5 (answered on `itm_a01115b80bcf`, "Drop line 5, enforce in the tools"): now L12.
+  Verdict: stands — the user chose "Drop line 5, enforce in the tools" on itm_a01115b80bcf
 - **A5** The gate2 `checks` field is QA's word, not re-read by the daemon (L6). Trades: a gate2 can carry a stale
   green line at its sha; land re-reads. Rejected: a daemon child per gate2 post.
+  Verdict: stands — the daemon starts no host CLI today and land's own read is the enforcement
 - **A6** QA environment (`itm_8677fb5e6e5e`, answered "Stub + live read", the default): scratch repo with `pilot gh-stub` replies, plus one live read-only
   `pilot checks` on #121's head. Rejected: a throwaway live PR.
+  Verdict: stands — answered "Stub + live read" on itm_8677fb5e6e5e
 - **A7** Overlaps: audit-f14 touches `scripts/integrate.mjs` and `scripts/land.mjs` (S3, S4 rebase on it; L1
   keeps reads PR-free); recut-decision touches `deck/server-tools.mjs` (S5 adds one call there) and
   `deck/landing.mjs` (untouched). ci-green must land before this run lands, or L11's cost bites daily.
+  Verdict: stands — audit-f14 and recut-decision are both implementing on those files and ci-green is signed and queued ahead; this run builds after them
+- **A8** Grilling depth (answered on `itm_01944e4474fe`, "every"): now L13.
+  Verdict: stands — the user pressed "every" on itm_01944e4474fe
 - **A9** Spawns: S3, S4, S6 add one fixture test each (about 105 spawns), under coverage-cell's `SPAWN_CEILING`
   13300, on `pilot` since ebe5233; each slice prints the gate's spawn count.
+  Verdict: stands — coverage-cell landed at ebe5233 and pilot's ceiling is 13300
 
 ## 7. Out of scope
 
@@ -126,7 +139,7 @@ Width 6; longest stem 3
 
 | Slice | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- |
-| S1 The checks on one commit read as one line | 7, 9, 10 | `deck/host.mjs`, `deck/host-github.mjs`, `scripts/checks.mjs` (new), `scripts/test/checks.test.mjs` (new), `deck/test/host-contract.test.mjs`, `docs/adr/NNNN-ci-gate.md` (new) | – | typescript, security | [S1](slices/S1.md) |
+| S1 The checks on one commit read as one line | 7, 9, 10 | `deck/host.mjs`, `deck/host-github.mjs`, `scripts/checks.mjs` (new), `scripts/test/checks.test.mjs` (new), `deck/test/host-contract.test.mjs`, `docs/adr/NNNN-ci-gate.md` (new), `CONTEXT.md` | – | typescript, security | [S1](slices/S1.md) |
 | S2 `pilot checks` prints it and waits | 7 | `bin/pilot.mjs`, `scripts/checks-cli.mjs` (new), `scripts/test/checks-cli.test.mjs` (new), `scripts/install-permissions.mjs`, `scripts/install-settings.mjs`, `scripts/test/install-allow-checks.test.mjs` (new) | S1 (`checksAt`) | typescript, security | [S2](slices/S2.md) |
 | S3 A landing refuses a red feature | 1, 9 | `scripts/land.mjs`, `scripts/test/lib/land-repos.mjs`, `scripts/test/land-checks.test.mjs` (new) | S1 (`checksGate`) | typescript | [S3](slices/S3.md) |
 | S4 Integrate refuses a red feature tip | 3 | `scripts/integrate.mjs`, `scripts/test/integrate-checks.test.mjs` (new) | S1 (`checksAt`) | typescript | [S4](slices/S4.md) |
