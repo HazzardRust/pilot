@@ -13,7 +13,7 @@ that other people's projects are pushed onto.
 
 | # | Behaviour | Evidence | Bar |
 | --- | --- | --- | --- |
-| 1 | On this machine `pilot open` (and the daemon's own open) shows the deck as a native Rune window when the Rune deck is built, the HTML page otherwise. *assumed A1, A2* | headless `--snap` PNG and `--tree` JSON of each screen state in the run; the window seen on the walkthrough | 8 states: overview, deck tab, `all=1`, thread open, thread closed, gate, items page, empty deck |
+| 1 | Rune is the primary deck where it is built: the daemon's own open at session start and `pilot deck --rotate` open the native Rune window, and `pilot deck` names it, when the release binary exists; the HTML page otherwise. A deck URL printed elsewhere still opens the browser. *A1 locked; A2 as main reads it* | headless `--snap` PNG and `--tree` JSON of each screen state in the run; the window seen on the walkthrough | 8 states: overview, deck tab, `all=1`, thread open, thread closed, gate, items page, empty deck |
 | 2 | Colours, layout and where each feature sits are kept: the deck.css tokens and the regions (header usage and tabs, queue, six left panels, right strip). | `theme` test against `deck/ui/deck.css`; each region's tree beside the HTML page's screenshot | every token value equal, light and dark; 0 regions or controls missing against §3's checklist |
 | 3 | Every action the HTML deck offers works from the Rune deck and ends in the same store change as its form POST. | one scripted replay per action against a scratch daemon | 17 of 17 (§3 Actions) |
 | 4 | A post made by a tool call appears without input; a half-typed reply, the scroll and the open panels survive it. | headless replay on a scratch daemon | shown within 1 s; draft, scroll offset and open set unchanged |
@@ -101,10 +101,13 @@ Deletion test: `render-*.mjs` survive (the HTML deck stays, A2). `renderHomePage
 
 ## 6. Assumed decisions
 
-- **A1** Native window, not a browser tab (itm_d184d1341214). Trade: no Rune deck in a browser; Rune's web target
-  is unproven. Rejected: Rune web build at 4321.
-- **A2** The HTML deck stays and stays what other installers get; the Rune deck is built locally with cargo and
-  opened when built (itm_6aa2534e84f0). Trade: two UIs; a new kind draws in both (eased by L2). Rejected: Rune only.
+- **A1** Native window, not a browser tab. Trade: no Rune deck in a browser; Rune's web target is unproven.
+  Rejected: Rune web build at 4321.
+  Answer: the user pressed "Native window" (itm_d184d1341214).
+- **A2** The HTML deck stays as the fallback and what other installers get; where the Rune deck is built (locally,
+  cargo, no shipped binaries) it is the primary and what every pilot open shows (itm_6aa2534e84f0: "HTML stays,
+  Rune opt-in" then "lets have rune as the primary", read by main). Trade: two UIs; a new kind draws in both (eased
+  by L2). Rejected: Rune only.
 - **A3** `npm test` runs `cargo test --manifest-path deck/rune/Cargo.toml` only where cargo is on PATH, else one
   skip line; CI adds one `windows-latest` job with Rust that builds and runs the client tests, and runs the paint
   tests only if the runner paints headless. Trade: a machine without Rust catches a broken screen only in CI.
@@ -112,7 +115,8 @@ Deletion test: `render-*.mjs` survive (the HTML deck stays, A2). `renderHomePage
   sizes, folds) is not migrated. Trade: one reset of folds and seen marks. Rejected: a server-side prefs route.
 - **A5** Bugs: until itm_b7272bb6e63c answers, the two recorded open ones: a refused typed reply loses its words
   (ADR 0096; S9), and two quick ticket-arrow presses move two places (S15).
-- **A6** Depth: Forks (itm_af9e1f649d17).
+- **A6** Depth: Forks.
+  Answer: the user pressed "forks" (itm_af9e1f649d17).
 
 Red team (each a change to §8):
 - red team: S1 cannot build until the user installs rustup and the C++ Build Tools: every slice is blocked on it,
@@ -142,7 +146,7 @@ Width 15; longest stem 5
 | --- | --- | --- | --- | --- | --- | --- |
 | S1 | Walking skeleton: a Rune window shows the deck's tabs read from `/api/view` | 1, 2, 9, 11 | `deck/rune/Cargo.toml`, `Cargo.lock`, `src/main.rs`, `src/app.rs`, `src/client.rs`, `src/regions/*.rs` (stubs), `src/theme.rs`, `src/prefs.rs`, `src/layout.rs`, `src/act.rs`, `src/act_deck.rs`, `tests/support/mod.rs`, `tests/skeleton.rs`, `deck/view/*.mjs` (index, reads, tabs, stubs), `deck/server-routes.mjs`, `deck/test/view-route.test.mjs`, `.gitignore`, `docs/adr/NNNN-rune-deck-ui.md` | – | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S1](slices/S1.md) |
 | S2 | A post appears live, and a stopped daemon is said and survived | 4, 10 | `deck/rune/src/live.rs`, `src/app.rs`, `tests/live.rs` | S1 (`app.rs`, `Client::events`) | `pilot:rust-reviewer` | [S2](slices/S2.md) |
-| S3 | `pilot open` opens the Rune deck when it is built | 1 | `deck/open.mjs`, `deck/test/open.test.mjs` | S1 (the binary's path) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
+| S3 | The deck opens as the Rune window wherever it is built | 1 | `deck/open.mjs`, `bin/pilot.mjs`, `deck/test/open.test.mjs` | S1 (the binary's path) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
 | S4 | The deck's palette, font and motion, light and dark | 2, 5 | `deck/rune/src/theme.rs`, `tests/theme.rs` | S1 (`theme::tokens`) | `pilot:rust-reviewer` | [S4](slices/S4.md) |
 | S5 | Thread actions post their form routes and change the store | 3, 9 | `deck/rune/src/act.rs`, `tests/act_thread.rs` | S1 (`Client`) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S5](slices/S5.md) |
 | S6 | Deck actions post their form routes and change the store | 3 | `deck/rune/src/act_deck.rs`, `tests/act_deck.rs` | S5 (`act::post`) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S6](slices/S6.md) |
@@ -166,8 +170,8 @@ other slice's plan changes. Then S5 (the write seam nine actions share), then th
 
 ## 9. Acceptance evidence
 
-1. `pilot open` on this machine shows the Rune window on the overview (spec 1); the HTML page still opens with the
-   binary removed.
+1. A new session on this machine opens the Rune window on the overview (spec 1); with the binary removed the HTML
+   page opens.
 2. Each screen beside the HTML page's screenshot: same colours, regions and controls, light and dark (spec 2).
 3. Panels open and close with springs; a press answers in its frame (spec 5).
 4. Each of the 17 actions pressed in the window changes the deck as the page would (spec 3); the named bugs do not
