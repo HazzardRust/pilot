@@ -89,7 +89,7 @@ test('a gate1 for a branch merely behind pilot is refused', (t) => {
   const { work, commit } = scratch(t);
   git(work, 'checkout', '-q', '-b', 'design/x', 'HEAD~1');
   commit('docs.md', 'design\n');
-  assert.throws(() => postGate1(work, 'design/x'), refused('design/x', "is not on pilot's tip", 'git rebase origin/pilot'));
+  assert.throws(() => postGate1(work, 'design/x'), refused('design/x', "is not on pilot's tip", 'git merge origin/pilot'));
   assert.equal(gate1s().length, 0);
 });
 

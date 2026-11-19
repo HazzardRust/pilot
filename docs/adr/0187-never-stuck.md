@@ -3,7 +3,7 @@ status: proposed
 date: 2026-11-18
 tags: [deck, tickets, recut, yield, pilot, architect, co-pilot]
 supersedes: [0153]
-superseded_by: []
+superseded_by: [NNNN]
 paths: [deck/recut.mjs, deck/server-tools.mjs, deck/landing.mjs, deck/store-tickets.mjs, agents/pilot.md, agents/pilot-architect.md, agents/pilot-co-pilot.md]
 ---
 # A stale plan is re-cut as standard, and a yield drains before it frees the lane
