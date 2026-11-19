@@ -34,7 +34,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed f88c239",
+      "state": "integrated",
       "after": [
         "S3"
       ],
@@ -87,8 +87,17 @@
       "pr": 119
     }
   ],
-  "next": "pausing: integrating S4 (f88c239b, typescript WARN) into feat at 8e1d8b96; S7 draining; then hand back paused",
-  "updatedAt": "2026-11-19T12:59:37.191Z",
+  "findings": [
+    "kept: S4-R1 MEDIUM — B2 pins only featureLine; add a land test with record base feat/x deriving below (and a host-throws case giving number null with why)",
+    "kept: S4-R2 MEDIUM — recordBase's unreadable-record refusal is untested: test it or drop the catch if chainGuard makes it unreachable",
+    "dropped: S4-R3 LOW — afterGreen's unused dir param: S5 fills the hook",
+    "kept: S4-R4 LOW — a record with no base is legacy: one-line comment",
+    "kept: S3-R1 LOW — chainLanded re-reads runRemote instead of baseOf's runs",
+    "kept: S3-R2 LOW — RUN_BASE error text still says pilot or feat/<slug>",
+    "kept: S3-R3 LOW — gone-and-unlanded lower branch fails with a bare git error, name it"
+  ],
+  "next": "pausing: S1-S4 integrated, feat/audit-f14 at eeefa270; S7 draining from 45581cf3; on its report integrate S7, then hand back paused. Resume: pilot ready (S5, S6, S8); fix round holds the kept findings",
+  "updatedAt": "2026-11-19T13:04:30.600Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -212,6 +221,21 @@
       "agent": "pilot-implementer",
       "what": "default node --test reporter prints no pass counts; fixer reran with --test-reporter=tap to read them",
       "evidence": "# tests 136 / # pass 136 / # fail 0 under tap"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4 implementer handed back twice before its reviewer reported, leaving the slice committed but unpushed and unreviewed; co-pilot collected the reviewer's verdict and pushed",
+      "evidence": "f88c239b local only; reviewer a18d750 Verdict: WARN delivered after resume"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4.md and S5.md disagree on where afterGreen lives; S5 forbade any land.mjs edit",
+      "evidence": "S5.md Prohibited: no edit of scripts/land.mjs; seam recorded in 8e1d8b96"
+    },
+    {
+      "agent": "typescript-reviewer",
+      "what": "reviewer's node --test hit EPERM in the suite gate slot dir, so it could not confirm the tests",
+      "evidence": "mkdir ...Temp\\pilot-gate-slots\\slot-1.json.takeover EPERM at land.test.mjs:23"
     }
   ]
 }
