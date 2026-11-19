@@ -15,7 +15,7 @@ import path from 'node:path';
 
 import { KIND_GATE2, KIND_TICKET, KIND_WALKTHROUGH } from '../items.mjs';
 import { lanesOf } from '../lanes.mjs';
-import { coPilotFor, listItems, needTicket, postItem, setCoPilot } from '../store.mjs';
+import { coPilotFor, listItems, needTicket, pivotTicket, postItem, setCoPilot } from '../store.mjs';
 import { postStored, shapedTicketBody, tempDeck } from '../testUtils.mjs';
 
 const { callTool } = await import('../server.mjs');
@@ -87,6 +87,34 @@ test("a gate2 on a green ticket only another author's walkthrough names is still
   needTicket(ticket.id); // green by the pilot's need, not by a concluding walkthrough
 
   assert.throws(() => postItem(gate2(repo, ticket)), /is not live; deck_ticket take it first/);
+});
+
+test('a gate2 on a green ticket whose naming walkthrough did not conclude it is not live', (t) => {
+  const { repo, ticket } = heldYellow(t);
+  postItem(walkthrough(repo, ticket, { author: ARCHITECT })); // names the ticket, moves nothing, so need may turn it green
+  needTicket(ticket.id);
+  postItem(walkthrough(repo, ticket)); // a concluding kind of walkthrough, but the ticket is not yellow: it moves nothing
+
+  assert.equal(reread(ticket.id).state, 'green');
+  assert.throws(() => postItem(gate2(repo, ticket)), /is not live; deck_ticket take it first/);
+});
+
+test('a stale concluding walkthrough no longer exempts a ticket pivoted and made green by need', (t) => {
+  const { repo, ticket } = heldYellow(t);
+  postItem(walkthrough(repo, ticket)); // concludes: green
+  pivotTicket(ticket.id); // back to yellow
+  needTicket(ticket.id); // green again, by need
+
+  assert.throws(() => postItem(gate2(repo, ticket)), /is not live; deck_ticket take it first/);
+});
+
+test('a gate2 from another repository naming a concluded green ticket is not live', (t) => {
+  const { repo, ticket } = heldYellow(t);
+  postItem(walkthrough(repo, ticket));
+  const other = fs.mkdtempSync(path.join(os.tmpdir(), 'walk-concludes-other-'));
+  t.after(() => fs.rmSync(other, { recursive: true, force: true }));
+
+  assert.throws(() => postItem(gate2(other, ticket)), /is not live; deck_ticket take it first/);
 });
 
 test('a blocking walkthrough leaves it yellow', (t) => {

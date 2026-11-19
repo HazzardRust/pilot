@@ -166,7 +166,7 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
   // Posting a gate2, or a concluding walkthrough on its open yellow ticket here (yellow-never-idle L2, L3; never refused for a lane, L8), turns its ticket green, and posting the closing report closes and resolves it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
   if (kind === KIND_GATE2) concludeOn(deck, ticket);
-  if (concludes(item, author) && walked?.kind === KIND_TICKET && stateOf(walked) === 'yellow' && sameRepo(walked.repo, item.repo)) concludeOn(deck, walked);
+  if (concludes(item, author) && walked?.kind === KIND_TICKET && stateOf(walked) === 'yellow' && sameRepo(walked.repo, item.repo)) concludeOn(deck, walked, item.id);
   if (kind === KIND_REPORT && ticket) {
     // Closing ends its liveness too (L9).
     delete ticket.live;
@@ -212,8 +212,8 @@ function ticketNamedBy(deck, item) {
   }
   // A gate is posted on the ticket in hand (ticket-states L9): the live one, never a parked one. A gate2 on a
   // yellow ticket is the exception: that ticket is the co-pilot's, never in the main slot (ADR 0087), and the post turns it green.
-  // So is a green one a walkthrough concluded (yellow-never-idle L2): the same co-pilot's ticket, one post later.
-  const coPilots = item.kind === KIND_GATE2 && (state === 'yellow' || (state === 'green' && deck.items.some((walk) => walk.ticket === ticket.id && sameRepo(walk.repo, ticket.repo) && concludes(walk, walk.author))));
+  // So is a green one its own walkthrough concluded (yellow-never-idle L2), in this gate2's repository: one post later.
+  const coPilots = item.kind === KIND_GATE2 && (state === 'yellow' || (state === 'green' && ticket.concludedBy !== undefined && sameRepo(ticket.repo, item.repo)));
   if (item.kind !== KIND_REPORT && !coPilots && ticket.live !== true) {
     throw new DeckRefusal(`a ${item.kind}'s ticket is the live ticket, and ${item.ticket} is not live; deck_ticket take it first`);
   }
