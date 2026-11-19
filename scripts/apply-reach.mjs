@@ -75,7 +75,7 @@ export function main(argv, { home = os.homedir(), pluginRoot = resolvePluginRoot
   if (argv.length === 0) {
     const { level, chosen } = readReach({ home });
     process.stdout.write(
-      `reach ${level}${chosen ? '' : ' (not chosen: an install that never chose keeps everything)'}\n` +
+      `reach ${level}${chosen ? '' : ' (not chosen: an install that never chose carries nothing)'}\n` +
         'choices:\n' +
         '  nothing     a plain claude session carries no pilot; pilot start carries all of it\n' +
         '  rules       plain sessions get the language rules only\n' +

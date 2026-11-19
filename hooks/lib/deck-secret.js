@@ -19,6 +19,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+const { pathKey } = require('./platform.js');
+
 const SECRET_FILENAME = 'deck.secret';
 const SECRET_SHAPE = /^[0-9a-f]{64}$/;
 // A racer that lost `wx` can read the winner's file between its create and its write. Kept short:
@@ -26,9 +28,19 @@ const SECRET_SHAPE = /^[0-9a-f]{64}$/;
 const SETTLE_TRIES = 3;
 const SETTLE_MS = 5;
 
-/** The directory in use: `PILOT_DECK_DIR`, or `~/.claude/pilot` when nothing overrides it. */
+/**
+ * The directory in use: `PILOT_DECK_DIR`, or `~/.claude/pilot` when nothing overrides it.
+ * Inside a `node --test` run (`NODE_TEST_CONTEXT` set) it throws rather than resolve the user's
+ * real store, found by `os.userInfo()`, which no environment variable moves (crew-refusals A1).
+ */
 function deckDir() {
-  return process.env.PILOT_DECK_DIR || path.join(os.homedir(), '.claude', 'pilot');
+  const dir = process.env.PILOT_DECK_DIR || path.join(os.homedir(), '.claude', 'pilot');
+  if (process.env.NODE_TEST_CONTEXT) {
+    const real = path.join(os.userInfo().homedir, '.claude', 'pilot');
+    // pathKey, not the spelling: a link or another case naming the real store is the real store.
+    if (pathKey(dir) === pathKey(real)) throw new Error('a test run may not use the real deck store: ' + real);
+  }
+  return dir;
 }
 
 function secretFile(dir) {

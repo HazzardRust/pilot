@@ -16,6 +16,7 @@ import { healthOf } from '../health.mjs';
 import { probeDeck } from '../probe.mjs';
 import { isCheckout } from '../spawn-root.mjs';
 import { statusLines } from '../status-command.mjs';
+import { tempDeck } from '../testUtils.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -40,7 +41,8 @@ const aDeck = (probe) =>
     now: 60_000,
   });
 
-test("health names the daemon's root", () => {
+test("health names the daemon's root", (t) => {
+  tempDeck(t);
   const health = healthOf();
   assert.equal(health.root, ROOT, 'the directory holding the daemon package.json');
   assert.equal(health.checkout, isCheckout(ROOT));

@@ -75,9 +75,9 @@ test('a repair aimed at a target repairs it as today, whatever the home reach', 
   assert.equal(fs.existsSync(rulesRoot({ home: FAKE_HOME })), false);
 });
 
-test('no reach file repairs as today', (t) => {
+test('no reach file repairs as nothing', (t) => {
   const home = scratchHome(t);
   repair(home);
-  assert.equal(count(homeRules(home)), 113);
-  assert.equal(count(rootRules(home)), 0);
+  assert.equal(count(homeRules(home)), 0);
+  assert.equal(count(rootRules(home)), 113);
 });

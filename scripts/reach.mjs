@@ -25,12 +25,12 @@ const PLANS = {
   everything: { home: 'all', root: 'none', user: true },
 };
 
-/** What an install that never chose reads as (A2): nothing is taken away on upgrade. */
-const NOT_CHOSEN = { level: 'everything', chosen: false };
+/** What an install that never chose reads as (handoff-cache A1): a plain `claude` carries no pilot. */
+const NOT_CHOSEN = { level: 'nothing', chosen: false };
 
 const pilotDir = (home) => path.join(home, '.claude', 'pilot');
 
-/** The stored reach. Absent, unreadable or not a level reads as `everything`, not chosen (A2). */
+/** The stored reach. Absent, unreadable or not a level reads as `nothing`, not chosen (handoff-cache A1). */
 export function readReach({ home = os.homedir() } = {}) {
   try {
     const { level } = JSON.parse(fs.readFileSync(path.join(pilotDir(home), 'reach.json'), 'utf8'));
