@@ -19,14 +19,14 @@ const { isWindows } = require('../lib/platform.js');
 const HOOK = path.join(__dirname, '..', 'shell-write-guard.js');
 const lane = { agent_type: 'pilot:pilot-implementer', agent_id: 'a1', tool_name: 'Bash' };
 
-/** A temp repo: f.md and sub/f.md tracked, loose.md untracked, junk.md ignored. */
+/** A temp repo: f.md, f.mjs and sub/f.md tracked, loose.md untracked, junk.md ignored. */
 function makeRepo() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'swg-'));
   fs.mkdirSync(path.join(dir, 'sub'));
-  for (const f of ['f.md', 'sub/f.md', 'loose.md', 'junk.md']) fs.writeFileSync(path.join(dir, f), 'a\n');
+  for (const f of ['f.md', 'f.mjs', 'sub/f.md', 'loose.md', 'junk.md']) fs.writeFileSync(path.join(dir, f), 'a\n');
   fs.writeFileSync(path.join(dir, '.gitignore'), 'junk.md\n');
   execFileSync('git', ['init', '-q', dir]);
-  execFileSync('git', ['-C', dir, 'add', 'f.md', 'sub/f.md', '.gitignore']);
+  execFileSync('git', ['-C', dir, 'add', 'f.md', 'f.mjs', 'sub/f.md', '.gitignore']);
   return dir;
 }
 
@@ -52,6 +52,45 @@ test('sed -i on an untracked file runs', () => {
   for (const command of [`sed -i 's/a/b/' loose.md`, `sed -i 's/a/b/' junk.md`]) assert.strictEqual(call(command), null, command);
   // f.md is tracked at cwd, but after a non-literal cd the relative path names an unknown dir (L7).
   assert.strictEqual(call(`cd "$D" && sed -i 's/a/b/' f.md`), null, 'a non-literal cd');
+});
+
+test('heredoc and echo writes into a tracked file are refused', () => {
+  const forms = [
+    "cat > f.mjs <<'EOF'\nexport const a = '\\n';\nEOF",
+    'cat <<EOF > f.mjs\nx\nEOF',
+    'cat >> f.md <<EOF\nx\nEOF',
+    'tee f.md <<EOF\nx\nEOF',
+    'tee -a f.md >/dev/null <<-EOF\n\tx\n\tEOF',
+    'echo x > f.md',
+    "printf '%s' x >> f.md",
+    'cd sub && echo x > f.md',
+    // S1 findings #3, #4: a prefix or compound keyword in front of the writer.
+    "command sed -i 's/a/b/' f.md", "env LC_ALL=C sed -i 's/a/b/' f.md", "time sed -i 's/a/b/' f.md",
+    "nohup sed -i 's/a/b/' f.md", "sudo -u root sed -i 's/a/b/' f.md", 'env -i echo x > f.md',
+    "if true; then sed -i 's/a/b/' f.md; fi", "for x in 1; do echo x > f.md; done", "! sed -i 's/a/b/' f.md",
+  ];
+  for (const command of forms) {
+    const out = call(command);
+    assert.strictEqual(out && out.hookSpecificOutput.permissionDecision, 'deny', command);
+    for (const word of ['f.m', 'Edit', 'Write', 'not a blocked step']) assert.ok(reasonOf(out).includes(word), `${command}: ${word}`);
+  }
+});
+
+test('read-only heredocs and other writes run', () => {
+  // The crew definitions' two heredocs (agents/pilot-architect.md:152, agents/pilot-teacher.md:53), bodies
+  // holding redirections and a sed -i on a tracked file (S1 security finding #9).
+  const body = "A1 Verdict: x > f.md\nsed -i 's/a/b/' f.md\necho y >> f.md\ncat > f.mjs <<EOF";
+  const forms = [
+    `pilot verdicts a.md <<'EOF'\n${body}\nEOF`,
+    `pilot lesson-report itm_1 <<'LESSON_REPORT_END'\n${body}\nLESSON_REPORT_END`,
+    `cat <<'LESSON_REPORT_END' | pilot lesson-report itm_1\n${body}\nLESSON_REPORT_END`,
+    `cat <<'EOF' | wc -l\n${body}\nEOF`,
+    `git commit -F - <<EOF\n${body}\nEOF`,
+    'git commit -m "a > b.md"', "echo 'x > f.md'", 'ls > /dev/null', 'npm test 2>&1', 'node gen.mjs > f.md',
+    'npm test | tee gate.log', 'echo x > scratch.txt', 'echo x > junk.md',
+    `node -e "require('fs').writeFileSync('f.mjs', 'x')"`, 'cat f.md > loose.md', 'command -v sed',
+  ];
+  for (const command of forms) assert.strictEqual(call(command), null, command);
 });
 
 test('the refusal is not a blocked step', () => {
