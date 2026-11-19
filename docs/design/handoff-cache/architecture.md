@@ -131,11 +131,10 @@ Red team (the cut assumed failed, each slice's first behaviour walked against th
 
 ## 9. Acceptance evidence
 
-Where QA runs follows the QA-environment answer (itm_5556a16a5dec). Default, scratch: headless scratch sessions in a
-temp repository, a scratch deck on a spare port, a temp config dir for `pilot update` and the plain session, the
-user's transcripts read-only, never the real `~/.claude`. Real install: the same steps on the user's machine. The
-hand-off with a live crew agent (4, 7) is, under scratch, a scratch pilot session's own hand-off with a scratch
-implementer; under real install, one hand-off of a live run.
+QA runs in scratch, the user's answer on itm_5556a16a5dec: headless scratch sessions in a temp repository, a scratch
+deck on a spare port, a temp config dir for `pilot update` and the plain session, the user's transcripts read-only,
+never the real `~/.claude`. The hand-off with a live crew agent (4, 7) is a scratch pilot session's own hand-off with
+a scratch implementer.
 
 1. `node scripts/audit-session-start.mjs <repo> --first-turn` prints the two rows, and `measurements.md` holds them (1).
 2. `probes/sections.md`, `probes/restart.md` and `probes/crew.md`, each with its counted rows (2, 4, 5, 7).
