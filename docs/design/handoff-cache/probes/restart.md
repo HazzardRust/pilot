@@ -63,6 +63,7 @@ verdict: /clear stays, compact-keep-head saves 1,000 tokens in 1 of 3 runs (L7 m
 S7 read the verdict above against its bar (architecture.md §5 L1, L7: the L7 measure drops by 1,000 tokens or
 more, and the pickup runs 3 of 3) and built nothing: `hooks/handoff-mod.mjs` still runs `/clear`, no rerun. The
 only working restart, compact-keep-head, ran the pickup 3 of 3 but cut the measure in 1 run of 3 (-1,683) and
-raised it by about 1,578 in the other 2, so the drop bar fails. Line 4's row for S11's ledger:
+raised it by about 1,578 in the other 2, so the drop bar fails; the one saving is the run without the 3.26k
+attachment (above). Line 4's row for S11's ledger:
 
-ruled out: /clear stays, kept head +1,578 / -1,683 / +1,579 vs 5,506 (pickup 3 of 3); compact refused headless; branch absent
+line 4, probes/restart.md, ruled out: /clear stays, kept head +1,578 / -1,683 / +1,579 vs 5,506 (pickup 3 of 3); compact refused headless; branch absent
