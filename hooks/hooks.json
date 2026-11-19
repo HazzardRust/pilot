@@ -71,6 +71,18 @@
         ],
         "description": "Stamp who wrote a deck message from the hook payload's agent_type, overwriting any author the agent gave (spec 2 of run-record, ADR 0027)",
         "id": "pre:deck-write:deck-author"
+      },
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/shell-write-guard.js\"",
+            "timeout": 5
+          }
+        ],
+        "description": "Refuse a pilot lane's sed -i on a git-tracked file before it runs, naming Edit and Write; fails open and posts nothing (audit-f12)",
+        "id": "pre:bash:shell-write-guard"
       }
     ],
     "PostToolUse": [
