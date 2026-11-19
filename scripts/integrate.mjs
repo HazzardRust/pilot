@@ -43,6 +43,7 @@ import { RUN_BASE } from '../deck/runs.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
 import { deleteMerged } from './branches.mjs';
 import { behavioursOf } from './check-slices.mjs';
+import { checkLine, checksAt } from './checks.mjs';
 import { takeSlot } from './gate-slots.mjs';
 import { mergeIntoPilot } from './sync.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
@@ -420,6 +421,20 @@ export function integrate(branch, options = {}) {
   };
   // A red return: the line, then the merge in hand undone, its failure named on the line.
   const fail = (line, failing = []) => ({ ok: false, line: line + reset(), failing });
+
+  // A red feature tip takes no slice (ci-gate L4): refused before anything merges or pushes. Only red refuses;
+  // green, pending, none and unread leave the line as it was. A host that cannot be built reads as none.
+  if (slice && runs !== null) {
+    let said;
+    try {
+      said = checksAt({ host: host === undefined ? hostFor(cwd, { git: gitIn(cwd) }) : host, sha: start });
+    } catch {
+      said = { state: 'none' };
+    }
+    if (said.state === 'red') {
+      return { ok: false, line: `${not}: ${checkLine(said)}; fix the feature first; nothing merged or pushed`, failing: [] };
+    }
+  }
 
   try {
     // `git merge` has no --trailer: the trailers go in as the message's last paragraph.

@@ -115,7 +115,7 @@ test('with the setting unset the argv is today\'s', (t) => {
   }
 
   assert.equal(result.ok, true, result.line);
-  assert.deepEqual(asked, [
+  assert.deepEqual(asked.filter((args) => !args[1]?.includes('/check-runs')), [
     ['pr', 'list', '--state', 'all', '--json', 'number,state,baseRefName,headRefName,headRefOid,body,isCrossRepository', '--limit', '1000'],
   ]);
   const argv = fs.readFileSync(trace, 'utf8')
