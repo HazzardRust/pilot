@@ -37,6 +37,8 @@ test('pending, none, unread are told apart', () => {
   assert.deepEqual(checksAt({ host: null, sha: SHA }), { state: 'none', sha: SHA, failed: [], pending: [], why: 'no host' });
   const unread = verdictOf(throwing(Object.assign(new Error('Command failed: gh api'), { stderr: 'HTTP 401: Bad credentials\nmore' })));
   assert.deepEqual(unread, { state: 'unread', sha: SHA, failed: [], pending: [], why: 'HTTP 401: Bad credentials' });
+  const crlf = verdictOf(throwing(Object.assign(new Error('Command failed: gh api'), { stderr: 'HTTP 502: Bad gateway\r\nmore\r\n' })));
+  assert.deepEqual(parseCheckLine(checkLine(crlf)), { state: 'unread', sha7: '5fef2ab', names: ['HTTP 502: Bad gateway'] }, "Windows stderr's CRLF");
   assert.equal(verdictOf(githubHost(() => 'not json')).state, 'unread', 'an answer that is not JSON');
   assert.equal(verdictOf(githubHost(() => '{"check_runs":{}}')).state, 'unread', 'an answer that is not the shape');
   assert.equal(verdictOf(answering([runAs(0, 'completed', 'success')], 101)).state, 'unread', 'runs past the one page are never read as fewer');
@@ -55,10 +57,10 @@ test('red wins over pending; neutral and skipped pass', () => {
   }
 });
 
-/** A fake `git` whose `ls-tree` of the sha lists `files`; any other call fails the test. */
+/** A fake `git` whose `ls-tree -z` of the sha lists `files`, NUL-ended as git prints them; any other call fails the test. */
 const treeOf = (files) => (args) => {
-  assert.deepEqual(args, ['ls-tree', '-r', '--name-only', SHA, '--', '.github/workflows', '.gitlab-ci.yml']);
-  return files.map((file) => `${file}\n`).join('');
+  assert.deepEqual(args, ['ls-tree', '-r', '-z', '--name-only', SHA, '--', '.github/workflows', '.gitlab-ci.yml']);
+  return files.map((file) => `${file}\0`).join('');
 };
 const WORKFLOW = treeOf(['.github/workflows/gate.yml']);
 const BARE = treeOf([]);
@@ -84,7 +86,7 @@ test('the gate fails closed', () => {
 });
 
 test('CI configured is a workflow file or .gitlab-ci.yml in the tree', () => {
-  for (const file of ['.github/workflows/gate.yml', '.github/workflows/release.yaml', '.gitlab-ci.yml']) assert.equal(ciConfigured(treeOf([file]), SHA), true, file);
+  for (const file of ['.github/workflows/gate.yml', '.github/workflows/release.yaml', '.gitlab-ci.yml', '.github/workflows/prüfung.yml']) assert.equal(ciConfigured(treeOf([file]), SHA), true, file);
   assert.equal(ciConfigured(treeOf(['.github/workflows/README.md', '.github/workflows/old/gate.yml']), SHA), false);
   assert.equal(ciConfigured(BARE, SHA), false);
   assert.throws(() => ciConfigured(BARE, '--output=x'), /full commit sha/);

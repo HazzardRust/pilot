@@ -21,7 +21,7 @@ function fullSha(sha) {
 }
 
 /** The first line a failure says: the CLI's stderr before the error's own message, which only names the command. */
-const firstLine = (err) => String(err?.stderr?.trim() || (err?.message ?? err)).split('\n')[0] || 'no answer';
+const firstLine = (err) => String(err?.stderr?.trim() || (err?.message ?? err)).split(/\r?\n/)[0] || 'no answer';
 
 /** The **Verdict** on `sha` (L3): red if any check failed, else pending if any is, else green; none at zero. */
 export function checksAt({ host, sha }) {
@@ -44,8 +44,9 @@ export function checksAt({ host, sha }) {
 
 /** True when the tree at `sha` holds a workflow file or `.gitlab-ci.yml` (**CI configured**). `git` is argv only. */
 export function ciConfigured(git, sha) {
-  const files = git(['ls-tree', '-r', '--name-only', fullSha(sha), '--', '.github/workflows', '.gitlab-ci.yml']);
-  return files.split(/\r?\n/).some((file) => CI_FILE.test(file));
+  // `-z`: a name git would quote (non-ASCII bytes) is printed raw, so it is never missed.
+  const files = git(['ls-tree', '-r', '-z', '--name-only', fullSha(sha), '--', '.github/workflows', '.gitlab-ci.yml']);
+  return files.split('\0').some((file) => CI_FILE.test(file));
 }
 
 /**
@@ -75,7 +76,7 @@ export function checkLine({ state, sha, failed = [], pending = [], why }) {
   return `checks ${state} at ${sha.slice(0, 7)}${names.length > 0 ? `: ${names.join(', ')}` : ''}`;
 }
 
-/** A **Check line** read back, or null when `line` is not one. */
+/** A **Check line** read back, or null when `line` is not one. A name holding `, ` reads back as two. */
 export function parseCheckLine(line) {
   const [, state, sha7, names] = LINE.exec(String(line)) ?? [];
   return state === undefined ? null : { state, sha7, names: names === undefined ? [] : names.split(', ') };
