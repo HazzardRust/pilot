@@ -9,17 +9,19 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed 08c1bdf; integrate refused: B7 look owed, no browser in crew, with main (post-review nit fixes read by no reviewer)",
+      "state": "integrated (post-review nit fixes read by no reviewer; B7 look by pilot)",
       "branch": "slice/human-steps-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1",
         "S3"
-      ]
+      ],
+      "branch": "slice/human-steps-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s2"
     },
     {
       "slice": "S3",
@@ -29,16 +31,25 @@
     },
     {
       "slice": "S4",
-      "state": "implementing",
+      "state": "pushed 2126dfa; integrating (verdicts from co-pilot rerun: typescript APPROVE, security APPROVE; B1/B4 rerun 16 pass, red-before confirmed)",
       "after": [
         "S3"
       ],
       "branch": "slice/human-steps-s4",
       "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "pushed 75a4c64 (added; typescript APPROVE)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/human-steps-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s5"
     }
   ],
-  "next": "human-steps: co-pilot aabb85124eb74b4d0 live, feat/human-steps: S3 integrated 25e02ba; S1 pushed 08c1bdf, pilot did its B7 look and sent the trailer, co-pilot integrating; S4 implementing; S2 after S1. Child reports land on main: relay to the co-pilot (trailer files in scratchpad). Principles verdicts are the pilot's. Seen: closed steps thread shows a dead Reopen button.",
-  "updatedAt": "2026-11-19T20:13:16.261Z",
+  "next": "S4 integrating (pilot integrate running); S5 pushed 75a4c64, integrate after S4; S2 implementing; then base check, fundamentalist, QA",
+  "updatedAt": "2026-11-19T20:34:20.412Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -106,6 +117,30 @@
       "kind": "drain",
       "what": "S1 and S3 reports misrouted to main, relayed; B7 look done in the pilot with five screenshots read",
       "size": 14000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: first typescript-reviewer's report never reached the implementer and could not be resumed (No transcript found); second review cost ~31k tokens",
+      "evidence": "S4 report relayed by main",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate log prints `home store changed: ~/.claude/pilot/deck.json` on every run",
+      "evidence": "S4 report, npm run test:quiet",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "S4's report from the previous session reached main late; co-pilot reran both reviewers and the slice verification to integrate",
+      "evidence": "two reviewer spawns (~47k tokens) duplicating the implementer's typescript review",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: python3 absent in the shell and a heredoc fallback silently wrote nothing; Edit needs a Read first, two retries",
+      "evidence": "S5 report",
+      "size": 1
     }
   ]
 }
