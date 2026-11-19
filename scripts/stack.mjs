@@ -9,6 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { hostFor } from '../deck/host.mjs';
+import { landingMessage } from './integrate.mjs';
 import { conflictPaths, mergeResolved } from './merge-generated.mjs';
 import { assertPushable, firstLine, git as gitAt, holds, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
 import { removeWorktree } from './sync.mjs';
@@ -45,7 +46,10 @@ export function prBase({ git, host, base }) {
  * (A3) is only retargeted. `git` is `(args) => string` run in `cwd`. Answers `{ lines, exitCode }`: one line per change,
  * `level #<n>` for a PR left as it was; exit 3 a hand conflict (nothing pushed for that branch), 1 any failure,
  * which outranks a conflict on another PR (every line is still printed).
- * Never pushes the default branch or `pilot` (`assertPushable`, `FEATURE`) and never rewrites a branch.
+ * After a squash of the lower branch (`squashOf`) the PR's branch is instead rebased onto the default branch and
+ * pushed leased, then retargeted (`rebaseAfterSquash`, L3): `rebased <head> onto <main> (squash of <lower>)`, or
+ * `not rebased <head>: <why>` with the PR left on its lower base for the next restack.
+ * Never pushes the default branch or `pilot` (`assertPushable`, `FEATURE`); the squash rebase is its only rewrite.
  */
 export function restack({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args), host }) {
   let main;
@@ -67,10 +71,21 @@ export function restack({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...arg
       const base = prBase({ git, host, base: review.base });
       // prBase passes any `feat/` text; only a plain branch name reaches the edit, the refs and the lines.
       if (base !== PILOT_BRANCH && base !== main && !FEATURE.test(base)) throw new Error(`base ${JSON.stringify(base)} is not a plain feat/ branch`);
+      // A squash of the lower branch: rebased first, retargeted only once rebased, so a refused rebase keeps the
+      // lower name for the next restack to try again.
+      const lowerTip = base === main && base !== review.base ? squashOf({ cwd, git, host, lower: review.base, main }) : null;
+      const rebase = lowerTip && rebaseAfterSquash({ cwd, git, head, lower: review.base, lowerTip, main });
+      if (rebase) {
+        lines.push(rebase.line);
+        failed ||= rebase.failed === true;
+        conflicted ||= rebase.conflict === true;
+        if (!rebase.rebased) continue;
+      }
       if (base !== review.base) {
         host.edit(number, { base });
         lines.push(`retargeted #${number} to ${base}`);
       }
+      if (rebase) continue;
       const forward = base === PILOT_BRANCH ? 'level' : mergeForward({ cwd, git, head, base, main });
       if (forward === 'level') {
         if (base === review.base) lines.push(`level #${number}`);
@@ -112,6 +127,69 @@ function mergeForward({ cwd, git, head, base, main }) {
     assertPushable(refspec, { git });
     git(['push', '-q', 'origin', refspec]);
     return { line: `merged ${base} into ${head}` };
+  } finally {
+    removeWorktree(cwd, dir);
+  }
+}
+
+/**
+ * The tip `lower`'s own-repository PR was merged at, when that tip is not in origin's default branch `main`: a squash
+ * (spec 6). `null` when the PR's tip is in `main`, a merge commit, which only retargets. Read from the host and git,
+ * never from `pilot.merge` (spec 7). Throws when the merged PR names no commit id.
+ */
+function squashOf({ cwd, git, host, lower, main }) {
+  const merged = host.reviews({ head: lower, state: 'merged', limit: LIST_LIMIT }).find((pr) => pr?.crossRepo === false && pr.state === 'merged');
+  const tip = merged?.headSha;
+  if (typeof tip !== 'string' || !/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(tip)) throw new Error(`${lower}'s merged PR names no commit`);
+  // A tip this clone never fetched is in no branch restack could rewrite: nothing to rebase, so it only retargets.
+  if (!holds(cwd, ['cat-file', '-e', `${tip}^{commit}`])) return null;
+  const mainTip = git(['rev-parse', '--verify', `refs/remotes/origin/${main}^{commit}`]);
+  return holds(cwd, ['merge-base', '--is-ancestor', tip, mainTip]) ? null : tip;
+}
+
+/** Whether `head`'s landing (`landingMessage`, two parents) is on origin's pilot's first-parent history (L3). */
+function landedOnOriginPilot(cwd, git, head) {
+  const ref = `refs/remotes/origin/${PILOT_BRANCH}`;
+  if (!holds(cwd, ['rev-parse', '--verify', '-q', `${ref}^{commit}`])) return false;
+  const subject = landingMessage(head);
+  return git(['log', '--first-parent', '--format=%P%x00%s', ref])
+    .split('\n')
+    .some((line) => {
+      const [parents, said] = line.split('\0');
+      return said === subject && parents.split(' ').length === 2;
+    });
+}
+
+/**
+ * The one forced push (L3): `head` rebased in a temporary worktree onto origin's `main`, dropping what `lowerTip`
+ * (the squashed lower branch) holds, and pushed leased on the tip fetched in this restack. Only for a feature landed on
+ * pilot. Answers `{ line, rebased }`, with `failed` for a refusal the pilot must act on and `conflict` for a rebase
+ * that stopped; nothing is pushed unless `rebased`. Throws on any other failure.
+ */
+function rebaseAfterSquash({ cwd, git, head, lower, lowerTip, main }) {
+  const refuse = (why, more) => ({ line: `not rebased ${head}: ${why}`, rebased: false, ...more });
+  if (!landedOnOriginPilot(cwd, git, head)) return refuse(`not landed on ${PILOT_BRANCH}`);
+  const fetched = git(['rev-parse', '--verify', `refs/remotes/origin/${head}^{commit}`]);
+  const mainTip = git(['rev-parse', '--verify', `refs/remotes/origin/${main}^{commit}`]);
+  if (!holds(cwd, ['merge-base', '--is-ancestor', lowerTip, fetched])) return refuse(`${lower}'s merged tip is not in it`, { failed: true });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-restack-'));
+  try {
+    git(['worktree', 'add', '-q', '--detach', dir, fetched]);
+    const tried = spawnSync('git', ['rebase', '-q', '--onto', mainTip, lowerTip], { cwd: dir, encoding: 'utf8', windowsHide: true });
+    if (tried.status !== 0) {
+      spawnSync('git', ['rebase', '--abort'], { cwd: dir, windowsHide: true });
+      return refuse(`conflict rebasing onto ${main}`, { conflict: true });
+    }
+    const refspec = `${gitAt(dir, 'rev-parse', 'HEAD')}:refs/heads/${head}`;
+    assertPushable(refspec, { git });
+    try {
+      git(['push', '-q', `--force-with-lease=refs/heads/${head}:${fetched}`, 'origin', refspec]);
+    } catch (err) {
+      const now = git(['ls-remote', 'origin', `refs/heads/${head}`]).split('\t')[0];
+      if (now !== fetched) return refuse('moved since fetched', { failed: true });
+      throw err;
+    }
+    return { line: `rebased ${head} onto ${main} (squash of ${lower})`, rebased: true };
   } finally {
     removeWorktree(cwd, dir);
   }

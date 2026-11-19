@@ -66,10 +66,13 @@ function build(dir, landed) {
 
 const repos = (t, landed = true) => gitFixture(t, `restack-squash:${landed}`, (dir) => build(dir, landed));
 
+/** A host whose `reviews` filters `prs` by the query's head and state; every edit is kept in `host.edits`. */
 function stubHost(prs) {
+  const edits = [];
   return {
+    edits,
     reviews: ({ head, state }) => prs.filter((pr) => (head === undefined || pr.head === head) && (state === 'all' || pr.state === state)),
-    edit: () => ({}),
+    edit: (number, change) => (edits.push([number, change]), {}),
   };
 }
 
@@ -110,10 +113,13 @@ test('a squash leaves B with only its commits', (t) => {
   const { origin, work, aTip } = repos(t);
   const before = tip(origin, 'feat/b');
 
-  const out = restackIn(work, squashed(aTip));
+  const host = squashed(aTip);
 
-  assert.deepEqual(out.lines, ['retargeted #2 to main', 'rebased feat/b onto main (squash of feat/a)']);
+  const out = restackIn(work, host);
+
+  assert.deepEqual(out.lines, ['rebased feat/b onto main (squash of feat/a)', 'retargeted #2 to main']);
   assert.equal(out.exitCode, 0);
+  assert.deepEqual(host.edits, [[2, { base: 'main' }]]);
   assert.deepEqual(run(origin, 'log', '--format=%s', 'main..feat/b').split('\n'), ['feat b two', 'feat b one']);
   assert.ok(isAncestor(origin, tip(origin, 'main'), tip(origin, 'feat/b')), 'feat/b stands on main');
   const pushes = out.calls.filter((args) => args[0] === 'push');
@@ -132,10 +138,13 @@ test('the lease holds', (t) => {
     moved = tip(origin, 'feat/b');
   };
 
-  const out = restackIn(work, squashed(aTip), elsewhere);
+  const host = squashed(aTip);
 
-  assert.deepEqual(out.lines, ['retargeted #2 to main', 'not rebased feat/b: moved since fetched']);
+  const out = restackIn(work, host, elsewhere);
+
+  assert.deepEqual(out.lines, ['not rebased feat/b: moved since fetched']);
   assert.equal(out.exitCode, 1);
+  assert.deepEqual(host.edits, [], 'left on feat/a for the next restack');
   assert.equal(tip(origin, 'feat/b'), moved);
   assert.deepEqual(forcedUpdates(origin, 'feat/b'), []);
 });
@@ -146,7 +155,8 @@ test('an unlanded run is never rewritten', (t) => {
 
   const out = restackIn(work, squashed(aTip));
 
-  assert.deepEqual(out.lines, ['retargeted #2 to main', 'not rebased feat/b: not landed on pilot']);
+  assert.deepEqual(out.lines, ['not rebased feat/b: not landed on pilot']);
+  assert.equal(out.exitCode, 0);
   assert.equal(tip(origin, 'feat/b'), before);
   assert.deepEqual(out.calls.filter((args) => args[0] === 'push'), []);
 });
