@@ -69,7 +69,7 @@
     },
     {
       "slice": "S8",
-      "state": "pushed ea09d22 — 524+ lines waived (tests); rust Warning (on head before the +3-line go/ask change, which the co-pilot read), typescript APPROVE; Escape needs Tab first -> added slice",
+      "state": "integrated at 747a1f7 — rust Warning, typescript APPROVE; Escape needs Tab first -> added slice",
       "after": [
         "S1"
       ],
@@ -164,8 +164,8 @@
       ]
     }
   ],
-  "next": "self-pausing for context: integrate S8 (running) and S6, drain S7 finisher and integrate it, then hand back paused",
-  "updatedAt": "2026-11-19T23:11:15.903Z",
+  "next": "draining at 225k: integrate S6, wait on S7 finisher and integrate it, then hand back paused",
+  "updatedAt": "2026-11-19T23:16:10.672Z",
   "friction": [
     {
       "agent": "pilot-implementer",
