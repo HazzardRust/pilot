@@ -14,8 +14,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { KIND_GATE1, KIND_GATE2, KIND_TICKET, SIGN_OFF } from '../items.mjs';
-import { planChanges, signedSections } from '../recut.mjs';
-import { DeckRefusal, addReply, listItems, pivotTicket, postItem, resolveItem, setCoPilot } from '../store.mjs';
+import { numberedSections, planChanges } from '../recut.mjs';
+import { DeckRefusal, addReply, coPilotFor, listItems, pivotTicket, postItem, resolveItem, setCoPilot } from '../store.mjs';
 import { recutTicket, replanTicket } from '../store-tickets.mjs';
 import { shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
 
@@ -122,10 +122,8 @@ test('a changed spec line, locked decision or slice graph takes a gate1', async 
 test('a headless artefact is never proven', async (t) => {
   tempDeck(t);
   const { work, first, headless } = repo(t);
-  assert.equal(signedSections(architecture({ 8: null })), null);
-  assert.deepEqual(signedSections(architecture()), { spec: SECTIONS[2][1], locked: SECTIONS[5][1], slices: SECTIONS[8][1] });
-  assert.equal(signedSections(`${architecture()}\n## 5. Locked decisions\n\n- **L1** Two replans.\n`), null, 'a section headed twice');
-  const fenced = (after) => signedSections(architecture({ 5: `\`\`\`\n## not a heading\n\`\`\`\n${after}` })).locked;
+  assert.equal(numberedSections(`${architecture()}\n## 5. Locked decisions\n\n- **L1** Two replans.\n`).get('5'), null, 'a section headed twice');
+  const fenced = (after) => numberedSections(architecture({ 5: `\`\`\`\n## not a heading\n\`\`\`\n${after}` })).get('5');
   assert.notEqual(fenced('- **L1** One replan.'), fenced('- **L1** Two replans.'), 'an edit after a fenced ## is still read');
   const ticket = signed(work, first);
 
@@ -164,6 +162,32 @@ test('a yellow ticket moves to the merge commit', async (t) => {
   assert.deepEqual([stored.state, stored.plan.sha, stored.plan.grantedAt], ['yellow', same, grantedAt]);
   assert.equal(gate1sOn(ticket.id).length, before, 'no gate1 is posted');
   assert.equal(stored.replies.at(-1).text, `Replanned at ${same.slice(0, 7)} by pilot: unchanged`);
+});
+
+test('a yellow replan of a live ticket keeps it live', async (t) => {
+  tempDeck(t);
+  const { work, first, same } = repo(t);
+  const ticket = signed(work, first);
+  setCoPilot(ticket.id, true);
+  // A yellow ticket is live while a co-pilot holds it (store-tickets.mjs:240: never `live` on a yellow one).
+  const held = () => coPilotFor(work)?.ticket === ticket.id && coPilotFor(work).live === true;
+  assert.ok(held(), 'the co-pilot holds the ticket');
+
+  await replan(ticket.id, same);
+
+  assert.equal(reread(ticket.id).state, 'yellow');
+  assert.ok(held(), 'the replan kept its co-pilot');
+});
+
+test('a re-cut whose §3 is reworded passes and names §3', async (t) => {
+  tempDeck(t);
+  const { work, first, reworded } = repo(t);
+  const ticket = recut(work, first);
+
+  const said = (await replan(ticket.id, reworded)).content[0].text;
+
+  assert.equal(said, `Replanned ${ticket.id} at ${reworded.slice(0, 7)}: signed plan kept; reworded ${SLICE}, §3.`);
+  assert.deepEqual([reread(ticket.id).state, reread(ticket.id).recut], ['yellow', undefined]);
 });
 
 test('a ticket with no signed plan, or one a gate2 names, is never replanned', async (t) => {

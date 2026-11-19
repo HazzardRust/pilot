@@ -28,7 +28,7 @@ import {
   ownerFilter, parkedTicketOf, parkTicket, pivotTicket, recordFor, recordVerdicts, refusePoster, repliesSince, resolveItem,
   setCoPilot, setQaComment, setSlices, takeTicket,
 } from './store.mjs';
-import { SHA, driftLine, fileAt, neverGranted, numberedSections, planChanges, planDrift, signedSections } from './recut.mjs';
+import { SHA, driftLine, fileAt, neverGranted, numberedSections, planChanges, planDrift } from './recut.mjs';
 import { noteDeck } from './store-items.mjs';
 import { recutTicket, replanTicket } from './store-tickets.mjs';
 
@@ -224,6 +224,9 @@ function threadId(args) {
 /** The sha a replan diffs from: the re-cut mark's, else the signed plan's own. */
 const replanFrom = (ticket) => ticket?.recut?.from ?? ticket?.plan?.sha;
 
+/** The signed sections of architecture.md (recut-decision A1, overturned): §2 spec, §5 locked decisions, §8 slices. */
+const SIGNED = ['2', '5', '8'];
+
 /**
  * `deck_ticket replan` (recut-decision L4, A1 overturned): a re-cut or signed yellow ticket moves its plan to `sha`
  * when §2, §5 and §8 of its architecture.md read the same there as at `replanFrom` (L5); any other edit under
@@ -245,21 +248,23 @@ async function replanned(id, sha, mover) {
   const changed = await planChanges(ticket.repo, from, sha, slug);
   if (changed === null) throw new DeckRefusal(`replan ${id}: ${from.slice(0, 7)} or ${sha} cannot be read in ${ticket.repo}, so the plan is never proven unchanged; ${gate1}`);
   const [before, after] = await Promise.all([from, sha].map((at) => fileAt(ticket.repo, at, artefact)));
-  const [signedBefore, signedAfter] = [before, after].map((text) => (text === null ? null : signedSections(text)));
-  if (signedBefore === null || signedAfter === null) throw new DeckRefusal(`replan ${id}: ${artefact} lacks §2, §5 or §8 at ${from.slice(0, 7)} or ${sha.slice(0, 7)}, so the plan is never proven unchanged; ${gate1}`);
-  const moved = [['2', 'spec'], ['5', 'locked'], ['8', 'slices']].filter(([, key]) => signedBefore[key] !== signedAfter[key]).map(([n]) => `§${n}`);
+  // A missing or twice-headed §2, §5 or §8 at either sha is never proven unchanged (L5): numberedSections maps it to null.
+  const [was, now] = [before, after].map((text) => (text === null ? null : numberedSections(text)));
+  if (![was, now].every((sections) => sections !== null && SIGNED.every((n) => typeof sections.get(n) === 'string'))) {
+    throw new DeckRefusal(`replan ${id}: ${artefact} lacks §2, §5 or §8 at ${from.slice(0, 7)} or ${sha.slice(0, 7)}, so the plan is never proven unchanged; ${gate1}`);
+  }
+  const moved = SIGNED.filter((n) => was.get(n) !== now.get(n)).map((n) => `§${n}`);
   if (moved.length > 0) throw new DeckRefusal(`replan ${id}: ${moved.join(', ')} changed since ${from.slice(0, 7)}; ${gate1}`);
   // The diff proved the plan unchanged since `from`; a re-cut or replan written while git ran moved it, so it proves nothing.
   if (replanFrom(listItems().find((item) => item.id === id)) !== from) throw new DeckRefusal(`replan ${id}: it was re-cut again while its plan was read; replan it again`);
-  const reworded = [...changed.filter((file) => file !== artefact), ...(changed.includes(artefact) ? rewordedSections(before, after, artefact) : [])];
+  const reworded = [...changed.filter((file) => file !== artefact), ...(changed.includes(artefact) ? rewordedSections(was, now, artefact) : [])];
   replanTicket(id, sha);
   noteDeck(id, `Replanned at ${sha.slice(0, 7)} by ${mover}: ${reworded.length === 0 ? 'unchanged' : `reworded ${reworded.join(', ')}`}`);
   return asText(`Replanned ${id} at ${sha.slice(0, 7)}: signed plan kept${reworded.length === 0 ? '' : `; reworded ${reworded.join(', ')}`}.`);
 }
 
-/** Each `§<n>` whose body differs between two texts of the artefact, or the artefact itself when no section does. */
-function rewordedSections(before, after, artefact) {
-  const [was, now] = [before, after].map(numberedSections);
+/** Each `§<n>` whose body differs between two section maps of the artefact, or the artefact itself when no section does. */
+function rewordedSections(was, now, artefact) {
   const differs = [...new Set([...was.keys(), ...now.keys()])].filter((n) => was.get(n) !== now.get(n)).map((n) => `§${n}`);
   return differs.length > 0 ? differs : [artefact];
 }
@@ -465,7 +470,8 @@ export function callTool(name, args, deps = {}) {
     if (mover !== 'pilot' && !(mover === 'architect' && (args?.action === 'merge' || args?.action === 'replan'))) {
       throw new DeckRefusal(`deck_ticket ${args?.action} is the pilot's${args?.action === 'replan' ? ' or the architect\'s' : ''}, not ${args.author}`);
     }
-    // A re-cut whose design dir is textually unchanged keeps its signature, with no press (never-stuck spec 15, L5).
+    // One replan covers a red re-cut and a yellow signed ticket: it passes when §2, §5 and §8 of architecture.md are
+    // unchanged and names any other edit, with no press (recut-decision L4, L5).
     if (args?.action === 'replan') return replanned(id, args?.sha, mover);
     // Need and pivot are the pilot's two state writes (overview-one-ticket spec 15, 18; L7, L8).
     // The pilot reads both lanes on the line that moves one (idle-main-lane spec 5; yellow-lane spec 2), read only by the answers that say them.

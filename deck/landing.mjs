@@ -397,6 +397,9 @@ export function adoptLandings(deps = {}) {
   return Promise.all(adopted.map((gate) => follow(gate, deps, { table, clock, pollMs, now, stop }))).then(() => undefined);
 }
 
+/** A drift line without its `(<why>)`: what two lines on one thread are compared by. */
+const withoutWhy = (line) => line.replace(/^Drift \([^)]*\): /, '');
+
 /**
  * The post-landing sweep (never-stuck spec 14; recut-decision spec 2): each open, signed, never-granted yellow ticket
  * of a landed gate2's repository is checked with `planDrift`, one at a time. A drifted one is only noted: its own
@@ -422,7 +425,12 @@ export async function driftAfterLanding(gate2Id, deps = {}) {
         // Read again after the await: a grant in the meantime stamped the plan, and a granted plan is never noted (L4).
         const now = listItems().find((item) => item.id === id);
         if (!neverGranted(now) || !isOpen(now) || stateOf(now) !== 'yellow') continue;
-        noteDeck(id, driftLine(drift, why));
+        // planDrift is cumulative, so a drift already noted reads the same at every later landing: one line per drift
+        // (spec 2). A replan since moved the plan, so the same text after it is a new drift.
+        const line = driftLine(drift, why);
+        const last = now.replies?.findLast((reply) => reply.author === 'deck' && /^(Drift \(|Replanned at )/.test(reply.text ?? ''))?.text;
+        if (last?.startsWith('Drift (') && withoutWhy(last) === withoutWhy(line)) continue;
+        noteDeck(id, line);
         noted.push(id);
         named.push(`${id} (${drift.state === 'gone' ? `plan ${drift.sha.slice(0, 8)} gone` : `${drift.files.length} file${drift.files.length === 1 ? '' : 's'}`})`);
       } catch (err) {

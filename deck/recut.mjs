@@ -125,25 +125,14 @@ export function numberedSections(text) {
   let fenced = false;
   for (const line of String(text).split(/\r?\n/)) {
     if (/^\s*(```|~~~)/.test(line)) fenced = !fenced;
-    const heading = fenced || !/^##\s/.test(line) ? undefined : (/^##\s+(\d+)\./.exec(line)?.[1] ?? null);
-    if (heading === undefined) body?.push(line);
-    else if (heading !== null && !sections.has(heading)) sections.set(heading, (body = []));
-    else {
-      if (heading !== null) sections.set(heading, null);
-      body = undefined;
-    }
+    const isHeading = !fenced && /^##\s/.test(line);
+    if (!isHeading) body?.push(line);
+    const number = isHeading ? /^##\s+(\d+)\./.exec(line)?.[1] : undefined;
+    // A heading ends the section; a new number opens one, a number headed again maps to null.
+    if (isHeading) body = number === undefined || sections.has(number) ? undefined : [];
+    if (number !== undefined) sections.set(number, body ?? null);
   }
   return new Map([...sections].map(([n, lines]) => [n, lines === null ? null : lines.join('\n').trim()]));
-}
-
-/**
- * The signed sections of architecture.md (recut-decision A1, overturned): §2 spec, §5 locked decisions and §8 slices,
- * or null when any is missing or headed twice, since a headless artefact is never proven unchanged (L5).
- */
-export function signedSections(text) {
-  const sections = numberedSections(text);
-  const [spec, locked, slices] = ['2', '5', '8'].map((n) => sections.get(n));
-  return [spec, locked, slices].every((one) => typeof one === 'string') ? { spec, locked, slices } : null;
 }
 
 /** The text of `file` at commit `sha` in `repoDir`, or null when git cannot show it. Local objects only. */

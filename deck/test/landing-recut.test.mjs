@@ -22,6 +22,8 @@ import { addReply, listItems, postItem, registerRun, requestSwitch, resolveItem,
 import { storeFile } from '../store-core.mjs';
 import { shapedTicketBody, takeLive, tempDeck, withTicket } from '../testUtils.mjs';
 
+const { callTool } = await import('../server.mjs');
+
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 // A copy of a slice file the architect wrote, so the owned paths come from the real producer's format.
 const SLICE = path.resolve(import.meta.dirname, 'fixtures/slice-owned.md');
@@ -48,16 +50,16 @@ function repos(t) {
     write('docs/design/x/slices/S1.md', fs.readFileSync(SLICE, 'utf8'));
     git(work, 'push', '-q', 'origin', 'HEAD:pilot');
     git(work, 'checkout', '-q', '-b', 'feat/x');
-    write(ARTEFACT, '# X\n');
+    write(ARTEFACT, '# X\n\n## 2. Spec\n\n| 1 |\n\n## 5. Locked decisions\n\n- L1\n\n## 8. Slices\n\n| S1 |\n');
     git(work, 'push', '-q', 'origin', 'feat/x');
     return { work, plan: { artefact: ARTEFACT, branch: 'feat/x', sha: git(work, 'rev-parse', 'HEAD') } };
   });
 }
 
 /** The landing: `file` changed on origin's `pilot`, from `work`. */
-function landOn(work, file) {
+function landOn(work, file, text = `changed ${file}\n`) {
   git(work, 'checkout', '-q', '-B', 'pilot', 'origin/pilot');
-  fs.writeFileSync(path.join(work, file), `changed ${file}\n`);
+  fs.writeFileSync(path.join(work, file), text);
   git(work, 'commit', '-q', '-am', `land ${file}`);
   git(work, 'push', '-q', 'origin', 'pilot');
 }
@@ -111,6 +113,52 @@ test('a landing over an owned file leaves the ticket yellow', async (t) => {
   assert.equal(line.text, `Drift after this landing: ${ticket.id} (1 file)`);
   assert.equal(line.from, 'deck');
   assert.ok(Number.isInteger(line.seq), 'the line wakes the pilot');
+});
+
+test('a drift is noted once: a later landing repeats nothing, one over a new owned file notes again (spec 2)', async (t) => {
+  tempDeck(t);
+  const { work, plan } = repos(t);
+  const first = aLandedGate2(work);
+  const ticket = signed(work, plan);
+  landOn(work, 'deck/store-items.mjs');
+  await driftAfterLanding(first.id);
+  const second = aGate2(work);
+  settleLanding(second.id, { ok: true, sha: '5e6f7a8', line: 'landed feat/z on pilot at 5e6f7a8' });
+  fs.writeFileSync(path.join(work, 'README.md'), 'not owned\n');
+  git(work, 'add', 'README.md');
+  landOn(work, 'README.md');
+
+  assert.deepEqual(await driftAfterLanding(second.id), [], 'the same drift is not noted again');
+  assert.equal(deckLines(ticket.id).length, 1);
+  assert.ok(!deckLines(second.id).some((text) => text.startsWith('Drift after this landing')));
+
+  const third = aGate2(work);
+  settleLanding(third.id, { ok: true, sha: '9b0c1d2', line: 'landed feat/w on pilot at 9b0c1d2' });
+  fs.writeFileSync(path.join(work, 'deck/server-wait.mjs'), 'new\n');
+  git(work, 'add', 'deck/server-wait.mjs');
+  landOn(work, 'deck/server-wait.mjs');
+
+  assert.deepEqual(await driftAfterLanding(third.id), [ticket.id], 'a drift that grew is noted');
+  assert.equal(deckLines(ticket.id).at(-1), 'Drift (landing 9b0c1d2): deck/server-wait.mjs, deck/store-items.mjs owned by S1; plan kept, ticket yellow');
+});
+
+test('after a replan the same drift is a new one, and is noted', async (t) => {
+  tempDeck(t);
+  const { work, plan } = repos(t);
+  const first = aLandedGate2(work);
+  const ticket = signed(work, plan);
+  landOn(work, 'deck/store-items.mjs');
+  await driftAfterLanding(first.id);
+  git(work, 'checkout', '-q', 'feat/x');
+  git(work, 'merge', '-q', '--no-edit', 'origin/pilot');
+  git(work, 'push', '-q', 'origin', 'feat/x');
+  await callTool('deck_ticket', { id: ticket.id, action: 'replan', sha: git(work, 'rev-parse', 'HEAD') });
+  const second = aGate2(work);
+  settleLanding(second.id, { ok: true, sha: '5e6f7a8', line: 'landed feat/z on pilot at 5e6f7a8' });
+  landOn(work, 'deck/store-items.mjs', 'changed again\n');
+
+  assert.deepEqual(await driftAfterLanding(second.id), [ticket.id]);
+  assert.equal(deckLines(ticket.id).at(-1), 'Drift (landing 5e6f7a8): deck/store-items.mjs owned by S1; plan kept, ticket yellow');
 });
 
 test('a granted ticket is never re-cut', async (t) => {
