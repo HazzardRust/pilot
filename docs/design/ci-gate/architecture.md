@@ -164,7 +164,7 @@ adds at most 2 lines to each.
 
 1. `pilot checks <#121 head>` prints the red line naming 3 runs, exit 1 (spec 7).
 2. In the scratch repo with `pilot gh-stub` answering a red check run: `pilot integrate slice/a` refuses (3);
-   `pilot land` refuses naming the check, pilot unmoved (1, 9); answered pending, both say pending; green, both pass.
+   `pilot land` refuses naming the check, pilot unmoved (1, 9); answered pending, land says pending and integrate says nothing (L4); green, both pass.
 3. `pilot base` in the scratch repo with a red stub prints `(CI red at …)` (6).
 4. A gate2 posted on the scratch deck without `checks` for a repo with a workflow file is refused; with the green
    line it posts (4).
