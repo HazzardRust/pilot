@@ -1,6 +1,6 @@
 # ci-gate: the host's CI is a gate at every step
 
-Ticket `itm_e5e0bc09827d` · base `pilot` (35868866) · merge thread `itm_e5218f28dd12` (merged none) · ADR NNNN
+Ticket `itm_e5e0bc09827d` · base `pilot` (ebe5233c) · merge thread `itm_e5218f28dd12` (merged none) · ADR NNNN
 
 ## 1. Problem
 
@@ -18,7 +18,6 @@ to be a gate at every step. Read live on 2026-11-20: PR #121's head `5fef2ab` ha
 | 2 | The lander runs `pilot checks <feat sha> --wait` before it says `Land again`; a red result is its hand-back line, verbatim. | 1 prose pin on `agents/pilot-lander.md`: the command precedes `Land again`, and red goes to `main`. |
 | 3 | `pilot integrate <slice>` refuses to merge onto a feature tip whose checks are red, nothing merged, naming the checks; the co-pilot (and the pilot on the short path) runs `pilot checks --wait` after each integration and routes red as a failed gate, never integrating over it. | 1 fixture integrate test: red tip gives `NOT integrated … checks red at <sha7>: <names>`, HEAD unmoved; prose pins on the co-pilot and `agents/pilot.md`. |
 | 4 | A gate2 on a repository with CI configured carries `checks`, the `pilot checks <sha>` line at the gate2's own sha, green; one missing, at another sha, or not green is refused naming why. | Deck tests: 3 refusals and 1 accept; a scratch repo with no workflow file posts without the field, so today's gate2 tests stay green unedited. |
-| 5 | *assumed (A4, `itm_a01115b80bcf`)*: no host branch protection on `pilot`; the code gates of lines 1, 3, 4 are the enforcement. The walkthrough reads main's ruleset 25518896 and shows its `required_status_checks`. | The walkthrough's `gh api repos/{owner}/{repo}/rulesets/25518896` step; no protection write by any agent. |
 | 6 | `pilot base` adds `(CI red at <sha7>: <names>)` when the base tip's checks are red, and `(CI pending at <sha7>)` when pending; Gate runs on every push to `pilot`. | Base test with a fake host: each of 2 suffixes once; `gate-workflow.test.mjs` pins `pilot` on push; a landing's push shows 1 Gate run on GitHub. |
 | 7 | `pilot checks [<ref>] [--wait <min>]` prints one line, `checks <state> at <sha7>[: <names>]`, state one of green, red, pending, none, unread, exit 0, 1, 4, 5, 6; `--wait` polls until not pending or the bound (default 20 min, max 60). | CLI tests on a fake host, one per state; live on #121's head prints `checks red at 5fef2ab: gate (ubuntu-latest), gate (windows-latest), gate (macos-latest)`. |
 | 8 | The GitLab adapter answers the same `checks` verb from the commit's statuses, so `pilot.host gitlab` is gated the same. | Contract test over a fake `glab` run: 3 statuses, failed, running, success, map to red, pending, green. |
@@ -26,7 +25,8 @@ to be a gate at every step. Read live on 2026-11-20: PR #121's head `5fef2ab` ha
 | 10 | practitioner: release engineer (the sha, not the branch) — every read is of one full commit sha, never "the PR" or a branch name, so a push after the read cannot slip past it. | `checksAt` refuses a non-full-sha argument before any `run`; land reads the tip it is about to merge. |
 
 Lines 1-4 and 6 sharpen the draft; 7 and 8 are implied (one reader for every step; other-host parity); 9 and 10
-are *assumed* practitioner lines inside the ask. The draft's line 5 cannot mean a required check here (A4).
+are *assumed* practitioner lines inside the ask. The draft's line 5 (a required check on `pilot`) is dropped (L12):
+land pushes a fresh merge commit CI never ran, so a required check would refuse every landing.
 
 ## 3. Findings
 
@@ -50,7 +50,7 @@ are *assumed* practitioner lines inside the ask. The draft's line 5 cannot mean 
 - Tests: `deck/test/host-contract.test.mjs` (fake runs), `scripts/test/host-bar.test.mjs`,
   `scripts/test/lib/land-repos.mjs:104` `fakeGh` (throws on an unknown verb: every land test breaks unless it
   answers `checks`), `scripts/test/integrate.test.mjs:60` (api answers `me\n`), `scripts/test/gate-workflow.test.mjs:160-164`.
-- Spawns: about 12088 against `SPAWN_CEILING` 12100 (`scripts/gate.mjs:45`); coverage-cell raises it to 13300.
+- Spawns: `SPAWN_CEILING` 13300 (`scripts/gate.mjs:46`) since coverage-cell landed at ebe5233.
 
 ### Seams
 
@@ -90,33 +90,35 @@ Deletion test: without **Checks**, land, integrate, base, the CLI and the gate2 
 - **L8** Tests stay under the spawn ceiling: verdict and gate logic tested pure over fake runs (0 spawns); one
   fixture test each for land, integrate and base, reusing the cached fixtures (about 35 spawns each).
 - **L9** Nothing a Gate 1 sign-off needs lives only in a slice file.
+- **L10** Pending (`itm_db635f8bd508`, "Refuse, lander waits"): land and gate2 refuse pending; the lander and
+  co-pilot wait with `pilot checks --wait`. Trades: a press after a late push is refused once. Rejected: land polls
+  inside its 30 min child.
+- **L11** Override (`itm_be1089fc71d0`, "No override"): no override path; red is fixed or rerun on the host.
+  Trades: the flaky idle-wake test blocks landings after 10:20 UTC until ci-green lands. Rejected: a user-only
+  `Land over red` reply.
+- **L12** Spec 5 (`itm_a01115b80bcf`, "Drop line 5, enforce in the tools"): no host protection on `pilot`; lines
+  1, 3, 4 enforce. Rejected: landing by host merge (`gh pr merge`), a rewrite of land overlapping audit-f14.
+- **L13** Depth (`itm_01944e4474fe`, "every").
 
 ## 6. Assumed decisions
 
-- **A1** Pending (main's thread): land and gate2 refuse pending; the lander and co-pilot wait with `pilot checks
-  --wait`. Trades: a press after a late push is refused once. Rejected: land polls inside its 30 min child.
 - **A2** No CI: `none` refuses at land and gate2 where CI is configured, passes noted where not; `pilot.host none`
   passes noted (`checks none at <sha7>: no host`). Trades: a repo whose workflow never triggers on PRs is blocked.
   Rejected: none always passes, which reopens the incident when a trigger is dropped.
-- **A3** Override (`itm_be1089fc71d0`): no override path; red is fixed or rerun on the host. Trades: the known
-  flaky idle-wake test blocks landings after 10:20 UTC until ci-green lands. Rejected: a user-only `Land over red`.
-- **A4** Spec 5 (`itm_a01115b80bcf`): dropped as above. Rejected: landing by host merge (`gh pr merge`), a
-  rewrite of land that overlaps audit-f14.
 - **A5** The gate2 `checks` field is QA's word, not re-read by the daemon (L6). Trades: a gate2 can carry a stale
   green line at its sha; land re-reads. Rejected: a daemon child per gate2 post.
 - **A6** QA environment (`itm_8677fb5e6e5e`, answered "Stub + live read", the default): scratch repo with `pilot gh-stub` replies, plus one live read-only
   `pilot checks` on #121's head. Rejected: a throwaway live PR.
 - **A7** Overlaps: audit-f14 touches `scripts/integrate.mjs` and `scripts/land.mjs` (S3, S4 rebase on it; L1
   keeps reads PR-free); recut-decision touches `deck/server-tools.mjs` (S5 adds one call there) and
-  `deck/landing.mjs` (untouched). ci-green must land before this run lands, or A3's cost bites daily.
-- **A8** Depth `itm_01944e4474fe` (main's): every.
-- **A9** Spawns: S3, S4, S6 add one fixture test each (about 105 spawns); they need coverage-cell's 13300 ceiling on
-  `pilot` and stop to ask `main` if it is not there.
+  `deck/landing.mjs` (untouched). ci-green must land before this run lands, or L11's cost bites daily.
+- **A9** Spawns: S3, S4, S6 add one fixture test each (about 105 spawns), under coverage-cell's `SPAWN_CEILING`
+  13300, on `pilot` since ebe5233; each slice prints the gate's spawn count.
 
 ## 7. Out of scope
 
-Host branch protection on `pilot` (A4); landing by host merge; re-running CI from the pilot; commit statuses
-from non-Actions GitHub apps (check runs only); making the suite green (ci-green); an override path (A3).
+Host branch protection on `pilot` (L12); landing by host merge; re-running CI from the pilot; commit statuses
+from non-Actions GitHub apps (check runs only); making the suite green (ci-green); an override path (L11).
 
 ## 8. Slices
 
@@ -130,7 +132,7 @@ Width 6; longest stem 3
 | S4 Integrate refuses a red feature tip | 3 | `scripts/integrate.mjs`, `scripts/test/integrate-checks.test.mjs` (new) | S1 (`checksAt`) | typescript | [S4](slices/S4.md) |
 | S5 A gate2 carries its green checks | 4 | `deck/items.mjs`, `deck/gate2-checks.mjs` (new), `deck/server-tools.mjs`, `deck/test/gate2-checks.test.mjs` (new) | S1 (`parseCheckLine`) | typescript, security | [S5](slices/S5.md) |
 | S6 `pilot base` says a red base | 6 | `scripts/base.mjs`, `.github/workflows/gate.yml`, `scripts/test/gate-workflow.test.mjs`, `scripts/test/base-checks.test.mjs` (new) | S1 (`checksAt`) | typescript | [S6](slices/S6.md) |
-| S7 The crew reads checks before each move | 2, 3, 4, 5 | `agents/pilot-lander.md`, `agents/pilot-co-pilot.md`, `agents/pilot.md`, `agents/pilot-qa.md`, `scripts/test/ci-gate-wording.test.mjs` (new) | S2 (`pilot checks --wait`), S5 (the `checks` field) | typescript, security | [S7](slices/S7.md) |
+| S7 The crew reads checks before each move | 2, 3, 4 | `agents/pilot-lander.md`, `agents/pilot-co-pilot.md`, `agents/pilot.md`, `agents/pilot-qa.md`, `scripts/test/ci-gate-wording.test.mjs` (new) | S2 (`pilot checks --wait`), S5 (the `checks` field) | typescript, security | [S7](slices/S7.md) |
 | S8 GitLab answers the same checks | 8 | `deck/host-gitlab.mjs`, `deck/test/host-gitlab-checks.test.mjs` (new) | S1 (the **Host** `checks` verb) | typescript, security | [S8](slices/S8.md) |
 
 S1 is the walking skeleton: a real `gh` read of one commit's check runs, through the **Host** seam, to the one
@@ -152,8 +154,7 @@ adds at most 2 lines to each.
 4. A gate2 posted on the scratch deck without `checks` for a repo with a workflow file is refused; with the green
    line it posts (4).
 5. The lander's, co-pilot's and QA's definitions show `pilot checks` before each move (2, 3).
-6. `gh api …/rulesets/25518896` lists `required_status_checks` on main (5).
-7. After landing, a Gate run appears on GitHub for the push to `pilot` (6).
+6. After landing, a Gate run appears on GitHub for the push to `pilot` (6).
 
 ## 10. Status
 
@@ -165,6 +166,6 @@ adds at most 2 lines to each.
 | S4 | planned | | | | S1 | 3 |
 | S5 | planned | | | | S1 | 4 |
 | S6 | planned | | | | S1 | 6 |
-| S7 | planned | | | | S2, S5 | 2, 3, 4, 5 |
+| S7 | planned | | | | S2, S5 | 2, 3, 4 |
 | S8 | planned | | | | S1 | 8 |
-| CI is a gate at every step | planned | feat/ci-gate | | | S1-S8 | 1-10 |
+| CI is a gate at every step | planned | feat/ci-gate | | | S1-S8 | 1-4, 6-10 |
