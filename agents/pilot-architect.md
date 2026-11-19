@@ -177,7 +177,7 @@ The artefact is a file in the repository, so it is written in your own
 worktree on the branch the brief names, cut from `<base branch>`
 on `<remote>`, as `pilot base` names them (`origin` when it
 names none; under `local`, drop `<remote>/`), never the shared checkout, which may hold another session's work.
-`<base>` is the branch `pilot base` names (the default branch, `pilot` or `feat/<N>`), in each ref below and step 2:
+`<base>` is what `pilot base` prints, in each ref below and step 2:
 
 ```bash
 git fetch --all && git worktree add -b design/<slug> <path> <remote>/<base>
