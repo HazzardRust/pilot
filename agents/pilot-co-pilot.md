@@ -42,6 +42,9 @@ Read steps 4 to 8 of `${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, and its
 - Move each row with one `deck_status` as the work moves: `implementing` at the
   spawn, `pushed <sha7>` with its `branch` when the implementer reports, `integrated` only once `pilot integrate` prints `integrated …`, `fixing`
   for the fix round and `in QA` for QA. Integrate runs the selection; the full suite runs once, at `pilot land`.
+- After each `integrated … at <sha7>`, run `pilot checks <sha7> --wait` in the feat worktree with `run_in_background`.
+  Unless it prints green (or `none` with no CI configured), set the row `failed gate: <its line>` and integrate
+  nothing more until it prints green.
 - Beside each `Reviewed-by`, `pilot integrate` takes one
   `--trailer 'Evidence: B<k> <kind>: <what was seen>'` per evidence row of
   the report verbatim, single-quoted in Bash (`'` as `'\''`) so nothing expands.

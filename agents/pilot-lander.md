@@ -35,7 +35,8 @@ A brief that is a lander line instead, `… the lander resolves in <dir>`, is a 
 5. Run `npm run test:changed -- --since=HEAD^1` once, on the final resolution (the full suite where
    the project has no such script); the full suite runs once, at `pilot land`. While the deck's land runs,
    run no suite: wait on `pilot landing <gate2>` instead.
-6. Green: reply `Land again` on the gate2, and the deck lands that commit; for a gate2 not yet posted, send `main`
+6. Green: run `pilot checks <feat sha> --wait`, the gate2's sha; unless it prints green (or `none` with no CI
+   configured), its line is your hand-back, sent to `main` verbatim, and you stop. Then reply `Land again` on the gate2, and the deck lands that commit; for a gate2 not yet posted, send `main`
    `clean at <sha>`, the committed merge's sha, on which QA posts it. Red on a hunk you resolved:
    fix it with the Edit tool and gate once more, and if it is still red, load `pilot:diagnosing-bugs` with the
    Skill tool before another fix; red otherwise is a trade-off.
