@@ -1,6 +1,6 @@
 # coverage-cell: the evidence runner's coverage cell is not refused by auto mode
 
-Ticket `itm_e3120951f457` · base `feat/handoff-cache` (e578f942, chained) · design branch `design/coverage-cell`
+Ticket `itm_e3120951f457` · base `pilot` (ffeb7306) · design branch `design/coverage-cell`
 
 ## 1. Problem
 
@@ -31,9 +31,8 @@ Cannot mean here: a reworded, split or prefixed cell; an allow rule; the six non
 
 | What | Where |
 | --- | --- |
-| The cell, Node column | `agents/pilot-evidence-runner.md:60`; cwd · env · command shape, `$TEST` vetted at `:29-31` |
-| The same cell, env-less, not yet landed | `origin/feat/crew-refusals:agents/pilot-evidence-runner.md:64` (crew-refusals removes the `HOME=$S` env from every cell) |
-| Pin on the table's shape | `scripts/test/pilot-agents.test.mjs:1101-1120`: every cell matches `` `$W` · `HOME=$S …` · `<cmd>` `` |
+| The cell, Node column | `agents/pilot-evidence-runner.md:64`; cwd · command shape, env-less since crew-refusals (ffeb730), `$TEST` vetted at `:29-31` |
+| Pin on the table's shape | `scripts/test/pilot-agents.test.mjs:1100-1116`: every cell matches `` ^`$W` · `<cmd>`$ `` and carries no `HOME=`, `USERPROFILE=` or `PILOT_DECK_DIR=` |
 | c8 is Node's own V8 coverage plus a converter | c8 README: "uses native V8 coverage", `NODE_V8_COVERAGE` as its temp dir |
 | The suite keeps the env down to every node child | `scripts/gate.mjs:75-90` (`gateEnv` spreads `env`), `:302-304` |
 | The fundamentalist already installs `node_modules` | `agents/pilot-fundamentalist.md:49-54`; the gate says so when it is missing, `scripts/gate.mjs:356` |
@@ -118,7 +117,7 @@ Width 1; longest stem 2
 Walking skeleton: S1, a real suite's raw V8 coverage in, one percentage out.
 
 Red team: attacked S1 b1 against `gate.mjs` (does the env reach the test children: yes, `gateEnv` spreads it), the
-pin at `pilot-agents.test.mjs:1101` (the env segment survives; `NODE_V8_COVERAGE` goes in the command segment), and
+pin at `pilot-agents.test.mjs:1112-1113` (one command segment, no env override list hit; `NODE_V8_COVERAGE` sits inside the command), and
 `${CLAUDE_PLUGIN_ROOT}` expansion in agent prose (expanded at load, seen in this run's own definition). Finds:
 - red team: A1's number on this repo reads hundreds of per-process JSON files (about 900 node processes per suite,
   `gate.mjs:38`); S2 gets a run behaviour bounding the script's runtime at 60 s.
@@ -128,7 +127,7 @@ pin at `pilot-agents.test.mjs:1101` (the env segment survives; `NODE_V8_COVERAGE
 
 ## 9. Acceptance evidence
 
-1. `node scripts/diff-coverage.mjs <v8-dir> origin/feat/handoff-cache` in the feature worktree prints a
+1. `node scripts/diff-coverage.mjs <v8-dir> origin/pilot` in the feature worktree prints a
    `Diff coverage: <n>%` line (spec 3).
 2. The fixture tests: 75% on 3 of 4, the never-called lines named, a `.ts` file listed as not measured (spec 3, 4).
 3. The Node coverage cell in `agents/pilot-evidence-runner.md` beside §5 L2: no `npx`, no `uvx` (spec 2).

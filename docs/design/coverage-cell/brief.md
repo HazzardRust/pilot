@@ -14,9 +14,8 @@ Remote: origin
 
 ## Base and PR target
 
-The base is `feat/coverage-cell`, cut at Gate 1 from `origin/feat/handoff-cache` (e578f942 at design time, a chained
-run). Branches: `slice/coverage-cell-s<n>`, pushed for the pilot to integrate; no slice PR. The PR target is
-`feat/handoff-cache` while that run is open, `pilot` once it has landed.
+The base is `feat/coverage-cell`, cut at Gate 1 from `origin/pilot` (ffeb7306). Branches: `slice/coverage-cell-s<n>`,
+pushed for the pilot to integrate; no slice PR. The PR target is `pilot`.
 
 ## PR titles
 
@@ -64,8 +63,8 @@ None recorded.
 
 ## crew-refusals
 
-`feat/crew-refusals` edits the same runner table line and is landing on `pilot`. If it is on `pilot` when S2 starts,
-write the cell in its env-less shape (architecture.md §6 A5). Its L1 binds this run (§5 L2).
+`feat/crew-refusals` landed on `pilot` at ffeb730 and removed the env segment from every runner cell, so S2
+writes the cell env-less (architecture.md §6 A5). Its L1 binds this run (§5 L2).
 
 ## Diff limit
 
