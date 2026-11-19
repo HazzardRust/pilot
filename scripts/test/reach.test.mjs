@@ -32,13 +32,13 @@ test('the plugin id and the rules root sit where the Start names them', (t) => {
   assert.equal(rootRules({ home }), path.join(home, '.claude', 'pilot', 'rules-root', '.claude', 'rules'));
 });
 
-test('no reach file reads as everything, not chosen', (t) => {
+test('no reach file reads nothing, not chosen', (t) => {
   const home = fakeHome(t);
-  assert.deepEqual(readReach({ home }), { level: 'everything', chosen: false });
+  assert.deepEqual(readReach({ home }), { level: 'nothing', chosen: false });
 
   for (const text of ['{not json', '{"level":"most"}', '[]', 'null', '']) {
     writeReach(home, text);
-    assert.deepEqual(readReach({ home }), { level: 'everything', chosen: false }, `malformed: ${JSON.stringify(text)}`);
+    assert.deepEqual(readReach({ home }), { level: 'nothing', chosen: false }, `malformed: ${JSON.stringify(text)}`);
   }
 
   for (const level of ['nothing', 'rules', 'everything']) {
@@ -57,6 +57,6 @@ test('the plan matches the level table', () => {
 test('a non-string level reads as not chosen', (t) => {
   const home = fakeHome(t);
   writeReach(home, '{"level":["nothing"]}');
-  assert.deepEqual(readReach({ home }), { level: 'everything', chosen: false });
+  assert.deepEqual(readReach({ home }), { level: 'nothing', chosen: false });
   assert.throws(() => rulesPlan(['nothing']), /reach/);
 });

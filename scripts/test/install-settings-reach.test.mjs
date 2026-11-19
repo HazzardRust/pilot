@@ -71,20 +71,76 @@ test('statusLine false removes the pilots own status line and subagent status li
 });
 
 test('repair at nothing never writes statusLine', (t) => {
-  // A pilot status line left at an older root: today's repair would repoint it. At `nothing`
-  // the user's statusLine is not the pilot's to write, so the file stays byte for byte.
-  const stale = JSON.stringify({ statusLine: statusLineSetting(OLD_ROOT) }, null, 2);
-  const { home, settingsPath } = fixture(t, stale, 'nothing');
+  // At `nothing` the user's statusLine is not the pilot's to write: a fixture without one gains none.
+  const bare = fixture(t, '{}\n', 'nothing');
+  const report = repairSettings({ home: bare.home, settingsPath: bare.settingsPath, pluginRoot: PLUGIN_ROOT });
+  assert.equal(fs.readFileSync(bare.settingsPath, 'utf8'), '{}\n');
+  assert.equal(report.changed, false);
+});
+
+/** An install from before the reach: the plugin and both pilot status lines in user settings. */
+const oldInstall = () =>
+  JSON.stringify(
+    {
+      enabledPlugins: { 'other@market': true, 'pilot@pilot': true },
+      statusLine: statusLineSetting(OLD_ROOT),
+      subagentStatusLine: subagentStatusLineSetting(OLD_ROOT),
+      permissions: { allow: ['mcp__plugin_pilot_deck__*', 'Bash(npm test)'] },
+      theme: 'dark',
+    },
+    null,
+    2,
+  );
+
+test('an old install with no reach file is cleaned once', (t) => {
+  const { home, settingsPath } = fixture(t, oldInstall());
 
   const report = repairSettings({ home, settingsPath, pluginRoot: PLUGIN_ROOT });
 
-  assert.equal(fs.readFileSync(settingsPath, 'utf8'), stale);
-  assert.equal(report.changed, false);
+  const after = readJson(settingsPath);
+  assert.equal(report.changed, true);
+  assert.equal(Object.hasOwn(after.enabledPlugins, 'pilot@pilot'), false);
+  assert.equal(Object.hasOwn(after, 'statusLine'), false);
+  assert.equal(Object.hasOwn(after, 'subagentStatusLine'), false);
+  // The user's own settings, and the allow rules a `pilot start` session relies on, stay.
+  assert.deepEqual(after.enabledPlugins, { 'other@market': true });
+  assert.deepEqual(after.permissions, { allow: ['mcp__plugin_pilot_deck__*', 'Bash(npm test)'] });
+  assert.equal(after.theme, 'dark');
 
-  // And a fixture without one gains none.
-  const bare = fixture(t, '{}\n', 'nothing');
-  repairSettings({ home: bare.home, settingsPath: bare.settingsPath, pluginRoot: PLUGIN_ROOT });
-  assert.equal(fs.readFileSync(bare.settingsPath, 'utf8'), '{}\n');
+  const cleaned = fs.readFileSync(settingsPath, 'utf8');
+  const again = repairSettings({ home, settingsPath, pluginRoot: PLUGIN_ROOT });
+  assert.equal(again.changed, false);
+  assert.equal(fs.readFileSync(settingsPath, 'utf8'), cleaned, 'a second run changes 0 bytes');
+});
+
+test('a chosen nothing cleans an old install the same way', (t) => {
+  const { home, settingsPath } = fixture(t, oldInstall(), 'nothing');
+  repairSettings({ home, settingsPath, pluginRoot: PLUGIN_ROOT });
+  assert.equal(Object.hasOwn(readJson(settingsPath), 'statusLine'), false);
+  assert.equal(Object.hasOwn(readJson(settingsPath).enabledPlugins, 'pilot@pilot'), false);
+});
+
+test('a written false for the plugin is left byte for byte', (t) => {
+  const off = JSON.stringify({ enabledPlugins: { 'pilot@pilot': false } }, null, 2);
+  const chosen = fixture(t, off, 'nothing');
+  const report = repairSettings({ home: chosen.home, settingsPath: chosen.settingsPath, pluginRoot: PLUGIN_ROOT });
+  assert.equal(report.changed, false);
+  assert.equal(fs.readFileSync(chosen.settingsPath, 'utf8'), off);
+});
+
+test('an enabledPlugins that is not an object is left alone by the repair, which does not throw', (t) => {
+  const raw = JSON.stringify({ enabledPlugins: ['pilot@pilot'] }, null, 2);
+  const { home, settingsPath } = fixture(t, raw);
+  const report = repairSettings({ home, settingsPath, pluginRoot: PLUGIN_ROOT });
+  assert.equal(report.changed, false);
+  assert.equal(fs.readFileSync(settingsPath, 'utf8'), raw);
+});
+
+test('repair at everything keeps the plugin and repoints the status lines', (t) => {
+  const { home, settingsPath } = fixture(t, oldInstall(), 'everything');
+  repairSettings({ home, settingsPath, pluginRoot: PLUGIN_ROOT });
+  assert.equal(readJson(settingsPath).enabledPlugins['pilot@pilot'], true);
+  assert.deepEqual(readJson(settingsPath).statusLine, statusLineSetting(PLUGIN_ROOT));
 });
 
 test('an enabledPlugins that is not an object is refused and left byte for byte', (t) => {
@@ -94,32 +150,4 @@ test('an enabledPlugins that is not an object is refused and left byte for byte'
     assert.equal(fs.readFileSync(settingsPath, 'utf8'), raw);
     assert.deepEqual(fs.readdirSync(path.dirname(settingsPath)), ['settings.json'], 'no backup either');
   }
-});
-
-test('repair with no reach file repoints as today', (t) => {
-  const { home, settingsPath } = fixture(
-    t,
-    JSON.stringify(
-      { statusLine: statusLineSetting(OLD_ROOT), subagentStatusLine: subagentStatusLineSetting(OLD_ROOT) },
-      null,
-      2,
-    ),
-  );
-
-  const report = repairSettings({ home, settingsPath, pluginRoot: PLUGIN_ROOT });
-
-  assert.equal(report.statusLine, 'repaired');
-  assert.equal(report.subagentStatusLine, 'repaired');
-  assert.deepEqual(readJson(settingsPath).statusLine, statusLineSetting(PLUGIN_ROOT));
-  assert.deepEqual(readJson(settingsPath).subagentStatusLine, subagentStatusLineSetting(PLUGIN_ROOT));
-});
-
-test('repair below everything leaves the subagent status line alone', (t) => {
-  const stale = JSON.stringify({ subagentStatusLine: subagentStatusLineSetting(OLD_ROOT) }, null, 2);
-  const { home, settingsPath } = fixture(t, stale, 'nothing');
-
-  const report = repairSettings({ home, settingsPath, pluginRoot: PLUGIN_ROOT });
-
-  assert.equal(fs.readFileSync(settingsPath, 'utf8'), stale);
-  assert.equal(report.changed, false);
 });
