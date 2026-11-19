@@ -91,10 +91,15 @@ a build on any probe that does not meet its bar (L1).
 
 - **A1 Absent `reach.json` reads `nothing` for every install** (posted itm_26a410398bc2). Trade: a user who relied on pilot in plain sessions loses it until `pilot reach everything`. Rejected: code unchanged, the user runs `pilot reach nothing` (S9 becomes a doctor line).
   User's answer (itm_26a410398bc2): Every install.
+  Verdict: stands — the user chose "Every install" on itm_26a410398bc2
 - **A2 A lost crew message is held via the deck.** Asked only if S5 proves a loss: then S5 stops and main posts the question before S6. Default: each crew report to main is also posted on the deck, which the fresh session reads. Trade: every crew prompt changes and adds one deck write per report. Rejected: the hand-off mod holding messages through the undocumented `session.receive` hook.
+  Verdict: stands — conditional on S5's measurement; a proven loss stops and is asked before S6, so nothing is built on it unasked
 - **A3 Line 1 measures transcripts already on disk**, not a newly run session. Trade: the sample is whatever hand-offs happened lately, unpaired. Rejected: a staged pair of sessions, which costs a live run.
+  Verdict: stands — transcripts on disk are real sessions' own usage counters and cost no new session; QA's scratch hand-off confirms live
 - **A4 Line 3 is built only for a miss of 1,000 tokens or more.** Trade: a smaller saving is left unbuilt. Rejected: building at any positive gain.
+  Verdict: stands — the user's line 6 closes a line the numbers rule out; a bar of 1,000 tokens makes that rule checkable
 - **A5 Probes run headless by implementers on `--model sonnet`**, about 30 scratch sessions in all (S2 3, S4 4 modes at 3 each, S5 10 or more, S6/S7/S8 reruns): 1.5M-4.5M tokens, mostly cache write and read, about $5-$20 API-equivalent at Sonnet prices; the 6 first-turn checks in S2 and S8 run on the pilot agent's own model (Opus), about 250k tokens more. The live confirmation of 4 and 7 is QA's hand-off (§9). Trade: real token spend, and headless timing may differ from an interactive clear. Rejected: probes only in the user's live sessions.
+  Verdict: stands — the user chose scratch sessions on itm_5556a16a5dec; the probes' cost, about 30 sessions and $5-$20, is stated at Gate 1
 
 ## 7. Out of scope
 
