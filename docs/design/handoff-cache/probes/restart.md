@@ -19,8 +19,6 @@ uncached input + cache read + cache write. Before the restart the context stood 
 | compact-keep-head | `$.command.run({command:'compact'})` with the `session.compact` hook returning `{messages: e.messages.slice(0, 2)}` | works | hook fired with `{trigger, messages}`, 4 messages; resolved `{text}`; `compact_boundary`; context cut to the opening exchange (68,362 → about 28-32k) and no summary call | 31,645 / 28,386 / 31,648 | 4 / 24,561 / 7,080; 4 / 24,563 / 3,819; 4 / 24,563 / 7,081 | 7,084 / 3,823 / 7,085 | +1,578 / -1,683 / +1,579 | 3 of 3 |
 | branch | `$.command.run({command:'branch'})` | absent | threw `restartprobe: $.command.run: no command named /branch in this session`; messages 4 → 4 | 68,433 (not cut) | 4 / 68,344 / 85 | n/a | n/a | 1 of 1, on the uncut context |
 
-Notes, one per row's reading:
-
 - **compact**: the refusal names headless only; whether an interactive session accepts `$.session.compact` is
   untried (A5 runs headless). The kept-head row takes the route the refusal names, a `/compact` prompt through
   `command.run`.

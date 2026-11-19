@@ -1,9 +1,5 @@
-/**
- * The mod's hands outside the host (the host lets a mod import nothing of Node's). Run by the mod through
- * `$.process.run`, it inherits the scratch session's environment, which `run.mjs` set:
- *   node io.mjs mode           prints PROBE_MODE
- *   node io.mjs log <uri-json> appends the decoded record, stamped, as one JSON line to PROBE_LOG
- */
+// The mod's hands outside the host, run through `$.process.run` with the env run.mjs set: `mode` prints
+// PROBE_MODE; `log <uri-json>` appends the decoded record, stamped, as one JSON line to PROBE_LOG.
 
 import fs from 'node:fs';
 
