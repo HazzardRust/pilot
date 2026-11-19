@@ -317,14 +317,16 @@ export function baseOf(cwd, runs = runRemote(gitIn(cwd))) {
   if (base === main) return trunk;
   if (!/^feat\//.test(base)) throw new Error(`run record base ${JSON.stringify(base)} is not ${PILOT_BRANCH}, ${main} or feat/<slug>`);
   const ref = shortRef(runRef(remoteOf(runs, base), base));
+  // N's branch gone (deleted on merge, then pruned): no tip to test, so the chain ends only once N has landed on pilot.
+  if (!holds(cwd, ['rev-parse', '-q', '--verify', `${ref}^{commit}`])) return chainLanded(cwd, base) ? trunk : { ref, chained: base };
   return holds(cwd, ['merge-base', '--is-ancestor', ref, trunk.ref]) ? trunk : { ref, chained: base };
 }
 
 /** Whether `feat/<N>`'s landing merge is on the pilot branch's first-parent history, contained in HEAD or not: `chainGuard`'s end of a chain (L5). */
 export const chainLanded = (cwd, head) => landingsOf(cwd, head, pilotBase(cwd).ref).length > 0;
 
-/** The branch name a base is merged as: `chained`, the pilot branch, or the default branch of `origin/<default>`. */
-const nameOf = (base) => base.chained ?? (base.ref === PILOT_BRANCH || base.ref.endsWith(`/${PILOT_BRANCH}`) ? PILOT_BRANCH : base.ref.replace(/^origin\//, ''));
+/** The branch name a base is merged as: `chained`, the pilot branch (`pilotBase`'s exact ref on `runs`), or the default branch of `origin/<default>`. */
+const nameOf = (base, runs) => base.chained ?? (base.ref === shortRef(runRef(runs, PILOT_BRANCH)) ? PILOT_BRANCH : base.ref.replace(/^origin\//, ''));
 
 /** The message of the merge `pilot land` writes onto the pilot branch. */
 export const landingMessage = (head) => `Merge ${head} into ${PILOT_BRANCH}`;
@@ -407,7 +409,7 @@ export function integrate(branch, options = {}) {
     git(cwd, 'fetch', '-q', '--prune', 'origin');
     if (runs !== null && runs !== 'origin') git(cwd, 'fetch', '-q', '--prune', runs);
     base = baseOf(cwd, runs);
-    name = nameOf(base);
+    name = nameOf(base, runs);
     taken = `${name}@${git(cwd, 'rev-parse', '--short', base.ref)}`;
     // Only a run based on pilot can have landed on it: a chained run's base N has not (L5).
     landed = name === PILOT_BRANCH && landedOnPilot(cwd, head, base.ref);

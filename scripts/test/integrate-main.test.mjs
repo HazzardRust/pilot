@@ -123,3 +123,20 @@ test('a chain outlives its landing on pilot', (t) => {
   git(work, 'fetch', '-q', 'origin');
   assert.deepEqual(baseOf(work, 'origin'), { ref: 'origin/trunk' }, 'a\'s tip is in trunk');
 });
+
+test('a chain whose lower branch is gone ends only once that branch landed', (t) => {
+  const { seed, clone } = stackRepos(t);
+  const work = clone('feat/c', 'c', 'feat/a');
+  git(seed, 'push', '-q', 'origin', '--delete', 'feat/a');
+  git(work, 'fetch', '-q', '--prune', 'origin');
+  assert.deepEqual(baseOf(work, 'origin'), { ref: 'origin/feat/a', chained: 'feat/a' }, 'gone unlanded: still chained');
+  assert.throws(() => chainGuard({ cwd: work }), /built on feat\/a, which has not landed/);
+
+  // a's landing, from seed's own feat/a, which outlives the delete on origin.
+  git(seed, 'checkout', '-q', 'pilot');
+  git(seed, 'reset', '-q', '--hard', 'origin/pilot');
+  git(seed, 'merge', '-q', '--no-ff', '-m', 'Merge feat/a into pilot', 'feat/a');
+  git(seed, 'push', '-q', 'origin', 'pilot');
+  git(work, 'fetch', '-q', '--prune', 'origin');
+  assert.deepEqual(baseOf(work, 'origin'), { ref: 'origin/trunk' }, 'gone after landing: the default branch');
+});
