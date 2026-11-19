@@ -251,7 +251,7 @@ function defaultReadEnabled() {
 /** What a plain session carries, and whether the enabled plugin agrees: only `everything` carries the plugin. Read-only. */
 export function reachRow({ reach, enabled }) {
   const name = 'Reach';
-  if (!reach.chosen) return { name, verdict: 'cannot tell', detail: 'not chosen; reads as everything', steps: ['pilot reach nothing'] };
+  if (!reach.chosen) return { name, verdict: 'cannot tell', detail: `not chosen; reads as ${reach.level}`, steps: ['pilot reach <level>'] };
   const { level } = reach;
   const wantsPlugin = rulesPlan(level).user;
   if (enabled !== undefined && enabled !== wantsPlugin) {
