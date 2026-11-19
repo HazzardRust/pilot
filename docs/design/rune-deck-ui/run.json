@@ -1,0 +1,213 @@
+{
+  "slug": "rune-deck-ui",
+  "feature": "Deck UI rebuilt in Rune",
+  "ticket": "itm_0dcd9aa67146",
+  "branch": "feat/rune-deck-ui",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-rune-deck-ui",
+  "artefact": "docs/design/rune-deck-ui/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed 7cae771 — re-committed for the trailer, tree identical to reviewed 4ea7320 (058d093f both); 821 lines, limit waived by main",
+      "branch": "slice/rune-deck-ui-s1b",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S5"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S5"
+      ]
+    },
+    {
+      "slice": "S8",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S9",
+      "state": "planned",
+      "after": [
+        "S5"
+      ]
+    },
+    {
+      "slice": "S10",
+      "state": "planned",
+      "after": [
+        "S6"
+      ]
+    },
+    {
+      "slice": "S11",
+      "state": "planned",
+      "after": [
+        "S5"
+      ]
+    },
+    {
+      "slice": "S12",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S13",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S14",
+      "state": "planned",
+      "after": [
+        "S10"
+      ]
+    },
+    {
+      "slice": "S15",
+      "state": "planned",
+      "after": [
+        "S6",
+        "S10"
+      ]
+    },
+    {
+      "slice": "S16",
+      "state": "planned",
+      "after": [
+        "S6"
+      ]
+    },
+    {
+      "slice": "S17",
+      "state": "planned",
+      "after": [
+        "S6"
+      ]
+    },
+    {
+      "slice": "S18",
+      "state": "planned",
+      "after": [
+        "S7"
+      ]
+    },
+    {
+      "slice": "S19",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S20",
+      "state": "planned",
+      "after": [
+        "S10"
+      ]
+    }
+  ],
+  "next": "integrate slice/rune-deck-ui-s1b (Reviewed-by rust+security approve, Evidence B1-B6, brief's 2 lines) once B1-B6 text is in hand; then pilot ready --slots 7",
+  "updatedAt": "2026-11-19T21:49:07.608Z",
+  "friction": [
+    {
+      "agent": "pilot-implementer",
+      "what": "probe login not settled in brief.md: one slice copied ~/.claude/.credentials.json into temp config dirs, another used the real login in place and wrote transcripts into ~/.claude/projects",
+      "evidence": "itm_41847d20a6a6; handoff-cache probes/restart/run.mjs:103-107",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate red on the base from a retired word in a design-doc slice file already on feat",
+      "evidence": "docs/design/handoff-cache/slices/S5.md:21, vocabulary guard",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "one session held three planning runs, two short-path builds, a landing and a co-pilot; reached the context advisory at 230k",
+      "size": 3
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "pilot verdicts wrote A6's Verdict line under the Red team heading and exited 0; moved back by hand",
+      "evidence": "rune-deck-ui architecture.md: Verdict at line 152 under 'Red team' at 151, not under A6's Answer at 149",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "hand-off record said 'architect gone' while the first Rune architect was still live; a second was spawned on the same worktree and the first stopped",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 diff budget (300) did not fit a crate-bootstrap slice owning ~48 new files; size in changed lines",
+      "evidence": "680 lines before fmt, 821 after; an escalation round-trip to main",
+      "size": 821
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "vocabulary guard scans generated Cargo.lock; size in minutes lost",
+      "evidence": "first npm test failed on crate names in deck/rune/Cargo.lock; +1 line in scripts/vocabulary-exempt.txt and a rerun",
+      "size": 7
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test takes ~7 minutes and ran twice; size in minutes",
+      "evidence": "two full gate runs in S1",
+      "size": 14
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Rune not in local cargo cache; cloned its repo to read the API; size in README lines",
+      "evidence": "scratchpad rune-src clone",
+      "size": 2800
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "none (S1 re-commit for trailer)",
+      "evidence": "7cae771, tree 058d093f = 4ea7320's",
+      "size": 0
+    }
+  ]
+}
