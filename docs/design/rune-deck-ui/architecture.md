@@ -18,7 +18,11 @@ that other people's projects are pushed onto.
 | 3 | Every action the HTML deck offers works from the Rune deck and ends in the same store change as its form POST. | one scripted replay per action against a scratch daemon | 17 of 17 (§3 Actions) |
 | 4 | A post made by a tool call appears without input; a half-typed reply, the scroll and the open panels survive it. | headless replay on a scratch daemon | shown within 1 s; draft, scroll offset and open set unchanged |
 | 5 | It no longer feels blocky: springs on panel open and close and on card arrival, press feedback in the same frame, no flash on a live update. | the user's look on the walkthrough; the headless tree shows the transition tracks | press shown within 16 ms (one frame); each spring settles under 300 ms; the taste call is the user's |
-| 6 | The minor bugs the user names are gone. *assumed A5, pending itm_b7272bb6e63c* | one replay per named bug, failing on the old behaviour | each named bug: 1 replay red before, green after |
+| 6a | State updates are neither slow nor out of step: every region is drawn from one view of one `seq`, the agents panel included (the user's named case). | S2 replay: a heartbeat to `/api/agents` and a post on a scratch daemon | each region changed within spec 4's 1 s; 0 regions on an older `seq` |
+| 6b | One spacing and grouping system across regions: a 4 px scale, gaps between groups at least twice those within, fixed row heights, and status lines as aligned columns (state, name, time), the overview's lane lines the first case. *practitioner: design-system engineer (Carbon, Atlassian, Primer)* | S4 scan of `src/regions/*.rs`; S7 replay of the three lane lines; the user's look | 0 spacing literals outside `theme::space`; state, name and time each start at one x across the lines |
+| 6c | The two recorded bugs: a refused typed reply keeps its words (ADR 0096), and two quick ticket-arrow presses move once. | S9, S15 replays | each red before, green after |
+| 6d | Dragging a left-strip panel's resize handle tracks the pointer, with no lag or snap near the default size (the user's named bug). | S20 scripted drag across the default | frame positions monotonic; each frame within 1 px of the pointer |
+| 6e | A notification count of three digits stays on one line and moves no panel (the user's named bug). | S20 headless snapshot at 99 and at 100 | panel bounds identical at both counts; the count on 1 line |
 | 7 | The Rune deck's tests run in the gate: a broken screen fails it. *assumed A3* | `npm test` runs `cargo test` where cargo is on PATH | a broken region fails `npm test`; no cargo prints 1 skip line |
 | 8 | Nothing about Rune becomes a pilot feature: no agent, rule or skill names or requires it. | `git grep -i rune -- agents rules skills` | 0 lines |
 | 9 | The Rune deck reads the deck secret, talks to loopback only, and never writes or logs the secret. *security* | client test refusing a non-loopback base; grep of its log output | 0 non-loopback requests; 0 secret bytes in logs |
@@ -98,6 +102,14 @@ Deletion test: `render-*.mjs` survive (the HTML deck stays, A2). `renderHomePage
 - **L8** Markdown bodies reach Rune as markdown with ids already turned into titles server-side; Rune draws them
   with `rune-kit`'s `Markdown`. Rejected: porting `deck/ui/markdown.mjs`.
 - **L9** Nothing a Gate 1 sign-off needs lives only in a slice file.
+- **L10** Spacing comes from one scale, `theme::space`: 0, 2, 4, 8, 12, 16, 24, 32, 48 px; within a group 4, card padding 8,
+  between groups 16, between panels 24; list rows 20 px, card lines 24 px; status lines are three columns, the state
+  12 ch fixed and left, the name flexible and clipped, the time 7 ch right, 16 px apart, no `·`; lane lines in phase
+  order planning, implementing, concluding. Taken from Carbon (carbondesignsystem.com/elements/spacing,
+  /components/data-table/style, /patterns/status-indicator-pattern: 4/8 scale, xs 24 rows, fixed status column),
+  Atlassian (atlassian.design/foundations/spacing: small within, large between) and Primer
+  (primer.style/foundations/primitives/size: 8/16 stack gaps). The 2× rule and the phase order are ours; Material 3
+  and Apple were not readable. Rejected: keeping deck.css's ad hoc rem gaps.
 
 ## 6. Assumed decisions
 
@@ -113,8 +125,15 @@ Deletion test: `render-*.mjs` survive (the HTML deck stays, A2). `renderHomePage
   tests only if the runner paints headless. Trade: a machine without Rust catches a broken screen only in CI.
 - **A4** Prefs start empty in `~/.claude/pilot/rune-deck.json`; the browser's localStorage (seen threads, panel
   sizes, folds) is not migrated. Trade: one reset of folds and seen marks. Rejected: a server-side prefs route.
-- **A5** Bugs: until itm_b7272bb6e63c answers, the two recorded open ones: a refused typed reply loses its words
-  (ADR 0096; S9), and two quick ticket-arrow presses move two places (S15).
+- **A5** Bugs (itm_b7272bb6e63c): the user named slow, inconsistent state updates (the agents panel) and weird
+  separation between objects (the three lane lines), and asked to pull ideas from elsewhere: spec 6a, 6b, L10. The
+  two recorded bugs are built too (6c). Answer: "small things everywhere, mostly to do with state updates being
+  slow/inconsistent, such as the agents panel … the seperatio between different objects can be weird"; then
+  "dragging around the resizing of the different panels on the left side feels laggy near the default position, and
+  when the notifications hit 3 digits, it creates a new line and resizes and puts the panels misaligned" (6d, 6e).
+- **A7** An agent leaves the agents panel only after 90 s without a tool call (`LIVE_WINDOW_MS`, ADR 0024); the
+  Rune deck shows that roster as it is. Trade: a finished agent lingers up to 90 s. Rejected here: a stop hook, which
+  moves ADR 0024 (killed agents never fire one); sent to `main` as a question.
 - **A6** Depth: Forks.
   Answer: the user pressed "forks" (itm_af9e1f649d17).
 
@@ -145,25 +164,25 @@ Width 15; longest stem 5
 | Slice | Title | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- | --- |
 | S1 | Walking skeleton: a Rune window shows the deck's tabs read from `/api/view` | 1, 2, 9, 11 | `deck/rune/Cargo.toml`, `Cargo.lock`, `src/main.rs`, `src/app.rs`, `src/client.rs`, `src/regions/*.rs` (stubs), `src/theme.rs`, `src/prefs.rs`, `src/layout.rs`, `src/act.rs`, `src/act_deck.rs`, `tests/support/mod.rs`, `tests/skeleton.rs`, `deck/view/*.mjs` (index, reads, tabs, stubs), `deck/server-routes.mjs`, `deck/test/view-route.test.mjs`, `.gitignore`, `docs/adr/NNNN-rune-deck-ui.md` | – | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S1](slices/S1.md) |
-| S2 | A post appears live, and a stopped daemon is said and survived | 4, 10 | `deck/rune/src/live.rs`, `src/app.rs`, `tests/live.rs` | S1 (`app.rs`, `Client::events`) | `pilot:rust-reviewer` | [S2](slices/S2.md) |
+| S2 | A post appears live, and a stopped daemon is said and survived | 4, 6a, 10 | `deck/rune/src/live.rs`, `src/app.rs`, `tests/live.rs` | S1 (`app.rs`, `Client::events`) | `pilot:rust-reviewer` | [S2](slices/S2.md) |
 | S3 | The deck opens as the Rune window wherever it is built | 1 | `deck/open.mjs`, `bin/pilot.mjs`, `deck/test/open.test.mjs` | S1 (the binary's path) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
-| S4 | The deck's palette, font and motion, light and dark | 2, 5 | `deck/rune/src/theme.rs`, `tests/theme.rs` | S1 (`theme::tokens`) | `pilot:rust-reviewer` | [S4](slices/S4.md) |
+| S4 | The deck's palette, font, spacing and motion, light and dark | 2, 5, 6b | `deck/rune/src/theme.rs`, `tests/theme.rs` | S1 (`theme::tokens`) | `pilot:rust-reviewer` | [S4](slices/S4.md) |
 | S5 | Thread actions post their form routes and change the store | 3, 9 | `deck/rune/src/act.rs`, `tests/act_thread.rs` | S1 (`Client`) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S5](slices/S5.md) |
 | S6 | Deck actions post their form routes and change the store | 3 | `deck/rune/src/act_deck.rs`, `tests/act_deck.rs` | S5 (`act::post`) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S6](slices/S6.md) |
-| S7 | The queue's cards, with option presses | 2, 3, 5, 11 | `deck/view/queue.mjs`, `deck/test/view-queue.test.mjs`, `deck/rune/src/regions/queue.rs`, `tests/queue.rs` | S5 (`Action::Reply`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S7](slices/S7.md) |
+| S7 | The queue's cards and lane lines, with option presses | 2, 3, 5, 6b, 11 | `deck/view/queue.mjs`, `deck/test/view-queue.test.mjs`, `deck/rune/src/regions/queue.rs`, `tests/queue.rs` | S5 (`Action::Reply`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S7](slices/S7.md) |
 | S8 | A thread reads whole, with its nav and Escape | 2, 11 | `deck/view/thread.mjs`, `deck/test/view-thread.test.mjs`, `deck/rune/src/regions/thread.rs`, `tests/thread.rs` | S1 (`viewOf`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S8](slices/S8.md) |
-| S9 | The reply box, options, confirm, reopen and dismiss | 3, 5, 6 | `deck/view/reply.mjs`, `deck/test/view-reply.test.mjs`, `deck/rune/src/regions/reply.rs`, `tests/reply.rs` | S5 (`Action`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S9](slices/S9.md) |
+| S9 | The reply box, options, confirm, reopen and dismiss | 3, 5, 6c | `deck/view/reply.mjs`, `deck/test/view-reply.test.mjs`, `deck/rune/src/regions/reply.rs`, `tests/reply.rs` | S5 (`Action`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S9](slices/S9.md) |
 | S10 | Notifications, seen marks and prefs | 2, 3 | `deck/view/notifications.mjs`, `deck/test/view-notifications.test.mjs`, `deck/rune/src/regions/notifications.rs`, `src/prefs.rs`, `tests/notifications.rs` | S6 (`Action::ClearNotice`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S10](slices/S10.md) |
 | S11 | The chat panel | 2, 3, 4 | `deck/view/chat.mjs`, `deck/test/view-chat.test.mjs`, `deck/rune/src/regions/chat.rs`, `tests/chat.rs` | S5 (`Action::Reply`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S11](slices/S11.md) |
 | S12 | The status table and its ticket selector | 2 | `deck/view/status.mjs`, `deck/test/view-status.test.mjs`, `deck/rune/src/regions/status.rs`, `tests/status.rs` | S1 (`viewOf`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S12](slices/S12.md) |
 | S13 | The run's git graph | 2 | `deck/view/graph.mjs`, `deck/test/view-graph.test.mjs`, `deck/rune/src/regions/graph.rs`, `tests/graph.rs` | S1 (`viewOf`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S13](slices/S13.md) |
 | S14 | The agents and reports panels | 2 | `deck/view/agents.mjs`, `deck/view/reports.mjs`, `deck/test/view-agents-reports.test.mjs`, `deck/rune/src/regions/agents.rs`, `src/regions/reports.rs`, `tests/agents_reports.rs` | S10 (`Prefs`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S14](slices/S14.md) |
-| S15 | The tickets panel: folds, move, switch | 2, 3, 6 | `deck/view/tickets.mjs`, `deck/test/view-tickets.test.mjs`, `deck/rune/src/regions/tickets.rs`, `tests/tickets.rs` | S6 (`Action::Move`), S10 (`Prefs`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S15](slices/S15.md) |
+| S15 | The tickets panel: folds, move, switch | 2, 3, 6c | `deck/view/tickets.mjs`, `deck/test/view-tickets.test.mjs`, `deck/rune/src/regions/tickets.rs`, `tests/tickets.rs` | S6 (`Action::Move`), S10 (`Prefs`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S15](slices/S15.md) |
 | S16 | The header: usage readout, tab strip, add deck | 2, 3 | `deck/view/usage.mjs`, `deck/test/view-usage.test.mjs`, `deck/rune/src/regions/usage.rs`, `src/regions/tabs.rs`, `tests/header.rs` | S6 (`Action::AddDeck`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S16](slices/S16.md) |
 | S17 | The right strip: toggle, create, start, close deck, alerts | 2, 3 | `deck/view/strip.mjs`, `deck/test/view-strip.test.mjs`, `deck/rune/src/regions/strip.rs`, `tests/strip.rs` | S6 (`Action::Create`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S17](slices/S17.md) |
 | S18 | Settled threads by day, and the items page | 2, 3 | `deck/view/history.mjs`, `deck/test/view-history.test.mjs`, `deck/rune/src/regions/history.rs`, `tests/history.rs` | S7 (`queue::card`) | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S18](slices/S18.md) |
 | S19 | `npm test` and CI run the Rune deck's tests | 7, 8 | `scripts/gate.mjs`, `scripts/test/gate-cargo.test.mjs`, `.github/workflows/ci.yml` | S1 (`deck/rune/Cargo.toml`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S19](slices/S19.md) |
-| S20 | The panels open, close and resize with springs, and stay as left | 2, 5 | `deck/rune/src/layout.rs`, `tests/layout.rs` | S10 (`Prefs`) | `pilot:rust-reviewer` | [S20](slices/S20.md) |
+| S20 | The panels open, close and resize with springs, and stay as left | 2, 5, 6d, 6e | `deck/rune/src/layout.rs`, `tests/layout.rs` | S10 (`Prefs`) | `pilot:rust-reviewer` | [S20](slices/S20.md) |
 
 Rust paths after S1 are under `deck/rune/`. S1 first by risk: if Rune will not build or paint headless here, every
 other slice's plan changes. Then S5 (the write seam nine actions share), then the regions by the actions they need.
@@ -174,8 +193,9 @@ other slice's plan changes. Then S5 (the write seam nine actions share), then th
    page opens.
 2. Each screen beside the HTML page's screenshot: same colours, regions and controls, light and dark (spec 2).
 3. Panels open and close with springs; a press answers in its frame (spec 5).
-4. Each of the 17 actions pressed in the window changes the deck as the page would (spec 3); the named bugs do not
-   reproduce (spec 6).
+4. Each of the 17 actions pressed in the window changes the deck as the page would (spec 3); an agent starting shows
+   on the panel at once, every panel in step (6a); the lane lines read as aligned columns (6b); the bugs do not
+   reproduce: refused words, double move, drag lag, a 100-count badge (6c-6e).
 5. A tool-call post appears while a reply is half typed, the draft kept (spec 4); a new kind's thread draws (spec 11).
 6. Stop the daemon: the window says so; start it: the window comes back (spec 10).
 7. `npm test` runs the Rune tests (spec 7); the grep finds 0 lines (spec 8); the secret is in no log (spec 9).
@@ -185,23 +205,23 @@ other slice's plan changes. Then S5 (the write seam nine actions share), then th
 | Slice | State | Branch | PR | Worktree | After | Spec |
 | --- | --- | --- | --- | --- | --- | --- |
 | S1 | planned | | | | – | 1, 2, 9, 11 |
-| S2 | planned | | | | S1 | 4, 10 |
+| S2 | planned | | | | S1 | 4, 6a, 10 |
 | S3 | planned | | | | S1 | 1 |
-| S4 | planned | | | | S1 | 2, 5 |
+| S4 | planned | | | | S1 | 2, 5, 6b |
 | S5 | planned | | | | S1 | 3, 9 |
 | S6 | planned | | | | S5 | 3 |
-| S7 | planned | | | | S5 | 2, 3, 5, 11 |
+| S7 | planned | | | | S5 | 2, 3, 5, 6b, 11 |
 | S8 | planned | | | | S1 | 2, 11 |
-| S9 | planned | | | | S5 | 3, 5, 6 |
+| S9 | planned | | | | S5 | 3, 5, 6c |
 | S10 | planned | | | | S6 | 2, 3 |
 | S11 | planned | | | | S5 | 2, 3, 4 |
 | S12 | planned | | | | S1 | 2 |
 | S13 | planned | | | | S1 | 2 |
 | S14 | planned | | | | S10 | 2 |
-| S15 | planned | | | | S6, S10 | 2, 3, 6 |
+| S15 | planned | | | | S6, S10 | 2, 3, 6c |
 | S16 | planned | | | | S6 | 2, 3 |
 | S17 | planned | | | | S6 | 2, 3 |
 | S18 | planned | | | | S7 | 2, 3 |
 | S19 | planned | | | | S1 | 7, 8 |
-| S20 | planned | | | | S10 | 2, 5 |
+| S20 | planned | | | | S10 | 2, 5, 6d, 6e |
 | Deck UI rebuilt in Rune | planned | `feat/rune-deck-ui` | | | S1-S20 | 1-11 |
