@@ -1,0 +1,182 @@
+{
+  "slug": "handoff-cache",
+  "feature": "The hand-off keeps the cache",
+  "ticket": "itm_3997fa784e4b",
+  "branch": "feat/handoff-cache",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-handoff-cache",
+  "artefact": "docs/design/handoff-cache/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed 52a0a4c; in review (fresh, verdict lost)",
+      "branch": "slice/handoff-cache-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "implementing",
+      "branch": "slice/handoff-cache-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "fixing (review WARNING: temp cleanup, exit paths, home refusal)",
+      "branch": "slice/handoff-cache-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "fixing (review WARNING: runner exit path, debug log)",
+      "branch": "slice/handoff-cache-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S5"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S4"
+      ]
+    },
+    {
+      "slice": "S8",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S9",
+      "state": "implementing",
+      "branch": "slice/handoff-cache-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-handoff-cache-s9"
+    },
+    {
+      "slice": "S10",
+      "state": "planned"
+    },
+    {
+      "slice": "S11",
+      "state": "planned",
+      "after": [
+        "S3",
+        "S7",
+        "S8"
+      ]
+    }
+  ],
+  "findings": [],
+  "next": "S1 integrating (52a0a4c, APPROVE). S4 and S5 fix rounds running on their slice branches; integrate each on its fix reviewer's verdict. S2, S9 implementing. Then S10, S3 from feat, S6 from S5 (crew verdict no loss), S7 closes per L1 (/clear stays). Record S4.md seam: compaction via command.run('compact').",
+  "updatedAt": "2026-11-19T08:14:01.158Z",
+  "friction": [
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "handed back twice while its evidence runner was still running, so the runner's table was lost and five checks never reached the review; a fresh runner is needed after the fix round",
+      "evidence": "yellow-never-idle co-pilot report",
+      "size": 3
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "mods API undocumented (docs URL 404), researcher grepped the 379 MB claude.exe for strings; hooks cannot tell a pilot session from a plain one except by agent_type",
+      "evidence": "handoff-cache architect hand-back; permission-denied.js:29",
+      "size": 2
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "auto mode denied a red-then-green proof that overwrote a tracked file and restored it with git checkout",
+      "evidence": "itm_5ba0526f7455",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "nothing checks that /clear starts a new transcript file; audit-session-start.mjs takes the first usage per file",
+      "evidence": "scripts/audit-session-start.mjs:95",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "deck labels the gate1 'feature PR opened' note as 'a landing ended short' and holds the turn until the ticket thread is replied to, twice",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the gate is red on the base from a design doc: vocabulary-guard finds the retired word 'task' at slices/S5.md:21, costing a 6-8 minute run and a rerun alone to rule out the slice",
+      "evidence": "scripts/test/vocabulary-guard.test.mjs:67 on slice/handoff-cache-s1 52a0a4c",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "tokenCounts was not exported though S1 needs it, forcing a 3-line edit outside the slice's files",
+      "evidence": "deck/transcripts.mjs:62",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "probe login not settled in the brief, so S2 could not run its probes",
+      "evidence": "brief.md Probes names scratch sessions and no auth route; itm_41847d20a6a6",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "mod API documented only in the bundled skill's d.ts; the brief's handoff-mod §3 has neither prompt.section nor text:null",
+      "evidence": "types/claude-code.d.ts:5061-5093; S2 fact sheet rows not found",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "400-line diff limit took two trimming passes: probe plugin plus runner is ~300 lines before the record",
+      "evidence": "handoff-cache S5 report, slice/handoff-cache-s5 a3b2a520",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "mods docs page 404s; $.agent.list() shape learned from a trial run",
+      "evidence": "handoff-cache S5 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief named worktree pilot-handoff-cache-s1 for every slice, and named no probe login route",
+      "evidence": "handoff-cache S5 report; itm_41847d20a6a6",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "base gate red had to be traced to the architecture commit before the slice could call it not its own; brief listed no known red",
+      "evidence": "handoff-cache S4 report; docs/design/handoff-cache/slices/S5.md:21 from d88c16e1",
+      "size": 2
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "the earlier S5 review's WARNING text was lost with the paused co-pilot, so the whole tip was re-reviewed",
+      "evidence": "S5 re-review of a3b2a520",
+      "size": 1
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "S4.md names $.session.compact and a session.compact hook while the shipped mod reaches compaction by command.run('compact'); the slice file was never updated",
+      "evidence": "slices/S4.md:22-23 vs probes/restart/mod.mjs at 28cf3057",
+      "size": 1
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "a live-transcript rerun of S1's audit drifts from measurements.md within minutes (27 to 29 rows), so a reviewer cannot byte-compare",
+      "evidence": "S1 review B3",
+      "size": 1
+    }
+  ]
+}
