@@ -1293,6 +1293,10 @@ test('a bad host stops the run before the status line is written either', (t) =>
 
 const { repairSettings, subagentStatusLineSetting } = await import('../install-settings.mjs');
 
+// The repairs below are the `everything` reach's; an absent reach reads `nothing` (handoff-cache A1).
+fs.mkdirSync(path.join(FAKE_HOME, '.claude', 'pilot'), { recursive: true });
+fs.writeFileSync(path.join(FAKE_HOME, '.claude', 'pilot', 'reach.json'), JSON.stringify({ level: 'everything' }));
+
 // A path shaped like the one an older plugin root actually wrote, and the root
 // a session running today would resolve. Neither carries meaning as a string;
 // only the `hooks/<script>` tail at the end does. Built under this process's own

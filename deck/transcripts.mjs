@@ -59,7 +59,8 @@ const namesSlug = (entry, slug) =>
   entry.type === 'assistant' &&
   blocks(entry.message).some((b) => b.type === 'tool_use' && String(b.name).endsWith(DECK_STATUS) && b.input?.slug === slug);
 
-function tokenCounts(usage = {}) {
+/** One call's usage split into its five counts; also the audit's first-turn reader. */
+export function tokenCounts(usage = {}) {
   const split = isObject(usage.cache_creation) ? usage.cache_creation : null;
   return {
     input: num(usage.input_tokens),

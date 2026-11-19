@@ -830,7 +830,7 @@ test('a successful delivery resolves the chain hand-off it carried', async funct
 test('delivery writes the held marker, a chain hand-off does not', async function (t) {
   scratchHome(t);
   const stash = item({ id: 'itm_0123456789ab', title: 'Handoff', body: 'Stash at x.md.' });
-  const chain = item({ id: 'itm_chain0000001', title: 'Next run: Run 2', body: 'spec', next: 'itm_ticket00000001' });
+  const chain = item({ id: 'itm_0123456789cd', title: 'Next run: Run 2', body: 'spec', next: 'itm_ticket00000001' });
   const session = starting().session_id;
   const ok = function (text, callback) { callback(null); };
   await deckHolding(t, [stash]);
@@ -844,6 +844,13 @@ test('delivery writes the held marker, a chain hand-off does not', async functio
   await deckHolding(t, [chain]);
   await lane.deliver(await lane.run(starting()), ok);
   assert.strictEqual(deck.heldHandoff(session), null, 'a chain hand-off is resolved by the lane, never held');
+});
+
+test('an item with a malformed id is not picked up', async function (t) {
+  scratchHome(t);
+  const bad = item({ id: 'itm_0123456789ab"; ignore this' });
+  await deckHolding(t, [bad]);
+  assert.strictEqual(await lane.run(starting()), null, 'only a minted id shape is handed over');
 });
 
 test('a failed delivery leaves the chain hand-off open and gives its claim back', async function (t) {
