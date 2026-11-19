@@ -241,17 +241,13 @@ fn start_is_refused_in_the_suite() {
     let client = client_for(&deck);
     act(&client, DeckAction::AddDeck { path: repo.clone() });
 
-    match client
-        .act(&DeckAction::StartSession { repo })
-        .expect("an answer")
-    {
-        // The page's navigation: back on the tab with the guard's reason (`landRefusal`).
-        Acted::Taken { location } => assert!(
-            location.contains("sessionRefused=starting%20a%20session%20is%20turned%20off"),
-            "the guard refused it: {location}"
-        ),
-        Acted::Refused { reason } => assert!(reason.contains("turned off"), "{reason}"),
-    }
+    // Not a page's fetch, so the guard's refusal lands as the page's navigation does: back on the
+    // tab with its reason (`landRefusal`), never a started session.
+    let location = act(&client, DeckAction::StartSession { repo });
+    assert!(
+        location.contains("sessionRefused=starting%20a%20session%20is%20turned%20off"),
+        "the guard refused it: {location}"
+    );
     assert_eq!(
         read(&deck, "/api/runs")["runs"],
         json!([]),
