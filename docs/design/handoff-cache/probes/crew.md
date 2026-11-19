@@ -48,3 +48,10 @@ does. Main spawns one background agent that waits for the mod's signal, `SendMes
 - Not covered: an interactive TTY, an agent life past 70 s, a send between the clear and the submit (QA's §9 check).
 
 verdict: no loss, 15 of 15
+
+## after S6
+
+S6 read the verdict above against its bar (architecture.md §5 L1) and built nothing: no crew prompt changed, no
+rerun. Line 7a's row for S11's ledger:
+
+ruled out: no loss in 15 runs
