@@ -163,19 +163,22 @@ function landedOnOriginPilot(cwd, git, head) {
 /**
  * The one forced push (L3): `head` rebased in a temporary worktree onto origin's `main`, dropping what `lowerTip`
  * (the squashed lower branch) holds, and pushed leased on the tip fetched in this restack. Only for a feature landed on
- * pilot. Answers `{ line, rebased }`, with `failed` for a refusal the pilot must act on and `conflict` for a rebase
- * that stopped; nothing is pushed unless `rebased`. Throws on any other failure.
+ * pilot. Answers `null` when `head` holds none of `lowerTip` (nothing to drop: retarget only), else `{ line, rebased }`,
+ * with `failed` for a refusal the pilot must act on and `conflict` for a rebase that stopped; nothing is pushed unless
+ * `rebased`. Throws on any other failure.
  */
 function rebaseAfterSquash({ cwd, git, head, lower, lowerTip, main }) {
   const refuse = (why, more) => ({ line: `not rebased ${head}: ${why}`, rebased: false, ...more });
-  if (!landedOnOriginPilot(cwd, git, head)) return refuse(`not landed on ${PILOT_BRANCH}`);
   const fetched = git(['rev-parse', '--verify', `refs/remotes/origin/${head}^{commit}`]);
+  // A branch holding none of the squashed tip (already rebased, by an earlier restack or by hand) only retargets.
+  if (!holds(cwd, ['merge-base', '--is-ancestor', lowerTip, fetched])) return null;
+  if (!landedOnOriginPilot(cwd, git, head)) return refuse(`not landed on ${PILOT_BRANCH}`);
   const mainTip = git(['rev-parse', '--verify', `refs/remotes/origin/${main}^{commit}`]);
-  if (!holds(cwd, ['merge-base', '--is-ancestor', lowerTip, fetched])) return refuse(`${lower}'s merged tip is not in it`, { failed: true });
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-restack-'));
   try {
     git(['worktree', 'add', '-q', '--detach', dir, fetched]);
     const tried = spawnSync('git', ['rebase', '-q', '--onto', mainTip, lowerTip], { cwd: dir, encoding: 'utf8', windowsHide: true });
+    if (tried.error || tried.status === null) throw new Error(`git rebase could not run: ${tried.error?.message ?? `signal ${tried.signal}`}`);
     if (tried.status !== 0) {
       spawnSync('git', ['rebase', '--abort'], { cwd: dir, windowsHide: true });
       return refuse(`conflict rebasing onto ${main}`, { conflict: true });

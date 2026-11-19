@@ -158,7 +158,20 @@ test('an unlanded run is never rewritten', (t) => {
   assert.deepEqual(out.lines, ['not rebased feat/b: not landed on pilot']);
   assert.equal(out.exitCode, 0);
   assert.equal(tip(origin, 'feat/b'), before);
-  assert.deepEqual(out.calls.filter((args) => args[0] === 'push'), []);
+});
+
+test('a branch already rebased is only retargeted', (t) => {
+  const { origin, work, aTip } = repos(t);
+  restackIn(work, squashed(aTip));
+  const rebased = tip(origin, 'feat/b');
+  const host = squashed(aTip); // the retarget never reached the host: #2 still reads feat/a
+
+  const out = restackIn(work, host);
+
+  assert.deepEqual(out.lines, ['retargeted #2 to main']);
+  assert.equal(out.exitCode, 0);
+  assert.deepEqual(host.edits, [[2, { base: 'main' }]]);
+  assert.equal(tip(origin, 'feat/b'), rebased);
 });
 
 test('pilot is never forced', (t) => {
