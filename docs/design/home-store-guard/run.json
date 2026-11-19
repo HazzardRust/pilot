@@ -1,0 +1,95 @@
+{
+  "slug": "home-store-guard",
+  "feature": "home store guard",
+  "ticket": "itm_8bee042932cd",
+  "branch": "feat/home-store-guard",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-home-store-guard",
+  "artefact": "docs/design/home-store-guard/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 gate stats the home store",
+      "state": "integrated",
+      "branch": "slice/home-store-guard-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-home-store-guard-s1"
+    },
+    {
+      "slice": "S2 deck store refuses a gate process's home write",
+      "state": "integrated",
+      "after": [
+        "S1 gate stats the home store"
+      ],
+      "branch": "slice/home-store-guard-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-home-store-guard-s2"
+    }
+  ],
+  "next": "Both slices in, feat 20281bfe, 4515 pass, trial clean on pilot at 20281bf. Walkthrough itm_dae597d9a7a6 posted, ticket green + taken. On its Sign off: close it, post gate2 myself (ticket itm_8bee042932cd, pr 117, sha 20281bf, walkthrough id; Verdict per slice + Gate line); on press spawn pilot-lander with the gate2 id.",
+  "updatedAt": "2026-11-19T04:39:22.511Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "the 800-line facades cap was found only by wc; store-core.mjs (799) does not say how near it is",
+      "evidence": "architect report, home-store-guard",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot posted the signal and QA-environment questions the architect then posted itself; two duplicates closed Moot",
+      "size": 4
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a live deck on a fixed port makes the gate's no-deck red unreachable in the real CLI on this machine; no test override for the deck port",
+      "evidence": "deck/tools.mjs:40 DECK_PORT = 4321",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "an uncommitted change to deck/tools.mjs makes test:changed --since=HEAD~1 select almost the whole suite",
+      "evidence": "4489 tests ~3 min vs 541 tests 25 s",
+      "size": 1
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "started pilot landing twice by mistake; deck_status after the prune could not write run.json because the recorded worktree was gone",
+      "evidence": "lander hand-back, yellow-never-idle",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck MCP CONNECTION_CLOSED for the first ~15 calls cost 3 duplicate question posts; question post refused twice for a missing Research: line not named in the brief; renderHomePage takes 14 positional args",
+      "evidence": "server-routes.mjs:133-154; rune-deck-ui architect report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "scripts/check-syntax.mjs cannot run bare: needs --experimental-vm-modules and a <cwd> argument only the gate's own call passes",
+      "evidence": "home-store-guard S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice Interface's space-separated log format cannot be parsed once argv or the path has spaces; implementer deviated to tabs",
+      "evidence": "docs/design/home-store-guard/slices/S2.md Interface",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "gate2 landed before spec 7's 60-min check could be read, so the deck refused QA's reply on the closed thread and the pass exists on no deck thread; a 60-min bar belongs in a mock-timer test",
+      "evidence": "deck_reply: item itm_2719befd52ba is closed: landed at d2358d9",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "walkthrough URL pointed at the scratch deck without its secret, and the user hit the secret prompt",
+      "evidence": "user reply on itm_f656751ff13c 04:02:29Z",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the process.platform seam rule lives only in scripts/test/platform-reads.test.mjs; no slice or brief points to it, found only at integration",
+      "evidence": "home-store-guard S2 integration red, 1 fail",
+      "size": 2
+    }
+  ]
+}
