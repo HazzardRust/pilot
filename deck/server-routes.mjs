@@ -57,6 +57,7 @@ import { renderDeckPage, renderHomePage, renderThreadPage } from './ui/render.mj
 import { readUsage } from './usage.mjs';
 import { SCREENS, viewOf } from './view/index.mjs';
 import { readDeck } from './view/reads.mjs';
+import { seeThread } from './view/thread.mjs';
 
 import { deckUrl } from './tools.mjs';
 import { healthOf } from './health.mjs';
@@ -195,6 +196,8 @@ async function route(request, response, open, start, land, exit, guard) {
     const screen = query.get('screen') ?? 'home';
     if (!SCREENS.has(screen)) return sendJson(response, 404, { error: `no screen ${screen}` });
     const asked = { screen, run: query.get('run'), all: query.get('all') === '1', ticket: query.get('ticket'), id: query.get('id') };
+    // Reading a thread is seeing it, as `GET /thread/<id>` below: its notice clears before the read (S8).
+    if (screen === 'thread') seeThread(asked.id, announceChange);
     return sendJson(response, 200, viewOf(readDeck(), asked));
   }
 
