@@ -139,7 +139,7 @@ Width 6; longest stem 3
 
 | Slice | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- |
-| S1 The checks on one commit read as one line | 7, 9, 10 | `deck/host.mjs`, `deck/host-github.mjs`, `scripts/checks.mjs` (new), `scripts/test/checks.test.mjs` (new), `deck/test/host-contract.test.mjs`, `docs/adr/NNNN-ci-gate.md` (new), `CONTEXT.md` | – | typescript, security | [S1](slices/S1.md) |
+| S1 The checks on one commit read as one line | 7, 9, 10 | `deck/host.mjs`, `deck/host-github.mjs`, `scripts/checks.mjs` (new), `scripts/test/checks.test.mjs` (new), `deck/test/host-contract.test.mjs` | – | typescript, security | [S1](slices/S1.md) |
 | S2 `pilot checks` prints it and waits | 7 | `bin/pilot.mjs`, `scripts/checks-cli.mjs` (new), `scripts/test/checks-cli.test.mjs` (new), `scripts/install-permissions.mjs`, `scripts/install-settings.mjs`, `scripts/test/install-allow-checks.test.mjs` (new) | S1 (`checksAt`) | typescript, security | [S2](slices/S2.md) |
 | S3 A landing refuses a red feature | 1, 9 | `scripts/land.mjs`, `scripts/test/lib/land-repos.mjs`, `scripts/test/land-checks.test.mjs` (new) | S1 (`checksGate`) | typescript | [S3](slices/S3.md) |
 | S4 Integrate refuses a red feature tip | 3 | `scripts/integrate.mjs`, `scripts/test/integrate-checks.test.mjs` (new) | S1 (`checksAt`) | typescript | [S4](slices/S4.md) |
@@ -147,6 +147,7 @@ Width 6; longest stem 3
 | S6 `pilot base` says a red base | 6 | `scripts/base.mjs`, `.github/workflows/gate.yml`, `scripts/test/gate-workflow.test.mjs`, `scripts/test/base-checks.test.mjs` (new) | S1 (`checksAt`) | typescript | [S6](slices/S6.md) |
 | S7 The crew reads checks before each move | 2, 3, 4 | `agents/pilot-lander.md`, `agents/pilot-co-pilot.md`, `agents/pilot.md`, `agents/pilot-qa.md`, `scripts/test/ci-gate-wording.test.mjs` (new) | S2 (`pilot checks --wait`), S5 (the `checks` field) | typescript, security | [S7](slices/S7.md) |
 | S8 GitLab answers the same checks | 8 | `deck/host-gitlab.mjs`, `deck/test/host-gitlab-checks.test.mjs` (new) | S1 (the **Host** `checks` verb) | typescript, security | [S8](slices/S8.md) |
+| S9 The run's ADR and glossary (added) | – | `docs/adr/NNNN-ci-gate.md` (new), `CONTEXT.md` | S1 | typescript | [S9](slices/S9.md) |
 
 S1 is the walking skeleton: a real `gh` read of one commit's check runs, through the **Host** seam, to the one
 check line. red team: `fakeGh` throws on an unknown verb (`land-repos.mjs:128`), so S3 owns that helper and
@@ -181,4 +182,5 @@ adds at most 2 lines to each.
 | S6 | planned | | | | S1 | 6 |
 | S7 | planned | | | | S2, S5 | 2, 3, 4 |
 | S8 | planned | | | | S1 | 8 |
+| S9 | planned (added) | | | | S1 | – |
 | CI is a gate at every step | planned | feat/ci-gate | | | S1-S8 | 1-4, 6-10 |
