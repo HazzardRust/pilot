@@ -114,9 +114,7 @@ fn tickets_of(deck: &support::Scratch, repo: &str) -> Vec<String> {
 
 /// Each tab's href, as the Rune deck's own read draws the strip.
 fn tab_hrefs(client: &Client) -> Vec<String> {
-    let view = client
-        .view(&Query::default())
-        .expect("a view");
+    let view = client.view(&Query::default()).expect("a view");
     view.regions["tabs"]["tabs"]
         .as_array()
         .expect("tabs")
@@ -153,6 +151,8 @@ fn a_repo(deck: &support::Scratch, name: &str) -> String {
 #[test]
 fn create_lands() {
     let deck = support::Scratch::start();
+    // Create opens a thread on a repository the deck has numbered, as a run's registration does.
+    register_run(&deck, "C:/work/alpha");
     let client = client_for(&deck);
 
     let location = act(
@@ -245,11 +245,17 @@ fn add_and_remove_deck_land() {
     let client = client_for(&deck);
 
     let location = act(&client, DeckAction::AddDeck { path: repo.clone() });
-    assert!(location.starts_with("/?run="), "lands on the new tab: {location}");
+    assert!(
+        location.starts_with("/?run="),
+        "lands on the new tab: {location}"
+    );
     assert!(tab_hrefs(&client).contains(&location), "a tab is added");
 
     assert_eq!(act(&client, DeckAction::RemoveDeck { repo }), "/");
-    assert!(!tab_hrefs(&client).contains(&location), "the ended tab is removed");
+    assert!(
+        !tab_hrefs(&client).contains(&location),
+        "the ended tab is removed"
+    );
 }
 
 #[test]
@@ -283,19 +289,29 @@ fn clear_notice_and_clear_notices_land() {
                 "deck_resolve",
                 json!({ "id": id, "resolution": "decided", "author": "" }),
             );
-            assert_eq!(item(&deck, &id)["notice"], true, "an agent's close leaves a notice");
+            assert_eq!(
+                item(&deck, &id)["notice"],
+                true,
+                "an agent's close leaves a notice"
+            );
             id
         })
         .collect();
     let client = client_for(&deck);
 
     act(&client, DeckAction::ClearNotice { id: ids[0].clone() });
-    assert!(item(&deck, &ids[0])["notice"].is_null(), "that notice is cleared");
+    assert!(
+        item(&deck, &ids[0])["notice"].is_null(),
+        "that notice is cleared"
+    );
     assert_eq!(item(&deck, &ids[1])["notice"], true, "and only that one");
 
     act(&client, DeckAction::ClearNotices);
     for id in &ids {
-        assert!(item(&deck, id)["notice"].is_null(), "{id}'s notice is cleared");
+        assert!(
+            item(&deck, id)["notice"].is_null(),
+            "{id}'s notice is cleared"
+        );
     }
 }
 
@@ -317,5 +333,9 @@ fn start_is_refused_in_the_suite() {
         ),
         Acted::Refused { reason } => assert!(reason.contains("turned off"), "{reason}"),
     }
-    assert_eq!(read(&deck, "/api/runs")["runs"], json!([]), "no session started");
+    assert_eq!(
+        read(&deck, "/api/runs")["runs"],
+        json!([]),
+        "no session started"
+    );
 }
