@@ -15,7 +15,7 @@ reported as a failed install.
 | 1 | Whoever spawns the evidence runner, a worktree with a `package-lock.json` and no `node_modules` gets `npm ci --ignore-scripts` before the first check | the runner on a fresh detached worktree: an `install` row, exit 0, then a `Diff coverage:` row | 1 run, a percentage printed |
 | 2 | A failed install is reported as that: the `install` row carries its exit code, and the Node coverage and mutation rows read `not run: install failed (exit <n>)` and are not run | a scratch repo whose lockfile disagrees with `package.json` | 1 install row with exit ≠ 0, 2 rows naming it |
 | 3 | The fundamentalist reports a failed install as `install failed (exit <n>)`, never as plain unmeasured, and is no longer a second installer | a prose test of both definitions | 3 tests red before, green after |
-| 4 | *assumed* (practitioner: CI engineer): an install never runs over an existing `node_modules`, since agents junction it and `npm ci` deletes through the junction | the condition in the runner's prose, pinned by spec 3's test | 0 `npm ci` runs when `node_modules` exists |
+| 4 | (practitioner: CI engineer; accepted on `itm_f652048fc632`) an install never runs over an existing `node_modules`, since agents junction it and `npm ci` deletes through the junction | the condition in the runner's prose, pinned by spec 3's test | 0 `npm ci` runs when `node_modules` exists |
 
 The draft's line 2 (Gate 2 wording) is carried by spec 3: Gate 2's gaps line is the pilot's and QA's,
 copied from the fundamentalist's report, so the cause reaches it once the report names it.
@@ -31,11 +31,13 @@ installed (2026-11-19 09:53 +10, the first installed plugin with the step):
 | yellow-never-idle | yes, on the re-run | runner output lost across a context reset |
 | crew-refusals | yes, 06:47Z | runner did not return; auto mode refused the old c8 cell |
 | handoff-cache | **no** | the co-pilot respawned the runner in its own worktree `pilot-evidence-handoff-cache` (runner transcript `agent-aebce435…`, 10:10Z: `node_modules missing: run npm ci`) |
+| human-steps | **no** | an evidence runner re-spawned by a co-pilot declined `npm ci`; diff coverage and mutation unmeasured (reported by `main`, 2026-11-20) |
 | recut-decision | yes, 14:46Z | auto mode refused the old c8 cell, "Undermining Oversight" (ticket `itm_5807aa39f833`); coverage-cell (`ebe5233c`) replaces that cell, effective after `pilot update` |
 
 The prose held every time the fundamentalist spawned the runner. The gap is that the install lives in
 the spawner, and the co-pilot (`agents/pilot-co-pilot.md:6` grants `pilot:pilot-evidence-runner`) is a
-second spawner without it. recut-decision's gap is not this cause.
+second spawner without it; human-steps is a second case of the handoff-cache shape. recut-decision's
+gap is not this cause.
 
 What the design leans on:
 
@@ -69,6 +71,7 @@ spawner (two today); behind the runner it is written once.
 - **L2 Only when no `node_modules`.** Rationale: `npm ci` deletes `node_modules` first, and agents junction it to a shared checkout. Rejected: always `npm ci`, the CI default, which costs ~40 s and risks a shared install.
 - **L3 Outside the table, before it.** Rationale: the six-check table and its no-`HOME` override test stay as they are; the scratch home stops a user `.npmrc` being read. Rejected: a seventh `Install` row.
 - **L4 ADR NNNN** (`docs/adr/NNNN-coverage-install.md`, S1) records L1 and A1.
+- **L5 Grilling depth: forks.** The user pressed "forks" on `itm_5106329c1e05`: the user is asked the design forks only, the rest defaulted here. Rejected: a full grilling of every branch.
 
 ## 6. Assumed decisions
 
@@ -76,6 +79,7 @@ spawner (two today); behind the runner it is written once.
   Assumed bars (security probe), each pinned by S1's tests: `--ignore-scripts` always; a scratch `HOME`
   and `USERPROFILE`; never `npm ci` when `node_modules` exists (spec 4, junctions); the runner's added
   network use is the npm registry only.
+  Verdict: stands — the user pressed "Accept the reworked spec" on itm_f652048fc632
 
 ## 7. Out of scope
 
