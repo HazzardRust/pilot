@@ -25,7 +25,11 @@ import fs from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+// The platform seam: the one place a platform is read, and the one tree-kill (taskkill /T /F on win32).
+const { killTree } = createRequire(import.meta.url)('../../../../../hooks/lib/platform.js');
 
 const PROBE = path.dirname(fileURLToPath(import.meta.url));
 const PILOT = path.resolve(PROBE, '..', '..', '..', '..', '..');
@@ -54,6 +58,22 @@ function args(argv) {
 // --- the login copy and its removal (L8) ---
 
 const live = new Set();
+const children = new Set();
+
+/** Registers a spawned session so every exit path ends it: its memory holds the token the login copy carries (L8). */
+export function track(child) {
+  children.add(child);
+  child.once('close', () => children.delete(child));
+  return child;
+}
+
+/** Ends each live session, and on win32 its whole tree, before the login copy goes. */
+function endChildren() {
+  for (const child of children) {
+    if (child.exitCode !== null || child.signalCode !== null || child.pid === undefined) continue;
+    try { killTree(child.pid); } catch (err) { process.stderr.write(`run.mjs: could not end pid ${child.pid}: ${err.message}\n`); }
+  }
+}
 
 /** The copied login first, then the whole scratch tree; a tree still locked keeps its entry for the exit sweep. */
 function scrub(tmp) {
@@ -71,7 +91,8 @@ function sweep() {
   for (const name of fs.readdirSync(os.tmpdir())) if (name.startsWith(PREFIX)) scrub(path.join(os.tmpdir(), name));
 }
 
-process.on('exit', () => { for (const tmp of live) scrub(tmp); });
+// Every exit path (the signals and uncaughtException below end in process.exit) runs this: the sessions first, then the copies.
+process.on('exit', () => { endChildren(); for (const tmp of live) scrub(tmp); });
 for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => process.exit(130));
 process.on('uncaughtException', (err) => {
   process.stderr.write(`run.mjs: ${err?.message ?? err}\n`);
@@ -203,11 +224,11 @@ async function once(opts, version) {
   const events = [];
   let measured = null;
   let spawnError = null;
-  const child = spawn('claude', [
+  const child = track(spawn('claude', [
     '-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose', '--model', opts.model,
     '--plugin-dir', PILOT, '--plugin-dir', PROBE, '--agent', 'pilot:pilot', '--settings', JSON.stringify({ agent: 'pilot:pilot' }),
     '--allowedTools', DECK_TOOLS.join(','), '--debug-file', path.join(s.tmp, 'debug.log'),
-  ], { cwd: s.repo, env: scratchEnv(s, opts), stdio: ['pipe', 'pipe', 'pipe'] });
+  ], { cwd: s.repo, env: scratchEnv(s, opts), stdio: ['pipe', 'pipe', 'pipe'] }));
   child.stdin.on('error', () => {}); // EPIPE from an early exit: the close handler records the exit.
   let stderr = '';
   child.stderr.on('data', (d) => { stderr += d; });
@@ -301,7 +322,9 @@ async function once(opts, version) {
   };
 }
 
-const opts = args(process.argv.slice(2));
-sweep();
-const version = (spawnSync('claude', ['--version'], { encoding: 'utf8', timeout: 15_000 }).stdout ?? '').trim() || 'unknown';
-for (let i = 0; i < opts.runs; i += 1) process.stdout.write(`${JSON.stringify(await once(opts, version))}\n`);
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const opts = args(process.argv.slice(2));
+  sweep();
+  const version = (spawnSync('claude', ['--version'], { encoding: 'utf8', timeout: 15_000 }).stdout ?? '').trim() || 'unknown';
+  for (let i = 0; i < opts.runs; i += 1) process.stdout.write(`${JSON.stringify(await once(opts, version))}\n`);
+}
