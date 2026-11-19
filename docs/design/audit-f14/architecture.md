@@ -84,16 +84,27 @@ Deletion test: `retarget` and the base rule in `feature-pr.mjs` both answer "wha
 ## 6. Assumed decisions
 
 - **A1** *assumed*: a test importer counts as a second importer. This is moot today (0 of 6 has one). Rejected: tests not counting.
+  Verdict: stands — moot today, none of the six has a test importer
 - **A2** *assumed*: no gate guard against new dead exports in this run. A guard needs a parser or a new `npx` dependency. Rejected: `scripts/check-exports.mjs` in the gate.
+  Verdict: stands — no queued ticket asks for a dead-export guard; a guard is a new dependency outside this run
 - **A3** *assumed* (cutover, not L11's setting): a record with base `pilot` keeps the release path until none remains, so the 3 runs in flight (yellow-never-idle, audit-f12, home-store-guard) still reach main. No new run can choose that path. Kept path: S4 gates `releasePr` on the landed record's base being `pilot`. It costs about 20 changed lines in S4, plus `release.mjs` and its 9 tests living on. It is removed once no open run record has base `pilot` (`git grep -l '"base": "pilot"' docs/design/*/run.json` on a live ticket's branch is empty), by a follow-up audit ticket and not by a slice of this run, since the condition cannot be true while the 3 runs are in flight. Rejected path: delete `release.mjs` in S4 and have the user open one last `pilot → main` PR by hand once the 3 have landed. That costs one human step and a PR that folds 3 features again, against the SOP. S4 shrinks by about 20 lines and S4 deletes the 9 release tests.
+  Verdict: stands — yellow-never-idle, audit-f12 and home-store-guard are based on pilot and must still reach main; L11 dropped a setting, not this transition
 - **A4** settled by L12.
+  Verdict: stands — settled by L12, the user's "Never rewrite pilot" on itm_eb1c97b72c6b
 - **A5** *assumed*, answered by the user on itm_bd8900cbbaee: "Restack resolves on B (default)", the default taken: a sibling conflict (A and B both off main, the same lines) is settled by `restack` merging main into an open feature branch that no longer merges clean. Generated files are regenerated (`merge-generated.mjs`), and a hand conflict exits 3 naming the file, for the lander on `feat/B`. Trade: pilot's resolution is made again on B. Rejected: `pilot base` stacking B on any unmerged feature it overlaps at the take, which makes longer stacks and makes B wait on A.
+  Verdict: stands — the user chose "Restack resolves on B (default)" on itm_bd8900cbbaee
 - **A6** *assumed*, answered by the user on itm_4d35092bb57b: "At each take and by hand (default)", the default taken: the pilot runs `pilot restack` after `pilot sync` at each take, and the user's step is the same command by hand. Trade: a merge into main sits unrestacked until the next take. Rejected: the deck polling the host, which is a new daemon loop.
+  Verdict: stands — the user chose "At each take and by hand (default)" on itm_4d35092bb57b
 - **A7** *assumed*: an unchained run's record base is the default branch's own name. `RUN_BASE` accepts a branch-name shape that does not start with `-`, and the scripts check it equals `remoteDefaultBranch`. Rejected: a `default` token, which no git ref names.
+  Verdict: stands — no queued ticket claims the record base's shape
 - **A8** *assumed*: `pilot.merge` has a reader only (`mergeMethodOf`). OPERATING documents `git config pilot.merge squash`. Rejected: a writer verb like `pilot host`, which adds a CLI surface for one key.
+  Verdict: stands — one git config key needs no writer verb
 - **A9** *assumed*: chain depth stays 1 and the chain base stays the deck's concluding feature, now including a feature that has landed but is unmerged. Rejected: arbitrary depth.
+  Verdict: stands — depth 1 is ADR 0176's bound already in use
 - **A10** *assumed*: one run, 9 slices, with no Runs table. F14 is S1 and stays in, as the user merged it.
+  Verdict: stands — the user merged the two tickets into one on itm_08346d099667
 - **A11** *assumed*: the recut check (`deck/recut.mjs:141`) keeps comparing against pilot, where the plan lands. Out of this cut.
+  Verdict: stands — plans still land on pilot, where the recut check compares
 - red team: S5 (allocating before the push) would collide. If a landing allocated 0193 on feat, pushed it and then went red, the next landing would allocate 0193 again. L7 fixes this: commit locally, push feat only after the suite is green, then push pilot.
 - red team: S3 alone would be undone. `feature-pr.mjs:184-189` re-edits the base on every status write, so a retarget made by restack would revert. L6 fixes this: both go through `prBase`.
 - red team: S2 alone would leave a main-cut run unable to chain. `deck/tickets.mjs:66` offers only base `pilot`. S2 owns that line.
@@ -132,10 +143,7 @@ Reviewer short names are `pilot:<name>-reviewer`. S2 is the walking skeleton: `p
 6. Temp-repo tests show B on A: retarget after a merge commit, a leased rebase after a squash, a fix merged forward, and a conflict exiting 3 (spec 6, 10). Pilot's push log holds no forced update (spec 8).
 7. F14's greps and `npm test` (spec 1-3). The legacy release tests stay green (spec 12).
 
-**QA environment** (pending itm_fb7a2155c9c1; one of these two is kept at the verdict):
-
-- *Default, local*: steps 1 and 3-6 run in temp repositories, with a bare repository as origin, a stub host recording every `open`/`edit`, and a scratch deck on a spare port. Steps 2 and 4 then read the stub host's recorded PR base and range, not GitHub's page. Cost: nothing on GitHub is seen.
-- *Alt, throwaway GitHub repository*: a private repository created for QA, with `pilot.host github`. The B-on-A stack runs end to end. The user merges #A (once with a merge commit, once with a squash), runs `pilot restack`, and looks at #B's base and commits tab. The repository is deleted after Gate 2. Cost: one repository create and delete, and the user's merges are real ones.
+**QA environment** (the user's, itm_fb7a2155c9c1: "Temp repos + stub host + scratch deck"): steps 1 and 3-6 run in temp repositories, with a bare repository as origin, a stub host recording every `open`/`edit`, and a scratch deck on a spare port. Steps 2 and 4 read the stub host's recorded PR base and range, not GitHub's page. Rejected: a throwaway GitHub repository, which costs a repository create and delete and real merges.
 
 ## 10. Status
 
