@@ -106,7 +106,7 @@
     },
     {
       "slice": "S12",
-      "state": "pushed 52759fe; integrating",
+      "state": "integrated",
       "after": [
         "S1",
         "S9",
@@ -126,7 +126,7 @@
     },
     {
       "slice": "S14",
-      "state": "pushed 70e275e",
+      "state": "pushed 70e275e; integrating",
       "after": [
         "S9",
         "S10"
@@ -152,8 +152,8 @@
     "dropped: S13 pushback — restart's env keeps ANTHROPIC*/PILOT_*: restart copies no login and its documented login is ANTHROPIC_API_KEY, so L8's copy terms do not reach it",
     "kept: S13 size — 194 changed lines accepted: net +40, the rest a move into probes/lib.mjs its slice file requires"
   ],
-  "next": "S13 integrated at 73e4f818; S12/S14 running (send them the tip to rebase); then base check, resume QA with the tip.",
-  "updatedAt": "2026-11-19T10:54:40.333Z",
+  "next": "S12 integrated at c8ca5e54; S14 integrating; then base check, resume QA with the tip.",
+  "updatedAt": "2026-11-19T10:57:38.412Z",
   "friction": [
     {
       "agent": "pilot-implementer",
