@@ -42,7 +42,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 9db54b0; NOT integrated: unbuilt B2, B3 need evidence trailers; re-integrating",
+      "state": "pushed 9db54b0; commit failed beside S2's overlap; re-integrating",
       "after": [
         "S5"
       ],
@@ -51,7 +51,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed 5cb8bfc; re-integrating with not-built evidence rows",
+      "state": "integrated",
       "after": [
         "S4"
       ],
@@ -90,8 +90,8 @@
     }
   ],
   "findings": [],
-  "next": "feat at 7cc9b460. S6, S7 integrating; then S2 90cc960, then S8 f31cbc9. Then seams on S9.md and S11.md; S11 (note sections.md:61 prose -1,394/-10 vs table -1,375/+5); base check; fundamentalist; QA.",
-  "updatedAt": "2026-11-19T09:11:03.627Z",
+  "next": "feat at c1cb19fc (S1, S3, S4, S5, S7, S9, S10 integrated). Integrating S6, S2, S8 in one sequence. Then seams on S9.md and S11.md; S11; base check; fundamentalist; QA.",
+  "updatedAt": "2026-11-19T09:12:06.390Z",
   "friction": [
     {
       "agent": "pilot-fundamentalist",
