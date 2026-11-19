@@ -69,11 +69,12 @@ function assertHostVerb(args) {
 }
 
 /** The `gh` runner in `cwd`: `(args) => stdout`, argv only, no shell; throws on a call off the allowlist. */
-export const ghRun = (cwd) => (args) => {
+export const ghRun = (cwd) => (args, { timeout } = {}) => {
   assertHostVerb(args);
-  return execFileSync('gh', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+  return execFileSync('gh', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, ...(timeout === undefined ? {} : { timeout }) });
 };
 
+const CHECKS_TIMEOUT_MS = 30_000;
 /** The one field set every review read asks for (A2), whoever the caller. */
 const FIELDS = 'number,state,baseRefName,headRefName,headRefOid,body,isCrossRepository';
 const STATES = { OPEN: 'open', MERGED: 'merged', CLOSED: 'closed' };
@@ -130,7 +131,7 @@ function withBodyFile(body, use) {
 /**
  * **Host** over `run(args) -> stdout` (`ghRun(cwd)` in use, a fake in tests). A `label` is created first and
  * dropped from the write when `gh` cannot make it: a label never costs the PR.
- * @param {(args: string[]) => string} run
+ * @param {(args: string[], opts?: {timeout?: number}) => string} run
  * @returns {import('./host.mjs').Host}
  */
 export function githubHost(run) {
@@ -195,7 +196,8 @@ export function githubHost(run) {
     /** The latest check runs on one full sha; runs past the one page throw rather than read as fewer. */
     checks(sha) {
       if (typeof sha !== 'string' || !FULL_SHA.test(sha)) throw new Error(`gh: ${JSON.stringify(sha)} is not a full commit sha`);
-      const said = json(run(['api', `repos/{owner}/{repo}/commits/${sha}/check-runs?filter=latest&per_page=100`]), 'api check-runs');
+      // A hung `gh` expires into a throw, which `checksAt` reads as `unread`; no other `gh` call has a timeout.
+      const said = json(run(['api', `repos/{owner}/{repo}/commits/${sha}/check-runs?filter=latest&per_page=100`], { timeout: CHECKS_TIMEOUT_MS }), 'api check-runs');
       if (!Array.isArray(said?.check_runs) || !Number.isSafeInteger(said.total_count)) throw new Error('gh api check-runs: an answer that is not the shape');
       if (said.total_count > said.check_runs.length) throw new Error(`gh api check-runs: ${said.total_count} runs, more than one page`);
       return said.check_runs.map(checkOf);

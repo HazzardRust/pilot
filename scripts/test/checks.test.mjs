@@ -47,6 +47,42 @@ test('pending, none, unread are told apart', () => {
   assert.throws(() => checksAt({ host: null, sha: 'pilot' }), /full commit sha/);
 });
 
+/** A host over a run that records each call's second argument and answers per verb. */
+const recording = () => {
+  const calls = [];
+  const run = (args, opts) => {
+    calls.push({ args, opts });
+    if (args[0] === 'api' && args[1] === 'user') return 'me';
+    if (args[0] === 'api') return JSON.stringify({ total_count: 0, check_runs: [] });
+    if (args[0] === 'pr' && args[1] === 'create') return 'https://github.com/o/r/pull/7\n';
+    if (args[0] === 'pr' && args[1] === 'list') return '[]';
+    if (args[0] === 'pr' && args[1] === 'view') return JSON.stringify({ number: 7, state: 'OPEN', comments: [] });
+    return '';
+  };
+  return { calls, host: githubHost(run) };
+};
+
+test('a hung gh is unread: only the checks read carries a timeout', () => {
+  const { calls, host } = recording();
+  verdictOf(host);
+  assert.deepEqual(calls.map((call) => call.opts), [{ timeout: 30000 }], 'the checks read passes 30 s');
+  const timedOut = Object.assign(new Error('spawnSync gh ETIMEDOUT'), { code: 'ETIMEDOUT' });
+  assert.deepEqual(verdictOf(throwing(timedOut)), { state: 'unread', sha: SHA, failed: [], pending: [], why: 'spawnSync gh ETIMEDOUT' });
+});
+
+test('other verbs are unchanged: no run receives a timeout', () => {
+  const { calls, host } = recording();
+  host.reviews({ state: 'open' });
+  host.review(7);
+  host.open({ base: 'main', head: 'x', title: 't', body: 'b', label: 'l' });
+  host.edit(7, { title: 't', body: 'b', label: 'l' });
+  host.comment(7, 'hi');
+  host.upsertComment(7, '<!--m-->', 'hi');
+  host.signedIn();
+  assert.ok(calls.length >= 7);
+  assert.deepEqual(calls.filter((call) => call.opts !== undefined), []);
+});
+
 test('red wins over pending; neutral and skipped pass', () => {
   const mixed = verdictOf(answering([runAs(0, 'completed', 'failure'), runAs(1, 'queued', null)]));
   assert.deepEqual(mixed, { state: 'red', sha: SHA, failed: [UBUNTU], pending: [WINDOWS] });
