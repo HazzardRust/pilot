@@ -55,6 +55,8 @@ import {
 import { queueView } from './tickets.mjs';
 import { renderDeckPage, renderHomePage, renderThreadPage } from './ui/render.mjs';
 import { readUsage } from './usage.mjs';
+import { SCREENS, viewOf } from './view/index.mjs';
+import { readDeck } from './view/reads.mjs';
 
 import { deckUrl } from './tools.mjs';
 import { healthOf } from './health.mjs';
@@ -183,6 +185,17 @@ async function route(request, response, open, start, land, exit, guard) {
       total: items.length,
       items: brief ? chosen : chosen.map((item) => ({ ...item, owner: ownerOf(item) })),
     });
+  }
+
+  /**
+   * The Rune deck's one read (rune-deck-ui L2): every region of a screen from one store read, as JSON.
+   * Behind the secret like every route but OPEN_ROUTES; it writes nothing.
+   */
+  if (request.method === 'GET' && pathname === '/api/view') {
+    const screen = query.get('screen') ?? 'home';
+    if (!SCREENS.has(screen)) return sendJson(response, 404, { error: `no screen ${screen}` });
+    const asked = { screen, run: query.get('run'), all: query.get('all') === '1', ticket: query.get('ticket'), id: query.get('id') };
+    return sendJson(response, 200, viewOf(readDeck(), asked));
   }
 
   if (request.method === 'GET' && pathname.startsWith(THREAD_PATH)) {
