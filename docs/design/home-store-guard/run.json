@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2 deck store refuses a gate process's home write",
-      "state": "pushed b279622a, integration red: 1 fail (only the seam reads process.platform); fix with implementer",
+      "state": "integrated",
       "after": [
         "S1 gate stats the home store"
       ],
@@ -23,8 +23,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-home-store-guard-s2"
     }
   ],
-  "next": "S2 integration red (store-dir.mjs reads process.platform outside the seam); implementer a0b216c12cf127aba fixing, re-pushes; then rerun pilot integrate with the same trailers, pilot integrate --trial, post walkthrough + gate2 myself. Owed: re-cut checks itm_4be41dcb9ee3, itm_7d3455d28cd6.",
-  "updatedAt": "2026-11-19T04:32:01.835Z",
+  "next": "Both slices in, feat 20281bfe, 4515 pass, trial clean on pilot at 20281bf. Walkthrough itm_dae597d9a7a6 posted, ticket green + taken. On its Sign off: close it, post gate2 myself (ticket itm_8bee042932cd, pr 117, sha 20281bf, walkthrough id; Verdict per slice + Gate line); on press spawn pilot-lander with the gate2 id.",
+  "updatedAt": "2026-11-19T04:39:22.511Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -72,6 +72,24 @@
       "what": "slice Interface's space-separated log format cannot be parsed once argv or the path has spaces; implementer deviated to tabs",
       "evidence": "docs/design/home-store-guard/slices/S2.md Interface",
       "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "gate2 landed before spec 7's 60-min check could be read, so the deck refused QA's reply on the closed thread and the pass exists on no deck thread; a 60-min bar belongs in a mock-timer test",
+      "evidence": "deck_reply: item itm_2719befd52ba is closed: landed at d2358d9",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "walkthrough URL pointed at the scratch deck without its secret, and the user hit the secret prompt",
+      "evidence": "user reply on itm_f656751ff13c 04:02:29Z",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the process.platform seam rule lives only in scripts/test/platform-reads.test.mjs; no slice or brief points to it, found only at integration",
+      "evidence": "home-store-guard S2 integration red, 1 fail",
+      "size": 2
     }
   ]
 }
