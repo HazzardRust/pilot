@@ -51,7 +51,7 @@ export function blockedStepLines(refusals) {
   if (refusals.length === 0) return ['Blocked steps: none'];
   const counts = new Map();
   for (const { agent, reason } of refusals) {
-    const row = `${agent} ${reason}`;
+    const row = JSON.stringify([agent, reason]);
     counts.set(row, { agent, reason, count: (counts.get(row)?.count ?? 0) + 1 });
   }
   const order = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
@@ -59,10 +59,13 @@ export function blockedStepLines(refusals) {
   return [`Blocked steps: ${refusals.length}`, ...rows.map((row) => `- ${said(row.agent)} ${said(row.reason)}: ${row.count}`)];
 }
 
-/** The ticket's blocked-step lines from the classifier log; a log that cannot be read says so and never stops the report. */
-function blockedStepsOf(repo, ticket) {
+/**
+ * The ticket's blocked-step lines from the classifier log, by ticket id alone: a crew session logs its own
+ * worktree's spelling of the repo, never the gate's. A log that cannot be read says so and never stops the report.
+ */
+function blockedStepsOf(ticket) {
   try {
-    return blockedStepLines(readRefusals({ repo, ticket }));
+    return blockedStepLines(readRefusals({ ticket }));
   } catch (err) {
     return [`Blocked steps: unknown (${said(String(err?.message ?? err).split('\n')[0])})`];
   }
@@ -204,7 +207,7 @@ export function postFilled(fields) {
   // A report built from no record would close the ticket on an empty one; the lander is told instead.
   if (!record) throw new DeckRefusal(`a report without a body is filled from the run record, and no run record names ${ticket}`);
   // Filed under the gate2's repository, as the deck's own report was, never the poster's worktree.
-  const report = postItem({ ...fields, repo: gate.repo, ...closingReportOf(record, gate, worktreesLeft(gate.repo, record.slug), pilotClosesOf(listItems(), ticket, gate.repo), blockedStepsOf(gate.repo, ticket)) });
+  const report = postItem({ ...fields, repo: gate.repo, ...closingReportOf(record, gate, worktreesLeft(gate.repo, record.slug), pilotClosesOf(listItems(), ticket, gate.repo), blockedStepsOf(ticket)) });
   noteDeck(report.id, REPORT_DUE);
   return report;
 }

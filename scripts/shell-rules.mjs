@@ -3,7 +3,6 @@
  * L4): one wording, so a grep and one test prove every definition holds it.
  *
  *   SHELL_RULES             the two sentences
- *   shellAgents(dir)        the definitions in `dir` whose `tools:` line grants Bash or PowerShell
  *   missingShellRules(dir)  one { agent, rule } row for each rule a shell agent lacks
  *
  * A rule counts when it appears with any run of whitespace standing for each space, so a
@@ -34,10 +33,6 @@ function definitions(dir) {
 // A scoped grant, `Bash(git:*)`, is still a shell: the name is read up to its `(`.
 const hasShell = ({ text }) =>
   listOf(split(text).front, 'tools').some((tool) => SHELLS.has(tool.replace(/\(.*$/, '').trim()));
-
-export function shellAgents(dir) {
-  return definitions(dir).filter(hasShell).map(({ agent }) => agent);
-}
 
 export function missingShellRules(dir) {
   const rows = [];

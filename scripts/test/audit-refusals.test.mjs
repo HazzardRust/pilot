@@ -82,7 +82,6 @@ test('the three habits of this run are three rows', (t) => {
   const rows = refusalRows(refusals);
   assert.deepEqual(rows.map((row) => row.count), [3, 3, 3]);
   assert.deepEqual(rows.map((row) => row.example).sort(), [COVERAGE, KILL, PROOF].sort());
-  assert.deepEqual(refusalRows(refusals, { min: 4 }), []);
 });
 
 test('the script prints the repo\'s counts and rows from a seeded log, and writes nothing', (t) => {

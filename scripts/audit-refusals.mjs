@@ -17,13 +17,12 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { pathToFileURL } from 'node:url';
 
-import { LOG_FILENAME, readRefusals } from '../deck/classifier-log.mjs';
+import { LOG_FILENAME, WITHHELD, readRefusals } from '../deck/classifier-log.mjs';
 import { deckDir } from '../hooks/lib/deck-secret.js';
 import { pathKey } from '../hooks/lib/platform.js';
 
 /** A recurring habit (A5): this many refusals of one shape in the repository. */
 const MIN_HABIT = 3;
-const WITHHELD = '<withheld: credential>'; // how S4 stores a field that held a credential
 const OPERATORS = ['&&', '||', ';', '|', '\n'];
 
 /** The command's parts, split on `&&`, `||`, `;`, `|` and newlines outside quotes. */
@@ -87,9 +86,8 @@ function habitRow(shape, group) {
   };
 }
 
-/** The refused shapes of at least `min` refusals each, most refused first, then by shape. */
-export function refusalRows(refusals, opts) {
-  const min = (opts && opts.min) || MIN_HABIT;
+/** The refused shapes of at least `MIN_HABIT` refusals each, most refused first, then by shape. */
+export function refusalRows(refusals) {
   const groups = new Map();
   for (const refusal of refusals) {
     // A withheld command has no shape to fix: counted by the caller, never grouped into a habit.
@@ -98,7 +96,7 @@ export function refusalRows(refusals, opts) {
     groups.set(shape, [...(groups.get(shape) ?? []), refusal]);
   }
   return [...groups]
-    .filter(([, group]) => group.length >= min)
+    .filter(([, group]) => group.length >= MIN_HABIT)
     .sort(([a, x], [b, y]) => y.length - x.length || a.localeCompare(b))
     .map(([shape, group]) => habitRow(shape, group));
 }

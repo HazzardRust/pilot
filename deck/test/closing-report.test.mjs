@@ -254,6 +254,21 @@ test("the lander's filled report counts the blocked steps logged for its ticket"
   assert.ok(reportsOn(ticket)[0].body.includes('Blocked steps: 1\n- a y: 1'), 'only this ticket is counted');
 });
 
+test("a blocked step logged under the worktree's own spelling of the repo is still counted by ticket", (t) => {
+  tempDeck(t);
+  const { repo, worktree } = aCheckout(t);
+  const { ticket, gate } = aSignedGate2(repo, worktree);
+  landThrough(gate, LAND_LINE);
+  // A crew session logs its cwd: the slice's worktree, backslashed on Windows, never gate.repo's spelling.
+  const logged = path.win32.normalize(worktree);
+  assert.notEqual(logged, gate.repo);
+  appendRefusal({ repo: logged, ticket, agent: 'a', reason: 'y', tool: 'Bash', command: 'c', verdict: 'refused' });
+
+  landerReport(repo, ticket);
+
+  assert.ok(reportsOn(ticket)[0].body.includes('Blocked steps: 1\n- a y: 1'), 'counted by its ticket');
+});
+
 test("a classifier log that cannot be read does not stop the lander's report", (t) => {
   tempDeck(t);
   const { repo, worktree } = aCheckout(t);
