@@ -80,19 +80,25 @@ module is shallow enough to fold. No fold slice.
   script. Tradeoff: line-level only, no source maps (TS) or branch coverage. Rejected: c8 as a plugin dependency
   plus diff-cover via pip, two toolchains and Python required.
   Answer (the user, `itm_aa6e5e340524`): "Built-in V8 + plugin script", the default as written.
+  Verdict: stands — the user took the default (itm_aa6e5e340524)
 - **A2 Missing `node_modules`** (`itm_38ebd5de8dcd`). Default: a follow-up ticket; the fundamentalist's existing
   `npm ci` step is where it fails, not the cell. Tradeoff: Gate 2 can still go up unmeasured for that cause.
   Rejected: a third slice on `pilot-fundamentalist.md`.
   Answer (the user, `itm_38ebd5de8dcd`): "Follow-up ticket", the default as written.
+  Verdict: stands — the user took the default (itm_38ebd5de8dcd); pilot files the follow-up ticket
 - **A3 QA environment** (`itm_38791313a2f4`). Default: this machine, auto mode on, the runner from the branch's
   definitions (`--plugin-dir` at the feature worktree) 3 times against a detached scratch worktree of this repo
   with `npm ci` done, a scratch deck, no database.
   Answer (the user, `itm_38791313a2f4`): "Real auto-mode session, scratch worktree", the default as written.
+  Verdict: stands — the user took the default (itm_38791313a2f4)
 - **A4 Node column only** (not posted, L1). The six other columns keep `uvx diff-cover`; no refusal of them is on
   record. Tradeoff: the same fetch shape stays for Python and the rest.
+  Verdict: stands — no queued ticket or recorded refusal covers the six other columns
 - **A5 crew-refusals ordering** (not posted, L1). It edits the same table line. If it is on `pilot` when S2 starts,
   S2 writes the cell in its env-less shape and its pin; otherwise the landing that comes second resolves one hunk.
+  Verdict: stands — crew-refusals gate2 is signed and landing now, so S2 most likely writes the env-less shape
 - **A6 Spec line 4** (not posted, L1): the counting rule, an added line, chosen to match diff-cover's on plain JS.
+  Verdict: stands — an added spec line that moves no locked decision
 
 ## 7. Out of scope
 
