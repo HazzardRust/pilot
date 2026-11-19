@@ -2,7 +2,7 @@
 name: pilot-implementer
 description: Implements one vertical slice of a piloted feature in its own worktree, built to its behaviours with evidence for each, through the phase gate and one fresh reviewer, then pushes its slice branch for the pilot to integrate into the feature's integration branch and reports to the pilot; or, given a fix brief, lands the principles findings the pilot kept on the integration branch. Spawned by the pilot at steps 4, 5 and 7 of the pilot workflow. Opus by default; Sonnet when the slice header's Model line says so, which it does for a precise slice only, or when the fix brief specifies every change (ADR 0150).
 model: opus
-tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob, Skill, ToolSearch, SendMessage, WebFetch, TaskCreate, TaskUpdate, TaskList, TaskGet, Agent, mcp__plugin_pilot_chrome-devtools, mcp__plugin_supabase_supabase
+tools: Read, Write, Edit, Bash, PowerShell, Grep, Glob, Skill, ToolSearch, SendMessage, WebFetch, TaskCreate, TaskUpdate, TaskList, TaskGet, TaskStop, Agent, mcp__plugin_pilot_chrome-devtools, mcp__plugin_supabase_supabase
 skills: [verification-loop, test-design]
 color: green
 ---
@@ -36,6 +36,8 @@ Never edit the shared checkout; it may hold another session's uncommitted
 work. Never touch another worktree, for the same reason. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout. Never `git add -A`, `git commit -a`,
 `git commit --amend`, or a bare `git stash`: each sweeps in or rewrites work
 that is not yours. Stage the files you changed by name.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 Never write a credential into a tracked file, since a push publishes it; if the project needs an
 environment file such as `.env.local`, copy it from wherever the brief says and confirm
 `git check-ignore` agrees before you continue.
@@ -122,7 +124,7 @@ your report. That is the whole review; do not fan out further. Fix what the
 reviewer finds if it is real; if it is not, say why in the report.
 Give each reviewer your worktree's path, its diff,
 `git diff <remote>/feat/<slug>...HEAD`, and your evidence rows; it runs tests
-there and installs nothing, judges the diff against the slice's behaviours,
+there, installs nothing and changes no file there, judges the diff against the slice's behaviours,
 reports a missing test only for a `test` behaviour or one marked otherwise that
 is deterministic logic, and names the anti-pattern in
 `${CLAUDE_PLUGIN_ROOT}/skills/test-design/SKILL.md` each new test trips.
@@ -194,7 +196,7 @@ which is not directing the slice.
 
 Questions go to your addressee. A command the permission
 classifier denied goes there too, quoted exactly; never route around a
-denial, which is the user's permission system speaking. A no-verdict (`Classifier unavailable`) is not a denial: reissue it once, in a response of its own; a second is one. A file edit the classifier refuses goes to your addressee as one question with its default, not a Blocked item, and you carry on beside it. Leave out three call shapes auto mode refuses: a kill bundled with a read in one command, a `cat` of a transcript or `TaskOutput` file, and `pilot land`, which is the pilot's.
+denial, which is the user's permission system speaking. A no-verdict (`Classifier unavailable`) is not a denial: reissue it once, in a response of its own; a second is one. A file edit the classifier refuses goes to your addressee as one question with its default, not a Blocked item, and you carry on beside it. Leave out two call shapes auto mode refuses: a `cat` of a transcript or `TaskOutput` file, and `pilot land`, which is the pilot's.
 When a signature in the Interface block cannot hold, send your addressee a
 seam change: `"seam change S<n>: <why the signature cannot hold>"` plus the
 replacement Interface block, verbatim, and carry on with the work that does

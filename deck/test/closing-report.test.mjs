@@ -14,7 +14,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { REPORT_DUE, closeLanded, closingReportOf } from '../closing-report.mjs';
+import { REPORT_DUE, blockedStepLines, closeLanded, closingReportOf } from '../closing-report.mjs';
+import { appendRefusal } from '../classifier-log.mjs';
 import { KIND_GATE2, KIND_HANDOFF, KIND_QUESTION, KIND_REPORT, SIGN_OFF } from '../items.mjs';
 import { closeLandedAtStart, startLanding } from '../landing.mjs';
 import { reportAskGaps } from '../report-shape.mjs';
@@ -85,6 +86,43 @@ test('the report names what landed', (t) => {
   assert.ok(!body.includes('removed C:/w/pilot-x-s1'), 'a cleared worktree is not listed');
   assert.ok(body.indexOf('a stale worktree') > -1 && body.includes('the suite takes 5 min'), 'the friction');
   assert.deepEqual(reportAskGaps(title, [], 'title'), []);
+  assert.deepEqual(reportAskGaps(body), []);
+});
+
+const refusal = (agent, reason) => ({ when: 'w', repo: 'r', ticket: 't', agent, reason, tool: 'Bash', command: 'c', verdict: 'refused' });
+
+test('two blocked steps from two agents are two rows', () => {
+  const lines = blockedStepLines([
+    refusal('pilot:pilot-evidence-runner', '[Undermining Oversight]'),
+    refusal('pilot:pilot-implementer', '[Destructive or Unwanted Actions]'),
+  ]);
+
+  assert.deepEqual(lines, [
+    'Blocked steps: 2',
+    '- pilot:pilot-evidence-runner [Undermining Oversight]: 1',
+    '- pilot:pilot-implementer [Destructive or Unwanted Actions]: 1',
+  ]);
+});
+
+test('the commonest blocked step comes first and repeats are counted', () => {
+  const lines = blockedStepLines([refusal('b', 'x'), refusal('a', 'y'), refusal('a', 'y')]);
+
+  assert.deepEqual(lines, ['Blocked steps: 3', '- a y: 2', '- b x: 1']);
+});
+
+test('no refusals reads none', () => {
+  assert.deepEqual(blockedStepLines([]), ['Blocked steps: none']);
+});
+
+test('the report carries the blocked step lines after the pilot closes', (t) => {
+  tempDeck(t);
+  const repo = scratch(t, 'repo');
+  const { ticket, gate } = aSignedGate2(repo);
+  const { record } = recordForTicket(repo, ticket);
+
+  const { body } = closingReportOf(record, { ...gate, landing: { state: 'landed', sha: '1a2b3c4', line: LAND_LINE } }, [], [], blockedStepLines([refusal('a', 'y')]));
+
+  assert.ok(body.indexOf('Blocked steps: 1\n- a y: 1') > body.indexOf('Closed by the pilot:'), 'after the closes section');
   assert.deepEqual(reportAskGaps(body), []);
 });
 
@@ -200,6 +238,47 @@ test('a report with a body is stored as it came', (t) => {
   const [report] = reportsOn(ticket);
   assert.equal(report.body, 'Landed.', 'a body given is kept');
   assert.equal(report.replies.length, 0, 'and noted nothing');
+});
+
+test("the lander's filled report counts the blocked steps logged for its ticket", (t) => {
+  tempDeck(t);
+  const { repo, worktree } = aCheckout(t);
+  const { ticket, gate } = aSignedGate2(repo, worktree);
+  landThrough(gate, LAND_LINE);
+  const entry = { repo: gate.repo, agent: 'a', reason: 'y', tool: 'Bash', command: 'c', verdict: 'refused' };
+  appendRefusal({ ...entry, ticket });
+  appendRefusal({ ...entry, ticket: null });
+
+  landerReport(repo, ticket);
+
+  assert.ok(reportsOn(ticket)[0].body.includes('Blocked steps: 1\n- a y: 1'), 'only this ticket is counted');
+});
+
+test("a blocked step logged under the worktree's own spelling of the repo is still counted by ticket", (t) => {
+  tempDeck(t);
+  const { repo, worktree } = aCheckout(t);
+  const { ticket, gate } = aSignedGate2(repo, worktree);
+  landThrough(gate, LAND_LINE);
+  // A crew session logs its cwd: the slice's worktree, backslashed on Windows, never gate.repo's spelling.
+  const logged = path.win32.normalize(worktree);
+  assert.notEqual(logged, gate.repo);
+  appendRefusal({ repo: logged, ticket, agent: 'a', reason: 'y', tool: 'Bash', command: 'c', verdict: 'refused' });
+
+  landerReport(repo, ticket);
+
+  assert.ok(reportsOn(ticket)[0].body.includes('Blocked steps: 1\n- a y: 1'), 'counted by its ticket');
+});
+
+test("a classifier log that cannot be read does not stop the lander's report", (t) => {
+  tempDeck(t);
+  const { repo, worktree } = aCheckout(t);
+  const { ticket, gate } = aSignedGate2(repo, worktree);
+  landThrough(gate, LAND_LINE);
+  fs.mkdirSync(path.join(process.env.PILOT_DECK_DIR, 'classifier.log'), { recursive: true });
+
+  landerReport(repo, ticket);
+
+  assert.match(reportsOn(ticket)[0].body, /Blocked steps: unknown \(\S/, 'the count says it is unknown');
 });
 
 test("a lander's bodiless report with no run record is refused", async (t) => {

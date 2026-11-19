@@ -1,0 +1,77 @@
+{
+  "slug": "audit-f12",
+  "feature": "A hook refuses shell edits of source",
+  "ticket": "itm_14e3f5278542",
+  "branch": "feat/audit-f12",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-audit-f12",
+  "artefact": "docs/design/audit-f12/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 sed -i on a tracked file is refused",
+      "state": "integrated",
+      "branch": "slice/audit-f12-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f12-s1"
+    },
+    {
+      "slice": "S2 heredoc and echo forms, pass catalogue, ADR",
+      "state": "integrated",
+      "after": [
+        "S1 sed -i on a tracked file is refused"
+      ],
+      "branch": "slice/audit-f12-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f12-s2"
+    }
+  ],
+  "next": "Both slices in, feat bc055125, trial clean. gate2 itm_e7330b8b1aac posted by pilot (real-session run + latency named as not done); on press spawn pilot-lander with it. Also waiting: home-store-guard walkthrough itm_dae597d9a7a6 then its gate2 by me. Co-pilot a07ee57e306b87795 live on handoff-cache itm_3997fa784e4b. Owed: re-cut checks itm_4be41dcb9ee3, itm_7d3455d28cd6.",
+  "updatedAt": "2026-11-19T05:05:46.854Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "run reports have no spend.json and live only as report items in deck.json and three archives; a researcher had to parse them",
+      "evidence": "audit-f12 architect report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "the audit counted 20 of 72 reports incl. two after 2026-10-21; the read found 18 real ones, none after 2026-10-14",
+      "evidence": "audit-f12 architect report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck_status refused S1/S2 rows because the pilot had sent rows under longer names; the error names the existing row only on collision",
+      "evidence": "audit-f12 and home-store-guard architect reports",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "user answered depth twice on two tickets (forks, then no grilling); two pushbacks and two corrections to architects",
+      "size": 6
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice sized at 157 lines against a 150 limit; a quote-aware tokenizer took it to 306 and forced a mid-slice question to main",
+      "evidence": "audit-f12 S1.md estimate vs brief.md limit",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "quoting JSON for a stdin hook probe in Bash produced invalid JSON, so the hook stayed silent and the first live run looked like a miss",
+      "evidence": "audit-f12 S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "two-reviewer review on the final tip means any round-2 nit fix restarts both reviews, so a 6-line fix was listed instead of made",
+      "evidence": "audit-f12 S2 report, the (( nit",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md's commit trailer names Fable while the implementer session's attribution names Opus; cost a judgement call",
+      "evidence": "docs/design/audit-f12/brief.md trailer",
+      "size": 1
+    }
+  ]
+}

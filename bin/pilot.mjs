@@ -25,6 +25,7 @@ import { main as branches } from '../scripts/branches.mjs';
 import { main as ghStub } from '../scripts/gh-stub.mjs';
 import { main as host } from '../scripts/host-setting.mjs';
 import { main as uninstall } from '../scripts/uninstall.mjs';
+import { main as update } from '../scripts/update.mjs';
 import { main as reach } from '../scripts/apply-reach.mjs';
 import { budget } from '../deck/budget.mjs';
 import { ready } from '../deck/schedule.mjs';
@@ -152,6 +153,9 @@ const usage = () => `pilot — the deck for piloted runs
                  with a large lesson's report md on stdin: shape-check it and write it to
                  <store>/lessons/<lesson id>.md, printing the path; exit 1 naming each
                  problem, nothing written
+  pilot update   update the plugin from the terminal: claude plugin marketplace update pilot,
+                 then claude plugin update pilot@pilot; prints pilot <before> -> <after> or
+                 pilot <v> is up to date. Refuses while a run is live; exit 1 then or on a failed call
   pilot uninstall [--yes]
                  print what would be stopped, removed and left, changing nothing; --yes
                  stops the deck, removes the pilot command, its launcher and the marked PATH
@@ -445,6 +449,11 @@ export async function run(argv, deps) {
     } catch (err) {
       return refuse(`pilot lesson-report: ${err.message}\n`);
     }
+    return undefined;
+  }
+
+  if (command === 'update') {
+    process.exitCode = await update(argv.slice(1));
     return undefined;
   }
 
