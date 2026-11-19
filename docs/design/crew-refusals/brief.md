@@ -44,7 +44,7 @@ https://claude.ai/code/session_01NXgSFppeY5pzVQLciH5swh
 
 ## Artefact
 
-`docs/design/crew-refusals/architecture.md`, slices in `slices/S1.md` to `slices/S3.md`. The run's ADR is
+`docs/design/crew-refusals/architecture.md`, slices in `slices/S1.md` to `slices/S5.md`. The run's ADR is
 `docs/adr/NNNN-crew-refusals.md` (S1, L6).
 
 ## Gate command
