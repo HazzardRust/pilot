@@ -9,23 +9,27 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed 71b6a5e",
+      "state": "integrated",
       "branch": "slice/ci-gate-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "pushed 46eec0e (integrating; its WARN-fix commit was read by no reviewer)",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/ci-gate-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s2"
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/ci-gate-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s5"
     },
     {
       "slice": "S7",
@@ -37,17 +41,21 @@
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "implementing (stubbing check-runs green in 10 land test files)",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/ci-gate-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s3"
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/ci-gate-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s4"
     },
     {
       "slice": "S6",
@@ -69,10 +77,19 @@
       "after": [
         "S1"
       ]
+    },
+    {
+      "slice": "S10",
+      "state": "implementing",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/ci-gate-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s10"
     }
   ],
-  "next": "ci-gate: integrating S1 (71b6a5e); then S2-S6, S8, S9 from its tip; S7 after S2 and S5.",
-  "updatedAt": "2026-11-19T17:48:39.352Z",
+  "next": "ci-gate: integrating S2; S3 resumed (wip 8f6defdc, stubbing 10 land tests); S4, S5, S10 implementing; S6, S8, S9 as slots free; S7 after S2+S5.",
+  "updatedAt": "2026-11-19T18:06:23.494Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -123,6 +140,56 @@
       "agent": "pilot-implementer",
       "what": "brief.md's commit trailer names Claude Fable 5.2 while implementers run on Opus/Sonnet",
       "evidence": "docs/design/ci-gate/brief.md:32",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "TaskOutput not usable by the co-pilot to wait on its children; harness forces an interim hand-back with three implementers live",
+      "evidence": "ci-gate hand-back, S2/S3/S5 live"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "slice estimates leave tests out, every opus slice ran past the 150-line limit",
+      "evidence": "S1 260 lines (git diff 1d2f0e68..db864833, non-docs), S2 279 reported"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "edited during the first full gate, so the gate ran twice",
+      "evidence": "S1 gate log"
+    },
+    {
+      "kind": "drain",
+      "what": "interim co-pilot hand-back read and checked while its children were still live",
+      "size": 2500
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's slice file names neither pinned allow-list test (install-allow-merge, install.test) that every new allow rule breaks; only the fact sheet found them",
+      "evidence": "scripts/test/install-allow-merge.test.mjs, scripts/test/install.test.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's ~130-line estimate counted code only; with tests ~290, a round trip",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot lacks TaskOutput; harness forced hand-back with three implementers live",
+      "evidence": "ci-gate co-pilot run",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "half the land tests build their own githubHost instead of fakeGh, so any gate in land breaks them one by one (44 red in 10 files); S3's B4 premise was wrong",
+      "evidence": "S3 report; scripts/test/land-*.test.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "implementer hand-back forced mid-slice (wip 8f6defdc) before it could act on the co-pilot's answer",
+      "evidence": "S3 report",
       "size": 1
     }
   ]
