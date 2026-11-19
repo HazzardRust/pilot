@@ -11,6 +11,7 @@ import path from 'node:path';
 import { holdWait, noteActive } from './agents.mjs';
 import { chainNext, isSuperseded } from './chain.mjs';
 import { cleanOnPilot, cleanRefusal } from './gate2-base.mjs';
+import { checksRefusal } from './gate2-checks.mjs';
 import { startLanding } from './landing.mjs';
 import { LAND_AGAIN, LANDING_KINDS } from './landing-replies.mjs';
 import { startPrWrite } from './pr-writes.mjs';
@@ -295,7 +296,11 @@ export function callTool(name, args, deps = {}) {
       const ticket = listItems().find((item) => item.id === args.ticket && item.kind === KIND_TICKET && sameRepo(item.repo, args.repo));
       assertVerdicts(args.repo, args, { record: ticket?.verdicts });
     }
-    if (args?.kind === KIND_GATE2) assertCleanOnPilot(args.repo, args.sha);
+    if (args?.kind === KIND_GATE2) {
+      assertCleanOnPilot(args.repo, args.sha);
+      const unchecked = checksRefusal(args.repo, args.sha, args.checks);
+      if (unchecked !== null) throw new DeckRefusal(unchecked);
+    }
     // Neither the run nor a `subdeck` argument is stored on the item: a caller stamps nothing.
     const { run: _run, subdeck: _subdeck, ...fields } = args ?? {};
     // Whether this post is the concluding move is read off the ticket's state either side of it (yellow-never-idle spec 2).
