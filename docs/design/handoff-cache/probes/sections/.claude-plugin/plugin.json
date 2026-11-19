@@ -1,0 +1,6 @@
+{
+  "name": "sectionsprobe",
+  "version": "0.0.1",
+  "description": "handoff-cache S2 probe: logs each prompt section's name, bytes and sha256, and removes the sections PROBE_TRIM names. Never shipped (L3).",
+  "hooks": "./hooks.json"
+}
