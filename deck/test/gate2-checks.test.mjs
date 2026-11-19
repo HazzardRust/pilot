@@ -66,17 +66,27 @@ test('not green, no post: a red or pending line is refused naming its checks', (
 
 test('a line that is not one check line is refused, a newline or control character included', (t) => {
   const { work, ci } = scratch(t);
-  for (const line of ['green', `${green(ci)}\nchecks green at ${ci.slice(0, 7)}`, `checks red at ${ci.slice(0, 7)}: a\u0007b`, `checks red at ${ci.slice(0, 7)}: a b`]) {
+  // The last line holds a literal U+2028 LINE SEPARATOR between `a` and `b`.
+  for (const line of ['green', `checks red at ${ci.slice(0, 7)}: ${'x'.repeat(600)}`, `${green(ci)}\nchecks green at ${ci.slice(0, 7)}`, `checks red at ${ci.slice(0, 7)}: a\u0007b`, `checks red at ${ci.slice(0, 7)}: a b`]) {
     assert.match(checksRefusal(work, ci, line), /^NOT posted: checks must be one line/, JSON.stringify(line));
   }
 });
 
-test('a green line posts, and the gate2 is stored with checks', (t) => {
-  tempDeck(t);
+test('a sha git cannot read counts as CI configured, so no checks is refused', (t) => {
+  const { work } = scratch(t);
+  assert.match(checksRefusal(work, 'deadbeef'.repeat(5), undefined), /^NOT posted: CI is configured at deadbee, .*checks/);
+});
+
+test('a green line, at a full or short gate2 sha, or none with no host (A2), is accepted', (t) => {
   const { work, ci } = scratch(t);
   assert.equal(checksRefusal(work, ci, green(ci)), null);
   assert.equal(checksRefusal(work, ci.slice(0, 12), green(ci)), null, 'a short gate2 sha');
   assert.equal(checksRefusal(work, ci, checkLine({ state: 'none', sha: ci, why: 'no host' })), null, 'pilot.host none (A2)');
+});
+
+test('deck_post refuses a gate2 without checks and stores one with its green line', (t) => {
+  tempDeck(t);
+  const { work, ci } = scratch(t);
   const { id } = postStored({ kind: KIND_TICKET, title: 'Pear', body: shapedTicketBody(), repo: work, state: 'yellow' });
   takeLive(id);
   const post = (checks) => callTool('deck_post', { kind: KIND_GATE2, title: 'Gate 2', body: 'Walk it.', repo: work, pr: '#250', sha: ci, ticket: id, checks });

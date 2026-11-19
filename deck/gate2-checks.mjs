@@ -26,8 +26,9 @@ function checkGit(repo) {
 /**
  * `NOT posted: <why>` for a gate2 at `sha` in `repo` whose `checks` is missing, at another sha, or not green;
  * null where it passes or CI is not configured at `sha`. A tree git cannot read counts as configured (A2), so the
- * gate stays shut. A `repo` that is no checkout, or a sha of the wrong shape, is the store's to refuse, as for
- * `assertCleanOnPilot`. `none ... : no host` passes, as at land (A2).
+ * gate stays shut. A sha of the wrong shape is the store's to refuse; a `repo` that is no checkout is not checked,
+ * as `assertCleanOnPilot` does not check it, and land's own read is the enforcement (A5). `none ... : no host`
+ * passes, as at land (A2).
  */
 export function checksRefusal(repo, sha, checks) {
   if (typeof sha !== 'string' || !SHA_FIELD.shape.test(sha.trim())) return null;
@@ -46,7 +47,7 @@ export function checksRefusal(repo, sha, checks) {
   const sha7 = (full ?? at).slice(0, 7);
   const line = typeof checks === 'string' ? checks.trim() : '';
   if (line === '') return `NOT posted: CI is configured at ${sha7}, so a gate2 carries checks, the line \`pilot checks ${full ?? at}\` printed`;
-  const read = CHECKS_FIELD.shape.test(line) ? parseCheckLine(line) : null;
+  const read = line.length <= CHECKS_FIELD.most && CHECKS_FIELD.shape.test(line) ? parseCheckLine(line) : null;
   if (read === null) return 'NOT posted: checks must be one line, as `pilot checks <sha>` printed it';
   if (!(full ?? at).startsWith(read.sha7)) return `NOT posted: checks at ${read.sha7}, the gate2 is ${sha7}`;
   if (read.state === 'green' || (read.state === 'none' && read.names.join(', ') === 'no host')) return null;
