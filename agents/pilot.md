@@ -398,6 +398,8 @@ one call: `pilot integrate --dir "<worktree>" <slice-branch>
 `--trailer 'Evidence: B<k> <kind>: <what was seen>'` per evidence row of the report, verbatim, single-quoted in Bash (`'` as `'\''`) so nothing expands. Set `git config pilot.test` once where there
 is no package.json; it takes the base first. On a pass it pushes and commits the run record as
 `chore(<slug>): run record`. On a failure it pushes nothing: send the row's real state and route its line.
+On the short path, then run `pilot checks <sha7> --wait` on the sha it printed, in the background: unless `checks green` (or
+`none` with no CI configured), the row is `failed gate: <its line>` and nothing integrates over it.
 If slice N+1 is already running from N's old tip, send it the new one so it
 rebases.
 
