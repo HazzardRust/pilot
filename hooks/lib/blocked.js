@@ -15,8 +15,9 @@
  * claim older than the window is free, whether its post landed or its hook was killed
  * mid-post, so a repeat after it posts again rather than being held for good.
  *
- * The command goes to the post and nowhere else: the deck's credential check runs on what
- * it is given, and a log line would be a second copy that no check reads.
+ * The command also reaches the classifier log (`deck/classifier-log.mjs`, crew-refusals S4),
+ * which runs the deck's credential check, `findCredential`, before it writes; `deps.onTicket`
+ * is handed the ticket resolved here, so the log entry names it.
  */
 
 'use strict';
@@ -137,7 +138,8 @@ function postedId(answer) {
  * the window. `step.key`, when given, is what the step is claimed by in place of its command.
  * `deps.deck` is the deck client (`./deck.js` by default), `deps.claims` the claim directory,
  * `deps.now` the clock a claim is aged by, `deps.live` true when the caller already found a
- * live run in `step.repo`, so the deck is not asked twice.
+ * live run in `step.repo`, so the deck is not asked twice; `deps.onTicket`, when given, is
+ * called with the ticket the step is filed under (null when none) before the post.
  */
 async function postBlocked(step, deps) {
   const deck = (deps && deps.deck) || client;
@@ -164,6 +166,7 @@ async function postBlocked(step, deps) {
     const ticket = await Promise.resolve()
       .then(function () { return deck.filedTicket(step.repo, String(step.agent)); })
       .catch(function () { return null; });
+    if (deps && typeof deps.onTicket === 'function') deps.onTicket(ticket);
     const id = postedId(await deck.post(itemFor(step, ticket)));
     if (id === null) throw new Error('the deck named no item');
     return id;

@@ -23,6 +23,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `blocked-shape.mjs` | checks a ticketed `Blocked:` question or walkthrough is posted blocking |
 | `budget.mjs` | the per-session agent split set by `pilot budget` |
 | `chain.mjs` | hands the next open ticket to a session when a run finishes cleanly |
+| `classifier-log.mjs` | the classifier log: one line per auto-mode denial, credentials withheld, newest 10,000 kept; a record, never a permission |
 | `client.mjs` | the stdio MCP server each session spawns; owns no state |
 | `closing-report.mjs` | writes the closing report when a landing lands: resolves the gate2, finishes its record, closes the ticket |
 | `daemon.mjs` | the deck process: starts the server over the store; holds a leash, or the idle rule on the user's deck |
