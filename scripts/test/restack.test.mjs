@@ -192,6 +192,32 @@ test('only an open own-repository feature PR is touched', (t) => {
   assert.equal(tip(origin, 'feat/b'), before);
 });
 
+test('a lower branch gone from origin fails that PR', (t) => {
+  const { origin, seed, work } = repos(t, true);
+  run(seed, 'push', '-q', 'origin', '--delete', 'feat/a');
+  const before = tip(origin, 'feat/b');
+  const { host } = stubHost([pr({ number: 2, head: 'feat/b', base: 'feat/a' })]);
+
+  const out = restackIn(work, host);
+
+  assert.equal(out.lines.length, 1);
+  assert.match(out.lines[0], /^restack failed for #2: /);
+  assert.equal(out.exitCode, 1);
+  assert.equal(tip(origin, 'feat/b'), before);
+  assert.deepEqual(out.calls.filter((args) => args[0] === 'push'), []);
+});
+
+test('a base that is no plain branch name fails that PR', (t) => {
+  const { work } = repos(t, true);
+  const { host, edits } = stubHost([pr({ number: 2, head: 'feat/b', base: 'feat/a b' })]);
+
+  const out = restackIn(work, host);
+
+  assert.deepEqual(out.lines, ['restack failed for #2: base "feat/a b" is not a plain feat/ branch']);
+  assert.equal(out.exitCode, 1);
+  assert.deepEqual(edits, []);
+});
+
 test('a host that cannot be asked fails', (t) => {
   const { work } = repos(t, true);
   const host = {

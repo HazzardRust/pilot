@@ -3,6 +3,7 @@
  * A run's record base never changes (L6); the PR's base is worked out from it on every write.
  */
 
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -15,8 +16,11 @@ import { removeWorktree } from './sync.mjs';
 /** How many PRs on the lower head are read, so a fork's PR of the same branch name cannot hide this repository's. */
 const LIST_LIMIT = 30;
 
+/** How many open PRs one restack reads: a repository with more open PRs than this restacks only the first. */
+const OPEN_LIMIT = 100;
+
 /** A feature branch's name as restack takes it from the host: `feat/` and plain path parts, so no argv option or refspec rides in. */
-const FEATURE = /^feat\/[\w.][\w.-]*(?:\/[\w.][\w.-]*)*$/;
+const FEATURE = /^(?!.*\.\.)feat\/\w[\w.-]*(?:\/\w[\w.-]*)*(?<!\.lock)$/;
 
 /**
  * The base a feature PR targets, from the run record's `base`: `pilot` stays `pilot` (a legacy run, A3);
@@ -39,7 +43,8 @@ export function prBase({ git, host, base }) {
  * N's tip, and one that no longer merges clean onto the default branch takes it, each merged in a temporary worktree
  * (generated paths regenerated, the branch's own run record kept) and pushed to origin, never forced. A `pilot` base
  * (A3) is only retargeted. `git` is `(args) => string` run in `cwd`. Answers `{ lines, exitCode }`: one line per change,
- * `level #<n>` for a PR left as it was; exit 3 a hand conflict (nothing pushed for that branch), 1 any failure.
+ * `level #<n>` for a PR left as it was; exit 3 a hand conflict (nothing pushed for that branch), 1 any failure,
+ * which outranks a conflict on another PR (every line is still printed).
  * Never pushes the default branch or `pilot` (`assertPushable`, `FEATURE`) and never rewrites a branch.
  */
 export function restack({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args), host }) {
@@ -48,7 +53,7 @@ export function restack({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...arg
   try {
     git(['fetch', '-q', '--prune', 'origin']);
     main = remoteDefaultBranch(git);
-    open = host.reviews({ state: 'open' });
+    open = host.reviews({ state: 'open', limit: OPEN_LIMIT });
   } catch (err) {
     return { lines: [`restack failed: ${firstLine(err)}`], exitCode: 1 };
   }
@@ -60,6 +65,8 @@ export function restack({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...arg
     const { number, head } = review;
     try {
       const base = prBase({ git, host, base: review.base });
+      // prBase passes any `feat/` text; only a plain branch name reaches the edit, the refs and the lines.
+      if (base !== PILOT_BRANCH && base !== main && !FEATURE.test(base)) throw new Error(`base ${JSON.stringify(base)} is not a plain feat/ branch`);
       if (base !== review.base) {
         host.edit(number, { base });
         lines.push(`retargeted #${number} to ${base}`);
@@ -88,7 +95,12 @@ function mergeForward({ cwd, git, head, base, main }) {
   const ours = git(['rev-parse', '--verify', `refs/remotes/origin/${head}^{commit}`]);
   const theirs = git(['rev-parse', '--verify', `refs/remotes/origin/${base}^{commit}`]);
   if (holds(cwd, ['merge-base', '--is-ancestor', theirs, ours])) return 'level';
-  if (base === main && holds(cwd, ['merge-tree', '--write-tree', ours, theirs])) return 'level';
+  if (base === main) {
+    // merge-tree exits 0 clean, 1 on a conflict; anything else is a git that could not try, never a reason to merge.
+    const tried = spawnSync('git', ['merge-tree', '--write-tree', ours, theirs], { cwd, encoding: 'utf8', windowsHide: true });
+    if (tried.status === 0) return 'level';
+    if (tried.status !== 1) throw new Error(`git merge-tree failed: ${String(tried.stderr || tried.error?.message || '').trim().split('\n')[0]}`);
+  }
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-restack-'));
   try {
     git(['worktree', 'add', '-q', '--detach', dir, ours]);
