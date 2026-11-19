@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { renderIndex } from '../adr-index.mjs';
+import { landingMessage } from '../integrate.mjs';
 import { restack } from '../stack.mjs';
 
 const INDEX = 'docs/adr/README.md';
@@ -70,9 +71,9 @@ function build(dir, stacked, landed) {
   else commit(seed, adr(seed, '0003'), 'feat b');
   run(seed, 'push', '-q', 'origin', 'feat/a', 'feat/b');
   if (landed) {
-    // Landings as their two-parent commits only: what restack reads of pilot is its first-parent subjects.
+    // Landings as their two-parent commits only, with the landing's own subject: restack reads pilot's first-parent subjects.
     let pilot = run(seed, 'rev-parse', 'main');
-    for (const branch of ['feat/a', 'feat/b']) pilot = run(seed, 'commit-tree', 'main^{tree}', '-p', pilot, '-p', branch, '-m', `Merge ${branch} into pilot`);
+    for (const branch of ['feat/a', 'feat/b']) pilot = run(seed, 'commit-tree', 'main^{tree}', '-p', pilot, '-p', branch, '-m', landingMessage(branch));
     run(seed, 'push', '-q', 'origin', `${pilot}:refs/heads/pilot`);
   }
   const work = path.join(dir, 'work');
