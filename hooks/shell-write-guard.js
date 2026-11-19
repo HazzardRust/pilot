@@ -43,8 +43,9 @@ function tokens(command) {
       }
       i = j + 1;
     } else if (c === '\\') {
-      word = (word || '') + (command[i + 1] || '');
-      i += 2;
+      const joined = /^\\\r?\n/.exec(command.slice(i)); // a line continuation is nothing
+      if (joined) i += joined[0].length;
+      else { word = (word || '') + (command[i + 1] || ''); i += 2; }
     } else if (c === ' ' || c === '\t' || c === '\r') {
       end();
       i++;
@@ -132,16 +133,21 @@ function writeTargets(command, cwd) {
   return targets;
 }
 
-/** The tracked subset of `paths`: one `git ls-files` per directory; throws on a git error. */
+/** The tracked subset of `paths`: one `git ls-files` per directory; a dir git errors on counts as untracked. */
 function isTracked(paths) {
   const byDir = new Map();
   for (const p of paths) byDir.set(path.dirname(p), (byDir.get(path.dirname(p)) || []).concat(p));
   const tracked = [];
   for (const [dir, list] of byDir) {
     const names = list.map((p) => path.basename(p));
-    const out = execFileSync('git', ['--literal-pathspecs', '-C', dir, 'ls-files', '-z', '--', ...names], {
-      encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 3000, windowsHide: true,
-    });
+    let out;
+    try {
+      out = execFileSync('git', ['--literal-pathspecs', '-C', dir, 'ls-files', '-z', '--', ...names], {
+        encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 3000, windowsHide: true,
+      });
+    } catch (_err) {
+      continue; // one missing or non-repo dir must not unguard the others (L4 per dir)
+    }
     const listed = new Set(out.split('\0'));
     tracked.push(...list.filter((p) => listed.has(path.basename(p))));
   }

@@ -36,7 +36,8 @@ const reasonOf = (out) => out && out.hookSpecificOutput.permissionDecisionReason
 
 test('sed -i on a tracked file is refused', (t) => {
   const abs = path.join(repo, 'f.md').replace(/\\/g, '/');
-  const forms = [`sed -i 's/a/b/' f.md`, `sed --in-place 's/a/b/' ${abs}`, `cd sub && sed -i 's/a/b/' f.md`];
+  const forms = [`sed -i 's/a/b/' f.md`, `sed --in-place 's/a/b/' ${abs}`, `cd sub && sed -i 's/a/b/' f.md`,
+    `sed -i 's/a/b/' \\\nf.md`, `sed -i 's/a/b/' ${path.join(repo, 'no-such-dir', 'x.md').replace(/\\/g, '/')} f.md`];
   if (isWindows()) forms.push(`sed -i 's/a/b/' ${abs.replace(/^([A-Za-z]):/, (_m, d) => '/' + d.toLowerCase())}`);
   else t.diagnostic('the /c/... form maps on win32 only');
   for (const command of forms) {
