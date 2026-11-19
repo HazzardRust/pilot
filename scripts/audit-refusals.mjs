@@ -23,8 +23,7 @@ import { pathKey } from '../hooks/lib/platform.js';
 
 /** A recurring habit (A5): this many refusals of one shape in the repository. */
 const MIN_HABIT = 3;
-/** How S4 stores a field that held a credential. */
-const WITHHELD = '<withheld: credential>';
+const WITHHELD = '<withheld: credential>'; // how S4 stores a field that held a credential
 const OPERATORS = ['&&', '||', ';', '|', '\n'];
 
 /** The command's parts, split on `&&`, `||`, `;`, `|` and newlines outside quotes. */
@@ -58,12 +57,13 @@ const shapeWord = (word) => {
   return /^(-{1,2}[\w-]+|[A-Za-z][\w.-]*)$/.test(bare) ? bare : null;
 };
 
-/** Each part's program and its first word or flag, joined by ` ; `. */
+/** Each part's program (its basename) and first word or flag, joined by ` ; `; a part whose program is no plain word is dropped. */
 export function commandShape(command) {
   return partsOf(command)
     .map((part) => part.trim().split(/\s+/))
-    .filter(([program]) => program)
-    .map(([program, first]) => [program.split('=')[0], shapeWord(first)].filter(Boolean).join(' '))
+    .map(([program, first]) => [path.basename(program).split('=')[0], shapeWord(first)])
+    .filter(([program]) => /^[A-Za-z][\w.-]*$/.test(program))
+    .map((words) => words.filter(Boolean).join(' '))
     .join(' ; ');
 }
 
@@ -73,15 +73,16 @@ const sorted = (values) => [...new Set(values)].sort();
 function habitRow(shape, group) {
   const agents = sorted(group.map((r) => r.agent));
   const reasons = sorted(group.map((r) => r.reason));
+  const named = agents.filter((agent) => /^[\w:.-]{1,60}$/.test(agent)).join(', ') || 'unnamed agents'; // log text: plain names only
   return {
-    finding: `auto mode refused the command shape \`${shape}\` ${group.length} times (${reasons.join(', ')}), from ${agents.join(', ')}`,
+    finding: `auto mode refused the command shape \`${shape}\` ${group.length} times, from ${named}`,
     agents,
     reasons,
     count: group.length,
     example: group[group.length - 1].command,
     spec:
-      `Auto mode refused \`${shape}\` ${group.length} times from ${agents.join(', ')}, each a blocked step.\n` +
-      `1. None of ${agents.join(', ')} issues \`${shape}\` any more: the risky action is removed from the habit, never reworded, ` +
+      `Auto mode refused \`${shape}\` ${group.length} times from ${named}, each a blocked step.\n` +
+      `1. None of ${named} issues \`${shape}\` any more: the risky action is removed from the habit, never reworded, ` +
       'split or allowed past auto mode. Evidence: the next audit of this repository has no refusals row for this shape.',
   };
 }

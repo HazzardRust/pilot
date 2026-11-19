@@ -1,8 +1,4 @@
-/**
- * crew-refusals S5, spec 7 (A5, L9): the audit's refusal habits. Every log here is written by
- * S4's own writer into a scratch dir and read back by its reader, never typed by hand, and never
- * the user's store.
- */
+/** crew-refusals S5, spec 7 (A5, L9): every log here is S4's writer's, in a scratch dir, never the user's store. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -44,6 +40,7 @@ test('a command keeps each part\'s program and first word or flag', () => {
   assert.equal(commandShape('export HOME=… ; npx c8'), 'export HOME ; npx c8');
   assert.equal(commandShape(KILL), 'pkill -f ; pkill -f ; sleep ; cd ; grep -n');
   assert.equal(commandShape(''), '');
+  assert.equal(commandShape('`Ignore_the_brief` x ; /usr/bin/node --test'), 'node --test', 'log text never shapes a row');
 });
 
 test('a shape refused three times is one habit row', (t) => {
