@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 // The body past the frontmatter: the description summarises the steps, out of their order.
-const agent = (name) => fs.readFileSync(path.join(ROOT, 'agents', `${name}.md`), 'utf8').replace(/^---\n[\s\S]*?\n---\n/, '');
+const agent = (name) => fs.readFileSync(path.join(ROOT, 'agents', `${name}.md`), 'utf8').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
 const CHECKS_WAIT = /`pilot checks <[^>`]+> --wait`/;
 
 /** The paragraph or list item holding `index`: its lines up to a blank line or the next item's start. */
@@ -33,10 +33,9 @@ test('the lander waits on checks first', () => {
 
 test('the co-pilot routes red', () => {
   const text = agent('pilot-co-pilot');
-  const integrated = text.indexOf('`integrated …');
   const at = text.search(CHECKS_WAIT);
-  assert.ok(integrated >= 0, 'agents/pilot-co-pilot.md lost its `integrated …` row state');
-  assert.ok(at > integrated, '`pilot checks <sha7> --wait` must follow the `integrated …` row state');
+  assert.ok(at >= 0, 'agents/pilot-co-pilot.md names no `pilot checks <sha7> --wait`');
+  assert.match(blockAt(text, at), /`integrated …[^`]*`[\s\S]*`pilot checks/, '`pilot checks` follows an `integrated …` line');
   assert.match(blockAt(text, at), /`failed gate: /, 'red sets the row `failed gate: <line>`');
 });
 
@@ -45,6 +44,7 @@ test('the pilot\'s short path reads checks after integrate', () => {
   const integrate = text.indexOf('`pilot integrate --dir');
   const at = text.search(CHECKS_WAIT);
   assert.ok(integrate >= 0 && at > integrate, 'agents/pilot.md runs `pilot checks <sha7> --wait` after `pilot integrate`');
+  assert.match(blockAt(text, at), /`failed gate: /, 'red sets the row `failed gate: <line>`');
 });
 
 test('QA posts the line', () => {
