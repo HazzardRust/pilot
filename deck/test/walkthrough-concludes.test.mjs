@@ -15,7 +15,7 @@ import path from 'node:path';
 
 import { KIND_GATE2, KIND_TICKET, KIND_WALKTHROUGH } from '../items.mjs';
 import { lanesOf } from '../lanes.mjs';
-import { coPilotFor, listItems, postItem, setCoPilot } from '../store.mjs';
+import { coPilotFor, listItems, needTicket, postItem, setCoPilot } from '../store.mjs';
 import { postStored, shapedTicketBody, tempDeck } from '../testUtils.mjs';
 
 const { callTool } = await import('../server.mjs');
@@ -68,15 +68,25 @@ test('the answer says so once for a gate2 that moved its ticket', (t) => {
   assert.equal(count(gated, CLAUSE(ticket.id)), 1);
 });
 
-test('a gate2 naming the walkthrough that concluded its ticket posts, and says nothing of green', (t) => {
+test('a gate2 after the walkthrough that concluded its ticket posts, and says nothing of green', (t) => {
   // The co-pilot's ticket is never live in the main slot (ADR 0087); the walkthrough has already turned it green.
+  for (const named of [true, false]) {
+    const { repo, ticket } = heldYellow(t);
+    const walk = postItem(walkthrough(repo, ticket));
+
+    const onGreen = answerOf(callTool('deck_post', gate2(repo, ticket, named ? { walkthrough: walk.id } : {}), NO_PR));
+
+    assert.equal(count(onGreen, 'is now green'), 0);
+    assert.equal(listItems().filter((item) => item.kind === KIND_GATE2 && item.ticket === ticket.id).length, 1, `stored, the walkthrough named: ${named}`);
+  }
+});
+
+test("a gate2 on a green ticket only another author's walkthrough names is still the live ticket's", (t) => {
   const { repo, ticket } = heldYellow(t);
-  const walk = postItem(walkthrough(repo, ticket));
+  postItem(walkthrough(repo, ticket, { author: ARCHITECT }));
+  needTicket(ticket.id); // green by the pilot's need, not by a concluding walkthrough
 
-  const onGreen = answerOf(callTool('deck_post', gate2(repo, ticket, { walkthrough: walk.id }), NO_PR));
-
-  assert.equal(count(onGreen, 'is now green'), 0);
-  assert.equal(listItems().filter((item) => item.kind === KIND_GATE2 && item.ticket === ticket.id).length, 1, 'the gate2 is stored');
+  assert.throws(() => postItem(gate2(repo, ticket)), /is not live; deck_ticket take it first/);
 });
 
 test('a blocking walkthrough leaves it yellow', (t) => {

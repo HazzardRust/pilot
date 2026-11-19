@@ -4,6 +4,7 @@
  */
 
 import { stateOf, ticketQueueOf } from './items.mjs';
+import { releaseIn } from './store-core.mjs';
 
 /**
  * `ticket` turns `state`; already in it, nothing changes (L4). Its place: 'tail' after the queue's last ticket, or where
@@ -21,4 +22,13 @@ export function enterStage(deck, ticket, state, place = 'tail') {
   deck.items.splice(from, 1);
   const tail = deck.items.indexOf(queue.at(-1));
   deck.items.splice(before ? deck.items.indexOf(before) : Math.max(from, tail + 1), 0, ticket);
+}
+
+/**
+ * The concluding move (yellow-never-idle L2), a gate2's and a concluding walkthrough's one path: the ticket turns green
+ * and, a hand-back like `needTicket`'s, releases its co-pilot in the caller's write (clear-waits-co-pilot L8).
+ */
+export function concludeOn(deck, ticket) {
+  enterStage(deck, ticket, 'green');
+  releaseIn(deck, ticket.repo, ticket.id);
 }

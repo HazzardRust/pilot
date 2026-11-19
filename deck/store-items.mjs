@@ -52,7 +52,7 @@ import { reportAskGaps } from './report-shape.mjs';
 import { ticketShapeGaps } from './ticket-shape.mjs';
 import { walkthroughShapeGaps } from './walkthrough-shape.mjs';
 import { placeSteps } from './step-shell.mjs';
-import { enterStage } from './store-stage.mjs';
+import { concludeOn, enterStage } from './store-stage.mjs';
 import { gate2EvidenceGaps, namedWalkthroughGaps, ownBranchGaps, recutGate1Gaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
 import { MAX_QUESTION_CHARS, POSTABLE_KINDS, andList } from './tools.mjs';
 import {
@@ -66,7 +66,6 @@ import {
   refuseCredentials,
   refuseOverOpenQuestions,
   refuseUnmerged,
-  releaseIn,
   requireText,
   seqOf,
   touchRuns,
@@ -165,10 +164,9 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   const walked = kind === KIND_WALKTHROUGH ? deck.items.find((each) => each.id === item.ticket) : undefined;
   const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : kind === KIND_GATE1 ? recutGate1Gaps(ticket, body) : walkthroughPlanGaps(walked, authorKind(author));
   if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
-  // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
+  // Posting a gate2, or a concluding walkthrough on its open yellow ticket here (yellow-never-idle L2, L3; never refused for a lane, L8), turns its ticket green, and posting the closing report closes and resolves it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
   if (kind === KIND_GATE2) concludeOn(deck, ticket);
-  // So does the pilot's or QA's non-blocking walkthrough on a yellow ticket (yellow-never-idle spec 1, L2, L3); never refused for a lane reason (L8).
-  if (concludesOn(walked, item, author)) concludeOn(deck, walked);
+  if (concludes(item, author) && walked?.kind === KIND_TICKET && stateOf(walked) === 'yellow' && sameRepo(walked.repo, item.repo)) concludeOn(deck, walked);
   if (kind === KIND_REPORT && ticket) {
     // Closing ends its liveness too (L9).
     delete ticket.live;
@@ -185,21 +183,8 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   return item;
 }
 
-/**
- * The concluding move (yellow-never-idle L2), gate2's and the walkthrough's one path: the ticket turns green and,
- * a hand-back like `needTicket`'s, releases its co-pilot in the caller's write (clear-waits-co-pilot L8).
- */
-function concludeOn(deck, ticket) {
-  enterStage(deck, ticket, 'green');
-  releaseIn(deck, ticket.repo, ticket.id);
-}
-
-/** A walkthrough that may conclude: not blocking, and posted by one of gate2's posters (L3). */
-const concludes = (walk, author) => walk.blocking !== true && POSTERS[KIND_GATE2].includes(writerKind(author));
-
-/** It concludes its ticket when that is an open yellow ticket of its repository. */
-const concludesOn = (ticket, item, author) =>
-  concludes(item, author) && ticket?.kind === KIND_TICKET && stateOf(ticket) === 'yellow' && sameRepo(ticket.repo, item.repo);
+/** A walkthrough that concludes its ticket (yellow-never-idle L3): not blocking, posted by one of gate2's posters. */
+const concludes = (walk, author) => walk.kind === KIND_WALKTHROUGH && walk.blocking !== true && POSTERS[KIND_GATE2].includes(writerKind(author));
 
 /** The states a ticket may be in for each kind that names one (ticket-states spec 2, L6). */
 const TICKET_STATES_FOR = {
@@ -227,9 +212,8 @@ function ticketNamedBy(deck, item) {
   }
   // A gate is posted on the ticket in hand (ticket-states L9): the live one, never a parked one. A gate2 on a
   // yellow ticket is the exception: that ticket is the co-pilot's, never in the main slot (ADR 0087), and the post turns it green.
-  // So is a green one whose named walkthrough was a concluding one (yellow-never-idle L2): the same co-pilot's ticket, one post later.
-  const concludedBy = (id) => deck.items.some((other) => other.id === id && other.kind === KIND_WALKTHROUGH && other.ticket === ticket.id && concludes(other, other.author));
-  const coPilots = item.kind === KIND_GATE2 && (state === 'yellow' || (state === 'green' && concludedBy(item.walkthrough)));
+  // So is a green one a walkthrough concluded (yellow-never-idle L2): the same co-pilot's ticket, one post later.
+  const coPilots = item.kind === KIND_GATE2 && (state === 'yellow' || (state === 'green' && deck.items.some((walk) => walk.ticket === ticket.id && sameRepo(walk.repo, ticket.repo) && concludes(walk, walk.author))));
   if (item.kind !== KIND_REPORT && !coPilots && ticket.live !== true) {
     throw new DeckRefusal(`a ${item.kind}'s ticket is the live ticket, and ${item.ticket} is not live; deck_ticket take it first`);
   }
