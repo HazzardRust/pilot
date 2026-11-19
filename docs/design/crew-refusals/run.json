@@ -1,0 +1,72 @@
+{
+  "slug": "crew-refusals",
+  "feature": "Crew commands auto mode refuses",
+  "ticket": "itm_64084fb89990",
+  "branch": "feat/crew-refusals",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-refusals",
+  "artefact": "docs/design/crew-refusals/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "planned"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S4"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned"
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S4"
+      ]
+    }
+  ],
+  "next": "Re-cut 47a24160 pushed, 5 slices, A1-A5 recorded. Old gate1 itm_7d7acc69e969 open unsigned; deck refuses a second. User asked to Dismiss it, or press Sign off, then `deck_ticket recut`. Then architect a034e74be6c995ded posts gate1 \"Changed since 512f5006:\". Never resolve it unsigned. Stashed: Rune itm_0dcd9aa67146, 2 questions open.",
+  "updatedAt": "2026-11-19T03:47:52.506Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "architect has no deck read tool and read closed threads straight from ~/.claude/pilot/deck.json; a pilot wait bundled with a deck_resolve got no classifier verdict and had to be reissued alone",
+      "evidence": "crew-refusals architect hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "re-cut after a typed reply on gate1: the deck refuses a second gate1 while the first is open, and the pilot may not resolve an unsigned gate, so the fresh gate waits on a press that passes nothing",
+      "evidence": "deck refusal on itm_64084fb89990: 'already has an open gate1, itm_7d7acc69e969; resolve it before posting another'",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "brief.md PR footer session URL differs from the commit trailer's session URL, so PR body attribution may be wrong",
+      "evidence": "docs/design/yellow-never-idle/brief.md:43",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "unsigned-gate loop: typed Sign off, Not yet press and typed not yet each woke the pilot and none let the re-cut gate1 be posted",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "five architect hand-backs duplicated as message plus forced interim hand-back plus task notification on each resume",
+      "size": 2
+    }
+  ]
+}
