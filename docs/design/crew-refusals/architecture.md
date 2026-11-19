@@ -124,10 +124,12 @@ own: one caller. No fold changes code beyond these; no fold slice.
   (never mutated); other `~/.claude/pilot` files rest on the mutation rule and `testUtils`' suite home, as today.
   Rejected: `gate.mjs` sets a scratch home in its spawn env (misses Stryker's direct `node --test`, moves every gate's
   home); a `PILOT_DECK_DIR` prefix (L2); a throwaway worktree (isolates the repo, not the store).
+  Answer: the user pressed "Guard in the store, drop exports" on `itm_6da59f1daeb7` (the default).
 - **A2 A reviewer proves red in a throwaway worktree** (`itm_cdddd4d75a58`). Default: `git worktree add --detach <tmp>`,
   the old source written there, the test run there, the worktree removed; a Node proof links the writer's
   `node_modules` read-only into it. Tradeoff: about a minute per proof. Rejected: the reviewer cites the implementer's
   red row and runs nothing (no independent red).
+  Answer: the user pressed "Throwaway worktree" on `itm_cdddd4d75a58` (the default).
 - **A3 Implementer and QA gain `TaskStop`** (`itm_d649b66f4053`). Default: both tool lines add it; it reaches only the
   agent's own tasks (§3). Tradeoff: two agents' tools widen. Rejected: no tool, every background run under its own
   `timeout`, and spec 4 reads "never kills; waits or times out" (a hung run holds the agent up to 10 min).
