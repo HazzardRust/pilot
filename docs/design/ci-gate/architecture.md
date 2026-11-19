@@ -148,6 +148,7 @@ Width 6; longest stem 3
 | S7 The crew reads checks before each move | 2, 3, 4 | `agents/pilot-lander.md`, `agents/pilot-co-pilot.md`, `agents/pilot.md`, `agents/pilot-qa.md`, `scripts/test/ci-gate-wording.test.mjs` (new) | S2 (`pilot checks --wait`), S5 (the `checks` field) | typescript, security | [S7](slices/S7.md) |
 | S8 GitLab answers the same checks | 8 | `deck/host-gitlab.mjs`, `deck/test/host-gitlab-checks.test.mjs` (new) | S1 (the **Host** `checks` verb) | typescript, security | [S8](slices/S8.md) |
 | S9 The run's ADR and glossary (added) | – | `docs/adr/NNNN-ci-gate.md` (new), `CONTEXT.md` | S1 | typescript | [S9](slices/S9.md) |
+| S10 A hung `gh` reads unread (added) | 9 | `deck/host-github.mjs`, its contract test | S1 | typescript | [S10](slices/S10.md) |
 
 S1 is the walking skeleton: a real `gh` read of one commit's check runs, through the **Host** seam, to the one
 check line. red team: `fakeGh` throws on an unknown verb (`land-repos.mjs:128`), so S3 owns that helper and
@@ -183,4 +184,5 @@ adds at most 2 lines to each.
 | S7 | planned | | | | S2, S5 | 2, 3, 4 |
 | S8 | planned | | | | S1 | 8 |
 | S9 | planned (added) | | | | S1 | – |
+| S10 | planned (added) | | | | S1 | 9 |
 | CI is a gate at every step | planned | feat/ci-gate | | | S1-S8 | 1-4, 6-10 |
