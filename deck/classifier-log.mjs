@@ -16,9 +16,10 @@ import { deckDir } from '../hooks/lib/deck-secret.js';
 import { findCredential } from './store-core.mjs';
 
 export const LOG_FILENAME = 'classifier.log';
-export const MAX_LINES = 10000;
+const MAX_LINES = 10000;
 const FIELD_MOST = 300;
-const WITHHELD = '<withheld: credential>';
+/** How a text field that held a credential is stored. */
+export const WITHHELD = '<withheld: credential>';
 /** The shortest line the writer can make (every field empty); below this many bytes the log cannot be over its cap. */
 const SHORTEST_LINE = 110;
 const VERDICTS = ['refused', 'no-verdict'];
@@ -82,8 +83,8 @@ function isRefusal(value) {
 }
 
 /**
- * The logged refusals, oldest first, the newest `MAX_LINES` at most; a torn or foreign line is
- * skipped, and no log yet reads as none. A log that exists and cannot be read throws.
+ * The logged refusals, oldest first, those of `filter.ticket` only when it is given; a torn or
+ * foreign line is skipped, and no log yet reads as none. A log that exists and cannot be read throws.
  */
 export function readRefusals(filter) {
   const dir = (filter && filter.dir) || deckDir();
@@ -103,9 +104,8 @@ export function readRefusals(filter) {
       continue;
     }
     if (!isRefusal(value)) continue;
-    if (filter && typeof filter.repo === 'string' && value.repo !== filter.repo) continue;
     if (filter && typeof filter.ticket === 'string' && value.ticket !== filter.ticket) continue;
     refusals.push(value);
   }
-  return refusals.slice(-MAX_LINES);
+  return refusals;
 }

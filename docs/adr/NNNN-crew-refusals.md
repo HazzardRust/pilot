@@ -43,4 +43,6 @@ an escaped mutant out of `~/.claude/pilot`; `deck/testUtils.mjs` already redirec
 
 A test file that forgets to isolate itself throws on its first store call instead of writing to a live deck. The
 evidence runner's six checks carry no environment override. Whether auto mode now allows them is read by QA's run in
-a scratch repository, not assumed here.
+a scratch repository, not assumed here. On Windows, `TaskStop` ends a background run's shell, but npm's `cmd.exe` and
+its `node` children run on until they exit by themselves (QA saw it at ff180873); a stop by PID tree is the shape auto
+mode refuses, so a hung suite runs to its own timeout.

@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { SHELL_RULES, shellAgents, missingShellRules } from '../shell-rules.mjs';
+import { SHELL_RULES, missingShellRules } from '../shell-rules.mjs';
 
 const AGENTS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'agents');
 
@@ -53,6 +53,5 @@ test('an agent with no shell needs none', (t) => {
     'scoped.md': agent('Read, Bash(git:*)', 'Runs git only, still a shell.'),
     'notes.txt': 'not an agent',
   });
-  assert.deepEqual(shellAgents(dir), ['scoped', 'shell']);
   assert.deepEqual(missingShellRules(dir).map((row) => row.agent), ['scoped', 'scoped', 'shell', 'shell']);
 });
