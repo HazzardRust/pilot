@@ -104,7 +104,7 @@ Deletion test: without **Checks**, land, integrate, base, the CLI and the gate2 
   rewrite of land that overlaps audit-f14.
 - **A5** The gate2 `checks` field is QA's word, not re-read by the daemon (L6). Trades: a gate2 can carry a stale
   green line at its sha; land re-reads. Rejected: a daemon child per gate2 post.
-- **A6** QA environment (`itm_8677fb5e6e5e`): scratch repo with `pilot gh-stub` replies, plus one live read-only
+- **A6** QA environment (`itm_8677fb5e6e5e`, answered "Stub + live read", the default): scratch repo with `pilot gh-stub` replies, plus one live read-only
   `pilot checks` on #121's head. Rejected: a throwaway live PR.
 - **A7** Overlaps: audit-f14 touches `scripts/integrate.mjs` and `scripts/land.mjs` (S3, S4 rebase on it; L1
   keeps reads PR-free); recut-decision touches `deck/server-tools.mjs` (S5 adds one call there) and
