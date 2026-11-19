@@ -9,27 +9,28 @@
   "slices": [
     {
       "slice": "S1 A landing over an owned file leaves the ticket yellow with one drift line",
-      "state": "pushed 268c4b7",
+      "state": "integrated",
       "branch": "slice/recut-decision-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-recut-decision-s1"
     },
     {
       "slice": "S2 A yellow ticket is replanned at a merge commit with no press",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
       ],
-      "branch": "slice/recut-decision-s2"
+      "branch": "slice/recut-decision-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-recut-decision-s2"
     },
     {
       "slice": "S3 The crew puts a plan on pilot by a merge and decides the re-cut",
-      "state": "implementing",
+      "state": "pushed fdb0cd8",
       "branch": "slice/recut-decision-s3",
       "worktree": "C:/Users/Hazzard/Projects/pilot-recut-decision-s3"
     }
   ],
-  "next": "co-pilot: integrate S1 268c4b7 into feat/recut-decision, then pilot ready for S2; S3 implementing",
-  "updatedAt": "2026-11-19T14:11:15.622Z",
+  "next": "co-pilot: integrate S3 fdb0cd8 into feat/recut-decision; S2 implementing",
+  "updatedAt": "2026-11-19T14:22:33.384Z",
   "friction": [
     {
       "kind": "drain",
@@ -55,6 +56,24 @@
       "agent": "pilot:pilot-implementer",
       "what": "fact sheet read the worktree after the implementer's edits, so its 'already present' notes described the implementer's own changes",
       "evidence": "S1 report, friction row",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot and architect prompt pins sit at 0 headroom on the base, so any prose slice must edit scripts/test/measure-prompt.test.mjs outside its owned files",
+      "evidence": "node scripts/measure-prompt.mjs: pilot -21.75, architect -27 after first draft",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate1 refusal text pinned in two test files; slice file named only one",
+      "evidence": "scripts/test/handoff-lineage-remote.test.mjs:156 failed in first full run",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node --test summary lines start with info/cross glyphs, not TAP '# pass', so a grep printed nothing",
+      "evidence": "first red run showed only 'Caught error'",
       "size": 1
     }
   ]
