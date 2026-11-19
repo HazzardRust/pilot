@@ -98,7 +98,7 @@
     },
     {
       "slice": "fix1",
-      "state": "pushed c66f7a4; integrating",
+      "state": "integrated",
       "after": [
         "S11"
       ],
@@ -116,7 +116,7 @@
     },
     {
       "slice": "S13",
-      "state": "pushed c7316f5; security re-review of its review-fix commit",
+      "state": "pushed c7316f5; integrating",
       "after": [
         "S2",
         "S4",
@@ -152,8 +152,8 @@
     "dropped: S13 pushback — restart's env keeps ANTHROPIC*/PILOT_*: restart copies no login and its documented login is ANTHROPIC_API_KEY, so L8's copy terms do not reach it",
     "kept: S13 size — 194 changed lines accepted: net +40, the rest a move into probes/lib.mjs its slice file requires"
   ],
-  "next": "fix1, S12, S13, S14 running; feat at b9e70740; integrate each on report, base check, resume QA with the tip.",
-  "updatedAt": "2026-11-19T10:33:20.483Z",
+  "next": "fix1 integrated at 08249c52; S13 integrating; S12/S14 running; then base check, resume QA with the tip.",
+  "updatedAt": "2026-11-19T10:34:45.529Z",
   "friction": [
     {
       "agent": "pilot-architect",
