@@ -166,11 +166,9 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : kind === KIND_GATE1 ? recutGate1Gaps(ticket, body) : walkthroughPlanGaps(walked, authorKind(author));
   if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
   // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
-  if (kind === KIND_GATE2) {
-    enterStage(deck, ticket, 'green');
-    // A hand-back like `needTicket`'s, so it releases the ticket's co-pilot in the same write (clear-waits-co-pilot L8).
-    releaseIn(deck, ticket.repo, ticket.id);
-  }
+  if (kind === KIND_GATE2) concludeOn(deck, ticket);
+  // So does the pilot's or QA's non-blocking walkthrough on a yellow ticket (yellow-never-idle spec 1, L2, L3); never refused for a lane reason (L8).
+  if (concludesOn(walked, item, author)) concludeOn(deck, walked);
   if (kind === KIND_REPORT && ticket) {
     // Closing ends its liveness too (L9).
     delete ticket.live;
@@ -186,6 +184,23 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   writeDeck(deck);
   return item;
 }
+
+/**
+ * The concluding move (yellow-never-idle L2), gate2's and the walkthrough's one path: the ticket turns green and,
+ * a hand-back like `needTicket`'s, releases its co-pilot in the caller's write (clear-waits-co-pilot L8).
+ */
+function concludeOn(deck, ticket) {
+  enterStage(deck, ticket, 'green');
+  releaseIn(deck, ticket.repo, ticket.id);
+}
+
+/** A walkthrough concludes its ticket only when it is not blocking, its poster is gate2's (L3), and the ticket is an open yellow ticket of its repository. */
+const concludesOn = (ticket, item, author) =>
+  item.blocking !== true &&
+  POSTERS[KIND_GATE2].includes(writerKind(author)) &&
+  ticket?.kind === KIND_TICKET &&
+  stateOf(ticket) === 'yellow' &&
+  sameRepo(ticket.repo, item.repo);
 
 /** The states a ticket may be in for each kind that names one (ticket-states spec 2, L6). */
 const TICKET_STATES_FOR = {
