@@ -15,14 +15,16 @@
     },
     {
       "slice": "S2 heredoc and echo forms, pass catalogue, ADR",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S1 sed -i on a tracked file is refused"
-      ]
+      ],
+      "branch": "slice/audit-f12-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-audit-f12-s2"
     }
   ],
-  "next": "S1 c49c1410 (306 lines, limit waived by main as assumed) integrating; then S2 implementer (opus, typescript + security): must strip heredoc bodies (security #9 false refusal), consider prefixes #3/#4, capture a real PreToolUse payload. Then trial + gate2 by me; a real-session sed run is still owed (artefact §9 step 1) before gate2. Owed: re-cut checks itm_4be41dcb9ee3, itm_7d3455d28cd6.",
-  "updatedAt": "2026-11-19T04:46:45.428Z",
+  "next": "S2 4904255e (202 lines, both verdicts on tip) integrating; then pilot integrate --trial, real-session sed check owed (artefact §9 step 1) or said plainly in gate2, post gate2 myself (surface false, checks table). Known misses listed in ADR: `((` subshell hides later lines, redirect after $(…), quadratic rescan. Owed: re-cut checks itm_4be41dcb9ee3, itm_7d3455d28cd6.",
+  "updatedAt": "2026-11-19T05:02:43.882Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -57,6 +59,18 @@
       "agent": "pilot-implementer",
       "what": "quoting JSON for a stdin hook probe in Bash produced invalid JSON, so the hook stayed silent and the first live run looked like a miss",
       "evidence": "audit-f12 S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "two-reviewer review on the final tip means any round-2 nit fix restarts both reviews, so a 6-line fix was listed instead of made",
+      "evidence": "audit-f12 S2 report, the (( nit",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md's commit trailer names Fable while the implementer session's attribution names Opus; cost a judgement call",
+      "evidence": "docs/design/audit-f12/brief.md trailer",
       "size": 1
     }
   ]
