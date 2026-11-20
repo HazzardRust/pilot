@@ -1,0 +1,293 @@
+{
+  "slug": "wait-deadlines",
+  "feature": "wait-deadlines",
+  "ticket": "itm_b760c7076c51",
+  "branch": "feat/wait-deadlines",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-wait-deadlines",
+  "artefact": "docs/design/wait-deadlines/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/wait-deadlines-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/wait-deadlines-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/wait-deadlines-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/wait-deadlines-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/wait-deadlines-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s5"
+    },
+    {
+      "slice": "wait-deadlines",
+      "state": "in QA: gate2 ready at 5a3b7e1c, waiting on the ticket going live"
+    }
+  ],
+  "findings": [
+    "kept: F1 finding — rules/orchestration.md:146 drops ', or `timeout: 600000`' (a tool timeout is lost once backgrounded at 180 s, against L2); S5.md Interface edited to match",
+    "kept: F2 finding — holderOfCommand reads every transcript synchronously (~5.4 s) on the daemon thread against client.mjs HEALTH_TIMEOUT_MS 1000; skip transcripts whose mtime predates the shell's start",
+    "dropped: F3 finding — the guard gaps (`timeout --`, nested timeout, nice/sh -c, `do :`) are shapes crew agents do not write; the drop's reason is corrected: S3 shares the recogniser, the backstop is the S5 rule and the co-pilot's 90-min child rule",
+    "dropped: F4 finding — one constant per module is brief.md's own decision (MAX_WAIT_MINUTES, STALL_AGE_S)",
+    "kept: F5 finding — S3.md/S4.md Interface blocks record row.script as needle, stallAgeS, stallAgeOf/PILOT_DECK_STALL_AGE_S (projectsRoot removed by N1)",
+    "dropped: F6 finding — main reviewed S5's five orchestration.md cuts and kept four, the fifth restored",
+    "kept: N1 nit — drop reapStalled's projectsRoot; tests pass a holder built on holderOfCommand",
+    "kept: N2 nit — drop waitFor's waitedMin; print opts.timeoutMin",
+    "kept: N3 nit — one ancestors(row, byPid) walk for the two identical walks in stalled-waits.mjs",
+    "dropped: N4 nit — markerOf naming the .output path still identifies the wait; changing it rewrites S3's B1 expectations for no reader gain",
+    "dropped: E1 evidence — daemon.mjs 248-259 (scan interval wiring) uncovered by unit tests, but QA ran it live on a scratch deck (spec 5/6 pass)",
+    "dropped: E2 evidence — deck/stalled-waits.mjs importing unboundedWaits from hooks/ is the signed seam (brief.md: S3 reads S2's unboundedWaits by name, L3 one recogniser)",
+    "dropped: E3 evidence — complexity over 10 in new functions (holderOfCommand 17, shellScript 16, stalledWaits 14) is parsing logic covered at 93% diff coverage; N3 trims the walks; no split worth its diff",
+    "dropped: E4 evidence — diff mutation did not run (Stryker sandbox cannot load the hooks/ import); recorded as not run, not as clean"
+  ],
+  "next": "paused; feat at 5a3b7e1c; QA ac4d83336a1e5dd87 done (trial clean on pilot, gate 4814/0, F2 live) and holds the gate2; the deck refuses it until itm_b760c7076c51 is live: main takes the ticket, then tells QA to post.",
+  "updatedAt": "2026-11-20T14:08:10.804Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "no shell-to-agent map anywhere; naming the holder of a stalled shell needed a transcript grep (deck/agents.mjs roster has no pid)",
+      "evidence": "architect report, design/wait-deadlines 25dcf7d5",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck MCP CONNECTION_CLOSED at spawn, recovered on ToolSearch (third agent today)",
+      "evidence": "architect and QA reports",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck_status refuses the worktree field from the architect, so the feat worktree could not be named as the brief asked and run.json was not written until the pilot sent it",
+      "evidence": "architect hand-back for gate1 itm_63d9d3c4bab2",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "its own pilot wait is still running to its 50-min bound after hand-back; the architect has no TaskStop",
+      "evidence": "shell b508l16ig",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "a harness hand-back enforce notice forced the co-pilot's SubagentHandback while three implementers were still live, against the never-end-with-a-child-live rule",
+      "evidence": "handback-send-enforce message after S2's interim notification",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "S5's slice header said after: – but its check-references gate needs S1's pilot wait-for; the co-pilot recorded the seam change",
+      "evidence": "feat/wait-deadlines 767f5e0d",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "always-loaded rules were already at the 3,500-token measure-rules cap; S5 had to trim orchestration.md prose to add its section",
+      "evidence": "S5 report: measure-rules 3500 before edit, 3499 after",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the vocabulary guard refuses the retired word in the architect's own design docs, keeping feat red until reworded",
+      "evidence": "vocabulary-guard.test.mjs:71; reworded on feat at 7a8d5fae",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate runs queue behind other worktrees (gate: waiting for a slot) and an implementer has no TaskStop for an outdated gate run",
+      "evidence": "S5 report friction",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5 forced to hand back before S1's tip arrived (hand-back enforce)",
+      "evidence": "S5 report, 0693c1f3",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "deck/README.md was not in S1's owned files, but the deck-readme test requires a row for each new deck module; one 7-min gate run lost",
+      "evidence": "S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "base moved twice under S1 (co-pilot doc commits on feat) forcing rebases; npm test 436 s per run",
+      "evidence": "S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1's report went to main, not to the co-pilot that spawned it",
+      "evidence": "coordinator relay of S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "vocabulary and home-directory guards rejected S2's verbatim fixture, found only by the full ~10-min gate, three runs",
+      "evidence": "S2 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's context was summarised twice mid-slice (about 140k tokens)",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's slice said after: – though its deny reason names S1's pilot wait-for; seam change 573d223b",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "always-loaded rules cap spent: 3499 of 3,500 after S5; npm test 469 s",
+      "evidence": "S5 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5's report went to main, not to the co-pilot that spawned it",
+      "evidence": "coordinator relay of S5 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test prints an ℹ fail line per sub-suite, so a wait on it matched an 8-test sub-suite early; wait on 'ℹ tests <total>'; no Monitor tool for the fix agent",
+      "evidence": "S2 fix report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "fix brief claimed program() skips prefix words; it does not (command is a PREFIX, not COMMAND_START), the fixer had to re-derive",
+      "evidence": "S2 fix report, 6413b95f",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2 fix and report went to main rather than to the co-pilot",
+      "evidence": "coordinator relay",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate of S2 merged and gated locally but its push failed on a DNS outage (Could not resolve host: github.com); pushed by hand once the network returned",
+      "evidence": "integrate output: integrated locally at d023281a, push or record failed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3 implementer's context was summarised before any commit; all work lost, slice restarted from the brief",
+      "evidence": "S3 message: worktree clean at 7b43391e after summary",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "two live unbounded `until grep -q Verdict <id>.output; do sleep 10; done` shells under the pilot's claude 16988 (bash 9988 on a28aa8f6e9874cbe0.output, bash 30060 on a18544e3d23cf7d4f.output), same shape as waits A/B, seen 2026-11-20; nothing stopped",
+      "evidence": "S3 implementer CIM read of the process table",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3's B1 asked for the captured win32 lines of waits A and B, which were never in the repo; live rows captured by CIM used instead",
+      "evidence": "S3 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "second implementer this run (S4 after S3) had its context summarised before any commit with no summary text carried over; whole first attempt lost",
+      "evidence": "S4 message: worktree clean at 2ad9e617 after summary",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "TaskStop was not loadable through ToolSearch for the implementer, so a stale gate ran 10 min",
+      "evidence": "S4 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice file worded the holder needle as marker plus watched file; the marker is NODE-DONE, not a path, so the needle became row.script",
+      "evidence": "S4 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "lost context mid-review and redid the pass; its evidence runner returned no table before hand-back, so the six evidence checks were not run",
+      "evidence": "fundamentalist report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "repo grep without a glob returned 38 KB (deck/ shares names projectsRoot, pollMs)",
+      "evidence": "fundamentalist report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "spec 4's live run launched an isolated `claude -p` with `--allowedTools Bash` (a permission grant scoped to that throwaway session) before the co-pilot's no-permission-flags note arrived; no classifier refusal",
+      "evidence": "QA spec 4 message",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "gate.mjs's end-of-run sweep stopped QA's scratch deck started from the same worktree, reading it as the suite's leak",
+      "evidence": "QA gate message: stopped 18676 daemon --leash-dir <qa worktree>",
+      "size": 1
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "its report was delivered to main, not to its fundamentalist, which had already handed back",
+      "evidence": "coordinator relay of evidence table",
+      "size": 1
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "diff mutation cannot run: Stryker's sandbox copy fails to import unboundedWaits from hooks/shell-write-guard.js (CJS from .mjs)",
+      "evidence": "SyntaxError at sandbox deck/stalled-waits.mjs:54",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the fix agent, with no Monitor tool, waited on npm test with an until-loop in Bash (the very shape this feature refuses); the installed plugin does not yet carry the hook",
+      "evidence": "fix round report, 5a3b7e1c",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Edit demands a prior Read of a file appended via Bash; a heredoc edit fallback wrote nothing",
+      "evidence": "fix round report",
+      "size": 1
+    }
+  ]
+}
