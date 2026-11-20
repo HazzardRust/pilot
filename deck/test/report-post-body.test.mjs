@@ -13,7 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { closeLanded, closingReportOf } from '../closing-report.mjs';
-import { KIND_GATE2, SIGN_OFF, isOpen } from '../items.mjs';
+import { KIND_GATE2, KIND_STEPS, SIGN_OFF, stateOf } from '../items.mjs';
 import { callTool } from '../server-tools.mjs';
 import { TOOLS } from '../tools.mjs';
 import { addReply, listItems, postItem, recordForTicket, registerRun, setSlices, settleLanding } from '../store.mjs';
@@ -47,7 +47,9 @@ for (const author of [undefined, 'pilot:pilot-lander', 'pilot-lander']) {
     const { record } = recordForTicket(repo, ticket);
     // The fixture repository is no git repository, so the worktrees left are not compared (lander-tail spec 5).
     assert.equal(withoutLeft(reports[0].body), withoutLeft(closingReportOf(record, gate, []).body), "its body is the closing report");
-    assert.match(reports[0].body, /Merge #901 with a merge commit/);
+    const threads = listItems().filter((item) => item.kind === KIND_STEPS && item.ticket === ticket);
+    assert.equal(threads.length, 1, 'beside its steps thread');
+    assert.equal(threads[0].steps[0].text, 'Merge #901 with a merge commit, when you want main to have it.');
   });
 }
 
@@ -86,7 +88,7 @@ test("the lander's post then finished closes the record", (t) => {
   callTool('deck_status', { slug: 'x', slices: [], finished: 'closing report posted', run: run.id });
 
   assert.equal(recordForTicket(repo, ticket).record.finished, 'closing report posted');
-  assert.equal(isOpen(listItems().find((item) => item.id === ticket)), false, 'the ticket is closed');
+  assert.equal(stateOf(listItems().find((item) => item.id === ticket)), 'green', 'the ticket stays green under its steps thread');
 });
 
 test('any other kind with no body is still refused', (t) => {
