@@ -279,7 +279,7 @@ function renderMakeTickets(repo) {
  * closed yet marked `open` — and it is that count, not the total, the badge
  * shows: a report already closed is history, not something waiting on anyone.
  */
-function reportsOf(items, repo) {
+export function reportsOf(items, repo) {
   return items
     .filter((item) => item.kind === KIND_REPORT && isStanding(item) && sameRepo(item.repo, repo))
     .reverse()
@@ -312,7 +312,7 @@ const renderAgent = (agent) =>
  * Spec 33's label names the panel directly above this line, so the two
  * together are a panel that says what it is and that it holds nothing.
  */
-const renderAgents = (agents = []) =>
+export const renderAgents = (agents = []) =>
   agents.length
     ? `<section class="agents">${agents.map(renderAgent).join('')}</section>`
     : '<p class="nobody">no agents live</p>';

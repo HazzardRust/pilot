@@ -1,1 +1,66 @@
-stub_region!();
+//! The Agents panel as `deck/view/agents.mjs` resolved it: the live roster, each row with whole seconds since the
+//! agent's last tool call, dimmed from 30 s quiet (L11). The roster is the view's; nothing here reads it from the
+//! daemon's own state (spec 11).
+
+use rune::tok::{self, type_};
+use rune::{Cx, El, col, row, text};
+use serde::Deserialize;
+
+use crate::app::State;
+use crate::theme::space;
+
+#[derive(Debug, Default)]
+pub struct Local;
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+struct Agent {
+    name: String,
+    quiet_s: u64,
+    quiet: bool,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+struct Agents {
+    agents: Vec<Agent>,
+}
+
+pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
+    // A region the view cannot be read as draws empty rather than taking the window down.
+    let view = Agents::deserialize(v).unwrap_or_default();
+    let t = tok::theme(cx.system_dark());
+    let mut panel = col()
+        .key("agents")
+        .gap(space::within)
+        .child(text("Agents").font(type_::BODY).color(t.text));
+    if view.agents.is_empty() {
+        return panel.child(
+            text("no agents live")
+                .key("agents-none")
+                .font(type_::LABEL)
+                .color(t.text_secondary),
+        );
+    }
+    for (i, agent) in view.agents.iter().enumerate() {
+        // A quiet agent reads in the secondary colour: still listed, no longer fresh.
+        let ink = if agent.quiet {
+            t.text_secondary
+        } else {
+            t.text
+        };
+        panel = panel.child(
+            row()
+                .key(format!("agent-{i}"))
+                .gap(space::within)
+                .child(text(&agent.name).font(type_::BODY).color(ink).grow(1.0))
+                .child(
+                    text(format!("{}s", agent.quiet_s))
+                        .key(format!("agent-{i}-age"))
+                        .font(type_::LABEL)
+                        .color(ink),
+                ),
+        );
+    }
+    panel
+}
