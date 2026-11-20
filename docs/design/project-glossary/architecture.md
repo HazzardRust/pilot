@@ -14,7 +14,7 @@ per run", while this repository already keeps a 70-term root `CONTEXT.md` nothin
 | # | Behaviour | Evidence | Bar |
 | --- | --- | --- | --- |
 | 1 | Grilling reads the root glossary before its first question and challenges a request term the glossary lists under `_Avoid_`, or one that is overloaded, by naming the canonical term. | `methodology-skills.test.mjs` over `skills/grilling/SKILL.md`, `skills/domain-modeling/SKILL.md`; `glossary-prose.test.mjs` over `agents/pilot.md`; QA: a scratch request saying "subagents" | each of the 3 files names `GLOSSARY.md` and reading it first; the pilot's question names **Crew** |
-| 2 | A term that outlives its run is written to the root glossary on the design branch as it settles, by the architect, so the Gate 1 press signs it off with the artefact; the artefact's ubiquitous-language section keeps run-local terms only. *assumed, A3* | `glossary-prose.test.mjs` over `agents/pilot.md`, `agents/pilot-architect.md`; this run's design diff | both files say it; this run's diff adds >= 1 glossary entry (it adds 2) |
+| 2 | A term that outlives its run is written to the root glossary on the design branch as it settles, by the architect, so the Gate 1 press signs it off with the artefact; the artefact's ubiquitous-language section keeps run-local terms only. *L7 (A3, answered)* | `glossary-prose.test.mjs` over `agents/pilot.md`, `agents/pilot-architect.md`; this run's design diff | both files say it; this run's diff adds >= 1 glossary entry (it adds 2) |
 | 3 | The glossary format file says the glossary carries no implementation detail, and `ADR-FORMAT.md` keeps the three ADR tests; `glossary.mjs check` fails an entry naming a file path and passes the repository's glossary inside `npm test`. | `glossary.test.mjs`; `node scripts/glossary.mjs check GLOSSARY.md` | path fixture: exit 1 naming the term; repo glossary: exit 0; 6 path entries rewritten |
 | 4 | The audit's navigability area lists each stale term: a glossary term with no use outside the glossary, `docs/design/` and `docs/adr/` is a row; a term the code contradicts is the explorer's judgement row. *practitioner: DDD modeller (Evans), the language checked against the code* | `glossary.test.mjs` on `staleTerms`; `audit-navigability.test.mjs` | fixture with 1 unused term of 3: exactly 1 result naming it; the area file runs the command |
 | 5 | `domain-modeling` and its vendor ledgers say where the glossary lives: one per repository, at its root, nothing under `~/.claude`. | `VENDOR.md` and `vendor/methodology.md` rows; `git grep -i "one glossary per run"` | the 3 rows changed; 0 hits outside `docs/design/`, `docs/adr/` |
@@ -80,6 +80,8 @@ Lasting terms this run settled are in the glossary (**Glossary**, **Stale term**
 - **L5 The check runs in this repository's gate and in the audit** of any repository. Rejected: a hook on every
   write (new hook surface for a doc lint).
 - **L6 Historic ADRs and design docs keep `CONTEXT.md`** as written. Rejected: rewriting history.
+- **L7 The architect writes each lasting term to `GLOSSARY.md` on the design branch as it settles; the Gate 1 press
+  signs the diff.** The user's answer to A3. Rejected: the pilot writing after the press (batched, unsigned).
 
 ## 6. Assumed decisions
 
@@ -92,6 +94,7 @@ Lasting terms this run settled are in the glossary (**Glossary**, **Stale term**
 - **A3 The architect writes lasting terms inline on the design branch; Gate 1 signs them** (the pilot's
   `itm_592774a86226`). Trades away: two runs adding under one subheading can conflict at landing (the lander resolves
   hunks). Rejected: the pilot writes after the press (batched, unsigned, owns no branch).
+  Answer (user, 2026-11-20): "Architect inline, signed at Gate 1". Locked as L7.
 
 ## 7. Out of scope
 
