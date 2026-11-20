@@ -20,11 +20,16 @@
  *   base pilot <sha> (feat/<N> not on origin)  the deck named a branch origin does not hold
  *
  * The deck is read only through `concluding`, which `main` points at `/api/tickets`; without it, today's line.
+ *
+ * With a `host` (`main` passes the repository's) the printed tip's checks are read, and a red or pending one adds a
+ * suffix: ` (CI red at <sha7>: <names>)` or ` (CI pending at <sha7>)`. Green, none and unread add nothing; the exit
+ * code never changes (ci-gate L4, L7).
  */
 
 import { execFileSync } from 'node:child_process';
+import { checksAt } from './checks.mjs';
+import { hostFor, hostOf } from '../deck/host.mjs';
 import { bearer } from '../hooks/lib/deck-secret.js';
-import { hostOf } from '../deck/host.mjs';
 import { RUN_BASE, SLUG } from '../deck/runs.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { ensurePilotBranch, firstLine, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
@@ -54,11 +59,25 @@ async function chainedOn(concluding, git) {
   } catch {
     return { note: ` (${branch} not on origin)` };
   }
-  return { line: `${branch} ${git(['rev-parse', '--short', `origin/${branch}`])} (concluding ${feature.ticket})` };
+  return { branch, line: `${branch} ${git(['rev-parse', '--short', `origin/${branch}`])} (concluding ${feature.ticket})` };
+}
+
+/** The suffix a red or pending tip adds, else ''; a host that cannot answer is silent (L4). */
+function ciSuffix(host, git, ref) {
+  if (host === null) return '';
+  let verdict;
+  try {
+    verdict = checksAt({ host, sha: git(['rev-parse', '--verify', `${ref}^{commit}`]) });
+  } catch {
+    return '';
+  }
+  const sha7 = verdict.sha.slice(0, 7);
+  if (verdict.state === 'red') return ` (CI red at ${sha7}: ${verdict.failed.join(', ')})`;
+  return verdict.state === 'pending' ? ` (CI pending at ${sha7})` : '';
 }
 
 /** Print the base line. Answers the exit code. */
-export async function base({ cwd = process.cwd(), say = (text) => process.stdout.write(text), warn = (text) => process.stderr.write(text), concluding } = {}) {
+export async function base({ cwd = process.cwd(), say = (text) => process.stdout.write(text), warn = (text) => process.stderr.write(text), concluding, host = null } = {}) {
   const git = (args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }).trim();
   let inWorkTree = false;
   try {
@@ -84,7 +103,7 @@ export async function base({ cwd = process.cwd(), say = (text) => process.stdout
     try {
       const chained = await chainedOn(concluding, git);
       if (chained?.line) {
-        say(`base ${chained.line}\n`);
+        say(`base ${chained.line}${ciSuffix(host, git, `origin/${chained.branch}`)}\n`);
         return 0;
       }
       deck = chained?.note ?? '';
@@ -100,7 +119,7 @@ export async function base({ cwd = process.cwd(), say = (text) => process.stdout
         const main = remoteDefaultBranch(git);
         // The remote's name for it is printed for an agent to cut from: a run base or nothing.
         if (!RUN_BASE.test(main)) throw new Error(`origin's default branch ${JSON.stringify(main)} is not a plain branch name`);
-        line = `base ${main} ${git(['rev-parse', '--short', '--verify', `refs/remotes/origin/${main}^{commit}`])}${deck}\n`;
+        line = `base ${main} ${git(['rev-parse', '--short', '--verify', `refs/remotes/origin/${main}^{commit}`])}${deck}${ciSuffix(host, git, `refs/remotes/origin/${main}`)}\n`;
       }
     } catch (err) {
       warn(`pilot base: ${firstLine(err)}\n`);
@@ -111,7 +130,7 @@ export async function base({ cwd = process.cwd(), say = (text) => process.stdout
       return 0;
     }
   }
-  say(`base ${PILOT_BRANCH} ${git(['rev-parse', '--short', pilot.sha])}${from}${where}${deck}\n`);
+  say(`base ${PILOT_BRANCH} ${git(['rev-parse', '--short', pilot.sha])}${from}${where}${deck}${ciSuffix(host, git, pilot.sha)}\n`);
   return 0;
 }
 
@@ -122,5 +141,11 @@ export async function main(argv) {
     return 2;
   }
   const cwd = process.cwd();
-  return base({ cwd, concluding: deckConcluding(cwd) });
+  let host = null;
+  try {
+    host = hostFor(cwd);
+  } catch {
+    // A host that cannot be chosen is unread, and `base` says nothing of it.
+  }
+  return base({ cwd, concluding: deckConcluding(cwd), host });
 }
