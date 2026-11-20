@@ -15,14 +15,16 @@
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/nothing-hidden-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-nothing-hidden-s2"
     }
   ],
-  "next": "S1 pushed f70b7b93, typescript-reviewer approve; integrating. Then S2 (Sonnet) from the new feat tip, integrate, integrate --trial, walkthrough from S1's look (seed-nothing-hidden.mjs + look.mjs in scratchpad 153142c8), gate2 by main. Landing must number NNNN-nothing-hidden ADR.",
-  "updatedAt": "2026-11-20T07:28:48.895Z",
+  "next": "S2 pushed 40b2e4f3 (reviewer WARN, test-design only; main looked at s2look/home-fold-open.png: cards name ticket + standing). Integrating; then integrate --trial, walkthrough for the look (scratch deck from feat worktree + seed script), gate2 by main after the walkthrough's sign-off. Landing numbers the NNNN ADR.",
+  "updatedAt": "2026-11-20T07:43:18.892Z",
   "friction": [
     {
       "kind": "drain",
@@ -34,6 +36,12 @@
       "what": "S1 used 184k tokens/150 tool uses: selection gate 336 s run twice; testUtils.mjs silently redirects HOME so it cannot seed a scratch deck; deck --scratch has no item seed; brief.md's SPAWN_CEILING 13300 vs base 15195; slice evidence B5 (README lists NNNN ADR) cannot hold before landing",
       "evidence": "S1 report, slice/nothing-hidden-s1 f70b7b93",
       "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "accentOf/ticketWornBy throw on undefined items (deck/items.mjs:688), hiding the real failure behind a second one; full gate ~6 min and its summary needs a grep of a long log",
+      "evidence": "S2 report, slice/nothing-hidden-s2 40b2e4f3",
+      "size": 1
     }
   ]
 }
