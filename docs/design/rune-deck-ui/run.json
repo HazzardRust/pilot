@@ -196,7 +196,7 @@
     },
     {
       "slice": "S22",
-      "state": "pushed 7fb26dc",
+      "state": "integrated at cebe677 — typescript approve, rust approve; 121 production lines; 4849/0",
       "after": [
         "S12"
       ],
@@ -219,8 +219,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-base"
     }
   ],
-  "next": "paused by main: integrating S22; S23 waits on its rust re-read; then hand back paused",
-  "updatedAt": "2026-11-20T04:01:06.751Z",
+  "next": "paused by main: integrate S23 (rust APPROVE on re-read); then hand back paused",
+  "updatedAt": "2026-11-20T04:04:22.015Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
