@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed 560d603",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -30,10 +30,45 @@
       ],
       "branch": "slice/two-devices-s3",
       "worktree": "C:/Users/Hazzard/Projects/pilot-two-devices-s3"
+    },
+    {
+      "slice": "Two devices, one repo",
+      "state": "fixing",
+      "branch": "feat/two-devices",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-two-devices-qa",
+      "pr": 136
+    },
+    {
+      "slice": "Fix round F1-F11",
+      "state": "pushed 23e46da",
+      "after": [
+        "S2",
+        "S3"
+      ],
+      "branch": "fix/two-devices",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-two-devices-fix"
     }
   ],
-  "next": "S3 integrated at 77eea775; integrating S2 (560d603), then fundamentalist and QA",
-  "updatedAt": "2026-11-20T15:29:12.889Z",
+  "findings": [
+    "kept: F1 simplify — one exported isSlug from deck/runs.mjs used at slug-clash.mjs:27, doctor.mjs:195, :528, runs.mjs:406",
+    "kept: F2 simplify — one readTickets(cwd,{open}) in deck/tickets.mjs for base.mjs, tickets.mjs and doctor; delete readOpenView and VIEW_TIMEOUT_MS",
+    "kept: F3 simplify — doctor exports one slugsWarning; start stops wiring readOpenView/rowLine/slugsRow/hostFor/gitAt itself",
+    "kept: F4 simplify — clashText(clash) exported from slug-clash.mjs, used by slugsRow and slugVerb",
+    "kept: F5 defect — git bounded by gitUnder(cwd,{timeout:5000}) in start, bare doctor and doctor slug as architecture §8 promises; QA saw start hang >150 s on a silent origin",
+    "kept: F6 missing test — slugVerb through main: clash exit 1, free exit 0, host throws reads cannot tell exit 1",
+    "kept: F7 simplify — one tips cache shared across held slugs so N slugs run one ls-remote per remote",
+    "kept: F8 simplify — shape checked once in readTickets; listOf/body guards and the malformed-view test go",
+    "kept: F9 simplify — drop export of twoDevicesSection from the test file",
+    "kept: F10 simplify — OPERATING.md keeps one clause on slug's output and points to pilot help",
+    "kept: F11 doc — setup step 4 names git remote add when the run remote is not origin (QA)",
+    "dropped: S2-sec-MEDIUM gh bound — §8 commits only the git read; bounding gh needs deck/host.mjs for every host caller, wider than this feature",
+    "dropped: QA-2 start prints cannot tell when the deck is down — A4 prints any non-pass row; spec 2b's 0-line rule covers none held or all free only",
+    "dropped: E-complexity slugClashes 17, slugsRow 12 (new) — each branch is one unread/remote case pinned by a test; F4 and F7 reshape both; a split adds lines; the rest are pre-existing functions only touched",
+    "dropped: E-duplication jscpd 9 clones, 72 lines — no locations printed; the clones the review located are F1, F2, F4",
+    "dropped: E-coverage and E-mutation — NOT RUN (c8 needs the full 13-16 min suite; Stryker hit timeout 900 in its dry run); recorded as not run, not clean"
+  ],
+  "next": "integrating fix/two-devices 23e46da, then fresh QA with the tip",
+  "updatedAt": "2026-11-20T16:19:16.518Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -127,6 +162,79 @@
       "agent": "pilot-co-pilot",
       "what": "pilot integrate requires Evidence kind exactly 'B5 run:'; an implementer's 'run, partial:' row was refused",
       "evidence": "NOT integrated slice/two-devices-s3: S3: B5 has no --trailer \"Evidence: B5 run: ...\""
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "evidence runner did not return before the report was forced; F6 rests on reading code, no mutation evidence",
+      "evidence": "fundamentalist report: runner >339 s, waiting on its own background work"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "its worktree could not be removed while the runner held it",
+      "evidence": "failed to delete pilot-two-devices-fund: Permission denied"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2 accepted an unbounded git read in start that contradicted the artefact's own §8 mitigation; §8 mitigations are not checked like Interface blocks",
+      "evidence": "architecture.md:142-143 vs bin/pilot.mjs:268"
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "delivered its table to main instead of its fundamentalist, after the fundamentalist's report was forced; coverage and mutation never ran to a result",
+      "evidence": "main relay: Stryker timeout 900 exit 124, 1551 mutants; c8 cell declined",
+      "size": 1
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "left scratch dir /tmp/tmp.UPuOApnbav (Stryker sandbox busy)",
+      "evidence": "runner cleanup line"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "full gate under parallel load: 7 timing reds (gate1-lineage 2, gate1-verdicts 2, gate2-base, gate2-checks-table, hooks inbox), each green alone",
+      "evidence": "QA gate at 7d9f5c0c: 4817 pass, 7 fail",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "npm run test:changed -- --since ran the full suite (gate.mjs takes no --since), 21 min",
+      "evidence": "QA gate run"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "the gate stopped QA's scratch deck because it was leashed to the worktree",
+      "evidence": "scratch deck pid 17872 stopped"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "QA's read-only wait for the fix tip has no bound; its run ended before the tip came, so a fresh QA must re-arm the scratch deck and fixtures",
+      "evidence": "QA hand-back at 7d9f5c0c, no walkthrough posted",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "posting a fixture ticket to a scratch deck needs a hand-rolled /api/tool call with sliceCount",
+      "evidence": "400 a ticket needs sliceCount"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "pilot host <name> writes global git config though OPERATING reads as per-clone",
+      "evidence": "output pilot.host github (global)"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a git killed by spawnSync's timeout on Windows leaves its http helper holding the cwd; fixture restore failed EPERM",
+      "evidence": "fix round: first slug-leash run, git-fixture rmSync EPERM"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fix brief contradicted itself: readTickets null-on-failure vs byte-identical pilot tickets messages; gitUnder returns a result rather than throwing",
+      "evidence": "fix round pushback; leashedGit wrapper added"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "full gate flake: wait-as.test.mjs 'a wait with --item ends on a reply' red in suite, 12/12 alone",
+      "evidence": "fix round gate 4830 pass 1 fail"
     }
   ]
 }
