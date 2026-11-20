@@ -249,7 +249,7 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
         .radius(theme::radius::button)
         .fill(ui.card)
         .transition(arrive)
-        .child(col().w(space::s1).h_full().fill(accent(&t, &c.accent)))
+        .child(col().w(space::s2).h_full().fill(accent(&t, &c.accent)))
         .child(body)
 }
 

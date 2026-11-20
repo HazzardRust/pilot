@@ -47,7 +47,7 @@ const LANE: f32 = space::s4;
 const ROW: f32 = theme::size::row;
 /// A dot's radius, and a doing dot's core and the end point's.
 const DOT: f32 = space::s2;
-const CORE: f32 = space::s1;
+const CORE: f32 = 2.0;
 /// The page's stroke weight (`deck.css`, `.graph`): a line's width, not a space.
 const STROKE: f32 = 1.5;
 
@@ -166,7 +166,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 .color(t.text)
                 .fill(t.bg)
                 .border(STROKE, tokens.rule)
-                .padding(space::s1)
+                .padding(space::s2)
                 .absolute(width, dot.row as f32 * ROW),
         );
     }
