@@ -108,6 +108,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `usage-switch.mjs` | the logging on/off switch file |
 | `usage.mjs` | how much of the context, five-hour and weekly allowance is gone |
 | `version.mjs` | `PLUGIN_VERSION`, read once from package.json, `isOlder`, `isVersion` and `ENGINES`; the only package.json read in the deck (daemon-lifecycle spec 3) |
+| `wait-for.mjs` | `pilot wait-for`: a wait on a file for a matching line that ends by itself at a required deadline |
 | `wait.mjs` | `pilot wait`: what wakes an idle agent |
 | `walkthrough-shape.mjs` | checks a QA walkthrough is a look, not a script |
 | `work.mjs` | the gates the pilot has signed in a directory since its last hand-off, for the guard's advice; served on `/api/record` |
