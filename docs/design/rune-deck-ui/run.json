@@ -88,7 +88,7 @@
     },
     {
       "slice": "S35 The spacing on the 4/8 grid (added)",
-      "state": "pushed 954e931; rust APPROVE (warnings); fixing playground --space-s1",
+      "state": "integrated at 4a5f27f; rust APPROVE (warnings); 781/0 selection",
       "after": [
         "S28 The left side as VS Code's side bar (added)",
         "S29 The right strip's buttons on the grid, rounded, by role (added)",
@@ -180,8 +180,8 @@
     "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
     "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
   ],
-  "next": "feat 60228818. S35 integrate running; then S32, then S33 (expect a tests/theme.rs conflict with S35: rebase by a fresh implementer). Then full cargo on feat, base check, fundamentalist, QA.",
-  "updatedAt": "2026-11-20T10:52:36.606Z",
+  "next": "feat 4a5f27ff. S35 integrated; S32 integrate running; then S33 (likely theme.rs conflict). Then full cargo on feat, base check, fundamentalist, QA.",
+  "updatedAt": "2026-11-20T10:53:08.713Z",
   "friction": [
     {
       "agent": "pilot-qa",
