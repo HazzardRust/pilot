@@ -61,9 +61,13 @@ struct Tickets {
 
 /// Sends a write; a refusal or a down deck says so, and the live reader brings the view that follows.
 fn send(s: &mut State, action: &DeckAction) {
-    if let Err(err) = Client::from_env().and_then(|client| client.act(action)) {
-        eprintln!("pilot-deck: {err}");
-        s.down = true;
+    match Client::from_env().and_then(|client| client.act(action)) {
+        Ok(Acted::Taken { .. }) => {}
+        Ok(Acted::Refused { reason }) => eprintln!("pilot-deck: refused: {reason}"),
+        Err(err) => {
+            eprintln!("pilot-deck: {err}");
+            s.down = true;
+        }
     }
 }
 

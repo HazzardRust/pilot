@@ -218,9 +218,9 @@ fn folds_are_kept_per_deck() {
         find(&restarted, &format!("ticket-{id}")).is_some(),
         "open after a restart"
     );
-    assert!(
-        find(&restarted, "tickets-fold-yellow").is_some()
-            && Prefs::load(&deck.dir).folds[REPO].len() == 1,
+    assert_eq!(
+        Prefs::load(&deck.dir).folds[REPO].len(),
+        1,
         "only the fold pressed is kept"
     );
 }

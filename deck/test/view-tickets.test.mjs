@@ -98,5 +98,25 @@ test('with no switch pending the arrows move within a queue', () => {
 test('a deck with no tickets has empty queues, and the overview none', () => {
   assert.deepEqual(ticketsView(reads([]), { run: MINE }).groups.map(({ rows }) => rows), [[], [], []]);
   assert.deepEqual(ticketsView({ ...reads([]), runs: [] }, {}), { repo: null, groups: [] });
-  assert.deepEqual(viewOf(reads([aTicket('itm_0000000000r1', 'red')]), { screen: 'home', run: MINE }).regions.tickets.groups[0].rows.length, 1);
+  assert.equal(viewOf(reads([aTicket('itm_0000000000r1', 'red')]), { screen: 'home', run: MINE }).regions.tickets.groups[0].rows.length, 1);
+});
+
+test('the co-pilot lane locks its own rows, and a paused row offers no Continue', () => {
+  const items = [
+    aTicket('itm_0000000000y1', 'yellow'),
+    aTicket('itm_0000000000y2', 'yellow'),
+    aTicket('itm_0000000000y3', 'yellow'),
+    aTicket('itm_0000000000g1', 'green'),
+    aTicket('itm_0000000000g2', 'green', { paused: { question: 'itm_0000000000q1' } }),
+    aTicket('itm_0000000000g3', 'green'),
+  ];
+  const r = reads(items, { [repoKey(MINE)]: { coPilot: { to: 'itm_0000000000y2', from: 'itm_0000000000y1', at: AT } } });
+  r.lanes.coPilots = { [repoKey(MINE)]: 'itm_0000000000y1' };
+
+  const view = flat(ticketsView(r, { run: MINE }));
+
+  assert.deepEqual(view.yellow.map(({ switch: swap }) => swap), [null, 'pending', 'locked'], 'held, lit, locked');
+  assert.deepEqual(view.yellow.map(({ up, down }) => [up, down]), [[false, true], [true, true], [true, false]], 'a co-pilot switch locks no arrows');
+  assert.deepEqual(view.green.map(({ switch: swap }) => swap), [null, null, 'idle'], 'in hand, paused, idle');
+  assert.deepEqual(view, pageRows(r), 'the page draws the same rows');
 });
