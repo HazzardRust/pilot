@@ -91,7 +91,7 @@ a runtime, and again into chat if A2 flips. It earns its keep. No shallow module
   (Typora-like, short of Obsidian). Rejected: near-zero `size` spans to hide them (unproven in Rune, caret steps
   through invisible bytes, `-` still never becomes a dot). Asked: itm_3cadb89e11ae.
 - **A2** Reply box only; the chat composer is left as it is. Tradeoff: two composers differ until a one-line
-  follow-up. Rejected: chat too (widens the ask). Asked: itm_cf736cb1ad17.
+  follow-up. Rejected: chat too (widens the ask). Asked: itm_cf736cb1ad17. Answered: "Reply box only" (the default).
 - **A3** An unfocused box renders every line (spec 5). Tradeoff: the line clicked back into shifts as it turns
   raw. Rejected: keep the last caret line raw. Asked: itm_b5ca8397c90b. Answered: "Render every line" (the default).
 - red team: walked S1's first behaviour against `reply.rs:395` and `el/text.rs:225`: a plain field with
