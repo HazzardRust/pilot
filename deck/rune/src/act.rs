@@ -2,7 +2,109 @@
 //! deck secret and the deck's own `Origin`, so the daemon takes it as a press on its own page. No
 //! redirect is followed (the client's agent allows none): the 303's `Location` is the answer.
 
+use std::collections::BTreeSet;
+use std::sync::Arc;
+use std::sync::mpsc::{self, Receiver, Sender};
+
+use rune::Waker;
+
 use crate::client::{Client, Error, Result};
+
+/// A post the deck has answered: the key its control sent it under, and what the deck made of it.
+pub type Answer = (String, Result<Acted>);
+
+/// The window's one table of posts in flight (spec 5): `send` marks a key sent in the frame of the
+/// press, the post runs on a thread of its own, and `settle` hands `app::poll` what has been answered.
+pub struct Pending {
+    /// The deck every post goes to; the window's own address, read per post, when unset.
+    pub deck: Option<Arc<Client>>,
+    /// Wakes the window when an answer is left; `app::setup` sets it.
+    pub wake: Option<Waker>,
+    sent: BTreeSet<String>,
+    answers: (Sender<Answer>, Receiver<Answer>),
+}
+
+impl Default for Pending {
+    fn default() -> Pending {
+        Pending {
+            deck: None,
+            wake: None,
+            sent: BTreeSet::new(),
+            answers: mpsc::channel(),
+        }
+    }
+}
+
+impl std::fmt::Debug for Pending {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Pending")
+            .field("sent", &self.sent)
+            .finish_non_exhaustive()
+    }
+}
+
+impl Pending {
+    /// The posts answered since the last call, each key no longer in flight. `app::poll` takes them.
+    pub fn settle(&mut self) -> Vec<Answer> {
+        let answered: Vec<Answer> = self.answers.1.try_iter().collect();
+        for (key, _) in &answered {
+            self.sent.remove(key);
+        }
+        answered
+    }
+
+    /// Whether a post under `key` is in flight: its control is drawn disabled until it is answered.
+    pub fn is_sent(&self, key: &str) -> bool {
+        self.sent.contains(key)
+    }
+}
+
+/// What a control shows of its answered post: the deck's refusal or the failure in its own words,
+/// none when the deck took it.
+pub fn refusal(acted: &Result<Acted>) -> Option<String> {
+    match acted {
+        Ok(Acted::Taken { .. }) => None,
+        Ok(Acted::Refused { reason }) => Some(reason.clone()),
+        Err(err) => Some(err.to_string()),
+    }
+}
+
+/// Posts `action` under `key` on a thread of its own and leaves the deck's answer for `settle`,
+/// waking the window; the UI thread never waits on the deck. A key already in flight sends nothing
+/// and returns false.
+pub fn send<A: Form + Send + 'static>(sender: &mut Pending, key: &str, action: A) -> bool {
+    if !sender.sent.insert(key.to_string()) {
+        return false;
+    }
+    let (deck, wake, answers, sent) = (
+        sender.deck.clone(),
+        sender.wake.clone(),
+        sender.answers.0.clone(),
+        key.to_string(),
+    );
+    let post = move || {
+        let acted = match deck {
+            Some(deck) => deck.act(&action),
+            None => Client::from_env().and_then(|deck| deck.act(&action)),
+        };
+        // A closed window has no one to tell: its receiver is gone with it.
+        let _ = answers.send((sent, acted));
+        if let Some(wake) = wake {
+            wake();
+        }
+    };
+    if let Err(err) = std::thread::Builder::new()
+        .name("pilot-deck-post".into())
+        .spawn(post)
+    {
+        let failed = Err(Error::Http(format!("the post did not start: {err}")));
+        let _ = sender.answers.0.send((key.to_string(), failed));
+        if let Some(wake) = &sender.wake {
+            wake();
+        }
+    }
+    true
+}
 
 /// One write the Rune deck makes: the form route it posts and that form's fields.
 pub trait Form {

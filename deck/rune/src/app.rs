@@ -3,6 +3,7 @@
 use rune::tok::{self, type_};
 use rune::{AppSpec, Cx, El, Tx, Waker, col, text};
 
+use crate::act;
 use crate::client::{Client, Query, View};
 use crate::layout;
 use crate::live::{self, Feed};
@@ -23,6 +24,8 @@ pub struct State {
     pub live: Option<live::Inbox>,
     /// A panel resize in hand.
     pub layout: layout::Local,
+    /// The posts in flight, settled once in `poll`.
+    pub pending: act::Pending,
 }
 
 impl State {
@@ -64,7 +67,7 @@ pub fn spec() -> AppSpec<State> {
 
 /// Starts the live reader on the window's query; a client refused here leaves `load`'s word.
 pub fn setup(s: &mut State, wake: Waker) {
-    s.regions.queue.inbox.wake = Some(wake.clone());
+    s.pending.wake = Some(wake.clone());
     match Client::from_env() {
         Ok(client) => s.live = Some(live::start(client, s.query.clone(), wake)),
         Err(err) => eprintln!("pilot-deck: no live view: {err}"),
@@ -76,7 +79,16 @@ pub fn setup(s: &mut State, wake: Waker) {
 pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
     // A send answered off the UI thread is taken here, as the live view is.
     let sent = regions::chat::settle(s, tx);
-    let settled = regions::queue::settle(s);
+    // Every post through `act::send` is answered here, once, on the control that sent it.
+    let answered = s.pending.settle();
+    for (key, acted) in &answered {
+        let reason = act::refusal(acted);
+        let r = &mut s.regions;
+        regions::queue::answered(&mut r.queue, key, reason.clone());
+        regions::history::answered(&mut r.history, key, reason.clone());
+        regions::notifications::answered(&mut r.notifications, key, reason);
+    }
+    let settled = !answered.is_empty();
     // A press's answer is the reply box's (S9), taken beside the view and never instead of it.
     let replied = regions::reply::poll(&mut s.regions.reply, tx);
     regions::usage::poll(s, tx);

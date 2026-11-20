@@ -140,7 +140,10 @@ fn content(s: &State, panel: &str, cx: &mut Cx<State>) -> El {
     let region = |name: &str| s.view.regions.get(name).unwrap_or(&none);
     let r = &s.regions;
     match panel {
-        "notifications" => regions::notifications::draw(region("notifications"), &s.prefs, cx),
+        "notifications" => {
+            let (n, pending) = (&r.notifications, &s.pending);
+            regions::notifications::draw(region("notifications"), &s.prefs, n, pending, cx)
+        }
         "chat" => regions::chat::draw(region("chat"), &r.chat, cx),
         "status" => col()
             .gap(space::between)
