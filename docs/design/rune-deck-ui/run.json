@@ -205,7 +205,7 @@
     },
     {
       "slice": "S23",
-      "state": "pushed c55094e — rust BLOCK (out-of-order moves) fixed, re-read running",
+      "state": "integrated at 0365938 — rust APPROVE on re-read (BLOCK fixed); 255 lines; 761/0; cargo ok on merged head; closes S9 security LOW and S12 re-read MEDIUM",
       "after": [
         "S9"
       ],
@@ -217,65 +217,58 @@
       "state": "integrated at 2c055ec — pilot dc5f7be in; render-rail.mjs exports kept on pilot's bodies; two view tests' stand-in kind moved off steps; view tests 62/62",
       "branch": "slice/rune-deck-ui-base",
       "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-base"
+    },
+    {
+      "slice": "Deck UI rebuilt in Rune",
+      "state": "fix round integrating; QA read-only pass done (Q1-Q7 kept as defects, to fix briefs), QA handed back awaiting tip",
+      "branch": "feat/rune-deck-ui",
+      "pr": 124
+    },
+    {
+      "slice": "fix round",
+      "state": "implementing — F1 F2 F3 F4 F8 N1 on fix/rune-deck-ui-principles, gate running",
+      "after": [
+        "S23"
+      ],
+      "branch": "fix/rune-deck-ui-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-rune-deck-ui-principles"
+    },
+    {
+      "slice": "S24",
+      "state": "planned (added, step 7 F6/F5/F9/T2)",
+      "after": [
+        "fix round"
+      ]
+    },
+    {
+      "slice": "S25",
+      "state": "planned (added, step 7 F6)",
+      "after": [
+        "S24"
+      ]
     }
   ],
-  "next": "paused by main: integrate S23 (rust APPROVE on re-read); then hand back paused",
-  "updatedAt": "2026-11-20T04:04:22.015Z",
+  "findings": [
+    "kept: F1 simplify — stub_region! has 0 uses, delete (-15)",
+    "kept: F2 simplify — two Location decoders disagree on '+' and '#'; one Acted::param (-28)",
+    "kept: F3 simplify — status/tabs block the UI thread on a view fetch against spec 5; live.ask as notifications does (-35)",
+    "kept: F4 simplify — usage's own fetch puts one region on a newer seq against spec 6a; live.ask every 30 s (-40)",
+    "kept: F5 simplify — refused run dismiss leaves the button disabled; built in added S24 with T2's red pin",
+    "kept: F6 simplify — no off-thread write seam, 5 posting mechanisms, 5 regions block; over the diff limit, added slices S24 and S25",
+    "dropped: F7 simplify — adds code for load only; N-1 reads already dropped, no correctness consequence",
+    "kept: F8 simplify — queue.mjs scrapes options from HTML by regex while reply.mjs ports the rule, against L2; queue uses reply's optionsOf (-22); also removes optionsOf's complexity 12",
+    "dropped: F9 simplify — folded into S24, no separate fix",
+    "dropped: T1 simplify — tests reach into live.rs internals but no transport change is planned; a rewrite with no behaviour gain",
+    "kept: T2 simplify — history test asserts internals and misses the refused dismiss; S24's behaviour 1",
+    "kept: N1 simplify — deck-dir rule written twice; one client::deck_dir (-5)",
+    "dropped: N2 simplify — openerFor(platform, url, rune) is the artefact's named Opener seam; -1 line does not pay for moving it",
+    "dropped: E1 runner complexity — stripView 15, queueView 13, usageView 11 are flat field maps of one region each; splitting adds indirection for no consequence",
+    "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
+    "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
+  ],
+  "next": "fix round integrate running; then fix 2 (Q1-Q4) beside S24, then fix 3 (Q5-Q7) beside S25; then base check and resume QA (pilot-qa-rune-deck-ui) with the tip",
+  "updatedAt": "2026-11-20T04:51:47.047Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S4: diff over the limit noticed only at commit; a test that parses deck.css by hand is ~250 lines",
-      "evidence": "deck/rune/tests/theme.rs 253 lines",
-      "size": 444
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S3: a scratch deck never opens anything, so checking the open path forced a hand-made probe that opened a read-only tab of the user's 4321 deck",
-      "evidence": "deck/open.mjs refuses on PILOT_DECK_DIR/PORT; scratchpad s3-open.mjs",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S3: slice names a test file that does not exist; release build 3 min per worktree",
-      "evidence": "deck/test/no-open.test.mjs not found; cargo build --release 3m06s",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S2: Rune's AppHandle is untestable from outside the crate (headless_runtime drops the update queue), costing a seam change; three behaviours named S1 stubs; the slice assumed a post advances seq, only a reply does",
-      "evidence": "rune playground/testing.rs:16; deck/store-items.mjs:326",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S8: run ended by the hand-back hook at ~188k tokens while waiting on another slice's tip; gate and reviews left for a successor",
-      "evidence": "slice/rune-deck-ui-s8 1af1748, three wip commits",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S8: posting a gate thread on a scratch deck took 8 calls through the store's guards; a thread snap needed a throwaway example since State::load opens on home",
-      "evidence": "S8 report",
-      "size": 8
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S5: a minimal gate1 fixture on a scratch deck cost ~6 probes through the store's guards; nothing documents the recipe outside deck/testUtils.mjs; B4 described a refusal the daemon does not make",
-      "evidence": "deck/store-items.mjs:281-323; S5 report",
-      "size": 6
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S12: npm test ~8 min and flaked once under concurrent load; no recipe for held lanes on a scratch deck; --snap loads the default query only",
-      "evidence": "daemon.test.mjs 'a reply on an item older than deck_read...' red once, 75/75 alone",
-      "size": 8
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S7: reached its context notice at ~230k before the trim; Rune's motion cause rule and instant press fill are documented only in rune's el/motion.rs; slice too big for the line limit (card, options, columns, spring)",
-      "evidence": "cae0a6a, production 452 lines",
-      "size": 452
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S8 finisher: no Monitor tool, waited on an 8-min npm test through blocked sleeps; Python heredoc broke on cp1252",
@@ -457,6 +450,59 @@
       "what": "S23: fresh worktree needs npm ci before pilot deck --scratch starts; the thread arrow is a keyless link so tests find it by role and rect",
       "evidence": "S23 report c55094e",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "base merge: cold cargo test through a grep pipe printed nothing and went to the background; a tasks-folder listing flooded context",
+      "evidence": "base merge report 47fc9c3",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "co-pilot ran 9 slices, a base merge and 2 re-reads; Bash foreground waits capped near 180 s so every wait was a ls-remote poll loop; advisory at 225k",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context compacted mid-run on a 116-file, 17.9k-line feature (4.9k Cargo.lock); summary kept none of the work, no report, respawned",
+      "evidence": "fundamentalist hand-back on itm_0dcd9aa67146, worktree removed at 03659388",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner never returned before hand-back, so coverage, mutation, complexity, duplication, dead code and dependency checks were not run; worktree checkout of 2,598 files and npm ci took minutes; worktree left locked (remove: Permission denied)",
+      "evidence": "fundamentalist final report on itm_0dcd9aa67146; git worktree remove pilot-fundamentalist-rune-deck-ui: Permission denied",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "report reached main, not the fundamentalist; Rust column not run (Cargo.toml not at root); coverage none (npm test exit 1 under scratch HOME, cargo off PATH); mutation timed out at 900 s; Stryker scratch left in /tmp",
+      "evidence": "runner af7ace8914ed34ef0 report relayed by main; /tmp/tmp.NyBys2scT8 removed by co-pilot",
+      "size": 5
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce hook forced a hand-back while the fix-round implementer and QA were live, against the never-end-a-turn-with-a-child-live rule",
+      "evidence": "hook message after the fix implementer's interim notification on itm_0dcd9aa67146",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce hook forces a 'paused' hand-back each time the co-pilot idles on live children; two no-change hand-backs reached main while the fix implementer and QA ran",
+      "evidence": "hand-backs on itm_0dcd9aa67146 at feat 7b7b7ec3",
+      "size": 2
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "Rust column skipped because Cargo.toml is at deck/rune, not the root; npm test failed under scratch HOME so no coverage; stryker timed out at 900 s: no evidence figure for a Rust feature; final report delivered to main, not its fundamentalist",
+      "evidence": "runner report on 03659388; scratch /tmp/tmp.NyBys2scT8 left",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "Rune prefs persist open panels between headless runs (~6 confounded probes); --script keys must exist in the first frame; headless time outruns real time without --realtime; spec 8's grep bar false-fails on 'prune'; run ended before the tip, needs a resume",
+      "evidence": "QA read-only report on itm_0dcd9aa67146 at 03659388",
+      "size": 6
     }
   ]
 }
