@@ -45,7 +45,7 @@ function step(git, args, what) {
 const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 
 /** `remote`'s branches as a name → sha map, from the remote itself. */
-function tipsOn(git, remote) {
+export function tipsOn(git, remote) {
   const tips = new Map();
   for (const line of step(git, ['ls-remote', '--heads', remote], `git ls-remote ${remote} failed`).split(/\r?\n/)) {
     const [sha, ref] = line.split('\t');
