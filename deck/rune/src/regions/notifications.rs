@@ -6,7 +6,8 @@
 
 use std::collections::BTreeMap;
 
-use rune::tok::{self, type_};
+use crate::theme::type_;
+use rune::tok;
 use rune::{Color, Cx, El, col, row, text};
 use serde::Deserialize;
 
@@ -177,7 +178,7 @@ pub fn draw(
     panel = panel.child(
         theme::control(text("Mark all seen"), dark)
             .key("notifications-mark-all")
-            .font(type_::LABEL)
+            .font(type_::CAPTION)
             .color(t.text_secondary)
             .role("button")
             .disabled(pending.is_sent(CLEAR_ALL))

@@ -57,16 +57,14 @@
     "side_min": 170.0,
     "side_default": 300.0,
     "handle": 4.0,
-    "pane_title": 11.0,
-    "pane_title_weight": 700.0,
-    "badge": 16.0,
-    "badge_text": 9.0,
-    "badge_weight": 600.0
+    "badge": 16.0
   },
-  "font": {
-    "family": ["Cascadia Mono", "SF Mono", "Menlo", "Consolas", "monospace"],
-    "size": 13.0,
-    "line": 1.6
+  "type": {
+    "ui": "Inter",
+    "mono": "JetBrains Mono",
+    "header": { "size": 13.0, "weight": 700.0 },
+    "body": { "size": 13.0, "weight": 400.0 },
+    "caption": { "size": 11.0, "weight": 500.0 }
   },
   "motion": {
     "panel": [0.12, 0.0],

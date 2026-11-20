@@ -1,4 +1,4 @@
-//! Turns `theme.json`'s `space`, `cols`, `radius`, `size` and `motion` into consts, so `theme::space::pad` stays a
+//! Turns `theme.json`'s `space`, `cols`, `radius`, `size`, `type` and `motion` into consts, so `theme::space::pad` stays a
 //! `const` a region can use anywhere. A malformed file fails the build, never the window.
 
 use std::fmt::Write as _;
@@ -63,7 +63,31 @@ fn main() {
         out
     };
 
+    // The type scales: `header`, `body` and `caption`, each a size and a weight, in two families.
+    let ty = section(&root, "type");
+    let family = |key: &str| {
+        ty[key]
+            .as_str()
+            .unwrap_or_else(|| panic!("theme.json type.{key} is not a name"))
+    };
+    let mut scales = format!(
+        "pub const UI: &str = {:?};\npub const MONO: &str = {:?};\n",
+        family("ui"),
+        family("mono")
+    );
+    for name in ["header", "body", "caption"] {
+        let scale = &ty[name];
+        let _ = writeln!(
+            scales,
+            "pub const {}: TextStyle = TextStyle::new({}, {});",
+            name.to_uppercase(),
+            operand(&scale["size"], name),
+            operand(&scale["weight"], name)
+        );
+    }
+
     let out = env::var("OUT_DIR").expect("OUT_DIR");
+    fs::write(Path::new(&out).join("type.rs"), scales).expect("write type.rs");
     fs::write(Path::new(&out).join("space.rs"), space).expect("write space.rs");
     fs::write(Path::new(&out).join("radius.rs"), consts("radius")).expect("write radius.rs");
     fs::write(Path::new(&out).join("opacity.rs"), consts("opacity")).expect("write opacity.rs");

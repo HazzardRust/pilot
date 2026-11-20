@@ -3,7 +3,8 @@
 //! turns a lane and a row into points and computes no layout of its own. Each dot's row is the
 //! hover target, as on the page (`renderDot`), and hovering it shows the slice's whole name.
 
-use rune::tok::{self, type_};
+use crate::theme::type_;
+use rune::tok;
 use rune::{Cx, El, LineCap, Path, Shape, canvas, el, row, text};
 use serde::Deserialize;
 
@@ -147,7 +148,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             .child(circle)
             .child(el().w(text_x))
             .child(theme::content(
-                text(id).font(type_::LABEL).color(t.text),
+                text(id).font(type_::CAPTION.mono()).color(t.text),
                 dark,
             ))
     });
@@ -162,7 +163,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         region = region.child(
             text(&dot.slice)
                 .key("graph-name")
-                .font(type_::LABEL)
+                .font(type_::CAPTION)
                 .color(t.text)
                 .fill(t.bg)
                 .border(STROKE, tokens.rule)

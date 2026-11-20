@@ -1,6 +1,6 @@
 //! The window's state and its one view: every region drawn from one `View` (spec 6a).
 
-use rune::tok::{self, type_};
+use rune::tok;
 use rune::{AppSpec, Cx, El, Titlebar, Tx, Waker, col, row, text};
 
 use crate::act;
@@ -9,7 +9,7 @@ use crate::layout;
 use crate::live::{self, Feed};
 use crate::prefs::{self, Prefs};
 use crate::regions::{self, Locals};
-use crate::theme::{self, size, space};
+use crate::theme::{self, size, space, type_};
 
 #[derive(Debug, Default)]
 pub struct State {
@@ -139,6 +139,16 @@ pub fn spec() -> AppSpec<State> {
         setup: Some(setup),
         poll: Some(poll),
         on_key: Some(key),
+        // Inter for the UI, JetBrains Mono for code, ids and times, both bundled (spec 22).
+        fonts: &[
+            include_bytes!("../assets/fonts/Inter-Regular.ttf"),
+            include_bytes!("../assets/fonts/Inter-Medium.ttf"),
+            include_bytes!("../assets/fonts/Inter-SemiBold.ttf"),
+            include_bytes!("../assets/fonts/JetBrainsMono-Regular.ttf"),
+            include_bytes!("../assets/fonts/JetBrainsMono-Medium.ttf"),
+            include_bytes!("../assets/fonts/JetBrainsMono-Bold.ttf"),
+        ],
+        families: (type_::UI, type_::MONO),
         ..AppSpec::new("pilot deck", (1280.0, 800.0), State::load, view)
     }
 }

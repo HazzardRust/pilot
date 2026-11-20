@@ -6,7 +6,8 @@
 
 use std::time::{Duration, Instant};
 
-use rune::tok::{self, type_};
+use crate::theme::type_;
+use rune::tok;
 use rune::{Color, Cx, El, Tx, row, text};
 use serde::Deserialize;
 
@@ -103,7 +104,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         row()
             .key(format!("usage-{key}"))
             .gap(space::within)
-            .child(text(key).font(type_::LABEL).color(k.quiet))
+            .child(text(key).font(type_::CAPTION).color(k.quiet))
             .child(figure)
     };
     let mut readout = row().key("usage").role("status").gap(space::between);
@@ -115,7 +116,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     if let Some(resets) = &usage.resets {
         readout = readout.child(theme::content(
             text(format!("resets {resets}"))
-                .font(type_::LABEL)
+                .font(type_::CAPTION)
                 .color(k.quiet),
             dark,
         ));

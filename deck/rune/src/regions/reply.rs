@@ -4,7 +4,8 @@
 //! touches (spec 4), and which only a reply the deck took empties (ADR 0096). The draft lives in
 //! memory alone: nothing here writes it to disk.
 
-use rune::tok::{self, type_};
+use crate::theme::type_;
+use rune::tok;
 use rune::{Color, Cx, El, Key, TextEdit, Tx, col, el, row, text, text_input};
 use serde::Deserialize;
 

@@ -1,7 +1,8 @@
 //! The Reports panel as `deck/view/reports.mjs` resolved it: the repository's closing reports, each with a ×
 //! that hides it. What was hidden is the window's own prefs (A4), kept by id so it stays hidden across a restart.
 
-use rune::tok::{self, type_};
+use crate::theme::type_;
+use rune::tok;
 use rune::{Cx, El, col, row, text};
 use serde::Deserialize;
 

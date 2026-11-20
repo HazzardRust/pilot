@@ -2,7 +2,8 @@
 //! agent's last tool call, dimmed from 30 s quiet (L11). The roster is the view's; nothing here reads it from the
 //! daemon's own state (spec 11).
 
-use rune::tok::{self, type_};
+use crate::theme::type_;
+use rune::tok;
 use rune::{Cx, El, col, row, text};
 use serde::Deserialize;
 
@@ -54,7 +55,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                 .child(theme::content(
                     text(format!("{}s", agent.quiet_s))
                         .key(format!("agent-{i}-age"))
-                        .font(type_::LABEL)
+                        .font(type_::CAPTION)
                         .color(ink),
                     dark,
                 )),

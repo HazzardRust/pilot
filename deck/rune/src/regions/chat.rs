@@ -5,7 +5,8 @@
 //! draft once the deck has taken it, or keeps it and the deck's reason when it has not. The draft
 //! lives here only, never on disk, and a live view never touches it.
 
-use rune::tok::{self, type_};
+use crate::theme::type_;
+use rune::tok;
 use rune::{Cx, El, ScrollSpec, TextEdit, Tx, col, text, text_input};
 use serde::Deserialize;
 
@@ -103,7 +104,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     if chat.messages.is_empty() {
         messages = messages.child(theme::content(
             text("Nothing said here yet.")
-                .font(type_::LABEL)
+                .font(type_::CAPTION)
                 .color(k.quiet),
             dark,
         ));
@@ -119,7 +120,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 .gap(space::within)
                 .padding(space::pad)
                 .child(theme::content(
-                    text(by).font(type_::LABEL).color(k.quiet),
+                    text(by).font(type_::CAPTION).color(k.quiet),
                     dark,
                 ))
                 .child(theme::markdown(message.text, dark)),
@@ -141,7 +142,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     if let Some(reason) = &local.refused {
         panel = panel.child(theme::content(
             text(reason)
-                .font(type_::LABEL)
+                .font(type_::CAPTION)
                 .color(k.state.unacknowledged),
             dark,
         ));

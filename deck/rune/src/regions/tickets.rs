@@ -3,7 +3,8 @@
 //! one place, gated on the move in flight until a newer view lands (6c: two quick presses moved it twice);
 //! its play asks Confirm before it posts `Switch`, and a pending switch's Cancel posts `CancelSwitch`.
 
-use rune::tok::{self, type_};
+use crate::theme::type_;
+use rune::tok;
 use rune::{Cx, El, col, row, text};
 use serde::Deserialize;
 
@@ -129,7 +130,7 @@ fn toggle(s: &mut State, repo: &str, colour: &str) {
 fn inert(key: String, label: &str, t: &tok::Theme) -> El {
     text(label)
         .key(key)
-        .font(type_::LABEL)
+        .font(type_::CAPTION)
         .color(t.text)
         .role("button")
 }
@@ -156,7 +157,7 @@ fn continue_of(
                 .gap(space::within)
                 .child(
                     text("switching…")
-                        .font(type_::LABEL)
+                        .font(type_::CAPTION)
                         .color(t.text_secondary),
                 )
                 .child(pressing(
@@ -179,7 +180,7 @@ fn continue_of(
                 .gap(space::within)
                 .child(
                     text(format!("Switch to {}?", r.name))
-                        .font(type_::LABEL)
+                        .font(type_::CAPTION)
                         .color(t.text),
                 )
                 .child(pressing(
@@ -223,7 +224,7 @@ fn ticket_row(
                 .on_press(move |s: &mut State| open_thread(s, &to)),
         )
         .child(theme::content(
-            text(&r.state).font(type_::LABEL).color(t.text_secondary),
+            text(&r.state).font(type_::CAPTION).color(t.text_secondary),
             dark,
         ));
     if let Some(play) = continue_of(r, repo, local, pending, t, dark) {
@@ -281,7 +282,7 @@ pub fn draw(
             .child(text(&g.label).font(type_::BODY).color(t.text))
             .child(
                 text(g.rows.len().to_string())
-                    .font(type_::LABEL)
+                    .font(type_::CAPTION)
                     .color(t.text_secondary),
             );
         let mut fold = col().gap(space::within).child(header);

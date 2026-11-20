@@ -158,21 +158,16 @@ fn every_colour_is_deck_css() {
 }
 
 #[test]
-fn the_font_is_the_deck() {
-    let css = deck_css();
-    let body = css_expr(&css, "font: 13px/1.6", "font:");
-    for dark in [false, true] {
-        let f = theme::tokens(dark).font;
-        assert_eq!(f.family.first(), Some(&"Cascadia Mono"));
-        assert_eq!(f.family.last(), Some(&"monospace"));
-        assert!(
-            f.family.iter().all(|name| body.contains(name)),
-            "{:?} is not in deck.css's stack {body}",
-            f.family
-        );
-        assert_eq!((f.size, f.line), (13.0, 1.6));
-        assert!(body.starts_with("13px/1.6"), "{body}");
-    }
+fn the_font_is_inter_and_jetbrains_mono_on_three_scales() {
+    use pilot_deck::theme::type_;
+    assert_eq!((type_::UI, type_::MONO), ("Inter", "JetBrains Mono"));
+    let scales = [type_::HEADER, type_::BODY, type_::CAPTION];
+    assert_eq!(
+        scales.map(|s| (s.size, s.weight)),
+        [(13.0, 700.0), (13.0, 400.0), (11.0, 500.0)]
+    );
+    assert!(scales.iter().all(|s| s.family == rune::Family::Sans));
+    assert_eq!(type_::BODY.mono().family, rune::Family::Mono);
 }
 
 #[test]
@@ -342,11 +337,7 @@ fn theme_json_is_read_and_is_the_only_source() {
         ("size.side_min", theme::size::side_min),
         ("size.side_default", theme::size::side_default),
         ("size.handle", theme::size::handle),
-        ("size.pane_title", theme::size::pane_title),
-        ("size.pane_title_weight", theme::size::pane_title_weight),
         ("size.badge", theme::size::badge),
-        ("size.badge_text", theme::size::badge_text),
-        ("size.badge_weight", theme::size::badge_weight),
     ] {
         is(path, n(got));
     }
@@ -366,10 +357,16 @@ fn theme_json_is_read_and_is_the_only_source() {
     is("roles.primary", serde_json::json!("blue"));
     is("roles.accent", serde_json::json!("yellow"));
     is("roles.error", serde_json::json!("red"));
-    let font = theme::tokens(false).font;
-    is("font.size", n(font.size));
-    is("font.line", n(font.line));
-    is("font.family", serde_json::json!(font.family));
+    is("type.ui", serde_json::json!(theme::type_::UI));
+    is("type.mono", serde_json::json!(theme::type_::MONO));
+    for (name, scale) in [
+        ("header", theme::type_::HEADER),
+        ("body", theme::type_::BODY),
+        ("caption", theme::type_::CAPTION),
+    ] {
+        is(&format!("type.{name}.size"), n(scale.size));
+        is(&format!("type.{name}.weight"), n(scale.weight));
+    }
     // A colour's hue or light/dark pair is read back through the colour it makes.
     for dark in [false, true] {
         let t = theme::tokens(dark);

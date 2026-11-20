@@ -2,7 +2,8 @@
 //! chosen ticket's slice table, each as the view resolved it (`deck/view/status.mjs`). The run
 //! record is the daemon's: this reads the view and nothing of the store (L1).
 
-use rune::tok::{self, type_};
+use crate::theme::type_;
+use rune::tok;
 use rune::{Cx, El, col, row, text};
 use serde::Deserialize;
 
@@ -73,10 +74,9 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     let status = Status::deserialize(v).unwrap_or_default();
     let dark = cx.system_dark();
     let t = tok::theme(dark);
-    let font = theme::tokens(dark).font;
     let cols = space::cols;
-    let state_w = cols.state_ch * font.size * ADVANCE;
-    let slice_w = cols.slice_ch * font.size * ADVANCE;
+    let state_w = cols.state_ch * type_::BODY.size * ADVANCE;
+    let slice_w = cols.slice_ch * type_::BODY.size * ADVANCE;
 
     let selector = status.tickets.iter().enumerate().fold(
         row().key("status-select").gap(space::between),
@@ -113,7 +113,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                     .child(theme::content(
                         text(&slice.slice)
                             .key(format!("{row_key}{i}-slice"))
-                            .font(type_::BODY)
+                            .font(type_::BODY.mono())
                             .color(t.text)
                             .truncate()
                             .w(slice_w)
@@ -125,7 +125,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                         // branch, PR and yours trail it at the right, as the page has no such columns.
                         text(&slice.state)
                             .key(format!("{row_key}{i}-state"))
-                            .font(type_::BODY)
+                            .font(type_::BODY.mono())
                             .color(t.text_secondary)
                             .truncate()
                             .min_w(state_w)
@@ -136,7 +136,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                     line = line.child(theme::content(
                         text(branch)
                             .key(format!("{row_key}{i}-branch"))
-                            .font(type_::LABEL)
+                            .font(type_::CAPTION.mono())
                             .color(t.text_secondary)
                             .truncate(),
                         dark,
@@ -145,7 +145,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                 if let Some(pr) = slice.pr {
                     line = line.child(theme::content(
                         text(format!("#{pr}"))
-                            .font(type_::LABEL)
+                            .font(type_::CAPTION.mono())
                             .color(t.text_secondary),
                         dark,
                     ));
@@ -153,7 +153,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                 if let Some(href) = &slice.href {
                     let mut yours = text("yours")
                         .key(format!("{row_key}{i}-yours"))
-                        .font(type_::LABEL)
+                        .font(type_::CAPTION)
                         .color(t.text);
                     // The page's link goes to the thread; a link the view shaped otherwise opens nothing.
                     if let Some(id) = href.strip_prefix("/thread/").filter(|id| !id.is_empty()) {
@@ -180,7 +180,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                     .key(format!("status-group-{g}"))
                     .gap(space::within)
                     .child(theme::content(
-                        text(&group.tab).font(type_::LABEL).color(t.text),
+                        text(&group.tab).font(type_::CAPTION).color(t.text),
                         dark,
                     ))
                     .child(table_of(

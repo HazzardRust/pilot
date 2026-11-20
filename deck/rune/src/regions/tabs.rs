@@ -4,7 +4,8 @@
 //! posts it as typed, trimmed, to `/add-deck`: the daemon alone checks it (deck-polish L4), and its
 //! refusal is drawn beside the box, which keeps the path. Spacing is `theme::space`.
 
-use rune::tok::{self, type_};
+use crate::theme::type_;
+use rune::tok;
 use rune::{Cx, El, TextEdit, col, row, text, text_input};
 use serde::Deserialize;
 
@@ -133,12 +134,12 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             .key(format!("tab-{i}"))
             .role("button")
             .gap(space::within)
-            .child(text(&tab.code).font(type_::TITLE).color(ink));
+            .child(text(&tab.code).font(type_::HEADER.mono()).color(ink));
         if tab.name != tab.code {
             one = one.child(text(&tab.name).font(type_::BODY).color(ink));
         }
         if tab.ended {
-            one = one.child(text("ended").font(type_::LABEL).color(t.text_secondary));
+            one = one.child(text("ended").font(type_::CAPTION).color(t.text_secondary));
         }
         if tab.selected {
             // deck.css's `.runs-strip a[aria-current]`: the chosen tab is underlined, not only inked.
@@ -148,7 +149,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
         strip.child(
             one.child(
                 text(tab.count.to_string())
-                    .font(type_::LABEL)
+                    .font(type_::CAPTION)
                     .color(t.text_secondary),
             )
             .on_press(move |s: &mut State| select(s, run.clone())),
@@ -166,7 +167,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             };
             local.refused = None;
         })
-        .child(text("+").font(type_::TITLE).color(t.text_secondary));
+        .child(text("+").font(type_::HEADER).color(t.text_secondary));
     // deck.css's `header`: a hairline under the tabs.
     let header = col()
         .key("tabs-header")
@@ -202,7 +203,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             text(reason)
                 .key("add-deck-refused")
                 .role("alert")
-                .font(type_::LABEL)
+                .font(type_::CAPTION)
                 .color(k.state.unacknowledged),
             dark,
         ));

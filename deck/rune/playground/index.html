@@ -17,8 +17,8 @@
   #msg { color: #555; }
   /* The mock: every value is a custom property set from theme.json (see render()). */
   #mock { --px: 1px; display: grid; grid-template-rows: calc(var(--size-titlebar, 32) * var(--px)) 1fr;
-    background: var(--surface); color: var(--text); font-family: var(--font-family); overflow: hidden;
-    font-size: calc(var(--font-size) * var(--px)); line-height: var(--font-line); }
+    background: var(--surface); color: var(--text); font-family: var(--type-ui), sans-serif; overflow: hidden;
+    font-size: calc(var(--type-body-size) * var(--px)); line-height: 1.6; }
   #mock .title { display: flex; align-items: center; padding: 0 calc(var(--space-pad) * var(--px)); border-bottom: 1px solid var(--rule); }
   #mock .main { display: grid; grid-template-columns: calc(var(--size-icon_bar, 48) * var(--px)) calc(var(--size-side_default, 300) * var(--px)) 1fr 220px; min-height: 0; }
   #mock .icons { display: flex; flex-direction: column; align-items: center; gap: calc(var(--space-within) * var(--px)); padding-top: calc(var(--space-pad) * var(--px)); border-right: 1px solid var(--rule); }
