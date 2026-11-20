@@ -169,7 +169,7 @@
     },
     {
       "slice": "S19",
-      "state": "implementing",
+      "state": "pushed b0f8fa9",
       "after": [
         "S1"
       ],
@@ -187,7 +187,7 @@
     },
     {
       "slice": "S21",
-      "state": "pushed 64093d8 — NOT integrated: taking base pilot dc5f7be conflicts in deck/ui/render-rail.mjs; waits on the base merge",
+      "state": "integrated at 4f0adcc — rust approve; 77 lines; 761/0 selection; cargo 86/0 on 64093d8",
       "after": [
         "S8"
       ],
@@ -214,26 +214,14 @@
     },
     {
       "slice": "base merge",
-      "state": "implementing: pilot dc5f7be into feat, render-rail.mjs conflict",
+      "state": "integrated at 2c055ec — pilot dc5f7be in; render-rail.mjs exports kept on pilot's bodies; two view tests' stand-in kind moved off steps; view tests 62/62",
       "branch": "slice/rune-deck-ui-base",
       "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-base"
     }
   ],
-  "next": "integrating S21 (feat carries pilot dc5f7be via slice/rune-deck-ui-base); then S20; S19, S22, S23 in flight; step-7 fix round carries status.rs sync fetch per press (S12 MEDIUM) and S18 refused-dismiss button",
-  "updatedAt": "2026-11-20T03:38:42.312Z",
+  "next": "integrate S20 then S19; S22, S23 in flight; then base check, fundamentalist, QA",
+  "updatedAt": "2026-11-20T03:40:29.868Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "npm test takes ~7 minutes and ran twice; size in minutes",
-      "evidence": "two full gate runs in S1",
-      "size": 14
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "Rune not in local cargo cache; cloned its repo to read the API; size in README lines",
-      "evidence": "scratchpad rune-src clone",
-      "size": 2800
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "none (S1 re-commit for trailer)",
@@ -457,6 +445,18 @@
       "what": "S20: Rune's API found only by reading its source (~15 greps); S20's Interface strips(state, cx) took no centre so it draws the whole window; Prefs had no field for 'user shut everything' vs first start",
       "evidence": "S20 report ade6964",
       "size": 15
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S19: signed Interface fixed a bare 'cargo' spawn (security BLOCK); fact sheet missed onSearchPath and the platform-reads pin; a test running the gate entry nested a second cargo run",
+      "evidence": "S19 report b0f8fa9",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate merges the base before the slice, so a base conflict can never pass it; resolved on a side branch and merged into feat by hand, then integrate",
+      "evidence": "NOT integrated slice/rune-deck-ui-s21 and -base: taking base pilot stopped; scripts/integrate.mjs:451",
+      "size": 2
     }
   ]
 }

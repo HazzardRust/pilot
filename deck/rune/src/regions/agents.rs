@@ -30,10 +30,8 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     // A region the view cannot be read as draws empty rather than taking the window down.
     let view = Agents::deserialize(v).unwrap_or_default();
     let t = tok::theme(cx.system_dark());
-    let mut panel = col()
-        .key("agents")
-        .gap(space::within)
-        .child(text("Agents").font(type_::BODY).color(t.text));
+    // The panel's header is the layout's (S20).
+    let mut panel = col().key("agents").gap(space::within);
     if view.agents.is_empty() {
         return panel.child(
             text("no agents live")
