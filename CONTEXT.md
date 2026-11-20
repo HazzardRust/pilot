@@ -110,6 +110,23 @@ _Avoid_: Plan approval, sign-off
 The user pressing Sign off on the whole feature, running where it is meant to run, after the procedure, on the pilot's `gate2` thread citing the signed walkthrough when there is one.
 _Avoid_: Acceptance, QA pass
 
+### CI checks
+
+**Check**:
+One host CI result on one commit, `{ name, outcome: pass | fail | pending }`.
+
+**Verdict**:
+The commit's checks read as one state: `green`, `red`, `pending`, `none`, `unread`.
+
+**CI configured**:
+The tree at the sha holds `.github/workflows/*.yml|yaml` or `.gitlab-ci.yml`.
+
+**Check line**:
+`checks <state> at <sha7>[: <names>]`, the one string every step prints and a gate2 carries.
+
+**Unread**:
+The host could not answer; never `green`.
+
 ### The deck
 
 **Deck**:

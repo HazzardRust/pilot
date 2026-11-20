@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { githubHost } from '../../deck/host-github.mjs';
+import { greenChecks } from './lib/land-repos.mjs';
 
 const { land, main } = await import('../land.mjs');
 const { main: pruneMain } = await import('../branches.mjs');
@@ -73,7 +74,7 @@ const gh = (args) => {
   if (args[0] === 'pr' && (args[1] === 'comment' || args[1] === 'ready')) return '';
   throw new Error(`unexpected gh ${args.join(' ')}`);
 };
-const host = githubHost(gh);
+const host = githubHost(greenChecks(gh));
 
 test("land deletes the run's merged slice branches", (t) => {
   const { origin, work, inWork } = scratchRun(t);
