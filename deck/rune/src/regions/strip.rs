@@ -175,7 +175,7 @@ pub fn session(
     };
     match post(&action) {
         Ok(Acted::Taken { location }) => {
-            s.regions.strip.refused = refusal_in(&location);
+            s.regions.strip.refused = Acted::Taken { location }.param("sessionRefused");
             if ask == Ask::Close && s.regions.strip.refused.is_none() {
                 go(s, Query::default());
             }
@@ -183,38 +183,6 @@ pub fn session(
         Ok(Acted::Refused { reason }) => s.regions.strip.refused = Some(reason),
         Err(err) => s.regions.strip.refused = Some(err.to_string()),
     }
-}
-
-/// The `sessionRefused` a refused Start's Location carries, percent-decoded.
-fn refusal_in(location: &str) -> Option<String> {
-    let query = location.split_once('?')?.1;
-    let raw = query
-        .split('&')
-        .find_map(|pair| pair.strip_prefix("sessionRefused="))?;
-    let bytes = raw.as_bytes();
-    let mut out = Vec::with_capacity(bytes.len());
-    let mut i = 0;
-    while i < bytes.len() {
-        let hex = bytes
-            .get(i + 1..i + 3)
-            .filter(|h| h.iter().all(u8::is_ascii_hexdigit))
-            .and_then(|h| std::str::from_utf8(h).ok());
-        match (bytes[i], hex.and_then(|h| u8::from_str_radix(h, 16).ok())) {
-            (b'%', Some(byte)) => {
-                out.push(byte);
-                i += 3;
-            }
-            (b'+', _) => {
-                out.push(b' ');
-                i += 1;
-            }
-            (byte, _) => {
-                out.push(byte);
-                i += 1;
-            }
-        }
-    }
-    Some(String::from_utf8_lossy(&out).into_owned())
 }
 
 /// A press-shaped label on `fill`, as the reply box draws one.

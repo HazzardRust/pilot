@@ -6,7 +6,7 @@
  */
 import {
   ASSUME_DEFAULT, CLOSABLE_KINDS, GATED_KINDS, HANDOFF_FAILED, KIND_AUDIT, KIND_CREW_HANDOFF, KIND_HANDOFF, KIND_LESSON,
-  KIND_QUESTION, KIND_WALKTHROUGH, NOT_YET, SIGN_OFF, TEACH_ME, chosenOf, isBlocking, isGate, isKnownKind, isOpen, isRecord,
+  KIND_QUESTION, KIND_WALKTHROUGH, NOT_YET, SIGN_OFF, TEACH_ME, askFor, chosenOf, isBlocking, isGate, isKnownKind, isOpen, isRecord,
   lastSaid,
 } from '../items.mjs';
 
@@ -41,12 +41,18 @@ function own(item) {
 }
 
 /** Each kind's options, as `KIND_RENDERERS` draws them; a kind not there offers none. */
-function optionsOf(item) {
+export function optionsOf(item) {
   if (item.kind === KIND_QUESTION || GATED_KINDS.includes(item.kind)) return choices(item);
   if (item.kind === KIND_WALKTHROUGH) return [option(SIGN_OFF, true, chosenOf({ ...item, options: [SIGN_OFF] }))];
   if ([KIND_AUDIT, KIND_LESSON, KIND_HANDOFF, KIND_CREW_HANDOFF].includes(item.kind)) return own(item);
   return [];
 }
+
+/** The words a confirming option asks with and its button says (`renderConfirmed`, `renderHandoffChoices`): a handoff's kind sentence, else `Send “option”?`. */
+export const confirmWords = (item, label) => ({
+  ask: GATED_KINDS.includes(item.kind) || item.kind === KIND_WALKTHROUGH ? `Send “${label}”?` : askFor(item.kind, item) ?? '',
+  yes: 'Confirm',
+});
 
 /**
  * `query` is `{ id }`, the page's `REPLY` slot: an id the live deck does not hold (archived, or gone) offers

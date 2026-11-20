@@ -1,10 +1,9 @@
 //! The header's usage readout (spec 2): the chosen deck's ctx, and the account's session and weekly
 //! figures, each in the band the page draws it in (`deck/ui/js/usage.mjs`), as the view resolved
 //! them (`deck/view/usage.mjs`). The figures move without a change to the store, so `poll` reads the
-//! view again every 30 s, as the page polls `/api/usage`, and takes its usage region alone, so
-//! every figure still comes by the view (L2).
+//! whole view again every 30 s, as the page polls `/api/usage`, so every figure still comes by the
+//! view (L2) and on the same `seq` as every other region.
 
-use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
 use rune::tok::{self, type_};
@@ -12,19 +11,15 @@ use rune::{Color, Cx, El, Tx, row, text};
 use serde::Deserialize;
 
 use crate::app::State;
-use crate::client::{Client, Query, Result, View};
 use crate::theme::{self, space};
 
 /// The page's poll interval (`USAGE_EVERY`).
 const EVERY: Duration = Duration::from_secs(30);
-/// How often the poll looks again while a read is out.
-const SETTLE: Duration = Duration::from_millis(250);
 
-/// When the next read is due, and the read out now with the query it was made for.
+/// When the next read is due.
 #[derive(Debug, Default)]
 pub struct Local {
     due: Option<Instant>,
-    out: Option<(Query, mpsc::Receiver<Result<View>>)>,
 }
 
 /// The status line's bands, which the page's are (`hooks/context-usage-statusline.js`).
@@ -54,54 +49,21 @@ struct Usage {
     resets: Option<String>,
 }
 
-/// From the window's poll: starts a read every 30 s and takes its usage region when it lands for
-/// the query still asked. Answers whether the view changed.
-pub fn poll(s: &mut State, tx: &mut Tx) -> bool {
+/// From the window's poll: every 30 s asks the live reader for the whole view again, so the figures
+/// land with every other region on one `seq` (spec 6a, L2), and sets the next wake.
+pub fn poll(s: &mut State, tx: &mut Tx) {
     let now = Instant::now();
-    let mut changed = false;
-    if let Some((query, answer)) = &s.regions.usage.out {
-        match answer.try_recv() {
-            Err(mpsc::TryRecvError::Empty) => {
-                tx.wake_after(SETTLE);
-                return false;
-            }
-            Ok(Ok(mut view)) if *query == s.query => {
-                if let Some(usage) = view.regions.remove("usage") {
-                    s.view.regions.insert("usage".into(), usage);
-                    changed = true;
-                }
-            }
-            // A failed read keeps the last figures: the live reader owns saying the deck is down.
-            Ok(Err(err)) => eprintln!("pilot-deck: usage: {err}"),
-            Ok(Ok(_)) | Err(mpsc::TryRecvError::Disconnected) => {}
-        }
-        s.regions.usage.out = None;
-    }
-    let local = &mut s.regions.usage;
     // The first view was read at load: the first poll only sets the clock.
-    let due = *local.due.get_or_insert(now + EVERY);
+    let due = *s.regions.usage.due.get_or_insert(now + EVERY);
     if now >= due {
-        local.due = Some(now + EVERY);
-        let query = s.query.clone();
-        let asked = query.clone();
-        let (answer, inbox) = mpsc::channel();
-        let spawned = std::thread::Builder::new()
-            .name("pilot-deck-usage".into())
-            .spawn(move || {
-                let _ = answer.send(Client::from_env().and_then(|client| client.view(&asked)));
-            });
-        match spawned {
-            Ok(_) => local.out = Some((query, inbox)),
-            Err(err) => eprintln!("pilot-deck: the usage read did not start: {err}"),
+        s.regions.usage.due = Some(now + EVERY);
+        if let Some(live) = &s.live {
+            live.ask(&s.query);
         }
     }
     // A one-shot wake, asked again on every poll, so an idle window still reads every 30 s.
-    let next = match (&local.out, local.due) {
-        (Some(_), _) | (None, None) => SETTLE,
-        (None, Some(due)) => due.saturating_duration_since(now),
-    };
-    tx.wake_after(next);
-    changed
+    let due = s.regions.usage.due.unwrap_or(now + EVERY);
+    tx.wake_after(due.saturating_duration_since(now));
 }
 
 pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {

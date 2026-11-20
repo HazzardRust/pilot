@@ -9,7 +9,9 @@ use std::process::Command;
 use std::sync::Mutex;
 
 use pilot_deck::act::Acted;
+use pilot_deck::app::{self, State};
 use pilot_deck::client::Client;
+use rune::{App, Env, Runtime};
 use serde_json::{Value, json};
 
 pub struct Scratch {
@@ -120,6 +122,49 @@ pub fn client_for(deck: &Scratch) -> Client {
     let made = Client::from_env();
     unsafe { vars.iter().for_each(|(name, _)| std::env::remove_var(name)) };
     made.expect("a loopback client")
+}
+
+/// The window as `main` opens it on `deck`, headless, with its live reader running, framed until the
+/// reader's first view has landed.
+pub fn live_window(deck: &Scratch) -> Runtime<State> {
+    let mut rt = {
+        let _held = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let port = deck.port.to_string();
+        let vars = [
+            ("PILOT_DECK_DIR", deck.dir.to_str().expect("a utf-8 dir")),
+            ("PILOT_DECK_PORT", port.as_str()),
+        ];
+        // SAFETY: every test that touches the environment does it here, holding `ENV`.
+        unsafe {
+            vars.iter()
+                .for_each(|(name, value)| std::env::set_var(name, value))
+        };
+        let made = App::new(app::spec()).headless_runtime((1280.0, 800.0), Env::new(true, 1.0));
+        unsafe { vars.iter().for_each(|(name, _)| std::env::remove_var(name)) };
+        made
+    };
+    rt.frame(0.0);
+    frame_until(&mut rt, "the first view", |rt| {
+        !rt.state.view.regions.is_empty()
+    });
+    // The window loaded a view of its own and the reader's first lands right behind it: let it, so
+    // a test that sets a recorded view is not undone by it.
+    let settle = std::time::Instant::now();
+    while settle.elapsed() < std::time::Duration::from_millis(500) {
+        rt.frame(1.0 / 60.0);
+        std::thread::yield_now();
+    }
+    rt
+}
+
+/// Frames `rt` until `done` holds, or fails naming `what` after five seconds.
+pub fn frame_until(rt: &mut Runtime<State>, what: &str, done: impl Fn(&Runtime<State>) -> bool) {
+    let start = std::time::Instant::now();
+    while !done(rt) {
+        rt.frame(1.0 / 60.0);
+        assert!(start.elapsed().as_secs() < 5, "{what} not within 5 s");
+        std::thread::yield_now();
+    }
 }
 
 pub fn secret(deck: &Scratch) -> String {

@@ -68,6 +68,44 @@ pub enum Acted {
     Refused { reason: String },
 }
 
+impl Acted {
+    /// The value of `name` in a taken write's `Location` query, as `encodeURIComponent` and a form
+    /// wrote it: the `#` fragment dropped, `+` a space, `%XX` decoded. None when refused or absent.
+    pub fn param(&self, name: &str) -> Option<String> {
+        let Acted::Taken { location } = self else {
+            return None;
+        };
+        let query = location.split_once('?')?.1.split('#').next()?;
+        let value = query
+            .split('&')
+            .find_map(|pair| pair.strip_prefix(name)?.strip_prefix('='))?;
+        let bytes = value.as_bytes();
+        let (mut out, mut i) = (Vec::with_capacity(bytes.len()), 0);
+        while i < bytes.len() {
+            let hex = bytes
+                .get(i + 1..i + 3)
+                .filter(|h| h.iter().all(u8::is_ascii_hexdigit))
+                .and_then(|h| std::str::from_utf8(h).ok())
+                .and_then(|h| u8::from_str_radix(h, 16).ok());
+            match (bytes[i], hex) {
+                (b'%', Some(byte)) => {
+                    out.push(byte);
+                    i += 3;
+                }
+                (b'+', _) => {
+                    out.push(b' ');
+                    i += 1;
+                }
+                (byte, _) => {
+                    out.push(byte);
+                    i += 1;
+                }
+            }
+        }
+        Some(String::from_utf8_lossy(&out).into_owned())
+    }
+}
+
 impl Client {
     pub fn act(&self, a: &impl Form) -> Result<Acted> {
         let fields = a.fields();
@@ -109,5 +147,31 @@ pub fn post(client: &Client, path: &str, fields: &[(&str, &str)]) -> Result<Acte
             })
         }
         code => Err(Error::Status(code)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Acted;
+
+    fn taken(location: &str) -> Acted {
+        Acted::Taken {
+            location: location.into(),
+        }
+    }
+
+    #[test]
+    fn param_decodes_plus_percent_and_drops_the_fragment() {
+        let acted = taken("/?run=%2Ftmp%2Fa+b&sessionRefused=no%20go+here%21#frag?x=1");
+        assert_eq!(acted.param("run").as_deref(), Some("/tmp/a b"));
+        assert_eq!(
+            acted.param("sessionRefused").as_deref(),
+            Some("no go here!")
+        );
+        assert_eq!(acted.param("missing"), None);
+        assert_eq!(taken("/?refused=a#b=c").param("b"), None);
+        assert_eq!(taken("/no-query").param("run"), None);
+        let refused = Acted::Refused { reason: "x".into() };
+        assert_eq!(refused.param("run"), None);
     }
 }

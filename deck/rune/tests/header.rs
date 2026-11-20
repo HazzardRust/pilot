@@ -4,8 +4,6 @@
 
 mod support;
 
-use std::sync::Mutex;
-
 use pilot_deck::act::Acted;
 use pilot_deck::app::{self, State};
 use pilot_deck::client::View;
@@ -13,9 +11,6 @@ use pilot_deck::regions::tabs;
 use pilot_deck::regions::usage::{self, Band};
 use rune::{Env, Runtime, TextEdit};
 use serde_json::{Value, json};
-
-/// A press reads its address from the environment, which every test in this binary shares.
-static ENV: Mutex<()> = Mutex::new(());
 
 fn view_with(regions: &[(&str, Value)]) -> View {
     View {
@@ -37,31 +32,9 @@ fn frame(state: State) -> Runtime<State> {
 fn texts(rt: &Runtime<State>) -> Vec<String> {
     rt.elements()
         .into_iter()
+        .filter(|element| !element.exiting)
         .filter_map(|element| element.text)
         .collect()
-}
-
-/// Points presses at a scratch deck until dropped, a panic included, holding `ENV` throughout.
-struct PointedAt(#[allow(dead_code)] std::sync::MutexGuard<'static, ()>);
-
-fn pointed_at(deck: &support::Scratch) -> PointedAt {
-    let held = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    // SAFETY: every test in this binary that sets or reads these two variables holds `ENV`.
-    unsafe {
-        std::env::set_var("PILOT_DECK_DIR", &deck.dir);
-        std::env::set_var("PILOT_DECK_PORT", deck.port.to_string());
-    }
-    PointedAt(held)
-}
-
-impl Drop for PointedAt {
-    fn drop(&mut self) {
-        // SAFETY: as in `pointed_at`; `ENV` is still held, released after this body.
-        unsafe {
-            std::env::remove_var("PILOT_DECK_DIR");
-            std::env::remove_var("PILOT_DECK_PORT");
-        }
-    }
 }
 
 fn press(rt: &mut Runtime<State>, key: &str) {
@@ -119,28 +92,25 @@ fn two_decks(repo: &str) -> Value {
 fn a_tab_press_selects_its_deck() {
     let deck = support::Scratch::start();
     let repo = deck.dir.join("two").to_string_lossy().into_owned();
-    let held = pointed_at(&deck);
-    let mut rt = frame(State {
-        view: view_with(&[("tabs", two_decks(&repo))]),
-        ..State::default()
-    });
+    let mut rt = support::live_window(&deck);
+    rt.update(|s, _| s.view = view_with(&[("tabs", two_decks(&repo))]));
+    rt.frame(0.0);
 
     press(&mut rt, "tab-2");
-    drop(held);
 
-    let (mut run, mut seq) = (None, 0);
-    rt.update(|s, _| {
-        run = s.query.run.clone();
-        seq = s.view.seq;
-    });
     assert_eq!(
-        run.as_deref(),
+        rt.state.query.run.as_deref(),
         Some(repo.as_str()),
         "the press set the query"
     );
-    assert_ne!(
-        seq, 99,
-        "the view is the scratch deck's, not the recorded one"
+    support::frame_until(&mut rt, "the live read for the deck", |rt| {
+        rt.state.view.seq != 99
+    });
+    rt.frame(0.0);
+    let shown = texts(&rt);
+    assert!(
+        !shown.iter().any(|t| t == "D1"),
+        "the recorded tabs are gone, the scratch deck's view is drawn: {shown:?}"
     );
 }
 
@@ -167,11 +137,7 @@ fn a_refused_add_deck_says_why_and_keeps_the_path() {
 fn the_daemons_refusal_of_a_typed_path_reaches_the_box() {
     let deck = support::Scratch::start();
     let missing = deck.dir.join("no such dir").to_string_lossy().into_owned();
-    // `client_for` sets and clears the same two variables a press reads: never beside one.
-    let client = {
-        let _env = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-        support::client_for(&deck)
-    };
+    let client = support::client_for(&deck);
     let mut state = State::default();
     state.regions.tabs.adding = Some(TextEdit::new(format!("  {missing}  ")));
 

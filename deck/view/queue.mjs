@@ -4,11 +4,12 @@ import { pilotStateOf } from '../pilot-state.mjs';
 import { queueOf, shownOf } from '../status.mjs';
 import { landingFor, tabFor, tabsOf } from '../tabs.mjs';
 import {
-  BLOCKING_BADGE, PREVIEW_CHARS, PREVIEW_LINES, STATE_BUCKETS, hrefFor, renderCardAnswers, renderKind,
+  BLOCKING_BADGE, PREVIEW_CHARS, PREVIEW_LINES, STATE_BUCKETS, hrefFor, renderKind,
 } from '../ui/render-cards.mjs';
 import { renderByline, renderCardClose } from '../ui/render-parts.mjs';
 import { ENDED_NOTE } from '../ui/render-rail.mjs';
 import { tabCode } from '../ui/render-strip.mjs';
+import { confirmWords, optionsOf } from './reply.mjs';
 
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", '#x27': "'" };
 const unescape = (text) => text.replace(/&(amp|lt|gt|quot|#39|#x27);/g, (_, name) => ENTITIES[name]);
@@ -16,25 +17,8 @@ const unescape = (text) => text.replace(/&(amp|lt|gt|quot|#39|#x27);/g, (_, name
 /** The words a renderer's HTML shows, tags dropped: the label the page's reader sees. */
 const plain = (html) => unescape(html.replace(/<[^>]*>/g, '')).trim();
 
-/** The confirm step a trigger's row shows in place (`confirm.mjs`): the next `.step.sure`'s sentence and button. */
-const SURE = /<div class="step sure" hidden><p>([\s\S]*?)<\/p><button\b[^>]*>([\s\S]*?)<\/button>/;
-
-/** The `choice` values the card's `/reply` form posts, read off the page's own form, each once; no other form's. */
-function optionsOf(item, back) {
-  const form = renderCardAnswers(item, back);
-  if (!form.startsWith('<form method="post" action="/reply">')) return [];
-  const options = new Map();
-  for (const { 1: attrs, index } of form.matchAll(/<button\b([^>]*)>/g)) {
-    const value = attrs.match(/\bname="choice" value="([^"]*)"/)?.[1];
-    if (value === undefined) continue;
-    const label = unescape(value);
-    if (options.get(label)?.confirm) continue;
-    // A trigger whose step cannot be read still confirms (fails closed), on the page's own Confirm word.
-    const sure = /\bdata-confirm\b/.test(attrs) && (form.slice(index).match(SURE) ?? []);
-    options.set(label, sure ? { label, confirm: true, ask: plain(sure[1] ?? ''), yes: plain(sure[2] ?? 'Confirm') } : { label, confirm: false });
-  }
-  return [...options.values()];
-}
+/** The `choice` options the card's `/reply` form offers: the reply box's own, each confirming one with its words. */
+const cardOptions = (item) => optionsOf(item).map(({ label, confirm }) => (confirm ? { label, confirm, ...confirmWords(item, label) } : { label, confirm }));
 
 /** The body as the card's preview cuts it (D6): six lines or 400 characters, kept as markdown (L8). */
 function excerptOf(body) {
@@ -57,7 +41,7 @@ export function cardOf(item, { items, tab, back, all }) {
     at: lastSaidAt(item) ?? null,
     excerpt: excerptOf(item.body),
     ...(tab ? { tab: { code: tabCode(tab), href: hrefFor(tab, all) } } : {}),
-    options: isOpen(item) ? optionsOf(item, back) : [],
+    options: isOpen(item) ? cardOptions(item) : [],
     closable: renderCardClose(item, back) !== '',
   };
 }
