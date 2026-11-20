@@ -83,6 +83,8 @@ a runtime, and again into chat if A2 flips. It earns its keep. No shallow module
 - **L8** QA runs the native Rune window built from `feat/reply-markdown` against a scratch deck with seeded threads;
   no database, nothing kept (the user, itm_7e0fff09827d). Rejected: the user's live deck (a QA draft could post to a
   real thread).
+- **L9** No grilling round (the user, itm_620aace73f0b, "No grilling"): the spec and A1-A3 as answered stand.
+  Rejected: a grilling round over the design.
 - **L7** Recorded as ADR NNNN (`docs/adr/NNNN-reply-markdown.md`), written by S1; the landing numbers it.
 
 ## 6. Assumed decisions
@@ -90,10 +92,13 @@ a runtime, and again into chat if A2 flips. It earns its keep. No shallow module
 - **A1** Markers on rendered lines are drawn in the quiet ink, not hidden. Tradeoff: `**bold**` shows faint stars
   (Typora-like, short of Obsidian). Rejected: near-zero `size` spans to hide them (unproven in Rune, caret steps
   through invisible bytes, `-` still never becomes a dot). Asked: itm_3cadb89e11ae. Answered: "Dim them" (the default).
+  Verdict: stands — the user pressed "Dim them" on itm_3cadb89e11ae
 - **A2** Reply box only; the chat composer is left as it is. Tradeoff: two composers differ until a one-line
   follow-up. Rejected: chat too (widens the ask). Asked: itm_cf736cb1ad17. Answered: "Reply box only" (the default).
+  Verdict: stands — the user pressed "Reply box only" on itm_cf736cb1ad17; no queued ticket claims the chat composer
 - **A3** An unfocused box renders every line (spec 5). Tradeoff: the line clicked back into shifts as it turns
   raw. Rejected: keep the last caret line raw. Asked: itm_b5ca8397c90b. Answered: "Render every line" (the default).
+  Verdict: stands — the user pressed "Render every line" on itm_b5ca8397c90b
 - red team: walked S1's first behaviour against `reply.rs:395` and `el/text.rs:225`: a plain field with
   decorations takes the rich display path, whose byte mapping is identity for a plain draft, so spans land on the
   typed bytes. Attacked: an IME preedit (Rune shifts the ranges), a heading's `size` span changing line height
