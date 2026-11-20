@@ -34,12 +34,23 @@ struct Slice {
     href: Option<String>,
 }
 
+/// One tab's table on the overview, under the tab's name, as the page's sections are.
+#[derive(Debug, Deserialize)]
+struct Group {
+    tab: String,
+    #[serde(default)]
+    rows: Vec<Slice>,
+}
+
 #[derive(Debug, Default, Deserialize)]
 struct Status {
     #[serde(default)]
     tickets: Vec<Ticket>,
     #[serde(default)]
     rows: Vec<Slice>,
+    /// The overview's tables, one per tab; empty on a deck's tab, which has the one above.
+    #[serde(default)]
+    groups: Vec<Group>,
 }
 
 /// The advance of one monospace glyph as a share of the font size: what turns the status line's
@@ -103,39 +114,59 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         },
     );
 
-    let table = status.rows.iter().enumerate().fold(
-        col().key("status-table").gap(space::within),
-        |table, (i, slice)| {
-            let mut line = row()
-                .key(format!("status-row-{i}"))
-                .gap(cols.gap)
-                .child(
-                    text(&slice.state)
-                        .font(type_::BODY)
-                        .color(t.text_secondary)
-                        .w(cols.state_ch * font.size * ADVANCE),
-                )
-                .child(
-                    text(&slice.slice)
-                        .font(type_::BODY)
-                        .color(t.text)
-                        .truncate()
-                        .grow(1.0),
-                );
-            if let Some(branch) = &slice.branch {
-                line = line.child(text(branch).font(type_::LABEL).color(t.text_secondary));
-            }
-            if let Some(pr) = slice.pr {
-                line = line.child(
-                    text(format!("#{pr}"))
-                        .font(type_::LABEL)
-                        .color(t.text_secondary),
-                );
-            }
-            if slice.href.is_some() {
-                line = line.child(text("yours").font(type_::LABEL).color(t.text));
-            }
-            table.child(line)
+    // A table's rows, keyed `{row_key}{i}` so two tables on the overview never share a key.
+    let table_of = |key: String, row_key: &str, rows: &[Slice]| {
+        rows.iter()
+            .enumerate()
+            .fold(col().key(key).gap(space::within), |table, (i, slice)| {
+                let mut line = row()
+                    .key(format!("{row_key}{i}"))
+                    .gap(cols.gap)
+                    .child(
+                        text(&slice.state)
+                            .font(type_::BODY)
+                            .color(t.text_secondary)
+                            .w(cols.state_ch * font.size * ADVANCE),
+                    )
+                    .child(
+                        text(&slice.slice)
+                            .font(type_::BODY)
+                            .color(t.text)
+                            .truncate()
+                            .grow(1.0),
+                    );
+                if let Some(branch) = &slice.branch {
+                    line = line.child(text(branch).font(type_::LABEL).color(t.text_secondary));
+                }
+                if let Some(pr) = slice.pr {
+                    line = line.child(
+                        text(format!("#{pr}"))
+                            .font(type_::LABEL)
+                            .color(t.text_secondary),
+                    );
+                }
+                if slice.href.is_some() {
+                    line = line.child(text("yours").font(type_::LABEL).color(t.text));
+                }
+                table.child(line)
+            })
+    };
+
+    let table = table_of("status-table".into(), "status-row-", &status.rows);
+    let groups = status.groups.iter().enumerate().fold(
+        col().key("status-groups").gap(space::between),
+        |groups, (g, group)| {
+            groups.child(
+                col()
+                    .key(format!("status-group-{g}"))
+                    .gap(space::within)
+                    .child(text(&group.tab).font(type_::LABEL).color(t.text))
+                    .child(table_of(
+                        format!("status-table-{g}"),
+                        &format!("status-row-{g}-"),
+                        &group.rows,
+                    )),
+            )
         },
     );
 
@@ -144,4 +175,5 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         .gap(space::between)
         .child(selector)
         .child(table)
+        .child(groups)
 }

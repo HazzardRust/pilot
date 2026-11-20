@@ -123,6 +123,50 @@ test('a run naming no tab has no table, and no run named takes the landing tab',
   assert.deepEqual(landed.rows.map((row) => row.slice), ['S1 the yellow slice', 'S2 the second']);
 });
 
+// rune-deck-ui S22 (spec 13): the overview draws one table per tab, as the page's overview does.
+const THEIRS = path.join('D:', 'work', 'kettle');
+
+/** Two decks, both live, so no tab is the landing one: this repo's held record, and a run elsewhere that posted a table. */
+const twoDecks = () => {
+  const r = reads();
+  const posted = { ...aRun(), id: 'run_000000000002', repo: THEIRS, name: 'kettle', slices: [{ slice: 'S1 brew', state: 'merged' }, { slice: 'S2 pour', state: 'doing', after: 'S1 brew' }] };
+  return { ...r, runs: [...r.runs, posted] };
+};
+
+/** What the page's overview draws: each tab's section name, and the slice, state and Yours link of its rows. */
+const overviewTables = (r) => {
+  const tabs = tabsOf(r.runs, r.items, r.numbers, r.agents, r.added, r.lanes);
+  return renderStrips(null, tabs, r.items)
+    .split('data-live="status"')[1]
+    .split('data-live="agents"')[0]
+    .split('<details class="run-section"')
+    .slice(1)
+    .map((section) => ({
+      tab: section.match(/data-section="([^"]*)"/)[1],
+      rows: [...(section.split('<tbody>')[1]?.split('</tbody>')[0] ?? '').matchAll(/<tr>(.*?)<\/tr>/g)].map(([, row]) => {
+        const [slice, state, yours] = [...row.matchAll(/<td[^>]*>(.*?)<\/td>/g)].map(([, cell]) => cell);
+        return { slice, state, href: yours.match(/href="([^"]*)"/)?.[1] };
+      }),
+    }));
+};
+
+test('the overview\'s tables are the page\'s', () => {
+  const view = statusView(twoDecks(), {});
+
+  const drawn = view.groups.map(({ tab, rows }) => ({ tab, rows: rows.map(({ slice, state, href }) => ({ slice, state, href })) }));
+  const page = overviewTables(twoDecks());
+  assert.equal(page.length, 2, 'the page draws a table for each deck');
+  assert.deepEqual(drawn, page);
+  assert.deepEqual(view.groups.map((group) => group.tickets), [[], []], 'the overview has no selector (A6)');
+  assert.deepEqual(view.rows, [], 'no single table beside the groups');
+});
+
+test('a deck tab keeps one table', () => {
+  const view = statusView(twoDecks(), { run: THEIRS });
+
+  assert.deepEqual(view, { tickets: [], rows: [{ slice: 'S1 brew', state: 'merged', after: [] }, { slice: 'S2 pour', state: 'doing', after: ['S1 brew'] }] });
+});
+
 test('with no held lane the newest run that posted a table is drawn', () => {
   const posted = { ...aRun(), slices: [{ slice: 'S1 posted', state: 'doing', after: 'S0' }, { slice: 'S2 next', state: '' }] };
   const bare = { ...reads([]), runs: [aRun(), posted], lanes: { coPilots: {}, switches: {}, records: [] } };

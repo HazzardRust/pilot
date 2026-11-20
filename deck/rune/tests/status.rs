@@ -73,6 +73,48 @@ fn the_table_and_selector_are_the_views() {
 }
 
 #[test]
+fn each_table_is_drawn_under_its_tabs_name() {
+    // The overview's view (S22): no single table, one group per tab.
+    let rt = frame(State {
+        view: view_with(json!({
+            "tickets": [],
+            "rows": [],
+            "groups": [
+                { "tab": "alpha deck", "tickets": [], "rows": [
+                    { "slice": "S1 the yellow slice", "state": "implementing", "branch": "slice/s1", "pr": 7, "after": [] },
+                ] },
+                { "tab": "bravo deck", "tickets": [], "rows": [
+                    { "slice": "S1 brew", "state": "merged", "after": [] },
+                    { "slice": "S2 pour", "state": "doing", "after": ["S1 brew"] },
+                ] },
+            ],
+        })),
+        ..State::default()
+    });
+
+    let shown = texts(&rt);
+    for want in [
+        "alpha deck",
+        "S1 the yellow slice",
+        "slice/s1",
+        "bravo deck",
+        "S1 brew",
+        "S2 pour",
+        "merged",
+        "doing",
+    ] {
+        assert!(shown.iter().any(|t| t == want), "no {want:?} in {shown:?}");
+    }
+    let at = |want: &str| shown.iter().position(|t| t == want).unwrap();
+    assert!(
+        at("alpha deck") < at("S1 the yellow slice")
+            && at("S1 the yellow slice") < at("bravo deck")
+            && at("bravo deck") < at("S1 brew"),
+        "each tab's name heads its own rows: {shown:?}"
+    );
+}
+
+#[test]
 fn a_view_with_no_status_draws_nothing_of_it() {
     let rt = frame(State {
         view: view_with(Value::Null),
