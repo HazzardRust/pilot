@@ -16,13 +16,13 @@
     },
     {
       "slice": "S26 Every control says clickable: the hover look, first (added)",
-      "state": "integrated; rust APPROVE (MEDIUM/LOW notes); 486 lines, limit waived by co-pilot (266 test lines, scope adds from co-pilot); cargo green",
+      "state": "integrated at dcd581c; rust APPROVE; 486 lines waived by co-pilot (tests); 765/0 selection",
       "branch": "slice/rune-deck-ui-s26",
       "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s26"
     },
     {
       "slice": "S27 The window frame: Rune's title bar and the top inset (added)",
-      "state": "implementing (from S26's tip)",
+      "state": "pushed f05f352; rust approve with notes; +79/-13; Win+Z flyout not seen (user's look)",
       "after": [
         "S26 Every control says clickable: the hover look, first (added)"
       ],
@@ -31,10 +31,12 @@
     },
     {
       "slice": "S28 The left side as VS Code's side bar (added)",
-      "state": "planned",
+      "state": "implementing (from S27's tip)",
       "after": [
         "S27 The window frame: Rune's title bar and the top inset (added)"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s28",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s28"
     },
     {
       "slice": "S29 The right strip's buttons on the grid, rounded, by role (added)",
@@ -91,10 +93,12 @@
     },
     {
       "slice": "S37 The token playground: one page that exports theme.json (added)",
-      "state": "planned",
+      "state": "implementing (from S36's tip)",
       "after": [
         "S36 theme.json: theme.rs takes its values from one JSON file (added)"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s37",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s37"
     },
     {
       "slice": "S34 The palette's values, by role and to WCAG AA (added)",
@@ -124,7 +128,7 @@
     },
     {
       "slice": "S36 theme.json: theme.rs takes its values from one JSON file (added)",
-      "state": "implementing",
+      "state": "integrated; rust Warning (MEDIUM test-design notes, pre-rebase; rebase delta re-expresses S26's tokens, cargo 23/23 ok); 504 lines waived by co-pilot (loader + tests); A-R2 build.rs consts + include_str",
       "branch": "slice/rune-deck-ui-s36",
       "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s36"
     },
@@ -153,59 +157,9 @@
     "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
     "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
   ],
-  "next": "Integrating S26 c33821c on feat 3f6a299b (base in); then the tip to S29, S30, S36; S27 re-spawned (first implementer lost its context).",
-  "updatedAt": "2026-11-20T08:32:44.319Z",
+  "next": "S36 integrate running; then integrate S27 f05f352; S28 from S27's tip; live S29, S30, S37.",
+  "updatedAt": "2026-11-20T08:53:13.840Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S9 fix: thread arrows move the query but nothing fetches until the deck's next change; two extra fix and re-read cycles",
-      "evidence": "live.rs:40 ask; S9 fix report a12a2db",
-      "size": 6
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S9 merge-in: npm test past the 180 s foreground limit buffered into a pipe; moved to background and waited",
-      "evidence": "S9 merge report 1fd9896",
-      "size": 6
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S14: npm test waited on other worktrees' gate slots, ~12 min in all",
-      "evidence": "gate: waiting for a slot: pid 20768 in ...-s13",
-      "size": 5
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S13: no recorded recipe for a --snap of real data (pilot deck --scratch --seed-run, page SVG via the deck secret)",
-      "evidence": "S13 report; scratchpad s13-snap.png",
-      "size": 10
-    },
-    {
-      "kind": "drain",
-      "what": "one session: hand-off pickup, a landing and its findings, 2 planning tickets, a hidden-gate inquiry, PR 83, a re-cut workaround, ci-gate merge review; advisory at 230k",
-      "size": 20
-    },
-    {
-      "agent": "pilot-lander",
-      "what": "deck said 'feature PR not updated: no commits between pilot and feat/ci-green' after a clean landing; run.json not written because prune ran before the last status call",
-      "evidence": "itm_a0d1cc86d06d notice 2026-11-20T00:50Z; lander hand-back"
-    },
-    {
-      "agent": "pilot",
-      "what": "deck_ticket replan keeps a sha not on plan.branch, so the co-pilot grant re-fires 're-cut check due: gone' forever",
-      "evidence": "deck/recut.mjs:145; itm_1f8238d5a300 fixed by ff-pushing design/crew-handoff-trace"
-    },
-    {
-      "agent": "pilot",
-      "what": "gate1 refused for a run stacked on a concluding base that had not taken pilot's tip; architect cannot fix without a merge",
-      "evidence": "nothing-hidden gate1 refusal 'not on pilot's tip'"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S15: cargo not on PATH in Bash or PowerShell; deck seq does not move on /move so a seq-keyed gate never lifts; 300-line limit cannot hold four tested behaviours across two languages",
-      "evidence": "S15 report a7e4ad8; 672 insertions, ~320 production",
-      "size": 3
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S17: a CARGO_TARGET_DIR at the worktree root fails the README directory test; brief should say deck/rune/target; headless presses right after a layout change land on an animating sibling",
@@ -386,6 +340,53 @@
       "agent": "pilot:pilot-co-pilot",
       "what": "the deck's 32-row cap forced folding S1-S25 and the fix rows into one row",
       "evidence": "deck_status error 'at most 32 slices'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S27 implementer was compacted before building and handed back with nothing done",
+      "evidence": "S27 report: no worktree, no branch"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "cargo not on PATH in Bash/PowerShell tools; needed PATH=$PATH:/c/Users/Hazzard/.cargo/bin",
+      "evidence": "base merge report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fresh worktree lacks node_modules, so 12 Rust integration test files fail ERR_MODULE_NOT_FOUND until junctioned",
+      "evidence": "S36 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate refused 'no run record row names it' after the worktree's run.json was reset; resending the row fixed it",
+      "evidence": "NOT integrated slice/rune-deck-ui-s26: no run record row names it"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "pilot wait exited 1 twice with 'deck not answering (timeout)' while /api/health answered 200 in 18 ms; the long-poll's own timeout on a quiet thread is reported as a dead deck, and QA stopped listening until told to retry",
+      "evidence": "qa worktree, wait --as qa --item itm_317aa44d9e6e, 2 exits; main's listener b9tt2pznd failed the same minute",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared CARGO_TARGET_DIR kept artifacts older than rebased sources; cargo test failed 'cannot find function' until src files were touched",
+      "evidence": "S36 rebase report"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S27 live check drove the wrong window: took a 16x16 helper window's handle, so the user's foreground app got 5 clicks, 2 drags and Win+Z,1,1,Esc,Win+Left,Esc; no rule required verifying the target window by pid or checking the foreground before input",
+      "evidence": "co-pilot report; user asked on itm_71e5e6d9cee3",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "live window drive took a wrong (16x16 helper) handle and sent clicks and Win+Z/Win+Left/Esc to the user's foreground app at the screen's top-left",
+      "evidence": "S27 heads-up message and report; reported to main for the user"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared CARGO_TARGET_DIR rebuilt by parallel slices swapped the release exe between gate and live check",
+      "evidence": "S27 report: copied its binary to the scratchpad"
     }
   ]
 }
