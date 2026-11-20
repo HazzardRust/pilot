@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "implementing",
+      "state": "pushed 75f0cce",
       "after": [
         "S1"
       ],
@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed e335f2e",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -67,8 +67,8 @@
       "state": "implementing"
     }
   ],
-  "next": "S4 integrating; S3 pushed 4f62ba1 (both APPROVE) waits for S4's integrate; S2 ae30a7d9d1567bb38 in review; next: integrate S3, then S2, pilot ready for S5",
-  "updatedAt": "2026-11-20T17:50:20.471Z",
+  "next": "S3 integrating; S2 pushed 75f0cce (both APPROVE) next to integrate; then pilot ready for S5",
+  "updatedAt": "2026-11-20T17:56:30.753Z",
   "friction": [
     {
       "agent": "architect",
@@ -150,6 +150,21 @@
       "agent": "pilot-implementer",
       "what": "repo-wide pinned lists outside the slice (inbox.test.js MODULES) need a line per new hook",
       "evidence": "hooks/test/inbox.test.js +1 in S3"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate waits on a cross-worktree slot when three slices run at once",
+      "evidence": "S2: gate: waiting for a slot: pid 28728 in -s3, pid 28332 in -s4; 440 s wall"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "repo tests print nothing per test without --test-reporter=tap",
+      "evidence": "S2: empty grep on default reporter, one wasted run"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice Interface changed step and trace but Files owned listed neither file",
+      "evidence": "S2 edits hooks/lib/wrapper-log.js +3 and deck/trace.mjs +3 outside its files"
     }
   ]
 }
