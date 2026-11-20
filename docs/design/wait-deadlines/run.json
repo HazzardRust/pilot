@@ -1,0 +1,133 @@
+{
+  "slug": "wait-deadlines",
+  "feature": "wait-deadlines",
+  "ticket": "itm_b760c7076c51",
+  "branch": "feat/wait-deadlines",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-wait-deadlines",
+  "artefact": "docs/design/wait-deadlines/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed bd509c0 (integrating)",
+      "branch": "slice/wait-deadlines-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "implementing (2 check-references reds wait on S1)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/wait-deadlines-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/wait-deadlines-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/wait-deadlines-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "pushed b3bca994 (spawn-wait rule restored; awaits rebase on S1, gate, review)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/wait-deadlines-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s5"
+    }
+  ],
+  "next": "pilot integrate of S1 bd509c07 running (bg bdrz7642v); on integrated, send S2 (a42d34471e1be36fc) and S5 (af72df9c3db7b3411) the tip to rebase+gate+push; integrate both; then S3, S4.",
+  "updatedAt": "2026-11-20T12:10:29.515Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "no shell-to-agent map anywhere; naming the holder of a stalled shell needed a transcript grep (deck/agents.mjs roster has no pid)",
+      "evidence": "architect report, design/wait-deadlines 25dcf7d5",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck MCP CONNECTION_CLOSED at spawn, recovered on ToolSearch (third agent today)",
+      "evidence": "architect and QA reports",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck_status refuses the worktree field from the architect, so the feat worktree could not be named as the brief asked and run.json was not written until the pilot sent it",
+      "evidence": "architect hand-back for gate1 itm_63d9d3c4bab2",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "its own pilot wait is still running to its 50-min bound after hand-back; the architect has no TaskStop",
+      "evidence": "shell b508l16ig",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "a harness hand-back enforce notice forced the co-pilot's SubagentHandback while three implementers were still live, against the never-end-with-a-child-live rule",
+      "evidence": "handback-send-enforce message after S2's interim notification",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "S5's slice header said after: – but its check-references gate needs S1's pilot wait-for; the co-pilot recorded the seam change",
+      "evidence": "feat/wait-deadlines 767f5e0d",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "always-loaded rules were already at the 3,500-token measure-rules cap; S5 had to trim orchestration.md prose to add its section",
+      "evidence": "S5 report: measure-rules 3500 before edit, 3499 after",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the vocabulary guard refuses the retired word in the architect's own design docs, keeping feat red until reworded",
+      "evidence": "vocabulary-guard.test.mjs:71; reworded on feat at 7a8d5fae",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate runs queue behind other worktrees (gate: waiting for a slot) and an implementer has no TaskStop for an outdated gate run",
+      "evidence": "S5 report friction",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5 forced to hand back before S1's tip arrived (hand-back enforce)",
+      "evidence": "S5 report, 0693c1f3",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "deck/README.md was not in S1's owned files, but the deck-readme test requires a row for each new deck module; one 7-min gate run lost",
+      "evidence": "S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "base moved twice under S1 (co-pilot doc commits on feat) forcing rebases; npm test 436 s per run",
+      "evidence": "S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1's report went to main, not to the co-pilot that spawned it",
+      "evidence": "coordinator relay of S1 report",
+      "size": 1
+    }
+  ]
+}
