@@ -118,6 +118,8 @@ struct Raw {
     #[allow(dead_code)]
     cols: IgnoredAny,
     #[allow(dead_code)]
+    opacity: IgnoredAny,
+    #[allow(dead_code)]
     radius: IgnoredAny,
     #[allow(dead_code)]
     size: IgnoredAny,
@@ -331,6 +333,12 @@ pub mod radius {
     pub fn pill(height: f32) -> f32 {
         height / 2.0
     }
+}
+
+/// Opacities.
+#[allow(non_upper_case_globals)]
+pub mod opacity {
+    include!(concat!(env!("OUT_DIR"), "/opacity.rs"));
 }
 
 /// Fixed sizes of the side-bar layout (DESIGN.md §4b), in px.

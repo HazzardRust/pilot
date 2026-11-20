@@ -40,6 +40,10 @@
     "hover_alpha": 0.07,
     "selection_alpha": 0.3
   },
+  "opacity": {
+    "disabled": 0.5,
+    "picked": 0.14
+  },
   "radius": {
     "button": 4.0,
     "chip": 2.0

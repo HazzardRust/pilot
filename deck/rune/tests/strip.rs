@@ -334,3 +334,157 @@ fn creating_in_the_window_opens_the_scratch_decks_new_thread() {
     assert_eq!(made["title"], "Try the strip");
     assert_eq!(made["repo"], "C:/work/alpha");
 }
+
+/// What the window draws at `key`.
+fn drawn_at(rt: &Runtime<State>, key: &str) -> rune::runtime::ElementInfo {
+    rt.elements()
+        .into_iter()
+        .find(|e| e.key.as_deref() == Some(key))
+        .unwrap_or_else(|| panic!("no {key} drawn"))
+}
+
+/// Moves over `key`, lets the tint ease in, and reads what the window then shows there.
+fn hover_of(rt: &mut Runtime<State>, key: &str) -> (f32, rune::Cursor) {
+    let [x, y, w, h] = drawn_at(rt, key).visible;
+    rt.pointer_move(x + w / 2.0, y + h / 2.0);
+    for _ in 0..30 {
+        rt.frame(1.0 / 60.0);
+    }
+    (drawn_at(rt, key).hover, rt.cursor())
+}
+
+#[test]
+fn strip_look() {
+    let mut rt = frame(State {
+        view: view_with(ended_tab()),
+        ..State::default()
+    });
+    rt.frame(1.0);
+    let keys = [
+        "strip-toggle",
+        "strip-create",
+        "strip-start",
+        "strip-close",
+        "strip-alerts",
+    ];
+    let k = pilot_deck::theme::tokens(true);
+    let states = [
+        k.state.waiting,
+        k.state.pilot,
+        k.state.resolved,
+        k.state.unacknowledged,
+    ];
+    let first = drawn_at(&rt, keys[0]);
+    for key in keys {
+        let e = drawn_at(&rt, key);
+        assert_eq!(e.rect[0], first.rect[0], "{key} is not on the column's x");
+        assert_eq!(e.rect[2], first.rect[2], "{key} is not the column's width");
+        assert_eq!(e.radius, pilot_deck::theme::radius::button, "{key} radius");
+        assert!(
+            states.iter().all(|s| e.fill != *s),
+            "{key} is filled with a state colour: {:?}",
+            e.fill
+        );
+        let (tint, cursor) = hover_of(&mut rt, key);
+        assert!(tint > 0.0, "{key} has no hover colour");
+        assert_eq!(cursor, rune::Cursor::Pointer, "{key} cursor");
+    }
+}
+
+#[test]
+fn a_disabled_strip_button_does_not_hover() {
+    let mut rt = frame(State {
+        view: view_with(ended_tab()),
+        ..State::default()
+    });
+    press(&mut rt, "strip-create");
+    rt.update(|s, _| s.regions.strip.naming = Some(TextEdit::new("no/slashes")));
+    rt.frame(1.0);
+    let (tint, cursor) = hover_of(&mut rt, "strip-next");
+    assert_eq!(tint, 0.0, "a disabled Next tints");
+    assert_ne!(
+        cursor,
+        rune::Cursor::Pointer,
+        "a disabled Next is a pointer"
+    );
+}
+
+#[test]
+fn alerts_switch() {
+    let mut seen = vec![];
+    for weekly in [true, false] {
+        let mut strip = ended_tab();
+        strip["alerts"]["weekly"] = json!(weekly);
+        let rt = frame(State {
+            view: view_with(strip),
+            ..State::default()
+        });
+        let e = drawn_at(&rt, "strip-alerts");
+        assert_eq!(e.role, "switch");
+        let tree = rt.accessibility_json().to_string();
+        let words = if weekly {
+            "Weekly alerts on"
+        } else {
+            "Weekly alerts off"
+        };
+        let state = if weekly {
+            "\"checked\""
+        } else {
+            "\"unchecked\""
+        };
+        assert!(tree.contains(words), "the words say {words}");
+        assert!(tree.contains(state), "the switch is {state}: {tree}");
+        let k = pilot_deck::theme::tokens(true);
+        let coloured = [
+            k.state.waiting,
+            k.state.pilot,
+            k.state.unacknowledged,
+            k.accent.blue,
+            k.accent.red,
+            k.accent.green,
+            k.accent.yellow,
+        ];
+        assert!(
+            coloured.iter().all(|c| e.fill != *c),
+            "coloured: {:?}",
+            e.fill
+        );
+        seen.push(e.fill);
+    }
+    assert_eq!(
+        seen[0], seen[1],
+        "the switch's colour changes with its state"
+    );
+}
+
+#[test]
+fn boxed_buttons_stay_inside_their_box_and_a_disabled_one_is_dimmed() {
+    let mut rt = frame(State {
+        view: view_with(ended_tab()),
+        ..State::default()
+    });
+    press(&mut rt, "strip-start");
+    let inside = |rt: &Runtime<State>, boxed: &str, keys: &[&str]| {
+        let b = drawn_at(rt, boxed).rect;
+        for key in keys {
+            let r = drawn_at(rt, key).rect;
+            assert!(
+                r[0] >= b[0] && r[0] + r[2] <= b[0] + b[2] + 0.5,
+                "{key} {r:?} overhangs {boxed} {b:?}"
+            );
+        }
+    };
+    // The asking box has no key of its own: the strip column is the bound.
+    inside(&rt, "strip", &["strip-start-confirm"]);
+    rt.update(|s, _| {
+        s.regions.strip.cancel();
+        s.regions.strip.naming = Some(TextEdit::new("no/slashes"));
+    });
+    rt.frame(1.0);
+    inside(&rt, "strip-create-group", &["strip-next", "strip-cancel"]);
+    let next = drawn_at(&rt, "strip-next");
+    assert!(next.opacity < 1.0, "a disabled Next looks live");
+    rt.update(|s, _| s.regions.strip.naming = Some(TextEdit::new("fine")));
+    rt.frame(1.0);
+    assert_eq!(drawn_at(&rt, "strip-next").opacity, 1.0);
+}
