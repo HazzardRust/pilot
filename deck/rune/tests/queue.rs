@@ -332,6 +332,34 @@ fn pressing_a_cards_kind_line_opens_its_thread() {
     assert_eq!(rt.state.query.id.as_deref(), Some(id));
 }
 
+/// The walkthrough of 2026-11-21: the way in's hover reaches past its words on the left, and the words
+/// stay level with the excerpt under them.
+#[test]
+fn a_cards_hover_reaches_past_its_words() {
+    let id = "itm_00000000c4";
+    let rt = recorded(json!({ "cards": [{
+        "id": id, "title": "Which port?", "excerpt": "Words.", "state": "posted", "kind": "question" }] }));
+    let open = find(&rt, &format!("card-{id}-title")).rect;
+    let title = rt
+        .elements()
+        .into_iter()
+        .find(|e| e.text.as_deref() == Some("Which port?"))
+        .expect("the title")
+        .rect;
+    let excerpt = find(&rt, &format!("card-{id}-excerpt")).rect;
+    assert!(
+        title[0] - open[0] >= 4.0,
+        "the hover starts {} px left of the words",
+        title[0] - open[0]
+    );
+    assert!(
+        (title[0] - excerpt[0]).abs() < 0.5,
+        "the title {} is not level with the excerpt {}",
+        title[0],
+        excerpt[0]
+    );
+}
+
 #[test]
 fn a_card_excerpt_is_drawn_as_markdown() {
     let id = "itm_00000000c2";

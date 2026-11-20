@@ -158,6 +158,12 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
         .label(c.title.as_str())
         .role("link")
         .gap(space::within)
+        // The tint reaches a step past the words, and the margin takes the step back, so the words
+        // stay level with the excerpt (the walkthrough of 2026-11-21).
+        .py(space::s2)
+        .px(space::s3)
+        .my(-space::s2)
+        .mx(-space::s3)
         .child(line)
         .child(text(&c.title).font(type_::HEADER).color(ui.text))
         .on_press(move |s: &mut State| open_thread(s, &to));
