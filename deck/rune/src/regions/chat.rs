@@ -101,7 +101,7 @@ fn send(s: &mut State, id: &str, tx: &mut Tx) {
     let slot = Arc::clone(&answer);
     let reply = Action::Reply {
         id: id.into(),
-        text: said.clone(),
+        text: said,
         choice: None,
     };
     let spawned = std::thread::Builder::new()
@@ -129,24 +129,27 @@ pub fn settle(s: &mut State, tx: &mut Tx) -> bool {
     let Some(sending) = &c.sending else {
         return false;
     };
-    let Some(answer) = sending
+    // Read before the slot: a thread that has let go of it has written all it ever will.
+    let ended = Arc::strong_count(&sending.answer) == 1;
+    let answer = sending
         .answer
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
-        .take()
-    else {
+        .take();
+    if answer.is_none() && !ended {
         tx.wake_after(SETTLE);
         return false;
-    };
+    }
     let sent = c.sending.take().map(|sending| sending.text);
     match answer {
-        Ok(Acted::Taken { .. }) => {
+        Some(Ok(Acted::Taken { .. })) => {
             if sent.as_deref() == Some(c.draft.text.as_str()) {
                 c.draft.clear();
             }
         }
-        Ok(Acted::Refused { reason }) => c.refused = Some(reason),
-        Err(err) => c.refused = Some(err),
+        Some(Ok(Acted::Refused { reason })) => c.refused = Some(reason),
+        Some(Err(err)) => c.refused = Some(err),
+        None => c.refused = Some("the send stopped without an answer".into()),
     }
     true
 }

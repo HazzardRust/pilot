@@ -10,7 +10,7 @@ use std::time::{Duration, Instant};
 use pilot_deck::act::Action;
 use pilot_deck::app::State;
 use pilot_deck::client::{Client, Query, View};
-use pilot_deck::regions::{self, chat};
+use pilot_deck::regions;
 use rune::{Cx, El, Env, Key, KeyEvent, Mods, Runtime, TextEdit};
 use serde_json::{Value, json};
 use support::{client_for, item, secret, taken};
@@ -68,14 +68,14 @@ fn window(view: View, client: Client) -> Runtime<State> {
     rt
 }
 
-/// Runs the window's poll for the chat until its send has an answer, as `app::poll` does.
+/// Runs the window's own poll until the chat's send has an answer.
 fn settle(rt: &mut Runtime<State>) {
     let deadline = Instant::now() + Duration::from_secs(5);
     while rt.state.regions.chat.sending() {
         assert!(Instant::now() < deadline, "the send never answered");
         std::thread::sleep(Duration::from_millis(20));
         rt.update(|s, tx| {
-            chat::settle(s, tx);
+            pilot_deck::app::poll(s, 0.0, tx);
         });
         rt.frame(0.0);
     }

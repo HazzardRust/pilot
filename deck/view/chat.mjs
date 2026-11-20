@@ -23,7 +23,7 @@ export function chatView(reads, { run = null } = {}) {
   if (!chat) return { messages: [] };
   return {
     id: chat.id,
-    messages: messagesOf(chat).map((message) => ({ by: byOf(message), at: message.repliedAt, text: String(message.text ?? '') })),
+    messages: messagesOf(chat).map((message) => ({ by: byOf(message), at: message.repliedAt ?? null, text: String(message.text ?? '') })),
   };
 }
 
