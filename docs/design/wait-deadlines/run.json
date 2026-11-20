@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 48528a6 (ts approve, sec approve; integrating)",
+      "state": "integrated",
       "after": [
         "S3"
       ],
@@ -48,10 +48,30 @@
       ],
       "branch": "slice/wait-deadlines-s5",
       "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s5"
+    },
+    {
+      "slice": "wait-deadlines",
+      "state": "in QA: gate2 ready at 5a3b7e1c, waiting on the ticket going live"
     }
   ],
-  "next": "integrating S4 48528a63 (last slice); then base check, fundamentalist (judge the 5.4 s synchronous holder scan in the daemon), QA (take a ticket live for noteStall; whether a holder can be planted).",
-  "updatedAt": "2026-11-20T13:37:40.031Z",
+  "findings": [
+    "kept: F1 finding — rules/orchestration.md:146 drops ', or `timeout: 600000`' (a tool timeout is lost once backgrounded at 180 s, against L2); S5.md Interface edited to match",
+    "kept: F2 finding — holderOfCommand reads every transcript synchronously (~5.4 s) on the daemon thread against client.mjs HEALTH_TIMEOUT_MS 1000; skip transcripts whose mtime predates the shell's start",
+    "dropped: F3 finding — the guard gaps (`timeout --`, nested timeout, nice/sh -c, `do :`) are shapes crew agents do not write; the drop's reason is corrected: S3 shares the recogniser, the backstop is the S5 rule and the co-pilot's 90-min child rule",
+    "dropped: F4 finding — one constant per module is brief.md's own decision (MAX_WAIT_MINUTES, STALL_AGE_S)",
+    "kept: F5 finding — S3.md/S4.md Interface blocks record row.script as needle, stallAgeS, stallAgeOf/PILOT_DECK_STALL_AGE_S (projectsRoot removed by N1)",
+    "dropped: F6 finding — main reviewed S5's five orchestration.md cuts and kept four, the fifth restored",
+    "kept: N1 nit — drop reapStalled's projectsRoot; tests pass a holder built on holderOfCommand",
+    "kept: N2 nit — drop waitFor's waitedMin; print opts.timeoutMin",
+    "kept: N3 nit — one ancestors(row, byPid) walk for the two identical walks in stalled-waits.mjs",
+    "dropped: N4 nit — markerOf naming the .output path still identifies the wait; changing it rewrites S3's B1 expectations for no reader gain",
+    "dropped: E1 evidence — daemon.mjs 248-259 (scan interval wiring) uncovered by unit tests, but QA ran it live on a scratch deck (spec 5/6 pass)",
+    "dropped: E2 evidence — deck/stalled-waits.mjs importing unboundedWaits from hooks/ is the signed seam (brief.md: S3 reads S2's unboundedWaits by name, L3 one recogniser)",
+    "dropped: E3 evidence — complexity over 10 in new functions (holderOfCommand 17, shellScript 16, stalledWaits 14) is parsing logic covered at 93% diff coverage; N3 trims the walks; no split worth its diff",
+    "dropped: E4 evidence — diff mutation did not run (Stryker sandbox cannot load the hooks/ import); recorded as not run, not as clean"
+  ],
+  "next": "paused; feat at 5a3b7e1c; QA ac4d83336a1e5dd87 done (trial clean on pilot, gate 4814/0, F2 live) and holds the gate2; the deck refuses it until itm_b760c7076c51 is live: main takes the ticket, then tells QA to post.",
+  "updatedAt": "2026-11-20T14:08:10.804Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -219,6 +239,54 @@
       "agent": "pilot-implementer",
       "what": "slice file worded the holder needle as marker plus watched file; the marker is NODE-DONE, not a path, so the needle became row.script",
       "evidence": "S4 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "lost context mid-review and redid the pass; its evidence runner returned no table before hand-back, so the six evidence checks were not run",
+      "evidence": "fundamentalist report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "repo grep without a glob returned 38 KB (deck/ shares names projectsRoot, pollMs)",
+      "evidence": "fundamentalist report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "spec 4's live run launched an isolated `claude -p` with `--allowedTools Bash` (a permission grant scoped to that throwaway session) before the co-pilot's no-permission-flags note arrived; no classifier refusal",
+      "evidence": "QA spec 4 message",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "gate.mjs's end-of-run sweep stopped QA's scratch deck started from the same worktree, reading it as the suite's leak",
+      "evidence": "QA gate message: stopped 18676 daemon --leash-dir <qa worktree>",
+      "size": 1
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "its report was delivered to main, not to its fundamentalist, which had already handed back",
+      "evidence": "coordinator relay of evidence table",
+      "size": 1
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "diff mutation cannot run: Stryker's sandbox copy fails to import unboundedWaits from hooks/shell-write-guard.js (CJS from .mjs)",
+      "evidence": "SyntaxError at sandbox deck/stalled-waits.mjs:54",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the fix agent, with no Monitor tool, waited on npm test with an until-loop in Bash (the very shape this feature refuses); the installed plugin does not yet carry the hook",
+      "evidence": "fix round report, 5a3b7e1c",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Edit demands a prior Read of a file appended via Bash; a heredoc edit fallback wrote nothing",
+      "evidence": "fix round report",
       "size": 1
     }
   ]
