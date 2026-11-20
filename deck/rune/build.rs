@@ -66,6 +66,7 @@ fn main() {
     let out = env::var("OUT_DIR").expect("OUT_DIR");
     fs::write(Path::new(&out).join("space.rs"), space).expect("write space.rs");
     fs::write(Path::new(&out).join("radius.rs"), consts("radius")).expect("write radius.rs");
+    fs::write(Path::new(&out).join("opacity.rs"), consts("opacity")).expect("write opacity.rs");
     fs::write(Path::new(&out).join("size.rs"), consts("size")).expect("write size.rs");
     fs::write(Path::new(&out).join("motion.rs"), motion).expect("write motion.rs");
 }

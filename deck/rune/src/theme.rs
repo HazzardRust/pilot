@@ -116,6 +116,8 @@ struct Raw {
     #[allow(dead_code)]
     cols: IgnoredAny,
     #[allow(dead_code)]
+    opacity: IgnoredAny,
+    #[allow(dead_code)]
     radius: IgnoredAny,
     #[allow(dead_code)]
     size: IgnoredAny,
@@ -334,8 +336,7 @@ pub mod radius {
 /// Opacities.
 #[allow(non_upper_case_globals)]
 pub mod opacity {
-    /// A control that cannot be pressed now.
-    pub const disabled: f32 = 0.5;
+    include!(concat!(env!("OUT_DIR"), "/opacity.rs"));
 }
 
 /// Fixed sizes of the side-bar layout (DESIGN.md §4b), in px.

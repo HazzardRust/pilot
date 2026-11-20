@@ -253,7 +253,7 @@ fn button(label: &str, key: &str, look: Look, off: bool, dark: bool) -> El {
     let face = match look {
         Look::Quiet => face.border(1.0, k.rule),
         Look::Primary => face.fill(r.primary),
-        Look::Picked => face.fill(r.on_surface.alpha(0.14)).border(1.0, k.rule),
+        Look::Picked => face.fill(r.on_surface.alpha(theme::opacity::picked)).border(1.0, k.rule),
     };
     if off {
         face.radius(theme::radius::button)
