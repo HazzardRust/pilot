@@ -22,18 +22,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
-import { bearer } from '../hooks/lib/deck-secret.js';
 import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
 import { MIN_MODS_VERSION, claudeVersion } from '../scripts/handoff.mjs';
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
-import { git as gitAt } from '../scripts/pilot-branch.mjs';
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { probeDeck } from './probe.mjs';
-import { SLUG } from './runs.mjs';
-import { slugClashes } from './slug-clash.mjs';
+import { isSlug } from './runs.mjs';
+import { clashText, leashedGit, slugClashes } from './slug-clash.mjs';
 import { storeDir as defaultStoreDir } from './store-dir.mjs';
-import { DECK_PORT, MAX_SLUG_CHARS, deckUrl } from './tools.mjs';
+import { readTickets } from './tickets.mjs';
+import { DECK_PORT, deckUrl } from './tools.mjs';
 import { ENGINES, PLUGIN_VERSION, isOlder, isVersion } from './version.mjs';
 
 const SYSTEM32 = path.win32.join(process.env.SystemRoot ?? 'C:/Windows', 'System32');
@@ -176,42 +175,29 @@ function hostRow({ git, hostFor, onPath, cwd }) {
 const DESIGN_PATH = /docs\/design\/([^/\s]+)\//g;
 /** The most held slugs one row reads (each costs a few `git ls-remote` and Host calls); past it, the rest are named unread. */
 const MAX_HELD = 20;
-/** How long the deck has to answer the open-ticket read, as `pilot base` bounds its own. */
-const VIEW_TIMEOUT_MS = 5000;
-
 /**
  * The slugs this deck holds (two-devices L5): each `docs/design/<slug>/` an open ticket's body names, `SLUG`-checked,
  * once each in the order named, minus the slugs of this deck's own run records, which are its runs and no clash.
+ * `view` is `readTickets`'s open view, whose shape it has checked.
  */
 export function heldSlugs(view) {
-  // The deck's answer is data: anything not an array holds nothing, so a malformed view never stops `start` (A2).
-  const listOf = (value) => (Array.isArray(value) ? value : []);
-  const own = new Set(listOf(view?.records).map((record) => record?.slug));
+  const own = new Set(view.records.map((record) => record.slug));
   const held = new Set();
-  for (const ticket of listOf(view?.open)) {
-    const body = ticket?.body;
-    if (typeof body !== 'string') continue;
-    for (const [, slug] of body.matchAll(DESIGN_PATH)) {
-      if (slug.length <= MAX_SLUG_CHARS && SLUG.test(slug) && !own.has(slug)) held.add(slug);
+  for (const ticket of view.open) {
+    for (const [, slug] of (ticket.body ?? '').matchAll(DESIGN_PATH)) {
+      if (isSlug(slug) && !own.has(slug)) held.add(slug);
     }
   }
   return [...held];
 }
 
-/** The deck's `/api/tickets?open=1` view for `cwd`, or null when the deck does not answer within the bound. */
-export async function readOpenView(cwd, url = deckUrl()) {
-  try {
-    const response = await fetch(`${url}/api/tickets?repo=${encodeURIComponent(cwd)}&open=1`, { headers: bearer(), signal: AbortSignal.timeout(VIEW_TIMEOUT_MS) });
-    return response.ok ? await response.json() : null;
-  } catch {
-    return null;
-  }
-}
+/** The open view for `cwd` (`readTickets`), or null when the deck could not be read: the slugs row's `cannot tell`. */
+const readOpenView = (cwd, url) => readTickets(cwd, { open: true, url }).catch(() => null);
 
 /**
  * The slugs row (two-devices spec 2b, 4): `fail` with a step per clash when a held slug is taken where another
  * device would see it, `cannot tell` when the deck or a remote could not be read, else `pass`. `view` is
- * `readOpenView`'s answer; null is a deck not read. Nothing held reads no git and no Host.
+ * `readTickets`'s open view; null is a deck not read. Nothing held reads no git and no Host; each remote is read once.
  */
 export function slugsRow({ view, git, hostFor, cwd = process.cwd() }) {
   const name = 'slugs';
@@ -227,17 +213,25 @@ export function slugsRow({ view, git, hostFor, cwd = process.cwd() }) {
     unread.push(`host: ${error.message}`);
   }
   const steps = [];
+  const tips = new Map();
   for (const slug of held) {
-    const { clashes, unread: why } = slugClashes(slug, { git, host });
-    for (const clash of clashes) {
-      steps.push(`${slug} is taken: ${'ref' in clash ? clash.ref : `PR #${clash.pr} from ${clash.head}`}; rename the run before it starts`);
-    }
+    const { clashes, unread: why } = slugClashes(slug, { git, host, tips });
+    for (const clash of clashes) steps.push(`${slug} is taken: ${clashText(clash)}; rename the run before it starts`);
     if (why) unread.push(`${slug}: ${why}`);
   }
   const free = `${held.length} held: ${held.join(', ')}`;
   if (steps.length) return { name, verdict: 'fail', detail: free, steps: [...steps, ...unread.map((line) => `cannot tell ${line}`)] };
   if (unread.length) return { name, verdict: 'cannot tell', detail: `${free}; ${unread.join('; ')}` };
   return { name, verdict: 'pass', detail: `${free}, none taken` };
+}
+
+/**
+ * The slugs row as `pilot start` warns it (two-devices spec 4; A2, A4): its printed line when it is not `pass`, else
+ * null. The deck view, git and Host default to the real reads, git on the slug read's leash (`leashedGit`).
+ */
+export async function slugsWarning({ cwd, readView = () => readOpenView(cwd), git = leashedGit(cwd), hostFor = hostForDefault }) {
+  const row = slugsRow({ view: await readView(), git, hostFor, cwd });
+  return row.verdict === 'pass' ? null : rowLine(row);
 }
 
 /** The scanner states that need nothing done; `not-excluded` needs the admin step; `unknown` cannot tell. */
@@ -494,7 +488,7 @@ export async function checkAll({
   readSettings = defaultReadSettings,
   env = process.env,
   cwd = process.cwd(),
-  git = (args) => gitAt(cwd, ...args),
+  git = leashedGit(cwd),
   hostFor = hostForDefault,
   readView = () => readOpenView(cwd, url),
 } = {}) {
@@ -521,18 +515,16 @@ export async function checkAll({
 }
 
 /** `<verdict>  <name>: <detail>`, each step indented below it. */
-export function rowLine({ name, verdict, detail, steps = [] }) {
+function rowLine({ name, verdict, detail, steps = [] }) {
   return [`${verdict}  ${name}: ${detail}`, ...steps.map((step) => `    ${step}`)].join('\n');
 }
-
-const isSlug = (word) => typeof word === 'string' && word.length <= MAX_SLUG_CHARS && SLUG.test(word);
 
 /**
  * `pilot doctor slug <slug>` (two-devices spec 2a, 2c): `free <slug>` and 0, or a `clash` line per clash and a
  * `cannot tell` line for what could not be read, and 1. Reads only: `git ls-remote` and the host's open reviews.
  */
 function slugVerb({ slug, cwd, deps, log }) {
-  const git = deps.git ?? ((args) => gitAt(cwd, ...args));
+  const git = deps.git ?? leashedGit(cwd);
   let host = null;
   let hostUnread;
   try {
@@ -541,7 +533,7 @@ function slugVerb({ slug, cwd, deps, log }) {
     hostUnread = `host: ${err.message}`;
   }
   const { clashes, unread } = slugClashes(slug, { git, host });
-  for (const clash of clashes) log(`clash ${slug}: ${'ref' in clash ? clash.ref : `PR #${clash.pr} from ${clash.head}`}`);
+  for (const clash of clashes) log(`clash ${slug}: ${clashText(clash)}`);
   const whys = [unread, hostUnread].filter(Boolean);
   if (whys.length) log(`cannot tell ${slug}: ${whys.join('; ')}`);
   if (clashes.length || whys.length) return 1;

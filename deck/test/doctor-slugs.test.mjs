@@ -13,7 +13,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { heldSlugs, slugsRow } from '../doctor.mjs';
+import { heldSlugs, main, slugsRow } from '../doctor.mjs';
 
 const run = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
@@ -96,9 +96,71 @@ test('a body slug off SLUG is dropped', () => {
   assert.deepEqual(heldSlugs(view), []);
 });
 
-test('a malformed view holds nothing and never throws', () => {
-  assert.deepEqual(heldSlugs({ open: { body: 'docs/design/x/' }, records: 'x' }), []);
-  assert.deepEqual(heldSlugs({ open: [null, ticket('docs/design/y/')], records: [null] }), ['y']);
+/** A stub git with no `pilot.remote` (so origin) whose `ls-remote` answers `heads`, recording every argv. */
+function stubGit(heads) {
+  const calls = [];
+  const git = (args) => {
+    calls.push(args);
+    if (args[0] === 'config') throw Object.assign(new Error('unset'), { status: 1 });
+    if (args[0] === 'ls-remote') return heads.map((head) => `${'a'.repeat(40)}\trefs/heads/${head}`).join('\n');
+    throw new Error(`unexpected git ${args.join(' ')}`);
+  };
+  return { git, calls };
+}
+
+/** `pilot doctor slug x` with `deps`, answering its exit code and printed lines. */
+async function slugVerb(deps) {
+  const lines = [];
+  const code = await main({ cwd: '.', args: ['slug', 'x'], deps, log: (line) => lines.push(line) });
+  return { code, lines };
+}
+
+test('pilot doctor slug names a clash and exits 1', async () => {
+  const { code, lines } = await slugVerb({ git: stubGit(['feat/x']).git, hostFor: () => null });
+
+  assert.equal(code, 1);
+  assert.deepEqual(lines, ['clash x: origin/feat/x']);
+});
+
+test('pilot doctor slug says free and exits 0', async () => {
+  const { code, lines } = await slugVerb({ git: stubGit(['main']).git, hostFor: () => null });
+
+  assert.equal(code, 0);
+  assert.deepEqual(lines, ['free x']);
+});
+
+test('pilot doctor slug with a Host it cannot choose cannot tell and exits 1', async () => {
+  const hostFor = () => {
+    throw new Error('pilot.host names "nope"');
+  };
+
+  const { code, lines } = await slugVerb({ git: stubGit([]).git, hostFor });
+
+  assert.equal(code, 1);
+  assert.deepEqual(lines, ['cannot tell x: host: pilot.host names "nope"']);
+});
+
+test('two held slugs read each remote once', () => {
+  const { git, calls } = stubGit(['feat/b']);
+  const view = { open: [ticket('docs/design/a/ and docs/design/b/')], records: [] };
+
+  const row = slugsRow({ view, git, hostFor: () => null, cwd: '.' });
+
+  assert.equal(row.verdict, 'fail');
+  assert.equal(calls.filter((args) => args[0] === 'ls-remote').length, 1, JSON.stringify(calls));
+});
+
+test('a remote read once and not answered is unread for every held slug', () => {
+  const git = (args) => {
+    if (args[0] === 'config') throw Object.assign(new Error('unset'), { status: 1 });
+    throw new Error('origin did not answer');
+  };
+  const view = { open: [ticket('docs/design/a/ and docs/design/b/')], records: [] };
+
+  const row = slugsRow({ view, git, hostFor: () => null, cwd: '.' });
+
+  assert.equal(row.verdict, 'cannot tell');
+  assert.match(row.detail, /a: .*origin did not answer; b: .*origin did not answer/);
 });
 
 test('a deck that was not read cannot tell', () => {
