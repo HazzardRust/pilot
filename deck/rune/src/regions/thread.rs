@@ -4,11 +4,11 @@
 
 use rune::tok::{self, type_};
 use rune::{Color, Cx, El, Key, col, el, row, text};
-use rune_kit::markdown::{Markdown, MarkdownStyle};
 use serde::Deserialize;
 
 use crate::app::State;
 use crate::client::Query;
+use crate::regions::queue::hhmm;
 use crate::theme::{self, space};
 
 #[derive(Debug, Default)]
@@ -110,9 +110,9 @@ pub fn key(s: &mut State, ev: &rune::KeyEvent, tx: &mut rune::Tx) -> bool {
 
 fn arrow(step: Option<Step>, glyph: &str, ink: Color, quiet: Color, dark: bool) -> El {
     match step {
-        None => text(glyph).font(type_::TITLE).color(quiet),
+        None => text(glyph).font(type_::LABEL).color(quiet),
         Some(Step { id }) => theme::control(text(glyph), dark)
-            .font(type_::TITLE)
+            .font(type_::LABEL)
             .color(ink)
             .role("link")
             .on_press(move |s: &mut State| {
@@ -125,6 +125,27 @@ fn arrow(step: Option<Step>, glyph: &str, ink: Color, quiet: Color, dark: bool) 
     }
 }
 
+/// A dashed 2 px rule: dashes stacked past any message's height, out of flow, so the row's clip cuts
+/// them where the message ends (the border dash a ring draws overlaps itself on a box this thin).
+fn dashes(text: &str, ink: Color) -> El {
+    const DASH: f32 = space::s3;
+    // A guess at how many wrapped lines the message runs to, with room to spare; the clip does the rest.
+    const CHARS_A_LINE: usize = 30;
+    const MOST: usize = 400;
+    let lines = text.len() / CHARS_A_LINE + text.matches('\n').count() + 4;
+    let count = ((lines as f32 * space::card_line / (2.0 * DASH)).ceil() as usize).min(MOST);
+    (0..count).fold(
+        col()
+            .w(space::s1)
+            .pin(Some(space::s0), Some(space::s0), None, None),
+        |stack, _| {
+            stack
+                .child(el().size(space::s1, DASH).fill(ink))
+                .child(el().size(space::s1, DASH))
+        },
+    )
+}
+
 pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     // No thread on this screen, or one the view cannot be read as: nothing, never a dead window.
     let Ok(th) = Thread::deserialize(v) else {
@@ -132,7 +153,6 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     };
     let dark = cx.system_dark();
     let (t, k) = (tok::theme(dark), theme::tokens(dark));
-    let md = MarkdownStyle::neutral(dark);
     let accent = match th.kind_line.accent.as_str() {
         "green" => k.accent.green,
         "yellow" => k.accent.yellow,
@@ -146,15 +166,22 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         "unacknowledged" => k.state.unacknowledged,
         _ => k.state.waiting,
     };
-    let line = |words: &str| text(words).font(type_::LABEL).color(k.quiet);
+    let line = |words: &str| theme::content(text(words).font(type_::LABEL).color(k.quiet), dark);
 
+    // The accent bar is a text line tall at most, and the time is the short form with the whole stamp on hover.
+    let at = line(&hhmm(Some(&th.kind_line.at))).help(th.kind_line.at.as_str());
     let mut kind = row()
         .key("kind")
+        .items_center()
+        .grow(1.0)
         .gap(space::within)
-        .child(el().size(space::s2, space::s4).fill(accent))
-        .child(text(&th.kind_line.state).font(type_::LABEL).color(tone))
+        .child(el().size(space::s1, space::s3).fill(accent))
+        .child(theme::content(
+            text(&th.kind_line.state).font(type_::LABEL).color(tone),
+            dark,
+        ))
         .child(line(&th.kind_line.kind))
-        .child(line(&th.kind_line.at));
+        .child(at);
     if let Some(standing) = &th.kind_line.standing {
         kind = kind.child(line(standing));
     }
@@ -162,6 +189,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
 
     let mut nav = row()
         .key("nav")
+        .items_center()
         .role("navigation")
         .gap(space::within)
         .child(arrow(th.nav.prev, "‹", t.text, k.quiet, dark));
@@ -178,24 +206,62 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         .focusable(true)
         .on_key(back(th.nav.run))
         .gap(space::between)
-        .child(row().gap(space::between).child(kind).child(nav))
-        .child(text(&th.title).font(type_::TITLE).color(t.text));
+        .child(
+            row()
+                .w_full()
+                .items_center()
+                .gap(space::between)
+                .child(kind)
+                .child(nav),
+        )
+        .child(theme::separator(dark))
+        .child(theme::content(
+            text(&th.title).font(type_::TITLE).color(t.text),
+            dark,
+        ));
     if let Some(note) = &th.type_note {
         page = page.child(line(note));
     }
-    page = page.child(Markdown::new(th.body).render(&md).key("body"));
+    page = page.child(theme::markdown(th.body, dark).key("body"));
     for (i, message) in th.messages.into_iter().enumerate() {
-        let by = match message.at {
+        let when = message.at.as_deref().map(|at| hhmm(Some(at)));
+        let by = match &when {
             Some(at) => format!("{} · {at}", message.by),
-            None => message.by,
+            None => message.by.clone(),
+        };
+        let mut who = line(&by);
+        if let Some(at) = &message.at {
+            who = who.help(at.as_str());
+        }
+        // deck.css's `.reply`: a 2 px rule down the left, solid for the user, dashed for an agent.
+        let mine = message.by == "you";
+        let mut rule = el()
+            .key(format!(
+                "message-{i}-rule-{}",
+                if mine { "solid" } else { "dashed" }
+            ))
+            .w(space::s1)
+            .h_full();
+        rule = if mine {
+            rule.fill(k.rule)
+        } else {
+            rule.clip_soft(space::s0)
+                .child(dashes(&message.text, k.rule))
         };
         page = page.child(
-            col()
+            row()
                 .key(format!("message-{i}"))
-                .gap(space::within)
-                .padding(space::pad)
-                .child(line(&by))
-                .child(Markdown::new(message.text).render(&md)),
+                .w_full()
+                .gap(space::pad)
+                .child(rule)
+                .child(
+                    col()
+                        .grow(1.0)
+                        .gap(space::within)
+                        .padding(space::pad)
+                        .child(who)
+                        .child(theme::markdown(message.text, dark)),
+                ),
         );
     }
     if let Some(resolution) = th.resolution {
@@ -204,7 +270,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                 .key("resolution")
                 .gap(space::within)
                 .child(line("closed"))
-                .child(Markdown::new(resolution).render(&md)),
+                .child(theme::markdown(resolution, dark)),
         );
     }
     page

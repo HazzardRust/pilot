@@ -143,6 +143,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
         if tab.ended {
             one = one.child(text("ended").font(type_::LABEL).color(t.text_secondary));
         }
+        if tab.selected {
+            // deck.css's `.runs-strip a[aria-current]`: the chosen tab is underlined, not only inked.
+            one = one.border_sides([0.0, 0.0, 1.0, 0.0], ink);
+        }
         let run = tab.repo;
         strip.child(
             one.child(
@@ -166,12 +170,13 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             local.refused = None;
         })
         .child(text("+").font(type_::TITLE).color(t.text_secondary));
+    // deck.css's `header`: a hairline under the tabs.
     let header = col()
         .key("tabs-header")
         .gap(space::within)
         .child(strip.child(plus));
     let Some(edit) = &local.adding else {
-        return header;
+        return header.child(theme::separator(dark));
     };
     let path = text_input(edit, type_::BODY)
         .key("add-deck-path")
@@ -196,13 +201,14 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
         .child(add_button);
     let mut header = header.child(add_box);
     if let Some(reason) = &local.refused {
-        header = header.child(
+        header = header.child(theme::content(
             text(reason)
                 .key("add-deck-refused")
                 .role("alert")
                 .font(type_::LABEL)
                 .color(k.state.unacknowledged),
-        );
+            dark,
+        ));
     }
-    header
+    header.child(theme::separator(dark))
 }

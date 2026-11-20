@@ -76,20 +76,20 @@ fn run_row(r: &RunRow, local: &Local, cx: &mut Cx<State>) -> El {
         .w_full()
         .h(space::row)
         .gap(space::between)
-        .child(
+        .child(theme::content(
             text(&r.name)
                 .key(key("name"))
                 .font(type_::LABEL)
                 .color(ui.text)
                 .grow(1.0),
-        );
+            dark,
+        ));
     if r.dismissable {
         let sent = local.dismissed.contains(&r.id);
         let id = r.id.clone();
         let mut button = theme::control(row(), dark)
             .key(key("dismiss"))
             .padding(space::pad)
-            .radius(tok::radius::SM)
             .border(1.0, t.rule)
             .fill(if sent { t.state.pilot } else { ui.card })
             .child(text("dismiss").font(type_::LABEL).color(ui.text))
@@ -104,13 +104,14 @@ fn run_row(r: &RunRow, local: &Local, cx: &mut Cx<State>) -> El {
     }
     let out = col().w_full().child(line);
     match local.refused.get(&r.id) {
-        Some(reason) => out.child(
+        Some(reason) => out.child(theme::content(
             text(reason)
                 .key(key("refused"))
                 .font(type_::BODY)
                 .color(t.state.unacknowledged)
                 .wrap(),
-        ),
+            dark,
+        )),
         None => out,
     }
 }
@@ -133,15 +134,18 @@ fn day(d: &Day, local: &Local, cx: &mut Cx<State>) -> El {
                     s.regions.history.folded.insert(key.clone(), !open);
                 }),
         )
-        .child(
+        .child(theme::content(
             text(d.cards.len().to_string())
                 .font(type_::LABEL)
                 .color(t.quiet),
-        );
+            dark,
+        ));
     let mut section = col().w_full().gap(space::pad).child(heading);
     if open {
         for c in &d.cards {
-            section = section.child(queue::card(c, cx));
+            section = section
+                .child(queue::card(c, cx))
+                .child(theme::separator(dark));
         }
     }
     section

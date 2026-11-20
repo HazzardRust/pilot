@@ -8,6 +8,7 @@ use std::sync::LazyLock;
 
 use rune::color::{srgb_decode, srgb_encode};
 use rune::{Color, Cursor, El, el};
+use rune_kit::markdown::{Markdown, MarkdownStyle};
 use serde::Deserialize;
 use serde::de::IgnoredAny;
 
@@ -362,6 +363,12 @@ pub fn separator_vertical(dark: bool) -> El {
 /// Content text is selectable, highlighted in the selection colour.
 pub fn content(el: El, dark: bool) -> El {
     el.selectable(true).selection_color(roles(dark).selection)
+}
+
+/// Markdown content: selectable, highlighted in the selection colour.
+pub fn markdown(source: impl Into<String>, dark: bool) -> El {
+    let style = MarkdownStyle::neutral(dark).selection(roles(dark).selection);
+    Markdown::new(source).selectable(true).render(&style)
 }
 
 /// Springs, never durations and easings: each settles in well under 300 ms (L10).
