@@ -104,6 +104,28 @@ fn close_takes_two_presses_and_posts_a_close() {
 }
 
 #[test]
+fn an_option_asked_over_a_showing_close_asks_for_itself() {
+    let mut local = typed("");
+    assert_eq!(local.close(ID, true), None);
+    assert_eq!(local.press(ID, &sign_off()), None);
+    assert_eq!(local.confirming.as_deref(), Some("Sign off"));
+    // The Confirm now posts the option, never the Close it replaced.
+    assert_eq!(local.confirm(ID), Some(reply("", Some("Sign off"))));
+}
+
+#[test]
+fn an_option_locked_after_its_ask_posts_nothing() {
+    let mut local = typed("");
+    assert_eq!(local.press(ID, &sign_off()), None);
+    let signed = Opt {
+        locked: true,
+        ..sign_off()
+    };
+    assert_eq!(local.press(ID, &signed), None);
+    assert_eq!(local.sent, None);
+}
+
+#[test]
 fn a_taken_reply_keeps_what_was_typed_after_it() {
     let mut local = typed("done");
     assert!(local.send(ID).is_some());

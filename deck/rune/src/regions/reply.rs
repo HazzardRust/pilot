@@ -89,6 +89,8 @@ impl Local {
             && self.confirming.as_deref() == Some(option.label.as_str())
             && self.asked_on.as_deref() == Some(id);
         if option.confirm && !armed {
+            // A showing Close ask is taken back: this ask is the option's own.
+            self.escape();
             self.confirming = Some(option.label.clone());
             self.asked_on = Some(id.to_string());
             return None;
@@ -287,6 +289,8 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         let label = option.label.clone();
         // A verdict's option and its confirm are one group: the ask and its Confirm sit beside it.
         let lit = pressed(&label) || asking || option.locked;
+        // Its Confirm is the option pressed again while armed, so `press`'s lock guard holds there too.
+        let again = option.clone();
         let mut group = row().gap(space::within).items_center().child(
             btn(&label, format!("option-{i}"), lit).on_press_tx(
                 move |s: &mut State, tx: &mut Tx| {
@@ -303,8 +307,8 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                         .color(t.text),
                 )
                 .child(btn("Confirm", "confirm".into(), false).on_press_tx(
-                    |s: &mut State, tx: &mut Tx| {
-                        let action = id_of(s).and_then(|id| s.regions.reply.confirm(&id));
+                    move |s: &mut State, tx: &mut Tx| {
+                        let action = id_of(s).and_then(|id| s.regions.reply.press(&id, &again));
                         post(s, action, tx);
                     },
                 ));
