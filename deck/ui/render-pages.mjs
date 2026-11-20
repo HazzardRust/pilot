@@ -7,7 +7,7 @@
  */
 
 import { KIND_STEPS, accentOf, authorKind, isOpen, lastSaidAt, newestSaidFirst, ownerOf } from '../items.mjs';
-import { queueOf, shownOf } from '../status.mjs';
+import { foldedOf, queueOf, shownOf } from '../status.mjs';
 import { landingFor, tabFor, tabsOf } from '../tabs.mjs';
 import { pilotStateOf } from '../pilot-state.mjs';
 import { escapeHtml, renderMarkdown } from './markdown.mjs';
@@ -175,8 +175,12 @@ function renderDayHeading(section) {
  * decided on the server's clock, and a page that read it from the wall would be
  * asserted against a different calendar on every day the suite ran.
  */
-function renderQueue(waiting, done, cardOf, now) {
-  if (!waiting.length && !done.length) return '<p class="empty">Nothing is waiting on you.</p>';
+function renderQueue(waiting, folded, done, cardOf, now) {
+  if (!waiting.length && !folded.length && !done.length) return '<p class="empty">Nothing is waiting on you.</p>';
+  // The fold (nothing-hidden spec 1; ADR 0204): what waits behind another ticket, counted and one press away, under the cards.
+  const fold = folded.length
+    ? `<details class="fold"><summary>${folded.length} waiting on other tickets</summary>${folded.map(cardOf).join('')}</details>`
+    : '';
   const sections = daySections(done, now).map(
     (section) =>
       `<details class="day" data-day="${escapeHtml(section.key)}"${section.open ? ' open' : ''}>` +
@@ -184,7 +188,7 @@ function renderQueue(waiting, done, cardOf, now) {
       section.items.map(cardOf).join('') +
       '</details>',
   );
-  return waiting.map(cardOf).join('') + sections.join('');
+  return waiting.map(cardOf).join('') + fold + sections.join('');
 }
 
 /**
@@ -266,9 +270,11 @@ export function renderHomePage(
 ) {
   const tabs = tabsOf(runs, items, numbers, agents, added, lanes);
   const tab = selected === null ? landingFor(tabs) : tabFor(tabs, selected);
-  const shown = (queue) => shownOf(queue, items);
-  const queue = shown(queueOf(items));
-  const waiting = tab ? shown(tab.open) : queue;
+  // The whole queue is what the strip counts; home draws its cards, then the fold (nothing-hidden spec 1, 2).
+  const queue = queueOf(items);
+  const scoped = tab ? tab.open : queue;
+  const waiting = shownOf(scoped, items);
+  const folded = foldedOf(scoped, items);
   // What this scope has settled, which is only asked for when the toggle is on:
   // the page ships nothing it is not showing (spec 2). Membership is `tabFor`'s
   // answer and not a comparison of our own, so a settled thread lands under the
@@ -281,16 +287,16 @@ export function renderHomePage(
   // rather than echoed from `selected`, which is the browser's (D2 of run-tabs, and D7).
   const back = hrefFor(tab, all);
   const cardOf = (item) =>
-    renderCard(item, { tab: tab ? null : tabFor(tabs, item.repo), back, all, items });
+    renderCard(item, { tab: tab ? null : tabFor(tabs, item.repo), back, all, items, lanes });
   return renderTemplate('home.html', {
     HOME: OVERVIEW_HREF,
     USAGE: renderUsage(tab),
-    TABS: renderStrip(tabs, tab, queue, all, refused, shown),
+    TABS: renderStrip(tabs, tab, queue, all, refused),
     STRIPS: renderStrips(tab, tabs, items, { ticket }),
     EVERYTHING: renderEverything(tab, all, tabs, numbers, sessionRefused, alerts),
     QUEUE:
       (tab?.ended && (tab.runs.length || !tab.added) ? ENDED_NOTE : '') +
-      renderQueue(waiting, done, cardOf, now) +
+      renderQueue(waiting, folded, done, cardOf, now) +
       (tab
         ? renderStateLine(pilotStateOf(tab, items, held, now))
         : tabs.map((each) => renderStateLine(pilotStateOf(each, items, held, now), each.name)).join('')),
@@ -315,7 +321,7 @@ export function renderDeckPage(items, runs = [], agents = {}, lanes = { coPilots
   const queue = queueOf(items);
   const ordered = [...queue, ...items.filter((item) => !queue.includes(item)).sort(newestSaidFirst)];
   const body = items.length
-    ? ordered.map((item) => renderCard(item, { back: '/items', items })).join('')
+    ? ordered.map((item) => renderCard(item, { back: '/items', items, lanes })).join('')
     : '<p class="empty">Nothing is waiting on you.</p>';
   return renderTemplate('index.html', {
     HOME: OVERVIEW_HREF,
@@ -375,7 +381,8 @@ function renderStep(step, glyph, label, all) {
  * queue's last and on to its first: either arrow lands on an open thread.
  */
 function renderThreadNav(item, items, tab, all = false) {
-  const open = shownOf(queueOf(items), items);
+  // Cards, then the fold: the order home draws them in, so X/N counts both (nothing-hidden A6).
+  const open = [...shownOf(queueOf(items), items), ...foldedOf(queueOf(items), items)];
   const full = [...open, ...daySections(items.filter((each) => !isOpen(each))).flatMap((day) => day.items)];
   const list = all ? full : open;
   const same = (each) => each.id === item.id;
