@@ -132,7 +132,7 @@
     },
     {
       "slice": "S15",
-      "state": "pushed a7e4ad8",
+      "state": "integrated at 9d83397 — rust APPROVE, typescript WARN; ~320 production lines, limit waived by co-pilot (tests); 4751/0; seam in S15.md",
       "after": [
         "S6",
         "S10"
@@ -160,17 +160,21 @@
     },
     {
       "slice": "S18",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S7"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s18",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s18"
     },
     {
       "slice": "S19",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s19",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s19"
     },
     {
       "slice": "S20",
@@ -201,8 +205,8 @@
       ]
     }
   ],
-  "next": "integrating S15 then S17; S16 implementing; then pilot ready for S18-S23",
-  "updatedAt": "2026-11-20T02:19:14.792Z",
+  "next": "integrating S17; S16, S18, S19 implementing; pilot ready for S20-S23 as slots free",
+  "updatedAt": "2026-11-20T02:28:11.785Z",
   "friction": [
     {
       "kind": "drain",
