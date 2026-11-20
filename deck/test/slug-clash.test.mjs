@@ -70,7 +70,30 @@ test('an open PR is a clash', (t) => {
   const answer = slugClashes('x', { git, host });
 
   assert.deepEqual(answer, { clashes: [{ ref: 'origin/feat/x' }, { ref: 'origin/design/x' }, { pr: 7, head: 'design/x' }] });
-  assert.deepEqual(host.asked.map((query) => [query.head, query.state]), [['feat/x', 'open'], ['design/x', 'open']]);
+  assert.ok(host.asked.every((query) => query.state === 'open'), 'a merged or closed review is no clash');
+});
+
+test('design/ is read on the run remote, not origin', (t) => {
+  const { work, git } = repo(t);
+  const runs = path.join(path.dirname(work), 'runs.git');
+  run(work, 'init', '--bare', '-q', runs);
+  run(work, 'remote', 'add', 'runs', runs);
+  run(work, 'config', 'pilot.remote', 'runs');
+
+  assert.deepEqual(slugClashes('x', { git, host: null }), { clashes: [{ ref: 'origin/feat/x' }] }, "origin's design/x is not the run remote's");
+  run(work, 'push', '-q', 'runs', 'HEAD:refs/heads/design/x');
+  assert.deepEqual(slugClashes('x', { git, host: null }), { clashes: [{ ref: 'origin/feat/x' }, { ref: 'runs/design/x' }] });
+});
+
+test('local mode cannot tell for design/', (t) => {
+  const { work, git } = repo(t);
+  run(work, 'config', 'pilot.remote', 'none');
+
+  const answer = slugClashes('free-name', { git, host: null });
+
+  assert.deepEqual(answer.clashes, []);
+  assert.equal(typeof answer.unread, 'string', 'never a free answer (A5)');
+  assert.match(answer.unread, /design\/free-name/);
 });
 
 test('stale tracking refs are not read', (t) => {
@@ -88,7 +111,8 @@ test('unreachable reads cannot tell', (t) => {
   const answer = slugClashes('x', { git, host: null });
 
   assert.deepEqual(answer.clashes, []);
-  assert.match(answer.unread ?? '', /origin/, 'names the remote that could not answer');
+  assert.equal(typeof answer.unread, 'string', 'never a free answer');
+  assert.match(answer.unread, /ls-remote origin failed/, 'names the remote that could not answer');
 });
 
 test('an unreadable host cannot tell', (t) => {
