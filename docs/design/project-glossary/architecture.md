@@ -1,6 +1,6 @@
 # One project glossary the crew maintains
 
-Ticket `itm_2458e437da6a` · slug `project-glossary` · base `origin/feat/human-steps` d88532ca · ADR NNNN (`docs/adr/NNNN-project-glossary.md`, S3)
+Ticket `itm_2458e437da6a` · slug `project-glossary` · base `origin/pilot` d282a698 · ADR NNNN (`docs/adr/NNNN-project-glossary.md`, S3)
 
 ## 1. Problem
 
@@ -16,7 +16,7 @@ already keeps a 70-term root `CONTEXT.md` nothing in the crew reads or writes.
 | --- | --- | --- | --- |
 | 1 | Grilling looks the request up in the root glossary before its first question and challenges a word the glossary lists under `_Avoid_`, or one that is overloaded, by naming the canonical term. | `methodology-skills.test.mjs` over `grilling`, `domain-modeling`; `glossary-prose.test.mjs` over `agents/pilot.md`; QA: a scratch request saying "subagents" (L8) | each of the 3 files names `glossary.mjs match` before the first question; the pilot's question names **Crew** |
 | 2 | A term that outlives its run is written to the root glossary on the design branch as it settles, by the architect, so the Gate 1 press signs it off; the artefact's ubiquitous-language section keeps run-local terms only. *L7* | `glossary-prose.test.mjs` over `agents/pilot.md`, `agents/pilot-architect.md`; this run's design diff | both files say it; this run's diff adds 3 glossary entries |
-| 3 | The format file says the glossary carries no implementation detail, `ADR-FORMAT.md` keeps the three ADR tests, and `glossary.mjs check` fails an entry naming a file path and passes the repository's glossary inside `npm test`. | `glossary.test.mjs`; `node scripts/glossary.mjs check GLOSSARY.md` | path fixture: exit 1 naming the term; repo glossary: exit 0; 6 path entries rewritten |
+| 3 | The format file says the glossary carries no implementation detail, `ADR-FORMAT.md` keeps the three ADR tests, and `glossary.mjs check` fails an entry naming a file path and passes the repository's glossary inside `npm test`. | `glossary.test.mjs`; `node scripts/glossary.mjs check GLOSSARY.md` | path fixture: exit 1 naming the term; repo glossary: exit 0; 7 path entries rewritten |
 | 4 | The audit's navigability area lists each stale term: a term with no use outside the glossary, `docs/design/` and `docs/adr/` is a row; a term the code contradicts is the explorer's judgement row. *practitioner: DDD modeller (Evans), the language checked against the code* | `glossary-stale.test.mjs`; `audit-navigability.test.mjs` | fixture with 1 unused term of 3: exactly 1 result naming it |
 | 5 | `domain-modeling` and its vendor ledgers say where the glossary lives: one per repository, at its root, nothing under `~/.claude`. | `VENDOR.md` and `vendor/methodology.md` rows; `git grep -i "one glossary per run"` | 3 rows changed; 0 hits outside `docs/design/`, `docs/adr/` |
 | 6 | `diagnosing-bugs` and `test-design` read the repository glossary, not "the artefact's section 3". *found issue* | `methodology-skills.test.mjs` | 0 "section 3 glossary"; both name `GLOSSARY.md` |
@@ -33,8 +33,8 @@ and `git log` over the tracked tree, confirmed by a row a person can re-run.
 ## 3. Findings
 
 - `CONTEXT.md` (root, 296 lines, 70 terms, `**Term**:` / definition / `_Avoid_:`, 6 subheadings) is the project
-  glossary in all but name. Lines 82, 132, 209, 231, 257, 287 name a path (spec 3's existing data). ci-gate S9 edits
-  it on its way to `pilot` (`feat(ci-gate): S9 the run's ADR and glossary`).
+  glossary in all but name. Lines 82, 134, 161, 238, 260, 286, 316 name a path (spec 3's existing data). ci-gate (landed,
+  d282a698) added a `### CI checks` group of 5 entries with no `_Avoid_:` line, one naming CI file paths.
 - Its git history names each run (`feat|fix(<slug>): …`), but that history does not travel with a copied file, which is
   why the user chose a stored log (A4, L12).
 - `skills/domain-modeling/SKILL.md:9,17-21,44-48`, `GLOSSARY-FORMAT.md:1-35`: glossary = artefact §3, "One glossary per
@@ -73,7 +73,7 @@ Lasting terms this run settled are in the glossary (**Glossary**, **Stale term**
 
 - **L1 One glossary per repository, at its root, in the repository.** Durable, reviewed with the code (ADR 0006 keeps
   only disposable state under `~/.claude`). Rejected: per-run glossary (drifts), a deck-store glossary (unreviewed). ADR NNNN.
-- **L2 The entry shape is the one the file uses** (`**Term**:`, definition, `_Avoid_:`, optional `###` groups).
+- **L2 The entry shape is the one the file uses** (`**Term**:`, definition, optional `_Avoid_:`, optional `###` groups).
   Rejected: the format file's `- **Term** —` list (no file uses it; 70 entries to rewrite).
 - **L3 Staleness is measured, contradiction judged**: `staleTerms` is a case-insensitive fixed-string `git grep` per
   term outside the glossary, `docs/design/`, `docs/adr/`. Rejected: an LLM pass per term (no command behind the row).
@@ -139,8 +139,8 @@ red team: (1) the format file's example shape is one `parseGlossary` cannot read
 `three-lanes-wording.test.mjs` pins colour words out of the glossary; this run's 3 terms hold none. (3) the skills
 slice half-built on S1's parser and S2's `match` while running beside them: S3 now comes after both. (4) one
 `glossary.mjs` for every command serialised four slices on one file: `stale`, `log`, `diff` split out (Seams). (5)
-ci-gate S9 adds glossary lines on `pilot`: S1 rebases on `pilot` once ci-gate lands and its check must pass those
-too. (6) the 200 cap drops a term's only row, so a strict "every term has a row" check would fail by design: L12 lets a rowless term pass and S7 catches an unlogged edit in the diff instead. (7) `_Avoid_` words
+ci-gate landed 5 entries without `_Avoid_:` and one naming CI paths: L2 makes `_Avoid_:` optional and S1 rewrites 7
+path entries, not 6. (6) the 200 cap drops a term's only row, so a strict "every term has a row" check would fail by design: L12 lets a rowless term pass and S7 catches an unlogged edit in the diff instead. (7) `_Avoid_` words
 like "update" are common in code: S7 scans added Markdown lines only, outside `docs/design/` and `docs/adr/`, and
 the fundamentalist judges each candidate.
 
