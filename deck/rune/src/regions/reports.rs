@@ -53,13 +53,7 @@ pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
         } else {
             "all hidden"
         };
-        return panel.child(theme::content(
-            text(none)
-                .key("reports-none")
-                .font(type_::LABEL)
-                .color(t.text_secondary),
-            dark,
-        ));
+        return panel.child(theme::empty(none, "reports-none", dark));
     }
     let last = listed.len() - 1;
     for (i, one) in listed.into_iter().enumerate() {

@@ -215,3 +215,47 @@ fn a_heartbeat_refreshes_every_region_from_one_view() {
         ]
     );
 }
+
+/// Presses the control keyed `key`, as a pointer does.
+fn press(rt: &mut Runtime<State>, key: &str) {
+    let at = rt
+        .elements()
+        .into_iter()
+        .find(|element| element.key.as_deref() == Some(key))
+        .unwrap_or_else(|| panic!("no element {key}"))
+        .rect;
+    let (x, y) = (at[0] + at[2] / 2.0, at[1] + at[3] / 2.0);
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(1.0 / 60.0);
+}
+
+#[test]
+fn retry_reconnects_without_waiting_out_the_backoff() {
+    let keys = Keys::new("retry");
+    let deck = Scratch::start();
+    keys.take(&deck);
+    let port = deck.port;
+    let mut rt = window(keys.dir(), port);
+
+    drop(deck);
+    frame_until(&mut rt, "deck not running", |rt| rt.state.down);
+    // Let the reader settle into its longest wait: 250 + 500 + 1000 ms of failures, then 2 s sleeps.
+    let settle = Instant::now();
+    while settle.elapsed() < Duration::from_millis(2000) {
+        rt.frame(1.0 / 60.0);
+        std::thread::sleep(Duration::from_millis(5));
+    }
+
+    let back = Scratch::start_on(Some(port));
+    keys.take(&back);
+    // The deck is back but the reader sleeps; the window offers Retry and pressing it reconnects now.
+    press(&mut rt, "retry");
+    let took = frame_until(&mut rt, "the view back after Retry", |rt| !rt.state.down);
+    eprintln!("retry reconnects: {took:?}");
+    assert!(
+        took < Duration::from_millis(1000),
+        "Retry waited {took:?}, the backoff's length"
+    );
+}

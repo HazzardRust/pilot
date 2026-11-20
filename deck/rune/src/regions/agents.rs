@@ -34,13 +34,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     // The panel's header is the layout's (S20).
     let mut panel = col().key("agents").gap(space::within);
     if view.agents.is_empty() {
-        return panel.child(theme::content(
-            text("no agents live")
-                .key("agents-none")
-                .font(type_::LABEL)
-                .color(t.text_secondary),
-            dark,
-        ));
+        return panel.child(theme::empty("no agents live", "agents-none", dark));
     }
     for (i, agent) in view.agents.iter().enumerate() {
         // A quiet agent reads in the secondary colour: still listed, no longer fresh.

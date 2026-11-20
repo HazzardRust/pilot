@@ -163,7 +163,11 @@ pub fn draw(
         .collect();
     let mut panel = col().key("notifications").gap(space::within);
     if view.notices.is_empty() && unseen.is_empty() {
-        return panel;
+        return panel.child(theme::empty(
+            "No notifications.",
+            "notifications-none",
+            dark,
+        ));
     }
 
     let listed: Vec<(String, u32)> = unseen

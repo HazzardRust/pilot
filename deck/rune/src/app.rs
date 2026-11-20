@@ -1,7 +1,7 @@
 //! The window's state and its one view: every region drawn from one `View` (spec 6a).
 
 use rune::tok::{self, type_};
-use rune::{AppSpec, Cx, El, Titlebar, Tx, Waker, col, text};
+use rune::{AppSpec, Cx, El, Titlebar, Tx, Waker, col, row, text};
 
 use crate::act;
 use crate::client::{Client, Query, View};
@@ -9,7 +9,7 @@ use crate::layout;
 use crate::live::{self, Feed};
 use crate::prefs::{self, Prefs};
 use crate::regions::{self, Locals};
-use crate::theme::{size, space};
+use crate::theme::{self, size, space};
 
 #[derive(Debug, Default)]
 pub struct State {
@@ -202,16 +202,33 @@ pub fn view(s: &State, cx: &mut Cx<State>) -> El {
 
 /// The centre column's region slots, top to bottom; the side panels are `layout`'s.
 pub fn center(s: &State, cx: &mut Cx<State>) -> El {
-    let t = tok::theme(cx.system_dark());
+    let dark = cx.system_dark();
+    let t = tok::theme(dark);
     let none = serde_json::Value::Null;
     let region = |name: &str| s.view.regions.get(name).unwrap_or(&none);
     let r = &s.regions;
     let mut screen = col().gap(space::between);
     if s.down {
         screen = screen.child(
-            text("deck not running")
-                .font(type_::BODY)
-                .color(t.text_secondary),
+            row()
+                .gap(space::between)
+                .child(
+                    text("deck not running")
+                        .font(type_::BODY)
+                        .color(t.text_secondary),
+                )
+                .child(
+                    theme::control(text("Retry"), dark)
+                        .key("retry")
+                        .font(type_::BODY)
+                        .color(t.text)
+                        .role("button")
+                        .on_press(|s: &mut State| {
+                            if let Some(live) = &s.live {
+                                live.retry();
+                            }
+                        }),
+                ),
         );
     }
     screen

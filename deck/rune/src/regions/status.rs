@@ -194,6 +194,11 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         },
     );
 
+    if status.tickets.is_empty() && status.rows.is_empty() && status.groups.is_empty() {
+        return col()
+            .key("status")
+            .child(theme::empty("No tickets to show.", "status-none", dark));
+    }
     col()
         .key("status")
         .gap(space::between)
