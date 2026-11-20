@@ -21,7 +21,7 @@
 import { pathKey as repoKey } from '../hooks/lib/platform.js';
 
 import {
-  DISMISSED_BY_USER, REPORT_DUE, SIGN_OFF, NOT_YET, SHA_FIELD, URL_FIELD, LOGIN_FIELD, SCREENS_FIELD, SLICE_FIELD, REPO_FIELD, NEXT_FIELD, DIR_FIELD, WORKDIR_FIELD, SHELL_FIELD, COMMENT_FIELD,
+  DISMISSED_BY_USER, REPORT_DUE, SIGN_OFF, NOT_YET, SHA_FIELD, URL_FIELD, LOGIN_FIELD, SCREENS_FIELD, SLICE_FIELD, REPO_FIELD, NEXT_FIELD, DIR_FIELD, WORKDIR_FIELD, SHELL_FIELD, COMMENT_FIELD, CHECKS_FIELD,
 } from './items-bounds.mjs';
 
 export {
@@ -226,7 +226,7 @@ const GATE1_FIELDS = [
 ];
 const GATE2_FIELDS = [
   { name: 'pr', required: true, shape: /^(#\d+|https?:\/\/\S+|feat\/[A-Za-z0-9._-]+)$/, means: 'a PR url, #n or feat/<slug>' },
-  SHA_FIELD,
+  SHA_FIELD, CHECKS_FIELD,
   { name: 'walkthrough', shape: /^itm_[0-9a-f]+$/, means: 'an item id' }, COMMENT_FIELD,
   // The ticket it concludes: a green one after its walkthrough sign-off (overview-one-ticket L18); the post still turns a yellow one green.
   { ...TICKET_ID_FIELD, required: true },
