@@ -48,10 +48,7 @@ agent's. A command whose directory is not your cwd runs in Bash as `git -C <dir>
 Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 
-Before you spawn the runner, a Node project with a `package-lock.json` and
-no `node_modules` gets `npm ci --ignore-scripts` in your worktree, under a
-scratch `HOME` and `USERPROFILE` so no user `.npmrc` is read: it adds no
-dependency and runs no install script. Install nothing else; use the
+The runner installs a worktree with no `node_modules` itself. Install nothing; use the
 project's tools or run one ephemerally (`npx --yes`, `uvx`, `pipx run`, `go
 run <pkg>@<version>`), since an added dependency changes the reviewed code.
 Copy the environment file only if the brief says the
@@ -143,7 +140,7 @@ runtime and raw output. Read its rows after the test pass. You run none of
 those checks yourself. If the runner fails or returns no table, the evidence
 pass is "not run": quote the runner's error and go on, never running the
 tools in its place, since the runner owns the mutation-safety rule. A row that reads `no tool for this stack` is reported as
-such.
+such, and one that reads `not run: install failed (exit <n>)` as `install failed (exit <n>)`, with the runner's `install` row quoted.
 
 Read every surviving mutant before calling it a
 finding: an equivalent mutant (one no test could ever kill) is dropped with a
