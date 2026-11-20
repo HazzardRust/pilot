@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "implementing",
+      "state": "pushed 540006f (ts approve, sec approve; integrating)",
       "after": [
         "S2"
       ],
@@ -49,8 +49,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s5"
     }
   ],
-  "next": "S1, S2, S5 integrated; feat at d023281a. S3 implementing from d023281a; S4 after S3; then base check, fundamentalist, QA.",
-  "updatedAt": "2026-11-20T12:45:10.525Z",
+  "next": "integrating S3 540006f5; then S4 from feat tip (seams: reapStalled holder(row), row.script needle, noteStall); then base check, fundamentalist, QA (QA: noteStall's liveTicketOf branch untested; take a ticket live on the scratch walk).",
+  "updatedAt": "2026-11-20T13:15:01.616Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -182,6 +182,24 @@
       "agent": "pilot-co-pilot",
       "what": "pilot integrate of S2 merged and gated locally but its push failed on a DNS outage (Could not resolve host: github.com); pushed by hand once the network returned",
       "evidence": "integrate output: integrated locally at d023281a, push or record failed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3 implementer's context was summarised before any commit; all work lost, slice restarted from the brief",
+      "evidence": "S3 message: worktree clean at 7b43391e after summary",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "two live unbounded `until grep -q Verdict <id>.output; do sleep 10; done` shells under the pilot's claude 16988 (bash 9988 on a28aa8f6e9874cbe0.output, bash 30060 on a18544e3d23cf7d4f.output), same shape as waits A/B, seen 2026-11-20; nothing stopped",
+      "evidence": "S3 implementer CIM read of the process table",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3's B1 asked for the captured win32 lines of waits A and B, which were never in the repo; live rows captured by CIM used instead",
+      "evidence": "S3 report",
       "size": 1
     }
   ]
