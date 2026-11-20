@@ -8,266 +8,131 @@
   "artefact": "docs/design/rune-deck-ui/architecture.md",
   "slices": [
     {
-      "slice": "S1",
-      "state": "integrated at 8c4cc3a — s1b 7cae771 re-committed for the trailer, tree identical to reviewed 4ea7320; 821 lines, limit waived by main",
-      "branch": "slice/rune-deck-ui-s1b",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s1"
-    },
-    {
-      "slice": "S2",
-      "state": "integrated at c58cd53 — 432 lines waived (tests); rust approve with nits; seam in S2.md",
-      "after": [
-        "S1"
-      ],
-      "branch": "slice/rune-deck-ui-s2",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s2"
-    },
-    {
-      "slice": "S3",
-      "state": "integrated at 0c2d42e — typescript APPROVE, security APPROVE",
-      "after": [
-        "S1"
-      ],
-      "branch": "slice/rune-deck-ui-s3",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s3"
-    },
-    {
-      "slice": "S4",
-      "state": "integrated at 0dc6f5f — 444 lines, limit waived by co-pilot (tests); rust approve; palette look waits on a region drawing from theme",
-      "after": [
-        "S1"
-      ],
-      "branch": "slice/rune-deck-ui-s4",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s4"
-    },
-    {
-      "slice": "S5",
-      "state": "integrated at 8a4af5c — rust APPROVE, security APPROVE",
-      "after": [
-        "S1"
-      ],
-      "branch": "slice/rune-deck-ui-s5",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s5"
-    },
-    {
-      "slice": "S6",
-      "state": "integrated at 599c883 — rust approve, security approve",
-      "after": [
-        "S5"
-      ],
-      "branch": "slice/rune-deck-ui-s6",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s6"
-    },
-    {
-      "slice": "S7",
-      "state": "integrated at d491beb — rust Approve, typescript Approve at dee5689; 491 production lines added (main's ~472 ceiling); full npm test ran on 5a04a52; B6 spring look to QA",
-      "after": [
-        "S5"
-      ],
-      "branch": "slice/rune-deck-ui-s7",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s7"
-    },
-    {
-      "slice": "S8",
-      "state": "integrated at 747a1f7 — rust Warning, typescript APPROVE; Escape needs Tab first -> added slice",
-      "after": [
-        "S1"
-      ],
-      "branch": "slice/rune-deck-ui-s8",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s8"
-    },
-    {
-      "slice": "S9",
-      "state": "integrated at d0240a5 — rust APPROVE, typescript APPROVE, security WARNING (LOW race closed by S23); 471 production lines, limit waived by main; app.rs and thread.rs outside owned files; 4737/0; B5 press look to QA",
-      "after": [
-        "S5"
-      ],
-      "branch": "slice/rune-deck-ui-s9",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s9"
-    },
-    {
-      "slice": "S10",
-      "state": "integrated at c79b7c5 — rust APPROVE, typescript APPROVE; 283 production lines; 4725/0",
-      "after": [
-        "S6"
-      ],
-      "branch": "slice/rune-deck-ui-s10",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s10"
-    },
-    {
-      "slice": "S11",
-      "state": "integrated at fdc0e14 — rust/typescript/security approve; 254 production lines; 4728/0; rune-kit markdown link handling to QA",
-      "after": [
-        "S5"
-      ],
-      "branch": "slice/rune-deck-ui-s11",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s11"
-    },
-    {
-      "slice": "S12",
-      "state": "integrated at 1fd78fd — 547 lines waived (tests); rust warning (re-read final head, cargo green), typescript WARN",
-      "after": [
-        "S1"
-      ],
-      "branch": "slice/rune-deck-ui-s12",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s12"
-    },
-    {
-      "slice": "S13",
-      "state": "integrated at a5e680e — rust approve, typescript approve; 191 production lines; 4747/0; edges carry lane (seam in S13.md); hover look to QA",
-      "after": [
-        "S1"
-      ],
-      "branch": "slice/rune-deck-ui-s13",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s13"
-    },
-    {
-      "slice": "S14",
-      "state": "integrated at 1ca6d7d — rust APPROVE, typescript APPROVE; ~209 production lines; 4743/0; render-rail export, notifications.rs pub(crate), app.rs 1 line outside owned",
-      "after": [
-        "S10"
-      ],
-      "branch": "slice/rune-deck-ui-s14",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s14"
-    },
-    {
-      "slice": "S15",
-      "state": "integrated at 9d83397 — rust APPROVE, typescript WARN; ~320 production lines, limit waived by co-pilot (tests); 4751/0; seam in S15.md",
-      "after": [
-        "S6",
-        "S10"
-      ],
-      "branch": "slice/rune-deck-ui-s15",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s15"
-    },
-    {
-      "slice": "S16",
-      "state": "integrated at b1d6482 — rust APPROVE on re-read (wake_after checked: wakes are pushed, none cancelled), typescript approve, security approve; 398 production lines, limit waived by co-pilot; 4810/0; cargo ok on 547c134 (co-pilot run)",
-      "after": [
-        "S6"
-      ],
-      "branch": "slice/rune-deck-ui-s16",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s16"
-    },
-    {
-      "slice": "S17",
-      "state": "integrated at dbeb862 — rust/typescript/security APPROVE; 434 production lines, limit waived by co-pilot; 4802/0; seam in S17.md; strip sits at the column foot until S20",
-      "after": [
-        "S6"
-      ],
-      "branch": "slice/rune-deck-ui-s17",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s17"
-    },
-    {
-      "slice": "S18",
-      "state": "integrated at d015168 — rust APPROVE with changes, typescript WARN; ~230 production lines; 4806/0; open: refused dismiss leaves the button disabled (to step 7); days/items look to QA",
-      "after": [
-        "S7"
-      ],
-      "branch": "slice/rune-deck-ui-s18",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s18"
-    },
-    {
-      "slice": "S19",
-      "state": "integrated at 1aa722b — typescript APPROVE, security APPROVE (after BLOCK fixed); 89 production lines; full suite 4847/0; seam in S19.md; B4 pending on PR #124's CI run",
-      "after": [
-        "S1"
-      ],
-      "branch": "slice/rune-deck-ui-s19",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s19"
-    },
-    {
-      "slice": "S20",
-      "state": "integrated at 5ed594c — rust APPROVE with nits; ~338 production lines, limit waived by co-pilot; 761/0 selection; cargo 91/0 on ade6964 (pre-S21 merge); seam in S20.md; B6 feel to QA",
-      "after": [
-        "S10"
-      ],
-      "branch": "slice/rune-deck-ui-s20",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s20"
-    },
-    {
-      "slice": "S21",
-      "state": "integrated at 4f0adcc — rust approve; 77 lines; 761/0 selection; cargo 86/0 on 64093d8",
-      "after": [
-        "S8"
-      ],
-      "branch": "slice/rune-deck-ui-s21",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s21"
-    },
-    {
-      "slice": "S22",
-      "state": "integrated at cebe677 — typescript approve, rust approve; 121 production lines; 4849/0",
-      "after": [
-        "S12"
-      ],
-      "branch": "slice/rune-deck-ui-s22",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s22"
-    },
-    {
-      "slice": "S23",
-      "state": "integrated at 0365938 — rust APPROVE on re-read (BLOCK fixed); 255 lines; 761/0; cargo ok on merged head; closes S9 security LOW and S12 re-read MEDIUM",
-      "after": [
-        "S9"
-      ],
-      "branch": "slice/rune-deck-ui-s23",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s23"
-    },
-    {
-      "slice": "base merge",
-      "state": "integrated at 2c055ec — pilot dc5f7be in; render-rail.mjs exports kept on pilot's bodies; two view tests' stand-in kind moved off steps; view tests 62/62",
-      "branch": "slice/rune-deck-ui-base",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-base"
-    },
-    {
       "slice": "Deck UI rebuilt in Rune",
-      "state": "fix round integrating; QA read-only pass done (Q1-Q7 kept as defects, to fix briefs), QA handed back awaiting tip",
+      "state": "implementing (pivoted: restyle S26-S37)",
       "branch": "feat/rune-deck-ui",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-rune-deck-ui",
       "pr": 124
     },
     {
-      "slice": "fix round",
-      "state": "integrated at db04ce6 — rust approve, typescript APPROVE; -119 net; 4849/0 selection; npm test 4857/0 and cargo green on 37a9938",
-      "after": [
-        "S23"
-      ],
-      "branch": "fix/rune-deck-ui-principles",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-rune-deck-ui-principles"
+      "slice": "S26 Every control says clickable: the hover look, first (added)",
+      "state": "integrated; rust APPROVE (MEDIUM/LOW notes); 486 lines, limit waived by co-pilot (266 test lines, scope adds from co-pilot); cargo green",
+      "branch": "slice/rune-deck-ui-s26",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s26"
     },
     {
-      "slice": "S24",
-      "state": "integrated at 5739fa2 — rust approve with nits; +86 net production, limit waived by co-pilot (tests); 761/0 selection; cargo 99/0 on 0e84e21",
+      "slice": "S27 The window frame: Rune's title bar and the top inset (added)",
+      "state": "implementing (from S26's tip)",
       "after": [
-        "fix round"
+        "S26 Every control says clickable: the hover look, first (added)"
       ],
-      "branch": "slice/rune-deck-ui-s24",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s24"
+      "branch": "slice/rune-deck-ui-s27",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s27"
     },
     {
-      "slice": "S25",
-      "state": "integrated at e89f1df — rust APPROVE; net +39, limit waived by co-pilot (rustfmt reindent); 761/0 selection; cargo green on 309e70c",
+      "slice": "S28 The left side as VS Code's side bar (added)",
+      "state": "planned",
       "after": [
-        "S24"
-      ],
-      "branch": "slice/rune-deck-ui-s25",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s25"
+        "S27 The window frame: Rune's title bar and the top inset (added)"
+      ]
     },
     {
-      "slice": "QA fix 1",
-      "state": "integrated at 54de6d9 — rust APPROVE, typescript APPROVE; +96 net; 4850/0 selection; Q1-Q4",
+      "slice": "S29 The right strip's buttons on the grid, rounded, by role (added)",
+      "state": "implementing (from S26's tip)",
       "after": [
-        "fix round"
+        "S26 Every control says clickable: the hover look, first (added)"
       ],
-      "branch": "fix/rune-deck-ui-qa1",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-rune-deck-ui-qa1"
+      "branch": "slice/rune-deck-ui-s29",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s29"
     },
     {
-      "slice": "QA fix 2",
-      "state": "fixing — NOT integrated: merge with S25 stopped (strip.rs); implementer merging e89f1df",
+      "slice": "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
+      "state": "implementing (from S26's tip)",
       "after": [
-        "S24"
+        "S26 Every control says clickable: the hover look, first (added)"
       ],
-      "branch": "fix/rune-deck-ui-qa2",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-rune-deck-ui-qa2"
+      "branch": "slice/rune-deck-ui-s30",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s30"
+    },
+    {
+      "slice": "S31 Left panes' contents: content selects, rows on the grid (added)",
+      "state": "planned",
+      "after": [
+        "S26 Every control says clickable: the hover look, first (added)"
+      ]
+    },
+    {
+      "slice": "S32 Every region designs its empty and error states (added)",
+      "state": "planned",
+      "after": [
+        "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
+        "S31 Left panes' contents: content selects, rows on the grid (added)"
+      ]
+    },
+    {
+      "slice": "S33 The deck's font and its three type scales (added)",
+      "state": "planned",
+      "after": [
+        "S27 The window frame: Rune's title bar and the top inset (added)",
+        "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
+        "S31 Left panes' contents: content selects, rows on the grid (added)"
+      ]
+    },
+    {
+      "slice": "S35 The spacing on the 4/8 grid (added)",
+      "state": "planned",
+      "after": [
+        "S28 The left side as VS Code's side bar (added)",
+        "S29 The right strip's buttons on the grid, rounded, by role (added)",
+        "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
+        "S31 Left panes' contents: content selects, rows on the grid (added)",
+        "S36 theme.json: theme.rs takes its values from one JSON file (added)"
+      ]
+    },
+    {
+      "slice": "S37 The token playground: one page that exports theme.json (added)",
+      "state": "planned",
+      "after": [
+        "S36 theme.json: theme.rs takes its values from one JSON file (added)"
+      ]
+    },
+    {
+      "slice": "S34 The palette's values, by role and to WCAG AA (added)",
+      "state": "planned",
+      "after": [
+        "S36 theme.json: theme.rs takes its values from one JSON file (added)"
+      ]
+    },
+    {
+      "slice": "S38 The reply box, reorganised (added)",
+      "state": "planned",
+      "after": [
+        "S26 Every control says clickable: the hover look, first (added)"
+      ]
+    },
+    {
+      "slice": "S1-S25 and fix rounds",
+      "state": "integrated, with base merge, fix round, QA fix 1-2; each row's detail in docs/design/rune-deck-ui/run.json at cb0866e9 (folded: the deck's 32-row cap)"
+    },
+    {
+      "slice": "S39 Back and forward: the mouse side buttons and Alt+Left/Right (added)",
+      "state": "planned",
+      "after": [
+        "S29 The right strip's buttons on the grid, rounded, by role (added)",
+        "S30 Header and centre: content selects, cards on the grid, the kind line (added)"
+      ]
+    },
+    {
+      "slice": "S36 theme.json: theme.rs takes its values from one JSON file (added)",
+      "state": "implementing",
+      "branch": "slice/rune-deck-ui-s36",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s36"
+    },
+    {
+      "slice": "base merge 2",
+      "state": "integrated at 3f6a299b; pilot 3b53b7e in; threadWalk carries nothing-hidden A6's order",
+      "branch": "fix/rune-deck-ui-base2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-base2"
     }
   ],
   "findings": [
@@ -288,51 +153,9 @@
     "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
     "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
   ],
-  "next": "QA fix 2 implementer merges e89f1df and re-gates; then integrate, cargo test on tip, base check, resume QA with the tip",
-  "updatedAt": "2026-11-20T06:14:42.418Z",
+  "next": "Integrating S26 c33821c on feat 3f6a299b (base in); then the tip to S29, S30, S36; S27 re-spawned (first implementer lost its context).",
+  "updatedAt": "2026-11-20T08:32:44.319Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S11: Rune headless settle_all snaps a scrolled viewport back; no task API, so an off-thread result needs app::poll",
-      "evidence": "S11 report; rune pointer.rs",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S9: no way to start the Rune binary on a thread screen; a throwaway example was needed for the look; the Interface was cut thinner than the page's reply slot (locked options, Close)",
-      "evidence": "S9 report; Tx/TextEdit read from the cargo checkout",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S10: Rune's Cx gives draw no State, so the draw signature changed in app.rs; clippy grep hid a -D warnings lint",
-      "evidence": "S10 report; tests/notifications.rs:127",
-      "size": 2
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "handback-send-enforce hook forces a 'paused' hand-back each time the co-pilot ends a turn to wait on live children; two false pauses, one needless release/re-grant by main",
-      "evidence": "two hand-backs on itm_0dcd9aa67146 with S9/S10/S11 finishers live, feat unchanged at 1dd62e24",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S10: cargo not on the Git Bash PATH; npm test reported 'home store changed: ~/.claude/pilot/deck.json' on the live deck",
-      "evidence": "S10 report; npm test tail on fac8ec51",
-      "size": 8
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S11: co-pilot's shared CARGO_TARGET_DIR compiled tests against another worktree's stale pilot_deck (path packages share a metadata hash); assumption withdrawn",
-      "evidence": "15 errors E0425/E0609 until touch lib.rs; S11 report",
-      "size": 5
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S9: two reviewers ended REQUEST CHANGES with no re-read; a draft shared across threads posts A's words to B (security MEDIUM) outside S9's files",
-      "evidence": "S9 report at ad264db9",
-      "size": 2
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S9 fix: thread arrows move the query but nothing fetches until the deck's next change; two extra fix and re-read cycles",
@@ -525,6 +348,44 @@
       "what": "QA fix 2: npm test skips cargo silently when cargo is off PATH (scripts/gate.mjs:257), so a green npm test says nothing about Rust; --script clicks need item-id keys and the seeded run lands on D1; background waits pushed out at 180 s",
       "evidence": "QA fix 2 report 4d7223d",
       "size": 4
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "QA left an 11G release build in pilot-qa-rune-deck-ui; D:\\qa1tmp removal refused; pilot-fundamentalist-rune-deck-ui dir left unregistered",
+      "evidence": "co-pilot hand-back at feat 6095785",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "QA ran out of context (236k) after two probe rounds, before the walkthrough; a fresh QA had to be briefed for the finishing steps. Rune saved panel state persists between headless runs; --script keys must exist in first frame; headless runs faster than real time without --realtime",
+      "evidence": "QA hand-off at cb0866e9",
+      "size": 3
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "taste check (spec 5) failed only at the walkthrough after 25 slices: no earlier look by the user at the Rune window; restyle is 300-600 lines and collides with spec 2's token parity test",
+      "evidence": "walkthrough itm_317aa44d9e6e, QA audit at cb0866e9",
+      "size": 3
+    },
+    {
+      "agent": "pilot-explorer",
+      "what": "Rune's winit is vendored under the git checkout (hashed dir), not ~/.cargo/registry, so a registry search finds nothing",
+      "evidence": "rune-c9b805e9ed8a3730/7cba77c"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "live hover check fought other windows for the pointer; a first CopyFromScreen captured the user's browser (not used)",
+      "evidence": "S26 report friction row"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "cargo test needs node_modules for the scratch deck, which a cargo-only worktree lacks (junction to feat's node_modules)",
+      "evidence": "S26 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the deck's 32-row cap forced folding S1-S25 and the fix rows into one row",
+      "evidence": "deck_status error 'at most 32 slices'"
     }
   ]
 }
