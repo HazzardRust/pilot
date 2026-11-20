@@ -228,7 +228,12 @@ export function holderOfCommand(repo, needle, { projectsRoot = defaultRoot() } =
     const sub = path.join(dir, session.name, 'subagents');
     const names = fs.existsSync(sub) ? fs.readdirSync(sub) : [];
     for (const [name, id] of names.map((n) => /^agent-([\w-]+)\.jsonl$/.exec(n)).filter(Boolean)) {
-      const text = fs.readFileSync(path.join(sub, name), 'utf8');
+      let text;
+      try {
+        text = fs.readFileSync(path.join(sub, name), 'utf8');
+      } catch {
+        continue; // a transcript gone or locked mid-scan is skipped, as an unparsed line is
+      }
       if (!text.includes(plain) || !readTranscript(name, text).entries.some((entry) => runsCommand(entry, needle))) continue;
       const type = readMeta(path.join(sub, `agent-${id}.meta.json`)).agentType;
       const agentType = typeof type === 'string' && /^[\w:.-]{1,80}$/.test(type) ? type : found.get(id)?.agentType ?? 'unknown';

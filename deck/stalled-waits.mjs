@@ -142,7 +142,7 @@ export function stalledWaits(table, { runs, stallAgeS = STALL_AGE_S }) {
  * One scan (L5, L6): one read of the process table, `stalledWaits` over it and the live runs, `gc` stopping each
  * with its tree, then `note(repo, line)` for each stop that went. `holder(row)` names the agent whose call started
  * a wait, or null, and defaults to the one subagent whose Bash call ran the row's script (`holderOfCommand` under
-`projectsRoot`, S4); `kill(pid, tree)` defaults to `gc`'s `stopper` over the same table. A read failure is one line
+ * `projectsRoot`, S4); `kill(pid, tree)` defaults to `gc`'s `stopper` over the same table. A read failure is one line
  * and stops nothing. Answers `gc`'s lines, none when nothing is stalled.
  */
 export function reapStalled({ read, runs, kill, note, holder, stallAgeS = STALL_AGE_S, projectsRoot }) {
