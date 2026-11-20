@@ -69,9 +69,11 @@ struct Tabs {
 
 /// Chooses a deck, `None` the overview: the window's query names it alone and the live reader is
 /// asked for its view off the UI thread, as an opened thread is (`notifications::open_thread`).
+/// The overview is an empty `run`, as the page's `/?run=` is: with no `run` the deck lands on its
+/// one live tab.
 pub fn select(s: &mut State, run: Option<String>) {
     let query = Query {
-        run,
+        run: Some(run.unwrap_or_default()),
         all: s.query.all,
         ..Query::default()
     };

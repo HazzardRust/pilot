@@ -76,6 +76,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     let t = tok::theme(cx.system_dark());
     let font = theme::tokens(cx.system_dark()).font;
     let cols = space::cols;
+    let state_w = cols.state_ch * font.size * ADVANCE;
 
     let selector = status.tickets.iter().enumerate().fold(
         row().key("status-select").gap(space::between),
@@ -104,24 +105,35 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         rows.iter()
             .enumerate()
             .fold(col().key(key).gap(space::within), |table, (i, slice)| {
+                // The page's columns, Slice then State then Yours; each cell one clipped line.
                 let mut line = row()
                     .key(format!("{row_key}{i}"))
                     .gap(cols.gap)
                     .child(
-                        text(&slice.state)
-                            .font(type_::BODY)
-                            .color(t.text_secondary)
-                            .w(cols.state_ch * font.size * ADVANCE),
-                    )
-                    .child(
                         text(&slice.slice)
+                            .key(format!("{row_key}{i}-slice"))
                             .font(type_::BODY)
                             .color(t.text)
                             .truncate()
                             .grow(1.0),
+                    )
+                    .child(
+                        text(&slice.state)
+                            .key(format!("{row_key}{i}-state"))
+                            .font(type_::BODY)
+                            .color(t.text_secondary)
+                            .truncate()
+                            .w(state_w)
+                            .min_w(state_w),
                     );
                 if let Some(branch) = &slice.branch {
-                    line = line.child(text(branch).font(type_::LABEL).color(t.text_secondary));
+                    line = line.child(
+                        text(branch)
+                            .key(format!("{row_key}{i}-branch"))
+                            .font(type_::LABEL)
+                            .color(t.text_secondary)
+                            .truncate(),
+                    );
                 }
                 if let Some(pr) = slice.pr {
                     line = line.child(
@@ -131,7 +143,12 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                     );
                 }
                 if slice.href.is_some() {
-                    line = line.child(text("yours").font(type_::LABEL).color(t.text));
+                    line = line.child(
+                        text("yours")
+                            .key(format!("{row_key}{i}-yours"))
+                            .font(type_::LABEL)
+                            .color(t.text),
+                    );
                 }
                 table.child(line)
             })

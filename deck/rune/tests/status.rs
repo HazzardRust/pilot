@@ -111,6 +111,53 @@ fn each_table_is_drawn_under_its_tabs_name() {
 }
 
 #[test]
+fn a_long_state_stays_in_its_column_and_the_cells_never_overlap() {
+    let rt = frame(State {
+        view: view_with(json!({
+            "tickets": [],
+            "rows": [
+                { "slice": "S1 a slice with a rather long name indeed", "state": "waiting on the co-pilot's review of the diff", "branch": "slice/s1", "pr": 7, "href": "/thread/itm_y", "after": [] },
+                { "slice": "S2 short", "state": "merged", "after": [] },
+            ],
+        })),
+        ..State::default()
+    });
+
+    let rect = |key: &str| {
+        rt.elements()
+            .into_iter()
+            .find(|e| e.key.as_deref() == Some(key))
+            .unwrap_or_else(|| panic!("{key} is drawn"))
+            .rect
+    };
+    for i in 0..2 {
+        let (slice, state) = (
+            rect(&format!("status-row-{i}-slice")),
+            rect(&format!("status-row-{i}-state")),
+        );
+        assert!(
+            slice[0] + slice[2] <= state[0] + 0.5,
+            "row {i}: the state starts after the slice ends: {slice:?} {state:?}"
+        );
+    }
+    let (state, branch) = (rect("status-row-0-state"), rect("status-row-0-branch"));
+    assert!(
+        state[0] + state[2] <= branch[0] + 0.5,
+        "{state:?} {branch:?}"
+    );
+    let (branch, yours) = (rect("status-row-0-branch"), rect("status-row-0-yours"));
+    assert!(
+        branch[0] + branch[2] <= yours[0] + 0.5,
+        "{branch:?} {yours:?}"
+    );
+    let state = rect("status-row-0-state");
+    assert!(
+        state[2] <= rect("status-row-1-state")[2] + 0.5,
+        "the state is one width"
+    );
+}
+
+#[test]
 fn a_view_with_no_status_draws_nothing_of_it() {
     let rt = frame(State {
         view: view_with(Value::Null),

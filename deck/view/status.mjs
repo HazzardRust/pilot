@@ -11,7 +11,7 @@ import { heldTicketsOf } from '../ui/render-rail.mjs';
 const hasTable = (record) => Array.isArray(record?.slices) && record.slices.length > 0;
 
 /**
- * `query` is `{ run, ticket }`. The overview (no run named, no landing tab) draws no single table and no selector
+ * `query` is `{ run, ticket }`. The overview (no run named and no landing tab, or an empty run) draws no single table and no selector
  * (A6), but one `{ tab, tickets, rows }` group per tab that has anything to show, in the strip's order, each its
  * default lane's rows, as `renderStrips` draws its sections (S22). A run naming no tab has nothing.
  */
@@ -20,7 +20,8 @@ export function statusView(reads, query = {}) {
   const tabs = tabsOf(reads.runs, reads.items, reads.numbers, reads.agents, reads.added, reads.lanes);
   const tab = run === null ? landingFor(tabs) : tabFor(tabs, run);
   if (tab) return tableOf(tab, reads.items, asked);
-  if (run !== null) return { tickets: [], rows: [] };
+  // An empty `run` is the page's `/?run=`, the overview; only a run naming no tab has nothing.
+  if (run !== null && run !== '') return { tickets: [], rows: [] };
   // A tab with a held ticket but no record still has a section on the page ("no slice table yet").
   const groups = tabs
     .map((each) => ({ each, table: tableOf(each, reads.items, null) }))

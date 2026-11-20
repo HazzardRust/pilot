@@ -115,6 +115,23 @@ fn a_tab_press_selects_its_deck() {
 }
 
 #[test]
+fn the_overview_press_names_an_empty_run_so_the_deck_does_not_land_on_a_tab() {
+    let mut rt = frame(State {
+        view: view_with(&[("tabs", two_decks("C:/elsewhere/two"))]),
+        query: pilot_deck::client::Query {
+            run: Some("C:/elsewhere/one".into()),
+            ..Default::default()
+        },
+        ..State::default()
+    });
+
+    press(&mut rt, "tab-0");
+
+    // `?screen=home` alone lands on the one live deck; the page's `/?run=` is the overview.
+    assert_eq!(rt.state.query.run.as_deref(), Some(""));
+}
+
+#[test]
 fn a_refused_add_deck_says_why_and_keeps_the_path() {
     let mut local = tabs::Local {
         adding: Some(TextEdit::new("C:/no/such/dir")),
