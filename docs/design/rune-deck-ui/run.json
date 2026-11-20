@@ -178,7 +178,7 @@
     },
     {
       "slice": "S20",
-      "state": "pushed ade6964 — waits on the base merge",
+      "state": "integrated at 5ed594c — rust APPROVE with nits; ~338 production lines, limit waived by co-pilot; 761/0 selection; cargo 91/0 on ade6964 (pre-S21 merge); seam in S20.md; B6 feel to QA",
       "after": [
         "S10"
       ],
@@ -219,8 +219,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-base"
     }
   ],
-  "next": "integrate S20 then S19; S22, S23 in flight; then base check, fundamentalist, QA",
-  "updatedAt": "2026-11-20T03:40:29.868Z",
+  "next": "paused by main: integrate S19; drain S22, S23; then hand back paused",
+  "updatedAt": "2026-11-20T03:43:58.418Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
