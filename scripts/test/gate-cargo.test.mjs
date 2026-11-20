@@ -127,8 +127,12 @@ test('the default which finds cargo.exe in an absolute PATH or Path dir, and not
   assert.equal(cargoStep({ PATH: dir }, undefined, 'win32').command, path.join(dir, 'cargo.exe'));
   assert.equal(cargoStep({ Path: dir }, undefined, 'win32').command, path.join(dir, 'cargo.exe'));
   // A relative entry would resolve against the checkout, where a planted cargo.exe could sit.
-  const relative = path.relative(process.cwd(), dir);
-  assert.ok(!path.isAbsolute(relative), 'the temp dir is on the checkout drive');
+  // The planted dir sits under the checkout, so the entry is relative whichever drive the temp dir is on.
+  const planted = fs.mkdtempSync(path.join(process.cwd(), '.pilot-gate-planted-'));
+  t.after(() => fs.rmSync(planted, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(planted, 'cargo.exe'), '');
+  const relative = path.relative(process.cwd(), planted);
+  assert.ok(!path.isAbsolute(relative));
   assert.deepEqual(cargoStep({ PATH: relative }, undefined, 'win32'), { skip: SKIP });
 });
 

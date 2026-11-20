@@ -161,6 +161,14 @@ test('the overview\'s tables are the page\'s', () => {
   assert.deepEqual(view.rows, [], 'no single table beside the groups');
 });
 
+test('an empty run is the overview too: one table per tab, as the page\'s `/?run=` draws', () => {
+  const view = statusView(twoDecks(), { run: '' });
+
+  const drawn = view.groups.map(({ tab, rows }) => ({ tab, rows: rows.map(({ slice, state, href }) => ({ slice, state, href })) }));
+  assert.equal(drawn.length, 2);
+  assert.deepEqual(drawn, overviewTables(twoDecks()));
+});
+
 test('a deck tab keeps one table', () => {
   const view = statusView(twoDecks(), { run: THEIRS });
 
