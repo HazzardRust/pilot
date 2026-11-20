@@ -94,14 +94,18 @@ and S2 under 300 lines.
   *Tradeoff*: ADR 0065's one-ticket feed becomes an order only; a busy deck lists longer. *Rejected*: a closed
   `<details>` "N waiting on other tickets" fold (one press from today's hiding). Posted `itm_e681de8bf939`; the user answered "Listed in full, after
   in-hand" (2026-11-20).
+  Verdict: stands — the user pressed "Listed in full, after in-hand" on itm_e681de8bf939
 - **A2** Order key: user thread last, then behind after not-behind, then newest first (a stable sort over
   `queueOf`). *Tradeoff*: a behind gate2 sits under an in-hand question even when older. *Rejected*: pure newest
   first (in hand no longer reads first, spec 5).
+  Verdict: stands — in-hand first is what the user chose on itm_e681de8bf939; a behind gate2 below a newer in-hand question is still drawn and counted
 - **A3** A card whose ticket was merged away names no ticket and no standing, as today (`card.test.mjs:381`).
   *Tradeoff*: the host's standing is one press away on the thread page. *Rejected*: following `ticketWornBy` to
   the host on the card (moves a pinned deck-press-feedback L5 rule).
+  Verdict: stands — no queued ticket claims the merged-away card; the pin at card.test.mjs:381 is today's behaviour
 - **A4** red team: `renderCard` without `items` (card-history tests) returns no ticket line rather than throwing;
   S2 guards it. *Rejected*: requiring `items` (edits 8 call sites in tests).
+  Verdict: stands — a render that throws would hide cards, the opposite of this ticket
 
 ## 7. Out of scope
 
