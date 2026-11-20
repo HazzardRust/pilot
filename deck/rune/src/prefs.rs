@@ -22,6 +22,9 @@ pub struct Prefs {
     pub side_width: Option<f32>,
     /// The side area was dragged below its minimum, so only the icon bar shows.
     pub side_hidden: bool,
+    /// Each pane's height the user dragged its border to; a pane not here is as tall as its
+    /// contents.
+    pub pane_heights: BTreeMap<String, f32>,
     pub hidden_reports: BTreeSet<String>,
 }
 

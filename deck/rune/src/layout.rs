@@ -84,7 +84,22 @@ const ADVANCE: f32 = 0.6;
 #[derive(Debug, Default)]
 pub struct Local {
     grab: Option<(f32, Option<f32>, bool)>,
+    border: Option<Border>,
 }
+
+/// A border's drag in hand: the two panes either side of it, their heights as drawn at the press,
+/// and the heights the prefs held then, which a cancel puts back.
+#[derive(Debug)]
+struct Border {
+    panes: [&'static str; 2],
+    drawn: [f32; 2],
+    kept: [Option<f32>; 2],
+}
+
+/// The room a pane's border takes: the 1 px rule and the space under it.
+const BORDER: f32 = 1.0 + space::s3;
+/// The least a dragged pane keeps: its border, its heading and one row.
+const PANE_MIN: f32 = BORDER + size::pane_head + size::row;
 
 /// Whether `panel` is open: as the user left it, or Chat and Status on a first start.
 pub fn is_open(prefs: &Prefs, panel: &str) -> bool {
@@ -248,6 +263,40 @@ fn drag(s: &mut State, d: &Drag, tx: &mut Tx) {
     }
 }
 
+/// The drag on the border between two open panes (QA j): the pane above takes what the pane below
+/// gives, each kept at `PANE_MIN` at least, on the pointer at every move; saved on the release.
+fn border_drag(s: &mut State, panes: [&'static str; 2], drawn: [f32; 2], d: &Drag, tx: &mut Tx) {
+    let heights = &mut s.prefs.pane_heights;
+    match d.phase {
+        Phase::Down => {
+            let kept = panes.map(|p| heights.get(p).copied());
+            s.layout.border = Some(Border { panes, drawn, kept });
+        }
+        Phase::Move => {
+            tx.instant();
+            if let Some(b) = &s.layout.border {
+                let total = b.drawn[0] + b.drawn[1];
+                if total >= 2.0 * PANE_MIN {
+                    let above = (b.drawn[0] + d.dy).clamp(PANE_MIN, total - PANE_MIN);
+                    heights.insert(b.panes[0].to_string(), above);
+                    heights.insert(b.panes[1].to_string(), total - above);
+                }
+            }
+        }
+        Phase::Up => match s.layout.border.take() {
+            Some(b) if d.cancelled() => {
+                for (pane, kept) in b.panes.iter().zip(b.kept) {
+                    match kept {
+                        Some(h) => heights.insert(pane.to_string(), h),
+                        None => heights.remove(*pane),
+                    };
+                }
+            }
+            _ => keep(&s.prefs),
+        },
+    }
+}
+
 /// One icon of the icon bar: its label on hover and to a reader, the 4 px primary bar on its left
 /// while its pane shows, and its count as a pill on its corner, out of the flow.
 fn icon_item(
@@ -316,7 +365,13 @@ fn icon_badge(count: usize, dark: bool) -> El {
 
 /// One pane: a 22 px header (chevron, title, count) over its contents. A shut pane
 /// stays mounted at no height, so it springs open and shut; Tab and a reader skip it.
-fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<State>) -> El {
+fn pane(
+    s: &State,
+    name: &'static str,
+    label: &str,
+    above: Option<&'static str>,
+    cx: &mut Cx<State>,
+) -> El {
     let dark = cx.system_dark();
     let t = tok::theme(dark);
     let open = is_open(&s.prefs, name);
@@ -352,17 +407,39 @@ fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<Sta
                 .padding(space::pad)
                 .child(content(s, name, cx)),
         );
-    let mut pane = col()
-        .key(format!("panel-{name}"))
-        .w_full()
-        .clip_soft(space::s0);
+    let key = format!("panel-{name}");
+    let mut pane = col().key(key.clone()).w_full().clip_soft(space::s0);
     if !open {
         body = body.h(space::s0);
         pane = pane.h(space::s0);
+    } else if let Some(&h) = s.prefs.pane_heights.get(name) {
+        // Dragged to a height (QA j): the body takes what the heading leaves and scrolls.
+        pane = pane.h(h);
+        body = body.grow(1.0).min_h(space::s0).scroll(ScrollSpec {
+            stick_bottom: false,
+        });
     }
-    // A rule between panes, none above the first (deck.css's list rules, none after the last).
-    if after {
-        pane = pane.child(theme::separator(dark));
+    // A rule between panes, none above the first (deck.css's list rules, none after the last);
+    // it and the room under it are the border that resizes the pane and the one above it.
+    if let Some(above) = above {
+        let drawn = [above, name].map(|p| {
+            cx.layout_size(&format!("panel-{p}"))
+                .map_or(space::s0, |[_, h]| h)
+        });
+        pane = pane.child(
+            col()
+                .key(format!("panel-{name}-border"))
+                .w_full()
+                .pb(space::s3)
+                .role("separator")
+                .label(format!("Resize {label}"))
+                .cursor(Cursor::ResizeRow)
+                .drag_threshold(space::s0)
+                .on_drag(move |s: &mut State, d: &mut Drag, tx: &mut Tx| {
+                    border_drag(s, [above, name], drawn, d, tx)
+                })
+                .child(theme::separator(dark)),
+        );
     }
     pane = pane.child(head).child(body);
     if open {
@@ -392,7 +469,8 @@ fn left_side(s: &State, cx: &mut Cx<State>) -> El {
             .pt(space::s7 - (size::icon_bar - size::icon) / 2.0),
         |bar, &panel| bar.child(icon_item(s, panel, dark)),
     );
-    let mut any_open = false;
+    // The open pane above the one being drawn, which its border resizes with it.
+    let mut above: Option<&'static str> = None;
     // Panes take their contents' height and the area scrolls past the last; room left over stays
     // below it (QA e).
     let mut side = col()
@@ -407,8 +485,10 @@ fn left_side(s: &State, cx: &mut Cx<State>) -> El {
         .clip_soft(space::s0)
         .motion(motion::panel);
     for (name, label, _) in &PANELS {
-        side = side.child(pane(s, name, label, any_open, cx));
-        any_open |= is_open(&s.prefs, name);
+        side = side.child(pane(s, name, label, above, cx));
+        if is_open(&s.prefs, name) {
+            above = Some(*name);
+        }
     }
     if !shown {
         side = side.inert().a11y_hidden();

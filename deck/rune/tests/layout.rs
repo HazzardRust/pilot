@@ -418,6 +418,41 @@ fn open_panes_touch_and_take_only_their_contents_height() {
     );
 }
 
+/// QA j: the border between two open panes drags up and down, one pane taking what the other
+/// gives, on the pointer; the two heights are saved on the release and come back on a restart.
+#[test]
+fn a_dragged_border_resizes_both_panes_and_persists() {
+    let (_held, dir) = prefs_dir("border");
+    let mut rt = window(notices(5), all_open(size::side_default));
+    let height = |rt: &Runtime<State>, p: &str| rects(rt, &format!("panel-{p}")).1[3];
+    let (above, below) = (height(&rt, "notifications"), height(&rt, "chat"));
+
+    let border = rects(&rt, "panel-chat-border").0;
+    let (x, y) = (border[0] + border[2] / 2.0, border[1] + border[3] / 2.0);
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    for step in 1..=10 {
+        rt.pointer_move(x, y - 3.0 * step as f32);
+        rt.frame(FRAME);
+    }
+    assert!(
+        Prefs::load(&dir).pane_heights.is_empty(),
+        "heights saved before the release"
+    );
+    rt.pointer_up(x, y - 30.0);
+    rt.frame(1.0);
+    assert_eq!(height(&rt, "notifications"), above - 30.0, "the pane above");
+    assert_eq!(height(&rt, "chat"), below + 30.0, "the pane below");
+
+    let again = window(notices(5), Prefs::load(&dir));
+    assert_eq!(
+        height(&again, "notifications"),
+        above - 30.0,
+        "after a restart"
+    );
+    assert_eq!(height(&again, "chat"), below + 30.0, "after a restart");
+}
+
 /// QA e: the first pane's heading and the first icon start where the centre's header does, 40 px
 /// under the title bar's rule (deck.css `--top`).
 #[test]
