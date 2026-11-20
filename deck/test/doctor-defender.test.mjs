@@ -83,7 +83,7 @@ test('the exclusion leads', () => {
 test('an unknown argument is refused', async () => {
   const never = () => assert.fail('no probe may run on a refused argument');
   const refused = { ...deps(never), probe: never, onPath: never, canWrite: never, resolveDep: never };
-  const malformed = [['defender', 'x'], ['nope'], ['nope', 'due'], ['defender', 'due', 'x'], ['defender', 'x', 'install'], ['defender', 'advised', 'install', 'x']];
+  const malformed = [['defender', 'x'], ['nope'], ['nope', 'due'], ['defender', 'due', 'x'], ['defender', 'x', 'install'], ['defender', 'advised', 'install', 'x'], ['slug'], ['slug', '--upload-pack=x'], ['slug', 'x', 'y']];
   for (const args of malformed) {
     const out = [];
     const err = [];
@@ -95,6 +95,6 @@ test('an unknown argument is refused', async () => {
       process.stderr.write = write;
     }
     assert.deepEqual(out, []);
-    assert.deepEqual(err, ['usage: pilot doctor [defender [due | advised <install|item id>]]\n'], args.join(' '));
+    assert.deepEqual(err, ['usage: pilot doctor [slug <slug> | defender [due | advised <install|item id>]]\n'], args.join(' '));
   }
 });

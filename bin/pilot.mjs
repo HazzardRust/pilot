@@ -211,6 +211,10 @@ const usage = () => `pilot — the deck for piloted runs
                  dependency installed, the store directory writable, and gh, git and claude
                  on PATH. One row each as <pass|fail|cannot tell>  <check>: <detail>, any
                  step indented below; changes nothing; exit 1 when a row fails, else 0
+  pilot doctor slug <slug>
+                 whether origin, the run remote or an open PR already has feat/<slug> or
+                 design/<slug>, read live: free <slug> and exit 0, else a clash line each or
+                 cannot tell, and exit 1; writes nothing
   pilot doctor defender
                  the Defender row alone, its steps the exclusion first and the Dev Drive
                  as the upgrade; exit 1 when it fails, else 0

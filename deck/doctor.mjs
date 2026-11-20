@@ -29,8 +29,10 @@ import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/
 import { git as gitAt } from '../scripts/pilot-branch.mjs';
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { probeDeck } from './probe.mjs';
+import { SLUG } from './runs.mjs';
+import { slugClashes } from './slug-clash.mjs';
 import { storeDir as defaultStoreDir } from './store-dir.mjs';
-import { DECK_PORT, deckUrl } from './tools.mjs';
+import { DECK_PORT, MAX_SLUG_CHARS, deckUrl } from './tools.mjs';
 import { ENGINES, PLUGIN_VERSION, isOlder, isVersion } from './version.mjs';
 
 const SYSTEM32 = path.win32.join(process.env.SystemRoot ?? 'C:/Windows', 'System32');
@@ -452,21 +454,48 @@ function rowLine({ name, verdict, detail, steps = [] }) {
   return [`${verdict}  ${name}: ${detail}`, ...steps.map((step) => `    ${step}`)].join('\n');
 }
 
+const isSlug = (word) => typeof word === 'string' && word.length <= MAX_SLUG_CHARS && SLUG.test(word);
+
+/**
+ * `pilot doctor slug <slug>` (two-devices spec 2a, 2c): `free <slug>` and 0, or a `clash` line per clash and a
+ * `cannot tell` line for what could not be read, and 1. Reads only: `git ls-remote` and the host's open reviews.
+ */
+function slugVerb({ slug, cwd, deps, log }) {
+  const git = deps.git ?? ((args) => gitAt(cwd, ...args));
+  let host = null;
+  let hostUnread;
+  try {
+    host = (deps.hostFor ?? hostForDefault)(cwd, { git });
+  } catch (err) {
+    hostUnread = `host: ${err.message}`;
+  }
+  const { clashes, unread } = slugClashes(slug, { git, host });
+  for (const clash of clashes) log(`clash ${slug}: ${'ref' in clash ? clash.ref : `PR #${clash.pr} from ${clash.head}`}`);
+  const whys = [unread, hostUnread].filter(Boolean);
+  if (whys.length) log(`cannot tell ${slug}: ${whys.join('; ')}`);
+  if (clashes.length || whys.length) return 1;
+  log(`free ${slug}`);
+  return 0;
+}
+
 /**
  * Print every row, or with `defender` the Defender row alone; 1 when a printed row fails, else 0
  * (`cannot tell` never fails, A5). `defender due` prints the two steps and exits 0 when the advice
  * is owed, else `not due: <why>` and 1; `defender advised <where>` writes the advice marker and
- * exits 0. Any other argument prints the usage on stderr, probes and writes nothing, 2.
+ * exits 0; `slug <slug>` is `slugVerb`. Any other argument, a non-slug among them, prints the usage on stderr,
+ * probes and writes nothing, 2.
  */
 export async function main({ cwd = process.cwd(), deps = {}, log = console.log, args = [] } = {}) {
   const [first, verb, where] = args;
   const known =
     args.length === 0 ||
+    (first === 'slug' && args.length === 2 && isSlug(verb)) ||
     (first === 'defender' && (args.length === 1 || (args.length === 2 && verb === 'due') || (args.length === 3 && verb === 'advised' && ADVISED_WHERE.test(where))));
   if (!known) {
-    process.stderr.write('usage: pilot doctor [defender [due | advised <install|item id>]]\n');
+    process.stderr.write('usage: pilot doctor [slug <slug> | defender [due | advised <install|item id>]]\n');
     return 2;
   }
+  if (first === 'slug') return slugVerb({ slug: verb, cwd, deps, log });
   const options = { root: projectsRoot(cwd), ...deps };
   const defender = { platform: options.platform ?? hostPlatform(), run: options.run ?? defaultRun, root: options.root };
   const store = options.storeDir ?? defaultStoreDir();
