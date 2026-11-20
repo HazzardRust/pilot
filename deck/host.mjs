@@ -14,7 +14,8 @@
  *   open(pr: { base: string, head: string, title: string, body: string, draft?: boolean, label?: string }): { number: number, why?: string },
  *   edit(n: number, change: { base?: string, title?: string, body?: string, label?: string }): { why?: string },
  *   comment(n: number, body: string): void, upsertComment(n: number, marker: string, body: string): 'posted'|'edited'|'none',
- *   signedIn(): boolean }} Host
+ *   signedIn(): boolean, checks(sha: string): Check[] }} Host
+ * @typedef {{ name: string, outcome: 'pass'|'fail'|'pending' }} Check  one host CI result on one commit (ci-gate)
  */
 
 import { git as gitAt } from '../scripts/pilot-branch.mjs';

@@ -6,7 +6,7 @@
  */
 
 // A red run's log goes under a home of this process's own, never the real one.
-import { git, isAncestor, commitFile, repos, passing, fakeGh, merges, mainSays, land } from './lib/land-repos.mjs';
+import { git, isAncestor, commitFile, repos, passing, fakeGh, greenChecks, merges, mainSays, land } from './lib/land-repos.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -66,7 +66,7 @@ test('a failing gh still lands and leaves the main PR unknown', (t) => {
     throw new Error('no GitHub host');
   };
 
-  const result = land({ cwd: a, git: gitIn(a), host: githubHost(gh), test: passing });
+  const result = land({ cwd: a, git: gitIn(a), host: githubHost(greenChecks(gh)), test: passing });
 
   assert.equal(git(origin, 'rev-parse', 'pilot'), result.sha);
   assert.equal(result.main.number, null);
@@ -193,7 +193,7 @@ test('main prints the main line, and unknown with the reason when gh fails', (t)
     throw new Error('no GitHub host');
   };
   git(b, 'config', 'pilot.test', passing);
-  const unknown = mainSays([], { cwd: b, git: gitIn(b), host: githubHost(failing) });
+  const unknown = mainSays([], { cwd: b, git: gitIn(b), host: githubHost(greenChecks(failing)) });
   assert.equal(unknown.code, 0);
   assert.match(unknown.out, /\npr comment failed: no GitHub host\nmain gets pilot: unknown \(gh pr list failed: no GitHub host\)\n$/);
 });
