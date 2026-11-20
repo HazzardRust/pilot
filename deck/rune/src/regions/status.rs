@@ -110,10 +110,10 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
             .enumerate()
             .fold(col().key(key).gap(space::within), |table, (i, slice)| {
                 // The page's columns, Slice then State then Yours; each cell one clipped line.
-                let mut line = row()
+                let mut line = theme::list_row(row())
                     .key(format!("{row_key}{i}"))
                     .gap(cols.gap)
-                    .child(
+                    .child(theme::content(
                         text(&slice.slice)
                             .key(format!("{row_key}{i}-slice"))
                             .font(type_::BODY)
@@ -121,8 +121,9 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                             .truncate()
                             .w(slice_w)
                             .min_w(slice_w),
-                    )
-                    .child(
+                        dark,
+                    ))
+                    .child(theme::content(
                         // The state takes what the row leaves, so it starts at one x on every row;
                         // branch, PR and yours trail it at the right, as the page has no such columns.
                         text(&slice.state)
@@ -132,22 +133,25 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                             .truncate()
                             .min_w(state_w)
                             .grow(1.0),
-                    );
+                        dark,
+                    ));
                 if let Some(branch) = &slice.branch {
-                    line = line.child(
+                    line = line.child(theme::content(
                         text(branch)
                             .key(format!("{row_key}{i}-branch"))
                             .font(type_::LABEL)
                             .color(t.text_secondary)
                             .truncate(),
-                    );
+                        dark,
+                    ));
                 }
                 if let Some(pr) = slice.pr {
-                    line = line.child(
+                    line = line.child(theme::content(
                         text(format!("#{pr}"))
                             .font(type_::LABEL)
                             .color(t.text_secondary),
-                    );
+                        dark,
+                    ));
                 }
                 if let Some(href) = &slice.href {
                     let mut yours = text("yours")
@@ -163,7 +167,10 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                     }
                     line = line.child(yours);
                 }
-                table.child(line)
+                // deck.css `.slices td`: a hairline under every row.
+                table
+                    .child(line)
+                    .child(theme::separator(dark).key(format!("{row_key}{i}-rule")))
             })
     };
 
@@ -175,12 +182,17 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                 col()
                     .key(format!("status-group-{g}"))
                     .gap(space::within)
-                    .child(text(&group.tab).font(type_::LABEL).color(t.text))
+                    .child(theme::content(
+                        text(&group.tab).font(type_::LABEL).color(t.text),
+                        dark,
+                    ))
                     .child(table_of(
                         format!("status-table-{g}"),
                         &format!("status-row-{g}-"),
                         &group.rows,
-                    )),
+                    ))
+                    // deck.css `.run-status`: a hairline under each tab's table.
+                    .child(theme::separator(dark).key(format!("status-group-{g}-rule"))),
             )
         },
     );

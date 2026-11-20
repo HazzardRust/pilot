@@ -210,9 +210,8 @@ fn ticket_row(
     dark: bool,
 ) -> El {
     let to = r.id.clone();
-    let mut line = row()
+    let mut line = theme::list_row(row())
         .key(format!("ticket-{}", r.id))
-        .h(space::row)
         .gap(space::within)
         .child(
             theme::control(text(&r.name), dark)
@@ -223,7 +222,10 @@ fn ticket_row(
                 .grow(1.0)
                 .on_press(move |s: &mut State| open_thread(s, &to)),
         )
-        .child(text(&r.state).font(type_::LABEL).color(t.text_secondary));
+        .child(theme::content(
+            text(&r.state).font(type_::LABEL).color(t.text_secondary),
+            dark,
+        ));
     if let Some(play) = continue_of(r, repo, local, pending, t, dark) {
         line = line.child(play);
     }
@@ -281,9 +283,14 @@ pub fn draw(
             );
         let mut fold = col().gap(space::within).child(header);
         if open.is_some_and(|set| set.contains(&g.colour)) {
-            fold = g.rows.iter().fold(fold, |fold, r| {
-                fold.child(ticket_row(r, &repo, local, pending, &t, dark))
-            });
+            // deck.css `.tickets-list li`: a hairline between items, none after the last.
+            let last = g.rows.len().saturating_sub(1);
+            for (i, r) in g.rows.iter().enumerate() {
+                fold = fold.child(ticket_row(r, &repo, local, pending, &t, dark));
+                if i != last {
+                    fold = fold.child(theme::separator(dark).key(format!("ticket-{}-rule", r.id)));
+                }
+            }
         }
         panel = panel.child(fold);
     }

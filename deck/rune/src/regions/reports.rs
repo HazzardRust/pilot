@@ -53,17 +53,19 @@ pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
         } else {
             "all hidden"
         };
-        return panel.child(
+        return panel.child(theme::content(
             text(none)
                 .key("reports-none")
                 .font(type_::LABEL)
                 .color(t.text_secondary),
-        );
+            dark,
+        ));
     }
-    for one in listed {
+    let last = listed.len() - 1;
+    for (i, one) in listed.into_iter().enumerate() {
         let (open, hidden) = (one.id.clone(), one.id.clone());
         panel = panel.child(
-            row()
+            theme::list_row(row())
                 .key(format!("report-{}", one.id))
                 .gap(space::within)
                 .child(
@@ -87,6 +89,10 @@ pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
                         }),
                 ),
         );
+        // deck.css `.reports-list li`: a hairline between items, none after the last.
+        if i != last {
+            panel = panel.child(theme::separator(dark).key(format!("report-{}-rule", one.id)));
+        }
     }
     panel
 }
