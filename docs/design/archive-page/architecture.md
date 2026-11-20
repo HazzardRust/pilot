@@ -2,6 +2,28 @@
 
 Ticket `itm_2fe34eca6f66`. Base `feat/ci-gate` (203bcfb6) on `origin`; PR target `pilot`.
 
+> **Resume** (parked red 2026-11-20, L8): built on the Rune deck after `rune-deck-ui` lands.
+>
+> **Drafted and stands:**
+> - §2 spec, with lines 5 (L2) and 3 (L9) locked.
+> - The data seam (`archive.mjs`, `ArchiveRow`, `ArchiveKind`).
+> - The record-kind slices S4–S10, which are written. Each is identical on HTML or Rune.
+>
+> **To re-cut against the landed Rune view API** (`GET /api/view`, `deck/view/*.mjs`):
+> - **S1:** the route and render become a `deck/view/archive.mjs` view module and a Rune Archive screen in the tab strip. It keeps `archive.mjs`, `tickets.mjs` and the month reader.
+> - **S2:** the detail becomes a Rune view.
+> - **S3:** sort, search and the kind filter move to Rust, with `pilot:rust-reviewer`.
+> - **Spec 1:** a Rune tab instead of a header link.
+> - **Spec 7:** the GET-only test now covers `/api/view`.
+>
+> S1–S3 have no slice files yet, and §8's rows for them describe the HTML cut.
+>
+> **Open dependencies** (Rune, unlanded on 2026-11-20):
+> - Rune S16 (header tab strip).
+> - Rune S18 (`deck/view/history.mjs` over `daySections`).
+>
+> Then: rebase, re-cut S1–S3, run `check-slices`, and post the gate1.
+
 ## 1. Problem
 
 The deck stores a lot on this machine and shows the user almost none of it. Out of sight today:
@@ -22,7 +44,7 @@ The user's words: "an entire separate ui page for me to view logging ... organis
 |---|---|---|
 | 1 | The deck has a separate Archive page at `GET /archive`. An "Archive" link in the header of every deck page leads to it. | A route test gets 200 on a scratch store. The link is on `/`, `/items` and `/thread/<id>`. The user opens it on the running deck. |
 | 2 | Closed tickets are listed, both from the live store and from the month files (`deck.archive-YYYY-MM.json`). Each row opens `/archive/<id>` with the ticket's thread replies, its plan and its closing report. | Scratch store with 3 closed tickets, 1 of them only in a month file: exactly 3 rows. Each detail page shows its report's title. |
-| 3 | Every local store has a view, under a kind the user can filter by (A2). The kinds:<br>• closed tickets<br>• closing reports<br>• hand-offs (`handoff`, `crew-handoff`)<br>• every other settled thread<br>• run records<br>• friction rows<br>• the classifier log<br>• usage windows<br>• memory samples<br>• audit reports<br>• the switch files (`alerts.json`, `usage-log.json`, `start-settings.json`)<br>• `deck.log` and `wrapper.log` | One seeded record of each kind appears under its kind, and a kind's filter shows exactly its seeded count. A coverage test fails on a thread kind or a store file that has neither a view nor a never-shown entry. |
+| 3 | Every local store has a view, under a kind the user can filter by (L9). The kinds:<br>• closed tickets<br>• closing reports<br>• hand-offs (`handoff`, `crew-handoff`)<br>• every other settled thread<br>• run records<br>• friction rows<br>• the classifier log<br>• usage windows<br>• memory samples<br>• audit reports<br>• the switch files (`alerts.json`, `usage-log.json`, `start-settings.json`)<br>• `deck.log` and `wrapper.log` | One seeded record of each kind appears under its kind, and a kind's filter shows exactly its seeded count. A coverage test fails on a thread kind or a store file that has neither a view nor a never-shown entry. |
 | 4 | Rows sort by any column, both ways. A search box filters rows on the page, with no request. | Client test: a date sort gives the exact order ascending and descending. Searching one ticket title leaves exactly its rows. |
 | 5 | Rows are grouped by date the way the home page groups settled threads (`daySections`: today, then each day, then each month). | Same headings and counts as `daySections` on the same dates. The user answered "Home page day sections" on itm_50eb0e5833dc. |
 | 6 | Every record reads as named fields: labels, local dates, bodies through the existing markdown renderer, never raw JSON. | Per-kind test: the kind's labels are present and no row holds `{"`. The user looks at it on the walkthrough. |
@@ -111,16 +133,15 @@ Deletion test: `store-archive` survives, because three callers need it, and the 
 - **L6** The server renders every row inside its day sections. The page script only sorts, filters and searches in the DOM.
   - *Rejected:* a JSON API with rendering in the client, which would make a second render path.
 - **L7** The run's ADR is `docs/adr/NNNN-archive-page.md`, cited as ADR NNNN and written in S10. The landing numbers it.
+- **L8** The Archive page is built on the Rune deck, after `rune-deck-ui` lands. The user decided this on itm_c499d801a364, after the pilot's pushback: "leave this red ticket until after rune has landed".
+  - *Overridden default:* building in today's HTML now. That would have shown stored records sooner, and the data layer (`archive.mjs` and the record-kind slices) is identical either way.
+- **L9** Every local store gets a view, except `deck.secret`, `deck-open.html` and `logs/*.log`. The user answered "Every store (default)" on itm_37996b6195d4.
+  - *Rejected:* the named kinds only, which would have been 3 fewer slices.
 
 ## 6. Assumed decisions
 
-- **A1 Built in today's HTML deck now, not after Rune.** *Posted as itm_c499d801a364.*
-  - *Default:* HTML now. Rune owns no `deck/ui` HTML file, and its L4 keeps the HTML deck. The `archiveRows` seam means a later Rune view is one module.
-  - *Trades:* Rune has no Archive page until then.
-  - *Rejected:* waiting the rest of the Rune run.
-- **A2 Every local store gets a view.** Exceptions: `deck.secret`, `deck-open.html` and `logs/*.log`.
-  - *Answered:* "Every store (default)", itm_37996b6195d4.
-  - *Rejected:* the named kinds only, which would have been 3 fewer slices.
+- **A1** is settled: see L8.
+- **A2** is settled: see L9.
 - **A3 Detail opens on its own route, `/archive/<id>`, not `/thread/<id>`.**
   - *Trades:* a second thread renderer.
   - *Rejected:* reusing `/thread/<id>`, whose GET clears a notice and so breaks spec 7.
@@ -141,7 +162,7 @@ Deletion test: `store-archive` survives, because three callers need it, and the 
 ## 7. Out of scope
 
 - Any write from the page: no reopening, deleting or replying.
-- The Rune view of the archive (A1).
+- The HTML deck view of the archive (L8).
 - The trace kind (A8).
 - Changing the Tickets tab.
 - Paging, export, and retention of the stores themselves.
