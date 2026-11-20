@@ -9,13 +9,13 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed bd509c0 (integrating)",
+      "state": "integrated",
       "branch": "slice/wait-deadlines-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s1"
     },
     {
       "slice": "S2",
-      "state": "implementing (2 check-references reds wait on S1)",
+      "state": "fixing (delta security WARN: quadratic sleep rescan kept)",
       "after": [
         "S1"
       ],
@@ -40,7 +40,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed b3bca994 (spawn-wait rule restored; awaits rebase on S1, gate, review)",
+      "state": "pushed c1c1bf7 (security APPROVE; integrating)",
       "after": [
         "S1"
       ],
@@ -48,8 +48,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s5"
     }
   ],
-  "next": "pilot integrate of S1 bd509c07 running (bg bdrz7642v); on integrated, send S2 (a42d34471e1be36fc) and S5 (af72df9c3db7b3411) the tip to rebase+gate+push; integrate both; then S3, S4.",
-  "updatedAt": "2026-11-20T12:10:29.515Z",
+  "next": "S5 integrate running (bjs1be020). S2: Sonnet fix implementer a44f2c6004b93e643 on slice/wait-deadlines-s2 for the kept quadratic-rescan MEDIUM; integrate S2 on its push and security verdict (ts APPROVE + latest sec). Then S3 from feat tip, S4.",
+  "updatedAt": "2026-11-20T12:23:01.980Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -127,6 +127,36 @@
       "agent": "pilot-implementer",
       "what": "S1's report went to main, not to the co-pilot that spawned it",
       "evidence": "coordinator relay of S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "vocabulary and home-directory guards rejected S2's verbatim fixture, found only by the full ~10-min gate, three runs",
+      "evidence": "S2 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's context was summarised twice mid-slice (about 140k tokens)",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's slice said after: – though its deny reason names S1's pilot wait-for; seam change 573d223b",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "always-loaded rules cap spent: 3499 of 3,500 after S5; npm test 469 s",
+      "evidence": "S5 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5's report went to main, not to the co-pilot that spawned it",
+      "evidence": "coordinator relay of S5 report",
       "size": 1
     }
   ]
