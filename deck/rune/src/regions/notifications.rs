@@ -1,5 +1,5 @@
-//! The Notifications panel, as the page's (`renderNotifications`, `deck/ui/js/notifications.mjs`): a
-//! header with the badge, the count of what the user has not seen; the closed threads' notices, each
+//! The Notifications panel, as the page's (`renderNotifications`, `deck/ui/js/notifications.mjs`):
+//! under the layout's header and count of what the user has not seen, the closed threads' notices, each
 //! with a × that clears it on the deck; then every open thread the user has not seen since the pilot
 //! last wrote on it, each with a × that marks it seen. Mark all seen does both. What was seen is the
 //! window's prefs (A4), kept against the pilot's write count so a new word shows the thread again.
@@ -16,9 +16,6 @@ use crate::theme::space;
 
 #[derive(Debug, Default)]
 pub struct Local;
-
-/// The panel's name in `Prefs::open_panels`.
-const PANEL: &str = "notifications";
 
 #[derive(Debug, Deserialize)]
 struct Notice {
@@ -113,8 +110,9 @@ fn line(
         )
 }
 
-/// Drawn from the window's prefs and not a `Local`: what was seen and whether the panel is open
-/// outlive the window, so they are `State::prefs`, which every press here writes back to disk.
+/// Drawn from the window's prefs and not a `Local`: what was seen outlives the window, so it is
+/// `State::prefs`, which every press here writes back to disk. The header, its count and whether
+/// the panel is open are the layout's (S20).
 pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
     // A region the view cannot be read as draws empty rather than taking the window down.
     let view = Notifications::deserialize(v).unwrap_or_default();
@@ -124,30 +122,8 @@ pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
         .iter()
         .filter(|one| shown(prefs, &one.id, one.writes))
         .collect();
-    let count = view.notices.len() + unseen.len();
-    let is_open = prefs.open_panels.contains(PANEL);
-
-    let mut header = row()
-        .key("notifications-header")
-        .gap(space::within)
-        .role("button")
-        .on_press(|s: &mut State| {
-            if !s.prefs.open_panels.remove(PANEL) {
-                s.prefs.open_panels.insert(PANEL.to_string());
-            }
-            keep(&s.prefs);
-        })
-        .child(text("Notifications").font(type_::BODY).color(t.text));
-    if count > 0 {
-        header = header.child(
-            text(count.to_string())
-                .key("notifications-badge")
-                .font(type_::LABEL)
-                .color(t.text),
-        );
-    }
-    let mut panel = col().key("notifications").gap(space::within).child(header);
-    if !is_open || count == 0 {
+    let mut panel = col().key("notifications").gap(space::within);
+    if view.notices.is_empty() && unseen.is_empty() {
         return panel;
     }
 

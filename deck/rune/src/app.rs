@@ -4,9 +4,11 @@ use rune::tok::{self, type_};
 use rune::{AppSpec, Cx, El, Tx, Waker, col, text};
 
 use crate::client::{Client, Query, View};
+use crate::layout;
 use crate::live::{self, Feed};
 use crate::prefs::{self, Prefs};
 use crate::regions::{self, Locals};
+use crate::theme::space;
 
 #[derive(Debug, Default)]
 pub struct State {
@@ -19,6 +21,8 @@ pub struct State {
     pub down: bool,
     /// What the live reader leaves for `poll`; none until `setup` starts it.
     pub live: Option<live::Inbox>,
+    /// A panel resize in hand.
+    pub layout: layout::Local,
 }
 
 impl State {
@@ -90,13 +94,18 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
     fed | settled | sent | replied | usage
 }
 
-/// The screen's region slots, top to bottom; a stub region draws nothing until its slice.
+/// The window: the side strips around the centre column (`layout`).
 pub fn view(s: &State, cx: &mut Cx<State>) -> El {
+    layout::strips(s, cx)
+}
+
+/// The centre column's region slots, top to bottom; the side panels are `layout`'s.
+pub fn center(s: &State, cx: &mut Cx<State>) -> El {
     let t = tok::theme(cx.system_dark());
     let none = serde_json::Value::Null;
     let region = |name: &str| s.view.regions.get(name).unwrap_or(&none);
     let r = &s.regions;
-    let mut screen = col().w_full().h_full().fill(t.bg).padding(16.0).gap(16.0);
+    let mut screen = col().gap(space::between);
     if s.down {
         screen = screen.child(
             text("deck not running")
@@ -107,25 +116,8 @@ pub fn view(s: &State, cx: &mut Cx<State>) -> El {
     screen
         .child(regions::usage::draw(region("usage"), &r.usage, cx))
         .child(regions::tabs::draw(region("tabs"), &r.tabs, cx))
-        .child(regions::notifications::draw(
-            region("notifications"),
-            &s.prefs,
-            cx,
-        ))
         .child(regions::queue::draw(region("queue"), &r.queue, cx))
         .child(regions::thread::draw(region("thread"), &r.thread, cx))
         .child(regions::reply::draw(region("reply"), &r.reply, cx))
         .child(regions::history::draw(region("history"), &r.history, cx))
-        .child(regions::chat::draw(region("chat"), &r.chat, cx))
-        .child(regions::status::draw(region("status"), &r.status, cx))
-        .child(regions::graph::draw(region("graph"), &r.graph, cx))
-        .child(regions::agents::draw(region("agents"), &r.agents, cx))
-        .child(regions::tickets::draw(
-            region("tickets"),
-            &r.tickets,
-            &s.prefs,
-            cx,
-        ))
-        .child(regions::reports::draw(region("reports"), &s.prefs, cx))
-        .child(regions::strip::draw(region("strip"), &r.strip, cx))
 }
