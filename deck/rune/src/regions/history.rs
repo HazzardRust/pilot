@@ -155,6 +155,13 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     // A region the view cannot be read as draws empty rather than taking the window down.
     let history = History::deserialize(v).unwrap_or_default();
     let mut region = col().key("history").w_full().gap(space::between);
+    if history.runs.is_empty() && history.days.is_empty() {
+        return region.child(theme::empty(
+            "No finished threads yet.",
+            "history-none",
+            cx.system_dark(),
+        ));
+    }
     if !history.runs.is_empty() {
         let runs = history
             .runs

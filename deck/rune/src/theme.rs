@@ -383,6 +383,17 @@ pub fn content(el: El, dark: bool) -> El {
     el.selectable(true).selection_color(roles(dark).selection)
 }
 
+/// A region with nothing in it: one quiet sentence under `key`, never a blank (DESIGN.md §5).
+pub fn empty(sentence: &str, key: &str, dark: bool) -> El {
+    content(
+        rune::text(sentence)
+            .key(key)
+            .font(rune::tok::type_::LABEL)
+            .color(rune::tok::theme(dark).text_secondary),
+        dark,
+    )
+}
+
 /// Markdown content: selectable, highlighted in the selection colour.
 pub fn markdown(source: impl Into<String>, dark: bool) -> El {
     let style = MarkdownStyle::neutral(dark).selection(roles(dark).selection);

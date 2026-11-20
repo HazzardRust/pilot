@@ -6,7 +6,7 @@
 //! lives here only, never on disk, and a live view never touches it.
 
 use rune::tok::{self, type_};
-use rune::{Cx, El, ScrollSpec, TextEdit, Tx, col, el, text, text_input};
+use rune::{Cx, El, ScrollSpec, TextEdit, Tx, col, text, text_input};
 use serde::Deserialize;
 
 use crate::act::{self, Action};
@@ -82,14 +82,15 @@ pub fn answered(c: &mut Local, key: &str, refused: Option<String>) {
 }
 
 pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
-    // No deck on this page, or a view that cannot be read: nothing, never a dead window.
+    let dark = cx.system_dark();
+    // No deck on this page, or a view that cannot be read: a sentence, never a dead window.
+    let none = || col().child(theme::empty("No chat open.", "chat-none", dark));
     let Ok(chat) = Chat::deserialize(v) else {
-        return el();
+        return none();
     };
     let Some(id) = chat.id else {
-        return el();
+        return none();
     };
-    let dark = cx.system_dark();
     let (t, k) = (tok::theme(dark), theme::tokens(dark));
 
     let mut messages = col()

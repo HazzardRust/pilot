@@ -255,8 +255,11 @@ pub fn draw(
     let view = Tickets::deserialize(v).unwrap_or_default();
     let dark = cx.system_dark();
     let t = tok::theme(dark);
+    const NONE: &str = "No tickets yet.";
     let Some(repo) = view.repo else {
-        return col().key("tickets");
+        return col()
+            .key("tickets")
+            .child(theme::empty(NONE, "tickets-none", dark));
     };
     let add = repo.clone();
     let mut panel = col().key("tickets").gap(space::between).child(pressing(
@@ -293,6 +296,9 @@ pub fn draw(
             }
         }
         panel = panel.child(fold);
+    }
+    if view.groups.is_empty() {
+        panel = panel.child(theme::empty(NONE, "tickets-none", dark));
     }
     panel
 }

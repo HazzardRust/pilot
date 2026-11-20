@@ -4,7 +4,7 @@
 //! tried again after `BACKOFF`; nothing polls the view on a timer.
 
 use std::io::BufRead;
-use std::sync::{Arc, Mutex, PoisonError, Weak};
+use std::sync::{Arc, Condvar, Mutex, PoisonError, Weak};
 use std::time::Duration;
 
 use rune::Waker;
@@ -32,7 +32,31 @@ type Asked = Arc<Mutex<Query>>;
 
 /// The newest `Feed` the reader left for the window; an older one it replaces is never drawn.
 #[derive(Debug, Clone, Default)]
-pub struct Inbox(Slotted, Asked, Arc<Mutex<Option<Fetcher>>>);
+pub struct Inbox(Slotted, Asked, Arc<Mutex<Option<Fetcher>>>, Arc<Nudge>);
+
+/// The Retry control's word to a reader waiting out its backoff: try now.
+#[derive(Debug, Default)]
+struct Nudge {
+    rung: Mutex<bool>,
+    wake: Condvar,
+}
+
+impl Nudge {
+    fn ring(&self) {
+        *self.rung.lock().unwrap_or_else(PoisonError::into_inner) = true;
+        self.wake.notify_all();
+    }
+
+    /// Waits out `wait`, or less if rung; whether it was rung.
+    fn wait(&self, wait: Duration) -> bool {
+        let rung = self.rung.lock().unwrap_or_else(PoisonError::into_inner);
+        let (mut rung, _) = self
+            .wake
+            .wait_timeout_while(rung, wait, |rung| !*rung)
+            .unwrap_or_else(PoisonError::into_inner);
+        std::mem::take(&mut *rung)
+    }
+}
 
 /// A feed with the query it was read for (a `Down` is for none), so one read for a query the
 /// window has since left is never drawn, however late it lands.
@@ -71,6 +95,12 @@ impl Inbox {
         }
     }
 
+    /// Reconnects at once: a reader sleeping out its backoff tries now (spec 10 still holds, the
+    /// backoff stays for every failure nobody pressed Retry on).
+    pub fn retry(&self) {
+        self.3.ring();
+    }
+
     /// The newest feed, unless it was read for a query other than the one now asked.
     pub fn take(&self) -> Option<Feed> {
         let (read_for, feed) = self
@@ -97,9 +127,10 @@ pub fn start(client: Client, query: Query, wake: Waker) -> Inbox {
     });
     let asked = inbox.1.clone();
     let slot = Arc::downgrade(&inbox.0);
+    let nudge = inbox.3.clone();
     let spawned = std::thread::Builder::new()
         .name("pilot-deck-live".into())
-        .spawn(move || follow(&client, &asked, &slot, &*wake));
+        .spawn(move || follow(&client, &asked, &slot, &nudge, &*wake));
     if let Err(err) = spawned {
         eprintln!("pilot-deck: the live reader did not start: {err}");
     }
@@ -151,6 +182,7 @@ fn follow(
     client: &Client,
     asked: &Asked,
     slot: &Slot,
+    nudge: &Nudge,
     wake: &(dyn Fn() + Send + Sync),
 ) -> Option<()> {
     let mut failures = 0;
@@ -174,8 +206,12 @@ fn follow(
         }
         // The stream ended or never opened: the daemon is gone until a reconnect says otherwise.
         put(slot, asked, None, Feed::Down, wake)?;
-        std::thread::sleep(BACKOFF[failures]);
-        failures = (failures + 1).min(BACKOFF.len() - 1);
+        if nudge.wait(BACKOFF[failures]) {
+            // Retry was pressed: try again from the shortest wait.
+            failures = 0;
+        } else {
+            failures = (failures + 1).min(BACKOFF.len() - 1);
+        }
     }
 }
 
@@ -188,6 +224,25 @@ mod tests {
             ticket: Some(id.into()),
             ..Query::default()
         }
+    }
+
+    #[test]
+    fn a_retry_ends_the_wait_it_finds_the_reader_in() {
+        let nudge = Arc::new(Nudge::default());
+        let ringer = nudge.clone();
+        let start = std::time::Instant::now();
+        let ringing = std::thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(50));
+            ringer.ring();
+        });
+
+        assert!(nudge.wait(Duration::from_secs(30)), "rung, not timed out");
+        assert!(start.elapsed() < Duration::from_secs(5));
+        ringing.join().unwrap();
+        assert!(
+            !nudge.wait(Duration::from_millis(10)),
+            "a ring answers one wait"
+        );
     }
 
     #[test]

@@ -329,5 +329,12 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         .fold(col().w_full(), |lines, (i, l)| {
             lines.child(state_line(i, l, &t, ui.text_secondary, dark))
         });
+    if queue.cards.is_empty() && queue.ended.is_none() {
+        region = region.child(theme::empty(
+            "Nothing is waiting on you.",
+            "queue-none",
+            dark,
+        ));
+    }
     region.child(cards).child(lines)
 }
