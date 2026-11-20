@@ -143,6 +143,17 @@ fn every_colour_is_deck_css() {
             );
         }
         close(t.accent.plain, [text; 3], "accent.plain is the text colour");
+        // The semantic roles are these same colours under a role's name (assumed A-R1).
+        let r = theme::roles(dark);
+        close(r.on_surface, [text; 3], "on_surface is the text colour");
+        close(r.primary, rgb(t.accent.blue), "primary is the blue accent");
+        close(r.error, rgb(t.accent.red), "error is the red accent");
+        close(r.hover, [text; 3], "hover tints with the text colour");
+        close(
+            r.selection,
+            rgb(t.accent.blue),
+            "selection tints with the primary",
+        );
     }
 }
 

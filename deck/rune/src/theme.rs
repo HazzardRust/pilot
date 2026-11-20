@@ -4,8 +4,8 @@
 //! way the browser mixes it, over the page's text colour (black on light, white on dark), and
 //! `light-dark(a, b)` picks one by mode. `tests/theme.rs` reads deck.css and compares every value.
 
-use rune::Color;
 use rune::color::{srgb_decode, srgb_encode};
+use rune::{Color, Cursor, El, el};
 
 /// `#rrggbb` as the colour Rune draws (linear, from sRGB bytes).
 fn hex(rgb: u32) -> Color {
@@ -135,6 +135,89 @@ pub fn tokens(dark: bool) -> Tokens {
             line: 1.6,
         },
     }
+}
+
+/// The semantic colour roles of deck/DESIGN.md §4, each one of the colours above under a role's
+/// name (assumed A-R1: the palette is deck.css's until the user answers). Every role lives here so
+/// a design-tool export can drive them.
+#[derive(Debug, Clone, Copy)]
+pub struct Roles {
+    /// The system background.
+    pub surface: Color,
+    /// Text on it.
+    pub on_surface: Color,
+    pub primary: Color,
+    pub accent: Color,
+    pub error: Color,
+    /// A control's hover tint: the text colour at 7%.
+    pub hover: Color,
+    /// Selected text's highlight: the primary at 30%.
+    pub selection: Color,
+}
+
+pub fn roles(dark: bool) -> Roles {
+    let t = tokens(dark);
+    let on_surface = t.accent.plain;
+    Roles {
+        surface: if dark { Color::BLACK } else { Color::WHITE },
+        on_surface,
+        primary: t.accent.blue,
+        accent: t.accent.yellow,
+        error: t.accent.red,
+        hover: on_surface.alpha(0.07),
+        selection: t.accent.blue.alpha(0.30),
+    }
+}
+
+/// Corner radii, in px.
+#[allow(non_upper_case_globals)]
+pub mod radius {
+    pub const button: f32 = 4.0;
+    pub const chip: f32 = 2.0;
+
+    /// A pill is half its height.
+    pub fn pill(height: f32) -> f32 {
+        height / 2.0
+    }
+}
+
+/// Fixed sizes of the side-bar layout (DESIGN.md §4b), in px.
+#[allow(non_upper_case_globals)]
+pub mod size {
+    pub const titlebar: f32 = 32.0;
+    pub const icon_bar: f32 = 48.0;
+    pub const icon: f32 = 24.0;
+    pub const pane_head: f32 = 22.0;
+    pub const row: f32 = 22.0;
+    pub const side_min: f32 = 170.0;
+    pub const side_default: f32 = 300.0;
+    pub const handle: f32 = 4.0;
+}
+
+/// A control says it is clickable (DESIGN.md §3): a text-colour tint on hover, the pointer cursor,
+/// the button's corner, a Tab stop and a visible keyboard focus ring. Rune eases the tint itself.
+pub fn control(el: El, dark: bool) -> El {
+    let r = roles(dark);
+    el.hover(r.hover)
+        .focusable(true)
+        .cursor(Cursor::Pointer)
+        .radius(radius::button)
+        .focus_ring(2.0, 1.0, r.primary)
+}
+
+/// A hairline: 1 px, in the rule colour, as wide as its parent.
+pub fn separator(dark: bool) -> El {
+    el().w_full().h(1.0).fill(tokens(dark).rule)
+}
+
+/// A vertical hairline: 1 px, in the rule colour, as tall as its parent.
+pub fn separator_vertical(dark: bool) -> El {
+    el().w(1.0).h_full().fill(tokens(dark).rule)
+}
+
+/// Content text is selectable, highlighted in the selection colour.
+pub fn content(el: El, dark: bool) -> El {
+    el.selectable(true).selection_color(roles(dark).selection)
 }
 
 /// Springs, never durations and easings: each settles in well under 300 ms (L10).

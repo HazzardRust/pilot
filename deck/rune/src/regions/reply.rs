@@ -230,12 +230,8 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     // The press that is out, or the option whose confirm is showing, draws pressed in the frame of
     // its press, before the deck answers (spec 6c).
     let btn = |label: &str, key: String, pressed: bool| {
-        button(
-            label,
-            key,
-            t.text,
-            if pressed { k.state.pilot } else { k.rule },
-        )
+        let fill = if pressed { k.state.pilot } else { k.rule };
+        theme::control(button(label, key, t.text, fill), dark)
     };
     let pressed = |label: &str| local.sent.as_deref() == Some(label);
     let id = reply.id;

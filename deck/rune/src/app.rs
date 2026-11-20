@@ -65,6 +65,12 @@ pub fn spec() -> AppSpec<State> {
     }
 }
 
+/// The window's app: `spec`, with Tab and Shift+Tab visiting every focusable control, as Rune
+/// visits only text fields and lists by default.
+pub fn app() -> rune::App<State> {
+    rune::App::new(spec()).tab_visits_controls(true)
+}
+
 /// Starts the live reader on the window's query; a client refused here leaves `load`'s word.
 pub fn setup(s: &mut State, wake: Waker) {
     s.pending.wake = Some(wake.clone());

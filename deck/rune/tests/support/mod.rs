@@ -11,7 +11,7 @@ use std::sync::Mutex;
 use pilot_deck::act::Acted;
 use pilot_deck::app::{self, State};
 use pilot_deck::client::Client;
-use rune::{App, Env, Runtime};
+use rune::{Env, Runtime};
 use serde_json::{Value, json};
 
 pub struct Scratch {
@@ -144,7 +144,7 @@ pub fn live_window(deck: &Scratch) -> Runtime<State> {
             vars.iter()
                 .for_each(|(name, value)| std::env::set_var(name, value))
         };
-        let made = App::new(app::spec()).headless_runtime((1280.0, 800.0), Env::new(true, 1.0));
+        let made = app::app().headless_runtime((1280.0, 800.0), Env::new(true, 1.0));
         unsafe { vars.iter().for_each(|(name, _)| std::env::remove_var(name)) };
         made
     };

@@ -132,7 +132,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
         } else {
             t.text_secondary
         };
-        let mut one = row()
+        let mut one = theme::control(row(), dark)
             .key(format!("tab-{i}"))
             .role("button")
             .gap(space::within)
@@ -153,7 +153,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             .on_press(move |s: &mut State| select(s, run.clone())),
         )
     });
-    let plus = row()
+    let plus = theme::control(row(), dark)
         .key("tab-add")
         .role("button")
         .label("Add a deck by path")
@@ -180,7 +180,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
         .placeholder("Absolute path of a directory", k.quiet)
         .on_edit(|s: &mut State| s.regions.tabs.adding.get_or_insert_with(TextEdit::default))
         .on_submit(|s: &mut State, _| add(s));
-    let mut add_button = row()
+    let mut add_button = theme::control(row(), dark)
         .key(ADD)
         .role("button")
         .child(text("Add").font(type_::BODY).color(t.text));

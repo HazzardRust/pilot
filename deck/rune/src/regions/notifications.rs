@@ -112,6 +112,7 @@ fn line(
     title: &str,
     id: &str,
     t: &tok::Theme,
+    dark: bool,
     sent: bool,
     drop: impl Fn(&mut State) + 'static,
 ) -> El {
@@ -121,7 +122,7 @@ fn line(
         .key(key)
         .gap(space::within)
         .child(
-            text(title)
+            theme::control(text(title), dark)
                 .font(type_::BODY)
                 .color(t.text)
                 .role("link")
@@ -130,7 +131,7 @@ fn line(
                 .on_press(move |s: &mut State| open_thread(s, &to)),
         )
         .child(
-            text("×")
+            theme::control(text("×"), dark)
                 .key(clear)
                 .font(type_::BODY)
                 .color(t.text_secondary)
@@ -170,7 +171,7 @@ pub fn draw(
         .map(|one| (one.id.clone(), one.writes))
         .collect();
     panel = panel.child(
-        text("Mark all seen")
+        theme::control(text("Mark all seen"), dark)
             .key("notifications-mark-all")
             .font(type_::LABEL)
             .color(t.text_secondary)
@@ -195,6 +196,7 @@ pub fn draw(
             &notice.title,
             &notice.id,
             &t,
+            dark,
             pending.is_sent(&sent),
             move |s| clear(s, &key, DeckAction::ClearNotice { id: id.clone() }),
         ));
@@ -207,6 +209,7 @@ pub fn draw(
             &one.title,
             &one.id,
             &t,
+            dark,
             false,
             move |s| {
                 mark_seen(&mut s.prefs, &id, writes);

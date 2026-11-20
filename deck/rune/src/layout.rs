@@ -180,7 +180,7 @@ fn panel(s: &State, name: &'static str, label: &str, cx: &mut Cx<State>) -> El {
     let t = tok::theme(dark);
     let open = is_open(&s.prefs, name);
     let (w, h) = size(&s.prefs, name);
-    let head = row()
+    let head = theme::control(row(), dark)
         .key(format!("panel-{name}-head"))
         .w(w)
         .gap(space::within)

@@ -74,8 +74,9 @@ pub fn choose(s: &mut State, ticket: &str) {
 pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     // A region the view cannot be read as draws empty rather than taking the window down.
     let status = Status::deserialize(v).unwrap_or_default();
-    let t = tok::theme(cx.system_dark());
-    let font = theme::tokens(cx.system_dark()).font;
+    let dark = cx.system_dark();
+    let t = tok::theme(dark);
+    let font = theme::tokens(dark).font;
     let cols = space::cols;
     let state_w = cols.state_ch * font.size * ADVANCE;
     let slice_w = cols.slice_ch * font.size * ADVANCE;
@@ -90,8 +91,9 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
             };
             let id = ticket.id.clone();
             selector.child(
-                row()
+                theme::control(row(), dark)
                     .key(format!("status-ticket-{i}"))
+                    .role("button")
                     .on_press(move |s: &mut State| choose(s, &id))
                     .child(
                         text(format!("{} {}", ticket.lane, ticket.name))
@@ -155,9 +157,8 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                     // The page's link goes to the thread; a link the view shaped otherwise opens nothing.
                     if let Some(id) = href.strip_prefix("/thread/").filter(|id| !id.is_empty()) {
                         let id = id.to_string();
-                        yours = yours
+                        yours = theme::control(yours, dark)
                             .role("link")
-                            .focusable(true)
                             .on_press(move |s: &mut State| open_thread(s, &id));
                     }
                     line = line.child(yours);
