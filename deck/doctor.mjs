@@ -22,6 +22,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
+import { bearer } from '../hooks/lib/deck-secret.js';
 import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
 import { MIN_MODS_VERSION, claudeVersion } from '../scripts/handoff.mjs';
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
@@ -169,6 +170,74 @@ function hostRow({ git, hostFor, onPath, cwd }) {
   return signedIn
     ? { name, verdict: 'pass', detail: `${which}: ${cli} signed in` }
     : { name, verdict: 'fail', detail: `${which}: ${cli} is not signed in`, steps: [`run \`${cli} auth login\``] };
+}
+
+/** A design path in a ticket body; its segment is held to `SLUG` before it is used anywhere. */
+const DESIGN_PATH = /docs\/design\/([^/\s]+)\//g;
+/** The most held slugs one row reads (each costs a few `git ls-remote` and Host calls); past it, the rest are named unread. */
+const MAX_HELD = 20;
+/** How long the deck has to answer the open-ticket read, as `pilot base` bounds its own. */
+const VIEW_TIMEOUT_MS = 5000;
+
+/**
+ * The slugs this deck holds (two-devices L5): each `docs/design/<slug>/` an open ticket's body names, `SLUG`-checked,
+ * once each in the order named, minus the slugs of this deck's own run records, which are its runs and no clash.
+ */
+export function heldSlugs(view) {
+  // The deck's answer is data: anything not an array holds nothing, so a malformed view never stops `start` (A2).
+  const listOf = (value) => (Array.isArray(value) ? value : []);
+  const own = new Set(listOf(view?.records).map((record) => record?.slug));
+  const held = new Set();
+  for (const ticket of listOf(view?.open)) {
+    const body = ticket?.body;
+    if (typeof body !== 'string') continue;
+    for (const [, slug] of body.matchAll(DESIGN_PATH)) {
+      if (slug.length <= MAX_SLUG_CHARS && SLUG.test(slug) && !own.has(slug)) held.add(slug);
+    }
+  }
+  return [...held];
+}
+
+/** The deck's `/api/tickets?open=1` view for `cwd`, or null when the deck does not answer within the bound. */
+export async function readOpenView(cwd, url = deckUrl()) {
+  try {
+    const response = await fetch(`${url}/api/tickets?repo=${encodeURIComponent(cwd)}&open=1`, { headers: bearer(), signal: AbortSignal.timeout(VIEW_TIMEOUT_MS) });
+    return response.ok ? await response.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The slugs row (two-devices spec 2b, 4): `fail` with a step per clash when a held slug is taken where another
+ * device would see it, `cannot tell` when the deck or a remote could not be read, else `pass`. `view` is
+ * `readOpenView`'s answer; null is a deck not read. Nothing held reads no git and no Host.
+ */
+export function slugsRow({ view, git, hostFor, cwd = process.cwd() }) {
+  const name = 'slugs';
+  if (!view) return { name, verdict: 'cannot tell', detail: 'the deck did not answer, so the slugs it holds are unknown' };
+  const all = heldSlugs(view);
+  if (all.length === 0) return { name, verdict: 'pass', detail: 'no open ticket names a design slug' };
+  const held = all.slice(0, MAX_HELD);
+  const unread = all.length > held.length ? [`${all.length - held.length} more slugs not read`] : [];
+  let host = null;
+  try {
+    host = hostFor(cwd, { git });
+  } catch (error) {
+    unread.push(`host: ${error.message}`);
+  }
+  const steps = [];
+  for (const slug of held) {
+    const { clashes, unread: why } = slugClashes(slug, { git, host });
+    for (const clash of clashes) {
+      steps.push(`${slug} is taken: ${'ref' in clash ? clash.ref : `PR #${clash.pr} from ${clash.head}`}; rename the run before it starts`);
+    }
+    if (why) unread.push(`${slug}: ${why}`);
+  }
+  const free = `${held.length} held: ${held.join(', ')}`;
+  if (steps.length) return { name, verdict: 'fail', detail: free, steps: [...steps, ...unread.map((line) => `cannot tell ${line}`)] };
+  if (unread.length) return { name, verdict: 'cannot tell', detail: `${free}; ${unread.join('; ')}` };
+  return { name, verdict: 'pass', detail: `${free}, none taken` };
 }
 
 /** The scanner states that need nothing done; `not-excluded` needs the admin step; `unknown` cannot tell. */
@@ -427,8 +496,9 @@ export async function checkAll({
   cwd = process.cwd(),
   git = (args) => gitAt(cwd, ...args),
   hostFor = hostForDefault,
+  readView = () => readOpenView(cwd, url),
 } = {}) {
-  const found = await probe(url);
+  const [found, view] = await Promise.all([probe(url), readView()]);
   let settings;
   try {
     settings = readSettings();
@@ -442,6 +512,7 @@ export async function checkAll({
     storeRow({ storeDir, canWrite }),
     reachRow({ reach: readReach(), enabled: readEnabled() }),
     hostRow({ git, hostFor, onPath, cwd }),
+    slugsRow({ view, git, hostFor, cwd }),
     ...CLIS.map((cmd) => cliRow(cmd, onPath)),
     allowRow({ readSettings }),
     modsRow({ version: claudeVersion(run), settings, env }),
@@ -450,7 +521,7 @@ export async function checkAll({
 }
 
 /** `<verdict>  <name>: <detail>`, each step indented below it. */
-function rowLine({ name, verdict, detail, steps = [] }) {
+export function rowLine({ name, verdict, detail, steps = [] }) {
   return [`${verdict}  ${name}: ${detail}`, ...steps.map((step) => `    ${step}`)].join('\n');
 }
 

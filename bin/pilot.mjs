@@ -46,7 +46,7 @@ import { main as landing } from '../deck/landing-wait.mjs';
 import { main as checks } from '../scripts/checks-cli.mjs';
 import { main as sync } from '../scripts/sync.mjs';
 import { main as restack } from '../scripts/stack.mjs';
-import { searchPathOnly } from '../scripts/pilot-branch.mjs';
+import { git as gitAt, searchPathOnly } from '../scripts/pilot-branch.mjs';
 import { main as worktrees } from '../scripts/worktrees.mjs';
 import { main as liveRoot } from '../scripts/live-root.mjs';
 import { parseVerdictMessage, writeVerdicts } from '../scripts/verdicts.mjs';
@@ -56,7 +56,8 @@ import { PLUGIN_VERSION } from '../deck/version.mjs';
 import { main as listTickets } from '../deck/tickets.mjs';
 import { main as listProcesses, processTable } from '../deck/procs.mjs';
 import { main as collectGarbage, deckPidNow, landSweep } from '../deck/gc.mjs';
-import { main as doctor } from '../deck/doctor.mjs';
+import { main as doctor, readOpenView, rowLine, slugsRow } from '../deck/doctor.mjs';
+import { hostFor as hostForDefault } from '../deck/host.mjs';
 import { main as restoreStore } from '../deck/store-restore.mjs';
 import { main as waitForReply } from '../deck/wait.mjs';
 import { main as waitForFile } from '../deck/wait-for.mjs';
@@ -253,13 +254,19 @@ const shellWord = (word) => (/^[\w@%+=:,./-]+$/.test(word) ? word : `'${word.rep
  * `pilot start` (spec 13, L12, L15): one detached window through S9's `openPilot`, the one window
  * builder, and back to the prompt at once, holding no child. Off Windows it prints the `claude`
  * line to run instead. `deps` is `openPilot`'s, for a test's recorder and scratch home.
+ *
+ * First it prints the `slugs` row when it is not `pass` (two-devices spec 4): a warning on stderr, never a refusal
+ * and never an exit code (A2, A4). `readView`, `git`, `hostFor` and `openPilot` are a test's stubs.
  */
-function start(args, { platform = hostPlatform(), home, ...deps } = {}) {
+async function start(args, { platform = hostPlatform(), home, readView, git, hostFor = hostForDefault, openPilot: open = openPilot, ...deps } = {}) {
   if (args.length) {
     process.stderr.write('usage: pilot start\n');
     process.exitCode = 2;
     return undefined;
   }
+  const cwd = process.cwd();
+  const slugs = slugsRow({ view: await (readView ?? (() => readOpenView(cwd)))(), git: git ?? ((argv) => gitAt(cwd, ...argv)), hostFor, cwd });
+  if (slugs.verdict !== 'pass') process.stderr.write(`${rowLine(slugs)}\n`);
   const reach = deps.reach ?? readReach({ home });
   try {
     if (platform !== 'win32') {
@@ -268,7 +275,7 @@ function start(args, { platform = hostPlatform(), home, ...deps } = {}) {
       console.log([...env, ...['claude', ...startArgs(reach, { home })].map(shellWord)].join(' '));
       return undefined;
     }
-    const child = openPilot(process.cwd(), { ...deps, platform, home, reach });
+    const child = open(cwd, { ...deps, platform, home, reach });
     // A spawn that fails does so after this returns; said, never thrown at a prompt already given back.
     child.on('error', (err) => {
       process.stderr.write(`pilot start: could not open the window: ${err.message}\n`);
