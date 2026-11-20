@@ -3,13 +3,15 @@
   "feature": "Nothing waiting on you is hidden",
   "ticket": "itm_31849c6b5525",
   "branch": "feat/nothing-hidden",
-  "base": "feat/ci-gate",
+  "base": "pilot",
   "worktree": "C:/Users/Hazzard/Projects/pilot-feat-nothing-hidden",
   "artefact": "docs/design/nothing-hidden/architecture.md",
   "slices": [
     {
       "slice": "S1",
-      "state": "planned"
+      "state": "integrated",
+      "branch": "slice/nothing-hidden-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-nothing-hidden-s1"
     },
     {
       "slice": "S2",
@@ -19,6 +21,19 @@
       ]
     }
   ],
-  "next": "A1 locked (in-hand first, others' gates+signoffs cards, rest counted fold); verdicts A1-A6 recorded and sent (A5 overturned). Architect committing and posting gate1 (8 locked, 2 slices, surface true); if none on deck, brief a fresh architect from pilot-design-nothing-hidden. After Sign off: short path, S1 Opus then S2 Sonnet. Also live: ci-gate QA posts gate2 after #128 CI on 8e50ef65.",
-  "updatedAt": "2026-11-20T01:45:34.426Z"
+  "next": "S1 pushed f70b7b93, typescript-reviewer approve; integrating. Then S2 (Sonnet) from the new feat tip, integrate, integrate --trial, walkthrough from S1's look (seed-nothing-hidden.mjs + look.mjs in scratchpad 153142c8), gate2 by main. Landing must number NNNN-nothing-hidden ADR.",
+  "updatedAt": "2026-11-20T07:28:48.895Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "replan refuses a signed ticket after a landing's re-cut because the hand-off committed docs/design/<slug>/run.json on feat; the deck's own record counts as a design change and forces a second Gate 1 press",
+      "size": 3000
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1 used 184k tokens/150 tool uses: selection gate 336 s run twice; testUtils.mjs silently redirects HOME so it cannot seed a scratch deck; deck --scratch has no item seed; brief.md's SPAWN_CEILING 13300 vs base 15195; slice evidence B5 (README lists NNNN ADR) cannot hold before landing",
+      "evidence": "S1 report, slice/nothing-hidden-s1 f70b7b93",
+      "size": 3
+    }
+  ]
 }
