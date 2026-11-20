@@ -17,7 +17,7 @@ use crate::theme::{self, space};
 const SEND: &str = "reply-press";
 
 /// A style's line in points: its own, or Rune's default of 1.25 × its size.
-fn line_height(style: rune::TextStyle) -> f32 {
+pub(crate) fn line_height(style: rune::TextStyle) -> f32 {
     if style.line_height > 0.0 {
         style.line_height
     } else {

@@ -7,9 +7,10 @@
 
 use crate::theme::type_;
 use rune::tok;
-use rune::{Cx, El, ScrollSpec, TextEdit, Tx, col, text, text_input};
+use rune::{Cx, El, ScrollSpec, TextEdit, Tx, col, row, text, text_input};
 use serde::Deserialize;
 
+use super::reply::line_height;
 use crate::act::{self, Action};
 use crate::app::State;
 use crate::theme::{self, space};
@@ -127,18 +128,40 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         );
     }
 
+    // The page's `<textarea rows="3">` and its Send button: three lines tall to start, growing past
+    // them as the reply box does; Enter sends too, Shift+Enter breaks the line.
+    let to = id.clone();
     let draft = text_input(&local.draft, type_::BODY)
         .key("chat-draft")
         .label("Message the pilot")
         .w_full()
         .placeholder("Say anything to the pilot.", k.quiet)
         .on_edit(|s: &mut State| &mut s.regions.chat.draft)
-        .on_submit(move |s: &mut State, _: &mut Tx| send(s, &id));
+        .on_submit(move |s: &mut State, _: &mut Tx| send(s, &id))
+        .wrap_anywhere()
+        .min_h(3.0 * line_height(type_::BODY) + 2.0 * space::pad)
+        .padding(space::pad)
+        .radius(theme::radius::button)
+        .fill(k.rule);
+    let send_button = theme::control(
+        row()
+            .key("chat-send")
+            .role("button")
+            .label("Send")
+            .padding(space::pad)
+            .border(1.0, k.rule)
+            .child(text("Send").font(type_::CAPTION).color(t.text)),
+        dark,
+    )
+    .self_start()
+    .disabled(local.sending())
+    .on_press(move |s: &mut State| send(s, &to));
     let mut panel = col()
         .key("chat")
         .gap(space::within)
         .child(messages)
-        .child(draft.color(t.text));
+        .child(draft.color(t.text))
+        .child(send_button);
     if let Some(reason) = &local.refused {
         panel = panel.child(theme::content(
             text(reason)
