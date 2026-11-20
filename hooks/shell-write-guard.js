@@ -99,7 +99,7 @@ function tokens(command) {
         if (op[0] === '<<' || op[0] === '<<-') heredoc = op[0];
         if (op[0] === '\n') i = skipBodies(command, i, pending.splice(0));
       } else {
-        if ('$`*?[~'.includes(c)) lit = false;
+        if ('$`*?['.includes(c) || (c === '~' && word === null)) lit = false; // bash expands `~` only at a word's start
         word = (word || '') + c;
         i++;
       }
