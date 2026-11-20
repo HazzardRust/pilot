@@ -61,7 +61,7 @@ async function coPilotItem(seen, repo) {
   const record = ticket
     ? '`GET /api/record?ticket=' + ticket + '&repo=' + encodeURIComponent(repo) + '`'
     : 'unknown: the deck named no co-pilot ticket for this directory';
-  return {
+  const item = {
     kind: 'crew-handoff',
     title: 'Handoff: pilot-co-pilot on ' + (ticket || 'ticket unknown') + ' paused itself at ' +
       tokens(seen.used) + ' tokens',
@@ -73,6 +73,9 @@ async function coPilotItem(seen, repo) {
       'Handoff failed: spawn a fresh co-pilot from the plan.',
     repo: repo,
   };
+  // The deck's own ticket id, so the successor's grant closes this item (crew-handoff-trace spec 5).
+  if (ticket) item[deck.STORED.field] = ticket;
+  return item;
 }
 
 /**
