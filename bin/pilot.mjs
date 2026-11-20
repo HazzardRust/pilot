@@ -46,7 +46,7 @@ import { main as landing } from '../deck/landing-wait.mjs';
 import { main as checks } from '../scripts/checks-cli.mjs';
 import { main as sync } from '../scripts/sync.mjs';
 import { main as restack } from '../scripts/stack.mjs';
-import { git as gitAt, searchPathOnly } from '../scripts/pilot-branch.mjs';
+import { searchPathOnly } from '../scripts/pilot-branch.mjs';
 import { main as worktrees } from '../scripts/worktrees.mjs';
 import { main as liveRoot } from '../scripts/live-root.mjs';
 import { parseVerdictMessage, writeVerdicts } from '../scripts/verdicts.mjs';
@@ -56,8 +56,7 @@ import { PLUGIN_VERSION } from '../deck/version.mjs';
 import { main as listTickets } from '../deck/tickets.mjs';
 import { main as listProcesses, processTable } from '../deck/procs.mjs';
 import { main as collectGarbage, deckPidNow, landSweep } from '../deck/gc.mjs';
-import { main as doctor, readOpenView, rowLine, slugsRow } from '../deck/doctor.mjs';
-import { hostFor as hostForDefault } from '../deck/host.mjs';
+import { main as doctor, slugsWarning } from '../deck/doctor.mjs';
 import { main as restoreStore } from '../deck/store-restore.mjs';
 import { main as waitForReply } from '../deck/wait.mjs';
 import { main as waitForFile } from '../deck/wait-for.mjs';
@@ -258,15 +257,15 @@ const shellWord = (word) => (/^[\w@%+=:,./-]+$/.test(word) ? word : `'${word.rep
  * First it prints the `slugs` row when it is not `pass` (two-devices spec 4): a warning on stderr, never a refusal
  * and never an exit code (A2, A4). `readView`, `git`, `hostFor` and `openPilot` are a test's stubs.
  */
-async function start(args, { platform = hostPlatform(), home, readView, git, hostFor = hostForDefault, openPilot: open = openPilot, ...deps } = {}) {
+async function start(args, { platform = hostPlatform(), home, readView, git, hostFor, openPilot: open = openPilot, ...deps } = {}) {
   if (args.length) {
     process.stderr.write('usage: pilot start\n');
     process.exitCode = 2;
     return undefined;
   }
   const cwd = process.cwd();
-  const slugs = slugsRow({ view: await (readView ?? (() => readOpenView(cwd)))(), git: git ?? ((argv) => gitAt(cwd, ...argv)), hostFor, cwd });
-  if (slugs.verdict !== 'pass') process.stderr.write(`${rowLine(slugs)}\n`);
+  const warning = await slugsWarning({ cwd, readView, git, hostFor });
+  if (warning !== null) process.stderr.write(`${warning}\n`);
   const reach = deps.reach ?? readReach({ home });
   try {
     if (platform !== 'win32') {

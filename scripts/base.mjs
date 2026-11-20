@@ -29,20 +29,12 @@
 import { execFileSync } from 'node:child_process';
 import { checksAt } from './checks.mjs';
 import { hostFor, hostOf } from '../deck/host.mjs';
-import { bearer } from '../hooks/lib/deck-secret.js';
 import { RUN_BASE, SLUG } from '../deck/runs.mjs';
-import { deckUrl } from '../deck/tools.mjs';
+import { readTickets } from '../deck/tickets.mjs';
 import { ensurePilotBranch, firstLine, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
 
-/** How long the deck has to answer before `pilot base` calls it not reached. */
-const TIMEOUT_MS = 5000;
-
 /** The deck's concluding feature for the repository at `cwd`, `{ ticket, slug, branch }` or null; throws when the deck does not answer. */
-const deckConcluding = (cwd) => async () => {
-  const response = await fetch(`${deckUrl()}/api/tickets?repo=${encodeURIComponent(cwd)}`, { headers: bearer(), signal: AbortSignal.timeout(TIMEOUT_MS) });
-  if (!response.ok) throw new Error(`it answered ${response.status}`);
-  return (await response.json()).concluding ?? null;
-};
+const deckConcluding = (cwd) => async () => (await readTickets(cwd)).concluding ?? null;
 
 /**
  * The chained line's ref and tip as `{ line }`, `{ note }` when origin lacks the branch, or null when the deck names

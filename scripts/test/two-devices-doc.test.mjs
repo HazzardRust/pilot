@@ -30,7 +30,7 @@ function numbered(block) {
  * `### Setting up a second device`) and every `pilot <verb>` it names in a code span. An absent section
  * gives three empty lists.
  */
-export function twoDevicesSection(text) {
+function twoDevicesSection(text) {
   const section = text.split(/^## Two devices, one repo\s*$/m)[1]?.split(/^## /m)[0] ?? '';
   const [rulesPart, ...subsections] = section.split(/^### /m);
   const setup = subsections.find((s) => /^Setting up a second device\s*$/m.test(s.split(/\r?\n/)[0])) ?? '';

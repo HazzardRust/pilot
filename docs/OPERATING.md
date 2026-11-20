@@ -74,10 +74,9 @@ what the two devices share, and nothing else (ADR NNNN):
 
 Two decks landing is already safe in git: `pilot land` fetches, re-merges once onto a `pilot` that moved, pushes
 without force, and on a second move stops and asks you to run it again. So the owner rule is about the queue: two decks
-must not cut the same slug. `pilot doctor slug <slug>` reads `origin` and the run remote live and prints a `clash` line
-for each `feat/<slug>` or `design/<slug>` branch and each open PR from one, exit 1, or `free <slug>`, exit 0; an
-unreachable remote or host reads `cannot tell`, exit 1, never free. The pilot runs it before it names a slug, and bare
-`pilot doctor` and `pilot start` print the same lines for the slugs this deck has queued.
+must not cut the same slug. `pilot doctor slug <slug>` says whether a slug is taken on either remote, never free when
+it cannot tell (`pilot help` has its output); the pilot runs it before it names a slug, and bare `pilot doctor` and
+`pilot start` check the slugs this deck has queued.
 
 ### Setting up a second device
 
@@ -89,7 +88,8 @@ On device 2, in PowerShell on Windows or your login shell elsewhere:
 2. Clone the repository, from the URL `git remote get-url origin` prints on device 1: `git clone <url>`, then `cd` into it.
 3. Set the same host as device 1, whose `pilot host` prints it: `pilot host <github|gitlab|none>`.
 4. Set the same run remote as device 1, whose `git config pilot.remote` prints it (nothing printed is `origin`):
-   `git config pilot.remote <name>`. Never `none` on either device: local run branches are invisible to the other, so
+   `git config pilot.remote <name>`, after `git remote add <name> <url>` when it is not `origin`, since a fresh clone
+   has only `origin`. Never `none` on either device: local run branches are invisible to the other, so
    `pilot doctor slug` cannot see the other device's `design/` branches.
 5. Sign in the CLIs on PATH: `gh auth status` (or `glab auth status` under `gitlab`) names your account, and `claude`
    starts signed in to the same account as device 1.
