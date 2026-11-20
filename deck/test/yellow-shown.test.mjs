@@ -40,7 +40,7 @@ test('a blocking question under a yellow ticket is drawn on the home page', (t) 
   assert.ok(listed(html, onRed), 'beside the ticket in hand\'s');
 });
 
-test('a question under a green ticket behind the one in hand stays hidden', (t) => {
+test('a question under a green ticket behind the one in hand is folded', (t) => {
   tempDeck(t);
   const ahead = aTicket('Ahead', 'green');
   const green = aTicket('Green', 'green');
@@ -50,5 +50,6 @@ test('a question under a green ticket behind the one in hand stays hidden', (t) 
 
   assert.equal(isBehind(behind, listItems()), true, 'L20 holds for every ticket that is not yellow');
   const html = home();
-  assert.ok(listed(html, onAhead) && !listed(html, behind), 'the green ticket\'s question waits behind the green one in hand (three-lanes spec 4)');
+  const [cards, fold] = html.split('<details class="fold">');
+  assert.ok(listed(cards, onAhead) && listed(fold ?? '', behind) && !listed(cards, behind), 'the green ticket\'s question waits behind the green one in hand, in the fold (three-lanes spec 4; nothing-hidden spec 1)');
 });
