@@ -463,6 +463,27 @@ fn the_frame_is_a_drag_band_with_the_content_below_it() {
         "the band drags nothing"
     );
     rt.pointer_up(x, y);
+    // The readout and the wordmark moved into the band (the user, 2026-11-21) do not take its press.
+    rt.update(|s, _| {
+        s.view.regions.insert(
+            "usage".into(),
+            serde_json::json!({ "ctx": 40, "session": 2, "weekly": 93 }),
+        );
+    });
+    rt.frame(1.5);
+    for key in ["brand", "usage-weekly"] {
+        let r = rects(&rt, key).0;
+        let (x, y) = (r[0] + r[2] / 2.0, r[1] + r[3] / 2.0);
+        rt.pointer_move(x, y);
+        rt.pointer_down(x, y);
+        assert_eq!(
+            rt.take_titlebar_action(),
+            Some(TitlebarAction::Drag),
+            "a press on {key} drags nothing"
+        );
+        rt.pointer_up(x, y);
+        rt.frame(2.0);
+    }
 
     let top = size::titlebar + space::pad;
     for key in ["strip-left", "centre"] {

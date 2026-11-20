@@ -68,7 +68,7 @@ fn the_figures_are_the_views_and_a_missing_one_is_unknown() {
 
     let shown = texts(&rt);
     for want in [
-        "ctx",
+        "pilot ctx",
         "19%",
         "session",
         "unknown",
@@ -89,7 +89,8 @@ fn rect(rt: &Runtime<State>, key: &str) -> [f32; 4] {
 }
 
 /// The walkthrough of 2026-11-21: the header sits at the page's top inset (deck.css `--top`,
-/// 40 px) under the title bar's rule, and the tabs 16 px under the readout, as the page's header.
+/// 40 px) under the title bar's rule; the user, 2026-11-21: the readout moves "in the black area at
+/// the top that is blank, along side a little brand of PILOT DECK", so the tabs lead the header.
 #[test]
 fn the_header_starts_at_the_pages_top_inset() {
     use pilot_deck::theme::size;
@@ -100,18 +101,25 @@ fn the_header_starts_at_the_pages_top_inset() {
         ]),
         ..State::default()
     });
-    let usage = rect(&rt, "usage");
     let rule = size::titlebar + 1.0;
-    assert!(
-        (usage[1] - rule - 40.0).abs() < 0.5,
-        "the readout starts {} under the rule, not 40",
-        usage[1] - rule
-    );
     let tabs = rect(&rt, "tabs");
     assert!(
-        (tabs[1] - (usage[1] + usage[3]) - 16.0).abs() < 0.5,
-        "the tabs are {} under the readout, not 16",
-        tabs[1] - (usage[1] + usage[3])
+        (tabs[1] - rule - 40.0).abs() < 0.5,
+        "the tabs start {} under the rule, not 40",
+        tabs[1] - rule
+    );
+    for key in ["usage", "brand"] {
+        let r = rect(&rt, key);
+        assert!(
+            r[1] >= 0.0 && r[1] + r[3] <= size::titlebar,
+            "{key} is not inside the title bar: {r:?}"
+        );
+    }
+    assert!(texts(&rt).iter().any(|t| t == "PILOT DECK"), "the wordmark");
+    let brand = rect(&rt, "brand");
+    assert!(
+        brand[0] + brand[2] <= rect(&rt, "usage")[0],
+        "the wordmark leads the readout"
     );
 }
 

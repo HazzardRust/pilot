@@ -436,13 +436,27 @@ pub fn strips(s: &State, cx: &mut Cx<State>) -> El {
     let none = Value::Null;
     let strip = s.view.regions.get("strip").unwrap_or(&none);
     // The title bar (`app::app`): a press anywhere on it but the caption buttons moves the window,
-    // a double press maximises it, and a right press opens the window menu.
-    let titlebar = el()
+    // a double press maximises it, and a right press opens the window menu. It carries a small
+    // wordmark and the usage readout (the user, 2026-11-21), neither of which takes a press.
+    let mut titlebar = row()
         .key("titlebar")
         .w_full()
         .h(size::titlebar)
+        .items_center()
+        .gap(space::between)
+        .pl(space::pad)
         .fill(surface.surface)
-        .window_drag();
+        .window_drag()
+        .child(
+            rune::text("PILOT DECK")
+                .key("brand")
+                .font(type_::CAPTION)
+                .color(theme::tokens(dark).quiet),
+        );
+    if !s.blind() {
+        let usage = s.view.regions.get("usage").unwrap_or(&none);
+        titlebar = titlebar.child(regions::usage::draw(usage, &s.regions.usage, cx));
+    }
     let content = row()
         .key("content")
         .w_full()

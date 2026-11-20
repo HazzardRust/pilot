@@ -258,14 +258,13 @@ pub fn center(s: &State, cx: &mut Cx<State>) -> El {
     if s.blind() {
         return screen;
     }
-    // deck.css's `header`: the readout and the tabs 16 px apart (`gap: 1rem`), one block.
-    screen = screen.child(
-        col()
-            .key("header")
-            .gap(space::s5)
-            .child(regions::usage::draw(region("usage"), &r.usage, cx))
-            .child(regions::tabs::draw(region("tabs"), &r.tabs, &s.pending, cx)),
-    );
+    // deck.css's `header`: the tabs; the usage readout is the title bar's (`layout::strips`).
+    screen = screen.child(col().key("header").child(regions::tabs::draw(
+        region("tabs"),
+        &r.tabs,
+        &s.pending,
+        cx,
+    )));
     // The queue is the home page's and the thread page lists no settled threads
     // (view/queue.mjs, history.mjs): a region a screen withholds is not drawn, rather than saying
     // there is nothing in it.
