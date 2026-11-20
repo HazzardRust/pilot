@@ -42,7 +42,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 21ca387",
+      "state": "integrated",
       "after": [
         "S2"
       ],
@@ -51,11 +51,13 @@
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "pushed 8dd6305",
       "after": [
         "S4",
         "S5"
-      ]
+      ],
+      "branch": "slice/crew-handoff-trace-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-handoff-trace-s6"
     },
     {
       "slice": "S7",
@@ -69,8 +71,8 @@
       "state": "implementing"
     }
   ],
-  "next": "S5 pushed 21ca387 (pin paid back by deck_post trim), integrating; next: pilot ready, start S6",
-  "updatedAt": "2026-11-20T18:29:32.330Z",
+  "next": "S6 pushed 8dd6305 (ts WARN pre-fix, both MEDs fixed; security APPROVE), integrating; next: pilot ready, start S7",
+  "updatedAt": "2026-11-20T18:51:55.319Z",
   "friction": [
     {
       "agent": "architect",
@@ -182,6 +184,16 @@
       "agent": "pilot-implementer",
       "what": "scratch daemon Bearer header documented only in hooks/lib/deck.js",
       "evidence": "S5 report"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "live checks need a hand-seeded deck.json; testUtils postStored writes only to its own temp deck",
+      "evidence": "S6 and S5 both wrote scratch seed scripts"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice Files owned omitted the one caller of a new Interface argument",
+      "evidence": "S6 edits deck/server-routes.mjs:590 outside its files"
     }
   ]
 }
