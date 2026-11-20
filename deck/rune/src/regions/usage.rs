@@ -74,15 +74,22 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     let reading = |key: &str, pct: Option<f32>| {
         let figure = match pct {
             // A reading the deck could not get is not a green one: no band at all.
-            None => text("unknown").font(type_::BODY).color(t.text_secondary),
+            None => theme::content(
+                text("unknown").font(type_::BODY).color(t.text_secondary),
+                dark,
+            ),
             Some(pct) => {
                 let ink: Color = match band(pct) {
-                    Band::Fine => k.usage.fine,
+                    // A reading that needs no attention takes no colour.
+                    Band::Fine => t.text,
                     Band::Warm => k.usage.warm,
                     Band::High => k.usage.high,
                     Band::Critical => k.usage.critical,
                 };
-                let figure = text(format!("{pct:.0}%")).font(type_::BODY).color(ink);
+                let figure = theme::content(
+                    text(format!("{pct:.0}%")).font(type_::BODY).color(ink),
+                    dark,
+                );
                 if band(pct) == Band::Critical {
                     row()
                         .fill(k.usage.critical_bg)
@@ -106,11 +113,12 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     }
     readout = readout.child(reading("session", usage.session));
     if let Some(resets) = &usage.resets {
-        readout = readout.child(
+        readout = readout.child(theme::content(
             text(format!("resets {resets}"))
                 .font(type_::LABEL)
                 .color(k.quiet),
-        );
+            dark,
+        ));
     }
     readout.child(reading("weekly", usage.weekly))
 }

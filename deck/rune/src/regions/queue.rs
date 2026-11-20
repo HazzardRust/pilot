@@ -5,7 +5,6 @@ use std::collections::BTreeMap;
 
 use rune::tok::{self, type_};
 use rune::{Color, Cx, El, SpringPair, Transition, col, row, text};
-use rune_kit::markdown::{Markdown, MarkdownStyle};
 use serde::Deserialize;
 
 use crate::act::{self, Action};
@@ -109,7 +108,7 @@ fn tone(t: &Tokens, name: &str) -> Color {
 }
 
 /// The `HH:MM` (UTC) of an ISO stamp the deck writes (`2026-11-19T22:48:02.883Z`), empty when there is none.
-fn hhmm(iso: Option<&str>) -> String {
+pub fn hhmm(iso: Option<&str>) -> String {
     iso.and_then(|s| s.get(11..16))
         .unwrap_or_default()
         .to_string()
@@ -137,22 +136,19 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
     let (t, ui) = (theme::tokens(dark), tok::theme(dark));
     let key = |part: &str| format!("card-{}-{part}", c.id);
-    let mut line = row().gap(space::within).child(
-        text(&c.state)
-            .key(key("state"))
-            .font(type_::LABEL)
-            .color(tone(&t, &c.tone)),
-    );
+    let said =
+        |words: String, ink: Color| theme::content(text(words).font(type_::LABEL).color(ink), dark);
+    let mut line = row()
+        .gap(space::within)
+        .child(said(c.state.clone(), tone(&t, &c.tone)).key(key("state")));
     if let Some(tab) = &c.tab {
-        line = line.child(text(&tab.code).font(type_::LABEL).color(t.quiet));
+        line = line.child(said(tab.code.clone(), t.quiet));
     }
-    line = line
-        .child(text(&c.kind).font(type_::LABEL).color(t.quiet))
-        .child(
-            text(hhmm(c.at.as_deref()))
-                .font(type_::LABEL)
-                .color(t.quiet),
-        );
+    let mut when = said(hhmm(c.at.as_deref()), t.quiet);
+    if let Some(at) = &c.at {
+        when = when.help(at.as_str());
+    }
+    line = line.child(said(c.kind.clone(), t.quiet)).child(when);
     // The title is the page's link to the thread.
     let to = c.id.clone();
     let mut body = col().grow(1.0).gap(space::within).child(line).child(
@@ -166,17 +162,12 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
     );
     if !c.excerpt.is_empty() {
         // The view has cut the preview; it is drawn as the page renders it, markdown (L8).
-        body = body.child(
-            Markdown::new(c.excerpt.as_str())
-                .render(&MarkdownStyle::neutral(dark))
-                .key(key("excerpt")),
-        );
+        body = body.child(theme::markdown(c.excerpt.as_str(), dark).key(key("excerpt")));
     }
     let button = |part: String, label: &str, fill: Color| {
         theme::control(row(), dark)
             .key(key(&part))
             .padding(space::pad)
-            .radius(tok::radius::SM)
             .border(1.0, t.rule)
             .fill(fill)
             .child(text(label).font(type_::LABEL).color(ui.text))
@@ -237,13 +228,14 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
         body = body.child(options);
     }
     if let Some(reason) = &c.refused {
-        body = body.child(
+        body = body.child(theme::content(
             text(reason)
                 .key(key("refused"))
                 .font(type_::BODY)
                 .color(t.state.unacknowledged)
                 .wrap(),
-        );
+            dark,
+        ));
     }
     let arrive = Transition::offset(0.0, space::s3)
         .combined(Transition::opacity())
@@ -254,7 +246,7 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
         .w_full()
         .gap(space::pad)
         .padding(space::pad)
-        .radius(tok::radius::SM)
+        .radius(theme::radius::button)
         .fill(ui.card)
         .transition(arrive)
         .child(col().w(space::s1).h_full().fill(accent(&t, &c.accent)))
@@ -263,7 +255,7 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
 
 /// One status line in three columns (L10): the state fixed and left, the name flexible and clipped, the
 /// time fixed and right, `cols.gap` apart.
-fn state_line(i: usize, l: &Line, t: &Tokens, ink: Color) -> El {
+fn state_line(i: usize, l: &Line, t: &Tokens, ink: Color, dark: bool) -> El {
     let ch = t.font.size * MONO_ADVANCE;
     let key = |part: &str| format!("line-{i}-{part}");
     let name = match (&l.name, &l.ticket) {
@@ -277,29 +269,32 @@ fn state_line(i: usize, l: &Line, t: &Tokens, ink: Color) -> El {
         .w_full()
         .h(space::row)
         .gap(space::cols.gap)
-        .child(
+        .child(theme::content(
             text(&l.state)
                 .key(key("state"))
                 .font(type_::LABEL)
                 .color(ink)
                 .truncate()
                 .w(space::cols.state_ch * ch),
-        )
-        .child(
+            dark,
+        ))
+        .child(theme::content(
             text(name)
                 .key(key("name"))
                 .font(type_::LABEL)
                 .color(ink)
                 .truncate()
                 .grow(1.0),
-        )
-        .child(
+            dark,
+        ))
+        .child(theme::content(
             text(hhmm(l.since.as_deref()))
                 .key(key("time"))
                 .font(type_::LABEL)
                 .color(t.quiet)
                 .w(space::cols.time_ch * ch),
-        )
+            dark,
+        ))
 }
 
 pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
@@ -309,7 +304,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     let (t, ui) = (theme::tokens(dark), tok::theme(dark));
     let mut region = col().key("queue").w_full().gap(space::between);
     if let Some(ended) = &queue.ended {
-        region = region.child(text(ended).font(type_::BODY).color(t.quiet).wrap());
+        region = region.child(theme::content(
+            text(ended).font(type_::BODY).color(t.quiet).wrap(),
+            dark,
+        ));
     }
     let mut cards = col().w_full().gap(space::pad);
     for c in &queue.cards {
@@ -321,14 +319,15 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             .as_ref()
             .filter(|(id, _)| *id == c.id)
             .map(|(_, label)| label.clone());
-        cards = cards.child(card(&c, cx));
+        // deck.css's `article`: a hairline under each.
+        cards = cards.child(card(&c, cx)).child(theme::separator(dark));
     }
     let lines = queue
         .state_lines
         .iter()
         .enumerate()
         .fold(col().w_full(), |lines, (i, l)| {
-            lines.child(state_line(i, l, &t, ui.text_secondary))
+            lines.child(state_line(i, l, &t, ui.text_secondary, dark))
         });
     region.child(cards).child(lines)
 }
