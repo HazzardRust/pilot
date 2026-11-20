@@ -230,14 +230,12 @@ function titleOf(item, items) {
   return ticket && item.title === `Next run: ${ticket.title}` ? `Next run: ${setOff(ticket.title)}` : escapeHtml(item.title);
 }
 
-/** A card's ticket line (deck-press-feedback spec 5, L5): the ticket's title as a link; nothing when it is absent or merged away. */
-function renderTicketOf(item, items) {
-  const ticket = ticketNamed(items, item.ticket);
-  return ticket && ticket.mergedInto === undefined ? ` · ${ticketLink(ticket, 'ticket')}` : '';
-}
-
-/** A thread page's ticket line (ticket-state-accents spec 8): the ticket it wears and where that ticket stands. */
-function renderTicketStanding(item, items, lanes) {
+/**
+ * A card's and a thread page's ticket line (ticket-state-accents spec 8, nothing-hidden spec 5): the ticket it
+ * wears and where that ticket stands. Nothing without `items` (A4) or when the ticket is merged away (A3).
+ */
+function renderTicketStanding(item, items, lanes = { coPilots: {}, switches: {} }) {
+  if (!items || ticketNamed(items, item.ticket)?.mergedInto !== undefined) return '';
   const ticket = item.kind === KIND_TICKET ? undefined : ticketWornBy(item, items);
   if (!ticket) return '';
   // A ticket stored without a repository has no co-pilot entry; `repoKey` would throw on it.
@@ -556,7 +554,7 @@ function renderCardClose(item, back) {
 }
 
 export {
-  renderTime, renderByline, renderMessages, code, setOff, withTitles, titleOf, renderTicketOf,
+  renderTime, renderByline, renderMessages, code, setOff, withTitles, titleOf,
   renderTicketStanding, renderAsked, renderChoice, renderChoiceRow, nothing, rendererFor, renderReplyForm,
   renderReopenForm, renderDismissForm, renderCloseForm, renderCardClose, renderSteps,
 };

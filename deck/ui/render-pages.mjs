@@ -287,7 +287,7 @@ export function renderHomePage(
   // rather than echoed from `selected`, which is the browser's (D2 of run-tabs, and D7).
   const back = hrefFor(tab, all);
   const cardOf = (item) =>
-    renderCard(item, { tab: tab ? null : tabFor(tabs, item.repo), back, all, items });
+    renderCard(item, { tab: tab ? null : tabFor(tabs, item.repo), back, all, items, lanes });
   return renderTemplate('home.html', {
     HOME: OVERVIEW_HREF,
     USAGE: renderUsage(tab),
@@ -321,7 +321,7 @@ export function renderDeckPage(items, runs = [], agents = {}, lanes = { coPilots
   const queue = queueOf(items);
   const ordered = [...queue, ...items.filter((item) => !queue.includes(item)).sort(newestSaidFirst)];
   const body = items.length
-    ? ordered.map((item) => renderCard(item, { back: '/items', items })).join('')
+    ? ordered.map((item) => renderCard(item, { back: '/items', items, lanes })).join('')
     : '<p class="empty">Nothing is waiting on you.</p>';
   return renderTemplate('index.html', {
     HOME: OVERVIEW_HREF,
