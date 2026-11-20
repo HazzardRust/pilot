@@ -25,7 +25,7 @@ pub struct Opt {
     pub label: String,
     pub confirm: bool,
     /// The page draws it disabled: the thread already holds a press. Drawn pressed; it posts nothing.
-    #[serde(default)]
+    /// No default: a view without it fails the parse and draws nothing, rather than unlocked.
     pub locked: bool,
 }
 
@@ -280,7 +280,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
 
     let mut options = row().key("reply-options").gap(space::pad);
     for (i, option) in reply.options.into_iter().enumerate() {
-        let asking = !local.closing && local.confirming.as_deref() == Some(option.label.as_str());
+        // An option locked since its ask (a refresh brought another surface's press) draws no Confirm.
+        let asking = !local.closing
+            && !option.locked
+            && local.confirming.as_deref() == Some(option.label.as_str());
         let label = option.label.clone();
         // A verdict's option and its confirm are one group: the ask and its Confirm sit beside it.
         let lit = pressed(&label) || asking || option.locked;
