@@ -28,9 +28,8 @@ As the **main session you are a system-level orchestrator**. You:
 - relay the outcome and the human steps.
 
 Past a handful of tool calls your default is to delegate; a couple of reads and a
-small edit you still do directly. When delegating would cost more than it returns,
-say so plainly and carry on directly. Going solo *silently* is what is not
-acceptable: state the reasoning either way.
+small edit you still do directly. Going solo *silently* is not acceptable: state
+the reasoning either way.
 
 As an **implementing agent you own the whole slice loop for your workstream**: plan,
 vertical slices, built to the behaviours, gate, one fresh review per slice, commit,
@@ -62,16 +61,12 @@ on a queue. The middle ground is a ceiling on count and a rule about shape.
 
 - **Up to thirteen agents in flight**, counting the main session and every child of
   every agent. Above that the rate limit binds and everything dies at once. It is
-  the ceiling, not the target: count before you spawn. Spawns run in the background;
-  never wait on one, act on its completion notification. It rose from eight on
-  2026-10-11 (bigger-jobs), when the user asked for bigger jobs and more children.
-  It rose to thirteen on 2026-10-18 (lander): a lander runs beside the co-pilot, and
-  the main session's share went from four to five to hold it.
+  the ceiling, not the target: count before you spawn.
 - **Parallel across workstreams, not over one diff.** Slices with disjoint owned
   files, the review or fix round of one slice beside the next slice's
   implementation, read-only research fanned out by an architect: welcome. Four
-  reviewers on one diff, or a reviewer per file: never. The cure for the 2026-09-05
-  review fan-out is one reviewer per slice, chosen by language, with a second only
+  reviewers on one diff, or a reviewer per file: never. One reviewer per slice,
+  chosen by language, with a second only
   when the slice touches auth, user input or SQL.
 - **Per-agent child budgets.** An architect holds up to six researchers; an
   implementer up to five children; a QA agent up to three; an explorer none and
@@ -94,8 +89,8 @@ on a queue. The middle ground is a ceiling on count and a rule about shape.
   one probe per claim, gates run once on the final state, the minimal fix, a
   small-diff limit past which the agent stops and asks `main`, and tables not
   narrative in the report.
-- Prefer a skill over an agent whenever both would do; a skill runs in the caller's
-  context and costs nothing until invoked.
+- Prefer a skill over an agent whenever both would do: it costs nothing until
+  invoked.
 
 The user's calibration, on 2026-09-06: "I like high autonomy and a parallel agents,
 i just limited us earlier today because we went a bit overboard. I think we need to
@@ -142,3 +137,13 @@ that environment, say so in the brief and do that verification yourself.
 An agent's report is evidence, not a verdict. Before you tell the user something is
 done, check the claims that would hurt if wrong and say which you checked. If a
 report contradicts the code, the code wins.
+
+## Waits end by themselves
+
+- A file or log: `pilot wait-for --file F --match RE --timeout M` (M ≤ 50), its
+  marker checked against what the writer prints.
+- A subagent: its completion notification, never its output file.
+- A test run: `run_in_background` and end the turn, or a `timeout` of 600000 ms.
+- Exit 2 is a wake-up call: wait again, carry on or hand back. Each wait is a
+  numbered report row, `wait <n> on <marker>: …`.
+- Before the final hand-back, `TaskStop` each background wait you started, by id.
