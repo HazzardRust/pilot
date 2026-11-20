@@ -233,6 +233,16 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         let fill = if pressed { k.state.pilot } else { k.rule };
         theme::control(button(label, key, t.text, fill), dark)
     };
+    let r = theme::roles(dark);
+    // A quiet button: the page's ink and a hairline, never a fill unless pressed in.
+    let quiet_btn = |label: &str, key: String, pressed: bool| {
+        let fill = if pressed {
+            k.state.pilot
+        } else {
+            Color::TRANSPARENT
+        };
+        theme::control(button(label, key, t.text, fill).border(1.0, k.rule), dark)
+    };
     let pressed = |label: &str| local.sent.as_deref() == Some(label);
     let id = reply.id;
 
@@ -282,11 +292,12 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 }));
         if asking {
             group = group
-                .child(
+                .child(theme::content(
                     text(format!("Send “{label}”?"))
                         .font(type_::BODY)
                         .color(t.text),
-                )
+                    dark,
+                ))
                 .child(
                     btn("Confirm", "confirm".into(), false).on_press(move |s: &mut State| {
                         let action = s.regions.reply.press(&again_at, &again);
@@ -298,16 +309,26 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     }
 
     let at = id.clone();
-    let mut send = row().key("reply-send").gap(space::pad).child(
-        btn("Reply", "send".into(), pressed("Reply")).on_press(move |s: &mut State| {
-            let action = s.regions.reply.send(&at);
-            post(s, action);
-        }),
-    );
+    // Reply, the one primary button, at the bottom right; Close and Dismiss are quiet, on the left,
+    // each with its confirm beside it.
+    let reply_button = {
+        let fill = if pressed("Reply") {
+            k.state.pilot
+        } else {
+            r.primary
+        };
+        theme::control(button("Reply", "send".into(), r.surface, fill), dark).on_press(
+            move |s: &mut State| {
+                let action = s.regions.reply.send(&at);
+                post(s, action);
+            },
+        )
+    };
+    let mut quiet = row().key("reply-quiet").gap(space::pad).items_center();
     if let Some(close) = reply.close {
         let (confirm, at, confirm_at) = (close.confirm, id.clone(), id.clone());
-        send = send.child(
-            btn(CLOSE, "close".into(), pressed(CLOSE) || local.closing).on_press(
+        quiet = quiet.child(
+            quiet_btn(CLOSE, "close".into(), pressed(CLOSE) || local.closing).on_press(
                 move |s: &mut State| {
                     let action = s.regions.reply.close(&at, confirm);
                     post(s, action);
@@ -315,27 +336,40 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             ),
         );
         if local.closing {
-            send = send
-                .child(text("Close this thread?").font(type_::BODY).color(t.text))
-                .child(btn("Confirm", "close-confirm".into(), false).on_press(
-                    move |s: &mut State| {
-                        let action = s.regions.reply.confirm(&confirm_at);
-                        post(s, action);
-                    },
-                ));
+            quiet = quiet
+                .child(theme::content(
+                    text("Close this thread?").font(type_::BODY).color(t.text),
+                    dark,
+                ))
+                .child(
+                    quiet_btn("Confirm", "close-confirm".into(), false).on_press(
+                        move |s: &mut State| {
+                            let action = s.regions.reply.confirm(&confirm_at);
+                            post(s, action);
+                        },
+                    ),
+                );
         }
     }
     if reply.dismiss {
-        send = send.child(
-            btn("Dismiss", "dismiss".into(), pressed("Dismiss")).on_press(move |s: &mut State| {
-                let action = s
-                    .regions
-                    .reply
-                    .plain("Dismiss", Action::DismissItem { id: id.clone() });
-                post(s, action);
-            }),
+        quiet = quiet.child(
+            quiet_btn("Dismiss", "dismiss".into(), pressed("Dismiss")).on_press(
+                move |s: &mut State| {
+                    let action = s
+                        .regions
+                        .reply
+                        .plain("Dismiss", Action::DismissItem { id: id.clone() });
+                    post(s, action);
+                },
+            ),
         );
     }
+    let send = row()
+        .key("reply-send")
+        .items_center()
+        .child(quiet)
+        .child(el().grow(1.0))
+        .child(reply_button);
 
     let mut box_ = col()
         .key("reply")
@@ -343,6 +377,9 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         .on_key(|s: &mut State, ev: &rune::KeyEvent, _: &mut Tx| {
             matches!(ev.key, Key::Escape) && s.regions.reply.escape()
         })
+        // The page's hairline above the box (deck.css:225).
+        .child(theme::separator(dark))
+        .child(options)
         .child(
             text_input(&local.draft, type_::BODY)
                 .key("reply-text")
@@ -350,9 +387,9 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 .placeholder("Reply to the pilot.", k.quiet)
                 .on_edit(|s: &mut State| &mut s.regions.reply.draft)
                 .padding(space::pad)
+                .radius(theme::radius::button)
                 .fill(k.rule),
         )
-        .child(options)
         .child(send);
     if let Some(reason) = &local.refused {
         box_ = box_.child(
