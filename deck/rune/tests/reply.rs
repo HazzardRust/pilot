@@ -601,7 +601,7 @@ fn the_kind_line_is_dotted_and_the_pager_centred() {
         .count();
     assert_eq!(dots, 3, "state · kind · time · owner");
 
-    let (nav, line) = (at(&rt, "nav"), all[kind.parent.expect("a line")].clone());
+    let (nav, line) = (at(&rt, "nav"), at(&rt, "thread-head"));
     let middle = |r: [f32; 4]| r[0] + r[2] / 2.0;
     assert!(
         (middle(nav.rect) - middle(line.rect)).abs() < 1.0,

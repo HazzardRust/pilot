@@ -1,13 +1,14 @@
 //! A thread read whole (spec 2): its kind line, its nav (‹ code › X/N), title, type note, body,
 //! messages and resolution, every word as `deck/view/thread.mjs` resolved it (L2). Bodies and
-//! messages are markdown drawn by rune-kit (L8). Escape or ← goes back to the deck that owns it.
+//! messages are markdown drawn by rune-kit (L8). The back arrow, Escape or ← leaves it as the HTML
+//! deck's arrow does.
 
 use crate::theme::type_;
 use rune::tok;
 use rune::{Color, Cx, El, Key, col, el, row, text};
 use serde::Deserialize;
 
-use crate::app::{State, go};
+use crate::app::{self, State, go};
 use crate::client::Query;
 use crate::regions::queue::hhmm;
 use crate::theme::{self, space};
@@ -64,21 +65,24 @@ struct Thread {
     resolution: Option<String>,
 }
 
-fn back(run: Option<String>) -> impl Fn(&mut State, &rune::KeyEvent, &mut rune::Tx) -> bool {
+/// Off the thread, as the HTML deck's back arrow goes (`app::leave`), to the deck page behind it or
+/// else the deck that owns it.
+fn leave(s: &mut State, run: Option<String>) {
+    let deck = Query {
+        screen: "home".into(),
+        run,
+        all: s.query.all,
+        ..Query::default()
+    };
+    app::leave(s, deck);
+}
+
+fn leave_key(run: Option<String>) -> impl Fn(&mut State, &rune::KeyEvent, &mut rune::Tx) -> bool {
     move |s, ev, _| {
         if !matches!(ev.key, Key::Escape | Key::Left) {
             return false;
         }
-        let all = s.query.all;
-        go(
-            s,
-            Query {
-                screen: "home".into(),
-                run: run.clone(),
-                all,
-                ..Query::default()
-            },
-        );
+        leave(s, run.clone());
         true
     }
 }
@@ -95,7 +99,7 @@ pub fn key(s: &mut State, ev: &rune::KeyEvent, tx: &mut rune::Tx) -> bool {
     let Ok(th) = Thread::deserialize(v) else {
         return false;
     };
-    back(th.nav.run)(s, ev, tx)
+    leave_key(th.nav.run)(s, ev, tx)
 }
 
 fn arrow(step: Option<Step>, glyph: &str, ink: Color, quiet: Color, dark: bool) -> El {
@@ -206,26 +210,54 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         nav = nav.child(text(code).font(type_::BODY.mono()).color(t.text));
     }
     nav = nav.child(arrow(th.nav.next, "›", t.text, k.quiet, dark));
+    // The way back at the header's start (thread.html `a.back`), a row-high square to press; an
+    // empty square of its size at the end mirrors it, so the nav stays on the centre.
+    let run = th.nav.run.clone();
+    let square = || {
+        row()
+            .size(theme::size::row, theme::size::row)
+            .min_w(theme::size::row)
+    };
     let mut right = row()
         .key("position")
         .grow(1.0)
         .min_w(space::s0)
+        .items_center()
+        .gap(space::within)
         .justify_end();
     if let Some(position) = &th.nav.position {
         right = right.child(said(position, k.quiet));
     }
+    let right = right.child(square());
+    let arrow = theme::control(square(), dark)
+        .key("thread-back")
+        .justify_center()
+        .items_center()
+        .role("link")
+        .label("Back to deck")
+        .help("Back to deck")
+        .on_press(move |s: &mut State| leave(s, run.clone()))
+        .child(text("←").font(type_::HEADER).color(t.text));
+    let left = row()
+        .grow(1.0)
+        .min_w(space::s0)
+        .items_center()
+        .gap(space::within)
+        .child(arrow)
+        .child(kind);
 
     let mut page = col()
         .key("thread")
         .focusable(true)
-        .on_key(back(th.nav.run))
+        .on_key(leave_key(th.nav.run))
         .gap(space::between)
         .child(
             row()
+                .key("thread-head")
                 .w_full()
                 .items_center()
                 .gap(space::between)
-                .child(kind)
+                .child(left)
                 .child(nav)
                 .child(right),
         )

@@ -66,6 +66,16 @@ pub fn back(s: &mut State) {
     }
 }
 
+/// A thread's way off (escape.mjs `leave`): `back` when the screen behind is a deck page, since
+/// another thread is no way off; otherwise to `deck`, the deck that owns the thread.
+pub fn leave(s: &mut State, deck: Query) {
+    if s.history.back.last().is_some_and(|q| q.id.is_none()) {
+        back(s);
+    } else {
+        go(s, deck);
+    }
+}
+
 /// The screen `back` left, the one now open kept for `back`.
 pub fn forward(s: &mut State) {
     if let Some(query) = s.history.forward.pop() {
