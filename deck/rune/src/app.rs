@@ -72,6 +72,8 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
     // A send answered off the UI thread is taken here, as the live view is.
     let sent = regions::chat::settle(s, tx);
     let settled = regions::queue::settle(s);
+    // A press's answer is the reply box's (S9), taken beside the view and never instead of it.
+    let replied = regions::reply::poll(&mut s.regions.reply, tx);
     let fed = match s.live.as_ref().and_then(live::Inbox::take) {
         Some(Feed::View(view)) => {
             // Data the server brought lands instantly unless asked: a card arriving live springs in (spec 5).
@@ -83,7 +85,7 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
         Some(Feed::Down) => !std::mem::replace(&mut s.down, true),
         None => false,
     };
-    fed | settled | sent
+    fed | settled | sent | replied
 }
 
 /// The screen's region slots, top to bottom; a stub region draws nothing until its slice.
