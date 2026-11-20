@@ -51,14 +51,15 @@ function optionsOf(item) {
 /**
  * `query` is `{ id }`, the page's `REPLY` slot: an id the live deck does not hold (archived, or gone) offers
  * nothing; a closed thread offers Reopen; an open record nothing; an open thread its reply box, its options,
- * Close on a question or a user thread (`renderSend`), and Dismiss on a gate or an unknown kind.
+ * Close on a question or a user thread (`renderSend`), and Dismiss on a gate or an unknown kind. A box that posts
+ * carries its thread's `id`, the page's form `action`: a press posts there, never to a thread the window moved to.
  */
 export function replyView(reads, { id }) {
   const item = reads.items.find((each) => each.id === id);
   if (!item) return NONE;
-  if (!isOpen(item)) return { mode: 'reopen', options: [], dismiss: false };
+  if (!isOpen(item)) return { mode: 'reopen', id, options: [], dismiss: false };
   if (isRecord(item)) return NONE;
-  const view = { mode: 'reply', options: optionsOf(item), dismiss: !isKnownKind(item.kind) || isGate(item.kind) };
+  const view = { mode: 'reply', id, options: optionsOf(item), dismiss: !isKnownKind(item.kind) || isGate(item.kind) };
   return CLOSABLE_KINDS.includes(item.kind) ? { ...view, close: { confirm: true } } : view;
 }
 

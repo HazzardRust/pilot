@@ -43,6 +43,8 @@ const CLOSE: &str = "Close";
 #[derive(Debug, Default, Deserialize)]
 struct Reply {
     mode: String,
+    /// The thread this box is drawn for: every press posts here, never to a thread moved to since.
+    id: String,
     #[serde(default)]
     options: Vec<Opt>,
     #[serde(default)]
@@ -234,10 +236,6 @@ pub fn poll(local: &mut Local, tx: &mut Tx) -> bool {
     true
 }
 
-fn id_of(s: &State) -> Option<String> {
-    s.query.id.clone()
-}
-
 /// A press-shaped label on `fill`.
 fn button(label: &str, key: String, ink: Color, fill: Color) -> El {
     row()
@@ -267,13 +265,16 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         )
     };
     let pressed = |label: &str| local.sent.as_deref() == Some(label);
+    let id = reply.id;
 
     if reply.mode == "reopen" {
         return col().key("reply").child(
             btn("Reopen", "reopen".into(), pressed("Reopen")).on_press_tx(
-                |s: &mut State, tx: &mut Tx| {
-                    let action = id_of(s)
-                        .and_then(|id| s.regions.reply.plain("Reopen", Action::Reopen { id }));
+                move |s: &mut State, tx: &mut Tx| {
+                    let action = s
+                        .regions
+                        .reply
+                        .plain("Reopen", Action::Reopen { id: id.clone() });
                     post(s, action, tx);
                 },
             ),
@@ -294,6 +295,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         let lit = pressed(&label) || asking || option.locked;
         // Its Confirm is the option pressed again while armed, so `press`'s lock guard holds there too.
         let again = option.clone();
+        let (at, again_at) = (id.clone(), id.clone());
         let mut face = btn(&label, format!("option-{i}"), lit);
         if option.recommended {
             face = face.gap(space::within).child(
@@ -307,7 +309,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             .gap(space::within)
             .items_center()
             .child(face.on_press_tx(move |s: &mut State, tx: &mut Tx| {
-                let action = id_of(s).and_then(|id| s.regions.reply.press(&id, &option));
+                let action = s.regions.reply.press(&at, &option);
                 post(s, action, tx);
             }));
         if asking {
@@ -319,7 +321,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 )
                 .child(btn("Confirm", "confirm".into(), false).on_press_tx(
                     move |s: &mut State, tx: &mut Tx| {
-                        let action = id_of(s).and_then(|id| s.regions.reply.press(&id, &again));
+                        let action = s.regions.reply.press(&again_at, &again);
                         post(s, action, tx);
                     },
                 ));
@@ -327,18 +329,21 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         options = options.child(group);
     }
 
+    let at = id.clone();
     let mut send = row().key("reply-send").gap(space::pad).child(
-        btn("Reply", "send".into(), pressed("Reply")).on_press_tx(|s: &mut State, tx: &mut Tx| {
-            let action = id_of(s).and_then(|id| s.regions.reply.send(&id));
-            post(s, action, tx);
-        }),
+        btn("Reply", "send".into(), pressed("Reply")).on_press_tx(
+            move |s: &mut State, tx: &mut Tx| {
+                let action = s.regions.reply.send(&at);
+                post(s, action, tx);
+            },
+        ),
     );
     if let Some(close) = reply.close {
-        let confirm = close.confirm;
+        let (confirm, at, confirm_at) = (close.confirm, id.clone(), id.clone());
         send = send.child(
             btn(CLOSE, "close".into(), pressed(CLOSE) || local.closing).on_press_tx(
                 move |s: &mut State, tx: &mut Tx| {
-                    let action = id_of(s).and_then(|id| s.regions.reply.close(&id, confirm));
+                    let action = s.regions.reply.close(&at, confirm);
                     post(s, action, tx);
                 },
             ),
@@ -347,8 +352,8 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             send = send
                 .child(text("Close this thread?").font(type_::BODY).color(t.text))
                 .child(btn("Confirm", "close-confirm".into(), false).on_press_tx(
-                    |s: &mut State, tx: &mut Tx| {
-                        let action = id_of(s).and_then(|id| s.regions.reply.confirm(&id));
+                    move |s: &mut State, tx: &mut Tx| {
+                        let action = s.regions.reply.confirm(&confirm_at);
                         post(s, action, tx);
                     },
                 ));
@@ -357,10 +362,11 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     if reply.dismiss {
         send = send.child(
             btn("Dismiss", "dismiss".into(), pressed("Dismiss")).on_press_tx(
-                |s: &mut State, tx: &mut Tx| {
-                    let action = id_of(s).and_then(|id| {
-                        s.regions.reply.plain("Dismiss", Action::DismissItem { id })
-                    });
+                move |s: &mut State, tx: &mut Tx| {
+                    let action = s
+                        .regions
+                        .reply
+                        .plain("Dismiss", Action::DismissItem { id: id.clone() });
                     post(s, action, tx);
                 },
             ),

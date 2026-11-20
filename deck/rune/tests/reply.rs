@@ -1,6 +1,8 @@
 //! rune-deck-ui S9: the reply box's own state, `reply::Local` (spec 3, 5, 6c). A verdict's option takes
 //! two presses, a refused reply keeps its words (the ADR 0096 bug), and a taken one empties the box.
 
+mod support;
+
 use pilot_deck::act::{Acted, Action};
 use pilot_deck::regions::reply::{Local, Opt};
 use rune::TextEdit;
@@ -183,7 +185,7 @@ fn the_recommended_option_draws_the_pages_quiet_mark() {
     use pilot_deck::client::View;
 
     let option = |label: &str, recommended: bool| serde_json::json!({ "label": label, "confirm": false, "locked": false, "recommended": recommended });
-    let reply = serde_json::json!({ "mode": "reply", "options": [option("Yes", false), option("No", true)] });
+    let reply = serde_json::json!({ "mode": "reply", "id": ID, "options": [option("Yes", false), option("No", true)] });
     let state = State {
         view: View {
             screen: "thread".into(),
@@ -274,4 +276,86 @@ fn moving_to_another_thread_gives_it_a_box_of_its_own() {
         // Its Confirm, pressed now, posts nothing on the new thread.
         assert_eq!(reply.confirm(other), None);
     });
+}
+
+/// Presses the first element `matches` picks, at its centre, and draws the next frame.
+fn click(
+    rt: &mut rune::Runtime<pilot_deck::app::State>,
+    matches: impl Fn(&rune::runtime::ElementInfo) -> bool,
+) {
+    let at = rt
+        .elements()
+        .into_iter()
+        .find(|element| matches(element))
+        .expect("drawn")
+        .rect;
+    let (x, y) = (at[0] + at[2] / 2.0, at[1] + at[3] / 2.0);
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(1.0 / 60.0);
+}
+
+#[test]
+fn a_press_on_a_view_not_yet_refreshed_posts_to_the_thread_it_shows() {
+    use pilot_deck::app::{self, State};
+    use pilot_deck::client::{Query, View};
+
+    let deck = support::Scratch::start();
+    let (shown, next) = (
+        support::question(&deck, "C:/work/alpha"),
+        support::question(&deck, "C:/work/alpha"),
+    );
+    let option = serde_json::json!({ "label": "A", "confirm": false, "locked": false, "recommended": false });
+    let reply = serde_json::json!({ "mode": "reply", "id": shown, "options": [option] });
+    let state = State {
+        view: View {
+            screen: "thread".into(),
+            seq: 1,
+            regions: [
+                ("thread".to_string(), thread_with_next(&next)),
+                ("reply".to_string(), reply),
+            ]
+            .into_iter()
+            .collect(),
+        },
+        query: Query {
+            id: Some(shown.clone()),
+            ..Query::default()
+        },
+        ..State::default()
+    };
+    let mut rt = rune::Runtime::new(state, app::view, (1280.0, 800.0), rune::Env::new(true, 1.0));
+    rt.frame(0.0);
+    // The arrow moves the query on; the window still shows the first thread until its view arrives.
+    click(&mut rt, |element| element.text.as_deref() == Some("›"));
+    // SAFETY: no other test in this binary touches the environment.
+    unsafe {
+        std::env::set_var("PILOT_DECK_DIR", &deck.dir);
+        std::env::set_var("PILOT_DECK_PORT", deck.port.to_string());
+    }
+    click(&mut rt, |element| {
+        element.key.as_deref() == Some("option-0")
+    });
+    let start = std::time::Instant::now();
+    let replies = |id: &str| {
+        support::item(&deck, id)["replies"]
+            .as_array()
+            .map_or(0, Vec::len)
+    };
+    while replies(&shown) + replies(&next) == 0
+        && start.elapsed() < std::time::Duration::from_secs(3)
+    {
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    unsafe {
+        std::env::remove_var("PILOT_DECK_DIR");
+        std::env::remove_var("PILOT_DECK_PORT");
+    }
+
+    assert_eq!(
+        (replies(&shown), replies(&next)),
+        (1, 0),
+        "the press posts to the thread drawn, not the one moved to"
+    );
 }

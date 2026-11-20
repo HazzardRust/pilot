@@ -89,6 +89,8 @@ test('the options are the page\'s: a gate, a question and a walkthrough', () => 
     assert.ok(page.length > 0, `${item.kind}: the page offers options`);
     assert.deepEqual(view.options, page, item.kind);
     assert.equal(view.mode, 'reply', item.kind);
+    // The page's form posts to its own thread; the box carries that thread's id.
+    assert.equal(view.id, item.id, item.kind);
   }
 });
 
@@ -129,7 +131,7 @@ test('dismiss is offered where the page offers it: a gate and an unknown kind, n
 test('a closed thread offers reopen, as the page does, and nothing else', () => {
   const closed = anItem({ options: ['A'], resolution: 'Done.', resolvedAt: AT });
   const view = replyView(readsOf([closed]), { id: closed.id });
-  assert.deepEqual(view, { mode: 'reopen', options: [], dismiss: false });
+  assert.deepEqual(view, { mode: 'reopen', id: closed.id, options: [], dismiss: false });
   assert.match(renderThreadPage(closed, [closed]), /action="\/reopen"/);
 });
 
