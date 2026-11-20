@@ -65,6 +65,10 @@ fn go(s: &mut State, query: Query) {
     if let Some(live) = &s.live {
         live.ask(&query);
     }
+    // Each thread has its own reply box, as on the page: words typed here never post on another.
+    if query.id != s.query.id {
+        s.regions.reply = Default::default();
+    }
     s.query = query;
 }
 

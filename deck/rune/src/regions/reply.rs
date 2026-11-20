@@ -27,6 +27,8 @@ pub struct Opt {
     /// The page draws it disabled: the thread already holds a press. Drawn pressed; it posts nothing.
     /// No default: a view without it fails the parse and draws nothing, rather than unlocked.
     pub locked: bool,
+    /// The pilot's recommended answer: drawn with the page's quiet "(recommended)" mark. No default either.
+    pub recommended: bool,
 }
 
 /// Close beside Reply, where the page draws it (a question, a user thread).
@@ -120,6 +122,7 @@ impl Local {
                 label,
                 confirm: true,
                 locked: false,
+                recommended: false,
             },
         )
     }
@@ -291,14 +294,22 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         let lit = pressed(&label) || asking || option.locked;
         // Its Confirm is the option pressed again while armed, so `press`'s lock guard holds there too.
         let again = option.clone();
-        let mut group = row().gap(space::within).items_center().child(
-            btn(&label, format!("option-{i}"), lit).on_press_tx(
-                move |s: &mut State, tx: &mut Tx| {
-                    let action = id_of(s).and_then(|id| s.regions.reply.press(&id, &option));
-                    post(s, action, tx);
-                },
-            ),
-        );
+        let mut face = btn(&label, format!("option-{i}"), lit);
+        if option.recommended {
+            face = face.gap(space::within).child(
+                text("(recommended)")
+                    .key(format!("option-{i}-recommended"))
+                    .font(type_::BODY)
+                    .color(k.quiet),
+            );
+        }
+        let mut group = row()
+            .gap(space::within)
+            .items_center()
+            .child(face.on_press_tx(move |s: &mut State, tx: &mut Tx| {
+                let action = id_of(s).and_then(|id| s.regions.reply.press(&id, &option));
+                post(s, action, tx);
+            }));
         if asking {
             group = group
                 .child(

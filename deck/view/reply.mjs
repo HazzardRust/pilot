@@ -12,8 +12,11 @@ import {
 
 const NONE = { mode: 'none', options: [], dismiss: false };
 
-/** An option as the page draws it: `locked` is its `disabled`, set once the thread holds a press (`renderChoice`). */
-const option = (label, confirm, chosen) => ({ label, confirm, locked: chosen !== null });
+/**
+ * An option as the page draws it (`renderChoice`): `locked` is its `disabled`, set once the thread holds a press;
+ * `recommended` its quiet "(recommended)" mark, which only the pilot's own answers carry.
+ */
+const option = (label, confirm, chosen, recommended = false) => ({ label, confirm, locked: chosen !== null, recommended });
 
 /** `renderChoices`: the pilot's answers, a verdict's each confirmed; Assume the default on a blocking thread; Teach me last. */
 function choices(item) {
@@ -24,7 +27,7 @@ function choices(item) {
   const reopened = isGate(item.kind) && chosen === NOT_YET;
   const chosenFor = (label) => ((withdrawable && label === NOT_YET) || (reopened && label === SIGN_OFF) ? null : chosen);
   return [
-    ...(Array.isArray(item.options) ? item.options : []).filter((o) => o !== TEACH_ME).map((label) => option(label, verdict, chosenFor(label))),
+    ...(Array.isArray(item.options) ? item.options : []).filter((o) => o !== TEACH_ME).map((label) => option(label, verdict, chosenFor(label), label === item.recommended)),
     ...(isBlocking(item) ? [option(ASSUME_DEFAULT, false, chosen)] : []),
     option(TEACH_ME, false, chosen),
   ];

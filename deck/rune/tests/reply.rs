@@ -12,6 +12,7 @@ fn sign_off() -> Opt {
         label: "Sign off".into(),
         confirm: true,
         locked: false,
+        recommended: false,
     }
 }
 
@@ -71,6 +72,7 @@ fn an_option_with_no_confirm_posts_on_one_press() {
         label: "Yes".into(),
         confirm: false,
         locked: false,
+        recommended: false,
     };
     assert_eq!(local.press(ID, &yes), Some(reply("", Some("Yes"))));
     assert_eq!(local.confirming, None);
@@ -173,4 +175,103 @@ fn a_sent_reply_empties_the_box() {
     assert_eq!(local.draft.text, "");
     assert_eq!(local.refused, None);
     assert_eq!(local.sent, None);
+}
+
+#[test]
+fn the_recommended_option_draws_the_pages_quiet_mark() {
+    use pilot_deck::app::{self, State};
+    use pilot_deck::client::View;
+
+    let option = |label: &str, recommended: bool| serde_json::json!({ "label": label, "confirm": false, "locked": false, "recommended": recommended });
+    let reply = serde_json::json!({ "mode": "reply", "options": [option("Yes", false), option("No", true)] });
+    let state = State {
+        view: View {
+            screen: "thread".into(),
+            seq: 1,
+            regions: [("reply".to_string(), reply)].into_iter().collect(),
+        },
+        ..State::default()
+    };
+    let mut rt = rune::Runtime::new(state, app::view, (1280.0, 800.0), rune::Env::new(true, 1.0));
+    rt.frame(0.0);
+
+    let marks: Vec<_> = rt
+        .elements()
+        .into_iter()
+        .filter(|element| element.text.as_deref() == Some("(recommended)"))
+        .collect();
+    assert_eq!(marks.len(), 1, "one mark, on the recommended option");
+    assert_eq!(marks[0].key.as_deref(), Some("option-1-recommended"));
+    assert_eq!(
+        marks[0].text_color,
+        Some(pilot_deck::theme::tokens(true).quiet)
+    );
+}
+
+/// A thread drawn with a next arrow to `next`, as `deck/view/thread.mjs` shapes the region.
+fn thread_with_next(next: &str) -> serde_json::Value {
+    serde_json::json!({
+        "title": "Which port?",
+        "kindLine": { "accent": "", "state": "", "tone": "", "kind": "question", "at": "", "owner": "" },
+        "nav": { "next": { "id": next } },
+        "body": "",
+    })
+}
+
+#[test]
+fn moving_to_another_thread_gives_it_a_box_of_its_own() {
+    use pilot_deck::app::{self, State};
+    use pilot_deck::client::{Query, View};
+
+    let other = "itm_000000000002";
+    let mut state = State {
+        view: View {
+            screen: "thread".into(),
+            seq: 1,
+            regions: [("thread".to_string(), thread_with_next(other))]
+                .into_iter()
+                .collect(),
+        },
+        query: Query {
+            id: Some(ID.into()),
+            ..Query::default()
+        },
+        ..State::default()
+    };
+    // Words for this thread, an ask showing on it, a refusal and a press out.
+    state.regions.reply = typed("for the first thread only");
+    assert_eq!(state.regions.reply.press(ID, &sign_off()), None);
+    state.regions.reply.refused = Some("an earlier refusal".into());
+    state.regions.reply.sent = Some("Reply".into());
+    let mut rt = rune::Runtime::new(state, app::view, (1280.0, 800.0), rune::Env::new(true, 1.0));
+    rt.frame(0.0);
+
+    let next = rt
+        .elements()
+        .into_iter()
+        .find(|element| element.text.as_deref() == Some("›"))
+        .expect("the next arrow is drawn");
+    let (x, y) = (
+        next.rect[0] + next.rect[2] / 2.0,
+        next.rect[1] + next.rect[3] / 2.0,
+    );
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(1.0 / 60.0);
+
+    rt.update(|s, _| {
+        assert_eq!(
+            s.query.id.as_deref(),
+            Some(other),
+            "the arrow moved the thread"
+        );
+        let reply = &mut s.regions.reply;
+        assert_eq!(reply.draft.text, "", "the first thread's words stay behind");
+        assert_eq!(reply.confirming, None);
+        assert_eq!(reply.refused, None);
+        assert_eq!(reply.sent, None);
+        // Its Confirm, pressed now, posts nothing on the new thread.
+        assert_eq!(reply.confirm(other), None);
+    });
 }

@@ -36,8 +36,9 @@ const readsOf = (items) => ({ seq: 1, items, runs: [], numbers: {}, agents: {}, 
 function pageOptions(html) {
   return [...html.matchAll(/<button type="submit" name="choice" value="([^"]*)"([^>]*)>([\s\S]*?)<\/button>/g)]
     .filter(([, , , text]) => text !== 'Confirm')
-    .map(([, value, attrs]) => ({
+    .map(([, value, attrs, text]) => ({
       label: value.replace(/&amp;/g, '&'), confirm: attrs.includes('data-confirm'), locked: / disabled\b/.test(attrs),
+      recommended: text.includes('<span class="quiet">(recommended)</span>'),
     }));
 }
 
@@ -95,12 +96,27 @@ test('a verdict confirms and a question does not; Teach me never does', () => {
   const gate = anItem({ kind: 'gate1', options: ['Sign off', 'Not yet'] });
   const question = anItem({ kind: 'question', options: ['A'] });
   assert.deepEqual(replyView(readsOf([gate]), { id: gate.id }).options, [
-    { label: 'Sign off', confirm: true, locked: false }, { label: 'Not yet', confirm: true, locked: false },
-    { label: 'Teach me', confirm: false, locked: false },
+    { label: 'Sign off', confirm: true, locked: false, recommended: false },
+    { label: 'Not yet', confirm: true, locked: false, recommended: false },
+    { label: 'Teach me', confirm: false, locked: false, recommended: false },
   ]);
   assert.deepEqual(replyView(readsOf([question]), { id: question.id }).options, [
-    { label: 'A', confirm: false, locked: false }, { label: 'Teach me', confirm: false, locked: false },
+    { label: 'A', confirm: false, locked: false, recommended: false },
+    { label: 'Teach me', confirm: false, locked: false, recommended: false },
   ]);
+});
+
+test('the recommended option is the one the page marks (recommended), and only on the pilot\'s answers', () => {
+  const cases = [
+    anItem({ kind: 'question', options: ['Yes', 'No'], recommended: 'No', blocking: true }),
+    anItem({ kind: 'gate1', options: ['Sign off', 'Not yet'], recommended: 'Sign off' }),
+  ];
+  for (const item of cases) {
+    const view = replyView(readsOf(cases), { id: item.id });
+    assert.deepEqual(view.options, pageOptions(renderReplySlot(item)), item.kind);
+  }
+  // The page's own answer: No is marked; Assume the default, which answers with it, and Teach me are not.
+  assert.deepEqual(replyView(readsOf(cases), { id: cases[0].id }).options.map((o) => o.recommended), [false, true, false, false]);
 });
 
 test('dismiss is offered where the page offers it: a gate and an unknown kind, never a question', () => {
