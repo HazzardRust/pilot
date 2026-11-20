@@ -103,10 +103,13 @@ Lasting terms this run settled are in the glossary (**Glossary**, **Stale term**
 
 - **A1 Rename `CONTEXT.md` to `GLOSSARY.md`** (`itm_5c8f5fc83bae`). Default: rename. Answer (user): "Rename to
   GLOSSARY.md", after first typing "lets keep context actually". Locked as L9.
+  Verdict: stands — the user pressed "Rename to GLOSSARY.md" on itm_5c8f5fc83bae after first typing keep
 - **A2 The fundamentalist does not check terms** (`itm_bb24de856f02`). Default: the audit owns it. Answer (user):
   overturned, "okay well both then"; plus a bounded change log read in part. Locked as L10, L11; spec 9-12 added.
+  Verdict: overturned: the user said "both" on itm_bb24de856f02: the fundamentalist checks terms in every feature's diff and the audit keeps its stale-term row, with a bounded change log read in part
 - **A3 The architect writes lasting terms inline; Gate 1 signs them** (`itm_592774a86226`). Answer (user):
   "Architect inline, signed at Gate 1". Locked as L7.
+  Verdict: stands — the user chose "Architect inline, signed at Gate 1" on itm_592774a86226
 - **A4 The glossary log is derived from git history, not stored** (`itm_7a69812e9528`). Default: `glossary-log.mjs`
   reads `git log -p -- GLOSSARY.md` (following the rename), rows of term, added/changed/removed, run, date; `--term`
   and `--limit 20`. Nothing stored, so nothing grows. Trades away: a shallow clone shows less; no file to open.
@@ -115,6 +118,7 @@ Lasting terms this run settled are in the glossary (**Glossary**, **Stale term**
   can take it from one project to another". Locked as L12, cap 200.
   overridden: git already records every change, a stored file is a second copy that can disagree, and runs landing
   close together conflict in it.
+  Verdict: overturned: the user wants a stored log file in the repo so it can be taken from one project to another (itm_7a69812e9528); a git-derived log does not travel with a copied file
 
 ## 7. Out of scope
 
