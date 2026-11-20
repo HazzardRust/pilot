@@ -84,6 +84,19 @@ test('another ticket\'s crew-handoff stays open', async (t) => {
   assert.deepEqual(openCrewHandoffsOf(listItems(), undefined), []);
 });
 
+test('a close the store refuses is named, and the grant still stands', async (t) => {
+  const base = await deckOnAPort(t);
+  const ticket = aYellowTicket('refused');
+  // Owned by the architect, so a close as the pilot is refused.
+  const theirs = postStored({ ...aCrewHandoff(ticket.id), owner: 'architect' });
+
+  const said = await tool(base, 'deck_ticket', { id: ticket.id, action: 'co-pilot' });
+
+  assert.match(said, new RegExp(`: live; ${theirs.id} left open: item ${theirs.id} is owned by architect`));
+  assert.deepEqual(openCrewHandoffsOf(listItems(), ticket.id).map((item) => item.id), [theirs.id]);
+  assert.deepEqual(await traced(theirs.id), [`no trace rows for ${theirs.id}`, 'waiting: posted, 0m'], 'no resolved row');
+});
+
 test("the guard's item names its ticket", async (t) => {
   const base = await deckOnAPort(t);
   hooksTo(t, base);
