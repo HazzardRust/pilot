@@ -98,6 +98,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `telemetry.mjs` | the half-hourly usage log |
 | `testUtils.mjs` | what the deck's tests stand a deck up from |
 | `tools.mjs` | the three tools a session may call, and where the deck lives |
+| `trace.mjs` | `pilot trace`: a hand-off's trace rows in time order, then what it waits on |
 | `transcripts.mjs` | the one transcript reader behind usage and analytics |
 | `ui/markdown.mjs` | escaping, link schemes and the whitelisted markdown renderer |
 | `ui/render-cards.mjs` | the cards, previews and run list |
