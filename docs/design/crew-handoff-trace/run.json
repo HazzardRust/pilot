@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed 4f62ba1",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -67,8 +67,8 @@
       "state": "implementing"
     }
   ],
-  "next": "S3 integrating; S2 pushed 75f0cce (both APPROVE) next to integrate; then pilot ready for S5",
-  "updatedAt": "2026-11-20T17:56:30.753Z",
+  "next": "S3 integrated at e42334fc; integrating S2 75f0cce; next: pilot ready for S5",
+  "updatedAt": "2026-11-20T18:03:54.028Z",
   "friction": [
     {
       "agent": "architect",
