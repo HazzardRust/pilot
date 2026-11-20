@@ -161,7 +161,8 @@ test('ubuntu keeps main-never-red\'s triggers', () => {
   assert.ok(namesMain(block(pullRequest, 'branches')), 'pull_request names main');
   assert.match(block(pullRequest, 'branches'), /['"]feat\/\*\*['"]/, 'a slice PR into a feature branch (A3)');
   assert.ok(namesMain(block(block(on, 'push'), 'branches')), 'push names main');
-  assert.doesNotMatch(block(block(on, 'push'), 'branches'), /feat/, 'push stays on main');
+  assert.ok(/(^|[\s[,'"-])pilot($|[\s\],'"])/.test(block(block(on, 'push'), 'branches')), 'push names pilot, so a base reads a run');
+  assert.doesNotMatch(block(block(on, 'push'), 'branches'), /feat/, 'push stays on main and pilot, never feat');
   const types = block(pullRequest, 'types');
   for (const type of ['opened', 'synchronize', 'reopened', 'ready_for_review', 'labeled']) {
     assert.match(types, new RegExp(`\\b${type}\\b`), `pull_request types include ${type}`);
