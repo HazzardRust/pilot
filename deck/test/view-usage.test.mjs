@@ -70,7 +70,7 @@ test("a deck's figures are the page's readings for it, its own ctx among them", 
   const view = usageView(reads(), { run: MINE });
 
   assert.deepEqual(view, { ctx: 19, session: 47, weekly: 91, resets: 'in 2 hrs' });
-  assert.deepEqual(['ctx', 'session', 'weekly'], pageReadings(MINE));
+  assert.deepEqual(pageReadings(MINE), ['ctx', 'session', 'weekly']);
 });
 
 test('the overview has no ctx, as the page draws no ctx span there', (t) => {
@@ -79,7 +79,7 @@ test('the overview has no ctx, as the page draws no ctx span there', (t) => {
   const view = usageView(reads([]), { run: null });
 
   assert.deepEqual(view, { session: 47, weekly: 91, resets: 'in 2 hrs' });
-  assert.deepEqual(['session', 'weekly'], pageReadings(null));
+  assert.deepEqual(pageReadings(null), ['session', 'weekly']);
 });
 
 test('a state file never written gives no figure, which the header draws as unknown', (t) => {

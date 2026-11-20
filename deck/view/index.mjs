@@ -1,7 +1,8 @@
 /**
  * The deck's view (rune-deck-ui L2, L5): one object per region of a screen, computed from one
  * `readDeck()` by the derivations the HTML deck already uses, with every display string resolved
- * here so the Rune deck draws a new kind with no Rust change (spec 11). Pure: it reads no file.
+ * here so the Rune deck draws a new kind with no Rust change (spec 11). It reads no file but the
+ * status line's usage state, in `usage.mjs`.
  */
 import { landingFor, tabFor, tabsOf } from '../tabs.mjs';
 import agents from './agents.mjs';
