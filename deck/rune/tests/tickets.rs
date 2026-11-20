@@ -216,6 +216,34 @@ fn a_switch_takes_a_confirm() {
     );
 }
 
+/// The user's note: a ticket dragged by its grip, like a playlist, lands where it is dropped, by the
+/// arrows' own one-place moves.
+#[test]
+fn a_dragged_ticket_lands_where_it_is_dropped() {
+    let deck = Scratch::start();
+    let [first, second, third] = ["First", "Second", "Third"].map(|title| ticket(&deck, title));
+    let mut rt = drawn(&deck, red_open());
+    let grip = find(&rt, &format!("ticket-{third}-grip"))
+        .expect("a grip on the row")
+        .rect;
+    let row = |id: &str| find(&rt, &format!("ticket-{id}")).expect("a row").rect[1];
+    let (x, y) = (grip[0] + grip[2] / 2.0, grip[1] + grip[3] / 2.0);
+    let to = y - (row(&third) - row(&first));
+    with_deck(&deck, || {
+        rt.pointer_move(x, y);
+        rt.pointer_down(x, y);
+        for step in 1..=8 {
+            rt.pointer_move(x, y + (to - y) * step as f32 / 8.0);
+            rt.frame(1.0 / 60.0);
+        }
+        rt.pointer_up(x, to);
+        rt.frame(1.0 / 60.0);
+    });
+    settle(&mut rt);
+    settle(&mut rt);
+    assert_eq!(tickets_of(&deck), [third, first, second], "two places up");
+}
+
 /// The user's note: a row's state sat at another x by whether its play was there. The red queue's next
 /// has no play and no up, the middle both arrows and a play, the last no down: one state column.
 #[test]

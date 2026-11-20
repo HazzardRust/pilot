@@ -5,7 +5,7 @@
 
 use crate::theme::type_;
 use rune::tok;
-use rune::{Cx, El, col, row, text};
+use rune::{Cursor, Cx, Drag, El, Phase, Tx, col, row, text};
 use serde::Deserialize;
 
 use super::notifications::{keep, open_thread};
@@ -17,11 +17,16 @@ use crate::theme::{self, space};
 
 /// The panel's window state: the ticket whose move is in flight and its place in its queue when pressed,
 /// and the row whose play is asking Confirm.
+///
+/// A row dragged by its grip follows the pointer by `dragging`'s (id, offset); on the drop it owes
+/// `owed`'s (id, up, moves left) one-place moves, each sent once the deck has answered the one before.
 #[derive(Debug, Default)]
 pub struct Local {
     pub moving: Option<String>,
     pub moved_at: u64,
     pub confirming: Option<String>,
+    pub dragging: Option<(String, f32)>,
+    pub owed: Option<(String, bool, u32)>,
 }
 
 /// What the page names a ticket-making thread (`TICKET_MAKING_TITLE`).
@@ -75,6 +80,57 @@ pub fn answered(local: &mut Local, key: &str, refused: Option<String>) {
         eprintln!("pilot-deck: {reason}");
         if key.ends_with("-move") {
             local.moving = None;
+            local.owed = None;
+        }
+    }
+}
+
+/// Sends the next move a drop owes, once the one before has been answered.
+pub fn carry(s: &mut State) {
+    let Some((id, up, left)) = s.regions.tickets.owed.clone() else {
+        return;
+    };
+    let key = format!("ticket-{id}-move");
+    if s.pending.is_sent(&key) {
+        return;
+    }
+    s.regions.tickets.owed = (left > 1).then(|| (id.clone(), up, left - 1));
+    send(s, &key, DeckAction::Move { id, up });
+}
+
+/// The grip: the row follows the pointer, and the drop owes one move per row passed, kept in its queue.
+fn drag(s: &mut State, id: &str, d: &Drag, tx: &mut Tx) {
+    match d.phase {
+        // A row whose drop would be refused does not follow the pointer either.
+        Phase::Down if in_flight(s) || s.regions.tickets.owed.is_some() => {}
+        Phase::Down => s.regions.tickets.dragging = Some((id.to_string(), 0.0)),
+        Phase::Move if s.regions.tickets.dragging.is_none() => {}
+        Phase::Move => {
+            tx.instant();
+            s.regions.tickets.dragging = Some((id.to_string(), d.dy));
+        }
+        Phase::Up => {
+            tx.instant();
+            s.regions.tickets.dragging = None;
+            if d.cancelled() || in_flight(s) || s.regions.tickets.owed.is_some() {
+                return;
+            }
+            let Some((at, len)) = queue_of(s, id) else {
+                return;
+            };
+            let rows = (d.dy / PITCH).round() as i64;
+            let to = (at as i64 + rows).clamp(0, len as i64 - 1);
+            let Ok(left) = u32::try_from((to - at as i64).unsigned_abs()) else {
+                return;
+            };
+            if left == 0 {
+                return;
+            }
+            // The arrows' gate holds until the view shows the ticket off the place it was dropped from.
+            let local = &mut s.regions.tickets;
+            (local.moving, local.moved_at) = (Some(id.to_string()), at);
+            local.owed = Some((id.to_string(), to < at as i64, left));
+            carry(s);
         }
     }
 }
@@ -88,23 +144,34 @@ fn pressing(button: El, sent: bool, then: impl Fn(&mut State) + 'static) -> El {
     }
 }
 
+/// A ticket's place in its queue and that queue's length, in the view the window holds now.
+fn queue_of(s: &State, id: &str) -> Option<(u64, usize)> {
+    let view = Tickets::deserialize(s.view.regions.get("tickets")?).ok()?;
+    view.groups.iter().find_map(|g| {
+        let at = g.rows.iter().position(|r| r.id == id)?;
+        Some((at as u64, g.rows.len()))
+    })
+}
+
 /// A ticket's place in its queue in the view the window holds now.
 fn place_of(s: &State, id: &str) -> Option<u64> {
-    let view = Tickets::deserialize(s.view.regions.get("tickets")?).ok()?;
-    view.groups
-        .iter()
-        .find_map(|g| g.rows.iter().position(|r| r.id == id))
-        .map(|at| at as u64)
+    queue_of(s, id).map(|(at, _)| at)
+}
+
+/// A move is in flight until the view shows its ticket off the place it was pressed or dropped at.
+fn in_flight(s: &State) -> bool {
+    let local = &s.regions.tickets;
+    local
+        .moving
+        .as_deref()
+        .is_some_and(|moving| place_of(s, moving) == Some(local.moved_at))
 }
 
 /// An arrow: posts nothing while a move is in flight, that is until the view shows the ticket moved off
 /// the place it was pressed at. The deck's `seq` counts replies, not moves, so it cannot say so. A move
 /// the deck did not take lifts the gate at once.
 fn move_ticket(s: &mut State, id: &str, up: bool) {
-    let local = &s.regions.tickets;
-    if let Some(moving) = &local.moving
-        && place_of(s, moving) == Some(local.moved_at)
-    {
+    if in_flight(s) || s.regions.tickets.owed.is_some() {
         return;
     }
     let Some(at) = place_of(s, id) else { return };
@@ -206,6 +273,8 @@ fn continue_of(
 const ADVANCE: f32 = 0.6;
 /// The state column in characters: the longest label `ticketLabelOf` gives, "awaiting sign-off".
 const LABEL_CH: f32 = 17.0;
+/// One row's step down its fold: the row, its hairline and the fold's gap either side of that.
+const PITCH: f32 = theme::size::row + 1.0 + 2.0 * space::within;
 
 /// At least a row-high square, holding one control, or nothing, centred.
 fn slot(control: Option<El>) -> El {
@@ -266,7 +335,24 @@ fn ticket_row(
         });
         line = line.child(slot(arrow));
     }
-    line
+    // A row the arrows cannot move (alone in its queue, or its lane locked) has no grip either.
+    let grip = (r.can_move.up || r.can_move.down).then(|| {
+        let id = r.id.clone();
+        text("⠿")
+            .key(format!("ticket-{}-grip", r.id))
+            .font(type_::BODY)
+            .color(t.text_secondary)
+            .role("button")
+            .label("Drag to move")
+            .help("Drag to move")
+            .cursor(Cursor::Grab)
+            .on_drag(move |s: &mut State, d: &mut Drag, tx: &mut Tx| drag(s, &id, d, tx))
+    });
+    line = line.child(slot(grip));
+    match &local.dragging {
+        Some((id, dy)) if *id == r.id => line.offset(0.0, *dy),
+        _ => line,
+    }
 }
 
 pub fn draw(

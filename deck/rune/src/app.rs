@@ -200,6 +200,7 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
         regions::tabs::answered(s, key, acted);
         regions::strip::answered(s, key, acted);
     }
+    regions::tickets::carry(s);
     let settled = !answered.is_empty();
     regions::usage::poll(s, tx);
     let fed = match s.live.as_ref().and_then(live::Inbox::take) {
