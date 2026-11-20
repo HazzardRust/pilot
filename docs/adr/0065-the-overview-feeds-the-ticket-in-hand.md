@@ -32,3 +32,5 @@ Rejected:
 Recorded in `docs/design/overview-one-ticket/architecture.md` (§5 L2, L3, L4, L5, L6, L12, L13, L16); deck threads itm_127a0238b9d2, itm_2dbd54abbff4, itm_0bfcf27836de.
 
 **Amended 2026-10-14 (yellow-lane S17, ADR 0147):** the ticket states kept their meaning and swapped colours, so planning is now red and concluding is now green, with yellow unchanged; read this ADR's green ticket as red and its red ticket as green.
+
+**Amended 2026-11-20 (ADR 0204):** L3 and L4 no longer hide: a thread behind the ticket in hand folds into one counted line under home's cards, a gate1, gate2 or signoff of any ticket is always a card, and the strip and the arrows count the whole queue.

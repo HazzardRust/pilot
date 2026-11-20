@@ -478,6 +478,11 @@ article.settled h2 a { color: var(--quiet); }
 }
 
 .day[open] > summary { color: inherit; }
+
+/* The fold (nothing-hidden spec 1): what waits behind another ticket, one counted
+   line under the cards, styled as a day heading so it reads as one press away. */
+.fold > summary { color: var(--quiet); cursor: pointer; letter-spacing: 0.08em; padding: 0.8rem 0; text-transform: uppercase; }
+.fold[open] > summary { color: inherit; }
 .day > summary .tally { color: var(--quiet); font-weight: 700; }
 .day > summary .tally::before { content: " · "; font-weight: 400; }
 
