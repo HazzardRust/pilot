@@ -166,6 +166,24 @@ test('an index that is a symlink is never followed', (t) => {
   assert.deepEqual(resolveGenerated(repo, [INDEX], { side: 'theirs' }), { resolved: [], left: [INDEX] });
 });
 
+test('an index under a symlinked docs/adr is never followed', (t) => {
+  const { dir, repo } = scratch(t);
+  const outside = path.join(dir, 'outside-adr');
+  fs.cpSync(path.join(repo, 'docs', 'adr'), outside, { recursive: true });
+  fs.rmSync(path.join(repo, 'docs', 'adr'), { recursive: true });
+  try {
+    fs.symlinkSync(outside, path.join(repo, 'docs', 'adr'), 'junction');
+  } catch (err) {
+    t.skip(`no symlinks here (${err.code})`);
+    return;
+  }
+  fs.copyFileSync(path.join(outside, '0001-decision-0001.md'), path.join(outside, '0002-decision-0002.md'));
+  const before = fs.readFileSync(path.join(outside, 'README.md'), 'utf8');
+
+  assert.equal(refreshIndex(repo), false);
+  assert.equal(fs.readFileSync(path.join(outside, 'README.md'), 'utf8'), before, 'the target is untouched');
+});
+
 test('the gitattributes line is pinned', (t) => {
   assert.match(ATTRIBUTES, /^docs\/adr\/README\.md merge=union$/m);
   const { repo } = scratch(t, null);

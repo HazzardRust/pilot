@@ -204,9 +204,13 @@ export function gitUnder(cwd, { timeout } = {}) {
  * `pilot.remote` is bad.
  * With `timeout` (ms), every git call shares that one deadline, and a call past it throws
  * with `code: 'ETIMEDOUT'`. The repository's `core.fsmonitor` is off for every call, so a
- * hostile repository's config runs no command.
+ * hostile repository's config runs no command. `base`, a full `refs/remotes/…` or `refs/heads/…` ref, replaces that
+ * pilot as the upstream (audit-f14 S2); anything else throws before git runs.
  */
-export function pilotLineage(cwd, ref, { timeout } = {}) {
+export function pilotLineage(cwd, ref, { timeout, base } = {}) {
+  if (base !== undefined && !(typeof base === 'string' && /^refs\/(?:remotes|heads)\//.test(base) && PLAIN.test(base))) {
+    throw new Error(`lineage base ${JSON.stringify(base)} is not a full branch ref`);
+  }
   const git = gitUnder(cwd, { timeout });
   const ok = (args) => git(args).status === 0;
   const text = (args, input) => {
@@ -215,8 +219,7 @@ export function pilotLineage(cwd, ref, { timeout } = {}) {
     return out.stdout;
   };
   const run = (args, input) => text(args, input).split('\n').filter(Boolean);
-  const runs = runRemote(text);
-  const upstream = runRef(runs, PILOT_BRANCH);
+  const upstream = base ?? runRef(runRemote(text), PILOT_BRANCH);
   if (!ok(['rev-parse', '-q', '--verify', `${upstream}^{commit}`])) return { upstream };
   const [sha] = run(['rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`]);
   const tip = ok(['merge-base', '--is-ancestor', upstream, sha]);

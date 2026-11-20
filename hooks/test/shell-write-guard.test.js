@@ -13,7 +13,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { decide } = require('../shell-write-guard.js');
+const { decide, writeTargets } = require('../shell-write-guard.js');
 const { isWindows } = require('../lib/platform.js');
 
 const HOOK = path.join(__dirname, '..', 'shell-write-guard.js');
@@ -46,6 +46,12 @@ test('sed -i on a tracked file is refused', (t) => {
     assert.strictEqual(out.hookSpecificOutput.hookEventName, 'PreToolUse');
     for (const word of ['f.md', 'Edit', 'Write']) assert.ok(reasonOf(out).includes(word), `${command}: ${word}`);
   }
+});
+
+test('a mid-word tilde is literal', () => {
+  // A Windows 8.3 short name such as RUNNER~1 is literal to bash, which expands `~` only at a word's start.
+  assert.strictEqual(writeTargets(`sed -i 's/a/b/' /x/RUNNER~1/f.md`, repo).length, 1, 'a mid-word ~ is a target');
+  assert.deepStrictEqual(writeTargets(`sed -i 's/a/b/' ~/f.md`, repo), [], 'a word-start ~ is an expansion');
 });
 
 test('sed -i on an untracked file runs', () => {
