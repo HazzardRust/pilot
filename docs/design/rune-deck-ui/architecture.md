@@ -38,7 +38,7 @@ that other people's projects are pushed onto.
 | 19 | *added (restyle, feedback 3-5)*: the left side is VS Code's side bar: an icon bar with labelled icons, one side area of one width, panes stacked with no gap cut by 1 px rules, a 1 px rule to the body, no snap. 6d and 6e hold on the side area's handle. | S28 layout tests | every pane's inner edge at one x; 6d and 6e bars |
 | 20 | *added (restyle, feedback 6)*: the right strip's buttons are one aligned column, rounded, coloured by role. | S29 strip test | one width and x; radius 4; 0 state-colour fills |
 | 21 | *added (restyle, DESIGN.md §3)*: every region draws its empty state, and "deck not running" offers Retry. | S32 empty and retry tests | 0 blank regions on the empty deck; Retry reconnects at once |
-| 22 | *added (restyle, feedback 9; waits on itm_1ca41d7c120d)*: a bundled font in at most three type scales. | S33 type-scale test; the snap | every text on one of 3 scales; the bundled family drawn |
+| 22 | *added (restyle, feedback 9; itm_1ca41d7c120d answered A: Inter + JetBrains Mono, 13 bold / 13 / 11)*: a bundled font in at most three type scales. | S33 type-scale test; the snap | every text on one of 3 scales; the bundled family drawn |
 
 ## 3. Findings
 
@@ -215,15 +215,16 @@ Width 15; longest stem 5
 | S22 | The overview shows one status table per tab (added) | 13 | `deck/view/status.mjs`, `deck/test/view-status.test.mjs`, `deck/rune/src/regions/status.rs`, `tests/status.rs` | S12 | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S22](slices/S22.md) |
 | S24 | A press posts off the UI thread, and its answer settles in one place (added) | 15 | `deck/rune/src/act.rs`, `src/app.rs`, `src/regions/queue.rs`, `regions/history.rs`, `regions/notifications.rs`, `tests/history.rs`, `tests/notifications.rs` | step 7 fix round | `pilot:rust-reviewer` | [S24](slices/S24.md) |
 | S25 | Every other press posts through act::send (added) | 15 | `deck/rune/src/regions/chat.rs`, `regions/reply.rs`, `regions/tickets.rs`, `regions/strip.rs`, `regions/tabs.rs`, `src/app.rs`, their tests | S24 | `pilot:rust-reviewer` | [S25](slices/S25.md) |
-| S26 | The restyle's tokens and the control and content looks (added) | 2, 16, 17 | `deck/rune/src/theme.rs`, `tests/theme.rs`, old spacing pins | pivot | `pilot:rust-reviewer` | [S26](slices/S26.md) |
+| S26 | Every control says clickable: the hover look, first (added) | 2, 16 | `deck/rune/src/theme.rs` (additive), every pressable in `src/regions/*.rs` and `src/layout.rs`, `tests/theme.rs`, `tests/hover.rs` | pivot | `pilot:rust-reviewer` | [S26](slices/S26.md) |
 | S27 | The window frame: Rune's title bar and the top inset (added) | 18 | `deck/rune/src/app.rs` `spec()`, `src/main.rs`, `src/layout.rs` `strips()`, `tests/layout.rs` | S26 | `pilot:rust-reviewer` | [S27](slices/S27.md) |
 | S28 | The left side as VS Code's side bar (added) | 19, 6d, 6e | `deck/rune/src/layout.rs`, `src/prefs.rs`, `tests/layout.rs` | S27 | `pilot:rust-reviewer` | [S28](slices/S28.md) |
 | S29 | The right strip's buttons on the grid, rounded, by role (added) | 20 | `deck/rune/src/regions/strip.rs`, `tests/strip.rs` | S26 | `pilot:rust-reviewer` | [S29](slices/S29.md) |
-| S30 | Header and centre: controls say clickable, content selects (added) | 16, 17 | `regions/tabs.rs`, `usage.rs`, `queue.rs`, `history.rs`, `thread.rs`, `reply.rs`, their tests | S26 | `pilot:rust-reviewer` | [S30](slices/S30.md) |
-| S31 | Left panes' contents: controls say clickable, content selects (added) | 16, 17 | `regions/notifications.rs`, `chat.rs`, `status.rs`, `graph.rs`, `agents.rs`, `tickets.rs`, `reports.rs`, their tests | S26 | `pilot:rust-reviewer` | [S31](slices/S31.md) |
+| S30 | Header and centre: content selects, cards on the grid, the kind line (added) | 17 | `regions/tabs.rs`, `usage.rs`, `queue.rs`, `history.rs`, `thread.rs`, `reply.rs`, their tests | S26 | `pilot:rust-reviewer` | [S30](slices/S30.md) |
+| S31 | Left panes' contents: content selects, rows on the grid (added) | 17 | `regions/notifications.rs`, `chat.rs`, `status.rs`, `graph.rs`, `agents.rs`, `tickets.rs`, `reports.rs`, their tests | S26 | `pilot:rust-reviewer` | [S31](slices/S31.md) |
 | S32 | Every region designs its empty and error states (added) | 21 | `src/app.rs`, `src/live.rs`, the regions' empty lines, `tests/empty.rs`, `tests/live.rs` | S30, S31 | `pilot:rust-reviewer` | [S32](slices/S32.md) |
-| S33 | The deck's font and its three type scales (added, waits) | 22 | `deck/rune/assets/fonts/`, `src/app.rs`, `src/theme.rs`, the regions' `.font` | S27, S30, S31 | `pilot:rust-reviewer` | [S33](slices/S33.md) |
+| S33 | The deck's font and its three type scales (added; itm_1ca41d7c120d answered A) | 22 | `deck/rune/assets/fonts/`, `src/app.rs`, `src/theme.rs`, the regions' `.font` | S27, S30, S31 | `pilot:rust-reviewer` | [S33](slices/S33.md) |
 | S34 | The palette's values (added, waits) | 2 | `src/theme.rs` role values, `tests/theme.rs` | S26 | `pilot:rust-reviewer` | [S34](slices/S34.md) |
+| S35 | The spacing on the 4/8 grid (added) | 6b | `deck/rune/src/theme.rs` `space`, old spacing pins | S28, S29, S30, S31 | `pilot:rust-reviewer` | [S35](slices/S35.md) |
 
 Rust paths after S1 are under `deck/rune/`. S1 first by risk: if Rune will not build or paint headless here, every
 other slice's plan changes. Then S5 (the write seam nine actions share), then the regions by the actions they need.
@@ -274,8 +275,9 @@ other slice's plan changes. Then S5 (the write seam nine actions share), then th
 | S27 | planned (added) | | | | S26 | 18 |
 | S28 | planned (added) | | | | S27 | 19, 6d, 6e |
 | S29 | planned (added) | | | | S26 | 20 |
-| S30 | planned (added) | | | | S26 | 16, 17 |
-| S31 | planned (added) | | | | S26 | 16, 17 |
+| S30 | planned (added) | | | | S26 | 17 |
+| S31 | planned (added) | | | | S26 | 17 |
+| S35 | planned (added) | | | | S28, S29, S30, S31 | 6b |
 | S32 | planned (added) | | | | S30, S31 | 21 |
 | S33 | planned (added) | | | | S27, S30, S31 | 22 |
 | S34 | planned (added) | | | | S26 | 2 |
