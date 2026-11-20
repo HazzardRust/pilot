@@ -82,6 +82,9 @@ Lasting terms this run settled are in the glossary (**Glossary**, **Stale term**
 - **L6 Historic ADRs and design docs keep `CONTEXT.md`** as written. Rejected: rewriting history.
 - **L7 The architect writes each lasting term to `GLOSSARY.md` on the design branch as it settles; the Gate 1 press
   signs the diff.** The user's answer to A3. Rejected: the pilot writing after the press (batched, unsigned).
+- **L8 QA runs in its own worktree of this repository plus one scratch fixture repository** holding one path entry
+  and one stale term, and one scratch pilot request using an `_Avoid_` word. The user's answer (`itm_813a9a2d4b97`).
+  Rejected: a second real repository. Grilling depth for this run is *forks* (`itm_488f8ece3b4f`): no Gate 1 walk.
 
 ## 6. Assumed decisions
 
