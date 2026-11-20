@@ -11,7 +11,7 @@ use pilot_deck::app::{self, State};
 use pilot_deck::client::View;
 use pilot_deck::prefs::Prefs;
 use pilot_deck::theme::{size, space};
-use rune::{Env, Runtime, TitlebarAction};
+use rune::{Env, Key, KeyEvent, Mods, Runtime, TitlebarAction};
 use serde_json::{Value, json};
 
 /// Every press here may write the prefs, and where they go is the environment, which the tests
@@ -313,6 +313,39 @@ fn a_drag_tracks_the_pointer_with_no_snap_at_the_default() {
     rt.frame(1.0);
     assert!(body(&rt, "chat")[3] > 0.0, "chat did not come back");
     assert!(rects(&rt, "side").0[2] >= size::side_min, "came back too narrow");
+}
+
+/// S28 behaviour 2, from the hidden side: the handle drags the area back out from where it shows
+/// (no jump to the width it last had), and Escape puts back exactly what the drag moved.
+#[test]
+fn a_hidden_side_drags_back_out_and_escape_puts_it_back() {
+    let (_held, _dir) = prefs_dir("hidden");
+    let mut prefs = Prefs::default();
+    prefs.side_width = Some(size::side_default);
+    prefs.side_hidden = true;
+    let mut rt = window(json!({}), prefs);
+
+    let (x, y) = rt.find("side-handle").expect("a handle on a hidden side");
+    assert_eq!(rects(&rt, "side").0[2], 0.0, "the hidden side shows");
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    let out = size::side_min + 30.0;
+    rt.pointer_move(x + out, y);
+    rt.frame(FRAME);
+    let s = rects(&rt, "side").0;
+    assert!(
+        (s[2] - out).abs() <= 1.0,
+        "dragged {out} out of hiding, the side is {} wide",
+        s[2]
+    );
+
+    rt.key(KeyEvent {
+        key: Key::Escape,
+        mods: Mods::default(),
+    });
+    rt.frame(1.0);
+    assert!(rt.state.prefs.side_hidden, "Escape left the side showing");
+    assert_eq!(rt.state.prefs.side_width, Some(size::side_default));
 }
 
 /// The notifications view with `n` notices, none of them seen.

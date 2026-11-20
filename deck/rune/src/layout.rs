@@ -80,11 +80,11 @@ const COUNT_CH: f32 = 4.0;
 /// The advance of one monospace glyph as a share of the font size, as the status columns take it.
 const ADVANCE: f32 = 0.6;
 
-/// The drag in hand: the side area's width at the press, which each move adds the pointer's travel
-/// to.
+/// The drag in hand: the side area's width as drawn at the press, which each move adds the
+/// pointer's travel to, and the prefs' width and hidden flag then, which a cancel puts back.
 #[derive(Debug, Default)]
 pub struct Local {
-    grab: Option<f32>,
+    grab: Option<(f32, Option<f32>, bool)>,
 }
 
 /// Whether `panel` is open: as the user left it, or Chat and Status on a first start.
@@ -102,6 +102,7 @@ pub fn toggle(prefs: &mut Prefs, panel: &str) {
     if prefs.open_panels.is_empty() {
         prefs.open_panels.extend(OPEN_FIRST.map(String::from));
     }
+    // Hidden: unhide and open, never remove. Shown: remove, or insert if it was not there.
     if std::mem::take(&mut prefs.side_hidden) || !prefs.open_panels.remove(panel) {
         prefs.open_panels.insert(panel.to_string());
     }
@@ -112,6 +113,11 @@ pub fn toggle(prefs: &mut Prefs, panel: &str) {
 /// The side area's width while it shows: as the user left it, or the default.
 pub fn side_width(prefs: &Prefs) -> f32 {
     prefs.side_width.unwrap_or(size::side_default)
+}
+
+/// Whether the side area shows: not dragged into hiding, and some pane open in it.
+fn shown(prefs: &Prefs) -> bool {
+    !prefs.side_hidden && PANELS.iter().any(|p| is_open(prefs, p.0))
 }
 
 /// Sets the side area's width to `width`, the pointer's, with no step and no pull toward the
@@ -217,15 +223,24 @@ fn content(s: &State, panel: &str, cx: &mut Cx<State>) -> El {
 /// since a spring here is the lag the user named (6d); the width is saved once, on the release.
 fn drag(s: &mut State, d: &Drag, tx: &mut Tx) {
     match d.phase {
-        Phase::Down => s.layout.grab = Some(side_width(&s.prefs)),
+        Phase::Down => {
+            let drawn = if shown(&s.prefs) {
+                side_width(&s.prefs)
+            } else {
+                space::s0
+            };
+            s.layout.grab = Some((drawn, s.prefs.side_width, s.prefs.side_hidden));
+        }
         Phase::Move => {
             tx.instant();
-            if let Some(start) = s.layout.grab {
-                resize(&mut s.prefs, start + d.dx);
+            if let Some((drawn, _, _)) = s.layout.grab {
+                resize(&mut s.prefs, drawn + d.dx);
             }
         }
         Phase::Up => match s.layout.grab.take() {
-            Some(start) if d.cancelled() => resize(&mut s.prefs, start),
+            Some((_, width, hidden)) if d.cancelled() => {
+                (s.prefs.side_width, s.prefs.side_hidden) = (width, hidden);
+            }
             _ => keep(&s.prefs),
         },
     }
@@ -321,7 +336,7 @@ fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<Sta
 /// stays when the area hides, so the area can be dragged back out.
 fn left_side(s: &State, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
-    let shown = !s.prefs.side_hidden && PANELS.iter().any(|p| is_open(&s.prefs, p.0));
+    let shown = shown(&s.prefs);
     let width = if shown { side_width(&s.prefs) } else { space::s0 };
     let bar = PANELS.iter().fold(
         col().key("icon-bar").w(size::icon_bar).h_full(),
