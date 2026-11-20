@@ -138,7 +138,7 @@ fetched on 2026-11-20 from microsoft/vscode.
   - The full suite runs once, at landing.
   - The user looks at every slice.
 
-- **Token playground** (the user, itm_2d4d885b5e13). The theme's values move into one JSON file, `deck/rune/theme.json`, read by theme.rs at build time (S36). A playground page, `deck/rune/playground/index.html` (S37), edits every token over a mock of the deck in light and dark and exports that JSON 1:1. The palette and any token values arrive as the user's export (S34). A native Rune screenshot stays the final check.
+- **Token playground** (the user, itm_2d4d885b5e13). The theme's values move into one JSON file, `deck/rune/theme.json`, read by theme.rs at build time (S36). A playground page, `deck/rune/playground/index.html` (S37), edits every token over a mock of the deck in light and dark and exports that JSON 1:1. The crew sets the palette (S34) and spacing (S35) values without waiting (the user: "dont wait on me"). A later export from the user replaces theme.json in one step. A native Rune screenshot stays the final check.
 
 ## 7. The user's feedback, verbatim (walkthrough itm_317aa44d9e6e)
 

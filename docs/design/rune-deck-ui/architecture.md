@@ -224,7 +224,7 @@ Width 15; longest stem 5
 | S31 | Left panes' contents: content selects, rows on the grid (added) | 17 | `regions/notifications.rs`, `chat.rs`, `status.rs`, `graph.rs`, `agents.rs`, `tickets.rs`, `reports.rs`, their tests | S26 | `pilot:rust-reviewer` | [S31](slices/S31.md) |
 | S32 | Every region designs its empty and error states (added) | 21 | `src/app.rs`, `src/live.rs`, the regions' empty lines, `tests/empty.rs`, `tests/live.rs` | S30, S31 | `pilot:rust-reviewer` | [S32](slices/S32.md) |
 | S33 | The deck's font and its three type scales (added; itm_1ca41d7c120d answered A) | 22 | `deck/rune/assets/fonts/`, `src/app.rs`, `src/theme.rs`, the regions' `.font` | S27, S30, S31 | `pilot:rust-reviewer` | [S33](slices/S33.md) |
-| S34 | The palette's values (added, waits on the user's export) | 2 | `deck/rune/theme.json` values, `tests/theme.rs` | S37 | `pilot:rust-reviewer` | [S34](slices/S34.md) |
+| S34 | The palette's values, by role and to WCAG AA (added) | 2 | `deck/rune/theme.json` role values, `tests/theme.rs`, `deck/DESIGN.md` §4 | S36 | `pilot:rust-reviewer` | [S34](slices/S34.md) |
 | S35 | The spacing on the 4/8 grid (added) | 6b | `deck/rune/src/theme.rs` `space`, old spacing pins | S28, S29, S30, S31 | `pilot:rust-reviewer` | [S35](slices/S35.md) |
 | S36 | theme.rs takes its values from one JSON file (added) | 23, 2 | `deck/rune/theme.json`, `src/theme.rs`, `tests/theme.rs`, `deck/DESIGN.md` §4 | S26 | `pilot:rust-reviewer` | [S36](slices/S36.md) |
 | S37 | The token playground: one page that exports theme.json (added) | 23 | `deck/rune/playground/`, `tests/theme.rs` | S36 | `pilot:typescript-reviewer` | [S37](slices/S37.md) |
@@ -285,5 +285,5 @@ other slice's plan changes. Then S5 (the write seam nine actions share), then th
 | S37 | planned (added) | | | | S36 | 23 |
 | S32 | planned (added) | | | | S30, S31 | 21 |
 | S33 | planned (added) | | | | S27, S30, S31 | 22 |
-| S34 | planned (added) | | | | S37 | 2 |
+| S34 | planned (added) | | | | S36 | 2 |
 | Deck UI rebuilt in Rune | planned | `feat/rune-deck-ui` | | | S1-S20 | 1-11 |
