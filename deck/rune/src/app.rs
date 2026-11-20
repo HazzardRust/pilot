@@ -59,8 +59,10 @@ pub fn setup(s: &mut State, wake: Waker) {
 
 /// Takes what the reader last left: a view replaces the whole `view` and nothing else, so a
 /// draft, a scroll and the open panels stay (spec 4); `Down` keeps the last view under the banner.
-pub fn poll(s: &mut State, _: f64, _: &mut Tx) -> bool {
-    match s.live.as_ref().and_then(live::Inbox::take) {
+pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
+    // A press's answer is the reply box's (S9), taken beside the view and never instead of it.
+    let replied = regions::reply::poll(&mut s.regions.reply, tx);
+    let fed = match s.live.as_ref().and_then(live::Inbox::take) {
         Some(Feed::View(view)) => {
             s.view = view;
             s.down = false;
@@ -68,7 +70,8 @@ pub fn poll(s: &mut State, _: f64, _: &mut Tx) -> bool {
         }
         Some(Feed::Down) => !std::mem::replace(&mut s.down, true),
         None => false,
-    }
+    };
+    replied || fed
 }
 
 /// The screen's region slots, top to bottom; a stub region draws nothing until its slice.
