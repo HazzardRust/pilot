@@ -453,6 +453,36 @@ fn a_dragged_border_resizes_both_panes_and_persists() {
     assert_eq!(height(&again, "chat"), below + 30.0, "after a restart");
 }
 
+/// QA h: a heading's press folds its pane to the heading row and the next unfolds it; the pane
+/// stays open, and the fold is kept apart from the open set.
+#[test]
+fn a_heading_folds_its_pane_and_keeps_it_open() {
+    let (_held, dir) = prefs_dir("fold");
+    let mut rt = window(notices(3), all_open(size::side_default));
+    let open = body(&rt, "notifications")[3];
+
+    press(&mut rt, "panel-notifications-head");
+    rt.frame(1.0);
+    assert_eq!(
+        body(&rt, "notifications")[3],
+        0.0,
+        "folded, the body still shows"
+    );
+    assert_eq!(
+        rects(&rt, "panel-notifications-head").0[3],
+        size::pane_head,
+        "folded, the heading is not one row"
+    );
+    let kept = Prefs::load(&dir);
+    assert!(kept.folded_panels.contains("notifications"), "{kept:?}");
+    assert!(kept.open_panels.contains("notifications"), "{kept:?}");
+
+    press(&mut rt, "panel-notifications-head");
+    rt.frame(1.0);
+    assert_eq!(body(&rt, "notifications")[3], open, "it did not unfold");
+    assert!(!Prefs::load(&dir).folded_panels.contains("notifications"));
+}
+
 /// QA e: the first pane's heading and the first icon start where the centre's header does, 40 px
 /// under the title bar's rule (deck.css `--top`).
 #[test]

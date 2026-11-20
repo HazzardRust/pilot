@@ -25,6 +25,8 @@ pub struct Prefs {
     /// Each pane's height the user dragged its border to; a pane not here is as tall as its
     /// contents.
     pub pane_heights: BTreeMap<String, f32>,
+    /// The open panes folded to their heading row; a pane shut and opened again keeps its fold.
+    pub folded_panels: BTreeSet<String>,
     pub hidden_reports: BTreeSet<String>,
 }
 

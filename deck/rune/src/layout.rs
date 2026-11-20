@@ -4,6 +4,8 @@
 //! width and whether it is hidden are the window's prefs (A4), saved on a press and on a drag's
 //! release, never once a frame.
 
+use std::f32::consts::FRAC_PI_2;
+
 use rune::tok;
 use rune::{
     Align, Cursor, Cx, Drag, El, Icon, Phase, ScrollSpec, Transition, Tx, col, el, icon, row, text,
@@ -121,6 +123,19 @@ pub fn toggle(prefs: &mut Prefs, panel: &str) {
         prefs.open_panels.insert(panel.to_string());
     }
     prefs.open_panels.insert(SET.to_string());
+    keep(prefs);
+}
+
+/// Whether `panel` is folded to its heading row; apart from whether it is open (QA h).
+pub fn folded(prefs: &Prefs, panel: &str) -> bool {
+    prefs.folded_panels.contains(panel)
+}
+
+/// A heading's press: folds `panel` to its heading row, or unfolds it, and saves the prefs.
+pub fn fold(prefs: &mut Prefs, panel: &str) {
+    if !prefs.folded_panels.remove(panel) {
+        prefs.folded_panels.insert(panel.to_string());
+    }
     keep(prefs);
 }
 
@@ -375,6 +390,8 @@ fn pane(
     let dark = cx.system_dark();
     let t = tok::theme(dark);
     let open = is_open(&s.prefs, name);
+    let is_folded = folded(&s.prefs, name);
+    // The heading folds the pane to its own row and unfolds it (QA h); the icon opens and shuts it.
     let head = theme::control(row(), dark)
         .key(format!("panel-{name}-head"))
         .w_full()
@@ -384,9 +401,14 @@ fn pane(
         .center_y()
         .role("button")
         .label(label)
-        .expanded(open)
-        .on_press(move |s: &mut State| toggle(&mut s.prefs, name))
-        .child(icon(&glyphs::CHEVRON_DOWN, space::s5).color(t.text))
+        .expanded(open && !is_folded)
+        .on_press(move |s: &mut State| fold(&mut s.prefs, name))
+        .child(
+            icon(&glyphs::CHEVRON_DOWN, space::s5)
+                .key(format!("panel-{name}-arrow"))
+                .rotate(if is_folded { -FRAC_PI_2 } else { 0.0 })
+                .color(t.text),
+        )
         .child(
             text(label.to_uppercase())
                 .font(type_::HEADER)
@@ -407,11 +429,16 @@ fn pane(
                 .padding(space::pad)
                 .child(content(s, name, cx)),
         );
-    let key = format!("panel-{name}");
-    let mut pane = col().key(key.clone()).w_full().clip_soft(space::s0);
+    let mut pane = col()
+        .key(format!("panel-{name}"))
+        .w_full()
+        .clip_soft(space::s0);
     if !open {
         body = body.h(space::s0);
         pane = pane.h(space::s0);
+    } else if is_folded {
+        // Folded: the rule and the heading stay, the body closes and takes no Tab stop.
+        body = body.h(space::s0).inert().a11y_hidden();
     } else if let Some(&h) = s.prefs.pane_heights.get(name) {
         // Dragged to a height (QA j): the body takes what the heading leaves and scrolls.
         pane = pane.h(h);
@@ -426,20 +453,23 @@ fn pane(
             cx.layout_size(&format!("panel-{p}"))
                 .map_or(space::s0, |[_, h]| h)
         });
-        pane = pane.child(
-            col()
-                .key(format!("panel-{name}-border"))
-                .w_full()
-                .pb(space::s3)
+        let mut border = col()
+            .key(format!("panel-{name}-border"))
+            .w_full()
+            .pb(space::s3)
+            .child(theme::separator(dark));
+        // A folded pane is its heading's height, so a border beside one does not drag.
+        if !is_folded && !folded(&s.prefs, above) {
+            border = border
                 .role("separator")
                 .label(format!("Resize {label}"))
                 .cursor(Cursor::ResizeRow)
                 .drag_threshold(space::s0)
                 .on_drag(move |s: &mut State, d: &mut Drag, tx: &mut Tx| {
                     border_drag(s, [above, name], drawn, d, tx)
-                })
-                .child(theme::separator(dark)),
-        );
+                });
+        }
+        pane = pane.child(border);
     }
     pane = pane.child(head).child(body);
     if open {
