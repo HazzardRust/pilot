@@ -99,6 +99,103 @@ fn a_thread_reads_whole_and_escape_or_left_goes_back_to_its_deck() {
     }
 
     a_back_press_survives_the_next_live_refetch(&deck, query);
+    a_move_reads_the_next_thread_at_once(&deck);
+}
+
+fn thread_ids(deck: &support::Scratch) -> Vec<String> {
+    let secret = std::fs::read_to_string(deck.dir.join("deck.secret")).expect("the secret");
+    let listed: serde_json::Value = ureq::get(format!("{}/api/items", deck.url))
+        .header("Authorization", format!("Bearer {}", secret.trim()))
+        .call()
+        .expect("items")
+        .body_mut()
+        .read_json()
+        .expect("json");
+    listed["items"]
+        .as_array()
+        .expect("items")
+        .iter()
+        .map(|item| item["id"].as_str().expect("an id").to_string())
+        .collect()
+}
+
+/// Spec 14: the arrow draws the next thread with no write to the deck between; and a view read
+/// for the thread just left is not drawn on the next one.
+fn a_move_reads_the_next_thread_at_once(deck: &support::Scratch) {
+    deck.post("Second thread?", "C:/work/alpha");
+    let ids = thread_ids(deck);
+    assert!(ids.len() >= 2, "two threads: {ids:?}");
+    let client = Client::from_env().expect("a loopback client");
+    let at = |id: &str| Query {
+        screen: "thread".into(),
+        id: Some(id.to_string()),
+        ..Query::default()
+    };
+    let first_query = at(&ids[0]);
+    let first = client.view(&first_query).expect("the first thread");
+    let (woke, wakes) = mpsc::channel();
+    let inbox = live::start(
+        client,
+        first_query.clone(),
+        Arc::new(move || {
+            let _ = woke.send(());
+        }),
+    );
+    let mut rt = Runtime::new(
+        State {
+            view: first.clone(),
+            query: first_query,
+            live: Some(inbox.clone()),
+            ..State::default()
+        },
+        thread_only,
+        (1280.0, 800.0),
+        Env::new(true, 1.0),
+    );
+    rt.frame(0.0);
+    // The connect's own refetch is for the thread being left; let it land, then move.
+    wakes.recv_timeout(Duration::from_secs(3)).expect("connect");
+    let arrow = rt
+        .elements()
+        .into_iter()
+        .find(|element| element.role == "link")
+        .expect("the thread's arrow is drawn");
+    let (x, y) = (
+        arrow.rect[0] + arrow.rect[2] / 2.0,
+        arrow.rect[1] + arrow.rect[3] / 2.0,
+    );
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(0.0);
+    let nav = &first.regions["thread"]["nav"];
+    let next = rt.state.query.id.clone().expect("a thread id");
+    assert!(
+        [&nav["prev"]["id"], &nav["next"]["id"]]
+            .iter()
+            .any(|neighbour| neighbour.as_str() == Some(next.as_str())),
+        "the arrow went to a neighbour: {next} of {nav}"
+    );
+    // No write to the deck from here: only the move can bring the next thread's view.
+    let moved = loop {
+        wakes
+            .recv_timeout(Duration::from_secs(3))
+            .expect("the move's own view");
+        if let Some(Feed::View(view)) = inbox.take() {
+            break view;
+        }
+    };
+    let second_title = Client::from_env()
+        .and_then(|client| client.view(&at(&next)))
+        .expect("the second")
+        .regions["thread"]["title"]
+        .as_str()
+        .expect("a title")
+        .to_string();
+    assert_eq!(
+        moved.regions["thread"]["title"].as_str(),
+        Some(second_title.as_str())
+    );
 }
 
 /// The live reader refetches for what the window last asked, so a nav press must tell it, or the

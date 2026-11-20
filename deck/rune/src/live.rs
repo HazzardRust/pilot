@@ -32,18 +32,53 @@ type Asked = Arc<Mutex<Query>>;
 
 /// The newest `Feed` the reader left for the window; an older one it replaces is never drawn.
 #[derive(Debug, Clone, Default)]
-pub struct Inbox(Arc<Mutex<Option<Feed>>>, Asked);
+pub struct Inbox(Slotted, Asked, Arc<Mutex<Option<Fetcher>>>);
+
+/// A feed with the query it was read for (a `Down` is for none), so one read for a query the
+/// window has since left is never drawn, however late it lands.
+type Slotted = Arc<Mutex<Option<(Option<Query>, Feed)>>>;
+
+/// What a move needs to read its view now: the reader's client and the window's waker.
+struct Fetcher {
+    client: Arc<Client>,
+    wake: Waker,
+}
+
+impl std::fmt::Debug for Fetcher {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Fetcher")
+    }
+}
 
 impl Inbox {
     /// The query every later refetch is made for. A feed already left was read for the old one, so
-    /// it is dropped: the window never draws a view that is not for what it last asked.
+    /// it is dropped: the window never draws a view that is not for what it last asked. The new
+    /// query is read at once on a thread of its own (the reader is waiting on the stream), not on
+    /// the deck's next change.
     pub fn ask(&self, query: &Query) {
-        self.0.lock().unwrap_or_else(PoisonError::into_inner).take();
         *self.1.lock().unwrap_or_else(PoisonError::into_inner) = query.clone();
+        self.0.lock().unwrap_or_else(PoisonError::into_inner).take();
+        let fetcher = self.2.lock().unwrap_or_else(PoisonError::into_inner);
+        if let Some(Fetcher { client, wake }) = fetcher.as_ref() {
+            let (client, wake) = (client.clone(), wake.clone());
+            let (asked, slot) = (self.1.clone(), Arc::downgrade(&self.0));
+            let _ = std::thread::Builder::new()
+                .name("pilot-deck-move".into())
+                .spawn(move || refetch(&client, &asked, &slot, &*wake));
+        }
     }
 
+    /// The newest feed, unless it was read for a query other than the one now asked.
     pub fn take(&self) -> Option<Feed> {
-        self.0.lock().unwrap_or_else(PoisonError::into_inner).take()
+        let (read_for, feed) = self
+            .0
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .take()?;
+        let asked = self.1.lock().unwrap_or_else(PoisonError::into_inner);
+        read_for
+            .is_none_or(|read_for| read_for == *asked)
+            .then_some(feed)
     }
 }
 
@@ -52,6 +87,11 @@ impl Inbox {
 pub fn start(client: Client, query: Query, wake: Waker) -> Inbox {
     let inbox = Inbox::default();
     inbox.ask(&query);
+    let client = Arc::new(client);
+    *inbox.2.lock().unwrap_or_else(PoisonError::into_inner) = Some(Fetcher {
+        client: client.clone(),
+        wake: wake.clone(),
+    });
     let asked = inbox.1.clone();
     let slot = Arc::downgrade(&inbox.0);
     let spawned = std::thread::Builder::new()
@@ -63,14 +103,19 @@ pub fn start(client: Client, query: Query, wake: Waker) -> Inbox {
     inbox
 }
 
-type Slot = Weak<Mutex<Option<Feed>>>;
+type Slot = Weak<Mutex<Option<(Option<Query>, Feed)>>>;
 
 /// Leaves `feed` for the window and wakes it; `None` once the window has gone.
-fn put(slot: &Slot, feed: Feed, wake: &(dyn Fn() + Send + Sync)) -> Option<()> {
+fn put(
+    slot: &Slot,
+    read_for: Option<Query>,
+    feed: Feed,
+    wake: &(dyn Fn() + Send + Sync),
+) -> Option<()> {
     *slot
         .upgrade()?
         .lock()
-        .unwrap_or_else(PoisonError::into_inner) = Some(feed);
+        .unwrap_or_else(PoisonError::into_inner) = Some((read_for, feed));
     wake();
     Some(())
 }
@@ -84,10 +129,10 @@ fn refetch(
 ) -> Option<bool> {
     let query = asked.lock().unwrap_or_else(PoisonError::into_inner).clone();
     match client.view(&query) {
-        Ok(view) => put(slot, Feed::View(view), wake).map(|()| true),
+        Ok(view) => put(slot, Some(query), Feed::View(view), wake).map(|()| true),
         Err(err) => {
             eprintln!("pilot-deck: {err}");
-            put(slot, Feed::Down, wake).map(|()| false)
+            put(slot, None, Feed::Down, wake).map(|()| false)
         }
     }
 }
@@ -118,7 +163,7 @@ fn follow(
             }
         }
         // The stream ended or never opened: the daemon is gone until a reconnect says otherwise.
-        put(slot, Feed::Down, wake)?;
+        put(slot, None, Feed::Down, wake)?;
         std::thread::sleep(BACKOFF[failures]);
         failures = (failures + 1).min(BACKOFF.len() - 1);
     }
@@ -128,15 +173,19 @@ fn follow(
 mod tests {
     use super::*;
 
+    fn asked(id: &str) -> Query {
+        Query {
+            ticket: Some(id.into()),
+            ..Query::default()
+        }
+    }
+
     #[test]
     fn asking_drops_a_feed_read_for_the_old_query() {
         let inbox = Inbox::default();
-        *inbox.0.lock().unwrap() = Some(Feed::Down);
+        *inbox.0.lock().unwrap() = Some((None, Feed::Down));
 
-        inbox.ask(&Query {
-            ticket: Some("itm_g".into()),
-            ..Query::default()
-        });
+        inbox.ask(&asked("itm_g"));
 
         assert!(inbox.take().is_none());
         assert_eq!(
@@ -144,5 +193,21 @@ mod tests {
             Some("itm_g"),
             "later refetches are for the new query"
         );
+    }
+
+    #[test]
+    fn a_late_view_read_for_the_query_left_draws_nothing() {
+        let inbox = Inbox::default();
+        let (old, new) = (asked("itm_old"), asked("itm_new"));
+        inbox.ask(&old);
+        inbox.ask(&new);
+        let slot = Arc::downgrade(&inbox.0);
+
+        // The refetch that was in flight for `old` lands after the move to `new`.
+        put(&slot, Some(old), Feed::View(View::default()), &|| {}).unwrap();
+        assert!(inbox.take().is_none(), "a stale view is not drawn");
+
+        put(&slot, Some(new), Feed::View(View::default()), &|| {}).unwrap();
+        assert!(matches!(inbox.take(), Some(Feed::View(_))));
     }
 }
