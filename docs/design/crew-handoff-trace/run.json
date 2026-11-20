@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed 75f0cce",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -42,10 +42,12 @@
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "pushed 21ca387",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/crew-handoff-trace-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-handoff-trace-s5"
     },
     {
       "slice": "S6",
@@ -67,8 +69,8 @@
       "state": "implementing"
     }
   ],
-  "next": "S3 integrated at e42334fc; integrating S2 75f0cce; next: pilot ready for S5",
-  "updatedAt": "2026-11-20T18:03:54.028Z",
+  "next": "S5 pushed 21ca387 (pin paid back by deck_post trim), integrating; next: pilot ready, start S6",
+  "updatedAt": "2026-11-20T18:29:32.330Z",
   "friction": [
     {
       "agent": "architect",
@@ -165,6 +167,21 @@
       "agent": "pilot-implementer",
       "what": "slice Interface changed step and trace but Files owned listed neither file",
       "evidence": "S2 edits hooks/lib/wrapper-log.js +3 and deck/trace.mjs +3 outside its files"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5 called its own pin regression pre-existing; the co-pilot reran on the feat tip and found it green",
+      "evidence": "feat 4722c031 measure-prompt+recut-prose pass 16 fail 0; S5 10292262 fail 2"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "importing deck/testUtils.mjs from a live script posts to its own temp deck, not PILOT_DECK_DIR; the live seed went missing",
+      "evidence": "S5: no ticket on the deck, 3 runs"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "scratch daemon Bearer header documented only in hooks/lib/deck.js",
+      "evidence": "S5 report"
     }
   ]
 }
