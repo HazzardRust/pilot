@@ -59,8 +59,10 @@ pub fn setup(s: &mut State, wake: Waker) {
 
 /// Takes what the reader last left: a view replaces the whole `view` and nothing else, so a
 /// draft, a scroll and the open panels stay (spec 4); `Down` keeps the last view under the banner.
-pub fn poll(s: &mut State, _: f64, _: &mut Tx) -> bool {
-    match s.live.as_ref().and_then(live::Inbox::take) {
+pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
+    // A chat send answered off the UI thread is taken here, as the live view is.
+    let sent = regions::chat::settle(s, tx);
+    sent | match s.live.as_ref().and_then(live::Inbox::take) {
         Some(Feed::View(view)) => {
             s.view = view;
             s.down = false;
