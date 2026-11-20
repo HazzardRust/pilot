@@ -9,7 +9,8 @@ use pilot_deck::app::{self, State};
 use pilot_deck::client::View;
 use pilot_deck::layout;
 use pilot_deck::prefs::Prefs;
-use rune::{Env, Runtime};
+use pilot_deck::theme::{size, space};
+use rune::{Env, Runtime, TitlebarAction};
 use serde_json::{Value, json};
 
 /// Every press here may write the prefs, and where they go is the environment, which the tests
@@ -252,4 +253,43 @@ fn a_three_digit_count_moves_nothing() {
         .collect();
     assert!(texts.iter().any(|t| t == "999+"), "no 999+ in {texts:?}");
     assert_eq!(panel_bounds(&at_1000), panel_bounds(&at_99));
+}
+
+/// S27: the window draws its own title bar, a band across the top that drags the window, and the
+/// content starts below it at the top inset.
+#[test]
+fn the_frame_is_a_drag_band_with_the_content_below_it() {
+    let (_held, _dir) = prefs_dir("frame");
+    let mut rt = app::app().headless_runtime((1280.0, 800.0), Env::new(true, 1.0));
+    rt.frame(0.0);
+    rt.frame(1.0);
+
+    if cfg!(any(target_os = "windows", target_os = "macos")) {
+        assert_eq!(
+            rt.chrome_insets().height,
+            size::titlebar,
+            "no custom title bar"
+        );
+    }
+    let band = rects(&rt, "titlebar").0;
+    assert_eq!(band, [0.0, 0.0, 1280.0, size::titlebar], "the band");
+    let (x, y) = (band[2] / 2.0, band[3] / 2.0);
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    assert_eq!(
+        rt.take_titlebar_action(),
+        Some(TitlebarAction::Drag),
+        "the band drags nothing"
+    );
+    rt.pointer_up(x, y);
+
+    let top = size::titlebar + space::pad;
+    for key in ["strip-left", "centre"] {
+        let content = rects(&rt, key).0;
+        assert!(
+            content[1] >= top,
+            "{key} starts at {}, above {top}",
+            content[1]
+        );
+    }
 }

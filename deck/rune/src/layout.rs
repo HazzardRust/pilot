@@ -10,7 +10,7 @@ use serde_json::Value;
 use crate::app::{self, State};
 use crate::prefs::Prefs;
 use crate::regions::{self, notifications::keep};
-use crate::theme::{self, motion, space};
+use crate::theme::{self, motion, size, space};
 
 /// The left strip, top to bottom, as the page's rail: each panel's name in the prefs and its label.
 const PANELS: [(&str, &str); 6] = [
@@ -237,9 +237,14 @@ fn panel(s: &State, name: &'static str, label: &str, cx: &mut Cx<State>) -> El {
         .child(body)
 }
 
-/// The window: the left strip's panels, the centre column, and the right strip.
+/// The window: the title bar, then under it the left strip's panels, the centre column, and the
+/// right strip.
 pub fn strips(s: &State, cx: &mut Cx<State>) -> El {
-    let t = tok::theme(cx.system_dark());
+    let dark = cx.system_dark();
+    let t = tok::theme(dark);
+    let surface = theme::roles(dark);
+    // The caption buttons Rune draws over the band's trailing edge take the text colour.
+    cx.caption_color(surface.on_surface);
     let left = PANELS.iter().fold(
         // Open panels taller than the window scroll the strip rather than run off its foot.
         col()
@@ -254,18 +259,35 @@ pub fn strips(s: &State, cx: &mut Cx<State>) -> El {
     );
     let none = Value::Null;
     let strip = s.view.regions.get("strip").unwrap_or(&none);
-    row()
+    // The title bar (`app::app`): a press anywhere on it but the caption buttons moves the window,
+    // a double press maximises it, and a right press opens the window menu.
+    let titlebar = el()
+        .key("titlebar")
         .w_full()
-        .h_full()
-        .fill(t.bg)
+        .h(size::titlebar)
+        .fill(surface.surface)
+        .window_drag();
+    let content = row()
+        .key("content")
+        .w_full()
+        .grow(1.0)
+        .min_h(space::s0)
         .padding(space::between)
+        .pt(space::pad)
         .gap(space::panels)
         .child(left)
-        .child(app::center(s, cx).grow(1.0).min_w(space::s0))
+        .child(app::center(s, cx).key("centre").grow(1.0).min_w(space::s0))
         .child(regions::strip::draw(
             strip,
             &s.regions.strip,
             &s.pending,
             cx,
-        ))
+        ));
+    col()
+        .w_full()
+        .h_full()
+        .fill(t.bg)
+        .child(titlebar)
+        .child(theme::separator(dark))
+        .child(content)
 }
