@@ -415,3 +415,26 @@ fn theme_json_is_read_and_is_the_only_source() {
         "a theme.json key nothing checks, or a check without a key"
     );
 }
+
+/// `hueOver` in `playground/index.html` on the eight author hues at 35%, pinned from the page:
+/// (hue, over black text, over white text). qa's dark `#5cbb9e` is where a plain byte mix says `#5dbb9e`.
+const PLAYGROUND_MIX: [(u32, &str, &str); 8] = [
+    (0x2563eb, "#184099", "#719af2"),
+    (0x7c3aed, "#51269a", "#aa7ff3"),
+    (0xd97706, "#8d4d04", "#e6a75d"),
+    (0xe11d48, "#92132f", "#ec6c88"),
+    (0x059669, "#036244", "#5cbb9e"),
+    (0x0891b2, "#055e74", "#5eb8cd"),
+    (0x65a30d, "#426a08", "#9bc362"),
+    (0xc026d3, "#7d1989", "#d672e2"),
+];
+
+#[test]
+fn playground_mix() {
+    for (hue, light, dark) in PLAYGROUND_MIX {
+        for (text, want) in [(Color::BLACK, light), (Color::WHITE, dark)] {
+            let got = theme::hue_over(text, hue, 0.35).hex();
+            assert_eq!(&got[..7], want, "#{hue:06x} over {text:?}");
+        }
+    }
+}

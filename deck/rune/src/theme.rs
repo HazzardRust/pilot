@@ -22,8 +22,9 @@ fn hex(rgb: u32) -> Color {
     }
 }
 
-/// `color-mix(in srgb, <text> mix%, <hue>)`: sRGB channels mixed, as CSS does.
-fn hue_over(text: Color, hue: u32, mix: f32) -> Color {
+/// `color-mix(in srgb, <text> mix%, <hue>)`: sRGB channels mixed, as CSS does. Public for
+/// `tests/theme.rs`, which holds `playground/index.html`'s copy of it to this one.
+pub fn hue_over(text: Color, hue: u32, mix: f32) -> Color {
     let encode = |c: Color| [c.r, c.g, c.b].map(srgb_encode);
     let (t, h) = (encode(text), encode(hex(hue)));
     let mix = |i: usize| srgb_decode(mix * t[i] + (1.0 - mix) * h[i]);
