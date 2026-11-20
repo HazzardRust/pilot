@@ -76,6 +76,7 @@ impl Default for Query {
     }
 }
 
+#[derive(Debug)]
 pub struct Client {
     // The write half (`act.rs`) posts with the same base, agent and secret.
     pub(crate) base: String,
