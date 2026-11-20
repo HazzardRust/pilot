@@ -382,7 +382,12 @@ pub fn draw(
         },
     ));
     let open = prefs.folds.get(&repo);
-    for g in &view.groups {
+    for (n, g) in view.groups.iter().enumerate() {
+        // A group's line between Red, Yellow and Green, none above the first.
+        if n > 0 {
+            let key = format!("tickets-group-{}-rule", g.colour);
+            panel = panel.child(theme::rule(theme::Rule::Group, dark).key(key));
+        }
         let (fold_repo, colour) = (repo.clone(), g.colour.clone());
         let header = theme::control(row(), dark)
             .key(format!("tickets-fold-{}", g.colour))
@@ -402,7 +407,8 @@ pub fn draw(
             for (i, r) in g.rows.iter().enumerate() {
                 fold = fold.child(ticket_row(r, &repo, local, pending, &t, dark));
                 if i != last {
-                    fold = fold.child(theme::separator(dark).key(format!("ticket-{}-rule", r.id)));
+                    let key = format!("ticket-{}-rule", r.id);
+                    fold = fold.child(theme::rule(theme::Rule::Item, dark).key(key));
                 }
             }
         }

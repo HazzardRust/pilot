@@ -86,7 +86,8 @@ pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
         );
         // deck.css `.reports-list li`: a hairline between items, none after the last.
         if i != last {
-            panel = panel.child(theme::separator(dark).key(format!("report-{}-rule", one.id)));
+            let key = format!("report-{}-rule", one.id);
+            panel = panel.child(theme::rule(theme::Rule::Item, dark).key(key));
         }
     }
     panel

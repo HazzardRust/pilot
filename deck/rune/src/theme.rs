@@ -369,6 +369,29 @@ pub fn separator(dark: bool) -> El {
     el().w_full().h(1.0).fill(tokens(dark).rule)
 }
 
+/// The side area's three line levels (the user, 2026-11-20): a pane's line spans the content
+/// column, one between groups (Red / Yellow / Green) is shorter, one between items shorter still.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Rule {
+    /// Over a pane (Tickets, Closing reports…), across the content: 8 px in from each edge.
+    Pane,
+    /// Between groups in a pane (Red / Yellow / Green): 24 px in from the content's edges.
+    Group,
+    /// Between items (tickets, reports, notices): 48 px in.
+    Item,
+}
+
+/// A hairline of `level`, centred in the column it is a child of. A pane's line sits in the pane,
+/// outside its padded body, so it comes in by the body's padding to span the same content.
+pub fn rule(level: Rule, dark: bool) -> El {
+    let inset = match level {
+        Rule::Pane => space::pad,
+        Rule::Group => space::s6,
+        Rule::Item => space::s8,
+    };
+    el().self_stretch().mx(inset).h(1.0).fill(tokens(dark).rule)
+}
+
 /// A vertical hairline: 1 px, in the rule colour, as tall as its parent.
 pub fn separator_vertical(dark: bool) -> El {
     el().w(1.0).h_full().fill(tokens(dark).rule)

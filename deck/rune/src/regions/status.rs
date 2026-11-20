@@ -164,10 +164,12 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                     }
                     line = line.child(yours);
                 }
-                // deck.css `.slices td`: a hairline under every row.
-                table
-                    .child(line)
-                    .child(theme::separator(dark).key(format!("{row_key}{i}-rule")))
+                // An item's line between rows, none after the last, where a group's line may follow.
+                let table = table.child(line);
+                if i + 1 == rows.len() {
+                    return table;
+                }
+                table.child(theme::rule(theme::Rule::Item, dark).key(format!("{row_key}{i}-rule")))
             })
     };
 
@@ -189,7 +191,9 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                         &group.rows,
                     ))
                     // deck.css `.run-status`: a hairline under each tab's table.
-                    .child(theme::separator(dark).key(format!("status-group-{g}-rule"))),
+                    .child(
+                        theme::rule(theme::Rule::Group, dark).key(format!("status-group-{g}-rule")),
+                    ),
             )
         },
     );

@@ -494,6 +494,57 @@ fn the_first_heading_and_icon_start_at_the_top_inset() {
     assert_eq!(rects(&rt, "icon-notifications-glyph").1[1], top, "icon");
 }
 
+/// QA g (the user, 2026-11-20): three line levels in the side area. A pane's line, the first
+/// pane's included, spans the content column; a line between groups (Red / Yellow) is shorter
+/// and centred; a line between items narrower still and centred.
+#[test]
+fn side_rules_come_in_three_levels_each_centred() {
+    let repo = "C:/work/alpha";
+    let row = |id: &str| json!({ "id": id, "name": id, "state": "queued", "canMove": { "up": false, "down": false } });
+    let regions = json!({
+        "notifications": { "notices": [{ "id": "itm_n1", "title": "a notice" }], "open": [] },
+        "tickets": { "repo": repo, "groups": [
+            { "colour": "red", "label": "Red", "rows": [row("itm_t1"), row("itm_t2")] },
+            { "colour": "yellow", "label": "Yellow", "rows": [row("itm_t3")] },
+        ] },
+    });
+    let mut prefs = all_open(size::side_default);
+    let folds = prefs.folds.entry(repo.into()).or_default();
+    folds.insert("red".into());
+    folds.insert("yellow".into());
+    let rt = window(regions, prefs);
+    let body = body(&rt, "tickets");
+    let centre = body[0] + body[2] / 2.0;
+    let line = |key: &str| rects(&rt, key).1;
+
+    let first = line("panel-notifications-rule");
+    let head = line("panel-notifications-head");
+    assert_eq!(first[1] + 1.0 + space::s3, head[1], "first pane's line");
+    let parent = line("panel-tickets-rule");
+    assert_eq!(
+        parent[2],
+        body[2] - 2.0 * space::pad,
+        "a pane's line spans the content"
+    );
+    let group = line("tickets-group-yellow-rule");
+    let item = line("ticket-itm_t1-rule");
+    assert!(
+        group[2] < parent[2] - 2.0 * space::s5,
+        "group {group:?}, pane {parent:?}"
+    );
+    assert!(
+        item[2] < group[2] - 2.0 * space::s5,
+        "item {item:?}, group {group:?}"
+    );
+    for (name, r) in [("pane", parent), ("group", group), ("item", item)] {
+        assert_eq!(r[3], 1.0, "{name} line is a hairline");
+        assert!(
+            (r[0] + r[2] / 2.0 - centre).abs() <= 0.5,
+            "{name} off centre: {r:?}"
+        );
+    }
+}
+
 /// S28 behaviour 3 (6e): a count gaining a digit moves no pane and no icon, and stays on one line.
 #[test]
 fn a_three_digit_count_moves_nothing() {

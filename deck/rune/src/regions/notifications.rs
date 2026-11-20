@@ -194,7 +194,8 @@ pub fn draw(
     let all = "notifications-mark-all-refused".into();
     panel = refusal(panel, local, CLEAR_ALL, all, ink, dark);
     // deck.css `.mark-all-form` and `.notice`: a hairline under Mark all seen and under every notice.
-    panel = panel.child(theme::separator(dark).key("notifications-mark-all-rule"));
+    let rule = |level| theme::rule(level, dark);
+    panel = panel.child(rule(theme::Rule::Group).key("notifications-mark-all-rule"));
     for (i, notice) in view.notices.iter().enumerate() {
         let (id, sent) = (notice.id.clone(), format!("{CLEAR}{}", notice.id));
         let key = sent.clone();
@@ -215,7 +216,7 @@ pub fn draw(
             ink,
             dark,
         );
-        panel = panel.child(theme::separator(dark).key(format!("notice-{i}-rule")));
+        panel = panel.child(rule(theme::Rule::Item).key(format!("notice-{i}-rule")));
     }
     for (i, one) in unseen.iter().enumerate() {
         let (id, writes) = (one.id.clone(), one.writes);

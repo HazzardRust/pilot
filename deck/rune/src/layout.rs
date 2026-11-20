@@ -16,7 +16,7 @@ use serde_json::Value;
 use crate::app::{self, State};
 use crate::prefs::Prefs;
 use crate::regions::{self, notifications::keep};
-use crate::theme::{self, motion, size, space, type_};
+use crate::theme::{self, Rule, motion, size, space, type_};
 
 /// An icon drawn in the deck's own line, 24 units square, in the colour `icon` tints it.
 macro_rules! line_icon {
@@ -446,31 +446,29 @@ fn pane(
             stick_bottom: false,
         });
     }
-    // A rule between panes, none above the first (deck.css's list rules, none after the last);
-    // it and the room under it are the border that resizes the pane and the one above it.
-    if let Some(above) = above {
+    // A pane's line over every pane, the first's included (the user, 2026-11-20). Between two
+    // panes it and the room under it are the border that resizes the pane and the one above it.
+    let mut border = col()
+        .key(format!("panel-{name}-border"))
+        .w_full()
+        .pb(space::s3)
+        .child(theme::rule(Rule::Pane, dark).key(format!("panel-{name}-rule")));
+    // A folded pane is its heading's height, so a border beside one does not drag.
+    if let Some(above) = above.filter(|&above| !is_folded && !folded(&s.prefs, above)) {
         let drawn = [above, name].map(|p| {
             cx.layout_size(&format!("panel-{p}"))
                 .map_or(space::s0, |[_, h]| h)
         });
-        let mut border = col()
-            .key(format!("panel-{name}-border"))
-            .w_full()
-            .pb(space::s3)
-            .child(theme::separator(dark));
-        // A folded pane is its heading's height, so a border beside one does not drag.
-        if !is_folded && !folded(&s.prefs, above) {
-            border = border
-                .role("separator")
-                .label(format!("Resize {label}"))
-                .cursor(Cursor::ResizeRow)
-                .drag_threshold(space::s0)
-                .on_drag(move |s: &mut State, d: &mut Drag, tx: &mut Tx| {
-                    border_drag(s, [above, name], drawn, d, tx)
-                });
-        }
-        pane = pane.child(border);
+        border = border
+            .role("separator")
+            .label(format!("Resize {label}"))
+            .cursor(Cursor::ResizeRow)
+            .drag_threshold(space::s0)
+            .on_drag(move |s: &mut State, d: &mut Drag, tx: &mut Tx| {
+                border_drag(s, [above, name], drawn, d, tx)
+            });
     }
+    pane = pane.child(border);
     pane = pane.child(head).child(body);
     if open {
         pane
@@ -508,7 +506,9 @@ fn left_side(s: &State, cx: &mut Cx<State>) -> El {
         .w(width)
         .h_full()
         .min_h(space::s0)
-        .pt(space::s7)
+        // The first pane's line and the room under it sit in the top inset, so its heading
+        // still starts level with the centre header.
+        .pt(space::s7 - 1.0 - space::s3)
         .scroll(ScrollSpec {
             stick_bottom: false,
         })

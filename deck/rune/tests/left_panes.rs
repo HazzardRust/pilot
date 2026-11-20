@@ -176,7 +176,8 @@ fn lists_carry_deck_css_hairlines_but_none_after_the_last() {
     let rt = window();
     let all = rt.elements();
     let has = |key: &str| by_key(&all, key).is_some();
-    // .notice and .mark-all-form rule every item; li:last-child drops it; .slices td rules every row.
+    // .notice and .mark-all-form rule every item; li:last-child drops it; a status table's rows are
+    // ruled between, since a group's line may follow the last (the user's line levels, 2026-11-20).
     for ruled in [
         "notifications-mark-all-rule",
         "notice-0-rule",
@@ -184,11 +185,14 @@ fn lists_carry_deck_css_hairlines_but_none_after_the_last() {
         "report-itm_r1-rule",
         "ticket-itm_t1-rule",
         "status-row-0-rule",
-        "status-row-1-rule",
     ] {
         assert!(has(ruled), "{ruled} is drawn");
     }
-    for last in ["report-itm_r2-rule", "ticket-itm_t2-rule"] {
+    for last in [
+        "report-itm_r2-rule",
+        "ticket-itm_t2-rule",
+        "status-row-1-rule",
+    ] {
         assert!(!has(last), "{last} is not drawn");
     }
 }
