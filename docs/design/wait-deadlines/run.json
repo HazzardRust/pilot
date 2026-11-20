@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "fixing (delta security WARN: quadratic sleep rescan kept)",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -24,11 +24,12 @@
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S2"
       ],
-      "branch": "slice/wait-deadlines-s3"
+      "branch": "slice/wait-deadlines-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s3"
     },
     {
       "slice": "S4",
@@ -40,7 +41,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed c1c1bf7 (security APPROVE; integrating)",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -48,8 +49,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s5"
     }
   ],
-  "next": "S5 integrate running (bjs1be020). S2: Sonnet fix implementer a44f2c6004b93e643 on slice/wait-deadlines-s2 for the kept quadratic-rescan MEDIUM; integrate S2 on its push and security verdict (ts APPROVE + latest sec). Then S3 from feat tip, S4.",
-  "updatedAt": "2026-11-20T12:23:01.980Z",
+  "next": "S1, S2, S5 integrated; feat at d023281a. S3 implementing from d023281a; S4 after S3; then base check, fundamentalist, QA.",
+  "updatedAt": "2026-11-20T12:45:10.525Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -157,6 +158,30 @@
       "agent": "pilot-implementer",
       "what": "S5's report went to main, not to the co-pilot that spawned it",
       "evidence": "coordinator relay of S5 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test prints an ℹ fail line per sub-suite, so a wait on it matched an 8-test sub-suite early; wait on 'ℹ tests <total>'; no Monitor tool for the fix agent",
+      "evidence": "S2 fix report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "fix brief claimed program() skips prefix words; it does not (command is a PREFIX, not COMMAND_START), the fixer had to re-derive",
+      "evidence": "S2 fix report, 6413b95f",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2 fix and report went to main rather than to the co-pilot",
+      "evidence": "coordinator relay",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate of S2 merged and gated locally but its push failed on a DNS outage (Could not resolve host: github.com); pushed by hand once the network returned",
+      "evidence": "integrate output: integrated locally at d023281a, push or record failed",
       "size": 1
     }
   ]
