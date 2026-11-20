@@ -11,6 +11,9 @@ use crate::client::Query;
 use crate::regions::queue::hhmm;
 use crate::theme::{self, space};
 
+/// A message's left rule and its dashes: a stroke's width, not a spacing (so off the 4 grid, like the graph's).
+const RULE: f32 = 2.0;
+
 #[derive(Debug, Default)]
 pub struct Local;
 
@@ -122,12 +125,12 @@ fn dashes(text: &str, ink: Color) -> El {
     let count = ((lines as f32 * space::card_line / (2.0 * DASH)).ceil() as usize).min(MOST);
     (0..count).fold(
         col()
-            .w(space::s1)
+            .w(RULE)
             .pin(Some(space::s0), Some(space::s0), None, None),
         |stack, _| {
             stack
-                .child(el().size(space::s1, DASH).fill(ink))
-                .child(el().size(space::s1, DASH))
+                .child(el().size(RULE, DASH).fill(ink))
+                .child(el().size(RULE, DASH))
         },
     )
 }
@@ -161,7 +164,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         .items_center()
         .grow(1.0)
         .gap(space::within)
-        .child(el().size(space::s1, space::s3).fill(accent))
+        .child(el().size(space::s2, space::s3).fill(accent))
         .child(theme::content(
             text(&th.kind_line.state).font(type_::LABEL).color(tone),
             dark,
@@ -226,7 +229,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                 "message-{i}-rule-{}",
                 if mine { "solid" } else { "dashed" }
             ))
-            .w(space::s1)
+            .w(RULE)
             .h_full();
         rule = if mine {
             rule.fill(k.rule)

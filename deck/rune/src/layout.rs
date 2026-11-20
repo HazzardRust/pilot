@@ -246,7 +246,7 @@ fn drag(s: &mut State, d: &Drag, tx: &mut Tx) {
     }
 }
 
-/// One icon of the icon bar: its label on hover and to a reader, the 2 px primary bar on its left
+/// One icon of the icon bar: its label on hover and to a reader, the 4 px primary bar on its left
 /// while its pane shows, and its count as a pill on its corner, out of the flow.
 fn icon_item(s: &State, (name, label, glyph): (&'static str, &str, &'static Icon), dark: bool) -> El {
     let t = tok::theme(dark);
@@ -263,7 +263,7 @@ fn icon_item(s: &State, (name, label, glyph): (&'static str, &str, &'static Icon
         .child(icon(glyph, size::icon).color(if active { t.text } else { t.text_secondary }));
     if active {
         item = item.child(
-            el().w(space::s1)
+            el().w(space::s2)
                 .h_full()
                 .pin(Some(space::s0), Some(space::s0), None, Some(space::s0))
                 .fill(theme::roles(dark).primary),

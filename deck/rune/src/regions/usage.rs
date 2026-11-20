@@ -93,7 +93,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                 if band(pct) == Band::Critical {
                     row()
                         .fill(k.usage.critical_bg)
-                        .padding(space::s1)
+                        .padding(space::s2)
                         .child(figure)
                 } else {
                     figure

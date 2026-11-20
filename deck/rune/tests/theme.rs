@@ -195,7 +195,6 @@ fn between_is_at_least_twice_within() {
     assert!(panels >= between);
     let steps = [
         space::s0,
-        space::s1,
         space::s2,
         space::s3,
         space::s4,
@@ -204,17 +203,32 @@ fn between_is_at_least_twice_within() {
         space::s7,
         space::s8,
     ];
-    assert_eq!(steps, [0.0, 2.0, 4.0, 8.0, 12.0, 16.0, 24.0, 32.0, 48.0]);
-    assert!(steps.iter().all(|s| s % 4.0 == 0.0 || *s == space::s1));
+    assert_eq!(steps, [0.0, 4.0, 8.0, 12.0, 16.0, 24.0, 32.0, 48.0]);
+    assert!(steps.iter().all(|s| s % 4.0 == 0.0));
     assert_eq!(
         (space::within, space::pad, space::between, space::panels),
-        (4.0, 8.0, 16.0, 24.0)
+        (8.0, 8.0, 24.0, 24.0)
     );
     assert_eq!((space::row, space::card_line), (20.0, 24.0));
     assert_eq!(
         (space::cols.state_ch, space::cols.time_ch, space::cols.gap),
         (12.0, 7.0, 16.0)
     );
+}
+
+/// The grid is 4: every number `theme.json` gives the `space` section is a multiple of 4.
+#[test]
+fn every_space_step_is_on_the_4_grid() {
+    let json: serde_json::Value = serde_json::from_str(
+        &fs::read_to_string(root().join("theme.json")).expect("deck/rune/theme.json"),
+    )
+    .expect("theme.json parses");
+    let space = json["space"].as_object().expect("a space section");
+    for (key, v) in space {
+        if let Some(n) = v.as_f64() {
+            assert_eq!(n % 4.0, 0.0, "space.{key} = {n} is off the 4 grid");
+        }
+    }
 }
 
 /// The calls on `src` that spell a spacing as a bare number: `.gap(8.0)`, `.padding(16)`.
@@ -298,7 +312,6 @@ fn theme_json_is_read_and_is_the_only_source() {
     // f32 1.6 widened is 1.600000023...: compare by the shortest decimal the f32 prints as.
     let n = |x: f32| serde_json::json!(x.to_string().parse::<f64>().expect("a number"));
     is("space.s0", n(space::s0));
-    is("space.s1", n(space::s1));
     is("space.s2", n(space::s2));
     is("space.s3", n(space::s3));
     is("space.s4", n(space::s4));
@@ -311,9 +324,9 @@ fn theme_json_is_read_and_is_the_only_source() {
     is("cols.slice_ch", n(space::cols.slice_ch));
     is("cols.state_ch", n(space::cols.state_ch));
     is("cols.time_ch", n(space::cols.time_ch));
-    is("space.within", serde_json::json!("s2"));
+    is("space.within", serde_json::json!("s3"));
     is("space.pad", serde_json::json!("s3"));
-    is("space.between", serde_json::json!("s5"));
+    is("space.between", serde_json::json!("s6"));
     is("space.panels", serde_json::json!("s6"));
     is("cols.gap", serde_json::json!("s5"));
     is("opacity.disabled", n(theme::opacity::disabled));
