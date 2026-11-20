@@ -9,6 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
+import { stallAgeOf } from '../daemon.mjs';
 import { STALL_AGE_S, reapStalled, shellScript, stalledWaits } from '../stalled-waits.mjs';
 
 const WIN_TMP = os.tmpdir();
@@ -44,7 +45,10 @@ const runs = [{ pid: CLIENT, repo: REPO }];
 
 test('the recorded rows are seen', () => {
   assert.equal(STALL_AGE_S, 50 * 60);
-  assert.equal(shellScript(captured(GIT_BASH, SCRIPT_A, 'bb4b')), SCRIPT_A.replace(/\\"/g, '"'));
+  assert.equal(
+    shellScript(captured(GIT_BASH, SCRIPT_A, 'bb4b')),
+    `until [ -s ${OUT}/a28aa8f6e9874cbe0.output ] && grep -q "Verdict" ${OUT}/a28aa8f6e9874cbe0.output; do sleep 10; done; echo ready`,
+  );
   const table = [...session(), ...pair(9988, 46312, SCRIPT_A, 14 * H), ...pair(30060, 33432, SCRIPT_B, 3 * H)];
   const rows = stalledWaits(table, { runs });
   assert.deepEqual(
@@ -69,8 +73,13 @@ test('only a stalled loop under a pilot run', () => {
     ...pair(304, 305, 'pilot wait-for --file out.log --match done --timeout 50', OLD),
     ...pair(306, 307, `timeout 600 bash -c 'until grep -q x f; do sleep 5; done'`, OLD),
     ...pair(308, 309, 'npm test', OLD),
+    proc(310, CLAUDE, 'bash.exe', captured(GIT_BASH, SCRIPT_A, 'c3').replace(/' < \/dev\/null/, ' < /dev/null'), OLD), // an eval that never closes
+    proc(311, CLAUDE, 'bash.exe', captured(GIT_BASH, SCRIPT_A, 'c4'), Number.NaN), // no age read
+    proc(312, 313, 'bash.exe', captured(GIT_BASH, SCRIPT_A, 'c5'), OLD), // a ppid cycle with no claude in it
+    proc(313, 312, 'bash.exe', 'bash', OLD),
   ];
   assert.deepEqual(stalledWaits(table, { runs }), []);
+  assert.deepEqual(stalledWaits([...session(), ...pair(101, 102, SCRIPT_A, OLD)], { runs: [{ pid: 999, repo: REPO }] }), [], 'a run whose pid is not in the table');
   assert.equal(stalledWaits([...session(), ...pair(101, 102, SCRIPT_A, STALL_AGE_S)], { runs }).length, 1, 'the bar is inclusive');
 });
 
@@ -104,6 +113,16 @@ test('the stop is the shell only', () => {
   const refused = reap(table, { kill: (pid) => { if (pid === 9988) throw new Error('Access is denied'); } });
   assert.deepEqual(refused.notes.map(([, line]) => line.split(' ')[3]), ['30060'], 'a stop that failed is not told as one');
   assert.ok(refused.lines.some((line) => line.startsWith('could not stop 9988')));
+});
+
+test('only an isolated scratch deck scans with a shorter stall age', () => {
+  const scratch = { PILOT_DECK_DIR: path.join(os.tmpdir(), 'pilot-scratch-x'), PILOT_DECK_STALL_AGE_S: '5' };
+  assert.equal(stallAgeOf(scratch, true), 5);
+  assert.equal(stallAgeOf(scratch, false), STALL_AGE_S, "the user's deck");
+  assert.equal(stallAgeOf({ PILOT_DECK_STALL_AGE_S: '5' }, true), STALL_AGE_S, 'a leashed deck on the real store');
+  for (const asked of ['0', '2.5', 'x', String(STALL_AGE_S + 1)]) {
+    assert.equal(stallAgeOf({ ...scratch, PILOT_DECK_STALL_AGE_S: asked }, true), STALL_AGE_S, asked);
+  }
 });
 
 test('an unreadable table stops nothing', () => {

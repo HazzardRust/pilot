@@ -16,6 +16,7 @@ export const STALL_AGE_S = 50 * 60;
 
 const SHELL = /^(?:ba)?sh(?:\.exe)?$/i;
 const CLAUDE = /^claude(?:\.exe)?$/i;
+const EVAL = /(?:^|[\s;&|(){}])eval '/;
 const MARKER_MAX = 200; // as `pilot wait-for` caps `--match` (L8)
 
 /** One argument of a Windows command line from `at`, by `CommandLineToArgvW`'s rules: its text and where it ends. */
@@ -46,7 +47,7 @@ function windowsArg(line, at) {
 
 /** The single-quoted argument of the first `eval '…'`, its `'\''` joins undone; null when there is none or it never closes. */
 function evalArg(script) {
-  const start = script.search(/(?:^|[\s;&|(){}])eval '/);
+  const start = script.search(EVAL);
   if (start < 0) return null;
   let k = script.indexOf("'", start);
   let text = '';
@@ -85,7 +86,7 @@ export function shellScript(command) {
     end = arg.end;
   }
   if (script === null || script === '') return null;
-  return evalArg(script) ?? script;
+  return EVAL.test(script) ? evalArg(script) : script; // an eval that never closes is unsure: null, never the outer script
 }
 
 /** The nearest `claude` above `row` in `byPid`, or null; a ppid cycle ends the walk. */
@@ -154,7 +155,7 @@ export function reapStalled({ read, runs, kill, note, holder, stallAgeS = STALL_
   const stop = kill ?? stopper(table);
   const lines = gc(rows, { kill: (pid) => stop(pid, true) });
   rows.forEach((row, k) => {
-    if (!lines[k].startsWith('stopped ')) return;
+    if (!lines[k]?.startsWith('stopped ')) return;
     let by = null;
     try {
       by = holder ? holder(row) : null;

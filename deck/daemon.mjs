@@ -48,12 +48,13 @@ const ARCHIVE_EVERY_MS = 24 * 60 * 60 * 1000;
 const STALL_SCAN_MS = 5 * 60 * 1000;
 
 /**
- * The stall age this deck scans with: `PILOT_DECK_STALL_AGE_S` on a leashed deck only, a scratch deck's live run of
- * the scan (wait-deadlines S3); the user's deck always waits the full `STALL_AGE_S`.
+ * The stall age this deck scans with: `PILOT_DECK_STALL_AGE_S` on a leashed deck with its own store only, a scratch
+ * deck's live run of the scan (wait-deadlines S3); the user's deck, or any on the real store, waits the full `STALL_AGE_S`.
  */
 export function stallAgeOf(env, leashed) {
   const asked = Number(env.PILOT_DECK_STALL_AGE_S);
-  return leashed && Number.isInteger(asked) && asked > 0 && asked < STALL_AGE_S ? asked : STALL_AGE_S;
+  const isolated = leashed && Boolean(env.PILOT_DECK_DIR); // its own store holds its own runs, never the real sessions'
+  return isolated && Number.isInteger(asked) && asked > 0 && asked < STALL_AGE_S ? asked : STALL_AGE_S;
 }
 
 /** Past this the log starts again: these are the last run's diagnostics, not every run's. */
@@ -251,7 +252,11 @@ export async function main() {
     }
   };
   const reap = () => {
-    for (const line of reapStalled({ read: processTable, runs: listLiveRuns, note, stallAgeS })) console.error(`[deck] ${line}`);
+    try {
+      for (const line of reapStalled({ read: processTable, runs: listLiveRuns, note, stallAgeS })) console.error(`[deck] ${line}`);
+    } catch (err) {
+      console.error('[deck] the stalled-wait scan failed:', err?.message ?? err); // a scan never takes the deck down
+    }
   };
   setInterval(reap, Math.min(STALL_SCAN_MS, stallAgeS * 1000)).unref();
   // A gate2 that landed under the last daemon and was left open is resolved; never a report (lander S15).
