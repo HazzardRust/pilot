@@ -40,6 +40,7 @@ that other people's projects are pushed onto.
 | 21 | *added (restyle, DESIGN.md §3)*: every region draws its empty state, and "deck not running" offers Retry. | S32 empty and retry tests | 0 blank regions on the empty deck; Retry reconnects at once |
 | 22 | *added (restyle, feedback 9; itm_1ca41d7c120d answered A: Inter + JetBrains Mono, 13 bold / 13 / 11)*: a bundled font in at most three type scales. | S33 type-scale test; the snap | every text on one of 3 scales; the bundled family drawn |
 | 23 | *added (restyle, the user's pick on itm_2d4d885b5e13)*: the theme's values live in one JSON file that a token playground page edits and exports 1:1, with colour mixes equal to Rune's; a native Rune screenshot stays the final check. | S36 theme json test; S37 page in a browser, a round-tripped export, playground mix test | export of the defaults byte-equal; 0 mix mismatches |
+| 24 | *added (restyle, feedback 14; arrangement assumed A-R4)*: the reply box reads options, then the box, then quiet Close and Dismiss on the left with Reply the one primary at the right; a confirm sits beside its button. | S38 layout and confirm tests | order as stated; 1 primary; 3, 6c, 15 replays green |
 
 ## 3. Findings
 
@@ -220,7 +221,7 @@ Width 15; longest stem 5
 | S27 | The window frame: Rune's title bar and the top inset (added) | 18 | `deck/rune/src/app.rs` `spec()`, `src/main.rs`, `src/layout.rs` `strips()`, `tests/layout.rs` | S26 | `pilot:rust-reviewer` | [S27](slices/S27.md) |
 | S28 | The left side as VS Code's side bar (added) | 19, 6d, 6e | `deck/rune/src/layout.rs`, `src/prefs.rs`, `tests/layout.rs` | S27 | `pilot:rust-reviewer` | [S28](slices/S28.md) |
 | S29 | The right strip's buttons on the grid, rounded, by role (added) | 20 | `deck/rune/src/regions/strip.rs`, `tests/strip.rs` | S26 | `pilot:rust-reviewer` | [S29](slices/S29.md) |
-| S30 | Header and centre: content selects, cards on the grid, the kind line (added) | 17 | `regions/tabs.rs`, `usage.rs`, `queue.rs`, `history.rs`, `thread.rs`, `reply.rs`, their tests | S26 | `pilot:rust-reviewer` | [S30](slices/S30.md) |
+| S30 | Header and centre: content selects, cards on the grid, the kind line (added) | 17 | `regions/tabs.rs`, `usage.rs`, `queue.rs`, `history.rs`, `thread.rs`, their tests | S26 | `pilot:rust-reviewer` | [S30](slices/S30.md) |
 | S31 | Left panes' contents: content selects, rows on the grid (added) | 17 | `regions/notifications.rs`, `chat.rs`, `status.rs`, `graph.rs`, `agents.rs`, `tickets.rs`, `reports.rs`, their tests | S26 | `pilot:rust-reviewer` | [S31](slices/S31.md) |
 | S32 | Every region designs its empty and error states (added) | 21 | `src/app.rs`, `src/live.rs`, the regions' empty lines, `tests/empty.rs`, `tests/live.rs` | S30, S31 | `pilot:rust-reviewer` | [S32](slices/S32.md) |
 | S33 | The deck's font and its three type scales (added; itm_1ca41d7c120d answered A) | 22 | `deck/rune/assets/fonts/`, `src/app.rs`, `src/theme.rs`, the regions' `.font` | S27, S30, S31 | `pilot:rust-reviewer` | [S33](slices/S33.md) |
@@ -228,6 +229,7 @@ Width 15; longest stem 5
 | S35 | The spacing on the 4/8 grid (added) | 6b | `deck/rune/src/theme.rs` `space`, old spacing pins | S28, S29, S30, S31 | `pilot:rust-reviewer` | [S35](slices/S35.md) |
 | S36 | theme.rs takes its values from one JSON file (added) | 23, 2 | `deck/rune/theme.json`, `src/theme.rs`, `tests/theme.rs`, `deck/DESIGN.md` §4 | S26 | `pilot:rust-reviewer` | [S36](slices/S36.md) |
 | S37 | The token playground: one page that exports theme.json (added) | 23 | `deck/rune/playground/`, `tests/theme.rs` | S36 | `pilot:typescript-reviewer` | [S37](slices/S37.md) |
+| S38 | The reply box, reorganised (added) | 24, 3, 6c, 15 | `deck/rune/src/regions/reply.rs`, `tests/reply.rs` | S26 | `pilot:rust-reviewer` | [S38](slices/S38.md) |
 
 Rust paths after S1 are under `deck/rune/`. S1 first by risk: if Rune will not build or paint headless here, every
 other slice's plan changes. Then S5 (the write seam nine actions share), then the regions by the actions they need.
@@ -283,6 +285,7 @@ other slice's plan changes. Then S5 (the write seam nine actions share), then th
 | S35 | planned (added) | | | | S28, S29, S30, S31, S36 | 6b |
 | S36 | planned (added) | | | | S26 | 23, 2 |
 | S37 | planned (added) | | | | S36 | 23 |
+| S38 | planned (added) | | | | S26 | 24 |
 | S32 | planned (added) | | | | S30, S31 | 21 |
 | S33 | planned (added) | | | | S27, S30, S31 | 22 |
 | S34 | planned (added) | | | | S36 | 2 |
