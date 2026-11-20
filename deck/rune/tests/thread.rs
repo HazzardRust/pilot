@@ -307,3 +307,106 @@ fn a_back_press_survives_the_next_live_refetch(deck: &support::Scratch, query: Q
         after.regions.get("thread")
     );
 }
+
+/// A thread drawn from a view written here, at `width`, so the kind line's length is the test's.
+fn drawn(state: &str, owner: &str, width: f32) -> Runtime<State> {
+    let thread = serde_json::json!({
+        "title": "Which port?",
+        "kindLine": { "accent": "plain", "state": state, "tone": "unacknowledged", "kind": "question",
+            "at": "2026-11-21T11:20:00Z", "owner": owner },
+        "nav": { "code": "D1", "position": "1/4" },
+        "body": "Fixture.",
+        "messages": [
+            { "by": "pilot:pilot-qa", "at": "2026-11-21T11:21:00Z", "text": "From qa." },
+            { "by": "pilot", "at": "2026-11-21T11:22:00Z", "text": "From the pilot." },
+            { "by": "you", "at": "2026-11-21T11:23:00Z", "text": "From you." }
+        ]
+    });
+    let mut view = View::default();
+    view.regions.insert("thread".into(), thread);
+    let mut rt = Runtime::new(
+        State {
+            view,
+            ..State::default()
+        },
+        thread_only,
+        (width, 800.0),
+        Env::new(true, 1.0),
+    );
+    rt.frame(0.0);
+    rt
+}
+
+fn rect_of(rt: &Runtime<State>, words: &str) -> [f32; 4] {
+    rt.elements()
+        .into_iter()
+        .find(|e| e.text.as_deref() == Some(words))
+        .unwrap_or_else(|| panic!("{words:?} is drawn"))
+        .rect
+}
+
+fn centre_y(r: [f32; 4]) -> f32 {
+    r[1] + r[3] / 2.0
+}
+
+/// The user, 2026-11-21: the "not picked up yet" status line "needs to be as big as what is above
+/// it", and given the room to wrap with the rest of that line kept centred.
+#[test]
+fn the_kind_line_is_as_big_as_the_title_and_wraps_with_the_nav_centred() {
+    let rt = drawn("not picked up yet", "pilot", 1280.0);
+    let (state, title) = (
+        rect_of(&rt, "not picked up yet"),
+        rect_of(&rt, "Which port?"),
+    );
+    assert!(
+        (state[3] - title[3]).abs() < 0.5,
+        "the status is {} tall, the title {}",
+        state[3],
+        title[3]
+    );
+
+    let long = "not picked up yet by anyone on the crew, this long status runs past its line";
+    let rt = drawn(long, "pilot", 640.0);
+    let kind = rt
+        .elements()
+        .into_iter()
+        .find(|e| e.key.as_deref() == Some("kind"))
+        .expect("the kind line")
+        .rect;
+    assert!(
+        kind[3] > 1.5 * title[3],
+        "a long kind line wraps: {} tall",
+        kind[3]
+    );
+    for words in ["D1", "1/4"] {
+        let at = centre_y(rect_of(&rt, words));
+        assert!(
+            (at - centre_y(kind)).abs() < 1.0,
+            "{words} sits at {at}, the kind line's centre at {}",
+            centre_y(kind)
+        );
+    }
+}
+
+/// The user, 2026-11-21: "the agent needs to be colour coded same as the html version", each crew
+/// kind in its `--by-*` colour (deck.css), the owner on the kind line and a message's byline.
+#[test]
+fn an_agent_name_is_drawn_in_its_own_colour() {
+    let by = pilot_deck::theme::tokens(true).by;
+    let rt = drawn("waiting on you", "qa", 1280.0);
+    // A name alone (the owner) or a byline, `<name> · <time>`, the time in the name's ink.
+    let ink = |name: &str| {
+        rt.elements()
+            .into_iter()
+            .filter(|e| {
+                e.text
+                    .as_deref()
+                    .is_some_and(|t| t == name || t.starts_with(&format!("{name} · ")))
+            })
+            .map(|e| e.text_color.expect("an ink"))
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(ink("qa"), vec![by.qa, by.qa], "the owner and qa's byline");
+    assert_eq!(ink("pilot"), vec![by.pilot], "the pilot's byline");
+    assert_eq!(ink("you"), vec![pilot_deck::theme::tokens(true).quiet]);
+}

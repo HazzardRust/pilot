@@ -100,9 +100,9 @@ pub fn key(s: &mut State, ev: &rune::KeyEvent, tx: &mut rune::Tx) -> bool {
 
 fn arrow(step: Option<Step>, glyph: &str, ink: Color, quiet: Color, dark: bool) -> El {
     match step {
-        None => text(glyph).font(type_::CAPTION).color(quiet),
+        None => text(glyph).font(type_::BODY).color(quiet),
         Some(Step { id }) => theme::control(text(glyph), dark)
-            .font(type_::CAPTION)
+            .font(type_::BODY)
             .color(ink)
             .role("link")
             .on_press(move |s: &mut State| {
@@ -157,24 +157,29 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         _ => k.state.waiting,
     };
     let line = |words: &str| theme::content(text(words).font(type_::CAPTION).color(k.quiet), dark);
+    // The kind line is as big as the tabs and title above it (the user, 2026-11-21).
+    let said =
+        |words: &str, ink: Color| theme::content(text(words).font(type_::BODY).color(ink), dark);
 
     // The accent bar is a text line tall at most, and the time is the short form with the whole stamp on hover.
-    let at = line(&hhmm(Some(&th.kind_line.at))).help(th.kind_line.at.as_str());
-    // The page's kind line: its parts a middle dot apart (the walkthrough of 2026-11-21).
+    let at = said(&hhmm(Some(&th.kind_line.at)), k.quiet).help(th.kind_line.at.as_str());
+    let (owner, owner_ink) = k.by.of(&th.kind_line.owner);
+    // The page's kind line: its parts a middle dot apart (the walkthrough of 2026-11-21), the owner
+    // in its crew colour as the HTML deck's byline is.
     let parts = [
-        Some(theme::content(
-            text(&th.kind_line.state).font(type_::CAPTION).color(tone),
-            dark,
-        )),
-        Some(line(&th.kind_line.kind)),
+        Some(said(&th.kind_line.state, tone).wrap()),
+        Some(said(&th.kind_line.kind, k.quiet)),
         Some(at),
-        th.kind_line.standing.as_deref().map(line),
-        Some(line(&th.kind_line.owner)),
+        th.kind_line.standing.as_deref().map(|s| said(s, k.quiet)),
+        Some(said(owner, owner_ink)),
     ];
+    // A kind line too long for its column wraps onto a second line; the row grows and the nav and
+    // X/N stay centred on it.
     let kind = parts.into_iter().flatten().enumerate().fold(
         row()
             .key("kind")
             .items_center()
+            .flex_wrap()
             .grow(1.0)
             .min_w(space::s0)
             .gap(space::within)
@@ -183,7 +188,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
             let kind = if i == 0 {
                 kind
             } else {
-                kind.child(text("·").font(type_::CAPTION).color(k.quiet))
+                kind.child(text("·").font(type_::BODY).color(k.quiet))
             };
             kind.child(part)
         },
@@ -198,7 +203,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         .gap(space::within)
         .child(arrow(th.nav.prev, "‹", t.text, k.quiet, dark));
     if let Some(code) = &th.nav.code {
-        nav = nav.child(text(code).font(type_::CAPTION.mono()).color(t.text));
+        nav = nav.child(text(code).font(type_::BODY.mono()).color(t.text));
     }
     nav = nav.child(arrow(th.nav.next, "›", t.text, k.quiet, dark));
     let mut right = row()
@@ -207,7 +212,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         .min_w(space::s0)
         .justify_end();
     if let Some(position) = &th.nav.position {
-        right = right.child(line(position));
+        right = right.child(said(position, k.quiet));
     }
 
     let mut page = col()
@@ -234,12 +239,17 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     }
     page = page.child(theme::markdown(th.body, dark).key("body"));
     for (i, message) in th.messages.into_iter().enumerate() {
-        let when = message.at.as_deref().map(|at| hhmm(Some(at)));
-        let by = match &when {
-            Some(at) => format!("{} · {at}", message.by),
-            None => message.by.clone(),
+        // deck.css's `.who`: the crew kind that wrote it in that kind's colour, `you` and the deck's
+        // own line quiet; the time beside it in the same ink, the whole stamp on hover.
+        let (name, ink) = match message.by.as_str() {
+            "you" | "deck" => (message.by.as_str(), k.quiet),
+            author => k.by.of(author),
         };
-        let mut who = line(&by);
+        let by = match &message.at {
+            Some(at) => format!("{name} · {}", hhmm(Some(at))),
+            None => name.to_string(),
+        };
+        let mut who = theme::content(text(&by).font(type_::CAPTION).color(ink), dark);
         if let Some(at) = &message.at {
             who = who.help(at.as_str());
         }

@@ -50,6 +50,28 @@ pub struct By {
     pub other: Color,
 }
 
+impl By {
+    /// deck.css's `.who.by-<kind>`: an author read as its crew kind the way `items.mjs`
+    /// `authorKind` reads it (`pilot:` and `pilot-` dropped), and that kind's colour; a name
+    /// outside the crew is `other`, drawn quiet.
+    pub fn of(&self, author: &str) -> (&'static str, Color) {
+        let name = author.strip_prefix("pilot:").unwrap_or(author);
+        let name = name.strip_prefix("pilot-").unwrap_or(name);
+        match name {
+            "" | "pilot" => ("pilot", self.pilot),
+            "architect" => ("architect", self.architect),
+            "implementer" => ("implementer", self.implementer),
+            "fundamentalist" => ("fundamentalist", self.fundamentalist),
+            "qa" => ("qa", self.qa),
+            "teacher" => ("teacher", self.teacher),
+            "explorer" => ("explorer", self.explorer),
+            "auditor" => ("auditor", self.auditor),
+            "lander" => ("lander", self.other),
+            _ => ("other", self.other),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct States {
     pub waiting: Color,
