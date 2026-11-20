@@ -60,7 +60,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed dee5689 — rust Approve, typescript Approve at final head; 491 production lines added (ceiling ~472); integrating",
+      "state": "integrated at d491beb — rust Approve, typescript Approve at dee5689; 491 production lines added (main's ~472 ceiling); full npm test ran on 5a04a52; B6 spring look to QA",
       "after": [
         "S5"
       ],
@@ -78,7 +78,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed 96fe24d (wip) — rust APPROVE, security REQUEST CHANGES (stale confirm; fix in wip, unrun), typescript REQUEST CHANGES (locked options, Close); not integrated",
+      "state": "pushed a12a2db — NOT integrated: app.rs poll conflict with S10/S11 on feat; merge-in to follow the base merge; 471 production lines, limit waived by main",
       "after": [
         "S5"
       ],
@@ -87,7 +87,7 @@
     },
     {
       "slice": "S10",
-      "state": "pushed ced5aaf — npm test 4720/0; typescript approve; rust request changes (clippy fix done, not re-read); whole-crate cargo not run; not integrated",
+      "state": "integrated at c79b7c5 — rust APPROVE, typescript APPROVE; 283 production lines; 4725/0",
       "after": [
         "S6"
       ],
@@ -96,7 +96,7 @@
     },
     {
       "slice": "S11",
-      "state": "pushed a67d89d (wip) — gates green, npm test 4722/0; 3 reviewers not run; not integrated",
+      "state": "integrated at fdc0e14 — rust/typescript/security approve; 254 production lines; 4728/0; rune-kit markdown link handling to QA",
       "after": [
         "S5"
       ],
@@ -114,17 +114,21 @@
     },
     {
       "slice": "S13",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s13"
     },
     {
       "slice": "S14",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S10"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s14"
     },
     {
       "slice": "S15",
@@ -182,10 +186,17 @@
       "after": [
         "S12"
       ]
+    },
+    {
+      "slice": "S23",
+      "state": "planned (added: thread move fetches its view at once; closes S9 security LOW, late view redraws the left thread's box)",
+      "after": [
+        "S9"
+      ]
     }
   ],
-  "next": "pausing; feat at df178e4b; draining S7 (dee5689), S9 (28207bb), S10, S11 (a67d89d). Rule: ONE cargo run at a time machine-wide, -j 4, whole-crate test once/slice; Rust slices in sequence. S7: cap 472 prod, integrate only on non-Block rust at final head, act HIGH fixed first if still Block. S21 Esc/left, S22 per-tab tables approved.",
-  "updatedAt": "2026-11-20T00:10:13.817Z",
+  "next": "merging origin/pilot 6213050 into feat (running); then S9 merge-in of feat (app.rs poll: queue::settle, chat::settle, reply::poll), integrate S9; send S13 S14 the tip; then pilot ready",
+  "updatedAt": "2026-11-20T01:06:36.534Z",
   "friction": [
     {
       "agent": "pilot-implementer",
@@ -352,6 +363,36 @@
       "what": "S10: Rune's Cx gives draw no State, so the draw signature changed in app.rs; clippy grep hid a -D warnings lint",
       "evidence": "S10 report; tests/notifications.rs:127",
       "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce hook forces a 'paused' hand-back each time the co-pilot ends a turn to wait on live children; two false pauses, one needless release/re-grant by main",
+      "evidence": "two hand-backs on itm_0dcd9aa67146 with S9/S10/S11 finishers live, feat unchanged at 1dd62e24",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: cargo not on the Git Bash PATH; npm test reported 'home store changed: ~/.claude/pilot/deck.json' on the live deck",
+      "evidence": "S10 report; npm test tail on fac8ec51",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11: co-pilot's shared CARGO_TARGET_DIR compiled tests against another worktree's stale pilot_deck (path packages share a metadata hash); assumption withdrawn",
+      "evidence": "15 errors E0425/E0609 until touch lib.rs; S11 report",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: two reviewers ended REQUEST CHANGES with no re-read; a draft shared across threads posts A's words to B (security MEDIUM) outside S9's files",
+      "evidence": "S9 report at ad264db9",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9 fix: thread arrows move the query but nothing fetches until the deck's next change; two extra fix and re-read cycles",
+      "evidence": "live.rs:40 ask; S9 fix report a12a2db",
+      "size": 6
     }
   ]
 }

@@ -374,7 +374,7 @@ const renderNotice = (item, tab, items) =>
  * Above them, the threads an agent closed that the user has not looked at since
  * (deck-press-feedback spec 7-9, L6), newest close first.
  */
-const renderNotifications = (items, tabs, back) => {
+export const renderNotifications = (items, tabs, back) => {
   const rows =
     noticesOf(items).map((item) => renderClosedNotice(item, back, items)).join('') +
     items

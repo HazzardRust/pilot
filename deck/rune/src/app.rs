@@ -5,6 +5,7 @@ use rune::{AppSpec, Cx, El, Tx, Waker, col, text};
 
 use crate::client::{Client, Query, View};
 use crate::live::{self, Feed};
+use crate::prefs::{self, Prefs};
 use crate::regions::{self, Locals};
 
 #[derive(Debug, Default)]
@@ -12,6 +13,8 @@ pub struct State {
     pub view: View,
     pub query: Query,
     pub regions: Locals,
+    /// The window's own view state, loaded once and written back by the region that changes it (A4).
+    pub prefs: Prefs,
     /// No view could be read: the daemon is down, or the client refused its address.
     pub down: bool,
     /// What the live reader leaves for `poll`; none until `setup` starts it.
@@ -22,16 +25,21 @@ impl State {
     /// The first view, read once; an error leaves the window up and saying so (spec 10).
     pub fn load() -> State {
         let query = Query::default();
+        let prefs = prefs::dir()
+            .map(|dir| Prefs::load(&dir))
+            .unwrap_or_default();
         match Client::from_env().and_then(|client| client.view(&query)) {
             Ok(view) => State {
                 view,
                 query,
+                prefs,
                 ..State::default()
             },
             Err(err) => {
                 eprintln!("pilot-deck: {err}");
                 State {
                     query,
+                    prefs,
                     down: true,
                     ..State::default()
                 }
@@ -61,6 +69,8 @@ pub fn setup(s: &mut State, wake: Waker) {
 /// Takes what the reader last left: a view replaces the whole `view` and nothing else, so a
 /// draft, a scroll and the open panels stay (spec 4); `Down` keeps the last view under the banner.
 pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
+    // A send answered off the UI thread is taken here, as the live view is.
+    let sent = regions::chat::settle(s, tx);
     let settled = regions::queue::settle(s);
     // A press's answer is the reply box's (S9), taken beside the view and never instead of it.
     let replied = regions::reply::poll(&mut s.regions.reply, tx);
@@ -75,7 +85,7 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
         Some(Feed::Down) => !std::mem::replace(&mut s.down, true),
         None => false,
     };
-    fed || settled || replied
+    fed | settled | sent | replied
 }
 
 /// The screen's region slots, top to bottom; a stub region draws nothing until its slice.
@@ -97,7 +107,7 @@ pub fn view(s: &State, cx: &mut Cx<State>) -> El {
         .child(regions::tabs::draw(region("tabs"), &r.tabs, cx))
         .child(regions::notifications::draw(
             region("notifications"),
-            &r.notifications,
+            &s.prefs,
             cx,
         ))
         .child(regions::queue::draw(region("queue"), &r.queue, cx))
