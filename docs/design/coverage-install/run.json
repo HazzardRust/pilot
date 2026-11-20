@@ -1,0 +1,98 @@
+{
+  "slug": "coverage-install",
+  "feature": "coverage-install",
+  "ticket": "itm_8afc7fbf2501",
+  "branch": "feat/coverage-install",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-coverage-install",
+  "artefact": "docs/design/coverage-install/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/coverage-install-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-coverage-install-s1"
+    }
+  ],
+  "next": "S1 pushed 778504a5, both reviewers WARN (accepted: security MEDIUMs pre-existing, moved from the fundamentalist's step). Now: pilot integrate into feat/coverage-install, then integrate --trial and post gate2 (surface false, PR #130), naming the unfixed security findings and that no real spawned runner was observed.",
+  "updatedAt": "2026-11-20T06:59:09.702Z",
+  "friction": [
+    {
+      "agent": "architect",
+      "what": "finding a coverage cause meant reading subagent transcripts and grepping the 3 MB+ deck.json by hand; run records keep no friction timestamps or plugin version",
+      "evidence": "~/.claude/projects/*/subagents/*.jsonl; 16 old records dated only by one bulk commit on 10-21"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot session ran three lanes across two summaries: relayed 3 child reports misrouted to main, ~12 forced interim co-pilot hand-backs read",
+      "size": 20000
+    },
+    {
+      "kind": "drain",
+      "what": "one pilot session ran three lanes: ~15 forced interim co-pilot hand-backs read, 5 child reports misrouted to main and relayed, the ci-gate principles report judged in the pilot",
+      "size": 60000
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "finding the cause meant reading subagent transcripts and grepping the 3 MB+ deck.json; friction rows carry no timestamp or plugin version, 16 run records share one bulk-commit date",
+      "evidence": "~/.claude/projects/*/subagents/*.jsonl; deck.json 3 MB+; records dated 10-21",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "waited 120 then 240 minutes on an unanswered question before stopping",
+      "evidence": "itm_f652048fc632 open, 0 replies",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "S4 human-steps implementer report delivered to main instead of its co-pilot; relayed by hand",
+      "size": 3000
+    },
+    {
+      "kind": "drain",
+      "what": "rune-deck-ui co-pilot hand-backs read three times (two pauses, one S1 trailer round)",
+      "size": 9000
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exited on a deck timeout; user's presses at 23:19 reached main late through hook notices",
+      "size": 1000
+    },
+    {
+      "kind": "drain",
+      "what": "deck /api/record needs the secret; main read run.json from worktrees with node instead",
+      "size": 1500
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 rune-deck-ui commit carried a Co-Authored-By naming its own model instead of brief.md's trailer; cost a re-commit branch and a co-pilot round",
+      "evidence": "slice/rune-deck-ui-s1 4ea7320 vs s1b 7cae771, same tree 058d093f",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no Monitor tool; waited on an 8-minute npm test with an unbounded until-grep loop that matched the wrong string and never ended; agent stayed alive 70+ minutes until main ended the shell",
+      "evidence": "S8 report; loop on ^exit in /tmp/s8-npm.log from 08:55, log complete 09:03",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "parallel Rust slices each link one binary per test file at 1.35 GB; 12 per-worktree target dirs reached 76 GB; user's 16 GB machine slowed",
+      "evidence": "link.exe 1,352 MB measured; target sizes 3.9-10.8 GB per worktree",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "S7 integrated at 491 production lines against main's ceiling of about 472",
+      "evidence": "hand-back: implementer 467, co-pilot's diff count 491",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "diff limit differs: brief.md says 150, spawn brief said 300; implementer cannot spawn pilot-evidence-runner so the slice's two 'run' behaviours were done by hand; node --test default reporter is not TAP, cost a rerun",
+      "evidence": "S1 report, slice/coverage-install-s1 778504a5",
+      "size": 1
+    }
+  ]
+}
