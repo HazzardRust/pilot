@@ -9,27 +9,31 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed 3d05711",
+      "state": "integrated",
       "branch": "slice/two-devices-s1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-two-devices-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "pushed 560d603",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/two-devices-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-two-devices-s2"
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "pushed 4ec4f1d",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/two-devices-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-two-devices-s3"
     }
   ],
-  "next": "S1 reported 3d05711 with both Verdict lines; integrating, then S2 and S3 in parallel",
-  "updatedAt": "2026-11-20T14:39:57.782Z",
+  "next": "S3 reported 4ec4f1d with both Verdicts; integrating S3, S2 still implementing",
+  "updatedAt": "2026-11-20T15:12:24.771Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -77,6 +81,26 @@
       "what": "TaskOutput is not in the co-pilot's tools though its definition waits on children with it; ending a turn to wait triggered an enforced hand-back with a child live",
       "evidence": "No such tool available: TaskOutput; [handback-send-enforce]",
       "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the pilot on PATH (plugin cache 0.9.9) is older than main and has no host command, so device-2 setup steps had to run through the worktree's bin/pilot.mjs",
+      "evidence": "S3: pilot host -> there is no \"host\" command"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the pilot prompt pin test fails on any prompt addition with zero slack, forcing an edit outside the slice",
+      "evidence": "S3: headroom -71.75 after a 3-line edit; scripts/test/measure-prompt.test.mjs"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice file cites land.mjs:243 without its directory (scripts/land.mjs)",
+      "evidence": "S3 fact sheet looked under deck/ first"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot brief told S3 to number its ADR, contradicting brief.md, the slice and ADR 0167 (adr-allocate numbers at landing); implementer rightly kept NNNN",
+      "evidence": "S3 pushback"
     }
   ]
 }
