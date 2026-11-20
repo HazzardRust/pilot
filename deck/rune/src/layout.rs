@@ -250,7 +250,11 @@ fn drag(s: &mut State, d: &Drag, tx: &mut Tx) {
 
 /// One icon of the icon bar: its label on hover and to a reader, the 4 px primary bar on its left
 /// while its pane shows, and its count as a pill on its corner, out of the flow.
-fn icon_item(s: &State, (name, label, glyph): (&'static str, &str, &'static Icon), dark: bool) -> El {
+fn icon_item(
+    s: &State,
+    (name, label, glyph): (&'static str, &str, &'static Icon),
+    dark: bool,
+) -> El {
     let t = tok::theme(dark);
     let active = !s.prefs.side_hidden && is_open(&s.prefs, name);
     let mut item = theme::control(el(), dark)
@@ -317,7 +321,12 @@ fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<Sta
             stick_bottom: false,
         })
         // The padding inside the scroll, so a shut pane's body closes to nothing.
-        .child(col().w_full().padding(space::pad).child(content(s, name, cx)));
+        .child(
+            col()
+                .w_full()
+                .padding(space::pad)
+                .child(content(s, name, cx)),
+        );
     let mut pane = col()
         .key(format!("panel-{name}"))
         .w_full()
@@ -330,7 +339,11 @@ fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<Sta
         pane = pane.child(theme::separator(dark));
     }
     pane = pane.child(head).child(body);
-    if open { pane } else { pane.inert().a11y_hidden() }
+    if open {
+        pane
+    } else {
+        pane.inert().a11y_hidden()
+    }
 }
 
 /// The left side: the icon bar, then the side area of one width with the open panes stacked in
@@ -339,7 +352,11 @@ fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<Sta
 fn left_side(s: &State, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
     let shown = shown(&s.prefs);
-    let width = if shown { side_width(&s.prefs) } else { space::s0 };
+    let width = if shown {
+        side_width(&s.prefs)
+    } else {
+        space::s0
+    };
     let bar = PANELS.iter().fold(
         col().key("icon-bar").w(size::icon_bar).h_full(),
         |bar, &panel| bar.child(icon_item(s, panel, dark)),

@@ -210,7 +210,10 @@ fn an_old_prefs_file_still_loads() {
 
     let prefs = Prefs::load(&dir);
     assert!(prefs.open_panels.contains("agents"), "{prefs:?}");
-    assert!(prefs.hidden_reports.contains("itm_000000000001"), "{prefs:?}");
+    assert!(
+        prefs.hidden_reports.contains("itm_000000000001"),
+        "{prefs:?}"
+    );
 }
 
 #[test]
@@ -312,7 +315,10 @@ fn a_drag_tracks_the_pointer_with_no_snap_at_the_default() {
     press(&mut rt, "icon-chat");
     rt.frame(1.0);
     assert!(body(&rt, "chat")[3] > 0.0, "chat did not come back");
-    assert!(rects(&rt, "side").0[2] >= size::side_min, "came back too narrow");
+    assert!(
+        rects(&rt, "side").0[2] >= size::side_min,
+        "came back too narrow"
+    );
 }
 
 /// S28 behaviour 2, from the hidden side: the handle drags the area back out from where it shows

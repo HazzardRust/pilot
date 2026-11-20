@@ -180,7 +180,10 @@ fn the_state_column_starts_at_one_x_whatever_the_other_cells_hold() {
     let first = x("status-row-0-state".into());
     for i in 1..3 {
         let at = x(format!("status-row-{i}-state"));
-        assert!((at - first).abs() < 0.5, "row {i}'s state at {at}, row 0's at {first}");
+        assert!(
+            (at - first).abs() < 0.5,
+            "row {i}'s state at {at}, row 0's at {first}"
+        );
     }
 }
 
