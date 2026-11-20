@@ -171,6 +171,26 @@ fn content_selects_and_labels_do_not() {
     }
 }
 
+/// The user, 2026-11-20: Add "does not look like an add button - just have a + symbol centered
+/// above the red section".
+#[test]
+fn add_is_a_plus_centred_above_red() {
+    let rt = window();
+    let all = rt.elements();
+    let at = |key: &str| all[by_key(&all, key).unwrap_or_else(|| panic!("no {key}"))].clone();
+    let (add, pane, red) = (at("tickets-add"), at("tickets"), at("tickets-fold-red"));
+    assert_eq!(add.text.as_deref(), Some("+"));
+    assert_eq!(add.label.as_deref(), Some("Add"));
+    let centre = |r: [f32; 4]| r[0] + r[2] / 2.0;
+    assert!(
+        (centre(add.rect) - centre(pane.rect)).abs() <= 0.5,
+        "+ at {:?}, pane {:?}",
+        add.rect,
+        pane.rect
+    );
+    assert!(add.rect[1] + add.rect[3] <= red.rect[1], "+ is above Red");
+}
+
 #[test]
 fn lists_carry_deck_css_hairlines_but_none_after_the_last() {
     let rt = window();

@@ -373,14 +373,23 @@ pub fn draw(
             .child(theme::empty(NONE, "tickets-none", dark));
     };
     let add = repo.clone();
-    let mut panel = col().key("tickets").gap(space::between).child(pressing(
-        button("tickets-add".into(), ADD, &t, dark),
-        pending.is_sent("tickets-add"),
-        move |s: &mut State| {
-            let (name, repo) = (ADD.to_string(), add.clone());
-            send(s, "tickets-add", DeckAction::Create { name, repo });
-        },
-    ));
+    // Add as a plain + centred above Red (the user, 2026-11-20); its name is its label and hover.
+    let plus = button("tickets-add".into(), "+", &t, dark)
+        .font(type_::HEADER)
+        .px(space::s3)
+        .label(ADD)
+        .help(ADD);
+    let mut panel = col().key("tickets").gap(space::between).child(
+        pressing(
+            plus,
+            pending.is_sent("tickets-add"),
+            move |s: &mut State| {
+                let (name, repo) = (ADD.to_string(), add.clone());
+                send(s, "tickets-add", DeckAction::Create { name, repo });
+            },
+        )
+        .self_center(),
+    );
     let open = prefs.folds.get(&repo);
     for (n, g) in view.groups.iter().enumerate() {
         // A group's line between Red, Yellow and Green, none above the first.
