@@ -72,11 +72,17 @@ Read steps 4 to 8 of `${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, and its
   is yours: record it in the owning slice file on `feat/<slug>`, as step 6
   does, and answer the child.
 
+**Drift**: on `drift:` in your grant, or a drift line from `main`, put the plan on
+the new pilot before the next spawn: `git merge <remote>/pilot` in `<feat>`, never a
+rebase, push `feat/<slug>` and send `main` the merge sha, which replans the ticket.
+A drift that moves a spec line, a locked decision or the slice graph goes to `main`
+as the re-cut it is; you spawn nothing on that plan until `main` answers.
+
 ## What goes to main
 
-You send `main` five things and nothing else: a question for the user, a seam
+You send `main` six things and nothing else: a question for the user, a seam
 change that moves a spec line or a locked decision, a crew hand-off you cannot
-resolve, a moot question, and your hand-back table. A blocking question that
+resolve, a moot question, a drift's merge sha, and your hand-back table. A blocking question that
 stopped mattering, its step done another way, superseded or met by a safe
 assumption: send `main` `moot <id>: <why>`, and the pilot closes it. A seam change that breaks a later slice's
 files or tests is a hand-off you cannot resolve, because only `main` resumes
@@ -97,7 +103,9 @@ its command, do the work that does not need it, and carry on. You have no
 blocked step as a blocking item titled `Blocked: <command>` on your ticket.
 A no-verdict (`Classifier unavailable`) is not a refused call: reissue it once, in a response of its own; a second is a blocked step.
 Never write a settings file or a permission rule, and never brief a child to: the permissions are the user's.
-Three call shapes auto mode refuses are never made: a kill bundled with a read in one command, a `cat` of a transcript or `TaskOutput` file (read a child through `TaskOutput` itself), and `pilot land`, which is the pilot's.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
+Two call shapes auto mode refuses are never made: a `cat` of a transcript or `TaskOutput` file (read a child through `TaskOutput` itself), and `pilot land`, which is the pilot's.
 A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
 A child's file edit the classifier refuses goes to `main` as one question with its default, never decided by you, since the permission is the user's, and not a blocked step: the hook posts nothing for it.
 

@@ -52,7 +52,7 @@ import { reportAskGaps } from './report-shape.mjs';
 import { ticketShapeGaps } from './ticket-shape.mjs';
 import { walkthroughShapeGaps } from './walkthrough-shape.mjs';
 import { placeSteps } from './step-shell.mjs';
-import { enterStage } from './store-stage.mjs';
+import { concludeOn, deckLine, enterStage } from './store-stage.mjs';
 import { gate2EvidenceGaps, namedWalkthroughGaps, ownBranchGaps, recutGate1Gaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
 import { MAX_QUESTION_CHARS, POSTABLE_KINDS, andList } from './tools.mjs';
 import {
@@ -66,7 +66,6 @@ import {
   refuseCredentials,
   refuseOverOpenQuestions,
   refuseUnmerged,
-  releaseIn,
   requireText,
   seqOf,
   touchRuns,
@@ -165,15 +164,12 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   const walked = kind === KIND_WALKTHROUGH ? deck.items.find((each) => each.id === item.ticket) : undefined;
   const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : kind === KIND_GATE1 ? recutGate1Gaps(ticket, body) : walkthroughPlanGaps(walked, authorKind(author));
   if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
-  // Posting a gate2 turns its ticket green, and posting the closing report closes and resolves it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
-  if (kind === KIND_GATE2) {
-    enterStage(deck, ticket, 'green');
-    // A hand-back like `needTicket`'s, so it releases the ticket's co-pilot in the same write (clear-waits-co-pilot L8).
-    releaseIn(deck, ticket.repo, ticket.id);
-  }
+  // Posting a gate2, or a concluding walkthrough on its open yellow ticket here (yellow-never-idle L2, L3; never refused for a lane, L8), turns its ticket green, and posting the closing report closes and resolves it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
+  if (kind === KIND_GATE2) concludeOn(deck, ticket);
+  if (concludes(item, author) && walked?.kind === KIND_TICKET && stateOf(walked) === 'yellow' && sameRepo(walked.repo, item.repo)) concludeOn(deck, walked, item.id);
   if (kind === KIND_REPORT && ticket) {
     // Closing ends its liveness too (L9).
-    delete ticket.live;
+    delete ticket.live; delete ticket.concludedBy;
     ticket.state = 'closed';
     ticket.resolution = `closed by ${item.id}`;
     ticket.resolvedAt = item.postedAt;
@@ -186,6 +182,9 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   writeDeck(deck);
   return item;
 }
+
+/** A walkthrough that concludes its ticket (yellow-never-idle L3): not blocking, posted by one of gate2's posters. */
+const concludes = (walk, author) => walk.kind === KIND_WALKTHROUGH && walk.blocking !== true && POSTERS[KIND_GATE2].includes(writerKind(author));
 
 /** The states a ticket may be in for each kind that names one (ticket-states spec 2, L6). */
 const TICKET_STATES_FOR = {
@@ -213,7 +212,8 @@ function ticketNamedBy(deck, item) {
   }
   // A gate is posted on the ticket in hand (ticket-states L9): the live one, never a parked one. A gate2 on a
   // yellow ticket is the exception: that ticket is the co-pilot's, never in the main slot (ADR 0087), and the post turns it green.
-  const coPilots = item.kind === KIND_GATE2 && state === 'yellow';
+  // So is a green one its own walkthrough concluded (yellow-never-idle L2), in this gate2's repository: one post later.
+  const coPilots = item.kind === KIND_GATE2 && (state === 'yellow' || (state === 'green' && ticket.concludedBy !== undefined && sameRepo(ticket.repo, item.repo)));
   if (item.kind !== KIND_REPORT && !coPilots && ticket.live !== true) {
     throw new DeckRefusal(`a ${item.kind}'s ticket is the live ticket, and ${item.ticket} is not live; deck_ticket take it first`);
   }
@@ -417,11 +417,11 @@ export function addPilotMessage(id, text, author, to, promise) {
 
 /**
  * A landing that ends short (three-lanes spec 15, L7): refused, or its main PR unknown (`mainLine`'s
- * `main gets pilot: unknown (<why>)`, one-integration-line spec 3). Its line is the pilot's to act on,
+ * `main gets pilot: unknown (<why>)`, one-integration-line spec 3; `featureLine`'s `feature PR: unknown (<why>)`). Its line is the pilot's to act on,
  * whoever owns the gate2.
  */
 export function isShortLanding({ ok, line }) {
-  return !ok || /^main gets pilot: unknown \(.*\)$/m.test(String(line ?? ''));
+  return !ok || /^(?:main gets pilot|feature PR): unknown \(.*\)$/m.test(String(line ?? ''));
 }
 
 /** A landing's state and its thread line, set on the item in hand. A short landing's line is `from: 'deck'` with a `seq`, which wakes the pilot and never reads as the user (L7). */
@@ -472,7 +472,7 @@ export function noteLaneFilled(gate2Id, taken) {
 export function noteDeck(id, text) {
   const deck = readDeck();
   const item = threadIn(deck, id);
-  item.replies.push({ from: 'deck', author: 'deck', text, repliedAt: new Date().toISOString(), seq: (deck.seq = seqOf(deck) + 1) });
+  item.replies.push(deckLine(deck, text, new Date().toISOString()));
   writeDeck(deck);
   return item;
 }

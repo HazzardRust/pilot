@@ -25,11 +25,24 @@ test("the pilot's yield drains", () => {
   assert.doesNotMatch(yieldPara, /Paused <id>/, 'no lane is taken on a `Paused` line before the drain');
 });
 
-test('the pilot spawns an architect on re-cut', () => {
-  const recut = paragraphs('agents/pilot.md').find((p) => p.includes('Re-cut check due'));
-  assert.ok(recut, 'pilot.md reads the `Re-cut check due` line');
-  assert.match(recut, /Re-cut by this landing/, 'and on the landing line');
-  assert.match(recut, /pilot-architect/, 'the same paragraph spawns the architect');
+test('the pilot decides on drift', () => {
+  const drift = paragraphs('agents/pilot.md').find((p) => p.startsWith('**Drift**'));
+  assert.ok(drift, 'pilot.md has a **Drift** paragraph');
+  assert.match(drift, /Drift after this landing/, "it reads S1's gate2 line");
+  assert.match(drift, /git merge/, 'the plan goes on pilot by a merge');
+  assert.match(drift, /deck_ticket replan/, 'then a replan, with no press');
+  assert.match(drift, /deck_ticket recut/, 'a refused replan is a re-cut');
+  assert.match(drift, /pilot-architect/, 'handed to the architect');
+  assert.doesNotMatch(read('agents/pilot.md'), /Re-cut by this landing/, 'the old sweep line is read nowhere');
+});
+
+test('the co-pilot merges first', () => {
+  const drift = paragraphs('agents/pilot-co-pilot.md').find((p) => p.startsWith('**Drift**'));
+  assert.ok(drift, 'pilot-co-pilot.md has a **Drift** paragraph');
+  assert.match(drift, /drift:/, 'read off `drift:` in its grant');
+  assert.match(drift, /git merge/, 'it merges pilot into feat/<slug>');
+  assert.match(drift, /`main`/, 'and reports to main');
+  assert.doesNotMatch(drift, /--force/, 'never a force-push');
 });
 
 test('the architect keeps locked decisions and replans', () => {
@@ -38,6 +51,16 @@ test('the architect keeps locked decisions and replans', () => {
   assert.match(section, /deck_ticket replan/, 'an unchanged plan goes back through `deck_ticket replan`');
   assert.match(section, /Changed since/, 'a changed plan takes a gate1 naming what changed');
   assert.match(section, /re-post no locked/i, 'a locked decision is not asked again');
+});
+
+test('no force-push on a pushed plan', () => {
+  const architect = read('agents/pilot-architect.md');
+  const section = /## Re-cut (.*?)(?: ## |$)/.exec(architect)?.[1];
+  assert.match(section, /git merge <remote>\/<base>/, 'a re-cut puts the pushed branch on its base by a merge');
+  assert.doesNotMatch(section, /git rebase/, 'not by a rebase, which needs a force-push');
+  const where = /## Where you work (.*?)(?: ## |$)/.exec(architect)?.[1];
+  assert.match(where, /pushed/, 'once the branch is pushed');
+  assert.match(where, /git merge <remote>\/<base>/, 'it takes its base by a merge');
 });
 
 test('the co-pilot drains every slice', () => {

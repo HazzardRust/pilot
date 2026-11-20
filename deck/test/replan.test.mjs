@@ -13,9 +13,9 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { KIND_GATE1, KIND_TICKET, SIGN_OFF } from '../items.mjs';
-import { planChanges } from '../recut.mjs';
-import { DeckRefusal, addReply, listItems, postItem, resolveItem, setCoPilot } from '../store.mjs';
+import { KIND_GATE1, KIND_GATE2, KIND_TICKET, SIGN_OFF } from '../items.mjs';
+import { numberedSections, planChanges } from '../recut.mjs';
+import { DeckRefusal, addReply, coPilotFor, listItems, pivotTicket, postItem, resolveItem, setCoPilot } from '../store.mjs';
 import { recutTicket, replanTicket } from '../store-tickets.mjs';
 import { shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
 
@@ -25,27 +25,38 @@ const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8',
 const ARTEFACT = 'docs/design/x/architecture.md';
 const SLICE = 'docs/design/x/slices/S1.md';
 
+const SECTIONS = { 2: ['Spec', '| 1 | a yellow ticket moves |'], 3: ['Findings', 'The anchor is server-tools.mjs:228.'], 5: ['Locked decisions', '- **L1** One replan.'], 8: ['Slices', '| S1 | `deck/lanes.mjs` |'] };
+/** An architecture.md with §2, §3, §5 and §8; `edits` maps a section number to its new body, null dropping it. */
+const architecture = (edits = {}) => ['# X', '', ...Object.entries(SECTIONS).flatMap(([n, [title, body]]) => (edits[n] === null ? [] : [`## ${n}. ${title}`, '', edits[n] ?? body, '']))].join('\n');
+
 /**
  * One repository with a plan at `first`; `same` is a later commit that changes only code outside the design dir, and
- * `changed` (off `first` too) one that edits the slice file.
+ * off `first` too: `changed` edits the slice file, `reworded` §3 and the slice file, `spec`, `locked` and `graph`
+ * edit §2, §5 and §8, and `headless` drops §8.
  */
 function repo(t) {
   return gitFixture(t, 'replan:repo', (root) => {
     const work = path.join(root, 'work');
     git(root, 'init', '-q', '-b', 'main', work);
-    const write = (file, text) => {
-      fs.mkdirSync(path.join(work, path.dirname(file)), { recursive: true });
-      fs.writeFileSync(path.join(work, file), text);
-      git(work, 'add', file);
-      git(work, 'commit', '-q', '-m', file);
+    const write = (files, branch) => {
+      if (branch) git(work, 'checkout', '-q', '-b', branch, first);
+      for (const [file, text] of Object.entries(files)) {
+        fs.mkdirSync(path.join(work, path.dirname(file)), { recursive: true });
+        fs.writeFileSync(path.join(work, file), text);
+      }
+      git(work, 'add', '--', ...Object.keys(files));
+      git(work, 'commit', '-q', '-m', branch ?? 'plan');
       return git(work, 'rev-parse', 'HEAD');
     };
-    write(ARTEFACT, '# X\n');
-    const first = write(SLICE, '# S1\n\n## Files owned\n\n- `deck/lanes.mjs`\n');
-    const same = write('deck/lanes.mjs', 'landed on pilot\n');
-    git(work, 'checkout', '-q', '-b', 'recut', first);
-    const changed = write(SLICE, '# S1\n\n## Files owned\n\n- `deck/lanes.mjs`\n- `deck/wait.mjs`\n');
-    return { work, first, same, changed };
+    const first = write({ [ARTEFACT]: architecture(), [SLICE]: '# S1\n\n## Files owned\n\n- `deck/lanes.mjs`\n' });
+    const same = write({ 'deck/lanes.mjs': 'landed on pilot\n' });
+    const changed = write({ [SLICE]: '# S1\n\n## Files owned\n\n- `deck/lanes.mjs`\n- `deck/wait.mjs`\n' }, 'recut');
+    const reworded = write({ [ARTEFACT]: architecture({ 3: 'The anchor is server-tools.mjs:240.' }), [SLICE]: '# S1, reworded\n\n## Files owned\n\n- `deck/lanes.mjs`\n' }, 'reworded');
+    const spec = write({ [ARTEFACT]: architecture({ 2: '| 1 | a red ticket moves |' }) }, 'spec');
+    const locked = write({ [ARTEFACT]: architecture({ 5: '- **L1** Two replans.' }) }, 'locked');
+    const graph = write({ [ARTEFACT]: architecture({ 8: '| S1 | `deck/wait.mjs` |' }) }, 'graph');
+    const headless = write({ [ARTEFACT]: architecture({ 8: null }) }, 'headless');
+    return { work, first, same, changed, reworded, spec, locked, graph, headless };
   });
 }
 
@@ -84,15 +95,40 @@ test('an unchanged design dir keeps the signature', async (t) => {
   assert.deepEqual(reread(ticket.id).plan, stored.plan, 'returned as stored');
 });
 
-test('one changed slice file refuses the replan', async (t) => {
+test('a wording-only change passes', async (t) => {
   tempDeck(t);
-  const { work, first, changed } = repo(t);
-  const ticket = recut(work, first);
+  const { work, first, reworded } = repo(t);
+  const ticket = signed(work, first);
 
-  await assert.rejects(async () => replan(ticket.id, changed, 'pilot:pilot-architect'), refusedNaming(SLICE, first.slice(0, 7)));
+  const said = (await replan(ticket.id, reworded, 'pilot:pilot-architect')).content[0].text;
 
-  assert.equal(reread(ticket.id).state, 'red');
-  assert.equal(reread(ticket.id).recut.from, first, 'the mark stays');
+  assert.equal(said, `Replanned ${ticket.id} at ${reworded.slice(0, 7)}: signed plan kept; reworded ${SLICE}, §3.`);
+  assert.deepEqual([reread(ticket.id).state, reread(ticket.id).plan.sha], ['yellow', reworded]);
+  assert.equal(reread(ticket.id).replies.at(-1).text, `Replanned at ${reworded.slice(0, 7)} by architect: reworded ${SLICE}, §3`);
+});
+
+test('a changed spec line, locked decision or slice graph takes a gate1', async (t) => {
+  tempDeck(t);
+  const fixture = repo(t);
+  const ticket = signed(fixture.work, fixture.first);
+  const replies = reread(ticket.id).replies.length;
+
+  for (const [commit, section] of [['spec', '§2'], ['locked', '§5'], ['graph', '§8']]) {
+    await assert.rejects(async () => replan(ticket.id, fixture[commit]), refusedNaming(section, `changed since ${fixture.first.slice(0, 7)}`, 'deck_ticket recut', `Changed since ${fixture.first.slice(0, 7)}:`));
+  }
+  assert.deepEqual([reread(ticket.id).state, reread(ticket.id).plan.sha, reread(ticket.id).replies.length], ['yellow', fixture.first, replies], 'the ticket is unchanged');
+});
+
+test('a headless artefact is never proven', async (t) => {
+  tempDeck(t);
+  const { work, first, headless } = repo(t);
+  assert.equal(numberedSections(`${architecture()}\n## 5. Locked decisions\n\n- **L1** Two replans.\n`).get('5'), null, 'a section headed twice');
+  const fenced = (after) => numberedSections(architecture({ 5: `\`\`\`\n## not a heading\n\`\`\`\n${after}` })).get('5');
+  assert.notEqual(fenced('- **L1** One replan.'), fenced('- **L1** Two replans.'), 'an edit after a fenced ## is still read');
+  const ticket = signed(work, first);
+
+  await assert.rejects(async () => replan(ticket.id, headless), refusedNaming('§8', 'never proven unchanged'));
+  assert.equal(reread(ticket.id).plan.sha, first);
 });
 
 test('a gone old sha is never unchanged', async (t) => {
@@ -110,14 +146,63 @@ test('a plan whose artefact is not under docs/design/<slug>/ is never unchanged'
   assert.equal(reread(ticket.id).state, 'red');
 });
 
-test('a ticket never re-cut is never replanned', async (t) => {
+test('a yellow ticket moves to the merge commit', async (t) => {
   tempDeck(t);
   const { work, first, same } = repo(t);
   const ticket = signed(work, first);
+  setCoPilot(ticket.id, true);
+  setCoPilot(ticket.id, false);
+  const { grantedAt } = reread(ticket.id).plan;
+  const before = gate1sOn(ticket.id).length;
 
-  await assert.rejects(async () => replan(ticket.id, same), refusedNaming(ticket.id, 're-cut', 'gate1'));
-  assert.throws(() => replanTicket(ticket.id, same), refusedNaming(ticket.id, 're-cut', 'gate1'));
-  assert.equal(reread(ticket.id).plan.sha, first, 'the signed plan is untouched');
+  const said = (await replan(ticket.id, same)).content[0].text;
+
+  assert.equal(said, `Replanned ${ticket.id} at ${same.slice(0, 7)}: signed plan kept.`);
+  const stored = reread(ticket.id);
+  assert.deepEqual([stored.state, stored.plan.sha, stored.plan.grantedAt], ['yellow', same, grantedAt]);
+  assert.equal(gate1sOn(ticket.id).length, before, 'no gate1 is posted');
+  assert.equal(stored.replies.at(-1).text, `Replanned at ${same.slice(0, 7)} by pilot: unchanged`);
+});
+
+test('a yellow replan of a live ticket keeps it live', async (t) => {
+  tempDeck(t);
+  const { work, first, same } = repo(t);
+  const ticket = signed(work, first);
+  setCoPilot(ticket.id, true);
+  // A yellow ticket is live while a co-pilot holds it (store-tickets.mjs:240: never `live` on a yellow one).
+  const held = () => coPilotFor(work)?.ticket === ticket.id && coPilotFor(work).live === true;
+  assert.ok(held(), 'the co-pilot holds the ticket');
+
+  await replan(ticket.id, same);
+
+  assert.equal(reread(ticket.id).state, 'yellow');
+  assert.ok(held(), 'the replan kept its co-pilot');
+});
+
+test('a re-cut whose §3 is reworded passes and names §3', async (t) => {
+  tempDeck(t);
+  const { work, first, reworded } = repo(t);
+  const ticket = recut(work, first);
+
+  const said = (await replan(ticket.id, reworded)).content[0].text;
+
+  assert.equal(said, `Replanned ${ticket.id} at ${reworded.slice(0, 7)}: signed plan kept; reworded ${SLICE}, §3.`);
+  assert.deepEqual([reread(ticket.id).state, reread(ticket.id).recut], ['yellow', undefined]);
+});
+
+test('a ticket with no signed plan, or one a gate2 names, is never replanned', async (t) => {
+  tempDeck(t);
+  const { work, first, same } = repo(t);
+  const built = signed(work, first);
+  const gate2 = postItem({ kind: KIND_GATE2, title: 'Gate 2', body: 'Verdict: approve\nGate: 1210 pass, 0 fail', repo: work, pr: '#250', sha: first, ticket: built.id });
+  pivotTicket(built.id);
+  await assert.rejects(async () => replan(built.id, same), refusedNaming(built.id, gate2.id));
+  assert.throws(() => replanTicket(built.id, same), refusedNaming(built.id, gate2.id));
+  assert.equal(reread(built.id).plan.sha, first, 'the signed plan is untouched');
+
+  const planning = postItem({ kind: KIND_TICKET, sliceCount: 60, title: 'unplanned', body: shapedTicketBody('unplanned'), repo: work });
+  await assert.rejects(async () => replan(planning.id, same), refusedNaming(planning.id, 'gate1'));
+  assert.throws(() => replanTicket(planning.id, same), refusedNaming(planning.id, 'gate1'));
 });
 
 test('a replanned plan is granted afresh, so its next grant checks drift again', (t) => {

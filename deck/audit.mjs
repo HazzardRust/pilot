@@ -15,7 +15,7 @@ import { storeDir } from './store.mjs';
 import { zeroCounts } from './transcripts.mjs';
 
 /** The measured concerns, in the order a tie is broken by. `open` is what no named area covers (spec 15). */
-export const AREAS = ['setup', 'loops', 'preview', 'navigability', 'context', 'tooling', 'rederived', 'open'];
+export const AREAS = ['setup', 'loops', 'preview', 'navigability', 'context', 'tooling', 'rederived', 'refusals', 'open'];
 
 /** L6: effort weights, and how many tokens are worth one minute. Both printed in the report. */
 const EFFORT_WEIGHTS = { S: 1, M: 3, L: 8 };

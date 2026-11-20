@@ -1,0 +1,224 @@
+{
+  "slug": "yellow-never-idle",
+  "feature": "yellow-never-idle",
+  "ticket": "itm_74926a1687c5",
+  "branch": "feat/yellow-never-idle",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-yellow-never-idle",
+  "qa": {
+    "branch": "qa/yellow-never-idle",
+    "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-qa",
+    "url": "http://127.0.0.1:60786"
+  },
+  "artefact": "docs/design/yellow-never-idle/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 walkthrough turns a yellow ticket green",
+      "state": "integrated",
+      "branch": "slice/yellow-never-idle-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-s1"
+    },
+    {
+      "slice": "S2 idle yellow ticket refuses the lane",
+      "state": "integrated",
+      "branch": "slice/yellow-never-idle-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-s2"
+    },
+    {
+      "slice": "S3 idle line wakes a parked wait",
+      "state": "integrated",
+      "after": [
+        "S2 idle yellow ticket refuses the lane"
+      ],
+      "branch": "slice/yellow-never-idle-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-s3"
+    },
+    {
+      "slice": "yellow-never-idle",
+      "state": "in QA: walkthrough itm_f656751ff13c posted; 60-min check of spec 7 at 04:37:40Z pending",
+      "branch": "feat/yellow-never-idle",
+      "pr": 114
+    },
+    {
+      "slice": "fix round (principles)",
+      "state": "integrated",
+      "after": [
+        "S3 idle line wakes a parked wait"
+      ],
+      "branch": "fix/yellow-never-idle-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-yellow-never-idle-fix"
+    }
+  ],
+  "findings": [
+    "dropped: QA-F1 — the Stop hook frames the deck's Idle line as 'the user has answered'; the line it points at says what to do, blocking until answered is intended, and the wording lives in stop-gate.js, which L4 keeps unedited; noted in the QA comment"
+  ],
+  "next": "Walkthrough itm_f656751ff13c up, QA comment on #114 posted by the deck; main runs `need`. QA a86e6d5724424a63a stays live: 60-min count of spec 7 at 04:37:40Z, then the user's replies, reporting to main.",
+  "updatedAt": "2026-11-19T04:00:44.945Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "co-pilot and reviewers read as `other` in authorKind, so owner-kind activity cannot name the crew",
+      "evidence": "deck/items.mjs:352, agents.mjs:180"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "crew list private to lane-ticket.mjs",
+      "evidence": "lane-ticket.mjs:10"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck MCP failed to connect at start, recovered on ToolSearch",
+      "evidence": "session notice"
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "a deck_status under slug never-stuck wrote Run 2's record over Run 1's run.json in the feat worktree; lander brief named the wrong file",
+      "evidence": "git diff docs/design/never-stuck/run.json: ticket itm_9b7008e91201 -> itm_4be94a7ae00a"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the 800-line facades cap and 8 tests pinning the old rule were in neither brief nor slice file; found only in the full gate",
+      "evidence": "S1 report: 10 reds on an intermediate run, store-items.mjs 815 then 798",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a whole-suite run on a stale state could not be stopped (TaskStop not loadable) and ran 6 min for nothing",
+      "evidence": "S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "no testUtils helper for a held co-pilot; three hops to build one",
+      "evidence": "S2 report: aTicket, store.setCoPilot (deck/store-runs.mjs:365), heartbeat",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "implementer reports landed in the pilot after the co-pilot paused; S1's saved to a file because next holds 400 chars",
+      "size": 15
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test prints sub-suite pass/fail lines before the overall summary, so a wait loop matched early; 8 min a run",
+      "evidence": "S1 fix report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "the harness forced the co-pilot to hand back while its S3 implementer was still live; its report has no live parent",
+      "evidence": "co-pilot hand-back, implementer a644e1a8ed175ed28",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3 had to edit a test S2 owns (stop-gate-idle-yellow.test.js, +3) because S2's slice file did not foresee S3's line landing first",
+      "evidence": "co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the scratch-deck live check takes 20 real minutes because IDLE_MS is a constant",
+      "evidence": "co-pilot hand-back",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the gate stops scratch decks leashed to the worktree; the first live wait failed with the deck not answering",
+      "evidence": "S3 report: stopped 35108 daemon --leash-dir <worktree>",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "another ticket's landing stopped the leak fixture daemon in the S3 worktree mid-gate; one flake red",
+      "evidence": "S3 report; audit-f11 land line: stopped 27640 daemon",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "server-wait.mjs at 796 of 800 lines; the next timer needs its own module",
+      "evidence": "S3 report",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "S3 implementer report (long) landed in the pilot after its co-pilot was forced to pause; saved to a file",
+      "size": 12
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "a context reset lost the evidence runner's table; its definition forbids re-running the checks itself, so the first report had no tool evidence",
+      "evidence": "principles report section 3: six checks 'not run: output lost in the reset'"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "deck MCP reported CONNECTION_CLOSED at spawn; recovered for the co-pilot on ToolSearch",
+      "evidence": "QA's first message"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "resumed to re-run the evidence runner, it was handed back before the runner reported; the feature's six tool checks never reached the review",
+      "evidence": "addendum: mutation, complexity, duplication, dead code, dependency shape 'not returned before hand-off'"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "the agent_type probe needed the live deck the environment forbids; Chrome DevTools MCP not loaded, so the card was read from the store, not seen",
+      "evidence": "QA findings 1/2 rows 'roster agent_type' and 'card look'"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "deckLine beside noteDeck pushed store-items.mjs to 804 lines and failed facades.test's 800 cap; moved to store-stage.mjs after a failed full gate",
+      "evidence": "fix report deviations"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "no TaskStop in the implementer session; a stale gate run could only be waited out, and the pkill attempt was refused",
+      "evidence": "itm_2a1383d712e2"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "the Stop hook writes session state to the real home ~/.claude; QA had to point USERPROFILE at a scratch home",
+      "evidence": "hooks/lib/deck.js:420 stateDir uses os.homedir"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "QA was handed back before the fix tip arrived, so the walkthrough needs a resume or a fresh QA agent",
+      "evidence": "QA hand-back 03:21:31Z"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "a blocking-question fixture needs recommended plus options; two 400s before it posted",
+      "evidence": "QA writer hand-back, q.mjs"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "spec 5-8 need 20 real minutes from the scratch deck's start and the pause landed inside the window; past ~03:59Z a successor restarts the deck and pays another 20",
+      "evidence": "QA writer hand-back"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "brief.md's PR footer session URL differs from the commit trailer's",
+      "evidence": "docs/design/yellow-never-idle/brief.md:43 vs :33"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "two spawn/send calls returned classifier no-verdict when batched with a deck_status; reissued alone, both passed",
+      "evidence": "Agent QA writer, SendMessage triage"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "a QA writer survived the session's /clear unrecorded, so a second pilot-qa was spawned on the same ticket and scratch deck; it stood down after posting two scratch fixtures",
+      "evidence": "a86e6d5724424a63a live with timed probe; a87be542505ca426b spawned 03:51Z, stood down 03:58Z"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "a co-pilot cannot TaskStop a child of a previous co-pilot or its own spawn; only main or the agent can",
+      "evidence": "TaskStop a87be542505ca426b refused for agent acd9f6ef0c5aac512"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "deck MCP dropped and QA's context reset mid-run; SEC3 is defined nowhere in docs/design/yellow-never-idle, so QA inferred it from a scratch script",
+      "evidence": "QA a86e6d5724424a63a report; grep of the artefact for SEC3: none"
+    }
+  ]
+}

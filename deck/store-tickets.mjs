@@ -25,7 +25,7 @@ import {
   switchOf,
   ticketQueueOf,
 } from './items.mjs';
-import { YIELD_MS, yieldsDue } from './lanes.mjs';
+import { CREW_IDLE_MS, YIELD_MS, idleYellowOf, yieldsDue } from './lanes.mjs';
 import { SHA } from './recut.mjs';
 import { nextRecord, repoKey, sameRepo } from './runs.mjs';
 import {
@@ -43,7 +43,7 @@ import {
   writeDeck,
 } from './store-core.mjs';
 import { resolveItem } from './store-items.mjs';
-import { enterStage } from './store-stage.mjs';
+import { deckLine, enterStage } from './store-stage.mjs';
 
 /**
  * The parked green ticket whose walkthrough a reply is on, by id, or undefined (ticket-states spec
@@ -372,8 +372,31 @@ export function yieldTicket(id, questionId) {
   ticket.yielding = { question: questionId, at };
   const question = deck.items.find((item) => item.id === questionId);
   const text = `Yielding ${id}: ${questionId} unanswered ${YIELD_MS / 60_000} min; send the co-pilot the pause: it drains every live slice, then hands back paused`;
-  question.replies = [...messagesOf(question), { from: 'deck', author: 'deck', text, repliedAt: at, seq: (deck.seq = seqOf(deck) + 1) }];
+  question.replies = [...messagesOf(question), deckLine(deck, text, at)];
   touchRuns(deck, ticket.repo);
+  writeDeck(deck);
+  return ticket;
+}
+
+/**
+ * The deck's idle wake (yellow-never-idle spec 7, 8; L7), one write: the co-pilot's held ticket, which `idleYellowOf`
+ * finds idle now with the crew last seen at `crewSeenAt`, is stamped `idleNoted: crewSeenAt` and given one `from: 'deck'`
+ * line with a `seq`, which wakes the pilot's parked wait. Refused unless it is due now and not yet noted for this
+ * `crewSeenAt`, so an idle episode is noted once; it releases nothing (A1). Returns the ticket.
+ */
+export function noteIdle(ticketId, crewSeenAt) {
+  const deck = readDeck();
+  const ticket = openTicketOf(deck, ticketId);
+  const entry = storedCoPilot(deck, ticket.repo);
+  const holder = entry && isLiveCoPilot(deck, entry) ? entry.ticket : undefined;
+  const now = Date.now();
+  const idle = idleYellowOf(deck.items, ticket.repo, holder, crewSeenAt);
+  if (idle?.ticket !== ticketId || idle.at > now || ticket.idleNoted === crewSeenAt) {
+    throw new DeckRefusal(`${ticketId} is not newly idle: the co-pilot holds ${holder ?? 'nothing'} here, and its crew must be quiet ${CREW_IDLE_MS / 60_000} min since a moment not yet noted`);
+  }
+  ticket.idleNoted = crewSeenAt;
+  const text = `Idle ${ticketId}: no crew tool call for ${CREW_IDLE_MS / 60_000} min and nothing blocks it — need it, or release it and spawn its successor`;
+  ticket.replies = [...messagesOf(ticket), deckLine(deck, text, new Date(now).toISOString())];
   writeDeck(deck);
   return ticket;
 }
@@ -444,21 +467,28 @@ export function recutTicket(id, why, files) {
 }
 
 /**
- * Restore a re-cut ticket's signature at `sha` (never-stuck spec 15, L5): the caller has proven its design dir
- * unchanged since `recut.from`. Only an open red ticket carrying the re-cut mark; yellow, its plan at `sha` and never
- * yet granted, the mark and liveness gone, in one write, as a gate1 Sign off leaves it. Returns the ticket.
+ * Move a signed plan to `sha` (never-stuck spec 15, L5; recut-decision L4): the caller has proven its signed sections
+ * unchanged since `recut.from`, else `plan.sha`. An open red ticket carrying the re-cut mark goes yellow, its plan at
+ * `sha` and never yet granted, the mark and liveness gone, as a gate1 Sign off leaves it; an open yellow signed ticket
+ * keeps its state, liveness and grant, its plan at `sha`. One write; never a ticket a gate2 names. Returns the ticket.
  */
 export function replanTicket(id, sha) {
   if (typeof sha !== 'string' || !SHA.test(sha)) throw new DeckRefusal('a replan names the new plan commit as its sha');
   const deck = readDeck();
   const ticket = openTicketOf(deck, id);
-  if (stateOf(ticket) !== 'red' || !ticket.recut || !ticket.plan || typeof ticket.plan !== 'object') {
-    throw new DeckRefusal(`item ${id} carries no re-cut mark; only a re-cut ticket is replanned, any other takes a gate1`);
+  const signed = ticket.plan !== null && typeof ticket.plan === 'object';
+  const recut = signed && stateOf(ticket) === 'red' && Boolean(ticket.recut);
+  if (!recut && !(signed && stateOf(ticket) === 'yellow' && !ticket.recut && typeof ticket.plan.sha === 'string')) {
+    throw new DeckRefusal(`item ${id} is neither re-cut nor a signed yellow ticket; only those are replanned, any other takes a gate1`);
   }
-  enterStage(deck, ticket, 'yellow');
+  const gate2 = deck.items.find((item) => item?.kind === KIND_GATE2 && item.ticket === id);
+  if (gate2) throw new DeckRefusal(`gate2 ${gate2.id} was posted on ${id}; a part-built ticket is never replanned`);
   ticket.plan = { ...ticket.plan, sha };
-  delete ticket.plan.grantedAt;
-  for (const field of ['live', 'recut']) delete ticket[field];
+  if (recut) {
+    enterStage(deck, ticket, 'yellow');
+    delete ticket.plan.grantedAt;
+    for (const field of ['live', 'recut']) delete ticket[field];
+  }
   touchRuns(deck, ticket.repo);
   writeDeck(deck);
   return ticket;

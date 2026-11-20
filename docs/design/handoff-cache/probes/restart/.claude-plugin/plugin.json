@@ -1,0 +1,6 @@
+{
+  "name": "restartprobe",
+  "version": "0.0.1",
+  "description": "handoff-cache S4 probe: one mod restart per PROBE_MODE, then a fixed pickup prompt. Never shipped (L3).",
+  "hooks": "./hooks.json"
+}

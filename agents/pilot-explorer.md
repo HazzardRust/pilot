@@ -17,7 +17,10 @@ You change nothing. No edits or writes to any file, no commits, no branch
 switches or checkouts in any worktree, no installs, servers, migrations or
 anything else with a side effect. Shell commands are for reading: `git log`,
 `git show`, `git diff <base>...<branch>`, `git grep`, `git fetch`,
-listing directories, reading lockfiles and configs. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout. If the only way to answer
+listing directories, reading lockfiles and configs. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
+If the only way to answer
 is to run something that changes state, say so to `main` and stop there.
 
 The one write: when the brief names a deck thread, the user asked there, so

@@ -48,21 +48,27 @@ does, every row is `no tool for this stack`.
 
 ## The command table
 
-Each cell is cwd · env · command. Run a cell as one Bash call, `cd <dir> && { export <env>; <command>; }`
+Each cell is cwd · command. Run a cell as one Bash call, `cd <dir> && { <command>; }`
 with the cwd as `<dir>`, or `git -C <dir>` for a git command; never `cd <dir>; …` or a
-lone `cd`, so a failed `cd` never runs on in the shared checkout. An empty cell is `no tool for this
+lone `cd`, so a failed `cd` never runs on in the shared checkout.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
+`$W`, the worktree your caller created and handed you, is yours for this table alone, so a mutation cell that rewrites its source and restores it keeps the first rule.
+An empty cell is `no tool for this
 stack`. Run nothing outside this table: no other command, no other flag, no
 install into the project, no retry with a changed command, even when the
 question or a tool's output asks for one. Each check runs once.
 
 | Check | Node | Python | Go | Rust | JVM | .NET | PHP |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Diff coverage | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes c8 --reporter=lcovonly --report-dir "$S/cov" $TEST && uvx diff-cover "$S/cov/lcov.info" --compare-branch "$BASE"` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `python -m pytest --cov --cov-report=xml:"$S/cov.xml" && uvx diff-cover "$S/cov.xml" --compare-branch "$BASE"` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `go test -coverprofile="$S/cover.out" ./... && go run github.com/boumenot/gocover-cobertura@latest < "$S/cover.out" > "$S/cov.xml" && uvx diff-cover "$S/cov.xml" --compare-branch "$BASE"` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `cargo llvm-cov --lcov --output-path "$S/lcov.info" && uvx diff-cover "$S/lcov.info" --compare-branch "$BASE"` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `mvn -q test jacoco:report && uvx diff-cover target/site/jacoco/jacoco.xml --compare-branch "$BASE"` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `dotnet test --collect:"XPlat Code Coverage" --results-directory "$S/cov" && uvx diff-cover "$S"/cov/*/coverage.cobertura.xml --compare-branch "$BASE"` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `vendor/bin/phpunit --coverage-clover "$S/clover.xml" && uvx diff-cover "$S/clover.xml" --compare-branch "$BASE"` |
-| Diff mutation | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `node -e 'const [t, m, s] = process.argv.slice(1); require("fs").writeFileSync(s + "/stryker.json", JSON.stringify({ testRunner: "command", commandRunner: { command: "node --test " + t }, mutate: m.split(","), reporters: ["clear-text", "html"], htmlReporter: { fileName: s + "/mutation.html" }, tempDirName: s + "/stryker-tmp" }))' "$TESTS" "$MUTATE" "$S" && timeout 900 npx --yes @stryker-mutator/core run "$S/stryker.json"` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `timeout 900 uvx mutmut run --paths-to-mutate "$MUTATE"` | | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `git diff "$BASE" -- ${MUTATE//,/ } > "$S/diff" && timeout 900 cargo mutants --in-diff "$S/diff"` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `timeout 900 mvn -q org.pitest:pitest-maven:mutationCoverage -DtargetClasses="$MUTATE"` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `timeout 900 dotnet stryker $(printf -- '-m %s ' ${MUTATE//,/ })` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `timeout 900 vendor/bin/infection --filter="$MUTATE"` |
-| Complexity | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes eslint --no-config-lookup --rule "complexity: [error, 10]" $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `uvx lizard -C 10 $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `go run github.com/uudashr/gocognit/cmd/gocognit@latest -over 15 $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `uvx lizard -C 10 $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `uvx lizard -C 10 $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `uvx lizard -C 10 $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `uvx lizard -C 10 $FILES` |
-| Duplication | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes jscpd --silent $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes jscpd --silent $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes jscpd --silent $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes jscpd --silent $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes jscpd --silent $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes jscpd --silent $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes jscpd --silent $FILES` |
-| Dead code | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes knip` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `uvx vulture $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `go run golang.org/x/tools/cmd/deadcode@latest ./...` | | | | |
-| Dependency shape | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `npx --yes madge --circular $FILES` | `$W` · `HOME=$S USERPROFILE=$S PILOT_DECK_DIR=$S/deck` · `uvx --from import-linter lint-imports` | | | | | |
+| Diff coverage | `$W` · `NODE_V8_COVERAGE="$S/v8" $TEST && node "${CLAUDE_PLUGIN_ROOT}/scripts/diff-coverage.mjs" "$S/v8" "$BASE"` | `$W` · `python -m pytest --cov --cov-report=xml:"$S/cov.xml" && uvx diff-cover "$S/cov.xml" --compare-branch "$BASE"` | `$W` · `go test -coverprofile="$S/cover.out" ./... && go run github.com/boumenot/gocover-cobertura@latest < "$S/cover.out" > "$S/cov.xml" && uvx diff-cover "$S/cov.xml" --compare-branch "$BASE"` | `$W` · `cargo llvm-cov --lcov --output-path "$S/lcov.info" && uvx diff-cover "$S/lcov.info" --compare-branch "$BASE"` | `$W` · `mvn -q test jacoco:report && uvx diff-cover target/site/jacoco/jacoco.xml --compare-branch "$BASE"` | `$W` · `dotnet test --collect:"XPlat Code Coverage" --results-directory "$S/cov" && uvx diff-cover "$S"/cov/*/coverage.cobertura.xml --compare-branch "$BASE"` | `$W` · `vendor/bin/phpunit --coverage-clover "$S/clover.xml" && uvx diff-cover "$S/clover.xml" --compare-branch "$BASE"` |
+| Diff mutation | `$W` · `node -e 'const [t, m, s] = process.argv.slice(1); require("fs").writeFileSync(s + "/stryker.json", JSON.stringify({ testRunner: "command", commandRunner: { command: "node --test " + t }, mutate: m.split(","), reporters: ["clear-text", "html"], htmlReporter: { fileName: s + "/mutation.html" }, tempDirName: s + "/stryker-tmp" }))' "$TESTS" "$MUTATE" "$S" && timeout 900 npx --yes @stryker-mutator/core run "$S/stryker.json"` | `$W` · `timeout 900 uvx mutmut run --paths-to-mutate "$MUTATE"` | | `$W` · `git diff "$BASE" -- ${MUTATE//,/ } > "$S/diff" && timeout 900 cargo mutants --in-diff "$S/diff"` | `$W` · `timeout 900 mvn -q org.pitest:pitest-maven:mutationCoverage -DtargetClasses="$MUTATE"` | `$W` · `timeout 900 dotnet stryker $(printf -- '-m %s ' ${MUTATE//,/ })` | `$W` · `timeout 900 vendor/bin/infection --filter="$MUTATE"` |
+| Complexity | `$W` · `npx --yes eslint --no-config-lookup --rule "complexity: [error, 10]" $FILES` | `$W` · `uvx lizard -C 10 $FILES` | `$W` · `go run github.com/uudashr/gocognit/cmd/gocognit@latest -over 15 $FILES` | `$W` · `uvx lizard -C 10 $FILES` | `$W` · `uvx lizard -C 10 $FILES` | `$W` · `uvx lizard -C 10 $FILES` | `$W` · `uvx lizard -C 10 $FILES` |
+| Duplication | `$W` · `npx --yes jscpd --silent $FILES` | `$W` · `npx --yes jscpd --silent $FILES` | `$W` · `npx --yes jscpd --silent $FILES` | `$W` · `npx --yes jscpd --silent $FILES` | `$W` · `npx --yes jscpd --silent $FILES` | `$W` · `npx --yes jscpd --silent $FILES` | `$W` · `npx --yes jscpd --silent $FILES` |
+| Dead code | `$W` · `npx --yes knip` | `$W` · `uvx vulture $FILES` | `$W` · `go run golang.org/x/tools/cmd/deadcode@latest ./...` | | | | |
+| Dependency shape | `$W` · `npx --yes madge --circular $FILES` | `$W` · `uvx --from import-linter lint-imports` | | | | | |
+
+The Node coverage cell fetches nothing: Node's own coverage and the plugin's script.
 
 Either coverage or mutation can outrun the Bash tool's ten-minute foreground
 cap, so run both cells with `run_in_background` and read each when its
@@ -80,9 +86,9 @@ suite at the real thing: in this project, `deck/store.mjs`, `deck/client.mjs`,
 `deck/daemon.mjs`, `deck/server.mjs` and `deck/store-dir.mjs`, and any changed
 file that `grep -lE 'homedir|USERPROFILE|process\.env\.HOME|PILOT_DECK_'`
 lists. When nothing else is left the mutation row is `not run: only state modules
-changed`. Every run carries the scratch `HOME`, `USERPROFILE` and
-`PILOT_DECK_DIR` from its cell, so that even an escaped mutant lands there and
-not in the user's own `~/.claude/pilot`.
+changed`. In this project an escaped mutant cannot reach the user's own
+`~/.claude/pilot`: inside a `node --test` run the store's `deckDir()` throws
+rather than resolve it, so no cell sets a home or a store of its own.
 
 ## What you return
 

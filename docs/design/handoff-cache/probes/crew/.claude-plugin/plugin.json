@@ -1,0 +1,6 @@
+{
+  "name": "crew-probe",
+  "version": "0.0.0",
+  "description": "handoff-cache S5 probe: clears the main session while a background agent sends main a message. Never shipped; run by run.mjs in a scratch headless session.",
+  "license": "MIT"
+}

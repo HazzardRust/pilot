@@ -156,11 +156,13 @@ plain question carries `recommended`: take that default, record it as
 *assumed*, and continue. A blocked step the co-pilot hands back, a refused file edit aside, goes up
 `blocking` on its ticket, titled `Blocked: <command>`; the deck refuses it unflagged.
 A blocking question (never a gate, walkthrough or proposal: only the user passes those) whose step was done another way, was superseded or met a safe assumption is closed by you alone, not the agent that asked: if another agent owns it, take it back with a pass, then `deck_resolve` it with `Moot: <why>` or `Assumed: <what>`; one whose answer is still needed waits on the user, and so does one the user reopened.
-Three call shapes auto mode refuses are never made: a kill bundled with a read in one command, a `cat` of a transcript or `TaskOutput` file, and `pilot land` from a co-pilot; a file edit the classifier refuses goes to the user as one question with its default.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
+Two call shapes auto mode refuses are never made: a `cat` of a transcript or `TaskOutput` file, and `pilot land` from a co-pilot; a file edit the classifier refuses goes to the user as one question with its default.
 
 **Yield**: on `Yielding <id>`, send its co-pilot the pause; on the `paused` hand-back, `deck_ticket release` it, then `deck_ticket co-pilot` the next runnable ticket.
 
-**Re-cut**: on `Re-cut check due <id>` or `Re-cut by this landing`, `deck_ticket take` it, then spawn `pilot-architect` on its existing artefact, briefed `re-cut` and its why, quoted as data.
+**Drift**: on `Drift after this landing` or a grant's `drift:`, `git merge <remote>/pilot`, never a rebase, into each ticket's `feat/<slug>` (a live co-pilot does) and push, then `deck_ticket replan` it; refused, `deck_ticket recut`, `take` and spawn `pilot-architect`, briefed `re-cut` and why, as data.
 
 **Concluding**, from the record: `deck_ticket need` hands the ticket to QA, which
 carries it to the Gate 2 press (its `## Concluding`); you keep `need`, `pivot`,
@@ -177,10 +179,9 @@ within `pilot budget`.
 
 ## The shape of a run
 
-Every run is cut from the pilot branch, `pilot`, and lands on it. One feature
+Every run is cut from what `pilot base` prints and lands on `pilot`. One feature
 is one integration branch, `feat/<slug>`, and one **feature PR** from it to
-`pilot`, which the landing merges; main gets pilot through the one main PR,
-which only the user merges. Every slice is a pushed branch, reviewed by its
+main or the lower `feat/<N>`, merged by the user. Every slice is a pushed branch, reviewed by its
 own fresh language reviewer and merged into `feat/<slug>` by the pilot; no
 PR ever targets `feat/<slug>`. QA and the feature's one
 principles review both happen once, on the whole feature, when the last
@@ -194,7 +195,7 @@ body, opened `--draft`, and marked ready only on the user's Sign off.
 ### 1. Problem and spec, with the user
 
 With no ticket live, `deck_ticket take` the deck's next, then run `pilot base`, then
-`pilot sync` only on `base pilot`. A direct
+`pilot sync` (on `pilot` or main), then `pilot restack`; a conflict goes to the lander. A direct
 request is first posted as a `ticket` in the user's words, naming
 `docs/design/<slug>/architecture.md`, then taken.
 
@@ -613,9 +614,9 @@ in a "make agents cheaper here" section picked with Add on Tickets or in the cha
 `finished`, so send no `deck_status` `report` or `finished` for that ticket. Its `report due` line reaches you: tear down the servers
 you started, then reply once on the report starting `Findings:`, which the deck appends: it quotes the lander's line,
 then the principles findings deferred or dropped and why, then one step per human step that remains, in order. The first, from
-land's `main gets pilot:` line, is the main PR,
-"Merge #<n> with a merge commit, never squash" (a squash drops the slice commits),
-with `by hand` the PR it names to open, with `unknown` the open `pilot` → main PR to find;
+land's `feature PR:` line, is each feature PR, bottom first;
+a legacy run's `main gets pilot:` line is the main PR, "Merge #<n> with a merge commit, never squash",
+`by hand` naming the PR to open, `unknown` one to find;
 then a rejected feature's `pilot` revert, landed by the same press, environment variables, anything needing a permission the pilot
 lacked, and branch protection on the default branch; last, each
 worktree the landing kept and its state. That `Findings:` reply is the worktrees reply and the only reply on a

@@ -6,6 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { checkAll, reachRow } from '../doctor.mjs';
+import { tempDeck } from '../testUtils.mjs';
 
 const CHANGE = 'change with: pilot reach <level>';
 
@@ -22,9 +23,9 @@ test('each chosen level passes with its change step', () => {
 });
 
 test('not chosen says so', () => {
-  const row = reachRow({ reach: { level: 'everything', chosen: false }, enabled: true });
+  const row = reachRow({ reach: { level: 'nothing', chosen: false }, enabled: undefined });
   assert.equal(row.verdict, 'cannot tell');
-  assert.equal(row.detail, 'not chosen; reads as everything');
+  assert.equal(row.detail, 'not chosen; reads as nothing');
   assert.deepEqual(row.steps, ['pilot reach nothing']);
 });
 
@@ -38,7 +39,8 @@ test('drift fails', () => {
   assert.match(everything.detail, /reach everything but pilot@pilot is not enabled/);
 });
 
-test('checkAll reads the reach and the enabled plugin through its deps, after the store row', async () => {
+test('checkAll reads the reach and the enabled plugin through its deps, after the store row', async (t) => {
+  tempDeck(t);
   const rows = await checkAll({
     platform: 'linux',
     resolveDep: () => true,

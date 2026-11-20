@@ -1,6 +1,6 @@
 /**
  * The store's core (audit-f1-f7 S13, ADR 0113): the constants, DeckRefusal, the credential
- * scan, reading and writing deck.json, the validators, and the added-deck and tab helpers.
+ * refusal (its scan is `deck/credential.mjs`'s, re-exported), reading and writing deck.json, the validators, and the added-deck and tab helpers.
  * Moved whole from `deck/store.mjs`, which re-exports the public names; the private helpers
  * the other store modules need are exported at the foot. Imported only by store modules (L3).
  */
@@ -10,8 +10,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
+import { findCredential } from './credential.mjs';
 import { stampLegacyGrants } from './recut.mjs';
-import { storeDir } from './store-dir.mjs';
+import { refuseGateHomeWrite, storeDir } from './store-dir.mjs';
 import { isDeck, keepBackup, localDay, noteParsed, recoverStore } from './store-recovery.mjs';
 
 import {
@@ -82,33 +83,7 @@ export function gate2Refusal(gate, ticket, blocking) {
   );
 }
 
-/**
- * Shapes that mean "this is a credential, not prose". Each is deliberately anchored
- * so that talking *about* tokens ("the token field is nullable", "secret rotation is
- * slice 9", `process.env.PILOT_API_KEY`) stays postable — a deck that refused every
- * mention of the word would be worked around within a day, which is the failure mode
- * that matters.
- */
-const CREDENTIAL_SHAPES = [
-  ['a private key block', /-----BEGIN (?:[A-Z]+ )*PRIVATE KEY-----/],
-  ['an sk- API key', /\bsk-[A-Za-z0-9_-]{16,}/],
-  ['a GitHub token', /\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})/],
-  ['an AWS access key id', /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/],
-  ['a Slack token', /\bxox[baprs]-[A-Za-z0-9-]{10,}/],
-  ['a bearer token', /\bBearer\s+[A-Za-z0-9._~+/=-]{20,}/],
-  [
-    'a secret assigned to a name',
-    /\b(?:api[_-]?key|secret|token|password|passwd|pwd)\b\s*[:=]\s*["']?[A-Za-z0-9/+_-]{16,}/i,
-  ],
-];
-
-/** The credential shape `text` matches, or null. */
-export function findCredential(text) {
-  for (const [what, pattern] of CREDENTIAL_SHAPES) {
-    if (pattern.test(text)) return what;
-  }
-  return null;
-}
+export { findCredential };
 
 /** Every string in `value`, however deep it sits in objects and lists. */
 const stringsIn = (value) => {
@@ -320,7 +295,7 @@ function withoutEstimate(item) {
 }
 
 function writeDeck(deck) {
-  const file = storeFile();
+  const file = refuseGateHomeWrite(storeFile());
   const dir = path.dirname(file);
   privateDir(dir, {
     onKept: (err) => console.error(`[deck] store dir ${dir} keeps the mode its owner set: ${err.message}`),
