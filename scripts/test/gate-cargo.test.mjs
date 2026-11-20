@@ -14,7 +14,8 @@ const { cargoStep, runGate } = await import('../gate.mjs');
 
 const slot = () => ({ slot: 1, waited: false, release: () => {} });
 const SKIP = 'rune deck: cargo not on PATH, skipped';
-const OFF_WINDOWS = 'rune deck: cargo test runs on Windows only, skipped';
+const CARGO = 'C:\\Users\\me\\.cargo\\bin\\cargo.exe';
+const OFF_WINDOWS ='rune deck: cargo test runs on Windows only, skipped';
 
 /** A fresh temp dir holding an untouched `deck.json`, removed when the test ends. */
 function store(t) {
@@ -55,15 +56,16 @@ function gate(t, { which, answer = () => ({ status: 0 }), platform = 'win32' }) 
 
 test('cargo runs where it is: cargoStep names cargo test on the Rune manifest', () => {
   const asked = [];
-  const step = cargoStep({}, (cmd) => (asked.push(cmd), 'C:\\Users\\me\\.cargo\\bin\\cargo.exe'), 'win32');
+  const step = cargoStep({}, (cmd) => (asked.push(cmd), CARGO), 'win32');
   assert.deepEqual(asked, ['cargo']);
-  assert.deepEqual(step, { command: 'cargo', args: ['test', '--manifest-path', 'deck/rune/Cargo.toml'] });
+  // The path found, never the bare name, which Windows would look up in the checkout first.
+  assert.deepEqual(step, { command: CARGO, args: ['test', '--manifest-path', 'deck/rune/Cargo.toml'] });
 });
 
 test('cargo runs where it is: the gate starts it hidden, in its checkout, under the home-store guard', (t) => {
-  const { code, calls, file } = gate(t, { which: () => '/usr/bin/cargo' });
+  const { code, calls, file } = gate(t, { which: () => CARGO });
   assert.equal(code, 0);
-  const cargo = calls.find((call) => call.command === 'cargo');
+  const cargo = calls.find((call) => call.command === CARGO);
   assert.ok(cargo, 'cargo was not started');
   assert.deepEqual(cargo.args, ['test', '--manifest-path', 'deck/rune/Cargo.toml']);
   assert.equal(cargo.options.windowsHide, true);
@@ -74,20 +76,20 @@ test('cargo runs where it is: the gate starts it hidden, in its checkout, under 
 
 test('a cargo run that writes the home store is caught by the home-store line', (t) => {
   const touch = (command, options) => {
-    if (command === 'cargo') fs.utimesSync(options.env.PILOT_GATE_HOME_STORE, new Date(), new Date());
+    if (command === CARGO) fs.utimesSync(options.env.PILOT_GATE_HOME_STORE, new Date(), new Date());
     return { status: 0 };
   };
-  const { code, out } = gate(t, { which: () => 'cargo', answer: touch });
+  const { code, out } = gate(t, { which: () => CARGO, answer: touch });
   assert.equal(code, 1);
   assert.match(out, /home store changed: /);
 });
 
 test('a failing cargo test fails the gate, and one that cannot start does too', (t) => {
-  const failed = gate(t, { which: () => 'cargo', answer: (command) => ({ status: command === 'cargo' ? 101 : 0 }) });
+  const failed = gate(t, { which: () => CARGO, answer: (command) => ({ status: command === CARGO ? 101 : 0 }) });
   assert.equal(failed.code, 1);
   const unstarted = gate(t, {
-    which: () => 'cargo',
-    answer: (command) => (command === 'cargo' ? { status: null, error: new Error('spawn cargo ENOENT') } : { status: 0 }),
+    which: () => CARGO,
+    answer: (command) => (command === CARGO ?{ status: null, error: new Error('spawn cargo ENOENT') } : { status: 0 }),
   });
   assert.equal(unstarted.code, 1);
 });
@@ -106,13 +108,18 @@ test('off Windows the Rune deck is one skip line too, cargo or not (A3: CI runs 
   }
 });
 
-test('the default which finds cargo on the PATH env it is given, with or without an extension', (t) => {
+test('the default which finds cargo.exe in an absolute PATH or Path dir, and nothing else', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-gate-which-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  assert.deepEqual(cargoStep({ PATH: dir, Path: dir, PATHEXT: '.EXE' }, undefined, 'win32'), { skip: SKIP });
+  fs.writeFileSync(path.join(dir, 'cargo.cmd'), '');
+  assert.deepEqual(cargoStep({ PATH: dir, Path: dir, PATHEXT: '.CMD;.EXE' }, undefined, 'win32'), { skip: SKIP });
   fs.writeFileSync(path.join(dir, 'cargo.exe'), '');
-  assert.equal(cargoStep({ PATH: dir, PATHEXT: '.EXE' }, undefined, 'win32').command, 'cargo');
-  assert.equal(cargoStep({ Path: dir, PATHEXT: '.EXE' }, undefined, 'win32').command, 'cargo');
+  assert.equal(cargoStep({ PATH: dir }, undefined, 'win32').command, path.join(dir, 'cargo.exe'));
+  assert.equal(cargoStep({ Path: dir }, undefined, 'win32').command, path.join(dir, 'cargo.exe'));
+  // A relative entry would resolve against the checkout, where a planted cargo.exe could sit.
+  const relative = path.relative(process.cwd(), dir);
+  assert.ok(!path.isAbsolute(relative), 'the temp dir is on the checkout drive');
+  assert.deepEqual(cargoStep({ PATH: relative }, undefined, 'win32'), { skip: SKIP });
 });
 
 test("no cargo is one skip line: the gate prints it once and its exit is the suite's", (t) => {

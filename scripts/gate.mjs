@@ -244,12 +244,15 @@ function homeStoreLine(file, before, deckPid) {
   return { red: false, line: `home store changed: ${file}; live deck ${deck ?? 'unknown'} up` };
 }
 
-/** The first `cmd` file on `env`'s PATH (`Path` on Windows), tried with each PATHEXT extension on win32; null when none. */
+/**
+ * The first `cmd` (`cmd.exe` on win32, the only kind spawn starts without a shell) in an absolute dir on
+ * `env`'s PATH (`Path` on Windows); null when none. A relative entry is skipped: it resolves against the checkout.
+ */
 function onPath(cmd, env, platform) {
-  const dirs = (env.PATH ?? env.Path ?? '').split(platform === 'win32' ? ';' : ':').filter(Boolean);
-  const names = platform === 'win32' ? (env.PATHEXT ?? '.EXE;.CMD;.BAT;.COM').split(';').map((ext) => cmd + ext.toLowerCase()) : [cmd];
+  const dirs = (env.PATH ?? env.Path ?? '').split(platform === 'win32' ? ';' : ':').filter((dir) => path.isAbsolute(dir));
+  const name = platform === 'win32' ? `${cmd}.exe` : cmd;
   for (const dir of dirs) {
-    for (const name of names) if (fs.statSync(path.join(dir, name), { throwIfNoEntry: false })?.isFile()) return path.join(dir, name);
+    if (fs.statSync(path.join(dir, name), { throwIfNoEntry: false })?.isFile()) return path.join(dir, name);
   }
   return null;
 }
@@ -257,11 +260,13 @@ function onPath(cmd, env, platform) {
 /**
  * The Rune deck's `cargo test` (rune-deck-ui S19; A3) when `which('cargo')` finds it on Windows, else the one
  * line the gate prints instead: off Windows the deck's tests run in CI's Windows job, not in every gate.
+ * The command is the path `which` found: a bare `cargo` is looked up in the checkout first on Windows.
  */
 export function cargoStep(env, which = (cmd) => onPath(cmd, env, platform), platform = process.platform) {
   if (platform !== 'win32') return { skip: 'rune deck: cargo test runs on Windows only, skipped' };
-  if (which('cargo') === null) return { skip: 'rune deck: cargo not on PATH, skipped' };
-  return { command: 'cargo', args: ['test', '--manifest-path', 'deck/rune/Cargo.toml'] };
+  const cargo = which('cargo');
+  if (cargo === null) return { skip: 'rune deck: cargo not on PATH, skipped' };
+  return { command: cargo, args: ['test', '--manifest-path', 'deck/rune/Cargo.toml'] };
 }
 
 /** Runs `step`'s cargo, or prints its skip line; its exit status, 1 when it could not start or was killed. */
