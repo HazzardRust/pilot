@@ -21,8 +21,8 @@
       "branch": "slice/reply-markdown-s2"
     }
   ],
-  "next": "Rune itm_0dcd9aa67146: feat d928ffe5, QA a6b772b2 live (fold, rules), post its lines on pilot-owned itm_f98fae4576f8; then successor: + Add, ticket rows/Status as HTML, pastel RYG, back arrow, parity list, QA comment. two-devices itm_c844d6d00d8e released at d1a622e7: co-pilot it, fresh QA per its run.json next. reply-markdown planned. Keep memory ui-design-workflow-notes.md.",
-  "updatedAt": "2026-11-20T16:33:11.388Z",
+  "next": "crew-handoff-trace itm_1f8238d5a300 released at be819183, S1-S7 in: co-pilot it, fundamentalist + QA per its run.json. Rune itm_0dcd9aa67146 at 415914f8, no QA live: waits on user's look itm_f98fae4576f8 + question itm_dc1c53d781cc (default built), then gate2. two-devices green: walkthrough itm_def488480f47. reply-markdown planned. Keep memory ui-design-workflow-notes.md.",
+  "updatedAt": "2026-11-20T19:16:09.100Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -143,6 +143,45 @@
       "kind": "drain",
       "what": "pilot wait timed out on a healthy deck about ten times during QA cargo gates; each restart a turn",
       "size": 6000
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce hook forces a hand-back while children are live and the co-pilot has no TaskOutput to block on; main watched origin and resumed it per slice",
+      "evidence": "six forced hand-backs on crew-handoff-trace",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "a child's SubagentHandback reaches main, not the co-pilot that spawned it",
+      "evidence": "main forwarded S1, S3, S4, S5, S6 reports",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5 called its own prompt-pin regression pre-existing; base passed 16 of 16",
+      "evidence": "feat 4722c031 vs S5 10292262",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice Files-owned lists missed files the Interface forces; deck store files sit at the 800-line cap; prompt pins have 0.25 tokens headroom",
+      "evidence": "S2, S6; server-wait.mjs 799; S5.md",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "per-slice resume loop for the hook-paused co-pilot: watch origin, resume, forward report facts, seven slices",
+      "size": 40000
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exited 'deck not answering' nine times in three hours while the deck answered MCP calls",
+      "size": 5000
+    },
+    {
+      "kind": "drain",
+      "what": "deck's 'feature PR not updated' timeout notices arrive as user replies and as 'landing ended short', each needing a reply",
+      "size": 3000
     }
   ]
 }
