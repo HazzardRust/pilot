@@ -62,7 +62,7 @@ fn window(view: View, client: Client) -> Runtime<State> {
         view,
         ..State::default()
     };
-    state.regions.chat.deck = Some(Arc::new(client));
+    state.pending.deck = Some(Arc::new(client));
     let mut rt = Runtime::new(state, chat_only, (1280.0, 800.0), Env::new(true, 1.0));
     rt.frame(0.0);
     rt

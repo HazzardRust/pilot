@@ -154,11 +154,23 @@ fn a_refused_add_deck_says_why_and_keeps_the_path() {
 fn the_daemons_refusal_of_a_typed_path_reaches_the_box() {
     let deck = support::Scratch::start();
     let missing = deck.dir.join("no such dir").to_string_lossy().into_owned();
-    let client = support::client_for(&deck);
     let mut state = State::default();
+    state.pending.deck = Some(std::sync::Arc::new(support::client_for(&deck)));
     state.regions.tabs.adding = Some(TextEdit::new(format!("  {missing}  ")));
 
-    tabs::add(&mut state, |action| client.act(action));
+    tabs::add(&mut state);
+    assert!(state.pending.is_sent("add-deck-add"), "Add is out");
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+    while state.pending.is_sent("add-deck-add") {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "the add never answered"
+        );
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        for (key, acted) in state.pending.settle() {
+            tabs::answered(&mut state, &key, &acted);
+        }
+    }
 
     let local = &state.regions.tabs;
     let reason = local.refused.as_deref().expect("the deck's reason is kept");

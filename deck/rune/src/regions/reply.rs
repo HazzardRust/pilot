@@ -4,20 +4,16 @@
 //! touches (spec 4), and which only a reply the deck took empties (ADR 0096). The draft lives in
 //! memory alone: nothing here writes it to disk.
 
-use std::sync::mpsc;
-use std::time::Duration;
-
 use rune::tok::{self, type_};
 use rune::{Color, Cx, El, Key, TextEdit, Tx, col, el, row, text, text_input};
 use serde::Deserialize;
 
-use crate::act::{Acted, Action};
+use crate::act::{self, Acted, Action};
 use crate::app::State;
-use crate::client::{Client, Result};
 use crate::theme::{self, space};
 
-/// How often `poll` looks for the deck's answer to a press that is out.
-const ANSWER_POLL: Duration = Duration::from_millis(50);
+/// The `act::send` key of the box's one press that is out.
+const SEND: &str = "reply-press";
 
 /// One option the user can press, as `replyView` lists it.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -68,7 +64,6 @@ pub struct Local {
     closing: bool,
     /// The text the press that is out carried: a taken answer empties the box only while it holds this.
     posted: Option<String>,
-    answer: Option<mpsc::Receiver<Result<Acted>>>,
 }
 
 impl Local {
@@ -177,63 +172,41 @@ impl Local {
     /// The deck's answer. Taken empties the box only while it still holds the text that was posted, so
     /// words typed since, or beside a Close, stay; refused keeps every typed word beside the reason.
     pub fn acted(&mut self, acted: Acted) {
+        self.settle(match acted {
+            Acted::Taken { .. } => None,
+            Acted::Refused { reason } => Some(reason),
+        });
+    }
+
+    /// `acted` on what `act::refusal` made of the answer: none when the deck took it.
+    fn settle(&mut self, refused: Option<String>) {
         self.sent = None;
         let posted = self.posted.take();
-        match acted {
-            Acted::Taken { .. } => {
+        match refused {
+            None => {
                 if posted.as_deref() == Some(self.draft.text.as_str()) {
                     self.draft.replace_text("");
                 }
                 self.refused = None;
             }
-            Acted::Refused { reason } => self.refused = Some(reason),
+            Some(reason) => self.refused = Some(reason),
         }
     }
 }
 
-/// Posts `action` off the window's thread, so the press draws in its own frame (spec 6c), and has
-/// `poll` look for the answer.
-fn post(s: &mut State, action: Option<Action>, tx: &mut Tx) {
-    let Some(action) = action else { return };
-    let (answer, inbox) = mpsc::channel();
-    let spawned = std::thread::Builder::new()
-        .name("pilot-deck-reply".into())
-        .spawn(move || {
-            let _ = answer.send(Client::from_env().and_then(|client| client.act(&action)));
-        });
-    match spawned {
-        Ok(_) => {
-            s.regions.reply.answer = Some(inbox);
-            tx.wake_after(ANSWER_POLL);
-        }
-        Err(err) => s.regions.reply.acted(Acted::Refused {
-            reason: format!("the reply could not be sent: {err}"),
-        }),
+/// The press's answer, from the window's poll: an error reaching the deck reads as a refusal in its
+/// own words, so the draft stays.
+pub fn answered(local: &mut Local, key: &str, refused: Option<String>) {
+    if key == SEND {
+        local.settle(refused);
     }
 }
 
-/// Takes the deck's answer to a press that is out; true when the box changed. An error reaching the
-/// deck reads as a refusal in its own words, so the draft stays.
-pub fn poll(local: &mut Local, tx: &mut Tx) -> bool {
-    let Some(inbox) = &local.answer else {
-        return false;
-    };
-    let acted = match inbox.try_recv() {
-        Err(mpsc::TryRecvError::Empty) => {
-            tx.wake_after(ANSWER_POLL);
-            return false;
-        }
-        Ok(Ok(acted)) => acted,
-        Ok(Err(err)) => Acted::Refused {
-            reason: err.to_string(),
-        },
-        Err(mpsc::TryRecvError::Disconnected) => Acted::Refused {
-            reason: "the reply was lost before the deck answered".into(),
-        },
-    };
-    local.answer = None;
-    local.acted(acted);
-    true
+/// Posts `action` through `act::send`, so the press draws in its own frame (spec 6c).
+fn post(s: &mut State, action: Option<Action>) {
+    if let Some(action) = action {
+        act::send(&mut s.pending, SEND, action);
+    }
 }
 
 /// A press-shaped label on `fill`.
@@ -269,15 +242,13 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
 
     if reply.mode == "reopen" {
         return col().key("reply").child(
-            btn("Reopen", "reopen".into(), pressed("Reopen")).on_press_tx(
-                move |s: &mut State, tx: &mut Tx| {
-                    let action = s
-                        .regions
-                        .reply
-                        .plain("Reopen", Action::Reopen { id: id.clone() });
-                    post(s, action, tx);
-                },
-            ),
+            btn("Reopen", "reopen".into(), pressed("Reopen")).on_press(move |s: &mut State| {
+                let action = s
+                    .regions
+                    .reply
+                    .plain("Reopen", Action::Reopen { id: id.clone() });
+                post(s, action);
+            }),
         );
     }
     if reply.mode != "reply" {
@@ -305,13 +276,14 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                     .color(k.quiet),
             );
         }
-        let mut group = row()
-            .gap(space::within)
-            .items_center()
-            .child(face.on_press_tx(move |s: &mut State, tx: &mut Tx| {
-                let action = s.regions.reply.press(&at, &option);
-                post(s, action, tx);
-            }));
+        let mut group =
+            row()
+                .gap(space::within)
+                .items_center()
+                .child(face.on_press(move |s: &mut State| {
+                    let action = s.regions.reply.press(&at, &option);
+                    post(s, action);
+                }));
         if asking {
             group = group
                 .child(
@@ -319,57 +291,53 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                         .font(type_::BODY)
                         .color(t.text),
                 )
-                .child(btn("Confirm", "confirm".into(), false).on_press_tx(
-                    move |s: &mut State, tx: &mut Tx| {
+                .child(
+                    btn("Confirm", "confirm".into(), false).on_press(move |s: &mut State| {
                         let action = s.regions.reply.press(&again_at, &again);
-                        post(s, action, tx);
-                    },
-                ));
+                        post(s, action);
+                    }),
+                );
         }
         options = options.child(group);
     }
 
     let at = id.clone();
     let mut send = row().key("reply-send").gap(space::pad).child(
-        btn("Reply", "send".into(), pressed("Reply")).on_press_tx(
-            move |s: &mut State, tx: &mut Tx| {
-                let action = s.regions.reply.send(&at);
-                post(s, action, tx);
-            },
-        ),
+        btn("Reply", "send".into(), pressed("Reply")).on_press(move |s: &mut State| {
+            let action = s.regions.reply.send(&at);
+            post(s, action);
+        }),
     );
     if let Some(close) = reply.close {
         let (confirm, at, confirm_at) = (close.confirm, id.clone(), id.clone());
         send = send.child(
-            btn(CLOSE, "close".into(), pressed(CLOSE) || local.closing).on_press_tx(
-                move |s: &mut State, tx: &mut Tx| {
+            btn(CLOSE, "close".into(), pressed(CLOSE) || local.closing).on_press(
+                move |s: &mut State| {
                     let action = s.regions.reply.close(&at, confirm);
-                    post(s, action, tx);
+                    post(s, action);
                 },
             ),
         );
         if local.closing {
             send = send
                 .child(text("Close this thread?").font(type_::BODY).color(t.text))
-                .child(btn("Confirm", "close-confirm".into(), false).on_press_tx(
-                    move |s: &mut State, tx: &mut Tx| {
+                .child(btn("Confirm", "close-confirm".into(), false).on_press(
+                    move |s: &mut State| {
                         let action = s.regions.reply.confirm(&confirm_at);
-                        post(s, action, tx);
+                        post(s, action);
                     },
                 ));
         }
     }
     if reply.dismiss {
         send = send.child(
-            btn("Dismiss", "dismiss".into(), pressed("Dismiss")).on_press_tx(
-                move |s: &mut State, tx: &mut Tx| {
-                    let action = s
-                        .regions
-                        .reply
-                        .plain("Dismiss", Action::DismissItem { id: id.clone() });
-                    post(s, action, tx);
-                },
-            ),
+            btn("Dismiss", "dismiss".into(), pressed("Dismiss")).on_press(move |s: &mut State| {
+                let action = s
+                    .regions
+                    .reply
+                    .plain("Dismiss", Action::DismissItem { id: id.clone() });
+                post(s, action);
+            }),
         );
     }
 

@@ -150,7 +150,9 @@ fn content(s: &State, panel: &str, cx: &mut Cx<State>) -> El {
             .child(regions::status::draw(region("status"), &r.status, cx))
             .child(regions::graph::draw(region("graph"), &r.graph, cx)),
         "agents" => regions::agents::draw(region("agents"), &r.agents, cx),
-        "tickets" => regions::tickets::draw(region("tickets"), &r.tickets, &s.prefs, cx),
+        "tickets" => {
+            regions::tickets::draw(region("tickets"), &r.tickets, &s.prefs, &s.pending, cx)
+        }
         _ => regions::reports::draw(region("reports"), &s.prefs, cx),
     }
 }
@@ -260,5 +262,10 @@ pub fn strips(s: &State, cx: &mut Cx<State>) -> El {
         .gap(space::panels)
         .child(left)
         .child(app::center(s, cx).grow(1.0).min_w(space::s0))
-        .child(regions::strip::draw(strip, &s.regions.strip, cx))
+        .child(regions::strip::draw(
+            strip,
+            &s.regions.strip,
+            &s.pending,
+            cx,
+        ))
 }

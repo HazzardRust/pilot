@@ -8,10 +8,9 @@ use rune::{Cx, El, col, row, text};
 use serde::Deserialize;
 
 use super::notifications::{keep, open_thread};
-use crate::act::Acted;
+use crate::act::{self, Pending};
 use crate::act_deck::DeckAction;
 use crate::app::State;
-use crate::client::Client;
 use crate::prefs::Prefs;
 use crate::theme::space;
 
@@ -59,15 +58,32 @@ struct Tickets {
     groups: Vec<Group>,
 }
 
-/// Sends a write; a refusal or a down deck says so, and the live reader brings the view that follows.
-fn send(s: &mut State, action: &DeckAction) {
-    match Client::from_env().and_then(|client| client.act(action)) {
-        Ok(Acted::Taken { .. }) => {}
-        Ok(Acted::Refused { reason }) => eprintln!("pilot-deck: refused: {reason}"),
-        Err(err) => {
-            eprintln!("pilot-deck: {err}");
-            s.down = true;
+/// Sends a write under `key`, shown sent until the deck answers; the live reader brings the view
+/// that follows, and `answered` says what the deck made of it.
+fn send(s: &mut State, key: &str, action: DeckAction) {
+    act::send(&mut s.pending, key, action);
+}
+
+/// The deck's answer to a write sent from here (`key` names the control): a refusal or a failure is
+/// said, and a move that was not taken lifts its gate at once.
+pub fn answered(local: &mut Local, key: &str, refused: Option<String>) {
+    if !key.starts_with("ticket") {
+        return;
+    }
+    if let Some(reason) = refused {
+        eprintln!("pilot-deck: {reason}");
+        if key.ends_with("-move") {
+            local.moving = None;
         }
+    }
+}
+
+/// `button` pressing `then` unless its write is out, when it is drawn disabled.
+fn pressing(button: El, sent: bool, then: impl Fn(&mut State) + 'static) -> El {
+    if sent {
+        button.disabled(true)
+    } else {
+        button.on_press(then)
     }
 }
 
@@ -97,18 +113,7 @@ fn move_ticket(s: &mut State, id: &str, up: bool) {
         id: id.to_string(),
         up,
     };
-    match Client::from_env().and_then(|client| client.act(&action)) {
-        Ok(Acted::Taken { .. }) => {}
-        Ok(Acted::Refused { reason }) => {
-            eprintln!("pilot-deck: move refused: {reason}");
-            s.regions.tickets.moving = None;
-        }
-        Err(err) => {
-            eprintln!("pilot-deck: {err}");
-            s.regions.tickets.moving = None;
-            s.down = true;
-        }
-    }
+    send(s, &format!("ticket-{id}-move"), action);
 }
 
 /// Opens or shuts one queue's fold on this deck, and keeps it.
@@ -129,9 +134,16 @@ fn button(key: String, label: &str, t: &tok::Theme) -> El {
 }
 
 /// The row's Continue as its `switch` names it: play then Confirm, the lit pending with Cancel, or locked.
-fn continue_of(r: &Row, repo: &str, local: &Local, t: &tok::Theme) -> Option<El> {
+fn continue_of(
+    r: &Row,
+    repo: &str,
+    local: &Local,
+    pending: &Pending,
+    t: &tok::Theme,
+) -> Option<El> {
     let key = |part: &str| format!("ticket-{}-{part}", r.id);
     let (repo, to) = (repo.to_string(), r.id.clone());
+    let (cancel, confirm) = (key("cancel"), key("confirm"));
     match r.switch.as_deref()? {
         "pending" => Some(
             row()
@@ -141,17 +153,14 @@ fn continue_of(r: &Row, repo: &str, local: &Local, t: &tok::Theme) -> Option<El>
                         .font(type_::LABEL)
                         .color(t.text_secondary),
                 )
-                .child(
-                    button(key("cancel"), "Cancel", t).on_press(move |s: &mut State| {
-                        send(
-                            s,
-                            &DeckAction::CancelSwitch {
-                                repo: repo.clone(),
-                                to: to.clone(),
-                            },
-                        );
-                    }),
-                ),
+                .child(pressing(
+                    button(cancel.clone(), "Cancel", t),
+                    pending.is_sent(&cancel),
+                    move |s: &mut State| {
+                        let (repo, to) = (repo.clone(), to.clone());
+                        send(s, &cancel, DeckAction::CancelSwitch { repo, to });
+                    },
+                )),
         ),
         "locked" => Some(
             button(key("play"), "▶", t)
@@ -167,18 +176,15 @@ fn continue_of(r: &Row, repo: &str, local: &Local, t: &tok::Theme) -> Option<El>
                         .font(type_::LABEL)
                         .color(t.text),
                 )
-                .child(
-                    button(key("confirm"), "Confirm", t).on_press(move |s: &mut State| {
+                .child(pressing(
+                    button(confirm.clone(), "Confirm", t),
+                    pending.is_sent(&confirm),
+                    move |s: &mut State| {
                         s.regions.tickets.confirming = None;
-                        send(
-                            s,
-                            &DeckAction::Switch {
-                                repo: repo.clone(),
-                                to: to.clone(),
-                            },
-                        );
-                    }),
-                )
+                        let (repo, to) = (repo.clone(), to.clone());
+                        send(s, &confirm, DeckAction::Switch { repo, to });
+                    },
+                ))
                 .modal(true, |s: &mut State| s.regions.tickets.confirming = None),
         ),
         _ => Some(button(key("play"), "▶", t).on_press(move |s: &mut State| {
@@ -187,7 +193,7 @@ fn continue_of(r: &Row, repo: &str, local: &Local, t: &tok::Theme) -> Option<El>
     }
 }
 
-fn ticket_row(r: &Row, repo: &str, local: &Local, t: &tok::Theme) -> El {
+fn ticket_row(r: &Row, repo: &str, local: &Local, pending: &Pending, t: &tok::Theme) -> El {
     let to = r.id.clone();
     let mut line = row()
         .key(format!("ticket-{}", r.id))
@@ -203,23 +209,31 @@ fn ticket_row(r: &Row, repo: &str, local: &Local, t: &tok::Theme) -> El {
                 .on_press(move |s: &mut State| open_thread(s, &to)),
         )
         .child(text(&r.state).font(type_::LABEL).color(t.text_secondary));
-    if let Some(play) = continue_of(r, repo, local, t) {
+    if let Some(play) = continue_of(r, repo, local, pending, t) {
         line = line.child(play);
     }
     for (up, can, glyph) in [(true, r.can_move.up, "↑"), (false, r.can_move.down, "↓")] {
         if can {
             let id = r.id.clone();
             let part = if up { "up" } else { "down" };
-            line = line.child(
-                button(format!("ticket-{}-{part}", r.id), glyph, t)
-                    .on_press(move |s: &mut State| move_ticket(s, &id, up)),
-            );
+            let sent = pending.is_sent(&format!("ticket-{id}-move"));
+            line = line.child(pressing(
+                button(format!("ticket-{}-{part}", r.id), glyph, t),
+                sent,
+                move |s: &mut State| move_ticket(s, &id, up),
+            ));
         }
     }
     line
 }
 
-pub fn draw(v: &serde_json::Value, local: &Local, prefs: &Prefs, cx: &mut Cx<State>) -> El {
+pub fn draw(
+    v: &serde_json::Value,
+    local: &Local,
+    prefs: &Prefs,
+    pending: &Pending,
+    cx: &mut Cx<State>,
+) -> El {
     // A region the view cannot be read as draws empty rather than taking the window down.
     let view = Tickets::deserialize(v).unwrap_or_default();
     let t = tok::theme(cx.system_dark());
@@ -227,17 +241,14 @@ pub fn draw(v: &serde_json::Value, local: &Local, prefs: &Prefs, cx: &mut Cx<Sta
         return col().key("tickets");
     };
     let add = repo.clone();
-    let mut panel = col().key("tickets").gap(space::between).child(
-        button("tickets-add".into(), ADD, &t).on_press(move |s: &mut State| {
-            send(
-                s,
-                &DeckAction::Create {
-                    name: ADD.into(),
-                    repo: add.clone(),
-                },
-            );
-        }),
-    );
+    let mut panel = col().key("tickets").gap(space::between).child(pressing(
+        button("tickets-add".into(), ADD, &t),
+        pending.is_sent("tickets-add"),
+        move |s: &mut State| {
+            let (name, repo) = (ADD.to_string(), add.clone());
+            send(s, "tickets-add", DeckAction::Create { name, repo });
+        },
+    ));
     let open = prefs.folds.get(&repo);
     for g in &view.groups {
         let (fold_repo, colour) = (repo.clone(), g.colour.clone());
@@ -254,10 +265,9 @@ pub fn draw(v: &serde_json::Value, local: &Local, prefs: &Prefs, cx: &mut Cx<Sta
             );
         let mut fold = col().gap(space::within).child(header);
         if open.is_some_and(|set| set.contains(&g.colour)) {
-            fold = g
-                .rows
-                .iter()
-                .fold(fold, |fold, r| fold.child(ticket_row(r, &repo, local, &t)));
+            fold = g.rows.iter().fold(fold, |fold, r| {
+                fold.child(ticket_row(r, &repo, local, pending, &t))
+            });
         }
         panel = panel.child(fold);
     }
