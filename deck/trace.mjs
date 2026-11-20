@@ -78,6 +78,9 @@ export async function trace(argv, { say = (text) => process.stdout.write(text), 
     return 1;
   }
   const seen = timeline(rows, id, now);
+  // The newest deck start first (spec 9): which code took the steps below.
+  const started = rows.filter((row) => row?.step === 'deck started' && !Number.isNaN(Date.parse(row.at))).sort((a, b) => Date.parse(a.at) - Date.parse(b.at)).at(-1);
+  if (started) say(`deck: ${shown(started.root ?? '-')} ${shown(started.version ?? '-')} since ${shown(started.at)}\n`);
   say(seen.rows.length ? seen.rows.map((row) => `${lineOf(row)}\n`).join('') : `no trace rows for ${id}\n`);
   say(`${seen.tail}\n`);
   return 0;

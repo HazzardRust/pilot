@@ -49,6 +49,8 @@ function replacedClause(id, entry) {
   console.error(`[deck] co-pilot ${entry.replaced} -> ${id}`);
   return `, replaced ${entry.replaced}`;
 }
+/** A co-pilot `granted` or `released` on a ticket, as a crew hand-off's step (crew-handoff-trace spec 1), after the store took it. */
+const coPilotStep = (name, ticket) => step({ step: name, kind: KIND_CREW_HANDOFF, ticket });
 /** The `why` of a re-cut the pilot asks for by hand; the deck's own drift checks name theirs (never-stuck S2, S3). */
 const RECUT_BY_PILOT = 'sent back to planning by the pilot';
 
@@ -417,6 +419,7 @@ export function callTool(name, args, deps = {}) {
   }
   if (name === 'deck_resolve') {
     const item = resolveItem(threadId(args), args?.resolution, args?.author);
+    if (item.kind === KIND_HANDOFF || item.kind === KIND_CREW_HANDOFF) step({ step: 'resolved', kind: item.kind, item: item.id, ticket: item.ticket });
     return asText(`Closed ${item.id}: ${item.resolution}`);
   }
   if (name === 'deck_status') {
@@ -502,15 +505,22 @@ export function callTool(name, args, deps = {}) {
       return planDrift(granted.repo, granted.plan).then((drift) => {
         const drifted = drift.state === 'gone' || drift.state === 'moved' ? driftLine(drift, 'first grant') : undefined;
         const entry = setCoPilot(id, true);
+        coPilotStep('granted', id);
         if (drifted) noteDeck(id, drifted);
         return asText(`Co-pilot ${id}: live${replacedClause(id, entry)}.${drifted ? ` drift: ${drifted}.` : ''}${drift.state === 'unchecked' ? ` drift unchecked: ${drift.reason}.` : ''} ${both()}`);
       });
     }
     if (args?.action === 'co-pilot' || args?.action === 'release') {
       const entry = setCoPilot(id, args.action === 'co-pilot');
-      if (args.action === 'co-pilot') return asText(`Co-pilot ${id}: live${replacedClause(id, entry)}. ${both()}`);
+      if (args.action === 'co-pilot') {
+        coPilotStep('granted', id);
+        return asText(`Co-pilot ${id}: live${replacedClause(id, entry)}. ${both()}`);
+      }
       // A release naming another ticket leaves the live one holding the /clear, so it never reads "released".
-      if (entry?.ticket === id && !entry.live) return asText(`Co-pilot ${id}: released. ${both()}`);
+      if (entry?.ticket === id && !entry.live) {
+        coPilotStep('released', id);
+        return asText(`Co-pilot ${id}: released. ${both()}`);
+      }
       return asText(`Co-pilot ${id}: ${entry?.live ? `not the live one; ${entry.ticket} is live` : 'no co-pilot is live here'}.`);
     }
     if (args?.action === 'pivot') {

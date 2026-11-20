@@ -30,7 +30,7 @@ import path from 'node:path';
 import { readAlertSwitch, setAlertSwitch } from './alert-switch.mjs';
 import { AgentRefusal, heldWaits, isAgentType, listAgents, noteAgent } from './agents.mjs';
 import { fillLanes } from './chain.mjs';
-import { KIND_GATE2, SIGN_OFF, chosenOf, isGate, ownerOf } from './items.mjs';
+import { HANDOFF_FAILED, KIND_CREW_HANDOFF, KIND_GATE2, KIND_HANDOFF, SIGN_OFF, chosenOf, isGate, ownerOf } from './items.mjs';
 import { startLanding } from './landing.mjs';
 import { lanesOf } from './lanes.mjs';
 import { owedThreadsOf } from './owed.mjs';
@@ -61,6 +61,7 @@ import { healthOf } from './health.mjs';
 import { logRefusal } from './refusal-log.mjs';
 import { exitRoute } from './exit-route.mjs';
 import { holdRoute } from './hold-route.mjs';
+import { step } from '../hooks/lib/wrapper-log.js';
 
 // --- routes ----------------------------------------------------------------
 
@@ -249,6 +250,11 @@ async function route(request, response, open, start, land, exit, guard) {
       addReply(id, text);
     } catch (err) {
       return landRefusedPress(request, response, answered, err);
+    }
+    // The user's Handoff failed, stored, is the hand-off's last step (crew-handoff-trace spec 1): ids only, never the text.
+    const handoff = answered?.kind === KIND_HANDOFF || answered?.kind === KIND_CREW_HANDOFF;
+    if (handoff && chosenOf({ options: answered.options, replies: [{ from: 'user', text }] }) === HANDOFF_FAILED) {
+      step({ step: 'failed', kind: answered.kind, item: answered.id, ticket: answered.ticket });
     }
     // The page's stored Sign off on a gate2 fills each queued lane in place, never by chainNext (gate2-frees-lane L2), then lands (gate2-lands L1).
     if (answered?.kind === KIND_GATE2 && pressed) {
