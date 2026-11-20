@@ -22,7 +22,7 @@
     },
     {
       "slice": "S27 The window frame: Rune's title bar and the top inset (added)",
-      "state": "pushed f05f352; rust approve with notes; +79/-13; Win+Z flyout not seen (user's look)",
+      "state": "pushed f05f352; integrate red once on a load flake (handoff-lineage-remote: git did not answer within 5 s; 7/0 alone); re-integrating",
       "after": [
         "S26 Every control says clickable: the hover look, first (added)"
       ],
@@ -40,7 +40,7 @@
     },
     {
       "slice": "S29 The right strip's buttons on the grid, rounded, by role (added)",
-      "state": "implementing (from S26's tip)",
+      "state": "pushed 80e24e4; rust CHANGES REQUESTED, 3 of 4 fixed, fresh re-review running; +272/-53",
       "after": [
         "S26 Every control says clickable: the hover look, first (added)"
       ],
@@ -49,7 +49,7 @@
     },
     {
       "slice": "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
-      "state": "implementing (from S26's tip)",
+      "state": "pushed e6795b9; rust approve; 483 lines waived by co-pilot (251 test lines)",
       "after": [
         "S26 Every control says clickable: the hover look, first (added)"
       ],
@@ -93,7 +93,7 @@
     },
     {
       "slice": "S37 The token playground: one page that exports theme.json (added)",
-      "state": "implementing (from S36's tip)",
+      "state": "pushed 53f261e; typescript approve with nits (all but the page-run test fixed); 290 lines",
       "after": [
         "S36 theme.json: theme.rs takes its values from one JSON file (added)"
       ],
@@ -128,7 +128,7 @@
     },
     {
       "slice": "S36 theme.json: theme.rs takes its values from one JSON file (added)",
-      "state": "integrated; rust Warning (MEDIUM test-design notes, pre-rebase; rebase delta re-expresses S26's tokens, cargo 23/23 ok); 504 lines waived by co-pilot (loader + tests); A-R2 build.rs consts + include_str",
+      "state": "integrated at c7bbc9e; rust Warning; 504 lines waived by co-pilot; 775/0 selection",
       "branch": "slice/rune-deck-ui-s36",
       "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s36"
     },
@@ -157,33 +157,9 @@
     "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
     "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
   ],
-  "next": "S36 integrate running; then integrate S27 f05f352; S28 from S27's tip; live S29, S30, S37.",
-  "updatedAt": "2026-11-20T08:53:13.840Z",
+  "next": "self-pause draining: S27 re-integrating; then S37 53f261e (message main the playground walkthrough facts), S30 e6795b9, S29 after re-review; live S28; start no new slice.",
+  "updatedAt": "2026-11-20T09:08:25.927Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S17: a CARGO_TARGET_DIR at the worktree root fails the README directory test; brief should say deck/rune/target; headless presses right after a layout change land on an animating sibling",
-      "evidence": "S17 report 0321848; scripts/test/deck-readme.test.mjs",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S18: cold worktree needs npm ci before cargo test; concurrent cargo builds on one target corrupt the PDB (LNK1285); did not find the --snap path other slices used",
-      "evidence": "S18 report f34f2b7",
-      "size": 3
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "C: filled (7.4G free) from per-worktree cargo targets of ~6-11G each; S19's rustc died with no space on device; freed 58G by deleting integrated slices' targets",
-      "evidence": "S19 message; df before 8.9G after 67G",
-      "size": 58
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S16: disk full mid-gate so cargo test never ran on the merged head; support::client_for's private lock let another binary's env race reach the user's 4321 deck; S16 and S17 each wrote a Location percent-decoder",
-      "evidence": "S16 report 547c134; tabs.rs param, strip.rs refusal_in",
-      "size": 4
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S21: npm test ~8 min with three unrelated JS reds under load (worktrees tests green alone, sync.test.mjs undecided); Monitor not available to implementers",
@@ -387,6 +363,26 @@
       "agent": "pilot:pilot-implementer",
       "what": "shared CARGO_TARGET_DIR rebuilt by parallel slices swapped the release exe between gate and live check",
       "evidence": "S27 report: copied its binary to the scratchpad"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared CARGO_TARGET_DIR served stale lib, test and release binaries three times; parallel full cargo runs made hover/history/tickets/theme/layout tests red under contention, green alone",
+      "evidence": "S29 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "integrate's selection went red on scripts/test/handoff-lineage-remote.test.mjs (5 s git timeout) under load from parallel cargo builds; 7/0 alone",
+      "evidence": "log 20261120T085620739Z-slice-rune-deck-ui-s27.log:860"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared CARGO_TARGET_DIR held another worktree's test binaries (layout listed tests not in its tree); cargo fmt rewrites tests/status.rs each run",
+      "evidence": "S30 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "rebasing onto feat replayed the unintegrated base slice and conflicted; needed rebase --onto; chrome-devtools MCP not loaded so the page check drove headless Chrome over raw CDP",
+      "evidence": "S37 report"
     }
   ]
 }
