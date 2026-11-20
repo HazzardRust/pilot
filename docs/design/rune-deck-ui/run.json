@@ -49,7 +49,7 @@
     },
     {
       "slice": "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
-      "state": "pushed e6795b9; rust approve; 483 lines waived by co-pilot (251 test lines)",
+      "state": "integrated; rust approve; 483 lines waived by co-pilot (251 test lines)",
       "after": [
         "S26 Every control says clickable: the hover look, first (added)"
       ],
@@ -93,7 +93,7 @@
     },
     {
       "slice": "S37 The token playground: one page that exports theme.json (added)",
-      "state": "integrated; typescript approve with nits; 290 lines",
+      "state": "integrated at a323777; typescript approve with nits; 886/0 selection; walkthrough facts sent to main",
       "after": [
         "S36 theme.json: theme.rs takes its values from one JSON file (added)"
       ],
@@ -157,8 +157,8 @@
     "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
     "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
   ],
-  "next": "self-pause draining: S37 integrating; then S30 e6795b9, S29 80e24e4; S28 rebasing; start no new slice. Follow-up for step 7: strip picked buttons lack a11y selected (S29 re-review MEDIUM).",
-  "updatedAt": "2026-11-20T09:10:33.407Z",
+  "next": "self-pause draining: integrating S30 e6795b9; then S29 80e24e4; S28 rebasing; start no new slice.",
+  "updatedAt": "2026-11-20T09:14:49.178Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
