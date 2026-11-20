@@ -110,6 +110,14 @@ _Avoid_: Plan approval, sign-off
 The user pressing Sign off on the whole feature, running where it is meant to run, after the procedure, on the pilot's `gate2` thread citing the signed walkthrough when there is one.
 _Avoid_: Acceptance, QA pass
 
+**Glossary**:
+The one list of a repository's lasting terms, kept in the repository at its root: grilling reads it before its first question, and a run adds each lasting term as it settles, signed off at Gate 1. A run's own ubiquitous-language section keeps only its run-local terms.
+_Avoid_: Context file, dictionary, ubiquitous language
+
+**Stale term**:
+A glossary term the code no longer uses or now contradicts; the audit names each as a row.
+_Avoid_: Dead term, orphan term
+
 ### CI checks
 
 **Check**:
