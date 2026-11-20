@@ -403,7 +403,7 @@ fn a_three_digit_count_moves_nothing() {
 /// glyph's lower half and, for one digit, its left half; not a wide pill over the glyph.
 #[test]
 fn an_icon_count_sits_on_its_corner_clear_of_the_glyph() {
-    for n in [6, 100] {
+    for n in [6, 100, 1000] {
         let rt = window(notices(n), all_open(size::side_default));
         let item = rects(&rt, "icon-notifications").1;
         let badge = rects(&rt, "icon-notifications-count").1;
