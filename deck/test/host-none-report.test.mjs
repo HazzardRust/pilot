@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { closingReportOf } from '../closing-report.mjs';
+import { closingReportOf, stepsOf } from '../closing-report.mjs';
 import { KIND_GATE2, KIND_TICKET } from '../items.mjs';
 import { DeckRefusal, listItems, postItem, storeFile } from '../store.mjs';
 import { mainLine } from '../../scripts/land.mjs';
@@ -44,11 +44,14 @@ test('a gate2 at none is accepted', (t) => {
 test('the report names branches', () => {
   const line = mainLine({ byHand: 'pilot', host: null });
   assert.equal(line, 'main gets pilot: merge pilot into main by hand');
-  const { body } = closingReportOf({ feature: 'x', slug: 'x', slices: [] }, { pr: 'feat/x', landing: { state: 'landed', sha: '1a2b3c4', line: `landed feat/x on pilot at 1a2b3c4\n${line}` } }, []);
+  const record = { feature: 'x', slug: 'x', slices: [] };
+  const gate = { pr: 'feat/x', landing: { state: 'landed', sha: '1a2b3c4', line: `landed feat/x on pilot at 1a2b3c4\n${line}` } };
+  const { body } = closingReportOf(record, gate, []);
+  const texts = stepsOf(record, gate, []).map((step) => step.text);
   assert.match(body, /^main gets pilot: merge pilot into main by hand$/m);
-  assert.ok(body.split('\n').includes('Human step: Merge pilot into main by hand, with a merge commit.'));
-  assert.doesNotMatch(body, /#\d+/);
+  assert.equal(texts[0], 'Merge pilot into main by hand, with a merge commit.');
+  assert.doesNotMatch(`${body}\n${texts.join('\n')}`, /#\d+/);
 
-  const other = closingReportOf({ feature: 'x', slug: 'x', slices: [] }, { pr: 'feat/x', landing: { state: 'landed', sha: '1a2b3c4', line: mainLine({ byHand: 'fork-pilot', host: null }) } }, []).body;
-  assert.ok(other.split('\n').includes('Human step: Merge fork-pilot into main by hand, with a merge commit.'));
+  const other = stepsOf(record, { pr: 'feat/x', landing: { state: 'landed', sha: '1a2b3c4', line: mainLine({ byHand: 'fork-pilot', host: null }) } }, []);
+  assert.equal(other[0].text, 'Merge fork-pilot into main by hand, with a merge commit.');
 });
