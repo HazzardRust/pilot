@@ -6,7 +6,7 @@ use rune::tok::{self, type_};
 use rune::{Cx, El, col, row, text};
 use serde::Deserialize;
 
-use crate::app::State;
+use crate::app::{State, go};
 use crate::client::Query;
 use crate::regions::notifications::open_thread;
 use crate::theme::{self, space};
@@ -65,10 +65,7 @@ pub fn choose(s: &mut State, ticket: &str) {
         ticket: Some(ticket.to_string()),
         ..s.query.clone()
     };
-    if let Some(live) = &s.live {
-        live.ask(&query);
-    }
-    s.query = query;
+    go(s, query);
 }
 
 pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {

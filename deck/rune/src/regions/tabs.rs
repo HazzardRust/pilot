@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 use crate::act::{self, Acted, Pending};
 use crate::act_deck::DeckAction;
-use crate::app::State;
+use crate::app::{State, go};
 use crate::client::{Query, Result};
 use crate::theme::{self, space};
 
@@ -80,10 +80,7 @@ pub fn select(s: &mut State, run: Option<String>) {
         all: s.query.all,
         ..Query::default()
     };
-    if let Some(live) = &s.live {
-        live.ask(&query);
-    }
-    s.query = query;
+    go(s, query);
 }
 
 /// Add: the typed path, trimmed and nothing else, posted through `act::send`; a blank box posts

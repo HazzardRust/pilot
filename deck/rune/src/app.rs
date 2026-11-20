@@ -26,6 +26,84 @@ pub struct State {
     pub layout: layout::Local,
     /// The posts in flight, settled once in `poll`.
     pub pending: act::Pending,
+    /// The screens the window has left, and the ones it went back from (spec 25).
+    pub history: History,
+}
+
+/// Back and forward through the queries the window has asked for.
+#[derive(Debug, Default)]
+pub struct History {
+    back: Vec<Query>,
+    forward: Vec<Query>,
+}
+
+/// The one way the window moves to another screen: the live reader is told, the step is
+/// remembered, and anything ahead of it is forgotten.
+pub fn go(s: &mut State, query: Query) {
+    if query == s.query {
+        return;
+    }
+    let from = s.query.clone();
+    s.history.back.push(from);
+    s.history.forward.clear();
+    visit(s, query);
+}
+
+/// The previous screen, the one now open kept for `forward`; none when there is no previous one.
+pub fn back(s: &mut State) {
+    if let Some(query) = s.history.back.pop() {
+        let from = s.query.clone();
+        s.history.forward.push(from);
+        visit(s, query);
+    }
+}
+
+/// The screen `back` left, the one now open kept for `back`.
+pub fn forward(s: &mut State) {
+    if let Some(query) = s.history.forward.pop() {
+        let from = s.query.clone();
+        s.history.back.push(from);
+        visit(s, query);
+    }
+}
+
+fn visit(s: &mut State, query: Query) {
+    if let Some(live) = &s.live {
+        live.ask(&query);
+    }
+    // Each thread has its own reply box, as on the page: words typed here never post on another,
+    // and the last thread's box is not drawn while the next one's view is on its way.
+    if query.id != s.query.id {
+        s.regions.reply = Default::default();
+        s.view.regions.remove("reply");
+    }
+    s.query = query;
+}
+
+/// The window's keys: Alt+Left and Alt+Right walk the history, the rest are the thread's. A focused
+/// field or control keeps its keys.
+pub fn key(s: &mut State, ev: &rune::KeyEvent, tx: &mut Tx) -> bool {
+    // A text field takes Alt+arrows itself and does not pass them on; a clicked button does, so
+    // the history keys still work after any click.
+    if ev.mods.alt {
+        match ev.key {
+            rune::Key::Left => back(s),
+            rune::Key::Right => forward(s),
+            _ => return false,
+        }
+        return true;
+    }
+    regions::thread::key(s, ev, tx)
+}
+
+/// `root` with the mouse's side buttons wired to `back` and `forward`, wherever on it they press.
+pub fn mouse_nav(root: El) -> El {
+    root.pointer_buttons([rune::PointerButton::Back, rune::PointerButton::Forward])
+        .on_background_press_tx(|s: &mut State, tx: &mut Tx| match tx.button() {
+            rune::PointerButton::Back => back(s),
+            rune::PointerButton::Forward => forward(s),
+            _ => {}
+        })
 }
 
 impl State {
@@ -60,7 +138,7 @@ pub fn spec() -> AppSpec<State> {
     AppSpec {
         setup: Some(setup),
         poll: Some(poll),
-        on_key: Some(regions::thread::key),
+        on_key: Some(key),
         ..AppSpec::new("pilot deck", (1280.0, 800.0), State::load, view)
     }
 }

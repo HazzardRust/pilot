@@ -416,9 +416,7 @@ pub fn strips(s: &State, cx: &mut Cx<State>) -> El {
             &s.pending,
             cx,
         ));
-    col()
-        .w_full()
-        .h_full()
+    app::mouse_nav(col().w_full().h_full())
         .fill(t.bg)
         .child(titlebar)
         .child(theme::separator(dark))

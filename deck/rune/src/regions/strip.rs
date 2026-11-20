@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 use crate::act::{self, Acted, Pending};
 use crate::act_deck::DeckAction;
-use crate::app::State;
+use crate::app::{State, go};
 use crate::client::{Query, Result};
 use crate::regions::notifications::open_thread;
 use crate::theme::{self, space};
@@ -117,14 +117,6 @@ impl Local {
     pub fn cancel(&mut self) {
         *self = Local::default();
     }
-}
-
-/// Moves the window to `query` and tells the live reader.
-fn go(s: &mut State, query: Query) {
-    if let Some(live) = &s.live {
-        live.ask(&query);
-    }
-    s.query = query;
 }
 
 /// Open/All: the page's toggle link, the same screen with `all` flipped.
