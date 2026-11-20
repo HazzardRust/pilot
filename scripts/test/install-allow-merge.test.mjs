@@ -22,7 +22,7 @@ const PLUGIN_ROOT = '/opt/pilot';
 const GC = ['Bash(pilot ps)', 'Bash(pilot gc)', 'Bash(pilot deck --stop *)', 'Bash(pilot deck --scratch *)']; // install-allow-gc.test.mjs pins these
 const NODE_SCRATCH = 'Bash(node bin/pilot.mjs deck --scratch *)';
 const READS = ['Bash(pilot wait)', 'Bash(pilot wait *)', 'Bash(pilot budget)', 'Bash(pilot tickets)', NODE_SCRATCH]; // install-allow-reads.test.mjs pins these
-const MERGE = ['Bash(pilot sync *)', 'Bash(pilot integrate *)', 'Bash(pilot land *)', 'Bash(pilot landing *)', ...GC, ...READS];
+const MERGE = ['Bash(pilot sync *)', 'Bash(pilot integrate *)', 'Bash(pilot land *)', 'Bash(pilot landing *)', 'Bash(pilot checks *)', ...GC, ...READS];
 
 function settingsFile(t, contents) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-merge-'));

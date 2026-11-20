@@ -12,11 +12,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { githubHost } from '../../deck/host-github.mjs';
+import { greenChecks } from './lib/land-repos.mjs';
 
 const { land } = await import('../land.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-const host = githubHost((args) => (args[1] === 'list' ? '[]' : ''));
+const host = githubHost(greenChecks((args) => (args[1] === 'list' ? '[]' : '')));
 const record = '{"slug":"a","next":"land"}\n';
 
 function repos(t) {
