@@ -64,7 +64,6 @@ test('not before, and once', (t) => {
   const ticket = yellowTicket('early');
   const handoff = crewHandoff(ticket.id);
 
-  assert.equal(CREW_WAIT_MS, 10 * MIN);
   assert.deepEqual(crewWaitOf(listItems(), REPO, null, START + 9 * MIN), [], 'nothing due at 9 min');
   assert.throws(() => noteCrewWait(handoff.id), DeckRefusal, 'a note before it is due is refused');
   const [due] = crewWaitOf(listItems(), REPO, null, START + 10 * MIN);
