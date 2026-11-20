@@ -98,6 +98,49 @@ fn a_hidden_report_stays_hidden() {
 }
 
 #[test]
+fn an_open_report_is_marked_open_right_after_its_title() {
+    let long = "A closing report whose title runs on far past the panel's width, ".repeat(4);
+    let rt = window(
+        json!({ "reports": { "reports": [
+            { "id": "itm_0000000000r1", "title": "Short", "href": "/thread/itm_0000000000r1", "at": null, "open": true },
+            { "id": "itm_0000000000r2", "title": long, "href": "/thread/itm_0000000000r2", "at": null, "open": true },
+            { "id": "itm_0000000000r3", "title": "Closed", "href": "/thread/itm_0000000000r3", "at": null, "open": false },
+        ] } }),
+        Prefs::default(),
+    );
+    let rect = |key: &str| {
+        rt.elements()
+            .into_iter()
+            .find(|e| e.key.as_deref() == Some(key))
+            .unwrap_or_else(|| panic!("{key} is drawn"))
+            .rect
+    };
+
+    for id in ["itm_0000000000r1", "itm_0000000000r2"] {
+        let (open, hide) = (
+            rect(&format!("report-{id}-open")),
+            rect(&format!("report-{id}-hide")),
+        );
+        assert!(
+            open[0] + open[2] <= hide[0] + 0.5,
+            "{id}: open before the ×"
+        );
+        assert!(
+            hide[0] + hide[2] <= 1280.5,
+            "{id}: the × stays in the window"
+        );
+    }
+    assert!(
+        rect("report-itm_0000000000r1-open")[0] < rect("report-itm_0000000000r2-open")[0],
+        "a short title's mark sits by its title, not at the row's end"
+    );
+    assert!(
+        rt.find("report-itm_0000000000r3-open").is_none(),
+        "a closed report has no mark"
+    );
+}
+
+#[test]
 fn every_report_hidden_says_so() {
     let mut prefs = Prefs::default();
     prefs.hidden_reports.insert("itm_0000000000r1".into());
