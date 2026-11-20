@@ -78,7 +78,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed 1fd9896 — integrating; merged feat 855e593, npm test 4737/0; rust APPROVE, typescript APPROVE, security WARNING at a12a2db; 471 production lines, limit waived by main; app.rs and thread.rs outside owned files",
+      "state": "integrated at d0240a5 — rust APPROVE, typescript APPROVE, security WARNING (LOW race closed by S23); 471 production lines, limit waived by main; app.rs and thread.rs outside owned files; 4737/0; B5 press look to QA",
       "after": [
         "S5"
       ],
@@ -114,7 +114,7 @@
     },
     {
       "slice": "S13",
-      "state": "implementing",
+      "state": "pushed 4b16688 — rust approve, typescript approve (test-only fixes after); 191 production lines; edges carry lane (seam); hover look to QA",
       "after": [
         "S1"
       ],
@@ -123,7 +123,7 @@
     },
     {
       "slice": "S14",
-      "state": "implementing",
+      "state": "pushed 7ca4419 — integrating; rust APPROVE, typescript APPROVE; ~209 production lines; render-rail export, notifications.rs pub(crate), app.rs 1 line outside owned",
       "after": [
         "S10"
       ],
@@ -195,8 +195,8 @@
       ]
     }
   ],
-  "next": "integrate S9 (running); S13 S14 live; then pilot ready (S23 after S9; S16 S17 S18 S19 S20 S21 S22)",
-  "updatedAt": "2026-11-20T01:22:47.325Z",
+  "next": "pausing: S14 integrating, then integrate S13 and record S13 edge lane seam in S13.md; then hand back paused",
+  "updatedAt": "2026-11-20T01:30:59.313Z",
   "friction": [
     {
       "agent": "pilot-implementer",
@@ -399,6 +399,18 @@
       "what": "S9 merge-in: npm test past the 180 s foreground limit buffered into a pipe; moved to background and waited",
       "evidence": "S9 merge report 1fd9896",
       "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S14: npm test waited on other worktrees' gate slots, ~12 min in all",
+      "evidence": "gate: waiting for a slot: pid 20768 in ...-s13",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S13: no recorded recipe for a --snap of real data (pilot deck --scratch --seed-run, page SVG via the deck secret)",
+      "evidence": "S13 report; scratchpad s13-snap.png",
+      "size": 10
     }
   ]
 }
