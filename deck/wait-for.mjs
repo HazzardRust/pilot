@@ -1,7 +1,7 @@
 // `pilot wait-for`: wait on a file for a line matching a pattern, and end by itself at a deadline.
 // An agent waiting on a log uses this instead of an `until` loop, which never ends when the marker
 // never comes. There is no default deadline, and none past MAX_WAIT_MINUTES.
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 
 // Inside the one-hour prompt cache (A4).
@@ -11,14 +11,18 @@ const DEFAULT_POLL_MS = 2000;
 const USAGE = `usage: pilot wait-for --file <path> --match <regex> --timeout <minutes>  (0 < minutes <= ${MAX_WAIT_MINUTES})`;
 
 // The file's text, or null while it does not exist yet. Any other failure (a directory, no read
-// permission) is thrown, since polling would never get past it.
+// permission) is thrown, since polling would never get past it; so is a FIFO or a device, whose
+// read could block past the deadline.
 function readText(file) {
+  let st;
   try {
-    return readFileSync(file, 'utf8');
+    st = statSync(file);
   } catch (e) {
     if (e.code === 'ENOENT') return null;
     throw e;
   }
+  if (!st.isFile()) throw new Error('not a regular file');
+  return readFileSync(file, 'utf8');
 }
 
 const realSleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
@@ -29,7 +33,8 @@ export async function waitFor({ file, match, timeoutMin, read = readText, now = 
   for (;;) {
     const text = read(file);
     if (text !== null) {
-      const line = text.split(/\r?\n/).find((l) => re.test(l));
+      // The last piece has no newline yet: a line still being written, so not matched.
+      const line = text.split(/\r?\n/).slice(0, -1).find((l) => re.test(l));
       if (line !== undefined) return { line };
     }
     const left = deadline - now();

@@ -5,7 +5,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { waitFor, main, MAX_WAIT_MINUTES } from '../wait-for.mjs';
+import { waitFor, main } from '../wait-for.mjs';
 
 const PILOT_BIN = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'bin', 'pilot.mjs');
 
@@ -31,6 +31,25 @@ test('a marker that comes is printed', async () => {
   const result = await waitFor({ file: '/tmp/x.log', match: '^exit', timeoutMin: 1, read, ...clock, pollMs: 100 });
   assert.deepEqual(result, { line: 'exit 0' });
   assert.equal(calls, 3);
+});
+
+test('a line still being written is not a match', async () => {
+  const clock = fakeClock();
+  const reads = ['starting\nexit', 'starting\nexit 1\n'];
+  let calls = 0;
+  const read = () => reads[Math.min(calls++, reads.length - 1)];
+  const result = await waitFor({ file: '/tmp/x.log', match: '^exit', timeoutMin: 1, read, ...clock, pollMs: 100 });
+  assert.deepEqual(result, { line: 'exit 1' });
+});
+
+test('a path that is not a file is refused, not waited on', async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'wait-for-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const out = sink();
+  const err = sink();
+  assert.equal(await main(['--file', dir, '--match', 'x', '--timeout', '1'], { out, err }), 1);
+  assert.equal(out.text(), '');
+  assert.match(err.text(), /cannot read/);
 });
 
 test('a missing file is not a match', async () => {
@@ -66,7 +85,8 @@ test('no deadline, no wait', async () => {
   const cases = [
     ['--file', '/tmp/x.log', '--match', '^exit'],
     ['--file', '/tmp/x.log', '--match', '^exit', '--timeout', '0'],
-    ['--file', '/tmp/x.log', '--match', '^exit', '--timeout', String(MAX_WAIT_MINUTES + 1)],
+    ['--file', '/tmp/x.log', '--match', '^exit', '--timeout', '51'],
+    ['--file', '/tmp/x.log', '--match', '^exit', '--timeout', '1e1'],
     ['--file', '/tmp/x.log', '--match', 'a'.repeat(201), '--timeout', '1'],
     ['--file', '/tmp/x.log', '--match', '(', '--timeout', '1'],
     ['--file', '/tmp/x.log', '--match', '^exit', '--timeout', 'soon'],
@@ -79,10 +99,6 @@ test('no deadline, no wait', async () => {
     assert.equal(out.text(), '', argv.join(' '));
     assert.notEqual(err.text(), '', argv.join(' '));
   }
-});
-
-test('the cap is fifty minutes', () => {
-  assert.equal(MAX_WAIT_MINUTES, 50);
 });
 
 test('the real command ends', () => {
