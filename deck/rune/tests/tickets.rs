@@ -216,6 +216,31 @@ fn a_switch_takes_a_confirm() {
     );
 }
 
+/// The user's note: a row's state sat at another x by whether its play was there. The red queue's next
+/// has no play and no up, the middle both arrows and a play, the last no down: one state column.
+#[test]
+fn a_rows_state_keeps_its_place_whatever_its_controls() {
+    let deck = Scratch::start();
+    let ids = ["Next", "Middle", "Last"].map(|title| ticket(&deck, title));
+    let rt = drawn(&deck, red_open());
+    let play = |id: &str| find(&rt, &format!("ticket-{id}-play")).is_some();
+    assert!(!play(&ids[0]) && play(&ids[1]), "both row shapes are drawn");
+
+    let edges: Vec<[f32; 2]> = ids
+        .iter()
+        .map(|id| {
+            let at = find(&rt, &format!("ticket-{id}-state"))
+                .unwrap_or_else(|| panic!("no state on {id}"))
+                .rect;
+            [at[0], at[0] + at[2]]
+        })
+        .collect();
+    assert!(
+        edges.iter().all(|edge| *edge == edges[0]),
+        "one state column: {edges:?}"
+    );
+}
+
 #[test]
 fn folds_are_kept_per_deck() {
     let deck = Scratch::start();

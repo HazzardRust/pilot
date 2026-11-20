@@ -202,6 +202,24 @@ fn continue_of(
     }
 }
 
+/// A caption character's advance as a share of its size, sizing the state column.
+const ADVANCE: f32 = 0.6;
+/// The state column in characters: the longest label `ticketLabelOf` gives, "awaiting sign-off".
+const LABEL_CH: f32 = 17.0;
+
+/// At least a row-high square, holding one control, or nothing, centred.
+fn slot(control: Option<El>) -> El {
+    let square = row()
+        .min_w(theme::size::row)
+        .h(theme::size::row)
+        .justify_center()
+        .items_center();
+    match control {
+        Some(control) => square.child(control),
+        None => square,
+    }
+}
+
 fn ticket_row(
     r: &Row,
     repo: &str,
@@ -224,23 +242,29 @@ fn ticket_row(
                 .on_press(move |s: &mut State| open_thread(s, &to)),
         )
         .child(theme::content(
-            text(&r.state).font(type_::CAPTION).color(t.text_secondary),
+            text(&r.state)
+                .key(format!("ticket-{}-state", r.id))
+                .font(type_::CAPTION)
+                .color(t.text_secondary)
+                .truncate()
+                .w(LABEL_CH * type_::CAPTION.size * ADVANCE),
             dark,
         ));
-    if let Some(play) = continue_of(r, repo, local, pending, t, dark) {
-        line = line.child(play);
-    }
+    // Play, up and down each hold a slot drawn or not, so the state sits at one x on every row; a
+    // pending switch's Cancel and a play's Confirm widen the play slot while they are up.
+    line = line.child(slot(continue_of(r, repo, local, pending, t, dark)));
     for (up, can, glyph) in [(true, r.can_move.up, "↑"), (false, r.can_move.down, "↓")] {
-        if can {
+        let arrow = can.then(|| {
             let id = r.id.clone();
             let part = if up { "up" } else { "down" };
             let sent = pending.is_sent(&format!("ticket-{id}-move"));
-            line = line.child(pressing(
+            pressing(
                 button(format!("ticket-{}-{part}", r.id), glyph, t, dark),
                 sent,
                 move |s: &mut State| move_ticket(s, &id, up),
-            ));
-        }
+            )
+        });
+        line = line.child(slot(arrow));
     }
     line
 }
