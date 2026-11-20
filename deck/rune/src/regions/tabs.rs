@@ -8,11 +8,14 @@ use rune::tok::{self, type_};
 use rune::{Cx, El, TextEdit, col, row, text, text_input};
 use serde::Deserialize;
 
-use crate::act::Acted;
+use crate::act::{self, Acted, Pending};
 use crate::act_deck::DeckAction;
 use crate::app::State;
-use crate::client::{Client, Query, Result};
+use crate::client::{Query, Result};
 use crate::theme::{self, space};
+
+/// The `act::send` key of the add-deck box's Add, which is also its button's.
+const ADD: &str = "add-deck-add";
 
 /// The add-deck box: the path being typed while it is open, and the deck's word on the last refusal.
 #[derive(Debug, Default)]
@@ -83,22 +86,29 @@ pub fn select(s: &mut State, run: Option<String>) {
     s.query = query;
 }
 
-/// Add: the typed path, trimmed and nothing else, posted by `act`; a blank box posts nothing, as the
-/// page's required field does. A deck taken is selected, as the page lands on it.
-pub fn add(s: &mut State, act: impl FnOnce(&DeckAction) -> Result<Acted>) {
-    let local = &mut s.regions.tabs;
-    let Some(path) = local
+/// Add: the typed path, trimmed and nothing else, posted through `act::send`; a blank box posts
+/// nothing, as the page's required field does. The answer comes back through `answered`.
+pub fn add(s: &mut State) {
+    let path = s
+        .regions
+        .tabs
         .adding
         .as_ref()
         .map(|edit| edit.text.trim().to_string())
-    else {
-        return;
-    };
-    if path.is_empty() {
+        .filter(|path| !path.is_empty());
+    if let Some(path) = path {
+        act::send(&mut s.pending, ADD, DeckAction::AddDeck { path });
+    }
+}
+
+/// The deck's answer to an add: a deck taken is selected, as the page lands on it.
+pub fn answered(s: &mut State, key: &str, acted: &Result<Acted>) {
+    if key != ADD {
         return;
     }
-    let landed = match act(&DeckAction::AddDeck { path }) {
-        Ok(acted) => local.acted(acted),
+    let local = &mut s.regions.tabs;
+    let landed = match acted {
+        Ok(acted) => local.acted(acted.clone()),
         Err(err) => {
             local.refused = Some(err.to_string());
             None
@@ -109,11 +119,7 @@ pub fn add(s: &mut State, act: impl FnOnce(&DeckAction) -> Result<Acted>) {
     }
 }
 
-fn act_on_deck(action: &DeckAction) -> Result<Acted> {
-    Client::from_env().and_then(|client| client.act(action))
-}
-
-pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
+pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx<State>) -> El {
     // A region the view cannot be read as draws empty rather than taking the window down.
     let tabs = Tabs::deserialize(v).unwrap_or_default().tabs;
     let dark = cx.system_dark();
@@ -173,18 +179,21 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         .grow(1.0)
         .placeholder("Absolute path of a directory", k.quiet)
         .on_edit(|s: &mut State| s.regions.tabs.adding.get_or_insert_with(TextEdit::default))
-        .on_submit(|s: &mut State, _| add(s, act_on_deck));
+        .on_submit(|s: &mut State, _| add(s));
+    let mut add_button = row()
+        .key(ADD)
+        .role("button")
+        .child(text("Add").font(type_::BODY).color(t.text));
+    add_button = if pending.is_sent(ADD) {
+        add_button.disabled(true)
+    } else {
+        add_button.on_press(add)
+    };
     let add_box = row()
         .key("add-deck")
         .gap(space::within)
         .child(path.color(t.text))
-        .child(
-            row()
-                .key("add-deck-add")
-                .role("button")
-                .on_press(|s: &mut State| add(s, act_on_deck))
-                .child(text("Add").font(type_::BODY).color(t.text)),
-        );
+        .child(add_button);
     let mut header = header.child(add_box);
     if let Some(reason) = &local.refused {
         header = header.child(

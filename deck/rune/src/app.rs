@@ -77,8 +77,6 @@ pub fn setup(s: &mut State, wake: Waker) {
 /// Takes what the reader last left: a view replaces the whole `view` and nothing else, so a
 /// draft, a scroll and the open panels stay (spec 4); `Down` keeps the last view under the banner.
 pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
-    // A send answered off the UI thread is taken here, as the live view is.
-    let sent = regions::chat::settle(s, tx);
     // Every post through `act::send` is answered here, once, on the control that sent it.
     let answered = s.pending.settle();
     for (key, acted) in &answered {
@@ -86,11 +84,14 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
         let r = &mut s.regions;
         regions::queue::answered(&mut r.queue, key, reason.clone());
         regions::history::answered(&mut r.history, key, reason.clone());
+        regions::chat::answered(&mut r.chat, key, reason.clone());
+        regions::reply::answered(&mut r.reply, key, reason.clone());
+        regions::tickets::answered(&mut r.tickets, key, reason.clone());
         regions::notifications::answered(&mut r.notifications, key, reason);
+        regions::tabs::answered(s, key, acted);
+        regions::strip::answered(s, key, acted);
     }
     let settled = !answered.is_empty();
-    // A press's answer is the reply box's (S9), taken beside the view and never instead of it.
-    let replied = regions::reply::poll(&mut s.regions.reply, tx);
     regions::usage::poll(s, tx);
     let fed = match s.live.as_ref().and_then(live::Inbox::take) {
         Some(Feed::View(view)) => {
@@ -103,7 +104,7 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
         Some(Feed::Down) => !std::mem::replace(&mut s.down, true),
         None => false,
     };
-    fed | settled | sent | replied
+    fed | settled
 }
 
 /// The window: the side strips around the centre column (`layout`).
@@ -127,7 +128,7 @@ pub fn center(s: &State, cx: &mut Cx<State>) -> El {
     }
     screen
         .child(regions::usage::draw(region("usage"), &r.usage, cx))
-        .child(regions::tabs::draw(region("tabs"), &r.tabs, cx))
+        .child(regions::tabs::draw(region("tabs"), &r.tabs, &s.pending, cx))
         .child(regions::queue::draw(region("queue"), &r.queue, cx))
         .child(regions::thread::draw(region("thread"), &r.thread, cx))
         .child(regions::reply::draw(region("reply"), &r.reply, cx))

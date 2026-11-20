@@ -4,7 +4,8 @@
 
 mod support;
 
-use std::sync::Mutex;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use pilot_deck::act::Acted;
 use pilot_deck::act_deck::DeckAction;
@@ -13,9 +14,6 @@ use pilot_deck::client::{Error, View};
 use pilot_deck::regions::strip::{self, Local};
 use rune::{Env, Runtime, TextEdit};
 use serde_json::{Value, json};
-
-/// The press reads its address from the environment, which every test in this binary shares.
-static ENV: Mutex<()> = Mutex::new(());
 
 fn view_with(strip: Value) -> View {
     View {
@@ -206,7 +204,7 @@ fn the_items_link_opens_the_items_page_and_back_returns_home() {
 }
 
 #[test]
-fn a_create_opens_the_new_thread() {
+fn a_create_posts_what_the_name_checked_and_opens_the_new_thread_once_taken() {
     let mut state = State {
         view: view_with(ended_tab()),
         ..State::default()
@@ -214,21 +212,21 @@ fn a_create_opens_the_new_thread() {
     state.regions.strip = naming("  Fix the kettle ");
     state.regions.strip.next();
 
-    let mut posted = None;
-    strip::create(&mut state, "C:/work/ended", |action| {
-        posted = Some(action.clone());
-        Ok(Acted::Taken {
-            location: "/thread/itm_0000000000ab".into(),
-        })
-    });
-
     assert_eq!(
-        posted,
+        state.regions.strip.confirm("C:/work/ended"),
         Some(DeckAction::Create {
             name: "Fix the kettle".into(),
             repo: "C:/work/ended".into()
         })
     );
+    strip::create(&mut state, "C:/work/ended");
+    assert!(state.pending.is_sent("strip-confirm"), "Create is out");
+
+    let taken = Ok(Acted::Taken {
+        location: "/thread/itm_0000000000ab".into(),
+    });
+    strip::answered(&mut state, "strip-confirm", &taken);
+
     assert_eq!(state.query.screen, "thread");
     assert_eq!(state.query.id.as_deref(), Some("itm_0000000000ab"));
     assert!(
@@ -243,11 +241,10 @@ fn a_refused_create_keeps_the_name_beside_the_reason() {
     state.regions.strip = naming("Fix the kettle");
     state.regions.strip.next();
 
-    strip::create(&mut state, "C:/work/nowhere", |_| {
-        Ok(Acted::Refused {
-            reason: "Create opens a thread on a repository the deck knows".into(),
-        })
+    let refused = Ok(Acted::Refused {
+        reason: "Create opens a thread on a repository the deck knows".into(),
     });
+    strip::answered(&mut state, "strip-confirm", &refused);
 
     assert_eq!(state.query.screen, "home");
     let local = &state.regions.strip;
@@ -262,7 +259,7 @@ fn a_refused_create_keeps_the_name_beside_the_reason() {
             .is_some_and(|r| r.contains("deck knows"))
     );
 
-    strip::create(&mut state, "C:/work/ended", |_| Err(Error::Status(500)));
+    strip::answered(&mut state, "strip-confirm", &Err(Error::Status(500)));
     assert!(
         state.regions.strip.refused.is_some(),
         "an unreachable deck is said too"
@@ -272,19 +269,22 @@ fn a_refused_create_keeps_the_name_beside_the_reason() {
 #[test]
 fn start_asks_first_and_a_refusal_is_said_in_the_decks_words() {
     let mut state = State::default();
-    let mut posts = 0;
-    let mut post = |_: &DeckAction| {
-        posts += 1;
-        Ok(Acted::Taken {
-            location: "/?run=C%3A%2Fwork%2Fended&sessionRefused=starting%20a%20session%20is%20turned%20off".into(),
-        })
-    };
 
-    strip::session(&mut state, strip::Ask::Start, "C:/work/ended", &mut post);
+    strip::session(&mut state, strip::Ask::Start, "C:/work/ended");
     assert_eq!(state.regions.strip.asking, Some(strip::Ask::Start));
-    strip::session(&mut state, strip::Ask::Start, "C:/work/ended", &mut post);
+    assert!(
+        !state.pending.is_sent("strip-start"),
+        "the first press asks"
+    );
+    strip::session(&mut state, strip::Ask::Start, "C:/work/ended");
+    assert!(state.pending.is_sent("strip-start"), "the Confirm posts");
 
-    assert_eq!(posts, 1, "the first press asks, the Confirm posts");
+    let taken = Ok(Acted::Taken {
+        location:
+            "/?run=C%3A%2Fwork%2Fended&sessionRefused=starting%20a%20session%20is%20turned%20off"
+                .into(),
+    });
+    strip::answered(&mut state, "strip-start", &taken);
     assert_eq!(
         state.regions.strip.refused.as_deref(),
         Some("starting a session is turned off")
@@ -301,26 +301,26 @@ fn creating_in_the_window_opens_the_scratch_decks_new_thread() {
         )
         .send_json(json!({ "repo": "C:/work/alpha", "pid": deck.pid }))
         .expect("the run registers");
-    let _held = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    // SAFETY: every test in this binary that touches the environment holds `ENV`.
-    unsafe {
-        std::env::set_var("PILOT_DECK_DIR", &deck.dir);
-        std::env::set_var("PILOT_DECK_PORT", deck.port.to_string());
-    }
     let tab = json!({ "all": false, "tab": { "repo": "C:/work/alpha", "code": "D1" }, "create": {}, "close": false, "alerts": { "weekly": true } });
-    let mut rt = frame(State {
+    let mut state = State {
         view: view_with(tab),
         ..State::default()
-    });
+    };
+    state.pending.deck = Some(Arc::new(support::client_for(&deck)));
+    let mut rt = frame(state);
 
     press(&mut rt, "strip-create");
     rt.update(|s, _| s.regions.strip.naming = Some(TextEdit::new("Try the strip")));
     rt.frame(0.0);
     press(&mut rt, "strip-next");
     press(&mut rt, "strip-confirm");
-    unsafe {
-        std::env::remove_var("PILOT_DECK_DIR");
-        std::env::remove_var("PILOT_DECK_PORT");
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while rt.state.query.screen != "thread" {
+        assert!(Instant::now() < deadline, "the create never answered");
+        std::thread::sleep(Duration::from_millis(20));
+        rt.update(|s, tx| {
+            app::poll(s, 0.0, tx);
+        });
     }
 
     let (mut screen, mut id) = (String::new(), None);
