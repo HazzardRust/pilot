@@ -244,6 +244,37 @@ function homeStoreLine(file, before, deckPid) {
   return { red: false, line: `home store changed: ${file}; live deck ${deck ?? 'unknown'} up` };
 }
 
+/** The first `cmd` file on `env`'s PATH (`Path` on Windows), tried with each PATHEXT extension on win32; null when none. */
+function onPath(cmd, env, platform) {
+  const dirs = (env.PATH ?? env.Path ?? '').split(platform === 'win32' ? ';' : ':').filter(Boolean);
+  const names = platform === 'win32' ? (env.PATHEXT ?? '.EXE;.CMD;.BAT;.COM').split(';').map((ext) => cmd + ext.toLowerCase()) : [cmd];
+  for (const dir of dirs) {
+    for (const name of names) if (fs.statSync(path.join(dir, name), { throwIfNoEntry: false })?.isFile()) return path.join(dir, name);
+  }
+  return null;
+}
+
+/**
+ * The Rune deck's `cargo test` (rune-deck-ui S19; A3) when `which('cargo')` finds it on Windows, else the one
+ * line the gate prints instead: off Windows the deck's tests run in CI's Windows job, not in every gate.
+ */
+export function cargoStep(env, which = (cmd) => onPath(cmd, env, platform), platform = process.platform) {
+  if (platform !== 'win32') return { skip: 'rune deck: cargo test runs on Windows only, skipped' };
+  if (which('cargo') === null) return { skip: 'rune deck: cargo not on PATH, skipped' };
+  return { command: 'cargo', args: ['test', '--manifest-path', 'deck/rune/Cargo.toml'] };
+}
+
+/** Runs `step`'s cargo, or prints its skip line; its exit status, 1 when it could not start or was killed. */
+function runeDeck(step, { spawn, cwd, env }) {
+  if (step.skip) {
+    process.stdout.write(`${step.skip}\n`);
+    return 0;
+  }
+  const run = spawn(step.command, step.args, { cwd, env, stdio: 'inherit', windowsHide: true });
+  if (run.error) process.stderr.write(`gate: rune deck: ${step.command} did not start: ${run.error.message}\n`);
+  return run.status ?? 1;
+}
+
 /**
  * One `home store written: <file> by <pid> <argv>` line per write the deck store refused under the
  * gate (home-store-guard spec 1; L4), from the log `refuseGateHomeWrite` appends `<pid>\t<argv>\t<file>` to.
@@ -269,8 +300,9 @@ function writerLines(log) {
  * With `--since=<ref>` (suite-at-landing S1; L7) it prints the scope line first and runs only the
  * selection, the flag kept from `node`; an empty selection runs nothing and passes, a null one runs full.
  * With `homeStore` it is red too when that file's stat changed and `deckPid()` names no deck.
+ * With `homeStore` and `which` it runs `cargoStep`'s cargo after the suite, in that window, red when it fails.
  */
-export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, ...rest } = {}) {
+export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, which, platform = process.platform, ...rest } = {}) {
   if (!syntaxClean(syntax, cwd)) return 1;
   const sinceArg = args.findLast((arg) => /^--since(=|$)/.test(arg));
   let selection;
@@ -311,6 +343,9 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
       windowsHide: true,
     });
     if (run.error) process.stderr.write(`gate: node --test did not start: ${run.error.message}\n`);
+    // rune-deck-ui S19: inside the home-store window and under its guard env, so a Rust test's scratch daemon
+    // that writes the home store is caught, and before the census, so one left running is too.
+    const rune = guard && which ? runeDeck(cargoStep(process.env, which, platform), { spawn, cwd, env: gateEnv(process.env, held.slot, file, guard) }) : 0;
     let after;
     try {
       if (before instanceof Error) throw before;
@@ -322,7 +357,7 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
     const home = homeStore === undefined ? undefined : homeStoreLine(homeStore, storeBefore, deckPid);
     const written = guard ? writerLines(guard.log) : [];
     process.stdout.write(`${[...after.lines, ...counted, ...(home ? [home.line] : []), ...written].join('\n')}\n`);
-    return after.red || counted.length > 1 || home?.red || written.length > 0 ? 1 : (run.status ?? 1);
+    return after.red || counted.length > 1 || home?.red || written.length > 0 || rune !== 0 ? 1 : (run.status ?? 1);
   } finally {
     held.release();
     if (scratch) fs.rmSync(scratch, { recursive: true, force: true });
@@ -363,5 +398,7 @@ if (guard.error) {
 } else if (guard.run) {
   // home-store-guard L1: only this entry arms the home store check, so the gate's own tests never stat the real store.
   const homeStore = path.join(os.homedir(), '.claude', 'pilot', 'deck.json');
-  process.exitCode = runGate(process.argv.slice(2), { syntax: syntaxErrors, ledgers: rebuildLedgers, homeStore });
+  // rune-deck-ui S19: only this entry arms the Rune deck's cargo step too, under the home-store guard.
+  const which = (cmd) => onPath(cmd, process.env, process.platform);
+  process.exitCode = runGate(process.argv.slice(2), { syntax: syntaxErrors, ledgers: rebuildLedgers, homeStore, which });
 }
