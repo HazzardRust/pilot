@@ -17,8 +17,8 @@ use crate::client::Query;
 use crate::prefs::{self, Prefs};
 use crate::theme::{self, space};
 
-/// The `act::send` key of a notice's ×, then `-` and its id; Mark all seen's is `CLEAR_ALL`.
-const CLEAR: &str = "clear-notice";
+/// The `act::send` key of a notice's ×, before its id; Mark all seen's is `CLEAR_ALL`.
+const CLEAR: &str = "clear-notice-";
 const CLEAR_ALL: &str = "clear-notices";
 
 /// The deck's refusals of this panel's writes, by the key each was sent under.
@@ -78,7 +78,8 @@ fn clear(s: &mut State, key: &str, action: DeckAction) {
 
 /// A notice write answered: a refusal's words go under the control that sent it.
 pub fn answered(n: &mut Local, key: &str, refused: Option<String>) {
-    if let (true, Some(reason)) = (key.starts_with(CLEAR), refused) {
+    let ours = key == CLEAR_ALL || key.starts_with(CLEAR);
+    if let (true, Some(reason)) = (ours, refused) {
         n.refused.insert(key.into(), reason);
     }
 }
@@ -174,6 +175,7 @@ pub fn draw(
             .font(type_::LABEL)
             .color(t.text_secondary)
             .role("button")
+            .disabled(pending.is_sent(CLEAR_ALL))
             .on_press(move |s: &mut State| {
                 listed
                     .iter()
@@ -186,7 +188,7 @@ pub fn draw(
     let all = "notifications-mark-all-refused".into();
     panel = refusal(panel, local, CLEAR_ALL, all, ink);
     for (i, notice) in view.notices.iter().enumerate() {
-        let (id, sent) = (notice.id.clone(), format!("{CLEAR}-{}", notice.id));
+        let (id, sent) = (notice.id.clone(), format!("{CLEAR}{}", notice.id));
         let key = sent.clone();
         panel = panel.child(line(
             format!("notice-{i}"),

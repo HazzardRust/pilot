@@ -99,6 +99,9 @@ pub fn send<A: Form + Send + 'static>(sender: &mut Pending, key: &str, action: A
     {
         let failed = Err(Error::Http(format!("the post did not start: {err}")));
         let _ = sender.answers.0.send((key.to_string(), failed));
+        if let Some(wake) = &sender.wake {
+            wake();
+        }
     }
     true
 }

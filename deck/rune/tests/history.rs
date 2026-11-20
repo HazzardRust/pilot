@@ -116,10 +116,9 @@ fn dismiss_run_posts_once() {
         "a sent dismiss is spent"
     );
     assert_eq!(rt.state.regions.history.dismissed.len(), 1);
-    // A second post would be refused (the run is gone) and leave its reason here.
-    rt.update(|s, tx| {
-        app::poll(s, 0.0, tx);
-    });
+    // A second post would be refused (the run is gone) and leave its reason here, once answered.
+    let sent = format!("dismiss-run-{run}");
+    poll_until(&mut rt, "the answer", |rt| !rt.state.pending.is_sent(&sent));
     assert!(rt.state.regions.history.refused.is_empty());
 }
 

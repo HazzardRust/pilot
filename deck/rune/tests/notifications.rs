@@ -212,6 +212,11 @@ fn a_refused_notice_clear_says_so() {
         rt.frame(1.0 / 60.0);
     }
 
+    assert_eq!(
+        find(&rt, "notice-0-refused").and_then(|e| e.text),
+        Some(words),
+        "the refusal is drawn under the × that sent it"
+    );
     assert!(
         !texts(&rt).iter().any(|text| text == "deck not running"),
         "a refusal is not the deck being down"
