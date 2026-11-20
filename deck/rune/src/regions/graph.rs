@@ -44,7 +44,7 @@ struct Graph {
 
 /// One lane's width and one row's height.
 const LANE: f32 = space::s4;
-const ROW: f32 = space::row;
+const ROW: f32 = theme::size::row;
 /// A dot's radius, and a doing dot's core and the end point's.
 const DOT: f32 = space::s2;
 const CORE: f32 = space::s1;
@@ -93,8 +93,9 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     if graph.dots.is_empty() {
         return el();
     }
-    let t = tok::theme(cx.system_dark());
-    let tokens = theme::tokens(cx.system_dark());
+    let dark = cx.system_dark();
+    let t = tok::theme(dark);
+    let tokens = theme::tokens(dark);
     let end = graph.dots.len();
     let text_x = x(graph.lanes.saturating_sub(1)) + LANE;
     let (width, height) = (text_x + space::s8, y(end) + ROW / 2.0);
@@ -145,7 +146,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             })
             .child(circle)
             .child(el().w(text_x))
-            .child(text(id).font(type_::LABEL).color(t.text))
+            .child(theme::content(
+                text(id).font(type_::LABEL).color(t.text),
+                dark,
+            ))
     });
 
     let mut region = el()

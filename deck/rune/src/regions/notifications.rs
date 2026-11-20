@@ -85,9 +85,12 @@ pub fn answered(n: &mut Local, key: &str, refused: Option<String>) {
 }
 
 /// A refusal under a control, when it has one.
-fn refusal(panel: El, local: &Local, sent: &str, key: String, ink: Color) -> El {
+fn refusal(panel: El, local: &Local, sent: &str, key: String, ink: Color, dark: bool) -> El {
     match local.refused.get(sent) {
-        Some(reason) => panel.child(text(reason).key(key).font(type_::BODY).color(ink).wrap()),
+        Some(reason) => panel.child(theme::content(
+            text(reason).key(key).font(type_::BODY).color(ink).wrap(),
+            dark,
+        )),
         None => panel,
     }
 }
@@ -118,7 +121,7 @@ fn line(
 ) -> El {
     let to = id.to_string();
     let clear = format!("{key}-clear");
-    row()
+    theme::list_row(row())
         .key(key)
         .gap(space::within)
         .child(
@@ -187,7 +190,9 @@ pub fn draw(
     );
     // Mark all seen's own refusal; its prefs half is the window's and has already happened.
     let all = "notifications-mark-all-refused".into();
-    panel = refusal(panel, local, CLEAR_ALL, all, ink);
+    panel = refusal(panel, local, CLEAR_ALL, all, ink, dark);
+    // deck.css `.mark-all-form` and `.notice`: a hairline under Mark all seen and under every notice.
+    panel = panel.child(theme::separator(dark).key("notifications-mark-all-rule"));
     for (i, notice) in view.notices.iter().enumerate() {
         let (id, sent) = (notice.id.clone(), format!("{CLEAR}{}", notice.id));
         let key = sent.clone();
@@ -200,7 +205,15 @@ pub fn draw(
             pending.is_sent(&sent),
             move |s| clear(s, &key, DeckAction::ClearNotice { id: id.clone() }),
         ));
-        panel = refusal(panel, local, &sent, format!("notice-{i}-refused"), ink);
+        panel = refusal(
+            panel,
+            local,
+            &sent,
+            format!("notice-{i}-refused"),
+            ink,
+            dark,
+        );
+        panel = panel.child(theme::separator(dark).key(format!("notice-{i}-rule")));
     }
     for (i, one) in unseen.iter().enumerate() {
         let (id, writes) = (one.id.clone(), one.writes);

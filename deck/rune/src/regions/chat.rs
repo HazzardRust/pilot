@@ -7,7 +7,6 @@
 
 use rune::tok::{self, type_};
 use rune::{Cx, El, ScrollSpec, TextEdit, Tx, col, el, text, text_input};
-use rune_kit::markdown::{Markdown, MarkdownStyle};
 use serde::Deserialize;
 
 use crate::act::{self, Action};
@@ -92,21 +91,21 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     };
     let dark = cx.system_dark();
     let (t, k) = (tok::theme(dark), theme::tokens(dark));
-    let md = MarkdownStyle::neutral(dark);
 
     let mut messages = col()
         .key("chat-messages")
         .w_full()
-        .h(LINES * space::row)
+        .h(LINES * theme::size::row)
         .gap(space::between)
         .scroll(ScrollSpec { stick_bottom: true })
         .on_at_bottom(|s: &mut State, at| s.regions.chat.at_bottom = at);
     if chat.messages.is_empty() {
-        messages = messages.child(
+        messages = messages.child(theme::content(
             text("Nothing said here yet.")
                 .font(type_::LABEL)
                 .color(k.quiet),
-        );
+            dark,
+        ));
     }
     for (i, message) in chat.messages.into_iter().enumerate() {
         let by = match message.at {
@@ -118,8 +117,11 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 .key(format!("chat-{i}"))
                 .gap(space::within)
                 .padding(space::pad)
-                .child(text(by).font(type_::LABEL).color(k.quiet))
-                .child(Markdown::new(message.text).render(&md)),
+                .child(theme::content(
+                    text(by).font(type_::LABEL).color(k.quiet),
+                    dark,
+                ))
+                .child(theme::markdown(message.text, dark)),
         );
     }
 
@@ -136,11 +138,12 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         .child(messages)
         .child(draft.color(t.text));
     if let Some(reason) = &local.refused {
-        panel = panel.child(
+        panel = panel.child(theme::content(
             text(reason)
                 .font(type_::LABEL)
                 .color(k.state.unacknowledged),
-        );
+            dark,
+        ));
     }
     panel
 }

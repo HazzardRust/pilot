@@ -368,6 +368,16 @@ pub fn separator_vertical(dark: bool) -> El {
     el().w(1.0).h_full().fill(tokens(dark).rule)
 }
 
+/// A list row as VS Code's side bar draws one: `size::row` tall, its text centred, indented by
+/// `space::s3` and padded `space::s4` on the right.
+pub fn list_row(row: El) -> El {
+    row.w_full()
+        .h(size::row)
+        .pl(space::s3)
+        .pr(space::s4)
+        .items_center()
+}
+
 /// Content text is selectable, highlighted in the selection colour.
 pub fn content(el: El, dark: bool) -> El {
     el.selectable(true).selection_color(roles(dark).selection)

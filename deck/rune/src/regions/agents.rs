@@ -7,7 +7,7 @@ use rune::{Cx, El, col, row, text};
 use serde::Deserialize;
 
 use crate::app::State;
-use crate::theme::space;
+use crate::theme::{self, space};
 
 #[derive(Debug, Default)]
 pub struct Local;
@@ -29,16 +29,18 @@ struct Agents {
 pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     // A region the view cannot be read as draws empty rather than taking the window down.
     let view = Agents::deserialize(v).unwrap_or_default();
-    let t = tok::theme(cx.system_dark());
+    let dark = cx.system_dark();
+    let t = tok::theme(dark);
     // The panel's header is the layout's (S20).
     let mut panel = col().key("agents").gap(space::within);
     if view.agents.is_empty() {
-        return panel.child(
+        return panel.child(theme::content(
             text("no agents live")
                 .key("agents-none")
                 .font(type_::LABEL)
                 .color(t.text_secondary),
-        );
+            dark,
+        ));
     }
     for (i, agent) in view.agents.iter().enumerate() {
         // A quiet agent reads in the secondary colour: still listed, no longer fresh.
@@ -48,16 +50,20 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
             t.text
         };
         panel = panel.child(
-            row()
+            theme::list_row(row())
                 .key(format!("agent-{i}"))
                 .gap(space::within)
-                .child(text(&agent.name).font(type_::BODY).color(ink).grow(1.0))
-                .child(
+                .child(theme::content(
+                    text(&agent.name).font(type_::BODY).color(ink).grow(1.0),
+                    dark,
+                ))
+                .child(theme::content(
                     text(format!("{}s", agent.quiet_s))
                         .key(format!("agent-{i}-age"))
                         .font(type_::LABEL)
                         .color(ink),
-                ),
+                    dark,
+                )),
         );
     }
     panel
