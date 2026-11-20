@@ -158,6 +158,33 @@ fn a_long_state_stays_in_its_column_and_the_cells_never_overlap() {
 }
 
 #[test]
+fn the_state_column_starts_at_one_x_whatever_the_other_cells_hold() {
+    let rt = frame(State {
+        view: view_with(json!({
+            "tickets": [],
+            "rows": [
+                { "slice": "S1", "state": "integrated at 8c4cc3a", "branch": "slice/rune-deck-ui-s1b", "after": [] },
+                { "slice": "S10", "state": "integrated at c79b105", "branch": "slice/rune-deck-ui-s10", "pr": 7, "href": "/thread/itm_y", "after": [] },
+                { "slice": "S2", "state": "merged", "after": [] },
+            ],
+        })),
+        ..State::default()
+    });
+    let x = |key: String| {
+        rt.elements()
+            .into_iter()
+            .find(|e| e.key.as_deref() == Some(key.as_str()))
+            .unwrap_or_else(|| panic!("{key} is drawn"))
+            .rect[0]
+    };
+    let first = x("status-row-0-state".into());
+    for i in 1..3 {
+        let at = x(format!("status-row-{i}-state"));
+        assert!((at - first).abs() < 0.5, "row {i}'s state at {at}, row 0's at {first}");
+    }
+}
+
+#[test]
 fn a_view_with_no_status_draws_nothing_of_it() {
     let rt = frame(State {
         view: view_with(Value::Null),

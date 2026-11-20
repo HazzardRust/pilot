@@ -78,6 +78,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     let font = theme::tokens(cx.system_dark()).font;
     let cols = space::cols;
     let state_w = cols.state_ch * font.size * ADVANCE;
+    let slice_w = cols.slice_ch * font.size * ADVANCE;
 
     let selector = status.tickets.iter().enumerate().fold(
         row().key("status-select").gap(space::between),
@@ -116,16 +117,19 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                             .font(type_::BODY)
                             .color(t.text)
                             .truncate()
-                            .grow(1.0),
+                            .w(slice_w)
+                            .min_w(slice_w),
                     )
                     .child(
+                        // The state takes what the row leaves, so it starts at one x on every row;
+                        // branch, PR and yours trail it at the right, as the page has no such columns.
                         text(&slice.state)
                             .key(format!("{row_key}{i}-state"))
                             .font(type_::BODY)
                             .color(t.text_secondary)
                             .truncate()
-                            .w(state_w)
-                            .min_w(state_w),
+                            .min_w(state_w)
+                            .grow(1.0),
                     );
                 if let Some(branch) = &slice.branch {
                     line = line.child(

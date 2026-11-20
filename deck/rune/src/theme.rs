@@ -175,15 +175,19 @@ pub mod space {
     pub const card_line: f32 = 24.0;
 
     /// A status line's three columns: the state fixed and left, the name flexible and clipped,
-    /// the time fixed and right, `gap` apart (no `·`).
+    /// the time fixed and right, `gap` apart (no `·`). The Status table's rows instead fix the
+    /// slice (`slice_ch`) and let the state grow from `state_ch`, its trailing cells after it.
     #[derive(Debug, Clone, Copy)]
     pub struct StatusCols {
+        /// The status table's Slice column, fixed so every row's State starts at one x.
+        pub slice_ch: f32,
         pub state_ch: f32,
         pub time_ch: f32,
         pub gap: f32,
     }
 
     pub const cols: StatusCols = StatusCols {
+        slice_ch: 5.0,
         state_ch: 12.0,
         time_ch: 7.0,
         gap: s5,
