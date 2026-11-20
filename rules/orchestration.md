@@ -143,7 +143,7 @@ report contradicts the code, the code wins.
   marker a plain literal checked against what the writer prints.
 - A subagent: it runs in the background; never wait on it, act on its completion
   notification, never its output file.
-- A test run: `run_in_background` and end the turn, or `timeout: 600000`.
+- A test run: `run_in_background` and end the turn.
 - Exit 2 is a wake-up call: wait again, carry on or hand back. Each wait is a
   numbered report row, `wait <n> on <marker>: …`.
 - Before handing back, `TaskStop` each background wait you started, by id.

@@ -57,7 +57,7 @@ test('a missing file is not a match', async () => {
   let calls = 0;
   const read = () => { calls++; return null; };
   const result = await waitFor({ file: '/tmp/x.log', match: '.*', timeoutMin: 0.02, read, ...clock, pollMs: 500 });
-  assert.deepEqual(result, { timedOut: true, waitedMin: 0.02 });
+  assert.deepEqual(result, { timedOut: true });
   // 0.02 min is 1200 ms: reads at 0, 500, 1000 and the deadline, 1200.
   assert.equal(calls, 4);
   assert.equal(clock.now(), 1200);

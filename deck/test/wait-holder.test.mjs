@@ -88,7 +88,21 @@ test('the line carries it', (t) => {
     runs: () => [{ pid: 16990, repo: REPO }],
     kill: () => {},
     note: (repo, text) => notes.push([repo, text]),
-    projectsRoot: root,
+    holder: (row) => {
+      const found = holderOfCommand(row.repo, row.script, { projectsRoot: root, since: Date.now() - row.ageS * 1000 });
+      return found && `${found.agentType} ${found.agentId}`;
+    },
   });
   assert.deepEqual(notes, [[REPO, `stopped stalled wait 30060 "NODE-DONE" held by pilot:rust-reviewer ${AGENT_B} for 180 min`]]);
+});
+
+test('a transcript last written before the wait began is not read', (t) => {
+  const root = projectsRoot(t, [waitB(), other()]);
+  const file = path.join(root, DIR_NAME, S1, 'subagents', `agent-${AGENT_B}.jsonl`);
+  const began = Date.now() - 60_000;
+  const old = new Date(began - 3_600_000);
+  fs.utimesSync(file, old, old);
+  assert.equal(holderOfCommand(REPO, WAIT_B, { projectsRoot: root, since: began }), null, 'written an hour before the shell began');
+  assert.deepEqual(holderOfCommand(REPO, WAIT_B, { projectsRoot: root, since: old.getTime() - 1 }), { agentType: 'pilot:rust-reviewer', agentId: AGENT_B }, 'written after it');
+  assert.deepEqual(holderOfCommand(REPO, WAIT_B, { projectsRoot: root }), { agentType: 'pilot:rust-reviewer', agentId: AGENT_B }, 'no since reads all');
 });

@@ -92,7 +92,7 @@ const reap = (table, extra = {}) => {
     runs: () => runs,
     kill: (pid, tree) => kills.push([pid, tree]),
     note: (repo, line) => notes.push([repo, line]),
-    projectsRoot: path.join(os.tmpdir(), 'wait-deadlines-no-projects'), // never the real ~/.claude/projects
+    holder: () => null, // never the real ~/.claude/projects
     ...extra,
   });
   return { kills, notes, lines };

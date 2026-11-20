@@ -38,7 +38,7 @@ export async function waitFor({ file, match, timeoutMin, read = readText, now = 
       if (line !== undefined) return { line };
     }
     const left = deadline - now();
-    if (left <= 0) return { timedOut: true, waitedMin: timeoutMin };
+    if (left <= 0) return { timedOut: true };
     await sleep(Math.min(pollMs, left));
   }
 }
@@ -87,7 +87,7 @@ export async function main(argv, { out = process.stdout, err = process.stderr } 
     return 1;
   }
   if (result.timedOut) {
-    out.write(`timed out waiting for ${opts.match} in ${opts.file} after ${result.waitedMin} min\n`);
+    out.write(`timed out waiting for ${opts.match} in ${opts.file} after ${opts.timeoutMin} min\n`);
     return 2;
   }
   out.write(`${result.line}\n`);

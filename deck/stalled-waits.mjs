@@ -90,13 +90,18 @@ export function shellScript(command) {
   return EVAL.test(script) ? evalArg(script) : script; // an eval that never closes is unsure: null, never the outer script
 }
 
-/** The nearest `claude` above `row` in `byPid`, or null; a ppid cycle ends the walk. */
-function claudeAbove(row, byPid) {
+/** The rows above `row` in `byPid`, nearest first; a ppid cycle ends the walk. */
+function* ancestors(row, byPid) {
   const seen = new Set([row.pid]);
   for (let up = byPid.get(row.ppid); up && !seen.has(up.pid); up = byPid.get(up.ppid)) {
-    if (CLAUDE.test(up.name ?? '')) return up.pid;
+    yield up;
     seen.add(up.pid);
   }
+}
+
+/** The nearest `claude` above `row` in `byPid`, or null. */
+function claudeAbove(row, byPid) {
+  for (const up of ancestors(row, byPid)) if (CLAUDE.test(up.name ?? '')) return up.pid;
   return null;
 }
 
@@ -124,30 +129,23 @@ export function stalledWaits(table, { runs, stallAgeS = STALL_AGE_S }) {
     const minutes = Math.floor(row.ageS / 60);
     matched.set(row.pid, {
       pid: row.pid, kind: 'shell', owner, worktree: run.repo, orphan: `stalled ${minutes} min`,
-      marker: waits[0].marker, repo: run.repo, script,
+      marker: waits[0].marker, repo: run.repo, script, ageS: row.ageS,
     });
   }
-  const underMatched = (row) => {
-    const seen = new Set([row.pid]);
-    for (let up = byPid.get(row.ppid); up && !seen.has(up.pid); up = byPid.get(up.ppid)) {
-      if (matched.has(up.pid)) return true;
-      seen.add(up.pid);
-    }
-    return false;
-  };
+  const underMatched = (row) => [...ancestors(row, byPid)].some((up) => matched.has(up.pid));
   return [...matched.values()].filter((row) => !underMatched(byPid.get(row.pid)));
 }
 
 /**
  * One scan (L5, L6): one read of the process table, `stalledWaits` over it and the live runs, `gc` stopping each
  * with its tree, then `note(repo, line)` for each stop that went. `holder(row)` names the agent whose call started
- * a wait, or null, and defaults to the one subagent whose Bash call ran the row's script (`holderOfCommand` under
- * `projectsRoot`, S4); `kill(pid, tree)` defaults to `gc`'s `stopper` over the same table. A read failure is one line
+ * a wait, or null, and defaults to the one subagent whose Bash call ran the row's script (`holderOfCommand`, S4,
+ * reading only transcripts written since the shell began); `kill(pid, tree)` defaults to `gc`'s `stopper` over the same table. A read failure is one line
  * and stops nothing. Answers `gc`'s lines, none when nothing is stalled.
  */
-export function reapStalled({ read, runs, kill, note, holder, stallAgeS = STALL_AGE_S, projectsRoot }) {
+export function reapStalled({ read, runs, kill, note, holder, stallAgeS = STALL_AGE_S }) {
   holder ??= (row) => {
-    const found = holderOfCommand(row.repo, row.script, { projectsRoot });
+    const found = holderOfCommand(row.repo, row.script, { since: Date.now() - row.ageS * 1000 - 60_000 /* the call is logged just before its shell starts */ });
     return found && `${found.agentType} ${found.agentId}`;
   };
   let table, rows;
