@@ -70,7 +70,9 @@ into its one caller if deleted, but it is the pure seam 2b's test needs; kept. N
 - **L2** No store sync, export or commit (user's ticket, spec 4). Rejected: sharing the store through git (ADR 0006, 0028, 0044).
 - **L3** One clash module, `deck/slug-clash.mjs`, read by the verb, the row and start. Rejected: a check in each caller.
 - **L4** A slug from argv or a ticket body is held to `SLUG` (`deck/runs.mjs:248`) before it reaches git or the host;
-  git runs as argv. Rejected: passing the raw word to `ls-remote`.
+  git runs as argv. Rejected: passing the raw word to `ls-remote`. Trust boundary (S1): the slug is checked kebab-case
+  before any process start, each git and host call takes it as one argv element, never a shell string; an invalid
+  argv slug is usage, exit 2; an invalid body slug is dropped (S2).
 - **L5** A slug with a run record on this deck is never a clash: its branches are this deck's own (red team).
 - **L6** Small-diff limit 400 changed lines per slice; past it the implementer stops and asks `main`.
 - **L7** The run's ADR is `docs/adr/NNNN-two-devices.md`, written in S3; the landing numbers it.
@@ -93,10 +95,16 @@ into its one caller if deleted, but it is the pure seam 2b's test needs; kept. N
   Rejected: a phrase pin (cut by ADR 0180). Not posted (covered by an ADR; main).
 - **A4** A clash on a held slug is a `fail` row (doctor exits 1), not a new `warn` verdict. Trades: doctor goes red
   for something that refuses nothing. Rejected: a fourth verdict across every row printer. Not posted.
+  It stays a warn in A2's sense only because nothing refuses on doctor's exit code: no hook, gate or agent step
+  stops on it, and `pilot start` never exits non-zero for a clash (S2 behaviour 5 pins exit 0 and one `openPilot`).
 - **A5** The setup section says both devices set the same `pilot.remote`, never `none`; `pilot doctor slug` under `none`
   reads `cannot tell` for `design/`. Rejected: probing local refs as if shared. Not posted (codebase fact).
 - **A6** `Bash(pilot doctor slug *)` joins the read-only allow rules (ADR 0186), so step 1 does not prompt. Trades:
-  one more allow rule. Rejected: the pilot's run prompting the user. Not posted.
+  one more allow rule. Rejected: the pilot's run prompting the user. Not posted. At most the verb runs
+  `git ls-remote` and the host's open-PR list: read-only network reads, no write anywhere; S1 (security-reviewed) owns it.
+- **A7** QA environment: a scratch clone on this machine against a local bare remote seeded with `feat/`/`design/`
+  clashes and a stubbed open PR (`pilot gh-stub`); the device-2 run (spec 3) is the user's walkthrough. Trades: no
+  agent sees a real second device. Rejected: none reachable. Posted by main as itm_e492e74bab24.
 
 ## 7. Out of scope
 
