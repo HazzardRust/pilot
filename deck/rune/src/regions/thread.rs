@@ -108,10 +108,10 @@ pub fn key(s: &mut State, ev: &rune::KeyEvent, tx: &mut rune::Tx) -> bool {
     back(th.nav.run)(s, ev, tx)
 }
 
-fn arrow(step: Option<Step>, glyph: &str, ink: Color, quiet: Color) -> El {
+fn arrow(step: Option<Step>, glyph: &str, ink: Color, quiet: Color, dark: bool) -> El {
     match step {
         None => text(glyph).font(type_::TITLE).color(quiet),
-        Some(Step { id }) => text(glyph)
+        Some(Step { id }) => theme::control(text(glyph), dark)
             .font(type_::TITLE)
             .color(ink)
             .role("link")
@@ -164,11 +164,11 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         .key("nav")
         .role("navigation")
         .gap(space::within)
-        .child(arrow(th.nav.prev, "‹", t.text, k.quiet));
+        .child(arrow(th.nav.prev, "‹", t.text, k.quiet, dark));
     if let Some(code) = &th.nav.code {
         nav = nav.child(text(code).font(type_::LABEL).color(t.text));
     }
-    nav = nav.child(arrow(th.nav.next, "›", t.text, k.quiet));
+    nav = nav.child(arrow(th.nav.next, "›", t.text, k.quiet, dark));
     if let Some(position) = &th.nav.position {
         nav = nav.child(line(position));
     }

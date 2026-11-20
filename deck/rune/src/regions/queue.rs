@@ -156,7 +156,7 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
     // The title is the page's link to the thread.
     let to = c.id.clone();
     let mut body = col().grow(1.0).gap(space::within).child(line).child(
-        text(&c.title)
+        theme::control(text(&c.title), dark)
             .key(key("title"))
             .font(type_::TITLE)
             .color(ui.text)
@@ -173,7 +173,7 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
         );
     }
     let button = |part: String, label: &str, fill: Color| {
-        row()
+        theme::control(row(), dark)
             .key(key(&part))
             .padding(space::pad)
             .radius(tok::radius::SM)

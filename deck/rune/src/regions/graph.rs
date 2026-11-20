@@ -134,6 +134,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             .size(width, ROW)
             .absolute(0.0, dot.row as f32 * ROW)
             .items_center()
+            .cursor(rune::Cursor::Pointer)
             .on_hover_change(move |s: &mut State, inside, _| {
                 let hovered = &mut s.regions.graph.hovered;
                 if inside {

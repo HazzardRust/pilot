@@ -8,7 +8,7 @@ use serde::Deserialize;
 use super::notifications::{keep, open_thread};
 use crate::app::State;
 use crate::prefs::Prefs;
-use crate::theme::space;
+use crate::theme::{self, space};
 
 #[derive(Debug, Default)]
 pub struct Local;
@@ -38,7 +38,8 @@ pub fn hide(prefs: &mut Prefs, id: &str) {
 /// Drawn from the window's prefs: the hidden ids outlive the window, so every × writes them back to disk.
 pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
     let view = Reports::deserialize(v).unwrap_or_default();
-    let t = tok::theme(cx.system_dark());
+    let dark = cx.system_dark();
+    let t = tok::theme(dark);
     let listed: Vec<&Report> = view
         .reports
         .iter()
@@ -66,7 +67,7 @@ pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
                 .key(format!("report-{}", one.id))
                 .gap(space::within)
                 .child(
-                    text(&one.title)
+                    theme::control(text(&one.title), dark)
                         .font(type_::BODY)
                         .color(t.text)
                         .role("link")
@@ -75,7 +76,7 @@ pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
                         .on_press(move |s: &mut State| open_thread(s, &open)),
                 )
                 .child(
-                    text("×")
+                    theme::control(text("×"), dark)
                         .key(format!("report-{}-hide", one.id))
                         .font(type_::BODY)
                         .color(t.text_secondary)

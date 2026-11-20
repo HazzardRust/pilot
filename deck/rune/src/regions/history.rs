@@ -86,7 +86,7 @@ fn run_row(r: &RunRow, local: &Local, cx: &mut Cx<State>) -> El {
     if r.dismissable {
         let sent = local.dismissed.contains(&r.id);
         let id = r.id.clone();
-        let mut button = row()
+        let mut button = theme::control(row(), dark)
             .key(key("dismiss"))
             .padding(space::pad)
             .radius(tok::radius::SM)
@@ -124,7 +124,7 @@ fn day(d: &Day, local: &Local, cx: &mut Cx<State>) -> El {
         .w_full()
         .gap(space::pad)
         .child(
-            text(&d.heading)
+            theme::control(text(&d.heading), dark)
                 .key(format!("day-{}", d.key))
                 .role("button")
                 .font(type_::LABEL)

@@ -12,7 +12,7 @@ use crate::act::{self, Pending};
 use crate::act_deck::DeckAction;
 use crate::app::State;
 use crate::prefs::Prefs;
-use crate::theme::space;
+use crate::theme::{self, space};
 
 /// The panel's window state: the ticket whose move is in flight and its place in its queue when pressed,
 /// and the row whose play is asking Confirm.
@@ -125,12 +125,17 @@ fn toggle(s: &mut State, repo: &str, colour: &str) {
     keep(&s.prefs);
 }
 
-fn button(key: String, label: &str, t: &tok::Theme) -> El {
+/// A glyph button that cannot be pressed, so it carries no hover.
+fn inert(key: String, label: &str, t: &tok::Theme) -> El {
     text(label)
         .key(key)
         .font(type_::LABEL)
         .color(t.text)
         .role("button")
+}
+
+fn button(key: String, label: &str, t: &tok::Theme, dark: bool) -> El {
+    theme::control(inert(key, label, t), dark)
 }
 
 /// The row's Continue as its `switch` names it: play then Confirm, the lit pending with Cancel, or locked.
@@ -140,6 +145,7 @@ fn continue_of(
     local: &Local,
     pending: &Pending,
     t: &tok::Theme,
+    dark: bool,
 ) -> Option<El> {
     let key = |part: &str| format!("ticket-{}-{part}", r.id);
     let (repo, to) = (repo.to_string(), r.id.clone());
@@ -154,7 +160,7 @@ fn continue_of(
                         .color(t.text_secondary),
                 )
                 .child(pressing(
-                    button(cancel.clone(), "Cancel", t),
+                    button(cancel.clone(), "Cancel", t, dark),
                     pending.is_sent(&cancel),
                     move |s: &mut State| {
                         let (repo, to) = (repo.clone(), to.clone());
@@ -163,7 +169,7 @@ fn continue_of(
                 )),
         ),
         "locked" => Some(
-            button(key("play"), "▶", t)
+            inert(key("play"), "▶", t)
                 .color(t.text_secondary)
                 .disabled(true),
         ),
@@ -177,7 +183,7 @@ fn continue_of(
                         .color(t.text),
                 )
                 .child(pressing(
-                    button(confirm.clone(), "Confirm", t),
+                    button(confirm.clone(), "Confirm", t, dark),
                     pending.is_sent(&confirm),
                     move |s: &mut State| {
                         s.regions.tickets.confirming = None;
@@ -187,20 +193,29 @@ fn continue_of(
                 ))
                 .modal(true, |s: &mut State| s.regions.tickets.confirming = None),
         ),
-        _ => Some(button(key("play"), "▶", t).on_press(move |s: &mut State| {
-            s.regions.tickets.confirming = Some(to.clone());
-        })),
+        _ => Some(
+            button(key("play"), "▶", t, dark).on_press(move |s: &mut State| {
+                s.regions.tickets.confirming = Some(to.clone());
+            }),
+        ),
     }
 }
 
-fn ticket_row(r: &Row, repo: &str, local: &Local, pending: &Pending, t: &tok::Theme) -> El {
+fn ticket_row(
+    r: &Row,
+    repo: &str,
+    local: &Local,
+    pending: &Pending,
+    t: &tok::Theme,
+    dark: bool,
+) -> El {
     let to = r.id.clone();
     let mut line = row()
         .key(format!("ticket-{}", r.id))
         .h(space::row)
         .gap(space::within)
         .child(
-            text(&r.name)
+            theme::control(text(&r.name), dark)
                 .font(type_::BODY)
                 .color(t.text)
                 .role("link")
@@ -209,7 +224,7 @@ fn ticket_row(r: &Row, repo: &str, local: &Local, pending: &Pending, t: &tok::Th
                 .on_press(move |s: &mut State| open_thread(s, &to)),
         )
         .child(text(&r.state).font(type_::LABEL).color(t.text_secondary));
-    if let Some(play) = continue_of(r, repo, local, pending, t) {
+    if let Some(play) = continue_of(r, repo, local, pending, t, dark) {
         line = line.child(play);
     }
     for (up, can, glyph) in [(true, r.can_move.up, "↑"), (false, r.can_move.down, "↓")] {
@@ -218,7 +233,7 @@ fn ticket_row(r: &Row, repo: &str, local: &Local, pending: &Pending, t: &tok::Th
             let part = if up { "up" } else { "down" };
             let sent = pending.is_sent(&format!("ticket-{id}-move"));
             line = line.child(pressing(
-                button(format!("ticket-{}-{part}", r.id), glyph, t),
+                button(format!("ticket-{}-{part}", r.id), glyph, t, dark),
                 sent,
                 move |s: &mut State| move_ticket(s, &id, up),
             ));
@@ -236,13 +251,14 @@ pub fn draw(
 ) -> El {
     // A region the view cannot be read as draws empty rather than taking the window down.
     let view = Tickets::deserialize(v).unwrap_or_default();
-    let t = tok::theme(cx.system_dark());
+    let dark = cx.system_dark();
+    let t = tok::theme(dark);
     let Some(repo) = view.repo else {
         return col().key("tickets");
     };
     let add = repo.clone();
     let mut panel = col().key("tickets").gap(space::between).child(pressing(
-        button("tickets-add".into(), ADD, &t),
+        button("tickets-add".into(), ADD, &t, dark),
         pending.is_sent("tickets-add"),
         move |s: &mut State| {
             let (name, repo) = (ADD.to_string(), add.clone());
@@ -252,7 +268,7 @@ pub fn draw(
     let open = prefs.folds.get(&repo);
     for g in &view.groups {
         let (fold_repo, colour) = (repo.clone(), g.colour.clone());
-        let header = row()
+        let header = theme::control(row(), dark)
             .key(format!("tickets-fold-{}", g.colour))
             .gap(space::within)
             .role("button")
@@ -266,7 +282,7 @@ pub fn draw(
         let mut fold = col().gap(space::within).child(header);
         if open.is_some_and(|set| set.contains(&g.colour)) {
             fold = g.rows.iter().fold(fold, |fold, r| {
-                fold.child(ticket_row(r, &repo, local, pending, &t))
+                fold.child(ticket_row(r, &repo, local, pending, &t, dark))
             });
         }
         panel = panel.child(fold);

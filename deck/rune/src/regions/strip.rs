@@ -237,7 +237,8 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
     let dark = cx.system_dark();
     let (t, k) = (tok::theme(dark), theme::tokens(dark));
     let btn = |label: &str, key: &str, lit: bool| {
-        button(label, key, t.text, if lit { k.state.pilot } else { k.rule })
+        let fill = if lit { k.state.pilot } else { k.rule };
+        theme::control(button(label, key, t.text, fill), dark)
     };
     // A control whose write is out is drawn sent and disabled until the deck answers.
     let sent_btn = |label: &str, key: &str, post: &str, lit: bool| {
