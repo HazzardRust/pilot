@@ -32,14 +32,16 @@ Draft line 5 (fix the classifier path) is dropped: none of the four causes invol
 
 | Wait | Agent | Marker and file | Why it never came | Why it outlived the agent | Source |
 | --- | --- | --- | --- | --- | --- |
-| A, 19/11 21:53 | implementer, audit-f14 S2 fix | `Verdict:` in a subagent's `tasks/<id>.output` | A subagent reports by message; its output file stayed 0 bytes | Tool backgrounded it at 180 s, so its `timeout: 300000` stopped applying; the agent pushed and finished, never stopped it | `…/6aa1c273…/subagents/agent-ae0452278ade1b306.jsonl` l.73-80 |
-| B, 20/11 08:40 | rust-reviewer, rune-deck-ui S12 | `NODE-DONE` or `^# fail` in its own task output | The command never echoes `NODE-DONE`; node prints `ℹ fail 0`, not `# fail` | Backgrounded at 180 s; `pkill -f "grep -q NODE-DONE"` killed a transient grep, not the loop | `…/4f2e1278…/subagents/agent-a74c7de1fde395ad7.jsonl` l.35-44 |
+| A, 19/11 21:53 | implementer, audit-f14 S2 fix | `Verdict:` in a subagent's `tasks/<id>.output` | A subagent reports by message; its output file stayed 0 bytes | Tool backgrounded it at 180 s, so its `timeout: 300000` stopped applying; the agent pushed and finished, never stopped it | `…/6aa1c273…/subagents/agent-ae0452278ade1b306.jsonl` l.73-80; stopped by TaskStop `baambqlmv` 2026-11-20 (`itm_de18acba764b`), holder woke and reported, `slice/audit-f14-s2` 17788995 intact; its friction: polled with `until grep` for want of Monitor |
+| B, 20/11 08:40 | rust-reviewer, rune-deck-ui S12 | `NODE-DONE` or `^# fail` in its own task output | The command never echoes `NODE-DONE`; node prints `ℹ fail 0`, not `# fail` | Backgrounded at 180 s; `pkill -f "grep -q NODE-DONE"` killed a transient grep, not the loop | `…/4f2e1278…/subagents/agent-a74c7de1fde395ad7.jsonl` l.35-44; stopped by TaskStop `be7fnv83z` 2026-11-20 (`itm_de18acba764b`), holder woke and delivered its S12 verdict about 5 h late |
 | C, 20/11 08:55 | implementer, S8 (no Monitor) | `^exit` in `/tmp/s8-npm.log` | The log never prints a line starting `exit` | Ended by the pilot by hand; the agent then resumed and finished | implementer friction row (ticket comment); shell no longer alive, no transcript read |
 | D, 20/11 | QA, human-steps (has Monitor) | CI state, Monitor loop | Loop condition could never be true | Bounded only by Monitor's 30-min timeout; agent listed as waiting after its hand-back | QA hand-back for gate2 `itm_7a192fe141af` |
 
 Common cause: an improvised poll on a string nobody checked would ever appear, plus a deadline held by the tool call
 rather than the command (lost at the 180 s auto-background), plus an agent ending with its shells live. No classifier
-log exists (`deckDir()/classifier.log` absent); no deck thread at those times.
+log exists (`deckDir()/classifier.log` absent); no deck thread at those times. The cost is not only a listed agent:
+the holder's own result waits behind the stall (B's verdict came about 5 h late). Stopping the shell alone woke both
+holders within a minute with their work intact, the evidence behind A2.
 
 **What exists**
 
@@ -125,6 +127,7 @@ that one long-polls the deck, this one reads a file.
 - **A4 120 min** for `--timeout`'s maximum and the stall age (`itm_c71984dbc9b7`). Tradeoff: a stuck wait lives up to
   2 h. Rejected: 30, which is under a slow full suite plus queueing.
 - **A5 QA on a scratch deck with planted processes** (`itm_b788644fdd9c`). Rejected: also report-only on the live deck.
+  Answer: "Scratch deck + planted processes" (default).
 - **A6 The holder is named from transcripts.** Default: `holderOfCommand` finds the subagent transcript whose Bash
   call holds the loop's marker and file, returning its agent type and id; `unknown` when none or several match.
   Tradeoff: reads the undocumented transcript format (as `transcripts.mjs` already does). Rejected: a ledger the
