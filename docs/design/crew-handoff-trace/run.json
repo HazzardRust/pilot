@@ -1,0 +1,129 @@
+{
+  "slug": "crew-handoff-trace",
+  "feature": "A crew hand-off never goes missing",
+  "ticket": "itm_1f8238d5a300",
+  "branch": "feat/crew-handoff-trace",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-handoff-trace",
+  "artefact": "docs/design/crew-handoff-trace/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed 3159f8e",
+      "branch": "slice/crew-handoff-trace-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-handoff-trace-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S4",
+        "S5"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S6"
+      ]
+    },
+    {
+      "slice": "crew-handoff-trace",
+      "state": "implementing"
+    }
+  ],
+  "next": "S1 reported (both APPROVE); waiting on ADR renumber push from aebd0a9eb4ab97a4a, then pilot integrate S1, pilot ready, start S2, S3, S4",
+  "updatedAt": "2026-11-20T17:18:33.605Z",
+  "friction": [
+    {
+      "agent": "architect",
+      "what": "deck.log has no timestamps, useless for forensics",
+      "evidence": "grep \"^2026-11-19T0\" ~/.claude/pilot/deck.log returns nothing"
+    },
+    {
+      "agent": "architect",
+      "what": "running code is the plugin cache, not the repository, and nothing says so; 3 probes to find",
+      "evidence": "pid 5472's command line points at the plugins cache; cache and pilot both say 0.9.9"
+    },
+    {
+      "agent": "architect",
+      "what": "800-line cap leaves no room in deck store files; trace rows forced into server-tools handlers",
+      "evidence": "items.mjs 799, store-runs.mjs 799, store-items.mjs 798 lines"
+    },
+    {
+      "agent": "architect",
+      "what": "deck MCP server reported connection closed at start-up though posting worked",
+      "evidence": "session notice; itm_cd0b9bedb2a5 posted fine"
+    },
+    {
+      "agent": "architect",
+      "what": "architect stopped before the verdict message while the depth question was still open; needs a resume at 210k tokens",
+      "evidence": "hand-back: design committed, gate1 not posted",
+      "size": 210000
+    },
+    {
+      "agent": "architect",
+      "what": "pilot verdicts refuses a §6 written as a table; rows had to be converted to A-bullets",
+      "evidence": "not in §6: A1…A6 until the rows were made bullets"
+    },
+    {
+      "agent": "architect",
+      "what": "first gate1 post refused for leaving A2 and A6 out of its body",
+      "evidence": "second post accepted as itm_3660a32fa0c8"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "deck MCP server reported CONNECTION_CLOSED at start-up though deck_status worked",
+      "evidence": "session notice; deck_status answered D3: 8 slices saved"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "TaskOutput not available to the co-pilot, so a bounded wait on a child is a Monitor on its branch push",
+      "evidence": "ToolSearch select:TaskOutput: No matching deferred tools found"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "a forced hand-back arrived while the S1 implementer was still live",
+      "evidence": "handback-send-enforce notice after S1 reported waiting on its own background work"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce fires at every turn end while a child is live, which contradicts never ending with a child live; the co-pilot has no TaskOutput for a blocking wait",
+      "evidence": "three enforce notices while S1's implementer was live; foreground wait loop moved to background after 180s"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "two repo-wide lints the slice file did not name (stored-literal join test, deck README module list) cost a second full gate run",
+      "evidence": "hooks/test/join.test.js:199 and scripts/test/deck-readme.test.mjs red on the first full run"
+    }
+  ]
+}
