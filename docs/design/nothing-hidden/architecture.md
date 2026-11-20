@@ -92,7 +92,8 @@ and S2 under 300 lines.
 
 - **A1** Other tickets' threads are listed in full as normal cards after the in-hand ones, nothing folded.
   *Tradeoff*: ADR 0065's one-ticket feed becomes an order only; a busy deck lists longer. *Rejected*: a closed
-  `<details>` "N waiting on other tickets" fold (one press from today's hiding). Posted `itm_e681de8bf939`.
+  `<details>` "N waiting on other tickets" fold (one press from today's hiding). Posted `itm_e681de8bf939`; the user answered "Listed in full, after
+  in-hand" (2026-11-20).
 - **A2** Order key: user thread last, then behind after not-behind, then newest first (a stable sort over
   `queueOf`). *Tradeoff*: a behind gate2 sits under an in-hand question even when older. *Rejected*: pure newest
   first (in hand no longer reads first, spec 5).
