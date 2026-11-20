@@ -12,6 +12,7 @@
  *   context-size-guard.js   slice 12  an agent filling its context window
  *   agent-roster.js         S5        this agent is still working, and here
  *   PLAIN_PICKUP (below)    audit S5  a hand-off taken by a session not the pilot
+ *   spawn-trace.js          crew-handoff-trace S3  the pilot spawned a co-pilot (a trace row; says nothing)
  *
  * Each is loaded and called inside its own try/catch, so a lane that is not
  * installed yet, or throws, is a no-op and the others are untouched. That is
@@ -99,6 +100,7 @@ const MODULES = [
   { file: './context-size-guard.js' },
   { file: './agent-roster.js' },
   PLAIN_PICKUP,
+  { file: './spawn-trace.js' },
 ];
 
 const nonEmpty = function (text) { return typeof text === 'string' && text.trim() !== ''; };

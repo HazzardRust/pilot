@@ -91,6 +91,7 @@ function workAdvice(work) {
 
 module.exports = {
   coPilotItem: coPilotItem,
+  coPilotTicketOf: coPilotTicketOf,
   handoffNowIfIdle: handoffNowIfIdle,
   howFull: howFull,
   whatComesNext: whatComesNext,

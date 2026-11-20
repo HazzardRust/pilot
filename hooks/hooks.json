@@ -124,6 +124,19 @@
         "id": "denied:any:blocked-item"
       }
     ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/subagent-stop.js\"",
+            "timeout": 5
+          }
+        ],
+        "description": "Trace a co-pilot's stop as one stopped row in the hand-off trace, with its agent id and the deck's co-pilot ticket; prints nothing and never blocks",
+        "id": "subagent-stop:co-pilot:trace"
+      }
+    ],
     "Stop": [
       {
         "hooks": [
