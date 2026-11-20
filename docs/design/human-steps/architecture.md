@@ -1,6 +1,6 @@
 # Human steps are a green thread
 
-Ticket `itm_7d3455d28cd6` · slug `human-steps` · base `origin/pilot` d2358d9f (re-cut from d03db508) · ADR NNNN (`docs/adr/NNNN-human-steps.md`, S1)
+Ticket `itm_7d3455d28cd6` · slug `human-steps` · base `origin/pilot` d2358d9f (re-cut from d03db508) · ADR 0202 (`docs/adr/0202-human-steps.md`, S1)
 
 ## 1. Problem
 
@@ -85,7 +85,7 @@ S2 moves them). `postFilled` survives: it is the one place a lander's report bec
   refused by `refuseCredentials`. Kept as `{ text }` objects so a later tick is a field, not a migration.
 - **L6** `isReportOwed` is false once a report names the ticket (red team).
 - **L7** Small-diff limit 300 changed lines per slice; past it the implementer stops and asks `main`.
-- **L8** The run's ADR is `docs/adr/NNNN-human-steps.md`, written in S1, amending ADR 0148 and ADR 0154 A2.
+- **L8** The run's ADR is `docs/adr/0202-human-steps.md`, written in S1, amending ADR 0148 and ADR 0154 A2.
 
 ## 6. Assumed decisions
 
@@ -123,7 +123,7 @@ Width 2; longest stem 2
 
 | Slice | Title | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- | --- |
-| S1 | Walking skeleton: Done on a steps thread closes its green ticket and wakes nobody | 3, 4, 5, 6 | `deck/items.mjs`, `deck/store-items.mjs`, `deck/owed.mjs`, `hooks/lib/deck.js`, `hooks/test/join.test.js`, `deck/ui/render-cards.mjs`, `deck/ui/render-rail.mjs`, `deck/test/human-steps.test.mjs` (new), `docs/adr/NNNN-human-steps.md` (new) | – | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S1](slices/S1.md) |
+| S1 | Walking skeleton: Done on a steps thread closes its green ticket and wakes nobody | 3, 4, 5, 6 | `deck/items.mjs`, `deck/store-items.mjs`, `deck/owed.mjs`, `hooks/lib/deck.js`, `hooks/test/join.test.js`, `deck/ui/render-cards.mjs`, `deck/ui/render-rail.mjs`, `deck/test/human-steps.test.mjs` (new), `docs/adr/0202-human-steps.md` (new) | – | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S1](slices/S1.md) |
 | S2 | The lander's report posts the steps thread and loses its human steps | 1, 2, 8 | `deck/closing-report.mjs`, `deck/test/closing-report.test.mjs`, `deck/test/closing-main-pr.test.mjs`, `deck/test/host-none-report.test.mjs`, `deck/test/report-post-body.test.mjs`, `deck/test/human-steps-fill.test.mjs` (new) | S1 (`postSteps`), S3 (`record.humanSteps`) | `pilot:typescript-reviewer` | [S2](slices/S2.md) |
 | S3 | A human step sent with deck_status is kept on the run record | 7 | `deck/server-tools.mjs`, `deck/tools.mjs`, `deck/store-runs.mjs`, `deck/test/human-step-record.test.mjs` (new) | – | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
 | S4 | The pilot records steps as they arise and its Findings carry none | 2, 7 | `agents/pilot.md`, `agents/pilot-lander.md`, `deck/items-bounds.mjs`, `hooks/test/inbox-alert.test.js`, `deck/test/report-due.test.mjs`, `scripts/test/measure-prompt.test.mjs` | S3 (`deck_status` `step`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S4](slices/S4.md) |

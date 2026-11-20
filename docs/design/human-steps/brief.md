@@ -45,7 +45,7 @@ https://claude.ai/code/session_01NXgSFppeY5pzVQLciH5swh
 ## Artefact
 
 `docs/design/human-steps/architecture.md`, slices in `slices/S1.md` to `slices/S4.md`. The run's ADR is
-`docs/adr/NNNN-human-steps.md` (S1, L8).
+`docs/adr/0202-human-steps.md` (S1, L8).
 
 ## Gate command
 

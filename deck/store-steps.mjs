@@ -1,5 +1,5 @@
 /**
- * A ticket's human steps (human-steps L2-L6, ADR NNNN): the steps thread's one writer, the report's close that
+ * A ticket's human steps (human-steps L2-L6, ADR 0202): the steps thread's one writer, the report's close that
  * yields to it, the user's Done, and the ticket's one close they share. Beside `store-items.mjs`, which is at
  * its line bar; the closes here are pure on the deck in hand, so they run inside that file's writes.
  */

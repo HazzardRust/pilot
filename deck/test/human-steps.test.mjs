@@ -1,7 +1,7 @@
 /**
  * S1 of human-steps: a steps thread stands under its green ticket until the user presses Done,
  * which closes both in one write; no agent closes or posts one, and nothing waits on it
- * (spec 3, 4, 5, 6; L2-L6, ADR NNNN).
+ * (spec 3, 4, 5, 6; L2-L6, ADR 0202).
  */
 
 import './no-open.mjs';
