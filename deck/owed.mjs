@@ -34,7 +34,7 @@ const isArchitectOwed = (ticket, items) =>
   !items.some((item) => item?.kind === KIND_GATE1 && isOpen(item) && item.ticket === ticket.id);
 
 /**
- * `repo`'s owed threads, `[{ id, line, why }]` in store order, pure; a ticket's line is its title. Then each
+ * `repo`'s owed threads, `[{ id, line, why }]` in store order, pure; a ticket's line is its title. Then, last, each
  * crew-handoff owed a successor (`successorOwedOf`, `coPilot` as `coPilotFor` gives it), its line the ticket id.
  */
 export function owedThreadsOf(items, repo, coPilot = null) {

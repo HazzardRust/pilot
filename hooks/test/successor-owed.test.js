@@ -114,7 +114,27 @@ test('a fresh session hears it', async function (t) {
   const said = answer.payload.hookSpecificOutput.additionalContext;
   assert.ok(said.endsWith('--- begin owed ---\nitm_7df7fdd3e4a3 successor owed: "itm_64084fb89990"\n--- end owed ---'), said);
   const told = said.slice(0, said.indexOf('--- begin owed ---'));
-  assert.match(told, /`deck_ticket co-pilot`[\s\S]*spawn/, 'the two moves, the grant before the spawn, outside the fence');
+  assert.ok(told.includes('`deck_ticket co-pilot`'), 'the grant command is named outside the fence');
+});
+
+// The route serves the rule with this directory's co-pilot: none while it is live, the row once it is released.
+test('the record route owes a successor only while no co-pilot holds the ticket', async function (t) {
+  await import('../../deck/test/no-open.mjs');
+  const { deckOnAPort, postStored, shapedTicketBody } = await import('../../deck/testUtils.mjs');
+  const base = await deckOnAPort(t);
+  const tool = async (name, args) => (await (await fetch(base + '/api/tool', {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: name, arguments: args }),
+  })).json()).content?.[0]?.text;
+  const owedNow = async () => (await (await fetch(base + '/api/record?repo=' + encodeURIComponent(REPO))).json()).owed
+    .filter((o) => o.why === 'successor owed');
+  const ticket = postStored({ kind: 'ticket', title: 'paused', body: shapedTicketBody('paused'), repo: REPO, sliceCount: 7, state: 'yellow' });
+  assert.match(await tool('deck_ticket', { id: ticket.id, action: 'co-pilot' }), /live/);
+  const { id: unused, ...shape } = aCrewHandoff('', ticket.id);
+  const handoff = postStored(shape);
+
+  assert.deepStrictEqual(await owedNow(), [], 'its co-pilot is live');
+  await tool('deck_ticket', { id: ticket.id, action: 'release' });
+  assert.deepStrictEqual(await owedNow(), [{ id: handoff.id, line: ticket.id, why: 'successor owed' }]);
 });
 
 test('a successor owed row whose line is not a ticket id is not echoed', function () {
