@@ -24,11 +24,14 @@ import path from 'node:path';
 
 import { hostFor } from '../deck/host.mjs';
 import { deleteMerged } from './branches.mjs';
+import { checksGate } from './checks.mjs';
 import { assertPushable, firstLine, holds, PILOT_BRANCH } from './pilot-branch.mjs';
-import { baseOf, commitRecords, git as gitAt, landingMessage } from './integrate.mjs';
+import { baseOf, chainLanded, commitRecords, git as gitAt, landingMessage } from './integrate.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
+import { afterGreen } from './land-adr.mjs';
 import { releasePr } from './release.mjs';
 import { runRef, runRemote } from './remotes.mjs';
+import { prBase } from './stack.mjs';
 import { isWorktreeOf, mergeIntoPilot, removeWorktree, resume } from './sync.mjs';
 import { holderFrom, prune, runRecord } from './worktrees.mjs';
 
@@ -43,7 +46,9 @@ const reason = (err) =>
  * `(args) => string` run in `cwd`, `host` the **Host** (`hostFor(cwd)` by default, null at `none`,
  * where nothing is commented or retargeted), `test` the
  * shell command, the repository's own by default. Answers `{ head, sha, retried, already, adr, host,
- * commentFailed?, stillOpen?, retargeted, main, pushSkipped?, deleted, kept, deleteFailed?, cleared }`: `sha` is pilot's tip after, `already` that the feature was on it,
+ * commentFailed?, stillOpen?, retargeted, main, pushSkipped?, deleted, kept, deleteFailed?, cleared }` for a legacy run (record base
+ * pilot, audit-f14 A3); for any other base `feature` (`featurePr`'s) in place of `retargeted` and `main`, no release PR touched and
+ * no merged poll. `sha` is pilot's tip after, `already` that the feature was on it,
  * `retargeted` `retarget`'s lines (none off origin), a chained feature refused first by `chainGuard`,
  * `adr` the `{ from, to }` the landing allocated or null,
  * `commentFailed` why `landed on pilot at <sha>` is not on the feature's PR, `stillOpen` the PR numbers
@@ -211,6 +216,12 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
     throw fail(`${firstLine(err)}; nothing pushed`);
   }
   chainGuard({ cwd });
+  // The caught-up tip's checks, before the record commit or any push (ci-gate L4, A2): red, pending, unread refuse.
+  const checks = checksGate({ host, git, sha: git(['rev-parse', 'HEAD']) });
+  if (!checks.ok) throw fail(`${checks.line}; nothing pushed`);
+  // A record base of pilot is a legacy run, and so is a record with no base, or no record: it keeps the release PR (audit-f14 A3).
+  const recorded = recordBase(cwd, head);
+  const legacy = recorded === undefined || recorded === PILOT_BRANCH;
   // The deck's run record rides in the landing merge (lander L10): committed, not discarded.
   commitRecords(cwd);
   const source = git(['rev-parse', 'HEAD']);
@@ -224,7 +235,7 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
     const reuse = fs.existsSync(keep) && !holds(cwd, ['merge-base', '--is-ancestor', source, before]) && resume({ cwd, dir: keep, pilotTip: before, source, message, side: 'theirs', refuse: fail, conflict: (left, why) => conflict(head, left, keep, why) });
     let merge;
     try {
-      merge = mergeIntoPilot({ cwd, git, source, message, test, label: head, keep, reuse });
+      merge = mergeIntoPilot({ cwd, git, source, message, test, label: head, keep, reuse, ...(!legacy && { afterGreen }) });
     } catch (err) {
       if (err.dir) throw conflict(head, err.paths, err.dir, err.why);
       const failed = Object.assign(new Error(`NOT landed: ${err.reason ?? err.message}; ${PILOT_BRANCH} not pushed`, { cause: err }), err);
@@ -239,12 +250,15 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
     // A1). Landed already: neither a refused comment nor an unreadable PR list reads as a failed landing.
     if (host !== null) {
       try {
+        // Only a legacy run's PR targets pilot, so only it is polled to read merged from the push (A3).
         const stillOpen = comment({ host, head, sha: merge.sha, counts: merge.counts, already: !merge.merged, wait, sleep });
         if (stillOpen.length) landed.stillOpen = stillOpen;
       } catch (err) {
         landed.commentFailed = firstLine(err);
       }
     }
+    // A main-cut run's PR is its own to main (audit-f14 spec 4): no release PR, no retarget (restack's).
+    if (!legacy) return { ...landed, feature: featurePr({ git, host, head, base: recorded }) };
     // Pilot pushed: a chained run's PR based on this feature now shows only its own diff (A6),
     // on the host's origin only, where pilot is.
     const retargeted = runs === 'origin' && host !== null ? retarget({ host, head }) : [];
@@ -254,18 +268,59 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
 }
 
 /**
+ * The `base` of `head`'s run record in `cwd`, undefined with no record. `chainGuard` parsed it
+ * already and refuses an unreadable one, so it parses here.
+ */
+function recordBase(cwd, head) {
+  const file = path.join(cwd, runRecord(head.slice('feat/'.length)));
+  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')).base : undefined;
+}
+
+/**
+ * The feature's own PR after a main-cut landing (audit-f14 spec 4): `{ number, base, below? }`, `base`
+ * `prBase`'s and `below` the open PR of the `feat/<N>` it stacks on; `{ number: null }` with no host,
+ * `{ number: null, why }` when the host cannot say. Never throws: the feature is landed.
+ */
+function featurePr({ git, host, head, base: recorded }) {
+  if (host === null) return { number: null };
+  const openOf = (branch) => host.reviews({ head: branch, state: 'open' }).find((pr) => pr.head === branch && pr.crossRepo === false && Number.isSafeInteger(pr.number) && pr.number > 0)?.number;
+  try {
+    const base = prBase({ git, host, base: recorded });
+    const number = openOf(head);
+    if (number === undefined) return { number: null, why: `no open PR has head ${head}` };
+    const below = base.startsWith('feat/') ? openOf(base) : undefined;
+    return { number, base, ...(below !== undefined && { below }) };
+  } catch (err) {
+    return { number: null, why: firstLine(err) };
+  }
+}
+
+/**
+ * The landing's last line for a main-cut run, which the deck parses (audit-f14 S6), in place of
+ * `mainLine`: the feature's own PR and its base, and the PR below it in a stack.
+ */
+export function featureLine({ number, base, below, why, host }) {
+  if (Number.isSafeInteger(number)) return `feature PR: #${number} into ${base}${below === undefined ? '' : ` (after #${below})`}`;
+  if (host === null) return 'feature PR: none (no host)';
+  return `feature PR: unknown (${String(why).slice(0, 200)})`;
+}
+
+/**
  * Refuses, exit 1, a feature built on `feat/<N>` while N has not landed on pilot (pilot-develop-line
  * spec 4b; L6): `baseOf`'s `chained`, read from the run record against the run remote's pilot as
  * last fetched. A record or pilot `baseOf` cannot read refuses too. Never reverts N (A2).
  */
 export function chainGuard({ cwd }) {
   let base;
+  let landed;
   try {
     base = baseOf(cwd);
+    // The chain outlives N's landing for integrate (audit-f14 L5); the guard's end is still that landing.
+    landed = base.chained !== undefined && chainLanded(cwd, base.chained);
   } catch (err) {
     throw fail(`${firstLine(err)}; nothing pushed`);
   }
-  if (base.chained) throw fail(`built on ${base.chained}, which has not landed; land it first, or revert it (fix round); nothing pushed`);
+  if (base.chained && !landed) throw fail(`built on ${base.chained}, which has not landed; land it first, or revert it (fix round); nothing pushed`);
 }
 
 /**
@@ -414,10 +469,10 @@ export function main(argv, inject = {}) {
   const table = inject.read && once(inject.read);
   const shared = table ? { holder: holderFrom(table), gc: inject.gc && (() => inject.gc(table)) } : {};
   try {
-    const { head, sha, retried, already, adr, host, main: mainPr, pushSkipped, commentFailed, stillOpen = [], retargeted = [], deleted, kept, deleteFailed, caughtUp, cleared } = land({ ...inject, ...shared });
+    const { head, sha, retried, already, adr, host, main: mainPr, feature, pushSkipped, commentFailed, stillOpen = [], retargeted = [], deleted, kept, deleteFailed, caughtUp, cleared } = land({ ...inject, ...shared });
     const said = already ? `${head} already on ${PILOT_BRANCH}` : `landed ${head} on ${PILOT_BRANCH}`;
     // Above the main line: the comment that failed, then the number the landing allocated (S8).
-    const above = `${commentFailed === undefined ? '' : `pr comment failed: ${commentFailed}\n`}${stillOpen.map((number) => `feature PR #${number} still reads open\n`).join('')}${adr ? `ADR ${adr.from} is ${adr.to}\n` : ''}`;
+    const above = `${commentFailed === undefined ? '' : `pr comment failed: ${commentFailed}\n`}${stillOpen.map((number) => `feature PR #${number} still reads open\n`).join('')}${adr ? `ADR ${adr.from} is ${adr.to}\n` : ''}${adr && feature ? `${head} moved on origin: git pull --ff-only before a fix\n` : ''}`;
     // The deck's row keeps only the output's tail (S8): the branch and clear lines go first, so
     // the SHA stays in it, and the main line last, bounded.
     const branches = [
@@ -428,7 +483,7 @@ export function main(argv, inject = {}) {
       ...(pushSkipped === undefined ? [] : [pushSkipped]),
       ...retargeted,
     ];
-    process.stdout.write(`${caughtUp}${[...branches, ...cleared].map((line) => `${line}\n`).join('')}${said} at ${sha.slice(0, 7)}${retried ? ' (pilot moved; merged again once)' : ''}\n${above}${labelLine(mainPr)}${mainLine({ ...mainPr, host })}\n`);
+    process.stdout.write(`${caughtUp}${[...branches, ...cleared].map((line) => `${line}\n`).join('')}${said} at ${sha.slice(0, 7)}${retried ? ' (pilot moved; merged again once)' : ''}\n${above}${feature ? featureLine({ ...feature, host }) : `${labelLine(mainPr)}${mainLine({ ...mainPr, host })}`}\n`);
     return 0;
   } catch (err) {
     process.stdout.write(`${err.caughtUp ?? ''}${err.message}\n`);

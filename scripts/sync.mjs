@@ -52,8 +52,10 @@ const short = (sha) => sha.slice(0, 7);
  * the push itself failed, and `reason` unprefixed; either way nothing is pushed. A stop on generated files only (`mergeResolved`,
  * `side` the writer side, 'theirs' the source) is resolved and goes on; the merged ADR index
  * is regenerated when it differs (clean-landing L1-L3), so `paths` names source files alone.
+ * `afterGreen(dir)`, given for a main-cut run (audit-f14 L7), replaces the in-merge allocation: it
+ * runs once the suite is green, its `{ from, to }` is `adr`, and the HEAD it leaves is what is pushed.
  */
-export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args), source, message, test, label: taken, keep, reuse = false, side = 'theirs', push = true, since }) {
+export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args), source, message, test, label: taken, keep, reuse = false, side = 'theirs', push = true, since, afterGreen }) {
   if (!/^[0-9a-f]{40}(?:[0-9a-f]{24})?$/.test(String(source))) throw fail(`${JSON.stringify(source)} is not a full commit SHA`);
   let runs;
   let pilotTip;
@@ -93,9 +95,10 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
     kept = reuse;
     // The feature's placeholder ADR is numbered in the merge that will be tested and pushed,
     // the lander's reused one included; the prepared trial and sync's main merge allocate nothing (one-integration-line L4).
+    // A main-cut run's is numbered on feat by `afterGreen`, once the suite is green (audit-f14 L7).
     let adr = null;
     try {
-      if (push && side === 'theirs') adr = allocateAdr(dir, { since: pilotTip });
+      if (push && side === 'theirs' && !afterGreen) adr = allocateAdr(dir, { since: pilotTip });
     } catch (err) {
       throw fail(firstLine(err));
     }
@@ -123,8 +126,19 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
       throw fail(`the tests could not run (${firstLine(err)})`);
     }
     if (run.status !== 0) throw fail(redLine(taken, run));
+    // Green: feat takes its number and is pushed before pilot, from the tested merge (L7).
+    let pushed = sha;
+    if (afterGreen) {
+      try {
+        gitAt(dir, 'reset', '-q', '--hard', sha);
+        adr = afterGreen(dir);
+        pushed = gitAt(dir, 'rev-parse', 'HEAD');
+      } catch (err) {
+        throw fail(firstLine(err));
+      }
+    }
     try {
-      assertPushable(`${sha}:${TARGET}`, { git });
+      assertPushable(`${pushed}:${TARGET}`, { git });
     } catch (err) {
       throw fail(firstLine(err));
     }
@@ -132,16 +146,22 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
     const holder = runs === null && git(['worktree', 'list', '--porcelain']).split('\n\n').find((tree) => tree.split('\n').includes(`branch ${TARGET}`));
     if (holder) throw fail(`${PILOT_BRANCH} is checked out in ${holder.split('\n')[0].slice('worktree '.length)}`);
     try {
-      if (runs === null) git(['update-ref', TARGET, sha, pilotTip]);
-      else git(['push', '-q', runs, `${sha}:${TARGET}`]);
+      if (runs === null) git(['update-ref', TARGET, pushed, pilotTip]);
+      else git(['push', '-q', runs, `${pushed}:${TARGET}`]);
     } catch (err) {
+      // A kept resolution goes back to the tested merge, so the retry resumes it, not afterGreen's remerge.
+      try {
+        if (pushed !== sha) gitAt(dir, 'reset', '-q', '--hard', sha);
+      } catch {
+        // A failed reset must not mask the rejection: land retries on `pushRejected` (F9).
+      }
       throw Object.assign(fail(`the push failed (${firstLine(err)})`), { pushRejected: true });
     }
     kept = false;
     // The counts, then `; <scope>` when the run printed one, as integrate's line has them (R10).
     const summary = [run.counts, run.scope].filter(Boolean).join('; ');
-    const line = `synced ${PILOT_BRANCH} ${short(sha)} (${taken})${summary ? `: ${summary}` : ''}`;
-    return { sha, merged: true, line, counts: run.counts, adr };
+    const line = `synced ${PILOT_BRANCH} ${short(pushed)} (${taken})${summary ? `: ${summary}` : ''}`;
+    return { sha: pushed, merged: true, line, counts: run.counts, adr };
   } finally {
     if (!kept) removeWorktree(cwd, dir);
   }

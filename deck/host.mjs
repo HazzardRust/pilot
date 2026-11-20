@@ -14,7 +14,8 @@
  *   open(pr: { base: string, head: string, title: string, body: string, draft?: boolean, label?: string }): { number: number, why?: string },
  *   edit(n: number, change: { base?: string, title?: string, body?: string, label?: string }): { why?: string },
  *   comment(n: number, body: string): void, upsertComment(n: number, marker: string, body: string): 'posted'|'edited'|'none',
- *   signedIn(): boolean }} Host
+ *   signedIn(): boolean, checks(sha: string): Check[] }} Host
+ * @typedef {{ name: string, outcome: 'pass'|'fail'|'pending' }} Check  one host CI result on one commit (ci-gate)
  */
 
 import { git as gitAt } from '../scripts/pilot-branch.mjs';
@@ -37,6 +38,22 @@ export function hostOf(git) {
     throw err;
   }
   if (!HOST_NAMES.includes(value)) throw new Error(`${HOST_KEY} names ${JSON.stringify(value)}: not one of ${HOST_NAMES.join(', ')}`);
+  return value;
+}
+
+export const MERGE_KEY = 'pilot.merge';
+export const MERGE_METHODS = Object.freeze(['merge', 'squash']);
+
+/** How a feature PR is merged, from `git config pilot.merge`: unset is `merge`. Throws, naming the key, on any other value (audit-f14 A8). */
+export function mergeMethodOf(git) {
+  let value;
+  try {
+    value = git(['config', '--get', MERGE_KEY]).replace(/\r?\n$/, '');
+  } catch (err) {
+    if (err.status === 1) return 'merge';
+    throw err;
+  }
+  if (!MERGE_METHODS.includes(value)) throw new Error(`${MERGE_KEY} names ${JSON.stringify(value)}: not one of ${MERGE_METHODS.join(', ')}`);
   return value;
 }
 

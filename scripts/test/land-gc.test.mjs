@@ -14,13 +14,14 @@ import path from 'node:path';
 
 import { gc } from '../../deck/gc.mjs';
 import { githubHost } from '../../deck/host-github.mjs';
+import { greenChecks } from './lib/land-repos.mjs';
 import { pilotProcesses } from '../../deck/procs.mjs';
 
 const { main } = await import('../land.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 const green = 'node -e "0"';
-const host = githubHost((args) => (args[0] === 'pr' && args[1] === 'list' ? '[]' : ''));
+const host = githubHost(greenChecks((args) => (args[0] === 'pr' && args[1] === 'list' ? '[]' : '')));
 
 /** origin.git with main, pilot and feat/x one commit ahead of pilot; `work` is on feat/x. */
 function scratchRun(t) {

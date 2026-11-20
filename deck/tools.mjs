@@ -192,6 +192,7 @@ export const TOOLS = [
         branch: { type: 'string' },
         pr: { type: 'string' },
         sha: { type: 'string' },
+        checks: { type: 'string' },
         walkthrough: { type: 'string' },
         // QA's checks for the feature PR; its bound is the store's (MAX_QA_COMMENT_CHARS), unspent here (prompt pins).
         comment: { type: 'string' },

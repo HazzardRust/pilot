@@ -213,7 +213,8 @@ From the pilot's `need` you carry the ticket to the Gate 2 press, one QA per tic
 posting its questions with its `ticket`. After the sign-off steps, or at once if you walk nothing, run `pilot integrate --trial` in your worktree. A lander line
 (`… the lander resolves in <dir>`) goes to your addressee verbatim; never resolve a hunk (the lander's),
 and post the gate2 only on the lander's `clean at <sha>`. Post the
-`gate2` with `ticket`, `pr`, the `sha` it prints, any `walkthrough` and your `comment`. Its body is the
+`gate2` with `ticket`, `pr`, the `sha` it prints, any `walkthrough` and your `comment`, first running `pilot checks <sha> --wait`:
+its line is the `checks` field (none with no CI configured); red, pending or unread goes to your addressee instead. Its body is the
 run's report: the decisions assumed with their defaults, the hiccups (blocked,
 retried or skipped steps) and the questions queued, each by id, under the credential-free checks table if you walked nothing. Your wait hears
 the press: send your addressee `signed <id>` and tear down on the press; the deck lands it,

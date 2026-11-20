@@ -8,6 +8,7 @@
 
 import fs from 'node:fs';
 
+import { git as gitAt } from '../scripts/pilot-branch.mjs';
 import { runWorktrees } from '../scripts/worktrees.mjs';
 import { readRefusals } from './classifier-log.mjs';
 import { isPilotClose, mayPilotClose } from './blocked-shape.mjs';
@@ -16,6 +17,7 @@ import { findCredential } from './credential.mjs';
 import { MAX_HUMAN_STEPS, MAX_HUMAN_STEP_CHARS, REPORT_DUE } from './items-bounds.mjs';
 import { CONFLICT_TITLE, LANDING_KINDS } from './landing-replies.mjs';
 import { reportAskGaps } from './report-shape.mjs';
+import { mergeMethodOf } from './host.mjs';
 import { rankFriction, repoOf } from './runs.mjs';
 import { DeckRefusal } from './store-core.mjs';
 import { noteDeck, postItem, resolveItem } from './store-items.mjs';
@@ -61,6 +63,15 @@ export function blockedStepLines(refusals) {
   return [`Blocked steps: ${refusals.length}`, ...rows.map((row) => `- ${said(row.agent)} ${said(row.reason)}: ${row.count}`)];
 }
 
+/** The repository's `pilot.merge`, or the Error that says why it cannot be read: the step names it and never hides it. */
+function methodAt(repo) {
+  try {
+    return mergeMethodOf((args) => gitAt(repo, ...args));
+  } catch (err) {
+    return err instanceof Error ? err : new Error(String(err));
+  }
+}
+
 /**
  * The ticket's blocked-step lines from the classifier log, by ticket id alone: a crew session logs its own
  * worktree's spelling of the repo, never the gate's. A log that cannot be read says so and never stops the report.
@@ -82,7 +93,32 @@ const MAIN_LINE = /^main gets pilot: (?:#(\d+)(?: \(opened\))?|open a PR from (\
 /** Land's main line and the PR or by-hand branch it names: `[line, number, byHand, merged]`, the last one land printed. */
 const mainLineOf = (gate) => [...String(gate?.landing?.line ?? '').matchAll(MAIN_LINE)].at(-1) ?? [];
 
-/** A landing's first human step, from land's main line (spec 3): the one PR the user merges for main. */
+/**
+ * Land's feature line, in S4's `featureLine` shapes (audit-f14): `feature PR: #<n> into <base>` with ` (after #<below>)`
+ * for a stack, `none (no host)`, or `unknown (<why>)`.
+ */
+const FEATURE_LINE = /^feature PR: (?:#(\d+) into (\S+?)(?: \(after #(\d+)\))?|none \(.*\)|unknown \((.*)\))$/gm;
+
+/** The step's method words: `pilot.merge`'s `merge` is a merge commit, `squash` a squash. */
+const METHOD_WORDS = { merge: 'a merge commit', squash: 'a squash' };
+
+/**
+ * The human step for a main-cut feature, from land's last `feature PR:` line: "Merge #<below>, then #<n> with a <method>",
+ * or "Merge #<n> with a <method>". A line that names no PR asks the pilot; no feature line at all is undefined.
+ */
+export function humanStep({ line, method }) {
+  const [, number, , below, why] = [...String(line ?? '').matchAll(FEATURE_LINE)].at(-1) ?? [];
+  if (number === undefined && why === undefined && !/^feature PR: none/m.test(String(line ?? ''))) return undefined;
+  if (number === undefined) return why === undefined ? 'Land opened no feature PR (no host): merge the feature branch by hand' : `Land named no feature PR (${said(why)}): check which PR brings this feature in`;
+  // A setting that cannot be read still gets the default words, with the cause beside them.
+  const how = method instanceof Error ? `${METHOD_WORDS.merge} (${said(String(method.message).split('\n')[0])})` : (METHOD_WORDS[method] ?? METHOD_WORDS.merge);
+  return below === undefined ? `Merge #${number} with ${how}` : `Merge #${below}, then #${number} with ${how}`;
+}
+
+/** Land's last `feature PR:` line, whole, or undefined. */
+const featureLineOf = (gate) => [...String(gate?.landing?.line ?? '').matchAll(FEATURE_LINE)].at(-1)?.[0];
+
+/** A legacy landing's first human step, from land's main line (spec 3): the one PR the user merges for main. */
 function mainStep(number, byHand, merged) {
   // No branch named: the PR's base is the host's default branch, which land does not print (QA F3).
   if (number !== undefined) return `Merge #${number} with a merge commit, when you want main to have it.`;
@@ -109,20 +145,30 @@ const stepText = (text) => {
 };
 
 /**
- * A landing's human steps (human-steps spec 1, A5): the main-PR step, the record's recorded steps, one
+ * A landing's first human step: the feature PR(s) land's `feature PR:` line names, merged by `method`
+ * (audit-f14), else a legacy run's main-PR step.
+ */
+function firstStepOf(gate, method) {
+  const featureLine = featureLineOf(gate);
+  if (featureLine !== undefined) return `${humanStep({ line: featureLine, method })}.`;
+  const [, number, byHand, merged] = mainLineOf(gate);
+  return mainStep(number, byHand, merged);
+}
+
+/**
+ * A landing's human steps (human-steps spec 1, A5): the feature-PR or main-PR step, the record's recorded steps, one
  * `Remove <path>` per worktree `left`, the prune step. Past 20 the removes fold into one and the
  * recorded steps' overflow into a pointer to the record. Each one line of at most 300 characters; one
  * naming a credential-shaped value is a neutral pointer, since `postSteps` would refuse the thread.
  */
-export function stepsOf(record, gate, left) {
-  const [, number, byHand, merged] = mainLineOf(gate);
+export function stepsOf(record, gate, left, method = 'merge') {
   const recorded = (Array.isArray(record?.humanSteps) ? record.humanSteps : []).map((step) => String(step?.text ?? '').trim()).filter(Boolean);
   const removes = (Array.isArray(left) ? left : []).map((dir) => (findCredential(dir) ? REMOVE_WITHHELD : `Remove ${said(dir)} when you are done with it.`));
   const over = 2 + recorded.length + removes.length > MAX_HUMAN_STEPS;
   const tail = over && removes.length > 1 ? [`Remove the ${removes.length} worktrees the closing report lists when you are done with them.`] : removes;
   const room = MAX_HUMAN_STEPS - 2 - tail.length;
   const kept = recorded.length > room ? [...recorded.slice(0, room - 1), `${recorded.length - room + 1} more steps are in the run record's humanSteps.`] : recorded;
-  return [mainStep(number, byHand, merged), ...kept, ...tail, PRUNE_STEP].map((text) => ({ text: stepText(text) }));
+  return [firstStepOf(gate, method), ...kept, ...tail, PRUNE_STEP].map((text) => ({ text: stepText(text) }));
 }
 
 /** The `left` line of a git that could not list: the cause's first line when there is one. */
@@ -143,11 +189,12 @@ export function closingReportOf(record, gate, left, closes = [], blocked = block
   const rows = (Array.isArray(record?.slices) ? record.slices : []).filter((row) => row?.slice !== record?.slug);
   const { agents, drains } = rankFriction(record?.friction);
   const list = (entries, none) => (entries.length > 0 ? entries.map((entry) => `- ${entry}`) : [`- ${none}`]);
-  // Land's main line, whole: a record line; its step is the steps thread's (human-steps L2).
+  // Land's feature line, else a legacy run's main line, whole: a record line; its step is the steps thread's (human-steps L2).
   const [mainLine] = mainLineOf(gate);
+  const landLine = featureLineOf(gate) ?? mainLine;
   const body = [
     `Landed ${said(gate?.pr ?? 'the feature PR')} at ${said(sha ?? 'an unknown SHA')}.`,
-    mainLine === undefined ? 'main gets pilot: not printed by land' : said(mainLine),
+    landLine === undefined ? 'main gets pilot: not printed by land' : said(landLine),
     '',
     'Slices:',
     ...list(rows.map((row) => `${said(row.slice)}${row.pr ? ` (#${row.pr})` : ''}`), 'none recorded'),
@@ -245,7 +292,7 @@ export function postFilled(fields) {
   const left = worktreesLeft(gate.repo, record.slug);
   // The steps thread before the report (L2), so the report's post leaves the ticket green under it.
   if (!items.some((item) => item.kind === KIND_STEPS && item.ticket === ticket)) {
-    postSteps({ ticket, repo: gate.repo, title: `Human steps: ${said(record.feature ?? record.slug)}`, steps: stepsOf(record, gate, left) });
+    postSteps({ ticket, repo: gate.repo, title: `Human steps: ${said(record.feature ?? record.slug)}`, steps: stepsOf(record, gate, left, methodAt(gate.repo)) });
   }
   // Filed under the gate2's repository, as the deck's own report was, never the poster's worktree.
   const report = postItem({ ...fields, repo: gate.repo, ...closingReportOf(record, gate, left, pilotClosesOf(listItems(), ticket, gate.repo), blockedStepsOf(ticket)) });

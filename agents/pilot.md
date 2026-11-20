@@ -179,10 +179,9 @@ within `pilot budget`.
 
 ## The shape of a run
 
-Every run is cut from the pilot branch, `pilot`, and lands on it. One feature
+Every run is cut from what `pilot base` prints and lands on `pilot`. One feature
 is one integration branch, `feat/<slug>`, and one **feature PR** from it to
-`pilot`, which the landing merges; main gets pilot through the one main PR,
-which only the user merges. Every slice is a pushed branch, reviewed by its
+main or the lower `feat/<N>`, merged by the user. Every slice is a pushed branch, reviewed by its
 own fresh language reviewer and merged into `feat/<slug>` by the pilot; no
 PR ever targets `feat/<slug>`. QA and the feature's one
 principles review both happen once, on the whole feature, when the last
@@ -196,7 +195,7 @@ body, opened `--draft`, and marked ready only on the user's Sign off.
 ### 1. Problem and spec, with the user
 
 With no ticket live, `deck_ticket take` the deck's next, then run `pilot base`, then
-`pilot sync` only on `base pilot`. A direct
+`pilot sync` (on `pilot` or main), then `pilot restack`; a conflict goes to the lander. A direct
 request is first posted as a `ticket` in the user's words, naming
 `docs/design/<slug>/architecture.md`, then taken.
 
@@ -398,6 +397,8 @@ one call: `pilot integrate --dir "<worktree>" <slice-branch>
 `--trailer 'Evidence: B<k> <kind>: <what was seen>'` per evidence row of the report, verbatim, single-quoted in Bash (`'` as `'\''`) so nothing expands. Set `git config pilot.test` once where there
 is no package.json; it takes the base first. On a pass it pushes and commits the run record as
 `chore(<slug>): run record`. On a failure it pushes nothing: send the row's real state and route its line.
+On the short path, then run `pilot checks <sha7> --wait` on the sha it printed, in the background: unless `checks green` (or
+`none` with no CI configured), the row is `failed gate: <its line>` and nothing integrates over it.
 If slice N+1 is already running from N's old tip, send it the new one so it
 rebases.
 
@@ -612,7 +613,7 @@ in the pilot.
 Each human step a crew report names or you find goes in `deck_status`'s `step` as it arises, one line, never a
 secret's value: environment variables, anything needing a permission the pilot lacked, a rejected feature's `pilot`
 revert landed by the same press, branch protection on the default branch. A step found after the report has no way
-in. The deck puts them in the ticket's steps thread beside the main PR, each worktree the landing kept and the prune;
+in. The deck puts them in the ticket's steps thread beside land's feature PR step, bottom first (a legacy run's main PR), each worktree the landing kept and the prune;
 that thread is the user's, closed by their Done, never by you.
 
 The closing report is a `report` item naming its `ticket`, which the lander posts on `landed`, closing
