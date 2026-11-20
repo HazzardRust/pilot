@@ -119,6 +119,10 @@ fetched on 2026-11-20 from microsoft/vscode.
 | Text selection | No text can be highlighted: Rune's text is unselectable by default (`rune` el/text.rs:483 `selectable(bool)`, rune-kit markdown's `selectable` flag) and the deck never sets it |
 | Hover affordance | Only the graph dots react to hover (`regions/graph.rs:137`, `on_hover_change`); tabs, strip buttons, cards and rows give no sign they are clickable. Rune has a per-element hover style (`El::hover`, visuals.rs:324), so no state flags are needed |
 | Thread kind line | `regions/thread.rs:151-181`: the `‹ ›` arrows are `type_::TITLE` while the rest is `LABEL`, so baselines differ; the rows set no cross-axis centring; the accent bar is `s2 x s4` (2x16), taller than the text; `at` is the raw ISO time with ms; gaps are 4 inside and 16 to the pager, so the pager floats. Fix: one size, a centred row, the time as `HH:MM` (full time on hover), the pager pushed to the right edge |
+| Reply box | `regions/reply.rs:344-360`: the input (filled with the rule colour), then the options row, then Reply/Close/Dismiss, all stacked on the left with equal weight. Proposed: the one-click options above the box; Reply as the single primary button at the box's bottom right; Close and Dismiss as quiet buttons on the left; confirms inline beside the button they confirm |
+| Message left rule | deck.css:495-502 draws a 2 px rule on each message's left, dashed for agent messages (`.from-pilot`) and solid for the user's; Rune's messages (`regions/thread.rs:192-199`) draw none. Restore it in Rune |
+| Tab and Shift+Tab | A bug: from the reply box, Tab goes nowhere. Two causes: the deck's buttons (`regions/reply.rs:213`, and the same pattern elsewhere) set `role("button")` but not `.focusable(true)`; and the app never calls Rune's `tab_visits_controls(true)` (rune 7cba77c app.rs:247), so by default Tab visits only text fields and lists (runtime/input/focus.rs:579-584). Fix: every control focusable, and `tab_visits_controls(true)` in app.rs. Unverified live |
+| Separator rules | The HTML page separates things with 1 px `--rule` hairlines; Rune relies on headers and spacing alone. Copy each one 1:1 from deck.css: header bottom :90, the reply box top :225, between cards `article` :445 (none after the thread :446), runs and run status :695/:701, table headers and rows `.slices` :709/:718, run-section summaries :1081-1091 (none after the last unless open), tickets/reports list items :1113-1114 (none after the last), trees :1143-1144, notices :1194, mark-all :1223, markdown tables :1231, and boxed code and panels :540/:602/:612/:775/:843/:979 |
 
 ## 6. Decisions for the restyle (2026-11-20)
 
@@ -137,6 +141,18 @@ fetched on 2026-11-20 from microsoft/vscode.
   - The behaviour tests stay: specs 3, 9, 10, 12, 14 and 15.
   - The full suite runs once, at landing.
   - The user looks at every slice.
+- **Font** (the user, on itm_1ca41d7c120d): Inter for the UI and JetBrains Mono for code, ids
+  and times, both bundled. Sizes are 13 bold, 13 and 11.
+- **Style hand-off: a token playground** (the user, on itm_2d4d885b5e13).
+  - It is an added slice of this ticket, ahead of the palette and spacing work, about 0.5-1
+    day.
+  - It is an HTML mock of the deck with a control for each Rune token: colours in light and
+    dark, font, sizes, spacing, radius, hover tint and springs.
+  - Its JSON export maps 1:1 to theme.rs field names.
+  - It reproduces deck.css's `color-mix(currentColor 35%, #hex)`, so the exported hexes match
+    Rune's.
+  - A native Rune screenshot stays the final check.
+  - Hover, text selection, the kind line and the font go ahead without waiting for it.
 
 - **Token playground** (the user, itm_2d4d885b5e13). The theme's values move into one JSON file, `deck/rune/theme.json`, read by theme.rs at build time (S36). A playground page, `deck/rune/playground/index.html` (S37), edits every token over a mock of the deck in light and dark and exports that JSON 1:1. The crew sets the palette (S34) and spacing (S35) values without waiting (the user: "dont wait on me"). A later export from the user replaces theme.json in one step. A native Rune screenshot stays the final check.
 
@@ -173,6 +189,8 @@ fetched on 2026-11-20 from microsoft/vscode.
      (OFL).
    - Sizes: header 13 bold, body 13, caption 11.
    - Added on the thread as option E: Inter + IBM Plex Mono, both already in Rune's assets.
+   - **Decided: A** (the user, on itm_1ca41d7c120d). Inter for the UI and JetBrains Mono for
+     code, ids and times, both bundled; JetBrains Mono's TTFs and OFL go into the repo.
 10. "okay i've noticed what feels off about the tabs - make sure to include nice subtle hover
     actions over everything on the page so i can tell what is a button and what is text"
     - Taken as the section 3 rule "Hover says clickable", applied to every control in the
@@ -182,3 +200,29 @@ fetched on 2026-11-20 from microsoft/vscode.
 12. "this status line or like title line i forget what you call it - it sucks the alignment
     is all off" (screenshot: `posted question 2026-11-20T06:47:28.707Z pilot ‹ D1 › 1/2`)
     - The thread's kind line: section 5, row "Thread kind line".
+13. "look the main thing is that no hover behaviour this is throwing me way off, and just the
+    overall style. if style feels like it is difficult for you to get right and you feel like
+    you are guessing at times, make sure to suggest a better system. like im sure that there
+    are some good ui design tools that you could get me to use, where you can upload the
+    current work somehow, and i can mess around to make it better to close the intent gap. up
+    you though, if there doesnt look like much return from using something else then im fine
+    with this"
+    - Hover is the top priority in the restyle.
+    - Decided as the token playground (section 6).
+14. "the "reply to the pilot" box and the buttons underneath it - reorganise. and while we are
+    here i thought of a feature - obsidian, the note taking app, when you write markdown text
+    into it, it renders it. so it renders whilst you are writing. there is some nuance to it
+    because some stuff stays unrendered whilst you are writing it and then renders as soon as
+    the cursor moves to a different line."
+    - The reorganisation: section 5, row "Reply box".
+    - Live markdown is a new feature, outside this restyle, and goes to the pilot as a ticket.
+15. "also a lot of nuance is missing. like the little line that goes from dotted to solid on
+    the left of the messages. also navigating via tab and shift+tab doesnt work to move around
+    the page when starting from the text box"
+    - Section 5, rows "Message left rule" and "Tab and Shift+Tab".
+    - "A lot of nuance is missing" means the restyle compares Rune with the HTML page region
+      by region, for details such as these.
+16. "just general lines that indicate separation - we need it. the html UI is nicer, at the
+    moment, it has these little lines that indicate the separation between things rather than
+    relying solely on headers and spacing."
+    - Section 5, row "Separator rules": each of deck.css's hairlines is copied 1:1.
