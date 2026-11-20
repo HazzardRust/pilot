@@ -160,23 +160,37 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
 
     // The accent bar is a text line tall at most, and the time is the short form with the whole stamp on hover.
     let at = line(&hhmm(Some(&th.kind_line.at))).help(th.kind_line.at.as_str());
-    let mut kind = row()
-        .key("kind")
-        .items_center()
-        .grow(1.0)
-        .gap(space::within)
-        .child(el().size(space::s2, space::s3).fill(accent))
-        .child(theme::content(
+    // The page's kind line: its parts a middle dot apart (the walkthrough of 2026-11-21).
+    let parts = [
+        Some(theme::content(
             text(&th.kind_line.state).font(type_::CAPTION).color(tone),
             dark,
-        ))
-        .child(line(&th.kind_line.kind))
-        .child(at);
-    if let Some(standing) = &th.kind_line.standing {
-        kind = kind.child(line(standing));
-    }
-    kind = kind.child(line(&th.kind_line.owner));
+        )),
+        Some(line(&th.kind_line.kind)),
+        Some(at),
+        th.kind_line.standing.as_deref().map(line),
+        Some(line(&th.kind_line.owner)),
+    ];
+    let kind = parts.into_iter().flatten().enumerate().fold(
+        row()
+            .key("kind")
+            .items_center()
+            .grow(1.0)
+            .min_w(space::s0)
+            .gap(space::within)
+            .child(el().size(space::s2, space::s3).fill(accent)),
+        |kind, (i, part)| {
+            let kind = if i == 0 {
+                kind
+            } else {
+                kind.child(text("·").font(type_::CAPTION).color(k.quiet))
+            };
+            kind.child(part)
+        },
+    );
 
+    // The page's header grid (deck.css `body[data-item] header`): `‹ code ›` on the centre, between
+    // two equal sides, the kind line on the left and X/N read from the right.
     let mut nav = row()
         .key("nav")
         .items_center()
@@ -187,8 +201,13 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         nav = nav.child(text(code).font(type_::CAPTION.mono()).color(t.text));
     }
     nav = nav.child(arrow(th.nav.next, "›", t.text, k.quiet, dark));
+    let mut right = row()
+        .key("position")
+        .grow(1.0)
+        .min_w(space::s0)
+        .justify_end();
     if let Some(position) = &th.nav.position {
-        nav = nav.child(line(position));
+        right = right.child(line(position));
     }
 
     let mut page = col()
@@ -202,7 +221,8 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                 .items_center()
                 .gap(space::between)
                 .child(kind)
-                .child(nav),
+                .child(nav)
+                .child(right),
         )
         .child(theme::separator(dark))
         .child(theme::content(
