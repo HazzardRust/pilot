@@ -448,6 +448,7 @@ export function callTool(name, args, deps = {}) {
       findings: args?.findings,
       friction: args?.friction,
       report: args?.report,
+      step: args?.step,
       next: args?.next,
       finished: args?.finished,
     });

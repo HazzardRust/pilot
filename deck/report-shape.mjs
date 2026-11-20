@@ -2,8 +2,8 @@
  * Whether a closing report asks the user anything (report-record spec 4, L4, A1, ADR 0148): a report is
  * the run's record, so anything that needs the user is its own thread. Pure: the body and the steps in,
  * the gaps out, so `postItem` refuses before it reads the store; `addPilotMessage` reads the same gaps
- * over the pilot's reply on a record (A3). "Reply here" is not an ask: the pilot announces its own
- * worktrees reply with "I reply here".
+ * over the pilot's reply on a record (A3). "Reply here" is not an ask: the pilot's own
+ * Findings: reply says "I reply here".
  */
 
 // Code spans and quoted text are what the line shows, not what it asks: stripped before either test.
