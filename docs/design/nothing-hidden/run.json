@@ -1,0 +1,24 @@
+{
+  "slug": "nothing-hidden",
+  "feature": "Nothing waiting on you is hidden",
+  "ticket": "itm_31849c6b5525",
+  "branch": "feat/nothing-hidden",
+  "base": "feat/ci-gate",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-nothing-hidden",
+  "artefact": "docs/design/nothing-hidden/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "planned"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    }
+  ],
+  "next": "A1 locked (in-hand first, others' gates+signoffs cards, rest counted fold); verdicts A1-A6 recorded and sent (A5 overturned). Architect committing and posting gate1 (8 locked, 2 slices, surface true); if none on deck, brief a fresh architect from pilot-design-nothing-hidden. After Sign off: short path, S1 Opus then S2 Sonnet. Also live: ci-gate QA posts gate2 after #128 CI on 8e50ef65.",
+  "updatedAt": "2026-11-20T01:45:34.426Z"
+}
