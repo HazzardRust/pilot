@@ -33,7 +33,8 @@ import { oneLine } from './one-line.mjs';
 import { holdLeash, leashFrom } from './leash.mjs';
 import { probeDeck } from './probe.mjs';
 import { processTable } from './procs.mjs';
-import { archiveOld, storeDir } from './store.mjs';
+import { STALL_AGE_S, noteStall, reapStalled } from './stalled-waits.mjs';
+import { archiveOld, listLiveRuns, storeDir } from './store.mjs';
 import { startMemoryLog } from './memory.mjs';
 import { startUsageLog } from './telemetry.mjs';
 import { readUsageSwitch } from './usage-switch.mjs';
@@ -42,6 +43,19 @@ import { searchPathOnly } from '../scripts/pilot-branch.mjs';
 
 /** How often the archive pass runs after the start's (store-durability A3). */
 const ARCHIVE_EVERY_MS = 24 * 60 * 60 * 1000;
+
+/** How often the stalled-wait scan runs (wait-deadlines A4): a stalled wait goes within 55 minutes. */
+const STALL_SCAN_MS = 5 * 60 * 1000;
+
+/**
+ * The stall age this deck scans with: `PILOT_DECK_STALL_AGE_S` on a leashed deck with its own store only, a scratch
+ * deck's live run of the scan (wait-deadlines S3); the user's deck, or any on the real store, waits the full `STALL_AGE_S`.
+ */
+export function stallAgeOf(env, leashed) {
+  const asked = Number(env.PILOT_DECK_STALL_AGE_S);
+  const isolated = leashed && Boolean(env.PILOT_DECK_DIR); // its own store holds its own runs, never the real sessions'
+  return isolated && Number.isInteger(asked) && asked > 0 && asked < STALL_AGE_S ? asked : STALL_AGE_S;
+}
 
 /** Past this the log starts again: these are the last run's diagnostics, not every run's. */
 const MAX_LOG_BYTES = 1024 * 1024;
@@ -228,6 +242,23 @@ export async function main() {
   };
   archive();
   setInterval(archive, ARCHIVE_EVERY_MS).unref();
+  // A wait stuck past the stall age under a live registered run is stopped and its repository told (wait-deadlines S3, A1).
+  const stallAgeS = stallAgeOf(process.env, Boolean(leash));
+  const note = (repo, line) => {
+    try {
+      noteStall(repo, line);
+    } catch (err) {
+      console.error(`[deck] ${line}, and the line could not be noted:`, err.message);
+    }
+  };
+  const reap = () => {
+    try {
+      for (const line of reapStalled({ read: processTable, runs: listLiveRuns, note, stallAgeS })) console.error(`[deck] ${line}`);
+    } catch (err) {
+      console.error('[deck] the stalled-wait scan failed:', err?.message ?? err); // a scan never takes the deck down
+    }
+  };
+  setInterval(reap, Math.min(STALL_SCAN_MS, stallAgeS * 1000)).unref();
   // A gate2 that landed under the last daemon and was left open is resolved; never a report (lander S15).
   try {
     closeLandedAtStart();

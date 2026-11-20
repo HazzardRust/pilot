@@ -59,6 +59,7 @@ import { main as collectGarbage, deckPidNow, landSweep } from '../deck/gc.mjs';
 import { main as doctor } from '../deck/doctor.mjs';
 import { main as restoreStore } from '../deck/store-restore.mjs';
 import { main as waitForReply } from '../deck/wait.mjs';
+import { main as waitForFile } from '../deck/wait-for.mjs';
 import { openPilot } from '../deck/session.mjs';
 import { runSettings, startArgs } from '../deck/run-env.mjs';
 import { readReach } from '../scripts/reach.mjs';
@@ -229,6 +230,9 @@ const usage = () => `pilot — the deck for piloted runs
                  run in the background; exit the moment a user reply this kind owns
                  (default pilot) is waiting for this repository, take it, print it,
                  and exit 0 (default timeout 50 minutes)
+  pilot wait-for --file <path> --match <regex> --timeout <minutes>
+                 print the first line of <path> matching <regex> and exit 0, or exit 2
+                 printing "timed out …" at the deadline; --timeout is required, at most 50
 
 Any command can be given as \`pilot --dir <path> <command> …\` to run it in <path>.
 
@@ -554,6 +558,11 @@ export async function run(argv, deps) {
 
   if (command === 'wait') {
     process.exitCode = await waitForReply(argv.slice(1));
+    return undefined;
+  }
+
+  if (command === 'wait-for') {
+    process.exitCode = await waitForFile(argv.slice(1), { out: process.stdout, err: process.stderr });
     return undefined;
   }
 
