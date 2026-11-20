@@ -14,7 +14,7 @@
   code { font-size: 11px; }
   #bar { display: flex; gap: 6px; flex-wrap: wrap; position: sticky; top: -8px; background: #fafafa; padding: 6px 0; }
   #out { width: 100%; height: 120px; font: 11px monospace; }
-  #msg { color: #a00; }
+  #msg { color: #555; }
   /* The mock: every value is a custom property set from theme.json (see render()). */
   #mock { --px: 1px; display: grid; grid-template-rows: calc(var(--size-titlebar, 32) * var(--px)) 1fr;
     background: var(--surface); color: var(--text); font-family: var(--font-family); overflow: hidden;
@@ -29,7 +29,7 @@
   #mock .tab, #mock button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer;
     padding: calc(var(--space-s1) * var(--px)) calc(var(--space-pad) * var(--px)); border-radius: calc(var(--radius-button, 4) * var(--px)); }
   #mock .tab:hover, #mock button:hover, #mock .icon:hover { background: var(--hover); }
-  #mock .tab.on { box-shadow: inset 0 -2px 0 var(--accent-blue); }
+  #mock .tab.on { box-shadow: inset 0 -2px 0 var(--roles-primary, var(--accent-blue)); }
   #mock .card { border: 1px solid var(--rule); border-radius: calc(var(--radius-button, 4) * var(--px)); padding: calc(var(--space-pad) * var(--px)); margin-bottom: calc(var(--space-within) * var(--px)); }
   #mock .quiet { color: var(--quiet); }
   #mock .chip { border-radius: calc(var(--radius-chip, 2) * var(--px)); padding: 0 calc(var(--space-within) * var(--px)); border: 1px solid currentColor; }
@@ -88,7 +88,8 @@ function hueOver(dark, hue, mix) {
   return '#' + [16, 8, 0].map(s => {
     const h = srgbEncode(srgbDecode(f(((hue >> s) & 0xff) / 255)));
     const lin = srgbDecode(f(f(m * t) + f(f(1 - m) * h)));
-    return Math.round(f(srgbEncode(lin) * 255)).toString(16).padStart(2, '0');
+    // Rust's `as u8` saturates.
+    return Math.min(255, Math.max(0, Math.round(f(srgbEncode(lin) * 255)))).toString(16).padStart(2, '0');
   }).join('');
 }
 
@@ -97,18 +98,24 @@ function parse(src) {
   let i = 0; const leaves = [];
   const ws = () => { while (/\s/.test(src[i])) i++; };
   const tok = re => { re.lastIndex = i; const m = re.exec(src); if (!m) throw new Error('bad JSON at ' + i); i = re.lastIndex; return m[0]; };
+  const str = /"(?:[^"\\]|\\.)*"/y;
+  const expect = c => { ws(); if (src[i++] !== c) throw new Error(`expected ${c} at ${i - 1}`); };
   function value(path) {
     ws(); const start = i;
     if (src[i] === '{') {
       i++; const obj = {}; ws();
       if (src[i] === '}') { i++; return obj; }
       for (;;) {
-        ws(); const key = JSON.parse(tok(/"(?:[^"\\]|\\.)*"/y)); ws(); i++;
+        ws(); const key = JSON.parse(tok(str)); expect(':');
         obj[key] = value(path.concat(key)); ws();
-        if (src[i++] === '}') return obj;
+        if (src[i] === '}') { i++; return obj; }
+        expect(',');
       }
     }
-    if (src[i] === '[') { let depth = 0; do { if (src[i] === '[') depth++; if (src[i] === ']') depth--; i++; } while (depth); }
+    if (src[i] === '[') {
+      let depth = 0;
+      do { if (src[i] === '"') { tok(str); continue; } if (src[i] === '[') depth++; if (src[i] === ']') depth--; i++; } while (depth && i < src.length);
+    }
     else tok(/"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null/y);
     const raw = src.slice(start, i), leaf = { path, start, end: i, raw, value: JSON.parse(raw) };
     leaves.push(leaf); return leaf.value;
@@ -118,8 +125,19 @@ function parse(src) {
 }
 
 const isHex = v => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
-const isPair = v => v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).join() === 'light,dark' && isHex(v.light) && isHex(v.dark);
+const isPair = v => v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 2 && isHex(v.light) && isHex(v.dark);
+// As theme.rs: a bare hex under `by` or `state` is a hue mixed over the text; any other is drawn as it is.
+const isHue = (v, path) => isHex(v) && ['by', 'state'].includes(path[0]);
+// Fractions run 0..1; every other number is px and runs to twice its value or 64.
+const isUnit = path => path[0] === 'alpha' || path[0] === 'motion' || /(^|_)(mix|alpha)$/.test(path.at(-1));
 let src = null, doc = null;
+/** The section a string names a key of (`"s2"` in `space`, `"blue"` in `accent`): the value is an alias. */
+const aliasOf = v => typeof v === 'string' && !isHex(v)
+  ? Object.keys(doc.root).find(s => {
+      const o = doc.root[s];
+      return o && typeof o === 'object' && !Array.isArray(o) && Object.hasOwn(o, v) && typeof o[v] !== 'string';
+    })
+  : undefined;
 
 function num(n, raw) { const s = String(n); return raw.includes('.') && !/[.e]/.test(s) ? s + '.0' : s; }
 function format(v, raw) {
@@ -137,9 +155,11 @@ function exportText() {
   return out + src.slice(at);
 }
 
-function load(text) {
+function load(text, from) {
   try { doc = parse(text); src = text; } catch (e) { msg.textContent = 'Import: ' + e.message; return; }
-  msg.textContent = ''; localStorage.setItem('theme.json', text); controls(); render();
+  msg.textContent = from;
+  try { localStorage.setItem('theme.json', text); localStorage.setItem('theme.from', from); } catch {}
+  controls(); render();
 }
 
 // The mock's custom properties: one per leaf, `--a-b` for path a.b, in the mode shown.
@@ -147,19 +167,22 @@ function render() {
   if (!doc) return;
   const dark = document.getElementById('dark').checked, r = doc.root, s = mock.style;
   const mix = r.hue_mix ?? 0.35, text = dark ? '255 255 255' : '0 0 0';
-  const space = n => typeof n === 'string' && typeof r.space?.[n] === 'number' ? r.space[n] : n;
-  s.setProperty('--text', `rgb(${text})`); s.setProperty('--surface', dark ? '#000' : '#fff');
-  s.setProperty('--rule', `rgb(${text} / ${r.alpha?.rule ?? 0.18})`); s.setProperty('--quiet', `rgb(${text} / ${r.alpha?.quiet ?? 0.55})`);
-  s.setProperty('--hover', `rgb(${text} / ${r.alpha?.hover ?? r.hover ?? 0.07})`);
-  s.setProperty('--selection', `color-mix(in srgb, var(--accent-blue) ${(r.alpha?.selection ?? r.selection ?? 0.3) * 100}%, transparent)`);
+  const pick = v => isPair(v) ? (dark ? v.dark : v.light) : v;
+  const resolve = v => { const home = aliasOf(v); return home ? pick(r[home][v]) : v; };
   (function walk(v, path) {
     const name = '--' + path.join('-');
-    if (isPair(v)) return s.setProperty(name, dark ? v.dark : v.light);
+    if (isPair(v)) return s.setProperty(name, pick(v));
     if (v && typeof v === 'object' && !Array.isArray(v)) { for (const k in v) walk(v[k], path.concat(k)); return; }
-    if (isHex(v)) s.setProperty(name, hueOver(dark, parseInt(v.slice(1), 16), mix));
+    if (isHue(v, path)) s.setProperty(name, hueOver(dark, parseInt(v.slice(1), 16), mix));
     else if (path[0] === 'font' && Array.isArray(v)) s.setProperty(name, v.map(x => JSON.stringify(x).replace(/^"(\w+)"$/, '$1')).join(', '));
-    else if (!Array.isArray(v)) s.setProperty(name, String(space(v)));
+    else if (!Array.isArray(v)) s.setProperty(name, String(resolve(v)));
   })(r, []);
+  // The derived colours last, so a top-level key of the same name cannot overwrite them.
+  const roles = r.roles ?? {};
+  s.setProperty('--text', `rgb(${text})`); s.setProperty('--surface', pick(roles.surface) ?? (dark ? '#000' : '#fff'));
+  s.setProperty('--rule', `rgb(${text} / ${r.alpha?.rule ?? 0.18})`); s.setProperty('--quiet', `rgb(${text} / ${r.alpha?.quiet ?? 0.55})`);
+  s.setProperty('--hover', `rgb(${text} / ${roles.hover_alpha ?? 0.07})`);
+  s.setProperty('--selection', `color-mix(in srgb, ${resolve(roles.primary ?? 'blue')} ${(roles.selection_alpha ?? 0.3) * 100}%, transparent)`);
   for (const el of document.querySelectorAll('[data-mixed]')) {
     const hue = parseInt(el.dataset.mixed, 16);
     el.innerHTML = [false, true].map(d => `<span class="sw" style="background:${hueOver(d, hue, mix)}"></span><code>${hueOver(d, hue, mix)}</code>`).join(' ');
@@ -173,12 +196,11 @@ function controls() {
   const set = (path, v) => { byPath.get(path.join('.')).value = v; let o = doc.root; path.slice(0, -1).forEach(k => o = o[k]); o[path.at(-1)] = v; render(); };
   const row = (label, ...kids) => { const d = document.createElement('div'); d.className = 'row'; const sp = document.createElement('span'); sp.textContent = label; sp.title = label; const c = document.createElement('span'); c.append(...kids); d.append(sp, c); tree.append(d); return c; };
   const input = (type, value, on, attrs = {}) => { const e = document.createElement(type === 'select' ? 'select' : 'input'); if (type !== 'select') e.type = type; Object.assign(e, attrs); e.value = value; e.oninput = () => on(e.value); return e; };
-  const slider = (v, on, unit) => {
-    const [max, step] = unit ? [1, 0.01] : [Math.max(64, v * 2), 0.5];
+  const slider = (v, on, path) => {
+    const [max, step] = isUnit(path) ? [1, 0.01] : [Math.max(64, v * 2), 0.5];
     const out = document.createElement('code'); out.textContent = ' ' + v;
     return [input('range', v, x => { out.textContent = ' ' + x; on(Number(x)); }, { min: 0, max, step }), out];
   };
-  const spaceSteps = Object.keys(doc.root.space ?? {}).filter(k => typeof doc.root.space[k] === 'number');
   (function walk(v, path) {
     const label = path.slice(1).join('.') || path[0];
     if (isPair(v)) {
@@ -186,37 +208,44 @@ function controls() {
     } else if (v && typeof v === 'object' && !Array.isArray(v)) {
       if (path.length) { const h = document.createElement('h3'); h.textContent = path.join('.'); tree.append(h); }
       for (const k in v) walk(v[k], path.concat(k));
-    } else if (isHex(v)) {
+    } else if (isHue(v, path)) {
       const mixed = document.createElement('span'); mixed.dataset.mixed = v.slice(1);
       row(label, input('color', v, x => { mixed.dataset.mixed = x.slice(1); set(path, x); }), mixed);
+    } else if (isHex(v)) {
+      row(label, input('color', v, x => set(path, x)));
     } else if (typeof v === 'number') {
-      row(label, ...slider(v, x => set(path, x), v > 0 && v <= 1));
+      row(label, ...slider(v, x => set(path, x), path));
     } else if (Array.isArray(v) && v.every(x => typeof x === 'number')) {
-      row(label, ...v.flatMap((x, i) => slider(x, n => set(path, v.map((y, j) => j === i ? n : y)), true)));
+      row(label, ...v.flatMap((x, i) => slider(x, n => set(path, v.map((y, j) => j === i ? n : y)), path)));
     } else if (Array.isArray(v)) {
       row(label, input('text', v.join(', '), x => set(path, x.split(',').map(t => t.trim()).filter(Boolean)), { size: 40 }));
-    } else if (typeof v === 'string' && spaceSteps.includes(v)) {
+    } else if (aliasOf(v)) {
+      const home = doc.root[aliasOf(v)], names = Object.keys(home).filter(k => typeof home[k] !== 'string');
       const sel = input('select', '', x => set(path, x));
-      sel.append(...spaceSteps.map(k => new Option(`${k} (${doc.root.space[k]})`, k))); sel.value = v; row(label, sel);
+      sel.append(...names.map(k => new Option(`${k} (${JSON.stringify(home[k])})`, k))); sel.value = v; row(label, sel);
     } else {
       row(label, input('text', String(v), x => set(path, x)));
     }
   })(doc.root, []);
 }
 
-document.getElementById('file').onchange = e => e.target.files[0]?.text().then(load);
+const importFile = file => file?.text().then(text => load(text, `${file.name}, imported ${new Date().toLocaleTimeString()}`));
+document.getElementById('file').onchange = e => { importFile(e.target.files[0]); e.target.value = ''; };
 document.getElementById('dark').onchange = render;
 document.body.ondragover = e => e.preventDefault();
-document.body.ondrop = e => { e.preventDefault(); e.dataTransfer.files[0]?.text().then(load); };
+document.body.ondrop = e => { e.preventDefault(); importFile(e.dataTransfer.files[0]); };
 exportBtn.onclick = () => { if (doc) out.value = exportText(); };
-copyBtn.onclick = () => { if (doc) navigator.clipboard.writeText(out.value = exportText()); };
+copyBtn.onclick = () => { if (doc) navigator.clipboard.writeText(out.value = exportText()).catch(e => msg.textContent = 'Copy: ' + e.message); };
 dl.onclick = () => {
   if (!doc) return;
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([out.value = exportText()], { type: 'application/json' }));
   a.download = 'theme.json'; a.click(); URL.revokeObjectURL(a.href);
 };
 document.getElementById('dark').checked = matchMedia('(prefers-color-scheme: dark)').matches;
-if (localStorage.getItem('theme.json')) load(localStorage.getItem('theme.json'));
+try {
+  const kept = localStorage.getItem('theme.json');
+  if (kept) load(kept, `${localStorage.getItem('theme.from') ?? 'theme.json'} (remembered: import again for the current file)`);
+} catch {}
 </script>
 </body>
 </html>
