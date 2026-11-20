@@ -209,6 +209,40 @@ function subagentFiles(sessionDir) {
     .map(([name, id]) => ({ id, ...readTranscript(path.join(dir, name)), meta: readMeta(path.join(dir, `agent-${id}.meta.json`)) }));
 }
 
+const runsCommand = (entry, needle) =>
+  entry.type === 'assistant' &&
+  blocks(entry.message).some((b) => b.type === 'tool_use' && b.name === 'Bash' && typeof b.input?.command === 'string' && b.input.command.includes(needle));
+
+/**
+ * The one subagent under `repo`'s project directory whose Bash call's command contains `needle` (wait-deadlines S4,
+ * A6), as its type and id; null when none or several did, an agent being its id across sessions (L4). Names only,
+ * never the command (L5); an agent type that is not a plain name is `unknown`.
+ */
+export function holderOfCommand(repo, needle, { projectsRoot = defaultRoot() } = {}) {
+  const dir = typeof needle === 'string' && needle !== '' ? projectDir(repo, projectsRoot) : null;
+  if (!dir) return null;
+  // The needle's longest run JSON writes verbatim: a cheap substring test before parsing, since a scan reads every agent.
+  const plain = needle.split(/["\\\u0000-\u001f\u007f-￿]/).reduce((a, b) => (b.length > a.length ? b : a), '');
+  const found = new Map();
+  for (const session of fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory())) {
+    const sub = path.join(dir, session.name, 'subagents');
+    const names = fs.existsSync(sub) ? fs.readdirSync(sub) : [];
+    for (const [name, id] of names.map((n) => /^agent-([\w-]+)\.jsonl$/.exec(n)).filter(Boolean)) {
+      let text;
+      try {
+        text = fs.readFileSync(path.join(sub, name), 'utf8');
+      } catch {
+        continue; // a transcript gone or locked mid-scan is skipped, as an unparsed line is
+      }
+      if (!text.includes(plain) || !readTranscript(name, text).entries.some((entry) => runsCommand(entry, needle))) continue;
+      const type = readMeta(path.join(sub, `agent-${id}.meta.json`)).agentType;
+      const agentType = typeof type === 'string' && /^[\w:.-]{1,80}$/.test(type) ? type : found.get(id)?.agentType ?? 'unknown';
+      found.set(id, { agentType, agentId: id });
+    }
+  }
+  return found.size === 1 ? [...found.values()][0] : null;
+}
+
 const USAGE_FIELDS = { input: 'inputTokens', output: 'outputTokens', cacheRead: 'cacheReadInputTokens', cacheWrite: 'cacheCreationInputTokens' };
 
 /**

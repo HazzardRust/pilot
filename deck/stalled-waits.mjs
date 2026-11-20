@@ -10,6 +10,7 @@ import { KIND_CHAT, liveTicketOf, sameRepo } from './items.mjs';
 import { oneLine } from './one-line.mjs';
 import { noteDeck } from './store-items.mjs';
 import { listItems } from './store-runs.mjs';
+import { holderOfCommand } from './transcripts.mjs';
 
 /** A4: the same 50 minutes as `pilot wait-for`'s cap; a wait older than this under a live registered run is stalled. */
 export const STALL_AGE_S = 50 * 60;
@@ -140,10 +141,15 @@ export function stalledWaits(table, { runs, stallAgeS = STALL_AGE_S }) {
 /**
  * One scan (L5, L6): one read of the process table, `stalledWaits` over it and the live runs, `gc` stopping each
  * with its tree, then `note(repo, line)` for each stop that went. `holder(row)` names the agent whose call started
- * a wait, or null; `kill(pid, tree)` defaults to `gc`'s `stopper` over the same table. A read failure is one line
+ * a wait, or null, and defaults to the one subagent whose Bash call ran the row's script (`holderOfCommand` under
+ * `projectsRoot`, S4); `kill(pid, tree)` defaults to `gc`'s `stopper` over the same table. A read failure is one line
  * and stops nothing. Answers `gc`'s lines, none when nothing is stalled.
  */
-export function reapStalled({ read, runs, kill, note, holder, stallAgeS = STALL_AGE_S }) {
+export function reapStalled({ read, runs, kill, note, holder, stallAgeS = STALL_AGE_S, projectsRoot }) {
+  holder ??= (row) => {
+    const found = holderOfCommand(row.repo, row.script, { projectsRoot });
+    return found && `${found.agentType} ${found.agentId}`;
+  };
   let table, rows;
   try {
     table = read();
@@ -158,7 +164,7 @@ export function reapStalled({ read, runs, kill, note, holder, stallAgeS = STALL_
     if (!lines[k]?.startsWith('stopped ')) return;
     let by = null;
     try {
-      by = holder ? holder(row) : null;
+      by = holder(row);
     } catch {
       /* an unreadable holder is unknown; the stop has already gone */
     }
