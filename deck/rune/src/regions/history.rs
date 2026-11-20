@@ -3,7 +3,8 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use rune::tok::{self, type_};
+use crate::theme::type_;
+use rune::tok;
 use rune::{Cx, El, col, row, text};
 use serde::Deserialize;
 
@@ -79,7 +80,7 @@ fn run_row(r: &RunRow, local: &Local, cx: &mut Cx<State>) -> El {
         .child(theme::content(
             text(&r.name)
                 .key(key("name"))
-                .font(type_::LABEL)
+                .font(type_::CAPTION)
                 .color(ui.text)
                 .grow(1.0),
             dark,
@@ -92,7 +93,7 @@ fn run_row(r: &RunRow, local: &Local, cx: &mut Cx<State>) -> El {
             .padding(space::pad)
             .border(1.0, t.rule)
             .fill(if sent { t.state.pilot } else { ui.card })
-            .child(text("dismiss").font(type_::LABEL).color(ui.text))
+            .child(text("dismiss").font(type_::CAPTION).color(ui.text))
             .disabled(sent);
         if !sent {
             button = button.on_press_tx(move |s: &mut State, tx: &mut rune::Tx| {
@@ -128,7 +129,7 @@ fn day(d: &Day, local: &Local, cx: &mut Cx<State>) -> El {
             theme::control(text(&d.heading), dark)
                 .key(format!("day-{}", d.key))
                 .role("button")
-                .font(type_::LABEL)
+                .font(type_::CAPTION)
                 .color(ui.text)
                 .on_press(move |s: &mut State| {
                     s.regions.history.folded.insert(key.clone(), !open);
@@ -136,7 +137,7 @@ fn day(d: &Day, local: &Local, cx: &mut Cx<State>) -> El {
         )
         .child(theme::content(
             text(d.cards.len().to_string())
-                .font(type_::LABEL)
+                .font(type_::CAPTION)
                 .color(t.quiet),
             dark,
         ));

@@ -3,7 +3,8 @@
 
 use std::collections::BTreeMap;
 
-use rune::tok::{self, type_};
+use crate::theme::type_;
+use rune::tok;
 use rune::{Color, Cx, El, SpringPair, Transition, col, row, text};
 use serde::Deserialize;
 
@@ -136,8 +137,9 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
     let (t, ui) = (theme::tokens(dark), tok::theme(dark));
     let key = |part: &str| format!("card-{}-{part}", c.id);
-    let said =
-        |words: String, ink: Color| theme::content(text(words).font(type_::LABEL).color(ink), dark);
+    let said = |words: String, ink: Color| {
+        theme::content(text(words).font(type_::CAPTION).color(ink), dark)
+    };
     let mut line = row()
         .gap(space::within)
         .child(said(c.state.clone(), tone(&t, &c.tone)).key(key("state")));
@@ -154,7 +156,7 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
     let mut body = col().grow(1.0).gap(space::within).child(line).child(
         theme::control(text(&c.title), dark)
             .key(key("title"))
-            .font(type_::TITLE)
+            .font(type_::HEADER)
             .color(ui.text)
             .role("link")
             .focusable(true)
@@ -170,7 +172,7 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
             .padding(space::pad)
             .border(1.0, t.rule)
             .fill(fill)
-            .child(text(label).font(type_::LABEL).color(ui.text))
+            .child(text(label).font(type_::CAPTION).color(ui.text))
     };
     let spent = c.sent.is_some();
     let asking = c
@@ -193,7 +195,7 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
                 .child(
                     text(&opt.ask)
                         .key(key("sure"))
-                        .font(type_::LABEL)
+                        .font(type_::CAPTION)
                         .color(ui.text),
                 )
                 .child(yes)
@@ -256,7 +258,7 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
 /// One status line in three columns (L10): the state fixed and left, the name flexible and clipped, the
 /// time fixed and right, `cols.gap` apart.
 fn state_line(i: usize, l: &Line, t: &Tokens, ink: Color, dark: bool) -> El {
-    let ch = t.font.size * MONO_ADVANCE;
+    let ch = type_::BODY.size * MONO_ADVANCE;
     let key = |part: &str| format!("line-{i}-{part}");
     let name = match (&l.name, &l.ticket) {
         (Some(name), Some(ticket)) => format!("{name}  {ticket}"),
@@ -272,7 +274,7 @@ fn state_line(i: usize, l: &Line, t: &Tokens, ink: Color, dark: bool) -> El {
         .child(theme::content(
             text(&l.state)
                 .key(key("state"))
-                .font(type_::LABEL)
+                .font(type_::CAPTION)
                 .color(ink)
                 .truncate()
                 .w(space::cols.state_ch * ch),
@@ -281,7 +283,7 @@ fn state_line(i: usize, l: &Line, t: &Tokens, ink: Color, dark: bool) -> El {
         .child(theme::content(
             text(name)
                 .key(key("name"))
-                .font(type_::LABEL)
+                .font(type_::CAPTION.mono())
                 .color(ink)
                 .truncate()
                 .grow(1.0),
@@ -290,7 +292,7 @@ fn state_line(i: usize, l: &Line, t: &Tokens, ink: Color, dark: bool) -> El {
         .child(theme::content(
             text(hhmm(l.since.as_deref()))
                 .key(key("time"))
-                .font(type_::LABEL)
+                .font(type_::CAPTION.mono())
                 .color(t.quiet)
                 .w(space::cols.time_ch * ch),
             dark,

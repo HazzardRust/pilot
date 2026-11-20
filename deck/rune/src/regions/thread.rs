@@ -2,7 +2,8 @@
 //! messages and resolution, every word as `deck/view/thread.mjs` resolved it (L2). Bodies and
 //! messages are markdown drawn by rune-kit (L8). Escape or ← goes back to the deck that owns it.
 
-use rune::tok::{self, type_};
+use crate::theme::type_;
+use rune::tok;
 use rune::{Color, Cx, El, Key, col, el, row, text};
 use serde::Deserialize;
 
@@ -99,9 +100,9 @@ pub fn key(s: &mut State, ev: &rune::KeyEvent, tx: &mut rune::Tx) -> bool {
 
 fn arrow(step: Option<Step>, glyph: &str, ink: Color, quiet: Color, dark: bool) -> El {
     match step {
-        None => text(glyph).font(type_::LABEL).color(quiet),
+        None => text(glyph).font(type_::CAPTION).color(quiet),
         Some(Step { id }) => theme::control(text(glyph), dark)
-            .font(type_::LABEL)
+            .font(type_::CAPTION)
             .color(ink)
             .role("link")
             .on_press(move |s: &mut State| {
@@ -155,7 +156,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         "unacknowledged" => k.state.unacknowledged,
         _ => k.state.waiting,
     };
-    let line = |words: &str| theme::content(text(words).font(type_::LABEL).color(k.quiet), dark);
+    let line = |words: &str| theme::content(text(words).font(type_::CAPTION).color(k.quiet), dark);
 
     // The accent bar is a text line tall at most, and the time is the short form with the whole stamp on hover.
     let at = line(&hhmm(Some(&th.kind_line.at))).help(th.kind_line.at.as_str());
@@ -166,7 +167,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         .gap(space::within)
         .child(el().size(space::s2, space::s3).fill(accent))
         .child(theme::content(
-            text(&th.kind_line.state).font(type_::LABEL).color(tone),
+            text(&th.kind_line.state).font(type_::CAPTION).color(tone),
             dark,
         ))
         .child(line(&th.kind_line.kind))
@@ -183,7 +184,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         .gap(space::within)
         .child(arrow(th.nav.prev, "‹", t.text, k.quiet, dark));
     if let Some(code) = &th.nav.code {
-        nav = nav.child(text(code).font(type_::LABEL).color(t.text));
+        nav = nav.child(text(code).font(type_::CAPTION.mono()).color(t.text));
     }
     nav = nav.child(arrow(th.nav.next, "›", t.text, k.quiet, dark));
     if let Some(position) = &th.nav.position {
@@ -205,7 +206,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         )
         .child(theme::separator(dark))
         .child(theme::content(
-            text(&th.title).font(type_::TITLE).color(t.text),
+            text(&th.title).font(type_::HEADER).color(t.text),
             dark,
         ));
     if let Some(note) = &th.type_note {

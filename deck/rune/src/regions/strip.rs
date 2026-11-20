@@ -4,7 +4,7 @@
 //! posts (`DeckAction`); the repository is the view's, never built here, and no process is started
 //! from Rust: Start asks the daemon, which owns the start and its guard.
 
-use rune::tok::type_;
+use crate::theme::type_;
 use rune::{Cx, El, Key, TextEdit, col, row, text, text_input};
 use serde::Deserialize;
 
@@ -241,7 +241,7 @@ fn button(label: &str, key: &str, look: Look, off: bool, dark: bool) -> El {
         .py(space::s2)
         .items_center()
         .justify_center()
-        .child(text(label).font(type_::LABEL).color(ink));
+        .child(text(label).font(type_::CAPTION).color(ink));
     let face = match look {
         Look::Quiet => face.border(1.0, k.rule),
         Look::Primary => face.fill(r.primary),
@@ -278,7 +278,12 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
     let sent_btn = |label: &str, key: &str, post: &str, look: Look| {
         button(label, key, look, pending.is_sent(post), dark)
     };
-    let say = |words: String| text(words).font(type_::LABEL).color(r.on_surface).w_full();
+    let say = |words: String| {
+        text(words)
+            .font(type_::CAPTION)
+            .color(r.on_surface)
+            .w_full()
+    };
 
     let mut out = col()
         .key("strip")
@@ -427,7 +432,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             text(reason)
                 .key("strip-refused")
                 .role("alert")
-                .font(type_::LABEL)
+                .font(type_::CAPTION)
                 .color(r.error)
                 .w_full(),
         );

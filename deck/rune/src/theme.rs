@@ -7,7 +7,7 @@
 use std::sync::LazyLock;
 
 use rune::color::{srgb_decode, srgb_encode};
-use rune::{Color, Cursor, El, el};
+use rune::{Color, Cursor, El, TextStyle, el};
 use rune_kit::markdown::{Markdown, MarkdownStyle};
 use serde::Deserialize;
 use serde::de::IgnoredAny;
@@ -77,15 +77,6 @@ pub struct Usage {
     pub critical_bg: Color,
 }
 
-/// deck.css's `font: 13px/1.6 ui-monospace, "Cascadia Mono", ...`, led by Cascadia Mono here: a
-/// native window has no `ui-monospace`.
-#[derive(Debug, Clone, Copy)]
-pub struct Mono {
-    pub family: &'static [&'static str],
-    pub size: f32,
-    pub line: f32,
-}
-
 #[derive(Debug, Clone, Copy)]
 pub struct Tokens {
     pub by: By,
@@ -94,7 +85,6 @@ pub struct Tokens {
     pub usage: Usage,
     pub rule: Color,
     pub quiet: Color,
-    pub font: Mono,
 }
 
 /// `theme.json`, read at build time and parsed once. A key renamed or malformed panics on the
@@ -108,8 +98,11 @@ struct Raw {
     accent: AccentHex,
     usage: UsageHex,
     alpha: Alpha,
-    font: RawFont,
     roles: RawRoles,
+    /// Read by `build.rs`: the type scales of `type_`.
+    #[serde(rename = "type")]
+    #[allow(dead_code)]
+    type_scales: IgnoredAny,
     /// Read by `build.rs`, which turns them into the consts below.
     #[allow(dead_code)]
     motion: IgnoredAny,
@@ -180,14 +173,6 @@ struct Alpha {
     quiet: f32,
 }
 
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct RawFont {
-    family: Vec<String>,
-    size: f32,
-    line: f32,
-}
-
 /// Which accents the roles reuse, by name, and the two tints.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -223,17 +208,6 @@ impl Pair {
 static RAW: LazyLock<Raw> = LazyLock::new(|| {
     serde_json::from_str(include_str!("../theme.json"))
         .unwrap_or_else(|e| panic!("theme.json: {e}"))
-});
-
-/// The font stack, leaked once so `Mono` stays `Copy`.
-static FAMILY: LazyLock<&'static [&'static str]> = LazyLock::new(|| {
-    let names: Vec<&'static str> = RAW
-        .font
-        .family
-        .iter()
-        .map(|n| &*Box::leak(n.clone().into_boxed_str()))
-        .collect();
-    Box::leak(names.into_boxed_slice())
 });
 
 pub fn tokens(dark: bool) -> Tokens {
@@ -275,11 +249,6 @@ pub fn tokens(dark: bool) -> Tokens {
         },
         rule: text.alpha(raw.alpha.rule),
         quiet,
-        font: Mono {
-            family: *FAMILY,
-            size: raw.font.size,
-            line: raw.font.line,
-        },
     }
 }
 
@@ -341,6 +310,15 @@ pub mod opacity {
     include!(concat!(env!("OUT_DIR"), "/opacity.rs"));
 }
 
+/// The deck's three type scales and no others (spec 22): `HEADER` 13 bold, `BODY` 13 and `CAPTION` 11,
+/// in Inter (`UI`); ids and times take `.mono()`, JetBrains Mono (`MONO`). Both families are bundled
+/// (`app::spec`). Rune's own `type_::LABEL` and `TITLE` are the caption and the header here.
+pub mod type_ {
+    use rune::TextStyle;
+
+    include!(concat!(env!("OUT_DIR"), "/type.rs"));
+}
+
 /// Fixed sizes of the side-bar layout (DESIGN.md §4b), in px.
 #[allow(non_upper_case_globals)]
 pub mod size {
@@ -388,7 +366,7 @@ pub fn empty(sentence: &str, key: &str, dark: bool) -> El {
     content(
         rune::text(sentence)
             .key(key)
-            .font(rune::tok::type_::LABEL)
+            .font(type_::CAPTION)
             .color(rune::tok::theme(dark).text_secondary),
         dark,
     )
@@ -396,8 +374,26 @@ pub fn empty(sentence: &str, key: &str, dark: bool) -> El {
 
 /// Markdown content: selectable, highlighted in the selection colour.
 pub fn markdown(source: impl Into<String>, dark: bool) -> El {
-    let style = MarkdownStyle::neutral(dark).selection(roles(dark).selection);
-    Markdown::new(source).selectable(true).render(&style)
+    Markdown::new(source)
+        .selectable(true)
+        .render(&markdown_style(dark))
+}
+
+/// Rune's neutral markdown style on the deck's scales: every heading the header, the body and inline
+/// code the body (code at scale 1.0), a code block the body in the mono family.
+pub fn markdown_style(dark: bool) -> MarkdownStyle {
+    let on = |scale: TextStyle| TextStyle {
+        line_height: 20.0,
+        ..scale
+    };
+    MarkdownStyle::neutral(dark)
+        .selection(roles(dark).selection)
+        .body_font(on(type_::BODY))
+        .heading_font(1, on(type_::HEADER))
+        .heading_font(2, on(type_::HEADER))
+        .heading_font(3, on(type_::HEADER))
+        .code_block_font(on(type_::BODY.mono()))
+        .inline_code_font(1.0, type_::BODY.weight)
 }
 
 /// Springs, never durations and easings: each settles in well under 300 ms (L10).

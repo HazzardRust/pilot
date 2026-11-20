@@ -6,8 +6,7 @@
 
 use rune::tok;
 use rune::{
-    Align, Cursor, Cx, Drag, El, Icon, Phase, ScrollSpec, TextStyle, Transition, Tx, col, el, icon,
-    row, text,
+    Align, Cursor, Cx, Drag, El, Icon, Phase, ScrollSpec, Transition, Tx, col, el, icon, row, text,
 };
 use rune_kit::glyphs;
 use serde_json::Value;
@@ -15,7 +14,7 @@ use serde_json::Value;
 use crate::app::{self, State};
 use crate::prefs::Prefs;
 use crate::regions::{self, notifications::keep};
-use crate::theme::{self, motion, size, space};
+use crate::theme::{self, motion, size, space, type_};
 
 /// An icon drawn in the deck's own line, 24 units square, in the colour `icon` tints it.
 macro_rules! line_icon {
@@ -139,7 +138,7 @@ pub fn count_cell(count: usize, dark: bool) -> El {
         _ => "999+".to_string(),
     };
     let pill = el()
-        .w(COUNT_CH * size::badge_text * ADVANCE + 2.0 * space::within)
+        .w(COUNT_CH * type_::CAPTION.size * ADVANCE + 2.0 * space::within)
         .h(size::badge)
         .center()
         .radius(theme::radius::pill(size::badge));
@@ -150,7 +149,7 @@ pub fn count_cell(count: usize, dark: bool) -> El {
     };
     pill.child(
         text(shown)
-            .font(TextStyle::new(size::badge_text, size::badge_weight))
+            .font(type_::CAPTION.mono())
             .color(theme::roles(dark).on_surface)
             .align(Align::Center)
             .truncate(),
@@ -300,7 +299,7 @@ fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<Sta
         .child(icon(&glyphs::CHEVRON_DOWN, space::s5).color(t.text))
         .child(
             text(label.to_uppercase())
-                .font(TextStyle::new(size::pane_title, size::pane_title_weight))
+                .font(type_::HEADER)
                 .color(t.text)
                 .truncate()
                 .grow(1.0),
