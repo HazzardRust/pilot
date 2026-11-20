@@ -58,17 +58,17 @@ const pageRows = (ticket) => {
   const html = renderStrips(tab, [tab], r.items, { ticket }).split('<tbody>')[1].split('</tbody>')[0];
   return [...html.matchAll(/<tr>(.*?)<\/tr>/g)].map(([, row]) => {
     const [slice, state, yours] = [...row.matchAll(/<td[^>]*>(.*?)<\/td>/g)].map(([, cell]) => cell);
-    return { slice, state, href: yours.match(/href="([^"]*)"/)?.[1] };
+    return { slice, state, href: yours.match(/href="([^"]*)"/)?.[1], yours: yours.match(/>([^<]*)<\/a>/)?.[1] };
   });
 };
 
 test('the rows are the page\'s', () => {
   const { rows } = statusView(reads(), { run: MINE, ticket: yellow.id });
 
-  const drawn = rows.map(({ slice, state, href }) => ({ slice, state, href }));
+  const drawn = rows.map(({ slice, state, href, yours }) => ({ slice, state, href, yours }));
   assert.deepEqual(drawn, pageRows(yellow.id));
   assert.equal(rows[0].href, `/thread/${asked.id}`, 'the Yours link is the thread');
-  assert.deepEqual(rows[0], { slice: 'S1 the yellow slice', state: 'implementing', branch: 'slice/s1', pr: 7, href: `/thread/${asked.id}`, after: [] });
+  assert.deepEqual(rows[0], { slice: 'S1 the yellow slice', state: 'implementing', branch: 'slice/s1', pr: 7, href: `/thread/${asked.id}`, yours: 'Which port?', kind: 'question', after: [] });
   assert.deepEqual(rows[1].after, ['S1 the yellow slice']);
 });
 

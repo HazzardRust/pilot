@@ -60,12 +60,18 @@ fn the_table_and_selector_are_the_views() {
         "concluding Ship the kettle",
         "S1 the yellow slice",
         "implementing",
-        "slice/s1",
-        "#7",
+        "SLICE",
+        "STATE",
+        "YOURS",
     ] {
         assert!(shown.iter().any(|t| t == want), "no {want:?} in {shown:?}");
     }
     assert!(!shown.iter().any(|t| t.contains("green slice")));
+    // The page's table has no branch or PR cell (the user: "copy what the html did").
+    assert!(
+        !shown.iter().any(|t| t == "slice/s1" || t == "#7"),
+        "{shown:?}"
+    );
 }
 
 #[test]
@@ -92,7 +98,6 @@ fn each_table_is_drawn_under_its_tabs_name() {
     for want in [
         "alpha deck",
         "S1 the yellow slice",
-        "slice/s1",
         "bravo deck",
         "S1 brew",
         "S2 pour",
@@ -140,16 +145,8 @@ fn a_long_state_stays_in_its_column_and_the_cells_never_overlap() {
             "row {i}: the state starts after the slice ends: {slice:?} {state:?}"
         );
     }
-    let (state, branch) = (rect("status-row-0-state"), rect("status-row-0-branch"));
-    assert!(
-        state[0] + state[2] <= branch[0] + 0.5,
-        "{state:?} {branch:?}"
-    );
-    let (branch, yours) = (rect("status-row-0-branch"), rect("status-row-0-yours"));
-    assert!(
-        branch[0] + branch[2] <= yours[0] + 0.5,
-        "{branch:?} {yours:?}"
-    );
+    let (state, yours) = (rect("status-row-0-state"), rect("status-row-0-yours"));
+    assert!(state[0] + state[2] <= yours[0] + 0.5, "{state:?} {yours:?}");
     let state = rect("status-row-0-state");
     assert!(
         state[2] <= rect("status-row-1-state")[2] + 0.5,
@@ -199,12 +196,16 @@ fn a_view_with_no_status_draws_nothing_of_it() {
 
 #[test]
 fn pressing_yours_opens_the_thread_it_links() {
-    let rows = json!({ "rows": [{ "slice": "S1 the slice", "state": "review", "href": "/thread/itm_00000000y1", "after": [] }] });
+    let rows = json!({ "rows": [{ "slice": "S1 the slice", "state": "review", "href": "/thread/itm_00000000y1", "yours": "Which port?", "kind": "question", "after": [] }] });
     let mut rt = frame(State {
         view: view_with(rows),
         ..State::default()
     });
     rt.frame(1.0);
+    assert!(
+        texts(&rt).iter().any(|t| t == "Which port?"),
+        "Yours reads the thread's title"
+    );
 
     let (x, y) = rt
         .find("status-row-0-yours")

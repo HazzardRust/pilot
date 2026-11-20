@@ -46,7 +46,8 @@ function tableOf(tab, items, asked) {
       state: row.state ?? '',
       ...(row.branch && { branch: row.branch }),
       ...(row.pr && { pr: row.pr }),
-      ...(item && { href: `/thread/${encodeURIComponent(item.id)}` }),
+      // The page's Yours cell: the thread's title, its kind on hover (`renderYours`).
+      ...(item && { href: `/thread/${encodeURIComponent(item.id)}`, yours: item.title, kind: item.kind }),
       after: row.after == null ? [] : [].concat(row.after),
     };
   });
