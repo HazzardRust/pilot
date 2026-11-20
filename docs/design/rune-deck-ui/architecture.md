@@ -30,6 +30,7 @@ that other people's projects are pushed onto.
 | 11 | A thread kind the Rune deck has never seen (human-steps' `steps`, its green-group label) draws from the labels the view carries, with no Rust change. *practitioner: client engineer who keeps product words on the server* | view test with an unknown kind | title, kind and state line drawn; 0 Rust edits |
 | 12 | *added (S8 review)*: Escape and ← leave an open thread as soon as it opens, with no Tab first, and never while a text field holds the key. | S21 key replay | red before, green after |
 | 13 | *added (S12 review)*: the overview shows one status table per tab, as the page does. | S22 view test against the page | same tabs, order and rows |
+| 14 | *added (S9 review)*: moving to another thread shows that thread at once, and a view of the thread just left never draws its reply box. | S23 key replay and late-view test | red before, green after |
 
 ## 3. Findings
 
@@ -202,6 +203,7 @@ Width 15; longest stem 5
 | S19 | `npm test` and CI run the Rune deck's tests | 7, 8 | `scripts/gate.mjs`, `scripts/test/gate-cargo.test.mjs`, `.github/workflows/ci.yml` | S1 (`deck/rune/Cargo.toml`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S19](slices/S19.md) |
 | S20 | The panels open, close and resize with springs, and stay as left | 2, 5, 6d, 6e | `deck/rune/src/layout.rs`, `tests/layout.rs` | S10 (`Prefs`) | `pilot:rust-reviewer` | [S20](slices/S20.md) |
 | S21 | Escape and left-arrow go back without a Tab first (added) | 12 | `deck/rune/src/regions/thread.rs`, `src/app.rs`, `tests/thread.rs` | S8 | `pilot:rust-reviewer` | [S21](slices/S21.md) |
+| S23 | A thread move fetches its view at once (added) | 14 | `deck/rune/src/live.rs`, `src/app.rs`, `tests/thread.rs` | S9 | `pilot:rust-reviewer` | [S23](slices/S23.md) |
 | S22 | The overview shows one status table per tab (added) | 13 | `deck/view/status.mjs`, `deck/test/view-status.test.mjs`, `deck/rune/src/regions/status.rs`, `tests/status.rs` | S12 | `pilot:rust-reviewer`, `pilot:typescript-reviewer` | [S22](slices/S22.md) |
 
 Rust paths after S1 are under `deck/rune/`. S1 first by risk: if Rune will not build or paint headless here, every
@@ -246,4 +248,5 @@ other slice's plan changes. Then S5 (the write seam nine actions share), then th
 | S20 | planned | | | | S10 | 2, 5, 6d, 6e |
 | S21 | planned (added) | | | | S8 | 12 |
 | S22 | planned (added) | | | | S12 | 13 |
+| S23 | planned (added) | | | | S9 | 14 |
 | Deck UI rebuilt in Rune | planned | `feat/rune-deck-ui` | | | S1-S20 | 1-11 |
