@@ -227,8 +227,8 @@ const tabLabel = (tab) => (tab.number ? `${tabCode(tab)} ${tab.name}` : tab.name
  * the Overview link the user is looking at would go nowhere it doesn't
  * already show.
  *
- * Overview's count is the whole open queue, which is what the overview lists;
- * a tab's is its own open items. Between them the strip is the overview of
+ * Overview's count is the whole open queue, cards and fold alike, which is what the overview lists;
+ * a tab's is its own open items, whole (nothing-hidden spec 2). Between them the strip is the overview of
  * runs, which is what the user asked the overview to be. The count is the
  * queue's whichever way the `all` toggle is: it is how much is waiting on the
  * user, and a number that meant two different things depending on a toggle
@@ -239,7 +239,7 @@ const tabLabel = (tab) => (tab.number ? `${tabCode(tab)} ${tab.name}` : tab.name
  * anything being reloaded. The `<nav>` itself is never replaced, only what is
  * inside it (D3).
  */
-function renderStrip(tabs, current, queue, all, refused, shown) {
+function renderStrip(tabs, current, queue, all, refused) {
   const overview = renderStripLink(
     hrefFor(null, all),
     'Overview',
@@ -248,7 +248,7 @@ function renderStrip(tabs, current, queue, all, refused, shown) {
     false,
   );
   const links = tabs.map((tab) =>
-    renderStripLink(hrefFor(tab, all), tabLabel(tab), shown(tab.open).length, tab === current, tab.ended, tab.unacknowledged),
+    renderStripLink(hrefFor(tab, all), tabLabel(tab), tab.open.length, tab === current, tab.ended, tab.unacknowledged),
   );
   const plus = renderAddDeck(hrefFor(current, all), refused);
   return `<nav class="runs-strip" data-live="tabs">${overview}${links.join('')}${plus}</nav>`;

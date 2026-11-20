@@ -22,7 +22,7 @@ import {
 } from '../items.mjs';
 import { isReportOwed } from '../owed.mjs';
 import { escapeHtml, renderMarkdown } from './markdown.mjs';
-import { renderTime, code, titleOf, renderTicketOf, renderAsked, renderChoice, renderChoiceRow, rendererFor, renderReplyForm, renderDismissForm, renderCloseForm, renderCardClose } from './render-parts.mjs';
+import { renderTime, code, titleOf, renderTicketStanding, renderAsked, renderChoice, renderChoiceRow, rendererFor, renderReplyForm, renderDismissForm, renderCloseForm, renderCardClose } from './render-parts.mjs';
 
 /** The badge a blocking question and its ticket's row carry (ticket-states spec 17, S18). */
 const BLOCKING_BADGE = '<span class="blocking">blocking</span>';
@@ -326,7 +326,7 @@ function renderTypeNote(item) {
   return note ? `<p class="type-note">${escapeHtml(note)}</p>` : '';
 }
 
-function renderCard(item, { tab = null, back = OVERVIEW_HREF, all = false, items } = {}) {
+function renderCard(item, { tab = null, back = OVERVIEW_HREF, all = false, items = [], lanes } = {}) {
   return [
     // A settled thread is only ever on a page the toggle is on, and it is there
     // to be looked up rather than worked through, so it is drawn a step back
@@ -335,7 +335,7 @@ function renderCard(item, { tab = null, back = OVERVIEW_HREF, all = false, items
     // Its ticket's accent (ticket-state-accents spec 3, L11): the stripe. The card sits inside the queue region, never one.
     `<article${isOpen(item) ? '' : ' class="settled"'} data-accent="${accentOf(item, items)}">`,
     `<span class="kind">${renderThreadState(item)} · ` +
-      `${renderCardRun(tab, all)}${renderKind(item)} · ${renderTime(lastSaidAt(item))}${renderTicketOf(item, items)}${renderReportOwed(item, items)}</span>`,
+      `${renderCardRun(tab, all)}${renderKind(item)} · ${renderTime(lastSaidAt(item))}${renderTicketStanding(item, items, lanes)}${renderReportOwed(item, items)}</span>`,
     `<h2><a href="/thread/${encodeURIComponent(item.id)}">${titleOf(item, items)}</a></h2>`,
     renderChainNote(item),
     renderTypeNote(item),
