@@ -46,7 +46,7 @@ https://claude.ai/code/session_01NXgSFppeY5pzVQLciH5swh
 ## Artefact
 
 `docs/design/ci-gate/architecture.md`, slices in `slices/S1.md` to `slices/S8.md`. The run's ADR is
-`docs/adr/NNNN-ci-gate.md` (S1); the landing numbers it. S1 also adds the §4 terms to `CONTEXT.md`.
+`docs/adr/0201-ci-gate.md` (S1); the landing numbers it. S1 also adds the §4 terms to `CONTEXT.md`.
 
 ## Gate command
 
