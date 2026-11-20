@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { closingReportOf } from '../closing-report.mjs';
+import { closingReportOf, stepsOf } from '../closing-report.mjs';
 import { KIND_GATE2, KIND_QUESTION, SIGN_OFF } from '../items.mjs';
 import { startLanding } from '../landing.mjs';
 import { addReply, listItems, postItem, registerRun, setSlices } from '../store.mjs';
@@ -21,19 +21,21 @@ import { isShortLanding } from '../store-items.mjs';
 import { tempDeck, withTicket } from '../testUtils.mjs';
 
 const record = { feature: 'x', slug: 'x', slices: [] };
-const reportFor = (line) => closingReportOf(record, { pr: '#590', landing: { state: 'landed', sha: '1a2b3c4', line } }, []).body;
+const landed = (line) => ({ pr: '#590', landing: { state: 'landed', sha: '1a2b3c4', line } });
+const reportFor = (line) => closingReportOf(record, landed(line), []).body;
+const stepsFor = (line) => stepsOf(record, landed(line), []).map((step) => step.text).join('\n');
 
-test("the report's first step is the main PR", () => {
-  const body = reportFor('landed feat/x on pilot at 1a2b3c4\nmain gets pilot: #901');
-  const steps = body.split('\n').filter((line) => line.startsWith('Human step:'));
+test("the landing's first step is the main PR", () => {
+  const line = 'landed feat/x on pilot at 1a2b3c4\nmain gets pilot: #901';
+  const [first] = stepsOf(record, landed(line), []);
   // No branch name: the PR's base is the host's default branch, which land never printed (QA F3: GitLab's was master).
-  assert.equal(steps[0], 'Human step: Merge #901 with a merge commit, when you want main to have it.');
-  assert.match(body, /^main gets pilot: #901$/m, 'the main line is shown');
-  assert.doesNotMatch(body, /merge first|ready/i, 'no merge-first or ready step');
+  assert.equal(first.text, 'Merge #901 with a merge commit, when you want main to have it.');
+  assert.match(reportFor(line), /^main gets pilot: #901$/m, 'the main line is shown');
+  assert.doesNotMatch(`${reportFor(line)}\n${stepsFor(line)}`, /merge first|ready/i, 'no merge-first or ready step');
 
-  assert.ok(reportFor('landed feat/x on pilot at 1a2b3c4\nmain gets pilot: #901 (opened)').includes('Human step: Merge #901 with a merge commit'));
+  assert.ok(stepsFor('landed feat/x on pilot at 1a2b3c4\nmain gets pilot: #901 (opened)').includes('Merge #901 with a merge commit'));
   assert.match(reportFor('landed feat/x on pilot at 1a2b3c4'), /^main gets pilot: not printed by land$/m);
-  assert.doesNotMatch(reportFor('landed feat/x on pilot at 1a2b3c4\nmain gets pilot: #9x'), /Merge #9/, 'no looser match than mainLine');
+  assert.doesNotMatch(stepsFor('landed feat/x on pilot at 1a2b3c4\nmain gets pilot: #9x'), /Merge #9/, 'no looser match than mainLine');
 });
 
 /** A repository and a linked worktree of it, removed when the test ends. */
