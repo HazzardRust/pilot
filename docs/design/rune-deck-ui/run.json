@@ -67,7 +67,7 @@
     },
     {
       "slice": "S32 Every region designs its empty and error states (added)",
-      "state": "pushed 938b622; rust APPROVE (MED: a Retry flag outlives its outage once)",
+      "state": "integrated at 5e3af11; rust APPROVE (MED: a Retry flag outlives its outage once); 765/0 selection",
       "after": [
         "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
         "S31 Left panes' contents: content selects, rows on the grid (added)"
@@ -77,7 +77,7 @@
     },
     {
       "slice": "S33 The deck's font and its three type scales (added)",
-      "state": "pushed f28a9ec; rust APPROVE with notes",
+      "state": "pushed ff385b0 (rebased); rust APPROVE with notes; integrate running",
       "after": [
         "S27 The window frame: Rune's title bar and the top inset (added)",
         "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
@@ -180,15 +180,9 @@
     "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
     "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
   ],
-  "next": "feat 4a5f27ff. S35 integrated; S32 integrate running; then S33 (likely theme.rs conflict). Then full cargo on feat, base check, fundamentalist, QA.",
-  "updatedAt": "2026-11-20T10:53:08.713Z",
+  "next": "feat 5e3af11b. S33 rebased ff385b0 (28 binaries green), integrate running. Then full cargo on feat, base check, fundamentalist, QA.",
+  "updatedAt": "2026-11-20T10:59:03.604Z",
   "friction": [
-    {
-      "agent": "pilot-qa",
-      "what": "taste check (spec 5) failed only at the walkthrough after 25 slices: no earlier look by the user at the Rune window; restyle is 300-600 lines and collides with spec 2's token parity test",
-      "evidence": "walkthrough itm_317aa44d9e6e, QA audit at cb0866e9",
-      "size": 3
-    },
     {
       "agent": "pilot-explorer",
       "what": "Rune's winit is vendored under the git checkout (hashed dir), not ~/.cargo/registry, so a registry search finds nothing",
@@ -404,6 +398,12 @@
       "what": "S33: Rune exposes no font size or style on a drawn element, so the type-scale test reads text heights as a proxy; the node test that scans deck/ raced cargo deleting temp dirs under target/ (ENOENT flake); pilot deck --stop rejected its arguments, the scratch deck was killed by pid",
       "evidence": "S33 report f28a9ec",
       "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S33 conflicted in four files with S32's empty states after parallel lanes; a rebase-only implementer resolved 5 hunks and moved theme::empty to the deck's CAPTION",
+      "evidence": "S33 rebase report ff385b0",
+      "size": 1
     }
   ]
 }
