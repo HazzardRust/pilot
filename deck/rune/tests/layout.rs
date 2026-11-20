@@ -399,6 +399,35 @@ fn a_three_digit_count_moves_nothing() {
     assert_eq!(panel_bounds(&at_1000), panel_bounds(&at_99));
 }
 
+/// QA: an icon's count is a badge on its top-right corner, inside the icon bar, clear of the
+/// glyph's lower half and, for one digit, its left half; not a wide pill over the glyph.
+#[test]
+fn an_icon_count_sits_on_its_corner_clear_of_the_glyph() {
+    for n in [6, 100] {
+        let rt = window(notices(n), all_open(size::side_default));
+        let item = rects(&rt, "icon-notifications").1;
+        let badge = rects(&rt, "icon-notifications-count").1;
+        let (cx, cy) = (item[0] + item[2] / 2.0, item[1] + item[3] / 2.0);
+
+        assert!(badge[0] >= item[0], "{n}: badge left of the bar {badge:?}");
+        assert!(
+            badge[0] + badge[2] <= item[0] + item[2],
+            "{n}: badge past the bar {badge:?} in {item:?}"
+        );
+        assert!(badge[1] >= item[1], "{n}: badge above its icon {badge:?}");
+        assert!(
+            badge[1] + badge[3] <= cy,
+            "{n}: badge over the glyph's lower half {badge:?}"
+        );
+        if n < 10 {
+            assert!(
+                badge[0] >= cx,
+                "{n}: badge over the glyph's left half {badge:?}"
+            );
+        }
+    }
+}
+
 /// S27: the window draws its own title bar, a band across the top that drags the window, and the
 /// content starts below it at the top inset.
 #[test]

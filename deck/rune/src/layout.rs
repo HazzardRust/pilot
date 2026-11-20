@@ -278,12 +278,35 @@ fn icon_item(
     let count = count(s, name);
     if count > 0 {
         item = item.child(
-            count_cell(count, dark)
+            icon_badge(count, dark)
                 .key(format!("icon-{name}-count"))
-                .pin(None, None, Some(space::s0), Some(space::within)),
+                .pin(None, Some(space::s2), Some(space::s2), None),
         );
     }
     item
+}
+
+/// An icon's count: a solid badge as wide as its digits on the icon's top-right corner, so it
+/// covers no more of the glyph than that corner. Out of the flow, so its width moves nothing (6e).
+fn icon_badge(count: usize, dark: bool) -> El {
+    let r = theme::roles(dark);
+    let shown = if count > 999 {
+        "999+".to_string()
+    } else {
+        count.to_string()
+    };
+    el().h(size::badge)
+        .min_w(size::badge)
+        .px(space::s2)
+        .center()
+        .radius(theme::radius::pill(size::badge))
+        .fill(r.on_surface)
+        .child(
+            text(shown)
+                .font(type_::CAPTION.mono())
+                .color(r.surface)
+                .align(Align::Center),
+        )
 }
 
 /// One pane: a 22 px header (chevron, title, count) over its contents, which scroll. A shut pane
