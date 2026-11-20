@@ -283,9 +283,6 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         let (at, again_at) = (id.clone(), id.clone());
         // A locked option is the page's `.choices button:disabled`: unlit and quiet, taking no press.
         let mut face = btn(&label, format!("option-{i}"), lit);
-        if option.locked {
-            face = face.opacity(theme::opacity::disabled).disabled(true);
-        }
         if option.recommended {
             face = face.gap(space::within).child(
                 text("(recommended)")
@@ -294,14 +291,15 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                     .color(k.quiet),
             );
         }
-        let mut group =
-            row()
-                .gap(space::within)
-                .items_center()
-                .child(face.on_press(move |s: &mut State| {
-                    let action = s.regions.reply.press(&at, &option);
-                    post(s, action);
-                }));
+        face = if option.locked {
+            face.opacity(theme::opacity::disabled).disabled(true)
+        } else {
+            face.on_press(move |s: &mut State| {
+                let action = s.regions.reply.press(&at, &option);
+                post(s, action);
+            })
+        };
+        let mut group = row().gap(space::within).items_center().child(face);
         if asking {
             group = group
                 .child(theme::content(
@@ -377,12 +375,13 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             }),
         );
     }
+    // Top-aligned, so a taller option ("(recommended)") never moves Reply or Close.
     let send = row()
         .key("reply-send")
         .items_start()
         .gap(space::between)
         .child(fixed)
-        .child(el().grow(1.0))
+        .child(el().grow(1.0).min_w(space::s0))
         .child(options);
 
     let mut box_ = col()
