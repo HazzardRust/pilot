@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed 4ec4f1d",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -32,8 +32,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-two-devices-s3"
     }
   ],
-  "next": "S3 reported 4ec4f1d with both Verdicts; integrating S3, S2 still implementing",
-  "updatedAt": "2026-11-20T15:12:24.771Z",
+  "next": "S3 integrated at 77eea775; integrating S2 (560d603), then fundamentalist and QA",
+  "updatedAt": "2026-11-20T15:29:12.889Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -101,6 +101,32 @@
       "agent": "pilot-co-pilot",
       "what": "co-pilot brief told S3 to number its ADR, contradicting brief.md, the slice and ADR 0167 (adr-allocate numbers at landing); implementer rightly kept NNNN",
       "evidence": "S3 pushback"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2 context reset mid-run lost the earlier state; slice rebuilt from nothing",
+      "evidence": "S2 report: no worktree or branch after reset"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the gate cannot be stopped mid-run (no TaskStop), so a review fix after the first gate cost a second full 13-16 min run",
+      "evidence": "S2 gates 782 s and 956 s"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the deck keys its view by repository path, so pilot doctor from a worktree never sees the real queue",
+      "evidence": "S2 B6 needed --dir at the shared checkout"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate's selection went red on two 5 s timing bounds while a parallel slice's full gate loaded the machine; both pass alone; second retry green",
+      "evidence": "deck/test/wait-for.test.mjs:116, scripts/test/handoff-lineage-remote.test.mjs:152; log 20261120T151304544Z-slice-two-devices-s3.log",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate requires Evidence kind exactly 'B5 run:'; an implementer's 'run, partial:' row was refused",
+      "evidence": "NOT integrated slice/two-devices-s3: S3: B5 has no --trailer \"Evidence: B5 run: ...\""
     }
   ]
 }
