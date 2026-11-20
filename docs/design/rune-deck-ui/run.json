@@ -235,7 +235,7 @@
     },
     {
       "slice": "S24",
-      "state": "implementing",
+      "state": "pushed 0e84e21 — rust approve with nits; 526 lines, limit waived by co-pilot (tests), +86 net production; npm test 4850/0, cargo 99/0; integrating",
       "after": [
         "fix round"
       ],
@@ -251,7 +251,7 @@
     },
     {
       "slice": "QA fix 1",
-      "state": "pushed 1d17cc6 — rust APPROVE, typescript APPROVE; +96 net; cargo 96/0, npm test 4850/0; integrating",
+      "state": "integrated at 54de6d9 — rust APPROVE, typescript APPROVE; +96 net; 4850/0 selection; Q1-Q4",
       "after": [
         "fix round"
       ],
@@ -277,15 +277,9 @@
     "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
     "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
   ],
-  "next": "integrating QA fix 1 (1d17cc6); S24 implementing; then QA fix 2 (Q5-Q7) after S24 and S25; then base check and resume QA with the tip",
-  "updatedAt": "2026-11-20T05:16:33.600Z",
+  "next": "integrating S24; then S25 beside QA fix 2 (Q5-Q7, Q8 items screen unreachable); then base check and resume QA with the tip",
+  "updatedAt": "2026-11-20T05:38:25.347Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S6: context summarized right after worktree creation, slice rebuilt from scratch; TaskStop unreachable so a 7.5-min npm test on a stale base was wasted; tests/support and pilot deck --scratch did not set the Start guard (PILOT_DECK_NO_START) so a Start press in a Rust test would open a real terminal",
-      "evidence": "S6 report; tests/support/mod.rs now sets it",
-      "size": 8
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S7 finisher: installed pilot on PATH is plugin 0.9.9 without /api/view, so snaps drew 'deck not running' until the worktree CLI was used; --snap cannot capture arrival frames; a soft reset onto a moved feat silently reverts newer content",
@@ -513,6 +507,12 @@
       "agent": "pilot:pilot-implementer",
       "what": "QA fix 1: rune --script event types undocumented (read rune source); npm test ~9 min; D:\\qa1tmp left after its removal was refused; gate printed 'home store changed' on the live deck",
       "evidence": "QA fix 1 report 1d17cc6",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S24: Rune rows with on_press report focusable false regardless, so a disabled-by-focusable pin is vacuous; the deck refuses neither a second dismiss nor a clear of a gone notice, so refusal tests need a second scratch deck; cargo stops at the first failing binary without --no-fail-fast; the items screen is unreachable from the window",
+      "evidence": "S24 report 0e84e21; tests/history.rs dismiss_run_posts_once",
       "size": 4
     }
   ]
