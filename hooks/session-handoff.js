@@ -49,6 +49,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const deck = require('./lib/deck.js');
+const { step } = require('./lib/wrapper-log.js');
 
 /** handoff-books L4: the audit record, an ES module, reached from this CommonJS hook by `import()`. */
 const AUDIT_URL = pathToFileURL(path.join(__dirname, '..', 'deck', 'audit.mjs')).href;
@@ -530,6 +531,8 @@ async function run(input) {
     return null;
   }
   deck.log('lane: handed ' + item.id);
+  // crew-handoff-trace S4: after the claim, so a second start on the same item writes no second row.
+  step({ step: 'handed', kind: HANDOFF_KIND, item: item.id, session: input.session_id });
   const due = await countAndDue(cwd, item.id);
   const withDue = function (text) { return due ? text + '\n\n' + due : text; };
   const { record: stored, yellow, lanes, owed, coPilot } = await recordFor(cwd);
