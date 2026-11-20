@@ -1,0 +1,82 @@
+{
+  "slug": "two-devices",
+  "feature": "Two devices, one repo",
+  "ticket": "itm_c844d6d00d8e",
+  "branch": "feat/two-devices",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-two-devices",
+  "artefact": "docs/design/two-devices/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed 3d05711",
+      "branch": "slice/two-devices-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-two-devices-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    }
+  ],
+  "next": "S1 reported 3d05711 with both Verdict lines; integrating, then S2 and S3 in parallel",
+  "updatedAt": "2026-11-20T14:39:57.782Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "no slug exists before gate1 and queued tickets have no slug field; queued slugs had to be read out of ticket bodies",
+      "evidence": "deck/store-items.mjs:649, deck/ticket-shape.mjs"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "pilot wait --as architect needs an --item, so with no thread open it could not wait for the verdict message and handed back before gate1",
+      "evidence": "architect hand-back, design/two-devices 81341c1a",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "two question posts refused for a missing Research: line; the rule is not in the architect's definition (pilot hit the same refusal once)",
+      "evidence": "architect hand-back; itm_09b174565601 first post"
+    },
+    {
+      "kind": "drain",
+      "what": "auto mode classifier gave no verdict on a Bash/Agent/SendMessage call batched with a deck call, four times; each cost a reissue in its own turn",
+      "size": 1200
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a new deck module must be listed in deck/README.md's Module column; the slice file does not say so and the gate catches it only after 8.7 min",
+      "evidence": "S1 first gate: 1 red, scripts/test/deck-readme.test.mjs"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the literal allow list is pinned in 3 test files outside the slice's owned files",
+      "evidence": "S1: 7 reds in a targeted run, install-allow-merge.test.mjs, install.test.mjs"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "node --test default reporter printed nothing through grep; needed --test-reporter=tap",
+      "evidence": "S1 empty first red capture"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md trailer names Claude Fable 5.2 while implementers run Opus 5.5",
+      "evidence": "docs/design/two-devices/brief.md:31"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "TaskOutput is not in the co-pilot's tools though its definition waits on children with it; ending a turn to wait triggered an enforced hand-back with a child live",
+      "evidence": "No such tool available: TaskOutput; [handback-send-enforce]",
+      "size": 1
+    }
+  ]
+}
