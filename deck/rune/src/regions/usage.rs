@@ -79,11 +79,8 @@ pub fn poll(s: &mut State, tx: &mut Tx) -> bool {
     }
     let local = &mut s.regions.usage;
     // The first view was read at load: the first poll only sets the clock.
-    if local.due.is_none() {
-        local.due = Some(now + EVERY);
-        tx.wake_after(EVERY);
-    }
-    if local.due.is_some_and(|due| now >= due) {
+    let due = *local.due.get_or_insert(now + EVERY);
+    if now >= due {
         local.due = Some(now + EVERY);
         let query = s.query.clone();
         let asked = query.clone();
@@ -97,8 +94,13 @@ pub fn poll(s: &mut State, tx: &mut Tx) -> bool {
             Ok(_) => local.out = Some((query, inbox)),
             Err(err) => eprintln!("pilot-deck: the usage read did not start: {err}"),
         }
-        tx.wake_after(if local.out.is_some() { SETTLE } else { EVERY });
     }
+    // A one-shot wake, asked again on every poll, so an idle window still reads every 30 s.
+    let next = match (&local.out, local.due) {
+        (Some(_), _) | (None, None) => SETTLE,
+        (None, Some(due)) => due.saturating_duration_since(now),
+    };
+    tx.wake_after(next);
     changed
 }
 

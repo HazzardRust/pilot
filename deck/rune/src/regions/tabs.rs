@@ -37,7 +37,12 @@ impl Local {
                 }
             },
         };
-        self.refused = Some(reason);
+        // A refusal with no words is still a refusal, never a blank line.
+        self.refused = Some(if reason.trim().is_empty() {
+            "the deck refused that path".into()
+        } else {
+            reason
+        });
         None
     }
 }
@@ -53,6 +58,7 @@ fn param(location: &str, name: &str) -> Option<String> {
     while i < bytes.len() {
         let hex = bytes
             .get(i + 1..i + 3)
+            .filter(|h| h.iter().all(u8::is_ascii_hexdigit))
             .and_then(|h| std::str::from_utf8(h).ok());
         match (bytes[i], hex.and_then(|h| u8::from_str_radix(h, 16).ok())) {
             (b'%', Some(byte)) => {

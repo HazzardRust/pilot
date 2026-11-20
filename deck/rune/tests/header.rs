@@ -41,15 +41,27 @@ fn texts(rt: &Runtime<State>) -> Vec<String> {
         .collect()
 }
 
-/// Points this test's presses at `deck` while the returned guard is held.
-fn pointed_at(deck: &support::Scratch) -> std::sync::MutexGuard<'static, ()> {
+/// Points presses at a scratch deck until dropped, a panic included, holding `ENV` throughout.
+struct PointedAt(#[allow(dead_code)] std::sync::MutexGuard<'static, ()>);
+
+fn pointed_at(deck: &support::Scratch) -> PointedAt {
     let held = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    // SAFETY: every test in this binary that touches the environment holds `ENV`.
+    // SAFETY: every test in this binary that sets or reads these two variables holds `ENV`.
     unsafe {
         std::env::set_var("PILOT_DECK_DIR", &deck.dir);
         std::env::set_var("PILOT_DECK_PORT", deck.port.to_string());
     }
-    held
+    PointedAt(held)
+}
+
+impl Drop for PointedAt {
+    fn drop(&mut self) {
+        // SAFETY: as in `pointed_at`; `ENV` is still held, released after this body.
+        unsafe {
+            std::env::remove_var("PILOT_DECK_DIR");
+            std::env::remove_var("PILOT_DECK_PORT");
+        }
+    }
 }
 
 fn press(rt: &mut Runtime<State>, key: &str) {
@@ -114,10 +126,6 @@ fn a_tab_press_selects_its_deck() {
     });
 
     press(&mut rt, "tab-2");
-    unsafe {
-        std::env::remove_var("PILOT_DECK_DIR");
-        std::env::remove_var("PILOT_DECK_PORT");
-    }
     drop(held);
 
     let (mut run, mut seq) = (None, 0);
@@ -159,7 +167,11 @@ fn a_refused_add_deck_says_why_and_keeps_the_path() {
 fn the_daemons_refusal_of_a_typed_path_reaches_the_box() {
     let deck = support::Scratch::start();
     let missing = deck.dir.join("no such dir").to_string_lossy().into_owned();
-    let client = support::client_for(&deck);
+    // `client_for` sets and clears the same two variables a press reads: never beside one.
+    let client = {
+        let _env = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        support::client_for(&deck)
+    };
     let mut state = State::default();
     state.regions.tabs.adding = Some(TextEdit::new(format!("  {missing}  ")));
 
