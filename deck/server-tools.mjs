@@ -16,7 +16,7 @@ import { startLanding } from './landing.mjs';
 import { LAND_AGAIN, LANDING_KINDS } from './landing-replies.mjs';
 import { startPrWrite } from './pr-writes.mjs';
 import {
-  KIND_GATE1, KIND_GATE2, KIND_TICKET, KIND_WALKTHROUGH, OWNER_KINDS, SIGN_OFF, authorKind, isChainHandoff, isGate, isOpen, isRecord, liveTicketOf, messagesOf, ownerOf, stateOf, waiterKind,
+  KIND_CREW_HANDOFF, KIND_GATE1, KIND_GATE2, KIND_HANDOFF, KIND_TICKET, KIND_WALKTHROUGH, OWNER_KINDS, SIGN_OFF, authorKind, isChainHandoff, isGate, isOpen, isRecord, liveTicketOf, messagesOf, ownerOf, stateOf, waiterKind,
 } from './items.mjs';
 import { postFilled } from './closing-report.mjs';
 import { assertOnPilotTip, assertVerdicts } from './lineage.mjs';
@@ -34,6 +34,7 @@ import { noteDeck } from './store-items.mjs';
 import { recutTicket, replanTicket } from './store-tickets.mjs';
 
 import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_READ_ITEMS, MAX_READ_LIMIT, deckUrl } from './tools.mjs';
+import { step } from '../hooks/lib/wrapper-log.js';
 
 // --- the tools, as the deck performs them ----------------------------------
 //
@@ -312,6 +313,8 @@ export function callTool(name, args, deps = {}) {
     const before = fields.kind === KIND_WALKTHROUGH || fields.kind === KIND_GATE2 ? stateOfNamed() : undefined;
     // The lander's bodiless report is filled from the run record (lander S15).
     const item = postFilled(fields);
+    // The deck sees a hand-off posted, so the deck writes its trace row (crew-handoff-trace L1): ids only, spec 7.
+    if (item.kind === KIND_HANDOFF || item.kind === KIND_CREW_HANDOFF) step({ step: 'posted', kind: item.kind, item: item.id, ticket: item.ticket });
     const concluded = before === 'yellow' && stateOfNamed() === 'green' ? ` ${item.ticket} is now green (concluding); the yellow lane is free.` : '';
     // A gate1 opens the feature PR, by a deck write the poster never waits on (spec 2, L1).
     if (item.kind === KIND_GATE1) prWrite(item.ticket, item.repo);

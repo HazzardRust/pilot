@@ -29,6 +29,7 @@ import { main as update } from '../scripts/update.mjs';
 import { main as reach } from '../scripts/apply-reach.mjs';
 import { budget } from '../deck/budget.mjs';
 import { ready } from '../deck/schedule.mjs';
+import { trace } from '../deck/trace.mjs';
 import { ensureDaemon, isDeckUp } from '../deck/client.mjs';
 import { fromLeash, startScratch, stopScratch } from '../deck/scratch.mjs';
 import { fromRoot } from '../deck/spawn-root.mjs';
@@ -193,6 +194,9 @@ const usage = () => `pilot — the deck for piloted runs
   pilot ready --ticket <id> --slots <n>
                  print the slices the ticket's record lets start now, one per line as
                  S<n> from <feat|branch>, at most n, or none; reads the deck, writes nothing
+  pilot trace <itm_id> [--file <path>]
+                 print a hand-off's or ticket's trace rows in time order, then done or
+                 waiting: <next step>, <age>; reads the trace file, never the deck (exit 2 on a bad id)
   pilot status   whether a deck is running at the deck's url: its pid, its version against
                  the plugin's (stale when older), uptime and live agents by repository;
                  then deck.log's last 20 lines either way. Exit 0 with a deck, 1 without
@@ -523,6 +527,11 @@ export async function run(argv, deps) {
 
   if (command === 'ready') {
     process.exitCode = await ready(argv.slice(1));
+    return undefined;
+  }
+
+  if (command === 'trace') {
+    process.exitCode = await trace(argv.slice(1));
     return undefined;
   }
 
