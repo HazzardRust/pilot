@@ -44,6 +44,8 @@ test('unbounded shapes are refused', () => {
     ['cd x && until grep -q done f; do sleep 4; done', 'until', 'done'],
     ['until grep -q x f; do sleep 5; done; echo done', 'until', 'x'],
     ['while true; do grep -q x f && break; sleep 5; done', 'while', null],
+    ['until grep -q x f; do command sleep 5; done', 'until', 'x'],
+    ['until grep -q x f; do timeout -s KILL 9999 sleep 5; done', 'until', 'x'],
   ];
   for (const [command, form, marker] of shapes) {
     const found = unboundedWaits(command);

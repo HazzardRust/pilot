@@ -220,17 +220,27 @@ function seconds(word) {
   return n > 0 ? n : null;
 }
 
+/** The program words under a leading `timeout [options] <n>`, and whether that `timeout` is within A4. */
+function underTimeout(words) {
+  const args = program(words);
+  if (args.length === 0 || baseName(args[0].w) !== 'timeout') return { args, bounded: false };
+  let k = 1;
+  for (; k < args.length && args[k].w[0] === '-'; k++) if (/^-[ks]$|^--(?:kill-after|signal)$/.test(args[k].w)) k++;
+  const n = args[k] ? seconds(args[k]) : null;
+  return { args: program(args.slice(k + 1)), bounded: n !== null && n <= MAX_WAIT_MINUTES * 60 };
+}
+
+/** Whether the simple command starting at token `k` runs `sleep`, past prefixes and a per-call `timeout <n>`. */
+function runsSleep(toks, k) {
+  const words = [];
+  for (; k < toks.length && !toks[k].op; k++) words.push(toks[k]);
+  const { args } = underTimeout(words);
+  return args.length > 0 && baseName(args[0].w) === 'sleep';
+}
+
 /** The `-c` script of a shell a simple command runs, and whether a `timeout` within A4 bounds it. */
 function shellScript(words) {
-  let args = program(words);
-  let bounded = false;
-  if (args.length > 0 && baseName(args[0].w) === 'timeout') {
-    let k = 1;
-    for (; k < args.length && args[k].w[0] === '-'; k++) if (/^-[ks]$|^--(?:kill-after|signal)$/.test(args[k].w)) k++;
-    const n = args[k] ? seconds(args[k]) : null;
-    bounded = n !== null && n <= MAX_WAIT_MINUTES * 60;
-    args = program(args.slice(k + 1));
-  }
+  const { args, bounded } = underTimeout(words);
   if (args.length === 0 || !SHELLS.test(baseName(args[0].w))) return null;
   let dashC = false;
   for (let k = 1; k < args.length; k++) {
@@ -257,7 +267,7 @@ function waitLoops(command, depth = 0) {
     } else if (t.w === 'done') {
       const loop = open.pop();
       if (loop && loop.body && loop.sleeps && (loop.form === 'until' || loop.form === 'while')) found.push(loop);
-    } else if (baseName(t.w) === 'sleep') {
+    } else if (runsSleep(toks, k)) {
       for (const loop of open) loop.sleeps = true;
     }
   });
@@ -290,7 +300,7 @@ function waitDenial(command) {
       permissionDecisionReason: `A wait loop (${waits.map((w) => w.form).join(', ')}) that sleeps with no bound can wait ` +
         'forever and outlive you: the tool call\'s timeout stops applying once it is backgrounded. Wait on a file with ' +
         `\`pilot wait-for --file F --match RE --timeout M\` (M at most ${MAX_WAIT_MINUTES}); run a test suite with ` +
-        'run_in_background and end your turn. ' +
+        'run_in_background and end your turn; a counted retry goes as `for i in $(seq N); do …; done`. ' +
         (tasks ? 'A subagent reports by message, not its output file: end your turn. ' : '') +
         'This is not a blocked step: post nothing and carry on.',
     },
