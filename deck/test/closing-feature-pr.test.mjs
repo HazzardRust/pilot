@@ -8,7 +8,7 @@ import './no-open.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { closingReportOf, humanStep } from '../closing-report.mjs';
+import { closingReportOf, humanStep, stepsOf } from '../closing-report.mjs';
 import { MERGE_KEY, mergeMethodOf } from '../host.mjs';
 import { isShortLanding } from '../store-items.mjs';
 
@@ -55,9 +55,11 @@ test('an unreadable setting is named in the step', () => {
   assert.match(humanStep({ line: 'feature PR: #12 into main', method }), /^Merge #12 with a merge commit \(pilot\.merge names "rebase"/);
 });
 
-test('the closing report carries the step and no main step', () => {
+test('the steps thread carries the step first; the closing report carries the line and no step', () => {
   const line = 'landed feat/a on pilot at 1a2b3c4\nfeature PR: #13 into feat/a (after #12)';
-  const { body } = closingReportOf({ slug: 'a', slices: [] }, { pr: '#590', landing: { state: 'landed', sha: '1a2b3c4', line } }, [], [], undefined, 'squash');
-  assert.match(body, /^Human step: Merge #12, then #13 with a squash/m);
-  assert.doesNotMatch(body, /main gets pilot/);
+  const gate = { pr: '#590', landing: { state: 'landed', sha: '1a2b3c4', line } };
+  assert.equal(stepsOf({ slug: 'a' }, gate, [], 'squash')[0].text, 'Merge #12, then #13 with a squash.');
+  const { body } = closingReportOf({ slug: 'a', slices: [] }, gate, []);
+  assert.match(body, /^feature PR: #13 into feat\/a \(after #12\)$/m);
+  assert.doesNotMatch(body, /Human step|main gets pilot/);
 });

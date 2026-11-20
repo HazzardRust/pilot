@@ -1,0 +1,237 @@
+{
+  "slug": "human-steps",
+  "feature": "Human steps are a green thread",
+  "ticket": "itm_7d3455d28cd6",
+  "branch": "feat/human-steps",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-human-steps",
+  "artefact": "docs/design/human-steps/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated (post-review nit fixes read by no reviewer; B7 look by pilot)",
+      "branch": "slice/human-steps-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated ef9308a",
+      "after": [
+        "S1",
+        "S3"
+      ],
+      "branch": "slice/human-steps-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated (second commit a081ce4 read by no reviewer)",
+      "branch": "slice/human-steps-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated 4717f11 (verdicts from co-pilot rerun: typescript APPROVE, security APPROVE)",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/human-steps-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated 1a7b91b (added)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/human-steps-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-human-steps-s5"
+    },
+    {
+      "slice": "feature",
+      "state": "fixing: fix/human-steps-principles pushed 68fb092 (typescript APPROVE, security APPROVE), integrating"
+    },
+    {
+      "slice": "fix",
+      "state": "pushed 68fb092 (principles + QA round K1-K11; typescript APPROVE, security APPROVE)",
+      "after": [
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "branch": "fix/human-steps-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-human-steps-principles"
+    }
+  ],
+  "findings": [
+    "kept: F1 simplify — agents/pilot-lander.md:57-59 asks for a steps id deck_post never returns; delete the steps field (and S4.md Interface)",
+    "kept: F2 simplify — REPORT.humanSteps (deck/runs.mjs:355, tools.mjs:312) read by nothing, shares a name with record.humanSteps; delete key and fixtures",
+    "kept: F3 simplify — L5's 20/300 written in four places and two one-line rules; one export in items-bounds.mjs",
+    "kept: F4 decision L5 simplify — record cap 17 to drop the overflow branch; moves L5 and spec 7, asked as itm_1309ffdc6081; fold stays (assumed)",
+    "kept: F5 needed — a closed steps thread page draws no numbered steps; draw the list in the closed branch",
+    "kept: F6 needed — stepsOf bounds untested (exactly 20, one Remove past 20, 300-char clip); three assertions",
+    "kept: N1 simplify — closeTicket re-export with no outside caller",
+    "kept: N2 simplify — stale 'worktrees reply' comments store-items.mjs:390, report-shape.mjs:5-6",
+    "dropped: N4 — KIND_STEPS placement; moved when items.mjs is next split, no consequence now",
+    "kept: N5 — S5.md fails check-slices (no Rewrite check/Misses, behaviour form)",
+    "kept: SEC1 consider — a credential-shaped worktree path made postSteps refuse inside postFilled; step and Worktrees left line now withheld",
+    "dropped: SEC2 consider — fromOwnPage on a steps thread's /close; the trusted-origin check holds and Close on a question works the same",
+    "kept: QA-F1 — Stripe sk_live_/rk_test_ keys passed refuseCredentials; one shape row in deck/credential.mjs",
+    "kept: QA-F2 — standingOf showed landing for a landed ticket with an open steps thread; now human steps"
+  ],
+  "next": "integrating fix/human-steps-principles 68fb092; then send QA the fix tip; L5 question itm_1309ffdc6081 open (fold assumed)",
+  "updatedAt": "2026-11-19T21:05:50.261Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "store-items.mjs postItem is ~100 lines of interleaved refusals; finding where a report closes its ticket took a dedicated explorer",
+      "evidence": "deck/store-items.mjs:174",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "STANDING/RECORD kinds duplicated in hooks/lib/deck.js (CJS) beside items.mjs; every new kind touches both plus join.test.js",
+      "evidence": "hooks/lib/deck.js, deck/items.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck MCP reported CONNECTION_CLOSED at start, then worked on first call",
+      "evidence": "human-steps architect hand-back",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "a QA agent of the previous session survived /clear unknown to the record, so the fresh co-pilot spawned a second pilot-qa on the same ticket",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck MCP server did not connect in a second architect session in a row; the pilot posted deck_status and the gate1 for it",
+      "evidence": "human-steps re-cut report: deck (CONNECTION_CLOSED) at session start; same in the audit-f14 re-cut",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "re-cut gate1 refused for an 8-char sha in its 'Changed since' line; the deck wants exactly 7",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: deck/store-runs.mjs already at its 800-line bar though the slice owns it; validation moved to deck/runs.mjs",
+      "evidence": "one 7-minute gate plus a refactor; Edit turned   in a regex into the raw character",
+      "size": 7
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: items.mjs and store-items.mjs at the 800-line cap forced a module move (deck/store-steps.mjs); kind and export lists pinned in five test files no slice names",
+      "evidence": "one 7-minute gate plus a module move; non-test diff 158 lines, over the 150 limit",
+      "size": 7
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "B7 look: the implementer definition lists chrome-devtools but a co-pilot-spawned session has no such tools; integrate refuses S1 without a look trailer",
+      "evidence": "3 ToolSearch calls, 'No matching deferred tools'; NOT integrated slice/human-steps-s1: S1: B7 has no --trailer",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "no agent in the crew had a browser tool for a `look` evidence row; integrate refused S1 until the pilot took headless Edge screenshots itself",
+      "evidence": "NOT integrated slice/human-steps-s1: S1: B7 has no --trailer \"Evidence: B7 look\""
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "deck source files sit at the 800-line cap and kind/export lists are pinned in five test files no slice names; one extra 7-minute gate each for S1 and S3",
+      "evidence": "S1 and S3 reports, human-steps"
+    },
+    {
+      "kind": "drain",
+      "what": "S1 and S3 reports misrouted to main, relayed; B7 look done in the pilot with five screenshots read",
+      "size": 14000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: first typescript-reviewer's report never reached the implementer and could not be resumed (No transcript found); second review cost ~31k tokens",
+      "evidence": "S4 report relayed by main",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate log prints `home store changed: ~/.claude/pilot/deck.json` on every run",
+      "evidence": "S4 report, npm run test:quiet",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "S4's report from the previous session reached main late; co-pilot reran both reviewers and the slice verification to integrate",
+      "evidence": "two reviewer spawns (~47k tokens) duplicating the implementer's typescript review",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: python3 absent in the shell and a heredoc fallback silently wrote nothing; Edit needs a Read first, two retries",
+      "evidence": "S5 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: a context summary between turns dropped all built work; rebuilt from the slice file",
+      "evidence": "git status clean at 865817cb after the summary",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: gate took 392 s",
+      "evidence": "duration_ms 391683",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate's full-suite selection exceeds argv limit and falls back",
+      "evidence": "full suite: selection is 39007 characters of argv, over 24000 (S4 integrate)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context reset mid-review lost the evidence runner's output; one-spawn rule left all six checks unmeasured, co-pilot respawned the runner",
+      "evidence": "principles report: tools table empty",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "declined npm ci in its worktree under its no-install rule, so diff coverage and diff mutation stayed unmeasured; stryker dry run failed on missing @modelcontextprotocol/sdk",
+      "evidence": "node_modules missing: run npm ci; There were failed tests in the initial test run",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "no chrome-devtools tools in a co-pilot-spawned QA; drove its own headless Chrome over CDP",
+      "evidence": "QA read-only report, human-steps",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck MCP reported CONNECTION_CLOSED at start, worked after ToolSearch",
+      "evidence": "QA first message",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix round: gitFixture caches by key, so a new K8 test reusing work-qa passed falsely; one wasted red cycle",
+      "evidence": "scripts/test/lib/git-fixture.mjs:62",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "items.mjs at its 800-line bar forced K11 into a one-line ternary",
+      "evidence": "facades.test.mjs line bar",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief's runs.mjs line numbers stale (273-274 actually ~452-453)",
+      "evidence": "fix round report",
+      "size": 1
+    }
+  ]
+}

@@ -93,6 +93,21 @@ fn back(run: Option<String>) -> impl Fn(&mut State, &rune::KeyEvent, &mut rune::
     }
 }
 
+/// The window's route for the same keys: nothing has focus when a thread has just opened, so the
+/// thread's own handler is not asked until a Tab. A focused field or control keeps its keys.
+pub fn key(s: &mut State, ev: &rune::KeyEvent, tx: &mut rune::Tx) -> bool {
+    if tx.focused().is_some() {
+        return false;
+    }
+    let Some(v) = s.view.regions.get("thread") else {
+        return false;
+    };
+    let Ok(th) = Thread::deserialize(v) else {
+        return false;
+    };
+    back(th.nav.run)(s, ev, tx)
+}
+
 fn arrow(step: Option<Step>, glyph: &str, ink: Color, quiet: Color) -> El {
     match step {
         None => text(glyph).font(type_::TITLE).color(quiet),
