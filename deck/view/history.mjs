@@ -15,7 +15,6 @@ import { cardOf } from './queue.mjs';
 export function historyView(reads, query = {}, now = Date.now()) {
   const { run = null, all = false, screen = 'home' } = query;
   const { items } = reads;
-  const tabs = tabsOf(reads.runs, items, reads.numbers, reads.agents, reads.added, reads.lanes);
   if (screen === 'items') {
     const queue = queueOf(items);
     const ordered = [...queue, ...items.filter((item) => !queue.includes(item)).sort(newestSaidFirst)];
@@ -24,6 +23,7 @@ export function historyView(reads, query = {}, now = Date.now()) {
     return { days: cards.length ? [{ key: 'items', heading: 'Everything', open: true, cards }] : [], runs };
   }
   if (!all) return { days: [] };
+  const tabs = tabsOf(reads.runs, items, reads.numbers, reads.agents, reads.added, reads.lanes);
   const tab = run === null ? landingFor(tabs) : tabFor(tabs, run);
   const back = hrefFor(tab, all);
   const done = items.filter((item) => !isOpen(item) && (tab === null || tabFor(tabs, item.repo) === tab));

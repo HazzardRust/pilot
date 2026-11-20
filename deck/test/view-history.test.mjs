@@ -62,3 +62,18 @@ test('the items screen lists everything', (t) => {
   assert.deepEqual(view.runs.map(({ name, dismissable }) => ({ name, dismissable })), [{ name: 'alpha', dismissable: true }]);
   assert.match(view.runs[0].id, /^run_/);
 });
+
+test("a run's scope holds its own settled threads, never the open ones or another repo's", (t) => {
+  tempDeck(t);
+  const BETA = 'D:/work/beta';
+  registerRun({ repo: ALPHA, pid: process.pid });
+  registerRun({ repo: BETA, pid: process.pid });
+  const open = ask('Waiting');
+  const reads = { ...readDeck(), items: [...readDeck().items, settled('mine', stamp(0)), { ...settled('theirs', stamp(0)), repo: BETA }] };
+  const idsOf = (run) => historyView(reads, { run, all: true, screen: 'home' }, NOW).days.flatMap((day) => day.cards.map((card) => card.id));
+
+  assert.deepEqual(idsOf(ALPHA), ['itm_mine']);
+  assert.deepEqual(idsOf(BETA), ['itm_theirs']);
+  assert.deepEqual(idsOf(null).sort(), ['itm_mine', 'itm_theirs']);
+  assert.ok(!idsOf(null).includes(open.id), "what is waiting is the queue's");
+});

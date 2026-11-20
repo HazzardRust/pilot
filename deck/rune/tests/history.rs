@@ -100,6 +100,16 @@ fn dismiss_run_posts_once() {
         "a sent dismiss is spent"
     );
     assert_eq!(rt.state.regions.history.dismissed.len(), 1);
+    // A second post would be refused (the run is gone) and leave its reason here.
+    assert!(
+        rt.state
+            .regions
+            .history
+            .refused
+            .lock()
+            .expect("lock")
+            .is_empty()
+    );
 }
 
 #[test]
