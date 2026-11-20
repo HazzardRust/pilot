@@ -235,7 +235,7 @@
     },
     {
       "slice": "S24",
-      "state": "pushed 0e84e21 — rust approve with nits; 526 lines, limit waived by co-pilot (tests), +86 net production; npm test 4850/0, cargo 99/0; integrating",
+      "state": "integrated at 5739fa2 — rust approve with nits; +86 net production, limit waived by co-pilot (tests); 761/0 selection; cargo 99/0 on 0e84e21",
       "after": [
         "fix round"
       ],
@@ -244,10 +244,12 @@
     },
     {
       "slice": "S25",
-      "state": "planned (added, step 7 F6)",
+      "state": "pushed 309e70c — rust APPROVE; +434/-395 (net +39, rustfmt reindent), limit waived by co-pilot; cargo green, npm test 4846/4 (gate1-lineage flakes, 9/0 alone); integrating",
       "after": [
         "S24"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s25",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s25"
     },
     {
       "slice": "QA fix 1",
@@ -257,6 +259,15 @@
       ],
       "branch": "fix/rune-deck-ui-qa1",
       "worktree": "C:/Users/Hazzard/Projects/pilot-fix-rune-deck-ui-qa1"
+    },
+    {
+      "slice": "QA fix 2",
+      "state": "implementing — Q5 Q6 Q7 Q8",
+      "after": [
+        "S24"
+      ],
+      "branch": "fix/rune-deck-ui-qa2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-rune-deck-ui-qa2"
     }
   ],
   "findings": [
@@ -277,21 +288,9 @@
     "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
     "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
   ],
-  "next": "integrating S24; then S25 beside QA fix 2 (Q5-Q7, Q8 items screen unreachable); then base check and resume QA with the tip",
-  "updatedAt": "2026-11-20T05:38:25.347Z",
+  "next": "integrating S25; QA fix 2 implementing (merges the new tip, strip.rs by hand); then base check and resume QA with the tip",
+  "updatedAt": "2026-11-20T06:11:02.098Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S7 finisher: installed pilot on PATH is plugin 0.9.9 without /api/view, so snaps drew 'deck not running' until the worktree CLI was used; --snap cannot capture arrival frames; a soft reset onto a moved feat silently reverts newer content",
-      "evidence": "S7 finisher report; node bin/pilot.mjs deck --scratch",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S10: context summarised right after worktree creation (48k tokens, 2 tool calls); stopped with nothing built and a respawn",
-      "evidence": "S10 first report; worktree clean at deb8d130",
-      "size": 1
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S7 fix: full npm test took ~25 min and could not be stopped, so it ran on 5a04a526, not the final head; line ceiling counts doc comments",
@@ -513,6 +512,18 @@
       "agent": "pilot:pilot-implementer",
       "what": "S24: Rune rows with on_press report focusable false regardless, so a disabled-by-focusable pin is vacuous; the deck refuses neither a second dismiss nor a clear of a gone notice, so refusal tests need a second scratch deck; cargo stops at the first failing binary without --no-fail-fast; the items screen is unreachable from the window",
       "evidence": "S24 report 0e84e21; tests/history.rs dismiss_run_posts_once",
+      "size": 4
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "implementers of long-integrated slices (S14, S21, QA fix 1, principles fix) stayed listed as running and held RAM until the user noticed; the co-pilot cannot TaskStop its own children, only main can",
+      "evidence": "TaskStop a9c25683bff6526b1, a1b6e9e451c0b4ee0, a5dcfcea5090ac3aa, a8fff1b6dc9b2ab4a from main",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S25: Rune ElementInfo cannot show a disabled text button, so B2 asserts pending.is_sent; --snap is one simulated frame, needs --realtime --script, a tall --size and a seeded rune-deck.json; 4 gate1-lineage reds under load, green alone",
+      "evidence": "S25 report 309e70c",
       "size": 4
     }
   ]
