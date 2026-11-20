@@ -58,7 +58,7 @@
     },
     {
       "slice": "S31 Left panes' contents: content selects, rows on the grid (added)",
-      "state": "pushed 799e2ca; rust Approve (Warning, MED tickets rule gap)",
+      "state": "integrated at bae0fae; rust Approve (Warning: tickets rule gap unchecked visually); 548/0 selection",
       "after": [
         "S26 Every control says clickable: the hover look, first (added)"
       ],
@@ -67,31 +67,37 @@
     },
     {
       "slice": "S32 Every region designs its empty and error states (added)",
-      "state": "planned",
+      "state": "pushed 938b622; rust APPROVE (MED: a Retry flag outlives its outage once)",
       "after": [
         "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
         "S31 Left panes' contents: content selects, rows on the grid (added)"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s32",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s32"
     },
     {
       "slice": "S33 The deck's font and its three type scales (added)",
-      "state": "planned",
+      "state": "pushed f28a9ec; rust APPROVE with notes",
       "after": [
         "S27 The window frame: Rune's title bar and the top inset (added)",
         "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
         "S31 Left panes' contents: content selects, rows on the grid (added)"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s33",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s33"
     },
     {
       "slice": "S35 The spacing on the 4/8 grid (added)",
-      "state": "planned",
+      "state": "pushed 954e931; rust APPROVE (warnings); fixing playground --space-s1",
       "after": [
         "S28 The left side as VS Code's side bar (added)",
         "S29 The right strip's buttons on the grid, rounded, by role (added)",
         "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
         "S31 Left panes' contents: content selects, rows on the grid (added)",
         "S36 theme.json: theme.rs takes its values from one JSON file (added)"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s35",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s35"
     },
     {
       "slice": "S37 The token playground: one page that exports theme.json (added)",
@@ -104,7 +110,7 @@
     },
     {
       "slice": "S34 The palette's values, by role and to WCAG AA (added)",
-      "state": "pushed 109b483; rust re-review WARNING (pressed state.pilot pair unchecked, disabled so exempt); integrate refused red on hover, waits on S40",
+      "state": "integrated at 28c01d3; rust re-review WARNING (pressed state.pilot light pair 4.06:1 unchecked; disabled, exempt); 564/0 selection",
       "after": [
         "S36 theme.json: theme.rs takes its values from one JSON file (added)"
       ],
@@ -113,7 +119,7 @@
     },
     {
       "slice": "S38 The reply box, reorganised (added)",
-      "state": "pushed 237acaa; rust APPROVE minor notes",
+      "state": "integrated at 4369442; rust APPROVE minor notes; 548/0 selection",
       "after": [
         "S26 Every control says clickable: the hover look, first (added)"
       ],
@@ -126,7 +132,7 @@
     },
     {
       "slice": "S39 Back and forward: the mouse side buttons and Alt+Left/Right (added)",
-      "state": "pushed 76a32bb; rust re-review APPROVE; integrate waits on S40 (hover red)",
+      "state": "integrated at 6022881; rust re-review APPROVE; 548/0 selection; two-thread check with a real mouse left for QA",
       "after": [
         "S29 The right strip's buttons on the grid, rounded, by role (added)",
         "S30 Header and centre: content selects, cards on the grid, the kind line (added)"
@@ -148,7 +154,7 @@
     },
     {
       "slice": "S40 The hover tests know the switch role (added)",
-      "state": "fixing: integrate refused red on theme test; taking S34's two opacity checks",
+      "state": "integrated at f1522a8; rust APPROVE; 765/0 selection",
       "after": [
         "S29 The right strip's buttons on the grid, rounded, by role (added)"
       ],
@@ -174,33 +180,9 @@
     "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
     "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
   ],
-  "next": "feat d7af357c. S40 b267832 integrated red on theme test (S34's fix) while S34 is red on hover (S40's fix): S40 takes S34's two opacity checks (seam change in S40.md), then integrate S40, S34, S31, S38, S39; then S33, S35.",
-  "updatedAt": "2026-11-20T10:13:50.337Z",
+  "next": "feat 60228818. S35 integrate running; then S32, then S33 (expect a tests/theme.rs conflict with S35: rebase by a fresh implementer). Then full cargo on feat, base check, fundamentalist, QA.",
+  "updatedAt": "2026-11-20T10:52:36.606Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S25: Rune ElementInfo cannot show a disabled text button, so B2 asserts pending.is_sent; --snap is one simulated frame, needs --realtime --script, a tall --size and a seeded rune-deck.json; 4 gate1-lineage reds under load, green alone",
-      "evidence": "S25 report 309e70c",
-      "size": 4
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "QA fix 2: npm test skips cargo silently when cargo is off PATH (scripts/gate.mjs:257), so a green npm test says nothing about Rust; --script clicks need item-id keys and the seeded run lands on D1; background waits pushed out at 180 s",
-      "evidence": "QA fix 2 report 4d7223d",
-      "size": 4
-    },
-    {
-      "agent": "pilot-qa",
-      "what": "QA left an 11G release build in pilot-qa-rune-deck-ui; D:\\qa1tmp removal refused; pilot-fundamentalist-rune-deck-ui dir left unregistered",
-      "evidence": "co-pilot hand-back at feat 6095785",
-      "size": 2
-    },
-    {
-      "agent": "pilot-qa",
-      "what": "QA ran out of context (236k) after two probe rounds, before the walkthrough; a fresh QA had to be briefed for the finishing steps. Rune saved panel state persists between headless runs; --script keys must exist in first frame; headless runs faster than real time without --realtime",
-      "evidence": "QA hand-off at cb0866e9",
-      "size": 3
-    },
     {
       "agent": "pilot-qa",
       "what": "taste check (spec 5) failed only at the walkthrough after 25 slices: no earlier look by the user at the Rune window; restyle is 300-600 lines and collides with spec 2's token parity test",
@@ -398,6 +380,30 @@
       "what": "two reds on feat each fixed by a different slice (S40 hover, S34 theme) deadlocked integrate, which needs each merge green alone; the seam moved two test lines into S40",
       "evidence": "NOT integrated S34 'merged red' (hover) and S40 'merged red' (theme.rs:418)",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate's selection ran node tests only (548-564) for S31, S34, S38 and S39, though each changed deck/rune; the Rust half was checked by a separate full cargo test on feat 60228818 (26 binaries green)",
+      "evidence": "integrate lines for S31/S34/S38/S39 vs 765 for S28/S40",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S35: cargo fmt rewrote five files outside the slice; npm test:changed skipped cargo (not on PATH inside it); pilot deck --help started or attached to the user's real deck on 4321 instead of printing help",
+      "evidence": "S35 report 954e931",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S32: mklink /J from bash mangled the path, so node_modules was missing until PowerShell made the junction; Edit refuses files read only via bash sed; npm test:changed's cargo step outlasted its wait",
+      "evidence": "S32 report 938b622",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S33: Rune exposes no font size or style on a drawn element, so the type-scale test reads text heights as a proxy; the node test that scans deck/ raced cargo deleting temp dirs under target/ (ENOENT flake); pilot deck --stop rejected its arguments, the scratch deck was killed by pid",
+      "evidence": "S33 report f28a9ec",
+      "size": 3
     }
   ]
 }
