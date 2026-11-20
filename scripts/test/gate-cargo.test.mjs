@@ -31,6 +31,10 @@ function store(t) {
 /** Runs `runGate` with stdout captured; every spawn is recorded and answered by `answer(command)`. */
 function gate(t, { which, answer = () => ({ status: 0 }), platform = 'win32' }) {
   const { dir, file } = store(t);
+  // Under the gate this process inherits its guard, which reads as a gate inside the gate: this gate is the outer one.
+  const inherited = process.env.PILOT_GATE_HOME_STORE;
+  delete process.env.PILOT_GATE_HOME_STORE;
+  t.after(() => inherited !== undefined && (process.env.PILOT_GATE_HOME_STORE = inherited));
   const calls = [];
   const written = [];
   const write = t.mock.method(process.stdout, 'write', (chunk) => written.push(String(chunk)) > 0);
