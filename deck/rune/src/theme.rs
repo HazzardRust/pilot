@@ -331,6 +331,13 @@ pub mod radius {
     }
 }
 
+/// Opacities.
+#[allow(non_upper_case_globals)]
+pub mod opacity {
+    /// A control that cannot be pressed now.
+    pub const disabled: f32 = 0.5;
+}
+
 /// Fixed sizes of the side-bar layout (DESIGN.md §4b), in px.
 #[allow(non_upper_case_globals)]
 pub mod size {

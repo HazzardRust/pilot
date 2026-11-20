@@ -245,7 +245,6 @@ fn button(label: &str, key: &str, look: Look, off: bool, dark: bool) -> El {
         .key(key)
         .role("button")
         .label(label)
-        .w(WIDTH)
         .px(space::s3)
         .py(space::s2)
         .items_center()
@@ -257,7 +256,9 @@ fn button(label: &str, key: &str, look: Look, off: bool, dark: bool) -> El {
         Look::Picked => face.fill(r.on_surface.alpha(0.14)).border(1.0, k.rule),
     };
     if off {
-        face.radius(theme::radius::button).disabled(true)
+        face.radius(theme::radius::button)
+            .opacity(theme::opacity::disabled)
+            .disabled(true)
     } else {
         theme::control(face, dark)
     }
@@ -266,7 +267,7 @@ fn button(label: &str, key: &str, look: Look, off: bool, dark: bool) -> El {
 /// A boxed group, the page's popout (`form.confirm`, deck.css:841): a hairline round it, 8 px in.
 fn boxed(dark: bool) -> El {
     col()
-        .w(WIDTH)
+        .items_stretch()
         .gap(space::s3)
         .padding(space::s3)
         .border(1.0, theme::tokens(dark).rule)
@@ -289,6 +290,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
 
     let mut out = col()
         .key("strip")
+        .items_stretch()
         // One column: every control the same width, on the grid, a stack with no floating gaps.
         .w(WIDTH)
         .gap(space::s3)
@@ -323,7 +325,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
         Some(tab) => Some(tab.repo.clone()),
         None => repos.get(local.repo).map(|choice| choice.repo.clone()),
     };
-    let mut making = col().key("strip-create-group");
+    let mut making = col().key("strip-create-group").items_stretch();
     match &local.naming {
         None => {
             making = making.child(btn("Create", "strip-create", Look::Quiet).on_press(
@@ -414,13 +416,13 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             if !busy {
                 face = face.on_press(move |s: &mut State| session(s, ask, &repo));
             }
-            let mut group = col().gap(space::s3).child(face);
+            let mut group = col().gap(space::s3).items_stretch().child(face);
             if asking {
                 group = group.child(
                     boxed(dark)
                         .child(say(format!("{verb} {}? {what}", tab.code)))
                         .child(
-                            sent_btn("Confirm", &format!("{key}-confirm"), "", Look::Primary)
+                            sent_btn("Confirm", &format!("{key}-confirm"), key, Look::Primary)
                                 .on_press(move |s: &mut State| session(s, ask, &again)),
                         ),
                 );

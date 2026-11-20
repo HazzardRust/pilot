@@ -456,3 +456,35 @@ fn alerts_switch() {
         "the switch's colour changes with its state"
     );
 }
+
+#[test]
+fn boxed_buttons_stay_inside_their_box_and_a_disabled_one_is_dimmed() {
+    let mut rt = frame(State {
+        view: view_with(ended_tab()),
+        ..State::default()
+    });
+    press(&mut rt, "strip-start");
+    let inside = |rt: &Runtime<State>, boxed: &str, keys: &[&str]| {
+        let b = drawn_at(rt, boxed).rect;
+        for key in keys {
+            let r = drawn_at(rt, key).rect;
+            assert!(
+                r[0] >= b[0] && r[0] + r[2] <= b[0] + b[2] + 0.5,
+                "{key} {r:?} overhangs {boxed} {b:?}"
+            );
+        }
+    };
+    // The asking box has no key of its own: the strip column is the bound.
+    inside(&rt, "strip", &["strip-start-confirm"]);
+    rt.update(|s, _| {
+        s.regions.strip.cancel();
+        s.regions.strip.naming = Some(TextEdit::new("no/slashes"));
+    });
+    rt.frame(1.0);
+    inside(&rt, "strip-create-group", &["strip-next", "strip-cancel"]);
+    let next = drawn_at(&rt, "strip-next");
+    assert!(next.opacity < 1.0, "a disabled Next looks live");
+    rt.update(|s, _| s.regions.strip.naming = Some(TextEdit::new("fine")));
+    rt.frame(1.0);
+    assert_eq!(drawn_at(&rt, "strip-next").opacity, 1.0);
+}
