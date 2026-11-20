@@ -22,6 +22,8 @@ export default function tabsRegion({ reads, tabs, tab, all }) {
     code: tabCode(one),
     name: one.name,
     href: hrefFor(one, all),
+    // The address a press asks for (`?run=`), as `hrefFor` spells it; the overview has none.
+    repo: one.repo,
     count: shown(one.open).length,
     ended: one.ended,
     unacknowledged: one.unacknowledged,
