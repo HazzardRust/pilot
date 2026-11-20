@@ -30,7 +30,6 @@ const report = () => ({
   featurePr: { number: 180, state: 'merged', mergeSha: 'a1b2c3d4e5f6' },
   slices: [{ slice: 'S1', pr: 181, mergeSha: '733afa1' }],
   assumed: [],
-  humanSteps: ['merge the feature PR'],
   worktreesLeft: [],
 });
 

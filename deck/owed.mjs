@@ -7,7 +7,7 @@
  * the hooks are CommonJS and cannot import it.
  */
 
-import { KIND_CHAT, KIND_GATE1, KIND_GATE2, KIND_TICKET, KIND_USER, isOpen, liveTicketOf, sameRepo } from './items.mjs';
+import { KIND_CHAT, KIND_GATE1, KIND_GATE2, KIND_REPORT, KIND_TICKET, KIND_USER, isOpen, liveTicketOf, sameRepo } from './items.mjs';
 
 const LINE_CHARS = 120;
 
@@ -20,10 +20,11 @@ const oneLine = (text) => {
   return line.length > LINE_CHARS ? `${line.slice(0, LINE_CHARS - 1).join('')}…` : line.join('');
 };
 
-/** An open ticket whose gate2 landed (never-stuck spec 1): its closing report, which closes it, is owed. */
+/** An open ticket whose gate2 landed (never-stuck spec 1) and no report names yet (human-steps L6): its closing report is owed. */
 export function isReportOwed(ticket, items) {
   return ticket?.kind === KIND_TICKET && isOpen(ticket) &&
-    items.some((item) => item?.kind === KIND_GATE2 && item.ticket === ticket.id && item.landing?.state === 'landed');
+    items.some((item) => item?.kind === KIND_GATE2 && item.ticket === ticket.id && item.landing?.state === 'landed') &&
+    !items.some((item) => item?.kind === KIND_REPORT && item.ticket === ticket.id);
 }
 
 /** The live red ticket with no gate1 open on it (never-stuck spec 2): an architect is owed. Read off the items, never a guess at agents. */
