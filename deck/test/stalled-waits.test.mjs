@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { STALL_AGE_S, shellScript, stalledWaits } from '../stalled-waits.mjs';
+import { STALL_AGE_S, reapStalled, shellScript, stalledWaits } from '../stalled-waits.mjs';
 
 const WIN_TMP = os.tmpdir();
 const TMP = WIN_TMP.replace(/\\/g, '/');
@@ -72,4 +72,44 @@ test('only a stalled loop under a pilot run', () => {
   ];
   assert.deepEqual(stalledWaits(table, { runs }), []);
   assert.equal(stalledWaits([...session(), ...pair(101, 102, SCRIPT_A, STALL_AGE_S)], { runs }).length, 1, 'the bar is inclusive');
+});
+
+const reap = (table, extra = {}) => {
+  const kills = [];
+  const notes = [];
+  const lines = reapStalled({
+    read: () => table,
+    runs: () => runs,
+    kill: (pid, tree) => kills.push([pid, tree]),
+    note: (repo, line) => notes.push([repo, line]),
+    ...extra,
+  });
+  return { kills, notes, lines };
+};
+
+test('the stop is the shell only', () => {
+  const table = [...session(), ...pair(9988, 46312, SCRIPT_A, 14 * H), ...pair(30060, 33432, SCRIPT_B, 3 * H)];
+  const { kills, notes, lines } = reap(table);
+  assert.deepEqual(kills, [[9988, true], [30060, true]]);
+  assert.deepEqual(notes, [
+    [REPO, `stopped stalled wait 9988 "${OUT}/a28aa8f6e9874cbe0.output" held by unknown for 840 min`],
+    [REPO, `stopped stalled wait 30060 "${SH_OUT}/a18544e3d23cf7d4f.output" held by unknown for 180 min`],
+  ]);
+  assert.equal(lines.length, 2);
+
+  const named = reap(table, { holder: (row) => (row.pid === 9988 ? 'implementer audit-f14 S2' : null) });
+  assert.match(named.notes[0][1], / held by implementer audit-f14 S2 for 840 min$/);
+  assert.match(named.notes[1][1], / held by unknown for 180 min$/);
+
+  const refused = reap(table, { kill: (pid) => { if (pid === 9988) throw new Error('Access is denied'); } });
+  assert.deepEqual(refused.notes.map(([, line]) => line.split(' ')[3]), ['30060'], 'a stop that failed is not told as one');
+  assert.ok(refused.lines.some((line) => line.startsWith('could not stop 9988')));
+});
+
+test('an unreadable table stops nothing', () => {
+  const { kills, notes, lines } = reap(null, { read: () => { throw new Error('powershell gone'); } });
+  assert.deepEqual(kills, []);
+  assert.deepEqual(notes, []);
+  assert.equal(lines.length, 1);
+  assert.match(lines[0], /powershell gone/);
 });

@@ -16,7 +16,7 @@ export const STALL_AGE_S = 50 * 60;
 
 const SHELL = /^(?:ba)?sh(?:\.exe)?$/i;
 const CLAUDE = /^claude(?:\.exe)?$/i;
-const MARKER_MAX = 120;
+const MARKER_MAX = 200; // as `pilot wait-for` caps `--match` (L8)
 
 /** One argument of a Windows command line from `at`, by `CommandLineToArgvW`'s rules: its text and where it ends. */
 function windowsArg(line, at) {
@@ -134,4 +134,41 @@ export function stalledWaits(table, { runs, stallAgeS = STALL_AGE_S }) {
     return false;
   };
   return [...matched.values()].filter((row) => !underMatched(byPid.get(row.pid)));
+}
+
+/**
+ * One scan (L5, L6): one read of the process table, `stalledWaits` over it and the live runs, `gc` stopping each
+ * with its tree, then `note(repo, line)` for each stop that went. `holder(row)` names the agent whose call started
+ * a wait, or null; `kill(pid, tree)` defaults to `gc`'s `stopper` over the same table. A read failure is one line
+ * and stops nothing. Answers `gc`'s lines, none when nothing is stalled.
+ */
+export function reapStalled({ read, runs, kill, note, holder, stallAgeS = STALL_AGE_S }) {
+  let table, rows;
+  try {
+    table = read();
+    rows = stalledWaits(table, { runs: runs(), stallAgeS });
+  } catch (err) {
+    return [`stalled waits: could not read the process table, nothing stopped: ${oneLine(err?.message ?? err, 200)}`];
+  }
+  if (rows.length === 0) return [];
+  const stop = kill ?? stopper(table);
+  const lines = gc(rows, { kill: (pid) => stop(pid, true) });
+  rows.forEach((row, k) => {
+    if (!lines[k].startsWith('stopped ')) return;
+    let by = null;
+    try {
+      by = holder ? holder(row) : null;
+    } catch {
+      /* an unreadable holder is unknown; the stop has already gone */
+    }
+    note(row.repo, `stopped stalled wait ${row.pid} "${oneLine(row.marker ?? '', MARKER_MAX)}" held by ${by ? oneLine(by, MARKER_MAX) : 'unknown'} for ${row.orphan.replace(/^stalled /, '')}`);
+  });
+  return lines;
+}
+
+/** The daemon's `note` (L7): a deck line on the repository's live ticket, else its chat item; neither, no line. */
+export function noteStall(repo, line) {
+  const items = listItems();
+  const to = liveTicketOf(items, repo) ?? items.find((item) => item?.kind === KIND_CHAT && sameRepo(item.repo, repo));
+  if (to) noteDeck(to.id, line);
 }
