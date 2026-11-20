@@ -535,6 +535,39 @@ fn inline_confirm() {
     );
 }
 
+/// The user, 2026-11-21: the reply box "start with more lines, like 5, rather than just the
+/// singular line", and "when i type an extremely long word it forgets to wrap".
+#[test]
+fn the_box_starts_five_lines_tall_and_wraps_a_long_word() {
+    use pilot_deck::theme::{space, type_};
+    let line = if type_::BODY.line_height > 0.0 {
+        type_::BODY.line_height
+    } else {
+        1.25 * type_::BODY.size
+    };
+    let five = 5.0 * line + 2.0 * space::pad;
+    let empty = at(&box_drawn(Local::default()), "reply-text").rect;
+    assert!(
+        (empty[3] - five).abs() < 1.0,
+        "the empty box is {} tall, not five lines ({five})",
+        empty[3]
+    );
+
+    let word = "a".repeat(1200);
+    let long = at(&box_drawn(typed(&word)), "reply-text").rect;
+    assert!(
+        long[2] <= empty[2] + 0.5,
+        "the word widened the box to {}, past {}",
+        long[2],
+        empty[2]
+    );
+    assert!(
+        long[3] > five + line,
+        "the word did not wrap: the box is {} tall",
+        long[3]
+    );
+}
+
 /// The walkthrough of 2026-11-21: the thread's kind line is the page's, its parts a middle dot
 /// apart, and `‹ code ›` sits on the centre of the line.
 #[test]

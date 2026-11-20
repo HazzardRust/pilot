@@ -16,6 +16,15 @@ use crate::theme::{self, space};
 /// The `act::send` key of the box's one press that is out.
 const SEND: &str = "reply-press";
 
+/// A style's line in points: its own, or Rune's default of 1.25 × its size.
+fn line_height(style: rune::TextStyle) -> f32 {
+    if style.line_height > 0.0 {
+        style.line_height
+    } else {
+        1.25 * style.size
+    }
+}
+
 /// One option the user can press, as `replyView` lists it.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Opt {
@@ -398,6 +407,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 .label("Reply")
                 .placeholder("Reply to the pilot.", k.quiet)
                 .on_edit(|s: &mut State| &mut s.regions.reply.draft)
+                // Five lines tall to start, and growing past them; a word longer than the box
+                // breaks at its width (the user, 2026-11-21).
+                .wrap_anywhere()
+                .min_h(5.0 * line_height(type_::BODY) + 2.0 * space::pad)
                 .padding(space::pad)
                 .radius(theme::radius::button)
                 .fill(k.rule),
