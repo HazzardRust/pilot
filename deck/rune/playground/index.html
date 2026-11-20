@@ -180,7 +180,7 @@ function render() {
   // The derived colours last, so a top-level key of the same name cannot overwrite them.
   const roles = r.roles ?? {};
   s.setProperty('--text', `rgb(${text})`); s.setProperty('--surface', pick(roles.surface) ?? (dark ? '#000' : '#fff'));
-  s.setProperty('--rule', `rgb(${text} / ${r.alpha?.rule ?? 0.18})`); s.setProperty('--quiet', `rgb(${text} / ${r.alpha?.quiet ?? 0.55})`);
+  s.setProperty('--rule', `rgb(${text} / ${r.alpha?.rule ?? 0.18})`); s.setProperty('--quiet', `rgb(${text} / ${r.alpha?.quiet ?? 0.58})`);
   s.setProperty('--hover', `rgb(${text} / ${roles.hover_alpha ?? 0.07})`);
   s.setProperty('--selection', `color-mix(in srgb, ${resolve(roles.primary ?? 'blue')} ${(roles.selection_alpha ?? 0.3) * 100}%, transparent)`);
   for (const el of document.querySelectorAll('[data-mixed]')) {

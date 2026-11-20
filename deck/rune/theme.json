@@ -30,7 +30,7 @@
   },
   "alpha": {
     "rule": 0.18,
-    "quiet": 0.55
+    "quiet": 0.58
   },
   "roles": {
     "surface": { "light": "#ffffff", "dark": "#000000" },

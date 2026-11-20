@@ -107,8 +107,8 @@ fn every_colour_is_deck_css() {
             "state.unacknowledged",
         );
 
-        // Alpha over the page: `--rule` is 18% of the text colour, `--quiet` 55%.
-        for (name, got, alpha) in [("rule", t.rule, 0.18), ("quiet", t.quiet, 0.55)] {
+        // Alpha over the page: `--rule` is 18% of the text colour, `--quiet` 55% in deck.css, moved to 58% (S34) so quiet text on the rule fill passes AA.
+        for (name, got, alpha) in [("rule", t.rule, 0.18), ("quiet", t.quiet, 0.58)] {
             assert!((got.a - alpha).abs() < 0.01, "{name} alpha {}", got.a);
             close(got, [text; 3], name);
         }
@@ -467,6 +467,17 @@ fn over(c: Color, under: [f32; 3]) -> [f32; 3] {
 }
 
 #[test]
+fn the_ratio_is_wcag() {
+    // Known values: black on white is 21:1, a colour on itself 1:1, and #777 on white is
+    // the classic 4.48:1 that fails AA.
+    assert!((ratio([0.0; 3], [255.0; 3]) - 21.0).abs() < 0.01);
+    assert!((ratio([9.0; 3], [9.0; 3]) - 1.0).abs() < 1e-6);
+    let grey = ratio([119.0; 3], [255.0; 3]);
+    assert!((grey - 4.48).abs() < 0.01 && grey < 4.5, "{grey}");
+}
+
+/// Pairs are composited in sRGB byte space, as CSS and the web deck do.
+#[test]
 fn contrast() {
     let mut weak = Vec::new();
     for dark in [false, true] {
@@ -518,8 +529,20 @@ fn contrast() {
             "on_surface on hover".into(),
             ratio(over(r.on_surface, hovered), hovered),
         ));
+        // Text on the rule colour used as a fill (an input's face) and on the picked fill.
+        for (fill, fill_name) in [
+            (t.rule, "rule fill"),
+            (r.on_surface.alpha(theme::opacity::picked), "picked fill"),
+        ] {
+            let under = over(fill, page);
+            for (text, text_name) in [(t.quiet, "quiet"), (r.on_surface, "on_surface")] {
+                pairs.push((
+                    format!("{text_name} on {fill_name}"),
+                    ratio(over(text, under), under),
+                ));
+            }
+        }
         for (name, got) in pairs {
-            println!("dark={dark} {name}: {got:.2}");
             if got < 4.5 {
                 weak.push(format!("dark={dark} {name}: {got:.2}"));
             }
