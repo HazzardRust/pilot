@@ -77,7 +77,7 @@ const STATE_LABEL = { red: 'planning', yellow: 'implementing', green: 'concludin
 const PARKED_LABEL = { ...STATE_LABEL, yellow: 'planned', green: 'awaiting sign-off' };
 
 /** A ticket's label: a parked green ticket awaits sign-off only while an open gate2 names it; turned green by `need`, it needs you. */
-function ticketLabelOf(item, state, items) {
+export function ticketLabelOf(item, state, items) {
   // A signed ticket holds no lane, whatever its stored `live` (gate2-frees-lane spec 1, L1).
   if (isLanding(item, items)) return 'landing';
   if (item.live === true) return STATE_LABEL[state];

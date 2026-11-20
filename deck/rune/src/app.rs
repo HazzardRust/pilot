@@ -118,7 +118,12 @@ pub fn view(s: &State, cx: &mut Cx<State>) -> El {
         .child(regions::status::draw(region("status"), &r.status, cx))
         .child(regions::graph::draw(region("graph"), &r.graph, cx))
         .child(regions::agents::draw(region("agents"), &r.agents, cx))
-        .child(regions::tickets::draw(region("tickets"), &r.tickets, cx))
+        .child(regions::tickets::draw(
+            region("tickets"),
+            &r.tickets,
+            &s.prefs,
+            cx,
+        ))
         .child(regions::reports::draw(region("reports"), &s.prefs, cx))
         .child(regions::strip::draw(region("strip"), &r.strip, cx))
 }
