@@ -78,7 +78,7 @@
     },
     {
       "slice": "S9",
-      "state": "fixing — at ad264db9 rust/typescript REQUEST CHANGES, security APPROVE; fix round: per-thread reply box (thread.rs seam), recommended marker; 451 production lines, limit waived by main; app.rs +3/-1 outside owned files",
+      "state": "pushed a12a2db — NOT integrated: app.rs poll conflict with S10/S11 on feat; merge-in to follow the base merge; 471 production lines, limit waived by main",
       "after": [
         "S5"
       ],
@@ -96,7 +96,7 @@
     },
     {
       "slice": "S11",
-      "state": "pushed f56ca90 — integrating; rust/typescript/security approve with comments; 254 production lines",
+      "state": "integrated at fdc0e14 — rust/typescript/security approve; 254 production lines; 4728/0; rune-kit markdown link handling to QA",
       "after": [
         "S5"
       ],
@@ -114,17 +114,21 @@
     },
     {
       "slice": "S13",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s13",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s13"
     },
     {
       "slice": "S14",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S10"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s14",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s14"
     },
     {
       "slice": "S15",
@@ -182,10 +186,17 @@
       "after": [
         "S12"
       ]
+    },
+    {
+      "slice": "S23",
+      "state": "planned (added: thread move fetches its view at once; closes S9 security LOW, late view redraws the left thread's box)",
+      "after": [
+        "S9"
+      ]
     }
   ],
-  "next": "integrate S11 (running); S9 fix round live; then pilot ready within yellow 8 (S14 S20 now unblocked by S10)",
-  "updatedAt": "2026-11-20T00:41:08.793Z",
+  "next": "merging origin/pilot 6213050 into feat (running); then S9 merge-in of feat (app.rs poll: queue::settle, chat::settle, reply::poll), integrate S9; send S13 S14 the tip; then pilot ready",
+  "updatedAt": "2026-11-20T01:06:36.534Z",
   "friction": [
     {
       "agent": "pilot-implementer",
@@ -376,6 +387,12 @@
       "what": "S9: two reviewers ended REQUEST CHANGES with no re-read; a draft shared across threads posts A's words to B (security MEDIUM) outside S9's files",
       "evidence": "S9 report at ad264db9",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9 fix: thread arrows move the query but nothing fetches until the deck's next change; two extra fix and re-read cycles",
+      "evidence": "live.rs:40 ask; S9 fix report a12a2db",
+      "size": 6
     }
   ]
 }
