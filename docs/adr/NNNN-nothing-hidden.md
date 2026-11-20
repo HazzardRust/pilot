@@ -24,7 +24,5 @@ ADR 0065 fed the overview one ticket at a time by dropping every thread whose ti
 
 ## Rejected
 
-- *One `shownOf` returning `{ cards, folded }`*: it breaks the Rune callers of `shownOf` at their rebase.
-- *Every other ticket's thread a card* (L8): the user took full listing off the table.
-- *In-hand only, everything else folded*: a gate2 in a fold is how a signed landing went unseen.
-- *Renaming `isBehind`*: pins in five tests and two ADRs for no behaviour.
+- *One `shownOf` returning `{ cards, folded }`*: it breaks Rune's callers at their rebase. *Renaming `isBehind`*: five test pins and two ADRs for no behaviour.
+- *Every other ticket's thread a card* (L8): full listing is off the table. *Everything not in hand folded*: a gate2 in a fold is how a signed landing went unseen.

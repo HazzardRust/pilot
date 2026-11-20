@@ -1,8 +1,6 @@
 /**
- * S1 of nothing-hidden (spec 1-4; L1, L3; A1, A5, A6): every queued thread is on home. A thread whose ticket is
- * in hand, an unticketed one, and every owed press (gate1, gate2, signoff) of any ticket is a card (`shownOf`);
- * the rest of what waits behind another ticket sits in one counted fold under the cards (`foldedOf`). The strip
- * counts and the thread arrows count both.
+ * S1 of nothing-hidden (spec 1-4; L1, A6): in-hand, unticketed and every owed press (gate1, gate2, signoff) are cards
+ * (`shownOf`); the rest behind another ticket sits in one counted fold (`foldedOf`); the strip and the arrows count both.
  */
 
 import './no-open.mjs';
@@ -35,24 +33,16 @@ function homeOf(html) {
   const main = html.match(/<main data-live="queue">(.*?)<\/main>/s)[1];
   const at = main.indexOf('<details class="fold">');
   const ids = (part) => [...part.matchAll(/<h2><a href="\/thread\/(itm_[0-9a-f]+)">/g)].map((match) => match[1]);
-  return {
-    cards: ids(at === -1 ? main : main.slice(0, at)),
-    folded: at === -1 ? [] : ids(main.slice(at)),
-    line: main.match(/<details class="fold"><summary>(\d+) waiting on other tickets<\/summary>/)?.[1] ?? null,
-  };
+  const line = main.match(/<details class="fold"><summary>(\d+) waiting on other tickets<\/summary>/)?.[1] ?? null;
+  return { cards: ids(at === -1 ? main : main.slice(0, at)), folded: at === -1 ? [] : ids(main.slice(at)), line };
 }
 const counts = (html) => [...html.match(/<nav class="runs-strip".*?<\/nav>/s)[0].matchAll(/<span class="count">(\d+)<\/span>/g)].map((match) => Number(match[1]));
 const positionOf = (html) => html.match(/<span class="position" data-live="position">(\d+)\/(\d+)<\/span>/)?.slice(1).map(Number) ?? null;
 
 /** Green A in hand, green B parked behind it holding a gate2, a signoff and a question (spec 1). */
 function parkedWithPresses() {
-  const a = aTicket('In hand', 'green');
-  const b = aTicket('Parked', 'green');
-  const asked = thread(KIND_QUESTION, a);
-  const gate = thread(KIND_GATE2, b);
-  const signoff = thread(KIND_SIGNOFF, b);
-  const question = thread(KIND_QUESTION, b);
-  return { a, b, asked, gate, signoff, question };
+  const [a, b] = [aTicket('In hand', 'green'), aTicket('Parked', 'green')];
+  return { asked: thread(KIND_QUESTION, a), gate: thread(KIND_GATE2, b), signoff: thread(KIND_SIGNOFF, b), question: thread(KIND_QUESTION, b) };
 }
 
 test('a parked ticket\'s gate2 is a card, its question folded', (t) => {
@@ -60,12 +50,10 @@ test('a parked ticket\'s gate2 is a card, its question folded', (t) => {
   const { asked, gate, signoff, question } = parkedWithPresses();
   const items = listItems();
   const queue = queueOf(items);
-
   assert.deepEqual(foldedOf(queue, items).map((item) => item.id), [question.id], 'only the parked ticket\'s question folds');
   const cards = shownOf(queue, items).map((item) => item.id);
   assert.ok(cards.includes(gate.id) && cards.includes(signoff.id), 'its owed presses are cards');
   assert.ok(cards.indexOf(asked.id) < cards.indexOf(gate.id) && cards.indexOf(asked.id) < cards.indexOf(signoff.id), 'after the ticket in hand\'s');
-
   for (const html of [overview(), tabPage()]) {
     const home = homeOf(html);
     assert.equal(home.line, '1', 'the fold line counts one');
@@ -87,7 +75,6 @@ test('counts and arrows count cards and fold', (t) => {
   thread(KIND_QUESTION, undefined, 'Unticketed');
   const total = queueOf(listItems()).length;
   assert.equal(total, 5);
-
   assert.deepEqual(counts(overview()), [total, total], 'the Overview and the tab each count the whole queue');
   const home = homeOf(overview());
   assert.equal(home.cards.length + home.folded.length, total, 'the page draws every one of them');
@@ -102,10 +89,8 @@ test('a landing ticket\'s gate2 stays a card after landing ended short', (t) => 
   addReply(gate.id, SIGN_OFF);
   noteDeck(gate.id, 'landing ended short: the merge was refused');
   thread(KIND_QUESTION, takeLive(aTicket('Holder', 'green').id));
-
   const items = listItems();
-  const stored = items.find((item) => item.id === gate.id);
-  assert.equal(threadState(stored), 'landing ended short');
+  assert.equal(threadState(items.find((item) => item.id === gate.id)), 'landing ended short');
   assert.ok(shownOf(queueOf(items), items).some((item) => item.id === gate.id), 'a card, not folded');
   for (const html of [overview(), tabPage()]) assert.ok(homeOf(html).cards.includes(gate.id), 'drawn above any fold');
 });
@@ -136,7 +121,6 @@ test('the sweep finds nothing missing and no press folded', (t) => {
       seeded.push(thread(kind, ticket, `${kind} · ${standing}`));
     }
   }
-
   const items = listItems();
   const queue = queueOf(items);
   assert.deepEqual(seeded.filter((item) => !queue.some((each) => each.id === item.id)).map((item) => item.title), [], 'every seeded thread is queued');
@@ -144,7 +128,6 @@ test('the sweep finds nothing missing and no press folded', (t) => {
   const folded = foldedOf(queue, items);
   assert.equal(cards.length + folded.length, queue.length, 'cards and fold are the whole queue');
   assert.deepEqual(cards.filter((item) => folded.includes(item)).map((item) => item.title), [], 'and disjoint');
-
   for (const [name, html] of [['overview', overview()], ['tab', tabPage()]]) {
     const home = homeOf(html);
     const missing = seeded.filter((item) => !home.cards.includes(item.id) && !home.folded.includes(item.id));

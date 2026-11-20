@@ -30,10 +30,7 @@ const overview = () => renderHomePage(listItems(), runs(), null, false, {}, {}, 
 const tabPage = () => renderHomePage(listItems(), runs(), REPO, false, {}, {}, Date.now());
 const threadPage = (item) => renderThreadPage(item, listItems(), runs(), {}, {}, false, []);
 
-/**
- * Whether the page lists this thread as a card above the fold, or inside the fold (nothing-hidden spec 1;
- * ADR NNNN): the card's heading links it either way, and the fold's `<details>` is the line between them.
- */
+/** Whether the page lists this thread as a card above the fold, or inside it (nothing-hidden spec 1): its heading links it. */
 const heading = (item) => `<h2><a href="/thread/${item.id}">`;
 const foldAt = (html) => (html.includes('<details class="fold">') ? html.indexOf('<details class="fold">') : html.length);
 const listed = (html, item) => html.slice(0, foldAt(html)).includes(heading(item));
