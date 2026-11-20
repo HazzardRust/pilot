@@ -6,7 +6,7 @@ use rune::tok::{self, type_};
 use rune::{Color, Cx, El, Key, col, el, row, text};
 use serde::Deserialize;
 
-use crate::app::State;
+use crate::app::{State, go};
 use crate::client::Query;
 use crate::regions::queue::hhmm;
 use crate::theme::{self, space};
@@ -58,20 +58,6 @@ struct Thread {
     #[serde(default)]
     messages: Vec<Message>,
     resolution: Option<String>,
-}
-
-/// The query a move to another screen asks for; the one place a thread changes what is read.
-fn go(s: &mut State, query: Query) {
-    if let Some(live) = &s.live {
-        live.ask(&query);
-    }
-    // Each thread has its own reply box, as on the page: words typed here never post on another,
-    // and the last thread's box is not drawn while the next one's view is on its way.
-    if query.id != s.query.id {
-        s.regions.reply = Default::default();
-        s.view.regions.remove("reply");
-    }
-    s.query = query;
 }
 
 fn back(run: Option<String>) -> impl Fn(&mut State, &rune::KeyEvent, &mut rune::Tx) -> bool {

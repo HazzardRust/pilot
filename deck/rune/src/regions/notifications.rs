@@ -12,7 +12,7 @@ use serde::Deserialize;
 
 use crate::act::{self, Pending};
 use crate::act_deck::DeckAction;
-use crate::app::State;
+use crate::app::{State, go};
 use crate::client::Query;
 use crate::prefs::{self, Prefs};
 use crate::theme::{self, space};
@@ -102,10 +102,7 @@ pub(crate) fn open_thread(s: &mut State, id: &str) {
         id: Some(id.to_string()),
         ..s.query.clone()
     };
-    if let Some(live) = &s.live {
-        live.ask(&query);
-    }
-    s.query = query;
+    go(s, query);
 }
 
 /// One row: the title, which opens the thread, and its ×, which runs `drop` and is drawn disabled
