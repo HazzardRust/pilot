@@ -80,6 +80,41 @@ fn the_figures_are_the_views_and_a_missing_one_is_unknown() {
     }
 }
 
+fn rect(rt: &Runtime<State>, key: &str) -> [f32; 4] {
+    rt.elements()
+        .into_iter()
+        .find(|element| element.key.as_deref() == Some(key) && !element.exiting)
+        .map(|element| element.rect)
+        .unwrap_or_else(|| panic!("no {key} drawn"))
+}
+
+/// The walkthrough of 2026-11-21: the header sits at the page's top inset (deck.css `--top`,
+/// 40 px) under the title bar's rule, and the tabs 16 px under the readout, as the page's header.
+#[test]
+fn the_header_starts_at_the_pages_top_inset() {
+    use pilot_deck::theme::size;
+    let rt = frame(State {
+        view: view_with(&[
+            ("usage", json!({ "session": 2, "weekly": 93 })),
+            ("tabs", two_decks("C:/elsewhere/two")),
+        ]),
+        ..State::default()
+    });
+    let usage = rect(&rt, "usage");
+    let rule = size::titlebar + 1.0;
+    assert!(
+        usage[1] >= rule + 40.0,
+        "the readout starts {} under the rule, not 40",
+        usage[1] - rule
+    );
+    let tabs = rect(&rt, "tabs");
+    assert!(
+        tabs[1] - (usage[1] + usage[3]) >= 16.0,
+        "the tabs are {} under the readout, not 16",
+        tabs[1] - (usage[1] + usage[3])
+    );
+}
+
 fn two_decks(repo: &str) -> Value {
     json!({ "tabs": [
         { "code": "Overview", "name": "Overview", "count": 0, "selected": true },

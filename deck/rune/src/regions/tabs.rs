@@ -123,7 +123,14 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
     let dark = cx.system_dark();
     let (t, k) = (tok::theme(dark), theme::tokens(dark));
     // The page's `<nav>` of links, and buttons in it: rune's `tab` role takes no pointer press.
-    let strip = row().key("tabs").role("navigation").gap(space::between);
+    // deck.css's `.runs-strip a`: a line of words, uppercase, in the body size of the mono family,
+    // quiet but for the chosen tab, its count in the tab's own ink (the user's target, 2026-11-21).
+    let face = type_::BODY.mono();
+    let strip = row()
+        .key("tabs")
+        .role("navigation")
+        .items_center()
+        .gap(space::between);
     let strip = tabs.into_iter().enumerate().fold(strip, |strip, (i, tab)| {
         let ink = if tab.selected {
             t.text
@@ -133,13 +140,15 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
         let mut one = theme::control(row(), dark)
             .key(format!("tab-{i}"))
             .role("button")
+            .items_center()
             .gap(space::within)
-            .child(text(&tab.code).font(type_::HEADER.mono()).color(ink));
+            .child(text(tab.code.to_uppercase()).font(face).color(ink));
         if tab.name != tab.code {
-            one = one.child(text(&tab.name).font(type_::BODY).color(ink));
+            one = one.child(text(tab.name.to_uppercase()).font(face).color(ink));
         }
+        // `.ended` keeps its case: a word about the deck, not a second name for it.
         if tab.ended {
-            one = one.child(text("ended").font(type_::CAPTION).color(t.text_secondary));
+            one = one.child(text("ended").font(face).color(t.text_secondary));
         }
         if tab.selected {
             // deck.css's `.runs-strip a[aria-current]`: the chosen tab is underlined, not only inked.
@@ -147,12 +156,8 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
         }
         let run = tab.repo;
         strip.child(
-            one.child(
-                text(tab.count.to_string())
-                    .font(type_::CAPTION)
-                    .color(t.text_secondary),
-            )
-            .on_press(move |s: &mut State| select(s, run.clone())),
+            one.child(text(tab.count.to_string()).font(face).color(ink))
+                .on_press(move |s: &mut State| select(s, run.clone())),
         )
     });
     let plus = theme::control(row(), dark)
@@ -167,11 +172,11 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             };
             local.refused = None;
         })
-        .child(text("+").font(type_::HEADER).color(t.text_secondary));
-    // deck.css's `header`: a hairline under the tabs.
+        .child(text("+").font(face).color(t.text_secondary));
+    // deck.css's `header`: a hairline 12 px under the tabs (`padding-bottom: 0.75rem`).
     let header = col()
         .key("tabs-header")
-        .gap(space::within)
+        .gap(space::s4)
         .child(strip.child(plus));
     let Some(edit) = &local.adding else {
         return header.child(theme::separator(dark));
