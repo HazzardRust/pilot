@@ -374,10 +374,20 @@ fn box_drawn(local: Local) -> rune::Runtime<pilot_deck::app::State> {
 
 /// A reply box with `labels` for options and Close, Dismiss on `dismiss`, in the dark window.
 fn box_with(local: Local, labels: &[&str], dismiss: bool) -> rune::Runtime<pilot_deck::app::State> {
+    box_of(local, labels, dismiss, false)
+}
+
+/// `box_with`, its options `locked` as an answered thread's are.
+fn box_of(
+    local: Local,
+    labels: &[&str],
+    dismiss: bool,
+    locked: bool,
+) -> rune::Runtime<pilot_deck::app::State> {
     use pilot_deck::app::{self, State};
     use pilot_deck::client::View;
 
-    let option = |label: &str| serde_json::json!({ "label": label, "confirm": false, "locked": false, "recommended": false });
+    let option = |label: &str| serde_json::json!({ "label": label, "confirm": false, "locked": locked, "recommended": false });
     let options: Vec<_> = labels.iter().map(|label| option(label)).collect();
     let reply = serde_json::json!({
         "mode": "reply", "id": ID, "options": options,
@@ -450,6 +460,22 @@ fn reply_layout() {
             e.key
         );
         assert_ne!(e.fill, primary, "{:?} is filled as Reply", e.key);
+    }
+}
+
+/// The user's note: an answered thread's options are drawn as Close is, not greyed; they still take
+/// no press (`a_locked_option_posts_nothing_and_asks_nothing`).
+#[test]
+fn a_locked_option_is_drawn_as_close() {
+    let rt = box_of(Local::default(), &["Yes", "No"], true, true);
+    let close = at(&rt, "close");
+    for key in ["option-0", "option-1", "dismiss"] {
+        let e = at(&rt, key);
+        assert_eq!(e.opacity, close.opacity, "{key} is dimmed");
+        assert_eq!(
+            e.text_color, close.text_color,
+            "{key} is not inked as Close"
+        );
     }
 }
 

@@ -281,7 +281,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         // Its Confirm is the option pressed again while armed, so `press`'s lock guard holds there too.
         let again = option.clone();
         let (at, again_at) = (id.clone(), id.clone());
-        // A locked option is the page's `.choices button:disabled`: unlit and quiet, taking no press.
+        // A locked option takes no press but is drawn as Close is, never greyed (the user's note).
         let mut face = btn(&label, format!("option-{i}"), lit);
         if option.recommended {
             face = face.gap(space::within).child(
@@ -292,7 +292,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             );
         }
         face = if option.locked {
-            face.opacity(theme::opacity::disabled).disabled(true)
+            face.disabled(true)
         } else {
             face.on_press(move |s: &mut State| {
                 let action = s.regions.reply.press(&at, &option);
