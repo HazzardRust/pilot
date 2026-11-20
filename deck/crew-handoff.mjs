@@ -20,3 +20,16 @@ export function successorOwedOf(items, repo, coPilot) {
     typeof item.ticket === 'string' && item.ticket !== held &&
     items.some((ticket) => ticket?.id === item.ticket && ticket.kind === KIND_TICKET && stateOf(ticket) === 'yellow' && sameRepo(ticket.repo, repo)));
 }
+
+/** How long a crew-handoff stays owed a successor before the deck wakes the pilot (crew-handoff-trace spec 6, A3). */
+export const CREW_WAIT_MS = 10 * 60_000;
+
+/**
+ * `successorOwedOf`'s crew-handoffs due by `now`, at `postedAt + CREW_WAIT_MS`, each `{ item, ticket, at }`; none the
+ * deck has already noted (`crewWaitNoted`), so each wakes the pilot once.
+ */
+export function crewWaitOf(items, repo, coPilot, now) {
+  return successorOwedOf(items, repo, coPilot)
+    .map((item) => ({ item, ticket: item.ticket, at: Date.parse(item.postedAt) + CREW_WAIT_MS }))
+    .filter(({ item, at }) => item.crewWaitNoted === undefined && at <= now);
+}
