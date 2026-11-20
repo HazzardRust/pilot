@@ -31,7 +31,7 @@
     },
     {
       "slice": "S28 The left side as VS Code's side bar (added)",
-      "state": "implementing (from S27's tip)",
+      "state": "pushed 0856f04; rust request changes (HIGH drag-from-hidden, MED cancel unhide) fixed red-first, fresh re-review running; 631 lines waived by co-pilot (about 230 test lines)",
       "after": [
         "S27 The window frame: Rune's title bar and the top inset (added)"
       ],
@@ -40,7 +40,7 @@
     },
     {
       "slice": "S29 The right strip's buttons on the grid, rounded, by role (added)",
-      "state": "pushed 80e24e4; rust re-review WARNING (fixes 1,2,4 hold; MEDIUM picked state has no a11y selected, kept as follow-up); +272/-53",
+      "state": "integrated; rust re-review WARNING (MEDIUM a11y selected kept as follow-up); +272/-53",
       "after": [
         "S26 Every control says clickable: the hover look, first (added)"
       ],
@@ -49,7 +49,7 @@
     },
     {
       "slice": "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
-      "state": "integrated; rust approve; 483 lines waived by co-pilot (251 test lines)",
+      "state": "integrated at f88ad09; rust approve; 483 lines waived by co-pilot (tests); 765/0 selection",
       "after": [
         "S26 Every control says clickable: the hover look, first (added)"
       ],
@@ -157,21 +157,9 @@
     "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
     "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
   ],
-  "next": "self-pause draining: integrating S30 e6795b9; then S29 80e24e4; S28 rebasing; start no new slice.",
-  "updatedAt": "2026-11-20T09:14:49.178Z",
+  "next": "self-pause draining: S29 integrating; S28 0856f04 re-review running, then integrate; then hand back paused. Assumed A-R5: S28's active-icon bar should be on_surface not primary (colour means state, feedback 19), a one-line fix for the successor.",
+  "updatedAt": "2026-11-20T09:21:16.300Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S21: npm test ~8 min with three unrelated JS reds under load (worktrees tests green alone, sync.test.mjs undecided); Monitor not available to implementers",
-      "evidence": "S21 report 64093d8",
-      "size": 8
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S20: Rune's API found only by reading its source (~15 greps); S20's Interface strips(state, cx) took no centre so it draws the whole window; Prefs had no field for 'user shut everything' vs first start",
-      "evidence": "S20 report ade6964",
-      "size": 15
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S19: signed Interface fixed a bare 'cargo' spawn (security BLOCK); fact sheet missed onSearchPath and the platform-reads pin; a test running the gate entry nested a second cargo run",
@@ -383,6 +371,16 @@
       "agent": "pilot:pilot-implementer",
       "what": "rebasing onto feat replayed the unintegrated base slice and conflicted; needed rebase --onto; chrome-devtools MCP not loaded so the page check drove headless Chrome over raw CDP",
       "evidence": "S37 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared CARGO_TARGET_DIR: stale lib and test binaries from another worktree, then E0463 can't find crate while another session held the build lock",
+      "evidence": "S28 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "slice text (active bar in primary, from DESIGN 4b) conflicted with the later colour-means-state rule (feedback 19); the implementer followed the slice",
+      "evidence": "S28 report colour table"
     }
   ]
 }
