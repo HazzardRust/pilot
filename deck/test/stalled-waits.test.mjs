@@ -55,3 +55,21 @@ test('the recorded rows are seen', () => {
     ],
   );
 });
+
+test('only a stalled loop under a pilot run', () => {
+  const OLD = 30 * H;
+  const table = [
+    ...session(),
+    ...pair(101, 102, SCRIPT_A, 49 * 60), // under the stall age
+    ...session(200, 201), // a claude whose client registered no run
+    ...pair(203, 204, SCRIPT_A, OLD, 200),
+    proc(301, CLAUDE, 'node.exe', `node -e "${SCRIPT_A}"`, OLD),
+    proc(302, CLAUDE, 'claude.exe', captured(GIT_BASH, SCRIPT_A, 'c1'), OLD),
+    proc(303, CLAUDE, 'git.exe', captured(GIT_BASH, SCRIPT_A, 'c2'), OLD),
+    ...pair(304, 305, 'pilot wait-for --file out.log --match done --timeout 50', OLD),
+    ...pair(306, 307, `timeout 600 bash -c 'until grep -q x f; do sleep 5; done'`, OLD),
+    ...pair(308, 309, 'npm test', OLD),
+  ];
+  assert.deepEqual(stalledWaits(table, { runs }), []);
+  assert.equal(stalledWaits([...session(), ...pair(101, 102, SCRIPT_A, STALL_AGE_S)], { runs }).length, 1, 'the bar is inclusive');
+});
