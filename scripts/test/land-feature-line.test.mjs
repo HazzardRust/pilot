@@ -100,6 +100,7 @@ test('a host that throws reads number null, with why', (t) => {
       throw new Error('gh is down');
     },
     comment: () => {},
+    checks: () => [{ name: 'gate', outcome: 'pass' }],
   };
 
   const result = land({ cwd: a, git: gitIn(a), host, test: passing });
