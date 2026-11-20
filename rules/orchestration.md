@@ -140,7 +140,7 @@ report contradicts the code, the code wins.
 ## Waits end by themselves
 
 - A file: `pilot wait-for --file F --match RE --timeout M` (minutes), the
-  marker checked against what the writer prints.
+  marker a plain literal checked against what the writer prints.
 - A subagent: it runs in the background; never wait on it, act on its completion
   notification, never its output file.
 - A test run: `run_in_background` and end the turn, or `timeout: 600000`.
