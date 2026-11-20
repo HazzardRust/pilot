@@ -110,7 +110,8 @@ One table and nothing else, one row per check per column you ran:
 | --- | --- | --- | --- | --- |
 
 When the install ran, its row comes first: check `install`, the command as
-you ran it, its exit and runtime, and its last 20 lines as raw output. When
+you ran it, its exit and runtime, and its last 20 lines as raw output, with
+its first five `npm error` lines above them when they do not hold them. When
 it exited non-zero, the Node diff coverage and diff mutation rows each read
 `not run: install failed (exit <n>)`, and the other checks run as usual.
 `command` is the cell as you ran it, with the variables filled in. `raw

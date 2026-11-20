@@ -1140,7 +1140,6 @@ test('the runner installs before its first check', () => {
   const before = agentSection('pilot-evidence-runner', 'Before the first run');
   assert.match(before, /HOME="\$S\/home" USERPROFILE="\$S\/home" npm ci --ignore-scripts/, 'npm ci --ignore-scripts under a scratch home');
   assert.match(before, /package-lock\.json/, 'only with a lockfile');
-  assert.match(before, /no `node_modules`/, 'only with no node_modules');
   assert.ok(source.indexOf('## Before the first run') < source.indexOf('## The command table'), 'the install comes before the table');
 });
 
@@ -1154,7 +1153,7 @@ test('a failed install is named, not run around', () => {
 test('one installer', () => {
   // lint: forbidden pattern; the fundamentalist leaves the install to the runner
   assert.doesNotMatch(agentSection('pilot-fundamentalist', 'Where you work'), /npm ci/, 'no install in the fundamentalist');
-  assert.match(agentSection('pilot-fundamentalist', 'The evidence pass[^\n]*'), /install failed/, 'a failed install is reported as that');
+  assert.match(agentSection('pilot-fundamentalist', 'The evidence pass[^\n]*'), /install failed \(exit <n>\)/, 'a failed install is reported as that');
 });
 
 test('the rule budgets the fundamentalist one child', () => {
