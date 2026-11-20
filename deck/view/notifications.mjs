@@ -6,11 +6,20 @@
  * themselves are the window's own prefs (A4), never the store's.
  */
 import { isQueued, noticesOf, pilotWrites } from '../items.mjs';
+import { titled } from './thread.mjs';
 
 const href = (item) => `/thread/${encodeURIComponent(item.id)}`;
 
+/** A closed notice reads `kind · title · resolution's first line`, as `renderClosedNotice` draws it. */
 export function notificationsView(reads) {
-  const notices = noticesOf(reads.items).map((item) => ({ id: item.id, title: item.title, href: href(item), at: Date.parse(item.resolvedAt) || 0 }));
+  const notices = noticesOf(reads.items).map((item) => ({
+    id: item.id,
+    kind: String(item.kind ?? ''),
+    title: item.title,
+    resolution: titled(String(item.resolution ?? '').split('\n')[0], reads.items),
+    href: href(item),
+    at: Date.parse(item.resolvedAt) || 0,
+  }));
   const open = reads.items
     .filter(isQueued)
     .reverse()

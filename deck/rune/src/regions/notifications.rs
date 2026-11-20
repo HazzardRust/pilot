@@ -8,7 +8,7 @@ use std::collections::BTreeMap;
 
 use crate::theme::type_;
 use rune::tok;
-use rune::{Color, Cx, El, col, row, text};
+use rune::{Color, Cx, El, Span, col, rich, row, text};
 use serde::Deserialize;
 
 use crate::act::{self, Pending};
@@ -32,6 +32,37 @@ pub struct Local {
 struct Notice {
     id: String,
     title: String,
+    /// The closed thread's kind and its resolution's first line, quiet either side of the title.
+    #[serde(default)]
+    kind: String,
+    #[serde(default)]
+    resolution: String,
+}
+
+/// `kind · title · resolution` as one line, the title in `ink` and the rest in `quiet`, as the page's
+/// `.notice` sets its `.who` spans off the link. A part the view left empty is left out with its dot.
+fn notice_text(kind: &str, title: &str, resolution: &str, ink: Color, quiet: Color) -> El {
+    let before = if kind.is_empty() {
+        String::new()
+    } else {
+        format!("{kind} · ")
+    };
+    let after = if resolution.is_empty() {
+        String::new()
+    } else {
+        format!(" · {resolution}")
+    };
+    let line = format!("{before}{title}{after}");
+    let (start, end) = (before.len(), before.len() + title.len());
+    let spans = vec![
+        Span::new(0, start).color(quiet),
+        Span::new(start, end).color(ink),
+        Span::new(end, line.len()).color(quiet),
+    ]
+    .into_iter()
+    .filter(|span| span.start < span.end)
+    .collect();
+    rich(line, spans)
 }
 
 #[derive(Debug, Deserialize)]
@@ -110,7 +141,7 @@ pub(crate) fn open_thread(s: &mut State, id: &str) {
 /// while `sent`.
 fn line(
     key: String,
-    title: &str,
+    title: El,
     id: &str,
     t: &tok::Theme,
     dark: bool,
@@ -123,7 +154,7 @@ fn line(
         .key(key)
         .gap(space::within)
         .child(
-            theme::control(text(title), dark)
+            theme::control(title, dark)
                 .font(type_::BODY)
                 .color(t.text)
                 .role("link")
@@ -201,7 +232,13 @@ pub fn draw(
         let key = sent.clone();
         panel = panel.child(line(
             format!("notice-{i}"),
-            &notice.title,
+            notice_text(
+                &notice.kind,
+                &notice.title,
+                &notice.resolution,
+                t.text,
+                theme::tokens(dark).quiet,
+            ),
             &notice.id,
             &t,
             dark,
@@ -222,7 +259,7 @@ pub fn draw(
         let (id, writes) = (one.id.clone(), one.writes);
         panel = panel.child(line(
             format!("open-{i}"),
-            &one.title,
+            text(&one.title),
             &one.id,
             &t,
             dark,
