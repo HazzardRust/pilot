@@ -183,10 +183,14 @@ const SHELLS = /^(?:ba|da|z|k)?sh$/;
 
 const baseName = (w) => path.basename(w).replace(/\.exe$/i, '');
 
-/** Whether token `k` starts a command: the first token, or one after a separator or a keyword. */
-function atCommand(toks, k) {
-  const prev = toks[k - 1];
-  return !prev || (prev.op ? SEPARATORS.includes(prev.op) : COMMAND_START.has(prev.w) && atCommand(toks, k - 1));
+/** For each token, whether it starts a command: the first, or one after a separator or a keyword that starts one. */
+function commandStarts(toks) {
+  const starts = [];
+  toks.forEach((t, k) => {
+    const prev = toks[k - 1];
+    starts.push(!prev || (prev.op ? SEPARATORS.includes(prev.op) : COMMAND_START.has(prev.w) && starts[k - 1]));
+  });
+  return starts;
 }
 
 /** The first grep pattern or test operand of a loop's condition, else null. */
@@ -243,8 +247,9 @@ function waitLoops(command, depth = 0) {
   const toks = tokens(command);
   const found = [];
   const open = [];
+  const starts = commandStarts(toks);
   toks.forEach((t, k) => {
-    if (t.op || !atCommand(toks, k)) return;
+    if (t.op || !starts[k]) return;
     if (LOOP_OPENERS.has(t.w)) open.push({ form: t.w, start: k, body: false, sleeps: false });
     else if (t.w === 'do') {
       const loop = open.length > 0 && open[open.length - 1];
