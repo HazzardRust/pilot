@@ -78,7 +78,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed a12a2db — NOT integrated: app.rs poll conflict with S10/S11 on feat; merge-in to follow the base merge; 471 production lines, limit waived by main",
+      "state": "pushed 1fd9896 — integrating; merged feat 855e593, npm test 4737/0; rust APPROVE, typescript APPROVE, security WARNING at a12a2db; 471 production lines, limit waived by main; app.rs and thread.rs outside owned files",
       "after": [
         "S5"
       ],
@@ -195,8 +195,8 @@
       ]
     }
   ],
-  "next": "merging origin/pilot 6213050 into feat (running); then S9 merge-in of feat (app.rs poll: queue::settle, chat::settle, reply::poll), integrate S9; send S13 S14 the tip; then pilot ready",
-  "updatedAt": "2026-11-20T01:06:36.534Z",
+  "next": "integrate S9 (running); S13 S14 live; then pilot ready (S23 after S9; S16 S17 S18 S19 S20 S21 S22)",
+  "updatedAt": "2026-11-20T01:22:47.325Z",
   "friction": [
     {
       "agent": "pilot-implementer",
@@ -392,6 +392,12 @@
       "agent": "pilot:pilot-implementer",
       "what": "S9 fix: thread arrows move the query but nothing fetches until the deck's next change; two extra fix and re-read cycles",
       "evidence": "live.rs:40 ask; S9 fix report a12a2db",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9 merge-in: npm test past the 180 s foreground limit buffered into a pipe; moved to background and waited",
+      "evidence": "S9 merge report 1fd9896",
       "size": 6
     }
   ]
