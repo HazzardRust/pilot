@@ -228,7 +228,7 @@ Width 15; longest stem 5
 | S33 | The deck's font and its three type scales (added; itm_1ca41d7c120d answered A) | 22 | `deck/rune/assets/fonts/`, `src/app.rs`, `src/theme.rs`, the regions' `.font` | S27, S30, S31 | `pilot:rust-reviewer` | [S33](slices/S33.md) |
 | S34 | The palette's values, by role and to WCAG AA (added) | 2 | `deck/rune/theme.json` role values, `tests/theme.rs`, `deck/DESIGN.md` §4 | S36 | `pilot:rust-reviewer` | [S34](slices/S34.md) |
 | S35 | The spacing on the 4/8 grid (added) | 6b | `deck/rune/src/theme.rs` `space`, old spacing pins | S28, S29, S30, S31 | `pilot:rust-reviewer` | [S35](slices/S35.md) |
-| S36 | theme.rs takes its values from one JSON file (added) | 23, 2 | `deck/rune/theme.json`, `src/theme.rs`, `tests/theme.rs`, `deck/DESIGN.md` §4 | S26 | `pilot:rust-reviewer` | [S36](slices/S36.md) |
+| S36 | theme.rs takes its values from one JSON file (added) | 23, 2 | `deck/rune/theme.json`, `src/theme.rs`, `tests/theme.rs`, `deck/DESIGN.md` §4 | pivot (beside S26) | `pilot:rust-reviewer` | [S36](slices/S36.md) |
 | S37 | The token playground: one page that exports theme.json (added) | 23 | `deck/rune/playground/`, `tests/theme.rs` | S36 | `pilot:typescript-reviewer` | [S37](slices/S37.md) |
 | S38 | The reply box, reorganised (added) | 24, 3, 6c, 15 | `deck/rune/src/regions/reply.rs`, `tests/reply.rs` | S26 | `pilot:rust-reviewer` | [S38](slices/S38.md) |
 | S39 | Back and forward: the mouse side buttons and Alt+Left/Right (added) | 25 | `src/app.rs`, `regions/thread.rs` and `strip.rs` `go`, `tests/nav.rs` | S29, S30 | `pilot:rust-reviewer` | [S39](slices/S39.md) |
@@ -285,7 +285,7 @@ other slice's plan changes. Then S5 (the write seam nine actions share), then th
 | S30 | planned (added) | | | | S26 | 17 |
 | S31 | planned (added) | | | | S26 | 17 |
 | S35 | planned (added) | | | | S28, S29, S30, S31, S36 | 6b |
-| S36 | planned (added) | | | | S26 | 23, 2 |
+| S36 | planned (added) | | | | pivot | 23, 2 |
 | S37 | planned (added) | | | | S36 | 23 |
 | S38 | planned (added) | | | | S26 | 24 |
 | S39 | planned (added) | | | | S29, S30 | 25 |
