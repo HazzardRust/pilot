@@ -98,6 +98,25 @@ fn a_panel_opens_with_a_spring() {
         between >= 3,
         "no spring, only {between} frames between shut and open: {heights:?}"
     );
+
+    // And it shuts on the same spring, never at once.
+    rt.frame(1.0);
+    press(&mut rt, "panel-agents-head");
+    let mut closing = Vec::new();
+    for _ in 0..30 {
+        rt.frame(FRAME);
+        closing.push(body(&rt, "agents")[3]);
+    }
+    assert_eq!(
+        *closing.last().expect("frames"),
+        0.0,
+        "agents never shut: {closing:?}"
+    );
+    let between = closing
+        .iter()
+        .filter(|h| **h > 0.5 && **h < open - 0.5)
+        .count();
+    assert!(between >= 3, "shut at once: {closing:?}");
 }
 
 #[test]

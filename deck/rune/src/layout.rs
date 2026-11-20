@@ -26,7 +26,8 @@ const PANELS: [(&str, &str); 6] = [
 const OPEN_FIRST: [&str; 2] = ["chat", "status"];
 
 /// In the open set once the user has toggled, so a set with every panel shut stays shut rather than
-/// reading as a first start.
+/// reading as a first start. A set saved before S20 without it (Notifications toggled on its own)
+/// is read as the user left it, Chat and Status shut.
 const SET: &str = "~";
 
 /// A panel before it is dragged: deck.css's `--panel` 19rem wide, and its floor, `.panel`'s 12rem by
@@ -220,6 +221,9 @@ fn panel(s: &State, name: &'static str, label: &str, cx: &mut Cx<State>) -> El {
                 .drag_threshold(space::s0)
                 .on_drag(move |s: &mut State, d: &mut Drag, tx: &mut Tx| drag(s, name, d, tx)),
         );
+    } else {
+        // A shut panel's contents are still mounted under the clip: Tab and a reader skip them.
+        body = body.inert().a11y_hidden();
     }
     col()
         .key(format!("panel-{name}"))
