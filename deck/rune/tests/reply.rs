@@ -366,3 +366,88 @@ fn a_press_on_a_view_not_yet_refreshed_posts_to_the_thread_it_shows() {
         "the press posts to the thread drawn, not the one moved to"
     );
 }
+
+/// A reply box drawn with two options, Close and Dismiss, in the dark window.
+fn box_drawn(local: Local) -> rune::Runtime<pilot_deck::app::State> {
+    use pilot_deck::app::{self, State};
+    use pilot_deck::client::View;
+
+    let option = |label: &str| serde_json::json!({ "label": label, "confirm": false, "locked": false, "recommended": false });
+    let reply = serde_json::json!({
+        "mode": "reply", "id": ID, "options": [option("Yes"), option("No")],
+        "close": { "confirm": true }, "dismiss": true,
+    });
+    let mut state = State {
+        view: View {
+            screen: "thread".into(),
+            seq: 1,
+            regions: [("reply".to_string(), reply)].into_iter().collect(),
+        },
+        ..State::default()
+    };
+    state.regions.reply = local;
+    let mut rt = rune::Runtime::new(state, app::view, (1280.0, 800.0), rune::Env::new(true, 1.0));
+    rt.frame(1.0);
+    rt
+}
+
+fn at(rt: &rune::Runtime<pilot_deck::app::State>, key: &str) -> rune::runtime::ElementInfo {
+    rt.elements()
+        .into_iter()
+        .find(|e| e.key.as_deref() == Some(key))
+        .unwrap_or_else(|| panic!("no {key} drawn"))
+}
+
+#[test]
+fn reply_layout() {
+    let rt = box_drawn(Local::default());
+    let (options, input) = (at(&rt, "reply-options"), at(&rt, "reply-text"));
+    assert!(
+        options.rect[1] < input.rect[1],
+        "the options sit above the input"
+    );
+    assert_eq!(input.radius, pilot_deck::theme::radius::button);
+
+    let (send, close, dismiss) = (at(&rt, "send"), at(&rt, "close"), at(&rt, "dismiss"));
+    let bottom = (send.rect[1] + send.rect[3]).max(close.rect[1] + close.rect[3]);
+    assert!(
+        send.rect[1] > input.rect[1] + input.rect[3] - 1.0
+            && bottom <= input.rect[1] + input.rect[3] + 80.0,
+        "Reply is in the row under the input"
+    );
+    assert!(
+        close.rect[0] < dismiss.rect[0] && dismiss.rect[0] < send.rect[0],
+        "Reply is last"
+    );
+    assert!(
+        (send.rect[0] + send.rect[2] - (input.rect[0] + input.rect[2])).abs() < 0.5,
+        "Reply is at the box's right edge"
+    );
+
+    // Only Reply takes the primary role; the others are quiet (no fill of the primary).
+    let primary = pilot_deck::theme::roles(true).primary;
+    let filled: Vec<_> = ["send", "close", "dismiss", "option-0", "option-1"]
+        .into_iter()
+        .filter(|key| at(&rt, key).fill == primary)
+        .collect();
+    assert_eq!(filled, ["send"]);
+}
+
+#[test]
+fn inline_confirm() {
+    let mut local = Local::default();
+    assert_eq!(local.close(ID, true), None);
+    let rt = box_drawn(local);
+    let (close, confirm) = (at(&rt, "close"), at(&rt, "close-confirm"));
+    assert!(
+        (close.rect[1] - confirm.rect[1]).abs() < 8.0
+            && confirm.rect[0] >= close.rect[0] + close.rect[2],
+        "the confirm sits on the Close button's row, to its right: {:?} {:?}",
+        close.rect,
+        confirm.rect
+    );
+    assert_eq!(
+        confirm.parent, close.parent,
+        "a sibling of Close, in no new row"
+    );
+}
