@@ -5,10 +5,12 @@ use std::collections::BTreeMap;
 
 use rune::tok::{self, type_};
 use rune::{Color, Cx, El, SpringPair, Transition, col, row, text};
+use rune_kit::markdown::{Markdown, MarkdownStyle};
 use serde::Deserialize;
 
 use crate::act::{self, Action};
 use crate::app::State;
+use crate::regions::notifications::open_thread;
 use crate::theme::{self, Tokens, motion, space};
 
 /// A monospace glyph's advance as a share of the font size: how wide one `ch` of a status column is.
@@ -151,20 +153,23 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
                 .font(type_::LABEL)
                 .color(t.quiet),
         );
+    // The title is the page's link to the thread.
+    let to = c.id.clone();
     let mut body = col().grow(1.0).gap(space::within).child(line).child(
         text(&c.title)
             .key(key("title"))
             .font(type_::TITLE)
-            .color(ui.text),
+            .color(ui.text)
+            .role("link")
+            .focusable(true)
+            .on_press(move |s: &mut State| open_thread(s, &to)),
     );
     if !c.excerpt.is_empty() {
+        // The view has cut the preview; it is drawn as the page renders it, markdown (L8).
         body = body.child(
-            text(&c.excerpt)
-                .key(key("excerpt"))
-                .font(type_::BODY)
-                .color(ui.text_secondary)
-                .wrap()
-                .max_lines(6),
+            Markdown::new(c.excerpt.as_str())
+                .render(&MarkdownStyle::neutral(dark))
+                .key(key("excerpt")),
         );
     }
     let button = |part: String, label: &str, fill: Color| {

@@ -152,6 +152,58 @@ fn the_toggle_flips_the_scope() {
 }
 
 #[test]
+fn the_items_link_opens_the_items_page_and_back_returns_home() {
+    let older = frame(State {
+        view: view_with(ended_tab()),
+        ..State::default()
+    });
+    assert!(
+        older.find("strip-items").is_none(),
+        "a view with no items link draws none"
+    );
+    let mut strip = ended_tab();
+    strip["items"] = json!({ "count": 3, "here": false });
+    let mut rt = frame(State {
+        view: view_with(strip.clone()),
+        ..State::default()
+    });
+    rt.update(|s, _| {
+        s.query.run = Some("C:/work/ended".into());
+        s.query.all = true;
+    });
+    assert!(
+        texts(&rt).iter().any(|t| t == "Items 3"),
+        "the link carries the view's count"
+    );
+
+    press(&mut rt, "strip-items");
+
+    let mut query = Default::default();
+    rt.update(|s, _| query = s.query.clone());
+    assert_eq!(query.screen, "items");
+    assert_eq!(query.id, None);
+    // The items page's view, as the live reader brings it.
+    strip["items"]["here"] = json!(true);
+    rt.update(|s, _| s.view = view_with(strip.clone()));
+    rt.frame(0.0);
+    assert!(
+        texts(&rt).iter().any(|t| t == "Back"),
+        "the items page has its way back"
+    );
+
+    press(&mut rt, "strip-items");
+
+    rt.update(|s, _| query = s.query.clone());
+    assert_eq!(query.screen, "home");
+    assert_eq!(
+        query.run.as_deref(),
+        Some("C:/work/ended"),
+        "back to the scope it left"
+    );
+    assert!(query.all, "with the toggle as it was");
+}
+
+#[test]
 fn a_create_posts_what_the_name_checked_and_opens_the_new_thread_once_taken() {
     let mut state = State {
         view: view_with(ended_tab()),

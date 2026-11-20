@@ -46,6 +46,12 @@ test('nothing is settled-by-day without Everything', (t) => {
   assert.deepEqual(historyView(reads, { run: null, all: false, screen: 'home' }, NOW).days, []);
 });
 
+test('the thread screen draws no settled cards, as the thread page lists none', (t) => {
+  tempDeck(t);
+  const reads = { ...readDeck(), items: [settled('old', stamp(0))] };
+  assert.deepEqual(historyView(reads, { run: null, all: true, screen: 'thread' }, NOW).days, []);
+});
+
 test('the items screen lists everything', (t) => {
   tempDeck(t);
   registerRun({ repo: ALPHA, pid: process.pid });

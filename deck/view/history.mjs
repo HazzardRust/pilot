@@ -22,7 +22,8 @@ export function historyView(reads, query = {}, now = Date.now()) {
     const runs = liveRuns(reads.runs).map(({ id, name }) => ({ id, name, dismissable: true }));
     return { days: cards.length ? [{ key: 'items', heading: 'Everything', open: true, cards }] : [], runs };
   }
-  if (!all) return { days: [] };
+  // Settled cards are the home page's under Everything; the thread page lists none.
+  if (!all || screen !== 'home') return { days: [] };
   const tabs = tabsOf(reads.runs, items, reads.numbers, reads.agents, reads.added, reads.lanes);
   const tab = run === null ? landingFor(tabs) : tabFor(tabs, run);
   const back = hrefFor(tab, all);

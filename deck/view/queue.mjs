@@ -60,7 +60,9 @@ const phaseRank = (tab, items) => {
  * on the overview one per tab, named and stably sorted planning, implementing, concluding, then the rest.
  */
 export function queueView(reads, query = {}, now = Date.now()) {
-  const { run = null, all = false } = query;
+  const { run = null, all = false, screen = 'home' } = query;
+  // The queue is the home page's: the thread page and `/items` draw none of its cards or lines.
+  if (screen !== 'home') return { cards: [], stateLines: [] };
   const { items } = reads;
   const tabs = tabsOf(reads.runs, items, reads.numbers, reads.agents, reads.added, reads.lanes);
   const tab = run === null ? landingFor(tabs) : tabFor(tabs, run);
