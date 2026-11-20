@@ -1,0 +1,53 @@
+{
+  "slug": "ci-green",
+  "feature": "Pilot's CI is green again",
+  "ticket": "itm_a0d1cc86d06d",
+  "branch": "feat/ci-green",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-ci-green",
+  "artefact": "docs/design/ci-green/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/ci-green-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-green-s1"
+    }
+  ],
+  "next": "ci-green: gate2 itm_c6ad0caef772 posted at d588a89 (PR #127, three Gate jobs success, trial clean). Waits on the user's Sign off press; on the press spawn pilot-lander with the gate2 id. After landing: spec 5, open feature branches take green pilot by merge. Possible follow-up, unticketed: `{` in the guard's non-literal set.",
+  "updatedAt": "2026-11-19T17:27:35.612Z",
+  "friction": [
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "a slice reviewer's hand-back for audit-f14 S4 was delivered to main twice instead of to the implementer that spawned it",
+      "evidence": "Review S4 diff, Verdict: WARN, two notifications"
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "both CI reds reproduce locally once known: idle-wake leaks a mocked clock and fails only after 10:20Z; shell-write-guard fails open on any path holding ~ (8.3 names)",
+      "evidence": "hooks/shell-write-guard.js:102; ci-green diagnosis"
+    },
+    {
+      "kind": "drain",
+      "what": "one session: hand-off pickup, 2 landings' findings, 3 Gate 1s, 6 ticket proposals, a re-cut workaround and a CI inquiry; advisory at 230k",
+      "size": 20
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "the depth question closed on its default by a new pilot session never reached the architect; it re-armed a wait on the closed thread and nearly posted a second gate1",
+      "evidence": "ci-green architect hand-back: wait on itm_71aebce2652f after it closed",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "stopping a background pilot wait took 3 calls: killing the bash shell leaves its node launcher child running",
+      "evidence": "ci-green architect hand-back: pid 135237",
+      "size": 1
+    },
+    {
+      "agent": "implementer",
+      "what": "slice file put tokens() at :102, it starts at :48; B2's red only shows with B1's reset left out, one extra edit and run",
+      "evidence": "hooks/shell-write-guard.js:48 vs slices/S1.md Files owned"
+    }
+  ]
+}

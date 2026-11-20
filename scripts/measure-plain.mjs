@@ -33,7 +33,7 @@ import { isScoped, isShippedCopy } from './install-rules.mjs';
 import { STATUSLINE_SCRIPT, ownCommandPath } from './install-settings.mjs';
 import { claudeBin, isWindows, pathKey } from '../hooks/lib/platform.js';
 
-export const ROWS = ['tools', 'agents', 'skills', 'mcp', 'hooks', 'rules', 'statusLine', 'excerpt'];
+const ROWS = ['tools', 'agents', 'skills', 'mcp', 'hooks', 'rules', 'statusLine', 'excerpt'];
 // `pilot:<agent|skill>`, `plugin:pilot:<server>`, `mcp__plugin_pilot_<server>__<tool>`.
 const NAMES_PILOT = /^(pilot:|plugin:pilot:|mcp__plugin_pilot_)/;
 const EXCERPT_MARKER = /^## Pilot\s*$/m;

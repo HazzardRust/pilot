@@ -57,13 +57,14 @@ const asTicket = (item) => ({
  * `laneTicketOf` with `coPilot` (blocked-yellow-yields spec 7); `live` stays the red queue's either way.
  * `concluding` is the feature waiting at Gate 2 that `pilot base` chains the next run on (pilot-develop-line spec 4,
  * L5, A5): the live green ticket with its record's slug and branch, or null with none or a record naming no branch.
+ * A record whose own base is a `feat/` branch is never offered, so a chain stays one deep (audit-f14 A9).
  */
 export function queueView(items, repo, records = [], { open = false, agent, coPilot = null } = {}) {
   const live = liveTicketOf(items, repo, 'red') ?? null;
   const decided = live && mergeDecisionOf(items, live.id);
   const filed = agent === undefined ? undefined : laneTicketOf(items, repo, agent, coPilot) ?? null;
   const green = liveTicketOf(items, repo, 'green');
-  const run = green && records.find((record) => record?.ticket === green.id && typeof record.branch === 'string' && (record.base ?? 'pilot') === 'pilot');
+  const run = green && records.find((record) => record?.ticket === green.id && typeof record.branch === 'string' && !/^feat\//i.test(record.base ?? 'pilot'));
   return {
     live: live && asTicket(live),
     red: ticketQueueOf(items, repo).filter((item) => item !== live).map(asTicket),

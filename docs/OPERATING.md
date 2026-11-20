@@ -26,12 +26,13 @@ A run needs only `pilot start`; the rest is what the agents call under it. Who r
 | `pilot integrate` | the co-pilot (and QA, or the pilot) | to merge each slice into `feat/<slug>` |
 | `pilot integrate --trial` | QA | before its gate2, to try the feature's tip on `pilot`; merges nothing into it |
 | `pilot pr --ticket <itm_id>` | the deck | after a gate1, each `deck_status` of its ticket, and QA's walkthrough or gate2 comment, to open or update the feature PR and QA's one comment on it |
-| `pilot land` | the deck | after your Gate 2 Sign off, to merge only the feature into `pilot` (no sync) and keep one open PR `pilot → main`: `main gets pilot: #<n>` |
+| `pilot land` | the deck | after your Gate 2 Sign off, to merge only the feature into `pilot` (no sync) and name its own PR to main: `feature PR: #<n> into <base>`; a legacy run (based on `pilot`) still keeps one open PR `pilot → main`: `main gets pilot: #<n>` |
 | `pilot sync` | the pilot | at a ticket's take (or by hand), never inside a landing, to take the default branch into `pilot` |
+| `pilot restack` | the pilot, and you | at a ticket's take after `pilot sync`, and by hand after you merge a feature PR, to retarget each open feature PR to its base and merge that base forward; after a squash, a leased rebase of a landed feature. Exit 3 names a conflict for the lander |
 | `pilot handoff` | the pilot | when its context is full |
 | `pilot landing <gate2-id>` | whoever wants to watch it, in the background | after your Gate 2 Sign off; waits for the deck's landing and prints how it went |
 
-`pilot` is the one integration line (ADR 0167): main gets it when you merge that one `pilot → main` PR with a merge commit, whenever you like.
+Each feature is its own PR to main (ADR 0200): you merge them, bottom of the stack first, whenever you like, and `pilot` stays the private line Gate 2 lands on. A merge commit is the default; if you squash, run `git config pilot.merge squash` once, so the human step says so. Under squash the stack's upper PR shows the lower feature's commits until `pilot restack` rebases it.
 
 For looking under a run: `pilot budget` sets how many agents each lane holds, `pilot analytics <slug>`
 prints a run's tokens, tool calls and time per agent, `pilot ps` and `pilot gc` list and stop

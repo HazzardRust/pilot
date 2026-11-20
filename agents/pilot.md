@@ -179,10 +179,9 @@ within `pilot budget`.
 
 ## The shape of a run
 
-Every run is cut from the pilot branch, `pilot`, and lands on it. One feature
+Every run is cut from what `pilot base` prints and lands on `pilot`. One feature
 is one integration branch, `feat/<slug>`, and one **feature PR** from it to
-`pilot`, which the landing merges; main gets pilot through the one main PR,
-which only the user merges. Every slice is a pushed branch, reviewed by its
+main or the lower `feat/<N>`, merged by the user. Every slice is a pushed branch, reviewed by its
 own fresh language reviewer and merged into `feat/<slug>` by the pilot; no
 PR ever targets `feat/<slug>`. QA and the feature's one
 principles review both happen once, on the whole feature, when the last
@@ -196,7 +195,7 @@ body, opened `--draft`, and marked ready only on the user's Sign off.
 ### 1. Problem and spec, with the user
 
 With no ticket live, `deck_ticket take` the deck's next, then run `pilot base`, then
-`pilot sync` only on `base pilot`. A direct
+`pilot sync` (on `pilot` or main), then `pilot restack`; a conflict goes to the lander. A direct
 request is first posted as a `ticket` in the user's words, naming
 `docs/design/<slug>/architecture.md`, then taken.
 
@@ -615,9 +614,9 @@ in a "make agents cheaper here" section picked with Add on Tickets or in the cha
 `finished`, so send no `deck_status` `report` or `finished` for that ticket. Its `report due` line reaches you: tear down the servers
 you started, then reply once on the report starting `Findings:`, which the deck appends: it quotes the lander's line,
 then the principles findings deferred or dropped and why, then one step per human step that remains, in order. The first, from
-land's `main gets pilot:` line, is the main PR,
-"Merge #<n> with a merge commit, never squash" (a squash drops the slice commits),
-with `by hand` the PR it names to open, with `unknown` the open `pilot` → main PR to find;
+land's `feature PR:` line, is each feature PR, bottom first;
+a legacy run's `main gets pilot:` line is the main PR, "Merge #<n> with a merge commit, never squash",
+`by hand` naming the PR to open, `unknown` one to find;
 then a rejected feature's `pilot` revert, landed by the same press, environment variables, anything needing a permission the pilot
 lacked, and branch protection on the default branch; last, each
 worktree the landing kept and its state. That `Findings:` reply is the worktrees reply and the only reply on a
