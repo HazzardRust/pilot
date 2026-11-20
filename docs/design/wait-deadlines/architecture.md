@@ -16,9 +16,9 @@ without the user hunting for it.
 | --- | --- | --- |
 | 1 | The cause of each recorded stalled wait is stated from evidence, or "no record". | §3 cause table and the ADR: 4 rows, each with marker, why it never came, source; 0 blank cells. |
 | 2 | A pilot-lane `Bash` call holding an `until`/`while` loop that sleeps, with no `timeout <n>` bound on it, is refused before it runs, the reason naming `pilot wait-for`. | Hook test: ≥6 unbounded shapes denied, `pilot wait-for`, `timeout 600 bash -c '…'` and `for i in $(seq 60)` allowed; a lint over `agents/ skills/ rules/ scripts/` finds 0 unbounded loops. |
-| 3 | `pilot wait-for --file F --match RE --timeout M` ends by itself: exit 0 printing the first matching line, or exit 2 printing `timed out waiting for <RE> in <F> after <M> min`. | CLI test: marker written after 50 ms → exit 0 and the line; never written, `--timeout 0.02` → exit 2 and that line in at most two seconds; no `--timeout`, or one over 120 → exit 1. |
-| 4 | A wait that times out is reported: the agent's report carries a `timed out waiting for <marker>` row, then it carries on or hands back. *assumed (A3)* | QA run on a scratch deck: an implementer brief whose marker never comes; its report holds exactly one such row. |
-| 5 | A stalled wait is seen and ended without the user: a shell under a pilot session whose command is an unbounded wait loop, older than 120 min, is stopped by the deck itself, and the pilot gets one deck line `stopped stalled wait <pid> "<marker>" held by <agent\|unknown> for <age>`. *assumed (A1, A4, A6)* | Unit test over a fake process table: exactly one stop and one line; QA: a planted loop under a scratch session is gone after one scan tick and the line is on the deck. |
+| 3 | `pilot wait-for --file F --match RE --timeout M` ends by itself: exit 0 printing the first matching line, or exit 2 printing `timed out waiting for <RE> in <F> after <M> min`. | CLI test: marker written after 50 ms → exit 0 and the line; never written, `--timeout 0.02` → exit 2 and that line in at most two seconds; no `--timeout`, or one over 50 → exit 1. |
+| 4 | A timeout is a wake-up call: the agent wakes to `timed out waiting for <marker>` and chooses to wait again, carry on or hand back; each bounded wait it ran is a report row naming which wait it was (`wait 2 on <marker>: timed out after 50 min`), so a long wait is a visible chain of 50-minute waits. *assumed (A3)* | QA run on a scratch deck: an implementer brief whose marker never comes and who re-arms once; its report holds exactly two numbered wait rows. |
+| 5 | A stalled wait is seen and ended without the user: a shell under a pilot session whose command is an unbounded wait loop, older than 50 min, is stopped by the deck itself, and the pilot gets one deck line `stopped stalled wait <pid> "<marker>" held by <agent\|unknown> for <age>`. *assumed (A1, A4, A6)* | Unit test over a fake process table: exactly one stop and one line; QA: a planted loop under a scratch session is gone after one scan tick and the line is on the deck. |
 | 6 | Ended means the wait shell and nothing else: no agent, `claude`, `node`, `git` process or worktree is stopped; the agent resumes on its shell's exit with its work intact. *assumed (A2)* | Unit test: over a table holding every kind, the stop set holds zero rows but the loop shells; QA: the planted loop's parent session still answers. |
 | 7 | An agent stops each background wait it started (`TaskStop` by id) before its final hand-back. | Read: the rule in `rules/orchestration.md`, one bullet; line 5 is the backstop. |
 | 8 | practitioner: incident replay — the recorded loop commands (A, B verbatim from their transcripts; C as the ticket records it) are each refused by the hook, and A and B's live process rows are recognised by the scan. | Hook test: three of three denied; scan test: two of two rows recognised. |
@@ -83,7 +83,8 @@ that one long-polls the deck, this one reads a file.
 - **Marker**: the string or pattern a wait looks for.
 - **Bound**: a deadline carried by the command itself (`pilot wait-for --timeout`, `timeout <n>`), not by the tool call.
 - **Unbounded wait**: an `until`/`while` loop that sleeps with no bound.
-- **Stalled wait**: an unbounded wait shell older than the stall age (120 min).
+- **Stalled wait**: an unbounded wait shell older than the stall age (50 min).
+- **Wake-up call**: a bounded wait's timeout, after which the agent decides to wait again, carry on or hand back.
 - **Holder**: the agent whose tool call started a wait.
 
 ## 5. Locked decisions
@@ -102,7 +103,7 @@ that one long-polls the deck, this one reads a file.
   unbounded wait by `unboundedWaits`; its nearest `claude` ancestor is the parent of a live registered run's pid
   (`listLiveRuns`); `ageS` ≥ the stall age.
   Anything unsure is not stopped. The kill follows the read in the same tick; no re-read (pid reuse within
-  milliseconds of a 2 h process is accepted).
+  milliseconds of a 50-min process is accepted).
 - **L7 The line routes by run.** The deck line goes through `noteDeck` on the proving run's repository's live ticket,
   else its chat item (ADR 0031); no run, no stop.
 - **L8 Untrusted text stays data (R5, R6).** The hook and the scan tokenise; nothing is evaluated or spawned from a
@@ -124,8 +125,12 @@ that one long-polls the deck, this one reads a file.
 - **A3 Hook refusal plus `pilot wait-for`** (`itm_e481d11f4790`). Default as spec 2-4. Tradeoff: a refusal can
   misfire (L4 limits it). Rejected: instructions only, which four improvisations already ignored and no test can hold
   (ADR 0180).
-- **A4 120 min** for `--timeout`'s maximum and the stall age (`itm_c71984dbc9b7`). Tradeoff: a stuck wait lives up to
-  2 h. Rejected: 30, which is under a slow full suite plus queueing.
+- **A4 50 min** for `--timeout`'s maximum and the stall age (`itm_c71984dbc9b7`). Answer, overturning the 120 default:
+  "50 mins, because 60 is when tokens are uncached", with a wake-up call. Locked: the agent wakes inside the one-hour
+  prompt cache, as `pilot wait` already stops at 50; the timeout is the wake-up call and a re-armed wait is counted and
+  reported (spec 4), so a long real wait is a chain of bounded waits. A `timeout <n>` over 3000 s is no bound (S2).
+  The 5-min scan stands: a stalled wait goes within 55 min. Tradeoff: a wait longer than 50 min costs one wake per 50.
+  Rejected: 120 (a wake after the cache is cold), 30 (under a slow full suite plus queueing).
 - **A5 QA on a scratch deck with planted processes** (`itm_b788644fdd9c`). Rejected: also report-only on the live deck.
   Answer: "Scratch deck + planted processes" (default).
 - **A6 The holder is named from transcripts.** Default: `holderOfCommand` finds the subagent transcript whose Bash
