@@ -204,7 +204,7 @@ test('the command prints the table, and --json prints the rows', (t) => {
 // human-steps S4 (2026-11-20) lowered it from 11966.75 to the measured 11962.75 (spec 2, 7; A1): "Ending a run" sends each human step with deck_status `step` as it arises, and the Findings: reply carries none, net -4.
 // ci-gate S5 (2026-11-20) raised it from 11942.75 to the measured 11949.5 (spec 4; L6): deck_post's bare `checks: { type: 'string' }`, 6.75.
 // ci-gate S7 (2026-11-20) raised it from 11949.5 to the measured 12005.75 (spec 3; L4, L10): step 5's short path runs `pilot checks <sha7> --wait` after integrate and routes red as `failed gate:`, 56.25.
-// Merge origin/pilot d282a698 into feat/human-steps (2026-11-20) set it to the measured 12035, 9 of it the steps-thread line naming land's feature PR step: human-steps' step field and Findings cut and ci-gate's checks field and short-path wait all stand, measured together.
+// Merge origin/pilot d282a698 into feat/human-steps (2026-11-20) set it to the measured 12035 (about 9 of it the steps-thread line naming land's feature PR step): human-steps' step field and Findings cut and ci-gate's checks field and short-path wait all stand, measured together.
 test('the pilot pin holds at its new number', async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
