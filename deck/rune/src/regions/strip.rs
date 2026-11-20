@@ -4,8 +4,8 @@
 //! posts (`DeckAction`); the repository is the view's, never built here, and no process is started
 //! from Rust: Start asks the daemon, which owns the start and its guard.
 
-use rune::tok::{self, type_};
-use rune::{Color, Cx, El, Key, TextEdit, col, row, text, text_input};
+use rune::tok::type_;
+use rune::{Cx, El, Key, TextEdit, col, row, text, text_input};
 use serde::Deserialize;
 
 use crate::act::{self, Acted, Pending};
@@ -218,15 +218,59 @@ pub fn answered(s: &mut State, key: &str, acted: &Result<Acted>) {
     }
 }
 
-/// A press-shaped label on `fill`, as the reply box draws one.
-fn button(label: &str, key: &str, ink: Color, fill: Color) -> El {
-    row()
+/// The strip's one column: every button and box is this wide, on the 4/8 grid.
+const WIDTH: f32 = space::s8 * 3.0;
+
+/// How a button is dressed (DESIGN.md §1): colour marks a state that needs attention, never a setting.
+#[derive(Clone, Copy, PartialEq)]
+enum Look {
+    /// A hairline and the page's own ink.
+    Quiet,
+    /// The one action that goes ahead: the primary role.
+    Primary,
+    /// The choice made, in a neutral tint of the text colour: a tint, never a hue.
+    Picked,
+}
+
+/// A press-shaped label, one column wide, with a 12 px label and 4x8 padding. Only an enabled button
+/// says clickable: a disabled one takes no hover tint and no pointer cursor.
+fn button(label: &str, key: &str, look: Look, off: bool, dark: bool) -> El {
+    let (r, k) = (theme::roles(dark), theme::tokens(dark));
+    let ink = if look == Look::Primary {
+        r.surface
+    } else {
+        r.on_surface
+    };
+    let face = row()
         .key(key)
         .role("button")
         .label(label)
-        .padding(space::pad)
-        .fill(fill)
-        .child(text(label).font(type_::BODY).color(ink))
+        .w(WIDTH)
+        .px(space::s3)
+        .py(space::s2)
+        .items_center()
+        .justify_center()
+        .child(text(label).font(type_::LABEL).color(ink));
+    let face = match look {
+        Look::Quiet => face.border(1.0, k.rule),
+        Look::Primary => face.fill(r.primary),
+        Look::Picked => face.fill(r.on_surface.alpha(0.14)).border(1.0, k.rule),
+    };
+    if off {
+        face.radius(theme::radius::button).disabled(true)
+    } else {
+        theme::control(face, dark)
+    }
+}
+
+/// A boxed group, the page's popout (`form.confirm`, deck.css:841): a hairline round it, 8 px in.
+fn boxed(dark: bool) -> El {
+    col()
+        .w(WIDTH)
+        .gap(space::s3)
+        .padding(space::s3)
+        .border(1.0, theme::tokens(dark).rule)
+        .radius(theme::radius::button)
 }
 
 pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx<State>) -> El {
@@ -235,22 +279,19 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
         return rune::el();
     };
     let dark = cx.system_dark();
-    let (t, k) = (tok::theme(dark), theme::tokens(dark));
-    let btn = |label: &str, key: &str, lit: bool| {
-        let fill = if lit { k.state.pilot } else { k.rule };
-        theme::control(button(label, key, t.text, fill), dark)
+    let (r, k) = (theme::roles(dark), theme::tokens(dark));
+    let btn = |label: &str, key: &str, look: Look| button(label, key, look, false, dark);
+    // A control whose write is out is drawn disabled until the deck answers.
+    let sent_btn = |label: &str, key: &str, post: &str, look: Look| {
+        button(label, key, look, pending.is_sent(post), dark)
     };
-    // A control whose write is out is drawn sent and disabled until the deck answers.
-    let sent_btn = |label: &str, key: &str, post: &str, lit: bool| {
-        btn(label, key, lit || pending.is_sent(post)).disabled(pending.is_sent(post))
-    };
-    let say = |words: String| text(words).font(type_::BODY).color(t.text);
+    let say = |words: String| text(words).font(type_::LABEL).color(r.on_surface).w_full();
 
     let mut out = col()
         .key("strip")
-        // Each control is as wide as its words, as the page's are, not the column's width.
-        .items_start()
-        .gap(space::between)
+        // One column: every control the same width, on the grid, a stack with no floating gaps.
+        .w(WIDTH)
+        .gap(space::s3)
         .on_key(|s: &mut State, ev: &rune::KeyEvent, _: &mut rune::Tx| {
             let local = &mut s.regions.strip;
             let open = local.naming.is_some() || local.asking.is_some();
@@ -263,7 +304,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             btn(
                 if strip.all { "All" } else { "Open" },
                 "strip-toggle",
-                strip.all,
+                Look::Quiet,
             )
             .on_press(toggle),
         );
@@ -273,7 +314,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
         } else {
             format!("Items {}", items.count)
         };
-        out = out.child(btn(&label, "strip-items", items.here).on_press(items_page));
+        out = out.child(btn(&label, "strip-items", Look::Quiet).on_press(items_page));
     }
 
     // Create: the tab's repository, or on the overview the deck the confirm has chosen.
@@ -282,10 +323,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
         Some(tab) => Some(tab.repo.clone()),
         None => repos.get(local.repo).map(|choice| choice.repo.clone()),
     };
-    let mut making = col().key("strip-create-group").gap(space::within);
+    let mut making = col().key("strip-create-group");
     match &local.naming {
         None => {
-            making = making.child(btn("Create", "strip-create", false).on_press(
+            making = making.child(btn("Create", "strip-create", Look::Quiet).on_press(
                 |s: &mut State| {
                     s.regions.strip.cancel();
                     s.regions.strip.naming = Some(TextEdit::default());
@@ -293,14 +334,12 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             ));
         }
         Some(edit) if !local.sure => {
-            let ready = local.can_next();
-            let mut next = btn("Next", "strip-next", false).disabled(!ready);
-            if ready {
+            let mut next = button("Next", "strip-next", Look::Primary, !local.can_next(), dark);
+            if local.can_next() {
                 next = next.on_press(|s: &mut State| s.regions.strip.next());
-            } else {
-                next = next.opacity(0.5);
             }
-            making = making
+            making = boxed(dark)
+                .key("strip-create-group")
                 .child(
                     text_input(edit, type_::BODY)
                         .key("strip-name")
@@ -312,11 +351,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
                         .padding(space::pad)
                         .fill(k.rule),
                 )
+                .child(next)
                 .child(
-                    row().gap(space::within).child(next).child(
-                        btn("Cancel", "strip-cancel", false)
-                            .on_press(|s: &mut State| s.regions.strip.cancel()),
-                    ),
+                    btn("Cancel", "strip-cancel", Look::Quiet)
+                        .on_press(|s: &mut State| s.regions.strip.cancel()),
                 );
         }
         Some(_) => {
@@ -325,22 +363,27 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
                 Some(tab) => format!("on {}?", tab.code),
                 None => "on which deck?".into(),
             };
-            making = making.child(say(format!("Open “{name}” {on}")));
+            making = boxed(dark)
+                .key("strip-create-group")
+                .child(say(format!("Open “{name}” {on}")));
             for (i, choice) in repos.iter().enumerate() {
+                let look = if i == local.repo {
+                    Look::Picked
+                } else {
+                    Look::Quiet
+                };
                 making = making.child(
-                    btn(&choice.label, &format!("strip-repo-{i}"), i == local.repo)
+                    btn(&choice.label, &format!("strip-repo-{i}"), look)
                         .on_press(move |s: &mut State| s.regions.strip.repo = i),
                 );
             }
-            let mut confirm = sent_btn("Create", CREATE, CREATE, false);
+            let mut confirm = sent_btn("Create", CREATE, CREATE, Look::Primary);
             if let Some(repo) = target.filter(|_| !pending.is_sent(CREATE)) {
                 confirm = confirm.on_press(move |s: &mut State| create(s, &repo));
             }
-            making = making.child(
-                row().gap(space::within).child(confirm).child(
-                    btn("Cancel", "strip-cancel", false)
-                        .on_press(|s: &mut State| s.regions.strip.cancel()),
-                ),
+            making = making.child(confirm).child(
+                btn("Cancel", "strip-cancel", Look::Quiet)
+                    .on_press(|s: &mut State| s.regions.strip.cancel()),
             );
         }
     }
@@ -366,18 +409,21 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             let asking = local.asking == Some(ask);
             let (repo, again) = (tab.repo.clone(), tab.repo.clone());
             let busy = pending.is_sent(key);
-            let mut face = sent_btn(verb, key, key, asking);
+            let look = if asking { Look::Picked } else { Look::Quiet };
+            let mut face = sent_btn(verb, key, key, look);
             if !busy {
                 face = face.on_press(move |s: &mut State| session(s, ask, &repo));
             }
-            let mut group = col().gap(space::within).child(face);
+            let mut group = col().gap(space::s3).child(face);
             if asking {
-                group = group
-                    .child(say(format!("{verb} {}? {what}", tab.code)))
-                    .child(
-                        btn("Confirm", &format!("{key}-confirm"), false)
-                            .on_press(move |s: &mut State| session(s, ask, &again)),
-                    );
+                group = group.child(
+                    boxed(dark)
+                        .child(say(format!("{verb} {}? {what}", tab.code)))
+                        .child(
+                            sent_btn("Confirm", &format!("{key}-confirm"), "", Look::Primary)
+                                .on_press(move |s: &mut State| session(s, ask, &again)),
+                        ),
+                );
             }
             out = out.child(group);
         }
@@ -387,18 +433,22 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             text(reason)
                 .key("strip-refused")
                 .role("alert")
-                .font(type_::BODY)
-                .color(k.accent.red),
+                .font(type_::LABEL)
+                .color(r.error)
+                .w_full(),
         );
     }
 
+    // A binary setting: a switch, said in its words and its checked state, never in a colour.
     let on = strip.alerts.weekly;
     let mut alerts = sent_btn(
         &format!("Weekly alerts {}", if on { "on" } else { "off" }),
         ALERTS,
         ALERTS,
-        on,
+        Look::Quiet,
     )
+    .role("switch")
+    .checked(on)
     .label("Warn agents at 95% of the weekly limit");
     if !pending.is_sent(ALERTS) {
         // Taken, the live reader brings the flipped switch; refused, `answered` says the deck's words.
