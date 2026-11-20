@@ -2,59 +2,35 @@
 //! never a kind matched here (L2, spec 11).
 
 use std::collections::BTreeMap;
-use std::sync::{Arc, Mutex, PoisonError};
 
 use rune::tok::{self, type_};
-use rune::{Color, Cx, El, SpringPair, Transition, Waker, col, row, text};
+use rune::{Color, Cx, El, SpringPair, Transition, col, row, text};
 use serde::Deserialize;
 
-use crate::act::{Acted, Action};
+use crate::act::{self, Action};
 use crate::app::State;
-use crate::client::Client;
 use crate::theme::{self, Tokens, motion, space};
 
 /// A monospace glyph's advance as a share of the font size: how wide one `ch` of a status column is.
 const MONO_ADVANCE: f32 = 0.6;
 
-/// The queue's window state; `confirming` is (card id, label), `deck` the window's own address when unset.
+/// The `act::send` key a card's reply goes under, before the card's id.
+const SENT: &str = "reply-card-";
+
+/// The queue's window state; `confirming` is (card id, label).
 #[derive(Debug, Default)]
 pub struct Local {
     pub sent: BTreeMap<String, String>,
     pub refused: BTreeMap<String, String>,
     pub confirming: Option<(String, String)>,
-    pub deck: Option<Arc<Client>>,
-    pub inbox: Inbox,
 }
 
-/// Refusals (card id, reason) the posting threads leave, and the waker `app::setup` sets.
-#[derive(Default)]
-pub struct Inbox {
-    pub refusals: Arc<Mutex<Vec<(String, String)>>>,
-    pub wake: Option<Waker>,
-}
-
-impl std::fmt::Debug for Inbox {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Inbox")
-            .field("refusals", &self.refusals)
-            .finish_non_exhaustive()
+/// A card's answered reply: a refusal puts its words on the card and its options back.
+pub fn answered(q: &mut Local, key: &str, refused: Option<String>) {
+    if let (Some(id), Some(reason)) = (key.strip_prefix(SENT), refused) {
+        q.sent.remove(id);
+        q.refused.insert(id.into(), reason);
     }
-}
-
-/// Takes the posting threads' refusals into `refused` for `app::poll`; true when there were any.
-pub fn settle(s: &mut State) -> bool {
-    let q = &mut s.regions.queue;
-    let mut left = q
-        .inbox
-        .refusals
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner);
-    let changed = !left.is_empty();
-    for (id, reason) in left.drain(..) {
-        q.sent.remove(&id);
-        q.refused.insert(id, reason);
-    }
-    changed
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -137,7 +113,7 @@ fn hhmm(iso: Option<&str>) -> String {
         .to_string()
 }
 
-/// A card sends once, shown sent at once; the post runs on its own thread and a refusal returns via `settle`.
+/// A card sends once, shown sent at once; its answer comes back through `answered`.
 fn press(s: &mut State, id: &str, label: &str) {
     let q = &mut s.regions.queue;
     q.confirming = None;
@@ -151,35 +127,7 @@ fn press(s: &mut State, id: &str, label: &str) {
         text: String::new(),
         choice: Some(label.into()),
     };
-    let (deck, refusals, wake, card) = (
-        q.deck.clone(),
-        q.inbox.refusals.clone(),
-        q.inbox.wake.clone(),
-        id.to_string(),
-    );
-    let post = move || {
-        let deck = deck.or_else(|| Client::from_env().ok().map(Arc::new));
-        let refused = match deck.map(|deck| deck.act(&reply)) {
-            Some(Ok(Acted::Taken { .. })) => return,
-            Some(Ok(Acted::Refused { reason })) => reason,
-            Some(Err(err)) => err.to_string(),
-            None => "no deck to send to".into(),
-        };
-        refusals
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .push((card, refused));
-        if let Some(wake) = wake {
-            wake();
-        }
-    };
-    if let Err(err) = std::thread::Builder::new()
-        .name("pilot-deck-reply".into())
-        .spawn(post)
-    {
-        q.sent.remove(id);
-        q.refused.insert(id.into(), err.to_string());
-    }
+    act::send(&mut s.pending, &format!("{SENT}{id}"), reply);
 }
 
 /// One card, reused by the history region (S18).

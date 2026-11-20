@@ -4,18 +4,28 @@
 //! last wrote on it, each with a × that marks it seen. Mark all seen does both. What was seen is the
 //! window's prefs (A4), kept against the pilot's write count so a new word shows the thread again.
 
+use std::collections::BTreeMap;
+
 use rune::tok::{self, type_};
-use rune::{Cx, El, col, row, text};
+use rune::{Color, Cx, El, col, row, text};
 use serde::Deserialize;
 
+use crate::act::{self, Pending};
 use crate::act_deck::DeckAction;
 use crate::app::State;
-use crate::client::{Client, Query};
+use crate::client::Query;
 use crate::prefs::{self, Prefs};
-use crate::theme::space;
+use crate::theme::{self, space};
 
+/// The `act::send` key of a notice's ×, then `-` and its id; Mark all seen's is `CLEAR_ALL`.
+const CLEAR: &str = "clear-notice";
+const CLEAR_ALL: &str = "clear-notices";
+
+/// The deck's refusals of this panel's writes, by the key each was sent under.
 #[derive(Debug, Default)]
-pub struct Local;
+pub struct Local {
+    pub refused: BTreeMap<String, String>,
+}
 
 #[derive(Debug, Deserialize)]
 struct Notice {
@@ -59,11 +69,25 @@ pub(crate) fn keep(prefs: &Prefs) {
     }
 }
 
-/// Sends a notice write; the live reader brings the view without the notice back.
-fn clear(s: &mut State, action: &DeckAction) {
-    if let Err(err) = Client::from_env().and_then(|client| client.act(action)) {
-        eprintln!("pilot-deck: {err}");
-        s.down = true;
+/// Sends a notice write under `key`; the live reader brings the view without the notice back, and a
+/// refusal comes back through `answered`.
+fn clear(s: &mut State, key: &str, action: DeckAction) {
+    s.regions.notifications.refused.remove(key);
+    act::send(&mut s.pending, key, action);
+}
+
+/// A notice write answered: a refusal's words go under the control that sent it.
+pub fn answered(n: &mut Local, key: &str, refused: Option<String>) {
+    if let (true, Some(reason)) = (key.starts_with(CLEAR), refused) {
+        n.refused.insert(key.into(), reason);
+    }
+}
+
+/// A refusal under a control, when it has one.
+fn refusal(panel: El, local: &Local, sent: &str, key: String, ink: Color) -> El {
+    match local.refused.get(sent) {
+        Some(reason) => panel.child(text(reason).key(key).font(type_::BODY).color(ink).wrap()),
+        None => panel,
     }
 }
 
@@ -80,15 +104,18 @@ pub(crate) fn open_thread(s: &mut State, id: &str) {
     s.query = query;
 }
 
-/// One row: the title, which opens the thread, and its ×, which runs `drop`.
+/// One row: the title, which opens the thread, and its ×, which runs `drop` and is drawn disabled
+/// while `sent`.
 fn line(
     key: String,
     title: &str,
     id: &str,
     t: &tok::Theme,
+    sent: bool,
     drop: impl Fn(&mut State) + 'static,
 ) -> El {
     let to = id.to_string();
+    let clear = format!("{key}-clear");
     row()
         .key(key)
         .gap(space::within)
@@ -103,20 +130,30 @@ fn line(
         )
         .child(
             text("×")
+                .key(clear)
                 .font(type_::BODY)
                 .color(t.text_secondary)
                 .role("button")
+                .focusable(true)
+                .disabled(sent)
                 .on_press(drop),
         )
 }
 
-/// Drawn from the window's prefs and not a `Local`: what was seen outlives the window, so it is
-/// `State::prefs`, which every press here writes back to disk. The header, its count and whether
-/// the panel is open are the layout's (S20).
-pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
+/// What was seen is drawn from the window's prefs, not `local`: it outlives the window, so it is
+/// `State::prefs`, which every press here writes back to disk; `local` holds only the deck's
+/// refusals. The header, its count and whether the panel is open are the layout's (S20).
+pub fn draw(
+    v: &serde_json::Value,
+    prefs: &Prefs,
+    local: &Local,
+    pending: &Pending,
+    cx: &mut Cx<State>,
+) -> El {
     // A region the view cannot be read as draws empty rather than taking the window down.
     let view = Notifications::deserialize(v).unwrap_or_default();
-    let t = tok::theme(cx.system_dark());
+    let dark = cx.system_dark();
+    let (t, ink) = (tok::theme(dark), theme::tokens(dark).state.unacknowledged);
     let unseen: Vec<&Open> = view
         .open
         .iter()
@@ -142,18 +179,24 @@ pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
                     .iter()
                     .for_each(|(id, writes)| mark_seen(&mut s.prefs, id, *writes));
                 keep(&s.prefs);
-                clear(s, &DeckAction::ClearNotices);
+                clear(s, CLEAR_ALL, DeckAction::ClearNotices);
             }),
     );
+    // Mark all seen's own refusal; its prefs half is the window's and has already happened.
+    let all = "notifications-mark-all-refused".into();
+    panel = refusal(panel, local, CLEAR_ALL, all, ink);
     for (i, notice) in view.notices.iter().enumerate() {
-        let id = notice.id.clone();
+        let (id, sent) = (notice.id.clone(), format!("{CLEAR}-{}", notice.id));
+        let key = sent.clone();
         panel = panel.child(line(
             format!("notice-{i}"),
             &notice.title,
             &notice.id,
             &t,
-            move |s| clear(s, &DeckAction::ClearNotice { id: id.clone() }),
+            pending.is_sent(&sent),
+            move |s| clear(s, &key, DeckAction::ClearNotice { id: id.clone() }),
         ));
+        panel = refusal(panel, local, &sent, format!("notice-{i}-refused"), ink);
     }
     for (i, one) in unseen.iter().enumerate() {
         let (id, writes) = (one.id.clone(), one.writes);
@@ -162,6 +205,7 @@ pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
             &one.title,
             &one.id,
             &t,
+            false,
             move |s| {
                 mark_seen(&mut s.prefs, &id, writes);
                 keep(&s.prefs);

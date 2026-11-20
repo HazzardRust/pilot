@@ -23,10 +23,26 @@ fn drawn(deck: &Scratch, query: &Query) -> Runtime<State> {
         view,
         ..State::default()
     };
-    state.regions.queue.deck = Some(Arc::new(client));
+    state.pending.deck = Some(Arc::new(client));
     let mut rt = Runtime::new(state, app::view, (1280.0, 800.0), Env::new(true, 1.0));
     rt.frame(0.0);
     rt
+}
+
+/// Polls and frames the window, as its event loop does, until `done` holds or five seconds pass.
+fn poll_until(rt: &mut Runtime<State>, what: &str, done: impl Fn(&Runtime<State>) -> bool) {
+    let start = Instant::now();
+    while !done(rt) {
+        assert!(
+            start.elapsed() < Duration::from_secs(5),
+            "{what} not within 5 s"
+        );
+        std::thread::sleep(Duration::from_millis(20));
+        rt.update(|s, tx| {
+            app::poll(s, 0.0, tx);
+        });
+        rt.frame(1.0 / 60.0);
+    }
 }
 
 fn items_screen() -> Query {
@@ -101,14 +117,41 @@ fn dismiss_run_posts_once() {
     );
     assert_eq!(rt.state.regions.history.dismissed.len(), 1);
     // A second post would be refused (the run is gone) and leave its reason here.
-    assert!(
-        rt.state
-            .regions
-            .history
-            .refused
-            .lock()
-            .expect("lock")
-            .is_empty()
+    rt.update(|s, tx| {
+        app::poll(s, 0.0, tx);
+    });
+    assert!(rt.state.regions.history.refused.is_empty());
+}
+
+#[test]
+fn a_refused_dismiss_can_be_pressed_again() {
+    let deck = Scratch::start();
+    let run = register(&deck);
+    let mut rt = drawn(&deck, &items_screen());
+    // The press goes to a second deck, which has no such run and refuses it in its own words.
+    let other = Scratch::start();
+    rt.state.pending.deck = Some(Arc::new(client_for(&other)));
+    let (key, refused) = (format!("run-{run}-dismiss"), format!("run-{run}-refused"));
+
+    click(&mut rt, &key);
+    poll_until(&mut rt, "the refusal", |rt| find(rt, &refused).is_some());
+
+    assert_eq!(
+        find(&rt, &refused).and_then(|e| e.text).as_deref(),
+        Some(format!("no run {run} on the deck").as_str()),
+        "the deck's own words, on the row that sent it"
+    );
+    // Pressed again, now at the deck that has the run, the dismiss is sent and taken.
+    rt.state.pending.deck = Some(Arc::new(client_for(&deck)));
+    click(&mut rt, &key);
+    let start = Instant::now();
+    while runs_left(&deck) != 0 && start.elapsed() < Duration::from_secs(3) {
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    assert_eq!(
+        runs_left(&deck),
+        0,
+        "a refused dismiss can be pressed again"
     );
 }
 

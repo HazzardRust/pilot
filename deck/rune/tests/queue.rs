@@ -111,7 +111,7 @@ fn drawn(deck: &Scratch) -> Runtime<State> {
         view,
         ..State::default()
     };
-    state.regions.queue.deck = Some(Arc::new(client));
+    state.pending.deck = Some(Arc::new(client));
     let mut rt = Runtime::new(state, app::view, (1280.0, 800.0), Env::new(true, 1.0));
     rt.frame(0.0);
     rt
@@ -258,7 +258,7 @@ fn a_failed_post_comes_back_through_settle() {
     let id = question(&deck, "Which port?", "C:/work/alpha");
     let mut rt = drawn(&deck);
     let gone = Scratch::start();
-    rt.state.regions.queue.deck = Some(Arc::new(client_for(&gone)));
+    rt.state.pending.deck = Some(Arc::new(client_for(&gone)));
     drop(gone);
     let option = format!("card-{id}-opt-0");
 
@@ -276,7 +276,7 @@ fn a_failed_post_comes_back_through_settle() {
             "the failed post never came back"
         );
         std::thread::sleep(Duration::from_millis(20));
-        rt.update(|s, _| settled = pilot_deck::regions::queue::settle(s));
+        rt.update(|s, tx| settled = app::poll(s, 0.0, tx));
     }
     rt.frame(1.0 / 60.0);
 

@@ -2,25 +2,34 @@
 //! their order are the view's (L2); this file folds them and draws S7's cards, one section each.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::sync::{Arc, Mutex, PoisonError};
 
 use rune::tok::{self, type_};
 use rune::{Cx, El, col, row, text};
 use serde::Deserialize;
 
 use super::queue::{self, Card};
-use crate::act::{Acted, Action};
+use crate::act::{self, Action};
 use crate::app::State;
-use crate::client::Client;
 use crate::theme::{self, space};
 
+/// The `act::send` key a run's dismiss goes under, before the run's id.
+const DISMISS: &str = "dismiss-run-";
+
 /// This window's folds (day key to open, over the view's own `open`), the runs whose dismiss is sent, and
-/// the refusals their posting threads leave (run id to reason), which the next frame draws.
+/// the deck's refusals of them (run id to reason), which the next frame draws.
 #[derive(Debug, Default)]
 pub struct Local {
     pub folded: BTreeMap<String, bool>,
     pub dismissed: BTreeSet<String>,
-    pub refused: Arc<Mutex<BTreeMap<String, String>>>,
+    pub refused: BTreeMap<String, String>,
+}
+
+/// A run's answered dismiss: a refusal puts its words under the row and the dismiss back.
+pub fn answered(h: &mut Local, key: &str, refused: Option<String>) {
+    if let (Some(id), Some(reason)) = (key.strip_prefix(DISMISS), refused) {
+        h.dismissed.remove(id);
+        h.refused.insert(id.into(), reason);
+    }
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -47,43 +56,15 @@ struct History {
     runs: Vec<RunRow>,
 }
 
-/// A run's dismiss sends once, on its own thread; the queue's deck and waker are the window's.
+/// A run's dismiss sends once, shown sent at once; its answer comes back through `answered`.
 fn dismiss(s: &mut State, id: &str) {
-    let (deck, wake) = (
-        s.regions.queue.deck.clone(),
-        s.regions.queue.inbox.wake.clone(),
-    );
     let h = &mut s.regions.history;
     if !h.dismissed.insert(id.into()) {
         return;
     }
-    let (refused, run) = (h.refused.clone(), id.to_string());
-    let post = move || {
-        let deck = deck.or_else(|| Client::from_env().ok().map(Arc::new));
-        let reason = match deck.map(|deck| deck.act(&Action::DismissRun { id: run.clone() })) {
-            Some(Ok(Acted::Taken { .. })) => return,
-            Some(Ok(Acted::Refused { reason })) => reason,
-            Some(Err(err)) => err.to_string(),
-            None => "no deck to send to".into(),
-        };
-        refused
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .insert(run, reason);
-        if let Some(wake) = wake {
-            wake();
-        }
-    };
-    if let Err(err) = std::thread::Builder::new()
-        .name("pilot-deck-dismiss".into())
-        .spawn(post)
-    {
-        h.dismissed.remove(id);
-        h.refused
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .insert(id.into(), err.to_string());
-    }
+    h.refused.remove(id);
+    let run = Action::DismissRun { id: id.into() };
+    act::send(&mut s.pending, &format!("{DISMISS}{id}"), run);
 }
 
 fn run_row(r: &RunRow, local: &Local, cx: &mut Cx<State>) -> El {
@@ -121,14 +102,8 @@ fn run_row(r: &RunRow, local: &Local, cx: &mut Cx<State>) -> El {
         }
         line = line.child(button);
     }
-    let reason = local
-        .refused
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .get(&r.id)
-        .cloned();
     let out = col().w_full().child(line);
-    match reason {
+    match local.refused.get(&r.id) {
         Some(reason) => out.child(
             text(reason)
                 .key(key("refused"))

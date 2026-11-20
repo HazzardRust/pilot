@@ -108,8 +108,13 @@ static ENV: Mutex<()> = Mutex::new(());
 
 /// A Rune client on `deck`, read from the environment as the window reads it.
 pub fn client_for(deck: &Scratch) -> Client {
+    client_on(deck, deck.port)
+}
+
+/// A Rune client with `deck`'s secret, dialling `port`: a deck that is not `deck`'s daemon.
+pub fn client_on(deck: &Scratch, port: u16) -> Client {
     let _held = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    let port = deck.port.to_string();
+    let port = port.to_string();
     let vars = [
         ("PILOT_DECK_DIR", deck.dir.to_str().expect("a utf-8 dir")),
         ("PILOT_DECK_PORT", port.as_str()),
