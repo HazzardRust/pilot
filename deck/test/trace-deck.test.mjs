@@ -89,16 +89,18 @@ test('the deck says what code it runs', async (t) => {
   const dir = tempDeck(t);
   const port = await freePort();
   const { version } = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  const file = path.join(dir, 'handoff-trace.jsonl');
 
   const child = spawn(process.execPath, [DAEMON], { env: { ...process.env, PILOT_DECK_DIR: dir, PILOT_DECK_PORT: String(port) }, stdio: 'ignore' });
   const gone = new Promise((resolve) => child.once('exit', resolve));
   try {
+    // The row lands after the port is bound; the trace is read until it names a deck or the deadline passes.
     const deadline = Date.now() + 20_000;
-    while (!(fs.existsSync(file) && fs.readFileSync(file, 'utf8').includes('deck started')) && Date.now() < deadline) {
+    let lines = await traced('itm_nothing');
+    while (!lines[0].startsWith('deck: ') && Date.now() < deadline) {
       await new Promise((resolve) => setTimeout(resolve, 100));
+      lines = await traced('itm_nothing');
     }
-    const lines = await traced('itm_nothing');
+    assert.ok(lines[0].startsWith('deck: '), `the daemon traced no start within 20s: ${lines[0]}`);
     assert.equal(lines[0].slice(0, lines[0].lastIndexOf(' since ')), `deck: ${ROOT} ${version}`);
     assert.ok(Number.isFinite(Date.parse(lines[0].slice(lines[0].lastIndexOf(' since ') + 7))), 'stamped');
     assert.equal(lines[1], 'no trace rows for itm_nothing');
