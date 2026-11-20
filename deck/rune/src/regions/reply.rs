@@ -44,13 +44,15 @@ pub struct Local {
     pub refused: Option<String>,
     /// The press that is out: drawn pressed until the deck answers, and no second press posts.
     pub sent: Option<String>,
+    /// The thread the showing confirm was asked on: its Confirm posts there or nowhere.
+    asked_on: Option<String>,
     answer: Option<mpsc::Receiver<Result<Acted>>>,
 }
 
 impl Local {
     /// The one way a press leaves the box: it is out until `acted`, and nothing else posts meanwhile.
     fn out(&mut self, label: &str, action: Action) -> Option<Action> {
-        self.confirming = None;
+        self.escape();
         self.sent = Some(label.to_string());
         Some(action)
     }
@@ -61,8 +63,11 @@ impl Local {
         if self.sent.is_some() {
             return None;
         }
-        if option.confirm && self.confirming.as_deref() != Some(option.label.as_str()) {
+        let armed = self.confirming.as_deref() == Some(option.label.as_str())
+            && self.asked_on.as_deref() == Some(id);
+        if option.confirm && !armed {
             self.confirming = Some(option.label.clone());
+            self.asked_on = Some(id.to_string());
             return None;
         }
         let action = Action::Reply {
@@ -75,6 +80,11 @@ impl Local {
 
     /// The showing confirm's Confirm: posts the option it asked about, once.
     pub fn confirm(&mut self, id: &str) -> Option<Action> {
+        // A confirm asked on another thread is not this one's: it is taken back, and nothing posts.
+        if self.asked_on.as_deref() != Some(id) {
+            self.escape();
+            return None;
+        }
         let label = self.confirming.clone()?;
         self.press(
             id,
@@ -87,6 +97,7 @@ impl Local {
 
     /// Escape: the confirm is taken back. False when none was showing, so the key goes on.
     pub fn escape(&mut self) -> bool {
+        self.asked_on = None;
         self.confirming.take().is_some()
     }
 

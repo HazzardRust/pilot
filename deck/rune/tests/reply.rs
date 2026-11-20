@@ -51,6 +51,19 @@ fn a_confirm_takes_two_presses() {
 }
 
 #[test]
+fn a_confirm_asked_on_one_thread_posts_nothing_on_another() {
+    let mut local = typed("");
+    assert_eq!(local.press(ID, &sign_off()), None);
+    // The user moves to another thread with the same option: its Confirm is not the first one's.
+    let other = "itm_000000000002";
+    assert_eq!(local.confirm(other), None);
+    assert_eq!(local.confirming, None);
+    assert_eq!(local.press(ID, &sign_off()), None);
+    assert_eq!(local.press(other, &sign_off()), None);
+    assert_eq!(local.sent, None);
+}
+
+#[test]
 fn an_option_with_no_confirm_posts_on_one_press() {
     let mut local = typed("");
     let yes = Opt {
