@@ -55,9 +55,11 @@ function step(row) {
   try {
     if (!row || typeof row.step !== 'string') return;
     const kept = { at: new Date().toISOString() };
-    for (const name of ['step', 'kind', 'item', require('./deck.js').STORED.field, 'agent', 'session']) {
+    for (const name of ['step', 'kind', 'item', require('./deck.js').STORED.field, 'agent', 'session', 'version']) {
       if (typeof row[name] === 'string' && row[name].length <= 100) kept[name] = row[name];
     }
+    // A `deck started` row's code directory, which a deep install path can take past 100 characters.
+    if (typeof row.root === 'string' && row.root.length <= 1000) kept.root = row.root;
     append(traceFile(), JSON.stringify(kept));
   } catch (err) { /* a trace that cannot be written costs nothing */ }
 }
