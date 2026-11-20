@@ -327,6 +327,11 @@ fn theme_json_is_read_and_is_the_only_source() {
         ("size.side_min", theme::size::side_min),
         ("size.side_default", theme::size::side_default),
         ("size.handle", theme::size::handle),
+        ("size.pane_title", theme::size::pane_title),
+        ("size.pane_title_weight", theme::size::pane_title_weight),
+        ("size.badge", theme::size::badge),
+        ("size.badge_text", theme::size::badge_text),
+        ("size.badge_weight", theme::size::badge_weight),
     ] {
         is(path, n(got));
     }

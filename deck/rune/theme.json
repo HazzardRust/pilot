@@ -56,7 +56,12 @@
     "row": 22.0,
     "side_min": 170.0,
     "side_default": 300.0,
-    "handle": 4.0
+    "handle": 4.0,
+    "pane_title": 11.0,
+    "pane_title_weight": 700.0,
+    "badge": 16.0,
+    "badge_text": 9.0,
+    "badge_weight": 600.0
   },
   "font": {
     "family": ["Cascadia Mono", "SF Mono", "Menlo", "Consolas", "monospace"],

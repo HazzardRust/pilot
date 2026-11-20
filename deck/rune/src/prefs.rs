@@ -1,5 +1,5 @@
 //! The Rune deck's local view state, never the store's (A4): what the user hid, folded, opened and
-//! sized, kept in `rune-deck.json` beside the store (`~/.claude/pilot`) so it survives a restart. Ids,
+//! widened, kept in `rune-deck.json` beside the store (`~/.claude/pilot`) so it survives a restart. Ids,
 //! names and numbers only: no secret and no message text is ever written here.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -17,8 +17,11 @@ pub struct Prefs {
     /// Each repository's folded rows.
     pub folds: BTreeMap<String, BTreeSet<String>>,
     pub open_panels: BTreeSet<String>,
-    /// Each resizable panel's width and height.
-    pub sizes: BTreeMap<String, (f32, f32)>,
+    /// The side area's one width, every pane's; none until the user drags it. A file from before
+    /// S28 carries per-panel `sizes` instead, which loading skips.
+    pub side_width: Option<f32>,
+    /// The side area was dragged below its minimum, so only the icon bar shows.
+    pub side_hidden: bool,
     pub hidden_reports: BTreeSet<String>,
 }
 

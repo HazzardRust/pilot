@@ -57,7 +57,7 @@ fn some_prefs() -> Prefs {
         .or_default()
         .insert("S2 the second".into());
     prefs.open_panels.insert("notifications".into());
-    prefs.sizes.insert("history".into(), (320.0, 240.5));
+    prefs.side_width = Some(240.5);
     prefs.hidden_reports.insert("itm_0000000000r1".into());
     prefs
 }
