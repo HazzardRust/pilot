@@ -56,8 +56,7 @@ where the user is.
 
 ## Concurrency: the middle ground
 
-Parallelism is welcome; the user would rather several agents ran at once than wait
-on a queue. The middle ground is a ceiling on count and a rule about shape.
+Parallelism is welcome. The middle ground is a ceiling on count and a rule about shape.
 
 - **Up to thirteen agents in flight**, counting the main session and every child of
   every agent. Above that the rate limit binds and everything dies at once. It is
@@ -142,7 +141,8 @@ report contradicts the code, the code wins.
 
 - A file: `pilot wait-for --file F --match RE --timeout M` (minutes), the
   marker checked against what the writer prints.
-- A subagent: its completion notification, never its output file.
+- A subagent: it runs in the background; never wait on it, act on its completion
+  notification, never its output file.
 - A test run: `run_in_background` and end the turn, or `timeout: 600000`.
 - Exit 2 is a wake-up call: wait again, carry on or hand back. Each wait is a
   numbered report row, `wait <n> on <marker>: …`.
