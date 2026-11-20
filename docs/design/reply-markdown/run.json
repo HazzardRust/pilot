@@ -21,8 +21,8 @@
       "branch": "slice/reply-markdown-s2"
     }
   ],
-  "next": "reply-markdown planned (gate1 signed aca2a46d, short path). Rune: QA afc31057 on walkthrough itm_f98fae4576f8, feat d075ad91; relay replies. wait-deadlines green: QA ac4d8333 live at 5a3b7e1c owes gate2 (PR #134), reports to a4cd233a. Yellow empty, next itm_1f8238d5a300 (re-cut notice stuck). Open: itm_de4ca1e5d6d9 (user stops pids), itm_e235d0195f0b. Keep memory ui-design-workflow-notes.md.",
-  "updatedAt": "2026-11-20T14:08:05.417Z",
+  "next": "Rune itm_0dcd9aa67146: feat d928ffe5, QA a6b772b2 live (fold, rules), post its lines on pilot-owned itm_f98fae4576f8; then successor: + Add, ticket rows/Status as HTML, pastel RYG, back arrow, parity list, QA comment. two-devices itm_c844d6d00d8e released at d1a622e7: co-pilot it, fresh QA per its run.json next. reply-markdown planned. Keep memory ui-design-workflow-notes.md.",
+  "updatedAt": "2026-11-20T16:33:11.388Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -66,6 +66,83 @@
       "kind": "drain",
       "what": "co-pilot's hand-back said pilot land is the pilot's before QA writes; pilot land merges into pilot, so it was not run; the agent text reads as if it were a pre-QA step",
       "size": 800
+    },
+    {
+      "kind": "drain",
+      "what": "QA agent ids from before /clear cannot be resumed (no transcript); gate2 posted by pilot without QA's per-line evidence",
+      "size": 3000
+    },
+    {
+      "kind": "drain",
+      "what": "replan stores a feat sha while driftOf tests ancestry on plan.branch (design); every replanned ticket reads gone on its co-pilot call; explorer trace recut.mjs:145, store-tickets.mjs:459",
+      "size": 4000
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exits at once while the yellow lane is empty, so nothing listens for a gate press until a co-pilot call passes",
+      "size": 1000
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "user taste notes arrived faster than one QA writer builds; 8 queued mid-round, two hand-backs at context mark; one agent holds 2-3 commit sets",
+      "evidence": "QA reports abc1e7c6, adfc38b9 on itm_f98fae4576f8",
+      "size": 3
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "walkthrough thread ownership flipped pilot/qa four times; deck hands a qa thread back when a building QA misses a reply",
+      "evidence": "itm_f98fae4576f8",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "running Rune window locks target/release, so every rebuild closes the user's view; cargo not on PATH",
+      "evidence": "QA abc1e7c6 report",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait timed out on a healthy deck five times (deck answers in ms right after)",
+      "size": 1500
+    },
+    {
+      "kind": "drain",
+      "what": "pre-/clear crew agents still alive but unknown to the new session: a second QA was spawned on a worktree whose QA was live",
+      "size": 2500
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "no way to open a given screen in the Rune window without clicking; with the user at the machine, thread and reply fixes rest on tests, not a live look",
+      "evidence": "QA aaed3a00 report, sets a and f",
+      "size": 2
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "report delivered to main, not its fundamentalist; coverage cell needs the 13-16 min suite, Stryker timed out at 900 s with no score, scratch dir left busy",
+      "evidence": "two-devices evidence table a53e83a2",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "five-second git timeouts go red when gates run in parallel and pass alone (QA gate 7 failures, fix gate 1)",
+      "evidence": "two-devices co-pilot hand-back",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "installed pilot 0.9.9 is older than the code under test (no host command); pilot integrate strict on Evidence trailer form and fix-branch rows",
+      "evidence": "two-devices co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "relaying about 20 walkthrough notes and QA lines one by one through the pilot, each with a tip and pid check",
+      "size": 60000
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait timed out on a healthy deck about ten times during QA cargo gates; each restart a turn",
+      "size": 6000
     }
   ]
 }
