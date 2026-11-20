@@ -292,7 +292,7 @@ function unboundedWaits(command) {
 function waitDenial(command) {
   const waits = waitLoops(command);
   if (waits.length === 0) return null;
-  const tasks = waits.some((w) => w.reads.some((r) => /(?:^|[\\/])tasks[\\/][^\\/]*\.output$/.test(r)));
+  const subagent = waits.some((w) => w.reads.some((r) => /\.output$/.test(r))); // Claude Code's background output file
   return {
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
@@ -301,7 +301,7 @@ function waitDenial(command) {
         'forever and outlive you: the tool call\'s timeout stops applying once it is backgrounded. Wait on a file with ' +
         `\`pilot wait-for --file F --match RE --timeout M\` (M at most ${MAX_WAIT_MINUTES}); run a test suite with ` +
         'run_in_background and end your turn; a counted retry goes as `for i in $(seq N); do …; done`. ' +
-        (tasks ? 'A subagent reports by message, not its output file: end your turn. ' : '') +
+        (subagent ? 'A subagent reports by message, not its output file: end your turn. ' : '') +
         'This is not a blocked step: post nothing and carry on.',
     },
   };

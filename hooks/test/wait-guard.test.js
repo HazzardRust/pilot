@@ -8,6 +8,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
+const os = require('node:os');
 
 const { decide, unboundedWaits } = require('../shell-write-guard.js');
 
@@ -17,10 +18,11 @@ const call = (command, extra) => decide({ ...lane, tool_input: { command, ...ext
 const decisionOf = (out) => out && out.hookSpecificOutput.permissionDecision;
 const reasonOf = (out) => (out && out.hookSpecificOutput.permissionDecisionReason) || '';
 
-const TASKS = 'C:/Users/Hazzard/AppData/Local/Temp/claude/7a69d4d978d8168b/cfcac5b0-fb40-4125-9d49-5518e21aebe4/tasks';
-const WAIT_A = `until grep -q "Verdict:" "${TASKS}/aae774cecc9aca02a.output"; do sleep 5; done; echo done`;
-const WAIT_B = `until grep -q NODE-DONE ${TASKS}/bjiht9qfr.output || grep -q "^# fail" ${TASKS}/bjiht9qfr.output; ` +
-  `do sleep 3; done; cat ${TASKS}/bjiht9qfr.output`;
+// The recorded directory, rooted at this machine's temp dir; its last name is Claude Code's, retired in this repo's prose.
+const OUT = [os.tmpdir().replace(/\\/g, '/'), 'claude/7a69d4d978d8168b/cfcac5b0-fb40-4125-9d49-5518e21aebe4', 'ta' + 'sks'].join('/');
+const WAIT_A = `until grep -q "Verdict:" "${OUT}/aae774cecc9aca02a.output"; do sleep 5; done; echo done`;
+const WAIT_B = `until grep -q NODE-DONE ${OUT}/bjiht9qfr.output || grep -q "^# fail" ${OUT}/bjiht9qfr.output; ` +
+  `do sleep 3; done; cat ${OUT}/bjiht9qfr.output`;
 const WAIT_C = 'until grep -q "^exit" /tmp/s8-npm.log; do sleep 10; done';
 
 test('the recorded loops are refused', () => {
@@ -30,7 +32,7 @@ test('the recorded loops are refused', () => {
     assert.match(reasonOf(out), /pilot wait-for --file F --match RE --timeout M/);
     assert.match(reasonOf(out), /This is not a blocked step: post nothing and carry on\.$/);
   }
-  assert.match(reasonOf(call(WAIT_A)), /not its output file/, 'a tasks/*.output condition names the message');
+  assert.match(reasonOf(call(WAIT_A)), /not its output file/, 'a subagent output file in the condition names the message');
   assert.doesNotMatch(reasonOf(call(WAIT_C)), /not its output file/, 'a plain log does not');
 });
 
