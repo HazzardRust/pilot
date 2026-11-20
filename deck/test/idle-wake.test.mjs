@@ -13,7 +13,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-import { forgetAgents, noteAgent } from '../agents.mjs';
+import { crewSeenAt, forgetAgents, noteAgent } from '../agents.mjs';
 import { KIND_TICKET, messagesOf } from '../items.mjs';
 import { armIdle } from '../server-wait.mjs';
 import { DeckRefusal, listItems, setCoPilot } from '../store.mjs';
@@ -116,6 +116,11 @@ test('a note not due, or already made, is refused', (t) => {
 });
 
 test('a parked wait wakes', async (t) => {
+  // The roster's start moment, not a sibling's mocked START: past START + 20 min the deck would note the ticket first.
+  const began = Date.now();
+  forgetAgents();
+  t.after(forgetAgents);
+  assert.ok(crewSeenAt(REPO) >= began, 'the parked-wait test reads no mocked clock');
   const base = await deckOnAPort(t);
   const port = process.env.PILOT_DECK_PORT;
   t.after(() => (port === undefined ? delete process.env.PILOT_DECK_PORT : (process.env.PILOT_DECK_PORT = port)));
@@ -134,4 +139,6 @@ test('a parked wait wakes', async (t) => {
   const printed = said.join('');
   assert.match(printed, new RegExp(`^REPLY ${ticket.id} "parked overnight"\n${idleText(ticket.id)}$`, 'm'));
   assert.doesNotMatch(printed, /NO REPLY/);
+  assert.doesNotMatch(printed, /yellow lane idle/, "woken by the test's note, not the deck's");
+  assert.equal(printed.match(/^REPLY /gm)?.length, 1, 'one REPLY');
 });

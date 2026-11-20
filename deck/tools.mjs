@@ -17,6 +17,7 @@
  * boundary, so a bound both halves need is declared here and read from there.
  */
 
+import { MAX_HUMAN_STEP_CHARS } from './items-bounds.mjs';
 import { KINDS, MAX_OPTIONS, MAX_SCREENS, PASS_KINDS, POSTABLE_KINDS, extraFieldsFor } from './items.mjs';
 import { MAX_SLICES, MAX_SLICE_CHARS, MAX_STATE_CHARS } from './status.mjs';
 import { MAX_WALKTHROUGH_BODY_LINES } from './walkthrough-shape.mjs';
@@ -191,6 +192,7 @@ export const TOOLS = [
         branch: { type: 'string' },
         pr: { type: 'string' },
         sha: { type: 'string' },
+        checks: { type: 'string' },
         walkthrough: { type: 'string' },
         // QA's checks for the feature PR; its bound is the store's (MAX_QA_COMMENT_CHARS), unspent here (prompt pins).
         comment: { type: 'string' },
@@ -309,9 +311,10 @@ export const TOOLS = [
           type: 'object',
           description:
             'its data, with finished: featurePr {number, state, mergeSha?}, slices [{slice, pr, mergeSha}], ' +
-            'assumed [{id: A<n>, decision, taken}], humanSteps [], worktreesLeft []; ' +
+            'assumed [{id: A<n>, decision, taken}], worktreesLeft []; ' +
             "never friction, which the deck ranks from the record's rows",
         },
+        step: { type: 'string', maxLength: MAX_HUMAN_STEP_CHARS, description: 'a human step, one line, never a secret' },
         next: { type: 'string', maxLength: MAX_STATE_CHARS, description: 'the next move, one line' },
         finished: {
           type: 'string',

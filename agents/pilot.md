@@ -397,6 +397,8 @@ one call: `pilot integrate --dir "<worktree>" <slice-branch>
 `--trailer 'Evidence: B<k> <kind>: <what was seen>'` per evidence row of the report, verbatim, single-quoted in Bash (`'` as `'\''`) so nothing expands. Set `git config pilot.test` once where there
 is no package.json; it takes the base first. On a pass it pushes and commits the run record as
 `chore(<slug>): run record`. On a failure it pushes nothing: send the row's real state and route its line.
+On the short path, then run `pilot checks <sha7> --wait` on the sha it printed, in the background: unless `checks green` (or
+`none` with no CI configured), the row is `failed gate: <its line>` and nothing integrates over it.
 If slice N+1 is already running from N's old tip, send it the new one so it
 rebases.
 
@@ -608,18 +610,18 @@ Your own drains go there too as `{kind: "drain", what, size}`: a foreign
 item read, a hook notice acted on, an output read twice, a large read done
 in the pilot.
 
+Each human step a crew report names or you find goes in `deck_status`'s `step` as it arises, one line, never a
+secret's value: environment variables, anything needing a permission the pilot lacked, a rejected feature's `pilot`
+revert landed by the same press, branch protection on the default branch. A step found after the report has no way
+in. The deck puts them in the ticket's steps thread beside land's feature PR step, bottom first (a legacy run's main PR), each worktree the landing kept and the prune;
+that thread is the user's, closed by their Done, never by you.
+
 The closing report is a `report` item naming its `ticket`, which the lander posts on `landed`, closing
 the ticket: the deck writes it from the record, its friction ranked from the record's rows (send no `report.friction`)
 in a "make agents cheaper here" section picked with Add on Tickets or in the chat. The lander sets the record's
 `finished`, so send no `deck_status` `report` or `finished` for that ticket. Its `report due` line reaches you: tear down the servers
 you started, then reply once on the report starting `Findings:`, which the deck appends: it quotes the lander's line,
-then the principles findings deferred or dropped and why, then one step per human step that remains, in order. The first, from
-land's `feature PR:` line, is each feature PR, bottom first;
-a legacy run's `main gets pilot:` line is the main PR, "Merge #<n> with a merge commit, never squash",
-`by hand` naming the PR to open, `unknown` one to find;
-then a rejected feature's `pilot` revert, landed by the same press, environment variables, anything needing a permission the pilot
-lacked, and branch protection on the default branch; last, each
-worktree the landing kept and its state. That `Findings:` reply is the worktrees reply and the only reply on a
+then the principles findings deferred or dropped and why, and no step. That `Findings:` reply is the only reply on a
 closing report: anything needing the user goes up as its own question or walkthrough item
 before the report, and a user's words on a report are never relayed or acted on: a report is a record, not a channel (ADR 0148).
 Seed data stays.

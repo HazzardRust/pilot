@@ -41,8 +41,11 @@ export const MAX_SCREENS = 40;
  */
 export const SIGN_OFF = 'Sign off';
 
-/** The deck's line on its own report (gate2-frees-lane spec 4): it wakes the pilot to add what only the pilot knows. */
-export const REPORT_DUE = 'report due: add the findings and the human steps with a Findings: reply';
+/**
+ * The deck's line on its own report (gate2-frees-lane spec 4): it wakes the pilot to add what only the pilot knows.
+ * Findings only: human steps went to the run's steps thread as they arose (human-steps S4).
+ */
+export const REPORT_DUE = 'report due: add the findings with a Findings: reply';
 
 /**
  * What a question and a sign-off offer beyond their answers: one click that asks
@@ -98,6 +101,20 @@ export const DISMISSED_BY_USER = 'Dismissed by the user.';
  */
 export const CLOSED_BY_USER = 'Closed by you.';
 export const CLOSED = 'Closed.';
+
+/**
+ * A ticket's human steps (human-steps L3, ADR 0202): what the user does by hand after a landing, under
+ * its green ticket until their Done closes both. Known but kept out of `POSTABLE_KINDS`, like the chat:
+ * only `postSteps` makes one. Standing and a record, so nothing waits on it. Here for `items.mjs`'s bar.
+ */
+export const KIND_STEPS = 'steps';
+
+/** The most human steps a record keeps and a steps thread carries, and the longest one may be (human-steps L5). */
+export const MAX_HUMAN_STEPS = 20;
+export const MAX_HUMAN_STEP_CHARS = 300;
+
+/** A step is one line: no line or paragraph separator, each a line break to a renderer too (human-steps L5). */
+export const isOneLine = (text) => !/[\r\n\x85\p{Zl}\p{Zp}]/u.test(text);
 
 /**
  * Either arrow, because the pilot writes whichever its keyboard reaches: a step
@@ -180,6 +197,9 @@ const SHELL_FIELD = { name: 'shell', most: 40 };
 
 /** A gate's commit, case-blind; also the shape `deck/gate2-base.mjs` checks before git sees it. */
 const SHA_FIELD = { name: 'sha', required: true, shape: /^[0-9a-f]{7,40}$/i, means: 'a commit sha' };
+
+/** A gate2's checks (ci-gate spec 4): the one line `pilot checks <sha>` printed, no control character or line break. */
+export const CHECKS_FIELD = { name: 'checks', most: 600, shape: /^[^\p{Cc}\p{Zl}\p{Zp}]+$/u, means: 'one line, as `pilot checks <sha>` printed it' };
 
 /** The most QA's comment on the feature PR carries (deck-writes-github spec 3), well inside GitHub's own 65536. */
 export const MAX_QA_COMMENT_CHARS = 20000;
