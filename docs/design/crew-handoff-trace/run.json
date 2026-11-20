@@ -51,7 +51,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 8dd6305",
+      "state": "integrated",
       "after": [
         "S4",
         "S5"
@@ -61,18 +61,20 @@
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "pushed 462bc0a",
       "after": [
         "S6"
-      ]
+      ],
+      "branch": "slice/crew-handoff-trace-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-handoff-trace-s7"
     },
     {
       "slice": "crew-handoff-trace",
       "state": "implementing"
     }
   ],
-  "next": "S6 pushed 8dd6305 (ts WARN pre-fix, both MEDs fixed; security APPROVE), integrating; next: pilot ready, start S7",
-  "updatedAt": "2026-11-20T18:51:55.319Z",
+  "next": "S7 pushed 462bc0a (APPROVE), integrating; next: base check, then fundamentalist and QA",
+  "updatedAt": "2026-11-20T19:08:58.397Z",
   "friction": [
     {
       "agent": "architect",
@@ -194,6 +196,16 @@
       "agent": "pilot-implementer",
       "what": "slice Files owned omitted the one caller of a new Interface argument",
       "evidence": "S6 edits deck/server-routes.mjs:590 outside its files"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "deck/server-wait.mjs had 4 lines under the 800 cap; S7 trimmed prose elsewhere to fit a timer",
+      "evidence": "wc -l 796 at base; facades.test failed at 801"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "implementer contexts reset mid-slice after worktree creation (S5, S7)",
+      "evidence": "both reported a clean worktree on resume"
     }
   ]
 }
