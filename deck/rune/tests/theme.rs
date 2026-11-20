@@ -262,3 +262,156 @@ fn no_region_spaces_by_hand() {
     }
     assert!(seen > 0, "no region files under {}", dir.display());
 }
+
+/// One theme.json key and the theme.rs value that must come from it.
+fn json_leaf(json: &serde_json::Value, path: &str) -> serde_json::Value {
+    path.split('.')
+        .fold(json, |at, key| {
+            at.get(key)
+                .unwrap_or_else(|| panic!("theme.json has no key {path}"))
+        })
+        .clone()
+}
+
+fn leaves(v: &serde_json::Value, path: &str, out: &mut Vec<String>) {
+    match v {
+        serde_json::Value::Object(map) => map
+            .iter()
+            .for_each(|(k, v)| leaves(v, format!("{path}.{k}").trim_start_matches('.'), out)),
+        _ => out.push(path.to_string()),
+    }
+}
+
+#[test]
+fn theme_json_is_read_and_is_the_only_source() {
+    let json: serde_json::Value = serde_json::from_str(
+        &fs::read_to_string(root().join("theme.json")).expect("deck/rune/theme.json"),
+    )
+    .expect("theme.json parses");
+
+    // Every key theme.json holds, each paired with the value the API returns for it.
+    let mut checked: Vec<String> = Vec::new();
+    let mut is = |path: &str, got: serde_json::Value| {
+        assert_eq!(json_leaf(&json, path), got, "theme.json {path}");
+        checked.push(path.to_string());
+    };
+    // f32 1.6 widened is 1.600000023...: compare by the shortest decimal the f32 prints as.
+    let n = |x: f32| serde_json::json!(x.to_string().parse::<f64>().expect("a number"));
+    is("space.s0", n(space::s0));
+    is("space.s1", n(space::s1));
+    is("space.s2", n(space::s2));
+    is("space.s3", n(space::s3));
+    is("space.s4", n(space::s4));
+    is("space.s5", n(space::s5));
+    is("space.s6", n(space::s6));
+    is("space.s7", n(space::s7));
+    is("space.s8", n(space::s8));
+    is("space.row", n(space::row));
+    is("space.card_line", n(space::card_line));
+    is("cols.slice_ch", n(space::cols.slice_ch));
+    is("cols.state_ch", n(space::cols.state_ch));
+    is("cols.time_ch", n(space::cols.time_ch));
+    is("space.within", serde_json::json!("s2"));
+    is("space.pad", serde_json::json!("s3"));
+    is("space.between", serde_json::json!("s5"));
+    is("space.panels", serde_json::json!("s6"));
+    is("cols.gap", serde_json::json!("s5"));
+    for (path, got) in [
+        ("radius.button", theme::radius::button),
+        ("radius.chip", theme::radius::chip),
+        ("size.titlebar", theme::size::titlebar),
+        ("size.icon_bar", theme::size::icon_bar),
+        ("size.icon", theme::size::icon),
+        ("size.pane_head", theme::size::pane_head),
+        ("size.row", theme::size::row),
+        ("size.side_min", theme::size::side_min),
+        ("size.side_default", theme::size::side_default),
+        ("size.handle", theme::size::handle),
+    ] {
+        is(path, n(got));
+    }
+    // The roles name accents (the colours themselves are checked against the palette above).
+    let (day, night) = (theme::roles(false), theme::roles(true));
+    let rgb_hex = |c: Color| c.hex()[..7].to_string();
+    is(
+        "roles.surface.light",
+        serde_json::json!(rgb_hex(day.surface)),
+    );
+    is(
+        "roles.surface.dark",
+        serde_json::json!(rgb_hex(night.surface)),
+    );
+    is("roles.hover_alpha", n(day.hover.a));
+    is("roles.selection_alpha", n(day.selection.a));
+    is("roles.primary", serde_json::json!("blue"));
+    is("roles.accent", serde_json::json!("yellow"));
+    is("roles.error", serde_json::json!("red"));
+    let font = theme::tokens(false).font;
+    is("font.size", n(font.size));
+    is("font.line", n(font.line));
+    is("font.family", serde_json::json!(font.family));
+    // A colour's hue or light/dark pair is read back through the colour it makes.
+    for dark in [false, true] {
+        let t = theme::tokens(dark);
+        let hex = |c: Color| c.hex()[..7].to_string();
+        let side = if dark { "dark" } else { "light" };
+        for (name, got) in [
+            ("green", t.accent.green),
+            ("yellow", t.accent.yellow),
+            ("red", t.accent.red),
+            ("blue", t.accent.blue),
+        ] {
+            let want = json_leaf(&json, &format!("accent.{name}.{side}"));
+            assert_eq!(want, hex(got), "accent.{name}.{side}");
+            checked.push(format!("accent.{name}.{side}"));
+        }
+        for (name, got) in [
+            ("fine", t.usage.fine),
+            ("warm", t.usage.warm),
+            ("high", t.usage.high),
+            ("critical", t.usage.critical),
+            ("critical_bg", t.usage.critical_bg),
+        ] {
+            let want = json_leaf(&json, &format!("usage.{name}.{side}"));
+            assert_eq!(want, hex(got), "usage.{name}.{side}");
+            checked.push(format!("usage.{name}.{side}"));
+        }
+    }
+    for (path, got) in [
+        ("alpha.rule", theme::tokens(false).rule.a),
+        ("alpha.quiet", theme::tokens(false).quiet.a),
+    ] {
+        assert!(
+            (json_leaf(&json, path).as_f64().unwrap() - f64::from(got)).abs() < 1e-6,
+            "{path}"
+        );
+        checked.push(path.to_string());
+    }
+    // Hues and the mix are covered by `every_colour_is_deck_css`; springs by their settling.
+    let spring = |path: &str| json_leaf(&json, path).as_array().unwrap().len();
+    for (name, s) in [
+        ("panel", motion::panel),
+        ("card", motion::card),
+        ("press", motion::press),
+    ] {
+        assert_eq!(spring(&format!("motion.{name}")), 2);
+        assert!(s.settling_duration(0.001) > 0.0, "{name}");
+        checked.push(format!("motion.{name}"));
+    }
+    for hue in ["by", "state"] {
+        let mut keys = Vec::new();
+        leaves(&json_leaf(&json, hue), hue, &mut keys);
+        checked.extend(keys);
+    }
+    checked.push("hue_mix".to_string());
+
+    // No key goes unread: every leaf in the file was checked above, and none is missing from it.
+    let mut all = Vec::new();
+    leaves(&json, "", &mut all);
+    all.sort();
+    checked.sort();
+    assert_eq!(
+        all, checked,
+        "a theme.json key nothing checks, or a check without a key"
+    );
+}

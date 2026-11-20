@@ -1,11 +1,15 @@
-//! The deck.css palette, font, springs and spacing scale (spec 2, L10).
+//! The deck.css palette, font, springs and spacing scale (spec 2, L10), valued in `theme.json`.
 //!
 //! Colours are deck.css's: `color-mix(in srgb, currentColor 35%, <hue>)` is mixed here in sRGB the
 //! way the browser mixes it, over the page's text colour (black on light, white on dark), and
 //! `light-dark(a, b)` picks one by mode. `tests/theme.rs` reads deck.css and compares every value.
 
+use std::sync::LazyLock;
+
 use rune::color::{srgb_decode, srgb_encode};
 use rune::{Color, Cursor, El, el};
+use serde::Deserialize;
+use serde::de::IgnoredAny;
 
 /// `#rrggbb` as the colour Rune draws (linear, from sRGB bytes).
 fn hex(rgb: u32) -> Color {
@@ -18,11 +22,11 @@ fn hex(rgb: u32) -> Color {
     }
 }
 
-/// `color-mix(in srgb, <text> 35%, <hue>)`: sRGB channels mixed, as CSS does.
-fn hue_over(text: Color, hue: u32) -> Color {
+/// `color-mix(in srgb, <text> mix%, <hue>)`: sRGB channels mixed, as CSS does.
+fn hue_over(text: Color, hue: u32, mix: f32) -> Color {
     let encode = |c: Color| [c.r, c.g, c.b].map(srgb_encode);
     let (t, h) = (encode(text), encode(hex(hue)));
-    let mix = |i: usize| srgb_decode(0.35 * t[i] + 0.65 * h[i]);
+    let mix = |i: usize| srgb_decode(mix * t[i] + (1.0 - mix) * h[i]);
     Color {
         r: mix(0),
         g: mix(1),
@@ -91,48 +95,186 @@ pub struct Tokens {
     pub font: Mono,
 }
 
+/// `theme.json`, read at build time and parsed once. A key renamed or malformed panics on the
+/// first read, which `tests/theme.rs` makes before any window opens.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Raw {
+    hue_mix: f32,
+    by: ByHue,
+    state: StateHue,
+    accent: AccentHex,
+    usage: UsageHex,
+    alpha: Alpha,
+    font: RawFont,
+    roles: RawRoles,
+    /// Read by `build.rs`, which turns them into the consts below.
+    #[allow(dead_code)]
+    motion: IgnoredAny,
+    #[allow(dead_code)]
+    space: IgnoredAny,
+    #[allow(dead_code)]
+    cols: IgnoredAny,
+    #[allow(dead_code)]
+    radius: IgnoredAny,
+    #[allow(dead_code)]
+    size: IgnoredAny,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ByHue {
+    pilot: Hex,
+    architect: Hex,
+    implementer: Hex,
+    fundamentalist: Hex,
+    qa: Hex,
+    teacher: Hex,
+    explorer: Hex,
+    auditor: Hex,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StateHue {
+    waiting: Hex,
+    pilot: Hex,
+    unacknowledged: Hex,
+}
+
+/// A colour that differs by mode.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Pair {
+    light: Hex,
+    dark: Hex,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct AccentHex {
+    green: Pair,
+    yellow: Pair,
+    red: Pair,
+    blue: Pair,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct UsageHex {
+    fine: Pair,
+    warm: Pair,
+    high: Pair,
+    critical: Pair,
+    critical_bg: Pair,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Alpha {
+    rule: f32,
+    quiet: f32,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawFont {
+    family: Vec<String>,
+    size: f32,
+    line: f32,
+}
+
+/// Which accents the roles reuse, by name, and the two tints.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawRoles {
+    surface: Pair,
+    primary: String,
+    accent: String,
+    error: String,
+    hover_alpha: f32,
+    selection_alpha: f32,
+}
+
+/// `"#rrggbb"`.
+struct Hex(u32);
+
+impl<'de> Deserialize<'de> for Hex {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(d)?;
+        let digits = s.strip_prefix('#').filter(|h| h.len() == 6);
+        digits
+            .and_then(|h| u32::from_str_radix(h, 16).ok())
+            .map(Hex)
+            .ok_or_else(|| serde::de::Error::custom(format!("{s} is not #rrggbb")))
+    }
+}
+
+impl Pair {
+    fn pick(&self, dark: bool) -> Color {
+        hex(if dark { self.dark.0 } else { self.light.0 })
+    }
+}
+
+static RAW: LazyLock<Raw> = LazyLock::new(|| {
+    serde_json::from_str(include_str!("../theme.json"))
+        .unwrap_or_else(|e| panic!("theme.json: {e}"))
+});
+
+/// The font stack, leaked once so `Mono` stays `Copy`.
+static FAMILY: LazyLock<&'static [&'static str]> = LazyLock::new(|| {
+    let names: Vec<&'static str> = RAW
+        .font
+        .family
+        .iter()
+        .map(|n| &*Box::leak(n.clone().into_boxed_str()))
+        .collect();
+    Box::leak(names.into_boxed_slice())
+});
+
 pub fn tokens(dark: bool) -> Tokens {
+    let raw = &*RAW;
     let text = if dark { Color::WHITE } else { Color::BLACK };
-    let pick = |light: u32, night: u32| hex(if dark { night } else { light });
-    let quiet = text.alpha(0.55);
+    let over = |h: &Hex| hue_over(text, h.0, raw.hue_mix);
+    let quiet = text.alpha(raw.alpha.quiet);
     Tokens {
         by: By {
-            pilot: hue_over(text, 0x2563eb),
-            architect: hue_over(text, 0x7c3aed),
-            implementer: hue_over(text, 0xd97706),
-            fundamentalist: hue_over(text, 0xe11d48),
-            qa: hue_over(text, 0x059669),
-            teacher: hue_over(text, 0x0891b2),
-            explorer: hue_over(text, 0x65a30d),
-            auditor: hue_over(text, 0xc026d3),
+            pilot: over(&raw.by.pilot),
+            architect: over(&raw.by.architect),
+            implementer: over(&raw.by.implementer),
+            fundamentalist: over(&raw.by.fundamentalist),
+            qa: over(&raw.by.qa),
+            teacher: over(&raw.by.teacher),
+            explorer: over(&raw.by.explorer),
+            auditor: over(&raw.by.auditor),
             other: quiet,
         },
         state: States {
-            waiting: hue_over(text, 0xd97706),
-            pilot: hue_over(text, 0x2563eb),
+            waiting: over(&raw.state.waiting),
+            pilot: over(&raw.state.pilot),
             resolved: quiet,
-            unacknowledged: hue_over(text, 0xdc2626),
+            unacknowledged: over(&raw.state.unacknowledged),
         },
         accent: Accents {
-            green: pick(0x15803d, 0x86efac),
-            yellow: pick(0xa16207, 0xfde047),
-            red: pick(0xb91c1c, 0xfca5a5),
-            blue: pick(0x1d4ed8, 0x93c5fd),
+            green: raw.accent.green.pick(dark),
+            yellow: raw.accent.yellow.pick(dark),
+            red: raw.accent.red.pick(dark),
+            blue: raw.accent.blue.pick(dark),
             plain: text,
         },
         usage: Usage {
-            fine: pick(0x15803d, 0x86efac),
-            warm: pick(0xa16207, 0xfde047),
-            high: pick(0xb91c1c, 0xfca5a5),
-            critical: pick(0xffffff, 0xfee2e2),
-            critical_bg: pick(0xb91c1c, 0x7f1d1d),
+            fine: raw.usage.fine.pick(dark),
+            warm: raw.usage.warm.pick(dark),
+            high: raw.usage.high.pick(dark),
+            critical: raw.usage.critical.pick(dark),
+            critical_bg: raw.usage.critical_bg.pick(dark),
         },
-        rule: text.alpha(0.18),
+        rule: text.alpha(raw.alpha.rule),
         quiet,
         font: Mono {
-            family: &["Cascadia Mono", "SF Mono", "Menlo", "Consolas", "monospace"],
-            size: 13.0,
-            line: 1.6,
+            family: *FAMILY,
+            size: raw.font.size,
+            line: raw.font.line,
         },
     }
 }
@@ -149,31 +291,39 @@ pub struct Roles {
     pub primary: Color,
     pub accent: Color,
     pub error: Color,
-    /// A control's hover tint: the text colour at 7%.
+    /// A control's hover tint: the text colour at `roles.hover_alpha`.
     pub hover: Color,
-    /// Selected text's highlight: the primary at 30%.
+    /// Selected text's highlight: the primary at `roles.selection_alpha`.
     pub selection: Color,
 }
 
 pub fn roles(dark: bool) -> Roles {
     let t = tokens(dark);
+    let r = &RAW.roles;
+    let named = |name: &str| match name {
+        "green" => t.accent.green,
+        "yellow" => t.accent.yellow,
+        "red" => t.accent.red,
+        "blue" => t.accent.blue,
+        other => panic!("theme.json roles: {other} is not an accent name"),
+    };
     let on_surface = t.accent.plain;
+    let primary = named(&r.primary);
     Roles {
-        surface: if dark { Color::BLACK } else { Color::WHITE },
+        surface: r.surface.pick(dark),
         on_surface,
-        primary: t.accent.blue,
-        accent: t.accent.yellow,
-        error: t.accent.red,
-        hover: on_surface.alpha(0.07),
-        selection: t.accent.blue.alpha(0.30),
+        primary,
+        accent: named(&r.accent),
+        error: named(&r.error),
+        hover: on_surface.alpha(r.hover_alpha),
+        selection: primary.alpha(r.selection_alpha),
     }
 }
 
 /// Corner radii, in px.
 #[allow(non_upper_case_globals)]
 pub mod radius {
-    pub const button: f32 = 4.0;
-    pub const chip: f32 = 2.0;
+    include!(concat!(env!("OUT_DIR"), "/radius.rs"));
 
     /// A pill is half its height.
     pub fn pill(height: f32) -> f32 {
@@ -184,14 +334,7 @@ pub mod radius {
 /// Fixed sizes of the side-bar layout (DESIGN.md §4b), in px.
 #[allow(non_upper_case_globals)]
 pub mod size {
-    pub const titlebar: f32 = 32.0;
-    pub const icon_bar: f32 = 48.0;
-    pub const icon: f32 = 24.0;
-    pub const pane_head: f32 = 22.0;
-    pub const row: f32 = 22.0;
-    pub const side_min: f32 = 170.0;
-    pub const side_default: f32 = 300.0;
-    pub const handle: f32 = 4.0;
+    include!(concat!(env!("OUT_DIR"), "/size.rs"));
 }
 
 /// A control says it is clickable (DESIGN.md §3): a text-colour tint on hover, the pointer cursor,
@@ -225,37 +368,14 @@ pub fn content(el: El, dark: bool) -> El {
 pub mod motion {
     use rune::Spring;
 
-    pub const panel: Spring = Spring::new(0.12, 0.0);
-    pub const card: Spring = Spring::new(0.10, 0.0);
-    pub const press: Spring = Spring::new(0.07, 0.0);
+    include!(concat!(env!("OUT_DIR"), "/motion.rs"));
 }
 
 /// One scale, in px (L10): between groups is at least twice within one, and a region names a step
 /// rather than a number.
 #[allow(non_upper_case_globals)]
 pub mod space {
-    pub const s0: f32 = 0.0;
-    pub const s1: f32 = 2.0;
-    pub const s2: f32 = 4.0;
-    pub const s3: f32 = 8.0;
-    pub const s4: f32 = 12.0;
-    pub const s5: f32 = 16.0;
-    pub const s6: f32 = 24.0;
-    pub const s7: f32 = 32.0;
-    pub const s8: f32 = 48.0;
-
-    /// Inside a group.
-    pub const within: f32 = s2;
-    /// A card's padding.
-    pub const pad: f32 = s3;
-    /// Between groups.
-    pub const between: f32 = s5;
-    /// Between panels.
-    pub const panels: f32 = s6;
-    /// A list row's height.
-    pub const row: f32 = 20.0;
-    /// A card line's height.
-    pub const card_line: f32 = 24.0;
+    include!(concat!(env!("OUT_DIR"), "/space.rs"));
 
     /// A status line's three columns: the state fixed and left, the name flexible and clipped,
     /// the time fixed and right, `gap` apart (no `·`). The Status table's rows instead fix the
@@ -268,11 +388,4 @@ pub mod space {
         pub time_ch: f32,
         pub gap: f32,
     }
-
-    pub const cols: StatusCols = StatusCols {
-        slice_ch: 5.0,
-        state_ch: 12.0,
-        time_ch: 7.0,
-        gap: s5,
-    };
 }
