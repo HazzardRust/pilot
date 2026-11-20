@@ -316,6 +316,8 @@ fn theme_json_is_read_and_is_the_only_source() {
     is("space.between", serde_json::json!("s5"));
     is("space.panels", serde_json::json!("s6"));
     is("cols.gap", serde_json::json!("s5"));
+    is("opacity.disabled", n(theme::opacity::disabled));
+    is("opacity.picked", n(theme::opacity::picked));
     for (path, got) in [
         ("radius.button", theme::radius::button),
         ("radius.chip", theme::radius::chip),
