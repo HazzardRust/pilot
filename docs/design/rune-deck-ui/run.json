@@ -60,7 +60,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed c9c2154 — production 397, tests 307 waived; rust Block (HIGH: co-pilot's trim dropped the page's confirm-in-place on options; sync act on press), typescript WARN; reviews read pre-rebase head; NOT integrated",
+      "state": "pushed dee5689 — rust Approve, typescript Approve at final head; 491 production lines added (ceiling ~472); integrating",
       "after": [
         "S5"
       ],
@@ -78,24 +78,30 @@
     },
     {
       "slice": "S9",
-      "state": "planned",
+      "state": "pushed 96fe24d (wip) — rust APPROVE, security REQUEST CHANGES (stale confirm; fix in wip, unrun), typescript REQUEST CHANGES (locked options, Close); not integrated",
       "after": [
         "S5"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s9"
     },
     {
       "slice": "S10",
-      "state": "planned",
+      "state": "pushed ced5aaf — npm test 4720/0; typescript approve; rust request changes (clippy fix done, not re-read); whole-crate cargo not run; not integrated",
       "after": [
         "S6"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s10"
     },
     {
       "slice": "S11",
-      "state": "planned",
+      "state": "pushed a67d89d (wip) — gates green, npm test 4722/0; 3 reviewers not run; not integrated",
       "after": [
         "S5"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s11",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s11"
     },
     {
       "slice": "S12",
@@ -162,10 +168,24 @@
       "after": [
         "S10"
       ]
+    },
+    {
+      "slice": "S21",
+      "state": "planned (added: Escape and left-arrow without Tab)",
+      "after": [
+        "S8"
+      ]
+    },
+    {
+      "slice": "S22",
+      "state": "planned (added: overview status per tab)",
+      "after": [
+        "S12"
+      ]
     }
   ],
-  "next": "self-pause at ~240k; feat/rune-deck-ui at 599c883b; next: S7 fix brief on c9c2154 restoring confirm-in-place on card options (~412 production: main waives), rust re-read, integrate S7; pilot ready (S9 S11 S13 S19); added slices: Escape without focus, overview status per tab. Step 7 carry: sync act/fetch on press, ask stale feed, S2 nits 2-3, excerpt markdown",
-  "updatedAt": "2026-11-19T23:33:40.523Z",
+  "next": "pausing; feat at df178e4b; draining S7 (dee5689), S9 (28207bb), S10, S11 (a67d89d). Rule: ONE cargo run at a time machine-wide, -j 4, whole-crate test once/slice; Rust slices in sequence. S7: cap 472 prod, integrate only on non-Block rust at final head, act HIGH fixed first if still Block. S21 Esc/left, S22 per-tab tables approved.",
+  "updatedAt": "2026-11-20T00:10:13.817Z",
   "friction": [
     {
       "agent": "pilot-implementer",
@@ -302,6 +322,36 @@
       "what": "S7 finisher: installed pilot on PATH is plugin 0.9.9 without /api/view, so snaps drew 'deck not running' until the worktree CLI was used; --snap cannot capture arrival frames; a soft reset onto a moved feat silently reverts newer content",
       "evidence": "S7 finisher report; node bin/pilot.mjs deck --scratch",
       "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: context summarised right after worktree creation (48k tokens, 2 tool calls); stopped with nothing built and a respawn",
+      "evidence": "S10 first report; worktree clean at deb8d130",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7 fix: full npm test took ~25 min and could not be stopped, so it ran on 5a04a526, not the final head; line ceiling counts doc comments",
+      "evidence": "S7 fix report; dee56898",
+      "size": 25
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11: Rune headless settle_all snaps a scrolled viewport back; no task API, so an off-thread result needs app::poll",
+      "evidence": "S11 report; rune pointer.rs",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: no way to start the Rune binary on a thread screen; a throwaway example was needed for the look; the Interface was cut thinner than the page's reply slot (locked options, Close)",
+      "evidence": "S9 report; Tx/TextEdit read from the cargo checkout",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: Rune's Cx gives draw no State, so the draw signature changed in app.rs; clippy grep hid a -D warnings lint",
+      "evidence": "S10 report; tests/notifications.rs:127",
+      "size": 2
     }
   ]
 }
