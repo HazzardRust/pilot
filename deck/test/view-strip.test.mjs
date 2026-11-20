@@ -17,6 +17,7 @@ const { repoKey } = await import('../runs.mjs');
 
 const LIVE = path.join('D:', 'work', 'live');
 const ENDED = path.join('D:', 'work', 'ended');
+const GONE = path.join('D:', 'work', 'gone');
 const AT = '2026-11-01T10:00:00.000Z';
 
 const aRun = (repo, pid) => ({ id: `run_00000000000${pid === process.pid ? 1 : 2}`, repo, name: path.basename(repo), pid, startedAt: AT, slices: [] });
@@ -28,7 +29,8 @@ const reads = ({ items = [], weekly = true } = {}) => ({
   items,
   // A pid no process holds: the run has ended.
   runs: [aRun(LIVE, process.pid), aRun(ENDED, 2 ** 31 - 2)],
-  numbers: { [repoKey(LIVE)]: 1, [repoKey(ENDED)]: 2 },
+  // GONE is numbered but has no tab: the page names it `D3 gone`.
+  numbers: { [repoKey(LIVE)]: 1, [repoKey(ENDED)]: 2, [repoKey(GONE)]: 3 },
   agents: {},
   added: [{ repo: ENDED }],
   lanes: { coPilots: {}, switches: {}, records: [] },
@@ -64,18 +66,17 @@ test('the controls are the page\'s', () => {
   const cases = [
     [reads(), { run: ENDED }],
     [reads({ items: [held], weekly: false }), { run: ENDED, all: true, sessionRefused: 'a session is already live in this deck' }],
-    [reads(), { run: LIVE }],
+    [reads(), { run: LIVE, sessionRefused: 'said where no Start is' }],
     [reads(), {}],
     [reads(), { run: path.join('D:', 'work', 'elsewhere'), all: true }],
   ];
+  // Which tab is chosen is shared with `stripView` by design; the controls are read off the page's HTML.
   for (const [r, query] of cases) {
-    const want = page(r, query);
-    assert.deepEqual(drawn(stripView(r, query)), { ...want, repos: want.repos }, JSON.stringify(query));
+    assert.deepEqual(drawn(stripView(r, query)), page(r, query), JSON.stringify(query));
   }
 });
 
-test('an ended tab offers Start, or Resume when it holds a ticket, and Close; a live one neither', () => {
-  if (process.platform !== 'win32') return;
+test('an ended tab offers Start, or Resume when it holds a ticket, and Close; a live one neither', { skip: process.platform !== 'win32' && 'Start is drawn on Windows only' }, () => {
   assert.equal(stripView(reads(), { run: ENDED }).start, 'start');
   assert.equal(stripView(reads({ items: [held] }), { run: ENDED }).start, 'resume');
   assert.equal(stripView(reads(), { run: ENDED }).close, true);
@@ -89,6 +90,7 @@ test('the overview asks which numbered deck, named as its tab', () => {
   assert.deepEqual(view.create.repos, [
     { repo: repoKey(LIVE), label: 'D1 live' },
     { repo: repoKey(ENDED), label: 'D2 ended' },
+    { repo: repoKey(GONE), label: 'D3 gone' },
   ]);
 });
 

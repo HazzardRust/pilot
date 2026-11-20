@@ -140,7 +140,11 @@ pub fn create(s: &mut State, repo: &str, post: impl FnOnce(&DeckAction) -> Resul
     match post(&action) {
         Ok(Acted::Taken { location }) => {
             s.regions.strip.cancel();
-            if let Some(id) = location.strip_prefix("/thread/") {
+            // An item id is `itm_` and hex; anything else in the Location opens nothing.
+            let id = location.strip_prefix("/thread/").filter(|id| {
+                !id.is_empty() && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+            });
+            if let Some(id) = id {
                 open_thread(s, id);
             }
         }
@@ -193,6 +197,7 @@ fn refusal_in(location: &str) -> Option<String> {
     while i < bytes.len() {
         let hex = bytes
             .get(i + 1..i + 3)
+            .filter(|h| h.iter().all(u8::is_ascii_hexdigit))
             .and_then(|h| std::str::from_utf8(h).ok());
         match (bytes[i], hex.and_then(|h| u8::from_str_radix(h, 16).ok())) {
             (b'%', Some(byte)) => {
@@ -237,6 +242,8 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
 
     let mut out = col()
         .key("strip")
+        // Each control is as wide as its words, as the page's are, not the column's width.
+        .items_start()
         .gap(space::between)
         .on_key(|s: &mut State, ev: &rune::KeyEvent, _: &mut rune::Tx| {
             let local = &mut s.regions.strip;
