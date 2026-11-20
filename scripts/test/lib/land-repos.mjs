@@ -88,6 +88,13 @@ console.log('ℹ pass 1'); console.log('ℹ fail 0');
   return { origin, seed, clone, mover, gitIn: (repo) => (args) => git(repo, ...args), ...cloned };
 }
 
+/** One check run that passed, the shape `gh api …/check-runs` lists: the default every land test lands on. */
+export const GREEN_RUN = { name: 'gate (ubuntu-latest)', status: 'completed', conclusion: 'success', html_url: 'https://github.com/o/r/actions/runs/1/job/1' };
+
+/** A test's own `gh` with the check-runs GET answered green first, so a landing's checks read passes (ci-gate S3). */
+export const greenChecks = (gh) => (args) =>
+  args[0] === 'api' && /\/check-runs\?/.test(args[1]) ? JSON.stringify({ total_count: 1, check_runs: [GREEN_RUN] }) : gh(args);
+
 export const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
 
 /**
@@ -100,8 +107,9 @@ export const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fai
  * `pr close` is not stubbed: the landing never closes a PR (pilot-develop-line A1). Each
  * `--body-file <f>` is recorded, and passed on, as `--body <text>`, read at the call since the
  * adapter removes the file after. `host` is `githubHost` over this `gh`, as `land` takes it.
+ * `api …/check-runs` answers `checks`, check-run JSON as GitHub gives it, one success run by default (ci-gate S3).
  */
-export function fakeGh(prs = [], comment = () => '', { created = 900, views = [] } = {}) {
+export function fakeGh(prs = [], comment = () => '', { created = 900, views = [], checks = [GREEN_RUN] } = {}) {
   const calls = [];
   let viewed = 0;
   const gh = (given) => {
@@ -125,6 +133,7 @@ export function fakeGh(prs = [], comment = () => '', { created = 900, views = []
     if (args[0] === 'pr' && args[1] === 'edit') return '';
     if (args[0] === 'label' && args[1] === 'create') return '';
     if (args[0] === 'pr' && args[1] === 'create') return `https://github.com/o/r/pull/${created}\n`;
+    if (args[0] === 'api' && /\/check-runs\?/.test(args[1])) return JSON.stringify({ total_count: checks.length, check_runs: checks });
     throw new Error(`unexpected gh ${args.join(' ')}`);
   };
   return { gh, calls, host: githubHost(gh) };

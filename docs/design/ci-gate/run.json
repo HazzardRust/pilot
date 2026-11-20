@@ -1,0 +1,346 @@
+{
+  "slug": "ci-gate",
+  "feature": "CI is a gate at every step",
+  "ticket": "itm_e5e0bc09827d",
+  "branch": "feat/ci-gate",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-ci-gate",
+  "artefact": "docs/design/ci-gate/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/ci-gate-s1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated (its WARN-fix commit read by no reviewer)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/ci-gate-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s2"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated (review fixes after the reviewers' read)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/ci-gate-s5",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s5"
+    },
+    {
+      "slice": "S7",
+      "state": "integrated (its third commit read by no reviewer)",
+      "after": [
+        "S2",
+        "S5"
+      ],
+      "branch": "slice/ci-gate-s7",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s7"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated (10 land test stubs wrap greenChecks)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/ci-gate-s3",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated (3 recording tests filter the check-runs read)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/ci-gate-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s4"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/ci-gate-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s6"
+    },
+    {
+      "slice": "S8",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/ci-gate-s8",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "integrated (WARN fixes after the reviewer's read)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/ci-gate-s9",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s9"
+    },
+    {
+      "slice": "S10",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/ci-gate-s10",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-ci-gate-s10"
+    },
+    {
+      "slice": "ci-gate",
+      "state": "in QA (read-only pass done at 8ac2db3a; waits on main's fix tip); gate2 waits on ci-green"
+    },
+    {
+      "slice": "Principles fix round",
+      "state": "integrated",
+      "after": [
+        "S7"
+      ],
+      "branch": "fix/ci-gate-principles",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-ci-gate-principles"
+    }
+  ],
+  "findings": [
+    "dropped: S2 simplify — `--wait <min>` is signed spec 7 (default 20, max 60); it works and is tested, the removal would move a spec line for -6 lines (QA's catch, overturns the pilot's first keep)"
+  ],
+  "next": "ci-gate: fix round pushed 9b2de68b (8 rows done, S2 dropped; last test-only commit unreviewed, suite not rerun on it), checked against the diff; pilot integrate running. Then send co-pilot the tip for QA's re-probe. Gate2 held until ci-green lands and pilot is merged in. Left over: architecture.md:68 glossary still names Check.url.",
+  "updatedAt": "2026-11-19T19:36:09.417Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "question post refused for a missing Research: line; the rule is not in the architect's definition (main hit it too)",
+      "evidence": "itm_8677fb5e6e5e first attempt; itm_db635f8bd508 first attempt",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "test stubs that throw on unknown host verbs make any new Host verb a cross-file change",
+      "evidence": "scripts/test/lib/land-repos.mjs:128",
+      "size": 1
+    },
+    {
+      "agent": "architect",
+      "what": "gate1 body rules live only in the pilot's definition; architect had to grep for them",
+      "evidence": "agents/pilot.md:334-337"
+    },
+    {
+      "agent": "architect",
+      "what": "deck_status requires slug, architect definition says send only ticket, slices, feature",
+      "evidence": "tool schema lists slug as required"
+    },
+    {
+      "agent": "architect",
+      "what": "glossary ownership assigned to no slice by the predecessor",
+      "evidence": "CONTEXT.md missing from §8 until this pass"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1 estimate of ~150 lines incl. ADR and glossary was low: code 113 + tests 148 before the ADR; cost a round trip and a re-cut to added S9",
+      "evidence": "S1 report; feat/ci-gate c1f6670c",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "edited during the first full npm test, so the multi-minute gate ran twice",
+      "evidence": "first S1 gate log, 3 reds all in-flight tests",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md's commit trailer names Claude Fable 5.2 while implementers run on Opus/Sonnet",
+      "evidence": "docs/design/ci-gate/brief.md:32",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "TaskOutput not usable by the co-pilot to wait on its children; harness forces an interim hand-back with three implementers live",
+      "evidence": "ci-gate hand-back, S2/S3/S5 live"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "slice estimates leave tests out, every opus slice ran past the 150-line limit",
+      "evidence": "S1 260 lines (git diff 1d2f0e68..db864833, non-docs), S2 279 reported"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "edited during the first full gate, so the gate ran twice",
+      "evidence": "S1 gate log"
+    },
+    {
+      "kind": "drain",
+      "what": "interim co-pilot hand-back read and checked while its children were still live",
+      "size": 2500
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's slice file names neither pinned allow-list test (install-allow-merge, install.test) that every new allow rule breaks; only the fact sheet found them",
+      "evidence": "scripts/test/install-allow-merge.test.mjs, scripts/test/install.test.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2's ~130-line estimate counted code only; with tests ~290, a round trip",
+      "evidence": "S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot lacks TaskOutput; harness forced hand-back with three implementers live",
+      "evidence": "ci-gate co-pilot run",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "half the land tests build their own githubHost instead of fakeGh, so any gate in land breaks them one by one (44 red in 10 files); S3's B4 premise was wrong",
+      "evidence": "S3 report; scripts/test/land-*.test.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "implementer hand-back forced mid-slice (wip 8f6defdc) before it could act on the co-pilot's answer",
+      "evidence": "S3 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Monitor unavailable to the implementer; polled a 400 s gate with background shell loops",
+      "evidence": "S10 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Edit wrote a   escape as a literal U+2028, breaking a regex literal; every gate2 test failed",
+      "evidence": "S5 report; od -c bytes 342 200 250",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief says deck/items.mjs at 798 lines; it was 799, edit hit the 800 cap",
+      "evidence": "docs/design/ci-gate/brief.md:65",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5 owned files omit deck/tools.mjs schema, deck/README.md row and prompt pins a new deck_post field needs; two full gates",
+      "evidence": "S5 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "parallel slices queue on the shared gate slots (%TEMP%/pilot-gate-slots): ~8 min waits, three integrate test files killed at 500 s, an EPERM on slot-0.json.takeover",
+      "evidence": "S4 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "scratchRepos lives inside integrate.test.mjs and is not importable; fixture copied",
+      "evidence": "scripts/test/integrate.test.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4's slice note claimed existing integrate tests stay green with 0 edits; two record gh calls exactly",
+      "evidence": "integrate-prune.test.mjs:109, integrate-remote.test.mjs:116",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a scripted node string-replace silently missed two edits through backslash escaping; tests caught it",
+      "evidence": "S6 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6 gate waited for a slot behind S5 and the feat worktree; Monitor unavailable, polled with until-loops",
+      "evidence": "S6 gate log line 7",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate slot takeover crashed with EPERM on mkdir while other worktrees queued; one wasted full run",
+      "evidence": "scripts/gate-slots.mjs:55, S9 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "three-lanes-wording bans bare red/yellow/green anywhere in CONTEXT.md; only the full gate showed it",
+      "evidence": "scripts/test/three-lanes-wording.test.mjs:54-56",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate runs 7-9 min, ran twice because review fixes followed the first run",
+      "evidence": "S8 report: 401898 and 518847 ms",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "token pin headroom was 0 at S7's base (pilot 11949.5 against 11949.5)",
+      "evidence": "scripts/test/measure-prompt.test.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "three-lanes-wording not in S7's verify list; cost a second ~20 min gate",
+      "evidence": "scripts/test/three-lanes-wording.test.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "S7's report went to main, not the co-pilot, despite the hello",
+      "evidence": "main relay of S7",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "auto-mode classifier refused the diff-coverage run; Stryker timed out at 900 s on 4814 mutants, none scored; knip has no config and reports 640 unused files",
+      "evidence": "principles report §3, ci-gate"
+    },
+    {
+      "kind": "drain",
+      "what": "S7 implementer and fundamentalist reports misrouted to main, read and relayed or judged by the pilot",
+      "size": 9000
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "hooks/test/inbox.test.js:1150 flaked once in the full gate (undefined == 'block'), 66/66 alone; file untouched by the feature",
+      "evidence": "QA gate at 8ac2db3a",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "full gate 18.4 min; the live deck store changed mid-run (other sessions)",
+      "evidence": "gate note: home store changed",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "`test:changed` alias runs the full gate, 18 min instead of a selected run",
+      "evidence": "package.json: \"test:changed\": \"node scripts/gate.mjs\""
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "posting a fixture gate2 needs a valid ticket whose shape is found by trial and error; 4 refusals",
+      "evidence": "scratch deck refusals: body shape, italics evidence, sliceCount"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "gh-stub gives one reply to every gh call, so the clean path prints a stray error",
+      "evidence": "`gh pr list: an answer that is not a list` after green integrate/land"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "flake in the full gate: hooks/test/inbox.test.js:1150, green alone 66/66",
+      "evidence": "QA gate.log, 4687 pass 1 fail at 8ac2db3a"
+    }
+  ]
+}

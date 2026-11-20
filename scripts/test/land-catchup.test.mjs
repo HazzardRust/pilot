@@ -13,13 +13,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { githubHost } from '../../deck/host-github.mjs';
+import { greenChecks } from './lib/land-repos.mjs';
 
 const { catchUp, main } = await import('../land.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 const gitIn = (repo) => (args) => git(repo, ...args);
 const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
-const host = githubHost((args) => (args[1] === 'list' ? '[]' : ''));
+const host = githubHost(greenChecks((args) => (args[1] === 'list' ? '[]' : '')));
 
 function commitFile(repo, file, text, message) {
   fs.writeFileSync(path.join(repo, file), text);

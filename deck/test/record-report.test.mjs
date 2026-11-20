@@ -31,7 +31,6 @@ const fullReport = () => ({
     { slice: 'S2', pr: 182, mergeSha: '0123456789abcdef0123456789abcdef01234567' },
   ],
   assumed: [{ id: 'A2', decision: 'past reports are not converted', taken: 'pilot, asked' }],
-  humanSteps: ['merge the feature PR'],
   worktreesLeft: ['C:/work/pilot-s1'],
 });
 
@@ -77,11 +76,11 @@ test('a report missing featurePr, or with a non-hex mergeSha, or an unknown key,
     [badSha, /slices\[1\]\.mergeSha/],
     [unknown, /verdict/],
     [{ ...fullReport(), assumed: [{ id: 'X1', decision: 'd', taken: 't' }] }, /assumed\[0\]\.id/],
-    [{ ...fullReport(), humanSteps: ['  '] }, /humanSteps\[0\]/],
+    [{ ...fullReport(), worktreesLeft: ['  '] }, /worktreesLeft\[0\]/],
     [{ ...fullReport(), featurePr: { ...featurePr, number: '180' } }, /featurePr\.number/],
     [{ ...fullReport(), featurePr: { ...featurePr, number: 0 } }, /featurePr\.number/],
     [{ ...fullReport(), featurePr: { ...featurePr, mergeSha: 'a1b2c3' } }, /featurePr\.mergeSha/],
-    [{ ...fullReport(), humanSteps: Array.from({ length: MAX_FINDINGS + 1 }, () => 'a step') }, /humanSteps/],
+    [{ ...fullReport(), worktreesLeft: Array.from({ length: MAX_FINDINGS + 1 }, () => 'C:/work/a') }, /worktreesLeft/],
     ['a paragraph of Markdown', /report/],
   ];
   for (const [report, field] of cases) {

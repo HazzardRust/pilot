@@ -35,6 +35,7 @@ import {
   recordFields,
   repoKey,
   sameRepo,
+  withHumanStep,
 } from './runs.mjs';
 import { neverGranted } from './recut.mjs';
 import { SliceRefusal, mergeSliceTable } from './status.mjs';
@@ -572,6 +573,7 @@ export function setSlices(runId, slices, feature, given = {}) {
     const previous = fields === null ? undefined : recordsOf(deck).find(recordOf(run, fields.slug))?.record;
     const under = fields === null ? run.slices : (previous?.slices ?? []);
     table = mergeSliceTable(under, slices);
+    if (given.step !== undefined) fields = withHumanStep(fields, previous?.humanSteps, given.step);
   } catch (err) {
     // Same shape as a malformed run: the caller's mistake comes back as the refusal
     // every other bad input does, so one path answers the client.
@@ -580,11 +582,9 @@ export function setSlices(runId, slices, feature, given = {}) {
     }
     throw err;
   }
-  // Every string the call carries, walked rather than listed: the name, every
-  // cell of every row, every record field and finding line, so a field added
-  // later is read without anyone remembering to add it. `after` is read too,
-  // though it must match another row: it matches through `sliceKey`, which
-  // lower-cases, and these patterns do not. A6 is only true if it reads every cell.
+  // Every string the call carries, walked rather than listed: the name, every cell of every row, every
+  // record field, finding line and human step, before any is stored, so a field added later is read
+  // without anyone remembering to add it. `after` too: it matches through `sliceKey`, which lower-cases.
   refuseCredentials('this status', stringsIn({ name, table, fields }).join('\n'));
 
   // The closing call empties the tab and its tree; the record below keeps the table.

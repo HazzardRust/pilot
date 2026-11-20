@@ -14,6 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { githubHost } from '../../deck/host-github.mjs';
+import { greenChecks } from './lib/land-repos.mjs';
 
 const { main } = await import('../land.mjs');
 const { sync } = await import('../sync.mjs');
@@ -71,7 +72,7 @@ function buildScratch(dir, { feature, pilotSide }) {
   git(seed, 'checkout', '-q', '-B', 'pilot', 'origin/pilot');
   pilotSide(seed);
   git(seed, 'push', '-q', 'origin', 'pilot');
-  const land = () => mainSays({ cwd: b, git: (args) => git(b, ...args), host: githubHost(() => '[]'), test: passing });
+  const land = () => mainSays({ cwd: b, git: (args) => git(b, ...args), host: githubHost(greenChecks(() => '[]')), test: passing });
   return { dir, origin, seed, b, land };
 }
 

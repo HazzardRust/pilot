@@ -106,7 +106,7 @@ test('a red integration deletes nothing', (t) => {
   assert.equal(result.ok, false);
   assert.doesNotMatch(result.line, /deleted|kept/);
   assert.ok(listed(origin).includes('slice/x-s1'), 'the slice is still on origin');
-  assert.deepEqual(asked, [], 'gh is not asked whether it merged');
+  assert.deepEqual(asked.filter((args) => !args[1]?.includes('/check-runs')), [], 'gh is not asked whether it merged');
 });
 
 test('a PR-less slice on the second remote is deleted by ancestry', (t) => {

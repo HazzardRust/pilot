@@ -9,7 +9,7 @@ on:
     branches: [main, 'feat/**', pilot]
     types: [opened, synchronize, reopened, ready_for_review, labeled]
   push:
-    branches: [main]
+    branches: [main, pilot]
   schedule:
     - cron: '0 6 * * 1'
   workflow_dispatch:

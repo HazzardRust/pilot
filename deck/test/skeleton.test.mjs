@@ -168,6 +168,8 @@ const CREDENTIALS = [
   ['an unspaced apikey assignment', 'apikey=abcdefghijklmnop0123'], // gitleaks:allow
   ['an unquoted secret assignment', 'secret = hunter2hunter2hunter2'],
   ['a token after a colon', 'token:abcdefghijklmnop0123'], // gitleaks:allow
+  // Built in two halves so no scanner reads the fixture as a live key.
+  ['a Stripe secret key', `Set STRIPE_KEY=${'sk_live'}_51Hx${'A'.repeat(20)}`],
 ];
 
 /** The other half of A6: prose about credentials has to stay postable. */

@@ -32,6 +32,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `exit-route.mjs` | `POST /api/exit { version }`: 202 and the daemon's shutdown only for a newer caller, 409 for one not newer or while a landing runs (daemon-lifecycle L3, ADR 0156) |
 | `gc.mjs` | `pilot gc`: stops each orphan `procs.mjs` names and nothing else, a test root as a tree; one line per stop, and `pilot land` runs it once landed (process-gc L11, L14) |
 | `gate2-base.mjs` | the gate2 base check: refuses a gate2 whose sha does not merge clean onto pilot, local git only |
+| `gate2-checks.mjs` | the gate2 checks field: where CI is configured at its sha, a gate2 carries `pilot checks <sha>`'s line, green at that sha, local git only (ci-gate spec 4) |
 | `gate2-evidence.mjs` | the gate2 evidence check: a short-path ticket's gate2 carries a `Verdict:` per slice, a `Gate:` line and, for a surface, its walkthrough (short-path spec 2); a full run's gate2 naming no walkthrough carries the checks table and, on a plan with a surface, a `surface planned, no walkthrough:` reason line; a named walkthrough is a real one on the gate2's ticket; `walkthroughPlanGaps` refuses QA's walkthrough on a plan marked with no surface (walkthrough-surface spec 3-6); `recutGate1Gaps` refuses a re-cut ticket's gate1 without a `Changed since <sha7>:` line (never-stuck spec 15) |
 | `health.mjs` | `GET /api/health`'s answer: pid, url, cursor, rss, and the plugin version with when this daemon started (daemon-lifecycle spec 3) |
 | `hold-route.mjs` | `POST /api/hold { id, ticket }`: the hand-off mod marks a hand-off held for a live co-pilot, item state and no reply, written once (held-handoff L2) |
@@ -85,6 +86,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `store-items.mjs` | the store's items: posting, replies, the gates, resolving, reopening and closing |
 | `store-recovery.mjs` | the store's backup: `deck.json.bak` kept before each write, and a corrupt store set aside and recovered from it |
 | `store-restore.mjs` | `pilot store restore`: the backup swapped in by hand, refused while a deck serves the store on any port |
+| `store-steps.mjs` | a ticket's human steps: the steps thread's one writer, the user's Done, and the ticket's one close the report shares |
 | `store-stage.mjs` | a ticket entering a stage: its state, its place in that stage's queue, and its first green entry |
 | `store-tickets.mjs` | the store's ticket queue: moving, taking and merging tickets, the lane switches |
 | `store-runs.mjs` | the store's reads and delivery, runs, co-pilot, budget, threads, slices and records |
