@@ -43,6 +43,10 @@ struct Group {
     tab: String,
     #[serde(default)]
     rows: Vec<Slice>,
+    #[serde(default)]
+    heading: String,
+    #[serde(default)]
+    started: String,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -51,6 +55,12 @@ struct Status {
     tickets: Vec<Ticket>,
     #[serde(default)]
     rows: Vec<Slice>,
+    /// The table's heading, as the page's `.run-status` opens: the feature or tab's name, and the
+    /// hour and minute the run started. Empty with no table.
+    #[serde(default)]
+    heading: String,
+    #[serde(default)]
+    started: String,
     /// The overview's tables, one per tab; empty on a deck's tab, which has the one above.
     #[serde(default)]
     groups: Vec<Group>,
@@ -203,7 +213,43 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         })
     };
 
-    let table = table_of("status-table".into(), "status-row-", &status.rows);
+    // The page's `<span class="run">name</span> · started <time>`: the name bold, then the hour.
+    let heading = |key: String, name: &str, started: &str| {
+        // In by the rows' own indent, so the name starts over the Slice column as on the page.
+        let mut line = row().key(key.clone()).pl(space::s3).child(theme::content(
+            text(name)
+                .key(format!("{key}-name"))
+                .font(type_::HEADER)
+                .color(t.text),
+            dark,
+        ));
+        if !started.is_empty() {
+            line = line.child(theme::content(
+                text(format!(" · started {started}"))
+                    .key(format!("{key}-started"))
+                    .font(type_::BODY)
+                    .color(t.text),
+                dark,
+            ));
+        }
+        line
+    };
+    let titled = |key: String, name: &str, started: &str, table: El| {
+        if name.is_empty() {
+            return table;
+        }
+        col()
+            .gap(space::within)
+            .child(heading(key, name, started))
+            .child(table)
+    };
+
+    let table = titled(
+        "status-heading".into(),
+        &status.heading,
+        &status.started,
+        table_of("status-table".into(), "status-row-", &status.rows),
+    );
     let groups = status.groups.iter().enumerate().fold(
         col().key("status-groups").gap(space::between),
         |groups, (g, group)| {
@@ -215,10 +261,15 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                         text(&group.tab).font(type_::CAPTION).color(t.text),
                         dark,
                     ))
-                    .child(table_of(
-                        format!("status-table-{g}"),
-                        &format!("status-row-{g}-"),
-                        &group.rows,
+                    .child(titled(
+                        format!("status-heading-{g}"),
+                        &group.heading,
+                        &group.started,
+                        table_of(
+                            format!("status-table-{g}"),
+                            &format!("status-row-{g}-"),
+                            &group.rows,
+                        ),
                     ))
                     // deck.css `.run-status`: a hairline under each tab's table.
                     .child(

@@ -72,6 +72,22 @@ test('the rows are the page\'s', () => {
   assert.deepEqual(rows[1].after, ['S1 the yellow slice']);
 });
 
+/** `HH:MM` on this machine's clock, as the heading reads a stamp. */
+const hhmm = (stamp) => new Date(stamp).toTimeString().slice(0, 5);
+
+test('the table is headed as the page heads it: the name, then the hour it started', () => {
+  const view = statusView(reads(), { run: MINE, ticket: yellow.id });
+  const r = reads();
+  const tab = tabFor(tabsOf(r.runs, r.items, r.numbers, r.agents, r.added, r.lanes), MINE);
+  const page = renderStrips(tab, [tab], r.items, { ticket: yellow.id }).split('<section class="run-status">')[1];
+
+  assert.equal(view.heading, page.match(/<span class="run"[^>]*>([^<]*)<\/span>/)[1]);
+  assert.match(page, /<span class="who"> · started <time datetime="2026-10-15T10:00:00.000Z">/);
+  assert.equal(view.started, hhmm(AT));
+  assert.match(view.started, /^\d\d:\d\d$/);
+  assert.equal(statusView(reads(), { run: MINE, ticket: red.id }).heading, undefined, 'no table, no heading');
+});
+
 test('the selector lists the held lanes with the chosen one marked', () => {
   const { tickets } = statusView(reads(), { run: MINE, ticket: green.id });
 
@@ -172,7 +188,12 @@ test('an empty run is the overview too: one table per tab, as the page\'s `/?run
 test('a deck tab keeps one table', () => {
   const view = statusView(twoDecks(), { run: THEIRS });
 
-  assert.deepEqual(view, { tickets: [], rows: [{ slice: 'S1 brew', state: 'merged', after: [] }, { slice: 'S2 pour', state: 'doing', after: ['S1 brew'] }] });
+  assert.deepEqual(view, {
+    tickets: [],
+    rows: [{ slice: 'S1 brew', state: 'merged', after: [] }, { slice: 'S2 pour', state: 'doing', after: ['S1 brew'] }],
+    heading: 'kettle',
+    started: hhmm(AT),
+  });
 });
 
 test('with no held lane the newest run that posted a table is drawn', () => {

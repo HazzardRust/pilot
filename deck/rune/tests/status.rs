@@ -75,6 +75,37 @@ fn the_table_and_selector_are_the_views() {
 }
 
 #[test]
+fn the_table_is_headed_by_its_name_and_the_hour_it_started() {
+    let mut status = two_lanes("yellow");
+    status["heading"] = json!("kettle");
+    status["started"] = json!("09:05");
+    let rt = frame(State {
+        view: view_with(status),
+        ..State::default()
+    });
+
+    let shown = texts(&rt);
+    for want in ["kettle", " · started 09:05"] {
+        assert!(shown.iter().any(|t| t == want), "no {want:?} in {shown:?}");
+    }
+    let y = |key: &str| rt.find(key).unwrap_or_else(|| panic!("{key} is drawn")).1;
+    assert!(
+        y("status-ticket-0") < y("status-heading-name")
+            && y("status-heading-name") < y("status-row-0-slice"),
+        "selector, heading, then the table, as the page orders them"
+    );
+    assert!(
+        frame(State {
+            view: view_with(two_lanes("yellow")),
+            ..State::default()
+        })
+        .find("status-heading-name")
+        .is_none(),
+        "no heading in the view, none drawn"
+    );
+}
+
+#[test]
 fn each_table_is_drawn_under_its_tabs_name() {
     // The overview's view (S22): no single table, one group per tab.
     let rt = frame(State {
