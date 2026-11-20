@@ -1132,6 +1132,31 @@ test('the Node coverage cell fetches nothing', () => {
   others.forEach((cell, i) => assert.match(cell, /diff-cover\b/, `${RUNNER_STACKS[i + 1]} keeps its cell`));
 });
 
+// --- coverage-install S1 (spec 1-3; L1-L3, A1): the runner is the one installer ---
+
+test('the runner installs before its first check', () => {
+  // lint: the install step sits in "Before the first run", which precedes the command table
+  const source = agentSource('pilot-evidence-runner');
+  const before = agentSection('pilot-evidence-runner', 'Before the first run');
+  assert.match(before, /HOME="\$S\/home" USERPROFILE="\$S\/home" npm ci --ignore-scripts/, 'npm ci --ignore-scripts under a scratch home');
+  assert.match(before, /package-lock\.json/, 'only with a lockfile');
+  assert.match(before, /no `node_modules`/, 'only with no node_modules');
+  assert.ok(source.indexOf('## Before the first run') < source.indexOf('## The command table'), 'the install comes before the table');
+});
+
+test('a failed install is named, not run around', () => {
+  // lint: the return table carries the install row and the failed-install marker
+  const back = agentSection('pilot-evidence-runner', 'What you return');
+  assert.match(back, /`install`/, 'an install row');
+  assert.match(back, /not run: install failed \(exit/, 'a failed install names its exit');
+});
+
+test('one installer', () => {
+  // lint: forbidden pattern; the fundamentalist leaves the install to the runner
+  assert.doesNotMatch(agentSection('pilot-fundamentalist', 'Where you work'), /npm ci/, 'no install in the fundamentalist');
+  assert.match(agentSection('pilot-fundamentalist', 'The evidence pass[^\n]*'), /install failed/, 'a failed install is reported as that');
+});
+
 test('the rule budgets the fundamentalist one child', () => {
   // cheaper-crew S2 (spec 4): the budget follows the helper.
   const rule = flat(read('rules/orchestration.md'));
