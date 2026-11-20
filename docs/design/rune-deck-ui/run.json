@@ -60,7 +60,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed dee5689 — rust Approve, typescript Approve at final head; 491 production lines added (ceiling ~472); integrating",
+      "state": "integrated at d491beb — rust Approve, typescript Approve at dee5689; 491 production lines added (main's ~472 ceiling); full npm test ran on 5a04a52; B6 spring look to QA",
       "after": [
         "S5"
       ],
@@ -78,7 +78,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed 96fe24d (wip) — rust APPROVE, security REQUEST CHANGES (stale confirm; fix in wip, unrun), typescript REQUEST CHANGES (locked options, Close); not integrated",
+      "state": "fixing — at ad264db9 rust/typescript REQUEST CHANGES, security APPROVE; fix round: per-thread reply box (thread.rs seam), recommended marker; 451 production lines, limit waived by main; app.rs +3/-1 outside owned files",
       "after": [
         "S5"
       ],
@@ -87,7 +87,7 @@
     },
     {
       "slice": "S10",
-      "state": "pushed ced5aaf — npm test 4720/0; typescript approve; rust request changes (clippy fix done, not re-read); whole-crate cargo not run; not integrated",
+      "state": "pushed fac8ec5 — rust APPROVE (fresh), typescript APPROVE (earlier head); 283 production lines; integrating",
       "after": [
         "S6"
       ],
@@ -96,7 +96,7 @@
     },
     {
       "slice": "S11",
-      "state": "pushed a67d89d (wip) — gates green, npm test 4722/0; 3 reviewers not run; not integrated",
+      "state": "pushed f56ca90 — rust/typescript/security approve with comments; 254 production lines; app.rs poll merge",
       "after": [
         "S5"
       ],
@@ -184,8 +184,8 @@
       ]
     }
   ],
-  "next": "pausing; feat at df178e4b; draining S7 (dee5689), S9 (28207bb), S10, S11 (a67d89d). Rule: ONE cargo run at a time machine-wide, -j 4, whole-crate test once/slice; Rust slices in sequence. S7: cap 472 prod, integrate only on non-Block rust at final head, act HIGH fixed first if still Block. S21 Esc/left, S22 per-tab tables approved.",
-  "updatedAt": "2026-11-20T00:10:13.817Z",
+  "next": "S10 integrating; then integrate S11; S9 fix round (thread.rs box reset, recommended) then 3 re-reads; then pilot ready within yellow 8",
+  "updatedAt": "2026-11-20T00:39:42.801Z",
   "friction": [
     {
       "agent": "pilot-implementer",
@@ -351,6 +351,30 @@
       "agent": "pilot:pilot-implementer",
       "what": "S10: Rune's Cx gives draw no State, so the draw signature changed in app.rs; clippy grep hid a -D warnings lint",
       "evidence": "S10 report; tests/notifications.rs:127",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce hook forces a 'paused' hand-back each time the co-pilot ends a turn to wait on live children; two false pauses, one needless release/re-grant by main",
+      "evidence": "two hand-backs on itm_0dcd9aa67146 with S9/S10/S11 finishers live, feat unchanged at 1dd62e24",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: cargo not on the Git Bash PATH; npm test reported 'home store changed: ~/.claude/pilot/deck.json' on the live deck",
+      "evidence": "S10 report; npm test tail on fac8ec51",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11: co-pilot's shared CARGO_TARGET_DIR compiled tests against another worktree's stale pilot_deck (path packages share a metadata hash); assumption withdrawn",
+      "evidence": "15 errors E0425/E0609 until touch lib.rs; S11 report",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: two reviewers ended REQUEST CHANGES with no re-read; a draft shared across threads posts A's words to B (security MEDIUM) outside S9's files",
+      "evidence": "S9 report at ad264db9",
       "size": 2
     }
   ]
