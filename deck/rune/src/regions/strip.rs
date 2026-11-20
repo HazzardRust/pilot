@@ -58,9 +58,18 @@ struct Alerts {
     weekly: bool,
 }
 
+/// The way to the items page, with the open queue's count; `here` on that page, where it leads back.
+#[derive(Debug, Deserialize)]
+struct Items {
+    count: usize,
+    here: bool,
+}
+
 #[derive(Debug, Deserialize)]
 struct Strip {
     all: bool,
+    #[serde(default)]
+    items: Option<Items>,
     #[serde(default)]
     tab: Option<Tab>,
     #[serde(default)]
@@ -122,6 +131,21 @@ fn go(s: &mut State, query: Query) {
 pub fn toggle(s: &mut State) {
     let query = Query {
         all: !s.query.all,
+        ..s.query.clone()
+    };
+    go(s, query);
+}
+
+/// Items: the items page, or from it the home screen of the scope it was left from.
+pub fn items_page(s: &mut State) {
+    let screen = if s.query.screen == "items" {
+        "home"
+    } else {
+        "items"
+    };
+    let query = Query {
+        screen: screen.into(),
+        id: None,
         ..s.query.clone()
     };
     go(s, query);
@@ -229,6 +253,14 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             )
             .on_press(toggle),
         );
+    if let Some(items) = &strip.items {
+        let label = if items.here {
+            "Back".to_string()
+        } else {
+            format!("Items {}", items.count)
+        };
+        out = out.child(btn(&label, "strip-items", items.here).on_press(items_page));
+    }
 
     // Create: the tab's repository, or on the overview the deck the confirm has chosen.
     let repos = strip.create.repos.unwrap_or_default();

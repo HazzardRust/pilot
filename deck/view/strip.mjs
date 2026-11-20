@@ -8,17 +8,21 @@ import path from 'node:path';
 
 import { isWindows } from '../../hooks/lib/platform.js';
 import { sameRepo } from '../items.mjs';
+import { queueOf } from '../status.mjs';
 import { landingFor, tabFor, tabsOf } from '../tabs.mjs';
 import { tabCode } from '../ui/render-strip.mjs';
 
-/** `query` is `{ run, all, sessionRefused }`; no tab is the overview, where Create asks which deck. */
+/** `query` is `{ screen, run, all, sessionRefused }`; no tab is the overview, where Create asks which deck. */
 export function stripView(reads, query = {}) {
-  const { run = null, all = false, sessionRefused = null } = query;
+  const { run = null, all = false, sessionRefused = null, screen = 'home' } = query;
   const tabs = tabsOf(reads.runs, reads.items, reads.numbers, reads.agents, reads.added, reads.lanes);
   const tab = run === null ? landingFor(tabs) : tabFor(tabs, run);
   // `readAlertSwitch` always answers a boolean; anything else reads as the page's button does, off.
   const weekly = reads.alerts?.weekly === true;
-  const view = { all: all === true, create: {}, close: Boolean(tab?.ended), alerts: { weekly } };
+  // The way to `/items`, counting the open queue as the overview tab's link does (`renderStrip`);
+  // `here` on the items page itself, where it is the way back.
+  const items = { count: queueOf(reads.items).length, here: screen === 'items' };
+  const view = { all: all === true, items, create: {}, close: Boolean(tab?.ended), alerts: { weekly } };
   if (!tab) {
     // Named as their tabs are (`renderCreate`'s options), or `D<n> <dir>` for a deck with no tab.
     view.create.repos = Object.entries(reads.numbers ?? {}).map(([repo, number]) => {

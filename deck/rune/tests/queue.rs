@@ -291,6 +291,94 @@ fn a_failed_post_comes_back_through_settle() {
     );
 }
 
+/// The window over a recorded queue region, drawn once.
+fn recorded(queue: Value) -> Runtime<State> {
+    let state = State {
+        view: pilot_deck::client::View {
+            screen: "home".into(),
+            seq: 1,
+            regions: [("queue".to_string(), queue)].into_iter().collect(),
+        },
+        ..State::default()
+    };
+    let mut rt = Runtime::new(state, app::view, (1280.0, 800.0), Env::new(true, 1.0));
+    rt.frame(0.0);
+    rt
+}
+
+#[test]
+fn pressing_a_card_title_opens_its_thread() {
+    let id = "itm_00000000c1";
+    let mut rt =
+        recorded(json!({ "cards": [{ "id": id, "title": "Which port?", "excerpt": "" }] }));
+
+    click(&mut rt, &format!("card-{id}-title"));
+
+    assert_eq!(rt.state.query.screen, "thread");
+    assert_eq!(rt.state.query.id.as_deref(), Some(id));
+}
+
+#[test]
+fn a_card_excerpt_is_drawn_as_markdown() {
+    let id = "itm_00000000c2";
+    let rt = recorded(json!({ "cards": [{
+        "id": id, "title": "Read me", "excerpt": "**Bold** words and `code`\n\n- one\n- [a link](https://example.com)" }] }));
+
+    let shown = texts(&rt);
+    assert!(
+        shown
+            .iter()
+            .all(|t| !t.contains("**") && !t.contains('`') && !t.contains("](")),
+        "no markdown syntax drawn raw: {shown:?}"
+    );
+    assert!(
+        shown.iter().any(|t| t.contains("Bold")),
+        "the excerpt's words are drawn: {shown:?}"
+    );
+    find(&rt, &format!("card-{id}-excerpt"));
+}
+
+#[test]
+fn the_thread_screen_draws_the_thread_alone_inside_the_window() {
+    let deck = Scratch::start();
+    let first = question(&deck, "First?", "C:/work/alpha");
+    for title in ["Second?", "Third?"] {
+        question(&deck, title, "C:/work/alpha");
+    }
+    let client = client_for(&deck);
+    let query = Query {
+        screen: "thread".into(),
+        id: Some(first.clone()),
+        ..Query::default()
+    };
+    let view = client.view(&query).expect("the thread's view");
+    let state = State {
+        view,
+        query,
+        ..State::default()
+    };
+    let (w, h) = (1440.0, 900.0);
+    let mut rt = Runtime::new(state, app::view, (w, h), Env::new(true, 1.0));
+    rt.frame(0.0);
+    rt.frame(1.0);
+
+    let cards: Vec<String> = rt
+        .elements()
+        .into_iter()
+        .filter_map(|element| element.key)
+        .filter(|key| key.starts_with("card-"))
+        .collect();
+    assert!(
+        cards.is_empty(),
+        "no queue card on the thread screen: {cards:?}"
+    );
+    let reply = find(&rt, "reply").rect;
+    assert!(
+        reply[1] + reply[3] <= h,
+        "the reply box ends inside the window: {reply:?}"
+    );
+}
+
 #[test]
 fn the_lane_lines_are_columns() {
     let deck = Scratch::start();

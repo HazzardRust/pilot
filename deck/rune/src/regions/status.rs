@@ -8,6 +8,7 @@ use serde::Deserialize;
 
 use crate::app::State;
 use crate::client::Query;
+use crate::regions::notifications::open_thread;
 use crate::theme::{self, space};
 
 #[derive(Debug, Default)]
@@ -142,13 +143,20 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                             .color(t.text_secondary),
                     );
                 }
-                if slice.href.is_some() {
-                    line = line.child(
-                        text("yours")
-                            .key(format!("{row_key}{i}-yours"))
-                            .font(type_::LABEL)
-                            .color(t.text),
-                    );
+                if let Some(href) = &slice.href {
+                    let mut yours = text("yours")
+                        .key(format!("{row_key}{i}-yours"))
+                        .font(type_::LABEL)
+                        .color(t.text);
+                    // The page's link goes to the thread; a link the view shaped otherwise opens nothing.
+                    if let Some(id) = href.strip_prefix("/thread/").filter(|id| !id.is_empty()) {
+                        let id = id.to_string();
+                        yours = yours
+                            .role("link")
+                            .focusable(true)
+                            .on_press(move |s: &mut State| open_thread(s, &id));
+                    }
+                    line = line.child(yours);
                 }
                 table.child(line)
             })

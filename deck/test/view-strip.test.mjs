@@ -80,7 +80,7 @@ test('an ended tab offers Start, or Resume when it holds a ticket, and Close; a 
   assert.equal(stripView(reads(), { run: ENDED }).start, 'start');
   assert.equal(stripView(reads({ items: [held] }), { run: ENDED }).start, 'resume');
   assert.equal(stripView(reads(), { run: ENDED }).close, true);
-  assert.deepEqual(stripView(reads(), { run: LIVE }), { all: false, tab: { repo: LIVE, code: 'D1' }, create: {}, close: false, alerts: { weekly: true } });
+  assert.deepEqual(stripView(reads(), { run: LIVE }), { all: false, items: { count: 0, here: false }, tab: { repo: LIVE, code: 'D1' }, create: {}, close: false, alerts: { weekly: true } });
 });
 
 test('the overview asks which numbered deck, named as its tab', () => {
@@ -99,6 +99,16 @@ test('a refused Start is said only on a tab that has a Start', () => {
 
   assert.equal(stripView(reads(), { run: LIVE, sessionRefused: said }).sessionRefused, undefined);
   assert.equal(stripView(reads(), { run: ENDED, sessionRefused: 42 }).sessionRefused, undefined);
+});
+
+test('the items link counts the open queue, as the overview tab does', () => {
+  const open = { id: 'itm_0000000000q1', kind: 'question', title: 'Which?', body: '', repo: LIVE, postedAt: AT, replies: [] };
+  const closed = { ...open, id: 'itm_0000000000q2', resolvedAt: AT, resolution: 'decided' };
+
+  assert.deepEqual(stripView(reads({ items: [open, closed] }), { run: LIVE }).items, { count: 1, here: false });
+  assert.deepEqual(stripView(reads(), {}).items, { count: 0, here: false }, 'the overview has the link too');
+  assert.deepEqual(stripView(reads(), { screen: 'items' }).items, { count: 0, here: true }, 'on the items page it is the way back');
+  assert.equal(stripView(reads(), { screen: 'thread' }).items.here, false, 'a thread leads to the items page');
 });
 
 test('the region is the view\'s strip', () => {

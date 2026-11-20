@@ -97,6 +97,18 @@ test('a handoff confirms Handoff failed with its kind\'s sentence', (t) => {
     { label: HANDOFF_FAILED, confirm: true, ask: askFor(KIND_HANDOFF, handoff), yes: 'Confirm' });
 });
 
+test('only the home screen has a queue: the thread and items pages draw no card and no state line', (t) => {
+  tempDeck(t);
+  registerRun({ repo: ALPHA, pid: process.pid });
+  const asked = ask('Which port?', ALPHA);
+  const reads = readDeck();
+
+  assert.equal(queueView(reads, { screen: 'home', run: ALPHA }).cards.length, 1, 'home has the card');
+  for (const screen of ['thread', 'items']) {
+    assert.deepEqual(queueView(reads, { screen, run: ALPHA, id: asked.id }), { cards: [], stateLines: [] }, screen);
+  }
+});
+
 test('the lane lines are in phase order', (t) => {
   tempDeck(t);
   // Strip order is concluding, planning, implementing; the lines read planning, implementing, concluding.

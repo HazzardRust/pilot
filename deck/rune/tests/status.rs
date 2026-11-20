@@ -168,6 +168,49 @@ fn a_view_with_no_status_draws_nothing_of_it() {
 }
 
 #[test]
+fn pressing_yours_opens_the_thread_it_links() {
+    let rows = json!({ "rows": [{ "slice": "S1 the slice", "state": "review", "href": "/thread/itm_00000000y1", "after": [] }] });
+    let mut rt = frame(State {
+        view: view_with(rows),
+        ..State::default()
+    });
+    rt.frame(1.0);
+
+    let (x, y) = rt
+        .find("status-row-0-yours")
+        .expect("the yours link is drawn");
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(0.0);
+
+    assert_eq!(rt.state.query.screen, "thread");
+    assert_eq!(rt.state.query.id.as_deref(), Some("itm_00000000y1"));
+}
+
+#[test]
+fn a_yours_link_not_to_a_thread_opens_nothing() {
+    for href in ["/thread/", "/items"] {
+        let rows = json!({ "rows": [{ "slice": "S1 the slice", "state": "review", "href": href, "after": [] }] });
+        let mut rt = frame(State {
+            view: view_with(rows),
+            ..State::default()
+        });
+        rt.frame(1.0);
+
+        let (x, y) = rt
+            .find("status-row-0-yours")
+            .expect("the yours mark is drawn");
+        rt.pointer_move(x, y);
+        rt.pointer_down(x, y);
+        rt.pointer_up(x, y);
+        rt.frame(0.0);
+
+        assert_eq!(rt.state.query.screen, "home", "{href} opens nothing");
+    }
+}
+
+#[test]
 fn choosing_a_ticket_sets_the_query_without_reading_on_the_ui_thread() {
     let mut state = State {
         view: view_with(two_lanes("yellow")),
