@@ -47,7 +47,12 @@ test('a locked option is the page\'s disabled one: pressed answers lock, a signe
   const cases = [
     anItem({ kind: 'gate2', options: ['Sign off', 'Not yet'], replies: [said('Sign off')] }),
     anItem({ kind: 'gate1', options: ['Sign off', 'Not yet'], replies: [said('Not yet')] }),
-    anItem({ kind: 'gate2', options: ['Sign off', 'Not yet'], replies: [said('Sign off')], landing: { state: 'queued' } }),
+    // Every landing state that locks a signed gate's Not yet, and one that does not.
+    ...['queued', 'running', 'landed', 'refused', 'failed'].map((state) =>
+      anItem({ kind: 'gate2', options: ['Sign off', 'Not yet'], replies: [said('Sign off')], landing: { state } })),
+    anItem({ kind: 'signoff', options: ['Ship', 'Hold'], replies: [said('Ship')] }),
+    anItem({ kind: 'crew-handoff', options: ['Handoff failed'], replies: [said('Handoff failed')] }),
+    anItem({ kind: 'handoff', options: ['Picked up'] }),
     anItem({ kind: 'question', options: ['Yes', 'No'], blocking: true, replies: [said('Yes')] }),
     anItem({ kind: 'walkthrough', replies: [said('Sign off')] }),
     anItem({ kind: 'audit', options: ['a', 'none'], replies: [said('none')] }),
