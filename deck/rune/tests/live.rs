@@ -67,9 +67,11 @@ fn frame_until(
     }
 }
 
+/// What the window shows: an element animating out (the banner leaving) is no longer shown.
 fn texts(rt: &Runtime<State>) -> Vec<String> {
     rt.elements()
         .into_iter()
+        .filter(|element| !element.exiting)
         .filter_map(|element| element.text)
         .collect()
 }
