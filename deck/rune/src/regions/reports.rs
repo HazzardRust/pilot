@@ -44,10 +44,8 @@ pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
         .iter()
         .filter(|one| shown(prefs, &one.id))
         .collect();
-    let mut panel = col()
-        .key("reports")
-        .gap(space::within)
-        .child(text("Closing reports").font(type_::BODY).color(t.text));
+    // The panel's header is the layout's (S20).
+    let mut panel = col().key("reports").gap(space::within);
     if listed.is_empty() {
         let none = if view.reports.is_empty() {
             "no reports"

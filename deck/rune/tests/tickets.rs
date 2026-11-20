@@ -84,8 +84,11 @@ fn view_of(deck: &Scratch) -> pilot_deck::client::View {
         .expect("the scratch deck's view")
 }
 
-/// The window over the repository's tab as it stands now, with `prefs`, drawn once.
-fn drawn(deck: &Scratch, prefs: Prefs) -> Runtime<State> {
+/// The window over the repository's tab as it stands now, with `prefs` and the Tickets panel open
+/// tall enough to hold every row (S20), drawn once.
+fn drawn(deck: &Scratch, mut prefs: Prefs) -> Runtime<State> {
+    prefs.open_panels.insert("tickets".into());
+    prefs.sizes.insert("tickets".into(), (304.0, 3000.0));
     let state = State {
         view: view_of(deck),
         prefs,
