@@ -242,7 +242,7 @@ export async function main() {
   };
   archive();
   setInterval(archive, ARCHIVE_EVERY_MS).unref();
-  // A wait stuck past the stall age under a pilot run is stopped and its repository told (wait-deadlines S3, A1).
+  // A wait stuck past the stall age under a live registered run is stopped and its repository told (wait-deadlines S3, A1).
   const stallAgeS = stallAgeOf(process.env, Boolean(leash));
   const note = (repo, line) => {
     try {
