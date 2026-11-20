@@ -24,6 +24,7 @@ import path from 'node:path';
 
 import { hostFor } from '../deck/host.mjs';
 import { deleteMerged } from './branches.mjs';
+import { checksGate } from './checks.mjs';
 import { assertPushable, firstLine, holds, PILOT_BRANCH } from './pilot-branch.mjs';
 import { baseOf, chainLanded, commitRecords, git as gitAt, landingMessage } from './integrate.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
@@ -215,6 +216,9 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
     throw fail(`${firstLine(err)}; nothing pushed`);
   }
   chainGuard({ cwd });
+  // The caught-up tip's checks, before the record commit or any push (ci-gate L4, A2): red, pending, unread refuse.
+  const checks = checksGate({ host, git, sha: git(['rev-parse', 'HEAD']) });
+  if (!checks.ok) throw fail(`${checks.line}; nothing pushed`);
   // A record base of pilot is a legacy run, and so is a record with no base, or no record: it keeps the release PR (audit-f14 A3).
   const recorded = recordBase(cwd, head);
   const legacy = recorded === undefined || recorded === PILOT_BRANCH;

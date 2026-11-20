@@ -17,6 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { githubHost } from '../../deck/host-github.mjs';
+import { greenChecks } from './lib/land-repos.mjs';
 
 const { main } = await import('../land.mjs');
 
@@ -91,7 +92,7 @@ function landFrom(feat, withGh = gh, withGit = gitIn(feat), extra = {}) {
   process.stdout.write = (text) => out.push(String(text));
   process.chdir(feat);
   try {
-    return { code: main([], { cwd: feat, git: withGit, host: githubHost(withGh), ...extra }), out: out.join('') };
+    return { code: main([], { cwd: feat, git: withGit, host: githubHost(greenChecks(withGh)), ...extra }), out: out.join('') };
   } finally {
     process.stdout.write = write;
     process.chdir(before);

@@ -16,7 +16,7 @@ import { SHA_FIELD } from './items-bounds.mjs';
 const CHECK_MS = 5000;
 
 /** `git` in `repo` under one deadline (`gitUnder`), answering stdout; throws on a non-zero exit. */
-function checkGit(repo) {
+export function checkGit(repo) {
   const git = gitUnder(repo, { timeout: CHECK_MS });
   return (_cwd, args) => {
     let out;

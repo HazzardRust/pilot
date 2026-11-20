@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { githubHost } from '../../deck/host-github.mjs';
+import { greenChecks } from './lib/land-repos.mjs';
 
 const { land } = await import('../land.mjs');
 
@@ -66,7 +67,7 @@ function fakeGh(prs = [], heads = []) {
     if (args[0] === 'pr' && args[1] === 'comment') return '';
     throw new Error(`unexpected gh ${args.join(' ')}`);
   };
-  return { host: githubHost(gh), calls };
+  return { host: githubHost(greenChecks(gh)), calls };
 }
 
 test("land pushes the landing to the second remote's pilot", (t) => {

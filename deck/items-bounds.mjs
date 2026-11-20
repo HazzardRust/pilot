@@ -181,6 +181,9 @@ const SHELL_FIELD = { name: 'shell', most: 40 };
 /** A gate's commit, case-blind; also the shape `deck/gate2-base.mjs` checks before git sees it. */
 const SHA_FIELD = { name: 'sha', required: true, shape: /^[0-9a-f]{7,40}$/i, means: 'a commit sha' };
 
+/** A gate2's checks (ci-gate spec 4): the one line `pilot checks <sha>` printed, no control character or line break. */
+export const CHECKS_FIELD = { name: 'checks', most: 600, shape: /^[^\p{Cc}\p{Zl}\p{Zp}]+$/u, means: 'one line, as `pilot checks <sha>` printed it' };
+
 /** The most QA's comment on the feature PR carries (deck-writes-github spec 3), well inside GitHub's own 65536. */
 export const MAX_QA_COMMENT_CHARS = 20000;
 

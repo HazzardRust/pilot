@@ -39,10 +39,12 @@ import path from 'node:path';
 
 import { cleanOnPilot } from '../deck/gate2-base.mjs';
 import { hostFor } from '../deck/host.mjs';
+import { FULL_SHA } from '../deck/host-github.mjs';
 import { RUN_BASE } from '../deck/runs.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
 import { deleteMerged } from './branches.mjs';
 import { behavioursOf } from './check-slices.mjs';
+import { checkLine, checksAt } from './checks.mjs';
 import { takeSlot } from './gate-slots.mjs';
 import { mergeIntoPilot } from './sync.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
@@ -190,9 +192,6 @@ export function redLine(label, run) {
   const failing = run.failing.length ? `; failing: ${names}${more}` : '';
   return `${label} merged red: ${run.counts ?? `exit ${run.status}`}${failing}; log ${run.log}`;
 }
-
-/** A full object name, sha-1 or sha-256, as `git rev-parse` prints it: the only text composed into a command. */
-const FULL_SHA = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 
 /**
  * The repository's own test command, `{ command, selected }`: with `since` and a package.json
@@ -432,6 +431,20 @@ export function integrate(branch, options = {}) {
   };
   // A red return: the line, then the merge in hand undone, its failure named on the line.
   const fail = (line, failing = []) => ({ ok: false, line: line + reset(), failing });
+
+  // A red feature tip takes no slice (ci-gate L4): refused before anything merges or pushes. Only red refuses;
+  // green, pending, none and unread leave the line as it was. A host that cannot be built reads as none.
+  if (slice && runs !== null) {
+    let said;
+    try {
+      said = checksAt({ host: host === undefined ? hostFor(cwd, { git: gitIn(cwd) }) : host, sha: start });
+    } catch {
+      said = { state: 'none' };
+    }
+    if (said.state === 'red') {
+      return { ok: false, line: `${not}: ${checkLine(said)}; fix the feature first; nothing merged or pushed`, failing: [] };
+    }
+  }
 
   try {
     // `git merge` has no --trailer: the trailers go in as the message's last paragraph.
