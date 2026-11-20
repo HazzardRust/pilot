@@ -119,24 +119,31 @@ that one long-polls the deck, this one reads a file.
 - **A1 The deck stops a stalled wait itself** (`itm_a80063da6998`). Default: the daemon's scan stops it on L6's proof
   and notes the pilot. Tradeoff: shipped code stops a process with no classifier or human in the loop. Rejected: the
   deck notices and the pilot runs `pilot gc`, which the classifier has refused as a pattern kill before.
+  Answer: "Daemon stops it, on that proof" (default).
+  Verdict: stands — the user pressed "Daemon stops it, on that proof" on itm_a80063da6998
 - **A2 Stop the wait shell only** (`itm_85390435bb33`). Default: the shell; the holder resumes on its exit, unpushed
   work intact. Tradeoff: a holder that is itself stuck stays; the co-pilot's 90-min child rule covers it. Rejected:
-  stopping the agent too, which loses unpushed work.
+  stopping the agent too, which loses unpushed work. Answer: "Stop the wait shell only" (default).
+  Verdict: stands — the user pressed "Stop the wait shell only" on itm_85390435bb33; both holders of the stopped waits A and B resumed with their work intact
 - **A3 Hook refusal plus `pilot wait-for`** (`itm_e481d11f4790`). Default as spec 2-4. Tradeoff: a refusal can
   misfire (L4 limits it). Rejected: instructions only, which four improvisations already ignored and no test can hold
-  (ADR 0180).
+  (ADR 0180). Answer: "Hook refusal + pilot wait-for" (default).
+  Verdict: stands — the user pressed "Hook refusal + pilot wait-for" on itm_e481d11f4790
 - **A4 50 min** for `--timeout`'s maximum and the stall age (`itm_c71984dbc9b7`). Answer, overturning the 120 default:
   "50 mins, because 60 is when tokens are uncached", with a wake-up call. Locked: the agent wakes inside the one-hour
   prompt cache, as `pilot wait` already stops at 50; the timeout is the wake-up call and a re-armed wait is counted and
   reported (spec 4), so a long real wait is a chain of bounded waits. A `timeout <n>` over 3000 s is no bound (S2).
   The 5-min scan stands: a stalled wait goes within 55 min. Tradeoff: a wait longer than 50 min costs one wake per 50.
   Rejected: 120 (a wake after the cache is cold), 30 (under a slow full suite plus queueing).
+  Verdict: overturned: the user set 50 minutes, not 120, so an agent wakes inside the one-hour prompt cache, with the timeout as the wake-up call and a re-armed wait counted and reported (itm_c71984dbc9b7)
 - **A5 QA on a scratch deck with planted processes** (`itm_b788644fdd9c`). Rejected: also report-only on the live deck.
   Answer: "Scratch deck + planted processes" (default).
+  Verdict: stands — the user pressed "Scratch deck + planted processes" on itm_b788644fdd9c
 - **A6 The holder is named from transcripts.** Default: `holderOfCommand` finds the subagent transcript whose Bash
   call holds the loop's marker and file, returning its agent type and id; `unknown` when none or several match.
   Tradeoff: reads the undocumented transcript format (as `transcripts.mjs` already does). Rejected: a ledger the
   hook writes per Bash call (a write on every call, the hottest path); no name at all (spec 5 asks for it).
+  Verdict: stands — no queued ticket adds a shell-to-agent map; crew-handoff-trace records hand-offs, not pids, so the transcript read is the only source
 
 ## 7. Out of scope
 
