@@ -96,6 +96,11 @@ test('a body slug off SLUG is dropped', () => {
   assert.deepEqual(heldSlugs(view), []);
 });
 
+test('a malformed view holds nothing and never throws', () => {
+  assert.deepEqual(heldSlugs({ open: { body: 'docs/design/x/' }, records: 'x' }), []);
+  assert.deepEqual(heldSlugs({ open: [null, ticket('docs/design/y/')], records: [null] }), ['y']);
+});
+
 test('a deck that was not read cannot tell', () => {
   const calls = [];
   const git = (args) => (calls.push(args), '');

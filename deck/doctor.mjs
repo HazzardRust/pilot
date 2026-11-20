@@ -184,9 +184,12 @@ const VIEW_TIMEOUT_MS = 5000;
  * once each in the order named, minus the slugs of this deck's own run records, which are its runs and no clash.
  */
 export function heldSlugs(view) {
-  const own = new Set((view?.records ?? []).map((record) => record?.slug));
+  // The deck's answer is data: anything not an array holds nothing, so a malformed view never stops `start` (A2).
+  const listOf = (value) => (Array.isArray(value) ? value : []);
+  const own = new Set(listOf(view?.records).map((record) => record?.slug));
   const held = new Set();
-  for (const { body } of view?.open ?? []) {
+  for (const ticket of listOf(view?.open)) {
+    const body = ticket?.body;
     if (typeof body !== 'string') continue;
     for (const [, slug] of body.matchAll(DESIGN_PATH)) {
       if (slug.length <= MAX_SLUG_CHARS && SLUG.test(slug) && !own.has(slug)) held.add(slug);
