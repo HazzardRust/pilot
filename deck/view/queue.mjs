@@ -42,7 +42,7 @@ function excerptOf(body) {
   return [...text.split('\n').slice(0, PREVIEW_LINES).join('\n')].slice(0, PREVIEW_CHARS).join('');
 }
 
-function cardOf(item, { items, tab, back, all }) {
+export function cardOf(item, { items, tab, back, all }) {
   const state = threadState(item);
   return {
     id: item.id,

@@ -142,7 +142,7 @@
     },
     {
       "slice": "S16",
-      "state": "implementing",
+      "state": "pushed 547c134 — cargo test on final head and rust re-read pending",
       "after": [
         "S6"
       ],
@@ -151,7 +151,7 @@
     },
     {
       "slice": "S17",
-      "state": "pushed 0321848",
+      "state": "integrated at dbeb862 — rust/typescript/security APPROVE; 434 production lines, limit waived by co-pilot; 4802/0; seam in S17.md; strip sits at the column foot until S20",
       "after": [
         "S6"
       ],
@@ -160,7 +160,7 @@
     },
     {
       "slice": "S18",
-      "state": "implementing",
+      "state": "integrated at d015168 — rust APPROVE with changes, typescript WARN; ~230 production lines; 4806/0; open: refused dismiss leaves the button disabled (to step 7); days/items look to QA",
       "after": [
         "S7"
       ],
@@ -178,17 +178,21 @@
     },
     {
       "slice": "S20",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S10"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s20",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s20"
     },
     {
       "slice": "S21",
-      "state": "planned (added: Escape and left-arrow without Tab)",
+      "state": "implementing",
       "after": [
         "S8"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s21",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s21"
     },
     {
       "slice": "S22",
@@ -205,25 +209,9 @@
       ]
     }
   ],
-  "next": "integrating S17; S16, S18, S19 implementing; pilot ready for S20-S23 as slots free",
-  "updatedAt": "2026-11-20T02:28:11.785Z",
+  "next": "integrating S16; S19, S20, S21 implementing; S22, S23 next as slots free; then base check, fundamentalist, QA",
+  "updatedAt": "2026-11-20T02:56:01.859Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "one session held three planning runs, two short-path builds, a landing and a co-pilot; reached the context advisory at 230k",
-      "size": 3
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "pilot verdicts wrote A6's Verdict line under the Red team heading and exited 0; moved back by hand",
-      "evidence": "rune-deck-ui architecture.md: Verdict at line 152 under 'Red team' at 151, not under A6's Answer at 149",
-      "size": 2
-    },
-    {
-      "kind": "drain",
-      "what": "hand-off record said 'architect gone' while the first Rune architect was still live; a second was spawned on the same worktree and the first stopped",
-      "size": 2
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S1 diff budget (300) did not fit a crate-bootstrap slice owning ~48 new files; size in changed lines",
@@ -441,6 +429,24 @@
       "what": "S17: a CARGO_TARGET_DIR at the worktree root fails the README directory test; brief should say deck/rune/target; headless presses right after a layout change land on an animating sibling",
       "evidence": "S17 report 0321848; scripts/test/deck-readme.test.mjs",
       "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S18: cold worktree needs npm ci before cargo test; concurrent cargo builds on one target corrupt the PDB (LNK1285); did not find the --snap path other slices used",
+      "evidence": "S18 report f34f2b7",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "C: filled (7.4G free) from per-worktree cargo targets of ~6-11G each; S19's rustc died with no space on device; freed 58G by deleting integrated slices' targets",
+      "evidence": "S19 message; df before 8.9G after 67G",
+      "size": 58
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S16: disk full mid-gate so cargo test never ran on the merged head; support::client_for's private lock let another binary's env race reach the user's 4321 deck; S16 and S17 each wrote a Location percent-decoder",
+      "evidence": "S16 report 547c134; tabs.rs param, strip.rs refusal_in",
+      "size": 4
     }
   ]
 }
