@@ -41,6 +41,7 @@ that other people's projects are pushed onto.
 | 22 | *added (restyle, feedback 9; itm_1ca41d7c120d answered A: Inter + JetBrains Mono, 13 bold / 13 / 11)*: a bundled font in at most three type scales. | S33 type-scale test; the snap | every text on one of 3 scales; the bundled family drawn |
 | 23 | *added (restyle, the user's pick on itm_2d4d885b5e13)*: the theme's values live in one JSON file that a token playground page edits and exports 1:1, with colour mixes equal to Rune's; a native Rune screenshot stays the final check. | S36 theme json test; S37 page in a browser, a round-tripped export, playground mix test | export of the defaults byte-equal; 0 mix mismatches |
 | 24 | *added (restyle, feedback 14; arrangement assumed A-R4)*: the reply box reads options, then the box, then quiet Close and Dismiss on the left with Reply the one primary at the right; a confirm sits beside its button. | S38 layout and confirm tests | order as stated; 1 primary; 3, 6c, 15 replays green |
+| 25 | *added (feedback 18)*: the mouse's back and forward buttons and Alt+Left/Right move through the threads and pages visited, as a browser does. | S39 history and key tests; a live press | push/back/forward as a stack; forward cleared on a new push |
 
 ## 3. Findings
 
@@ -230,6 +231,7 @@ Width 15; longest stem 5
 | S36 | theme.rs takes its values from one JSON file (added) | 23, 2 | `deck/rune/theme.json`, `src/theme.rs`, `tests/theme.rs`, `deck/DESIGN.md` §4 | S26 | `pilot:rust-reviewer` | [S36](slices/S36.md) |
 | S37 | The token playground: one page that exports theme.json (added) | 23 | `deck/rune/playground/`, `tests/theme.rs` | S36 | `pilot:typescript-reviewer` | [S37](slices/S37.md) |
 | S38 | The reply box, reorganised (added) | 24, 3, 6c, 15 | `deck/rune/src/regions/reply.rs`, `tests/reply.rs` | S26 | `pilot:rust-reviewer` | [S38](slices/S38.md) |
+| S39 | Back and forward: the mouse side buttons and Alt+Left/Right (added) | 25 | `src/app.rs`, `regions/thread.rs` and `strip.rs` `go`, `tests/nav.rs` | S29, S30 | `pilot:rust-reviewer` | [S39](slices/S39.md) |
 
 Rust paths after S1 are under `deck/rune/`. S1 first by risk: if Rune will not build or paint headless here, every
 other slice's plan changes. Then S5 (the write seam nine actions share), then the regions by the actions they need.
@@ -286,6 +288,7 @@ other slice's plan changes. Then S5 (the write seam nine actions share), then th
 | S36 | planned (added) | | | | S26 | 23, 2 |
 | S37 | planned (added) | | | | S36 | 23 |
 | S38 | planned (added) | | | | S26 | 24 |
+| S39 | planned (added) | | | | S29, S30 | 25 |
 | S32 | planned (added) | | | | S30, S31 | 21 |
 | S33 | planned (added) | | | | S27, S30, S31 | 22 |
 | S34 | planned (added) | | | | S36 | 2 |
