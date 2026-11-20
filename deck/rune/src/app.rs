@@ -1,7 +1,7 @@
 //! The window's state and its one view: every region drawn from one `View` (spec 6a).
 
 use rune::tok::{self, type_};
-use rune::{AppSpec, Cx, El, Tx, Waker, col, text};
+use rune::{AppSpec, Cx, El, Titlebar, Tx, Waker, col, text};
 
 use crate::act;
 use crate::client::{Client, Query, View};
@@ -9,7 +9,7 @@ use crate::layout;
 use crate::live::{self, Feed};
 use crate::prefs::{self, Prefs};
 use crate::regions::{self, Locals};
-use crate::theme::space;
+use crate::theme::{size, space};
 
 #[derive(Debug, Default)]
 pub struct State {
@@ -66,9 +66,13 @@ pub fn spec() -> AppSpec<State> {
 }
 
 /// The window's app: `spec`, with Tab and Shift+Tab visiting every focusable control, as Rune
-/// visits only text fields and lists by default.
+/// visits only text fields and lists by default, and the window's own title bar in place of the
+/// native one (DESIGN.md §4b): Rune keeps the resize edges, snap layouts and caption buttons, and
+/// `layout::strips` draws the band that drags the window.
 pub fn app() -> rune::App<State> {
-    rune::App::new(spec()).tab_visits_controls(true)
+    rune::App::new(spec())
+        .tab_visits_controls(true)
+        .titlebar(Titlebar::new(size::titlebar))
 }
 
 /// Starts the live reader on the window's query; a client refused here leaves `load`'s word.
