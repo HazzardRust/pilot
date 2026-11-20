@@ -39,6 +39,7 @@ that other people's projects are pushed onto.
 | 20 | *added (restyle, feedback 6)*: the right strip's buttons are one aligned column, rounded, coloured by role. | S29 strip test | one width and x; radius 4; 0 state-colour fills |
 | 21 | *added (restyle, DESIGN.md §3)*: every region draws its empty state, and "deck not running" offers Retry. | S32 empty and retry tests | 0 blank regions on the empty deck; Retry reconnects at once |
 | 22 | *added (restyle, feedback 9; itm_1ca41d7c120d answered A: Inter + JetBrains Mono, 13 bold / 13 / 11)*: a bundled font in at most three type scales. | S33 type-scale test; the snap | every text on one of 3 scales; the bundled family drawn |
+| 23 | *added (restyle, the user's pick on itm_2d4d885b5e13)*: the theme's values live in one JSON file that a token playground page edits and exports 1:1, with colour mixes equal to Rune's; a native Rune screenshot stays the final check. | S36 theme json test; S37 page in a browser, a round-tripped export, playground mix test | export of the defaults byte-equal; 0 mix mismatches |
 
 ## 3. Findings
 
@@ -223,8 +224,10 @@ Width 15; longest stem 5
 | S31 | Left panes' contents: content selects, rows on the grid (added) | 17 | `regions/notifications.rs`, `chat.rs`, `status.rs`, `graph.rs`, `agents.rs`, `tickets.rs`, `reports.rs`, their tests | S26 | `pilot:rust-reviewer` | [S31](slices/S31.md) |
 | S32 | Every region designs its empty and error states (added) | 21 | `src/app.rs`, `src/live.rs`, the regions' empty lines, `tests/empty.rs`, `tests/live.rs` | S30, S31 | `pilot:rust-reviewer` | [S32](slices/S32.md) |
 | S33 | The deck's font and its three type scales (added; itm_1ca41d7c120d answered A) | 22 | `deck/rune/assets/fonts/`, `src/app.rs`, `src/theme.rs`, the regions' `.font` | S27, S30, S31 | `pilot:rust-reviewer` | [S33](slices/S33.md) |
-| S34 | The palette's values (added, waits) | 2 | `src/theme.rs` role values, `tests/theme.rs` | S26 | `pilot:rust-reviewer` | [S34](slices/S34.md) |
+| S34 | The palette's values (added, waits on the user's export) | 2 | `deck/rune/theme.json` values, `tests/theme.rs` | S37 | `pilot:rust-reviewer` | [S34](slices/S34.md) |
 | S35 | The spacing on the 4/8 grid (added) | 6b | `deck/rune/src/theme.rs` `space`, old spacing pins | S28, S29, S30, S31 | `pilot:rust-reviewer` | [S35](slices/S35.md) |
+| S36 | theme.rs takes its values from one JSON file (added) | 23, 2 | `deck/rune/theme.json`, `src/theme.rs`, `tests/theme.rs`, `deck/DESIGN.md` §4 | S26 | `pilot:rust-reviewer` | [S36](slices/S36.md) |
+| S37 | The token playground: one page that exports theme.json (added) | 23 | `deck/rune/playground/`, `tests/theme.rs` | S36 | `pilot:typescript-reviewer` | [S37](slices/S37.md) |
 
 Rust paths after S1 are under `deck/rune/`. S1 first by risk: if Rune will not build or paint headless here, every
 other slice's plan changes. Then S5 (the write seam nine actions share), then the regions by the actions they need.
@@ -277,8 +280,10 @@ other slice's plan changes. Then S5 (the write seam nine actions share), then th
 | S29 | planned (added) | | | | S26 | 20 |
 | S30 | planned (added) | | | | S26 | 17 |
 | S31 | planned (added) | | | | S26 | 17 |
-| S35 | planned (added) | | | | S28, S29, S30, S31 | 6b |
+| S35 | planned (added) | | | | S28, S29, S30, S31, S36 | 6b |
+| S36 | planned (added) | | | | S26 | 23, 2 |
+| S37 | planned (added) | | | | S36 | 23 |
 | S32 | planned (added) | | | | S30, S31 | 21 |
 | S33 | planned (added) | | | | S27, S30, S31 | 22 |
-| S34 | planned (added) | | | | S26 | 2 |
+| S34 | planned (added) | | | | S37 | 2 |
 | Deck UI rebuilt in Rune | planned | `feat/rune-deck-ui` | | | S1-S20 | 1-11 |
