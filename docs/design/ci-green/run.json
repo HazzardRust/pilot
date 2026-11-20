@@ -14,8 +14,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-ci-green-s1"
     }
   ],
-  "next": "ci-green: S1 pushed 7bb01c40, both reviewers APPROVE; pilot integrate into feat/ci-green running. Then read PR #127's three Gate jobs (B4) and §3's table against the logs (B5), then pilot integrate --trial and post gate2 (short path, surface per the signed plan). Follow-up noted by security reviewer: `{` not in the guard's non-literal set (outside S1).",
-  "updatedAt": "2026-11-19T17:06:06.436Z",
+  "next": "ci-green: gate2 itm_c6ad0caef772 posted at d588a89 (PR #127, three Gate jobs success, trial clean). Waits on the user's Sign off press; on the press spawn pilot-lander with the gate2 id. After landing: spec 5, open feature branches take green pilot by merge. Possible follow-up, unticketed: `{` in the guard's non-literal set.",
+  "updatedAt": "2026-11-19T17:27:35.612Z",
   "friction": [
     {
       "agent": "pilot:typescript-reviewer",
