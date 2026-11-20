@@ -14,8 +14,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-coverage-install-s1"
     }
   ],
-  "next": "S1 pushed 778504a5, both reviewers WARN (accepted: security MEDIUMs pre-existing, moved from the fundamentalist's step). Now: pilot integrate into feat/coverage-install, then integrate --trial and post gate2 (surface false, PR #130), naming the unfixed security findings and that no real spawned runner was observed.",
-  "updatedAt": "2026-11-20T06:59:09.702Z",
+  "next": "Green, live concluding. gate2 itm_164350f6d70f (main's, short path, c133d364, PR #130) awaits Sign off; on press spawn pilot-lander with that id. Blocking item itm_d438345c27cc is mis-filed on this ticket (QA rune's refused wait; user said try again; QA told to rerun): close it Moot once QA confirms, else gate2 is refused.",
+  "updatedAt": "2026-11-20T07:50:32.749Z",
   "friction": [
     {
       "agent": "architect",
