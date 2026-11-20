@@ -60,7 +60,7 @@ test('a release with no live co-pilot leaves no row', async (t) => {
   const ticket = postStored({ kind: KIND_TICKET, title: 'idle', body: shapedTicketBody('idle'), repo: REPO, sliceCount: 60, state: 'yellow' });
 
   assert.match(await tool(base, 'deck_ticket', { id: ticket.id, action: 'release' }), /no co-pilot is live here/);
-  assert.deepEqual(await traced(ticket.id), [`no trace rows for ${ticket.id}`, 'waiting: posted, 0m']);
+  assert.deepEqual(await traced(ticket.id), [`no trace rows for ${ticket.id}`, 'no hand-off']);
 });
 
 test('resolving a crew-handoff leaves a row', async (t) => {
@@ -73,8 +73,8 @@ test('resolving a crew-handoff leaves a row', async (t) => {
 
   const lines = await traced(handoff.id);
   assert.match(lines[0], new RegExp(` resolved crew-handoff item=${handoff.id}$`));
-  assert.equal(lines.at(-1), 'done');
-  assert.deepEqual(await traced(question.id), [`no trace rows for ${question.id}`, 'waiting: posted, 0m'], 'a question leaves nothing');
+  assert.match(lines.at(-1), /^waiting: spawned, \d+m$/, 'resolved by hand, never spawned');
+  assert.deepEqual(await traced(question.id), [`no trace rows for ${question.id}`, 'no hand-off'], 'a question leaves nothing');
 });
 
 test("the user's press leaves a row", async (t) => {

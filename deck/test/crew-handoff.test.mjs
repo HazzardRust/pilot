@@ -66,8 +66,9 @@ test('a grant closes its ticket\'s crew-handoff', async (t) => {
   assert.equal(byId(handoff).resolution, 'successor granted');
   const lines = await traced(handoff);
   assert.match(lines[0], new RegExp(` posted crew-handoff item=${handoff} ticket=${ticket.id}$`));
-  assert.match(lines[1], new RegExp(` resolved crew-handoff item=${handoff} ticket=${ticket.id}$`));
-  assert.equal(lines.at(-1), 'done');
+  assert.match(lines[1], new RegExp(` granted crew-handoff ticket=${ticket.id}$`), 'the ticket\'s grant row is on the item\'s timeline');
+  assert.match(lines[2], new RegExp(` resolved crew-handoff item=${handoff} ticket=${ticket.id}$`));
+  assert.match(lines.at(-1), /^waiting: spawned, \d+m$/, 'the grant resolves it; the spawn hook ends it');
 });
 
 test('another ticket\'s crew-handoff stays open', async (t) => {
@@ -94,7 +95,7 @@ test('a close the store refuses is named, and the grant still stands', async (t)
 
   assert.match(said, new RegExp(`: live; ${theirs.id} left open: item ${theirs.id} is owned by architect`));
   assert.deepEqual(openCrewHandoffsOf(listItems(), ticket.id).map((item) => item.id), [theirs.id]);
-  assert.deepEqual(await traced(theirs.id), [`no trace rows for ${theirs.id}`, 'waiting: posted, 0m'], 'no resolved row');
+  assert.deepEqual(await traced(theirs.id), [`no trace rows for ${theirs.id}`, 'no hand-off'], 'no resolved row');
 });
 
 test("the guard's item names its ticket", async (t) => {

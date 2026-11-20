@@ -242,7 +242,8 @@ async function route(request, response, open, start, land, exit, guard) {
     const text = replyFrom(form, answered?.kind);
     // A gate's Sign off is the press that passes it (merge-first L12), so it is the page's alone,
     // as the gate's Dismiss is: an absent Origin, which `isTrustedOrigin` lets through for curl, is refused.
-    const pressed = chosenOf({ options: answered?.options, replies: [{ from: 'user', text }] }) === SIGN_OFF;
+    const chosen = chosenOf({ options: answered?.options, replies: [{ from: 'user', text }] });
+    const pressed = chosen === SIGN_OFF;
     if (isGate(answered?.kind) && pressed && !fromOwnPage(request)) {
       return send(response, 403, 'text/plain; charset=utf-8', "a gate's Sign off is only taken from the deck's own page\n");
     }
@@ -253,7 +254,7 @@ async function route(request, response, open, start, land, exit, guard) {
     }
     // The user's Handoff failed, stored, is the hand-off's last step (crew-handoff-trace spec 1): ids only, never the text.
     const handoff = answered?.kind === KIND_HANDOFF || answered?.kind === KIND_CREW_HANDOFF;
-    if (handoff && chosenOf({ options: answered.options, replies: [{ from: 'user', text }] }) === HANDOFF_FAILED) {
+    if (handoff && chosen === HANDOFF_FAILED) {
       step({ step: 'failed', kind: answered.kind, item: answered.id, ticket: answered.ticket });
     }
     // The page's stored Sign off on a gate2 fills each queued lane in place, never by chainNext (gate2-frees-lane L2), then lands (gate2-lands L1).

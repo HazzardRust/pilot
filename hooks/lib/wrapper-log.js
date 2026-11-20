@@ -37,12 +37,11 @@ function log(text) {
 
 /**
  * Where the hand-off trace lives (crew-handoff-trace A1): one JSON row per line, beside the deck's
- * store. With no home given that is `deckDir()`, so a scratch deck (`PILOT_DECK_DIR`) traces into its
- * own directory and a test run cannot reach the real file (deckDir throws on it).
+ * store, in `deckDir()`, so a scratch deck (`PILOT_DECK_DIR`) traces into its own directory and a
+ * test run cannot reach the real file (deckDir throws on it).
  */
-function traceFile(home) {
-  const dir = home === undefined ? deckDir() : path.join(home, '.claude', 'pilot');
-  return path.join(dir, 'handoff-trace.jsonl');
+function traceFile() {
+  return path.join(deckDir(), 'handoff-trace.jsonl');
 }
 
 /**

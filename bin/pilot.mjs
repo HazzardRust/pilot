@@ -194,7 +194,7 @@ const usage = () => `pilot — the deck for piloted runs
   pilot ready --ticket <id> --slots <n>
                  print the slices the ticket's record lets start now, one per line as
                  S<n> from <feat|branch>, at most n, or none; reads the deck, writes nothing
-  pilot trace <itm_id> [--file <path>]
+  pilot trace <itm_id>
                  print a hand-off's or ticket's trace rows in time order, then done or
                  waiting: <next step>, <age>; reads the trace file, never the deck (exit 2 on a bad id)
   pilot status   whether a deck is running at the deck's url: its pid, its version against

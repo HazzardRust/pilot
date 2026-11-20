@@ -11,7 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { STEPS, timeline, trace } from '../trace.mjs';
+import { timeline, trace } from '../trace.mjs';
 
 const TICKET = 'itm_64084fb89990';
 const CREW = 'itm_7df7fdd3e4a3';
@@ -31,9 +31,48 @@ const NOVEMBER_19 = [
   crew('08:08:31', 'released'),
 ];
 
-test('the step order per kind is the spec 1 order', () => {
-  assert.deepEqual(STEPS.crew, ['posted', 'stopped', 'released', 'granted', 'spawned', 'resolved', 'failed']);
-  assert.deepEqual(STEPS.pilot, ['posted', 'handed', 'cleared', 'submitted', 'resolved', 'failed']);
+// The real writers' order (L3): the grant writes granted then resolved, the spawn hook writes spawned after.
+const WRITERS_ORDER = [
+  crew('07:29:01', 'posted', { item: CREW }),
+  crew('07:29:53', 'stopped', { agent: 'a4a0177a' }),
+  crew('07:30:04', 'released'),
+  crew('07:30:07', 'granted'),
+  crew('07:30:08', 'resolved'),
+  crew('07:30:25', 'spawned', { agent: 'acf7b6eb' }),
+];
+
+test('a crew hand-off spawned after its grant is done', () => {
+  assert.equal(timeline(WRITERS_ORDER, TICKET, Date.parse(at('09:00:00'))).tail, 'done');
+});
+
+test('a crew hand-off granted and resolved but not yet spawned waits on spawned', () => {
+  const seen = timeline(WRITERS_ORDER.slice(0, 5), TICKET, Date.parse(at('07:35:08')));
+  assert.equal(seen.tail, 'waiting: spawned, 5m');
+});
+
+// The stopped, released, granted and spawned rows carry the ticket, never the item (B2): the item's own timeline takes them too.
+test('an item id follows its ticket rows from its posted row on', () => {
+  const before = crew('07:00:00', 'stopped', { agent: 'old' });
+  const itemRows = [WRITERS_ORDER[0], crew('07:30:08', 'resolved', { item: CREW })];
+  const ticketRows = [WRITERS_ORDER[1], WRITERS_ORDER[2], WRITERS_ORDER[3], WRITERS_ORDER[5]];
+  const now = Date.parse(at('09:00:00'));
+  const done = timeline([before, ...itemRows, ...ticketRows], CREW, now);
+  assert.equal(done.tail, 'done');
+  assert.equal(done.rows.length, 6, 'a ticket row older than the posted row is not the item\'s');
+  assert.equal(timeline([...itemRows, ...ticketRows.slice(0, 3)], CREW, Date.parse(at('07:35:08'))).tail, 'waiting: spawned, 5m');
+});
+
+test('a later hand-off of the same ticket is not on an earlier item\'s timeline', () => {
+  const second = 'itm_second00001';
+  const rows = [...WRITERS_ORDER, crew('08:00:00', 'posted', { item: second }), crew('08:00:30', 'stopped', { agent: 'b' })];
+  const now = Date.parse(at('09:00:00'));
+  assert.equal(timeline(rows, CREW, now).tail, 'done');
+  assert.equal(timeline(rows, second, now).tail, 'waiting: released, 1h00m');
+});
+
+test('a failed crew hand-off is done', () => {
+  const rows = [...WRITERS_ORDER.slice(0, 3), crew('07:30:09', 'failed')];
+  assert.equal(timeline(rows, TICKET, Date.parse(at('09:00:00'))).tail, 'done');
 });
 
 test('an unfinished hand-off says what it waits on', () => {
@@ -64,12 +103,23 @@ function traceRun(argv) {
   return trace(argv, { say: (text) => out.push(text), complain: (text) => err.push(text) }).then((code) => ({ code, out: out.join(''), err: err.join('') }));
 }
 
-test('pilot trace prints the rows then the tail from a file', async (t) => {
+/** A scratch deck directory the trace reads from, restored after the test. */
+function scratchDeck(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-trace-'));
-  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const file = path.join(dir, 'handoff-trace.jsonl');
-  fs.writeFileSync(file, `${JSON.stringify(NOVEMBER_19[0])}\nnot json\n\n${JSON.stringify(NOVEMBER_19[1])}\n`);
-  const run = await traceRun([TICKET, '--file', file]);
+  const before = process.env.PILOT_DECK_DIR;
+  process.env.PILOT_DECK_DIR = dir;
+  t.after(() => {
+    if (before === undefined) delete process.env.PILOT_DECK_DIR;
+    else process.env.PILOT_DECK_DIR = before;
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+  return dir;
+}
+
+test('pilot trace prints the rows then the tail from the deck directory', async (t) => {
+  const dir = scratchDeck(t);
+  fs.writeFileSync(path.join(dir, 'handoff-trace.jsonl'), `${JSON.stringify(NOVEMBER_19[0])}\nnot json\n\n${JSON.stringify(NOVEMBER_19[1])}\n`);
+  const run = await traceRun([TICKET]);
   assert.equal(run.code, 0);
   const lines = run.out.trimEnd().split('\n');
   assert.equal(lines.length, 3);
@@ -78,19 +128,18 @@ test('pilot trace prints the rows then the tail from a file', async (t) => {
   assert.match(lines[2], /^waiting: released, \d+h\d\dm$/);
 });
 
-test('pilot trace on a missing file says no rows and waits on posted', async (t) => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-trace-'));
-  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const run = await traceRun(['itm_cc', '--file', path.join(dir, 'none.jsonl')]);
+test('pilot trace on a missing file says no rows and no hand-off', async (t) => {
+  scratchDeck(t);
+  const run = await traceRun(['itm_cc']);
   assert.equal(run.code, 0);
-  assert.equal(run.out, 'no trace rows for itm_cc\nwaiting: posted, 0m\n');
+  assert.equal(run.out, 'no trace rows for itm_cc\nno hand-off\n');
 });
 
-test('pilot trace refuses a bad id with exit 2', async () => {
-  for (const argv of [[], ['../etc/passwd'], ['itm_aa', '--file'], ['itm_aa', '--bogus', 'x']]) {
+test('pilot trace refuses a bad id or an extra argument with exit 2', async () => {
+  for (const argv of [[], ['../etc/passwd'], ['itm_aa', '--file', 'x'], ['itm_aa', '--bogus']]) {
     const run = await traceRun(argv);
     assert.equal(run.code, 2, JSON.stringify(argv));
-    assert.match(run.err, /^pilot trace: usage: pilot trace <itm_id> \[--file <path>\]/);
+    assert.match(run.err, /^pilot trace: usage: pilot trace <itm_id>\n/);
     assert.equal(run.out, '');
   }
 });
