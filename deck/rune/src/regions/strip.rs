@@ -8,10 +8,10 @@ use rune::tok::{self, type_};
 use rune::{Color, Cx, El, Key, TextEdit, col, row, text, text_input};
 use serde::Deserialize;
 
-use crate::act::Acted;
+use crate::act::{self, Acted, Pending};
 use crate::act_deck::DeckAction;
 use crate::app::State;
-use crate::client::{Client, Query, Result};
+use crate::client::{Query, Result};
 use crate::regions::notifications::open_thread;
 use crate::theme::{self, space};
 
@@ -127,41 +127,29 @@ pub fn toggle(s: &mut State) {
     go(s, query);
 }
 
-fn live_post(action: &DeckAction) -> Result<Acted> {
-    Client::from_env().and_then(|client| client.act(action))
+/// The `act::send` keys of the strip's writes, each its control's own key.
+const CREATE: &str = "strip-confirm";
+const ALERTS: &str = "strip-alerts";
+
+/// The key a Start or Close post goes under.
+fn session_key(ask: Ask) -> &'static str {
+    match ask {
+        Ask::Start => "strip-start",
+        Ask::Close => "strip-close",
+    }
 }
 
-/// Create's confirm: posts through `post`; taken, the new thread is the next screen; refused, the
-/// name stays beside the deck's words.
-pub fn create(s: &mut State, repo: &str, post: impl FnOnce(&DeckAction) -> Result<Acted>) {
-    let Some(action) = s.regions.strip.confirm(repo) else {
-        return;
-    };
-    match post(&action) {
-        Ok(Acted::Taken { location }) => {
-            s.regions.strip.cancel();
-            // An item id is `itm_` and hex; anything else in the Location opens nothing.
-            let id = location.strip_prefix("/thread/").filter(|id| {
-                !id.is_empty() && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
-            });
-            if let Some(id) = id {
-                open_thread(s, id);
-            }
-        }
-        Ok(Acted::Refused { reason }) => s.regions.strip.refused = Some(reason),
-        Err(err) => s.regions.strip.refused = Some(err.to_string()),
+/// Create's confirm: posts through `act::send`; the answer comes back through `answered`.
+pub fn create(s: &mut State, repo: &str) {
+    if let Some(action) = s.regions.strip.confirm(repo) {
+        act::send(&mut s.pending, CREATE, action);
     }
 }
 
 /// Start or Close pressed on `repo`: the first press asks, the Confirm posts. A Start the daemon
-/// refuses lands with its reason in the Location (`landRefusal`), said here in its words; a Close
-/// taken lands on the overview, as the page's does.
-pub fn session(
-    s: &mut State,
-    ask: Ask,
-    repo: &str,
-    post: impl FnOnce(&DeckAction) -> Result<Acted>,
-) {
+/// refuses lands with its reason in the Location (`landRefusal`), said in `answered` in its words;
+/// a Close taken lands on the overview, as the page's does.
+pub fn session(s: &mut State, ask: Ask, repo: &str) {
     let local = &mut s.regions.strip;
     if local.asking != Some(ask) {
         local.asking = Some(ask);
@@ -173,15 +161,36 @@ pub fn session(
         Ask::Start => DeckAction::StartSession { repo: repo.into() },
         Ask::Close => DeckAction::RemoveDeck { repo: repo.into() },
     };
-    match post(&action) {
-        Ok(Acted::Taken { location }) => {
-            s.regions.strip.refused = Acted::Taken { location }.param("sessionRefused");
+    act::send(&mut s.pending, session_key(ask), action);
+}
+
+/// The deck's answer to a write sent from here. Create taken: the new thread is the next screen;
+/// refused, the name stays beside the deck's words. A Close taken goes to the overview.
+pub fn answered(s: &mut State, key: &str, acted: &Result<Acted>) {
+    let ask = [Ask::Start, Ask::Close]
+        .into_iter()
+        .find(|ask| session_key(*ask) == key);
+    match (key, ask, acted) {
+        (CREATE, _, Ok(Acted::Taken { location })) => {
+            s.regions.strip.cancel();
+            // An item id is `itm_` and hex; anything else in the Location opens nothing.
+            let id = location.strip_prefix("/thread/").filter(|id| {
+                !id.is_empty() && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+            });
+            if let Some(id) = id {
+                open_thread(s, id);
+            }
+        }
+        (_, Some(ask), Ok(taken @ Acted::Taken { .. })) => {
+            s.regions.strip.refused = taken.param("sessionRefused");
             if ask == Ask::Close && s.regions.strip.refused.is_none() {
                 go(s, Query::default());
             }
         }
-        Ok(Acted::Refused { reason }) => s.regions.strip.refused = Some(reason),
-        Err(err) => s.regions.strip.refused = Some(err.to_string()),
+        (CREATE, ..) | (_, Some(_), _) | (ALERTS, ..) => {
+            s.regions.strip.refused = act::refusal(acted);
+        }
+        _ => {}
     }
 }
 
@@ -196,7 +205,7 @@ fn button(label: &str, key: &str, ink: Color, fill: Color) -> El {
         .child(text(label).font(type_::BODY).color(ink))
 }
 
-pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
+pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx<State>) -> El {
     // No strip on this screen, or a view it cannot read: nothing, rather than taking the window down.
     let Ok(strip) = Strip::deserialize(v) else {
         return rune::el();
@@ -205,6 +214,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     let (t, k) = (tok::theme(dark), theme::tokens(dark));
     let btn = |label: &str, key: &str, lit: bool| {
         button(label, key, t.text, if lit { k.state.pilot } else { k.rule })
+    };
+    // A control whose write is out is drawn sent and disabled until the deck answers.
+    let sent_btn = |label: &str, key: &str, post: &str, lit: bool| {
+        btn(label, key, lit || pending.is_sent(post)).disabled(pending.is_sent(post))
     };
     let say = |words: String| text(words).font(type_::BODY).color(t.text);
 
@@ -286,9 +299,9 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                         .on_press(move |s: &mut State| s.regions.strip.repo = i),
                 );
             }
-            let mut confirm = btn("Create", "strip-confirm", false);
-            if let Some(repo) = target {
-                confirm = confirm.on_press(move |s: &mut State| create(s, &repo, live_post));
+            let mut confirm = sent_btn("Create", CREATE, CREATE, false);
+            if let Some(repo) = target.filter(|_| !pending.is_sent(CREATE)) {
+                confirm = confirm.on_press(move |s: &mut State| create(s, &repo));
             }
             making = making.child(
                 row().gap(space::within).child(confirm).child(
@@ -319,16 +332,18 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         for (ask, verb, key, what) in controls {
             let asking = local.asking == Some(ask);
             let (repo, again) = (tab.repo.clone(), tab.repo.clone());
-            let mut group = col().gap(space::within).child(
-                btn(verb, key, asking)
-                    .on_press(move |s: &mut State| session(s, ask, &repo, live_post)),
-            );
+            let busy = pending.is_sent(key);
+            let mut face = sent_btn(verb, key, key, asking);
+            if !busy {
+                face = face.on_press(move |s: &mut State| session(s, ask, &repo));
+            }
+            let mut group = col().gap(space::within).child(face);
             if asking {
                 group = group
                     .child(say(format!("{verb} {}? {what}", tab.code)))
                     .child(
                         btn("Confirm", &format!("{key}-confirm"), false)
-                            .on_press(move |s: &mut State| session(s, ask, &again, live_post)),
+                            .on_press(move |s: &mut State| session(s, ask, &again)),
                     );
             }
             out = out.child(group);
@@ -345,20 +360,18 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     }
 
     let on = strip.alerts.weekly;
-    out.child(
-        btn(
-            &format!("Weekly alerts {}", if on { "on" } else { "off" }),
-            "strip-alerts",
-            on,
-        )
-        .label("Warn agents at 95% of the weekly limit")
-        .on_press(move |s: &mut State| {
-            // Taken, the live reader brings the flipped switch; refused, the deck's words.
-            s.regions.strip.refused = match live_post(&DeckAction::Alerts { weekly: !on }) {
-                Ok(Acted::Taken { .. }) => None,
-                Ok(Acted::Refused { reason }) => Some(reason),
-                Err(err) => Some(err.to_string()),
-            };
-        }),
+    let mut alerts = sent_btn(
+        &format!("Weekly alerts {}", if on { "on" } else { "off" }),
+        ALERTS,
+        ALERTS,
+        on,
     )
+    .label("Warn agents at 95% of the weekly limit");
+    if !pending.is_sent(ALERTS) {
+        // Taken, the live reader brings the flipped switch; refused, `answered` says the deck's words.
+        alerts = alerts.on_press(move |s: &mut State| {
+            act::send(&mut s.pending, ALERTS, DeckAction::Alerts { weekly: !on });
+        });
+    }
+    out.child(alerts)
 }

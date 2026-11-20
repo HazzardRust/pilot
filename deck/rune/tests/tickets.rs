@@ -5,7 +5,8 @@
 
 mod support;
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 
 use pilot_deck::app::{self, State};
 use pilot_deck::client::{Client, Query};
@@ -89,11 +90,12 @@ fn view_of(deck: &Scratch) -> pilot_deck::client::View {
 fn drawn(deck: &Scratch, mut prefs: Prefs) -> Runtime<State> {
     prefs.open_panels.insert("tickets".into());
     prefs.sizes.insert("tickets".into(), (304.0, 3000.0));
-    let state = State {
+    let mut state = State {
         view: view_of(deck),
         prefs,
         ..State::default()
     };
+    state.pending.deck = with_deck(deck, Client::from_env).ok().map(Arc::new);
     let mut rt = Runtime::new(state, app::view, (1280.0, 4000.0), Env::new(true, 1.0));
     rt.frame(0.0);
     rt
@@ -125,6 +127,18 @@ fn refresh(deck: &Scratch, rt: &mut Runtime<State>) {
     }
 }
 
+/// Runs the window's own poll until a post has been answered.
+fn settle(rt: &mut Runtime<State>) {
+    let deadline = Instant::now() + Duration::from_secs(10);
+    let mut answered = false;
+    while !answered {
+        assert!(Instant::now() < deadline, "the post never answered");
+        std::thread::sleep(Duration::from_millis(20));
+        rt.update(|s, tx| answered = app::poll(s, 0.0, tx));
+    }
+    rt.frame(1.0 / 60.0);
+}
+
 fn press(deck: &Scratch, rt: &mut Runtime<State>, key: &str) {
     let at = find(rt, key)
         .unwrap_or_else(|| panic!("no element {key}"))
@@ -147,6 +161,7 @@ fn two_quick_presses_move_once() {
     // The second press lands before any new view: the arrow is the same one, still on the old row.
     press(&deck, &mut rt, &format!("ticket-{third}-up"));
     press(&deck, &mut rt, &format!("ticket-{third}-up"));
+    settle(&mut rt);
 
     assert_eq!(
         tickets_of(&deck),
@@ -157,6 +172,7 @@ fn two_quick_presses_move_once() {
     // A view showing the move lifts the gate: the next press moves it again.
     refresh(&deck, &mut rt);
     press(&deck, &mut rt, &format!("ticket-{third}-up"));
+    settle(&mut rt);
     assert_eq!(tickets_of(&deck), [third, first, second]);
 }
 
@@ -184,6 +200,7 @@ fn a_switch_takes_a_confirm() {
     );
 
     press(&deck, &mut rt, &format!("ticket-{to}-confirm"));
+    settle(&mut rt);
     assert_eq!(
         newest_text(&deck, &to),
         "Continue this ticket",
@@ -192,6 +209,7 @@ fn a_switch_takes_a_confirm() {
 
     refresh(&deck, &mut rt);
     press(&deck, &mut rt, &format!("ticket-{to}-cancel"));
+    settle(&mut rt);
     assert_eq!(
         newest_text(&deck, &to),
         "switch cancelled",
