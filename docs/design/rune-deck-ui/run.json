@@ -31,7 +31,7 @@
     },
     {
       "slice": "S28 The left side as VS Code's side bar (added)",
-      "state": "re-evidence: B1-B4 shown on 0856f043, rust APPROVE; gate re-running after disk full",
+      "state": "integrated at d660054; rust APPROVE (re-evidenced); 631 lines waived by co-pilot; 765/0 selection",
       "after": [
         "S27 The window frame: Rune's title bar and the top inset (added)"
       ],
@@ -58,7 +58,7 @@
     },
     {
       "slice": "S31 Left panes' contents: content selects, rows on the grid (added)",
-      "state": "implementing",
+      "state": "pushed 799e2ca; rust Approve (Warning, MED tickets rule gap)",
       "after": [
         "S26 Every control says clickable: the hover look, first (added)"
       ],
@@ -104,7 +104,7 @@
     },
     {
       "slice": "S34 The palette's values, by role and to WCAG AA (added)",
-      "state": "implementing",
+      "state": "pushed 109b483; rust re-review WARNING (pressed state.pilot pair unchecked, disabled so exempt); integrate refused red on hover, waits on S40",
       "after": [
         "S36 theme.json: theme.rs takes its values from one JSON file (added)"
       ],
@@ -113,7 +113,7 @@
     },
     {
       "slice": "S38 The reply box, reorganised (added)",
-      "state": "implementing",
+      "state": "pushed 237acaa; rust APPROVE minor notes",
       "after": [
         "S26 Every control says clickable: the hover look, first (added)"
       ],
@@ -126,7 +126,7 @@
     },
     {
       "slice": "S39 Back and forward: the mouse side buttons and Alt+Left/Right (added)",
-      "state": "implementing (probe passed; disk-blocked once, resumed)",
+      "state": "pushed 76a32bb; rust re-review APPROVE; integrate waits on S40 (hover red)",
       "after": [
         "S29 The right strip's buttons on the grid, rounded, by role (added)",
         "S30 Header and centre: content selects, cards on the grid, the kind line (added)"
@@ -145,6 +145,15 @@
       "state": "integrated at 3f6a299b; pilot 3b53b7e in; threadWalk carries nothing-hidden A6's order",
       "branch": "fix/rune-deck-ui-base2",
       "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-base2"
+    },
+    {
+      "slice": "S40 The hover tests know the switch role (added)",
+      "state": "fixing: integrate refused red on theme test; taking S34's two opacity checks",
+      "after": [
+        "S29 The right strip's buttons on the grid, rounded, by role (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s40",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s40"
     }
   ],
   "findings": [
@@ -165,51 +174,9 @@
     "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
     "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
   ],
-  "next": "feat a6d45de7 (worktree recreated after prune removed it). S28 gate re-running; S39 resumed from wip cefd23bd; S31, S34, S38 implementing. Then S33, S35. A-R5 assumed untraceable.",
-  "updatedAt": "2026-11-20T09:44:34.245Z",
+  "next": "feat d7af357c. S40 b267832 integrated red on theme test (S34's fix) while S34 is red on hover (S40's fix): S40 takes S34's two opacity checks (seam change in S40.md), then integrate S40, S34, S31, S38, S39; then S33, S35.",
+  "updatedAt": "2026-11-20T10:13:50.337Z",
   "friction": [
-    {
-      "agent": "pilot-co-pilot",
-      "what": "handback-send-enforce hook forced a hand-back while the fix-round implementer and QA were live, against the never-end-a-turn-with-a-child-live rule",
-      "evidence": "hook message after the fix implementer's interim notification on itm_0dcd9aa67146",
-      "size": 1
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "handback-send-enforce hook forces a 'paused' hand-back each time the co-pilot idles on live children; two no-change hand-backs reached main while the fix implementer and QA ran",
-      "evidence": "hand-backs on itm_0dcd9aa67146 at feat 7b7b7ec3",
-      "size": 2
-    },
-    {
-      "agent": "pilot-evidence-runner",
-      "what": "Rust column skipped because Cargo.toml is at deck/rune, not the root; npm test failed under scratch HOME so no coverage; stryker timed out at 900 s: no evidence figure for a Rust feature; final report delivered to main, not its fundamentalist",
-      "evidence": "runner report on 03659388; scratch /tmp/tmp.NyBys2scT8 left",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-qa",
-      "what": "Rune prefs persist open panels between headless runs (~6 confounded probes); --script keys must exist in the first frame; headless time outruns real time without --realtime; spec 8's grep bar false-fails on 'prune'; run ended before the tip, needs a resume",
-      "evidence": "QA read-only report on itm_0dcd9aa67146 at 03659388",
-      "size": 6
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "QA fix 1: rune --script event types undocumented (read rune source); npm test ~9 min; D:\\qa1tmp left after its removal was refused; gate printed 'home store changed' on the live deck",
-      "evidence": "QA fix 1 report 1d17cc6",
-      "size": 4
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S24: Rune rows with on_press report focusable false regardless, so a disabled-by-focusable pin is vacuous; the deck refuses neither a second dismiss nor a clear of a gone notice, so refusal tests need a second scratch deck; cargo stops at the first failing binary without --no-fail-fast; the items screen is unreachable from the window",
-      "evidence": "S24 report 0e84e21; tests/history.rs dismiss_run_posts_once",
-      "size": 4
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "implementers of long-integrated slices (S14, S21, QA fix 1, principles fix) stayed listed as running and held RAM until the user noticed; the co-pilot cannot TaskStop its own children, only main can",
-      "evidence": "TaskStop a9c25683bff6526b1, a1b6e9e451c0b4ee0, a5dcfcea5090ac3aa, a8fff1b6dc9b2ab4a from main",
-      "size": 2
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S25: Rune ElementInfo cannot show a disabled text button, so B2 asserts pending.is_sent; --snap is one simulated frame, needs --realtime --script, a tall --size and a seeded rune-deck.json; 4 gate1-lineage reds under load, green alone",
@@ -389,6 +356,48 @@
       "what": "pilot worktrees prune --run rune-deck-ui --base origin/feat/rune-deck-ui counted the feat worktree itself as merged-clean and removed it and its local branch; co-pilot read only the output's tail; recreated from origin at a6d45de7, npm ci rerun",
       "evidence": "deck_status 'the recorded worktree is gone' after the prune",
       "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S38: disk full mid-run (LNK1318/LNK1180, os error 1455 paging file); release build and npm test not run; cargo fmt reformats untouched strip.rs and status.rs; slice file line numbers stale",
+      "evidence": "S38 report 237acaa",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S31: disk full mid-gate (LNK1180, os error 112); npm test selection skipped the Rust half with cargo off PATH; cargo fmt rewrites files outside the slice every run; scratch deck refused ticket bodies so tickets/reports never seen live",
+      "evidence": "S31 report 799e2ca",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S28 re-evidence: C: filled to 0 under five slices' own deck/rune/target; rustc crashes looked like contention until the release log named the disk; two red probes and two release builds lost",
+      "evidence": "S28 re-evidence report 0856f043",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S34: disk full (os error 112, link.exe 1140, paging file too small) cost four cargo runs; npm test skipped; brief wrongly said CARGO_TARGET_DIR was shared (targets are per worktree); light snap impossible without changing the system theme",
+      "evidence": "S34 report 109b483",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S29 integrated with hover::plain_text_is_still red: its switch role is not in S26's is_control, and the selection reported 765/0 while cargo stopped at the first failing binary; three later slices met the red",
+      "evidence": "cargo test --test hover on feat d6600544: hover.rs:142 FAILED; S34 integrate 'merged red: 781 pass, 0 fail'",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S39: origin/feat moved mid-slice, so a reset --soft squash silently reverted newer commits (caught in a 15-file diff, redone); no real OS-window side-button check was safe; scratch deck empty so thread-to-thread history unchecked live",
+      "evidence": "S39 report 76a32bb",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "two reds on feat each fixed by a different slice (S40 hover, S34 theme) deadlocked integrate, which needs each merge green alone; the seam moved two test lines into S40",
+      "evidence": "NOT integrated S34 'merged red' (hover) and S40 'merged red' (theme.rs:418)",
+      "size": 2
     }
   ]
 }
