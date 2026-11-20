@@ -9,6 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
+import './no-open.mjs';
 import { stallAgeOf } from '../daemon.mjs';
 import { STALL_AGE_S, reapStalled, shellScript, stalledWaits } from '../stalled-waits.mjs';
 
