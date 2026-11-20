@@ -226,7 +226,7 @@
     },
     {
       "slice": "fix round",
-      "state": "implementing — F1 F2 F3 F4 F8 N1 on fix/rune-deck-ui-principles, gate running",
+      "state": "integrated at db04ce6 — rust approve, typescript APPROVE; -119 net; 4849/0 selection; npm test 4857/0 and cargo green on 37a9938",
       "after": [
         "S23"
       ],
@@ -235,10 +235,12 @@
     },
     {
       "slice": "S24",
-      "state": "planned (added, step 7 F6/F5/F9/T2)",
+      "state": "implementing",
       "after": [
         "fix round"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s24",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s24"
     },
     {
       "slice": "S25",
@@ -246,6 +248,15 @@
       "after": [
         "S24"
       ]
+    },
+    {
+      "slice": "QA fix 1",
+      "state": "pushed 1d17cc6 — rust APPROVE, typescript APPROVE; +96 net; cargo 96/0, npm test 4850/0; integrating",
+      "after": [
+        "fix round"
+      ],
+      "branch": "fix/rune-deck-ui-qa1",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-fix-rune-deck-ui-qa1"
     }
   ],
   "findings": [
@@ -266,15 +277,9 @@
     "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
     "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
   ],
-  "next": "fix round integrate running; then fix 2 (Q1-Q4) beside S24, then fix 3 (Q5-Q7) beside S25; then base check and resume QA (pilot-qa-rune-deck-ui) with the tip",
-  "updatedAt": "2026-11-20T04:51:47.047Z",
+  "next": "integrating QA fix 1 (1d17cc6); S24 implementing; then QA fix 2 (Q5-Q7) after S24 and S25; then base check and resume QA with the tip",
+  "updatedAt": "2026-11-20T05:16:33.600Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S8 finisher: no Monitor tool, waited on an 8-min npm test through blocked sleeps; Python heredoc broke on cp1252",
-      "evidence": "S8 finisher report",
-      "size": 8
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S6: context summarized right after worktree creation, slice rebuilt from scratch; TaskStop unreachable so a 7.5-min npm test on a stale base was wasted; tests/support and pilot deck --scratch did not set the Start guard (PILOT_DECK_NO_START) so a Start press in a Rust test would open a real terminal",
@@ -503,6 +508,12 @@
       "what": "Rune prefs persist open panels between headless runs (~6 confounded probes); --script keys must exist in the first frame; headless time outruns real time without --realtime; spec 8's grep bar false-fails on 'prune'; run ended before the tip, needs a resume",
       "evidence": "QA read-only report on itm_0dcd9aa67146 at 03659388",
       "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "QA fix 1: rune --script event types undocumented (read rune source); npm test ~9 min; D:\\qa1tmp left after its removal was refused; gate printed 'home store changed' on the live deck",
+      "evidence": "QA fix 1 report 1d17cc6",
+      "size": 4
     }
   ]
 }
