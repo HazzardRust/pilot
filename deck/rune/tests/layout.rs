@@ -370,18 +370,63 @@ fn notices(n: usize) -> Value {
     json!({ "notifications": { "notices": notices, "open": [] } })
 }
 
+/// Every icon, the first heading, and each heading's and body's x and width. A pane is as tall as
+/// what it holds (QA e), so a hundredth notice lengthens Notifications and moves the panes under
+/// it; the count's digit moves none of these.
 fn panel_bounds(rt: &Runtime<State>) -> Vec<[f32; 4]> {
-    PANELS
+    let icons = PANELS.iter().map(|p| rects(rt, &format!("icon-{p}")).1);
+    let columns = PANELS
         .iter()
-        .flat_map(|p| {
-            [
-                format!("icon-{p}"),
-                format!("panel-{p}-head"),
-                format!("panel-{p}-body"),
-            ]
-        })
-        .map(|key| rects(rt, &key).1)
+        .flat_map(|p| [format!("panel-{p}-head"), format!("panel-{p}-body")])
+        .map(|key| {
+            let r = rects(rt, &key).1;
+            [r[0], 0.0, r[2], 0.0]
+        });
+    icons
+        .chain([rects(rt, "panel-notifications-head").1])
+        .chain(columns)
         .collect()
+}
+
+/// QA e: an open pane is as tall as what it holds, the next one starts where it ends with no
+/// gap, and the room left over stays below the last.
+#[test]
+fn open_panes_touch_and_take_only_their_contents_height() {
+    let rt = window(notices(2), all_open(size::side_default));
+    let panes: Vec<[f32; 4]> = PANELS
+        .iter()
+        .map(|p| rects(&rt, &format!("panel-{p}")).1)
+        .collect();
+    for pair in panes.windows(2) {
+        let (above, below) = (pair[0], pair[1]);
+        assert!(
+            (above[1] + above[3] - below[1]).abs() <= 0.5,
+            "a gap between panes: {above:?} then {below:?}"
+        );
+    }
+    let side = rects(&rt, "side").1;
+    let last = panes[panes.len() - 1];
+    assert!(
+        last[1] + last[3] < side[1] + side[3] - size::row,
+        "the panes fill the side area: last {last:?}, side {side:?}"
+    );
+    let agents = rects(&rt, "panel-agents").1[3];
+    let notifications = rects(&rt, "panel-notifications").1[3];
+    assert!(
+        agents < notifications,
+        "an empty pane ({agents}) as tall as two notices ({notifications})"
+    );
+}
+
+/// QA e: the first pane's heading and the first icon start where the centre's header does, 40 px
+/// under the title bar's rule (deck.css `--top`).
+#[test]
+fn the_first_heading_and_icon_start_at_the_top_inset() {
+    let rt = window(json!({}), all_open(size::side_default));
+    let top = rects(&rt, "header").1[1];
+    assert_eq!(top, size::titlebar + 1.0 + space::pad + space::s7);
+    assert_eq!(rects(&rt, "panel-notifications-head").1[1], top, "heading");
+    assert_eq!(rects(&rt, "icon-notifications-glyph").1[1], top, "icon");
 }
 
 /// S28 behaviour 3 (6e): a count gaining a digit moves no pane and no icon, and stays on one line.

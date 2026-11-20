@@ -266,7 +266,11 @@ fn icon_item(
         .help(label)
         .expanded(active)
         .on_press(move |s: &mut State| toggle(&mut s.prefs, name))
-        .child(icon(glyph, size::icon).color(if active { t.text } else { t.text_secondary }));
+        .child(
+            icon(glyph, size::icon)
+                .key(format!("icon-{name}-glyph"))
+                .color(if active { t.text } else { t.text_secondary }),
+        );
     if active {
         item = item.child(
             el().key(format!("icon-{name}-marker"))
@@ -310,7 +314,7 @@ fn icon_badge(count: usize, dark: bool) -> El {
         )
 }
 
-/// One pane: a 22 px header (chevron, title, count) over its contents, which scroll. A shut pane
+/// One pane: a 22 px header (chevron, title, count) over its contents. A shut pane
 /// stays mounted at no height, so it springs open and shut; Tab and a reader skip it.
 fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
@@ -336,15 +340,12 @@ fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<Sta
                 .grow(1.0),
         )
         .child(count_cell(count(s, name), dark).key(format!("panel-{name}-count")));
-    let body = col()
+    // As tall as its contents (QA e): the side area scrolls, not each pane. The padding is inside
+    // the body, so a shut pane's body closes to nothing.
+    let mut body = col()
         .key(format!("panel-{name}-body"))
         .w_full()
-        .grow(1.0)
-        .min_h(space::s0)
-        .scroll(ScrollSpec {
-            stick_bottom: false,
-        })
-        // The padding inside the scroll, so a shut pane's body closes to nothing.
+        .clip_soft(space::s0)
         .child(
             col()
                 .w_full()
@@ -354,10 +355,11 @@ fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<Sta
     let mut pane = col()
         .key(format!("panel-{name}"))
         .w_full()
-        .h(space::s0)
-        .min_h(space::s0)
-        .grow(if open { 1.0 } else { 0.0 })
         .clip_soft(space::s0);
+    if !open {
+        body = body.h(space::s0);
+        pane = pane.h(space::s0);
+    }
     // A rule between panes, none above the first (deck.css's list rules, none after the last).
     if after {
         pane = pane.child(theme::separator(dark));
@@ -381,15 +383,27 @@ fn left_side(s: &State, cx: &mut Cx<State>) -> El {
     } else {
         space::s0
     };
+    // The first glyph and the first heading start at the centre header's top (`app::center`).
     let bar = PANELS.iter().fold(
-        col().key("icon-bar").w(size::icon_bar).h_full(),
+        col()
+            .key("icon-bar")
+            .w(size::icon_bar)
+            .h_full()
+            .pt(space::s7 - (size::icon_bar - size::icon) / 2.0),
         |bar, &panel| bar.child(icon_item(s, panel, dark)),
     );
     let mut any_open = false;
+    // Panes take their contents' height and the area scrolls past the last; room left over stays
+    // below it (QA e).
     let mut side = col()
         .key("side")
         .w(width)
         .h_full()
+        .min_h(space::s0)
+        .pt(space::s7)
+        .scroll(ScrollSpec {
+            stick_bottom: false,
+        })
         .clip_soft(space::s0)
         .motion(motion::panel);
     for (name, label, _) in &PANELS {
