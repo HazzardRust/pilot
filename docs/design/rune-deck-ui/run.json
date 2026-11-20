@@ -87,7 +87,7 @@
     },
     {
       "slice": "S10",
-      "state": "pushed fac8ec5 — rust APPROVE (fresh), typescript APPROVE (earlier head); 283 production lines; integrating",
+      "state": "integrated at c79b7c5 — rust APPROVE, typescript APPROVE; 283 production lines; 4725/0",
       "after": [
         "S6"
       ],
@@ -96,7 +96,7 @@
     },
     {
       "slice": "S11",
-      "state": "pushed f56ca90 — rust/typescript/security approve with comments; 254 production lines; app.rs poll merge",
+      "state": "pushed f56ca90 — integrating; rust/typescript/security approve with comments; 254 production lines",
       "after": [
         "S5"
       ],
@@ -184,8 +184,8 @@
       ]
     }
   ],
-  "next": "S10 integrating; then integrate S11; S9 fix round (thread.rs box reset, recommended) then 3 re-reads; then pilot ready within yellow 8",
-  "updatedAt": "2026-11-20T00:39:42.801Z",
+  "next": "integrate S11 (running); S9 fix round live; then pilot ready within yellow 8 (S14 S20 now unblocked by S10)",
+  "updatedAt": "2026-11-20T00:41:08.793Z",
   "friction": [
     {
       "agent": "pilot-implementer",
