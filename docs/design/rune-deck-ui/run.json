@@ -169,7 +169,7 @@
     },
     {
       "slice": "S19",
-      "state": "pushed b0f8fa9",
+      "state": "integrated at 1aa722b — typescript APPROVE, security APPROVE (after BLOCK fixed); 89 production lines; full suite 4847/0; seam in S19.md; B4 pending on PR #124's CI run",
       "after": [
         "S1"
       ],
@@ -196,7 +196,7 @@
     },
     {
       "slice": "S22",
-      "state": "implementing",
+      "state": "pushed 7fb26dc",
       "after": [
         "S12"
       ],
@@ -205,7 +205,7 @@
     },
     {
       "slice": "S23",
-      "state": "implementing — scope adds S12 re-read MEDIUM: feeds stamped with their query, stale feed dropped",
+      "state": "pushed c55094e — rust BLOCK (out-of-order moves) fixed, re-read running",
       "after": [
         "S9"
       ],
@@ -219,21 +219,9 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-base"
     }
   ],
-  "next": "paused by main: integrate S19; drain S22, S23; then hand back paused",
-  "updatedAt": "2026-11-20T03:43:58.418Z",
+  "next": "paused by main: integrating S22; S23 waits on its rust re-read; then hand back paused",
+  "updatedAt": "2026-11-20T04:01:06.751Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "none (S1 re-commit for trailer)",
-      "evidence": "7cae771, tree 058d093f = 4ea7320's",
-      "size": 0
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S4: a fresh worktree has no node_modules, so the skeleton test fails until npm ci; npm test 8.3 min",
-      "evidence": "S4 report; 496 s",
-      "size": 8
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S4: diff over the limit noticed only at commit; a test that parses deck.css by hand is ~250 lines",
@@ -456,6 +444,18 @@
       "agent": "pilot-co-pilot",
       "what": "pilot integrate merges the base before the slice, so a base conflict can never pass it; resolved on a side branch and merged into feat by hand, then integrate",
       "evidence": "NOT integrated slice/rune-deck-ui-s21 and -base: taking base pilot stopped; scripts/integrate.mjs:451",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S22: seeding a scratch deck with two decks needs a hand-written script with the deck secret's bearer; a failed seed left a scratch daemon running",
+      "evidence": "S22 report 7fb26dc; scratchpad s22-seed.mjs",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S23: fresh worktree needs npm ci before pilot deck --scratch starts; the thread arrow is a keyless link so tests find it by role and rect",
+      "evidence": "S23 report c55094e",
       "size": 2
     }
   ]
