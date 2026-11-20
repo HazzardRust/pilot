@@ -255,11 +255,20 @@ pub fn center(s: &State, cx: &mut Cx<State>) -> El {
     if s.blind() {
         return screen;
     }
-    screen
+    screen = screen
         .child(regions::usage::draw(region("usage"), &r.usage, cx))
-        .child(regions::tabs::draw(region("tabs"), &r.tabs, &s.pending, cx))
-        .child(regions::queue::draw(region("queue"), &r.queue, cx))
+        .child(regions::tabs::draw(region("tabs"), &r.tabs, &s.pending, cx));
+    // The queue is the home page's and the thread page lists no settled threads
+    // (view/queue.mjs, history.mjs): a region a screen withholds is not drawn, rather than saying
+    // there is nothing in it.
+    if s.query.screen == "home" {
+        screen = screen.child(regions::queue::draw(region("queue"), &r.queue, cx));
+    }
+    screen = screen
         .child(regions::thread::draw(region("thread"), &r.thread, cx))
-        .child(regions::reply::draw(region("reply"), &r.reply, cx))
-        .child(regions::history::draw(region("history"), &r.history, cx))
+        .child(regions::reply::draw(region("reply"), &r.reply, cx));
+    if s.query.screen != "thread" {
+        screen = screen.child(regions::history::draw(region("history"), &r.history, cx));
+    }
+    screen
 }
