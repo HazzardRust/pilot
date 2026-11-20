@@ -103,13 +103,13 @@ fn the_header_starts_at_the_pages_top_inset() {
     let usage = rect(&rt, "usage");
     let rule = size::titlebar + 1.0;
     assert!(
-        usage[1] >= rule + 40.0,
+        (usage[1] - rule - 40.0).abs() < 0.5,
         "the readout starts {} under the rule, not 40",
         usage[1] - rule
     );
     let tabs = rect(&rt, "tabs");
     assert!(
-        tabs[1] - (usage[1] + usage[3]) >= 16.0,
+        (tabs[1] - (usage[1] + usage[3]) - 16.0).abs() < 0.5,
         "the tabs are {} under the readout, not 16",
         tabs[1] - (usage[1] + usage[3])
     );
