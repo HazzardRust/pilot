@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed 540006f (ts approve, sec approve; integrating)",
+      "state": "integrated",
       "after": [
         "S2"
       ],
@@ -33,11 +33,12 @@
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "pushed 48528a6 (ts approve, sec approve; integrating)",
       "after": [
         "S3"
       ],
-      "branch": "slice/wait-deadlines-s4"
+      "branch": "slice/wait-deadlines-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s4"
     },
     {
       "slice": "S5",
@@ -49,8 +50,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-wait-deadlines-s5"
     }
   ],
-  "next": "integrating S3 540006f5; then S4 from feat tip (seams: reapStalled holder(row), row.script needle, noteStall); then base check, fundamentalist, QA (QA: noteStall's liveTicketOf branch untested; take a ticket live on the scratch walk).",
-  "updatedAt": "2026-11-20T13:15:01.616Z",
+  "next": "integrating S4 48528a63 (last slice); then base check, fundamentalist (judge the 5.4 s synchronous holder scan in the daemon), QA (take a ticket live for noteStall; whether a holder can be planted).",
+  "updatedAt": "2026-11-20T13:37:40.031Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -200,6 +201,24 @@
       "agent": "pilot-implementer",
       "what": "S3's B1 asked for the captured win32 lines of waits A and B, which were never in the repo; live rows captured by CIM used instead",
       "evidence": "S3 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "second implementer this run (S4 after S3) had its context summarised before any commit with no summary text carried over; whole first attempt lost",
+      "evidence": "S4 message: worktree clean at 2ad9e617 after summary",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "TaskStop was not loadable through ToolSearch for the implementer, so a stale gate ran 10 min",
+      "evidence": "S4 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice file worded the holder needle as marker plus watched file; the marker is NODE-DONE, not a path, so the needle became row.script",
+      "evidence": "S4 report",
       "size": 1
     }
   ]
