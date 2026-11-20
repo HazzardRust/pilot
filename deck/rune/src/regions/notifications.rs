@@ -53,7 +53,7 @@ pub fn mark_seen(prefs: &mut Prefs, id: &str, writes: u32) {
 
 /// Keeps the prefs on disk; a write that fails says so and leaves the window's copy, which is still
 /// right for this session.
-fn keep(prefs: &Prefs) {
+pub(crate) fn keep(prefs: &Prefs) {
     let saved = prefs::dir()
         .ok_or_else(|| std::io::Error::other("no home directory"))
         .and_then(|dir| prefs.save(&dir));
@@ -71,7 +71,7 @@ fn clear(s: &mut State, action: &DeckAction) {
 }
 
 /// Opens a listed thread, as its link on the page does.
-fn open_thread(s: &mut State, id: &str) {
+pub(crate) fn open_thread(s: &mut State, id: &str) {
     let query = Query {
         screen: "thread".into(),
         id: Some(id.to_string()),
