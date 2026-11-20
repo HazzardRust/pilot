@@ -1,5 +1,5 @@
 /**
- * S3 of wait-deadlines: the deck stops a stalled wait under a pilot run and tells the pilot (spec 5, 6, 8, 9; L5-L7).
+ * S3 of wait-deadlines: the deck stops a stalled wait under a live registered run and tells the pilot (spec 5, 6, 8, 9; L5-L7).
  * The two wait rows are the CIM `CommandLine`s of two live Claude Code shells captured on 2026-11-20, shaped as
  * waits A and B were (a loop on a subagent's output file, §3); only their paths are re-rooted at this machine's temp
  * dir. The process table and the kill are injected: nothing here reads or stops a real process.
@@ -60,7 +60,7 @@ test('the recorded rows are seen', () => {
   );
 });
 
-test('only a stalled loop under a pilot run', () => {
+test('only a stalled loop under a live registered run', () => {
   const OLD = 30 * H;
   const table = [
     ...session(),

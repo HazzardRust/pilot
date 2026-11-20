@@ -11,7 +11,7 @@ import { oneLine } from './one-line.mjs';
 import { noteDeck } from './store-items.mjs';
 import { listItems } from './store-runs.mjs';
 
-/** A4: the same 50 minutes as `pilot wait-for`'s cap; a wait older than this under a pilot run is stalled. */
+/** A4: the same 50 minutes as `pilot wait-for`'s cap; a wait older than this under a live registered run is stalled. */
 export const STALL_AGE_S = 50 * 60;
 
 const SHELL = /^(?:ba)?sh(?:\.exe)?$/i;
