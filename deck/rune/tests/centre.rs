@@ -200,7 +200,7 @@ fn each_message_has_the_left_rule() {
 }
 
 #[test]
-fn the_kind_line_is_one_centred_row_with_the_pager_at_the_right() {
+fn the_kind_line_is_one_centred_row_with_the_pager_on_the_centre() {
     let (deck, id) = seeded();
     let rt = drawn(&deck, &thread_query(&id), true);
     let all = rt.elements();
@@ -241,12 +241,21 @@ fn the_kind_line_is_one_centred_row_with_the_pager_at_the_right() {
         "the full time is on its help: {:?}",
         clock.help
     );
-    let nav = by_key(&rt, "nav");
+    // The walkthrough of 2026-11-21 moved `‹ code ›` to the centre, as the page's header grid; X/N
+    // reads from the right edge.
+    let (nav, position) = (by_key(&rt, "nav"), by_key(&rt, "position"));
     let page = by_key(&rt, "thread");
+    let middle = |r: [f32; 4]| r[0] + r[2] / 2.0;
     assert!(
-        (nav.rect[0] + nav.rect[2] - (page.rect[0] + page.rect[2])).abs() <= 1.0,
-        "the pager is at the right edge: nav {:?} page {:?}",
+        (middle(nav.rect) - middle(page.rect)).abs() <= 1.0,
+        "the pager is on the centre: nav {:?} page {:?}",
         nav.rect,
+        page.rect
+    );
+    assert!(
+        (position.rect[0] + position.rect[2] - (page.rect[0] + page.rect[2])).abs() <= 1.0,
+        "X/N is at the right edge: {:?} page {:?}",
+        position.rect,
         page.rect
     );
 }
