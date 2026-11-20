@@ -587,9 +587,10 @@ async function route(request, response, open, start, land, exit, guard) {
     // And the threads the pilot still owes it (yellow-lane L6), so the hooks need not compute them,
     // and the gates it has signed since its last hand-off (yellow-lane A5), for the guard's work lane.
     const items = listItems();
+    const coPilot = coPilotFor(query.get('repo'));
     return sendJson(response, 200, {
-      ...found, budget: budgetFor(query.get('repo')).main, coPilot: coPilotFor(query.get('repo')), lanes: lanesOf(query.get('repo')),
-      owed: owedThreadsOf(items, query.get('repo')), work: workSince(items, query.get('repo')),
+      ...found, budget: budgetFor(query.get('repo')).main, coPilot, lanes: lanesOf(query.get('repo')),
+      owed: owedThreadsOf(items, query.get('repo'), coPilot), work: workSince(items, query.get('repo')),
     });
   }
 

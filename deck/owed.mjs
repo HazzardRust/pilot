@@ -7,12 +7,13 @@
  * the hooks are CommonJS and cannot import it.
  */
 
+import { successorOwedOf } from './crew-handoff.mjs';
 import { KIND_CHAT, KIND_GATE1, KIND_GATE2, KIND_REPORT, KIND_TICKET, KIND_USER, isOpen, liveTicketOf, sameRepo } from './items.mjs';
 
 const LINE_CHARS = 120;
 
 /** Every reason `owedThreadsOf` gives, fixed words, the only ones `pilot wait` echoes. */
-export const OWED_WHY = ['unanswered', 'promised', 'report owed', 'architect owed'];
+export const OWED_WHY = ['unanswered', 'promised', 'report owed', 'architect owed', 'successor owed'];
 
 /** A message as one line of at most 120 characters. */
 const oneLine = (text) => {
@@ -32,8 +33,12 @@ const isArchitectOwed = (ticket, items) =>
   ticket === liveTicketOf(items, ticket.repo, 'red') &&
   !items.some((item) => item?.kind === KIND_GATE1 && isOpen(item) && item.ticket === ticket.id);
 
-/** `repo`'s owed threads, `[{ id, line, why }]` in store order, pure; a ticket's line is its title. */
-export function owedThreadsOf(items, repo) {
+/**
+ * `repo`'s owed threads, `[{ id, line, why }]` in store order, pure; a ticket's line is its title. Then each
+ * crew-handoff owed a successor (`successorOwedOf`, `coPilot` as `coPilotFor` gives it), its line the ticket id.
+ */
+export function owedThreadsOf(items, repo, coPilot = null) {
+  const successors = successorOwedOf(items, repo, coPilot).map((item) => ({ id: item.id, line: item.ticket, why: 'successor owed' }));
   return items.flatMap((item) => {
     if (item?.kind === KIND_TICKET && sameRepo(item.repo, repo)) {
       const why = isReportOwed(item, items) ? 'report owed' : isArchitectOwed(item, items) ? 'architect owed' : null;
@@ -43,5 +48,5 @@ export function owedThreadsOf(items, repo) {
     const last = Array.isArray(item.replies) ? item.replies.at(-1) : undefined;
     const why = last?.from === 'user' ? 'unanswered' : last?.from === 'pilot' && last.promise === true ? 'promised' : null;
     return why ? [{ id: item.id, line: oneLine(last.text), why }] : [];
-  });
+  }).concat(successors);
 }
