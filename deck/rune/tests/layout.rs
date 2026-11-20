@@ -1,13 +1,14 @@
-//! rune-deck-ui S20: the side panels. Chat and Status open on a first start; a panel opens on a
-//! spring; a drag tracks the pointer with no snap at the default size; the open set and the sizes
-//! come back after a restart; and a three-digit count moves no panel (spec 2, 5, 6d, 6e).
+//! rune-deck-ui S20 and S28: the left side as VS Code's side bar. Chat and Status open on a first
+//! start; a pane opens on a spring; the panes share one width, so their inner edges line up; each
+//! icon names its pane and toggles it; the side area's drag tracks the pointer with no snap and
+//! hides below its minimum; the open set and the width come back after a restart; and a
+//! three-digit count moves nothing (spec 2, 5, 6d, 6e, 19).
 
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
 
 use pilot_deck::app::{self, State};
 use pilot_deck::client::View;
-use pilot_deck::layout;
 use pilot_deck::prefs::Prefs;
 use pilot_deck::theme::{size, space};
 use rune::{Env, Runtime, TitlebarAction};
@@ -82,7 +83,7 @@ fn a_panel_opens_with_a_spring() {
     let (_held, _dir) = prefs_dir("spring");
     let mut rt = window(json!({}), Prefs::default());
 
-    press(&mut rt, "panel-agents-head");
+    press(&mut rt, "icon-agents");
     let mut heights = Vec::new();
     for _ in 0..30 {
         rt.frame(FRAME);
@@ -102,7 +103,7 @@ fn a_panel_opens_with_a_spring() {
 
     // And it shuts on the same spring, never at once.
     rt.frame(1.0);
-    press(&mut rt, "panel-agents-head");
+    press(&mut rt, "icon-agents");
     let mut closing = Vec::new();
     for _ in 0..30 {
         rt.frame(FRAME);
@@ -120,48 +121,132 @@ fn a_panel_opens_with_a_spring() {
     assert!(between >= 3, "shut at once: {closing:?}");
 }
 
+const PANELS: [&str; 6] = [
+    "notifications",
+    "chat",
+    "status",
+    "agents",
+    "tickets",
+    "reports",
+];
+
+/// Prefs with every pane open and the side area `width` wide.
+fn all_open(width: f32) -> Prefs {
+    let mut prefs = Prefs::default();
+    prefs
+        .open_panels
+        .extend(PANELS.iter().map(|p| p.to_string()));
+    prefs.side_width = Some(width);
+    prefs
+}
+
+/// S28 behaviour 1: the panes share one side area, so their inner edges line up at any width.
 #[test]
-fn open_panels_and_sizes_survive_a_restart() {
+fn aligned() {
+    for width in [size::side_min, size::side_default, 450.0] {
+        let rt = window(json!({}), all_open(width));
+        let edges: Vec<f32> = PANELS
+            .iter()
+            .flat_map(|p| [format!("panel-{p}-head"), format!("panel-{p}-body")])
+            .map(|key| {
+                let r = rects(&rt, &key).1;
+                r[0] + r[2]
+            })
+            .collect();
+        let side = rects(&rt, "side").1;
+        assert_eq!(side[2], width, "the side area is not {width} wide");
+        for edge in &edges {
+            assert!(
+                (edge - (side[0] + side[2])).abs() <= 0.5,
+                "at {width}: inner edges {edges:?}, side {side:?}"
+            );
+        }
+    }
+}
+
+/// S28 behaviour 4: each icon names its panel, and pressing it shows or shuts that pane.
+#[test]
+fn each_icon_names_its_pane_and_toggles_it() {
+    let (_held, _dir) = prefs_dir("icons");
+    let mut rt = window(json!({}), Prefs::default());
+
+    let labels = [
+        ("notifications", "Notifications"),
+        ("chat", "Chat"),
+        ("status", "Status"),
+        ("agents", "Agents"),
+        ("tickets", "Tickets"),
+        ("reports", "Closing reports"),
+    ];
+    let elements = rt.elements();
+    for (name, label) in labels {
+        let icon = elements
+            .iter()
+            .find(|e| e.key.as_deref() == Some(&format!("icon-{name}")))
+            .unwrap_or_else(|| panic!("no icon for {name}"));
+        assert_eq!(icon.help.as_deref(), Some(label), "{name}'s tooltip");
+        assert_eq!(icon.label.as_deref(), Some(label), "{name}'s label");
+        assert_eq!(icon.role, "button", "{name}'s role");
+    }
+
+    press(&mut rt, "icon-agents");
+    rt.frame(1.0);
+    assert!(body(&rt, "agents")[3] > 0.0, "agents did not show");
+    press(&mut rt, "icon-agents");
+    rt.frame(1.0);
+    assert_eq!(body(&rt, "agents")[3], 0.0, "agents did not shut");
+}
+
+#[test]
+fn an_old_prefs_file_still_loads() {
+    let (_held, dir) = prefs_dir("old");
+    std::fs::create_dir_all(&dir).expect("a scratch dir");
+    let old = json!({
+        "open_panels": ["~", "agents"],
+        "sizes": { "agents": [304.0, 240.0] },
+        "hidden_reports": ["itm_000000000001"]
+    });
+    std::fs::write(dir.join("rune-deck.json"), old.to_string()).expect("an old file");
+
+    let prefs = Prefs::load(&dir);
+    assert!(prefs.open_panels.contains("agents"), "{prefs:?}");
+    assert!(prefs.hidden_reports.contains("itm_000000000001"), "{prefs:?}");
+}
+
+#[test]
+fn the_open_panes_and_side_width_survive_a_restart() {
     let (_held, dir) = prefs_dir("restart");
     let mut rt = window(json!({}), Prefs::default());
 
-    // The top panel, so its grip is in the window whatever stands open under it.
-    press(&mut rt, "panel-notifications-head");
-    rt.frame(1.0);
-    let (x, y) = rt
-        .find("panel-notifications-grip")
-        .expect("a grip on an open panel");
+    let (x, y) = rt.find("side-handle").expect("a handle on the side area");
     rt.pointer_move(x, y);
     rt.pointer_down(x, y);
     for step in 1..=10 {
-        rt.pointer_move(x + 3.0 * step as f32, y + 5.0 * step as f32);
+        rt.pointer_move(x + 3.0 * step as f32, y);
         rt.frame(FRAME);
     }
-    assert!(
-        !Prefs::load(&dir).sizes.contains_key("notifications"),
-        "a size was saved before the release"
+    assert_eq!(
+        Prefs::load(&dir).side_width,
+        None,
+        "a width was saved before the release"
     );
-    rt.pointer_up(x + 30.0, y + 50.0);
+    rt.pointer_up(x + 30.0, y);
     rt.frame(1.0);
-    let dragged = body(&rt, "notifications");
+    let dragged = rects(&rt, "side").0;
 
     let restarted = Prefs::load(&dir);
-    assert!(
-        restarted.sizes.contains_key("notifications"),
-        "no size saved: {restarted:?}"
-    );
     let again = window(json!({}), restarted);
     assert_eq!(
-        body(&again, "notifications")[2..],
-        dragged[2..],
-        "the size came back different"
+        rects(&again, "side").0[2],
+        dragged[2],
+        "the width came back different"
     );
     assert!(body(&again, "chat")[3] > 0.0, "chat shut after the restart");
 
     // The open set is kept as left, all of it shut included.
     let mut rt = again;
-    for panel in ["notifications", "chat", "status"] {
-        press(&mut rt, &format!("panel-{panel}-head"));
+    for panel in ["chat", "status"] {
+        press(&mut rt, &format!("icon-{panel}"));
         rt.frame(1.0);
     }
     let shut = window(json!({}), Prefs::load(&dir));
@@ -174,40 +259,60 @@ fn open_panels_and_sizes_survive_a_restart() {
     }
 }
 
+/// S28 behaviour 2 (6d): the side area's edge is the pointer's on every frame, with no snap at the
+/// default; and dragged below its minimum, the area hides.
 #[test]
 fn a_drag_tracks_the_pointer_with_no_snap_at_the_default() {
     let (_held, _dir) = prefs_dir("drag");
-    let open = window(json!({}), Prefs::default());
-    let default = body(&open, "chat");
-    // Start 40 px short of the default, so the drag crosses it on the way down.
+    // Start 40 px short of the default, so the drag crosses it.
     let mut prefs = Prefs::default();
-    layout::resize(&mut prefs, "chat", (default[2], default[3] - 40.0));
+    prefs.side_width = Some(size::side_default - 40.0);
     let mut rt = window(json!({}), prefs);
 
-    let (x, y) = rt.find("panel-chat-grip").expect("a grip");
-    let grab = y - (body(&rt, "chat")[1] + body(&rt, "chat")[3]);
+    let (x, y) = rt.find("side-handle").expect("a handle");
+    let side = rects(&rt, "side").0;
+    let grab = x - (side[0] + side[2]);
     rt.pointer_move(x, y);
     rt.pointer_down(x, y);
     let mut last = f32::MIN;
     for step in 1..=40 {
-        let py = y + 2.0 * step as f32;
-        rt.pointer_move(x, py);
+        let px = x + 2.0 * step as f32;
+        rt.pointer_move(px, y);
         rt.frame(FRAME);
-        let b = body(&rt, "chat");
-        let bottom = b[1] + b[3];
+        let s = rects(&rt, "side").0;
+        let edge = s[0] + s[2];
         assert!(
-            (bottom - (py - grab)).abs() <= 1.0,
-            "step {step}: edge {bottom}, pointer {py}"
+            (edge - (px - grab)).abs() <= 1.0,
+            "step {step}: edge {edge}, pointer {px}"
         );
-        assert!(b[3] >= last, "step {step}: {} after {last}", b[3]);
-        last = b[3];
+        assert!(s[2] >= last, "step {step}: {} after {last}", s[2]);
+        last = s[2];
     }
-    rt.pointer_up(x, y + 80.0);
+    rt.pointer_up(x + 80.0, y);
     assert!(
-        last > default[3] + 30.0,
+        last > size::side_default + 30.0,
         "the drag stopped at {last}, default {}",
-        default[3]
+        size::side_default
     );
+
+    // Dragged below the minimum, the area hides; an icon brings it back.
+    rt.frame(1.0);
+    let (x, y) = rt.find("side-handle").expect("a handle");
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    let under = last - size::side_min + 20.0;
+    for step in 1..=10 {
+        rt.pointer_move(x - under * step as f32 / 10.0, y);
+        rt.frame(FRAME);
+    }
+    rt.pointer_up(x - under, y);
+    rt.frame(1.0);
+    assert!(rt.state.prefs.side_hidden, "the side area did not hide");
+    assert_eq!(rects(&rt, "side").0[2], 0.0, "the side area still shows");
+    press(&mut rt, "icon-chat");
+    rt.frame(1.0);
+    assert!(body(&rt, "chat")[3] > 0.0, "chat did not come back");
+    assert!(rects(&rt, "side").0[2] >= size::side_min, "came back too narrow");
 }
 
 /// The notifications view with `n` notices, none of them seen.
@@ -219,33 +324,33 @@ fn notices(n: usize) -> Value {
 }
 
 fn panel_bounds(rt: &Runtime<State>) -> Vec<[f32; 4]> {
-    [
-        "notifications",
-        "chat",
-        "status",
-        "agents",
-        "tickets",
-        "reports",
-    ]
-    .iter()
-    .flat_map(|p| [format!("panel-{p}-head"), format!("panel-{p}-body")])
-    .map(|key| rects(rt, &key).1)
-    .collect()
+    PANELS
+        .iter()
+        .flat_map(|p| {
+            [
+                format!("icon-{p}"),
+                format!("panel-{p}-head"),
+                format!("panel-{p}-body"),
+            ]
+        })
+        .map(|key| rects(rt, &key).1)
+        .collect()
 }
 
+/// S28 behaviour 3 (6e): a count gaining a digit moves no pane and no icon, and stays on one line.
 #[test]
 fn a_three_digit_count_moves_nothing() {
-    let at_99 = window(notices(99), Prefs::default());
-    let at_100 = window(notices(100), Prefs::default());
+    let draw = |n: usize| window(notices(n), all_open(size::side_default));
+    let (at_1, at_99, at_100) = (draw(1), draw(99), draw(100));
 
     assert_eq!(panel_bounds(&at_99), panel_bounds(&at_100));
     let shown = |rt: &Runtime<State>| rects(rt, "panel-notifications-count").1;
+    assert_eq!(shown(&at_100)[3], shown(&at_1)[3], "the count wrapped");
     assert_eq!(shown(&at_100)[3], shown(&at_99)[3], "the count wrapped");
     let head = rects(&at_100, "panel-notifications-head").1;
-    let chat = rects(&at_100, "panel-chat-head").1;
-    assert_eq!(head[3], chat[3], "the header is not one line");
+    assert_eq!(head[3], size::pane_head, "the header is not one line");
 
-    let at_1000 = window(notices(1000), Prefs::default());
+    let at_1000 = draw(1000);
     let texts: Vec<String> = at_1000
         .elements()
         .into_iter()
