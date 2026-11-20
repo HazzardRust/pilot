@@ -53,6 +53,7 @@ pub fn spec() -> AppSpec<State> {
     AppSpec {
         setup: Some(setup),
         poll: Some(poll),
+        on_key: Some(regions::thread::key),
         ..AppSpec::new("pilot deck", (1280.0, 800.0), State::load, view)
     }
 }
