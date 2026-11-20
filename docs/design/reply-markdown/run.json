@@ -1,0 +1,71 @@
+{
+  "slug": "reply-markdown",
+  "feature": "Reply box renders markdown",
+  "ticket": "itm_864c47669387",
+  "branch": "feat/reply-markdown",
+  "base": "feat/rune-deck-ui",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-reply-markdown",
+  "artefact": "docs/design/reply-markdown/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "planned",
+      "branch": "slice/reply-markdown-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/reply-markdown-s2"
+    }
+  ],
+  "next": "reply-markdown planned (gate1 signed aca2a46d, short path). Rune: QA afc31057 on walkthrough itm_f98fae4576f8, feat d075ad91; relay replies. wait-deadlines green: QA ac4d8333 live at 5a3b7e1c owes gate2 (PR #134), reports to a4cd233a. Yellow empty, next itm_1f8238d5a300 (re-cut notice stuck). Open: itm_de4ca1e5d6d9 (user stops pids), itm_e235d0195f0b. Keep memory ui-design-workflow-notes.md.",
+  "updatedAt": "2026-11-20T14:08:05.417Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "rune-kit's markdown parser maps only to rendered text, its source map private; three probes to rule it out and call pulldown-cmark directly",
+      "evidence": "rune-kit parser/map.rs",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "first three question posts refused for a missing Research: line; ADR 0119's rule is not in the architect's definition (main hit it three times too)",
+      "evidence": "itm_3cadb89e11ae, itm_cf736cb1ad17, itm_b5ca8397c90b",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "brief trailer names Fable 5.2 while Opus crew agents' harness trailer says Opus 5.5; two agents asked which to use",
+      "evidence": "a9633301 on feat/rune-deck-ui; reply-markdown brief.md",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "auto mode gave no verdict on a Bash or SendMessage call batched with other calls five times; each reissued alone",
+      "size": 1500
+    },
+    {
+      "kind": "drain",
+      "what": "deck filed main's refused Stop-Process as a blocking item on the live planning ticket, which refused its gate1 until main closed it as moot",
+      "size": 1500
+    },
+    {
+      "kind": "drain",
+      "what": "crew-handoff item itm_f93c340ba2f1 stayed open after its co-pilot handed back directly; cost the user a question; ticket itm_a28fc03b3ae5 queued",
+      "size": 2500
+    },
+    {
+      "kind": "drain",
+      "what": "deck_post refused questions five times: Research: line wording (only the full skip-list phrase passes) and the 1200-char body cap",
+      "size": 2000
+    },
+    {
+      "kind": "drain",
+      "what": "co-pilot's hand-back said pilot land is the pilot's before QA writes; pilot land merges into pilot, so it was not run; the agent text reads as if it were a pre-QA step",
+      "size": 800
+    }
+  ]
+}
