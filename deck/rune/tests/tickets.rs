@@ -307,6 +307,53 @@ fn a_row_carries_the_pages_lines() {
     );
 }
 
+/// The user's note: Red / Yellow / Green in deck.css's pastels. A queue's heading and its rows' states
+/// take the queue's accent (`.ticket-queue > summary`, `.ticket-state[data-state]`), and the row in hand
+/// is tinted at 14% of the waiting colour with a 3 px bar (`li.in-hand`), the others not.
+#[test]
+fn a_queue_wears_its_pastel() {
+    let deck = Scratch::start();
+    let [head, other] = ["Head", "Other"].map(|title| ticket(&deck, title));
+    let rt = drawn(&deck, red_open());
+    let tk = pilot_deck::theme::tokens(true);
+    let ink = |key: &str| find(&rt, key).and_then(|e| e.text_color);
+
+    assert_eq!(
+        ink("tickets-fold-red-label"),
+        Some(tk.accent.red),
+        "heading"
+    );
+    assert_eq!(
+        ink("tickets-fold-yellow-label"),
+        Some(tk.accent.yellow),
+        "every heading"
+    );
+    assert_eq!(
+        find(&rt, "tickets-fold-red-label").and_then(|e| e.text),
+        Some("RED".into()),
+        "in capitals"
+    );
+    assert_eq!(
+        ink(&format!("ticket-{other}-state")),
+        Some(tk.accent.red),
+        "state"
+    );
+
+    let fill = |id: &str| find(&rt, &format!("ticket-{id}")).expect("a row").fill;
+    assert_eq!(fill(&head), tk.state.waiting.alpha(0.14), "in hand");
+    assert!(
+        find(&rt, &format!("ticket-{head}-bar")).is_some_and(|e| e.rect[2] == 3.0),
+        "a 3 px bar"
+    );
+    assert_eq!(fill(&other).a, 0.0, "no other row");
+    let text_x = |id: &str| {
+        find(&rt, &format!("ticket-{id}-state"))
+            .expect("a state")
+            .rect[0]
+    };
+    assert_eq!(text_x(&head), text_x(&other), "the text where it was");
+}
+
 #[test]
 fn folds_are_kept_per_deck() {
     let deck = Scratch::start();

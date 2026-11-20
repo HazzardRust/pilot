@@ -164,7 +164,7 @@ fn content_selects_and_labels_do_not() {
             "{said:?} selects"
         );
     }
-    for said in ["First notice", "First report", "First ticket", "Red"] {
+    for said in ["First notice", "First report", "First ticket", "RED"] {
         let label = with_text(&rt, said);
         assert_ne!(
             cursor_over(&mut rt, &label),

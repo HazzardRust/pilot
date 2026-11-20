@@ -89,7 +89,7 @@ struct Queue {
     state_lines: Vec<Line>,
 }
 
-fn accent(t: &Tokens, name: &str) -> Color {
+pub(super) fn accent(t: &Tokens, name: &str) -> Color {
     match name {
         "green" => t.accent.green,
         "yellow" => t.accent.yellow,

@@ -8,10 +8,11 @@ use std::rc::Rc;
 
 use crate::theme::type_;
 use rune::tok;
-use rune::{Cursor, Cx, Drag, El, Phase, Tx, col, row, text};
+use rune::{Cursor, Cx, Drag, El, Phase, Tx, col, el, row, text};
 use serde::Deserialize;
 
 use super::notifications::{keep, open_thread};
+use super::queue::accent;
 use crate::act::{self, Pending};
 use crate::act_deck::DeckAction;
 use crate::app::State;
@@ -77,6 +78,8 @@ struct Row {
     switch: Option<String>,
     /// `main` or `co-pilot`: the lane that takes it next.
     next: Option<String>,
+    /// `in-hand` or `co-pilot`: the row the page sets apart (`li.in-hand`, `li.co-pilot-held`).
+    mark: Option<String>,
     live: bool,
     recut: Option<String>,
     questions: Questions,
@@ -368,9 +371,13 @@ fn link(words: impl Into<String>, id: &str, ink: rune::Color, dark: bool) -> El 
 
 /// The row's text column, as `renderTicketRow` lays it out: `next`, the title, then live, the state,
 /// re-cut and the questions on one line, the size, the artefact, short path, and the two folds.
-fn lines(r: &Row, local: &Local, t: &tok::Theme, dark: bool) -> El {
+/// The co-pilot's row also says so, in its lane's blue: across the top, where the page writes it down the edge.
+fn lines(r: &Row, colour: &str, local: &Local, t: &tok::Theme, dark: bool) -> El {
     let tk = theme::tokens(dark);
     let mut body = col().grow(1.0).min_w(0.0).gap(space::s2);
+    if r.mark.as_deref() == Some("co-pilot") {
+        body = body.child(said("co-pilot", tk.state.pilot).key(format!("ticket-{}-lane", r.id)));
+    }
     if let Some(lane) = &r.next {
         let ink = if lane == "co-pilot" {
             tk.state.pilot
@@ -393,7 +400,8 @@ fn lines(r: &Row, local: &Local, t: &tok::Theme, dark: bool) -> El {
         state = state.child(said("live", tk.state.waiting));
     }
     state = state.child(theme::content(
-        said(&r.state, t.text_secondary).key(format!("ticket-{}-state", r.id)),
+        // deck.css `.ticket-state[data-state]`: the state in its queue's colour.
+        said(&r.state, accent(&tk, colour)).key(format!("ticket-{}-state", r.id)),
         dark,
     ));
     if let Some(why) = &r.recut {
@@ -444,8 +452,13 @@ fn lines(r: &Row, local: &Local, t: &tok::Theme, dark: bool) -> El {
     body
 }
 
+/// The row in hand's tint and its edge's width (deck.css: `14%`, `inset 3px`).
+const HAND_TINT: f32 = 0.14;
+const HAND_BAR: f32 = 3.0;
+
 fn ticket_row(
     r: &Row,
+    colour: &str,
     repo: &str,
     mids: &Mids,
     local: &Local,
@@ -498,14 +511,33 @@ fn ticket_row(
             .on_drag(move |s: &mut State, d: &mut Drag, tx: &mut Tx| drag(s, &id, &mids, d, tx))
     });
     let line = row()
-        .key(key)
-        .w_full()
-        .pl(space::s3)
         .pr(space::s4)
         .gap(space::within)
-        .child(lines(r, local, t, dark))
+        .child(lines(r, colour, local, t, dark))
         .child(controls)
         .child(slot(grip).self_center());
+    // deck.css `li.in-hand` / `li.co-pilot-held`: the row tinted at 14% of its lane's colour, a 3 px bar
+    // down its left edge, its text where an unmarked row's is.
+    let tk = theme::tokens(dark);
+    let lane = match r.mark.as_deref() {
+        Some("in-hand") => Some(tk.state.waiting),
+        Some("co-pilot") => Some(tk.state.pilot),
+        _ => None,
+    };
+    let line = match lane {
+        Some(ink) => row()
+            .key(key)
+            .w_full()
+            .fill(ink.alpha(HAND_TINT))
+            .child(
+                el().key(format!("ticket-{}-bar", r.id))
+                    .w(HAND_BAR)
+                    .self_stretch()
+                    .fill(ink),
+            )
+            .child(line.grow(1.0).min_w(0.0).pl(space::s3 - HAND_BAR)),
+        None => line.key(key).w_full().pl(space::s3),
+    };
     match &local.dragging {
         Some((id, dy)) if *id == r.id => line.offset(0.0, *dy),
         _ => line,
@@ -555,16 +587,23 @@ pub fn draw(
             panel = panel.child(theme::rule(theme::Rule::Group, dark).key(key));
         }
         let (fold_repo, colour) = (repo.clone(), g.colour.clone());
+        let ink = accent(&theme::tokens(dark), &g.colour);
         let header = theme::control(row(), dark)
             .key(format!("tickets-fold-{}", g.colour))
             .gap(space::within)
             .role("button")
             .on_press(move |s: &mut State| toggle(s, &fold_repo, &colour))
-            .child(text(&g.label).font(type_::BODY).color(t.text))
+            // deck.css `.ticket-queue > summary`: the label and its count in capitals, in the queue's pastel.
+            .child(
+                text(g.label.to_uppercase())
+                    .key(format!("tickets-fold-{}-label", g.colour))
+                    .font(type_::CAPTION)
+                    .color(ink),
+            )
             .child(
                 text(g.rows.len().to_string())
                     .font(type_::CAPTION)
-                    .color(t.text_secondary),
+                    .color(ink),
             );
         let mut fold = col().gap(space::within).child(header);
         if open.is_some_and(|set| set.contains(&g.colour)) {
@@ -584,7 +623,9 @@ pub fn draw(
             }
             let mids: Mids = Rc::new(mids);
             for (i, r) in g.rows.iter().enumerate() {
-                fold = fold.child(ticket_row(r, &repo, &mids, local, pending, &t, dark));
+                fold = fold.child(ticket_row(
+                    r, &g.colour, &repo, &mids, local, pending, &t, dark,
+                ));
                 if i != last {
                     let key = format!("ticket-{}-rule", r.id);
                     fold = fold.child(theme::rule(theme::Rule::Item, dark).key(key));
