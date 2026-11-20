@@ -33,7 +33,7 @@
  * would go in `store.postItem`, and the page would not have to change.
  */
 
-import { KIND_USER, MAX_SLICE_CHARS, appearsInYours, isBehind, isQueued, newestSaidFirst, repoKey } from './items.mjs';
+import { KIND_GATE1, KIND_GATE2, KIND_SIGNOFF, KIND_USER, MAX_SLICE_CHARS, appearsInYours, isBehind, isQueued, newestSaidFirst, repoKey } from './items.mjs';
 
 /**
  * What a slice may be called, in characters. The number lives in `items.mjs`
@@ -494,9 +494,20 @@ export const queueOf = (items) =>
     .filter(isQueued)
     .sort((a, b) => (a.kind === KIND_USER) - (b.kind === KIND_USER) || newestSaidFirst(a, b));
 
+/** The owed presses (nothing-hidden L1; ADR NNNN): a press the user owes, a card whichever ticket it names. */
+const OWED_KINDS = [KIND_GATE1, KIND_GATE2, KIND_SIGNOFF];
+const isFolded = (item, items) => !OWED_KINDS.includes(item.kind) && isBehind(item, items);
+
 /**
- * The shown queue (overview-one-ticket L3, L4; ADR 0065): a queue, the deck's or a tab's, less
- * what waits behind its repository's ticket in hand. What the overview and a tab list, the
- * thread arrows walk and the strip counts; `queueOf` itself stays whole for the Stop hook and `/items`.
+ * The cards (nothing-hidden L1, amending overview-one-ticket L3, L4; ADR NNNN): a queue, the deck's or a
+ * tab's, less what folds behind another ticket (`foldedOf`). Every owed press stays a card, behind or not;
+ * non-user threads first, then what is not behind before what is, each in queue order. Home draws these
+ * above the fold and the thread arrows walk them first; `queueOf` stays whole, and the strip counts it.
  */
-export const shownOf = (queue, items) => queue.filter((item) => !isBehind(item, items));
+export function shownOf(queue, items) {
+  const rank = (item) => (item.kind === KIND_USER ? 2 : 0) + (isBehind(item, items) ? 1 : 0);
+  return queue.filter((item) => !isFolded(item, items)).sort((a, b) => rank(a) - rank(b));
+}
+
+/** The fold (nothing-hidden L1; ADR NNNN): the rest of the queue, behind and not an owed press, in queue order. */
+export const foldedOf = (queue, items) => queue.filter((item) => isFolded(item, items));

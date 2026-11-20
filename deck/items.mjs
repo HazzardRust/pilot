@@ -664,10 +664,10 @@ export function coPilotStateOf(items, repo, coPilotTicket, switching) {
 }
 
 /**
- * Whether a thread waits behind the ticket in hand (overview-one-ticket L3, L16): it names an open
- * ticket of its repository that is not in the main deck's hand. Read at render time, never stored;
- * an unticketed thread, or one naming a closed ticket, is never behind. A blocking question is no
- * exception (spec 24, L19): it hides and shows with its ticket. A yellow ticket's thread is never
+ * Whether a thread waits behind the ticket in hand (overview-one-ticket L3, L16): it names an open ticket of its repository
+ * not in the main deck's hand. Read at render time, never stored; it orders and folds, never hides (nothing-hidden L3):
+ * home folds it unless it is an owed press (`foldedOf`). An unticketed thread, or one naming a closed ticket, is never
+ * behind. A blocking question is no exception (spec 24, L19): it folds with its ticket. A yellow ticket's thread is never
  * behind either (yellow-agent spec 4, amending L20): the main deck never holds a yellow ticket, and
  * what its co-pilot passes up is the user's to answer while it builds.
  */
