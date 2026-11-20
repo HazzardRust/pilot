@@ -60,6 +60,18 @@ test('unbounded shapes are refused', () => {
   assert.strictEqual(unboundedWaits("timeout 0 bash -c 'until grep -q x f; do sleep 1; done'").length, 1, 'timeout 0 never fires');
 });
 
+test('a run of keywords scans in linear time', () => {
+  assert.strictEqual(unboundedWaits('until x; do time -p sleep 1; done').length, 1, 'time -p sleep');
+  for (const kw of ['! ', 'time ', 'then ', 'time -p ']) {
+    const began = Date.now();
+    const found = unboundedWaits('until x; do ' + kw.repeat(20000) + 'sleep 1; done');
+    assert.ok(Date.now() - began < 500, `${kw.trim()} run took ${Date.now() - began} ms`);
+    assert.strictEqual(found.length, 1, kw);
+  }
+  assert.strictEqual(unboundedWaits('until x; do ! sleep 1; done').length, 1, '! sleep');
+  assert.strictEqual(unboundedWaits('until x; do time sleep 1; done').length, 1, 'time sleep');
+});
+
 test('bounded shapes run', () => {
   const loop = 'until grep -q x f; do sleep 5; done';
   for (const command of [

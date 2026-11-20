@@ -267,7 +267,7 @@ function waitLoops(command, depth = 0) {
     } else if (t.w === 'done') {
       const loop = open.pop();
       if (loop && loop.body && loop.sleeps && (loop.form === 'until' || loop.form === 'while')) found.push(loop);
-    } else if (runsSleep(toks, k)) {
+    } else if (!(COMMAND_START.has(t.w) && toks[k + 1] && COMMAND_START.has(toks[k + 1].w)) && runsSleep(toks, k)) { // in a keyword run only the last keyword scans, else it is quadratic
       for (const loop of open) loop.sleeps = true;
     }
   });
