@@ -10,19 +10,34 @@ import { heldTicketsOf } from '../ui/render-rail.mjs';
 
 const hasTable = (record) => Array.isArray(record?.slices) && record.slices.length > 0;
 
-/** `query` is `{ run, ticket }`; the overview (no tab) has no table and no selector (A6). */
+/**
+ * `query` is `{ run, ticket }`. The overview (no run named, no landing tab) draws no single table and no selector
+ * (A6), but one `{ tab, tickets, rows }` group per tab that has anything to show, in the strip's order, each its
+ * default lane's rows, as `renderStrips` draws its sections (S22). A run naming no tab has nothing.
+ */
 export function statusView(reads, query = {}) {
   const { run = null, ticket: asked = null } = query;
   const tabs = tabsOf(reads.runs, reads.items, reads.numbers, reads.agents, reads.added, reads.lanes);
   const tab = run === null ? landingFor(tabs) : tabFor(tabs, run);
-  if (!tab) return { tickets: [], rows: [] };
-  const held = heldTicketsOf(tab, reads.items);
+  if (tab) return tableOf(tab, reads.items, asked);
+  if (run !== null) return { tickets: [], rows: [] };
+  // A tab with a held ticket but no record still has a section on the page ("no slice table yet").
+  const groups = tabs
+    .map((each) => ({ each, table: tableOf(each, reads.items, null) }))
+    .filter(({ each, table }) => table.rows.length > 0 || heldTicketsOf(each, reads.items).length > 0)
+    .map(({ each, table }) => ({ tab: each.name, tickets: [], rows: table.rows }));
+  return { tickets: [], rows: [], groups };
+}
+
+/** One tab's table: the chosen held lane's record (`asked` only picks among them), and its selector. */
+function tableOf(tab, items, asked) {
+  const held = heldTicketsOf(tab, items);
   const chosen = (held.find((lane) => lane.ticket.id === asked) ?? held[0])?.ticket;
   // A held ticket with no record has no rows; with no held lane, the newest run that posted a table.
   const slices = chosen
     ? ((tab.records ?? []).findLast((each) => each?.ticket === chosen.id && hasTable(each))?.slices ?? [])
     : (tab.runs.filter(hasTable).at(-1)?.slices ?? []);
-  const yours = yoursIndex(reads.items.filter((item) => tab.open.includes(item)));
+  const yours = yoursIndex(items.filter((item) => tab.open.includes(item)));
   const rows = slices.map((row) => {
     const item = yoursFor({ repo: tab.repo }, row, yours);
     return {
