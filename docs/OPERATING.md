@@ -61,6 +61,42 @@ A repository with no `test:changed` script, or one tested by `git config pilot.t
 
 A run's branches (`pilot`, `design/`, `slice/`, `fix/` and `qa/`) go to `origin` by default, and all but `pilot` are deleted from the remote they live on once they are merged, never before. `feat/<slug>`, the head of the feature PR, is always on `origin`, and is deleted there by `pilot branches prune` once its PR merges. The git setting `pilot.remote` moves the rest: `git config pilot.remote none` keeps run branches local, and `git config pilot.remote <name>` sends them to that remote instead (it must be a name `git remote` lists). `pilot branches prune --slug <slug>` deletes that run's merged ones that are still around; add `--dry-run` to see them first (ADR 0134).
 
+## Two devices, one repo
+
+You can carry on work on one repository from a second device that has pilot and the same accounts signed in. Git is
+what the two devices share, and nothing else (ADR NNNN):
+
+1. Git is the shared state: work moves between the devices only as pushed branches, `pilot` and the PRs on the remote.
+2. Each device runs its own deck. Its tickets, threads and run records stay on that device; nothing syncs, exports or
+   commits them.
+3. One device, the owner, holds the queue and lands on `pilot`. Which one is your convention; no setting enforces it.
+4. The other device hands its work over as a pushed branch and a PR, never as deck data.
+
+Two decks landing is already safe in git: `pilot land` fetches, re-merges once onto a `pilot` that moved, pushes
+without force, and on a second move stops and asks you to run it again. So the owner rule is about the queue: two decks
+must not cut the same slug. `pilot doctor slug <slug>` reads `origin` and the run remote live and prints a `clash` line
+for each `feat/<slug>` or `design/<slug>` branch and each open PR from one, exit 1, or `free <slug>`, exit 0; an
+unreachable remote or host reads `cannot tell`, exit 1, never free. The pilot runs it before it names a slug, and bare
+`pilot doctor` and `pilot start` print the same lines for the slugs this deck has queued.
+
+### Setting up a second device
+
+On device 2, in PowerShell on Windows or your login shell elsewhere:
+
+1. Install pilot as the README's install prompt says (`claude plugin marketplace add HazzardRust/pilot`, then
+   `claude plugin install pilot@pilot` and its `docs/INSTALL.md`), or `claude plugin update pilot@pilot` where it is
+   already installed; `pilot help` then lists `pilot host` among its commands.
+2. Clone the repository, from the URL `git remote get-url origin` prints on device 1: `git clone <url>`, then `cd` into it.
+3. Set the same host as device 1, whose `pilot host` prints it: `pilot host <github|gitlab|none>`.
+4. Set the same run remote as device 1, whose `git config pilot.remote` prints it (nothing printed is `origin`):
+   `git config pilot.remote <name>`. Never `none` on either device: local run branches are invisible to the other, so
+   `pilot doctor slug` cannot see the other device's `design/` branches.
+5. Sign in the CLIs on PATH: `gh auth status` (or `glab auth status` under `gitlab`) names your account, and `claude`
+   starts signed in to the same account as device 1.
+6. Check the device: `pilot doctor` in the clone shows no `fail` row. A `fail` row prints its fix below it; run that,
+   then `pilot doctor` again.
+7. Start: `pilot start`. Leave the queue and the landings to the owner, and hand this device's work over as rule 4 says.
+
 ## Moving to a fresh public repository
 
 The move replaces the private HazzardRust/pilot, and its history, with a public repository of one
