@@ -141,7 +141,7 @@ test('the ticket row draws data-state', () => {
     REPO,
   );
   const rowOf = (title) => {
-    const end = page.indexOf(`>${title}</a>`);
+    const end = page.indexOf(`>${title}</a>`, page.indexOf('</main>')); // past the queue: a parked gate2's card names Fig too (nothing-hidden spec 1)
     assert.notEqual(end, -1, `${title} is on the tab`);
     return page.slice(page.lastIndexOf('<li', end), page.indexOf('</li>', end));
   };

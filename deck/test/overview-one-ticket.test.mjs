@@ -1,9 +1,9 @@
 /**
  * S1 of overview-one-ticket (spec 1-8; L2-L4, L6, L13, L16; ADR 0065): the overview feeds one ticket
- * at a time. Per repository, the queue shows only the threads that name the ticket
- * in hand (`inHandOf`: the live ticket, else `nextTicketOf`) and every unticketed thread; the arrows
- * walk and the strip counts that shown queue, and a hidden thread is a press away on its ticket's
- * Tickets row.
+ * at a time. Per repository, the queue's cards are the threads that name the ticket
+ * in hand (`inHandOf`: the live ticket, else `nextTicketOf`) and every unticketed thread; the rest
+ * fold under them, counted (nothing-hidden S1, amending L3, L4), the arrows walk and the strip counts
+ * both, and a folded thread is also a press away on its ticket's Tickets row.
  */
 
 import './no-open.mjs';
@@ -30,12 +30,15 @@ const overview = () => renderHomePage(listItems(), runs(), null, false, {}, {}, 
 const tabPage = () => renderHomePage(listItems(), runs(), REPO, false, {}, {}, Date.now());
 const threadPage = (item) => renderThreadPage(item, listItems(), runs(), {}, {}, false, []);
 
-/** Whether the page lists this thread as a card in its queue: the card's heading links it. */
-const listed = (html, item) => html.includes(`<h2><a href="/thread/${item.id}">`);
+/** Whether the page lists this thread as a card above the fold, or inside it (nothing-hidden spec 1): its heading links it. */
+const heading = (item) => `<h2><a href="/thread/${item.id}">`;
+const foldAt = (html) => (html.includes('<details class="fold">') ? html.indexOf('<details class="fold">') : html.length);
+const listed = (html, item) => html.slice(0, foldAt(html)).includes(heading(item));
+const folded = (html, item) => html.slice(foldAt(html)).includes(heading(item));
 const rowOf = (html, ticket) => html.match(new RegExp(`<li data-state="[a-z]+"(?: class="in-hand")?>(?:<span class="next">next</span>)?<a href="/thread/${ticket.id}">.*?</details></li>`, 's'))?.[0] ?? '';
 const counts = (html) => [...html.match(/<nav class="runs-strip".*?<\/nav>/s)[0].matchAll(/<span class="count">(\d+)<\/span>/g)].map((match) => Number(match[1]));
 
-test('two green tickets with questions: the overview lists only the first\'s', (t) => {
+test('two green tickets with questions: the overview lists the first\'s and folds the second\'s', (t) => {
   tempDeck(t);
   const first = aTicket('First', 'green');
   const second = aTicket('Second', 'green');
@@ -44,9 +47,9 @@ test('two green tickets with questions: the overview lists only the first\'s', (
 
   for (const html of [overview(), tabPage()]) {
     assert.ok(listed(html, asked), 'the ticket in hand\'s question is listed');
-    assert.ok(!listed(html, behind), 'the second green ticket\'s question waits behind it');
+    assert.ok(folded(html, behind), 'the second green ticket\'s question waits behind it, in the fold');
   }
-  assert.ok(listItems().find((item) => item.id === behind.id).resolvedAt === undefined, 'hidden, never closed (L3)');
+  assert.ok(listItems().find((item) => item.id === behind.id).resolvedAt === undefined, 'folded, never closed (L3)');
 });
 
 test('a red ticket ahead of a green one: both lanes\' threads are listed (three-lanes spec 4)', (t) => {
@@ -83,7 +86,7 @@ test('closing the ticket in hand lists the next one\'s threads', (t) => {
   const second = aTicket('Second', 'green');
   askOn(first);
   const next = askOn(second);
-  assert.ok(!listed(overview(), next));
+  assert.ok(folded(overview(), next));
 
   aReport(first);
 
@@ -99,13 +102,13 @@ test('an unticketed question is listed whatever is in hand', (t) => {
   const unticketed = askOn(undefined, 'Unticketed');
 
   const before = overview();
-  assert.ok(listed(before, unticketed) && listed(before, one) && !listed(before, two), 'beside the first ticket in hand');
+  assert.ok(listed(before, unticketed) && listed(before, one) && folded(before, two), 'beside the first ticket in hand');
   aReport(first);
   const after = overview();
   assert.ok(listed(after, unticketed) && listed(after, two), 'and beside the second');
 });
 
-test('a hidden ticket\'s question is linked from its Tickets row', (t) => {
+test('a folded ticket\'s question is linked from its Tickets row', (t) => {
   tempDeck(t);
   const first = aTicket('First', 'green');
   // Green, not yellow or red: a yellow ticket's threads are never behind (yellow-agent S5), and a red one is planning's.
@@ -115,7 +118,7 @@ test('a hidden ticket\'s question is linked from its Tickets row', (t) => {
   const walk = aWalkthrough(second);
 
   const html = tabPage();
-  assert.ok(!listed(html, behind), 'hidden from the queue');
+  assert.ok(folded(html, behind), 'folded under the cards');
   const row = rowOf(html, second);
   assert.match(row, /<details class="previews"><summary>threads<\/summary>/, 'a row that is not the head carries its threads');
   assert.ok(row.includes(`<a href="/thread/${behind.id}">`), 'its question opens from the row');
@@ -124,7 +127,7 @@ test('a hidden ticket\'s question is linked from its Tickets row', (t) => {
   assert.doesNotMatch(rowOf(html, aTicket('Quiet', 'red')), /previews/, 'a ticket with nothing open shows none');
 });
 
-test('the arrows and the tab count walk the shown queue', (t) => {
+test('the arrows and the tab count walk the cards, then the fold', (t) => {
   tempDeck(t);
   // The clock is held and stepped a millisecond a post (S16): a fast ubuntu runner posted all five in
   // one, and a tie keeps deck order (thread-nav.test.mjs), oldest first, not the newest first asserted here.
@@ -133,18 +136,19 @@ test('the arrows and the tab count walk the shown queue', (t) => {
   const first = tick(aTicket('First', 'green'));
   const second = tick(aTicket('Second', 'green'));
   const asked = tick(askOn(first));
-  tick(askOn(second));
+  const behind = tick(askOn(second));
   const unticketed = tick(askOn(undefined, 'Unticketed'));
 
-  assert.deepEqual(counts(overview()), [2, 2], 'the overview and the tab each count the two cards listed');
-  // Newest first: the unticketed question, then the first ticket's; from that last one › goes nowhere.
-  const nav = threadPage(asked);
-  assert.match(nav, /<span aria-disabled="true">›<\/span>/, '› from the last shown thread goes nowhere');
-  assert.match(nav, /<span class="position" data-live="position">2\/2<\/span>/);
-  assert.match(threadPage(unticketed), /<span class="position" data-live="position">1\/2<\/span>/);
+  assert.deepEqual(counts(overview()), [3, 3], 'the overview and the tab each count the two cards and the folded one');
+  // Newest first among the cards: the unticketed question, then the first ticket's; then the fold's, the walk's end.
+  assert.match(threadPage(unticketed), /<span class="position" data-live="position">1\/3<\/span>/);
+  assert.match(threadPage(asked), /<span class="position" data-live="position">2\/3<\/span>/);
+  const nav = threadPage(behind);
+  assert.match(nav, /<span aria-disabled="true">›<\/span>/, '› from the folded thread, the last, goes nowhere');
+  assert.match(nav, /<span class="position" data-live="position">3\/3<\/span>/);
 });
 
-test('a parked ticket\'s question is hidden until that ticket is taken', (t) => {
+test('a parked ticket\'s question is folded until that ticket is taken', (t) => {
   tempDeck(t);
   // Two red tickets: a parked ticket is behind only its own stage's live one (three-lanes spec 4).
   const live = aTicket('Live', 'red');
@@ -152,7 +156,7 @@ test('a parked ticket\'s question is hidden until that ticket is taken', (t) => 
   takeLive(live.id);
   const parked = askOn(red);
 
-  assert.ok(!listed(overview(), parked), 'behind the live red ticket (L16)');
+  assert.ok(folded(overview(), parked), 'behind the live red ticket (L16), in the fold');
   takeLive(red.id);
   assert.ok(listed(overview(), parked), 'taken, it is the ticket in hand');
 });
@@ -169,8 +173,8 @@ test('a blocking question on a ticket that is not in hand is behind, and its Tic
 
   assert.ok(isBehind(blocker, listItems()), 'the parked green ticket is not in hand');
   const html = tabPage();
-  assert.ok(listed(html, asked) && !listed(html, blocker), 'off the overview, beside the green ticket in hand');
-  assert.deepEqual(counts(html), [1, 1], 'the strip counts only the shown card');
+  assert.ok(listed(html, asked) && folded(html, blocker), 'folded, under the green ticket in hand\'s card');
+  assert.deepEqual(counts(html), [2, 2], 'the strip counts the card and the fold');
   assert.ok(rowOf(html, parked).includes(`<a href="/thread/${blocker.id}">`), 'its row links it');
 });
 
