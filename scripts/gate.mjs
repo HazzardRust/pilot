@@ -20,7 +20,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { syntaxErrors } from './check-syntax.mjs';
 import { spawnCount } from './count-spawns.mjs';
-import { hostPlatform } from '../hooks/lib/platform.js';
+import { hostPlatform, onSearchPath } from '../hooks/lib/platform.js';
 import { deckPidNow, stopper } from '../deck/gc.mjs';
 import { isClaude, pilotProcesses, processTable } from '../deck/procs.mjs';
 import { takeSlot } from './gate-slots.mjs';
@@ -245,25 +245,14 @@ function homeStoreLine(file, before, deckPid) {
 }
 
 /**
- * The first `cmd` (`cmd.exe` on win32, the only kind spawn starts without a shell) in an absolute dir on
- * `env`'s PATH (`Path` on Windows); null when none. A relative entry is skipped: it resolves against the checkout.
- */
-function onPath(cmd, env, platform) {
-  const dirs = (env.PATH ?? env.Path ?? '').split(platform === 'win32' ? ';' : ':').filter((dir) => path.isAbsolute(dir));
-  const name = platform === 'win32' ? `${cmd}.exe` : cmd;
-  for (const dir of dirs) {
-    if (fs.statSync(path.join(dir, name), { throwIfNoEntry: false })?.isFile()) return path.join(dir, name);
-  }
-  return null;
-}
-
-/**
  * The Rune deck's `cargo test` (rune-deck-ui S19; A3) when `which('cargo')` finds it on Windows, else the one
- * line the gate prints instead: off Windows the deck's tests run in CI's Windows job, not in every gate.
+ * line the gate prints instead: off Windows the deck's tests run in CI's Windows job, not in every gate, and a
+ * gate a test starts (its env carries the outer gate's guard) leaves them to the outer one.
  * The command is the path `which` found: a bare `cargo` is looked up in the checkout first on Windows.
  */
-export function cargoStep(env, which = (cmd) => onPath(cmd, env, platform), platform = process.platform) {
+export function cargoStep(env, which = (cmd) => onSearchPath(`${cmd}.exe`, env, platform), platform = hostPlatform()) {
   if (platform !== 'win32') return { skip: 'rune deck: cargo test runs on Windows only, skipped' };
+  if (env.PILOT_GATE_HOME_STORE) return { skip: 'rune deck: a gate inside the gate, skipped' };
   const cargo = which('cargo');
   if (cargo === null) return { skip: 'rune deck: cargo not on PATH, skipped' };
   return { command: cargo, args: ['test', '--manifest-path', 'deck/rune/Cargo.toml'] };
@@ -307,7 +296,7 @@ function writerLines(log) {
  * With `homeStore` it is red too when that file's stat changed and `deckPid()` names no deck.
  * With `homeStore` and `which` it runs `cargoStep`'s cargo after the suite, in that window, red when it fails.
  */
-export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, which, platform = process.platform, ...rest } = {}) {
+export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, which, platform = hostPlatform(), ...rest } = {}) {
   if (!syntaxClean(syntax, cwd)) return 1;
   const sinceArg = args.findLast((arg) => /^--since(=|$)/.test(arg));
   let selection;
@@ -404,6 +393,6 @@ if (guard.error) {
   // home-store-guard L1: only this entry arms the home store check, so the gate's own tests never stat the real store.
   const homeStore = path.join(os.homedir(), '.claude', 'pilot', 'deck.json');
   // rune-deck-ui S19: only this entry arms the Rune deck's cargo step too, under the home-store guard.
-  const which = (cmd) => onPath(cmd, process.env, process.platform);
+  const which = (cmd) => onSearchPath(`${cmd}.exe`);
   process.exitCode = runGate(process.argv.slice(2), { syntax: syntaxErrors, ledgers: rebuildLedgers, homeStore, which });
 }

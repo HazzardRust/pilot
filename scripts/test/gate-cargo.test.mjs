@@ -108,6 +108,12 @@ test('off Windows the Rune deck is one skip line too, cargo or not (A3: CI runs 
   }
 });
 
+test('a gate a test starts inside the gate skips the Rune deck, loudly: the outer gate runs it once', () => {
+  assert.deepEqual(cargoStep({ PILOT_GATE_HOME_STORE: 'C:\\Users\\me\\.claude\\pilot\\deck.json' }, () => CARGO, 'win32'), {
+    skip: 'rune deck: a gate inside the gate, skipped',
+  });
+});
+
 test('the default which finds cargo.exe in an absolute PATH or Path dir, and nothing else', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-gate-which-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
