@@ -318,6 +318,20 @@ fn pressing_a_card_title_opens_its_thread() {
     assert_eq!(rt.state.query.id.as_deref(), Some(id));
 }
 
+/// The walkthrough of 2026-11-21: the way into a thread is the title and the kind line above it, one
+/// target, so a press on the kind line opens the thread too.
+#[test]
+fn pressing_a_cards_kind_line_opens_its_thread() {
+    let id = "itm_00000000c3";
+    let mut rt = recorded(json!({ "cards": [{
+        "id": id, "title": "Which port?", "excerpt": "", "state": "posted", "kind": "question" }] }));
+
+    click(&mut rt, &format!("card-{id}-state"));
+
+    assert_eq!(rt.state.query.screen, "thread");
+    assert_eq!(rt.state.query.id.as_deref(), Some(id));
+}
+
 #[test]
 fn a_card_excerpt_is_drawn_as_markdown() {
     let id = "itm_00000000c2";

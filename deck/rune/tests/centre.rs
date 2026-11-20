@@ -119,19 +119,20 @@ fn cards_and_tabs_take_the_radius() {
 fn content_selects_and_control_labels_do_not() {
     let (deck, id) = seeded();
     let mut rt = drawn(&deck, &Query::default(), true);
-    for content in [
-        with_text(&rt, "Body of the card"),
-        by_key(&rt, &format!("card-{id}-state")),
-    ] {
-        assert_eq!(
-            cursor_over(&mut rt, &content),
-            Cursor::Text,
-            "{:?} selects",
-            content.text
-        );
-    }
+    let content = with_text(&rt, "Body of the card");
+    assert_eq!(
+        cursor_over(&mut rt, &content),
+        Cursor::Text,
+        "{:?} selects",
+        content.text
+    );
     let all = rt.elements();
-    for control in ["tab-0", &format!("card-{id}-opt-0")] {
+    // The kind line is part of the card's way into its thread (the walkthrough of 2026-11-21).
+    for control in [
+        "tab-0",
+        &format!("card-{id}-opt-0"),
+        &format!("card-{id}-title"),
+    ] {
         let path = by_key(&rt, control).path;
         let label = all
             .iter()

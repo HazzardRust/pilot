@@ -137,9 +137,8 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
     let (t, ui) = (theme::tokens(dark), tok::theme(dark));
     let key = |part: &str| format!("card-{}-{part}", c.id);
-    let said = |words: String, ink: Color| {
-        theme::content(text(words).font(type_::CAPTION).color(ink), dark)
-    };
+    // The kind line is part of the way into the thread below, a label, so it is not selectable.
+    let said = |words: String, ink: Color| text(words).font(type_::CAPTION).color(ink);
     let mut line = row()
         .gap(space::within)
         .child(said(c.state.clone(), tone(&t, &c.tone)).key(key("state")));
@@ -151,17 +150,18 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
         when = when.help(at.as_str());
     }
     line = line.child(said(c.kind.clone(), t.quiet)).child(when);
-    // The title is the page's link to the thread.
+    // The way into the thread: the title and the kind line above it, one target under one hover
+    // (the walkthrough of 2026-11-21; the page's link is the title alone).
     let to = c.id.clone();
-    let mut body = col().grow(1.0).gap(space::within).child(line).child(
-        theme::control(text(&c.title), dark)
-            .key(key("title"))
-            .font(type_::HEADER)
-            .color(ui.text)
-            .role("link")
-            .focusable(true)
-            .on_press(move |s: &mut State| open_thread(s, &to)),
-    );
+    let open = theme::control(col(), dark)
+        .key(key("title"))
+        .label(c.title.as_str())
+        .role("link")
+        .gap(space::within)
+        .child(line)
+        .child(text(&c.title).font(type_::HEADER).color(ui.text))
+        .on_press(move |s: &mut State| open_thread(s, &to));
+    let mut body = col().grow(1.0).gap(space::within).child(open);
     if !c.excerpt.is_empty() {
         // The view has cut the preview; it is drawn as the page renders it, markdown (L8).
         body = body.child(theme::markdown(c.excerpt.as_str(), dark).key(key("excerpt")));
