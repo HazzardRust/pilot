@@ -45,8 +45,5 @@ impl Prefs {
 /// Where the prefs live: the store's dir as the client reads it, `PILOT_DECK_DIR` or `~/.claude/pilot`,
 /// so a scratch deck's window keeps its prefs with the scratch store and never touches the user's.
 pub fn dir() -> Option<PathBuf> {
-    match std::env::var("PILOT_DECK_DIR") {
-        Ok(dir) if !dir.trim().is_empty() => Some(PathBuf::from(dir)),
-        _ => std::env::home_dir().map(|home| home.join(".claude").join("pilot")),
-    }
+    crate::client::deck_dir().ok()
 }

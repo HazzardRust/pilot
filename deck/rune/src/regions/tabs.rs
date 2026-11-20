@@ -11,7 +11,7 @@ use serde::Deserialize;
 use crate::act::Acted;
 use crate::act_deck::DeckAction;
 use crate::app::State;
-use crate::client::{Client, Query, Result, View};
+use crate::client::{Client, Query, Result};
 use crate::theme::{self, space};
 
 /// The add-deck box: the path being typed while it is open, and the deck's word on the last refusal.
@@ -26,14 +26,14 @@ impl Local {
     /// navigation lands; either way the box keeps the path beside the reason. Taken closes the box
     /// and answers the deck it landed on.
     pub fn acted(&mut self, acted: Acted) -> Option<String> {
-        let reason = match acted {
-            Acted::Refused { reason } => reason,
-            Acted::Taken { location } => match param(&location, "refused") {
+        let reason = match &acted {
+            Acted::Refused { reason } => reason.clone(),
+            Acted::Taken { .. } => match acted.param("refused") {
                 Some(reason) => reason,
                 None => {
                     self.adding = None;
                     self.refused = None;
-                    return param(&location, "run");
+                    return acted.param("run");
                 }
             },
         };
@@ -45,33 +45,6 @@ impl Local {
         });
         None
     }
-}
-
-/// The value of `name` in a Location's query, percent-decoded as `encodeURIComponent` wrote it.
-fn param(location: &str, name: &str) -> Option<String> {
-    let query = location.split_once('?')?.1.split('#').next()?;
-    let value = query
-        .split('&')
-        .find_map(|pair| pair.strip_prefix(name)?.strip_prefix('='))?;
-    let bytes = value.as_bytes();
-    let (mut out, mut i) = (Vec::with_capacity(bytes.len()), 0);
-    while i < bytes.len() {
-        let hex = bytes
-            .get(i + 1..i + 3)
-            .filter(|h| h.iter().all(u8::is_ascii_hexdigit))
-            .and_then(|h| std::str::from_utf8(h).ok());
-        match (bytes[i], hex.and_then(|h| u8::from_str_radix(h, 16).ok())) {
-            (b'%', Some(byte)) => {
-                out.push(byte);
-                i += 3;
-            }
-            (byte, _) => {
-                out.push(byte);
-                i += 1;
-            }
-        }
-    }
-    Some(String::from_utf8_lossy(&out).into_owned())
 }
 
 #[derive(Debug, Deserialize)]
@@ -94,29 +67,18 @@ struct Tabs {
     tabs: Vec<Tab>,
 }
 
-/// Chooses a deck, `None` the overview: the window's query names it alone, the live reader is told,
-/// and the view is read again for it by `fetch`. A view that cannot be read leaves the query and the
-/// last view under the banner, as a chosen ticket does (`status::choose`).
-pub fn select(s: &mut State, run: Option<String>, fetch: impl FnOnce(&Query) -> Result<View>) {
+/// Chooses a deck, `None` the overview: the window's query names it alone and the live reader is
+/// asked for its view off the UI thread, as an opened thread is (`notifications::open_thread`).
+pub fn select(s: &mut State, run: Option<String>) {
     let query = Query {
         run,
         all: s.query.all,
         ..Query::default()
     };
-    match fetch(&query) {
-        Ok(view) => {
-            if let Some(live) = &s.live {
-                live.ask(&query);
-            }
-            s.view = view;
-            s.query = query;
-            s.down = false;
-        }
-        Err(err) => {
-            eprintln!("pilot-deck: {err}");
-            s.down = true;
-        }
+    if let Some(live) = &s.live {
+        live.ask(&query);
     }
+    s.query = query;
 }
 
 /// Add: the typed path, trimmed and nothing else, posted by `act`; a blank box posts nothing, as the
@@ -141,12 +103,8 @@ pub fn add(s: &mut State, act: impl FnOnce(&DeckAction) -> Result<Acted>) {
         }
     };
     if let Some(run) = landed {
-        select(s, Some(run), read_again);
+        select(s, Some(run));
     }
-}
-
-fn read_again(query: &Query) -> Result<View> {
-    Client::from_env().and_then(|client| client.view(query))
 }
 
 fn act_on_deck(action: &DeckAction) -> Result<Acted> {
@@ -184,7 +142,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                     .font(type_::LABEL)
                     .color(t.text_secondary),
             )
-            .on_press(move |s: &mut State| select(s, run.clone(), read_again)),
+            .on_press(move |s: &mut State| select(s, run.clone())),
         )
     });
     let plus = row()

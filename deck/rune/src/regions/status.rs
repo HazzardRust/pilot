@@ -7,7 +7,7 @@ use rune::{Cx, El, col, row, text};
 use serde::Deserialize;
 
 use crate::app::State;
-use crate::client::{Client, Query, Result, View};
+use crate::client::Query;
 use crate::theme::{self, space};
 
 #[derive(Debug, Default)]
@@ -57,32 +57,17 @@ struct Status {
 /// `ch` columns (L10) into a width.
 const ADVANCE: f32 = 0.6;
 
-/// Chooses a held ticket: the window's query takes its id, the live reader is told, and the view
-/// is read again for it, `fetch` being how. A view that cannot be read leaves the query and the
-/// last view as they were, under the banner, rather than naming a ticket whose rows never came.
-pub fn choose(s: &mut State, ticket: &str, fetch: impl FnOnce(&Query) -> Result<View>) {
+/// Chooses a held ticket: the window's query takes its id and the live reader is asked for its
+/// view off the UI thread, as an opened thread is (`notifications::open_thread`).
+pub fn choose(s: &mut State, ticket: &str) {
     let query = Query {
         ticket: Some(ticket.to_string()),
         ..s.query.clone()
     };
-    match fetch(&query) {
-        Ok(view) => {
-            if let Some(live) = &s.live {
-                live.ask(&query);
-            }
-            s.view = view;
-            s.query = query;
-            s.down = false;
-        }
-        Err(err) => {
-            eprintln!("pilot-deck: {err}");
-            s.down = true;
-        }
+    if let Some(live) = &s.live {
+        live.ask(&query);
     }
-}
-
-fn read_again(query: &Query) -> Result<View> {
-    Client::from_env().and_then(|client| client.view(query))
+    s.query = query;
 }
 
 pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
@@ -104,7 +89,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
             selector.child(
                 row()
                     .key(format!("status-ticket-{i}"))
-                    .on_press(move |s: &mut State| choose(s, &id, read_again))
+                    .on_press(move |s: &mut State| choose(s, &id))
                     .child(
                         text(format!("{} {}", ticket.lane, ticket.name))
                             .font(type_::BODY)

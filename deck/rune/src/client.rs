@@ -76,6 +76,17 @@ impl Default for Query {
     }
 }
 
+/// The store's dir: `PILOT_DECK_DIR` (`~/.claude/pilot` unset or blank).
+pub fn deck_dir() -> Result<PathBuf> {
+    match std::env::var("PILOT_DECK_DIR") {
+        Ok(dir) if !dir.trim().is_empty() => Ok(PathBuf::from(dir)),
+        _ => Ok(std::env::home_dir()
+            .ok_or(Error::NoHome)?
+            .join(".claude")
+            .join("pilot")),
+    }
+}
+
 #[derive(Debug)]
 pub struct Client {
     // The write half (`act.rs`) posts with the same base, agent and secret.
@@ -107,13 +118,7 @@ impl Client {
                 .filter(|p| *p > 0)
                 .ok_or(Error::BadPort(text))?,
         };
-        let dir = match var("PILOT_DECK_DIR") {
-            Some(dir) => PathBuf::from(dir),
-            None => std::env::home_dir()
-                .ok_or(Error::NoHome)?
-                .join(".claude")
-                .join("pilot"),
-        };
+        let dir = deck_dir()?;
         // No proxy and no redirect: either could carry the secret off loopback.
         let agent = ureq::Agent::config_builder()
             .proxy(None)

@@ -79,7 +79,7 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
     let settled = regions::queue::settle(s);
     // A press's answer is the reply box's (S9), taken beside the view and never instead of it.
     let replied = regions::reply::poll(&mut s.regions.reply, tx);
-    let usage = regions::usage::poll(s, tx);
+    regions::usage::poll(s, tx);
     let fed = match s.live.as_ref().and_then(live::Inbox::take) {
         Some(Feed::View(view)) => {
             // Data the server brought lands instantly unless asked: a card arriving live springs in (spec 5).
@@ -91,7 +91,7 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
         Some(Feed::Down) => !std::mem::replace(&mut s.down, true),
         None => false,
     };
-    fed | settled | sent | replied | usage
+    fed | settled | sent | replied
 }
 
 /// The window: the side strips around the centre column (`layout`).

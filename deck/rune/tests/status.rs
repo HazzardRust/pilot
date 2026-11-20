@@ -3,16 +3,11 @@
 
 mod support;
 
-use std::sync::Mutex;
-
 use pilot_deck::app::{self, State};
-use pilot_deck::client::{Error, Query, View};
+use pilot_deck::client::View;
 use pilot_deck::regions::status;
 use rune::{Env, Runtime};
 use serde_json::{Value, json};
-
-/// The press reads its address from the environment, which every test in this binary shares.
-static ENV: Mutex<()> = Mutex::new(());
 
 fn view_with(status: Value) -> View {
     View {
@@ -47,6 +42,7 @@ fn frame(state: State) -> Runtime<State> {
 fn texts(rt: &Runtime<State>) -> Vec<String> {
     rt.elements()
         .into_iter()
+        .filter(|element| !element.exiting)
         .filter_map(|element| element.text)
         .collect()
 }
@@ -125,61 +121,26 @@ fn a_view_with_no_status_draws_nothing_of_it() {
 }
 
 #[test]
-fn choosing_a_ticket_sets_the_query_and_takes_the_next_views_rows() {
+fn choosing_a_ticket_sets_the_query_without_reading_on_the_ui_thread() {
     let mut state = State {
         view: view_with(two_lanes("yellow")),
         ..State::default()
     };
 
-    status::choose(&mut state, "itm_g", |query: &Query| {
-        assert_eq!(
-            query.ticket.as_deref(),
-            Some("itm_g"),
-            "the fetch is for the chosen ticket"
-        );
-        Ok(view_with(two_lanes("green")))
-    });
+    status::choose(&mut state, "itm_g");
 
     assert_eq!(state.query.ticket.as_deref(), Some("itm_g"));
-    let shown = texts(&frame(state));
-    assert!(shown.iter().any(|t| t == "S1 the green slice"), "{shown:?}");
-    assert!(
-        !shown.iter().any(|t| t == "S1 the yellow slice"),
-        "{shown:?}"
-    );
+    // The view stays the last one read until the live reader's next lands.
+    assert_eq!(state.view.seq, 99);
 }
 
 #[test]
-fn a_choice_that_cannot_be_read_leaves_the_query_and_the_view() {
-    let mut state = State {
-        view: view_with(two_lanes("yellow")),
-        ..State::default()
-    };
-
-    status::choose(&mut state, "itm_g", |_| Err(Error::Status(500)));
-
-    assert_eq!(state.query.ticket, None);
-    assert!(state.down);
-    assert!(
-        texts(&frame(state))
-            .iter()
-            .any(|t| t == "S1 the yellow slice")
-    );
-}
-
-#[test]
-fn pressing_a_ticket_in_the_window_reads_the_scratch_decks_view_for_it() {
+fn pressing_a_ticket_in_the_window_draws_the_scratch_decks_view_for_it() {
     let deck = support::Scratch::start();
-    let _held = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    // SAFETY: every test in this binary that touches the environment holds `ENV`.
-    unsafe {
-        std::env::set_var("PILOT_DECK_DIR", &deck.dir);
-        std::env::set_var("PILOT_DECK_PORT", deck.port.to_string());
-    }
-    let mut rt = frame(State {
-        view: view_with(two_lanes("yellow")),
-        ..State::default()
-    });
+    let mut rt = support::live_window(&deck);
+    rt.update(|s, _| s.view = view_with(two_lanes("yellow")));
+    rt.frame(0.0);
+    assert!(texts(&rt).iter().any(|t| t == "S1 the yellow slice"));
 
     let (x, y) = rt
         .find("status-ticket-1")
@@ -188,19 +149,15 @@ fn pressing_a_ticket_in_the_window_reads_the_scratch_decks_view_for_it() {
     rt.pointer_down(x, y);
     rt.pointer_up(x, y);
     rt.frame(0.0);
-    unsafe {
-        std::env::remove_var("PILOT_DECK_DIR");
-        std::env::remove_var("PILOT_DECK_PORT");
-    }
 
-    let (mut query, mut seq) = (None, 0);
-    rt.update(|s, _| {
-        query = s.query.ticket.clone();
-        seq = s.view.seq;
+    assert_eq!(rt.state.query.ticket.as_deref(), Some("itm_g"));
+    support::frame_until(&mut rt, "the live read for the ticket", |rt| {
+        rt.state.view.seq != 99
     });
-    assert_eq!(query.as_deref(), Some("itm_g"), "the press set the query");
-    assert_ne!(
-        seq, 99,
-        "the view is the scratch deck's, not the recorded one"
+    rt.frame(0.0);
+    let shown = texts(&rt);
+    assert!(
+        !shown.iter().any(|t| t == "S1 the yellow slice"),
+        "the recorded rows are gone, the scratch deck's view is drawn: {shown:?}"
     );
 }
