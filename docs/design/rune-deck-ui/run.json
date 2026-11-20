@@ -244,7 +244,7 @@
     },
     {
       "slice": "S25",
-      "state": "pushed 309e70c — rust APPROVE; +434/-395 (net +39, rustfmt reindent), limit waived by co-pilot; cargo green, npm test 4846/4 (gate1-lineage flakes, 9/0 alone); integrating",
+      "state": "integrated at e89f1df — rust APPROVE; net +39, limit waived by co-pilot (rustfmt reindent); 761/0 selection; cargo green on 309e70c",
       "after": [
         "S24"
       ],
@@ -262,7 +262,7 @@
     },
     {
       "slice": "QA fix 2",
-      "state": "implementing — Q5 Q6 Q7 Q8",
+      "state": "fixing — NOT integrated: merge with S25 stopped (strip.rs); implementer merging e89f1df",
       "after": [
         "S24"
       ],
@@ -288,15 +288,9 @@
     "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
     "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
   ],
-  "next": "integrating S25; QA fix 2 implementing (merges the new tip, strip.rs by hand); then base check and resume QA with the tip",
-  "updatedAt": "2026-11-20T06:11:02.098Z",
+  "next": "QA fix 2 implementer merges e89f1df and re-gates; then integrate, cargo test on tip, base check, resume QA with the tip",
+  "updatedAt": "2026-11-20T06:14:42.418Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S7 fix: full npm test took ~25 min and could not be stopped, so it ran on 5a04a526, not the final head; line ceiling counts doc comments",
-      "evidence": "S7 fix report; dee56898",
-      "size": 25
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S11: Rune headless settle_all snaps a scrolled viewport back; no task API, so an off-thread result needs app::poll",
@@ -524,6 +518,12 @@
       "agent": "pilot:pilot-implementer",
       "what": "S25: Rune ElementInfo cannot show a disabled text button, so B2 asserts pending.is_sent; --snap is one simulated frame, needs --realtime --script, a tall --size and a seeded rune-deck.json; 4 gate1-lineage reds under load, green alone",
       "evidence": "S25 report 309e70c",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "QA fix 2: npm test skips cargo silently when cargo is off PATH (scripts/gate.mjs:257), so a green npm test says nothing about Rust; --script clicks need item-id keys and the seeded run lands on D1; background waits pushed out at 180 s",
+      "evidence": "QA fix 2 report 4d7223d",
       "size": 4
     }
   ]
