@@ -51,6 +51,7 @@ pub fn spec() -> AppSpec<State> {
 
 /// Starts the live reader on the window's query; a client refused here leaves `load`'s word.
 pub fn setup(s: &mut State, wake: Waker) {
+    s.regions.queue.inbox.wake = Some(wake.clone());
     match Client::from_env() {
         Ok(client) => s.live = Some(live::start(client, s.query.clone(), wake)),
         Err(err) => eprintln!("pilot-deck: no live view: {err}"),
@@ -60,10 +61,13 @@ pub fn setup(s: &mut State, wake: Waker) {
 /// Takes what the reader last left: a view replaces the whole `view` and nothing else, so a
 /// draft, a scroll and the open panels stay (spec 4); `Down` keeps the last view under the banner.
 pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
+    let settled = regions::queue::settle(s);
     // A press's answer is the reply box's (S9), taken beside the view and never instead of it.
     let replied = regions::reply::poll(&mut s.regions.reply, tx);
     let fed = match s.live.as_ref().and_then(live::Inbox::take) {
         Some(Feed::View(view)) => {
+            // Data the server brought lands instantly unless asked: a card arriving live springs in (spec 5).
+            tx.animated();
             s.view = view;
             s.down = false;
             true
@@ -71,7 +75,7 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
         Some(Feed::Down) => !std::mem::replace(&mut s.down, true),
         None => false,
     };
-    replied || fed
+    fed || settled || replied
 }
 
 /// The screen's region slots, top to bottom; a stub region draws nothing until its slice.
