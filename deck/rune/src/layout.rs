@@ -197,6 +197,9 @@ fn count(s: &State, panel: &str) -> usize {
 }
 
 fn content(s: &State, panel: &str, cx: &mut Cx<State>) -> El {
+    if s.blind() {
+        return el();
+    }
     let none = Value::Null;
     let region = |name: &str| s.view.regions.get(name).unwrap_or(&none);
     let r = &s.regions;

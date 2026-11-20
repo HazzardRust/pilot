@@ -325,6 +325,12 @@ pub mod size {
     include!(concat!(env!("OUT_DIR"), "/size.rs"));
 }
 
+/// The label's ink on a control drawn pressed, whose fill is `state.pilot`: the page colour, since
+/// the text colour on that fill is under 3:1 in both themes.
+pub fn pressed_ink(dark: bool) -> Color {
+    roles(dark).surface
+}
+
 /// A control says it is clickable (DESIGN.md §3): a text-colour tint on hover, the pointer cursor,
 /// the button's corner, a Tab stop and a visible keyboard focus ring. Rune eases the tint itself.
 pub fn control(el: El, dark: bool) -> El {

@@ -30,6 +30,14 @@ pub struct State {
     pub history: History,
 }
 
+impl State {
+    /// Down with no view read yet: the regions know nothing, so they draw nothing rather than
+    /// an empty state that claims there is nothing (S32).
+    pub fn blind(&self) -> bool {
+        self.down && self.view.regions.is_empty()
+    }
+}
+
 /// Back and forward through the queries the window has asked for.
 #[derive(Debug, Default)]
 pub struct History {
@@ -161,6 +169,9 @@ pub fn app() -> rune::App<State> {
     rune::App::new(spec())
         .tab_visits_controls(true)
         .titlebar(Titlebar::new(size::titlebar))
+        // Centred on its monitor when it opens: the OS's cascade put its close button off a
+        // 1440-wide screen.
+        .on_window(|window| window.center())
 }
 
 /// Starts the live reader on the window's query; a client refused here leaves `load`'s word.
@@ -240,6 +251,9 @@ pub fn center(s: &State, cx: &mut Cx<State>) -> El {
                         }),
                 ),
         );
+    }
+    if s.blind() {
+        return screen;
     }
     screen
         .child(regions::usage::draw(region("usage"), &r.usage, cx))

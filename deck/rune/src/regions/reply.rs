@@ -230,9 +230,16 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     let (t, k) = (tok::theme(dark), theme::tokens(dark));
     // The press that is out, or the option whose confirm is showing, draws pressed in the frame of
     // its press, before the deck answers (spec 6c).
+    let ink = |pressed: bool| {
+        if pressed {
+            theme::pressed_ink(dark)
+        } else {
+            t.text
+        }
+    };
     let btn = |label: &str, key: String, pressed: bool| {
         let fill = if pressed { k.state.pilot } else { k.rule };
-        theme::control(button(label, key, t.text, fill), dark)
+        theme::control(button(label, key, ink(pressed), fill), dark)
     };
     let r = theme::roles(dark);
     // A quiet button: the page's ink and a hairline, never a fill unless pressed in.
@@ -242,7 +249,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         } else {
             Color::TRANSPARENT
         };
-        theme::control(button(label, key, t.text, fill).border(1.0, k.rule), dark)
+        theme::control(
+            button(label, key, ink(pressed), fill).border(1.0, k.rule),
+            dark,
+        )
     };
     let pressed = |label: &str| local.sent.as_deref() == Some(label);
     let id = reply.id;

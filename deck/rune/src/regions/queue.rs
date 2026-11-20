@@ -166,13 +166,18 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
         // The view has cut the preview; it is drawn as the page renders it, markdown (L8).
         body = body.child(theme::markdown(c.excerpt.as_str(), dark).key(key("excerpt")));
     }
-    let button = |part: String, label: &str, fill: Color| {
+    let button = |part: String, label: &str, sent: bool| {
+        let (fill, ink) = if sent {
+            (t.state.pilot, theme::pressed_ink(dark))
+        } else {
+            (ui.card, ui.text)
+        };
         theme::control(row(), dark)
             .key(key(&part))
             .padding(space::pad)
             .border(1.0, t.rule)
             .fill(fill)
-            .child(text(label).font(type_::CAPTION).color(ui.text))
+            .child(text(label).font(type_::CAPTION).color(ink))
     };
     let spent = c.sent.is_some();
     let asking = c
@@ -182,7 +187,7 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
     if let Some(opt) = asking {
         // The page's confirm in place (`confirm.mjs`): a press elsewhere, or Escape, backs out.
         let (id, label) = (c.id.clone(), opt.label.clone());
-        let yes = button("yes".into(), &opt.yes, ui.card)
+        let yes = button("yes".into(), &opt.yes, false)
             .autofocus()
             .on_press_tx(move |s: &mut State, tx: &mut rune::Tx| {
                 tx.instant();
@@ -211,8 +216,7 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
                 .enumerate()
                 .fold(row().gap(space::within), |options, (i, opt)| {
                     let sent = c.sent.as_deref() == Some(opt.label.as_str());
-                    let fill = if sent { t.state.pilot } else { ui.card };
-                    let mut button = button(format!("opt-{i}"), &opt.label, fill).disabled(spent);
+                    let mut button = button(format!("opt-{i}"), &opt.label, sent).disabled(spent);
                     if !spent {
                         let (id, label, confirm) = (c.id.clone(), opt.label.clone(), opt.confirm);
                         // Instant: the press is shown in the frame it lands in, not eased toward (spec 5).

@@ -259,3 +259,31 @@ fn retry_reconnects_without_waiting_out_the_backoff() {
         "Retry waited {took:?}, the backoff's length"
     );
 }
+
+#[test]
+fn a_deck_down_at_first_load_claims_no_empty_regions() {
+    let keys = Keys::new("blind");
+    std::fs::write(keys.0.join("deck.secret"), "qa").expect("a secret");
+    // A port nothing listens on: bound, then let go.
+    let port = std::net::TcpListener::bind("127.0.0.1:0")
+        .and_then(|l| l.local_addr())
+        .expect("a free port")
+        .port();
+    let mut rt = window(keys.dir(), port);
+    frame_until(&mut rt, "deck not running", |rt| {
+        rt.state.down && texts(rt).iter().any(|text| text == "deck not running")
+    });
+
+    let shown = texts(&rt);
+    for claim in [
+        "Nothing is waiting on you.",
+        "No finished threads yet.",
+        "No tickets to show.",
+        "No chat open.",
+    ] {
+        assert!(
+            !shown.iter().any(|text| text == claim),
+            "down at first load, yet: {claim}"
+        );
+    }
+}

@@ -93,7 +93,11 @@ fn run_row(r: &RunRow, local: &Local, cx: &mut Cx<State>) -> El {
             .padding(space::pad)
             .border(1.0, t.rule)
             .fill(if sent { t.state.pilot } else { ui.card })
-            .child(text("dismiss").font(type_::CAPTION).color(ui.text))
+            .child(text("dismiss").font(type_::CAPTION).color(if sent {
+                theme::pressed_ink(dark)
+            } else {
+                ui.text
+            }))
             .disabled(sent);
         if !sent {
             button = button.on_press_tx(move |s: &mut State, tx: &mut rune::Tx| {

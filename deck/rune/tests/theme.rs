@@ -544,6 +544,12 @@ fn contrast() {
             "on_surface on hover".into(),
             ratio(over(r.on_surface, hovered), hovered),
         ));
+        // A pressed control's label on its state.pilot fill (a sent or locked option, Dismiss).
+        let pressed = over(t.state.pilot, page);
+        pairs.push((
+            "pressed_ink on state.pilot fill".into(),
+            ratio(over(theme::pressed_ink(dark), pressed), pressed),
+        ));
         // Text on the rule colour used as a fill (an input's face) and on the picked fill.
         for (fill, fill_name) in [
             (t.rule, "rule fill"),
