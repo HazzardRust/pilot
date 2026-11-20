@@ -95,8 +95,8 @@ Times are UTC. Old pilot session 7cfa40fe, new session 6aa1c273, both in
 
 | Seam | Interface | Folded behind it | Category |
 | --- | --- | --- | --- |
-| **Trace** (`hooks/lib/wrapper-log.js`) | `log(text)`, `step(row)`, `traceFile(home?)` | the one rotation, the row's allowed fields (spec 7), the file's place (A1) | local-substitutable (home injected) |
-| **Timeline** (`deck/trace.mjs`) | `timeline(rows, id, now) -> { rows, tail }`, `trace(argv)` | the step order per kind, missing-step age, stale-code line | in-process |
+| **Trace** (`hooks/lib/wrapper-log.js`) | `log(text)`, `step(row)`, `traceFile()` | the one rotation, the row's allowed fields (spec 7), the file's place (A1: `deckDir()`) | local-substitutable (`PILOT_DECK_DIR`) |
+| **Timeline** (`deck/trace.mjs`) | `timeline(rows, id, now) -> { rows, tail }`, `trace(argv)` (`pilot trace <itm_id>`, no `--file`) | the step order per kind (crew: posted, stopped, released, granted, resolved, spawned, failed, L3; done at spawned or failed), an item following its ticket's rows, missing-step age, stale-code line | in-process |
 | **Crew hand-off** (`deck/crew-handoff.mjs`) | `openCrewHandoffsOf(items, ticketId)`, `successorOwedOf(items, repo, coPilot)`, `crewWaitOf(items, repo, coPilot, now)` | the item↔ticket join that today lives only in `pilot.md:130` prose and a title | in-process |
 | **Owed threads** (`deck/owed.mjs`) | `owedThreadsOf(items, repo, coPilot?)`, `OWED_WHY` | adds `successor owed` | in-process |
 
