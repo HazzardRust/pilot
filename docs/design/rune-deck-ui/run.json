@@ -160,7 +160,7 @@
     },
     {
       "slice": "S18",
-      "state": "pushed f34f2b7",
+      "state": "integrated at d015168 — rust APPROVE with changes, typescript WARN; ~230 production lines; 4806/0; open: refused dismiss leaves the button disabled (to step 7); days/items look to QA",
       "after": [
         "S7"
       ],
@@ -178,17 +178,21 @@
     },
     {
       "slice": "S20",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S10"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s20",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s20"
     },
     {
       "slice": "S21",
-      "state": "planned (added: Escape and left-arrow without Tab)",
+      "state": "implementing",
       "after": [
         "S8"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s21",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s21"
     },
     {
       "slice": "S22",
@@ -205,8 +209,8 @@
       ]
     }
   ],
-  "next": "integrating S18; S16 awaiting cargo run and rust re-read; S19 implementing; pilot ready for S20-S23 as slots free",
-  "updatedAt": "2026-11-20T02:49:00.207Z",
+  "next": "integrating S16; S19, S20, S21 implementing; S22, S23 next as slots free; then base check, fundamentalist, QA",
+  "updatedAt": "2026-11-20T02:56:01.859Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
