@@ -120,7 +120,10 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                 };
                 let figure = text(format!("{pct:.0}%")).font(type_::BODY).color(ink);
                 if band(pct) == Band::Critical {
-                    row().fill(k.usage.critical_bg).padding(space::s1).child(figure)
+                    row()
+                        .fill(k.usage.critical_bg)
+                        .padding(space::s1)
+                        .child(figure)
                 } else {
                     figure
                 }

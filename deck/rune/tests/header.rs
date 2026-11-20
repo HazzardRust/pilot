@@ -53,7 +53,8 @@ fn pointed_at(deck: &support::Scratch) -> std::sync::MutexGuard<'static, ()> {
 }
 
 fn press(rt: &mut Runtime<State>, key: &str) {
-    let (x, y) = rt.find(key).unwrap_or_else(|| panic!("{key} is drawn"));    rt.pointer_move(x, y);
+    let (x, y) = rt.find(key).unwrap_or_else(|| panic!("{key} is drawn"));
+    rt.pointer_move(x, y);
     rt.pointer_down(x, y);
     rt.pointer_up(x, y);
     rt.frame(0.0);
@@ -73,12 +74,23 @@ fn the_bands_are_the_pages() {
 #[test]
 fn the_figures_are_the_views_and_a_missing_one_is_unknown() {
     let rt = frame(State {
-        view: view_with(&[("usage", json!({ "ctx": 19, "weekly": 91, "resets": "in 2 hrs" }))]),
+        view: view_with(&[(
+            "usage",
+            json!({ "ctx": 19, "weekly": 91, "resets": "in 2 hrs" }),
+        )]),
         ..State::default()
     });
 
     let shown = texts(&rt);
-    for want in ["ctx", "19%", "session", "unknown", "resets in 2 hrs", "weekly", "91%"] {
+    for want in [
+        "ctx",
+        "19%",
+        "session",
+        "unknown",
+        "resets in 2 hrs",
+        "weekly",
+        "91%",
+    ] {
         assert!(shown.iter().any(|t| t == want), "no {want:?} in {shown:?}");
     }
 }
@@ -113,8 +125,15 @@ fn a_tab_press_selects_its_deck() {
         run = s.query.run.clone();
         seq = s.view.seq;
     });
-    assert_eq!(run.as_deref(), Some(repo.as_str()), "the press set the query");
-    assert_ne!(seq, 99, "the view is the scratch deck's, not the recorded one");
+    assert_eq!(
+        run.as_deref(),
+        Some(repo.as_str()),
+        "the press set the query"
+    );
+    assert_ne!(
+        seq, 99,
+        "the view is the scratch deck's, not the recorded one"
+    );
 }
 
 #[test]
@@ -128,7 +147,10 @@ fn a_refused_add_deck_says_why_and_keeps_the_path() {
         reason: "no directory at C:/no/such/dir".into(),
     });
 
-    assert_eq!(local.refused.as_deref(), Some("no directory at C:/no/such/dir"));
+    assert_eq!(
+        local.refused.as_deref(),
+        Some("no directory at C:/no/such/dir")
+    );
     let typed = local.adding.as_ref().map(|edit| edit.text.as_str());
     assert_eq!(typed, Some("C:/no/such/dir"), "the typed path stays");
 }
@@ -145,7 +167,10 @@ fn the_daemons_refusal_of_a_typed_path_reaches_the_box() {
 
     let local = &state.regions.tabs;
     let reason = local.refused.as_deref().expect("the deck's reason is kept");
-    assert!(!reason.is_empty() && !reason.contains("refused="), "{reason:?}");
+    assert!(
+        !reason.is_empty() && !reason.contains("refused="),
+        "{reason:?}"
+    );
     let typed = local.adding.as_ref().map(|edit| edit.text.trim());
     assert_eq!(typed, Some(missing.as_str()), "the typed path stays");
     assert_eq!(state.query.run, None, "no deck is selected");
