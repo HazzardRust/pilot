@@ -130,7 +130,10 @@ fn rows_sit_on_the_grid() {
     ] {
         let at = by_key(&all, key).unwrap_or_else(|| panic!("no row {key}"));
         let [x, _, w, h] = all[at].rect;
-        assert_eq!(h, theme::size::row, "{key} is size::row tall");
+        // A ticket row is the HTML deck's, several lines tall (the user, 2026-11-20).
+        if !key.starts_with("ticket-") {
+            assert_eq!(h, theme::size::row, "{key} is size::row tall");
+        }
         if key == "graph-row-0" {
             continue;
         }

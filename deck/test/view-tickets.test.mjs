@@ -95,6 +95,29 @@ test('with no switch pending the arrows move within a queue', () => {
   assert.deepEqual(flat(ticketsView(r, { run: MINE })), pageRows(r));
 });
 
+test('a row carries the page row\'s further lines', () => {
+  const plan = { sliceCount: 2, artefact: 'docs/design/x/architecture.md', gate1: 'itm_0000000000a1' };
+  const items = [
+    aTicket('itm_0000000000r1', 'red', { plan, body: '> the spec' }),
+    aTicket('itm_0000000000r2', 'red', { sliceCount: 4, recut: { why: 'too big' } }),
+    { id: 'itm_0000000000q1', kind: 'question', title: 'Which?', ticket: 'itm_0000000000r1', blocking: true, postedAt: AT, replies: [] },
+    { id: 'itm_0000000000q2', kind: 'question', title: 'Done?', ticket: 'itm_0000000000r1', resolvedAt: AT, postedAt: AT, replies: [] },
+  ];
+  const html = renderStrips(tabFor(tabsOf(reads(items).runs, items, {}, {}, [], reads(items).lanes), MINE), [], items);
+
+  const [first, second] = ticketsView(reads(items), { run: MINE }).groups[0].rows;
+
+  const { id, name, href, state, canMove, switch: _, ...lines } = first;
+  assert.deepEqual(lines, {
+    next: 'main', mark: 'in-hand', live: false, recut: null, questions: { count: 1, blocking: 1 }, slices: 2,
+    artefact: { name: plan.artefact, gate1: plan.gate1 }, shortPath: true,
+    threads: [{ id: 'itm_0000000000q1', kind: 'question', title: 'Which?' }], spec: '> the spec',
+  });
+  assert.match(html, /<span class="next">next<\/span><a href="\/thread\/itm_0000000000r1">/, 'the page marks the same next');
+  assert.match(html, /1 question \(1 blocking\)/);
+  assert.deepEqual([second.next, second.mark, second.recut, second.slices, second.shortPath, second.threads], [null, null, 'too big', 4, false, []]);
+});
+
 test('a deck with no tickets has empty queues, and the overview none', () => {
   assert.deepEqual(ticketsView(reads([]), { run: MINE }).groups.map(({ rows }) => rows), [[], [], []]);
   assert.deepEqual(ticketsView({ ...reads([]), runs: [] }, {}), { repo: null, groups: [] });

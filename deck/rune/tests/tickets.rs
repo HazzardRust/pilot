@@ -269,6 +269,44 @@ fn a_rows_state_keeps_its_place_whatever_its_controls() {
     );
 }
 
+/// The user's note: a row showed its title alone. As the HTML deck's row: `next` on the queue's head,
+/// the title, the state, the size, and the spec shut under it until pressed.
+#[test]
+fn a_row_carries_the_pages_lines() {
+    let deck = Scratch::start();
+    let [head, other] = ["Head", "Other"].map(|title| ticket(&deck, title));
+    let mut rt = drawn(&deck, red_open());
+    let shows = |rt: &Runtime<State>, id: &str, words: &str| {
+        let row = find(rt, &format!("ticket-{id}")).expect("a row").rect;
+        rt.elements().into_iter().any(|e| {
+            let inside = e.rect[1] >= row[1] && e.rect[1] < row[1] + row[3];
+            inside && e.text.as_deref() == Some(words)
+        })
+    };
+    assert!(
+        find(&rt, &format!("ticket-{head}-next")).is_some(),
+        "next on the head"
+    );
+    assert!(
+        find(&rt, &format!("ticket-{other}-next")).is_none(),
+        "and on no other row"
+    );
+    for words in ["Head", "planning", "1 slice", "▸ spec"] {
+        assert!(shows(&rt, &head, words), "the row shows {words}");
+    }
+    assert!(
+        !shows(&rt, &head, "fix the thing"),
+        "the spec is served shut"
+    );
+
+    press(&deck, &mut rt, &format!("ticket-{head}-spec"));
+    rt.frame(1.0 / 60.0);
+    assert!(
+        shows(&rt, &head, "▾ spec") && shows(&rt, &head, "fix the thing"),
+        "opened"
+    );
+}
+
 #[test]
 fn folds_are_kept_per_deck() {
     let deck = Scratch::start();
