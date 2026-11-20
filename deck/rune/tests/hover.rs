@@ -55,9 +55,9 @@ fn screens(id: &str) -> Vec<(&'static str, Query)> {
     ]
 }
 
-/// A pressable: the button and link roles every press handler here carries.
+/// A pressable: the button, link and switch roles every press handler here carries.
 fn is_control(e: &ElementInfo) -> bool {
-    !e.exiting && (e.role == "button" || e.role == "link")
+    !e.exiting && (e.role == "button" || e.role == "link" || e.role == "switch")
 }
 
 fn centre(e: &ElementInfo) -> Option<(f32, f32)> {
