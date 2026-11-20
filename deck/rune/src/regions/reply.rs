@@ -24,7 +24,19 @@ const ANSWER_POLL: Duration = Duration::from_millis(50);
 pub struct Opt {
     pub label: String,
     pub confirm: bool,
+    /// The page draws it disabled: the thread already holds a press. Drawn pressed; it posts nothing.
+    #[serde(default)]
+    pub locked: bool,
 }
+
+/// Close beside Reply, where the page draws it (a question, a user thread).
+#[derive(Debug, Deserialize)]
+struct CloseOpt {
+    confirm: bool,
+}
+
+/// What Close is called in the box: the label its ask and its out press carry.
+const CLOSE: &str = "Close";
 
 #[derive(Debug, Default, Deserialize)]
 struct Reply {
@@ -33,6 +45,8 @@ struct Reply {
     options: Vec<Opt>,
     #[serde(default)]
     dismiss: bool,
+    #[serde(default)]
+    close: Option<CloseOpt>,
 }
 
 #[derive(Debug, Default)]
@@ -46,6 +60,10 @@ pub struct Local {
     pub sent: Option<String>,
     /// The thread the showing confirm was asked on: its Confirm posts there or nowhere.
     asked_on: Option<String>,
+    /// The showing confirm is Close's, not an option's that happens to be called "Close".
+    closing: bool,
+    /// The text the press that is out carried: a taken answer empties the box only while it holds this.
+    posted: Option<String>,
     answer: Option<mpsc::Receiver<Result<Acted>>>,
 }
 
@@ -54,16 +72,21 @@ impl Local {
     fn out(&mut self, label: &str, action: Action) -> Option<Action> {
         self.escape();
         self.sent = Some(label.to_string());
+        self.posted = match &action {
+            Action::Reply { text, .. } => Some(text.clone()),
+            _ => None,
+        };
         Some(action)
     }
 
-    /// An option pressed: a confirming one asks first and posts on its Confirm; any other posts, with
-    /// what the box holds as its text.
+    /// An option pressed: a locked one posts nothing; a confirming one asks first and posts on its
+    /// Confirm; any other posts, with what the box holds as its text.
     pub fn press(&mut self, id: &str, option: &Opt) -> Option<Action> {
-        if self.sent.is_some() {
+        if self.sent.is_some() || option.locked {
             return None;
         }
-        let armed = self.confirming.as_deref() == Some(option.label.as_str())
+        let armed = !self.closing
+            && self.confirming.as_deref() == Some(option.label.as_str())
             && self.asked_on.as_deref() == Some(id);
         if option.confirm && !armed {
             self.confirming = Some(option.label.clone());
@@ -85,12 +108,16 @@ impl Local {
             self.escape();
             return None;
         }
+        if self.closing {
+            return self.close(id, true);
+        }
         let label = self.confirming.clone()?;
         self.press(
             id,
             &Opt {
                 label,
                 confirm: true,
+                locked: false,
             },
         )
     }
@@ -98,7 +125,25 @@ impl Local {
     /// Escape: the confirm is taken back. False when none was showing, so the key goes on.
     pub fn escape(&mut self) -> bool {
         self.asked_on = None;
+        self.closing = false;
         self.confirming.take().is_some()
+    }
+
+    /// Close pressed: with `confirm` it asks first and posts on its Confirm, as the page's does. It
+    /// carries no text: the box keeps whatever it holds.
+    pub fn close(&mut self, id: &str, confirm: bool) -> Option<Action> {
+        if self.sent.is_some() {
+            return None;
+        }
+        let armed = self.closing && self.asked_on.as_deref() == Some(id);
+        if confirm && !armed {
+            self.escape();
+            self.confirming = Some(CLOSE.to_string());
+            self.asked_on = Some(id.to_string());
+            self.closing = true;
+            return None;
+        }
+        self.out(CLOSE, Action::Close { id: id.to_string() })
     }
 
     /// Reply: the typed text alone; an empty box sends nothing, as the page's required field does.
@@ -122,12 +167,16 @@ impl Local {
         self.out(label, action)
     }
 
-    /// The deck's answer. Taken empties the box; refused keeps every typed word beside the reason.
+    /// The deck's answer. Taken empties the box only while it still holds the text that was posted, so
+    /// words typed since, or beside a Close, stay; refused keeps every typed word beside the reason.
     pub fn acted(&mut self, acted: Acted) {
         self.sent = None;
+        let posted = self.posted.take();
         match acted {
             Acted::Taken { .. } => {
-                self.draft.replace_text("");
+                if posted.as_deref() == Some(self.draft.text.as_str()) {
+                    self.draft.replace_text("");
+                }
                 self.refused = None;
             }
             Acted::Refused { reason } => self.refused = Some(reason),
@@ -231,11 +280,12 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
 
     let mut options = row().key("reply-options").gap(space::pad);
     for (i, option) in reply.options.into_iter().enumerate() {
-        let asking = local.confirming.as_deref() == Some(option.label.as_str());
+        let asking = !local.closing && local.confirming.as_deref() == Some(option.label.as_str());
         let label = option.label.clone();
         // A verdict's option and its confirm are one group: the ask and its Confirm sit beside it.
+        let lit = pressed(&label) || asking || option.locked;
         let mut group = row().gap(space::within).items_center().child(
-            btn(&label, format!("option-{i}"), pressed(&label) || asking).on_press_tx(
+            btn(&label, format!("option-{i}"), lit).on_press_tx(
                 move |s: &mut State, tx: &mut Tx| {
                     let action = id_of(s).and_then(|id| s.regions.reply.press(&id, &option));
                     post(s, action, tx);
@@ -265,6 +315,27 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             post(s, action, tx);
         }),
     );
+    if let Some(close) = reply.close {
+        let confirm = close.confirm;
+        send = send.child(
+            btn(CLOSE, "close".into(), pressed(CLOSE) || local.closing).on_press_tx(
+                move |s: &mut State, tx: &mut Tx| {
+                    let action = id_of(s).and_then(|id| s.regions.reply.close(&id, confirm));
+                    post(s, action, tx);
+                },
+            ),
+        );
+        if local.closing {
+            send = send
+                .child(text("Close this thread?").font(type_::BODY).color(t.text))
+                .child(btn("Confirm", "close-confirm".into(), false).on_press_tx(
+                    |s: &mut State, tx: &mut Tx| {
+                        let action = id_of(s).and_then(|id| s.regions.reply.confirm(&id));
+                        post(s, action, tx);
+                    },
+                ));
+        }
+    }
     if reply.dismiss {
         send = send.child(
             btn("Dismiss", "dismiss".into(), pressed("Dismiss")).on_press_tx(

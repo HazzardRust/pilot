@@ -36,8 +36,40 @@ const readsOf = (items) => ({ seq: 1, items, runs: [], numbers: {}, agents: {}, 
 function pageOptions(html) {
   return [...html.matchAll(/<button type="submit" name="choice" value="([^"]*)"([^>]*)>([\s\S]*?)<\/button>/g)]
     .filter(([, , , text]) => text !== 'Confirm')
-    .map(([, value, attrs]) => ({ label: value.replace(/&amp;/g, '&'), confirm: attrs.includes('data-confirm') }));
+    .map(([, value, attrs]) => ({
+      label: value.replace(/&amp;/g, '&'), confirm: attrs.includes('data-confirm'), locked: / disabled\b/.test(attrs),
+    }));
 }
+
+const said = (text, from = 'user') => ({ from, text, repliedAt: AT });
+
+test('a locked option is the page\'s disabled one: pressed answers lock, a signed gate keeps Not yet', () => {
+  const cases = [
+    anItem({ kind: 'gate2', options: ['Sign off', 'Not yet'], replies: [said('Sign off')] }),
+    anItem({ kind: 'gate1', options: ['Sign off', 'Not yet'], replies: [said('Not yet')] }),
+    anItem({ kind: 'gate2', options: ['Sign off', 'Not yet'], replies: [said('Sign off')], landing: { state: 'queued' } }),
+    anItem({ kind: 'question', options: ['Yes', 'No'], blocking: true, replies: [said('Yes')] }),
+    anItem({ kind: 'walkthrough', replies: [said('Sign off')] }),
+    anItem({ kind: 'audit', options: ['a', 'none'], replies: [said('none')] }),
+    anItem({ kind: 'handoff', options: ['Handoff failed'], replies: [said('Handoff failed')] }),
+    anItem({ kind: 'lesson', options: ['x', 'y'], replies: [said('x')] }),
+    anItem({ kind: 'lesson', options: ['x', 'y'], replies: [said('x'), said('try again', 'pilot')] }),
+  ];
+  for (const item of cases) {
+    const view = replyView(readsOf(cases), { id: item.id });
+    assert.deepEqual(view.options, pageOptions(renderReplySlot(item)), `${item.kind} ${item.replies.map((r) => r.text)}`);
+  }
+  // The page's own answer, not only agreement: a signed gate locks Sign off and leaves Not yet pressable.
+  assert.deepEqual(replyView(readsOf(cases), { id: cases[0].id }).options.map((o) => o.locked), [true, false, true]);
+});
+
+test('Close is offered where the page draws it, confirmed in place: a question and a user thread', () => {
+  for (const item of [anItem({ kind: 'question' }), anItem({ kind: 'user' }), anItem({ kind: 'gate2', options: ['Sign off'] })]) {
+    const view = replyView(readsOf([item]), { id: item.id });
+    const drawn = renderReplySlot(item).includes('action="/close"');
+    assert.deepEqual(view.close ?? null, drawn ? { confirm: true } : null, item.kind);
+  }
+});
 
 test('the options are the page\'s: a gate, a question and a walkthrough', () => {
   const cases = [
@@ -58,10 +90,11 @@ test('a verdict confirms and a question does not; Teach me never does', () => {
   const gate = anItem({ kind: 'gate1', options: ['Sign off', 'Not yet'] });
   const question = anItem({ kind: 'question', options: ['A'] });
   assert.deepEqual(replyView(readsOf([gate]), { id: gate.id }).options, [
-    { label: 'Sign off', confirm: true }, { label: 'Not yet', confirm: true }, { label: 'Teach me', confirm: false },
+    { label: 'Sign off', confirm: true, locked: false }, { label: 'Not yet', confirm: true, locked: false },
+    { label: 'Teach me', confirm: false, locked: false },
   ]);
   assert.deepEqual(replyView(readsOf([question]), { id: question.id }).options, [
-    { label: 'A', confirm: false }, { label: 'Teach me', confirm: false },
+    { label: 'A', confirm: false, locked: false }, { label: 'Teach me', confirm: false, locked: false },
   ]);
 });
 

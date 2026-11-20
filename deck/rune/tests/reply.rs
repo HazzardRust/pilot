@@ -11,6 +11,7 @@ fn sign_off() -> Opt {
     Opt {
         label: "Sign off".into(),
         confirm: true,
+        locked: false,
     }
 }
 
@@ -69,9 +70,48 @@ fn an_option_with_no_confirm_posts_on_one_press() {
     let yes = Opt {
         label: "Yes".into(),
         confirm: false,
+        locked: false,
     };
     assert_eq!(local.press(ID, &yes), Some(reply("", Some("Yes"))));
     assert_eq!(local.confirming, None);
+}
+
+#[test]
+fn a_locked_option_posts_nothing_and_asks_nothing() {
+    let mut local = typed("");
+    let signed = Opt {
+        locked: true,
+        ..sign_off()
+    };
+    assert_eq!(local.press(ID, &signed), None);
+    assert_eq!(local.confirming, None);
+    assert_eq!(local.confirm(ID), None);
+    assert_eq!(local.sent, None);
+}
+
+#[test]
+fn close_takes_two_presses_and_posts_a_close() {
+    let mut local = typed("a note that is not the close");
+    assert_eq!(local.close(ID, true), None);
+    assert_eq!(local.confirming.as_deref(), Some("Close"));
+    assert_eq!(local.confirm(ID), Some(Action::Close { id: ID.into() }));
+    assert_eq!(local.sent.as_deref(), Some("Close"));
+    // A close taken is not the box's text taken: the words stay.
+    local.acted(Acted::Taken {
+        location: format!("/thread/{ID}"),
+    });
+    assert_eq!(local.draft.text, "a note that is not the close");
+}
+
+#[test]
+fn a_taken_reply_keeps_what_was_typed_after_it() {
+    let mut local = typed("done");
+    assert!(local.send(ID).is_some());
+    local.draft = TextEdit::new("done, and one more thing");
+    local.acted(Acted::Taken {
+        location: format!("/thread/{ID}"),
+    });
+    assert_eq!(local.draft.text, "done, and one more thing");
 }
 
 #[test]
