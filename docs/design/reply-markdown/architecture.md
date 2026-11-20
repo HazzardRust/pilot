@@ -12,7 +12,7 @@ the raw text, unchanged.
 
 ## 2. Spec
 
-*Proposed, with the user as itm_bbf3e33c48d2; not yet agreed.*
+*Agreed by the user on itm_bbf3e33c48d2 ("Agree"), lines 1-7 as proposed.*
 
 | # | Behaviour | Evidence | Bar |
 | --- | --- | --- | --- |
@@ -80,6 +80,9 @@ a runtime, and again into chat if A2 flips. It earns its keep. No shallow module
   rune-kit's `MarkdownStyle` (private fields).
 - **L6** Links are inert while composing: a span, no handler (spec 4). Rejected: Ctrl+click opens (a new opener and
   trust surface for typed text).
+- **L8** QA runs the native Rune window built from `feat/reply-markdown` against a scratch deck with seeded threads;
+  no database, nothing kept (the user, itm_7e0fff09827d). Rejected: the user's live deck (a QA draft could post to a
+  real thread).
 - **L7** Recorded as ADR NNNN (`docs/adr/NNNN-reply-markdown.md`), written by S1; the landing numbers it.
 
 ## 6. Assumed decisions
