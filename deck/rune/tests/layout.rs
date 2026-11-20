@@ -78,6 +78,14 @@ fn chat_and_status_open_by_default() {
     }
 }
 
+/// The user's note: the selected icon's coloured bar sits on the window's left edge, no gap.
+#[test]
+fn the_selected_marker_is_flush_with_the_window_edge() {
+    let rt = window(json!({}), Prefs::default());
+
+    assert_eq!(rects(&rt, "icon-chat-marker").0[0], 0.0);
+}
+
 #[test]
 fn a_panel_opens_with_a_spring() {
     let (_held, _dir) = prefs_dir("spring");

@@ -269,7 +269,8 @@ fn icon_item(
         .child(icon(glyph, size::icon).color(if active { t.text } else { t.text_secondary }));
     if active {
         item = item.child(
-            el().w(space::s2)
+            el().key(format!("icon-{name}-marker"))
+                .w(space::s2)
                 .h_full()
                 .pin(Some(space::s0), Some(space::s0), None, Some(space::s0))
                 .fill(theme::roles(dark).primary),
@@ -449,6 +450,8 @@ pub fn strips(s: &State, cx: &mut Cx<State>) -> El {
         .min_h(space::s0)
         .padding(space::between)
         .pt(space::pad)
+        // The icon bar meets the window's left edge, so its selected bar is flush with it.
+        .pl(space::s0)
         .gap(space::panels)
         .child(left)
         .child(app::center(s, cx).key("centre").grow(1.0).min_w(space::s0))
