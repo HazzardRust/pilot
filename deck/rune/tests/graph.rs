@@ -89,6 +89,17 @@ fn hovering_a_dot_shows_its_slice_name() {
 
     let shown = texts(&rt);
     assert!(shown.iter().any(|t| t == "S3 the right"), "{shown:?}");
+    let name = rt
+        .elements()
+        .into_iter()
+        .find(|element| element.text.as_deref() == Some("S3 the right"))
+        .expect("the name is drawn");
+    let [_, _, w, h] = name.visible;
+    assert!(
+        w > 0.0 && h > 0.0,
+        "no clip hides the name: {:?}",
+        name.visible
+    );
     assert!(!shown.iter().any(|t| t == "S1 the base"), "{shown:?}");
 }
 
