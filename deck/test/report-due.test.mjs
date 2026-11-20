@@ -56,12 +56,12 @@ test("the pilot's findings append", (t) => {
   const { report } = aLandedReport(t);
   const before = stored(report.id).body;
 
-  addPilotMessage(report.id, 'Findings: the suite took 5 min.\nHuman steps: none.');
+  addPilotMessage(report.id, 'Findings: the suite took 5 min.');
   assert.ok(stored(report.id).body.startsWith(before), 'the deck report is kept');
-  assert.ok(stored(report.id).body.endsWith('Findings: the suite took 5 min.\nHuman steps: none.'));
+  assert.ok(stored(report.id).body.endsWith('Findings: the suite took 5 min.'));
 
   addPilotMessage(report.id, 'Findings: a second note.');
-  assert.ok(stored(report.id).body.endsWith('Findings: the suite took 5 min.\nHuman steps: none.\n\nFindings: a second note.'));
+  assert.ok(stored(report.id).body.endsWith('Findings: the suite took 5 min.\n\nFindings: a second note.'));
 });
 
 test('findings that ask are refused', (t) => {

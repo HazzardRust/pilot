@@ -57,11 +57,11 @@ test('an unknown screen is a 404 naming it', async (t) => {
 test('an unknown kind still has its tab counted', (t) => {
   tempDeck(t);
   registerRun({ repo: ALPHA, pid: process.pid });
-  // This store refuses `steps` until human-steps lands, so the read is the store's with the kind swapped:
+  // `steps` is a standing kind now, so the read is the store's with a kind swapped in:
   // a kind this code has never seen, as a newer daemon's store would hold it.
   const posted = postItem({ kind: 'question', title: 'Do these', body: '1. press it', repo: ALPHA, author: '' });
   const reads = readDeck();
-  reads.items = reads.items.map((item) => (item.id === posted.id ? { ...item, kind: 'steps' } : item));
+  reads.items = reads.items.map((item) => (item.id === posted.id ? { ...item, kind: 'mystery' } : item));
 
   const { tabs } = viewOf(reads, { screen: 'home', run: ALPHA }).regions.tabs;
 

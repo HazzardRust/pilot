@@ -323,7 +323,7 @@ const STORED = Object.freeze({ kind: 'ticket', field: 'ticket', coPilots: 'coPil
  * The standing kinds (L6): open, and never waiting on the user, so never holding
  * a turn. `deck/items.mjs` `STANDING_KINDS` spelled for the hooks; `join.test.js` pins both.
  */
-const STANDING_KINDS = [STORED.kind, 'report'];
+const STANDING_KINDS = [STORED.kind, 'report', 'steps'];
 
 function isStanding(item) {
   return Boolean(item && STANDING_KINDS.indexOf(item.kind) !== -1);
@@ -334,7 +334,7 @@ function isStanding(item) {
  * one stored there before the store refused it waits on no pilot. `deck/items.mjs`
  * `RECORD_KINDS` spelled for the hooks; `join.test.js` pins both.
  */
-const RECORD_KINDS = ['report'];
+const RECORD_KINDS = ['report', 'steps'];
 
 function isRecord(item) {
   return Boolean(item && RECORD_KINDS.indexOf(item.kind) !== -1);

@@ -19,6 +19,7 @@ import {
   HANDOFF_FAILED,
   KIND_QUESTION,
   KIND_REPORT,
+  KIND_STEPS,
   KIND_TICKET,
   KIND_USER,
   KIND_WALKTHROUGH,
@@ -73,6 +74,7 @@ import {
   writeDeck,
 } from './store-core.mjs';
 import { archivedItem } from './store-archive.mjs';
+import { doneOn, reportCloses } from './store-steps.mjs';
 
 /** Who may post a gate, by stamped kind (three-lanes spec 14, L14): the pilot or the architect posts planning's (architect-runs-red L4), and the pilot or QA concluding's. A kind absent here is anyone's; an unstamped call is the pilot's. */
 const POSTERS = Object.freeze({ [KIND_GATE1]: Object.freeze(['pilot', 'architect']), [KIND_GATE2]: Object.freeze(['pilot', 'qa']) });
@@ -167,13 +169,7 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   // Posting a gate2, or a concluding walkthrough on its open yellow ticket here (yellow-never-idle L2, L3; never refused for a lane, L8), turns its ticket green, and posting the closing report closes and resolves it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
   if (kind === KIND_GATE2) concludeOn(deck, ticket);
   if (concludes(item, author) && walked?.kind === KIND_TICKET && stateOf(walked) === 'yellow' && sameRepo(walked.repo, item.repo)) concludeOn(deck, walked, item.id);
-  if (kind === KIND_REPORT && ticket) {
-    // Closing ends its liveness too (L9).
-    delete ticket.live; delete ticket.concludedBy;
-    ticket.state = 'closed';
-    ticket.resolution = `closed by ${item.id}`;
-    ticket.resolvedAt = item.postedAt;
-  }
+  if (kind === KIND_REPORT && ticket) reportCloses(deck, ticket, item); // left green while a steps thread is open (human-steps L2)
   // A hand-off supersedes its directory's older open one, closed in this same write so only one offers Handoff failed; a chain one stays, its failed press hands its tickets back.
   const superseded = kind === KIND_HANDOFF ? deck.items.filter((each) => each.kind === KIND_HANDOFF && isOpen(each) && sameRepo(each.repo, item.repo) && !isChainHandoff(each, item.repo)) : [];
   for (const older of superseded) Object.assign(older, { resolution: `superseded by ${item.id}`, resolvedAt: item.postedAt });
@@ -391,7 +387,7 @@ export function addPilotMessage(id, text, author, to, promise) {
     // The pilot's Resolving and Land again on a landing conflict are its whoever owns the gate2 (L7).
     const landingWord = to === undefined && landingReply(item, text, writerKind(author), repliedAt);
     if (!landingWord && !mayWrite(item, writerKind(author), to)) throw notTheOwner(item);
-    // The pilot's one reply on a record, its worktrees reply, asks nothing either (ADR 0148, A3).
+    // The pilot's one reply on a record, the Findings: reply, asks nothing either (ADR 0148, A3).
     if (isRecord(item)) refuseAsks(reportAskGaps(text, [], 'reply'));
     // The pilot's findings on its report go into the report itself (gate2-frees-lane spec 4); the user's reply is still refused.
     if (isRecord(item) && writerKind(author) === 'pilot' && text.startsWith('Findings:')) {
@@ -564,6 +560,7 @@ export function resolveItem(id, resolution, author) {
   return writeToThread(id, (deck, item) => {
     if (item.kind === KIND_CHAT) throw new DeckRefusal(`item ${id} is the chat: ${NEVER_CLOSED}`);
     if (item.kind === KIND_USER) throw new DeckRefusal(`item ${id} is ${USER_CLOSES}`);
+    if (item.kind === KIND_STEPS) throw new DeckRefusal(`item ${id} is a ticket's human steps: only the user's Done closes it (human-steps L3)`);
     if (writerKind(author) !== ownerOf(item)) throw notTheOwner(item);
     // A blocking item is never answered for the user (S18), but for the pilot's close of a question (blocking-close L1, ADR 0178).
     const [pilotClose, claimed] = [isPilotClose(item, resolution, author), pilotCloseClaimed(resolution)];
@@ -683,6 +680,7 @@ export function reopenItem(id) {
   }
   // Its words and slice count already live in the ticket it merged into; reopened, they would count twice (QA F2).
   if (item.mergedInto !== undefined) throw new DeckRefusal(`item ${id} is merged into ${item.mergedInto}; reopen that ticket instead`);
+  if (item.kind === KIND_STEPS) throw new DeckRefusal(`item ${id} is a ticket's human steps: its Done closed the ticket too, so it is not reopened`);
 
   // Pushed again, a Close's words would read as the pilot's (spec 1).
   if (item.resolution !== CLOSED_BY_USER) {
@@ -765,9 +763,10 @@ function settledLanding(landing) {
 export function closeItem(id) {
   return writeToThread(id, (deck, item) => {
     if (!CLOSABLE_KINDS.includes(item.kind)) {
-      throw new DeckRefusal(`item ${id} is a ${item.kind}; only a question or a user thread can be closed from the page`);
+      throw new DeckRefusal(`item ${id} is a ${item.kind}; only a question, a user thread or a steps thread can be closed from the page`);
     }
     const now = new Date().toISOString();
+    if (item.kind === KIND_STEPS) return doneOn(deck, item, now); // Done: no reply `seq` (human-steps L4)
     deck.seq = seqOf(deck) + 1;
     item.replies.push({ from: 'user', text: CLOSED, repliedAt: now, seq: deck.seq });
     item.resolution = CLOSED_BY_USER;

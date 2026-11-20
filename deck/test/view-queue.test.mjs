@@ -50,18 +50,18 @@ test('labels come from the server', (t) => {
   // Two live runs, so no sole run's tab is landed on and the overview labels each card.
   registerRun({ repo: BETA, pid: process.pid });
   const asked = ask('Which port?', ALPHA, { options: ['4321', '4322'] });
-  // This store refuses `steps` until human-steps lands, so the read is the store's with the kind swapped.
-  const steps = ask('Do these', ALPHA);
+  // `steps` is a standing kind now, so a kind this code has never seen is swapped in.
+  const unknown = ask('Do these', ALPHA);
   const reads = readDeck();
-  reads.items = reads.items.map((item) => (item.id === steps.id ? { ...item, kind: 'steps' } : item));
+  reads.items = reads.items.map((item) => (item.id === unknown.id ? { ...item, kind: 'mystery' } : item));
 
   const cards = queueView(reads, {}).cards;
   const card = (id) => cards.find((each) => each.id === id);
 
-  assert.equal(card(steps.id).kind, 'steps');
-  assert.equal(card(steps.id).state, 'posted');
-  assert.equal(card(steps.id).title, 'Do these');
-  assert.deepEqual(card(steps.id).options, [], 'an unknown kind offers no reply option');
+  assert.equal(card(unknown.id).kind, 'mystery');
+  assert.equal(card(unknown.id).state, 'posted');
+  assert.equal(card(unknown.id).title, 'Do these');
+  assert.deepEqual(card(unknown.id).options, [], 'an unknown kind offers no reply option');
   assert.equal(card(asked.id).kind, 'question');
   assert.deepEqual(card(asked.id).options, [
     { label: '4321', confirm: false },

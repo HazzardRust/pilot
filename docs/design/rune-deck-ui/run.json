@@ -142,7 +142,7 @@
     },
     {
       "slice": "S16",
-      "state": "pushed 547c134 — cargo test on final head and rust re-read pending",
+      "state": "integrated at b1d6482 — rust APPROVE on re-read (wake_after checked: wakes are pushed, none cancelled), typescript approve, security approve; 398 production lines, limit waived by co-pilot; 4810/0; cargo ok on 547c134 (co-pilot run)",
       "after": [
         "S6"
       ],
@@ -178,7 +178,7 @@
     },
     {
       "slice": "S20",
-      "state": "implementing",
+      "state": "pushed ade6964 — waits on the base merge",
       "after": [
         "S10"
       ],
@@ -187,7 +187,7 @@
     },
     {
       "slice": "S21",
-      "state": "implementing",
+      "state": "pushed 64093d8 — NOT integrated: taking base pilot dc5f7be conflicts in deck/ui/render-rail.mjs; waits on the base merge",
       "after": [
         "S8"
       ],
@@ -196,34 +196,32 @@
     },
     {
       "slice": "S22",
-      "state": "planned (added: overview status per tab)",
+      "state": "implementing",
       "after": [
         "S12"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s22",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s22"
     },
     {
       "slice": "S23",
-      "state": "planned (added: thread move fetches its view at once; closes S9 security LOW, late view redraws the left thread's box)",
+      "state": "implementing — scope adds S12 re-read MEDIUM: feeds stamped with their query, stale feed dropped",
       "after": [
         "S9"
-      ]
+      ],
+      "branch": "slice/rune-deck-ui-s23",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s23"
+    },
+    {
+      "slice": "base merge",
+      "state": "implementing: pilot dc5f7be into feat, render-rail.mjs conflict",
+      "branch": "slice/rune-deck-ui-base",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-base"
     }
   ],
-  "next": "integrating S16; S19, S20, S21 implementing; S22, S23 next as slots free; then base check, fundamentalist, QA",
-  "updatedAt": "2026-11-20T02:56:01.859Z",
+  "next": "integrating S21 (feat carries pilot dc5f7be via slice/rune-deck-ui-base); then S20; S19, S22, S23 in flight; step-7 fix round carries status.rs sync fetch per press (S12 MEDIUM) and S18 refused-dismiss button",
+  "updatedAt": "2026-11-20T03:38:42.312Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S1 diff budget (300) did not fit a crate-bootstrap slice owning ~48 new files; size in changed lines",
-      "evidence": "680 lines before fmt, 821 after; an escalation round-trip to main",
-      "size": 821
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "vocabulary guard scans generated Cargo.lock; size in minutes lost",
-      "evidence": "first npm test failed on crate names in deck/rune/Cargo.lock; +1 line in scripts/vocabulary-exempt.txt and a rerun",
-      "size": 7
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "npm test takes ~7 minutes and ran twice; size in minutes",
@@ -447,6 +445,18 @@
       "what": "S16: disk full mid-gate so cargo test never ran on the merged head; support::client_for's private lock let another binary's env race reach the user's 4321 deck; S16 and S17 each wrote a Location percent-decoder",
       "evidence": "S16 report 547c134; tabs.rs param, strip.rs refusal_in",
       "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S21: npm test ~8 min with three unrelated JS reds under load (worktrees tests green alone, sync.test.mjs undecided); Monitor not available to implementers",
+      "evidence": "S21 report 64093d8",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S20: Rune's API found only by reading its source (~15 greps); S20's Interface strips(state, cx) took no centre so it draws the whole window; Prefs had no field for 'user shut everything' vs first start",
+      "evidence": "S20 report ade6964",
+      "size": 15
     }
   ]
 }

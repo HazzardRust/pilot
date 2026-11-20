@@ -4,7 +4,7 @@
 mod support;
 
 use pilot_deck::app::State;
-use pilot_deck::client::{Client, Query};
+use pilot_deck::client::{Client, Query, View};
 use pilot_deck::live::{self, Feed};
 use pilot_deck::regions;
 use std::sync::{Arc, mpsc};
@@ -98,7 +98,67 @@ fn a_thread_reads_whole_and_escape_or_left_goes_back_to_its_deck() {
         );
     }
 
+    escape_and_left_go_back_with_nothing_focused(&view, &query, &owner);
+    a_key_typed_into_a_field_is_not_stolen(&view, &query);
     a_back_press_survives_the_next_live_refetch(&deck, query);
+}
+
+fn window(view: &View, query: &Query, draw: fn(&State, &mut Cx<State>) -> El) -> Runtime<State> {
+    let mut rt = Runtime::new(
+        State {
+            view: view.clone(),
+            query: query.clone(),
+            ..State::default()
+        },
+        draw,
+        (1280.0, 800.0),
+        Env::new(true, 1.0),
+    );
+    // The window's own key route, as `app::spec` wires it.
+    rt.on_key = pilot_deck::app::spec().on_key;
+    rt.frame(0.0);
+    rt
+}
+
+/// A thread just opened has no focus, so its own handler hears nothing until a Tab; the window's
+/// route must take the back keys then.
+fn escape_and_left_go_back_with_nothing_focused(view: &View, query: &Query, owner: &str) {
+    for key in [Key::Escape, Key::Left] {
+        let mut rt = window(view, query, thread_only);
+        assert!(!rt.has_focus(), "a thread just opened holds no focus");
+        press(&mut rt, key.clone());
+        assert_eq!(
+            rt.state.query,
+            Query {
+                screen: "home".into(),
+                run: Some(owner.to_string()),
+                ..Query::default()
+            },
+            "{key:?} with no Tab goes back to the deck that owns the thread"
+        );
+    }
+}
+
+fn thread_and_field(s: &State, cx: &mut Cx<State>) -> El {
+    rune::col().child(thread_only(s, cx)).child(
+        rune::text_input(&s.regions.reply.draft, rune::tok::type_::BODY)
+            .key("field")
+            .label("Reply")
+            .on_edit(|s: &mut State| &mut s.regions.reply.draft),
+    )
+}
+
+fn a_key_typed_into_a_field_is_not_stolen(view: &View, query: &Query) {
+    let mut rt = window(view, query, thread_and_field);
+    // The thread is the first stop, the field the second.
+    press(&mut rt, Key::Tab);
+    press(&mut rt, Key::Tab);
+    assert!(rt.has_focus(), "focus is on a stop");
+    press(&mut rt, Key::Left);
+    assert_eq!(
+        &rt.state.query, query,
+        "← in a field moves the caret and does not go back"
+    );
 }
 
 /// The live reader refetches for what the window last asked, so a nav press must tell it, or the
