@@ -230,9 +230,15 @@ fn moving_to_another_thread_gives_it_a_box_of_its_own() {
         view: View {
             screen: "thread".into(),
             seq: 1,
-            regions: [("thread".to_string(), thread_with_next(other))]
-                .into_iter()
-                .collect(),
+            regions: [
+                ("thread".to_string(), thread_with_next(other)),
+                (
+                    "reply".to_string(),
+                    serde_json::json!({ "mode": "reply", "id": ID, "options": [] }),
+                ),
+            ]
+            .into_iter()
+            .collect(),
         },
         query: Query {
             id: Some(ID.into()),
@@ -262,6 +268,12 @@ fn moving_to_another_thread_gives_it_a_box_of_its_own() {
     rt.pointer_up(x, y);
     rt.frame(1.0 / 60.0);
 
+    // Until the next thread's view arrives no box is drawn, so nothing is typed into the first's.
+    assert!(
+        !rt.elements()
+            .iter()
+            .any(|element| !element.exiting && element.key.as_deref() == Some("reply-text"))
+    );
     rt.update(|s, _| {
         assert_eq!(
             s.query.id.as_deref(),
@@ -312,23 +324,18 @@ fn a_press_on_a_view_not_yet_refreshed_posts_to_the_thread_it_shows() {
         view: View {
             screen: "thread".into(),
             seq: 1,
-            regions: [
-                ("thread".to_string(), thread_with_next(&next)),
-                ("reply".to_string(), reply),
-            ]
-            .into_iter()
-            .collect(),
+            regions: [("reply".to_string(), reply)].into_iter().collect(),
         },
+        // The query has moved on to the next thread, and a view read for the first one has landed
+        // after it (a refetch already under way when the arrow was pressed).
         query: Query {
-            id: Some(shown.clone()),
+            id: Some(next.clone()),
             ..Query::default()
         },
         ..State::default()
     };
     let mut rt = rune::Runtime::new(state, app::view, (1280.0, 800.0), rune::Env::new(true, 1.0));
     rt.frame(0.0);
-    // The arrow moves the query on; the window still shows the first thread until its view arrives.
-    click(&mut rt, |element| element.text.as_deref() == Some("›"));
     // SAFETY: no other test in this binary touches the environment.
     unsafe {
         std::env::set_var("PILOT_DECK_DIR", &deck.dir);
