@@ -23,8 +23,8 @@
       "worktree": "C:/Users/Hazzard/Projects/pilot-nothing-hidden-s2"
     }
   ],
-  "next": "S2 pushed 40b2e4f3 (reviewer WARN, test-design only; main looked at s2look/home-fold-open.png: cards name ticket + standing). Integrating; then integrate --trial, walkthrough for the look (scratch deck from feat worktree + seed script), gate2 by main after the walkthrough's sign-off. Landing numbers the NNNN ADR.",
-  "updatedAt": "2026-11-20T07:43:18.892Z",
+  "next": "Walkthrough itm_0fd983c2478f signed. gate2 itm_b52a86b5c49f posted (PR #131, ca5e88b) awaits press; on press spawn pilot-lander with that id. Scratch deck pid 42148 (http://127.0.0.1:59128, Temp/pilot-scratch-Z1i9jm) to tear down at report.",
+  "updatedAt": "2026-11-20T07:57:39.846Z",
   "friction": [
     {
       "kind": "drain",
