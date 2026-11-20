@@ -28,8 +28,8 @@ As the **main session you are a system-level orchestrator**. You:
 - relay the outcome and the human steps.
 
 Past a handful of tool calls your default is to delegate; a couple of reads and a
-small edit you still do directly. Going solo *silently* is not acceptable: state
-the reasoning either way.
+small edit you still do directly. When delegating costs more than it returns, go
+solo; either way, say why, never *silently*.
 
 As an **implementing agent you own the whole slice loop for your workstream**: plan,
 vertical slices, built to the behaviours, gate, one fresh review per slice, commit,
@@ -140,10 +140,10 @@ report contradicts the code, the code wins.
 
 ## Waits end by themselves
 
-- A file or log: `pilot wait-for --file F --match RE --timeout M` (M ≤ 50), its
+- A file: `pilot wait-for --file F --match RE --timeout M` (minutes), the
   marker checked against what the writer prints.
 - A subagent: its completion notification, never its output file.
-- A test run: `run_in_background` and end the turn, or a `timeout` of 600000 ms.
+- A test run: `run_in_background` and end the turn, or `timeout: 600000`.
 - Exit 2 is a wake-up call: wait again, carry on or hand back. Each wait is a
   numbered report row, `wait <n> on <marker>: …`.
-- Before the final hand-back, `TaskStop` each background wait you started, by id.
+- Before handing back, `TaskStop` each background wait you started, by id.
