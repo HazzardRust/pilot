@@ -1,142 +1,162 @@
 # One project glossary the crew maintains
 
-Ticket `itm_2458e437da6a` · slug `project-glossary` · base `origin/feat/human-steps` d88532ca · ADR NNNN (`docs/adr/NNNN-project-glossary.md`, S2)
+Ticket `itm_2458e437da6a` · slug `project-glossary` · base `origin/feat/human-steps` d88532ca · ADR NNNN (`docs/adr/NNNN-project-glossary.md`, S3)
 
 ## 1. Problem
 
 The user wants Matt Pocock's domain-modeling philosophy applied with its state at project level: one glossary and
 one `docs/adr/` per repository, in the repository, which grilling reads first, a run writes to as terms settle, and
-the audit keeps honest. Today the plugin's skills say the glossary is "the artefact's section 3" and "one glossary
-per run", while this repository already keeps a 70-term root `CONTEXT.md` nothing in the crew reads or writes.
+the fundamentalist and the audit keep honest, with a bounded log of its changes that an agent reads only in part.
+Today the skills say the glossary is "the artefact's section 3" and "one glossary per run", while this repository
+already keeps a 70-term root `CONTEXT.md` nothing in the crew reads or writes.
 
 ## 2. Spec
 
 | # | Behaviour | Evidence | Bar |
 | --- | --- | --- | --- |
-| 1 | Grilling reads the root glossary before its first question and challenges a request term the glossary lists under `_Avoid_`, or one that is overloaded, by naming the canonical term. | `methodology-skills.test.mjs` over `skills/grilling/SKILL.md`, `skills/domain-modeling/SKILL.md`; `glossary-prose.test.mjs` over `agents/pilot.md`; QA: a scratch request saying "subagents" | each of the 3 files names `GLOSSARY.md` and reading it first; the pilot's question names **Crew** |
-| 2 | A term that outlives its run is written to the root glossary on the design branch as it settles, by the architect, so the Gate 1 press signs it off with the artefact; the artefact's ubiquitous-language section keeps run-local terms only. *L7 (A3, answered)* | `glossary-prose.test.mjs` over `agents/pilot.md`, `agents/pilot-architect.md`; this run's design diff | both files say it; this run's diff adds >= 1 glossary entry (it adds 2) |
-| 3 | The glossary format file says the glossary carries no implementation detail, and `ADR-FORMAT.md` keeps the three ADR tests; `glossary.mjs check` fails an entry naming a file path and passes the repository's glossary inside `npm test`. | `glossary.test.mjs`; `node scripts/glossary.mjs check GLOSSARY.md` | path fixture: exit 1 naming the term; repo glossary: exit 0; 6 path entries rewritten |
-| 4 | The audit's navigability area lists each stale term: a glossary term with no use outside the glossary, `docs/design/` and `docs/adr/` is a row; a term the code contradicts is the explorer's judgement row. *practitioner: DDD modeller (Evans), the language checked against the code* | `glossary.test.mjs` on `staleTerms`; `audit-navigability.test.mjs` | fixture with 1 unused term of 3: exactly 1 result naming it; the area file runs the command |
-| 5 | `domain-modeling` and its vendor ledgers say where the glossary lives: one per repository, at its root, nothing under `~/.claude`. | `VENDOR.md` and `vendor/methodology.md` rows; `git grep -i "one glossary per run"` | the 3 rows changed; 0 hits outside `docs/design/`, `docs/adr/` |
-| 6 | `diagnosing-bugs` and `test-design` read the repository glossary, not "the artefact's section 3". *found issue* | `methodology-skills.test.mjs` | 0 "section 3 glossary" in either skill; both name `GLOSSARY.md` |
-| 7 | The glossary is `GLOSSARY.md` at the root and every live reference follows it. *assumed, A1* | `git grep -n "CONTEXT\.md"` outside `docs/design/`, `docs/adr/`, `vendor/`, `VENDOR.md` | 0 hits; `npm test` green |
-| 8 | `GLOSSARY-FORMAT.md` shows the entry shape the glossary actually uses (`**Term**:`, definition, `_Avoid_:`), the shape `glossary.mjs` parses. *red team* | `methodology-skills.test.mjs`: the format file's example through `parseGlossary` | >= 1 entry parsed from the format file's example, 0 lint problems |
+| 1 | Grilling looks the request up in the root glossary before its first question and challenges a word the glossary lists under `_Avoid_`, or one that is overloaded, by naming the canonical term. | `methodology-skills.test.mjs` over `grilling`, `domain-modeling`; `glossary-prose.test.mjs` over `agents/pilot.md`; QA: a scratch request saying "subagents" (L8) | each of the 3 files names `glossary.mjs match` before the first question; the pilot's question names **Crew** |
+| 2 | A term that outlives its run is written to the root glossary on the design branch as it settles, by the architect, so the Gate 1 press signs it off; the artefact's ubiquitous-language section keeps run-local terms only. *L7* | `glossary-prose.test.mjs` over `agents/pilot.md`, `agents/pilot-architect.md`; this run's design diff | both files say it; this run's diff adds 3 glossary entries |
+| 3 | The format file says the glossary carries no implementation detail, `ADR-FORMAT.md` keeps the three ADR tests, and `glossary.mjs check` fails an entry naming a file path and passes the repository's glossary inside `npm test`. | `glossary.test.mjs`; `node scripts/glossary.mjs check GLOSSARY.md` | path fixture: exit 1 naming the term; repo glossary: exit 0; 6 path entries rewritten |
+| 4 | The audit's navigability area lists each stale term: a term with no use outside the glossary, `docs/design/` and `docs/adr/` is a row; a term the code contradicts is the explorer's judgement row. *practitioner: DDD modeller (Evans), the language checked against the code* | `glossary-stale.test.mjs`; `audit-navigability.test.mjs` | fixture with 1 unused term of 3: exactly 1 result naming it |
+| 5 | `domain-modeling` and its vendor ledgers say where the glossary lives: one per repository, at its root, nothing under `~/.claude`. | `VENDOR.md` and `vendor/methodology.md` rows; `git grep -i "one glossary per run"` | 3 rows changed; 0 hits outside `docs/design/`, `docs/adr/` |
+| 6 | `diagnosing-bugs` and `test-design` read the repository glossary, not "the artefact's section 3". *found issue* | `methodology-skills.test.mjs` | 0 "section 3 glossary"; both name `GLOSSARY.md` |
+| 7 | The glossary is `GLOSSARY.md` at the root and every live reference follows it. *L9 (A1)* | `git grep -n "CONTEXT\.md"` outside `docs/design/`, `docs/adr/`, `vendor/`, `VENDOR.md` | 0 hits; `npm test` green |
+| 8 | `GLOSSARY-FORMAT.md` shows the entry shape the glossary uses (`**Term**:`, definition, `_Avoid_:`), the shape `glossary.mjs` parses. *red team* | `methodology-skills.test.mjs` through `parseGlossary` | >= 1 entry parsed from the example, 0 lint problems |
+| 9 | An agent reads only the entries it needs: `match <text>` returns the entries whose term or `_Avoid_` word is in the text, `term <name>` one entry; no prose tells an agent to read the whole file. *the user's, A2 answer* | `glossary.test.mjs`; `methodology-skills` and `glossary-prose` pins | "the subagents" -> 1 entry (**Crew**), under 6 lines of 300; 0 "read GLOSSARY.md" whole-file instructions |
+| 10 | The glossary has a log of changes: each term added, changed or removed, with the run that did it and the date. *the user's, A2 answer* | `glossary-log.test.mjs` on a fixture history | 3 commits (add, change, remove) -> 3 rows, each naming its `<slug>` |
+| 11 | The log is bounded and read in part: one term's history or the newest N rows, never the whole history by default. *assumed, A4* | `glossary-log.test.mjs` | 30 changes -> 20 rows by default; `--term T` -> only T's rows |
+| 12 | The fundamentalist checks terms in every feature's diff: an added prose line using an `_Avoid_` word, a term whose last use the diff removes, and a new term the artefact lists as lasting but the glossary lacks, each a finding. *L10 (A2)* | `glossary-diff.test.mjs`; `fundamentalist-terms.test.mjs` over `agents/pilot-fundamentalist.md` | fixture diff with 1 Avoid use, 1 lost term -> 2 candidates; the pass names the command |
 
-Practitioner lines: spec 4 is the DDD practitioner's (Evans): the ubiquitous language is checked against the code,
-not kept as a document; its raw material is `git grep` over the tracked tree, and its external confirmation is the
-audit row a person can re-run.
+Practitioner: spec 4 and 12 are the DDD modeller's: the ubiquitous language checked against the code, from `git grep`
+and `git log` over the tracked tree, confirmed by a row a person can re-run.
 
 ## 3. Findings
 
-- `CONTEXT.md` (root, 296 lines, 70 terms, upstream shape `**Term**:` / definition / `_Avoid_:`, 6 subheadings) is
-  the project glossary in all but name; last touched by spec-first S4. Lines 82, 132, 209, 231, 257, 287 name a path
-  or file (spec 3's existing data).
-- `skills/domain-modeling/SKILL.md:9,17-21,44-48` and `GLOSSARY-FORMAT.md:1-35`: glossary = artefact §3, "One glossary
-  per run" (`:35`), example shape `- **Order** — ...` that no file here uses (spec 8). `ADR-FORMAT.md:60-66` already
-  carries the three tests.
+- `CONTEXT.md` (root, 296 lines, 70 terms, `**Term**:` / definition / `_Avoid_:`, 6 subheadings) is the project
+  glossary in all but name. Lines 82, 132, 209, 231, 257, 287 name a path (spec 3's existing data). ci-gate S9 edits
+  it on its way to `pilot` (`feat(ci-gate): S9 the run's ADR and glossary`).
+- Its history is a log already: every commit subject is `feat|fix(<slug>): …` or `Merge feat/<slug>`, so the run that
+  changed a term is recoverable from `git log -p -- CONTEXT.md` (spec 10, A4).
+- `skills/domain-modeling/SKILL.md:9,17-21,44-48`, `GLOSSARY-FORMAT.md:1-35`: glossary = artefact §3, "One glossary per
+  run" (`:35`), an example shape `- **Order** — …` no file uses (spec 8). `ADR-FORMAT.md:60-66` has the three tests.
 - The architect's template puts ubiquitous language at §4 (`agents/pilot-architect.md:211`); every skill says §3.
-- `agents/pilot.md:90,345-347`: domain-modeling "during grilling and at Gate 1"; terms "go to the glossary" with no
-  file named and no writer named.
-- `skills/diagnosing-bugs/SKILL.md:9,17`, `skills/test-design/SKILL.md:9,17`: read "the artefact's section 3 glossary".
+- `agents/pilot.md:90,345-347`: domain-modeling "during grilling and at Gate 1"; no file and no writer named.
+- `skills/diagnosing-bugs/SKILL.md:9,17`, `skills/test-design/SKILL.md:9,17`: "the artefact's section 3 glossary".
 - Live `CONTEXT.md` readers: `scripts/test/pilot-agents.test.mjs:306`, `state-words.test.mjs:45`,
-  `three-lanes-wording.test.mjs:54-58` (colour words pinned out of it), `docs/architecture.md:7`,
-  `skills/audit/areas/navigability.md:40`. ADRs 0147, 0151, 0185 and old design docs cite it as history.
-- Audit areas are prose briefs to an explorer whose measurements are read-only commands (`navigability.md`, pinned
-  by `audit-navigability.test.mjs`); measuring scripts live in `scripts/audit-*.mjs`.
-- `npm test` = `scripts/gate.mjs`, every `scripts/test/*.test.mjs` picked up.
-- Upstream `domain-modeling` (main) now names the file `GLOSSARY.md` at the root of a single-context repo.
+  `three-lanes-wording.test.mjs:54-58` (colour words pinned out), `docs/architecture.md:7`, `navigability.md:40`.
+- `agents/pilot-fundamentalist.md` (303 lines): passes decisions, subtraction, test, evidence, judgement; pinned by
+  `fundamentalist-decisions.test.mjs` and `fundamentalist-case.test.mjs`. It reads the feature diff only.
+- Audit areas are prose briefs whose measures are read-only commands, pinned by `audit-navigability.test.mjs`.
 
 ### Seams
 
 | Seam | Interface | Folded behind it | Category |
 | --- | --- | --- | --- |
-| `scripts/glossary.mjs` | `parseGlossary(text)`, `lintGlossary(text)`, `staleTerms(repoDir, text)`; CLI `check <file>`, `stale <repo>` | the entry shape, the path rule, the `git grep` per term (today nowhere: the audit has no glossary measure) | in-process; `git` local-substitutable |
-| Glossary prose | the files naming where the glossary is and who reads and writes it: `domain-modeling`, `grilling`, `diagnosing-bugs`, `test-design`, `pilot.md`, `pilot-architect.md` | nothing folded; deletion test: each file is read by a different agent, so each keeps its line | prose |
+| `scripts/glossary.mjs` | `parseGlossary`, `lintGlossary`, `matchGlossary`, `termOf`; CLI `check`, `match`, `term` | the entry shape, the path rule, the lookup | in-process |
+| `scripts/glossary-stale.mjs` | `staleTerms(repoDir, text)`; CLI `<repo>` | a literal `git grep` per term with the 3 exclusions | local-substitutable (`git`) |
+| `scripts/glossary-log.mjs` | `glossaryLog(repoDir, { term?, limit? })`; CLI | `git log -p` of the glossary diffed per entry, run from the subject | local-substitutable (`git`) |
+| `scripts/glossary-diff.mjs` | `termsInDiff(repoDir, base, head)`; CLI | Avoid words in added prose lines, terms whose last use went | local-substitutable (`git`) |
+| Glossary prose | where the glossary is and who looks up, writes and checks it: 4 skills, `pilot.md`, `pilot-architect.md`, `pilot-fundamentalist.md` | nothing folded: each file is read by a different agent | prose |
 
-Deletion test: `audit/areas/navigability.md` item 5 survives (it is the explorer's brief); `glossary.mjs` earns its
-keep across 2 callers (the gate's test, the audit).
+Deletion test: one CLI for all four commands was the deeper module, but `stale`, `log` and `diff` each shell out to
+`git` and run on parallel lanes; one file would serialise S1-S7. All three import `parseGlossary`, so the entry shape
+stays in one place.
 
 ## 4. Ubiquitous language
 
-Lasting terms this run settled are in the glossary (**Glossary**, **Stale term**). Run-local:
+Lasting terms this run settled are in the glossary (**Glossary**, **Stale term**, **Glossary log**). Run-local:
 
 - **Lasting term** — a term a later run would meet; goes to the glossary. Not a "global term".
-- **Run-local term** — a term only this artefact uses; stays in its ubiquitous-language section. Not a "temp term".
+- **Run-local term** — a term only this artefact uses; stays here. Not a "temp term".
 - **Path entry** — a glossary entry whose definition names a file or directory path. Not "implementation detail" in general.
-
 ## 5. Locked decisions
 
-- **L1 One glossary per repository, at its root, in the repository.** Durable, reviewed with the code, read by
-  every agent in the checkout (ADR 0006 keeps only disposable state under `~/.claude`). Rejected: a per-run glossary
-  (drifts, nobody reads last run's), a deck-store glossary (not in the repo, not reviewed). ADR NNNN.
-- **L2 The entry shape is the one the file already uses** (`**Term**:` line, definition line, `_Avoid_:` line,
-  optional `###` groups). Rejected: the format file's `- **Term** —` list (no file uses it; 70 entries to rewrite).
-- **L3 Staleness is measured, contradiction judged.** `staleTerms` is a case-insensitive fixed-string `git grep` per
-  term outside the glossary, `docs/design/`, `docs/adr/`; contradiction stays the explorer's row. Rejected: an LLM
-  pass per term (unmeasured, the audit's rows need a command).
-- **L4 The path rule is narrow**: a definition token starting `~/` or `./`, holding two `/`-separated segments
-  ending `/` or a file extension, or a bare `name.ext` with a known source or doc extension. Branch patterns like
-  `feat/<slug>` and agent names pass. Rejected: banning all backticks (kills `gate1`, `report`).
-- **L5 The check runs in this repository's gate and in the audit** of any repository. Rejected: a hook on every
-  write (new hook surface for a doc lint).
+- **L1 One glossary per repository, at its root, in the repository.** Durable, reviewed with the code (ADR 0006 keeps
+  only disposable state under `~/.claude`). Rejected: per-run glossary (drifts), a deck-store glossary (unreviewed). ADR NNNN.
+- **L2 The entry shape is the one the file uses** (`**Term**:`, definition, `_Avoid_:`, optional `###` groups).
+  Rejected: the format file's `- **Term** —` list (no file uses it; 70 entries to rewrite).
+- **L3 Staleness is measured, contradiction judged**: `staleTerms` is a case-insensitive fixed-string `git grep` per
+  term outside the glossary, `docs/design/`, `docs/adr/`. Rejected: an LLM pass per term (no command behind the row).
+- **L4 The path rule is narrow**: a token starting `~/` or `./`, two `/`-separated segments ending `/` or an extension,
+  or a bare `name.ext` with a source or doc extension. `feat/<slug>` and agent names pass. Rejected: banning backticks.
+- **L5 The check runs in this repository's gate and in the audit** of any repository. Rejected: a write hook.
 - **L6 Historic ADRs and design docs keep `CONTEXT.md`** as written. Rejected: rewriting history.
-- **L7 The architect writes each lasting term to `GLOSSARY.md` on the design branch as it settles; the Gate 1 press
+- **L7 The architect writes each lasting term to the glossary on the design branch as it settles; the Gate 1 press
   signs the diff.** The user's answer to A3. Rejected: the pilot writing after the press (batched, unsigned).
 - **L8 QA runs in its own worktree of this repository plus one scratch fixture repository** holding one path entry
-  and one stale term, and one scratch pilot request using an `_Avoid_` word. The user's answer (`itm_813a9a2d4b97`).
-  Rejected: a second real repository. Grilling depth for this run is *forks* (`itm_488f8ece3b4f`): no Gate 1 walk.
+  and one stale term, and one scratch pilot request using an `_Avoid_` word (`itm_813a9a2d4b97`). Rejected: a second
+  real repository. Grilling depth is *forks* (`itm_488f8ece3b4f`): no Gate 1 walk.
+- **L9 The file is `GLOSSARY.md`.** The user's answer to A1. Rejected: keeping `CONTEXT.md`.
+- **L10 Both the fundamentalist and the audit check terms.** The user's answer to A2: the fundamentalist on every
+  feature's diff (`glossary-diff.mjs` candidates, judged), the audit on the whole tree (stale terms). Recorded
+  objection (pilot): a second owner of terms and a terms pass on every Opus review.
+- **L11 The read path is a lookup, never the file**: grilling runs `match` on the request, any agent `term` on a word;
+  the 300-line file is opened whole only to edit it. Rejected: an index of terms read every time (72 lines still
+  loaded per run), a size cap on the glossary (the user bounded the log, not the terms).
 
 ## 6. Assumed decisions
 
-- **A1 Rename `CONTEXT.md` to `GLOSSARY.md`** (`itm_5c8f5fc83bae`). Default: rename, update the 5 live readers.
-  Trades away: a repository still holding an upstream-1.2.3 `CONTEXT.md` is not read (no fallback). Rejected: keep
-  `CONTEXT.md` (the name says context, upstream moved on).
-- **A2 The fundamentalist does not check terms** (`itm_bb24de856f02`). Default: the audit owns staleness, Gate 1
-  owns new terms. Trades away: a rename in code leaves a stale term until the next audit. Rejected: a row in the
-  fundamentalist's pass.
-- **A3 The architect writes lasting terms inline on the design branch; Gate 1 signs them** (the pilot's
-  `itm_592774a86226`). Trades away: two runs adding under one subheading can conflict at landing (the lander resolves
-  hunks). Rejected: the pilot writes after the press (batched, unsigned, owns no branch).
-  Answer (user, 2026-11-20): "Architect inline, signed at Gate 1". Locked as L7.
+- **A1 Rename `CONTEXT.md` to `GLOSSARY.md`** (`itm_5c8f5fc83bae`). Default: rename. Answer (user): "Rename to
+  GLOSSARY.md", after first typing "lets keep context actually". Locked as L9.
+- **A2 The fundamentalist does not check terms** (`itm_bb24de856f02`). Default: the audit owns it. Answer (user):
+  overturned, "okay well both then"; plus a bounded change log read in part. Locked as L10, L11; spec 9-12 added.
+- **A3 The architect writes lasting terms inline; Gate 1 signs them** (`itm_592774a86226`). Answer (user):
+  "Architect inline, signed at Gate 1". Locked as L7.
+- **A4 The glossary log is derived from git history, not stored** (`itm_7a69812e9528`). Default: `glossary-log.mjs`
+  reads `git log -p -- GLOSSARY.md` (following the rename), rows of term, added/changed/removed, run, date; `--term`
+  and `--limit 20`. Nothing stored, so nothing grows. Trades away: a shallow clone shows less; no file to open.
+  Rejected: `GLOSSARY-LOG.md` capped at N rows (every run writes it, conflicts at landing, can disagree with git).
 
 ## 7. Out of scope
 
-A glossary map or several contexts; per-module glossaries; a fallback reader for `CONTEXT.md`; rewriting old ADRs
-or design docs; a fundamentalist row (A2); auto-fixing a stale term (the audit reports, a ticket fixes).
+A glossary map or several contexts; per-module glossaries; a `CONTEXT.md` fallback reader; rewriting old ADRs or
+design docs; a cap on the number of terms; auto-fixing a stale term (the audit reports, a ticket fixes).
 
 ## 8. Slices
 
-Width 3; longest stem 2
+Width 4; longest stem 3
 
 | Slice | Title | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- | --- |
 | S1 | Walking skeleton: `GLOSSARY.md` passes `glossary.mjs check` in the gate | 3, 7 | `GLOSSARY.md` (from `CONTEXT.md`), `scripts/glossary.mjs` (new), `scripts/test/glossary.test.mjs` (new), `scripts/test/fixtures/glossary/` (new), `scripts/test/pilot-agents.test.mjs`, `scripts/test/state-words.test.mjs`, `scripts/test/three-lanes-wording.test.mjs`, `docs/architecture.md` | – | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S1](slices/S1.md) |
-| S2 | domain-modeling says one glossary per repository | 1, 3, 5, 6, 8 | `skills/domain-modeling/SKILL.md`, `skills/domain-modeling/GLOSSARY-FORMAT.md`, `skills/grilling/SKILL.md`, `skills/diagnosing-bugs/SKILL.md`, `skills/test-design/SKILL.md`, `VENDOR.md`, `vendor/methodology.md`, `scripts/test/methodology-skills.test.mjs`, `docs/adr/NNNN-project-glossary.md` (new) | S1 (`parseGlossary`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S2](slices/S2.md) |
-| S3 | The audit names a stale term | 4, 7 | `scripts/glossary.mjs` (`staleTerms`, `stale`), `scripts/test/glossary-stale.test.mjs` (new), `scripts/test/fixtures/glossary-stale/` (new), `skills/audit/areas/navigability.md`, `scripts/test/audit-navigability.test.mjs` | S1 (`scripts/glossary.mjs`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
-| S4 | The pilot reads the glossary first and the architect writes it | 1, 2 | `agents/pilot.md`, `agents/pilot-architect.md`, `scripts/test/glossary-prose.test.mjs` (new) | – | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S4](slices/S4.md) |
+| S2 | A word looks up its entry, never the whole file | 9 | `scripts/glossary.mjs` (`matchGlossary`, `termOf`, `match`, `term`), `scripts/test/glossary-match.test.mjs` (new) | S1 (`scripts/glossary.mjs`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S2](slices/S2.md) |
+| S3 | The skills say one glossary per repository, looked up | 1, 3, 5, 6, 8, 9 | `skills/domain-modeling/SKILL.md`, `skills/domain-modeling/GLOSSARY-FORMAT.md`, `skills/grilling/SKILL.md`, `skills/diagnosing-bugs/SKILL.md`, `skills/test-design/SKILL.md`, `VENDOR.md`, `vendor/methodology.md`, `scripts/test/methodology-skills.test.mjs`, `docs/adr/NNNN-project-glossary.md` (new) | S1 (`parseGlossary`), S2 (`match`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
+| S4 | The audit names a stale term | 4, 7 | `scripts/glossary-stale.mjs` (new), `scripts/test/glossary-stale.test.mjs` (new), `scripts/test/fixtures/glossary-stale/` (new), `skills/audit/areas/navigability.md`, `scripts/test/audit-navigability.test.mjs` | S1 (`parseGlossary`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S4](slices/S4.md) |
+| S5 | The pilot looks the request up first and the architect writes terms | 1, 2, 9 | `agents/pilot.md`, `agents/pilot-architect.md`, `scripts/test/glossary-prose.test.mjs` (new) | S2 (`match`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S5](slices/S5.md) |
+| S6 | The glossary log shows a term's history | 10, 11 | `scripts/glossary-log.mjs` (new), `scripts/test/glossary-log.test.mjs` (new) | S1 (`parseGlossary`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S6](slices/S6.md) |
+| S7 | The fundamentalist flags a term the diff misuses or orphans | 12 | `scripts/glossary-diff.mjs` (new), `scripts/test/glossary-diff.test.mjs` (new), `agents/pilot-fundamentalist.md`, `scripts/test/fundamentalist-terms.test.mjs` (new) | S1 (`parseGlossary`), S4 (`staleTerms`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S7](slices/S7.md) |
 
-red team: (1) S2 first wrote the format file's example in the `—` list shape `parseGlossary` cannot read; spec 8 and
-L2 added. (2) `three-lanes-wording.test.mjs` pins colour words out of the glossary; this run's 2 terms hold none.
-(3) S2's spec-8 test half-built on S1's parser while running beside S1: S2 now comes after S1 (`parseGlossary`).
-(4) A term like "Pilot" always matches; `staleTerms` only ever under-reports, which the Misses line says.
+red team: (1) the format file's example shape is one `parseGlossary` cannot read: spec 8, L2. (2)
+`three-lanes-wording.test.mjs` pins colour words out of the glossary; this run's 3 terms hold none. (3) the skills
+slice half-built on S1's parser and S2's `match` while running beside them: S3 now comes after both. (4) one
+`glossary.mjs` for every command serialised four slices on one file: `stale`, `log`, `diff` split out (Seams). (5)
+ci-gate S9 adds glossary lines on `pilot`: S1 rebases on `pilot` once ci-gate lands and its check must pass those
+too. (6) the log must follow the rename, or every term's history starts at S1: S6's behaviour 3. (7) `_Avoid_` words
+like "update" are common in code: S7 scans added Markdown lines only, outside `docs/design/` and `docs/adr/`, and
+the fundamentalist judges each candidate.
 
 ## 9. Acceptance evidence
 
-1. `node scripts/glossary.mjs check GLOSSARY.md` exits 0; on `scripts/test/fixtures/glossary/path-entry.md` exits 1
-   naming the term (spec 3).
-2. `git grep -n "CONTEXT\.md" -- ':!docs/design' ':!docs/adr' ':!vendor' ':!VENDOR.md'` prints nothing (spec 7).
-3. `node scripts/glossary.mjs stale scripts/test/fixtures/glossary-stale` prints exactly 1 term (spec 4).
-4. A scratch run whose request says "the subagents": the pilot's first question names **Crew** (spec 1).
-5. The design branch diff of this run shows `GLOSSARY.md` gaining **Glossary** and **Stale term** (spec 2).
-6. `git grep -i "one glossary per run" -- ':!docs/design' ':!docs/adr'` prints nothing; the 3 ledger rows read
-   "one per repository, at its root" (spec 5, 6, 8).
+1. `node scripts/glossary.mjs match "the subagents"` prints the **Crew** entry only (spec 9).
+2. A scratch pilot request saying "the subagents": the first question names **Crew** (spec 1, L8).
+3. `node scripts/glossary.mjs check GLOSSARY.md` exits 0; on the scratch fixture's path entry exits 1 (spec 3).
+4. `git grep -n "CONTEXT\.md" -- ':!docs/design' ':!docs/adr' ':!vendor' ':!VENDOR.md'` prints nothing (spec 7).
+5. `node scripts/glossary-stale.mjs <scratch fixture>` prints exactly its 1 stale term (spec 4).
+6. `node scripts/glossary-log.mjs . --term Glossary` shows the term added by `project-glossary`; with no flag, 20 rows (spec 10, 11).
+7. `node scripts/glossary-diff.mjs . origin/pilot feat/project-glossary` lists its candidates; the fundamentalist's
+   report has a terms row or says none (spec 12).
+8. This run's design diff adds **Glossary**, **Stale term**, **Glossary log** (spec 2); `git grep -i "one glossary per run"` outside
+   `docs/design/`, `docs/adr/` prints nothing (spec 5, 6, 8).
 
 ## 10. Status
 
 | Slice | State | Branch | PR | Worktree | After | Spec |
 | --- | --- | --- | --- | --- | --- | --- |
 | S1 | planned | slice/project-glossary-s1 | – | – | – | 3, 7 |
-| S2 | planned | slice/project-glossary-s2 | – | – | S1 | 1, 3, 5, 6, 8 |
-| S3 | planned | slice/project-glossary-s3 | – | – | S1 | 4, 7 |
-| S4 | planned | slice/project-glossary-s4 | – | – | – | 1, 2 |
-| project-glossary | planned | feat/project-glossary | – | – | S1-S4 | 1-8 |
+| S2 | planned | slice/project-glossary-s2 | – | – | S1 | 9 |
+| S3 | planned | slice/project-glossary-s3 | – | – | S1, S2 | 1, 3, 5, 6, 8, 9 |
+| S4 | planned | slice/project-glossary-s4 | – | – | S1 | 4, 7 |
+| S5 | planned | slice/project-glossary-s5 | – | – | S2 | 1, 2, 9 |
+| S6 | planned | slice/project-glossary-s6 | – | – | S1 | 10, 11 |
+| S7 | planned | slice/project-glossary-s7 | – | – | S1, S4 | 12 |
+| project-glossary | planned | feat/project-glossary | – | – | S1-S7 | 1-12 |

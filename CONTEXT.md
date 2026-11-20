@@ -111,12 +111,16 @@ The user pressing Sign off on the whole feature, running where it is meant to ru
 _Avoid_: Acceptance, QA pass
 
 **Glossary**:
-The one list of a repository's lasting terms, kept in the repository at its root: grilling reads it before its first question, and a run adds each lasting term as it settles, signed off at Gate 1. A run's own ubiquitous-language section keeps only its run-local terms.
+The one list of a repository's lasting terms, kept in the repository at its root: grilling looks the request's words up in it before its first question, never reading it whole, and a run adds each lasting term as it settles, signed off at Gate 1. A run's own ubiquitous-language section keeps only its run-local terms.
 _Avoid_: Context file, dictionary, ubiquitous language
 
 **Stale term**:
-A glossary term the code no longer uses or now contradicts; the audit names each as a row.
+A glossary term the code no longer uses or now contradicts; the audit names each as a row, and the fundamentalist names one a feature leaves behind.
 _Avoid_: Dead term, orphan term
+
+**Glossary log**:
+The history of each glossary term, added, changed or removed, with the run that did it; read one term or the newest few at a time, never whole.
+_Avoid_: Changelog, term history file
 
 ### The deck
 
