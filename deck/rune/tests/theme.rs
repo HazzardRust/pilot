@@ -107,8 +107,8 @@ fn every_colour_is_deck_css() {
             "state.unacknowledged",
         );
 
-        // Alpha over the page: `--rule` is 18% of the text colour, `--quiet` 55%.
-        for (name, got, alpha) in [("rule", t.rule, 0.18), ("quiet", t.quiet, 0.55)] {
+        // Alpha over the page: `--rule` is 18% of the text colour, `--quiet` 55% in deck.css, moved to 58% (S34) so quiet text on the rule fill passes AA.
+        for (name, got, alpha) in [("rule", t.rule, 0.18), ("quiet", t.quiet, 0.58)] {
             assert!((got.a - alpha).abs() < 0.01, "{name} alpha {}", got.a);
             close(got, [text; 3], name);
         }
@@ -444,4 +444,114 @@ fn playground_mix() {
             assert_eq!(&got[..7], want, "#{hue:06x} over {text:?}");
         }
     }
+}
+
+/// WCAG 2.x relative luminance of an sRGB colour given as 0..=255 bytes.
+fn luminance(c: [f32; 3]) -> f32 {
+    let lin = |v: f32| {
+        let v = v / 255.0;
+        if v <= 0.03928 {
+            v / 12.92
+        } else {
+            ((v + 0.055) / 1.055).powf(2.4)
+        }
+    };
+    0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2])
+}
+
+fn ratio(a: [f32; 3], b: [f32; 3]) -> f32 {
+    let (la, lb) = (luminance(a), luminance(b));
+    (la.max(lb) + 0.05) / (la.min(lb) + 0.05)
+}
+
+/// `c` composited over the opaque `under`, as the screen shows it.
+fn over(c: Color, under: [f32; 3]) -> [f32; 3] {
+    let top = rgb(c);
+    let a = c.a;
+    [0, 1, 2].map(|i| (a * top[i] + (1.0 - a) * under[i]).round())
+}
+
+#[test]
+fn the_ratio_is_wcag() {
+    // Known values: black on white is 21:1, a colour on itself 1:1, and #777 on white is
+    // the classic 4.48:1 that fails AA.
+    assert!((ratio([0.0; 3], [255.0; 3]) - 21.0).abs() < 0.01);
+    assert!((ratio([9.0; 3], [9.0; 3]) - 1.0).abs() < 1e-6);
+    let grey = ratio([119.0; 3], [255.0; 3]);
+    assert!((grey - 4.48).abs() < 0.01 && grey < 4.5, "{grey}");
+}
+
+/// Pairs are composited in sRGB byte space, as CSS and the web deck do.
+#[test]
+fn contrast() {
+    let mut weak = Vec::new();
+    for dark in [false, true] {
+        let t = theme::tokens(dark);
+        let r = theme::roles(dark);
+        let page = rgb(r.surface);
+        // Every text colour the deck sets on the page: body text needs 4.5:1.
+        let on_page = [
+            ("on_surface", r.on_surface),
+            ("primary", r.primary),
+            ("accent", r.accent),
+            ("error", r.error),
+            ("quiet", t.quiet),
+            ("by.pilot", t.by.pilot),
+            ("by.architect", t.by.architect),
+            ("by.implementer", t.by.implementer),
+            ("by.fundamentalist", t.by.fundamentalist),
+            ("by.qa", t.by.qa),
+            ("by.teacher", t.by.teacher),
+            ("by.explorer", t.by.explorer),
+            ("by.auditor", t.by.auditor),
+            ("state.waiting", t.state.waiting),
+            ("state.pilot", t.state.pilot),
+            ("state.unacknowledged", t.state.unacknowledged),
+            ("accent.green", t.accent.green),
+            ("accent.yellow", t.accent.yellow),
+            ("accent.red", t.accent.red),
+            ("accent.blue", t.accent.blue),
+            ("usage.fine", t.usage.fine),
+            ("usage.warm", t.usage.warm),
+            ("usage.high", t.usage.high),
+        ];
+        let mut pairs: Vec<(String, f32)> = on_page
+            .iter()
+            .map(|(n, c)| (format!("{n} on surface"), ratio(over(*c, page), page)))
+            .collect();
+        let crit_bg = over(t.usage.critical_bg, page);
+        pairs.push((
+            "usage.critical on critical_bg".into(),
+            ratio(over(t.usage.critical, crit_bg), crit_bg),
+        ));
+        let picked = over(r.selection, page);
+        pairs.push((
+            "on_surface on selection".into(),
+            ratio(over(r.on_surface, picked), picked),
+        ));
+        let hovered = over(r.hover, page);
+        pairs.push((
+            "on_surface on hover".into(),
+            ratio(over(r.on_surface, hovered), hovered),
+        ));
+        // Text on the rule colour used as a fill (an input's face) and on the picked fill.
+        for (fill, fill_name) in [
+            (t.rule, "rule fill"),
+            (r.on_surface.alpha(theme::opacity::picked), "picked fill"),
+        ] {
+            let under = over(fill, page);
+            for (text, text_name) in [(t.quiet, "quiet"), (r.on_surface, "on_surface")] {
+                pairs.push((
+                    format!("{text_name} on {fill_name}"),
+                    ratio(over(text, under), under),
+                ));
+            }
+        }
+        for (name, got) in pairs {
+            if got < 4.5 {
+                weak.push(format!("dark={dark} {name}: {got:.2}"));
+            }
+        }
+    }
+    assert!(weak.is_empty(), "below 4.5:1: {weak:#?}");
 }

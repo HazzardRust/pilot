@@ -58,7 +58,7 @@ deck.css's colours). The values live in `deck/rune/theme.json`; `theme.rs` only 
   colour of its own, and light or dark taken from the system.
 - **Surface and on-surface.** The system background, with text in black (light) or white
   (dark).
-- **Quiet text.** Text at 55% (`--quiet`, `quiet`): secondary metadata and resolved threads.
+- **Quiet text.** Text at 58% in the Rune deck (`quiet`; deck.css `--quiet` is 55%, moved up 3 points in S34 because quiet text on the rule fill, an input's face, was 4.25:1 in light mode): secondary metadata and resolved threads.
 - **Rule.** Text at 18% (`--rule`, `rule`): the only border, always a hairline.
 - **Author colours.** Each is the text colour 35% mixed into a hue: pilot `#2563eb`,
   architect `#7c3aed`, implementer `#d97706`, fundamentalist `#e11d48`, qa `#059669`,
@@ -67,6 +67,15 @@ deck.css's colours). The values live in `deck/rune/theme.json`; `theme.rs` only 
   unacknowledged `#dc2626`, resolved quiet.
 - **Accents.** Each pair is light, dark: green `#15803d` / `#86efac`, yellow `#a16207` /
   `#fde047`, red (error) `#b91c1c` / `#fca5a5`, blue (primary) `#1d4ed8` / `#93c5fd`.
+- **Roles and contrast (S34, assumed A-R3).** Every colour is one of `surface`, `on-surface`,
+  `primary`, `accent`, `error`, plus the tints `hover` (text at 7%), `selection` (primary at
+  30%), `rule` and `quiet`. The `contrast` test in `deck/rune/tests/theme.rs` checks each text
+  pair against 4.5:1. One value moved: quiet 55% to 58%. Every deck.css hue already passes, so none other is
+  recorded as shifted. Ratios on the page, light / dark: on-surface 21.00 / 21.00, primary
+  6.70 / 11.65, accent 4.92 / 15.93, error 6.47 / 11.06, quiet 5.33 / 6.92 (on the rule fill 4.66 / 5.64, on the picked fill 4.83 / 6.15), green 5.02 /
+  14.96. Lowest author or state colour: 6.37 (explorer, light) and 7.04 (architect, dark).
+  On-surface over selection 12.86 / 11.43, over hover 17.94 / 18.73. Usage critical on its
+  fill 6.47 / 8.20. The hairline rule is not text and is exempt.
 - **Typography.** Cascadia Mono, then SF Mono, Menlo, Consolas, monospace. 13 px with a 1.6
   line height.
 - **Spacing scale.** In px, from `theme::space`: 0, 2, 4, 8, 12, 16, 24, 32, 48.
