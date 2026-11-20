@@ -77,5 +77,6 @@ test('no tab has no graph', () => {
 test('the region is the view\'s graph', () => {
   const view = viewOf(reads(), { screen: 'home', run: MINE, ticket: yellow.id });
 
-  assert.deepEqual(view.regions.graph, graphView(reads(), { run: MINE, ticket: yellow.id }));
+  assert.equal(view.regions.graph.lanes, 2);
+  assert.deepEqual(view.regions.graph.dots.map((dot) => dot.slice), ['S1 the base', 'S2 the left', 'S3 the right', 'S4 the join']);
 });
