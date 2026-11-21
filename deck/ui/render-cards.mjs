@@ -8,6 +8,7 @@ import {
   KIND_GATE1,
   KIND_GATE2,
   KIND_HANDOFF,
+  KIND_STEPS,
   KIND_USER,
   accentOf,
   isBlocking,
@@ -21,7 +22,7 @@ import {
 } from '../items.mjs';
 import { isReportOwed } from '../owed.mjs';
 import { escapeHtml, renderMarkdown } from './markdown.mjs';
-import { renderTime, code, titleOf, renderTicketOf, renderAsked, renderChoice, renderChoiceRow, rendererFor, renderReplyForm, renderDismissForm, renderCloseForm, renderCardClose } from './render-parts.mjs';
+import { renderTime, code, titleOf, renderTicketStanding, renderAsked, renderChoice, renderChoiceRow, rendererFor, renderReplyForm, renderDismissForm, renderCloseForm, renderCardClose } from './render-parts.mjs';
 
 /** The badge a blocking question and its ticket's row carry (ticket-states spec 17, S18). */
 const BLOCKING_BADGE = '<span class="blocking">blocking</span>';
@@ -34,11 +35,30 @@ const BLOCKING_BADGE = '<span class="blocking">blocking</span>';
  * user's word (L11). A record offers nothing at all: it takes no reply (ADR 0148).
  */
 function renderReplySlot(item) {
+  if (item.kind === KIND_STEPS) return renderStepsDone(item);
   if (isRecord(item)) return '';
   if (CLOSABLE_KINDS.includes(item.kind)) return renderReplyForm(item) + renderCloseForm(item);
   // A gate also offers Dismiss: deck_resolve refuses it unsigned, so this is a stale gate's exit (merge-first L8).
   const dismissable = !isKnownKind(item.kind) || isGate(item.kind);
   return renderReplyForm(item) + (dismissable ? renderDismissForm(item) : '');
+}
+
+/** A steps thread's numbered steps, open or closed (human-steps spec 1). */
+export function renderHumanSteps(item) {
+  const steps = (Array.isArray(item.steps) ? item.steps : []).map((step) => `<li>${escapeHtml(step?.text ?? '')}</li>`).join('');
+  return `<ol class="human-steps">${steps}</ol>`;
+}
+
+/**
+ * A steps thread's numbered steps and its one Done (human-steps A2, L4): a plain post to `/close`, which
+ * closes the thread and its ticket. It takes no reply: it is a record.
+ */
+function renderStepsDone(item) {
+  return (
+    renderHumanSteps(item) +
+    '<form class="close" method="post" action="/close" data-in-place>' +
+    `<input type="hidden" name="id" value="${escapeHtml(item.id)}" /><button type="submit">Done</button></form>`
+  );
 }
 
 /**
@@ -306,7 +326,7 @@ function renderTypeNote(item) {
   return note ? `<p class="type-note">${escapeHtml(note)}</p>` : '';
 }
 
-function renderCard(item, { tab = null, back = OVERVIEW_HREF, all = false, items } = {}) {
+function renderCard(item, { tab = null, back = OVERVIEW_HREF, all = false, items = [], lanes } = {}) {
   return [
     // A settled thread is only ever on a page the toggle is on, and it is there
     // to be looked up rather than worked through, so it is drawn a step back
@@ -315,7 +335,7 @@ function renderCard(item, { tab = null, back = OVERVIEW_HREF, all = false, items
     // Its ticket's accent (ticket-state-accents spec 3, L11): the stripe. The card sits inside the queue region, never one.
     `<article${isOpen(item) ? '' : ' class="settled"'} data-accent="${accentOf(item, items)}">`,
     `<span class="kind">${renderThreadState(item)} · ` +
-      `${renderCardRun(tab, all)}${renderKind(item)} · ${renderTime(lastSaidAt(item))}${renderTicketOf(item, items)}${renderReportOwed(item, items)}</span>`,
+      `${renderCardRun(tab, all)}${renderKind(item)} · ${renderTime(lastSaidAt(item))}${renderTicketStanding(item, items, lanes)}${renderReportOwed(item, items)}</span>`,
     `<h2><a href="/thread/${encodeURIComponent(item.id)}">${titleOf(item, items)}</a></h2>`,
     renderChainNote(item),
     renderTypeNote(item),
@@ -384,6 +404,7 @@ function renderRuns(runs) {
 }
 
 export {
-  BLOCKING_BADGE, renderReplySlot, renderResolution, hrefFor, renderThreadState, renderKind, renderChainNote, renderTypeNote,
+  BLOCKING_BADGE, GATE_NAMES, STATE_BUCKETS, renderReplySlot, renderResolution, hrefFor, renderThreadState, renderKind, renderChainNote, renderTypeNote,
   renderCard, renderRuns,
 };
+export { PREVIEW_LINES, PREVIEW_CHARS, renderCardAnswers };

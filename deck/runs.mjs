@@ -22,6 +22,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { MAX_HUMAN_STEPS, MAX_HUMAN_STEP_CHARS, isOneLine } from './items-bounds.mjs';
 import { MAX_STATE_CHARS } from './status.mjs';
 import { MAX_FEATURE_CHARS, MAX_FINDINGS, MAX_SLUG_CHARS } from './tools.mjs';
 
@@ -238,7 +239,7 @@ export function freshRuns(runs) {
  * falls on it rather than on `next`, `finished` or `report`. `qaComment` is last and
  * stays on the deck: neither the run.json mirror nor the session-start hook carries it.
  */
-const RECORD_ORDER = ['slug', 'feature', 'ticket', 'branch', 'base', 'worktree', 'qa', 'artefact', 'slices', 'findings', 'report', 'next', 'finished', 'finishedAt', 'updatedAt', 'friction', 'qaComment'];
+const RECORD_ORDER = ['slug', 'feature', 'ticket', 'branch', 'base', 'worktree', 'qa', 'artefact', 'slices', 'findings', 'humanSteps', 'report', 'next', 'finished', 'finishedAt', 'updatedAt', 'friction', 'qaComment'];
 
 /** The one spelling of a clean finish: the only `finished` that chains the next ticket (L3). */
 export const FINISHED_CLEAN = 'closing report posted';
@@ -246,8 +247,12 @@ export const FINISHED_CLEAN = 'closing report posted';
 /** A slug names `docs/design/<slug>/`, so it is kebab-case and nothing a path could misread. */
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-/** A run's base (pilot-develop-line L6): `pilot`, or the concluding feature's `feat/<slug>` it is chained on. */
-export const RUN_BASE = new RegExp(`^(?:pilot|feat/${SLUG.source.slice(1, -1)})$`);
+/**
+ * A run's base (pilot-develop-line L6; audit-f14 A7): `pilot`, the concluding feature's `feat/<slug>` it is chained
+ * on, or the default branch's own name. It reaches git as an argument, so it never starts with `-`, holds no `..` or
+ * `//`, is never `HEAD`, and ends in no `/`, `.` or `.lock`; a `feat/` segment is only ever the slug form.
+ */
+export const RUN_BASE = new RegExp(`^(?:pilot|feat/${SLUG.source.slice(1, -1)}|(?!HEAD$)(?!(?:.*/)?feat/)(?!.*(?:\\.\\.|//|\\.lock$|[./]$))[A-Za-z0-9_][A-Za-z0-9._/-]*)$`);
 
 const TICKET_ID = /^itm_[0-9a-f]+$/;
 
@@ -352,7 +357,6 @@ const REPORT = {
   featurePr: (field, value) => reportObject(field, value, { number: reportPr, state: reportText, mergeSha: reportSha }, ['mergeSha']),
   slices: rowsOf({ slice: reportText, pr: reportPr, mergeSha: reportSha }),
   assumed: rowsOf({ id: reportId, decision: reportText, taken: reportText }),
-  humanSteps: (field, value) => reportList(field, value, reportText),
   worktreesLeft: (field, value) => reportList(field, value, reportText),
 };
 
@@ -416,7 +420,7 @@ export function recordFields({ slug, ticket, branch, base, worktree, qa, artefac
   // The ref `pilot integrate` merges at every slice, so never anything git could read as an option.
   if (base !== undefined) {
     fields.base = recordCell('base', base);
-    if (!RUN_BASE.test(fields.base)) throw new RunRefusal(`base must be pilot or feat/<slug>, not ${JSON.stringify(fields.base)}`);
+    if (!RUN_BASE.test(fields.base)) throw new RunRefusal(`base must be pilot, feat/<slug> or a branch name, not ${JSON.stringify(fields.base)}`);
   }
   if (worktree !== undefined) {
     // Where the daemon writes run.json (independence spec 22.2), so never a relative path.
@@ -446,6 +450,22 @@ export function recordFields({ slug, ticket, branch, base, worktree, qa, artefac
   if (report?.friction !== undefined) throw new RunRefusal("report.friction is derived from the record's friction rows");
   if (report !== undefined) fields.report = reportObject('report', report, REPORT);
   return fields;
+}
+
+/**
+ * `fields` with `step` appended to the record's human steps `kept`, as `{ text }` (human-steps L5,
+ * A1): one trimmed line of 1-300 characters, at most 20 a record, and only beside a slug, since
+ * only a record keeps them. A line or paragraph separator is a line break to a renderer too.
+ */
+export function withHumanStep(fields, kept, step) {
+  if (fields === null) throw new RunRefusal('step belongs to the run record; send slug with it');
+  const text = typeof step === 'string' ? step.trim() : '';
+  if (text === '' || text.length > MAX_HUMAN_STEP_CHARS || !isOneLine(text)) {
+    throw new RunRefusal(`step must be one line of 1 to ${MAX_HUMAN_STEP_CHARS} characters`);
+  }
+  const humanSteps = [...(Array.isArray(kept) ? kept : []), { text }];
+  if (humanSteps.length > MAX_HUMAN_STEPS) throw new RunRefusal(`the record keeps at most ${MAX_HUMAN_STEPS} human steps, and it has them`);
+  return { ...fields, humanSteps };
 }
 
 /**

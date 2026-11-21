@@ -56,11 +56,11 @@ test('the architect keeps locked decisions and replans', () => {
 test('no force-push on a pushed plan', () => {
   const architect = read('agents/pilot-architect.md');
   const section = /## Re-cut (.*?)(?: ## |$)/.exec(architect)?.[1];
-  assert.match(section, /git merge <remote>\/pilot/, 'a re-cut puts the pushed branch on pilot by a merge');
+  assert.match(section, /git merge <remote>\/<base>/, 'a re-cut puts the pushed branch on its base by a merge');
   assert.doesNotMatch(section, /git rebase/, 'not by a rebase, which needs a force-push');
   const where = /## Where you work (.*?)(?: ## |$)/.exec(architect)?.[1];
   assert.match(where, /pushed/, 'once the branch is pushed');
-  assert.match(where, /git merge <remote>\/pilot/, 'it takes pilot by a merge');
+  assert.match(where, /git merge <remote>\/<base>/, 'it takes its base by a merge');
 });
 
 test('the co-pilot drains every slice', () => {

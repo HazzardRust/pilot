@@ -39,25 +39,25 @@ async function printed(work, checks) {
 
 test('a red base says so, naming each failed check', async (t) => {
   const { work } = scratch(t);
-  const sha = git(work, 'rev-parse', 'origin/pilot');
+  const sha = git(work, 'rev-parse', 'origin/main');
   const { code, out, asked } = await printed(work, [
     { name: 'gate (ubuntu)', outcome: 'fail' }, { name: 'gate (windows)', outcome: 'fail' }, { name: 'lint', outcome: 'pass' },
   ]);
   assert.equal(code, 0);
-  assert.equal(out, `base pilot ${sha.slice(0, 7)} (CI red at ${sha.slice(0, 7)}: gate (ubuntu), gate (windows))\n`);
+  assert.equal(out, `base main ${sha.slice(0, 7)} (CI red at ${sha.slice(0, 7)}: gate (ubuntu), gate (windows))\n`);
   assert.deepEqual(asked, [sha]);
 });
 
 test('a pending base says so, once', async (t) => {
   const { work } = scratch(t);
-  const sha7 = git(work, 'rev-parse', '--short', 'origin/pilot');
+  const sha7 = git(work, 'rev-parse', '--short', 'origin/main');
   const { out } = await printed(work, [{ name: 'gate', outcome: 'pending' }, { name: 'gate 2', outcome: 'pending' }]);
-  assert.equal(out, `base pilot ${sha7} (CI pending at ${sha7})\n`);
+  assert.equal(out, `base main ${sha7} (CI pending at ${sha7})\n`);
 });
 
 test('green, none, unread and no host print today\'s line', async (t) => {
   const { work } = scratch(t);
-  const today = `base pilot ${git(work, 'rev-parse', '--short', 'origin/pilot')}\n`;
+  const today = `base main ${git(work, 'rev-parse', '--short', 'origin/main')}\n`;
   assert.equal((await printed(work)).out, today, 'no host');
   assert.deepEqual((await printed(work)).asked, [], 'no host, no read');
   assert.equal((await printed(work, [{ name: 'gate', outcome: 'pass' }])).out, today, 'green');

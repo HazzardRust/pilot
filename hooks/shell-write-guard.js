@@ -99,7 +99,7 @@ function tokens(command) {
         if (op[0] === '<<' || op[0] === '<<-') heredoc = op[0];
         if (op[0] === '\n') i = skipBodies(command, i, pending.splice(0));
       } else {
-        if ('$`*?[~'.includes(c)) lit = false;
+        if ('$`*?['.includes(c) || (c === '~' && word === null)) lit = false; // bash expands `~` only at a word's start
         word = (word || '') + c;
         i++;
       }
@@ -175,6 +175,138 @@ function shellWrites({ words, redirs }) {
   return [];
 }
 
+/** The longest `timeout <n>` that bounds a wait, in seconds: 50 minutes (wait-deadlines A4). */
+const MAX_WAIT_MINUTES = 50;
+const LOOP_OPENERS = new Set(['until', 'while', 'for', 'select']);
+const COMMAND_START = new Set(['do', 'then', 'else', 'elif', '!', '{', 'until', 'while', 'if', 'time']);
+const SHELLS = /^(?:ba|da|z|k)?sh$/;
+
+const baseName = (w) => path.basename(w).replace(/\.exe$/i, '');
+
+/** For each token, whether it starts a command: the first, or one after a separator or a keyword that starts one. */
+function commandStarts(toks) {
+  const starts = [];
+  toks.forEach((t, k) => {
+    const prev = toks[k - 1];
+    starts.push(!prev || (prev.op ? SEPARATORS.includes(prev.op) : COMMAND_START.has(prev.w) && starts[k - 1]));
+  });
+  return starts;
+}
+
+/** The first grep pattern or test operand of a loop's condition, else null. */
+function markerOf(toks) {
+  for (const { words } of commands(toks)) {
+    const args = program(words);
+    if (args.length === 0) continue;
+    const name = baseName(args[0].w);
+    if (/^(?:[ef]?grep|rg)$/.test(name)) {
+      for (let k = 1; k < args.length; k++) {
+        const a = args[k].w;
+        if (a === '-e' || a === '--regexp') return args[k + 1] ? args[k + 1].w : null;
+        if (a[0] !== '-') return a;
+      }
+    } else if (name === 'test' || name === '[' || name === '[[') {
+      const operand = args.slice(1).find((a) => a.lit && !/^(?:-\w+|!|\]\]?|=+|!=)$/.test(a.w));
+      if (operand) return operand.w;
+    }
+  }
+  return null;
+}
+
+/** The seconds a `timeout` duration allows, else null; 0 never fires, so it is null too. */
+function seconds(word) {
+  const m = word.lit && /^(\d+(?:\.\d+)?)([smhd]?)$/.exec(word.w);
+  const n = m ? Number(m[1]) * { '': 1, s: 1, m: 60, h: 3600, d: 86400 }[m[2]] : 0;
+  return n > 0 ? n : null;
+}
+
+/** The program words under a leading `timeout [options] <n>`, and whether that `timeout` is within A4. */
+function underTimeout(words) {
+  const args = program(words);
+  if (args.length === 0 || baseName(args[0].w) !== 'timeout') return { args, bounded: false };
+  let k = 1;
+  for (; k < args.length && args[k].w[0] === '-'; k++) if (/^-[ks]$|^--(?:kill-after|signal)$/.test(args[k].w)) k++;
+  const n = args[k] ? seconds(args[k]) : null;
+  return { args: program(args.slice(k + 1)), bounded: n !== null && n <= MAX_WAIT_MINUTES * 60 };
+}
+
+/** Whether the simple command starting at token `k` runs `sleep`, past prefixes and a per-call `timeout <n>`. */
+function runsSleep(toks, k) {
+  const words = [];
+  for (; k < toks.length && !toks[k].op; k++) words.push(toks[k]);
+  const { args } = underTimeout(words);
+  return args.length > 0 && baseName(args[0].w) === 'sleep';
+}
+
+/** The `-c` script of a shell a simple command runs, and whether a `timeout` within A4 bounds it. */
+function shellScript(words) {
+  const { args, bounded } = underTimeout(words);
+  if (args.length === 0 || !SHELLS.test(baseName(args[0].w))) return null;
+  let dashC = false;
+  for (let k = 1; k < args.length; k++) {
+    const a = args[k].w;
+    if (/^[-+]O$|^[-+]o$/.test(a)) k++;
+    else if (/^-[a-zA-Z]+$/.test(a)) dashC = dashC || a.includes('c');
+    else if (a[0] !== '-' && a[0] !== '+') return dashC ? { script: a, bounded } : null;
+  }
+  return null;
+}
+
+/** Each until/while loop that sleeps, with its marker and the words of its condition, nested shells included. */
+function waitLoops(command, depth = 0) {
+  const toks = tokens(command);
+  const found = [];
+  const open = [];
+  const starts = commandStarts(toks);
+  toks.forEach((t, k) => {
+    if (t.op || !starts[k]) return;
+    if (LOOP_OPENERS.has(t.w)) open.push({ form: t.w, start: k, body: false, sleeps: false });
+    else if (t.w === 'do') {
+      const loop = open.length > 0 && open[open.length - 1];
+      if (loop && !loop.body) { loop.body = true; loop.cond = toks.slice(loop.start + 1, k); }
+    } else if (t.w === 'done') {
+      const loop = open.pop();
+      if (loop && loop.body && loop.sleeps && (loop.form === 'until' || loop.form === 'while')) found.push(loop);
+    } else if (!(COMMAND_START.has(t.w) && toks[k + 1] && COMMAND_START.has(toks[k + 1].w)) && runsSleep(toks, k)) { // in a keyword run only the last keyword scans, else it is quadratic
+      for (const loop of open) loop.sleeps = true;
+    }
+  });
+  const waits = found.sort((a, b) => a.start - b.start).map((loop) => ({
+    form: loop.form, marker: markerOf(loop.cond), reads: loop.cond.filter((c) => c.w).map((c) => c.w),
+  }));
+  if (depth < 3) {
+    for (const { words } of commands(toks)) {
+      const inner = shellScript(words);
+      if (inner && !inner.bounded) waits.push(...waitLoops(inner.script, depth + 1));
+    }
+  }
+  return waits;
+}
+
+/** Each until/while loop whose body sleeps with no `timeout <n>` of at most 50 minutes around it (wait-deadlines S2). */
+function unboundedWaits(command) {
+  return waitLoops(command).map(({ form, marker }) => ({ form, marker }));
+}
+
+/** The PreToolUse deny for an unbounded wait, else null; a tool call's own timeout is never a bound (L2). */
+function waitDenial(command) {
+  const waits = waitLoops(command);
+  if (waits.length === 0) return null;
+  const subagent = waits.some((w) => w.reads.some((r) => /\.output$/.test(r))); // Claude Code's background output file
+  return {
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      permissionDecision: 'deny',
+      permissionDecisionReason: `A wait loop (${waits.map((w) => w.form).join(', ')}) that sleeps with no bound can wait ` +
+        'forever and outlive you: the tool call\'s timeout stops applying once it is backgrounded. Wait on a file with ' +
+        `\`pilot wait-for --file F --match RE --timeout M\` (M at most ${MAX_WAIT_MINUTES}); run a test suite with ` +
+        'run_in_background and end your turn; a counted retry goes as `for i in $(seq N); do …; done`. ' +
+        (subagent ? 'A subagent reports by message, not its output file: end your turn. ' : '') +
+        'This is not a blocked step: post nothing and carry on.',
+    },
+  };
+}
+
 /** A Git Bash `/c/...` path as `C:/...` on win32 (L5). */
 function native(p) {
   const m = isWindows() && /^\/([a-zA-Z])(\/.*)?$/.exec(p);
@@ -228,6 +360,8 @@ function decide(payload, deps) {
     if (!payload || typeof payload !== 'object' || !isPilotLane(payload)) return null;
     const command = payload.tool_input && payload.tool_input.command;
     if (typeof command !== 'string') return null;
+    const wait = waitDenial(command);
+    if (wait) return wait;
     const targets = writeTargets(command, typeof payload.cwd === 'string' ? payload.cwd : process.cwd());
     if (targets.length === 0) return null;
     const tracked = ((deps && deps.isTracked) || isTracked)([...new Set(targets.map((t) => t.path))]);
@@ -258,7 +392,7 @@ async function main() {
   process.exitCode = 0;
 }
 
-module.exports = { decide, writeTargets, isTracked };
+module.exports = { decide, writeTargets, isTracked, unboundedWaits };
 
 if (require.main === module) {
   main();

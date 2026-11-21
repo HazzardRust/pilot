@@ -33,7 +33,7 @@ import { ensureDaemon, isDeckUp } from '../deck/client.mjs';
 import { fromLeash, startScratch, stopScratch } from '../deck/scratch.mjs';
 import { fromRoot } from '../deck/spawn-root.mjs';
 import { openFile, rotateSecret } from '../deck/launch.mjs';
-import { openDeck } from '../deck/open.mjs';
+import { openDeck, PACKAGE_ROOT, runeBinary } from '../deck/open.mjs';
 import { main as serveDeck } from '../deck/daemon.mjs';
 import { storeDir } from '../deck/store.mjs';
 import { readUsageSwitch, setUsageSwitch } from '../deck/usage-switch.mjs';
@@ -45,6 +45,7 @@ import { main as land } from '../scripts/land.mjs';
 import { main as landing } from '../deck/landing-wait.mjs';
 import { main as checks } from '../scripts/checks-cli.mjs';
 import { main as sync } from '../scripts/sync.mjs';
+import { main as restack } from '../scripts/stack.mjs';
 import { searchPathOnly } from '../scripts/pilot-branch.mjs';
 import { main as worktrees } from '../scripts/worktrees.mjs';
 import { main as liveRoot } from '../scripts/live-root.mjs';
@@ -58,6 +59,7 @@ import { main as collectGarbage, deckPidNow, landSweep } from '../deck/gc.mjs';
 import { main as doctor } from '../deck/doctor.mjs';
 import { main as restoreStore } from '../deck/store-restore.mjs';
 import { main as waitForReply } from '../deck/wait.mjs';
+import { main as waitForFile } from '../deck/wait-for.mjs';
 import { openPilot } from '../deck/session.mjs';
 import { runSettings, startArgs } from '../deck/run-env.mjs';
 import { readReach } from '../scripts/reach.mjs';
@@ -93,7 +95,7 @@ const usage = () => `pilot — the deck for piloted runs
                  the pilot's hand-off, after its deck_status: commit and push run.json in
                  the feat worktree and post the handoff item
   pilot integrate [<slice-branch>] [--no-push] [--trailer "<line>"]... [--dir <worktree>]
-                 in the feat/<slug> worktree (or the one --dir names): take origin/pilot, merge the slice (if
+                 in the feat/<slug> worktree (or the one --dir names): take the run's base (the default branch, feat/<N>, or pilot for a legacy run), merge the slice (if
                  named), test the selection (the tests the diff touches), push, commit run.json; refuses on the default branch
   pilot integrate --trial [--dir <worktree>]
                  in the feat/<slug> worktree, before the gate2: push the feature and try its
@@ -103,8 +105,9 @@ const usage = () => `pilot — the deck for piloted runs
                  the deck's write of a run's feature PR: open the draft feat/<slug> PR on the
                  record's base, or rewrite its body (spec and slice table) and base when they
                  differ; prints one line, nothing written when GitHub already matches
-  pilot base     print the ref the next run is cut from: origin's pilot branch and its
-                 tip, created from the default branch's tip when origin has none
+  pilot base     print the ref the next run is cut from and its tip: the default branch, or
+                 the feat/<N> it chains on; pilot under pilot.host none or another run remote,
+                 pilot itself created from the default branch's tip when origin has none
   pilot gh-stub [--dir <d>] [--powershell]
                  print the lines that put a stub gh first on PATH, answering reply.txt and logging calls.jsonl
   pilot sync
@@ -115,7 +118,12 @@ const usage = () => `pilot — the deck for piloted runs
   pilot land
                  in the feat/<slug> worktree: push the feature, merge only it into pilot
                  in a temporary worktree (no sync), run the full suite (the only full run), push pilot (merged again once if it moved),
-                 and keep one open PR from pilot to main, printing main gets pilot: #<n> or why not; exit 3 a conflict
+                 and print the feature PR last, feature PR: #<n> into <base> or why not (a run based
+                 on pilot keeps its PR from pilot to main); exit 3 a conflict
+  pilot restack
+                 after a feature PR merges, or by hand: retarget each open feat/ PR whose lower feature merged,
+                 merge a lower branch or a clashing default branch into it, push never forced; one line per PR;
+                 exit 1 failed, 3 a conflict (naming each path)
   pilot landing <gate2-id>
                  run in the background after a gate2's Sign off: wait for the landing the
                  deck runs, print its line; exit 0 landed, 1 not, 2 no deck or no such gate2
@@ -218,6 +226,9 @@ const usage = () => `pilot — the deck for piloted runs
                  run in the background; exit the moment a user reply this kind owns
                  (default pilot) is waiting for this repository, take it, print it,
                  and exit 0 (default timeout 50 minutes)
+  pilot wait-for --file <path> --match <regex> --timeout <minutes>
+                 print the first line of <path> matching <regex> and exit 0, or exit 2
+                 printing "timed out …" at the deadline; --timeout is required, at most 50
 
 Any command can be given as \`pilot --dir <path> <command> …\` to run it in <path>.
 
@@ -351,7 +362,9 @@ export async function run(argv, deps) {
     // The path, never the URL with its key (deck-token A2): opening the file signs the browser in.
     // A deck that has just come up writes it a moment after it answers; one older than it never does.
     for (let tries = 0; up && tries < 20 && !existsSync(openFile()); tries += 1) await new Promise((r) => setTimeout(r, 100));
-    const open = existsSync(openFile()) ? `open ${openFile()}` : 'no open file: `pilot deck --rotate` writes one';
+    // Where the Rune deck is built it is what opens (rune-deck-ui A2); `deps.root` is a test's package root.
+    const rune = runeBinary(deps?.root ?? PACKAGE_ROOT, hostPlatform());
+    const open = rune ? `open ${rune}` : existsSync(openFile()) ? `open ${openFile()}` : 'no open file: `pilot deck --rotate` writes one';
     console.log(up ? `The deck is up at ${deckUrl()}\n${open}` : `No deck answered at ${deckUrl()}`);
     process.exitCode = up ? 0 : 1;
     return undefined;
@@ -381,6 +394,11 @@ export async function run(argv, deps) {
     // The deck's pid is read at the sweep, not before the landing: a deck restarted meanwhile is not an orphan.
     // `read` is the one table read clear's holder and the sweep share (landing-keeps-worktrees L4).
     process.exitCode = land(argv.slice(1), { read: processTable, gc: (read) => landSweep({ userDeckPid: deckPidNow(), read }) });
+    return undefined;
+  }
+
+  if (command === 'restack') {
+    process.exitCode = restack(argv.slice(1));
     return undefined;
   }
 
@@ -538,6 +556,11 @@ export async function run(argv, deps) {
 
   if (command === 'wait') {
     process.exitCode = await waitForReply(argv.slice(1));
+    return undefined;
+  }
+
+  if (command === 'wait-for') {
+    process.exitCode = await waitForFile(argv.slice(1), { out: process.stdout, err: process.stderr });
     return undefined;
   }
 

@@ -44,7 +44,8 @@ test('base creates pilot from the default tip when the remote has none', async (
   const { code, out } = await printed(work);
   assert.equal(code, 0);
   assert.equal(git(origin, 'rev-parse', 'refs/heads/pilot'), main, 'origin has pilot at main\'s tip');
-  assert.equal(out, `base pilot ${git(work, 'rev-parse', '--short', main)} (created from main)\n`);
+  // Pilot is still created, since Gate 2 lands there; a run on origin with a host is cut from main (audit-f14 L9).
+  assert.equal(out, `base main ${git(work, 'rev-parse', '--short', main)}\n`);
 });
 
 test('base never creates pilot over an existing one', async (t) => {
@@ -57,7 +58,7 @@ test('base never creates pilot over an existing one', async (t) => {
   const { code, out } = await printed(work);
   assert.equal(code, 0);
   assert.equal(git(origin, 'rev-parse', 'refs/heads/pilot'), ahead, 'the existing pilot is kept');
-  assert.equal(out, `base pilot ${git(work, 'rev-parse', '--short', ahead)}\n`);
+  assert.equal(out, `base main ${git(work, 'rev-parse', '--short', 'origin/main')}\n`);
 });
 
 test('assertPushable refuses the default branch by name', async (t) => {

@@ -1,0 +1,409 @@
+{
+  "slug": "rune-deck-ui",
+  "feature": "Deck UI rebuilt in Rune",
+  "ticket": "itm_0dcd9aa67146",
+  "branch": "feat/rune-deck-ui",
+  "base": "pilot",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-rune-deck-ui",
+  "artefact": "docs/design/rune-deck-ui/architecture.md",
+  "slices": [
+    {
+      "slice": "Deck UI rebuilt in Rune",
+      "state": "implementing (pivoted: restyle S26-S39)",
+      "branch": "feat/rune-deck-ui",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-feat-rune-deck-ui",
+      "pr": 124
+    },
+    {
+      "slice": "S26 Every control says clickable: the hover look, first (added)",
+      "state": "integrated at dcd581c; rust APPROVE; 486 lines waived by co-pilot (tests); 765/0 selection",
+      "branch": "slice/rune-deck-ui-s26",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s26"
+    },
+    {
+      "slice": "S27 The window frame: Rune's title bar and the top inset (added)",
+      "state": "integrated at 05a1e8e; rust approve with notes; +79/-13; 765/0 selection; Win+Z flyout is the user's look",
+      "after": [
+        "S26 Every control says clickable: the hover look, first (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s27",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s27"
+    },
+    {
+      "slice": "S28 The left side as VS Code's side bar (added)",
+      "state": "integrated at d660054; rust APPROVE (re-evidenced); 631 lines waived by co-pilot; 765/0 selection",
+      "after": [
+        "S27 The window frame: Rune's title bar and the top inset (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s28",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s28"
+    },
+    {
+      "slice": "S29 The right strip's buttons on the grid, rounded, by role (added)",
+      "state": "integrated at a6d45de; rust re-review WARNING (MEDIUM: picked buttons lack a11y selected, follow-up); 765/0 selection",
+      "after": [
+        "S26 Every control says clickable: the hover look, first (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s29",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s29"
+    },
+    {
+      "slice": "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
+      "state": "integrated at f88ad09; rust approve; 483 lines waived by co-pilot (tests); 765/0 selection",
+      "after": [
+        "S26 Every control says clickable: the hover look, first (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s30",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s30"
+    },
+    {
+      "slice": "S31 Left panes' contents: content selects, rows on the grid (added)",
+      "state": "integrated at bae0fae; rust Approve (Warning: tickets rule gap unchecked visually); 548/0 selection",
+      "after": [
+        "S26 Every control says clickable: the hover look, first (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s31",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s31"
+    },
+    {
+      "slice": "S32 Every region designs its empty and error states (added)",
+      "state": "integrated at 5e3af11; rust APPROVE (MED: a Retry flag outlives its outage once); 765/0 selection",
+      "after": [
+        "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
+        "S31 Left panes' contents: content selects, rows on the grid (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s32",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s32"
+    },
+    {
+      "slice": "S33 The deck's font and its three type scales (added)",
+      "state": "pushed ff385b0 (rebased); rust APPROVE with notes; integrate running",
+      "after": [
+        "S27 The window frame: Rune's title bar and the top inset (added)",
+        "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
+        "S31 Left panes' contents: content selects, rows on the grid (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s33",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s33"
+    },
+    {
+      "slice": "S35 The spacing on the 4/8 grid (added)",
+      "state": "integrated at 4a5f27f; rust APPROVE (warnings); 781/0 selection",
+      "after": [
+        "S28 The left side as VS Code's side bar (added)",
+        "S29 The right strip's buttons on the grid, rounded, by role (added)",
+        "S30 Header and centre: content selects, cards on the grid, the kind line (added)",
+        "S31 Left panes' contents: content selects, rows on the grid (added)",
+        "S36 theme.json: theme.rs takes its values from one JSON file (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s35",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s35"
+    },
+    {
+      "slice": "S37 The token playground: one page that exports theme.json (added)",
+      "state": "integrated at a323777; typescript approve with nits; 886/0 selection; walkthrough facts sent to main",
+      "after": [
+        "S36 theme.json: theme.rs takes its values from one JSON file (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s37",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s37"
+    },
+    {
+      "slice": "S34 The palette's values, by role and to WCAG AA (added)",
+      "state": "integrated at 28c01d3; rust re-review WARNING (pressed state.pilot light pair 4.06:1 unchecked; disabled, exempt); 564/0 selection",
+      "after": [
+        "S36 theme.json: theme.rs takes its values from one JSON file (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s34",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s34"
+    },
+    {
+      "slice": "S38 The reply box, reorganised (added)",
+      "state": "integrated at 4369442; rust APPROVE minor notes; 548/0 selection",
+      "after": [
+        "S26 Every control says clickable: the hover look, first (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s38",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s38"
+    },
+    {
+      "slice": "S1-S25 and fix rounds",
+      "state": "integrated, with base merge, fix round, QA fix 1-2; each row's detail in docs/design/rune-deck-ui/run.json at cb0866e9 (folded: the deck's 32-row cap)"
+    },
+    {
+      "slice": "S39 Back and forward: the mouse side buttons and Alt+Left/Right (added)",
+      "state": "integrated at 6022881; rust re-review APPROVE; 548/0 selection; two-thread check with a real mouse left for QA",
+      "after": [
+        "S29 The right strip's buttons on the grid, rounded, by role (added)",
+        "S30 Header and centre: content selects, cards on the grid, the kind line (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s39",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s39"
+    },
+    {
+      "slice": "S36 theme.json: theme.rs takes its values from one JSON file (added)",
+      "state": "integrated at c7bbc9e; rust Warning; 504 lines waived by co-pilot; 775/0 selection",
+      "branch": "slice/rune-deck-ui-s36",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s36"
+    },
+    {
+      "slice": "base merge 2",
+      "state": "integrated at 3f6a299b; pilot 3b53b7e in; threadWalk carries nothing-hidden A6's order",
+      "branch": "fix/rune-deck-ui-base2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-base2"
+    },
+    {
+      "slice": "S40 The hover tests know the switch role (added)",
+      "state": "integrated at f1522a8; rust APPROVE; 765/0 selection",
+      "after": [
+        "S29 The right strip's buttons on the grid, rounded, by role (added)"
+      ],
+      "branch": "slice/rune-deck-ui-s40",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-rune-deck-ui-s40"
+    }
+  ],
+  "findings": [
+    "kept: F1 simplify — stub_region! has 0 uses, delete (-15)",
+    "kept: F2 simplify — two Location decoders disagree on '+' and '#'; one Acted::param (-28)",
+    "kept: F3 simplify — status/tabs block the UI thread on a view fetch against spec 5; live.ask as notifications does (-35)",
+    "kept: F4 simplify — usage's own fetch puts one region on a newer seq against spec 6a; live.ask every 30 s (-40)",
+    "kept: F5 simplify — refused run dismiss leaves the button disabled; built in added S24 with T2's red pin",
+    "kept: F6 simplify — no off-thread write seam, 5 posting mechanisms, 5 regions block; over the diff limit, added slices S24 and S25",
+    "dropped: F7 simplify — adds code for load only; N-1 reads already dropped, no correctness consequence",
+    "kept: F8 simplify — queue.mjs scrapes options from HTML by regex while reply.mjs ports the rule, against L2; queue uses reply's optionsOf (-22); also removes optionsOf's complexity 12",
+    "dropped: F9 simplify — folded into S24, no separate fix",
+    "dropped: T1 simplify — tests reach into live.rs internals but no transport change is planned; a rewrite with no behaviour gain",
+    "kept: T2 simplify — history test asserts internals and misses the refused dismiss; S24's behaviour 1",
+    "kept: N1 simplify — deck-dir rule written twice; one client::deck_dir (-5)",
+    "dropped: N2 simplify — openerFor(platform, url, rune) is the artefact's named Opener seam; -1 line does not pay for moving it",
+    "dropped: E1 runner complexity — stripView 15, queueView 13, usageView 11 are flat field maps of one region each; splitting adds indirection for no consequence",
+    "dropped: E2 runner madge cycle integrate.mjs > sync.mjs — neither file is in the feature's diff; pre-existing",
+    "dropped: E3 runner knip deck/view/*View unused — index.mjs imports each region's default export; the named twin is unused but harmless, 0 consequence"
+  ],
+  "next": "feat 5e3af11b. S33 rebased ff385b0 (28 binaries green), integrate running. Then full cargo on feat, base check, fundamentalist, QA.",
+  "updatedAt": "2026-11-20T10:59:03.604Z",
+  "friction": [
+    {
+      "agent": "pilot-explorer",
+      "what": "Rune's winit is vendored under the git checkout (hashed dir), not ~/.cargo/registry, so a registry search finds nothing",
+      "evidence": "rune-c9b805e9ed8a3730/7cba77c"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "live hover check fought other windows for the pointer; a first CopyFromScreen captured the user's browser (not used)",
+      "evidence": "S26 report friction row"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "cargo test needs node_modules for the scratch deck, which a cargo-only worktree lacks (junction to feat's node_modules)",
+      "evidence": "S26 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the deck's 32-row cap forced folding S1-S25 and the fix rows into one row",
+      "evidence": "deck_status error 'at most 32 slices'"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S27 implementer was compacted before building and handed back with nothing done",
+      "evidence": "S27 report: no worktree, no branch"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "cargo not on PATH in Bash/PowerShell tools; needed PATH=$PATH:/c/Users/Hazzard/.cargo/bin",
+      "evidence": "base merge report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fresh worktree lacks node_modules, so 12 Rust integration test files fail ERR_MODULE_NOT_FOUND until junctioned",
+      "evidence": "S36 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate refused 'no run record row names it' after the worktree's run.json was reset; resending the row fixed it",
+      "evidence": "NOT integrated slice/rune-deck-ui-s26: no run record row names it"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "pilot wait exited 1 twice with 'deck not answering (timeout)' while /api/health answered 200 in 18 ms; the long-poll's own timeout on a quiet thread is reported as a dead deck, and QA stopped listening until told to retry",
+      "evidence": "qa worktree, wait --as qa --item itm_317aa44d9e6e, 2 exits; main's listener b9tt2pznd failed the same minute",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared CARGO_TARGET_DIR kept artifacts older than rebased sources; cargo test failed 'cannot find function' until src files were touched",
+      "evidence": "S36 rebase report"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S27 live check drove the wrong window: took a 16x16 helper window's handle, so the user's foreground app got 5 clicks, 2 drags and Win+Z,1,1,Esc,Win+Left,Esc; no rule required verifying the target window by pid or checking the foreground before input",
+      "evidence": "co-pilot report; user asked on itm_71e5e6d9cee3",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "live window drive took a wrong (16x16 helper) handle and sent clicks and Win+Z/Win+Left/Esc to the user's foreground app at the screen's top-left",
+      "evidence": "S27 heads-up message and report; reported to main for the user"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared CARGO_TARGET_DIR rebuilt by parallel slices swapped the release exe between gate and live check",
+      "evidence": "S27 report: copied its binary to the scratchpad"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared CARGO_TARGET_DIR served stale lib, test and release binaries three times; parallel full cargo runs made hover/history/tickets/theme/layout tests red under contention, green alone",
+      "evidence": "S29 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "integrate's selection went red on scripts/test/handoff-lineage-remote.test.mjs (5 s git timeout) under load from parallel cargo builds; 7/0 alone",
+      "evidence": "log 20261120T085620739Z-slice-rune-deck-ui-s27.log:860"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared CARGO_TARGET_DIR held another worktree's test binaries (layout listed tests not in its tree); cargo fmt rewrites tests/status.rs each run",
+      "evidence": "S30 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "rebasing onto feat replayed the unintegrated base slice and conflicted; needed rebase --onto; chrome-devtools MCP not loaded so the page check drove headless Chrome over raw CDP",
+      "evidence": "S37 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared CARGO_TARGET_DIR: stale lib and test binaries from another worktree, then E0463 can't find crate while another session held the build lock",
+      "evidence": "S28 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "slice text (active bar in primary, from DESIGN 4b) conflicted with the later colour-means-state rule (feedback 19); the implementer followed the slice",
+      "evidence": "S28 report colour table"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "context guard reached with S28 approved but not integrated; seven slices (S31-S35, S38, S39) not started",
+      "evidence": "self-pause at 263k"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "shared CARGO_TARGET_DIR served stale binaries across worktrees and made tests red under contention; workaround is touching build.rs before each run; per-worktree dirs would fill C:",
+      "evidence": "co-pilot hand-back, feat/rune-deck-ui a6d45de7",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "cargo not on PATH in agents' shells; a fresh worktree needs a node_modules junction for the Rust tests; integrate selection red once on a 5 s git timeout in handoff-lineage-remote.test.mjs under load; first S27 implementer compacted before building",
+      "evidence": "co-pilot hand-back",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "per-slice 400-line limit waived four times, mostly for test lines (S26 486, S36 504, S30 483, S28 631)",
+      "evidence": "co-pilot hand-back slices table",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "session start showed a CONNECTION_CLOSED notice for a server named deck; the successor took it for the plugin deck tools and handed back without starting, though plugin_pilot_deck worked",
+      "evidence": "successor hand-back at feat a6d45de7; main's resume message",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the hand-off record named S28's evidence rows and a finding id (A-R5) that lived only in a report the successor could not read; S28 re-evidenced, A-R5 dropped as untraceable",
+      "evidence": "record next at a6d45de7; main found neither in commits, crew-handoff or ticket thread",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S28 re-evidence handed back with no rows after 2 tool uses and 36 s, saying its context had been summarised mid-run; nothing pushed; respawned and told to write rows to its scratchpad as it goes",
+      "evidence": "re-evidence hand-back; task usage 2 tool uses, 49k tokens",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "C: filled to 0 under per-worktree deck/rune/target dirs (feat 24G, qa 13G, s22 9.5G, s23 11G, live slices 1-9G each) with 4-5 cargo builds in parallel; rustc crashed (metadata stub, LNK1180) and looked like contention first; 24 merged-clean worktrees pruned freed 30G",
+      "evidence": "S28 re-evidence and S39 hand-backs; pilot worktrees prune --run rune-deck-ui",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot worktrees prune --run rune-deck-ui --base origin/feat/rune-deck-ui counted the feat worktree itself as merged-clean and removed it and its local branch; co-pilot read only the output's tail; recreated from origin at a6d45de7, npm ci rerun",
+      "evidence": "deck_status 'the recorded worktree is gone' after the prune",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S38: disk full mid-run (LNK1318/LNK1180, os error 1455 paging file); release build and npm test not run; cargo fmt reformats untouched strip.rs and status.rs; slice file line numbers stale",
+      "evidence": "S38 report 237acaa",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S31: disk full mid-gate (LNK1180, os error 112); npm test selection skipped the Rust half with cargo off PATH; cargo fmt rewrites files outside the slice every run; scratch deck refused ticket bodies so tickets/reports never seen live",
+      "evidence": "S31 report 799e2ca",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S28 re-evidence: C: filled to 0 under five slices' own deck/rune/target; rustc crashes looked like contention until the release log named the disk; two red probes and two release builds lost",
+      "evidence": "S28 re-evidence report 0856f043",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S34: disk full (os error 112, link.exe 1140, paging file too small) cost four cargo runs; npm test skipped; brief wrongly said CARGO_TARGET_DIR was shared (targets are per worktree); light snap impossible without changing the system theme",
+      "evidence": "S34 report 109b483",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S29 integrated with hover::plain_text_is_still red: its switch role is not in S26's is_control, and the selection reported 765/0 while cargo stopped at the first failing binary; three later slices met the red",
+      "evidence": "cargo test --test hover on feat d6600544: hover.rs:142 FAILED; S34 integrate 'merged red: 781 pass, 0 fail'",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S39: origin/feat moved mid-slice, so a reset --soft squash silently reverted newer commits (caught in a 15-file diff, redone); no real OS-window side-button check was safe; scratch deck empty so thread-to-thread history unchecked live",
+      "evidence": "S39 report 76a32bb",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "two reds on feat each fixed by a different slice (S40 hover, S34 theme) deadlocked integrate, which needs each merge green alone; the seam moved two test lines into S40",
+      "evidence": "NOT integrated S34 'merged red' (hover) and S40 'merged red' (theme.rs:418)",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate's selection ran node tests only (548-564) for S31, S34, S38 and S39, though each changed deck/rune; the Rust half was checked by a separate full cargo test on feat 60228818 (26 binaries green)",
+      "evidence": "integrate lines for S31/S34/S38/S39 vs 765 for S28/S40",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S35: cargo fmt rewrote five files outside the slice; npm test:changed skipped cargo (not on PATH inside it); pilot deck --help started or attached to the user's real deck on 4321 instead of printing help",
+      "evidence": "S35 report 954e931",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S32: mklink /J from bash mangled the path, so node_modules was missing until PowerShell made the junction; Edit refuses files read only via bash sed; npm test:changed's cargo step outlasted its wait",
+      "evidence": "S32 report 938b622",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S33: Rune exposes no font size or style on a drawn element, so the type-scale test reads text heights as a proxy; the node test that scans deck/ raced cargo deleting temp dirs under target/ (ENOENT flake); pilot deck --stop rejected its arguments, the scratch deck was killed by pid",
+      "evidence": "S33 report f28a9ec",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S33 conflicted in four files with S32's empty states after parallel lanes; a rebase-only implementer resolved 5 hunks and moved theme::empty to the deck's CAPTION",
+      "evidence": "S33 rebase report ff385b0",
+      "size": 1
+    }
+  ]
+}

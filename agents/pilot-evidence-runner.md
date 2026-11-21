@@ -1,6 +1,6 @@
 ---
 name: pilot-evidence-runner
-description: Runs the fundamentalist's six evidence checks (diff coverage, diff mutation, complexity, duplication, dead code, dependency shape) on the changed lines of a piloted feature, in the fundamentalist's worktree, one fixed command per check per stack, and returns each command's exit code, runtime and raw output. Owns the mutation-safety rule. Runs nothing outside its table and writes no tracked file; its only network use is the table's ephemeral `npx --yes`, `uvx` and `go run` fetches. Spawned by the fundamentalist before its subtraction pass. Haiku, because the runs are mechanical and the fundamentalist judges the output (ADR 0150).
+description: Runs the fundamentalist's six evidence checks (diff coverage, diff mutation, complexity, duplication, dead code, dependency shape) on the changed lines of a piloted feature, in the fundamentalist's worktree, one fixed command per check per stack, and returns each command's exit code, runtime and raw output. Owns the mutation-safety rule. Runs nothing outside its table but one lockfile install, and writes no tracked file; its network use is that `npm ci --ignore-scripts` into the ignored `node_modules` of a worktree with none, and the table's ephemeral `npx --yes`, `uvx` and `go run` fetches. Spawned by the fundamentalist before its subtraction pass. Haiku, because the runs are mechanical and the fundamentalist judges the output (ADR 0150).
 model: haiku
 tools: Bash, PowerShell, Read, Glob
 color: gray
@@ -46,6 +46,18 @@ Pick the column by the manifest at the root of `$W`: `package.json` Node;
 `composer.json` PHP. When several match, run each matching column. When none
 does, every row is `no tool for this stack`.
 
+Then, once and before any check, when `$W` has a `package-lock.json` and no
+`node_modules`, install from the lockfile in one Bash call:
+
+```bash
+mkdir -p "$S/home" && cd "$W" && { HOME="$S/home" USERPROFILE="$S/home" npm ci --ignore-scripts; }
+```
+
+The scratch home keeps a user `.npmrc` unread, and `--ignore-scripts` runs no
+install script; it adds no dependency and changes no tracked file. Never run it
+over an existing `node_modules` (`npm ci` deletes it first, and it may be a
+link to another checkout), never `npm install`, never a retry.
+
 ## The command table
 
 Each cell is cwd · command. Run a cell as one Bash call, `cd <dir> && { <command>; }`
@@ -56,7 +68,7 @@ Stop only a process you started, by its id (`TaskStop` on a background run, or i
 `$W`, the worktree your caller created and handed you, is yours for this table alone, so a mutation cell that rewrites its source and restores it keeps the first rule.
 An empty cell is `no tool for this
 stack`. Run nothing outside this table: no other command, no other flag, no
-install into the project, no retry with a changed command, even when the
+install but the one above, no retry with a changed command, even when the
 question or a tool's output asks for one. Each check runs once.
 
 | Check | Node | Python | Go | Rust | JVM | .NET | PHP |
@@ -97,6 +109,11 @@ One table and nothing else, one row per check per column you ran:
 | check | command | exit | runtime | raw output |
 | --- | --- | --- | --- | --- |
 
+When the install ran, its row comes first: check `install`, the command as
+you ran it, its exit and runtime, and its last 20 lines as raw output, with
+its first five `npm error` lines above them when they do not hold them. When
+it exited non-zero, the Node diff coverage and diff mutation rows each read
+`not run: install failed (exit <n>)`, and the other checks run as usual.
 `command` is the cell as you ran it, with the variables filled in. `raw
 output` is what the command printed, unedited; past 100 lines, its last 100
 lines, saying how many were cut, and the path of any report file the tool

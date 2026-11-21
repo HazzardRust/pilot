@@ -1,0 +1,50 @@
+name: Rune deck
+
+# The Rune deck's own build and tests on Windows (rune-deck-ui S19; A3): the gate skips them off Windows and
+# where cargo is not on PATH, so this job is where a broken Rune screen turns a PR red. macOS and Linux are
+# out of scope. The tests start scratch daemons through node, so the node install comes first.
+on:
+  pull_request:
+    branches: [main, 'feat/**', pilot]
+    paths: ['deck/**', 'bin/**', 'scripts/gate.mjs', '.github/workflows/ci.yml']
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rune-deck-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  rune-deck:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          cargo --version
+
+      - name: Build the Rune deck
+        run: cargo build --locked --manifest-path deck/rune/Cargo.toml --tests
+
+      - name: Test the Rune deck
+        run: cargo test --locked --manifest-path deck/rune/Cargo.toml

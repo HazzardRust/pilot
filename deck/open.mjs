@@ -17,9 +17,28 @@
  */
 
 import { spawn } from 'node:child_process';
+import { statSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { hostPlatform } from '../hooks/lib/platform.js';
 import { openFile } from './launch.mjs';
+
+/** This package's root: the one place a Rune deck binary is looked for, never a path from the environment. */
+export const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+/**
+ * The Rune deck built under `root` by `cargo build --release`, or null. A debug build is not the deck,
+ * and only a regular file counts, so a half-built target directory opens the page as before.
+ */
+export function runeBinary(root, platform) {
+  const file = path.join(root, 'deck', 'rune', 'target', 'release', platform === 'win32' ? 'pilot-deck.exe' : 'pilot-deck');
+  try {
+    return statSync(file).isFile() ? file : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * How long after trying to open a tab the deck refuses to try again. Two sessions
@@ -43,14 +62,16 @@ let lastTriedAt = 0;
  * whose first argument is a window title — hence the empty string, so that a URL is
  * never taken for one.
  */
-export function openerFor(platform, url) {
+export function openerFor(platform, url, rune = null) {
+  // The Rune deck finds its deck from the secret file and port itself, so it is started bare (rune-deck-ui A2).
+  if (rune) return { command: rune, args: [] };
   if (platform === 'win32') return { command: 'cmd', args: ['/c', 'start', '', url] };
   if (platform === 'darwin') return { command: 'open', args: [url] };
   return { command: 'xdg-open', args: [url] };
 }
 
 /**
- * Open the deck in the default browser, unless it has just been opened or
+ * Open the deck: the Rune window where `rune` is built, the default browser otherwise; unless it has just been opened or
  * `PILOT_DECK_NO_OPEN` says not to. Returns whether the opener was started, which is not
  * the same as a tab appearing: the platform's opener answers to nobody once it is away.
  *
@@ -58,7 +79,7 @@ export function openerFor(platform, url) {
  * to start a process, and that must never happen while the suite is running — so the
  * tests hand it a recorder, and the daemon hands it nothing.
  */
-export function openDeck(spawnOpener = spawn, platform = hostPlatform()) {
+export function openDeck(spawnOpener = spawn, platform = hostPlatform(), rune = runeBinary(PACKAGE_ROOT, platform)) {
   const off = process.env.PILOT_DECK_NO_OPEN;
   // Any value at all, not only `1`: the one reason to set this is to stop a browser
   // appearing, and `PILOT_DECK_NO_OPEN=0` is nobody's way of asking for one.
@@ -73,7 +94,7 @@ export function openDeck(spawnOpener = spawn, platform = hostPlatform()) {
   lastTriedAt = now;
 
   const file = openFile();
-  const { command, args } = openerFor(platform, file);
+  const { command, args } = openerFor(platform, file, rune);
   try {
     const child = spawnOpener(command, args, { detached: true, stdio: 'ignore', windowsHide: true });
     // A browser that will not start is worth one line on the daemon's stderr and nothing

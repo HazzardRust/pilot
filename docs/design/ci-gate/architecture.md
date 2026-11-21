@@ -1,6 +1,6 @@
 # ci-gate: the host's CI is a gate at every step
 
-Ticket `itm_e5e0bc09827d` · base `pilot` (ebe5233c) · merge thread `itm_e5218f28dd12` (merged none) · ADR NNNN
+Ticket `itm_e5e0bc09827d` · base `pilot` (ebe5233c) · merge thread `itm_e5218f28dd12` (merged none) · ADR 0201
 
 ## 1. Problem
 
@@ -147,7 +147,7 @@ Width 6; longest stem 3
 | S6 `pilot base` says a red base | 6 | `scripts/base.mjs`, `.github/workflows/gate.yml`, `scripts/test/gate-workflow.test.mjs`, `scripts/test/base-checks.test.mjs` (new) | S1 (`checksAt`) | typescript | [S6](slices/S6.md) |
 | S7 The crew reads checks before each move | 2, 3, 4 | `agents/pilot-lander.md`, `agents/pilot-co-pilot.md`, `agents/pilot.md`, `agents/pilot-qa.md`, `scripts/test/ci-gate-wording.test.mjs` (new) | S2 (`pilot checks --wait`), S5 (the `checks` field) | typescript, security | [S7](slices/S7.md) |
 | S8 GitLab answers the same checks | 8 | `deck/host-gitlab.mjs`, `deck/test/host-gitlab-checks.test.mjs` (new) | S1 (the **Host** `checks` verb) | typescript, security | [S8](slices/S8.md) |
-| S9 The run's ADR and glossary (added) | – | `docs/adr/NNNN-ci-gate.md` (new), `CONTEXT.md` | S1 | typescript | [S9](slices/S9.md) |
+| S9 The run's ADR and glossary (added) | – | `docs/adr/0201-ci-gate.md` (new), `CONTEXT.md` | S1 | typescript | [S9](slices/S9.md) |
 | S10 A hung `gh` reads unread (added) | 9 | `deck/host-github.mjs`, its contract test | S1 | typescript | [S10](slices/S10.md) |
 
 S1 is the walking skeleton: a real `gh` read of one commit's check runs, through the **Host** seam, to the one

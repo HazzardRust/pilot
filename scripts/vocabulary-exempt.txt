@@ -14,3 +14,4 @@ docs/adr/0159-
 scripts/test/fixtures/init-
 docs/design/handoff-cache/probes/sections/runs.jsonl
 docs/design/handoff-cache/probes/sections.md
+deck/rune/Cargo.lock

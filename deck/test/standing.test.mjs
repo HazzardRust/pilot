@@ -51,7 +51,7 @@ const section = (page, id) => {
 
 test('a ticket is open but not waiting', () => {
   const ticket = anItem('t1', KIND_TICKET, 'Run 2');
-  assert.deepEqual(STANDING_KINDS, [KIND_TICKET, KIND_REPORT]);
+  assert.deepEqual(STANDING_KINDS, [KIND_TICKET, KIND_REPORT, 'steps']);
   assert.ok(KINDS.includes(KIND_TICKET) && KINDS.includes(KIND_REPORT), 'both are kinds deck_post takes');
   assert.equal(isStanding(ticket), true);
   assert.equal(isQueued(ticket), false);

@@ -7,6 +7,7 @@ import {
   KIND_CHAT,
   KIND_GATE2,
   KIND_REPORT,
+  KIND_STEPS,
   KIND_USER,
   isBlocking,
   isLanding,
@@ -77,7 +78,9 @@ const STATE_LABEL = { red: 'planning', yellow: 'implementing', green: 'concludin
 const PARKED_LABEL = { ...STATE_LABEL, yellow: 'planned', green: 'awaiting sign-off' };
 
 /** A ticket's label: a parked green ticket awaits sign-off only while an open gate2 names it; turned green by `need`, it needs you. */
-function ticketLabelOf(item, state, items) {
+export function ticketLabelOf(item, state, items) {
+  // Its report posted, it waits only on the user's Done on its steps thread (human-steps A4).
+  if (items.some((other) => other.kind === KIND_STEPS && other.ticket === item.id && isOpen(other))) return 'human steps';
   // A signed ticket holds no lane, whatever its stored `live` (gate2-frees-lane spec 1, L1).
   if (isLanding(item, items)) return 'landing';
   if (item.live === true) return STATE_LABEL[state];
@@ -117,7 +120,8 @@ function renderQuestionCount(asked) {
  * when none is open. On every row, so a thread behind the ticket in hand is a press away.
  */
 function renderPreviews(ticket, items) {
-  const links = items.filter((item) => item.ticket === ticket.id && isQueued(item)).map((item) => `<p>${item.kind} ${renderStandingLink(item)}</p>`);
+  // A steps thread is standing, never queued, and still drawn under its ticket: the way to its Done (human-steps A4).
+  const links = items.filter((item) => item.ticket === ticket.id && (isQueued(item) || (item.kind === KIND_STEPS && isOpen(item)))).map((item) => `<p>${item.kind} ${renderStandingLink(item)}</p>`);
   return links.length ? `<details class="previews"><summary>threads</summary>${links.join('')}</details>` : '';
 }
 
@@ -279,7 +283,7 @@ function renderMakeTickets(repo) {
  * closed yet marked `open` — and it is that count, not the total, the badge
  * shows: a report already closed is history, not something waiting on anyone.
  */
-function reportsOf(items, repo) {
+export function reportsOf(items, repo) {
   return items
     .filter((item) => item.kind === KIND_REPORT && isStanding(item) && sameRepo(item.repo, repo))
     .reverse()
@@ -312,7 +316,7 @@ const renderAgent = (agent) =>
  * Spec 33's label names the panel directly above this line, so the two
  * together are a panel that says what it is and that it holds nothing.
  */
-const renderAgents = (agents = []) =>
+export const renderAgents = (agents = []) =>
   agents.length
     ? `<section class="agents">${agents.map(renderAgent).join('')}</section>`
     : '<p class="nobody">no agents live</p>';
@@ -374,7 +378,7 @@ const renderNotice = (item, tab, items) =>
  * Above them, the threads an agent closed that the user has not looked at since
  * (deck-press-feedback spec 7-9, L6), newest close first.
  */
-const renderNotifications = (items, tabs, back) => {
+export const renderNotifications = (items, tabs, back) => {
   const rows =
     noticesOf(items).map((item) => renderClosedNotice(item, back, items)).join('') +
     items
@@ -445,7 +449,7 @@ function renderChat(tab, items) {
  * the implementing ticket its live co-pilot holds, then the concluding lane's, then the planning lane's. Held lanes only:
  * a queued or switching lane names none.
  */
-function heldTicketsOf(tab, items) {
+export function heldTicketsOf(tab, items) {
   if (!tab) return [];
   const implementing =
     coPilotStateOf(items, tab.repo, tab.coPilot, tab.switching) === 'held'

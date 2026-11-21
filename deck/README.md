@@ -77,6 +77,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `session.mjs` | starts a session in a terminal window when the Start route asks |
 | `spawn-root.mjs` | which root a client spawns the daemon from and its version: the installed plugin for a checkout on 4321, else its own root (ADR 0165) |
 | `step-shell.mjs` | where a wizard's or a report's command steps run: a command step without a `dir` is refused, and a missing `shell` is the daemon's platform default (walkthrough-surface spec 9) |
+| `stalled-waits.mjs` | the daemon's 5-minute scan: an unbounded wait shell past 50 minutes under a live run's `claude` is stopped through `gc`, and the run's repository told (wait-deadlines S3) |
 | `status-command.mjs` | `pilot status`: the deck's url, pid, version against the plugin's, uptime, live agents, and deck.log's last 20 lines; reads only (daemon-lifecycle spec 8, 9) |
 | `status.mjs` | the slice table and its Yours column |
 | `store-archive.mjs` | the store's month archive: closed items over 30 days old moved to `deck.archive-YYYY-MM.json`, read back by id |
@@ -86,6 +87,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `store-items.mjs` | the store's items: posting, replies, the gates, resolving, reopening and closing |
 | `store-recovery.mjs` | the store's backup: `deck.json.bak` kept before each write, and a corrupt store set aside and recovered from it |
 | `store-restore.mjs` | `pilot store restore`: the backup swapped in by hand, refused while a deck serves the store on any port |
+| `store-steps.mjs` | a ticket's human steps: the steps thread's one writer, the user's Done, and the ticket's one close the report shares |
 | `store-stage.mjs` | a ticket entering a stage: its state, its place in that stage's queue, and its first green entry |
 | `store-tickets.mjs` | the store's ticket queue: moving, taking and merging tickets, the lane switches |
 | `store-runs.mjs` | the store's reads and delivery, runs, co-pilot, budget, threads, slices and records |
@@ -107,6 +109,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `usage-switch.mjs` | the logging on/off switch file |
 | `usage.mjs` | how much of the context, five-hour and weekly allowance is gone |
 | `version.mjs` | `PLUGIN_VERSION`, read once from package.json, `isOlder`, `isVersion` and `ENGINES`; the only package.json read in the deck (daemon-lifecycle spec 3) |
+| `wait-for.mjs` | `pilot wait-for`: a wait on a file for a matching line that ends by itself at a required deadline |
 | `wait.mjs` | `pilot wait`: what wakes an idle agent |
 | `walkthrough-shape.mjs` | checks a QA walkthrough is a look, not a script |
 | `work.mjs` | the gates the pilot has signed in a directory since its last hand-off, for the guard's advice; served on `/api/record` |
