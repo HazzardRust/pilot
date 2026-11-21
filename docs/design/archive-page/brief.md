@@ -14,9 +14,8 @@ Remote: origin
 
 ## Base and PR target
 
-The base is `feat/archive-page`, cut at Gate 1 from the design tip on `origin/feat/ci-gate` (203bcfb6, `pilot base`:
-`base feat/ci-gate`). Branches: `slice/archive-page-s<n>`, pushed for the pilot to integrate; no slice PR. The PR
-target is `pilot`.
+The base is `feat/archive-page`, cut at Gate 1 from the design tip on `origin/pilot` (Rune landed at 4fee6665).
+Branches: `slice/archive-page-s<n>`, pushed for the pilot to integrate; no slice PR. The PR target is `pilot`.
 
 ## PR titles
 
@@ -30,7 +29,7 @@ Every commit ends with these two lines, copied exactly:
 
 ```
 Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01NXgSFppeY5pzVQLciH5swh
+Claude-Session: https://claude.ai/code/session_01NXgSFpzNB8zPpKs1Y5s2eU
 ```
 
 ## PR footer
@@ -40,7 +39,7 @@ Every PR body ends with these lines, copied exactly:
 ```
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-https://claude.ai/code/session_01NXgSFppeY5pzVQLciH5swh
+https://claude.ai/code/session_01NXgSFpzNB8zPpKs1Y5s2eU
 ```
 
 ## Artefact
@@ -55,7 +54,7 @@ npm ci
 npm test
 ```
 
-On resume after rune-deck-ui lands, add `cargo test --manifest-path deck/rune/Cargo.toml` (Rune brief) and re-check the flaky list.
+A slice that edits `deck/rune/` also runs `cargo test --manifest-path deck/rune/Cargo.toml` (its own `--test <name>` first).
 
 `npm test` runs `node scripts/gate.mjs`: 5.5 to 20 minutes on 2026-11-20. One file: `node --test <file>`. Run the full
 `npm test` once, on the slice's final state. The repo has no typecheck, lint or build script. Tests use a scratch store
@@ -63,14 +62,14 @@ On resume after rune-deck-ui lands, add `cargo test --manifest-path deck/rune/Ca
 
 ## Known flaky tests
 
-- `deck/test/idle-wake.test.mjs` "a parked wait wakes": red after 10:20 UTC until ci-green lands (its gate2 is open).
 - Windows-CI only: "sed -i on a tracked file is refused".
 
 ## Diff limit
 
-300 changed lines per slice. Past that, stop and ask `main`.
+400 changed lines per slice. Past that, stop and ask `main`.
 
 ## Live verification
 
-The page is a surface: start a scratch deck on a copy of the store (`PILOT_DECK_DIR`), open `/archive` in a browser and
-look at it. Never point a test or a timing at the live `~/.claude/pilot`.
+The screen is a surface: start a scratch deck on a copy of the store (`PILOT_DECK_DIR`), run the Rune deck against it
+(`cargo build --release --manifest-path deck/rune/Cargo.toml`, then `deck/rune/target/release/pilot-deck`; `--snap out.png`
+for a screenshot), press Archive and look at it. Never point a test or a timing at the live `~/.claude/pilot`.
