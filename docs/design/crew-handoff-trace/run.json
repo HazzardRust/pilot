@@ -61,7 +61,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed 462bc0a",
+      "state": "integrated",
       "after": [
         "S6"
       ],
@@ -70,11 +70,20 @@
     },
     {
       "slice": "crew-handoff-trace",
-      "state": "implementing"
+      "state": "implementing",
+      "pr": 129
+    },
+    {
+      "slice": "feature",
+      "state": "QA done at a872f2c6; gate2 for main to post"
     }
   ],
-  "next": "S7 pushed 462bc0a (APPROVE), integrating; next: base check, then fundamentalist and QA",
-  "updatedAt": "2026-11-20T19:08:58.397Z",
+  "findings": [
+    "dropped: R2-L1 (re-review) — the window bound misses a second hand-off posted in the same millisecond; implausible at ms resolution",
+    "dropped: R2-L2 (re-review) — another item's late row inside the window: crew rows carry no item, so they cannot be told apart; accepted"
+  ],
+  "next": "QA done at a872f2c6, gate green, trial integrate clean, base check: in; gate2 body relayed to main (QA's deck MCP down); next: main posts gate2 (ticket itm_1f8238d5a300, pr 129, sha a872f2c6), then deck_ticket need",
+  "updatedAt": "2026-11-20T20:04:12.872Z",
   "friction": [
     {
       "agent": "architect",
@@ -206,6 +215,31 @@
       "agent": "pilot-implementer",
       "what": "implementer contexts reset mid-slice after worktree creation (S5, S7)",
       "evidence": "both reported a clean worktree on resume"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context summary lost the evidence runner's state; npm ci had not run",
+      "evidence": "worktree had no node_modules after the summary; no runner table came back, so the six evidence rows are missing"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "context summarised right after spawn; deck MCP disconnected in its session",
+      "evidence": "its first message: no worktree, scratchpad empty, deck CONNECTION_CLOSED so no deck_post/deck_read"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "scratch-deck yellow ticket needs a hand-written deck.json; testUtils.mjs:30 deletes PILOT_DECK_DIR on import so postStored wrote elsewhere; --seed-run registers the worktree path but pilot wait resolves to the main checkout",
+      "evidence": "about 15 tool calls; `NO DECK for C:\\Users\\Hazzard\\Projects\\pilot` from the parked wait, losing spec 6's live delivery"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "full gate about 8 min, past the shell's blocking window, run 3 times as F1 and B2 arrived after the first; a node -e replace in a double-quoted shell string dropped a backslash twice; no TaskStop or Monitor in its tool list and the deck MCP was disconnected",
+      "evidence": "/tmp/gate*.log, 4 runs; trace-deck.test.mjs:76 and crew-handoff.test.mjs:70"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the reviewer's BLOCK was fixed but the reviewer was not re-run, so its last verdict stood as BLOCK",
+      "evidence": "fix report: 'I did not re-run the reviewer, so the BLOCK line stands as its last word'"
     }
   ]
 }
