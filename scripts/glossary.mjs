@@ -97,20 +97,150 @@ export function lintGlossary(text) {
   return problems;
 }
 
-function main(argv) {
-  const [command, file, ...rest] = argv;
-  if (command !== 'check' || !file || rest.length > 0) {
-    process.stderr.write('usage: node scripts/glossary.mjs check <file>\n');
-    process.exit(2);
+/**
+ * The lower-case words of a text, split on every run of non-letters and non-digits: one fixed
+ * character class, so a long CLI argument costs linear time and no glossary text becomes a regex.
+ */
+function wordsOf(text) {
+  return text.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+}
+
+/** An entry's own lines in the file, from its `**Term**:` line to the blank line or heading that ends it. */
+function entryText(lines, { line }) {
+  const own = [lines[line - 1].trimEnd()];
+  for (let i = line; i < lines.length; i += 1) {
+    const next = lines[i].trimEnd();
+    if (next === '' || HEADING.test(next) || TERM.test(next)) break;
+    own.push(next);
   }
-  let text;
+  return own.join('\n');
+}
+
+/** Each entry's names: its term first, then its `_Avoid_` words, a trailing `(…)` note dropped. */
+function namesOf(glossary) {
+  return parseGlossary(glossary).map((entry) => ({
+    entry,
+    names: [
+      { word: entry.term, via: 'term' },
+      ...entry.avoid.map((avoid) => ({ word: avoid.split('(')[0].trim(), via: 'avoid' })),
+    ]
+      .map((name) => ({ ...name, words: wordsOf(name.word) }))
+      .filter(({ words }) => words.length > 0),
+  }));
+}
+
+/**
+ * The glossary entries a text's words name, whole-word and case-insensitive (spec 9, L11): at
+ * each word the longest term or `_Avoid_` name starting there hits, and its words are consumed,
+ * so "take the base" is the `Take the base` entry rather than `Base` as well. Each entry comes
+ * once, by the first name that hit it, in the file's order.
+ */
+export function matchGlossary(text, glossary) {
+  const lines = glossary.split(/\r?\n/);
+  const entries = namesOf(glossary);
+  const byFirst = new Map();
+  entries.forEach(({ names }, index) => {
+    for (const name of names) {
+      const first = name.words[0];
+      if (!byFirst.has(first)) byFirst.set(first, []);
+      byFirst.get(first).push({ ...name, index });
+    }
+  });
+  const words = wordsOf(text);
+  const hits = new Map();
+  let at = 0;
+  while (at < words.length) {
+    let longest = 0;
+    let matched = [];
+    for (const name of byFirst.get(words[at]) ?? []) {
+      const length = name.words.length;
+      if (length < longest || !name.words.every((word, k) => words[at + k] === word)) continue;
+      if (length > longest) matched = [];
+      longest = length;
+      matched.push(name);
+    }
+    for (const { index, via, word } of matched) {
+      if (hits.has(index)) continue;
+      const { entry } = entries[index];
+      hits.set(index, { term: entry.term, via, word, entry: entryText(lines, entry) });
+    }
+    at += Math.max(longest, 1);
+  }
+  return [...hits.keys()].sort((a, b) => a - b).map((index) => hits.get(index));
+}
+
+/**
+ * The text of the one entry whose term is `name`, else the first whose `_Avoid_` word is, case
+ * insensitive; null when none is. A term wins, since `Sync` is also `Take the base`'s Avoid word.
+ */
+export function termOf(name, glossary) {
+  const wanted = wordsOf(name).join(' ');
+  if (wanted === '') return null;
+  const entries = namesOf(glossary);
+  const is = ({ words }) => words.join(' ') === wanted;
+  const found =
+    entries.find(({ names }) => names.some((n) => n.via === 'term' && is(n))) ??
+    entries.find(({ names }) => names.some(is));
+  return found ? entryText(glossary.split(/\r?\n/), found.entry) : null;
+}
+
+const USAGE =
+  'usage: node scripts/glossary.mjs check <file>\n' +
+  '       node scripts/glossary.mjs match <text…> [--file GLOSSARY.md]\n' +
+  '       node scripts/glossary.mjs term <name> [--file GLOSSARY.md]\n';
+
+function usage() {
+  process.stderr.write(USAGE);
+  process.exit(2);
+}
+
+function readGlossary(file) {
   try {
-    text = fs.readFileSync(file, 'utf8');
+    return fs.readFileSync(file, 'utf8');
   } catch (error) {
     process.stderr.write(`glossary: cannot read ${file}: ${error.code ?? error.message}\n`);
     process.exit(2);
   }
-  const problems = lintGlossary(text);
+}
+
+/** `match` and `term`'s arguments: the words, and the glossary `--file`, `GLOSSARY.md` in the working directory by default. */
+function lookupArgs(args) {
+  const words = [];
+  let file = 'GLOSSARY.md';
+  for (let i = 0; i < args.length; i += 1) {
+    if (args[i] !== '--file') words.push(args[i]);
+    else if (i + 1 < args.length) file = args[(i += 1)];
+    else usage();
+  }
+  if (words.length === 0) usage();
+  return { text: words.join(' '), file };
+}
+
+function main(argv) {
+  const [command, ...args] = argv;
+  if (command === 'match') {
+    const { text, file } = lookupArgs(args);
+    const hits = matchGlossary(text, readGlossary(file));
+    const blocks = hits.map(({ term, word, entry }) =>
+      [`${term} (via ${word})`, ...entry.split('\n').slice(1)].join('\n'),
+    );
+    if (blocks.length > 0) process.stdout.write(`${blocks.join('\n\n')}\n`);
+    return;
+  }
+  if (command === 'term') {
+    const { text, file } = lookupArgs(args);
+    const entry = termOf(text, readGlossary(file));
+    if (entry === null) {
+      process.stderr.write(`no entry for ${text}\n`);
+      process.exitCode = 1;
+      return;
+    }
+    process.stdout.write(`${entry}\n`);
+    return;
+  }
+  const [file, ...rest] = args;
+  if (command !== 'check' || !file || rest.length > 0) usage();
+  const problems = lintGlossary(readGlossary(file));
   for (const { line, term, token } of problems) process.stdout.write(`${line} ${term}: names a path ${token}\n`);
   process.exitCode = problems.length > 0 ? 1 : 0;
 }
