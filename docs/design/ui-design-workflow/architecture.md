@@ -112,8 +112,11 @@ Deletion test:
 ## 6. Assumed decisions
 
 - **A1** The tool: generalise the playground. Posted itm_a93cebfdaf4c. Trade: we maintain the page and build the web preview. Rejected: a DTCG export, Onlook.
+  Answer (user, itm_a93cebfdaf4c): "Generalise the playground", the default.
 - **A2** The deck refuses a gate1 without the look lines and a QA walkthrough without its difference list. Posted itm_25145bc7061f. Trade: 1 deck slice and 4 body lines for agents to get right. Rejected: prose and lint only.
+  Answer (user, itm_25145bc7061f): "Deck refuses", the default.
 - **A3** The export reaches the crew as a file path in a reply on Shape the look. Posted itm_88eea115fae3. Trade: one copy-paste. Rejected: a loopback Save route, which would take a file:// page's `Origin: null` with a bearer the page must hold.
+  Answer (user, itm_88eea115fae3): "Reply with the path", the default.
 - **A4** The web surface is a static fixture, `fixtures/surface-web/`. With the user, itm_1e265416d839. Trade: not a real product page. Rejected: the HTML deck, whose routes need its bearer.
 - **A5** Proceed without the notes file and DESIGN.md §8. With the user, itm_4abbec087d33. Trade: any rule only they held is missing.
 - **A6** Spec 12 (contrast flag) is in scope as an added line (pilot, on the user's behalf).
