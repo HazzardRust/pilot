@@ -26,6 +26,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `classifier-log.mjs` | the classifier log: one line per auto-mode denial, credentials withheld, newest 10,000 kept; a record, never a permission |
 | `client.mjs` | the stdio MCP server each session spawns; owns no state |
 | `closing-report.mjs` | writes the closing report when a landing lands: resolves the gate2, finishes its record, closes the ticket |
+| `crew-handoff.mjs` | a ticket's open crew-handoffs, which a successor's `deck_ticket co-pilot` grant closes |
 | `credential.mjs` | the one credential check, `findCredential`, for every deck post, land's output and the classifier log |
 | `daemon.mjs` | the deck process: starts the server over the store; holds a leash, or the idle rule on the user's deck |
 | `doctor.mjs` | `pilot doctor`: one row per local check, `pass`, `fail` or `cannot tell` (Defender over the projects root and its admin step, Node against engines, the deck dependency, the store directory writable, `gh`, `git`, `claude` on PATH); exit 1 on a fail; reads only, bar one temp file it removes (process-gc L12, daemon-lifecycle spec 10) |
@@ -99,6 +100,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `telemetry.mjs` | the half-hourly usage log |
 | `testUtils.mjs` | what the deck's tests stand a deck up from |
 | `tools.mjs` | the three tools a session may call, and where the deck lives |
+| `trace.mjs` | `pilot trace`: a hand-off's trace rows in time order, then what it waits on |
 | `transcripts.mjs` | the one transcript reader behind usage and analytics |
 | `ui/markdown.mjs` | escaping, link schemes and the whitelisted markdown renderer |
 | `ui/render-cards.mjs` | the cards, previews and run list |

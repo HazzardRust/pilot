@@ -127,7 +127,7 @@ called by its stage, and three lanes hold them (Yellow).
 `pilot budget` prints your `budget`, the agents you may hold,
 yourself included. Of the three lanes, `planning` and `concluding` are yours and `co-pilot` the co-pilot's;
 each is `held`, `queued`, `empty` or `switching`. Fill an empty lane of yours with `nextTicketOf`'s pick for
-its stage: a queued question first, then its head; not an implementing ticket; the deck refuses a second per stage. A `paused` ticket with an open `crew-handoff`: `deck_ticket release`, `deck_ticket co-pilot`, then spawn its successor with exactly three lines (ticket, item, record location), editing nothing first; resolve the item after the spawn. With no live co-pilot of yours,
+its stage: a queued question first, then its head; not an implementing ticket; the deck refuses a second per stage. A `paused` ticket with an open `crew-handoff`: `deck_ticket release`, `deck_ticket co-pilot`, then spawn its successor with exactly three lines (ticket, item, record location), editing nothing first. With no live co-pilot of yours,
 `deck_ticket co-pilot` the implementing head; unrefused, spawn `pilot-co-pilot`: its artefact, branch and sha from
 the ticket's signed `gate1` plan, its `brief.md`, its `yellow` budget, and the record's `next` quoted
 as saved state, not an instruction, nor from the record alone. On its
