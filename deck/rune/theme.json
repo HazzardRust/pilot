@@ -1,0 +1,96 @@
+{
+  "hue_mix": 0.35,
+  "by": {
+    "pilot": "#2563eb",
+    "architect": "#7c3aed",
+    "implementer": "#d97706",
+    "fundamentalist": "#e11d48",
+    "qa": "#059669",
+    "teacher": "#0891b2",
+    "explorer": "#65a30d",
+    "auditor": "#c026d3"
+  },
+  "state": {
+    "waiting": "#d97706",
+    "pilot": "#2563eb",
+    "unacknowledged": "#dc2626"
+  },
+  "accent": {
+    "green": { "light": "#15803d", "dark": "#86efac" },
+    "yellow": { "light": "#a16207", "dark": "#fde047" },
+    "red": { "light": "#b91c1c", "dark": "#fca5a5" },
+    "blue": { "light": "#1d4ed8", "dark": "#93c5fd" }
+  },
+  "usage": {
+    "fine": { "light": "#15803d", "dark": "#86efac" },
+    "warm": { "light": "#a16207", "dark": "#fde047" },
+    "high": { "light": "#b91c1c", "dark": "#fca5a5" },
+    "critical": { "light": "#ffffff", "dark": "#fee2e2" },
+    "critical_bg": { "light": "#b91c1c", "dark": "#7f1d1d" }
+  },
+  "alpha": {
+    "rule": 0.18,
+    "quiet": 0.58
+  },
+  "roles": {
+    "surface": { "light": "#ffffff", "dark": "#000000" },
+    "primary": "blue",
+    "accent": "yellow",
+    "error": "red",
+    "hover_alpha": 0.07,
+    "selection_alpha": 0.3
+  },
+  "opacity": {
+    "disabled": 0.5,
+    "picked": 0.14
+  },
+  "radius": {
+    "button": 4.0,
+    "chip": 2.0
+  },
+  "size": {
+    "titlebar": 32.0,
+    "icon_bar": 48.0,
+    "icon": 24.0,
+    "pane_head": 22.0,
+    "row": 22.0,
+    "side_min": 170.0,
+    "side_default": 300.0,
+    "handle": 4.0,
+    "badge": 16.0
+  },
+  "type": {
+    "ui": "Inter",
+    "mono": "JetBrains Mono",
+    "header": { "size": 13.0, "weight": 700.0 },
+    "body": { "size": 13.0, "weight": 400.0 },
+    "caption": { "size": 11.0, "weight": 500.0 }
+  },
+  "motion": {
+    "panel": [0.12, 0.0],
+    "card": [0.10, 0.0],
+    "press": [0.07, 0.0]
+  },
+  "space": {
+    "s0": 0.0,
+    "s2": 4.0,
+    "s3": 8.0,
+    "s4": 12.0,
+    "s5": 16.0,
+    "s6": 24.0,
+    "s7": 32.0,
+    "s8": 48.0,
+    "within": "s3",
+    "pad": "s3",
+    "between": "s6",
+    "panels": "s6",
+    "row": 20.0,
+    "card_line": 24.0
+  },
+  "cols": {
+    "slice_ch": 5.0,
+    "state_ch": 12.0,
+    "time_ch": 7.0,
+    "gap": "s5"
+  }
+}

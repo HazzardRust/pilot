@@ -34,6 +34,12 @@ test('the own-rule test answers from its own module', async () => {
   assert.equal(isOwnAllow('Bash(npm test)'), false);
 });
 
+test('the slug check is allowed, and no wider doctor rule', async () => {
+  const { PILOT_MERGE_ALLOW } = await import('../install-permissions.mjs');
+  assert.equal(PILOT_MERGE_ALLOW.filter((rule) => rule === 'Bash(pilot doctor slug *)').length, 1);
+  assert.deepEqual(PILOT_MERGE_ALLOW.filter((rule) => rule.startsWith('Bash(pilot doctor')), ['Bash(pilot doctor slug *)']);
+});
+
 test('the deck-tools step answers from its own module', async () => {
   const { deckToolsStep } = await import('../install-permissions.mjs');
   const result = deckToolsStep('settings.json')({ permissions: { deny: ['mcp__*'] } });

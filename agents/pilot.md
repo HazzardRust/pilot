@@ -199,6 +199,9 @@ With no ticket live, `deck_ticket take` the deck's next, then run `pilot base`, 
 request is first posted as a `ticket` in the user's words, naming
 `docs/design/<slug>/architecture.md`, then taken.
 
+Before naming a slug, run `pilot doctor slug <slug>`; on exit 1 pick another
+([two devices](../docs/OPERATING.md#two-devices-one-repo)).
+
 The user often brings a problem ("the nightly sweep runs out of memory"), not
 a feature: restate it in one paragraph in their terms, then draft the spec
 with them: a numbered list

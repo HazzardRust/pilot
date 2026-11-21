@@ -26,10 +26,12 @@ import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
 import { MIN_MODS_VERSION, claudeVersion } from '../scripts/handoff.mjs';
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
-import { git as gitAt } from '../scripts/pilot-branch.mjs';
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { probeDeck } from './probe.mjs';
+import { isSlug } from './runs.mjs';
+import { clashText, leashedGit, slugClashes } from './slug-clash.mjs';
 import { storeDir as defaultStoreDir } from './store-dir.mjs';
+import { readTickets } from './tickets.mjs';
 import { DECK_PORT, deckUrl } from './tools.mjs';
 import { ENGINES, PLUGIN_VERSION, isOlder, isVersion } from './version.mjs';
 
@@ -167,6 +169,69 @@ function hostRow({ git, hostFor, onPath, cwd }) {
   return signedIn
     ? { name, verdict: 'pass', detail: `${which}: ${cli} signed in` }
     : { name, verdict: 'fail', detail: `${which}: ${cli} is not signed in`, steps: [`run \`${cli} auth login\``] };
+}
+
+/** A design path in a ticket body; its segment is held to `SLUG` before it is used anywhere. */
+const DESIGN_PATH = /docs\/design\/([^/\s]+)\//g;
+/** The most held slugs one row reads (each costs a few `git ls-remote` and Host calls); past it, the rest are named unread. */
+const MAX_HELD = 20;
+/**
+ * The slugs this deck holds (two-devices L5): each `docs/design/<slug>/` an open ticket's body names, `SLUG`-checked,
+ * once each in the order named, minus the slugs of this deck's own run records, which are its runs and no clash.
+ * `view` is `readTickets`'s open view, whose shape it has checked.
+ */
+export function heldSlugs(view) {
+  const own = new Set(view.records.map((record) => record.slug));
+  const held = new Set();
+  for (const ticket of view.open) {
+    for (const [, slug] of (ticket.body ?? '').matchAll(DESIGN_PATH)) {
+      if (isSlug(slug) && !own.has(slug)) held.add(slug);
+    }
+  }
+  return [...held];
+}
+
+/** The open view for `cwd` (`readTickets`), or null when the deck could not be read: the slugs row's `cannot tell`. */
+const readOpenView = (cwd, url) => readTickets(cwd, { open: true, url }).catch(() => null);
+
+/**
+ * The slugs row (two-devices spec 2b, 4): `fail` with a step per clash when a held slug is taken where another
+ * device would see it, `cannot tell` when the deck or a remote could not be read, else `pass`. `view` is
+ * `readTickets`'s open view; null is a deck not read. Nothing held reads no git and no Host; each remote is read once.
+ */
+export function slugsRow({ view, git, hostFor, cwd = process.cwd() }) {
+  const name = 'slugs';
+  if (!view) return { name, verdict: 'cannot tell', detail: 'the deck did not answer, so the slugs it holds are unknown' };
+  const all = heldSlugs(view);
+  if (all.length === 0) return { name, verdict: 'pass', detail: 'no open ticket names a design slug' };
+  const held = all.slice(0, MAX_HELD);
+  const unread = all.length > held.length ? [`${all.length - held.length} more slugs not read`] : [];
+  let host = null;
+  try {
+    host = hostFor(cwd, { git });
+  } catch (error) {
+    unread.push(`host: ${error.message}`);
+  }
+  const steps = [];
+  const tips = new Map();
+  for (const slug of held) {
+    const { clashes, unread: why } = slugClashes(slug, { git, host, tips });
+    for (const clash of clashes) steps.push(`${slug} is taken: ${clashText(clash)}; rename the run before it starts`);
+    if (why) unread.push(`${slug}: ${why}`);
+  }
+  const free = `${held.length} held: ${held.join(', ')}`;
+  if (steps.length) return { name, verdict: 'fail', detail: free, steps: [...steps, ...unread.map((line) => `cannot tell ${line}`)] };
+  if (unread.length) return { name, verdict: 'cannot tell', detail: `${free}; ${unread.join('; ')}` };
+  return { name, verdict: 'pass', detail: `${free}, none taken` };
+}
+
+/**
+ * The slugs row as `pilot start` warns it (two-devices spec 4; A2, A4): its printed line when it is not `pass`, else
+ * null. The deck view, git and Host default to the real reads, git on the slug read's leash (`leashedGit`).
+ */
+export async function slugsWarning({ cwd, readView = () => readOpenView(cwd), git = leashedGit(cwd), hostFor = hostForDefault }) {
+  const row = slugsRow({ view: await readView(), git, hostFor, cwd });
+  return row.verdict === 'pass' ? null : rowLine(row);
 }
 
 /** The scanner states that need nothing done; `not-excluded` needs the admin step; `unknown` cannot tell. */
@@ -423,10 +488,11 @@ export async function checkAll({
   readSettings = defaultReadSettings,
   env = process.env,
   cwd = process.cwd(),
-  git = (args) => gitAt(cwd, ...args),
+  git = leashedGit(cwd),
   hostFor = hostForDefault,
+  readView = () => readOpenView(cwd, url),
 } = {}) {
-  const found = await probe(url);
+  const [found, view] = await Promise.all([probe(url), readView()]);
   let settings;
   try {
     settings = readSettings();
@@ -440,6 +506,7 @@ export async function checkAll({
     storeRow({ storeDir, canWrite }),
     reachRow({ reach: readReach(), enabled: readEnabled() }),
     hostRow({ git, hostFor, onPath, cwd }),
+    slugsRow({ view, git, hostFor, cwd }),
     ...CLIS.map((cmd) => cliRow(cmd, onPath)),
     allowRow({ readSettings }),
     modsRow({ version: claudeVersion(run), settings, env }),
@@ -453,20 +520,45 @@ function rowLine({ name, verdict, detail, steps = [] }) {
 }
 
 /**
+ * `pilot doctor slug <slug>` (two-devices spec 2a, 2c): `free <slug>` and 0, or a `clash` line per clash and a
+ * `cannot tell` line for what could not be read, and 1. Reads only: `git ls-remote` and the host's open reviews.
+ */
+function slugVerb({ slug, cwd, deps, log }) {
+  const git = deps.git ?? leashedGit(cwd);
+  let host = null;
+  let hostUnread;
+  try {
+    host = (deps.hostFor ?? hostForDefault)(cwd, { git });
+  } catch (err) {
+    hostUnread = `host: ${err.message}`;
+  }
+  const { clashes, unread } = slugClashes(slug, { git, host });
+  for (const clash of clashes) log(`clash ${slug}: ${clashText(clash)}`);
+  const whys = [unread, hostUnread].filter(Boolean);
+  if (whys.length) log(`cannot tell ${slug}: ${whys.join('; ')}`);
+  if (clashes.length || whys.length) return 1;
+  log(`free ${slug}`);
+  return 0;
+}
+
+/**
  * Print every row, or with `defender` the Defender row alone; 1 when a printed row fails, else 0
  * (`cannot tell` never fails, A5). `defender due` prints the two steps and exits 0 when the advice
  * is owed, else `not due: <why>` and 1; `defender advised <where>` writes the advice marker and
- * exits 0. Any other argument prints the usage on stderr, probes and writes nothing, 2.
+ * exits 0; `slug <slug>` is `slugVerb`. Any other argument, a non-slug among them, prints the usage on stderr,
+ * probes and writes nothing, 2.
  */
 export async function main({ cwd = process.cwd(), deps = {}, log = console.log, args = [] } = {}) {
   const [first, verb, where] = args;
   const known =
     args.length === 0 ||
+    (first === 'slug' && args.length === 2 && isSlug(verb)) ||
     (first === 'defender' && (args.length === 1 || (args.length === 2 && verb === 'due') || (args.length === 3 && verb === 'advised' && ADVISED_WHERE.test(where))));
   if (!known) {
-    process.stderr.write('usage: pilot doctor [defender [due | advised <install|item id>]]\n');
+    process.stderr.write('usage: pilot doctor [slug <slug> | defender [due | advised <install|item id>]]\n');
     return 2;
   }
+  if (first === 'slug') return slugVerb({ slug: verb, cwd, deps, log });
   const options = { root: projectsRoot(cwd), ...deps };
   const defender = { platform: options.platform ?? hostPlatform(), run: options.run ?? defaultRun, root: options.root };
   const store = options.storeDir ?? defaultStoreDir();

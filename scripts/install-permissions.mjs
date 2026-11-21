@@ -194,6 +194,8 @@ export const PILOT_MERGE_ALLOW = [
   'Bash(pilot wait *)',
   'Bash(pilot budget)',
   'Bash(pilot tickets)',
+  // two-devices (A6): `ls-remote` and the host's open-PR list only, the slug kebab-checked before either.
+  'Bash(pilot doctor slug *)',
   'Bash(node bin/pilot.mjs deck --scratch *)',
 ];
 
