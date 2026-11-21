@@ -1,6 +1,6 @@
 # The deck's UI, rebuilt in Rune
 
-Ticket `itm_0dcd9aa67146` · slug `rune-deck-ui` · base `origin/pilot` fa28b73b · ADR NNNN (`docs/adr/NNNN-rune-deck-ui.md`, S1)
+Ticket `itm_0dcd9aa67146` · slug `rune-deck-ui` · base `origin/pilot` fa28b73b · ADR 0206 (`docs/adr/0206-rune-deck-ui.md`, S1)
 
 ## 1. Problem
 
@@ -193,7 +193,7 @@ Width 15; longest stem 5
 
 | Slice | Title | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- | --- |
-| S1 | Walking skeleton: a Rune window shows the deck's tabs read from `/api/view` | 1, 2, 9, 11 | `deck/rune/Cargo.toml`, `Cargo.lock`, `src/main.rs`, `src/app.rs`, `src/client.rs`, `src/regions/*.rs` (stubs), `src/theme.rs`, `src/prefs.rs`, `src/layout.rs`, `src/act.rs`, `src/act_deck.rs`, `tests/support/mod.rs`, `tests/skeleton.rs`, `deck/view/*.mjs` (index, reads, tabs, stubs), `deck/server-routes.mjs`, `deck/test/view-route.test.mjs`, `.gitignore`, `docs/adr/NNNN-rune-deck-ui.md` | – | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S1](slices/S1.md) |
+| S1 | Walking skeleton: a Rune window shows the deck's tabs read from `/api/view` | 1, 2, 9, 11 | `deck/rune/Cargo.toml`, `Cargo.lock`, `src/main.rs`, `src/app.rs`, `src/client.rs`, `src/regions/*.rs` (stubs), `src/theme.rs`, `src/prefs.rs`, `src/layout.rs`, `src/act.rs`, `src/act_deck.rs`, `tests/support/mod.rs`, `tests/skeleton.rs`, `deck/view/*.mjs` (index, reads, tabs, stubs), `deck/server-routes.mjs`, `deck/test/view-route.test.mjs`, `.gitignore`, `docs/adr/0206-rune-deck-ui.md` | – | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S1](slices/S1.md) |
 | S2 | A post appears live, and a stopped daemon is said and survived | 4, 6a, 10 | `deck/rune/src/live.rs`, `src/app.rs`, `tests/live.rs` | S1 (`app.rs`, `Client::events`) | `pilot:rust-reviewer` | [S2](slices/S2.md) |
 | S3 | The deck opens as the Rune window wherever it is built | 1 | `deck/open.mjs`, `bin/pilot.mjs`, `deck/test/open.test.mjs` | S1 (the binary's path) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
 | S4 | The deck's palette, font, spacing and motion, light and dark | 2, 5, 6b | `deck/rune/src/theme.rs`, `tests/theme.rs` | S1 (`theme::tokens`) | `pilot:rust-reviewer` | [S4](slices/S4.md) |

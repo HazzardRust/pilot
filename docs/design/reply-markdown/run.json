@@ -1,0 +1,187 @@
+{
+  "slug": "reply-markdown",
+  "feature": "Reply box renders markdown",
+  "ticket": "itm_864c47669387",
+  "branch": "feat/reply-markdown",
+  "base": "feat/rune-deck-ui",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-reply-markdown",
+  "artefact": "docs/design/reply-markdown/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "planned",
+      "branch": "slice/reply-markdown-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/reply-markdown-s2"
+    }
+  ],
+  "next": "crew-handoff-trace itm_1f8238d5a300 released at be819183, S1-S7 in: co-pilot it, fundamentalist + QA per its run.json. Rune itm_0dcd9aa67146 at 415914f8, no QA live: waits on user's look itm_f98fae4576f8 + question itm_dc1c53d781cc (default built), then gate2. two-devices green: walkthrough itm_def488480f47. reply-markdown planned. Keep memory ui-design-workflow-notes.md.",
+  "updatedAt": "2026-11-20T19:16:09.100Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "rune-kit's markdown parser maps only to rendered text, its source map private; three probes to rule it out and call pulldown-cmark directly",
+      "evidence": "rune-kit parser/map.rs",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "first three question posts refused for a missing Research: line; ADR 0119's rule is not in the architect's definition (main hit it three times too)",
+      "evidence": "itm_3cadb89e11ae, itm_cf736cb1ad17, itm_b5ca8397c90b",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "brief trailer names Fable 5.2 while Opus crew agents' harness trailer says Opus 5.5; two agents asked which to use",
+      "evidence": "a9633301 on feat/rune-deck-ui; reply-markdown brief.md",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "auto mode gave no verdict on a Bash or SendMessage call batched with other calls five times; each reissued alone",
+      "size": 1500
+    },
+    {
+      "kind": "drain",
+      "what": "deck filed main's refused Stop-Process as a blocking item on the live planning ticket, which refused its gate1 until main closed it as moot",
+      "size": 1500
+    },
+    {
+      "kind": "drain",
+      "what": "crew-handoff item itm_f93c340ba2f1 stayed open after its co-pilot handed back directly; cost the user a question; ticket itm_a28fc03b3ae5 queued",
+      "size": 2500
+    },
+    {
+      "kind": "drain",
+      "what": "deck_post refused questions five times: Research: line wording (only the full skip-list phrase passes) and the 1200-char body cap",
+      "size": 2000
+    },
+    {
+      "kind": "drain",
+      "what": "co-pilot's hand-back said pilot land is the pilot's before QA writes; pilot land merges into pilot, so it was not run; the agent text reads as if it were a pre-QA step",
+      "size": 800
+    },
+    {
+      "kind": "drain",
+      "what": "QA agent ids from before /clear cannot be resumed (no transcript); gate2 posted by pilot without QA's per-line evidence",
+      "size": 3000
+    },
+    {
+      "kind": "drain",
+      "what": "replan stores a feat sha while driftOf tests ancestry on plan.branch (design); every replanned ticket reads gone on its co-pilot call; explorer trace recut.mjs:145, store-tickets.mjs:459",
+      "size": 4000
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exits at once while the yellow lane is empty, so nothing listens for a gate press until a co-pilot call passes",
+      "size": 1000
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "user taste notes arrived faster than one QA writer builds; 8 queued mid-round, two hand-backs at context mark; one agent holds 2-3 commit sets",
+      "evidence": "QA reports abc1e7c6, adfc38b9 on itm_f98fae4576f8",
+      "size": 3
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "walkthrough thread ownership flipped pilot/qa four times; deck hands a qa thread back when a building QA misses a reply",
+      "evidence": "itm_f98fae4576f8",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "running Rune window locks target/release, so every rebuild closes the user's view; cargo not on PATH",
+      "evidence": "QA abc1e7c6 report",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait timed out on a healthy deck five times (deck answers in ms right after)",
+      "size": 1500
+    },
+    {
+      "kind": "drain",
+      "what": "pre-/clear crew agents still alive but unknown to the new session: a second QA was spawned on a worktree whose QA was live",
+      "size": 2500
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "no way to open a given screen in the Rune window without clicking; with the user at the machine, thread and reply fixes rest on tests, not a live look",
+      "evidence": "QA aaed3a00 report, sets a and f",
+      "size": 2
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "report delivered to main, not its fundamentalist; coverage cell needs the 13-16 min suite, Stryker timed out at 900 s with no score, scratch dir left busy",
+      "evidence": "two-devices evidence table a53e83a2",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "five-second git timeouts go red when gates run in parallel and pass alone (QA gate 7 failures, fix gate 1)",
+      "evidence": "two-devices co-pilot hand-back",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "installed pilot 0.9.9 is older than the code under test (no host command); pilot integrate strict on Evidence trailer form and fix-branch rows",
+      "evidence": "two-devices co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "relaying about 20 walkthrough notes and QA lines one by one through the pilot, each with a tip and pid check",
+      "size": 60000
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait timed out on a healthy deck about ten times during QA cargo gates; each restart a turn",
+      "size": 6000
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce hook forces a hand-back while children are live and the co-pilot has no TaskOutput to block on; main watched origin and resumed it per slice",
+      "evidence": "six forced hand-backs on crew-handoff-trace",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "a child's SubagentHandback reaches main, not the co-pilot that spawned it",
+      "evidence": "main forwarded S1, S3, S4, S5, S6 reports",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5 called its own prompt-pin regression pre-existing; base passed 16 of 16",
+      "evidence": "feat 4722c031 vs S5 10292262",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice Files-owned lists missed files the Interface forces; deck store files sit at the 800-line cap; prompt pins have 0.25 tokens headroom",
+      "evidence": "S2, S6; server-wait.mjs 799; S5.md",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "per-slice resume loop for the hook-paused co-pilot: watch origin, resume, forward report facts, seven slices",
+      "size": 40000
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exited 'deck not answering' nine times in three hours while the deck answered MCP calls",
+      "size": 5000
+    },
+    {
+      "kind": "drain",
+      "what": "deck's 'feature PR not updated' timeout notices arrive as user replies and as 'landing ended short', each needing a reply",
+      "size": 3000
+    }
+  ]
+}

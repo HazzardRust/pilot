@@ -1,4 +1,4 @@
-//! The Rune deck (ADR NNNN): a native window over the daemon's `GET /api/view`, an HTTP client of
+//! The Rune deck (ADR 0206): a native window over the daemon's `GET /api/view`, an HTTP client of
 //! loopback and never a reader of the store (L1).
 
 pub mod act;
