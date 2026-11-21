@@ -97,12 +97,14 @@ test('a parked pilot wait returns with the line', async (t) => {
   t.after(() => (port === undefined ? delete process.env.PILOT_DECK_PORT : (process.env.PILOT_DECK_PORT = port)));
   process.env.PILOT_DECK_PORT = new URL(base).port;
   const ticket = yellowTicket('parked overnight');
-  const handoff = crewHandoff(ticket.id, new Date(Date.now() - 11 * MIN).toISOString());
 
   const said = [];
   const waiting = wait({ env: {}, repo: REPO, kind: 'pilot', timeoutMinutes: 0.2, pollMs: 200, say: (line) => said.push(line), warn: (line) => said.push(line) });
   for (let i = 0; i < 400 && waiterCount() < 1; i += 1) await new Promise((resolve) => setTimeout(resolve, 5));
   assert.equal(waiterCount(), 1, 'the wait is parked');
+  // Stored overdue only now, and noted in the same synchronous turn: a crew-handoff due before the park is the deck's
+  // own timer's to write on any announce, which on a slow runner landed before the wait parked.
+  const handoff = crewHandoff(ticket.id, new Date(Date.now() - 11 * MIN).toISOString());
   noteCrewWait(handoff.id);
 
   assert.equal(await waiting, 0, 'the line ends the wait, well before its timeout');
