@@ -26,15 +26,15 @@ The user's words: "an entire separate ui page for me to view logging ... organis
 |---|---|---|
 | 1 | The Rune deck has a separate Archive screen, `GET /api/view?screen=archive`. An Archive button beside Items in the right strip opens it (A9). | A view test gets 200 and the `archive` region on a scratch store; a Rune test clicks `strip-archive` and finds the rows. The user opens it on the running Rune deck. |
 | 2 | Closed tickets are listed, both from the live store and from the month files (`deck.archive-YYYY-MM.json`). Pressing a row opens its detail on the same screen (`&id=<id>`) with the ticket's thread replies, its plan and its closing report. | Scratch store with 3 closed tickets, 1 of them only in a month file: exactly 3 rows. Each detail shows its report's title. |
-| 3 | Every local store has a view, under a kind the user can filter by (L9). The kinds:<br>• closed tickets<br>• closing reports<br>• hand-offs (`handoff`, `crew-handoff`)<br>• every other settled thread<br>• run records<br>• friction rows<br>• the classifier log<br>• usage windows<br>• memory samples<br>• audit reports<br>• the switch files (`alerts.json`, `usage-log.json`, `start-settings.json`)<br>• `deck.log` and `wrapper.log` | One seeded record of each kind appears under its kind, and a kind's filter shows exactly its seeded count. A coverage test fails on a thread kind or a store file that has neither a view nor a never-shown entry. |
+| 3 | Every local store has a view, under a kind the user can filter by (L9). The kinds:<br>• closed tickets<br>• closing reports<br>• hand-offs (`handoff`, `crew-handoff`)<br>• every other settled thread<br>• run records<br>• friction rows<br>• the classifier log<br>• usage windows<br>• memory samples<br>• audit reports<br>• the switch files (`alerts.json`, `usage-log.json`, `start-settings.json`)<br>• `deck.log` and `wrapper.log`<br>• hand-off trace rows (`handoff-trace.jsonl`, A8) | One seeded record of each kind appears under its kind, and a kind's filter shows exactly its seeded count. A coverage test fails on a thread kind or a store file that has neither a view nor a never-shown entry. |
 | 4 | Rows sort by any column, both ways. A search box and a kind filter narrow the rows in the Rune deck itself, with no request per keystroke. | Rust test: a date sort gives the exact order ascending and descending; searching one ticket title leaves exactly its rows; typing makes no request. |
 | 5 | Rows are grouped by date the way the home page groups settled threads (`daySections`: today, then each day, then each month). | Same headings and counts as `daySections` on 3 seeded dates (today, yesterday, last month). The user answered "Home page day sections" on itm_50eb0e5833dc. |
-| 6 | Every record reads as named fields: labels, local dates, bodies through `rune-kit`'s `Markdown` (Rune L8), never raw JSON. | Per-kind test over all 12 kinds: each kind's labels are present and 0 rows hold `{"`. The user looks at it on the walkthrough. |
+| 6 | Every record reads as named fields: labels, local dates, bodies through `rune-kit`'s `Markdown` (Rune L8), never raw JSON. | Per-kind test over all 13 kinds: each kind's labels are present and 0 rows hold `{"`. The user looks at it on the walkthrough. |
 | 7 | The screen only reads. It makes GETs only, and visiting it or a detail changes no stored byte and clears no notice. | Test: all 3 sha256s, of `deck.json`, the month files and `classifier.log`, are unchanged after `screen=archive` and every `&id=`, including for an item that carries a notice, on a current-format store (L10). |
 | 8 | Credentials are withheld. `deck.secret`, `deck-open.html` and `logs/*.log` are never opened. Every string shown passes `findCredential` and is replaced by `<withheld: credential>` on a hit. *practitioner: security reviewer* | A seeded classifier row and a `deck.log` line, each holding an `sk-` token, render withheld. A spy shows the three never-shown paths are not read. |
 | 9 | The Archive screen copes with the real store's scale: about 1,500 live items plus 2 month files and the logs. *practitioner: log-explorer engineer* (assumed A5) | The view is served in under 2 s from a copy of `~/.claude/pilot` under `PILOT_DECK_DIR`, timed 3 times; a Rune frame over 10,000 rows with Today open draws in under 50 ms, 3 runs. |
 
-Cannot mean here: `~/.claude/pilot/handoff-trace.jsonl`, which belongs to crew-handoff-trace and has not landed. That run adds one record-kind file here (§7).
+`handoff-trace.jsonl` (crew-handoff-trace, Gate 2 signed 2026-11-21) is a kind here once that run lands: S11 (A8 overturned).
 
 ## 3. Findings
 
@@ -70,6 +70,7 @@ Cannot mean here: `~/.claude/pilot/handoff-trace.jsonl`, which belongs to crew-h
   | `audits/<repo>/` | `record.json` and `<stamp>.json` | `deck/audit.mjs` |
   | `alerts.json`, `usage-log.json`, `start-settings.json` | switch files | |
   | `deck.log`, `wrapper.log(.old)` | text | |
+  | `handoff-trace.jsonl(.old)` | JSONL hand-off steps (crew-handoff-trace, unlanded at re-cut) | `hooks/lib/wrapper-log.js traceFile`; read by `deck/trace.mjs` |
   | `deck.secret` and `deck-open.html` | hold the secret | |
   | `logs/*.log` | raw test output, unfiltered | |
 
@@ -85,7 +86,7 @@ Cannot mean here: `~/.claude/pilot/handoff-trace.jsonl`, which belongs to crew-h
 | Seam | Interface | Folded behind it | Category |
 |---|---|---|---|
 | archive (`deck/archive.mjs`) | `archiveRows()`, `archiveKinds()`, `NEVER_SHOWN` | pure reads of the store and the month files, record-kind discovery, credential withholding | local-substitutable (temp `PILOT_DECK_DIR`) |
-| record kind (`deck/archive-kinds/*.mjs`) | `{ kind, label, files, rowsOf(source) }` | each store's parsing and field labels | in-process; 12 adapters, a real seam |
+| record kind (`deck/archive-kinds/*.mjs`) | `{ kind, label, files, rowsOf(source) }` | each store's parsing and field labels | in-process; 13 adapters, a real seam |
 | month files (`deck/store-archive.mjs`) | `archivedItem(id)`, `archivedItems()` | `readMonth` across every month file | local-substitutable |
 | archive detail (`deck/archive-detail.mjs`) | `archiveDetail(id)` | the join of an item, its plan and its closing report | local-substitutable |
 | archive view (`deck/view/archive.mjs`, `deck/view/archive-detail.mjs`) | the `archive` and `archiveDetail` regions of `viewOf` | `daySections` reuse, the kinds' counts, the screen gate | local-substitutable (`deckOnAPort`) |
@@ -130,39 +131,47 @@ Deletion test: `store-archive` survives, because three callers need it, and the 
 ## 6. Assumed decisions
 
 - **A1** is settled: see L8.
+  Verdict: stands — settled as L8 on the user's "Keep waiting for Rune to land" (itm_697b1f9df302); Rune landed at 4fee666
 - **A2** is settled: see L9.
+  Verdict: stands — settled as L9
 - **A3 Detail opens on the archive screen, `screen=archive&id=<id>`, not `screen=thread`.**
   - *Trades:* a second thread drawing in Rune, without reply or options.
   - *Rejected:* `screen=thread`, whose GET clears a notice and so breaks spec 7.
+  Verdict: stands — no queued ticket changes how a thread's notice clears; spec 7 needs the read-only path
 - **A4 Sorting by a column other than date orders the rows inside each day section.** Sorting by date also flips the order of the sections.
   - *Trades:* there is no flat cross-day sort.
   - *Rejected:* dropping the sections while a column sort is on, which breaks spec 5.
+  Verdict: stands — the Tickets tab's date grouping the user asked to match (spec 5) keeps sections
 - **A5 No pagination.** Every row is in the view, with the 2 s and 50 ms bars of spec 9; day sections fold, Today open, so a frame draws only open sections.
   - *Trades:* a view of several MB on the real store, refetched on each live change while the screen is open.
   - *Rejected:* server paging, which would split search across requests.
+  Verdict: stands — no queued ticket adds paging to /api/view; spec 9's bars guard the cost
 - **A6 Text logs show their newest 2,000 lines each, one row per line.** This covers `deck.log`, `wrapper.log` and `wrapper.log.old`. A row takes its timestamp from the line where one parses, and the file's mtime otherwise.
   - *Trades:* older lines are not shown.
   - *Rejected:* the whole file.
+  Verdict: stands — no recorded preference asks for whole logs; the files stay on disk
 - **A7 Items show only once settled** (closed or resolved). Open items stay on the deck itself. Run records, logs and switch files show whatever is current.
   - *Rejected:* duplicating the open queue.
+  Verdict: stands — open items are on the deck itself, and the side-panes ticket itm_f9162b87414f owns their panes
 - **A8 `handoff-trace.jsonl` is out until crew-handoff-trace lands.** That run adds `deck/archive-kinds/trace.mjs`, and S10's coverage list names the file as pending.
   - *Rejected:* building against an unlanded format.
+  Verdict: overturned: crew-handoff-trace's Gate 2 (itm_34bcc492a686) was signed 2026-11-21 and lands before this run implements, so handoff-trace.jsonl is in scope as a kind; spec 3 asks for everything logged
 - **A9 The Archive button sits in the right strip beside Items** (`strip.archive`, as `strip.items`).
   - *Trades:* a shared file, `regions/strip.rs`, with itm_f9162b87414f (side panes); the strip, not the header, as the way in.
   - *Rejected:* an Archive entry in the header tab strip (`regions/tabs.rs`), which mixes a page among the deck tabs.
   - Answered "Strip beside Items" on itm_d1836b2773f6 (the default).
+  Verdict: stands — the user pressed "Strip beside Items" on itm_d1836b2773f6
 
 ## 7. Out of scope
 
 - Any write from the page: no reopening, deleting or replying.
 - The HTML deck view of the archive (L8): `/archive` HTML routes are not built.
-- The trace kind (A8).
 - Changing the Tickets tab.
 - Paging, export, and retention of the stores themselves.
 
 ## 8. Slices
 
-Width 8; longest stem 3
+Width 9; longest stem 3
 
 | Slice | Spec | Files owned | After | Reviewers | File |
 |---|---|---|---|---|---|
@@ -175,7 +184,8 @@ Width 8; longest stem 3
 | S7 Usage windows and memory samples | 3, 6 | `deck/archive-kinds/usage.mjs` (new), `deck/archive-kinds/memory.mjs` (new), `deck/test/archive-telemetry.test.mjs` (new) | S1 (record-kind seam) | typescript | [S7](slices/S7.md) |
 | S8 Audit reports and switch files | 3, 6 | `deck/archive-kinds/audits.mjs` (new), `deck/archive-kinds/switches.mjs` (new), `deck/test/archive-audits.test.mjs` (new) | S1 (record-kind seam) | typescript | [S8](slices/S8.md) |
 | S9 Deck and wrapper logs, line by line | 3, 6, 8 | `deck/archive-kinds/textlogs.mjs` (new), `deck/test/archive-textlogs.test.mjs` (new) | S1 (record-kind seam) | typescript, security | [S9](slices/S9.md) |
-| S10 Every store is covered, at real scale | 3, 9 | `deck/test/archive-coverage.test.mjs` (new), `scripts/archive-timing.mjs` (new), `docs/adr/NNNN-archive-page.md` (new) | S4 (thread kinds claimed), S5 (records kinds), S6 (classifier kind), S7 (usage, memory kinds), S8 (audits, switches kinds), S9 (text-log kinds) | typescript | [S10](slices/S10.md) |
+| S11 Hand-off trace rows | 3, 6 | `deck/archive-kinds/trace.mjs` (new), `deck/test/archive-trace.test.mjs` (new) | S1 (record-kind seam) | typescript | [S11](slices/S11.md) |
+| S10 Every store is covered, at real scale | 3, 9 | `deck/test/archive-coverage.test.mjs` (new), `scripts/archive-timing.mjs` (new), `docs/adr/NNNN-archive-page.md` (new) | S4 (thread kinds claimed), S5 (records kinds), S6 (classifier kind), S7 (usage, memory kinds), S8 (audits, switches kinds), S9 (text-log kinds), S11 (trace kind) | typescript | [S10](slices/S10.md) |
 
 Walking skeleton: S1, across both sides: a pure store read, the month files, one record kind, withholding, the `archive` region and screen, the strip button, and the Rune list in day sections. Estimated near 400 lines, the brief's limit; past it, S1's implementer stops and asks main.
 
@@ -183,6 +193,7 @@ Red team (re-cut), each walked against the landed files:
 - **red team:** `history` draws on every non-thread screen with "No finished threads yet." (`app.rs:286`, `history.rs:164`): S1 withholds it on `archive` (L11) and pins the text's absence (S1 behaviour 5).
 - **red team:** `REGIONS` run on every screen (`view/index.mjs:34`): an unguarded `archive` region would read every log on each home refresh. S1 behaviour 6 pins `{}` off screen.
 - **red team:** the HTML-cut S1 drew only titles; non-item kinds (logs, usage) have no detail (S2 joins items only), so S1's Rust row draws each row's fields, or spec 6 fails for S5-S9.
+- **red team:** S11 reads a file whose writer is not on `pilot` at re-cut (`feat/crew-handoff-trace` a872f2c6): S11 stops and asks main if `deck/trace.mjs` is absent from its base; nothing else waits on it but S10.
 - **red team:** S2 and S3 both thicken the Rune screen: the detail is its own region file (`archive_detail.rs`), so S3 owns `archive.rs` alone and the two run side by side.
 
 ## 9. Acceptance evidence
@@ -212,5 +223,6 @@ What the user sees, in the order they meet it:
 | S7 | planned | | | | S1 | 3, 6 |
 | S8 | planned | | | | S1 | 3, 6 |
 | S9 | planned | | | | S1 | 3, 6, 8 |
-| S10 | planned | | | | S4, S5, S6, S7, S8, S9 | 3, 9 |
-| archive-page | planned | feat/archive-page | | | S1-S10 | 1-9 |
+| S10 | planned | | | | S4, S5, S6, S7, S8, S9, S11 | 3, 9 |
+| S11 | planned | | | | S1 | 3, 6 |
+| archive-page | planned | feat/archive-page | | | S1-S11 | 1-9 |
