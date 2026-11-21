@@ -150,7 +150,7 @@ Deletion test: `store-archive` survives, because three callers need it, and the 
 - **A9 The Archive button sits in the right strip beside Items** (`strip.archive`, as `strip.items`).
   - *Trades:* a shared file, `regions/strip.rs`, with itm_f9162b87414f (side panes); the strip, not the header, as the way in.
   - *Rejected:* an Archive entry in the header tab strip (`regions/tabs.rs`), which mixes a page among the deck tabs.
-  - Posted to the user via main (ticket parked).
+  - Answered "Strip beside Items" on itm_d1836b2773f6 (the default).
 
 ## 7. Out of scope
 
