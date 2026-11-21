@@ -79,7 +79,7 @@ The architecture document for a run: spec, design, locked and assumed decisions,
 _Avoid_: Plan, PRD
 
 **Slice file**:
-`docs/design/<slug>/slices/S<n>.md`, holding one slice's fields beside the artefact, which keeps the slice list; a brief passes its path.
+One slice's fields in a file of their own in the run's design folder, beside the artefact, which keeps the slice list; a brief passes its path.
 _Avoid_: Slice section, ticket
 
 **Interface block**:
@@ -131,7 +131,7 @@ One host CI result on one commit, `{ name, outcome: pass | fail | pending }`.
 The commit's checks read as one state: `green`, `red`, `pending`, `none`, `unread`.
 
 **CI configured**:
-The tree at the sha holds `.github/workflows/*.yml|yaml` or `.gitlab-ci.yml`.
+The tree at the sha holds a GitHub Actions workflow file or a GitLab CI file.
 
 **Check line**:
 `checks <state> at <sha7>[: <names>]`, the one string every step prints and a gate2 carries.
@@ -158,7 +158,7 @@ The status-table column naming the user's next action for a slice, rendered from
 _Avoid_: Action, todo
 
 **Store**:
-The deck's JSON on disk under `~/.claude/pilot/`. The daemon is its only writer.
+The deck's JSON on disk in the pilot's folder of the user's Claude home. The daemon is its only writer.
 _Avoid_: Database, state file
 
 **Deck number**:
@@ -235,7 +235,7 @@ The detached worktree outside the repository the auditor measures in and removes
 _Avoid_: Slice worktree, sandbox
 
 **Area**:
-One measured concern, briefed by a file in `skills/audit/areas/`; `open` is the auditor's area for what no named area covers.
+One measured concern, briefed by one area file of the audit skill; `open` is the auditor's area for what no named area covers.
 _Avoid_: Category, check
 
 **Row**:
@@ -257,7 +257,7 @@ _Avoid_: Selection, approval
 ### Run analytics
 
 **Transcript**:
-One JSONL file under `~/.claude/projects`, a session's or a subagent's. Read for numbers, never for text.
+One JSONL file in Claude Code's projects folder, a session's or a subagent's. Read for numbers, never for text.
 _Avoid_: Log, history
 
 **Counted message**:
@@ -283,7 +283,7 @@ _Avoid_: Rates, billing
 ### Usage telemetry
 
 **Usage log**:
-`usage.jsonl` in the deck's store: append-only, one line per half-hour window, written by the daemon.
+The usage JSONL file in the deck's store: append-only, one line per half-hour window, written by the daemon.
 _Avoid_: Telemetry file, metrics, history
 
 **Window**:
@@ -313,7 +313,7 @@ The vendored single-purpose reviewers and skills the crew loads. Never orchestra
 _Avoid_: Library, plugins, dependencies
 
 **Vendored file**:
-A file copied from ECC or mattpocock-skills, carrying a provenance header and a row in `VENDOR.md`, marked verbatim or adapted.
+A file copied from ECC or mattpocock-skills, carrying a provenance header and a row in the vendoring ledger at the repository root, marked verbatim or adapted.
 _Avoid_: Dependency, import, fork
 
 **Re-sync**:
