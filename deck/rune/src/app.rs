@@ -66,6 +66,16 @@ pub fn back(s: &mut State) {
     }
 }
 
+/// A thread's way off (escape.mjs `leave`): `back` when the screen behind is a deck page, since
+/// another thread is no way off; otherwise to `deck`, the deck that owns the thread.
+pub fn leave(s: &mut State, deck: Query) {
+    if s.history.back.last().is_some_and(|q| q.id.is_none()) {
+        back(s);
+    } else {
+        go(s, deck);
+    }
+}
+
 /// The screen `back` left, the one now open kept for `back`.
 pub fn forward(s: &mut State) {
     if let Some(query) = s.history.forward.pop() {
@@ -200,6 +210,7 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
         regions::tabs::answered(s, key, acted);
         regions::strip::answered(s, key, acted);
     }
+    regions::tickets::carry(s);
     let settled = !answered.is_empty();
     regions::usage::poll(s, tx);
     let fed = match s.live.as_ref().and_then(live::Inbox::take) {
@@ -228,7 +239,9 @@ pub fn center(s: &State, cx: &mut Cx<State>) -> El {
     let none = serde_json::Value::Null;
     let region = |name: &str| s.view.regions.get(name).unwrap_or(&none);
     let r = &s.regions;
-    let mut screen = col().gap(space::between);
+    // The page's top inset (deck.css `--top`, 2.5rem): with the content row's own `pad`, the
+    // header starts 40 px under the title bar's rule, not against it.
+    let mut screen = col().gap(space::between).pt(space::s7);
     if s.down {
         screen = screen.child(
             row()
@@ -255,9 +268,13 @@ pub fn center(s: &State, cx: &mut Cx<State>) -> El {
     if s.blind() {
         return screen;
     }
-    screen = screen
-        .child(regions::usage::draw(region("usage"), &r.usage, cx))
-        .child(regions::tabs::draw(region("tabs"), &r.tabs, &s.pending, cx));
+    // deck.css's `header`: the tabs; the usage readout is the title bar's (`layout::strips`).
+    screen = screen.child(col().key("header").child(regions::tabs::draw(
+        region("tabs"),
+        &r.tabs,
+        &s.pending,
+        cx,
+    )));
     // The queue is the home page's and the thread page lists no settled threads
     // (view/queue.mjs, history.mjs): a region a screen withholds is not drawn, rather than saying
     // there is nothing in it.

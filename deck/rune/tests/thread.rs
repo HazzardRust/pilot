@@ -160,7 +160,7 @@ fn a_move_reads_the_next_thread_at_once(deck: &support::Scratch) {
     let arrow = rt
         .elements()
         .into_iter()
-        .find(|element| element.role == "link")
+        .find(|element| element.role == "link" && element.key.as_deref() != Some("thread-back"))
         .expect("the thread's arrow is drawn");
     let (x, y) = (
         arrow.rect[0] + arrow.rect[2] / 2.0,
@@ -247,7 +247,8 @@ fn thread_and_field(s: &State, cx: &mut Cx<State>) -> El {
 
 fn a_key_typed_into_a_field_is_not_stolen(view: &View, query: &Query) {
     let mut rt = window(view, query, thread_and_field);
-    // The thread is the first stop, the field the second.
+    // The thread is the first stop, its back arrow the second, the field the third.
+    press(&mut rt, Key::Tab);
     press(&mut rt, Key::Tab);
     press(&mut rt, Key::Tab);
     assert!(rt.has_focus(), "focus is on a stop");
@@ -306,4 +307,160 @@ fn a_back_press_survives_the_next_live_refetch(deck: &support::Scratch, query: Q
         "the refetch was for the thread again: {:?}",
         after.regions.get("thread")
     );
+}
+
+/// A thread drawn from a view written here, at `width`, so the kind line's length is the test's.
+fn drawn(state: &str, owner: &str, width: f32) -> Runtime<State> {
+    drawn_after(state, owner, width, &[])
+}
+
+/// `drawn`, opened after the window has been on each of `steps` in turn from the overview.
+fn drawn_after(state: &str, owner: &str, width: f32, steps: &[Query]) -> Runtime<State> {
+    let thread = serde_json::json!({
+        "title": "Which port?",
+        "kindLine": { "accent": "plain", "state": state, "tone": "unacknowledged", "kind": "question",
+            "at": "2026-11-21T11:20:00Z", "owner": owner },
+        "nav": { "code": "D1", "position": "1/4", "run": "C:/work/alpha" },
+        "body": "Fixture.",
+        "messages": [
+            { "by": "pilot:pilot-qa", "at": "2026-11-21T11:21:00Z", "text": "From qa." },
+            { "by": "pilot", "at": "2026-11-21T11:22:00Z", "text": "From the pilot." },
+            { "by": "you", "at": "2026-11-21T11:23:00Z", "text": "From you." }
+        ]
+    });
+    let mut view = View::default();
+    view.regions.insert("thread".into(), thread);
+    let mut s = State::default();
+    for step in steps {
+        pilot_deck::app::go(&mut s, step.clone());
+    }
+    s.view = view;
+    let mut rt = Runtime::new(s, thread_only, (width, 800.0), Env::new(true, 1.0));
+    rt.frame(0.0);
+    rt
+}
+
+fn rect_of(rt: &Runtime<State>, words: &str) -> [f32; 4] {
+    rt.elements()
+        .into_iter()
+        .find(|e| e.text.as_deref() == Some(words))
+        .unwrap_or_else(|| panic!("{words:?} is drawn"))
+        .rect
+}
+
+fn centre_y(r: [f32; 4]) -> f32 {
+    r[1] + r[3] / 2.0
+}
+
+/// The user, 2026-11-21: "the threads need a back navigation arrow". At the header's start, as the
+/// HTML deck's `a.back`: back to the deck page behind the thread, else to the deck that owns it,
+/// never back into another thread; the nav stays on the header's centre.
+#[test]
+fn the_back_arrow_leaves_the_thread_as_the_html_deck_does() {
+    let thread = |id: &str| Query {
+        id: Some(id.into()),
+        ..Query::default()
+    };
+    let tab = Query {
+        run: Some("C:/work/other".into()),
+        ..Query::default()
+    };
+    let owner = Query {
+        run: Some("C:/work/alpha".into()),
+        ..Query::default()
+    };
+    for (from, to) in [
+        (vec![tab.clone(), thread("itm_a")], tab.clone()),
+        (vec![thread("itm_a"), thread("itm_b")], owner.clone()),
+        (vec![], owner.clone()),
+    ] {
+        let mut rt = drawn_after("waiting on you", "pilot", 1280.0, &from);
+        let (x, y) = rt.find("thread-back").expect("a back arrow");
+        rt.pointer_move(x, y);
+        rt.pointer_down(x, y);
+        rt.pointer_up(x, y);
+        rt.frame(0.0);
+        assert_eq!(rt.state.query, to, "after {from:?}");
+    }
+
+    let rt = drawn("waiting on you", "pilot", 1280.0);
+    let key = |k: &str| {
+        rt.elements()
+            .into_iter()
+            .find(|e| e.key.as_deref() == Some(k))
+            .unwrap_or_else(|| panic!("no {k}"))
+            .rect
+    };
+    let (arrow, kind, nav, page) = (key("thread-back"), key("kind"), key("nav"), key("thread"));
+    assert!(
+        arrow[0] + arrow[2] <= kind[0],
+        "arrow {arrow:?}, kind {kind:?}"
+    );
+    let centre = |r: [f32; 4]| r[0] + r[2] / 2.0;
+    assert!(
+        (centre(nav) - centre(page)).abs() <= 0.5,
+        "nav {nav:?}, page {page:?}"
+    );
+}
+
+/// The user, 2026-11-21: the "not picked up yet" status line "needs to be as big as what is above
+/// it", and given the room to wrap with the rest of that line kept centred.
+#[test]
+fn the_kind_line_is_as_big_as_the_title_and_wraps_with_the_nav_centred() {
+    let rt = drawn("not picked up yet", "pilot", 1280.0);
+    let (state, title) = (
+        rect_of(&rt, "not picked up yet"),
+        rect_of(&rt, "Which port?"),
+    );
+    assert!(
+        (state[3] - title[3]).abs() < 0.5,
+        "the status is {} tall, the title {}",
+        state[3],
+        title[3]
+    );
+
+    let long = "not picked up yet by anyone on the crew, this long status runs past its line";
+    let rt = drawn(long, "pilot", 640.0);
+    let kind = rt
+        .elements()
+        .into_iter()
+        .find(|e| e.key.as_deref() == Some("kind"))
+        .expect("the kind line")
+        .rect;
+    assert!(
+        kind[3] > 1.5 * title[3],
+        "a long kind line wraps: {} tall",
+        kind[3]
+    );
+    for words in ["D1", "1/4"] {
+        let at = centre_y(rect_of(&rt, words));
+        assert!(
+            (at - centre_y(kind)).abs() < 1.0,
+            "{words} sits at {at}, the kind line's centre at {}",
+            centre_y(kind)
+        );
+    }
+}
+
+/// The user, 2026-11-21: "the agent needs to be colour coded same as the html version", each crew
+/// kind in its `--by-*` colour (deck.css), the owner on the kind line and a message's byline.
+#[test]
+fn an_agent_name_is_drawn_in_its_own_colour() {
+    let by = pilot_deck::theme::tokens(true).by;
+    let rt = drawn("waiting on you", "qa", 1280.0);
+    // A name alone (the owner) or a byline, `<name> · <time>`, the time in the name's ink.
+    let ink = |name: &str| {
+        rt.elements()
+            .into_iter()
+            .filter(|e| {
+                e.text
+                    .as_deref()
+                    .is_some_and(|t| t == name || t.starts_with(&format!("{name} · ")))
+            })
+            .map(|e| e.text_color.expect("an ink"))
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(ink("qa"), vec![by.qa, by.qa], "the owner and qa's byline");
+    assert_eq!(ink("pilot"), vec![by.pilot], "the pilot's byline");
+    assert_eq!(ink("you"), vec![pilot_deck::theme::tokens(true).quiet]);
 }

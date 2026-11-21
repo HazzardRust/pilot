@@ -45,7 +45,7 @@ https://claude.ai/code/session_01NXgSFppeY5pzVQLciH5swh
 ## Artefact
 
 `docs/design/rune-deck-ui/architecture.md`, slices in `slices/S1.md` to `slices/S20.md`. The run's ADR is
-`docs/adr/NNNN-rune-deck-ui.md` (S1).
+`docs/adr/0206-rune-deck-ui.md` (S1).
 
 ## Prerequisite
 

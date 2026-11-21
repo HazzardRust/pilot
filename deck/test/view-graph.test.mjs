@@ -46,6 +46,8 @@ test('the graph is graphOf\'s', () => {
   const graph = graphView(reads(), { run: MINE, ticket: yellow.id });
 
   assert.deepEqual(graph, {
+    // The page's label over the graph: the tab's name, the record naming no feature of its own.
+    name: 'pilot',
     lanes: 2,
     dots: [
       { slice: 'S1 the base', lane: 0, row: 0, state: 'done' },
@@ -71,7 +73,7 @@ test('a state with no phase is drawn as none', () => {
 });
 
 test('no tab has no graph', () => {
-  assert.deepEqual(graphView(reads(), { run: path.join('D:', 'work', 'elsewhere') }), { dots: [], edges: [], lanes: 0 });
+  assert.deepEqual(graphView(reads(), { run: path.join('D:', 'work', 'elsewhere') }), { name: '', dots: [], edges: [], lanes: 0 });
 });
 
 test('the region is the view\'s graph', () => {

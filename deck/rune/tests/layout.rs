@@ -78,6 +78,14 @@ fn chat_and_status_open_by_default() {
     }
 }
 
+/// The user's note: the selected icon's coloured bar sits on the window's left edge, no gap.
+#[test]
+fn the_selected_marker_is_flush_with_the_window_edge() {
+    let rt = window(json!({}), Prefs::default());
+
+    assert_eq!(rects(&rt, "icon-chat-marker").0[0], 0.0);
+}
+
 #[test]
 fn a_panel_opens_with_a_spring() {
     let (_held, _dir) = prefs_dir("spring");
@@ -362,18 +370,179 @@ fn notices(n: usize) -> Value {
     json!({ "notifications": { "notices": notices, "open": [] } })
 }
 
+/// Every icon, the first heading, and each heading's and body's x and width. A pane is as tall as
+/// what it holds (QA e), so a hundredth notice lengthens Notifications and moves the panes under
+/// it; the count's digit moves none of these.
 fn panel_bounds(rt: &Runtime<State>) -> Vec<[f32; 4]> {
-    PANELS
+    let icons = PANELS.iter().map(|p| rects(rt, &format!("icon-{p}")).1);
+    let columns = PANELS
         .iter()
-        .flat_map(|p| {
-            [
-                format!("icon-{p}"),
-                format!("panel-{p}-head"),
-                format!("panel-{p}-body"),
-            ]
-        })
-        .map(|key| rects(rt, &key).1)
+        .flat_map(|p| [format!("panel-{p}-head"), format!("panel-{p}-body")])
+        .map(|key| {
+            let r = rects(rt, &key).1;
+            [r[0], 0.0, r[2], 0.0]
+        });
+    icons
+        .chain([rects(rt, "panel-notifications-head").1])
+        .chain(columns)
         .collect()
+}
+
+/// QA e: an open pane is as tall as what it holds, the next one starts where it ends with no
+/// gap, and the room left over stays below the last.
+#[test]
+fn open_panes_touch_and_take_only_their_contents_height() {
+    let rt = window(notices(2), all_open(size::side_default));
+    let panes: Vec<[f32; 4]> = PANELS
+        .iter()
+        .map(|p| rects(&rt, &format!("panel-{p}")).1)
+        .collect();
+    for pair in panes.windows(2) {
+        let (above, below) = (pair[0], pair[1]);
+        assert!(
+            (above[1] + above[3] - below[1]).abs() <= 0.5,
+            "a gap between panes: {above:?} then {below:?}"
+        );
+    }
+    let side = rects(&rt, "side").1;
+    let last = panes[panes.len() - 1];
+    assert!(
+        last[1] + last[3] < side[1] + side[3] - size::row,
+        "the panes fill the side area: last {last:?}, side {side:?}"
+    );
+    let agents = rects(&rt, "panel-agents").1[3];
+    let notifications = rects(&rt, "panel-notifications").1[3];
+    assert!(
+        agents < notifications,
+        "an empty pane ({agents}) as tall as two notices ({notifications})"
+    );
+}
+
+/// QA j: the border between two open panes drags up and down, one pane taking what the other
+/// gives, on the pointer; the two heights are saved on the release and come back on a restart.
+#[test]
+fn a_dragged_border_resizes_both_panes_and_persists() {
+    let (_held, dir) = prefs_dir("border");
+    let mut rt = window(notices(5), all_open(size::side_default));
+    let height = |rt: &Runtime<State>, p: &str| rects(rt, &format!("panel-{p}")).1[3];
+    let (above, below) = (height(&rt, "notifications"), height(&rt, "chat"));
+
+    let border = rects(&rt, "panel-chat-border").0;
+    let (x, y) = (border[0] + border[2] / 2.0, border[1] + border[3] / 2.0);
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    for step in 1..=10 {
+        rt.pointer_move(x, y - 3.0 * step as f32);
+        rt.frame(FRAME);
+    }
+    assert!(
+        Prefs::load(&dir).pane_heights.is_empty(),
+        "heights saved before the release"
+    );
+    rt.pointer_up(x, y - 30.0);
+    rt.frame(1.0);
+    assert_eq!(height(&rt, "notifications"), above - 30.0, "the pane above");
+    assert_eq!(height(&rt, "chat"), below + 30.0, "the pane below");
+
+    let again = window(notices(5), Prefs::load(&dir));
+    assert_eq!(
+        height(&again, "notifications"),
+        above - 30.0,
+        "after a restart"
+    );
+    assert_eq!(height(&again, "chat"), below + 30.0, "after a restart");
+}
+
+/// QA h: a heading's press folds its pane to the heading row and the next unfolds it; the pane
+/// stays open, and the fold is kept apart from the open set.
+#[test]
+fn a_heading_folds_its_pane_and_keeps_it_open() {
+    let (_held, dir) = prefs_dir("fold");
+    let mut rt = window(notices(3), all_open(size::side_default));
+    let open = body(&rt, "notifications")[3];
+
+    press(&mut rt, "panel-notifications-head");
+    rt.frame(1.0);
+    assert_eq!(
+        body(&rt, "notifications")[3],
+        0.0,
+        "folded, the body still shows"
+    );
+    assert_eq!(
+        rects(&rt, "panel-notifications-head").0[3],
+        size::pane_head,
+        "folded, the heading is not one row"
+    );
+    let kept = Prefs::load(&dir);
+    assert!(kept.folded_panels.contains("notifications"), "{kept:?}");
+    assert!(kept.open_panels.contains("notifications"), "{kept:?}");
+
+    press(&mut rt, "panel-notifications-head");
+    rt.frame(1.0);
+    assert_eq!(body(&rt, "notifications")[3], open, "it did not unfold");
+    assert!(!Prefs::load(&dir).folded_panels.contains("notifications"));
+}
+
+/// QA e: the first pane's heading and the first icon start where the centre's header does, 40 px
+/// under the title bar's rule (deck.css `--top`).
+#[test]
+fn the_first_heading_and_icon_start_at_the_top_inset() {
+    let rt = window(json!({}), all_open(size::side_default));
+    let top = rects(&rt, "header").1[1];
+    assert_eq!(top, size::titlebar + 1.0 + space::pad + space::s7);
+    assert_eq!(rects(&rt, "panel-notifications-head").1[1], top, "heading");
+    assert_eq!(rects(&rt, "icon-notifications-glyph").1[1], top, "icon");
+}
+
+/// QA g (the user, 2026-11-20): three line levels in the side area. A pane's line, the first
+/// pane's included, spans the content column; a line between groups (Red / Yellow) is shorter
+/// and centred; a line between items narrower still and centred.
+#[test]
+fn side_rules_come_in_three_levels_each_centred() {
+    let repo = "C:/work/alpha";
+    let row = |id: &str| json!({ "id": id, "name": id, "state": "queued", "canMove": { "up": false, "down": false } });
+    let regions = json!({
+        "notifications": { "notices": [{ "id": "itm_n1", "title": "a notice" }], "open": [] },
+        "tickets": { "repo": repo, "groups": [
+            { "colour": "red", "label": "Red", "rows": [row("itm_t1"), row("itm_t2")] },
+            { "colour": "yellow", "label": "Yellow", "rows": [row("itm_t3")] },
+        ] },
+    });
+    let mut prefs = all_open(size::side_default);
+    let folds = prefs.folds.entry(repo.into()).or_default();
+    folds.insert("red".into());
+    folds.insert("yellow".into());
+    let rt = window(regions, prefs);
+    let body = body(&rt, "tickets");
+    let centre = body[0] + body[2] / 2.0;
+    let line = |key: &str| rects(&rt, key).1;
+
+    let first = line("panel-notifications-rule");
+    let head = line("panel-notifications-head");
+    assert_eq!(first[1] + 1.0 + space::s3, head[1], "first pane's line");
+    let parent = line("panel-tickets-rule");
+    assert_eq!(
+        parent[2],
+        body[2] - 2.0 * space::pad,
+        "a pane's line spans the content"
+    );
+    let group = line("tickets-group-yellow-rule");
+    let item = line("ticket-itm_t1-rule");
+    assert!(
+        group[2] < parent[2] - 2.0 * space::s5,
+        "group {group:?}, pane {parent:?}"
+    );
+    assert!(
+        item[2] < group[2] - 2.0 * space::s5,
+        "item {item:?}, group {group:?}"
+    );
+    for (name, r) in [("pane", parent), ("group", group), ("item", item)] {
+        assert_eq!(r[3], 1.0, "{name} line is a hairline");
+        assert!(
+            (r[0] + r[2] / 2.0 - centre).abs() <= 0.5,
+            "{name} off centre: {r:?}"
+        );
+    }
 }
 
 /// S28 behaviour 3 (6e): a count gaining a digit moves no pane and no icon, and stays on one line.
@@ -455,6 +624,27 @@ fn the_frame_is_a_drag_band_with_the_content_below_it() {
         "the band drags nothing"
     );
     rt.pointer_up(x, y);
+    // The readout and the wordmark moved into the band (the user, 2026-11-21) do not take its press.
+    rt.update(|s, _| {
+        s.view.regions.insert(
+            "usage".into(),
+            serde_json::json!({ "ctx": 40, "session": 2, "weekly": 93 }),
+        );
+    });
+    rt.frame(1.5);
+    for key in ["brand", "usage-weekly"] {
+        let r = rects(&rt, key).0;
+        let (x, y) = (r[0] + r[2] / 2.0, r[1] + r[3] / 2.0);
+        rt.pointer_move(x, y);
+        rt.pointer_down(x, y);
+        assert_eq!(
+            rt.take_titlebar_action(),
+            Some(TitlebarAction::Drag),
+            "a press on {key} drags nothing"
+        );
+        rt.pointer_up(x, y);
+        rt.frame(2.0);
+    }
 
     let top = size::titlebar + space::pad;
     for key in ["strip-left", "centre"] {

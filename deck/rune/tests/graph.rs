@@ -104,6 +104,28 @@ fn hovering_a_dot_shows_its_slice_name() {
 }
 
 #[test]
+fn the_graph_is_labelled_with_the_views_name_above_its_dots() {
+    let mut graph = fork_and_join();
+    graph["name"] = json!("kettle");
+    let rt = frame(graph);
+
+    let (_, label_y) = rt.find("graph-label").expect("the label is drawn");
+    let (_, dot_y) = rt.find("graph-dot-0").expect("drawn");
+    assert!(
+        label_y < dot_y,
+        "the label heads the graph: {label_y} {dot_y}"
+    );
+    assert!(texts(&rt).iter().any(|t| t == "kettle"));
+    assert!(
+        frame(fork_and_join()).find("graph-label").is_none(),
+        "no name, no label"
+    );
+    // The page draws the label over a table whose rows make no dot.
+    let bare = json!({ "dots": [], "edges": [], "lanes": 0, "name": "kettle" });
+    assert!(frame(bare).find("graph-label").is_some());
+}
+
+#[test]
 fn a_view_with_no_graph_draws_no_dot() {
     for graph in [Value::Null, json!({ "dots": [], "edges": [], "lanes": 0 })] {
         assert!(frame(graph).find("graph-dot-0").is_none());

@@ -68,7 +68,7 @@ fn the_figures_are_the_views_and_a_missing_one_is_unknown() {
 
     let shown = texts(&rt);
     for want in [
-        "ctx",
+        "pilot ctx",
         "19%",
         "session",
         "unknown",
@@ -78,6 +78,49 @@ fn the_figures_are_the_views_and_a_missing_one_is_unknown() {
     ] {
         assert!(shown.iter().any(|t| t == want), "no {want:?} in {shown:?}");
     }
+}
+
+fn rect(rt: &Runtime<State>, key: &str) -> [f32; 4] {
+    rt.elements()
+        .into_iter()
+        .find(|element| element.key.as_deref() == Some(key) && !element.exiting)
+        .map(|element| element.rect)
+        .unwrap_or_else(|| panic!("no {key} drawn"))
+}
+
+/// The walkthrough of 2026-11-21: the header sits at the page's top inset (deck.css `--top`,
+/// 40 px) under the title bar's rule; the user, 2026-11-21: the readout moves "in the black area at
+/// the top that is blank, along side a little brand of PILOT DECK", so the tabs lead the header.
+#[test]
+fn the_header_starts_at_the_pages_top_inset() {
+    use pilot_deck::theme::size;
+    let rt = frame(State {
+        view: view_with(&[
+            ("usage", json!({ "session": 2, "weekly": 93 })),
+            ("tabs", two_decks("C:/elsewhere/two")),
+        ]),
+        ..State::default()
+    });
+    let rule = size::titlebar + 1.0;
+    let tabs = rect(&rt, "tabs");
+    assert!(
+        (tabs[1] - rule - 40.0).abs() < 0.5,
+        "the tabs start {} under the rule, not 40",
+        tabs[1] - rule
+    );
+    for key in ["usage", "brand"] {
+        let r = rect(&rt, key);
+        assert!(
+            r[1] >= 0.0 && r[1] + r[3] <= size::titlebar,
+            "{key} is not inside the title bar: {r:?}"
+        );
+    }
+    assert!(texts(&rt).iter().any(|t| t == "PILOT DECK"), "the wordmark");
+    let brand = rect(&rt, "brand");
+    assert!(
+        brand[0] + brand[2] <= rect(&rt, "usage")[0],
+        "the wordmark leads the readout"
+    );
 }
 
 fn two_decks(repo: &str) -> Value {

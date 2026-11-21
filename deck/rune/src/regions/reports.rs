@@ -3,7 +3,7 @@
 
 use crate::theme::type_;
 use rune::tok;
-use rune::{Cx, El, col, row, text};
+use rune::{Cx, El, col, el, row, text};
 use serde::Deserialize;
 
 use super::notifications::{keep, open_thread};
@@ -18,6 +18,9 @@ pub struct Local;
 struct Report {
     id: String,
     title: String,
+    /// Not yet closed by the pilot: the page's "open" mark, in the waiting colour.
+    #[serde(default)]
+    open: bool,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -59,34 +62,44 @@ pub fn draw(v: &serde_json::Value, prefs: &Prefs, cx: &mut Cx<State>) -> El {
     let last = listed.len() - 1;
     for (i, one) in listed.into_iter().enumerate() {
         let (open, hidden) = (one.id.clone(), one.id.clone());
+        let mut line = theme::list_row(row())
+            .key(format!("report-{}", one.id))
+            .gap(space::within)
+            .child(
+                theme::control(text(&one.title), dark)
+                    .font(type_::BODY)
+                    .color(t.text)
+                    .role("link")
+                    .truncate()
+                    .on_press(move |s: &mut State| open_thread(s, &open)),
+            );
+        // deck.css `.reports-list .open`: the word just after the title, in the waiting colour.
+        if one.open {
+            line = line.child(
+                text("open")
+                    .key(format!("report-{}-open", one.id))
+                    .font(type_::BODY)
+                    .color(theme::tokens(dark).state.waiting),
+            );
+        }
+        // The rest of the row, so the × stays at its end whatever the title's width.
         panel = panel.child(
-            theme::list_row(row())
-                .key(format!("report-{}", one.id))
-                .gap(space::within)
-                .child(
-                    theme::control(text(&one.title), dark)
-                        .font(type_::BODY)
-                        .color(t.text)
-                        .role("link")
-                        .truncate()
-                        .grow(1.0)
-                        .on_press(move |s: &mut State| open_thread(s, &open)),
-                )
-                .child(
-                    theme::control(text("×"), dark)
-                        .key(format!("report-{}-hide", one.id))
-                        .font(type_::BODY)
-                        .color(t.text_secondary)
-                        .role("button")
-                        .on_press(move |s: &mut State| {
-                            hide(&mut s.prefs, &hidden);
-                            keep(&s.prefs);
-                        }),
-                ),
+            line.child(el().grow(1.0)).child(
+                theme::control(text("×"), dark)
+                    .key(format!("report-{}-hide", one.id))
+                    .font(type_::BODY)
+                    .color(t.text_secondary)
+                    .role("button")
+                    .on_press(move |s: &mut State| {
+                        hide(&mut s.prefs, &hidden);
+                        keep(&s.prefs);
+                    }),
+            ),
         );
         // deck.css `.reports-list li`: a hairline between items, none after the last.
         if i != last {
-            panel = panel.child(theme::separator(dark).key(format!("report-{}-rule", one.id)));
+            let key = format!("report-{}-rule", one.id);
+            panel = panel.child(theme::rule(theme::Rule::Item, dark).key(key));
         }
     }
     panel

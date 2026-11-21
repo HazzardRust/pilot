@@ -3,7 +3,7 @@ name = "pilot-deck"
 version = "0.1.0"
 edition = "2024"
 publish = false
-description = "The deck's native client: a Rune window reading the daemon's view over loopback (ADR NNNN)."
+description = "The deck's native client: a Rune window reading the daemon's view over loopback (ADR 0206)."
 
 [[bin]]
 name = "pilot-deck"

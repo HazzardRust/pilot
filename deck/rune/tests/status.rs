@@ -60,12 +60,49 @@ fn the_table_and_selector_are_the_views() {
         "concluding Ship the kettle",
         "S1 the yellow slice",
         "implementing",
-        "slice/s1",
-        "#7",
+        "SLICE",
+        "STATE",
+        "YOURS",
     ] {
         assert!(shown.iter().any(|t| t == want), "no {want:?} in {shown:?}");
     }
     assert!(!shown.iter().any(|t| t.contains("green slice")));
+    // The page's table has no branch or PR cell (the user: "copy what the html did").
+    assert!(
+        !shown.iter().any(|t| t == "slice/s1" || t == "#7"),
+        "{shown:?}"
+    );
+}
+
+#[test]
+fn the_table_is_headed_by_its_name_and_the_hour_it_started() {
+    let mut status = two_lanes("yellow");
+    status["heading"] = json!("kettle");
+    status["started"] = json!("09:05");
+    let rt = frame(State {
+        view: view_with(status),
+        ..State::default()
+    });
+
+    let shown = texts(&rt);
+    for want in ["kettle", " · started 09:05"] {
+        assert!(shown.iter().any(|t| t == want), "no {want:?} in {shown:?}");
+    }
+    let y = |key: &str| rt.find(key).unwrap_or_else(|| panic!("{key} is drawn")).1;
+    assert!(
+        y("status-ticket-0") < y("status-heading-name")
+            && y("status-heading-name") < y("status-row-0-slice"),
+        "selector, heading, then the table, as the page orders them"
+    );
+    assert!(
+        frame(State {
+            view: view_with(two_lanes("yellow")),
+            ..State::default()
+        })
+        .find("status-heading-name")
+        .is_none(),
+        "no heading in the view, none drawn"
+    );
 }
 
 #[test]
@@ -92,7 +129,6 @@ fn each_table_is_drawn_under_its_tabs_name() {
     for want in [
         "alpha deck",
         "S1 the yellow slice",
-        "slice/s1",
         "bravo deck",
         "S1 brew",
         "S2 pour",
@@ -140,16 +176,8 @@ fn a_long_state_stays_in_its_column_and_the_cells_never_overlap() {
             "row {i}: the state starts after the slice ends: {slice:?} {state:?}"
         );
     }
-    let (state, branch) = (rect("status-row-0-state"), rect("status-row-0-branch"));
-    assert!(
-        state[0] + state[2] <= branch[0] + 0.5,
-        "{state:?} {branch:?}"
-    );
-    let (branch, yours) = (rect("status-row-0-branch"), rect("status-row-0-yours"));
-    assert!(
-        branch[0] + branch[2] <= yours[0] + 0.5,
-        "{branch:?} {yours:?}"
-    );
+    let (state, yours) = (rect("status-row-0-state"), rect("status-row-0-yours"));
+    assert!(state[0] + state[2] <= yours[0] + 0.5, "{state:?} {yours:?}");
     let state = rect("status-row-0-state");
     assert!(
         state[2] <= rect("status-row-1-state")[2] + 0.5,
@@ -199,12 +227,16 @@ fn a_view_with_no_status_draws_nothing_of_it() {
 
 #[test]
 fn pressing_yours_opens_the_thread_it_links() {
-    let rows = json!({ "rows": [{ "slice": "S1 the slice", "state": "review", "href": "/thread/itm_00000000y1", "after": [] }] });
+    let rows = json!({ "rows": [{ "slice": "S1 the slice", "state": "review", "href": "/thread/itm_00000000y1", "yours": "Which port?", "kind": "question", "after": [] }] });
     let mut rt = frame(State {
         view: view_with(rows),
         ..State::default()
     });
     rt.frame(1.0);
+    assert!(
+        texts(&rt).iter().any(|t| t == "Which port?"),
+        "Yours reads the thread's title"
+    );
 
     let (x, y) = rt
         .find("status-row-0-yours")

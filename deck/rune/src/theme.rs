@@ -50,6 +50,28 @@ pub struct By {
     pub other: Color,
 }
 
+impl By {
+    /// deck.css's `.who.by-<kind>`: an author read as its crew kind the way `items.mjs`
+    /// `authorKind` reads it (`pilot:` and `pilot-` dropped), and that kind's colour; a name
+    /// outside the crew is `other`, drawn quiet.
+    pub fn of(&self, author: &str) -> (&'static str, Color) {
+        let name = author.strip_prefix("pilot:").unwrap_or(author);
+        let name = name.strip_prefix("pilot-").unwrap_or(name);
+        match name {
+            "" | "pilot" => ("pilot", self.pilot),
+            "architect" => ("architect", self.architect),
+            "implementer" => ("implementer", self.implementer),
+            "fundamentalist" => ("fundamentalist", self.fundamentalist),
+            "qa" => ("qa", self.qa),
+            "teacher" => ("teacher", self.teacher),
+            "explorer" => ("explorer", self.explorer),
+            "auditor" => ("auditor", self.auditor),
+            "lander" => ("lander", self.other),
+            _ => ("other", self.other),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct States {
     pub waiting: Color,
@@ -347,6 +369,29 @@ pub fn separator(dark: bool) -> El {
     el().w_full().h(1.0).fill(tokens(dark).rule)
 }
 
+/// The side area's three line levels (the user, 2026-11-20): a pane's line spans the content
+/// column, one between groups (Red / Yellow / Green) is shorter, one between items shorter still.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Rule {
+    /// Over a pane (Tickets, Closing reports…), across the content: 8 px in from each edge.
+    Pane,
+    /// Between groups in a pane (Red / Yellow / Green): 24 px in from the content's edges.
+    Group,
+    /// Between items (tickets, reports, notices): 48 px in.
+    Item,
+}
+
+/// A hairline of `level`, centred in the column it is a child of. A pane's line sits in the pane,
+/// outside its padded body, so it comes in by the body's padding to span the same content.
+pub fn rule(level: Rule, dark: bool) -> El {
+    let inset = match level {
+        Rule::Pane => space::pad,
+        Rule::Group => space::s6,
+        Rule::Item => space::s8,
+    };
+    el().self_stretch().mx(inset).h(1.0).fill(tokens(dark).rule)
+}
+
 /// A vertical hairline: 1 px, in the rule colour, as tall as its parent.
 pub fn separator_vertical(dark: bool) -> El {
     el().w(1.0).h_full().fill(tokens(dark).rule)
@@ -417,11 +462,11 @@ pub mod space {
     include!(concat!(env!("OUT_DIR"), "/space.rs"));
 
     /// A status line's three columns: the state fixed and left, the name flexible and clipped,
-    /// the time fixed and right, `gap` apart (no `·`). The Status table's rows instead fix the
-    /// slice (`slice_ch`) and let the state grow from `state_ch`, its trailing cells after it.
+    /// the time fixed and right, `gap` apart (no `·`). The Status table's cells are `gap` apart.
     #[derive(Debug, Clone, Copy)]
     pub struct StatusCols {
-        /// The status table's Slice column, fixed so every row's State starts at one x.
+        /// No longer read: the Status table's columns are shares (`regions::status`); kept for
+        /// theme.json's and the playground's shape.
         pub slice_ch: f32,
         pub state_ch: f32,
         pub time_ch: f32,

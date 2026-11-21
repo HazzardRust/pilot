@@ -7,10 +7,15 @@
 import { graphOf } from '../status.mjs';
 import { statusView } from './status.mjs';
 
-/** `query` is `{ run, ticket }`, chosen as the Status panel chooses it. A dot's state is its phase, or ''. */
+/**
+ * `query` is `{ run, ticket }`, chosen as the Status panel chooses it. A dot's state is its phase, or ''.
+ * `name` labels the graph, the table's heading (`renderRunGraph`); '' with no table.
+ */
 export function graphView(reads, query = {}) {
-  const { lanes, dots, edges } = graphOf(statusView(reads, query).rows);
+  const status = statusView(reads, query);
+  const { lanes, dots, edges } = graphOf(status.rows);
   return {
+    name: status.heading ?? '',
     dots: dots.map(({ name, lane, row, phase }) => ({ slice: name, lane, row, state: phase ?? '' })),
     edges: edges.map(({ from, to, lane }) => ({ from, to, lane })),
     lanes,
