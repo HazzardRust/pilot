@@ -1,0 +1,130 @@
+{
+  "slug": "project-glossary",
+  "feature": "One project glossary",
+  "ticket": "itm_2458e437da6a",
+  "branch": "feat/project-glossary",
+  "base": "pilot",
+  "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-project-glossary",
+  "artefact": "docs/design/project-glossary/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed c144962",
+      "branch": "slice/project-glossary-s1",
+      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-project-glossary-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S2",
+        "S6"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S2",
+        "S6"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S4",
+        "S6"
+      ]
+    }
+  ],
+  "next": "co-pilot: pilot integrate S1 (c144962) into feat/project-glossary; then S2, S4, S6 in parallel off the integrated tip",
+  "updatedAt": "2026-11-21T01:44:41.906Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "GLOSSARY-FORMAT.md documents an entry shape no file uses; skills say ubiquitous language is section 3 while the architect template has it at section 4",
+      "evidence": "architect report on design/project-glossary 6c8a4e05",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "ci-gate brief.md was only on origin/feat/ci-gate, not origin/pilot, when asked to copy the flaky-test list from it",
+      "evidence": "architect report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "pilot base moved from feat/human-steps to pilot mid-design (ci-gate landed), forcing a rebase of design/project-glossary whose push was then rejected as non-fast-forward",
+      "evidence": "architect hand-back, local d275a8ad vs origin e9ee4b12",
+      "size": 3
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "the pilot's hold on A1/A2 arrived queued after the architect had already posted them; replies on its threads timed out to the pilot",
+      "evidence": "itm_5c8f5fc83bae, itm_bb24de856f02 handed to pilot by the deck",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "pilot told the architect to make a rebased design branch pushable with merge -s ours of its pre-rebase tip; that recorded feat/human-steps as merged while the tree lacked it, so the next pilot merge conflicted and a landing would have reverted human-steps; repaired by hand with a tree-rebuilding merge",
+      "size": 12000
+    },
+    {
+      "kind": "drain",
+      "what": "each landing flags every signed queued ticket for re-cut; the pilot merges pilot into each feat and replans by hand (3 tickets, twice today)",
+      "size": 8000
+    },
+    {
+      "kind": "drain",
+      "what": "replan at the feat tip still read 'gone' on the co-pilot call; only fast-forwarding design/project-glossary to the same sha and replanning again cleared it",
+      "size": 3000
+    },
+    {
+      "kind": "drain",
+      "what": "gate2 post refused twice: pr must be '#n', and a checks-table comment is QA's only, so a pilot-relayed gate2 carries the table in its body",
+      "size": 4000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "full npm test exceeds 3 min, so Bash backgrounds it and waits on it get backgrounded too (~10 min wall, 4 extra tool rounds)",
+      "evidence": "4821 tests, spawns 14200 (git 13125); run twice",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no TaskStop reachable to cancel a stale suite run",
+      "evidence": "ToolSearch select:TaskStop returned no match",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 slice Interface named no input bound for a path-argument CLI; ReDoS reached review",
+      "evidence": "security-reviewer WARNING glossary.mjs:65,:68; 200 KB token hung >80 s",
+      "size": 15
+    }
+  ]
+}
