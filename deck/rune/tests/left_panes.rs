@@ -130,7 +130,10 @@ fn rows_sit_on_the_grid() {
     ] {
         let at = by_key(&all, key).unwrap_or_else(|| panic!("no row {key}"));
         let [x, _, w, h] = all[at].rect;
-        assert_eq!(h, theme::size::row, "{key} is size::row tall");
+        // Ticket and Status rows are the HTML deck's, as tall as their lines (the user, 2026-11-20).
+        if !key.starts_with("ticket-") && !key.starts_with("status-") {
+            assert_eq!(h, theme::size::row, "{key} is size::row tall");
+        }
         if key == "graph-row-0" {
             continue;
         }
@@ -161,7 +164,7 @@ fn content_selects_and_labels_do_not() {
             "{said:?} selects"
         );
     }
-    for said in ["First notice", "First report", "First ticket", "Red"] {
+    for said in ["First notice", "First report", "First ticket", "RED"] {
         let label = with_text(&rt, said);
         assert_ne!(
             cursor_over(&mut rt, &label),
@@ -171,12 +174,33 @@ fn content_selects_and_labels_do_not() {
     }
 }
 
+/// The user, 2026-11-20: Add "does not look like an add button - just have a + symbol centered
+/// above the red section".
+#[test]
+fn add_is_a_plus_centred_above_red() {
+    let rt = window();
+    let all = rt.elements();
+    let at = |key: &str| all[by_key(&all, key).unwrap_or_else(|| panic!("no {key}"))].clone();
+    let (add, pane, red) = (at("tickets-add"), at("tickets"), at("tickets-fold-red"));
+    assert_eq!(add.text.as_deref(), Some("+"));
+    assert_eq!(add.label.as_deref(), Some("Add"));
+    let centre = |r: [f32; 4]| r[0] + r[2] / 2.0;
+    assert!(
+        (centre(add.rect) - centre(pane.rect)).abs() <= 0.5,
+        "+ at {:?}, pane {:?}",
+        add.rect,
+        pane.rect
+    );
+    assert!(add.rect[1] + add.rect[3] <= red.rect[1], "+ is above Red");
+}
+
 #[test]
 fn lists_carry_deck_css_hairlines_but_none_after_the_last() {
     let rt = window();
     let all = rt.elements();
     let has = |key: &str| by_key(&all, key).is_some();
-    // .notice and .mark-all-form rule every item; li:last-child drops it; .slices td rules every row.
+    // .notice and .mark-all-form rule every item; li:last-child drops it; a status table's rows are
+    // ruled between, since a group's line may follow the last (the user's line levels, 2026-11-20).
     for ruled in [
         "notifications-mark-all-rule",
         "notice-0-rule",
@@ -184,11 +208,14 @@ fn lists_carry_deck_css_hairlines_but_none_after_the_last() {
         "report-itm_r1-rule",
         "ticket-itm_t1-rule",
         "status-row-0-rule",
-        "status-row-1-rule",
     ] {
         assert!(has(ruled), "{ruled} is drawn");
     }
-    for last in ["report-itm_r2-rule", "ticket-itm_t2-rule"] {
+    for last in [
+        "report-itm_r2-rule",
+        "ticket-itm_t2-rule",
+        "status-row-1-rule",
+    ] {
         assert!(!has(last), "{last} is not drawn");
     }
 }

@@ -4,6 +4,8 @@
 //! width and whether it is hidden are the window's prefs (A4), saved on a press and on a drag's
 //! release, never once a frame.
 
+use std::f32::consts::FRAC_PI_2;
+
 use rune::tok;
 use rune::{
     Align, Cursor, Cx, Drag, El, Icon, Phase, ScrollSpec, Transition, Tx, col, el, icon, row, text,
@@ -14,7 +16,7 @@ use serde_json::Value;
 use crate::app::{self, State};
 use crate::prefs::Prefs;
 use crate::regions::{self, notifications::keep};
-use crate::theme::{self, motion, size, space, type_};
+use crate::theme::{self, Rule, motion, size, space, type_};
 
 /// An icon drawn in the deck's own line, 24 units square, in the colour `icon` tints it.
 macro_rules! line_icon {
@@ -84,7 +86,22 @@ const ADVANCE: f32 = 0.6;
 #[derive(Debug, Default)]
 pub struct Local {
     grab: Option<(f32, Option<f32>, bool)>,
+    border: Option<Border>,
 }
+
+/// A border's drag in hand: the two panes either side of it, their heights as drawn at the press,
+/// and the heights the prefs held then, which a cancel puts back.
+#[derive(Debug)]
+struct Border {
+    panes: [&'static str; 2],
+    drawn: [f32; 2],
+    kept: [Option<f32>; 2],
+}
+
+/// The room a pane's border takes: the 1 px rule and the space under it.
+const BORDER: f32 = 1.0 + space::s3;
+/// The least a dragged pane keeps: its border, its heading and one row.
+const PANE_MIN: f32 = BORDER + size::pane_head + size::row;
 
 /// Whether `panel` is open: as the user left it, or Chat and Status on a first start.
 pub fn is_open(prefs: &Prefs, panel: &str) -> bool {
@@ -106,6 +123,19 @@ pub fn toggle(prefs: &mut Prefs, panel: &str) {
         prefs.open_panels.insert(panel.to_string());
     }
     prefs.open_panels.insert(SET.to_string());
+    keep(prefs);
+}
+
+/// Whether `panel` is folded to its heading row; apart from whether it is open (QA h).
+pub fn folded(prefs: &Prefs, panel: &str) -> bool {
+    prefs.folded_panels.contains(panel)
+}
+
+/// A heading's press: folds `panel` to its heading row, or unfolds it, and saves the prefs.
+pub fn fold(prefs: &mut Prefs, panel: &str) {
+    if !prefs.folded_panels.remove(panel) {
+        prefs.folded_panels.insert(panel.to_string());
+    }
     keep(prefs);
 }
 
@@ -248,6 +278,40 @@ fn drag(s: &mut State, d: &Drag, tx: &mut Tx) {
     }
 }
 
+/// The drag on the border between two open panes (QA j): the pane above takes what the pane below
+/// gives, each kept at `PANE_MIN` at least, on the pointer at every move; saved on the release.
+fn border_drag(s: &mut State, panes: [&'static str; 2], drawn: [f32; 2], d: &Drag, tx: &mut Tx) {
+    let heights = &mut s.prefs.pane_heights;
+    match d.phase {
+        Phase::Down => {
+            let kept = panes.map(|p| heights.get(p).copied());
+            s.layout.border = Some(Border { panes, drawn, kept });
+        }
+        Phase::Move => {
+            tx.instant();
+            if let Some(b) = &s.layout.border {
+                let total = b.drawn[0] + b.drawn[1];
+                if total >= 2.0 * PANE_MIN {
+                    let above = (b.drawn[0] + d.dy).clamp(PANE_MIN, total - PANE_MIN);
+                    heights.insert(b.panes[0].to_string(), above);
+                    heights.insert(b.panes[1].to_string(), total - above);
+                }
+            }
+        }
+        Phase::Up => match s.layout.border.take() {
+            Some(b) if d.cancelled() => {
+                for (pane, kept) in b.panes.iter().zip(b.kept) {
+                    match kept {
+                        Some(h) => heights.insert(pane.to_string(), h),
+                        None => heights.remove(*pane),
+                    };
+                }
+            }
+            _ => keep(&s.prefs),
+        },
+    }
+}
+
 /// One icon of the icon bar: its label on hover and to a reader, the 4 px primary bar on its left
 /// while its pane shows, and its count as a pill on its corner, out of the flow.
 fn icon_item(
@@ -266,10 +330,15 @@ fn icon_item(
         .help(label)
         .expanded(active)
         .on_press(move |s: &mut State| toggle(&mut s.prefs, name))
-        .child(icon(glyph, size::icon).color(if active { t.text } else { t.text_secondary }));
+        .child(
+            icon(glyph, size::icon)
+                .key(format!("icon-{name}-glyph"))
+                .color(if active { t.text } else { t.text_secondary }),
+        );
     if active {
         item = item.child(
-            el().w(space::s2)
+            el().key(format!("icon-{name}-marker"))
+                .w(space::s2)
                 .h_full()
                 .pin(Some(space::s0), Some(space::s0), None, Some(space::s0))
                 .fill(theme::roles(dark).primary),
@@ -309,12 +378,20 @@ fn icon_badge(count: usize, dark: bool) -> El {
         )
 }
 
-/// One pane: a 22 px header (chevron, title, count) over its contents, which scroll. A shut pane
+/// One pane: a 22 px header (chevron, title, count) over its contents. A shut pane
 /// stays mounted at no height, so it springs open and shut; Tab and a reader skip it.
-fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<State>) -> El {
+fn pane(
+    s: &State,
+    name: &'static str,
+    label: &str,
+    above: Option<&'static str>,
+    cx: &mut Cx<State>,
+) -> El {
     let dark = cx.system_dark();
     let t = tok::theme(dark);
     let open = is_open(&s.prefs, name);
+    let is_folded = folded(&s.prefs, name);
+    // The heading folds the pane to its own row and unfolds it (QA h); the icon opens and shuts it.
     let head = theme::control(row(), dark)
         .key(format!("panel-{name}-head"))
         .w_full()
@@ -324,9 +401,14 @@ fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<Sta
         .center_y()
         .role("button")
         .label(label)
-        .expanded(open)
-        .on_press(move |s: &mut State| toggle(&mut s.prefs, name))
-        .child(icon(&glyphs::CHEVRON_DOWN, space::s5).color(t.text))
+        .expanded(open && !is_folded)
+        .on_press(move |s: &mut State| fold(&mut s.prefs, name))
+        .child(
+            icon(&glyphs::CHEVRON_DOWN, space::s5)
+                .key(format!("panel-{name}-arrow"))
+                .rotate(if is_folded { -FRAC_PI_2 } else { 0.0 })
+                .color(t.text),
+        )
         .child(
             text(label.to_uppercase())
                 .font(type_::HEADER)
@@ -335,15 +417,12 @@ fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<Sta
                 .grow(1.0),
         )
         .child(count_cell(count(s, name), dark).key(format!("panel-{name}-count")));
-    let body = col()
+    // As tall as its contents (QA e): the side area scrolls, not each pane. The padding is inside
+    // the body, so a shut pane's body closes to nothing.
+    let mut body = col()
         .key(format!("panel-{name}-body"))
         .w_full()
-        .grow(1.0)
-        .min_h(space::s0)
-        .scroll(ScrollSpec {
-            stick_bottom: false,
-        })
-        // The padding inside the scroll, so a shut pane's body closes to nothing.
+        .clip_soft(space::s0)
         .child(
             col()
                 .w_full()
@@ -353,14 +432,43 @@ fn pane(s: &State, name: &'static str, label: &str, after: bool, cx: &mut Cx<Sta
     let mut pane = col()
         .key(format!("panel-{name}"))
         .w_full()
-        .h(space::s0)
-        .min_h(space::s0)
-        .grow(if open { 1.0 } else { 0.0 })
         .clip_soft(space::s0);
-    // A rule between panes, none above the first (deck.css's list rules, none after the last).
-    if after {
-        pane = pane.child(theme::separator(dark));
+    if !open {
+        body = body.h(space::s0);
+        pane = pane.h(space::s0);
+    } else if is_folded {
+        // Folded: the rule and the heading stay, the body closes and takes no Tab stop.
+        body = body.h(space::s0).inert().a11y_hidden();
+    } else if let Some(&h) = s.prefs.pane_heights.get(name) {
+        // Dragged to a height (QA j): the body takes what the heading leaves and scrolls.
+        pane = pane.h(h);
+        body = body.grow(1.0).min_h(space::s0).scroll(ScrollSpec {
+            stick_bottom: false,
+        });
     }
+    // A pane's line over every pane, the first's included (the user, 2026-11-20). Between two
+    // panes it and the room under it are the border that resizes the pane and the one above it.
+    let mut border = col()
+        .key(format!("panel-{name}-border"))
+        .w_full()
+        .pb(space::s3)
+        .child(theme::rule(Rule::Pane, dark).key(format!("panel-{name}-rule")));
+    // A folded pane is its heading's height, so a border beside one does not drag.
+    if let Some(above) = above.filter(|&above| !is_folded && !folded(&s.prefs, above)) {
+        let drawn = [above, name].map(|p| {
+            cx.layout_size(&format!("panel-{p}"))
+                .map_or(space::s0, |[_, h]| h)
+        });
+        border = border
+            .role("separator")
+            .label(format!("Resize {label}"))
+            .cursor(Cursor::ResizeRow)
+            .drag_threshold(space::s0)
+            .on_drag(move |s: &mut State, d: &mut Drag, tx: &mut Tx| {
+                border_drag(s, [above, name], drawn, d, tx)
+            });
+    }
+    pane = pane.child(border);
     pane = pane.child(head).child(body);
     if open {
         pane
@@ -380,20 +488,37 @@ fn left_side(s: &State, cx: &mut Cx<State>) -> El {
     } else {
         space::s0
     };
+    // The first glyph and the first heading start at the centre header's top (`app::center`).
     let bar = PANELS.iter().fold(
-        col().key("icon-bar").w(size::icon_bar).h_full(),
+        col()
+            .key("icon-bar")
+            .w(size::icon_bar)
+            .h_full()
+            .pt(space::s7 - (size::icon_bar - size::icon) / 2.0),
         |bar, &panel| bar.child(icon_item(s, panel, dark)),
     );
-    let mut any_open = false;
+    // The open pane above the one being drawn, which its border resizes with it.
+    let mut above: Option<&'static str> = None;
+    // Panes take their contents' height and the area scrolls past the last; room left over stays
+    // below it (QA e).
     let mut side = col()
         .key("side")
         .w(width)
         .h_full()
+        .min_h(space::s0)
+        // The first pane's line and the room under it sit in the top inset, so its heading
+        // still starts level with the centre header.
+        .pt(space::s7 - 1.0 - space::s3)
+        .scroll(ScrollSpec {
+            stick_bottom: false,
+        })
         .clip_soft(space::s0)
         .motion(motion::panel);
     for (name, label, _) in &PANELS {
-        side = side.child(pane(s, name, label, any_open, cx));
-        any_open |= is_open(&s.prefs, name);
+        side = side.child(pane(s, name, label, above, cx));
+        if is_open(&s.prefs, name) {
+            above = Some(*name);
+        }
     }
     if !shown {
         side = side.inert().a11y_hidden();
@@ -435,13 +560,27 @@ pub fn strips(s: &State, cx: &mut Cx<State>) -> El {
     let none = Value::Null;
     let strip = s.view.regions.get("strip").unwrap_or(&none);
     // The title bar (`app::app`): a press anywhere on it but the caption buttons moves the window,
-    // a double press maximises it, and a right press opens the window menu.
-    let titlebar = el()
+    // a double press maximises it, and a right press opens the window menu. It carries a small
+    // wordmark and the usage readout (the user, 2026-11-21), neither of which takes a press.
+    let mut titlebar = row()
         .key("titlebar")
         .w_full()
         .h(size::titlebar)
+        .items_center()
+        .gap(space::between)
+        .pl(space::pad)
         .fill(surface.surface)
-        .window_drag();
+        .window_drag()
+        .child(
+            rune::text("PILOT DECK")
+                .key("brand")
+                .font(type_::CAPTION)
+                .color(theme::tokens(dark).quiet),
+        );
+    if !s.blind() {
+        let usage = s.view.regions.get("usage").unwrap_or(&none);
+        titlebar = titlebar.child(regions::usage::draw(usage, &s.regions.usage, cx));
+    }
     let content = row()
         .key("content")
         .w_full()
@@ -449,6 +588,8 @@ pub fn strips(s: &State, cx: &mut Cx<State>) -> El {
         .min_h(space::s0)
         .padding(space::between)
         .pt(space::pad)
+        // The icon bar meets the window's left edge, so its selected bar is flush with it.
+        .pl(space::s0)
         .gap(space::panels)
         .child(left)
         .child(app::center(s, cx).key("centre").grow(1.0).min_w(space::s0))

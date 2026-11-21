@@ -72,25 +72,21 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     let usage = Usage::deserialize(v).unwrap_or_default();
     let dark = cx.system_dark();
     let (t, k) = (tok::theme(dark), theme::tokens(dark));
-    let reading = |key: &str, pct: Option<f32>| {
+    // The page's readout (deck.css `.usage`): one line of the body size in the mono family, labels
+    // quiet and each figure in its band, the user's target on the walkthrough of 2026-11-21.
+    let face = type_::BODY.mono();
+    let reading = |key: &str, label: &str, pct: Option<f32>| {
         let figure = match pct {
             // A reading the deck could not get is not a green one: no band at all.
-            None => theme::content(
-                text("unknown").font(type_::BODY).color(t.text_secondary),
-                dark,
-            ),
+            None => theme::content(text("unknown").font(face).color(t.text_secondary), dark),
             Some(pct) => {
                 let ink: Color = match band(pct) {
-                    // A reading that needs no attention takes no colour.
-                    Band::Fine => t.text,
+                    Band::Fine => k.usage.fine,
                     Band::Warm => k.usage.warm,
                     Band::High => k.usage.high,
                     Band::Critical => k.usage.critical,
                 };
-                let figure = theme::content(
-                    text(format!("{pct:.0}%")).font(type_::BODY).color(ink),
-                    dark,
-                );
+                let figure = theme::content(text(format!("{pct:.0}%")).font(face).color(ink), dark);
                 if band(pct) == Band::Critical {
                     row()
                         .fill(k.usage.critical_bg)
@@ -103,23 +99,30 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         };
         row()
             .key(format!("usage-{key}"))
+            .items_center()
             .gap(space::within)
-            .child(text(key).font(type_::CAPTION).color(k.quiet))
+            .child(text(label).font(face).color(k.quiet))
             .child(figure)
     };
-    let mut readout = row().key("usage").role("status").gap(space::between);
-    // ctx is a deck's: none on the overview, and none for a deck whose session has not reported.
+    let mut readout = row()
+        .key("usage")
+        .role("status")
+        .items_center()
+        .gap(space::between);
+    // ctx is a deck's: none on the overview, and none for a deck whose session has not reported. It
+    // reads the main agent's context only, so it says so (the user, 2026-11-21).
     if usage.ctx.is_some() {
-        readout = readout.child(reading("ctx", usage.ctx));
+        readout = readout.child(reading("ctx", "pilot ctx", usage.ctx));
     }
-    readout = readout.child(reading("session", usage.session));
+    // The reset is said inside its reading, a word after the figure, as the page's `<small>` is.
+    let mut session = reading("session", "session", usage.session);
     if let Some(resets) = &usage.resets {
-        readout = readout.child(theme::content(
-            text(format!("resets {resets}"))
-                .font(type_::CAPTION)
-                .color(k.quiet),
+        session = session.child(theme::content(
+            text(format!("resets {resets}")).font(face).color(k.quiet),
             dark,
         ));
     }
-    readout.child(reading("weekly", usage.weekly))
+    readout
+        .child(session)
+        .child(reading("weekly", "weekly", usage.weekly))
 }

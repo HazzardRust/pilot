@@ -369,13 +369,29 @@ fn a_press_on_a_view_not_yet_refreshed_posts_to_the_thread_it_shows() {
 
 /// A reply box drawn with two options, Close and Dismiss, in the dark window.
 fn box_drawn(local: Local) -> rune::Runtime<pilot_deck::app::State> {
+    box_with(local, &["Yes", "No"], true)
+}
+
+/// A reply box with `labels` for options and Close, Dismiss on `dismiss`, in the dark window.
+fn box_with(local: Local, labels: &[&str], dismiss: bool) -> rune::Runtime<pilot_deck::app::State> {
+    box_of(local, labels, dismiss, false)
+}
+
+/// `box_with`, its options `locked` as an answered thread's are.
+fn box_of(
+    local: Local,
+    labels: &[&str],
+    dismiss: bool,
+    locked: bool,
+) -> rune::Runtime<pilot_deck::app::State> {
     use pilot_deck::app::{self, State};
     use pilot_deck::client::View;
 
-    let option = |label: &str| serde_json::json!({ "label": label, "confirm": false, "locked": false, "recommended": false });
+    let option = |label: &str| serde_json::json!({ "label": label, "confirm": false, "locked": locked, "recommended": false });
+    let options: Vec<_> = labels.iter().map(|label| option(label)).collect();
     let reply = serde_json::json!({
-        "mode": "reply", "id": ID, "options": [option("Yes"), option("No")],
-        "close": { "confirm": true }, "dismiss": true,
+        "mode": "reply", "id": ID, "options": options,
+        "close": { "confirm": true }, "dismiss": dismiss,
     });
     let mut state = State {
         view: View {
@@ -398,39 +414,106 @@ fn at(rt: &rune::Runtime<pilot_deck::app::State>, key: &str) -> rune::runtime::E
         .unwrap_or_else(|| panic!("no {key} drawn"))
 }
 
+/// The walkthrough of 2026-11-21: under the input, Reply at the box's left edge and Close beside it,
+/// as the page's `.send` row; the options and Dismiss one group at the right, on the same line.
 #[test]
 fn reply_layout() {
     let rt = box_drawn(Local::default());
-    let (options, input) = (at(&rt, "reply-options"), at(&rt, "reply-text"));
-    assert!(
-        options.rect[1] < input.rect[1],
-        "the options sit above the input"
-    );
+    let input = at(&rt, "reply-text");
     assert_eq!(input.radius, pilot_deck::theme::radius::button);
 
     let (send, close, dismiss) = (at(&rt, "send"), at(&rt, "close"), at(&rt, "dismiss"));
-    let bottom = (send.rect[1] + send.rect[3]).max(close.rect[1] + close.rect[3]);
+    let options = at(&rt, "reply-options");
+    for (name, e) in [("Reply", &send), ("Close", &close), ("options", &options)] {
+        assert!(
+            e.rect[1] > input.rect[1] + input.rect[3] - 1.0
+                && e.rect[1] <= input.rect[1] + input.rect[3] + 40.0,
+            "{name} is in the row under the input"
+        );
+    }
     assert!(
-        send.rect[1] > input.rect[1] + input.rect[3] - 1.0
-            && bottom <= input.rect[1] + input.rect[3] + 80.0,
-        "Reply is in the row under the input"
+        (send.rect[0] - input.rect[0]).abs() < 0.5,
+        "Reply is at the box's left edge"
     );
     assert!(
-        close.rect[0] < dismiss.rect[0] && dismiss.rect[0] < send.rect[0],
-        "Reply is last"
+        send.rect[0] < close.rect[0] && close.rect[0] < options.rect[0],
+        "Reply, then Close, then the rest"
     );
     assert!(
-        (send.rect[0] + send.rect[2] - (input.rect[0] + input.rect[2])).abs() < 0.5,
-        "Reply is at the box's right edge"
+        (dismiss.rect[0] + dismiss.rect[2] - (input.rect[0] + input.rect[2])).abs() < 0.5,
+        "the rest end at the box's right edge"
     );
 
-    // Only Reply takes the primary role; the others are quiet (no fill of the primary).
+    // Only Reply takes the primary role; every other button is the card's: one fill, one hairline.
     let primary = pilot_deck::theme::roles(true).primary;
-    let filled: Vec<_> = ["send", "close", "dismiss", "option-0", "option-1"]
+    let others = ["close", "dismiss", "option-0", "option-1"].map(|key| at(&rt, key));
+    assert_eq!(send.fill, primary);
+    for e in &others {
+        assert_eq!(
+            e.fill, others[0].fill,
+            "{:?} is not dressed as Close",
+            e.key
+        );
+        assert_eq!(
+            e.text_color, others[0].text_color,
+            "{:?} is not inked as Close",
+            e.key
+        );
+        assert_ne!(e.fill, primary, "{:?} is filled as Reply", e.key);
+    }
+}
+
+/// The user's note: an answered thread's options are drawn as Close is, not greyed; they still take
+/// no press (`a_locked_option_posts_nothing_and_asks_nothing`).
+#[test]
+fn a_locked_option_is_drawn_as_close() {
+    let rt = box_of(Local::default(), &["Yes", "No"], true, true);
+    let close = at(&rt, "close");
+    for key in ["option-0", "option-1", "dismiss"] {
+        let e = at(&rt, key);
+        assert_eq!(e.opacity, close.opacity, "{key} is dimmed");
+        assert_eq!(
+            e.text_color, close.text_color,
+            "{key} is not inked as Close"
+        );
+    }
+}
+
+/// Close and Reply stand in one place whatever the thread offers besides them.
+#[test]
+fn close_and_reply_do_not_move_with_the_options() {
+    let none = box_with(Local::default(), &[], false);
+    let many = box_with(
+        Local::default(),
+        &["ship", "hold", "Teach me", "later"],
+        true,
+    );
+    for key in ["send", "close"] {
+        assert_eq!(at(&none, key).rect, at(&many, key).rect, "{key} moved");
+    }
+}
+
+/// Tab from the box lands on Reply first, so a typed reply goes with Tab then Enter.
+#[test]
+fn tab_from_the_box_reaches_reply_first() {
+    let mut rt = box_drawn(Local::default());
+    let field = at(&rt, "reply-text");
+    let (x, y) = (field.rect[0] + 4.0, field.rect[1] + field.rect[3] / 2.0);
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(1.0 / 60.0);
+    rt.key(rune::KeyEvent {
+        key: rune::Key::Tab,
+        mods: rune::Mods::default(),
+    });
+    rt.frame(1.0 / 60.0);
+    let focused = rt
+        .elements()
         .into_iter()
-        .filter(|key| at(&rt, key).fill == primary)
-        .collect();
-    assert_eq!(filled, ["send"]);
+        .find(|e| e.focused)
+        .and_then(|e| e.key);
+    assert_eq!(focused.as_deref(), Some("send"));
 }
 
 #[test]
@@ -449,5 +532,81 @@ fn inline_confirm() {
     assert_eq!(
         confirm.parent, close.parent,
         "a sibling of Close, in no new row"
+    );
+}
+
+/// The user, 2026-11-21: the reply box "start with more lines, like 5, rather than just the
+/// singular line", and "when i type an extremely long word it forgets to wrap".
+#[test]
+fn the_box_starts_five_lines_tall_and_wraps_a_long_word() {
+    use pilot_deck::theme::{space, type_};
+    let line = if type_::BODY.line_height > 0.0 {
+        type_::BODY.line_height
+    } else {
+        1.25 * type_::BODY.size
+    };
+    let five = 5.0 * line + 2.0 * space::pad;
+    let empty = at(&box_drawn(Local::default()), "reply-text").rect;
+    assert!(
+        (empty[3] - five).abs() < 1.0,
+        "the empty box is {} tall, not five lines ({five})",
+        empty[3]
+    );
+
+    let word = "a".repeat(1200);
+    let long = at(&box_drawn(typed(&word)), "reply-text").rect;
+    assert!(
+        long[2] <= empty[2] + 0.5,
+        "the word widened the box to {}, past {}",
+        long[2],
+        empty[2]
+    );
+    assert!(
+        long[3] > five + line,
+        "the word did not wrap: the box is {} tall",
+        long[3]
+    );
+}
+
+/// The walkthrough of 2026-11-21: the thread's kind line is the page's, its parts a middle dot
+/// apart, and `‹ code ›` sits on the centre of the line.
+#[test]
+fn the_kind_line_is_dotted_and_the_pager_centred() {
+    use pilot_deck::app::{self, State};
+    use pilot_deck::client::View;
+
+    let thread = serde_json::json!({
+        "title": "A thread", "body": "Words.",
+        "kindLine": { "accent": "blue", "state": "not picked up yet", "tone": "waiting",
+            "kind": "question", "at": "2026-11-20T11:20:00Z", "owner": "pilot" },
+        "nav": { "prev": { "id": "itm_a" }, "code": "D1", "next": { "id": "itm_b" }, "position": "1/4" },
+    });
+    let state = State {
+        view: View {
+            screen: "thread".into(),
+            seq: 1,
+            regions: [("thread".to_string(), thread)].into_iter().collect(),
+        },
+        ..State::default()
+    };
+    let mut rt = rune::Runtime::new(state, app::view, (1280.0, 800.0), rune::Env::new(true, 1.0));
+    rt.frame(1.0);
+
+    let kind = at(&rt, "kind");
+    let all = rt.elements();
+    let dots = all
+        .iter()
+        .filter(|e| e.text.as_deref() == Some("·"))
+        .filter(|e| e.parent.is_some_and(|p| all[p].path == kind.path))
+        .count();
+    assert_eq!(dots, 3, "state · kind · time · owner");
+
+    let (nav, line) = (at(&rt, "nav"), at(&rt, "thread-head"));
+    let middle = |r: [f32; 4]| r[0] + r[2] / 2.0;
+    assert!(
+        (middle(nav.rect) - middle(line.rect)).abs() < 1.0,
+        "the pager at {} is not on the line's centre {}",
+        middle(nav.rect),
+        middle(line.rect)
     );
 }

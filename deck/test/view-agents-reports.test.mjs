@@ -87,7 +87,17 @@ test('the reports are the page\'s', () => {
 
   assert.deepEqual(view.reports.map(({ id }) => id), reportsOf(items, MINE).map(({ id }) => id));
   assert.equal(view.reports.length, 2);
-  assert.deepEqual(view.reports[0], { id: newer.id, title: newer.title, href: `/thread/${newer.id}`, at: newer.postedAt });
+  assert.deepEqual(view.reports[0], { id: newer.id, title: newer.title, href: `/thread/${newer.id}`, at: newer.postedAt, open: true });
+});
+
+test('a report the pilot has closed loses its open mark, as on the page', () => {
+  const closed = aReport('itm_0000000000a4', { resolvedAt: '2026-11-02T10:00:00.000Z', resolution: 'closed' });
+  const open = aReport('itm_0000000000a5');
+
+  const view = reportsView(reads([closed, open]), { run: MINE });
+
+  const marked = Object.fromEntries(view.reports.map(({ id, open: mark }) => [id, mark]));
+  assert.deepEqual(marked, { [closed.id]: false, [open.id]: true });
 });
 
 test('the regions are the view\'s', () => {

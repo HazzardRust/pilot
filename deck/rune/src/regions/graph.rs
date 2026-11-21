@@ -5,7 +5,7 @@
 
 use crate::theme::type_;
 use rune::tok;
-use rune::{Cx, El, LineCap, Path, Shape, canvas, el, row, text};
+use rune::{Cx, El, LineCap, Path, Shape, canvas, col, el, row, text};
 use serde::Deserialize;
 
 use crate::app::State;
@@ -41,6 +41,9 @@ struct Graph {
     edges: Vec<Edge>,
     #[serde(default)]
     lanes: usize,
+    /// The label over the graph, the table's heading (`renderRunGraph`'s `.run`).
+    #[serde(default)]
+    name: String,
 }
 
 /// One lane's width and one row's height.
@@ -91,11 +94,21 @@ fn edge(graph: &Graph, edge: &Edge) -> Path {
 pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     // A region the view cannot be read as draws empty rather than taking the window down.
     let graph = Graph::deserialize(v).unwrap_or_default();
-    if graph.dots.is_empty() {
-        return el();
-    }
     let dark = cx.system_dark();
     let t = tok::theme(dark);
+    // The page labels the graph with the tab's name, bold, even over a table with no dot to draw.
+    let label = (!graph.name.is_empty()).then(|| {
+        theme::content(
+            text(&graph.name)
+                .key("graph-label")
+                .font(type_::HEADER)
+                .color(t.text),
+            dark,
+        )
+    });
+    if graph.dots.is_empty() {
+        return label.unwrap_or_else(el);
+    }
     let tokens = theme::tokens(dark);
     let end = graph.dots.len();
     let text_x = x(graph.lanes.saturating_sub(1)) + LANE;
@@ -171,5 +184,8 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 .absolute(width, dot.row as f32 * ROW),
         );
     }
-    region
+    match label {
+        Some(label) => col().gap(space::within).child(label).child(region),
+        None => region,
+    }
 }

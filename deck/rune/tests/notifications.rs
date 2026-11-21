@@ -250,3 +250,29 @@ fn a_press_is_drawn_before_the_deck_answers() {
     );
     drop(holds);
 }
+
+#[test]
+fn a_closed_notice_reads_kind_title_and_resolution() {
+    let notices = json!({ "notices": [
+        { "id": "itm_000000000001", "kind": "question", "title": "Which port?", "resolution": "A, the default" },
+        { "id": "itm_000000000002", "title": "Bare" },
+    ], "open": [] });
+    let mut state = State {
+        view: pilot_deck::client::View {
+            screen: "home".into(),
+            seq: 1,
+            regions: [("notifications".to_string(), notices)]
+                .into_iter()
+                .collect(),
+        },
+        ..State::default()
+    };
+    state.prefs.open_panels.insert("notifications".into());
+    let mut rt = Runtime::new(state, app::view, (1280.0, 800.0), Env::new(true, 1.0));
+    rt.frame(0.0);
+
+    let shown = texts(&rt);
+    for want in ["question · Which port? · A, the default", "Bare"] {
+        assert!(shown.iter().any(|t| t == want), "no {want:?} in {shown:?}");
+    }
+}

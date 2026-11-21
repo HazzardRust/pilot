@@ -216,6 +216,144 @@ fn a_switch_takes_a_confirm() {
     );
 }
 
+/// The user's note: a ticket dragged by its grip, like a playlist, lands where it is dropped, by the
+/// arrows' own one-place moves.
+#[test]
+fn a_dragged_ticket_lands_where_it_is_dropped() {
+    let deck = Scratch::start();
+    let [first, second, third] = ["First", "Second", "Third"].map(|title| ticket(&deck, title));
+    let mut rt = drawn(&deck, red_open());
+    let grip = find(&rt, &format!("ticket-{third}-grip"))
+        .expect("a grip on the row")
+        .rect;
+    let row = |id: &str| find(&rt, &format!("ticket-{id}")).expect("a row").rect[1];
+    let (x, y) = (grip[0] + grip[2] / 2.0, grip[1] + grip[3] / 2.0);
+    let to = y - (row(&third) - row(&first));
+    with_deck(&deck, || {
+        rt.pointer_move(x, y);
+        rt.pointer_down(x, y);
+        for step in 1..=8 {
+            rt.pointer_move(x, y + (to - y) * step as f32 / 8.0);
+            rt.frame(1.0 / 60.0);
+        }
+        rt.pointer_up(x, to);
+        rt.frame(1.0 / 60.0);
+    });
+    settle(&mut rt);
+    settle(&mut rt);
+    assert_eq!(tickets_of(&deck), [third, first, second], "two places up");
+}
+
+/// The user's note: a row's state sat at another x by whether its play was there. The red queue's next
+/// has no play and no up, the middle both arrows and a play, the last no down: one state column.
+#[test]
+fn a_rows_state_keeps_its_place_whatever_its_controls() {
+    let deck = Scratch::start();
+    let ids = ["Next", "Middle", "Last"].map(|title| ticket(&deck, title));
+    let rt = drawn(&deck, red_open());
+    let play = |id: &str| find(&rt, &format!("ticket-{id}-play")).is_some();
+    assert!(!play(&ids[0]) && play(&ids[1]), "both row shapes are drawn");
+
+    let edges: Vec<[f32; 2]> = ids
+        .iter()
+        .map(|id| {
+            let at = find(&rt, &format!("ticket-{id}-state"))
+                .unwrap_or_else(|| panic!("no state on {id}"))
+                .rect;
+            [at[0], at[0] + at[2]]
+        })
+        .collect();
+    assert!(
+        edges.iter().all(|edge| *edge == edges[0]),
+        "one state column: {edges:?}"
+    );
+}
+
+/// The user's note: a row showed its title alone. As the HTML deck's row: `next` on the queue's head,
+/// the title, the state, the size, and the spec shut under it until pressed.
+#[test]
+fn a_row_carries_the_pages_lines() {
+    let deck = Scratch::start();
+    let [head, other] = ["Head", "Other"].map(|title| ticket(&deck, title));
+    let mut rt = drawn(&deck, red_open());
+    let shows = |rt: &Runtime<State>, id: &str, words: &str| {
+        let row = find(rt, &format!("ticket-{id}")).expect("a row").rect;
+        rt.elements().into_iter().any(|e| {
+            let inside = e.rect[1] >= row[1] && e.rect[1] < row[1] + row[3];
+            inside && e.text.as_deref() == Some(words)
+        })
+    };
+    assert!(
+        find(&rt, &format!("ticket-{head}-next")).is_some(),
+        "next on the head"
+    );
+    assert!(
+        find(&rt, &format!("ticket-{other}-next")).is_none(),
+        "and on no other row"
+    );
+    for words in ["Head", "planning", "1 slice", "▸ spec"] {
+        assert!(shows(&rt, &head, words), "the row shows {words}");
+    }
+    assert!(
+        !shows(&rt, &head, "fix the thing"),
+        "the spec is served shut"
+    );
+
+    press(&deck, &mut rt, &format!("ticket-{head}-spec"));
+    rt.frame(1.0 / 60.0);
+    assert!(
+        shows(&rt, &head, "▾ spec") && shows(&rt, &head, "fix the thing"),
+        "opened"
+    );
+}
+
+/// The user's note: Red / Yellow / Green in deck.css's pastels. A queue's heading and its rows' states
+/// take the queue's accent (`.ticket-queue > summary`, `.ticket-state[data-state]`), and the row in hand
+/// is tinted at 14% of the waiting colour with a 3 px bar (`li.in-hand`), the others not.
+#[test]
+fn a_queue_wears_its_pastel() {
+    let deck = Scratch::start();
+    let [head, other] = ["Head", "Other"].map(|title| ticket(&deck, title));
+    let rt = drawn(&deck, red_open());
+    let tk = pilot_deck::theme::tokens(true);
+    let ink = |key: &str| find(&rt, key).and_then(|e| e.text_color);
+
+    assert_eq!(
+        ink("tickets-fold-red-label"),
+        Some(tk.accent.red),
+        "heading"
+    );
+    assert_eq!(
+        ink("tickets-fold-yellow-label"),
+        Some(tk.accent.yellow),
+        "every heading"
+    );
+    assert_eq!(
+        find(&rt, "tickets-fold-red-label").and_then(|e| e.text),
+        Some("RED".into()),
+        "in capitals"
+    );
+    assert_eq!(
+        ink(&format!("ticket-{other}-state")),
+        Some(tk.accent.red),
+        "state"
+    );
+
+    let fill = |id: &str| find(&rt, &format!("ticket-{id}")).expect("a row").fill;
+    assert_eq!(fill(&head), tk.state.waiting.alpha(0.14), "in hand");
+    assert!(
+        find(&rt, &format!("ticket-{head}-bar")).is_some_and(|e| e.rect[2] == 3.0),
+        "a 3 px bar"
+    );
+    assert_eq!(fill(&other).a, 0.0, "no other row");
+    let text_x = |id: &str| {
+        find(&rt, &format!("ticket-{id}-state"))
+            .expect("a state")
+            .rect[0]
+    };
+    assert_eq!(text_x(&head), text_x(&other), "the text where it was");
+}
+
 #[test]
 fn folds_are_kept_per_deck() {
     let deck = Scratch::start();

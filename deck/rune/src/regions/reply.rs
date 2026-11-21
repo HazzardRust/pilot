@@ -16,12 +16,21 @@ use crate::theme::{self, space};
 /// The `act::send` key of the box's one press that is out.
 const SEND: &str = "reply-press";
 
+/// A style's line in points: its own, or Rune's default of 1.25 × its size.
+pub(crate) fn line_height(style: rune::TextStyle) -> f32 {
+    if style.line_height > 0.0 {
+        style.line_height
+    } else {
+        1.25 * style.size
+    }
+}
+
 /// One option the user can press, as `replyView` lists it.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Opt {
     pub label: String,
     pub confirm: bool,
-    /// The page draws it disabled: the thread already holds a press. Drawn pressed; it posts nothing.
+    /// The page draws it disabled: the thread already holds a press. Drawn disabled; it posts nothing.
     /// No default: a view without it fails the parse and draws nothing, rather than unlocked.
     pub locked: bool,
     /// The pilot's recommended answer: drawn with the page's quiet "(recommended)" mark. No default either.
@@ -218,7 +227,7 @@ fn button(label: &str, key: String, ink: Color, fill: Color) -> El {
         .label(label)
         .padding(space::pad)
         .fill(fill)
-        .child(text(label).font(type_::BODY).color(ink))
+        .child(text(label).font(type_::CAPTION).color(ink))
 }
 
 pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
@@ -237,13 +246,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             t.text
         }
     };
-    let btn = |label: &str, key: String, pressed: bool| {
-        let fill = if pressed { k.state.pilot } else { k.rule };
-        theme::control(button(label, key, ink(pressed), fill), dark)
-    };
     let r = theme::roles(dark);
-    // A quiet button: the page's ink and a hairline, never a fill unless pressed in.
-    let quiet_btn = |label: &str, key: String, pressed: bool| {
+    // Every button but Reply, as a queue card's options are (the walkthrough of 2026-11-21): the
+    // page's ink and a hairline, never a fill unless pressed in.
+    let btn = |label: &str, key: String, pressed: bool| {
         let fill = if pressed {
             k.state.pilot
         } else {
@@ -272,7 +278,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         return el();
     }
 
-    let mut options = row().key("reply-options").gap(space::pad);
+    let mut options = row().key("reply-options").gap(space::pad).items_center();
     for (i, option) in reply.options.into_iter().enumerate() {
         // An option locked since its ask (a refresh brought another surface's press) draws no Confirm.
         let asking = !local.closing
@@ -280,10 +286,11 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             && local.confirming.as_deref() == Some(option.label.as_str());
         let label = option.label.clone();
         // A verdict's option and its confirm are one group: the ask and its Confirm sit beside it.
-        let lit = pressed(&label) || asking || option.locked;
+        let lit = pressed(&label) || asking;
         // Its Confirm is the option pressed again while armed, so `press`'s lock guard holds there too.
         let again = option.clone();
         let (at, again_at) = (id.clone(), id.clone());
+        // A locked option takes no press but is drawn as Close is, never greyed (the user's note).
         let mut face = btn(&label, format!("option-{i}"), lit);
         if option.recommended {
             face = face.gap(space::within).child(
@@ -293,14 +300,15 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                     .color(k.quiet),
             );
         }
-        let mut group =
-            row()
-                .gap(space::within)
-                .items_center()
-                .child(face.on_press(move |s: &mut State| {
-                    let action = s.regions.reply.press(&at, &option);
-                    post(s, action);
-                }));
+        face = if option.locked {
+            face.disabled(true)
+        } else {
+            face.on_press(move |s: &mut State| {
+                let action = s.regions.reply.press(&at, &option);
+                post(s, action);
+            })
+        };
+        let mut group = row().gap(space::within).items_center().child(face);
         if asking {
             group = group
                 .child(theme::content(
@@ -320,8 +328,9 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     }
 
     let at = id.clone();
-    // Reply, the one primary button, at the bottom right; Close and Dismiss are quiet, on the left,
-    // each with its confirm beside it.
+    // The walkthrough of 2026-11-21: Reply, the one primary button, then Close, each in one place on
+    // every thread, Reply the first stop on Tab from the box, as the page's `.send` row; every other
+    // button is one group of its own at the right, so options come and go without moving either.
     let reply_button = {
         let fill = if pressed("Reply") {
             k.state.pilot
@@ -335,11 +344,15 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             },
         )
     };
-    let mut quiet = row().key("reply-quiet").gap(space::pad).items_center();
+    let mut fixed = row()
+        .key("reply-fixed")
+        .gap(space::pad)
+        .items_center()
+        .child(reply_button);
     if let Some(close) = reply.close {
         let (confirm, at, confirm_at) = (close.confirm, id.clone(), id.clone());
-        quiet = quiet.child(
-            quiet_btn(CLOSE, "close".into(), pressed(CLOSE) || local.closing).on_press(
+        fixed = fixed.child(
+            btn(CLOSE, "close".into(), pressed(CLOSE) || local.closing).on_press(
                 move |s: &mut State| {
                     let action = s.regions.reply.close(&at, confirm);
                     post(s, action);
@@ -347,40 +360,38 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             ),
         );
         if local.closing {
-            quiet = quiet
+            fixed = fixed
                 .child(theme::content(
                     text("Close this thread?").font(type_::BODY).color(t.text),
                     dark,
                 ))
-                .child(
-                    quiet_btn("Confirm", "close-confirm".into(), false).on_press(
-                        move |s: &mut State| {
-                            let action = s.regions.reply.confirm(&confirm_at);
-                            post(s, action);
-                        },
-                    ),
-                );
+                .child(btn("Confirm", "close-confirm".into(), false).on_press(
+                    move |s: &mut State| {
+                        let action = s.regions.reply.confirm(&confirm_at);
+                        post(s, action);
+                    },
+                ));
         }
     }
     if reply.dismiss {
-        quiet = quiet.child(
-            quiet_btn("Dismiss", "dismiss".into(), pressed("Dismiss")).on_press(
-                move |s: &mut State| {
-                    let action = s
-                        .regions
-                        .reply
-                        .plain("Dismiss", Action::DismissItem { id: id.clone() });
-                    post(s, action);
-                },
-            ),
+        options = options.child(
+            btn("Dismiss", "dismiss".into(), pressed("Dismiss")).on_press(move |s: &mut State| {
+                let action = s
+                    .regions
+                    .reply
+                    .plain("Dismiss", Action::DismissItem { id: id.clone() });
+                post(s, action);
+            }),
         );
     }
+    // Top-aligned, so a taller option ("(recommended)") never moves Reply or Close.
     let send = row()
         .key("reply-send")
-        .items_center()
-        .child(quiet)
-        .child(el().grow(1.0))
-        .child(reply_button);
+        .items_start()
+        .gap(space::between)
+        .child(fixed)
+        .child(el().grow(1.0).min_w(space::s0))
+        .child(options);
 
     let mut box_ = col()
         .key("reply")
@@ -390,13 +401,16 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         })
         // The page's hairline above the box (deck.css:225).
         .child(theme::separator(dark))
-        .child(options)
         .child(
             text_input(&local.draft, type_::BODY)
                 .key("reply-text")
                 .label("Reply")
                 .placeholder("Reply to the pilot.", k.quiet)
                 .on_edit(|s: &mut State| &mut s.regions.reply.draft)
+                // Five lines tall to start, and growing past them; a word longer than the box
+                // breaks at its width (the user, 2026-11-21).
+                .wrap_anywhere()
+                .min_h(5.0 * line_height(type_::BODY) + 2.0 * space::pad)
                 .padding(space::pad)
                 .radius(theme::radius::button)
                 .fill(k.rule),

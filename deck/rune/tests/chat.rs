@@ -121,6 +121,44 @@ fn enter_posts_one_reply_to_the_chat_and_the_draft_empties_once_taken() {
 }
 
 #[test]
+fn the_box_is_three_lines_tall_and_send_posts_the_draft() {
+    let deck = support::Scratch::start();
+    let repo = a_deck_with_a_chat(&deck);
+    let client = client_for(&deck);
+    let view = view_of(&client, &repo);
+    let id = chat_id(&view);
+    let mut rt = window(view, client);
+
+    let tall = |rt: &Runtime<State>, key: &str| {
+        rt.elements()
+            .into_iter()
+            .find(|e| e.key.as_deref() == Some(key))
+            .unwrap_or_else(|| panic!("{key} is drawn"))
+            .rect[3]
+    };
+    let line = 1.25 * pilot_deck::theme::type_::BODY.size;
+    assert!(
+        tall(&rt, "chat-draft") >= 3.0 * line,
+        "the page's rows=\"3\": {} against a line of {line}",
+        tall(&rt, "chat-draft")
+    );
+
+    rt.state.regions.chat.draft = TextEdit::new("Send by the button");
+    rt.frame(0.0);
+    let (x, y) = rt.find("chat-send").expect("the Send button is drawn");
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(0.0);
+    settle(&mut rt);
+
+    assert_eq!(rt.state.regions.chat.draft.text, "");
+    let said = replies(&deck, &id);
+    assert_eq!(said.len(), 1, "one reply posted: {said:?}");
+    assert_eq!(said[0]["text"], "Send by the button");
+}
+
+#[test]
 fn a_send_the_deck_does_not_take_keeps_the_draft_and_says_why() {
     let deck = support::Scratch::start();
     let repo = a_deck_with_a_chat(&deck);

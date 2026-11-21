@@ -74,7 +74,8 @@ fn the_window_shows_the_scratch_decks_tabs() {
         .into_iter()
         .filter_map(|element| element.text)
         .collect();
-    for code in ["Overview", "alpha"] {
+    // The strip says its words in capitals, as the page's `.runs-strip a` does.
+    for code in ["OVERVIEW", "ALPHA"] {
         assert!(
             texts.iter().any(|text| text == code),
             "no {code} tab among {texts:?}"

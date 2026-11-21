@@ -15,7 +15,7 @@ import { threadWalk } from '../ui/render-pages.mjs';
 import { tabCode } from '../ui/render-strip.mjs';
 
 /** Prose with each id of an item the deck holds read as that item's title, as `withTitles` does for the page. */
-const titled = (text, items) =>
+export const titled = (text, items) =>
   String(text ?? '').replace(/(\/thread\/)?\b(itm_[0-9a-f]{12})\b/g, (said, _path, id) => items.find((each) => each.id === id)?.title ?? said);
 
 /** The ticket line of `renderTicketStanding`, as words: the ticket's title and where it stands. */

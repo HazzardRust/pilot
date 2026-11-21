@@ -46,8 +46,19 @@ test('the notices are the page\'s', () => {
   const page = pageIds(items);
   assert.deepEqual(view.notices.map(({ id }) => id), page.notices);
   assert.deepEqual(view.open.map(({ id, writes }) => ({ id, writes })), page.open);
-  assert.deepEqual(view.notices[0], { id: newer.id, title: newer.title, href: `/thread/${newer.id}`, at: Date.parse(newer.resolvedAt) });
+  assert.deepEqual(view.notices[0], { id: newer.id, kind: 'question', title: newer.title, resolution: 'decided', href: `/thread/${newer.id}`, at: Date.parse(newer.resolvedAt) });
   assert.deepEqual(view.open[0], { id: spoken.id, title: 'Which <port>?', href: `/thread/${spoken.id}`, writes: 3 });
+});
+
+test('a closed notice reads as the page\'s: kind · title · the resolution\'s first line, an id read as its title', () => {
+  const named = aQuestion('itm_0000000000c1', { title: 'Which port?' });
+  const closed = aQuestion('itm_0000000000c2', { resolvedAt: '2026-11-03T10:00:00.000Z', resolution: 'answered on itm_0000000000c1\nmore', notice: true });
+
+  const [notice] = notificationsView(reads([named, closed]), {}).notices;
+
+  const page = renderNotifications([named, closed], [], '/').split('data-notice=')[1].replace(/<form[\s\S]*$/, '').replace(/<[^>]*>/g, '');
+  assert.equal(`${notice.kind} · ${notice.title} · ${notice.resolution}`, page.slice(page.indexOf('>') + 1));
+  assert.equal(notice.resolution, 'answered on Which port?');
 });
 
 test('an empty deck has nothing to notify', () => {
