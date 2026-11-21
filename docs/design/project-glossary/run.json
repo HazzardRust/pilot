@@ -4,23 +4,23 @@
   "ticket": "itm_2458e437da6a",
   "branch": "feat/project-glossary",
   "base": "pilot",
-  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-project-glossary",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-project-glossary",
   "artefact": "docs/design/project-glossary/architecture.md",
   "slices": [
     {
       "slice": "S1",
-      "state": "integrated at 344a7f58",
+      "state": "integrated at 2f25339",
       "branch": "slice/project-glossary-s1",
-      "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-project-glossary-s1"
+      "worktree": "C:\\Users\\jrylk\\Projects\\pilot-project-glossary-s1"
     },
     {
       "slice": "S2",
-      "state": "implementing",
+      "state": "integrated at 29e5b95",
       "after": [
         "S1"
       ],
       "branch": "slice/project-glossary-s2",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-project-glossary-s2"
+      "worktree": "C:/Users/jrylk/Projects/pilot-project-glossary-s2"
     },
     {
       "slice": "S3",
@@ -38,7 +38,7 @@
         "S1"
       ],
       "branch": "slice/project-glossary-s4",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-project-glossary-s4"
+      "worktree": "C:/Users/jrylk/Projects/pilot-project-glossary-s4"
     },
     {
       "slice": "S5",
@@ -50,12 +50,12 @@
     },
     {
       "slice": "S6",
-      "state": "implementing",
+      "state": "pushed 91a28ab",
       "after": [
         "S1"
       ],
       "branch": "slice/project-glossary-s6",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-project-glossary-s6"
+      "worktree": "C:/Users/jrylk/Projects/pilot-project-glossary-s6"
     },
     {
       "slice": "S7",
@@ -67,8 +67,8 @@
       ]
     }
   ],
-  "next": "pause drain: S2 pilot integrate running; then integrate S4 (7d881ec); S6 implementing; S3, S5, S7 not started",
-  "updatedAt": "2026-11-21T02:31:44.210Z",
+  "next": "successor co-pilot on this device: integrate S4 (7d881ec), then S6 (91a28ab), then spawn S3, S5, S7",
+  "updatedAt": "2026-11-21T14:37:52.777Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -172,6 +172,45 @@
       "what": "brief.md:32 trailer session id differs from the co-pilot brief's",
       "evidence": "brief.md:32 ...ppeY5pzVQLciH5swh vs ...zNB8zPpKs1Y5s2eU",
       "size": 1
+    },
+    {
+      "agent": "pilot-explorer",
+      "what": "the deck store holds about 3,400 absolute home paths and machine-bound files, so it cannot be copied between machines",
+      "evidence": "explorer aa386d96 on itm_6f787d6ef190; 52 MB, 175 files",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "pilot handoff refused twice on a landed run's pruned worktree (two-devices) until another run's deck_status made its record the newest",
+      "size": 3000
+    },
+    {
+      "kind": "drain",
+      "what": "co-pilot did not hand back paused within 15 minutes of the pause while its implementers ran, holding the pilot past its 260k mark",
+      "size": 8000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1's 7 reworded term names are recorded nowhere; S6 had to rebuild them from git show",
+      "evidence": "git show -M c144962d plus grep -B3",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 Interface lists --log only on check while Prohibited assumes append takes one; added to all commands (S3, S5, S7 may assume it)",
+      "evidence": "slices/S6.md Interface vs Prohibited",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "full suite >3 min; S6 final-state suite skipped on the user's mid-turn word, pre-fix run green",
+      "evidence": "~4830 tests",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "deck MCP server failed to connect in the co-pilot's session; rows relayed through main",
+      "evidence": "CONNECTION_CLOSED on spawn, 2026-11-21"
     }
   ]
 }
