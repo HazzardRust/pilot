@@ -4,21 +4,23 @@
   "ticket": "itm_2458e437da6a",
   "branch": "feat/project-glossary",
   "base": "pilot",
-  "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-feat-project-glossary",
+  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-project-glossary",
   "artefact": "docs/design/project-glossary/architecture.md",
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed c144962",
+      "state": "integrated at 344a7f58",
       "branch": "slice/project-glossary-s1",
       "worktree": "C:\\Users\\Hazzard\\Projects\\pilot-project-glossary-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/project-glossary-s2",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-project-glossary-s2"
     },
     {
       "slice": "S3",
@@ -31,10 +33,12 @@
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "pushed 7d881ec",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/project-glossary-s4",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-project-glossary-s4"
     },
     {
       "slice": "S5",
@@ -46,10 +50,12 @@
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/project-glossary-s6",
+      "worktree": "C:/Users/Hazzard/Projects/pilot-project-glossary-s6"
     },
     {
       "slice": "S7",
@@ -61,8 +67,8 @@
       ]
     }
   ],
-  "next": "co-pilot: pilot integrate S1 (c144962) into feat/project-glossary; then S2, S4, S6 in parallel off the integrated tip",
-  "updatedAt": "2026-11-21T01:44:41.906Z",
+  "next": "pause drain: S2 pilot integrate running; then integrate S4 (7d881ec); S6 implementing; S3, S5, S7 not started",
+  "updatedAt": "2026-11-21T02:31:44.210Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -125,6 +131,47 @@
       "what": "S1 slice Interface named no input bound for a path-argument CLI; ReDoS reached review",
       "evidence": "security-reviewer WARNING glossary.mjs:65,:68; 200 KB token hung >80 s",
       "size": 15
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back enforce hook fired twice while three implementer children were live; the co-pilot cannot wait on them and main must resume it on each slice report",
+      "evidence": "co-pilot af718622 hand-backs 1 and 2 on project-glossary, S2/S4/S6 building",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md carries a different Claude-Session trailer than the co-pilot brief",
+      "evidence": "brief.md:32 vs co-pilot brief",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 B2 'and not Base twice' reads two ways; B5 tested only a once-used Avoid word, letting termOf return wrong entries for Sync, Hand-off, Ticket, Audit report",
+      "evidence": "typescript-reviewer HIGH on termOf",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "first full-suite run wasted on a pre-fix state",
+      "evidence": "suite >3 min",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "session relayed seven gate1 refusals and four co-pilot forced hand-backs; about 60k tokens of agent hand-back text repeated twice each (message plus SubagentHandback)",
+      "size": 60000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "windowsHide:true on every child process is enforced only by the full suite; no slice or brief names it",
+      "evidence": "hidden-spawns.test.mjs failed on scripts/glossary-stale.mjs spawnSync(",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md:32 trailer session id differs from the co-pilot brief's",
+      "evidence": "brief.md:32 ...ppeY5pzVQLciH5swh vs ...zNB8zPpKs1Y5s2eU",
+      "size": 1
     }
   ]
 }
