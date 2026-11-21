@@ -18,3 +18,9 @@ test('every measurement in it is a read-only command', () => {
   );
 });
 
+test('the area runs the measure', () => {
+  const measure = sectionOf(navigability(), 'Measure');
+  assert.match(measure, /node scripts\/glossary\.mjs check GLOSSARY\.md/, 'it runs the glossary check');
+  assert.match(measure, /node scripts\/glossary-stale\.mjs \./, 'it runs the stale-term search');
+});
+
