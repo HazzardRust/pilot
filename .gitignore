@@ -1,4 +1,5 @@
 node_modules/
+deck/rune/target/
 
 # Environment files hold secrets; an example file stays committable.
 .env
