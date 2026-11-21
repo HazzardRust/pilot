@@ -336,7 +336,7 @@ export function listAgents(now = Date.now()) {
     const live = [...agents.values()]
       .filter((agent) => isLive(agent, now))
       .sort((left, right) => left.since - right.since)
-      .map((agent) => ({ agentType: agent.agentType, since: new Date(agent.since).toISOString() }));
+      .map((agent) => ({ agentType: agent.agentType, since: new Date(agent.since).toISOString(), lastSeen: new Date(agent.lastSeen).toISOString() }));
     if (live.length) roster[key] = live;
   }
   return roster;

@@ -381,14 +381,7 @@ function renderStep(step, glyph, label, all) {
  * queue's last and on to its first: either arrow lands on an open thread.
  */
 function renderThreadNav(item, items, tab, all = false) {
-  // Cards, then the fold: the order home draws them in, so X/N counts both (nothing-hidden A6).
-  const open = [...shownOf(queueOf(items), items), ...foldedOf(queueOf(items), items)];
-  const full = [...open, ...daySections(items.filter((each) => !isOpen(each))).flatMap((day) => day.items)];
-  const list = all ? full : open;
-  const same = (each) => each.id === item.id;
-  const at = list.findIndex(same);
-  const prev = at !== -1 ? list[at - 1] : full.some(same) ? list.at(-1) : undefined;
-  const next = at !== -1 ? list[at + 1] : list[0];
+  const { prev, next, at, list } = threadWalk(item, items, all);
   const code = tab ? renderLink(hrefFor(tab, all), tabCode(tab)) : '';
   const position = at === -1 ? '' : `<span class="position" data-live="position">${at + 1}/${list.length}</span>`;
   const which = all ? 'thread' : 'open thread';
@@ -400,6 +393,19 @@ function renderThreadNav(item, items, tab, all = false) {
     '</nav>' +
     position
   );
+}
+
+/** The walk the nav above draws, as data, so the Rune deck's thread view walks the same list (rune-deck-ui S8). */
+export function threadWalk(item, items, all = false) {
+  // Cards, then the fold: the order home draws them in, so X/N counts both (nothing-hidden A6).
+  const open = [...shownOf(queueOf(items), items), ...foldedOf(queueOf(items), items)];
+  const full = [...open, ...daySections(items.filter((each) => !isOpen(each))).flatMap((day) => day.items)];
+  const list = all ? full : open;
+  const same = (each) => each.id === item.id;
+  const at = list.findIndex(same);
+  const prev = at !== -1 ? list[at - 1] : full.some(same) ? list.at(-1) : undefined;
+  const next = at !== -1 ? list[at + 1] : list[0];
+  return { prev, next, at, list };
 }
 
 /**

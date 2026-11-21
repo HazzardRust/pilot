@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rune deck token playground</title>
+<style>
+  body { margin: 0; display: grid; grid-template-columns: 380px 1fr; height: 100vh; font: 12px/1.4 system-ui, sans-serif; }
+  #controls { overflow: hidden auto; padding: 8px 12px; border-right: 1px solid #ccc; background: #fafafa; color: #222; }
+  #controls h3 { margin: 12px 0 4px; font-size: 12px; text-transform: uppercase; color: #666; }
+  .row { display: grid; grid-template-columns: 120px 1fr; gap: 6px; align-items: center; margin: 2px 0; }
+  .row > span:first-child { overflow: hidden; text-overflow: ellipsis; }
+  .row input[type=range] { width: 140px; vertical-align: middle; }
+  .sw { display: inline-block; width: 14px; height: 14px; vertical-align: middle; border: 1px solid #0003; margin-left: 4px; }
+  code { font-size: 11px; }
+  #bar { display: flex; gap: 6px; flex-wrap: wrap; position: sticky; top: -8px; background: #fafafa; padding: 6px 0; }
+  #out { width: 100%; height: 120px; font: 11px monospace; }
+  #msg { color: #555; }
+  /* The mock: every value is a custom property set from theme.json (see render()). */
+  #mock { --px: 1px; display: grid; grid-template-rows: calc(var(--size-titlebar, 32) * var(--px)) 1fr;
+    background: var(--surface); color: var(--text); font-family: var(--type-ui), sans-serif; overflow: hidden;
+    font-size: calc(var(--type-body-size) * var(--px)); line-height: 1.6; }
+  #mock .title { display: flex; align-items: center; padding: 0 calc(var(--space-pad) * var(--px)); border-bottom: 1px solid var(--rule); }
+  #mock .main { display: grid; grid-template-columns: calc(var(--size-icon_bar, 48) * var(--px)) calc(var(--size-side_default, 300) * var(--px)) 1fr 220px; min-height: 0; }
+  #mock .icons { display: flex; flex-direction: column; align-items: center; gap: calc(var(--space-within) * var(--px)); padding-top: calc(var(--space-pad) * var(--px)); border-right: 1px solid var(--rule); }
+  #mock .icon { width: calc(var(--size-icon, 24) * var(--px)); height: calc(var(--size-icon, 24) * var(--px)); border-radius: calc(var(--radius-button, 4) * var(--px)); display: grid; place-items: center; color: var(--quiet); }
+  #mock .side, #mock .thread, #mock .strip { padding: calc(var(--space-pad) * var(--px)); overflow: hidden; }
+  #mock .side, #mock .thread { border-right: 1px solid var(--rule); }
+  #mock .tabs { display: flex; gap: calc(var(--space-within) * var(--px)); margin-bottom: calc(var(--space-between) * var(--px)); }
+  #mock .tab, #mock button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer;
+    padding: calc(var(--space-s2) * var(--px)) calc(var(--space-pad) * var(--px)); border-radius: calc(var(--radius-button, 4) * var(--px)); }
+  #mock .tab:hover, #mock button:hover, #mock .icon:hover { background: var(--hover); }
+  #mock .tab.on { box-shadow: inset 0 -2px 0 var(--roles-primary, var(--accent-blue)); }
+  #mock .card { border: 1px solid var(--rule); border-radius: calc(var(--radius-button, 4) * var(--px)); padding: calc(var(--space-pad) * var(--px)); margin-bottom: calc(var(--space-within) * var(--px)); }
+  #mock .quiet { color: var(--quiet); }
+  #mock .chip { border-radius: calc(var(--radius-chip, 2) * var(--px)); padding: 0 calc(var(--space-within) * var(--px)); border: 1px solid currentColor; }
+  #mock .msg { margin: calc(var(--space-between) * var(--px)) 0; }
+  #mock ::selection { background: var(--selection); }
+</style>
+</head>
+<body>
+<div id="controls">
+  <div id="bar">
+    <label><input type="file" id="file" accept=".json" hidden><button onclick="file.click()">Import</button></label>
+    <button id="exportBtn">Export</button><button id="copyBtn">Copy</button><button id="dl">Download</button>
+    <label><input type="checkbox" id="dark"> dark</label>
+    <span id="msg"></span>
+  </div>
+  <textarea id="out" readonly placeholder="Import deck/rune/theme.json (or drop it here)."></textarea>
+  <div id="tree"></div>
+</div>
+<div id="mock">
+  <div class="title"><b>pilot</b>&nbsp;<span class="quiet">· deck</span></div>
+  <div class="main">
+    <div class="icons"><div class="icon">◧</div><div class="icon">☰</div><div class="icon">⚑</div></div>
+    <div class="side">
+      <div class="tabs"><button class="tab on">Queue</button><button class="tab">Tickets</button><button class="tab">History</button></div>
+      <div class="card"><div><span style="color: var(--state-waiting)">waiting</span> · <b>S37 token playground</b></div>
+        <div class="quiet">question · <span style="color: var(--by-implementer)">implementer</span> · 2m</div></div>
+      <div class="card"><div><span style="color: var(--state-unacknowledged)">unacknowledged</span> · gate1 rune-deck-ui</div>
+        <div class="quiet">gate1 · <span style="color: var(--by-architect)">architect</span> · 1h</div></div>
+    </div>
+    <div class="thread">
+      <div class="quiet">question · <span style="color: var(--by-pilot)">pilot</span> · itm_2d4d885b5e13</div>
+      <h3 style="margin: calc(var(--space-within) * var(--px)) 0">Which tokens should the playground drive?</h3>
+      <div class="msg"><span style="color: var(--by-qa)">qa</span> <span class="quiet">10:42</span><br>Every value in theme.json, light and dark. Select this text to see the selection.</div>
+      <div class="msg"><span style="color: var(--by-fundamentalist)">fundamentalist</span> <span class="quiet">10:44</span><br>One page, no build step.</div>
+      <div style="display: flex; gap: calc(var(--space-within) * var(--px))">
+        <button style="color: var(--accent-green)">Sign off</button><button style="color: var(--accent-red)">Reject</button><button>Reply</button></div>
+    </div>
+    <div class="strip">
+      <div class="quiet">usage</div>
+      <div><span class="chip" style="color: var(--usage-fine)">fine 12%</span> <span class="chip" style="color: var(--usage-warm)">warm 61%</span></div>
+      <div style="margin-top: calc(var(--space-within) * var(--px))"><span class="chip" style="color: var(--usage-high)">high 84%</span>
+        <span class="chip" style="color: var(--usage-critical); background: var(--usage-critical_bg)">critical 97%</span></div>
+      <div class="quiet" style="margin-top: calc(var(--space-between) * var(--px))">agents</div>
+      <div style="color: var(--by-teacher)">teacher</div><div style="color: var(--by-explorer)">explorer</div><div style="color: var(--by-auditor)">auditor</div>
+    </div>
+  </div>
+</div>
+<script>
+// Rune's colour maths in f32, as rune-motion's srgb_decode/srgb_encode and theme.rs's hue_over.
+const f = Math.fround;
+function srgbDecode(c) { return c <= f(0.04045) ? f(c / f(12.92)) : f(Math.pow(f(f(c + f(0.055)) / f(1.055)), f(2.4))); }
+function srgbEncode(c) { return c <= f(0.0031308) ? f(c * f(12.92)) : f(f(f(1.055) * f(Math.pow(c, f(f(1) / f(2.4))))) - f(0.055)); }
+/** theme.rs `hue_over(text, hue, mix)` then Rune's `Color::hex`: `#rrggbb`. */
+function hueOver(dark, hue, mix) {
+  const m = f(mix), t = srgbEncode(dark ? 1 : 0);
+  return '#' + [16, 8, 0].map(s => {
+    const h = srgbEncode(srgbDecode(f(((hue >> s) & 0xff) / 255)));
+    const lin = srgbDecode(f(f(m * t) + f(f(1 - m) * h)));
+    // Rust's `as u8` saturates.
+    return Math.min(255, Math.max(0, Math.round(f(srgbEncode(lin) * 255)))).toString(16).padStart(2, '0');
+  }).join('');
+}
+
+// theme.json read with each leaf's source span, so an untouched export is the file byte for byte.
+function parse(src) {
+  let i = 0; const leaves = [];
+  const ws = () => { while (/\s/.test(src[i])) i++; };
+  const tok = re => { re.lastIndex = i; const m = re.exec(src); if (!m) throw new Error('bad JSON at ' + i); i = re.lastIndex; return m[0]; };
+  const str = /"(?:[^"\\]|\\.)*"/y;
+  const expect = c => { ws(); if (src[i++] !== c) throw new Error(`expected ${c} at ${i - 1}`); };
+  function value(path) {
+    ws(); const start = i;
+    if (src[i] === '{') {
+      i++; const obj = {}; ws();
+      if (src[i] === '}') { i++; return obj; }
+      for (;;) {
+        ws(); const key = JSON.parse(tok(str)); expect(':');
+        obj[key] = value(path.concat(key)); ws();
+        if (src[i] === '}') { i++; return obj; }
+        expect(',');
+      }
+    }
+    if (src[i] === '[') {
+      let depth = 0;
+      do { if (src[i] === '"') { tok(str); continue; } if (src[i] === '[') depth++; if (src[i] === ']') depth--; i++; } while (depth && i < src.length);
+    }
+    else tok(/"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null/y);
+    const raw = src.slice(start, i), leaf = { path, start, end: i, raw, value: JSON.parse(raw) };
+    leaves.push(leaf); return leaf.value;
+  }
+  const root = value([]); ws(); if (i !== src.length) throw new Error('trailing text at ' + i);
+  return { root, leaves };
+}
+
+const isHex = v => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
+const isPair = v => v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 2 && isHex(v.light) && isHex(v.dark);
+// As theme.rs: a bare hex under `by` or `state` is a hue mixed over the text; any other is drawn as it is.
+const isHue = (v, path) => isHex(v) && ['by', 'state'].includes(path[0]);
+// Fractions run 0..1; every other number is px and runs to twice its value or 64.
+const isUnit = path => path[0] === 'alpha' || path[0] === 'motion' || /(^|_)(mix|alpha)$/.test(path.at(-1));
+let src = null, doc = null;
+/** The section a string names a key of (`"s2"` in `space`, `"blue"` in `accent`): the value is an alias. */
+const aliasOf = v => typeof v === 'string' && !isHex(v)
+  ? Object.keys(doc.root).find(s => {
+      const o = doc.root[s];
+      return o && typeof o === 'object' && !Array.isArray(o) && Object.hasOwn(o, v) && typeof o[v] !== 'string';
+    })
+  : undefined;
+
+function num(n, raw) { const s = String(n); return raw.includes('.') && !/[.e]/.test(s) ? s + '.0' : s; }
+function format(v, raw) {
+  if (typeof v === 'number') return num(v, raw);
+  if (Array.isArray(v)) return '[' + v.map(x => typeof x === 'number' ? num(x, raw) : JSON.stringify(x)).join(', ') + ']';
+  return JSON.stringify(v);
+}
+function exportText() {
+  let out = '', at = 0;
+  for (const l of [...doc.leaves].sort((a, b) => a.start - b.start)) {
+    const same = JSON.stringify(l.value) === JSON.stringify(JSON.parse(l.raw));
+    out += src.slice(at, l.start) + (same ? l.raw : format(l.value, l.raw));
+    at = l.end;
+  }
+  return out + src.slice(at);
+}
+
+function load(text, from) {
+  try { doc = parse(text); src = text; } catch (e) { msg.textContent = 'Import: ' + e.message; return; }
+  msg.textContent = from;
+  try { localStorage.setItem('theme.json', text); localStorage.setItem('theme.from', from); } catch {}
+  controls(); render();
+}
+
+// The mock's custom properties: one per leaf, `--a-b` for path a.b, in the mode shown.
+function render() {
+  if (!doc) return;
+  const dark = document.getElementById('dark').checked, r = doc.root, s = mock.style;
+  const mix = r.hue_mix ?? 0.35, text = dark ? '255 255 255' : '0 0 0';
+  const pick = v => isPair(v) ? (dark ? v.dark : v.light) : v;
+  const resolve = v => { const home = aliasOf(v); return home ? pick(r[home][v]) : v; };
+  (function walk(v, path) {
+    const name = '--' + path.join('-');
+    if (isPair(v)) return s.setProperty(name, pick(v));
+    if (v && typeof v === 'object' && !Array.isArray(v)) { for (const k in v) walk(v[k], path.concat(k)); return; }
+    if (isHue(v, path)) s.setProperty(name, hueOver(dark, parseInt(v.slice(1), 16), mix));
+    else if (path[0] === 'font' && Array.isArray(v)) s.setProperty(name, v.map(x => JSON.stringify(x).replace(/^"(\w+)"$/, '$1')).join(', '));
+    else if (!Array.isArray(v)) s.setProperty(name, String(resolve(v)));
+  })(r, []);
+  // The derived colours last, so a top-level key of the same name cannot overwrite them.
+  const roles = r.roles ?? {};
+  s.setProperty('--text', `rgb(${text})`); s.setProperty('--surface', pick(roles.surface) ?? (dark ? '#000' : '#fff'));
+  s.setProperty('--rule', `rgb(${text} / ${r.alpha?.rule ?? 0.18})`); s.setProperty('--quiet', `rgb(${text} / ${r.alpha?.quiet ?? 0.58})`);
+  s.setProperty('--hover', `rgb(${text} / ${roles.hover_alpha ?? 0.07})`);
+  s.setProperty('--selection', `color-mix(in srgb, ${resolve(roles.primary ?? 'blue')} ${(roles.selection_alpha ?? 0.3) * 100}%, transparent)`);
+  for (const el of document.querySelectorAll('[data-mixed]')) {
+    const hue = parseInt(el.dataset.mixed, 16);
+    el.innerHTML = [false, true].map(d => `<span class="sw" style="background:${hueOver(d, hue, mix)}"></span><code>${hueOver(d, hue, mix)}</code>`).join(' ');
+  }
+}
+
+// A control per leaf, chosen by the value's shape, so a key theme.json gains needs no edit here.
+function controls() {
+  tree.innerHTML = '';
+  const byPath = new Map(doc.leaves.map(l => [l.path.join('.'), l]));
+  const set = (path, v) => { byPath.get(path.join('.')).value = v; let o = doc.root; path.slice(0, -1).forEach(k => o = o[k]); o[path.at(-1)] = v; render(); };
+  const row = (label, ...kids) => { const d = document.createElement('div'); d.className = 'row'; const sp = document.createElement('span'); sp.textContent = label; sp.title = label; const c = document.createElement('span'); c.append(...kids); d.append(sp, c); tree.append(d); return c; };
+  const input = (type, value, on, attrs = {}) => { const e = document.createElement(type === 'select' ? 'select' : 'input'); if (type !== 'select') e.type = type; Object.assign(e, attrs); e.value = value; e.oninput = () => on(e.value); return e; };
+  const slider = (v, on, path) => {
+    const [max, step] = isUnit(path) ? [1, 0.01] : [Math.max(64, v * 2), 0.5];
+    const out = document.createElement('code'); out.textContent = ' ' + v;
+    return [input('range', v, x => { out.textContent = ' ' + x; on(Number(x)); }, { min: 0, max, step }), out];
+  };
+  (function walk(v, path) {
+    const label = path.slice(1).join('.') || path[0];
+    if (isPair(v)) {
+      row(label, ...['light', 'dark'].map(m => input('color', v[m], x => set(path.concat(m), x), { title: m })));
+    } else if (v && typeof v === 'object' && !Array.isArray(v)) {
+      if (path.length) { const h = document.createElement('h3'); h.textContent = path.join('.'); tree.append(h); }
+      for (const k in v) walk(v[k], path.concat(k));
+    } else if (isHue(v, path)) {
+      const mixed = document.createElement('span'); mixed.dataset.mixed = v.slice(1);
+      row(label, input('color', v, x => { mixed.dataset.mixed = x.slice(1); set(path, x); }), mixed);
+    } else if (isHex(v)) {
+      row(label, input('color', v, x => set(path, x)));
+    } else if (typeof v === 'number') {
+      row(label, ...slider(v, x => set(path, x), path));
+    } else if (Array.isArray(v) && v.every(x => typeof x === 'number')) {
+      row(label, ...v.flatMap((x, i) => slider(x, n => set(path, v.map((y, j) => j === i ? n : y)), path)));
+    } else if (Array.isArray(v)) {
+      row(label, input('text', v.join(', '), x => set(path, x.split(',').map(t => t.trim()).filter(Boolean)), { size: 40 }));
+    } else if (aliasOf(v)) {
+      const home = doc.root[aliasOf(v)], names = Object.keys(home).filter(k => typeof home[k] !== 'string');
+      const sel = input('select', '', x => set(path, x));
+      sel.append(...names.map(k => new Option(`${k} (${JSON.stringify(home[k])})`, k))); sel.value = v; row(label, sel);
+    } else {
+      row(label, input('text', String(v), x => set(path, x)));
+    }
+  })(doc.root, []);
+}
+
+const importFile = file => file?.text().then(text => load(text, `${file.name}, imported ${new Date().toLocaleTimeString()}`));
+document.getElementById('file').onchange = e => { importFile(e.target.files[0]); e.target.value = ''; };
+document.getElementById('dark').onchange = render;
+document.body.ondragover = e => e.preventDefault();
+document.body.ondrop = e => { e.preventDefault(); importFile(e.dataTransfer.files[0]); };
+exportBtn.onclick = () => { if (doc) out.value = exportText(); };
+copyBtn.onclick = () => { if (doc) navigator.clipboard.writeText(out.value = exportText()).catch(e => msg.textContent = 'Copy: ' + e.message); };
+dl.onclick = () => {
+  if (!doc) return;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([out.value = exportText()], { type: 'application/json' }));
+  a.download = 'theme.json'; a.click(); URL.revokeObjectURL(a.href);
+};
+document.getElementById('dark').checked = matchMedia('(prefers-color-scheme: dark)').matches;
+try {
+  const kept = localStorage.getItem('theme.json');
+  if (kept) load(kept, `${localStorage.getItem('theme.from') ?? 'theme.json'} (remembered: import again for the current file)`);
+} catch {}
+</script>
+</body>
+</html>
