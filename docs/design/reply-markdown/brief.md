@@ -30,7 +30,7 @@ Every commit ends with these two lines, copied exactly:
 
 ```
 Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01NXgSFppeY5pzVQLciH5swh
+Claude-Session: https://claude.ai/code/session_01NXgSFpzNB8zPpKs1Y5s2eU
 ```
 
 ## PR footer
@@ -40,12 +40,12 @@ Every PR body ends with these lines, copied exactly:
 ```
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-https://claude.ai/code/session_01NXgSFppeY5pzVQLciH5swh
+https://claude.ai/code/session_01NXgSFpzNB8zPpKs1Y5s2eU
 ```
 
 ## Artefact
 
-`docs/design/reply-markdown/architecture.md`, slices in `slices/S1.md` and `slices/S2.md`. The run's ADR is
+`docs/design/reply-markdown/architecture.md`, slices in `slices/S1.md` to `slices/S4.md`. The run's ADR is
 `docs/adr/NNNN-reply-markdown.md` (S1).
 
 ## Environment
@@ -78,4 +78,4 @@ None recorded.
 
 ## Diff limit
 
-300 changed lines per slice, `Cargo.lock` excluded. Past that, stop and ask `main`.
+400 changed lines per slice, `Cargo.lock` excluded. Past that, stop and ask `main`.
