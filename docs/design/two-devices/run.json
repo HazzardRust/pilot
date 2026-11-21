@@ -33,14 +33,14 @@
     },
     {
       "slice": "Two devices, one repo",
-      "state": "fixing",
+      "state": "in QA: walkthrough itm_def488480f47 posted at d1a622e7, awaiting the user",
       "branch": "feat/two-devices",
       "worktree": "C:/Users/Hazzard/Projects/pilot-two-devices-qa",
       "pr": 136
     },
     {
       "slice": "Fix round F1-F11",
-      "state": "pushed 23e46da",
+      "state": "integrated",
       "after": [
         "S2",
         "S3"
@@ -65,10 +65,11 @@
     "dropped: QA-2 start prints cannot tell when the deck is down — A4 prints any non-pass row; spec 2b's 0-line rule covers none held or all free only",
     "dropped: E-complexity slugClashes 17, slugsRow 12 (new) — each branch is one unread/remote case pinned by a test; F4 and F7 reshape both; a split adds lines; the rest are pre-existing functions only touched",
     "dropped: E-duplication jscpd 9 clones, 72 lines — no locations printed; the clones the review located are F1, F2, F4",
-    "dropped: E-coverage and E-mutation — NOT RUN (c8 needs the full 13-16 min suite; Stryker hit timeout 900 in its dry run); recorded as not run, not clean"
+    "dropped: E-coverage and E-mutation — NOT RUN (c8 needs the full 13-16 min suite; Stryker hit timeout 900 in its dry run); recorded as not run, not clean",
+    "dropped: fix-sec-MEDIUM Windows git helper outliving the timeout kill — slug-leash.test.mjs reproduces that setup (http origin, Windows) and returns in 5.1 s; the SIGKILL/BatchMode fix changes shared gitUnder beyond this feature"
   ],
-  "next": "integrating fix/two-devices 23e46da, then fresh QA with the tip",
-  "updatedAt": "2026-11-20T16:19:16.518Z",
+  "next": "walkthrough itm_def488480f47 awaits the user at d1a622e7 (base check in); on Sign off, QA runs pilot integrate --trial and posts gate2; QA agent is not live, a fresh pilot-qa reads the replies",
+  "updatedAt": "2026-11-20T16:49:31.679Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -235,6 +236,31 @@
       "agent": "pilot-implementer",
       "what": "full gate flake: wait-as.test.mjs 'a wait with --item ends on a reply' red in suite, 12/12 alone",
       "evidence": "fix round gate 4830 pass 1 fail"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "npm run test:changed stopped QA's worktree-leashed scratch deck; deck --stop then refused the pid and left its dir",
+      "evidence": "stopped 24940 daemon; 'pilot deck --stop: pid 24940 is not a scratch deck'; C:/Users/Hazzard/AppData/Local/Temp/pilot-scratch-42zcP7 remains"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "test:changed fell back to the full suite (11 min) because its selection exceeds the argv limit",
+      "evidence": "full suite: selection is 41748 characters of argv, over 24000"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "hang fixture crashes on ECONNRESET after git gives up and has to be restarted for each probe",
+      "evidence": "hang.log: unhandled 'error' ECONNRESET"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "a scratch clone of a local bare remote cannot exercise the PR read with real gh, so the all-free pass case needs host none",
+      "evidence": "gh: none of the git remotes point to a known GitHub host"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "deck MCP failed to connect at spawn (CONNECTION_CLOSED) but deck_status and deck_read worked once loaded; TaskOutput is not in this co-pilot's toolset, so bounded waits were Monitor sleeps",
+      "evidence": "ToolSearch TaskOutput: no matching deferred tools"
     }
   ]
 }
