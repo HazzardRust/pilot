@@ -303,7 +303,7 @@ test('no pilot prose posts a gate as a signoff item', () => {
 test('no swept file says a gate is "the user saying"', () => {
   // merge-first S5 (spec 6, §3 F6): typed words never pass a gate, so no swept line says they do.
   const rot = /user saying|sa(?:ys?|id) (?:they are|I am) satisfied|are you satisfied|on the user's word|pass neither on the user's|When the user is satisfied/i;
-  for (const file of ['agents/pilot.md', 'agents/pilot-qa.md', 'CLAUDE.excerpt.md', 'CONTEXT.md', 'rules/vertical-execution.md', 'rules/orchestration.md']) {
+  for (const file of ['agents/pilot.md', 'agents/pilot-qa.md', 'CLAUDE.excerpt.md', 'GLOSSARY.md', 'rules/vertical-execution.md', 'rules/orchestration.md']) {
     // lint: forbidden pattern
     assert.doesNotMatch(read(file).replace(/\s+/g, ' '), rot, file);
   }
