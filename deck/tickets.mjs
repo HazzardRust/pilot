@@ -39,6 +39,33 @@ export function openRuns(records, { host }) {
 /** How long the deck has to answer one read before this calls it down. */
 const TIMEOUT_MS = 5000;
 
+const isObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/**
+ * The deck's `/api/tickets` view for `cwd`, with `open` every open ticket too: the one read `pilot tickets`,
+ * `pilot base` and the doctor's `slugs` row share, with the bearer and a `TIMEOUT_MS` bound. The view's shape is
+ * checked here, once: `records` and, with `open`, `open` are arrays of objects, each open `body` a string or absent.
+ * A missing secret throws as itself; anything else, a malformed view among it, as `<url> did not answer: <why>`.
+ */
+export async function readTickets(cwd, { open = false, url } = {}) {
+  // Before the request's try: a missing secret file names itself, not a deck that did not answer.
+  const headers = bearer();
+  let where = url ?? 'the deck';
+  try {
+    // Inside the try: `deckUrl()` throws on a mistyped `PILOT_DECK_PORT`, and that is a deck not read too.
+    where = url ?? deckUrl();
+    const response = await fetch(`${where}/api/tickets?repo=${encodeURIComponent(cwd)}${open ? '&open=1' : ''}`, { headers, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    if (!response.ok) throw new Error(`it answered ${response.status}`);
+    const view = await response.json();
+    const objects = (list) => Array.isArray(list) && list.every(isObject);
+    const shaped = isObject(view) && objects(view.records) && (!open || (objects(view.open) && view.open.every(({ body }) => body == null || typeof body === 'string')));
+    if (!shaped) throw new Error('its view is malformed');
+    return view;
+  } catch (err) {
+    throw new Error(`${where} did not answer: ${err.message}`);
+  }
+}
+
 const asTicket = (item) => ({
   id: item.id,
   title: item.title,
@@ -123,24 +150,10 @@ const gitIn = (cwd) => (args) => execFileSync('git', args, { cwd, encoding: 'utf
 /** The subcommand's work: ask the deck, print the queue, or with `open` every open ticket and run. Answers the exit code. */
 export async function tickets({ cwd = process.cwd(), say = (text) => process.stdout.write(text), open = false, host, git = gitIn(cwd) } = {}) {
   let view;
-  let url = 'the deck';
-  let headers;
   try {
-    // Before the request's try: a missing secret file names itself, not a deck that did not answer.
-    headers = bearer();
+    view = await readTickets(cwd, { open });
   } catch (err) {
     process.stderr.write(`pilot tickets: ${err.message}\n`);
-    return 1;
-  }
-  try {
-    // Inside the try: `deckUrl()` throws on a mistyped `PILOT_DECK_PORT`, and that is exit 1 too.
-    url = deckUrl();
-    const query = `repo=${encodeURIComponent(cwd)}${open ? '&open=1' : ''}`;
-    const response = await fetch(`${url}/api/tickets?${query}`, { headers, signal: AbortSignal.timeout(TIMEOUT_MS) });
-    if (!response.ok) throw new Error(`it answered ${response.status}`);
-    view = await response.json();
-  } catch (err) {
-    process.stderr.write(`pilot tickets: ${url} did not answer: ${err.message}\n`);
     return 1;
   }
   if (!open) {

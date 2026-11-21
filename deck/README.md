@@ -75,6 +75,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `server-wait.mjs` | the server's waiting half: body readers, guards, the asset allowlist and the long poll |
 | `server.mjs` | the server's facade: re-exports its siblings' names for every older importer |
 | `session.mjs` | starts a session in a terminal window when the Start route asks |
+| `slug-clash.mjs` | whether origin, the run remote or an open review already holds a slug's `feat/` or `design/` branch, read live |
 | `spawn-root.mjs` | which root a client spawns the daemon from and its version: the installed plugin for a checkout on 4321, else its own root (ADR 0165) |
 | `step-shell.mjs` | where a wizard's or a report's command steps run: a command step without a `dir` is refused, and a missing `shell` is the daemon's platform default (walkthrough-surface spec 9) |
 | `stalled-waits.mjs` | the daemon's 5-minute scan: an unbounded wait shell past 50 minutes under a live run's `claude` is stopped through `gc`, and the run's repository told (wait-deadlines S3) |
