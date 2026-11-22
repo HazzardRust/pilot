@@ -92,13 +92,16 @@ ADR NNNN records L1-L3 as an extension of ADR 0208 L3.
   the press, the next grant or move closes it. Trade: the pilot's reply remains one step. Rejected: never auto-close a
   pressed item (the pilot must remember again). Question `itm_962130e8bae6`.
   Closed by the deck's default after 20 minutes with no answer, not by the user: "Assumed: Close once pilot replied".
+  Verdict: stands — deck default on itm_962130e8bae6, not the user; a press the pilot has answered is no longer closed over, which keeps the ticket's line 4
 - **A2 `need` closes.** Default: the deck closes at `need`, even though the ticket may pivot back; the lanes line then
   names the owed successor. Trade: the item's pointer to the paused branch is closed (still readable). Rejected: close
   only at gate2/report (a second rule). Question `itm_61dd35363e32`.
   Closed by the deck's default after 20 minutes with no answer, not by the user: "Assumed: Close at need".
+  Verdict: stands — deck default on itm_61dd35363e32, not the user; a pivot back gets a fresh crew-handoff if one is needed
 - **A3 Ticketless crew-handoffs.** Default: they show `waiting` and are still the pilot's to close. Trade: those keep
   depending on the pilot. Rejected: tagging them with a ticket in the guard (a hooks slice). Question `itm_9c2e0a9c4326`.
   Closed by the deck's default after 20 minutes with no answer, not by the user: "Assumed: Show waiting only".
+  Verdict: stands — deck default on itm_9c2e0a9c4326, not the user; ticketless hand-offs stay pilot-closed but show waiting, and no queued ticket touches the context-size guard hook
 
 ## 7. Out of scope
 
