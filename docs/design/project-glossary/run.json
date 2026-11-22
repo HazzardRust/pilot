@@ -74,39 +74,31 @@
     },
     {
       "slice": "feature",
-      "state": "QA read-only pass done at 47804ff (gate green); QA ended before the fix tip; fresh QA due on the fix tip",
+      "state": "gate2 itm_b98784665468 posted at aef4850; checks green; awaiting Sign off",
       "branch": "feat/project-glossary",
       "pr": 133
     },
     {
       "slice": "fix round",
-      "state": "integrated",
+      "state": "added; integrated at 6aec05b; checks: ubuntu green, windows and macos cancelled by the aef4850 push (not failed)",
       "after": [
         "S7"
       ],
       "branch": "fix/project-glossary",
       "worktree": "C:/Users/jrylk/Projects/pilot-project-glossary-fix"
+    },
+    {
+      "slice": "project-glossary",
+      "state": "refused: timed out after 30 min"
     }
   ],
   "findings": [
     "kept: SEC-M fix-round security MEDIUM — glossary-stale.mjs and glossary.mjs check print repository terms unmasked; share lineOf's mask, widened to [\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}], routed to QA as the writer",
     "dropped: SEC-L fix-round security LOW — readFileSync follows a symlinked GLOSSARY.md: reads only, prints terms already masked by SEC-M"
   ],
-  "next": "integrating fix round 0a1f0f2; then checks, fresh QA on the tip with SEC-M as its first fix",
-  "updatedAt": "2026-11-22T08:44:23.955Z",
+  "next": "Gate2 itm_b98784665468 signed; landing timed out twice. No third blind try: read the lander's log, find the cause. User there: \"this ticket has a problem that needs to be prevented systematically\"; asked which; on answer, a ticket proposal. ui-design-workflow co-pilot pausing: on hand-back release itm_132a653de1fc, spawn successor. Then take next red ticket.",
+  "updatedAt": "2026-11-22T10:24:23.208Z",
   "friction": [
-    {
-      "agent": "pilot-architect",
-      "what": "pilot base moved from feat/human-steps to pilot mid-design (ci-gate landed), forcing a rebase of design/project-glossary whose push was then rejected as non-fast-forward",
-      "evidence": "architect hand-back, local d275a8ad vs origin e9ee4b12",
-      "size": 3
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "the pilot's hold on A1/A2 arrived queued after the architect had already posted them; replies on its threads timed out to the pilot",
-      "evidence": "itm_5c8f5fc83bae, itm_bb24de856f02 handed to pilot by the deck",
-      "size": 2
-    },
     {
       "kind": "drain",
       "what": "pilot told the architect to make a rebased design branch pushable with merge -s ours of its pre-rebase tip; that recorded feat/human-steps as merged while the tree lacked it, so the next pilot merge conflicted and a landing would have reverted human-steps; repaired by hand with a tree-rebuilding merge",
@@ -326,6 +318,17 @@
       "what": "Edit tool decoded \\uXXXX escapes into raw bidi characters in source; one npm test run died with no summary (10 min rerun); K5 had 1 token of architect headroom",
       "evidence": "fix round report on 0a1f0f2",
       "size": 4
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "npm test default reporter died with no summary (twice this run across agents); test:quiet gives totals and names; deck_post wants the exact gate2 table header; a reviewer child left a background task QA cannot stop",
+      "evidence": "QA report at aef4850, gate.mjs:354",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "glossary landing timed out after 30 min twice while other runs' gates ran on the laptop",
+      "size": 2
     }
   ]
 }
