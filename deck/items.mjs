@@ -277,7 +277,7 @@ const SPECS = {
   },
   [KIND_CREW_HANDOFF]: {
     options: false,
-    fields: [SLICE_FIELD, REPO_FIELD],
+    fields: [SLICE_FIELD, REPO_FIELD, TICKET_ID_FIELD],
     buttons: [HANDOFF_FAILED],
     note: "The pilot closes this when the agent's own handoff arrives. Handoff failed has it brief a fresh agent from the agent's branch.",
     ask: 'Treat this agent as lost, and brief a fresh one from its branch?',

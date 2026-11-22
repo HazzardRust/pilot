@@ -1,10 +1,8 @@
 /**
- * The deck server's waiting half (feature audit-f1-f7, spec 13, ADR 0113): the HTTP
- * plumbing every route shares (the body readers, `send`, the Origin and Host guards,
- * the static-asset allowlist) and the long poll (the `changes` emitter, the hand-off
- * timers, `waitForReplies` and the fallback). Moved out of `deck/server.mjs` whole and
- * in order; `deck/server.mjs` imports what it uses from here and re-exports
- * `browserCount` and `waiterCount`, so no import of the old path changed.
+ * The deck server's waiting half (feature audit-f1-f7, spec 13, ADR 0113): the HTTP plumbing every route shares (the
+ * body readers, `send`, the Origin and Host guards, the static-asset allowlist) and the long poll (the `changes`
+ * emitter, the hand-off timers, `waitForReplies` and the fallback). `deck/server.mjs` imports what it uses from here
+ * and re-exports `browserCount` and `waiterCount`, so no import of the old path changed.
  */
 
 import crypto from 'node:crypto';
@@ -23,7 +21,7 @@ import {
   repliesSince, yieldTicket,
 } from './store.mjs';
 import { CONFLICT_TURN_MS } from './store-items.mjs';
-import { noteIdle } from './store-tickets.mjs';
+import { crewWaitsDue, noteCrewWait, noteIdle } from './store-tickets.mjs';
 import { defaultsDue, takeDefault } from './store-defaults.mjs';
 import { cookieName, deckDir, ensureSecret, secretFile } from '../hooks/lib/deck-secret.js';
 import { DECK_HOST } from './tools.mjs';
@@ -331,11 +329,8 @@ const refuseWithoutSecret = (response, pathname, file) =>
 
 // --- the long poll ---------------------------------------------------------
 
-// Two events for one fact, because two different things subscribe to it and the daemon
-// has to be able to tell them apart (D15). One counter answered "something is
-// subscribed", which is not the question `POST /api/runs` asks: an agent parked in
-// `deck_wait` is nobody looking at anything, and counting it as a watcher keeps the tab
-// shut for exactly the session that wanted one.
+// Two events for one fact, so the daemon can tell a page from a parked `deck_wait` (D15): counting
+// a waiter as a watcher keeps the tab shut for exactly the session that wanted one.
 const CHANGED_FOR_BROWSER = 'deck-changed-browser';
 const CHANGED_FOR_WAITER = 'deck-changed-waiter';
 const changes = new EventEmitter();
@@ -343,11 +338,8 @@ const changes = new EventEmitter();
 changes.setMaxListeners(0);
 
 /**
- * How many pages are reading `/events` right now, and how many sessions are parked in
- * `deck_wait`. Each count is the event's own listener count rather than a number kept by
- * hand, so neither can drift from what is actually subscribed. Both are exported because
- * `setMaxListeners(0)` above turns off the only warning Node would otherwise give about
- * a subscription that is never removed, so a test is what is left to notice.
+ * How many pages read `/events` and how many sessions are parked in `deck_wait`, each the event's own listener
+ * count; exported because `setMaxListeners(0)` silences Node's leak warning, so a test is what is left to notice.
  */
 export const browserCount = () => changes.listenerCount(CHANGED_FOR_BROWSER);
 export const waiterCount = () => changes.listenerCount(CHANGED_FOR_WAITER);
@@ -406,6 +398,7 @@ function armHandoffs() {
   armStateTimers(items, runs);
   armYields();
   armIdle();
+  armCrewWaits();
   armDefaults();
   armConflicts();
 }
@@ -548,6 +541,16 @@ export function armIdle() {
     // The roster's departure announce usually re-arms first; only a moved crew moment arms again, so no refusal spins.
     else if (seenNow(id) !== seenAt) armIdle();
   });
+}
+
+/** Each owed crew-handoff's one timer, by item id (crew-handoff-trace A3); on fire `noteCrewWait` checks the rule again. */
+const crewTimers = new Map();
+export function armCrewWaits() {
+  try {
+    armOneShots(crewTimers, crewWaitsDue(), noteCrewWait, (err, id) => err instanceof DeckRefusal || console.error(`[deck] the crew wait on ${id} could not be written:`, err.message));
+  } catch (err) {
+    console.error('[deck] the crew-wait timers could not read the store:', err.message);
+  }
 }
 
 /** Each due default's one timer, by question id, with the moment it was armed for. */

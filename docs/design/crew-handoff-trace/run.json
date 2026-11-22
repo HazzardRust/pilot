@@ -1,0 +1,270 @@
+{
+  "slug": "crew-handoff-trace",
+  "feature": "A crew hand-off never goes missing",
+  "ticket": "itm_1f8238d5a300",
+  "branch": "feat/crew-handoff-trace",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-crew-handoff-trace",
+  "artefact": "docs/design/crew-handoff-trace/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/crew-handoff-trace-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/crew-handoff-trace-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/crew-handoff-trace-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/crew-handoff-trace-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/crew-handoff-trace-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated",
+      "after": [
+        "S4",
+        "S5"
+      ],
+      "branch": "slice/crew-handoff-trace-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "integrated",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/crew-handoff-trace-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s7"
+    },
+    {
+      "slice": "crew-handoff-trace",
+      "state": "refused: origin/feat/crew-handoff-trace is at 59c2b3d, the gate2 signed a872f2c644ae812257990da31bdec9dbfb3e51ec; nothing run",
+      "pr": 129
+    },
+    {
+      "slice": "feature",
+      "state": "gate2 itm_406ec0b6ae78 posted at aec7e95: CI green, trial clean; awaiting Sign off"
+    }
+  ],
+  "findings": [
+    "dropped: R2-L1 (re-review) — the window bound misses a second hand-off posted in the same millisecond; implausible at ms resolution",
+    "dropped: R2-L2 (re-review) — another item's late row inside the window: crew rows carry no item, so they cannot be told apart; accepted"
+  ],
+  "next": "Gate 2 itm_406ec0b6ae78 (pr 129, sha aec7e95) awaits the user's Sign off press; on the press spawn pilot-lander with the gate2 id, then reply Findings: on its closing report. Old gate2 itm_34bcc492a686 is closed.",
+  "updatedAt": "2026-11-22T00:08:11.002Z",
+  "friction": [
+    {
+      "agent": "architect",
+      "what": "deck.log has no timestamps, useless for forensics",
+      "evidence": "grep \"^2026-11-19T0\" ~/.claude/pilot/deck.log returns nothing"
+    },
+    {
+      "agent": "architect",
+      "what": "running code is the plugin cache, not the repository, and nothing says so; 3 probes to find",
+      "evidence": "pid 5472's command line points at the plugins cache; cache and pilot both say 0.9.9"
+    },
+    {
+      "agent": "architect",
+      "what": "800-line cap leaves no room in deck store files; trace rows forced into server-tools handlers",
+      "evidence": "items.mjs 799, store-runs.mjs 799, store-items.mjs 798 lines"
+    },
+    {
+      "agent": "architect",
+      "what": "deck MCP server reported connection closed at start-up though posting worked",
+      "evidence": "session notice; itm_cd0b9bedb2a5 posted fine"
+    },
+    {
+      "agent": "architect",
+      "what": "architect stopped before the verdict message while the depth question was still open; needs a resume at 210k tokens",
+      "evidence": "hand-back: design committed, gate1 not posted",
+      "size": 210000
+    },
+    {
+      "agent": "architect",
+      "what": "pilot verdicts refuses a §6 written as a table; rows had to be converted to A-bullets",
+      "evidence": "not in §6: A1…A6 until the rows were made bullets"
+    },
+    {
+      "agent": "architect",
+      "what": "first gate1 post refused for leaving A2 and A6 out of its body",
+      "evidence": "second post accepted as itm_3660a32fa0c8"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "deck MCP server reported CONNECTION_CLOSED at start-up though deck_status worked",
+      "evidence": "session notice; deck_status answered D3: 8 slices saved"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "TaskOutput not available to the co-pilot, so a bounded wait on a child is a Monitor on its branch push",
+      "evidence": "ToolSearch select:TaskOutput: No matching deferred tools found"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "a forced hand-back arrived while the S1 implementer was still live",
+      "evidence": "handback-send-enforce notice after S1 reported waiting on its own background work"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce fires at every turn end while a child is live, which contradicts never ending with a child live; the co-pilot has no TaskOutput for a blocking wait",
+      "evidence": "three enforce notices while S1's implementer was live; foreground wait loop moved to background after 180s"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "two repo-wide lints the slice file did not name (stored-literal join test, deck README module list) cost a second full gate run",
+      "evidence": "hooks/test/join.test.js:199 and scripts/test/deck-readme.test.mjs red on the first full run"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "a child's SubagentHandback report reaches main, not the co-pilot that spawned it, so main relays it",
+      "evidence": "S1 implementer's report arrived at main; main forwarded facts"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "piping a payload into post-tool.js runs every lane against the real home; S3's live run consumed a real usage-alert claim",
+      "evidence": "S3 report, friction row"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the full npm test gate takes about 11 minutes per slice",
+      "evidence": "S3 report: 4832 tests, ~11 min"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "repo-wide pinned lists outside the slice (inbox.test.js MODULES) need a line per new hook",
+      "evidence": "hooks/test/inbox.test.js +1 in S3"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate waits on a cross-worktree slot when three slices run at once",
+      "evidence": "S2: gate: waiting for a slot: pid 28728 in -s3, pid 28332 in -s4; 440 s wall"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "repo tests print nothing per test without --test-reporter=tap",
+      "evidence": "S2: empty grep on default reporter, one wasted run"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice Interface changed step and trace but Files owned listed neither file",
+      "evidence": "S2 edits hooks/lib/wrapper-log.js +3 and deck/trace.mjs +3 outside its files"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5 called its own pin regression pre-existing; the co-pilot reran on the feat tip and found it green",
+      "evidence": "feat 4722c031 measure-prompt+recut-prose pass 16 fail 0; S5 10292262 fail 2"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "importing deck/testUtils.mjs from a live script posts to its own temp deck, not PILOT_DECK_DIR; the live seed went missing",
+      "evidence": "S5: no ticket on the deck, 3 runs"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "scratch daemon Bearer header documented only in hooks/lib/deck.js",
+      "evidence": "S5 report"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "live checks need a hand-seeded deck.json; testUtils postStored writes only to its own temp deck",
+      "evidence": "S6 and S5 both wrote scratch seed scripts"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice Files owned omitted the one caller of a new Interface argument",
+      "evidence": "S6 edits deck/server-routes.mjs:590 outside its files"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "deck/server-wait.mjs had 4 lines under the 800 cap; S7 trimmed prose elsewhere to fit a timer",
+      "evidence": "wc -l 796 at base; facades.test failed at 801"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "implementer contexts reset mid-slice after worktree creation (S5, S7)",
+      "evidence": "both reported a clean worktree on resume"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context summary lost the evidence runner's state; npm ci had not run",
+      "evidence": "worktree had no node_modules after the summary; no runner table came back, so the six evidence rows are missing"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "context summarised right after spawn; deck MCP disconnected in its session",
+      "evidence": "its first message: no worktree, scratchpad empty, deck CONNECTION_CLOSED so no deck_post/deck_read"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "scratch-deck yellow ticket needs a hand-written deck.json; testUtils.mjs:30 deletes PILOT_DECK_DIR on import so postStored wrote elsewhere; --seed-run registers the worktree path but pilot wait resolves to the main checkout",
+      "evidence": "about 15 tool calls; `NO DECK for C:\\Users\\jrylk\\Projects\\pilot` from the parked wait, losing spec 6's live delivery"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "full gate about 8 min, past the shell's blocking window, run 3 times as F1 and B2 arrived after the first; a node -e replace in a double-quoted shell string dropped a backslash twice; no TaskStop or Monitor in its tool list and the deck MCP was disconnected",
+      "evidence": "/tmp/gate*.log, 4 runs; trace-deck.test.mjs:76 and crew-handoff.test.mjs:70"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the reviewer's BLOCK was fixed but the reviewer was not re-run, so its last verdict stood as BLOCK",
+      "evidence": "fix report: 'I did not re-run the reviewer, so the BLOCK line stands as its last word'"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot diagnosed the macOS CI failure itself: CI log grep twice, server-wait.mjs and crew-wait.test.mjs reads",
+      "size": 25000
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "feat worktree had no node_modules on this device, first gate run stopped at once",
+      "evidence": "gate log: node_modules missing: run npm ci"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "laptop slept about an hour mid-gate; a 10-minute gate took 75 minutes wall",
+      "evidence": "fix agent duration 4518 s; glossary gate log tests of 3661773 ms"
+    },
+    {
+      "agent": "pilot",
+      "what": "laptop slept twice (1 h, 3 h): pilot wait died 3 times on deck timeouts, the co-pilot's stream stalled, and six questions were closed by the deck's 20-min default while the user was away",
+      "evidence": "pilot wait exit 1 'deck not answering'; itm_4abbec087d33 resolution 'Assumed: Proceed without (no answer 20 min)'"
+    },
+    {
+      "agent": "pilot",
+      "what": "gate2 post refused twice for shape (checks field, spec-line table) before it went up",
+      "evidence": "NOT posted: a gate2 carries checks; a gate2 with no walkthrough carries the checks table"
+    }
+  ]
+}
