@@ -72,12 +72,13 @@ test('browser QA drops Core Web Vitals and the breakpoint sweep as standing chec
 // ci-gate S5 (2026-11-20) raised it from 5121.75 to the measured 5128.5 (spec 4; L6): deck_post's bare `checks: { type: 'string' }`, 6.75.
 // ci-gate S7 (2026-11-20) raised it from 5128.5 to the measured 5168.25 (spec 4; L10): `## Concluding` runs `pilot checks <sha> --wait` before the gate2 and posts its line as `checks`, 39.75.
 // ui-design-workflow S6 (2026-11-22) raised it from 5168.25 to the measured 5183.75 (spec 4, 11; L8): "On any surface load `pilot:ui-design` and walk its checklists.", 15.75 (5168 to 5183.75).
-test('QA\'s own share of its prompt stays at or under 5183.75 tokens, with the checklists loaded on demand', async (t) => {
+// ui-design-workflow S9 (2026-11-22) raised it from 5183.75 to the measured 5257.5 (spec 6, 9; L8): the difference-list question named by `Differences:` before the walkthrough, and a Look notes paragraph, 73.75.
+test('QA\'s own share of its prompt stays at or under 5257.5 tokens, with the checklists loaded on demand', async (t) => {
   const { measure } = await import('../measure-prompt.mjs');
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'qa-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const qa = rows.find((row) => row.agent === 'pilot-qa');
   const own = (qa.definition + qa.skills + qa.tools) / 4;
-  assert.ok(own <= 5183.75, `pilot-qa's own share is ${own} tokens`);
+  assert.ok(own <= 5257.5, `pilot-qa's own share is ${own} tokens`);
 });

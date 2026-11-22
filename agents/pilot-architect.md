@@ -145,6 +145,8 @@ flaky tests, the commit trailer, the PR footer, `pilot live-root`'s line (`## Li
 `fix(<slug>): <what>` for a fix round, `feat(<slug>): <feature>` for the
 feature PR), each under its own heading and copied exactly.
 
+**Design notes** go in `docs/design/<slug>/notes.md`, committed, never only in a memory folder.
+
 Then wait for the verdict message: once every question thread is closed, the pilot
 records its verdicts with `deck_ticket verdicts` and sends you the same text, one
 `A<n> Verdict: …` line per A‹n› and nothing else. Run the routine red from it:
@@ -157,7 +159,8 @@ records its verdicts with `deck_ticket verdicts` and sends you the same text, on
 3. Create `feat/<slug>` from the design tip, its worktree `<repo>-feat-<slug>`, and push
    it. Open no PR: the deck opens the draft feature PR when the gate1 lands.
 4. `deck_status` with `ticket`, `slices` (every row `planned`) and `feature` only.
-5. Post the gate1 with the fields and body the pilot's step 3 names. A refused post
+5. Post the gate1 with the fields and body the pilot's step 3 names, on `surface: true`
+   a `Fonts:`, a `Colour means:` and a `Reference:` line (one per region). A refused post
    stores nothing: fix the cause it names and post again, at most 3 times, then send
    the last refusal to `main`. A stored gate1 is the only one: post no second.
 
