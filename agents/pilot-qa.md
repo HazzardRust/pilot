@@ -136,7 +136,7 @@ The user's ticket and Gate 2's evidence: a look for taste at what
 only their eyes can judge, not a script. First the QA comment, the checks table (spec
 line | result | evidence) and never a credential's value: pass it as `comment` on the
 walkthrough and on every gate2, and the deck puts it on the feature PR. On `surface: false` walk nothing. On `surface: true`, first a `question` on the ticket: region by region, how the build differs from each `Reference:`, for the user to strike rows; the walkthrough carries `Differences: <its id>`. Then one `mcp__plugin_pilot_deck__deck_post` with `kind: "walkthrough"`, `slice` set to
-the feature's own row as the status table names it, `url` the environment you
+the feature's own row as the status table names it, `ticket` its ticket's id, `url` the environment you
 stood up and left running, already in the state to look at, `login` (name
 where the credential is, never its value, which the deck shows), and `screens` as a few
 pushes on where to look and what to click through, for the user to judge how
