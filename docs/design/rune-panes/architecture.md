@@ -98,6 +98,8 @@ module, since one caller draws it. Every `test` behaviour targets one of these t
   Rejected: Rust deriving tab names or groups from raw ids.
 - **L4** The centre is one viewport keyed per screen and thread, so a new thread opens fresh at the bottom and a
   live refetch keeps the offset. Rejected: a viewport per region (the reply box and history would scroll apart).
+- **L6** QA runs the Rune deck built on this laptop, on a scratch deck with seeded data, beside the HTML deck: the
+  user's press on itm_b58bc6c5879e. Rejected: the user's live deck.
 - **L5** One slice per pane, each owning its region file, view module and tests; the empty texts last, since
   `tests/empty.rs` and four regions' empty lines are shared. Rejected: one empty-text edit per pane slice (a
   shared table edited by four parallel slices).
@@ -108,22 +110,29 @@ module, since one caller draws it. Every `test` behaviour targets one of these t
   kept (rune-deck-ui L11, the user's pick on itm_671096e1253c). Trade: one more number per row. Rejected: replacing
   the age (overturns L11). *sent to `main` as B1; posted itm_4b9dece272d0*
   Answer: the user pressed "Both" (itm_4b9dece272d0).
+  Verdict: stands — the user pressed Both on itm_4b9dece272d0
 - **A2** Empty texts follow the ticket: blank for notifications, chat and status, "no tickets" for tickets, agents and
   reports unchanged. Trade: reverses rune-deck-ui spec 21 for three regions. Rejected: keep Rune's sentences and
   reword only tickets. *sent to `main` as B2; posted itm_bc4c98f219eb*
   Answer: the user pressed "Follow the ticket" (itm_bc4c98f219eb).
+  Verdict: stands — the user pressed Follow the ticket on itm_bc4c98f219eb
 - **A3** Scroll bar: Rune's overlay bar, shown while scrolling and draggable then. Trade: no bar at rest, unlike the
   HTML page. Rejected: forcing an always-shown bar (no public setting confirmed at the pin). *sent to `main` as B3; posted itm_4618d7d1990a*
   Answer: the user pressed "Overlay" (itm_4618d7d1990a).
+  Verdict: stands — the user pressed Overlay on itm_4618d7d1990a
 - **A4** A thread opens at its bottom, as the ticket says, though the HTML thread opens at the top. Trade: a long
   ask's opening lines need a scroll up. Rejected: open at the top.
+  Verdict: stands — the ticket's line 8 says a thread opens at the bottom
 - **A5** The tabs header stays fixed above the centre's viewport; PageUp, PageDown, Home, End, Up and Down scroll it
   when no text field holds the key; Left and Escape still leave a thread. Trade: Up and Down no longer reach
   anything else when nothing is focused. Rejected: the header scrolling away; Space as a page key (it types).
+  Verdict: stands — no queued ticket touches the centre column or its keys
 - **A6** Spec 3d already holds (`next` above the title, live/state/badges on one line): pinned by a test, nothing
   moved. Rejected: joining `next` onto the state line (the HTML deck does not).
+  Verdict: stands — a pin, nothing moves
 - **A7** Create threads listed as the HTML deck lists them: every kind-`user` item of the tab's repo, open and
   closed, newest first as `reads.items` orders them. Rejected: open ones only.
+  Verdict: stands — matches the HTML deck, as the ticket asks
 - **A8** A State link uses `Tx::open_url` (http, https; trailing `.,;:!?)]}'"` trimmed as `URL_IN_TEXT` does).
   Rejected: a deck route that opens it (a new write path).
 
@@ -134,6 +143,7 @@ thread is taller than its window; S1 may raise those test windows' heights and n
 against `tests/tickets.rs:358` (`folds_are_kept_per_deck`): it assumes shut-by-default folds; a held row now opens
 its fold, so S5 owns that test. Walked S7 against S2-S5: each of those changes the same region files S7 edits, so S7
 comes after all four. Seam two slices half-build: none (each pane's view field and its Rust reader are one slice's).
+  Verdict: stands — http and https only adds no new trust boundary
 
 ## 7. Out of scope
 
