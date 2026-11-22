@@ -1,0 +1,120 @@
+{
+  "slug": "ui-design-workflow",
+  "feature": "UI design workflow",
+  "ticket": "itm_132a653de1fc",
+  "branch": "feat/ui-design-workflow",
+  "base": "main",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-ui-design-workflow",
+  "artefact": "docs/design/ui-design-workflow/architecture.md",
+  "slices": [
+    {
+      "slice": "feature",
+      "state": "implementing: co-pilot running; feat at 0fd6c2f"
+    },
+    {
+      "slice": "S1",
+      "state": "pushed 1da7017 (security re-review approve)",
+      "branch": "slice/ui-design-workflow-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "implementing",
+      "branch": "slice/ui-design-workflow-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S4",
+        "S2"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "pushed e081b1e",
+      "branch": "slice/ui-design-workflow-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "pushed 2d6198f; integrating (pilot integrate running since 20:07, base main merged 178fe97)",
+      "branch": "slice/ui-design-workflow-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "planned",
+      "after": [
+        "S6"
+      ]
+    }
+  ],
+  "humanSteps": [
+    {
+      "text": "Screen-off on mains was set to never (powercfg /change monitor-timeout-ac 0) on this laptop; restore with powercfg /change monitor-timeout-ac 3 when no run is live."
+    },
+    {
+      "text": "Screen-off on mains is back at 3 min (the earlier 'never' was undone). Overnight stall was the lid closing at 00:42, not the screen timer; lid-close-on-mains is still 'sleep'. A keep-awake task (bwuxoob75) runs only while this pilot session lives."
+    },
+    {
+      "text": "Lid close on mains was set to 'do nothing' at the user's ask (was sleep); restore with: powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 1; powercfg /setactive SCHEME_CURRENT. On battery, lid close still sleeps."
+    }
+  ],
+  "next": "Pausing: S8 integrate in flight; then pilot integrate S7 e081b1e (typescript approve-with-nits, security approve) and S1 1da7017 (typescript approve on 8453584, security approve on 1da7017); S3 in gate.",
+  "updatedAt": "2026-11-22T10:29:10.413Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "pilot misdiagnosed the overnight stall as the screen-off timer; the event log shows lid close at 00:42 then standby until the lid opened at 16:42",
+      "size": 9000
+    },
+    {
+      "agent": "pilot",
+      "what": "deck_resolve on a pressed-but-superseded gate1 granted its old plan and moved the ticket to yellow; needed deck_ticket recut and take to undo",
+      "evidence": "ticket plan sha f48f103 after resolving itm_7c608c7dab46 as Superseded"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "fresh gate1 refused three times: verdict lines missing for A7-A10, old gate1 still open and owned by pilot, git timeout of 5 s on the design branch",
+      "evidence": "architect hand-backs on ui-design-workflow"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S8's slice file named only facades.test.mjs and no gate1 fixtures posting surface: true, so three test files outside the slice changed, one found only by the reviewer; two npm test runs wrote one log, one extra full run",
+      "evidence": "S8 report, slice/ui-design-workflow-s8 2d6198f"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S7: node --test default reporter printed nothing through grep; B4 asked the log to print a step a clean cargo fmt --check never prints, forcing a second 10-minute gate",
+      "evidence": "S7 report, e081b1e"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1: two structural lints for a new deck/*.mjs (README module row; process.platform only via hooks/lib/platform.js) are in neither brief nor slice, one extra 15-minute gate; estimate of 250 lines left out fixture, ADR and skill (652 landed)",
+      "evidence": "S1 report, 1da7017"
+    }
+  ]
+}
