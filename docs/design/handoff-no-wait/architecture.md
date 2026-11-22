@@ -119,6 +119,7 @@ and not kept as shallow modules. No other fold is needed.
   spec 7's probe, and a crash still kills the crew. Rejected path: crew outside the session (§3), which survives
   crashes but costs roughly 3x the slices and a cross-session channel.
   Answer: "Clear and keep (default)", the user on itm_1134e81c665c.
+  Verdict: stands — the user pressed "Clear and keep (default)" on itm_1134e81c665c; it meets their "we have to make sure they are able to survive", and handoff-self-close (signed, unbuilt) touches crew-handoff closing, not the hold
 - red team: E2 and E4 show a co-pilot that ends its turn with a child live loses that child's report, clear or no
   clear. That is already forbidden (`pilot-co-pilot.md:131`), so S5 restates it in the resync clause rather than
   adding a slice.
