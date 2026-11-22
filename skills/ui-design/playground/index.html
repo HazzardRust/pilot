@@ -114,10 +114,10 @@ function render() {
   if (!doc) return;
   const table = document.getElementById('contrast');
   table.replaceChildren(...pairs().map(([mode, fg, bg, a, b]) => {
-    const ratio = tokens.contrast(a, b), tr = document.createElement('tr');
-    tr.className = ratio < 4.5 ? 'low' : '';
+    const { low, text: ratio } = tokens.rate(a, b), tr = document.createElement('tr');
+    tr.className = low ? 'low' : '';
     tr.title = `${a} on ${b}`;
-    for (const text of [mode, `${fg} on ${bg}`, (ratio < 4.5 ? 'low ' : '') + ratio.toFixed(2)]) {
+    for (const text of [mode, `${fg} on ${bg}`, ratio]) {
       const td = document.createElement('td'); td.textContent = text; tr.append(td);
     }
     return tr;

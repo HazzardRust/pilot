@@ -98,7 +98,7 @@ Recommendation (A1): generalise the playground, and keep each stack's own token 
 | Surface adapter, `deck/look.mjs` | `readSurface(path)`, `snap(surface, screen, mode, out, spawn)`, `look(argv)` | screen → route lookup, argv templating, browser lookup; 2 adapters, `command` and `web` (a real seam) | local-substitutable (`spawn` injected) |
 | Token leaves, `skills/ui-design/playground/tokens.js` | `leaves(text)`, `exportText(doc)`, `applyExport(current, exported)`, `contrast(a, b)` | the leaf parser now inline in the playground page (`index.html:103-152`), so page and CLI share one | in-process |
 | Plan gaps, `deck/gate2-evidence.mjs` | `surfaceGate1Gaps(ticket, body)`, `walkthroughPlanGaps(ticket, kind, body, items)` | the look lines and the difference-list check, beside `recutGate1Gaps` | in-process |
-| Rune start-up, `deck/rune/src/app.rs` | `Start::from_args(args) -> Start { query, mode }` | `--open <query>`, `--mode light\|dark` into `State::load` | in-process |
+| Rune start-up, `deck/rune/src/app.rs` | `Start::from_args(args) -> Start { query }` | `--open <query>` into `State::load`; the mode is Rune's own `--theme light\|dark` (fix round) | in-process |
 | Deck launch, `deck/open.mjs` | `launchCopy(binary, dir, copy) -> path` | copy the release exe to a run path before spawning | local-substitutable (fs injected) |
 | Rune gate, `scripts/gate.mjs` | `cargoStep(env, which, platform) -> { steps: [{command, args}] } \| { skip }` | fmt check before test | local-substitutable (`which`) |
 

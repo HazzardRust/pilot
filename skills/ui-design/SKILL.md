@@ -15,6 +15,7 @@ its token file. The commands below read that file and nothing stack-specific.
   "name": "surface-web",
   "tokens": "tokens.json",
   "rules": "DESIGN.md",
+  "preview": "index.html",
   "screens": { "home": "#home", "settings": "#settings" },
   "open": { "kind": "web", "page": "index.html" }
 }
@@ -23,6 +24,7 @@ its token file. The commands below read that file and nothing stack-specific.
 - Every path is relative to the `surface.json`, and stays inside the repository; `../DESIGN.md` is fine.
 - `tokens`: the stack's own token file, the only place a value is defined. Colours are `{ "light", "dark" }` pairs.
 - `rules`: the surface's committed ruleset, its rules, what each token means and its known gaps. Required.
+- `preview`: a page drawn from the token file, which `pilot look shape` opens the playground on.
 - `screens`: each screen's start-up route. For `web` a route is a query (`?…`) or a fragment (`#…`) on the page.
 - `open` is one of two kinds, and neither takes a shell line:
   - `{ "kind": "web", "page": "index.html" }`: a headless Chromium-family browser found on the machine, with a
@@ -66,3 +68,5 @@ changes the user's desktop, windows, clipboard or settings, and the loading agen
 | Command | Does |
 | --- | --- |
 | `pilot look snap <surface.json> <screen> [--mode light\|dark] [--out <png>]` | one PNG of a screen in a mode (default light, `<screen>-<mode>.png`) |
+| `pilot look shape <surface.json>` | open the token playground in a browser on the surface's own preview page |
+| `pilot look apply <export.json> <surface.json>` | lay a playground export onto the surface's token file, only the changed leaves |

@@ -17,11 +17,25 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 test('contrast at the AA edge', () => {
   const { contrast } = loadTokens();
   // WCAG 2.x: #777777 on white is the familiar 4.48 (fails AA), #767676 the 4.54 that passes.
-  assert.equal(contrast('#777777', '#ffffff'), 4.48);
-  assert.equal(contrast('#767676', '#ffffff'), 4.54);
-  assert.equal(contrast('#ffffff', '#767676'), 4.54, 'the order of the pair does not matter');
+  assert.equal(contrast('#777777', '#ffffff').toFixed(2), '4.48');
+  assert.equal(contrast('#767676', '#ffffff').toFixed(2), '4.54');
+  assert.equal(contrast('#ffffff', '#767676'), contrast('#767676', '#ffffff'), 'the order of the pair does not matter');
   assert.equal(contrast('#000000', '#FFFFFF'), 21);
   assert.equal(contrast('#123456', '#123456'), 1);
+});
+
+test('a pair just under AA is not rounded up to it', () => {
+  const { contrast } = loadTokens();
+  // #098766 on white is 4.4977: it fails AA, so rounding to 4.5 before the compare hid it.
+  assert.ok(contrast('#098766', '#ffffff') < 4.5);
+});
+
+test('the playground flags a pair under AA and shows its ratio to 2 decimals', () => {
+  const tokens = loadTokens();
+  const rate = (fg, bg) => ({ ...tokens.rate(fg, bg) }); // out of the page's realm, for deepEqual
+  assert.deepEqual(rate('#777777', '#ffffff'), { low: true, text: 'low 4.48' });
+  assert.deepEqual(rate('#767676', '#ffffff'), { low: false, text: '4.54' });
+  assert.deepEqual(rate('#098766', '#ffffff'), { low: true, text: 'low 4.50' });
 });
 
 test('contrast refuses a colour that is not #rrggbb', () => {

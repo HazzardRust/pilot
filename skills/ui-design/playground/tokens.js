@@ -105,11 +105,17 @@
     return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
   }
 
-  /** The WCAG 2.x contrast ratio of two `#rrggbb` colours, either order, to 2 decimals (AA text needs 4.5). */
+  /** The WCAG 2.x contrast ratio of two `#rrggbb` colours, either order, unrounded so a ratio just under 4.5 still fails AA. */
   function contrast(fg, bg) {
     const [hi, lo] = [luminance(fg), luminance(bg)].sort((a, b) => b - a);
-    return Math.round((hi + 0.05) / (lo + 0.05) * 100) / 100;
+    return (hi + 0.05) / (lo + 0.05);
   }
 
-  g.tokens = { leaves, exportText, applyExport, contrast };
+  /** A pair's contrast cell: `low` under WCAG AA text (4.5), `text` the ratio as the page shows it. */
+  function rate(fg, bg) {
+    const ratio = contrast(fg, bg), low = ratio < 4.5;
+    return { low, text: (low ? 'low ' : '') + ratio.toFixed(2) };
+  }
+
+  g.tokens = { leaves, exportText, applyExport, contrast, rate };
 })(globalThis);
