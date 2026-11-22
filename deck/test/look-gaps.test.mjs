@@ -48,7 +48,8 @@ test('the post path refuses', (t) => {
     kind: KIND_GATE1, title: 'Gate 1', body, repo: REPO, artefact: ARTEFACT,
     sha: '31efcb0', locked: 1, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', ticket: ticket.id, surface: true,
   });
-  assert.throws(() => gate1('The artefact.'), (error) => error instanceof DeckRefusal && /Fonts:/.test(error.message));
+  assert.throws(() => gate1('The artefact.'), (error) => error instanceof DeckRefusal && /Fonts:/.test(error.message)
+    && /Colour means:/.test(error.message) && /Reference:/.test(error.message), 'every gap in one refusal');
   assert.equal(listItems().filter((item) => item.kind === KIND_GATE1).length, 0, 'nothing stored');
   assert.equal(gate1(`The artefact.\n${LOOK}`).kind, KIND_GATE1);
 });

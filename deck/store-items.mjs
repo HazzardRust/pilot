@@ -165,7 +165,7 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   // QA's walkthrough on a plan marked with no surface is refused naming it (L3), on one with a surface without its Differences: line (ui-design-workflow L3); a walkthrough's ticket is optional. A re-cut's gate1 says what changed (never-stuck L5), a surface gate1 its look lines.
   const walked = kind === KIND_WALKTHROUGH ? deck.items.find((each) => each.id === item.ticket) : undefined;
   const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : kind === KIND_GATE1 ? [...recutGate1Gaps(ticket, body), ...surfaceGate1Gaps(item.surface, body)] : walkthroughPlanGaps(walked, authorKind(author), body, deck.items);
-  if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
+  if (unproven.length > 0) throw new DeckRefusal(unproven.join('; ')); // every gap at once, so one retry can fix them all
   // Posting a gate2, or a concluding walkthrough on its open yellow ticket here (yellow-never-idle L2, L3; never refused for a lane, L8), turns its ticket green, and posting the closing report closes and resolves it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
   if (kind === KIND_GATE2) concludeOn(deck, ticket);
   if (concludes(item, author) && walked?.kind === KIND_TICKET && stateOf(walked) === 'yellow' && sameRepo(walked.repo, item.repo)) concludeOn(deck, walked, item.id);
