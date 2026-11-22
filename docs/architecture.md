@@ -4,7 +4,7 @@ Pilot is a Claude Code plugin. A main session (the pilot) directs a crew of agen
 
 This page says which directory holds what and how they connect. It does not say why.
 
-- The words (pilot, crew, run, slice, gate) are defined in [`CONTEXT.md`](../CONTEXT.md).
+- The words (pilot, crew, run, slice, gate) are defined in [`GLOSSARY.md`](../GLOSSARY.md).
 - The decisions and their reasons are the ADRs; [`docs/adr/README.md`](adr/README.md) is the index and the first read.
 - How a feature was built lives in `docs/design/`, not here.
 
