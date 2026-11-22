@@ -8,7 +8,7 @@
  * `{route}`, `{mode}` and `{out}` substituted, each as one whole argv element's text.
  */
 
-import { spawn as nodeSpawn, spawnSync } from 'node:child_process';
+import { spawn as spawnDetached, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -214,7 +214,7 @@ export function shapeUrl(surface) {
  * started from an argv with no shell and left running. The URL goes as one argv element, since a
  * file URL handed to the system's default handler loses its query.
  */
-export function shape(surface, start = nodeSpawn) {
+export function shape(surface, start = spawnDetached) {
   const url = shapeUrl(surface);
   const child = start(findBrowser(), [url], { detached: true, stdio: 'ignore', windowsHide: false });
   return { url, child };
@@ -225,7 +225,7 @@ export function shape(surface, start = nodeSpawn) {
  * `pilot look shape <surface.json>`: 0 with the browser started and the token file to import printed, 1 failed, 2 bad args.
  * `pilot look apply <export.json> <surface.json>`: 0 with the changed paths printed, 1 refused or failed, 2 bad args.
  */
-export function look(argv, { spawn = spawnSync, start = nodeSpawn, out: stdout = process.stdout, err: stderr = process.stderr } = {}) {
+export function look(argv, { spawn = spawnSync, start = spawnDetached, out: stdout = process.stdout, err: stderr = process.stderr } = {}) {
   if (argv[0] === 'shape') {
     const [, file, ...extra] = argv;
     if (!file || file.startsWith('-') || extra.length) {
