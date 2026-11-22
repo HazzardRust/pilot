@@ -4,7 +4,7 @@
  * with no walkthrough carries QA's checks table (walkthrough-surface spec 3, 4). Pure: the ticket and the gate2's fields in, the gaps out, so `postItem` refuses before it writes.
  */
 
-import { KIND_WALKTHROUGH, isShortPath, sameRepo } from './items.mjs';
+import { KIND_QUESTION, KIND_WALKTHROUGH, isShortPath, sameRepo } from './items.mjs';
 
 /** Lines of `body` that start with `label`, leading space aside. */
 const linesStarting = (body, label) => body.split('\n').filter((line) => line.trimStart().startsWith(label)).length;
@@ -82,12 +82,35 @@ export function namedWalkthroughGaps(items, { walkthrough, ticket }) {
 
 /**
  * The gaps in a walkthrough by `kind` on `ticket` (walkthrough-surface spec 5, 6; L2, L3): QA's on a plan marked
- * `surface: false` is one; the pilot's wizard, a plan without `surface` (signed before it existed) or no plan, none.
+ * `surface: false` is one; QA's on `surface: true` owes a `Differences: itm_…` line naming a question on its ticket
+ * (ui-design-workflow spec 6, L3), the id never echoed; the pilot's wizard, a plan without `surface` (signed before it
+ * existed) or no plan, none.
  */
-export function walkthroughPlanGaps(ticket, kind) {
-  if (kind !== 'qa' || ticket?.plan?.surface !== false) return [];
-  return [`the plan ${ticket.plan.artefact} marks no surface: no walkthrough; the checks table goes in the gate2`];
+export function walkthroughPlanGaps(ticket, kind, body = '', items = []) {
+  if (kind !== 'qa') return [];
+  const surface = ticket?.plan?.surface;
+  if (surface === false) return [`the plan ${ticket.plan.artefact} marks no surface: no walkthrough; the checks table goes in the gate2`];
+  if (surface !== true) return [];
+  const id = differencesOf(body);
+  const list = id === undefined ? undefined : items.find((item) => item.id === id);
+  return list?.kind === KIND_QUESTION && list.ticket === ticket.id ? [] : ["QA's walkthrough on a surface plan names its difference list, a question on its ticket: Differences: itm_…"];
 }
+
+/** The look lines a surface gate1 owes (ui-design-workflow spec 10, L3). */
+const LOOK_LINES = ['Fonts:', 'Colour means:', 'Reference:'];
+
+/**
+ * What a gate1 still owes when its plan has a surface (ui-design-workflow spec 10, L3, A2): a body line for each of
+ * the fonts, what colour means and a reference per region, so the user reads the look at Gate 1. None otherwise.
+ */
+export function surfaceGate1Gaps(surface, body) {
+  if (surface !== true) return [];
+  return LOOK_LINES.filter((label) => linesStarting(String(body), label) === 0)
+    .map((label) => `a gate1 with a surface carries a \`${label} <what>\` line in its body`);
+}
+
+/** The id a `Differences:` line names in `body`, or `undefined`. */
+const differencesOf = (body) => /^\s*Differences:\s*(itm_[0-9a-z]+)/m.exec(String(body))?.[1];
 
 /**
  * What a gate1 on `ticket` still owes when the ticket carries a re-cut mark (never-stuck spec 15, L5): a body line
