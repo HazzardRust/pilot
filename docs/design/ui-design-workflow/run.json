@@ -53,7 +53,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 7169aea",
+      "state": "integrated at 5451f22 (checks green)",
       "after": [
         "S1"
       ],
@@ -93,8 +93,8 @@
       "text": "Lid close on mains was set to 'do nothing' at the user's ask (was sleep); restore with: powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 1; powercfg /setactive SCHEME_CURRENT. On battery, lid close still sleeps."
     }
   ],
-  "next": "S6 integrating; then checks, then integrate S9 5b4d712 (built on S6 7169aea); S5 implementing; then fundamentalist and QA.",
-  "updatedAt": "2026-11-22T12:25:11.160Z",
+  "next": "Integrating S9 5b4d712; S5 in its gate; then fundamentalist and QA.",
+  "updatedAt": "2026-11-22T12:47:06.724Z",
   "friction": [
     {
       "kind": "drain",
