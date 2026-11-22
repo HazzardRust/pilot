@@ -161,14 +161,14 @@ machine file seam has two adapters (a real dir, a test's temp dir). `store-resto
   Grilling depth itm_6f2ecf72643f: closed "Every", the same way.
 - A4 `deck.secret` and `deck.pid` stay their own files; `machine.json` takes the rest (spec 2 reworded from
   "one machine file"). Trade: three machine files, not one; gain: no change to the 14 secret readers, the hooks
-  or the Rune client. Rejected: moving the secret into `machine.json`. Question itm_2a13a6f2258a.
+  or the Rune client. Rejected: moving the secret into `machine.json`. Question itm_2a13a6f2258a: answered "Keep them separate", the default.
 - A5 The bundle is gzipped JSON, not a zip. Trade: opened with `gunzip`, not a double-click; gain: no
-  dependency and no extraction path to attack. Rejected: zip via a library or hand-written tar. Question itm_ca8d6770d745.
+  dependency and no extraction path to attack. Rejected: zip via a library or hand-written tar. Question itm_ca8d6770d745: answered "Gzipped JSON", the default.
 - A6 A repo cloned at a different place under home than on the source is out: `--root` remaps whole roots only.
-  Rejected: a per-repo remap flag. Question itm_a796f98cfb42.
+  Rejected: a per-repo remap flag. Question itm_a796f98cfb42: answered "Out: remap whole roots only", the default.
 - A7 QA runs in scratch homes (`PILOT_DECK_DIR`) on a copy of the real store and two different home paths,
   never the live store; the live store migrates only when the user upgrades after Gate 2.
-  Rejected: QA on the live store. Question itm_35e3a9c9a548.
+  Rejected: QA on the live store. Question itm_35e3a9c9a548: answered "Scratch homes, real-store copy", the default.
 
 red team: (1) `store-core.mjs` sits at 774 of the 800-line facade bar: S1 and S2 may add at most 10 lines
 there, the rest lives in the codec. (2) `backUp` writes beside a guarded home store (F7): S1 routes it through
