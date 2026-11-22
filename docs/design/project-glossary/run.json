@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 7d881ec",
+      "state": "integrated at b3d9e94",
       "after": [
         "S1"
       ],
@@ -50,7 +50,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 91a28ab",
+      "state": "integrating, gate running",
       "after": [
         "S1"
       ],
@@ -67,8 +67,8 @@
       ]
     }
   ],
-  "next": "successor co-pilot on this device: integrate S4 (7d881ec), then S6 (91a28ab), then spawn S3, S5, S7",
-  "updatedAt": "2026-11-21T14:37:52.777Z",
+  "next": "wait on S6 pilot integrate (bjgbr39yh); then pilot checks; then spawn S3, S5, S7",
+  "updatedAt": "2026-11-22T06:42:37.545Z",
   "friction": [
     {
       "agent": "pilot-architect",
