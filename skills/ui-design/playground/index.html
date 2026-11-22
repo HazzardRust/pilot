@@ -35,7 +35,8 @@
   <table id="contrast"></table>
   <div id="tree"></div>
 </div>
-<iframe id="preview" title="preview" hidden></iframe>
+<!-- The preview only listens and draws: scripts, and nothing else (no top navigation, popups or forms). -->
+<iframe id="preview" title="preview" sandbox="allow-scripts" hidden></iframe>
 <div id="nopreview" hidden>No preview: open this page with <code>pilot look shape &lt;surface.json&gt;</code>, which names the
   surface's preview page in <code>?preview=</code>.</div>
 <!-- The one leaf parser, shared with `pilot look apply` (ui-design-workflow L6). -->

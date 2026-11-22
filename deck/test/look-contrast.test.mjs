@@ -52,9 +52,10 @@ function preview(page) {
   return { onTokens: context.onTokens, parent: context.parent, set };
 }
 
+// Each preview, its token file, and where that file keeps the dark surface colour.
 const previews = [
-  ['deck/rune/playground/mock.html', 'deck/rune/theme.json'],
-  ['fixtures/surface-web/index.html', 'fixtures/surface-web/tokens.json'],
+  ['deck/rune/playground/mock.html', 'deck/rune/theme.json', (t) => t.roles.surface.dark],
+  ['fixtures/surface-web/index.html', 'fixtures/surface-web/tokens.json', (t) => t.color.surface.dark],
 ];
 
 test('pilot look shape opens the one page on each surface\'s own preview', (t) => {
@@ -88,7 +89,7 @@ test('pilot look shape refuses a surface with no preview', () => {
   assert.throws(() => shapeUrl(surface), /^Error: preview: missing/);
 });
 
-for (const [page, tokenFile] of previews) {
+for (const [page, tokenFile, darkSurface] of previews) {
   test(`a preview ignores a foreign message: ${page}`, () => {
     const { onTokens, parent, set } = preview(page);
     const tokens = JSON.parse(readFileSync(join(root, tokenFile), 'utf8'));
@@ -98,6 +99,7 @@ for (const [page, tokenFile] of previews) {
     onTokens({ source: {}, data: { tokens, dark: false } });
     assert.deepEqual(set, [], 'nothing changed');
     onTokens({ source: parent, data: { tokens, dark: true } });
-    assert.ok(set.length > 0, 'the parent page\'s tokens redraw it');
+    const surface = set.filter(([name]) => name === '--surface').map(([, value]) => value).at(-1);
+    assert.equal(surface, darkSurface(tokens), 'the parent page\'s tokens redraw it, in the mode sent');
   });
 }

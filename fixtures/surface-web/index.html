@@ -63,9 +63,9 @@
     if (event.source !== parent || !data || typeof data !== 'object') return;
     const { tokens, dark } = data;
     if (!tokens || typeof tokens !== 'object' || Array.isArray(tokens)) return;
+    apply(tokens, dark === true);
     framed = true;
     document.getElementById('error').hidden = true;
-    apply(tokens, dark === true);
     show();
   }
   addEventListener('message', onTokens);
