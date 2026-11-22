@@ -1,0 +1,14 @@
+{
+  "name": "rune-deck",
+  "tokens": "theme.json",
+  "rules": "../DESIGN.md",
+  "screens": {
+    "home": "screen=home",
+    "thread": "screen=thread",
+    "items": "screen=items"
+  },
+  "open": {
+    "kind": "command",
+    "argv": ["target/release/pilot-deck", "--open", "{route}", "--mode", "{mode}", "--snap", "{out}"]
+  }
+}

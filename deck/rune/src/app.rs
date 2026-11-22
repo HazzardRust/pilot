@@ -124,10 +124,110 @@ pub fn mouse_nav(root: El) -> El {
         })
 }
 
+/// What the window opens on (ui-design-workflow S2, spec 7): `--open <route>`, the HTML deck's
+/// query (`screen=thread&id=itm_x`), and `--mode light|dark`. Every other argument is Rune's.
+#[derive(Debug, Default, Clone, PartialEq)]
+pub struct Start {
+    pub query: Query,
+    /// None: the system's mode, as before.
+    pub dark: Option<bool>,
+}
+
+const OPEN: &str = "--open";
+const MODE: &str = "--mode";
+/// The screens `/api/view` serves (deck/view/index.mjs `SCREENS`).
+const SCREENS: [&str; 3] = ["home", "thread", "items"];
+
+impl Start {
+    /// `pilot-deck`'s own flags out of `args` (without the program name); each at most once,
+    /// with a value. Rune's flags are left for Rune.
+    pub fn from_args(args: impl IntoIterator<Item = String>) -> Result<Start, String> {
+        let mut start = Start::default();
+        let (mut open, mut mode) = (false, false);
+        let mut args = args.into_iter();
+        while let Some(flag) = args.next() {
+            let seen = match flag.as_str() {
+                OPEN => &mut open,
+                MODE => &mut mode,
+                _ => continue,
+            };
+            if std::mem::replace(seen, true) {
+                return Err(format!("{flag} is given twice"));
+            }
+            let value = args.next().ok_or_else(|| format!("{flag} needs a value"))?;
+            if flag == OPEN {
+                start.query = route(&value)?;
+            } else {
+                start.dark = Some(match value.as_str() {
+                    "light" => false,
+                    "dark" => true,
+                    other => return Err(format!("{MODE} {other}: use light or dark")),
+                });
+            }
+        }
+        Ok(start)
+    }
+
+    /// The arguments Rune reads: `args` without `--open` and `--mode` and their values, and the
+    /// mode as Rune's own `--theme`, which the window and a headless `--snap` both draw in.
+    pub fn rune_args(&self, args: impl IntoIterator<Item = String>) -> Vec<String> {
+        let mut args = args.into_iter();
+        let mut rune = Vec::new();
+        while let Some(arg) = args.next() {
+            if arg == OPEN || arg == MODE {
+                args.next();
+            } else {
+                rune.push(arg);
+            }
+        }
+        if let Some(dark) = self.dark {
+            rune.extend(["--theme".into(), if dark { "dark" } else { "light" }.into()]);
+        }
+        rune
+    }
+}
+
+/// A route, `key=value` pairs joined by `&`, into a query: each key one of `Query`'s, at most once,
+/// with a value; `screen` one `/api/view` serves, and `all` only `1`.
+fn route(text: &str) -> Result<Query, String> {
+    let mut query = Query::default();
+    let mut seen = Vec::new();
+    for pair in text.split('&') {
+        let (key, value) = pair
+            .split_once('=')
+            .filter(|(_, v)| !v.is_empty())
+            .ok_or_else(|| format!("{OPEN} {text}: {pair} is not key=value"))?;
+        if seen.contains(&key) {
+            return Err(format!("{OPEN} {text}: {key} is given twice"));
+        }
+        seen.push(key);
+        match key {
+            "screen" if SCREENS.contains(&value) => query.screen = value.into(),
+            "screen" => {
+                return Err(format!(
+                    "{OPEN} {text}: no screen {value}; use {}",
+                    SCREENS.join(", ")
+                ));
+            }
+            "all" if value == "1" => query.all = true,
+            "run" => query.run = Some(value.into()),
+            "ticket" => query.ticket = Some(value.into()),
+            "id" => query.id = Some(value.into()),
+            _ => {
+                return Err(format!(
+                    "{OPEN} {text}: {key}={value} is not screen, run, all=1, ticket or id"
+                ));
+            }
+        }
+    }
+    Ok(query)
+}
+
 impl State {
-    /// The first view, read once; an error leaves the window up and saying so (spec 10).
-    pub fn load() -> State {
-        let query = Query::default();
+    /// The first view, read once, of the screen `start` opens on; an error leaves the window up
+    /// and saying so (spec 10).
+    pub fn load(start: Start) -> State {
+        let query = start.query;
         let prefs = prefs::dir()
             .map(|dir| Prefs::load(&dir))
             .unwrap_or_default();
@@ -167,7 +267,12 @@ pub fn spec() -> AppSpec<State> {
             include_bytes!("../assets/fonts/JetBrainsMono-Bold.ttf"),
         ],
         families: (type_::UI, type_::MONO),
-        ..AppSpec::new("pilot deck", (1280.0, 800.0), State::load, view)
+        ..AppSpec::new(
+            "pilot deck",
+            (1280.0, 800.0),
+            || State::load(Start::default()),
+            view,
+        )
     }
 }
 

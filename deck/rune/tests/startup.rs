@@ -10,7 +10,13 @@ fn args(line: &[&str]) -> Vec<String> {
 
 #[test]
 fn a_route_and_a_mode_parse_into_the_start_query() {
-    let start = Start::from_args(args(&["--open", "screen=thread&id=itm_1", "--mode", "dark"])).unwrap();
+    let start = Start::from_args(args(&[
+        "--open",
+        "screen=thread&id=itm_1",
+        "--mode",
+        "dark",
+    ]))
+    .unwrap();
     assert_eq!(
         start.query,
         Query {
@@ -34,7 +40,8 @@ fn no_flags_start_on_home_in_the_system_mode() {
 
 #[test]
 fn every_query_field_rides_the_route() {
-    let start = Start::from_args(args(&["--open", "screen=items&run=r1&all=1&ticket=itm_t"])).unwrap();
+    let start =
+        Start::from_args(args(&["--open", "screen=items&run=r1&all=1&ticket=itm_t"])).unwrap();
     assert_eq!(
         start.query,
         Query {
@@ -55,9 +62,36 @@ fn an_unknown_flag_value_is_refused() {
 
 #[test]
 fn rune_flags_pass_untouched() {
-    let start = Start::from_args(args(&["--snap", "out.png", "--mode", "light", "--tree", "t.json"])).unwrap();
+    let start = Start::from_args(args(&[
+        "--snap", "out.png", "--mode", "light", "--tree", "t.json",
+    ]))
+    .unwrap();
     assert_eq!(start.dark, Some(false));
     assert_eq!(start.query, Query::default());
+}
+
+#[test]
+fn rune_reads_its_own_flags_and_the_mode_as_its_theme() {
+    let line = args(&[
+        "--open",
+        "screen=items",
+        "--snap",
+        "out.png",
+        "--mode",
+        "light",
+        "--tree",
+        "t.json",
+    ]);
+    let start = Start::from_args(line.clone()).unwrap();
+    assert_eq!(
+        start.rune_args(line),
+        args(&["--snap", "out.png", "--tree", "t.json", "--theme", "light"])
+    );
+    let system = Start::from_args(args(&["--snap", "out.png"])).unwrap();
+    assert_eq!(
+        system.rune_args(args(&["--snap", "out.png"])),
+        args(&["--snap", "out.png"])
+    );
 }
 
 #[test]
