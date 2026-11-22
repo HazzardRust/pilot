@@ -59,6 +59,14 @@ test('an Avoid word in added prose is a candidate', (t) => {
   ]);
 });
 
+test('an added line opening "++ " is prose, not a file header', (t) => {
+  const dir = makeRepo(t, BASE, { 'README.md': 'The Crew does the work.\n++ the subagents\nAsk the subagents.\n' });
+  assert.deepEqual(
+    termsInDiff(dir, 'base', 'head').map(({ file, line }) => `${file}:${line}`),
+    ['README.md:2', 'README.md:3'],
+  );
+});
+
 test('a term whose last use goes is orphaned', (t) => {
   const dir = makeRepo(t, BASE, { 'README.md': 'The work gets done.\n' });
   assert.deepEqual(of('orphaned', termsInDiff(dir, 'base', 'head')), [{ kind: 'orphaned', term: 'Crew' }]);
@@ -95,9 +103,9 @@ test('an unlogged glossary edit is a candidate', (t) => {
 test('a ref shaped like an option is refused before git sees it', (t) => {
   const dir = makeRepo(t, BASE, {});
   for (const ref of ['--output=pwned', '-p', 'base\nhead', '']) {
-    assert.throws(() => termsInDiff(dir, ref, 'head'), /ref/);
+    assert.throws(() => termsInDiff(dir, ref, 'head'), /is refused/);
   }
-  assert.throws(() => termsInDiff(dir, 'base', 'no-such-ref'), /no-such-ref/);
+  assert.throws(() => termsInDiff(dir, 'base', 'no-such-ref'), /no-such-ref is not a commit/);
   assert.equal(fs.existsSync(path.join(dir, 'pwned')), false);
 });
 
@@ -111,4 +119,12 @@ test('the CLI prints one line per candidate and exits 0', (t) => {
   ]);
   const bad = spawnSync(process.execPath, [CLI, dir, '-p', 'head'], { encoding: 'utf8' });
   assert.equal(bad.status, 2);
+});
+
+test('the CLI prints a control character from the repository as ?', (t) => {
+  const glossary = '# Glossary\n\n**Bell\x07\x1b[2J**:\nA term holding control characters.\n_Avoid_: subagents\n';
+  const dir = makeRepo(t, { 'GLOSSARY.md': glossary }, { 'README.md': 'Ask the subagents.\n' });
+  const run = spawnSync(process.execPath, [CLI, dir, 'base', 'head'], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
+  assert.equal(run.stdout, 'avoid README.md:1 subagents -> Bell??[2J\n');
 });

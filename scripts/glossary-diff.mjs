@@ -30,7 +30,7 @@ const COMMIT_ID = /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/;
 
 /** `git args…` in `repoDir`: its result, thrown when git cannot start or exits outside `ok`. */
 function git(repoDir, args, ok = [0]) {
-  const result = spawnSync('git', ['-c', 'core.quotePath=false', ...args], {
+  const result = spawnSync('git', ['-c', 'core.quotePath=false', '-c', 'core.fsmonitor=false', ...args], {
     cwd: repoDir,
     encoding: 'utf8',
     maxBuffer: 256 * 1024 * 1024,
@@ -88,10 +88,13 @@ function addedProse(repoDir, base, head) {
   const added = [];
   let file = null;
   let line = 0;
+  // A file's header runs from `diff --git` to its first hunk, so an added line reading `++ x` is never a `+++` header.
+  let header = false;
   for (const raw of stdout.split('\n')) {
-    if (raw.startsWith('+++ ')) file = pathOf(raw.slice(4));
-    else if (raw.startsWith('@@ ')) line = Number(/\+(\d+)/.exec(raw)?.[1] ?? 0);
-    else if (raw.startsWith('+') && file) added.push({ file, line: line++, text: raw.slice(1) });
+    if (raw.startsWith('diff --git ')) [header, file] = [true, null];
+    else if (header && raw.startsWith('+++ ')) file = pathOf(raw.slice(4));
+    else if (raw.startsWith('@@ ')) [header, line] = [false, Number(/\+(\d+)/.exec(raw)?.[1] ?? 0)];
+    else if (!header && raw.startsWith('+') && file) added.push({ file, line: line++, text: raw.slice(1) });
   }
   return added;
 }
@@ -147,10 +150,11 @@ export function termsInDiff(repoDir, base, head) {
   return candidates;
 }
 
+/** A candidate's line; the repository's text reaches it with each control character as `?`, so it cannot forge a line or drive a terminal. */
 const lineOf = (c) =>
-  c.kind === 'avoid' ? `avoid ${c.file}:${c.line} ${c.word} -> ${c.term}`
+  (c.kind === 'avoid' ? `avoid ${c.file}:${c.line} ${c.word} -> ${c.term}`
     : c.kind === 'orphaned' ? `orphaned ${c.term}`
-      : `unlogged ${c.change} ${c.term}`;
+      : `unlogged ${c.change} ${c.term}`).replace(/[\x00-\x1f\x7f]/g, '?');
 
 function main(argv) {
   if (argv.length !== 3) {
