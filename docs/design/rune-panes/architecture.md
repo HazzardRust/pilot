@@ -61,7 +61,9 @@ in CI's `Rune deck` job; every `look` line is the user's, on the walkthrough, be
   the messages, even with no chat (`render-rail.mjs:425-445`, `items.mjs:61`).
 - Agents: `view/agents.mjs:15-19` sends a flat roster of `{name, kind, since, quietS, quiet}`; Rust drops `since`
   and draws `"{quiet_s}s"` (`regions/agents.rs:45-65`, rune-deck-ui L11). HTML: `"<type> · started N min ago"`
-  and a `run-section` per deck on the overview (`render-rail.mjs:304-305, 543-551`).
+  and a `run-section` per deck on the overview (`render-rail.mjs:304-305, 543-551`). The page writes the ISO stamp
+  and `ui/js/time.mjs` `relative` turns it into "3 mins ago" in the browser; the view already calls `relative`
+  server-side for usage resets (`view/usage.mjs:13, 27`), the precedent S6 follows.
 - Empty texts are pinned in one table, `tests/empty.rs:9-18` (`SENTENCES`), from rune-deck-ui spec 21.
 - Build here: cargo 1.100 is on PATH on this laptop and the crate compiles past its build scripts (the C++ linker is
   present); CI's `Rune deck` job (`.github/workflows/ci.yml`, `windows-latest`) builds and tests on PRs to `pilot`
