@@ -91,6 +91,7 @@ ADR NNNN records L1-L3 as an extension of ADR 0208 L3.
 - **A1 Press rule.** Default: an item with an unanswered press is never auto-closed; once the pilot has replied after
   the press, the next grant or move closes it. Trade: the pilot's reply remains one step. Rejected: never auto-close a
   pressed item (the pilot must remember again). Question `itm_962130e8bae6`.
+  Closed by the deck's default after 20 minutes with no answer, not by the user: "Assumed: Close once pilot replied".
 - **A2 `need` closes.** Default: the deck closes at `need`, even though the ticket may pivot back; the lanes line then
   names the owed successor. Trade: the item's pointer to the paused branch is closed (still readable). Rejected: close
   only at gate2/report (a second rule). Question `itm_61dd35363e32`.
