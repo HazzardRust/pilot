@@ -19,7 +19,7 @@
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
-import { matchGlossary, parseGlossary } from './glossary.mjs';
+import { matchGlossary, parseGlossary, printable } from './glossary.mjs';
 import { readLog } from './glossary-log.mjs';
 import { NOT_USE, usedAt } from './glossary-stale.mjs';
 
@@ -144,11 +144,11 @@ export function termsInDiff(repoDir, base, head) {
   return candidates;
 }
 
-/** A candidate's line; the repository's text reaches it with each C0, C1, zero-width and bidi control as `?`, so it cannot forge a line, drive a terminal or reorder what is shown. */
+/** A candidate's line, `printable`. */
 const lineOf = (c) =>
-  (c.kind === 'avoid' ? `avoid ${c.file}:${c.line} ${c.word} -> ${c.term}`
+  printable(c.kind === 'avoid' ? `avoid ${c.file}:${c.line} ${c.word} -> ${c.term}`
     : c.kind === 'orphaned' ? `orphaned ${c.term}`
-      : `unlogged ${c.change} ${c.term}`).replace(/[\x00-\x1f\x7f-\x9f\u{200b}-\u{200f}\u{202a}-\u{202e}\u{2066}-\u{2069}]/gu, '?');
+      : `unlogged ${c.change} ${c.term}`);
 
 function main(argv) {
   if (argv.length !== 3) {

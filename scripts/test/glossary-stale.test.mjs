@@ -68,6 +68,12 @@ test('a term used only in the log is stale', (t) => {
   assert.deepEqual(staleTerms(dir, glossary), [{ term: 'Logged', line: 1 }]);
 });
 
+test('the CLI prints a bidi control in a stale term as ?', (t) => {
+  const dir = makeRepo(t, { files: { 'GLOSSARY.md': '**Evil\u{202e}txt**:\nA reversed word.\n' } });
+  const { status, stdout } = spawnSync(process.execPath, [CLI, dir], { encoding: 'utf8' });
+  assert.deepEqual([status, stdout], [1, '1 Evil?txt\n']);
+});
+
 test('the CLI exits 0 with none stale, 1 with some, 2 on bad usage', (t) => {
   const cli = (...args) => spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf8' });
   const clean = makeRepo(t, { files: { 'GLOSSARY.md': '**Used**:\nA word.\n', 'src/a.txt': 'used\n' } });

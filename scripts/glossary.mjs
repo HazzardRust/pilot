@@ -20,6 +20,12 @@ const FILE_EXTENSIONS = new Set([
 ]);
 
 /**
+ * `line` with each control, format, line- and paragraph-separator character as `?`: the audited
+ * repository's text cannot forge a line, drive a terminal or reorder what is shown.
+ */
+export const printable = (line) => line.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, '?');
+
+/**
  * Each glossary entry: a `**Term**:` line, the definition lines under it, and an optional
  * `_Avoid_:` line. A `#` heading groups entries and is never one; a blank line ends an entry.
  * `line` is the 1-based line of the term.
@@ -247,7 +253,7 @@ function main(argv) {
   const [file, ...rest] = args;
   if (command !== 'check' || !file || rest.length > 0) usage();
   const problems = lintGlossary(readGlossary(file));
-  for (const { line, term, token } of problems) process.stdout.write(`${line} ${term}: names a path ${token}\n`);
+  for (const { line, term, token } of problems) process.stdout.write(`${printable(`${line} ${term}: names a path ${token}`)}\n`);
   process.exitCode = problems.length > 0 ? 1 : 0;
 }
 

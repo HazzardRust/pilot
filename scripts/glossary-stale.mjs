@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { parseGlossary } from './glossary.mjs';
+import { parseGlossary, printable } from './glossary.mjs';
 
 /** Where a term is defined, logged or planned rather than used: the one measure of use (L3), shared with glossary-diff.mjs. */
 export const NOT_USE = [':(exclude)GLOSSARY.md', ':(exclude)GLOSSARY-LOG.md', ':(exclude)docs/design/', ':(exclude)docs/adr/'];
@@ -59,7 +59,7 @@ function main(argv) {
     process.stderr.write(`glossary-stale: ${error.message}\n`);
     process.exit(2);
   }
-  for (const { line, term } of stale) process.stdout.write(`${line} ${term}\n`);
+  for (const { line, term } of stale) process.stdout.write(`${printable(`${line} ${term}`)}\n`);
   process.exitCode = stale.length > 0 ? 1 : 0;
 }
 
