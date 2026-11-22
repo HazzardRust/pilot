@@ -96,6 +96,7 @@ ADR NNNN records L1-L3 as an extension of ADR 0208 L3.
   only at gate2/report (a second rule). Question `itm_61dd35363e32`.
 - **A3 Ticketless crew-handoffs.** Default: they show `waiting` and are still the pilot's to close. Trade: those keep
   depending on the pilot. Rejected: tagging them with a ticket in the guard (a hooks slice). Question `itm_9c2e0a9c4326`.
+  Closed by the deck's default after 20 minutes with no answer, not by the user: "Assumed: Show waiting only".
 
 ## 7. Out of scope
 
