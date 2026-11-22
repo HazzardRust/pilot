@@ -1,7 +1,8 @@
 <!doctype html>
 <!-- The web surface fixture (ui-design-workflow S1). Every colour and spacing is a CSS variable set
      from tokens.json; the screen is the URL's fragment (#home, #settings) and the mode is the
-     browser's prefers-color-scheme. No network: the token file is read from beside this page. -->
+     browser's prefers-color-scheme. No network: the token file is read from beside this page, or
+     arrives from the token playground by postMessage (S5). -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -43,27 +44,44 @@
 </main>
 <div id="error" hidden></div>
 <script>
-  const dark = matchMedia('(prefers-color-scheme: dark)').matches;
   const kebab = (key) => key.replaceAll('_', '-');
   /** Each leaf becomes a CSS variable: a {light, dark} pair takes the mode's side; a number is pixels. */
-  function apply(tokens) {
+  function apply(tokens, dark) {
     const style = document.documentElement.style;
-    for (const [key, value] of Object.entries(tokens.color)) style.setProperty(`--${kebab(key)}`, dark ? value.dark : value.light);
-    for (const [key, value] of Object.entries(tokens.space)) style.setProperty(`--space-${key}`, `${value}px`);
+    for (const [key, value] of Object.entries(tokens.color ?? {})) style.setProperty(`--${kebab(key)}`, dark ? value.dark : value.light);
+    for (const [key, value] of Object.entries(tokens.space ?? {})) style.setProperty(`--space-${key}`, `${value}px`);
     style.setProperty('--radius', `${tokens.radius}px`);
-    style.setProperty('--font-family', tokens.font.family);
-    style.setProperty('--font-size', `${tokens.font.size}px`);
+    style.setProperty('--font-family', tokens.font?.family);
+    style.setProperty('--font-size', `${tokens.font?.size}px`);
   }
+  /**
+   * The token playground (S5) frames this page and sends `{ tokens, dark }` by postMessage; anything
+   * else, or from any other window, changes nothing. Its tokens win over the file read below.
+   */
+  function onTokens(event) {
+    const data = event.data;
+    if (event.source !== parent || !data || typeof data !== 'object') return;
+    const { tokens, dark } = data;
+    if (!tokens || typeof tokens !== 'object' || Array.isArray(tokens)) return;
+    apply(tokens, dark === true);
+    framed = true;
+    document.getElementById('error').hidden = true;
+    show();
+  }
+  addEventListener('message', onTokens);
   function show() {
     const screen = location.hash.slice(1) || 'home';
     for (const main of document.querySelectorAll('main')) main.hidden = main.id !== screen;
     for (const a of document.querySelectorAll('nav a')) a.toggleAttribute('aria-current', a.hash === `#${screen}`);
   }
   addEventListener('hashchange', show);
+  // A framed page's file read is often blocked (file:// in a normal profile): the message is its tokens.
+  let framed = false;
   fetch('tokens.json')
     .then((res) => res.json())
-    .then((tokens) => { apply(tokens); show(); })
+    .then((tokens) => { if (!framed) { apply(tokens, matchMedia('(prefers-color-scheme: dark)').matches); show(); } })
     .catch((err) => {
+      if (framed) return;
       const box = document.getElementById('error');
       box.hidden = false;
       box.textContent = `tokens.json did not load: ${err.message}`;

@@ -200,6 +200,8 @@ const usage = () => `pilot — the deck for piloted runs
                  (default <screen>-<mode>.png); starts one process, sends no input
   pilot look apply <export.json> <surface.json>
                  lay a playground export onto the surface's token file, only the changed leaves
+  pilot look shape <surface.json>
+                 open the token playground in a browser on the surface's own preview page
   pilot trace <itm_id>
                  print a hand-off's or ticket's trace rows in time order, then done or
                  waiting: <next step>, <age>; reads the trace file, never the deck (exit 2 on a bad id)

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Token playground</title>
+<style>
+  body { margin: 0; display: grid; grid-template-columns: 380px 1fr; height: 100vh; font: 12px/1.4 system-ui, sans-serif; }
+  #controls { overflow: hidden auto; padding: 8px 12px; border-right: 1px solid #ccc; background: #fafafa; color: #222; }
+  #controls h3 { margin: 12px 0 4px; font-size: 12px; text-transform: uppercase; color: #666; }
+  .row { display: grid; grid-template-columns: 120px 1fr; gap: 6px; align-items: center; margin: 2px 0; }
+  .row > span:first-child { overflow: hidden; text-overflow: ellipsis; }
+  .row input[type=range] { width: 140px; vertical-align: middle; }
+  code { font-size: 11px; }
+  #bar { display: flex; gap: 6px; flex-wrap: wrap; position: sticky; top: -8px; background: #fafafa; padding: 6px 0; }
+  #out { width: 100%; height: 120px; font: 11px monospace; }
+  #msg { color: #555; }
+  #contrast { width: 100%; border-collapse: collapse; margin: 6px 0; }
+  #contrast td { padding: 1px 4px; border-bottom: 1px solid #e4e4e4; }
+  #contrast td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  #contrast tr.low td { color: #b00020; font-weight: 600; }
+  #preview { width: 100%; height: 100%; border: 0; }
+  #nopreview { padding: 24px; color: #555; }
+</style>
+</head>
+<body>
+<div id="controls">
+  <div id="bar">
+    <label><input type="file" id="file" accept=".json" hidden><button onclick="file.click()">Import</button></label>
+    <button id="exportBtn">Export</button><button id="copyBtn">Copy</button><button id="dl">Download</button>
+    <label><input type="checkbox" id="dark"> dark</label>
+    <span id="msg"></span>
+  </div>
+  <textarea id="out" readonly placeholder="Import the surface's token file (or drop it here)."></textarea>
+  <h3>Contrast, text on surface (AA needs 4.5:1)</h3>
+  <table id="contrast"></table>
+  <div id="tree"></div>
+</div>
+<!-- The preview only listens and draws: scripts, and nothing else (no top navigation, popups or forms). -->
+<iframe id="preview" title="preview" sandbox="allow-scripts" hidden></iframe>
+<div id="nopreview" hidden>No preview: open this page with <code>pilot look shape &lt;surface.json&gt;</code>, which names the
+  surface's preview page in <code>?preview=</code>.</div>
+<!-- The one leaf parser, shared with `pilot look apply` (ui-design-workflow L6). -->
+<script src="tokens.js"></script>
+<script>
+// Any surface (ui-design-workflow S5): the page edits a token file's leaves and sends the whole tree,
+// with the mode, to the surface's own preview page, framed from `?preview=<file url>`. The preview
+// draws; the page knows nothing of it but that channel.
+const isHex = v => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
+const isPair = v => v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 2 && isHex(v.light) && isHex(v.dark);
+// Fractions run 0..1; every other number is px and runs to twice its value or 64.
+const isUnit = path => path[0] === 'alpha' || path[0] === 'motion' || /(^|_)(mix|alpha)$/.test(path.at(-1));
+let doc = null, fileName = 'tokens.json';
+/** The section a string names a key of (`"s2"` in `space`, `"blue"` in `accent`): the value is an alias. */
+const aliasOf = v => typeof v === 'string' && !isHex(v)
+  ? Object.keys(doc.root).find(s => {
+      const o = doc.root[s];
+      return o && typeof o === 'object' && !Array.isArray(o) && Object.hasOwn(o, v) && typeof o[v] !== 'string';
+    })
+  : undefined;
+
+// Only a local file is framed: the preview is a page in the repository, never a site.
+const previewUrl = (() => {
+  const named = new URLSearchParams(location.search).get('preview');
+  try { return named && new URL(named).protocol === 'file:' ? new URL(named).href : null; } catch { return null; }
+})();
+const frame = document.getElementById('preview');
+// Remembered per preview, so one surface's token file never lands on another's.
+const memo = 'tokens:' + (previewUrl ?? '');
+if (previewUrl) { frame.hidden = false; frame.onload = send; frame.src = previewUrl; }
+else document.getElementById('nopreview').hidden = false;
+
+const exportText = () => tokens.exportText(doc);
+
+function load(text, from) {
+  try { doc = tokens.leaves(text); } catch (e) { msg.textContent = 'Import: ' + e.message; return; }
+  msg.textContent = from;
+  try { localStorage.setItem(memo, text); localStorage.setItem(memo + ':from', from); } catch {}
+  controls(); render();
+}
+
+/** The preview's whole channel: the token tree and the mode. A file:// frame has an opaque origin, so `'*'`. */
+function send() {
+  if (doc && previewUrl) frame.contentWindow?.postMessage({ tokens: doc.root, dark: document.getElementById('dark').checked }, '*');
+}
+
+/**
+ * Every text/surface pair the tokens hold, in both modes, by leaf name: each of `text`, `muted`
+ * and `quiet` on each of `surface`, `panel` and `background`, and `on_x` on `x`. A file with no
+ * `text` colour draws its text as Rune does, black in light and white in dark.
+ */
+function pairs() {
+  const rows = [];
+  for (const dark of [false, true]) {
+    const named = new Map();
+    (function walk(v, path) {
+      const key = path.at(-1)?.replaceAll('-', '_');
+      if (isPair(v) || isHex(v)) { if (key && !named.has(key)) named.set(key, isPair(v) ? (dark ? v.dark : v.light) : v); return; }
+      if (v && typeof v === 'object' && !Array.isArray(v)) for (const k in v) walk(v[k], path.concat(k));
+    })(doc.root, []);
+    if (!named.has('text')) named.set('text', dark ? '#ffffff' : '#000000');
+    const mode = dark ? 'dark' : 'light';
+    for (const fg of ['text', 'muted', 'quiet']) for (const bg of ['surface', 'panel', 'background']) {
+      if (named.has(fg) && named.has(bg)) rows.push([mode, fg, bg, named.get(fg), named.get(bg)]);
+    }
+    for (const [fg, colour] of named) {
+      const bg = fg.startsWith('on_') && fg.slice(3);
+      if (bg && named.has(bg)) rows.push([mode, fg, bg, colour, named.get(bg)]);
+    }
+  }
+  return rows;
+}
+
+function render() {
+  if (!doc) return;
+  const table = document.getElementById('contrast');
+  table.replaceChildren(...pairs().map(([mode, fg, bg, a, b]) => {
+    const ratio = tokens.contrast(a, b), tr = document.createElement('tr');
+    tr.className = ratio < 4.5 ? 'low' : '';
+    tr.title = `${a} on ${b}`;
+    for (const text of [mode, `${fg} on ${bg}`, (ratio < 4.5 ? 'low ' : '') + ratio.toFixed(2)]) {
+      const td = document.createElement('td'); td.textContent = text; tr.append(td);
+    }
+    return tr;
+  }));
+  send();
+}
+
+// A control per leaf, chosen by the value's shape, so a key the token file gains needs no edit here.
+function controls() {
+  tree.innerHTML = '';
+  const byPath = new Map(doc.leaves.map(l => [l.path.join('.'), l]));
+  const set = (path, v) => { byPath.get(path.join('.')).value = v; let o = doc.root; path.slice(0, -1).forEach(k => o = o[k]); o[path.at(-1)] = v; render(); };
+  const row = (label, ...kids) => { const d = document.createElement('div'); d.className = 'row'; const sp = document.createElement('span'); sp.textContent = label; sp.title = label; const c = document.createElement('span'); c.append(...kids); d.append(sp, c); tree.append(d); return c; };
+  const input = (type, value, on, attrs = {}) => { const e = document.createElement(type === 'select' ? 'select' : 'input'); if (type !== 'select') e.type = type; Object.assign(e, attrs); e.value = value; e.oninput = () => on(e.value); return e; };
+  const slider = (v, on, path) => {
+    const [max, step] = isUnit(path) ? [1, 0.01] : [Math.max(64, v * 2), 0.5];
+    const out = document.createElement('code'); out.textContent = ' ' + v;
+    return [input('range', v, x => { out.textContent = ' ' + x; on(Number(x)); }, { min: 0, max, step }), out];
+  };
+  (function walk(v, path) {
+    const label = path.slice(1).join('.') || path[0];
+    if (isPair(v)) {
+      row(label, ...['light', 'dark'].map(m => input('color', v[m], x => set(path.concat(m), x), { title: m })));
+    } else if (v && typeof v === 'object' && !Array.isArray(v)) {
+      if (path.length) { const h = document.createElement('h3'); h.textContent = path.join('.'); tree.append(h); }
+      for (const k in v) walk(v[k], path.concat(k));
+    } else if (isHex(v)) {
+      row(label, input('color', v, x => set(path, x)));
+    } else if (typeof v === 'number') {
+      row(label, ...slider(v, x => set(path, x), path));
+    } else if (Array.isArray(v) && v.every(x => typeof x === 'number')) {
+      row(label, ...v.flatMap((x, i) => slider(x, n => set(path, v.map((y, j) => j === i ? n : y)), path)));
+    } else if (Array.isArray(v)) {
+      row(label, input('text', v.join(', '), x => set(path, x.split(',').map(t => t.trim()).filter(Boolean)), { size: 40 }));
+    } else if (aliasOf(v)) {
+      const home = doc.root[aliasOf(v)], names = Object.keys(home).filter(k => typeof home[k] !== 'string');
+      const sel = input('select', '', x => set(path, x));
+      sel.append(...names.map(k => new Option(`${k} (${JSON.stringify(home[k])})`, k))); sel.value = v; row(label, sel);
+    } else {
+      row(label, input('text', String(v), x => set(path, x)));
+    }
+  })(doc.root, []);
+}
+
+const importFile = file => file?.text().then(text => { fileName = file.name; load(text, `${file.name}, imported ${new Date().toLocaleTimeString()}`); });
+document.getElementById('file').onchange = e => { importFile(e.target.files[0]); e.target.value = ''; };
+document.getElementById('dark').onchange = render;
+document.body.ondragover = e => e.preventDefault();
+document.body.ondrop = e => { e.preventDefault(); importFile(e.dataTransfer.files[0]); };
+exportBtn.onclick = () => { if (doc) out.value = exportText(); };
+copyBtn.onclick = () => { if (doc) navigator.clipboard.writeText(out.value = exportText()).catch(e => msg.textContent = 'Copy: ' + e.message); };
+dl.onclick = () => {
+  if (!doc) return;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([out.value = exportText()], { type: 'application/json' }));
+  a.download = fileName; a.click(); URL.revokeObjectURL(a.href);
+};
+document.getElementById('dark').checked = matchMedia('(prefers-color-scheme: dark)').matches;
+try {
+  const kept = localStorage.getItem(memo);
+  if (kept) load(kept, `${localStorage.getItem(memo + ':from') ?? 'the token file'} (remembered: import again for the current file)`);
+} catch {}
+</script>
+</body>
+</html>

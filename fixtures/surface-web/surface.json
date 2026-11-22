@@ -2,6 +2,7 @@
   "name": "surface-web",
   "tokens": "tokens.json",
   "rules": "DESIGN.md",
+  "preview": "index.html",
   "screens": {
     "home": "#home",
     "settings": "#settings"

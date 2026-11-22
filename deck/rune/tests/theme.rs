@@ -433,7 +433,7 @@ fn theme_json_is_read_and_is_the_only_source() {
     );
 }
 
-/// `hueOver` in `playground/index.html` on the eight author hues at 35%, pinned from the page:
+/// `hueOver` in `playground/mock.html`, the playground's Rune preview (S5), on the eight author hues at 35%, pinned from the page:
 /// (hue, over black text, over white text). qa's dark `#5cbb9e` is where a plain byte mix says `#5dbb9e`.
 const PLAYGROUND_MIX: [(u32, &str, &str); 8] = [
     (0x2563eb, "#184099", "#719af2"),
