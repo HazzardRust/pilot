@@ -2,6 +2,7 @@
   "name": "rune-deck",
   "tokens": "theme.json",
   "rules": "../DESIGN.md",
+  "preview": "playground/mock.html",
   "screens": {
     "home": "screen=home",
     "thread": "screen=thread",

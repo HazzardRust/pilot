@@ -1,22 +1,15 @@
 <!doctype html>
+<!-- The Rune deck's preview for the token playground (ui-design-workflow S5): a mock of the deck
+     whose every value is a custom property set from theme.json. The playground page
+     (skills/ui-design/playground/index.html) frames it and sends `{ tokens, dark }` by postMessage. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Rune deck token playground</title>
+<title>Rune deck mock</title>
 <style>
-  body { margin: 0; display: grid; grid-template-columns: 380px 1fr; height: 100vh; font: 12px/1.4 system-ui, sans-serif; }
-  #controls { overflow: hidden auto; padding: 8px 12px; border-right: 1px solid #ccc; background: #fafafa; color: #222; }
-  #controls h3 { margin: 12px 0 4px; font-size: 12px; text-transform: uppercase; color: #666; }
-  .row { display: grid; grid-template-columns: 120px 1fr; gap: 6px; align-items: center; margin: 2px 0; }
-  .row > span:first-child { overflow: hidden; text-overflow: ellipsis; }
-  .row input[type=range] { width: 140px; vertical-align: middle; }
-  .sw { display: inline-block; width: 14px; height: 14px; vertical-align: middle; border: 1px solid #0003; margin-left: 4px; }
-  code { font-size: 11px; }
-  #bar { display: flex; gap: 6px; flex-wrap: wrap; position: sticky; top: -8px; background: #fafafa; padding: 6px 0; }
-  #out { width: 100%; height: 120px; font: 11px monospace; }
-  #msg { color: #555; }
-  /* The mock: every value is a custom property set from theme.json (see render()). */
-  #mock { --px: 1px; display: grid; grid-template-rows: calc(var(--size-titlebar, 32) * var(--px)) 1fr;
+  :root { --px: 1px; }
+  html, body { margin: 0; height: 100%; }
+  #mock { display: grid; grid-template-rows: calc(var(--size-titlebar, 32) * var(--px)) 1fr; height: 100%;
     background: var(--surface); color: var(--text); font-family: var(--type-ui), sans-serif; overflow: hidden;
     font-size: calc(var(--type-body-size) * var(--px)); line-height: 1.6; }
   #mock .title { display: flex; align-items: center; padding: 0 calc(var(--space-pad) * var(--px)); border-bottom: 1px solid var(--rule); }
@@ -38,16 +31,6 @@
 </style>
 </head>
 <body>
-<div id="controls">
-  <div id="bar">
-    <label><input type="file" id="file" accept=".json" hidden><button onclick="file.click()">Import</button></label>
-    <button id="exportBtn">Export</button><button id="copyBtn">Copy</button><button id="dl">Download</button>
-    <label><input type="checkbox" id="dark"> dark</label>
-    <span id="msg"></span>
-  </div>
-  <textarea id="out" readonly placeholder="Import deck/rune/theme.json (or drop it here)."></textarea>
-  <div id="tree"></div>
-</div>
 <div id="mock">
   <div class="title"><b>pilot</b>&nbsp;<span class="quiet">· deck</span></div>
   <div class="main">
@@ -77,8 +60,6 @@
     </div>
   </div>
 </div>
-<!-- The one leaf parser, shared with `pilot look apply` (ui-design-workflow L6). -->
-<script src="../../../skills/ui-design/playground/tokens.js"></script>
 <script>
 // Rune's colour maths in f32, as rune-motion's srgb_decode/srgb_encode and theme.rs's hue_over.
 const f = Math.fround;
@@ -99,33 +80,20 @@ const isHex = v => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
 const isPair = v => v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 2 && isHex(v.light) && isHex(v.dark);
 // As theme.rs: a bare hex under `by` or `state` is a hue mixed over the text; any other is drawn as it is.
 const isHue = (v, path) => isHex(v) && ['by', 'state'].includes(path[0]);
-// Fractions run 0..1; every other number is px and runs to twice its value or 64.
-const isUnit = path => path[0] === 'alpha' || path[0] === 'motion' || /(^|_)(mix|alpha)$/.test(path.at(-1));
-let doc = null;
 /** The section a string names a key of (`"s2"` in `space`, `"blue"` in `accent`): the value is an alias. */
-const aliasOf = v => typeof v === 'string' && !isHex(v)
-  ? Object.keys(doc.root).find(s => {
-      const o = doc.root[s];
+const aliasOf = (r, v) => typeof v === 'string' && !isHex(v)
+  ? Object.keys(r).find(s => {
+      const o = r[s];
       return o && typeof o === 'object' && !Array.isArray(o) && Object.hasOwn(o, v) && typeof o[v] !== 'string';
     })
   : undefined;
 
-const exportText = () => tokens.exportText(doc);
-
-function load(text, from) {
-  try { doc = tokens.leaves(text); } catch (e) { msg.textContent = 'Import: ' + e.message; return; }
-  msg.textContent = from;
-  try { localStorage.setItem('theme.json', text); localStorage.setItem('theme.from', from); } catch {}
-  controls(); render();
-}
-
 // The mock's custom properties: one per leaf, `--a-b` for path a.b, in the mode shown.
-function render() {
-  if (!doc) return;
-  const dark = document.getElementById('dark').checked, r = doc.root, s = mock.style;
+function render(r, dark) {
+  const s = document.documentElement.style;
   const mix = r.hue_mix ?? 0.35, text = dark ? '255 255 255' : '0 0 0';
   const pick = v => isPair(v) ? (dark ? v.dark : v.light) : v;
-  const resolve = v => { const home = aliasOf(v); return home ? pick(r[home][v]) : v; };
+  const resolve = v => { const home = aliasOf(r, v); return home ? pick(r[home][v]) : v; };
   (function walk(v, path) {
     const name = '--' + path.join('-');
     if (isPair(v)) return s.setProperty(name, pick(v));
@@ -140,69 +108,17 @@ function render() {
   s.setProperty('--rule', `rgb(${text} / ${r.alpha?.rule ?? 0.18})`); s.setProperty('--quiet', `rgb(${text} / ${r.alpha?.quiet ?? 0.58})`);
   s.setProperty('--hover', `rgb(${text} / ${roles.hover_alpha ?? 0.07})`);
   s.setProperty('--selection', `color-mix(in srgb, ${resolve(roles.primary ?? 'blue')} ${(roles.selection_alpha ?? 0.3) * 100}%, transparent)`);
-  for (const el of document.querySelectorAll('[data-mixed]')) {
-    const hue = parseInt(el.dataset.mixed, 16);
-    el.innerHTML = [false, true].map(d => `<span class="sw" style="background:${hueOver(d, hue, mix)}"></span><code>${hueOver(d, hue, mix)}</code>`).join(' ');
-  }
 }
 
-// A control per leaf, chosen by the value's shape, so a key theme.json gains needs no edit here.
-function controls() {
-  tree.innerHTML = '';
-  const byPath = new Map(doc.leaves.map(l => [l.path.join('.'), l]));
-  const set = (path, v) => { byPath.get(path.join('.')).value = v; let o = doc.root; path.slice(0, -1).forEach(k => o = o[k]); o[path.at(-1)] = v; render(); };
-  const row = (label, ...kids) => { const d = document.createElement('div'); d.className = 'row'; const sp = document.createElement('span'); sp.textContent = label; sp.title = label; const c = document.createElement('span'); c.append(...kids); d.append(sp, c); tree.append(d); return c; };
-  const input = (type, value, on, attrs = {}) => { const e = document.createElement(type === 'select' ? 'select' : 'input'); if (type !== 'select') e.type = type; Object.assign(e, attrs); e.value = value; e.oninput = () => on(e.value); return e; };
-  const slider = (v, on, path) => {
-    const [max, step] = isUnit(path) ? [1, 0.01] : [Math.max(64, v * 2), 0.5];
-    const out = document.createElement('code'); out.textContent = ' ' + v;
-    return [input('range', v, x => { out.textContent = ' ' + x; on(Number(x)); }, { min: 0, max, step }), out];
-  };
-  (function walk(v, path) {
-    const label = path.slice(1).join('.') || path[0];
-    if (isPair(v)) {
-      row(label, ...['light', 'dark'].map(m => input('color', v[m], x => set(path.concat(m), x), { title: m })));
-    } else if (v && typeof v === 'object' && !Array.isArray(v)) {
-      if (path.length) { const h = document.createElement('h3'); h.textContent = path.join('.'); tree.append(h); }
-      for (const k in v) walk(v[k], path.concat(k));
-    } else if (isHue(v, path)) {
-      const mixed = document.createElement('span'); mixed.dataset.mixed = v.slice(1);
-      row(label, input('color', v, x => { mixed.dataset.mixed = x.slice(1); set(path, x); }), mixed);
-    } else if (isHex(v)) {
-      row(label, input('color', v, x => set(path, x)));
-    } else if (typeof v === 'number') {
-      row(label, ...slider(v, x => set(path, x), path));
-    } else if (Array.isArray(v) && v.every(x => typeof x === 'number')) {
-      row(label, ...v.flatMap((x, i) => slider(x, n => set(path, v.map((y, j) => j === i ? n : y)), path)));
-    } else if (Array.isArray(v)) {
-      row(label, input('text', v.join(', '), x => set(path, x.split(',').map(t => t.trim()).filter(Boolean)), { size: 40 }));
-    } else if (aliasOf(v)) {
-      const home = doc.root[aliasOf(v)], names = Object.keys(home).filter(k => typeof home[k] !== 'string');
-      const sel = input('select', '', x => set(path, x));
-      sel.append(...names.map(k => new Option(`${k} (${JSON.stringify(home[k])})`, k))); sel.value = v; row(label, sel);
-    } else {
-      row(label, input('text', String(v), x => set(path, x)));
-    }
-  })(doc.root, []);
+/** The playground page's `{ tokens, dark }`: anything else, or from any other window, changes nothing. */
+function onTokens(event) {
+  const data = event.data;
+  if (event.source !== parent || !data || typeof data !== 'object') return;
+  const { tokens, dark } = data;
+  if (!tokens || typeof tokens !== 'object' || Array.isArray(tokens)) return;
+  render(tokens, dark === true);
 }
-
-const importFile = file => file?.text().then(text => load(text, `${file.name}, imported ${new Date().toLocaleTimeString()}`));
-document.getElementById('file').onchange = e => { importFile(e.target.files[0]); e.target.value = ''; };
-document.getElementById('dark').onchange = render;
-document.body.ondragover = e => e.preventDefault();
-document.body.ondrop = e => { e.preventDefault(); importFile(e.dataTransfer.files[0]); };
-exportBtn.onclick = () => { if (doc) out.value = exportText(); };
-copyBtn.onclick = () => { if (doc) navigator.clipboard.writeText(out.value = exportText()).catch(e => msg.textContent = 'Copy: ' + e.message); };
-dl.onclick = () => {
-  if (!doc) return;
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([out.value = exportText()], { type: 'application/json' }));
-  a.download = 'theme.json'; a.click(); URL.revokeObjectURL(a.href);
-};
-document.getElementById('dark').checked = matchMedia('(prefers-color-scheme: dark)').matches;
-try {
-  const kept = localStorage.getItem('theme.json');
-  if (kept) load(kept, `${localStorage.getItem('theme.from') ?? 'theme.json'} (remembered: import again for the current file)`);
-} catch {}
+addEventListener('message', onTokens);
 </script>
 </body>
 </html>

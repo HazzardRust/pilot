@@ -1,7 +1,8 @@
 // Token leaves (ui-design-workflow S4, ADR NNNN, L6): the one parser of a JSON token file, read
 // with each leaf's source span so an untouched export is the file byte for byte. A classic script
 // that sets `globalThis.tokens`: the playground page loads it by <script src>, `pilot look apply`
-// through `vm`. It reads text and returns text; it touches no file, page or network.
+// through `vm`. It reads text and returns text; it touches no file, page or network. S5 adds
+// `contrast`, the ratio the page's contrast table flags under 4.5:1.
 (function (g) {
   'use strict';
 
@@ -94,5 +95,21 @@
     return { text: exportText(doc), changed, refused };
   }
 
-  g.tokens = { leaves, exportText, applyExport };
+  /** WCAG 2.x relative luminance of `#rrggbb`. */
+  function luminance(hex) {
+    if (!isHex(hex)) throw new TypeError(`${JSON.stringify(hex)} is not a #rrggbb colour`);
+    const [red, green, blue] = [1, 3, 5].map(at => {
+      const c = parseInt(hex.slice(at, at + 2), 16) / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  }
+
+  /** The WCAG 2.x contrast ratio of two `#rrggbb` colours, either order, to 2 decimals (AA text needs 4.5). */
+  function contrast(fg, bg) {
+    const [hi, lo] = [luminance(fg), luminance(bg)].sort((a, b) => b - a);
+    return Math.round((hi + 0.05) / (lo + 0.05) * 100) / 100;
+  }
+
+  g.tokens = { leaves, exportText, applyExport, contrast };
 })(globalThis);
