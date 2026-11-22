@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "feature",
-      "state": "implementing: all but S5 integrated, checks green; feat at 6880052 (pilot f5f34c6 merged at 1098535)"
+      "state": "fixing: fix round pushed 885e1c0, integrating"
     },
     {
       "slice": "S1",
@@ -43,7 +43,7 @@
     },
     {
       "slice": "S5",
-      "state": "integrated",
+      "state": "integrated at af5e4ad (checks running)",
       "after": [
         "S4",
         "S2"
@@ -80,7 +80,29 @@
       ],
       "branch": "slice/ui-design-workflow-s9",
       "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s9"
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S5"
+      ],
+      "branch": "fix/ui-design-workflow-principles",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-ui-design-workflow-principles"
     }
+  ],
+  "findings": [
+    "kept: F1 finding — tokens.contrast rounds before the 4.5 threshold, so 4.495-4.4999 pass AA unflagged; return the unrounded ratio, round on display only",
+    "kept: F2 finding — the <4.5 flag lives only in page code; move the predicate into tokens.js and test both edges plus a 4.495 pair",
+    "kept: F3 simplify — S2's --mode re-parses what Rune's own --theme already takes; drop Start.dark/MODE, surface.json argv passes --theme {mode} (about -30 lines)",
+    "kept: N1 nit — drop export of look.mjs shape if nothing outside look.mjs imports it",
+    "kept: N2 nit — name the two other homes of the screen list in app.rs SCREENS comment",
+    "dropped: N3 nit — one switch over verbs is churn on tested parsing for small cognitive gain",
+    "dropped: N4 nit — the printed path must exist, so the copy on print is defensible",
+    "kept: Q1 QA — skills/ui-design/SKILL.md Commands table lacks shape and apply, adapter example lacks preview",
+    "kept: Q2 QA — the Differences refusal runs only when the walkthrough carries ticket; pilot-qa.md's walkthrough line now names ticket (pin by measured delta)",
+    "dropped: Q3 QA — Rune contrast table pairs only text on surface; spec 12's bar is met and extending pairs is a new behaviour, not a defect",
+    "kept: Q4 QA — store-items.mjs:168 refuses with the first gap only; a gate1 missing three look lines takes three refusals; refuse with all gaps at once"
   ],
   "humanSteps": [
     {
@@ -93,8 +115,8 @@
       "text": "Lid close on mains was set to 'do nothing' at the user's ask (was sleep); restore with: powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 1; powercfg /setactive SCHEME_CURRENT. On battery, lid close still sleeps."
     }
   ],
-  "next": "Co-pilot (successor) integrating S5 b0fffb9; then pilot checks, base check vs origin/pilot, fundamentalist, QA.",
-  "updatedAt": "2026-11-22T13:21:32.871Z",
+  "next": "Integrating the fix round (fix/ui-design-workflow-principles 885e1c0) into feat; then checks, base check, resume QA with the tip.",
+  "updatedAt": "2026-11-22T14:19:26.031Z",
   "friction": [
     {
       "kind": "drain",
@@ -166,6 +188,46 @@
       "agent": "S5",
       "what": "hidden-spawns lint matches only spawn\\w*( call text; a spawner injected under another name (start() passes unflagged; cost a fix round",
       "evidence": "deck/look.mjs:220 at b0fffb9; scripts/test/hidden-spawns.test.mjs"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "context summarised mid-run; the evidence runner's table was lost, so the six checks have no result",
+      "evidence": "fundamentalist report §3 Tools, evidence runner row: not run here"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "full 2760-file worktree checkout for a read-only review; git diff --stat cut at 60 lines hid pilot-architect.md",
+      "evidence": "fundamentalist report §5"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "predecessor's hand-back with S5's trailers did not survive the hand-off; Evidence trailers rebuilt from probes, B3/B4 looks deferred to QA",
+      "evidence": "S5 integrated at af5e4ad"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "Chrome DevTools MCP tools did not load; QA wrote its own ~60-line CDP driver",
+      "evidence": "QA hand-back friction, ToolSearch found no matching tool"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "spec 2's bar names a scratch piloted run the brief did not budget; covered structurally on the co-pilot's assumed default",
+      "evidence": "QA question, spec 2"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "harness forced a hand-back before the fix tip arrived; QA must be resumed",
+      "evidence": "QA hand-back 13:55Z"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "loadTokens returns objects from another vm realm, so assert.deepEqual failed on equal objects; test copies them first",
+      "evidence": "fix round report, 2d1f2e6"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fresh worktree Rust test plus release build about 5 min; gate logs briefly written to C:/Users/jrylk/Projects/",
+      "evidence": "fix round report, 885e1c0"
     }
   ]
 }
