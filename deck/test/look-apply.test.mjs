@@ -57,6 +57,7 @@ test('an unknown key or a wrong shape is refused whole', () => {
     'a hex where a number stood': exported(THEME, { 'by.qa': '#123456', [number.path.join('.')]: '#abcdef' }),
     'an object where a leaf stood': THEME.replace('"qa": "#059669"', '"qa": { "light": "#000000", "dark": "#ffffff" }'),
     'a duplicate key': THEME.replace('"qa": "#059669",', '"qa": "#059669", "qa": "#111111",'),
+    'a number past what JSON holds': THEME.replace(number.raw, '1e999'),
     'not JSON': '{ "by": ',
   };
   for (const [name, text] of Object.entries(cases)) {

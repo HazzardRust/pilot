@@ -62,6 +62,8 @@
     if (Array.isArray(v)) return '[' + v.map(shape).join(',') + ']';
     if (v === null) return 'null';
     if (isHex(v)) return 'hex';
+    // `1e999` parses to Infinity, which no JSON file can hold, so it fits no leaf.
+    if (typeof v === 'number' && !Number.isFinite(v)) return 'a number past JSON';
     return typeof v;
   }
 
@@ -72,8 +74,11 @@
    */
   function applyExport(current, exported) {
     const doc = leaves(current);
-    let next;
-    try { next = leaves(exported); } catch (e) { return { text: current, changed: [], refused: ['export: ' + e.message] }; }
+    // Anything the export makes throw, a stack overflow on deep nesting among them, is a refusal.
+    try { return lay(current, doc, leaves(exported)); } catch (e) { return { text: current, changed: [], refused: ['export: ' + e.message] }; }
+  }
+
+  function lay(current, doc, next) {
     const key = l => JSON.stringify(l.path), name = l => l.path.join('.');
     const theirs = new Map(next.leaves.map(l => [key(l), l]));
     const refused = [], changed = [];

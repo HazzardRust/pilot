@@ -212,7 +212,7 @@ export function look(argv, { spawn = spawnSync, out: stdout = process.stdout, er
     try {
       const { changed, refused } = apply(exportFile, readSurface(file));
       if (refused.length) {
-        stderr.write(`pilot look: the export is refused and nothing was written:\n${refused.map((r) => `  ${r}\n`).join('')}`);
+        stderr.write(`pilot look: the export is refused and nothing was written:\n${refused.map((r) => `  ${r.replace(/[\x00-\x1f\x7f]/g, '?')}\n`).join('')}`);
         return 1;
       }
       stdout.write(changed.map((p) => `${p}\n`).join(''));
