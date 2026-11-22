@@ -24,12 +24,14 @@
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1",
         "S2",
         "S6"
-      ]
+      ],
+      "branch": "slice/project-glossary-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-project-glossary-s3"
     },
     {
       "slice": "S4",
@@ -42,15 +44,17 @@
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "pushed 10cf362",
       "after": [
         "S2",
         "S6"
-      ]
+      ],
+      "branch": "slice/project-glossary-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-project-glossary-s5"
     },
     {
       "slice": "S6",
-      "state": "integrating, gate running",
+      "state": "integrated at 94e0734",
       "after": [
         "S1"
       ],
@@ -59,16 +63,18 @@
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1",
         "S4",
         "S6"
-      ]
+      ],
+      "branch": "slice/project-glossary-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-project-glossary-s7"
     }
   ],
-  "next": "wait on S6 pilot integrate (bjgbr39yh); then pilot checks; then spawn S3, S5, S7",
-  "updatedAt": "2026-11-22T06:42:37.545Z",
+  "next": "pause drain: integrate S5 (10cf362) once checks 94e0734 green; S3, S7 implementers live",
+  "updatedAt": "2026-11-22T07:00:58.576Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -211,6 +217,12 @@
       "agent": "pilot-co-pilot",
       "what": "deck MCP server failed to connect in the co-pilot's session; rows relayed through main",
       "evidence": "CONNECTION_CLOSED on spawn, 2026-11-21"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 slice names prompt pins in pilot-agents.test.mjs but they are in measure-prompt.test.mjs:215,:257; both prompts at 0 headroom, so the implementer cut three sentences of pilot-architect.md outside the slice to fit (4 measure-edit rounds)",
+      "evidence": "S5 report, slice/project-glossary-s5 cb6e5db",
+      "size": 4
     }
   ]
 }
