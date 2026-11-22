@@ -82,11 +82,17 @@ Deletion test: deleting `pr-overview.mjs` puts the section parse and rules back 
 ## 6. Assumed decisions
 
 - **A1** Authors: architect writes it at Gate 1; QA rewrites it on `feat/<slug>` when its fixes change what a user sees; the pilot writes the trivial one; the deck composes the release one. Rejected: the pilot writes all (its context), the Gate 1 text stands untouched (can describe cut work). Thread `itm_cc3f54ddd01d`.
+  Verdict: stands — the user pressed Architect, then QA on itm_cc3f54ddd01d
 - **A2** Shape: four labelled lines, What changes / Why / What you'll notice / Can it be undone (door and who it affects), with the built line under them. Rejected: a free paragraph, nicer but uncheckable. Thread `itm_62f0a9fec739`.
+  Verdict: stands — the user pressed Four labelled lines on itm_62f0a9fec739
 - **A3** Banned tokens: `S<n>`, `itm_`, `A<n>`, `L<n>`, `ADR <4 digits>`, and the crew role names, from `agents/pilot-*.md` basenames minus `pilot-` (architect, implementer, fundamentalist, co-pilot, lander, teacher, explorer, qa ...); "pilot" itself stays, it is the product. Tradeoff: "explorer" or "teacher" in honest prose is refused too.
+  Verdict: stands — the ticket's line 1 names these ids; pilot is the product's name
 - **A4** Pocock's text adapted into a new skill rather than quoted in agent prose; ledger row at 1.3.2 beside the 1.2.3 rows. Tradeoff: one more skill file to re-sync.
+  Verdict: stands — glossary left the prompt pins at 0 headroom, a pointer line fits
 - **A5** Release overview: one line per landed feature, the first sentence of its What changes; no artefact at `pilotRef`, the slug. Rejected: a written paragraph at landing (needs a model, stale between landings). Stated in thread `itm_cc3f54ddd01d`'s default.
+  Verdict: stands — one line per landed feature was in the default the user pressed on itm_cc3f54ddd01d
 - **A6** The trivial PR is proved by a wording pin on `agents/pilot.md` (ADR 0082 allows one where wording is the product). Rejected: a `pilot pr-body` helper, a CLI for one prompt line.
+  Verdict: stands — no deck code writes the trivial PR body
 - red team: S3's prompt lines land on `agents/pilot.md` and `agents/pilot-architect.md` while project-glossary lands; S3 merges `origin/pilot` first and re-measures the pins, never edits a pin to fit unmeasured.
 - red team: `specOf` stops at the next `## `, so `## Overview` above §1 never leaks into §2; walked against `scripts/feature-pr.mjs:74-90`.
 - red team: an overview carrying `@name` would notify; it passes through `quiet` like the rest (spec 1 test covers it).
