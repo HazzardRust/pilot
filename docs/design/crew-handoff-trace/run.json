@@ -4,14 +4,14 @@
   "ticket": "itm_1f8238d5a300",
   "branch": "feat/crew-handoff-trace",
   "base": "pilot",
-  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-crew-handoff-trace",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-crew-handoff-trace",
   "artefact": "docs/design/crew-handoff-trace/architecture.md",
   "slices": [
     {
       "slice": "S1",
       "state": "integrated",
       "branch": "slice/crew-handoff-trace-s1",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-handoff-trace-s1"
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s1"
     },
     {
       "slice": "S2",
@@ -20,7 +20,7 @@
         "S1"
       ],
       "branch": "slice/crew-handoff-trace-s2",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-handoff-trace-s2"
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s2"
     },
     {
       "slice": "S3",
@@ -29,7 +29,7 @@
         "S1"
       ],
       "branch": "slice/crew-handoff-trace-s3",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-handoff-trace-s3"
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s3"
     },
     {
       "slice": "S4",
@@ -38,7 +38,7 @@
         "S1"
       ],
       "branch": "slice/crew-handoff-trace-s4",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-handoff-trace-s4"
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s4"
     },
     {
       "slice": "S5",
@@ -47,7 +47,7 @@
         "S2"
       ],
       "branch": "slice/crew-handoff-trace-s5",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-handoff-trace-s5"
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s5"
     },
     {
       "slice": "S6",
@@ -57,7 +57,7 @@
         "S5"
       ],
       "branch": "slice/crew-handoff-trace-s6",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-handoff-trace-s6"
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s6"
     },
     {
       "slice": "S7",
@@ -66,24 +66,24 @@
         "S6"
       ],
       "branch": "slice/crew-handoff-trace-s7",
-      "worktree": "C:/Users/Hazzard/Projects/pilot-slice-crew-handoff-trace-s7"
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-crew-handoff-trace-s7"
     },
     {
       "slice": "crew-handoff-trace",
-      "state": "implementing",
+      "state": "refused: origin/feat/crew-handoff-trace is at 59c2b3d, the gate2 signed a872f2c644ae812257990da31bdec9dbfb3e51ec; nothing run",
       "pr": 129
     },
     {
       "slice": "feature",
-      "state": "QA done at a872f2c6; gate2 for main to post"
+      "state": "gate2 itm_406ec0b6ae78 posted at aec7e95: CI green, trial clean; awaiting Sign off"
     }
   ],
   "findings": [
     "dropped: R2-L1 (re-review) — the window bound misses a second hand-off posted in the same millisecond; implausible at ms resolution",
     "dropped: R2-L2 (re-review) — another item's late row inside the window: crew rows carry no item, so they cannot be told apart; accepted"
   ],
-  "next": "QA done at a872f2c6, gate green, trial integrate clean, base check: in; gate2 body relayed to main (QA's deck MCP down); next: main posts gate2 (ticket itm_1f8238d5a300, pr 129, sha a872f2c6), then deck_ticket need",
-  "updatedAt": "2026-11-20T20:04:12.872Z",
+  "next": "Gate 2 itm_406ec0b6ae78 (pr 129, sha aec7e95) awaits the user's Sign off press; on the press spawn pilot-lander with the gate2 id, then reply Findings: on its closing report. Old gate2 itm_34bcc492a686 is closed.",
+  "updatedAt": "2026-11-22T00:08:11.002Z",
   "friction": [
     {
       "agent": "architect",
@@ -229,7 +229,7 @@
     {
       "agent": "pilot:pilot-qa",
       "what": "scratch-deck yellow ticket needs a hand-written deck.json; testUtils.mjs:30 deletes PILOT_DECK_DIR on import so postStored wrote elsewhere; --seed-run registers the worktree path but pilot wait resolves to the main checkout",
-      "evidence": "about 15 tool calls; `NO DECK for C:\\Users\\Hazzard\\Projects\\pilot` from the parked wait, losing spec 6's live delivery"
+      "evidence": "about 15 tool calls; `NO DECK for C:\\Users\\jrylk\\Projects\\pilot` from the parked wait, losing spec 6's live delivery"
     },
     {
       "agent": "pilot:pilot-implementer",
@@ -240,6 +240,31 @@
       "agent": "pilot:pilot-implementer",
       "what": "the reviewer's BLOCK was fixed but the reviewer was not re-run, so its last verdict stood as BLOCK",
       "evidence": "fix report: 'I did not re-run the reviewer, so the BLOCK line stands as its last word'"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot diagnosed the macOS CI failure itself: CI log grep twice, server-wait.mjs and crew-wait.test.mjs reads",
+      "size": 25000
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "feat worktree had no node_modules on this device, first gate run stopped at once",
+      "evidence": "gate log: node_modules missing: run npm ci"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "laptop slept about an hour mid-gate; a 10-minute gate took 75 minutes wall",
+      "evidence": "fix agent duration 4518 s; glossary gate log tests of 3661773 ms"
+    },
+    {
+      "agent": "pilot",
+      "what": "laptop slept twice (1 h, 3 h): pilot wait died 3 times on deck timeouts, the co-pilot's stream stalled, and six questions were closed by the deck's 20-min default while the user was away",
+      "evidence": "pilot wait exit 1 'deck not answering'; itm_4abbec087d33 resolution 'Assumed: Proceed without (no answer 20 min)'"
+    },
+    {
+      "agent": "pilot",
+      "what": "gate2 post refused twice for shape (checks field, spec-line table) before it went up",
+      "evidence": "NOT posted: a gate2 carries checks; a gate2 with no walkthrough carries the checks table"
     }
   ]
 }
