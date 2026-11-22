@@ -13,7 +13,7 @@
     },
     {
       "slice": "S1",
-      "state": "pushed 1da7017 (security re-review approve)",
+      "state": "integrated at b15b9df",
       "branch": "slice/ui-design-workflow-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s1"
     },
@@ -83,8 +83,8 @@
       "text": "Lid close on mains was set to 'do nothing' at the user's ask (was sleep); restore with: powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 1; powercfg /setactive SCHEME_CURRENT. On battery, lid close still sleeps."
     }
   ],
-  "next": "Pausing: S8 1d7d1e2 and S7 946446b integrated; S7 checks running; then integrate S1 1da7017, then S3 731040c; record S3's 3 added files in slices/S3.md.",
-  "updatedAt": "2026-11-22T10:49:53.466Z",
+  "next": "Pausing: S8 1d7d1e2, S7 946446b, S1 b15b9df integrated; S1 checks running; then integrate S3 731040c (expect a bin/pilot.mjs merge beside S1); record S3's 3 added files in slices/S3.md; then pilot ready for S2, S4, S6.",
+  "updatedAt": "2026-11-22T11:01:15.442Z",
   "friction": [
     {
       "kind": "drain",
