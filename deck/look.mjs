@@ -215,7 +215,7 @@ export function shapeUrl(surface) {
  * file URL handed to the system's default handler loses its query. `windowsHide` hides only a
  * console: the browser's own window still shows, as `deck/open.mjs`'s opener does.
  */
-export function shape(surface, spawnBrowser = spawn) {
+function shape(surface, spawnBrowser = spawn) {
   const url = shapeUrl(surface);
   const child = spawnBrowser(findBrowser(), [url], { detached: true, stdio: 'ignore', windowsHide: true });
   return { url, child };
