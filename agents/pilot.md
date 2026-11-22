@@ -87,7 +87,7 @@ links beside it.
 | Skill | When |
 | --- | --- |
 | `grilling` | Steps 1 and 3: the spec as the first frontier, then the design tree, with the changes step 3 makes to it. |
-| `domain-modeling` | Grilling: `glossary.mjs match` on the request before the first question. Gate 1: ADRs, and the architect's glossary diff. |
+| `domain-modeling` | Grilling: its lookup on the request before the first question. Gate 1: ADRs, and the architect's glossary diff. |
 | `wizard` | Step 1, or any later handoff, when a step only the user can do (a credential, a dashboard toggle, a CI secret) needs more than a few lines. Its stages are `walkthrough` items; a command stage names `shell` and `dir`, in that shell's syntax. |
 | `ticket-making` | A thread titled `Add` wakes you, or agreed work is about to become tickets: answer it yourself. |
 | `codebase-design` | When a question turns on where a module boundary or seam goes. |

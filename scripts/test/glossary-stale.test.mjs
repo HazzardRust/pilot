@@ -5,12 +5,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { staleTerms } from '../glossary-stale.mjs';
+import { appendLog } from '../glossary-log.mjs';
 
 const FIXTURE = fileURLToPath(new URL('./fixtures/glossary-stale/', import.meta.url));
+const CLI = fileURLToPath(new URL('../glossary-stale.mjs', import.meta.url));
 
 /** A fresh git repository in a temp directory: `from` copied in, then `files` written, all tracked. */
 function makeRepo(t, { from, files = {} } = {}) {
@@ -57,4 +59,21 @@ test('a term used only in docs/design is stale', (t) => {
     },
   });
   assert.deepEqual(staleTerms(dir, glossary), [{ term: 'Pending', line: 1 }]);
+});
+
+test('a term used only in the log is stale', (t) => {
+  const glossary = '**Logged**:\nA term with only its log row.\n';
+  const log = appendLog('', { date: '2026-11-22', run: 'project-glossary', change: 'added', term: 'Logged' });
+  const dir = makeRepo(t, { files: { 'GLOSSARY.md': glossary, 'GLOSSARY-LOG.md': log } });
+  assert.deepEqual(staleTerms(dir, glossary), [{ term: 'Logged', line: 1 }]);
+});
+
+test('the CLI exits 0 with none stale, 1 with some, 2 on bad usage', (t) => {
+  const cli = (...args) => spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf8' });
+  const clean = makeRepo(t, { files: { 'GLOSSARY.md': '**Used**:\nA word.\n', 'src/a.txt': 'used\n' } });
+  assert.deepEqual([cli(clean).status, cli(clean).stdout], [0, '']);
+  const stale = makeRepo(t, { from: FIXTURE });
+  assert.deepEqual([cli(stale).status, cli(stale).stdout], [1, '9 Orphan\n']);
+  assert.equal(cli().status, 2);
+  assert.equal(cli(clean, 'extra').status, 2);
 });

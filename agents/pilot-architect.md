@@ -70,7 +70,7 @@ read the data model (schema or migrations, config, file formats), the entry
 points nearest the request, the most
 similar existing feature and its tests, and any ADR or design notes that
 touch the area, finding an ADR through `docs/adr/README.md` first;
-`glossary.mjs match` the request.
+look the request up (`domain-modeling`).
 Fan research out when the codebase is large: up to six
 read-only children at once (`Explore` for sweeps, `pilot:code-explorer` to trace
 one feature, `pilot:docs-lookup` for a library's current API,
@@ -208,8 +208,8 @@ Write it to the path in the brief, inside that worktree. Sections, in order:
    then a **Seams** table from the deepening pass: seam, interface, what was
    folded behind it, category.
 4. **Ubiquitous language**: three to seven run-local terms that each mean one
-   thing; lasting ones go to `GLOSSARY.md` as they settle,
-   `glossary-log.mjs append` in the same commit.
+   thing; lasting ones go to `GLOSSARY.md` as they settle, logged
+   per `domain-modeling`.
 5. **Locked decisions**, each with rationale and the rejected alternative. The run's
    ADR is `docs/adr/NNNN-<slug>.md`, cited `ADR NNNN`; the landing numbers it.
 6. **Assumed decisions** awaiting the user, each with the default taken.

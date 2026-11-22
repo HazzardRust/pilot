@@ -40,12 +40,11 @@ here is installed, built, started, or served.
    `CONTEXT.md`, or a root `GLOSSARY.md`, or their absence — how a newcomer
    finds where things live and what the project calls them.
 6. Glossary terms: where `GLOSSARY.md` exists, run, from the repository
-   root, `node scripts/glossary.mjs check GLOSSARY.md` (a definition naming
-   a path, one line each) and `node scripts/glossary-stale.mjs .` (a term no
-   tracked file uses outside `GLOSSARY.md`, `docs/design/` and `docs/adr/`,
-   one `<line> <term>` each). Each printed line is a row; the scripts are
-   this plugin's own, so run them from its checkout against the audited
-   path if the repository has none. Then read the definitions beside the
+   root, `node "${CLAUDE_PLUGIN_ROOT}/scripts/glossary.mjs" check GLOSSARY.md`
+   (a definition naming a path, one line each) and
+   `node "${CLAUDE_PLUGIN_ROOT}/scripts/glossary-stale.mjs" .` (a term no
+   tracked file uses outside `GLOSSARY.md`, `GLOSSARY-LOG.md`, `docs/design/`
+   and `docs/adr/`, one `<line> <term>` each). Each printed line is a row. Then read the definitions beside the
    code they name and judge contradiction: a term the code still uses but
    now means something else is a row, named with the `git grep` that showed
    the use.
