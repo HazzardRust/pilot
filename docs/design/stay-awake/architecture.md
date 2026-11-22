@@ -73,6 +73,7 @@ Deletion test: `idle.mjs`'s `holdIdle` stays separate — it exits on *nothing*,
 | L5 | One unref'd 60 s tick; a holder is spawned on a false→true transition and killed on true→false, nothing in between. | Bounded process starts; release within a minute of the linger. | Event-driven holds on each heartbeat (noisy spawn/kill on a flickering roster). |
 | L6 | `/api/health` carries `awake: { held, since }`, and `probeDeck` copies it, so the doctor row says whether the deck holds now. | One place the truth lives; doctor reads it, never infers. | Doctor listing OS requests itself (needs elevation on Windows). |
 | L7 | ADR NNNN "The deck holds a keep-awake request while work is in flight" records L1-L5 and the lid limit. | A later reader would otherwise re-derive the OS facts. | No ADR. |
+| L8 | Grilling depth: forks, *assumed*: the deck took the default after 20 min with no answer (itm_5529a1376790), not the user's press. | ADR 0021: depth is the user's, once per run; the default stands until they say otherwise. | A deeper round nobody asked for. |
 
 ## 6. Assumed decisions
 
