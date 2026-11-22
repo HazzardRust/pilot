@@ -110,7 +110,7 @@ export function surfaceGate1Gaps(surface, body) {
 }
 
 /** The id a `Differences:` line names in `body`, or `undefined`. */
-const differencesOf = (body) => /^\s*Differences:\s*(itm_[0-9a-z]+)/m.exec(String(body))?.[1];
+const differencesOf = (body) => /^[ \t]*Differences:[ \t]*(itm_[0-9a-f]+)\b/m.exec(String(body))?.[1];
 
 /**
  * What a gate1 on `ticket` still owes when the ticket carries a re-cut mark (never-stuck spec 15, L5): a body line
