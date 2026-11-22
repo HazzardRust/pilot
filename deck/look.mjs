@@ -14,6 +14,8 @@ import { tmpdir } from 'node:os';
 import { delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { hostPlatform } from '../hooks/lib/platform.js';
+
 const MODES = ['light', 'dark'];
 const USAGE = 'usage: pilot look snap <surface.json> <screen> [--mode light|dark] [--out <png>]\n';
 
@@ -100,7 +102,7 @@ function browserCandidates(env, platform) {
 }
 
 /** The browser `snap` starts: `PILOT_LOOK_BROWSER` when set, else the first installed candidate. */
-function findBrowser(env = process.env, platform = process.platform) {
+function findBrowser(env = process.env, platform = hostPlatform()) {
   const named = env.PILOT_LOOK_BROWSER;
   const found = named ? [named].filter((p) => isAbsolute(p) && existsSync(p)) : browserCandidates(env, platform).filter(existsSync);
   if (!found.length) {
