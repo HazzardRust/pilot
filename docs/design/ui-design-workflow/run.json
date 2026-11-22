@@ -26,7 +26,7 @@
     },
     {
       "slice": "S3",
-      "state": "implementing",
+      "state": "pushed 731040c (typescript APPROVE at 731040c, security APPROVE at 18746b6)",
       "branch": "slice/ui-design-workflow-s3",
       "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s3"
     },
@@ -54,13 +54,13 @@
     },
     {
       "slice": "S7",
-      "state": "pushed e081b1e",
+      "state": "pushed e081b1e; integrating",
       "branch": "slice/ui-design-workflow-s7",
       "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s7"
     },
     {
       "slice": "S8",
-      "state": "pushed 2d6198f; integrating (pilot integrate running since 20:07, base main merged 178fe97)",
+      "state": "integrated at 1d7d1e2",
       "branch": "slice/ui-design-workflow-s8",
       "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s8"
     },
@@ -83,8 +83,8 @@
       "text": "Lid close on mains was set to 'do nothing' at the user's ask (was sleep); restore with: powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 1; powercfg /setactive SCHEME_CURRENT. On battery, lid close still sleeps."
     }
   ],
-  "next": "Pausing: S8 integrate in flight; then pilot integrate S7 e081b1e (typescript approve-with-nits, security approve) and S1 1da7017 (typescript approve on 8453584, security approve on 1da7017); S3 in gate.",
-  "updatedAt": "2026-11-22T10:29:10.413Z",
+  "next": "Pausing: S8 integrated 1d7d1e2, checks running; then integrate S7 e081b1e, S1 1da7017, S3 731040c (all reviews clear); record in slices/S3.md the 3 added files (bin/pilot.mjs, deck/test/launch.test.mjs, deck/test/open.test.mjs).",
+  "updatedAt": "2026-11-22T10:39:44.463Z",
   "friction": [
     {
       "kind": "drain",
@@ -115,6 +115,11 @@
       "agent": "pilot-implementer",
       "what": "S1: two structural lints for a new deck/*.mjs (README module row; process.platform only via hooks/lib/platform.js) are in neither brief nor slice, one extra 15-minute gate; estimate of 250 lines left out fixture, ADR and skill (652 landed)",
       "evidence": "S1 report, 1da7017"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3: openDeck names the open file, refused under node --test unless deck/testUtils.mjs's home is loaded; no comment in open.mjs or no-open.mjs says so, found by tracing hooks/lib/deck-secret.js:36",
+      "evidence": "S3 report, 731040c"
     }
   ]
 }
