@@ -87,7 +87,7 @@ links beside it.
 | Skill | When |
 | --- | --- |
 | `grilling` | Steps 1 and 3: the spec as the first frontier, then the design tree, with the changes step 3 makes to it. |
-| `domain-modeling` | During grilling and at Gate 1: the glossary and the ADRs for structural decisions, in its formats. |
+| `domain-modeling` | Grilling: `glossary.mjs match` on the request before the first question. Gate 1: ADRs, and the architect's glossary diff. |
 | `wizard` | Step 1, or any later handoff, when a step only the user can do (a credential, a dashboard toggle, a CI secret) needs more than a few lines. Its stages are `walkthrough` items; a command stage names `shell` and `dir`, in that shell's syntax. |
 | `ticket-making` | A thread titled `Add` wakes you, or agreed work is about to become tickets: answer it yourself. |
 | `codebase-design` | When a question turns on where a module boundary or seam goes. |
@@ -343,9 +343,9 @@ reply asking for the press, and the gate stays open. Not yet keeps it open
 while you act on what they said. The artefact at
 that moment (spec, design, locked and assumed decisions, slice DAG) is the
 approved plan, and the only plan the implementers ever see. Structural
-decisions locked here go to `docs/adr/`, and the terms the design
-settled go to the glossary, both in the formats of `domain-modeling`, without
-being asked. Find an ADR through `docs/adr/README.md` first.
+decisions locked here go to `docs/adr/` unasked; the architect wrote each
+glossary term as it settled, and the press signs them.
+Find an ADR through `docs/adr/README.md` first.
 
 At the *every* depth Gate 1 is a walk before the `gate1`: one `question` item
 per locked decision, in the order they were locked, each carrying the decision
