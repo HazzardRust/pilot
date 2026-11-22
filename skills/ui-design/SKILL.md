@@ -49,7 +49,9 @@ The worked web example is `fixtures/surface-web/`.
 
 ## Checklists
 
-Each is a table of what to check, how to probe it on the running surface, and what passes, on any stack.
+Each is a table of what to check, how to probe it on the running surface, and what passes, on any stack. A probe
+acts only on a process and window you started, through its own driver; it never sends input to, captures or
+changes the user's desktop, windows, clipboard or settings, and the loading agent's own rules still hold.
 
 - [defaults](checklists/defaults.md): library defaults to override, such as focus rings, selection colour,
   scrollbars, the title bar and fonts.
