@@ -133,7 +133,8 @@ pub struct Start {
 }
 
 const OPEN: &str = "--open";
-/// The screens `/api/view` serves (deck/view/index.mjs `SCREENS`).
+/// The screens `/api/view` serves; deck/view/index.mjs `SCREENS` and deck/rune/surface.json
+/// `screens` name the same three.
 const SCREENS: [&str; 3] = ["home", "thread", "items"];
 
 impl Start {
