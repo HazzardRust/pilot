@@ -8,7 +8,7 @@
  * `{route}`, `{mode}` and `{out}` substituted, each as one whole argv element's text.
  */
 
-import { spawn as spawnDetached, spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -212,11 +212,12 @@ export function shapeUrl(surface) {
 /**
  * `pilot look shape`: the playground opened on `surface`'s preview in a Chromium-family browser,
  * started from an argv with no shell and left running. The URL goes as one argv element, since a
- * file URL handed to the system's default handler loses its query.
+ * file URL handed to the system's default handler loses its query. `windowsHide` hides only a
+ * console: the browser's own window still shows, as `deck/open.mjs`'s opener does.
  */
-export function shape(surface, start = spawnDetached) {
+export function shape(surface, spawnBrowser = spawn) {
   const url = shapeUrl(surface);
-  const child = start(findBrowser(), [url], { detached: true, stdio: 'ignore', windowsHide: false });
+  const child = spawnBrowser(findBrowser(), [url], { detached: true, stdio: 'ignore', windowsHide: true });
   return { url, child };
 }
 
@@ -225,7 +226,7 @@ export function shape(surface, start = spawnDetached) {
  * `pilot look shape <surface.json>`: 0 with the browser started and the token file to import printed, 1 failed, 2 bad args.
  * `pilot look apply <export.json> <surface.json>`: 0 with the changed paths printed, 1 refused or failed, 2 bad args.
  */
-export function look(argv, { spawn = spawnSync, start = spawnDetached, out: stdout = process.stdout, err: stderr = process.stderr } = {}) {
+export function look(argv, { spawn = spawnSync, spawnBrowser, out: stdout = process.stdout, err: stderr = process.stderr } = {}) {
   if (argv[0] === 'shape') {
     const [, file, ...extra] = argv;
     if (!file || file.startsWith('-') || extra.length) {
@@ -234,7 +235,7 @@ export function look(argv, { spawn = spawnSync, start = spawnDetached, out: stdo
     }
     try {
       const surface = readSurface(file);
-      const { url, child } = shape(surface, start);
+      const { url, child } = shape(surface, spawnBrowser);
       // A browser that fails after it starts is past this call; say so rather than lose it.
       child.on('error', (error) => { stderr.write(`pilot look: the browser did not start: ${error.message}\n`); process.exitCode = 1; });
       child.unref();

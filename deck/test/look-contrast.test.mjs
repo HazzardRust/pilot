@@ -68,7 +68,7 @@ test('pilot look shape opens the one page on each surface\'s own preview', (t) =
     const lines = [];
     const fakeChild = { on: () => {}, unref: () => {} };
     const code = look(['shape', join(root, surfaceFile)], {
-      start: (command, args, options) => { started.push({ command, args, options }); return fakeChild; },
+      spawnBrowser: (command, args, options) => { started.push({ command, args, options }); return fakeChild; },
       out: { write: (s) => lines.push(s) },
       err: { write: (s) => assert.fail(s) },
     });
@@ -79,7 +79,11 @@ test('pilot look shape opens the one page on each surface\'s own preview', (t) =
     assert.equal(url.protocol, 'file:');
     assert.match(url.pathname, /\/skills\/ui-design\/playground\/index\.html$/);
     assert.equal(fileURLToPath(url.searchParams.get('preview')), join(root, preview));
-    assert.equal(started[0].options.shell, undefined, 'no shell');
+    assert.deepEqual(
+      { shell: started[0].options.shell, detached: started[0].options.detached, windowsHide: started[0].options.windowsHide },
+      { shell: undefined, detached: true, windowsHide: true },
+      'no shell, left running, no console window',
+    );
   }
 });
 
