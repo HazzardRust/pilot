@@ -78,12 +78,18 @@ Deletion test: `idle.mjs`'s `holdIdle` stays separate — it exits on *nothing*,
 ## 6. Assumed decisions
 
 - **A1** `LINGER_MS` = 15 min (the pilot's itm_b1f7f8428d17). *Tradeoff:* awake up to ~16 min after the last agent; covers a background gate. *Rejected:* within a minute (sleeps mid-gate), 5 min (misses long gates).
+  Answer: 15 min, the deck's default after 20 min (itm_b1f7f8428d17); assumed, not the user's press.
 - **A2** An armed default holds (itm_568ac6a6c4d6). *Tradeoff:* up to 20 min awake per unanswered question. *Rejected:* agents only — the field case's six defaults would still have waited for wake.
+  Answer: Yes, the deck's default (itm_568ac6a6c4d6); assumed.
 - **A3** The Power row fails (doctor exits 1) on battery or a sleeping lid action on the current source (itm_e235cc4bb810). *Tradeoff:* doctor is red on most laptops at defaults; nothing gates on its exit. *Rejected:* an always-pass note.
+  Answer: fail, the deck's default (itm_e235cc4bb810); assumed.
 - **A4** Linux takes `sleep:idle`, not `handle-lid-switch` (itm_99e30795cf94). *Tradeoff:* a Linux lid close still suspends. *Rejected:* the lid lock: privileged on some distros, unlike the other two OSes.
+  Answer: "Lid close stays the user's" (itm_99e30795cf94), the default as written.
 - **A5** A main session alone holds nothing (itm_b5d68c974470). *Tradeoff:* a lone session without subagents can sleep. *Rejected:* a main-session heartbeat on every tool call.
+  Answer: No (crew agents only), the deck's default (itm_b5d68c974470); assumed.
 - **A6** Build as scoped despite the lid limit (itm_1b57cd063b34). *Tradeoff:* the holder fixes idle sleep only. *Rejected:* doctor row only; dropping the ticket.
 - **A7** QA runs on this laptop and CI (itm_b4722d322eba). *Tradeoff:* macOS and Linux are proved by CI only.
+  Answer: this laptop + CI, the deck's default (itm_b4722d322eba); assumed.
 
 ## 7. Out of scope
 
