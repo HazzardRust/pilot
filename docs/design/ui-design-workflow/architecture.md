@@ -113,19 +113,29 @@ Deletion test:
 
 - **A1** The tool: generalise the playground. Posted itm_a93cebfdaf4c. Trade: we maintain the page and build the web preview. Rejected: a DTCG export, Onlook.
   No user answer: the deck closed itm_a93cebfdaf4c as assumed after 20 min, so the default stands for now.
+  Verdict: stands — the deck took the default after 20 min with no answer (itm_a93cebfdaf4c), not the user; it fits their standing rule against tools with telemetry or metered keys
 - **A2** The deck refuses a gate1 without the look lines and a QA walkthrough without its difference list. Posted itm_25145bc7061f. Trade: 1 deck slice and 4 body lines for agents to get right. Rejected: prose and lint only.
   No user answer: the deck closed itm_25145bc7061f as assumed after 20 min, so the default stands for now.
+  Verdict: stands — deck default on itm_25145bc7061f, not the user; no queued ticket touches gate1 or walkthrough refusals
 - **A3** The export reaches the crew as a file path in a reply on Shape the look. Posted itm_88eea115fae3. Trade: one copy-paste. Rejected: a loopback Save route, which would take a file:// page's `Origin: null` with a bearer the page must hold.
   No user answer: the deck closed itm_88eea115fae3 as assumed after 20 min, so the default stands for now.
+  Verdict: stands — deck default on itm_88eea115fae3, not the user; it adds no write route or trust boundary
 - **A4** The web surface is a static fixture, `fixtures/surface-web/`. With the user, itm_1e265416d839. Trade: not a real product page. Rejected: the HTML deck, whose routes need its bearer.
   No user answer: the deck closed itm_1e265416d839 as assumed after 20 min, so the default stands for now.
+  Verdict: stands — deck default on itm_1e265416d839, not the user
 - **A5** Proceed without the notes file and DESIGN.md §8. Trade: any rule only they held is missing.
   No user answer: the deck closed itm_4abbec087d33 as assumed after 20 min, so the default stands for now.
+  Verdict: stands — deck default on itm_4abbec087d33, not the user, who named both inputs in the ticket; Gate 1 says so first
 - **A6** Spec 12 (contrast flag) is in scope as an added line (pilot, on the user's behalf).
+  Verdict: stands — one added spec line, marked added, within the user's AA rule in DESIGN.md
 - **A7** An export is applied by a Sonnet implementer on a fix brief on `feat/<slug>`, running `pilot look apply`. Not posted (process). Trade: one spawn per export. Rejected: the co-pilot applying it, since it writes no code.
+  Verdict: stands — the co-pilot writes no code, and a Sonnet fix brief is the existing route
 - **A8** One `surface.json` per surface, beside its token file. Not posted. Trade: no repo-wide list of surfaces. Rejected: a repo-level registry (one adapter per stack is all spec 1 needs).
+  Verdict: stands — no queued ticket needs a repo-wide surface list
 - **A9** S3's cause (the exe lock) is a hypothesis. If its first behaviour shows `cargo build --release` succeeds with the window up, S3 is re-cut to the real cause before any change. Not posted.
-- red team: **A10** S4 moves the parser out of the Rune page while S5 moves the page itself. S5 comes after S4 (`index.html`), never beside it, so the page is never half-moved.
+  Verdict: stands — a hypothesis stays one until S3's first behaviour proves it
+- **A10** red team: S4 moves the parser out of the Rune page while S5 moves the page itself. S5 comes after S4 (`index.html`), never beside it, so the page is never half-moved.
+  Verdict: stands — reply-markdown (#137) and archive-page (#139) do not touch the playground page
 
 ## 7. Out of scope
 
