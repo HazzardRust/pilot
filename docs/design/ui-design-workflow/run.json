@@ -34,7 +34,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed fd96c69",
+      "state": "integrated at 46606ab (checks green at 5bc3390, rune-deck success)",
       "after": [
         "S1"
       ],
@@ -51,7 +51,7 @@
     },
     {
       "slice": "S6",
-      "state": "implementing",
+      "state": "pushed 7169aea",
       "after": [
         "S1"
       ],
@@ -89,8 +89,8 @@
       "text": "Lid close on mains was set to 'do nothing' at the user's ask (was sleep); restore with: powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 1; powercfg /setactive SCHEME_CURRENT. On battery, lid close still sleeps."
     }
   ],
-  "next": "S4 integrating; S2 pushed 93f1a86 integrates next; S6 implementing. Then pilot ready for S5 and S9.",
-  "updatedAt": "2026-11-22T11:43:49.893Z",
+  "next": "Integrating S2 93f1a86, then S6 7169aea; then pilot ready for S5, S9.",
+  "updatedAt": "2026-11-22T11:56:31.594Z",
   "friction": [
     {
       "kind": "drain",
@@ -136,6 +136,11 @@
       "agent": "pilot-implementer",
       "what": "S2: a fresh worktree has no deck/rune/target, so the red cargo test and the release build each took about 6 minutes cold; the slice's premise that --snap honours State::load's mode was false (headless reads only --theme)",
       "evidence": "S2 report, slice/ui-design-workflow-s2 93f1a86"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6: TREE_TESTS in scripts/select-tests.mjs is checked only by the full suite; a new test that reads a directory passed alone and went red in the one full run (tree-census, 4970/1); neither slice nor brief names it",
+      "evidence": "S6 report, slice/ui-design-workflow-s6 7169aea"
     }
   ]
 }
