@@ -96,8 +96,8 @@
     "kept: SEC-M fix-round security MEDIUM — glossary-stale.mjs and glossary.mjs check print repository terms unmasked; share lineOf's mask, widened to [\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}], routed to QA as the writer",
     "dropped: SEC-L fix-round security LOW — readFileSync follows a symlinked GLOSSARY.md: reads only, prints terms already masked by SEC-M"
   ],
-  "next": "Gate2 itm_b98784665468 signed; landing timed out twice. No third blind try: read the lander's log, find the cause. User there: \"this ticket has a problem that needs to be prevented systematically\"; asked which; on answer, a ticket proposal. ui-design-workflow co-pilot pausing: on hand-back release itm_132a653de1fc, spawn successor. Then take next red ticket.",
-  "updatedAt": "2026-11-22T10:24:23.208Z",
+  "next": "Glossary gate2 itm_b98784665468 signed, landing timed out twice from machine load: land again now no slice gate runs (spawn pilot-lander). ui-design-workflow released, paused at 2f2c198 (S1,S3,S7,S8 in): deck_ticket co-pilot itm_132a653de1fc, spawn successor from its record. Proposal itm_43827dc32984 open (hand-off wait fix): on Yes post the ticket at head. Then take next red ticket.",
+  "updatedAt": "2026-11-22T11:22:55.474Z",
   "friction": [
     {
       "kind": "drain",
