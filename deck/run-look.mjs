@@ -29,7 +29,7 @@ import { deckUrl } from './tools.mjs';
 import { listeningRepo } from './wait.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
 import { bearer } from '../hooks/lib/deck-secret.js';
-import { log } from '../hooks/lib/wrapper-log.js';
+import { log, step } from '../hooks/lib/wrapper-log.js';
 
 const OPS = ['start', 'turn', 'cleared', 'unstarted'];
 
@@ -309,6 +309,7 @@ async function cleared(repo, pid, id, read, settleMs) {
   // A clear no lane answered is said in the chat too (S17, A8 option B): the thread may be the body nobody got.
   if (!(await markedWithin(id, settleMs))) return unstarted(repo, id, 'no marker', read, { both: true });
   log(`mod: cleared ${id}`);
+  step({ step: 'cleared', kind: HANDOFF_KIND, item: id });
   let items = [];
   try {
     items = await read(); // for a queued lander; a deck that does not answer names none
@@ -316,6 +317,7 @@ async function cleared(repo, pid, id, read, settleMs) {
     items = [];
   }
   log(`mod: submitted ${id}`);
+  step({ step: 'submitted', kind: HANDOFF_KIND, item: id });
   return { act: 'submit', id, prompt: firstPrompt(items, repo) };
 }
 
