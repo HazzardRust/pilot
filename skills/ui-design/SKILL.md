@@ -45,6 +45,19 @@ The worked web example is `fixtures/surface-web/`.
    The capture starts one process with the screen already open; it never moves the mouse, sends a key or takes a
    picture of the user's screen. Exit 0 prints the PNG's path; 1 names what failed; 2 is a usage error.
 3. A colour or spacing change is a token change in the token file, never a literal in the surface's code.
+4. Before the user looks, walk the four checklists below on the running surface, in both modes.
+
+## Checklists
+
+Each is a table of what to check, how to probe it on the running surface, and what passes, on any stack.
+
+- [defaults](checklists/defaults.md): library defaults to override, such as focus rings, selection colour,
+  scrollbars, the title bar and fonts.
+- [interaction](checklists/interaction.md): hover, select, Tab and press, each probed live; every icon-only
+  control names itself.
+- [parity](checklists/parity.md): region by region against the reference `DESIGN.md` names.
+- [platform](checklists/platform.md): what the reference platform gives free, such as resize, snap, keyboard
+  and copy.
 
 ## Commands
 

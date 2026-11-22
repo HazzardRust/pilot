@@ -100,7 +100,7 @@ Chrome DevTools MCP tools (`mcp__plugin_pilot_chrome-devtools__*`; a "browser
 already running" error is transient: retry). Probe a PR command under
 `eval "$(pilot gh-stub)"`, never a real host: a probe can write to a live PR. When the feature has a GUI or web surface, first load, with the
 Skill tool, `pilot:browser-qa` (the checklist) and `pilot:design-review` (the
-taste pass); otherwise load neither. Cover:
+taste pass); otherwise load neither. On any surface load `pilot:ui-design` and walk its checklists. Cover:
 
 - every line of the spec, in the order a user would meet them, with the
   evidence the spec names for each;
