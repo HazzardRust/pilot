@@ -102,6 +102,8 @@ test('the web adapter starts one headless browser with an argv', () => {
     const profile = args.find((a) => a.startsWith('--user-data-dir='));
     assert.ok(profile && profile.slice('--user-data-dir='.length).startsWith(tmpdir()), profile);
     assert.equal(args.includes('--force-dark-mode'), mode === 'dark');
+    // A page that may read local files is given no network to send them on.
+    assert.ok(args.includes('--proxy-server=127.0.0.1:9') && args.includes('--host-resolver-rules=MAP * ~NOTFOUND'));
     assert.match(args.at(-1), /^file:\/\/.*\/ui\/index\.html#home$/);
     assert.equal(options.shell, undefined);
   }

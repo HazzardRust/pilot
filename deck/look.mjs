@@ -11,7 +11,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const MODES = ['light', 'dark'];
@@ -95,7 +95,7 @@ function browserCandidates(env, platform) {
   if (platform === 'darwin') {
     return ['Google Chrome', 'Chromium', 'Microsoft Edge'].map((app) => `/Applications/${app}.app/Contents/MacOS/${app}`);
   }
-  return (env.PATH ?? '').split(':').filter(Boolean)
+  return (env.PATH ?? '').split(delimiter).filter(Boolean)
     .flatMap((d) => ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'microsoft-edge'].map((b) => join(d, b)));
 }
 
@@ -128,6 +128,12 @@ function snapWeb(surface, route, mode, out, spawn) {
       `--user-data-dir=${profile}`,
       // The fixture reads its token file from file://; only this throwaway profile is allowed to.
       '--allow-file-access-from-files',
+      // No network, so a page that can read local files cannot send them anywhere: every request
+      // goes to a closed loopback proxy, no name resolves, and WebRTC takes no direct UDP path.
+      '--proxy-server=127.0.0.1:9',
+      '--proxy-bypass-list=<-loopback>',
+      '--host-resolver-rules=MAP * ~NOTFOUND',
+      '--force-webrtc-ip-handling-policy=disable_non_proxied_udp',
       '--virtual-time-budget=5000',
       '--window-size=1280,800',
       `--screenshot=${out}`,
@@ -158,6 +164,8 @@ export function snap(surface, screen, mode, out, spawn = spawnSync) {
   }
   if (!MODES.includes(mode)) throw new Error(`no mode ${mode}; use light or dark`);
   const target = resolve(out);
+  // An earlier capture left at `out` would pass for this one when the process writes nothing.
+  rmSync(target, { force: true });
   const run = surface.open.kind === 'web' ? snapWeb : snapCommand;
   const result = run(surface, surface.screens[screen], mode, target, spawn);
   return { status: result.error || result.status === null ? 1 : result.status, out: target };
@@ -168,7 +176,7 @@ export function look(argv, { spawn = spawnSync, out: stdout = process.stdout, er
   const [verb, file, screen, ...rest] = argv;
   const flags = { '--mode': 'light', '--out': null };
   for (let i = 0; i < rest.length; i += 2) {
-    if (!(rest[i] in flags) || rest[i + 1] === undefined) {
+    if (!Object.hasOwn(flags, rest[i]) || rest[i + 1] === undefined) {
       stderr.write(USAGE);
       return 2;
     }

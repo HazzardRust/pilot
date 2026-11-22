@@ -45,9 +45,11 @@ serve a web page and a native Rust window alike.
 
 - A new stack joins by writing one `surface.json` and its `DESIGN.md`; nothing in `deck/` changes.
 - The web adapter passes `--allow-file-access-from-files` so a page can read its token file from file://, and
-  only to the throwaway profile.
+  only to the throwaway profile. Because such a page could read any file the user can, the same browser gets no
+  network: a closed loopback proxy for every request, no name resolution, and no direct WebRTC UDP.
 - A browser at a path the lookup does not know needs `PILOT_LOOK_BROWSER`; QA's run on another machine shows it.
-- A `surface.json` is code in effect: its `command` argv runs on `pilot look snap`. It is reviewed as such.
+- A `surface.json` is code in effect, like a Makefile: its `command` argv, `argv[0]` included, runs as written on
+  `pilot look snap`, with no confirmation. It is trusted repository content and reviewed as such.
 
 ## Rejected
 
