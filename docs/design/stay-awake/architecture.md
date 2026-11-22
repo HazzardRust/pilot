@@ -84,7 +84,7 @@ Deletion test: `idle.mjs`'s `holdIdle` stays separate — it exits on *nothing*,
 - **A3** The Power row fails (doctor exits 1) on battery or a sleeping lid action on the current source (itm_e235cc4bb810). *Tradeoff:* doctor is red on most laptops at defaults; nothing gates on its exit. *Rejected:* an always-pass note.
   Answer: fail, the deck's default (itm_e235cc4bb810); assumed.
 - **A4** Linux takes `sleep:idle`, not `handle-lid-switch` (itm_99e30795cf94). *Tradeoff:* a Linux lid close still suspends. *Rejected:* the lid lock: privileged on some distros, unlike the other two OSes.
-  Answer: "Lid close stays the user's" (itm_99e30795cf94), the default as written.
+  Answer: "Lid close stays the user's" (itm_99e30795cf94), the deck's default after 20 min; assumed.
 - **A5** A main session alone holds nothing (itm_b5d68c974470). *Tradeoff:* a lone session without subagents can sleep. *Rejected:* a main-session heartbeat on every tool call.
   Answer: No (crew agents only), the deck's default (itm_b5d68c974470); assumed.
 - **A6** Build as scoped despite the lid limit (itm_1b57cd063b34). *Tradeoff:* the holder fixes idle sleep only. *Rejected:* doctor row only; dropping the ticket.
