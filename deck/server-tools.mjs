@@ -16,9 +16,10 @@ import { startLanding } from './landing.mjs';
 import { LAND_AGAIN, LANDING_KINDS } from './landing-replies.mjs';
 import { startPrWrite } from './pr-writes.mjs';
 import {
-  KIND_GATE1, KIND_GATE2, KIND_TICKET, KIND_WALKTHROUGH, OWNER_KINDS, SIGN_OFF, authorKind, isChainHandoff, isGate, isOpen, isRecord, liveTicketOf, messagesOf, ownerOf, stateOf, waiterKind,
+  KIND_CREW_HANDOFF, KIND_GATE1, KIND_GATE2, KIND_HANDOFF, KIND_TICKET, KIND_WALKTHROUGH, OWNER_KINDS, SIGN_OFF, authorKind, isChainHandoff, isGate, isOpen, isRecord, liveTicketOf, messagesOf, ownerOf, stateOf, waiterKind,
 } from './items.mjs';
 import { postFilled } from './closing-report.mjs';
+import { openCrewHandoffsOf } from './crew-handoff.mjs';
 import { assertOnPilotTip, assertVerdicts } from './lineage.mjs';
 import { selectItems } from './read.mjs';
 import { laneOf, lanesOf } from './lanes.mjs';
@@ -34,6 +35,7 @@ import { noteDeck } from './store-items.mjs';
 import { recutTicket, replanTicket } from './store-tickets.mjs';
 
 import { DEFAULT_WAIT_MS, MAX_POLL_MS, MAX_READ_ITEMS, MAX_READ_LIMIT, deckUrl } from './tools.mjs';
+import { step } from '../hooks/lib/wrapper-log.js';
 
 // --- the tools, as the deck performs them ----------------------------------
 //
@@ -47,6 +49,22 @@ function replacedClause(id, entry) {
   if (!entry?.replaced) return '';
   console.error(`[deck] co-pilot ${entry.replaced} -> ${id}`);
   return `, replaced ${entry.replaced}`;
+}
+/** A co-pilot `granted` or `released` on a ticket, as a crew hand-off's step (crew-handoff-trace spec 1), after the store took it. */
+const coPilotStep = (name, ticket) => step({ step: name, kind: KIND_CREW_HANDOFF, ticket });
+/** A grant closes its ticket's open crew-handoffs, each with its `resolved` row; `; closed <id>` per close (crew-handoff-trace spec 5). */
+function closeCrewHandoffs(ticket) {
+  return openCrewHandoffsOf(listItems(), ticket).map((item) => {
+    // The grant has already taken: a refused close is named in its answer, never thrown over it.
+    try {
+      resolveItem(item.id, 'successor granted');
+    } catch (err) {
+      if (!(err instanceof DeckRefusal)) throw err;
+      return `; ${item.id} left open: ${err.message}`;
+    }
+    step({ step: 'resolved', kind: item.kind, item: item.id, ticket });
+    return `; closed ${item.id}`;
+  }).join('');
 }
 /** The `why` of a re-cut the pilot asks for by hand; the deck's own drift checks name theirs (never-stuck S2, S3). */
 const RECUT_BY_PILOT = 'sent back to planning by the pilot';
@@ -312,6 +330,8 @@ export function callTool(name, args, deps = {}) {
     const before = fields.kind === KIND_WALKTHROUGH || fields.kind === KIND_GATE2 ? stateOfNamed() : undefined;
     // The lander's bodiless report is filled from the run record (lander S15).
     const item = postFilled(fields);
+    // The deck sees a hand-off posted, so the deck writes its trace row (crew-handoff-trace L1): ids only, spec 7.
+    if (item.kind === KIND_HANDOFF || item.kind === KIND_CREW_HANDOFF) step({ step: 'posted', kind: item.kind, item: item.id, ticket: item.ticket });
     const concluded = before === 'yellow' && stateOfNamed() === 'green' ? ` ${item.ticket} is now green (concluding); the yellow lane is free.` : '';
     // A gate1 opens the feature PR, by a deck write the poster never waits on (spec 2, L1).
     if (item.kind === KIND_GATE1) prWrite(item.ticket, item.repo);
@@ -414,6 +434,7 @@ export function callTool(name, args, deps = {}) {
   }
   if (name === 'deck_resolve') {
     const item = resolveItem(threadId(args), args?.resolution, args?.author);
+    if (item.kind === KIND_HANDOFF || item.kind === KIND_CREW_HANDOFF) step({ step: 'resolved', kind: item.kind, item: item.id, ticket: item.ticket });
     return asText(`Closed ${item.id}: ${item.resolution}`);
   }
   if (name === 'deck_status') {
@@ -499,15 +520,22 @@ export function callTool(name, args, deps = {}) {
       return planDrift(granted.repo, granted.plan).then((drift) => {
         const drifted = drift.state === 'gone' || drift.state === 'moved' ? driftLine(drift, 'first grant') : undefined;
         const entry = setCoPilot(id, true);
+        coPilotStep('granted', id);
         if (drifted) noteDeck(id, drifted);
-        return asText(`Co-pilot ${id}: live${replacedClause(id, entry)}.${drifted ? ` drift: ${drifted}.` : ''}${drift.state === 'unchecked' ? ` drift unchecked: ${drift.reason}.` : ''} ${both()}`);
+        return asText(`Co-pilot ${id}: live${replacedClause(id, entry)}${closeCrewHandoffs(id)}.${drifted ? ` drift: ${drifted}.` : ''}${drift.state === 'unchecked' ? ` drift unchecked: ${drift.reason}.` : ''} ${both()}`);
       });
     }
     if (args?.action === 'co-pilot' || args?.action === 'release') {
       const entry = setCoPilot(id, args.action === 'co-pilot');
-      if (args.action === 'co-pilot') return asText(`Co-pilot ${id}: live${replacedClause(id, entry)}. ${both()}`);
+      if (args.action === 'co-pilot') {
+        coPilotStep('granted', id);
+        return asText(`Co-pilot ${id}: live${replacedClause(id, entry)}${closeCrewHandoffs(id)}. ${both()}`);
+      }
       // A release naming another ticket leaves the live one holding the /clear, so it never reads "released".
-      if (entry?.ticket === id && !entry.live) return asText(`Co-pilot ${id}: released. ${both()}`);
+      if (entry?.ticket === id && !entry.live) {
+        coPilotStep('released', id);
+        return asText(`Co-pilot ${id}: released. ${both()}`);
+      }
       return asText(`Co-pilot ${id}: ${entry?.live ? `not the live one; ${entry.ticket} is live` : 'no co-pilot is live here'}.`);
     }
     if (args?.action === 'pivot') {
