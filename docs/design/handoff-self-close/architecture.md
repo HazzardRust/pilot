@@ -81,6 +81,8 @@ seam); `crewWaitOf` survives (it wakes the pilot, a different reader). No fold s
   trimmed for each line added. Rejected: a facade split of `items.mjs` (out of scope for 2 slices).
 - **L6 A refused close is logged once per item and skipped**, never thrown into `announceChange`, never retried in a
   loop. The reconcile re-announces only when it closed something, so it recurses at most once.
+- **L7 Grilling depth: forks** (assumed). Taken by the deck's default after 20 minutes with no answer
+  (`itm_b43b3bb41f75`), not by the user.
 
 ADR NNNN records L1-L3 as an extension of ADR 0208 L3.
 
