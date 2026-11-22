@@ -55,6 +55,7 @@ import { writeLessonReport } from '../scripts/lesson-report.mjs';
 import { DECK_PORT, deckPort, deckUrl } from '../deck/server.mjs';
 import { PLUGIN_VERSION } from '../deck/version.mjs';
 import { main as listTickets } from '../deck/tickets.mjs';
+import { look } from '../deck/look.mjs';
 import { main as listProcesses, processTable } from '../deck/procs.mjs';
 import { main as collectGarbage, deckPidNow, landSweep } from '../deck/gc.mjs';
 import { main as doctor, slugsWarning } from '../deck/doctor.mjs';
@@ -194,6 +195,9 @@ const usage = () => `pilot — the deck for piloted runs
   pilot ready --ticket <id> --slots <n>
                  print the slices the ticket's record lets start now, one per line as
                  S<n> from <feat|branch>, at most n, or none; reads the deck, writes nothing
+  pilot look snap <surface.json> <screen> [--mode light|dark] [--out <png>]
+                 capture a surface's screen, opened by its start-up route, to a PNG
+                 (default <screen>-<mode>.png); starts one process, sends no input
   pilot trace <itm_id>
                  print a hand-off's or ticket's trace rows in time order, then done or
                  waiting: <next step>, <age>; reads the trace file, never the deck (exit 2 on a bad id)
@@ -539,6 +543,11 @@ export async function run(argv, deps) {
 
   if (command === 'ready') {
     process.exitCode = await ready(argv.slice(1));
+    return undefined;
+  }
+
+  if (command === 'look') {
+    process.exitCode = look(argv.slice(1));
     return undefined;
   }
 
