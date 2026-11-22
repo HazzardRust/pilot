@@ -154,18 +154,21 @@ machine file seam has two adapters (a real dir, a test's temp dir). `store-resto
 ## 6. Assumed decisions
 
 - A1 Prose keeps its absolute paths (body, replies, titles, urls, screens, landing lines): ~700 stay visible.
-  Rejected: rewriting the user's and agents' words, irreversible. Question itm_2c3e775b59bc (pilot's).
+  Rejected: rewriting the user's and agents' words, irreversible. Question itm_2c3e775b59bc: closed "Keep prose verbatim", a deck default after 20 min with no answer, not the user's press.
 - A2 Export lists unpushed work and never refuses. Rejected: refusing, which blocks a move when the source
-  machine is the one that must go. Question itm_e66f243e265a (pilot's).
-- A3 Behaviours 8-11 are in this ticket. Question itm_ed56db958bf6 (pilot's).
+  machine is the one that must go. Question itm_e66f243e265a: closed "List and export", a deck default after 20 min with no answer, not the user's press.
+- A3 Behaviours 8-11 are in this ticket. Question itm_ed56db958bf6: closed "All four", a deck default after 20 min with no answer, not the user's press.
+  Grilling depth itm_6f2ecf72643f: closed "Every", the same way.
 - A4 `deck.secret` and `deck.pid` stay their own files; `machine.json` takes the rest (spec 2 reworded from
   "one machine file"). Trade: three machine files, not one; gain: no change to the 14 secret readers, the hooks
-  or the Rune client. Rejected: moving the secret into `machine.json`.
+  or the Rune client. Rejected: moving the secret into `machine.json`. Question itm_2a13a6f2258a.
 - A5 The bundle is gzipped JSON, not a zip. Trade: opened with `gunzip`, not a double-click; gain: no
-  dependency and no extraction path to attack. Rejected: zip via a library or hand-written tar.
+  dependency and no extraction path to attack. Rejected: zip via a library or hand-written tar. Question itm_ca8d6770d745.
 - A6 A repo cloned at a different place under home than on the source is out: `--root` remaps whole roots only.
+  Rejected: a per-repo remap flag. Question itm_a796f98cfb42.
 - A7 QA runs in scratch homes (`PILOT_DECK_DIR`) on a copy of the real store and two different home paths,
   never the live store; the live store migrates only when the user upgrades after Gate 2.
+  Rejected: QA on the live store. Question itm_35e3a9c9a548.
 
 red team: (1) `store-core.mjs` sits at 774 of the 800-line facade bar: S1 and S2 may add at most 10 lines
 there, the rest lives in the codec. (2) `backUp` writes beside a guarded home store (F7): S1 routes it through
