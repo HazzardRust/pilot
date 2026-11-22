@@ -25,8 +25,8 @@ in CI's `Rune deck` job; every `look` line is the user's, on the walkthrough, be
 | 3c | An open queue with no ticket says "none". | Rune test | 1 "none" per empty open fold |
 | 3d | A row's live, state, re-cut and questions sit on one line under the title, `next` above it, as the HTML deck does. *assumed A6* | Rune test at the default side width | 4 parts on 1 line |
 | 4 | Chat lists the tab's Create threads above the messages, even with no chat open; each opens its thread. | view test; Rune test on a seeded view with two | 2 rows above the first message; a press opens that thread |
-| 5 | Agents rows read "<type> · started N mins ago" (the HTML deck's `relative` words); the overview has one section per deck. *assumed A1* | view test; Rune test on a seeded roster of two decks | 2 section headings; every row in that form |
-| 6 | Empty texts match the HTML deck: "no tickets"; nothing for notifications, chat and status. *assumed A2* | `tests/empty.rs` on an empty scratch deck | 4 of 4 as the HTML deck draws them |
+| 5 | Agents rows read "<type> · started N mins ago" (the HTML deck's `relative` words); the overview has one section per deck. *A1, the user's pick* | view test; Rune test on a seeded roster of two decks | 2 section headings; every row in that form |
+| 6 | Empty texts match the HTML deck: "no tickets"; nothing for notifications, chat and status. *A2, the user's pick* | `tests/empty.rs` on an empty scratch deck | 4 of 4 as the HTML deck draws them |
 | 7 | Starts after "Deck UI rebuilt in Rune" landed. | the base carries `deck/rune/` | 1 landing: `deck/rune/` present at the base, 86957ec |
 | 8 | The centre column scrolls on every screen: a thread by wheel, keys and scrollbar to its last message, opening at the bottom and following new messages while there; home and the items page open at the top. *A3, A4, A5* | Rune test on a seeded 60-message thread in a 900 px window; the user's look | wheel and End each put the last message inside the window; PageUp leaves it; 0 offset change on a live refetch while scrolled up |
 | 8a | *practitioner: desktop-app engineer*: a key typed in the reply box never scrolls the centre. | Rune test with the reply box focused | End moves the caret, 0 scroll |
@@ -107,11 +107,14 @@ module, since one caller draws it. Every `test` behaviour targets one of these t
 - **A1** Agents row: "<type> · started N min ago" on the left, and the quiet age at the right with its 30 s dimming
   kept (rune-deck-ui L11, the user's pick on itm_671096e1253c). Trade: one more number per row. Rejected: replacing
   the age (overturns L11). *sent to `main` as B1; posted itm_4b9dece272d0*
+  Answer: the user pressed "Both" (itm_4b9dece272d0).
 - **A2** Empty texts follow the ticket: blank for notifications, chat and status, "no tickets" for tickets, agents and
   reports unchanged. Trade: reverses rune-deck-ui spec 21 for three regions. Rejected: keep Rune's sentences and
   reword only tickets. *sent to `main` as B2; posted itm_bc4c98f219eb*
+  Answer: the user pressed "Follow the ticket" (itm_bc4c98f219eb).
 - **A3** Scroll bar: Rune's overlay bar, shown while scrolling and draggable then. Trade: no bar at rest, unlike the
   HTML page. Rejected: forcing an always-shown bar (no public setting confirmed at the pin). *sent to `main` as B3; posted itm_4618d7d1990a*
+  Answer: the user pressed "Overlay" (itm_4618d7d1990a).
 - **A4** A thread opens at its bottom, as the ticket says, though the HTML thread opens at the top. Trade: a long
   ask's opening lines need a scroll up. Rejected: open at the top.
 - **A5** The tabs header stays fixed above the centre's viewport; PageUp, PageDown, Home, End, Up and Down scroll it
