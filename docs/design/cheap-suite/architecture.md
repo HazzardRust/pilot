@@ -99,16 +99,20 @@ adapter except `rune-target`, which is internal to the gate.
 
 - **A1** Test verdicts (posted `itm_c8e56cfbea64`, a fork). Default: keep and cheapen, as the verdict table. Trades the
   larger cut for keeping every field case. Rejected: a slow tier off the local full run; cutting landing e2e to one test per command.
+  Verdict: stands — the deck took the default after 20 min with no answer (itm_c8e56cfbea64), not the user; it keeps the ticket's rule that nothing is deleted before the user has seen it
 - **A2** Security: the landing trusts a proved tree (posted `itm_2fe6194a937e`). **Answered by the user: "Trust a proved
   tree (default)".** Proof = at least three Gate jobs, all success, on the exact tip, one annotated tree; full when
   the feature touches `.github/`, `package*.json` or a `FULL_TRIGGERS` file. Proves: every test green on three OSes on
   that tree, and reached tests green locally on the delta. Does not prove: a test the selection misses on the delta,
   this machine's environment for unchanged areas, or a test that prints a forged annotation in its own job; the push
   run on `pilot` is the backstop. Draft PRs to `main` get Gate too. Rejected: always full, made fast (~10-12 min).
+  Verdict: stands — the user pressed "Trust a proved tree (default)" on itm_2fe6194a937e
 - **A3** The shared Rune target is wiped above 400 fingerprint units (about 50 worktree builds). Trades one cold build
   per ~50 worktrees for bounded disk. Rejected: no bound (unbounded growth); a size walk per gate (slow). Not a fork.
+  Verdict: stands — the queued prebuilt-Rune ticket itm_ff5ace129388 concerns a plugin install, not the worktree build cache
 - **A4** Bars: spawns ≤ 11,000 and git ≤ 10,000; full suite ≤ 15 min with two other suites live. Trades a weaker bar
   than the draft's "far fewer" for one the measured levers reach (F3, F4: most git is distinct scenarios). Not a fork.
+  Verdict: stands — 15 min is the ticket's own "under half the 30-minute limit"; no queued ticket sets another bar
 
 ## 7. Out of scope
 
