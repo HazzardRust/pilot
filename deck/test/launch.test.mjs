@@ -162,12 +162,19 @@ test('pilot deck prints the open line, not the secret', async (t) => {
   // A deck older than its open file: the line says how to get one, not a path to nothing.
   // Where this checkout has the Rune deck built, that is what opens instead (rune-deck-ui S3).
   const rune = runeBinary(PACKAGE_ROOT, process.platform);
-  const older = await pilot(['deck'], dir, port);
-  assert.deepEqual(older.stdout.trim().split(/\r?\n/), [`The deck is up at ${base}`, rune ? `open ${rune}` : 'no open file: `pilot deck --rotate` writes one']);
+  // It names the copy under target/run, never the release exe a rebuild must replace (ui-design-workflow S3).
+  const runCopy = /^open .+[\\/]target[\\/]run[\\/]pilot-deck-\d+(\.exe)?$/;
+  const older = (await pilot(['deck'], dir, port)).stdout.trim().split(/\r?\n/);
+  assert.equal(older[0], `The deck is up at ${base}`);
+  if (rune) assert.match(older[1], runCopy);
+  else assert.deepEqual(older.slice(1), ['no open file: `pilot deck --rotate` writes one']);
 
   writeOpenFile(dir, base, secret);
   const { stdout } = await pilot(['deck'], dir, port);
-  assert.deepEqual(stdout.trim().split(/\r?\n/), [`The deck is up at ${base}`, `open ${rune ?? openFile(dir)}`]);
+  const [up, open] = stdout.trim().split(/\r?\n/);
+  assert.equal(up, `The deck is up at ${base}`);
+  if (rune) assert.match(open, runCopy);
+  else assert.equal(open, `open ${openFile(dir)}`);
   assert.ok(!stdout.includes(secret), 'stdout holds no secret');
 
   const scratch = await pilot(['deck', '--scratch'], dir, port);

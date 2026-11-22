@@ -104,7 +104,7 @@ export function openerFor(platform, url, rune = null) {
  * The copy of `rune` under `<target>/run`, or `rune` itself when no copy can be made (a full disk): a
  * window that blocks the next build is still better than no window, and the line on stderr says why.
  */
-function runCopy(rune) {
+export function runCopy(rune) {
   try {
     return launchCopy(rune, path.join(path.dirname(path.dirname(rune)), 'run'));
   } catch (err) {
