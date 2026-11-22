@@ -1,5 +1,6 @@
-//! `pilot-deck`: opens the deck's window. `--open <route>` and `--mode light|dark` pick its first
-//! screen and mode (`app::Start`); Rune's own flags (`--snap <png>`, `--tree`) render it headless.
+//! `pilot-deck`: opens the deck's window. `--open <route>` picks its first screen (`app::Start`);
+//! Rune's own flags pick its mode (`--theme light|dark`) and render it headless (`--snap <png>`,
+//! `--tree`).
 
 use pilot_deck::app::{self, Start, State};
 

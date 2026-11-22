@@ -1,5 +1,5 @@
-//! ui-design-workflow S2: the window starts on any screen in either mode, by start-up route
-//! (spec 7), so `pilot look snap` captures it without driving the mouse.
+//! ui-design-workflow S2: the window starts on any screen by start-up route (spec 7), in the mode
+//! Rune's own `--theme` gives it, so `pilot look snap` captures it without driving the mouse.
 
 use pilot_deck::app::Start;
 use pilot_deck::client::Query;
@@ -9,11 +9,11 @@ fn args(line: &[&str]) -> Vec<String> {
 }
 
 #[test]
-fn a_route_and_a_mode_parse_into_the_start_query() {
+fn a_route_parses_into_the_start_query() {
     let start = Start::from_args(args(&[
         "--open",
         "screen=thread&id=itm_1",
-        "--mode",
+        "--theme",
         "dark",
     ]))
     .unwrap();
@@ -25,17 +25,12 @@ fn a_route_and_a_mode_parse_into_the_start_query() {
             ..Query::default()
         }
     );
-    assert_eq!(start.dark, Some(true));
-    let light = Start::from_args(args(&["--mode", "light"])).unwrap();
-    assert_eq!(light.dark, Some(false));
-    assert_eq!(light.query, Query::default());
 }
 
 #[test]
-fn no_flags_start_on_home_in_the_system_mode() {
+fn no_flags_start_on_home() {
     let start = Start::from_args(Vec::new()).unwrap();
     assert_eq!(start.query, Query::default());
-    assert_eq!(start.dark, None);
 }
 
 #[test]
@@ -55,29 +50,13 @@ fn every_query_field_rides_the_route() {
 }
 
 #[test]
-fn an_unknown_flag_value_is_refused() {
-    let err = Start::from_args(args(&["--mode", "sepia"])).unwrap_err();
-    assert!(err.contains("light") && err.contains("dark"), "{err}");
-}
-
-#[test]
-fn rune_flags_pass_untouched() {
-    let start = Start::from_args(args(&[
-        "--snap", "out.png", "--mode", "light", "--tree", "t.json",
-    ]))
-    .unwrap();
-    assert_eq!(start.dark, Some(false));
-    assert_eq!(start.query, Query::default());
-}
-
-#[test]
-fn rune_reads_its_own_flags_and_the_mode_as_its_theme() {
+fn rune_reads_every_flag_but_the_route() {
     let line = args(&[
         "--open",
         "screen=items",
         "--snap",
         "out.png",
-        "--mode",
+        "--theme",
         "light",
         "--tree",
         "t.json",
@@ -85,7 +64,7 @@ fn rune_reads_its_own_flags_and_the_mode_as_its_theme() {
     let start = Start::from_args(line.clone()).unwrap();
     assert_eq!(
         start.rune_args(line),
-        args(&["--snap", "out.png", "--tree", "t.json", "--theme", "light"])
+        args(&["--snap", "out.png", "--theme", "light", "--tree", "t.json"])
     );
     let system = Start::from_args(args(&["--snap", "out.png"])).unwrap();
     assert_eq!(
@@ -98,7 +77,6 @@ fn rune_reads_its_own_flags_and_the_mode_as_its_theme() {
 fn a_bad_route_is_refused() {
     for bad in [
         &["--open"][..],
-        &["--mode"],
         &["--open", "screen=nowhere"],
         &["--open", "screen=thread&colour=red"],
         &["--open", "screen=thread&id=a&id=b"],

@@ -125,63 +125,47 @@ pub fn mouse_nav(root: El) -> El {
 }
 
 /// What the window opens on (ui-design-workflow S2, spec 7): `--open <route>`, the HTML deck's
-/// query (`screen=thread&id=itm_x`), and `--mode light|dark`. Every other argument is Rune's.
+/// query (`screen=thread&id=itm_x`). Every other argument is Rune's, its own `--theme light|dark`
+/// for the mode among them.
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct Start {
     pub query: Query,
-    /// None: the system's mode, as before.
-    pub dark: Option<bool>,
 }
 
 const OPEN: &str = "--open";
-const MODE: &str = "--mode";
 /// The screens `/api/view` serves (deck/view/index.mjs `SCREENS`).
 const SCREENS: [&str; 3] = ["home", "thread", "items"];
 
 impl Start {
-    /// `pilot-deck`'s own flags out of `args` (without the program name); each at most once,
+    /// `pilot-deck`'s own flag out of `args` (without the program name): `--open`, at most once,
     /// with a value. Rune's flags are left for Rune.
     pub fn from_args(args: impl IntoIterator<Item = String>) -> Result<Start, String> {
         let mut start = Start::default();
-        let (mut open, mut mode) = (false, false);
+        let mut open = false;
         let mut args = args.into_iter();
         while let Some(flag) = args.next() {
-            let seen = match flag.as_str() {
-                OPEN => &mut open,
-                MODE => &mut mode,
-                _ => continue,
-            };
-            if std::mem::replace(seen, true) {
+            if flag != OPEN {
+                continue;
+            }
+            if std::mem::replace(&mut open, true) {
                 return Err(format!("{flag} is given twice"));
             }
             let value = args.next().ok_or_else(|| format!("{flag} needs a value"))?;
-            if flag == OPEN {
-                start.query = route(&value)?;
-            } else {
-                start.dark = Some(match value.as_str() {
-                    "light" => false,
-                    "dark" => true,
-                    other => return Err(format!("{MODE} {other}: use light or dark")),
-                });
-            }
+            start.query = route(&value)?;
         }
         Ok(start)
     }
 
-    /// The arguments Rune reads: `args` without `--open` and `--mode` and their values, and the
-    /// mode as Rune's own `--theme`, which the window and a headless `--snap` both draw in.
+    /// The arguments Rune reads: `args` without `--open` and its value.
     pub fn rune_args(&self, args: impl IntoIterator<Item = String>) -> Vec<String> {
         let mut args = args.into_iter();
         let mut rune = Vec::new();
         while let Some(arg) = args.next() {
-            if arg == OPEN || arg == MODE {
+            if arg == OPEN {
                 args.next();
             } else {
                 rune.push(arg);
             }
-        }
-        if let Some(dark) = self.dark {
-            rune.extend(["--theme".into(), if dark { "dark" } else { "light" }.into()]);
         }
         rune
     }
