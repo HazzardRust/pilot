@@ -9,15 +9,40 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { runInNewContext } from 'node:vm';
 
 import { hostPlatform } from '../hooks/lib/platform.js';
 
 const MODES = ['light', 'dark'];
-const USAGE = 'usage: pilot look snap <surface.json> <screen> [--mode light|dark] [--out <png>]\n';
+const USAGE = 'usage: pilot look snap <surface.json> <screen> [--mode light|dark] [--out <png>]\n'
+  + '       pilot look apply <export.json> <surface.json>\n';
+const TOKENS_JS = join(dirname(fileURLToPath(import.meta.url)), '..', 'skills', 'ui-design', 'playground', 'tokens.js');
+
+/**
+ * The playground's leaf parser, `tokens.js`, run in a fresh `vm` context (L6) so the page and the
+ * CLI share one parser; returns its `{ leaves, exportText, applyExport }`. The export it is later
+ * handed is only ever parsed as text by it, never run.
+ */
+export function loadTokens() {
+  const context = {};
+  runInNewContext(readFileSync(TOKENS_JS, 'utf8'), context, { filename: TOKENS_JS });
+  return context.tokens;
+}
+
+/**
+ * `pilot look apply`: `exportFile` laid onto the surface's token file, written only when nothing
+ * is refused. Returns `{ changed, refused }`.
+ */
+export function apply(exportFile, surface) {
+  const current = readFileSync(surface.tokens, 'utf8');
+  const { text, changed, refused } = loadTokens().applyExport(current, readFileSync(exportFile, 'utf8'));
+  if (!refused.length && text !== current) writeFileSync(surface.tokens, text);
+  return { changed: [...changed], refused: [...refused] };
+}
 
 /** The nearest directory at or above `dir` holding `.git` (a directory, or a worktree's file). */
 function repositoryRoot(dir) {
@@ -173,8 +198,30 @@ export function snap(surface, screen, mode, out, spawn = spawnSync) {
   return { status: result.error || result.status === null ? 1 : result.status, out: target };
 }
 
-/** `pilot look snap <surface.json> <screen> [--mode m] [--out f]`: 0 with the PNG written, 1 failed, 2 bad args. */
+/**
+ * `pilot look snap <surface.json> <screen> [--mode m] [--out f]`: 0 with the PNG written, 1 failed, 2 bad args.
+ * `pilot look apply <export.json> <surface.json>`: 0 with the changed paths printed, 1 refused or failed, 2 bad args.
+ */
 export function look(argv, { spawn = spawnSync, out: stdout = process.stdout, err: stderr = process.stderr } = {}) {
+  if (argv[0] === 'apply') {
+    const [, exportFile, file, ...extra] = argv;
+    if (!exportFile || !file || exportFile.startsWith('-') || file.startsWith('-') || extra.length) {
+      stderr.write(USAGE);
+      return 2;
+    }
+    try {
+      const { changed, refused } = apply(exportFile, readSurface(file));
+      if (refused.length) {
+        stderr.write(`pilot look: the export is refused and nothing was written:\n${refused.map((r) => `  ${r}\n`).join('')}`);
+        return 1;
+      }
+      stdout.write(changed.map((p) => `${p}\n`).join(''));
+      return 0;
+    } catch (error) {
+      stderr.write(`pilot look: ${error.message}\n`);
+      return 1;
+    }
+  }
   const [verb, file, screen, ...rest] = argv;
   const flags = { '--mode': 'light', '--out': null };
   for (let i = 0; i < rest.length; i += 2) {
