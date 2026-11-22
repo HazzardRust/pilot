@@ -198,6 +198,8 @@ const usage = () => `pilot — the deck for piloted runs
   pilot look snap <surface.json> <screen> [--mode light|dark] [--out <png>]
                  capture a surface's screen, opened by its start-up route, to a PNG
                  (default <screen>-<mode>.png); starts one process, sends no input
+  pilot look apply <export.json> <surface.json>
+                 lay a playground export onto the surface's token file, only the changed leaves
   pilot trace <itm_id>
                  print a hand-off's or ticket's trace rows in time order, then done or
                  waiting: <next step>, <age>; reads the trace file, never the deck (exit 2 on a bad id)

@@ -77,6 +77,8 @@
     </div>
   </div>
 </div>
+<!-- The one leaf parser, shared with `pilot look apply` (ui-design-workflow L6). -->
+<script src="../../../skills/ui-design/playground/tokens.js"></script>
 <script>
 // Rune's colour maths in f32, as rune-motion's srgb_decode/srgb_encode and theme.rs's hue_over.
 const f = Math.fround;
@@ -93,44 +95,13 @@ function hueOver(dark, hue, mix) {
   }).join('');
 }
 
-// theme.json read with each leaf's source span, so an untouched export is the file byte for byte.
-function parse(src) {
-  let i = 0; const leaves = [];
-  const ws = () => { while (/\s/.test(src[i])) i++; };
-  const tok = re => { re.lastIndex = i; const m = re.exec(src); if (!m) throw new Error('bad JSON at ' + i); i = re.lastIndex; return m[0]; };
-  const str = /"(?:[^"\\]|\\.)*"/y;
-  const expect = c => { ws(); if (src[i++] !== c) throw new Error(`expected ${c} at ${i - 1}`); };
-  function value(path) {
-    ws(); const start = i;
-    if (src[i] === '{') {
-      i++; const obj = {}; ws();
-      if (src[i] === '}') { i++; return obj; }
-      for (;;) {
-        ws(); const key = JSON.parse(tok(str)); expect(':');
-        obj[key] = value(path.concat(key)); ws();
-        if (src[i] === '}') { i++; return obj; }
-        expect(',');
-      }
-    }
-    if (src[i] === '[') {
-      let depth = 0;
-      do { if (src[i] === '"') { tok(str); continue; } if (src[i] === '[') depth++; if (src[i] === ']') depth--; i++; } while (depth && i < src.length);
-    }
-    else tok(/"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null/y);
-    const raw = src.slice(start, i), leaf = { path, start, end: i, raw, value: JSON.parse(raw) };
-    leaves.push(leaf); return leaf.value;
-  }
-  const root = value([]); ws(); if (i !== src.length) throw new Error('trailing text at ' + i);
-  return { root, leaves };
-}
-
 const isHex = v => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
 const isPair = v => v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 2 && isHex(v.light) && isHex(v.dark);
 // As theme.rs: a bare hex under `by` or `state` is a hue mixed over the text; any other is drawn as it is.
 const isHue = (v, path) => isHex(v) && ['by', 'state'].includes(path[0]);
 // Fractions run 0..1; every other number is px and runs to twice its value or 64.
 const isUnit = path => path[0] === 'alpha' || path[0] === 'motion' || /(^|_)(mix|alpha)$/.test(path.at(-1));
-let src = null, doc = null;
+let doc = null;
 /** The section a string names a key of (`"s2"` in `space`, `"blue"` in `accent`): the value is an alias. */
 const aliasOf = v => typeof v === 'string' && !isHex(v)
   ? Object.keys(doc.root).find(s => {
@@ -139,24 +110,10 @@ const aliasOf = v => typeof v === 'string' && !isHex(v)
     })
   : undefined;
 
-function num(n, raw) { const s = String(n); return raw.includes('.') && !/[.e]/.test(s) ? s + '.0' : s; }
-function format(v, raw) {
-  if (typeof v === 'number') return num(v, raw);
-  if (Array.isArray(v)) return '[' + v.map(x => typeof x === 'number' ? num(x, raw) : JSON.stringify(x)).join(', ') + ']';
-  return JSON.stringify(v);
-}
-function exportText() {
-  let out = '', at = 0;
-  for (const l of [...doc.leaves].sort((a, b) => a.start - b.start)) {
-    const same = JSON.stringify(l.value) === JSON.stringify(JSON.parse(l.raw));
-    out += src.slice(at, l.start) + (same ? l.raw : format(l.value, l.raw));
-    at = l.end;
-  }
-  return out + src.slice(at);
-}
+const exportText = () => tokens.exportText(doc);
 
 function load(text, from) {
-  try { doc = parse(text); src = text; } catch (e) { msg.textContent = 'Import: ' + e.message; return; }
+  try { doc = tokens.leaves(text); } catch (e) { msg.textContent = 'Import: ' + e.message; return; }
   msg.textContent = from;
   try { localStorage.setItem('theme.json', text); localStorage.setItem('theme.from', from); } catch {}
   controls(); render();
