@@ -32,21 +32,16 @@ const builtTarget = (t, seconds) => {
   return { target, exe };
 };
 
-/** `node:fs` with every copy counted and `unlinkSync` replaced by `unlink` when given. */
-const watchedFs = (unlink) => {
-  const copies = [];
-  return {
-    copies,
-    fs: {
-      ...fs,
-      copyFileSync: (from, to) => {
-        copies.push(to);
-        return fs.copyFileSync(from, to);
-      },
-      unlinkSync: unlink ?? fs.unlinkSync,
-    },
-  };
+/** `node:fs` with the named calls replaced. */
+const fsWith = (overrides) => ({ ...fs, ...overrides });
+
+/** A call that fails the way the platform does, with `code`. */
+const failing = (code) => () => {
+  throw Object.assign(new Error(`${code}: refused`), { code });
 };
+
+/** The names in `dir` that a half-done copy would leave. */
+const parts = (dir) => fs.readdirSync(dir).filter((name) => name.endsWith('.part'));
 
 const recorder = () => {
   const calls = [];
@@ -79,34 +74,79 @@ test('the spawned path is never the release exe', async (t) => {
 test('one copy per build', (t) => {
   const { target, exe } = builtTarget(t, BUILD_1);
   const run = path.join(target, 'run');
-  const watched = watchedFs();
 
-  const first = launchCopy(exe, run, watched.fs);
-  assert.equal(launchCopy(exe, run, watched.fs), first, 'the same build opens the same copy');
-  assert.equal(watched.copies.length, 1, 'copied once');
+  const first = launchCopy(exe, run);
+  // A mark only the first copy carries: a second copy of the same build would overwrite it.
+  fs.appendFileSync(first, ' as opened');
+  assert.equal(launchCopy(exe, run), first, 'the same build opens the same copy');
+  assert.match(fs.readFileSync(first, 'utf8'), /as opened$/, 'copied once');
 
   fs.writeFileSync(exe, 'build two');
   fs.utimesSync(exe, BUILD_2, BUILD_2);
-  const second = launchCopy(exe, run, watched.fs);
+  const second = launchCopy(exe, run);
   assert.equal(second, path.join(run, 'pilot-deck-1700000001000.exe'));
-  assert.equal(watched.copies.length, 2, 'a new build copies again');
-  assert.equal(fs.readFileSync(second, 'utf8'), 'build two');
+  assert.equal(fs.readFileSync(second, 'utf8'), 'build two', 'a new build copies again');
   assert.deepEqual(fs.readdirSync(run), ['pilot-deck-1700000001000.exe'], 'and the old copy, not in use, is gone');
 });
 
-for (const code of ['EBUSY', 'EPERM']) {
-  test(`a copy in use is kept (${code})`, (t) => {
+for (const code of ['EBUSY', 'EPERM', 'EACCES', 'EIO']) {
+  test(`a copy that cannot be removed is kept (${code})`, (t) => {
     const { target, exe } = builtTarget(t, BUILD_1);
     const run = path.join(target, 'run');
     const old = launchCopy(exe, run);
 
     fs.utimesSync(exe, BUILD_2, BUILD_2);
-    const inUse = watchedFs(() => {
-      throw Object.assign(new Error(`${code}: resource busy or locked`), { code });
-    });
-    const fresh = launchCopy(exe, run, inUse.fs);
+    const fresh = launchCopy(exe, run, fsWith({ unlinkSync: failing(code) }));
 
     assert.ok(fs.existsSync(old), 'the running copy is left where it is');
-    assert.ok(fs.existsSync(fresh), 'and the new build is copied beside it');
+    assert.equal(fresh, path.join(run, 'pilot-deck-1700000001000.exe'), 'and the new build is what opens');
   });
 }
+
+test('a newer copy is not removed', (t) => {
+  const { target, exe } = builtTarget(t, BUILD_1);
+  const run = path.join(target, 'run');
+  fs.mkdirSync(run);
+  // Another open's copy of a later build, made but not yet started.
+  const newer = path.join(run, 'pilot-deck-1700000005000.exe');
+  fs.writeFileSync(newer, 'build three');
+
+  launchCopy(exe, run);
+  assert.ok(fs.existsSync(newer));
+});
+
+test('a copy that fails leaves no part behind', (t) => {
+  const { target, exe } = builtTarget(t, BUILD_1);
+  const run = path.join(target, 'run');
+  const diskFull = fsWith({
+    copyFileSync: (from, to) => {
+      fs.writeFileSync(to, 'half');
+      failing('ENOSPC')();
+    },
+  });
+
+  assert.throws(() => launchCopy(exe, run, diskFull), { code: 'ENOSPC' });
+  assert.deepEqual(parts(run), []);
+});
+
+test('a copy another open just made is the one used', (t) => {
+  const { target, exe } = builtTarget(t, BUILD_1);
+  const run = path.join(target, 'run');
+  const copy = path.join(run, 'pilot-deck-1700000000000.exe');
+  // The other open renames first and starts its window, so this rename finds a running exe.
+  const lost = fsWith({
+    renameSync: () => {
+      fs.copyFileSync(exe, copy);
+      failing('EPERM')();
+    },
+  });
+
+  assert.equal(launchCopy(exe, run, lost), copy);
+  assert.deepEqual(parts(run), []);
+});
+
+test('a copy that cannot be made opens the build in place', async () => {
+  const { runCopy } = await import('../open.mjs');
+  const missing = path.join(os.tmpdir(), 'pilot-no-such-target', 'release', 'pilot-deck.exe');
+  assert.equal(runCopy(missing), missing);
+});

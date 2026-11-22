@@ -41,33 +41,50 @@ export function runeBinary(root, platform) {
 }
 
 /** A copy `launchCopy` made: the build's mtime in milliseconds, and `.exe` on Windows. */
-const COPY_NAME = /^pilot-deck-\d+(\.exe)?$/;
+const COPY_NAME = /^pilot-deck-(\d+)(\.exe)?$/;
+
+/** What Windows says of a file a window still runs, or another open has just removed. */
+const IN_USE = ['EBUSY', 'EPERM', 'EACCES', 'ENOENT'];
 
 /**
  * The copy of `binary` the deck runs, made in `dir` once per build. Windows locks a running exe, so a
  * window started from `target/release` makes the next `cargo build --release` fail to replace it (A9);
- * a window started from a copy leaves the build free. Older copies go, except one a window still runs,
- * which Windows refuses to remove (EBUSY, EPERM) and the next open after it closes clears.
+ * a window started from a copy leaves the build free. Only making the copy can throw: older copies go
+ * best effort, except one a window still runs, which Windows refuses to remove and a later open clears.
  */
 export function launchCopy(binary, dir, fs = nodeFs) {
-  const name = `pilot-deck-${Math.trunc(fs.statSync(binary).mtimeMs)}${path.extname(binary)}`;
-  const copy = path.join(dir, name);
+  const stamp = Math.trunc(fs.statSync(binary).mtimeMs);
+  const copy = path.join(dir, `pilot-deck-${stamp}${path.extname(binary)}`);
   fs.mkdirSync(dir, { recursive: true });
   if (!fs.existsSync(copy)) {
     // Copied beside, then renamed, so an open racing a half-written copy never runs it.
     const part = `${copy}.${process.pid}.part`;
-    fs.copyFileSync(binary, part);
-    fs.renameSync(part, copy);
-  }
-  for (const old of fs.readdirSync(dir)) {
-    if (old === name || !COPY_NAME.test(old)) continue;
     try {
-      fs.unlinkSync(path.join(dir, old));
+      fs.copyFileSync(binary, part);
+      fs.renameSync(part, copy);
     } catch (err) {
-      if (!['EBUSY', 'EPERM', 'ENOENT'].includes(err.code)) throw err;
+      fs.rmSync(part, { force: true });
+      // Another open renamed its copy of this build first, and may already run it.
+      if (!fs.existsSync(copy)) throw err;
     }
   }
+  try {
+    for (const old of fs.readdirSync(dir)) {
+      // Only older builds: a newer copy is another open's, made and not yet started.
+      if (Number(COPY_NAME.exec(old)?.[1]) < stamp) removeCopy(path.join(dir, old), fs);
+    }
+  } catch (err) {
+    console.error(`[deck] could not clear old copies in ${dir}:`, err.message);
+  }
   return copy;
+}
+
+function removeCopy(file, fs) {
+  try {
+    fs.unlinkSync(file);
+  } catch (err) {
+    if (!IN_USE.includes(err.code)) console.error(`[deck] could not remove ${file}:`, err.message);
+  }
 }
 
 /**
