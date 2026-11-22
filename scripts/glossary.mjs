@@ -159,7 +159,9 @@ export function matchGlossary(text, glossary) {
       longest = length;
       matched.push(name);
     }
-    for (const { index, via, word } of matched) {
+    // a term wins over an `_Avoid_` hit on the same words, as in termOf.
+    const terms = matched.filter(({ via }) => via === 'term');
+    for (const { index, via, word } of terms.length > 0 ? terms : matched) {
       if (hits.has(index)) continue;
       const { entry } = entries[index];
       hits.set(index, { term: entry.term, via, word, entry: entryText(lines, entry) });
@@ -186,8 +188,8 @@ export function termOf(name, glossary) {
 
 const USAGE =
   'usage: node scripts/glossary.mjs check <file>\n' +
-  '       node scripts/glossary.mjs match <text…> [--file GLOSSARY.md]\n' +
-  '       node scripts/glossary.mjs term <name> [--file GLOSSARY.md]\n';
+  '       node scripts/glossary.mjs match <text…> [--file GLOSSARY.md] [-- <text…>]\n' +
+  '       node scripts/glossary.mjs term <name> [--file GLOSSARY.md] [-- <name>]\n';
 
 function usage() {
   process.stderr.write(USAGE);
@@ -203,11 +205,15 @@ function readGlossary(file) {
   }
 }
 
-/** `match` and `term`'s arguments: the words, and the glossary `--file`, `GLOSSARY.md` in the working directory by default. */
+/** `match` and `term`'s arguments: the words, and the glossary `--file`, `GLOSSARY.md` in the working directory by default; after `--` every argument is a word. */
 function lookupArgs(args) {
   const words = [];
   let file = 'GLOSSARY.md';
   for (let i = 0; i < args.length; i += 1) {
+    if (args[i] === '--') {
+      words.push(...args.slice(i + 1));
+      break;
+    }
     if (args[i] !== '--file') words.push(args[i]);
     else if (i + 1 < args.length) file = args[(i += 1)];
     else usage();

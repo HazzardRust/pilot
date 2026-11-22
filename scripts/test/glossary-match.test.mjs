@@ -31,8 +31,10 @@ test('a term hits by its own name', () => {
   // the longest name consumes its words: `Base` does not hit on the "base" of "take the base".
   assert.deepEqual(
     hits.map(({ term, via }) => [term, via]),
-    [['Take the base', 'term'], ['Sync', 'avoid']],
+    [['Take the base', 'term']],
+    "a term wins over another entry's Avoid word on the same words",
   );
+  assert.deepEqual(matchGlossary('open the ticket', GLOSSARY).map(({ term }) => term), ['Ticket']);
   assert.deepEqual(
     matchGlossary('base base base', GLOSSARY).map(({ term }) => term),
     ['Base'],
@@ -84,6 +86,13 @@ test('a lookup with no words or no readable file exits 2', () => {
   const unreadable = cli('match', 'x', '--file', 'no-such-glossary.md');
   assert.equal(unreadable.status, 2);
   assert.match(unreadable.stderr, /cannot read no-such-glossary\.md/);
+});
+
+test('after -- every argument is a word, --file among them', () => {
+  const run = cli('term', '--file', FIXTURE, '--', 'located', '--file', 'term');
+  assert.equal(run.status, 1, run.stderr);
+  assert.equal(run.stderr, 'no entry for located --file term\n');
+  assert.equal(cli('term', '--file', FIXTURE, '--', 'located term').stdout.split('\n')[0], '**Pathy term**:');
 });
 
 test('a long argument is matched in linear time', () => {

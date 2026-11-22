@@ -39,8 +39,18 @@ test('the log is capped', () => {
   assert.equal(rows.length, 200);
   assert.equal(rows[0].term, 'Term 2');
   assert.equal(rows[199].term, 'Term 201');
-  const one = appendLog(appendLog('', row('added', 'A')), row('added', 'B'), 1);
-  assert.deepEqual(readLog(one).map((r) => r.term), ['B']);
+});
+
+test('a date that is not on the calendar is refused', () => {
+  assert.throws(() => appendLog('', row('added', 'Widget', 'r', '2026-02-31')), /date/);
+  assert.throws(() => appendLog('', row('added', 'Widget', 'r', '2025-02-29')), /date/);
+  assert.equal(readLog(appendLog('', row('added', 'Widget', 'r', '2024-02-29')))[0].date, '2024-02-29');
+});
+
+test('an append keeps a CRLF log CRLF', () => {
+  const crlf = logOf(row('added', 'A')).replace(/\n/g, '\r\n');
+  const next = appendLog(crlf, row('added', 'B'));
+  assert.equal(next, logOf(row('added', 'A'), row('added', 'B')).replace(/\n/g, '\r\n'));
 });
 
 test('a malformed row or argument is refused', () => {
@@ -65,8 +75,11 @@ test('a disagreement fails the check', () => {
 test('a row without a run and an over-cap log fail the check', () => {
   const log = logOf(row('added', 'Kept')).replace('some-run', '');
   assert.deepEqual(checkLog(log, glossaryOf('Kept')).map(({ line }) => line), [7]);
-  let big = '';
-  for (let i = 1; i <= 201; i += 1) big = appendLog(big, row('added', 'Kept'), 1000);
+  // past the cap only by hand: appendLog never writes 201 rows.
+  const one = logOf(row('added', 'Kept'));
+  const rowLine = one.trimEnd().split('\n').at(-1);
+  const big = `${one}${`${rowLine}\n`.repeat(200)}`;
+  assert.equal(readLog(big).length, 201);
   assert.equal(checkLog(big, glossaryOf('Kept')).length, 1);
 });
 

@@ -21,11 +21,10 @@ import { pathToFileURL } from 'node:url';
 
 import { matchGlossary, parseGlossary } from './glossary.mjs';
 import { readLog } from './glossary-log.mjs';
+import { NOT_USE, usedAt } from './glossary-stale.mjs';
 
 const GLOSSARY = 'GLOSSARY.md';
 const LOG = 'GLOSSARY-LOG.md';
-/** Where a term is defined, logged or planned rather than used. */
-const NOT_USE = [`:(exclude)${GLOSSARY}`, `:(exclude)${LOG}`, ':(exclude)docs/design/', ':(exclude)docs/adr/'];
 const COMMIT_ID = /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/;
 
 /** `git args…` in `repoDir`: its result, thrown when git cannot start or exits outside `ok`. */
@@ -59,11 +58,6 @@ function commitOf(repoDir, ref) {
 function fileAt(repoDir, id, name) {
   const listed = git(repoDir, ['ls-tree', '--name-only', id, '--', name]).stdout.trim();
   return listed === name ? git(repoDir, ['cat-file', 'blob', `${id}:${name}`]).stdout : '';
-}
-
-/** True when some file of commit `id`, outside NOT_USE, holds `term` as a whole word, any case. */
-function usedAt(repoDir, id, term) {
-  return git(repoDir, ['grep', '-q', '-i', '-F', '-w', '-e', term, id, '--', ...NOT_USE], [0, 1]).status === 0;
 }
 
 /** A diff header's path: `b/x`, or C-quoted `"b/x"`, with git's trailing tab after a name holding a space dropped. */
@@ -141,7 +135,7 @@ export function termsInDiff(repoDir, base, head) {
     }
   }
   for (const { term } of parseGlossary(glossary)) {
-    if (!usedAt(repoDir, to, term) && usedAt(repoDir, from, term)) candidates.push({ kind: 'orphaned', term });
+    if (!usedAt(repoDir, term, to) && usedAt(repoDir, term, from)) candidates.push({ kind: 'orphaned', term });
   }
   const logged = rowsAdded(fileAt(repoDir, from, LOG), fileAt(repoDir, to, LOG));
   for (const { term, change } of glossaryEdits(fileAt(repoDir, from, GLOSSARY), glossary)) {
@@ -150,11 +144,11 @@ export function termsInDiff(repoDir, base, head) {
   return candidates;
 }
 
-/** A candidate's line; the repository's text reaches it with each control character as `?`, so it cannot forge a line or drive a terminal. */
+/** A candidate's line; the repository's text reaches it with each C0, C1, zero-width and bidi control as `?`, so it cannot forge a line, drive a terminal or reorder what is shown. */
 const lineOf = (c) =>
   (c.kind === 'avoid' ? `avoid ${c.file}:${c.line} ${c.word} -> ${c.term}`
     : c.kind === 'orphaned' ? `orphaned ${c.term}`
-      : `unlogged ${c.change} ${c.term}`).replace(/[\x00-\x1f\x7f]/g, '?');
+      : `unlogged ${c.change} ${c.term}`).replace(/[\x00-\x1f\x7f-\x9f\u{200b}-\u{200f}\u{202a}-\u{202e}\u{2066}-\u{2069}]/gu, '?');
 
 function main(argv) {
   if (argv.length !== 3) {

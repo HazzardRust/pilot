@@ -100,6 +100,39 @@ test('an unlogged glossary edit is a candidate', (t) => {
   assert.deepEqual(of('unlogged', termsInDiff(logged, 'base', 'head')), []);
 });
 
+test('an Avoid word added in the glossary or its log is not a candidate', (t) => {
+  const log = appendLog('', { date: '2026-11-22', run: 'project-glossary', change: 'added', term: 'Subagents' });
+  const dir = makeRepo(t, BASE, {
+    'GLOSSARY.md': `${BASE['GLOSSARY.md']}\nThe subagents are the Crew.\n`,
+    'GLOSSARY-LOG.md': log,
+  });
+  assert.deepEqual(of('avoid', termsInDiff(dir, 'base', 'head')), []);
+});
+
+test('a changed or removed entry is unlogged until its row is added', (t) => {
+  const lane = '**Lane**:\nOne of three ways a ticket runs.\n';
+  const base = { ...BASE, 'GLOSSARY.md': `${BASE['GLOSSARY.md']}\n${lane}`, 'README.md': 'The Crew takes a Lane.\n' };
+  const edits = {
+    changed: `${BASE['GLOSSARY.md']}\n**Lane**:\nOne of four ways a ticket runs.\n`,
+    removed: BASE['GLOSSARY.md'],
+  };
+  for (const [change, glossary] of Object.entries(edits)) {
+    const unlogged = makeRepo(t, base, { 'GLOSSARY.md': glossary });
+    assert.deepEqual(of('unlogged', termsInDiff(unlogged, 'base', 'head')), [{ kind: 'unlogged', term: 'Lane', change }]);
+    const log = appendLog('', { date: '2026-11-22', run: 'project-glossary', change, term: 'Lane' });
+    const logged = makeRepo(t, base, { 'GLOSSARY.md': glossary, 'GLOSSARY-LOG.md': log });
+    assert.deepEqual(of('unlogged', termsInDiff(logged, 'base', 'head')), [], `${change}, logged`);
+  }
+});
+
+test('the CLI prints a C1 or bidi control from the repository as ?', (t) => {
+  const glossary = '# Glossary\n\n**Bidi\u{202e}\u{85}\u{200b}**:\nA term holding invisible controls.\n_Avoid_: subagents\n';
+  const dir = makeRepo(t, { 'GLOSSARY.md': glossary }, { 'README.md': 'Ask the subagents.\n' });
+  const run = spawnSync(process.execPath, [CLI, dir, 'base', 'head'], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
+  assert.equal(run.stdout, 'avoid README.md:1 subagents -> Bidi???\n');
+});
+
 test('a ref shaped like an option is refused before git sees it', (t) => {
   const dir = makeRepo(t, BASE, {});
   for (const ref of ['--output=pwned', '-p', 'base\nhead', '']) {

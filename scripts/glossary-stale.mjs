@@ -1,6 +1,6 @@
 /**
  * Stale glossary terms (project-glossary S4; spec 4, 7; L3): a term of `GLOSSARY.md` that no tracked
- * file uses outside the glossary, `docs/design/` and `docs/adr/` is a word the code has dropped.
+ * file uses outside the glossary, its log, `docs/design/` and `docs/adr/` is a word the code has dropped.
  * The terms come from the audited repository, so each reaches `git` as one argv entry after `-e`,
  * matched as a fixed string (`-F`), with no shell between: a term is only ever text.
  * `node scripts/glossary-stale.mjs <repo>` prints `<line> <term>` per stale term and exits 0 with
@@ -13,14 +13,17 @@ import { pathToFileURL } from 'node:url';
 
 import { parseGlossary } from './glossary.mjs';
 
-/** Where a term is defined or planned rather than used. */
-const EXCLUDED = [':(exclude)GLOSSARY.md', ':(exclude)docs/design/', ':(exclude)docs/adr/'];
+/** Where a term is defined, logged or planned rather than used: the one measure of use (L3), shared with glossary-diff.mjs. */
+export const NOT_USE = [':(exclude)GLOSSARY.md', ':(exclude)GLOSSARY-LOG.md', ':(exclude)docs/design/', ':(exclude)docs/adr/'];
 
-/** True when some tracked file of `repoDir`, outside EXCLUDED, holds `term` as a whole word, any case. */
-function isUsed(repoDir, term) {
+/**
+ * True when some tracked file of `repoDir` outside NOT_USE holds `term` as a whole word, any case:
+ * at `commit`, a commit id the caller resolved, or in the working tree when none is given.
+ */
+export function usedAt(repoDir, term, commit) {
   const result = spawnSync(
     'git',
-    ['-c', 'core.fsmonitor=false', 'grep', '-q', '-i', '-F', '-w', '-e', term, '--', ...EXCLUDED],
+    ['-c', 'core.fsmonitor=false', 'grep', '-q', '-i', '-F', '-w', '-e', term, ...(commit ? [commit] : []), '--', ...NOT_USE],
     { cwd: repoDir, stdio: 'ignore', shell: false, windowsHide: true },
   );
   if (result.error) throw result.error;
@@ -32,7 +35,7 @@ function isUsed(repoDir, term) {
 /** Each term of the glossary `text` that `repoDir` does not use, with the 1-based line it is defined on. */
 export function staleTerms(repoDir, text) {
   return parseGlossary(text)
-    .filter(({ term }) => !isUsed(repoDir, term))
+    .filter(({ term }) => !usedAt(repoDir, term))
     .map(({ term, line }) => ({ term, line }));
 }
 

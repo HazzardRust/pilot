@@ -22,21 +22,20 @@ const domainRow = () => /\| `domain-modeling` \|([^\n]*)/.exec(fs.readFileSync(p
 test('the pilot looks the request up before grilling', () => {
   const row = domainRow();
   assert.ok(row, 'pilot.md has a `domain-modeling` row');
-  assert.match(row, /glossary\.mjs match/, 'grilling runs `glossary.mjs match`');
-  assert.match(row, /glossary\.mjs match[^|]*before[^|]*question/, 'on the request, before the first question');
+  // the command and its quoting rule are domain-modeling's own; the row points at it.
+  assert.match(row, /request[^|]*before[^|]*question/, 'on the request, before the first question');
 });
 
 test('the architect writes lasting terms inline', () => {
   const architect = read('agents/pilot-architect.md');
   const before = /## Read before you design (.*?) ## /.exec(architect)?.[1];
   assert.ok(before, 'pilot-architect.md has a ## Read before you design section');
-  assert.match(before, /glossary\.mjs match/, 'the request is looked up with `match`');
+  assert.match(before, /request[^.]*`domain-modeling`/, 'the request is looked up as domain-modeling says');
   const item = /4\. \*\*Ubiquitous language\*\*(.*?) 5\. \*\*/.exec(architect)?.[1];
   assert.ok(item, 'the artefact has item 4 Ubiquitous language');
   assert.match(item, /run-local/, 'item 4 holds run-local terms only');
   assert.match(item, /`GLOSSARY\.md`/, 'a lasting term goes to GLOSSARY.md');
-  assert.match(item, /glossary-log\.mjs append/, 'logged with `append`');
-  assert.match(item, /same commit/, 'in the commit that writes the term');
+  assert.match(item, /logged[^.]*`domain-modeling`/, 'logged as domain-modeling says, in the same commit');
 });
 
 test('nobody batches terms after the press, nobody reads the whole file', () => {

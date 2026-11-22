@@ -16,7 +16,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseGlossary } from './glossary.mjs';
 
-export const CAP = 200;
+const CAP = 200;
 const LOG_NAME = 'GLOSSARY-LOG.md';
 const CHANGES = new Set(['added', 'changed', 'removed']);
 const HEADER = ['Date', 'Run', 'Change', 'Term'];
@@ -31,7 +31,10 @@ const TEMPLATE = [
 
 /** A problem with one field of a row, or `null`. Each regex is anchored with no nested quantifier, so linear. */
 function fieldProblem({ date, run, change, term }) {
-  if (typeof date !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(date)) return `date "${date}" is not YYYY-MM-DD`;
+  // a calendar date round-trips through Date; 2026-02-31 would come back as March 3rd.
+  if (typeof date !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(date) || new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date) {
+    return `date "${date}" is not YYYY-MM-DD`;
+  }
   if (typeof run !== 'string' || run === '') return 'a row without a run';
   if (run.length > MAX_RUN || !/^[a-z0-9-]+$/.test(run) || run.startsWith('-') || run.endsWith('-')) return `run "${run}" is not a slug`;
   if (!CHANGES.has(change)) return `change "${change}" is not added, changed or removed`;
@@ -104,17 +107,20 @@ export function readLog(text) {
   return parseStrict(text).rows.map(withoutLine);
 }
 
-/** The new file text with `row` appended, the oldest rows dropped past `cap`; a file with no table gets one, an empty one the log's title too. */
-export function appendLog(text, row, cap = CAP) {
-  if (!Number.isInteger(cap) || cap < 1) throw new Error(`cap ${cap} is not a positive integer`);
+/**
+ * The new file text with `row` appended, the oldest rows dropped past the cap, in the file's own
+ * line ending; a file with no table gets one, an empty one the log's title too.
+ */
+export function appendLog(text, row) {
   const clean = { date: row?.date, run: row?.run, change: row?.change, term: row?.term };
   const problem = fieldProblem(clean);
   if (problem) throw new Error(`glossary log row: ${problem}`);
   const parsed = parseStrict(text);
   let { before } = parsed;
   if (parsed.headerLine === 0) before = before.some((line) => line !== '') ? [...before, ''] : TEMPLATE;
-  const rows = [...parsed.rows.map(withoutLine), clean].slice(-cap);
-  return `${[...before, ...tableOf(rows), ...parsed.after].join('\n')}\n`;
+  const rows = [...parsed.rows.map(withoutLine), clean].slice(-CAP);
+  const eol = text.includes('\r\n') ? '\r\n' : '\n';
+  return `${[...before, ...tableOf(rows), ...parsed.after].join(eol)}${eol}`;
 }
 
 /**

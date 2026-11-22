@@ -153,7 +153,7 @@ the fundamentalist judges each candidate.
 1. `node scripts/glossary.mjs match "the subagents"` prints the **Crew** entry only (spec 9).
 2. A scratch pilot request saying "the subagents": the first question names **Crew** (spec 1, L8).
 3. `node scripts/glossary.mjs check GLOSSARY.md` exits 0; on the scratch fixture's path entry exits 1 (spec 3).
-4. `git grep -n "CONTEXT\.md" -- ':!docs/design' ':!docs/adr' ':!vendor' ':!VENDOR.md'` prints nothing (spec 7).
+4. `git grep -n "CONTEXT\.md" -- ':!docs/design' ':!docs/adr' ':!vendor' ':!VENDOR.md' ':!skills/domain-modeling/SKILL.md' ':!skills/domain-modeling/GLOSSARY-FORMAT.md' ':!skills/audit/areas/navigability.md' ':!agents/pilot-fundamentalist.md'` prints nothing (spec 7); the four excluded files name it as vendor provenance, as another repository's file the audit looks for, and as the rename that reads every entry unlogged.
 5. `node scripts/glossary-stale.mjs <scratch fixture>` prints exactly its 1 stale term (spec 4).
 6. `node scripts/glossary-log.mjs show --term Glossary` shows its `added` row naming `project-glossary`; `check` exits 0; a copy of both files in a scratch directory with no git gives the same output (spec 10, 11).
 7. `node scripts/glossary-diff.mjs . origin/pilot feat/project-glossary` lists its candidates; the fundamentalist's
