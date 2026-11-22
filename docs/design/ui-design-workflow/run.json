@@ -9,33 +9,37 @@
   "slices": [
     {
       "slice": "feature",
-      "state": "implementing: co-pilot running; feat at 0fd6c2f"
+      "state": "implementing: S1, S3, S7, S8 integrated; S2, S4, S6 implementing; feat at 25927a3"
     },
     {
       "slice": "S1",
-      "state": "integrated at b15b9df",
+      "state": "integrated at b15b9df (checks green)",
       "branch": "slice/ui-design-workflow-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "pushed 93f1a86",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/ui-design-workflow-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s2"
     },
     {
       "slice": "S3",
-      "state": "pushed 731040c (typescript APPROVE at 731040c, security APPROVE at 18746b6)",
+      "state": "integrated at 2f2c198 (checks green)",
       "branch": "slice/ui-design-workflow-s3",
       "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s3"
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "pushed fd96c69",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/ui-design-workflow-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s4"
     },
     {
       "slice": "S5",
@@ -47,20 +51,22 @@
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/ui-design-workflow-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s6"
     },
     {
       "slice": "S7",
-      "state": "integrated at 946446b",
+      "state": "integrated at 946446b (checks green)",
       "branch": "slice/ui-design-workflow-s7",
       "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s7"
     },
     {
       "slice": "S8",
-      "state": "integrated at 1d7d1e2",
+      "state": "integrated at 1d7d1e2 (checks green)",
       "branch": "slice/ui-design-workflow-s8",
       "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s8"
     },
@@ -83,8 +89,8 @@
       "text": "Lid close on mains was set to 'do nothing' at the user's ask (was sleep); restore with: powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 1; powercfg /setactive SCHEME_CURRENT. On battery, lid close still sleeps."
     }
   ],
-  "next": "Pausing: S8 1d7d1e2, S7 946446b, S1 b15b9df integrated; S1 checks running; then integrate S3 731040c (expect a bin/pilot.mjs merge beside S1); record S3's 3 added files in slices/S3.md; then pilot ready for S2, S4, S6.",
-  "updatedAt": "2026-11-22T11:01:15.442Z",
+  "next": "S4 integrating; S2 pushed 93f1a86 integrates next; S6 implementing. Then pilot ready for S5 and S9.",
+  "updatedAt": "2026-11-22T11:43:49.893Z",
   "friction": [
     {
       "kind": "drain",
@@ -120,6 +126,16 @@
       "agent": "pilot-implementer",
       "what": "S3: openDeck names the open file, refused under node --test unless deck/testUtils.mjs's home is loaded; no comment in open.mjs or no-open.mjs says so, found by tracing hooks/lib/deck-secret.js:36",
       "evidence": "S3 report, 731040c"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4: Chrome DevTools MCP tools absent from the session; wrote a 60-line CDP driver for the browser check. Both verdicts came on b1ecc6c before the fixes, so a re-review was needed",
+      "evidence": "S4 report, slice/ui-design-workflow-s4 fd96c69"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2: a fresh worktree has no deck/rune/target, so the red cargo test and the release build each took about 6 minutes cold; the slice's premise that --snap honours State::load's mode was false (headless reads only --theme)",
+      "evidence": "S2 report, slice/ui-design-workflow-s2 93f1a86"
     }
   ]
 }
