@@ -4,8 +4,8 @@ Ticket `itm_52b72e87a2a3`. Grilling depth: forks (L1). Brief: `brief.md`.
 
 ## 1. Problem
 
-"still going? why are the tests taking so long?" On 2026-11-22 three signed landings of PR #133 timed out at the deck's
-30-minute limit (`deck/landing.mjs:35`) with no test failing; the fourth landed at 26.5 minutes. The user wants the
+"still going? why are the tests taking so long?" On 2026-11-22 two signed landings of PR #133 timed out at the deck's
+30-minute limit (`deck/landing.mjs:35`) with no test failing (the ticket's count). The user wants the
 suite cheaper and each test's worth examined ("maybe dont run as many tests? like we should check how reasonable they
 are"), not a higher limit.
 
@@ -137,7 +137,7 @@ red team: (1) S3 and S5 both edit `select-tests.mjs` (`changed`, tree `since`): 
 and S3 both edit `gate.mjs`: chained. (3) S4's `testedTrees` widens the `gh` allowlist, a seam S5 only reads: S5 names
 S4's symbol, never restates it. (4) S6's memo can serve a stale default branch inside one land call if a test renames
 it mid-call; S6 behaviour 2 pins that a new runner asks again. (5) Spec 4 is at risk if S6-S8 save less than estimated
-(F7: load doubles time); S10 says so with numbers and names the Defender step, it does not raise the limit. (6) S7 and S9 reshape `inbox.test.js` and `daemon.test.mjs`, files the queued runs (handoff-no-wait, reply-markdown, archive-page, ui-design-workflow) also add tests to: each starts from the then `feat/cheap-suite` tip and re-applies its rule to tests found there (L9), never to today's list.
+(F7: load doubles time); S10 says so with numbers and names the Defender step, it does not raise the limit. (6) S7 and S9 reshape `inbox.test.js` and `daemon.test.mjs`, files the queued runs (handoff-no-wait, reply-markdown, archive-page, ui-design-workflow) also add tests to: each starts from the then `feat/cheap-suite` tip and re-applies its rule to tests found there (L9), never to today's list. (7) S9 was `Model: sonnet` while delivering spec 2 (A1) and 3 (A4), both assumed: now opus.
 
 ## 9. Acceptance evidence
 
