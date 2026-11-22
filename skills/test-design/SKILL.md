@@ -6,7 +6,7 @@ description: What makes a test worth keeping, where its seams go, and which anti
 upstream: mattpocock-skills 1.2.3 - skills/engineering/tdd/SKILL.md
 copyright: Copyright (c) 2026 Matt Pocock
 licence: MIT - see THIRD-PARTY-NOTICES.md
-adapted: renamed tdd to test-design for its job (ADR 0180); the glossary is the artefact section 3; under a piloted slice the slice file's Interface and Tests are the agreed seams, off it the seams are agreed on the deck, naming per seam what its test catches and misses; anti-patterns gain prose pin, hand-written fixture, dependent tests and happy path only; siblings are named under pilot:
+adapted: renamed tdd to test-design for its job (ADR 0180); words are looked up in the repository's GLOSSARY.md with glossary.mjs term; under a piloted slice the slice file's Interface and Tests are the agreed seams, off it the seams are agreed on the deck, naming per seam what its test catches and misses; anti-patterns gain prose pin, hand-written fixture, dependent tests and happy path only; siblings are named under pilot:
 ledger: vendor/methodology.md
 -->
 
@@ -14,7 +14,7 @@ ledger: vendor/methodology.md
 
 The red → green loop is `pilot:tdd-workflow`. This skill is the reference that makes that loop produce tests worth keeping: what a good test is, where tests go, the anti-patterns, and the rules of the loop. Every section applies on every cycle: consult them before and during the loop, not after.
 
-When exploring the codebase, read the artefact's section 3 glossary so test names and interface vocabulary match the run's domain language, and respect ADRs in the area you're touching.
+When exploring the codebase, look a domain word up in the repository's `GLOSSARY.md` with `node "${CLAUDE_PLUGIN_ROOT}/scripts/glossary.mjs" term <word>` so test names and interface vocabulary match the domain language, and respect ADRs in the area you're touching.
 
 ## What a good test is
 

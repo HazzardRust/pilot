@@ -6,7 +6,7 @@ description: Diagnosis loop for hard bugs and performance regressions. Use when 
 upstream: mattpocock-skills 1.2.3 - skills/engineering/diagnosing-bugs/SKILL.md
 copyright: Copyright (c) 2026 Matt Pocock
 licence: MIT - see THIRD-PARTY-NOTICES.md
-adapted: the human in the loop is a deck walkthrough item waited on with the deck's own tools rather than a terminal script; the glossary is the artefact section 3; walkthrough steps are written `do this → correct result`, unlabelled, to match this package's convention; an agent without the deck sends its ranked hypotheses to its addressee, and two failed fixes end in that list rather than a third
+adapted: the human in the loop is a deck walkthrough item waited on with the deck's own tools rather than a terminal script; words are looked up in the repository's GLOSSARY.md with glossary.mjs term; walkthrough steps are written `do this → correct result`, unlabelled, to match this package's convention; an agent without the deck sends its ranked hypotheses to its addressee, and two failed fixes end in that list rather than a third
 ledger: vendor/methodology.md
 -->
 
@@ -14,7 +14,7 @@ ledger: vendor/methodology.md
 
 A discipline for hard bugs. Skip phases only when explicitly justified.
 
-When exploring the codebase, read the run's architecture artefact — its section 3 glossary for the vocabulary and its section 7 for what each slice was meant to do — and check ADRs in the area you're touching.
+When exploring the codebase, look a domain word up in the repository's `GLOSSARY.md` with `node "${CLAUDE_PLUGIN_ROOT}/scripts/glossary.mjs" term <word>`, read the run's architecture artefact's slices for what each was meant to do, and check ADRs in the area you're touching.
 
 ## Redact
 
