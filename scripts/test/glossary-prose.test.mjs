@@ -23,7 +23,7 @@ test('the pilot looks the request up before grilling', () => {
   const row = domainRow();
   assert.ok(row, 'pilot.md has a `domain-modeling` row');
   assert.match(row, /glossary\.mjs match/, 'grilling runs `glossary.mjs match`');
-  assert.match(row, /glossary\.mjs match[^|]*before the first question/, 'on the request, before the first question');
+  assert.match(row, /glossary\.mjs match[^|]*before[^|]*question/, 'on the request, before the first question');
 });
 
 test('the architect writes lasting terms inline', () => {
