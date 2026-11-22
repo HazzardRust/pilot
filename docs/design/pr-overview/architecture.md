@@ -78,6 +78,7 @@ Deletion test: deleting `pr-overview.mjs` puts the section parse and rules back 
 - **L4** No overview means today's body, byte for byte (spec 7): runs in flight are not broken. Rejected: refusing a gate1 without one (would touch `deck/store-items.mjs`, which ui-design-workflow S8 owns).
 - **L5** The built line is the one record-derived line, counted from states starting `integrated` (507 of the record states in `docs/design/*/run.json` do); never a slice id.
 - **L6** The overview's own rules live in an adapted skill, `skills/pr-overview/SKILL.md`; each writer's agent file gains one line naming it. ADR NNNN records L2-L6. Rejected: the rules restated in three agent files (prompt pins at 0 headroom).
+- **L7** QA's environment is this feature's own draft PR on GitHub; other open PRs keep their bodies until their runs next update them. The user's press on `itm_121c01811a63`.
 
 ## 6. Assumed decisions
 
