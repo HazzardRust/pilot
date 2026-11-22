@@ -30,6 +30,14 @@ test('a pair just under AA is not rounded up to it', () => {
   assert.ok(contrast('#098766', '#ffffff') < 4.5);
 });
 
+test('the playground flags a pair under AA and shows its ratio to 2 decimals', () => {
+  const tokens = loadTokens();
+  const rate = (fg, bg) => ({ ...tokens.rate(fg, bg) }); // out of the page's realm, for deepEqual
+  assert.deepEqual(rate('#777777', '#ffffff'), { low: true, text: 'low 4.48' });
+  assert.deepEqual(rate('#767676', '#ffffff'), { low: false, text: '4.54' });
+  assert.deepEqual(rate('#098766', '#ffffff'), { low: true, text: 'low 4.50' });
+});
+
 test('contrast refuses a colour that is not #rrggbb', () => {
   const { contrast } = loadTokens();
   for (const bad of ['#fff', 'white', '', null, '#gggggg']) {

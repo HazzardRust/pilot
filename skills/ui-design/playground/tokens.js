@@ -111,5 +111,11 @@
     return (hi + 0.05) / (lo + 0.05);
   }
 
-  g.tokens = { leaves, exportText, applyExport, contrast };
+  /** A pair's contrast cell: `low` under WCAG AA text (4.5), `text` the ratio as the page shows it. */
+  function rate(fg, bg) {
+    const ratio = contrast(fg, bg), low = ratio < 4.5;
+    return { low, text: (low ? 'low ' : '') + ratio.toFixed(2) };
+  }
+
+  g.tokens = { leaves, exportText, applyExport, contrast, rate };
 })(globalThis);
