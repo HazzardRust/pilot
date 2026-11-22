@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed 140e076",
+      "state": "integrated at 712582b",
       "after": [
         "S1",
         "S2",
@@ -63,7 +63,7 @@
     },
     {
       "slice": "S7",
-      "state": "implementing",
+      "state": "pushed 28c1e1c; report lost, needs verdicts and evidence before integrate",
       "after": [
         "S1",
         "S4",
@@ -73,8 +73,13 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-project-glossary-s7"
     }
   ],
-  "next": "pause drain: integrate S3 (140e076) once checks 0863a79 green; S7 implementer live; then hand back paused",
-  "updatedAt": "2026-11-22T07:21:31.939Z",
+  "findings": [
+    "kept: S4-sec F1 MEDIUM — skills/audit/areas/navigability.md Measure item 6 has the auditing agent run the audited repo's own glossary scripts; fix: always the plugin's copy by absolute path",
+    "kept: S5-sec MEDIUM — glossary.mjs match instructions in pilot.md, pilot-architect.md (and S3's grilling SKILL.md) give no quoting rule, so request text in a double-quoted Bash call is shell-expanded; fix: stdin or `--` input in scripts/glossary.mjs plus one clause per prompt, raising measure-prompt.test.mjs pins",
+    "dropped: S6-ts F1 — spawn without windowsHide in a test file only; no user-facing effect"
+  ],
+  "next": "paused; feat/project-glossary at 712582b, checks green. Next: spawn pilot:typescript-reviewer and pilot:security-reviewer on slice/project-glossary-s7 (28c1e1c), red-then-green 36c6741 (stub) vs 28c1e1c for B1-B4, read B5; integrate S7; then fundamentalist, fix round (S4-sec F1, S5-sec), QA",
+  "updatedAt": "2026-11-22T07:56:59.842Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -235,6 +240,48 @@
       "what": "S3 slice interface names S2's match/term but the exports are matchGlossary/termOf; B4 asks for 3 domain-modeling ledger rows where 2 mention the glossary",
       "evidence": "S3 report pushback",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7 fact sheet named heading '## The judgement pass' but it is '## The judgement pass: principles'; gate waited for a slot behind two other runs; Edit retries after 'File has not been read yet'",
+      "evidence": "S7 report on slice/project-glossary-s7 28c1e1c",
+      "size": 2
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "S7 orphan measure copies S4's isUsed and drifted: excludes GLOSSARY-LOG.md where glossary-stale.mjs does not; new excludes and changed/removed glossary edits unpinned",
+      "evidence": "glossary-diff.mjs:28 vs glossary-stale.mjs:17; Verdict WARNING on 28c1e1c",
+      "size": 2
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "lineOf strips C0 and DEL only; C1 and bidi controls from repository text reach the terminal",
+      "evidence": "glossary-diff.mjs:157; Verdict APPROVE on 28c1e1c",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "predecessor recorded S7 friction but not its reviewer Verdict lines or evidence rows; S7 re-reviewed fresh before integration",
+      "evidence": "run.json had no Verdict for 28c1e1c",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "S7 implementer's SubagentHandback report was lost when the session changed under the co-pilot; SendMessage to its id found no transcript, so its Verdict and Evidence rows cannot be quoted for pilot integrate",
+      "evidence": "SendMessage aed626ebf79b5fd5e: No transcript found",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot checks --wait returns 'checks pending' on the windows-latest runner and must be re-armed by hand (twice: 94e0734, 712582b)",
+      "evidence": "bngb2cmfx-style waits brmhsp8r5, b0a2gjlfc",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "classifier gave no verdict on a Bash call issued beside a deck_status three times; each needed a reissue",
+      "evidence": "this run",
+      "size": 1
     }
   ]
 }
