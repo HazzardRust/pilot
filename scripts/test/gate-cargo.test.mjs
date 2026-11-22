@@ -2,6 +2,7 @@
  * rune-deck-ui S19 (spec 7; A3): the gate runs the Rune deck's `cargo test` where cargo is on PATH, else
  * prints one skip line. `cargoStep` decides; `runGate`, given `which`, runs it inside the home-store window
  * with the guard env and joins its status to the gate's. `spawn` is injected, so neither node nor cargo starts.
+ * ui-design-workflow S7 (spec 11): `cargo fmt --check` runs before `cargo test`, and a red one stops the gate.
  */
 
 import { test } from 'node:test';
@@ -45,7 +46,7 @@ function gate(t, { which, answer = () => ({ status: 0 }), platform = 'win32' }) 
       read: () => [],
       spawn: (command, args, options) => {
         calls.push({ command, args, options });
-        return answer(command, options);
+        return answer(command, options, args);
       },
       homeStore: file,
       deckPid: () => null,
@@ -58,24 +59,34 @@ function gate(t, { which, answer = () => ({ status: 0 }), platform = 'win32' }) 
   }
 }
 
-test('cargo runs where it is: cargoStep names cargo test on the Rune manifest', () => {
+const FMT = ['fmt', '--check', '--manifest-path', 'deck/rune/Cargo.toml'];
+const TEST = ['test', '--manifest-path', 'deck/rune/Cargo.toml'];
+
+test('fmt runs before test: cargoStep names cargo fmt --check, then cargo test, on the Rune manifest', () => {
   const asked = [];
   const step = cargoStep({}, (cmd) => (asked.push(cmd), CARGO), 'win32');
   assert.deepEqual(asked, ['cargo']);
   // The path found, never the bare name, which Windows would look up in the checkout first.
-  assert.deepEqual(step, { command: CARGO, args: ['test', '--manifest-path', 'deck/rune/Cargo.toml'] });
+  assert.deepEqual(step, { steps: [{ command: CARGO, args: FMT }, { command: CARGO, args: TEST }] });
 });
 
-test('cargo runs where it is: the gate starts it hidden, in its checkout, under the home-store guard', (t) => {
+test('fmt runs before test: the gate starts both hidden, in order, in its checkout, under the home-store guard', (t) => {
   const { code, calls, file } = gate(t, { which: () => CARGO });
   assert.equal(code, 0);
-  const cargo = calls.find((call) => call.command === CARGO);
-  assert.ok(cargo, 'cargo was not started');
-  assert.deepEqual(cargo.args, ['test', '--manifest-path', 'deck/rune/Cargo.toml']);
-  assert.equal(cargo.options.windowsHide, true);
-  assert.equal(cargo.options.env.PILOT_GATE_HOME_STORE, file);
-  assert.ok(cargo.options.env.PILOT_GATE_HOME_LOG);
-  assert.equal(cargo.options.cwd, path.dirname(file));
+  const cargo = calls.filter((call) => call.command === CARGO);
+  assert.deepEqual(cargo.map((call) => call.args), [FMT, TEST]);
+  for (const call of cargo) {
+    assert.equal(call.options.windowsHide, true);
+    assert.equal(call.options.env.PILOT_GATE_HOME_STORE, file);
+    assert.ok(call.options.env.PILOT_GATE_HOME_LOG);
+    assert.equal(call.options.cwd, path.dirname(file));
+  }
+});
+
+test('an unformatted file makes the gate red: a failing fmt step gives exit 1 and starts no test step', (t) => {
+  const { code, calls } = gate(t, { which: () => CARGO, answer: (command) => ({ status: command === CARGO ? 1 : 0 }) });
+  assert.equal(code, 1);
+  assert.deepEqual(calls.filter((call) => call.command === CARGO).map((call) => call.args), [FMT]);
 });
 
 test('a cargo run that writes the home store is caught by the home-store line', (t) => {
@@ -89,8 +100,9 @@ test('a cargo run that writes the home store is caught by the home-store line', 
 });
 
 test('a failing cargo test fails the gate, and one that cannot start does too', (t) => {
-  const failed = gate(t, { which: () => CARGO, answer: (command) => ({ status: command === CARGO ? 101 : 0 }) });
+  const failed = gate(t, { which: () => CARGO, answer: (command, options, args) => ({ status: command === CARGO && args[0] === 'test' ? 101 : 0 }) });
   assert.equal(failed.code, 1);
+  assert.deepEqual(failed.calls.filter((call) => call.command === CARGO).map((call) => call.args), [FMT, TEST]);
   const unstarted = gate(t, {
     which: () => CARGO,
     answer: (command) => (command === CARGO ?{ status: null, error: new Error('spawn cargo ENOENT') } : { status: 0 }),
@@ -124,8 +136,10 @@ test('the default which finds cargo.exe in an absolute PATH or Path dir, and not
   fs.writeFileSync(path.join(dir, 'cargo.cmd'), '');
   assert.deepEqual(cargoStep({ PATH: dir, Path: dir, PATHEXT: '.CMD;.EXE' }, undefined, 'win32'), { skip: SKIP });
   fs.writeFileSync(path.join(dir, 'cargo.exe'), '');
-  assert.equal(cargoStep({ PATH: dir }, undefined, 'win32').command, path.join(dir, 'cargo.exe'));
-  assert.equal(cargoStep({ Path: dir }, undefined, 'win32').command, path.join(dir, 'cargo.exe'));
+  for (const env of [{ PATH: dir }, { Path: dir }]) {
+    const commands = cargoStep(env, undefined, 'win32').steps.map((step) => step.command);
+    assert.deepEqual(commands, [path.join(dir, 'cargo.exe'), path.join(dir, 'cargo.exe')]);
+  }
   // A relative entry would resolve against the checkout, where a planted cargo.exe could sit.
   // The planted dir sits under the checkout, so the entry is relative whichever drive the temp dir is on.
   const planted = fs.mkdtempSync(path.join(process.cwd(), '.pilot-gate-planted-'));
