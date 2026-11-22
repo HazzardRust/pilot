@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "implementing",
+      "state": "pushed 140e076",
       "after": [
         "S1",
         "S2",
@@ -44,7 +44,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 10cf362",
+      "state": "integrated at 0863a79",
       "after": [
         "S2",
         "S6"
@@ -73,8 +73,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-project-glossary-s7"
     }
   ],
-  "next": "pause drain: integrate S5 (10cf362) once checks 94e0734 green; S3, S7 implementers live",
-  "updatedAt": "2026-11-22T07:00:58.576Z",
+  "next": "pause drain: integrate S3 (140e076) once checks 0863a79 green; S7 implementer live; then hand back paused",
+  "updatedAt": "2026-11-22T07:21:31.939Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -223,6 +223,18 @@
       "what": "S5 slice names prompt pins in pilot-agents.test.mjs but they are in measure-prompt.test.mjs:215,:257; both prompts at 0 headroom, so the implementer cut three sentences of pilot-architect.md outside the slice to fit (4 measure-edit rounds)",
       "evidence": "S5 report, slice/project-glossary-s5 cb6e5db",
       "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test writes the live deck store outside the worktree: 'home store changed: ~/.claude/pilot/deck.json; live deck 9000 up'",
+      "evidence": "S3 final gate on slice/project-glossary-s3 140e076",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 slice interface names S2's match/term but the exports are matchGlossary/termOf; B4 asks for 3 domain-modeling ledger rows where 2 mention the glossary",
+      "evidence": "S3 report pushback",
+      "size": 2
     }
   ]
 }
