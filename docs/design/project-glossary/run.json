@@ -63,7 +63,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed 28c1e1c; report lost, needs verdicts and evidence before integrate",
+      "state": "integrated at 47804ff",
       "after": [
         "S1",
         "S4",
@@ -71,28 +71,30 @@
       ],
       "branch": "slice/project-glossary-s7",
       "worktree": "C:/Users/jrylk/Projects/pilot-project-glossary-s7"
+    },
+    {
+      "slice": "feature",
+      "state": "QA read-only pass done at 47804ff (gate green); QA ended before the fix tip; fresh QA due on the fix tip",
+      "branch": "feat/project-glossary",
+      "pr": 133
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S7"
+      ],
+      "branch": "fix/project-glossary",
+      "worktree": "C:/Users/jrylk/Projects/pilot-project-glossary-fix"
     }
   ],
   "findings": [
-    "kept: S4-sec F1 MEDIUM — skills/audit/areas/navigability.md Measure item 6 has the auditing agent run the audited repo's own glossary scripts; fix: always the plugin's copy by absolute path",
-    "kept: S5-sec MEDIUM — glossary.mjs match instructions in pilot.md, pilot-architect.md (and S3's grilling SKILL.md) give no quoting rule, so request text in a double-quoted Bash call is shell-expanded; fix: stdin or `--` input in scripts/glossary.mjs plus one clause per prompt, raising measure-prompt.test.mjs pins",
-    "dropped: S6-ts F1 — spawn without windowsHide in a test file only; no user-facing effect"
+    "kept: SEC-M fix-round security MEDIUM — glossary-stale.mjs and glossary.mjs check print repository terms unmasked; share lineOf's mask, widened to [\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}], routed to QA as the writer",
+    "dropped: SEC-L fix-round security LOW — readFileSync follows a symlinked GLOSSARY.md: reads only, prints terms already masked by SEC-M"
   ],
-  "next": "paused; feat/project-glossary at 712582b, checks green. Next: spawn pilot:typescript-reviewer and pilot:security-reviewer on slice/project-glossary-s7 (28c1e1c), red-then-green 36c6741 (stub) vs 28c1e1c for B1-B4, read B5; integrate S7; then fundamentalist, fix round (S4-sec F1, S5-sec), QA",
-  "updatedAt": "2026-11-22T07:56:59.842Z",
+  "next": "integrating fix round 0a1f0f2; then checks, fresh QA on the tip with SEC-M as its first fix",
+  "updatedAt": "2026-11-22T08:44:23.955Z",
   "friction": [
-    {
-      "agent": "pilot-architect",
-      "what": "GLOSSARY-FORMAT.md documents an entry shape no file uses; skills say ubiquitous language is section 3 while the architect template has it at section 4",
-      "evidence": "architect report on design/project-glossary 6c8a4e05",
-      "size": 2
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "ci-gate brief.md was only on origin/feat/ci-gate, not origin/pilot, when asked to copy the flaky-test list from it",
-      "evidence": "architect report",
-      "size": 1
-    },
     {
       "agent": "pilot-architect",
       "what": "pilot base moved from feat/human-steps to pilot mid-design (ci-gate landed), forcing a rebase of design/project-glossary whose push was then rejected as non-fast-forward",
@@ -282,6 +284,48 @@
       "what": "classifier gave no verdict on a Bash call issued beside a deck_status three times; each needed a reissue",
       "evidence": "this run",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner reported after the fundamentalist's hand-back; npm test fails in a fresh worktree (deck/rune Cargo.toml, deck/procs.mjs), so diff coverage unmeasured; Stryker npx refused by the classifier; the gate wrote the live ~/.claude/pilot/deck.json",
+      "evidence": "fundamentalist final report on 47804ff, tools table",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "review worktree could not be removed while its runner held it; directory deleted, git worktree entry may need a prune",
+      "evidence": "C:/Users/jrylk/Projects/pilot-fundamentalist-project-glossary",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "scratch claude session logged deck MCP failed to connect though deck_post worked; `pilot deck --help` opened the live deck tab",
+      "evidence": "QA acceptance 2 probe, scratch deck :60000",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "forced hand-back while waiting read-only for the fix tip; worktree qa/project-glossary left for the next QA",
+      "evidence": "QA report at 47804ff",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 7's 0-hit CONTEXT.md bar fails by construction on provenance lines; spec 4 x spec 10 cut into S4 and S6 with no interaction test, so the log-exclude bug showed only in QA",
+      "evidence": "QA F1, F2 at 47804ff",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back enforce hook forced a hand-back while the fix implementer was live in its gate; its report will reach no co-pilot unless main resumes one",
+      "evidence": "fix/project-glossary 0a1f0f2 local, unpushed",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit tool decoded \\uXXXX escapes into raw bidi characters in source; one npm test run died with no summary (10 min rerun); K5 had 1 token of architect headroom",
+      "evidence": "fix round report on 0a1f0f2",
+      "size": 4
     }
   ]
 }
