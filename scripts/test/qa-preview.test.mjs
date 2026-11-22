@@ -81,5 +81,5 @@ test('QA\'s own share of its prompt stays at or under 5264 tokens, with the chec
   const rows = await measure({ root: ROOT, home });
   const qa = rows.find((row) => row.agent === 'pilot-qa');
   const own = (qa.definition + qa.skills + qa.tools) / 4;
-  assert.ok(own <= 5264,`pilot-qa's own share is ${own} tokens`);
+  assert.ok(own <= 5264, `pilot-qa's own share is ${own} tokens`);
 });
