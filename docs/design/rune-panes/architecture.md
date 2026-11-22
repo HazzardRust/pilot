@@ -65,8 +65,9 @@ in CI's `Rune deck` job; every `look` line is the user's, on the walkthrough, be
   and `ui/js/time.mjs` `relative` turns it into "3 mins ago" in the browser; the view already calls `relative`
   server-side for usage resets (`view/usage.mjs:13, 27`), the precedent S6 follows.
 - Empty texts are pinned in one table, `tests/empty.rs:9-18` (`SENTENCES`), from rune-deck-ui spec 21.
-- Build here: cargo 1.100 is on PATH on this laptop and the crate compiles past its build scripts (the C++ linker is
-  present); CI's `Rune deck` job (`.github/workflows/ci.yml`, `windows-latest`) builds and tests on PRs to `pilot`
+- Build here: cargo 1.100 is on PATH on this laptop; on origin/pilot 86957ec, after `npm ci`, `cargo test --locked
+  --no-fail-fast` builds and passes 177 of 177 across 27 test binaries, scratch daemons and headless frames included
+  (without `npm ci` every scratch-daemon test fails at `tests/support/mod.rs:33`); CI's `Rune deck` job (`.github/workflows/ci.yml`, `windows-latest`) builds and tests on PRs to `pilot`
   that touch `deck/**`. `deck/test/facades.test.mjs` caps only `deck/*.mjs` and `deck/ui/*.mjs` at 800 lines.
 
 ### Seams
