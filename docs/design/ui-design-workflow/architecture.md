@@ -118,7 +118,9 @@ Deletion test:
 - **A3** The export reaches the crew as a file path in a reply on Shape the look. Posted itm_88eea115fae3. Trade: one copy-paste. Rejected: a loopback Save route, which would take a file:// page's `Origin: null` with a bearer the page must hold.
   No user answer: the deck closed itm_88eea115fae3 as assumed after 20 min, so the default stands for now.
 - **A4** The web surface is a static fixture, `fixtures/surface-web/`. With the user, itm_1e265416d839. Trade: not a real product page. Rejected: the HTML deck, whose routes need its bearer.
-- **A5** Proceed without the notes file and DESIGN.md §8. With the user, itm_4abbec087d33. Trade: any rule only they held is missing.
+  No user answer: the deck closed itm_1e265416d839 as assumed after 20 min, so the default stands for now.
+- **A5** Proceed without the notes file and DESIGN.md §8. Trade: any rule only they held is missing.
+  No user answer: the deck closed itm_4abbec087d33 as assumed after 20 min, so the default stands for now.
 - **A6** Spec 12 (contrast flag) is in scope as an added line (pilot, on the user's behalf).
 - **A7** An export is applied by a Sonnet implementer on a fix brief on `feat/<slug>`, running `pilot look apply`. Not posted (process). Trade: one spawn per export. Rejected: the co-pilot applying it, since it writes no code.
 - **A8** One `surface.json` per surface, beside its token file. Not posted. Trade: no repo-wide list of surfaces. Rejected: a repo-level registry (one adapter per stack is all spec 1 needs).
@@ -162,6 +164,8 @@ S1 is the walking skeleton. A real `surface.json` is read by the real CLI, which
 - S1's fixture: Chromium blocks `fetch` of file:// JSON. The `web` adapter passes `--allow-file-access-from-files` to a temporary profile only.
 
 ## 9. Acceptance evidence
+
+QA environment: this laptop, with the Rune deck built here, the web fixture in a local browser, and a scratch deck store; no database. This default was not chosen by the user: the deck closed itm_25709c626d1e as assumed after 20 min with no answer.
 
 1. On the Rune deck plan's Gate 1, the gate1 body shows `Fonts:`, `Colour means:` and `Reference:` lines. A gate1 without them was refused (spec 10).
 2. The **Shape the look** item appears after the sign. The user runs `pilot look shape deck/rune/surface.json`, moves a colour, sees a pair flagged under 4.5:1, and downloads the export (spec 2, 12).
