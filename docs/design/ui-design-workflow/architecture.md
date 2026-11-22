@@ -28,6 +28,25 @@ Inputs:
 | 10 | The gate1 of a surface feature carries the fonts, what colour means, and a reference per region. | Deck test: a `surface: true` gate1 with no `Fonts:`, `Colour means:` or `Reference:` line is refused (3 refusals), and one with all three is stored. The architect's step 5 names the lines. |
 | 11 | Line 4's checks gain: every icon-only control names itself. Each slice gate on the Rune deck runs a format check beside both test halves. | The interaction checklist has an icon-only row. `cargoStep` returns `cargo fmt --check` and `cargo test`; a gate test shows 1 unformatted file makes the gate red, with 0 test steps started. |
 | 12 | *added, assumed (A6)*: the playground shows the WCAG contrast ratio of each text/surface role pair, and flags a pair under 4.5:1. practitioner: design-systems engineer | `contrast` test on `tokens.js`: `#777777` on `#ffffff` gives 4.48 and is flagged; `#767676` gives 4.54 and is not. |
+| 13 | *added (§7 feedback 1, 2; L10)*: every surface carries a committed design ruleset (rules, what each token means, known gaps), and its `surface.json` names it as `rules`. | `readSurface` test: a `surface.json` without `rules`, or naming a file that is missing, is refused. Both adapters name one: `deck/DESIGN.md` and `fixtures/surface-web/DESIGN.md`. |
+| 14 | *added (L10)*: a run's design notes are committed under `docs/design/<slug>/`, never kept only in a machine's memory folder. | The pilot's and the architect's definitions each carry a **Design notes** heading naming `docs/design/<slug>/notes.md`; a structural lint (the heading exists in both) pins it. |
+
+### 2.1 DESIGN.md §7 against the spec (A5 overturned)
+
+| §7 feedback | Covered by |
+| --- | --- |
+| 1 a ruleset given as a design doc; 2 "document that as a design.md" | **not covered**: became spec 13 (S1, S2) |
+| 3 corners, panel snap, title bar, left separator | Rune-only, for itm_f9162b87414f |
+| 4, 5 copy VS Code's side bar; symbols name themselves on hover | 10 (`Reference:` per region), 6, 11 |
+| 6 buttons in a random palette, misaligned | 4 (defaults, parity), 12 |
+| 7 skip tests while restyling | ADR 0185: style is `look` evidence, a test only for logic; 7's snaps |
+| 8 text too close to the top; 12 kind line misaligned; 14 reply box layout | Rune-only, for itm_f9162b87414f |
+| 9 a new font | 10 (`Fonts:`) |
+| 10, 13 hover on everything; 11 selectable text | 4 (interaction) |
+| 13 "suggest a better system … close the intent gap" | 2, 3, 5 |
+| 14 live markdown | its own ticket (#137 reply-markdown) |
+| 15 missing nuance region by region; Tab and Shift+Tab | 6, 4 |
+| 16 separation lines as the HTML deck has | 4 (parity), 6 |
 
 ## 3. Findings
 
@@ -108,6 +127,7 @@ Deletion test:
 - **L7** Two adapter kinds: `command`, an argv template run with no shell, and `web`, a headless Chromium found on the machine, with a temporary profile. Rejected: a shell string in `surface.json` (injection).
 - **L8** Each crew prompt addition points at the skill, and its pin rises by the measured delta with a dated comment: at most 80 tokens each for the pilot, QA and the architect. Rejected: cutting other prose to fit, which is out of scope.
 - **L9** The run's ADR is `docs/adr/NNNN-ui-design-workflow.md`, cited ADR NNNN. The landing numbers it.
+- **L10** Replaces A5 (user, itm_47ebe79d7ce4). The notes file and DESIGN.md §8 are unrecoverable. DESIGN.md §7 is read line by line against the spec (§2.1), and its uncovered workflow rule becomes spec 13. From now on a run's design notes live in the repo (spec 14). Rejected: proceeding without them.
 
 ## 6. Assumed decisions
 
@@ -125,7 +145,7 @@ Deletion test:
   Verdict: stands — deck default on itm_1e265416d839, not the user
 - **A5** Proceed without the notes file and DESIGN.md §8. Trade: any rule only they held is missing.
   No user answer: the deck closed itm_4abbec087d33 as assumed after 20 min, so the default stands for now.
-  Verdict: stands — deck default on itm_4abbec087d33, not the user, who named both inputs in the ticket; Gate 1 says so first
+  Verdict: overturned: the user called the DESIGN.md question important; the two inputs are unrecoverable (old machine out of reach), and on itm_47ebe79d7ce4 they chose to have DESIGN.md section 7 read line by line against the spec, with design notes committed in the repo from now on
 - **A6** Spec 12 (contrast flag) is in scope as an added line (pilot, on the user's behalf).
   Verdict: stands — one added spec line, marked added, within the user's AA rule in DESIGN.md
 - **A7** An export is applied by a Sonnet implementer on a fix brief on `feat/<slug>`, running `pilot look apply`. Not posted (process). Trade: one spawn per export. Rejected: the co-pilot applying it, since it writes no code.
@@ -144,6 +164,7 @@ Deletion test:
 - A loopback route that receives exports (A3).
 - `design-review`'s web-only scope; it is not generalised here.
 - Sync of look exports between devices.
+- Rune-only look fixes from §7 (feedback 3, 8, 12, 14's reply box), for itm_f9162b87414f to check against the Rune deck as built.
 
 ## 8. Slices
 
@@ -151,15 +172,15 @@ Width 6; longest stem 3 (S1 → S4 → S5, S1 → S6 → S9)
 
 | Slice | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- |
-| S1 `pilot look snap` captures a web fixture screen in light and dark | 1, 7 | `deck/look.mjs` (new), `bin/pilot.mjs`, `fixtures/surface-web/` (new: `index.html`, `tokens.json`, `surface.json`), `skills/ui-design/SKILL.md` (new), `deck/test/look.test.mjs` (new), `docs/adr/NNNN-ui-design-workflow.md` (new) | – | typescript, security | [S1](slices/S1.md) |
-| S2 The Rune deck opens any screen in either mode by start-up route | 1, 7 | `deck/rune/src/app.rs`, `deck/rune/src/main.rs`, `deck/rune/tests/startup.rs` (new), `deck/rune/surface.json` (new) | S1 (`surface.json` shape) | rust, security | [S2](slices/S2.md) |
+| S1 `pilot look snap` captures a web fixture screen in light and dark | 1, 7, 13 | `deck/look.mjs` (new), `bin/pilot.mjs`, `fixtures/surface-web/` (new: `index.html`, `tokens.json`, `surface.json`, `DESIGN.md`), `skills/ui-design/SKILL.md` (new), `deck/test/look.test.mjs` (new), `docs/adr/NNNN-ui-design-workflow.md` (new) | – | typescript, security | [S1](slices/S1.md) |
+| S2 The Rune deck opens any screen in either mode by start-up route | 1, 7, 13 | `deck/rune/src/app.rs`, `deck/rune/src/main.rs`, `deck/rune/tests/startup.rs` (new), `deck/rune/surface.json` (new) | S1 (`surface.json` shape) | rust, security | [S2](slices/S2.md) |
 | S3 A rebuild keeps the user's Rune window | 8 | `deck/open.mjs`, `deck/test/open-copy.test.mjs` (new) | – | typescript, security | [S3](slices/S3.md) |
 | S4 `pilot look apply` changes only the touched tokens | 3 | `skills/ui-design/playground/tokens.js` (new), `deck/rune/playground/index.html` (parser out), `deck/look.mjs` (`apply`), `deck/test/look-apply.test.mjs` (new) | S1 (`deck/look.mjs`) | typescript, security | [S4](slices/S4.md) |
 | S5 One playground shapes any surface and flags low contrast | 1, 5, 12 | `skills/ui-design/playground/index.html` (moved from `deck/rune/playground/`), `deck/rune/playground/mock.html` (new), `fixtures/surface-web/index.html` (preview message), `deck/rune/surface.json` and `fixtures/surface-web/surface.json` (`preview`), `skills/ui-design/playground/tokens.js` (`contrast`), `deck/rune/tests/theme.rs` (path), `deck/look.mjs` (`shape`), `deck/test/look-contrast.test.mjs` (new) | S4 (`tokens.js`, `index.html`, `deck/look.mjs`), S2 (`deck/rune/surface.json`) | typescript, rust, security | [S5](slices/S5.md) |
 | S6 Four checklists the implementer and QA load | 4, 11 | `skills/ui-design/checklists/*.md` (new, 4), `skills/ui-design/SKILL.md` (links), `agents/pilot-implementer.md`, `agents/pilot-qa.md` (skill load line), `scripts/test/ui-design.test.mjs` (new), `scripts/test/qa-preview.test.mjs` (pin) | S1 (`SKILL.md`) | typescript, security | [S6](slices/S6.md) |
 | S7 The Rune gate checks format | 11 | `scripts/gate.mjs` (`cargoStep`, `runeDeck`), `scripts/test/gate-cargo.test.mjs` (new) | – | typescript, security | [S7](slices/S7.md) |
 | S8 The deck refuses a surface gate1 without its look lines, and QA's walkthrough without its difference list | 6, 10 | `deck/gate2-evidence.mjs`, `deck/store-items.mjs` (line 167 in place), `deck/test/look-gaps.test.mjs` (new) | – | typescript, security | [S8](slices/S8.md) |
-| S9 The pilot, QA and architect run the look step | 2, 6, 9, 10 | `agents/pilot.md`, `agents/pilot-qa.md`, `agents/pilot-architect.md`, `scripts/test/ui-design.test.mjs` (look-notes lint), `scripts/test/measure-prompt.test.mjs` (pins) | S6 (`agents/pilot-qa.md`, `ui-design.test.mjs`, `qa-preview.test.mjs` pin) | typescript, security | [S9](slices/S9.md) |
+| S9 The pilot, QA and architect run the look step and commit design notes | 2, 6, 9, 10, 14 | `agents/pilot.md`, `agents/pilot-qa.md`, `agents/pilot-architect.md`, `scripts/test/ui-design.test.mjs` (look-notes and design-notes lints), `scripts/test/measure-prompt.test.mjs` (pins) | S6 (`agents/pilot-qa.md`, `ui-design.test.mjs`, `qa-preview.test.mjs` pin) | typescript, security | [S9](slices/S9.md) |
 
 S1 is the walking skeleton. A real `surface.json` is read by the real CLI, which starts a real headless browser through the `web` adapter and leaves a PNG of the fixture in each mode. That proves the adapter seam, the argv-only process start and the fixture's token load, before any Rust or prose stands on them.
 
@@ -171,6 +192,7 @@ S1 is the walking skeleton. A real `surface.json` is read by the real CLI, which
 - S5 beside S4 would half-move the page, so it now comes after S4 (A10).
 - S7: `cargo fmt --check` might fail today and flood the slice. Checked: it exits 0 on 5fd835e.
 - S3: the cause is unproven, so its first behaviour is the probe (A9).
+- S1/S2: the Rune adapter's `rules` is `../DESIGN.md`. S1's escape check was relative to the file's directory, which would have refused it. It is now relative to the repository.
 - S1's fixture: Chromium blocks `fetch` of file:// JSON. The `web` adapter passes `--allow-file-access-from-files` to a temporary profile only.
 
 ## 9. Acceptance evidence
@@ -190,13 +212,13 @@ QA environment: this laptop, with the Rune deck built here, the web fixture in a
 
 | Slice | State | Branch | PR | Worktree | After | Spec |
 | --- | --- | --- | --- | --- | --- | --- |
-| S1 | planned | – | – | – | – | 1, 7 |
-| S2 | planned | – | – | – | S1 | 1, 7 |
+| S1 | planned | – | – | – | – | 1, 7, 13 |
+| S2 | planned | – | – | – | S1 | 1, 7, 13 |
 | S3 | planned | – | – | – | – | 8 |
 | S4 | planned | – | – | – | S1 | 3 |
 | S5 | planned | – | – | – | S4, S2 | 1, 5, 12 |
 | S6 | planned | – | – | – | S1 | 4, 11 |
 | S7 | planned | – | – | – | – | 11 |
 | S8 | planned | – | – | – | – | 6, 10 |
-| S9 | planned | – | – | – | S6 | 2, 6, 9, 10 |
-| UI design workflow | planned | feat/ui-design-workflow | – | – | S1-S9 | 1-12 |
+| S9 | planned | – | – | – | S6 | 2, 6, 9, 10, 14 |
+| UI design workflow | planned | feat/ui-design-workflow | – | – | S1-S9 | 1-14 |
