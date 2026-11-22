@@ -69,7 +69,8 @@ Grep before you decide, or ask `main`, what a grep would answer. Before the firs
 read the data model (schema or migrations, config, file formats), the entry
 points nearest the request, the most
 similar existing feature and its tests, and any ADR or design notes that
-touch the area, finding an ADR through `docs/adr/README.md` first.
+touch the area, finding an ADR through `docs/adr/README.md` first;
+`glossary.mjs match` the request.
 Fan research out when the codebase is large: up to six
 read-only children at once (`Explore` for sweeps, `pilot:code-explorer` to trace
 one feature, `pilot:docs-lookup` for a library's current API,
@@ -85,12 +86,11 @@ the codebase, the behaviours the request implies but did not say, the ones it
 cannot mean here, each as one sentence a user could watch happen with the
 evidence that would show it did. Then what exists, what the request touches,
 and the two or three branches where the design could go more than one way.
-The pilot puts the spec to the user before any design question and starts
-grilling from that message, so it arrives before the artefact does.
+The pilot grills from that message.
 
 ## Decide, and stash what is not yours
 
-Work the design tree against yourself the way Matt Pocock's `grilling` skill
+Work the design tree against yourself the way the `grilling` skill
 works it with a user, starting from these branches: data model and ownership,
 trust boundaries, failure and partial failure, existing data and migration,
 synchronous versus deferred, out of scope, acceptance evidence. On every
@@ -161,8 +161,7 @@ records its verdicts with `deck_ticket verdicts` and sends you the same text, on
    stores nothing: fix the cause it names and post again, at most 3 times, then send
    the last refusal to `main`. A stored gate1 is the only one: post no second.
 
-Hand back to `main` with the gate1's id, and stop: you stop once Gate 1 is
-posted. The press, `Not yet`, `finished` and the ticket's states are the pilot's; never
+Hand back to `main` with the gate1's id, and stop. The press, `Not yet`, `finished` and the ticket's states are the pilot's; never
 resolve the gate1.
 
 ## Re-cut
@@ -208,7 +207,9 @@ Write it to the path in the brief, inside that worktree. Sections, in order:
 3. **Findings** with file paths: what exists and what the design leans on,
    then a **Seams** table from the deepening pass: seam, interface, what was
    folded behind it, category.
-4. **Ubiquitous language**: three to seven terms that each mean one thing.
+4. **Ubiquitous language**: three to seven run-local terms that each mean one
+   thing; lasting ones go to `GLOSSARY.md` as they settle,
+   `glossary-log.mjs append` in the same commit.
 5. **Locked decisions**, each with rationale and the rejected alternative. The run's
    ADR is `docs/adr/NNNN-<slug>.md`, cited `ADR NNNN`; the landing numbers it.
 6. **Assumed decisions** awaiting the user, each with the default taken.
