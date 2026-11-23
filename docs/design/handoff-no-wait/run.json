@@ -27,7 +27,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed 72a7e8c",
+      "state": "integrated",
       "after": [
         "S1",
         "S4"
@@ -59,10 +59,37 @@
       "state": "integrated",
       "branch": "slice/handoff-no-wait-s7",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s7"
+    },
+    {
+      "slice": "handoff-no-wait",
+      "state": "fixing"
+    },
+    {
+      "slice": "Fix round: principles findings",
+      "state": "pushed 7da6634",
+      "after": [
+        "S2",
+        "S5",
+        "S6"
+      ],
+      "branch": "fix/handoff-no-wait",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-handoff-no-wait"
+    },
+    {
+      "slice": "fix round",
+      "state": "pushed 7da6634, co-pilot integrating",
+      "after": [
+        "S2"
+      ],
+      "branch": "fix/handoff-no-wait",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-handoff-no-wait"
     }
   ],
-  "next": "co-pilot: S5 integrated at e23d5ac, checks running; then S2 72a7e8c; then fundamentalist",
-  "updatedAt": "2026-11-23T04:01:28.120Z",
+  "findings": [
+    "kept: N5 simplify — the --turn-ended flag is parsed and ignored after F1 (run-look.mjs, hooks/handoff-mod.mjs:48, its test:92); remove it end to end; goes to QA as the writer with QA-F2"
+  ],
+  "next": "co-pilot: integrating the fix round 7da6634; then pilot checks; then pause (context advisory)",
+  "updatedAt": "2026-11-23T05:14:46.537Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -217,6 +244,59 @@
       "what": "S2: the slice file named no home for B1/B2 and missed askFor's held branch and render-cards' held bucket",
       "evidence": "S2 report pushback",
       "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "context summarised mid-run; lost track of its evidence runner, which had not handed back, so the six evidence checks are unjudged",
+      "evidence": "fundamentalist report §3: not run",
+      "size": 3
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "no TaskStop reachable; its detached worktree pilot-fund-handoff-no-wait left in place for a still-running runner",
+      "evidence": "ToolSearch: No matching deferred tools found",
+      "size": 2
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "all six checks gave no result: the changed-file list carried two files deleted on the branch (deck/hold-route.mjs, deck/test/handoff-hold.test.mjs), so eslint, jscpd and madge exited on a missing path; coverage died on a rustc internal compiler error in tests/tickets.rs; stryker hit its 900 s timeout with 7290 mutants; knip listed 696 unused files",
+      "evidence": "evidence runner hand-back, worktree pilot-fund-handoff-no-wait, base origin/main 69e315c",
+      "size": 35000
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "its report reached main after the fundamentalist had already reported, so nobody judged it",
+      "evidence": "hand-back from a84e5532 to main"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fix round: npm ci over 2 min; test:quiet queued behind the qa- and fund- worktrees' gates",
+      "evidence": "fix-round report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fix round: hooks blocked sed -i and a bare until loop (two retries); pilot wait-for timed out on a redirected log",
+      "evidence": "fix-round report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "two gate slots shared by every worktree: each implementer's 13-min full gate queued 15-20 min behind the others; the user asked why the implementer took so long",
+      "evidence": "gate: waiting for a slot (s1, s3, s4, fix-round logs)",
+      "size": 5
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "full suite went red on six timing tests while scratch claude runs shared the machine; each green alone",
+      "evidence": "QA gate at 73051dc",
+      "size": 2
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "all six evidence checks gave no result: deleted files broke eslint, jscpd, madge; coverage hit a rustc ICE in tests/tickets.rs; stryker timed out; knip listed 696 files",
+      "evidence": "runner hand-back via main",
+      "size": 4
     }
   ]
 }
