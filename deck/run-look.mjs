@@ -4,7 +4,7 @@
  * `SETTLE_MS`; the mod does the clearing
  * and the submitting, and this file decides whether to.
  *
- *   node <root>/deck/run-look.mjs <op> [--id itm_<hex>] [--turn-ended <ms>] [--why <text>]
+ *   node <root>/deck/run-look.mjs <op> [--id itm_<hex>] [--why <text>]
  *
  * prints one JSON `Outcome` line and exits 0; a refused argument exits 2 with no line, before anything is read.
  *
@@ -12,7 +12,7 @@
  * `claims/posted-<session pid>.stamp`) and only once, by the `wx` claim `clear-typed-<id>` (L2). `cleared`
  * answers the fresh session's first prompt once the SessionStart lane has marked it (L3), drops the posted
  * stamp, and is the one place that logs the hand-off taken (L9). `start` writes the session's reported-in stamp
- * and releases the directory's co-pilot, chaining nothing (L12, L13). `turn` also holds the clear while the directory's co-pilot is live, and a
+ * and releases the directory's co-pilot, chaining nothing (L12, L13). A live co-pilot never holds the clear (handoff-no-wait L2), and a
  * clear starts the directory's 5-minute cooldown (L6). A hand-off that did not start is said aloud once per id.
  */
 
@@ -24,7 +24,7 @@ import { pathToFileURL } from 'node:url';
 
 import { isOpen, repoKey, sameRepo } from './items.mjs';
 import { landerDue } from './landing-replies.mjs';
-import { claimDir, claimNameFor, HOLD_BOUND_MS, laneMarked, postedFile, reportedFile, takeClaim } from './run-claim.mjs';
+import { claimDir, claimNameFor, laneMarked, postedFile, reportedFile, takeClaim } from './run-claim.mjs';
 import { deckUrl } from './tools.mjs';
 import { listeningRepo } from './wait.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
@@ -129,62 +129,6 @@ async function openItems() {
 }
 
 /**
- * Whether this look may clear past this directory's co-pilot, and the moment a turn end must follow.
- * Handoff failed on any open hand-off of the directory re-arms it, whatever the co-pilot says (held-handoff L3),
- * and the clear then waits for a turn end after the press, never mid-turn; an unreadable press time reads as
- * `now`. Otherwise a live co-pilot holds it `until` 20 minutes past the directory's earliest `hold.at`, read
- * from the items so a restarted session keeps the same clock; a hold not yet written counts from `now` (L4).
- * Either way a released co-pilot's clear waits for the turn after its release, since that release's
- * hand-back turn may still be running.
- */
-function holdFor(items, cwd, coPilot, now) {
-  const open = items.filter((item) => item?.kind === HANDOFF_KIND && sameRepo(item.repo, cwd) && isOpen(item));
-  const from = coPilot?.live === true ? Date.parse(coPilot.at) || 0 : 0; // a hold or press from before this co-pilot went live is not its own
-  const presses = open.filter((item) => item.hold?.rearmedAt).map((item) => Date.parse(item.hold.rearmedAt) || now).filter((time) => time >= from);
-  const released = coPilot?.live === true ? 0 : Date.parse(coPilot?.at) || 0;
-  if (presses.length > 0) return { clear: true, why: 'rearmed', since: Math.max(...presses, released) };
-  if (coPilot?.live !== true) return { clear: true, why: 'free', since: released };
-  // A hold from before the go-live counts from the go-live, never dropped: dropped, `until` would slide with `now` (QA F4).
-  const until = Math.min(now, ...open.map((item) => Date.parse(item.hold?.at)).filter(Number.isFinite).map((time) => Math.max(time, from))) + HOLD_BOUND_MS;
-  return now >= until ? { clear: true, why: 'bound', since: released } : { clear: false, ticket: coPilot.ticket, until };
-}
-
-/**
- * This directory's co-pilot, `{ ticket, live, at }` or null, from `GET /api/record?repo=` (clear-waits-co-pilot L7):
- * a read that marks nothing delivered, never `deck_read` with a `repo`. A daemon older than the field answers null.
- */
-async function coPilotAt(cwd) {
-  const response = await deckFetch(`/api/record?repo=${encodeURIComponent(cwd)}`, { signal: deadline() });
-  if (!response.ok) throw new Error(`the deck answered /api/record with ${response.status}`);
-  return (await bodyOf(response, '/api/record'))?.coPilot ?? null;
-}
-
-/**
- * A held hand-off is marked held on the item, never by a reply, so nothing takes the hold for a pick-up
- * (held-handoff L2, A1). Every look marks it; the deck keeps the first and answers `held` only then, which is
- * when the line is logged. A deck that will not take the hold is logged and left.
- */
-async function sayHeld(handoff, coPilot) {
-  try {
-    const response = await deckFetch('/api/hold', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id: handoff.id, ticket: coPilot.ticket }),
-      signal: deadline(),
-    });
-    if (!response.ok) {
-      await response.body?.cancel();
-      throw new Error(`the deck answered /api/hold with ${response.status}`);
-    }
-    if ((await bodyOf(response, '/api/hold'))?.held === true) {
-      log(`mod: held ${handoff.id} for the co-pilot on ${coPilot.ticket}`);
-    }
-  } catch (err) {
-    log(`mod: could not post the hold on ${handoff.id} (${err?.message ?? err})`);
-  }
-}
-
-/**
  * A hand-off that went wrong, told to the user rather than left as an idle session: a reply on the hand-off's
  * thread, and a line in this directory's chat when the thread refuses it, as a closed one does (handoff-prompt
  * spec 3), or always when `both`. Never a prompt: nothing says which session it would land in. A deck that will
@@ -252,7 +196,7 @@ function stampCleared(repo, now) {
   }
 }
 
-async function turn(repo, pid, turnEndedAt, { read, coPilot, now }) {
+async function turn(repo, pid, { read, now }) {
   const posted = postedBy(pid); // asked first: a session that posted nothing reads nothing
   if (!posted) return none('this session posted no hand-off');
   const at = now();
@@ -262,17 +206,8 @@ async function turn(repo, pid, turnEndedAt, { read, coPilot, now }) {
   if (!handoff) return none(`${posted} was closed before the turn ended`);
   if (handoff.id !== posted) return none(`${posted} is superseded`); // the newer id is deck text, never echoed
   if (laneMarked(handoff.id)) return none(`${handoff.id} is already picked up`);
-  const live = await coPilot(repo);
-  const hold = holdFor(items, repo, live, at);
-  if (!hold.clear) {
-    await sayHeld(handoff, live);
-    return { act: 'held', id: handoff.id, until: hold.until };
-  }
-  // A re-arm or a release while the turn ran: the clear waits for a turn end after it, never mid-turn.
-  if (turnEndedAt < hold.since) return none(`${handoff.id} waits for a turn end after ${new Date(hold.since).toISOString()}`);
   if (!takeClaim(claimNameFor(handoff.id))) return none(`${handoff.id} is already cleared`);
   stampCleared(repo, at);
-  if (hold.why === 'bound') log(`mod: hold on ${handoff.id} past 20 min, clearing with the co-pilot on ${live.ticket} live`);
   return { act: 'clear', id: handoff.id };
 }
 
@@ -353,23 +288,23 @@ async function start(repo, pid) {
 }
 
 /**
- * One look. `deps` stand in for the deck read, the co-pilot read, the clock, the parent pid and the marker wait in
+ * One look. `deps` stand in for the deck read, the clock, the parent pid and the marker wait in
  * a test. The session is the look's parent, the Claude Code process whose mod ran it, never `CLAUDE_PID`: the host
  * does not set it for a mod's process, so there it is only ever inherited from an outer session (F15).
  */
 export async function look(op, args = {}, deps = {}) {
-  const { read = openItems, coPilot = coPilotAt, now = Date.now, ppid = process.ppid, settleMs = SETTLE_MS } = deps;
+  const { read = openItems, now = Date.now, ppid = process.ppid, settleMs = SETTLE_MS } = deps;
   const repo = args.repo ?? listeningRepo(process.cwd());
   const pid = ppid;
   if (op === 'start') return start(repo, pid);
-  if (op === 'turn') return turn(repo, pid, Number.isFinite(args.turnEndedAt) ? args.turnEndedAt : 0, { read, coPilot, now });
+  if (op === 'turn') return turn(repo, pid, { read, now });
   if (!ITEM_ID.test(args.id ?? '')) return none(`${op} needs an item id`);
   if (op === 'cleared') return cleared(repo, pid, args.id, read, settleMs);
   if (op === 'unstarted' && UNSTARTED_WHY.includes(args.why)) return unstarted(repo, args.id, args.why, read);
   return none(`${op} is not a look`);
 }
 
-const FLAGS = { '--id': 'id', '--turn-ended': 'turnEndedAt', '--why': 'why' };
+const FLAGS = { '--id': 'id', '--why': 'why' };
 
 /** The op and its arguments, or null for anything refused. */
 function parse(argv) {
@@ -385,10 +320,6 @@ function parse(argv) {
   if (args.id !== undefined && !ITEM_ID.test(args.id)) return null;
   if ((op === 'cleared' || op === 'unstarted') && args.id === undefined) return null;
   if (args.why !== undefined ? op !== 'unstarted' || !UNSTARTED_WHY.includes(args.why) : op === 'unstarted') return null;
-  if (args.turnEndedAt !== undefined) {
-    if (!/^\d{1,16}$/.test(args.turnEndedAt)) return null;
-    args.turnEndedAt = Number(args.turnEndedAt);
-  }
   return { op, args };
 }
 
@@ -396,7 +327,7 @@ function parse(argv) {
 export async function main(argv, { out = (line) => process.stdout.write(`${line}\n`) } = {}) {
   const parsed = parse(argv);
   if (!parsed) {
-    process.stderr.write('usage: run-look.mjs <start|turn|cleared|unstarted> [--id itm_<hex>] [--turn-ended <ms>] [--why <text>]\n');
+    process.stderr.write('usage: run-look.mjs <start|turn|cleared|unstarted> [--id itm_<hex>] [--why <text>]\n');
     return 2;
   }
   let outcome;

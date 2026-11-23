@@ -391,7 +391,7 @@ const renderOwnChoices = (item, extra = [], chosen = chosenOf(item)) => {
  * place with the kind's sentence and a Confirm posting the same choice. Hidden, so with no script one press posts.
  */
 const renderHandoffChoices = (item, extra = []) => {
-  const ask = askFor(item.kind, item);
+  const ask = askFor(item.kind);
   if (!item.options?.includes(HANDOFF_FAILED)) return renderOwnChoices(item, extra);
   const chosen = chosenOf(item);
   const buttons = item.options.map((option) => renderChoice(option, null, '', chosen, option === HANDOFF_FAILED));

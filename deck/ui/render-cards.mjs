@@ -273,8 +273,6 @@ const STATE_BUCKETS = {
   'not picked up yet': 'pilot',
   // A hand-off nobody has picked up (thread-kinds spec 19): a colour of its own, since it waits on neither.
   unacknowledged: 'unacknowledged',
-  // A hand-off whose `/clear` waits on a live co-pilot (held-handoff spec 2): with the pilot's side, not unacknowledged.
-  held: 'pilot',
   resolved: 'resolved',
 };
 
