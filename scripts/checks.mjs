@@ -8,6 +8,7 @@
  */
 
 import { FULL_SHA } from '../deck/host-github.mjs';
+import { FULL_TRIGGERS } from './select-tests.mjs';
 
 const OUTCOMES = new Set(['pass', 'fail', 'pending']);
 /** A workflow file GitHub runs (top level of `.github/workflows`) or GitLab's one file. */
@@ -70,6 +71,48 @@ export function checksGate({ host, git, sha }) {
     if (!configured) return pass({ ...verdict, why: 'no CI configured' });
   }
   return { ok: false, line: checkLine(verdict) };
+}
+
+/** At least this many Gate jobs, one per OS, before a run proves anything (cheap-suite A2). */
+const PROOF_JOBS = 3;
+
+/** True when a change to `file` alters how CI or the suite runs, so no earlier run speaks for it (A2). */
+const outrunsProof = (file) => file.startsWith('.github/') || FULL_TRIGGERS.includes(file);
+
+/**
+ * The **Proof** a green CI run gives a landing (cheap-suite spec 5; L7, A2): the tree at least three `gate (<os>)`
+ * jobs on the exact tip `sha` all passed and all named, or null with the line saying why not. `base...sha`
+ * touching `.github/` or a `FULL_TRIGGERS` file is never proved, since the run it would trust is the one it changed.
+ */
+export function provenTree({ host, git, sha, base }) {
+  fullSha(sha);
+  fullSha(base);
+  const none = (why) => ({ tree: null, line: `no ci proof: ${why}` });
+  if (host === null) return none('no host');
+  let changed;
+  try {
+    // `-z`: a name git would quote is printed raw; `--no-renames`: a file moved out of `.github/` still names it.
+    changed = git(['diff', '--name-only', '--no-renames', '-z', `${base}...${sha}`, '--']).split('\0').filter(Boolean);
+  } catch (err) {
+    return none(`the feature diff is unreadable: ${firstLine(err)}`);
+  }
+  const trigger = changed.find(outrunsProof);
+  if (trigger !== undefined) return none(`${trigger} changed`);
+  let rows;
+  try {
+    rows = host.testedTrees(sha);
+    if (!Array.isArray(rows) || !rows.every((row) => typeof row?.name === 'string')) throw new Error('testedTrees: an answer that is not the shape');
+  } catch (err) {
+    return none(firstLine(err));
+  }
+  if (rows.length < PROOF_JOBS) return none(`${rows.length} gate jobs, fewer than ${PROOF_JOBS}`);
+  const failed = rows.find((row) => row.conclusion !== 'success');
+  if (failed !== undefined) return none(`${failed.name} concluded ${failed.conclusion}`);
+  const blank = rows.find((row) => typeof row.tree !== 'string' || !FULL_SHA.test(row.tree));
+  if (blank !== undefined) return none(`${blank.name} named no tree`);
+  const tree = rows[0].tree;
+  if (rows.some((row) => row.tree !== tree)) return none('the gate jobs tested different trees');
+  return { tree, line: `ci proved ${tree.slice(0, 7)} on ${rows.length} jobs` };
 }
 
 /** The **Check line**: `checks <state> at <sha7>[: <names>]`, the failed or pending names, else the why. */
