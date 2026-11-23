@@ -1,6 +1,7 @@
 // `scripts/probe-clear-survival.mjs` (handoff-no-wait S6, spec 2, 4, 7, 8): the step judge over the
 // stream lines a headless `claude` printed after the clear. The lines below were captured from the
-// probe's own passing run on 2026-11-23 (`--keep`), with usage, ids and thinking fields dropped.
+// probe's own passing run on 2026-11-23 (`--keep`), with usage, timestamps and thinking dropped and
+// the notice's output path neutralised; the random ids are kept.
 // The probe itself starts a real `claude` and never runs in the suite.
 
 import { test } from 'node:test';
@@ -17,7 +18,7 @@ const reset = String.raw`{"type":"conversation_reset","new_conversation_id":"ab2
 const agentCall = String.raw`{"type":"assistant","message":{"model":"claude-haiku-5-5","type":"message","role":"assistant","content":[{"type":"tool_use","id":"toolu_01JaJZ2EZYe9MUAiwe942TTN","name":"SendMessage","input":{"to":"main","message":"PROBE-RELAY-7Q2 worker done","summary":"Relay probe completion message to main","type":"message","recipient":"main","recipient_kind":"main","content":"PROBE-RELAY-7Q2 worker done"},"caller":{"type":"direct"}}],"stop_reason":null,"stop_sequence":null},"parent_tool_use_id":"toolu_01PpS6JEkUjafajhA6p37eNh","agent_id":"a9e1734260fdcbe2f","session_id":"90d4706e-1a24-4a56-a1b5-88dd4868cc8e","subagent_type":"copilot","task_description":"probe copilot"}`;
 const freshRead = String.raw`{"type":"assistant","message":{"model":"claude-haiku-5-5","type":"message","role":"assistant","content":[{"type":"text","text":"Agent a9e1734260fdcbe2f reported: \"PROBE-RELAY-7Q2 worker done\"\n\nI don't have a record of an active task for that agent, since the conversation was cleared, so I haven't acted on it. What would you like to work on?"}],"stop_reason":null,"stop_sequence":null},"parent_tool_use_id":null,"session_id":"90d4706e-1a24-4a56-a1b5-88dd4868cc8e"}`;
 const freshResult = String.raw`{"type":"result","subtype":"success","is_error":false,"result":"Agent a9e1734260fdcbe2f reported: \"PROBE-RELAY-7Q2 worker done\"\n\nI don't have a record of an active task for that agent, since the conversation was cleared, so I haven't acted on it. What would you like to work on?","session_id":"90d4706e-1a24-4a56-a1b5-88dd4868cc8e"}`;
-const notice = String.raw`{"type":"system","subtype":"task_notification","task_id":"a9e1734260fdcbe2f","run_id":"0mwsngn9g-1fc0555b","tool_use_id":"toolu_01PpS6JEkUjafajhA6p37eNh","status":"completed","output_file":"C:\\Users\\jrylk\\AppData\\Local\\Temp\\claude\\3f5a72b9f690057d\\389e3a01-b1fa-4f7c-8874-acfa2e4a1621\\tasks\\a9e1734260fdcbe2f.output","summary":"PROBE-REPORT-7Q2","summary_is_report":true,"session_id":"90d4706e-1a24-4a56-a1b5-88dd4868cc8e"}`;
+const notice = String.raw`{"type":"system","subtype":"task_notification","task_id":"a9e1734260fdcbe2f","run_id":"0mwsngn9g-1fc0555b","tool_use_id":"toolu_01PpS6JEkUjafajhA6p37eNh","status":"completed","output_file":"C:\\tmp\\tasks\\a9e1734260fdcbe2f.output","summary":"PROBE-REPORT-7Q2","summary_is_report":true,"session_id":"90d4706e-1a24-4a56-a1b5-88dd4868cc8e"}`;
 const passing = [reset, agentCall, freshRead, notice];
 
 // The captured agent line with one of its two agent fields removed.

@@ -11,7 +11,10 @@
  *
  * Exit 0: `survived +<s>s; sendmessage ok; report reached`. Exit 1: `failed at <step>`.
  * The run is billed to the user's own sign-in: every API key and cloud-provider variable is dropped
- * from the child's environment. Hooks are off in the probe's settings. Everything lives in a
+ * from the child's environment, and `--setting-sources local` (an empty temporary directory) keeps
+ * the user's settings out, so no `apiKeyHelper` and no user permission rule applies. Hooks are off
+ * in the probe's settings. `Bash(node:*)` lets the haiku agents run any `node -e`; the brief is a
+ * constant, so nothing outside this file chooses what they run. Everything lives in a
  * temporary directory removed at the end, unless `--keep` is passed, which prints its path.
  * The suite never runs this; it judges recorded lines through `judge`.
  */
@@ -109,11 +112,11 @@ function readWrite(file) {
 
 function run(dir, bin, env) {
   const settings = path.join(dir, 'settings.json');
-  fs.writeFileSync(settings, JSON.stringify({ disableAllHooks: true }));
+  fs.writeFileSync(settings, JSON.stringify({ disableAllHooks: true, permissions: { defaultMode: 'default' } }));
   const workFile = path.join(dir, 'work.txt');
   const log = fs.createWriteStream(path.join(dir, 'stream.log'));
   const args = ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose',
-    '--model', 'haiku', '--settings', settings, '--agents', JSON.stringify(AGENTS), '--strict-mcp-config',
+    '--model', 'haiku', '--setting-sources', 'local', '--settings', settings, '--agents', JSON.stringify(AGENTS), '--strict-mcp-config',
     '--allowedTools', 'Agent', 'SendMessage', 'Bash(node:*)'];
   const child = spawn(bin, args, { cwd: dir, env: { ...env, [WORK_ENV]: workFile }, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
   // A claude that dies mid-run breaks the pipe; the verdict at exit names the step it reached.
@@ -188,7 +191,13 @@ async function main(argv) {
     return 0;
   } finally {
     if (keep) console.log(`kept ${dir}`);
-    else fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 });
+    else {
+      try {
+        fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 });
+      } catch (error) {
+        console.error(`could not remove ${dir}: ${error.message}`);
+      }
+    }
   }
 }
 
