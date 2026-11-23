@@ -112,6 +112,21 @@ test('any other mkdir error still throws', (t) => {
   );
 });
 
+test('a lock that keeps answering EPERM is a fault, not a wait', (t) => {
+  const dir = scratch(t, 'locks');
+  fs.writeFileSync(path.join(dir, 'slot-0.json'), JSON.stringify({ pid: 999_999_991, dir: 'C:/gone', since: '2026-10-12T00:00:00.000Z' }));
+  const mkdir = (target) => {
+    if (target.endsWith('.takeover')) throw Object.assign(new Error(`EPERM: mkdir '${target}'`), { code: 'EPERM' });
+    return fs.mkdirSync(target);
+  };
+  let sleeps = 0;
+  assert.throws(
+    () => takeSlot({ dir, slots: 1, cwd: 'C:/repo/x', env: {}, alive: () => false, sleep: () => void sleeps++, say: () => {}, mkdir }),
+    { code: 'EPERM' },
+  );
+  assert.equal(sleeps, 10, 'it waited STALE_MS / POLL_MS rounds, no fewer');
+});
+
 test('an unreadable slot older than 10 s is taken over', (t) => {
   const dir = scratch(t, 'locks');
   fs.writeFileSync(path.join(dir, 'slot-0.json'), '{"pid": 4');
