@@ -115,7 +115,8 @@ function importsOf(text, rel) {
 
 /**
  * The selection for `since` in `cwd`: `files` the absolute test paths to run, sorted, or null for a
- * full run with `reason`; `total` the test files a full run starts; `since` the merge-base sha.
+ * full run with `reason`; `total` the test files a full run starts; `since` the merge-base sha;
+ * `changed` the repository-relative paths the diff named, sorted, empty when no diff was read.
  */
 export function selectTests({ cwd, since, git = gitIn(cwd) }) {
   const present = presentFiles(cwd, git);
@@ -127,7 +128,7 @@ export function selectTests({ cwd, since, git = gitIn(cwd) }) {
     base = git(['merge-base', sha, 'HEAD']).trim();
   } catch {
     // A control character in the ref would forge a line of the gate's output, so it prints as `?`.
-    return { files: null, total, since, reason: `cannot resolve ${since.replace(/[\x00-\x1f\x7f]/g, '?')}` };
+    return { files: null, total, since, reason: `cannot resolve ${since.replace(/[\x00-\x1f\x7f]/g, '?')}`, changed: [] };
   }
   let changed;
   try {
@@ -138,10 +139,11 @@ export function selectTests({ cwd, since, git = gitIn(cwd) }) {
     ]);
   } catch {
     // A failed diff is not an empty one: nothing is known about what changed, so everything runs.
-    return { files: null, total, since: base, reason: 'git diff failed' };
+    return { files: null, total, since: base, reason: 'git diff failed', changed: [] };
   }
+  const paths = [...changed].sort();
   const trigger = FULL_TRIGGERS.find((rel) => changed.has(rel));
-  if (trigger) return { files: null, total, since: base, reason: `${trigger} changed` };
+  if (trigger) return { files: null, total, since: base, reason: `${trigger} changed`, changed: paths };
   const source = new Map(present.filter((rel) => SOURCE.test(rel)).map((rel) => [rel, fs.readFileSync(path.join(cwd, rel), 'utf8')]));
   const importers = new Map();
   for (const [rel, text] of source) {
@@ -163,11 +165,11 @@ export function selectTests({ cwd, since, git = gitIn(cwd) }) {
     const fromNames = new Set([...from].map((r) => path.posix.basename(r)));
     return !tests.some((t) => from.has(t) || named(t, fromNames));
   });
-  if (lonely) return { files: null, total, since: base, reason: `${lonely} reaches no test` };
+  if (lonely) return { files: null, total, since: base, reason: `${lonely} reaches no test`, changed: paths };
   const files = selected.map((rel) => path.resolve(cwd, rel)).sort();
   const argv = files.join(' ').length;
-  if (argv > ARGV_LIMIT) return { files: null, total, since: base, reason: `selection is ${argv} characters of argv, over ${ARGV_LIMIT}` };
-  return { files, total, since: base };
+  if (argv > ARGV_LIMIT) return { files: null, total, since: base, reason: `selection is ${argv} characters of argv, over ${ARGV_LIMIT}`, changed: paths };
+  return { files, total, since: base, changed: paths };
 }
 
 /**

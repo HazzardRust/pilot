@@ -146,7 +146,7 @@ test('a changed test file is selected alone', (t) => {
   const { dir, sha } = gitFixture(t, 'select:three', threeTests);
   fs.appendFileSync(path.join(dir, 'test/a.test.mjs'), '// touched\n');
   const selection = selectTests({ cwd: dir, since: 'main' });
-  assert.deepEqual(selection, { files: [path.resolve(dir, 'test/a.test.mjs')], total: 3, since: sha });
+  assert.deepEqual(selection, { files: [path.resolve(dir, 'test/a.test.mjs')], total: 3, since: sha, changed: ['test/a.test.mjs'] });
 });
 
 test('a changed module selects its direct importers', (t) => {
