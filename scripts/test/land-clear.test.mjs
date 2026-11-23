@@ -116,7 +116,7 @@ test('a landing keeps its qa and feat worktrees', (t) => {
     `kept concluding ${as.feat}`,
     `kept concluding ${as.qa}`,
   ].sort(), 'the branch and clear lines come first');
-  assert.match(landed, /^[0-9a-f]{7}\nmain gets pilot: #900 \(opened\)\n$/);
+  assert.match(landed, /^[0-9a-f]{7}\nno ci proof: 0 gate jobs, fewer than 3\nmain gets pilot: #900 \(opened\)\n$/);
   assert.ok(fs.existsSync(dir('feat')) && fs.existsSync(dir('qa')), 'both directories exist');
   assert.deepEqual(listed().map((p) => path.basename(p)).sort(), ['feat', 'other', 'qa', 'work'], "the slice and design worktrees are gone; another run's stays");
   assert.deepEqual(branches(work), ['feat/s', 'main', 'qa/s', 'slice/other-s1']);
