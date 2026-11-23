@@ -57,7 +57,7 @@ function stampPosted(claims, id, pid = PID) {
 
 /**
  * A guarded deck holding `items`, answering as the daemon does: `deck_read` and `deck_reply` on `/api/tool`, the
- * directory's co-pilot on `GET /api/record`, and `POST /api/hold`. Every request is kept, in order, in `calls`.
+ * directory's co-pilot on `GET /api/record`, and `POST /api/started`. Every request is kept, in order, in `calls`.
  */
 async function deckHolding(t, items, { coPilot = null, released = false } = {}) {
   const calls = [];
@@ -83,7 +83,6 @@ async function deckHolding(t, items, { coPilot = null, released = false } = {}) 
         return send(response, { content: [{ type: 'text', text: 'replied' }] });
       }
       if (request.method === 'GET' && route === '/api/record') return send(response, { coPilot });
-      if (request.method === 'POST' && route === '/api/hold') return send(response, { held: true });
       if (request.method === 'POST' && route === '/api/started') return send(response, { released });
       response.writeHead(404);
       return response.end();
@@ -224,35 +223,20 @@ test('a live co-pilot does not hold the clear', async (t) => {
   assert.ok(calls.filter((call) => call.name === 'deck_read').every((call) => call.args.repo === undefined), 'no read names a repo');
 });
 
-test('a re-arm press clears with the co-pilot live, after a turn end past the press', async (t) => {
+// never-stuck S19 (spec 25): a released co-pilot's clear waits for the turn end after its release, never mid-turn.
+test('a released co-pilot clears at the turn end after its release', async (t) => {
   const claims = scratchHome(t);
-  const now = Date.now();
-  const press = now - MINUTE;
-  const handoff = { ...handoffItem(), hold: { at: at(now - 5 * MINUTE), rearmedAt: at(press) } };
-  stampPosted(claims, handoff.id);
-  await deckHolding(t, [handoff], { coPilot: { ticket: 'itm_c0c0c0c0c0c0', live: true, at: at(now - 10 * MINUTE) } });
-  const deps = { ...session, now: () => now };
-
-  const before = await look('turn', { repo: OURS, turnEndedAt: press - 1 }, deps);
-  assert.equal(before.act, 'none', 'a turn that ended before the press does not clear');
-  assert.equal(claimed(claims, handoff.id), false);
-
-  assert.deepEqual(await look('turn', { repo: OURS, turnEndedAt: press }, deps), { act: 'clear', id: handoff.id });
-});
-
-// never-stuck S19 (spec 25): a co-pilot released on a queued pause frees the clear at the next turn end, not at the bound.
-test('a released hold clears before the bound', async (t) => {
-  const claims = scratchHome(t);
-  const heldAt = Date.now() - 5 * MINUTE;
-  const releasedAt = heldAt + 2 * MINUTE;
-  const handoff = { ...handoffItem(), hold: { at: at(heldAt) } };
+  const releasedAt = Date.now() - 3 * MINUTE;
+  const handoff = handoffItem();
   stampPosted(claims, handoff.id);
   await deckHolding(t, [handoff], { coPilot: { ticket: 'itm_c0c0c0c0c0c0', live: false, at: at(releasedAt) } });
+  const deps = { ...session, now: () => releasedAt + MINUTE };
 
-  const outcome = await look('turn', { repo: OURS, turnEndedAt: releasedAt + MINUTE }, { ...session, now: () => releasedAt + MINUTE });
+  const before = await look('turn', { repo: OURS, turnEndedAt: releasedAt - 1 }, deps);
+  assert.equal(before.act, 'none', 'a turn that ended before the release does not clear');
+  assert.equal(claimed(claims, handoff.id), false);
 
-  assert.deepEqual(outcome, { act: 'clear', id: handoff.id });
-  assert.deepEqual(logLines(claims).filter((line) => line.includes('past 20 min')), [], 'not cleared as the bound');
+  assert.deepEqual(await look('turn', { repo: OURS, turnEndedAt: releasedAt + MINUTE }, deps), { act: 'clear', id: handoff.id });
 });
 
 test('a hand-off closed or superseded before the turn ended is not cleared', async (t) => {

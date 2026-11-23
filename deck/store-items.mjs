@@ -326,9 +326,8 @@ export function addReply(id, said) {
     // The user's answer resumes a ticket it paused, in this same write (blocked-yellow-yields spec 3, A3).
     resumeIn(deck, item);
     if (item.kind !== KIND_HANDOFF || chosenOf(item) !== HANDOFF_FAILED) return;
-    // A held press re-arms the `/clear`, co-pilot live or not (held-handoff L3); one the pilot acknowledged did not fail (L8).
+    // A press on a hand-off the pilot acknowledged did not fail (L8).
     const ack = item.replies.find((message) => message.from === 'pilot');
-    if (item.hold && !ack) { item.hold.rearmedAt = reply.repliedAt; return; }
     // A chain hand-off that failed would otherwise lose the ticket it was meant to
     // start (QA F2): `chainNext` took the ticket when it posted this hand-off
     // (`deck/chain.mjs`), so Handoff failed hands it back to Tickets. It takes it live
@@ -347,22 +346,6 @@ export function addReply(id, said) {
     }
     if (ack) reply.pickedUpAt = ack.repliedAt;
   });
-}
-
-const HOLD_TICKET = /^itm_[0-9a-f]{1,64}$/;
-
-/**
- * The hand-off mod held this hand-off's `/clear` for the directory's live co-pilot (held-handoff L2): item state,
- * never a message, so no pick-up reader takes it for one. Written once, the first `at` kept; a closed item or one that is not a hand-off takes none. Answers whether it wrote.
- */
-export function markHold(id, ticket) {
-  if (typeof ticket !== 'string' || !HOLD_TICKET.test(ticket)) throw new DeckRefusal('a hold names its ticket, an item id');
-  const deck = readDeck();
-  const item = threadIn(deck, id);
-  if (item.kind !== KIND_HANDOFF || !isOpen(item) || item.hold) return false;
-  item.hold = { ticket, at: new Date().toISOString() };
-  writeDeck(deck);
-  return true;
 }
 
 /**

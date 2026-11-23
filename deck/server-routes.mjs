@@ -64,7 +64,6 @@ import { deckUrl } from './tools.mjs';
 import { healthOf } from './health.mjs';
 import { logRefusal } from './refusal-log.mjs';
 import { exitRoute } from './exit-route.mjs';
-import { holdRoute } from './hold-route.mjs';
 import { step } from '../hooks/lib/wrapper-log.js';
 
 // --- routes ----------------------------------------------------------------
@@ -719,7 +718,6 @@ async function route(request, response, open, start, land, exit, guard) {
     announceChange();
     return sendJson(response, 200, { released });
   }
-  if (isWrite && pathname === '/api/hold') return holdRoute(request, response);
 
   if (isWrite && pathname === '/api/tool') {
     const { name, arguments: args } = await readJsonBody(request);
