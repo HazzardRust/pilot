@@ -72,7 +72,7 @@ Lines 3, 4b, 5 and 7 are implied, not asked for. Line 2's "or a resumable stop" 
 
 | Seam | Interface | Folded behind it | Category |
 | --- | --- | --- | --- |
-| The look's `turn` (`deck/run-look.mjs`) | `turn(repo, pid, turnEndedAt, deps) -> Outcome` (`clear` or `none`) | `holdFor`'s co-pilot gate and `sayHeld`, deleted, not folded | local-substitutable (deps fakes) |
+| The look's `turn` (`deck/run-look.mjs`) | `turn(repo, pid, deps) -> Outcome` (`clear` or `none`) | `holdFor`'s co-pilot gate and `sayHeld`, deleted, not folded | local-substitutable (deps fakes) |
 | The co-pilot entry (`deck/store-runs.mjs`) | `noteCoPilotAgent(repo, agentId, agentType, now) -> boolean`; `/api/record`'s `coPilot` gains `agent` | the stamp rule (live entry, heartbeat after `at`, type `pilot:pilot-co-pilot`) | in-process (scratch store) |
 | The notice (`hooks/session-handoff.js`) | `yellowNotice(yellow, coPilot) -> string` | the adopt and resync wording | in-process |
 | The mod (`hooks/handoff-mod.mjs`) | `register(on)` | its hold timers, deleted | true external (fake `on` and `$`) |

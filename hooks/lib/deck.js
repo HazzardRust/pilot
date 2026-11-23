@@ -312,13 +312,14 @@ function isChat(item) {
   return Boolean(item && item.kind === 'chat');
 }
 
+/** A harness agent id, as the deck stamps it on a co-pilot's entry; never an option, a path or a space. */
+const AGENT_ID = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;
+
 /**
  * The stored spellings (co-pilot-tickets L11): the ticket kind, the field an item names its ticket by,
  * and the record's co-pilot keys. The one place on the hooks side that spells them; `join.test.js`
  * pins `kind` and `field` to `deck/items.mjs` and holds every other hook to reading them here.
  */
-/** A harness agent id, as the deck stamps it on a co-pilot's entry; never an option, a path or a space. */
-const AGENT_ID = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;
 const STORED = Object.freeze({ kind: 'ticket', field: 'ticket', coPilots: 'coPilots', coPilot: 'coPilot' });
 
 /**
