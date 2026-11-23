@@ -20,7 +20,7 @@ open thread here that `qa` owns with `deck_reply`
 and `to: "pilot"`: a QA agent belongs to the session that spawned it, and
 this one has none yet. Resume a live run, start the background `pilot wait` now, and
 spawn the co-pilot the `co-pilot` lane names; one the notice says is live: `SendMessage`
-it, spawn none, and on no answer `deck_ticket release`, then spawn.
+it (by the notice's id, with its `resync` line), spawn none, and on no answer `deck_ticket release`, then spawn.
 
 ## What is yours alone
 
@@ -550,7 +550,7 @@ A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd 
 `Message queued for delivery to <id> at its next tool round` is not
 `Resuming agent <id>`: check the expected effect (a PR state, a deck item, a
 report) after a few minutes; if absent, stop the agent and do the step
-yourself or re-brief it. The hand-off pause is the exception: queued, `deck_ticket release` it at once.
+yourself or re-brief it.
 
 ### The artefact is the state
 
@@ -595,7 +595,8 @@ The hand-off asks nothing of the user. Two steps, in order, nothing more:
    `handoff` item for this repository from the record, and answers in one
    line. The record is the hand-off; no prose is written anywhere.
 
-The hand-off mod then clears and submits the first prompt, so stop there. If
+The hand-off mod then clears and submits the first prompt, so stop there. A
+live co-pilot survives the clear: send it nothing, no pause. If
 the line says the mod has not reported in, tell the user to type `/clear`, the fallback, and stop. If it names a
 failure, nothing was posted: fix that and run it again. A `SessionStart` lane
 (`hooks/session-handoff.js`) hands the fresh session that item, the record

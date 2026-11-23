@@ -94,7 +94,7 @@ test('a handoff confirms Handoff failed with its kind\'s sentence', (t) => {
 
   // The row's one shared step comes after every button (render-parts.mjs `renderHandoffChoices`).
   assert.deepEqual(options.find((option) => option.label === HANDOFF_FAILED),
-    { label: HANDOFF_FAILED, confirm: true, ask: askFor(KIND_HANDOFF, handoff), yes: 'Confirm' });
+    { label: HANDOFF_FAILED, confirm: true, ask: askFor(KIND_HANDOFF), yes: 'Confirm' });
 });
 
 test('only the home screen has a queue: the thread and items pages draw no card and no state line', (t) => {
