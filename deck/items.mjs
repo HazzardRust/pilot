@@ -306,9 +306,9 @@ export function buttonsFor(kind) {
   return specFor(kind).buttons ?? null;
 }
 
-/** The sentence a kind's Handoff failed confirms in place with (handoff-failed-confirm L3), or null; a held `item`'s re-arms (held-handoff L3). */
-export function askFor(kind, item) {
-  return isHeld(item) ? "Stop waiting for the co-pilot, and type /clear at this session's next turn end?" : specFor(kind).ask ?? null;
+/** The sentence a kind's Handoff failed confirms in place with (handoff-failed-confirm L3), or null. */
+export function askFor(kind) {
+  return specFor(kind).ask ?? null;
 }
 
 /**
@@ -320,9 +320,6 @@ export function noteFor(item) {
   if (item?.kind === KIND_QUESTION && item.away && item.recommended) {
     return `Posted while you were away: the pilot went with ${item.recommended}. Reply to revise.`;
   }
-  // The hand-off mod holds the `/clear` for a live co-pilot (held-handoff spec 1, L2): the card says so, not "picks this up".
-  // Handoff failed re-arms it (spec 3, L3), and the card says that until the pick-up ends the hold.
-  if (isHeld(item)) return item.hold.rearmedAt ? 're-armed: /clear at the next turn end' : `held: /clear waits on ${item.hold.ticket}'s co-pilot`;
   if (item?.kind === KIND_HANDOFF && /^superseded by itm_\w+$/.test(item.resolution ?? '')) return item.resolution; // not "press Handoff failed" (QA Q3)
   const { note, buttons } = specFor(item?.kind);
   if (!note) return null;
@@ -501,19 +498,13 @@ export function isOpen(item) {
 /** How long a hand-off may sit with no word from the pilot before it reads `unacknowledged` (thread-kinds spec 19, L7, A8): read off the clock and the thread, never stored or swept. */
 export const HANDOFF_ACK_MS = 3 * 60 * 1000;
 
-// A hand-off whose `/clear` the mod holds for a live co-pilot (held-handoff L2), until the pick-up (the pilot's first word).
-function isHeld(item) {
-  if (item?.kind !== KIND_HANDOFF || !isOpen(item) || typeof item.hold?.ticket !== 'string') return false;
-  return !messagesOf(item).some((message) => message?.from === 'pilot');
-}
-
 /**
  * A hand-off nobody has picked up (spec 19, 21): open, kind `handoff`, nothing from the
  * pilot on it, and `HANDOFF_ACK_MS` past its posting. A chain
  * hand-off the lane resolved is closed, so it never reads this way.
  */
 export function isUnacknowledged(item, now = Date.now()) {
-  if (item?.kind !== KIND_HANDOFF || !isOpen(item) || isHeld(item)) return false;
+  if (item?.kind !== KIND_HANDOFF || !isOpen(item)) return false;
   if (messagesOf(item).some((message) => message?.from === 'pilot')) return false;
   const posted = timeOf(item.postedAt);
   return !Number.isNaN(posted) && now - posted >= HANDOFF_ACK_MS;
@@ -785,7 +776,6 @@ export function appearsInYours(item) {
  */
 export function threadState(item, now = Date.now()) {
   if (!isOpen(item)) return 'resolved';
-  if (isHeld(item)) return 'held';
   if (isUnacknowledged(item, now)) return 'unacknowledged';
   // A user's word on a record is never picked up (report-record spec 3), so the state reads past it.
   const last = lastSaid(isRecord(item) ? { replies: messagesOf(item).filter((message) => message.from !== 'user') } : item);
