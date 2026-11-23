@@ -275,9 +275,10 @@ function homeStoreLine(file, before, deckPid) {
 }
 
 /**
- * The Rune deck's `cargo test` (rune-deck-ui S19; A3) when `which('cargo')` finds it on Windows, else the one
- * line the gate prints instead: off Windows the deck's tests run in CI's Windows job, not in every gate, and a
- * gate a test starts (its env carries the outer gate's guard) leaves them to the outer one.
+ * The Rune deck's `cargo fmt --check` then `cargo test` (rune-deck-ui S19; A3; ui-design-workflow S7) when
+ * `which('cargo')` finds it on Windows, else the one line the gate prints instead: off Windows the deck's tests
+ * run in CI's Windows job, not in every gate, and a gate a test starts (its env carries the outer gate's guard)
+ * leaves them to the outer one. `--check` only reports: the gate never rewrites a source file.
  * The command is the path `which` found: a bare `cargo` is looked up in the checkout first on Windows.
  * Its `env` is what the spawn adds: `CARGO_TARGET_DIR`, the shared Rune build (cheap-suite S3; L5).
  * A `selection` with files (a `--since` gate, never a full run) whose `changed` names nothing under `deck/`
@@ -291,37 +292,54 @@ export function cargoStep(env, which = (cmd) => onSearchPath(`${cmd}.exe`, env, 
   }
   const cargo = which('cargo');
   if (cargo === null) return { skip: 'rune deck: cargo not on PATH, skipped' };
-  return { command: cargo, args: ['test', '--manifest-path', 'deck/rune/Cargo.toml'], env: { CARGO_TARGET_DIR: runeTargetDir(env, platform) } };
+  const manifest = ['--manifest-path', 'deck/rune/Cargo.toml'];
+  return {
+    steps: [{ command: cargo, args: ['fmt', '--check', ...manifest] }, { command: cargo, args: ['test', ...manifest] }],
+    env: { CARGO_TARGET_DIR: runeTargetDir(env, platform) },
+  };
 }
 
 /**
- * Runs `step`'s cargo, or prints its skip line; its exit status, 1 when it could not start or was killed.
- * Before the build `bound` keeps the shared target bounded (A3), one line when it wiped it; a wipe that
- * fails is named and the build runs on what is left. Then `stale` dates `deck/rune`'s own sources, so the
- * build is this worktree's and never another's from the shared target; one that fails is named and red.
+ * Runs `rune`'s steps in order, or prints its skip line; the first non-zero exit status, 1 when a step could
+ * not start or was killed, and no step after it starts. Before them `bound` keeps the shared target bounded
+ * (A3), one line when it wiped it; a wipe that fails is named and the steps run on what is left. Then `stale`
+ * dates `deck/rune`'s own sources, so the build is this worktree's and never another's from the shared target;
+ * one that fails is named and red.
  */
-function runeDeck(step, { spawn, cwd, env, bound, stale }) {
-  if (step.skip) {
-    process.stdout.write(`${step.skip}\n`);
+function runeDeck(rune, { spawn, cwd, env, bound, stale }) {
+  if (rune.skip) {
+    process.stdout.write(`${rune.skip}
+`);
     return 0;
   }
-  const dir = step.env.CARGO_TARGET_DIR;
+  const dir = rune.env.CARGO_TARGET_DIR;
   try {
     const { wiped, units } = bound(dir);
-    if (wiped) process.stdout.write(`rune deck: shared build held ${units} units, over ${RUNE_TARGET_MAX}, wiped ${dir}\n`);
+    if (wiped) process.stdout.write(`rune deck: shared build held ${units} units, over ${RUNE_TARGET_MAX}, wiped ${dir}
+`);
   } catch (err) {
-    process.stderr.write(`gate: rune deck: could not bound ${dir}: ${firstLine(err)}\n`);
+    process.stderr.write(`gate: rune deck: could not bound ${dir}: ${firstLine(err)}
+`);
   }
   const crate = path.join(cwd, 'deck', 'rune');
   try {
     stale(crate);
   } catch (err) {
-    process.stderr.write(`gate: rune deck: could not date ${crate}: ${firstLine(err)}\n`);
+    process.stderr.write(`gate: rune deck: could not date ${crate}: ${firstLine(err)}
+`);
     return 1;
   }
-  const run = spawn(step.command, step.args, { cwd, env: { ...env, ...step.env }, stdio: 'inherit', windowsHide: true });
-  if (run.error) process.stderr.write(`gate: rune deck: ${step.command} did not start: ${run.error.message}\n`);
-  return run.status ?? 1;
+  for (const step of rune.steps) {
+    // A clean `fmt --check` prints nothing, so each step names itself and the log shows it ran.
+    process.stdout.write(`rune deck: cargo ${step.args.join(' ')}
+`);
+    const run = spawn(step.command, step.args, { cwd, env: { ...env, ...rune.env }, stdio: 'inherit', windowsHide: true });
+    if (run.error) process.stderr.write(`gate: rune deck: ${step.command} ${step.args[0]} did not start: ${run.error.message}
+`);
+    const status = run.status ?? 1;
+    if (status !== 0) return status;
+  }
+  return 0;
 }
 
 /**
@@ -349,7 +367,7 @@ function writerLines(log) {
  * With `--since=<ref>` (suite-at-landing S1; L7) it prints the scope line first and runs only the
  * selection, the flag kept from `node`; an empty selection runs nothing and passes, a null one runs full.
  * With `homeStore` it is red too when that file's stat changed and `deckPid()` names no deck.
- * With `homeStore` and `which` it runs `cargoStep`'s cargo after the suite, in that window, red when it fails,
+ * With `homeStore` and `which` it runs `cargoStep`'s steps after the suite, in that window, red when one fails,
  * given the selection and bounding the shared target with `bound` first.
  * With `--cost` (cheap-suite S1; L4) it adds the cost reporter and prints the cost table last, its status unchanged.
  */

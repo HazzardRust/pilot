@@ -21,7 +21,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed a78fcef; R1/R2/R3 red-then-green (R3 pins re-run by co-pilot in throwaway worktree); ts/security/rust APPROVE; R3 cost +5 s/gate (435/431 ms -> 5472/5200 ms); concurrent-build race in Misses; integrating",
+      "state": "integrated at 781318b; checks green; R3 +5 s/gate; concurrent-build race in Misses",
       "after": [
         "S1"
       ],
@@ -36,15 +36,17 @@
     },
     {
       "slice": "S5",
-      "state": "planned, not started; start after S3+S4 integrate; brief carries S4 security LOW: the tree diff from proved tree to landing tree must also send a .github/ or FULL_TRIGGERS change to a full run",
+      "state": "pushed 9d87f46 (fix: a full annotation page proves no tree; pin red->green; light 36/36; ts APPROVE, security APPROVE); full re-gate waits on main's hold",
       "after": [
         "S3",
         "S4"
-      ]
+      ],
+      "branch": "slice/cheap-suite-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s5"
     },
     {
       "slice": "S6",
-      "state": "pushed 6dc3fb9 (Verdict: APPROVE); owed runs done: reruns 27/27, test:changed (full fallback) 5000 pass 0 fail; B4 bar MISSED: config --get pilot.remote 90->30, ls-remote --symref 71->15 vs <=12 (for the fundamentalist); integrate after S3",
+      "state": "integrating 6dc3fb9 (holds heavy slot); B1-B3 re-run green 14/14; B4 bar MISSED (30, 15 vs <=12) for the fundamentalist",
       "branch": "slice/cheap-suite-s6",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s6"
     },
@@ -98,25 +100,20 @@
     "dropped: S4 LOW annotations read one page of 100 (forging is A2's accepted risk; trigger rule keeps gate changes full)",
     "dropped: S4 LOW gate-workflow.test.mjs edited outside Files owned (required by the draft-PR trigger; named here)",
     "dropped: S4 LOW provenTree reads diff before host (each case keeps its own reason)",
-    "kept: S4 security LOW base...sha misses trigger files landed on main after the branch point; moved to S5 brief (tree diff to landing tree applies the trigger rule)",
+    "kept: S4 security LOW base...sha misses trigger files landed on main after the branch point; built in S5 (tree-since trigger pin, .github/ and package.json)",
     "dropped: S3 security HIGH skip fails open for bin/scripts/hooks changes reaching the daemon; stands on itm_649bb5483746 'Keep as signed', an ASSUMED default the deck's timeout took, not the user's press; Gate 2 must show it",
     "dropped: S3 security MEDIUM runeTargetDir accepts any absolute LOCALAPPDATA (rmSync rooted at <base>/pilot/rune-target; misconfiguration)",
     "dropped: S3 typescript MEDIUM wipe vs live cargo build EBUSY (caught and named; S3 Misses, read by S8 timed run)",
-    "kept: S3 typescript LOW select-tests trigger path unpinned; one assertion added"
+    "kept: S3 typescript LOW select-tests trigger path unpinned; one assertion added",
+    "kept: S3 R3 shared target served another worktree's compiled code; staleRoot fixed a78fcef, +5 s/gate; concurrent-build race in S3 Misses",
+    "kept: S5 security MEDIUM annotation flood pushes the real tested-tree off page 1, leaving a forged tree the only one (bypasses the one-tree defence); fix: a full page proves no tree (overrides the S4 LOW drop above, now that S5 trusts the tree)",
+    "dropped: S5 typescript LOW hand-written testedTrees rows (file style)",
+    "dropped: S5 typescript LOW proof computed on an already-landed feature (harmless)",
+    "dropped: S5 security LOW proved = sha === null on rev-parse failure (still needs ^{tree}, else full)"
   ],
-  "next": "S3 integrate running; then checks; S6 6dc3fb9, checks; S7/S8 owed runs serially; S5 (with S4 LOW); S10; fundamentalist; QA",
-  "updatedAt": "2026-11-23T12:28:54.332Z",
+  "next": "HOLD (main landing PR #140): S6 integrate finishing, then report quiet; after hold lifted: S6 checks; resume S5 fixer with go for re-gate, integrate; S7/S8 owed runs serially; S10; fundamentalist; QA",
+  "updatedAt": "2026-11-23T12:55:19.102Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "pilot relayed five forced co-pilot hand-backs and three child reports by hand on handoff-no-wait; each relay re-read a full report",
-      "size": 45000
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "harness flagged the prebuilt-rune architect for a possibly irreversible local deletion; its design worktree and reflog show nothing lost, the flagged call itself was not identified",
-      "evidence": "task notification on ad6d1843524ff98d7, 2026-11-23 06:2xZ"
-    },
     {
       "agent": "pilot",
       "what": "after the power cut the lane went to handoff-no-wait before cheap-suite, against the user's 'make sure this runs next' on the cheap-suite thread; the ticket thread was not read before the grant",
@@ -335,6 +332,18 @@
       "agent": "pilot:pilot-implementer",
       "what": "cargo fmt --check flags files outside the slice",
       "evidence": "agents_reports.rs, live.rs use order",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "land's whole-output pins in land.test.mjs / land-clear.test.mjs break on any new land line and only a full run reaches them",
+      "evidence": "S5 full run: 5025 pass, 3 fail, fixed 8551b79",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the co-pilot hello arrives mid-task after the brief, so the child reads it as a second instruction",
+      "evidence": "S5 fixer report: hello arrived mid-task; this report is that reply",
       "size": 1
     }
   ]
