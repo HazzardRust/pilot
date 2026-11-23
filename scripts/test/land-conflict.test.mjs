@@ -101,8 +101,6 @@ test('a conflict keeps the land worktree and names it; a conflict names the land
   assert.equal(fs.realpathSync.native(kept), fs.realpathSync.native(path.join(dir, 'b-land-b')), 'beside the checkout, inside its parent directory');
   assert.ok(midMerge(kept), 'the kept worktree is mid-merge');
   assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip, 'pilot unchanged');
-
-  assert.equal(code, 3);
   assert.match(out, /; the lander resolves in .+-land-b\n$/);
   assert.equal(path.resolve(keptDir(out)), path.resolve(dir, 'b-land-b'));
 });

@@ -134,11 +134,11 @@ test('the installed command runs whichever version the plugin is at now, with no
   const second = fakePlugin(path.join(scratch(t), '0.5.2'), 'the second version');
   install({ root: ROOT, prefix, dir, verify: false, path: memory() });
 
-  const before = runInstalled(prefix, ['run'], atRoot(first));
-  const after = runInstalled(prefix, ['run'], atRoot(second));
+  const fromFirst = runInstalled(prefix, ['run'], atRoot(first));
+  const fromSecond = runInstalled(prefix, ['run'], atRoot(second));
 
-  assert.match(before.stdout, /the first version run/, before.stderr);
-  assert.match(after.stdout, /the second version run/, after.stderr);
+  assert.match(fromFirst.stdout, /the first version run/, fromFirst.stderr);
+  assert.match(fromSecond.stdout, /the second version run/, fromSecond.stderr);
 });
 
 test('a second run changes nothing and says so', (t) => {

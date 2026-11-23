@@ -63,7 +63,8 @@ const pilot = async (cwd, ...args) => {
     process.exitCode = saved.code;
     process.stdout.write = saved.out;
     process.stderr.write = saved.err;
-    for (const name of Object.keys(DECK_OFF)) if (saved.env[name] === undefined) delete process.env[name]; else process.env[name] = saved.env[name];
+    for (const name of Object.keys(process.env)) if (!(name in saved.env)) delete process.env[name];
+    Object.assign(process.env, saved.env);
   }
 };
 
