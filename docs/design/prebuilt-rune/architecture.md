@@ -95,7 +95,7 @@ Deletion test: `runeBinary` alone is shallow (one stat); it stays as `findRune`'
 
 ## 5. Locked decisions
 
-ADR NNNN (`docs/adr/NNNN-prebuilt-rune.md`).
+ADR 0211 (`docs/adr/0211-prebuilt-rune.md`).
 
 - **L0** Grilling depth: forks (itm_dd645b74ccff, closed 06:10Z by the deck's 20-minute default, not a press): no
   Gate 1 walk; the gate1 is the only item once every question thread is closed. Rejected: a full walk.
@@ -122,28 +122,37 @@ ADR NNNN (`docs/adr/NNNN-prebuilt-rune.md`).
 - **A1** Who writes the pin: CI commits `release.json` in the build run (itm_fd5feb14a5a1). Default taken. Trades
   a bot push to a run branch for no trust-on-first-use window. Rejected: local `npm run rune-pin`. Assumed: closed
   by the deck's 20-minute timeout, not by the user; unconfirmed.
+  Verdict: stands — CI writes the pin; no queued ticket touches release.json
 - **A2** Download rule: https on every hop, any host, at most 5 hops, 30 s, 100 MB; sha256 is the gate
   (itm_f5aceacfeafc). Rejected: exact-host allowlist (broke elsewhere when GitHub moved hosts in 2025). Assumed:
   closed by the deck's 20-minute timeout, not by the user; unconfirmed.
+  Verdict: stands — sha256 against the installed pin is the gate, hosts may move
 - **A3** Verify at download and at every reuse (itm_991b2f11334c). Costs ~50-100 ms per open. Rejected: download
   only. Assumed: closed by the deck's 20-minute timeout, not by the user; unconfirmed.
+  Verdict: stands — ~50-100 ms per open is cheap against a tampered reuse
 - **A4** Residual risk accepted, no repo setting (itm_7ba44d9a0d49): a poisoned build input is pinned faithfully;
   mitigated by `--locked` and the rev pin. Rejected: release immutability as a handoff. User answered: "Accept, no
   extra setting".
+  Verdict: stands — user answered "Accept, no extra setting"
 - **A5** No code signing (itm_326ee0d80b61); Smart App Control enforced → HTML (spec 10). Rejected: Artifact
   Signing + Apple Developer ID. Assumed: closed by the deck's 20-minute timeout, not by the user; unconfirmed.
+  Verdict: stands — no signing matches the user's no-extra-cost preference; spec 10 covers Smart App Control
 - **A6** Fetch on `pilot deck` only (itm_60338a16a5ec); auto-open and doctor never download. Rejected: daemon
   background fetch; prefetch at `pilot update`. Assumed: thread closed by the deck's
   20-minute timeout ("First pilot deck"), not by the user; default stands, unconfirmed.
+  Verdict: stands — fetch only on pilot deck; no background network use
 - **A7** A release is a manual dispatch, not automatic on a version change (pilot's itm_9914932172bc). Assumed:
   thread closed by the deck's 20-minute timeout, not by the user; default stands, unconfirmed.
+  Verdict: stands — manual dispatch; the user merges and releases
 - **A8** Three targets: win32-x64, darwin-arm64, linux-x64 on ubuntu-22.04 for an older glibc (pilot's
   itm_5d271bb6c718). Rejected: also Intel macOS and Windows ARM. Assumed: thread closed by the deck's 20-minute
   timeout, not by the user; Rune tests stay Windows-only, macOS and Linux build-only.
-- **A9** A public scratch prerelease is allowed during S4 and QA, deleted after (pilot's itm_bb030b7c165e, blocking).
-  Trades a short-lived public release for evidence against real GitHub. Rejected path, also built: no public write,
-  the PR run's artifacts only, the download proven by `ensureRune` with a `get` reading the artifact from disk, the
-  real download checked at the first real release.
+  Verdict: stands — three targets; the user's machines are covered
+- **A9** A public scratch prerelease is allowed (pilot's itm_bb030b7c165e). Confirmed by the user, who pressed
+  "Allow scratch prerelease (default)": a `rune-scratch-<sha7>` tag and public prerelease during S4 and QA, deleted
+  by QA afterwards. Trades a short-lived public release for evidence against real GitHub. Rejected: no public write,
+  the PR run's artifacts only, the download proven by `ensureRune` with a `get` reading the artifact from disk.
+  Verdict: stands — user pressed "Allow scratch prerelease" on itm_bb030b7c165e
 - **A10** QA runs on this Windows machine in a scratch home with cargo off PATH; macOS and Linux by CI build and
   header check only; HazzardLaptop a human step after landing (pilot's itm_e374d036106d).
 
@@ -151,6 +160,7 @@ red team: S3 needs the SAC reason S2 adds, so S3 now comes after S2, not only S1
 cannot run from a feature branch, so spec 1, 2 and 9 had no in-run evidence; L7's scratch tag added to S4. red team:
 S1 and S4 each half-built `release.json`'s shape; S1 owns the reader and the format, S4 round-trips through it.
 red team: a fetched file on Linux/macOS lacks the exec bit; S1 sets 0755 before the rename.
+  Verdict: stands — QA on this Windows machine, laptop as a human step
 
 ## 7. Out of scope
 
@@ -164,7 +174,7 @@ Width 2; longest stem 3 (S1 → S2 → S3)
 
 | Slice | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- |
-| S1 `pilot deck` downloads, verifies and opens a pinned Rune binary | 3, 4, 7 | `deck/rune-bin.mjs` (new), `deck/open.mjs`, `bin/pilot.mjs`, `deck/test/rune-bin.test.mjs` (new), `docs/adr/NNNN-prebuilt-rune.md` (new) | – | typescript, security | [S1](slices/S1.md) |
+| S1 `pilot deck` downloads, verifies and opens a pinned Rune binary | 3, 4, 7 | `deck/rune-bin.mjs` (new), `deck/open.mjs`, `bin/pilot.mjs`, `deck/test/rune-bin.test.mjs` (new), `docs/adr/0211-prebuilt-rune.md` (new) | – | typescript, security | [S1](slices/S1.md) |
 | S2 every failure opens HTML with one line | 5, 6, 10 | `deck/rune-bin.mjs`, `deck/test/rune-fail.test.mjs` (new) | S1 (`deck/rune-bin.mjs`) | typescript, security | [S2](slices/S2.md) |
 | S3 `pilot doctor` has a Rune row | 8 | `deck/doctor.mjs`, `deck/test/doctor-rune.test.mjs` (new) | S2 (`findRune`'s reasons) | typescript | [S3](slices/S3.md) |
 | S4 a release run publishes three binaries and pins them | 1, 2, 9 | `.github/workflows/rune-release.yml` (new), `scripts/rune-pin.mjs` (new), `scripts/test/rune-pin.test.mjs` (new), `docs/OPERATING.md` | S1 (`release.json` format, `readPin`) | typescript, security | [S4](slices/S4.md) |
