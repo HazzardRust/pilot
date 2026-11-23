@@ -2,7 +2,7 @@
 //! for that tab's view, and a refused add deck says why and keeps the typed path. The presses run
 //! against a scratch daemon, never 4321.
 
-mod support;
+use crate::support;
 
 use pilot_deck::act::Acted;
 use pilot_deck::app::{self, State};

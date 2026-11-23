@@ -3,7 +3,7 @@
 //! short time, and each message carries deck.css's left rule. Drawn from a view a real scratch
 //! deck served (L7).
 
-mod support;
+use crate::support;
 
 use std::sync::Arc;
 

@@ -1,7 +1,7 @@
 //! rune-deck-ui S12: the Status region draws a recorded view's rows, and choosing a ticket sets the
 //! query and takes the next view's rows. The press runs against a scratch daemon, never 4321.
 
-mod support;
+use crate::support;
 
 use pilot_deck::app::{self, State};
 use pilot_deck::client::View;

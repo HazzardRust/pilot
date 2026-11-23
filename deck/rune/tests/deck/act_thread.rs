@@ -1,7 +1,7 @@
 //! rune-deck-ui S5: every thread write the page makes, the Rune deck makes through the same form route,
 //! read back through the daemon's read routes only (`/api/items`, `/api/runs`), never the store.
 
-mod support;
+use crate::support;
 
 use pilot_deck::act::{Acted, Action};
 use serde_json::{Value, json};

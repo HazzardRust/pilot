@@ -3,9 +3,9 @@
 //! `Switch`, and a pending switch's Cancel posts `CancelSwitch`; an opened fold is the window's prefs and
 //! opens again after a restart.
 
-mod support;
+use crate::support;
 
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use pilot_deck::app::{self, State};
@@ -19,7 +19,7 @@ use support::{Scratch, id_in, item, read, secret, tool};
 const REPO: &str = "C:/work/alpha";
 
 /// The client and the prefs read their place from the environment, which every test here shares.
-static ENV: Mutex<()> = Mutex::new(());
+use crate::support::ENV;
 
 /// Runs `make` with the deck's address and dir in the environment, as the window's own start reads them.
 fn with_deck<T>(deck: &Scratch, make: impl FnOnce() -> T) -> T {

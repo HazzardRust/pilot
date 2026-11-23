@@ -1,7 +1,7 @@
 //! rune-deck-ui S32 (spec 21): on a deck with nothing in it every region says so in a quiet
 //! sentence instead of drawing blank, read from a real empty scratch deck's own view.
 
-mod support;
+use crate::support;
 
 use support::{Scratch, live_window};
 

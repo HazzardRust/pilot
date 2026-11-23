@@ -1,7 +1,7 @@
 //! rune-deck-ui S8: a thread drawn whole from a real scratch deck's view, and Escape or ← going
 //! back to the deck that owns it (L7: the view is the daemon's, recorded by a real read).
 
-mod support;
+use crate::support;
 
 use pilot_deck::app::State;
 use pilot_deck::client::{Client, Query, View};
@@ -43,7 +43,8 @@ fn a_thread_reads_whole_and_escape_or_left_goes_back_to_its_deck() {
         .expect("an id")
         .to_string();
 
-    // SAFETY: this binary's only test sets the client's address, before any thread reads it.
+    let held = support::ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    // SAFETY: every test that touches the environment holds `support::ENV`.
     unsafe {
         std::env::set_var("PILOT_DECK_DIR", &deck.dir);
         std::env::set_var("PILOT_DECK_PORT", deck.port.to_string());
@@ -102,6 +103,12 @@ fn a_thread_reads_whole_and_escape_or_left_goes_back_to_its_deck() {
     a_key_typed_into_a_field_is_not_stolen(&view, &query);
     a_back_press_survives_the_next_live_refetch(&deck, query);
     a_move_reads_the_next_thread_at_once(&deck);
+    // SAFETY: still holding `support::ENV`.
+    unsafe {
+        std::env::remove_var("PILOT_DECK_DIR");
+        std::env::remove_var("PILOT_DECK_PORT");
+    }
+    drop(held);
 }
 
 fn thread_ids(deck: &support::Scratch) -> Vec<String> {

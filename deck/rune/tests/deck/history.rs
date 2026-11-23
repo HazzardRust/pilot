@@ -1,7 +1,7 @@
 //! rune-deck-ui S18: the settled-by-day folds and the items page's runs, drawn from a view a real scratch
 //! deck served (L7); a run's Dismiss posts once through the write seam.
 
-mod support;
+use crate::support;
 
 use std::sync::Arc;
 use std::time::{Duration, Instant};

@@ -2,7 +2,7 @@
 //! a press in the Tickets panel, the strip and the tab strip is sent through `act::send` in the frame of
 //! the press, and `draw` disables a control exactly while its key is in flight.
 
-mod support;
+use crate::support;
 
 use std::net::TcpListener;
 use std::sync::Arc;

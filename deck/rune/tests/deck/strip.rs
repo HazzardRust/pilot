@@ -2,7 +2,7 @@
 //! daemon does before Next, the toggle sets the query, and a create opens the new thread. Every press
 //! that posts runs against a scratch daemon, never 4321, and that daemon refuses Start before a spawn.
 
-mod support;
+use crate::support;
 
 use std::sync::Arc;
 use std::time::{Duration, Instant};
