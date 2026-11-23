@@ -11,8 +11,8 @@ each surface brings its own preview page, which the playground frames and feeds.
 3. Move the controls. The preview redraws at once; the `dark` box switches the mode. The contrast table lists each
    text/surface pair in light and dark and flags one under 4.5:1 (WCAG AA): `text`, `muted` and `quiet` on `surface`,
    `panel` and `background`, and `on_x` on `x`, matched by leaf name. A file with no `text` colour is read as black
-   text in light and white in dark. Ratios are rounded to 2 decimals before the flag, so a pair a hair under 4.5
-   (4.495 and up) shows 4.50 unflagged.
+   text in light and white in dark. The flag reads the unrounded ratio, so a pair a hair under 4.5 shows
+   `low 4.50`.
 4. **Download** (or **Copy**) the export, then `pilot look apply <export.json> <surface.json>` lays it onto the token
    file. Untouched values keep their bytes.
 
