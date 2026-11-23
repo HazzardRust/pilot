@@ -433,6 +433,18 @@ test('the host reads annotations and nothing more', (t) => {
   assert.ok(fs.existsSync(path.join(dir, 'calls.jsonl')), 'the annotations GET does start one, so the 0 above is seen');
 });
 
+test('a full annotation page proves no tree', () => {
+  const notice = (message, title) => ({ annotation_level: 'notice', title, message });
+  const page = [notice('a'.repeat(40), 'tested-tree'), ...Array.from({ length: 99 }, (_, i) => notice(`line ${i}`, 'Node'))];
+  assert.equal(page.length, 100);
+  const said = {
+    [CHECK_RUNS]: { total_count: 1, check_runs: [{ id: 11, name: 'gate (ubuntu-latest)', status: 'completed', conclusion: 'success', app: { slug: 'github-actions' } }] },
+    [annotations(11)]: page,
+  };
+  const host = githubHost((args) => JSON.stringify(said[args[1]]));
+  assert.deepEqual(host.testedTrees(SHA), [{ name: 'gate (ubuntu-latest)', conclusion: 'success', tree: null }]);
+});
+
 test('the allowlist still refuses', (t) => {
   const dir = stubbed(t);
   const gh = ghRun(dir);

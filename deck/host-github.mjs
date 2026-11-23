@@ -222,7 +222,8 @@ export function githubHost(run) {
         const notes = json(run(['api', `repos/{owner}/{repo}/check-runs/${check.id}/annotations?per_page=100`], { timeout: CHECKS_TIMEOUT_MS }), 'api annotations');
         if (!Array.isArray(notes)) throw new Error('gh api annotations: an answer that is not a list');
         const trees = new Set(notes.filter((note) => note?.title === 'tested-tree').map((note) => String(note.message).trim()));
-        return { name: check.name, conclusion: String(check.conclusion ?? check.status), tree: trees.size === 1 ? [...trees][0] : null };
+        // A full page may have pushed the real notice off it, leaving a forged one alone: no proof.
+        return { name: check.name, conclusion: String(check.conclusion ?? check.status), tree: trees.size === 1 && notes.length < 100 ? [...trees][0] : null };
       });
     },
     signedIn() {
