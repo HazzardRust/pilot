@@ -1,5 +1,5 @@
 /**
- * Slice S4 of ui-design-workflow: `pilot look apply` changes only the touched tokens (ADR NNNN).
+ * Slice S4 of ui-design-workflow: `pilot look apply` changes only the touched tokens (ADR 0210).
  *
  * The current text is Rune's real `theme.json`, and every export is made by the same
  * `tokens.exportText` the playground page runs, so no fixture is typed in the exporter's format.

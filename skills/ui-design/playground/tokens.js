@@ -1,4 +1,4 @@
-// Token leaves (ui-design-workflow S4, ADR NNNN, L6): the one parser of a JSON token file, read
+// Token leaves (ui-design-workflow S4, ADR 0210, L6): the one parser of a JSON token file, read
 // with each leaf's source span so an untouched export is the file byte for byte. A classic script
 // that sets `globalThis.tokens`: the playground page loads it by <script src>, `pilot look apply`
 // through `vm`. It reads text and returns text; it touches no file, page or network. S5 adds

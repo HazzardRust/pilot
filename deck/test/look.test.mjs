@@ -1,5 +1,5 @@
 /**
- * Slice S1 of ui-design-workflow: `pilot look snap` (ADR NNNN).
+ * Slice S1 of ui-design-workflow: `pilot look snap` (ADR 0210).
  *
  * The surface adapter is a process start from a repo file's argv, so every test here hands
  * `snap` a recorder instead of `spawnSync` and asserts the argv it would have started. Each

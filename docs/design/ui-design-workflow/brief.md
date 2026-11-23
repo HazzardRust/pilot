@@ -49,7 +49,7 @@ https://claude.ai/code/session_01NXgSForDWcHA67cB28cNrm
 ## Artefact
 
 `docs/design/ui-design-workflow/architecture.md`, slices in `slices/S1.md` to `slices/S9.md`. The run's ADR is
-`docs/adr/NNNN-ui-design-workflow.md` (S1); the landing numbers it.
+`docs/adr/0210-ui-design-workflow.md` (S1); the landing numbers it.
 
 ## Gate command
 

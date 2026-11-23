@@ -5,7 +5,7 @@ description: The look step for any feature with a surface someone looks at, on a
 
 # UI design: the look step
 
-One step for every stack (ADR NNNN). What a stack contributes is a **surface adapter**: a `surface.json` beside
+One step for every stack (ADR 0210). What a stack contributes is a **surface adapter**: a `surface.json` beside
 its token file. The commands below read that file and nothing stack-specific.
 
 ## The surface adapter
