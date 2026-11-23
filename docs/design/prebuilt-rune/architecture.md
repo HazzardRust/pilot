@@ -131,10 +131,12 @@ ADR NNNN (`docs/adr/NNNN-prebuilt-rune.md`).
 - **A5** No code signing (itm_326ee0d80b61); Smart App Control enforced → HTML (spec 10). Rejected: Artifact
   Signing + Apple Developer ID.
 - **A6** Fetch on `pilot deck` only (itm_60338a16a5ec); auto-open and doctor never download. Rejected: daemon
-  background fetch; prefetch at `pilot update`.
-- **A7** A release is a manual dispatch, not automatic on a version change (pilot's itm_9914932172bc).
+  background fetch; prefetch at `pilot update`. User answered: "First pilot deck" (default taken).
+- **A7** A release is a manual dispatch, not automatic on a version change (pilot's itm_9914932172bc). Assumed:
+  thread closed by the deck's 20-minute timeout, not by the user; default stands, unconfirmed.
 - **A8** Three targets: win32-x64, darwin-arm64, linux-x64 on ubuntu-22.04 for an older glibc (pilot's
-  itm_5d271bb6c718). Rejected: also Intel macOS and Windows ARM.
+  itm_5d271bb6c718). Rejected: also Intel macOS and Windows ARM. Assumed: thread closed by the deck's 20-minute
+  timeout, not by the user; Rune tests stay Windows-only, macOS and Linux build-only.
 - **A9** A public scratch prerelease is allowed during S4 and QA, deleted after (pilot's itm_bb030b7c165e, blocking).
   Trades a short-lived public release for evidence against real GitHub. Rejected path, also built: no public write,
   the PR run's artifacts only, the download proven by `ensureRune` with a `get` reading the artifact from disk, the

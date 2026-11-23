@@ -47,7 +47,7 @@ Taken from `docs/design/portable-store/brief.md` (on `origin/design/portable-sto
 
 - Before S4's first push: this machine's GitHub credential lacks the `workflow` scope, so a push adding
   `.github/workflows/rune-release.yml` is refused until the user runs `gh auth refresh -h github.com -s workflow`
-  (asked on itm_daa1ea49125f). S4 stops and asks `main` if the push is refused; the design branch carries no workflow file.
+  (asked on itm_daa1ea49125f; still missing as of 2026-11-23: the token has gist, read:org, repo). S4 stops and asks `main` if the push is refused; the design branch carries no workflow file.
 - After landing: on HazzardLaptop, `pilot deck` after the first real release (spec 9, A10).
 
 ## Network
@@ -62,7 +62,7 @@ Every commit ends with these two lines, copied exactly:
 
 ```
 Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01NXgSForDWcHA67cB28cNrm
+Claude-Session: https://claude.ai/code/session_01NXgSFqofX9JXraJQMnd6vc
 ```
 
 ## PR footer
@@ -70,7 +70,7 @@ Claude-Session: https://claude.ai/code/session_01NXgSForDWcHA67cB28cNrm
 ```
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-https://claude.ai/code/session_01NXgSForDWcHA67cB28cNrm
+https://claude.ai/code/session_01NXgSFqofX9JXraJQMnd6vc
 ```
 
 ## Live root
