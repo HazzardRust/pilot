@@ -83,6 +83,7 @@ export const TREE_TESTS = Object.freeze([
   'scripts/test/state-words.test.mjs',
   'scripts/test/ticket-states.test.mjs',
   'scripts/test/tree-census.test.mjs',
+  'scripts/test/ui-design.test.mjs',
   'scripts/test/vocabulary-guard.test.mjs',
 ]);
 
