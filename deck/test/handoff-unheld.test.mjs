@@ -37,5 +37,5 @@ test('a hand-off card is never held', (t) => {
   assert.ok(PLAIN_NOTE, 'a hand-off has a plain note to compare with');
   assert.equal(noteFor(handoff), PLAIN_NOTE);
   assert.equal(askFor(KIND_HANDOFF), 'Treat the session this went to as lost, and brief a fresh one from this hand-off?');
-  assert.notEqual(threadState(handoff), 'held');
+  assert.equal(threadState(handoff), 'posted');
 });
