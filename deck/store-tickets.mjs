@@ -29,7 +29,7 @@ import {
 } from './items.mjs';
 import { CREW_IDLE_MS, YIELD_MS, idleYellowOf, yieldsDue } from './lanes.mjs';
 import { SHA } from './recut.mjs';
-import { nextRecord, repoKey, sameRepo } from './runs.mjs';
+import { nextRecord, repoKey, repoOf, sameRepo } from './runs.mjs';
 import {
   DeckRefusal,
   bylineOf,
@@ -548,6 +548,25 @@ export function setQaComment(ticketId, comment) {
   writeDeck(deck);
   return ticket.repo;
 }
+
+/**
+ * A co-pilot's heartbeat stamps its agent id on `cwd`'s live co-pilot entry (handoff-no-wait S4, L4): true when it
+ * wrote. Only the co-pilot's type, only after the grant's `at`, and only a changed id, so an unchanged heartbeat
+ * writes nothing; a worktree counts for its repository. Here and not beside `coPilotFor`: store-runs is at its bar.
+ */
+export function noteCoPilotAgent(cwd, agentId, agentType, now = Date.now()) {
+  if (agentType !== CO_PILOT_TYPE || typeof cwd !== 'string' || typeof agentId !== 'string' || !AGENT_ID.test(agentId)) return false;
+  const deck = readDeck();
+  const repo = repoOf(cwd) ?? cwd;
+  const entry = storedCoPilot(deck, repo);
+  if (!entry || !isLiveCoPilot(deck, entry) || !(now > Date.parse(entry.at)) || entry.agent === agentId) return false;
+  deck.coPilots[repoKey(repo)] = { ...entry, agent: agentId };
+  writeDeck(deck);
+  return true;
+}
+
+const CO_PILOT_TYPE = 'pilot:pilot-co-pilot';
+const AGENT_ID = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/; // a harness agent id; never an option, a path or a space
 
 /** Every item on the deck, oldest first, each with whatever replies it has. */
 
