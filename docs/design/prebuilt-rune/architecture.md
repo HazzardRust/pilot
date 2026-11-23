@@ -126,7 +126,8 @@ ADR NNNN (`docs/adr/NNNN-prebuilt-rune.md`).
 - **A3** Verify at download and at every reuse (itm_991b2f11334c). Costs ~50-100 ms per open. Rejected: download
   only.
 - **A4** Residual risk accepted, no repo setting (itm_7ba44d9a0d49): a poisoned build input is pinned faithfully;
-  mitigated by `--locked` and the rev pin. Rejected: release immutability as a handoff.
+  mitigated by `--locked` and the rev pin. Rejected: release immutability as a handoff. User answered: "Accept, no
+  extra setting".
 - **A5** No code signing (itm_326ee0d80b61); Smart App Control enforced → HTML (spec 10). Rejected: Artifact
   Signing + Apple Developer ID.
 - **A6** Fetch on `pilot deck` only (itm_60338a16a5ec); auto-open and doctor never download. Rejected: daemon
