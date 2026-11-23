@@ -22,6 +22,7 @@ are"), not a higher limit.
 | 7 | The Rune deck's build is shared across worktrees and bounded. | A second fresh worktree's `cargo test` builds in < 2 min (7m32s cold today); one target dir instead of 13 GB per worktree. |
 | 8 | A selected gate that changes nothing under `deck/` runs no cargo. | Gate test both ways; the skip line in a scripts-only slice gate. |
 | 9 | practitioner: Rust build engineers (matklad, "Delete Cargo Integration Tests") — the Rune tests link as one binary. | 172 tests in one target; cold `--no-run` time and size lower than before. |
+| 10 | (added, user, itm_52b72e87a2a3) The plugin's version is bumped with this feature. *assumed* (A5) | read: every file that carries the plugin version on feat/cheap-suite reads one version higher than on the base, and they agree with each other. |
 
 Lines 1-9 are main's working spec (accepted 2026-11-22); the bars in 3 and 4 are mine from the measurement (A4).
 
@@ -113,6 +114,7 @@ adapter except `rune-target`, which is internal to the gate.
 - **A4** Bars: spawns ≤ 11,000 and git ≤ 10,000; full suite ≤ 15 min with two other suites live. Trades a weaker bar
   than the draft's "far fewer" for one the measured levers reach (F3, F4: most git is distinct scenarios). Not a fork.
   Verdict: stands — 15 min is the ticket's own "under half the 30-minute limit"; no queued ticket sets another bar
+- **A5** The version bump of spec 10 is a patch bump (the artefact names no other). Recorded by the co-pilot as assumed; the user asked for "a version bump" (itm_52b72e87a2a3, 2026-11-22). Which files carry the version is S10's to find (last bump: 2530153).
 
 ## 7. Out of scope
 
@@ -135,7 +137,7 @@ Width 7; longest stem 4 (S1 → S3 → S5 → S10).
 | S7 | Hook and client tests share their daemon and stop waiting on fixed budgets | 2, 3, 6 | `hooks/test/inbox.test.js`, `deck/client.mjs`, `deck/test/client-rejoin.test.mjs` | – | typescript | [S7](slices/S7.md) |
 | S8 | Script tests drop duplicate landings and nested gates | 2, 3, 6 | five `scripts/test/land*.test.mjs`, `test-quiet`, `install-command`, `cli-wiring` tests | – | typescript | [S8](slices/S8.md) |
 | S9 | Deck tests reuse one deck and one fixture per file | 2, 3, 6 | `deck/test/daemon`, `gate2-base`, `landing-recut`, `classifier-log` tests | – | typescript | [S9](slices/S9.md) |
-| S10 | The suite is measured cheaper under load | 3, 4, 6 | `scripts/gate.mjs` (`SPAWN_CEILING`), `scripts/test/cost-bars.test.mjs`, `cost-after.txt` | S1 (`test:cost`), S2 (`deck/rune/tests`), S3 (`cargoStep`), S5 (`selectTests`), S6 (`runRemote`), S7 (`inbox.test.js`), S8 (`land-*.test.mjs`), S9 (`daemon.test.mjs`) | typescript | [S10](slices/S10.md) |
+| S10 | The suite is measured cheaper under load | 3, 4, 6, 10 | `scripts/gate.mjs` (`SPAWN_CEILING`), `scripts/test/cost-bars.test.mjs`, `cost-after.txt` | S1 (`test:cost`), S2 (`deck/rune/tests`), S3 (`cargoStep`), S5 (`selectTests`), S6 (`runRemote`), S7 (`inbox.test.js`), S8 (`land-*.test.mjs`), S9 (`daemon.test.mjs`) | typescript | [S10](slices/S10.md) |
 
 red team: (1) S3 and S5 both edit `select-tests.mjs` (`changed`, tree `since`): S5 after S3, not beside it. (2) S1
 and S3 both edit `gate.mjs`: chained. (3) S4's `testedTrees` widens the `gh` allowlist, a seam S5 only reads: S5 names
@@ -165,5 +167,5 @@ it mid-call; S6 behaviour 2 pins that a new runner asks again. (5) Spec 4 is at 
 | S7 | planned | – | – | – | – | 2, 3, 6 |
 | S8 | planned | – | – | – | – | 2, 3, 6 |
 | S9 | planned | – | – | – | – | 2, 3, 6 |
-| S10 | planned | – | – | – | S1, S2, S3, S5, S6, S7, S8, S9 | 3, 4, 6 |
+| S10 | planned | – | – | – | S1, S2, S3, S5, S6, S7, S8, S9 | 3, 4, 6, 10 |
 | cheap-suite | planned | feat/cheap-suite | – | – | – | 1-9 |
