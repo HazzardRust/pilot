@@ -17,7 +17,7 @@
  */
 
 import { spawn } from 'node:child_process';
-import { statSync } from 'node:fs';
+import nodeFs, { statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -37,6 +37,53 @@ export function runeBinary(root, platform) {
     return statSync(file).isFile() ? file : null;
   } catch {
     return null;
+  }
+}
+
+/** A copy `launchCopy` made: the build's mtime in milliseconds, and `.exe` on Windows. */
+const COPY_NAME = /^pilot-deck-(\d+)(\.exe)?$/;
+
+/** What Windows says of a file a window still runs, or another open has just removed. */
+const IN_USE = ['EBUSY', 'EPERM', 'EACCES', 'ENOENT'];
+
+/**
+ * The copy of `binary` the deck runs, made in `dir` once per build. Windows locks a running exe, so a
+ * window started from `target/release` makes the next `cargo build --release` fail to replace it (A9);
+ * a window started from a copy leaves the build free. Only making the copy can throw: older copies go
+ * best effort, except one a window still runs, which Windows refuses to remove and a later open clears.
+ */
+export function launchCopy(binary, dir, fs = nodeFs) {
+  const stamp = Math.trunc(fs.statSync(binary).mtimeMs);
+  const copy = path.join(dir, `pilot-deck-${stamp}${path.extname(binary)}`);
+  fs.mkdirSync(dir, { recursive: true });
+  if (!fs.existsSync(copy)) {
+    // Copied beside, then renamed, so an open racing a half-written copy never runs it.
+    const part = `${copy}.${process.pid}.part`;
+    try {
+      fs.copyFileSync(binary, part);
+      fs.renameSync(part, copy);
+    } catch (err) {
+      fs.rmSync(part, { force: true });
+      // Another open renamed its copy of this build first, and may already run it.
+      if (!fs.existsSync(copy)) throw err;
+    }
+  }
+  try {
+    for (const old of fs.readdirSync(dir)) {
+      // Only older builds: a newer copy is another open's, made and not yet started.
+      if (Number(COPY_NAME.exec(old)?.[1]) < stamp) removeCopy(path.join(dir, old), fs);
+    }
+  } catch (err) {
+    console.error(`[deck] could not clear old copies in ${dir}:`, err.message);
+  }
+  return copy;
+}
+
+function removeCopy(file, fs) {
+  try {
+    fs.unlinkSync(file);
+  } catch (err) {
+    if (!IN_USE.includes(err.code)) console.error(`[deck] could not remove ${file}:`, err.message);
   }
 }
 
@@ -71,6 +118,19 @@ export function openerFor(platform, url, rune = null) {
 }
 
 /**
+ * The copy of `rune` under `<target>/run`, or `rune` itself when no copy can be made (a full disk): a
+ * window that blocks the next build is still better than no window, and the line on stderr says why.
+ */
+export function runCopy(rune) {
+  try {
+    return launchCopy(rune, path.join(path.dirname(path.dirname(rune)), 'run'));
+  } catch (err) {
+    console.error(`[deck] could not copy ${rune}, opening it in place:`, err.message);
+    return rune;
+  }
+}
+
+/**
  * Open the deck: the Rune window where `rune` is built, the default browser otherwise; unless it has just been opened or
  * `PILOT_DECK_NO_OPEN` says not to. Returns whether the opener was started, which is not
  * the same as a tab appearing: the platform's opener answers to nobody once it is away.
@@ -94,7 +154,7 @@ export function openDeck(spawnOpener = spawn, platform = hostPlatform(), rune = 
   lastTriedAt = now;
 
   const file = openFile();
-  const { command, args } = openerFor(platform, file, rune);
+  const { command, args } = openerFor(platform, file, rune && runCopy(rune));
   try {
     const child = spawnOpener(command, args, { detached: true, stdio: 'ignore', windowsHide: true });
     // A browser that will not start is worth one line on the daemon's stderr and nothing

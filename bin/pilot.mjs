@@ -34,7 +34,7 @@ import { ensureDaemon, isDeckUp } from '../deck/client.mjs';
 import { fromLeash, startScratch, stopScratch } from '../deck/scratch.mjs';
 import { fromRoot } from '../deck/spawn-root.mjs';
 import { openFile, rotateSecret } from '../deck/launch.mjs';
-import { openDeck, PACKAGE_ROOT, runeBinary } from '../deck/open.mjs';
+import { openDeck, PACKAGE_ROOT, runCopy, runeBinary } from '../deck/open.mjs';
 import { main as serveDeck } from '../deck/daemon.mjs';
 import { storeDir } from '../deck/store.mjs';
 import { readUsageSwitch, setUsageSwitch } from '../deck/usage-switch.mjs';
@@ -55,6 +55,7 @@ import { writeLessonReport } from '../scripts/lesson-report.mjs';
 import { DECK_PORT, deckPort, deckUrl } from '../deck/server.mjs';
 import { PLUGIN_VERSION } from '../deck/version.mjs';
 import { main as listTickets } from '../deck/tickets.mjs';
+import { look } from '../deck/look.mjs';
 import { main as listProcesses, processTable } from '../deck/procs.mjs';
 import { main as collectGarbage, deckPidNow, landSweep } from '../deck/gc.mjs';
 import { main as doctor, slugsWarning } from '../deck/doctor.mjs';
@@ -194,6 +195,13 @@ const usage = () => `pilot — the deck for piloted runs
   pilot ready --ticket <id> --slots <n>
                  print the slices the ticket's record lets start now, one per line as
                  S<n> from <feat|branch>, at most n, or none; reads the deck, writes nothing
+  pilot look snap <surface.json> <screen> [--mode light|dark] [--out <png>]
+                 capture a surface's screen, opened by its start-up route, to a PNG
+                 (default <screen>-<mode>.png); starts one process, sends no input
+  pilot look apply <export.json> <surface.json>
+                 lay a playground export onto the surface's token file, only the changed leaves
+  pilot look shape <surface.json>
+                 open the token playground in a browser on the surface's own preview page
   pilot trace <itm_id>
                  print a hand-off's or ticket's trace rows in time order, then done or
                  waiting: <next step>, <age>; reads the trace file, never the deck (exit 2 on a bad id)
@@ -378,7 +386,7 @@ export async function run(argv, deps) {
     for (let tries = 0; up && tries < 20 && !existsSync(openFile()); tries += 1) await new Promise((r) => setTimeout(r, 100));
     // Where the Rune deck is built it is what opens (rune-deck-ui A2); `deps.root` is a test's package root.
     const rune = runeBinary(deps?.root ?? PACKAGE_ROOT, hostPlatform());
-    const open = rune ? `open ${rune}` : existsSync(openFile()) ? `open ${openFile()}` : 'no open file: `pilot deck --rotate` writes one';
+    const open = rune ? `open ${runCopy(rune)}` : existsSync(openFile()) ? `open ${openFile()}` : 'no open file: `pilot deck --rotate` writes one';
     console.log(up ? `The deck is up at ${deckUrl()}\n${open}` : `No deck answered at ${deckUrl()}`);
     process.exitCode = up ? 0 : 1;
     return undefined;
@@ -539,6 +547,11 @@ export async function run(argv, deps) {
 
   if (command === 'ready') {
     process.exitCode = await ready(argv.slice(1));
+    return undefined;
+  }
+
+  if (command === 'look') {
+    process.exitCode = look(argv.slice(1));
     return undefined;
   }
 

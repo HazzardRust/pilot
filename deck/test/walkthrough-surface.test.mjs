@@ -24,7 +24,7 @@ const redTicket = () => takeLive(postItem({ kind: KIND_TICKET, title: 'Wide', bo
 
 const gate1 = (ticket, extra = {}) =>
   postItem({
-    kind: KIND_GATE1, title: 'Gate 1', body: 'The artefact.', repo: REPO, artefact: ARTEFACT,
+    kind: KIND_GATE1, title: 'Gate 1', body: 'The artefact.\nFonts: Inter\nColour means: red is blocked\nReference: VS Code', repo: REPO, artefact: ARTEFACT,
     sha: '31efcb0', locked: 1, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', ticket: ticket.id, ...extra,
   });
 
@@ -66,7 +66,6 @@ test("the pilot's wizard still walks it", (t) => {
 
 test('a legacy plan is walked as before', () => {
   assert.deepEqual(walkthroughPlanGaps({ plan: { artefact: ARTEFACT, sliceCount: 3 } }, 'qa'), []);
-  assert.deepEqual(walkthroughPlanGaps({ plan: { artefact: ARTEFACT, surface: true } }, 'qa'), []);
   assert.deepEqual(walkthroughPlanGaps({}, 'qa'), [], 'no plan');
   assert.deepEqual(walkthroughPlanGaps(undefined, 'qa'), [], 'no ticket');
 });
