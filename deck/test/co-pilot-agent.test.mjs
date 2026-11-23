@@ -8,6 +8,7 @@ import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -82,10 +83,14 @@ test('a worktree heartbeat counts for its repository', (t) => {
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const repo = path.join(root, 'repo');
   const worktree = path.join(root, 'repo-s4');
-  fs.mkdirSync(path.join(repo, '.git', 'worktrees', 'repo-s4'), { recursive: true });
-  fs.mkdirSync(worktree);
-  // What `git worktree add` writes into the worktree's `.git` file.
-  fs.writeFileSync(path.join(worktree, '.git'), `gitdir: ${path.join(repo, '.git', 'worktrees', 'repo-s4').replace(/\\/g, '/')}\n`);
+  const git = (cwd, ...args) => {
+    const ran = spawnSync('git', args, { cwd, encoding: 'utf8', windowsHide: true });
+    assert.equal(ran.status, 0, ran.stderr);
+  };
+  fs.mkdirSync(repo);
+  git(repo, 'init', '-q');
+  git(repo, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'base');
+  git(repo, 'worktree', 'add', '-q', worktree); // the `.git` file the real producer writes
   granted(repo);
 
   assert.equal(noteCoPilotAgent(worktree, 'wt000000000000001', CO_PILOT), true);
