@@ -120,16 +120,18 @@ ADR NNNN (`docs/adr/NNNN-prebuilt-rune.md`).
 ## 6. Assumed decisions
 
 - **A1** Who writes the pin: CI commits `release.json` in the build run (itm_fd5feb14a5a1). Default taken. Trades
-  a bot push to a run branch for no trust-on-first-use window. Rejected: local `npm run rune-pin`.
+  a bot push to a run branch for no trust-on-first-use window. Rejected: local `npm run rune-pin`. Assumed: closed
+  by the deck's 20-minute timeout, not by the user; unconfirmed.
 - **A2** Download rule: https on every hop, any host, at most 5 hops, 30 s, 100 MB; sha256 is the gate
-  (itm_f5aceacfeafc). Rejected: exact-host allowlist (broke elsewhere when GitHub moved hosts in 2025).
+  (itm_f5aceacfeafc). Rejected: exact-host allowlist (broke elsewhere when GitHub moved hosts in 2025). Assumed:
+  closed by the deck's 20-minute timeout, not by the user; unconfirmed.
 - **A3** Verify at download and at every reuse (itm_991b2f11334c). Costs ~50-100 ms per open. Rejected: download
-  only.
+  only. Assumed: closed by the deck's 20-minute timeout, not by the user; unconfirmed.
 - **A4** Residual risk accepted, no repo setting (itm_7ba44d9a0d49): a poisoned build input is pinned faithfully;
   mitigated by `--locked` and the rev pin. Rejected: release immutability as a handoff. User answered: "Accept, no
   extra setting".
 - **A5** No code signing (itm_326ee0d80b61); Smart App Control enforced → HTML (spec 10). Rejected: Artifact
-  Signing + Apple Developer ID.
+  Signing + Apple Developer ID. Assumed: closed by the deck's 20-minute timeout, not by the user; unconfirmed.
 - **A6** Fetch on `pilot deck` only (itm_60338a16a5ec); auto-open and doctor never download. Rejected: daemon
   background fetch; prefetch at `pilot update`. Assumed: thread closed by the deck's
   20-minute timeout ("First pilot deck"), not by the user; default stands, unconfirmed.
