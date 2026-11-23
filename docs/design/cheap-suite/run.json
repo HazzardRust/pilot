@@ -1,0 +1,332 @@
+{
+  "slug": "cheap-suite",
+  "feature": "cheap-suite",
+  "ticket": "itm_52b72e87a2a3",
+  "branch": "feat/cheap-suite",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-cheap-suite",
+  "artefact": "docs/design/cheap-suite/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed d88f825 (Verdict: approve); integrate after S11 (its gate runs the full suite)",
+      "branch": "slice/cheap-suite-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "fixing: local wip f767370 (origin 3ac7661, rust-reviewer APPROVE on 3ac7661); cap of 8 scratch decks, measure on gates open",
+      "branch": "slice/cheap-suite-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "local 7db99be, not pushed; B1-B3 red-then-green done (31/31 green); typescript WARN, security WARN (HIGH accepted under itm_649bb5483746); owes gate test:changed --since=d88f825, B4 timed builds, push; implementer handed back waiting for heavy slot, resume it with go",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/cheap-suite-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "pushed 0928f84, ready to integrate; typescript APPROVE, security APPROVE (re-read); B4 run 45138042410 success, tested-tree ff9d31ee = 0928f84^{tree} on windows, macos, ubuntu",
+      "branch": "slice/cheap-suite-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "planned, not started; start after S3+S4 integrate; brief carries S4 security LOW: the tree diff from proved tree to landing tree must also send a .github/ or FULL_TRIGGERS change to a full run",
+      "after": [
+        "S3",
+        "S4"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "pushed 6dc3fb9 (Verdict: APPROVE); owes reruns release/gate-census/handoff-wording/sync-remote, GIT_TRACE land-clear (<=12 each), test:changed --since=91bb068; needs a fresh implementer",
+      "branch": "slice/cheap-suite-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "pushed 48ce7bc (Verdict: approve); owes cold cargo build deck/rune + test:changed --since=717bb32",
+      "branch": "slice/cheap-suite-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "pushed a9ea85c (Verdict: APPROVE); S8.md B2=6 at 505014c; owes runs 2-3 of 8 files, GIT_TRACE base(s8-base)/slice, coverage, test:changed --since=717bb32, remove pilot-cheap-suite-s8-base",
+      "branch": "slice/cheap-suite-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "pushed ded0792 (Verdict: APPROVE); bars missed as measured, reported; integrate after S1",
+      "branch": "slice/cheap-suite-s9",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s9"
+    },
+    {
+      "slice": "S10",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9"
+      ]
+    },
+    {
+      "slice": "S11",
+      "state": "pushed a7fcd98; red-green 3/3, full suite 4999 pass 0 fail; integrating",
+      "branch": "slice/cheap-suite-s11",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s11"
+    }
+  ],
+  "findings": [
+    "dropped: S8 LOW land-adr-branch reads ADR from output text (format already pinned by assert.match)",
+    "dropped: S8 LOW test-quiet bypasses gate.mjs (slice B3 accepts)",
+    "dropped: S8 LOW install-command shim relocation (the shim tests catch it when run)",
+    "dropped: S6 LOW fresh() top-level only (latent, no such fixture)",
+    "dropped: S6 LOW runRemote throw-not-remembered untested (WeakMap.set after ask, read)",
+    "kept: S11 MEDIUM permanent lock EPERM looped forever; fixed a7fcd98",
+    "dropped: S4 LOW gate.yml comment that a proof needs 3 OSes (fails safe as 'fewer than 3'; a gate.yml push needs workflow scope the token lacks)",
+    "dropped: S4 LOW annotations read one page of 100 (forging is A2's accepted risk; trigger rule keeps gate changes full)",
+    "dropped: S4 LOW gate-workflow.test.mjs edited outside Files owned (required by the draft-PR trigger; named here)",
+    "dropped: S4 LOW provenTree reads diff before host (each case keeps its own reason)",
+    "kept: S4 security LOW base...sha misses trigger files landed on main after the branch point; moved to S5 brief (tree diff to landing tree applies the trigger rule)",
+    "dropped: S3 security HIGH skip fails open for bin/scripts/hooks changes reaching the daemon (accepted trade, itm_649bb5483746 keep as signed)",
+    "dropped: S3 security MEDIUM runeTargetDir accepts any absolute LOCALAPPDATA (rmSync rooted at <base>/pilot/rune-target; misconfiguration)",
+    "dropped: S3 typescript MEDIUM wipe vs live cargo build EBUSY (caught and named; S3 Misses, read by S8 timed run)",
+    "kept: S3 typescript LOW select-tests trigger path unpinned; one assertion added"
+  ],
+  "next": "ONE heavy run crew-wide. Integrating S11 (heavy). Then S3 go (gate, B4, push); integrate S1, S9, S4, S3; S2 fix, S6/S7/S8 runs serially; S5, S10.",
+  "updatedAt": "2026-11-23T10:01:28.336Z",
+  "friction": [
+    {
+      "agent": "architect",
+      "what": "No recorded per-file test timings; where the time goes needed a fresh full-suite run",
+      "evidence": "4,971 tests, 19.5 min wall, 14,140 processes, 13,073 git, run by the architect itself"
+    },
+    {
+      "agent": "architect",
+      "what": "pilot wait exits 1 on a deck outage instead of retrying; the hand-off then took the live architect for lost and a second was spawned on the same worktree",
+      "evidence": "deck not answering about 23:21; wait re-armed by hand; two architects on design/cheap-suite until stand-down"
+    },
+    {
+      "agent": "architect",
+      "what": "Architect cannot stop its own waits by id: TaskStop not in its toolset",
+      "evidence": "ended its wait by process-table search and taskkill on PID 23344"
+    },
+    {
+      "agent": "architect",
+      "what": "Auto mode refused two git steps on the architect's own branches",
+      "evidence": "git commit on design/cheap-suite and git worktree add -b feat/cheap-suite + push refused as Destructive or Unwanted Actions; user ran both, two blocked-step round trips, one filed twice"
+    },
+    {
+      "agent": "architect",
+      "what": "pilot wait --item exited 1 with no reason printed",
+      "evidence": "output only 'listening on ...' then exit 1"
+    },
+    {
+      "agent": "architect",
+      "what": "gate1 base check comes after the push",
+      "evidence": "main moved to 69e315c (PR #147) during the hold; refusal only at deck_post forced a merge and second push of both branches"
+    },
+    {
+      "agent": "architect",
+      "what": "Architect definition does not say deck_status refuses worktree from it",
+      "evidence": "first deck_status call refused for carrying worktree"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a slice touching scripts/checks.mjs cannot run a narrow gate: test:changed goes full silently",
+      "evidence": "full suite: selection is 33315 characters of argv, over 24000",
+      "size": 20
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "token lacks workflow scope while S4 owns gate.yml",
+      "evidence": "refusing to allow an OAuth App to create or update workflow .github/workflows/gate.yml without workflow scope"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "lost track of a background gate across a context summary; handed back before the full-gate go arrived",
+      "evidence": "S4 report: found still running only from its log"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot relayed five forced co-pilot hand-backs and three child reports by hand on handoff-no-wait; each relay re-read a full report",
+      "size": 45000
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "harness flagged the prebuilt-rune architect for a possibly irreversible local deletion; its design worktree and reflog show nothing lost, the flagged call itself was not identified",
+      "evidence": "task notification on ad6d1843524ff98d7, 2026-11-23 06:2xZ"
+    },
+    {
+      "agent": "pilot",
+      "what": "after the power cut the lane went to handoff-no-wait before cheap-suite, against the user's 'make sure this runs next' on the cheap-suite thread; the ticket thread was not read before the grant",
+      "evidence": "itm_52b72e87a2a3 reply 2026-11-22T14:23Z"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "successor brief said S1/S2/S4 implementers were dead; co-pilot spawned duplicates on live slices, stopped before any write",
+      "evidence": "S1, S2, S4 duplicates each report clean tree, no commits, no push",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md trailer session id differs from main's brief trailer",
+      "evidence": "session_01NXgSForDWcHA67cB28cNrm vs session_01NXgSFqofX9JXraJQMnd6vc; crew uses main's"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 implementer lost its reviewer Verdict and evidence rows in a context resume; review and evidence re-run",
+      "evidence": "main's forward: no Verdict line, no B<k> rows",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: nested slice tests without PILOT_GATE_SLOT=selected time out at 50 s while own gate holds a slot",
+      "evidence": "one wasted rerun",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: hidden-spawns text scan flags any `spawns (` in a template string",
+      "evidence": "one ~53 min full-suite run",
+      "size": 53
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1/S4: reviewer hand-back lost on context resume, reviewer re-spawned",
+      "evidence": "S1 second reviewer; S4 both reviewers re-run by co-pilot",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 evidence: cold cargo builds over 5 min each push foreground calls to background",
+      "evidence": "328 s and 285 s builds",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: relative NODE_OPTIONS --import path for count-spawns fails when planted tests start node with repo cwd",
+      "evidence": "2 tests failed, one rerun with absolute file:/// path",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: per-file time bars unreadable under 100% CPU load, 2x swings between runs; spawn counts are the stable measure",
+      "evidence": "daemon 22.9/28.4/49.8 s",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9 slice prescriptions written against costs absent at 91bb068 (files already on gitFixture, production git >half)",
+      "evidence": "gate2-base 118 git (66 production), landing-recut 114 (76)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "live deck writes ~/.claude/pilot/deck.json mid-gate, gate prints home store changed",
+      "evidence": "S2 integrate log, S9 gate",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: selection argv over 24000 chars turns a slice gate into a 21-min full suite incl. cargo build (LNK1318 under contention)",
+      "evidence": "argv 35843 chars",
+      "size": 21
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: gitFixture shares closures across tests, a per-runner memo leaked; slice file did not own git-fixture.mjs",
+      "evidence": "1 full-suite regression, 3 files outside slice",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: land-clear under GIT_TRACE takes 1006 s on the shared machine",
+      "evidence": "first attempt timed out at 900 s",
+      "size": 17
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8 per-file times useless under load",
+      "evidence": "land-prune 815 s, land-clear 1468 s in run 1"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8.md line refs for install-command match no single test",
+      "evidence": "S8.md cites install-command :130, :140"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8 B4 needed a production seam the slice prohibited; B2 7 fewer crossed scenarios",
+      "evidence": "seam 13d1553 options.npm; B2 counted 6"
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "S11 Misses line false: permanent lock EPERM loops forever",
+      "evidence": "gate-slots.mjs:58-60, ageOf 0 for a missing lock"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the hello from the co-pilot arrived mid-task and the child named another address",
+      "evidence": "S8.md fixer report, 505014c"
+    },
+    {
+      "agent": "pilot",
+      "what": "successor brief said the previous crew was dead; architect and S1/S2/S4 implementers had survived /clear, so a duplicate architect and 3 duplicate implementers were spawned and stood down",
+      "evidence": "hand-off notice gave no list of live agents; task notifications arrived after the spawns",
+      "size": 4
+    },
+    {
+      "agent": "pilot",
+      "what": "pilot wait prints a deck timeout default as REPLY exactly like a user's answer",
+      "evidence": "itm_9914932172bc, itm_5d271bb6c718, itm_e374d036106d, itm_b0df0f22f83f resolved 'no answer 20 min'; told apart only by deck_read",
+      "size": 4
+    },
+    {
+      "agent": "pilot",
+      "what": "signed landings failed 4 times on environment, not code: slot takeover EPERM, 30-min limit under crew load, disk full (33 Rune target dirs ~390 GB), 30-min limit with a cold Rune build (8m04s)",
+      "evidence": "land logs 20261123T070624078Z and 20261123T075945009Z; gate-slots.mjs:57",
+      "size": 120
+    },
+    {
+      "agent": "pilot",
+      "what": "idle-lane hook demands a successor while the lane is deliberately held for a test hold or a full disk",
+      "evidence": "Stop hook 'yellow lane idle' fired 4 times during the hold",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "land log grep returned whole PATH lines (cargo env dump)",
+      "size": 12000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 context compacted mid-slice; earlier verdicts and red run lost and redone",
+      "evidence": "S3 report: both reviews and red run redone after compaction",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 forced to hand back while waiting for the co-pilot's go on a heavy run under the one-heavy-run rule",
+      "evidence": "S3 report: told to hand back while waiting",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11 slice worktree had no node_modules; first gate launch failed at once",
+      "evidence": "node_modules missing: run npm ci",
+      "size": 1
+    }
+  ]
+}
