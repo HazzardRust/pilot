@@ -25,7 +25,9 @@ import { claudeBin, killTree } from '../hooks/lib/platform.js';
 export const RELAY = 'PROBE-RELAY-7Q2';
 export const REPORT = 'PROBE-REPORT-7Q2';
 const WORKER_DELAY_MS = 60_000;
-const DEADLINE_MS = 220_000;
+const DEADLINE_MS = 200_000;
+const KILL_GRACE_MS = 10_000;
+const WORK_ENV = 'PROBE_CLEAR_WORK';
 const AUTH_ENV = /^(ANTHROPIC_|CLAUDE_CODE_OAUTH_TOKEN$|CLAUDE_CODE_USE_|AWS_|GOOGLE_|AZURE_)/i;
 
 /**
@@ -74,11 +76,12 @@ const AGENTS = {
 };
 
 // E3's depth-2 brief with E5's relay folded in: the co-pilot keeps its turn open on the worker.
-function brief(workFile) {
-  const write = `node -e "setTimeout(()=>require('fs').writeFileSync('${workFile}', String(Date.now())), ${WORKER_DELAY_MS})"`;
+// The work file's path reaches both commands through the child's environment, never the text.
+function brief() {
+  const write = `node -e "setTimeout(()=>require('fs').writeFileSync(process.env.${WORK_ENV}, String(Date.now())), ${WORKER_DELAY_MS})"`;
   // This Claude Code has no TaskOutput, so the co-pilot holds its turn the way E3's did: a
   // foreground poll on the worker's file.
-  const poll = `node -e "const f='${workFile}';const t=setInterval(()=>{if(require('fs').existsSync(f))clearInterval(t)},1000)"`;
+  const poll = `node -e "const t=setInterval(()=>{if(require('fs').existsSync(process.env.${WORK_ENV}))clearInterval(t)},1000)"`;
   const worker = `Run this command in the foreground with timeout 150000: ${write} Then reply WORKER-DONE.`;
   const copilot = [
     `Step 1: use the Agent tool with subagent_type "worker", run_in_background true, description "probe worker", prompt: ${JSON.stringify(worker)}`,
@@ -107,12 +110,14 @@ function readWrite(file) {
 function run(dir, bin, env) {
   const settings = path.join(dir, 'settings.json');
   fs.writeFileSync(settings, JSON.stringify({ disableAllHooks: true }));
-  const workFile = path.join(dir, 'work.txt').split(path.sep).join('/');
+  const workFile = path.join(dir, 'work.txt');
   const log = fs.createWriteStream(path.join(dir, 'stream.log'));
   const args = ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose',
     '--model', 'haiku', '--settings', settings, '--agents', JSON.stringify(AGENTS), '--strict-mcp-config',
     '--allowedTools', 'Agent', 'SendMessage', 'Bash(node:*)'];
-  const child = spawn(bin, args, { cwd: dir, env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+  const child = spawn(bin, args, { cwd: dir, env: { ...env, [WORK_ENV]: workFile }, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+  // A claude that dies mid-run breaks the pipe; the verdict at exit names the step it reached.
+  child.stdin.on('error', (error) => log.write(`#ERR stdin ${error.message}\n`));
   const marks = {};
   const after = [];
   let buf = '';
@@ -121,10 +126,18 @@ function run(dir, bin, env) {
     if (ended) return;
     ended = true;
     child.stdin.end();
-    setTimeout(() => { if (child.exitCode === null) killTree(child.pid); }, 20_000).unref();
+    setTimeout(() => {
+      if (child.exitCode !== null || child.pid === undefined) return;
+      try {
+        killTree(child.pid);
+      } catch (error) {
+        console.error(`could not stop claude ${child.pid}: ${error.message}`);
+      }
+    }, KILL_GRACE_MS).unref();
   };
+  let deadline;
   return new Promise((resolve) => {
-    child.on('error', (error) => { log.end(); resolve({ error }); });
+    child.on('error', (error) => { clearTimeout(deadline); log.end(); resolve({ error }); });
     child.stderr.on('data', (data) => log.write(`#ERR ${data}`));
     child.stdout.on('data', (data) => {
       buf += data;
@@ -142,13 +155,13 @@ function run(dir, bin, env) {
         if (marks.clear && judge(after, marks, readWrite(workFile)).ok) end();
       }
     });
-    const deadline = setTimeout(end, DEADLINE_MS);
+    deadline = setTimeout(end, DEADLINE_MS);
     child.on('exit', (code) => {
       clearTimeout(deadline);
       log.end();
       resolve({ code, verdict: judge(after, marks, readWrite(workFile)) });
     });
-    child.stdin.write(line(brief(workFile)));
+    child.stdin.write(line(brief()));
   });
 }
 
