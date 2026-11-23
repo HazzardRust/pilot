@@ -26,6 +26,7 @@ import { isClaude, pilotProcesses, processTable } from '../deck/procs.mjs';
 import { takeSlot } from './gate-slots.mjs';
 import { rebuildLedgers } from './ledgers.mjs';
 import { TEST_GLOB, scopeLine, selectTests } from './select-tests.mjs';
+import { costTable } from './test-cost.mjs';
 
 export const MAX_CONCURRENCY = 4;
 export const CHILD_HEAP_MB = 512;
@@ -53,6 +54,21 @@ const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import
 
 /** The checkout this gate belongs to. */
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// URLs, since `node --test` reads a Windows path's drive as a URL scheme.
+const QUIET_REPORTER = new URL('./quiet-reporter.mjs', import.meta.url).href;
+const COST_REPORTER = new URL('./test-cost.mjs', import.meta.url).href;
+
+/**
+ * `args` with the cost reporter writing to `file` (cheap-suite S1; L4): the caller's reporters keep
+ * stdout, or the quiet one shows the run when the caller named none, so the cost lines never reach the screen.
+ */
+function costArgs(args, file) {
+  const reporters = args.filter((arg) => arg.startsWith('--test-reporter=')).length || 1;
+  const shown = args.some((arg) => arg.startsWith('--test-reporter=')) ? [] : [`--test-reporter=${QUIET_REPORTER}`];
+  const destinations = args.filter((arg) => arg.startsWith('--test-reporter-destination=')).length;
+  const unrouted = Array(Math.max(0, reporters - destinations)).fill('--test-reporter-destination=stdout');
+  return [...args, ...shown, ...unrouted, `--test-reporter=${COST_REPORTER}`, `--test-reporter-destination=${file}`];
+}
 
 /** `text` with each glob metacharacter in a one-character class; `!` is special only before `(`, which is closed off. */
 function escapeGlob(text) {
@@ -183,11 +199,24 @@ function spawnLines(count, ceiling) {
   if (count.total <= ceiling) return lines;
   const most = [...count.owners]
     .filter(([owner]) => owner !== '-')
-    .sort(([a, n], [b, m]) => m - n || (a < b ? -1 : 1))
+    .sort(([a, n], [b, m]) => m.total - n.total || (a < b ? -1 : 1))
     .slice(0, 3)
-    .map(([owner, n]) => `${owner} ${n}`);
+    .map(([owner, n]) => `${owner} ${n.total}`);
   lines.push(`spawns over ${ceiling}${most.length ? `; most: ${most.join(', ')}` : ''}`);
   return lines;
+}
+
+/**
+ * The cost table from the reporter's `file` and the spawn owners (cheap-suite S1), or nothing beside a
+ * `cost:` line on stderr when it cannot be read: the table is a report, so the run's status stays the suite's.
+ */
+function costLines(file, owners) {
+  try {
+    return costTable(fs.readFileSync(file, 'utf8').split('\n'), owners);
+  } catch (err) {
+    process.stderr.write(`cost: no table (${firstLine(err)})\n`);
+    return '';
+  }
 }
 
 /**
@@ -295,9 +324,12 @@ function writerLines(log) {
  * selection, the flag kept from `node`; an empty selection runs nothing and passes, a null one runs full.
  * With `homeStore` it is red too when that file's stat changed and `deckPid()` names no deck.
  * With `homeStore` and `which` it runs `cargoStep`'s cargo after the suite, in that window, red when it fails.
+ * With `--cost` (cheap-suite S1; L4) it adds the cost reporter and prints the cost table last, its status unchanged.
  */
 export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, which, platform = hostPlatform(), ...rest } = {}) {
   if (!syntaxClean(syntax, cwd)) return 1;
+  const cost = args.includes('--cost');
+  args = args.filter((arg) => arg !== '--cost');
   const sinceArg = args.findLast((arg) => /^--since(=|$)/.test(arg));
   let selection;
   if (sinceArg === '--since') {
@@ -318,9 +350,11 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
   const held = selection?.files ? { slot: process.env.PILOT_GATE_SLOT || 'selected', release() {} } : slot({ cwd, env: process.env });
   let scratch;
   try {
-    if (spawns === undefined || homeStore !== undefined) scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-gate-spawns-'));
+    if (spawns === undefined || homeStore !== undefined || cost) scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-gate-spawns-'));
     const file = spawns ?? path.join(scratch, 'spawns.txt');
     fs.writeFileSync(file, '');
+    const costFile = cost ? path.join(scratch, 'cost.jsonl') : undefined;
+    if (costFile) args = costArgs(args, costFile);
     const guard = homeStore === undefined ? undefined : { store: homeStore, log: path.join(scratch, 'home-writes.txt') };
     if (guard) fs.writeFileSync(guard.log, '');
     let before;
@@ -347,10 +381,12 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
     } catch (err) {
       after = { red: true, lines: [`left running: cannot tell, the process table did not read (${firstLine(err)})`] };
     }
-    const counted = spawnLines(spawnCount(file), ceiling);
+    const count = spawnCount(file);
+    const counted = spawnLines(count, ceiling);
     const home = homeStore === undefined ? undefined : homeStoreLine(homeStore, storeBefore, deckPid);
     const written = guard ? writerLines(guard.log) : [];
     process.stdout.write(`${[...after.lines, ...counted, ...(home ? [home.line] : []), ...written].join('\n')}\n`);
+    if (costFile) process.stdout.write(costLines(costFile, count.owners));
     return after.red || counted.length > 1 || home?.red || written.length > 0 || rune !== 0 ? 1 : (run.status ?? 1);
   } finally {
     held.release();
