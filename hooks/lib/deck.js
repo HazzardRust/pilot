@@ -317,6 +317,8 @@ function isChat(item) {
  * and the record's co-pilot keys. The one place on the hooks side that spells them; `join.test.js`
  * pins `kind` and `field` to `deck/items.mjs` and holds every other hook to reading them here.
  */
+/** A harness agent id, as the deck stamps it on a co-pilot's entry; never an option, a path or a space. */
+const AGENT_ID = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;
 const STORED = Object.freeze({ kind: 'ticket', field: 'ticket', coPilots: 'coPilots', coPilot: 'coPilot' });
 
 /**
@@ -720,6 +722,7 @@ const OPEN_READ_LIMIT = 20;
 
 /** What the two hooks call. Nothing else here is anybody's business. */
 module.exports = {
+  AGENT_ID: AGENT_ID,
   STORED: STORED,
   OPEN_READ_LIMIT: OPEN_READ_LIMIT,
   log: require('./wrapper-log.js').log,

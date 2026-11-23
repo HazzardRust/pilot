@@ -310,7 +310,6 @@ async function recover(items, cwd, stored) {
 }
 
 const TICKET_ID = /^itm_\w{1,40}$/;
-const AGENT_ID = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/; // deck/store-tickets.mjs's, which stamps it
 // `/api/record`'s co-pilot entry, `{ ticket, live, at, agent? }` or null, under the key `STORED` spells.
 const { coPilot: CO_PILOT } = deck.STORED;
 
@@ -350,7 +349,7 @@ function yellowNotice(yellow, coPilot, now = new Date()) {
   const on = coPilot && coPilot.live === true ? coPilot[deck.STORED.field] : null;
   const live = typeof on === 'string' && TICKET_ID.test(on);
   // The agent stamp (handoff-no-wait L5) is said outside the fence too, so only in the store's own shape.
-  const agent = live && typeof coPilot.agent === 'string' && AGENT_ID.test(coPilot.agent) ? coPilot.agent : null;
+  const agent = live && typeof coPilot.agent === 'string' && deck.AGENT_ID.test(coPilot.agent) ? coPilot.agent : null;
   const adopt = agent
     ? 'co-pilot ' + agent + ' is live on ' + on + ': it survived the `/clear`; `SendMessage` ' + agent +
       ' `resync ' + now.toISOString() + '` and spawn none; with no answer, `deck_ticket release` on ' + on +

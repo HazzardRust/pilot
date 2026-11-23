@@ -5,6 +5,7 @@
  * (`storedCoPilot`, `releaseIn`, `isLiveCoPilot`) live in `store-core.mjs`.
  */
 
+import { AGENT_ID } from '../hooks/lib/deck.js';
 import { parseVerdictMessage } from '../scripts/verdicts.mjs';
 import { CREW_WAIT_MS, crewWaitOf } from './crew-handoff.mjs';
 import {
@@ -550,7 +551,6 @@ export function setQaComment(ticketId, comment) {
 }
 
 const CO_PILOT_TYPE = 'pilot:pilot-co-pilot';
-const AGENT_ID = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/; // a harness agent id; never an option, a path or a space
 
 /**
  * A co-pilot's heartbeat stamps its agent id on `cwd`'s live co-pilot entry (handoff-no-wait S4, L4): true when it

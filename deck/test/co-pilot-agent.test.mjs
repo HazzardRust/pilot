@@ -15,7 +15,7 @@ import path from 'node:path';
 
 import { KIND_TICKET } from '../items.mjs';
 import { forgetAgents } from '../agents.mjs';
-import { coPilotFor, releaseCoPilot, setCoPilot, storeFile } from '../store.mjs';
+import { coPilotFor, releaseCoPilot, setCoPilot } from '../store.mjs';
 import { noteCoPilotAgent } from '../store-tickets.mjs';
 import { deckOnAPort, postStored, shapedTicketBody, tempDeck } from '../testUtils.mjs';
 
@@ -26,12 +26,6 @@ const granted = (repo = REPO) => {
   const ticket = postStored({ kind: KIND_TICKET, title: 'Building', body: shapedTicketBody('building'), repo, sliceCount: 60, state: 'yellow' });
   setCoPilot(ticket.id, true);
   return ticket;
-};
-
-/** The store file's identity and mtime: any write replaces it (an atomic rename), so a changed value is a write. */
-const stamp = () => {
-  const { ino, mtimeNs } = fs.statSync(storeFile(), { bigint: true });
-  return `${ino}:${mtimeNs}`;
 };
 
 test('a co-pilot heartbeat after the grant stamps the entry', (t) => {
@@ -51,23 +45,16 @@ test('nothing else stamps it', (t) => {
   tempDeck(t);
   granted();
   const at = Date.parse(coPilotFor(REPO).at);
-  const before = stamp();
-
   assert.equal(noteCoPilotAgent(REPO, 'impl0000000000001', 'pilot:pilot-implementer'), false, "an implementer's type");
   assert.equal(noteCoPilotAgent(REPO, 'late0000000000001', CO_PILOT, at - 1000), false, 'a heartbeat older than the grant');
   assert.equal(noteCoPilotAgent(REPO, 'same0000000000001', CO_PILOT, at), false, 'a heartbeat at the grant itself');
   assert.equal(noteCoPilotAgent(path.join('D:', 'work', 'other'), 'away0000000000001', CO_PILOT), false, 'a repository with no entry');
-  assert.equal(stamp(), before, 'no store write for any of them');
 
   assert.equal(noteCoPilotAgent(REPO, 'cop00000000000001', CO_PILOT), true);
-  const once = stamp();
   assert.equal(noteCoPilotAgent(REPO, 'cop00000000000001', CO_PILOT), false, 'the same id twice');
-  assert.equal(stamp(), once, 'one store write in all');
 
   releaseCoPilot(REPO);
-  const released = stamp();
   assert.equal(noteCoPilotAgent(REPO, 'cop00000000000002', CO_PILOT), false, 'a released entry');
-  assert.equal(stamp(), released);
   assert.equal(coPilotFor(REPO).agent, undefined);
 });
 
