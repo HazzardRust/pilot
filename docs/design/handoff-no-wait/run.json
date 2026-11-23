@@ -1,0 +1,112 @@
+{
+  "slug": "handoff-no-wait",
+  "feature": "A hand-off never waits on the co-pilot",
+  "ticket": "itm_d129dcf82505",
+  "branch": "feat/handoff-no-wait",
+  "base": "main",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-handoff-no-wait",
+  "artefact": "docs/design/handoff-no-wait/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed 40c49c1",
+      "branch": "slice/handoff-no-wait-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s1"
+    },
+    {
+      "slice": "S4",
+      "state": "pushed d312a06",
+      "branch": "slice/handoff-no-wait-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s4"
+    },
+    {
+      "slice": "S6",
+      "state": "planned"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S4"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S4"
+      ]
+    },
+    {
+      "slice": "S7 The design passes the vocabulary guard (added)",
+      "state": "pushed 21f92b0",
+      "branch": "slice/handoff-no-wait-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s7"
+    }
+  ],
+  "next": "co-pilot: integrating S7 (brings base); S4 d312a06 and S1 40c49c1 pushed, gates finishing; then S6",
+  "updatedAt": "2026-11-23T02:09:51.879Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "Claude Code's behaviour on /clear is undocumented; read the minified binary and ran 5 probes",
+      "evidence": "docs-lookup found nothing; clearConversation, LZt",
+      "size": 8
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "--settings '<json>' breaks under spawn shell:true on Windows",
+      "evidence": "Invalid JSON provided to --settings",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "'hold' has 3 meanings in the repo",
+      "evidence": "grep held: 20 files, 3 the hand-off hold",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exited 1 four times on a deck timeout under load (deck answers in 1-3 s); each needs a restart and a read",
+      "size": 3000
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "landing gate cold-builds the Rune deck (7.5 min) in the landing worktree after a 9 min node suite; third timeout at 30 min with tests passing",
+      "evidence": "logs/20261122T114505911Z-feat-project-glossary.log; cargo test --test strip 2.42s warm",
+      "size": 6
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "a sed edit of a tracked file is refused by a hook only some of the time",
+      "evidence": "last sed refused, earlier ones on the same files passed",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "verdict message queued past the architect's hand-back a second time (both tickets); two full hand-back reports each",
+      "size": 6000
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S7: fresh worktree had no node_modules; gate failed until npm ci",
+      "evidence": "node_modules missing: run npm ci",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S7: foreground gate hit the 180 s auto-background; waited with pilot wait-for",
+      "evidence": "S7 report",
+      "size": 1
+    }
+  ]
+}
