@@ -21,13 +21,13 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 488b315",
+      "state": "integrated",
       "branch": "slice/handoff-no-wait-s6",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s6"
     },
     {
       "slice": "S2",
-      "state": "implementing",
+      "state": "pushed 72a7e8c",
       "after": [
         "S1",
         "S4"
@@ -61,8 +61,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s7"
     }
   ],
-  "next": "co-pilot: S6 integrating on 5a578e2; then S5 8bbaa94 (assumed: resync also resends the last hand-back before <time>; prompts test file dropped, B4 read); S2 implementing",
-  "updatedAt": "2026-11-23T03:47:49.556Z",
+  "next": "co-pilot: S5 integrating; then S2 72a7e8c; then fundamentalist on the whole feature",
+  "updatedAt": "2026-11-23T04:00:38.400Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -198,6 +198,24 @@
       "agent": "pilot-implementer",
       "what": "S5: gate summary must be grepped from a log under 400+ lines of Rust output",
       "evidence": "gate.log:7",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2: context compacted early; work lost and re-derived from a clean worktree",
+      "evidence": "worktree clean at eb11fd9, no node_modules",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2: Edit refuses a file seen only through Bash (8 extra Reads); a held|hold grep over deck returned 39 KB because held is also a lane word",
+      "evidence": "S2 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2: the slice file named no home for B1/B2 and missed askFor's held branch and render-cards' held bucket",
+      "evidence": "S2 report pushback",
       "size": 1
     }
   ]
