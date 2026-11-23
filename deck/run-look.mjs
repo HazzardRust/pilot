@@ -130,17 +130,11 @@ async function openItems() {
 
 /**
  * The moment a turn end must follow before this look may clear. A live co-pilot never holds the clear, since
- * the clear keeps the crew (handoff-no-wait L2). Handoff failed on any open hand-off of the directory re-arms
- * it (held-handoff L3), and the clear then waits for a turn end after the press, never mid-turn; an unreadable
- * press time reads as `now`. Either way a released co-pilot's clear waits for the turn after its release,
- * since that release's hand-back turn may still be running.
+ * the clear keeps the crew (handoff-no-wait L2), so this is 0 for one. A released co-pilot's clear waits for
+ * the turn after its release, since that release's hand-back turn may still be running.
  */
-function holdFor(items, cwd, coPilot, now) {
-  const open = items.filter((item) => item?.kind === HANDOFF_KIND && sameRepo(item.repo, cwd) && isOpen(item));
-  const from = coPilot?.live === true ? Date.parse(coPilot.at) || 0 : 0; // a press from before this co-pilot went live is not its own
-  const presses = open.filter((item) => item.hold?.rearmedAt).map((item) => Date.parse(item.hold.rearmedAt) || now).filter((time) => time >= from);
-  const released = coPilot?.live === true ? 0 : Date.parse(coPilot?.at) || 0;
-  return { since: Math.max(...presses, released) };
+function releasedAt(coPilot) {
+  return coPilot?.live === true ? 0 : Date.parse(coPilot?.at) || 0;
 }
 
 /**
@@ -232,9 +226,9 @@ async function turn(repo, pid, turnEndedAt, { read, coPilot, now }) {
   if (handoff.id !== posted) return none(`${posted} is superseded`); // the newer id is deck text, never echoed
   if (laneMarked(handoff.id)) return none(`${handoff.id} is already picked up`);
   const live = await coPilot(repo);
-  const hold = holdFor(items, repo, live, at);
-  // A re-arm or a release while the turn ran: the clear waits for a turn end after it, never mid-turn.
-  if (turnEndedAt < hold.since) return none(`${handoff.id} waits for a turn end after ${new Date(hold.since).toISOString()}`);
+  const since = releasedAt(live);
+  // A release while the turn ran: the clear waits for a turn end after it, never mid-turn.
+  if (turnEndedAt < since) return none(`${handoff.id} waits for a turn end after ${new Date(since).toISOString()}`);
   if (!takeClaim(claimNameFor(handoff.id))) return none(`${handoff.id} is already cleared`);
   stampCleared(repo, at);
   return { act: 'clear', id: handoff.id };
