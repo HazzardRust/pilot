@@ -151,24 +151,35 @@ machine file seam has two adapters (a real dir, a test's temp dir). `store-resto
 - L8 The run's ADR is `docs/adr/NNNN-portable-store.md` (ADR NNNN); ADR 0207's "No store sync" bullet is
   reworded to point at it.
 
+Gate 1 walk, each closed on its recommended default by the deck at 2026-11-23T01:23Z, not the user's press:
+L1 itm_9bdd9beb23a3; L2 itm_357c05a04599; L3 itm_bdc94d6d8d7a; L5 itm_9d84c92311fe; L6 itm_05903f711416;
+L7 itm_dff14db22111; L8 itm_5156b85885e2; L4 had no walk item, A5's question (itm_ca8d6770d745) covered it.
+
 ## 6. Assumed decisions
 
-- A1 Prose keeps its absolute paths (body, replies, titles, urls, screens, landing lines): ~700 stay visible.
+- **A1** Prose keeps its absolute paths (body, replies, titles, urls, screens, landing lines): ~700 stay visible.
   Rejected: rewriting the user's and agents' words, irreversible. Question itm_2c3e775b59bc: closed "Keep prose verbatim", a deck default after 20 min with no answer, not the user's press.
-- A2 Export lists unpushed work and never refuses. Rejected: refusing, which blocks a move when the source
+  Verdict: stands — deck default on itm_2c3e775b59bc, not the user; rewriting their words is irreversible and no queued ticket reads a path out of prose
+- **A2** Export lists unpushed work and never refuses. Rejected: refusing, which blocks a move when the source
   machine is the one that must go. Question itm_e66f243e265a: closed "List and export", a deck default after 20 min with no answer, not the user's press.
-- A3 Behaviours 8-11 are in this ticket. Question itm_ed56db958bf6: closed "All four", a deck default after 20 min with no answer, not the user's press.
+  Verdict: stands — deck default on itm_e66f243e265a, not the user; the real move of 2026-11-21 lost unpushed work silently, and a list answers that without blocking a failing machine
+- **A3** Behaviours 8-11 are in this ticket. Question itm_ed56db958bf6: closed "All four", a deck default after 20 min with no answer, not the user's press.
   Grilling depth itm_6f2ecf72643f: closed "Every", the same way.
-- A4 `deck.secret` and `deck.pid` stay their own files; `machine.json` takes the rest (spec 2 reworded from
+  Verdict: stands — deck default on itm_ed56db958bf6, not the user; behaviours 8-11 are the field note's breakages, and no queued ticket covers them
+- **A4** `deck.secret` and `deck.pid` stay their own files; `machine.json` takes the rest (spec 2 reworded from
   "one machine file"). Trade: three machine files, not one; gain: no change to the 14 secret readers, the hooks
   or the Rune client. Rejected: moving the secret into `machine.json`. Question itm_2a13a6f2258a: closed "Keep them separate", a deck default after 20 min with no answer, not the user\'s press.
-- A5 The bundle is gzipped JSON, not a zip. Trade: opened with `gunzip`, not a double-click; gain: no
+  Verdict: stands — deck default on itm_2a13a6f2258a, not the user; no queued ticket moves the secret or the pid file
+- **A5** The bundle is gzipped JSON, not a zip. Trade: opened with `gunzip`, not a double-click; gain: no
   dependency and no extraction path to attack. Rejected: zip via a library or hand-written tar. Question itm_ca8d6770d745: closed "Gzipped JSON", a deck default after 20 min with no answer, not the user\'s press.
-- A6 A repo cloned at a different place under home than on the source is out: `--root` remaps whole roots only.
+  Verdict: stands — deck default on itm_ca8d6770d745, not the user; it fits their standing preference against new dependencies
+- **A6** A repo cloned at a different place under home than on the source is out: `--root` remaps whole roots only.
   Rejected: a per-repo remap flag. Question itm_a796f98cfb42: closed "Out: remap whole roots only", a deck default after 20 min with no answer, not the user\'s press.
-- A7 QA runs in scratch homes (`PILOT_DECK_DIR`) on a copy of the real store and two different home paths,
+  Verdict: stands — deck default on itm_a796f98cfb42, not the user; both of their machines share one user name and layout
+- **A7** QA runs in scratch homes (`PILOT_DECK_DIR`) on a copy of the real store and two different home paths,
   never the live store; the live store migrates only when the user upgrades after Gate 2.
   Rejected: QA on the live store. Question itm_35e3a9c9a548: closed "Scratch homes, real-store copy", a deck default after 20 min with no answer, not the user\'s press.
+  Verdict: stands — deck default on itm_35e3a9c9a548, not the user; the live store holds every run and is never the test bed
 
 red team: (1) `store-core.mjs` sits at 774 of the 800-line facade bar: S1 and S2 may add at most 10 lines
 there, the rest lives in the codec. (2) `backUp` writes beside a guarded home store (F7): S1 routes it through
@@ -204,6 +215,8 @@ Walking skeleton: S1, a copy of the real store read, migrated and read back with
 red team: S6 and S7 both touched `deck/doctor.mjs`: spec 8's evidence is now the landing's state, so only S7
 edits doctor. S5 and S6 both edit `store-move.mjs`: S6 puts its rewrite in `store-gone.mjs` and adds one call. Other runs: cheap-suite S7 edits `deck/client.mjs` and
 S9 daemon tests; this run touches neither file but `deck/daemon.mjs` (S7), so S7 starts from the then base.
+Overlaps on origin: archive-page S1 `deck/store-archive.mjs` (our S3); handoff-no-wait S4 `deck/store-runs.mjs`
+(S2); stay-awake S3 `bin/pilot.mjs`, `deck/doctor.mjs` (S4, S5, S7); cheap-suite S8 `bin/pilot.mjs` (S4, S5).
 
 ## 9. Acceptance evidence
 
