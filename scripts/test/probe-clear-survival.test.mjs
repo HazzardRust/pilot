@@ -39,6 +39,12 @@ test('each missing step is named: report when the completion notice is cut', () 
   assert.deepEqual(judge([reset, agentCall, freshRead], { clear: CLEAR }, WROTE), { ok: false, step: 'report' });
 });
 
+test('each missing step is named: report when the notice only quotes the brief', () => {
+  // Shaped on the 2026-11-23 run whose co-pilot ended its turn early, its summary repeating the brief.
+  const quoting = `{"type":"system","subtype":"task_notification","status":"completed","summary":"I have not finished the probe, so I can't send ${RELAY} or reply ${REPORT} yet.","session_id":"8727e3bd"}`;
+  assert.deepEqual(judge([reset, freshRead, quoting], { clear: CLEAR }, WROTE), { ok: false, step: 'report' });
+});
+
 test('each missing step is named: the first one, whatever else is missing', () => {
   assert.deepEqual(judge([], { clear: CLEAR }, null), { ok: false, step: 'worker' });
   assert.deepEqual(judge(['not json', reset], { clear: CLEAR }, WROTE), { ok: false, step: 'sendmessage' });

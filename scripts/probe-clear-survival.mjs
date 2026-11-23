@@ -20,7 +20,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { claudeBin } from '../hooks/lib/platform.js';
+import { claudeBin, killTree } from '../hooks/lib/platform.js';
 
 export const RELAY = 'PROBE-RELAY-7Q2';
 export const REPORT = 'PROBE-REPORT-7Q2';
@@ -43,8 +43,9 @@ export function judge(lines, marks, wroteAt) {
   // The fresh context's own words: an agent's lines carry its agent_id and parent tool call.
   const fresh = ({ json }) => (json.type === 'assistant' || json.type === 'result') && !json.agent_id && !json.parent_tool_use_id;
   if (!events.some((event) => fresh(event) && event.line.includes(RELAY))) return { ok: false, step: 'sendmessage' };
-  const notice = ({ json }) => json.type === 'system' && json.subtype === 'task_notification';
-  if (!events.some((event) => notice(event) && event.line.includes(REPORT))) return { ok: false, step: 'report' };
+  // The report is the co-pilot's whole reply; a summary that merely repeats the brief is not one.
+  const report = ({ json }) => json.type === 'system' && json.subtype === 'task_notification' && String(json.summary ?? '').trim() === REPORT;
+  if (!events.some(report)) return { ok: false, step: 'report' };
   return { ok: true, after: Math.round((wroteAt - clear) / 1000) };
 }
 
@@ -57,10 +58,127 @@ function parse(line) {
   }
 }
 
-function main(argv) {
-  return Promise.resolve(argv);
+const AGENTS = {
+  copilot: {
+    description: 'probe co-pilot that spawns one worker',
+    prompt: "You direct one worker. Follow the user's brief exactly.",
+    tools: ['Agent', 'SendMessage', 'Bash'],
+    model: 'haiku',
+  },
+  worker: {
+    description: 'probe worker that runs one command',
+    prompt: 'Run the one command you are given, then reply as told.',
+    tools: ['Bash'],
+    model: 'haiku',
+  },
+};
+
+// E3's depth-2 brief with E5's relay folded in: the co-pilot keeps its turn open on the worker.
+function brief(workFile) {
+  const write = `node -e "setTimeout(()=>require('fs').writeFileSync('${workFile}', String(Date.now())), ${WORKER_DELAY_MS})"`;
+  // This Claude Code has no TaskOutput, so the co-pilot holds its turn the way E3's did: a
+  // foreground poll on the worker's file.
+  const poll = `node -e "const f='${workFile}';const t=setInterval(()=>{if(require('fs').existsSync(f))clearInterval(t)},1000)"`;
+  const worker = `Run this command in the foreground with timeout 150000: ${write} Then reply WORKER-DONE.`;
+  const copilot = [
+    `Step 1: use the Agent tool with subagent_type "worker", run_in_background true, description "probe worker", prompt: ${JSON.stringify(worker)}`,
+    `Step 2: run this command with Bash in the foreground with timeout 150000, and never end your turn before it returns: ${poll}`,
+    `Step 3: use SendMessage with to "main" and message "${RELAY} worker done".`,
+    `Step 4: reply with exactly ${REPORT} and nothing else.`,
+  ].join(' ');
+  return `Use the Agent tool once: subagent_type "copilot", run_in_background true, description "probe copilot", prompt: ${JSON.stringify(copilot)} Then reply with the agentId only and end your turn. Do not wait for it.`;
+}
+
+const AFTER_CLEAR = 'A background agent may send you a message. When one arrives, quote its text verbatim in one line.';
+
+function line(text) {
+  return JSON.stringify({ type: 'user', message: { role: 'user', content: text } }) + '\n';
+}
+
+function readWrite(file) {
+  try {
+    const at = Number(fs.readFileSync(file, 'utf8'));
+    return Number.isFinite(at) ? at : null;
+  } catch {
+    return null;
+  }
+}
+
+function run(dir, bin, env) {
+  const settings = path.join(dir, 'settings.json');
+  fs.writeFileSync(settings, JSON.stringify({ disableAllHooks: true }));
+  const workFile = path.join(dir, 'work.txt').split(path.sep).join('/');
+  const log = fs.createWriteStream(path.join(dir, 'stream.log'));
+  const args = ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose',
+    '--model', 'haiku', '--settings', settings, '--agents', JSON.stringify(AGENTS), '--strict-mcp-config',
+    '--allowedTools', 'Agent', 'SendMessage', 'Bash(node:*)'];
+  const child = spawn(bin, args, { cwd: dir, env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+  const marks = {};
+  const after = [];
+  let buf = '';
+  let ended = false;
+  const end = () => {
+    if (ended) return;
+    ended = true;
+    child.stdin.end();
+    setTimeout(() => { if (child.exitCode === null) killTree(child.pid); }, 20_000).unref();
+  };
+  return new Promise((resolve) => {
+    child.on('error', (error) => { log.end(); resolve({ error }); });
+    child.stderr.on('data', (data) => log.write(`#ERR ${data}`));
+    child.stdout.on('data', (data) => {
+      buf += data;
+      let at;
+      while ((at = buf.indexOf('\n')) >= 0) {
+        const text = buf.slice(0, at);
+        buf = buf.slice(at + 1);
+        log.write(text + '\n');
+        if (marks.clear) after.push(text);
+        else if (text.includes('"type":"result"')) {
+          marks.clear = Date.now();
+          child.stdin.write(line('/clear'));
+          child.stdin.write(line(AFTER_CLEAR));
+        }
+        if (marks.clear && judge(after, marks, readWrite(workFile)).ok) end();
+      }
+    });
+    const deadline = setTimeout(end, DEADLINE_MS);
+    child.on('exit', (code) => {
+      clearTimeout(deadline);
+      log.end();
+      resolve({ code, verdict: judge(after, marks, readWrite(workFile)) });
+    });
+    child.stdin.write(line(brief(workFile)));
+  });
+}
+
+async function main(argv) {
+  const keep = argv.includes('--keep');
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !AUTH_ENV.test(key)));
+  const bin = claudeBin(env);
+  if (!bin) {
+    console.log('failed at claude: no claude on PATH');
+    return 1;
+  }
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'probe-clear-'));
+  try {
+    const { error, verdict } = await run(dir, bin, env);
+    if (error) {
+      console.log(`failed at claude: ${error.message}`);
+      return 1;
+    }
+    if (!verdict.ok) {
+      console.log(`failed at ${verdict.step}`);
+      return 1;
+    }
+    console.log(`survived +${verdict.after}s; sendmessage ok; report reached`);
+    return 0;
+  } finally {
+    if (keep) console.log(`kept ${dir}`);
+    else fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 });
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main(process.argv.slice(2));
+  process.exitCode = await main(process.argv.slice(2));
 }
