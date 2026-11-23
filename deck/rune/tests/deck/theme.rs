@@ -2,13 +2,13 @@
 
 use std::fs;
 use std::hint::black_box;
-use std::path::Path;
+use std::path::PathBuf;
 
 use pilot_deck::theme::{self, Tokens, motion, space};
 use rune::Color;
 
-fn root() -> &'static Path {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
+fn root() -> PathBuf {
+    crate::support::manifest_dir()
 }
 
 fn deck_css() -> String {
