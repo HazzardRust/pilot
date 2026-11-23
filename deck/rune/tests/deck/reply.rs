@@ -336,7 +336,9 @@ fn a_press_on_a_view_not_yet_refreshed_posts_to_the_thread_it_shows() {
     };
     let mut rt = rune::Runtime::new(state, app::view, (1280.0, 800.0), rune::Env::new(true, 1.0));
     rt.frame(0.0);
-    let held = support::ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    let held = support::ENV
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
     // SAFETY: every test that touches the environment holds `support::ENV`.
     unsafe {
         std::env::set_var("PILOT_DECK_DIR", &deck.dir);

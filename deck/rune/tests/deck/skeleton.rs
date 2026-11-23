@@ -2,7 +2,6 @@
 
 use crate::support;
 
-
 use pilot_deck::app::{self, State};
 use pilot_deck::client::{Client, Error, Query};
 use rune::{Env, Runtime};
