@@ -1,6 +1,5 @@
 //! The Rune deck's tests, linked as one test binary.
 
-mod support;
 mod act_deck;
 mod act_thread;
 mod agents_reports;
@@ -23,6 +22,7 @@ mod skeleton;
 mod startup;
 mod status;
 mod strip;
+mod support;
 mod theme;
 mod thread;
 mod tickets;
