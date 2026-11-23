@@ -15,4 +15,3 @@ scripts/test/fixtures/init-
 docs/design/handoff-cache/probes/sections/runs.jsonl
 docs/design/handoff-cache/probes/sections.md
 deck/rune/Cargo.lock
-scripts/test/probe-clear-survival.test.mjs
