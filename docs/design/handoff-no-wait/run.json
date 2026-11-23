@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed 40c49c1",
+      "state": "pushed 2f9a8be",
       "branch": "slice/handoff-no-wait-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s1"
     },
@@ -21,7 +21,9 @@
     },
     {
       "slice": "S6",
-      "state": "planned"
+      "state": "implementing",
+      "branch": "slice/handoff-no-wait-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s6"
     },
     {
       "slice": "S2",
@@ -33,10 +35,12 @@
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "pushed e5fceb0",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/handoff-no-wait-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s3"
     },
     {
       "slice": "S5",
@@ -48,13 +52,13 @@
     },
     {
       "slice": "S7 The design passes the vocabulary guard (added)",
-      "state": "pushed 21f92b0",
+      "state": "integrated",
       "branch": "slice/handoff-no-wait-s7",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s7"
     }
   ],
-  "next": "co-pilot: integrating S7 (brings base); S4 d312a06 and S1 40c49c1 pushed, gates finishing; then S6",
-  "updatedAt": "2026-11-23T02:09:51.879Z",
+  "next": "co-pilot: S4 integrating; then S1 2f9a8be, S3 e5fceb0, S6; then S2 (rename holdFor, stale test name per S1) and S5",
+  "updatedAt": "2026-11-23T02:54:59.548Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -106,6 +110,60 @@
       "agent": "pilot-implementer",
       "what": "S7: foreground gate hit the 180 s auto-background; waited with pilot wait-for",
       "evidence": "S7 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6: context summarised mid-run, work lost (worktree clean at base, reflog 'reset: moving to HEAD'); handed back empty, respawned",
+      "evidence": "S6 hand-back; git reflog of slice/handoff-no-wait-s6",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6 respawn handed back after 4 tool calls/27 s claiming its context was summarised; with 50k tokens used, it most likely read a startup summary reminder as lost work",
+      "evidence": "af904e80 hand-back: 4 tool uses, 26.7 s, worktree clean at c44f420",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "harness forced a second hand-back with four implementers live",
+      "evidence": "handback-send-enforce",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4: deck/store-runs.mjs, the owned file, had no room (799 of the 800-line bar); noteCoPilotAgent moved to deck/store-tickets.mjs",
+      "evidence": "facades.test.mjs:19",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4: full gate queued behind two other worktrees' gates",
+      "evidence": "s4-gate.log: gate: waiting for a slot",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3: a context compaction dropped progress state; re-established from git status (one extra round)",
+      "evidence": "S3 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3: the quiet gate log buries the single node failure above ~580 lines of cargo output",
+      "evidence": "s3-gate.log line 8",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1: the vocabulary guard skips untracked files, so the new ADR's retired words passed the targeted run and failed only in the full gate after commit; a second commit and a third ~13 min full run",
+      "evidence": "first gate log: docs/adr/0210-handoff-no-wait.md:24:task",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1: the advisory text was pinned in context-size.test.js, outside the slice's named test file",
+      "evidence": "hooks/test/context-size.test.js:625-647",
       "size": 1
     }
   ]
