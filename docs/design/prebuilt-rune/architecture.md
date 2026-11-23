@@ -131,7 +131,8 @@ ADR NNNN (`docs/adr/NNNN-prebuilt-rune.md`).
 - **A5** No code signing (itm_326ee0d80b61); Smart App Control enforced → HTML (spec 10). Rejected: Artifact
   Signing + Apple Developer ID.
 - **A6** Fetch on `pilot deck` only (itm_60338a16a5ec); auto-open and doctor never download. Rejected: daemon
-  background fetch; prefetch at `pilot update`. User answered: "First pilot deck" (default taken).
+  background fetch; prefetch at `pilot update`. Assumed: thread closed by the deck's
+  20-minute timeout ("First pilot deck"), not by the user; default stands, unconfirmed.
 - **A7** A release is a manual dispatch, not automatic on a version change (pilot's itm_9914932172bc). Assumed:
   thread closed by the deck's 20-minute timeout, not by the user; default stands, unconfirmed.
 - **A8** Three targets: win32-x64, darwin-arm64, linux-x64 on ubuntu-22.04 for an older glibc (pilot's
