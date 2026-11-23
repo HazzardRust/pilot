@@ -42,6 +42,9 @@ test('a co-pilot heartbeat after the grant stamps the entry', (t) => {
   assert.equal(noteCoPilotAgent(REPO, 'a1b2c3d4e5f6a7b8c', CO_PILOT), true);
   assert.equal(coPilotFor(REPO).agent, 'a1b2c3d4e5f6a7b8c');
   assert.equal(coPilotFor(REPO).live, true, 'the stamp leaves the grant as it was');
+
+  assert.equal(noteCoPilotAgent(REPO, 'f0e1d2c3b4a596870', CO_PILOT), true, 'the latest co-pilot heartbeat wins');
+  assert.equal(coPilotFor(REPO).agent, 'f0e1d2c3b4a596870');
 });
 
 test('nothing else stamps it', (t) => {
