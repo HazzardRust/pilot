@@ -4,9 +4,11 @@
 // Each test binary compiles this module whole and uses only part of it.
 #![allow(dead_code)]
 
+use std::cell::Cell;
+use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::Mutex;
+use std::sync::{Condvar, Mutex};
 
 use pilot_deck::act::Acted;
 use pilot_deck::app::{self, State};
@@ -19,6 +21,51 @@ pub struct Scratch {
     pub port: u16,
     pub pid: u32,
     pub dir: PathBuf,
+    // Dropped after `drop` has stopped the daemon, so the next test's deck starts only then.
+    _slot: Slot,
+}
+
+/// Tests holding a scratch deck at once. As 25 binaries, at most one file's tests ran together, and
+/// the busiest file held 8 decks; one binary on 16 threads held 17 and ran a loaded machine out of
+/// memory, so the decks get the old ceiling back while the tests without one keep every thread.
+const DECKS: usize = 8;
+
+static HELD: (Mutex<usize>, Condvar) = (Mutex::new(0), Condvar::new());
+
+thread_local! {
+    /// This test's live decks: its second deck rides its first slot, so a test holding two never
+    /// waits on itself.
+    static MINE: Cell<usize> = const { Cell::new(0) };
+}
+
+/// One test's claim on the deck ceiling, taken before its first deck starts. Not `Send`: `MINE` counts
+/// per thread, so a deck must be dropped on the thread that started it.
+struct Slot(PhantomData<*const ()>);
+
+impl Slot {
+    fn take() -> Slot {
+        if MINE.get() == 0 {
+            let (held, freed) = &HELD;
+            let mut n = held.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+            while *n >= DECKS {
+                n = freed.wait(n).unwrap_or_else(|poisoned| poisoned.into_inner());
+            }
+            *n += 1;
+        }
+        MINE.set(MINE.get() + 1);
+        Slot(PhantomData)
+    }
+}
+
+impl Drop for Slot {
+    fn drop(&mut self) {
+        MINE.set(MINE.get() - 1);
+        if MINE.get() == 0 {
+            let (held, freed) = &HELD;
+            *held.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) -= 1;
+            freed.notify_one();
+        }
+    }
 }
 
 fn pilot(args: &[&str]) -> String {
@@ -50,6 +97,7 @@ impl Scratch {
         if let Some(port) = &port {
             args.extend(["--port", port]);
         }
+        let slot = Slot::take();
         let out = pilot(&args);
         let field = |name: &str| {
             out.lines()
@@ -68,6 +116,7 @@ impl Scratch {
             pid: field("pid").parse().expect("a pid"),
             dir: PathBuf::from(field("dir")),
             url,
+            _slot: slot,
         }
     }
 
