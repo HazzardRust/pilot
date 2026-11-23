@@ -49,12 +49,13 @@ const ageOf = (file) => {
  * and the removal happen under a `mkdir` lock, so two waiters that both saw the dead holder
  * cannot both remove it and the second remove a live holder's fresh file.
  */
-function takeOver(file, alive) {
+function takeOver(file, alive, mkdir) {
   const lock = `${file}.takeover`;
   try {
-    fs.mkdirSync(lock);
+    mkdir(lock);
   } catch (err) {
-    if (err.code !== 'EEXIST') throw err;
+    // On Windows a `mkdir` of a directory another waiter is removing answers EPERM or EACCES, not EEXIST.
+    if (!['EEXIST', 'EPERM', 'EACCES'].includes(err.code)) throw err;
     if (ageOf(lock) > STALE_MS) fs.rmSync(lock, { recursive: true, force: true });
     return;
   }
@@ -79,6 +80,7 @@ export function takeSlot({
   alive = isRunning,
   sleep = sleepFor,
   say = sayOnStderr,
+  mkdir = fs.mkdirSync,
 }) {
   // Passed on as inherited: under a selected gate it is `selected`, which a Number() made NaN.
   if (env.PILOT_GATE_SLOT) return { release: noop, slot: env.PILOT_GATE_SLOT, waited: false };
@@ -95,7 +97,7 @@ export function takeSlot({
       } catch (err) {
         if (err.code !== 'EEXIST') throw err;
       }
-      takeOver(file, alive);
+      takeOver(file, alive, mkdir);
       holders.push(holderOf(file));
     }
     if (holders.includes(null)) continue; // a slot freed or was taken over while we looked

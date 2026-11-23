@@ -85,6 +85,33 @@ test('a stale takeover lock is removed, then the dead slot taken', (t) => {
   slot.release();
 });
 
+const lockMkdir = (code) => {
+  let fails = 1;
+  return (target) => {
+    if (target.endsWith('.takeover') && fails-- > 0) throw Object.assign(new Error(`${code}: mkdir '${target}'`), { code });
+    return fs.mkdirSync(target);
+  };
+};
+
+test('a takeover lock being removed reads as held', (t) => {
+  const dir = scratch(t, 'locks');
+  fs.writeFileSync(path.join(dir, 'slot-0.json'), JSON.stringify({ pid: 999_999_991, dir: 'C:/gone', since: '2026-10-12T00:00:00.000Z' }));
+  let sleeps = 0;
+  const sleep = () => assert.ok(++sleeps < 3, 'the slot was never taken on a later round');
+  const slot = takeSlot({ dir, slots: 1, cwd: 'C:/repo/x', env: {}, alive: () => false, sleep, say: () => {}, mkdir: lockMkdir('EPERM') });
+  assert.deepEqual([slot.slot, slot.waited, sleeps], [0, true, 1]);
+  slot.release();
+});
+
+test('any other mkdir error still throws', (t) => {
+  const dir = scratch(t, 'locks');
+  fs.writeFileSync(path.join(dir, 'slot-0.json'), JSON.stringify({ pid: 999_999_991, dir: 'C:/gone', since: '2026-10-12T00:00:00.000Z' }));
+  assert.throws(
+    () => takeSlot({ dir, slots: 1, cwd: 'C:/repo/x', env: {}, alive: () => false, sleep: never, say: () => {}, mkdir: lockMkdir('ENOSPC') }),
+    { code: 'ENOSPC' },
+  );
+});
+
 test('an unreadable slot older than 10 s is taken over', (t) => {
   const dir = scratch(t, 'locks');
   fs.writeFileSync(path.join(dir, 'slot-0.json'), '{"pid": 4');
