@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed 2f9a8be",
+      "state": "integrated",
       "branch": "slice/handoff-no-wait-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s1"
     },
@@ -27,11 +27,13 @@
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1",
         "S4"
-      ]
+      ],
+      "branch": "slice/handoff-no-wait-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s2"
     },
     {
       "slice": "S3",
@@ -44,11 +46,13 @@
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1",
         "S4"
-      ]
+      ],
+      "branch": "slice/handoff-no-wait-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s5"
     },
     {
       "slice": "S7 The design passes the vocabulary guard (added)",
@@ -57,8 +61,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s7"
     }
   ],
-  "next": "co-pilot: S4 integrated beb0aa8, checks running; then S1 2f9a8be, S3 e5fceb0, S6 488b315; then S2, S5",
-  "updatedAt": "2026-11-23T03:09:47.455Z",
+  "next": "co-pilot: S1 integrated eb11fd9 (checks running); S2, S5 implementing from eb11fd9; integrate S3 e5fceb0 and S6 488b315 on green",
+  "updatedAt": "2026-11-23T03:22:14.059Z",
   "friction": [
     {
       "agent": "pilot-architect",
