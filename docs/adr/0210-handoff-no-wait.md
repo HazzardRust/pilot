@@ -21,10 +21,10 @@ the hand-off mod held the `/clear` for up to 20 minutes while the deck held a li
 pilot did nothing. On 2026-11-22 a co-pilot told to pause at 10:23 was still working at 11:20: its second hand-back
 was refused while its implementers ran, so the clear waited on a message that could not arrive.
 
-Probes on Claude Code 2.1.330 (handoff-no-wait §3, E1-E5) showed the clear keeps every live agent task: a
+Probes on Claude Code 2.1.330 (handoff-no-wait §3, E1-E5) showed the clear keeps every live agent: a
 background agent wrote 47 s after the clear, a depth-2 worker 67 s after it, and a `SendMessage` to `main` 56 s
-after it was read by the fresh session. The clear drops only queued task-notifications of task-type `tool_call`,
-the cleared conversation's own backgrounded tool calls, and no crew message is of that type.
+after it was read by the fresh session. The clear drops only the queued notices of the cleared conversation's own
+backgrounded tool calls, and no crew message is one of those.
 
 ## Decision
 
