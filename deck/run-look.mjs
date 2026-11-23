@@ -4,7 +4,7 @@
  * `SETTLE_MS`; the mod does the clearing
  * and the submitting, and this file decides whether to.
  *
- *   node <root>/deck/run-look.mjs <op> [--id itm_<hex>] [--turn-ended <ms>] [--why <text>]
+ *   node <root>/deck/run-look.mjs <op> [--id itm_<hex>] [--why <text>]
  *
  * prints one JSON `Outcome` line and exits 0; a refused argument exits 2 with no line, before anything is read.
  *
@@ -304,7 +304,7 @@ export async function look(op, args = {}, deps = {}) {
   return none(`${op} is not a look`);
 }
 
-const FLAGS = { '--id': 'id', '--turn-ended': 'turnEndedAt', '--why': 'why' };
+const FLAGS = { '--id': 'id', '--why': 'why' };
 
 /** The op and its arguments, or null for anything refused. */
 function parse(argv) {
@@ -320,10 +320,6 @@ function parse(argv) {
   if (args.id !== undefined && !ITEM_ID.test(args.id)) return null;
   if ((op === 'cleared' || op === 'unstarted') && args.id === undefined) return null;
   if (args.why !== undefined ? op !== 'unstarted' || !UNSTARTED_WHY.includes(args.why) : op === 'unstarted') return null;
-  if (args.turnEndedAt !== undefined) {
-    if (!/^\d{1,16}$/.test(args.turnEndedAt)) return null;
-    args.turnEndedAt = Number(args.turnEndedAt);
-  }
   return { op, args };
 }
 
@@ -331,7 +327,7 @@ function parse(argv) {
 export async function main(argv, { out = (line) => process.stdout.write(`${line}\n`) } = {}) {
   const parsed = parse(argv);
   if (!parsed) {
-    process.stderr.write('usage: run-look.mjs <start|turn|cleared|unstarted> [--id itm_<hex>] [--turn-ended <ms>] [--why <text>]\n');
+    process.stderr.write('usage: run-look.mjs <start|turn|cleared|unstarted> [--id itm_<hex>] [--why <text>]\n');
     return 2;
   }
   let outcome;

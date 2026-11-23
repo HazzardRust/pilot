@@ -43,11 +43,6 @@ async function look($, op, ...flags) {
   }
 }
 
-/** The `turn` look, told when the main session's last turn ended. */
-function lookTurn($, mod) {
-  return look($, 'turn', '--turn-ended', String(mod.turnEndedAt));
-}
-
 /** Act on a `turn` outcome: a well-formed `clear` hands off; anything else, a failed look among them, does nothing. */
 async function decide($, mod, due) {
   if (due?.act !== 'clear' || !ITEM_ID.test(due.id ?? '')) return;
@@ -88,7 +83,7 @@ async function unstarted($, mod, id, why) {
 export function register(on) {
   if (LOOK === null) return;
   // One session's state: `register` runs once per session (and again on a reload, which drops the timers too).
-  const mod = { busy: false, turnEndedAt: 0, submitted: null, started: false, due: null, noTurn: null };
+  const mod = { busy: false, submitted: null, started: false, due: null, noTurn: null };
 
   on('session.start', async ($, e, next) => {
     const result = await next(e);
@@ -113,8 +108,7 @@ export function register(on) {
     if (e.agentId !== undefined) return result;
     mod.busy = false;
     try {
-      mod.turnEndedAt = await $.clock.now();
-      const due = mod.due ?? await lookTurn($, mod);
+      const due = mod.due ?? await look($, 'turn');
       mod.due = null;
       await decide($, mod, due);
     } catch {

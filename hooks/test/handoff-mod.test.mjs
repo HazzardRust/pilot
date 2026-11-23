@@ -89,7 +89,7 @@ test('turn.complete runs the look, clears, then submits', async () => {
   const [turn, clear, cleared, submit] = calls;
   assert.equal(turn.argv[0], 'node');
   assert.equal(path.resolve(turn.argv[1]), LOOK, "the look's path is the module's own");
-  assert.deepEqual(turn.argv.slice(2), ['turn', '--turn-ended', '0']);
+  assert.deepEqual(turn.argv.slice(2), ['turn']);
   assert.deepEqual(clear.input, { command: 'clear' });
   assert.equal(path.resolve(cleared.argv[1]), LOOK);
   assert.deepEqual(cleared.argv.slice(2), ['cleared', '--id', ID]);
@@ -208,19 +208,3 @@ test('no turn.start within 60 s is said; one inside it is not', async () => {
   }
 });
 
-test('the turn-ended time passed to the look is the last turn.complete', async () => {
-  const { $, advance, looks } = host({ turn: { act: 'none', why: 'this session posted no hand-off' } });
-  const hooks = hooksOf();
-
-  await advance(5_000);
-  await hooks['turn.start']($, turnStart, next);
-  await advance(2_000);
-  await hooks['turn.complete']($, turnEnd, next); // ends at 7 s
-  await advance(30_000);
-  await hooks['turn.complete']($, turnEnd, next); // ends at 37 s
-
-  assert.deepEqual(looks('turn').map(({ argv, at }) => [at, argv.slice(3)]), [
-    [7_000, ['--turn-ended', '7000']],
-    [37_000, ['--turn-ended', '37000']],
-  ]);
-});

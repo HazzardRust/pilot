@@ -102,7 +102,7 @@ const AT = '2026-10-20T05:00:00Z';
 const CLEARED = new Date('2026-10-20T06:30:00.000Z');
 
 test('a stamped survivor is named with its resync', function () {
-  const head = HEAD(lane.yellowNotice(YELLOW, { ticket: 'itm_x', live: true, at: AT, agent: 'a1b2' }, CLEARED));
+  const head = HEAD(lane.yellowNotice(YELLOW, { ticket: 'itm_x', live: true, at: AT, agent: 'a1b2' }, CLEARED, 'clear'));
   assert.match(head, /co-pilot a1b2 is live on itm_x/, head);
   assert.match(head, /`SendMessage` a1b2 `resync 2026-10-20T06:30:00\.000Z`/, head);
   assert.match(head, /spawn none/, head);
@@ -128,7 +128,7 @@ test('an agent id of the wrong shape is never echoed', function () {
 
 // held-handoff S4 (spec 5; L7), through the hook: `/api/record`'s `coPilot` survives `recordFor` into the notice,
 // its agent stamp (handoff-no-wait S5) with it.
-test('the hook names a live co-pilot from /api/record', async function (t) {
+async function noticeFor(t, source) {
   const http = require('node:http');
   scratchHome(t);
   const answer = { record: null, yellow: YELLOW, lanes: null, coPilot: { ticket: 'itm_cccccccccccc', live: true, at: '2026-10-20T05:00:00Z', agent: 'a1b2c3d4e5f6a7b8c' } };
@@ -145,14 +145,25 @@ test('the hook names a live co-pilot from /api/record', async function (t) {
   t.after(function () { return new Promise(function (resolve) { server.close(resolve); }); });
   process.env.PILOT_DECK_PORT = String(server.address().port);
 
-  const said = (await lane.run({
+  return (await lane.run({
     session_id: '2600840c-2a13-45b7-87fc-0000000000s9',
     transcript_path: path.join(os.tmpdir(), 'transcript.jsonl'),
     cwd: OURS,
     hook_event_name: 'SessionStart',
-    source: 'clear',
+    source: source,
   })).payload.hookSpecificOutput.additionalContext;
+}
 
+test('the hook names a live co-pilot from /api/record', async function (t) {
+  const said = await noticeFor(t, 'clear');
   assert.match(said, /co-pilot a1b2c3d4e5f6a7b8c is live on itm_cccccccccccc/, said.slice(0, 600));
   assert.match(said, /`SendMessage` a1b2c3d4e5f6a7b8c `resync \d{4}-\d\d-\d\dT[\d:.]+Z`/, 'the clear is dated: ' + said.slice(0, 600));
+});
+
+// QA F2: a new process's start races the mod's release, and its crew died with the old process, so only a
+// `/clear` names a survivor by id; any other start keeps the plain live line.
+test('a start that is not a clear names no survivor', async function (t) {
+  const said = await noticeFor(t, 'startup');
+  assert.match(said, /a co-pilot is live on itm_cccccccccccc/, said.slice(0, 600));
+  assert.doesNotMatch(said, /a1b2c3d4e5f6a7b8c|resync|survived/, said.slice(0, 600));
 });
