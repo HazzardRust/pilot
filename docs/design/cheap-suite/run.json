@@ -15,13 +15,13 @@
     },
     {
       "slice": "S2",
-      "state": "pushed ecb0f62 (rust-reviewer APPROVE); integrating",
+      "state": "integrated at 34114e6; checks green",
       "branch": "slice/cheap-suite-s2",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s2"
     },
     {
       "slice": "S3",
-      "state": "failed gate: merged red, cargo act_deck 7 FAILED: test binary from the shared rune-target bakes env!(CARGO_MANIFEST_DIR) of the worktree that built it (pilot-cheap-suite-s3-b4, removed) -> ERR_MODULE_NOT_FOUND bin/pilot.mjs; fix after S2 integrates",
+      "state": "pushed a78fcef; R1/R2/R3 red-then-green (R3 pins re-run by co-pilot in throwaway worktree); ts/security/rust APPROVE; R3 cost +5 s/gate (435/431 ms -> 5472/5200 ms); concurrent-build race in Misses; integrating",
       "after": [
         "S1"
       ],
@@ -104,19 +104,9 @@
     "dropped: S3 typescript MEDIUM wipe vs live cargo build EBUSY (caught and named; S3 Misses, read by S8 timed run)",
     "kept: S3 typescript LOW select-tests trigger path unpinned; one assertion added"
   ],
-  "next": "integrating S2 ecb0f62, checks; then S3 fix round (test binaries in the shared target resolve their own worktree at run time; red-then-green incl. a live other worktree; if it moves L5, ask main); reintegrate S3, checks; S6, checks; S7/S8 owed runs; S5 (with S4 LOW), S10",
-  "updatedAt": "2026-11-23T12:02:15.179Z",
+  "next": "S3 integrate running; then checks; S6 6dc3fb9, checks; S7/S8 owed runs serially; S5 (with S4 LOW); S10; fundamentalist; QA",
+  "updatedAt": "2026-11-23T12:28:54.332Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "token lacks workflow scope while S4 owns gate.yml",
-      "evidence": "refusing to allow an OAuth App to create or update workflow .github/workflows/gate.yml without workflow scope"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "lost track of a background gate across a context summary; handed back before the full-gate go arrived",
-      "evidence": "S4 report: found still running only from its log"
-    },
     {
       "kind": "drain",
       "what": "pilot relayed five forced co-pilot hand-backs and three child reports by hand on handoff-no-wait; each relay re-read a full report",
@@ -333,6 +323,18 @@
       "agent": "pilot:pilot-implementer",
       "what": "S6.md B4 bar 'one per land call' did not count the land calls or child pilot processes in land-clear, so the bar was not checkable when set",
       "evidence": "S6 B4 measured 30 and 15 vs <=12",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the shared Rune target silently served another worktree's compiled build to the S3 fixer's own first gate",
+      "evidence": "first full cargo run read 173 passed incl. the other worktree's probe test; real count 172",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "cargo fmt --check flags files outside the slice",
+      "evidence": "agents_reports.rs, live.rs use order",
       "size": 1
     }
   ]
