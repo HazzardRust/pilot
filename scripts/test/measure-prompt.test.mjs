@@ -206,13 +206,14 @@ test('the command prints the table, and --json prints the rows', (t) => {
 // ci-gate S7 (2026-11-20) raised it from 11949.5 to the measured 12005.75 (spec 3; L4, L10): step 5's short path runs `pilot checks <sha7> --wait` after integrate and routes red as `failed gate:`, 56.25.
 // Merge origin/pilot d282a698 into feat/human-steps (2026-11-20) set it to the measured 12035 (about 9 of it the steps-thread line naming land's feature PR step): human-steps' step field and Findings cut and ci-gate's checks field and short-path wait all stand, measured together.
 // two-devices S3 (2026-11-21) raised it from 12035 to the measured 12069.5 (spec 1, 2a; L8): step 1 runs `pilot doctor slug <slug>` before naming a slug and links OPERATING.md's two-devices section, 34.5.
+// handoff-no-wait S1 (2026-11-23) lowered it from 12069.5 to the measured 12053 (spec 1; L2): the hand-off pause's queued-release clause goes, and the hand-off section says a live co-pilot is sent nothing, net -4.
 test('the pilot pin holds at its new number', async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const pilot = rows.find((row) => row.agent === 'pilot');
   const own = (pilot.definition + pilot.skills + pilot.tools) / 4;
-  assert.ok(own <= 12069.5, `pilot's own share is ${own} tokens, over its 12069.5`);
+  assert.ok(own <= 12053, `pilot's own share is ${own} tokens, over its 12053`);
 });
 
 // research-first S1 raised the explorer's from 2209 to the measured 2409 (L5): `## A research brief` cost 200.5 (2208.5 to 2409), 41 of it the security-review sentence on fetched pages and queries.

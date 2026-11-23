@@ -208,7 +208,8 @@ test('a start with no co-pilot to release, or no deck, still reports in', async 
   assert.ok(fs.existsSync(path.join(claims, `mod-${PID}.stamp`)), 'the stamp is written first, whatever the deck says');
 });
 
-test('a live co-pilot holds the clear and posts the hold', async (t) => {
+// handoff-no-wait S1 (L2): the clear keeps the crew, so a live co-pilot never holds it.
+test('a live co-pilot does not hold the clear', async (t) => {
   const claims = scratchHome(t);
   const handoff = handoffItem();
   stampPosted(claims, handoff.id);
@@ -217,9 +218,9 @@ test('a live co-pilot holds the clear and posts the hold', async (t) => {
 
   const outcome = await look('turn', { repo: OURS, turnEndedAt: now }, { ...session, now: () => now });
 
-  assert.deepEqual(outcome, { act: 'held', id: handoff.id, until: now + 20 * MINUTE });
-  assert.deepEqual(calls.filter((call) => call.route === '/api/hold').map((call) => call.args), [{ id: handoff.id, ticket: 'itm_c0c0c0c0c0c0' }], 'one hold posted');
-  assert.equal(claimed(claims, handoff.id), false, 'the claim is given back');
+  assert.deepEqual(outcome, { act: 'clear', id: handoff.id });
+  assert.equal(calls.filter((call) => call.route === '/api/hold').length, 0, 'no hold posted');
+  assert.ok(claimed(claims, handoff.id), 'the claim is taken');
   assert.ok(calls.filter((call) => call.name === 'deck_read').every((call) => call.args.repo === undefined), 'no read names a repo');
 });
 
@@ -237,20 +238,6 @@ test('a re-arm press clears with the co-pilot live, after a turn end past the pr
   assert.equal(claimed(claims, handoff.id), false);
 
   assert.deepEqual(await look('turn', { repo: OURS, turnEndedAt: press }, deps), { act: 'clear', id: handoff.id });
-});
-
-test('the hold clears at 20 minutes', async (t) => {
-  const claims = scratchHome(t);
-  const heldAt = Date.now() - 30 * MINUTE;
-  const handoff = { ...handoffItem(), hold: { at: at(heldAt) } };
-  stampPosted(claims, handoff.id);
-  await deckHolding(t, [handoff], { coPilot: { ticket: 'itm_c0c0c0c0c0c0', live: true, at: at(heldAt - MINUTE) } });
-
-  const early = await look('turn', { repo: OURS, turnEndedAt: heldAt }, { ...session, now: () => heldAt + 19 * MINUTE });
-  assert.deepEqual(early, { act: 'held', id: handoff.id, until: heldAt + 20 * MINUTE }, 'held a minute before the bound');
-
-  const bound = await look('turn', { repo: OURS, turnEndedAt: heldAt }, { ...session, now: () => heldAt + 20 * MINUTE });
-  assert.deepEqual(bound, { act: 'clear', id: handoff.id }, 'cleared at the bound');
 });
 
 // never-stuck S19 (spec 25): a co-pilot released on a queued pause frees the clear at the next turn end, not at the bound.

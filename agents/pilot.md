@@ -546,7 +546,7 @@ A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd 
 `Message queued for delivery to <id> at its next tool round` is not
 `Resuming agent <id>`: check the expected effect (a PR state, a deck item, a
 report) after a few minutes; if absent, stop the agent and do the step
-yourself or re-brief it. The hand-off pause is the exception: queued, `deck_ticket release` it at once.
+yourself or re-brief it.
 
 ### The artefact is the state
 
@@ -589,7 +589,8 @@ The hand-off asks nothing of the user. Two steps, in order, nothing more:
    `handoff` item for this repository from the record, and answers in one
    line. The record is the hand-off; no prose is written anywhere.
 
-The hand-off mod then clears and submits the first prompt, so stop there. If
+The hand-off mod then clears and submits the first prompt, so stop there. A
+live co-pilot survives the clear: send it nothing, no pause. If
 the line says the mod has not reported in, tell the user to type `/clear`, the fallback, and stop. If it names a
 failure, nothing was posted: fix that and run it again. A `SessionStart` lane
 (`hooks/session-handoff.js`) hands the fresh session that item, the record
