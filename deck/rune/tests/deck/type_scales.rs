@@ -1,6 +1,6 @@
 //! rune-deck-ui S33: the deck draws in three type scales and no other (header 13, body 13, caption 11).
 
-mod support;
+use crate::support;
 
 use std::fs;
 use std::path::{Path, PathBuf};

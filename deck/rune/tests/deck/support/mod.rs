@@ -103,8 +103,8 @@ impl Drop for Scratch {
     }
 }
 
-/// The client reads its address from the environment, which every test in a binary shares.
-static ENV: Mutex<()> = Mutex::new(());
+/// The client reads its address from the environment, which every test in the one test binary shares.
+pub static ENV: Mutex<()> = Mutex::new(());
 
 /// A Rune client on `deck`, read from the environment as the window reads it.
 pub fn client_for(deck: &Scratch) -> Client {

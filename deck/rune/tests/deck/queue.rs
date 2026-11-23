@@ -1,9 +1,9 @@
 //! rune-deck-ui S7: the queue's cards and lane lines, drawn from a view a real scratch deck served (L7), and
 //! an option press posted once through the write seam.
 
-mod support;
+use crate::support;
 
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use pilot_deck::app::{self, State};
@@ -18,7 +18,7 @@ use support::Scratch;
 const BUDGET: Duration = Duration::from_millis(1000);
 
 /// The client reads its address from the environment, which every test in this binary shares.
-static ENV: Mutex<()> = Mutex::new(());
+use crate::support::ENV;
 
 /// Runs `make` with the deck's address in the environment, as the window's own start reads it.
 fn with_deck<T>(deck: &Scratch, make: impl FnOnce() -> T) -> T {

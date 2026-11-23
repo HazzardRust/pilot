@@ -1,7 +1,7 @@
 //! rune-deck-ui S9: the reply box's own state, `reply::Local` (spec 3, 5, 6c). A verdict's option takes
 //! two presses, a refused reply keeps its words (the ADR 0096 bug), and a taken one empties the box.
 
-mod support;
+use crate::support;
 
 use pilot_deck::act::{Acted, Action};
 use pilot_deck::regions::reply::{Local, Opt};
@@ -336,7 +336,8 @@ fn a_press_on_a_view_not_yet_refreshed_posts_to_the_thread_it_shows() {
     };
     let mut rt = rune::Runtime::new(state, app::view, (1280.0, 800.0), rune::Env::new(true, 1.0));
     rt.frame(0.0);
-    // SAFETY: no other test in this binary touches the environment.
+    let held = support::ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    // SAFETY: every test that touches the environment holds `support::ENV`.
     unsafe {
         std::env::set_var("PILOT_DECK_DIR", &deck.dir);
         std::env::set_var("PILOT_DECK_PORT", deck.port.to_string());
@@ -359,6 +360,7 @@ fn a_press_on_a_view_not_yet_refreshed_posts_to_the_thread_it_shows() {
         std::env::remove_var("PILOT_DECK_DIR");
         std::env::remove_var("PILOT_DECK_PORT");
     }
+    drop(held);
 
     assert_eq!(
         (replies(&shown), replies(&next)),

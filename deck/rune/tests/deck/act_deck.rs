@@ -2,7 +2,7 @@
 //! route, read back through the daemon's read routes only (`/api/items`, `/api/runs`, `/api/view`, `/`).
 //! Every scratch daemon runs under the deck's own Start guard (`support::pilot`), so no test opens a terminal.
 
-mod support;
+use crate::support;
 
 use pilot_deck::act::Acted;
 use pilot_deck::act_deck::DeckAction;

@@ -2,7 +2,7 @@
 //! window's own prefs file and never the store; and the panel's × and Mark all seen clear the deck's
 //! notices through the page's own routes, read back through `/api/view`.
 
-mod support;
+use crate::support;
 
 use std::path::PathBuf;
 use std::sync::Arc;

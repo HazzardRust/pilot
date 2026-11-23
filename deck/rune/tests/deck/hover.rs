@@ -2,7 +2,7 @@
 //! page, every pressable shows a hover tint and the pointer cursor, and plain text reacts to
 //! nothing. Drawn from a view a real scratch deck served (L7).
 
-mod support;
+use crate::support;
 
 use std::sync::Arc;
 

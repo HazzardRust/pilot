@@ -5,7 +5,7 @@
 //! three-digit count moves nothing (spec 2, 5, 6d, 6e, 19).
 
 use std::path::PathBuf;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::MutexGuard;
 
 use pilot_deck::app::{self, State};
 use pilot_deck::client::View;
@@ -16,7 +16,7 @@ use serde_json::{Value, json};
 
 /// Every press here may write the prefs, and where they go is the environment, which the tests
 /// of this binary share: each test holds this and points it at a scratch dir of its own.
-static ENV: Mutex<()> = Mutex::new(());
+use crate::support::ENV;
 
 const FRAME: f64 = 1.0 / 60.0;
 
