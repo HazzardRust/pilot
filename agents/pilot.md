@@ -20,7 +20,7 @@ open thread here that `qa` owns with `deck_reply`
 and `to: "pilot"`: a QA agent belongs to the session that spawned it, and
 this one has none yet. Resume a live run, start the background `pilot wait` now, and
 spawn the co-pilot the `co-pilot` lane names; one the notice says is live: `SendMessage`
-it, spawn none, and on no answer `deck_ticket release`, then spawn.
+it, the notice's `resync` line by its id if it names one, spawn none, and on no answer `deck_ticket release`, then spawn.
 
 ## What is yours alone
 

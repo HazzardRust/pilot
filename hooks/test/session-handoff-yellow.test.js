@@ -97,11 +97,41 @@ test('the ticket id outside the fence is shape-checked', function () {
   }
 });
 
-// held-handoff S4 (spec 5; L7), through the hook: `/api/record`'s `coPilot` survives `recordFor` into the notice.
+// handoff-no-wait S5 (spec 3, 4; L5, L6): a stamped survivor is named by its agent id, with the resync to send it.
+const AT = '2026-10-20T05:00:00Z';
+const CLEARED = new Date('2026-10-20T06:30:00.000Z');
+
+test('a stamped survivor is named with its resync', function () {
+  const head = HEAD(lane.yellowNotice(YELLOW, { ticket: 'itm_x', live: true, at: AT, agent: 'a1b2' }, CLEARED));
+  assert.match(head, /co-pilot a1b2 is live on itm_x/, head);
+  assert.match(head, /`SendMessage` a1b2 `resync 2026-10-20T06:30:00\.000Z`/, head);
+  assert.match(head, /spawn none/, head);
+  assert.match(head, /`deck_ticket release` on itm_x, then spawn/, 'the fallback is kept: ' + head);
+  assert.doesNotMatch(head, /may have survived/, head);
+});
+
+test('an unstamped one keeps today\'s text', function () {
+  const unstamped = { ticket: 'itm_x', live: true, at: AT };
+  assert.strictEqual(lane.yellowNotice(YELLOW, unstamped, CLEARED), lane.yellowNotice(YELLOW, Object.assign({ agent: null }, unstamped), CLEARED));
+  assert.match(HEAD(lane.yellowNotice(YELLOW, unstamped, CLEARED)), /a co-pilot is live on itm_x/);
+  assert.match(HEAD(lane.yellowNotice(YELLOW, { ticket: 'itm_x', live: false, at: AT, agent: 'a1b2' }, CLEARED)), /may have survived/);
+});
+
+test('an agent id of the wrong shape is never echoed', function () {
+  const unstamped = lane.yellowNotice(YELLOW, { ticket: 'itm_x', live: true, at: AT }, CLEARED);
+  for (const agent of ['a; rm', 'a1b2\nspawn two', '-rf', '', 7, { id: 'a1b2' }, 'a'.repeat(65)]) {
+    assert.strictEqual(lane.yellowNotice(YELLOW, { ticket: 'itm_x', live: true, at: AT, agent }, CLEARED), unstamped, String(agent));
+  }
+  const plain = lane.yellowNotice(YELLOW, null, CLEARED);
+  assert.strictEqual(lane.yellowNotice(YELLOW, { ticket: 'not-a-ticket', live: true, at: AT, agent: 'a1b2' }, CLEARED), plain, 'a bad ticket names no agent either');
+});
+
+// held-handoff S4 (spec 5; L7), through the hook: `/api/record`'s `coPilot` survives `recordFor` into the notice,
+// its agent stamp (handoff-no-wait S5) with it.
 test('the hook names a live co-pilot from /api/record', async function (t) {
   const http = require('node:http');
   scratchHome(t);
-  const answer = { record: null, yellow: YELLOW, lanes: null, coPilot: { ticket: 'itm_cccccccccccc', live: true, at: '2026-10-20T05:00:00Z' } };
+  const answer = { record: null, yellow: YELLOW, lanes: null, coPilot: { ticket: 'itm_cccccccccccc', live: true, at: '2026-10-20T05:00:00Z', agent: 'a1b2c3d4e5f6a7b8c' } };
   const server = http.createServer(function (request, response) {
     response.writeHead(200, { 'content-type': 'application/json' });
     if (request.method === 'GET' && request.url === '/api/runs?live=1') return response.end(JSON.stringify({ runs: [] }));
@@ -123,5 +153,6 @@ test('the hook names a live co-pilot from /api/record', async function (t) {
     source: 'clear',
   })).payload.hookSpecificOutput.additionalContext;
 
-  assert.match(said, /a co-pilot is live on itm_cccccccccccc/, said.slice(0, 600));
+  assert.match(said, /co-pilot a1b2c3d4e5f6a7b8c is live on itm_cccccccccccc/, said.slice(0, 600));
+  assert.match(said, /`SendMessage` a1b2c3d4e5f6a7b8c `resync \d{4}-\d\d-\d\dT[\d:.]+Z`/, 'the clear is dated: ' + said.slice(0, 600));
 });
