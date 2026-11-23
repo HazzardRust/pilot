@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "fixing: local wip f767370 (origin 3ac7661, rust-reviewer APPROVE on 3ac7661); cap of 8 scratch decks, measure on gates open",
+      "state": "fixing: local ecb0f62 (f767370 kept + rustfmt import order), rust-reviewer APPROVE; B1 green; owes cargo test x3 with node sampling, B3 cold --no-run pair, push; fixer paused for the heavy slot, resume with go",
       "branch": "slice/cheap-suite-s2",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s2"
     },
@@ -30,7 +30,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 0928f84, ready to integrate; typescript APPROVE, security APPROVE (re-read); B4 run 45138042410 success, tested-tree ff9d31ee = 0928f84^{tree} on windows, macos, ubuntu",
+      "state": "pushed 0928f84 (typescript APPROVE, security APPROVE); integrating",
       "branch": "slice/cheap-suite-s4",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s4"
     },
@@ -62,7 +62,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed ded0792 (Verdict: APPROVE); integrating",
+      "state": "integrated at 2923c55; checks green",
       "branch": "slice/cheap-suite-s9",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s9"
     },
@@ -104,19 +104,9 @@
     "dropped: S3 typescript MEDIUM wipe vs live cargo build EBUSY (caught and named; S3 Misses, read by S8 timed run)",
     "kept: S3 typescript LOW select-tests trigger path unpinned; one assertion added"
   ],
-  "next": "integrating S9 ded0792; then S4 0928f84, S3 7db99be one at a time with pilot checks after each; then S2 fix, S6/S7/S8 owed runs serially; S5 (with S4 LOW), S10; ONE heavy run crew-wide",
-  "updatedAt": "2026-11-23T11:03:04.148Z",
+  "next": "integrating S4 0928f84; then resume S2 fixer with go (cargo x3, B3 pair, push); S3 7db99be integrate; S2 integrate; S6/S7/S8 owed runs serially; S5 (with S4 LOW), S10; ONE heavy run crew-wide",
+  "updatedAt": "2026-11-23T11:26:27.207Z",
   "friction": [
-    {
-      "agent": "architect",
-      "what": "Auto mode refused two git steps on the architect's own branches",
-      "evidence": "git commit on design/cheap-suite and git worktree add -b feat/cheap-suite + push refused as Destructive or Unwanted Actions; user ran both, two blocked-step round trips, one filed twice"
-    },
-    {
-      "agent": "architect",
-      "what": "pilot wait --item exited 1 with no reason printed",
-      "evidence": "output only 'listening on ...' then exit 1"
-    },
     {
       "agent": "architect",
       "what": "gate1 base check comes after the push",
@@ -330,6 +320,18 @@
       "what": "crew reports do not cross a co-pilot hand-off, so the successor rebuilt each slice's Evidence trailers from the record and its own reruns; integrate refused S1 until each B<k> had one",
       "evidence": "NOT integrated slice/cheap-suite-s1: S1: B1 has no --trailer \"Evidence: B1 test: ...\"",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a subagent cannot block on a co-pilot's go; it hands back and must be resumed by message",
+      "evidence": "S2 fixer: 'After the ready message I had nothing left to do but end the turn'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node.exe is shared across sessions, so a run's peak node count needs a baseline subtracted",
+      "evidence": "about 17 node.exe alive before the S2 cargo run",
+      "size": 1
     }
   ]
 }
