@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const { RUNE_TARGET_MAX, boundTarget, runeTargetDir } = await import('../rune-target.mjs');
+const { RUNE_TARGET_MAX, boundTarget, runeTargetDir, staleRoot } = await import('../rune-target.mjs');
 
 /** A scratch target dir with `units` entries under `debug/.fingerprint`, removed when the test ends. */
 function target(t, units) {
@@ -55,4 +55,29 @@ test('the shared target is under LOCALAPPDATA on Windows, never the checkout or 
     assert.ok(!dir.includes('.claude'), dir);
   }
   assert.equal(runeTargetDir({ XDG_CACHE_HOME: '/home/me/.cache' }, 'linux'), '/home/me/.cache/pilot/rune-target');
+});
+
+test('staleRoot dates the crate\'s own sources now and nothing else, so cargo rebuilds it from this worktree', (t) => {
+  const crate = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-rune-crate-'));
+  t.after(() => fs.rmSync(crate, { recursive: true, force: true }));
+  const old = new Date('2001-01-01T00:00:00Z');
+  const files = ['build.rs', 'src/lib.rs', 'src/regions/a.rs', 'tests/deck/main.rs', 'tests/deck/support/mod.rs', 'Cargo.toml', 'theme.json'];
+  for (const rel of files) {
+    fs.mkdirSync(path.dirname(path.join(crate, rel)), { recursive: true });
+    fs.writeFileSync(path.join(crate, rel), '');
+    fs.utimesSync(path.join(crate, rel), old, old);
+  }
+  const now = new Date('2026-11-23T12:00:00Z');
+  assert.equal(staleRoot(crate, now), 5);
+  const dated = (rel) => fs.statSync(path.join(crate, rel)).mtime.toISOString();
+  for (const rel of files.slice(0, 5)) assert.equal(dated(rel), now.toISOString(), rel);
+  for (const rel of files.slice(5)) assert.equal(dated(rel), old.toISOString(), rel);
+});
+
+test('staleRoot throws on a crate with no build.rs, for the gate to name', (t) => {
+  const crate = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-rune-crate-'));
+  t.after(() => fs.rmSync(crate, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(crate, 'src'));
+  fs.mkdirSync(path.join(crate, 'tests'));
+  assert.throws(() => staleRoot(crate), { code: 'ENOENT' });
 });

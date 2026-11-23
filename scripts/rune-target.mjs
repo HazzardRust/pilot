@@ -42,3 +42,21 @@ export function boundTarget(dir, { max = RUNE_TARGET_MAX } = {}) {
   fs.rmSync(dir, { recursive: true, force: true, maxRetries: 3 });
   return { wiped: true, units };
 }
+
+/**
+ * Dates the crate's own sources `now` (`build.rs` and every file under `src/` and `tests/`), so cargo rebuilds
+ * the crate from this worktree. Cargo judges a path package fresh by mtime and keys it relative to its
+ * workspace, so in the shared target another worktree's later build of it reads as fresh here and its test
+ * binary, compiled from that worktree's sources, is what runs. Dependencies stay shared. The count dated; a
+ * file that cannot be dated throws, for the caller to name.
+ */
+export function staleRoot(crate, now = new Date()) {
+  const files = [path.join(crate, 'build.rs')];
+  for (const dir of ['src', 'tests']) {
+    for (const entry of fs.readdirSync(path.join(crate, dir), { recursive: true, withFileTypes: true })) {
+      if (entry.isFile()) files.push(path.join(entry.parentPath, entry.name));
+    }
+  }
+  for (const file of files) fs.utimesSync(file, now, now);
+  return files.length;
+}

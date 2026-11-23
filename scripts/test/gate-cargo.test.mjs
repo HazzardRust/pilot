@@ -33,7 +33,7 @@ function store(t) {
  * Runs `runGate` with stdout captured; every spawn is recorded and answered by `answer(command)`. `select`
  * given, the gate runs `--since=main` on its answer. `bound` answers for the shared target, never the real one.
  */
-function gate(t, { which, answer = () => ({ status: 0 }), platform = 'win32', select, bound = () => ({ wiped: false, units: 0 }) }) {
+function gate(t, { which, answer = () => ({ status: 0 }), platform = 'win32', select, bound = () => ({ wiped: false, units: 0 }), stale = () => 0 }) {
   const { dir, file } = store(t);
   // Under the gate this process inherits its guard, which reads as a gate inside the gate: this gate is the outer one.
   const inherited = process.env.PILOT_GATE_HOME_STORE;
@@ -48,6 +48,7 @@ function gate(t, { which, answer = () => ({ status: 0 }), platform = 'win32', se
       slot,
       ...(select ? { select } : {}),
       bound,
+      stale,
       read: () => [],
       spawn: (command, args, options) => {
         calls.push({ command, args, options });
@@ -132,6 +133,33 @@ test('the gate builds a deck change into the shared target, bounded first, the g
   assert.ok(out.split('\n').includes(`rune deck: shared build held 401 units, over 400, wiped ${dir}`), out);
   // The suite's own run never carries the shared target: only the cargo spawn sets it.
   assert.equal(calls[0].options.env.CARGO_TARGET_DIR, process.env.CARGO_TARGET_DIR);
+});
+
+test('the gate dates its own crate\'s sources after the bound and before cargo, so no other worktree\'s build runs', (t) => {
+  const order = [];
+  const { code, calls } = gate(t, {
+    which: () => CARGO,
+    answer: (command) => (order.push(command), { status: 0 }),
+    bound: () => (order.push('bound'), { wiped: false, units: 0 }),
+    stale: (crate) => (order.push(`stale ${crate}`), 3),
+  });
+  assert.equal(code, 0);
+  const crate = path.join(calls[0].options.cwd, 'deck', 'rune');
+  assert.deepEqual(order.slice(1), ['bound', `stale ${crate}`, CARGO]);
+});
+
+test('a crate whose sources cannot be dated is red, named, and starts no cargo', (t) => {
+  const errors = [];
+  const err = t.mock.method(process.stderr, 'write', (chunk) => errors.push(String(chunk)) > 0);
+  let result;
+  try {
+    result = gate(t, { which: () => CARGO, stale: () => { throw new Error('ENOENT: no such file, utime build.rs'); } });
+  } finally {
+    err.mock.restore();
+  }
+  assert.equal(result.code, 1);
+  assert.ok(!result.calls.some((call) => call.command === CARGO));
+  assert.match(errors.join(''), /gate: rune deck: could not date .*rune: ENOENT: no such file, utime build.rs/);
 });
 
 test('a shared target that cannot be bounded is named, and cargo still runs', (t) => {
