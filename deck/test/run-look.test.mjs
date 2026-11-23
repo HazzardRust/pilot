@@ -59,7 +59,7 @@ function stampPosted(claims, id, pid = PID) {
  * A guarded deck holding `items`, answering as the daemon does: `deck_read` and `deck_reply` on `/api/tool`, the
  * directory's co-pilot on `GET /api/record`, and `POST /api/started`. Every request is kept, in order, in `calls`.
  */
-async function deckHolding(t, items, { coPilot = null, released = false } = {}) {
+async function deckHolding(t, items, { coPilot = null, released = false, recordStatus = 200 } = {}) {
   const calls = [];
   const send = (response, body) => {
     response.writeHead(200, { 'content-type': 'application/json' });
@@ -82,7 +82,13 @@ async function deckHolding(t, items, { coPilot = null, released = false } = {}) 
       if (request.method === 'POST' && route === '/api/tool' && body?.name === 'deck_reply') {
         return send(response, { content: [{ type: 'text', text: 'replied' }] });
       }
-      if (request.method === 'GET' && route === '/api/record') return send(response, { coPilot });
+      if (request.method === 'GET' && route === '/api/record') {
+        if (recordStatus !== 200) {
+          response.writeHead(recordStatus);
+          return response.end();
+        }
+        return send(response, { coPilot });
+      }
       if (request.method === 'POST' && route === '/api/started') return send(response, { released });
       response.writeHead(404);
       return response.end();
@@ -146,7 +152,7 @@ test("a claude started inside the session that posted is its parent, not the out
   const outer = PID + 1;
   stampPosted(claims, handoff.id, outer);
   process.env.CLAUDE_PID = String(outer); // inherited from the outer session; scratchHome restores it
-  const nested = { read: async () => [handoff], coPilot: async () => null, ppid: PID };
+  const nested = { read: async () => [handoff], ppid: PID };
 
   await look('start', { repo: OURS }, nested);
   const outcome = await look('turn', { repo: OURS }, nested);
@@ -223,20 +229,18 @@ test('a live co-pilot does not hold the clear', async (t) => {
   assert.ok(calls.filter((call) => call.name === 'deck_read').every((call) => call.args.repo === undefined), 'no read names a repo');
 });
 
-// never-stuck S19 (spec 25): a released co-pilot's clear waits for the turn end after its release, never mid-turn.
-test('a released co-pilot clears at the turn end after its release', async (t) => {
+// handoff-no-wait (L2): the clear has no regard to the co-pilot, so a failed co-pilot read cannot block it.
+test('a failing co-pilot read does not block the clear', async (t) => {
   const claims = scratchHome(t);
-  const releasedAt = Date.now() - 3 * MINUTE;
   const handoff = handoffItem();
   stampPosted(claims, handoff.id);
-  await deckHolding(t, [handoff], { coPilot: { ticket: 'itm_c0c0c0c0c0c0', live: false, at: at(releasedAt) } });
-  const deps = { ...session, now: () => releasedAt + MINUTE };
+  const calls = await deckHolding(t, [handoff], { recordStatus: 500 });
+  const now = Date.now();
 
-  const before = await look('turn', { repo: OURS, turnEndedAt: releasedAt - 1 }, deps);
-  assert.equal(before.act, 'none', 'a turn that ended before the release does not clear');
-  assert.equal(claimed(claims, handoff.id), false);
+  const outcome = await look('turn', { repo: OURS, turnEndedAt: now }, { ...session, now: () => now });
 
-  assert.deepEqual(await look('turn', { repo: OURS, turnEndedAt: releasedAt + MINUTE }, deps), { act: 'clear', id: handoff.id });
+  assert.deepEqual(outcome, { act: 'clear', id: handoff.id });
+  assert.equal(calls.filter((call) => call.route === '/api/record').length, 0, 'the co-pilot is never read');
 });
 
 test('a hand-off closed or superseded before the turn ended is not cleared', async (t) => {
@@ -251,7 +255,7 @@ test('a hand-off closed or superseded before the turn ended is not cleared', asy
   const ours = handoffItem();
   const newer = handoffItem();
   stampPosted(claims, ours.id);
-  const outcome = await look('turn', { repo: OURS, turnEndedAt: Date.now() }, { ...session, read: async () => [ours, newer], coPilot: async () => null });
+  const outcome = await look('turn', { repo: OURS, turnEndedAt: Date.now() }, { ...session, read: async () => [ours, newer] });
   assert.equal(outcome.act, 'none', 'superseded');
   assert.equal(claimed(claims, ours.id) || claimed(claims, newer.id), false, 'no claim kept for either');
 });
@@ -261,7 +265,7 @@ test('a forged hand-off inside the cooldown clears nothing', async (t) => {
   const first = handoffItem();
   const forged = handoffItem();
   const items = [first];
-  const deps = (now) => ({ ...session, read: async () => items, coPilot: async () => null, now: () => now });
+  const deps = (now) => ({ ...session, read: async () => items, now: () => now });
   const clearedAt = Date.now();
   stampPosted(claims, first.id);
   assert.deepEqual(await look('turn', { repo: OURS, turnEndedAt: clearedAt }, deps(clearedAt)), { act: 'clear', id: first.id });

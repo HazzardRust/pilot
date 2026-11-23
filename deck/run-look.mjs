@@ -129,25 +129,6 @@ async function openItems() {
 }
 
 /**
- * The moment a turn end must follow before this look may clear. A live co-pilot never holds the clear, since
- * the clear keeps the crew (handoff-no-wait L2), so this is 0 for one. A released co-pilot's clear waits for
- * the turn after its release, since that release's hand-back turn may still be running.
- */
-function releasedAt(coPilot) {
-  return coPilot?.live === true ? 0 : Date.parse(coPilot?.at) || 0;
-}
-
-/**
- * This directory's co-pilot, `{ ticket, live, at }` or null, from `GET /api/record?repo=` (clear-waits-co-pilot L7):
- * a read that marks nothing delivered, never `deck_read` with a `repo`. A daemon older than the field answers null.
- */
-async function coPilotAt(cwd) {
-  const response = await deckFetch(`/api/record?repo=${encodeURIComponent(cwd)}`, { signal: deadline() });
-  if (!response.ok) throw new Error(`the deck answered /api/record with ${response.status}`);
-  return (await bodyOf(response, '/api/record'))?.coPilot ?? null;
-}
-
-/**
  * A hand-off that went wrong, told to the user rather than left as an idle session: a reply on the hand-off's
  * thread, and a line in this directory's chat when the thread refuses it, as a closed one does (handoff-prompt
  * spec 3), or always when `both`. Never a prompt: nothing says which session it would land in. A deck that will
@@ -215,7 +196,7 @@ function stampCleared(repo, now) {
   }
 }
 
-async function turn(repo, pid, turnEndedAt, { read, coPilot, now }) {
+async function turn(repo, pid, { read, now }) {
   const posted = postedBy(pid); // asked first: a session that posted nothing reads nothing
   if (!posted) return none('this session posted no hand-off');
   const at = now();
@@ -225,10 +206,6 @@ async function turn(repo, pid, turnEndedAt, { read, coPilot, now }) {
   if (!handoff) return none(`${posted} was closed before the turn ended`);
   if (handoff.id !== posted) return none(`${posted} is superseded`); // the newer id is deck text, never echoed
   if (laneMarked(handoff.id)) return none(`${handoff.id} is already picked up`);
-  const live = await coPilot(repo);
-  const since = releasedAt(live);
-  // A release while the turn ran: the clear waits for a turn end after it, never mid-turn.
-  if (turnEndedAt < since) return none(`${handoff.id} waits for a turn end after ${new Date(since).toISOString()}`);
   if (!takeClaim(claimNameFor(handoff.id))) return none(`${handoff.id} is already cleared`);
   stampCleared(repo, at);
   return { act: 'clear', id: handoff.id };
@@ -311,16 +288,16 @@ async function start(repo, pid) {
 }
 
 /**
- * One look. `deps` stand in for the deck read, the co-pilot read, the clock, the parent pid and the marker wait in
+ * One look. `deps` stand in for the deck read, the clock, the parent pid and the marker wait in
  * a test. The session is the look's parent, the Claude Code process whose mod ran it, never `CLAUDE_PID`: the host
  * does not set it for a mod's process, so there it is only ever inherited from an outer session (F15).
  */
 export async function look(op, args = {}, deps = {}) {
-  const { read = openItems, coPilot = coPilotAt, now = Date.now, ppid = process.ppid, settleMs = SETTLE_MS } = deps;
+  const { read = openItems, now = Date.now, ppid = process.ppid, settleMs = SETTLE_MS } = deps;
   const repo = args.repo ?? listeningRepo(process.cwd());
   const pid = ppid;
   if (op === 'start') return start(repo, pid);
-  if (op === 'turn') return turn(repo, pid, Number.isFinite(args.turnEndedAt) ? args.turnEndedAt : 0, { read, coPilot, now });
+  if (op === 'turn') return turn(repo, pid, { read, now });
   if (!ITEM_ID.test(args.id ?? '')) return none(`${op} needs an item id`);
   if (op === 'cleared') return cleared(repo, pid, args.id, read, settleMs);
   if (op === 'unstarted' && UNSTARTED_WHY.includes(args.why)) return unstarted(repo, args.id, args.why, read);
