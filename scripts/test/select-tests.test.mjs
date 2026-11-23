@@ -169,6 +169,61 @@ test('an unresolvable ref runs full and says so', (t) => {
   assert.equal(selectTests({ cwd: dir, since: 'a\nselected 0 of 3 test files since 0123456' }).reason, 'cannot resolve a?selected 0 of 3 test files since 0123456', 'a ref forges no line');
 });
 
+/**
+ * A proved tree beside `threeTests`' HEAD, as CI's merge tree stands beside the landing's (cheap-suite F9): `side`, off
+ * `one`, made the change to `test/a.test.mjs` that main then made too, and main went on to change `lib/b.mjs`.
+ * Answers the side commit's tree, which is no ancestor of HEAD and no commit at all.
+ */
+function provedBeside(dir) {
+  git(dir, 'checkout', '-q', '-b', 'side');
+  fs.appendFileSync(path.join(dir, 'test/a.test.mjs'), '// touched\n');
+  git(dir, 'commit', '-q', '-am', 'side');
+  const tree = git(dir, 'rev-parse', 'HEAD^{tree}');
+  git(dir, 'checkout', '-q', 'main');
+  fs.appendFileSync(path.join(dir, 'test/a.test.mjs'), '// touched\n');
+  git(dir, 'commit', '-q', '-am', 'same change on main');
+  fs.appendFileSync(path.join(dir, 'lib/b.mjs'), 'export const c = 2;\n');
+  git(dir, 'commit', '-q', '-am', 'main goes on');
+  return tree;
+}
+
+test('a tree since diffs exactly', (t) => {
+  const { dir } = gitFixture(t, 'select:three', threeTests);
+  const tree = provedBeside(dir);
+
+  const selection = selectTests({ cwd: dir, since: tree });
+
+  // Since merge-base(side, HEAD) it would be a, b1 and b2: test/a.test.mjs changed there too.
+  assert.deepEqual(selection, { files: [path.resolve(dir, 'test/b1.test.mjs'), path.resolve(dir, 'test/b2.test.mjs')], total: 3, since: tree, changed: ['lib/b.mjs'] });
+});
+
+test('a tree since runs full when a CI file changed after it', (t) => {
+  const { dir } = gitFixture(t, 'select:three', threeTests);
+  const tree = provedBeside(dir);
+  fs.mkdirSync(path.join(dir, '.github/workflows'), { recursive: true });
+  fs.writeFileSync(path.join(dir, '.github/workflows/gate.yml'), 'on: push\n');
+  git(dir, 'add', '.github');
+  git(dir, 'commit', '-q', '-m', 'ci lands on pilot after the branch point');
+
+  const selection = selectTests({ cwd: dir, since: tree });
+
+  assert.equal(selection.files, null);
+  assert.equal(selection.reason, '.github/workflows/gate.yml changed');
+  assert.equal(selection.since, tree);
+});
+
+test('an unresolvable since still runs full', (t) => {
+  const { dir } = gitFixture(t, 'select:three', threeTests);
+  const blob = git(dir, 'rev-parse', 'HEAD:lib/b.mjs');
+  const absent = '0123456789abcdef0123456789abcdef01234567';
+
+  for (const since of [blob, absent]) {
+    const selection = selectTests({ cwd: dir, since });
+    assert.equal(selection.files, null, since);
+    assert.equal(scopeLine(selection), `full suite: cannot resolve ${since}`);
+  }
+});
+
 test('the scope line round-trips', () => {
   const selected = { files: ['/r/test/a.test.mjs'], total: 3, since: '0123456789abcdef0123456789abcdef01234567' };
   const full = { files: null, total: 3, since: 'nope', reason: 'cannot resolve nope' };

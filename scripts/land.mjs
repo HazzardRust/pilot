@@ -24,7 +24,7 @@ import path from 'node:path';
 
 import { hostFor } from '../deck/host.mjs';
 import { deleteMerged } from './branches.mjs';
-import { checksGate } from './checks.mjs';
+import { checksGate, provenTree } from './checks.mjs';
 import { assertPushable, firstLine, holds, PILOT_BRANCH } from './pilot-branch.mjs';
 import { baseOf, chainLanded, commitRecords, git as gitAt, landingMessage } from './integrate.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
@@ -217,8 +217,16 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
   }
   chainGuard({ cwd });
   // The caught-up tip's checks, before the record commit or any push (ci-gate L4, A2): red, pending, unread refuse.
-  const checks = checksGate({ host, git, sha: git(['rev-parse', 'HEAD']) });
+  const tip = git(['rev-parse', 'HEAD']);
+  const checks = checksGate({ host, git, sha: tip });
   if (!checks.ok) throw fail(`${checks.line}; nothing pushed`);
+  // The tree green CI proved on this tip (cheap-suite spec 5, A2): the merge tests only what differs from it; no proof, the full suite.
+  let proof;
+  try {
+    proof = provenTree({ host, git, sha: tip, base: git(['rev-parse', runRef(runs, PILOT_BRANCH)]) });
+  } catch (err) {
+    proof = { tree: null, line: `no ci proof: ${firstLine(err)}` };
+  }
   // A record base of pilot is a legacy run, and so is a record with no base, or no record: it keeps the release PR (audit-f14 A3).
   const recorded = recordBase(cwd, head);
   const legacy = recorded === undefined || recorded === PILOT_BRANCH;
@@ -235,7 +243,7 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
     const reuse = fs.existsSync(keep) && !holds(cwd, ['merge-base', '--is-ancestor', source, before]) && resume({ cwd, dir: keep, pilotTip: before, source, message, side: 'theirs', refuse: fail, conflict: (left, why) => conflict(head, left, keep, why) });
     let merge;
     try {
-      merge = mergeIntoPilot({ cwd, git, source, message, test, label: head, keep, reuse, ...(!legacy && { afterGreen }) });
+      merge = mergeIntoPilot({ cwd, git, source, message, test, label: head, keep, reuse, ...(proof.tree !== null && { since: proof.tree }), ...(!legacy && { afterGreen }) });
     } catch (err) {
       if (err.dir) throw conflict(head, err.paths, err.dir, err.why);
       const failed = Object.assign(new Error(`NOT landed: ${err.reason ?? err.message}; ${PILOT_BRANCH} not pushed`, { cause: err }), err);
@@ -245,13 +253,13 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
       if (retried) throw fail(`${PILOT_BRANCH} moved again after one retry; ${head} is pushed, ${PILOT_BRANCH} is not: run pilot land again`);
       continue;
     }
-    const landed = { head, sha: merge.sha, retried, already: !merge.merged, adr: merge.adr ?? null, ...(pushSkipped && { pushSkipped }) };
+    const landed = { head, sha: merge.sha, retried, already: !merge.merged, adr: merge.adr ?? null, proof: proof.line, ...(pushSkipped && { pushSkipped }) };
     // A feature already on pilot comments on nothing (spec 2), nor does one with no host (other-host
     // A1). Landed already: neither a refused comment nor an unreadable PR list reads as a failed landing.
     if (host !== null) {
       try {
         // Only a legacy run's PR targets pilot, so only it is polled to read merged from the push (A3).
-        const stillOpen = comment({ host, head, sha: merge.sha, counts: merge.counts, already: !merge.merged, wait, sleep });
+        const stillOpen = comment({ host, head, sha: merge.sha, counts: merge.counts, ...(proof.tree !== null && { proved: proof.line }), already: !merge.merged, wait, sleep });
         if (stillOpen.length) landed.stillOpen = stillOpen;
       } catch (err) {
         landed.commentFailed = firstLine(err);
@@ -382,17 +390,18 @@ const conflict = (head, paths, dir, why) => fail(conflictLine({ head, onto: PILO
 
 /**
  * Puts `landed on pilot at <sha>`, then `; full suite <counts>` when the feature merge's run
- * printed counts (suite-at-landing L8), on each open or merged PR from this repository whose head
+ * printed counts (suite-at-landing L8), or `; <proved>, then <counts>` when the run was the selection since the
+ * tree `proved` names (cheap-suite spec 5), on each open or merged PR from this repository whose head
  * is `head`. An open one against pilot is first polled, every `POLL_MS` up to `wait` ms, for
  * GitHub to read it merged from the push (A1); no PR is ever closed. Throws when there is no
  * such PR. `already`, the feature on pilot before this landing, comments on nothing (spec 2).
  * Answers the numbers still reading open after the wait, commented all the same.
  */
-export function comment({ host, head, sha, counts, already = false, wait = 30_000, sleep = pause }) {
+export function comment({ host, head, sha, counts, proved, already = false, wait = 30_000, sleep = pause }) {
   if (already) return [];
   const ours = host.reviews({ head, state: 'all' }).filter((review) => Number.isSafeInteger(review.number) && review.crossRepo === false && (review.state === 'open' || review.state === 'merged'));
   if (!ours.length) throw new Error(`no open or merged PR has head ${head}`);
-  const body = `landed on pilot at ${sha}${counts ? `; full suite ${counts}` : ''}`;
+  const body = `landed on pilot at ${sha}${counts ? `; ${proved ? `${proved}, then` : 'full suite'} ${counts}` : ''}`;
   const stillOpen = [];
   for (const { number, state, base } of ours) {
     if (state === 'open' && base === PILOT_BRANCH && !readsMerged({ host, number, wait, sleep })) stillOpen.push(number);
@@ -469,10 +478,10 @@ export function main(argv, inject = {}) {
   const table = inject.read && once(inject.read);
   const shared = table ? { holder: holderFrom(table), gc: inject.gc && (() => inject.gc(table)) } : {};
   try {
-    const { head, sha, retried, already, adr, host, main: mainPr, feature, pushSkipped, commentFailed, stillOpen = [], retargeted = [], deleted, kept, deleteFailed, caughtUp, cleared } = land({ ...inject, ...shared });
+    const { head, sha, retried, already, adr, host, main: mainPr, feature, pushSkipped, commentFailed, stillOpen = [], retargeted = [], deleted, kept, deleteFailed, caughtUp, cleared, proof } = land({ ...inject, ...shared });
     const said = already ? `${head} already on ${PILOT_BRANCH}` : `landed ${head} on ${PILOT_BRANCH}`;
-    // Above the main line: the comment that failed, then the number the landing allocated (S8).
-    const above = `${commentFailed === undefined ? '' : `pr comment failed: ${commentFailed}\n`}${stillOpen.map((number) => `feature PR #${number} still reads open\n`).join('')}${adr ? `ADR ${adr.from} is ${adr.to}\n` : ''}${adr && feature ? `${head} moved on origin: git pull --ff-only before a fix\n` : ''}`;
+    // Above the main line: what the test run trusted (cheap-suite spec 5), the comment that failed, then the number the landing allocated (S8).
+    const above = `${proof}\n${commentFailed === undefined ? '' : `pr comment failed: ${commentFailed}\n`}${stillOpen.map((number) => `feature PR #${number} still reads open\n`).join('')}${adr ? `ADR ${adr.from} is ${adr.to}\n` : ''}${adr && feature ? `${head} moved on origin: git pull --ff-only before a fix\n` : ''}`;
     // The deck's row keeps only the output's tail (S8): the branch and clear lines go first, so
     // the SHA stays in it, and the main line last, bounded.
     const branches = [
