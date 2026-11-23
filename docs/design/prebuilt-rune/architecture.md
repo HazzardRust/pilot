@@ -16,12 +16,14 @@ also the pilot's spec questions itm_9914932172bc and itm_5d271bb6c718 (A7, A8).
 
 1. One dispatch of `rune-release.yml` on the bumped branch publishes release `v<version>` holding the Rune deck for
    Windows x64, macOS arm64 and Linux x64, each `cargo build --release --locked` from that commit, each checked for
-   its OS's executable header (and on macOS its ad-hoc signature) before publish. *`gh release view <tag> --json
-   assets` on a scratch tag:* **exactly 3** assets, **0** others. practitioner: release engineer (uv/ripgrep-style
-   per-target matrix with a pre-publish smoke check).
-2. The same run writes `deck/rune/release.json` (version, tag, per target the file and its sha256) and commits it to
-   that branch. *An independent `certutil -hashfile`/`shasum -a 256` of each downloaded asset:* **3 of 3** equal their
-   pin. practitioner: supply-chain reviewer (hash computed in the build run and shipped in the package, as esbuild).
+   its OS's executable header (and on macOS its ad-hoc signature) before publish. *The feature PR's build run lists
+   **exactly 3** binaries as artifacts, **0** others; with A9 allowed, `gh release view rune-scratch-<sha7> --json
+   assets` lists the same 3.* practitioner: release engineer (uv/ripgrep-style per-target matrix with a pre-publish
+   smoke check).
+2. The same run writes `deck/rune/release.json` (version, tag, per target the file and its sha256), on a dispatch
+   committed to that branch, otherwise in the job summary and artifacts. *An independent `certutil -hashfile`/`shasum
+   -a 256` of each built binary:* **3 of 3** equal their pin. practitioner: supply-chain reviewer (hash computed in the
+   build run and shipped in the package, as esbuild).
 3. `pilot deck` with no local build and a pin for its version downloads its OS's binary **once**, verifies it, stores
    it under the plugin's `deck/rune/target/fetched/`, and names it in its `open` line. *Stubbed-download test:* **1**
    request on the first run, **0** on the second; the `open` line names the fetched copy.
@@ -38,9 +40,12 @@ also the pilot's spec questions itm_9914932172bc and itm_5d271bb6c718 (A7, A8).
    is named.
 8. `pilot doctor` has a Rune row: `built here, <path>`, `fetched <version>, verified`, or `missing: <reason>` naming
    what to do; doctor makes **0** requests. *A test per state:* **3** states, and **one** per missing reason.
-9. On HazzardLaptop (no C++ tools), `pilot deck` from the scratch release opens the Rune window. *QA walkthrough:*
-   **1** Rune window, **0** build tools installed. practitioner: release engineer (the field machine is the test).
-10. Where Windows Smart App Control is enforced, which blocks unsigned code, `pilot deck` downloads nothing and opens
+9. On a Windows machine with no cargo on PATH, a CI-built binary is fetched and `pilot deck` opens the Rune window.
+   *QA per A10, this machine, a scratch home, cargo off PATH:* **1** Rune window from a CI-built binary (downloaded
+   from the scratch prerelease under A9, else loaded by `ensureRune` with a `get` reading the PR run's artifact from
+   disk); HazzardLaptop after the first real release is a human step, **0** build tools there. practitioner: release
+   engineer (the field machine is the test).
+10. *(added)* Where Windows Smart App Control is enforced, which blocks unsigned code, `pilot deck` downloads nothing and opens
     HTML with one line, and doctor's row says so. *Test with the registry read stubbed to enforced:* **0** requests,
     **one** line. (Found by A5's research; build-now.)
 
@@ -105,8 +110,10 @@ ADR NNNN (`docs/adr/NNNN-prebuilt-rune.md`).
 - **L6** The request is one plain GET to `https://github.com/HazzardRust/pilot/releases/download/<tag>/<asset>`,
   the tag from the pin and matched against `^v\d+\.\d+\.\d+$|^rune-scratch-[0-9a-f]{7,40}$`; nothing else is sent,
   and the signed redirect URL is never printed.
-- **L7** Evidence before main: a `rune-scratch-*` tag push runs the same workflow as a prerelease with no commit,
-  because `workflow_dispatch` only exists once the file is on the default branch.
+- **L7** Evidence before main, because `workflow_dispatch` only exists once the file is on the default branch: a
+  `pull_request` touching the workflow, `scripts/rune-pin.mjs` or `deck/rune/Cargo.{toml,lock}` runs build and pin
+  only, the 3 binaries and `release.json` as artifacts; a `rune-scratch-*` tag push (A9) adds a prerelease with no
+  commit. Either A9 answer works with no re-cut.
 
 ## 6. Assumed decisions
 
@@ -125,6 +132,12 @@ ADR NNNN (`docs/adr/NNNN-prebuilt-rune.md`).
 - **A7** A release is a manual dispatch, not automatic on a version change (pilot's itm_9914932172bc).
 - **A8** Three targets: win32-x64, darwin-arm64, linux-x64 on ubuntu-22.04 for an older glibc (pilot's
   itm_5d271bb6c718). Rejected: also Intel macOS and Windows ARM.
+- **A9** A public scratch prerelease is allowed during S4 and QA, deleted after (pilot's itm_bb030b7c165e, blocking).
+  Trades a short-lived public release for evidence against real GitHub. Rejected path, also built: no public write,
+  the PR run's artifacts only, the download proven by `ensureRune` with a `get` reading the artifact from disk, the
+  real download checked at the first real release.
+- **A10** QA runs on this Windows machine in a scratch home with cargo off PATH; macOS and Linux by CI build and
+  header check only; HazzardLaptop a human step after landing (pilot's itm_e374d036106d).
 
 red team: S3 needs the SAC reason S2 adds, so S3 now comes after S2, not only S1. red team: `workflow_dispatch`
 cannot run from a feature branch, so spec 1, 2 and 9 had no in-run evidence; L7's scratch tag added to S4. red team:
@@ -150,10 +163,11 @@ Width 2; longest stem 3 (S1 → S2 → S3)
 
 ## 9. Acceptance evidence
 
-In the order the user meets it: a scratch tag pushed, the workflow green, `gh release view` listing 3 assets (spec
-1); `release.json` from the run's summary matching 3 independent hashes (2); on HazzardLaptop, a scratch worktree
-with that `release.json`, `pilot deck` downloads once and opens the Rune window, a second run downloads nothing (3, 7,
-9); a byte flipped in the stored file → HTML and one line (4); network off → HTML and one line (5); `pilot doctor`'s
+In the order the user meets it: the feature PR's build run green with 3 binary artifacts, and under A9 a scratch
+prerelease listing the same 3 (spec 1); its `release.json` matching 3 independent hashes (2); on this machine, a
+scratch home with cargo off PATH and a scratch worktree holding that `release.json`: the binary fetched once (from the
+prerelease, or under A9's other path by `ensureRune` reading the artifact from disk), `pilot deck` opening the Rune
+window, a second run downloading nothing (3, 7, 9); after landing, HazzardLaptop as a human step (9); a byte flipped in the stored file → HTML and one line (4); network off → HTML and one line (5); `pilot doctor`'s
 Rune row in each state (8, 10); the tests for 6 and 10.
 
 ## 10. Status
