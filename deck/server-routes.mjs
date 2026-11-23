@@ -52,6 +52,7 @@ import {
   moveTicket, noteLaneFilled, cancelSwitch, refuseLaneSwitch, requestSwitch, resumableRecordFor, yellowHeadOf, recordForTicket,
   recordsFor, registerRun, releaseCoPilot, removeDeck, reopenItem, setBudget, storedTabFor,
 } from './store.mjs';
+import { noteCoPilotAgent } from './store-tickets.mjs';
 import { queueView } from './tickets.mjs';
 import { renderDeckPage, renderHomePage, renderThreadPage } from './ui/render.mjs';
 import { readUsage } from './usage.mjs';
@@ -700,6 +701,7 @@ async function route(request, response, open, start, land, exit, guard) {
     const heartbeat = await readJsonBody(request);
     try {
       noteAgent(heartbeat);
+      noteCoPilotAgent(heartbeat.cwd, heartbeat.agentId, heartbeat.agentType); // the co-pilot's id on its lane (handoff-no-wait L4)
     } catch (err) {
       if (err instanceof AgentRefusal) throw new DeckRefusal(err.message);
       throw err;
