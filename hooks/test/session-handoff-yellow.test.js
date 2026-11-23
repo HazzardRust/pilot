@@ -112,18 +112,19 @@ test('a stamped survivor is named with its resync', function () {
 
 test('an unstamped one keeps today\'s text', function () {
   const unstamped = { ticket: 'itm_x', live: true, at: AT };
-  assert.strictEqual(lane.yellowNotice(YELLOW, unstamped, CLEARED), lane.yellowNotice(YELLOW, Object.assign({ agent: null }, unstamped), CLEARED));
-  assert.match(HEAD(lane.yellowNotice(YELLOW, unstamped, CLEARED)), /a co-pilot is live on itm_x/);
-  assert.match(HEAD(lane.yellowNotice(YELLOW, { ticket: 'itm_x', live: false, at: AT, agent: 'a1b2' }, CLEARED)), /may have survived/);
+  assert.strictEqual(lane.yellowNotice(YELLOW, unstamped, CLEARED, 'clear'), lane.yellowNotice(YELLOW, Object.assign({ agent: null }, unstamped), CLEARED, 'clear'));
+  assert.match(HEAD(lane.yellowNotice(YELLOW, unstamped, CLEARED, 'clear')), /a co-pilot is live on itm_x/);
+  assert.match(HEAD(lane.yellowNotice(YELLOW, { ticket: 'itm_x', live: false, at: AT, agent: 'a1b2' }, CLEARED, 'clear')), /may have survived/);
 });
 
+// On a `/clear`, the one start that names a survivor (QA F2), so the shape check is what keeps these out.
 test('an agent id of the wrong shape is never echoed', function () {
-  const unstamped = lane.yellowNotice(YELLOW, { ticket: 'itm_x', live: true, at: AT }, CLEARED);
+  const unstamped = lane.yellowNotice(YELLOW, { ticket: 'itm_x', live: true, at: AT }, CLEARED, 'clear');
   for (const agent of ['a; rm', 'a1b2\nspawn two', '-rf', '', 7, { id: 'a1b2' }, 'a'.repeat(65)]) {
-    assert.strictEqual(lane.yellowNotice(YELLOW, { ticket: 'itm_x', live: true, at: AT, agent }, CLEARED), unstamped, String(agent));
+    assert.strictEqual(lane.yellowNotice(YELLOW, { ticket: 'itm_x', live: true, at: AT, agent }, CLEARED, 'clear'), unstamped, String(agent));
   }
-  const plain = lane.yellowNotice(YELLOW, null, CLEARED);
-  assert.strictEqual(lane.yellowNotice(YELLOW, { ticket: 'not-a-ticket', live: true, at: AT, agent: 'a1b2' }, CLEARED), plain, 'a bad ticket names no agent either');
+  const plain = lane.yellowNotice(YELLOW, null, CLEARED, 'clear');
+  assert.strictEqual(lane.yellowNotice(YELLOW, { ticket: 'not-a-ticket', live: true, at: AT, agent: 'a1b2' }, CLEARED, 'clear'), plain, 'a bad ticket names no agent either');
 });
 
 // held-handoff S4 (spec 5; L7), through the hook: `/api/record`'s `coPilot` survives `recordFor` into the notice,
