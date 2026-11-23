@@ -50,7 +50,7 @@ export function optionsOf(item) {
 
 /** The words a confirming option asks with and its button says (`renderConfirmed`, `renderHandoffChoices`): a handoff's kind sentence, else `Send “option”?`. */
 export const confirmWords = (item, label) => ({
-  ask: GATED_KINDS.includes(item.kind) || item.kind === KIND_WALKTHROUGH ? `Send “${label}”?` : askFor(item.kind, item) ?? '',
+  ask: GATED_KINDS.includes(item.kind) || item.kind === KIND_WALKTHROUGH ? `Send “${label}”?` : askFor(item.kind) ?? '',
   yes: 'Confirm',
 });
 

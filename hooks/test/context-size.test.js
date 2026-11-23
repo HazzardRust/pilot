@@ -621,8 +621,8 @@ test('a crew agent at the advisory is not offered the pilot\'s handoff', async f
   result.commit();
 });
 
-// clear-waits-co-pilot spec 6, A3: the pause gets the whole buffer between the advisory and the hard mark.
-test("the pilot's advisory names the pause", async function (t) {
+// handoff-no-wait S1 (L2): the clear keeps the crew, so the pilot's advisory asks its co-pilot for no pause.
+test("the pilot's advisory asks for no pause", async function (t) {
   const home = scratchHome(t);
   seedSnapshot(home, 23);
   const input = pilotInput(home);
@@ -631,19 +631,9 @@ test("the pilot's advisory names the pause", async function (t) {
   const result = await throughPostTool(input);
   assert.ok(result, 'the advisory lands');
   const said = result.payload.hookSpecificOutput.additionalContext;
-  assert.match(said, /co-pilot is live, send it the pause now/);
-  assert.match(said, /hands back `paused`/);
-  assert.match(said, /`deck_ticket release`/);
-  assert.match(said, /queued/, 'never-stuck S19: a queued pause is released at once');
+  assert.match(said, /run `pilot handoff`/);
+  assert.doesNotMatch(said, /pause/);
   result.commit();
-});
-
-// never-stuck S19 (spec 25, 26): a pause SendMessage only queued does not hold the clear for the whole bound.
-test("the pilot's advisory releases a queued pause at once", function () {
-  const said = require('../lib/guard-advice.js').handoffNowIfIdle(true, true);
-  assert.match(said, /queued/);
-  assert.match(said, /deck_ticket release/);
-  assert.match(said, /`deck_ticket release` it at once/);
 });
 
 test("a crew agent's does not", async function (t) {

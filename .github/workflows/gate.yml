@@ -3,7 +3,8 @@ name: Gate
 # The project's full gate on every non-draft PR to main and every push to main (main-never-red L8), on
 # ubuntu. macOS and Windows join for a PR labelled all-os (drafts included), the weekly schedule, a
 # dispatch, or any non-draft PR once the repository is public (mac-linux L7, L10). A feature PR to
-# pilot runs it too, drafts included (ci-cross-os L6).
+# pilot runs it too, drafts included (ci-cross-os L6), and so does a draft PR to main, whose green run a
+# landing trusts for the tree each job names in its last step (cheap-suite A2, L7).
 on:
   pull_request:
     branches: [main, 'feat/**', pilot]
@@ -23,7 +24,7 @@ concurrency:
 
 jobs:
   gate:
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft || contains(github.event.pull_request.labels.*.name, 'all-os') || github.base_ref == 'pilot'
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft || contains(github.event.pull_request.labels.*.name, 'all-os') || github.base_ref == 'pilot' || github.base_ref == 'main'
     strategy:
       fail-fast: false
       matrix:
@@ -54,3 +55,8 @@ jobs:
 
       - name: Check provenance
         run: node scripts/check-provenance.mjs agents/ skills/ rules/
+
+      # Last, so only a job whose every step passed names a tree; `provenTree` reads it back (cheap-suite L7).
+      - name: Name the tested tree
+        shell: bash
+        run: echo "::notice title=tested-tree::$(git rev-parse 'HEAD^{tree}')"

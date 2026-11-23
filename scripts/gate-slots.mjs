@@ -21,6 +21,9 @@ const POLL_MS = 1000;
 /** How old an unreadable slot file or a takeover lock must be before it counts as abandoned. */
 const STALE_MS = 10_000;
 
+/** How many rounds in a row a lock may answer EPERM or EACCES before it is a fault, not a removal in flight. */
+const MAX_REFUSALS = STALE_MS / POLL_MS;
+
 const noop = () => {};
 
 const sleepFor = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -49,15 +52,20 @@ const ageOf = (file) => {
  * and the removal happen under a `mkdir` lock, so two waiters that both saw the dead holder
  * cannot both remove it and the second remove a live holder's fresh file.
  */
-function takeOver(file, alive) {
+function takeOver(file, alive, mkdir, refusals) {
   const lock = `${file}.takeover`;
   try {
-    fs.mkdirSync(lock);
+    mkdir(lock);
   } catch (err) {
-    if (err.code !== 'EEXIST') throw err;
+    // On Windows a `mkdir` of a directory another waiter is removing answers EPERM or EACCES, not EEXIST.
+    if (!['EEXIST', 'EPERM', 'EACCES'].includes(err.code)) throw err;
+    // A removal in flight ends within a round or two; a refusal that outlasts STALE_MS is a fault.
+    if (err.code === 'EEXIST') refusals.delete(file);
+    else if (refusals.set(file, (refusals.get(file) ?? 0) + 1).get(file) > MAX_REFUSALS) throw err;
     if (ageOf(lock) > STALE_MS) fs.rmSync(lock, { recursive: true, force: true });
     return;
   }
+  refusals.delete(file);
   try {
     const holder = holderOf(file);
     const gone = holder === 'unreadable' ? ageOf(file) > STALE_MS : holder !== null && !alive(holder.pid);
@@ -79,12 +87,14 @@ export function takeSlot({
   alive = isRunning,
   sleep = sleepFor,
   say = sayOnStderr,
+  mkdir = fs.mkdirSync,
 }) {
   // Passed on as inherited: under a selected gate it is `selected`, which a Number() made NaN.
   if (env.PILOT_GATE_SLOT) return { release: noop, slot: env.PILOT_GATE_SLOT, waited: false };
   fs.mkdirSync(dir, { recursive: true });
   const mine = { pid: process.pid, dir: cwd, since: new Date().toISOString() };
   let waited = false;
+  const refusals = new Map();
   for (;;) {
     const holders = [];
     for (let slot = 0; slot < slots; slot++) {
@@ -95,7 +105,7 @@ export function takeSlot({
       } catch (err) {
         if (err.code !== 'EEXIST') throw err;
       }
-      takeOver(file, alive);
+      takeOver(file, alive, mkdir, refusals);
       holders.push(holderOf(file));
     }
     if (holders.includes(null)) continue; // a slot freed or was taken over while we looked

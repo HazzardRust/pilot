@@ -223,6 +223,10 @@ export function gitlabHost(run) {
         if (said.length < 100) return found;
       }
     },
+    /** No Gate job names its tree on GitLab (cheap-suite S4), so a GitLab landing has no proof and runs full. */
+    testedTrees() {
+      return [];
+    },
     signedIn() {
       try {
         run(['auth', 'status']);

@@ -1,0 +1,350 @@
+{
+  "slug": "cheap-suite",
+  "feature": "cheap-suite",
+  "ticket": "itm_52b72e87a2a3",
+  "branch": "feat/cheap-suite",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-cheap-suite",
+  "artefact": "docs/design/cheap-suite/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated at ba5ddce; checks green",
+      "branch": "slice/cheap-suite-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at 34114e6; checks green",
+      "branch": "slice/cheap-suite-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at 781318b; checks green; R3 +5 s/gate; concurrent-build race in Misses",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/cheap-suite-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at 5604695; checks green",
+      "branch": "slice/cheap-suite-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "pushed 9d87f46 (fix: a full annotation page proves no tree; pin red->green; light 36/36; ts APPROVE, security APPROVE); full re-gate waits on main's hold",
+      "after": [
+        "S3",
+        "S4"
+      ],
+      "branch": "slice/cheap-suite-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrating 6dc3fb9 (holds heavy slot); B1-B3 re-run green 14/14; B4 bar MISSED (30, 15 vs <=12) for the fundamentalist",
+      "branch": "slice/cheap-suite-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "pushed 48ce7bc (Verdict: approve); owes cold cargo build deck/rune + test:changed --since=717bb32",
+      "branch": "slice/cheap-suite-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "pushed a9ea85c (Verdict: APPROVE); S8.md B2=6 at 505014c; owes runs 2-3 of 8 files, GIT_TRACE base(s8-base)/slice, coverage, test:changed --since=717bb32, remove pilot-cheap-suite-s8-base",
+      "branch": "slice/cheap-suite-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "integrated at 2923c55; checks green; B2 bar MISSED: git gate2-base 167->143, landing-recut 202->178 vs <60 (for the fundamentalist)",
+      "branch": "slice/cheap-suite-s9",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s9"
+    },
+    {
+      "slice": "S10",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9"
+      ]
+    },
+    {
+      "slice": "S11",
+      "state": "integrated at fe80393; checks green",
+      "branch": "slice/cheap-suite-s11",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s11"
+    }
+  ],
+  "findings": [
+    "dropped: S8 LOW land-adr-branch reads ADR from output text (format already pinned by assert.match)",
+    "dropped: S8 LOW test-quiet bypasses gate.mjs (slice B3 accepts)",
+    "dropped: S8 LOW install-command shim relocation (the shim tests catch it when run)",
+    "dropped: S6 LOW fresh() top-level only (latent, no such fixture)",
+    "dropped: S6 LOW runRemote throw-not-remembered untested (WeakMap.set after ask, read)",
+    "kept: S11 MEDIUM permanent lock EPERM looped forever; fixed a7fcd98",
+    "dropped: S4 LOW gate.yml comment that a proof needs 3 OSes (fails safe as 'fewer than 3'; a gate.yml push needs workflow scope the token lacks)",
+    "dropped: S4 LOW annotations read one page of 100 (forging is A2's accepted risk; trigger rule keeps gate changes full)",
+    "dropped: S4 LOW gate-workflow.test.mjs edited outside Files owned (required by the draft-PR trigger; named here)",
+    "dropped: S4 LOW provenTree reads diff before host (each case keeps its own reason)",
+    "kept: S4 security LOW base...sha misses trigger files landed on main after the branch point; built in S5 (tree-since trigger pin, .github/ and package.json)",
+    "dropped: S3 security HIGH skip fails open for bin/scripts/hooks changes reaching the daemon; stands on itm_649bb5483746 'Keep as signed', an ASSUMED default the deck's timeout took, not the user's press; Gate 2 must show it",
+    "dropped: S3 security MEDIUM runeTargetDir accepts any absolute LOCALAPPDATA (rmSync rooted at <base>/pilot/rune-target; misconfiguration)",
+    "dropped: S3 typescript MEDIUM wipe vs live cargo build EBUSY (caught and named; S3 Misses, read by S8 timed run)",
+    "kept: S3 typescript LOW select-tests trigger path unpinned; one assertion added",
+    "kept: S3 R3 shared target served another worktree's compiled code; staleRoot fixed a78fcef, +5 s/gate; concurrent-build race in S3 Misses",
+    "kept: S5 security MEDIUM annotation flood pushes the real tested-tree off page 1, leaving a forged tree the only one (bypasses the one-tree defence); fix: a full page proves no tree (overrides the S4 LOW drop above, now that S5 trusts the tree)",
+    "dropped: S5 typescript LOW hand-written testedTrees rows (file style)",
+    "dropped: S5 typescript LOW proof computed on an already-landed feature (harmless)",
+    "dropped: S5 security LOW proved = sha === null on rev-parse failure (still needs ^{tree}, else full)"
+  ],
+  "next": "HOLD (main landing PR #140): S6 integrate finishing, then report quiet; after hold lifted: S6 checks; resume S5 fixer with go for re-gate, integrate; S7/S8 owed runs serially; S10; fundamentalist; QA",
+  "updatedAt": "2026-11-23T12:55:19.102Z",
+  "friction": [
+    {
+      "agent": "pilot",
+      "what": "after the power cut the lane went to handoff-no-wait before cheap-suite, against the user's 'make sure this runs next' on the cheap-suite thread; the ticket thread was not read before the grant",
+      "evidence": "itm_52b72e87a2a3 reply 2026-11-22T14:23Z"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "successor brief said S1/S2/S4 implementers were dead; co-pilot spawned duplicates on live slices, stopped before any write",
+      "evidence": "S1, S2, S4 duplicates each report clean tree, no commits, no push",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md trailer session id differs from main's brief trailer",
+      "evidence": "session_01NXgSForDWcHA67cB28cNrm vs session_01NXgSFqofX9JXraJQMnd6vc; crew uses main's"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 implementer lost its reviewer Verdict and evidence rows in a context resume; review and evidence re-run",
+      "evidence": "main's forward: no Verdict line, no B<k> rows",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: nested slice tests without PILOT_GATE_SLOT=selected time out at 50 s while own gate holds a slot",
+      "evidence": "one wasted rerun",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: hidden-spawns text scan flags any `spawns (` in a template string",
+      "evidence": "one ~53 min full-suite run",
+      "size": 53
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1/S4: reviewer hand-back lost on context resume, reviewer re-spawned",
+      "evidence": "S1 second reviewer; S4 both reviewers re-run by co-pilot",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 evidence: cold cargo builds over 5 min each push foreground calls to background",
+      "evidence": "328 s and 285 s builds",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: relative NODE_OPTIONS --import path for count-spawns fails when planted tests start node with repo cwd",
+      "evidence": "2 tests failed, one rerun with absolute file:/// path",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: per-file time bars unreadable under 100% CPU load, 2x swings between runs; spawn counts are the stable measure",
+      "evidence": "daemon 22.9/28.4/49.8 s",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9 slice prescriptions written against costs absent at 91bb068 (files already on gitFixture, production git >half)",
+      "evidence": "gate2-base 118 git (66 production), landing-recut 114 (76)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "live deck writes ~/.claude/pilot/deck.json mid-gate, gate prints home store changed",
+      "evidence": "S2 integrate log, S9 gate",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: selection argv over 24000 chars turns a slice gate into a 21-min full suite incl. cargo build (LNK1318 under contention)",
+      "evidence": "argv 35843 chars",
+      "size": 21
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: gitFixture shares closures across tests, a per-runner memo leaked; slice file did not own git-fixture.mjs",
+      "evidence": "1 full-suite regression, 3 files outside slice",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: land-clear under GIT_TRACE takes 1006 s on the shared machine",
+      "evidence": "first attempt timed out at 900 s",
+      "size": 17
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8 per-file times useless under load",
+      "evidence": "land-prune 815 s, land-clear 1468 s in run 1"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8.md line refs for install-command match no single test",
+      "evidence": "S8.md cites install-command :130, :140"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8 B4 needed a production seam the slice prohibited; B2 7 fewer crossed scenarios",
+      "evidence": "seam 13d1553 options.npm; B2 counted 6"
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "S11 Misses line false: permanent lock EPERM loops forever",
+      "evidence": "gate-slots.mjs:58-60, ageOf 0 for a missing lock"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the hello from the co-pilot arrived mid-task and the child named another address",
+      "evidence": "S8.md fixer report, 505014c"
+    },
+    {
+      "agent": "pilot",
+      "what": "successor brief said the previous crew was dead; architect and S1/S2/S4 implementers had survived /clear, so a duplicate architect and 3 duplicate implementers were spawned and stood down",
+      "evidence": "hand-off notice gave no list of live agents; task notifications arrived after the spawns",
+      "size": 4
+    },
+    {
+      "agent": "pilot",
+      "what": "pilot wait prints a deck timeout default as REPLY exactly like a user's answer",
+      "evidence": "itm_9914932172bc, itm_5d271bb6c718, itm_e374d036106d, itm_b0df0f22f83f resolved 'no answer 20 min'; told apart only by deck_read",
+      "size": 4
+    },
+    {
+      "agent": "pilot",
+      "what": "signed landings failed 4 times on environment, not code: slot takeover EPERM, 30-min limit under crew load, disk full (33 Rune target dirs ~390 GB), 30-min limit with a cold Rune build (8m04s)",
+      "evidence": "land logs 20261123T070624078Z and 20261123T075945009Z; gate-slots.mjs:57",
+      "size": 120
+    },
+    {
+      "agent": "pilot",
+      "what": "idle-lane hook demands a successor while the lane is deliberately held for a test hold or a full disk",
+      "evidence": "Stop hook 'yellow lane idle' fired 4 times during the hold",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "land log grep returned whole PATH lines (cargo env dump)",
+      "size": 12000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 context compacted mid-slice; earlier verdicts and red run lost and redone",
+      "evidence": "S3 report: both reviews and red run redone after compaction",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 forced to hand back while waiting for the co-pilot's go on a heavy run under the one-heavy-run rule",
+      "evidence": "S3 report: told to hand back while waiting",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11 slice worktree had no node_modules; first gate launch failed at once",
+      "evidence": "node_modules missing: run npm ci",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 worktree had no node_modules; npm ci before the gate",
+      "evidence": "S3 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a fresh worktree's Rust tests need node_modules (they spawn bin/pilot.mjs); B4's timed cargo test reported 7 reds beside a good build time",
+      "evidence": "Cannot find package '@modelcontextprotocol/sdk', cargo exit 101",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "crew reports do not cross a co-pilot hand-off, so the successor rebuilt each slice's Evidence trailers from the record and its own reruns; integrate refused S1 until each B<k> had one",
+      "evidence": "NOT integrated slice/cheap-suite-s1: S1: B1 has no --trailer \"Evidence: B1 test: ...\"",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a subagent cannot block on a co-pilot's go; it hands back and must be resumed by message",
+      "evidence": "S2 fixer: 'After the ready message I had nothing left to do but end the turn'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node.exe is shared across sessions, so a run's peak node count needs a baseline subtracted",
+      "evidence": "about 17 node.exe alive before the S2 cargo run",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a Remove-Item samp* cleanup also deleted its own sampler script; run 1 lost its node figures",
+      "evidence": "S2 fixer report: sampled run 2 only",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed selection overflowed argv (35843 > 24000 chars) and fell back to the full suite, cargo included",
+      "evidence": "S6 evidence run: full suite: selection is 35843 characters of argv, over 24000; 10 min 46 s",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6.md B4 bar 'one per land call' did not count the land calls or child pilot processes in land-clear, so the bar was not checkable when set",
+      "evidence": "S6 B4 measured 30 and 15 vs <=12",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the shared Rune target silently served another worktree's compiled build to the S3 fixer's own first gate",
+      "evidence": "first full cargo run read 173 passed incl. the other worktree's probe test; real count 172",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "cargo fmt --check flags files outside the slice",
+      "evidence": "agents_reports.rs, live.rs use order",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "land's whole-output pins in land.test.mjs / land-clear.test.mjs break on any new land line and only a full run reaches them",
+      "evidence": "S5 full run: 5025 pass, 3 fail, fixed 8551b79",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the co-pilot hello arrives mid-task after the brief, so the child reads it as a second instruction",
+      "evidence": "S5 fixer report: hello arrived mid-task; this report is that reply",
+      "size": 1
+    }
+  ]
+}

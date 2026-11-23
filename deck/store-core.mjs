@@ -715,7 +715,7 @@ export function addDeck(given) {
   return { repo, created: true };
 }
 
-/** `deck.coPilots[repoKey]` (clear-waits-co-pilot L3), `{ ticket, live, at }`, or null for none or a malformed entry. */
+/** `deck.coPilots[repoKey]` (clear-waits-co-pilot L3), `{ ticket, live, at, agent? }`, or null for none or a malformed entry. */
 function storedCoPilot(deck, dir) {
   const entry = deck.coPilots?.[repoKey(dir)];
   return typeof entry?.ticket === 'string' && typeof entry.at === 'string' ? entry : null;

@@ -54,7 +54,7 @@ import { ticketShapeGaps } from './ticket-shape.mjs';
 import { walkthroughShapeGaps } from './walkthrough-shape.mjs';
 import { placeSteps } from './step-shell.mjs';
 import { concludeOn, deckLine, enterStage } from './store-stage.mjs';
-import { gate2EvidenceGaps, namedWalkthroughGaps, ownBranchGaps, recutGate1Gaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
+import { gate2EvidenceGaps, namedWalkthroughGaps, ownBranchGaps, recutGate1Gaps, surfaceGate1Gaps, walkthroughPlanGaps } from './gate2-evidence.mjs';
 import { MAX_QUESTION_CHARS, POSTABLE_KINDS, andList } from './tools.mjs';
 import {
   DeckRefusal,
@@ -162,10 +162,10 @@ export function postItem({ kind, title, body, author, longer, ...given }) {
   refuseOverOpenQuestions(deck, item);
   const ticket = ticketNamedBy(deck, item);
   if (kind === KIND_GATE1 && ticket) refuseUnmerged(deck.items, ticket);
-  // QA's walkthrough on a plan marked with no surface is refused naming it (L3); a walkthrough's ticket is optional. A re-cut's gate1 says what changed (never-stuck L5).
+  // QA's walkthrough on a plan marked with no surface is refused naming it (L3), on one with a surface without its Differences: line (ui-design-workflow L3); a walkthrough's ticket is optional. A re-cut's gate1 says what changed (never-stuck L5), a surface gate1 its look lines.
   const walked = kind === KIND_WALKTHROUGH ? deck.items.find((each) => each.id === item.ticket) : undefined;
-  const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : kind === KIND_GATE1 ? recutGate1Gaps(ticket, body) : walkthroughPlanGaps(walked, authorKind(author));
-  if (unproven.length > 0) throw new DeckRefusal(unproven[0]);
+  const unproven = kind === KIND_GATE2 ? [...namedWalkthroughGaps(deck.items, item), ...gate2EvidenceGaps(ticket, item)] : kind === KIND_GATE1 ? [...recutGate1Gaps(ticket, body), ...surfaceGate1Gaps(item.surface, body)] : walkthroughPlanGaps(walked, authorKind(author), body, deck.items);
+  if (unproven.length > 0) throw new DeckRefusal(unproven.join('; ')); // every gap at once, so one retry can fix them all
   // Posting a gate2, or a concluding walkthrough on its open yellow ticket here (yellow-never-idle L2, L3; never refused for a lane, L8), turns its ticket green, and posting the closing report closes and resolves it, in this same write (ticket-states spec 1, L3, A1); signing the gate2 moves nothing.
   if (kind === KIND_GATE2) concludeOn(deck, ticket);
   if (concludes(item, author) && walked?.kind === KIND_TICKET && stateOf(walked) === 'yellow' && sameRepo(walked.repo, item.repo)) concludeOn(deck, walked, item.id);
@@ -326,9 +326,8 @@ export function addReply(id, said) {
     // The user's answer resumes a ticket it paused, in this same write (blocked-yellow-yields spec 3, A3).
     resumeIn(deck, item);
     if (item.kind !== KIND_HANDOFF || chosenOf(item) !== HANDOFF_FAILED) return;
-    // A held press re-arms the `/clear`, co-pilot live or not (held-handoff L3); one the pilot acknowledged did not fail (L8).
+    // A press on a hand-off the pilot acknowledged did not fail (L8).
     const ack = item.replies.find((message) => message.from === 'pilot');
-    if (item.hold && !ack) { item.hold.rearmedAt = reply.repliedAt; return; }
     // A chain hand-off that failed would otherwise lose the ticket it was meant to
     // start (QA F2): `chainNext` took the ticket when it posted this hand-off
     // (`deck/chain.mjs`), so Handoff failed hands it back to Tickets. It takes it live
@@ -347,22 +346,6 @@ export function addReply(id, said) {
     }
     if (ack) reply.pickedUpAt = ack.repliedAt;
   });
-}
-
-const HOLD_TICKET = /^itm_[0-9a-f]{1,64}$/;
-
-/**
- * The hand-off mod held this hand-off's `/clear` for the directory's live co-pilot (held-handoff L2): item state,
- * never a message, so no pick-up reader takes it for one. Written once, the first `at` kept; a closed item or one that is not a hand-off takes none. Answers whether it wrote.
- */
-export function markHold(id, ticket) {
-  if (typeof ticket !== 'string' || !HOLD_TICKET.test(ticket)) throw new DeckRefusal('a hold names its ticket, an item id');
-  const deck = readDeck();
-  const item = threadIn(deck, id);
-  if (item.kind !== KIND_HANDOFF || !isOpen(item) || item.hold) return false;
-  item.hold = { ticket, at: new Date().toISOString() };
-  writeDeck(deck);
-  return true;
 }
 
 /**
