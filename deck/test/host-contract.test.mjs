@@ -394,12 +394,14 @@ test('the host reads annotations and nothing more', (t) => {
   const calls = [];
   const TREE = '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
   const notice = (message, title = 'tested-tree') => ({ annotation_level: 'notice', title, message });
+  const actions = { slug: 'github-actions' };
   const said = {
-    [CHECK_RUNS]: { total_count: 4, check_runs: [
-      { id: 11, name: 'gate (ubuntu-latest)', status: 'completed', conclusion: 'success' },
-      { id: 12, name: 'gate (windows-latest)', status: 'in_progress', conclusion: null },
-      { id: 13, name: 'gate (macos-latest)', status: 'completed', conclusion: 'success' },
-      { id: 14, name: 'CodeQL', status: 'completed', conclusion: 'success' },
+    [CHECK_RUNS]: { total_count: 5, check_runs: [
+      { id: 11, name: 'gate (ubuntu-latest)', status: 'completed', conclusion: 'success', app: actions },
+      { id: 12, name: 'gate (windows-latest)', status: 'in_progress', conclusion: null, app: actions },
+      { id: 13, name: 'gate (macos-latest)', status: 'completed', conclusion: 'success', app: actions },
+      { id: 14, name: 'CodeQL', status: 'completed', conclusion: 'success', app: actions },
+      { id: 15, name: 'gate (ubuntu-latest)', status: 'completed', conclusion: 'success', app: { slug: 'other-app' } },
     ] },
     [annotations(11)]: [notice('a warning', 'Node'), notice(TREE)],
     [annotations(12)]: [],
@@ -414,7 +416,7 @@ test('the host reads annotations and nothing more', (t) => {
     { name: 'gate (windows-latest)', conclusion: 'in_progress', tree: null },
     { name: 'gate (macos-latest)', conclusion: 'success', tree: null },
   ]);
-  assert.deepEqual(calls.map((args) => args[1]), [CHECK_RUNS, annotations(11), annotations(12), annotations(13)], 'no annotations read for a run not named gate');
+  assert.deepEqual(calls.map((args) => args[1]), [CHECK_RUNS, annotations(11), annotations(12), annotations(13)], 'no annotations read for a run not named gate, nor for one another app posted');
   assert.throws(() => host.testedTrees('5fef2ab'), /not a full commit sha/);
   assert.deepEqual(gitlabHost(() => assert.fail('no glab call')).testedTrees(SHA), [], 'a GitLab landing has no proof');
   const dir = stubbed(t);

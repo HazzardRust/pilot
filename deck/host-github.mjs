@@ -216,7 +216,8 @@ export function githubHost(run) {
      * null when it names none, or more than one, so a second notice a test prints never picks the tree.
      */
     testedTrees(sha) {
-      return latestRuns(sha).filter((check) => GATE_JOB.test(check?.name)).map((check) => {
+      // Actions' own runs only: another app with checks:write could post a `gate (...)` run of its own.
+      return latestRuns(sha).filter((check) => GATE_JOB.test(check?.name) && check.app?.slug === 'github-actions').map((check) => {
         if (!Number.isSafeInteger(check.id) || check.id < 1) throw new Error(`gh api check-runs: ${check.name} has no id`);
         const notes = json(run(['api', `repos/{owner}/{repo}/check-runs/${check.id}/annotations?per_page=100`], { timeout: CHECKS_TIMEOUT_MS }), 'api annotations');
         if (!Array.isArray(notes)) throw new Error('gh api annotations: an answer that is not a list');

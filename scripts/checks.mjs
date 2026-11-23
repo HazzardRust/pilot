@@ -81,8 +81,10 @@ const outrunsProof = (file) => file.startsWith('.github/') || FULL_TRIGGERS.incl
 
 /**
  * The **Proof** a green CI run gives a landing (cheap-suite spec 5; L7, A2): the tree at least three `gate (<os>)`
- * jobs on the exact tip `sha` all passed and all named, or null with the line saying why not. `base...sha`
- * touching `.github/` or a `FULL_TRIGGERS` file is never proved, since the run it would trust is the one it changed.
+ * jobs, each a different one, whose check runs sit on the exact tip `sha`, all passed and all named; or null with the
+ * line saying why not. The tree is what the jobs checked out, a PR run's merge commit (F9), not `sha^{tree}`: the
+ * caller diffs it against the tree it lands and tests the difference. `base...sha` touching `.github/` or a
+ * `FULL_TRIGGERS` file is never proved, since the run it would trust is the one it changed.
  */
 export function provenTree({ host, git, sha, base }) {
   fullSha(sha);
@@ -105,7 +107,8 @@ export function provenTree({ host, git, sha, base }) {
   } catch (err) {
     return none(firstLine(err));
   }
-  if (rows.length < PROOF_JOBS) return none(`${rows.length} gate jobs, fewer than ${PROOF_JOBS}`);
+  const jobs = new Set(rows.map((row) => row.name)).size;
+  if (jobs < PROOF_JOBS) return none(`${jobs} gate jobs, fewer than ${PROOF_JOBS}`);
   const failed = rows.find((row) => row.conclusion !== 'success');
   if (failed !== undefined) return none(`${failed.name} concluded ${failed.conclusion}`);
   const blank = rows.find((row) => typeof row.tree !== 'string' || !FULL_SHA.test(row.tree));

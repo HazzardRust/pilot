@@ -40,6 +40,7 @@ test('anything short of that proves nothing', () => {
   none(null, 'no host');
   none({ testedTrees() { throw Object.assign(new Error('Command failed: gh api'), { stderr: 'HTTP 502: Bad Gateway\n' }); } }, 'HTTP 502: Bad Gateway');
   none(hostOf(THREE.slice(0, 2)), '2 gate jobs, fewer than 3');
+  none(hostOf([THREE[0], THREE[0], THREE[1]]), '2 gate jobs, fewer than 3');
   none(hostOf([THREE[0], row('macos-latest', 'failure'), THREE[2]]), 'gate (macos-latest) concluded failure');
   none(hostOf([THREE[0], THREE[1], row('windows-latest', 'success', OTHER)]), 'the gate jobs tested different trees');
   none(hostOf([THREE[0], row('macos-latest', 'success', null), THREE[2]]), 'gate (macos-latest) named no tree');
@@ -47,6 +48,8 @@ test('anything short of that proves nothing', () => {
   none(hostOf(THREE), '.github/workflows/gate.yml changed', gitOf(['deck/items.mjs', '.github/workflows/gate.yml']));
   none(hostOf(THREE), 'scripts/gate.mjs changed', gitOf(['scripts/gate.mjs']));
   none(hostOf(THREE), 'package-lock.json changed', gitOf(['package-lock.json']));
+  none(hostOf(THREE), 'package.json changed', gitOf(['package.json']));
+  none(hostOf(THREE), '.github/dependabot.yml changed', gitOf(['.github/dependabot.yml']));
   none(hostOf(THREE), 'the feature diff is unreadable: fatal: bad revision', () => { throw new Error('fatal: bad revision'); });
 });
 
