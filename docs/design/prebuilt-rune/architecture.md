@@ -97,6 +97,8 @@ Deletion test: `runeBinary` alone is shallow (one stat); it stays as `findRune`'
 
 ADR NNNN (`docs/adr/NNNN-prebuilt-rune.md`).
 
+- **L0** Grilling depth: forks (itm_dd645b74ccff, closed 06:10Z by the deck's 20-minute default, not a press): no
+  Gate 1 walk; the gate1 is the only item once every question thread is closed. Rejected: a full walk.
 - **L1** The only trusted hash is the pin in the installed plugin; no hash is read from the network. Rejected: a
   `SHA256SUMS` asset beside the binaries (same host as what it checks).
 - **L2** One seam, `deck/rune-bin.mjs`: `findRune` never touches the network, `ensureRune` is the only caller of
