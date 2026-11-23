@@ -15,13 +15,13 @@
     },
     {
       "slice": "S4",
-      "state": "pushed d312a06",
+      "state": "integrated",
       "branch": "slice/handoff-no-wait-s4",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s4"
     },
     {
       "slice": "S6",
-      "state": "implementing",
+      "state": "pushed 488b315",
       "branch": "slice/handoff-no-wait-s6",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s6"
     },
@@ -57,8 +57,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s7"
     }
   ],
-  "next": "co-pilot: S4 integrating; then S1 2f9a8be, S3 e5fceb0, S6; then S2 (rename holdFor, stale test name per S1) and S5",
-  "updatedAt": "2026-11-23T02:54:59.548Z",
+  "next": "co-pilot: S4 integrated beb0aa8, checks running; then S1 2f9a8be, S3 e5fceb0, S6 488b315; then S2, S5",
+  "updatedAt": "2026-11-23T03:09:47.455Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -165,6 +165,24 @@
       "what": "S1: the advisory text was pinned in context-size.test.js, outside the slice's named test file",
       "evidence": "hooks/test/context-size.test.js:625-647",
       "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6: the vocabulary guard rejects Claude Code's own stream field names (task_notification, task_id); only the full suite shows it, and nothing points a slice to `vocabulary.mjs check <files>`",
+      "evidence": "gate run 2: 8 retired word(s), fail 1",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6: architecture §3 cites probe scripts 'in the session scratchpad' with no path, and E3's 'keeps its turn open' omits that the co-pilot had no TaskOutput and polled",
+      "evidence": "one failed live run, failed at sendmessage, 220 s",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6: ~13 min full gate restarted three times after review fixes",
+      "evidence": "S6 report",
+      "size": 3
     }
   ]
 }
