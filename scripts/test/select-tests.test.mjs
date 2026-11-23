@@ -197,20 +197,22 @@ test('a tree since diffs exactly', (t) => {
   assert.deepEqual(selection, { files: [path.resolve(dir, 'test/b1.test.mjs'), path.resolve(dir, 'test/b2.test.mjs')], total: 3, since: tree, changed: ['lib/b.mjs'] });
 });
 
-test('a tree since runs full when a CI file changed after it', (t) => {
-  const { dir } = gitFixture(t, 'select:three', threeTests);
-  const tree = provedBeside(dir);
-  fs.mkdirSync(path.join(dir, '.github/workflows'), { recursive: true });
-  fs.writeFileSync(path.join(dir, '.github/workflows/gate.yml'), 'on: push\n');
-  git(dir, 'add', '.github');
-  git(dir, 'commit', '-q', '-m', 'ci lands on pilot after the branch point');
+for (const trigger of ['.github/workflows/gate.yml', 'package.json']) {
+  test(`a tree since runs full when ${trigger} changed after it`, (t) => {
+    const { dir } = gitFixture(t, 'select:three', threeTests);
+    const tree = provedBeside(dir);
+    fs.mkdirSync(path.dirname(path.join(dir, trigger)), { recursive: true });
+    fs.writeFileSync(path.join(dir, trigger), '{}\n');
+    git(dir, 'add', trigger);
+    git(dir, 'commit', '-q', '-m', 'lands on pilot after the branch point');
 
-  const selection = selectTests({ cwd: dir, since: tree });
+    const selection = selectTests({ cwd: dir, since: tree });
 
-  assert.equal(selection.files, null);
-  assert.equal(selection.reason, '.github/workflows/gate.yml changed');
-  assert.equal(selection.since, tree);
-});
+    assert.equal(selection.files, null);
+    assert.equal(selection.reason, `${trigger} changed`);
+    assert.equal(selection.since, tree);
+  });
+}
 
 test('an unresolvable since still runs full', (t) => {
   const { dir } = gitFixture(t, 'select:three', threeTests);
