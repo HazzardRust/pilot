@@ -2,8 +2,8 @@
  * handoff-mod S1 and S3: the mod, `hooks/handoff-mod.mjs`, is a thin adapter (L1). On the main session's
  * `turn.complete` it runs the look, clears, runs the look's `cleared`, and submits what that answered (L3); a
  * subagent's turn end does nothing (L4). S3: busy and idle from `turn.start` and `turn.complete`, `start` once at
- * `session.start`, and a submit that never started said aloud; handoff-no-wait S3: no timer but that one. The host is faked:
- * `on` collects the hooks, `$` records each call, and `$.clock` is a hand-wound clock.
+ * `session.start`, and a submit that never started said aloud; handoff-no-wait S3: no timer but that one. The
+ * host is faked: `on` collects the hooks, `$` records each call, and `$.clock` is a hand-wound clock.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
