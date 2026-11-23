@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed d88f825 (Verdict: approve); integrate after S11 (its gate runs the full suite)",
+      "state": "pushed d88f825 (Verdict: approve); integrating (successor co-pilot)",
       "branch": "slice/cheap-suite-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s1"
     },
@@ -21,7 +21,7 @@
     },
     {
       "slice": "S3",
-      "state": "local 7db99be, not pushed; B1-B3 red-then-green done (31/31 green); typescript WARN, security WARN (HIGH accepted under itm_649bb5483746); owes gate test:changed --since=d88f825, B4 timed builds, push; implementer handed back waiting for heavy slot, resume it with go",
+      "state": "pushed 7db99be (typescript WARN, security WARN, HIGH accepted under itm_649bb5483746); gate full 5010 pass 0 fail, cargo 28/28; B4 cold 2m55s, second worktree 58.32s; ready to integrate after S1",
       "after": [
         "S1"
       ],
@@ -82,7 +82,7 @@
     },
     {
       "slice": "S11",
-      "state": "pushed a7fcd98; red-green 3/3, full suite 4999 pass 0 fail; integrating",
+      "state": "integrated at fe80393; checks green",
       "branch": "slice/cheap-suite-s11",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s11"
     }
@@ -99,24 +99,14 @@
     "dropped: S4 LOW gate-workflow.test.mjs edited outside Files owned (required by the draft-PR trigger; named here)",
     "dropped: S4 LOW provenTree reads diff before host (each case keeps its own reason)",
     "kept: S4 security LOW base...sha misses trigger files landed on main after the branch point; moved to S5 brief (tree diff to landing tree applies the trigger rule)",
-    "dropped: S3 security HIGH skip fails open for bin/scripts/hooks changes reaching the daemon (accepted trade, itm_649bb5483746 keep as signed)",
+    "dropped: S3 security HIGH skip fails open for bin/scripts/hooks changes reaching the daemon; stands on itm_649bb5483746 'Keep as signed', an ASSUMED default the deck's timeout took, not the user's press; Gate 2 must show it",
     "dropped: S3 security MEDIUM runeTargetDir accepts any absolute LOCALAPPDATA (rmSync rooted at <base>/pilot/rune-target; misconfiguration)",
     "dropped: S3 typescript MEDIUM wipe vs live cargo build EBUSY (caught and named; S3 Misses, read by S8 timed run)",
     "kept: S3 typescript LOW select-tests trigger path unpinned; one assertion added"
   ],
-  "next": "ONE heavy run crew-wide. Integrating S11 (heavy). Then S3 go (gate, B4, push); integrate S1, S9, S4, S3; S2 fix, S6/S7/S8 runs serially; S5, S10.",
-  "updatedAt": "2026-11-23T10:01:28.336Z",
+  "next": "integrating S1 d88f825; then S9 ded0792, S4 0928f84, S3 7db99be one at a time with pilot checks after each; then S2 fix, S6/S7/S8 owed runs serially; S5 (with S4 LOW), S10; ONE heavy run crew-wide",
+  "updatedAt": "2026-11-23T10:31:52.952Z",
   "friction": [
-    {
-      "agent": "architect",
-      "what": "No recorded per-file test timings; where the time goes needed a fresh full-suite run",
-      "evidence": "4,971 tests, 19.5 min wall, 14,140 processes, 13,073 git, run by the architect itself"
-    },
-    {
-      "agent": "architect",
-      "what": "pilot wait exits 1 on a deck outage instead of retrying; the hand-off then took the live architect for lost and a second was spawned on the same worktree",
-      "evidence": "deck not answering about 23:21; wait re-armed by hand; two architects on design/cheap-suite until stand-down"
-    },
     {
       "agent": "architect",
       "what": "Architect cannot stop its own waits by id: TaskStop not in its toolset",
@@ -326,6 +316,18 @@
       "agent": "pilot:pilot-implementer",
       "what": "S11 slice worktree had no node_modules; first gate launch failed at once",
       "evidence": "node_modules missing: run npm ci",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 worktree had no node_modules; npm ci before the gate",
+      "evidence": "S3 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a fresh worktree's Rust tests need node_modules (they spawn bin/pilot.mjs); B4's timed cargo test reported 7 reds beside a good build time",
+      "evidence": "Cannot find package '@modelcontextprotocol/sdk', cargo exit 101",
       "size": 1
     }
   ]
