@@ -2,7 +2,7 @@
 //! `Action::Reply` to the deck's chat thread off the UI thread and the draft empties once the deck
 //! has taken it; a new message follows the reader only while they are at the bottom.
 
-mod support;
+use crate::support;
 
 use std::sync::Arc;
 use std::time::{Duration, Instant};

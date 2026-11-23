@@ -1,15 +1,14 @@
 //! rune-deck-ui S1: the client's loopback rule and the window drawing a real daemon's tabs.
 
-mod support;
+use crate::support;
 
-use std::sync::Mutex;
 
 use pilot_deck::app::{self, State};
 use pilot_deck::client::{Client, Error, Query};
 use rune::{Env, Runtime};
 
 /// The client reads its address from the environment, which every test in this binary shares.
-static ENV: Mutex<()> = Mutex::new(());
+use crate::support::ENV;
 
 fn client_with(vars: &[(&str, &str)]) -> Result<Client, Error> {
     let _held = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());

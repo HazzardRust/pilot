@@ -2,11 +2,11 @@
 //! since its last tool call; the Reports panel lists the view's reports, one the user hid stays hidden and
 //! the × hides one and keeps it across a restart (A4); and a heartbeat reaches the agents region within 1 s.
 
-mod support;
+use crate::support;
 
 use std::path::PathBuf;
 use std::sync::mpsc;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use pilot_deck::app::State;
@@ -152,7 +152,7 @@ fn every_report_hidden_says_so() {
 }
 
 /// The press writes the prefs to `PILOT_DECK_DIR`, which a test of its own sets and clears.
-static ENV: Mutex<()> = Mutex::new(());
+use crate::support::ENV;
 
 #[test]
 fn the_x_hides_a_report_and_it_stays_hidden_after_a_restart() {

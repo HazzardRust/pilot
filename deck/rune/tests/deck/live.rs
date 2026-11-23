@@ -1,11 +1,11 @@
 //! rune-deck-ui S2: the window follows a scratch deck's `/events`, says when the daemon is gone,
 //! and comes back when it returns, refetching one whole view each time.
 
-mod support;
+use crate::support;
 
 use std::path::PathBuf;
 use std::sync::mpsc;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use pilot_deck::app::{self, State};
@@ -19,7 +19,7 @@ use support::Scratch;
 const BUDGET: Duration = Duration::from_millis(2000 + 1000);
 
 /// The client reads its address from the environment, which every test in this binary shares.
-static ENV: Mutex<()> = Mutex::new(());
+use crate::support::ENV;
 
 /// Runs `make` with the deck's address in the environment, as the window's own start reads it.
 fn with_deck<T>(dir: &str, port: u16, make: impl FnOnce() -> T) -> T {
