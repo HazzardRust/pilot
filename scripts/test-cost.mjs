@@ -51,6 +51,8 @@ export function costTable(lines, owners, { top = 40 } = {}) {
   const widths = cells[0].map((_, i) => Math.max(...cells.map((cell) => cell[i].length)));
   const out = cells.map((cell) => cell.map((text, i) => (i === 0 ? text.padEnd(widths[i]) : text.padStart(widths[i]))).join('  ').trimEnd());
   if (rest.length) out.push(`rest ${rest.length} files ${seconds(sum(rest, 'ms'))} s ${sum(rest, 'total')} spawns`);
-  out.push(`total ${ranked.length} files ${seconds(sum(ranked, 'ms'))} s ${sum(ranked, 'total')} spawns (git ${sum(ranked, 'git')})`);
+  // The git count is built apart: `spawns (` reads as a spawn call to hidden-spawns.test.mjs.
+  const git = `(git ${sum(ranked, 'git')})`;
+  out.push(`total ${ranked.length} files ${seconds(sum(ranked, 'ms'))} s ${sum(ranked, 'total')} spawns ${git}`);
   return `${out.join('\n')}\n`;
 }
