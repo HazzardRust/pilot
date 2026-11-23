@@ -8,17 +8,23 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const script = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts['test:quiet'];
+const REPORTER = '--test-reporter=./scripts/quiet-reporter.mjs';
 
-// Runs the script's own command over fixture files in a temp dir; never over the suite.
+// Runs `node --test` with the script's reporter over fixture files in a temp dir; never the
+// script itself, whose gate would run a second suite inside this one (S8 of cheap-suite).
 function runOver(file) {
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT; // else the child runs as a subtest of this run
+  const r = spawnSync(process.execPath, ['--test', REPORTER, file], { cwd: root, encoding: 'utf8', env, windowsHide: true });
+  return { out: (r.stdout ?? '') + (r.stderr ?? ''), status: r.status };
+}
+
+test("package.json's test:quiet names the quiet reporter", () => {
   assert.ok(script, 'package.json has scripts["test:quiet"]');
   const [cmd, ...args] = script.split(/\s+/);
   assert.equal(cmd, 'node');
-  const r = spawnSync(process.execPath, [...args, file], { cwd: root, encoding: 'utf8', env });
-  return { out: (r.stdout ?? '') + (r.stderr ?? ''), status: r.status };
-}
+  assert.ok(args.includes(REPORTER), script);
+});
 
 function fixture(name, body) {
   const dir = mkdtempSync(join(tmpdir(), 'test-quiet-'));

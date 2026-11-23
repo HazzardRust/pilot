@@ -87,7 +87,8 @@ function buildResolved(root) {
   return { ...repos, dir, resolution: git(dir, 'rev-parse', 'HEAD') };
 }
 
-test('a conflict keeps the land worktree and names it', (t) => {
+// One conflicting landing, both checks (S8 of cheap-suite merged two tests on the same fixture).
+test('a conflict keeps the land worktree and names it; a conflict names the lander and the kept dir', (t) => {
   const { dir, origin, land } = conflicting(t);
   const pilotTip = git(origin, 'rev-parse', 'pilot');
 
@@ -100,12 +101,6 @@ test('a conflict keeps the land worktree and names it', (t) => {
   assert.equal(fs.realpathSync.native(kept), fs.realpathSync.native(path.join(dir, 'b-land-b')), 'beside the checkout, inside its parent directory');
   assert.ok(midMerge(kept), 'the kept worktree is mid-merge');
   assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip, 'pilot unchanged');
-});
-
-test('a conflict names the lander and the kept dir', (t) => {
-  const { dir, land } = conflicting(t);
-
-  const { code, out } = land();
 
   assert.equal(code, 3);
   assert.match(out, /; the lander resolves in .+-land-b\n$/);
