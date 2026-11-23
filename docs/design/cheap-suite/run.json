@@ -15,13 +15,13 @@
     },
     {
       "slice": "S2",
-      "state": "fixing: local ecb0f62 (f767370 kept + rustfmt import order), rust-reviewer APPROVE; B1 green; owes cargo test x3 with node sampling, B3 cold --no-run pair, push; fixer paused for the heavy slot, resume with go",
+      "state": "pushed ecb0f62 (rust-reviewer APPROVE); integrating",
       "branch": "slice/cheap-suite-s2",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s2"
     },
     {
       "slice": "S3",
-      "state": "pushed 7db99be (typescript WARN, security WARN, HIGH accepted under itm_649bb5483746); gate full 5010 pass 0 fail, cargo 28/28; B4 cold 2m55s, second worktree 58.32s; ready to integrate after S1",
+      "state": "failed gate: merged red, cargo act_deck 7 FAILED: test binary from the shared rune-target bakes env!(CARGO_MANIFEST_DIR) of the worktree that built it (pilot-cheap-suite-s3-b4, removed) -> ERR_MODULE_NOT_FOUND bin/pilot.mjs; fix after S2 integrates",
       "after": [
         "S1"
       ],
@@ -30,7 +30,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 0928f84 (typescript APPROVE, security APPROVE); integrating",
+      "state": "integrated at 5604695; checks green",
       "branch": "slice/cheap-suite-s4",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s4"
     },
@@ -44,7 +44,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 6dc3fb9 (Verdict: APPROVE); owes reruns release/gate-census/handoff-wording/sync-remote, GIT_TRACE land-clear (<=12 each), test:changed --since=91bb068; needs a fresh implementer",
+      "state": "pushed 6dc3fb9 (Verdict: APPROVE); owed runs done: reruns 27/27, test:changed (full fallback) 5000 pass 0 fail; B4 bar MISSED: config --get pilot.remote 90->30, ls-remote --symref 71->15 vs <=12 (for the fundamentalist); integrate after S3",
       "branch": "slice/cheap-suite-s6",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s6"
     },
@@ -62,7 +62,7 @@
     },
     {
       "slice": "S9",
-      "state": "integrated at 2923c55; checks green",
+      "state": "integrated at 2923c55; checks green; B2 bar MISSED: git gate2-base 167->143, landing-recut 202->178 vs <60 (for the fundamentalist)",
       "branch": "slice/cheap-suite-s9",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s9"
     },
@@ -104,25 +104,9 @@
     "dropped: S3 typescript MEDIUM wipe vs live cargo build EBUSY (caught and named; S3 Misses, read by S8 timed run)",
     "kept: S3 typescript LOW select-tests trigger path unpinned; one assertion added"
   ],
-  "next": "integrating S4 0928f84; then resume S2 fixer with go (cargo x3, B3 pair, push); S3 7db99be integrate; S2 integrate; S6/S7/S8 owed runs serially; S5 (with S4 LOW), S10; ONE heavy run crew-wide",
-  "updatedAt": "2026-11-23T11:26:27.207Z",
+  "next": "integrating S2 ecb0f62, checks; then S3 fix round (test binaries in the shared target resolve their own worktree at run time; red-then-green incl. a live other worktree; if it moves L5, ask main); reintegrate S3, checks; S6, checks; S7/S8 owed runs; S5 (with S4 LOW), S10",
+  "updatedAt": "2026-11-23T12:02:15.179Z",
   "friction": [
-    {
-      "agent": "architect",
-      "what": "gate1 base check comes after the push",
-      "evidence": "main moved to 69e315c (PR #147) during the hold; refusal only at deck_post forced a merge and second push of both branches"
-    },
-    {
-      "agent": "architect",
-      "what": "Architect definition does not say deck_status refuses worktree from it",
-      "evidence": "first deck_status call refused for carrying worktree"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "a slice touching scripts/checks.mjs cannot run a narrow gate: test:changed goes full silently",
-      "evidence": "full suite: selection is 33315 characters of argv, over 24000",
-      "size": 20
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "token lacks workflow scope while S4 owns gate.yml",
@@ -331,6 +315,24 @@
       "agent": "pilot:pilot-implementer",
       "what": "node.exe is shared across sessions, so a run's peak node count needs a baseline subtracted",
       "evidence": "about 17 node.exe alive before the S2 cargo run",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a Remove-Item samp* cleanup also deleted its own sampler script; run 1 lost its node figures",
+      "evidence": "S2 fixer report: sampled run 2 only",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed selection overflowed argv (35843 > 24000 chars) and fell back to the full suite, cargo included",
+      "evidence": "S6 evidence run: full suite: selection is 35843 characters of argv, over 24000; 10 min 46 s",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6.md B4 bar 'one per land call' did not count the land calls or child pilot processes in land-clear, so the bar was not checkable when set",
+      "evidence": "S6 B4 measured 30 and 15 vs <=12",
       "size": 1
     }
   ]
