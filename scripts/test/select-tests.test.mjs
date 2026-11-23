@@ -116,7 +116,9 @@ test('a query, a require, a rename and a dotfile still reach their tests', (t) =
   assert.deepEqual(select(dir), ['test/require.test.mjs'], 'a createRequire call');
   ({ dir } = gitFixture(t, 'select:edges', EDGES));
   git(dir, 'mv', 'lib/s.mjs', 'lib/t.mjs');
-  assert.equal(selectTests({ cwd: dir, since: 'main' }).reason, 'lib/t.mjs reaches no test', 'a staged rename runs full: its new path is imported by no one');
+  const renamed = selectTests({ cwd: dir, since: 'main' });
+  assert.equal(renamed.reason, 'lib/t.mjs reaches no test', 'a staged rename runs full: its new path is imported by no one');
+  assert.deepEqual(renamed.changed, ['lib/s.mjs', 'lib/t.mjs'], 'a full run still names what changed, old path and new');
   ({ dir } = gitFixture(t, 'select:edges', EDGES));
   fs.appendFileSync(path.join(dir, '.gitattributes'), '*.md text\n');
   assert.deepEqual(select(dir), ['test/dotfile.test.mjs'], 'a dotfile named by a test');
