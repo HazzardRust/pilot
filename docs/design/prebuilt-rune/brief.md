@@ -43,11 +43,18 @@ Taken from `docs/design/portable-store/brief.md` (on `origin/design/portable-sto
 - The machine is shared with other runs' gates: never run the full suite twice in a slice, and time only what the
   slice says to time.
 
+## Human steps
+
+- Before S4's first push: this machine's GitHub credential lacks the `workflow` scope, so a push adding
+  `.github/workflows/rune-release.yml` is refused until the user runs `gh auth refresh -h github.com -s workflow`
+  (asked on itm_daa1ea49125f). S4 stops and asks `main` if the push is refused; the design branch carries no workflow file.
+- After landing: on HazzardLaptop, `pilot deck` after the first real release (spec 9, A10).
+
 ## Network
 
-No test reaches the internet: the download goes through the injected `get`. The only real network use in the run
-is S4's `rune-scratch-<sha7>` tag push and QA's download of that prerelease; the scratch release and tag are deleted
-(`gh release delete rune-scratch-<sha7> --cleanup-tag --yes`) once QA has used them.
+No test reaches the internet: the download goes through the injected `get`. The PR run's build is the default
+evidence; only if A9 allows it, S4 pushes a `rune-scratch-<sha7>` tag and QA downloads that prerelease, and the
+scratch release and tag are deleted (`gh release delete rune-scratch-<sha7> --cleanup-tag --yes`) once QA has used them.
 
 ## Commit trailer
 
