@@ -11,6 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const { cargoStep, runGate } = await import('../gate.mjs');
+const { runeTargetDir } = await import('../rune-target.mjs');
 
 const slot = () => ({ slot: 1, waited: false, release: () => {} });
 const SKIP = 'rune deck: cargo not on PATH, skipped';
@@ -28,8 +29,11 @@ function store(t) {
   return { dir, file };
 }
 
-/** Runs `runGate` with stdout captured; every spawn is recorded and answered by `answer(command)`. */
-function gate(t, { which, answer = () => ({ status: 0 }), platform = 'win32' }) {
+/**
+ * Runs `runGate` with stdout captured; every spawn is recorded and answered by `answer(command)`. `select`
+ * given, the gate runs `--since=main` on its answer. `bound` answers for the shared target, never the real one.
+ */
+function gate(t, { which, answer = () => ({ status: 0 }), platform = 'win32', select, bound = () => ({ wiped: false, units: 0 }), stale = () => 0 }) {
   const { dir, file } = store(t);
   // Under the gate this process inherits its guard, which reads as a gate inside the gate: this gate is the outer one.
   const inherited = process.env.PILOT_GATE_HOME_STORE;
@@ -39,9 +43,12 @@ function gate(t, { which, answer = () => ({ status: 0 }), platform = 'win32' }) 
   const written = [];
   const write = t.mock.method(process.stdout, 'write', (chunk) => written.push(String(chunk)) > 0);
   try {
-    const code = runGate([], {
+    const code = runGate(select ? ['--since=main'] : [], {
       cwd: dir,
       slot,
+      ...(select ? { select } : {}),
+      bound,
+      stale,
       read: () => [],
       spawn: (command, args, options) => {
         calls.push({ command, args, options });
@@ -63,7 +70,110 @@ test('cargo runs where it is: cargoStep names cargo test on the Rune manifest', 
   const step = cargoStep({}, (cmd) => (asked.push(cmd), CARGO), 'win32');
   assert.deepEqual(asked, ['cargo']);
   // The path found, never the bare name, which Windows would look up in the checkout first.
-  assert.deepEqual(step, { command: CARGO, args: ['test', '--manifest-path', 'deck/rune/Cargo.toml'] });
+  assert.equal(step.command, CARGO);
+  assert.deepEqual(step.args, ['test', '--manifest-path', 'deck/rune/Cargo.toml']);
+});
+
+const SHA = '0123456789abcdef0123456789abcdef01234567';
+const LOCAL = { LOCALAPPDATA: 'C:\\Users\\me\\AppData\\Local' };
+/** A `--since` selection that ran some files, its diff naming `changed`. */
+const selected = (changed) => ({ files: ['C:\\r\\scripts\\test\\land.test.mjs'], total: 9, since: SHA, changed });
+
+test('a selected gate that touches nothing under deck/ runs no cargo: cargoStep names the sha (spec 8)', () => {
+  assert.deepEqual(cargoStep(LOCAL, () => CARGO, 'win32', selected(['scripts/land.mjs'])), {
+    skip: 'rune deck: nothing under deck/ changed since 0123456, skipped',
+  });
+  // A path that only starts like deck/ is not under it.
+  assert.ok(cargoStep(LOCAL, () => CARGO, 'win32', selected(['decks/x.mjs', 'docs/deck/a.md'])).skip);
+});
+
+test('a deck change or a full run still runs cargo, into the shared build (spec 7, 8)', () => {
+  const shared = { CARGO_TARGET_DIR: runeTargetDir(LOCAL, 'win32') };
+  assert.equal(shared.CARGO_TARGET_DIR, 'C:\\Users\\me\\AppData\\Local\\pilot\\rune-target');
+  for (const selection of [
+    undefined,
+    selected(['deck/view.mjs']),
+    selected(['deck/rune/src/app.rs', 'scripts/land.mjs']),
+    // A trigger already makes the selection full; a selection naming one runs cargo whatever its files say.
+    selected(['scripts/gate.mjs']),
+    { files: null, total: 9, since: SHA, reason: 'scripts/x.mjs reaches no test', changed: ['scripts/x.mjs'] },
+    // A selection that read no diff names nothing changed, and is a full run.
+    { files: null, total: 9, since: 'nope', reason: 'cannot resolve nope', changed: [] },
+  ]) {
+    const step = cargoStep(LOCAL, () => CARGO, 'win32', selection);
+    assert.equal(step.command, CARGO, JSON.stringify(selection));
+    assert.deepEqual(step.env, shared);
+  }
+});
+
+test('the gate passes its selection: a scripts-only --since gate prints the skip line once and starts no cargo', (t) => {
+  const bounds = [];
+  const { code, calls, out } = gate(t, { which: () => CARGO, select: () => selected(['scripts/land.mjs']), bound: (dir) => (bounds.push(dir), { wiped: false, units: 0 }) });
+  assert.equal(code, 0);
+  assert.equal(calls.length, 1, 'only the suite started');
+  assert.equal(out.split('\n').filter((line) => line === 'rune deck: nothing under deck/ changed since 0123456, skipped').length, 1);
+  assert.deepEqual(bounds, [], 'a skipped step leaves the shared build alone');
+});
+
+test('the gate builds a deck change into the shared target, bounded first, the guard env kept', (t) => {
+  const order = [];
+  const { code, calls, out, file } = gate(t, {
+    which: () => CARGO,
+    select: () => selected(['deck/view.mjs']),
+    answer: (command) => (order.push(command), { status: 0 }),
+    bound: (dir) => (order.push(`bound ${dir}`), { wiped: true, units: 401 }),
+  });
+  assert.equal(code, 0);
+  const cargo = calls.find((call) => call.command === CARGO);
+  assert.ok(cargo, 'cargo was not started');
+  const dir = runeTargetDir(process.env, 'win32');
+  assert.equal(cargo.options.env.CARGO_TARGET_DIR, dir);
+  assert.equal(cargo.options.env.PILOT_GATE_HOME_STORE, file);
+  assert.deepEqual(order.slice(1), [`bound ${dir}`, CARGO]);
+  assert.ok(out.split('\n').includes(`rune deck: shared build held 401 units, over 400, wiped ${dir}`), out);
+  // The suite's own run never carries the shared target: only the cargo spawn sets it.
+  assert.equal(calls[0].options.env.CARGO_TARGET_DIR, process.env.CARGO_TARGET_DIR);
+});
+
+test('the gate dates its own crate\'s sources after the bound and before cargo, so no other worktree\'s build runs', (t) => {
+  const order = [];
+  const { code, calls } = gate(t, {
+    which: () => CARGO,
+    answer: (command) => (order.push(command), { status: 0 }),
+    bound: () => (order.push('bound'), { wiped: false, units: 0 }),
+    stale: (crate) => (order.push(`stale ${crate}`), 3),
+  });
+  assert.equal(code, 0);
+  const crate = path.join(calls[0].options.cwd, 'deck', 'rune');
+  assert.deepEqual(order.slice(1), ['bound', `stale ${crate}`, CARGO]);
+});
+
+test('a crate whose sources cannot be dated is red, named, and starts no cargo', (t) => {
+  const errors = [];
+  const err = t.mock.method(process.stderr, 'write', (chunk) => errors.push(String(chunk)) > 0);
+  let result;
+  try {
+    result = gate(t, { which: () => CARGO, stale: () => { throw new Error('ENOENT: no such file, utime build.rs'); } });
+  } finally {
+    err.mock.restore();
+  }
+  assert.equal(result.code, 1);
+  assert.ok(!result.calls.some((call) => call.command === CARGO));
+  assert.match(errors.join(''), /gate: rune deck: could not date .*rune: ENOENT: no such file, utime build.rs/);
+});
+
+test('a shared target that cannot be bounded is named, and cargo still runs', (t) => {
+  const errors = [];
+  const err = t.mock.method(process.stderr, 'write', (chunk) => errors.push(String(chunk)) > 0);
+  let result;
+  try {
+    result = gate(t, { which: () => CARGO, bound: () => { throw new Error('EBUSY: resource busy'); } });
+  } finally {
+    err.mock.restore();
+  }
+  assert.equal(result.code, 0);
+  assert.ok(result.calls.some((call) => call.command === CARGO));
+  assert.match(errors.join(''), /gate: rune deck: could not bound .*rune-target: EBUSY: resource busy/);
 });
 
 test('cargo runs where it is: the gate starts it hidden, in its checkout, under the home-store guard', (t) => {

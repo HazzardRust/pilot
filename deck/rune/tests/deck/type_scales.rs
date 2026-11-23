@@ -103,7 +103,7 @@ fn sources(dir: &Path, into: &mut Vec<PathBuf>) {
 
 #[test]
 fn no_text_size_is_set_outside_the_scales() {
-    let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+    let src = support::manifest_dir().join("src");
     let mut files = Vec::new();
     sources(&src, &mut files);
     let mut stray = Vec::new();

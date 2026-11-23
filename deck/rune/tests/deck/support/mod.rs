@@ -6,7 +6,7 @@
 
 use std::cell::Cell;
 use std::marker::PhantomData;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Condvar, Mutex};
 
@@ -68,8 +68,17 @@ impl Drop for Slot {
     }
 }
 
+/// `deck/rune` in the worktree running this test, read when it runs, never baked in with `env!`: the gate's
+/// shared `CARGO_TARGET_DIR` (cheap-suite S3, L5) hands a test binary one worktree built to another, and
+/// `cargo test` sets `CARGO_MANIFEST_DIR` for the binary it runs.
+pub fn manifest_dir() -> PathBuf {
+    std::env::var_os("CARGO_MANIFEST_DIR")
+        .map(PathBuf::from)
+        .expect("CARGO_MANIFEST_DIR is unset: run the deck's tests through cargo test")
+}
+
 fn pilot(args: &[&str]) -> String {
-    let cli = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../bin/pilot.mjs");
+    let cli = manifest_dir().join("../../bin/pilot.mjs");
     let out = Command::new("node")
         .arg(cli)
         .args(args)

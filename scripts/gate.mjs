@@ -25,7 +25,8 @@ import { deckPidNow, stopper } from '../deck/gc.mjs';
 import { isClaude, pilotProcesses, processTable } from '../deck/procs.mjs';
 import { takeSlot } from './gate-slots.mjs';
 import { rebuildLedgers } from './ledgers.mjs';
-import { TEST_GLOB, scopeLine, selectTests } from './select-tests.mjs';
+import { RUNE_TARGET_MAX, boundTarget, runeTargetDir, staleRoot } from './rune-target.mjs';
+import { FULL_TRIGGERS, TEST_GLOB, scopeLine, selectTests } from './select-tests.mjs';
 import { costTable } from './test-cost.mjs';
 
 export const MAX_CONCURRENCY = 4;
@@ -278,22 +279,47 @@ function homeStoreLine(file, before, deckPid) {
  * line the gate prints instead: off Windows the deck's tests run in CI's Windows job, not in every gate, and a
  * gate a test starts (its env carries the outer gate's guard) leaves them to the outer one.
  * The command is the path `which` found: a bare `cargo` is looked up in the checkout first on Windows.
+ * Its `env` is what the spawn adds: `CARGO_TARGET_DIR`, the shared Rune build (cheap-suite S3; L5).
+ * A `selection` with files (a `--since` gate, never a full run) whose `changed` names nothing under `deck/`
+ * and no `FULL_TRIGGERS` file skips it (spec 8).
  */
-export function cargoStep(env, which = (cmd) => onSearchPath(`${cmd}.exe`, env, platform), platform = hostPlatform()) {
+export function cargoStep(env, which = (cmd) => onSearchPath(`${cmd}.exe`, env, platform), platform = hostPlatform(), selection) {
   if (platform !== 'win32') return { skip: 'rune deck: cargo test runs on Windows only, skipped' };
   if (env.PILOT_GATE_HOME_STORE) return { skip: 'rune deck: a gate inside the gate, skipped' };
+  if (selection?.files && Array.isArray(selection.changed) && !selection.changed.some((rel) => rel.startsWith('deck/') || FULL_TRIGGERS.includes(rel))) {
+    return { skip: `rune deck: nothing under deck/ changed since ${selection.since.slice(0, 7)}, skipped` };
+  }
   const cargo = which('cargo');
   if (cargo === null) return { skip: 'rune deck: cargo not on PATH, skipped' };
-  return { command: cargo, args: ['test', '--manifest-path', 'deck/rune/Cargo.toml'] };
+  return { command: cargo, args: ['test', '--manifest-path', 'deck/rune/Cargo.toml'], env: { CARGO_TARGET_DIR: runeTargetDir(env, platform) } };
 }
 
-/** Runs `step`'s cargo, or prints its skip line; its exit status, 1 when it could not start or was killed. */
-function runeDeck(step, { spawn, cwd, env }) {
+/**
+ * Runs `step`'s cargo, or prints its skip line; its exit status, 1 when it could not start or was killed.
+ * Before the build `bound` keeps the shared target bounded (A3), one line when it wiped it; a wipe that
+ * fails is named and the build runs on what is left. Then `stale` dates `deck/rune`'s own sources, so the
+ * build is this worktree's and never another's from the shared target; one that fails is named and red.
+ */
+function runeDeck(step, { spawn, cwd, env, bound, stale }) {
   if (step.skip) {
     process.stdout.write(`${step.skip}\n`);
     return 0;
   }
-  const run = spawn(step.command, step.args, { cwd, env, stdio: 'inherit', windowsHide: true });
+  const dir = step.env.CARGO_TARGET_DIR;
+  try {
+    const { wiped, units } = bound(dir);
+    if (wiped) process.stdout.write(`rune deck: shared build held ${units} units, over ${RUNE_TARGET_MAX}, wiped ${dir}\n`);
+  } catch (err) {
+    process.stderr.write(`gate: rune deck: could not bound ${dir}: ${firstLine(err)}\n`);
+  }
+  const crate = path.join(cwd, 'deck', 'rune');
+  try {
+    stale(crate);
+  } catch (err) {
+    process.stderr.write(`gate: rune deck: could not date ${crate}: ${firstLine(err)}\n`);
+    return 1;
+  }
+  const run = spawn(step.command, step.args, { cwd, env: { ...env, ...step.env }, stdio: 'inherit', windowsHide: true });
   if (run.error) process.stderr.write(`gate: rune deck: ${step.command} did not start: ${run.error.message}\n`);
   return run.status ?? 1;
 }
@@ -323,10 +349,11 @@ function writerLines(log) {
  * With `--since=<ref>` (suite-at-landing S1; L7) it prints the scope line first and runs only the
  * selection, the flag kept from `node`; an empty selection runs nothing and passes, a null one runs full.
  * With `homeStore` it is red too when that file's stat changed and `deckPid()` names no deck.
- * With `homeStore` and `which` it runs `cargoStep`'s cargo after the suite, in that window, red when it fails.
+ * With `homeStore` and `which` it runs `cargoStep`'s cargo after the suite, in that window, red when it fails,
+ * given the selection and bounding the shared target with `bound` first.
  * With `--cost` (cheap-suite S1; L4) it adds the cost reporter and prints the cost table last, its status unchanged.
  */
-export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, which, platform = hostPlatform(), ...rest } = {}) {
+export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, which, platform = hostPlatform(), bound = boundTarget, stale = staleRoot, ...rest } = {}) {
   if (!syntaxClean(syntax, cwd)) return 1;
   const cost = args.includes('--cost');
   args = args.filter((arg) => arg !== '--cost');
@@ -373,7 +400,7 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
     if (run.error) process.stderr.write(`gate: node --test did not start: ${run.error.message}\n`);
     // rune-deck-ui S19: inside the home-store window and under its guard env, so a Rust test's scratch daemon
     // that writes the home store is caught, and before the census, so one left running is too.
-    const rune = guard && which ? runeDeck(cargoStep(process.env, which, platform), { spawn, cwd, env: gateEnv(process.env, held.slot, file, guard) }) : 0;
+    const rune = guard && which ? runeDeck(cargoStep(process.env, which, platform, selection), { spawn, cwd, env: gateEnv(process.env, held.slot, file, guard), bound, stale }) : 0;
     let after;
     try {
       if (before instanceof Error) throw before;
