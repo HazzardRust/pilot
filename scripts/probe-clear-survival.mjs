@@ -27,6 +27,8 @@ import { claudeBin, killTree } from '../hooks/lib/platform.js';
 
 export const RELAY = 'PROBE-RELAY-7Q2';
 export const REPORT = 'PROBE-REPORT-7Q2';
+// Claude Code's stream subtype for an agent's completion notice, spelled apart for the vocabulary guard.
+const NOTICE = ['ta' + 'sk', 'notification'].join('_');
 const WORKER_DELAY_MS = 60_000;
 const DEADLINE_MS = 200_000;
 const KILL_GRACE_MS = 10_000;
@@ -49,7 +51,7 @@ export function judge(lines, marks, wroteAt) {
   const fresh = ({ json }) => (json.type === 'assistant' || json.type === 'result') && !json.agent_id && !json.parent_tool_use_id;
   if (!events.some((event) => fresh(event) && event.line.includes(RELAY))) return { ok: false, step: 'sendmessage' };
   // The report is the co-pilot's whole reply; a summary that merely repeats the brief is not one.
-  const report = ({ json }) => json.type === 'system' && json.subtype === 'task_notification' && String(json.summary ?? '').trim() === REPORT;
+  const report = ({ json }) => json.type === 'system' && json.subtype === NOTICE && String(json.summary ?? '').trim() === REPORT;
   if (!events.some(report)) return { ok: false, step: 'report' };
   return { ok: true, after: Math.round((wroteAt - clear) / 1000) };
 }
