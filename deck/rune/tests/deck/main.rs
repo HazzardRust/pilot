@@ -20,6 +20,7 @@ mod notifications;
 mod queue;
 mod reply;
 mod skeleton;
+mod startup;
 mod status;
 mod strip;
 mod theme;
