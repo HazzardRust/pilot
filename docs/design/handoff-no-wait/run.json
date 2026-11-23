@@ -37,7 +37,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed e5fceb0",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -46,7 +46,7 @@
     },
     {
       "slice": "S5",
-      "state": "implementing",
+      "state": "pushed 8bbaa94",
       "after": [
         "S1",
         "S4"
@@ -61,8 +61,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s7"
     }
   ],
-  "next": "co-pilot: S1 integrated eb11fd9 (checks running); S2, S5 implementing from eb11fd9; integrate S3 e5fceb0 and S6 488b315 on green",
-  "updatedAt": "2026-11-23T03:22:14.059Z",
+  "next": "co-pilot: S6 integrating on 5a578e2; then S5 8bbaa94 (assumed: resync also resends the last hand-back before <time>; prompts test file dropped, B4 read); S2 implementing",
+  "updatedAt": "2026-11-23T03:47:49.556Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -187,6 +187,18 @@
       "what": "S6: ~13 min full gate restarted three times after review fixes",
       "evidence": "S6 report",
       "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5: no CLI prints the pilot pin's own-share number; needed a scratch script importing measure()",
+      "evidence": "measure-prompt.mjs prints columns, not (definition+skills+tools)/4",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5: gate summary must be grepped from a log under 400+ lines of Rust output",
+      "evidence": "gate.log:7",
+      "size": 1
     }
   ]
 }
