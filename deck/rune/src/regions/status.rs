@@ -4,7 +4,7 @@
 
 use crate::theme::type_;
 use rune::tok;
-use rune::{Cx, El, col, row, text};
+use rune::{Cx, El, Link, Span, Tx, col, el, rich, row, text};
 use serde::Deserialize;
 
 use crate::app::{State, go};
@@ -47,7 +47,12 @@ struct Group {
     heading: String,
     #[serde(default)]
     started: String,
+    #[serde(default)]
+    held: bool,
 }
+
+/// What the page says for a held ticket with no record yet (`renderStrips`, `p.empty`).
+const NO_TABLE: &str = "no slice table yet";
 
 #[derive(Debug, Default, Deserialize)]
 struct Status {
@@ -64,6 +69,9 @@ struct Status {
     /// The overview's tables, one per tab; empty on a deck's tab, which has the one above.
     #[serde(default)]
     groups: Vec<Group>,
+    /// The chosen held ticket has no record: the view's `held` (`deck/view/status.mjs`).
+    #[serde(default)]
+    held: bool,
 }
 
 /// The table's Slice, State and Yours columns as shares of its width; every cell wraps in its own.
@@ -75,6 +83,91 @@ fn shares(rows: &[Slice]) -> [f32; 3] {
         0.0
     };
     [2.0, 3.0, yours]
+}
+
+/// The chosen ticket's bar, as wide as the page's `inset 2px` shadow.
+const BAR: f32 = 2.0;
+
+/// A piece of a State cell: text as posted, or an http(s) URL drawn as a link.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Part {
+    Text(String),
+    Url(String),
+}
+
+/// What the page's `URL_IN_TEXT` (`deck/ui/render-strip.mjs`) leaves off a URL's end.
+const TRAILING: &[char] = &['.', ',', ';', ':', '!', '?', ')', ']', '}', '\'', '"'];
+
+/// A State cell split as the page's `renderState` splits it: each `http://` or `https://` run up to
+/// whitespace or `<`, its trailing punctuation left as text, is a URL; every other scheme is text.
+/// The parts joined are `state` unchanged.
+pub fn links(state: &str) -> Vec<Part> {
+    let mut parts = Vec::new();
+    let (mut text_from, mut at) = (0, 0);
+    while let Some(next) = state[at..].chars().next() {
+        let rest = &state[at..];
+        let scheme = ["https://", "http://"]
+            .iter()
+            .find(|s| {
+                rest.as_bytes()
+                    .get(..s.len())
+                    .is_some_and(|b| b.eq_ignore_ascii_case(s.as_bytes()))
+            })
+            .map(|s| s.len());
+        if let Some(scheme) = scheme {
+            let run = rest
+                .find(|c: char| c.is_whitespace() || c == '<')
+                .unwrap_or(rest.len());
+            let url = rest[..run].trim_end_matches(TRAILING);
+            if url.len() > scheme {
+                if at > text_from {
+                    parts.push(Part::Text(state[text_from..at].to_string()));
+                }
+                parts.push(Part::Url(url.to_string()));
+                at += url.len();
+                text_from = at;
+                continue;
+            }
+        }
+        at += next.len_utf8();
+    }
+    if text_from < state.len() {
+        parts.push(Part::Text(state[text_from..].to_string()));
+    }
+    parts
+}
+
+/// A State cell as the page's: the text as posted, each URL in it an underlined link that opens in
+/// the browser through `Tx::open_url`, which refuses every scheme past http, https and mailto.
+fn state_cell(state: &str, key: String, ink: rune::Color) -> El {
+    let mut at = 0;
+    let mut urls = Vec::new();
+    for part in links(state) {
+        let (Part::Text(words) | Part::Url(words)) = &part;
+        if let Part::Url(url) = &part {
+            urls.push((at..at + url.len(), url.clone()));
+        }
+        at += words.len();
+    }
+    let spans = urls
+        .iter()
+        .map(|(range, _)| Span::new(range.start, range.end).underline(ink))
+        .collect();
+    let mut cell = rich(state, spans)
+        .key(key)
+        .font(type_::BODY)
+        .color(ink)
+        .wrap();
+    if urls.is_empty() {
+        return cell;
+    }
+    for (range, url) in urls {
+        cell = cell.link(Link::new(range, url));
+    }
+    cell.on_link(|_: &mut State, url: &str, tx: &mut Tx| {
+        // A link the runtime refuses (no host, a space) opens nothing; the cell still reads as posted.
+        let _ = tx.open_url(url);
+    })
 }
 
 /// Chooses a held ticket: the window's query takes its id and the live reader is asked for its
@@ -94,8 +187,10 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     let t = tok::theme(dark);
     let cols = space::cols;
 
+    // The page's `.status-select`: one "<lane> · <title>" per line, the chosen one in the text's ink
+    // behind a 2 px bar and indented 0.5rem (deck.css `box-shadow: inset 2px 0`), the rest quiet.
     let selector = status.tickets.iter().enumerate().fold(
-        row().key("status-select").gap(space::between),
+        col().key("status-select"),
         |selector, (i, ticket)| {
             let ink = if ticket.chosen {
                 t.text
@@ -103,17 +198,23 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                 t.text_secondary
             };
             let id = ticket.id.clone();
-            selector.child(
-                theme::control(row(), dark)
-                    .key(format!("status-ticket-{i}"))
-                    .role("button")
-                    .on_press(move |s: &mut State| choose(s, &id))
-                    .child(
-                        text(format!("{} {}", ticket.lane, ticket.name))
-                            .font(type_::BODY)
-                            .color(ink),
-                    ),
-            )
+            let mut line = theme::control(row(), dark)
+                .key(format!("status-ticket-{i}"))
+                .role("button")
+                .on_press(move |s: &mut State| choose(s, &id));
+            let mut label = text(format!("{} · {}", ticket.lane, ticket.name))
+                .font(type_::BODY)
+                .color(ink);
+            if ticket.chosen {
+                line = line.child(
+                    el().key(format!("status-ticket-{i}-bar"))
+                        .w(BAR)
+                        .h_full()
+                        .fill(ink),
+                );
+                label = label.pl(space::s3);
+            }
+            selector.child(line.child(label))
         },
     );
 
@@ -170,11 +271,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                 ))
                 .child(cell(
                     theme::content(
-                        text(&slice.state)
-                            .key(format!("{row_key}{i}-state"))
-                            .font(type_::BODY)
-                            .color(t.text)
-                            .wrap(),
+                        state_cell(&slice.state, format!("{row_key}{i}-state"), t.text),
                         dark,
                     ),
                     state_share,
@@ -253,14 +350,22 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
     let groups = status.groups.iter().enumerate().fold(
         col().key("status-groups").gap(space::between),
         |groups, (g, group)| {
+            let mut named = col()
+                .key(format!("status-group-{g}"))
+                .gap(space::within)
+                .child(theme::content(
+                    text(&group.tab).font(type_::CAPTION).color(t.text),
+                    dark,
+                ));
+            if group.held {
+                named = named.child(theme::empty(
+                    NO_TABLE,
+                    &format!("status-group-{g}-held"),
+                    dark,
+                ));
+            }
             groups.child(
-                col()
-                    .key(format!("status-group-{g}"))
-                    .gap(space::within)
-                    .child(theme::content(
-                        text(&group.tab).font(type_::CAPTION).color(t.text),
-                        dark,
-                    ))
+                named
                     .child(titled(
                         format!("status-heading-{g}"),
                         &group.heading,
@@ -279,15 +384,19 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         },
     );
 
-    if status.tickets.is_empty() && status.rows.is_empty() && status.groups.is_empty() {
+    if !status.held
+        && status.tickets.is_empty()
+        && status.rows.is_empty()
+        && status.groups.is_empty()
+    {
         return col()
             .key("status")
             .child(theme::empty("No tickets to show.", "status-none", dark));
     }
-    col()
-        .key("status")
-        .gap(space::between)
-        .child(selector)
-        .child(table)
-        .child(groups)
+    // The page's order: the selector, the held sentence, then the table.
+    let mut pane = col().key("status").gap(space::between).child(selector);
+    if status.held {
+        pane = pane.child(theme::empty(NO_TABLE, "status-held", dark));
+    }
+    pane.child(table).child(groups)
 }
