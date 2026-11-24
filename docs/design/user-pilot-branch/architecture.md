@@ -134,6 +134,13 @@ S6 deletes the `PILOT_BRANCH` export from `scripts/pilot-branch.mjs` through S1'
 `export const PILOT_BRANCH` only for the unfolded consumers and S6's structural test fails while any import remains;
 the deletion is S6's one line in a file S1 owns, after S1 has integrated.
 
+Shared with land-batching (`design/land-batching`, Gate 1 signed, queued): `scripts/gate.mjs` (S1 here; its S6, S7),
+`scripts/integrate.mjs`, `scripts/sync.mjs`, `scripts/worktrees.mjs` (S2; its S3, S4, S5), `scripts/land.mjs` (S3;
+its S1, S2, S5), `scripts/branches.mjs` (S5; its S5). Land-batching first is cheaper: its change is structural (one
+`gitView` through the landing), ours a name swap per site that re-applies on top; the other order makes its slices
+re-thread `pilotBranch(git)` through `tipOf` refs. Neither order makes a slice here unbuildable: S1, S2, S3, S5 merge
+land-batching's feature first when it has landed, and S1's `gateEnv` line sits beside its spawn constants, not in them.
+
 Red team (walked each first behaviour against the files):
 - red team: `release.mjs:19` keeps its own `LANDING` regex; S2 and S3 would each half-build landing detection.
   Folded into S1's `landingSubjects`, so S2 and S3 run side by side.
