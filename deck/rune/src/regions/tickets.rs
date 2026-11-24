@@ -632,9 +632,7 @@ pub fn draw(
                 repo: &repo,
             };
             for (i, r) in g.rows.iter().enumerate() {
-                fold = fold.child(ticket_row(
-                    r, &lane, &mids, local, pending, &t, dark,
-                ));
+                fold = fold.child(ticket_row(r, &lane, &mids, local, pending, &t, dark));
                 if i != last {
                     let key = format!("ticket-{}-rule", r.id);
                     fold = fold.child(theme::rule(theme::Rule::Item, dark).key(key));
