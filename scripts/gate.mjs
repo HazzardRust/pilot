@@ -130,10 +130,17 @@ function namesPathUnder(command, cwd, platform) {
   return false;
 }
 
-/** The pilot-owned processes under `cwd` in `after` and not in `before`, by pid and command, so a reused pid is new. */
+/**
+ * The pilot-owned processes under `cwd` in `after` and not in `before`, by pid and command, so a reused pid is new.
+ * A keep-awake holder names no path: it is the suite's when the deck it watches is, or that deck is gone.
+ */
 export function leftovers(before, after, cwd, platform = hostPlatform()) {
   const was = new Set(before.map((p) => `${p.pid} ${p.command}`));
-  return after.filter((p) => !was.has(`${p.pid} ${p.command}`) && namesPathUnder(p.command, cwd, platform));
+  const fresh = after.filter((p) => !was.has(`${p.pid} ${p.command}`));
+  const left = fresh.filter((p) => namesPathUnder(p.command, cwd, platform));
+  const decks = new Set(left.map((p) => p.pid));
+  const holders = fresh.filter((p) => p.kind === 'holder' && !left.includes(p) && (decks.has(p.owner) || p.orphan === `deck ${p.owner} gone`));
+  return [...left, ...holders];
 }
 
 const pause = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -163,22 +170,27 @@ function besideGate(table, row, self) {
  * neither stopped nor named. The last line is
  * `left running: none`, or there is one `left running: <pid> <kind> <command>` per survivor.
  */
-export function census(before, { cwd, read = processTable, kill = stopper, deckPid = deckPidNow, self = process.pid, graceMs = GRACE_MS, pollMs = POLL_MS, sleep = pause, now = Date.now }) {
+export function census(before, { cwd, read = processTable, kill = stopper, deckPid = deckPidNow, self = process.pid, graceMs = GRACE_MS, pollMs = POLL_MS, sleep = pause, now = Date.now, select = leftovers }) {
   const watch = (base) => {
     for (const end = now() + graceMs; ; sleep(pollMs)) {
       const table = read();
-      const left = leftovers(base, pilotProcesses(table, {}), cwd).filter((row) => !besideGate(table, row, self));
+      const left = select(base, pilotProcesses(table, {}), cwd).filter((row) => !besideGate(table, row, self));
       if (left.length === 0 || now() >= end) return { table, left };
     }
   };
   const first = watch(before);
   const deck = first.left.length ? deckPid() : undefined;
+  // The user's deck and the holder it watches are neither stopped nor named.
+  const users = (r) => r.pid === deck || (r.kind === 'holder' && r.owner === deck);
   const lines = [];
+  // An unanswered probe cannot tell a leashless daemon, or its holder, from the user's deck: named, never stopped.
+  // The set is taken before the loop, so a holder listed ahead of its deck is spared too.
+  const leashless = (r) => r.kind === 'daemon' && !/\s--leash\s/.test(` ${r.command} `);
+  const unsure = new Set(deck === undefined ? first.left.filter(leashless).map((r) => r.pid) : []);
   const stop = kill(first.table);
-  for (const row of first.left.filter((r) => r.pid !== deck)) {
+  for (const row of first.left.filter((r) => !users(r))) {
     try {
-      // An unanswered probe cannot tell a leashless daemon from the user's deck: named, never stopped.
-      if (deck === undefined && row.kind === 'daemon' && !/\s--leash\s/.test(` ${row.command} `)) {
+      if (unsure.has(row.pid) || (row.kind === 'holder' && unsure.has(row.owner))) {
         lines.push(`not stopped ${row.pid}: cannot tell it from the user's deck`);
         continue;
       }
@@ -188,7 +200,7 @@ export function census(before, { cwd, read = processTable, kill = stopper, deckP
       lines.push(`could not stop ${row.pid}: ${firstLine(err)}`);
     }
   }
-  const survivors = lines.length ? watch([...before, ...first.left.filter((r) => r.pid === deck)]).left : [];
+  const survivors = lines.length ? watch([...before, ...first.left.filter(users)]).left : [];
   lines.push(...(survivors.length ? survivors.map((row) => `left running: ${named(row)}`) : ['left running: none']));
   return { red: survivors.length > 0, lines };
 }

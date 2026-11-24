@@ -3,7 +3,8 @@
  * process on the machine with one reader per call: on Windows one PowerShell CIM query, elsewhere
  * one `ps`. Both are fixed argv, never a shell string, and `run` is injected in tests.
  * `pilotProcesses` picks the node processes running pilot code (a deck daemon, a `pilot wait`, a
- * `node --test` root) and names each orphan with its reason. The user's deck is never an orphan,
+ * `node --test` root) and the keep-awake holders a deck starts (stay-awake S4), and names each
+ * orphan with its reason. The user's deck is never an orphan,
  * and a process this module does not recognise is never listed, so it can never be stopped.
  */
 import { execFileSync } from 'node:child_process';
@@ -11,6 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { hostPlatform } from '../hooks/lib/platform.js';
+import { REASON, holderFor } from './awake.mjs';
 import { DECK_HOST, DECK_PORT } from './tools.mjs';
 
 const WINDOWS_QUERY = [
@@ -140,6 +142,38 @@ function underPilot(word, exists) {
   return false;
 }
 
+/** Where `arg` stands as a whole word of `command` at or after `from`, else -1. */
+function wordAt(command, arg, from) {
+  for (let at = command.indexOf(arg, from); at !== -1; at = command.indexOf(arg, at + 1)) {
+    if (/^[\s"]?$/.test(command[at - 1] ?? '') && /^[\s"]?$/.test(command[at + arg.length] ?? '')) return at;
+  }
+  return -1;
+}
+
+const imageOf = (holder) => holder && path.win32.basename(holder.cmd).toLowerCase();
+
+/**
+ * The pid a keep-awake holder row watches (stay-awake S4), or null: its image and its argv, in order,
+ * are what `build` makes for one of the numbers it carries, on any platform, since the table is this
+ * host's. A holder with no `REASON` in its argv (caffeinate) is sure only while that pid is its parent.
+ */
+function watchedBy(p, build) {
+  const image = String(p.name).toLowerCase();
+  const platforms = ['win32', 'darwin', 'linux'].filter((platform) => image === imageOf(build(platform, 1)));
+  const command = String(p.command).replaceAll('\\"', '"');
+  for (const pid of platforms.length ? new Set((command.match(/\d+/g) ?? []).map(Number)) : []) {
+    if (!Number.isSafeInteger(pid) || pid < 1) continue;
+    for (const platform of platforms) {
+      const holder = build(platform, pid);
+      if (imageOf(holder) !== image) continue;
+      let at = 0;
+      const inOrder = holder.args.every((arg) => (at = wordAt(command, arg, at)) !== -1 && ((at += arg.length), true));
+      if (inOrder && (p.ppid === pid || holder.args.some((arg) => arg.includes(REASON)))) return pid;
+    }
+  }
+  return null;
+}
+
 /** Whether a process-table row is a Claude session. */
 export const isClaude = (p) => /^claude(\.exe)?$/i.test(p.name);
 
@@ -151,8 +185,10 @@ export const isClaude = (p) => /^claude(\.exe)?$/i.test(p.name);
  * What cannot be read for sure is never an orphan: a leashless daemon unless the user's deck
  * answered another pid (refused or silent leaves it unsure), a leash that is not a pid, a relative path, a wait whose
  * ancestor chain reaches a live root with no `claude` in it.
+ * A keep-awake holder's owner is the deck it watches; it is an orphan when that deck is gone or is
+ * itself an orphan, so the user's deck's holder never is.
  */
-export function pilotProcesses(table, { userDeckPid, exists = fs.existsSync }) {
+export function pilotProcesses(table, { userDeckPid, exists = fs.existsSync, holderFor: build = holderFor }) {
   const byPid = new Map(table.map((p) => [p.pid, p]));
   const ancestors = function* (p) {
     const seen = new Set([p.pid]);
@@ -201,6 +237,13 @@ export function pilotProcesses(table, { userDeckPid, exists = fs.existsSync }) {
       const parent = byPid.has(p.ppid);
       owned.push({ ...p, kind: 'test', owner: parent ? p.ppid : null, worktree: null, orphan: parent ? null : `parent ${p.ppid} gone` });
     }
+  }
+  const orphaned = new Set(owned.filter((row) => row.orphan).map((row) => row.pid));
+  for (const p of table) {
+    const deck = /^node(\.exe)?$/i.test(p.name) ? null : watchedBy(p, build);
+    if (deck === null) continue;
+    const orphan = deck === userDeckPid ? null : !byPid.has(deck) ? `deck ${deck} gone` : orphaned.has(deck) ? `deck ${deck} is an orphan` : null;
+    owned.push({ ...p, kind: 'holder', owner: deck, worktree: null, orphan });
   }
   return owned;
 }

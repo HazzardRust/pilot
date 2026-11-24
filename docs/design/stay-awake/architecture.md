@@ -113,6 +113,7 @@ Width 2; longest stem 2
 | S1 The user's deck holds a Windows keep-awake request while an agent runs | 1, 5, 6, 7, 8 | `deck/awake.mjs` (new), `deck/agents.mjs` (`lastHeardAt`), `deck/daemon.mjs` (wiring), `deck/health.mjs` (`awake`), `deck/test/awake.test.mjs` (new), `deck/test/awake-holder.test.mjs` (new), `docs/adr/NNNN-stay-awake.md` (new) | – | typescript, security | [S1](slices/S1.md) |
 | S2 macOS and Linux hold by their own means | 2, 3 | `deck/awake.mjs` (`holderFor` darwin, linux rows), `deck/test/awake-holder.test.mjs` (darwin, linux cases) | S1 (`deck/awake.mjs` `holderFor`) | typescript, security | [S2](slices/S2.md) |
 | S3 pilot doctor names what would still stop the work | 3, 4, 9 | `deck/power.mjs` (new), `deck/doctor.mjs` (one row), `deck/probe.mjs` (`awake`), `bin/pilot.mjs` (usage line), `deck/test/doctor-power.test.mjs` (new), `deck/test/power-writes.test.mjs` (new) | S1 (`/api/health` `awake`) | typescript, security | [S3](slices/S3.md) |
+| S4 the gate's census counts a leftover holder (added) | 7 | `deck/procs.mjs` (a `holder` row), `scripts/gate.mjs` (`leftovers`, `census`), `deck/test/procs.test.mjs`, `scripts/test/gate-census.test.mjs` | S1 (`deck/awake.mjs` `holderFor`, `REASON`) | typescript, security | [S4](slices/S4.md) |
 
 S2 and S3 share no file and run side by side once S1 is integrated. red team: walked S1's first behaviour against
 `deck/daemon.mjs:299`: the hold must sit in the same `else` branch as the idle rule or a leashed test deck spawns a
@@ -137,4 +138,5 @@ leaving an orphan `tail` under the gate's census (S2 kills the process group); `
 | S1 | planned | | | | – | 1, 5, 6, 7, 8 |
 | S2 | planned | | | | S1 | 2, 3 |
 | S3 | planned | | | | S1 | 3, 4, 9 |
+| S4 (added) | planned | slice/stay-awake-s4 | | | S1 | 7 |
 | stay-awake | planned | feat/stay-awake | | | S1, S2, S3 | 1-9 |
