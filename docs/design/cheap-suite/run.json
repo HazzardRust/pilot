@@ -36,29 +36,30 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 9d87f46 (fix: a full annotation page proves no tree; pin red->green; light 36/36; ts APPROVE, security APPROVE); full re-gate waits on main's hold",
+      "state": "pushed 88dc79a; feat 94c4425 merged; ts + security APPROVE; integrating",
       "after": [
         "S3",
-        "S4"
+        "S4",
+        "S12"
       ],
       "branch": "slice/cheap-suite-s5",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s5"
     },
     {
       "slice": "S6",
-      "state": "integrating 6dc3fb9 (holds heavy slot); B1-B3 re-run green 14/14; B4 bar MISSED (30, 15 vs <=12) for the fundamentalist",
+      "state": "integrated at e5e448f; checks green; B4 bar MISSED (30, 15 vs <=12) for the fundamentalist",
       "branch": "slice/cheap-suite-s6",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s6"
     },
     {
       "slice": "S7",
-      "state": "pushed 48ce7bc (Verdict: approve); owes cold cargo build deck/rune + test:changed --since=717bb32",
+      "state": "pushed 47ccb79; feat 94c4425 merged; ts APPROVE; integrates after S5",
       "branch": "slice/cheap-suite-s7",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s7"
     },
     {
       "slice": "S8",
-      "state": "pushed a9ea85c (Verdict: APPROVE); S8.md B2=6 at 505014c; owes runs 2-3 of 8 files, GIT_TRACE base(s8-base)/slice, coverage, test:changed --since=717bb32, remove pilot-cheap-suite-s8-base",
+      "state": "pushed ab589dd; feat 94c4425 merged; ts APPROVE; B2 -6 meets bar 6 (record's MISSED was wrong); integrates after S7",
       "branch": "slice/cheap-suite-s8",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s8"
     },
@@ -79,7 +80,10 @@
         "S6",
         "S7",
         "S8",
-        "S9"
+        "S9",
+        "S12",
+        "S13",
+        "S14"
       ]
     },
     {
@@ -87,6 +91,30 @@
       "state": "integrated at fe80393; checks green",
       "branch": "slice/cheap-suite-s11",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s11"
+    },
+    {
+      "slice": "S12",
+      "state": "integrated at eb29c0f; hand-merged on the user's Allow (itm_4e4a2e791c89)",
+      "branch": "slice/cheap-suite-s12",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s12"
+    },
+    {
+      "slice": "S13",
+      "state": "integrated at e2e208f; hand-merged; 3-OS CI run 45197880294 green on the stack",
+      "after": [
+        "S12"
+      ],
+      "branch": "slice/cheap-suite-s13",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s13"
+    },
+    {
+      "slice": "S14",
+      "state": "integrated at 94c4425; hand-merged; feat tree identical to CI-green 4169195",
+      "after": [
+        "S13"
+      ],
+      "branch": "slice/cheap-suite-s14",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s14"
     }
   ],
   "findings": [
@@ -111,134 +139,9 @@
     "dropped: S5 typescript LOW proof computed on an already-landed feature (harmless)",
     "dropped: S5 security LOW proved = sha === null on rev-parse failure (still needs ^{tree}, else full)"
   ],
-  "next": "HOLD (main landing PR #140): S6 integrate finishing, then report quiet; after hold lifted: S6 checks; resume S5 fixer with go for re-gate, integrate; S7/S8 owed runs serially; S10; fundamentalist; QA",
-  "updatedAt": "2026-11-23T12:55:19.102Z",
+  "next": "integrating S5 (88dc79a), then checks; S7 (47ccb79); S8 (ab589dd); S10; fundamentalist (brief: S8 coverage drop on gate.mjs etc. from removed nested gate; S8 B2/B4 counted by V8 not GIT_TRACE); fix round; QA.",
+  "updatedAt": "2026-11-24T00:25:17.009Z",
   "friction": [
-    {
-      "agent": "pilot",
-      "what": "after the power cut the lane went to handoff-no-wait before cheap-suite, against the user's 'make sure this runs next' on the cheap-suite thread; the ticket thread was not read before the grant",
-      "evidence": "itm_52b72e87a2a3 reply 2026-11-22T14:23Z"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "successor brief said S1/S2/S4 implementers were dead; co-pilot spawned duplicates on live slices, stopped before any write",
-      "evidence": "S1, S2, S4 duplicates each report clean tree, no commits, no push",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "brief.md trailer session id differs from main's brief trailer",
-      "evidence": "session_01NXgSForDWcHA67cB28cNrm vs session_01NXgSFqofX9JXraJQMnd6vc; crew uses main's"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S2 implementer lost its reviewer Verdict and evidence rows in a context resume; review and evidence re-run",
-      "evidence": "main's forward: no Verdict line, no B<k> rows",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S1: nested slice tests without PILOT_GATE_SLOT=selected time out at 50 s while own gate holds a slot",
-      "evidence": "one wasted rerun",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S1: hidden-spawns text scan flags any `spawns (` in a template string",
-      "evidence": "one ~53 min full-suite run",
-      "size": 53
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S1/S4: reviewer hand-back lost on context resume, reviewer re-spawned",
-      "evidence": "S1 second reviewer; S4 both reviewers re-run by co-pilot",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S2 evidence: cold cargo builds over 5 min each push foreground calls to background",
-      "evidence": "328 s and 285 s builds",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S9: relative NODE_OPTIONS --import path for count-spawns fails when planted tests start node with repo cwd",
-      "evidence": "2 tests failed, one rerun with absolute file:/// path",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S9: per-file time bars unreadable under 100% CPU load, 2x swings between runs; spawn counts are the stable measure",
-      "evidence": "daemon 22.9/28.4/49.8 s",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S9 slice prescriptions written against costs absent at 91bb068 (files already on gitFixture, production git >half)",
-      "evidence": "gate2-base 118 git (66 production), landing-recut 114 (76)",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "live deck writes ~/.claude/pilot/deck.json mid-gate, gate prints home store changed",
-      "evidence": "S2 integrate log, S9 gate",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S6: selection argv over 24000 chars turns a slice gate into a 21-min full suite incl. cargo build (LNK1318 under contention)",
-      "evidence": "argv 35843 chars",
-      "size": 21
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S6: gitFixture shares closures across tests, a per-runner memo leaked; slice file did not own git-fixture.mjs",
-      "evidence": "1 full-suite regression, 3 files outside slice",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S6: land-clear under GIT_TRACE takes 1006 s on the shared machine",
-      "evidence": "first attempt timed out at 900 s",
-      "size": 17
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S8 per-file times useless under load",
-      "evidence": "land-prune 815 s, land-clear 1468 s in run 1"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S8.md line refs for install-command match no single test",
-      "evidence": "S8.md cites install-command :130, :140"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S8 B4 needed a production seam the slice prohibited; B2 7 fewer crossed scenarios",
-      "evidence": "seam 13d1553 options.npm; B2 counted 6"
-    },
-    {
-      "agent": "pilot:typescript-reviewer",
-      "what": "S11 Misses line false: permanent lock EPERM loops forever",
-      "evidence": "gate-slots.mjs:58-60, ageOf 0 for a missing lock"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "the hello from the co-pilot arrived mid-task and the child named another address",
-      "evidence": "S8.md fixer report, 505014c"
-    },
-    {
-      "agent": "pilot",
-      "what": "successor brief said the previous crew was dead; architect and S1/S2/S4 implementers had survived /clear, so a duplicate architect and 3 duplicate implementers were spawned and stood down",
-      "evidence": "hand-off notice gave no list of live agents; task notifications arrived after the spawns",
-      "size": 4
-    },
-    {
-      "agent": "pilot",
-      "what": "pilot wait prints a deck timeout default as REPLY exactly like a user's answer",
-      "evidence": "itm_9914932172bc, itm_5d271bb6c718, itm_e374d036106d, itm_b0df0f22f83f resolved 'no answer 20 min'; told apart only by deck_read",
-      "size": 4
-    },
     {
       "agent": "pilot",
       "what": "signed landings failed 4 times on environment, not code: slot takeover EPERM, 30-min limit under crew load, disk full (33 Rune target dirs ~390 GB), 30-min limit with a cold Rune build (8m04s)",
@@ -345,6 +248,121 @@
       "what": "the co-pilot hello arrives mid-task after the brief, so the child reads it as a second instruction",
       "evidence": "S5 fixer report: hello arrived mid-task; this report is that reply",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S6 integrate's selection overflowed argv again and ran the full suite",
+      "evidence": "selection is 37013 characters of argv, over 24000",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "six landing retries of PR #140 diagnosed in the pilot: logs, CPU sampler, Defender finding",
+      "size": 40000
+    },
+    {
+      "kind": "drain",
+      "what": "deck idle/empty-lane hook fired on a co-pilot waiting on a 25-min gate; three co-pilot respawns",
+      "size": 25000
+    },
+    {
+      "kind": "drain",
+      "what": "two features both numbered ADR 0210, found only at landing; deck restarts the merge when a commit sits on top of the resolved merge",
+      "size": 15000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7 gate results lived only in context and were lost to compaction; both owed runs rerun (~9.5 min)",
+      "evidence": "S7 report: B4 comparison lost, both runs repeated on 48ce7bc",
+      "size": 570
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "cold Rune build costs more than the slice's node tests, per worktree (seconds)",
+      "evidence": "cargo test --no-run 232 s vs ~122 s node tests on 48ce7bc",
+      "size": 232
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "git add of the old path after git mv failed the whole add; rename split into its own commit",
+      "evidence": "S5 9b527bb then 62a4e4c"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a background command's exit 0 was its trailing echo, not the test run's",
+      "evidence": "S5 scratchpad/s5-changed.log: 1 fail under exit 0"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 and S7 hand-backs reached main, not the co-pilot; main forwarded them",
+      "evidence": "coordinator forwards of S7 and S5 reports"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a fresh worktree has no node_modules; 59 Rune tests fail ERR_MODULE_NOT_FOUND (support/mod.rs:89 shells out to bin/pilot.mjs) until npm ci, one misleading cargo run",
+      "evidence": "S12 report: 59 failures before npm ci, 172 pass after",
+      "size": 59
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "base test-quiet's nested gate made every S8 before-run slow and red",
+      "evidence": "424.7 s + fail under GIT_TRACE; 54.7 s + fail under coverage",
+      "size": 425
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8's B1 bar is a raw grep count of assert.; a reviewer-asked dedupe of a duplicate assert reads as a miss",
+      "evidence": "land-conflict 46 -> 45, a9ea85c"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no ready-made counter of land() calls; marker chosen by reading land.mjs",
+      "evidence": "git symbolic-ref --short HEAD at scripts/land.mjs:64"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the brief's unconfirmed path hypothesis cost one failed attempt at forcing posix paths on Windows",
+      "evidence": "S13: replacing path functions broke node's module loader"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed exits 1 on a pre-existing Rune cargo fmt diff, so its exit code cannot be read as the slice's",
+      "evidence": "S13 --since=b21f2de: 551 pass 0 fail, exit 1 from fmt on 8 files"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no CI runs on a slice branch, so a Linux-only red cannot be shown there without a manual dispatch",
+      "evidence": "gate.yml and ci.yml triggers: PRs, main/pilot pushes, workflow_dispatch"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "cargo fmt --check prints \\\\?\\ paths on Windows, so grepping file names needs a sed first",
+      "evidence": "S14 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced twice while three implementers were live in background test runs, so it could not take their reports",
+      "evidence": "two handback-send-enforce notices, each right after the children entered background runs"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "Monitor poll loop refused by a hook; stacked waits, two duplicates stopped by id",
+      "evidence": "PreToolUse:Monitor hook error; TaskStop bbn16uihh, b6ug91ti2"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed pulls in the cargo suite when a feat merge brings deck/rune test changes the slice does not own; gate ran past 180 s",
+      "evidence": "S7: node 148 s + cargo 51.6 s, all for rune test files outside the slice"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5/S7 reports reached main, not the co-pilot, after the co-pilot's forced hand-back",
+      "evidence": "coordinator relayed S5 88dc79a and S7 47ccb79 reports"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7.md B3 says 4 tests; the file has 5 (slice file stale)",
+      "evidence": "deck/test/client-rejoin.test.mjs 5 pass at 47ccb79"
     }
   ]
 }
