@@ -3,6 +3,7 @@
  * settle (handoff-self-close spec 2, 6) read it.
  */
 
+import { CREW_WAIT_MS } from './crew-wait.mjs';
 import { HANDOFF_FAILED, KIND_CREW_HANDOFF, KIND_TICKET, chosenOf, isOpen, messagesOf, sameRepo, stateOf } from './items.mjs';
 
 /**
@@ -49,8 +50,7 @@ export function successorOwedOf(items, repo, coPilot) {
     items.some((ticket) => ticket?.id === item.ticket && ticket.kind === KIND_TICKET && stateOf(ticket) === 'yellow' && sameRepo(ticket.repo, repo)));
 }
 
-/** How long a crew-handoff stays owed a successor before the deck wakes the pilot (crew-handoff-trace spec 6, A3). */
-export const CREW_WAIT_MS = 10 * 60_000;
+export { CREW_WAIT_MS };
 
 /**
  * `successorOwedOf`'s crew-handoffs due by `now`, at `postedAt + CREW_WAIT_MS`, each `{ item, ticket, at }`; none the

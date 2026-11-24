@@ -19,6 +19,7 @@
  */
 
 import { pathKey as repoKey } from '../hooks/lib/platform.js';
+import { crewWaitingOf } from './crew-wait.mjs';
 
 import {
   DISMISSED_BY_USER, KIND_STEPS, REPORT_DUE, SIGN_OFF, NOT_YET, SHA_FIELD, URL_FIELD, LOGIN_FIELD, SCREENS_FIELD, SLICE_FIELD, REPO_FIELD, NEXT_FIELD, DIR_FIELD, WORKDIR_FIELD, SHELL_FIELD, COMMENT_FIELD, CHECKS_FIELD,
@@ -758,12 +759,9 @@ export function appearsInYours(item) {
 
 /**
  * The five states of a thread, worded as the spec words them (line 4, A7). They
- * are *derived*: no agent types one, nothing is stored on the item to hold one,
- * and the clock is consulted only for a hand-off's `unacknowledged` (spec 19) —
- * otherwise two facts the thread already carries decide it,
- * the last message in it and whether the hand-off of that message was recorded
- * (D4). So a state cannot drift from the thread it describes, and a deck nobody
- * has touched for a week still reads correctly.
+ * are *derived*: nothing is stored on the item to hold one, and the clock is consulted only for
+ * `unacknowledged` (spec 19) and a crew-handoff's `waiting <age>`; otherwise the last message and whether
+ * its hand-off was recorded (D4) decide it, so a state cannot drift from the thread it describes.
  *
  * The last message is what the state is read off, because it is the only one
  * that can still be waiting on anybody: an older reply that was handed over
@@ -776,6 +774,8 @@ export function appearsInYours(item) {
  */
 export function threadState(item, now = Date.now()) {
   if (!isOpen(item)) return 'resolved';
+  const waiting = crewWaitingOf(item, now);
+  if (waiting !== null) return waiting;
   if (isUnacknowledged(item, now)) return 'unacknowledged';
   // A user's word on a record is never picked up (report-record spec 3), so the state reads past it.
   const last = lastSaid(isRecord(item) ? { replies: messagesOf(item).filter((message) => message.from !== 'user') } : item);

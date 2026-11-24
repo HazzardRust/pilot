@@ -4,7 +4,8 @@
  * (L1), each through `resolveItem` with its `resolved` trace row (L2), never over an unanswered press (A1).
  */
 
-import { openCrewHandoffsOf, settledCrewHandoffsOf } from './crew-handoff.mjs';
+import { CREW_WAIT_MS, openCrewHandoffsOf, settledCrewHandoffsOf } from './crew-handoff.mjs';
+import { KIND_CREW_HANDOFF, isOpen } from './items.mjs';
 import { DeckRefusal, listItems, resolveItem } from './store.mjs';
 import { step } from '../hooks/lib/wrapper-log.js';
 
@@ -23,6 +24,23 @@ export function closeCrewHandoffs(ticketId) {
   }).join('');
 }
 
+/** Each open crew-handoff's one repaint timer, by item id, at the moment it would read `waiting <age>`. */
+const waitTimers = new Map();
+
+/** One unref'd one-shot per open crew-handoff at `postedAt + CREW_WAIT_MS` (spec 5, L5), so the pages repaint as it crosses; never one already past. */
+function armWaitRepaints(items, announce) {
+  const now = Date.now();
+  for (const item of items) {
+    if (item?.kind !== KIND_CREW_HANDOFF || !isOpen(item) || waitTimers.has(item.id)) continue;
+    const at = Date.parse(item.postedAt) + CREW_WAIT_MS;
+    if (!(at > now)) continue;
+    waitTimers.set(item.id, setTimeout(() => {
+      waitTimers.delete(item.id);
+      announce();
+    }, at - now).unref());
+  }
+}
+
 /** The items whose close the deck has already logged as refused, so each is logged once and never retried (L6). */
 const refused = new Set();
 
@@ -32,13 +50,16 @@ const refused = new Set();
  * (L6). Calls `announce` once when it closed any, so the re-announcement settles nothing and stops. Returns the count.
  */
 export function settleCrew(announce) {
+  let items;
   let settled;
   try {
-    settled = settledCrewHandoffsOf(listItems());
+    items = listItems();
+    settled = settledCrewHandoffsOf(items);
   } catch {
     // An unreadable store is `armHandoffs`'s to log, in the read it makes next; the settle closes nothing.
     return 0;
   }
+  armWaitRepaints(items, announce);
   let closed = 0;
   for (const { item, why } of settled) {
     if (refused.has(item.id)) continue;
