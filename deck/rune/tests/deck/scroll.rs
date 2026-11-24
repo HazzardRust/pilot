@@ -97,8 +97,11 @@ fn focused(rt: &Runtime<State>) -> Option<String> {
         .and_then(|e| e.key)
 }
 
-fn in_window(r: [f32; 4]) -> bool {
-    r[1] >= 0.0 && r[1] + r[3] <= HEIGHT
+/// Whether `r` shows between the fixed tabs header and the window's bottom edge: an element
+/// scrolled under the header is not in view.
+fn in_window(rt: &Runtime<State>, r: [f32; 4]) -> bool {
+    let ([_, top, _, height], _) = rt.presented("header").expect("the header is drawn");
+    r[1] >= top + height && r[1] + r[3] <= HEIGHT
 }
 
 fn last(rt: &Runtime<State>) -> [f32; 4] {
@@ -126,7 +129,10 @@ fn a_thread_opens_at_its_last_message() {
     let (deck, id) = long_thread();
     let rt = window(&deck, &thread_query(&id));
     let r = last(&rt);
-    assert!(in_window(r), "the last message is in the window: {r:?}");
+    assert!(
+        in_window(&rt, r),
+        "the last message is in the window: {r:?}"
+    );
 }
 
 #[test]
@@ -135,11 +141,17 @@ fn the_wheel_reaches_the_top_and_the_bottom() {
     let mut rt = window(&deck, &thread_query(&id));
     wheel(&mut rt, 2000.0, 20);
     let title = rect_with(&rt, "Which port?");
-    assert!(in_window(title), "the wheel up shows the title: {title:?}");
-    assert!(!in_window(last(&rt)), "and the last message has left");
+    assert!(
+        in_window(&rt, title),
+        "the wheel up shows the title: {title:?}"
+    );
+    assert!(!in_window(&rt, last(&rt)), "and the last message has left");
     wheel(&mut rt, -2000.0, 20);
     let r = last(&rt);
-    assert!(in_window(r), "the wheel down shows the last message: {r:?}");
+    assert!(
+        in_window(&rt, r),
+        "the wheel down shows the last message: {r:?}"
+    );
 }
 
 #[test]
@@ -148,12 +160,15 @@ fn keys_scroll_the_centre() {
     let mut rt = window(&deck, &thread_query(&id));
     assert!(!rt.has_focus(), "a thread just opened holds no focus");
     press(&mut rt, Key::PageUp);
-    assert!(!in_window(last(&rt)), "PageUp moves the last message out");
+    assert!(
+        !in_window(&rt, last(&rt)),
+        "PageUp moves the last message out"
+    );
     press(&mut rt, Key::End);
-    assert!(in_window(last(&rt)), "End brings it back");
+    assert!(in_window(&rt, last(&rt)), "End brings it back");
     press(&mut rt, Key::Home);
     let title = rect_with(&rt, "Which port?");
-    assert!(in_window(title), "Home shows the title: {title:?}");
+    assert!(in_window(&rt, title), "Home shows the title: {title:?}");
     let before = last(&rt)[1];
     press(&mut rt, Key::Down);
     let moved = before - last(&rt)[1];
@@ -180,6 +195,8 @@ fn a_key_in_the_reply_box_is_not_a_scroll() {
         Some("reply-text"),
         "the box holds focus"
     );
+    // At the bottom, where the box shows: Home, Up and PageUp would move the centre were they a
+    // scroll. Scrolled up, the box is off screen and a key's caret reveal moves the centre.
     for key in [
         Key::Home,
         Key::End,
@@ -221,14 +238,14 @@ fn home_opens_at_the_top_and_the_wheel_reaches_the_last_card() {
     };
     let cards = titles(&rt);
     assert!(
-        in_window(cards[0]),
+        in_window(&rt, cards[0]),
         "the first card is in the window: {:?}",
         cards[0]
     );
-    assert!(!in_window(cards[39]), "the last card is below it");
+    assert!(!in_window(&rt, cards[39]), "the last card is below it");
     wheel(&mut rt, -2000.0, 40);
     let r = titles(&rt)[39];
-    assert!(in_window(r), "the wheel reaches the last card: {r:?}");
+    assert!(in_window(&rt, r), "the wheel reaches the last card: {r:?}");
 }
 
 #[test]
@@ -239,12 +256,12 @@ fn a_live_refetch_keeps_a_scrolled_up_thread_in_place() {
     press(&mut rt, Key::PageUp);
     let visible = (1..=MESSAGES)
         .map(|n| format!("Message number {n}"))
-        .find(|words| in_window(rect_with(&rt, words)))
+        .find(|words| in_window(&rt, rect_with(&rt, words)))
         .expect("a message in the window");
     let before = rect_with(&rt, &visible)[1];
-    assert!(!in_window(last(&rt)), "scrolled up off the bottom");
+    assert!(!in_window(&rt, last(&rt)), "scrolled up off the bottom");
     assert!(
-        !in_window(rect_with(&rt, "Which port?")),
+        !in_window(&rt, rect_with(&rt, "Which port?")),
         "and not to the top: the thread opened at its bottom"
     );
 
