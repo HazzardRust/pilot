@@ -1,0 +1,46 @@
+left running: none
+spawns 13571 (node 831, git 12472, other 268)
+home store changed: C:\Users\jrylk\.claude\pilot\deck.json; live deck 8472 up
+file                                              s  tests  spawns   git  node  other
+scripts/test/land-clear.test.mjs              123.3     12    1012  1000     0     12
+scripts/test/land.test.mjs                     72.4     12     583   570     0     13
+scripts/test/integrate.test.mjs                62.7     21     446   427     0     19
+scripts/test/land-adr-branch.test.mjs          61.6      6     414   407     0      7
+scripts/test/release.test.mjs                  59.9      9     473   466     0      7
+scripts/test/land-conflict.test.mjs            50.8     10     423   419     0      4
+scripts/test/integrate-base.test.mjs           40.7     11     287   281     0      6
+scripts/test/sync.test.mjs                     39.6     14     316   308     0      8
+scripts/test/land-generated.test.mjs           37.6      5     257   254     0      3
+scripts/test/integrate-slice-commit.test.mjs   35.6     12     255   248     0      7
+scripts/test/land-feature-line.test.mjs        35.4      6     261   256     0      5
+scripts/test/branches.test.mjs                 34.5     14     246   244     2      0
+scripts/test/integrate-prune.test.mjs          33.6      8     234   226     0      8
+scripts/test/land-catchup.test.mjs             32.3      6     245   243     0      2
+hooks/test/inbox.test.js                       31.4     66     129     0   129      0
+scripts/test/worktrees.test.mjs                29.9     16     292   289     3      0
+scripts/test/land-prune.test.mjs               29.8      5     241   236     0      5
+scripts/test/restack.test.mjs                  29.3      9     175   175     0      0
+scripts/test/land-suite.test.mjs               29.2      4     169   160     0      9
+scripts/test/restack-squash.test.mjs           28.7      7     197   197     0      0
+scripts/test/worktrees-landed.test.mjs         26.9      6     252   252     0      0
+scripts/test/glossary-diff.test.mjs            26.7     11     283   279     4      0
+scripts/test/land-remote.test.mjs              25.3      3     201   196     0      5
+deck/test/host-contract.test.mjs               24.8     16      26     0     0     26
+scripts/test/land-chain.test.mjs               24.7      4     184   181     0      3
+scripts/test/integrate-main.test.mjs           23.7      4     146   145     0      1
+scripts/test/land-main-pr.test.mjs             23.1     10     179   176     0      3
+scripts/test/integrate-select.test.mjs         22.7      4     119   110     0      9
+scripts/test/integrate-landed.test.mjs         22.5      5     149   144     0      5
+deck/test/daemon.test.mjs                      21.0     75      24     0    24      0
+scripts/test/integrate-remote.test.mjs         20.4      3     144   141     0      3
+scripts/test/merge-generated.test.mjs          19.8     10     137   134     0      3
+scripts/test/integrate-chain.test.mjs          19.7      5     123   119     0      4
+scripts/test/integrate-copies.test.mjs         18.9      8     149   149     0      0
+scripts/test/land-adr.test.mjs                 18.4      3     121   118     0      3
+scripts/test/base-remote.test.mjs              18.1      7     133   133     0      0
+scripts/test/feature-pr.test.mjs               18.0     13     101    98     0      3
+scripts/test/select-tests.test.mjs             17.6     16     155   155     0      0
+scripts/test/sync-remote.test.mjs              16.0      5     129   125     0      4
+scripts/test/integrate-dir.test.mjs            15.5      5     115   112     0      3
+rest 588 files 774.8 s 3980 spawns
+total 628 files 2096.8 s 13505 spawns (git 12472)
