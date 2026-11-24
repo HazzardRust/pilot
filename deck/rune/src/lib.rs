@@ -8,5 +8,6 @@ pub mod client;
 pub mod layout;
 pub mod live;
 pub mod prefs;
+pub mod preview;
 pub mod regions;
 pub mod theme;

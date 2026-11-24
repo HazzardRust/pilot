@@ -404,6 +404,8 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         .child(
             text_input(&local.draft, type_::BODY)
                 .key("reply-text")
+                // The markdown preview: painted over the draft, never written into it (L2).
+                .decorations(crate::preview::spans(&local.draft, dark))
                 .label("Reply")
                 .placeholder("Reply to the pilot.", k.quiet)
                 .on_edit(|s: &mut State| &mut s.regions.reply.draft)
