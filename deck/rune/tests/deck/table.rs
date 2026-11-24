@@ -51,18 +51,30 @@ fn tables_in(md: &str) -> Vec<Vec<Vec<String>>> {
     tables
 }
 
+/// S5, the user: "Table = button inserting a 2x2 at the cursor". The prose part splits at the caret.
 #[test]
-fn the_table_button_inserts_a_2_x_2_grid_after_the_carets_line() {
-    let mut local = typed_at("a\nb", 0);
+fn the_table_button_inserts_a_2_x_2_grid_at_the_caret() {
+    let mut local = typed_at("one two\nthree", 3);
     local.insert_table();
-    assert_eq!(local.draft.text, "a");
+    assert_eq!(local.draft.text, "one");
     assert_eq!(local.tables.len(), 1);
     assert_eq!(local.tables[0].0.size(), (2, 2));
-    assert_eq!(local.tables[0].1.text, "b");
+    assert_eq!(local.tables[0].1.text, " two\nthree");
 }
 
+/// At a line's end or start, the line break beside the caret is the grid's own: no blank line.
 #[test]
-fn a_table_inserted_on_the_last_line_leaves_the_prose_whole() {
+fn a_table_at_a_line_end_or_start_takes_the_break_beside_it() {
+    let mut local = typed_at("a\nb", 1);
+    local.insert_table();
+    assert_eq!(local.draft.text, "a");
+    assert_eq!(local.tables[0].1.text, "b");
+
+    let mut local = typed_at("a\nb", 2);
+    local.insert_table();
+    assert_eq!(local.draft.text, "a");
+    assert_eq!(local.tables[0].1.text, "b");
+
     let mut local = typed_at("a\nb", 3);
     local.insert_table();
     assert_eq!(local.draft.text, "a\nb");
@@ -70,15 +82,18 @@ fn a_table_inserted_on_the_last_line_leaves_the_prose_whole() {
 }
 
 #[test]
-fn a_table_goes_after_the_line_of_the_prose_part_holding_the_caret() {
-    let mut local = typed_at("é one\né two", 4);
+fn a_table_goes_at_the_caret_of_the_prose_part_holding_it() {
+    // Byte 1 is inside "é": the caret is put back on a char boundary, never a panic.
+    let mut local = typed_at("é one", 1);
     local.insert_table();
-    assert_eq!(local.draft.text, "é one");
+    assert_eq!(
+        local.draft.text.len() + local.tables[0].1.text.len(),
+        "é one".len()
+    );
     local.tables[0].1 = TextEdit::new("x\ny");
-    local.tables[0].1.set_caret(0);
+    local.tables[0].1.set_caret(1);
     local.tables[0].1.focused = true;
     local.insert_table();
-    assert_eq!(local.draft.text, "é one");
     let prose: Vec<_> = local.tables.iter().map(|(_, p)| p.text.as_str()).collect();
     assert_eq!(prose, ["x", "y"]);
 }
@@ -227,7 +242,7 @@ fn a_table_alone_is_its_markdown() {
 }
 
 fn table_local() -> Local {
-    let mut local = typed_at("before\nafter", 0);
+    let mut local = typed_at("before\nafter", 6);
     local.insert_table();
     fill(&mut local, 0, &[&["h", "k"], &["1", "2"]]);
     local
@@ -350,6 +365,100 @@ fn tab_shift_tab_and_return_move_between_cells() {
     );
 }
 
+/// S5, Obsidian's way: Tab off a row's end goes to the next row's first cell; Tab in the last cell
+/// adds a row and goes into it.
+#[test]
+fn tab_in_the_last_cell_adds_a_row_and_moves_into_it() {
+    use rune::Key;
+    let mut rt = grid_with_caret_in("cell-0-0-1");
+    press(&mut rt, Key::Tab, false);
+    assert_eq!(
+        focused(&rt).as_deref(),
+        Some("cell-0-1-0"),
+        "Tab off a row's end"
+    );
+
+    let mut rt = grid_with_caret_in("cell-0-1-1");
+    press(&mut rt, Key::Tab, false);
+    assert_eq!(rt.state.regions.reply.tables[0].0.size(), (3, 2));
+    assert_eq!(
+        focused(&rt).as_deref(),
+        Some("cell-0-2-0"),
+        "Tab in the last cell"
+    );
+    assert!(!rt.state.pending.is_sent("reply-press"));
+}
+
+/// S5: Shift+Tab from a row's first cell goes to the row above's last; Up in a cell's second line
+/// stays in the cell, and only from its first line leaves it.
+#[test]
+fn shift_tab_wraps_rows_and_up_stays_in_a_two_line_cell() {
+    use rune::Key;
+    let mut rt = grid_with_caret_in("cell-0-1-0");
+    press(&mut rt, Key::Tab, true);
+    assert_eq!(focused(&rt).as_deref(), Some("cell-0-0-1"), "Shift+Tab");
+
+    let mut local = table_local();
+    local.tables[0].0.cell_mut(1, 1).replace_text("x\ny");
+    let mut rt = box_drawn(local);
+    click(&mut rt, "cell-0-1-1");
+    rt.state.regions.reply.tables[0]
+        .0
+        .cell_mut(1, 1)
+        .set_caret(3);
+    press(&mut rt, Key::Up, false);
+    assert_eq!(
+        focused(&rt).as_deref(),
+        Some("cell-0-1-1"),
+        "Up from line 2"
+    );
+    rt.state.regions.reply.tables[0]
+        .0
+        .cell_mut(1, 1)
+        .set_caret(1);
+    press(&mut rt, Key::Up, false);
+    assert_eq!(
+        focused(&rt).as_deref(),
+        Some("cell-0-0-1"),
+        "Up from line 1"
+    );
+}
+
+/// S5: Shift+Return breaks a line inside the cell; the grid keeps its size and the caret its cell.
+#[test]
+fn shift_return_breaks_a_line_inside_a_cell() {
+    use rune::Key;
+    let mut rt = grid_with_caret_in("cell-0-1-0");
+    press(&mut rt, Key::Enter, true);
+    rt.paste("x");
+    rt.frame(1.0 / 60.0);
+    let table = &rt.state.regions.reply.tables[0].0;
+    assert_eq!(table.size(), (2, 2));
+    assert_eq!(
+        table.cell(1, 0).text.matches('\n').count(),
+        1,
+        "{:?}",
+        table.cell(1, 0).text
+    );
+    assert_eq!(focused(&rt).as_deref(), Some("cell-0-1-0"));
+    assert!(!rt.state.pending.is_sent("reply-press"));
+}
+
+/// S5: a cell's line break is `<br>` and its `|` is `\|`, so the GFM keeps one row and one cell.
+#[test]
+fn a_cells_line_break_is_written_as_br() {
+    let mut table = Table::new(2, 2);
+    table.cell_mut(0, 0).replace_text("h");
+    table.cell_mut(1, 0).replace_text("a\nb | c");
+    table.cell_mut(1, 1).replace_text("d\r\ne");
+    let md = table.markdown();
+    assert_eq!(md, "| h |  |\n| --- | --- |\n| a<br>b \\| c | d<br>e |");
+    let read = tables_in(&md);
+    assert_eq!(read.len(), 1);
+    assert_eq!(read[0].len(), 2, "two rows: {read:?}");
+    assert_eq!(read[0][1].len(), 2, "two cells: {read:?}");
+}
+
 #[test]
 fn up_from_the_header_and_down_from_the_last_row_leave_the_grid() {
     use rune::Key;
@@ -362,25 +471,63 @@ fn up_from_the_header_and_down_from_the_last_row_leave_the_grid() {
     assert_eq!(focused(&rt).as_deref(), Some("reply-text-1"), "Down");
 }
 
+/// S5: the five buttons under a grid are gone; the right-click menu replaces them.
 #[test]
-fn the_controls_change_the_grid_and_keep_the_caret_in_it() {
-    let mut rt = grid_with_caret_in("cell-0-1-1");
-    for (control, size) in [
-        ("table-0-add-row", (3, 2)),
-        ("table-0-add-col", (3, 3)),
-        ("table-0-remove-row", (2, 3)),
-        ("table-0-remove-col", (2, 2)),
+fn no_controls_are_drawn_under_a_grid() {
+    let rt = grid_with_caret_in("cell-0-1-1");
+    let controls: Vec<_> = rt
+        .elements()
+        .into_iter()
+        .filter_map(|e| e.key)
+        .filter(|k| k.starts_with("table-0-"))
+        .collect();
+    assert!(controls.is_empty(), "controls drawn: {controls:?}");
+}
+
+/// Right-clicks `cell` and picks `id` from the menu it opens, through Rune's own popup path.
+fn pick(rt: &mut rune::Runtime<pilot_deck::app::State>, cell: &str, id: &str) {
+    let e = at(rt, cell);
+    let (x, y) = (e.rect[0] + e.rect[2] / 2.0, e.rect[1] + e.rect[3] / 2.0);
+    rt.pointer_move(x, y);
+    rt.secondary_down(x, y);
+    rt.secondary_up(x, y);
+    rt.frame(1.0 / 60.0);
+    let menu = rt
+        .popup_menu()
+        .unwrap_or_else(|| panic!("right-click on {cell} opened no menu"));
+    assert!(menu.find(id).is_some(), "{id} not in the menu: {menu:?}");
+    rt.resolve_popup(Some(id)).expect("the pick lands");
+    rt.frame(1.0 / 60.0);
+}
+
+/// S5, Obsidian's way: right-click on a cell, and each action acts at that cell.
+#[test]
+fn the_cell_menu_reshapes_the_grid_at_that_cell() {
+    for (id, size) in [
+        ("add-row", (3, 2)),
+        ("add-col", (2, 3)),
+        ("delete-row", (1, 2)),
+        ("delete-col", (2, 1)),
     ] {
-        click(&mut rt, control);
-        rt.frame(1.0 / 60.0);
-        assert_eq!(rt.state.regions.reply.tables[0].0.size(), size, "{control}");
+        let mut rt = grid_with_caret_in("cell-0-0-0");
+        pick(&mut rt, "cell-0-1-1", id);
+        assert_eq!(rt.state.regions.reply.tables[0].0.size(), size, "{id}");
         let at = focused(&rt);
         assert!(
             at.as_deref().is_some_and(|k| k.starts_with("cell-0-")),
-            "{control} left the caret at {at:?}"
+            "{id} left the caret at {at:?}"
         );
     }
-    click(&mut rt, "table-0-delete");
+    // Acting at the right-clicked cell, not the caret's: row 1 holds "1", "2"; column 1 "k", "2".
+    let mut rt = grid_with_caret_in("cell-0-0-0");
+    pick(&mut rt, "cell-0-1-1", "delete-col");
+    assert_eq!(
+        rt.state.regions.reply.tables[0].0.markdown(),
+        "| h |\n| --- |\n| 1 |"
+    );
+
+    let mut rt = grid_with_caret_in("cell-0-0-0");
+    pick(&mut rt, "cell-0-1-1", "delete-table");
     assert!(rt.state.regions.reply.tables.is_empty());
     assert_eq!(rt.state.regions.reply.draft.text, "before\nafter");
 }
@@ -395,7 +542,7 @@ fn deleting_a_second_grid_with_no_prose_after_it_keeps_the_prose_before() {
     local.tables.push((Table::new(2, 2), TextEdit::new("")));
     let mut rt = box_drawn(local);
     click(&mut rt, "cell-1-0-0");
-    click(&mut rt, "table-1-delete");
+    pick(&mut rt, "cell-1-0-0", "delete-table");
     let reply = &rt.state.regions.reply;
     assert_eq!(reply.tables.len(), 1);
     assert_eq!(reply.tables[0].1.text, "mid");
