@@ -50,9 +50,10 @@ A ticket whose signed plan has 2 slices or fewer takes the **short path**: the p
 
 | Step | Runs |
 | --- | --- |
-| a slice's phase gate, the fix round, QA, the lander's resolution | the selection (`npm run test:changed`) |
-| `pilot integrate` (the slice, the base, a resumed merge) | the selection since the start of the merge |
-| `pilot sync` | the selection |
+| a slice's phase gate | the selection at slice scope (`PILOT_TEST_SCOPE=slice`): a trigger file, a script no test reaches or an overlong selection runs the matched files and the whole-tree tests, cargo does not run, and the scope line ends `; deferred: <reason>, ...` |
+| the fix round, QA, the lander's resolution | the selection (`npm run test:changed`), wide |
+| `pilot integrate` (the slice, the base, a resumed merge) | the selection since the start of the merge, wide: what the phase gate deferred runs here |
+| `pilot sync` | the selection, wide |
 | `pilot land`'s merge of the feature into `pilot` | the full suite, once |
 
 A repository with no `test:changed` script, or one tested by `git config pilot.test`, runs its own full test command at every step. The Linux referee and CI run `node scripts/gate.mjs`, full, unchanged (ADR 0166).

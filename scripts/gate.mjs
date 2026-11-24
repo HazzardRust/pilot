@@ -276,6 +276,9 @@ function homeStoreLine(file, before, deckPid) {
   return { red: false, line: `home store changed: ${file}; live deck ${deck ?? 'unknown'} up` };
 }
 
+/** The skip line of a slice-scope gate's cargo step: integrate's wide gate runs it (tested-once spec 3). */
+const CARGO_DEFERRED = 'rune deck: deferred to integrate';
+
 /**
  * The Rune deck's `cargo fmt --check` then `cargo test` (rune-deck-ui S19; A3; ui-design-workflow S7) when
  * `which('cargo')` finds it on Windows, else the one line the gate prints instead: off Windows the deck's tests
@@ -284,7 +287,8 @@ function homeStoreLine(file, before, deckPid) {
  * The command is the path `which` found: a bare `cargo` is looked up in the checkout first on Windows.
  * Its `env` is what the spawn adds: `CARGO_TARGET_DIR`, the shared Rune build (cheap-suite S3; L5).
  * A `selection` with files (a `--since` gate, never a full run) whose `changed` names nothing under `deck/`
- * and no `FULL_TRIGGERS` file skips it (spec 8).
+ * and no `FULL_TRIGGERS` file skips it (spec 8). At slice scope, `env.PILOT_TEST_SCOPE` `slice`, it is deferred to
+ * integrate's wide gate (tested-once spec 3).
  */
 export function cargoStep(env, which = (cmd) => onSearchPath(`${cmd}.exe`, env, platform), platform = hostPlatform(), selection) {
   if (platform !== 'win32') return { skip: 'rune deck: cargo test runs on Windows only, skipped' };
@@ -292,6 +296,7 @@ export function cargoStep(env, which = (cmd) => onSearchPath(`${cmd}.exe`, env, 
   if (selection?.files && !selection.changed.some((rel) => rel.startsWith('deck/') || FULL_TRIGGERS.includes(rel))) {
     return { skip: `rune deck: nothing under deck/ changed since ${selection.since.slice(0, 7)}, skipped` };
   }
+  if (env.PILOT_TEST_SCOPE === 'slice') return { skip: CARGO_DEFERRED };
   const cargo = which('cargo');
   if (cargo === null) return { skip: 'rune deck: cargo not on PATH, skipped' };
   const manifest = ['--manifest-path', 'deck/rune/Cargo.toml'];
@@ -377,8 +382,14 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
     process.stderr.write('gate: --since takes its ref as --since=<ref>\n');
     return 1;
   }
+  // tested-once A2: `pilot test --scope slice` sets it; anything else is wide.
+  const scope = process.env.PILOT_TEST_SCOPE === 'slice' ? 'slice' : 'wide';
+  // The wide call is unchanged: `selectTests`'s default scope is wide.
+  if (sinceArg !== undefined) selection = select({ cwd, since: sinceArg.slice('--since='.length), ...(scope === 'slice' ? { scope } : {}) });
+  const cargo = homeStore !== undefined && which ? cargoStep({ ...process.env, PILOT_TEST_SCOPE: scope }, which, platform, selection) : undefined;
+  // A deferred cargo step is named in the scope line, so the run reads as incomplete (tested-once spec 1, 3).
+  if (selection && cargo?.skip === CARGO_DEFERRED) selection = { ...selection, deferred: [...(selection.deferred ?? []), 'cargo'] };
   if (sinceArg !== undefined) {
-    selection = select({ cwd, since: sinceArg.slice('--since='.length) });
     process.stdout.write(`${scopeLine(selection)}\n`);
     args = args.filter((arg) => !/^--since(=|$)/.test(arg));
   }
@@ -414,7 +425,7 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
     if (run.error) process.stderr.write(`gate: node --test did not start: ${run.error.message}\n`);
     // rune-deck-ui S19: inside the home-store window and under its guard env, so a Rust test's scratch daemon
     // that writes the home store is caught, and before the census, so one left running is too.
-    const rune = guard && which ? runeDeck(cargoStep(process.env, which, platform, selection), { spawn, cwd, env: gateEnv(process.env, held.slot, file, guard), bound, stale }) : 0;
+    const rune = guard && cargo ? runeDeck(cargo, { spawn, cwd, env: gateEnv(process.env, held.slot, file, guard), bound, stale }) : 0;
     let after;
     try {
       if (before instanceof Error) throw before;
