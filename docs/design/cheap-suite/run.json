@@ -112,111 +112,51 @@
     },
     {
       "slice": "S15",
-      "state": "integrated",
+      "state": "integrated 86e4dcc",
       "after": [
         "S10"
       ],
       "branch": "slice/cheap-suite-s15",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s15"
+    },
+    {
+      "slice": "cheap-suite",
+      "state": "fixing: fix round live; QA read-only pass done at 86e4dcc: spec 4 FAIL 1,354 s vs 900 s, full run 8 reds in inbox.test.js"
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S15"
+      ],
+      "branch": "slice/cheap-suite-fix",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-fix"
     }
   ],
   "findings": [
-    "dropped: S8 LOW land-adr-branch reads ADR from output text (format already pinned by assert.match)",
-    "dropped: S8 LOW test-quiet bypasses gate.mjs (slice B3 accepts)",
-    "dropped: S8 LOW install-command shim relocation (the shim tests catch it when run)",
-    "dropped: S6 LOW fresh() top-level only (latent, no such fixture)",
-    "dropped: S6 LOW runRemote throw-not-remembered untested (WeakMap.set after ask, read)",
-    "kept: S11 MEDIUM permanent lock EPERM looped forever; fixed a7fcd98",
-    "dropped: S4 LOW gate.yml comment that a proof needs 3 OSes (fails safe as 'fewer than 3'; a gate.yml push needs workflow scope the token lacks)",
-    "dropped: S4 LOW annotations read one page of 100 (forging is A2's accepted risk; trigger rule keeps gate changes full)",
-    "dropped: S4 LOW gate-workflow.test.mjs edited outside Files owned (required by the draft-PR trigger; named here)",
-    "dropped: S4 LOW provenTree reads diff before host (each case keeps its own reason)",
-    "kept: S4 security LOW base...sha misses trigger files landed on main after the branch point; built in S5 (tree-since trigger pin, .github/ and package.json)",
-    "dropped: S3 security HIGH skip fails open for bin/scripts/hooks changes reaching the daemon; stands on itm_649bb5483746 'Keep as signed', an ASSUMED default the deck's timeout took, not the user's press; Gate 2 must show it",
-    "dropped: S3 security MEDIUM runeTargetDir accepts any absolute LOCALAPPDATA (rmSync rooted at <base>/pilot/rune-target; misconfiguration)",
-    "dropped: S3 typescript MEDIUM wipe vs live cargo build EBUSY (caught and named; S3 Misses, read by S8 timed run)",
-    "kept: S3 typescript LOW select-tests trigger path unpinned; one assertion added",
-    "kept: S3 R3 shared target served another worktree's compiled code; staleRoot fixed a78fcef, +5 s/gate; concurrent-build race in S3 Misses",
-    "kept: S5 security MEDIUM annotation flood pushes the real tested-tree off page 1, leaving a forged tree the only one (bypasses the one-tree defence); fix: a full page proves no tree (overrides the S4 LOW drop above, now that S5 trusts the tree)",
-    "dropped: S5 typescript LOW hand-written testedTrees rows (file style)",
-    "dropped: S5 typescript LOW proof computed on an already-landed feature (harmless)",
-    "dropped: S5 security LOW proved = sha === null on rev-parse failure (still needs ^{tree}, else full)"
+    "kept: F1 simplify — Rune skip fails open (gate.mjs:292); not built, user question itm_0f4d3d042faa",
+    "kept: F2 drop — delete cost-bars.test.mjs, asserts cost-after.txt reads its own numbers",
+    "kept: F3 simplify — spec row 3 reworded as missed-then-lowered; restoring bars is itm_79509e578453",
+    "kept: F4 needed-evidence — sample up to 10 land.mjs mutants, test any survivor",
+    "kept: F5 simplify — .github/ proof rule gets one home",
+    "kept: N1 drop — `changed` on files:null has no reader",
+    "kept: N2 simplify — test-cost total off by 66, drop the `-` skip",
+    "kept: N3 simplify — runeDeck raw newlines restored to \\n",
+    "dropped: N4 simplify — CAP_BUDGET options argument, 4-function refactor costs more than it saves",
+    "dropped: knip GATE_SLOTS drop — predates the feature (18a5d2f), a test imports it",
+    "dropped: complexity simplify — file-level only, nothing ties rows to this diff"
   ],
   "humanSteps": [
     {
       "text": "15 idle `node --test scripts/test/land-*.test.mjs` processes from a timed-out mutation run are left alive (started 24/11 12:24:38-45, parents gone); end them in Task Manager or reboot when no run is live."
+    },
+    {
+      "text": "Remove leftover evidence worktree once idle: git -C C:/Users/jrylk/Projects/pilot worktree remove --force C:/Users/jrylk/Projects/pilot-cheap-suite-fund; scratch dir /tmp/tmp.nQT78iiwdq also left"
     }
   ],
-  "next": "co-pilot live: S15 a128318 integrating; then fundamentalist + QA (read-only), fix round, QA walkthrough.",
-  "updatedAt": "2026-11-24T03:00:24.093Z",
+  "next": "Fix round e56094e pushed, verified; pilot integrate of slice/cheap-suite-fix into pilot-feat-cheap-suite running. On pass: pilot checks, then resume QA (a992777f, read-only) with the tip + items: inbox.test.js 8-red cascade; test:cost top=40 vs spec 1; spec 4 miss (1,354 s vs 900 s) into walkthrough, no re-bar. Then gate2 by QA; then ticket proposal: batch git in landing.",
+  "updatedAt": "2026-11-24T03:47:16.097Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "the shared Rune target silently served another worktree's compiled build to the S3 fixer's own first gate",
-      "evidence": "first full cargo run read 173 passed incl. the other worktree's probe test; real count 172",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "cargo fmt --check flags files outside the slice",
-      "evidence": "agents_reports.rs, live.rs use order",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "land's whole-output pins in land.test.mjs / land-clear.test.mjs break on any new land line and only a full run reaches them",
-      "evidence": "S5 full run: 5025 pass, 3 fail, fixed 8551b79",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "the co-pilot hello arrives mid-task after the brief, so the child reads it as a second instruction",
-      "evidence": "S5 fixer report: hello arrived mid-task; this report is that reply",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "S6 integrate's selection overflowed argv again and ran the full suite",
-      "evidence": "selection is 37013 characters of argv, over 24000",
-      "size": 1
-    },
-    {
-      "kind": "drain",
-      "what": "six landing retries of PR #140 diagnosed in the pilot: logs, CPU sampler, Defender finding",
-      "size": 40000
-    },
-    {
-      "kind": "drain",
-      "what": "deck idle/empty-lane hook fired on a co-pilot waiting on a 25-min gate; three co-pilot respawns",
-      "size": 25000
-    },
-    {
-      "kind": "drain",
-      "what": "two features both numbered ADR 0210, found only at landing; deck restarts the merge when a commit sits on top of the resolved merge",
-      "size": 15000
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S7 gate results lived only in context and were lost to compaction; both owed runs rerun (~9.5 min)",
-      "evidence": "S7 report: B4 comparison lost, both runs repeated on 48ce7bc",
-      "size": 570
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "cold Rune build costs more than the slice's node tests, per worktree (seconds)",
-      "evidence": "cargo test --no-run 232 s vs ~122 s node tests on 48ce7bc",
-      "size": 232
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "git add of the old path after git mv failed the whole add; rename split into its own commit",
-      "evidence": "S5 9b527bb then 62a4e4c"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "a background command's exit 0 was its trailing echo, not the test run's",
-      "evidence": "S5 scratchpad/s5-changed.log: 1 fail under exit 0"
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S5 and S7 hand-backs reached main, not the co-pilot; main forwarded them",
@@ -361,6 +301,71 @@
       "what": "Edit refused edits on architecture.md and S10.md until each was Read first; five edits re-issued",
       "evidence": "S15 report",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "handed back before its evidence runner returned; the runner was left running in pilot-cheap-suite-fund with no one to stop it",
+      "evidence": "fundamentalist report: tools table 'not run', cleanup still open",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot checks --wait died on gh ETIMEDOUT (exit 6), no verdict; re-armed",
+      "evidence": "checks unread at 86e4dcc: spawnSync gh ETIMEDOUT",
+      "size": 1
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "diff mutation produced no result: Stryker timed out at 900 s before any mutant finished",
+      "evidence": "2545 mutants over 10 modules, initial test run 1 min 54 s, exit 124",
+      "size": 900
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "diff coverage not run: the repo's changed-tests command is outside the runner's allowed npm form",
+      "evidence": "npm run test:changed -- --since=c3f22e6 vs ^npm (test|run NAME)$"
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "scratch dir left behind, rm -rf failed busy after the Stryker timeout",
+      "evidence": "/tmp/tmp.nQT78iiwdq/stryker-tmp/sandbox-bWtQuA: Device or resource busy; no matching node process found afterwards"
+    },
+    {
+      "kind": "drain",
+      "what": "evidence runner's hand-back delivered to main instead of the fundamentalist; read and relayed to the co-pilot",
+      "size": 1500
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exited twice on 'deck not answering' timeout; output read and wait restarted",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced while the fix-round implementer and QA were live in background runs; their reports go to main",
+      "evidence": "handback-send-enforce after fixer entered background work",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot checks --wait timed out on gh three times (exit 6) while gh pr checks answered in 12 s",
+      "evidence": "checks unread at 86e4dcc: spawnSync gh ETIMEDOUT x3",
+      "size": 3
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "spec 4's wall-time bar cannot be checked on a shared machine",
+      "evidence": "1354 s here vs 650 s in S10; branches.test 412 s in the suite vs 19 s alone"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "base named differently in two places",
+      "evidence": "brief.md says main da9a644; the PR and brief say pilot c3f22e6"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "hand-back forced by the harness while waiting for the fix tip",
+      "evidence": "QA report: 'handing back here because the harness required it'"
     }
   ]
 }
