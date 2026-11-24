@@ -199,6 +199,7 @@ fn a_heartbeat_refreshes_every_region_from_one_view() {
         regions,
         [
             "agents",
+            "archive",
             "chat",
             "graph",
             "history",
