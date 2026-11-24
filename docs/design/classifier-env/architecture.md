@@ -96,21 +96,27 @@ ADR NNNN (`docs/adr/NNNN-classifier-env.md`, written in S1) records L1-L4.
 - **A1** Constant prose naming no repo; the classifier resolves `<repo>` from the working directory. Tradeoff: no
   literal path given. Rejected: a per-repo settings file with the sanitised path (a second file family, and the
   shared file would point a live session at the last-started repo). Asked: itm_e68bc690faee.
+  Verdict: stands — deck took the default on itm_e68bc690faee (no answer 20 min); start-settings.json is one file per home, and no queued ticket makes it per-repo
 - **A2** Context only: `environment`, no `allow` rule. Tradeoff: if context alone does not unblock a build-output
   delete in `<repo>-feat-x`, it stays blocked until a follow-up. Rejected: a narrow allow rule (real loosening; an
   allow overrides a soft_deny). Asked: itm_b3d18023a002.
+  Verdict: stands — deck took the default on itm_b3d18023a002; the ticket's own spec line 3 forbids a blanket allow
 - **A3** Off switch is the environment variable `PILOT_CLASSIFIER_ENV=off`, read at the Start. Tradeoff: the deck's
   Start needs the deck restarted after `setx`. Rejected: a stored setting behind a new `pilot classifier` command.
   Asked: itm_fe2e6aa41d19. Closed by the deck, not the user: "Assumed: Env var (default) (no answer 20 min)".
+  Verdict: stands — deck took the default on itm_fe2e6aa41d19; no queued ticket adds a stored pilot setting to hang a switch on
 - **A4** Spec 8, the `pilot doctor` row, `main`'s question itm_1d8272a673d9 (default yes). Cut as S3 with no edge, so
   a no drops S3 and nothing else. Closed by the deck, not the user: "Assumed: Warn in pilot doctor (no answer 20
   min)"; S3 and spec 8 stand.
+  Verdict: stands — deck took the default on itm_1d8272a673d9; the user's own settings.json was read and has the block without "$defaults"
 - **A5** QA environment, `main`'s question itm_d24c3c01f382: a scratch home, plus one read-only
   `claude auto-mode config` against the real home. Tradeoff: the real start-settings.json is written only by the
   user's own Start. Rejected: QA running a Start against the real home. Closed by the deck, not the user:
   "Assumed: Scratch home + read-only look at the real one".
+  Verdict: stands — deck took the default on itm_d24c3c01f382; live pilot sessions on this machine share the real start-settings.json
 - **A6** Grilling depth: Every, assumed (itm_af228ea26e6d closed by the deck after 20 min, no answer); Gate 1 is a
   walk, one question per locked decision.
+  Verdict: stands — deck took the default on itm_af228ea26e6d; the walk L1-L4 was posted and each closed on its default
 - red team: walked S1 behaviour 1 against `start-session.test.mjs:303`: it deep-equals the file to
   `runSettings(level).settings` under the test's own `process.env`; a CI or shell with `PILOT_CLASSIFIER_ENV=off`
   set would still pass, so S1's tests pass `env` explicitly. Walked the shared file: two Starts in two repos now
