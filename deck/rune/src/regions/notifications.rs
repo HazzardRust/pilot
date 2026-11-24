@@ -70,6 +70,9 @@ struct Open {
     id: String,
     title: String,
     writes: u32,
+    /// The name of the tab the thread's repository is, empty when it names none.
+    #[serde(default)]
+    tab: String,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -259,7 +262,11 @@ pub fn draw(
         let (id, writes) = (one.id.clone(), one.writes);
         panel = panel.child(line(
             format!("open-{i}"),
-            text(&one.title),
+            text(if one.tab.is_empty() {
+                one.title.clone()
+            } else {
+                format!("{} · {}", one.title, one.tab)
+            }),
             &one.id,
             &t,
             dark,

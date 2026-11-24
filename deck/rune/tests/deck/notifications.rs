@@ -276,3 +276,27 @@ fn a_closed_notice_reads_kind_title_and_resolution() {
         assert!(shown.iter().any(|t| t == want), "no {want:?} in {shown:?}");
     }
 }
+
+#[test]
+fn an_open_row_ends_with_its_tab() {
+    let open = json!({ "notices": [], "open": [
+        { "id": "itm_000000000001", "title": "Which port?", "writes": 1, "tab": "kettle" },
+        { "id": "itm_000000000002", "title": "Bare", "writes": 1, "tab": "" },
+    ] });
+    let mut state = State {
+        view: pilot_deck::client::View {
+            screen: "home".into(),
+            seq: 1,
+            regions: [("notifications".to_string(), open)].into_iter().collect(),
+        },
+        ..State::default()
+    };
+    state.prefs.open_panels.insert("notifications".into());
+    let mut rt = Runtime::new(state, app::view, (1280.0, 800.0), Env::new(true, 1.0));
+    rt.frame(0.0);
+
+    let shown = texts(&rt);
+    for want in ["Which port? · kettle", "Bare"] {
+        assert!(shown.iter().any(|t| t == want), "no {want:?} in {shown:?}");
+    }
+}
