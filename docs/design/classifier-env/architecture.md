@@ -107,7 +107,8 @@ ADR NNNN (`docs/adr/NNNN-classifier-env.md`, written in S1) records L1-L4.
   min)"; S3 and spec 8 stand.
 - **A5** QA environment, `main`'s question itm_d24c3c01f382: a scratch home, plus one read-only
   `claude auto-mode config` against the real home. Tradeoff: the real start-settings.json is written only by the
-  user's own Start. Rejected: QA running a Start against the real home.
+  user's own Start. Rejected: QA running a Start against the real home. Closed by the deck, not the user:
+  "Assumed: Scratch home + read-only look at the real one".
 - **A6** Grilling depth: Every, assumed (itm_af228ea26e6d closed by the deck after 20 min, no answer); Gate 1 is a
   walk, one question per locked decision.
 - red team: walked S1 behaviour 1 against `start-session.test.mjs:303`: it deep-equals the file to
