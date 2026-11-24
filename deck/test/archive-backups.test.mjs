@@ -33,13 +33,15 @@ const v2 = () => ({
 
 const field = (row, label) => row.fields.find((f) => f.label === label)?.value;
 const backupRows = (dir) => archiveRows(dir).filter((row) => row.kind === 'backup');
+/** The upgrade copies alone: the upgrade's write also leaves `deck.json.bak`, a row of its own. */
+const upgradeRows = (dir) => backupRows(dir).filter((row) => row.id.startsWith('backup:deck.v'));
 
 test('an upgrade backup reads as its fields', (t) => {
   const day = today();
   const dir = tempDeck(t);
   fs.writeFileSync(storeFile(), JSON.stringify(v2()));
   listItems();
-  const rows = backupRows(dir);
+  const rows = upgradeRows(dir);
   assert.equal(rows.length, 1);
   assert.equal(rows[0].id, `backup:deck.v2-${day}.json`);
   assert.equal(field(rows[0], 'File'), `deck.v2-${day}.json`);
@@ -54,7 +56,7 @@ test('a numbered backup is read too', (t) => {
   fs.writeFileSync(path.join(dir, `deck.v2-${day}.json`), '{"version":2,"items":[');
   fs.writeFileSync(storeFile(), JSON.stringify(v2()));
   listItems();
-  const rows = backupRows(dir);
+  const rows = upgradeRows(dir);
   assert.deepEqual(rows.map((row) => row.id), [`backup:deck.v2-${day}-2.json`], 'the truncated copy is no row, the numbered one is');
   assert.equal(field(rows[0], 'Items'), '4');
 });
@@ -66,6 +68,26 @@ test('a malformed backup is skipped', () => {
     fs.writeFileSync(path.join(dir, 'deck.v2-2026-11-01.json'), '{"version":2}');
     fs.writeFileSync(path.join(dir, 'deck.v3-2026-11-01.json'), JSON.stringify({ version: 3, items: [{}, {}] }));
     assert.deepEqual(backupRows(dir).map((row) => field(row, 'Items')), ['2']);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('the write backup and the set-aside stores are rows too (F3, L9)', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archive-backups-'));
+  try {
+    fs.writeFileSync(path.join(dir, 'deck.json.bak'), JSON.stringify({ version: 3, items: [{}, {}, {}] }));
+    fs.writeFileSync(path.join(dir, 'deck.json.corrupt-2026-11-01'), 'truncated');
+    fs.writeFileSync(path.join(dir, 'deck.json.replaced-2026-11-02-2'), JSON.stringify({ version: 3, items: [{}] }));
+    const rows = backupRows(dir);
+    assert.deepEqual(
+      rows.map((row) => [row.id, field(row, 'Day'), field(row, 'Items')]),
+      [
+        ['backup:deck.json.bak', new Date(fs.statSync(path.join(dir, 'deck.json.bak')).mtimeMs).toLocaleDateString('sv-SE'), '3'],
+        ['backup:deck.json.corrupt-2026-11-01', '2026-11-01', 'not a deck'],
+        ['backup:deck.json.replaced-2026-11-02-2', '2026-11-02', '1'],
+      ],
+    );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

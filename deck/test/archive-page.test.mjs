@@ -89,15 +89,16 @@ test("rows sit in daySections' sections", async (t) => {
 
   const { regions } = await view(base, 'screen=archive');
 
-  // The seeded v2 store was upgraded today, so its backup is a row of today's section too (S15).
+  // The seeded v2 store was upgraded and written today, so its upgrade copy and `deck.json.bak` are rows of today's
+  // section too (S15, F3).
   const todayKey = new Date().toLocaleDateString('sv-SE');
-  const expected = daySections([today, yesterday, old, chat]).map(({ key, label, items }) => ({ key, heading: label, count: items.length + (key === todayKey ? 1 : 0) }));
+  const expected = daySections([today, yesterday, old, chat]).map(({ key, label, items }) => ({ key, heading: label, count: items.length + (key === todayKey ? 2 : 0) }));
   assert.equal(expected.length, 3, 'today, yesterday and a month');
   assert.deepEqual(regions.archive.days.map(({ key, heading, rows }) => ({ key, heading, count: rows.length })), expected);
   assert.deepEqual(regions.archive.days.map((day) => day.open), [true, false, false], 'only today is served open');
   assert.deepEqual(
     regions.archive.kinds.filter(({ count }) => count > 0).map(({ kind, count }) => [kind, count]),
-    [['backup', 1], ['thread', 1], ['tickets', 3]],
+    [['backup', 2], ['thread', 1], ['tickets', 3]],
   );
 });
 
