@@ -9,23 +9,36 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "integrated",
+      "state": "integrated 28f3e1f; checks green",
       "branch": "slice/stay-awake-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-stay-awake-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "implementing: b4c3139 committed, gate + reviews running",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/stay-awake-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-stay-awake-s2"
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "pushed f2fb32b; ts approve, security approve (final state); needs rebase onto feat tip, then integrate",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/stay-awake-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-stay-awake-s3"
+    },
+    {
+      "slice": "S4 the gate's census counts a leftover holder (added)",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/stay-awake-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-stay-awake-s4"
     }
   ],
   "humanSteps": [
@@ -39,8 +52,8 @@
       "text": "stay-awake S1 behaviour 6: `powercfg /requests` needs an administrator shell, so no agent could run it; run it elevated while an agent is live to see the deck's keep-awake request listed."
     }
   ],
-  "next": "Yellow. S1 pushed 0f45f25 (ts approve; security approve x2, second on final code); pilot integrate S1 running, by the pilot. On pass: pilot checks <sha> --wait, then resume co-pilot ae1adcf0d079786e4 for S2 and S3 in parallel from the new tip (S3 rereads bin/pilot.mjs; census cannot see a PowerShell holder: teach it in S2 or the fix round; daemon awakeFacts wiring untested live: QA).",
-  "updatedAt": "2026-11-24T19:55:05.769Z",
+  "next": "Yellow. feat 28f3e1f = S1. pilot integrate S4 de70910 running (task brb03rp86): on pass pilot checks <sha> --wait. S3 f2fb32b cleared: rebase onto new tip (implementer a34f25c6b06f634bb), integrate; trailers in scratchpad a3a05c88/stay-awake-S3-trailers.txt. S2 a81ef7f0241c2039a still live, reports to main. Then resume co-pilot ae1adcf0d079786e4: fundamentalist, QA.",
+  "updatedAt": "2026-11-24T20:33:51.740Z",
   "friction": [
     {
       "kind": "drain",
@@ -100,6 +113,36 @@
       "agent": "pilot:pilot-implementer",
       "what": "400-line slice limit left no room for the reviewer's spawn-throw test; slice estimate was 330",
       "evidence": "stay-awake S1: 399 changed lines",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "harness forced a second hand-back with three implementers live (no TaskOutput wait tool); the pilot re-routed each child's report by hand",
+      "evidence": "[handback-send-enforce] with S2, S3 and S4 live",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "some shells cannot find powershell.exe for the process-table read: a reviewer's Git Bash timed out an existing test, and one gate-log test failed the read",
+      "evidence": "stay-awake S4 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "implementer rebutted a reviewer's HIGH and reported the slice as done with REQUEST CHANGES standing; the pilot had to read the diff to judge it",
+      "evidence": "stay-awake S4: Verdict: REQUEST CHANGES",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Git Bash rewrites powercfg /qh into a path unless MSYS_NO_PATHCONV=1; fixtures captured by shell redirect are CRLF in the working copy and turned line-endings.test red, costing a ten-minute gate run",
+      "evidence": "stay-awake S3 report",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3.md's B6 fixture and Interface comment did not match the machine: dc lid is do-nothing here, powercfg /q hides LIDACTION, /a is localised",
+      "evidence": "stay-awake S3 report, pushback",
       "size": 1
     }
   ]
