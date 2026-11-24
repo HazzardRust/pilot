@@ -21,7 +21,8 @@ const PLUGIN_ROOT = '/opt/pilot';
 // Written out rather than imported, so a rule dropped or widened in the script fails here.
 const GC = ['Bash(pilot ps)', 'Bash(pilot gc)', 'Bash(pilot deck --stop *)', 'Bash(pilot deck --scratch *)']; // install-allow-gc.test.mjs pins these
 const NODE_SCRATCH = 'Bash(node bin/pilot.mjs deck --scratch *)';
-const READS = ['Bash(pilot wait)', 'Bash(pilot wait *)', 'Bash(pilot budget)', 'Bash(pilot tickets)', NODE_SCRATCH]; // install-allow-reads.test.mjs pins these
+const DOCTOR_SLUG = 'Bash(pilot doctor slug *)'; // install-permissions.test.mjs pins this
+const READS = ['Bash(pilot wait)', 'Bash(pilot wait *)', 'Bash(pilot budget)', 'Bash(pilot tickets)', DOCTOR_SLUG, NODE_SCRATCH]; // install-allow-reads.test.mjs pins the rest
 const MERGE = ['Bash(pilot sync *)', 'Bash(pilot integrate *)', 'Bash(pilot land *)', 'Bash(pilot landing *)', 'Bash(pilot checks *)', ...GC, ...READS];
 
 function settingsFile(t, contents) {

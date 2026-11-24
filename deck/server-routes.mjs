@@ -30,7 +30,7 @@ import path from 'node:path';
 import { readAlertSwitch, setAlertSwitch } from './alert-switch.mjs';
 import { AgentRefusal, heldWaits, isAgentType, listAgents, noteAgent } from './agents.mjs';
 import { fillLanes } from './chain.mjs';
-import { KIND_GATE2, SIGN_OFF, chosenOf, isGate, ownerOf } from './items.mjs';
+import { HANDOFF_FAILED, KIND_CREW_HANDOFF, KIND_GATE2, KIND_HANDOFF, SIGN_OFF, chosenOf, isGate, ownerOf } from './items.mjs';
 import { startLanding } from './landing.mjs';
 import { lanesOf } from './lanes.mjs';
 import { owedThreadsOf } from './owed.mjs';
@@ -52,6 +52,7 @@ import {
   moveTicket, noteLaneFilled, cancelSwitch, refuseLaneSwitch, requestSwitch, resumableRecordFor, yellowHeadOf, recordForTicket,
   recordsFor, registerRun, releaseCoPilot, removeDeck, reopenItem, setBudget, storedTabFor,
 } from './store.mjs';
+import { noteCoPilotAgent } from './store-tickets.mjs';
 import { queueView } from './tickets.mjs';
 import { renderDeckPage, renderHomePage, renderThreadPage } from './ui/render.mjs';
 import { readUsage } from './usage.mjs';
@@ -63,7 +64,7 @@ import { deckUrl } from './tools.mjs';
 import { healthOf } from './health.mjs';
 import { logRefusal } from './refusal-log.mjs';
 import { exitRoute } from './exit-route.mjs';
-import { holdRoute } from './hold-route.mjs';
+import { step } from '../hooks/lib/wrapper-log.js';
 
 // --- routes ----------------------------------------------------------------
 
@@ -257,7 +258,8 @@ async function route(request, response, open, start, land, exit, guard) {
     const text = replyFrom(form, answered?.kind);
     // A gate's Sign off is the press that passes it (merge-first L12), so it is the page's alone,
     // as the gate's Dismiss is: an absent Origin, which `isTrustedOrigin` lets through for curl, is refused.
-    const pressed = chosenOf({ options: answered?.options, replies: [{ from: 'user', text }] }) === SIGN_OFF;
+    const chosen = chosenOf({ options: answered?.options, replies: [{ from: 'user', text }] });
+    const pressed = chosen === SIGN_OFF;
     if (isGate(answered?.kind) && pressed && !fromOwnPage(request)) {
       return send(response, 403, 'text/plain; charset=utf-8', "a gate's Sign off is only taken from the deck's own page\n");
     }
@@ -265,6 +267,11 @@ async function route(request, response, open, start, land, exit, guard) {
       addReply(id, text);
     } catch (err) {
       return landRefusedPress(request, response, answered, err);
+    }
+    // The user's Handoff failed, stored, is the hand-off's last step (crew-handoff-trace spec 1): ids only, never the text.
+    const handoff = answered?.kind === KIND_HANDOFF || answered?.kind === KIND_CREW_HANDOFF;
+    if (handoff && chosen === HANDOFF_FAILED) {
+      step({ step: 'failed', kind: answered.kind, item: answered.id, ticket: answered.ticket });
     }
     // The page's stored Sign off on a gate2 fills each queued lane in place, never by chainNext (gate2-frees-lane L2), then lands (gate2-lands L1).
     if (answered?.kind === KIND_GATE2 && pressed) {
@@ -597,9 +604,10 @@ async function route(request, response, open, start, land, exit, guard) {
     // And the threads the pilot still owes it (yellow-lane L6), so the hooks need not compute them,
     // and the gates it has signed since its last hand-off (yellow-lane A5), for the guard's work lane.
     const items = listItems();
+    const coPilot = coPilotFor(query.get('repo'));
     return sendJson(response, 200, {
-      ...found, budget: budgetFor(query.get('repo')).main, coPilot: coPilotFor(query.get('repo')), lanes: lanesOf(query.get('repo')),
-      owed: owedThreadsOf(items, query.get('repo')), work: workSince(items, query.get('repo')),
+      ...found, budget: budgetFor(query.get('repo')).main, coPilot, lanes: lanesOf(query.get('repo')),
+      owed: owedThreadsOf(items, query.get('repo'), coPilot), work: workSince(items, query.get('repo')),
     });
   }
 
@@ -692,6 +700,7 @@ async function route(request, response, open, start, land, exit, guard) {
     const heartbeat = await readJsonBody(request);
     try {
       noteAgent(heartbeat);
+      noteCoPilotAgent(heartbeat.cwd, heartbeat.agentId, heartbeat.agentType); // the co-pilot's id on its lane (handoff-no-wait L4)
     } catch (err) {
       if (err instanceof AgentRefusal) throw new DeckRefusal(err.message);
       throw err;
@@ -709,7 +718,6 @@ async function route(request, response, open, start, land, exit, guard) {
     announceChange();
     return sendJson(response, 200, { released });
   }
-  if (isWrite && pathname === '/api/hold') return holdRoute(request, response);
 
   if (isWrite && pathname === '/api/tool') {
     const { name, arguments: args } = await readJsonBody(request);

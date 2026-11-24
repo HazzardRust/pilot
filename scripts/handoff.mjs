@@ -28,7 +28,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 
 import { OWED_WHY } from '../deck/owed.mjs';
-import { HOLD_BOUND_MS, notePosted, reportedFile, sessionPid } from '../deck/run-claim.mjs';
+import { notePosted, reportedFile, sessionPid } from '../deck/run-claim.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { isOlder, isVersion } from '../deck/version.mjs';
 import { listeningRepo } from '../deck/wait.mjs';
@@ -167,7 +167,7 @@ export async function handoff({ cwd = process.cwd(), env = process.env, trailers
   const repo = listeningRepo(cwd);
   let landed = null;
   try {
-    const { record, yellow, coPilot, lanes, owed: served } = await ask(`/api/record?repo=${encodeURIComponent(repo)}`);
+    const { record, yellow, lanes, owed: served } = await ask(`/api/record?repo=${encodeURIComponent(repo)}`);
     // Refused before anything lands: a hand-off never leaves the user's question behind (spec 9).
     const owed = owedOf(served);
     const unanswered = owedAs(owed, 'unanswered');
@@ -197,17 +197,12 @@ export async function handoff({ cwd = process.cwd(), env = process.env, trailers
     const id = /\bitm_[0-9a-f]+\b/.exec(posted?.content?.[0]?.text ?? '')?.[0];
     if (!id) throw new Refusal('the deck took the handoff item but named no id');
     notePosted(sessionPid(env, process.ppid), id);
-    // A live co-pilot holds the /clear until its release, at most the bound (clear-waits-co-pilot spec 6, A3): the
-    // line says so and repeats the pause. A pause SendMessage only queued is released at once (never-stuck S19).
-    const paused = coPilot?.live === true && /^itm_[0-9a-f]+$/.test(coPilot.ticket)
-      ? `/clear held for the co-pilot on ${coPilot.ticket}, up to ${HOLD_BOUND_MS / 60000} minutes: send it the pause; ` +
-        'if SendMessage answers queued, deck_ticket release it now, else on its hand-back; '
-      : '';
-    // The hand-off is posted either way; only who clears differs (spec 8: no refusal to hand off).
+    // A live co-pilot survives the clear and is sent nothing (handoff-no-wait L2). The hand-off is posted
+    // either way; only who clears differs (spec 8: no refusal to hand off).
     const mod = modState(env, version);
     const then = mod.in
-      ? `${paused}the hand-off mod clears this session ${paused ? 'after that' : 'and submits the first prompt'}; stop here`
-      : `${paused}the hand-off mod has not reported in (${mod.why}): ${paused ? 'after that ' : ''}tell the user to type /clear, and stop`;
+      ? 'the hand-off mod clears this session and submits the first prompt; stop here'
+      : `the hand-off mod has not reported in (${mod.why}): tell the user to type /clear, and stop`;
     return { ok: true, line: `handed off: ${landed}; posted ${id}; ${then}` };
   } catch (err) {
     const why = err instanceof Refusal ? err.message : firstLine(err);

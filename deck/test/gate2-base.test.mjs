@@ -28,30 +28,6 @@ const { callTool } = await import('../server.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
-/** A bare origin whose `main` is the default, a clone of it, and `feat/x` cut from `main` with one commit. */
-function scratch(t) {
-  return gitFixture(t, 'gate2-base:scratch', buildScratch);
-}
-
-function buildScratch(root) {
-  const origin = path.join(root, 'origin.git');
-  const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
-  git(root, 'clone', '-q', origin, work);
-  const commit = (file, text) => {
-    fs.writeFileSync(path.join(work, file), text);
-    git(work, 'add', file);
-    git(work, 'commit', '-q', '-m', `${file}: ${text}`);
-    return git(work, 'rev-parse', 'HEAD');
-  };
-  commit('a.txt', 'base\n');
-  git(work, 'push', '-q', 'origin', 'HEAD:main');
-  git(work, 'remote', 'set-head', 'origin', 'main');
-  git(work, 'checkout', '-q', '-b', 'feat/x');
-  const feat = commit('feat.txt', 'feature\n');
-  return { work, feat };
-}
-
 /** Posts a gate2 for `sha` in `repo` through `callTool`, on a live ticket. */
 function postGate2(repo, sha) {
   const { id } = postStored({ kind: KIND_TICKET, title: 'Pear', body: shapedTicketBody(), repo, state: 'yellow' });
@@ -169,9 +145,9 @@ test('a prepared merge of the sha is accepted', (t) => {
 const FLAG = 'NoDefaultCurrentDirectoryInExePath';
 const PLANTED = { skip: process.platform !== 'win32' && 'only Windows searches the cwd for a bare command name' };
 
-/** The scratch clone with whoami planted as its git, and an environment without the flag and with `.` on PATH. */
+/** `onPilot`'s clone with whoami planted as its git, and an environment without the flag and with `.` on PATH. */
 function planted(t) {
-  const repo = scratch(t);
+  const repo = onPilot(t);
   const whoami = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'whoami.exe');
   for (const name of ['git.com', 'git.exe']) fs.copyFileSync(whoami, path.join(repo.work, name));
   const env = { ...process.env };
@@ -196,7 +172,8 @@ test('the pilot CLI does not run a git planted in the repository', PLANTED, (t) 
 
 test('the deck daemon does not run a git planted in the repository', PLANTED, async (t) => {
   const dir = tempDeck(t);
-  const { work, feat, env } = planted(t);
+  // indexOnly merges clean onto pilot, so the post is accepted only if every git the deck ran there was the real one.
+  const { work, indexOnly, env } = planted(t);
   const { id } = postStored({ kind: KIND_TICKET, title: 'Pear', body: shapedTicketBody(), repo: work, state: 'yellow' });
   takeLive(id);
   const port = await freePort();
@@ -219,7 +196,7 @@ test('the deck daemon does not run a git planted in the repository', PLANTED, as
     const response = await fetch(`${base}/api/tool`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', ...bearer(dir) },
-      body: JSON.stringify({ name: 'deck_post', arguments: { kind: KIND_GATE2, title: 'Gate 2', body: 'Walk it.', repo: work, pr: '#250', sha: feat, ticket: id } }),
+      body: JSON.stringify({ name: 'deck_post', arguments: { kind: KIND_GATE2, title: 'Gate 2', body: 'Walk it.', repo: work, pr: '#250', sha: indexOnly, ticket: id } }),
     });
     const result = await response.json();
     assert.match(result.content?.[0]?.text ?? JSON.stringify(result), /^Posted itm_/);

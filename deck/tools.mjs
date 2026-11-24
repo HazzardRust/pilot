@@ -154,7 +154,7 @@ export const TOOLS = [
         },
         slice: {
           type: 'string',
-          description: 'the deck_status row it is about',
+          description: 'its deck_status row',
         },
         options: {
           type: 'array',
@@ -183,7 +183,7 @@ export const TOOLS = [
         longer: { type: 'string', description: `${kindsWith('longer')} only: why its body needs over ${MAX_WALKTHROUGH_BODY_LINES} lines` },
         dir: { type: 'string', description: `${kindsWith('dir')} only: absolute; steps' cwd or a ticket's worktree` },
         shell: { type: 'string', description: `${kindsWith('shell')} only: its commands' shell` },
-        ticket: { type: 'string', description: `${kindsWith('ticket')} only: the ticket id` },
+        ticket: { type: 'string', description: `${kindsWith('ticket')} only: its ticket` },
         artefact: { type: 'string' },
         locked: { type: 'integer', minimum: 0 },
         slices: { type: 'string' },

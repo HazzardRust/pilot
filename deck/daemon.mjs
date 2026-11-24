@@ -24,6 +24,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { ensureSecret } from '../hooks/lib/deck-secret.js';
+import { step } from '../hooks/lib/wrapper-log.js';
+import { healthOf } from './health.mjs';
 import { writeOpenFile } from './launch.mjs';
 import { createDeckHttpServer, DECK_HOST, deckPort, deckUrl } from './server.mjs';
 import { holdIdle } from './idle.mjs';
@@ -195,6 +197,9 @@ export async function main() {
   }
 
   console.error(`[deck] serving ${deckUrl()} (pid ${process.pid})`);
+  // The code this deck runs, as its health route names it, so a trace says which deck took each step (crew-handoff-trace spec 9).
+  const { root, version } = healthOf();
+  step({ step: 'deck started', root, version });
 
   // Names this deck and its port in its store dir, so `pilot store restore` asks that port (store-durability
   // spec 9). Here and not in `startDaemon`, whose in-process test servers serve no store dir of their own.

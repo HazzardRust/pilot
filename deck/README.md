@@ -26,6 +26,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `classifier-log.mjs` | the classifier log: one line per auto-mode denial, credentials withheld, newest 10,000 kept; a record, never a permission |
 | `client.mjs` | the stdio MCP server each session spawns; owns no state |
 | `closing-report.mjs` | writes the closing report when a landing lands: resolves the gate2, finishes its record, closes the ticket |
+| `crew-handoff.mjs` | a ticket's open crew-handoffs, which a successor's `deck_ticket co-pilot` grant closes |
 | `credential.mjs` | the one credential check, `findCredential`, for every deck post, land's output and the classifier log |
 | `daemon.mjs` | the deck process: starts the server over the store; holds a leash, or the idle rule on the user's deck |
 | `doctor.mjs` | `pilot doctor`: one row per local check, `pass`, `fail` or `cannot tell` (Defender over the projects root and its admin step, Node against engines, the deck dependency, the store directory writable, `gh`, `git`, `claude` on PATH); exit 1 on a fail; reads only, bar one temp file it removes (process-gc L12, daemon-lifecycle spec 10) |
@@ -35,7 +36,6 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `gate2-checks.mjs` | the gate2 checks field: where CI is configured at its sha, a gate2 carries `pilot checks <sha>`'s line, green at that sha, local git only (ci-gate spec 4) |
 | `gate2-evidence.mjs` | the gate2 evidence check: a short-path ticket's gate2 carries a `Verdict:` per slice, a `Gate:` line and, for a surface, its walkthrough (short-path spec 2); a full run's gate2 naming no walkthrough carries the checks table and, on a plan with a surface, a `surface planned, no walkthrough:` reason line; a named walkthrough is a real one on the gate2's ticket; `walkthroughPlanGaps` refuses QA's walkthrough on a plan marked with no surface (walkthrough-surface spec 3-6); `recutGate1Gaps` refuses a re-cut ticket's gate1 without a `Changed since <sha7>:` line (never-stuck spec 15) |
 | `health.mjs` | `GET /api/health`'s answer: pid, url, cursor, rss, and the plugin version with when this daemon started (daemon-lifecycle spec 3) |
-| `hold-route.mjs` | `POST /api/hold { id, ticket }`: the hand-off mod marks a hand-off held for a live co-pilot, item state and no reply, written once (held-handoff L2) |
 | `host-github.mjs` | the GitHub adapter: **Host** over `gh`, and the one `gh` process start, argv only, refusing any call off its argv allowlist before a process starts (other-host spec 2, L5) |
 | `host-gitlab.mjs` | the GitLab adapter: **Host** over `glab api` REST v4 on the current project's merge requests, and the one `glab` process start, argv only, refusing any call off its own allowlist before a process starts (other-host spec 4, 6, A3) |
 | `host.mjs` | the host: reads `pilot.host` (unset is `github`) and hands back its **Host** adapter, or null at `none` (other-host spec 1-3) |
@@ -51,6 +51,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `launch.mjs` | how a browser gets in: the 0600 open file that forwards to `GET /open?key=`, the per-port page cookie that route sets, and `pilot deck --rotate` (deck-token A2, A3) |
 | `leash.mjs` | the leash a daemon that is not the user's deck holds: its pid and paths from argv, the 2 s poll that ends it, and the session's `CLAUDE_PID` (process-gc L1-L4) |
 | `lineage.mjs` | the gate1 lineage check: refuses a design-docs-only post whose branch is not on pilot's lineage |
+| `look.mjs` | `pilot look`: reads a surface's `surface.json` and captures a screen by route with one argv-started process; `apply` lays a playground export onto the token file |
 | `memory.mjs` | each deck process's memory readings, one JSON line each |
 | `one-line.mjs` | `oneLine`: text from a peer or caller made one printable line, for logs and stderr |
 | `open.mjs` | opens the deck page in a browser when a run registers |
@@ -75,6 +76,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `server-wait.mjs` | the server's waiting half: body readers, guards, the asset allowlist and the long poll |
 | `server.mjs` | the server's facade: re-exports its siblings' names for every older importer |
 | `session.mjs` | starts a session in a terminal window when the Start route asks |
+| `slug-clash.mjs` | whether origin, the run remote or an open review already holds a slug's `feat/` or `design/` branch, read live |
 | `spawn-root.mjs` | which root a client spawns the daemon from and its version: the installed plugin for a checkout on 4321, else its own root (ADR 0165) |
 | `step-shell.mjs` | where a wizard's or a report's command steps run: a command step without a `dir` is refused, and a missing `shell` is the daemon's platform default (walkthrough-surface spec 9) |
 | `stalled-waits.mjs` | the daemon's 5-minute scan: an unbounded wait shell past 50 minutes under a live run's `claude` is stopped through `gc`, and the run's repository told (wait-deadlines S3) |
@@ -98,6 +100,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `telemetry.mjs` | the half-hourly usage log |
 | `testUtils.mjs` | what the deck's tests stand a deck up from |
 | `tools.mjs` | the three tools a session may call, and where the deck lives |
+| `trace.mjs` | `pilot trace`: a hand-off's trace rows in time order, then what it waits on |
 | `transcripts.mjs` | the one transcript reader behind usage and analytics |
 | `ui/markdown.mjs` | escaping, link schemes and the whitelisted markdown renderer |
 | `ui/render-cards.mjs` | the cards, previews and run list |

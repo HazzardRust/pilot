@@ -10,6 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { checkProvenance } from '../check-provenance.mjs';
+import { parseGlossary, lintGlossary } from '../glossary.mjs';
 import { frontmatterOf, bodyOf } from './lib/area-file.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -130,6 +131,50 @@ test('wizard emits a deck item rather than an interactive terminal prompt', () =
 test('diagnosing-bugs names no terminal HITL loop template', () => {
   // lint: diagnosing-bugs carries no hitl-loop.template.sh reference
   assert.doesNotMatch(readSkill('diagnosing-bugs'), /hitl-loop\.template\.sh/, 'the terminal HITL loop is a deck walkthrough now');
+});
+
+const readFormat = () =>
+  fs.readFileSync(path.join(ROOT, 'skills', 'domain-modeling', 'GLOSSARY-FORMAT.md'), 'utf8').replace(/\r\n/g, '\n');
+
+/** The skills that mention the glossary (project-glossary S3); with the format file, the prose that says where it is. */
+const GLOSSARY_SKILLS = ['domain-modeling', 'grilling', 'diagnosing-bugs', 'test-design'];
+
+test("the format file's Structure example is an entry in the glossary's real shape (project-glossary spec 8)", () => {
+  const structure = /## Structure\n[\s\S]*?```md\n([\s\S]*?)```/.exec(readFormat());
+  assert.ok(structure, 'GLOSSARY-FORMAT.md needs a ## Structure section with an ```md example');
+
+  const entries = parseGlossary(structure[1]);
+  assert.ok(entries.length >= 1, 'parseGlossary reads no entry from the example, so it shows a shape no file uses');
+  assert.ok(entries.some((entry) => entry.avoid.length > 0), 'the example shows no _Avoid_: line');
+  assert.deepEqual(lintGlossary(structure[1]), [], 'the example names a path, which the format forbids');
+});
+
+test('grilling looks the request up in the glossary before its first question (project-glossary spec 1)', () => {
+  // The provenance header names the lookup too, so the order is read in the instructions only.
+  const grilling = readSkill('grilling').replace(/<!-- provenance[\s\S]*?-->/, '');
+  // The command may be named bare or through the plugin root, `glossary.mjs" match`.
+  const lookup = grilling.search(/glossary\.mjs"? match/);
+  const firstQuestion = grilling.indexOf('deck_post');
+
+  assert.ok(lookup >= 0, 'grilling names no `glossary.mjs match` lookup');
+  assert.ok(firstQuestion >= 0, 'grilling posts its questions with deck_post');
+  assert.ok(lookup < firstQuestion, 'the lookup must come before the first question is posted');
+  assert.match(readSkill('domain-modeling'), /GLOSSARY\.md/, 'domain-modeling must name the repository glossary');
+});
+
+test('no skill keeps a per-run glossary or tells an agent to read the whole glossary (project-glossary spec 5, 6, 9)', () => {
+  const texts = [...GLOSSARY_SKILLS.map((name) => [name, readSkill(name)]), ['GLOSSARY-FORMAT.md', readFormat()]];
+
+  // assert.ok over a test, not doesNotMatch, so a failure names the file without dumping it.
+  for (const [name, text] of texts) {
+    // `\s+`, so the slice's verification grep for the phrase finds no hit in this file either.
+    assert.ok(!/one glossary per\s+run/i.test(text), `${name} keeps a glossary per run`);
+    assert.ok(!/section 3 glossary/i.test(text), `${name} sends the reader to the artefact's section 3`);
+    assert.ok(!/\bread\b[^.\n]{0,30}GLOSSARY\.md/i.test(text), `${name} tells an agent to read the whole glossary`);
+  }
+  for (const name of ['diagnosing-bugs', 'test-design']) {
+    assert.match(readSkill(name), /GLOSSARY\.md/, `${name} must look words up in the repository glossary`);
+  }
 });
 
 test('every skill that names a sibling skill names it under the pilot namespace', () => {

@@ -88,21 +88,59 @@ const healthAt = async function (port) {
 };
 
 /**
- * A deck of this test's own: its own store directory, its own port, and a
- * daemon process killed when the test ends however it ends.
+ * The file's one deck (cheap-suite S7): a store directory, a port and a daemon
+ * spawned by the first test that asks and killed when the file ends. A test is
+ * kept apart from the tests before it by its own home, which is its repository,
+ * its run and its hook state; a test that stops its deck takes `ownDeckFor`.
  */
+let sharedDeck = null;
+const sharedStops = [];
+let sharedDir = null;
+// Registered at load: `after` called inside a test would end the deck with that test.
+test.after(async function () {
+  await Promise.all(sharedStops.map(function (stop) { return stop(); }));
+  if (sharedDir !== null) fs.rmSync(sharedDir, { recursive: true, force: true });
+});
+
 async function deckFor(t) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-s5-deck-'));
-  const stops = [];
-  // The hooks under test, and the requests below, read this deck's secret from its dir (deck-token S1).
+  if (sharedDeck === null) {
+    sharedDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-s5-deck-'));
+    sharedDeck = spawnDeck(sharedDir, sharedStops).then(function (deck) {
+      return { port: deck.port, dir: deck.dir, repo: deck.repo };
+    });
+  }
+  const deck = await sharedDeck;
+  pointAt(t, deck.dir);
+  return deck;
+}
+
+/** The hooks under test, and the requests below, read the deck's secret from its dir (deck-token S1). */
+function pointAt(t, dir) {
   const previousDir = process.env.PILOT_DECK_DIR;
   process.env.PILOT_DECK_DIR = dir;
-  t.after(async function () {
+  t.after(function () {
     if (previousDir === undefined) delete process.env.PILOT_DECK_DIR;
     else process.env.PILOT_DECK_DIR = previousDir;
+  });
+}
+
+/**
+ * A deck of this test's own: its own store directory, its own port, and a
+ * daemon process killed when the test ends however it ends. For a test that
+ * stops its deck, or that proves how a deck is taken for this file's own.
+ */
+async function ownDeckFor(t) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-s5-deck-'));
+  const stops = [];
+  pointAt(t, dir);
+  t.after(async function () {
     await Promise.all(stops.map(function (stop) { return stop(); }));
     fs.rmSync(dir, { recursive: true, force: true });
   });
+  return spawnDeck(dir, stops);
+}
+
+async function spawnDeck(dir, stops) {
   // A port is only this test's once its health names the daemon spawned here (S11):
   // something else can hold the probed port by the time the daemon binds it.
   for (let attempt = 1; ; attempt += 1) {
@@ -317,6 +355,7 @@ test('the PostToolUse process names its modules up front, in order', function ()
       './context-size-guard.js',
       './agent-roster.js',
       'plain-pickup', // audit-fixes S5: inline in post-tool.js
+      './spawn-trace.js', // crew-handoff-trace S3
     ]
   );
 });
@@ -588,7 +627,8 @@ test('a tool use after deck_resolve on that thread says nothing', async function
 
 test('a reply on a QA-owned thread is never repeated to the pilot', async function (t) {
   const home = makeHome(t);
-  const deck = await deckFor(t);
+  // Its own deck: a QA reply left unheard falls back to every later pilot's stop gate (ADR 0045).
+  const deck = await ownDeckFor(t);
   const id = await postItem(deck.port, { kind: 'walkthrough', author: 'pilot:pilot-qa' });
   await establish(home, deck);
   await replyInBrowser(deck.port, id, 'Step two fails.');
@@ -599,7 +639,8 @@ test('a reply on a QA-owned thread is never repeated to the pilot', async functi
 
 test('the Stop gate holds on exactly the threads the repeat names', async function (t) {
   const home = makeHome(t);
-  const deck = await deckFor(t);
+  // Its own deck, for the QA reply it leaves unheard (ADR 0045), as above.
+  const deck = await ownDeckFor(t);
   const one = await postItem(deck.port, { title: 'Port?' });
   const two = await postItem(deck.port, { title: 'Name?' });
   const pushed = await postItem(deck.port, { title: 'Colour?' });
@@ -784,7 +825,7 @@ test('another repository\'s chatter does not starve this one\'s reply', async fu
 
 test('a deck that is not answering lets the session carry on, and says so once', async function (t) {
   const home = makeHome(t);
-  const deck = await deckFor(t);
+  const deck = await ownDeckFor(t);
   await establish(home, deck);
   await deck.stop();
 
@@ -898,7 +939,7 @@ test('an answer that predates the session does not block its stop', async functi
 
 test('a deck that is not answering never traps the pilot', async function (t) {
   const home = makeHome(t);
-  const deck = await deckFor(t);
+  const deck = await ownDeckFor(t);
   const id = await postItem(deck.port);
   await establish(home, deck);
   await replyInBrowser(deck.port, id, 'use 4322');
@@ -1211,7 +1252,7 @@ test('a stop already held once is let through rather than held again', async fun
 
 test('a deck that is not answering never holds the pilot on its own question', async function (t) {
   const home = makeHome(t);
-  const deck = await deckFor(t);
+  const deck = await ownDeckFor(t);
   await establish(home, deck);
   await postedHere(home, deck);
   await deck.stop();
@@ -1233,7 +1274,7 @@ test('the same unanswered question is waited on once, not at the end of every tu
   await establish(home, deck);
   const id = await postedHere(home, deck, { title: 'Which port for the deck?' });
 
-  const told = await stopping(home, deck.port, {}, { PILOT_STOP_HOLD_MS: '1200' });
+  const told = await stopping(home, deck.port, {}, { PILOT_STOP_HOLD_MS: '200' });
   assert.equal(told.json.decision, 'block', 'the first time, it is said');
 
   // `stop_hook_active` is false again on the next stop after a new user prompt,
@@ -1255,7 +1296,7 @@ test('a question already waited on once still wakes the pilot when it is answere
   const deck = await deckFor(t);
   await establish(home, deck);
   const id = await postedHere(home, deck);
-  assert.equal((await stopping(home, deck.port, {}, { PILOT_STOP_HOLD_MS: '1200' })).json.decision, 'block');
+  assert.equal((await stopping(home, deck.port, {}, { PILOT_STOP_HOLD_MS: '200' })).json.decision, 'block');
 
   // Standing aside on the waiting is not standing aside on the answer: the
   // unread-reply gate is a different question and must still fire.
@@ -1317,7 +1358,7 @@ test('a question closed while the gate is waiting lets the turn end', async func
 
 test('a deck that dies while the gate is waiting lets the turn end', async function (t) {
   const home = makeHome(t);
-  const deck = await deckFor(t);
+  const deck = await ownDeckFor(t);
   await establish(home, deck);
   await postedHere(home, deck);
 
@@ -1551,7 +1592,7 @@ test('a deck answering on the probed port that is not the one this test spawned 
     return probe;
   };
 
-  const deck = await deckFor(t);
+  const deck = await ownDeckFor(t);
   assert.match(await postItem(deck.port), /^itm_/);
   assert.notEqual(deck.port, taken, 'the stranger is not this test\'s deck');
 });

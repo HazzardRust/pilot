@@ -8,7 +8,7 @@
 
 import { execFileSync, spawnSync } from 'node:child_process';
 import path from 'node:path';
-import { runRef, runRemote } from './remotes.mjs';
+import { oncePerRunner, runRef, runRemote } from './remotes.mjs';
 import { hostPlatform } from '../hooks/lib/platform.js';
 
 /** A ref side git takes literally: no option, glob, revision syntax, `HEAD`, `@` or whitespace. */
@@ -91,8 +91,11 @@ export function defaultBranch(git) {
  * The default branch's name as the remote says it now (`ls-remote --symref origin HEAD`),
  * so a renamed default is still the default (spec 4; L4). Throws "no default branch known"
  * when the remote cannot be asked or names none; there is no fallback to origin/HEAD.
+ * Asked once per `git` runner; a throw is asked again.
  */
-export function remoteDefaultBranch(git) {
+export const remoteDefaultBranch = oncePerRunner(askRemoteDefaultBranch);
+
+function askRemoteDefaultBranch(git) {
   const unknown = 'no default branch known';
   const said = step(git, ['ls-remote', '--symref', 'origin', 'HEAD'], `${unknown} (origin could not be asked)`);
   const name = /^ref: refs\/heads\/(\S+)\tHEAD$/m.exec(said)?.[1];

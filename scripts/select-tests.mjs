@@ -37,6 +37,12 @@ export const FULL_TRIGGERS = Object.freeze([
   'scripts/select-tests.mjs',
 ]);
 
+/**
+ * True when a change to `file` alters how CI or the suite runs (cheap-suite A2): no earlier CI run speaks for it, so
+ * `provenTree` proves nothing past it and a selection since a proved tree runs full.
+ */
+export const outrunsProof = (file) => file.startsWith('.github/') || FULL_TRIGGERS.includes(file);
+
 /** The longest the selected absolute paths may be, joined, before the run goes full: Windows caps a command line near 32767. */
 export const ARGV_LIMIT = 24000;
 
@@ -83,6 +89,7 @@ export const TREE_TESTS = Object.freeze([
   'scripts/test/state-words.test.mjs',
   'scripts/test/ticket-states.test.mjs',
   'scripts/test/tree-census.test.mjs',
+  'scripts/test/ui-design.test.mjs',
   'scripts/test/vocabulary-guard.test.mjs',
 ]);
 
@@ -115,16 +122,29 @@ function importsOf(text, rel) {
 
 /**
  * The selection for `since` in `cwd`: `files` the absolute test paths to run, sorted, or null for a
- * full run with `reason`; `total` the test files a full run starts; `since` the merge-base sha.
+ * full run with `reason`; `total` the test files a full run starts; `since` the merge-base sha, or the tree
+ * itself when `since` names one (a proved tree, diffed as it is, a `.github/` change past it a full run too);
+ * `changed`, beside `files` only, the repository-relative paths the diff named, sorted.
  */
 export function selectTests({ cwd, since, git = gitIn(cwd) }) {
   const present = presentFiles(cwd, git);
   const tests = present.filter((rel) => path.posix.matchesGlob(rel, TEST_GLOB));
   const total = tests.length;
   let base;
+  let proved = false;
+  const resolve = (type) => {
+    try {
+      return git(['rev-parse', '--verify', '--quiet', '--end-of-options', `${since}^{${type}}`]).trim();
+    } catch {
+      return null;
+    }
+  };
   try {
-    const sha = git(['rev-parse', '--verify', '--quiet', '--end-of-options', `${since}^{commit}`]).trim();
-    base = git(['merge-base', sha, 'HEAD']).trim();
+    const sha = resolve('commit');
+    // A tree, CI's proved merge tree (cheap-suite F9), is diffed as it is: it has no history to take a merge-base of.
+    proved = sha === null;
+    base = proved ? resolve('tree') : git(['merge-base', sha, 'HEAD']).trim();
+    if (!base) throw new Error('neither commit nor tree');
   } catch {
     // A control character in the ref would forge a line of the gate's output, so it prints as `?`.
     return { files: null, total, since, reason: `cannot resolve ${since.replace(/[\x00-\x1f\x7f]/g, '?')}` };
@@ -140,7 +160,10 @@ export function selectTests({ cwd, since, git = gitIn(cwd) }) {
     // A failed diff is not an empty one: nothing is known about what changed, so everything runs.
     return { files: null, total, since: base, reason: 'git diff failed' };
   }
-  const trigger = FULL_TRIGGERS.find((rel) => changed.has(rel));
+  const paths = [...changed].sort();
+  // Past a proved tree a CI file changed too, one landed on the target after the feature branched included, runs full:
+  // the run that proved the tree is the one it changed (cheap-suite A2).
+  const trigger = FULL_TRIGGERS.find((rel) => changed.has(rel)) ?? (proved ? paths.find(outrunsProof) : undefined);
   if (trigger) return { files: null, total, since: base, reason: `${trigger} changed` };
   const source = new Map(present.filter((rel) => SOURCE.test(rel)).map((rel) => [rel, fs.readFileSync(path.join(cwd, rel), 'utf8')]));
   const importers = new Map();
@@ -167,7 +190,7 @@ export function selectTests({ cwd, since, git = gitIn(cwd) }) {
   const files = selected.map((rel) => path.resolve(cwd, rel)).sort();
   const argv = files.join(' ').length;
   if (argv > ARGV_LIMIT) return { files: null, total, since: base, reason: `selection is ${argv} characters of argv, over ${ARGV_LIMIT}` };
-  return { files, total, since: base };
+  return { files, total, since: base, changed: paths };
 }
 
 /**

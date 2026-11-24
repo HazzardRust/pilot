@@ -26,16 +26,12 @@ function whatComesNext(isPilot, onDeck) {
  * Between tickets the hand-off costs the least it ever will, so the pilot on the
  * deck is told at the advisory not to spend the tokens before the hard mark
  * waiting for it. Only the pilot: a `handoff` item is the pilot's kind. A live
- * co-pilot holds the hand-off's /clear, so it is paused now, while the buffer to
- * the hard mark is whole (clear-waits-co-pilot spec 6, A3). A pause that only
- * queued is released at once, the bound as backstop (never-stuck S19, A7).
+ * co-pilot survives the clear and is sent nothing (handoff-no-wait L2).
  */
 function handoffNowIfIdle(isPilot, onDeck) {
   if (!isPilot || !onDeck) return '';
   return ' If nothing is in flight — no live agent, no open run — the cheapest move is the ' +
-    'handoff now: one `deck_status` call, then run `pilot handoff`. If your co-pilot is live, ' +
-    'send it the pause now: it integrates the slice in flight and hands back `paused`; ' +
-    '`deck_ticket release` it then; if SendMessage answers queued, `deck_ticket release` it at once.';
+    'handoff now: one `deck_status` call, then run `pilot handoff`.';
 }
 
 /**
@@ -61,7 +57,7 @@ async function coPilotItem(seen, repo) {
   const record = ticket
     ? '`GET /api/record?ticket=' + ticket + '&repo=' + encodeURIComponent(repo) + '`'
     : 'unknown: the deck named no co-pilot ticket for this directory';
-  return {
+  const item = {
     kind: 'crew-handoff',
     title: 'Handoff: pilot-co-pilot on ' + (ticket || 'ticket unknown') + ' paused itself at ' +
       tokens(seen.used) + ' tokens',
@@ -73,6 +69,9 @@ async function coPilotItem(seen, repo) {
       'Handoff failed: spawn a fresh co-pilot from the plan.',
     repo: repo,
   };
+  // The deck's own ticket id, so the successor's grant closes this item (crew-handoff-trace spec 5).
+  if (ticket) item[deck.STORED.field] = ticket;
+  return item;
 }
 
 /**
@@ -91,6 +90,7 @@ function workAdvice(work) {
 
 module.exports = {
   coPilotItem: coPilotItem,
+  coPilotTicketOf: coPilotTicketOf,
   handoffNowIfIdle: handoffNowIfIdle,
   howFull: howFull,
   whatComesNext: whatComesNext,

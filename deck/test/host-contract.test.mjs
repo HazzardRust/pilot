@@ -68,7 +68,7 @@ const isReview = (review) => {
 };
 
 /** The **Host** surface, whole: no `whoami` and no `name` (user answer itm_6eca66849bdb). */
-const HOST_KEYS = ['checks', 'cli', 'comment', 'edit', 'open', 'review', 'reviews', 'signedIn', 'upsertComment'];
+const HOST_KEYS = ['checks', 'cli', 'comment', 'edit', 'open', 'review', 'reviews', 'signedIn', 'testedTrees', 'upsertComment'];
 
 const CONTRACT = [
   ['reviews', (host) => host.reviews({ state: 'all' }), (said) => { assert.equal(said.length, 3); said.forEach(isReview); assert.deepEqual(said.map((r) => r.state), ['open', 'merged', 'closed']); }],
@@ -385,6 +385,64 @@ test('only the one GET reaches gh', (t) => {
   assert.equal(fs.existsSync(path.join(dir, 'calls.jsonl')), false, '0 processes started');
   gh(['api', CHECK_RUNS]);
   assert.ok(fs.existsSync(path.join(dir, 'calls.jsonl')), 'the one GET does start one, so the 0 above is seen');
+});
+
+// cheap-suite S4, spec 5; L7. The tree each Gate job tested, read from its `tested-tree` annotation: one more GET.
+const annotations = (id) => `repos/{owner}/{repo}/check-runs/${id}/annotations?per_page=100`;
+
+test('the host reads annotations and nothing more', (t) => {
+  const calls = [];
+  const TREE = '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
+  const notice = (message, title = 'tested-tree') => ({ annotation_level: 'notice', title, message });
+  const actions = { slug: 'github-actions' };
+  const said = {
+    [CHECK_RUNS]: { total_count: 5, check_runs: [
+      { id: 11, name: 'gate (ubuntu-latest)', status: 'completed', conclusion: 'success', app: actions },
+      { id: 12, name: 'gate (windows-latest)', status: 'in_progress', conclusion: null, app: actions },
+      { id: 13, name: 'gate (macos-latest)', status: 'completed', conclusion: 'success', app: actions },
+      { id: 14, name: 'CodeQL', status: 'completed', conclusion: 'success', app: actions },
+      { id: 15, name: 'gate (ubuntu-latest)', status: 'completed', conclusion: 'success', app: { slug: 'other-app' } },
+    ] },
+    [annotations(11)]: [notice('a warning', 'Node'), notice(TREE)],
+    [annotations(12)]: [],
+    [annotations(13)]: [notice(TREE), notice('e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')],
+  };
+  const host = githubHost((args) => {
+    calls.push(args);
+    return JSON.stringify(said[args[1]]);
+  });
+  assert.deepEqual(host.testedTrees(SHA), [
+    { name: 'gate (ubuntu-latest)', conclusion: 'success', tree: TREE },
+    { name: 'gate (windows-latest)', conclusion: 'in_progress', tree: null },
+    { name: 'gate (macos-latest)', conclusion: 'success', tree: null },
+  ]);
+  assert.deepEqual(calls.map((args) => args[1]), [CHECK_RUNS, annotations(11), annotations(12), annotations(13)], 'no annotations read for a run not named gate, nor for one another app posted');
+  assert.throws(() => host.testedTrees('5fef2ab'), /not a full commit sha/);
+  assert.deepEqual(gitlabHost(() => assert.fail('no glab call')).testedTrees(SHA), [], 'a GitLab landing has no proof');
+  const dir = stubbed(t);
+  const gh = ghRun(dir);
+  for (const args of [
+    ['api', '-X', 'POST', annotations(11)],
+    ['api', annotations(11), '-f', 'title=x'],
+    ['api', annotations('11/../12')],
+    ['api', annotations(11).replace('{owner}/{repo}', 'other/repo')],
+    ['api', 'repos/{owner}/{repo}/actions/runs/11/logs'],
+  ]) assert.throws(() => gh(args), /^Error: gh api .*: not a host verb$/, args.join(' '));
+  assert.equal(fs.existsSync(path.join(dir, 'calls.jsonl')), false, '0 processes started');
+  gh(['api', annotations(11)]);
+  assert.ok(fs.existsSync(path.join(dir, 'calls.jsonl')), 'the annotations GET does start one, so the 0 above is seen');
+});
+
+test('a full annotation page proves no tree', () => {
+  const notice = (message, title) => ({ annotation_level: 'notice', title, message });
+  const page = [notice('a'.repeat(40), 'tested-tree'), ...Array.from({ length: 99 }, (_, i) => notice(`line ${i}`, 'Node'))];
+  assert.equal(page.length, 100);
+  const said = {
+    [CHECK_RUNS]: { total_count: 1, check_runs: [{ id: 11, name: 'gate (ubuntu-latest)', status: 'completed', conclusion: 'success', app: { slug: 'github-actions' } }] },
+    [annotations(11)]: page,
+  };
+  const host = githubHost((args) => JSON.stringify(said[args[1]]));
+  assert.deepEqual(host.testedTrees(SHA), [{ name: 'gate (ubuntu-latest)', conclusion: 'success', tree: null }]);
 });
 
 test('the allowlist still refuses', (t) => {

@@ -1,0 +1,302 @@
+{
+  "slug": "handoff-no-wait",
+  "feature": "A hand-off never waits on the co-pilot",
+  "ticket": "itm_d129dcf82505",
+  "branch": "feat/handoff-no-wait",
+  "base": "main",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-handoff-no-wait",
+  "artefact": "docs/design/handoff-no-wait/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/handoff-no-wait-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s1"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated",
+      "branch": "slice/handoff-no-wait-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s4"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated",
+      "branch": "slice/handoff-no-wait-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s6"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S4"
+      ],
+      "branch": "slice/handoff-no-wait-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/handoff-no-wait-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s3"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S4"
+      ],
+      "branch": "slice/handoff-no-wait-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s5"
+    },
+    {
+      "slice": "S7 The design passes the vocabulary guard (added)",
+      "state": "integrated",
+      "branch": "slice/handoff-no-wait-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-no-wait-s7"
+    },
+    {
+      "slice": "handoff-no-wait",
+      "state": "fixing"
+    },
+    {
+      "slice": "Fix round: principles findings",
+      "state": "pushed 7da6634",
+      "after": [
+        "S2",
+        "S5",
+        "S6"
+      ],
+      "branch": "fix/handoff-no-wait",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-handoff-no-wait"
+    },
+    {
+      "slice": "fix round",
+      "state": "pushed 7da6634, co-pilot integrating",
+      "after": [
+        "S2"
+      ],
+      "branch": "fix/handoff-no-wait",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-handoff-no-wait"
+    }
+  ],
+  "findings": [
+    "kept: N5 simplify — the --turn-ended flag is parsed and ignored after F1 (run-look.mjs, hooks/handoff-mod.mjs:48, its test:92); remove it end to end; goes to QA as the writer with QA-F2"
+  ],
+  "next": "co-pilot: integrating the fix round 7da6634; then pilot checks; then pause (context advisory)",
+  "updatedAt": "2026-11-23T05:14:46.537Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "Claude Code's behaviour on /clear is undocumented; read the minified binary and ran 5 probes",
+      "evidence": "docs-lookup found nothing; clearConversation, LZt",
+      "size": 8
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "--settings '<json>' breaks under spawn shell:true on Windows",
+      "evidence": "Invalid JSON provided to --settings",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "'hold' has 3 meanings in the repo",
+      "evidence": "grep held: 20 files, 3 the hand-off hold",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exited 1 four times on a deck timeout under load (deck answers in 1-3 s); each needs a restart and a read",
+      "size": 3000
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "landing gate cold-builds the Rune deck (7.5 min) in the landing worktree after a 9 min node suite; third timeout at 30 min with tests passing",
+      "evidence": "logs/20261122T114505911Z-feat-project-glossary.log; cargo test --test strip 2.42s warm",
+      "size": 6
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "a sed edit of a tracked file is refused by a hook only some of the time",
+      "evidence": "last sed refused, earlier ones on the same files passed",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "verdict message queued past the architect's hand-back a second time (both tickets); two full hand-back reports each",
+      "size": 6000
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S7: fresh worktree had no node_modules; gate failed until npm ci",
+      "evidence": "node_modules missing: run npm ci",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S7: foreground gate hit the 180 s auto-background; waited with pilot wait-for",
+      "evidence": "S7 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6: context summarised mid-run, work lost (worktree clean at base, reflog 'reset: moving to HEAD'); handed back empty, respawned",
+      "evidence": "S6 hand-back; git reflog of slice/handoff-no-wait-s6",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6 respawn handed back after 4 tool calls/27 s claiming its context was summarised; with 50k tokens used, it most likely read a startup summary reminder as lost work",
+      "evidence": "af904e80 hand-back: 4 tool uses, 26.7 s, worktree clean at c44f420",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "harness forced a second hand-back with four implementers live",
+      "evidence": "handback-send-enforce",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4: deck/store-runs.mjs, the owned file, had no room (799 of the 800-line bar); noteCoPilotAgent moved to deck/store-tickets.mjs",
+      "evidence": "facades.test.mjs:19",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4: full gate queued behind two other worktrees' gates",
+      "evidence": "s4-gate.log: gate: waiting for a slot",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3: a context compaction dropped progress state; re-established from git status (one extra round)",
+      "evidence": "S3 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3: the quiet gate log buries the single node failure above ~580 lines of cargo output",
+      "evidence": "s3-gate.log line 8",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1: the vocabulary guard skips untracked files, so the new ADR's retired words passed the targeted run and failed only in the full gate after commit; a second commit and a third ~13 min full run",
+      "evidence": "first gate log: docs/adr/0210-handoff-no-wait.md:24:task",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1: the advisory text was pinned in context-size.test.js, outside the slice's named test file",
+      "evidence": "hooks/test/context-size.test.js:625-647",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6: the vocabulary guard rejects Claude Code's own stream field names (task_notification, task_id); only the full suite shows it, and nothing points a slice to `vocabulary.mjs check <files>`",
+      "evidence": "gate run 2: 8 retired word(s), fail 1",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6: architecture §3 cites probe scripts 'in the session scratchpad' with no path, and E3's 'keeps its turn open' omits that the co-pilot had no TaskOutput and polled",
+      "evidence": "one failed live run, failed at sendmessage, 220 s",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6: ~13 min full gate restarted three times after review fixes",
+      "evidence": "S6 report",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5: no CLI prints the pilot pin's own-share number; needed a scratch script importing measure()",
+      "evidence": "measure-prompt.mjs prints columns, not (definition+skills+tools)/4",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5: gate summary must be grepped from a log under 400+ lines of Rust output",
+      "evidence": "gate.log:7",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2: context compacted early; work lost and re-derived from a clean worktree",
+      "evidence": "worktree clean at eb11fd9, no node_modules",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2: Edit refuses a file seen only through Bash (8 extra Reads); a held|hold grep over deck returned 39 KB because held is also a lane word",
+      "evidence": "S2 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2: the slice file named no home for B1/B2 and missed askFor's held branch and render-cards' held bucket",
+      "evidence": "S2 report pushback",
+      "size": 1
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "context summarised mid-run; lost track of its evidence runner, which had not handed back, so the six evidence checks are unjudged",
+      "evidence": "fundamentalist report §3: not run",
+      "size": 3
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "no TaskStop reachable; its detached worktree pilot-fund-handoff-no-wait left in place for a still-running runner",
+      "evidence": "ToolSearch: No matching deferred tools found",
+      "size": 2
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "all six checks gave no result: the changed-file list carried two files deleted on the branch (deck/hold-route.mjs, deck/test/handoff-hold.test.mjs), so eslint, jscpd and madge exited on a missing path; coverage died on a rustc internal compiler error in tests/tickets.rs; stryker hit its 900 s timeout with 7290 mutants; knip listed 696 unused files",
+      "evidence": "evidence runner hand-back, worktree pilot-fund-handoff-no-wait, base origin/main 69e315c",
+      "size": 35000
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "its report reached main after the fundamentalist had already reported, so nobody judged it",
+      "evidence": "hand-back from a84e5532 to main"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fix round: npm ci over 2 min; test:quiet queued behind the qa- and fund- worktrees' gates",
+      "evidence": "fix-round report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fix round: hooks blocked sed -i and a bare until loop (two retries); pilot wait-for timed out on a redirected log",
+      "evidence": "fix-round report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "two gate slots shared by every worktree: each implementer's 13-min full gate queued 15-20 min behind the others; the user asked why the implementer took so long",
+      "evidence": "gate: waiting for a slot (s1, s3, s4, fix-round logs)",
+      "size": 5
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "full suite went red on six timing tests while scratch claude runs shared the machine; each green alone",
+      "evidence": "QA gate at 73051dc",
+      "size": 2
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "all six evidence checks gave no result: deleted files broke eslint, jscpd, madge; coverage hit a rustc ICE in tests/tickets.rs; stryker timed out; knip listed 696 files",
+      "evidence": "runner hand-back via main",
+      "size": 4
+    }
+  ]
+}
