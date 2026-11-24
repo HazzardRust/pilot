@@ -282,6 +282,55 @@ fn focused(rt: &rune::Runtime<pilot_deck::app::State>) -> Option<String> {
         .and_then(|e| e.key)
 }
 
+/// The walkthrough of 2026-11-24, the user: "i dont want it to be shift enter, just normal enter".
+/// Plain Return in the draft and in the text after a grid makes a line and sends nothing; Shift+Return
+/// still makes one.
+#[test]
+fn return_in_the_text_makes_a_line_and_sends_nothing() {
+    use rune::Key;
+    for shift in [false, true] {
+        for (key, part) in [("reply-text", None), ("reply-text-1", Some(0))] {
+            let mut rt = box_drawn(table_local());
+            click(&mut rt, key);
+            press(&mut rt, Key::Enter, shift);
+            let reply = &rt.state.regions.reply;
+            let text = match part {
+                None => &reply.draft.text,
+                Some(t) => &reply.tables[t].1.text,
+            };
+            assert_eq!(
+                text.matches('\n').count(),
+                1,
+                "{key}, shift {shift}: {text:?}"
+            );
+            assert!(
+                !rt.state.pending.is_sent("reply-press"),
+                "{key}, shift {shift}: Return sent the reply"
+            );
+        }
+    }
+}
+
+/// The walkthrough of 2026-11-24, the user: Table "doesnt match the group the other buttons being
+/// reply and close - make it a separate group below". Its own row, under Reply and Close.
+#[test]
+fn table_is_a_group_of_its_own_under_reply_and_close() {
+    let rt = box_drawn(Local::default());
+    let (send, close, table) = (at(&rt, "send"), at(&rt, "close"), at(&rt, "table"));
+    for (name, e) in [("Reply", &send), ("Close", &close)] {
+        assert!(
+            table.rect[1] >= e.rect[1] + e.rect[3],
+            "Table at y {} is not under {name} (bottom {})",
+            table.rect[1],
+            e.rect[1] + e.rect[3]
+        );
+    }
+    assert!(
+        (table.rect[0] - send.rect[0]).abs() < 0.5,
+        "Table starts its row at Reply's left edge"
+    );
+}
+
 #[test]
 fn tab_shift_tab_and_return_move_between_cells() {
     use rune::Key;

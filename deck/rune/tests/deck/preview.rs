@@ -131,30 +131,42 @@ fn nested_emphasis_and_an_empty_or_overrun_draft_render_without_a_panic() {
 
 #[test]
 fn headings_render_in_the_header_type() {
-    // 0..1 `#`, 1 ` `, 2..3 `H`, 3 `\n`, 4 `x`: the caret on line 2.
-    let spans = preview::spans(&edit("# H\nx", 4, 4), DARK);
+    // 0..3 `###`, 3 ` `, 4..5 `H`, 5 `\n`, 6 `x`: the caret on line 2.
+    let spans = preview::spans(&edit("### H\nx", 6, 6), DARK);
     let header = theme::type_::HEADER;
 
     assert!(
-        has(&spans, 2..3, |s| s.size == Some(header.size)
+        has(&spans, 4..5, |s| s.size == Some(header.size)
             && s.weight == Some(header.weight)),
         "the header type over H: {spans:?}"
     );
     assert!(
-        has(&spans, 0..2, |s| s.color == Some(quiet())),
+        has(&spans, 0..4, |s| s.color == Some(quiet())),
         "quiet #: {spans:?}"
     );
 }
 
+/// The walkthrough of 2026-11-24: "some markdown rendering is missing, such as for dotpoints"; the
+/// user chose a solid dash (itm_51f1646c9f32). A list marker off the caret is drawn in the body ink
+/// at the thread's bullet weight, never dimmed.
 #[test]
-fn list_markers_render_quiet() {
-    // 0..2 `- `, 2 `a`, 4..7 `1. `, 7 `b`, 9 `x`: the caret on line 3.
+fn list_markers_render_solid() {
+    // 0 `-`, 2 `a`, 4..6 `1.`, 7 `b`, 9 `x`: the caret on line 3.
     let spans = preview::spans(&edit("- a\n1. b\nx", 9, 9), DARK);
+    let ink = theme::tokens(DARK).text;
+    let weight = theme::type_::BODY.weight;
 
-    for marker in [0..2, 4..7] {
+    for marker in [0..1, 4..6] {
         assert!(
-            has(&spans, marker.clone(), |s| s.color == Some(quiet())),
-            "quiet marker {marker:?}: {spans:?}"
+            has(&spans, marker.clone(), |s| s.color == Some(ink)
+                && s.weight == Some(weight)),
+            "solid marker {marker:?}: {spans:?}"
+        );
+        assert!(
+            !spans.iter().any(|s| (s.start as usize) < marker.end
+                && (s.end as usize) > marker.start
+                && s.color == Some(quiet())),
+            "marker {marker:?} dimmed: {spans:?}"
         );
     }
     assert_eq!(within(&spans, 2..3), 0, "a unstyled: {spans:?}");
@@ -229,7 +241,7 @@ fn a_long_draft_is_styled_within_a_frame() {
     let text: String = (0..300).map(line).collect::<Vec<_>>().join("\n");
     let caret = text.len() / 2;
     let e = edit(&text, caret, caret);
-    let header = theme::type_::HEADER;
+    let header = theme::type_::heading(1);
 
     let mut best = std::time::Duration::MAX;
     let mut spans = Vec::new();
@@ -249,6 +261,59 @@ fn a_long_draft_is_styled_within_a_frame() {
         best < std::time::Duration::from_millis(16),
         "300 lines took {best:?}, past a 60 Hz frame"
     );
+}
+
+/// The walkthrough of 2026-11-24: "### only bolds; wants real heading sizes" (itm_283d49f29661,
+/// "Sizes in both"). A heading off the caret draws at H1 17, H2 15, H3 13 bold, H4 and deeper 13.
+#[test]
+fn headings_have_real_sizes_by_level() {
+    for (level, size) in [(1, 17.0), (2, 15.0), (3, 13.0), (4, 13.0), (6, 13.0)] {
+        // `#`s, a space, `H`, `\n`, `x`: the caret on line 2, so the heading renders.
+        let text = format!("{} H\nx", "#".repeat(level));
+        let spans = preview::spans(&edit(&text, text.len(), text.len()), DARK);
+        let word = level + 1..level + 2;
+
+        assert!(
+            has(&spans, word, |s| s.size == Some(size)
+                && s.weight == Some(theme::type_::HEADER.weight)),
+            "level {level} draws at {size} bold: {spans:?}"
+        );
+    }
+}
+
+/// Spec 7: a heading typed in the box and sent looks the same in the thread. The thread's style
+/// keeps its heading fonts private, so they are read off its `Debug`: the four sizes in `headings`.
+#[test]
+fn a_heading_is_the_same_size_in_the_box_and_the_thread() {
+    let style = format!("{:?}", theme::markdown_style(DARK));
+    let from = style
+        .find("headings: [")
+        .expect("the style lists its headings");
+    // The first four styles after the list opens are levels 1 to 4 (`code_block` follows it).
+    let thread: Vec<f32> = style[from..]
+        .split("TextStyle { size: ")
+        .skip(1)
+        .take(4)
+        .map(|s| {
+            let n: String = s
+                .chars()
+                .take_while(|c| c.is_ascii_digit() || *c == '.')
+                .collect();
+            n.parse().expect("a number")
+        })
+        .collect();
+    assert_eq!(thread, [17.0, 15.0, 13.0, 13.0], "the thread's headings");
+
+    for (i, thread_size) in thread.iter().enumerate() {
+        let level = i + 1;
+        let text = format!("{} H\nx", "#".repeat(level));
+        let spans = preview::spans(&edit(&text, text.len(), text.len()), DARK);
+        assert!(
+            has(&spans, level + 1..level + 2, |s| s.size
+                == Some(*thread_size)),
+            "level {level} in the box is the thread's {thread_size}: {spans:?}"
+        );
+    }
 }
 
 #[test]

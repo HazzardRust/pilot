@@ -564,9 +564,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             ),
         );
     }
-    // Table after Close, out of the Tab order and never taking focus, so the prose part holding
-    // the caret still holds it when the press lands (A5, A6); the caret then goes to the first cell.
-    fixed = fixed.child(
+    // Table, a group of its own in a row under Reply and Close (the user, 2026-11-24), out of the
+    // Tab order and never taking focus, so the prose part holding the caret still holds it when the
+    // press lands (A5, A6); the caret then goes to the first cell.
+    let insert = row().key("reply-insert").gap(space::pad).child(
         btn("Table", "table".into(), false)
             .focusable(false)
             .preserve_focus_on_press(true)
@@ -625,6 +626,9 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 .label("Reply")
                 .placeholder("Reply to the pilot.", k.quiet)
                 .on_edit(|s: &mut State| &mut s.regions.reply.draft)
+                // Plain Return makes a line, as Shift+Return does; Reply is pressed, never typed
+                // (the user, 2026-11-24: "just normal enter"; rune's `text_input` doc).
+                .on_submit(|s: &mut State, _: &mut Tx| s.regions.reply.draft.insert("\n"))
                 // Five lines tall to start, and growing past them; a word longer than the box
                 // breaks at its width (the user, 2026-11-21).
                 .wrap_anywhere()
@@ -697,10 +701,13 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 .key(prose_key(t + 1))
                 .label("Reply, after the table")
                 .on_edit(move |s: &mut State| s.regions.reply.part(t, None))
+                .on_submit(move |s: &mut State, _: &mut Tx| {
+                    s.regions.reply.part(t, None).insert("\n")
+                })
                 .wrap_anywhere(),
         );
     }
-    box_ = box_.child(send);
+    box_ = box_.child(send).child(insert);
     if let Some(reason) = &local.refused {
         box_ = box_.child(
             text(reason)

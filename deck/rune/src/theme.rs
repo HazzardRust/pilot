@@ -338,10 +338,23 @@ pub mod opacity {
 /// The deck's three type scales and no others (spec 22): `HEADER` 13 bold, `BODY` 13 and `CAPTION` 11,
 /// in Inter (`UI`); ids and times take `.mono()`, JetBrains Mono (`MONO`). Both families are bundled
 /// (`app::spec`). Rune's own `type_::LABEL` and `TITLE` are the caption and the header here.
+///
+/// The one exception is a markdown body (the thread's and the reply box's preview), where a heading
+/// takes its real size by level (reply-markdown S6): `H1` 17 and `H2` 15 bold, `HEADER` for 3 and
+/// deeper; `heading` picks one. Nothing else in the deck uses `H1` or `H2`.
 pub mod type_ {
     use rune::TextStyle;
 
     include!(concat!(env!("OUT_DIR"), "/type.rs"));
+
+    /// A markdown heading of `level` (1 to 6): `H1`, `H2`, then `HEADER` for 3 and deeper.
+    pub fn heading(level: u8) -> TextStyle {
+        match level {
+            1 => H1,
+            2 => H2,
+            _ => HEADER,
+        }
+    }
 }
 
 /// Fixed sizes of the side-bar layout (DESIGN.md §4b), in px.
@@ -433,19 +446,25 @@ pub fn markdown(source: impl Into<String>, dark: bool) -> El {
         .render(&markdown_style(dark))
 }
 
-/// Rune's neutral markdown style on the deck's scales: every heading the header, the body and inline
-/// code the body (code at scale 1.0), a code block the body in the mono family.
+/// Rune's neutral markdown style on the deck's scales: headings by level (`type_::heading`; the reply
+/// box's preview draws the same), the body and inline code the body (code at scale 1.0), a code block
+/// the body in the mono family. A heading larger than the body takes the 24 px line Rune's own 17 and
+/// 15 take; the rest take 20.
 pub fn markdown_style(dark: bool) -> MarkdownStyle {
     let on = |scale: TextStyle| TextStyle {
-        line_height: 20.0,
+        line_height: if scale.size > type_::BODY.size {
+            24.0
+        } else {
+            20.0
+        },
         ..scale
     };
     MarkdownStyle::neutral(dark)
         .selection(roles(dark).selection)
         .body_font(on(type_::BODY))
-        .heading_font(1, on(type_::HEADER))
-        .heading_font(2, on(type_::HEADER))
-        .heading_font(3, on(type_::HEADER))
+        .heading_font(1, on(type_::heading(1)))
+        .heading_font(2, on(type_::heading(2)))
+        .heading_font(3, on(type_::heading(3)))
         .code_block_font(on(type_::BODY.mono()))
         .inline_code_font(1.0, type_::BODY.weight)
 }
