@@ -28,11 +28,12 @@ const isOwner = (token) => token === '-' || (TEST_GLOB !== undefined && !token.s
 
 /**
  * `{ total, node, git, other, owners }` from a spawn file's lines; `node` is any node binary, `git` any
- * git, and `owners` counts each owner's lines. A file may hold spaces, so the owner is the last field
- * only when it reads as one; a two-field line is `-`'s.
+ * git, and `owners` holds each owner's `{ total, node, git, other }` (cheap-suite S1). A file may hold
+ * spaces, so the owner is the last field only when it reads as one; a two-field line is `-`'s.
  */
 export function spawnCount(file) {
   const count = { total: 0, node: 0, git: 0, other: 0, owners: new Map() };
+  const tally = () => ({ total: 0, node: 0, git: 0, other: 0 });
   for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
     if (!line) continue;
     const rest = line.slice(line.indexOf(' ') + 1);
@@ -40,9 +41,12 @@ export function spawnCount(file) {
     const owned = cut > 0 && isOwner(rest.slice(cut + 1));
     const owner = owned ? rest.slice(cut + 1) : '-';
     const name = path.win32.basename(owned ? rest.slice(0, cut) : rest).toLowerCase().replace(/\.exe$/, '');
-    count.total++;
-    count[name === 'node' || name === 'git' ? name : 'other']++;
-    count.owners.set(owner, (count.owners.get(owner) ?? 0) + 1);
+    const kind = name === 'node' || name === 'git' ? name : 'other';
+    if (!count.owners.has(owner)) count.owners.set(owner, tally());
+    for (const sum of [count, count.owners.get(owner)]) {
+      sum.total++;
+      sum[kind]++;
+    }
   }
   return count;
 }
