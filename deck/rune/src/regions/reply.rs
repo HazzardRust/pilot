@@ -82,23 +82,41 @@ pub struct Local {
     spare: TextEdit,
 }
 
-/// The five controls under a grid (A7): their label and key suffix, in the order drawn.
+/// What a right-click on a cell offers, acting at that cell (S5, Obsidian's way).
 #[derive(Debug, Clone, Copy)]
 enum Control {
     AddRow,
-    AddCol,
     RemoveRow,
+    AddCol,
     RemoveCol,
     Delete,
 }
 
-const CONTROLS: [(Control, &str, &str); 5] = [
-    (Control::AddRow, "+ row", "add-row"),
-    (Control::AddCol, "+ column", "add-col"),
-    (Control::RemoveRow, "− row", "remove-row"),
-    (Control::RemoveCol, "− column", "remove-col"),
-    (Control::Delete, "Delete table", "delete"),
+/// The cell menu's items: what each does, its title and its id, in the order shown.
+const MENU: [(Control, &str, &str); 5] = [
+    (Control::AddRow, "Add row below", "add-row"),
+    (Control::RemoveRow, "Delete row", "delete-row"),
+    (Control::AddCol, "Add column right", "add-col"),
+    (Control::RemoveCol, "Delete column", "delete-col"),
+    (Control::Delete, "Delete table", "delete-table"),
 ];
+
+/// The cell menu: the header row is never deleted, nor the last column, so those items are off.
+fn cell_menu(r: usize, cols: usize) -> rune::PopupMenu {
+    let mut menu = rune::PopupMenu::new();
+    for (control, title, id) in MENU {
+        let enabled = match control {
+            Control::RemoveRow => r > 0,
+            Control::RemoveCol => cols > 1,
+            _ => true,
+        };
+        if matches!(control, Control::Delete) {
+            menu = menu.separator();
+        }
+        menu = menu.item(rune::PopupItem::new(id, title).enabled(enabled));
+    }
+    menu
+}
 
 /// The key of grid `t`'s cell at row `r`, column `c` (L12).
 fn cell_key(t: usize, r: usize, c: usize) -> String {
@@ -141,8 +159,9 @@ impl Local {
             })
     }
 
-    /// The Table button: a 2 × 2 grid after the caret's line of the prose part holding the caret (the
-    /// first when none does), which splits there; the lines after it become the grid's prose part (A6).
+    /// The Table button: a 2 × 2 grid at the caret of the prose part holding it (the first when none
+    /// does), which splits there; the text after the caret becomes the grid's prose part (S5). A line
+    /// break beside the caret is the grid's own, so none is left at the cut.
     pub fn insert_table(&mut self) {
         self.insert();
     }
@@ -165,13 +184,9 @@ impl Local {
         // The caret may sit off a char boundary; `text[caret..]` would panic there.
         prose.sync_invariants();
         let caret = prose.focus.min(prose.text.len());
-        let (head, tail) = match prose.text[caret..].find('\n') {
-            Some(n) => (
-                prose.text[..caret + n].to_string(),
-                prose.text[caret + n + 1..].to_string(),
-            ),
-            None => (prose.text.clone(), String::new()),
-        };
+        let (head, tail) = prose.text.split_at(caret);
+        let head = head.strip_suffix('\n').unwrap_or(head).to_string();
+        let tail = tail.strip_prefix('\n').unwrap_or(tail).to_string();
         prose.replace_text(head);
         self.tables
             .insert(after, (Table::new(2, 2), TextEdit::new(tail)));
@@ -206,12 +221,23 @@ impl Local {
         prose_key(t)
     }
 
-    /// Up, Down or Return (`down`) in grid `t`'s cell (r, c): the key the caret goes to. Up from the
+    /// Up, Down, Return or Tab in grid `t`'s cell (r, c): the key the caret goes to. Up from the
     /// header and Down from the last row leave for the prose beside the grid; Return moves down a
-    /// row, adding one under the last (spec 11). Tab and Shift+Tab are Rune's own focus order.
+    /// row, adding one under the last (spec 11); Tab moves to the next cell, and in the last cell
+    /// adds a row and moves into it (S5, Obsidian's way). `None` leaves the key to the field.
     fn step(&mut self, t: usize, (r, c): (usize, usize), key: &Key) -> Option<String> {
-        let rows = self.tables.get(t)?.0.size().0;
+        let (rows, cols) = self.tables.get(t)?.0.size();
+        if r >= rows || c >= cols {
+            return None;
+        }
         match key {
+            Key::Tab if c + 1 < cols => Some(cell_key(t, r, c + 1)),
+            Key::Tab => {
+                if r + 1 >= rows {
+                    self.tables[t].0.add_row(r);
+                }
+                Some(cell_key(t, r + 1, 0))
+            }
             Key::Up if r == 0 => Some(self.prose_before(t)),
             Key::Up => Some(cell_key(t, r - 1, c)),
             Key::Down if r + 1 >= rows => {
@@ -238,7 +264,7 @@ impl Local {
             .find(|&(r, c)| table.cell(r, c).focused)
     }
 
-    /// A control under grid `t` pressed, acting on the caret's cell (r, c) (A7): the key the caret
+    /// A cell menu item picked on grid `t`'s cell (r, c) (S5): the key the caret
     /// goes to, a cell of the grid, or the prose before it once the grid is deleted and the prose
     /// joined. A grid or cell gone since the frame was drawn changes nothing.
     fn reshape(&mut self, t: usize, (r, c): (usize, usize), control: Control) -> Option<String> {
@@ -634,7 +660,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 .wrap_anywhere()
                 .min_h(5.0 * line_height(type_::BODY) + 2.0 * space::pad),
         );
-    // Each grid, then the prose part after it (L10): one single-line field per cell, never pipes.
+    // Each grid, then the prose part after it (L10): one field per cell, never pipes.
     // The header row as the thread's rendered table draws one (L5): its weight at body size, on
     // its header fill (rune-kit `MarkdownStyle::from_kit`'s `table_head_fill`).
     let head = rune::TextStyle {
@@ -650,17 +676,40 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             for c in 0..cols {
                 let font = if r == 0 { head } else { type_::BODY };
                 // Rendered once the caret leaves, as a prose line off the caret (A8).
+                // Multi-line, so Shift+Return breaks a line in the cell (S5); the keys that move
+                // between cells are taken here, before the editor sees them.
                 let cell = field(table.cell(r, c), font, dark)
-                    .single_line()
                     .key(cell_key(t, r, c))
                     .label(format!("Table cell, row {}, column {}", r + 1, c + 1))
                     .on_edit(move |s: &mut State| s.regions.reply.part(t, Some((r, c))))
                     .on_input_key(move |s: &mut State, ev: &rune::KeyEvent, tx: &mut Tx| {
                         let plain = ev.mods == rune::Mods::default();
-                        let to = match ev.key {
-                            Key::Up | Key::Down if plain => {
-                                s.regions.reply.step(t, (r, c), &ev.key)
+                        let shift_only = ev.mods
+                            == rune::Mods {
+                                shift: true,
+                                ..rune::Mods::default()
+                            };
+                        let reply = &mut s.regions.reply;
+                        // Up and Down leave the cell only from its first or last line.
+                        let edge = |reply: &mut Local, up: bool| {
+                            let edit = reply.part(t, Some((r, c)));
+                            // The caret may sit off a char boundary; slicing there would panic.
+                            edit.sync_invariants();
+                            let caret = edit.focus.min(edit.text.len());
+                            match up {
+                                true => !edit.text[..caret].contains('\n'),
+                                false => !edit.text[caret..].contains('\n'),
                             }
+                        };
+                        let to = match ev.key {
+                            Key::Up if plain && edge(reply, true) => reply.step(t, (r, c), &ev.key),
+                            Key::Down if plain && edge(reply, false) => {
+                                reply.step(t, (r, c), &ev.key)
+                            }
+                            Key::Enter | Key::Tab if plain => reply.step(t, (r, c), &ev.key),
+                            // Shift+Tab goes back a cell; from the first, Rune's own focus order.
+                            Key::Tab if shift_only && c > 0 => Some(cell_key(t, r, c - 1)),
+                            Key::Tab if shift_only && r > 0 => Some(cell_key(t, r - 1, cols - 1)),
                             _ => None,
                         };
                         to.map(|key| tx.focus(key, false)).is_some()
@@ -671,30 +720,31 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                             tx.focus(key, false);
                         }
                     })
+                    // Right-click: the cell menu, acting at this cell (S5).
+                    .on_secondary_press(
+                        move |_: &mut State, at: rune::PointerPress, tx: &mut Tx| {
+                            tx.popup_menu(
+                                cell_menu(r, cols),
+                                at,
+                                move |s: &mut State, picked: Option<&str>, tx: &mut Tx| {
+                                    let control = MENU
+                                        .iter()
+                                        .find(|(_, _, id)| Some(*id) == picked)
+                                        .map(|&(control, _, _)| control);
+                                    if let Some(key) =
+                                        control.and_then(|k| s.regions.reply.reshape(t, (r, c), k))
+                                    {
+                                        tx.focus(key, false);
+                                    }
+                                },
+                            );
+                        },
+                    )
                     .grow(1.0)
                     .min_w(space::s0);
                 line = line.child(if r == 0 { cell.fill(head_fill) } else { cell });
             }
             grid = grid.child(line);
-        }
-        // The controls show while a cell has the caret, out of the Tab order and never taking
-        // focus, so the cell still holds the caret when the press lands (A7).
-        // The press reads the cell as drawn: a pointer down may blur the field before it lands.
-        if let Some(at) = local.caret_cell(t) {
-            let mut controls = row().key(format!("table-{t}-controls")).gap(space::within);
-            for (control, label, suffix) in CONTROLS {
-                controls = controls.child(
-                    btn(label, format!("table-{t}-{suffix}"), false)
-                        .focusable(false)
-                        .preserve_focus_on_press(true)
-                        .on_press_tx(move |s: &mut State, tx: &mut Tx| {
-                            if let Some(key) = s.regions.reply.reshape(t, at, control) {
-                                tx.focus(key, false);
-                            }
-                        }),
-                );
-            }
-            grid = grid.child(controls);
         }
         box_ = box_.child(grid).child(
             field(prose, type_::BODY, dark)

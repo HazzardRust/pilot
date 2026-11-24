@@ -1,4 +1,4 @@
-//! A table in the reply box (ADR reply-markdown L10-L12): a grid of single-line cells the user types
+//! A table in the reply box (ADR reply-markdown L10-L12): a grid of cells the user types
 //! into, never pipe syntax, written out as canonical GFM only when the reply is sent.
 
 use rune::TextEdit;
@@ -65,13 +65,14 @@ impl Table {
     }
 
     /// Canonical GFM (L11): the header, a `| --- |` delimiter, the body; `|` in a cell is written
-    /// `\|` and every other byte as typed, so a cell's markdown means what it means in prose.
+    /// `\|`, a line break `<br>` as Obsidian writes it (S5), and every other byte as typed, so a
+    /// cell's markdown means what it means in prose.
     pub fn markdown(&self) -> String {
         let line = |cells: &[TextEdit]| {
             let mut out = String::from("|");
             for cell in cells {
                 out.push(' ');
-                out.push_str(&cell.text.replace('|', "\\|"));
+                out.push_str(&cell.text.replace('|', "\\|").replace('\n', "<br>"));
                 out.push_str(" |");
             }
             out
