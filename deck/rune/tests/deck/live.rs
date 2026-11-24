@@ -4,8 +4,8 @@
 use crate::support;
 
 use std::path::PathBuf;
-use std::sync::mpsc;
 use std::sync::Arc;
+use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
 use pilot_deck::app::{self, State};

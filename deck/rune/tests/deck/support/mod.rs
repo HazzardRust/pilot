@@ -48,7 +48,9 @@ impl Slot {
             let (held, freed) = &HELD;
             let mut n = held.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
             while *n >= DECKS {
-                n = freed.wait(n).unwrap_or_else(|poisoned| poisoned.into_inner());
+                n = freed
+                    .wait(n)
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
             }
             *n += 1;
         }
