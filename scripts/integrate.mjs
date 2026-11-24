@@ -54,7 +54,7 @@ import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-gene
 import { assertPushable, firstLine, git, isPilotBase, isPilotName, landingSubjects, pilotBranch, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRef, runRemote, shortRef } from './remotes.mjs';
 import { scopeOf } from './select-tests.mjs';
-import { headOf, nodeMajor, recordRun, worktreeTree } from './test-ledger.mjs';
+import { headOf, nodeMajor, recordRun, reusableRun, worktreeTree } from './test-ledger.mjs';
 import { hostPlatform } from '../hooks/lib/platform.js';
 import { holderFrom, runRecord } from './worktrees.mjs';
 
@@ -259,11 +259,23 @@ export const NO_TEST = 'no package.json here; set git config pilot.test "<comman
  * `runTests` on the injected `test` as given, in a slot; absent, on the repository's own command
  * since `since`, the tip before the merge (suite-at-landing L4), a selection taking no slot (L9).
  */
-function runChosen(cwd, test, since, label) {
+function runChosen(cwd, test, since, label, home) {
   const chosen = test === undefined ? testCommand(cwd, { since }) : { command: test, selected: false };
   if (chosen === undefined) throw new Error(NO_TEST);
   // An injected command's row says `injected`, a since no request names, so it is never reused.
-  return runTests(cwd, chosen.command, { label, where: 'integrate', since: test !== undefined ? 'injected' : chosen.selected ? since : null, slot: !chosen.selected });
+  return runTests(cwd, chosen.command, { label, where: 'integrate', since: test !== undefined ? 'injected' : chosen.selected ? since : null, home, slot: !chosen.selected });
+}
+
+/**
+ * The ledger row (`reusableRun`; tested-once L3, L4) that proves the merge in hand green: the
+ * latest green, complete row for its exact tree since `since`, the tip before the merge; else null.
+ * An injected `test` always runs. Inside the suite an unpassed `home` reads no ledger, as `runTests`
+ * writes none (L8).
+ */
+function provenRun(cwd, test, since, home) {
+  if (test !== undefined) return null;
+  const ledgerHome = home ?? (process.env.PILOT_GATE_HOME_STORE ? null : os.homedir());
+  return ledgerHome === null ? null : reusableRun({ tree: worktreeTree(cwd), since, home: ledgerHome });
 }
 
 /** A green run's `<counts>`, then `; <scope>` when it printed one. */
@@ -404,7 +416,8 @@ export function landedOnPilot(cwd, head, ref, git = gitView(cwd)) {
 
 /**
  * Integrate one slice branch, or with none take the base alone. `test` is the shell
- * command, run as given (default the repository's own since the tip before the merge, `runChosen`), `push` false keeps origin untouched, `trailers` are
+ * command, run as given (default the repository's own since the tip before the merge, `runChosen`, unless
+ * a ledger row under `home` proves the merge's tree green, `provenRun`), `push` false keeps origin untouched, `trailers` are
  * `Key: value` lines for every commit made. `install`, `host` and `holder` are the calls
  * out to other tools, replaceable for a test. Answers `{ ok, line, failing }`, plus `code` 2 when it was refused for want of a test command.
  */
@@ -417,6 +430,7 @@ export function integrate(branch, options = {}) {
     host, // the **Host**, null at none; unset, `hostFor(cwd)` when the prune asks
     install = installWithNpm,
     holder = holderFrom(processTable), // a slice tree a live process holds is kept (L4)
+    home, // the ledger's and the logs' home, default the user's
   } = options;
   const slice = branch?.replace(/^origin\//, '');
   const not = slice ? `NOT integrated ${slice}` : 'base NOT taken';
@@ -542,17 +556,21 @@ export function integrate(branch, options = {}) {
   }
   const merged = slice ?? taken;
   let run;
+  let reused;
   try {
-    run = runChosen(cwd, test, start, merged);
-    view.forget(); // the test command is git's to touch too, outside the view (L3)
+    reused = provenRun(cwd, test, start, home);
+    if (!reused) {
+      run = runChosen(cwd, test, start, merged, home);
+      view.forget(); // the test command is git's to touch too, outside the view (L3)
+    }
   } catch (err) {
-    // The log could not be written: the merge in hand is undone, as on red.
+    // The log could not be written, or the ledger not read: the merge in hand is undone, as on red.
     return fail(`${not}: the tests could not run (${firstLine(err)}); not pushed`);
   }
-  if (run.status !== 0) {
+  if (run && run.status !== 0) {
     return fail(`${not}: ${redLine(merged, run)}; not pushed`, run.failing);
   }
-  const counts = summaryOf(run);
+  const counts = reused ? `tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}` : summaryOf(run);
 
   try {
     if (slice) commit(view, subject, trailers);
