@@ -10,6 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { appendRefusal, readRefusals } from '../classifier-log.mjs';
+import { findCredential } from '../credential.mjs';
 
 function scratch(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-classifier-log-'));
@@ -82,6 +83,87 @@ for (const [shape, command] of [
     appendRefusal(entry({ command }), { dir });
     assert.strictEqual(readRefusals({ dir })[0].command, '<withheld: credential>');
     assert.ok(!fs.readFileSync(path.join(dir, 'classifier.log'), 'utf8').includes(SECRET), 'not on disk either');
+  });
+}
+
+// archive-page S13: shapes S6's security review found missing. Each token is built in parts so no line here is one.
+const HEX64 = 'a1b2c3d4e5f60718'.repeat(4);
+for (const [shape, command, secret] of [
+  ['a GitLab token', 'echo glpat-' + SECRET + 'Ab3De6Gh9J | glab auth login --stdin', SECRET],
+  ['an npm token', 'npm config set //registry.npmjs.org/:x npm_' + SECRET + 'a'.repeat(26), SECRET],
+  ['a Google API key', 'curl "https://maps.googleapis.com/x?key=AIza' + SECRET + 'b'.repeat(25) + '"', SECRET],
+  ['a DigitalOcean token', 'doctl auth init -t dop_v1_' + HEX64, HEX64],
+  ['Authorization: token', 'curl -H "Authorization: token ' + SECRET + 'abcdefgh" https://api.github.com', SECRET],
+  ['--token <x>', 'gh-tool --token ' + SECRET + ' run', SECRET],
+  ['--token=<x>', 'gh-tool --token=' + SECRET + ' run', SECRET],
+  ['--api-key <x>', 'stripe-cli --api-key ' + SECRET + ' listen', SECRET],
+  ['--api-key=<x>', 'stripe-cli --api-key=' + SECRET + ' listen', SECRET],
+  ['_authToken=', 'echo //registry.npmjs.org/:_authToken=' + SECRET + ' >> .npmrc', SECRET],
+  ['sshpass -p <x>', 'sshpass -p ' + SECRET + ' ssh deploy@host', SECRET],
+  ['sshpass -v -p<x>', 'sshpass -v -p' + SECRET + ' ssh deploy@host', SECRET],
+  ['mysql -p<x>', 'mysql -u root -p' + SECRET + ' app', SECRET],
+  ['mysql -p"<x>"', 'mysql -uroot -p"' + SECRET + '" app', SECRET],
+  ['a quoted JSON password', 'echo \'{"user":"ci","password":"' + SECRET + '"}\' > creds.json', SECRET],
+  ['a URL with an empty user', 'redis-cli -u redis://:' + SECRET + '@cache.example.com:6379', SECRET],
+  ['Authorization: bearer in lower case', 'curl -H "Authorization: bearer ' + SECRET + 'abcdefgh" x', SECRET],
+  ['a quoted JSON key with a prefixed name', 'echo \'{"db_password": "' + SECRET + '"}\'', SECRET],
+]) {
+  test(`a credential as ${shape} reads back withheld`, (t) => {
+    const dir = scratch(t);
+    appendRefusal(entry({ command }), { dir });
+    assert.strictEqual(readRefusals({ dir })[0].command, '<withheld: credential>');
+    assert.ok(!fs.readFileSync(path.join(dir, 'classifier.log'), 'utf8').includes(secret), 'not on disk either');
+  });
+}
+
+// S13 B2: talk about these shapes, and the commands that only look like them, stay readable.
+test('prose and commands near the new shapes read back as they were', (t) => {
+  const dir = scratch(t);
+  const plain = [
+    'const apiKey = process.env.PILOT_API_KEY;',
+    'the token field in the schema is nullable; secret rotation is slice 9',
+    'TOKEN_LIMIT=4096 node run.mjs',
+    'claude --token-limit 5',
+    'gh-tool --token $GH_TOKEN run',
+    'gh-tool --token=<token> run',
+    'pass --token whenever the registry asks',
+    'mysql -p',
+    'mysql -u root -p mydb',
+    'sshpass -e ssh -p 22 deploy@host',
+    'sshpass -p "$SSHPASS" ssh deploy@host',
+    'echo \'{"password": ""}\'',
+    'echo \'{"password": "string"}\'',
+    'npm config get npm_config_registry',
+    'echo "Authorization: token authentication is deprecated"',
+    'echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} >> .npmrc',
+    'this._authToken = response.data.token;',
+  ];
+  for (const command of plain) appendRefusal(entry({ command }), { dir });
+  assert.deepStrictEqual(readRefusals({ dir }).map((r) => r.command), plain);
+});
+
+// S13 B3: a 64 KiB string aimed at each new shape is checked in under 50 ms.
+for (const [name, text] of [
+  ['a run of sshpass -v', 'sshpass' + ' -v'.repeat(21845)],
+  ['a run of sshpass with -f args', 'sshpass -f a'.repeat(5461)],
+  ['sshpass then a long -f path', 'sshpass -f ' + 'a'.repeat(65536)],
+  ['a run of mysql', 'mysql '.repeat(10922)],
+  ['mysql then a long gap', 'mysql ' + 'x '.repeat(32768)],
+  ['a quoted key with no closing quote', '"password":"' + 'a'.repeat(65536)],
+  ['a run of quoted prefixed names', '"a_'.repeat(21845)],
+  ['a run of --token', ' --token'.repeat(8192)],
+  ['--token= then a long letter run', '--token=' + 'a'.repeat(65536)],
+  ['Authorization: token then a long run', 'Authorization: token ' + 'a'.repeat(65536)],
+  ['a run of glpat-', 'glpat-'.repeat(10922)],
+  // Found by S13's security review in two older shapes: each was quadratic, about a second at 64 KiB.
+  ['a run of hyphen-joined api_key names', 'api_key-'.repeat(8192)],
+  ['a run of hyphen-joined token names', 'token-a-'.repeat(8192)],
+  ['a run of eyJ- segments', 'eyJ-'.repeat(16384)],
+]) {
+  test(`${name} is checked by findCredential in under 50 ms`, () => {
+    const started = process.hrtime.bigint();
+    findCredential(text);
+    assert.ok(process.hrtime.bigint() - started < 50_000_000n, 'checked in under 50 ms');
   });
 }
 
