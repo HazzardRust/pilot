@@ -195,7 +195,7 @@ const runsTheDeck = (table, pid) => table().some((p) => p.pid === pid && isDeckD
  * from before that route reports no version and is stopped by pid, but only when the
  * process table shows that pid running `deck/daemon.mjs`; anything else is left alone.
  */
-export async function replaceOlder(found, { version = PLUGIN_VERSION, post = postExit, table = processTable, kill = (pid) => process.kill(pid) } = {}) {
+export async function replaceOlder(found, { version = PLUGIN_VERSION, post = postExit, table = processTable, kill = (pid) => process.kill(pid), startTimeoutMs = START_TIMEOUT_MS } = {}) {
   const keep = (why) => {
     console.error(`[deck] the ${oneLine(found.version ?? 'unversioned', 120)} deck at ${deckUrl()} (pid ${found.pid}) is kept: ${oneLine(why, 120)}`);
     return 'kept';
@@ -216,12 +216,12 @@ export async function replaceOlder(found, { version = PLUGIN_VERSION, post = pos
       return keep(`it could not be stopped (${err?.message ?? err})`);
     }
   }
-  const deadline = Date.now() + START_TIMEOUT_MS;
+  const deadline = Date.now() + startTimeoutMs;
   while (Date.now() < deadline) {
     if ((await probe()).state === 'none') return 'replaced';
     await sleep(START_INTERVAL_MS);
   }
-  return keep(`it still held the port after ${START_TIMEOUT_MS}ms`);
+  return keep(`it still held the port after ${startTimeoutMs}ms`);
 }
 
 /**
@@ -235,8 +235,11 @@ export async function replaceOlder(found, { version = PLUGIN_VERSION, post = pos
  * only when no deck answers or the deck is older than this client, so a join to a current
  * deck never asks `claude`. A `resolve` that throws starts no deck (L3): one stderr line,
  * and the answer is whether a deck is answering anyway.
+ *
+ * `startTimeoutMs` is how long a started deck, or an older one leaving the port, is waited
+ * for: `START_TIMEOUT_MS` in use, an argument so a test can watch a start give up sooner.
  */
-export async function ensureDaemon({ resolve = resolveOnce, spawnProcess = spawn } = {}) {
+export async function ensureDaemon({ resolve = resolveOnce, spawnProcess = spawn, startTimeoutMs = START_TIMEOUT_MS } = {}) {
   const found = await probe();
   if (found.state === 'deck' && !isOlder(found.version, PLUGIN_VERSION)) return true;
 
@@ -247,7 +250,7 @@ export async function ensureDaemon({ resolve = resolveOnce, spawnProcess = spawn
     console.error(`[deck] no deck started: ${oneLine(err?.message ?? String(err), 400)}`);
     return found.state === 'deck';
   }
-  if (found.state === 'deck' && (!isOlder(found.version, target.version) || (await replaceOlder(found, { version: target.version })) === 'kept')) return true;
+  if (found.state === 'deck' && (!isOlder(found.version, target.version) || (await replaceOlder(found, { version: target.version, startTimeoutMs })) === 'kept')) return true;
 
   const daemon = spawnProcess(process.execPath, [path.join(target.root, 'deck', 'daemon.mjs'), ...(target.args ?? [])], {
     cwd: os.homedir(),
@@ -264,13 +267,13 @@ export async function ensureDaemon({ resolve = resolveOnce, spawnProcess = spawn
   daemon.on('error', (err) => console.error(`[deck] could not start the deck: ${oneLine(err.message, 400)}`));
   daemon.unref();
 
-  const deadline = Date.now() + START_TIMEOUT_MS;
+  const deadline = Date.now() + startTimeoutMs;
   while (Date.now() < deadline) {
     await sleep(START_INTERVAL_MS);
     if (await isDeckUp()) return true;
   }
 
-  console.error(`[deck] no deck answered ${deckUrl()} after ${START_TIMEOUT_MS}ms`);
+  console.error(`[deck] no deck answered ${deckUrl()} after ${startTimeoutMs}ms`);
   return false;
 }
 
@@ -442,11 +445,11 @@ export const JOIN_ATTEMPTS = 3;
 let onTheDeck = null;
 let starts = 0;
 
-export function ensureOnTheDeck() {
+export function ensureOnTheDeck({ startTimeoutMs } = {}) {
   onTheDeck ??= (async () => {
     try {
       const mayStart = starts++ < JOIN_ATTEMPTS;
-      if (await (mayStart ? ensureDaemon() : isDeckUp())) {
+      if (await (mayStart ? ensureDaemon({ startTimeoutMs }) : isDeckUp())) {
         await registerSession();
         return true;
       }
@@ -477,9 +480,10 @@ const deckIsGone = (err) => err?.cause?.code === 'ECONNREFUSED';
  *
  * A call nobody answered at the socket rejoins once and is tried once more; a second
  * failure is the tool error it always was, and an answer the deck gave is never retried.
+ * `join` goes to both joins (`ensureOnTheDeck`), and is a test's start budget.
  */
-export async function callDeckTool(name, args, pollMs = MAX_POLL_MS, onEmptyPoll) {
-  const joined = ensureOnTheDeck();
+export async function callDeckTool(name, args, pollMs = MAX_POLL_MS, onEmptyPoll, join = {}) {
+  const joined = ensureOnTheDeck(join);
   await joined;
   try {
     return await forward(name, args, pollMs, onEmptyPoll);
@@ -488,7 +492,7 @@ export async function callDeckTool(name, args, pollMs = MAX_POLL_MS, onEmptyPoll
     // Only the join this call saw fail is forgotten: calls refused together rejoin as one (spec 6).
     // `ensureOnTheDeck` then starts a deck under ADR 0120's cap and registers this session on it.
     if (onTheDeck === joined) onTheDeck = null;
-    await ensureOnTheDeck();
+    await ensureOnTheDeck(join);
     return forward(name, args, pollMs, onEmptyPoll);
   }
 }
