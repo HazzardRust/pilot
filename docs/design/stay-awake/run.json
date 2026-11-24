@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed f2fb32b",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -52,8 +52,8 @@
       "text": "stay-awake S1 behaviour 6: `powercfg /requests` needs an administrator shell, so no agent could run it; run it elevated while an agent is live to see the deck's keep-awake request listed."
     }
   ],
-  "next": "Yellow, co-pilot a1a485efedff11c54 live. S2 faebbf6 reported (CI 45481769402 green, TS + security APPROVE), report and trailers sent to co-pilot to integrate. S3 f2fb32b with co-pilot. Open: Linux holder B2/B3 skip on ubuntu CI (logind refuses), co-pilot decides added slice vs question. Then fundamentalist, QA scratch-deck awakeFacts check.",
-  "updatedAt": "2026-11-24T20:51:33.327Z",
+  "next": "pilot checks 187c309 --wait (S3 integrated); then integrate S2 faebbf6; then added slice S5 (Linux holder proved on CI) for spec 2/8's ubuntu evidence; then fundamentalist, QA",
+  "updatedAt": "2026-11-24T20:52:57.713Z",
   "friction": [
     {
       "kind": "drain",
