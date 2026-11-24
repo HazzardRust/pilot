@@ -79,6 +79,38 @@ test('a proved landing runs the selection since the proved tree', (t) => {
   assert.match(bodyOf(calls), new RegExp(`; ci proved ${tree.slice(0, 7)} on 3 jobs, then 12 pass, 0 fail$`), 'the PR is not told the full suite ran');
 });
 
+test('a feature that changes .github/ since pilot is never proved, even on a green tree', (t) => {
+  const { work, trace } = suiteOnPilot(t);
+  fs.mkdirSync(path.join(work, '.github'));
+  commitFile(work, '.github/ci.yml', 'on: push\n', 'ci');
+  git(work, 'push', '-q', 'origin', 'feat/a');
+  const { host } = fakeGh([{ number: 7, headRefName: 'feat/a' }]);
+
+  const said = mainSays([], { cwd: work, git: (args) => git(work, ...args), host: proving(host, git(work, 'rev-parse', 'HEAD^{tree}')) });
+
+  assert.equal(said.code, 0, said.out);
+  assert.deepEqual(fs.readFileSync(trace, 'utf8').trim().split('\n'), ['full']);
+  assert.match(said.out, /^no ci proof: \.github\/ci\.yml changed$/m);
+});
+
+test('a proof that cannot be read is no proof: the landing runs the full suite and says why', (t) => {
+  const { work, trace, tree } = suiteOnPilot(t);
+  const { host } = fakeGh([{ number: 7, headRefName: 'feat/a' }]);
+  // The first read of pilot's tip, the proof's base, answers no sha: provenTree throws before it asks the host.
+  let first = true;
+  const garbled = (args) => {
+    if (first && args[0] === 'rev-parse' && args.length === 2 && args[1].endsWith('/pilot')) return ((first = false), 'not-a-sha');
+    return git(work, ...args);
+  };
+
+  const said = mainSays([], { cwd: work, git: garbled, host: proving(host, tree) });
+
+  assert.equal(first, false, "the proof read pilot's tip");
+  assert.equal(said.code, 0, said.out);
+  assert.deepEqual(fs.readFileSync(trace, 'utf8').trim().split('\n'), ['full']);
+  assert.match(said.out, /^no ci proof: checks: "not-a-sha" is not a full commit sha$/m);
+});
+
 test('an unproved landing runs the full suite', (t) => {
   const { work, trace, tree } = suiteOnPilot(t);
   const { host } = fakeGh([{ number: 7, headRefName: 'feat/a' }]);

@@ -99,9 +99,8 @@ test('a deck change or a full run still runs cargo, into the shared build (spec 
     selected(['deck/rune/src/app.rs', 'scripts/land.mjs']),
     // A trigger already makes the selection full; a selection naming one runs cargo whatever its files say.
     selected(['scripts/gate.mjs']),
-    { files: null, total: 9, since: SHA, reason: 'scripts/x.mjs reaches no test', changed: ['scripts/x.mjs'] },
-    // A selection that read no diff names nothing changed, and is a full run.
-    { files: null, total: 9, since: 'nope', reason: 'cannot resolve nope', changed: [] },
+    { files: null, total: 9, since: SHA, reason: 'scripts/x.mjs reaches no test' },
+    { files: null, total: 9, since: 'nope', reason: 'cannot resolve nope' },
   ]) {
     const step = cargoStep(LOCAL, () => CARGO, 'win32', selection);
     assert.deepEqual(step.steps.map((one) => one.command), [CARGO, CARGO], JSON.stringify(selection));
