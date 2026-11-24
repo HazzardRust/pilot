@@ -18,13 +18,17 @@
  * so rather than serving half a feature.
  */
 
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { ensureSecret } from '../hooks/lib/deck-secret.js';
+import { hostPlatform } from '../hooks/lib/platform.js';
 import { step } from '../hooks/lib/wrapper-log.js';
+import { lastHeardAt } from './agents.mjs';
+import { holdAwake } from './awake.mjs';
 import { healthOf } from './health.mjs';
 import { writeOpenFile } from './launch.mjs';
 import { createDeckHttpServer, DECK_HOST, deckPort, deckUrl } from './server.mjs';
@@ -36,7 +40,8 @@ import { holdLeash, leashFrom } from './leash.mjs';
 import { probeDeck } from './probe.mjs';
 import { processTable } from './procs.mjs';
 import { STALL_AGE_S, noteStall, reapStalled } from './stalled-waits.mjs';
-import { archiveOld, listLiveRuns, storeDir } from './store.mjs';
+import { archiveOld, listItems, listLiveRuns, storeDir } from './store.mjs';
+import { defaultsDue } from './store-defaults.mjs';
 import { startMemoryLog } from './memory.mjs';
 import { startUsageLog } from './telemetry.mjs';
 import { readUsageSwitch } from './usage-switch.mjs';
@@ -130,6 +135,9 @@ export function holdUsersDeckIdle(server, onIdle, { now = Date.now, table = proc
   });
   return holdIdle({ lastRequestAt: () => lastRequestAt, landings, table, onIdle, now, intervalMs });
 }
+
+/** What the keep-awake rule reads (stay-awake L3): the roster's last heartbeat, the landings, the armed defaults. */
+const awakeFacts = () => ({ lastHeardAt: lastHeardAt(), landings: landingsRunning(), armedDefaults: defaultsDue(listItems(), Infinity).length });
 
 /**
  * The held-port message (A1, spec 7): the holder by pid and version when it is a deck, and named as
@@ -300,6 +308,9 @@ export async function main() {
       console.error('[deck] idle for 10 minutes: no session, no landing, no request; closing');
       shutdown();
     });
+    // Only the user's deck keeps the machine awake while work is in flight (stay-awake L2); its holder dies with it.
+    const awake = holdAwake({ facts: awakeFacts, spawn, platform: hostPlatform(), pid: process.pid });
+    process.on('exit', () => awake.stop());
   }
   // Last, once `shutdown` exists: a crash closes the deck the way a signal does, and exits 1 (L1).
   exitOnCrash(shutdown);
