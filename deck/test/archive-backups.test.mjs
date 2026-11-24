@@ -77,13 +77,15 @@ test('the write backup and the set-aside stores are rows too (F3, L9)', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archive-backups-'));
   try {
     fs.writeFileSync(path.join(dir, 'deck.json.bak'), JSON.stringify({ version: 3, items: [{}, {}, {}] }));
+    const written = new Date(2026, 10, 3, 12); // local noon on 3 November, so its local day is that day
+    fs.utimesSync(path.join(dir, 'deck.json.bak'), written, written);
     fs.writeFileSync(path.join(dir, 'deck.json.corrupt-2026-11-01'), 'truncated');
     fs.writeFileSync(path.join(dir, 'deck.json.replaced-2026-11-02-2'), JSON.stringify({ version: 3, items: [{}] }));
     const rows = backupRows(dir);
     assert.deepEqual(
       rows.map((row) => [row.id, field(row, 'Day'), field(row, 'Items')]),
       [
-        ['backup:deck.json.bak', new Date(fs.statSync(path.join(dir, 'deck.json.bak')).mtimeMs).toLocaleDateString('sv-SE'), '3'],
+        ['backup:deck.json.bak', '2026-11-03', '3'],
         ['backup:deck.json.corrupt-2026-11-01', '2026-11-01', 'not a deck'],
         ['backup:deck.json.replaced-2026-11-02-2', '2026-11-02', '1'],
       ],
