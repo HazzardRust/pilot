@@ -194,7 +194,7 @@ fn odd_headings_lists_and_links_render_without_a_panic_at_any_caret() {
         "Title é\r\n===\r\nnext",
         "a\nb\n---\nc",
         "# closing ##\n#hashtag\n####### seven",
-        "  - é nested\n    + deeper\n* [ ] task\n10) ten",
+        "  - é nested\n    + deeper\n* [ ] todo\n10) ten",
         "<https://e.x> [r][r] [] [](u) [`c`](u)\n\n[r]: https://e.x",
         "> # quoted\n> - item [l](u)",
         "-\n#\n[",
