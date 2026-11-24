@@ -19,8 +19,11 @@ function ageOf(ms) {
 export function crewWaitingOf(item, now = Date.now()) {
   if (item?.kind !== 'crew-handoff' || item.resolvedAt) return null;
   const messages = Array.isArray(item.replies) ? item.replies : [];
-  const press = messages.findLastIndex((message) => message?.from === 'user' && typeof message.text === 'string' && message.text.startsWith('Handoff failed'));
-  if (press >= 0 && !messages.slice(press + 1).some((message) => message?.from === 'pilot')) return null;
+  // Twin of `pressUnanswered` (crew-handoff.mjs), on raw fields: the last user message is a Handoff failed press, with or without a note.
+  const press = messages.findLastIndex((message) => message?.from === 'user');
+  const text = messages[press]?.text;
+  const pressed = typeof text === 'string' && (text === 'Handoff failed' || text.startsWith('Handoff failed\n\n'));
+  if (pressed && !messages.slice(press + 1).some((message) => message?.from === 'pilot')) return null;
   const age = now - (typeof item.postedAt === 'string' ? Date.parse(item.postedAt) : NaN);
   return age >= CREW_WAIT_MS ? `waiting ${ageOf(age)}` : null;
 }

@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import test from 'node:test';
 
-import { CREW_WAIT_MS } from '../crew-handoff.mjs';
+import { CREW_WAIT_MS, pressUnanswered } from '../crew-handoff.mjs';
 import { crewWaitingOf } from '../crew-wait.mjs';
 import { settleCrew } from '../crew-settle.mjs';
 import { HANDOFF_FAILED, KIND_CREW_HANDOFF, threadState } from '../items.mjs';
@@ -73,6 +73,21 @@ test('a pressed item keeps its press state', (t) => {
   assert.equal(threadState(reread(item.id)), 'not picked up yet');
   addPilotMessage(item.id, 'Looking.', '');
   assert.equal(crewWaitingOf(reread(item.id), Date.now()), 'waiting 11m', 'the pilot answered, so the press is not holding it');
+});
+
+test('crewWaitingOf and pressUnanswered agree on what a press is', () => {
+  const said = (from, text) => ({ from, text, repliedAt: new Date(START + MIN).toISOString() });
+  const cases = {
+    press: [said('user', HANDOFF_FAILED)],
+    'press with a note': [said('user', `${HANDOFF_FAILED}\n\nit hung`)],
+    'free text': [said('user', 'Handoff failed to start, why?')],
+    'press then more user text': [said('user', HANDOFF_FAILED), said('user', 'hello?')],
+    'press then pilot': [said('user', HANDOFF_FAILED), said('pilot', 'Looking.')],
+  };
+  for (const [name, replies] of Object.entries(cases)) {
+    const item = crewHandoff({ options: [HANDOFF_FAILED], replies });
+    assert.equal(crewWaitingOf(item, START + 11 * MIN) === null, pressUnanswered(item), name);
+  }
 });
 
 test('the deck repaints at the mark', (t) => {
