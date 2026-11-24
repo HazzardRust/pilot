@@ -127,6 +127,8 @@ fn click(rt: &mut rune::Runtime<pilot_deck::app::State>, key: &str) {
     let (x, y) = (e.rect[0] + e.rect[2] / 2.0, e.rect[1] + e.rect[3] / 2.0);
     rt.pointer_move(x, y);
     rt.pointer_down(x, y);
+    // A frame while the button is held, as a hand's press has: a blur on the down shows here.
+    rt.frame(1.0 / 60.0);
     rt.pointer_up(x, y);
     rt.frame(1.0 / 60.0);
 }
@@ -229,6 +231,116 @@ fn send_and_the_option_presses_carry_the_table() {
         panic!("the option posts a reply");
     };
     assert_eq!(text, SENT);
+}
+
+/// The box with `table_local`'s grid, the caret put in `cell` by a click.
+fn grid_with_caret_in(cell: &str) -> rune::Runtime<pilot_deck::app::State> {
+    let mut rt = box_drawn(table_local());
+    click(&mut rt, cell);
+    rt
+}
+
+fn press(rt: &mut rune::Runtime<pilot_deck::app::State>, key: rune::Key, shift: bool) {
+    rt.key(rune::KeyEvent {
+        key,
+        mods: rune::Mods {
+            shift,
+            ..rune::Mods::default()
+        },
+    });
+    rt.frame(1.0 / 60.0);
+}
+
+fn focused(rt: &rune::Runtime<pilot_deck::app::State>) -> Option<String> {
+    rt.elements()
+        .into_iter()
+        .find(|e| e.focused)
+        .and_then(|e| e.key)
+}
+
+#[test]
+fn tab_shift_tab_and_return_move_between_cells() {
+    use rune::Key;
+    let mut rt = grid_with_caret_in("cell-0-0-0");
+    press(&mut rt, Key::Tab, false);
+    assert_eq!(focused(&rt).as_deref(), Some("cell-0-0-1"), "Tab");
+    press(&mut rt, Key::Tab, true);
+    assert_eq!(focused(&rt).as_deref(), Some("cell-0-0-0"), "Shift+Tab");
+
+    let mut rt = grid_with_caret_in("cell-0-1-1");
+    press(&mut rt, Key::Enter, false);
+    assert_eq!(rt.state.regions.reply.tables[0].0.size(), (3, 2));
+    assert_eq!(focused(&rt).as_deref(), Some("cell-0-2-1"), "Return");
+    assert!(
+        !rt.state.pending.is_sent("reply-press"),
+        "Return posts nothing"
+    );
+}
+
+#[test]
+fn up_from_the_header_and_down_from_the_last_row_leave_the_grid() {
+    use rune::Key;
+    let mut rt = grid_with_caret_in("cell-0-0-1");
+    press(&mut rt, Key::Up, false);
+    assert_eq!(focused(&rt).as_deref(), Some("reply-text"), "Up");
+
+    let mut rt = grid_with_caret_in("cell-0-1-0");
+    press(&mut rt, Key::Down, false);
+    assert_eq!(focused(&rt).as_deref(), Some("reply-text-1"), "Down");
+}
+
+#[test]
+fn the_controls_change_the_grid_and_keep_the_caret_in_it() {
+    let mut rt = grid_with_caret_in("cell-0-1-1");
+    for (control, size) in [
+        ("table-0-add-row", (3, 2)),
+        ("table-0-add-col", (3, 3)),
+        ("table-0-remove-row", (2, 3)),
+        ("table-0-remove-col", (2, 2)),
+    ] {
+        click(&mut rt, control);
+        rt.frame(1.0 / 60.0);
+        assert_eq!(rt.state.regions.reply.tables[0].0.size(), size, "{control}");
+        let at = focused(&rt);
+        assert!(
+            at.as_deref().is_some_and(|k| k.starts_with("cell-0-")),
+            "{control} left the caret at {at:?}"
+        );
+    }
+    click(&mut rt, "table-0-delete");
+    assert!(rt.state.regions.reply.tables.is_empty());
+    assert_eq!(rt.state.regions.reply.draft.text, "before\nafter");
+}
+
+#[test]
+fn the_header_row_and_the_last_column_are_never_removed() {
+    let mut table = Table::new(2, 1);
+    table.remove_row(0);
+    table.remove_col(0);
+    assert_eq!(table.size(), (2, 1));
+    table.add_row(1);
+    table.add_col(0);
+    table.remove_row(2);
+    assert_eq!(table.size(), (2, 2));
+}
+
+#[test]
+fn a_cell_without_the_caret_renders_its_markdown() {
+    use pilot_deck::preview;
+    let mut table = Table::new(2, 2);
+    let cell = table.cell_mut(1, 0);
+    cell.replace_text("**b** _i_ `c`");
+    let spans = preview::spans(cell, true);
+    assert!(spans.iter().any(|s| s.weight.is_some()), "bold: {spans:?}");
+    assert!(spans.iter().any(|s| s.italic), "italic: {spans:?}");
+    assert!(spans.iter().any(|s| s.mono), "mono: {spans:?}");
+
+    cell.focused = true;
+    cell.set_caret(0);
+    assert!(
+        preview::spans(cell, true).is_empty(),
+        "the caret's cell is raw"
+    );
 }
 
 #[test]

@@ -82,6 +82,24 @@ pub struct Local {
     spare: TextEdit,
 }
 
+/// The five controls under a grid (A7): their label and key suffix, in the order drawn.
+#[derive(Debug, Clone, Copy)]
+enum Control {
+    AddRow,
+    AddCol,
+    RemoveRow,
+    RemoveCol,
+    Delete,
+}
+
+const CONTROLS: [(Control, &str, &str); 5] = [
+    (Control::AddRow, "+ row", "add-row"),
+    (Control::AddCol, "+ column", "add-col"),
+    (Control::RemoveRow, "− row", "remove-row"),
+    (Control::RemoveCol, "− column", "remove-col"),
+    (Control::Delete, "Delete table", "delete"),
+];
+
 /// The key of grid `t`'s cell at row `r`, column `c` (L12).
 fn cell_key(t: usize, r: usize, c: usize) -> String {
     format!("cell-{t}-{r}-{c}")
@@ -154,6 +172,85 @@ impl Local {
             Some((r, c)) if r < table.size().0 && c < table.size().1 => table.cell_mut(r, c),
             Some(_) => &mut self.spare,
         }
+    }
+
+    /// The key of the prose part before grid `t`, its caret put at its end.
+    fn prose_before(&mut self, t: usize) -> String {
+        let (prose, key) = match t.checked_sub(1) {
+            Some(p) => (&mut self.tables[p].1, format!("reply-text-{t}")),
+            None => (&mut self.draft, "reply-text".to_string()),
+        };
+        prose.set_caret(prose.text.len());
+        key
+    }
+
+    /// Up, Down or Return (`down`) in grid `t`'s cell (r, c): the key the caret goes to. Up from the
+    /// header and Down from the last row leave for the prose beside the grid; Return moves down a
+    /// row, adding one under the last (spec 11). Tab and Shift+Tab are Rune's own focus order.
+    fn step(&mut self, t: usize, (r, c): (usize, usize), key: &Key) -> Option<String> {
+        let rows = self.tables.get(t)?.0.size().0;
+        match key {
+            Key::Up if r == 0 => Some(self.prose_before(t)),
+            Key::Up => Some(cell_key(t, r - 1, c)),
+            Key::Down if r + 1 >= rows => {
+                self.tables[t].1.set_caret(0);
+                Some(format!("reply-text-{}", t + 1))
+            }
+            Key::Down => Some(cell_key(t, r + 1, c)),
+            Key::Enter => {
+                if r + 1 >= rows {
+                    self.tables[t].0.add_row(r);
+                }
+                Some(cell_key(t, r + 1, c))
+            }
+            _ => None,
+        }
+    }
+
+    /// The cell of grid `t` holding the caret.
+    fn caret_cell(&self, t: usize) -> Option<(usize, usize)> {
+        let table = &self.tables.get(t)?.0;
+        let (rows, cols) = table.size();
+        (0..rows)
+            .flat_map(|r| (0..cols).map(move |c| (r, c)))
+            .find(|&(r, c)| table.cell(r, c).focused)
+    }
+
+    /// A control under grid `t` pressed, acting on the caret's cell (r, c) (A7): the key the caret
+    /// goes to, a cell of the grid, or the prose before it once the grid is deleted and the prose
+    /// joined. A grid or cell gone since the frame was drawn changes nothing.
+    fn reshape(&mut self, t: usize, (r, c): (usize, usize), control: Control) -> Option<String> {
+        let table = &mut self.tables.get_mut(t)?.0;
+        let (rows, cols) = table.size();
+        if r >= rows || c >= cols {
+            return None;
+        }
+        match control {
+            Control::AddRow => table.add_row(r),
+            Control::AddCol => table.add_col(c),
+            Control::RemoveRow => table.remove_row(r),
+            Control::RemoveCol => table.remove_col(c),
+            Control::Delete => {
+                let (_, after) = self.tables.remove(t);
+                let before = match t.checked_sub(1) {
+                    Some(p) => &mut self.tables[p].1,
+                    None => &mut self.draft,
+                };
+                let join = before.text.len();
+                let joined = match (before.text.is_empty(), after.text.is_empty()) {
+                    (false, false) => format!("{}\n{}", before.text, after.text),
+                    _ => format!("{}{}", before.text, after.text),
+                };
+                before.replace_text(joined);
+                before.set_caret(join);
+                return Some(match t {
+                    0 => "reply-text".to_string(),
+                    _ => format!("reply-text-{t}"),
+                });
+            }
+        }
+        let (rows, cols) = table.size();
+        Some(cell_key(t, r.min(rows - 1), c.min(cols - 1)))
     }
 
     /// The one way a press leaves the box: it is out until `acted`, and nothing else posts meanwhile.
@@ -446,6 +543,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     fixed = fixed.child(
         btn("Table", "table".into(), false)
             .focusable(false)
+            .preserve_focus_on_press(true)
             .on_press_tx(|s: &mut State, tx: &mut Tx| {
                 let t = s.regions.reply.insert();
                 tx.focus(cell_key(t, 0, 0), false);
@@ -524,9 +622,25 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                         .single_line()
                         .key(cell_key(t, r, c))
                         .label(format!("Table cell, row {}, column {}", r + 1, c + 1))
+                        // Rendered once the caret leaves, as a prose line off the caret (A8).
+                        .decorations(crate::preview::spans(table.cell(r, c), dark))
                         .on_edit(move |s: &mut State| s.regions.reply.part(t, Some((r, c))))
+                        .on_input_key(move |s: &mut State, ev: &rune::KeyEvent, tx: &mut Tx| {
+                            let plain = ev.mods == rune::Mods::default();
+                            let to = match ev.key {
+                                Key::Up | Key::Down if plain => {
+                                    s.regions.reply.step(t, (r, c), &ev.key)
+                                }
+                                _ => None,
+                            };
+                            to.map(|key| tx.focus(key, false)).is_some()
+                        })
                         // Return in a cell stays in the grid: it never presses Reply.
-                        .on_submit(|_: &mut State, _: &mut Tx| {})
+                        .on_submit(move |s: &mut State, tx: &mut Tx| {
+                            if let Some(key) = s.regions.reply.step(t, (r, c), &Key::Enter) {
+                                tx.focus(key, false);
+                            }
+                        })
                         .grow(1.0)
                         .min_w(space::s0)
                         .padding(space::pad)
@@ -535,6 +649,25 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 );
             }
             grid = grid.child(line);
+        }
+        // The controls show while a cell has the caret, out of the Tab order and never taking
+        // focus, so the cell still holds the caret when the press lands (A7).
+        // The press reads the cell as drawn: a pointer down may blur the field before it lands.
+        if let Some(at) = local.caret_cell(t) {
+            let mut controls = row().key(format!("table-{t}-controls")).gap(space::within);
+            for (control, label, suffix) in CONTROLS {
+                controls = controls.child(
+                    btn(label, format!("table-{t}-{suffix}"), false)
+                        .focusable(false)
+                        .preserve_focus_on_press(true)
+                        .on_press_tx(move |s: &mut State, tx: &mut Tx| {
+                            if let Some(key) = s.regions.reply.reshape(t, at, control) {
+                                tx.focus(key, false);
+                            }
+                        }),
+                );
+            }
+            grid = grid.child(controls);
         }
         box_ = box_.child(grid).child(
             text_input(prose, type_::BODY)
