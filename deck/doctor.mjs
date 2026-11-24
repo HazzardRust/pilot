@@ -353,6 +353,27 @@ export function allowRow({ readSettings = defaultReadSettings }) {
   };
 }
 
+/** The autoMode lists whose setting replaces the classifier's defaults unless it keeps `"$defaults"`. */
+const AUTO_MODE_LISTS = ['environment', 'allow', 'soft_deny', 'hard_deny'];
+
+/**
+ * Fail when the user settings' autoMode sets environment, allow, soft_deny or hard_deny without "$defaults"
+ * (classifier-env spec 8). `settings` is the user settings object or null; read-only, and it never runs the reset.
+ */
+export function autoModeRow({ settings }) {
+  const name = 'auto mode defaults';
+  if (!settings) return { name, verdict: 'cannot tell', detail: 'the user settings file could not be read as JSON' };
+  const block = settings.autoMode ?? {};
+  const dropped = AUTO_MODE_LISTS.filter((list) => Array.isArray(block[list]) && !block[list].includes('$defaults'));
+  if (!dropped.length) return { name, verdict: 'pass', detail: 'no user autoMode list drops "$defaults"' };
+  return {
+    name,
+    verdict: 'fail',
+    detail: `your user autoMode ${dropped.join(', ')} ${dropped.length > 1 ? 'drop' : 'drops'} "$defaults", so the classifier loses its default rules there`,
+    steps: [`claude auto-mode reset (clears the autoMode block in ${defaultSettingsPath()}), or add "$defaults" to each list named`],
+  };
+}
+
 /** A `CLAUDE_CODE_SAFE_MODE` that is set and not plainly off. */
 const safeMode = (value) => typeof value === 'string' && value !== '' && !/^(0|false)$/i.test(value);
 
@@ -509,6 +530,7 @@ export async function checkAll({
     slugsRow({ view, git, hostFor, cwd }),
     ...CLIS.map((cmd) => cliRow(cmd, onPath)),
     allowRow({ readSettings }),
+    autoModeRow({ settings }),
     modsRow({ version: claudeVersion(run), settings, env }),
     ...deckRows({ found, port: new URL(url).port }),
   ];
