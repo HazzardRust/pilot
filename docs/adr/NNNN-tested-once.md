@@ -25,12 +25,9 @@ A slice's tests ran at the implementer's gate, again at integrate, again at QA a
 
 ## Rejected
 
-- Git notes as the proof: pushed, so the trust is shared with every clone.
-- The implementer's trailer as the proof: a claim, not a status (L3).
-- A ledger write in `gate.mjs`: other repositories do not have it (L5).
-- A second committed file for the rows: the deck's record already carries them (L7).
+- As the proof, git notes (pushed, so the trust is shared with every clone) or the implementer's trailer (a claim, not a status; L3).
+- A ledger write in `gate.mjs`, which other repositories lack (L5); a second committed file for the rows (L7).
 
 ## Consequences
 
-- An implementer re-gating an unchanged tree runs nothing; a flaky green is reused once more.
-- A forged row by a process of the user, or a change only to ignored files, a submodule or a symlink's target, is not seen; CI and land's run catch what it hides.
+An implementer re-gating an unchanged tree runs nothing; a flaky green is reused once more. A forged row by a process of the user, or a change only to ignored files, a submodule or a symlink's target, is not seen; CI and land's run catch what it hides.

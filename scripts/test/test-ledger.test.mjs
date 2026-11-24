@@ -53,17 +53,11 @@ test('a run writes one row with its own exit', (t) => {
   const red = runTests(cwd, 'node -e "process.exit(3)"', { label: 'red', where: 'integrate', home, slot: false });
   assert.equal(red.status, 3);
   assert.equal(typeof red.minutes, 'number');
-  const [first] = rowsOf(home);
-  assert.equal(first.exit, 3);
-  assert.equal(first.where, 'integrate');
-  assert.equal(first.tree, tree);
-  assert.equal(first.branch, 'slice/demo-s1');
-  assert.equal(first.slug, 'demo');
-  assert.equal(first.sha, git(cwd, 'rev-parse', 'HEAD'));
+  const { exit, where, branch, slug, sha } = rowsOf(home)[0];
+  assert.deepEqual({ exit, where, tree: rowsOf(home)[0].tree, branch, slug, sha },
+    { exit: 3, where: 'integrate', tree, branch: 'slice/demo-s1', slug: 'demo', sha: git(cwd, 'rev-parse', 'HEAD') });
   runTests(cwd, 'node -e "process.exit(0)"', { label: 'green', where: 'integrate', home, slot: false });
-  const rows = rowsOf(home);
-  assert.equal(rows.length, 2);
-  assert.equal(rows[1].exit, 0);
+  assert.deepEqual(rowsOf(home).map((row) => row.exit), [3, 0]);
   if (process.platform !== 'win32') assert.equal(fs.statSync(ledgerOf(home)).mode & 0o777, 0o600);
 });
 

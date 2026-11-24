@@ -11,6 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { privateDir } from '../hooks/lib/atomic-write.js';
+import { hostPlatform } from '../hooks/lib/platform.js';
 
 const RECORDS = ':(glob)docs/design/*/run.json';
 
@@ -21,6 +22,12 @@ export const ledgerPath = (home) => path.join(home, '.claude', 'pilot', 'tests',
 export const nodeMajor = () => Number(process.versions.node.split('.')[0]);
 
 const gitIn = (cwd, args, env = process.env) => execFileSync('git', args, { cwd, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }).trim();
+
+/** `{ sha, branch }` of `cwd`'s HEAD, each null where git names none (no repository, unborn, detached). */
+export function headOf(cwd) {
+  const out = (args) => spawnSync('git', args, { cwd, encoding: 'utf8', windowsHide: true }).stdout?.trim() || null;
+  return { sha: out(['rev-parse', '-q', '--verify', 'HEAD']), branch: out(['branch', '--show-current']) };
+}
 
 /**
  * The tree sha of `cwd`'s worktree, untracked files included and run records from HEAD, written
@@ -86,7 +93,7 @@ export function reusableRun({ tree, since = null, home }) {
   if (typeof tree !== 'string' || !tree) return null;
   const fits = (row) =>
     row.exit === 0 && row.tree === tree && !deferred(row.scope) && (row.since === null || row.since === since) &&
-    row.platform === process.platform && row.node === nodeMajor();
+    row.platform === hostPlatform() && row.node === nodeMajor();
   return rowsIn(home).filter(fits).at(-1) ?? null;
 }
 

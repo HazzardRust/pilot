@@ -54,7 +54,8 @@ import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-gene
 import { assertPushable, firstLine, git, isPilotBase, isPilotName, landingSubjects, pilotBranch, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRef, runRemote, shortRef } from './remotes.mjs';
 import { scopeOf } from './select-tests.mjs';
-import { nodeMajor, recordRun, worktreeTree } from './test-ledger.mjs';
+import { headOf, nodeMajor, recordRun, worktreeTree } from './test-ledger.mjs';
+import { hostPlatform } from '../hooks/lib/platform.js';
 import { holderFrom, runRecord } from './worktrees.mjs';
 
 const RECORDS = ':(glob)docs/design/*/run.json';
@@ -170,7 +171,8 @@ function countsOf(output) {
 export function runTests(cwd, test, { label = 'tests', where = 'tests', branch, since = null, home, slots = {}, slot: inSlot = true } = {}) {
   const ledgerHome = home ?? (process.env.PILOT_GATE_HOME_STORE ? null : os.homedir());
   home ??= os.homedir();
-  const tree = ledgerHome === null ? null : worktreeTree(cwd);
+  // The tree, sha and branch the run starts on, read before it can move them.
+  const start = ledgerHome === null ? null : { tree: worktreeTree(cwd), ...headOf(cwd) };
   const dir = path.join(home, '.claude', 'pilot', 'logs');
   privateDir(path.dirname(dir)); // the store, if this is its first writer (L6)
   fs.mkdirSync(dir, { recursive: true });
@@ -193,12 +195,10 @@ export function runTests(cwd, test, { label = 'tests', where = 'tests', branch, 
   const output = fs.readFileSync(log, 'utf8');
   const status = run.status ?? run.error?.code ?? run.signal;
   const scope = scopeOf(output);
-  if (ledgerHome !== null) {
-    const head = tree === null ? null : spawnSync('git', ['rev-parse', '-q', '--verify', 'HEAD'], { cwd, encoding: 'utf8', windowsHide: true }).stdout.trim() || null;
-    branch ??= tree === null ? null : spawnSync('git', ['branch', '--show-current'], { cwd, encoding: 'utf8', windowsHide: true }).stdout.trim() || null;
+  if (start !== null) {
     recordRun({
-      at: new Date().toISOString(), where, branch: branch ?? null, slug: null, sha: head, tree, since, scope,
-      exit: status, minutes, platform: process.platform, node: nodeMajor(),
+      at: new Date().toISOString(), where, branch: branch ?? start.branch, slug: null, sha: start.sha, tree: start.tree, since, scope,
+      exit: status, minutes, platform: hostPlatform(), node: nodeMajor(),
     }, { home: ledgerHome });
   }
   if (status === 0) fs.rmSync(log, { force: true });
