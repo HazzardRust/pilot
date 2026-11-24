@@ -96,7 +96,7 @@
     },
     {
       "slice": "S10",
-      "state": "pushed b193e2b",
+      "state": "integrated 1ea5ee7; checks green",
       "after": [
         "S4",
         "S5",
@@ -143,8 +143,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s15"
     }
   ],
-  "next": "Integrating S10 b193e2b; then checks, integrate S15 8712de7 (ts approve, B1-B5), checks, fundamentalist, QA.",
-  "updatedAt": "2026-11-24T14:23:38.582Z",
+  "next": "Integrating S15 8712de7; then checks, fundamentalist, QA.",
+  "updatedAt": "2026-11-24T14:44:45.232Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
