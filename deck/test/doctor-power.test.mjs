@@ -140,3 +140,14 @@ test('readPower on macOS and Linux reads the source and logind actions', () => {
   const linux = readPower({ platform: 'linux', run: (cmd, args) => `${answers[args.at(-1)]}\n` });
   assert.deepEqual(linux, { source: 'ac', lid: { ac: 'nothing', dc: 'sleep' }, button: { ac: 'shutdown', dc: 'shutdown' }, modernStandby: null });
 });
+
+test('a lidless desktop on AC with its lid action set to sleep passes, and says it has no lid', () => {
+  const sleepy = fixture('powercfg-lidaction.txt').replace(/(AC Power Setting Index: 0x)[0-9a-f]{8}/i, '$100000001');
+  const run = (cmd, args) => (args.includes('5ca83367-6e45-459f-a27b-476b1d01c936') ? sleepy : args.includes('7648efa3-dd9c-4e3e-b566-50f929386280') ? fixture('powercfg-pbuttonaction.txt') : '{"aoac":false,"ac":1,"lid":false}');
+  const power = readPower({ platform: 'win32', run });
+  assert.equal(power.lid.ac, 'sleep', 'the setting is still read: a desktop keeps the default');
+  const row = powerRow({ power, awake: HELD, platform: 'win32' });
+  assert.equal(row.verdict, 'pass');
+  assert.match(row.detail, /no lid/);
+  assert.doesNotMatch(row.detail, /lid sleeps/);
+});

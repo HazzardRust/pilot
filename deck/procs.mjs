@@ -167,7 +167,15 @@ function watchedBy(p, build) {
       const holder = build(platform, pid);
       if (imageOf(holder) !== image) continue;
       let at = 0;
-      const inOrder = holder.args.every((arg) => (at = wordAt(command, arg, at)) !== -1 && ((at += arg.length), true));
+      let inOrder = true;
+      for (const arg of holder.args) {
+        at = wordAt(command, arg, at);
+        if (at === -1) {
+          inOrder = false;
+          break;
+        }
+        at += arg.length;
+      }
       if (inOrder && (p.ppid === pid || holder.args.some((arg) => arg.includes(REASON)))) return pid;
     }
   }

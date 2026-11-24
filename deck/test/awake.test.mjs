@@ -7,12 +7,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 
+import './no-open.mjs';
 import { LINGER_MS, awakeState, holdAwake, inFlight } from '../awake.mjs';
 import { forgetAgents, lastHeardAt, noteAgent } from '../agents.mjs';
 import { healthOf } from '../health.mjs';
 import { KIND_QUESTION } from '../items.mjs';
-import { listItems } from '../store.mjs';
-import { defaultsDue } from '../store-defaults.mjs';
+import { awakeFacts } from '../daemon.mjs';
 import { postStored, tempDeck } from '../testUtils.mjs';
 
 const MINUTE = 60_000;
@@ -71,20 +71,20 @@ test('a heartbeat holds and the linger releases', (t) => {
 
 test('an armed default holds with no agent', async (t) => {
   const question = { kind: KIND_QUESTION, title: 'Which store?', body: 'A or B', repo: 'D:/work/alpha', options: ['A', 'B'], recommended: 'B' };
-  /** What the daemon passes as `armedDefaults`: the default timer's own count. */
-  const armed = () => defaultsDue(listItems(), Infinity).length;
 
   await t.test('a defaultable question holds', (t) => {
     tempDeck(t);
+    forgetAgents();
     postStored(question);
-    assert.equal(inFlight({ ...NOTHING, armedDefaults: armed() }, START), true);
+    assert.equal(inFlight(awakeFacts(), START), true);
   });
   await t.test('a blocking question and a gate hold nothing', (t) => {
     tempDeck(t);
+    forgetAgents();
     postStored({ ...question, blocking: true });
     postStored({ kind: 'gate1', title: 'Sign off', body: 'plan', repo: 'D:/work/alpha', options: ['Sign off'], recommended: 'Sign off' });
-    assert.equal(armed(), 0);
-    assert.equal(inFlight({ ...NOTHING, armedDefaults: armed() }, START), false);
+    assert.equal(awakeFacts().armedDefaults, 0);
+    assert.equal(inFlight(awakeFacts(), START), false);
   });
 });
 

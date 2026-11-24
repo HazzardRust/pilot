@@ -137,7 +137,7 @@ export function holdUsersDeckIdle(server, onIdle, { now = Date.now, table = proc
 }
 
 /** What the keep-awake rule reads (stay-awake L3): the roster's last heartbeat, the landings, the armed defaults. */
-const awakeFacts = () => ({ lastHeardAt: lastHeardAt(), landings: landingsRunning(), armedDefaults: defaultsDue(listItems(), Infinity).length });
+export const awakeFacts = () => ({ lastHeardAt: lastHeardAt(), landings: landingsRunning(), armedDefaults: defaultsDue(listItems(), Infinity).length });
 
 /**
  * The held-port message (A1, spec 7): the holder by pid and version when it is a deck, and named as

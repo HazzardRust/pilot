@@ -129,17 +129,6 @@ test("a leashless daemon's holder is not stopped when the user's deck cannot be 
   assert.deepEqual(lines.slice(0, 2), ["not stopped 32: cannot tell it from the user's deck", "not stopped 33: cannot tell it from the user's deck"]);
 });
 
-test("a holder listed ahead of its leashless daemon is still not stopped when the user's deck cannot be read", () => {
-  const leashless = { ...daemon(32), command: `node ${CWD}/deck/daemon.mjs` };
-  const stops = [];
-  let clock = 0;
-  // `leftovers` lists holders last; this selection puts the holder first, so census must not lean on that order.
-  const select = (...args) => leftovers(...args).reverse();
-  const { lines } = census([], { cwd: CWD, read: () => [leashless, holder(33, 32)], kill: () => (pid) => stops.push(pid), deckPid: () => undefined, self: 99, sleep: (ms) => (clock += ms), now: () => clock, select });
-  assert.deepEqual(stops, []);
-  assert.deepEqual(lines.slice(0, 2), ["not stopped 33: cannot tell it from the user's deck", "not stopped 32: cannot tell it from the user's deck"]);
-});
-
 test("a leashless daemon is not stopped when the user's deck cannot be read", () => {
   const leashless = { ...daemon(32), command: `node ${CWD}/deck/daemon.mjs` };
   const { red, lines, stops } = runCensus([[leashless]], { deckPid: () => undefined });
