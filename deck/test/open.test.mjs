@@ -437,7 +437,10 @@ test('pilot deck names what opens', async (t) => {
   t.mock.restoreAll();
 
   const [withRune, withoutRune] = said.map((line) => line.split(/\r?\n/));
-  assert.deepEqual(withRune, [`The deck is up at ${base}`, `open ${path.join(built, 'deck', 'rune', 'target', 'release', name)}`]);
+  // It names the copy under target/run, not the release exe a rebuild must replace (ui-design-workflow S3).
+  assert.equal(withRune[0], `The deck is up at ${base}`);
+  assert.match(withRune[1], /^open .+[\\/]pilot-deck-\d+(\.exe)?$/);
+  assert.equal(path.dirname(withRune[1].slice('open '.length)), path.join(built, 'deck', 'rune', 'target', 'run'));
   assert.deepEqual(withoutRune, [`The deck is up at ${base}`, `open ${openFile()}`]);
 });
 

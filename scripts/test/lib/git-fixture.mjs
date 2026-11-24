@@ -16,7 +16,10 @@
  * and the tests see, whatever `os.tmpdir()` returns.
  *
  * `build` must not call `t.after`, nor return closures over mutable in-memory state: its value
- * is shared by every test of the key. Every directory goes when the process exits.
+ * is shared by every test of the key. A later test gets each function in the value (the value
+ * itself, or a top-level property) as a new wrapper, because code under test remembers answers
+ * per git runner (`runRemote`, `remoteDefaultBranch`; cheap-suite spec 3) and a restored
+ * repository must not inherit them. Every directory goes when the process exits.
  *
  * Import it first:
  *
@@ -59,13 +62,23 @@ function copy(from, to) {
   fs.cpSync(from, to, { recursive: true, preserveTimestamps: true });
 }
 
+/** A function as a new wrapper, so a per-runner memo starts empty; anything else as it is. */
+const rewrap = (v) => (typeof v === 'function' ? (...args) => v(...args) : v);
+
+/** `value` with itself or its top-level functions rewrapped: a later test's runners are new runners. */
+function fresh(value) {
+  if (typeof value === 'function') return rewrap(value);
+  if (value === null || typeof value !== 'object' || Object.getPrototypeOf(value) !== Object.prototype) return value;
+  return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, rewrap(v)]));
+}
+
 export function gitFixture(t, key, build) {
   const known = fixtures.get(key);
   if (known && known.test !== t) {
     fs.rmSync(known.dir, { recursive: true, force: true });
     copy(known.template, known.dir);
     known.test = t;
-    return known.value;
+    return fresh(known.value);
   }
   const dir = tempDir('pilot-fixture-');
   const value = build(dir);

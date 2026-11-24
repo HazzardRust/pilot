@@ -76,14 +76,37 @@ const gh = (args) => {
 };
 const host = githubHost(greenChecks(gh));
 
-test("land deletes the run's merged slice branches", (t) => {
-  const { origin, work, inWork } = scratchRun(t);
+// One landing, four checks on it (S8 of cheap-suite merged four tests that each landed the same
+// scratchRun): the merged branches go, the gate1 and slice merge shas still resolve, another
+// run's branches are untouched, and the dry run after it lists only the feature branch.
+test("land deletes the run's merged slice branches; the gate1 and slice merge shas still resolve; another run's branches are untouched; after a landing the dry run lists only the feature branch", (t) => {
+  const { root, origin, work, inWork, gate1, sliceMerge } = scratchRun(t);
+  const tipOf = (name) => git(origin, 'rev-parse', `refs/heads/${name}`);
+  const others = ['slice/y-s1', 'slice/xx-s1', 'design/x-y', 'fix/x-y-s1'];
+  const tips = others.map(tipOf);
 
   const result = land({ cwd: work, git: inWork, host,test: green });
 
   assert.deepEqual([...result.deleted].sort(), ['design/x', 'fix/x-s1', 'qa/x', 'slice/x-s1']);
   assert.deepEqual(result.kept, []);
   assert.deepEqual(heads(origin), ['design/x-y', 'feat/x', 'fix/x-y-s1', 'main', 'pilot', 'slice/xx-s1', 'slice/y-s1'], 'only pilot and feat/x stay from the run');
+
+  const fresh = path.join(root, 'fresh');
+  git(root, 'clone', '-q', origin, fresh);
+  for (const sha of [gate1, sliceMerge]) git(fresh, 'cat-file', '-e', `${sha}^{commit}`);
+
+  assert.deepEqual(others.map(tipOf), tips, 'still on origin at the same tips');
+  const passed = [...result.deleted, ...result.kept.map(({ branch: b }) => b)];
+  assert.ok(!passed.some((b) => others.includes(b) || b.startsWith('feat/')), `another slug or feat/ is never passed: ${passed}`);
+
+  let out = '';
+  const code = pruneMain(['prune', '--slug', 'x', '--dry-run'], { cwd: work, host, write: (text) => (out += text) });
+
+  assert.equal(code, 0, out);
+  const named = out.split('\n').filter((line) => /^(would delete|kept) /.test(line));
+  assert.equal(named.length, 1, out);
+  assert.match(named[0], /^kept feat\/x: /);
+  assert.match(out, /^dry run: would delete 0, kept 1; nothing deleted$/m);
 });
 
 test('a planted unmerged fix branch survives and is named', (t) => {
@@ -101,29 +124,6 @@ test('a planted unmerged fix branch survives and is named', (t) => {
   assert.ok(heads(origin).includes('fix/x-s2'), 'the unmerged fix branch is still on origin');
   assert.match(out, /^kept: fix\/x-s2 \(not merged into origin\/feat\/x\)$/m);
   assert.match(out, /^deleted: design\/x, fix\/x-s1, qa\/x, slice\/x-s1$/m);
-});
-
-test('the gate1 and slice merge shas still resolve', (t) => {
-  const { root, work, origin, inWork, gate1, sliceMerge } = scratchRun(t);
-
-  land({ cwd: work, git: inWork, host,test: green });
-
-  const fresh = path.join(root, 'fresh');
-  git(root, 'clone', '-q', origin, fresh);
-  for (const sha of [gate1, sliceMerge]) git(fresh, 'cat-file', '-e', `${sha}^{commit}`);
-});
-
-test("another run's branches are untouched", (t) => {
-  const { origin, work, inWork } = scratchRun(t);
-  const tipOf = (name) => git(origin, 'rev-parse', `refs/heads/${name}`);
-  const others = ['slice/y-s1', 'slice/xx-s1', 'design/x-y', 'fix/x-y-s1'];
-  const tips = others.map(tipOf);
-
-  const result = land({ cwd: work, git: inWork, host,test: green });
-
-  assert.deepEqual(others.map(tipOf), tips, 'still on origin at the same tips');
-  const passed = [...result.deleted, ...result.kept.map(({ branch: b }) => b)];
-  assert.ok(!passed.some((b) => others.includes(b) || b.startsWith('feat/')), `another slug or feat/ is never passed: ${passed}`);
 });
 
 test('under none, land lists and deletes nothing', (t) => {
@@ -164,18 +164,4 @@ test('a refused deletion is named after the landing, with what was kept', (t) =>
   assert.match(out, /^kept: fix\/x-s2 \(not merged into origin\/feat\/x\)$/m);
   assert.match(out, /^branch deletion failed, some may be gone; check the run remote: git push origin --delete failed: /m);
   assert.ok(['design/x', 'fix/x-s1', 'qa/x', 'slice/x-s1'].every((name) => heads(origin).includes(name)), 'nothing deleted');
-});
-
-test('after a landing the dry run lists only the feature branch', (t) => {
-  const { work, inWork } = scratchRun(t);
-  land({ cwd: work, git: inWork, host,test: green });
-  let out = '';
-
-  const code = pruneMain(['prune', '--slug', 'x', '--dry-run'], { cwd: work, host, write: (text) => (out += text) });
-
-  assert.equal(code, 0, out);
-  const named = out.split('\n').filter((line) => /^(would delete|kept) /.test(line));
-  assert.equal(named.length, 1, out);
-  assert.match(named[0], /^kept feat\/x: /);
-  assert.match(out, /^dry run: would delete 0, kept 1; nothing deleted$/m);
 });
