@@ -53,13 +53,13 @@
     },
     {
       "slice": "S7",
-      "state": "pushed 47ccb79; ts APPROVE; integrating",
+      "state": "integrated at c7053df; checks green",
       "branch": "slice/cheap-suite-s7",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s7"
     },
     {
       "slice": "S8",
-      "state": "pushed ab589dd; feat 94c4425 merged; ts APPROVE; B2 -6 meets bar 6 (record's MISSED was wrong); integrates after S7",
+      "state": "pushed ab589dd; ts APPROVE; integrating",
       "branch": "slice/cheap-suite-s8",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s8"
     },
@@ -139,8 +139,8 @@
     "dropped: S5 typescript LOW proof computed on an already-landed feature (harmless)",
     "dropped: S5 security LOW proved = sha === null on rev-parse failure (still needs ^{tree}, else full)"
   ],
-  "next": "S5 green at dae95ba; integrating S7 (47ccb79); then S8 (ab589dd); S10; fundamentalist; fix round; QA.",
-  "updatedAt": "2026-11-24T00:50:30.402Z",
+  "next": "S7 green at c7053df; integrating S8 (ab589dd); S10; fundamentalist; fix round; QA.",
+  "updatedAt": "2026-11-24T01:08:31.500Z",
   "friction": [
     {
       "agent": "pilot",
