@@ -1,12 +1,13 @@
 /**
- * The switch files as archive rows (archive-page spec 3, 6): `alerts.json`, `usage-log.json` and
- * `start-settings.json`, one row each, one field per top-level key. A missing or unreadable file is no row.
+ * The switch files as archive rows (archive-page spec 3, 6): `alerts.json`, `usage-log.json`,
+ * `start-settings.json` and the `defender-advised.json` marker, one row each, one field per top-level key. A
+ * missing or unreadable file is no row.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 
-const FILES = ['alerts.json', 'usage-log.json', 'start-settings.json'];
+const FILES = ['alerts.json', 'usage-log.json', 'start-settings.json', 'defender-advised.json'];
 
 const label = (key) => key.charAt(0).toUpperCase() + key.slice(1);
 

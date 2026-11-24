@@ -50,15 +50,6 @@ const NOT_A_STORE_FILE = new Map([
   ['record.json', 'a file inside an audit folder, which `audits/*/*.json` covers'],
 ]);
 
-/**
- * Store files whose content another view already carries, so a view of their own would only repeat a row.
- */
-const SHOWN_THROUGH_ANOTHER = new Map([
-  ['deck.v${version}-${day}.json', 'a pre-upgrade copy of deck.json'],
-  ['deck.v${version}-${day}-${n}.json', 'a pre-upgrade copy of deck.json'],
-  ['defender-advised.json', 'a two-field marker whose only meaning is that it exists'],
-]);
-
 const SKIPPED_DIRS = new Set(['node_modules', 'target', 'test', 'rune', 'archive-kinds', 'ui']);
 
 /** Every `.json`, `.jsonl` or `.log` string literal in the source under `deck/` and `hooks/`, tests and kinds aside. */
@@ -103,6 +94,6 @@ test('every thread kind has one view', (t) => {
 test('every store file is viewed or never shown', () => {
   assert.ok(STORE_FILES.includes('handoff-trace.jsonl'), 'the scan finds the hand-off trace writer');
   assert.ok(STORE_FILES.length > 10, 'the scan finds the store writers');
-  const unviewed = STORE_FILES.filter((name) => !SHOWN_THROUGH_ANOTHER.has(name) && !viewed(name));
+  const unviewed = STORE_FILES.filter((name) => !viewed(name));
   assert.deepEqual(unviewed, [], `store files with neither a kind's files nor a NEVER_SHOWN entry: ${unviewed.join(', ')}`);
 });
