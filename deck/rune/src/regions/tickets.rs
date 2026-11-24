@@ -337,6 +337,18 @@ fn slot(control: Option<El>) -> El {
     }
 }
 
+/// A red outlined badge (deck.css `.badge`): the label in the `red` token, a 1 px stroke of it, the
+/// button's corner.
+fn badge(label: &str, dark: bool) -> El {
+    let red = theme::tokens(dark).accent.red;
+    text(label)
+        .font(type_::CAPTION)
+        .color(red)
+        .border(1.0, red)
+        .radius(theme::radius::button)
+        .px(space::s2)
+}
+
 /// One line of a row's text, in `ink`.
 fn said(words: impl Into<String>, ink: rune::Color) -> El {
     text(words.into()).font(type_::BODY).color(ink).wrap()
@@ -405,20 +417,17 @@ fn lines(r: &Row, colour: &str, local: &Local, t: &tok::Theme, dark: bool) -> El
         dark,
     ));
     if let Some(why) = &r.recut {
-        state = state.child(said("re-cut", t.text_secondary).help(why.as_str()));
+        let key = format!("ticket-{}-recut", r.id);
+        state = state.child(badge("re-cut", dark).key(key).help(why.as_str()));
     }
     let q = &r.questions;
     if q.count > 0 {
         let plural = if q.count == 1 { "" } else { "s" };
-        let blocking = if q.blocking > 0 {
-            format!(" ({} blocking)", q.blocking)
-        } else {
-            String::new()
-        };
-        state = state.child(said(
-            format!("{} question{plural}{blocking}", q.count),
-            t.text,
-        ));
+        state = state.child(said(format!("{} question{plural}", q.count), t.text));
+    }
+    if q.blocking > 0 {
+        let key = format!("ticket-{}-blocking", r.id);
+        state = state.child(badge("blocking", dark).key(key));
     }
     body = body.child(state);
     if let Some(n) = r.slices {
@@ -456,16 +465,23 @@ fn lines(r: &Row, colour: &str, local: &Local, t: &tok::Theme, dark: bool) -> El
 const HAND_TINT: f32 = 0.14;
 const HAND_BAR: f32 = 3.0;
 
-fn ticket_row(
-    r: &Row,
-    colour: &str,
-    repo: &str,
-    mids: &Mids,
-    local: &Local,
-    pending: &Pending,
-    t: &tok::Theme,
+/// What every row of a panel is drawn against.
+struct Around<'a> {
+    repo: &'a str,
+    local: &'a Local,
+    pending: &'a Pending,
+    t: &'a tok::Theme,
     dark: bool,
-) -> El {
+}
+
+fn ticket_row(r: &Row, colour: &str, mids: &Mids, around: &Around) -> El {
+    let Around {
+        repo,
+        local,
+        pending,
+        t,
+        dark,
+    } = *around;
     let key = format!("ticket-{}", r.id);
     let play = continue_of(r, repo, local, pending, t, dark);
     // A play asking Confirm takes the whole row, as the page blanks the row around its confirm step.
@@ -544,6 +560,11 @@ fn ticket_row(
     }
 }
 
+/// Whether the queue holds the row in hand or the co-pilot's.
+fn held(g: &Group) -> bool {
+    g.rows.iter().any(|r| r.mark.is_some())
+}
+
 pub fn draw(
     v: &serde_json::Value,
     local: &Local,
@@ -580,6 +601,13 @@ pub fn draw(
         .self_center(),
     );
     let open = prefs.folds.get(&repo);
+    let around = Around {
+        repo: &repo,
+        local,
+        pending,
+        t: &t,
+        dark,
+    };
     for (n, g) in view.groups.iter().enumerate() {
         // A group's line between Red, Yellow and Green, none above the first.
         if n > 0 {
@@ -588,11 +616,18 @@ pub fn draw(
         }
         let (fold_repo, colour) = (repo.clone(), g.colour.clone());
         let ink = accent(&theme::tokens(dark), &g.colour);
+        // A fold holding the row in hand or the co-pilot's opens itself, and a press does not shut it.
+        let held = held(g);
         let header = theme::control(row(), dark)
             .key(format!("tickets-fold-{}", g.colour))
             .gap(space::within)
-            .role("button")
-            .on_press(move |s: &mut State| toggle(s, &fold_repo, &colour))
+            .role("button");
+        let header = if held {
+            header
+        } else {
+            header.on_press(move |s: &mut State| toggle(s, &fold_repo, &colour))
+        };
+        let header = header
             // deck.css `.ticket-queue > summary`: the label and its count in capitals, in the queue's pastel.
             .child(
                 text(g.label.to_uppercase())
@@ -606,7 +641,11 @@ pub fn draw(
                     .color(ink),
             );
         let mut fold = col().gap(space::within).child(header);
-        if open.is_some_and(|set| set.contains(&g.colour)) {
+        if held || open.is_some_and(|set| set.contains(&g.colour)) {
+            if g.rows.is_empty() {
+                let key = format!("tickets-fold-{}-none", g.colour);
+                fold = fold.child(said("none", t.text_secondary).key(key));
+            }
             // deck.css `.tickets-list li`: a hairline between items, none after the last.
             let last = g.rows.len().saturating_sub(1);
             let mut mids: Vec<(String, f32)> = g
@@ -623,9 +662,7 @@ pub fn draw(
             }
             let mids: Mids = Rc::new(mids);
             for (i, r) in g.rows.iter().enumerate() {
-                fold = fold.child(ticket_row(
-                    r, &g.colour, &repo, &mids, local, pending, &t, dark,
-                ));
+                fold = fold.child(ticket_row(r, &g.colour, &mids, &around));
                 if i != last {
                     let key = format!("ticket-{}-rule", r.id);
                     fold = fold.child(theme::rule(theme::Rule::Item, dark).key(key));

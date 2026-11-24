@@ -87,10 +87,18 @@ fn view_of(deck: &Scratch) -> pilot_deck::client::View {
 
 /// The window over the repository's tab as it stands now, with `prefs` and the Tickets panel open
 /// as the only pane, so the side area's height holds every row (S20, S28), drawn once.
-fn drawn(deck: &Scratch, mut prefs: Prefs) -> Runtime<State> {
+fn drawn(deck: &Scratch, prefs: Prefs) -> Runtime<State> {
+    drawn_with(deck, prefs, |_| {})
+}
+
+/// `drawn` over the deck's real tickets region after `seed` has set fields on it, so a row can carry what
+/// the deck serves only once a run has been through a gate.
+fn drawn_with(deck: &Scratch, mut prefs: Prefs, seed: impl FnOnce(&mut Value)) -> Runtime<State> {
     prefs.open_panels.insert("tickets".into());
+    let mut view = view_of(deck);
+    seed(view.regions.get_mut("tickets").expect("a tickets region"));
     let mut state = State {
-        view: view_of(deck),
+        view,
         prefs,
         ..State::default()
     };
@@ -357,23 +365,23 @@ fn a_queue_wears_its_pastel() {
 #[test]
 fn folds_are_kept_per_deck() {
     let deck = Scratch::start();
-    let id = ticket(&deck, "Only");
+    ticket(&deck, "Only");
     let mut rt = drawn(&deck, Prefs::default());
     assert!(
-        find(&rt, &format!("ticket-{id}")).is_none(),
+        find(&rt, "tickets-fold-green-none").is_none(),
         "a fold is served shut"
     );
 
-    press(&deck, &mut rt, "tickets-fold-red");
+    press(&deck, &mut rt, "tickets-fold-green");
 
     assert!(
-        find(&rt, &format!("ticket-{id}")).is_some(),
+        find(&rt, "tickets-fold-green-none").is_some(),
         "the fold opens"
     );
-    assert!(rt.state.prefs.folds[REPO].contains("red"));
+    assert!(rt.state.prefs.folds[REPO].contains("green"));
     let restarted = drawn(&deck, Prefs::load(&deck.dir));
     assert!(
-        find(&restarted, &format!("ticket-{id}")).is_some(),
+        find(&restarted, "tickets-fold-green-none").is_some(),
         "open after a restart"
     );
     assert_eq!(
@@ -381,4 +389,105 @@ fn folds_are_kept_per_deck() {
         1,
         "only the fold pressed is kept"
     );
+}
+
+/// Spec 3a: the head row of the red queue, seeded with what the deck serves a re-cut ticket with open
+/// blocking questions, and a live run.
+fn recut_head(tickets: &mut Value) {
+    let row = &mut tickets["groups"][0]["rows"][0];
+    row["recut"] = json!("scope grew");
+    row["live"] = json!(true);
+    row["questions"] = json!({ "count": 2, "blocking": 1 });
+}
+
+/// Spec 3a: re-cut and blocking are red badges. The stroke itself is not in the element tree: it is read
+/// at `badge`; the ink and the corner are.
+#[test]
+fn recut_and_blocking_are_red_badges() {
+    let deck = Scratch::start();
+    let id = ticket(&deck, "Head");
+    let plain = drawn(&deck, red_open());
+    let rt = drawn_with(&deck, red_open(), recut_head);
+    let red = pilot_deck::theme::tokens(true).accent.red;
+
+    for part in ["recut", "blocking"] {
+        let key = format!("ticket-{id}-{part}");
+        assert!(find(&plain, &key).is_none(), "no {part} badge unasked");
+        let badge = find(&rt, &key).unwrap_or_else(|| panic!("no {part} badge"));
+        assert_eq!(badge.text_color, Some(red), "{part} in red");
+        assert_eq!(badge.radius, 4.0, "{part} with the button's corner");
+    }
+}
+
+/// Spec 3b: a fold holding the row in hand opens itself from empty prefs, and a press leaves it open and
+/// writes nothing.
+#[test]
+fn the_held_fold_opens_itself() {
+    let deck = Scratch::start();
+    let id = ticket(&deck, "Head");
+    let mut rt = drawn_with(&deck, Prefs::default(), |tickets| {
+        let mut row = tickets["groups"][0]["rows"][0].take();
+        row["mark"] = json!("in-hand");
+        tickets["groups"][0]["rows"] = json!([]);
+        tickets["groups"][1]["rows"] = json!([row]);
+    });
+    assert!(find(&rt, &format!("ticket-{id}")).is_some(), "drawn open");
+
+    press(&deck, &mut rt, "tickets-fold-yellow");
+
+    assert!(
+        find(&rt, &format!("ticket-{id}")).is_some(),
+        "still open after a press"
+    );
+    assert!(rt.state.prefs.folds.is_empty(), "no fold kept for it");
+}
+
+/// Spec 3c: an open queue with no ticket says none, a shut one says nothing.
+#[test]
+fn an_open_empty_queue_says_none() {
+    let deck = Scratch::start();
+    ticket(&deck, "Head");
+    let mut prefs = red_open();
+    prefs
+        .folds
+        .entry(REPO.into())
+        .or_default()
+        .insert("green".into());
+    let rt = drawn(&deck, prefs);
+
+    let none = find(&rt, "tickets-fold-green-none").expect("none in the open empty fold");
+    assert_eq!(none.text.as_deref(), Some("none"));
+    assert!(
+        find(&rt, "tickets-fold-yellow-none").is_none(),
+        "none in no shut fold"
+    );
+}
+
+/// Spec 3d (A6, a pin): live, state, re-cut and questions share one line, `next` sits above the title.
+#[test]
+fn a_rows_badges_share_one_line() {
+    let deck = Scratch::start();
+    let id = ticket(&deck, "Head");
+    let rt = drawn_with(&deck, red_open(), |tickets| {
+        recut_head(tickets);
+        tickets["groups"][0]["rows"][0]["questions"]["blocking"] = json!(0);
+    });
+    let row = find(&rt, &format!("ticket-{id}")).expect("a row").rect;
+    let y_of = |words: &str| {
+        rt.elements()
+            .into_iter()
+            .find(|e| {
+                let inside = e.rect[1] >= row[1] && e.rect[1] < row[1] + row[3];
+                inside && e.text.as_deref() == Some(words)
+            })
+            .unwrap_or_else(|| panic!("no {words}"))
+            .rect[1]
+    };
+
+    let line = y_of("live");
+    for words in ["planning", "re-cut", "2 questions"] {
+        assert_eq!(y_of(words), line, "{words} on the line");
+    }
+    assert!(y_of("next") < y_of("Head"), "next above the title");
+    assert!(y_of("Head") < line, "the line under the title");
 }
