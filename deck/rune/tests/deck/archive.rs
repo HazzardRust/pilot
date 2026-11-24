@@ -51,10 +51,13 @@ fn the_archive_button_opens_the_closed_tickets_by_day() {
     let mut rt = live_window(&deck);
 
     rt.frame(1.0);
-    let (x, y) = rt.find("strip-archive").expect("an Archive button in the strip");
+    let (x, y) = rt
+        .find("strip-archive")
+        .expect("an Archive button in the strip");
     rt.pointer_move(x, y);
     rt.pointer_down(x, y);
     rt.pointer_up(x, y);
+    rt.frame(0.0);
     assert_eq!(rt.state.query.screen, "archive");
     assert_eq!(rt.state.query.id, None);
 

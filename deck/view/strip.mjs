@@ -22,7 +22,9 @@ export function stripView(reads, query = {}) {
   // The way to `/items`, counting the open queue as the overview tab's link does (`renderStrip`);
   // `here` on the items page itself, where it is the way back.
   const items = { count: queueOf(reads.items).length, here: screen === 'items' };
-  const view = { all: all === true, items, create: {}, close: Boolean(tab?.ended), alerts: { weekly } };
+  // The way to the archive screen (archive-page spec 1), beside Items; `here` on it, where it leads back.
+  const archive = { here: screen === 'archive' };
+  const view = { all: all === true, items, archive, create: {}, close: Boolean(tab?.ended), alerts: { weekly } };
   if (!tab) {
     // Named as their tabs are (`renderCreate`'s options), or `D<n> <dir>` for a deck with no tab.
     view.create.repos = Object.entries(reads.numbers ?? {}).map(([repo, number]) => {
