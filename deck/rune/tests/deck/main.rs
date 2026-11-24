@@ -4,6 +4,7 @@ mod act_deck;
 mod act_thread;
 mod agents_reports;
 mod archive;
+mod archive_detail;
 mod archive_filter;
 mod centre;
 mod chat;

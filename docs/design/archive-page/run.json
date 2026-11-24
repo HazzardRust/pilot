@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed 5cee353 (node 15/15 s2-node.log, cargo 179/179 s2-cargo.log; ts approve, rust APPROVE, security APPROVE); queued behind S4 integrate",
+      "state": "integrated 0487cdb; checks green",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "integrating 1b9262b",
+      "state": "integrated dc80540; checks green",
       "after": [
         "S1"
       ],
@@ -42,45 +42,57 @@
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "integrated a93d0b6; checks green",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/archive-page-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s5"
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "integrated e307a13; checks green",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/archive-page-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s6"
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "pushed 1cce2af",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/archive-page-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s7"
     },
     {
       "slice": "S8",
-      "state": "planned",
+      "state": "pushed 40d237a",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/archive-page-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s8"
     },
     {
       "slice": "S9",
-      "state": "planned",
+      "state": "pushed 3f8c07f",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/archive-page-s9",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s9"
     },
     {
       "slice": "S11",
-      "state": "planned",
+      "state": "pushed c2121b4",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/archive-page-s11",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s11"
     },
     {
       "slice": "S10",
@@ -94,65 +106,35 @@
         "S9",
         "S11"
       ]
+    },
+    {
+      "slice": "S12 clippy ticket_row args (added)",
+      "state": "integrated f56c544; checks green",
+      "branch": "slice/archive-page-s12",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s12"
+    },
+    {
+      "slice": "S13 findCredential knows more shapes (added)",
+      "state": "integrated",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/archive-page-s13",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s13"
+    },
+    {
+      "slice": "S14 findCredential name rule and vendor prefixes (added)",
+      "state": "pushed cd28c08",
+      "after": [
+        "S13 findCredential knows more shapes (added)"
+      ],
+      "branch": "slice/archive-page-s14",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s14"
     }
   ],
-  "next": "draining: S3 integrating; then S2 5cee353 (its per-behaviour evidence rows were lost with my context; trailers from the record); then hand back paused",
-  "updatedAt": "2026-11-24T08:47:09.167Z",
+  "next": "S13 6944328 integrating; then S14, S7, S8, S9, S11; S10 last (also records seams: S8.md Top rows finding - effort; S9.md cut at a word); assumed: credential shapes past S14 not built; QA: 50 ms bar only in cargo test --release archive_filter.",
+  "updatedAt": "2026-11-24T11:44:20.697Z",
   "friction": [
-    {
-      "agent": "pilot-architect",
-      "what": "ticket said group like the Tickets tab, which groups nothing; cost a question",
-      "evidence": "deck/items.mjs:598, deck/ui/render-rail.mjs:188; itm_50eb0e5833dc"
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "store file names are scattered string literals across deck/ and hooks/, no registry; needed an explorer sweep",
-      "evidence": "archive-page S10 coverage test must grep for them"
-    },
-    {
-      "kind": "drain",
-      "what": "Stop hook made the pilot take the next planning ticket while past the context advisory, with nothing it could start on it",
-      "size": 1500
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "C: filled to 7.4G free and S19's cargo build failed; per-worktree cargo target dirs had to be deleted by hand",
-      "evidence": "co-pilot hand-back, feat/rune-deck-ui 03659388",
-      "size": 3
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "pilot integrate merges the base before the slice and refused S21 and the side branch on a render-rail.mjs conflict with pilot dc5f7beb; needed an implementer and a hand merge",
-      "evidence": "slice/rune-deck-ui-base 47fc9c3, merge 2c055ec",
-      "size": 3
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "successor stopped at once on the harness notice 'deck (CONNECTION_CLOSED)' without its plugin deck tools being down in main; cost a spawn round and a resume",
-      "evidence": "hand-back on itm_0dcd9aa67146, 40k tokens, 4 tool uses",
-      "size": 2
-    },
-    {
-      "kind": "drain",
-      "what": "Stop hook refused a parked archive-page and made the pilot retake it though L8 says wait for Rune; cost a question to the user",
-      "size": 1500
-    },
-    {
-      "kind": "drain",
-      "what": "pilot wait exited 1 twice on 'deck not answering (timeout)' while the crew's cargo/npm gates ran; deck answered on the next call each time, listener restarted by hand",
-      "size": 800
-    },
-    {
-      "agent": "pilot-explorer",
-      "what": "second agent this session to stop on the harness notice 'deck (CONNECTION_CLOSED)' and not post; plugin deck tools worked once loaded via ToolSearch; cost a hand-back and a resume each time",
-      "evidence": "itm_88049dc4b34c reply posted only on resume; same on co-pilot itm_0dcd9aa67146",
-      "size": 2
-    },
-    {
-      "agent": "pilot-explorer",
-      "what": "git grep with -A after the tree-ish fails; ADR files are single very long lines, so a grep of one is a wall of text",
-      "evidence": "explorer report on itm_88049dc4b34c"
-    },
     {
       "kind": "drain",
       "what": "QA's walkthrough feedback relayed to main message by message (7 relays) while main ran two short-path tickets; a blocked-step item for the Rune QA's wait was filed on the coverage-install ticket and blocks its gate2",
@@ -246,6 +228,144 @@
       "agent": "pilot:pilot-implementer",
       "what": "clippy red on a base file no slice owns: tickets.rs:459 ticket_row has 8 args, from ae00199, already on pilot",
       "evidence": "git merge-base --is-ancestor ae00199 origin/pilot: on pilot",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S2's report evidence rows were lost with my context before integration; pilot integrate refuses without per-behaviour Evidence trailers, and a transcript cannot be read back",
+      "evidence": "NOT integrated slice/archive-page-s2: S2: B1 has no --trailer; SendMessage to the S2 implementer: not reachable",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 and S3 each register a test module in deck/rune/tests/deck/main.rs, so parallel slices conflict on one line",
+      "evidence": "git merge-tree dc80540 5cee353: CONFLICT deck/rune/tests/deck/main.rs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "run record shape (deck.records[] as {repo, record}, slice cells {slice, state}) not documented for an adapter author",
+      "evidence": "S5: six greps over deck/store-runs.mjs, deck/runs.mjs, deck/status.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "storeFile lives in deck/store.mjs, not store-dir.mjs; first S5 test run failed on the import",
+      "evidence": "TypeError: storeFile is not a function",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a fresh worktree has no node_modules, so deck/rune cargo tests fail (61) until npm ci; brief gate did not say so",
+      "evidence": "S12: ERR_MODULE_NOT_FOUND @modelcontextprotocol/sdk from deck/client.mjs",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "one clippy error masked two field_reassign_with_default lints in tests/deck/layout.rs:279,337",
+      "evidence": "S12 fixed them in-slice after too_many_arguments cleared",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "usage.jsonl line shape not given in S7's Interface; read from deck/telemetry.mjs appendWindow and deck/usage.mjs readSnapshot",
+      "evidence": "S7 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "any .mjs in deck/archive-kinds/ is auto-discovered as a kind, so adapters duplicate isObject/text/linesOf rather than share a helper",
+      "evidence": "S7 typescript-reviewer LOW",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a shared CARGO_TARGET_DIR across worktrees reused a stale test binary, faking a regression; a red proof needs its own target dir",
+      "evidence": "S2: live.rs panic literal lacked archiveDetail; cargo clean -p pilot-deck fixed; ~15 min",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "snapping a seeded deck needs an undocumented deck.secret in PILOT_DECK_DIR even with secret: null",
+      "evidence": "S2 B5 first snap showed deck not running",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "rebase --continue chained after a failed Edit committed conflict markers (caught before push)",
+      "evidence": "S2 main.rs:7-11, reset to 5cee353",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S8.md names audit Top rows as what - size; real audit rows carry finding and effort (deck/audit.mjs rowProblems)",
+      "evidence": "S8 report; seam change recorded in S8.md",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate selection ran 5089 tests; daemon-replace 'a newer caller stops the daemon' timed out at 30 s under parallel implementer load, passes alone in 1.2 s; cost one ~8 min integrate",
+      "evidence": "C:/Users/jrylk/.claude/pilot/logs/20261124T094023757Z-slice-archive-page-s5.log:5506",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "repo has no eslint flat config and no lint script, so npx eslint fails and slices have no lint gate",
+      "evidence": "S11 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6's slice Misses line handed credential coverage to the reviewer, but closing it means editing shared deck/credential.mjs outside the slice; security review found prefixed env names and ~10 token shapes missed",
+      "evidence": "S6 security-reviewer request changes; fixed prefixed names in 8998f3b, rest added as S13",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6 looked for the Archive control in the icon bar; it is strip-archive in the right strip (strip.rs:345)",
+      "evidence": "S6 report look row",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S9 Interface said only 'the line clipped to 120 chars'; a plain cut can expose a token prefix findCredential only catches whole; cut at a word boundary instead",
+      "evidence": "S9 report; seam recorded in S9.md",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6's 64 KiB probes never exercised the name rule or the JWT shape; both were quadratic (~1 s at 64 KiB), found only by S13's security review",
+      "evidence": "S13 6944328: 908/987/1258 ms before, 1-5 ms after",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Edit refused after a Bash-only read ('File has not been read yet'), twice",
+      "evidence": "S13 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "credential denylist is open-ended: each security review of findCredential lists another round of shapes (S13: 10, S14: 5 more groups); stopped at S14 by co-pilot decision",
+      "evidence": "S14 report findings 3-7",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief's mixed-case long rule caught camelCase identifiers and broke landing.test.mjs fixtures outside the slice",
+      "evidence": "landing.test.mjs:217,:319",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "briefing slices to skip the full suite let S2 miss deck-readme.test.mjs's module list; caught only at integrate (~8 min)",
+      "evidence": "C:/Users/jrylk/.claude/pilot/logs/20261124T101939797Z-slice-archive-page-s2.log:5513",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S12 gate ran clippy and cargo test but not cargo fmt --check; integrate refused on a one-line fmt diff",
+      "evidence": "C:/Users/jrylk/.claude/pilot/logs/20261124T102800275Z-slice-archive-page-s12.log:860",
       "size": 1
     }
   ]

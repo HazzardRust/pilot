@@ -456,10 +456,15 @@ fn lines(r: &Row, colour: &str, local: &Local, t: &tok::Theme, dark: bool) -> El
 const HAND_TINT: f32 = 0.14;
 const HAND_BAR: f32 = 3.0;
 
+/// The queue a row sits in: its lane's colour and the repo it belongs to.
+struct Lane<'a> {
+    colour: &'a str,
+    repo: &'a str,
+}
+
 fn ticket_row(
     r: &Row,
-    colour: &str,
-    repo: &str,
+    lane: &Lane,
     mids: &Mids,
     local: &Local,
     pending: &Pending,
@@ -467,7 +472,7 @@ fn ticket_row(
     dark: bool,
 ) -> El {
     let key = format!("ticket-{}", r.id);
-    let play = continue_of(r, repo, local, pending, t, dark);
+    let play = continue_of(r, lane.repo, local, pending, t, dark);
     // A play asking Confirm takes the whole row, as the page blanks the row around its confirm step.
     if local.confirming.as_deref() == Some(r.id.as_str()) {
         let sure = row()
@@ -513,7 +518,7 @@ fn ticket_row(
     let line = row()
         .pr(space::s4)
         .gap(space::within)
-        .child(lines(r, colour, local, t, dark))
+        .child(lines(r, lane.colour, local, t, dark))
         .child(controls)
         .child(slot(grip).self_center());
     // deck.css `li.in-hand` / `li.co-pilot-held`: the row tinted at 14% of its lane's colour, a 3 px bar
@@ -622,10 +627,12 @@ pub fn draw(
                 mids.clear();
             }
             let mids: Mids = Rc::new(mids);
+            let lane = Lane {
+                colour: &g.colour,
+                repo: &repo,
+            };
             for (i, r) in g.rows.iter().enumerate() {
-                fold = fold.child(ticket_row(
-                    r, &g.colour, &repo, &mids, local, pending, &t, dark,
-                ));
+                fold = fold.child(ticket_row(r, &lane, &mids, local, pending, &t, dark));
                 if i != last {
                     let key = format!("ticket-{}-rule", r.id);
                     fold = fold.child(theme::rule(theme::Rule::Item, dark).key(key));

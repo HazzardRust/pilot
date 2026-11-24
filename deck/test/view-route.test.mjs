@@ -25,7 +25,7 @@ test('the view names every region of the screen', (t) => {
 
   assert.equal(view.screen, 'home');
   assert.deepEqual(Object.keys(view.regions).sort(), [
-    'agents', 'archive', 'chat', 'graph', 'history', 'notifications', 'queue', 'reply',
+    'agents', 'archive', 'archiveDetail', 'chat', 'graph', 'history', 'notifications', 'queue', 'reply',
     'reports', 'status', 'strip', 'tabs', 'thread', 'tickets', 'usage',
   ]);
 });
