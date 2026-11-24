@@ -23,9 +23,10 @@ function planFields(plan, items) {
     ['Slices', plan.sliceCount],
     ['Gate 1', typeof plan.gate1 === 'string' ? titled(plan.gate1, items) : undefined],
   ];
-  return named
+  const fields = named
     .filter(([, value]) => value !== undefined && value !== null && value !== '')
     .map(([label, value]) => ({ label, value: withheld(String(value)) }));
+  return fields.length > 0 ? fields : null;
 }
 
 /**

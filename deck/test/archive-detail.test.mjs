@@ -71,11 +71,13 @@ test("a ticket's detail joins its thread, plan and report", (t) => {
 test('a ticket with no plan or report gives null for each, and an unknown id gives null', (t) => {
   tempDeck(t);
   const bare = postStored({ kind: 'ticket', title: 'bare', body: shapedTicketBody('bare'), repo: REPO, resolvedAt: ago(HOUR) });
+  const unnamed = postStored({ kind: 'ticket', title: 'unnamed', body: shapedTicketBody('unnamed'), repo: REPO, resolvedAt: ago(HOUR), plan: { grantedAt: 'legacy' } });
   const open = postStored({ kind: 'ticket', title: 'open', body: shapedTicketBody('open'), repo: REPO });
   listItems();
 
   const detail = archiveDetail(bare.id);
   assert.deepEqual([detail.replies, detail.plan, detail.report], [[], null, null]);
+  assert.equal(archiveDetail(unnamed.id).plan, null, 'a plan naming none of its fields is no plan');
   assert.equal(archiveDetail('itm_ffffffffffff'), null);
   assert.equal(archiveDetail(open.id), null, 'an open ticket is no archive row');
 });
@@ -91,6 +93,8 @@ test('an archived ticket opens too', (t) => {
 
   assert.equal(detail.title, 'the archived ticket');
   assert.equal(detail.report.title, 'Closing report: the archived ticket');
+  assert.equal(detail.replies.length, 2, 'its thread came with it');
+  assert.equal(detail.plan.at(-1).value, 'Plan for the archived ticket', 'and its plan, the gate1 read off the month file');
 });
 
 test('a credential in a reply or report is withheld', (t) => {

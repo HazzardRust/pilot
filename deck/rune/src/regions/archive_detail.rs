@@ -54,7 +54,7 @@ impl Detail {
 }
 
 /// Back: the same screen without the row's id, which draws the list.
-fn back(s: &mut State) {
+fn to_list(s: &mut State) {
     let query = Query {
         screen: "archive".into(),
         id: None,
@@ -94,7 +94,7 @@ pub fn draw(detail: &Option<Detail>, cx: &mut Cx<State>) -> El {
         .role("button")
         .font(type_::BODY)
         .color(ui.text)
-        .on_press(back);
+        .on_press(to_list);
     let mut region = col()
         .key("archive-detail")
         .w_full()
