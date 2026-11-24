@@ -18,7 +18,7 @@ the re-cut, assumed until Gate 1 (the user's table ask on the ticket, folded in 
 
 | # | Behaviour | Evidence | Bar |
 | --- | --- | --- | --- |
-| 1 | Every line the cursor is not on renders bold, italic, inline code, headings, list markers and links, in the look the thread gives the same markdown once sent. | `preview::spans` test per kind; `--snap` PNG of the box; the user's look | 6 of 6 kinds styled |
+| 1 | Every line the cursor is not on renders bold, italic, inline code, headings, list markers and links, in the look the thread gives the same markdown once sent. A heading has its real size by level, H1 17, H2 15, H3 and deeper 13 bold, in the box and the thread alike: the deck's "three type scales and no others" rule excepts markdown bodies, and nothing else in the deck changes size. *re-cut after the walkthrough, S6 (itm_283d49f29661)* | `preview::spans` test per kind; `--snap` PNG of the box; the user's look | 6 of 6 kinds styled |
 | 2 | Every line the caret or the selection touches stays unstyled; moving the caret to another line styles the old one and unstyles the new one in the same frame. | `preview::spans` test moving the caret line 1 → line 2; the user's look | 0 spans on a raw line; the other line's spans all present |
 | 3 | What is sent is the typed text, byte for byte, outside tables; with no table inserted it is the draft itself. *re-cut* | `reply::Local::send` test after typing markdown and moving the caret; the S3 pin with a table between two prose parts | 0 bytes differ in prose |
 | 4 | A rendered link is never followed: a click places the caret (the line turns raw); nothing opens, nothing posts. *security* | test: a press on a rendered link's text posts no `Action`; read: `Span` carries no link and the crate has no URL opener | 0 actions; 0 openers |
@@ -197,6 +197,7 @@ Width 2; longest stem 3
 | S2 | Headings, list markers and inert links render, within a frame | 1, 4, 6 | `deck/rune/src/preview.rs`, `tests/preview.rs`, `tests/reply.rs` | S1 (`preview::spans`, `preview.rs`) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S2](slices/S2.md) |
 | S3 | Table skeleton: the Table button inserts a grid, typing fills its cells, the reply is sent with a GFM table | 3, 8, 9, 10 | `deck/rune/src/table.rs` (new), `src/lib.rs`, `src/regions/reply.rs`, `tests/table.rs` (new), `docs/adr/NNNN-reply-markdown.md` | S1 (`reply.rs`, `lib.rs`, the ADR) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
 | S4 | Moving through cells, adding and removing rows and columns, cells rendering | 11, 12, 13 | `deck/rune/src/table.rs`, `src/regions/reply.rs`, `tests/table.rs` | S3 (`table::Table`, the grid in `reply.rs`, `tests/table.rs`) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S4](slices/S4.md) |
+| S6 | Headings have real sizes in the reply box and the thread *(added)* | 1, 7 | `deck/rune/theme.json`, `build.rs`, `src/theme.rs`, `src/preview.rs`, `tests/preview.rs`, `tests/theme.rs` | S2 (`preview::spans`) | `pilot:rust-reviewer` | [S6](slices/S6.md) |
 
 ## 9. Acceptance evidence
 

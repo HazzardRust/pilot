@@ -29,8 +29,8 @@ pub fn spans(edit: &TextEdit, dark: bool) -> Vec<Span> {
             *inner = Some(inner.map_or(at.end, |end| end.max(at.end)));
         }
         let (marker, look): (usize, fn(Span) -> Span) = match event {
-            Event::Start(Tag::Heading { .. }) => {
-                heading(text, at, dark, &mut out);
+            Event::Start(Tag::Heading { level, .. }) => {
+                heading(text, at, level as u8, dark, &mut out);
                 continue;
             }
             Event::Start(Tag::Item) => {
@@ -99,9 +99,11 @@ pub fn spans(edit: &TextEdit, dark: bool) -> Vec<Span> {
     }
 }
 
-/// A heading at `at` in the header type: an ATX heading's `#`s and the space after them quiet, a
-/// setext heading's underline quiet, the words on its first line in `type_::HEADER`.
-fn heading(text: &str, at: Range<usize>, dark: bool, out: &mut Vec<Span>) {
+/// A heading of `level` at `at`: an ATX heading's `#`s and the space after them quiet, a setext
+/// heading's underline quiet, the words on its first line in the thread's size for that level
+/// (`type_::heading`).
+fn heading(text: &str, at: Range<usize>, level: u8, dark: bool, out: &mut Vec<Span>) {
+    let look = type_::heading(level);
     let quiet = theme::tokens(dark).quiet;
     // The range may carry the line's `\n`; what is left is the heading's own lines.
     let end = at.start + text[at.clone()].trim_end_matches(['\n', '\r']).len();
@@ -131,11 +133,7 @@ fn heading(text: &str, at: Range<usize>, dark: bool, out: &mut Vec<Span>) {
     }
     let close = open + text[open..words_end].trim_end().len();
     if close > open {
-        out.push(
-            Span::new(open, close)
-                .size(type_::HEADER.size)
-                .weight(type_::HEADER.weight),
-        );
+        out.push(Span::new(open, close).size(look.size).weight(look.weight));
     }
 }
 
