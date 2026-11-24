@@ -101,7 +101,7 @@ ADR NNNN (`docs/adr/NNNN-classifier-env.md`, written in S1) records L1-L4.
   allow overrides a soft_deny). Asked: itm_b3d18023a002.
 - **A3** Off switch is the environment variable `PILOT_CLASSIFIER_ENV=off`, read at the Start. Tradeoff: the deck's
   Start needs the deck restarted after `setx`. Rejected: a stored setting behind a new `pilot classifier` command.
-  Asked: itm_fe2e6aa41d19.
+  Asked: itm_fe2e6aa41d19. Closed by the deck, not the user: "Assumed: Env var (default) (no answer 20 min)".
 - **A4** Spec 8, the `pilot doctor` row, `main`'s question itm_1d8272a673d9 (default yes). Cut as S3 with no edge, so
   a no drops S3 and nothing else.
 - **A5** QA environment, `main`'s question itm_d24c3c01f382: a scratch home, plus one read-only
