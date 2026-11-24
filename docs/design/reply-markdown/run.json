@@ -5,6 +5,11 @@
   "branch": "feat/reply-markdown",
   "base": "pilot",
   "worktree": "C:/Users/jrylk/Projects/pilot-feat-reply-markdown",
+  "qa": {
+    "branch": "qa/reply-markdown",
+    "worktree": "C:/Users/jrylk/Projects/pilot-qa-reply-markdown",
+    "url": "http://127.0.0.1:63171"
+  },
   "artefact": "docs/design/reply-markdown/architecture.md",
   "slices": [
     {
@@ -33,79 +38,55 @@
     },
     {
       "slice": "S4",
-      "state": "integrated",
+      "state": "integrated ddc8ebd",
       "after": [
         "S3"
       ],
       "branch": "slice/reply-markdown-s4",
       "worktree": "C:/Users/jrylk/Projects/pilot-reply-markdown-s4"
+    },
+    {
+      "slice": "feature",
+      "state": "walkthrough posted, waiting on the user",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "pr": 137
+    },
+    {
+      "slice": "Added: Enter, Table button row, bullets",
+      "state": "pushed c8ef952 on feat/reply-markdown (QA fixes, rust-reviewer approve; live look not done)"
+    },
+    {
+      "slice": "Added: table insert 2x2 and Obsidian-style grow",
+      "state": "implementing",
+      "branch": "slice/reply-markdown-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-reply-markdown-s5"
+    },
+    {
+      "slice": "Added: thread table selection",
+      "state": "planned",
+      "after": [
+        "Added: heading sizes"
+      ]
+    },
+    {
+      "slice": "Added: heading sizes",
+      "state": "integrated",
+      "branch": "slice/reply-markdown-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-reply-markdown-s6"
     }
   ],
-  "next": "S4 480e5c2 being integrated by pilot (co-pilot dormant, lane held). Next: checks; base-check integrate; fundamentalist + QA; fix round must fix light-theme white ink in reply fields. QA notes: A1 contrast, IME, heading = body size, typed \\| in cell, unclosed fence, step 8 order: Name,Tab,Size,Return,**2**,Shift+Tab,a | b.",
-  "updatedAt": "2026-11-24T06:12:13.171Z",
+  "findings": [
+    "dropped: F6 link test expected value — rune-kit has no public path from parse + markdown_style to a link's colour; no independent source exists",
+    "kept: F8 (QA) Table pressed with the caret in a cell inserts after that grid — fixed in ed2b6ca with a red-then-green test"
+  ],
+  "next": "Integrating S6 (98bf8ee) into feat/reply-markdown via pilot integrate in pilot-feat-reply-markdown. S5 table aa98506c3a66e3ceb still implementing. Then S7 thread table selection + br in cells as a break in the thread, then fresh pilot-qa (QA handoff itm_38fd681f5af0: env port 63171, look incl. Enter/Table row/bullets, 6 px box jump on headings), walkthrough, gate2.",
+  "updatedAt": "2026-11-24T08:16:58.330Z",
   "friction": [
-    {
-      "agent": "pilot-qa",
-      "what": "walkthrough thread ownership flipped pilot/qa four times; deck hands a qa thread back when a building QA misses a reply",
-      "evidence": "itm_f98fae4576f8",
-      "size": 2
-    },
-    {
-      "agent": "pilot-qa",
-      "what": "running Rune window locks target/release, so every rebuild closes the user's view; cargo not on PATH",
-      "evidence": "QA abc1e7c6 report",
-      "size": 1
-    },
-    {
-      "kind": "drain",
-      "what": "pilot wait timed out on a healthy deck five times (deck answers in ms right after)",
-      "size": 1500
-    },
-    {
-      "kind": "drain",
-      "what": "pre-/clear crew agents still alive but unknown to the new session: a second QA was spawned on a worktree whose QA was live",
-      "size": 2500
-    },
-    {
-      "agent": "pilot-qa",
-      "what": "no way to open a given screen in the Rune window without clicking; with the user at the machine, thread and reply fixes rest on tests, not a live look",
-      "evidence": "QA aaed3a00 report, sets a and f",
-      "size": 2
-    },
-    {
-      "agent": "pilot-evidence-runner",
-      "what": "report delivered to main, not its fundamentalist; coverage cell needs the 13-16 min suite, Stryker timed out at 900 s with no score, scratch dir left busy",
-      "evidence": "two-devices evidence table a53e83a2",
-      "size": 2
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "five-second git timeouts go red when gates run in parallel and pass alone (QA gate 7 failures, fix gate 1)",
-      "evidence": "two-devices co-pilot hand-back",
-      "size": 2
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "installed pilot 0.9.9 is older than the code under test (no host command); pilot integrate strict on Evidence trailer form and fix-branch rows",
-      "evidence": "two-devices co-pilot hand-back",
-      "size": 1
-    },
-    {
-      "kind": "drain",
-      "what": "relaying about 20 walkthrough notes and QA lines one by one through the pilot, each with a tip and pid check",
-      "size": 60000
-    },
-    {
-      "kind": "drain",
-      "what": "pilot wait timed out on a healthy deck about ten times during QA cargo gates; each restart a turn",
-      "size": 6000
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "handback-send-enforce hook forces a hand-back while children are live and the co-pilot has no TaskOutput to block on; main watched origin and resumed it per slice",
-      "evidence": "six forced hand-backs on crew-handoff-trace",
-      "size": 3
-    },
     {
       "agent": "pilot-co-pilot",
       "what": "a child's SubagentHandback reaches main, not the co-pilot that spawned it",
@@ -276,6 +257,70 @@
       "what": "S3 test click helper ran pointer down+up with no frame between, hiding a focus-blur bug the live run found",
       "evidence": "script: no element with key \"table-0-remove-row\"",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner picks its stack from the manifest at the worktree root (package.json), so a Rust feature under deck/rune got no diff coverage, mutation, complexity, duplication or dead-code evidence",
+      "evidence": "runner chose the Node column; Cargo.toml is at deck/rune; npm ci 4.4s wasted",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "forced hand-back while waiting read-only for the fix-round tip; walkthrough and gate2 now need a resume or a fresh QA",
+      "evidence": "QA report: 'this handback was forced: no fix-round tip had arrived yet'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot-deck window talks to the live deck on 4321 when PILOT_DECK_PORT is unset; a script file with a BOM fails with only 'expected value at line 1 column 1'",
+      "evidence": "client.rs:99-112; p6-nosend.json written with Set-Content -Encoding utf8",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "brief says about 10 tests skipped; the gate skips 28",
+      "evidence": "gate.log: 5103 tests, 28 skipped",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer fix",
+      "what": "Rune exposes no rendered span colours to tests; F6 could not be done; headless --script grammar documented only in rune tooling/script.rs",
+      "evidence": "MarkdownStyle fields pub(super), Renderer::spans private",
+      "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "pilot land has no help text; pilot.md step 7 and pilot-co-pilot.md:55 disagree with step 9 on whether it lands on pilot before Gate 2; read the co-pilot definition to decide",
+      "size": 20
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "live deck at 4321 stalled while two full suites ran on the machine; pilot wait died three times",
+      "evidence": "curl exit 28 on /api/health; health 2-6 s under load",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a walkthrough Sign off was retracted 40 s after the press; QA had already closed it and posted gate2",
+      "evidence": "itm_766edd40c97d seq 3410-3411, gate2 itm_21617ae25e07 superseded",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck refused QA's reply once the thread's owner had changed; pilot had to relay",
+      "evidence": "item is owned by pilot refusal on itm_766edd40c97d",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "design skipped research of existing editors; Return, heading sizes and table controls all came back as user finds",
+      "evidence": "7 finds on the walkthrough, three added slices",
+      "size": 5
+    },
+    {
+      "kind": "drain",
+      "what": "pilot missed a Sign off press made before the hand-off and asked the user for it again",
+      "size": 2
     }
   ]
 }
