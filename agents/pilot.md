@@ -376,6 +376,8 @@ that carries only the slice: the path of `docs/design/<slug>/brief.md`, the
 path of its slice file, `docs/design/<slug>/slices/S<n>.md`, the worktree and
 branch to create, and the subject, `feat(<slug>): S<n> <title>`.
 
+A signed `surface: true` gate1 gets **Shape the look**, a `question`: `pilot look shape <surface.json>`, reply with the export's path; a Sonnet fix applies it.
+
 Sequential along the DAG is the default; two relaxations need no asking:
 
 - **Pipeline.** Start the next slice on N's lane the moment N's branch is pushed,
@@ -490,6 +492,8 @@ notebook; else its checks table rides in the gate2. From then on it reads the us
 on that thread itself, tells the pilot what came back, and is `feat/<slug>`'s
 only writer for the fixes they turn up. From `need` it carries concluding to the press.
 
+**Look notes**: one agent per surface's batch; you hold the walkthrough.
+
 ### 9. Gate 2 and ready
 
 **Gate 2** is the user signing off the feature, asked
@@ -571,6 +575,8 @@ call. The artefact's table is the plan, and the run
 record that call writes is the live state: a session resumed cold, or a
 compaction, is handed the record and reads the artefact for the design, so
 nothing about the run lives only in the pilot's head.
+
+**Design notes**: `docs/design/<slug>/notes.md`, committed, never only in memory.
 
 ## When your own context fills
 
