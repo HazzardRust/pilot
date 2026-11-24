@@ -8,9 +8,12 @@
 // (`x=token=…`). The name starts where no name character precedes it, and neither run can hold `:` or `=`, so each
 // character is scanned from one start only.
 const NAMED_VALUE = /(?<![A-Za-z0-9_-])([A-Za-z0-9_-]+)\s*[:=]\s*["']?(?=([A-Za-z0-9/+_.@!#%*-]+))/g;
-const KEYWORD = 'api[_-]?key|secret|token|password|passwd|pwd';
-const NAME_HOLDS = [new RegExp(`(?:^|[_-])(?:${KEYWORD})s?(?![a-z0-9])`, 'i'), /[a-z0-9](?:Api[_-]?Key|Secret|Token|Passw(?:or)?d|Pwd)s?(?![a-z0-9])/];
-const NAME_ENDS = [new RegExp(`(?:^|[_-])(?:${KEYWORD})s?$`, 'i'), /[a-z0-9](?:Api[_-]?Key|Secret|Token|Passw(?:or)?d|Pwd)s?$/];
+// A keyword may be glued to the word before it (`PGPASSWORD`, `GITHUBTOKEN`), but `pwd` only after a separator or a
+// camel hump, since `OLDPWD` is a directory. In the middle of a name a camel hump may follow (`accessTokenTtl`).
+const GLUED = 'api[_-]?key|secret|token|passw(?:or)?d';
+const CAMEL = /[a-z0-9](?:Api[_-]?Key|Secret|Token|Passw(?:or)?d|Pwd)s?/.source;
+const NAME_HOLDS = [new RegExp(`(?:${GLUED}|(?:^|[_-])pwd)s?(?![a-z0-9])`, 'i'), new RegExp(`${CAMEL}(?![a-z0-9])`)];
+const NAME_ENDS = [new RegExp(`(?:${GLUED}|(?:^|[_-])pwd)s?$`, 'i'), new RegExp(`${CAMEL}$`)];
 
 /**
  * Whether a `NAMED_VALUE` match is a credential of the given length class. Long: 16+ characters with a digit or
@@ -113,10 +116,11 @@ const CREDENTIAL_SHAPES = [
   ],
   // Only the joined form: `mysql -p db` prompts, and `db` is the database. The gap stops at the next `mysql`.
   ['a mysql -p password', /\bmysql\w*\b(?:(?!mysql)[^\n|;&])*?\s-p["']?(?![$<{])[^\s"']/],
-  // A quoted JSON key leaves no doubt about what follows, so the value may be short; a plain word ("string") is prose.
+  // A quoted JSON or Python key leaves no doubt about what follows, so the value may be short; a plain word ("string")
+  // is prose. The key run cannot hold a quote, so each character is scanned from one opening quote only.
   [
     'a secret under a quoted key',
-    /"(?:[A-Za-z0-9]+[_-])*(?:api[_-]?key|secret|token|password|passwd|pwd)"\s*:\s*"(?![$<{])(?=[^"\s]*[^A-Za-z"\s])[^"\s]{6,}"/i,
+    /["'][A-Za-z0-9_-]*(?:api[_-]?key|secret|token|passw(?:or)?d|pwd)s?["']\s*:\s*["'](?![$<{])(?=[^"'\s]*[^A-Za-z"'\s])[^"'\s]{6,}["']/i,
   ],
 ];
 

@@ -131,6 +131,11 @@ for (const [shape, command, secret] of [
   ['a long mixed-case value with no digit', 'export API_TOKEN=aBcDeFgHiJ' + 'kLmNoPqRsT', 'aBcDeFgHiJ'],
   ['a long value holding dots', 'SECRET_KEY=abc.' + SECRET + '.xyz12345', SECRET],
   ['a kebab value with a digit, failing closed', 'secret: rotate-quarterly-per-policy-doc-v2', 'rotate-quarterly'],
+  // S14's security review: a quoted camelCase or single-quoted key, and a name with no separator.
+  ['a quoted camelCase key', 'echo \'{"clientSecret": "' + SECRET + '"}\'', SECRET],
+  ['a single-quoted key', "creds = {'password': '" + SECRET + "'}", SECRET],
+  ['PGPASSWORD=<x>', 'PGPASSWORD=' + SECRET + ' psql -h db app', SECRET],
+  ['a glued upper-case name', 'export GITHUBTOKEN=' + SECRET + 'Ab3De6Gh9J', SECRET],
   ['--secret <x>', 'vault-cli --secret ' + SECRET + ' put', SECRET],
   ['--pass <x>', 'zip-tool --pass ' + SECRET + ' a.zip', SECRET],
   ['docker login -p <x>', 'docker login -u ci -p ' + SECRET + ' registry.example.com', SECRET],
@@ -226,6 +231,9 @@ for (const [name, text] of [
   ['a run of eyJ- segments', 'eyJ-'.repeat(16384)],
   // S14 B3: each added or changed rule.
   ['a run of camelCase names with no value', 'apiKey'.repeat(10922)],
+  ['a run of quoted glued keys', '"xtoken\''.repeat(8192)],
+  ['a quoted key then a long unclosed value', "'password': '" + 'a1'.repeat(32768)],
+  ['a run of glued names', 'PGPASSWORD'.repeat(6553) + '=x'],
   ['a run of name= pairs', 'a='.repeat(32768)],
   ['a name then a long letter value', 'clientSecret=' + 'a'.repeat(65536)],
   ['a name then a long dotted value', 'token=' + 'a.'.repeat(32768)],
