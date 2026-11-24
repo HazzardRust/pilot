@@ -56,13 +56,17 @@ const neverShown = (file) => NEVER.some((pattern) => pattern.test(path.posix.nor
 
 export const withheld = (value) => (typeof value === 'string' && findCredential(value) ? WITHHELD : value);
 
-/** One row with every string through `findCredential` (L5). */
+/** One row with every string through `findCredential` (L5); a field's `markdown` flag (spec 6) is kept. */
 const shown = (row) => ({
   kind: withheld(row.kind),
   id: withheld(row.id),
   at: withheld(row.at ?? null),
   title: withheld(row.title),
-  fields: (row.fields ?? []).map((field) => ({ label: withheld(String(field.label ?? '')), value: withheld(String(field.value ?? '')) })),
+  fields: (row.fields ?? []).map((field) => ({
+    label: withheld(String(field.label ?? '')),
+    value: withheld(String(field.value ?? '')),
+    ...(field.markdown === true && { markdown: true }),
+  })),
 });
 
 /** The live store as it stands on disk, or an empty one where it is missing or unreadable: never recovered here. */

@@ -93,6 +93,17 @@ test('an open thread is no row', (t) => {
   assert.ok(!archiveRows().some((row) => row.id === open.id));
 });
 
+test('a markdown field keeps its flag through archiveRows (spec 6)', (t) => {
+  tempDeck(t);
+  settled('report', { body: '## Landed' });
+  listItems();
+
+  const [row] = rowsOfKind('report');
+
+  assert.equal(row.fields.find((field) => field.label === 'Body').markdown, true);
+  assert.equal(row.fields.find((field) => field.label === 'Ticket').markdown, undefined, 'an unflagged field gains no flag');
+});
+
 test('archived items are included', (t) => {
   tempDeck(t);
   const old = settled('report', { postedAt: ago(41 * DAY), resolvedAt: undefined });

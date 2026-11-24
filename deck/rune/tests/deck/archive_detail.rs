@@ -3,11 +3,12 @@
 
 use crate::support;
 
-use rune::Runtime;
+use rune::{Env, Runtime};
 use serde_json::json;
 use support::{Scratch, frame_until, id_in, live_window, tool};
 
-use pilot_deck::app::State;
+use pilot_deck::app::{self, State};
+use pilot_deck::client::View;
 
 fn keys(rt: &Runtime<State>) -> Vec<String> {
     rt.elements()
@@ -31,6 +32,38 @@ fn press(rt: &mut Runtime<State>, key: &str) {
     rt.pointer_down(x, y);
     rt.pointer_up(x, y);
     rt.frame(0.0);
+}
+
+/// Spec 6: a field the view flags `markdown` is drawn as Markdown, its markup gone; an unflagged one as text.
+#[test]
+fn a_markdown_field_draws_as_markdown() {
+    let detail = json!({
+        "id": "itm_0123456789ab", "title": "A report", "kind": "report", "replies": [], "plan": null, "report": null,
+        "fields": [
+            { "label": "Body", "value": "## Landed\n\n- **S1** merged", "markdown": true },
+            { "label": "Ticket", "value": "**itm_raw**" },
+        ],
+    });
+    let mut state = State {
+        view: View {
+            screen: "archive".into(),
+            seq: 1,
+            regions: [("archiveDetail".to_string(), detail)].into_iter().collect(),
+        },
+        ..State::default()
+    };
+    state.query.screen = "archive".into();
+    state.query.id = Some("itm_0123456789ab".into());
+    let mut rt = Runtime::new(state, app::view, (1280.0, 800.0), Env::new(true, 1.0));
+    rt.frame(0.0);
+
+    let drawn = texts(&rt);
+    assert!(drawn.iter().any(|t| t == "Landed"), "the heading drawn without its ##: {drawn:?}");
+    assert!(
+        !drawn.iter().any(|t| t.contains("## Landed") || t.contains("**S1**")),
+        "no raw markup: {drawn:?}"
+    );
+    assert!(drawn.iter().any(|t| t == "**itm_raw**"), "an unflagged field stays text: {drawn:?}");
 }
 
 #[test]
