@@ -774,6 +774,17 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                     )
                     .grow(1.0)
                     .min_w(space::s0);
+                // A hairline between columns, as between rows (the user, 2026-11-24: "they just
+                // need dividers. just line like the rows do").
+                if c > 0 {
+                    line = line.child(
+                        el().key(format!("grid-{t}-col-{r}-{c}"))
+                            .self_stretch()
+                            .border_sides([0.0, 0.0, 0.0, HAIR], rule)
+                            .border_layout()
+                            .a11y_hidden(),
+                    );
+                }
                 line = line.child(cell);
             }
             grid = grid.child(line);

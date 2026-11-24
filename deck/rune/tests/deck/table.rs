@@ -251,8 +251,21 @@ fn the_grid_is_drawn_as_the_threads_table() {
         head[1] > grid[1] && head[0] > grid[0],
         "header inside the outline: {grid:?} {head:?}"
     );
+    // A hairline between columns, as between rows, the full height of its row.
     let (a, b) = (at(&rt, "cell-0-1-0").rect, at(&rt, "cell-0-1-1").rect);
-    assert!((a[0] + a[2] - b[0]).abs() < 0.5, "cells touch: {a:?} {b:?}");
+    let col = at(&rt, "grid-0-col-1-1").rect;
+    assert!(
+        col[2] > 0.0 && col[2] <= 1.0,
+        "a hairline, not a gap: {col:?}"
+    );
+    assert!(
+        (a[0] + a[2] - col[0]).abs() < 0.5 && (col[0] + col[2] - b[0]).abs() < 0.5,
+        "the line sits between the cells: {a:?} {col:?} {b:?}"
+    );
+    assert!(
+        (col[3] - a[3]).abs() < 0.5,
+        "as tall as the row: {col:?} {a:?}"
+    );
 }
 
 #[test]
