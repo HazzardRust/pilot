@@ -78,7 +78,7 @@
     },
     {
       "slice": "S9",
-      "state": "integrated",
+      "state": "integrated 7e02602; checks green",
       "after": [
         "S1"
       ],
@@ -87,7 +87,7 @@
     },
     {
       "slice": "S11",
-      "state": "pushed c2121b4",
+      "state": "pushed 5718b0b",
       "after": [
         "S1"
       ],
@@ -132,25 +132,9 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s14"
     }
   ],
-  "next": "S9 3f8c07f integrating; then S11 c2121b4; S10 last (also records seams: S8.md Top rows finding - effort; S9.md cut at a word); assumed: credential shapes past S14 not built; QA: 50 ms bar only in cargo test --release archive_filter.",
-  "updatedAt": "2026-11-24T13:29:46.640Z",
+  "next": "Integrating S11 5718b0b (typescript warn, B1-B4); then checks, S10, fundamentalist, QA.",
+  "updatedAt": "2026-11-24T13:54:04.812Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "re-cut flags on two signed tickets after each of two landings; merged pilot into both feat branches and replanned by hand, four times in all",
-      "size": 4000
-    },
-    {
-      "kind": "drain",
-      "what": "Stop hook made the pilot retake archive-page, which waits on Rune by the user's decision, to fill the planning lane",
-      "size": 500
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "/api/view computes every region for every screen and nothing says so where a region is added; pilot base printed another run's base again",
-      "evidence": "archive-page re-cut hand-back, deck/view/index.mjs:34",
-      "size": 2
-    },
     {
       "kind": "drain",
       "what": "one live planning ticket: a re-cut gate1 waiting on the user parks the next ticket's architect, whose questions and gate1 the deck then refuses",
@@ -370,6 +354,24 @@
       "agent": "pilot-implementer",
       "what": "archive row keys are the item id for ticket, handoff and report rows, so tests cannot tell kinds apart by key; the ticket caption 'tickets' had to be found by running the test",
       "evidence": "S7 fix 30e8b06, archive.rs",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S11 evidence rows lived only in the earlier co-pilot's context; a re-proof spawn was needed",
+      "evidence": "record next names B1-B4, no rows stored",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "no TaskOutput tool, cannot wait on a child; hand-back forced with the S11 implementer live (fourth time across runs)",
+      "evidence": "ToolSearch select:TaskOutput: No matching deferred tools found",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test takes ~9 min and prints a fail 0 line for nested sub-runs, so a wait on that line fires early",
+      "evidence": "S11 re-proof, relayed by main",
       "size": 1
     }
   ]
