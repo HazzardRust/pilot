@@ -26,7 +26,8 @@
  * reason the session started. Reading `source` would mean a pilot that
  * relaunched instead of clearing silently lost its own stash. The one
  * exception is the yellow lane (yellow-agent S6): `compact` keeps the
- * session, and with it the co-pilot it spawned, so a compact carries no lane.
+ * session, and with it the co-pilot it spawned, so a compact carries no lane;
+ * and only a `clear` names a surviving co-pilot by its agent id (handoff-no-wait, QA F2).
  *
  * Beside the item goes the run record (run-record S2, L7, ADR 0028): the
  * structured state the pilot last wrote with `deck_status`, fetched from
@@ -310,7 +311,7 @@ async function recover(items, cwd, stored) {
 }
 
 const TICKET_ID = /^itm_\w{1,40}$/;
-// `/api/record`'s co-pilot entry, `{ ticket, live, at }` or null, under the key `STORED` spells.
+// `/api/record`'s co-pilot entry, `{ ticket, live, at, agent? }` or null, under the key `STORED` spells.
 const { coPilot: CO_PILOT } = deck.STORED;
 
 /**
@@ -332,9 +333,11 @@ function yellowClaim(yellow) {
  * The yellow head, quoted for a session to spawn its co-pilot from (S1's Yellow section). Only the
  * ticket id, checked for its shape, is said outside the fence; the plan and the record's `next` are
  * JSON inside it, so no line of either can close it. Nothing else of the record is carried: no agent
- * type, branch or artefact is taken from one (L5); the plan's are the signed gate1's.
+ * type, branch or artefact is taken from one (L5); the plan's are the signed gate1's. A live co-pilot
+ * whose agent id the deck stamped is named by it, with `resync <now>` to send it (handoff-no-wait L5), on a
+ * `/clear` only: a new process's crew died with the old one, and its start races the mod's release (QA F2).
  */
-function yellowNotice(yellow, coPilot) {
+function yellowNotice(yellow, coPilot, now = new Date(), source) {
   const saved = {
     ticket: { id: yellow[deck.STORED.field].id, title: clip(yellow[deck.STORED.field].title, MAX_TITLE_CHARS) },
     // The signed plan's four references and nothing else a deck adds, however it answers.
@@ -346,7 +349,14 @@ function yellowNotice(yellow, coPilot) {
   // fence (held-handoff L7); otherwise say "may have survived" rather than assert there is none, or
   // the fresh session spawns a second one on the same ticket (itm_2a18cf6abdc0).
   const on = coPilot && coPilot.live === true ? coPilot[deck.STORED.field] : null;
-  const adopt = typeof on === 'string' && TICKET_ID.test(on)
+  const live = typeof on === 'string' && TICKET_ID.test(on);
+  // The agent stamp (handoff-no-wait L5) is said outside the fence too, so only in the store's own shape.
+  const agent = live && source === 'clear' && typeof coPilot.agent === 'string' && deck.AGENT_ID.test(coPilot.agent) ? coPilot.agent : null;
+  const adopt = agent
+    ? 'co-pilot ' + agent + ' is live on ' + on + ': it survived the `/clear`; `SendMessage` ' + agent +
+      ' `resync ' + now.toISOString() + '` and spawn none; with no answer, `deck_ticket release` on ' + on +
+      ', then spawn `pilot-co-pilot` '
+    : live
     ? 'a co-pilot is live on ' + on + ': message it with `SendMessage` and spawn none; with no ' +
       'answer, `deck_ticket release` on ' + on + ', then spawn `pilot-co-pilot` '
     : 'a co-pilot of this session may have survived the `/clear`: if one is live on this ticket, message ' +
@@ -373,7 +383,7 @@ async function yellowLane(yellow, cwd, source, always, coPilot) {
   if (!always && record && (await heldElsewhere(record, cwd))) return null;
   const fresh = deck.claim(name);
   if (!always && !fresh) return null;
-  return { claimed: fresh ? [name] : [], text: yellowNotice(yellow, coPilot) };
+  return { claimed: fresh ? [name] : [], text: yellowNotice(yellow, coPilot, new Date(), source) };
 }
 
 /** `result` with the lane appended, or the lane alone as a bare start's payload. */

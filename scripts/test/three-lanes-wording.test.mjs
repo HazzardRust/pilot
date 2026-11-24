@@ -51,11 +51,11 @@ test('no stage is called by a colour alone in the prose', () => {
   assert.deepEqual(bareColours(pilot.replace(legend, '')), [], 'agents/pilot.md outside its Legend');
   assert.deepEqual(bareColours(read('agents/pilot-co-pilot.md')), [], 'agents/pilot-co-pilot.md');
   assert.deepEqual(bareColours(read('skills/ticket-making/SKILL.md')), [], 'skills/ticket-making/SKILL.md');
-  const context = read('CONTEXT.md');
+  const context = read('GLOSSARY.md');
   const colourEntry = context.match(/\*\*Ticket state\*\*:\n(.*)\n/)[1];
-  assert.deepEqual(bareColours(context.replace(colourEntry, '')), [], 'CONTEXT.md outside the colour entry');
+  assert.deepEqual(bareColours(context.replace(colourEntry, '')), [], 'GLOSSARY.md outside the colour entry');
   // lint: the glossary terms exist
-  for (const term of ['Lane', 'Stage', 'Held lane']) assert.match(context, new RegExp(`^\\*\\*${term}\\*\\*:$`, 'm'), `CONTEXT names **${term}**`);
+  for (const term of ['Lane', 'Stage', 'Held lane']) assert.match(context, new RegExp(`^\\*\\*${term}\\*\\*:$`, 'm'), `GLOSSARY names **${term}**`);
 });
 
 // lint: the ADR index row exists

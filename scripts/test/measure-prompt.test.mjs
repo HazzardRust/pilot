@@ -206,13 +206,17 @@ test('the command prints the table, and --json prints the rows', (t) => {
 // ci-gate S7 (2026-11-20) raised it from 11949.5 to the measured 12005.75 (spec 3; L4, L10): step 5's short path runs `pilot checks <sha7> --wait` after integrate and routes red as `failed gate:`, 56.25.
 // Merge origin/pilot d282a698 into feat/human-steps (2026-11-20) set it to the measured 12035 (about 9 of it the steps-thread line naming land's feature PR step): human-steps' step field and Findings cut and ci-gate's checks field and short-path wait all stand, measured together.
 // two-devices S3 (2026-11-21) raised it from 12035 to the measured 12069.5 (spec 1, 2a; L8): step 1 runs `pilot doctor slug <slug>` before naming a slug and links OPERATING.md's two-devices section, 34.5.
+// ui-design-workflow S9 (2026-11-22) raised it from 12069.5 to the measured 12140.25 (spec 2, 9, 14; L8): step 4's Shape the look, a Look notes and a Design notes paragraph, 79.5 (12060.75 to 12140.25).
+// handoff-no-wait S1 (2026-11-23) lowered it from 12069.5 to the measured 12053 (spec 1; L2): the hand-off pause's queued-release clause goes, and the hand-off section says a live co-pilot is sent nothing, net -4.
+// handoff-no-wait S5 (2026-11-23) raised it from 12053 to the measured 12066.5 (spec 3, 4; L5): the first-turn rule sends a live co-pilot the notice's `resync` line by its id if it names one, 13.5.
+// Merge origin/pilot 8391b00 into feat/handoff-no-wait (2026-11-23) set it to the measured 12143.75 (L8, L2, L5): ui-design-workflow's step 4 paragraphs and handoff-no-wait's hand-off and first-turn edits both stand, measured together.
 test('the pilot pin holds at its new number', async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const pilot = rows.find((row) => row.agent === 'pilot');
   const own = (pilot.definition + pilot.skills + pilot.tools) / 4;
-  assert.ok(own <= 12069.5, `pilot's own share is ${own} tokens, over its 12069.5`);
+  assert.ok(own <= 12143.75, `pilot's own share is ${own} tokens, over its 12143.75`);
 });
 
 // research-first S1 raised the explorer's from 2209 to the measured 2409 (L5): `## A research brief` cost 200.5 (2208.5 to 2409), 41 of it the security-review sentence on fetched pages and queries.
@@ -248,11 +252,12 @@ test("the explorer's own share stays at or under its pin", async (t) => {
 // human-steps S3 (2026-11-20) raised the architect's from 10609 to the measured 10633 (spec 7; L5, A1): deck_status's `step: { type: 'string', maxLength: 300, description }`, 24.
 // ci-gate S5 (2026-11-20) raised the architect's from 10609 to the measured 10615.75 (spec 4; L6): deck_post's bare `checks: { type: 'string' }`, 6.75.
 // Merge origin/pilot d282a698 into feat/human-steps (2026-11-20) set the architect's to the measured 10634.25: human-steps' `step` and ci-gate's `checks` both stand.
+// ui-design-workflow S9 (2026-11-22) raised the architect's from 10634.25 to the measured 10681.75 (spec 10, 14; L8): step 5's `Fonts:`, `Colour means:` and `Reference:` lines and a Design notes paragraph, 47.75 (10634 to 10681.75).
 test("the architect's own share stays at or under its pin", async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const row = rows.find((row) => row.agent === 'pilot-architect');
   const own = (row.definition + row.skills + row.tools) / 4;
-  assert.ok(own <= 10634.25, `pilot-architect's own share is ${own} tokens, over its 10634.25`);
+  assert.ok(own <= 10681.75, `pilot-architect's own share is ${own} tokens, over its 10681.75`);
 });

@@ -2,8 +2,8 @@
  * handoff-mod S1 and S3: the mod, `hooks/handoff-mod.mjs`, is a thin adapter (L1). On the main session's
  * `turn.complete` it runs the look, clears, runs the look's `cleared`, and submits what that answered (L3); a
  * subagent's turn end does nothing (L4). S3: busy and idle from `turn.start` and `turn.complete`, `start` once at
- * `session.start`, the hold timers (idle only), and a submit that never started said aloud. The host is faked:
- * `on` collects the hooks, `$` records each call, and `$.clock` is a hand-wound clock.
+ * `session.start`, and a submit that never started said aloud; handoff-no-wait S3: no timer but that one. The
+ * host is faked: `on` collects the hooks, `$` records each call, and `$.clock` is a hand-wound clock.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -89,7 +89,7 @@ test('turn.complete runs the look, clears, then submits', async () => {
   const [turn, clear, cleared, submit] = calls;
   assert.equal(turn.argv[0], 'node');
   assert.equal(path.resolve(turn.argv[1]), LOOK, "the look's path is the module's own");
-  assert.deepEqual(turn.argv.slice(2), ['turn', '--turn-ended', '0']);
+  assert.deepEqual(turn.argv.slice(2), ['turn']);
   assert.deepEqual(clear.input, { command: 'clear' });
   assert.equal(path.resolve(cleared.argv[1]), LOOK);
   assert.deepEqual(cleared.argv.slice(2), ['cleared', '--id', ID]);
@@ -127,25 +127,31 @@ test("a refused clear (the Stop hold) submits nothing and the turn's result stan
   assert.deepEqual(calls.map(({ call }) => call), ['process.run', 'command.run']);
 });
 
-test('a held outcome looks again at its bound and every 30 s, idle only', async () => {
-  const until = 100_000;
-  const { $, advance, looks } = host({ turn: { act: 'held', id: ID, until } });
-  const hooks = hooksOf();
+test('no timer is armed but the 60 s started check, whatever the turn look answers', async () => {
+  // `held` is no longer an answer the look gives (S1); one that arrives anyway arms nothing either.
+  const cases = [
+    [{ act: 'clear', id: ID }, [60_000]],
+    [{ act: 'none', why: 'this session posted no hand-off' }, []],
+    [{ act: 'held', id: ID, until: 100_000 }, []],
+  ];
+  for (const [turn, afters] of cases) {
+    const { $, advance, looks } = host({ turn, cleared: { act: 'submit', id: ID, prompt: PROMPT } });
+    const armed = [];
+    const { after, every } = $.clock;
+    $.clock.after = (ms, fn) => { armed.push(['after', ms]); return after(ms, fn); };
+    $.clock.every = (ms, fn) => { armed.push(['every', ms]); return every(ms, fn); };
 
-  await hooks['turn.complete']($, turnEnd, next); // look at 0: held
-  await advance(40_000); // tick at 30 s
-  await hooks['turn.start']($, turnStart, next); // busy from 40 s
-  await advance(30_000); // the tick at 60 s finds the session busy
-  await hooks['turn.complete']($, turnEnd, next); // idle at 70 s: the turn end looks
-  await advance(30_000); // tick at 90 s, the bound at 100 s
+    await hooksOf()['turn.complete']($, turnEnd, next);
+    await advance(1_200_000);
 
-  assert.deepEqual(looks('turn').map(({ at }) => at), [0, 30_000, 70_000, 90_000, 100_000]);
+    assert.deepEqual(armed, afters.map((ms) => ['after', ms]), JSON.stringify(turn));
+    assert.equal(looks('turn').length, 1, `${turn.act}: only the turn end looks`);
+  }
 });
 
-test('a clear answered to a timer look a turn overtook waits for that turn to end', async () => {
-  const { $, calls, advance } = host({ turn: [{ act: 'held', id: ID, until: 1_200_000 }, { act: 'clear', id: ID }], cleared: { act: 'submit', id: ID, prompt: PROMPT } });
+test('a clear answered to a look a turn overtook waits for that turn to end', async () => {
+  const { $, calls } = host({ turn: { act: 'clear', id: ID }, cleared: { act: 'submit', id: ID, prompt: PROMPT } });
   const hooks = hooksOf();
-  await hooks['turn.complete']($, turnEnd, next);
   const run = $.process.run;
   $.process.run = async (argv) => {
     const answer = await run(argv);
@@ -153,57 +159,12 @@ test('a clear answered to a timer look a turn overtook waits for that turn to en
     return answer;
   };
 
-  await advance(30_000);
+  await hooks['turn.complete']($, turnEnd, next);
   assert.equal(calls.filter(({ call }) => call === 'command.run').length, 0, 'no clear mid-turn');
   $.process.run = run;
   await hooks['turn.complete']($, turnEnd, next);
 
-  assert.deepEqual(calls.map(({ call, argv }) => argv?.[2] ?? call), ['turn', 'turn', 'command.run', 'cleared', 'prompt.submit']);
-});
-
-test("a timer due while the turn end's look runs looks no second time", async () => {
-  const { $, advance, looks } = host({ turn: { act: 'held', id: ID, until: 1_200_000 } });
-  const hooks = hooksOf();
-  await hooks['turn.complete']($, turnEnd, next); // held: the timers are armed
-  const run = $.process.run;
-  $.process.run = async (argv) => {
-    if (argv[2] === 'turn') await advance(30_000); // the tick falls due while this look runs
-    return run(argv);
-  };
-
-  await hooks['turn.complete']($, turnEnd, next);
-
-  assert.equal(looks('turn').length, 2, 'the held look and the turn end look, not the tick');
-});
-
-test('a bound in the past arms no bound timer; the 30 s tick still looks', async () => {
-  const { $, advance, looks } = host({ turn: [-4, -3, -2, -1].map((until) => ({ act: 'held', id: ID, until })) });
-  const hooks = hooksOf();
-
-  await hooks['turn.complete']($, turnEnd, next);
-  await advance(1_000);
-  assert.equal(looks('turn').length, 1, 'no look loop on a stale bound');
-  await advance(90_000);
-  assert.deepEqual(looks('turn').map(({ at }) => at), [0, 30_000, 60_000, 90_000]);
-});
-
-test('a release ends the timers', async () => {
-  for (const release of [{ act: 'clear', id: ID }, { act: 'none', why: 'the hand-off is closed' }]) {
-    const { $, advance, timers, looks } = host({
-      turn: [{ act: 'held', id: ID, until: 1_200_000 }, release],
-      cleared: { act: 'submit', id: ID, prompt: PROMPT },
-    });
-    const hooks = hooksOf();
-
-    await hooks['turn.complete']($, turnEnd, next);
-    assert.equal(timers.size, 2, 'held: the bound and the 30 s tick');
-    await advance(30_000); // the tick's look answers the release
-    if (release.act === 'clear') await hooks['turn.start']($, turnStart, next); // the submitted turn starts
-
-    assert.equal(timers.size, 0, JSON.stringify(release));
-    await advance(120_000);
-    assert.equal(looks('turn').length, 2, 'no look after the release');
-  }
+  assert.deepEqual(calls.map(({ call, argv }) => argv?.[2] ?? call), ['turn', 'command.run', 'cleared', 'prompt.submit']);
 });
 
 test('session.start runs start once', async () => {
@@ -247,18 +208,3 @@ test('no turn.start within 60 s is said; one inside it is not', async () => {
   }
 });
 
-test('the turn-ended time passed to the look is the last turn.complete', async () => {
-  const { $, advance, looks } = host({ turn: { act: 'held', id: ID, until: 1_200_000 } });
-  const hooks = hooksOf();
-
-  await advance(5_000);
-  await hooks['turn.start']($, turnStart, next);
-  await advance(2_000);
-  await hooks['turn.complete']($, turnEnd, next); // ends at 7 s
-  await advance(30_000); // the tick at 37 s
-
-  assert.deepEqual(looks('turn').map(({ argv, at }) => [at, argv.slice(3)]), [
-    [7_000, ['--turn-ended', '7000']],
-    [37_000, ['--turn-ended', '7000']],
-  ]);
-});

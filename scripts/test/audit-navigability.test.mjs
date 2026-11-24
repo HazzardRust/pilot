@@ -18,3 +18,11 @@ test('every measurement in it is a read-only command', () => {
   );
 });
 
+test('the area runs the measure', () => {
+  const measure = sectionOf(navigability(), 'Measure');
+  // the plugin's copy, never a script the audited repository ships
+  assert.match(measure, /node "\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/glossary\.mjs" check GLOSSARY\.md/, 'it runs the glossary check');
+  assert.match(measure, /node "\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/glossary-stale\.mjs" \./, 'it runs the stale-term search');
+  assert.doesNotMatch(measure, /node scripts\/glossary/, "it never runs the repository's own copy");
+});
+

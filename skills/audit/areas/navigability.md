@@ -37,12 +37,21 @@ here is installed, built, started, or served.
    README section titled "start here" (or its absence) — how a newcomer
    finds where to run the thing.
 5. Map and glossary: an architecture document under `docs/`, a top-level
-   `CONTEXT.md`, or a glossary section, or their absence — how a newcomer
+   `CONTEXT.md`, or a root `GLOSSARY.md`, or their absence — how a newcomer
    finds where things live and what the project calls them.
+6. Glossary terms: where `GLOSSARY.md` exists, run, from the repository
+   root, `node "${CLAUDE_PLUGIN_ROOT}/scripts/glossary.mjs" check GLOSSARY.md`
+   (a definition naming a path, one line each) and
+   `node "${CLAUDE_PLUGIN_ROOT}/scripts/glossary-stale.mjs" .` (a term no
+   tracked file uses outside `GLOSSARY.md`, `GLOSSARY-LOG.md`, `docs/design/`
+   and `docs/adr/`, one `<line> <term>` each). Each printed line is a row. Then read the definitions beside the
+   code they name and judge contradiction: a term the code still uses but
+   now means something else is a row, named with the `git grep` that showed
+   the use.
 
 ## Rows
 
-One row per finding, in S1's Row shape: `command` is exactly the `git ls-files`, `wc -l` or `git grep` that produced
+One row per finding, in S1's Row shape: `command` is exactly the `git ls-files`, `wc -l`, `git grep` or glossary script that produced
 the finding, and `output` is the counts or paths it returned. A finding with no command behind it, or a dead-code
 claim with no grep, is not a row.
 

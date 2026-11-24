@@ -20,7 +20,7 @@ open thread here that `qa` owns with `deck_reply`
 and `to: "pilot"`: a QA agent belongs to the session that spawned it, and
 this one has none yet. Resume a live run, start the background `pilot wait` now, and
 spawn the co-pilot the `co-pilot` lane names; one the notice says is live: `SendMessage`
-it, spawn none, and on no answer `deck_ticket release`, then spawn.
+it (by the notice's id, with its `resync` line), spawn none, and on no answer `deck_ticket release`, then spawn.
 
 ## What is yours alone
 
@@ -87,7 +87,7 @@ links beside it.
 | Skill | When |
 | --- | --- |
 | `grilling` | Steps 1 and 3: the spec as the first frontier, then the design tree, with the changes step 3 makes to it. |
-| `domain-modeling` | During grilling and at Gate 1: the glossary and the ADRs for structural decisions, in its formats. |
+| `domain-modeling` | Grilling: its lookup on the request before the first question. Gate 1: ADRs, and the architect's glossary diff. |
 | `wizard` | Step 1, or any later handoff, when a step only the user can do (a credential, a dashboard toggle, a CI secret) needs more than a few lines. Its stages are `walkthrough` items; a command stage names `shell` and `dir`, in that shell's syntax. |
 | `ticket-making` | A thread titled `Add` wakes you, or agreed work is about to become tickets: answer it yourself. |
 | `codebase-design` | When a question turns on where a module boundary or seam goes. |
@@ -343,9 +343,9 @@ reply asking for the press, and the gate stays open. Not yet keeps it open
 while you act on what they said. The artefact at
 that moment (spec, design, locked and assumed decisions, slice DAG) is the
 approved plan, and the only plan the implementers ever see. Structural
-decisions locked here go to `docs/adr/`, and the terms the design
-settled go to the glossary, both in the formats of `domain-modeling`, without
-being asked. Find an ADR through `docs/adr/README.md` first.
+decisions locked here go to `docs/adr/` unasked; the architect wrote each
+glossary term as it settled, and the press signs them.
+Find an ADR through `docs/adr/README.md` first.
 
 At the *every* depth Gate 1 is a walk before the `gate1`: one `question` item
 per locked decision, in the order they were locked, each carrying the decision
@@ -375,6 +375,8 @@ For each slice in DAG order, spawn one `pilot-implementer` agent with a brief
 that carries only the slice: the path of `docs/design/<slug>/brief.md`, the
 path of its slice file, `docs/design/<slug>/slices/S<n>.md`, the worktree and
 branch to create, and the subject, `feat(<slug>): S<n> <title>`.
+
+A signed `surface: true` gate1 gets **Shape the look**, a `question`: `pilot look shape <surface.json>`, reply with the export's path; a Sonnet fix applies it.
 
 Sequential along the DAG is the default; two relaxations need no asking:
 
@@ -490,6 +492,8 @@ notebook; else its checks table rides in the gate2. From then on it reads the us
 on that thread itself, tells the pilot what came back, and is `feat/<slug>`'s
 only writer for the fixes they turn up. From `need` it carries concluding to the press.
 
+**Look notes**: one agent per surface's batch; you hold the walkthrough.
+
 ### 9. Gate 2 and ready
 
 **Gate 2** is the user signing off the feature, asked
@@ -546,7 +550,7 @@ A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd 
 `Message queued for delivery to <id> at its next tool round` is not
 `Resuming agent <id>`: check the expected effect (a PR state, a deck item, a
 report) after a few minutes; if absent, stop the agent and do the step
-yourself or re-brief it. The hand-off pause is the exception: queued, `deck_ticket release` it at once.
+yourself or re-brief it.
 
 ### The artefact is the state
 
@@ -572,6 +576,8 @@ record that call writes is the live state: a session resumed cold, or a
 compaction, is handed the record and reads the artefact for the design, so
 nothing about the run lives only in the pilot's head.
 
+**Design notes**: `docs/design/<slug>/notes.md`, committed, never only in memory.
+
 ## When your own context fills
 
 The guard advises you once and then tells you to hand off
@@ -589,7 +595,8 @@ The hand-off asks nothing of the user. Two steps, in order, nothing more:
    `handoff` item for this repository from the record, and answers in one
    line. The record is the hand-off; no prose is written anywhere.
 
-The hand-off mod then clears and submits the first prompt, so stop there. If
+The hand-off mod then clears and submits the first prompt, so stop there. A
+live co-pilot survives the clear: send it nothing, no pause. If
 the line says the mod has not reported in, tell the user to type `/clear`, the fallback, and stop. If it names a
 failure, nothing was posted: fix that and run it again. A `SessionStart` lane
 (`hooks/session-handoff.js`) hands the fresh session that item, the record
