@@ -107,7 +107,8 @@ exported, not copied. No fold changes code on its own: each sits in the slice wh
 - **A2** *assumed* — Every Rune card that belongs to a ticket draws the ticket line, as every HTML card already does.
   Trades: one caption line on every ticketed Rune card, wider than the ask. Rejected: steps cards only (a kind-special
   line). Question `itm_a47641105921`. User, 2026-11-24: "Every card with a ticket (default)".
-- **A3** *assumed* — Grilling depth: forks (the pilot's question `itm_1f544b61e001`).
+- **A3** *assumed* — Grilling depth: forks (the pilot's question `itm_1f544b61e001`), closed at the default by the
+  deck's 20-minute timeout, not pressed.
 
 ## 7. Out of scope
 
