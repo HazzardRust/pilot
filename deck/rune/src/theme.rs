@@ -107,6 +107,8 @@ pub struct Tokens {
     pub usage: Usage,
     pub rule: Color,
     pub quiet: Color,
+    /// The page's text colour: black on light, white on dark.
+    pub text: Color,
 }
 
 /// `theme.json`, read at build time and parsed once. A key renamed or malformed panics on the
@@ -271,6 +273,7 @@ pub fn tokens(dark: bool) -> Tokens {
         },
         rule: text.alpha(raw.alpha.rule),
         quiet,
+        text,
     }
 }
 

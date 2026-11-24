@@ -4,7 +4,7 @@
 use rune::TextEdit;
 
 /// Rows of cells, row 0 the header; every row has the same number of cells.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Table {
     rows: Vec<Vec<TextEdit>>,
 }

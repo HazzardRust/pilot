@@ -83,6 +83,30 @@ fn a_table_goes_after_the_line_of_the_prose_part_holding_the_caret() {
     assert_eq!(prose, ["x", "y"]);
 }
 
+/// Table pressed with the caret in a cell of grid 0: the new grid goes after it, never above it.
+#[test]
+fn a_table_inserted_from_a_cell_goes_after_its_grid() {
+    let mut local = typed_at("a", 1);
+    local.insert_table();
+    fill(&mut local, 0, &[&["h", "k"], &["1", "2"]]);
+    local.tables[0].1.replace_text("after");
+    local.tables[0].0.cell_mut(0, 0).focused = true;
+    local.insert_table();
+    assert_eq!(local.tables.len(), 2);
+    assert_eq!(
+        local.tables[0].0.markdown(),
+        "| h | k |\n| --- | --- |\n| 1 | 2 |"
+    );
+    assert_eq!(
+        local.tables[1].0.markdown(),
+        "|  |  |\n| --- | --- |\n|  |  |"
+    );
+    assert_eq!(
+        local.text(),
+        "a\n\n| h | k |\n| --- | --- |\n| 1 | 2 |\n\n|  |  |\n| --- | --- |\n|  |  |\n\nafter"
+    );
+}
+
 #[test]
 fn a_blank_grid_sends_nothing() {
     let mut local = typed_at("  ", 0);
@@ -310,6 +334,27 @@ fn the_controls_change_the_grid_and_keep_the_caret_in_it() {
     click(&mut rt, "table-0-delete");
     assert!(rt.state.regions.reply.tables.is_empty());
     assert_eq!(rt.state.regions.reply.draft.text, "before\nafter");
+}
+
+/// Deleting a second grid whose prose part is empty: the prose before it stays as it was and takes
+/// the caret.
+#[test]
+fn deleting_a_second_grid_with_no_prose_after_it_keeps_the_prose_before() {
+    let mut local = typed_at("before", 6);
+    local.insert_table();
+    local.tables[0].1 = TextEdit::new("mid");
+    local.tables.push((Table::new(2, 2), TextEdit::new("")));
+    let mut rt = box_drawn(local);
+    click(&mut rt, "cell-1-0-0");
+    click(&mut rt, "table-1-delete");
+    let reply = &rt.state.regions.reply;
+    assert_eq!(reply.tables.len(), 1);
+    assert_eq!(reply.tables[0].1.text, "mid");
+    assert_eq!(
+        reply.text(),
+        "before\n\n|  |  |\n| --- | --- |\n|  |  |\n\nmid"
+    );
+    assert_eq!(focused(&rt).as_deref(), Some("reply-text-1"));
 }
 
 #[test]

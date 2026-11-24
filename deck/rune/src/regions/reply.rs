@@ -105,6 +105,14 @@ fn cell_key(t: usize, r: usize, c: usize) -> String {
     format!("cell-{t}-{r}-{c}")
 }
 
+/// The key of prose part `p` (`Local::prose_mut`): `reply-text`, then `reply-text-<p>`.
+fn prose_key(p: usize) -> String {
+    match p {
+        0 => "reply-text".to_string(),
+        _ => format!("reply-text-{p}"),
+    }
+}
+
 impl Local {
     /// What the box holds as one reply: the prose parts and each table's GFM in order, one blank line
     /// between a table and the text beside it (L10, L11). The one join of the draft: every press reads it.
@@ -141,11 +149,21 @@ impl Local {
 
     /// `insert_table`, returning the new grid's index for the caret to go to.
     fn insert(&mut self) -> usize {
-        let at = self.tables.iter().position(|(_, prose)| prose.focused);
-        let prose = match at {
-            Some(i) => &mut self.tables[i].1,
-            None => &mut self.draft,
-        };
+        // The caret in a cell of grid t: the new grid goes straight after it, an empty prose part
+        // between, and grid t's prose part follows the new grid.
+        if let Some(t) = (0..self.tables.len()).find(|&t| self.caret_cell(t).is_some()) {
+            let tail = std::mem::take(&mut self.tables[t].1);
+            self.tables.insert(t + 1, (Table::new(2, 2), tail));
+            return t + 1;
+        }
+        let after = self
+            .tables
+            .iter()
+            .position(|(_, prose)| prose.focused)
+            .map_or(0, |i| i + 1);
+        let prose = self.prose_mut(after);
+        // The caret may sit off a char boundary; `text[caret..]` would panic there.
+        prose.sync_invariants();
         let caret = prose.focus.min(prose.text.len());
         let (head, tail) = match prose.text[caret..].find('\n') {
             Some(n) => (
@@ -155,7 +173,6 @@ impl Local {
             None => (prose.text.clone(), String::new()),
         };
         prose.replace_text(head);
-        let after = at.map_or(0, |i| i + 1);
         self.tables
             .insert(after, (Table::new(2, 2), TextEdit::new(tail)));
         after
@@ -174,14 +191,19 @@ impl Local {
         }
     }
 
+    /// Prose part `p`: 0 the draft, `p` the one after grid `p - 1` (L10).
+    fn prose_mut(&mut self, p: usize) -> &mut TextEdit {
+        match p.checked_sub(1) {
+            Some(t) => &mut self.tables[t].1,
+            None => &mut self.draft,
+        }
+    }
+
     /// The key of the prose part before grid `t`, its caret put at its end.
     fn prose_before(&mut self, t: usize) -> String {
-        let (prose, key) = match t.checked_sub(1) {
-            Some(p) => (&mut self.tables[p].1, format!("reply-text-{t}")),
-            None => (&mut self.draft, "reply-text".to_string()),
-        };
+        let prose = self.prose_mut(t);
         prose.set_caret(prose.text.len());
-        key
+        prose_key(t)
     }
 
     /// Up, Down or Return (`down`) in grid `t`'s cell (r, c): the key the caret goes to. Up from the
@@ -193,8 +215,8 @@ impl Local {
             Key::Up if r == 0 => Some(self.prose_before(t)),
             Key::Up => Some(cell_key(t, r - 1, c)),
             Key::Down if r + 1 >= rows => {
-                self.tables[t].1.set_caret(0);
-                Some(format!("reply-text-{}", t + 1))
+                self.prose_mut(t + 1).set_caret(0);
+                Some(prose_key(t + 1))
             }
             Key::Down => Some(cell_key(t, r + 1, c)),
             Key::Enter => {
@@ -232,10 +254,7 @@ impl Local {
             Control::RemoveCol => table.remove_col(c),
             Control::Delete => {
                 let (_, after) = self.tables.remove(t);
-                let before = match t.checked_sub(1) {
-                    Some(p) => &mut self.tables[p].1,
-                    None => &mut self.draft,
-                };
+                let before = self.prose_mut(t);
                 let join = before.text.len();
                 let joined = match (before.text.is_empty(), after.text.is_empty()) {
                     (false, false) => format!("{}\n{}", before.text, after.text),
@@ -243,10 +262,7 @@ impl Local {
                 };
                 before.replace_text(joined);
                 before.set_caret(join);
-                return Some(match t {
-                    0 => "reply-text".to_string(),
-                    _ => format!("reply-text-{t}"),
-                });
+                return Some(prose_key(t));
             }
         }
         let (rows, cols) = table.size();
@@ -406,6 +422,16 @@ fn button(label: &str, key: String, ink: Color, fill: Color) -> El {
         .padding(space::pad)
         .fill(fill)
         .child(text(label).font(type_::CAPTION).color(ink))
+}
+
+/// A field of the box editing `edit` in `font`: its markdown painted over it, never written into
+/// it (L2), on the rule fill at the button's corner.
+fn field(edit: &TextEdit, font: rune::TextStyle, dark: bool) -> El {
+    text_input(edit, font)
+        .decorations(crate::preview::spans(edit, dark))
+        .padding(space::pad)
+        .radius(theme::radius::button)
+        .fill(theme::tokens(dark).rule)
 }
 
 pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
@@ -594,59 +620,56 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         // The page's hairline above the box (deck.css:225).
         .child(theme::separator(dark))
         .child(
-            text_input(&local.draft, type_::BODY)
-                .key("reply-text")
-                // The markdown preview: painted over the draft, never written into it (L2).
-                .decorations(crate::preview::spans(&local.draft, dark))
+            field(&local.draft, type_::BODY, dark)
+                .key(prose_key(0))
                 .label("Reply")
                 .placeholder("Reply to the pilot.", k.quiet)
                 .on_edit(|s: &mut State| &mut s.regions.reply.draft)
                 // Five lines tall to start, and growing past them; a word longer than the box
                 // breaks at its width (the user, 2026-11-21).
                 .wrap_anywhere()
-                .min_h(5.0 * line_height(type_::BODY) + 2.0 * space::pad)
-                .padding(space::pad)
-                .radius(theme::radius::button)
-                .fill(k.rule),
+                .min_h(5.0 * line_height(type_::BODY) + 2.0 * space::pad),
         );
     // Each grid, then the prose part after it (L10): one single-line field per cell, never pipes.
+    // The header row as the thread's rendered table draws one (L5): its weight at body size, on
+    // its header fill (rune-kit `MarkdownStyle::from_kit`'s `table_head_fill`).
+    let head = rune::TextStyle {
+        weight: type_::HEADER.weight,
+        ..type_::BODY
+    };
+    let head_fill = rune_kit::Kit::neutral(dark).c.layer_01;
     for (t, (table, prose)) in local.tables.iter().enumerate() {
         let (rows, cols) = table.size();
         let mut grid = col().key(format!("table-{t}")).gap(space::within);
         for r in 0..rows {
             let mut line = row().gap(space::within);
             for c in 0..cols {
-                let font = if r == 0 { type_::HEADER } else { type_::BODY };
-                line = line.child(
-                    text_input(table.cell(r, c), font)
-                        .single_line()
-                        .key(cell_key(t, r, c))
-                        .label(format!("Table cell, row {}, column {}", r + 1, c + 1))
-                        // Rendered once the caret leaves, as a prose line off the caret (A8).
-                        .decorations(crate::preview::spans(table.cell(r, c), dark))
-                        .on_edit(move |s: &mut State| s.regions.reply.part(t, Some((r, c))))
-                        .on_input_key(move |s: &mut State, ev: &rune::KeyEvent, tx: &mut Tx| {
-                            let plain = ev.mods == rune::Mods::default();
-                            let to = match ev.key {
-                                Key::Up | Key::Down if plain => {
-                                    s.regions.reply.step(t, (r, c), &ev.key)
-                                }
-                                _ => None,
-                            };
-                            to.map(|key| tx.focus(key, false)).is_some()
-                        })
-                        // Return in a cell stays in the grid: it never presses Reply.
-                        .on_submit(move |s: &mut State, tx: &mut Tx| {
-                            if let Some(key) = s.regions.reply.step(t, (r, c), &Key::Enter) {
-                                tx.focus(key, false);
+                let font = if r == 0 { head } else { type_::BODY };
+                // Rendered once the caret leaves, as a prose line off the caret (A8).
+                let cell = field(table.cell(r, c), font, dark)
+                    .single_line()
+                    .key(cell_key(t, r, c))
+                    .label(format!("Table cell, row {}, column {}", r + 1, c + 1))
+                    .on_edit(move |s: &mut State| s.regions.reply.part(t, Some((r, c))))
+                    .on_input_key(move |s: &mut State, ev: &rune::KeyEvent, tx: &mut Tx| {
+                        let plain = ev.mods == rune::Mods::default();
+                        let to = match ev.key {
+                            Key::Up | Key::Down if plain => {
+                                s.regions.reply.step(t, (r, c), &ev.key)
                             }
-                        })
-                        .grow(1.0)
-                        .min_w(space::s0)
-                        .padding(space::pad)
-                        .radius(theme::radius::button)
-                        .fill(k.rule),
-                );
+                            _ => None,
+                        };
+                        to.map(|key| tx.focus(key, false)).is_some()
+                    })
+                    // Return in a cell stays in the grid: it never presses Reply.
+                    .on_submit(move |s: &mut State, tx: &mut Tx| {
+                        if let Some(key) = s.regions.reply.step(t, (r, c), &Key::Enter) {
+                            tx.focus(key, false);
+                        }
+                    })
+                    .grow(1.0)
+                    .min_w(space::s0);
+                line = line.child(if r == 0 { cell.fill(head_fill) } else { cell });
             }
             grid = grid.child(line);
         }
@@ -670,15 +693,11 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             grid = grid.child(controls);
         }
         box_ = box_.child(grid).child(
-            text_input(prose, type_::BODY)
-                .key(format!("reply-text-{}", t + 1))
-                .decorations(crate::preview::spans(prose, dark))
+            field(prose, type_::BODY, dark)
+                .key(prose_key(t + 1))
                 .label("Reply, after the table")
                 .on_edit(move |s: &mut State| s.regions.reply.part(t, None))
-                .wrap_anywhere()
-                .padding(space::pad)
-                .radius(theme::radius::button)
-                .fill(k.rule),
+                .wrap_anywhere(),
         );
     }
     box_ = box_.child(send);

@@ -485,6 +485,32 @@ fn at(rt: &rune::Runtime<pilot_deck::app::State>, key: &str) -> rune::runtime::E
         .unwrap_or_else(|| panic!("no {key} drawn"))
 }
 
+/// The light window draws the draft in the page's ink, black on light (deck.css), never Rune's white.
+#[test]
+fn the_light_window_draws_the_draft_in_its_ink() {
+    use pilot_deck::app::{self, State};
+    use pilot_deck::client::View;
+
+    let reply = serde_json::json!({ "mode": "reply", "id": ID, "options": [] });
+    let mut state = State {
+        view: View {
+            screen: "thread".into(),
+            seq: 1,
+            regions: [("reply".to_string(), reply)].into_iter().collect(),
+        },
+        ..State::default()
+    };
+    state.regions.reply = typed("words");
+    let mut rt = rune::Runtime::new(
+        state,
+        app::view,
+        (1280.0, 800.0),
+        rune::Env::new(false, 1.0),
+    );
+    rt.frame(1.0);
+    assert_eq!(at(&rt, "reply-text").text_color, Some(rune::Color::BLACK));
+}
+
 /// The walkthrough of 2026-11-21: under the input, Reply at the box's left edge and Close beside it,
 /// as the page's `.send` row; the options and Dismiss one group at the right, on the same line.
 #[test]
