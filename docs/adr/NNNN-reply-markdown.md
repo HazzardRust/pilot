@@ -4,7 +4,7 @@ date: 2026-11-24
 tags: [deck, rune, reply, markdown]
 supersedes: []
 superseded_by: []
-paths: [deck/rune/src/preview.rs, deck/rune/src/regions/reply.rs, deck/rune/Cargo.toml, docs/design/reply-markdown/architecture.md]
+paths: [deck/rune/src/preview.rs, deck/rune/src/regions/reply.rs, deck/rune/src/table.rs, deck/rune/Cargo.toml, docs/design/reply-markdown/architecture.md]
 ---
 # The reply box previews markdown by decoration, off the caret's line
 
@@ -38,6 +38,19 @@ hide a character. rune-kit's markdown parser reports spans over its *rendered* t
   Rejected: rune-kit's `MarkdownStyle` (private fields).
 - **L6** Links are inert while composing: a span, no press handler, no opener. Rejected: Ctrl+click opens (a new
   opener and trust surface for typed text).
+- **L10** The draft is prose parts and grids in order: `Local::draft` stays the first prose part, and
+  `Local::tables: Vec<(Table, TextEdit)>` holds each grid with the prose part after it. `Local::text()` joins them
+  and is all `send`, `press` and the taken-reply clear read. The Table button inserts a 2 × 2 grid after the caret's
+  line, splitting that prose part, and the caret goes to the first header cell. Rejected: one `TextEdit` holding
+  the pipe syntax (Rune cannot draw a grid inside a field or hide its bytes); a `Vec<Block>` replacing `draft`
+  (every test that sets `draft` changes, for no behaviour).
+- **L11** `Table::markdown()` writes canonical GFM: `| a | b |`, a `| --- | --- |` delimiter, `|` in a cell as `\|`
+  and every other byte as typed, so a cell's markdown means what it means in prose; `Local::text()` puts one blank
+  line between a table and non-empty prose. Rejected: column padding to align pipes (bytes nobody reads in the
+  thread); alignment markers (no control sets them).
+- **L12** Cells are single-line `text_input`s, one per cell, keyed `cell-<t>-<r>-<c>`, each with an `on_submit` of
+  its own so Return in a cell never presses Reply. Rejected: Rune's `grid` (a terminal screen, no fields); one
+  field per row with pipes hidden (decorations cannot hide bytes).
 
 ## Consequences
 

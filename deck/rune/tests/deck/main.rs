@@ -24,6 +24,7 @@ mod startup;
 mod status;
 mod strip;
 mod support;
+mod table;
 mod theme;
 mod thread;
 mod tickets;
