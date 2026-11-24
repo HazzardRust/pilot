@@ -9,23 +9,27 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed dba276f; ts-reviewer approve, security-reviewer approve; B1-B4 red then green; landing 36 -> 35 git; integrating",
+      "state": "integrated, checks green at 493bd48",
       "branch": "slice/land-batching-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/land-batching-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s2"
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "pushed 0730d94",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/land-batching-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s3"
     },
     {
       "slice": "S4",
@@ -58,8 +62,8 @@
       ]
     }
   ],
-  "next": "Co-pilot a3d4eaa113a04b0dd resumed with S1's report (dba276f, both reviewers approve, B1-B4 rows sent): integrate S1, checks, then S2 + S3 parallel. Question itm_d4fe4d751e28 open (count rev-list/diff/log as reads; default yes; build stays on signed list until answered): relay the answer to the co-pilot. Note for S2/S5 brief: pin must cover the forget() it depends on.",
-  "updatedAt": "2026-11-24T15:50:22.611Z",
+  "next": "S3 pushed 0730d94 (B1 pin green base+after, live run; B2 24->20), integrating. Fundamentalist notes: holdsVia vs holdsIn fold; oncePerRunner answers outlive forget(). S2 (a4e1c28dfff2d1fe3) gating. Then S4+S5.",
+  "updatedAt": "2026-11-24T16:16:47.001Z",
   "friction": [
     {
       "agent": "architect",
@@ -93,6 +97,35 @@
       "what": "signed read allowlist makes the view inert in a landing: rev-list, diff, log count as writes, 0 memo hits; S1's signed bar was green before any change",
       "evidence": "S1 report: countGit 36 on base, 35 after via chainGuard reuse",
       "size": 4
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "forced hand-back with the S1 implementer live (no TaskOutput, foreground wait impossible)",
+      "evidence": "handback-send-enforce fired while a71687d1dd4520742 ran its gate; main resumed the co-pilot after",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "deck auto-assumed the default on a plain question that moves a signed definition after 20 min; pilot wait printed it as REPLY and the hook as a landing; had to read the thread to see from: deck, then re-ask blocking",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 bar (75%) written before integrate's argv was traced; unreachable inside S3's files",
+      "evidence": "integrate 24 -> 20 (83%); 18 needs branches.mjs fetch skip + refusal reorder; spec-4 question on itm_d4fe4d751e28",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "holdsIn owned by S2 while S3 needed it in parallel: duplicate holdsVia in integrate.mjs",
+      "evidence": "S3 report: holdsVia(git,args) local to integrate.mjs, to fold",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test output ~5,600 lines, node totals buried before the Rust suite",
+      "evidence": "S3 report: grep needed for the totals",
+      "size": 1
     }
   ]
 }
