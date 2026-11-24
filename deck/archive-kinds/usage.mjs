@@ -3,13 +3,12 @@
  * file alone, never through `telemetry.mjs`, whose writers start timers. A torn or foreign line is skipped.
  */
 
-import fs from 'node:fs';
 import path from 'node:path';
 
 import { localStamp } from '../archive-time.mjs';
+import jsonLines from './json-lines.mjs';
 
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
-const text = (value) => (value === undefined || value === null ? '' : String(value));
 
 /** The sum of one model's token counts. */
 const sum = (counts) => (isObject(counts) ? Object.values(counts).reduce((n, v) => n + (Number.isFinite(v) ? v : 0), 0) : 0);
@@ -19,29 +18,9 @@ const pairs = (map, valueOf) => (isObject(map) ? Object.entries(map).map(([name,
 
 const percent = (limit) => (isObject(limit) && Number.isFinite(limit.pct) ? String(limit.pct) : '');
 
-function linesOf(file) {
-  let raw;
-  try {
-    raw = fs.readFileSync(file, 'utf8');
-  } catch {
-    return [];
-  }
-  const lines = [];
-  for (const line of raw.split('\n')) {
-    if (!line.trim()) continue;
-    try {
-      const parsed = JSON.parse(line);
-      if (isObject(parsed)) lines.push(parsed);
-    } catch {
-      // A torn line is one the writer is still ending; it is not a row.
-    }
-  }
-  return lines;
-}
-
 function rowsOf({ dir }) {
   const rows = [];
-  for (const line of linesOf(path.join(dir, 'usage.jsonl'))) {
+  for (const line of jsonLines(path.join(dir, 'usage.jsonl')).filter(Boolean)) {
     const window = isObject(line.window) ? line.window : {};
     if (typeof window.to !== 'string') continue;
     const tokens = isObject(line.tokens) ? line.tokens : {};
@@ -54,7 +33,7 @@ function rowsOf({ dir }) {
       { label: 'Tokens', value: String(sum(tokens.total)) },
       { label: 'By model', value: pairs(tokens.byModel, sum) },
       { label: 'By repo', value: pairs(tokens.byRepo, (models) => (isObject(models) ? Object.values(models).reduce((n, counts) => n + sum(counts), 0) : 0)) },
-      { label: 'Error', value: text(line.snapshotError) },
+      { label: 'Error', value: line.snapshotError },
     ];
     rows.push({ kind: 'usage', id: `usage:${window.to}`, at: window.to, title: `Usage ${localStamp(window.from)} to ${localStamp(window.to)}`, fields });
   }

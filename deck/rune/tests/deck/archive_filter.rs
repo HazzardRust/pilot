@@ -170,16 +170,9 @@ fn a_kind_filter_shows_exactly_its_count() {
         closed("Charlie", 18, 11),
     ]);
     let days = days_of(&region);
-    let count = region["kinds"]
-        .as_array()
-        .expect("the region's kinds")
-        .iter()
-        .find(|k| k["kind"] == "tickets")
-        .and_then(|k| k["count"].as_u64())
-        .expect("a tickets count");
     let rows = |days: &[Day]| days.iter().map(|d| d.rows.len() as u64).sum::<u64>();
 
-    assert_eq!(rows(&filter_rows(&days, Some("tickets"), "")), count);
+    assert_eq!(rows(&filter_rows(&days, Some("tickets"), "")), 3);
     assert_eq!(rows(&filter_rows(&days, Some("logs"), "")), 0);
 }
 

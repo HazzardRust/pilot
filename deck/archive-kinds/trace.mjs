@@ -3,35 +3,20 @@
  * `.old`, read from the store directory the source gives. A torn line is skipped; no file is no rows.
  */
 
-import fs from 'node:fs';
 import path from 'node:path';
 
 import { localStamp } from '../archive-time.mjs';
+import jsonLines from './json-lines.mjs';
 
 const FILES = ['handoff-trace.jsonl', 'handoff-trace.jsonl.old'];
 
 const text = (value) => (typeof value === 'string' ? value : '');
 
-function linesOf(file) {
-  try {
-    return fs.readFileSync(file, 'utf8').split('\n');
-  } catch {
-    return [];
-  }
-}
-
 function rowsOf({ dir }) {
   const rows = [];
   for (const name of FILES) {
-    linesOf(path.join(dir, name)).forEach((raw, index) => {
-      if (raw.trim() === '') return;
-      let entry;
-      try {
-        entry = JSON.parse(raw);
-      } catch {
-        return;
-      }
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+    jsonLines(path.join(dir, name)).forEach((entry, index) => {
+      if (entry === null) return;
       const kind = entry.kind === 'crew-handoff' ? 'crew' : entry.kind === 'handoff' ? 'pilot' : text(entry.kind);
       const at = typeof entry.at === 'string' && !Number.isNaN(Date.parse(entry.at)) ? entry.at : null;
       rows.push({

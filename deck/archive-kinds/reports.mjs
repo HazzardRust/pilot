@@ -6,8 +6,6 @@
 import { localStamp } from '../archive-time.mjs';
 import { KIND_REPORT, lastSaidAt } from '../items.mjs';
 
-const text = (value) => (value === undefined || value === null ? '' : String(value));
-
 function rowsOf({ deck, months }) {
   const seen = new Set();
   const rows = [];
@@ -15,12 +13,12 @@ function rowsOf({ deck, months }) {
     if (item?.kind !== KIND_REPORT || typeof item.id !== 'string' || seen.has(item.id)) continue;
     seen.add(item.id);
     const fields = [
-      { label: 'Ticket', value: text(item.ticket) },
-      { label: 'Feature', value: text(item.feature ?? item.title) },
+      { label: 'Ticket', value: item.ticket },
+      { label: 'Feature', value: item.feature ?? item.title },
       { label: 'Landed', value: localStamp(item.postedAt) },
-      { label: 'Body', value: text(item.body), markdown: true },
+      { label: 'Body', value: item.body, markdown: true },
     ];
-    rows.push({ kind: 'report', id: item.id, at: lastSaidAt(item) ?? null, title: text(item.title), fields });
+    rows.push({ kind: 'report', id: item.id, at: lastSaidAt(item) ?? null, title: item.title, fields });
   }
   return rows;
 }

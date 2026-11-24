@@ -5,28 +5,24 @@
  */
 
 import { localStamp } from '../archive-time.mjs';
-import { KIND_CREW_HANDOFF, KIND_HANDOFF, KIND_REPORT, KIND_TICKET, isOpen, lastSaidAt, messagesOf } from '../items.mjs';
+import { KIND_CREW_HANDOFF, KIND_HANDOFF, KIND_REPORT, KIND_TICKET, lastSaidAt, messagesOf } from '../items.mjs';
 
 const CLAIMED = new Set([KIND_TICKET, KIND_REPORT, KIND_HANDOFF, KIND_CREW_HANDOFF]);
 
-const text = (value) => (value === undefined || value === null ? '' : String(value));
-
-function rowsOf({ deck, months }) {
-  const seen = new Set();
+function rowsOf({ settled }) {
   const rows = [];
-  for (const item of [...(deck.items ?? []), ...months]) {
-    if (typeof item?.kind !== 'string' || CLAIMED.has(item.kind) || isOpen(item) || typeof item.id !== 'string' || seen.has(item.id)) continue;
-    seen.add(item.id);
+  for (const item of settled) {
+    if (typeof item.kind !== 'string' || CLAIMED.has(item.kind)) continue;
     const fields = [
       { label: 'Kind', value: item.kind },
-      { label: 'Ticket', value: text(item.ticket) },
-      { label: 'Resolution', value: text(item.resolution) },
+      { label: 'Ticket', value: item.ticket },
+      { label: 'Resolution', value: item.resolution },
       { label: 'Replies', value: String(messagesOf(item).length) },
       { label: 'Posted', value: localStamp(item.postedAt) },
       { label: 'Closed', value: localStamp(item.resolvedAt) },
-      { label: 'Body', value: text(item.body), markdown: true },
+      { label: 'Body', value: item.body, markdown: true },
     ];
-    rows.push({ kind: 'thread', id: item.id, at: lastSaidAt(item) ?? null, title: text(item.title), fields });
+    rows.push({ kind: 'thread', id: item.id, at: lastSaidAt(item) ?? null, title: item.title, fields });
   }
   return rows;
 }
