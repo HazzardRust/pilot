@@ -116,7 +116,8 @@ function importsOf(text, rel) {
 
 /**
  * The selection for `since` in `cwd`: `files` the absolute test paths to run, sorted, or null for a
- * full run with `reason`; `total` the test files a full run starts; `since` the merge-base sha;
+ * full run with `reason`; `total` the test files a full run starts; `since` the merge-base sha, or the tree
+ * itself when `since` names one (a proved tree, diffed as it is, a `.github/` change past it a full run too);
  * `changed` the repository-relative paths the diff named, sorted, empty when no diff was read.
  */
 export function selectTests({ cwd, since, git = gitIn(cwd) }) {
@@ -124,9 +125,20 @@ export function selectTests({ cwd, since, git = gitIn(cwd) }) {
   const tests = present.filter((rel) => path.posix.matchesGlob(rel, TEST_GLOB));
   const total = tests.length;
   let base;
+  let proved = false;
+  const resolve = (type) => {
+    try {
+      return git(['rev-parse', '--verify', '--quiet', '--end-of-options', `${since}^{${type}}`]).trim();
+    } catch {
+      return null;
+    }
+  };
   try {
-    const sha = git(['rev-parse', '--verify', '--quiet', '--end-of-options', `${since}^{commit}`]).trim();
-    base = git(['merge-base', sha, 'HEAD']).trim();
+    const sha = resolve('commit');
+    // A tree, CI's proved merge tree (cheap-suite F9), is diffed as it is: it has no history to take a merge-base of.
+    proved = sha === null;
+    base = proved ? resolve('tree') : git(['merge-base', sha, 'HEAD']).trim();
+    if (!base) throw new Error('neither commit nor tree');
   } catch {
     // A control character in the ref would forge a line of the gate's output, so it prints as `?`.
     return { files: null, total, since, reason: `cannot resolve ${since.replace(/[\x00-\x1f\x7f]/g, '?')}`, changed: [] };
@@ -143,7 +155,9 @@ export function selectTests({ cwd, since, git = gitIn(cwd) }) {
     return { files: null, total, since: base, reason: 'git diff failed', changed: [] };
   }
   const paths = [...changed].sort();
-  const trigger = FULL_TRIGGERS.find((rel) => changed.has(rel));
+  // Past a proved tree a CI file changed too, one landed on the target after the feature branched included, runs full:
+  // the run that proved the tree is the one it changed (cheap-suite A2).
+  const trigger = FULL_TRIGGERS.find((rel) => changed.has(rel)) ?? (proved ? paths.find((rel) => rel.startsWith('.github/')) : undefined);
   if (trigger) return { files: null, total, since: base, reason: `${trigger} changed`, changed: paths };
   const source = new Map(present.filter((rel) => SOURCE.test(rel)).map((rel) => [rel, fs.readFileSync(path.join(cwd, rel), 'utf8')]));
   const importers = new Map();

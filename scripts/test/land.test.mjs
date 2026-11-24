@@ -177,7 +177,7 @@ test('a feature already on pilot merges nothing', (t) => {
   const again = mainSays([], { cwd: a, git: gitIn(a), host: seen.host, test: passing });
   assert.equal(again.code, 0);
   assert.ok(!seen.calls.some((args) => args[1] === 'comment'), 'no second comment for a feature already on pilot');
-  assert.equal(again.out, `feat/a already on pilot at ${pilotTip.slice(0, 7)}\nmain gets pilot: no open PR\n`);
+  assert.equal(again.out, `feat/a already on pilot at ${pilotTip.slice(0, 7)}\nno ci proof: 0 gate jobs, fewer than 3\nmain gets pilot: no open PR\n`);
   assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip);
 });
 
@@ -186,7 +186,7 @@ test('main prints the main line, and unknown with the reason when gh fails', (t)
   git(a, 'config', 'pilot.test', passing);
   const none = mainSays([], { cwd: a, git: gitIn(a), host: fakeGh([{ number: 11, headRefName: 'feat/a', headRefOid: git(a, 'rev-parse', 'HEAD') }]).host });
   assert.equal(none.code, 0);
-  assert.match(none.out, /^landed feat\/a on pilot at [0-9a-f]{7}\nmain gets pilot: #900 \(opened\)\n$/);
+  assert.match(none.out, /^landed feat\/a on pilot at [0-9a-f]{7}\nno ci proof: 0 gate jobs, fewer than 3\nmain gets pilot: #900 \(opened\)\n$/);
 
   const b = clone('b');
   const failing = () => {

@@ -92,7 +92,7 @@ adapter except `rune-target`, which is internal to the gate.
 - **L5** The shared Rune target lives in `%LOCALAPPDATA%\pilot\rune-target`; rejected: under `~/.claude/pilot` (the deck's store, which `itm_d9b831208266` exports) and per worktree (13 GB each).
 - **L6** Rune tests as one binary, `debug = "line-tables-only"`; rejected: `autotests = false` (a new file would silently not run).
 - **L7** The proof is read through the `Host` seam from check-run annotations; rejected: job logs (parsing, redirects) and artifacts (download).
-- **L8** The run's ADR (`ADR NNNN`, written in S5) amends ADR 0166 L4 and L8: the landing runs the delta selection on a proved tree.
+- **L8** The run's ADR (ADR 0212, written in S5) amends ADR 0166 L4 and L8: the landing runs the delta selection on a proved tree.
 - **L9** Verdicts are rules applied at build time against the then tree, so tests that queued runs land (handoff-no-wait, reply-markdown, archive-page, ui-design-workflow) are judged, never deleted blind.
 - **L10** A landing with no proof still runs the full suite, the census and the home-store check unchanged.
 

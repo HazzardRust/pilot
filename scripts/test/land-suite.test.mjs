@@ -1,11 +1,12 @@
 /**
- * The landing is the one full run of the suite and says so on the PR (suite-at-landing spec 3, 7,
- * L8): the feature merge passes `mergeIntoPilot` no `since`, so a repository with a
- * `test:changed` script still runs `npm test` once, and the comment on the feature PR carries
- * that run's counts. `gh` is faked; the landing runs against a scratch bare "origin".
+ * The landing runs the full suite unless green CI proved a tree (suite-at-landing spec 3, 7, L8;
+ * cheap-suite spec 5, L7, A2): with no proof the feature merge passes `mergeIntoPilot` no `since`,
+ * so a repository with a `test:changed` script still runs `npm test` once, and the comment on the
+ * feature PR carries that run's counts; with a proof it passes the proved tree, and the selection
+ * runs since it. `gh` is faked; the landing runs against a scratch bare "origin".
  */
 
-import { repos, land, fakeGh, git, commitFile } from './lib/land-repos.mjs';
+import { repos, land, fakeGh, git, commitFile, mainSays } from './lib/land-repos.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -43,4 +44,49 @@ test('the feature merge is the full run', (t) => {
   assert.ok(runs.every((line) => !line.startsWith('changed')), 'no test:changed run');
   assert.ok(runs.every((line) => !line.includes('--since')), 'no --since');
   assert.equal(bodyOf(calls), `landed on pilot at ${result.sha}; full suite 12 pass, 0 fail`);
+});
+
+/**
+ * A pilot already holding a package whose `test` and `test:changed` scripts log how they were
+ * called, and `feat/a` cut from it changing only `a.txt`, so no trigger file stands in the feature's diff.
+ */
+function suiteOnPilot(t) {
+  const { seed, clone } = repos(t);
+  const trace = path.join(path.dirname(seed), 'suite-trace.txt');
+  commitFile(seed, 'run.mjs', `import fs from 'node:fs';\nfs.appendFileSync(${JSON.stringify(trace)}, process.argv.slice(2).join(' ') + '\\n');\nconsole.log('ℹ pass 12');\nconsole.log('ℹ fail 0');\n`, 'run');
+  const pkg = { name: 'fixture', version: '1.0.0', scripts: { test: 'node run.mjs full', 'test:changed': 'node run.mjs changed' } };
+  commitFile(seed, 'package.json', `${JSON.stringify(pkg, null, 2)}\n`, 'package');
+  commitFile(seed, 'package-lock.json', `${JSON.stringify({ name: 'fixture', version: '1.0.0', lockfileVersion: 3, requires: true, packages: { '': { name: 'fixture', version: '1.0.0' } } }, null, 2)}\n`, 'lock');
+  git(seed, 'push', '-q', 'origin', 'main', 'main:pilot');
+  const work = clone('a');
+  return { work, trace, tree: git(work, 'rev-parse', 'HEAD^{tree}') };
+}
+
+const OSES = ['ubuntu-latest', 'windows-latest', 'macos-latest'];
+
+/** `host` with its `testedTrees` answering one row per OS on `tree`, each concluding `conclusion(os)`. */
+const proving = (host, tree, conclusion = () => 'success') => ({ ...host, testedTrees: () => OSES.map((os) => ({ name: `gate (${os})`, conclusion: conclusion(os), tree })) });
+
+test('a proved landing runs the selection since the proved tree', (t) => {
+  const { work, trace, tree } = suiteOnPilot(t);
+  const { host, calls } = fakeGh([{ number: 7, headRefName: 'feat/a' }]);
+
+  const said = mainSays([], { cwd: work, git: (args) => git(work, ...args), host: proving(host, tree) });
+
+  assert.equal(said.code, 0, said.out);
+  assert.deepEqual(fs.readFileSync(trace, 'utf8').trim().split('\n'), [`changed --since=${tree}`]);
+  assert.match(said.out, new RegExp(`^ci proved ${tree.slice(0, 7)} on 3 jobs$`, 'm'));
+  assert.match(bodyOf(calls), new RegExp(`; ci proved ${tree.slice(0, 7)} on 3 jobs, then 12 pass, 0 fail$`), 'the PR is not told the full suite ran');
+});
+
+test('an unproved landing runs the full suite', (t) => {
+  const { work, trace, tree } = suiteOnPilot(t);
+  const { host } = fakeGh([{ number: 7, headRefName: 'feat/a' }]);
+  const failing = proving(host, tree, (os) => (os === 'windows-latest' ? 'failure' : 'success'));
+
+  const said = mainSays([], { cwd: work, git: (args) => git(work, ...args), host: failing });
+
+  assert.equal(said.code, 0, said.out);
+  assert.deepEqual(fs.readFileSync(trace, 'utf8').trim().split('\n'), ['full']);
+  assert.match(said.out, /^no ci proof: gate \(windows-latest\) concluded failure$/m);
 });
