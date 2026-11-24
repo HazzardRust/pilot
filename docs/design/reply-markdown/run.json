@@ -62,7 +62,7 @@
     },
     {
       "slice": "Added: table insert 2x2 and Obsidian-style grow",
-      "state": "implementing",
+      "state": "integrated",
       "branch": "slice/reply-markdown-s5",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-reply-markdown-s5"
     },
@@ -75,7 +75,7 @@
     },
     {
       "slice": "Added: heading sizes",
-      "state": "integrated",
+      "state": "integrated 0ea0041",
       "branch": "slice/reply-markdown-s6",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-reply-markdown-s6"
     }
@@ -84,8 +84,8 @@
     "dropped: F6 link test expected value — rune-kit has no public path from parse + markdown_style to a link's colour; no independent source exists",
     "kept: F8 (QA) Table pressed with the caret in a cell inserts after that grid — fixed in ed2b6ca with a red-then-green test"
   ],
-  "next": "Integrating S6 (98bf8ee) into feat/reply-markdown via pilot integrate in pilot-feat-reply-markdown. S5 table aa98506c3a66e3ceb still implementing. Then S7 thread table selection + br in cells as a break in the thread, then fresh pilot-qa (QA handoff itm_38fd681f5af0: env port 63171, look incl. Enter/Table row/bullets, 6 px box jump on headings), walkthrough, gate2.",
-  "updatedAt": "2026-11-24T08:16:58.330Z",
+  "next": "feat/reply-markdown 0ea0041 (S6 in). Integrating S5 (9f6f262) via pilot integrate in pilot-feat-reply-markdown. Then S7: thread table selection + br in a cell drawn as a break in the thread (S5 pins \"| a<br>b \\| c |\"; box shows a real break). Then fresh pilot-qa from QA handoff itm_38fd681f5af0: look at native cell menu, Enter/Table row/bullets, 6 px box jump; walkthrough; gate2.",
+  "updatedAt": "2026-11-24T08:24:57.457Z",
   "friction": [
     {
       "agent": "pilot-co-pilot",
