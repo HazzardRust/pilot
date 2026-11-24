@@ -7,6 +7,7 @@
  * Sleep still end the request; nothing here writes a power setting (L4).
  */
 
+import fs from 'node:fs';
 import path from 'node:path';
 
 /** A1: how long after the last heartbeat work still counts as in flight; it covers a background gate. */
@@ -49,15 +50,49 @@ export function inFlight({ lastHeardAt, landings, armedDefaults }, now) {
   return (lastHeardAt !== null && now - lastHeardAt < LINGER_MS) || landings > 0 || armedDefaults > 0;
 }
 
+/** The POSIX holders, by absolute path (L1); neither takes `sudo`. */
+const CAFFEINATE = '/usr/bin/caffeinate';
+const SYSTEMD_INHIBIT = '/usr/bin/systemd-inhibit';
+
 /**
  * The holder for `platform`, watching `pid`: an absolute command and an argv array, never a shell
- * string (L1). Null where no holder is built yet (darwin and linux arrive in S2).
+ * string (L1). Darwin's `caffeinate -i` takes PreventUserIdleSystemSleep until `pid` exits; linux's
+ * inhibitor blocks sleep and idle only (A4: never handle-lid-switch) around a `tail` that ends with `pid`.
+ * Neither prints `held`. Null on a platform with no holder.
  */
 export function holderFor(platform, pid) {
   if (!Number.isInteger(pid) || pid < 1) throw new RangeError(`holderFor: not a pid: ${pid}`);
   if (platform === 'win32') return { cmd: POWERSHELL, args: ['-NoProfile', '-NonInteractive', '-Command', windowsHolder(pid)] };
+  if (platform === 'darwin') return { cmd: CAFFEINATE, args: ['-i', '-w', String(pid)] };
+  if (platform === 'linux') {
+    return { cmd: SYSTEMD_INHIBIT, args: ['--what=sleep:idle', '--who=pilot', `--why=${REASON}`, '--mode=block', 'tail', `--pid=${pid}`, '-f', '/dev/null'] };
+  }
   return null;
 }
+
+const executable = (file) => {
+  try {
+    fs.accessSync(file, fs.constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/** Why `platform` cannot hold on this machine, for the log; null when its holder can run. */
+export function holderUnavailable(platform) {
+  if (platform === 'win32') return null;
+  if (platform === 'darwin') return executable(CAFFEINATE) ? null : `no ${CAFFEINATE}`;
+  if (platform === 'linux') {
+    if (!executable(SYSTEMD_INHIBIT)) return `no ${SYSTEMD_INHIBIT}`;
+    // sd_booted(): without systemd as init there is no logind to take the inhibitor.
+    return fs.existsSync('/run/systemd/system') ? null : 'systemd is not running, so logind cannot take an inhibitor';
+  }
+  return `no keep-awake holder for ${platform}`;
+}
+
+/** On POSIX the holder leads its own process group, so a stop reaches `tail` as well (L1). */
+const killGroupOf = (pid) => process.kill(-pid, 'SIGTERM');
 
 const NOT_HELD = Object.freeze({ held: false, since: null });
 
@@ -72,7 +107,9 @@ export const awakeState = () => ({ ...state });
  * or dies is logged once until one holds again, and the next tick may try again (spec 6).
  * Returns stop(), which kills a holder it has.
  */
-export function holdAwake({ facts, spawn, platform, pid, now = Date.now, intervalMs = TICK_MS, log = console.error }) {
+export function holdAwake({ facts, spawn, platform, pid, now = Date.now, intervalMs = TICK_MS, log = console.error, killGroup = killGroupOf }) {
+  // POSIX holders say nothing, so the spawn is the hold, and they are stopped by their group.
+  const posix = platform !== 'win32';
   let child = null;
   let quiet = false; // a failure was logged and no holder has held since
 
@@ -87,24 +124,28 @@ export function holdAwake({ facts, spawn, platform, pid, now = Date.now, interva
     let proc;
     try {
       const holder = holderFor(platform, pid);
-      if (holder === null) return;
-      proc = spawn(holder.cmd, holder.args, { stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true });
+      if (holder === null) return fail(holderUnavailable(platform));
+      proc = spawn(holder.cmd, holder.args, { stdio: ['ignore', posix ? 'ignore' : 'pipe', 'ignore'], windowsHide: true, detached: posix });
     } catch (err) {
       return fail(String(err?.message ?? err).split('\n')[0]);
     }
     child = proc;
-    let out = '';
-    proc.stdout?.on('data', (chunk) => {
+    const held = () => {
       if (child !== proc || state.held) return;
-      out = (out + chunk).slice(-64);
-      if (!/^held\r?$/m.test(out)) return;
       state = { held: true, since: new Date(now()).toISOString() };
-      quiet = false;
+      // A spawn is no proof the OS took the hold, so a POSIX holder re-arms the log only by outliving a tick.
+      if (!posix) quiet = false;
+    };
+    let out = '';
+    if (posix) proc.on('spawn', held);
+    proc.stdout?.on('data', (chunk) => {
+      out = (out + chunk).slice(-64);
+      if (/^held\r?$/m.test(out)) held();
     });
     const ended = (why) => {
       if (child !== proc) return; // released on purpose, or already ended
       child = null;
-      fail(why);
+      fail(posix ? (holderUnavailable(platform) ?? why) : why);
     };
     proc.on('error', (err) => ended(String(err?.message ?? err).split('\n')[0]));
     proc.on('exit', (code, signal) => ended(signal ? `killed by ${signal}` : `exit ${code}`));
@@ -115,8 +156,10 @@ export function holdAwake({ facts, spawn, platform, pid, now = Date.now, interva
     child = null;
     state = NOT_HELD;
     try {
-      proc.kill();
+      if (posix && Number.isInteger(proc.pid)) killGroup(proc.pid);
+      else proc.kill();
     } catch (err) {
+      if (err?.code === 'ESRCH') return; // it had already exited
       log(`[deck] the keep-awake holder could not be stopped (${String(err?.message ?? err).split('\n')[0]}); it exits with the deck`);
     }
   };
@@ -130,6 +173,7 @@ export function holdAwake({ facts, spawn, platform, pid, now = Date.now, interva
     }
     if (want && child === null) start();
     else if (!want && child !== null) release();
+    else if (child !== null && state.held) quiet = false;
   };
 
   const timer = setInterval(tick, intervalMs);
