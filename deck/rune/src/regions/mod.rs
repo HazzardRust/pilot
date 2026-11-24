@@ -3,6 +3,7 @@
 
 pub mod agents;
 pub mod archive;
+pub mod archive_detail;
 pub mod chat;
 pub mod graph;
 pub mod history;

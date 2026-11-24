@@ -54,7 +54,7 @@ const NEVER = NEVER_SHOWN.map((pattern) => new RegExp(`^${pattern.replaceAll('.'
  */
 const neverShown = (file) => NEVER.some((pattern) => pattern.test(path.posix.normalize(file.replaceAll('\\', '/'))));
 
-const withheld = (value) => (typeof value === 'string' && findCredential(value) ? WITHHELD : value);
+export const withheld = (value) => (typeof value === 'string' && findCredential(value) ? WITHHELD : value);
 
 /** One row with every string through `findCredential` (L5). */
 const shown = (row) => ({
@@ -66,7 +66,7 @@ const shown = (row) => ({
 });
 
 /** The live store as it stands on disk, or an empty one where it is missing or unreadable: never recovered here. */
-function liveDeck(dir) {
+export function liveDeck(dir) {
   const raw = readDeckFile(path.join(dir, 'deck.json'));
   return raw === null ? { items: [] } : JSON.parse(raw);
 }
