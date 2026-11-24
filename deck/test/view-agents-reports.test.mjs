@@ -14,8 +14,6 @@ const { agentsView } = await import('../view/agents.mjs');
 const { reportsView } = await import('../view/reports.mjs');
 const { viewOf } = await import('../view/index.mjs');
 const { renderAgents, reportsOf } = await import('../ui/render-rail.mjs');
-const { tabsOf } = await import('../tabs.mjs');
-
 const MINE = 'C:/work/pilot';
 const NOW = Date.parse('2026-11-20T12:00:00.000Z');
 
@@ -95,18 +93,20 @@ test('the overview groups by deck', () => {
   const OTHER = 'C:/work/elsewhere';
   noteAgent({ agentId: 'b1', agentType: 'Explore', cwd: OTHER }, NOW - 5000);
   beat('a1', 'pilot:pilot-qa', 5);
-  const both = reads([], listAgents(NOW));
-  both.runs = [...both.runs, { repo: OTHER, startedAt: '2026-11-01T09:30:00.000Z', pid: process.pid }];
-  const order = tabsOf(both.runs, both.items, both.numbers, both.agents, both.added, both.lanes);
+  const three = reads([], listAgents(NOW));
+  // A third deck with nobody live has no section, as the page drops a scope with no agents.
+  three.runs = [
+    ...three.runs,
+    { repo: OTHER, startedAt: '2026-11-01T09:30:00.000Z', pid: process.pid },
+    { repo: 'C:/work/idle', startedAt: '2026-11-01T09:45:00.000Z', pid: process.pid },
+  ];
 
-  const { groups } = agentsView(both, { run: '' }, NOW);
+  const { groups } = agentsView(three, { run: '' }, NOW);
 
-  assert.equal(groups.length, 2);
-  assert.deepEqual(groups.map(({ tab }) => tab), order.map(({ name }) => name));
-  assert.deepEqual(
-    groups.map(({ agents }) => agents.map(({ name }) => name)),
-    order.map(({ agents }) => agents.map(({ agentType }) => agentType)),
-  );
+  assert.deepEqual(groups.map(({ tab, agents }) => [tab, agents.map(({ name }) => name)]), [
+    ['pilot', ['pilot:pilot-qa']],
+    ['elsewhere', ['Explore']],
+  ]);
   forgetAgents();
 });
 
