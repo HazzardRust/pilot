@@ -38,7 +38,7 @@ function rowsOf({ dir }) {
         kind: 'trace',
         id: `trace:${name}:${index + 1}`,
         at,
-        title: `${kind} ${text(entry.step)}: ${text(entry.item)}`,
+        title: [kind, text(entry.step)].filter(Boolean).join(' ') + (text(entry.item) ? `: ${text(entry.item)}` : ''),
         fields: [
           { label: 'Kind', value: kind },
           { label: 'Step', value: text(entry.step) },
