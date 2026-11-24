@@ -112,8 +112,22 @@ fn click(rt: &mut rune::Runtime<pilot_deck::app::State>, key: &str) {
 fn a_grid_shows_boxes_not_pipes_and_typing_fills_a_cell() {
     let mut rt = box_drawn(Local::default());
     click(&mut rt, "table");
-    assert_eq!(rt.state.regions.reply.tables.len(), 1, "Table inserts a grid");
-    click(&mut rt, "cell-0-0-0");
+    assert_eq!(
+        rt.state.regions.reply.tables.len(),
+        1,
+        "Table inserts a grid"
+    );
+    rt.frame(1.0 / 60.0);
+    let focused = rt
+        .elements()
+        .into_iter()
+        .find(|e| e.focused)
+        .and_then(|e| e.key);
+    assert_eq!(
+        focused.as_deref(),
+        Some("cell-0-0-0"),
+        "the caret goes to the first cell"
+    );
     rt.paste("Name");
     rt.frame(1.0 / 60.0);
 
@@ -123,10 +137,14 @@ fn a_grid_shows_boxes_not_pipes_and_typing_fills_a_cell() {
         rt.state.regions.reply.text()
     );
     let elements = rt.elements();
-    assert!(
-        elements
-            .iter()
-            .any(|e| e.key.as_deref() == Some("cell-0-0-0"))
+    let cell = elements
+        .iter()
+        .find(|e| e.key.as_deref() == Some("cell-0-0-0"))
+        .expect("cell-0-0-0 drawn");
+    assert_eq!(
+        cell.text.as_deref(),
+        Some("Name"),
+        "the cell shows what was typed"
     );
     let piped: Vec<_> = elements
         .iter()
@@ -156,10 +174,7 @@ fn a_table_alone_is_its_markdown() {
     let mut table = Table::new(2, 2);
     table.cell_mut(0, 0).replace_text("h");
     table.cell_mut(1, 1).replace_text("a|b");
-    assert_eq!(
-        table.markdown(),
-        "| h |  |\n| --- | --- |\n|  | a\\|b |"
-    );
+    assert_eq!(table.markdown(), "| h |  |\n| --- | --- |\n|  | a\\|b |");
 }
 
 fn table_local() -> Local {

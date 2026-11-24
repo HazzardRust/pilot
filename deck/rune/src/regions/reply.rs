@@ -11,6 +11,7 @@ use serde::Deserialize;
 
 use crate::act::{self, Acted, Action};
 use crate::app::State;
+use crate::table::Table;
 use crate::theme::{self, space};
 
 /// The `act::send` key of the box's one press that is out.
@@ -61,7 +62,10 @@ struct Reply {
 
 #[derive(Debug, Default)]
 pub struct Local {
+    /// The first prose part: everything before the first table (L10).
     pub draft: TextEdit,
+    /// Each grid and the prose part after it, in order (L10). Only `text()` joins them.
+    pub tables: Vec<(Table, TextEdit)>,
     /// The verdict option whose confirm is showing.
     pub confirming: Option<String>,
     /// The deck's own words for the last press it refused.
@@ -74,9 +78,74 @@ pub struct Local {
     closing: bool,
     /// The text the press that is out carried: a taken answer empties the box only while it holds this.
     posted: Option<String>,
+    /// Where an edit to a grid removed since its frame lands: in no part of the reply.
+    spare: TextEdit,
+}
+
+/// The key of grid `t`'s cell at row `r`, column `c` (L12).
+fn cell_key(t: usize, r: usize, c: usize) -> String {
+    format!("cell-{t}-{r}-{c}")
 }
 
 impl Local {
+    /// What the box holds as one reply: the prose parts and each table's GFM in order, one blank line
+    /// between a table and the text beside it (L10, L11). The one join of the draft: every press reads it.
+    pub fn text(&self) -> String {
+        let mut out = self.draft.text.clone();
+        for (table, prose) in &self.tables {
+            if !out.is_empty() {
+                out.push_str("\n\n");
+            }
+            out.push_str(&table.markdown());
+            if !prose.text.is_empty() {
+                out.push_str("\n\n");
+                out.push_str(&prose.text);
+            }
+        }
+        out
+    }
+
+    /// The Table button: a 2 × 2 grid after the caret's line of the prose part holding the caret (the
+    /// first when none does), which splits there; the lines after it become the grid's prose part (A6).
+    pub fn insert_table(&mut self) {
+        self.insert();
+    }
+
+    /// `insert_table`, returning the new grid's index for the caret to go to.
+    fn insert(&mut self) -> usize {
+        let at = self.tables.iter().position(|(_, prose)| prose.focused);
+        let prose = match at {
+            Some(i) => &mut self.tables[i].1,
+            None => &mut self.draft,
+        };
+        let caret = prose.focus.min(prose.text.len());
+        let (head, tail) = match prose.text[caret..].find('\n') {
+            Some(n) => (
+                prose.text[..caret + n].to_string(),
+                prose.text[caret + n + 1..].to_string(),
+            ),
+            None => (prose.text.clone(), String::new()),
+        };
+        prose.replace_text(head);
+        let after = at.map_or(0, |i| i + 1);
+        self.tables
+            .insert(after, (Table::new(2, 2), TextEdit::new(tail)));
+        after
+    }
+
+    /// The field a drawn cell or prose part edits: `cell` `None` for grid `t`'s prose part. A grid
+    /// emptied since the frame was drawn (a taken reply) edits `spare`, never another part.
+    fn part(&mut self, t: usize, cell: Option<(usize, usize)>) -> &mut TextEdit {
+        let Some((table, prose)) = self.tables.get_mut(t) else {
+            return &mut self.spare;
+        };
+        match cell {
+            None => prose,
+            Some((r, c)) if r < table.size().0 && c < table.size().1 => table.cell_mut(r, c),
+            Some(_) => &mut self.spare,
+        }
+    }
+
     /// The one way a press leaves the box: it is out until `acted`, and nothing else posts meanwhile.
     fn out(&mut self, label: &str, action: Action) -> Option<Action> {
         self.escape();
@@ -106,7 +175,7 @@ impl Local {
         }
         let action = Action::Reply {
             id: id.to_string(),
-            text: self.draft.text.clone(),
+            text: self.text(),
             choice: Some(option.label.clone()),
         };
         self.out(&option.label, action)
@@ -160,12 +229,13 @@ impl Local {
 
     /// Reply: the typed text alone; an empty box sends nothing, as the page's required field does.
     pub fn send(&mut self, id: &str) -> Option<Action> {
-        if self.sent.is_some() || self.draft.text.trim().is_empty() {
+        let text = self.text();
+        if self.sent.is_some() || text.trim().is_empty() {
             return None;
         }
         let action = Action::Reply {
             id: id.to_string(),
-            text: self.draft.text.clone(),
+            text,
             choice: None,
         };
         self.out("Reply", action)
@@ -194,8 +264,9 @@ impl Local {
         let posted = self.posted.take();
         match refused {
             None => {
-                if posted.as_deref() == Some(self.draft.text.as_str()) {
+                if posted.as_deref() == Some(self.text().as_str()) {
                     self.draft.replace_text("");
+                    self.tables.clear();
                 }
                 self.refused = None;
             }
@@ -349,8 +420,8 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         .gap(space::pad)
         .items_center()
         .child(reply_button);
-    if let Some(close) = reply.close {
-        let (confirm, at, confirm_at) = (close.confirm, id.clone(), id.clone());
+    if let Some(close) = &reply.close {
+        let (confirm, at) = (close.confirm, id.clone());
         fixed = fixed.child(
             btn(CLOSE, "close".into(), pressed(CLOSE) || local.closing).on_press(
                 move |s: &mut State| {
@@ -359,6 +430,19 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 },
             ),
         );
+    }
+    // Table after Close, out of the Tab order and never taking focus, so the prose part holding
+    // the caret still holds it when the press lands (A5, A6); the caret then goes to the first cell.
+    fixed = fixed.child(
+        btn("Table", "table".into(), false)
+            .focusable(false)
+            .on_press_tx(|s: &mut State, tx: &mut Tx| {
+                let t = s.regions.reply.insert();
+                tx.focus(cell_key(t, 0, 0), false);
+            }),
+    );
+    if reply.close.is_some() {
+        let confirm_at = id.clone();
         if local.closing {
             fixed = fixed
                 .child(theme::content(
@@ -416,8 +500,45 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 .padding(space::pad)
                 .radius(theme::radius::button)
                 .fill(k.rule),
-        )
-        .child(send);
+        );
+    // Each grid, then the prose part after it (L10): one single-line field per cell, never pipes.
+    for (t, (table, prose)) in local.tables.iter().enumerate() {
+        let (rows, cols) = table.size();
+        let mut grid = col().key(format!("table-{t}")).gap(space::within);
+        for r in 0..rows {
+            let mut line = row().gap(space::within);
+            for c in 0..cols {
+                let font = if r == 0 { type_::HEADER } else { type_::BODY };
+                line = line.child(
+                    text_input(table.cell(r, c), font)
+                        .single_line()
+                        .key(cell_key(t, r, c))
+                        .label(format!("Table cell, row {}, column {}", r + 1, c + 1))
+                        .on_edit(move |s: &mut State| s.regions.reply.part(t, Some((r, c))))
+                        // Return in a cell stays in the grid: it never presses Reply.
+                        .on_submit(|_: &mut State, _: &mut Tx| {})
+                        .grow(1.0)
+                        .min_w(space::s0)
+                        .padding(space::pad)
+                        .radius(theme::radius::button)
+                        .fill(k.rule),
+                );
+            }
+            grid = grid.child(line);
+        }
+        box_ = box_.child(grid).child(
+            text_input(prose, type_::BODY)
+                .key(format!("reply-text-{}", t + 1))
+                .decorations(crate::preview::spans(prose, dark))
+                .label("Reply, after the table")
+                .on_edit(move |s: &mut State| s.regions.reply.part(t, None))
+                .wrap_anywhere()
+                .padding(space::pad)
+                .radius(theme::radius::button)
+                .fill(k.rule),
+        );
+    }
+    box_ = box_.child(send);
     if let Some(reason) = &local.refused {
         box_ = box_.child(
             text(reason)
