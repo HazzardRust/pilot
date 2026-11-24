@@ -103,7 +103,8 @@ ADR NNNN (`docs/adr/NNNN-classifier-env.md`, written in S1) records L1-L4.
   Start needs the deck restarted after `setx`. Rejected: a stored setting behind a new `pilot classifier` command.
   Asked: itm_fe2e6aa41d19. Closed by the deck, not the user: "Assumed: Env var (default) (no answer 20 min)".
 - **A4** Spec 8, the `pilot doctor` row, `main`'s question itm_1d8272a673d9 (default yes). Cut as S3 with no edge, so
-  a no drops S3 and nothing else.
+  a no drops S3 and nothing else. Closed by the deck, not the user: "Assumed: Warn in pilot doctor (no answer 20
+  min)"; S3 and spec 8 stand.
 - **A5** QA environment, `main`'s question itm_d24c3c01f382: a scratch home, plus one read-only
   `claude auto-mode config` against the real home. Tradeoff: the real start-settings.json is written only by the
   user's own Start. Rejected: QA running a Start against the real home.
