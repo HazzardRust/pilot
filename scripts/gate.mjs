@@ -170,11 +170,11 @@ function besideGate(table, row, self) {
  * neither stopped nor named. The last line is
  * `left running: none`, or there is one `left running: <pid> <kind> <command>` per survivor.
  */
-export function census(before, { cwd, read = processTable, kill = stopper, deckPid = deckPidNow, self = process.pid, graceMs = GRACE_MS, pollMs = POLL_MS, sleep = pause, now = Date.now }) {
+export function census(before, { cwd, read = processTable, kill = stopper, deckPid = deckPidNow, self = process.pid, graceMs = GRACE_MS, pollMs = POLL_MS, sleep = pause, now = Date.now, select = leftovers }) {
   const watch = (base) => {
     for (const end = now() + graceMs; ; sleep(pollMs)) {
       const table = read();
-      const left = leftovers(base, pilotProcesses(table, {}), cwd).filter((row) => !besideGate(table, row, self));
+      const left = select(base, pilotProcesses(table, {}), cwd).filter((row) => !besideGate(table, row, self));
       if (left.length === 0 || now() >= end) return { table, left };
     }
   };
@@ -183,13 +183,14 @@ export function census(before, { cwd, read = processTable, kill = stopper, deckP
   // The user's deck and the holder it watches are neither stopped nor named.
   const users = (r) => r.pid === deck || (r.kind === 'holder' && r.owner === deck);
   const lines = [];
-  const unsure = new Set();
+  // An unanswered probe cannot tell a leashless daemon, or its holder, from the user's deck: named, never stopped.
+  // The set is taken before the loop, so a holder listed ahead of its deck is spared too.
+  const leashless = (r) => r.kind === 'daemon' && !/\s--leash\s/.test(` ${r.command} `);
+  const unsure = new Set(deck === undefined ? first.left.filter(leashless).map((r) => r.pid) : []);
   const stop = kill(first.table);
   for (const row of first.left.filter((r) => !users(r))) {
     try {
-      // An unanswered probe cannot tell a leashless daemon, or its holder, from the user's deck: named, never stopped.
-      if (deck === undefined && ((row.kind === 'daemon' && !/\s--leash\s/.test(` ${row.command} `)) || (row.kind === 'holder' && unsure.has(row.owner)))) {
-        unsure.add(row.pid);
+      if (unsure.has(row.pid) || (row.kind === 'holder' && unsure.has(row.owner))) {
         lines.push(`not stopped ${row.pid}: cannot tell it from the user's deck`);
         continue;
       }
