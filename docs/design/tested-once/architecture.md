@@ -106,15 +106,21 @@ would have to remember it. `testCommand` is a pass-through for agents, folded be
 
 - **A1** Proof of a pass is a local ledger keyed by tree (default, `main`'s verdict requested). Trades: one
   machine only. Rejected: git notes (pushed, shared trust), implementer trailer (L3).
+  Verdict: stands — a pass is proved only by a row the test tool wrote from the process's own exit code; a slice was pushed red twice today on an agent's claim
 - **A2** The slice-scope switch is env `PILOT_TEST_SCOPE`, set by `pilot test --scope slice`. Trades: a
   hidden input. Rejected: a flag to `test:changed`, which breaks other repositories' scripts.
+  Verdict: stands — an env switch leaves other repos' test:changed scripts untouched
 - **A3** QA reuses CI (open as `itm_d6739b04e059`, default Reuse CI). Trades: QA trusts CI's three runners
   over a local run. Rejected: always run locally at QA.
+  Verdict: stands — the user chose Reuse CI on itm_d6739b04e059; reuse needs all three OS gate jobs green
 - **A4** Spec 5's bar is ≤ 12 local runs. Trades: a guess until the first run measures it.
+  Verdict: stands — 12 is a bar measured on the first run after landing, not a gate
 - **A5** Slice scope also defers `FULL_TRIGGERS` changes (package.json, gate.mjs…) to integrate. Trades:
   a slice editing the runner gets its full run one step later.
+  Verdict: stands — integrate runs wide, so a trigger-file change is still tested before it reaches feat
 - **A6** `pilot test` reuses a matching row for any role, so an implementer re-gating an unchanged tree
   runs nothing. Trades: a flaky green is reused once more; `--fresh` is not added.
+  Verdict: stands — an unchanged tree re-gated is the redundant run the user asked to remove
 
 ## 7. Out of scope
 
