@@ -14,7 +14,7 @@ working branch. The user wants it named `<gh-user>-pilot`, here `hazzardrust-pil
 |---|---|---|---|
 | 1 | The branch every Gate 2 lands on is `<login>-pilot`, lower-cased from the host CLI's signed-in user, derived on first use and stored as `git config --local pilot.branch`. Cutting is unchanged (ADR 0200): main or the concluding `feat/<N>` on a host, the pilot branch under `pilot.host none` or another run remote. | test, seeded login `HazzardRust`: `pilot base`, `pilot sync`, `pilot land`, `pilot restack` name `hazzardrust-pilot`; config holds it | 4 commands name it; 0 login reads on a second run |
 | 2 | Two users, two clones, one remote: each landing and sync pushes only its own `<login>-pilot`, and `pilot restack` touches only the signed-in user's own PRs. | test, two seeded names: the other branch's tip and the other user's PR base unchanged | 0 writes to the other's branch or PRs |
-| 3 | A repository with a legacy `pilot` and no `<login>-pilot`: the first `pilot base` creates it at `pilot`'s tip, `pilot restack` retargets the user's open PRs based on `pilot` to it, run records with base `pilot` read as it, and landings made before the move still count. `pilot` itself is left untouched (L1). | test on a seeded repo; live on QA's scratch GitHub repo (A1): 2 PRs on `pilot` | both PR bases = new branch; new tip = old tip; `pilot` tip unchanged; a pre-move landing reads landed |
+| 3 | A repository with a legacy `pilot` and no `<login>-pilot`: the first `pilot base` creates it at `pilot`'s tip, `pilot restack` retargets the user's open PRs based on `pilot` to it, run records with base `pilot` read as it, and landings made before the move still count. `pilot` itself is left untouched (L1). | test on a seeded repo; live on QA's scratch GitHub repo (L13): 2 PRs on `pilot` | both PR bases = new branch; new tip = old tip; `pilot` tip unchanged; a pre-move landing reads landed |
 | 4 | One derivation: no literal branch `pilot` in `bin/`, `scripts/`, `deck/*.mjs` outside `scripts/pilot-branch.mjs`; CI triggers on `'*-pilot'`; agents and docs say "your pilot branch (`<login>-pilot`)". | structural test; CI run on a PR to `hazzardrust-pilot` | 0 hits; 1 green CI run on that PR |
 | 5 | No name to read (host CLI signed out or `pilot.host none`, no stored name, no `PILOT_BRANCH`): exit 1 with one line naming `gh auth login` / `glab auth login` and `git config pilot.branch <name>`; nothing created. | test per case | exit 1; 0 refs and 0 config written |
 | 6 | A login git would not take literally as a branch (`..`, a trailing `.` or `.lock`, anything off `[a-z0-9._-]`) is refused with spec 5's line, never cleaned (user, itm_20ed8652604a). | test per bad shape | exit 1 per shape; 0 refs |
@@ -89,13 +89,14 @@ function because the name is now per repository. `pilot-tip.mjs` survives (hooks
 - **L11 CI** triggers on `'*-pilot'` and `main`/`feat/**`; `gate.yml`'s base test is `endsWith(github.base_ref, '-pilot')`.
 - **L12 Grilling depth: forks** (user, itm_210405d6a2eb): only decisions whose paths give materially different
   deliverables are posted; the rest stand as A‹n›.
+- **L13 QA environment** (user, itm_e01ae7f5c98e; was A1). QA creates a private `HazzardRust/pilot-branch-scratch`
+  with `gh`, seeds `pilot` + 2 feat PRs, and the user deletes it after Gate 2. Rejected: tests only (the first real
+  retarget would be this repo's 10 PRs); a user-made repo (one more handoff).
 - Recorded as `docs/adr/NNNN-user-pilot-branch.md` (ADR NNNN), amending ADR 0083 and ADR 0200's `pilot` wording.
 
 ## 6. Assumed decisions
 
-- **A1 QA environment** (posted, itm_e01ae7f5c98e). Default: QA creates a private `HazzardRust/pilot-branch-scratch`
-  with `gh`, seeds `pilot` + 2 feat PRs, and the user deletes it after Gate 2. Trades a repo on the user's account
-  for a live retarget proof. Rejected: tests only (first real retarget would be this repo's 10 PRs).
+- **A1 QA environment**: moved to §5 as L13 (user, itm_e01ae7f5c98e).
 - **A2 `pilot.host none` needs `pilot.branch` set** by hand once (spec 5), so a local-only repository that works
   today stops until it is set. Trades one command for "never guess". Rejected: `none` keeps `pilot`.
 - **A3 Spec 2-5, 8, 9 as proposed**, not yet confirmed by the user.
@@ -152,7 +153,7 @@ Red team (walked each first behaviour against the files):
 
 ## 9. Acceptance evidence
 
-1. In QA's scratch repo (A1), signed in: `pilot base` prints `base … ` and `git config pilot.branch` reads
+1. In QA's scratch repo (L13), signed in: `pilot base` prints `base … ` and `git config pilot.branch` reads
    `hazzardrust-pilot`; `git ls-remote origin hazzardrust-pilot` equals the old `pilot` tip (spec 1, 3).
 2. `pilot restack` prints `retargeted #<n> to hazzardrust-pilot` twice; both PRs show that base on GitHub (spec 3).
 3. A feature taken through Gate 2 lands on `hazzardrust-pilot`; `pilot` is unchanged (spec 1, 3).
