@@ -43,7 +43,9 @@ fn a_thread_reads_whole_and_escape_or_left_goes_back_to_its_deck() {
         .expect("an id")
         .to_string();
 
-    let held = support::ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    let held = support::ENV
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
     // SAFETY: every test that touches the environment holds `support::ENV`.
     unsafe {
         std::env::set_var("PILOT_DECK_DIR", &deck.dir);

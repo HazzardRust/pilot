@@ -25,6 +25,9 @@ const CO_PILOT = 'pilot:pilot-co-pilot';
 const granted = (repo = REPO) => {
   const ticket = postStored({ kind: KIND_TICKET, title: 'Building', body: shapedTicketBody('building'), repo, sliceCount: 60, state: 'yellow' });
   setCoPilot(ticket.id, true);
+  // A heartbeat in the grant's own millisecond stamps nothing (`now > at`); a fast runner reaches the next line inside it.
+  const at = Date.parse(coPilotFor(repo).at);
+  while (Date.now() <= at);
   return ticket;
 };
 
