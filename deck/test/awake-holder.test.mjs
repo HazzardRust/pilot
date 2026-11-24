@@ -11,6 +11,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { EventEmitter, once } from 'node:events';
+import fs from 'node:fs';
 import path from 'node:path';
 
 import { hostPlatform } from '../../hooks/lib/platform.js';
@@ -84,20 +85,41 @@ const commandLines = () => execFileSync('ps', ['-eo', 'args'], { encoding: 'utf8
 
 const notOn = (platform) => hostPlatform() !== platform && `the ${platform} holder runs on ${platform} only`;
 
-/** Why the linux holder cannot run here, for a skip: another OS, or no logind. Never null: node:test runs a `skip: null` test and counts its failure as a skip. */
-const linuxSkip = () => notOn('linux') || holderUnavailable('linux') || false;
+/** Set to `1` by gate.yml's ubuntu job, whose runner a polkit rule grants the inhibitor: there a holder that cannot hold fails. */
+const REQUIRE_LINUX_HOLDER = 'PILOT_REQUIRE_LINUX_HOLDER';
+const required = (env) => env[REQUIRE_LINUX_HOLDER] === '1';
+
+/**
+ * Why the linux holder cannot run here, for a skip: another OS, or no logind. Where it is required, only
+ * another OS skips; an unavailable holder runs and fails on `cannotHold`. Never null: node:test runs a
+ * `skip: null` test and counts its failure as a skip.
+ */
+const linuxSkip = ({ host = hostPlatform(), unavailable = holderUnavailable('linux'), env = process.env } = {}) =>
+  (host !== 'linux' && 'the linux holder runs on linux only') || (!required(env) && unavailable) || false;
+
+/** The skip reason for a holder logind refused, or, where the holder is required, an assertion failure. */
+function cannotHold(why, env = process.env) {
+  if (required(env)) assert.fail(`${REQUIRE_LINUX_HOLDER}=1 requires the linux holder, but it cannot hold: ${why}`);
+  return `logind refused the inhibitor here: ${why}`;
+}
+
+/** Fails the case where the holder is required but unavailable, which `linuxSkip` let run. */
+function available() {
+  const why = holderUnavailable('linux');
+  if (why) cannotHold(why);
+}
 
 /**
  * Half a second for a holder to take hold. A holder logind refuses (polkit grants an inhibitor to a
- * process in no login session, such as a CI runner's, only with admin auth) skips naming its stderr;
- * any other early exit fails.
+ * process in no login session, such as a CI runner's, only with admin auth) skips naming its stderr,
+ * unless the holder is required; any other early exit fails.
  */
 async function settled(t, holder) {
   await new Promise((resolve) => setTimeout(resolve, 500));
   if (holder.exitCode === null && holder.signalCode === null) return true;
   const why = holder.err.trim();
   if (/access denied|not authorized|authentication/i.test(why)) {
-    t.skip(`logind refused the inhibitor here: ${why}`);
+    t.skip(cannotHold(why));
     return false;
   }
   assert.fail(`the holder exited ${holder.exitCode ?? holder.signalCode} at start: ${JSON.stringify(why)}`);
@@ -151,6 +173,36 @@ test('the POSIX holders watch the pid they are given', () => {
   // The Interface's argv, as S2.md states it: the census recognises the holders by it.
   assert.deepEqual(args, ['--what=sleep:idle', '--who=pilot', '--why=pilot: work in flight', '--mode=block', 'tail', '--pid=4242', '-f', '/dev/null']);
   assert.throws(() => holderFor('linux', 0), RangeError, 'a pid of 0 would watch the process group');
+});
+
+test('where CI requires the linux holder, a refusal fails', () => {
+  const required = { [REQUIRE_LINUX_HOLDER]: '1' };
+  assert.equal(linuxSkip({ host: 'linux', unavailable: 'no systemd-inhibit on PATH', env: required }), false, 'it runs, and fails on the reason');
+  assert.throws(() => cannotHold('Failed to inhibit: Access denied', required), /PILOT_REQUIRE_LINUX_HOLDER.*Access denied/);
+});
+
+test('without the flag a linux holder that cannot hold still skips naming why', () => {
+  assert.equal(linuxSkip({ host: 'linux', unavailable: 'no systemd-inhibit on PATH', env: {} }), 'no systemd-inhibit on PATH');
+  assert.equal(linuxSkip({ host: 'linux', unavailable: null, env: {} }), false);
+  assert.equal(cannotHold('Failed to inhibit: Access denied', {}), 'logind refused the inhibitor here: Failed to inhibit: Access denied');
+  assert.equal(cannotHold('x', { [REQUIRE_LINUX_HOLDER]: '0' }), 'logind refused the inhibitor here: x', 'only 1 requires it');
+});
+
+test('another OS skips the linux holder even where it is required', () => {
+  assert.equal(linuxSkip({ host: 'darwin', unavailable: null, env: { [REQUIRE_LINUX_HOLDER]: '1' } }), 'the linux holder runs on linux only');
+});
+
+test('the package takes no privilege: no holder runs elevated and no polkit file ships', () => {
+  const elevators = new Set(['sudo', 'pkexec', 'doas', 'runas', 'runas.exe']);
+  for (const platform of ['win32', 'darwin', 'linux']) {
+    const { cmd, args } = holderFor(platform, 4242);
+    for (const word of [cmd, ...args]) assert.ok(!elevators.has(path.basename(word.replace(/\\/g, '/')).toLowerCase()), `${platform}: ${word}`);
+  }
+  const root = path.join(import.meta.dirname, '..', '..');
+  for (const dir of ['deck', 'bin']) {
+    const shipped = fs.readdirSync(path.join(root, dir), { recursive: true }).map(String);
+    assert.deepEqual(shipped.filter((file) => /polkit|\.rules$|\.policy$/i.test(file)), [], `${dir}/ ships a polkit file`);
+  }
 });
 
 test('holderUnavailable names why a platform cannot hold', () => {
@@ -234,6 +286,7 @@ test('macOS lists the assertion while held', { skip: notOn('darwin') }, async (t
 });
 
 test('Linux lists the inhibitor while held', { skip: linuxSkip() }, async (t) => {
+  available();
   const watched = aWatched(t);
   const holder = aPosixHolder(t, 'linux', watched.pid);
   const mine = (out) =>
@@ -250,6 +303,7 @@ test('Linux lists the inhibitor while held', { skip: linuxSkip() }, async (t) =>
 for (const platform of ['darwin', 'linux']) {
   const skip = platform === 'linux' ? linuxSkip() : notOn('darwin');
   test(`the ${platform} holder dies with its pid`, { skip }, async (t) => {
+    if (platform === 'linux') available();
     const watched = aWatched(t);
     const holder = aPosixHolder(t, platform, watched.pid);
     if (!(await settled(t, holder))) return; // it holds while its pid lives

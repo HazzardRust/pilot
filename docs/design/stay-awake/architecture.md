@@ -112,6 +112,7 @@ Width 2; longest stem 2
 | --- | --- | --- | --- | --- | --- |
 | S1 The user's deck holds a Windows keep-awake request while an agent runs | 1, 5, 6, 7, 8 | `deck/awake.mjs` (new), `deck/agents.mjs` (`lastHeardAt`), `deck/daemon.mjs` (wiring), `deck/health.mjs` (`awake`), `deck/test/awake.test.mjs` (new), `deck/test/awake-holder.test.mjs` (new), `docs/adr/NNNN-stay-awake.md` (new) | – | typescript, security | [S1](slices/S1.md) |
 | S2 macOS and Linux hold by their own means | 2, 3 | `deck/awake.mjs` (`holderFor` darwin, linux rows), `deck/test/awake-holder.test.mjs` (darwin, linux cases) | S1 (`deck/awake.mjs` `holderFor`) | typescript, security | [S2](slices/S2.md) |
+| S5 the Linux holder is proved on CI (added) | 2, 8 | `.github/workflows/gate.yml` (an ubuntu-only step), `deck/test/awake-holder.test.mjs` (the Linux skip rule) | S2 (`linuxSkip`, `settled`) | typescript, security | [S5](slices/S5.md) |
 | S3 pilot doctor names what would still stop the work | 3, 4, 9 | `deck/power.mjs` (new), `deck/doctor.mjs` (one row), `deck/probe.mjs` (`awake`), `bin/pilot.mjs` (usage line), `deck/test/doctor-power.test.mjs` (new), `deck/test/power-writes.test.mjs` (new) | S1 (`/api/health` `awake`) | typescript, security | [S3](slices/S3.md) |
 | S4 the gate's census counts a leftover holder (added) | 7 | `deck/procs.mjs` (a `holder` row), `scripts/gate.mjs` (`leftovers`, `census`), `deck/test/procs.test.mjs`, `scripts/test/gate-census.test.mjs` | S1 (`deck/awake.mjs` `holderFor`, `REASON`) | typescript, security | [S4](slices/S4.md) |
 

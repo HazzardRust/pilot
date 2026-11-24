@@ -200,13 +200,15 @@ test('the gate workflow runs the full gate', () => {
   const text = workflowText();
   assert.deepEqual(values(text, 'run'), [
     'npm ci',
+    `echo "$RULE" | sudo tee /etc/polkit-1/rules.d/49-pilot-ci-inhibit.rules && echo PILOT_REQUIRE_LINUX_HOLDER=1 >> "$GITHUB_ENV"`,
     'npm test',
     'node scripts/check-references.mjs',
     'node scripts/check-provenance.mjs agents/ skills/ rules/',
     `echo "::notice title=tested-tree::$(git rev-parse 'HEAD^{tree}')"`,
   ]);
   assert.doesNotMatch(code(text), /continue-on-error/);
-  assert.equal(values(text, 'if').length, 1, 'no step-level if skips a step');
+  // stay-awake S5: the one step-level if is ubuntu's logind grant, which no other OS needs.
+  assert.deepEqual(values(text, 'if').slice(1), ["runner.os == 'Linux'"], 'no other step-level if skips a step');
 });
 
 test('no job gains a write permission or a secret', () => {
