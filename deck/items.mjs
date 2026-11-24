@@ -279,7 +279,7 @@ const SPECS = {
     options: false,
     fields: [SLICE_FIELD, REPO_FIELD, TICKET_ID_FIELD],
     buttons: [HANDOFF_FAILED],
-    note: "The pilot closes this when the agent's own handoff arrives. Handoff failed has it brief a fresh agent from the agent's branch.",
+    note: "The deck closes this as its ticket moves on, the pilot a ticketless one. Handoff failed has it brief a fresh agent from the branch.",
     ask: 'Treat this agent as lost, and brief a fresh one from its branch?',
   },
 };

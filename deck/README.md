@@ -26,7 +26,8 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `classifier-log.mjs` | the classifier log: one line per auto-mode denial, credentials withheld, newest 10,000 kept; a record, never a permission |
 | `client.mjs` | the stdio MCP server each session spawns; owns no state |
 | `closing-report.mjs` | writes the closing report when a landing lands: resolves the gate2, finishes its record, closes the ticket |
-| `crew-handoff.mjs` | a ticket's open crew-handoffs, which a successor's `deck_ticket co-pilot` grant closes |
+| `crew-handoff.mjs` | which crew-handoffs a grant or the settle closes: a ticket's open ones, those whose ticket left yellow, never over an unanswered press |
+| `crew-settle.mjs` | the deck's crew-handoff closes: a `co-pilot` grant's, and the settle after every change, each traced |
 | `credential.mjs` | the one credential check, `findCredential`, for every deck post, land's output and the classifier log |
 | `daemon.mjs` | the deck process: starts the server over the store; holds a leash, or the idle rule on the user's deck |
 | `doctor.mjs` | `pilot doctor`: one row per local check, `pass`, `fail` or `cannot tell` (Defender over the projects root and its admin step, Node against engines, the deck dependency, the store directory writable, `gh`, `git`, `claude` on PATH); exit 1 on a fail; reads only, bar one temp file it removes (process-gc L12, daemon-lifecycle spec 10) |
