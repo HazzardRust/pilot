@@ -91,6 +91,8 @@ dirs); folding it would put its policy behind the guarded seam. `isRunBranch` su
   Branch pruning is out of scope (the user).
 - **L6** `--force` only on a landed run, after the tracked status is re-read clean (ADR 0171 kept).
 - **L7** The run set is not widened by name (F3); new trees are tagged at creation instead. ADR NNNN records L1-L7.
+- **L8** Grilling depth is every (itm_90eb03b73d3d): assumed by the deck's 20-min timeout, not pressed by the user.
+  So Gate 1 is preceded by a walk, one question per locked decision in order.
 
 ## 6. Assumed decisions
 
