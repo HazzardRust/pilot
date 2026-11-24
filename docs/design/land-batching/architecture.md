@@ -13,11 +13,11 @@ signed numbers".
 
 | # | Behaviour | Evidence and bar |
 |---|---|---|
-| 1 | A full suite run spawns at most 11,000 processes, at most 10,000 of them git. | `npm run test:cost` on the feature tip prints `spawns <t> (node …, git <g>, …)` with t ≤ 11,000 and g ≤ 10,000; recorded as `docs/design/land-batching/cost-after.txt` (S7). Today 13,677 / 12,572. |
+| 1 | A full suite run spawns at most 11,000 processes, at most 10,000 of them git. | `npm run test:cost` on the feature tip prints `spawns <t> (node …, git <g>, …)` with t ≤ 11,000 and g ≤ 10,000; recorded as `docs/design/land-batching/cost-after.txt` (S7, or S6 when the product cut falls short). Today 13,677 / 12,572. |
 | 2 | The gate holds the signed bars: `SPAWN_CEILING` reads 11,000 and a new `GIT_CEILING` 10,000; a run over either is red. cheap-suite's spec 3 and A4 name 11,000 / 10,000 again. | `scripts/test/gate-spawns.test.mjs`: a count of 11,001 total is red, 10,001 git under 11,000 total is red, 11,000 / 10,000 is green (3 cases). The cheap-suite rows read the signed numbers. |
 | 3 | `pilot land`, `pilot integrate` and `pilot sync` behave as before: same printed lines, refusals, commits and pushes. | All existing land*, integrate*, sync* tests pass unchanged (0 edited asserts). One pin per command on a seeded repo, written on the base before any product change: printed lines (SHAs normalised), pilot's and the feature's tips, the merge commit's parents and subject. |
 | 4 | The saving comes first from product code: one landing, one integrate and one sync each spawn fewer git, asserted. *assumed* (A2) | `countGit` per command on a seeded repo: landing 39 → ≤ 27 (S5); `pilot sync` main-merge 18 → ≤ 14; integrate one slice ≤ 75% of its base count, both numbers in the test. |
-| 5 | Any remainder past spec 4 comes from the shared test fixture helpers, with no test skipped, cut or weakened. *assumed* (A1, itm_6b7ac21774f1) | S6's diff touches only `scripts/test/lib/` and helper call sites; the test count of the full run equals the base's (629 files) and 0 asserts removed. |
+| 5 | Any remainder past spec 4 comes from the shared test fixture helpers, with no test skipped, cut or weakened. *assumed* (A1, itm_6b7ac21774f1). This rewrites the ticket's spec 4 ("not from fixtures"), which the user's Yes covered; S6 alone delivers it and nothing comes after it, so a no at Gate 1 drops S6 alone. | S6's diff touches only `scripts/test/lib/` and helper call sites; the test count of the full run equals the base's (629 files) and 0 asserts removed. |
 | 6 | practitioner: git performance engineers (GIT_TRACE2 users) — the per-call-site git census, before and after, is kept beside the design. | `spawns-before.txt` (this commit) and S7's `spawns-after.txt`: git spawns per entry module and per argv, same probe; both files cover at least 99% of the gate's git count. |
 
 ## 3. Findings
@@ -102,6 +102,8 @@ adopts, not a move.
   added tests included. archive-page, reply-markdown, classifier-env share no file with this run (checked by diff).
 - **A5** The bars carry no headroom: `SPAWN_CEILING` 11,000 flat, not measured + 10% (gate.mjs L16's rule). Trades:
   the next feature adding spawns past them must cut or ask. Rejected: measured + 10% (would sit above the signed bar).
+- **A6** QA environment (itm_470ec6f7a434, main's): this machine with seeded repos and a local bare remote, plus the
+  spawn count from a CI run of the feature PR. Trades: no landing on a real host repo before Gate 2.
 
 ## 7. Out of scope
 
@@ -110,7 +112,8 @@ suite wall time; prune-worktrees' own behaviour; any change to what land, integr
 
 ## 8. Slices
 
-Width 4; longest stem 4 (S1 → S2 → S4 → S7).
+Width 3; longest stem 5 (S1 → S2 → S4 → S7 → S6). S6 has no dependants: a no on A1 drops it alone, and the bars then
+stay at S7's product-only run (A1's rejected path).
 
 | Slice | Title | Spec | Files owned | After | Reviewers | File |
 |---|---|---|---|---|---|---|
@@ -119,22 +122,22 @@ Width 4; longest stem 4 (S1 → S2 → S4 → S7).
 | S3 | `pilot integrate` runs on one view | 3, 4 | `scripts/integrate.mjs`, `scripts/test/integrate-pin.test.mjs` (new) | S1 (`gitView`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
 | S4 | `pilot sync` and the pilot merge run on one view | 3, 4 | `scripts/sync.mjs`, `scripts/test/sync-pin.test.mjs` (new) | S2 (`tipOf`, `holdsIn`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S4](slices/S4.md) |
 | S5 | The landing's tail reuses its fetch and worktree list | 4 | `scripts/branches.mjs`, `scripts/land.mjs` (passes its view to the tail), `scripts/worktrees.mjs`, `scripts/test/land-tail-spawns.test.mjs` (new), `scripts/test/land-pin.test.mjs` | S2 (`scripts/land.mjs` passes its view; `tipOf`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S5](slices/S5.md) |
-| S6 | Test fixture helpers spawn fewer git | 5 | `scripts/test/lib/land-repos.mjs`, `scripts/test/lib/git-fixture.mjs`, `scripts/test/lib/fixture-git.test.mjs` (new) | – | `pilot:typescript-reviewer` | [S6](slices/S6.md) |
-| S7 | The suite meets 11,000 / 10,000 and the gate holds them | 1, 2, 6 | `scripts/gate.mjs`, `scripts/test/gate-spawns.test.mjs`, `docs/design/cheap-suite/architecture.md`, `docs/design/land-batching/cost-after.txt` (new), `docs/design/land-batching/spawns-after.txt` (new) | S3 (suite), S4 (suite), S5 (suite), S6 (suite) | `pilot:typescript-reviewer` | [S7](slices/S7.md) |
+| S6 | Test fixture helpers close the rest and the bars read the signed numbers | 5, 1, 2 | `scripts/test/lib/land-repos.mjs`, `scripts/test/lib/git-fixture.mjs`, `scripts/test/lib/fixture-git.test.mjs` (new), `scripts/gate.mjs` (the two constants), `docs/design/cheap-suite/architecture.md`, `docs/design/land-batching/cost-after.txt`, `docs/design/land-batching/spawns-after.txt` | S7 (`scripts/gate.mjs`, `cost-after.txt`) | `pilot:typescript-reviewer` | [S6](slices/S6.md) |
+| S7 | The gate holds a git ceiling and the product-only run is measured | 1, 2, 6 | `scripts/gate.mjs`, `scripts/test/gate-spawns.test.mjs`, `docs/design/cheap-suite/architecture.md`, `docs/design/land-batching/cost-after.txt` (new), `docs/design/land-batching/spawns-after.txt` (new) | S3 (suite), S4 (suite), S5 (suite) | `pilot:typescript-reviewer` | [S7](slices/S7.md) |
 
 S5 edits `land.mjs` only to pass its view to `deleteMerged` and `clear`, after S2. Census: `spawns-before.txt`, made by `census-probe.mjs` (run: `PROBE_OUT=<file> NODE_OPTIONS=--import=file:///<abs>/census-probe.mjs npm run test:cost`).
 red team: `land` calls `commitRecords` (`integrate.mjs`, S3's file), a commit made outside the view, before reading HEAD again: a stale HEAD would push the wrong source. S1 adds `Git.forget()` and calls it there; L3 names it. red team: the 26 landing bar first sat on S2, but four of its savings are S5's fetches and lists: bars now S1 ≤ 36, S2 ≤ 32, S5 ≤ 27.
 red team: S3 and S1 both first read `integrate.mjs`'s `git` export (land imports `git as gitAt`): S1 must not change
 it, only stop calling it, so S3 owns every `integrate.mjs` line. red team: S2 and S4 both need `holdsIn`: S2 creates
 it, S4 only calls it (after S2). red team: S7 measured before prune-worktrees lands would pass and then break on its
-landing: A4 makes S7 measure after it. red team: S6 touching `git-fixture.mjs` could change every fixture-based
+landing: A4 makes S7 measure after it. red team: S6 first ran beside S1 with S7 after it, so a no on A1 would have left S7 blocked: S6 now comes last. red team: S6 touching `git-fixture.mjs` could change every fixture-based
 test's repo; its pin is the full suite's unchanged test count and pass count.
 
 ## 9. Acceptance evidence
 
 1. A landing on a seeded repo prints the same lines as on the base and spawns ≤ 27 git (S1, S2, S5 pins and counts).
 2. `pilot integrate` and `pilot sync` print the same lines and spawn fewer git (S3, S4).
-3. A full `npm run test:cost` prints spawns ≤ 11,000, git ≤ 10,000 (S7, `cost-after.txt`).
+3. A full `npm run test:cost` prints spawns ≤ 11,000, git ≤ 10,000 (S7, or S6 after it; `cost-after.txt`).
 4. `spawns-before.txt` against `spawns-after.txt`: where the 2,572+ went, per entry module (S7).
 5. A gate over 11,000 or over 10,000 git reads red (S7 test).
 
@@ -147,6 +150,6 @@ test's repo; its pin is the full suite's unchanged test count and pass count.
 | S3 | planned | | | | S1 | 3, 4 |
 | S4 | planned | | | | S2 | 3, 4 |
 | S5 | planned | | | | S2 | 4 |
-| S6 | planned | | | | – | 5 |
-| S7 | planned | | | | S3, S4, S5, S6 | 1, 2, 6 |
+| S6 | planned | | | | S7 | 5, 1, 2 |
+| S7 | planned | | | | S3, S4, S5 | 1, 2, 6 |
 | feature | planned | `feat/land-batching` | | | | 1-6 |
