@@ -27,5 +27,6 @@ mod support;
 mod table;
 mod theme;
 mod thread;
+mod thread_table;
 mod tickets;
 mod type_scales;

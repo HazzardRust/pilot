@@ -439,11 +439,15 @@ pub fn empty(sentence: &str, key: &str, dark: bool) -> El {
     )
 }
 
-/// Markdown content: selectable, highlighted in the selection colour.
+/// Markdown content: selectable, highlighted in the selection colour. A table cell's `<br>` draws
+/// as a line break, and a selection across table cells copies as a GFM table (`thread_table`).
 pub fn markdown(source: impl Into<String>, dark: bool) -> El {
-    Markdown::new(source)
+    let source: std::rc::Rc<str> = source.into().into();
+    let drawn = crate::thread_table::draws_breaks(&source);
+    Markdown::new(drawn)
         .selectable(true)
         .render(&markdown_style(dark))
+        .selection_copy(move |sel| crate::thread_table::copy(&source, sel))
 }
 
 /// Rune's neutral markdown style on the deck's scales: headings by level (`type_::heading`; the reply
