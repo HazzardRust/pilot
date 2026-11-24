@@ -6,7 +6,7 @@
 
 import { archiveRows, liveDeck, withheld } from './archive.mjs';
 import { localStamp } from './archive-time.mjs';
-import { isOpen, KIND_REPORT, messagesOf } from './items.mjs';
+import { KIND_REPORT, messagesOf } from './items.mjs';
 import { archivedItems } from './store-archive.mjs';
 import { storeDir } from './store-dir.mjs';
 import { titled } from './view/thread.mjs';
@@ -38,7 +38,7 @@ export function archiveDetail(id, dir = storeDir()) {
   if (!row) return null;
   const items = [...(liveDeck(dir).items ?? []), ...archivedItems(dir)];
   const item = items.find((each) => each?.id === id);
-  const report = items.find((each) => each?.kind === KIND_REPORT && each.ticket === id && !isOpen(each));
+  const report = items.find((each) => each?.kind === KIND_REPORT && each.ticket === id);
   return {
     id: row.id,
     title: row.title,

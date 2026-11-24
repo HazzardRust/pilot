@@ -26,8 +26,8 @@ const ago = (ms) => new Date(Date.now() - ms).toISOString();
 
 const PLAN = { artefact: 'docs/design/alpha/architecture.md', branch: 'feat/alpha', sha: 'abc1234', slug: 'alpha', sliceCount: 3 };
 
-/** A ticket closed `at` ago, with two replies, a signed plan naming its gate1, and its closing report. */
-function story(title, at, over = {}) {
+/** A ticket closed `at` ago, with two replies, a signed plan naming its gate1, and (unless `reported` is false) its closing report. */
+function story(title, at, over = {}, reported = true) {
   const gate1 = postStored({ kind: 'gate1', title: `Plan for ${title}`, repo: REPO, resolvedAt: ago(at + 2 * HOUR), postedAt: ago(at + 3 * HOUR) });
   const replies = [
     { from: 'user', text: 'Go ahead.', repliedAt: ago(at + 2 * HOUR) },
@@ -37,7 +37,8 @@ function story(title, at, over = {}) {
     kind: 'ticket', title, body: shapedTicketBody(title), repo: REPO, sliceCount: 3, state: 'green',
     postedAt: ago(at + 4 * HOUR), resolvedAt: ago(at), replies, plan: { ...PLAN, gate1: gate1.id }, ...over,
   });
-  const report = postStored({ kind: 'report', title: `Closing report: ${title}`, body: '## Landed\n\n- **S1** merged', ticket: ticket.id, repo: REPO, resolvedAt: ago(at), postedAt: ago(at) });
+  if (!reported) return { gate1, ticket, report: null };
+  const report = postStored({ kind: 'report', title: `Closing report: ${title}`, body: '## Landed\n\n- **S1** merged', ticket: ticket.id, repo: REPO, postedAt: ago(at) });
   return { gate1, ticket, report };
 }
 
@@ -46,7 +47,7 @@ const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).
 test("a ticket's detail joins its thread, plan and report", (t) => {
   tempDeck(t);
   const { gate1, ticket } = story('the joined ticket', HOUR);
-  postStored({ kind: 'report', title: 'another ticket report', body: 'x', ticket: 'itm_000000000000', repo: REPO, resolvedAt: ago(HOUR) });
+  postStored({ kind: 'report', title: 'another ticket report', body: 'x', ticket: 'itm_000000000000', repo: REPO, postedAt: ago(HOUR) });
   listItems();
 
   const detail = archiveDetail(ticket.id);
@@ -82,18 +83,10 @@ test('a ticket with no plan or report gives null for each, and an unknown id giv
   assert.equal(archiveDetail(open.id), null, 'an open ticket is no archive row');
 });
 
-test('an open report on a closed ticket is not its closing report', (t) => {
-  tempDeck(t);
-  const bare = postStored({ kind: 'ticket', title: 'bare', body: shapedTicketBody('bare'), repo: REPO, resolvedAt: ago(HOUR) });
-  postStored({ kind: 'report', title: 'a draft report', body: 'not settled', ticket: bare.id, repo: REPO });
-  listItems();
-
-  assert.equal(archiveDetail(bare.id).report, null);
-});
-
 test('an archived ticket opens too', (t) => {
   const dir = tempDeck(t);
-  const { ticket } = story('the archived ticket', 40 * DAY);
+  // A report is never resolved, so the store keeps its ticket live (store-archive keptIds): an archived ticket has none.
+  const { ticket } = story('the archived ticket', 40 * DAY, {}, false);
   archiveOld();
   assert.ok(!listItems().some((item) => item.id === ticket.id), 'the ticket left the live store');
   assert.ok(fs.readdirSync(dir).some((name) => /^deck\.archive-\d{4}-\d{2}\.json$/.test(name)), 'for a month file');
@@ -101,7 +94,6 @@ test('an archived ticket opens too', (t) => {
   const detail = archiveDetail(ticket.id);
 
   assert.equal(detail.title, 'the archived ticket');
-  assert.equal(detail.report.title, 'Closing report: the archived ticket');
   assert.equal(detail.replies.length, 2, 'its thread came with it');
   assert.equal(detail.plan.at(-1).value, 'Plan for the archived ticket', 'and its plan, the gate1 read off the month file');
 });
