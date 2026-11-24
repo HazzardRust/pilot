@@ -61,14 +61,15 @@ test('a trigger file defers at slice scope', (t) => {
   assert.equal(wide.reason, 'package.json changed');
 });
 
-test('an argv overflow at slice scope runs the changed and tree tests and defers the rest', (t) => {
+test('an argv overflow at slice scope runs the direct and tree tests and defers the rest', (t) => {
   const { dir } = gitFixture(t, 'scope:repo', REPO);
   const long = 'a'.repeat(80);
-  for (let i = 0; i < 400; i++) write(dir, `test/${long}${i}.test.mjs`, "import '../lib/used.mjs';\n");
+  // 400 tests reach lib/used.mjs through lib/mid.mjs, one hop further than test/t.test.mjs.
+  write(dir, 'lib/mid.mjs', "export * from './used.mjs';\n");
+  for (let i = 0; i < 400; i++) write(dir, `test/${long}${i}.test.mjs`, "import '../lib/mid.mjs';\n");
   git(dir, 'add', '.');
   git(dir, 'commit', '-q', '-m', 'many');
   fs.appendFileSync(path.join(dir, 'lib/used.mjs'), 'export const v = 2;\n');
-  fs.appendFileSync(path.join(dir, 'test/t.test.mjs'), '// touched\n');
   const slice = selectTests({ cwd: dir, since: 'HEAD', scope: 'slice' });
   assert.deepEqual(slice.files, [path.resolve(dir, TREE), path.resolve(dir, 'test/t.test.mjs')].sort());
   assert.match(slice.deferred.join(), /^selection is \d+ characters of argv, over 24000$/);

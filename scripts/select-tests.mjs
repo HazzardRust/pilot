@@ -199,8 +199,10 @@ export function selectTests({ cwd, since, git = gitIn(cwd), scope = 'wide' }) {
   const overflow = `selection is ${argv} characters of argv, over ${ARGV_LIMIT}`;
   if (argv > ARGV_LIMIT && !slice) return { files: null, total, since: base, reason: overflow };
   if (argv > ARGV_LIMIT) {
-    // At slice scope an overlong selection keeps what fits on any command line: the changed tests and the tree tests.
-    files = selected.filter((rel) => changed.has(rel) || tree.has(rel)).map((rel) => path.resolve(cwd, rel)).sort();
+    // At slice scope an overlong selection keeps the nearest tests: the changed ones, the ones importing a changed
+    // file directly, and the tree tests.
+    const direct = new Set([...changed].flatMap((rel) => importers.get(rel) ?? []));
+    files = selected.filter((rel) => changed.has(rel) || direct.has(rel) || tree.has(rel)).map((rel) => path.resolve(cwd, rel)).sort();
     if (files.join(' ').length > ARGV_LIMIT) return { files: null, total, since: base, reason: overflow };
     deferred.push(overflow);
   }
