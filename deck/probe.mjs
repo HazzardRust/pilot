@@ -33,5 +33,7 @@ export async function probeDeck(url, { timeoutMs = 1000 } = {}) {
     ...(isText(health.startedAt) && { startedAt: health.startedAt }),
     ...(isText(health.root) && { root: health.root }),
     ...(typeof health.checkout === 'boolean' && { checkout: health.checkout }),
+    // stay-awake L6: whether the deck holds its keep-awake request, and since when.
+    ...(typeof health.awake?.held === 'boolean' && { awake: { held: health.awake.held, since: isText(health.awake.since) ? health.awake.since : null } }),
   };
 }

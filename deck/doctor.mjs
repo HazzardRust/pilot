@@ -27,6 +27,7 @@ import { MIN_MODS_VERSION, claudeVersion } from '../scripts/handoff.mjs';
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
+import { powerRow, readPower } from './power.mjs';
 import { probeDeck } from './probe.mjs';
 import { isSlug } from './runs.mjs';
 import { clashText, leashedGit, slugClashes } from './slug-clash.mjs';
@@ -501,6 +502,7 @@ export async function checkAll({
   }
   return [
     defenderRow({ platform, run, root }),
+    powerRow({ power: readPower({ platform, run }), awake: found.awake, platform }),
     nodeRow({ nodeVersion, engines }),
     dependencyRow({ resolveDep }),
     storeRow({ storeDir, canWrite }),
