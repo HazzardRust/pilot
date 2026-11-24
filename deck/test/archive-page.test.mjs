@@ -41,9 +41,9 @@ function seed() {
   const today = closed('the ticket closed today', Math.min(HOUR, sinceMidnight / 2));
   const yesterday = closed('the ticket closed yesterday', sinceMidnight + 12 * HOUR);
   const open = ticket('the open ticket');
-  postStored({ kind: 'chat', title: 'a closed chat', body: 'hello', repo: REPO, resolvedAt: ago(HOUR) });
+  const chat = postStored({ kind: 'chat', title: 'a closed chat', body: 'hello', repo: REPO, resolvedAt: ago(HOUR) });
   listItems();
-  return { old, today, yesterday, open };
+  return { old, today, yesterday, open, chat };
 }
 
 const monthFiles = (dir) => fs.readdirSync(dir).filter((name) => /^deck\.archive-\d{4}-\d{2}\.json$/.test(name));
@@ -84,15 +84,18 @@ test('closed tickets from both stores are rows', (t) => {
 
 test("rows sit in daySections' sections", async (t) => {
   const base = await deckOnAPort(t);
-  const { old, today, yesterday } = seed();
+  const { old, today, yesterday, chat } = seed();
 
   const { regions } = await view(base, 'screen=archive');
 
-  const expected = daySections([today, yesterday, old]).map(({ key, label, items }) => ({ key, heading: label, count: items.length }));
+  const expected = daySections([today, yesterday, old, chat]).map(({ key, label, items }) => ({ key, heading: label, count: items.length }));
   assert.equal(expected.length, 3, 'today, yesterday and a month');
   assert.deepEqual(regions.archive.days.map(({ key, heading, rows }) => ({ key, heading, count: rows.length })), expected);
   assert.deepEqual(regions.archive.days.map((day) => day.open), [true, false, false], 'only today is served open');
-  assert.deepEqual(regions.archive.kinds, [{ kind: 'tickets', label: 'Closed tickets', count: 3 }]);
+  assert.deepEqual(
+    regions.archive.kinds.filter(({ count }) => count > 0).map(({ kind, count }) => [kind, count]),
+    [['thread', 1], ['tickets', 3]],
+  );
 });
 
 test('the screen writes nothing', async (t) => {
