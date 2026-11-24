@@ -71,7 +71,7 @@
     },
     {
       "slice": "S10",
-      "state": "pushed 579c3f3; ts APPROVE; integrating (full suite)",
+      "state": "integrated at e17d767; checks green at 53795ed; B1 MISSED (13571 spawns / 12472 git vs 11000 / 10000); B2 650 s, two suites at once; B3 partial (land.mjs needs diff mutation); LOW: test-cost.mjs:56 total row off by 66",
       "after": [
         "S5",
         "S7",
@@ -112,10 +112,12 @@
     },
     {
       "slice": "S15",
-      "state": "planned (added): cut spawns to the bars; land-*.test.mjs hold ~4400 git spawns, land-clear ~1000; carries the green cost-bars pin; moves no locked decision",
+      "state": "integrated",
       "after": [
         "S10"
-      ]
+      ],
+      "branch": "slice/cheap-suite-s15",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s15"
     }
   ],
   "findings": [
@@ -145,27 +147,9 @@
       "text": "15 idle `node --test scripts/test/land-*.test.mjs` processes from a timed-out mutation run are left alive (started 24/11 12:24:38-45, parents gone); end them in Task Manager or reboot when no run is live."
     }
   ],
-  "next": "integrating S10 579c3f3 (full suite); checks; S15 (added: spawn cut, writes S15.md first); fundamentalist; fix round; QA.",
-  "updatedAt": "2026-11-24T02:33:01.637Z",
+  "next": "co-pilot live: S15 a128318 integrating; then fundamentalist + QA (read-only), fix round, QA walkthrough.",
+  "updatedAt": "2026-11-24T03:00:24.093Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "a Remove-Item samp* cleanup also deleted its own sampler script; run 1 lost its node figures",
-      "evidence": "S2 fixer report: sampled run 2 only",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "test:changed selection overflowed argv (35843 > 24000 chars) and fell back to the full suite, cargo included",
-      "evidence": "S6 evidence run: full suite: selection is 35843 characters of argv, over 24000; 10 min 46 s",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S6.md B4 bar 'one per land call' did not count the land calls or child pilot processes in land-clear, so the bar was not checkable when set",
-      "evidence": "S6 B4 measured 30 and 15 vs <=12",
-      "size": 1
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "the shared Rune target silently served another worktree's compiled build to the S3 fixer's own first gate",
@@ -361,6 +345,22 @@
       "kind": "drain",
       "what": "pilot wait timed out on the deck four times in a row while suites ran; deck itself answering; 4 restarts and a timed probe",
       "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the per-file cost table does not split spawns into test-made versus code-under-test, so S15's lever guess (fixtures) needed a custom preload to check",
+      "evidence": "land-clear: 1012 spawns, 64 from test code; scratchpad s15/attr2.mjs"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced six times in one run while a child was live; main relayed every child report by hand",
+      "evidence": "handback-send-enforce notices on S5/S7/S8, S8 fix, S10, S15"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit refused edits on architecture.md and S10.md until each was Read first; five edits re-issued",
+      "evidence": "S15 report",
+      "size": 1
     }
   ]
 }
