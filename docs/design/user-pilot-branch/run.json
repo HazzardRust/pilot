@@ -66,8 +66,8 @@
       "pr": 157
     }
   ],
-  "next": "No agent live. Red: gate1 itm_178637b5acc6 awaits press. Green: gate2 itm_1d819d4586dc (reply-markdown, PR #137, 44541ac) awaits press; then lander + QA a418f693a8ff8fa45 \"tear down\". Yellow empty: tested-once first (its record's next: security re-review S1, integrate S1+S3); land-batching waits on itm_bd575183ec2f; archive-page on F7/F8/F9. Each record's next is current.",
-  "updatedAt": "2026-11-24T17:10:30.197Z",
+  "next": "Red: gate1 itm_178637b5acc6 awaits press. Green: gate2 itm_1d819d4586dc (reply-markdown) and itm_589b847f8e5c (handoff-self-close; scratch deck port 4399 pid 40724) await press, then a lander each. Yellow: stay-awake itm_498e739e2bcb mid-run, see its record. Paused on questions: tested-once itm_ce0954d114aa, classifier-env itm_36f9b943921e. Each record's next is current.",
+  "updatedAt": "2026-11-24T20:35:47.456Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -95,6 +95,26 @@
       "kind": "drain",
       "what": "deck_status next capped at 400 chars: five calls rejected and rewritten",
       "size": 5
+    },
+    {
+      "kind": "drain",
+      "what": "co-pilot forced to hand back twice with children live; the pilot collected five implementer reports directly and integrated four slices itself, each report 3-6k tokens in the pilot's context",
+      "size": 30
+    },
+    {
+      "kind": "drain",
+      "what": "a blocking co-pilot question yields its ticket after 20 min unanswered: two tickets paused mid-build while the user was away, each costing a pause, a hand-back and a re-brief",
+      "size": 12
+    },
+    {
+      "kind": "drain",
+      "what": "evidence rows live only in agent reports: the pilot wrote four trailer files to its scratchpad so a hand-off would not lose them",
+      "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait restarted 9 times; stop hook and idle notices each read and answered",
+      "size": 8
     }
   ]
 }
