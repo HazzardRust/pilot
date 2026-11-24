@@ -55,7 +55,8 @@ const CREDENTIAL_SHAPES = [
   ['a token authorization', /\bAuthorization:\s*token\s+(?![$<{])[A-Za-z0-9._~+/=-]{16,}/i],
   // As `--password`: a reference or placeholder stays postable, as does a plain word; `--token-limit` is another flag.
   ['a --token or --api-key value', /(?:^|\s)--(?:token|api[-_]?key)(?:\s+|=)["']?(?![$<{-])(?=[^\s"']*[^A-Za-z\s"'])[^\s"']{8,}/i],
-  ['an npm _authToken', /_authToken\s*=\s*["']?(?![$<{])[^\s"']{8,}/],
+  // The `.npmrc` key starts a line or follows the registry's `:`; `this._authToken = …` is code.
+  ['an npm _authToken', /(?<![^\s:])_authToken\s*=\s*["']?(?![$<{])[^\s"']{8,}/],
   // sshpass's own options come first, `-f`/`-d`/`-P` taking a value; any other word ends them, so `ssh -p 22` after
   // the command is a port. No run holds `sshpass`, so each character is scanned from one start only.
   [

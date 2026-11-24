@@ -134,6 +134,7 @@ test('prose and commands near the new shapes read back as they were', (t) => {
     'npm config get npm_config_registry',
     'echo "Authorization: token authentication is deprecated"',
     'echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} >> .npmrc',
+    'this._authToken = response.data.token;',
   ];
   for (const command of plain) appendRefusal(entry({ command }), { dir });
   assert.deepStrictEqual(readRefusals({ dir }).map((r) => r.command), plain);
