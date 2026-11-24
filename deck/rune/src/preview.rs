@@ -34,8 +34,9 @@ pub fn spans(edit: &TextEdit, dark: bool) -> Vec<Span> {
                 continue;
             }
             Event::Start(Tag::Item) => {
-                // The marker (`-`, `*`, `1.`) solid in the body ink at the thread's bullet weight,
-                // never dimmed (the user's "Solid dash now", itm_51f1646c9f32); the item's text untouched.
+                // The marker (`-`, `*`, `1.`) solid in the body ink at the thread's bullet
+                // weight, never dimmed (the user's "Solid dash now", itm_51f1646c9f32); the
+                // item's own text untouched.
                 let line = &text.as_bytes()[at.clone()];
                 let mark = line.iter().take_while(|b| !b.is_ascii_whitespace()).count();
                 out.push(

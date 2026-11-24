@@ -204,7 +204,7 @@ On a scratch deck in the Rune window, the user opens a thread and types into the
 
 1. `**bold** _it_ `code``, Shift+Return, a second line: the first line renders, the second stays raw (spec 1, 2).
 2. Arrow up: the first line turns raw, the second renders, in one frame (spec 2).
-3. `# Head`, `- item`, `[pilot](https://example.com)` on lines of their own render as heading, quiet marker, link (1).
+3. `# Head`, `- item`, `[pilot](https://example.com)` on lines of their own render as heading, solid marker (body ink, body weight; the user, 2026-11-24), link (1).
 4. Clicking the link puts the caret there; no browser opens, nothing posts (spec 4).
 5. Clicking into the thread: every line renders (spec 5).
 6. A 300-line paste types without lag (spec 6); the reply sent reads in the thread exactly as typed and styles as it
