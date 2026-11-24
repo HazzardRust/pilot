@@ -54,6 +54,7 @@ import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-gene
 import { assertPushable, firstLine, git, isPilotBase, isPilotName, landingSubjects, pilotBranch, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRef, runRemote, shortRef } from './remotes.mjs';
 import { scopeOf } from './select-tests.mjs';
+import { nodeMajor, recordRun, worktreeTree } from './test-ledger.mjs';
 import { holderFrom, runRecord } from './worktrees.mjs';
 
 const RECORDS = ':(glob)docs/design/*/run.json';
@@ -160,8 +161,16 @@ function countsOf(output) {
  * L8), freed red, green or thrown; `slots` goes to `takeSlot` (a test's lock directory). `slot`
  * false, for a selecting command, takes none and sets no `PILOT_GATE_SLOT`, so a gate inside
  * that falls back to the full suite takes its own (suite-at-landing L9).
+ *
+ * Once the process has exited, one ledger row (`recordRun`; tested-once L3) holds its own status,
+ * `where`, `branch` (default the checked-out one), `since` and the tree taken before it started; a
+ * throw before the exit writes none. Inside the suite (`PILOT_GATE_HOME_STORE` set) no row is
+ * written unless `home` is passed (L8). `minutes` is the run's wall time.
  */
-export function runTests(cwd, test, { label = 'tests', home = os.homedir(), slots = {}, slot: inSlot = true } = {}) {
+export function runTests(cwd, test, { label = 'tests', where = 'tests', branch, since = null, home, slots = {}, slot: inSlot = true } = {}) {
+  const ledgerHome = home ?? (process.env.PILOT_GATE_HOME_STORE ? null : os.homedir());
+  home ??= os.homedir();
+  const tree = ledgerHome === null ? null : worktreeTree(cwd);
   const dir = path.join(home, '.claude', 'pilot', 'logs');
   privateDir(path.dirname(dir)); // the store, if this is its first writer (L6)
   fs.mkdirSync(dir, { recursive: true });
@@ -171,6 +180,7 @@ export function runTests(cwd, test, { label = 'tests', home = os.homedir(), slot
   const fd = fs.openSync(log, 'wx', 0o600);
   let run;
   let slot;
+  const started = Date.now();
   try {
     if (inSlot) slot = takeSlot({ cwd, env: process.env, ...slots });
     const env = slot ? { ...process.env, PILOT_GATE_SLOT: String(slot.slot) } : process.env;
@@ -179,10 +189,20 @@ export function runTests(cwd, test, { label = 'tests', home = os.homedir(), slot
     slot?.release();
     fs.closeSync(fd);
   }
+  const minutes = Math.round((Date.now() - started) / 600) / 100;
   const output = fs.readFileSync(log, 'utf8');
   const status = run.status ?? run.error?.code ?? run.signal;
+  const scope = scopeOf(output);
+  if (ledgerHome !== null) {
+    const head = tree === null ? null : spawnSync('git', ['rev-parse', '-q', '--verify', 'HEAD'], { cwd, encoding: 'utf8', windowsHide: true }).stdout.trim() || null;
+    branch ??= tree === null ? null : spawnSync('git', ['branch', '--show-current'], { cwd, encoding: 'utf8', windowsHide: true }).stdout.trim() || null;
+    recordRun({
+      at: new Date().toISOString(), where, branch: branch ?? null, slug: null, sha: head, tree, since, scope,
+      exit: status, minutes, platform: process.platform, node: nodeMajor(),
+    }, { home: ledgerHome });
+  }
   if (status === 0) fs.rmSync(log, { force: true });
-  return { status, counts: countsOf(output), failing: failingNames(output), log, scope: scopeOf(output) };
+  return { status, counts: countsOf(output), failing: failingNames(output), log, scope, minutes };
 }
 
 /** How many failing tests a red line names before it counts the rest. */
@@ -237,7 +257,8 @@ export const NO_TEST = 'no package.json here; set git config pilot.test "<comman
 function runChosen(cwd, test, since, label) {
   const chosen = test === undefined ? testCommand(cwd, { since }) : { command: test, selected: false };
   if (chosen === undefined) throw new Error(NO_TEST);
-  return runTests(cwd, chosen.command, { label, slot: !chosen.selected });
+  // The row's `since` is null only for the repository's own full command: an injected one claims no scope.
+  return runTests(cwd, chosen.command, { label, where: 'integrate', since: test === undefined && !chosen.selected ? null : since, slot: !chosen.selected });
 }
 
 /** A green run's `<counts>`, then `; <scope>` when it printed one. */
