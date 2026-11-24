@@ -374,8 +374,12 @@ pub fn center(s: &State, cx: &mut Cx<State>) -> El {
     screen = screen
         .child(regions::thread::draw(region("thread"), &r.thread, cx))
         .child(regions::reply::draw(region("reply"), &r.reply, cx));
-    // The archive lists its own rows and withholds history's (archive-page L11).
-    if s.query.screen == "archive" {
+    // The archive lists its own rows and withholds history's (archive-page L11); with a row's `id` it draws
+    // that row's detail instead of the list (A3).
+    if s.query.screen == "archive" && s.query.id.is_some() {
+        let detail = regions::archive_detail::Detail::of(region("archiveDetail"));
+        screen = screen.child(regions::archive_detail::draw(&detail, cx));
+    } else if s.query.screen == "archive" {
         screen = screen.child(regions::archive::draw(region("archive"), &r.archive, cx));
     } else if s.query.screen != "thread" {
         screen = screen.child(regions::history::draw(region("history"), &r.history, cx));
