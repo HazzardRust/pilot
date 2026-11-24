@@ -37,14 +37,12 @@ test('a file with spawns and no passing test still shows', () => {
   ]);
 });
 
-test('past the top rows the rest is one line', () => {
-  const lines = [line('a.test.mjs', 3000), line('b.test.mjs', 2000), line('c.test.mjs', 1000), line('d.test.mjs', 500)];
-  const owners = new Map([['c.test.mjs', kinds(1, 1, 0)], ['d.test.mjs', kinds(0, 0, 3)]]);
-  const table = rows(costTable(lines, owners, { top: 2 }));
-  assert.deepEqual(table.slice(3), [
-    ['rest', '2', 'files', '1.5', 's', '5', 'spawns'],
-    ['total', '4', 'files', '6.5', 's', '5', 'spawns', '(git', '1)'],
-  ]);
+test('every file the run started is a row, however many (spec 1)', () => {
+  const lines = Array.from({ length: 45 }, (_, i) => line(`f${String(i).padStart(2, '0')}.test.mjs`, 1000 - i));
+  const table = rows(costTable(lines, new Map()));
+  assert.equal(table.length, 1 + 45 + 1, 'a header, 45 rows and the total');
+  assert.deepEqual(table.at(-2)[0], 'f44.test.mjs');
+  assert.ok(!table.some((row) => row[0] === 'rest'), 'no file is folded into a rest line');
 });
 
 test("the runner's own spawns, owner `-`, are a row and in the total, so the total matches the spawn line", () => {

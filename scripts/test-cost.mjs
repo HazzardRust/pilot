@@ -22,11 +22,11 @@ const seconds = (ms) => (ms / 1000).toFixed(1);
 
 /**
  * The cost table: a header, one row per file slowest first by summed ms (then most spawns, then name),
- * `top` rows and then `rest <n> files <s> s <spawns> spawns`, and last
- * `total <files> files <s> s <spawns> spawns (git <g>)`. A file is any file in `lines` or any owner, the
- * runner's own `-` included so the total matches the spawn line; a file with spawns and no reported test is a row of 0 s.
+ * every file a row (spec 1), and last `total <files> files <s> s <spawns> spawns (git <g>)`. A file is any
+ * file in `lines` or any owner, the runner's own `-` included so the total matches the spawn line; a file with
+ * spawns and no reported test is a row of 0 s.
  */
-export function costTable(lines, owners, { top = 40 } = {}) {
+export function costTable(lines, owners) {
   const files = new Map();
   const row = (file) => {
     if (!files.has(file)) files.set(file, { file, ms: 0, tests: 0, total: 0, node: 0, git: 0, other: 0 });
@@ -43,13 +43,10 @@ export function costTable(lines, owners, { top = 40 } = {}) {
     Object.assign(row(owner), { total: kinds.total, node: kinds.node, git: kinds.git, other: kinds.other });
   }
   const ranked = [...files.values()].sort((a, b) => b.ms - a.ms || b.total - a.total || (a.file < b.file ? -1 : 1));
-  const shown = ranked.slice(0, top);
-  const rest = ranked.slice(top);
   const sum = (list, key) => list.reduce((n, entry) => n + entry[key], 0);
-  const cells = [['file', 's', 'tests', 'spawns', 'git', 'node', 'other'], ...shown.map((e) => [e.file, seconds(e.ms), e.tests, e.total, e.git, e.node, e.other].map(String))];
+  const cells = [['file', 's', 'tests', 'spawns', 'git', 'node', 'other'], ...ranked.map((e) => [e.file, seconds(e.ms), e.tests, e.total, e.git, e.node, e.other].map(String))];
   const widths = cells[0].map((_, i) => Math.max(...cells.map((cell) => cell[i].length)));
   const out = cells.map((cell) => cell.map((text, i) => (i === 0 ? text.padEnd(widths[i]) : text.padStart(widths[i]))).join('  ').trimEnd());
-  if (rest.length) out.push(`rest ${rest.length} files ${seconds(sum(rest, 'ms'))} s ${sum(rest, 'total')} spawns`);
   // The git count is built apart: `spawns (` reads as a spawn call to hidden-spawns.test.mjs.
   const git = `(git ${sum(ranked, 'git')})`;
   out.push(`total ${ranked.length} files ${seconds(sum(ranked, 'ms'))} s ${sum(ranked, 'total')} spawns ${git}`);

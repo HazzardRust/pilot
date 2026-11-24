@@ -31,6 +31,8 @@ Remote: origin
 - Every child process must pass `windowsHide: true` (`hidden-spawns.test.mjs`, full suite only).
 - `pilot checks --wait` returns pending on windows-latest and needs re-arming.
 - `deck/items.mjs` and `deck/server-wait.mjs` sit at the 800-line facade bar.
+- `hooks/test/inbox.test.js` went 8 red in one loaded full run (QA, 86e4dcc), 66/66 alone, 0 fail in the full
+  gates at e56094e and 37c07bf; likely the hook's 1500 ms deck budget (`hooks/lib/deck.js:38`) under load, not reproduced.
 - The machine is shared with other runs' gates: never run the full suite twice in a slice, and time only what the
   slice says to time.
 
