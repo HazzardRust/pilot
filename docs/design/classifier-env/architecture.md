@@ -104,6 +104,11 @@ ADR NNNN (`docs/adr/NNNN-classifier-env.md`, written in S1) records L1-L4.
   Asked: itm_fe2e6aa41d19.
 - **A4** Spec 8, the `pilot doctor` row, `main`'s question itm_1d8272a673d9 (default yes). Cut as S3 with no edge, so
   a no drops S3 and nothing else.
+- **A5** QA environment, `main`'s question itm_d24c3c01f382: a scratch home, plus one read-only
+  `claude auto-mode config` against the real home. Tradeoff: the real start-settings.json is written only by the
+  user's own Start. Rejected: QA running a Start against the real home.
+- **A6** Grilling depth: Every, assumed (itm_af228ea26e6d closed by the deck after 20 min, no answer); Gate 1 is a
+  walk, one question per locked decision.
 - red team: walked S1 behaviour 1 against `start-session.test.mjs:303`: it deep-equals the file to
   `runSettings(level).settings` under the test's own `process.env`; a CI or shell with `PILOT_CLASSIFIER_ENV=off`
   set would still pass, so S1's tests pass `env` explicitly. Walked the shared file: two Starts in two repos now
