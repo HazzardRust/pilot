@@ -87,7 +87,7 @@
     },
     {
       "slice": "S11",
-      "state": "pushed 5718b0b",
+      "state": "integrated 21961f8; checks green",
       "after": [
         "S1"
       ],
@@ -96,7 +96,7 @@
     },
     {
       "slice": "S10",
-      "state": "planned",
+      "state": "pushed b193e2b",
       "after": [
         "S4",
         "S5",
@@ -105,7 +105,9 @@
         "S8",
         "S9",
         "S11"
-      ]
+      ],
+      "branch": "slice/archive-page-s10",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s10"
     },
     {
       "slice": "S12 clippy ticket_row args (added)",
@@ -130,28 +132,20 @@
       ],
       "branch": "slice/archive-page-s14",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s14"
+    },
+    {
+      "slice": "S15 Upgrade backups and the defender marker (added)",
+      "state": "pushed 8712de7",
+      "after": [
+        "S10"
+      ],
+      "branch": "slice/archive-page-s15",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s15"
     }
   ],
-  "next": "Integrating S11 5718b0b (typescript warn, B1-B4); then checks, S10, fundamentalist, QA.",
-  "updatedAt": "2026-11-24T13:54:04.812Z",
+  "next": "Integrating S10 b193e2b; then checks, integrate S15 8712de7 (ts approve, B1-B5), checks, fundamentalist, QA.",
+  "updatedAt": "2026-11-24T14:23:38.582Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "one live planning ticket: a re-cut gate1 waiting on the user parks the next ticket's architect, whose questions and gate1 the deck then refuses",
-      "size": 3000
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S1 implementer handed back after creating its worktree, reporting that a compaction had wiped its context; nothing built",
-      "evidence": "2 tool uses, 21 s; slice/archive-page-s1 HEAD 453e570, clean tree, not on origin",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "The co-pilot hello ('send me what your definition sends main') reads as a request for the report. The first S1 implementer answered it by handing back empty; the second replied 'no report yet' and kept building",
-      "evidence": "afa65ced handed back after 2 tool uses; a7564be5 replied by SendMessage 'nothing is built ... building the slice now'",
-      "size": 1
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S1 pushed twice on a non-npm exit code; final full gate red on an unlisted deck module (deck/README.md)",
@@ -373,6 +367,24 @@
       "what": "npm test takes ~9 min and prints a fail 0 line for nested sub-runs, so a wait on that line fires early",
       "evidence": "S11 re-proof, relayed by main",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10 Interface says STORE_FILES is found by grep, but a raw literal grep gives ~35 names, over half not store files; the implementer wrote an exclusion list with reasons",
+      "evidence": "S10 report: NOT_A_STORE_FILE 19 names",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "co-pilot brief asked for ADR 0213 against L7's NNNN placeholder; implementer followed L7",
+      "evidence": "S10 report pushback",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "testUtils seeds a v2 deck, so any archive test over a seeded store now sees an upgrade backup row; cost one npm test red and a rerun",
+      "evidence": "S15: archive-page.test.mjs rows sit in daySections' sections failed alone",
+      "size": 2
     }
   ]
 }
