@@ -94,16 +94,21 @@ adopts, not a move.
   (S6), after S1-S5 and S7 are measured. **Answered**: the user pressed "Fixtures make up the rest" on itm_6b7ac21774f1. Product cut estimated −1,500 to −2,100; fixture folds −500 to −900; needed −2,572.
   Trades spec 4's "not fixtures" wording. Rejected: bars at what product reaches (keeps spec 4, misses the signed
   bars); product beyond the three scripts (~400 duplicate reads there, still short).
+  Verdict: stands — the user pressed "Fixtures make up the rest" on itm_6b7ac21774f1; it rewrites the ticket's spec line 4 on their word
 - **A2** Per-command bars (spec 4): landing ≤ 27 of 39 (S1 ≤ 36, S2 ≤ 32, S5 ≤ 27), sync main-merge ≤ 14 of 18, integrate ≤ 75% of its base
   count. Trades: a looser bar per command for one that each slice can prove alone. Rejected: one combined bar.
+  Verdict: stands — no recorded preference sets other per-command bars; the suite bars are the user's signed 11,000 / 10,000
 - **A3** The landing's tail (S5) reuses the landing's own fetch: `deleteMerged` and `prune` read refs the landing's
   fetch and push left, no second and third `fetch origin`. Trades: a branch another session pushes in those seconds
   is seen at the next landing, not this one. Rejected: keep the fetches (−200 lost).
+  Verdict: stands — the push stays the arbiter when another device moves the remote after the one fetch, so spec 3's refusals hold
 - **A4** prune-worktrees (itm_0ddca8a8e2f0) lands first, as the ticket says: S5 (worktrees.mjs) and S3
   (integrate.mjs, its `pruneSlice` neighbour) merge `origin/main` before they start, and S7 measures after it, its
   added tests included. archive-page, reply-markdown, classifier-env share no file with this run (checked by diff).
+  Verdict: stands — prune-worktrees itm_0ddca8a8e2f0 is signed and yellow, ahead of this ticket in the implementing queue, and the ticket's own text orders them so
 - **A5** The bars carry no headroom: `SPAWN_CEILING` 11,000 flat, not measured + 10% (gate.mjs L16's rule). Trades:
   the next feature adding spawns past them must cut or ask. Rejected: measured + 10% (would sit above the signed bar).
+  Verdict: stands — the user chose the CI count on itm_470ec6f7a434, which is the guard for bars with no headroom
 
 ## 7. Out of scope
 
