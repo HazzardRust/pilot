@@ -187,7 +187,9 @@ fn the_sent_text_is_the_typed_text() {
     let mut local = typed(typed_text);
     local.draft.focused = true;
     local.draft.set_caret(typed_text.len());
+    pilot_deck::preview::spans(&local.draft, false);
     local.draft.set_caret(0);
+    pilot_deck::preview::spans(&local.draft, false);
     assert_eq!(local.send(ID), Some(reply(typed_text, None)));
 }
 

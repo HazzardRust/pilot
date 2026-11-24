@@ -115,6 +115,21 @@ fn a_span_crossing_a_raw_line_clips_at_a_char_boundary() {
 }
 
 #[test]
+fn nested_emphasis_and_an_empty_or_overrun_draft_render_without_a_panic() {
+    // `***a***` is emphasis around strong: the a both italic and bold, six quiet stars.
+    let spans = preview::spans(&edit("***a***\nx", 9, 9), DARK);
+    assert!(has(&spans, 3..4, |s| s.weight.is_some()), "{spans:?}");
+    assert!(has(&spans, 1..6, |s| s.italic), "{spans:?}");
+    for marker in [0..1, 1..3, 4..6, 6..7] {
+        assert!(has(&spans, marker, |s| s.color == Some(quiet())));
+    }
+
+    assert!(preview::spans(&edit("", 0, 0), DARK).is_empty());
+    // A caret past the end of the text clamps to it rather than slicing out of range.
+    assert!(preview::spans(&edit("**a**", 40, 99), DARK).is_empty());
+}
+
+#[test]
 fn an_unfocused_box_renders_every_line() {
     let text = "**a**\n**b**";
     let mut e = edit(text, 1, 1);
