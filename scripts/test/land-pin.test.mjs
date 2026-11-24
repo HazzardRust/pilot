@@ -4,7 +4,8 @@
  * recorded on the base before any product change. Nothing here reaches a real remote.
  */
 
-import { git, commitFile, repos, passing, fakeGh, mainSays } from './lib/land-repos.mjs';
+import { git, commitFile, repos, passing, fakeGh, mainSays, land } from './lib/land-repos.mjs';
+import { countGit } from './lib/count-git.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -34,4 +35,14 @@ test('the landing prints what it printed on the base and leaves the same merge o
   );
   assert.equal(git(origin, 'log', '-1', '--format=%s', 'pilot'), 'Merge feat/x into pilot');
   assert.equal(git(origin, 'log', '-1', '--format=%P', 'pilot'), `${before} ${tip}`);
+});
+
+// 36 measured on the base for this landing (land-batching S1); S1's bar is 35, S5's 27 (A2).
+const BASE_GIT = 36;
+const BAR_GIT = 35;
+
+test('one landing spawns fewer git than on the base', (t) => {
+  const { gitIn, x } = repos(t, 'x');
+  const { value, git: spawned } = countGit(() => land({ cwd: x, git: gitIn(x), host: fakeGh().host, test: passing }));
+  assert.equal(value.already, false);  assert.ok(spawned <= BAR_GIT, `one landing spawned ${spawned} git, over ${BAR_GIT} (${BASE_GIT} on the base)`);
 });
