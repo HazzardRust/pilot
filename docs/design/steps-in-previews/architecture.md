@@ -104,11 +104,14 @@ exported, not copied. No fold changes code on its own: each sits in the slice wh
   "not queued"; one kind-specific line in `isQueued`. Rejected: drop steps from `STANDING_KINDS` (the Stop gate would
   hold a pilot's turn on steps only the user can do); keep L6 and add a Steps section (a second list, the one missed).
   Question `itm_d3f9528237e6`, closed at the default by the deck's 20-minute timeout, not pressed.
+  Verdict: stands — itm_d3f9528237e6 closed by timeout at the default, not pressed; it moves human-steps L6, which the user's words ask for ("can you get the actual tickets up on the preview"); agents' side of L6 is untouched
 - **A2** *assumed* — Every Rune card that belongs to a ticket draws the ticket line, as every HTML card already does.
   Trades: one caption line on every ticketed Rune card, wider than the ask. Rejected: steps cards only (a kind-special
   line). Question `itm_a47641105921`. User, 2026-11-24: "Every card with a ticket (default)".
+  Verdict: stands — the user pressed "Every card with a ticket (default)" on itm_a47641105921; side-panes itm_f9162b87414f owns the panes only
 - **A3** *assumed* — Grilling depth: forks (the pilot's question `itm_1f544b61e001`), closed at the default by the
   deck's 20-minute timeout, not pressed.
+  Verdict: stands — itm_1f544b61e001 closed by timeout at the default forks, not pressed
 
 ## 7. Out of scope
 
