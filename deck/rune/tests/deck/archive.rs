@@ -70,15 +70,14 @@ fn the_archive_button_opens_the_closed_tickets_by_day() {
         drawn.iter().any(|key| key.starts_with("archive-day-")),
         "a day section: {drawn:?}"
     );
-    assert_eq!(
-        drawn
-            .iter()
-            .filter(|key| key.starts_with("archive-row-"))
-            .count(),
-        3,
-        "exactly the three closed tickets"
-    );
     let shown = texts(&rt);
+    // Other kinds (usage, memory, ...) draw rows of their own from the scratch deck's stores; only the
+    // ticket kind's rows are the closed tickets, each captioned `tickets`.
+    assert_eq!(
+        shown.iter().filter(|text| *text == "tickets").count(),
+        3,
+        "exactly the three closed tickets: {shown:?}"
+    );
     for label in ["Repository", "State", "Closed"] {
         assert_eq!(
             shown.iter().filter(|text| *text == label).count(),
