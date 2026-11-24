@@ -25,7 +25,9 @@ import { deckPidNow, stopper } from '../deck/gc.mjs';
 import { isClaude, pilotProcesses, processTable } from '../deck/procs.mjs';
 import { takeSlot } from './gate-slots.mjs';
 import { rebuildLedgers } from './ledgers.mjs';
-import { TEST_GLOB, scopeLine, selectTests } from './select-tests.mjs';
+import { RUNE_TARGET_MAX, boundTarget, runeTargetDir, staleRoot } from './rune-target.mjs';
+import { FULL_TRIGGERS, TEST_GLOB, scopeLine, selectTests } from './select-tests.mjs';
+import { costTable } from './test-cost.mjs';
 
 export const MAX_CONCURRENCY = 4;
 export const CHILD_HEAP_MB = 512;
@@ -53,6 +55,21 @@ const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import
 
 /** The checkout this gate belongs to. */
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// URLs, since `node --test` reads a Windows path's drive as a URL scheme.
+const QUIET_REPORTER = new URL('./quiet-reporter.mjs', import.meta.url).href;
+const COST_REPORTER = new URL('./test-cost.mjs', import.meta.url).href;
+
+/**
+ * `args` with the cost reporter writing to `file` (cheap-suite S1; L4): the caller's reporters keep
+ * stdout, or the quiet one shows the run when the caller named none, so the cost lines never reach the screen.
+ */
+function costArgs(args, file) {
+  const reporters = args.filter((arg) => arg.startsWith('--test-reporter=')).length || 1;
+  const shown = args.some((arg) => arg.startsWith('--test-reporter=')) ? [] : [`--test-reporter=${QUIET_REPORTER}`];
+  const destinations = args.filter((arg) => arg.startsWith('--test-reporter-destination=')).length;
+  const unrouted = Array(Math.max(0, reporters - destinations)).fill('--test-reporter-destination=stdout');
+  return [...args, ...shown, ...unrouted, `--test-reporter=${COST_REPORTER}`, `--test-reporter-destination=${file}`];
+}
 
 /** `text` with each glob metacharacter in a one-character class; `!` is special only before `(`, which is closed off. */
 function escapeGlob(text) {
@@ -183,11 +200,24 @@ function spawnLines(count, ceiling) {
   if (count.total <= ceiling) return lines;
   const most = [...count.owners]
     .filter(([owner]) => owner !== '-')
-    .sort(([a, n], [b, m]) => m - n || (a < b ? -1 : 1))
+    .sort(([a, n], [b, m]) => m.total - n.total || (a < b ? -1 : 1))
     .slice(0, 3)
-    .map(([owner, n]) => `${owner} ${n}`);
+    .map(([owner, n]) => `${owner} ${n.total}`);
   lines.push(`spawns over ${ceiling}${most.length ? `; most: ${most.join(', ')}` : ''}`);
   return lines;
+}
+
+/**
+ * The cost table from the reporter's `file` and the spawn owners (cheap-suite S1), or nothing beside a
+ * `cost:` line on stderr when it cannot be read: the table is a report, so the run's status stays the suite's.
+ */
+function costLines(file, owners) {
+  try {
+    return costTable(fs.readFileSync(file, 'utf8').split('\n'), owners);
+  } catch (err) {
+    process.stderr.write(`cost: no table (${firstLine(err)})\n`);
+    return '';
+  }
 }
 
 /**
@@ -245,28 +275,71 @@ function homeStoreLine(file, before, deckPid) {
 }
 
 /**
- * The Rune deck's `cargo test` (rune-deck-ui S19; A3) when `which('cargo')` finds it on Windows, else the one
- * line the gate prints instead: off Windows the deck's tests run in CI's Windows job, not in every gate, and a
- * gate a test starts (its env carries the outer gate's guard) leaves them to the outer one.
+ * The Rune deck's `cargo fmt --check` then `cargo test` (rune-deck-ui S19; A3; ui-design-workflow S7) when
+ * `which('cargo')` finds it on Windows, else the one line the gate prints instead: off Windows the deck's tests
+ * run in CI's Windows job, not in every gate, and a gate a test starts (its env carries the outer gate's guard)
+ * leaves them to the outer one. `--check` only reports: the gate never rewrites a source file.
  * The command is the path `which` found: a bare `cargo` is looked up in the checkout first on Windows.
+ * Its `env` is what the spawn adds: `CARGO_TARGET_DIR`, the shared Rune build (cheap-suite S3; L5).
+ * A `selection` with files (a `--since` gate, never a full run) whose `changed` names nothing under `deck/`
+ * and no `FULL_TRIGGERS` file skips it (spec 8).
  */
-export function cargoStep(env, which = (cmd) => onSearchPath(`${cmd}.exe`, env, platform), platform = hostPlatform()) {
+export function cargoStep(env, which = (cmd) => onSearchPath(`${cmd}.exe`, env, platform), platform = hostPlatform(), selection) {
   if (platform !== 'win32') return { skip: 'rune deck: cargo test runs on Windows only, skipped' };
   if (env.PILOT_GATE_HOME_STORE) return { skip: 'rune deck: a gate inside the gate, skipped' };
+  if (selection?.files && Array.isArray(selection.changed) && !selection.changed.some((rel) => rel.startsWith('deck/') || FULL_TRIGGERS.includes(rel))) {
+    return { skip: `rune deck: nothing under deck/ changed since ${selection.since.slice(0, 7)}, skipped` };
+  }
   const cargo = which('cargo');
   if (cargo === null) return { skip: 'rune deck: cargo not on PATH, skipped' };
-  return { command: cargo, args: ['test', '--manifest-path', 'deck/rune/Cargo.toml'] };
+  const manifest = ['--manifest-path', 'deck/rune/Cargo.toml'];
+  return {
+    steps: [{ command: cargo, args: ['fmt', '--check', ...manifest] }, { command: cargo, args: ['test', ...manifest] }],
+    env: { CARGO_TARGET_DIR: runeTargetDir(env, platform) },
+  };
 }
 
-/** Runs `step`'s cargo, or prints its skip line; its exit status, 1 when it could not start or was killed. */
-function runeDeck(step, { spawn, cwd, env }) {
-  if (step.skip) {
-    process.stdout.write(`${step.skip}\n`);
+/**
+ * Runs `rune`'s steps in order, or prints its skip line; the first non-zero exit status, 1 when a step could
+ * not start or was killed, and no step after it starts. Before them `bound` keeps the shared target bounded
+ * (A3), one line when it wiped it; a wipe that fails is named and the steps run on what is left. Then `stale`
+ * dates `deck/rune`'s own sources, so the build is this worktree's and never another's from the shared target;
+ * one that fails is named and red.
+ */
+function runeDeck(rune, { spawn, cwd, env, bound, stale }) {
+  if (rune.skip) {
+    process.stdout.write(`${rune.skip}
+`);
     return 0;
   }
-  const run = spawn(step.command, step.args, { cwd, env, stdio: 'inherit', windowsHide: true });
-  if (run.error) process.stderr.write(`gate: rune deck: ${step.command} did not start: ${run.error.message}\n`);
-  return run.status ?? 1;
+  const dir = rune.env.CARGO_TARGET_DIR;
+  try {
+    const { wiped, units } = bound(dir);
+    if (wiped) process.stdout.write(`rune deck: shared build held ${units} units, over ${RUNE_TARGET_MAX}, wiped ${dir}
+`);
+  } catch (err) {
+    process.stderr.write(`gate: rune deck: could not bound ${dir}: ${firstLine(err)}
+`);
+  }
+  const crate = path.join(cwd, 'deck', 'rune');
+  try {
+    stale(crate);
+  } catch (err) {
+    process.stderr.write(`gate: rune deck: could not date ${crate}: ${firstLine(err)}
+`);
+    return 1;
+  }
+  for (const step of rune.steps) {
+    // A clean `fmt --check` prints nothing, so each step names itself and the log shows it ran.
+    process.stdout.write(`rune deck: cargo ${step.args.join(' ')}
+`);
+    const run = spawn(step.command, step.args, { cwd, env: { ...env, ...rune.env }, stdio: 'inherit', windowsHide: true });
+    if (run.error) process.stderr.write(`gate: rune deck: ${step.command} ${step.args[0]} did not start: ${run.error.message}
+`);
+    const status = run.status ?? 1;
+    if (status !== 0) return status;
+  }
+  return 0;
 }
 
 /**
@@ -294,10 +367,14 @@ function writerLines(log) {
  * With `--since=<ref>` (suite-at-landing S1; L7) it prints the scope line first and runs only the
  * selection, the flag kept from `node`; an empty selection runs nothing and passes, a null one runs full.
  * With `homeStore` it is red too when that file's stat changed and `deckPid()` names no deck.
- * With `homeStore` and `which` it runs `cargoStep`'s cargo after the suite, in that window, red when it fails.
+ * With `homeStore` and `which` it runs `cargoStep`'s steps after the suite, in that window, red when one fails,
+ * given the selection and bounding the shared target with `bound` first.
+ * With `--cost` (cheap-suite S1; L4) it adds the cost reporter and prints the cost table last, its status unchanged.
  */
-export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, which, platform = hostPlatform(), ...rest } = {}) {
+export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, which, platform = hostPlatform(), bound = boundTarget, stale = staleRoot, ...rest } = {}) {
   if (!syntaxClean(syntax, cwd)) return 1;
+  const cost = args.includes('--cost');
+  args = args.filter((arg) => arg !== '--cost');
   const sinceArg = args.findLast((arg) => /^--since(=|$)/.test(arg));
   let selection;
   if (sinceArg === '--since') {
@@ -318,9 +395,11 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
   const held = selection?.files ? { slot: process.env.PILOT_GATE_SLOT || 'selected', release() {} } : slot({ cwd, env: process.env });
   let scratch;
   try {
-    if (spawns === undefined || homeStore !== undefined) scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-gate-spawns-'));
+    if (spawns === undefined || homeStore !== undefined || cost) scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-gate-spawns-'));
     const file = spawns ?? path.join(scratch, 'spawns.txt');
     fs.writeFileSync(file, '');
+    const costFile = cost ? path.join(scratch, 'cost.jsonl') : undefined;
+    if (costFile) args = costArgs(args, costFile);
     const guard = homeStore === undefined ? undefined : { store: homeStore, log: path.join(scratch, 'home-writes.txt') };
     if (guard) fs.writeFileSync(guard.log, '');
     let before;
@@ -339,7 +418,7 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
     if (run.error) process.stderr.write(`gate: node --test did not start: ${run.error.message}\n`);
     // rune-deck-ui S19: inside the home-store window and under its guard env, so a Rust test's scratch daemon
     // that writes the home store is caught, and before the census, so one left running is too.
-    const rune = guard && which ? runeDeck(cargoStep(process.env, which, platform), { spawn, cwd, env: gateEnv(process.env, held.slot, file, guard) }) : 0;
+    const rune = guard && which ? runeDeck(cargoStep(process.env, which, platform, selection), { spawn, cwd, env: gateEnv(process.env, held.slot, file, guard), bound, stale }) : 0;
     let after;
     try {
       if (before instanceof Error) throw before;
@@ -347,10 +426,12 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
     } catch (err) {
       after = { red: true, lines: [`left running: cannot tell, the process table did not read (${firstLine(err)})`] };
     }
-    const counted = spawnLines(spawnCount(file), ceiling);
+    const count = spawnCount(file);
+    const counted = spawnLines(count, ceiling);
     const home = homeStore === undefined ? undefined : homeStoreLine(homeStore, storeBefore, deckPid);
     const written = guard ? writerLines(guard.log) : [];
     process.stdout.write(`${[...after.lines, ...counted, ...(home ? [home.line] : []), ...written].join('\n')}\n`);
+    if (costFile) process.stdout.write(costLines(costFile, count.owners));
     return after.red || counted.length > 1 || home?.red || written.length > 0 || rune !== 0 ? 1 : (run.status ?? 1);
   } finally {
     held.release();

@@ -126,6 +126,8 @@ current with `deck_status`, and hand back with outcome `paused`, no child live;
 the ticket stays implementing. A yield's pause quotes the deck's `Yielding <id>`
 line and drains the same way: the deck paused the ticket on your unanswered question, and its answer or close resumes your successor.
 
+A `resync <time>` from `main` means its context was cleared and you were not: send `main` again your last hand-back before `<time>` and every question and hand-back since, then carry on, still never ending a turn with a child live.
+
 At your context guard's advisory notice, pause as `main`'s pause does and
 start no slice, fix round or QA after it. Past the hard mark still undrained, wait
 on your children and do nothing else. Never end a turn with a child live, since its report would reach no one: wait on it with `TaskOutput` or `Monitor`, each wait bounded; one silent for 90 minutes in all, `TaskStop` it, write its row's real state, name it a blocked step and carry on. You own no slice

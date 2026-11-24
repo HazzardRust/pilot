@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 
-const { assertPushable } = await import('../pilot-branch.mjs');
+const { assertPushable, remoteDefaultBranch } = await import('../pilot-branch.mjs');
 const { base } = await import('../base.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -94,4 +94,45 @@ test('assertPushable refuses every ref when the remote has no default branch', a
   const { origin, work } = scratchRepos(t);
   git(origin, 'symbolic-ref', 'HEAD', 'refs/heads/gone');
   assert.throws(() => assertPushable('pilot', { git: (args) => git(work, ...args) }), /no default branch known/);
+});
+
+/** A runner in `cwd` that counts its `ls-remote` calls; `fail` throws on that many first calls. */
+function countingRunner(cwd, fail = 0) {
+  const runner = (args) => {
+    if (args[0] === 'ls-remote') {
+      runner.asked += 1;
+      if (runner.asked <= fail) throw Object.assign(new Error('origin could not be reached'), { status: 128 });
+    }
+    return git(cwd, ...args);
+  };
+  runner.asked = 0;
+  return runner;
+}
+
+test('remoteDefaultBranch: one runner asks once (cheap-suite spec 3)', (t) => {
+  const { work } = scratchRepos(t);
+  const runner = countingRunner(work);
+  assert.deepEqual([remoteDefaultBranch(runner), remoteDefaultBranch(runner), remoteDefaultBranch(runner)], ['main', 'main', 'main']);
+  assert.equal(runner.asked, 1, 'ls-remote runs once per runner');
+});
+
+test('remoteDefaultBranch: a new runner asks again after the remote\'s HEAD is renamed', (t) => {
+  // The memo is keyed on the runner, not the directory: a cwd-keyed cache would hand the second runner the stale name.
+  const { origin, work } = scratchRepos(t);
+  const first = countingRunner(work);
+  assert.equal(remoteDefaultBranch(first), 'main');
+  git(work, 'push', '-q', 'origin', 'main:trunk');
+  git(origin, 'symbolic-ref', 'HEAD', 'refs/heads/trunk');
+  assert.equal(remoteDefaultBranch(first), 'main', 'one runner keeps the answer it was given');
+  assert.equal(first.asked, 1);
+  assert.equal(remoteDefaultBranch(countingRunner(work)), 'trunk', 'a new runner reads the new name');
+});
+
+test('remoteDefaultBranch: a failure is asked again, then the answer is kept', (t) => {
+  const { work } = scratchRepos(t);
+  const runner = countingRunner(work, 1);
+  assert.throws(() => remoteDefaultBranch(runner), /no default branch known \(origin could not be asked\)/);
+  assert.equal(remoteDefaultBranch(runner), 'main', 'the throw was not remembered');
+  assert.equal(remoteDefaultBranch(runner), 'main');
+  assert.equal(runner.asked, 2, 'asked once for the failure and once for the answer');
 });

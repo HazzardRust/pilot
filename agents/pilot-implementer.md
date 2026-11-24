@@ -96,6 +96,7 @@ checklist behind it:
    `pilot live-root --dir <slug>-s<n>` prints, never a fresh repository; on `untrusted` or exit 1, send
    your addressee the line. Where it makes something
    to see, hear or play — a GUI, a picture, video, audio, a plot, a game —
+   load `pilot:ui-design` with the Skill tool and walk its checklists, then
    look at it: a web page in a real browser against
    a local dev server through the Chrome DevTools MCP tools
    (`mcp__plugin_pilot_chrome-devtools__*`; a "browser already running" error

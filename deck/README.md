@@ -36,7 +36,6 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `gate2-checks.mjs` | the gate2 checks field: where CI is configured at its sha, a gate2 carries `pilot checks <sha>`'s line, green at that sha, local git only (ci-gate spec 4) |
 | `gate2-evidence.mjs` | the gate2 evidence check: a short-path ticket's gate2 carries a `Verdict:` per slice, a `Gate:` line and, for a surface, its walkthrough (short-path spec 2); a full run's gate2 naming no walkthrough carries the checks table and, on a plan with a surface, a `surface planned, no walkthrough:` reason line; a named walkthrough is a real one on the gate2's ticket; `walkthroughPlanGaps` refuses QA's walkthrough on a plan marked with no surface (walkthrough-surface spec 3-6); `recutGate1Gaps` refuses a re-cut ticket's gate1 without a `Changed since <sha7>:` line (never-stuck spec 15) |
 | `health.mjs` | `GET /api/health`'s answer: pid, url, cursor, rss, and the plugin version with when this daemon started (daemon-lifecycle spec 3) |
-| `hold-route.mjs` | `POST /api/hold { id, ticket }`: the hand-off mod marks a hand-off held for a live co-pilot, item state and no reply, written once (held-handoff L2) |
 | `host-github.mjs` | the GitHub adapter: **Host** over `gh`, and the one `gh` process start, argv only, refusing any call off its argv allowlist before a process starts (other-host spec 2, L5) |
 | `host-gitlab.mjs` | the GitLab adapter: **Host** over `glab api` REST v4 on the current project's merge requests, and the one `glab` process start, argv only, refusing any call off its own allowlist before a process starts (other-host spec 4, 6, A3) |
 | `host.mjs` | the host: reads `pilot.host` (unset is `github`) and hands back its **Host** adapter, or null at `none` (other-host spec 1-3) |
@@ -52,6 +51,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `launch.mjs` | how a browser gets in: the 0600 open file that forwards to `GET /open?key=`, the per-port page cookie that route sets, and `pilot deck --rotate` (deck-token A2, A3) |
 | `leash.mjs` | the leash a daemon that is not the user's deck holds: its pid and paths from argv, the 2 s poll that ends it, and the session's `CLAUDE_PID` (process-gc L1-L4) |
 | `lineage.mjs` | the gate1 lineage check: refuses a design-docs-only post whose branch is not on pilot's lineage |
+| `look.mjs` | `pilot look`: reads a surface's `surface.json` and captures a screen by route with one argv-started process; `apply` lays a playground export onto the token file |
 | `memory.mjs` | each deck process's memory readings, one JSON line each |
 | `one-line.mjs` | `oneLine`: text from a peer or caller made one printable line, for logs and stderr |
 | `open.mjs` | opens the deck page in a browser when a run registers |

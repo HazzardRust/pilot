@@ -109,7 +109,8 @@ test("sync names the run remote's missing pilot, and pushes nothing", (t) => {
   const before = refs(origin);
   for (const [mode, ref] of [['second', 'second/pilot'], ['none', 'pilot']]) {
     git(work, 'config', 'pilot.remote', mode);
-    assert.throws(() => sync({ cwd: work, git: inWork, test: green }), (err) =>
+    // Each mode is its own command, so its own runner: one runner keeps the run remote it read first (cheap-suite spec 3).
+    assert.throws(() => sync({ cwd: work, git: (args) => inWork(args), test: green }), (err) =>
       err.exitCode === 1 && err.message === `NOT synced: no ${ref} (run pilot base first); nothing pushed`);
   }
   assert.equal(refs(origin), before, 'nothing pushed to origin');
