@@ -101,26 +101,33 @@ dirs); folding it would put its policy behind the guarded seam. `isRunBranch` su
   never found by `--run` (spec 11, doctor). Rejected: inferring from HEAD or path, which misses `qa-hnw` and could
   claim another session's tree.
   Answer: "Tag at creation (default)" on itm_b346db272062, assumed by the deck's 20-min timeout, not pressed.
+  Verdict: stands — itm_b346db272062 closed by timeout at the default, not pressed; no queued ticket claims worktree creation
 - **A2** Where the landing's prune runs. Default: where it does now, the lander's step 1 (`pilot worktrees prune
   --run`) in its own process, before its report post; `stepsOf` simply stops naming removals. Tradeoff: ordering
   rests on the lander's prose. Rejected: the deck pruning inside `postFilled`, which would block the deck's MCP
   call for minutes deleting a 13 GB tree.
+  Verdict: stands — matches the user's words on itm_0a88fcb7ead9; the open proposal itm_d807720f203c touches the same lander step, so the prune stays one command call
 - **A3** Untracked non-ignored files keep a tree at a mid-run job end (slice, design, abandon, `remove`); at landing
   only tracked dirt keeps one (ADR 0171). Tradeoff: a stray scratch file keeps a slice tree. Rejected: tracked-only
   everywhere, which loses a file an implementer forgot to add.
   Answer: "Keeps mid-run, not at landing (default)" on itm_412621bbca04, assumed by the deck's 20-min timeout, not pressed.
+  Verdict: stands — itm_412621bbca04 closed by timeout at the default, not pressed; it loses no forgotten file
 - **A4** Design and abandon prunes run from `deck_status`'s `finished` (`planned`, `abandoned…`) as a detached
   `pilot worktrees prune --run <slug> --stage <s>` child noting one line on the ticket. Tradeoff: the deck spawns
   one more child kind. Rejected: a hook on the press, which runs before the pilot has sent `finished`.
+  Verdict: stands — no queued ticket claims deck_status finished
 - **A5** Doctor: stale is 14 days without a commit and not in `pilot`; the size walk covers stale trees only and
   stops at 10 s (`≥` then); the row fails only under 10% free. Rejected: sizing every tree (minutes on 22 trees).
+  Verdict: stands — queued ticket itm_0476cd419c86 renames the pilot branch, so the name is read, never a literal
 - **A6** Legacy trees (itm_c83b9ffb134b, spec 11). Default: one sweep, `pilot worktrees prune` without `--run`
   judging against `pilot` as well as `main`, as slice S8, droppable alone. Rejected: name only (the disk stays full).
   Answer: the default, assumed by the deck's 20-min timeout, not pressed by the user.
+  Verdict: stands — same branch-name condition as A5; S8 stays droppable
 - **A7** QA environment (itm_43eb34939286). Default: a scratch repo with a bare remote and an isolated deck store on
   Windows; the real checkout gets one read-only `pilot doctor` and a `prune --dry-run`. Tradeoff: no real landing
   on this machine's runs. Rejected: QA on the real checkout, which could remove live trees.
   Answer: the default, assumed by the deck's 20-min timeout, not pressed by the user.
+  Verdict: stands — no shared environment is touched; the real checkout stays read-only
 - red team: F3 — widening `isRunBranch` to `slice/<slug>-*` would move `pilot branches prune`'s selection and break
   the collision pin; L7 and A1 replace it with the tag.
 - red team: S5's `planned` prune deletes the design tree a re-cut architect reuses; S6 makes the re-cut text re-add
