@@ -16,8 +16,8 @@ const NAME_HOLDS = [new RegExp(`(?:${GLUED}|(?:^|[_-])pwd)s?(?![a-z0-9])`, 'i'),
 const NAME_ENDS = [new RegExp(`(?:${GLUED}|(?:^|[_-])pwd)s?$`, 'i'), new RegExp(`${CAMEL}$`)];
 
 /**
- * Whether a `NAMED_VALUE` match is a credential of the given length class. Long: 16+ characters with a digit or
- * both cases. Short: 6+ with a letter and a digit or one of `@!#%*`, so a slug (`re-issued`), a count and a
+ * Whether a `NAMED_VALUE` match is a credential of the given length class. Long: 16+ characters of any letter
+ * class, since a letters-only value is still a key. Short: 6+ with a letter and a digit or one of `@!#%*`, so a slug (`re-issued`), a count and a
  * dotted reference stay prose. Code is not a value: a call (`load(…)`), a member chain with no digit
  * (`process.env.API_KEY`) or a camelCase identifier of whole words (`currentSessionToken`).
  */
@@ -26,7 +26,7 @@ function namedSecret(match, text, length) {
   if (text[match.index + whole.length + value.length] === '(') return false;
   if (/^[A-Za-z_]+(?:\.[A-Za-z_]+)+$/.test(value) || /^[A-Za-z][a-z]+(?:[A-Z][a-z]{2,})+$/.test(value)) return false;
   if (length === 'long') {
-    return value.length >= 16 && (/[0-9]/.test(value) || (/[a-z]/.test(value) && /[A-Z]/.test(value))) && NAME_HOLDS.some((r) => r.test(name));
+    return value.length >= 16 && NAME_HOLDS.some((r) => r.test(name));
   }
   return value.length >= 6 && /[A-Za-z]/.test(value) && /[0-9@!#%*]/.test(value) && NAME_ENDS.some((r) => r.test(name));
 }

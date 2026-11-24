@@ -214,7 +214,7 @@ test('credential-shaped output is withheld with the exit code', (t) => {
   const gate = aGate2(repo, { worktree });
 
   startLanding(gate.id, { spawn: fake.spawn, env: {} });
-  fake.exit(1, `NOT landed: token=${'a1'.repeat(12)}\n`);
+  fake.exit(1, `NOT landed: token=${'a'.repeat(24)}\n`);
   const line = deckLines(gate.id).at(-1);
   assert.equal(line, 'NOT landed: pilot land exited 1 and its output was withheld: it looks like a secret assigned to a name');
   assert.equal(reread(gate.id).landing.state, 'refused');
@@ -316,7 +316,7 @@ test('exit 0 with nothing printed, and exit 0 with credential-shaped output, eac
   const leaky = aSpawn();
   const leaked = aGate2(repo, { worktree });
   startLanding(leaked.id, { spawn: leaky.spawn, env: {} });
-  leaky.exit(0, `landed feat/x on pilot at 1a2b3c4\ntoken=${'a1'.repeat(12)}\n`);
+  leaky.exit(0, `landed feat/x on pilot at 1a2b3c4\ntoken=${'a'.repeat(24)}\n`);
   assert.equal(deckLines(leaked.id).at(-1), 'landed: pilot land exited 0 and its output was withheld: it looks like a secret assigned to a name');
   assert.equal(reread(leaked.id).landing.state, 'landed');
   assert.equal(reread(leaked.id).landing.sha, undefined, 'a withheld line names no SHA');
