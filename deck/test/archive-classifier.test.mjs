@@ -73,6 +73,23 @@ test('a token is withheld on the page', async (t) => {
   for (const json of [list, opened]) assert.ok(!json.includes(KEY.slice(0, 20)), 'the token is nowhere in the archive view');
 });
 
+test('a secret set inline under a prefixed name is withheld', (t) => {
+  const dir = tempDeck(t);
+  const commands = [
+    `AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI${'K'.repeat(20)} aws s3 ls`,
+    `NPM_TOKEN=${'abcdef0123'.repeat(2)} npm publish`,
+    `export DB_PASSWORD=${'hunter2'.repeat(3)}`,
+  ];
+  fs.writeFileSync(path.join(dir, LOG_FILENAME), commands.map((command) => rawLine({ command })).join('\n') + '\n');
+
+  const shown = archiveRows(dir).filter((row) => row.kind === 'classifier');
+
+  assert.deepEqual(
+    shown.map((row) => field(row, 'Command')),
+    commands.map(() => '<withheld: credential>'),
+  );
+});
+
 test('a torn line is skipped, not fatal', (t) => {
   const dir = tempDeck(t);
   const torn = rawLine({ tool: 'Write' }).slice(0, 40);

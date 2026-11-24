@@ -19,9 +19,11 @@ const CREDENTIAL_SHAPES = [
   ['an AWS access key id', /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/],
   ['a Slack token', /\bxox[baprs]-[A-Za-z0-9-]{10,}/],
   ['a bearer token', /\bBearer\s+[A-Za-z0-9._~+/=-]{20,}/],
+  // The name may carry `_`/`-` joined words either side (`AWS_SECRET_ACCESS_KEY=`, `NPM_TOKEN=`). The run starts only
+  // where no name character precedes it, so each name is scanned from one start and nothing backtracks quadratically.
   [
     'a secret assigned to a name',
-    /\b(?:api[_-]?key|secret|token|password|passwd|pwd)\b\s*[:=]\s*["']?[A-Za-z0-9/+_-]{16,}/i,
+    /(?<![A-Za-z0-9_-])(?:[A-Za-z0-9]+[_-])*(?:api[_-]?key|secret|token|password|passwd|pwd)(?:[_-][A-Za-z0-9]+)*(?![A-Za-z0-9])\s*[:=]\s*["']?[A-Za-z0-9/+_-]{16,}/i,
   ],
   // A shell reference (`$TOKEN`) or a placeholder (`<token>`) names a credential and stays postable; a plain word
   // after `--password` or `Basic` is prose. No run may fail open at a bound, and none may backtrack for seconds on
