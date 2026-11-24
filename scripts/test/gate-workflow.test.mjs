@@ -169,8 +169,9 @@ test('ubuntu keeps main-never-red\'s triggers', () => {
   }
   assert.ok(osesFor(event('pull_request')).includes('ubuntu-latest'), 'a non-draft PR');
   assert.ok(osesFor(event('push')).includes('ubuntu-latest'), 'a push to main');
-  assert.deepEqual(osesFor(event('pull_request', { draft: true, labels: ['docs'] })), [], 'a draft without the label');
-  assert.deepEqual(osesFor(event('pull_request', { draft: true, isPrivate: false })), [], 'a public draft');
+  assert.deepEqual(osesFor(event('pull_request', { draft: true, labels: ['docs'], baseRef: 'feat/x' })), [], 'a draft slice PR without the label');
+  // cheap-suite A2: a draft PR to main runs Gate too, so the landing has a run to read its proof from.
+  assert.deepEqual(osesFor(event('pull_request', { draft: true, isPrivate: false })), THREE, 'a public draft to main');
   for (const trigger of ['pull_request_target', 'issue_comment', 'workflow_run']) {
     assert.doesNotMatch(code(text), new RegExp(`\\b${trigger}\\b`), `no ${trigger}`);
   }
@@ -202,6 +203,7 @@ test('the gate workflow runs the full gate', () => {
     'npm test',
     'node scripts/check-references.mjs',
     'node scripts/check-provenance.mjs agents/ skills/ rules/',
+    `echo "::notice title=tested-tree::$(git rev-parse 'HEAD^{tree}')"`,
   ]);
   assert.doesNotMatch(code(text), /continue-on-error/);
   assert.equal(values(text, 'if').length, 1, 'no step-level if skips a step');

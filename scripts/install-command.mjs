@@ -215,7 +215,8 @@ function describe({ action, why, current, launcher, dryRun, dir, prefix, answere
  * `action` is one of `linked`, `repointed`, `already` or `refused`, `launcher` is
  * `written` or `identical`, and `ok` is false on a refusal or a command that was
  * installed but does not answer. `path` is where the command directory stands on the
- * persistent PATH; `options.path` is passed to `persistPath`.
+ * persistent PATH; `options.path` is passed to `persistPath`. `options.npm` runs npm with
+ * an argument list and answers spawnSync's shape; the real npm by default, injected for a test.
  */
 export function installCommand(options = {}) {
   const root = path.resolve(options.root || packageRoot());
@@ -229,7 +230,7 @@ export function installCommand(options = {}) {
   const launcher = action === 'refused' ? undefined : writeLauncher(root, dir, dryRun);
 
   if (!dryRun && (action === 'linked' || action === 'repointed')) {
-    const result = npm(['install', '-g', '--prefix', prefix, dir]);
+    const result = (options.npm || npm)(['install', '-g', '--prefix', prefix, dir]);
     if (result.status !== 0) throw new Error(`npm install -g failed: ${(result.stderr || '').trim()}`);
   }
 

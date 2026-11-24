@@ -21,6 +21,13 @@ serde_json = "1"
 # Plain HTTP only: no TLS, no proxy, no redirects (spec 9); the client talks to loopback.
 ureq = { version = "3", default-features = false, features = ["json"] }
 
+# Backtraces keep file and line; the debug info that makes the PDBs huge goes (L6).
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
 # build.rs turns theme.json's space and motion into consts.
 [build-dependencies]
 serde_json = "1"

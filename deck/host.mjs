@@ -14,8 +14,10 @@
  *   open(pr: { base: string, head: string, title: string, body: string, draft?: boolean, label?: string }): { number: number, why?: string },
  *   edit(n: number, change: { base?: string, title?: string, body?: string, label?: string }): { why?: string },
  *   comment(n: number, body: string): void, upsertComment(n: number, marker: string, body: string): 'posted'|'edited'|'none',
- *   signedIn(): boolean, checks(sha: string): Check[] }} Host
+ *   signedIn(): boolean, checks(sha: string): Check[], testedTrees(sha: string): TestedTree[] }} Host
  * @typedef {{ name: string, outcome: 'pass'|'fail'|'pending' }} Check  one host CI result on one commit (ci-gate)
+ * @typedef {{ name: string, conclusion: string, tree: string | null }} TestedTree  one `gate (<os>)` run and the
+ *   tree its `tested-tree` annotation names (cheap-suite L7)
  */
 
 import { git as gitAt } from '../scripts/pilot-branch.mjs';
