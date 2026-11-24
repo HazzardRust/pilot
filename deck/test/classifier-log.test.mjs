@@ -173,6 +173,8 @@ test('prose and code near the S14 shapes read back as they were', (t) => {
     'password: see the team vault, never paste it here',
     'const clientSecret = loadClientSecretFromVault(env);',
     'const accessToken = currentSessionToken;',
+    'echo \'{"max_tokens": "100000"}\'',
+    'echo \'{"OLDPWD": "/home/u1/x"}\'',
     'PASSWORD_MIN_LENGTH=12',
     'docker build --secret id=npmrc,src=.npmrc .',
     'docker login -p $REGISTRY_PASS registry.example.com',

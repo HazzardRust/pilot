@@ -117,10 +117,11 @@ const CREDENTIAL_SHAPES = [
   // Only the joined form: `mysql -p db` prompts, and `db` is the database. The gap stops at the next `mysql`.
   ['a mysql -p password', /\bmysql\w*\b(?:(?!mysql)[^\n|;&])*?\s-p["']?(?![$<{])[^\s"']/],
   // A quoted JSON or Python key leaves no doubt about what follows, so the value may be short; a plain word ("string")
-  // is prose. The key run cannot hold a quote, so each character is scanned from one opening quote only.
+  // is prose. The key run cannot hold a quote, so each character is scanned from one opening quote only. No plural
+  // (`"max_tokens": "100000"` is a count) and `pwd` only after a separator (`"OLDPWD"` is a directory).
   [
     'a secret under a quoted key',
-    /["'][A-Za-z0-9_-]*(?:api[_-]?key|secret|token|passw(?:or)?d|pwd)s?["']\s*:\s*["'](?![$<{])(?=[^"'\s]*[^A-Za-z"'\s])[^"'\s]{6,}["']/i,
+    /["'](?:[A-Za-z0-9_-]*(?:api[_-]?key|secret|token|passw(?:or)?d)|(?:[A-Za-z0-9_-]*[_-])?pwd)["']\s*:\s*["'](?![$<{])(?=[^"'\s]*[^A-Za-z"'\s])[^"'\s]{6,}["']/i,
   ],
 ];
 
