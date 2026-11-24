@@ -72,7 +72,8 @@ impl Table {
             let mut out = String::from("|");
             for cell in cells {
                 out.push(' ');
-                out.push_str(&cell.text.replace('|', "\\|").replace('\n', "<br>"));
+                let text = cell.text.replace('|', "\\|").replace("\r\n", "\n");
+                out.push_str(&text.replace('\n', "<br>"));
                 out.push_str(" |");
             }
             out

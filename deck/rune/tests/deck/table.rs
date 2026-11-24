@@ -389,6 +389,41 @@ fn tab_in_the_last_cell_adds_a_row_and_moves_into_it() {
     assert!(!rt.state.pending.is_sent("reply-press"));
 }
 
+/// S5: Shift+Tab from a row's first cell goes to the row above's last; Up in a cell's second line
+/// stays in the cell, and only from its first line leaves it.
+#[test]
+fn shift_tab_wraps_rows_and_up_stays_in_a_two_line_cell() {
+    use rune::Key;
+    let mut rt = grid_with_caret_in("cell-0-1-0");
+    press(&mut rt, Key::Tab, true);
+    assert_eq!(focused(&rt).as_deref(), Some("cell-0-0-1"), "Shift+Tab");
+
+    let mut local = table_local();
+    local.tables[0].0.cell_mut(1, 1).replace_text("x\ny");
+    let mut rt = box_drawn(local);
+    click(&mut rt, "cell-0-1-1");
+    rt.state.regions.reply.tables[0]
+        .0
+        .cell_mut(1, 1)
+        .set_caret(3);
+    press(&mut rt, Key::Up, false);
+    assert_eq!(
+        focused(&rt).as_deref(),
+        Some("cell-0-1-1"),
+        "Up from line 2"
+    );
+    rt.state.regions.reply.tables[0]
+        .0
+        .cell_mut(1, 1)
+        .set_caret(1);
+    press(&mut rt, Key::Up, false);
+    assert_eq!(
+        focused(&rt).as_deref(),
+        Some("cell-0-0-1"),
+        "Up from line 1"
+    );
+}
+
 /// S5: Shift+Return breaks a line inside the cell; the grid keeps its size and the caret its cell.
 #[test]
 fn shift_return_breaks_a_line_inside_a_cell() {
@@ -415,8 +450,9 @@ fn a_cells_line_break_is_written_as_br() {
     let mut table = Table::new(2, 2);
     table.cell_mut(0, 0).replace_text("h");
     table.cell_mut(1, 0).replace_text("a\nb | c");
+    table.cell_mut(1, 1).replace_text("d\r\ne");
     let md = table.markdown();
-    assert_eq!(md, "| h |  |\n| --- | --- |\n| a<br>b \\| c |  |");
+    assert_eq!(md, "| h |  |\n| --- | --- |\n| a<br>b \\| c | d<br>e |");
     let read = tables_in(&md);
     assert_eq!(read.len(), 1);
     assert_eq!(read[0].len(), 2, "two rows: {read:?}");
