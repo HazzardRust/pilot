@@ -453,11 +453,16 @@ fn button(label: &str, key: String, ink: Color, fill: Color) -> El {
 /// A field of the box editing `edit` in `font`: its markdown painted over it, never written into
 /// it (L2), on the rule fill at the button's corner.
 fn field(edit: &TextEdit, font: rune::TextStyle, dark: bool) -> El {
+    bare_field(edit, font, dark)
+        .radius(theme::radius::button)
+        .fill(theme::tokens(dark).rule)
+}
+
+/// A field with no box of its own: a table cell, which the grid's outline and rules hold.
+fn bare_field(edit: &TextEdit, font: rune::TextStyle, dark: bool) -> El {
     text_input(edit, font)
         .decorations(crate::preview::spans(edit, dark))
         .padding(space::pad)
-        .radius(theme::radius::button)
-        .fill(theme::tokens(dark).rule)
 }
 
 pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
@@ -667,18 +672,45 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
         weight: type_::HEADER.weight,
         ..type_::BODY
     };
-    let head_fill = rune_kit::Kit::neutral(dark).c.layer_01;
+    // The whole grid as the thread draws a table (the user, 2026-11-24: "why cant we just render
+    // the actual table?"): a hairline outline at a 6 pt corner, the header on its fill, a hairline
+    // between rows, cells side by side with no box of their own (`from_kit`'s `table_outline`,
+    // `table_head_fill`, `table_rule`). The outline takes layout room so the header's fill sits
+    // inside it, and nothing clips the grid, so a cell's focus ring is drawn whole at its edges.
+    const RADIUS: f32 = 6.0;
+    const HAIR: f32 = 0.5;
+    let kit = rune_kit::Kit::neutral(dark);
+    let (head_fill, rule) = (kit.c.layer_01, kit.c.border_muted);
+    let inner = RADIUS - HAIR;
     for (t, (table, prose)) in local.tables.iter().enumerate() {
         let (rows, cols) = table.size();
-        let mut grid = col().key(format!("table-{t}")).gap(space::within);
+        let mut grid = col()
+            .key(format!("table-{t}"))
+            .border(HAIR, rule)
+            .border_layout()
+            .radius(RADIUS);
         for r in 0..rows {
-            let mut line = row().gap(space::within);
+            if r > 0 {
+                // A hairline as tall as its own top border, so the region spaces nothing by hand.
+                grid = grid.child(
+                    el().key(format!("grid-{t}-rule-{r}"))
+                        .w_full()
+                        .border_sides([HAIR, 0.0, 0.0, 0.0], rule)
+                        .border_layout()
+                        .a11y_hidden(),
+                );
+            }
+            let mut line = row().key(format!("grid-{t}-row-{r}"));
+            if r == 0 {
+                let low = if rows == 1 { inner } else { 0.0 };
+                line = line.fill(head_fill).clip_corners([inner, inner, low, low]);
+            }
             for c in 0..cols {
                 let font = if r == 0 { head } else { type_::BODY };
                 // Rendered once the caret leaves, as a prose line off the caret (A8).
                 // Multi-line, so Shift+Return breaks a line in the cell (S5); the keys that move
                 // between cells are taken here, before the editor sees them.
-                let cell = field(table.cell(r, c), font, dark)
+                let cell = bare_field(table.cell(r, c), font, dark)
                     .key(cell_key(t, r, c))
                     .label(format!("Table cell, row {}, column {}", r + 1, c + 1))
                     .on_edit(move |s: &mut State| s.regions.reply.part(t, Some((r, c))))
@@ -742,7 +774,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                     )
                     .grow(1.0)
                     .min_w(space::s0);
-                line = line.child(if r == 0 { cell.fill(head_fill) } else { cell });
+                line = line.child(cell);
             }
             grid = grid.child(line);
         }

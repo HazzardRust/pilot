@@ -218,6 +218,43 @@ fn a_grid_shows_boxes_not_pipes_and_typing_fills_a_cell() {
     assert!(piped.is_empty(), "pipes drawn: {piped:?}");
 }
 
+/// The user, on the walkthrough (2026-11-24): "why cant we just render the actual table?". The grid
+/// is drawn as the thread draws a table (rune-kit `MarkdownStyle::from_kit`): the header row on its
+/// fill, a hairline rule between rows, cells side by side with no grey box of their own.
+#[test]
+fn the_grid_is_drawn_as_the_threads_table() {
+    let mut rt = box_drawn(table_local());
+    rt.frame(1.0 / 60.0);
+    let kit = rune_kit::Kit::neutral(true);
+    let grey_box = pilot_deck::theme::tokens(true).rule;
+    for key in ["cell-0-0-0", "cell-0-0-1", "cell-0-1-0", "cell-0-1-1"] {
+        assert_ne!(
+            at(&rt, key).fill,
+            grey_box,
+            "{key} still sits on a grey box"
+        );
+    }
+    assert_eq!(at(&rt, "grid-0-row-0").fill, kit.c.layer_01, "header fill");
+    assert_ne!(
+        at(&rt, "grid-0-row-1").fill,
+        kit.c.layer_01,
+        "body row unfilled"
+    );
+    let rule = at(&rt, "grid-0-rule-1").rect;
+    assert!(
+        rule[3] > 0.0 && rule[3] <= 1.0,
+        "a hairline, not a gap: {rule:?}"
+    );
+    // The outline takes room: the header sits inside the grid's edge, not over it.
+    let (grid, head) = (at(&rt, "table-0").rect, at(&rt, "grid-0-row-0").rect);
+    assert!(
+        head[1] > grid[1] && head[0] > grid[0],
+        "header inside the outline: {grid:?} {head:?}"
+    );
+    let (a, b) = (at(&rt, "cell-0-1-0").rect, at(&rt, "cell-0-1-1").rect);
+    assert!((a[0] + a[2] - b[0]).abs() < 0.5, "cells touch: {a:?} {b:?}");
+}
+
 #[test]
 fn the_sent_table_reads_back_as_the_same_cells() {
     let mut local = typed_at("Before", 0);
