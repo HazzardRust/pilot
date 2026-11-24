@@ -311,6 +311,26 @@ fn return_in_the_text_makes_a_line_and_sends_nothing() {
     }
 }
 
+/// The walkthrough of 2026-11-24, the user: Table "doesnt match the group the other buttons being
+/// reply and close - make it a separate group below". Its own row, under Reply and Close.
+#[test]
+fn table_is_a_group_of_its_own_under_reply_and_close() {
+    let rt = box_drawn(Local::default());
+    let (send, close, table) = (at(&rt, "send"), at(&rt, "close"), at(&rt, "table"));
+    for (name, e) in [("Reply", &send), ("Close", &close)] {
+        assert!(
+            table.rect[1] >= e.rect[1] + e.rect[3],
+            "Table at y {} is not under {name} (bottom {})",
+            table.rect[1],
+            e.rect[1] + e.rect[3]
+        );
+    }
+    assert!(
+        (table.rect[0] - send.rect[0]).abs() < 0.5,
+        "Table starts its row at Reply's left edge"
+    );
+}
+
 #[test]
 fn tab_shift_tab_and_return_move_between_cells() {
     use rune::Key;

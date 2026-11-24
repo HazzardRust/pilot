@@ -564,9 +564,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
             ),
         );
     }
-    // Table after Close, out of the Tab order and never taking focus, so the prose part holding
-    // the caret still holds it when the press lands (A5, A6); the caret then goes to the first cell.
-    fixed = fixed.child(
+    // Table, a group of its own in a row under Reply and Close (the user, 2026-11-24), out of the
+    // Tab order and never taking focus, so the prose part holding the caret still holds it when the
+    // press lands (A5, A6); the caret then goes to the first cell.
+    let insert = row().key("reply-insert").gap(space::pad).child(
         btn("Table", "table".into(), false)
             .focusable(false)
             .preserve_focus_on_press(true)
@@ -706,7 +707,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
                 .wrap_anywhere(),
         );
     }
-    box_ = box_.child(send);
+    box_ = box_.child(send).child(insert);
     if let Some(reason) = &local.refused {
         box_ = box_.child(
             text(reason)
