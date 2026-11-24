@@ -60,7 +60,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed 30e8b06 (test fix, feat merged in)",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -124,7 +124,7 @@
     },
     {
       "slice": "S14 findCredential name rule and vendor prefixes (added)",
-      "state": "integrated",
+      "state": "integrated 84c2bed; checks green",
       "after": [
         "S13 findCredential knows more shapes (added)"
       ],
@@ -132,8 +132,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s14"
     }
   ],
-  "next": "S14 f25c541 integrating; then S7 30e8b06, S8, S9, S11; S10 last (also records seams: S8.md Top rows finding - effort; S9.md cut at a word); assumed: credential shapes past S14 not built; QA: 50 ms bar only in cargo test --release archive_filter.",
-  "updatedAt": "2026-11-24T12:30:30.489Z",
+  "next": "S7 30e8b06 integrating; then S8, S9, S11; S10 last (also records seams: S8.md Top rows finding - effort; S9.md cut at a word); assumed: credential shapes past S14 not built; QA: 50 ms bar only in cargo test --release archive_filter.",
+  "updatedAt": "2026-11-24T12:50:52.357Z",
   "friction": [
     {
       "kind": "drain",
