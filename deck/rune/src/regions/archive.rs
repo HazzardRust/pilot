@@ -24,6 +24,7 @@ pub struct Local {
     pub sort: Option<(Column, bool)>,
 }
 
+/// A column the list sorts by, pressed as `archive-sort-<column>`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Column {
     Date,
@@ -34,6 +35,7 @@ pub enum Column {
 // Every string borrows the view's own (A5): a frame reads 10,000 rows without copying one, which an
 // owned `String` per string cost a release build about 20 ms of the 50 ms bar.
 
+/// One `label: value` of a row, as the view wrote it.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 pub struct Field<'a> {
@@ -41,6 +43,7 @@ pub struct Field<'a> {
     pub value: &'a str,
 }
 
+/// One archive row: its kind, id, ISO stamp `at`, local time `when`, title and fields.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 pub struct Row<'a> {
@@ -54,6 +57,7 @@ pub struct Row<'a> {
     pub fields: Vec<Field<'a>>,
 }
 
+/// One day (or month) section: its date key, heading, whether the view opens it, and its rows.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 pub struct Day<'a> {
@@ -81,7 +85,7 @@ struct Archive<'a> {
 }
 
 /// `days` with each section's rows ordered by `by` (A4): a section is never dropped or merged, and only
-/// `Date` also orders the sections, by their newest row.
+/// `Date` also orders the sections, by their date.
 pub fn sort_rows<'a>(days: &[Day<'a>], by: Column, asc: bool) -> Vec<Day<'a>> {
     let mut out = days.to_vec();
     for d in &mut out {
@@ -95,8 +99,9 @@ pub fn sort_rows<'a>(days: &[Day<'a>], by: Column, asc: bool) -> Vec<Day<'a>> {
         }
     }
     if by == Column::Date {
-        // A section's place is its newest row's; an undated section sorts as the oldest.
-        out.sort_by_cached_key(|d| d.rows.iter().filter_map(|r| r.at).max());
+        // A section's place is its own date key (`2026-11-20`, `2026-10`), so one a filter emptied
+        // keeps it; `undated` sorts as the oldest.
+        out.sort_by_key(|d| (d.key != "undated", d.key));
         if !asc {
             out.reverse();
         }

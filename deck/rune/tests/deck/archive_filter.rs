@@ -112,6 +112,17 @@ fn a_date_sort_gives_the_exact_order_both_ways() {
             vec!["Echo"]
         ],
     );
+    // A section a search has emptied keeps its date's place, both ways.
+    let searched = filter_rows(&days, None, "Delta");
+    let empty: Vec<&str> = vec![];
+    assert_eq!(
+        titles(&sort_rows(&searched, Column::Date, true)),
+        [empty.clone(), vec!["Delta"], empty.clone()],
+    );
+    assert_eq!(
+        titles(&sort_rows(&searched, Column::Date, false)),
+        [empty.clone(), vec!["Delta"], empty],
+    );
     // Any other column orders inside a section and keeps every section where it was (A4).
     assert_eq!(
         titles(&sort_rows(&days, Column::Title, true)),
@@ -397,5 +408,6 @@ fn a_region_with_no_days_yet_draws_nothing() {
     let mut rt = archive_window(json!({}));
     rt.frame(0.0);
     let drawn = keys(&rt);
-    assert!(!drawn.contains(&"archive-none".to_string()), "{drawn:?}");
+    let mine: Vec<&String> = drawn.iter().filter(|k| k.starts_with("archive")).collect();
+    assert_eq!(mine, ["archive"], "the region, empty: {drawn:?}");
 }
