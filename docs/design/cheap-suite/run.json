@@ -36,7 +36,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 88dc79a; feat 94c4425 merged; ts + security APPROVE; integrating",
+      "state": "integrated at dae95ba; checks green",
       "after": [
         "S3",
         "S4",
@@ -53,7 +53,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed 47ccb79; feat 94c4425 merged; ts APPROVE; integrates after S5",
+      "state": "pushed 47ccb79; ts APPROVE; integrating",
       "branch": "slice/cheap-suite-s7",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s7"
     },
@@ -139,8 +139,8 @@
     "dropped: S5 typescript LOW proof computed on an already-landed feature (harmless)",
     "dropped: S5 security LOW proved = sha === null on rev-parse failure (still needs ^{tree}, else full)"
   ],
-  "next": "integrating S5 (88dc79a), then checks; S7 (47ccb79); S8 (ab589dd); S10; fundamentalist (brief: S8 coverage drop on gate.mjs etc. from removed nested gate; S8 B2/B4 counted by V8 not GIT_TRACE); fix round; QA.",
-  "updatedAt": "2026-11-24T00:25:17.009Z",
+  "next": "S5 green at dae95ba; integrating S7 (47ccb79); then S8 (ab589dd); S10; fundamentalist; fix round; QA.",
+  "updatedAt": "2026-11-24T00:50:30.402Z",
   "friction": [
     {
       "agent": "pilot",
