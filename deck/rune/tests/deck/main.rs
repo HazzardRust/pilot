@@ -3,6 +3,7 @@
 mod act_deck;
 mod act_thread;
 mod agents_reports;
+mod archive;
 mod centre;
 mod chat;
 mod empty;

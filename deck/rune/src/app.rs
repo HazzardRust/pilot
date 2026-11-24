@@ -134,8 +134,8 @@ pub struct Start {
 
 const OPEN: &str = "--open";
 /// The screens `/api/view` serves; deck/view/index.mjs `SCREENS` and deck/rune/surface.json
-/// `screens` name the same three.
-const SCREENS: [&str; 3] = ["home", "thread", "items"];
+/// `screens` name the same four.
+const SCREENS: [&str; 4] = ["home", "thread", "items", "archive"];
 
 impl Start {
     /// `pilot-deck`'s own flag out of `args` (without the program name): `--open`, at most once,
@@ -374,7 +374,10 @@ pub fn center(s: &State, cx: &mut Cx<State>) -> El {
     screen = screen
         .child(regions::thread::draw(region("thread"), &r.thread, cx))
         .child(regions::reply::draw(region("reply"), &r.reply, cx));
-    if s.query.screen != "thread" {
+    // The archive lists its own rows and withholds history's (archive-page L11).
+    if s.query.screen == "archive" {
+        screen = screen.child(regions::archive::draw(region("archive"), &r.archive, cx));
+    } else if s.query.screen != "thread" {
         screen = screen.child(regions::history::draw(region("history"), &r.history, cx));
     }
     screen

@@ -65,11 +65,19 @@ struct Items {
     here: bool,
 }
 
+/// The way to the archive screen; `here` on it, where it leads back.
+#[derive(Debug, Deserialize)]
+struct Archive {
+    here: bool,
+}
+
 #[derive(Debug, Deserialize)]
 struct Strip {
     all: bool,
     #[serde(default)]
     items: Option<Items>,
+    #[serde(default)]
+    archive: Option<Archive>,
     #[serde(default)]
     tab: Option<Tab>,
     #[serde(default)]
@@ -134,6 +142,21 @@ pub fn items_page(s: &mut State) {
         "home"
     } else {
         "items"
+    };
+    let query = Query {
+        screen: screen.into(),
+        id: None,
+        ..s.query.clone()
+    };
+    go(s, query);
+}
+
+/// Archive: the archive screen, or from it the home screen of the scope it was left from.
+pub fn archive_page(s: &mut State) {
+    let screen = if s.query.screen == "archive" {
+        "home"
+    } else {
+        "archive"
     };
     let query = Query {
         screen: screen.into(),
@@ -316,6 +339,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             format!("Items {}", items.count)
         };
         out = out.child(btn(&label, "strip-items", Look::Quiet).on_press(items_page));
+    }
+    if let Some(archive) = &strip.archive {
+        let label = if archive.here { "Back" } else { "Archive" };
+        out = out.child(btn(label, "strip-archive", Look::Quiet).on_press(archive_page));
     }
 
     // Create: the tab's repository, or on the overview the deck the confirm has chosen.

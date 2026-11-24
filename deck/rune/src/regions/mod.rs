@@ -2,6 +2,7 @@
 //! its own view state, so a region slice edits its own file and nothing of `app.rs`.
 
 pub mod agents;
+pub mod archive;
 pub mod chat;
 pub mod graph;
 pub mod history;
@@ -20,6 +21,7 @@ pub mod usage;
 #[derive(Debug, Default)]
 pub struct Locals {
     pub agents: agents::Local,
+    pub archive: archive::Local,
     pub chat: chat::Local,
     pub graph: graph::Local,
     pub history: history::Local,
