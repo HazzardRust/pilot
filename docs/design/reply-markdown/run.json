@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "integrated",
+      "state": "integrated 118333f",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "implementing",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -39,8 +39,8 @@
       ]
     }
   ],
-  "next": "S2 e608e6c being integrated by pilot (co-pilot afa63e9 dormant, lane held). S3 impl a2f78c0 live, unpushed. Next: pilot checks on S2 sha; S3 rebase + integrate; S4 (opus); base-check integrate (origin/main not in feat); fundamentalist; QA. QA notes: light-theme white reply text, A1 contrast, IME, heading = body size.",
-  "updatedAt": "2026-11-24T05:29:29.065Z",
+  "next": "S2 integrated 118333f (checks pending). S3 f5bd3f6 being integrated by pilot (co-pilot afa63e9 dormant, lane held). Next: pilot checks on both shas; S4 (opus) from the new tip; base-check integrate; fundamentalist; QA. QA notes: light-theme white reply text + grid, A1 contrast, IME, heading = body size, typed \\| in a cell, unclosed fence before table, hand-driven window.",
+  "updatedAt": "2026-11-24T05:33:13.155Z",
   "friction": [
     {
       "kind": "drain",
