@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "implementing: b4c3139 committed, gate + reviews running",
+      "state": "pushed faebbf6",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed f2fb32b; ts approve, security approve (final state); needs rebase onto feat tip, then integrate",
+      "state": "pushed f2fb32b",
       "after": [
         "S1"
       ],
@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4 the gate's census counts a leftover holder (added)",
-      "state": "integrated",
+      "state": "integrated 1df4c7f; CI checks not yet run",
       "after": [
         "S1"
       ],
@@ -52,8 +52,8 @@
       "text": "stay-awake S1 behaviour 6: `powercfg /requests` needs an administrator shell, so no agent could run it; run it elevated while an agent is live to see the deck's keep-awake request listed."
     }
   ],
-  "next": "Yellow. feat 28f3e1f = S1. pilot integrate S4 de70910 running (task brb03rp86): on pass pilot checks <sha> --wait. S3 f2fb32b cleared: rebase onto new tip (implementer a34f25c6b06f634bb), integrate; trailers in scratchpad a3a05c88/stay-awake-S3-trailers.txt. S2 a81ef7f0241c2039a still live, reports to main. Then resume co-pilot ae1adcf0d079786e4: fundamentalist, QA.",
-  "updatedAt": "2026-11-24T20:33:51.740Z",
+  "next": "Yellow, co-pilot a1a485efedff11c54 live. S2 faebbf6 reported (CI 45481769402 green, TS + security APPROVE), report and trailers sent to co-pilot to integrate. S3 f2fb32b with co-pilot. Open: Linux holder B2/B3 skip on ubuntu CI (logind refuses), co-pilot decides added slice vs question. Then fundamentalist, QA scratch-deck awakeFacts check.",
+  "updatedAt": "2026-11-24T20:51:33.327Z",
   "friction": [
     {
       "kind": "drain",
@@ -144,6 +144,24 @@
       "what": "S3.md's B6 fixture and Interface comment did not match the machine: dc lid is do-nothing here, powercfg /q hides LIDACTION, /a is localised",
       "evidence": "stay-awake S3 report, pushback",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node:test books a failing test given skip: null as a skip; linux holder failures read as skips on CI",
+      "evidence": "S2 report: one CI round to find; linuxSkip() now returns false",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "ubuntu-latest has no login session, polkit refuses systemd-inhibit; cross-OS behaviour only visible on CI, minutes per round",
+      "evidence": "Failed to inhibit: Access denied as the requested operation requires interactive authentication",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "reviewer Verdict line for b4c3139 lost in the session hand-off; a fresh security reviewer spawned on the whole diff",
+      "evidence": "S2 report, Reviewers section",
+      "size": 2
     }
   ]
 }
