@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "integrated",
+      "state": "integrated 0487cdb; checks green",
       "after": [
         "S1"
       ],
@@ -109,7 +109,7 @@
     },
     {
       "slice": "S12 clippy ticket_row args (added)",
-      "state": "pushed 5ee50e1 (fmt fix)",
+      "state": "integrated",
       "branch": "slice/archive-page-s12",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s12"
     },
@@ -132,8 +132,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s14"
     }
   ],
-  "next": "S2 1d62751 integrating; then S12 5ee50e1, S6, S13, S14, S7, S8, S9, S11 (record seams: S8.md Top rows finding - effort; S9.md cut at a word); assumed: credential shapes past S14 not built; S10 last; QA: 50 ms bar only in cargo test --release archive_filter.",
-  "updatedAt": "2026-11-24T10:30:54.570Z",
+  "next": "S12 5ee50e1 integrating; then S6, S13, S14, S7, S8, S9, S11; S10 last (also records seams: S8.md Top rows finding - effort; S9.md cut at a word); assumed: credential shapes past S14 not built; QA: 50 ms bar only in cargo test --release archive_filter.",
+  "updatedAt": "2026-11-24T10:56:47.906Z",
   "friction": [
     {
       "kind": "drain",
