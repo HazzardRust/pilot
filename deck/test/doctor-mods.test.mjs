@@ -47,8 +47,8 @@ test('checkAll reads the version from `claude --version` through its run, never 
     readSettings: () => ({}),
     env: {},
   });
-  // The Power row's reads (stay-awake S3) go through the same run: busctl on linux.
-  assert.deepEqual(calls.filter(([cmd]) => cmd !== '/usr/bin/busctl'), [['claude', '--version']]);
+  // Other rows' reads go through the same run (the Power row's, stay-awake S3).
+  assert.deepEqual(calls.filter(([cmd]) => cmd === 'claude'), [['claude', '--version']]);
   const mods = rows.find((r) => r.name === 'mods');
   assert.equal(mods.verdict, 'pass', mods.detail);
   assert.match(mods.detail, /2\.1\.326/);

@@ -15,8 +15,9 @@ const POWERSHELL = path.win32.join(SYSTEM32, 'WindowsPowerShell', 'v1.0', 'power
 const SUB_BUTTONS = '4f971e89-eebd-4455-a8de-9e59040e7347';
 const LIDACTION = '5ca83367-6e45-459f-a27b-476b1d01c936';
 const PBUTTONACTION = '7648efa3-dd9c-4e3e-b566-50f929386280';
-/** The setting's index: 0 do nothing, 1 sleep, 2 hibernate, 3 shut down; the button's 4 turns off the display, so the machine runs on. */
-const WINDOWS_ACTIONS = ['nothing', 'sleep', 'hibernate', 'shutdown', 'nothing'];
+/** The setting's index: 0 do nothing, 1 sleep, 2 hibernate, 3 shut down; only the button has 4, which turns off the display, so the machine runs on. */
+const LID_ACTIONS = ['nothing', 'sleep', 'hibernate', 'shutdown'];
+const BUTTON_ACTIONS = [...LID_ACTIONS, 'nothing'];
 
 /**
  * GetSystemPowerStatus's ACLineStatus (byte 0: 0 battery, 1 plugged in, 255 unknown) and GetPwrCapabilities'
@@ -56,10 +57,10 @@ const attempt = (read) => {
 };
 
 /** The current AC and DC indexes of one setting: the last two hex values `powercfg /qh` prints, read by position, not label. */
-function windowsAction(run, setting) {
+function windowsAction(run, setting, actions) {
   const values = [...run(POWERCFG, ['/qh', 'SCHEME_CURRENT', SUB_BUTTONS, setting]).matchAll(/:\s*0x([0-9a-f]{8})\s*$/gim)];
   if (values.length < 2) return { ac: null, dc: null };
-  const [ac, dc] = values.slice(-2).map(([, hex]) => WINDOWS_ACTIONS[Number.parseInt(hex, 16)] ?? null);
+  const [ac, dc] = values.slice(-2).map(([, hex]) => actions[Number.parseInt(hex, 16)] ?? null);
   return { ac, dc };
 }
 
@@ -67,8 +68,8 @@ function readWindows(run) {
   const status = attempt(() => JSON.parse(run(POWERSHELL, ['-NoProfile', '-NonInteractive', '-Command', STATUS_QUERY]).replace(/^\uFEFF/, '')));
   return {
     source: status?.ac === 1 ? 'ac' : status?.ac === 0 ? 'battery' : null,
-    lid: attempt(() => windowsAction(run, LIDACTION)),
-    button: attempt(() => windowsAction(run, PBUTTONACTION)),
+    lid: attempt(() => windowsAction(run, LIDACTION, LID_ACTIONS)),
+    button: attempt(() => windowsAction(run, PBUTTONACTION, BUTTON_ACTIONS)),
     modernStandby: typeof status?.aoac === 'boolean' ? status.aoac : null,
   };
 }
