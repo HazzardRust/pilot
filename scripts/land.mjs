@@ -25,6 +25,7 @@ import path from 'node:path';
 import { hostFor } from '../deck/host.mjs';
 import { deleteMerged } from './branches.mjs';
 import { checksGate, provenTree } from './checks.mjs';
+import { gitView } from './git-view.mjs';
 import { assertPushable, firstLine, holds, PILOT_BRANCH } from './pilot-branch.mjs';
 import { baseOf, chainLanded, commitRecords, git as gitAt, landingMessage } from './integrate.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
@@ -58,7 +59,9 @@ const reason = (err) =>
  * `gc`'s (process-gc L14): `() => string[]`, none by default, so only the CLI stops processes.
  * `holder` is `prune`'s (landing-keeps-worktrees L2): none by default, so nothing is held.
  */
-export function land({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args), host, test, gc = () => [], holder, remove = removeWorktree, wait, sleep } = {}) {
+export function land({ cwd = process.cwd(), git: run = (args) => gitAt(cwd, ...args), host, test, gc = () => [], holder, remove = removeWorktree, wait, sleep } = {}) {
+  // One view for the whole landing (land-batching L2): every callee below reads git through it.
+  const git = gitView(cwd, { run });
   let head;
   try {
     head = git(['symbolic-ref', '--short', 'HEAD']);
@@ -215,7 +218,7 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
   } catch (err) {
     throw fail(`${firstLine(err)}; nothing pushed`);
   }
-  chainGuard({ cwd });
+  chainGuard({ cwd, runs });
   // The caught-up tip's checks, before the record commit or any push (ci-gate L4, A2): red, pending, unread refuse.
   const tip = git(['rev-parse', 'HEAD']);
   const checks = checksGate({ host, git, sha: tip });
@@ -231,7 +234,8 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
   const recorded = recordBase(cwd, head);
   const legacy = recorded === undefined || recorded === PILOT_BRANCH;
   // The deck's run record rides in the landing merge (lander L10): committed, not discarded.
-  commitRecords(cwd);
+  // A record commit is a write made outside the view (L3).
+  if (commitRecords(cwd)) git.forget();
   const source = git(['rev-parse', 'HEAD']);
   const pushSkipped = pushFeature({ git, head, source });
   const keep = keptDir(mainCheckout(git), head);
@@ -241,6 +245,8 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
   for (let retried = false; ; retried = true) {
     const before = git(['rev-parse', pilotRef]);
     const reuse = fs.existsSync(keep) && !holds(cwd, ['merge-base', '--is-ancestor', source, before]) && resume({ cwd, dir: keep, pilotTip: before, source, message, side: 'theirs', refuse: fail, conflict: (left, why) => conflict(head, left, keep, why) });
+    // A resumed land dir is written outside the view (L3).
+    if (fs.existsSync(keep)) git.forget();
     let merge;
     try {
       merge = mergeIntoPilot({ cwd, git, source, message, test, label: head, keep, reuse, ...(proof.tree !== null && { since: proof.tree }), ...(!legacy && { afterGreen }) });
@@ -249,10 +255,14 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
       const failed = Object.assign(new Error(`NOT landed: ${err.reason ?? err.message}; ${PILOT_BRANCH} not pushed`, { cause: err }), err);
       // Rejected because pilot moved since the fetch: fetch and merge again once. Anything else stops here.
       if (!err.pushRejected || (runs !== null && !holds(cwd, ['fetch', '-q', '--prune', runs]))) throw failed;
+      // The fetch, the resume and the merge's own worktree wrote outside the view (L3).
+      git.forget();
       if (git(['rev-parse', pilotRef]) === before) throw failed;
       if (retried) throw fail(`${PILOT_BRANCH} moved again after one retry; ${head} is pushed, ${PILOT_BRANCH} is not: run pilot land again`);
       continue;
     }
+    // The merge's worktree, and `afterGreen`'s number on feat, wrote outside the view (L3).
+    git.forget();
     const landed = { head, sha: merge.sha, retried, already: !merge.merged, adr: merge.adr ?? null, proof: proof.line, ...(pushSkipped && { pushSkipped }) };
     // A feature already on pilot comments on nothing (spec 2), nor does one with no host (other-host
     // A1). Landed already: neither a refused comment nor an unreadable PR list reads as a failed landing.
@@ -316,15 +326,16 @@ export function featureLine({ number, base, below, why, host }) {
 /**
  * Refuses, exit 1, a feature built on `feat/<N>` while N has not landed on pilot (pilot-develop-line
  * spec 4b; L6): `baseOf`'s `chained`, read from the run record against the run remote's pilot as
- * last fetched. A record or pilot `baseOf` cannot read refuses too. Never reverts N (A2).
+ * last fetched. A record or pilot `baseOf` cannot read refuses too. Never reverts N (A2). `runs`, the run
+ * remote the landing already read, is read again when absent.
  */
-export function chainGuard({ cwd }) {
+export function chainGuard({ cwd, runs }) {
   let base;
   let landed;
   try {
-    base = baseOf(cwd);
+    base = baseOf(cwd, runs);
     // The chain outlives N's landing for integrate (audit-f14 L5); the guard's end is still that landing.
-    landed = base.chained !== undefined && chainLanded(cwd, base.chained);
+    landed = base.chained !== undefined && chainLanded(cwd, base.chained, runs);
   } catch (err) {
     throw fail(`${firstLine(err)}; nothing pushed`);
   }
