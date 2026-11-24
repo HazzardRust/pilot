@@ -65,7 +65,7 @@ cargo test --manifest-path deck/rune/Cargo.toml
 
 `npm test` runs `node scripts/gate.mjs`, 6-8 minutes, 10 skipped is normal; it runs the cargo test line itself where
 cargo is on PATH. `cargo fmt --check` is added for this run: formatting drift reached QA on the Rune run.
-One file: `node --test <file>`; one Rust test: `cargo test --manifest-path deck/rune/Cargo.toml --test <name>`.
+One file: `node --test <file>`; one Rust test module: `cargo test --manifest-path deck/rune/Cargo.toml --test deck -- <module>::`. The Rune tests are one binary since cheap-suite: files under `deck/rune/tests/deck/`, each a `mod` in `tests/deck/main.rs`.
 
 ## Live check
 
