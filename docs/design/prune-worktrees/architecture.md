@@ -100,6 +100,7 @@ dirs); folding it would put its policy behind the guarded seam. `isRunBranch` su
   run branches and the land dir. Tradeoff: every creating agent's line changes (S6), and untagged legacy trees are
   never found by `--run` (spec 11, doctor). Rejected: inferring from HEAD or path, which misses `qa-hnw` and could
   claim another session's tree.
+  Answer: "Tag at creation (default)", pressed by the user on itm_b346db272062.
 - **A2** Where the landing's prune runs. Default: where it does now, the lander's step 1 (`pilot worktrees prune
   --run`) in its own process, before its report post; `stepsOf` simply stops naming removals. Tradeoff: ordering
   rests on the lander's prose. Rejected: the deck pruning inside `postFilled`, which would block the deck's MCP
