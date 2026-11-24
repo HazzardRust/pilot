@@ -192,6 +192,82 @@ fn a_send_the_deck_does_not_take_keeps_the_draft_and_says_why() {
     assert!(replies(&deck, &id).is_empty());
 }
 
+/// A window on a seeded chat view: no deck, no scratch daemon.
+fn seeded(chat: Value) -> Runtime<State> {
+    let mut state = State::default();
+    state.view.regions.insert("chat".into(), chat);
+    let mut rt = Runtime::new(state, chat_only, (1280.0, 800.0), Env::new(true, 1.0));
+    rt.frame(0.0);
+    rt
+}
+
+fn two_threads() -> Value {
+    json!([
+        { "id": "itm_0000000000c1", "title": "Add a dark mode", "href": "/thread/itm_0000000000c1" },
+        { "id": "itm_0000000000c2", "title": "Fix the header", "href": "/thread/itm_0000000000c2" },
+    ])
+}
+
+fn top_of(rt: &Runtime<State>, key: &str) -> f32 {
+    let ([_, y, _, _], _) = rt
+        .presented(key)
+        .unwrap_or_else(|| panic!("no {key} drawn"));
+    y
+}
+
+#[test]
+fn the_create_threads_sit_above_the_messages() {
+    let rt = seeded(json!({
+        "id": "itm_0000000000a1",
+        "messages": [{ "by": "you", "at": null, "text": "hello" }],
+        "threads": two_threads(),
+    }));
+
+    let first_message = top_of(&rt, "chat-0");
+    for key in ["chat-thread-0", "chat-thread-1"] {
+        assert!(
+            top_of(&rt, key) < first_message,
+            "{key} is above the first message"
+        );
+    }
+    assert!(top_of(&rt, "chat-thread-0") < top_of(&rt, "chat-thread-1"));
+}
+
+#[test]
+fn a_thread_row_opens_its_thread() {
+    let mut rt = seeded(json!({
+        "id": "itm_0000000000a1",
+        "messages": [],
+        "threads": two_threads(),
+    }));
+
+    let (x, y) = rt.find("chat-thread-1").expect("the second row is drawn");
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(0.0);
+
+    assert_eq!(rt.state.query.screen, "thread");
+    assert_eq!(rt.state.query.id.as_deref(), Some("itm_0000000000c2"));
+}
+
+#[test]
+fn the_threads_show_with_no_chat_open() {
+    let rt = seeded(json!({ "messages": [], "threads": two_threads() }));
+
+    let texts: Vec<String> = rt.elements().into_iter().filter_map(|e| e.text).collect();
+    for title in ["Add a dark mode", "Fix the header"] {
+        assert!(
+            texts.iter().any(|t| t == title),
+            "{title} is drawn: {texts:?}"
+        );
+    }
+    assert!(
+        texts.iter().any(|t| t.contains("No chat open")),
+        "the sentence stays: {texts:?}"
+    );
+}
+
 /// The top and bottom of `key`'s box as the window shows it.
 fn span(rt: &Runtime<State>, key: &str) -> (f32, f32) {
     let ([_, y, _, h], _) = rt
