@@ -54,7 +54,7 @@ npm ci
 npm test
 ```
 
-A slice that edits `deck/rune/` also runs `cargo test --manifest-path deck/rune/Cargo.toml` (its own `--test <name>` first).
+A slice that edits `deck/rune/` also runs `cargo test --manifest-path deck/rune/Cargo.toml` (its own `--test deck <module>` filter first; the Rune tests are one binary under `tests/deck/` since drift merge df492de).
 
 `npm test` runs `node scripts/gate.mjs`: 5.5 to 20 minutes on 2026-11-20. One file: `node --test <file>`. Run the full
 `npm test` once, on the slice's final state. The repo has no typecheck, lint or build script. Tests use a scratch store
