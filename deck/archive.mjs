@@ -31,7 +31,14 @@ const KINDS = (
       .readdirSync(KINDS_DIR)
       .filter((name) => name.endsWith('.mjs'))
       .sort()
-      .map(async (name) => (await import(pathToFileURL(path.join(KINDS_DIR, name)).href)).default),
+      .map(async (name) => {
+        try {
+          return (await import(pathToFileURL(path.join(KINDS_DIR, name)).href)).default;
+        } catch (error) {
+          console.error(`[deck] archive kind ${name} failed to load; skipped: ${error.message}`);
+          return undefined;
+        }
+      }),
   )
 ).filter((kind) => typeof kind?.kind === 'string' && Array.isArray(kind.files) && typeof kind.rowsOf === 'function');
 
@@ -55,7 +62,7 @@ const shown = (row) => ({
   id: withheld(row.id),
   at: withheld(row.at ?? null),
   title: withheld(row.title),
-  fields: (row.fields ?? []).map((field) => ({ ...field, label: withheld(field.label), value: withheld(field.value) })),
+  fields: (row.fields ?? []).map((field) => ({ label: withheld(String(field.label ?? '')), value: withheld(String(field.value ?? '')) })),
 });
 
 /** The live store as it stands on disk, or an empty one where it is missing or unreadable: never recovered here. */
