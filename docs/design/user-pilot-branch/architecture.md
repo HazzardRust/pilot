@@ -97,19 +97,24 @@ function because the name is now per repository. `pilot-tip.mjs` survives (hooks
 ## 6. Assumed decisions
 
 - **A1 QA environment**: moved to §5 as L13 (user, itm_e01ae7f5c98e).
+  Verdict: stands — the user chose it on itm_e01ae7f5c98e; now L13
 - **A2 `pilot.host none` needs `pilot.branch` set** by hand once (spec 5), so a local-only repository that works
   today stops until it is set. Trades one command for "never guess". Rejected: `none` keeps `pilot`.
+  Verdict: stands — the user agreed never guessing a name; no queued ticket depends on host none
 - **A3 Spec 2-5, 8, 9 as proposed**, not yet confirmed by the user.
+  Verdict: stands — spec 9 is a consequence of spec 2
 - **A4 What a name can reach** (security). `PILOT_BRANCH` and `pilot.branch` are accepted only as
   `^[a-z0-9][a-z0-9._-]*-pilot$` (no `..`, no `.lock` or `.` end) or the legacy `pilot`, before any git call, so
   neither can name an option, a refspec, `HEAD`, a `feat/`/`slice/` branch or the default branch; every push still
   passes `assertPushable`, argv only. A derived login passes the same test (spec 6). Trades a free-form override
   for a closed shape. Rejected: today's `PLAIN` alone (would let `pilot.branch=main-line` or `feat/x` be the line).
+  Verdict: stands
 - **A5 A stored name naming another user's branch** is warned, not refused: `pilot doctor`'s spec 7 row says the
   stored name is not `<login>-pilot`; landings proceed. Git holds no ownership to check, and a hand-set name is how a
   user deliberately shares a line or runs `pilot.host none`. Trades: user B can land on `a-pilot` if B sets it by
   hand. Rejected: refusing every push whose name differs from the signed-in `<login>-pilot` (a login read per push,
   and no answer under `pilot.host none`).
+  Verdict: stands — setting another user's name is a deliberate local act; refusing would break host none
 
 ## 7. Out of scope
 
