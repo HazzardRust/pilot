@@ -15,7 +15,7 @@ are"), not a higher limit.
 |---|---|---|
 | 1 | One command prints every test file's time and process starts (node, git, other), slowest first, with totals. | `npm run test:cost`: one row per file the run started (607 today), its table in the S1 report. |
 | 2 | Every test group has a verdict the user read before anything changed: kept, merged or cut, what it guards, and for a cut what still guards it. Verdicts are rules, re-applied at build time to tests other runs land meanwhile. | The verdict table below; the user's answer on A1. 0 test deleted that the table does not name. |
-| 3 | The tests that stay start fewer processes. *assumed* (A4) | `test:cost` before/after: total spawns ≤ 11,000 and git ≤ 10,000 (from 14,140 / 13,073); `SPAWN_CEILING` = measured + 10%. |
+| 3 | The tests that stay start fewer processes. *assumed* (A4) | `test:cost` before/after: spawns ≤ 13,571 and git ≤ 12,472 (the S10 run; from 14,140 / 13,073); `SPAWN_CEILING` = measured + 10%. |
 | 4 | The full node suite finishes well inside the limit with other gates beside it. *assumed* (A4) | One timed `npm run test:quiet` with two other full suites live: ≤ 15 min (half the limit; 19.5 min today with one or two beside). |
 | 5 | A landing reruns only what green CI did not prove (A2, user: trust a proved tree). | Land tests: a proved tip runs `selected <n> of <m> ... since <tree7>`; an unproved one runs the full suite, naming why. |
 | 6 | No protection is lost silently. | Per merging slice: line coverage of the production modules its tests reach not lower, and an assert census not lower except listed exact duplicates; S10: 20 sampled mutants each on `land.mjs`, `sync.mjs`, `integrate.mjs` killed as before. |
@@ -114,6 +114,7 @@ adapter except `rune-target`, which is internal to the gate.
 - **A4** Bars: spawns ≤ 11,000 and git ≤ 10,000; full suite ≤ 15 min with two other suites live. Trades a weaker bar
   than the draft's "far fewer" for one the measured levers reach (F3, F4: most git is distinct scenarios). Not a fork.
   Verdict: stands — 15 min is the ticket's own "under half the 30-minute limit"; no queued ticket sets another bar
+  Revised in the run: bars lowered to the measured S10 run, assumed as itm_daf0dced0c59's default; the 14,929 ceiling stops regressions.
 - **A5** The version bump of spec 10 is a patch bump (the artefact names no other). Recorded by the co-pilot as assumed; the user asked for "a version bump" (itm_52b72e87a2a3, 2026-11-22). Which files carry the version is S10's to find (last bump: 2530153).
 
 ## 7. Out of scope
@@ -138,6 +139,7 @@ Width 7; longest stem 4 (S1 → S3 → S5 → S10).
 | S8 | Script tests drop duplicate landings and nested gates | 2, 3, 6 | five `scripts/test/land*.test.mjs`, `test-quiet`, `install-command`, `cli-wiring` tests | – | typescript | [S8](slices/S8.md) |
 | S9 | Deck tests reuse one deck and one fixture per file | 2, 3, 6 | `deck/test/daemon`, `gate2-base`, `landing-recut`, `classifier-log` tests | – | typescript | [S9](slices/S9.md) |
 | S10 | The suite is measured cheaper under load | 3, 4, 6, 10 | `scripts/gate.mjs` (`SPAWN_CEILING`), `scripts/test/cost-bars.test.mjs`, `cost-after.txt` | S1 (`test:cost`), S2 (`deck/rune/tests`), S3 (`cargoStep`), S5 (`selectTests`), S6 (`runRemote`), S7 (`inbox.test.js`), S8 (`land-*.test.mjs`), S9 (`daemon.test.mjs`) | typescript | [S10](slices/S10.md) |
+| S15 | The spawn bars are the measured run (added in the run) | 3 | `scripts/test/cost-bars.test.mjs`, `docs/design/cheap-suite/slices/S10.md` | S10 (`cost-after.txt`) | typescript | [S15](slices/S15.md) |
 
 red team: (1) S3 and S5 both edit `select-tests.mjs` (`changed`, tree `since`): S5 after S3, not beside it. (2) S1
 and S3 both edit `gate.mjs`: chained. (3) S4's `testedTrees` widens the `gh` allowlist, a seam S5 only reads: S5 names
