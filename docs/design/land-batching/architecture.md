@@ -17,7 +17,7 @@ signed numbers".
 | 2 | The gate holds the signed bars: `SPAWN_CEILING` reads 11,000 and a new `GIT_CEILING` 10,000; a run over either is red. cheap-suite's spec 3 and A4 name 11,000 / 10,000 again. | `scripts/test/gate-spawns.test.mjs`: a count of 11,001 total is red, 10,001 git under 11,000 total is red, 11,000 / 10,000 is green (3 cases). The cheap-suite rows read the signed numbers. |
 | 3 | `pilot land`, `pilot integrate` and `pilot sync` behave as before: same printed lines, refusals, commits and pushes. | All existing land*, integrate*, sync* tests pass unchanged (0 edited asserts). One pin per command on a seeded repo, written on the base before any product change: printed lines (SHAs normalised), pilot's and the feature's tips, the merge commit's parents and subject. |
 | 4 | The saving comes first from product code: one landing, one integrate and one sync each spawn fewer git, asserted. *assumed* (A2) | `countGit` per command on a seeded repo: landing 39 → ≤ 27 (S5); `pilot sync` main-merge 18 → ≤ 14; integrate one slice ≤ 75% of its base count, both numbers in the test. |
-| 5 | Any remainder past spec 4 comes from the shared test fixture helpers, with no test skipped, cut or weakened. *assumed* (A1, itm_6b7ac21774f1). This rewrites the ticket's spec 4 ("not from fixtures"), which the user's Yes covered; S6 alone delivers it and nothing comes after it, so a no at Gate 1 drops S6 alone. | S6's diff touches only `scripts/test/lib/` and helper call sites; the test count of the full run equals the base's (629 files) and 0 asserts removed. |
+| 5 | Any remainder past spec 4 comes from the shared test fixture helpers, with no test skipped, cut or weakened. User pressed "Fixtures make up the rest" (A1, itm_6b7ac21774f1), a press, not the 20-minute default. This rewrites the ticket's spec 4 ("not from fixtures"), which the user's Yes covered; S6 alone delivers it and nothing comes after it, so a no at Gate 1 drops S6 alone. | S6's diff touches only `scripts/test/lib/` and helper call sites; the test count of the full run equals the base's (629 files) and 0 asserts removed. |
 | 6 | practitioner: git performance engineers (GIT_TRACE2 users) — the per-call-site git census, before and after, is kept beside the design. | `spawns-before.txt` (this commit) and S7's `spawns-after.txt`: git spawns per entry module and per argv, same probe; both files cover at least 99% of the gate's git count. |
 
 ## 3. Findings
@@ -85,11 +85,13 @@ adopts, not a move.
 - **L5** Pins first: each command's pin is written and green on the base in the slice that first changes that
   command, before its product change. Rejected: golden files (they pin paths and timing noise).
 - **L6** The run's ADR is `docs/adr/NNNN-land-batching.md` (ADR NNNN, S1): a command reads git through one view.
+- **L7** QA environment (user, itm_470ec6f7a434, "This machine + the CI count"): this machine, seeded repositories with a
+  local bare remote, plus the spawn count read from a CI run of the feature PR before Gate 2. Rejected: a landing on a real host repo.
 
 ## 6. Assumed decisions
 
 - **A1** Where the remainder past product batching comes from (itm_6b7ac21774f1, posted). Default: fixture helpers
-  (S6), after S1-S5 are measured. Product cut estimated −1,500 to −2,100; fixture folds −500 to −900; needed −2,572.
+  (S6), after S1-S5 and S7 are measured. **Answered**: the user pressed "Fixtures make up the rest" on itm_6b7ac21774f1. Product cut estimated −1,500 to −2,100; fixture folds −500 to −900; needed −2,572.
   Trades spec 4's "not fixtures" wording. Rejected: bars at what product reaches (keeps spec 4, misses the signed
   bars); product beyond the three scripts (~400 duplicate reads there, still short).
 - **A2** Per-command bars (spec 4): landing ≤ 27 of 39 (S1 ≤ 36, S2 ≤ 32, S5 ≤ 27), sync main-merge ≤ 14 of 18, integrate ≤ 75% of its base
@@ -102,8 +104,6 @@ adopts, not a move.
   added tests included. archive-page, reply-markdown, classifier-env share no file with this run (checked by diff).
 - **A5** The bars carry no headroom: `SPAWN_CEILING` 11,000 flat, not measured + 10% (gate.mjs L16's rule). Trades:
   the next feature adding spawns past them must cut or ask. Rejected: measured + 10% (would sit above the signed bar).
-- **A6** QA environment (itm_470ec6f7a434, main's): this machine with seeded repos and a local bare remote, plus the
-  spawn count from a CI run of the feature PR. Trades: no landing on a real host repo before Gate 2.
 
 ## 7. Out of scope
 
