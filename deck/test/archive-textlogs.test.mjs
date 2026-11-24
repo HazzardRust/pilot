@@ -58,16 +58,18 @@ test('each line is a row with its time', (t) => {
 test('a line without a stamp takes the file time, and a long line is clipped in its title', (t) => {
   const dir = tempDeck(t);
   const file = path.join(dir, 'deck.log');
-  fs.writeFileSync(file, `[deck] listening\r\n${'x'.repeat(300)}\n`);
+  fs.writeFileSync(file, `[deck] listening\r\n${'word '.repeat(60).trimEnd()}\n${'x'.repeat(5000)}\n`);
   const mtime = new Date('2026-03-04T05:06:07.000Z');
   fs.utimesSync(file, mtime, mtime);
 
   const rows = rowsOf(dir);
 
-  assert.deepEqual(rows.map((row) => row.at), [mtime.toISOString(), mtime.toISOString()]);
+  assert.deepEqual(rows.map((row) => row.at), Array(3).fill(mtime.toISOString()));
   assert.equal(rows[0].title, '[deck] listening', 'no carriage return is left on a CRLF line');
-  assert.equal(rows[1].title.length, 120);
-  assert.equal(rows[1].fields.find((field) => field.label === 'Line').value.length, 300);
+  assert.equal(rows[1].title, 'word '.repeat(24).trimEnd(), 'clipped to 120 at a word');
+  assert.equal(rows[1].fields.find((field) => field.label === 'Line').value.length, 299);
+  assert.equal(rows[2].title, 'deck.log:3', 'a first word past 120 is never cut into');
+  assert.ok(!rows[2].fields.find((field) => field.label === 'Line').value.includes('xxx'), 'a 5,000-character word is no row');
 });
 
 test('no log file is no rows', (t) => {
@@ -100,6 +102,17 @@ test('a token in a log line is withheld', (t) => {
   assert.equal(rows[0].title, '<withheld: credential>');
   assert.equal(rows[0].fields.find((field) => field.label === 'Line').value, '<withheld: credential>');
   assert.ok(!JSON.stringify(rows).includes(token), 'no string of any row holds the token');
+});
+
+test('a title cut never leaves part of a token', (t) => {
+  const dir = tempDeck(t);
+  const token = 'A1b2C3d4E5f6G7h8I9j0K1l2M3n4';
+  fs.writeFileSync(path.join(dir, 'deck.log'), `${'pad '.repeat(26)}Bearer ${token}\n`);
+
+  const [row] = archiveRows().filter((each) => each.kind === 'log');
+
+  assert.equal(row.fields.find((field) => field.label === 'Line').value, '<withheld: credential>');
+  assert.ok(!row.title.includes(token.slice(0, 6)), `the title ${row.title} holds no head of the token`);
 });
 
 test('the raw test logs stay unread', (t) => {
