@@ -20,6 +20,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `alert-switch.mjs` | the Weekly alerts on/off switch file |
 | `analytics.mjs` | `pilot analytics`: a run's tokens, tool calls, time and cost per agent |
 | `audit.mjs` | the housekeeping audit report: checked, ranked, rendered, kept in the store |
+| `awake.mjs` | the keep-awake hold: the in-flight rule, the per-OS holder, the tick |
 | `blocked-shape.mjs` | checks a ticketed `Blocked:` question or walkthrough is posted blocking |
 | `budget.mjs` | the per-session agent split set by `pilot budget` |
 | `chain.mjs` | hands the next open ticket to a session when a run finishes cleanly |
