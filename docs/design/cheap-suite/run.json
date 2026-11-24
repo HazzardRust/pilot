@@ -1,0 +1,371 @@
+{
+  "slug": "cheap-suite",
+  "feature": "cheap-suite",
+  "ticket": "itm_52b72e87a2a3",
+  "branch": "feat/cheap-suite",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-cheap-suite",
+  "artefact": "docs/design/cheap-suite/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated at ba5ddce; checks green",
+      "branch": "slice/cheap-suite-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at 34114e6; checks green",
+      "branch": "slice/cheap-suite-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at 781318b; checks green; R3 +5 s/gate; concurrent-build race in Misses",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/cheap-suite-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at 5604695; checks green",
+      "branch": "slice/cheap-suite-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at dae95ba; checks green",
+      "after": [
+        "S3",
+        "S4",
+        "S12"
+      ],
+      "branch": "slice/cheap-suite-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated at e5e448f; checks green; B4 bar MISSED (30, 15 vs <=12) for the fundamentalist",
+      "branch": "slice/cheap-suite-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "integrated at c7053df; checks green",
+      "branch": "slice/cheap-suite-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "integrated at 3ee74ef (fix ff'd by main); checks green",
+      "branch": "slice/cheap-suite-s8fix",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s8fix"
+    },
+    {
+      "slice": "S9",
+      "state": "integrated at 2923c55; checks green; B2 bar MISSED: git gate2-base 167->143, landing-recut 202->178 vs <60 (for the fundamentalist)",
+      "branch": "slice/cheap-suite-s9",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s9"
+    },
+    {
+      "slice": "S10",
+      "state": "integrated at e17d767; checks green at 53795ed; B1 MISSED (13571 spawns / 12472 git vs 11000 / 10000); B2 650 s, two suites at once; B3 partial (land.mjs needs diff mutation); LOW: test-cost.mjs:56 total row off by 66",
+      "after": [
+        "S5",
+        "S7",
+        "S8"
+      ],
+      "branch": "slice/cheap-suite-s10",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s10"
+    },
+    {
+      "slice": "S11",
+      "state": "integrated at fe80393; checks green",
+      "branch": "slice/cheap-suite-s11",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s11"
+    },
+    {
+      "slice": "S12",
+      "state": "integrated at eb29c0f; hand-merged on the user's Allow (itm_4e4a2e791c89)",
+      "branch": "slice/cheap-suite-s12",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s12"
+    },
+    {
+      "slice": "S13",
+      "state": "integrated at e2e208f; hand-merged; 3-OS CI run 45197880294 green on the stack",
+      "after": [
+        "S12"
+      ],
+      "branch": "slice/cheap-suite-s13",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s13"
+    },
+    {
+      "slice": "S14",
+      "state": "integrated at 94c4425; hand-merged; feat tree identical to CI-green 4169195",
+      "after": [
+        "S13"
+      ],
+      "branch": "slice/cheap-suite-s14",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s14"
+    },
+    {
+      "slice": "S15",
+      "state": "integrated 86e4dcc",
+      "after": [
+        "S10"
+      ],
+      "branch": "slice/cheap-suite-s15",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s15"
+    },
+    {
+      "slice": "cheap-suite",
+      "state": "fixing: fix round live; QA read-only pass done at 86e4dcc: spec 4 FAIL 1,354 s vs 900 s, full run 8 reds in inbox.test.js"
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S15"
+      ],
+      "branch": "slice/cheap-suite-fix",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-fix"
+    }
+  ],
+  "findings": [
+    "kept: F1 simplify — Rune skip fails open (gate.mjs:292); not built, user question itm_0f4d3d042faa",
+    "kept: F2 drop — delete cost-bars.test.mjs, asserts cost-after.txt reads its own numbers",
+    "kept: F3 simplify — spec row 3 reworded as missed-then-lowered; restoring bars is itm_79509e578453",
+    "kept: F4 needed-evidence — sample up to 10 land.mjs mutants, test any survivor",
+    "kept: F5 simplify — .github/ proof rule gets one home",
+    "kept: N1 drop — `changed` on files:null has no reader",
+    "kept: N2 simplify — test-cost total off by 66, drop the `-` skip",
+    "kept: N3 simplify — runeDeck raw newlines restored to \\n",
+    "dropped: N4 simplify — CAP_BUDGET options argument, 4-function refactor costs more than it saves",
+    "dropped: knip GATE_SLOTS drop — predates the feature (18a5d2f), a test imports it",
+    "dropped: complexity simplify — file-level only, nothing ties rows to this diff"
+  ],
+  "humanSteps": [
+    {
+      "text": "15 idle `node --test scripts/test/land-*.test.mjs` processes from a timed-out mutation run are left alive (started 24/11 12:24:38-45, parents gone); end them in Task Manager or reboot when no run is live."
+    },
+    {
+      "text": "Remove leftover evidence worktree once idle: git -C C:/Users/jrylk/Projects/pilot worktree remove --force C:/Users/jrylk/Projects/pilot-cheap-suite-fund; scratch dir /tmp/tmp.nQT78iiwdq also left"
+    }
+  ],
+  "next": "Fix round e56094e pushed, verified; pilot integrate of slice/cheap-suite-fix into pilot-feat-cheap-suite running. On pass: pilot checks, then resume QA (a992777f, read-only) with the tip + items: inbox.test.js 8-red cascade; test:cost top=40 vs spec 1; spec 4 miss (1,354 s vs 900 s) into walkthrough, no re-bar. Then gate2 by QA; then ticket proposal: batch git in landing.",
+  "updatedAt": "2026-11-24T03:47:16.097Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 and S7 hand-backs reached main, not the co-pilot; main forwarded them",
+      "evidence": "coordinator forwards of S7 and S5 reports"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a fresh worktree has no node_modules; 59 Rune tests fail ERR_MODULE_NOT_FOUND (support/mod.rs:89 shells out to bin/pilot.mjs) until npm ci, one misleading cargo run",
+      "evidence": "S12 report: 59 failures before npm ci, 172 pass after",
+      "size": 59
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "base test-quiet's nested gate made every S8 before-run slow and red",
+      "evidence": "424.7 s + fail under GIT_TRACE; 54.7 s + fail under coverage",
+      "size": 425
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8's B1 bar is a raw grep count of assert.; a reviewer-asked dedupe of a duplicate assert reads as a miss",
+      "evidence": "land-conflict 46 -> 45, a9ea85c"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no ready-made counter of land() calls; marker chosen by reading land.mjs",
+      "evidence": "git symbolic-ref --short HEAD at scripts/land.mjs:64"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the brief's unconfirmed path hypothesis cost one failed attempt at forcing posix paths on Windows",
+      "evidence": "S13: replacing path functions broke node's module loader"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed exits 1 on a pre-existing Rune cargo fmt diff, so its exit code cannot be read as the slice's",
+      "evidence": "S13 --since=b21f2de: 551 pass 0 fail, exit 1 from fmt on 8 files"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no CI runs on a slice branch, so a Linux-only red cannot be shown there without a manual dispatch",
+      "evidence": "gate.yml and ci.yml triggers: PRs, main/pilot pushes, workflow_dispatch"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "cargo fmt --check prints \\\\?\\ paths on Windows, so grepping file names needs a sed first",
+      "evidence": "S14 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced twice while three implementers were live in background test runs, so it could not take their reports",
+      "evidence": "two handback-send-enforce notices, each right after the children entered background runs"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "Monitor poll loop refused by a hook; stacked waits, two duplicates stopped by id",
+      "evidence": "PreToolUse:Monitor hook error; TaskStop bbn16uihh, b6ug91ti2"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed pulls in the cargo suite when a feat merge brings deck/rune test changes the slice does not own; gate ran past 180 s",
+      "evidence": "S7: node 148 s + cargo 51.6 s, all for rune test files outside the slice"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5/S7 reports reached main, not the co-pilot, after the co-pilot's forced hand-back",
+      "evidence": "coordinator relayed S5 88dc79a and S7 47ccb79 reports"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7.md B3 says 4 tests; the file has 5 (slice file stale)",
+      "evidence": "deck/test/client-rejoin.test.mjs 5 pass at 47ccb79"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced a third time while a child was live on its own background CI wait",
+      "evidence": "handback-send-enforce after s8fix agent went into Gate run 45303824395"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8's B4 was measured on Windows only, so a POSIX-only break in a faked npm passed its gate and review",
+      "evidence": "Gate 45303160603 ubuntu/macos red at 0d87e06; fix 3ee74ef chmod 0o755"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate refuses a fix branch over the red tip it fixes, and a co-pilot has no worktree of its own on feat to land the fix",
+      "evidence": "NOT integrated slice/cheap-suite-s8fix: checks red at 0d87e06 ... fix the feature first",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "integrate refuses a fix branch over the very red tip it fixes, and the co-pilot owns no feat worktree to land a fix in; the pilot fast-forwarded by hand",
+      "evidence": "NOT integrated slice/cheap-suite-s8fix: checks red at 0d87e06 ... fix the feature first (integrate.mjs:444)"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8's B4 measured on Windows only; a POSIX-only break in a faked npm passed its gate and review; no CI runs on a slice branch",
+      "evidence": "Gate run 45303160603 red at 0d87e06"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced three more times while children were live",
+      "evidence": "handback-send-enforce notices"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10 implementer's context reset right after spawn; it could not tell whether its timed run had started",
+      "evidence": "S10 message: worktree clean at 3ee74ef, no log in scratchpad",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a land.mjs mutant takes ~400 s (every land*.test.mjs runs per mutant), so S10's B3 as written (20 mutants x 3 modules x 2 sides) is a ~4 h job; neither the slice nor the runner can sample mutants",
+      "evidence": "base.jsonl: land 0 L68 killed 408s"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the gate's slot limit makes 'three suites at once' two plus one queued",
+      "evidence": "load-a.log: gate: waiting for a slot"
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "a Stryker run that hit its 900 s timeout left 15 orphaned node --test processes alive",
+      "evidence": "PIDs 29292 21212 23024 26636 27532 16424 32512 24816 35772 36788 32228 17284 18344 37792 37384, parents gone, ~0 CPU"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait timed out on the deck four times in a row while suites ran; deck itself answering; 4 restarts and a timed probe",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the per-file cost table does not split spawns into test-made versus code-under-test, so S15's lever guess (fixtures) needed a custom preload to check",
+      "evidence": "land-clear: 1012 spawns, 64 from test code; scratchpad s15/attr2.mjs"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced six times in one run while a child was live; main relayed every child report by hand",
+      "evidence": "handback-send-enforce notices on S5/S7/S8, S8 fix, S10, S15"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit refused edits on architecture.md and S10.md until each was Read first; five edits re-issued",
+      "evidence": "S15 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "handed back before its evidence runner returned; the runner was left running in pilot-cheap-suite-fund with no one to stop it",
+      "evidence": "fundamentalist report: tools table 'not run', cleanup still open",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot checks --wait died on gh ETIMEDOUT (exit 6), no verdict; re-armed",
+      "evidence": "checks unread at 86e4dcc: spawnSync gh ETIMEDOUT",
+      "size": 1
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "diff mutation produced no result: Stryker timed out at 900 s before any mutant finished",
+      "evidence": "2545 mutants over 10 modules, initial test run 1 min 54 s, exit 124",
+      "size": 900
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "diff coverage not run: the repo's changed-tests command is outside the runner's allowed npm form",
+      "evidence": "npm run test:changed -- --since=c3f22e6 vs ^npm (test|run NAME)$"
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "scratch dir left behind, rm -rf failed busy after the Stryker timeout",
+      "evidence": "/tmp/tmp.nQT78iiwdq/stryker-tmp/sandbox-bWtQuA: Device or resource busy; no matching node process found afterwards"
+    },
+    {
+      "kind": "drain",
+      "what": "evidence runner's hand-back delivered to main instead of the fundamentalist; read and relayed to the co-pilot",
+      "size": 1500
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exited twice on 'deck not answering' timeout; output read and wait restarted",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced while the fix-round implementer and QA were live in background runs; their reports go to main",
+      "evidence": "handback-send-enforce after fixer entered background work",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot checks --wait timed out on gh three times (exit 6) while gh pr checks answered in 12 s",
+      "evidence": "checks unread at 86e4dcc: spawnSync gh ETIMEDOUT x3",
+      "size": 3
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "spec 4's wall-time bar cannot be checked on a shared machine",
+      "evidence": "1354 s here vs 650 s in S10; branches.test 412 s in the suite vs 19 s alone"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "base named differently in two places",
+      "evidence": "brief.md says main da9a644; the PR and brief say pilot c3f22e6"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "hand-back forced by the harness while waiting for the fix tip",
+      "evidence": "QA report: 'handing back here because the harness required it'"
+    }
+  ]
+}
