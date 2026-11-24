@@ -179,6 +179,20 @@ fn a_sent_reply_empties_the_box() {
     assert_eq!(local.sent, None);
 }
 
+/// reply-markdown spec 3: the preview styles by decoration only, so what is sent is the typed
+/// text byte for byte, after the caret has moved and the lines have re-rendered.
+#[test]
+fn the_sent_text_is_the_typed_text() {
+    let typed_text = "**a**\n# b";
+    let mut local = typed(typed_text);
+    local.draft.focused = true;
+    local.draft.set_caret(typed_text.len());
+    pilot_deck::preview::spans(&local.draft, false);
+    local.draft.set_caret(0);
+    pilot_deck::preview::spans(&local.draft, false);
+    assert_eq!(local.send(ID), Some(reply(typed_text, None)));
+}
+
 #[test]
 fn the_recommended_option_draws_the_pages_quiet_mark() {
     use pilot_deck::app::{self, State};
