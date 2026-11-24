@@ -104,6 +104,8 @@ for (const [shape, command, secret] of [
   ['mysql -p<x>', 'mysql -u root -p' + SECRET + ' app', SECRET],
   ['mysql -p"<x>"', 'mysql -uroot -p"' + SECRET + '" app', SECRET],
   ['a quoted JSON password', 'echo \'{"user":"ci","password":"' + SECRET + '"}\' > creds.json', SECRET],
+  ['a URL with an empty user', 'redis-cli -u redis://:' + SECRET + '@cache.example.com:6379', SECRET],
+  ['Authorization: bearer in lower case', 'curl -H "Authorization: bearer ' + SECRET + 'abcdefgh" x', SECRET],
   ['a quoted JSON key with a prefixed name', 'echo \'{"db_password": "' + SECRET + '"}\'', SECRET],
 ]) {
   test(`a credential as ${shape} reads back withheld`, (t) => {
@@ -153,6 +155,10 @@ for (const [name, text] of [
   ['--token= then a long letter run', '--token=' + 'a'.repeat(65536)],
   ['Authorization: token then a long run', 'Authorization: token ' + 'a'.repeat(65536)],
   ['a run of glpat-', 'glpat-'.repeat(10922)],
+  // Found by S13's security review in two older shapes: each was quadratic, about a second at 64 KiB.
+  ['a run of hyphen-joined api_key names', 'api_key-'.repeat(8192)],
+  ['a run of hyphen-joined token names', 'token-a-'.repeat(8192)],
+  ['a run of eyJ- segments', 'eyJ-'.repeat(16384)],
 ]) {
   test(`${name} is checked by findCredential in under 50 ms`, () => {
     const started = process.hrtime.bigint();

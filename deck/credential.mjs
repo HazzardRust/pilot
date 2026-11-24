@@ -20,10 +20,11 @@ const CREDENTIAL_SHAPES = [
   ['a Slack token', /\bxox[baprs]-[A-Za-z0-9-]{10,}/],
   ['a bearer token', /\bBearer\s+[A-Za-z0-9._~+/=-]{20,}/],
   // The name may carry `_`/`-` joined words either side (`AWS_SECRET_ACCESS_KEY=`, `NPM_TOKEN=`). The run starts only
-  // where no name character precedes it, so each name is scanned from one start and nothing backtracks quadratically.
+  // where no name character precedes it, so each name is scanned from one start. A lookahead finds the keyword
+  // segment and the name is then taken whole: trying every keyword split against the suffix was quadratic.
   [
     'a secret assigned to a name',
-    /(?<![A-Za-z0-9_-])(?:[A-Za-z0-9]+[_-])*(?:api[_-]?key|secret|token|password|passwd|pwd)(?:[_-][A-Za-z0-9]+)*(?![A-Za-z0-9])\s*[:=]\s*["']?[A-Za-z0-9/+_-]{16,}/i,
+    /(?<![A-Za-z0-9_-])(?=(?:[A-Za-z0-9]+[_-])*(?:api[_-]?key|secret|token|password|passwd|pwd)(?![A-Za-z0-9]))[A-Za-z0-9_-]+\s*[:=]\s*["']?[A-Za-z0-9/+_-]{16,}/i,
   ],
   // A shell reference (`$TOKEN`) or a placeholder (`<token>`) names a credential and stays postable; a plain word
   // after `--password` or `Basic` is prose. No run may fail open at a bound, and none may backtrack for seconds on
@@ -43,16 +44,18 @@ const CREDENTIAL_SHAPES = [
   // from one `://` only.
   [
     'a password in a URL',
-    /\b[a-z][a-z0-9+.-]{0,30}:\/\/[^\s/:@$<]+:(?![$<{])[^\s/@]+@(?!(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?(?:[/?#\s"']|$))/i,
+    /\b[a-z][a-z0-9+.-]{0,30}:\/\/[^\s/:@$<]*:(?![$<{])[^\s/@]+@(?!(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?(?:[/?#\s"']|$))/i,
   ],
   ['a --password value', /(?:^|\s)--password(?:\s+|=)["']?(?![$<{-])(?=[^\s"']*[^A-Za-z\s"'])[^\s"']{6,}/],
   ['a Basic authorization', /\bAuthorization:\s*Basic\s+(?=[A-Za-z0-9+/=]*[0-9+/=])[A-Za-z0-9+/]{8,}={0,2}/i],
-  ['a JWT', /\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/],
+  // No segment character may precede `eyJ`, so a run of `eyJ-` is scanned from one start, not one per `eyJ`.
+  ['a JWT', /(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/],
   ['a GitLab token', /\bglpat-[A-Za-z0-9_-]{20,}/],
   ['an npm token', /\bnpm_[A-Za-z0-9]{36,}/],
   ['a Google API key', /\bAIza[0-9A-Za-z_-]{35}/],
   ['a DigitalOcean token', /\bdo[opr]_v1_[a-f0-9]{64}/],
-  ['a token authorization', /\bAuthorization:\s*token\s+(?![$<{])[A-Za-z0-9._~+/=-]{16,}/i],
+  // The scheme is case-insensitive in HTTP, so a lower-case `bearer` after the header name is caught here.
+  ['a token authorization', /\bAuthorization:\s*(?:token|bearer)\s+(?![$<{])[A-Za-z0-9._~+/=-]{16,}/i],
   // As `--password`: a reference or placeholder stays postable, as does a plain word; `--token-limit` is another flag.
   ['a --token or --api-key value', /(?:^|\s)--(?:token|api[-_]?key)(?:\s+|=)["']?(?![$<{-])(?=[^\s"']*[^A-Za-z\s"'])[^\s"']{8,}/i],
   // The `.npmrc` key starts a line or follows the registry's `:`; `this._authToken = …` is code.
