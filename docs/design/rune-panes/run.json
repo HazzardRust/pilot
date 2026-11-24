@@ -1,0 +1,111 @@
+{
+  "slug": "rune-panes",
+  "feature": "Rune side panes match the HTML deck",
+  "ticket": "itm_f9162b87414f",
+  "branch": "feat/rune-panes",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-rune-panes",
+  "artefact": "docs/design/rune-panes/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed 558aa76",
+      "branch": "slice/rune-panes-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "pushed e625f37",
+      "branch": "slice/rune-panes-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "pushed 4afe2dd",
+      "branch": "slice/rune-panes-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "implementing",
+      "branch": "slice/rune-panes-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "implementing",
+      "branch": "slice/rune-panes-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "implementing",
+      "branch": "slice/rune-panes-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ]
+    }
+  ],
+  "next": "co-pilot: integrating S3 4afe2dd, then S2 e625f37, S1 558aa76; S4, S5, S6 implementing; S7 after S2-S5.",
+  "updatedAt": "2026-11-24T23:05:22.605Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "first cargo test hid that Rune's scratch-daemon tests need npm ci, and stopped at the first failing binary",
+      "evidence": "7 act_deck failures at deck/rune/tests/support/mod.rs:33, ERR_MODULE_NOT_FOUND; rerun with --no-fail-fast"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "rune-deck-ui empty-text sentences pinned in one shared table forced a separate slice",
+      "evidence": "deck/rune/tests/empty.rs:9-18 SENTENCES"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "cargo test, clippy and npm test each run past 3 minutes, and the npm gate takes about 12; each background wait costs turns, and the gate log has to be grepped for the Rune results",
+      "evidence": "S3 report: npm test 5076 pass, about 12 minutes"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3.md's Interface block shows a stale draw signature",
+      "evidence": "real signature draw(v, prefs, local, pending, cx)"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the slice file named Tx::open_url but not Rune's inline rich+Link/on_link, so finding the link API took about 8 greps into the rune checkout",
+      "evidence": "el/text.rs:406-420, runtime/elements.rs:399"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "no recipe for seeding held tickets on a scratch deck, so the selector bar and the held sentence were checked by tests only",
+      "evidence": "deck_post refused: dir must be the absolute path of a worktree; a ticket's body is not in ticket-making's shape"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a cold first build per worktree",
+      "evidence": "about 5 min for the test build, 7m08s for the release build"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1's B7 (drag the scroll bar in the built window) is a desktop action no agent here can take; the plan should have given it to the walkthrough",
+      "evidence": "S1 report: B7 partial, only a --snap of a 60-message thread"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the slice file left out Rune's key routing, which pages the scroll view around a focused field",
+      "evidence": "B4 red on Page Up (680 -> 1354 px) until FIELDS went in"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a clippy target folder inside the worktree breaks the README coverage test",
+      "evidence": "scripts/test/deck-readme.test.mjs failed with target-clippy-s1/ present"
+    }
+  ]
+}
