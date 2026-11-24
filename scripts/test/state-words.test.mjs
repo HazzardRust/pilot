@@ -42,7 +42,7 @@ export function stateWords(rel) {
 const DEFINING = [
   'agents/pilot.md',
   'skills/ticket-making/SKILL.md',
-  'CONTEXT.md',
+  'GLOSSARY.md',
   'docs/adr/0147-red-is-planning-green-is-concluding.md',
 ];
 

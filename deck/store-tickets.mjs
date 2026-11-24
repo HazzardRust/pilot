@@ -5,8 +5,11 @@
  * (`storedCoPilot`, `releaseIn`, `isLiveCoPilot`) live in `store-core.mjs`.
  */
 
+import { AGENT_ID } from '../hooks/lib/deck.js';
 import { parseVerdictMessage } from '../scripts/verdicts.mjs';
+import { CREW_WAIT_MS, crewWaitOf } from './crew-handoff.mjs';
 import {
+  KIND_CREW_HANDOFF,
   KIND_GATE2,
   KIND_QUESTION,
   KIND_TICKET,
@@ -27,7 +30,7 @@ import {
 } from './items.mjs';
 import { CREW_IDLE_MS, YIELD_MS, idleYellowOf, yieldsDue } from './lanes.mjs';
 import { SHA } from './recut.mjs';
-import { nextRecord, repoKey, sameRepo } from './runs.mjs';
+import { nextRecord, repoKey, repoOf, sameRepo } from './runs.mjs';
 import {
   DeckRefusal,
   bylineOf,
@@ -401,6 +404,42 @@ export function noteIdle(ticketId, crewSeenAt) {
   return ticket;
 }
 
+/** `repo`'s co-pilot on the deck in hand as `coPilotFor` gives it, `{ ticket, live }`, or null. */
+function coPilotIn(deck, repo) {
+  const entry = storedCoPilot(deck, repo);
+  return entry ? { ticket: entry.ticket, live: isLiveCoPilot(deck, entry) } : null;
+}
+
+/**
+ * The deck's crew wait (crew-handoff-trace spec 6, A3), one write: a crew-handoff `crewWaitOf` finds due now is stamped
+ * `crewWaitNoted` and given one `from: 'deck'` line with a `seq`, which wakes the pilot's parked wait. Refused unless it
+ * is due and not yet noted; it grants and releases nothing. Returns the item.
+ */
+export function noteCrewWait(itemId) {
+  const deck = readDeck();
+  const item = deck.items.find((stored) => stored.id === itemId);
+  const now = Date.now();
+  if (!item || !crewWaitOf(deck.items, item.repo, coPilotIn(deck, item.repo), now).some((due) => due.item === item)) {
+    throw new DeckRefusal(`no crew wait on ${itemId} is due: an open crew-handoff must be owed a successor ${CREW_WAIT_MS / 60_000} min, not yet noted`);
+  }
+  const at = new Date(now).toISOString();
+  item.crewWaitNoted = at;
+  const text = `Successor owed on ${item.ticket}: ${item.id} open ${CREW_WAIT_MS / 60_000} min with no co-pilot — deck_ticket co-pilot it and spawn its successor`;
+  item.replies = [...messagesOf(item), deckLine(deck, text, at)];
+  writeDeck(deck);
+  return item;
+}
+
+/** Every crew-handoff `crewWaitOf` will name, item id → `{ key, at }`, for the deck's one-shot timers. */
+export function crewWaitsDue() {
+  const deck = readDeck();
+  const due = new Map();
+  for (const { repo } of deck.items.filter((item) => item?.kind === KIND_CREW_HANDOFF && isOpen(item))) {
+    for (const { item, at } of crewWaitOf(deck.items, repo, coPilotIn(deck, repo), Infinity)) due.set(item.id, { key: item.postedAt, at });
+  }
+  return due;
+}
+
 /**
  * `setCoPilot`'s release of `ticket`'s live co-pilot on the deck in hand, and the drain's end (never-stuck L6): an open
  * yellow ticket that was `yielding` turns green with `paused` its `yielding`; a closed one only loses the yield.
@@ -509,6 +548,25 @@ export function setQaComment(ticketId, comment) {
   entry.record = nextRecord(entry.record, { qaComment: comment, updatedAt: new Date().toISOString() });
   writeDeck(deck);
   return ticket.repo;
+}
+
+const CO_PILOT_TYPE = 'pilot:pilot-co-pilot';
+
+/**
+ * A co-pilot's heartbeat stamps its agent id on `cwd`'s live co-pilot entry (handoff-no-wait S4, L4): true when it
+ * wrote. Only the co-pilot's type, only after the grant's `at`, and only a changed id, so an unchanged heartbeat
+ * writes nothing; a worktree counts for its repository. Here and not beside `coPilotFor`: store-runs is at its bar.
+ */
+export function noteCoPilotAgent(cwd, agentId, agentType, now = Date.now()) {
+  if (agentType?.trim?.() !== CO_PILOT_TYPE || typeof cwd !== 'string' || cwd.trim() === '' || !AGENT_ID.test(agentId?.trim?.() ?? '')) return false;
+  const deck = readDeck();
+  const repo = repoOf(cwd.trim()) ?? cwd.trim(); // trimmed as `noteAgent` trims, so both resolve one heartbeat alike
+  agentId = agentId.trim();
+  const entry = storedCoPilot(deck, repo);
+  if (!entry || !isLiveCoPilot(deck, entry) || !(now > Date.parse(entry.at)) || entry.agent === agentId) return false;
+  deck.coPilots[repoKey(repo)] = { ...entry, agent: agentId };
+  writeDeck(deck);
+  return true;
 }
 
 /** Every item on the deck, oldest first, each with whatever replies it has. */

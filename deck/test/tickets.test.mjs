@@ -164,6 +164,21 @@ test('pilot tickets is exit 1 when the deck answers non-OK', async (t) => {
   assert.equal(text, '', 'nothing printed as a queue');
 });
 
+test('readTickets refuses a malformed open view, so no reader judges one', async (t) => {
+  const { readTickets } = await import('../tickets.mjs');
+  let body;
+  const deck = http.createServer((request, response) => response.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify(body)));
+  await new Promise((resolve) => deck.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise((resolve) => deck.close(resolve)));
+  const url = `http://127.0.0.1:${deck.address().port}`;
+
+  for (body of [null, { open: { body: 'docs/design/x/' }, records: [] }, { open: [], records: 'x' }, { open: [null], records: [] }, { open: [{ body: 7 }], records: [] }]) {
+    await assert.rejects(readTickets(ALPHA, { open: true, url }), /did not answer: its view is malformed$/, JSON.stringify(body));
+  }
+  body = { open: [{ id: 'itm_1', body: 'docs/design/x/' }, { id: 'itm_2' }], records: [{ slug: 'y' }] };
+  assert.deepEqual(await readTickets(ALPHA, { open: true, url }), body, 'a well-formed view comes back as sent');
+});
+
 test('pilot tickets with no deck secret says so alone, and never asks the deck', async (t) => {
   snapshotAt(t, ALPHA, 0); // a home with no deck.secret
   let asked = 0;

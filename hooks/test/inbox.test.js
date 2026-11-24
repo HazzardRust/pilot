@@ -317,6 +317,7 @@ test('the PostToolUse process names its modules up front, in order', function ()
       './context-size-guard.js',
       './agent-roster.js',
       'plain-pickup', // audit-fixes S5: inline in post-tool.js
+      './spawn-trace.js', // crew-handoff-trace S3
     ]
   );
 });

@@ -247,6 +247,9 @@ export const FINISHED_CLEAN = 'closing report posted';
 /** A slug names `docs/design/<slug>/`, so it is kebab-case and nothing a path could misread. */
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+/** Whether `word` is a slug: a string on `SLUG` of at most `MAX_SLUG_CHARS` characters. */
+export const isSlug = (word) => typeof word === 'string' && word.length <= MAX_SLUG_CHARS && SLUG.test(word);
+
 /**
  * A run's base (pilot-develop-line L6; audit-f14 A7): `pilot`, the concluding feature's `feat/<slug>` it is chained
  * on, or the default branch's own name. It reaches git as an argument, so it never starts with `-`, holds no `..` or
@@ -403,7 +406,7 @@ export function recordFields({ slug, ticket, branch, base, worktree, qa, artefac
     if (sent) throw new RunRefusal(`${sent[0]} belongs to the run record; send slug with it`);
     return null;
   }
-  if (typeof slug !== 'string' || slug.length > MAX_SLUG_CHARS || !SLUG.test(slug)) {
+  if (!isSlug(slug)) {
     throw new RunRefusal(
       `slug must be the feature's slug, lower-case words joined by hyphens and at most ` +
         `${MAX_SLUG_CHARS} characters, not ${JSON.stringify(slug)}`,
