@@ -18,6 +18,7 @@ mod no_wait;
 mod notifications;
 mod queue;
 mod reply;
+mod scroll;
 mod skeleton;
 mod startup;
 mod status;
