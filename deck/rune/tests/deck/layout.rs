@@ -276,8 +276,10 @@ fn the_open_panes_and_side_width_survive_a_restart() {
 fn a_drag_tracks_the_pointer_with_no_snap_at_the_default() {
     let (_held, _dir) = prefs_dir("drag");
     // Start 40 px short of the default, so the drag crosses it.
-    let mut prefs = Prefs::default();
-    prefs.side_width = Some(size::side_default - 40.0);
+    let prefs = Prefs {
+        side_width: Some(size::side_default - 40.0),
+        ..Prefs::default()
+    };
     let mut rt = window(json!({}), prefs);
 
     let (x, y) = rt.find("side-handle").expect("a handle");
@@ -334,9 +336,11 @@ fn a_drag_tracks_the_pointer_with_no_snap_at_the_default() {
 #[test]
 fn a_hidden_side_drags_back_out_and_escape_puts_it_back() {
     let (_held, _dir) = prefs_dir("hidden");
-    let mut prefs = Prefs::default();
-    prefs.side_width = Some(size::side_default);
-    prefs.side_hidden = true;
+    let prefs = Prefs {
+        side_width: Some(size::side_default),
+        side_hidden: true,
+        ..Prefs::default()
+    };
     let mut rt = window(json!({}), prefs);
 
     let (x, y) = rt.find("side-handle").expect("a handle on a hidden side");
