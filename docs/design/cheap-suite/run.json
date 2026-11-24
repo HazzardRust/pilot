@@ -59,9 +59,9 @@
     },
     {
       "slice": "S8",
-      "state": "pushed ab589dd; ts APPROVE; integrating",
-      "branch": "slice/cheap-suite-s8",
-      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s8"
+      "state": "integrated at 3ee74ef (fix ff'd by main); checks green",
+      "branch": "slice/cheap-suite-s8fix",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s8fix"
     },
     {
       "slice": "S9",
@@ -71,20 +71,14 @@
     },
     {
       "slice": "S10",
-      "state": "planned",
+      "state": "pushed 579c3f3; ts APPROVE; integrating (full suite)",
       "after": [
-        "S1",
-        "S2",
-        "S3",
         "S5",
-        "S6",
         "S7",
-        "S8",
-        "S9",
-        "S12",
-        "S13",
-        "S14"
-      ]
+        "S8"
+      ],
+      "branch": "slice/cheap-suite-s10",
+      "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s10"
     },
     {
       "slice": "S11",
@@ -115,6 +109,13 @@
       ],
       "branch": "slice/cheap-suite-s14",
       "worktree": "C:/Users/jrylk/Projects/pilot-cheap-suite-s14"
+    },
+    {
+      "slice": "S15",
+      "state": "planned (added): cut spawns to the bars; land-*.test.mjs hold ~4400 git spawns, land-clear ~1000; carries the green cost-bars pin; moves no locked decision",
+      "after": [
+        "S10"
+      ]
     }
   ],
   "findings": [
@@ -139,74 +140,14 @@
     "dropped: S5 typescript LOW proof computed on an already-landed feature (harmless)",
     "dropped: S5 security LOW proved = sha === null on rev-parse failure (still needs ^{tree}, else full)"
   ],
-  "next": "S7 green at c7053df; integrating S8 (ab589dd); S10; fundamentalist; fix round; QA.",
-  "updatedAt": "2026-11-24T01:08:31.500Z",
+  "humanSteps": [
+    {
+      "text": "15 idle `node --test scripts/test/land-*.test.mjs` processes from a timed-out mutation run are left alive (started 24/11 12:24:38-45, parents gone); end them in Task Manager or reboot when no run is live."
+    }
+  ],
+  "next": "integrating S10 579c3f3 (full suite); checks; S15 (added: spawn cut, writes S15.md first); fundamentalist; fix round; QA.",
+  "updatedAt": "2026-11-24T02:33:01.637Z",
   "friction": [
-    {
-      "agent": "pilot",
-      "what": "signed landings failed 4 times on environment, not code: slot takeover EPERM, 30-min limit under crew load, disk full (33 Rune target dirs ~390 GB), 30-min limit with a cold Rune build (8m04s)",
-      "evidence": "land logs 20261123T070624078Z and 20261123T075945009Z; gate-slots.mjs:57",
-      "size": 120
-    },
-    {
-      "agent": "pilot",
-      "what": "idle-lane hook demands a successor while the lane is deliberately held for a test hold or a full disk",
-      "evidence": "Stop hook 'yellow lane idle' fired 4 times during the hold",
-      "size": 4
-    },
-    {
-      "kind": "drain",
-      "what": "land log grep returned whole PATH lines (cargo env dump)",
-      "size": 12000
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S3 context compacted mid-slice; earlier verdicts and red run lost and redone",
-      "evidence": "S3 report: both reviews and red run redone after compaction",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S3 forced to hand back while waiting for the co-pilot's go on a heavy run under the one-heavy-run rule",
-      "evidence": "S3 report: told to hand back while waiting",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S11 slice worktree had no node_modules; first gate launch failed at once",
-      "evidence": "node_modules missing: run npm ci",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S3 worktree had no node_modules; npm ci before the gate",
-      "evidence": "S3 report",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "a fresh worktree's Rust tests need node_modules (they spawn bin/pilot.mjs); B4's timed cargo test reported 7 reds beside a good build time",
-      "evidence": "Cannot find package '@modelcontextprotocol/sdk', cargo exit 101",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "crew reports do not cross a co-pilot hand-off, so the successor rebuilt each slice's Evidence trailers from the record and its own reruns; integrate refused S1 until each B<k> had one",
-      "evidence": "NOT integrated slice/cheap-suite-s1: S1: B1 has no --trailer \"Evidence: B1 test: ...\"",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "a subagent cannot block on a co-pilot's go; it hands back and must be resumed by message",
-      "evidence": "S2 fixer: 'After the ready message I had nothing left to do but end the turn'",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "node.exe is shared across sessions, so a run's peak node count needs a baseline subtracted",
-      "evidence": "about 17 node.exe alive before the S2 cargo run",
-      "size": 1
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "a Remove-Item samp* cleanup also deleted its own sampler script; run 1 lost its node figures",
@@ -363,6 +304,63 @@
       "agent": "pilot:pilot-implementer",
       "what": "S7.md B3 says 4 tests; the file has 5 (slice file stale)",
       "evidence": "deck/test/client-rejoin.test.mjs 5 pass at 47ccb79"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced a third time while a child was live on its own background CI wait",
+      "evidence": "handback-send-enforce after s8fix agent went into Gate run 45303824395"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8's B4 was measured on Windows only, so a POSIX-only break in a faked npm passed its gate and review",
+      "evidence": "Gate 45303160603 ubuntu/macos red at 0d87e06; fix 3ee74ef chmod 0o755"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate refuses a fix branch over the red tip it fixes, and a co-pilot has no worktree of its own on feat to land the fix",
+      "evidence": "NOT integrated slice/cheap-suite-s8fix: checks red at 0d87e06 ... fix the feature first",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "integrate refuses a fix branch over the very red tip it fixes, and the co-pilot owns no feat worktree to land a fix in; the pilot fast-forwarded by hand",
+      "evidence": "NOT integrated slice/cheap-suite-s8fix: checks red at 0d87e06 ... fix the feature first (integrate.mjs:444)"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8's B4 measured on Windows only; a POSIX-only break in a faked npm passed its gate and review; no CI runs on a slice branch",
+      "evidence": "Gate run 45303160603 red at 0d87e06"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back forced three more times while children were live",
+      "evidence": "handback-send-enforce notices"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10 implementer's context reset right after spawn; it could not tell whether its timed run had started",
+      "evidence": "S10 message: worktree clean at 3ee74ef, no log in scratchpad",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a land.mjs mutant takes ~400 s (every land*.test.mjs runs per mutant), so S10's B3 as written (20 mutants x 3 modules x 2 sides) is a ~4 h job; neither the slice nor the runner can sample mutants",
+      "evidence": "base.jsonl: land 0 L68 killed 408s"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the gate's slot limit makes 'three suites at once' two plus one queued",
+      "evidence": "load-a.log: gate: waiting for a slot"
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "a Stryker run that hit its 900 s timeout left 15 orphaned node --test processes alive",
+      "evidence": "PIDs 29292 21212 23024 26636 27532 16424 32512 24816 35772 36788 32228 17284 18344 37792 37384, parents gone, ~0 CPU"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait timed out on the deck four times in a row while suites ran; deck itself answering; 4 restarts and a timed probe",
+      "size": 5
     }
   ]
 }
