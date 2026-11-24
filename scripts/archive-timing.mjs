@@ -27,7 +27,7 @@ if (!fs.statSync(dir, { throwIfNoEntry: false })?.isDirectory()) {
   process.exit(2);
 }
 const home = path.resolve(os.homedir(), '.claude', 'pilot');
-if (fs.realpathSync(dir).toLowerCase() === fs.realpathSync(home).toLowerCase()) {
+if (fs.existsSync(home) && fs.realpathSync(dir).toLowerCase() === fs.realpathSync(home).toLowerCase()) {
   console.error('archive-timing: refusing the live store; time a copy of it');
   process.exit(2);
 }
