@@ -16,13 +16,16 @@ pub fn spans(edit: &TextEdit, dark: bool) -> Vec<Span> {
     let k = theme::tokens(dark);
     let quiet = |at: Range<usize>| Span::new(at.start, at.end).color(k.quiet);
     let mut out = Vec::new();
-    // A link open in the draft: where it starts, and the end of its text so far. Links never nest.
-    let mut link: Option<(usize, Option<usize>)> = None;
+    // A link open in the draft: where it starts, how many spans came before it, and the end of its
+    // text so far. Links never nest.
+    let mut link: Option<(usize, usize, Option<usize>)> = None;
     let mut link_look = None;
     // rune-kit's own options (`markdown/parser.rs`), so a draft parses as the thread will.
     let opts = Options::ENABLE_STRIKETHROUGH | Options::ENABLE_TABLES | Options::ENABLE_TASKLISTS;
     for (event, at) in Parser::new_ext(text, opts).into_offset_iter() {
-        if let (Some((_, inner)), false) = (&mut link, matches!(event, Event::End(TagEnd::Link))) {
+        if let Some((_, _, inner)) = &mut link
+            && !matches!(event, Event::End(TagEnd::Link))
+        {
             *inner = Some(inner.map_or(at.end, |end| end.max(at.end)));
         }
         let (marker, look): (usize, fn(Span) -> Span) = match event {
@@ -42,28 +45,32 @@ pub fn spans(edit: &TextEdit, dark: bool) -> Vec<Span> {
                 continue;
             }
             Event::Start(Tag::Link { .. }) => {
-                link = Some((at.start, None));
+                link = Some((at.start, out.len(), None));
                 continue;
             }
             Event::End(TagEnd::Link) => {
-                let Some((start, inner)) = link.take() else {
+                let Some((start, before, inner)) = link.take() else {
                     continue;
                 };
                 // `[text](url)` or `<url>`: one opening byte, then the text, then the rest quiet. A
-                // link is painted only: it carries no press and opens nothing (spec 4).
-                match inner.filter(|&end| end > start + 1 && end <= at.end) {
+                // link is painted only: it carries no press and opens nothing (spec 4). Its spans go
+                // in ahead of its children's, so a `**` or a backtick inside it still draws quiet.
+                let look = match inner.filter(|&end| end > start + 1 && end <= at.end) {
                     Some(end) => {
                         // The thread's own link look (rune-kit `MarkdownStyle::from_kit`, L5).
                         let (accent, underline) = *link_look.get_or_insert_with(|| {
                             let kit = rune_kit::Kit::neutral(dark);
                             (kit.c.text_accent, kit.alpha(kit.c.text_accent, 0.4))
                         });
-                        out.push(quiet(start..start + 1));
-                        out.push(Span::new(start + 1, end).color(accent).underline(underline));
-                        out.push(quiet(end..at.end));
+                        vec![
+                            quiet(start..start + 1),
+                            Span::new(start + 1, end).color(accent).underline(underline),
+                            quiet(end..at.end),
+                        ]
                     }
-                    None => out.push(quiet(start..at.end)),
-                }
+                    None => vec![quiet(start..at.end)],
+                };
+                out.splice(before..before, look);
                 continue;
             }
             Event::Start(Tag::Strong) => (2, Span::bold),
