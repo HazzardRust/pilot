@@ -1,0 +1,95 @@
+{
+  "slug": "tested-once",
+  "feature": "tested once",
+  "ticket": "itm_7c9012a1a71a",
+  "branch": "feat/tested-once",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-tested-once",
+  "artefact": "docs/design/tested-once/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed c1bc236; ts-reviewer warn, security-reviewer approve (re-review of 41d59c4..c1bc236); integrate after S3",
+      "branch": "slice/tested-once-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "implementing",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/tested-once-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "pushed 2c67f4e; ts-reviewer approve; integrating",
+      "branch": "slice/tested-once-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "implementing (+ testCli suite-ledger read fix from S1 security re-review)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/tested-once-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "implementing",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/tested-once-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s5"
+    },
+    {
+      "slice": "feature",
+      "state": "planned",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "branch": "feat/tested-once"
+    }
+  ],
+  "next": "S3 integrating; then integrate S1 (security approve); send S2/S4/S5 (pipelined from S1 c1bc236) the new feat tip to rebase. A6 vs L4 question with main, default keep as built.",
+  "updatedAt": "2026-11-24T17:13:38.808Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "TaskStop on a background test run leaves its node children; the next gate overlapped them: one 9-minute red run, 582 fails; quiet reporter prints no failure reason",
+      "evidence": "waiting for a slot: pid 816; stopped 29948 test",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "forced hand-back with two implementers live, before any report",
+      "evidence": "tested-once co-pilot hand-back, handback-send-enforce",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "four forced co-pilot hand-backs this session; each child's report came to main and was relayed by hand; evidence rows saved to scratchpad files because the record's cells cap at 400 chars",
+      "size": 25
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "400-line limit counts the ADR and tests: three trim passes, reviewer-asked tests squeezed out; undocumented platform-reads guard cost a 7-minute red run",
+      "evidence": "424, 401, 409, 399; only the seam reads process.platform",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "A6 and L4 conflict found only at build: slice-scope runs always say deferred, so they are never reusable",
+      "evidence": "S1 pushback 1; S3 B3 row deferred: cargo",
+      "size": 4
+    }
+  ]
+}
