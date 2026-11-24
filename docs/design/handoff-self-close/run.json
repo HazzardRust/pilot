@@ -9,13 +9,13 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "integrated",
+      "state": "integrated e9e31fa; checks green",
       "branch": "slice/handoff-self-close-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-self-close-s1"
     },
     {
       "slice": "S2",
-      "state": "pushed b7b4ac7; ts warn (MEDIUM fixed after review, fix read by pilot); awaits rebase onto S1's integrated tip",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -23,8 +23,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-self-close-s2"
     }
   ],
-  "next": "Short path. pilot integrate S1 c9c14ed running (ts approve, security approve). On pass: pilot checks <sha> --wait; resume S2 implementer a292d1bb751c1b96e to rebase b7b4ac7 onto new feat tip. Then integrate S2 (ts: warn; B1-B6 in its report), pilot integrate --trial, gate2 + walkthrough (surface: true; nobody has seen the pages in a browser).",
-  "updatedAt": "2026-11-24T17:59:47.678Z",
+  "next": "Short path. S1 integrated at feat e9e31fa, checks green. pilot integrate S2 b47a9b5 re-running with B6 look (pilot saw WAITING 14M on home card and thread header in Edge screenshots). On pass: pilot checks <sha> --wait, pilot integrate --trial in the feat worktree, post walkthrough (surface: true; Rune label not drawn or seen) and gate2 with a Verdict line per slice and a Gate line.",
+  "updatedAt": "2026-11-24T18:25:47.431Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -90,6 +90,11 @@
       "what": "harness commit trailer (Sonnet, this session) differs from the brief.md trailer",
       "evidence": "handoff-self-close S2 report, commit trailer",
       "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "integrate refused S2 after the queue wait: evidence kind `look` cannot be met by an implementer with no browser tools; one extra implementer resume and integrate run",
+      "size": 3
     }
   ]
 }
