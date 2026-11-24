@@ -129,7 +129,7 @@ for (const [shape, command, secret] of [
   ['a short value under a name', 'export DB_PASSWORD=' + SHORT, SHORT],
   ['a value holding .@!#%*', 'password=' + PUNCT + ' ./run', PUNCT],
   ['a long letters-only value', 'resume with token = abcdefghijklm' + 'nopqrstuvwxyz', 'abcdefghijklm'],
-  ['a long mixed-case value with no digit','export API_TOKEN=aBcDeFgHiJ' + 'kLmNoPqRsT', 'aBcDeFgHiJ'],
+  ['a long mixed-case value with no digit', 'export API_TOKEN=aBcDeFgHiJ' + 'kLmNoPqRsT', 'aBcDeFgHiJ'],
   ['a long value holding dots', 'SECRET_KEY=abc.' + SECRET + '.xyz12345', SECRET],
   ['a kebab value with a digit, failing closed', 'secret: rotate-quarterly-per-policy-doc-v2', 'rotate-quarterly'],
   // S14's security review: a quoted camelCase or single-quoted key, and a name with no separator.
