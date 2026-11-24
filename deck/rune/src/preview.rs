@@ -34,14 +34,15 @@ pub fn spans(edit: &TextEdit, dark: bool) -> Vec<Span> {
                 continue;
             }
             Event::Start(Tag::Item) => {
-                // The marker (`-`, `*`, `1.`) and the spaces after it; the item's own text untouched.
+                // The marker (`-`, `*`, `1.`) solid in the body ink at the thread's bullet weight,
+                // never dimmed (the user's "Solid dash now", itm_51f1646c9f32); the item's text untouched.
                 let line = &text.as_bytes()[at.clone()];
                 let mark = line.iter().take_while(|b| !b.is_ascii_whitespace()).count();
-                let gap = line[mark..]
-                    .iter()
-                    .take_while(|&&b| b == b' ' || b == b'\t')
-                    .count();
-                out.push(quiet(at.start..at.start + mark + gap));
+                out.push(
+                    Span::new(at.start, at.start + mark)
+                        .color(k.text)
+                        .weight(type_::BODY.weight),
+                );
                 continue;
             }
             Event::Start(Tag::Link { .. }) => {

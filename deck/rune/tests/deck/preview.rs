@@ -146,15 +146,27 @@ fn headings_render_in_the_header_type() {
     );
 }
 
+/// The walkthrough of 2026-11-24: "some markdown rendering is missing, such as for dotpoints"; the
+/// user chose a solid dash (itm_51f1646c9f32). A list marker off the caret is drawn in the body ink
+/// at the thread's bullet weight, never dimmed.
 #[test]
-fn list_markers_render_quiet() {
-    // 0..2 `- `, 2 `a`, 4..7 `1. `, 7 `b`, 9 `x`: the caret on line 3.
+fn list_markers_render_solid() {
+    // 0 `-`, 2 `a`, 4..6 `1.`, 7 `b`, 9 `x`: the caret on line 3.
     let spans = preview::spans(&edit("- a\n1. b\nx", 9, 9), DARK);
+    let ink = theme::tokens(DARK).text;
+    let weight = theme::type_::BODY.weight;
 
-    for marker in [0..2, 4..7] {
+    for marker in [0..1, 4..6] {
         assert!(
-            has(&spans, marker.clone(), |s| s.color == Some(quiet())),
-            "quiet marker {marker:?}: {spans:?}"
+            has(&spans, marker.clone(), |s| s.color == Some(ink)
+                && s.weight == Some(weight)),
+            "solid marker {marker:?}: {spans:?}"
+        );
+        assert!(
+            !spans.iter().any(|s| (s.start as usize) < marker.end
+                && (s.end as usize) > marker.start
+                && s.color == Some(quiet())),
+            "marker {marker:?} dimmed: {spans:?}"
         );
     }
     assert_eq!(within(&spans, 2..3), 0, "a unstyled: {spans:?}");
