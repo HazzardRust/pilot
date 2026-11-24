@@ -58,86 +58,44 @@
     },
     {
       "slice": "Added: Enter, Table button row, bullets",
-      "state": "pushed c8ef952 on feat/reply-markdown (QA fixes, rust-reviewer approve; live look not done)"
+      "state": "integrated c8ef952 (QA fixes; live look not done)"
     },
     {
       "slice": "Added: table insert 2x2 and Obsidian-style grow",
-      "state": "integrated",
+      "state": "integrated ca4ddb6",
       "branch": "slice/reply-markdown-s5",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-reply-markdown-s5"
     },
     {
       "slice": "Added: thread table selection",
-      "state": "planned",
+      "state": "integrated (B2-B4; B1 moved to S8; ~510 lines, size assumed by main)",
       "after": [
         "Added: heading sizes"
-      ]
+      ],
+      "branch": "slice/reply-markdown-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-reply-markdown-s7"
     },
     {
       "slice": "Added: heading sizes",
       "state": "integrated 0ea0041",
       "branch": "slice/reply-markdown-s6",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-reply-markdown-s6"
+    },
+    {
+      "slice": "Added: S8 whole-cell highlight (Rune patch)",
+      "state": "planned: Rune PR on anomalyco/rune branch + pin bump (user, itm_5ab8d5b9feb6)",
+      "after": [
+        "Added: thread table selection"
+      ]
     }
   ],
   "findings": [
     "dropped: F6 link test expected value — rune-kit has no public path from parse + markdown_style to a link's colour; no independent source exists",
     "kept: F8 (QA) Table pressed with the caret in a cell inserts after that grid — fixed in ed2b6ca with a red-then-green test"
   ],
-  "next": "feat/reply-markdown 0ea0041 (S6 in). Integrating S5 (9f6f262) via pilot integrate in pilot-feat-reply-markdown. Then S7: thread table selection + br in a cell drawn as a break in the thread (S5 pins \"| a<br>b \\| c |\"; box shows a real break). Then fresh pilot-qa from QA handoff itm_38fd681f5af0: look at native cell menu, Enter/Table row/bullets, 6 px box jump; walkthrough; gate2.",
-  "updatedAt": "2026-11-24T08:24:57.457Z",
+  "next": "co-pilot: integrating S7 1c61b0c. Next: checks on the new tip; S8 Rune select_whole patch + pin bump from that tip; QA on S8's tip.",
+  "updatedAt": "2026-11-24T08:49:22.984Z",
   "friction": [
-    {
-      "agent": "pilot-co-pilot",
-      "what": "a child's SubagentHandback reaches main, not the co-pilot that spawned it",
-      "evidence": "main forwarded S1, S3, S4, S5, S6 reports",
-      "size": 3
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "S5 called its own prompt-pin regression pre-existing; base passed 16 of 16",
-      "evidence": "feat 4722c031 vs S5 10292262",
-      "size": 2
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "slice Files-owned lists missed files the Interface forces; deck store files sit at the 800-line cap; prompt pins have 0.25 tokens headroom",
-      "evidence": "S2, S6; server-wait.mjs 799; S5.md",
-      "size": 2
-    },
-    {
-      "kind": "drain",
-      "what": "per-slice resume loop for the hook-paused co-pilot: watch origin, resume, forward report facts, seven slices",
-      "size": 40000
-    },
-    {
-      "kind": "drain",
-      "what": "pilot wait exited 'deck not answering' nine times in three hours while the deck answered MCP calls",
-      "size": 5000
-    },
-    {
-      "kind": "drain",
-      "what": "deck's 'feature PR not updated' timeout notices arrive as user replies and as 'landing ended short', each needing a reply",
-      "size": 3000
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "re-cut gate1 refused four times in a row for four separate causes: design branch behind pilot, body missing verdict lines, the superseded gate1 still open, ticket yellow after that gate1 closed; each cost a round trip through main",
-      "evidence": "architect ae2b12b4 messages on reply-markdown, deck refusal texts",
-      "size": 4
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "rebased an already pushed design branch onto an unlanded feature branch, so its push needed force; pilot base printed another run's base",
-      "evidence": "local ec08830c vs origin aca2a46d; pilot base: feat/two-devices",
-      "size": 3
-    },
-    {
-      "agent": "pilot-qa",
-      "what": "npm test gate printed home store changed for the user's real deck.json",
-      "evidence": "QA a669683e hand-back on two-devices d1a622e7",
-      "size": 2
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S1 implementer compacted before its first commit and restarted the slice from scratch",
@@ -320,6 +278,58 @@
     {
       "kind": "drain",
       "what": "pilot missed a Sign off press made before the hand-off and asked the user for it again",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 archive-page pushed twice while red: a wrapper's echo exit was read as npm's",
+      "evidence": "254884d gate log: cargo 1 fail; final gate node 1 fail deck-readme.test.mjs:27",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Rust deck tests fail with ERR_MODULE_NOT_FOUND until npm ci runs in a new worktree; no recipe for driving pilot-deck headless",
+      "evidence": "S5 and S6 reports",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a native context menu cannot be snapped headless, so the live-look gate for it cannot be met by an agent",
+      "evidence": "rune popup_menu/mod.rs:12-13",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot budget refuses from a co-pilot; harness forced a hand-back while a non-child implementer was live",
+      "evidence": "has no session on this deck",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "pilot tickets --open lists only a PR's design docs, not its planned code files; run-record write path split across store-runs.mjs:660 and server-tools.mjs:199",
+      "evidence": "tested-once report",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "auto-mode classifier gave no verdict on mixed parallel calls four times; each cost a reissue",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "pilot tickets --open output 47 KB for a one-row proposal check",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7 slice file cited wrong rune-kit lines (blocks.rs:463, parser.rs:409; table drawn at blocks.rs:483 -> table.rs:425) and B1's Rune dependency was not checked before Gate 1; ~10 Rune source reads to establish it",
+      "evidence": "S7 report friction; fact sheet flagged both cites",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Runtime::new takes a fn pointer, so a closure test harness did not compile; a drag point at a glyph centre lands on a boundary and selects nothing",
+      "evidence": "S7 report friction",
       "size": 2
     }
   ]
