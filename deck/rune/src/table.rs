@@ -32,6 +32,38 @@ impl Table {
         &mut self.rows[r][c]
     }
 
+    /// An empty row under row `after`.
+    pub fn add_row(&mut self, after: usize) {
+        let cols = self.size().1;
+        let at = (after + 1).min(self.rows.len());
+        self.rows
+            .insert(at, (0..cols).map(|_| TextEdit::default()).collect());
+    }
+
+    /// An empty column right of column `after`, in every row.
+    pub fn add_col(&mut self, after: usize) {
+        for row in &mut self.rows {
+            let at = (after + 1).min(row.len());
+            row.insert(at, TextEdit::default());
+        }
+    }
+
+    /// Row `r` out; the header (row 0) is never removed.
+    pub fn remove_row(&mut self, r: usize) {
+        if r > 0 && r < self.rows.len() {
+            self.rows.remove(r);
+        }
+    }
+
+    /// Column `c` out of every row; the last column left is never removed.
+    pub fn remove_col(&mut self, c: usize) {
+        if self.size().1 > 1 && c < self.size().1 {
+            for row in &mut self.rows {
+                row.remove(c);
+            }
+        }
+    }
+
     /// Canonical GFM (L11): the header, a `| --- |` delimiter, the body; `|` in a cell is written
     /// `\|` and every other byte as typed, so a cell's markdown means what it means in prose.
     pub fn markdown(&self) -> String {
