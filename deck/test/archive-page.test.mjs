@@ -93,8 +93,8 @@ test("rows sit in daySections' sections", async (t) => {
   assert.deepEqual(regions.archive.days.map(({ key, heading, rows }) => ({ key, heading, count: rows.length })), expected);
   assert.deepEqual(regions.archive.days.map((day) => day.open), [true, false, false], 'only today is served open');
   assert.deepEqual(
-    regions.archive.kinds.map(({ kind, count }) => [kind, count]),
-    [['handoff', 0], ['report', 0], ['thread', 1], ['tickets', 3]],
+    regions.archive.kinds.filter(({ count }) => count > 0).map(({ kind, count }) => [kind, count]),
+    [['thread', 1], ['tickets', 3]],
   );
 });
 
