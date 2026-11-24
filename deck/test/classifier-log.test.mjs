@@ -116,6 +116,79 @@ for (const [shape, command, secret] of [
   });
 }
 
+// archive-page S14: what S13's security review left open. Each token is built in parts so no line here is one.
+const SHORT = 'hun' + 't3r';
+const PUNCT = 'Pa' + '@s.s!#%*';
+const BASIC_LETTERS = 'dXNlcjpw' + 'YXNz';
+for (const [shape, command, secret] of [
+  ['a camelCase apiKey', 'const apiKey = "' + SECRET + '";', SECRET],
+  ['a camelCase clientSecret', 'clientSecret: ' + SECRET, SECRET],
+  ['a plural secrets', 'secrets=' + SECRET, SECRET],
+  ['a plural tokens', 'tokens: ' + SECRET, SECRET],
+  ['a plural PASSWORDS', 'PASSWORDS=' + SECRET, SECRET],
+  ['a short value under a name', 'export DB_PASSWORD=' + SHORT, SHORT],
+  ['a value holding .@!#%*', 'password=' + PUNCT + ' ./run', PUNCT],
+  ['a long letters-only value', 'resume with token = abcdefghijklm' + 'nopqrstuvwxyz', 'abcdefghijklm'],
+  ['a long mixed-case value with no digit', 'export API_TOKEN=aBcDeFgHiJ' + 'kLmNoPqRsT', 'aBcDeFgHiJ'],
+  ['a long value holding dots', 'SECRET_KEY=abc.' + SECRET + '.xyz12345', SECRET],
+  ['a kebab value with a digit, failing closed', 'secret: rotate-quarterly-per-policy-doc-v2', 'rotate-quarterly'],
+  // S14's security review: a quoted camelCase or single-quoted key, and a name with no separator.
+  ['a quoted camelCase key', 'echo \'{"clientSecret": "' + SECRET + '"}\'', SECRET],
+  ['a single-quoted key', "creds = {'password': '" + SECRET + "'}", SECRET],
+  ['PGPASSWORD=<x>', 'PGPASSWORD=' + SECRET + ' psql -h db app', SECRET],
+  ['a glued upper-case name', 'export GITHUBTOKEN=' + SECRET + 'Ab3De6Gh9J', SECRET],
+  ['--secret <x>', 'vault-cli --secret ' + SECRET + ' put', SECRET],
+  ['--pass <x>', 'zip-tool --pass ' + SECRET + ' a.zip', SECRET],
+  ['docker login -p <x>', 'docker login -u ci -p ' + SECRET + ' registry.example.com', SECRET],
+  ['redis-cli -a <x>', 'redis-cli -h cache -a ' + SECRET + ' ping', SECRET],
+  ['htpasswd -b <file> <user> <x>', 'htpasswd -b .htpasswd ci ' + SECRET, SECRET],
+  ['htpasswd -nb <user> <x>', 'htpasswd -nb ci ' + SECRET, SECRET],
+  ['a Hugging Face token', 'export HF=hf_' + SECRET + 'c'.repeat(24), SECRET],
+  ['a SendGrid key', 'SG.' + SECRET + 'd'.repeat(12) + '.' + SECRET + 'e'.repeat(33), SECRET],
+  ['a PyPI token', 'twine upload -u __token__ -p pypi-AgEIcHlwaS5vcmc' + SECRET + 'f'.repeat(40), SECRET],
+  ['a Shopify token', 'export SHOPIFY=shpat_' + HEX64.slice(0, 32), HEX64.slice(0, 32)],
+  ['a Supabase token', 'export SUPABASE=sbp_' + HEX64.slice(0, 40), HEX64.slice(0, 40)],
+  ['a Linear key', 'LINEAR=lin_api_' + SECRET + 'g'.repeat(30), SECRET],
+  ['a Stripe webhook secret', 'WEBHOOK=whsec_' + SECRET + 'h'.repeat(22), SECRET],
+  ['a Google OAuth token', 'curl -H "X-Goog: ya29.' + SECRET + 'i'.repeat(20) + '"', SECRET],
+  ['an Azure AccountKey', 'DefaultEndpointsProtocol=https;AccountName=x;AccountKey=' + SECRET + 'j'.repeat(30) + '==;', SECRET],
+  ['Authorization: Basic with no digit', 'curl -H "Authorization: Basic ' + BASIC_LETTERS + '" x', BASIC_LETTERS],
+]) {
+  test(`a credential as ${shape} reads back withheld`, (t) => {
+    const dir = scratch(t);
+    appendRefusal(entry({ command }), { dir });
+    assert.strictEqual(readRefusals({ dir })[0].command, '<withheld: credential>');
+    assert.ok(!fs.readFileSync(path.join(dir, 'classifier.log'), 'utf8').includes(secret), 'not on disk either');
+  });
+}
+
+// S14 B2: prose about tokens and secrets, and code that names them, stay readable.
+test('prose and code near the S14 shapes read back as they were', (t) => {
+  const dir = scratch(t);
+  const plain = [
+    'sk-learn-pipeline is the model we ship',
+    'rotate the API token every 90 days: see docs/security.md',
+    'secrets: inherit',
+    'max_tokens: 100000',
+    'token: re-issued after the leak, ask in #ops',
+    'password: see the team vault, never paste it here',
+    'const clientSecret = loadClientSecretFromVault(env);',
+    'const accessToken = currentSessionToken;',
+    'echo \'{"max_tokens": "100000"}\'',
+    'echo \'{"OLDPWD": "/home/u1/x"}\'',
+    'PASSWORD_MIN_LENGTH=12',
+    'docker build --secret id=npmrc,src=.npmrc .',
+    'docker login -p $REGISTRY_PASS registry.example.com',
+    'docker run -p 8080:80 nginx',
+    'redis-cli -a "$REDIS_PASSWORD" ping',
+    'htpasswd -b .htpasswd ci $HTPASS',
+    'htpasswd -c .htpasswd ci',
+    'echo "Authorization: Basic Authentication is weak"',
+  ];
+  for (const command of plain) appendRefusal(entry({ command }), { dir });
+  assert.deepStrictEqual(readRefusals({ dir }).map((r) => r.command), plain);
+});
+
 // S13 B2: talk about these shapes, and the commands that only look like them, stay readable.
 test('prose and commands near the new shapes read back as they were', (t) => {
   const dir = scratch(t);
@@ -159,6 +232,30 @@ for (const [name, text] of [
   ['a run of hyphen-joined api_key names', 'api_key-'.repeat(8192)],
   ['a run of hyphen-joined token names', 'token-a-'.repeat(8192)],
   ['a run of eyJ- segments', 'eyJ-'.repeat(16384)],
+  // S14 B3: each added or changed rule.
+  ['a run of camelCase names with no value', 'apiKey'.repeat(10922)],
+  ['a run of quoted glued keys', '"xtoken\''.repeat(8192)],
+  ['a quoted key then a long unclosed value', "'password': '" + 'a1'.repeat(32768)],
+  ['a run of glued names', 'PGPASSWORD'.repeat(6553) + '=x'],
+  ['a run of name= pairs', 'a='.repeat(32768)],
+  ['a name then a long letter value', 'clientSecret=' + 'a'.repeat(65536)],
+  ['a name then a long dotted value', 'token=' + 'a.'.repeat(32768)],
+  ['a name then spaces and no separator', 'secret' + ' '.repeat(65536)],
+  ['a long hyphenated name', 'token-'.repeat(10922) + '=x'],
+  ['a run of --secret', ' --secret'.repeat(7281)],
+  ['--pass= then a long letter run', '--pass=' + 'a'.repeat(65536)],
+  ['a run of docker login', 'docker login '.repeat(5041)],
+  ['docker login then a long gap', 'docker login ' + 'x '.repeat(32768)],
+  ['a run of redis-cli', 'redis-cli '.repeat(6553)],
+  ['redis-cli then a long gap', 'redis-cli ' + 'x '.repeat(32768)],
+  ['a run of htpasswd -b', 'htpasswd -b'.repeat(5957)],
+  ['htpasswd then a long flag cluster', 'htpasswd -' + 'b'.repeat(65536)],
+  ['SG. then a long run', 'SG.' + 'a'.repeat(65536)],
+  ['a run of SG.', 'SG.'.repeat(21845)],
+  ['a run of vendor prefixes', 'hf_ pypi- shpat_ sbp_ lin_api_ whsec_ ya29. '.repeat(1489)],
+  ['a run of AccountKey=', 'AccountKey='.repeat(5957)],
+  ['Authorization: Basic then a long letter run', 'Authorization: Basic ' + 'a'.repeat(65536)],
+  ['a run of Authorization: Basic', 'Authorization: Basic '.repeat(3120)],
 ]) {
   test(`${name} is checked by findCredential in under 50 ms`, () => {
     const started = process.hrtime.bigint();
