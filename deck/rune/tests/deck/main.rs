@@ -16,6 +16,7 @@ mod live;
 mod nav;
 mod no_wait;
 mod notifications;
+mod preview;
 mod queue;
 mod reply;
 mod skeleton;
