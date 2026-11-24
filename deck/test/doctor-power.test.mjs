@@ -34,6 +34,7 @@ test('plugged in, lid does nothing: pass, naming whether the deck holds and the 
   assert.equal(row.verdict, 'pass');
   assert.match(row.detail, /held since 2026-11-25T10:00:00\.000Z/);
   assert.match(row.detail, /power button sleeps/);
+  assert.ok(row.steps?.some((step) => step.includes('"Choose what the power buttons do"')), text(row));
   const free = powerRow({ power: windows(), awake: { held: false, since: null }, platform: 'win32' });
   assert.match(free.detail, /not held/);
 });
@@ -76,6 +77,7 @@ test('macOS and Linux: each names its own lid setting', () => {
   const linux = powerRow({ power: { source: 'ac', lid: { ac: 'sleep', dc: 'sleep' }, button: { ac: 'shutdown', dc: 'shutdown' }, modernStandby: null }, awake: HELD, platform: 'linux' });
   assert.equal(linux.verdict, 'fail');
   assert.ok(linux.steps.some((step) => step.includes('HandleLidSwitchExternalPower') && step.includes('/etc/systemd/logind.conf')), text(linux));
+  assert.ok(linux.steps.some((step) => step.includes('HandlePowerKey')), text(linux));
 });
 
 /** The reads captured on one Windows laptop: powercfg /qh per setting, and the status script's JSON. */

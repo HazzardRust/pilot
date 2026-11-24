@@ -119,6 +119,13 @@ function lidStep(platform, source) {
   return null;
 }
 
+/** Where the user changes the power-button action, per OS (spec 4); the Mac's is not a setting. */
+function buttonStep(platform) {
+  if (platform === 'win32') return 'set the power button to Do nothing: Control Panel > Power Options > "Choose what the power buttons do"';
+  if (platform === 'linux') return 'set HandlePowerKey=ignore in /etc/systemd/logind.conf (as root), then restart systemd-logind';
+  return null;
+}
+
 /** The Power row: whether the deck holds the request, and what still sleeps the machine (A3: `fail` on battery or a lid that acts). */
 export function powerRow({ power, awake, platform }) {
   const { source, lid, button, modernStandby, lidless } = power;
@@ -139,7 +146,10 @@ export function powerRow({ power, awake, platform }) {
     if (modernStandby) steps.push('on Modern Standby on battery, Windows ends the keep-awake request 5 minutes after the sleep timeout');
   }
   if (lidNow && lidNow !== 'nothing' && lidStep(platform, source)) steps.push(lidStep(platform, source));
+  // A risk, never a verdict (A3 fails on the source and the lid only), so the step rides a passing row too.
+  const buttonNow = source === 'battery' ? button.dc : button.ac;
+  if (buttonNow && buttonNow !== 'nothing' && buttonStep(platform)) steps.push(buttonStep(platform));
 
   const verdict = source === 'battery' ? 'fail' : source === null || lidNow === null ? 'cannot tell' : lidNow === 'nothing' ? 'pass' : 'fail';
-  return verdict === 'pass' ? { name: 'Power', verdict, detail } : { name: 'Power', verdict, detail, steps };
+  return verdict === 'pass' && steps.length === 0 ? { name: 'Power', verdict, detail } : { name: 'Power', verdict, detail, steps };
 }
