@@ -21,7 +21,7 @@ const BUTTON_ACTIONS = [...LID_ACTIONS, 'nothing'];
 
 /**
  * GetSystemPowerStatus's ACLineStatus (byte 0: 0 battery, 1 plugged in, 255 unknown) and GetPwrCapabilities'
- * AoAc (byte 20, Modern Standby), read into byte buffers. Single-quoted C#: PowerShell expands nothing in it.
+ * LidPresent (byte 2) and AoAc (byte 20, Modern Standby), read into byte buffers. Single-quoted C#: PowerShell expands nothing in it.
  */
 const STATUS_QUERY = [
   "$ErrorActionPreference = 'Stop'",
@@ -30,9 +30,9 @@ const STATUS_QUERY = [
   '[DllImport("powrprof.dll")] public static extern bool GetPwrCapabilities(byte[] caps);',
   "'",
   '$s = New-Object byte[] 12; $c = New-Object byte[] 128',
-  '$r = @{ ac = $null; aoac = $null }',
+  '$r = @{ ac = $null; aoac = $null; lid = $null }',
   'if ([PilotPower.Native]::GetSystemPowerStatus($s)) { $r.ac = [int]$s[0] }',
-  'if ([PilotPower.Native]::GetPwrCapabilities($c)) { $r.aoac = [bool]$c[20] }',
+  'if ([PilotPower.Native]::GetPwrCapabilities($c)) { $r.aoac = [bool]$c[20]; $r.lid = [bool]$c[2] }',
   '$r | ConvertTo-Json -Compress',
 ].join('\n');
 
@@ -71,6 +71,7 @@ function readWindows(run) {
     lid: attempt(() => windowsAction(run, LIDACTION, LID_ACTIONS)),
     button: attempt(() => windowsAction(run, PBUTTONACTION, BUTTON_ACTIONS)),
     modernStandby: typeof status?.aoac === 'boolean' ? status.aoac : null,
+    lidless: status?.lid === false,
   };
 }
 
@@ -98,14 +99,13 @@ function readLinux(run) {
   };
 }
 
-const NONE = Object.freeze({ ac: null, dc: null });
-
-/** What the OS says about power: its source, the lid and power-button actions per source, and Modern Standby. */
+/** What the OS says about power: its source, the lid and power-button actions per source, Modern Standby, and `lidless: true` where the machine has no lid. */
 export function readPower({ platform, run }) {
   const read = { win32: readWindows, darwin: readMac, linux: readLinux }[platform];
   const found = (read && attempt(() => read(run))) ?? {};
   const pair = (value) => ({ ac: value?.ac ?? null, dc: value?.dc ?? null });
-  return { source: found.source ?? null, lid: pair(found.lid ?? NONE), button: pair(found.button ?? NONE), modernStandby: found.modernStandby ?? null };
+  const power = { source: found.source ?? null, lid: pair(found.lid), button: pair(found.button), modernStandby: found.modernStandby ?? null };
+  return found.lidless ? { ...power, lidless: true } : power;
 }
 
 const SAYS = { nothing: 'does nothing', sleep: 'sleeps', hibernate: 'hibernates', shutdown: 'shuts down' };
@@ -121,17 +121,18 @@ function lidStep(platform, source) {
 
 /** The Power row: whether the deck holds the request, and what still sleeps the machine (A3: `fail` on battery or a lid that acts). */
 export function powerRow({ power, awake, platform }) {
-  const { source, lid, button, modernStandby } = power;
+  const { source, lid, button, modernStandby, lidless } = power;
   const held = awake?.held === true ? `held since ${awake.since ?? 'cannot tell'}` : 'not held';
   const facts = [held, source ? ON[source] : 'power source cannot tell'];
-  if (lid.ac || lid.dc) facts.push(`lid ${says(lid.ac)} plugged in, ${says(lid.dc)} on battery`);
+  if (lidless) facts.push('no lid');
+  else if (lid.ac || lid.dc) facts.push(`lid ${says(lid.ac)} plugged in, ${says(lid.dc)} on battery`);
   if (button.ac || button.dc) facts.push(`power button ${says(source === 'battery' ? button.dc : button.ac)}`);
   if (modernStandby !== null) facts.push(`Modern Standby ${modernStandby ? 'yes' : 'no'}`);
   if (platform === 'darwin') facts.push('a lid close sleeps a Mac unless it is in clamshell mode on power (an external display, keyboard and power)');
   facts.push('the keep-awake request does not stop the lid, the power button or Sleep');
   const detail = facts.join('; ');
 
-  const lidNow = source ? lid[source === 'ac' ? 'ac' : 'dc'] : null;
+  const lidNow = lidless ? 'nothing' : source ? lid[source === 'ac' ? 'ac' : 'dc'] : null;
   const steps = [];
   if (source === 'battery') {
     steps.push('plug in: on battery the machine sleeps on its own timers and lid close');

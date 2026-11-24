@@ -170,11 +170,11 @@ function besideGate(table, row, self) {
  * neither stopped nor named. The last line is
  * `left running: none`, or there is one `left running: <pid> <kind> <command>` per survivor.
  */
-export function census(before, { cwd, read = processTable, kill = stopper, deckPid = deckPidNow, self = process.pid, graceMs = GRACE_MS, pollMs = POLL_MS, sleep = pause, now = Date.now, select = leftovers }) {
+export function census(before, { cwd, read = processTable, kill = stopper, deckPid = deckPidNow, self = process.pid, graceMs = GRACE_MS, pollMs = POLL_MS, sleep = pause, now = Date.now }) {
   const watch = (base) => {
     for (const end = now() + graceMs; ; sleep(pollMs)) {
       const table = read();
-      const left = select(base, pilotProcesses(table, {}), cwd).filter((row) => !besideGate(table, row, self));
+      const left = leftovers(base, pilotProcesses(table, {}), cwd).filter((row) => !besideGate(table, row, self));
       if (left.length === 0 || now() >= end) return { table, left };
     }
   };
