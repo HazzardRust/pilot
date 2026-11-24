@@ -69,6 +69,29 @@ fn a_table_inserted_on_the_last_line_leaves_the_prose_whole() {
     assert_eq!(local.tables[0].1.text, "");
 }
 
+#[test]
+fn a_table_goes_after_the_line_of_the_prose_part_holding_the_caret() {
+    let mut local = typed_at("é one\né two", 4);
+    local.insert_table();
+    assert_eq!(local.draft.text, "é one");
+    local.tables[0].1 = TextEdit::new("x\ny");
+    local.tables[0].1.set_caret(0);
+    local.tables[0].1.focused = true;
+    local.insert_table();
+    assert_eq!(local.draft.text, "é one");
+    let prose: Vec<_> = local.tables.iter().map(|(_, p)| p.text.as_str()).collect();
+    assert_eq!(prose, ["x", "y"]);
+}
+
+#[test]
+fn a_blank_grid_sends_nothing() {
+    let mut local = typed_at("  ", 0);
+    local.insert_table();
+    assert_eq!(local.send(ID), None);
+    local.tables[0].0.cell_mut(1, 1).replace_text("x");
+    assert!(local.send(ID).is_some());
+}
+
 /// The deck's thread screen with this reply box, dark, as `tests/deck/reply.rs` draws it.
 fn box_drawn(local: Local) -> rune::Runtime<pilot_deck::app::State> {
     use pilot_deck::app::{self, State};

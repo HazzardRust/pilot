@@ -105,6 +105,16 @@ impl Local {
         out
     }
 
+    /// Nothing typed anywhere: every prose part and every cell blank, so an empty grid is no reply.
+    fn blank(&self) -> bool {
+        let empty = |edit: &TextEdit| edit.text.trim().is_empty();
+        empty(&self.draft)
+            && self.tables.iter().all(|(table, prose)| {
+                let (rows, cols) = table.size();
+                empty(prose) && (0..rows).all(|r| (0..cols).all(|c| empty(table.cell(r, c))))
+            })
+    }
+
     /// The Table button: a 2 × 2 grid after the caret's line of the prose part holding the caret (the
     /// first when none does), which splits there; the lines after it become the grid's prose part (A6).
     pub fn insert_table(&mut self) {
@@ -229,10 +239,10 @@ impl Local {
 
     /// Reply: the typed text alone; an empty box sends nothing, as the page's required field does.
     pub fn send(&mut self, id: &str) -> Option<Action> {
-        let text = self.text();
-        if self.sent.is_some() || text.trim().is_empty() {
+        if self.sent.is_some() || self.blank() {
             return None;
         }
+        let text = self.text();
         let action = Action::Reply {
             id: id.to_string(),
             text,
