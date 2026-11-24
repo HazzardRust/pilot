@@ -4,9 +4,7 @@
  * the one deck.json is still read and written only inside the daemon (L3).
  */
 
-import os from 'node:os';
 import path from 'node:path';
-import { testRunsFor } from '../scripts/test-ledger.mjs';
 import { DEFAULT_BUDGET, checkBudget } from './budget.mjs';
 import {
   KIND_TICKET,
@@ -37,7 +35,7 @@ import {
   recordFields,
   repoKey,
   sameRepo,
-  withHumanStep,
+  withHumanStep, withTestRuns,
 } from './runs.mjs';
 import { neverGranted } from './recut.mjs';
 import { SliceRefusal, mergeSliceTable } from './status.mjs';
@@ -659,36 +657,19 @@ const recordOf = (run, slug) => {
   return (entry) => entry?.repo === key && entry?.record?.slug === slug;
 };
 
-/**
- * The feature's test-ledger rows as the record keeps them (tested-once spec 4), from the ledger under
- * this user's home; none when it holds none. A ledger that cannot be read keeps the rows the record had,
- * said on stderr, since a status write must not fail on it.
- */
-function testRunsOf(slug, kept) {
-  try {
-    const rows = testRunsFor({ slug, home: os.homedir() });
-    return rows.length === 0 ? undefined : rows.map(({ where, branch, sha, scope, exit, minutes, at }) => ({ where, branch, sha, scope, exit, minutes, at }));
-  } catch (err) {
-    console.error(`[deck] the test ledger could not be read: ${err.message}`);
-    return kept;
-  }
-}
-
 function upsertRecord(deck, run, table, fields, name) {
   const key = repoKey(run.repo);
   const records = recordsOf(deck);
   const mine = recordOf(run, fields.slug);
   const previous = records.find(mine)?.record ?? {};
-  const record = nextRecord(previous, {
+  const record = withTestRuns(nextRecord(previous, {
     ...fields,
     feature: name ?? previous.feature,
     slices: table,
     updatedAt: new Date().toISOString(),
-  });
+  }), previous.tests);
   // A 0.7.19 sub-deck stamped the record it wrote (A17); the sub-deck is gone (L10), so a write drops it.
   delete record.subdeck;
-  const tests = testRunsOf(fields.slug, previous.tests);
-  if (tests) record.tests = tests;
   deck.records = [...records.filter((entry) => !mine(entry)), { repo: key, record }];
   return record;
 }

@@ -27,7 +27,10 @@ function scratchHome(t) {
   process.env.HOME = home;
   process.env.USERPROFILE = home;
   t.after(() => {
-    Object.assign(process.env, before);
+    for (const [name, value] of Object.entries(before)) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
     fs.rmSync(home, { recursive: true, force: true });
   });
   return home;
