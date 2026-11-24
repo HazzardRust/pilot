@@ -21,14 +21,19 @@ const WITHHELD = '<withheld: credential>';
 
 const KINDS_DIR = fileURLToPath(new URL('./archive-kinds/', import.meta.url));
 
-/** Each kind module under `deck/archive-kinds/`, in file-name order (L4): a kind slice adds one file. */
-const KINDS = await Promise.all(
-  fs
-    .readdirSync(KINDS_DIR)
-    .filter((name) => name.endsWith('.mjs'))
-    .sort()
-    .map(async (name) => (await import(pathToFileURL(path.join(KINDS_DIR, name)).href)).default),
-);
+/**
+ * Each kind module under `deck/archive-kinds/`, in file-name order (L4): a kind slice adds one file. A module whose
+ * default export is no kind (a helper beside them) is not one.
+ */
+const KINDS = (
+  await Promise.all(
+    fs
+      .readdirSync(KINDS_DIR)
+      .filter((name) => name.endsWith('.mjs'))
+      .sort()
+      .map(async (name) => (await import(pathToFileURL(path.join(KINDS_DIR, name)).href)).default),
+  )
+).filter((kind) => typeof kind?.kind === 'string' && Array.isArray(kind.files) && typeof kind.rowsOf === 'function');
 
 export function archiveKinds() {
   return KINDS;
@@ -36,8 +41,11 @@ export function archiveKinds() {
 
 const NEVER = NEVER_SHOWN.map((pattern) => new RegExp(`^${pattern.replaceAll('.', '\\.').replaceAll('*', '[^/]*')}$`, 'i'));
 
-/** Whether a store file name, relative to the store and with `/` between parts, is one the archive never opens. */
-const neverShown = (file) => NEVER.some((pattern) => pattern.test(file.replaceAll('\\', '/')));
+/**
+ * Whether a store file name, relative to the store, is one the archive never opens; `./` and `..` are resolved
+ * first. A kind module is repository code: its `files` are what review holds it to, and this refuses by name.
+ */
+const neverShown = (file) => NEVER.some((pattern) => pattern.test(path.posix.normalize(file.replaceAll('\\', '/'))));
 
 const withheld = (value) => (typeof value === 'string' && findCredential(value) ? WITHHELD : value);
 

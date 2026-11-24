@@ -5,14 +5,13 @@
 
 use std::collections::BTreeMap;
 
-use crate::theme::type_;
 use rune::tok;
 use rune::{Cx, El, ScrollSpec, col, row, text};
 use serde::Deserialize;
 
 use crate::app::{State, go};
 use crate::client::Query;
-use crate::theme::{self, space};
+use crate::theme::{self, space, type_};
 
 /// This window's folds: day key to open, over the view's own `open`.
 #[derive(Debug, Default)]
@@ -137,8 +136,15 @@ fn day(d: &Day, local: &Local, cx: &mut Cx<State>) -> El {
 }
 
 pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
-    // A region the view cannot be read as draws empty rather than taking the window down.
-    let archive = Archive::deserialize(v).unwrap_or_default();
+    // A region the view cannot be read as (or not yet loaded) draws nothing rather than taking the window
+    // down or claiming the archive is empty.
+    let Some(archive) = v
+        .is_object()
+        .then(|| Archive::deserialize(v).ok())
+        .flatten()
+    else {
+        return col().key("archive");
+    };
     let mut region = col()
         .key("archive")
         .w_full()

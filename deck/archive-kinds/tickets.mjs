@@ -3,16 +3,8 @@
  * month file, one row per id, the live copy first where a failed archive pass left one in both.
  */
 
+import { localStamp } from '../archive-time.mjs';
 import { KIND_TICKET, isOpen, lastSaidAt } from '../items.mjs';
-
-const pad = (n) => String(n).padStart(2, '0');
-
-/** `iso` as a local date and time, `YYYY-MM-DD HH:MM`; an unreadable stamp reads as itself. */
-export function localStamp(iso) {
-  const at = new Date(iso);
-  if (Number.isNaN(at.getTime())) return String(iso ?? '');
-  return `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())} ${pad(at.getHours())}:${pad(at.getMinutes())}`;
-}
 
 const text = (value) => (value === undefined || value === null ? '' : String(value));
 

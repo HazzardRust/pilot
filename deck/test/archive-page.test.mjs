@@ -34,10 +34,12 @@ const closed = (title, at, over = {}) => ticket(title, { postedAt: ago(at + HOUR
  * ticket and one closed chat; the live store read once through `listItems`, so it is in the current format (L10).
  */
 function seed() {
+  // Pinned to local midnight, so the run's time of day never moves a ticket into another day's section.
+  const sinceMidnight = Date.now() - new Date().setHours(0, 0, 0, 0);
   const old = closed('the old ticket', 40 * DAY);
   archiveOld();
-  const today = closed('the ticket closed today', HOUR);
-  const yesterday = closed('the ticket closed yesterday', DAY);
+  const today = closed('the ticket closed today', Math.min(HOUR, sinceMidnight / 2));
+  const yesterday = closed('the ticket closed yesterday', sinceMidnight + 12 * HOUR);
   const open = ticket('the open ticket');
   postStored({ kind: 'chat', title: 'a closed chat', body: 'hello', repo: REPO, resolvedAt: ago(HOUR) });
   listItems();

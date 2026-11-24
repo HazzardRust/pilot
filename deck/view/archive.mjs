@@ -4,8 +4,8 @@
  * `archiveRows`' own, read off disk and never through the view's `readDeck` (L3).
  */
 import { archiveKinds, archiveRows } from '../archive.mjs';
+import { localStamp } from '../archive-time.mjs';
 import { daySections } from '../ui/render-pages.mjs';
-import { localStamp } from '../archive-kinds/tickets.mjs';
 
 export function archiveView(query = {}, now = Date.now()) {
   if (query.screen !== 'archive') return {};
@@ -16,7 +16,7 @@ export function archiveView(query = {}, now = Date.now()) {
     key,
     heading: label,
     open,
-    rows: items.map(({ row }) => ({ ...row, when: row.at ? localStamp(row.at).slice(11) : '' })),
+    rows: items.map(({ row }) => ({ ...row, when: localStamp(row.at).slice(11) })),
   }));
   return { kinds, days };
 }
