@@ -45,13 +45,16 @@ test('every level writes the pilot lines after the defaults', (t) => {
 
 test('the prose is the same from any repo', (t) => {
   const was = process.cwd();
-  t.after(() => process.chdir(was));
   const blocks = ['alpha', 'beta & co'].map((name) => {
     const repo = path.join(scratch(t), name);
     fs.mkdirSync(repo);
     process.chdir(repo);
-    const settings = writtenSettings(startArgs({ level: 'nothing' }, { home: scratch(t, `pilot-home-${name.length}-`), env: ON }));
-    return JSON.stringify(settings.autoMode);
+    try {
+      const settings = writtenSettings(startArgs({ level: 'nothing' }, { home: scratch(t, `pilot-home-${name.length}-`), env: ON }));
+      return JSON.stringify(settings.autoMode);
+    } finally {
+      process.chdir(was);
+    }
   });
   assert.ok(blocks[0].includes('$defaults'), 'the block is written');
   assert.equal(blocks[1], blocks[0]);
@@ -97,4 +100,7 @@ test('the off switch omits the block', (t) => {
   }
   const written = writtenSettings(startArgs({ level: 'rules' }, { home, env: OFF }));
   assert.equal('autoMode' in written, false, 'the Start threads env to the file');
+  for (const value of ['on', '', 'no']) {
+    assert.ok(runSettings('nothing', undefined, { home, env: { [CLASSIFIER_SWITCH]: value } }).settings.autoMode, `"${value}" keeps the block`);
+  }
 });
