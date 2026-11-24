@@ -130,6 +130,69 @@ fn nested_emphasis_and_an_empty_or_overrun_draft_render_without_a_panic() {
 }
 
 #[test]
+fn headings_render_in_the_header_type() {
+    // 0..1 `#`, 1 ` `, 2..3 `H`, 3 `\n`, 4 `x`: the caret on line 2.
+    let spans = preview::spans(&edit("# H\nx", 4, 4), DARK);
+    let header = theme::type_::HEADER;
+
+    assert!(
+        has(&spans, 2..3, |s| s.size == Some(header.size)
+            && s.weight == Some(header.weight)),
+        "the header type over H: {spans:?}"
+    );
+    assert!(
+        has(&spans, 0..2, |s| s.color == Some(quiet())),
+        "quiet #: {spans:?}"
+    );
+}
+
+#[test]
+fn list_markers_render_quiet() {
+    // 0..2 `- `, 2 `a`, 4..7 `1. `, 7 `b`, 9 `x`: the caret on line 3.
+    let spans = preview::spans(&edit("- a\n1. b\nx", 9, 9), DARK);
+
+    for marker in [0..2, 4..7] {
+        assert!(
+            has(&spans, marker.clone(), |s| s.color == Some(quiet())),
+            "quiet marker {marker:?}: {spans:?}"
+        );
+    }
+    assert_eq!(within(&spans, 2..3), 0, "a unstyled: {spans:?}");
+    assert_eq!(within(&spans, 7..8), 0, "b unstyled: {spans:?}");
+}
+
+#[test]
+fn a_long_draft_is_styled_within_a_frame() {
+    let line = |i: usize| match i % 6 {
+        0 => format!("# Heading {i}"),
+        1 => format!("- item **{i}** with _some_ words"),
+        2 => format!("{i}. step with `code` in it"),
+        3 => format!("see [the link {i}](https://example.com/{i}) here"),
+        4 => format!("plain prose on line {i}, long enough to wrap in the box"),
+        _ => String::new(),
+    };
+    let text: String = (0..300).map(line).collect::<Vec<_>>().join("\n");
+    let caret = text.len() / 2;
+    let e = edit(&text, caret, caret);
+    let header = theme::type_::HEADER;
+
+    let mut best = std::time::Duration::MAX;
+    let mut spans = Vec::new();
+    for _ in 0..5 {
+        let start = std::time::Instant::now();
+        spans = preview::spans(&e, DARK);
+        best = best.min(start.elapsed());
+    }
+
+    let headings = spans.iter().filter(|s| s.size == Some(header.size)).count();
+    assert!(headings >= 48, "the headings render: {headings}");
+    assert!(
+        best < std::time::Duration::from_millis(16),
+        "300 lines took {best:?}, past a 60 Hz frame"
+    );
+}
+
+#[test]
 fn an_unfocused_box_renders_every_line() {
     let text = "**a**\n**b**";
     let mut e = edit(text, 1, 1);

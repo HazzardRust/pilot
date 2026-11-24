@@ -4,10 +4,10 @@
 
 use std::ops::Range;
 
-use pulldown_cmark::{Event, Options, Parser, Tag};
+use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 use rune::{Span, TextEdit};
 
-use crate::theme::{self, space};
+use crate::theme::{self, space, type_};
 
 /// The styled ranges of `edit.text`'s rendered lines: none on a line the caret or selection
 /// touches while `edit.focused`; every line rendered when not focused. Never mutates the draft.
@@ -16,10 +16,56 @@ pub fn spans(edit: &TextEdit, dark: bool) -> Vec<Span> {
     let k = theme::tokens(dark);
     let quiet = |at: Range<usize>| Span::new(at.start, at.end).color(k.quiet);
     let mut out = Vec::new();
+    // A link open in the draft: where it starts, and the end of its text so far. Links never nest.
+    let mut link: Option<(usize, Option<usize>)> = None;
+    let mut link_look = None;
     // rune-kit's own options (`markdown/parser.rs`), so a draft parses as the thread will.
     let opts = Options::ENABLE_STRIKETHROUGH | Options::ENABLE_TABLES | Options::ENABLE_TASKLISTS;
     for (event, at) in Parser::new_ext(text, opts).into_offset_iter() {
+        if let (Some((_, inner)), false) = (&mut link, matches!(event, Event::End(TagEnd::Link))) {
+            *inner = Some(inner.map_or(at.end, |end| end.max(at.end)));
+        }
         let (marker, look): (usize, fn(Span) -> Span) = match event {
+            Event::Start(Tag::Heading { .. }) => {
+                heading(text, at, dark, &mut out);
+                continue;
+            }
+            Event::Start(Tag::Item) => {
+                // The marker (`-`, `*`, `1.`) and the spaces after it; the item's own text untouched.
+                let line = &text.as_bytes()[at.clone()];
+                let mark = line.iter().take_while(|b| !b.is_ascii_whitespace()).count();
+                let gap = line[mark..]
+                    .iter()
+                    .take_while(|&&b| b == b' ' || b == b'\t')
+                    .count();
+                out.push(quiet(at.start..at.start + mark + gap));
+                continue;
+            }
+            Event::Start(Tag::Link { .. }) => {
+                link = Some((at.start, None));
+                continue;
+            }
+            Event::End(TagEnd::Link) => {
+                let Some((start, inner)) = link.take() else {
+                    continue;
+                };
+                // `[text](url)` or `<url>`: one opening byte, then the text, then the rest quiet. A
+                // link is painted only: it carries no press and opens nothing (spec 4).
+                match inner.filter(|&end| end > start + 1 && end <= at.end) {
+                    Some(end) => {
+                        // The thread's own link look (rune-kit `MarkdownStyle::from_kit`, L5).
+                        let (accent, underline) = *link_look.get_or_insert_with(|| {
+                            let kit = rune_kit::Kit::neutral(dark);
+                            (kit.c.text_accent, kit.alpha(kit.c.text_accent, 0.4))
+                        });
+                        out.push(quiet(start..start + 1));
+                        out.push(Span::new(start + 1, end).color(accent).underline(underline));
+                        out.push(quiet(end..at.end));
+                    }
+                    None => out.push(quiet(start..at.end)),
+                }
+                continue;
+            }
             Event::Start(Tag::Strong) => (2, Span::bold),
             Event::Start(Tag::Emphasis) => (1, Span::italic),
             Event::Code(_) => {
@@ -41,6 +87,46 @@ pub fn spans(edit: &TextEdit, dark: bool) -> Vec<Span> {
     match raw(edit) {
         Some(raw) => out.into_iter().flat_map(|s| clip(s, &raw)).collect(),
         None => out,
+    }
+}
+
+/// A heading at `at` in the header type: an ATX heading's `#`s and the space after them quiet, a
+/// setext heading's underline quiet, the words on its first line in `type_::HEADER`.
+fn heading(text: &str, at: Range<usize>, dark: bool, out: &mut Vec<Span>) {
+    let quiet = theme::tokens(dark).quiet;
+    // The range may carry the line's `\n`; what is left is the heading's own lines.
+    let end = at.start + text[at.clone()].trim_end_matches(['\n', '\r']).len();
+    let bytes = &text.as_bytes()[at.start..end];
+    let hashes = bytes.iter().take_while(|&&b| b == b'#').count();
+    let atx =
+        (1..=6).contains(&hashes) && bytes.get(hashes).is_none_or(|&b| b == b' ' || b == b'\t');
+    let (open, words_end) = if atx {
+        let gap = bytes[hashes..]
+            .iter()
+            .take_while(|&&b| b == b' ' || b == b'\t')
+            .count();
+        (at.start + hashes + gap, end)
+    } else {
+        // Setext: the words, then a line of `=` or `-`.
+        let under = bytes
+            .iter()
+            .rposition(|&b| b == b'\n')
+            .map_or(end, |n| at.start + n);
+        if under < end {
+            out.push(Span::new(under + 1, end).color(quiet));
+        }
+        (at.start, under)
+    };
+    if open > at.start {
+        out.push(Span::new(at.start, open).color(quiet));
+    }
+    let close = open + text[open..words_end].trim_end().len();
+    if close > open {
+        out.push(
+            Span::new(open, close)
+                .size(type_::HEADER.size)
+                .weight(type_::HEADER.weight),
+        );
     }
 }
 
