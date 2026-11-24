@@ -160,8 +160,6 @@ fn tables(md: &str) -> Vec<Vec<Vec<String>>> {
 }
 
 #[test]
-#[ignore = "B1 open: rune 7cba77c takes a partial range in the end texts of a selection across texts \
-            (runtime/selection/selectable.rs:291, :301); whole-cell needs rune's select_whole, a later slice"]
 fn a_drag_over_a_table_selects_whole_cells_in_row_order() {
     let mut rt = deck(SOURCE);
     let tail = glyphs(&rt, "th/c1");
