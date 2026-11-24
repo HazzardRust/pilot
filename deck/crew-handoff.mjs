@@ -1,13 +1,41 @@
 /**
- * A paused co-pilot's crew-handoff, as its ticket's successor grant reads it (crew-handoff-trace S5, spec 5).
+ * A paused co-pilot's crew-handoff, as its ticket's successor grant (crew-handoff-trace S5, spec 5) and the deck's
+ * settle (handoff-self-close spec 2, 6) read it.
  */
 
-import { KIND_CREW_HANDOFF, KIND_TICKET, isOpen, sameRepo, stateOf } from './items.mjs';
+import { HANDOFF_FAILED, KIND_CREW_HANDOFF, KIND_TICKET, chosenOf, isOpen, messagesOf, sameRepo, stateOf } from './items.mjs';
 
-/** The open crew-handoffs naming `ticketId`; none for a missing id. */
+/**
+ * The user pressed Handoff failed and the pilot has not written since (handoff-self-close spec 6, A1): the press is
+ * still the pilot's, so the deck closes nothing over it.
+ */
+export function pressUnanswered(item) {
+  if (chosenOf(item) !== HANDOFF_FAILED) return false;
+  const messages = messagesOf(item);
+  const press = messages.findLastIndex((message) => message?.from === 'user');
+  return !messages.slice(press + 1).some((message) => message?.from === 'pilot');
+}
+
+/** The open crew-handoffs naming `ticketId`, but a pressed one the pilot has not answered; none for a missing id. */
 export function openCrewHandoffsOf(items, ticketId) {
   if (typeof ticketId !== 'string') return [];
-  return items.filter((item) => item.kind === KIND_CREW_HANDOFF && isOpen(item) && item.ticket === ticketId);
+  return items.filter((item) => item.kind === KIND_CREW_HANDOFF && isOpen(item) && item.ticket === ticketId && !pressUnanswered(item));
+}
+
+/** The move each non-yellow state names in the deck's close (spec 2): concluding, planning, or closed. */
+const MOVES = Object.freeze({ green: 'moved to concluding', red: 'sent back to planning', closed: 'closed' });
+
+/**
+ * The open ticketed crew-handoffs whose ticket is no longer yellow, each `{ item, why }` (handoff-self-close spec 2,
+ * 3, L1): a ticket gone from the store reads `closed`; a pressed item the pilot has not answered is not named.
+ */
+export function settledCrewHandoffsOf(items) {
+  return items.flatMap((item) => {
+    if (item?.kind !== KIND_CREW_HANDOFF || !isOpen(item) || typeof item.ticket !== 'string' || pressUnanswered(item)) return [];
+    const ticket = items.find((candidate) => candidate?.id === item.ticket && candidate.kind === KIND_TICKET);
+    const why = ticket === undefined ? MOVES.closed : MOVES[stateOf(ticket)];
+    return why === undefined ? [] : [{ item, why }];
+  });
 }
 
 /**
