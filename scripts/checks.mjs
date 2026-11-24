@@ -8,7 +8,7 @@
  */
 
 import { FULL_SHA } from '../deck/host-github.mjs';
-import { FULL_TRIGGERS } from './select-tests.mjs';
+import { outrunsProof } from './select-tests.mjs';
 
 const OUTCOMES = new Set(['pass', 'fail', 'pending']);
 /** A workflow file GitHub runs (top level of `.github/workflows`) or GitLab's one file. */
@@ -75,9 +75,6 @@ export function checksGate({ host, git, sha }) {
 
 /** At least this many Gate jobs, one per OS, before a run proves anything (cheap-suite A2). */
 const PROOF_JOBS = 3;
-
-/** True when a change to `file` alters how CI or the suite runs, so no earlier run speaks for it (A2). */
-const outrunsProof = (file) => file.startsWith('.github/') || FULL_TRIGGERS.includes(file);
 
 /**
  * The **Proof** a green CI run gives a landing (cheap-suite spec 5; L7, A2): the tree at least three `gate (<os>)`

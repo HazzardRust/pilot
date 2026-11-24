@@ -23,8 +23,8 @@ const seconds = (ms) => (ms / 1000).toFixed(1);
 /**
  * The cost table: a header, one row per file slowest first by summed ms (then most spawns, then name),
  * `top` rows and then `rest <n> files <s> s <spawns> spawns`, and last
- * `total <files> files <s> s <spawns> spawns (git <g>)`. A file is any file in `lines` or any owner but
- * the runner's `-`, so a file with spawns and no reported test is a row of 0 s.
+ * `total <files> files <s> s <spawns> spawns (git <g>)`. A file is any file in `lines` or any owner, the
+ * runner's own `-` included so the total matches the spawn line; a file with spawns and no reported test is a row of 0 s.
  */
 export function costTable(lines, owners, { top = 40 } = {}) {
   const files = new Map();
@@ -40,7 +40,6 @@ export function costTable(lines, owners, { top = 40 } = {}) {
     entry.tests++;
   }
   for (const [owner, kinds] of owners) {
-    if (owner === '-') continue;
     Object.assign(row(owner), { total: kinds.total, node: kinds.node, git: kinds.git, other: kinds.other });
   }
   const ranked = [...files.values()].sort((a, b) => b.ms - a.ms || b.total - a.total || (a.file < b.file ? -1 : 1));

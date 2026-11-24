@@ -22,7 +22,8 @@ test('the table ranks files by time and names their spawns', () => {
     ['b.test.mjs', '3.0', '1', '2', '2', '0', '0'],
     ['a.test.mjs', '1.5', '2', '5', '3', '1', '1'],
     ['c.test.mjs', '0.2', '1', '0', '0', '0', '0'],
-    ['total', '3', 'files', '4.7', 's', '7', 'spawns', '(git', '5)'],
+    ['-', '0.0', '0', '21', '7', '7', '7'],
+    ['total', '4', 'files', '4.7', 's', '28', 'spawns', '(git', '12)'],
   ]);
 });
 
@@ -43,6 +44,16 @@ test('past the top rows the rest is one line', () => {
   assert.deepEqual(table.slice(3), [
     ['rest', '2', 'files', '1.5', 's', '5', 'spawns'],
     ['total', '4', 'files', '6.5', 's', '5', 'spawns', '(git', '1)'],
+  ]);
+});
+
+test("the runner's own spawns, owner `-`, are a row and in the total, so the total matches the spawn line", () => {
+  const owners = new Map([['a.test.mjs', kinds(2, 0, 0)], ['-', kinds(1, 3, 0)]]);
+  assert.deepEqual(rows(costTable([line('a.test.mjs', 100)], owners)), [
+    ['file', 's', 'tests', 'spawns', 'git', 'node', 'other'],
+    ['a.test.mjs', '0.1', '1', '2', '2', '0', '0'],
+    ['-', '0.0', '0', '4', '1', '3', '0'],
+    ['total', '2', 'files', '0.1', 's', '6', 'spawns', '(git', '3)'],
   ]);
 });
 

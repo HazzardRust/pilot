@@ -289,7 +289,7 @@ function homeStoreLine(file, before, deckPid) {
 export function cargoStep(env, which = (cmd) => onSearchPath(`${cmd}.exe`, env, platform), platform = hostPlatform(), selection) {
   if (platform !== 'win32') return { skip: 'rune deck: cargo test runs on Windows only, skipped' };
   if (env.PILOT_GATE_HOME_STORE) return { skip: 'rune deck: a gate inside the gate, skipped' };
-  if (selection?.files && Array.isArray(selection.changed) && !selection.changed.some((rel) => rel.startsWith('deck/') || FULL_TRIGGERS.includes(rel))) {
+  if (selection?.files && !selection.changed.some((rel) => rel.startsWith('deck/') || FULL_TRIGGERS.includes(rel))) {
     return { skip: `rune deck: nothing under deck/ changed since ${selection.since.slice(0, 7)}, skipped` };
   }
   const cargo = which('cargo');
@@ -310,34 +310,28 @@ export function cargoStep(env, which = (cmd) => onSearchPath(`${cmd}.exe`, env, 
  */
 function runeDeck(rune, { spawn, cwd, env, bound, stale }) {
   if (rune.skip) {
-    process.stdout.write(`${rune.skip}
-`);
+    process.stdout.write(`${rune.skip}\n`);
     return 0;
   }
   const dir = rune.env.CARGO_TARGET_DIR;
   try {
     const { wiped, units } = bound(dir);
-    if (wiped) process.stdout.write(`rune deck: shared build held ${units} units, over ${RUNE_TARGET_MAX}, wiped ${dir}
-`);
+    if (wiped) process.stdout.write(`rune deck: shared build held ${units} units, over ${RUNE_TARGET_MAX}, wiped ${dir}\n`);
   } catch (err) {
-    process.stderr.write(`gate: rune deck: could not bound ${dir}: ${firstLine(err)}
-`);
+    process.stderr.write(`gate: rune deck: could not bound ${dir}: ${firstLine(err)}\n`);
   }
   const crate = path.join(cwd, 'deck', 'rune');
   try {
     stale(crate);
   } catch (err) {
-    process.stderr.write(`gate: rune deck: could not date ${crate}: ${firstLine(err)}
-`);
+    process.stderr.write(`gate: rune deck: could not date ${crate}: ${firstLine(err)}\n`);
     return 1;
   }
   for (const step of rune.steps) {
     // A clean `fmt --check` prints nothing, so each step names itself and the log shows it ran.
-    process.stdout.write(`rune deck: cargo ${step.args.join(' ')}
-`);
+    process.stdout.write(`rune deck: cargo ${step.args.join(' ')}\n`);
     const run = spawn(step.command, step.args, { cwd, env: { ...env, ...rune.env }, stdio: 'inherit', windowsHide: true });
-    if (run.error) process.stderr.write(`gate: rune deck: ${step.command} ${step.args[0]} did not start: ${run.error.message}
-`);
+    if (run.error) process.stderr.write(`gate: rune deck: ${step.command} ${step.args[0]} did not start: ${run.error.message}\n`);
     const status = run.status ?? 1;
     if (status !== 0) return status;
   }
