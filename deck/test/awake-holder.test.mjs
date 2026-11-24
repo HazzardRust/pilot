@@ -153,6 +153,23 @@ test('the POSIX holders watch the pid they are given', () => {
   assert.throws(() => holderFor('linux', 0), RangeError, 'a pid of 0 would watch the process group');
 });
 
+test('where CI requires the linux holder, a refusal fails', () => {
+  const required = { [REQUIRE_LINUX_HOLDER]: '1' };
+  assert.equal(linuxSkip({ host: 'linux', unavailable: 'no systemd-inhibit on PATH', env: required }), false, 'it runs, and fails on the reason');
+  assert.throws(() => cannotHold('Failed to inhibit: Access denied', required), /PILOT_REQUIRE_LINUX_HOLDER.*Access denied/);
+});
+
+test('without the flag a linux holder that cannot hold still skips naming why', () => {
+  assert.equal(linuxSkip({ host: 'linux', unavailable: 'no systemd-inhibit on PATH', env: {} }), 'no systemd-inhibit on PATH');
+  assert.equal(linuxSkip({ host: 'linux', unavailable: null, env: {} }), false);
+  assert.equal(cannotHold('Failed to inhibit: Access denied', {}), 'logind refused the inhibitor here: Failed to inhibit: Access denied');
+  assert.equal(cannotHold('x', { [REQUIRE_LINUX_HOLDER]: '0' }), 'logind refused the inhibitor here: x', 'only 1 requires it');
+});
+
+test('another OS skips the linux holder even where it is required', () => {
+  assert.equal(linuxSkip({ host: 'darwin', unavailable: null, env: { [REQUIRE_LINUX_HOLDER]: '1' } }), 'the linux holder runs on linux only');
+});
+
 test('holderUnavailable names why a platform cannot hold', () => {
   assert.equal(holderUnavailable('win32'), null);
   assert.match(holderUnavailable('sunos'), /sunos/);
