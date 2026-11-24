@@ -25,7 +25,7 @@ export function isRead(args) {
     case 'ls-remote':
       return true;
     case 'config':
-      return args.length === 3 && args[1] === '--get';
+      return args.length === 3 && args[1] === '--get' && !args[2].startsWith('-');
     case 'worktree':
       return args[1] === 'list';
     case 'merge-base':

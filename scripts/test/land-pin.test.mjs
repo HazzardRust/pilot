@@ -44,5 +44,6 @@ const BAR_GIT = 35;
 test('one landing spawns fewer git than on the base', (t) => {
   const { gitIn, x } = repos(t, 'x');
   const { value, git: spawned } = countGit(() => land({ cwd: x, git: gitIn(x), host: fakeGh().host, test: passing }));
-  assert.equal(value.already, false);  assert.ok(spawned <= BAR_GIT, `one landing spawned ${spawned} git, over ${BAR_GIT} (${BASE_GIT} on the base)`);
+  assert.equal(value.already, false);
+  assert.ok(spawned <= BAR_GIT, `one landing spawned ${spawned} git, over ${BAR_GIT} (${BASE_GIT} on the base)`);
 });
