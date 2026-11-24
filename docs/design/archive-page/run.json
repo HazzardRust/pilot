@@ -9,30 +9,36 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "integrating 651900b (rust, typescript, security: approve with comments)",
+      "state": "integrated 7fb3b9d; checks green",
       "branch": "slice/archive-page-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "pushed 5cee353 (node 15/15 s2-node.log, cargo 179/179 s2-cargo.log; ts approve, rust APPROVE, security APPROVE); queued behind S4 integrate",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/archive-page-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s2"
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "implementing (+ S1 rust MEDIUM: {} region not loaded)",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/archive-page-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s3"
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "integrating 437602a",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/archive-page-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s4"
     },
     {
       "slice": "S5",
@@ -90,8 +96,8 @@
       ]
     }
   ],
-  "next": "co-pilot: pilot integrate S1 651900b, then pilot checks, then pilot ready for S2-S9,S11; S3 brief carries the rust MEDIUM ({} region flashes 'Nothing archived yet.')",
-  "updatedAt": "2026-11-24T07:51:34.688Z",
+  "next": "co-pilot: S4 integrating; then integrate S2 5cee353; start S5-S9,S11 from new tip; S3 implementing",
+  "updatedAt": "2026-11-24T08:24:15.487Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -210,6 +216,24 @@
       "agent": "pilot:pilot-implementer",
       "what": "fix commit 651900b carries its own model and session in the trailer, not brief.md's trailer lines",
       "evidence": "git show 651900b: Co-Authored-By: Claude Sonnet 5.5, session_01NXgSFrR7...; brief.md names Claude Fable 5.2, session_01NXgSFpzNB8...",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1's kinds pin listed every kind, so each kind slice (S4-S9, S11) had to edit S1's test: parallel conflicts; S4 made it ignore zero-count kinds",
+      "evidence": "437602a test(archive-page): S4 the kinds pin ignores kinds with no rows",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "region names pinned in live.rs and view-route.test.mjs outside the slice; S2 added archiveDetail to both",
+      "evidence": "S2 first cargo run: live::a_heartbeat_refreshes_every_region_from_one_view failed",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a report cannot be seeded in a Rust test (deck_post refuses a report on a red ticket); hand-written store fixture",
+      "evidence": "deck_post 400: a report's ticket is an open green ticket",
       "size": 1
     }
   ]
