@@ -9,24 +9,27 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "fixing: pushed ad6e2d1, reviewers approved; fixer moving its tests to tests/deck/ on feat 59be70e",
+      "state": "integrated b9a6760; checks green at 52ae2c7",
       "branch": "slice/reply-markdown-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-reply-markdown-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S1"
       ],
-      "branch": "slice/reply-markdown-s2"
+      "branch": "slice/reply-markdown-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-reply-markdown-s2"
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/reply-markdown-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-reply-markdown-s3"
     },
     {
       "slice": "S4",
@@ -36,57 +39,9 @@
       ]
     }
   ],
-  "next": "Co-pilot a09adcca paused (forced), lane held; S1 fixer ab3ccc0d (Sonnet) live, reports to main. On its pushed sha: resume a09adcca by SendMessage (integrate S1: Reviewed-by rust + security approve, Evidence B1-B6; pilot checks; spawn S2 and S3). feat/reply-markdown 59be70e, replanned. For QA: light-theme reply text renders white (pre-existing per S1), A1 contrast, IME.",
-  "updatedAt": "2026-11-24T04:53:41.075Z",
+  "next": "S2 e608e6c being integrated by pilot (co-pilot afa63e9 dormant, lane held). S3 impl a2f78c0 live, unpushed. Next: pilot checks on S2 sha; S3 rebase + integrate; S4 (opus); base-check integrate (origin/main not in feat); fundamentalist; QA. QA notes: light-theme white reply text, A1 contrast, IME, heading = body size.",
+  "updatedAt": "2026-11-24T05:29:29.065Z",
   "friction": [
-    {
-      "agent": "pilot-architect",
-      "what": "rune-kit's markdown parser maps only to rendered text, its source map private; three probes to rule it out and call pulldown-cmark directly",
-      "evidence": "rune-kit parser/map.rs",
-      "size": 2
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "first three question posts refused for a missing Research: line; ADR 0119's rule is not in the architect's definition (main hit it three times too)",
-      "evidence": "itm_3cadb89e11ae, itm_cf736cb1ad17, itm_b5ca8397c90b",
-      "size": 2
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "brief trailer names Fable 5.2 while Opus crew agents' harness trailer says Opus 5.5; two agents asked which to use",
-      "evidence": "a9633301 on feat/rune-deck-ui; reply-markdown brief.md",
-      "size": 1
-    },
-    {
-      "kind": "drain",
-      "what": "auto mode gave no verdict on a Bash or SendMessage call batched with other calls five times; each reissued alone",
-      "size": 1500
-    },
-    {
-      "kind": "drain",
-      "what": "deck filed main's refused Stop-Process as a blocking item on the live planning ticket, which refused its gate1 until main closed it as moot",
-      "size": 1500
-    },
-    {
-      "kind": "drain",
-      "what": "crew-handoff item itm_f93c340ba2f1 stayed open after its co-pilot handed back directly; cost the user a question; ticket itm_a28fc03b3ae5 queued",
-      "size": 2500
-    },
-    {
-      "kind": "drain",
-      "what": "deck_post refused questions five times: Research: line wording (only the full skip-list phrase passes) and the 1200-char body cap",
-      "size": 2000
-    },
-    {
-      "kind": "drain",
-      "what": "co-pilot's hand-back said pilot land is the pilot's before QA writes; pilot land merges into pilot, so it was not run; the agent text reads as if it were a pre-QA step",
-      "size": 800
-    },
-    {
-      "kind": "drain",
-      "what": "QA agent ids from before /clear cannot be resumed (no transcript); gate2 posted by pilot without QA's per-line evidence",
-      "size": 3000
-    },
     {
       "kind": "drain",
       "what": "replan stores a feat sha while driftOf tests ancestry on plan.branch (design); every replanned ticket reads gone on its co-pilot call; explorer trace recut.mjs:145, store-tickets.mjs:459",
@@ -263,6 +218,60 @@
       "what": "hand-back enforcement forced a hand-back while a child was running, twice on this ticket",
       "evidence": "two paused hand-backs",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 implementer compacted before its first commit and restarted the slice from scratch (second time this run, after S1)",
+      "evidence": "its message: worktree clean at b9a6760, no commits, restarting with npm ci and fact sheet",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: link colour named by L5 has no theme token; four reads into rune-kit to find Kit::neutral(dark).c.text_accent",
+      "evidence": "S2 pause report; now in S2.md seams",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "co-pilot cannot TaskStop its own spawned implementers on a pause; had to message them to stop",
+      "evidence": "TaskStop error: main, user or the agent itself can stop it",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1 and S3 implementers each compacted before their first commit and restarted",
+      "evidence": "co-pilot hand-back",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot cannot TaskStop children it spawned; on a pause it has to message them",
+      "evidence": "co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fix implementer would not report to main while a co-pilot directed the slice, so the pilot learned of the push from git",
+      "evidence": "817c519 found by fetch; fixer hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "pilot wait-for --match 'exit ' matched a test name in the log",
+      "evidence": "S1 fixer report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "ending a turn to wait on live children triggers a forced hand-back, twice in one run; co-pilot cannot idle on its implementers",
+      "evidence": "[handback-send-enforce] Your report has not been delivered. Call SubagentHandback({message: <your full report>}) now; the call ends your run.",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "hand-off notice said architect owed for itm_0ddca8a8e2f0 while the original architect a17960 was still live; a duplicate was spawned on the same worktree and stopped after 2 commits",
+      "evidence": "owed row: architect owed; a17960 reported commits 82630d7, 7ba4d20 it did not make",
+      "size": 64000
     }
   ]
 }
