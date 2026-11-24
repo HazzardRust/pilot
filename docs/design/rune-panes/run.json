@@ -21,25 +21,25 @@
     },
     {
       "slice": "S3",
-      "state": "pushed 4afe2dd",
+      "state": "integrated bd8969d",
       "branch": "slice/rune-panes-s3",
       "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s3"
     },
     {
       "slice": "S4",
-      "state": "implementing",
+      "state": "pushed 20eda6f",
       "branch": "slice/rune-panes-s4",
       "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s4"
     },
     {
       "slice": "S5",
-      "state": "implementing",
+      "state": "pushed a338bf6",
       "branch": "slice/rune-panes-s5",
       "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s5"
     },
     {
       "slice": "S6",
-      "state": "implementing",
+      "state": "pushed 02cb698",
       "branch": "slice/rune-panes-s6",
       "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s6"
     },
@@ -54,8 +54,8 @@
       ]
     }
   ],
-  "next": "co-pilot: integrating S3 4afe2dd, then S2 e625f37, S1 558aa76; S4, S5, S6 implementing; S7 after S2-S5.",
-  "updatedAt": "2026-11-24T23:05:22.605Z",
+  "next": "co-pilot: S3 integrated bd8969d; integrating S2 e625f37; then S1 558aa76, S4 20eda6f, S5 a338bf6, S6 02cb698; S7 after S2-S5 integrate (it also fixes the clippy errors at tests/deck/layout.rs:280,338).",
+  "updatedAt": "2026-11-24T23:34:54.610Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -106,6 +106,31 @@
       "agent": "pilot-implementer",
       "what": "a clippy target folder inside the worktree breaks the README coverage test",
       "evidence": "scripts/test/deck-readme.test.mjs failed with target-clippy-s1/ present"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "brief.md's commit trailer (Claude Fable 5.2) contradicts the implementer's own system attribution, so the slice commit carries a mixed trailer",
+      "evidence": "S4 report: Sonnet co-author line with the brief's session line"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "npm test takes about 15 minutes, and Monitor is not available to an implementer",
+      "evidence": "S4 report: node stage 843 s; waited with pilot wait-for"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "ElementInfo exposes no border or stroke, so S5's red badge stroke is checked by reading the code, not by a test",
+      "evidence": "S5 B1: badge() .border(1.0, red), unobservable in the element tree"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "pilot wait-for --match error matched thiserror in the compile log",
+      "evidence": "S5 report"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "Rune's --open refuses run=, and opening a side pane headless needs an undocumented open_panels entry in rune-deck.json",
+      "evidence": "S6 report: run= is not key=value; {\"open_panels\":[\"agents\"]}"
     }
   ]
 }
