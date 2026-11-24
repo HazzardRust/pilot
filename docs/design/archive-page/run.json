@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "implementing (+ S1 rust MEDIUM: {} region not loaded)",
+      "state": "integrating 1b9262b",
       "after": [
         "S1"
       ],
@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4",
-      "state": "integrating 437602a",
+      "state": "integrated 48b8f51; checks green",
       "after": [
         "S1"
       ],
@@ -96,8 +96,8 @@
       ]
     }
   ],
-  "next": "co-pilot: S4 integrating; then integrate S2 5cee353; start S5-S9,S11 from new tip; S3 implementing",
-  "updatedAt": "2026-11-24T08:24:15.487Z",
+  "next": "draining: S3 integrating; then S2 5cee353 (its per-behaviour evidence rows were lost with my context; trailers from the record); then hand back paused",
+  "updatedAt": "2026-11-24T08:47:09.167Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -234,6 +234,18 @@
       "agent": "pilot:pilot-implementer",
       "what": "a report cannot be seeded in a Rust test (deck_post refuses a report on a red ticket); hand-written store fixture",
       "evidence": "deck_post 400: a report's ticket is an open green ticket",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the slice verification command runs a debug build, so the 50 ms frame bar (B5) is only asserted by a separate cargo test --release run",
+      "evidence": "S3 archive_filter asserts under cfg(not(debug_assertions)); release 6/6 at 13-14 ms",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "clippy red on a base file no slice owns: tickets.rs:459 ticket_row has 8 args, from ae00199, already on pilot",
+      "evidence": "git merge-base --is-ancestor ae00199 origin/pilot: on pilot",
       "size": 1
     }
   ]
