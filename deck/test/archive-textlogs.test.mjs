@@ -72,9 +72,42 @@ test('a line without a stamp takes the file time, and a long line is clipped in 
   assert.ok(!rows[2].fields.find((field) => field.label === 'Line').value.includes('xxx'), 'a 5,000-character word is no row');
 });
 
-test('no log file is no rows', (t) => {
+test('no log file is no rows, and one that cannot be read is none either', (t) => {
   const dir = tempDeck(t);
   assert.deepEqual(rowsOf(dir), []);
+  fs.mkdirSync(path.join(dir, 'deck.log'));
+  const errors = [];
+  t.mock.method(console, 'error', (line) => errors.push(line));
+  assert.deepEqual(rowsOf(dir), []);
+  assert.equal(errors.length, 1, 'the unreadable log is named once');
+  assert.match(errors[0], /archive log deck\.log could not be read/);
+});
+
+test('an indented first word past 120 is never cut into either', (t) => {
+  const dir = tempDeck(t);
+  fs.writeFileSync(path.join(dir, 'deck.log'), `  ${'y'.repeat(200)}\n`);
+
+  const [row] = rowsOf(dir);
+
+  assert.equal(row.title, 'deck.log:1');
+  assert.equal(row.fields.find((field) => field.label === 'Line').value, `  ${'y'.repeat(200)}`);
+});
+
+test('lines across read boundaries are whole, and the last line needs no newline', (t) => {
+  const dir = tempDeck(t);
+  // 655 lines of 100 bytes and 35 more bytes put the 64 KiB read boundary inside the two-byte `é`.
+  const split = `${'k'.repeat(35)}é split`;
+  // A 100,000-byte line spans the next read boundary too, and is cut at a word in its row.
+  const long = 'word '.repeat(20000).trimEnd();
+  const lines = [...Array(655).fill('x'.repeat(99)), split, long, 'after'];
+  fs.writeFileSync(path.join(dir, 'wrapper.log.old'), `${lines.join('\n')}\nunterminated`);
+
+  const rows = rowsOf(dir);
+
+  assert.equal(rows.length, 659);
+  assert.equal(rows[655].title, split, 'the character split by the read is whole');
+  assert.equal(rows[656].fields.find((field) => field.label === 'Line').value, long.slice(0, 4094));
+  assert.deepEqual(rows.slice(-2).map((row) => [row.id, row.title]), [['wrapper.log.old:658', 'after'], ['wrapper.log.old:659', 'unterminated']]);
 });
 
 test('only the newest 2,000 lines', (t) => {
