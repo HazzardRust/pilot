@@ -42,6 +42,16 @@ orphaned processes, and `pilot worktrees prune` removes merged-clean worktrees. 
 
 The deck does, by `pilot pr`, and the crew never does (ADR 0182). On a gate1 post, every `deck_status`, and a walkthrough or gate2 post with a comment, for a ticket with a gate1, the deck opens or rewrites the draft feature PR `feat/<slug>` (its body and its base) and posts QA's one comment on it. A failed write puts one line, `feature PR not updated: <line>`, on the ticket's thread and is retried on the next trigger. Agents push their own branches, and the implementer opens its own draft slice PR; nothing else they run writes to GitHub.
 
+## What the classifier is told
+
+A Start writes an `autoMode.environment` block into `~/.claude/pilot/start-settings.json`, the settings file the session is started with, so the auto-mode classifier knows about the pilot's own environment. The block is `"$defaults"` (the classifier's built-in environment) followed by two lines: one says the repository is trusted, the other says build output the pilot writes is expected. The lines are the `CLASSIFIER_ENVIRONMENT` constant in `deck/run-env.mjs`; read them there.
+
+The block loosens no rule. It adds no `allow` rule and grants no permission: it only gives the classifier context for its own judgement. Your own `autoMode` block in `~/.claude/settings.json` is not touched; `claude auto-mode reset` resets that block, and does nothing to the pilot's.
+
+To see what the classifier is told, run `claude --settings ~/.claude/pilot/start-settings.json auto-mode config`; the merged environment starts with `"$defaults"` and ends with the pilot's two lines.
+
+To turn the block off, start with `PILOT_CLASSIFIER_ENV`=off set in the environment. `CLASSIFIER_SWITCH` in `deck/run-env.mjs` names the variable, and it matches the value `off` exactly, case-sensitive: `OFF`, `0` or any other value keeps the block. With it off, the Start writes no `autoMode` entry.
+
 ## Which tests run when
 
 The full suite (`npm test`, every test file) runs once per feature, at `pilot land`. Every step before it tests only the selection: the test files the diff touches, the tests that import a changed module (directly or through others), the tests that name a changed file, and the whole-tree tests. `npm run test:changed -- --since=<ref>` runs that selection and prints `selected <n> of <m> test files since <sha7>`; where the diff touches `package.json`, the lockfile, the gate, the selector, or a script no test reaches, it runs the full suite and prints `full suite: <reason>`. Only a full run takes a gate slot.
