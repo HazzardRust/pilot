@@ -1,0 +1,100 @@
+{
+  "slug": "user-pilot-branch",
+  "feature": "The pilot branch is named for its user",
+  "ticket": "itm_0476cd419c86",
+  "branch": "feat/user-pilot-branch",
+  "base": "feat/reply-markdown",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-user-pilot-branch",
+  "artefact": "docs/design/user-pilot-branch/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "planned"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S8",
+      "state": "planned"
+    },
+    {
+      "slice": "feature",
+      "state": "planned; Gate 1 itm_178637b5acc6 at eaf07b6 awaits the user's Sign off",
+      "pr": 157
+    }
+  ],
+  "next": "No agent live. Red: gate1 itm_178637b5acc6 awaits press. Green: gate2 itm_1d819d4586dc (reply-markdown, PR #137, 44541ac) awaits press; then lander + QA a418f693a8ff8fa45 \"tear down\". Yellow empty: tested-once first (its record's next: security re-review S1, integrate S1+S3); land-batching waits on itm_bd575183ec2f; archive-page on F7/F8/F9. Each record's next is current.",
+  "updatedAt": "2026-11-24T17:10:30.197Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "hand-back forced while waiting on main's verdict message; gate1 steps left undone",
+      "evidence": "architect hand-back: formal verdict message never arrived before this handback was forced",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "grep for the pilot branch name drowns in plugin, agent and CLI uses of the same word; a hook blocks sed -i on tracked docs",
+      "evidence": "53 files, 132 occurrences; A1 to L13 redone with Edit",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait restarted about 12 times; every exit output read; two exits were deck-written lines (auto-assumed default, yield) printed as REPLY",
+      "size": 15
+    },
+    {
+      "kind": "drain",
+      "what": "auto mode gave no verdict on a Bash call sharing a response with a deck call; reissued alone",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "deck_status next capped at 400 chars: five calls rejected and rewritten",
+      "size": 5
+    }
+  ]
+}
