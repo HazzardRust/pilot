@@ -370,7 +370,10 @@ export function autoModeRow({ settings }) {
     name,
     verdict: 'fail',
     detail: `your user autoMode ${dropped.join(', ')} ${dropped.length > 1 ? 'drop' : 'drops'} "$defaults", so the classifier loses its default rules there`,
-    steps: [`claude auto-mode reset (clears the autoMode block in ${defaultSettingsPath()}), or add "$defaults" to each list named`],
+    steps: [
+      `add "$defaults" to each list named in ${defaultSettingsPath()}`,
+      'or: claude auto-mode reset (removes your whole autoMode block, custom rules included)',
+    ],
   };
 }
 

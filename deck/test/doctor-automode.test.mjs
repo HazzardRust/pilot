@@ -2,7 +2,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { autoModeRow } from '../doctor.mjs';
+import { autoModeRow, checkAll } from '../doctor.mjs';
+import { tempDeck } from '../testUtils.mjs';
 
 test('no autoMode block passes', () => {
   const row = autoModeRow({ settings: {} });
@@ -36,4 +37,25 @@ test('every list that drops them is named', () => {
 
 test('unreadable settings cannot tell', () => {
   assert.equal(autoModeRow({ settings: null }).verdict, 'cannot tell');
+});
+
+test('checkAll judges the settings it already read', async (t) => {
+  tempDeck(t);
+  let reads = 0;
+  const rows = await checkAll({
+    platform: 'linux',
+    run: () => '2.1.331 (Claude Code)\n',
+    resolveDep: () => true,
+    canWrite: () => true,
+    onPath: () => true,
+    git: () => 'none',
+    probe: async () => ({ state: 'none' }),
+    readReach: () => ({ level: 'everything', chosen: true }),
+    readEnabled: () => true,
+    readSettings: () => (reads++, { autoMode: { environment: ['x'] } }),
+    env: {},
+  });
+  const row = rows.find((r) => r.name === 'auto mode defaults') ?? assert.fail(`no auto mode row in ${rows.map((r) => r.name)}`);
+  assert.equal(row.verdict, 'fail', row.detail);
+  assert.equal(reads, 2, "checkAll's own read and allowRow's, no third");
 });
