@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed faebbf6",
+      "state": "integrated (checks green at 595e4df)",
       "after": [
         "S1"
       ],
@@ -39,6 +39,15 @@
       ],
       "branch": "slice/stay-awake-s4",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-stay-awake-s4"
+    },
+    {
+      "slice": "S5 the Linux holder is proved on CI (added)",
+      "state": "pushed 168341d",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/stay-awake-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-stay-awake-s5"
     }
   ],
   "humanSteps": [
@@ -52,8 +61,8 @@
       "text": "stay-awake S1 behaviour 6: `powercfg /requests` needs an administrator shell, so no agent could run it; run it elevated while an agent is live to see the deck's keep-awake request listed."
     }
   ],
-  "next": "pilot checks 187c309 --wait (S3 integrated); then integrate S2 faebbf6; then added slice S5 (Linux holder proved on CI) for spec 2/8's ubuntu evidence; then fundamentalist, QA",
-  "updatedAt": "2026-11-24T20:52:57.713Z",
+  "next": "Yellow: feat 595e4df = S1-S4. S5 168341d reported (CI 45490413987 green, linux holder cases ran; TS + security approve); report and trailers sent to co-pilot a1a485efedff11c54, resumed, to integrate S5, pilot checks, then fundamentalist on PR 142 over S1-S5, fix round, QA scratch-deck awakeFacts check. If co-pilot is silent, integrate S5 from the S5 report in the pilot's transcript or respawn.",
+  "updatedAt": "2026-11-24T21:45:10.474Z",
   "friction": [
     {
       "kind": "drain",
@@ -162,6 +171,35 @@
       "what": "reviewer Verdict line for b4c3139 lost in the session hand-off; a fresh security reviewer spawned on the whole diff",
       "evidence": "S2 report, Reviewers section",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "foreground waits backgrounded at 180 s, no TaskOutput, until-loop blocked by the Monitor hook: each wait ended the turn and the harness forced a hand-back with a child live",
+      "evidence": "pilot checks moved to background bz77u8sur; forced hand-back with S5 implementer running",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "classifier gave no verdict on a parallel Bash call",
+      "evidence": "pilot checks 187c309: one reissue, then accepted",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Git Bash rewrites /qh into a path unless MSYS_NO_PATHCONV=1; fixtures captured by shell redirect are CRLF",
+      "evidence": "S3: one gate red and a 10-minute rerun",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "two pilot wait processes were live after the hand-off; both timeouts read",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate-workflow.test.mjs pins every run line of gate.yml and forbids step ifs; the S5 brief owned gate.yml but not its pinning test",
+      "evidence": "S5 report: found by grep, 1 extra file; a dispatched CI run takes about 10 min so LOW fixes were left out",
+      "size": 3
     }
   ]
 }
