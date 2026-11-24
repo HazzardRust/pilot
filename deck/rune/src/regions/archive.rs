@@ -91,7 +91,7 @@ pub fn sort_rows<'a>(days: &[Day<'a>], by: Column, asc: bool) -> Vec<Day<'a>> {
     for d in &mut out {
         match by {
             Column::Date => d.rows.sort_by(|a, b| a.at.cmp(&b.at)),
-            Column::Kind => d.rows.sort_by(|a, b| a.kind.cmp(&b.kind)),
+            Column::Kind => d.rows.sort_by(|a, b| a.kind.cmp(b.kind)),
             Column::Title => d.rows.sort_by_cached_key(|r| r.title.to_lowercase()),
         }
         if !asc {
