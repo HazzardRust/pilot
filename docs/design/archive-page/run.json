@@ -51,7 +51,7 @@
     },
     {
       "slice": "S6",
-      "state": "integrated",
+      "state": "integrated e307a13; checks green",
       "after": [
         "S1"
       ],
@@ -115,7 +115,7 @@
     },
     {
       "slice": "S13 findCredential knows more shapes (added)",
-      "state": "pushed 6944328",
+      "state": "integrated",
       "after": [
         "S6"
       ],
@@ -132,8 +132,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s14"
     }
   ],
-  "next": "S6 8998f3b integrating; then S13, S14, S7, S8, S9, S11; S10 last (also records seams: S8.md Top rows finding - effort; S9.md cut at a word); assumed: credential shapes past S14 not built; QA: 50 ms bar only in cargo test --release archive_filter.",
-  "updatedAt": "2026-11-24T11:18:18.661Z",
+  "next": "S13 6944328 integrating; then S14, S7, S8, S9, S11; S10 last (also records seams: S8.md Top rows finding - effort; S9.md cut at a word); assumed: credential shapes past S14 not built; QA: 50 ms bar only in cargo test --release archive_filter.",
+  "updatedAt": "2026-11-24T11:44:20.697Z",
   "friction": [
     {
       "kind": "drain",
