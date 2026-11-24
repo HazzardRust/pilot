@@ -130,7 +130,7 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
     try {
       run = runTests(dir, chosen.command, {
         label: taken, where: side === 'ours' ? 'sync' : 'land', branch: side === 'ours' ? PILOT_BRANCH : taken,
-        since: test === undefined && !chosen.selected ? null : (since ?? null), slot: !chosen.selected,
+        since: test ? 'injected' : chosen.selected ? since : null, slot: !chosen.selected,
       });
     } catch (err) {
       throw fail(`the tests could not run (${firstLine(err)})`);

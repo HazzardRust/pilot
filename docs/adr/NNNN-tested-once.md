@@ -33,4 +33,4 @@ A slice's tests ran at the implementer's gate, again at integrate, again at QA a
 ## Consequences
 
 - An implementer re-gating an unchanged tree runs nothing; a flaky green is reused once more.
-- A forged row by a process of the user is not detected; CI and land's run catch what it hides.
+- A forged row by a process of the user, or a change only to ignored files, a submodule or a symlink's target, is not seen; CI and land's run catch what it hides.

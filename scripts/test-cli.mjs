@@ -35,7 +35,8 @@ function commitOf(cwd, ref) {
   return out.status === 0 ? out.stdout.trim() : null;
 }
 
-export function testCli(argv, { cwd = process.cwd(), home = os.homedir(), print = console.log } = {}) {
+// `home` reaches `runTests` as given: inside the suite an unpassed one writes no row (L8).
+export function testCli(argv, { cwd = process.cwd(), home, print = console.log } = {}) {
   const opts = parse(argv);
   if (opts.error) {
     print(opts.error);
@@ -49,7 +50,7 @@ export function testCli(argv, { cwd = process.cwd(), home = os.homedir(), print 
       return 2;
     }
   }
-  const reused = reusableRun({ tree: worktreeTree(cwd), since: since ?? null, home });
+  const reused = reusableRun({ tree: worktreeTree(cwd), since: since ?? null, home: home ?? os.homedir() });
   if (reused) {
     print(`tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}`);
     return 0;

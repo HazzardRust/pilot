@@ -257,8 +257,8 @@ export const NO_TEST = 'no package.json here; set git config pilot.test "<comman
 function runChosen(cwd, test, since, label) {
   const chosen = test === undefined ? testCommand(cwd, { since }) : { command: test, selected: false };
   if (chosen === undefined) throw new Error(NO_TEST);
-  // The row's `since` is null only for the repository's own full command: an injected one claims no scope.
-  return runTests(cwd, chosen.command, { label, where: 'integrate', since: test === undefined && !chosen.selected ? null : since, slot: !chosen.selected });
+  // An injected command's row says `injected`, a since no request names, so it is never reused.
+  return runTests(cwd, chosen.command, { label, where: 'integrate', since: test !== undefined ? 'injected' : chosen.selected ? since : null, slot: !chosen.selected });
 }
 
 /** A green run's `<counts>`, then `; <scope>` when it printed one. */
