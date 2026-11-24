@@ -60,7 +60,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed 1cce2af",
+      "state": "pushed 30e8b06 (test fix, feat merged in)",
       "after": [
         "S1"
       ],
@@ -115,7 +115,7 @@
     },
     {
       "slice": "S13 findCredential knows more shapes (added)",
-      "state": "integrated",
+      "state": "integrated f9e23f0; checks green",
       "after": [
         "S6"
       ],
@@ -124,7 +124,7 @@
     },
     {
       "slice": "S14 findCredential name rule and vendor prefixes (added)",
-      "state": "pushed cd28c08",
+      "state": "integrated",
       "after": [
         "S13 findCredential knows more shapes (added)"
       ],
@@ -132,29 +132,9 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s14"
     }
   ],
-  "next": "S13 6944328 integrating; then S14, S7, S8, S9, S11; S10 last (also records seams: S8.md Top rows finding - effort; S9.md cut at a word); assumed: credential shapes past S14 not built; QA: 50 ms bar only in cargo test --release archive_filter.",
-  "updatedAt": "2026-11-24T11:44:20.697Z",
+  "next": "S14 f25c541 integrating; then S7 30e8b06, S8, S9, S11; S10 last (also records seams: S8.md Top rows finding - effort; S9.md cut at a word); assumed: credential shapes past S14 not built; QA: 50 ms bar only in cargo test --release archive_filter.",
+  "updatedAt": "2026-11-24T12:30:30.489Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "QA's walkthrough feedback relayed to main message by message (7 relays) while main ran two short-path tickets; a blocked-step item for the Rune QA's wait was filed on the coverage-install ticket and blocks its gate2",
-      "size": 6000
-    },
-    {
-      "kind": "drain",
-      "what": "pilot integrate refused evidence rows not shaped exactly 'B<k> <kind>:' (sub-step rows), cost a rerun; gate2/ticket/question posts refused 5 times on body shape",
-      "size": 3000
-    },
-    {
-      "kind": "drain",
-      "what": "pilot relayed 19 pieces of walkthrough feedback from QA to the co-pilot one message each, since QA cannot message the co-pilot; each relay re-stated QA's anchors",
-      "size": 15000
-    },
-    {
-      "kind": "drain",
-      "what": "pilot wait exited 1 three times on 'deck not answering (timeout)' while direct deck calls worked; the deck also dropped two feature-PR table updates on its own timeout",
-      "size": 2500
-    },
     {
       "kind": "drain",
       "what": "re-cut flags on two signed tickets after each of two landings; merged pilot into both feat branches and replanned by hand, four times in all",
@@ -366,6 +346,30 @@
       "agent": "pilot-implementer",
       "what": "S12 gate ran clippy and cargo test but not cargo fmt --check; integrate refused on a one-line fmt diff",
       "evidence": "C:/Users/jrylk/.claude/pilot/logs/20261124T102800275Z-slice-archive-page-s12.log:860",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "S14 brief listed the credential test files from S6's report; record.test.mjs also pins findCredential and was not in the gate, so a regression surfaced only at integrate",
+      "evidence": "C:/Users/jrylk/.claude/pilot/logs/20261124T121113866Z-slice-archive-page-s14.log:5604",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "grep for credential pins (withheld, DeckRefusal, findCredential) matches 96 test files; no narrower index of what pins credential.mjs",
+      "evidence": "S14 fix report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "S1's Rust test counts every archive row, so each kind whose store the scratch daemon writes breaks it; adapter slices ran only node tests and missed it",
+      "evidence": "C:/Users/jrylk/.claude/pilot/logs/20261124T121934154Z-slice-archive-page-s7.log, archive.rs:73 left 4 right 3",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "archive row keys are the item id for ticket, handoff and report rows, so tests cannot tell kinds apart by key; the ticket caption 'tickets' had to be found by running the test",
+      "evidence": "S7 fix 30e8b06, archive.rs",
       "size": 1
     }
   ]
