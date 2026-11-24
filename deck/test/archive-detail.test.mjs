@@ -82,6 +82,15 @@ test('a ticket with no plan or report gives null for each, and an unknown id giv
   assert.equal(archiveDetail(open.id), null, 'an open ticket is no archive row');
 });
 
+test('an open report on a closed ticket is not its closing report', (t) => {
+  tempDeck(t);
+  const bare = postStored({ kind: 'ticket', title: 'bare', body: shapedTicketBody('bare'), repo: REPO, resolvedAt: ago(HOUR) });
+  postStored({ kind: 'report', title: 'a draft report', body: 'not settled', ticket: bare.id, repo: REPO });
+  listItems();
+
+  assert.equal(archiveDetail(bare.id).report, null);
+});
+
 test('an archived ticket opens too', (t) => {
   const dir = tempDeck(t);
   const { ticket } = story('the archived ticket', 40 * DAY);
