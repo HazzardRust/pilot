@@ -108,6 +108,7 @@ dirs); folding it would put its policy behind the guarded seam. `isRunBranch` su
 - **A3** Untracked non-ignored files keep a tree at a mid-run job end (slice, design, abandon, `remove`); at landing
   only tracked dirt keeps one (ADR 0171). Tradeoff: a stray scratch file keeps a slice tree. Rejected: tracked-only
   everywhere, which loses a file an implementer forgot to add.
+  Answer: "Keeps mid-run, not at landing (default)" on itm_412621bbca04, assumed by the deck's 20-min timeout, not pressed.
 - **A4** Design and abandon prunes run from `deck_status`'s `finished` (`planned`, `abandoned…`) as a detached
   `pilot worktrees prune --run <slug> --stage <s>` child noting one line on the ticket. Tradeoff: the deck spawns
   one more child kind. Rejected: a hook on the press, which runs before the pilot has sent `finished`.
