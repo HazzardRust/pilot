@@ -1,0 +1,106 @@
+{
+  "slug": "stay-awake",
+  "feature": "machine stays awake while agents run",
+  "ticket": "itm_498e739e2bcb",
+  "branch": "feat/stay-awake",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-stay-awake",
+  "artefact": "docs/design/stay-awake/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/stay-awake-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-stay-awake-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    }
+  ],
+  "humanSteps": [
+    {
+      "text": "At the user's ask, on battery too: sleep timeout never and lid close 'do nothing' (were 3 min and sleep). Restore: powercfg /change standby-timeout-dc 3; powercfg /setdcvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 1; powercfg /setactive SCHEME_CURRENT."
+    },
+    {
+      "text": "Low battery on this laptop set to 20% with action sleep (was lower); restore in Power Options if unwanted."
+    },
+    {
+      "text": "stay-awake S1 behaviour 6: `powercfg /requests` needs an administrator shell, so no agent could run it; run it elevated while an agent is live to see the deck's keep-awake request listed."
+    }
+  ],
+  "next": "Yellow. S1 pushed 0f45f25 (ts approve; security approve x2, second on final code); pilot integrate S1 running, by the pilot. On pass: pilot checks <sha> --wait, then resume co-pilot ae1adcf0d079786e4 for S2 and S3 in parallel from the new tip (S3 rereads bin/pilot.mjs; census cannot see a PowerShell holder: teach it in S2 or the fix round; daemon awakeFacts wiring untested live: QA).",
+  "updatedAt": "2026-11-24T19:55:05.769Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "pilot session ran to 260k: three tickets, four standby recoveries, power-settings work and two gate re-posts in one context",
+      "size": 260000
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "architect and pilot both posted the spec branches: 4 duplicate question threads opened and closed",
+      "evidence": "itm_2a997c92e396, itm_e489689c8b2c, itm_82d90a300b0b, itm_76e5b0b2d372 closed as duplicates of the pilot's"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "research was OS power docs on the web, not the repo",
+      "evidence": "PowerSetRequest docs, caffeinate man page"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "pilot base names main while runs build on pilot",
+      "evidence": "base main 5fd835e, 343 commits behind origin/pilot"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "Edit failed after a Bash commit because the file had not been read first",
+      "evidence": "two Edit retries"
+    },
+    {
+      "kind": "drain",
+      "what": "deck defaults and notices read as 'user answered' by the hook, each needing a deck_read to tell apart",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "no TaskOutput tool, so it could only watch its child through a Monitor on the branch push; the harness then forced a hand-back with the S1 implementer still live",
+      "evidence": "select:TaskOutput -> No matching deferred tools found",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "first deck_status refused: full slice titles sent where the record held rows named S1/S2/S3",
+      "evidence": "S1 and S1 The user's deck holds ... are both S1; one identifier is one slice.",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md is stale: trailer names another session, flaky list copied from crew-handoff-trace, names test:changed which is the same gate as npm test, and never mentions the deck-readme test that any new deck/*.mjs turns red (cost a gate cycle on three slices today)",
+      "evidence": "stay-awake S1 report; same miss in handoff-self-close S1 and tested-once",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the process census counts only node processes, so B7 as worded cannot fail for a PowerShell holder; needed an own process-table query",
+      "evidence": "stay-awake S1 report, pushback",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "400-line slice limit left no room for the reviewer's spawn-throw test; slice estimate was 330",
+      "evidence": "stay-awake S1: 399 changed lines",
+      "size": 1
+    }
+  ]
+}
