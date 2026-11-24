@@ -16,6 +16,7 @@ const hasTable = (record) => Array.isArray(record?.slices) && record.slices.leng
  * default lane's rows, as `renderStrips` draws its sections (S22). A run naming no tab has nothing.
  */
 export function statusView(reads, query = {}) {
+  // `held: true`, on the table or a group, is a held ticket with no record (rune-panes S2, spec 1c).
   const { run = null, ticket: asked = null } = query;
   const tabs = tabsOf(reads.runs, reads.items, reads.numbers, reads.agents, reads.added, reads.lanes);
   const tab = run === null ? landingFor(tabs) : tabFor(tabs, run);
@@ -62,7 +63,8 @@ function tableOf(tab, items, asked) {
     held.length < 2
       ? []
       : held.map(({ stage, ticket }) => ({ id: ticket.id, name: ticket.title, lane: stage, chosen: ticket.id === chosen.id }));
-  if (rows.length === 0) return { tickets, rows };
+  // A held ticket with no record: the page's "no slice table yet" (`renderStrips`), drawn by the window off `held`.
+  if (rows.length === 0) return { tickets, rows, ...(chosen && !record && { held: true }) };
   // The heading `renderStrips` gives the table and its graph: the record's own feature, else the tab's name,
   // and when the newest run started (QA F1).
   const heading = record?.feature || tab.name;

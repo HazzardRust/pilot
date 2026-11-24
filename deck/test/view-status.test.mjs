@@ -125,6 +125,25 @@ test('a held ticket with no record has no rows', () => {
   assert.deepEqual(statusView(reads(), { run: MINE, ticket: red.id }).rows, []);
 });
 
+// rune-panes S2 (spec 1c): a held ticket with no record is flagged, so the window says "no slice table yet".
+test('a held ticket with no record is flagged, on its deck and under its overview group', () => {
+  const heldOnly = { ...reads([red]), lanes: { coPilots: {}, switches: {}, records: [] } };
+  const kettle = { ...aRun(), id: 'run_000000000002', repo: THEIRS, name: 'kettle', slices: [{ slice: 'S1 brew', state: 'merged' }] };
+  const both = { ...heldOnly, runs: [...heldOnly.runs, kettle] };
+
+  assert.equal(statusView(heldOnly, { run: MINE }).held, true, 'the deck tab');
+  assert.equal(statusView(both, { run: THEIRS }).held, undefined, 'a tab with no ticket');
+  const groups = statusView(both, {}).groups;
+  assert.deepEqual(
+    groups.map(({ tab, held }) => ({ tab, held })),
+    [
+      { tab: 'pilot', held: true },
+      { tab: 'kettle', held: undefined },
+    ],
+  );
+  assert.equal(statusView(reads(), { run: MINE, ticket: yellow.id }).held, undefined, 'a held ticket with a record');
+});
+
 test('the region is the view\'s status', () => {
   const view = viewOf(reads(), { screen: 'home', run: MINE, ticket: green.id });
 
