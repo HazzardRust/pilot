@@ -25,11 +25,11 @@ the re-cut, assumed until Gate 1 (the user's table ask on the ticket, folded in 
 | 5 | With the box not focused, every line renders. *assumed A3* | `preview::spans` test with `focused = false` | 0 lines without their spans |
 | 6 | No input lag: a long draft's spans are computed within one frame. *practitioner: editor engineer, who budgets per-keystroke cost* | timing test in the gate's build | 300-line draft < 16 ms |
 | 7 | What styles while typing is what styles once sent: the same parser and dialect the thread uses. *practitioner: editor designer, who checks the preview against the output* | read: `pulldown-cmark` 0.13, rune-kit's own; snap of a draft beside the same text sent | 0 kinds styled in one and not the other |
-| 8 | A Table button in the reply box inserts an empty grid below the caret's line: a header row and one body row, two columns, the caret in the first header cell. *assumed A5, A6* | `reply::Local::insert_table` test; the user's look | 1 press → 1 grid of 2 × 2 cells |
+| 8 | A Table button in the reply box inserts an empty grid at the caret (the text before it stays above, the text after it goes below): a header row and one body row, two columns, the caret in the first header cell. *assumed A5, A6; at the caret since S5 (itm_b02a3ca3e60c)* | `reply::Local::insert_table` test; the user's look | 1 press → 1 grid of 2 × 2 cells |
 | 9 | Typing goes straight into the rendered cell boxes; an inserted table never shows its pipe syntax in the box. | test typing into cell (0, 0) through `box_drawn`; `--snap` | 0 `\|` drawn for an inserted table |
 | 10 | The reply is sent with the table as GFM table syntax the thread renders as a table; a `\|` typed in a cell is escaped. *practitioner: markdown tool author, who round-trips through the reader* | test: pulldown-cmark with `ENABLE_TABLES` over `Local::text()` reads back every cell; the sent reply in the thread | 0 cells differ, one holding `\|` |
-| 11 | Tab and Shift+Tab move between cells; Return moves down a row, adding one under the last; Up from the header and Down from the last row put the caret in the text before or after. | focus-key test per move | 6 of 6 moves land |
-| 12 | Controls under the grid add a row, add a column, remove the caret's row, remove its column, and delete the table. *assumed A7* | test per control on the grid's size | 5 of 5 |
+| 11 | Tab and Shift+Tab move between cells, Tab in the last cell adding a row; Return moves down a row, adding one under the last; Shift+Return breaks the line in the cell; Up from the header and Down from the last row put the caret in the text before or after. *the Obsidian way since S5* | focus-key test per move | 6 of 6 moves land |
+| 12 | Right-click on a cell opens a menu that adds a row, adds a column, deletes that cell's row, deletes its column, or deletes the table; no controls are drawn under the grid. *A7 replaced by S5 (itm_b02a3ca3e60c)* | test per menu item on the grid's size | 5 of 5 |
 | 13 | A cell the caret is not in renders bold, italic and code as a line off the caret does. *assumed A8* | `preview::spans` on a cell's `TextEdit` | 3 of 3 kinds |
 | 14 | In a thread, a drag that crosses a rendered table selects whole cells in row order, and copying it gives a GFM table of those cells; a cell sent with a line break (`a<br>b`) draws as two lines in the thread. *added, S7, itm_73bc35726c66; the whole-cell highlight is open: Rune 7cba77c paints the end cells' partial range, and the fix is a Rune change (S7 report)* | a test per half; the live window, both themes | 0 partially highlighted cells; 0 cells drawn as "ab" |
 
@@ -161,6 +161,8 @@ shallow module to fold; no fold slice.
   table), acting on the caret's cell, shown only while a cell has the caret. Tradeoff: no keyboard way to delete a
   row. Rejected: a right-click menu (Rune context menus unread); keyboard chords.
   Verdict: stands — the queued side-panes ticket itm_f9162b87414f touches no reply-region file
+  Superseded by S5: the user's walkthrough asked for Obsidian's way (itm_b02a3ca3e60c), a right-click menu on a cell
+  and Tab or Return growing the grid; the five buttons are gone
 - **A8** A cell without the caret renders its bold, italic and code through `preview::spans`, as a line off the
   caret does. Tradeoff: one call per cell per frame (bounded by spec 6's budget). Rejected: cells always raw (a cell
   looks unlike the same text in prose).
@@ -198,6 +200,7 @@ Width 2; longest stem 3
 | S2 | Headings, list markers and inert links render, within a frame | 1, 4, 6 | `deck/rune/src/preview.rs`, `tests/preview.rs`, `tests/reply.rs` | S1 (`preview::spans`, `preview.rs`) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S2](slices/S2.md) |
 | S3 | Table skeleton: the Table button inserts a grid, typing fills its cells, the reply is sent with a GFM table | 3, 8, 9, 10 | `deck/rune/src/table.rs` (new), `src/lib.rs`, `src/regions/reply.rs`, `tests/table.rs` (new), `docs/adr/NNNN-reply-markdown.md` | S1 (`reply.rs`, `lib.rs`, the ADR) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
 | S4 | Moving through cells, adding and removing rows and columns, cells rendering | 11, 12, 13 | `deck/rune/src/table.rs`, `src/regions/reply.rs`, `tests/table.rs` | S3 (`table::Table`, the grid in `reply.rs`, `tests/table.rs`) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S4](slices/S4.md) |
+| S5 | Table inserts 2 × 2 and grows the Obsidian way *(added)* | 8, 11, 12 | `deck/rune/src/regions/reply.rs`, `src/table.rs`, `tests/deck/table.rs` | S4 (`Local::reshape`, `Local::step`, `tests/deck/table.rs`) | `pilot:rust-reviewer` | [S5](slices/S5.md) |
 | S6 | Headings have real sizes in the reply box and the thread *(added)* | 1, 7 | `deck/rune/theme.json`, `build.rs`, `src/theme.rs`, `src/preview.rs`, `tests/preview.rs`, `tests/theme.rs` | S2 (`preview::spans`) | `pilot:rust-reviewer` | [S6](slices/S6.md) |
 | S7 | Thread tables select as whole cells and draw a cell's line break *(added)* | 14 | `deck/rune/src/theme.rs`, `src/thread_table.rs` (new), `src/lib.rs`, `tests/deck/thread_table.rs` (new), `tests/deck/main.rs` | S6 (`theme.rs`), S5 (`<br>` in `Table::markdown`) | `pilot:rust-reviewer` | [S7](slices/S7.md) |
 
@@ -216,16 +219,19 @@ On a scratch deck in the Rune window, the user opens a thread and types into the
    cell, no pipes anywhere (spec 8, 9).
 8. Type `Name`, Tab, `Size`, Return, `a | b`, Tab, `**2**`: each lands in its box; Return under the last row adds
    one; Down from the last row puts the caret in the text after (spec 9, 11).
-9. + column, − row, then delete table on a second table: the grid changes each time (spec 12). Clicking out: `**2**`
-   renders bold in its cell (spec 13).
+9. Right-click a cell: add column, delete row, then delete table on a second table: the grid changes each time
+   (spec 12). Clicking out: `**2**` renders bold in its cell (spec 13).
 10. Send: the thread shows the line and a table with the same cells, `a | b` in one cell (spec 3, 10).
 
 ## 10. Status
 
 | Slice | State | Branch | PR | Worktree | After | Spec |
 | --- | --- | --- | --- | --- | --- | --- |
-| S1 | planned | | | | – | 1, 2, 3, 5, 7 |
-| S2 | planned | | | | S1 | 1, 4, 6 |
-| S3 | planned | | | | S1 | 3, 8, 9, 10 |
-| S4 | planned | | | | S3 | 11, 12, 13 |
-| Reply box renders markdown as you type | planned | `feat/reply-markdown` | #137 | `C:\Users\Hazzard\Projects\pilot-feat-reply-markdown` | S1-S4 | 1-13 |
+| S1 | integrated | | | | – | 1, 2, 3, 5, 7 |
+| S2 | integrated | | | | S1 | 1, 4, 6 |
+| S3 | integrated | | | | S1 | 3, 8, 9, 10 |
+| S4 | integrated | | | | S3 | 11, 12, 13 |
+| S5 | integrated | | | | S4 | 8, 11, 12 |
+| S6 | integrated | | | | S2 | 1, 7 |
+| S7 | integrated | | | | S6, S5 | 14 |
+| Reply box renders markdown as you type | QA | `feat/reply-markdown` | #137 | | S1-S7 | 1-14 |

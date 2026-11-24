@@ -273,6 +273,21 @@ fn a_cells_br_draws_as_a_line_break() {
     );
 }
 
+/// QA's live finding: a drag from prose into a table's last cell painted the cell between them not
+/// at all; the copy still holds every cell the drag crossed, the end cell whole.
+#[test]
+fn a_drag_from_prose_into_the_last_cell_copies_every_cell_between() {
+    let src = "**bold** see table:\n\n| Name | Size |\n| --- | --- |\n| a<br>b | x \\| y |\n";
+    let mut rt = deck(src);
+    let bold = glyphs(&rt, "b0");
+    let x = glyphs(&rt, "r0/c1");
+    let copied = copy(&mut rt, bold[1], after(x[0]));
+    assert_eq!(
+        copied,
+        "old see table:\n\n| Name | Size |\n| --- | --- |\n| a<br>b | x \\| y |"
+    );
+}
+
 #[test]
 fn a_br_outside_a_table_draws_as_rune_kit_draws_it() {
     let src = "one<br>two\n";

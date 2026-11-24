@@ -594,3 +594,29 @@ fn a_taken_reply_empties_the_box_table_and_all() {
     assert_eq!(local.draft.text, "");
     assert!(local.tables.is_empty());
 }
+
+/// QA at 1280 × 800 (the user's window at 150 %): a box taller than the window pushed Reply below
+/// its edge and nothing scrolled. A wheel over the page brings Reply into the window.
+#[test]
+fn a_box_taller_than_the_window_scrolls_reply_into_view() {
+    let mut local = Local::default();
+    for _ in 0..6 {
+        local.insert_table();
+    }
+    let mut rt = box_drawn(local);
+    let below = at(&rt, "send").rect;
+    assert!(
+        below[1] > 800.0,
+        "the case needs Reply below the window: {below:?}"
+    );
+    for _ in 0..20 {
+        rt.wheel(640.0, 400.0, -120.0);
+        rt.frame(1.0 / 60.0);
+    }
+    rt.frame(1.0);
+    let send = at(&rt, "send").rect;
+    assert!(
+        send[1] >= 0.0 && send[1] + send[3] <= 800.0,
+        "Reply out of the window after a wheel: {send:?}"
+    );
+}

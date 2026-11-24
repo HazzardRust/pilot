@@ -82,6 +82,10 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-reply-markdown-s6"
     },
     {
+      "slice": "Added: centre column scrolls (Reply reachable at 1280x800 with a table)",
+      "state": "built by QA on feat/reply-markdown (main's decision on QA's live finding)"
+    },
+    {
       "slice": "Added: S8 whole-cell highlight (Rune patch)",
       "state": "paused: wip pushed 53f933a, unpinned; Rune a6b4dccf local (push 403, itm_83caaf8110ef); B1 B2 red-green via local patch; no review yet",
       "after": [
