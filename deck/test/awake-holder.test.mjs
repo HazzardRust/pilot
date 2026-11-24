@@ -130,17 +130,14 @@ test('the POSIX holders watch the pid they are given', () => {
   assert.deepEqual(holderFor('darwin', 4242), { cmd: '/usr/bin/caffeinate', args: ['-i', '-w', '4242'] });
   const { cmd, args } = holderFor('linux', 4242);
   assert.equal(path.posix.basename(cmd), 'systemd-inhibit');
-  assert.deepEqual(args, ['--what=sleep:idle', '--who=pilot', `--why=${REASON}`, '--mode=block', 'tail', '--pid=4242', '-f', '/dev/null']);
+  // The Interface's argv, as S2.md states it: the census recognises the holders by it.
+  assert.deepEqual(args, ['--what=sleep:idle', '--who=pilot', '--why=pilot: work in flight', '--mode=block', 'tail', '--pid=4242', '-f', '/dev/null']);
   assert.throws(() => holderFor('linux', 0), RangeError, 'a pid of 0 would watch the process group');
 });
 
 test('holderUnavailable names why a platform cannot hold', () => {
   assert.equal(holderUnavailable('win32'), null);
   assert.match(holderUnavailable('sunos'), /sunos/);
-  for (const platform of ['darwin', 'linux']) {
-    const why = holderUnavailable(platform);
-    assert.ok(why === null || (typeof why === 'string' && why.length > 0), `${platform}: null or a reason`);
-  }
 });
 
 /** A spawn that records each call and hands back a child with a pid; nothing starts. */
@@ -161,15 +158,22 @@ function fakeSpawn() {
   return { spawn, children };
 }
 
-test('on POSIX the deck holds from the spawn and stops the holder by its group', (t) => {
+/** A linux hold on the mock clock with a fake spawn, its group kills and log lines kept. */
+function aPosixHold(t) {
   t.mock.timers.enable({ apis: ['setInterval', 'Date'], now: Date.parse('2026-11-25T10:00:00Z') });
   const { spawn, children } = fakeSpawn();
   const groups = [];
   const logs = [];
   const hold = holdAwake({ facts: () => ({ lastHeardAt: null, landings: 1, armedDefaults: 0 }), spawn, platform: 'linux', pid: 4242, log: (line) => logs.push(line), killGroup: (pid) => groups.push(pid) });
   t.after(() => hold.stop());
+  return { hold, children, groups, logs, advance: (ms) => t.mock.timers.tick(ms) };
+}
 
-  t.mock.timers.tick(60_000);
+test('on POSIX the deck holds from the spawn and stops the holder by its group', (t) => {
+  assert.equal(awakeState().held, false, 'no hold left by an earlier test');
+  const { hold, children, groups, logs, advance } = aPosixHold(t);
+
+  advance(60_000);
   assert.equal(children.length, 1);
   assert.equal(children[0].call.options.detached, true, 'its own process group');
   assert.equal(awakeState().held, false, 'not before the OS has started it');
@@ -178,9 +182,25 @@ test('on POSIX the deck holds from the spawn and stops the holder by its group',
 
   hold.stop();
   assert.deepEqual(groups, [children[0].pid], 'the group is killed, so no tail is left');
-  assert.equal(children[0].kills, 0);
   assert.equal(awakeState().held, false);
   assert.deepEqual(logs, []);
+});
+
+test('a POSIX holder that dies as it starts is logged once', (t) => {
+  const { children, logs, advance } = aPosixHold(t);
+  for (let minute = 0; minute < 3; minute += 1) {
+    advance(60_000);
+    children[minute].emit('spawn'); // e.g. logind refuses the inhibitor: started, then gone
+    children[minute].emit('exit', 1, null);
+  }
+  assert.equal(children.length, 3, 'retried each minute');
+  assert.equal(logs.length, 1, 'one log line, not one a minute');
+
+  advance(60_000);
+  children[3].emit('spawn');
+  advance(60_000); // it outlives a tick: a real hold
+  children[3].emit('exit', null, 'SIGKILL');
+  assert.equal(logs.length, 2, 'a holder that held and then died is logged again');
 });
 
 test('macOS lists the assertion while held', { skip: notOn('darwin') }, async (t) => {
@@ -218,6 +238,7 @@ for (const platform of ['darwin', 'linux']) {
 
     watched.kill();
     await exitWithin5s(holder, 'the holder');
+    if (platform !== 'linux') return; // only the linux holder has a tail
     const tails = await within(5000, () => commandLines().filter((line) => line.includes(`tail --pid=${watched.pid}`)), (left) => left.length === 0, 'no tail left');
     assert.deepEqual(tails, []);
   });

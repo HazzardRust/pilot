@@ -133,7 +133,8 @@ export function holdAwake({ facts, spawn, platform, pid, now = Date.now, interva
     const held = () => {
       if (child !== proc || state.held) return;
       state = { held: true, since: new Date(now()).toISOString() };
-      quiet = false;
+      // A spawn is no proof the OS took the hold, so a POSIX holder re-arms the log only by outliving a tick.
+      if (!posix) quiet = false;
     };
     let out = '';
     if (posix) proc.on('spawn', held);
@@ -158,6 +159,7 @@ export function holdAwake({ facts, spawn, platform, pid, now = Date.now, interva
       if (posix && Number.isInteger(proc.pid)) killGroup(proc.pid);
       else proc.kill();
     } catch (err) {
+      if (err?.code === 'ESRCH') return; // it had already exited
       log(`[deck] the keep-awake holder could not be stopped (${String(err?.message ?? err).split('\n')[0]}); it exits with the deck`);
     }
   };
@@ -171,6 +173,7 @@ export function holdAwake({ facts, spawn, platform, pid, now = Date.now, interva
     }
     if (want && child === null) start();
     else if (!want && child !== null) release();
+    else if (child !== null && state.held) quiet = false;
   };
 
   const timer = setInterval(tick, intervalMs);
