@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "integrated",
+      "state": "integrated 3c4a8fb",
       "after": [
         "S1"
       ],
@@ -33,31 +33,17 @@
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S3"
-      ]
+      ],
+      "branch": "slice/reply-markdown-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-reply-markdown-s4"
     }
   ],
-  "next": "S2 integrated 118333f (checks pending). S3 f5bd3f6 being integrated by pilot (co-pilot afa63e9 dormant, lane held). Next: pilot checks on both shas; S4 (opus) from the new tip; base-check integrate; fundamentalist; QA. QA notes: light-theme white reply text + grid, A1 contrast, IME, heading = body size, typed \\| in a cell, unclosed fence before table, hand-driven window.",
-  "updatedAt": "2026-11-24T05:33:13.155Z",
+  "next": "S4 480e5c2 being integrated by pilot (co-pilot dormant, lane held). Next: checks; base-check integrate; fundamentalist + QA; fix round must fix light-theme white ink in reply fields. QA notes: A1 contrast, IME, heading = body size, typed \\| in cell, unclosed fence, step 8 order: Name,Tab,Size,Return,**2**,Shift+Tab,a | b.",
+  "updatedAt": "2026-11-24T06:12:13.171Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "replan stores a feat sha while driftOf tests ancestry on plan.branch (design); every replanned ticket reads gone on its co-pilot call; explorer trace recut.mjs:145, store-tickets.mjs:459",
-      "size": 4000
-    },
-    {
-      "kind": "drain",
-      "what": "pilot wait exits at once while the yellow lane is empty, so nothing listens for a gate press until a co-pilot call passes",
-      "size": 1000
-    },
-    {
-      "agent": "pilot-qa",
-      "what": "user taste notes arrived faster than one QA writer builds; 8 queued mid-round, two hand-backs at context mark; one agent holds 2-3 commit sets",
-      "evidence": "QA reports abc1e7c6, adfc38b9 on itm_f98fae4576f8",
-      "size": 3
-    },
     {
       "agent": "pilot-qa",
       "what": "walkthrough thread ownership flipped pilot/qa four times; deck hands a qa thread back when a building QA misses a reply",
@@ -272,6 +258,24 @@
       "what": "hand-off notice said architect owed for itm_0ddca8a8e2f0 while the original architect a17960 was still live; a duplicate was spawned on the same worktree and stopped after 2 commits",
       "evidence": "owed row: architect owed; a17960 reported commits 82630d7, 7ba4d20 it did not make",
       "size": 64000
+    },
+    {
+      "agent": "pilot:pilot-implementer S2",
+      "what": "vocabulary guard rejects 'task' inside a Rust test string; only found by the 10-minute npm test",
+      "evidence": "deck/rune/tests/deck/preview.rs:197:task, 1 retired word(s)",
+      "size": 12
+    },
+    {
+      "agent": "pilot:pilot-implementer S3/S4",
+      "what": "live check has no recipe: no example --script or --open route, no CLI to post a thread on a scratch deck",
+      "evidence": "--open /thread/<id> rejected with 'is not key=value'; S4 wrote a script POSTing deck_post to /api/tool",
+      "size": 12
+    },
+    {
+      "agent": "pilot:pilot-implementer S4",
+      "what": "S3 test click helper ran pointer down+up with no frame between, hiding a focus-blur bug the live run found",
+      "evidence": "script: no element with key \"table-0-remove-row\"",
+      "size": 1
     }
   ]
 }
