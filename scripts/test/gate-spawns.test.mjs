@@ -68,18 +68,27 @@ function spawnFile(t, lines) {
   return file;
 }
 
-test('spawnCount attributes a line to its owner', (t) => {
+test('spawnCount splits each owner by kind', (t) => {
   const file = spawnFile(t, [
     '1 node a.test.mjs',
     '2 C:\\Program Files\\Git\\cmd\\git.exe a.test.mjs',
     '3 git b.test.mjs',
+    '7 C:\\Program Files\\nodejs\\node.exe b.test.mjs',
+    '8 git b.test.mjs',
     '4 C:\\Program Files\\nodejs\\node.exe',
     '5 cmd.exe',
     '6 cmd.exe -',
   ]);
   const count = spawnCount(file);
-  assert.deepEqual(kinds(count), { total: 6, node: 2, git: 2, other: 2 });
-  assert.deepEqual(count.owners, new Map([['a.test.mjs', 2], ['b.test.mjs', 1], ['-', 3]]));
+  assert.deepEqual(kinds(count), { total: 8, node: 3, git: 3, other: 2 });
+  assert.deepEqual(
+    count.owners,
+    new Map([
+      ['a.test.mjs', { total: 2, node: 1, git: 1, other: 0 }],
+      ['b.test.mjs', { total: 3, node: 1, git: 2, other: 0 }],
+      ['-', { total: 3, node: 1, git: 0, other: 2 }],
+    ]),
+  );
 });
 
 test('over the ceiling the gate names the top three owners', async (t) => {
@@ -132,5 +141,5 @@ test("a test's node child inherits its owner", (t) => {
   assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
   const count = spawnCount(file);
   assert.deepEqual(kinds(count), { total: 2, node: 1, git: 1, other: 0 });
-  assert.deepEqual(count.owners, new Map([['scripts/test/fixtures/spawns/spawns.test.mjs', 2]]));
+  assert.deepEqual(count.owners, new Map([['scripts/test/fixtures/spawns/spawns.test.mjs', { total: 2, node: 1, git: 1, other: 0 }]]));
 });

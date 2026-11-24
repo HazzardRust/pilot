@@ -117,6 +117,7 @@ test("pilotLineage reads the run remote's pilot, or the local one under none", (
   assert.deepEqual(pilotLineage(work, 'main'), { upstream, tip: false, copies: 0 });
   git(work, 'config', 'pilot.remote', 'none');
   assert.deepEqual(pilotLineage(work, pilotTip), { upstream: local }, 'no local pilot yet');
-  ensurePilotBranch({ git: inWork });
+  // A new command is a new runner: one runner keeps the run remote it read first (cheap-suite spec 3).
+  ensurePilotBranch({ git: (args) => inWork(args) });
   assert.deepEqual(pilotLineage(work, pilotTip), { upstream: local, tip: true, copies: 0 });
 });

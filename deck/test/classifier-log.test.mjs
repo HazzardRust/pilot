@@ -3,7 +3,7 @@
  * against a scratch `dir` of its own, never the user's store.
  */
 
-import { test } from 'node:test';
+import { after, before, test } from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -93,6 +93,12 @@ test('a long field of repeated curl flags is checked without a backtracking stal
 });
 
 // Each probe is 64 KiB and must be checked well under a second; a quadratic shape takes seconds.
+// The probes share one scratch dir: each times only its own append and reads nothing back.
+let probes;
+before(() => {
+  probes = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-classifier-log-'));
+});
+after(() => fs.rmSync(probes, { recursive: true, force: true }));
 for (const [name, command] of [
   ['a run of u after curl -', 'curl -' + 'u'.repeat(65536)],
   ['an alternating uA run after curl -', 'curl -' + 'uA'.repeat(32768)],
@@ -111,10 +117,9 @@ for (const [name, command] of [
   ['a URL password with no @', 'x://u:' + 'p'.repeat(65536)],
   ['a run of URL schemes', 'a.'.repeat(15) + 'a://' + 'b:'.repeat(32768)],
 ]) {
-  test(`${name} is checked in under 200 ms`, (t) => {
-    const dir = scratch(t);
+  test(`${name} is checked in under 200 ms`, () => {
     const started = process.hrtime.bigint();
-    appendRefusal(entry({ command }), { dir });
+    appendRefusal(entry({ command }), { dir: probes });
     assert.ok(process.hrtime.bigint() - started < 200_000_000n, 'checked in under 200 ms');
   });
 }
@@ -207,7 +212,15 @@ test('a command is clipped to 300 characters', (t) => {
 test('the log stays bounded', (t) => {
   const dir = scratch(t);
   const small = { repo: '', agent: '', reason: '', tool: '', ticket: null, verdict: 'refused' };
-  for (let n = 0; n <= 10000; n++) appendRefusal({ ...small, command: String(n) }, { dir });
+  // Entries 0-9998 go in as one write of the writer's own line, renumbered: 10,001 appends cost a
+  // minute on Windows. The last two go through appendRefusal, at the cap and one past it.
+  const log = path.join(dir, 'classifier.log');
+  appendRefusal({ ...small, command: '0' }, { dir });
+  const line = JSON.parse(fs.readFileSync(log, 'utf8'));
+  const seeded = [];
+  for (let n = 1; n <= 9998; n++) seeded.push(JSON.stringify({ ...line, command: String(n) }) + '\n');
+  fs.appendFileSync(log, seeded.join(''));
+  for (let n = 9999; n <= 10000; n++) appendRefusal({ ...small, command: String(n) }, { dir });
   const read = readRefusals({ dir });
   assert.strictEqual(read.length, 10000);
   assert.strictEqual(read[0].command, '1', 'the oldest is gone');

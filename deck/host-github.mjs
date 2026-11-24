@@ -26,13 +26,15 @@ const COMMENT_PATCH = new RegExp(`^repos/${SEGMENT}/${SEGMENT}/issues/comments/\
 export const FULL_SHA = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 /** The one `gh api` read (ci-gate L2): this repository's latest check runs on one full sha, one page. */
 const CHECK_RUNS = new RegExp(`^repos/\\{owner\\}/\\{repo\\}/commits/${FULL_SHA.source.slice(1, -1)}/check-runs\\?filter=latest&per_page=100$`);
+/** The other read (cheap-suite L7): one check run's annotations, one page, where a Gate job names its tree. */
+const ANNOTATIONS = /^repos\/\{owner\}\/\{repo\}\/check-runs\/\d+\/annotations\?per_page=100$/;
 /**
  * `gh api` flags that take a value; any other flag is refused rather than guessed at. Never `-F`,
  * whose `@file` value reads a local file into the request.
  */
 const API_VALUE_FLAGS = new Set(['-X', '--method', '-f', '--jq']);
 
-/** True when `args` is a `gh api` call on the list: `api user` or the check-runs GET with only `--jq`, or a comment PATCH. */
+/** True when `args` is a `gh api` call on the list: `api user`, the check-runs or annotations GET with only `--jq`, or a comment PATCH. */
 function apiAllowed(args) {
   let method = null;
   let target = null;
@@ -53,7 +55,7 @@ function apiAllowed(args) {
     if (arg === '-f') sendsBody = true;
   }
   // No `-X GET` either: a GET is `gh api`'s default only while no `-f` rides along.
-  if (method === null) return (target === 'user' || CHECK_RUNS.test(target ?? '')) && !sendsBody;
+  if (method === null) return (target === 'user' || CHECK_RUNS.test(target ?? '') || ANNOTATIONS.test(target ?? '')) && !sendsBody;
   return method === 'PATCH' && COMMENT_PATCH.test(target ?? '');
 }
 
@@ -99,6 +101,9 @@ function json(said, what) {
   }
 }
 
+/** A Gate workflow job's check run, one per matrix OS (`.github/workflows/gate.yml`). */
+const GATE_JOB = /^gate \([^()]+\)$/;
+
 const FAILED = new Set(['failure', 'cancelled', 'timed_out', 'action_required', 'stale']);
 const PASSED = new Set(['success', 'neutral', 'skipped']);
 
@@ -135,6 +140,15 @@ function withBodyFile(body, use) {
  * @returns {import('./host.mjs').Host}
  */
 export function githubHost(run) {
+  /** The latest check runs on one full sha, one page; runs past it throw rather than read as fewer. */
+  const latestRuns = (sha) => {
+    if (typeof sha !== 'string' || !FULL_SHA.test(sha)) throw new Error(`gh: ${JSON.stringify(sha)} is not a full commit sha`);
+    // A hung `gh` expires into a throw, which `checksAt` reads as `unread`; only the CI reads carry a timeout.
+    const said = json(run(['api', `repos/{owner}/{repo}/commits/${sha}/check-runs?filter=latest&per_page=100`], { timeout: CHECKS_TIMEOUT_MS }), 'api check-runs');
+    if (!Array.isArray(said?.check_runs) || !Number.isSafeInteger(said.total_count)) throw new Error('gh api check-runs: an answer that is not the shape');
+    if (said.total_count > said.check_runs.length) throw new Error(`gh api check-runs: ${said.total_count} runs, more than one page`);
+    return said.check_runs;
+  };
   // `flags` are the write's label flags, `why` the first line of the refusal that dropped them (else absent).
   const labelled = (label, flag) => {
     if (label === undefined) return { flags: [] };
@@ -195,12 +209,22 @@ export function githubHost(run) {
     },
     /** The latest check runs on one full sha; runs past the one page throw rather than read as fewer. */
     checks(sha) {
-      if (typeof sha !== 'string' || !FULL_SHA.test(sha)) throw new Error(`gh: ${JSON.stringify(sha)} is not a full commit sha`);
-      // A hung `gh` expires into a throw, which `checksAt` reads as `unread`; no other `gh` call has a timeout.
-      const said = json(run(['api', `repos/{owner}/{repo}/commits/${sha}/check-runs?filter=latest&per_page=100`], { timeout: CHECKS_TIMEOUT_MS }), 'api check-runs');
-      if (!Array.isArray(said?.check_runs) || !Number.isSafeInteger(said.total_count)) throw new Error('gh api check-runs: an answer that is not the shape');
-      if (said.total_count > said.check_runs.length) throw new Error(`gh api check-runs: ${said.total_count} runs, more than one page`);
-      return said.check_runs.map(checkOf);
+      return latestRuns(sha).map(checkOf);
+    },
+    /**
+     * One row per latest `gate (<os>)` run on `sha`, its tree from its `tested-tree` annotation (cheap-suite L7):
+     * null when it names none, or more than one, so a second notice a test prints never picks the tree.
+     */
+    testedTrees(sha) {
+      // Actions' own runs only: another app with checks:write could post a `gate (...)` run of its own.
+      return latestRuns(sha).filter((check) => GATE_JOB.test(check?.name) && check.app?.slug === 'github-actions').map((check) => {
+        if (!Number.isSafeInteger(check.id) || check.id < 1) throw new Error(`gh api check-runs: ${check.name} has no id`);
+        const notes = json(run(['api', `repos/{owner}/{repo}/check-runs/${check.id}/annotations?per_page=100`], { timeout: CHECKS_TIMEOUT_MS }), 'api annotations');
+        if (!Array.isArray(notes)) throw new Error('gh api annotations: an answer that is not a list');
+        const trees = new Set(notes.filter((note) => note?.title === 'tested-tree').map((note) => String(note.message).trim()));
+        // A full page may have pushed the real notice off it, leaving a forged one alone: no proof.
+        return { name: check.name, conclusion: String(check.conclusion ?? check.status), tree: trees.size === 1 && notes.length < 100 ? [...trees][0] : null };
+      });
     },
     signedIn() {
       try {
