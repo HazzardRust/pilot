@@ -1,0 +1,98 @@
+{
+  "slug": "land-batching",
+  "feature": "Landing spawns far fewer git",
+  "ticket": "itm_7a100ab43411",
+  "branch": "feat/land-batching",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-land-batching",
+  "artefact": "docs/design/land-batching/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed dba276f; ts-reviewer approve, security-reviewer approve; B1-B4 red then green; landing 36 -> 35 git; integrating",
+      "branch": "slice/land-batching-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S3",
+        "S4",
+        "S5"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S7"
+      ]
+    }
+  ],
+  "next": "Co-pilot a3d4eaa113a04b0dd resumed with S1's report (dba276f, both reviewers approve, B1-B4 rows sent): integrate S1, checks, then S2 + S3 parallel. Question itm_d4fe4d751e28 open (count rev-list/diff/log as reads; default yes; build stays on signed list until answered): relay the answer to the co-pilot. Note for S2/S5 brief: pin must cover the forget() it depends on.",
+  "updatedAt": "2026-11-24T15:50:22.611Z",
+  "friction": [
+    {
+      "agent": "architect",
+      "what": "the gate counts spawns per test file, never per caller or argv; splitting fixture git from product git took a custom preload and a 35-minute full run",
+      "evidence": "scripts/count-spawns.mjs:61"
+    },
+    {
+      "agent": "architect",
+      "what": "integrate builds a new git runner on every call, so a per-runner cache does not survive",
+      "evidence": "scripts/integrate.mjs:283, called at :290 :306 :314 :406 :440 :547"
+    },
+    {
+      "agent": "architect",
+      "what": "pilot wait still listening over an hour on a thread past its 20-minute default; Monitor and TaskStop not available to it",
+      "evidence": "itm_ae5baeaadbc9; a 60 s retry exited 124"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "forced hand-back with the S1 implementer live, minutes after spawn; a Monitor until-loop was refused by a hook",
+      "evidence": "land-batching co-pilot hand-back: no TaskOutput or foreground wait",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "signed spec's baseline of 39 git processes measures 36 on the seeded repo, so S1's bar would have passed before any change",
+      "evidence": "S1 implementer's base measurement; C1",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "signed read allowlist makes the view inert in a landing: rev-list, diff, log count as writes, 0 memo hits; S1's signed bar was green before any change",
+      "evidence": "S1 report: countGit 36 on base, 35 after via chainGuard reuse",
+      "size": 4
+    }
+  ]
+}
