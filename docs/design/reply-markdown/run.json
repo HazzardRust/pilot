@@ -1,16 +1,17 @@
 {
   "slug": "reply-markdown",
-  "feature": "Reply box renders markdown",
+  "feature": "Reply box renders markdown as you type",
   "ticket": "itm_864c47669387",
   "branch": "feat/reply-markdown",
-  "base": "feat/rune-deck-ui",
-  "worktree": "C:/Users/Hazzard/Projects/pilot-feat-reply-markdown",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-reply-markdown",
   "artefact": "docs/design/reply-markdown/architecture.md",
   "slices": [
     {
       "slice": "S1",
-      "state": "planned",
-      "branch": "slice/reply-markdown-s1"
+      "state": "fixing: pushed ad6e2d1, reviewers approved; fixer moving its tests to tests/deck/ on feat 59be70e",
+      "branch": "slice/reply-markdown-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-reply-markdown-s1"
     },
     {
       "slice": "S2",
@@ -19,10 +20,24 @@
         "S1"
       ],
       "branch": "slice/reply-markdown-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S3"
+      ]
     }
   ],
-  "next": "crew-handoff-trace itm_1f8238d5a300 released at be819183, S1-S7 in: co-pilot it, fundamentalist + QA per its run.json. Rune itm_0dcd9aa67146 at 415914f8, no QA live: waits on user's look itm_f98fae4576f8 + question itm_dc1c53d781cc (default built), then gate2. two-devices green: walkthrough itm_def488480f47. reply-markdown planned. Keep memory ui-design-workflow-notes.md.",
-  "updatedAt": "2026-11-20T19:16:09.100Z",
+  "next": "Co-pilot a09adcca paused (forced), lane held; S1 fixer ab3ccc0d (Sonnet) live, reports to main. On its pushed sha: resume a09adcca by SendMessage (integrate S1: Reviewed-by rust + security approve, Evidence B1-B6; pilot checks; spawn S2 and S3). feat/reply-markdown 59be70e, replanned. For QA: light-theme reply text renders white (pre-existing per S1), A1 contrast, IME.",
+  "updatedAt": "2026-11-24T04:53:41.075Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -182,6 +197,72 @@
       "kind": "drain",
       "what": "deck's 'feature PR not updated' timeout notices arrive as user replies and as 'landing ended short', each needing a reply",
       "size": 3000
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "re-cut gate1 refused four times in a row for four separate causes: design branch behind pilot, body missing verdict lines, the superseded gate1 still open, ticket yellow after that gate1 closed; each cost a round trip through main",
+      "evidence": "architect ae2b12b4 messages on reply-markdown, deck refusal texts",
+      "size": 4
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "rebased an already pushed design branch onto an unlanded feature branch, so its push needed force; pilot base printed another run's base",
+      "evidence": "local ec08830c vs origin aca2a46d; pilot base: feat/two-devices",
+      "size": 3
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "npm test gate printed home store changed for the user's real deck.json",
+      "evidence": "QA a669683e hand-back on two-devices d1a622e7",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 implementer compacted before its first commit and restarted the slice from scratch",
+      "evidence": "its message: worktree clean at b567993, no commits, restarting with fact sheet",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back enforcement forced the co-pilot to hand back while its child was still running; second ticket today",
+      "evidence": "reply-markdown and cheap-suite co-pilot hand-backs, both 'paused, forced'",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1 implementer compacted before its first commit and restarted the slice",
+      "evidence": "its message: worktree clean at b567993, restarting",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot-deck --help started the live deck; --snap script format had no repo example (read rune tooling/script.rs); brief's 10-skipped note stale (28)",
+      "evidence": "S1 report friction rows",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "cheap-suite landed mid-slice and moved Rune tests into one binary; S1 built on old paths needed a move round",
+      "evidence": "pilot 307e236; deck/rune/tests/deck/main.rs",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "pilot-deck --help started the live deck; --snap script format has no example in the repo; brief's skipped count stale",
+      "evidence": "S1 report",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "cheap-suite landed mid-slice, so S1 needed a round to move its tests into the one-binary layout",
+      "evidence": "pilot 307e236",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back enforcement forced a hand-back while a child was running, twice on this ticket",
+      "evidence": "two paused hand-backs",
+      "size": 2
     }
   ]
 }
