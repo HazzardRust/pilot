@@ -90,6 +90,8 @@ function replay(args) {
   fs.mkdirSync(binOf(prefix), { recursive: true });
   for (const name of template.shims) {
     fs.cpSync(path.join(binOf(template.prefix), name), path.join(binOf(prefix), name), { verbatimSymlinks: true });
+    // npm makes the bin's target executable; a copied symlink leaves the launcher at 0644, so exec is EACCES off Windows.
+    if (!WINDOWS) fs.chmodSync(path.join(binOf(prefix), name), 0o755);
   }
   return { status: 0, stdout: '', stderr: '' };
 }
