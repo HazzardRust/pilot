@@ -19,6 +19,7 @@ import { deckOnAPort, postStored, shapedTicketBody, tempDeck } from '../testUtil
 const { archiveOld, listItems } = await import('../store.mjs');
 const { archiveRows, NEVER_SHOWN } = await import('../archive.mjs');
 const { daySections } = await import('../ui/render-pages.mjs');
+const { archiveView } = await import('../view/archive.mjs');
 
 const REPO = 'D:/work/alpha';
 const HOUR = 60 * 60 * 1000;
@@ -150,4 +151,12 @@ test('other screens never read the archive', async (t) => {
   assert.deepEqual(regions.archive, {});
   assert.deepEqual(seen.filter((file) => /deck\.archive-\d{4}-\d{2}\.json$|\.log$/.test(file)), [], 'no month file or log read');
   assert.ok(seen.some((file) => file.endsWith('/deck.json')), 'the spy saw the home read');
+});
+
+test("a row's detail builds no list beside it (F2)", (t) => {
+  tempDeck(t);
+  const { today } = seed();
+
+  assert.ok(archiveView({ screen: 'archive' }).days.length > 0, 'the list has rows without an id');
+  assert.deepEqual(archiveView({ screen: 'archive', id: today.id }), {}, 'the detail draws instead of the list');
 });
