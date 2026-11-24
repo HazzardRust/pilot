@@ -60,7 +60,9 @@ function aWatched(t) {
 function aPosixHolder(t, platform, pid) {
   const { cmd, args } = holderFor(platform, pid);
   assert.equal(path.posix.isAbsolute(cmd), true, 'by absolute path');
-  const holder = spawn(cmd, args, { stdio: 'ignore', detached: true });
+  const holder = spawn(cmd, args, { stdio: ['ignore', 'ignore', 'pipe'], detached: true });
+  holder.err = '';
+  holder.stderr.on('data', (chunk) => (holder.err += chunk));
   t.after(() => {
     try {
       process.kill(-holder.pid, 'SIGTERM');
@@ -82,8 +84,24 @@ const commandLines = () => execFileSync('ps', ['-eo', 'args'], { encoding: 'utf8
 
 const notOn = (platform) => hostPlatform() !== platform && `the ${platform} holder runs on ${platform} only`;
 
-/** Why the linux holder cannot run here, for a skip: another OS, or no logind. */
-const linuxSkip = () => notOn('linux') || holderUnavailable('linux');
+/** Why the linux holder cannot run here, for a skip: another OS, or no logind. Never null: node:test runs a `skip: null` test and counts its failure as a skip. */
+const linuxSkip = () => notOn('linux') || holderUnavailable('linux') || false;
+
+/**
+ * Half a second for a holder to take hold. A holder logind refuses (polkit grants an inhibitor to a
+ * process in no login session, such as a CI runner's, only with admin auth) skips naming its stderr;
+ * any other early exit fails.
+ */
+async function settled(t, holder) {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  if (holder.exitCode === null && holder.signalCode === null) return true;
+  const why = holder.err.trim();
+  if (/access denied|not authorized|authentication/i.test(why)) {
+    t.skip(`logind refused the inhibitor here: ${why}`);
+    return false;
+  }
+  assert.fail(`the holder exited ${holder.exitCode ?? holder.signalCode} at start: ${JSON.stringify(why)}`);
+}
 
 test('the Windows holder appears and dies with its pid', { skip: notOn('win32') }, async (t) => {
   const watched = aWatched(t);
@@ -222,6 +240,7 @@ test('Linux lists the inhibitor while held', { skip: linuxSkip() }, async (t) =>
     out.split('\n').filter((line) => /^\s*pilot\s/.test(line) && new RegExp(`\\s${holder.pid}\\s`).test(line) && /\ssleep:idle\s/.test(line) && /\sblock\s*$/.test(line)).length;
   const inhibitors = () => execFileSync(holderFor('linux', 1).cmd, ['--list', '--no-pager', '--no-legend'], { encoding: 'utf8' });
 
+  if (!(await settled(t, holder))) return;
   assert.equal(await within(5000, () => mine(inhibitors()), (n) => n > 0, 'the inhibitor'), 1);
   process.kill(-holder.pid, 'SIGTERM');
   await exitWithin5s(holder, 'systemd-inhibit');
@@ -233,8 +252,7 @@ for (const platform of ['darwin', 'linux']) {
   test(`the ${platform} holder dies with its pid`, { skip }, async (t) => {
     const watched = aWatched(t);
     const holder = aPosixHolder(t, platform, watched.pid);
-    await new Promise((resolve) => setTimeout(resolve, 500)); // let it take hold
-    assert.equal(holder.exitCode, null, 'it holds while its pid lives');
+    if (!(await settled(t, holder))) return; // it holds while its pid lives
 
     watched.kill();
     await exitWithin5s(holder, 'the holder');
