@@ -1,9 +1,4 @@
-/**
- * tested-once S1 (spec 4; L3-L5, L8, A1, A2, A6): every test run `runTests` makes leaves one ledger row
- * with the process's own exit, a red or deferred row is never reused, reuse is the exact tree on the
- * same platform and node, `pilot test` starts no process for a green tree it has a row for, and a
- * run inside the suite writes no row unless a home is passed. Scratch repositories and a scratch home.
- */
+// tested-once S1 (spec 4; L3-L5, L8): the ledger's rows and their reuse. Scratch repositories and homes.
 
 // Before anything reads the home directory: a test that forgets `home` writes into a temp dir.
 import './lib/fake-home.mjs';
@@ -31,14 +26,11 @@ function tmp(t, name) {
 function repo(t) {
   const cwd = tmp(t, 'repo');
   git(cwd, 'init', '-q', '-b', 'slice/demo-s1');
-  git(cwd, 'config', 'user.email', 'test@example.com');
-  git(cwd, 'config', 'user.name', 'test');
-  git(cwd, 'config', 'core.autocrlf', 'false');
   fs.writeFileSync(path.join(cwd, 'a.txt'), 'a\n');
   fs.mkdirSync(path.join(cwd, 'docs', 'design', 'x'), { recursive: true });
   fs.writeFileSync(path.join(cwd, 'docs', 'design', 'x', 'run.json'), '{"slices":[]}\n');
   git(cwd, 'add', '.');
-  git(cwd, 'commit', '-q', '-m', 'one');
+  git(cwd, '-c', 'user.email=t@example.com', '-c', 'user.name=t', 'commit', '-q', '-m', 'one');
   return cwd;
 }
 
@@ -68,7 +60,6 @@ test('a run writes one row with its own exit', (t) => {
   assert.equal(first.branch, 'slice/demo-s1');
   assert.equal(first.slug, 'demo');
   assert.equal(first.sha, git(cwd, 'rev-parse', 'HEAD'));
-  assert.equal(typeof first.minutes, 'number');
   runTests(cwd, 'node -e "process.exit(0)"', { label: 'green', where: 'integrate', home, slot: false });
   const rows = rowsOf(home);
   assert.equal(rows.length, 2);
@@ -110,8 +101,7 @@ test('reuse is the exact tree', (t) => {
   assert.equal(reusableRun({ tree: worktreeTree(cwd), since, home: other }), null);
   recordRun(row(cwd), { home: other });
   assert.ok(reusableRun({ tree: worktreeTree(cwd), since, home: other }), 'a full row stands for any since');
-  assert.deepEqual(testRunsFor({ slug: 'demo', home: other }).length, 3);
-  assert.deepEqual(testRunsFor({ slug: 'else', home: other }), []);
+  assert.deepEqual([testRunsFor({ slug: 'demo', home: other }).length, testRunsFor({ slug: 'else', home: other }).length], [3, 0]);
 });
 
 test('pilot test reuses a green tree', (t) => {

@@ -1,15 +1,8 @@
 /**
- * The test ledger (tested-once spec 4; ADR NNNN, L3, L4, L8): one jsonl line per test run, appended
- * by `runTests` after the test process exits, its `exit` that process's own status. A pass is proved
- * only by a row this file wrote from that status, never by parsed output, an argument or a report.
- *
- * Reuse is keyed by the worktree's exact tree (`worktreeTree`): untracked files included, ignored
- * ones not, and every `docs/design/<slug>/run.json` taken from HEAD, since the deck rewrites it while
- * a run is in flight. A row is reused only when it exited 0, its scope line defers nothing, its tree
- * is the asked tree, its `since` is the asked one or null (a full run), and it ran on this platform
- * and node major. The file is `~/.claude/pilot/tests/ledger.jsonl`, mode 0600; any process of the
- * user can append to it, as to the deck store, so agents are told never to write it, and land's full
- * run and CI stay the backstop (L4).
+ * The test ledger (tested-once spec 4; ADR NNNN L3, L4, L8): one jsonl line per test run, appended by
+ * `runTests` after the process exits, its `exit` that process's own status. Reuse is keyed by the
+ * worktree's exact tree; `docs/design/<slug>/run.json` is taken from HEAD, since the deck rewrites it
+ * while a run is in flight. Any process of the user can append here, so agents never write it (L4).
  */
 
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -75,17 +68,14 @@ function rowsIn(home) {
     if (err.code === 'ENOENT') return [];
     throw err;
   }
-  const rows = [];
-  for (const line of text.split('\n')) {
-    if (!line.trim()) continue;
+  return text.split('\n').flatMap((line) => {
     try {
       const row = JSON.parse(line);
-      if (row && typeof row === 'object') rows.push(row);
+      return row && typeof row === 'object' ? [row] : [];
     } catch {
-      // A torn or foreign line proves nothing; the rows around it still stand.
+      return []; // A blank, torn or foreign line proves nothing; the rows around it still stand.
     }
-  }
-  return rows;
+  });
 }
 
 /** A scope line that defers part of the run to a later step: the row is not complete. */

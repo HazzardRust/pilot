@@ -1,11 +1,8 @@
 /**
- * `pilot test [--as <role>] [--scope slice] [--since <ref>]`: the one way an agent runs the tests
- * (tested-once spec 4; L5, A2, A6). A green, complete ledger row for the worktree's exact tree
- * (`reusableRun`) starts no test process and prints `tests reused: <where> <sha7>`; otherwise the
- * repository's own command (`testCommand`, the selection since `--since`) runs through `runTests`,
- * which writes the row, and prints its counts and minutes. `--scope slice` sets `PILOT_TEST_SCOPE=slice`
- * for the run, so the selection defers its fallbacks to integrate (A2). Exit 0 green, the run's own
- * status red (1 when that is not a number), 2 on a usage error.
+ * `pilot test [--as <role>] [--scope slice] [--since <ref>]`, the one way an agent runs the tests
+ * (tested-once spec 4; L5, A2, A6): a green ledger row for the exact tree starts no process
+ * (`tests reused: <where> <sha7>`); else `testCommand` runs through `runTests`, which writes the row.
+ * `--scope slice` sets `PILOT_TEST_SCOPE=slice` for the run. Exit 0 green, the run's status red, 2 usage.
  */
 
 import { spawnSync } from 'node:child_process';

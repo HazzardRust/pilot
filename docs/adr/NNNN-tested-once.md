@@ -33,5 +33,4 @@ A slice's tests ran at the implementer's gate, again at integrate, again at QA a
 ## Consequences
 
 - An implementer re-gating an unchanged tree runs nothing; a flaky green is reused once more.
-- The ledger is one machine's: a run on another machine proves nothing here.
 - A forged row by a process of the user is not detected; CI and land's run catch what it hides.
