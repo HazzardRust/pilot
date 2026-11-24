@@ -48,7 +48,9 @@ fn a_markdown_field_draws_as_markdown() {
         view: View {
             screen: "archive".into(),
             seq: 1,
-            regions: [("archiveDetail".to_string(), detail)].into_iter().collect(),
+            regions: [("archiveDetail".to_string(), detail)]
+                .into_iter()
+                .collect(),
         },
         ..State::default()
     };
@@ -58,12 +60,20 @@ fn a_markdown_field_draws_as_markdown() {
     rt.frame(0.0);
 
     let drawn = texts(&rt);
-    assert!(drawn.iter().any(|t| t == "Landed"), "the heading drawn without its ##: {drawn:?}");
     assert!(
-        !drawn.iter().any(|t| t.contains("## Landed") || t.contains("**S1**")),
+        drawn.iter().any(|t| t == "Landed"),
+        "the heading drawn without its ##: {drawn:?}"
+    );
+    assert!(
+        !drawn
+            .iter()
+            .any(|t| t.contains("## Landed") || t.contains("**S1**")),
         "no raw markup: {drawn:?}"
     );
-    assert!(drawn.iter().any(|t| t == "**itm_raw**"), "an unflagged field stays text: {drawn:?}");
+    assert!(
+        drawn.iter().any(|t| t == "**itm_raw**"),
+        "an unflagged field stays text: {drawn:?}"
+    );
 }
 
 #[test]
