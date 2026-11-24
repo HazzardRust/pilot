@@ -4,7 +4,7 @@ The facts every implementer of this feature shares. Read this first, then your s
 
 ## Repository
 
-`C:/Users/Hazzard/Projects/pilot` (GitHub `HazzardRust/pilot`). Default branch `main`, pilot branch `pilot`. Never
+`C:/Users/jrylk/Projects/pilot` (GitHub `HazzardRust/pilot`). Default branch `main`, pilot branch `pilot`. Never
 work in that shared checkout or in another session's worktree. Create your own beside it,
 `pilot-reply-markdown-s<n>`, and run `npm ci` there before the first test.
 
@@ -14,9 +14,9 @@ Remote: origin
 
 ## Base and PR target
 
-The base is `feat/reply-markdown`, cut at Gate 1 from `origin/feat/rune-deck-ui` (this run stacks on Rune, which has
-not landed). Branches: `slice/reply-markdown-s<n>`, pushed for the pilot to integrate; no slice PR. The feature PR's
-target is `feat/rune-deck-ui` until Rune lands, then `pilot`.
+The base is `feat/reply-markdown`, which carries Rune (landed on `pilot`) and was merged up to `origin/pilot` at
+8cc844c. Branch each slice from the `feat/reply-markdown` tip your brief names. Branches: `slice/reply-markdown-s<n>`,
+pushed for the co-pilot to integrate; no slice PR. The feature PR (#137) lands on `pilot` at Gate 2.
 
 ## PR titles
 
