@@ -193,6 +193,59 @@ fn the_sent_text_is_the_typed_text() {
     assert_eq!(local.send(ID), Some(reply(typed_text, None)));
 }
 
+/// reply-markdown spec 4: a link in the draft renders as the thread draws one, and a press on it
+/// only moves the caret: no opener, no post.
+#[test]
+fn a_link_renders_as_a_link_and_is_never_followed() {
+    // 0 `[`, 1 `t`, 2..16 `](https://e.x)`, 16 `\n`, 17 `x`.
+    let draft = "[t](https://e.x)\nx";
+    let mut caret_below = TextEdit::new(draft);
+    caret_below.focused = true;
+    caret_below.set_caret(17);
+    let spans = pilot_deck::preview::spans(&caret_below, true);
+    let kit = rune_kit::Kit::neutral(true);
+    let (accent, underline) = (kit.c.text_accent, kit.alpha(kit.c.text_accent, 0.4));
+    let quiet = pilot_deck::theme::tokens(true).quiet;
+    let over = |at: std::ops::Range<u32>| {
+        spans
+            .iter()
+            .find(|s| s.start == at.start && s.end == at.end)
+    };
+    assert!(
+        over(1..2).is_some_and(|s| s.color == Some(accent) && s.underline == Some(underline)),
+        "t in the link colour, underlined: {spans:?}"
+    );
+    for marker in [0..1, 2..16] {
+        assert!(
+            over(marker.clone()).is_some_and(|s| s.color == Some(quiet)),
+            "quiet {marker:?}: {spans:?}"
+        );
+    }
+
+    let mut rt = box_drawn(typed(draft));
+    let field = at(&rt, "reply-text");
+    let (x, y) = (
+        field.rect[0] + pilot_deck::theme::space::pad + 5.0,
+        field.rect[1] + pilot_deck::theme::space::pad + 6.0,
+    );
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(1.0 / 60.0);
+    rt.update(|s, _| {
+        let reply = &s.regions.reply;
+        assert!(
+            (1..=2).contains(&reply.draft.focus),
+            "the press landed on t: caret at {}",
+            reply.draft.focus
+        );
+        assert_eq!(reply.draft.text, draft, "the draft is unchanged");
+        assert!(!s.pending.is_sent("reply-press"), "nothing posted");
+        assert_eq!(reply.sent, None);
+        assert_eq!(reply.confirming, None);
+    });
+}
+
 #[test]
 fn the_recommended_option_draws_the_pages_quiet_mark() {
     use pilot_deck::app::{self, State};

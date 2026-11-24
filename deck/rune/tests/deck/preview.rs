@@ -130,6 +130,128 @@ fn nested_emphasis_and_an_empty_or_overrun_draft_render_without_a_panic() {
 }
 
 #[test]
+fn headings_render_in_the_header_type() {
+    // 0..1 `#`, 1 ` `, 2..3 `H`, 3 `\n`, 4 `x`: the caret on line 2.
+    let spans = preview::spans(&edit("# H\nx", 4, 4), DARK);
+    let header = theme::type_::HEADER;
+
+    assert!(
+        has(&spans, 2..3, |s| s.size == Some(header.size)
+            && s.weight == Some(header.weight)),
+        "the header type over H: {spans:?}"
+    );
+    assert!(
+        has(&spans, 0..2, |s| s.color == Some(quiet())),
+        "quiet #: {spans:?}"
+    );
+}
+
+#[test]
+fn list_markers_render_quiet() {
+    // 0..2 `- `, 2 `a`, 4..7 `1. `, 7 `b`, 9 `x`: the caret on line 3.
+    let spans = preview::spans(&edit("- a\n1. b\nx", 9, 9), DARK);
+
+    for marker in [0..2, 4..7] {
+        assert!(
+            has(&spans, marker.clone(), |s| s.color == Some(quiet())),
+            "quiet marker {marker:?}: {spans:?}"
+        );
+    }
+    assert_eq!(within(&spans, 2..3), 0, "a unstyled: {spans:?}");
+    assert_eq!(within(&spans, 7..8), 0, "b unstyled: {spans:?}");
+}
+
+/// The look a byte draws in: Rune flattens decorations with the later span winning.
+fn colour_at(spans: &[Span], byte: usize) -> Option<rune::Color> {
+    spans
+        .iter()
+        .rev()
+        .find(|s| (s.start as usize) <= byte && byte < s.end as usize && s.color.is_some())
+        .and_then(|s| s.color)
+}
+
+#[test]
+fn markers_inside_a_link_stay_quiet() {
+    // 0 `[`, 1..3 `**`, 3 `b`, 4..6 `**`, 6..10 `](u)`, 10 `\n`, 11 `x`.
+    let spans = preview::spans(&edit("[**b**](u)\nx", 11, 11), DARK);
+    for byte in [1, 2, 4, 5] {
+        assert_eq!(
+            colour_at(&spans, byte),
+            Some(quiet()),
+            "byte {byte}: {spans:?}"
+        );
+    }
+    assert_ne!(
+        colour_at(&spans, 3),
+        Some(quiet()),
+        "b in the link colour: {spans:?}"
+    );
+}
+
+#[test]
+fn odd_headings_lists_and_links_render_without_a_panic_at_any_caret() {
+    let drafts = [
+        "Title é\r\n===\r\nnext",
+        "a\nb\n---\nc",
+        "# closing ##\n#hashtag\n####### seven",
+        "  - é nested\n    + deeper\n* [ ] todo\n10) ten",
+        "<https://e.x> [r][r] [] [](u) [`c`](u)\n\n[r]: https://e.x",
+        "> # quoted\n> - item [l](u)",
+        "-\n#\n[",
+    ];
+    for text in drafts {
+        for caret in 0..=text.len() + 1 {
+            for s in preview::spans(&edit(text, caret, caret), DARK) {
+                assert!(
+                    s.start <= s.end && s.end as usize <= text.len(),
+                    "{text:?} {s:?}"
+                );
+                assert!(text.is_char_boundary(s.start as usize), "{text:?} {s:?}");
+                assert!(text.is_char_boundary(s.end as usize), "{text:?} {s:?}");
+            }
+        }
+        let mut unfocused = edit(text, 0, 0);
+        unfocused.focused = false;
+        preview::spans(&unfocused, DARK);
+    }
+}
+
+#[test]
+fn a_long_draft_is_styled_within_a_frame() {
+    let line = |i: usize| match i % 6 {
+        0 => format!("# Heading {i}"),
+        1 => format!("- item **{i}** with _some_ words"),
+        2 => format!("{i}. step with `code` in it"),
+        3 => format!("see [the link {i}](https://example.com/{i}) here"),
+        4 => format!("plain prose on line {i}, long enough to wrap in the box"),
+        _ => String::new(),
+    };
+    let text: String = (0..300).map(line).collect::<Vec<_>>().join("\n");
+    let caret = text.len() / 2;
+    let e = edit(&text, caret, caret);
+    let header = theme::type_::HEADER;
+
+    let mut best = std::time::Duration::MAX;
+    let mut spans = Vec::new();
+    for _ in 0..5 {
+        let start = std::time::Instant::now();
+        spans = preview::spans(&e, DARK);
+        best = best.min(start.elapsed());
+    }
+
+    // 50 of each kind; the caret's line, one of the 300, stays raw, so at most one is missing.
+    let headings = spans.iter().filter(|s| s.size == Some(header.size)).count();
+    let links = spans.iter().filter(|s| s.underline.is_some()).count();
+    assert!(headings >= 49, "the headings render: {headings}");
+    assert!(links >= 49, "the links render: {links}");
+    eprintln!("300 lines styled in {best:?}");
+    assert!(
+        best < std::time::Duration::from_millis(16),
+        "300 lines took {best:?}, past a 60 Hz frame"
+    );
+}
+
+#[test]
 fn an_unfocused_box_renders_every_line() {
     let text = "**a**\n**b**";
     let mut e = edit(text, 1, 1);
