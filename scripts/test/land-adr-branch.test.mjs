@@ -42,23 +42,20 @@ function adrRepos(t) {
 const featFiles = (origin, name) => git(origin, 'diff', '--name-only', `main..feat/${name}`).split('\n');
 const host = (name) => fakeGh([{ number: 12, headRefName: `feat/${name}`, baseRefName: 'main', state: 'OPEN' }]).host;
 
-test('the PR carries the number', (t) => {
+// One landing through `main`, both checks (S8 of cheap-suite): `main` prints the `adr` that
+// `land` answered as `ADR <from> is <to>`, so the allocation is read back from that line.
+test('the PR carries the number; the landed lines say feat moved on origin', (t) => {
   const { origin, x } = adrRepos(t);
 
-  const landed = land({ cwd: x, git: (args) => git(x, ...args), host: host('x'), test: passing });
+  const said = mainSays([], { cwd: x, git: (args) => git(x, ...args), host: host('x'), test: passing });
 
   const files = featFiles(origin, 'x');
   assert.ok(files.includes('docs/adr/0193-x.md'), files.join(', '));
   assert.deepEqual(files.filter((f) => f.includes('NNNN-')), []);
-  assert.deepEqual(landed.adr, { from: 'NNNN-x', to: '0193' });
+  const [, from, to] = said.out.match(/^ADR (\S+) is (\S+)$/m) ?? [];
+  assert.deepEqual({ from, to }, { from: 'NNNN-x', to: '0193' });
   assert.equal(git(origin, 'rev-parse', 'pilot^2'), git(origin, 'rev-parse', 'feat/x'), 'pilot merges the numbered feature');
   assert.equal(git(origin, 'rev-parse', 'feat/x^'), git(x, 'rev-parse', 'HEAD'), 'one commit on top of the landed tip');
-});
-
-test('the landed lines say feat moved on origin', (t) => {
-  const { x } = adrRepos(t);
-
-  const said = mainSays([], { cwd: x, git: (args) => git(x, ...args), host: host('x'), test: passing });
 
   assert.equal(said.code, 0, said.out);
   assert.match(said.out, /\nADR NNNN-x is 0193\nfeat\/x moved on origin: git pull --ff-only before a fix\nfeature PR: #12 into main\n$/);

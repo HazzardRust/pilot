@@ -15,12 +15,22 @@ import path from 'node:path';
 
 import { githubHost } from '../../deck/host-github.mjs';
 
-test('land merges the feature into pilot', (t) => {
-  const { origin, gitIn, a: work } = repos(t, 'a');
+// One landing, both checks (S8 of cheap-suite): main moves before it, as the second test had it.
+test('land merges the feature into pilot; land takes nothing from main', (t) => {
+  const { origin, seed, gitIn, a: work } = repos(t, 'a');
   const { host, calls } = fakeGh();
+  commitFile(seed, 'm2.txt', 'm2\n', 'main moves');
+  git(seed, 'push', '-q', 'origin', 'main');
+  const mainTip = git(origin, 'rev-parse', 'main');
   const before = git(origin, 'rev-parse', 'pilot');
+  const pilotTip = before;
 
   const result = land({ cwd: work, git: gitIn(work), host, test: passing });
+
+  assert.equal(git(origin, 'rev-list', '--first-parent', '--count', pilotTip + '..pilot'), '1', 'pilot gains one first-parent commit');
+  assert.equal(git(origin, 'log', '-1', '--format=%s', 'pilot'), 'Merge feat/a into pilot');
+  assert.ok(!git(origin, 'log', '--format=%s', pilotTip + '..pilot').includes('Merge main into pilot'));
+  assert.ok(!isAncestor(origin, mainTip, 'pilot'), "main's new commit is not on pilot");
 
   const tip = git(work, 'rev-parse', 'feat/a');
   assert.equal(merges(origin, 'pilot')[0], `Merge feat/a into pilot ${before} ${tip}`, 'a merge with the feature tip as second parent');
@@ -112,21 +122,6 @@ test('land refuses outside a feat/ branch', (t) => {
   }
   assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip, 'pilot unmoved');
   assert.equal(git(origin, 'rev-parse', 'main'), mainTip, 'main unmoved');
-});
-
-test('land takes nothing from main', (t) => {
-  const { origin, seed, gitIn, a: work } = repos(t, 'a');
-  commitFile(seed, 'm2.txt', 'm2\n', 'main moves');
-  git(seed, 'push', '-q', 'origin', 'main');
-  const mainTip = git(origin, 'rev-parse', 'main');
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
-
-  land({ cwd: work, git: gitIn(work), host: fakeGh().host, test: passing });
-
-  assert.equal(git(origin, 'rev-list', '--first-parent', '--count', pilotTip + '..pilot'), '1', 'pilot gains one first-parent commit');
-  assert.equal(git(origin, 'log', '-1', '--format=%s', 'pilot'), 'Merge feat/a into pilot');
-  assert.ok(!git(origin, 'log', '--format=%s', pilotTip + '..pilot').includes('Merge main into pilot'));
-  assert.ok(!isAncestor(origin, mainTip, 'pilot'), "main's new commit is not on pilot");
 });
 
 test('a red main does not stop the landing', (t) => {
