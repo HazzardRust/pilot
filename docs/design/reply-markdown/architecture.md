@@ -31,6 +31,7 @@ the re-cut, assumed until Gate 1 (the user's table ask on the ticket, folded in 
 | 11 | Tab and Shift+Tab move between cells; Return moves down a row, adding one under the last; Up from the header and Down from the last row put the caret in the text before or after. | focus-key test per move | 6 of 6 moves land |
 | 12 | Controls under the grid add a row, add a column, remove the caret's row, remove its column, and delete the table. *assumed A7* | test per control on the grid's size | 5 of 5 |
 | 13 | A cell the caret is not in renders bold, italic and code as a line off the caret does. *assumed A8* | `preview::spans` on a cell's `TextEdit` | 3 of 3 kinds |
+| 14 | In a thread, a drag that crosses a rendered table selects whole cells in row order, and copying it gives a GFM table of those cells; a cell sent with a line break (`a<br>b`) draws as two lines in the thread. *added, S7, itm_73bc35726c66; the whole-cell highlight is open: Rune 7cba77c paints the end cells' partial range, and the fix is a Rune change (S7 report)* | a test per half; the live window, both themes | 0 partially highlighted cells; 0 cells drawn as "ab" |
 
 ## 3. Findings
 
@@ -185,7 +186,7 @@ shallow module to fold; no fold slice.
 Blockquotes, strikethrough, fenced code blocks, images, bare-URL autolinks; the chat composer (A2); hiding
 markers (A1); a toolbar beyond the Table button; any change to how a sent message renders in the thread. For
 tables: turning typed or pasted pipe syntax into a grid (A4), a keyboard chord to insert (A5), column alignment,
-line breaks inside a cell, merged cells, editing a table in a message already sent.
+merged cells, editing a table in a message already sent.
 
 ## 8. Slices
 
@@ -198,6 +199,7 @@ Width 2; longest stem 3
 | S3 | Table skeleton: the Table button inserts a grid, typing fills its cells, the reply is sent with a GFM table | 3, 8, 9, 10 | `deck/rune/src/table.rs` (new), `src/lib.rs`, `src/regions/reply.rs`, `tests/table.rs` (new), `docs/adr/NNNN-reply-markdown.md` | S1 (`reply.rs`, `lib.rs`, the ADR) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
 | S4 | Moving through cells, adding and removing rows and columns, cells rendering | 11, 12, 13 | `deck/rune/src/table.rs`, `src/regions/reply.rs`, `tests/table.rs` | S3 (`table::Table`, the grid in `reply.rs`, `tests/table.rs`) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S4](slices/S4.md) |
 | S6 | Headings have real sizes in the reply box and the thread *(added)* | 1, 7 | `deck/rune/theme.json`, `build.rs`, `src/theme.rs`, `src/preview.rs`, `tests/preview.rs`, `tests/theme.rs` | S2 (`preview::spans`) | `pilot:rust-reviewer` | [S6](slices/S6.md) |
+| S7 | Thread tables select as whole cells and draw a cell's line break *(added)* | 14 | `deck/rune/src/theme.rs`, `src/thread_table.rs` (new), `src/lib.rs`, `tests/deck/thread_table.rs` (new), `tests/deck/main.rs` | S6 (`theme.rs`), S5 (`<br>` in `Table::markdown`) | `pilot:rust-reviewer` | [S7](slices/S7.md) |
 
 ## 9. Acceptance evidence
 

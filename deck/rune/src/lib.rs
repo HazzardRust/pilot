@@ -12,3 +12,4 @@ pub mod preview;
 pub mod regions;
 pub mod table;
 pub mod theme;
+pub mod thread_table;
