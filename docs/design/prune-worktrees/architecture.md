@@ -25,7 +25,7 @@ human steps on their list; branch pruning is not part of that list ("dont worry 
 | 8 | A tree holding a link or junction (a QA scratch tree's `node_modules`) has the link removed first by the same command, then the tree, and the dir is checked gone. *practitioner: git-for-Windows maintainer* | Test: a junction into a sibling tree's `node_modules`; after removal the target's files are byte-identical and the tree's dir is gone. Probe (§3 F5): git 2.56 alone exits 0 and leaves the dir. |
 | 9 | No human-steps thread or closing walkthrough carries "prune other runs' branches". The branch prune itself is out of scope. | Test: the steps a landing posts name `pilot branches prune` 0 times. |
 | 10 | The closing report's "Worktrees left" is true: it lists every tree of the run still on disk. (Added, build-now.) | Test: a tagged detached tree kept dirty is 1 of its lines; 0 trees on disk go unlisted. Field case: handoff-no-wait's report said "none" while `pilot-cheap-suite-fund` and the `qa-hnw` scratch stood. |
-| 11 | *assumed, itm_c83b9ffb134b*: the trees already on disk without a tag are swept once by `pilot worktrees prune` (no `--run`), which judges against the run remote's `pilot` too, removing those clean, moved and landed; the rest kept and named. | Test: a legacy tree landed on `pilot` but not `main` goes; one at an unlanded sha stays. On this machine `--dry-run` names the landed leftovers. |
+| 11 | *assumed by timeout, itm_c83b9ffb134b (A6)*: the trees already on disk without a tag are swept once by `pilot worktrees prune` (no `--run`), which judges against the run remote's `pilot` too, removing those clean, moved and landed; the rest kept and named. | Test: a legacy tree landed on `pilot` but not `main` goes; one at an unlanded sha stays. On this machine `--dry-run` names the landed leftovers. |
 
 Lines 6's orphan dirs, 8's dir check and 10 are implied, not asked for. Line 1 cannot mean the legacy names
 `slice/cheap-suite-fix`: a prefix match would make `clean-landing`'s branches `clean`'s (F3).
@@ -114,6 +114,11 @@ dirs); folding it would put its policy behind the guarded seam. `isRunBranch` su
   stops at 10 s (`≥` then); the row fails only under 10% free. Rejected: sizing every tree (minutes on 22 trees).
 - **A6** Legacy trees (itm_c83b9ffb134b, spec 11). Default: one sweep, `pilot worktrees prune` without `--run`
   judging against `pilot` as well as `main`, as slice S8, droppable alone. Rejected: name only (the disk stays full).
+  Answer: the default, assumed by the deck's 20-min timeout, not pressed by the user.
+- **A7** QA environment (itm_43eb34939286). Default: a scratch repo with a bare remote and an isolated deck store on
+  Windows; the real checkout gets one read-only `pilot doctor` and a `prune --dry-run`. Tradeoff: no real landing
+  on this machine's runs. Rejected: QA on the real checkout, which could remove live trees.
+  Answer: the default, assumed by the deck's 20-min timeout, not pressed by the user.
 - red team: F3 — widening `isRunBranch` to `slice/<slug>-*` would move `pilot branches prune`'s selection and break
   the collision pin; L7 and A1 replace it with the tag.
 - red team: S5's `planned` prune deletes the design tree a re-cut architect reuses; S6 makes the re-cut text re-add
