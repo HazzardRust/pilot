@@ -69,8 +69,11 @@ fn fields(list: &[Field], cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
     let (t, ui) = (theme::tokens(dark), tok::theme(dark));
     list.iter().fold(col().gap(space::within), |out, f| {
+        // Beside its label a Markdown block takes the row's rest and wraps there, never its own full width.
         let value = if f.markdown {
             theme::markdown(f.value.clone(), dark)
+                .grow(1.0)
+                .min_w(space::s0)
         } else {
             theme::content(text(&f.value).font(type_::BODY).color(ui.text).wrap(), dark)
         };
