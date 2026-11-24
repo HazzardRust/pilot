@@ -48,8 +48,10 @@ const POLL_MS = 1_000;
  * 2026-11-20, recut-decision S2: 12141 (node 781, git 11101, other 259) on Windows; the replan fixture's plan commits.
  * 2026-11-20, audit-f14 principles round: 13813 (node 788, git 12749, other 276) on Windows; the whole feature's fixture
  *   tests, this round's landing retry, stacked and unlanded restack fixtures among them.
+ * 2026-11-24, cheap-suite S10: 13571 (node 831, git 12472, other 268) on Windows, Node 26, under two other
+ *   full suites; the acceptance run in docs/design/cheap-suite/cost-after.txt, ceiling 13571 + 10%.
  */
-export const SPAWN_CEILING = 15195;
+export const SPAWN_CEILING = 14929;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 
