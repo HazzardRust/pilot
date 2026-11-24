@@ -1,0 +1,216 @@
+{
+  "slug": "archive-page",
+  "feature": "Archive page",
+  "ticket": "itm_2fe34eca6f66",
+  "branch": "feat/archive-page",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-archive-page",
+  "artefact": "docs/design/archive-page/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrating 651900b (rust, typescript, security: approve with comments)",
+      "branch": "slice/archive-page-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S8",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S9",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S11",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S10",
+      "state": "planned",
+      "after": [
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S11"
+      ]
+    }
+  ],
+  "next": "co-pilot: pilot integrate S1 651900b, then pilot checks, then pilot ready for S2-S9,S11; S3 brief carries the rust MEDIUM ({} region flashes 'Nothing archived yet.')",
+  "updatedAt": "2026-11-24T07:51:34.688Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "ticket said group like the Tickets tab, which groups nothing; cost a question",
+      "evidence": "deck/items.mjs:598, deck/ui/render-rail.mjs:188; itm_50eb0e5833dc"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "store file names are scattered string literals across deck/ and hooks/, no registry; needed an explorer sweep",
+      "evidence": "archive-page S10 coverage test must grep for them"
+    },
+    {
+      "kind": "drain",
+      "what": "Stop hook made the pilot take the next planning ticket while past the context advisory, with nothing it could start on it",
+      "size": 1500
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "C: filled to 7.4G free and S19's cargo build failed; per-worktree cargo target dirs had to be deleted by hand",
+      "evidence": "co-pilot hand-back, feat/rune-deck-ui 03659388",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot integrate merges the base before the slice and refused S21 and the side branch on a render-rail.mjs conflict with pilot dc5f7beb; needed an implementer and a hand merge",
+      "evidence": "slice/rune-deck-ui-base 47fc9c3, merge 2c055ec",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "successor stopped at once on the harness notice 'deck (CONNECTION_CLOSED)' without its plugin deck tools being down in main; cost a spawn round and a resume",
+      "evidence": "hand-back on itm_0dcd9aa67146, 40k tokens, 4 tool uses",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "Stop hook refused a parked archive-page and made the pilot retake it though L8 says wait for Rune; cost a question to the user",
+      "size": 1500
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exited 1 twice on 'deck not answering (timeout)' while the crew's cargo/npm gates ran; deck answered on the next call each time, listener restarted by hand",
+      "size": 800
+    },
+    {
+      "agent": "pilot-explorer",
+      "what": "second agent this session to stop on the harness notice 'deck (CONNECTION_CLOSED)' and not post; plugin deck tools worked once loaded via ToolSearch; cost a hand-back and a resume each time",
+      "evidence": "itm_88049dc4b34c reply posted only on resume; same on co-pilot itm_0dcd9aa67146",
+      "size": 2
+    },
+    {
+      "agent": "pilot-explorer",
+      "what": "git grep with -A after the tree-ish fails; ADR files are single very long lines, so a grep of one is a wall of text",
+      "evidence": "explorer report on itm_88049dc4b34c"
+    },
+    {
+      "kind": "drain",
+      "what": "QA's walkthrough feedback relayed to main message by message (7 relays) while main ran two short-path tickets; a blocked-step item for the Rune QA's wait was filed on the coverage-install ticket and blocks its gate2",
+      "size": 6000
+    },
+    {
+      "kind": "drain",
+      "what": "pilot integrate refused evidence rows not shaped exactly 'B<k> <kind>:' (sub-step rows), cost a rerun; gate2/ticket/question posts refused 5 times on body shape",
+      "size": 3000
+    },
+    {
+      "kind": "drain",
+      "what": "pilot relayed 19 pieces of walkthrough feedback from QA to the co-pilot one message each, since QA cannot message the co-pilot; each relay re-stated QA's anchors",
+      "size": 15000
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exited 1 three times on 'deck not answering (timeout)' while direct deck calls worked; the deck also dropped two feature-PR table updates on its own timeout",
+      "size": 2500
+    },
+    {
+      "kind": "drain",
+      "what": "re-cut flags on two signed tickets after each of two landings; merged pilot into both feat branches and replanned by hand, four times in all",
+      "size": 4000
+    },
+    {
+      "kind": "drain",
+      "what": "Stop hook made the pilot retake archive-page, which waits on Rune by the user's decision, to fill the planning lane",
+      "size": 500
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "/api/view computes every region for every screen and nothing says so where a region is added; pilot base printed another run's base again",
+      "evidence": "archive-page re-cut hand-back, deck/view/index.mjs:34",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "one live planning ticket: a re-cut gate1 waiting on the user parks the next ticket's architect, whose questions and gate1 the deck then refuses",
+      "size": 3000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 implementer handed back after creating its worktree, reporting that a compaction had wiped its context; nothing built",
+      "evidence": "2 tool uses, 21 s; slice/archive-page-s1 HEAD 453e570, clean tree, not on origin",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "The co-pilot hello ('send me what your definition sends main') reads as a request for the report. The first S1 implementer answered it by handing back empty; the second replied 'no report yet' and kept building",
+      "evidence": "afa65ced handed back after 2 tool uses; a7564be5 replied by SendMessage 'nothing is built ... building the slice now'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 pushed twice on a non-npm exit code; final full gate red on an unlisted deck module (deck/README.md)",
+      "evidence": "gate-final.log: npm exit 1, 5079/5108, every deck module is listed scripts/test/deck-readme.test.mjs:27",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fix commit 651900b carries its own model and session in the trailer, not brief.md's trailer lines",
+      "evidence": "git show 651900b: Co-Authored-By: Claude Sonnet 5.5, session_01NXgSFrR7...; brief.md names Claude Fable 5.2, session_01NXgSFpzNB8...",
+      "size": 1
+    }
+  ]
+}
