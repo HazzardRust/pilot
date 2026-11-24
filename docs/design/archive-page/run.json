@@ -69,7 +69,7 @@
     },
     {
       "slice": "S8",
-      "state": "integrated",
+      "state": "integrated 933eafb; checks green",
       "after": [
         "S1"
       ],
@@ -78,7 +78,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed 3f8c07f",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -132,8 +132,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s14"
     }
   ],
-  "next": "S8 40d237a integrating; then S9 3f8c07f, S11 c2121b4; S10 last (also records seams: S8.md Top rows finding - effort; S9.md cut at a word); assumed: credential shapes past S14 not built; QA: 50 ms bar only in cargo test --release archive_filter.",
-  "updatedAt": "2026-11-24T13:06:12.710Z",
+  "next": "S9 3f8c07f integrating; then S11 c2121b4; S10 last (also records seams: S8.md Top rows finding - effort; S9.md cut at a word); assumed: credential shapes past S14 not built; QA: 50 ms bar only in cargo test --release archive_filter.",
+  "updatedAt": "2026-11-24T13:29:46.640Z",
   "friction": [
     {
       "kind": "drain",
