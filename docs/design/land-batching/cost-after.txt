@@ -2,23 +2,23 @@
 > pilot@0.9.11 test:cost
 > node scripts/gate.mjs --cost
 
-syntax ok 903 files in 495 ms
+syntax ok 904 files in 349 ms
 ledgers current
-tests 5199 · pass 5167 · fail 0
+tests 5200 · pass 5168 · fail 0
 rune deck: cargo fmt --check --manifest-path deck/rune/Cargo.toml
 rune deck: cargo test --manifest-path deck/rune/Cargo.toml
-   Compiling pilot-deck v0.1.0 (C:\Users\jrylk\Projects\pilot-slice-land-batching-s7\deck\rune)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 10.76s
+   Compiling pilot-deck v0.1.0 (C:\Users\jrylk\Projects\pilot-slice-land-batching-s6\deck\rune)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 11.96s
      Running unittests src\lib.rs (C:\Users\jrylk\AppData\Local\pilot\rune-target\debug\build\pilot-deck/051a3896c378a756\out\pilot_deck-051a3896c378a756.exe)
 
 running 5 tests
-test act::tests::param_decodes_plus_percent_and_drops_the_fragment ... ok
-test live::tests::a_stale_read_landing_after_the_current_one_does_not_replace_it ... ok
 test live::tests::a_late_view_read_for_the_query_left_draws_nothing ... ok
+test live::tests::a_stale_read_landing_after_the_current_one_does_not_replace_it ... ok
+test act::tests::param_decodes_plus_percent_and_drops_the_fragment ... ok
 test live::tests::asking_drops_a_feed_read_for_the_old_query ... ok
 test live::tests::a_retry_ends_the_wait_it_finds_the_reader_in ... ok
 
-test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
 
      Running unittests src\main.rs (C:\Users\jrylk\AppData\Local\pilot\rune-target\debug\build\pilot-deck/628be8ce561dabdb\out\pilot_deck-628be8ce561dabdb.exe)
 
@@ -37,63 +37,63 @@ test agents_reports::an_open_report_is_marked_open_right_after_its_title ... ok
 test agents_reports::the_agents_are_the_views_roster_with_their_ages ... ok
 test agents_reports::the_overview_draws_a_section_per_deck ... ok
 test agents_reports::the_x_hides_a_report_and_it_stays_hidden_after_a_restart ... ok
-test act_deck::create_lands ... ok
-test act_thread::a_reply_lands ... ok
 test act_thread::a_refusal_comes_back_with_its_reason ... ok
-test act_deck::add_and_remove_deck_land ... ok
 test act_thread::an_option_press_lands_as_the_choice ... ok
-test act_deck::start_is_refused_in_the_suite ... ok
+test agents_reports::a_heartbeat_puts_the_agent_in_the_agents_region_within_a_second ... ok
 test act_deck::move_lands ... ok
-test act_deck::clear_notice_and_clear_notices_land ... ok
+test act_thread::a_reply_lands ... ok
+test act_deck::switch_and_cancel_land ... ok
+test act_deck::alerts_land ... ok
+test act_deck::add_and_remove_deck_land ... ok
+test chat::the_threads_show_with_no_chat_open ... ok
 test chat::a_thread_row_opens_its_thread ... ok
 test chat::the_create_threads_sit_above_the_messages ... ok
-test chat::the_threads_show_with_no_chat_open ... ok
-test act_deck::alerts_land ... ok
-test act_deck::switch_and_cancel_land ... ok
-test agents_reports::a_heartbeat_puts_the_agent_in_the_agents_region_within_a_second ... ok
-test graph::a_view_with_no_graph_draws_no_dot ... ok
+test act_deck::start_is_refused_in_the_suite ... ok
+test act_deck::create_lands ... ok
 test act_thread::close_reopen_dismiss_and_dismiss_run_land ... ok
-test graph::each_dot_is_drawn_with_its_identifier ... ok
-test header::a_refused_add_deck_says_why_and_keeps_the_path ... ok
-test graph::the_lanes_and_rows_are_the_views ... ok
-test header::the_bands_are_the_pages ... ok
-test graph::hovering_a_dot_shows_its_slice_name ... ok
-test centre::cards_and_tabs_take_the_radius ... ok
-test header::the_figures_are_the_views_and_a_missing_one_is_unknown ... ok
-test centre::each_message_has_the_left_rule ... ok
-test centre::the_kind_line_is_one_centred_row_with_the_pager_on_the_centre ... ok
-test graph::the_graph_is_labelled_with_the_views_name_above_its_dots ... ok
-test header::the_header_starts_at_the_pages_top_inset ... ok
-test hover::a_separator_is_one_pixel_in_the_rule_colour ... ok
-test header::the_overview_press_names_an_empty_run_so_the_deck_does_not_land_on_a_tab ... ok
-test centre::content_selects_and_control_labels_do_not ... ok
-test chat::enter_posts_one_reply_to_the_chat_and_the_draft_empties_once_taken ... ok
-test chat::a_send_the_deck_does_not_take_keeps_the_draft_and_says_why ... ok
 test chat::the_box_is_three_lines_tall_and_send_posts_the_draft ... ok
+test graph::each_dot_is_drawn_with_its_identifier ... ok
+test act_deck::clear_notice_and_clear_notices_land ... ok
+test header::a_refused_add_deck_says_why_and_keeps_the_path ... ok
+test graph::hovering_a_dot_shows_its_slice_name ... ok
+test header::the_bands_are_the_pages ... ok
+test graph::a_view_with_no_graph_draws_no_dot ... ok
+test centre::cards_and_tabs_take_the_radius ... ok
+test graph::the_lanes_and_rows_are_the_views ... ok
+test centre::each_message_has_the_left_rule ... ok
+test header::the_figures_are_the_views_and_a_missing_one_is_unknown ... ok
+test header::the_header_starts_at_the_pages_top_inset ... ok
+test header::the_overview_press_names_an_empty_run_so_the_deck_does_not_land_on_a_tab ... ok
+test hover::a_separator_is_one_pixel_in_the_rule_colour ... ok
+test graph::the_graph_is_labelled_with_the_views_name_above_its_dots ... ok
+test centre::content_selects_and_control_labels_do_not ... ok
+test chat::a_send_the_deck_does_not_take_keeps_the_draft_and_says_why ... ok
+test chat::enter_posts_one_reply_to_the_chat_and_the_draft_empties_once_taken ... ok
+test centre::the_kind_line_is_one_centred_row_with_the_pager_on_the_centre ... ok
 test layout::a_drag_tracks_the_pointer_with_no_snap_at_the_default ... ok
-test chat::a_new_message_follows_the_reader_at_the_bottom_and_leaves_one_scrolled_up_in_place ... ok
 test layout::a_dragged_border_resizes_both_panes_and_persists ... ok
-test empty::an_empty_deck_reads_as_the_html_deck ... ok
 test empty::a_deck_with_tickets_but_none_in_a_queue_keeps_its_queues ... ok
-test layout::a_heading_folds_its_pane_and_keeps_it_open ... ok
-test layout::a_hidden_side_drags_back_out_and_escape_puts_it_back ... ok
+test chat::a_new_message_follows_the_reader_at_the_bottom_and_leaves_one_scrolled_up_in_place ... ok
 test empty::a_thread_page_claims_nothing_of_the_queue_or_history ... ok
+test empty::an_empty_deck_reads_as_the_html_deck ... ok
+test layout::a_heading_folds_its_pane_and_keeps_it_open ... ok
+test empty::an_empty_repository_draws_no_tickets_in_place_of_its_queues ... ok
 test layout::chat_and_status_open_by_default ... ok
-test layout::aligned ... ok
+test layout::a_hidden_side_drags_back_out_and_escape_puts_it_back ... ok
 test layout::open_panes_touch_and_take_only_their_contents_height ... ok
+test layout::side_rules_come_in_three_levels_each_centred ... ok
+test layout::aligned ... ok
+test layout::the_first_heading_and_icon_start_at_the_top_inset ... ok
 test layout::a_panel_opens_with_a_spring ... ok
 test layout::an_old_prefs_file_still_loads ... ok
-test layout::the_first_heading_and_icon_start_at_the_top_inset ... ok
-test layout::side_rules_come_in_three_levels_each_centred ... ok
-test empty::an_empty_repository_draws_no_tickets_in_place_of_its_queues ... ok
-test layout::each_icon_names_its_pane_and_toggles_it ... ok
 test layout::the_selected_marker_is_flush_with_the_window_edge ... ok
+test header::the_daemons_refusal_of_a_typed_path_reaches_the_box ... ok
+test layout::each_icon_names_its_pane_and_toggles_it ... ok
+test left_panes::content_selects_and_labels_do_not ... ok
 test left_panes::add_is_a_plus_centred_above_red ... ok
+test left_panes::lists_carry_deck_css_hairlines_but_none_after_the_last ... ok
 test layout::the_frame_is_a_drag_band_with_the_content_below_it ... ok
 test left_panes::rows_sit_on_the_grid ... ok
-test left_panes::lists_carry_deck_css_hairlines_but_none_after_the_last ... ok
-test left_panes::content_selects_and_labels_do_not ... ok
-test header::the_daemons_refusal_of_a_typed_path_reaches_the_box ... ok
 test layout::an_icon_count_sits_on_its_corner_clear_of_the_glyph ... ok
 test nav::a_side_button_pressed_over_a_child_still_goes_back ... ok
 test nav::alt_arrows_do_nothing_while_a_field_holds_the_key ... ok
@@ -105,13 +105,13 @@ test nav::the_other_ways_to_change_screen_are_steps_too ... ok
 test header::a_tab_press_selects_its_deck ... ok
 test layout::the_open_panes_and_side_width_survive_a_restart ... ok
 test notifications::a_closed_notice_reads_kind_title_and_resolution ... ok
-test notifications::a_missing_or_corrupt_file_loads_default ... ok
 test live::a_deck_down_at_first_load_claims_no_empty_regions ... ok
+test notifications::a_missing_or_corrupt_file_loads_default ... ok
 test notifications::a_long_open_row_wraps_and_keeps_its_tab ... ok
 test notifications::an_open_row_ends_with_its_tab ... ok
 test notifications::prefs_survive_a_restart ... ok
 test notifications::seen_hides_until_the_next_write ... ok
-test layout::a_three_digit_count_moves_nothing ... ok
+test live::a_heartbeat_refreshes_every_region_from_one_view ... ok
 test preview::a_heading_is_the_same_size_in_the_box_and_the_thread ... ok
 test preview::a_line_off_the_caret_renders_bold_italic_and_code ... ok
 test preview::a_long_draft_is_styled_within_a_frame ... ok
@@ -125,7 +125,7 @@ test preview::markers_inside_a_link_stay_quiet ... ok
 test preview::nested_emphasis_and_an_empty_or_overrun_draft_render_without_a_panic ... ok
 test preview::odd_headings_lists_and_links_render_without_a_panic_at_any_caret ... ok
 test preview::the_carets_line_stays_raw_and_renders_once_the_caret_leaves ... ok
-test live::a_heartbeat_refreshes_every_region_from_one_view ... ok
+test layout::a_three_digit_count_moves_nothing ... ok
 test history::a_settled_day_folds_and_today_is_open ... ok
 test history::dismiss_run_posts_once ... ok
 test queue::a_card_excerpt_is_drawn_as_markdown ... ok
@@ -152,41 +152,41 @@ test reply::an_option_locked_after_its_ask_posts_nothing ... ok
 test reply::an_option_with_no_confirm_posts_on_one_press ... ok
 test reply::close_and_reply_do_not_move_with_the_options ... ok
 test reply::close_takes_two_presses_and_posts_a_close ... ok
-test reply::inline_confirm ... ok
 test notifications::the_x_and_mark_all_seen_clear_the_decks_notices ... ok
+test reply::inline_confirm ... ok
 test reply::moving_to_another_thread_gives_it_a_box_of_its_own ... ok
-test queue::a_card_draws_its_parts ... ok
 test reply::reply_layout ... ok
 test reply::tab_from_the_box_reaches_reply_first ... ok
-test queue::a_confirmed_option_asks_in_place_before_it_posts ... ok
+test queue::a_card_draws_its_parts ... ok
+test reply::the_box_starts_five_lines_tall_and_wraps_a_long_word ... ok
 test reply::the_kind_line_is_dotted_and_the_pager_centred ... ok
 test reply::the_sent_text_is_the_typed_text ... ok
+test queue::a_confirmed_option_asks_in_place_before_it_posts ... ok
 test reply::the_light_window_draws_the_draft_in_its_ink ... ok
 test reply::the_recommended_option_draws_the_pages_quiet_mark ... ok
-test reply::the_box_starts_five_lines_tall_and_wraps_a_long_word ... ok
 test notifications::a_refused_notice_clear_says_so ... ok
 test queue::a_post_shows_its_card_within_a_second ... ok
 test queue::a_steps_card_names_its_ticket_and_counts_its_steps ... ok
 test skeleton::the_client_refuses_a_non_loopback_base ... ok
 test skeleton::the_client_refuses_a_port_that_is_not_one ... ok
-test queue::the_lane_lines_are_columns ... ok
+test queue::an_option_press_is_sent_once ... ok
 test startup::a_bad_route_is_refused ... ok
 test startup::a_route_parses_into_the_start_query ... ok
 test startup::every_query_field_rides_the_route ... ok
 test startup::no_flags_start_on_home ... ok
 test startup::rune_reads_every_flag_but_the_route ... ok
-test queue::an_option_press_is_sent_once ... ok
-test queue::a_failed_post_comes_back_through_settle ... ok
+test queue::the_lane_lines_are_columns ... ok
 test status::a_long_state_stays_in_its_column_and_the_cells_never_overlap ... ok
-test queue::the_thread_screen_draws_the_thread_alone_inside_the_window ... ok
+test queue::a_failed_post_comes_back_through_settle ... ok
 test status::a_view_with_no_status_draws_nothing_of_it ... ok
-test status::choosing_a_ticket_sets_the_query_without_reading_on_the_ui_thread ... ok
 test status::a_url_in_state_opens_the_browser ... ok
+test status::choosing_a_ticket_sets_the_query_without_reading_on_the_ui_thread ... ok
 test status::a_range_off_the_text_draws_no_link ... ok
+test queue::the_thread_screen_draws_the_thread_alone_inside_the_window ... ok
 test status::each_table_is_drawn_under_its_tabs_name ... ok
+test status::a_yours_link_not_to_a_thread_opens_nothing ... ok
 test status::pressing_yours_opens_the_thread_it_links ... ok
 test hover::plain_text_is_still ... ok
-test status::a_yours_link_not_to_a_thread_opens_nothing ... ok
 test status::the_selector_reads_lane_and_title_one_per_line_a_bar_on_the_chosen ... ok
 test status::the_state_column_starts_at_one_x_whatever_the_other_cells_hold ... ok
 test strip::a_create_posts_what_the_name_checked_and_opens_the_new_thread_once_taken ... ok
@@ -196,30 +196,30 @@ test status::the_held_ticket_says_so_on_its_deck_and_under_its_group ... ok
 test strip::a_disabled_strip_button_does_not_hover ... ok
 test strip::create_checks_the_name_before_next ... ok
 test reply::a_press_on_a_view_not_yet_refreshed_posts_to_the_thread_it_shows ... ok
-test strip::alerts_switch ... ok
+test live::a_stopped_daemon_is_said_and_a_restarted_one_comes_back ... ok
 test strip::start_asks_first_and_a_refusal_is_said_in_the_decks_words ... ok
 test status::the_table_is_headed_by_its_name_and_the_hour_it_started ... ok
-test live::a_stopped_daemon_is_said_and_a_restarted_one_comes_back ... ok
 test strip::boxed_buttons_stay_inside_their_box_and_a_disabled_one_is_dimmed ... ok
-test live::retry_reconnects_without_waiting_out_the_backoff ... ok
-test table::a_blank_grid_sends_nothing ... ok
+test strip::alerts_switch ... ok
 test strip::next_pressed_on_a_bad_name_stays_on_the_name ... ok
+test table::a_blank_grid_sends_nothing ... ok
+test strip::the_toggle_flips_the_scope ... ok
 test table::a_cell_without_the_caret_renders_its_markdown ... ok
 test table::a_cells_line_break_is_written_as_br ... ok
-test strip::the_toggle_flips_the_scope ... ok
+test strip::the_strip_draws_the_views_controls ... ok
 test table::a_table_alone_is_its_markdown ... ok
 test table::a_table_at_a_line_end_or_start_takes_the_break_beside_it ... ok
 test table::a_table_goes_at_the_caret_of_the_prose_part_holding_it ... ok
 test table::a_table_inserted_from_a_cell_goes_after_its_grid ... ok
 test table::a_taken_reply_empties_the_box_table_and_all ... ok
-test table::a_grid_shows_boxes_not_pipes_and_typing_fills_a_cell ... ok
-test strip::the_items_link_opens_the_items_page_and_back_returns_home ... ok
 test table::a_box_taller_than_the_window_scrolls_reply_into_view ... ok
+test strip::the_items_link_opens_the_items_page_and_back_returns_home ... ok
+test table::a_grid_shows_boxes_not_pipes_and_typing_fills_a_cell ... ok
 test table::send_and_the_option_presses_carry_the_table ... ok
-test strip::the_strip_draws_the_views_controls ... ok
+test live::retry_reconnects_without_waiting_out_the_backoff ... ok
 test table::deleting_a_second_grid_with_no_prose_after_it_keeps_the_prose_before ... ok
-test strip::strip_look ... ok
 test table::no_controls_are_drawn_under_a_grid ... ok
+test strip::strip_look ... ok
 test table::shift_return_breaks_a_line_inside_a_cell ... ok
 test table::table_is_a_group_of_its_own_under_reply_and_close ... ok
 test table::shift_tab_wraps_rows_and_up_stays_in_a_two_line_cell ... ok
@@ -231,38 +231,38 @@ test theme::between_is_at_least_twice_within ... ok
 test theme::contrast ... ok
 test theme::every_colour_is_deck_css ... ok
 test theme::every_space_step_is_on_the_4_grid ... ok
-test theme::no_region_spaces_by_hand ... ok
+test table::tab_shift_tab_and_return_move_between_cells ... ok
 test theme::playground_mix ... ok
 test theme::the_font_is_inter_and_jetbrains_mono_on_three_scales ... ok
 test theme::the_motion_is_springs_that_settle ... ok
 test theme::the_ratio_is_wcag ... ok
 test theme::the_scan_sees_a_number_spaced_by_hand ... ok
 test theme::theme_json_is_read_and_is_the_only_source ... ok
+test theme::no_region_spaces_by_hand ... ok
 test table::the_grid_is_drawn_as_the_threads_table ... ok
-test table::tab_shift_tab_and_return_move_between_cells ... ok
 test table::return_in_the_text_makes_a_line_and_sends_nothing ... ok
 test thread::an_agent_name_is_drawn_in_its_own_colour ... ok
+test scroll::a_thread_opens_at_its_last_message ... ok
 test table::up_from_the_header_and_down_from_the_last_row_leave_the_grid ... ok
-test thread_table::a_br_outside_a_table_draws_as_rune_kit_draws_it ... ok
 test thread_table::a_cells_br_draws_as_a_line_break ... ok
+test thread_table::a_br_outside_a_table_draws_as_rune_kit_draws_it ... ok
 test thread_table::a_drag_from_one_table_into_the_next_copies_two_tables_and_the_prose ... ok
 test thread_table::a_drag_from_prose_into_the_last_cell_copies_every_cell_between ... ok
-test scroll::a_thread_opens_at_its_last_message ... ok
-test thread_table::a_drag_inside_one_cell_copies_its_text_with_the_break_as_a_newline ... ok
-test thread_table::a_drag_over_a_table_selects_whole_cells_in_row_order ... ignored, B1 open: rune 7cba77c takes a partial range in the end texts of a selection across texts (runtime/selection/selectable.rs:291, :301); whole-cell needs rune's select_whole, a later slice
-test thread::the_kind_line_is_as_big_as_the_title_and_wraps_with_the_nav_centred ... ok
 test thread_table::a_drag_inside_the_second_table_copies_its_cells ... ok
+test thread_table::a_drag_over_a_table_selects_whole_cells_in_row_order ... ignored, B1 open: rune 7cba77c takes a partial range in the end texts of a selection across texts (runtime/selection/selectable.rs:291, :301); whole-cell needs rune's select_whole, a later slice
+test thread_table::a_drag_inside_one_cell_copies_its_text_with_the_break_as_a_newline ... ok
+test thread::the_kind_line_is_as_big_as_the_title_and_wraps_with_the_nav_centred ... ok
+test thread_table::a_drag_over_prose_only_copies_as_rune_kit_does ... ok
 test thread_table::copying_a_drag_across_cells_gives_a_gfm_table_of_those_cells ... ok
 test thread_table::copying_a_drag_over_the_whole_table_gives_the_table ... ok
-test thread_table::a_drag_over_prose_only_copies_as_rune_kit_does ... ok
-test skeleton::the_window_shows_the_scratch_decks_tabs ... ok
 test thread::the_back_arrow_leaves_the_thread_as_the_html_deck_does ... ok
 test table::the_cell_menu_reshapes_the_grid_at_that_cell ... ok
 test hover::every_control_hovers ... ok
-test strip::creating_in_the_window_opens_the_scratch_decks_new_thread ... ok
+test skeleton::the_window_shows_the_scratch_decks_tabs ... ok
 test status::pressing_a_ticket_in_the_window_draws_the_scratch_decks_view_for_it ... ok
-test scroll::a_live_refetch_keeps_a_scrolled_up_thread_in_place ... ok
+test strip::creating_in_the_window_opens_the_scratch_decks_new_thread ... ok
 test thread::a_steps_thread_lists_its_steps_and_done_closes_it_and_its_ticket ... ok
+test scroll::a_live_refetch_keeps_a_scrolled_up_thread_in_place ... ok
 test scroll::home_opens_at_the_top_and_the_wheel_reaches_the_last_card ... ok
 test scroll::the_wheel_reaches_the_top_and_the_bottom ... ok
 test type_scales::markdown_headings_code_and_blocks_are_on_a_scale ... ok
@@ -270,12 +270,12 @@ test type_scales::no_text_size_is_set_outside_the_scales ... ok
 test thread::a_thread_reads_whole_and_escape_or_left_goes_back_to_its_deck ... ok
 test tickets::a_queue_wears_its_pastel ... ok
 test tickets::a_rows_badges_share_one_line ... ok
-test tickets::a_dragged_ticket_lands_where_it_is_dropped ... ok
 test tickets::a_row_carries_the_pages_lines ... ok
+test tickets::a_dragged_ticket_lands_where_it_is_dropped ... ok
 test tickets::a_rows_state_keeps_its_place_whatever_its_controls ... ok
 test scroll::keys_scroll_the_centre ... ok
-test tickets::an_open_empty_queue_says_none ... ok
 test tickets::a_switch_takes_a_confirm ... ok
+test tickets::an_open_empty_queue_says_none ... ok
 test tickets::the_held_fold_opens_itself ... ok
 test tickets::folds_are_kept_per_deck ... ok
 test tickets::recut_and_blocking_are_red_badges ... ok
@@ -283,7 +283,7 @@ test scroll::a_key_in_the_reply_box_is_not_a_scroll ... ok
 test tickets::two_quick_presses_move_once ... ok
 test type_scales::every_text_in_the_overview_and_a_thread_is_on_a_scale ... ok
 
-test result: ok. 252 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 26.04s
+test result: ok. 252 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 24.94s
 
    Doc-tests pilot_deck
 
@@ -292,650 +292,650 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 left running: none
-spawns 12815 (node 848, git 11676, other 291)
+spawns 12807 (node 848, git 11668, other 291)
 file                                                    s  tests  spawns  git  node  other
-scripts/test/land-clear.test.mjs                     64.2     12     842  830     0     12
-scripts/test/land.test.mjs                           36.9     12     449  436     0     13
-scripts/test/integrate.test.mjs                      36.4     21     398  379     0     19
-scripts/test/land-adr-branch.test.mjs                34.4      6     359  352     0      7
-scripts/test/branches.test.mjs                       34.0     14     246  244     2      0
-scripts/test/release.test.mjs                        30.9      9     389  382     0      7
-hooks/test/inbox.test.js                             27.6     66     129    0   129      0
-scripts/test/land-conflict.test.mjs                  26.7     10     342  338     0      4
-scripts/test/land-suite.test.mjs                     26.0      6     216  201     0     15
-scripts/test/sync.test.mjs                           24.7     14     295  287     0      8
-scripts/test/integrate-base.test.mjs                 23.6     11     260  254     0      6
-scripts/test/base-remote.test.mjs                    23.4      7     133  133     0      0
-scripts/test/worktrees.test.mjs                      23.0     16     292  289     3      0
-scripts/test/integrate-slice-commit.test.mjs         22.5     12     241  234     0      7
-scripts/test/land-generated.test.mjs                 20.6      5     214  211     0      3
-scripts/test/feature-pr.test.mjs                     19.0     13     101   98     0      3
-scripts/test/land-catchup.test.mjs                   18.9      6     224  222     0      2
-scripts/test/restack.test.mjs                        18.7      9     172  172     0      0
-scripts/test/worktrees-landed.test.mjs               18.5      6     252  252     0      0
-scripts/test/integrate-prune.test.mjs                18.3      8     196  188     0      8
-scripts/test/restack-squash.test.mjs                 18.3      7     191  191     0      0
-scripts/test/land-feature-line.test.mjs              17.9      6     200  195     0      5
-scripts/test/glossary-diff.test.mjs                  16.9     11     283  279     4      0
-deck/test/daemon.test.mjs                            16.8     75      24    0    24      0
-scripts/test/integrate-main.test.mjs                 15.7      4     140  139     0      1
-deck/test/startup.test.mjs                           14.7      8       4    0     4      0
-scripts/test/integrate-landed.test.mjs               14.3      5     143  138     0      5
-scripts/test/integrate-select.test.mjs               14.1      4     104   95     0      9
-scripts/test/land-prune.test.mjs                     13.9      5     180  175     0      5
-deck/test/landing-recut.test.mjs                     13.9     12     114  114     0      0
-scripts/test/land-remote.test.mjs                    12.9      3     161  156     0      5
-scripts/test/merge-generated.test.mjs                12.8     10     134  131     0      3
-deck/test/gate2-base.test.mjs                        12.4      9     121  117     3      1
-scripts/test/land-chain.test.mjs                     12.3      4     145  142     0      3
-scripts/test/base-chain.test.mjs                     12.2      7      67   67     0      0
-scripts/test/integrate-copies.test.mjs               12.1      8     145  145     0      0
-scripts/test/base-checks.test.mjs                    11.8      3      62   62     0      0
-scripts/test/integrate-remote.test.mjs               11.6      3     127  124     0      3
-deck/test/host-contract.test.mjs                     11.2     16      26    0     0     26
-scripts/test/integrate-chain.test.mjs                11.1      5     106  102     0      4
-scripts/test/select-tests.test.mjs                   11.0     16     155  155     0      0
-deck/test/plan-drift.test.mjs                        10.9      8      91   91     0      0
-deck/test/landing-recreate.test.mjs                  10.8      4      77   77     0      0
-scripts/test/base-main.test.mjs                      10.8      4      56   56     0      0
-scripts/test/land-adr.test.mjs                       10.3      3     107  104     0      3
+scripts/test/land-clear.test.mjs                     86.7     12     842  830     0     12
+scripts/test/land.test.mjs                           57.5     12     441  428     0     13
+scripts/test/release.test.mjs                        50.6      9     385  378     0      7
+scripts/test/integrate.test.mjs                      44.8     21     398  379     0     19
+scripts/test/land-adr-branch.test.mjs                41.8      6     357  350     0      7
+scripts/test/land-suite.test.mjs                     35.0      6     212  197     0     15
+scripts/test/land-conflict.test.mjs                  34.3     10     342  338     0      4
+scripts/test/restack.test.mjs                        31.0      9     172  172     0      0
+scripts/test/restack-squash.test.mjs                 29.6      7     191  191     0      0
+scripts/test/integrate-base.test.mjs                 27.9     11     260  254     0      6
+scripts/test/integrate-slice-commit.test.mjs         27.5     12     241  234     0      7
+scripts/test/land-generated.test.mjs                 27.3      5     214  211     0      3
+scripts/test/branches.test.mjs                       26.5     14     246  244     2      0
+hooks/test/inbox.test.js                             24.8     66     129    0   129      0
+scripts/test/land-catchup.test.mjs                   23.5      6     224  222     0      2
+scripts/test/sync.test.mjs                           23.0     14     295  287     0      8
+scripts/test/integrate-prune.test.mjs                22.8      8     196  188     0      8
+scripts/test/worktrees.test.mjs                      22.2     16     292  289     3      0
+scripts/test/land-feature-line.test.mjs              22.1      6     198  193     0      5
+scripts/test/glossary-diff.test.mjs                  21.4     11     283  279     4      0
+scripts/test/merge-generated.test.mjs                20.4     10     134  131     0      3
+scripts/test/land-prune.test.mjs                     19.2      5     180  175     0      5
+scripts/test/land-remote.test.mjs                    18.7      3     161  156     0      5
+scripts/test/select-tests.test.mjs                   18.5     16     155  155     0      0
+scripts/test/integrate-main.test.mjs                 17.9      4     140  139     0      1
+scripts/test/worktrees-landed.test.mjs               17.8      6     252  252     0      0
+deck/test/daemon.test.mjs                            17.1     75      24    0    24      0
+scripts/test/integrate-landed.test.mjs               16.5      5     143  138     0      5
+scripts/test/integrate-select.test.mjs               16.2      4     104   95     0      9
+scripts/test/land-chain.test.mjs                     15.5      4     143  140     0      3
+deck/test/startup.test.mjs                           14.9      8       4    0     4      0
+scripts/test/integrate-copies.test.mjs               14.3      8     145  145     0      0
+scripts/test/integrate-remote.test.mjs               13.9      3     127  124     0      3
+scripts/test/base-remote.test.mjs                    13.8      7     133  133     0      0
+scripts/test/integrate-chain.test.mjs                13.6      5     106  102     0      4
+scripts/test/land-tail-spawns.test.mjs               13.0      3      88   87     0      1
+scripts/test/land-adr.test.mjs                       13.0      3     105  102     0      3
+scripts/test/feature-pr.test.mjs                     12.8     13     101   98     0      3
+scripts/test/sync-remote.test.mjs                    12.4      5     122  118     0      4
+scripts/test/rules-ledger.test.mjs                   12.4      8      95   95     0      0
+scripts/test/land-main-pr.test.mjs                   12.2     10     119  116     0      3
+scripts/test/merge-into-pilot.test.mjs               11.7      5      79   77     0      2
+scripts/test/integrate-dir.test.mjs                  11.6      5     109  106     0      3
+deck/test/host-contract.test.mjs                     11.3     16      26    0     0     26
+scripts/test/sync-pin.test.mjs                       11.3      4      61   59     0      2
+scripts/test/sync-noop.test.mjs                      11.1      3      62   61     0      1
+scripts/test/pilot-tip.test.mjs                      10.3      4      74   71     3      0
 deck/test/slug-leash.test.mjs                        10.2      2       8    8     0      0
-scripts/test/feature-pr-comment.test.mjs              9.7      4      46   46     0      0
-scripts/test/sync-remote.test.mjs                     9.6      5     122  118     0      4
-scripts/test/land-main-pr.test.mjs                    9.6     10     121  118     0      3
-deck/test/leash.test.mjs                              9.6      7       5    0     5      0
-scripts/test/integrate-dir.test.mjs                   9.2      5     109  106     0      3
-deck/test/gate1-lineage.test.mjs                      8.8      9      90   90     0      0
-scripts/test/land-tail-spawns.test.mjs                8.6      3      90   89     0      1
-deck/test/replan.test.mjs                             8.4     14      92   92     0      0
+deck/test/landing-recut.test.mjs                     10.1     12     114  114     0      0
+deck/test/gate2-base.test.mjs                        10.0      9     121  117     3      1
+scripts/test/integrate-trial.test.mjs                 9.9      3      86   86     0      0
+deck/test/leash.test.mjs                              9.3      7       5    0     5      0
+scripts/test/red-line.test.mjs                        9.3      1      61   57     0      4
+scripts/test/pilot-branch.test.mjs                    9.1      9      47   47     0      0
+scripts/test/integrate-pin.test.mjs                   9.0      3      80   78     0      2
+deck/test/plan-drift.test.mjs                         9.0      8      91   91     0      0
+scripts/test/select-fallback.test.mjs                 8.8      9      73   73     0      0
+scripts/test/land-pin.test.mjs                        8.7      2      75   73     0      2
+scripts/test/handoff-lineage-remote.test.mjs          8.5      7     100   96     0      4
+scripts/test/select-replay.test.mjs                   8.5      4      45   44     1      0
 deck/test/wait-session.test.mjs                       7.9      4       6    5     1      0
-deck/test/land-adopt.test.mjs                         7.8      7      16    0     7      9
-scripts/test/integrate-trial.test.mjs                 7.8      3      86   86     0      0
-scripts/test/integrate-pin.test.mjs                   7.7      3      82   80     0      2
-deck/test/wait-idle-lane.test.mjs                     7.5     10       0    0     0      0
-hooks/test/context-usage.test.js                      7.4     57     181    0   181      0
-hooks/test/permission-refuse.test.js                  7.4     14      22    0    22      0
-deck/test/gate1-verdicts.test.mjs                     7.3     11      77   77     0      0
-scripts/test/fresh-repo.test.mjs                      7.2      8      63   61     2      0
-scripts/test/rules-ledger.test.mjs                    7.1      8      95   95     0      0
-scripts/test/handoff-lineage-remote.test.mjs          7.1      7     100   96     0      4
-scripts/test/merge-into-pilot.test.mjs                7.1      5      79   77     0      2
-deck/test/scratch.test.mjs                            7.1      7       7    0     7      0
-scripts/test/land-pin.test.mjs                        6.7      2      77   75     0      2
-scripts/test/sync-resume.test.mjs                     6.7      2      80   79     0      1
-scripts/test/sync-pin.test.mjs                        6.5      4      63   61     0      2
-scripts/test/gate-census.test.mjs                     6.5     12       8    0     2      6
-scripts/test/pilot-tip.test.mjs                       6.2      4      74   71     3      0
-scripts/test/sync-noop.test.mjs                       6.0      3      62   61     0      1
-scripts/test/select-fallback.test.mjs                 5.9      9      73   73     0      0
-scripts/test/red-line.test.mjs                        5.9      1      61   57     0      4
-deck/test/client-rejoin.test.mjs                      5.8      5       5    0     5      0
-deck/test/free-port.test.mjs                          5.8      3      88   87     1      0
-scripts/test/pilot-branch.test.mjs                    5.5      9      47   47     0      0
+deck/test/landing-recreate.test.mjs                   7.7      4      77   77     0      0
+deck/test/land-adopt.test.mjs                         7.7      7      16    0     7      9
+deck/test/wait-idle-lane.test.mjs                     7.6     10       0    0     0      0
+scripts/test/sync-resume.test.mjs                     7.5      2      80   79     0      1
+scripts/test/base-chain.test.mjs                      7.4      7      67   67     0      0
+deck/test/replan.test.mjs                             7.3     14      92   92     0      0
+deck/test/gate1-lineage.test.mjs                      7.2      9      90   90     0      0
+hooks/test/permission-refuse.test.js                  7.0     14      22    0    22      0
+deck/test/scratch.test.mjs                            6.9      7       7    0     7      0
+scripts/test/base-checks.test.mjs                     6.7      3      62   62     0      0
+scripts/test/base-main.test.mjs                       6.7      4      56   56     0      0
+scripts/test/gate-census.test.mjs                     6.6     12       8    0     2      6
+scripts/test/land-gc.test.mjs                         6.3      2      58   56     0      2
+deck/test/gate1-verdicts.test.mjs                     6.0     11      77   77     0      0
+hooks/test/context-usage.test.js                      5.9     57     181    0   181      0
+scripts/test/feature-pr-comment.test.mjs              5.9      4      46   46     0      0
+deck/test/client-rejoin.test.mjs                      5.7      5       5    0     5      0
+scripts/test/fresh-repo.test.mjs                      5.4      8      63   61     2      0
+scripts/test/integrate-checks.test.mjs                5.4      2      48   47     0      1
 deck/test/daemon-rss.test.mjs                         5.3      2       1    0     1      0
 scripts/test/gh-stub.test.mjs                         5.1      6       8    0     6      2
-scripts/test/base.test.mjs                            5.1      5      29   29     0      0
-scripts/test/uninstall.test.mjs                       5.0     10      17    9     3      5
-deck/test/lineage-base.test.mjs                       5.0      5      60   60     0      0
-scripts/test/select-replay.test.mjs                   5.0      4      45   44     1      0
+scripts/test/land-none.test.mjs                       5.0      2      42   41     0      1
 deck/test/pass.test.mjs                               5.0     15       0    0     0      0
-scripts/test/land-gc.test.mjs                         5.0      2      58   56     0      2
-scripts/test/adr-allocate.test.mjs                    4.7      5      60   60     0      0
+deck/test/free-port.test.mjs                          4.8      3      88   87     1      0
+scripts/test/land-record.test.mjs                     4.8      1      42   41     0      1
+scripts/test/ledgers.test.mjs                         4.8      3      45   45     0      0
 hooks/test/deck-client.test.js                        4.7     17       0    0     0      0
 deck/test/store-restore.test.mjs                      4.6     14       2    0     2      0
-deck/test/launch.test.mjs                             4.6      6       6    0     6      0
-scripts/test/test-command.test.mjs                    4.3     11      31   24     4      3
-scripts/test/worktrees-holder.test.mjs                4.3      7      44   44     0      0
-scripts/test/integrate-checks.test.mjs                4.2      2      48   47     0      1
-scripts/test/audit-context.test.mjs                   4.2     22      54   52     2      0
-deck/test/gate2-checks.test.mjs                       4.2      8      48   48     0      0
+scripts/test/uninstall.test.mjs                       4.5     10      17    9     3      5
+deck/test/launch.test.mjs                             4.5      6       6    0     6      0
+scripts/test/handoff.test.mjs                         4.5     17      58   58     0      0
+scripts/test/lib/fixture-git.test.mjs                 4.4      1      32   32     0      0
+scripts/test/land-merged-read.test.mjs                4.2      3      35   34     0      1
+scripts/test/stack-base.test.mjs                      4.1      3      18   18     0      0
 deck/test/audit-offer.test.mjs                        4.1     12      11    0    11      0
-scripts/test/audit-spend-runs.test.mjs                4.1      5      37   32     5      0
-scripts/test/cli-wiring.test.mjs                      4.0      6      20   19     1      0
-scripts/test/check-syntax.test.mjs                    4.0      6      28   14    14      0
-scripts/test/land-none.test.mjs                       3.8      2      44   43     0      1
-deck/test/usage-switch.test.mjs                       3.8      9      13    2    11      0
-scripts/test/land-record.test.mjs                     3.8      1      42   41     0      1
-scripts/test/handoff.test.mjs                         3.7     17      58   58     0      0
-deck/test/doctor-defender.test.mjs                    3.5      4       9    6     0      3
-scripts/test/apply-reach.test.mjs                     3.5      9       1    0     1      0
+deck/test/lineage-base.test.mjs                       4.0      5      60   60     0      0
+scripts/test/test-command.test.mjs                    4.0     11      31   24     4      3
+scripts/test/worktrees-holder.test.mjs                3.9      7      44   44     0      0
+scripts/test/pilot-branch-env.test.mjs                3.7      4      20    9    11      0
+scripts/test/adr-allocate.test.mjs                    3.7      5      60   60     0      0
+scripts/test/git-view.test.mjs                        3.7      6      34   34     0      0
+deck/test/usage-switch.test.mjs                       3.6      9      13    2    11      0
+scripts/test/install-command.test.mjs                 3.6     17      18    0     6     12
+deck/test/gate2-checks.test.mjs                       3.5      8      48   48     0      0
 deck/test/daemon-replace.test.mjs                     3.5      9       9    0     6      3
+scripts/test/git-fixture.test.mjs                     3.5     11      60   60     0      0
+scripts/test/apply-reach.test.mjs                     3.4      9       1    0     1      0
 deck/test/landing-wake.test.mjs                       3.3      4       0    0     0      0
-scripts/test/land-merged-read.test.mjs                3.3      3      37   36     0      1
-scripts/test/ledgers.test.mjs                         3.3      3      45   45     0      0
+scripts/test/audit-context.test.mjs                   3.3     22      54   52     2      0
+scripts/test/land-offline.test.mjs                    3.3      3      33   32     0      1
 deck/test/wait-as.test.mjs                            3.3     12      11   11     0      0
-scripts/test/install-command.test.mjs                 3.2     17      18    0     6     12
-scripts/test/host-bar.test.mjs                        3.2      7       2    0     0      2
-hooks/test/stale-checkout.test.js                     3.0      4      35   27     8      0
-deck/test/slug-clash.test.mjs                         2.9      8      30   30     0      0
-hooks/test/shell-write-guard.test.js                  2.9     11      39   38     1      0
-scripts/test/install.test.mjs                         2.9    113      34   16    18      0
-deck/test/audit-pick.test.mjs                         2.9     13       7    0     7      0
-deck/test/wait.test.mjs                               2.9     30      28   28     0      0
-scripts/test/git-fixture.test.mjs                     2.8     11      60   60     0      0
-scripts/test/git-view.test.mjs                        2.8      6      34   34     0      0
-scripts/test/pilot-branch-env.test.mjs                2.5      4      20    9    11      0
-scripts/test/glossary-stale.test.mjs                  2.4      6      39   32     7      0
-deck/test/procs.test.mjs                              2.4     23       7    0     3      4
-scripts/test/stack-base.test.mjs                      2.4      3      18   18     0      0
-scripts/test/land-offline.test.mjs                    2.3      3      33   32     0      1
+scripts/test/install.test.mjs                         3.1    113      34   16    18      0
+scripts/test/host-bar.test.mjs                        3.1      7       2    0     0      2
+scripts/test/glossary-stale.test.mjs                  3.1      6      39   32     7      0
+scripts/test/base.test.mjs                            3.0      5      29   29     0      0
+scripts/test/cli-wiring.test.mjs                      2.8      6      20   19     1      0
+scripts/test/audit-spend-runs.test.mjs                2.8      5      37   32     5      0
+scripts/test/quiet-reporter.test.mjs                  2.7      4       7    0     7      0
+deck/test/wait.test.mjs                               2.7     30      28   28     0      0
+deck/test/slug-clash.test.mjs                         2.6      8      30   30     0      0
+scripts/test/check-syntax.test.mjs                    2.6      6      28   14    14      0
+scripts/test/git-view-tips.test.mjs                   2.5      5      26   26     0      0
+scripts/test/land-checks.test.mjs                     2.5      3      26   26     0      0
+deck/test/audit-pick.test.mjs                         2.5     13       7    0     7      0
 deck/test/daemon-lifecycle.test.mjs                   2.3      7       8    0     8      0
-scripts/test/audit-spend-reports.test.mjs             2.3      5      20   15     5      0
-scripts/test/land-checks.test.mjs                     2.3      3      28   28     0      0
-hooks/test/held-handoff.test.js                       2.2      9       7    0     7      0
-scripts/test/audit-spend.test.mjs                     2.2      4      19   14     5      0
-scripts/test/git-view-tips.test.mjs                   2.1      5      26   26     0      0
+scripts/test/rules-repair.test.mjs                    2.3     10      11    2     9      0
+deck/test/doctor-defender.test.mjs                    2.2      4       9    6     0      3
+hooks/test/shell-write-guard.test.js                  2.2     11      39   38     1      0
+hooks/test/stale-checkout.test.js                     2.1      4      35   27     8      0
 deck/test/scratch-seed.test.mjs                       2.1      4       5    0     5      0
-deck/test/human-steps-fill.test.mjs                   2.0     10      15   15     0      0
-deck/test/chat.test.mjs                               1.9     12       1    0     1      0
+scripts/test/handoff-friction.test.mjs                2.0      1      16   15     0      1
+hooks/test/held-handoff.test.js                       2.0      9       7    0     7      0
+deck/test/chat.test.mjs                               2.0     12       1    0     1      0
+deck/test/procs.test.mjs                              1.9     23       7    0     3      4
 deck/test/wait-no-reply.test.mjs                      1.9      3       0    0     0      0
 deck/test/owner.test.mjs                              1.9     10       0    0     0      0
-deck/test/closing-report.test.mjs                     1.8     23      12   12     0      0
+scripts/test/gate-spawns.test.mjs                     1.9      7       7    0     7      0
+scripts/test/remotes.test.mjs                         1.9      5      20   20     0      0
 deck/test/secret-unprinted.test.mjs                   1.8      2       5    0     5      0
-scripts/test/rules-repair.test.mjs                    1.8     10      11    2     9      0
-scripts/test/quiet-reporter.test.mjs                  1.7      4       7    0     7      0
-deck/test/telemetry-line.test.mjs                     1.7     15      45   45     0      0
 deck/test/facades.test.mjs                            1.7     11       4    0     4      0
+scripts/test/line-endings.test.mjs                    1.7      4      13   13     0      0
 deck/test/lesson.test.mjs                             1.7      8       0    0     0      0
-scripts/test/gate-spawns.test.mjs                     1.6      7       7    0     7      0
+scripts/test/audit-spend.test.mjs                     1.6      4      19   14     5      0
+scripts/test/audit-spend-reports.test.mjs             1.6      5      20   15     5      0
 hooks/test/context-size.test.js                       1.6     88       5    0     5      0
-scripts/test/handoff-friction.test.mjs                1.6      1      16   15     0      1
+deck/test/closing-report.test.mjs                     1.6     23      12   12     0      0
 deck/test/wait-for.test.mjs                           1.5      7       1    0     1      0
-scripts/test/remotes.test.mjs                         1.5      5      20   20     0      0
-deck/test/report-post-body.test.mjs                   1.5      9      12   12     0      0
-deck/test/deck-from.test.mjs                          1.5      5       4    0     4      0
+deck/test/deck-from.test.mjs                          1.4      5       4    0     4      0
 deck/test/signoff-owner.test.mjs                      1.4      8       0    0     0      0
-scripts/test/verdicts-write.test.mjs                  1.4      6       4    0     4      0
 deck/test/scratch-stop.test.mjs                       1.4      7       8    0     8      0
-scripts/test/vocabulary-guard.test.mjs                1.3     14       8    5     3      0
-scripts/test/line-endings.test.mjs                    1.3      4      13   13     0      0
+scripts/test/verdicts-write.test.mjs                  1.4      6       4    0     4      0
+deck/test/telemetry-line.test.mjs                     1.3     15      45   45     0      0
+deck/test/human-steps-fill.test.mjs                   1.3     10      15   15     0      0
+deck/test/report-post-body.test.mjs                   1.3      9      12   12     0      0
 deck/test/lanes-runnable.test.mjs                     1.3      5       0    0     0      0
-scripts/test/adr-index.test.mjs                       1.2     14      12    0    12      0
 deck/test/chain.test.mjs                              1.2     35       0    0     0      0
-scripts/test/diff-coverage.test.mjs                   1.1      6      19   12     7      0
-deck/test/report-due.test.mjs                         1.1      4       8    8     0      0
-hooks/test/owner-hooks.test.js                        1.0     10       6    0     6      0
-deck/test/verdict-record.test.mjs                     1.0      5      16   16     0      0
+hooks/test/owner-hooks.test.js                        1.1     10       6    0     6      0
 scripts/test/lesson-report.test.mjs                   1.0      7       3    0     3      0
+hooks/test/session-handoff.test.js                    1.0     54       2    0     2      0
 deck/test/fallback.test.mjs                           1.0     16       0    0     0      0
 scripts/test/uninstall-settings.test.mjs              1.0      7       5    5     0      0
-hooks/test/session-handoff.test.js                    0.9     54       2    0     2      0
+scripts/test/adr-index.test.mjs                       0.9     14      12    0    12      0
+scripts/test/glossary-match.test.mjs                  0.9      8      10    0    10      0
+deck/test/verdict-record.test.mjs                     0.9      5      16   16     0      0
+scripts/test/gitignore.test.mjs                       0.9      3      13   13     0      0
+deck/test/spawn-root.test.mjs                         0.9     10       0    0     0      0
 deck/test/awake-holder.test.mjs                       0.9     15       5    0     2      3
 scripts/test/install-rules-reach.test.mjs             0.9      5       0    0     0      0
 deck/test/ticket-live-scope.test.mjs                  0.9      6       2    0     2      0
-deck/test/spawn-root.test.mjs                         0.8     10       0    0     0      0
-deck/test/landing.test.mjs                            0.8     13       1    1     0      0
-deck/test/tabs.test.mjs                               0.8     62       8    0     8      0
 deck/test/wait-yellow-lane.test.mjs                   0.8      1       0    0     0      0
-deck/test/schedule.test.mjs                           0.8     11       8    8     0      0
-deck/test/reopen.test.mjs                             0.8     19       0    0     0      0
-deck/test/doctor-slugs.test.mjs                       0.8     11       7    7     0      0
 deck/test/create.test.mjs                             0.8     25       0    0     0      0
-deck/test/scratch-registry.test.mjs                   0.8      2       2    0     2      0
 deck/test/audit.test.mjs                              0.8     10       2    0     2      0
-scripts/test/audit-refusals.test.mjs                  0.8      9       8    5     3      0
-deck/test/closing-worktrees-left.test.mjs             0.7      4       6    6     0      0
-deck/test/items.test.mjs                              0.7     45       0    0     0      0
+deck/test/reopen.test.mjs                             0.8     19       0    0     0      0
+deck/test/landing.test.mjs                            0.8     13       1    1     0      0
+deck/test/items.test.mjs                              0.8     45       0    0     0      0
+scripts/test/handoff-owed.test.mjs                    0.8      5      18   16     0      2
+scripts/test/vocabulary-guard.test.mjs                0.7     14       8    5     3      0
 deck/test/wait-record.test.mjs                        0.7      4       1    1     0      0
-hooks/test/session-handoff-count.test.js              0.7      3       1    0     1      0
-deck/test/memory.test.mjs                             0.7     10       4    1     3      0
-deck/test/live.test.mjs                               0.7     50       0    0     0      0
-scripts/test/gitignore.test.mjs                       0.7      3      13   13     0      0
+deck/test/report-due.test.mjs                         0.7      4       8    8     0      0
 scripts/test/glossary-log.test.mjs                    0.7     11       8    0     8      0
-scripts/test/handoff-owed.test.mjs                    0.7      5      18   16     0      2
-scripts/test/glossary-match.test.mjs                  0.7      8      10    0    10      0
-deck/test/stale.test.mjs                              0.6     29       5    0     5      0
-deck/test/co-pilot-agent.test.mjs                     0.6      5       3    3     0      0
-deck/test/landing-wait.test.mjs                       0.6     13       0    0     0      0
+scripts/test/diff-coverage.test.mjs                   0.7      6      19   12     7      0
+deck/test/scratch-registry.test.mjs                   0.7      2       2    0     2      0
+deck/test/doctor-slugs.test.mjs                       0.7     11       7    7     0      0
+deck/test/tabs.test.mjs                               0.7     62       8    0     8      0
+deck/test/landing-guard.test.mjs                      0.7      8       0    0     0      0
+deck/test/live.test.mjs                               0.7     50       0    0     0      0
 hooks/test/handoff-trace.test.js                      0.6      3       3    3     0      0
-scripts/test/measure-plain.test.mjs                   0.6      8       3    0     3      0
+deck/test/gc.test.mjs                                 0.6      7       3    0     2      1
+deck/test/landing-wait.test.mjs                       0.6     13       0    0     0      0
 deck/test/status.test.mjs                             0.6     56       0    0     0      0
-deck/test/landing-guard.test.mjs                      0.6      8       0    0     0      0
+hooks/test/session-handoff-count.test.js              0.6      3       1    0     1      0
+deck/test/deck-guard.test.mjs                         0.6      5       1    0     1      0
+deck/test/closing-worktrees-left.test.mjs             0.6      4       6    6     0      0
+scripts/test/audit-refusals.test.mjs                  0.6      9       8    5     3      0
 deck/test/pilot-state-wait.test.mjs                   0.6      5       0    0     0      0
-scripts/test/no-pilot-run.test.mjs                    0.6      2       2    1     1      0
+deck/test/memory.test.mjs                             0.6     10       4    1     3      0
+deck/test/record.test.mjs                             0.6     25       2    0     2      0
+scripts/test/measure-plain.test.mjs                   0.6      8       3    0     3      0
+deck/test/schedule.test.mjs                           0.6     11       8    8     0      0
+scripts/test/one-line-docs.test.mjs                   0.6      2       2    0     2      0
 deck/test/telemetry-resume.test.mjs                   0.5     11      18   18     0      0
-deck/test/gc.test.mjs                                 0.5      7       3    0     2      1
-deck/test/deck-guard.test.mjs                         0.5      5       1    0     1      0
-deck/test/run-look.test.mjs                           0.5     16       0    0     0      0
-deck/test/close.test.mjs                              0.5     16       0    0     0      0
-deck/test/land-again.test.mjs                         0.5     10       0    0     0      0
-deck/test/telemetry.test.mjs                          0.5     10       5    3     2      0
+deck/test/status-command.test.mjs                     0.5      7       3    0     3      0
 deck/test/orphan.test.mjs                             0.5      8       1    1     0      0
-scripts/test/tree-census.test.mjs                     0.5      2       1    1     0      0
-deck/test/idle.test.mjs                               0.5      6       0    0     0      0
+deck/test/run-look.test.mjs                           0.5     16       0    0     0      0
+deck/test/land-again.test.mjs                         0.5     10       0    0     0      0
+deck/test/stale.test.mjs                              0.5     29       5    0     5      0
+deck/test/close.test.mjs                              0.5     16       0    0     0      0
+deck/test/telemetry.test.mjs                          0.5     10       5    3     2      0
 deck/test/idle-wake.test.mjs                          0.5      5       0    0     0      0
-scripts/test/one-line-docs.test.mjs                   0.5      2       2    0     2      0
-deck/test/record.test.mjs                             0.5     25       2    0     2      0
+deck/test/idle.test.mjs                               0.5      6       0    0     0      0
+scripts/test/no-pilot-run.test.mjs                    0.5      2       2    1     1      0
 deck/test/landing-queue.test.mjs                      0.5      6       0    0     0      0
-scripts/test/check-slices.test.mjs                    0.4     32       4    0     4      0
-scripts/test/audit-session-start.test.mjs             0.4     16       4    0     4      0
+scripts/test/gate-install.test.mjs                    0.5      4       1    0     1      0
+deck/test/co-pilot.test.mjs                           0.5     14       0    0     0      0
 deck/test/inplace.test.mjs                            0.4     20       0    0     0      0
-deck/test/stop-holds-lane.test.mjs                    0.4      5       0    0     0      0
-deck/test/co-pilot.test.mjs                           0.4     14       0    0     0      0
-deck/test/deck-secret.test.mjs                        0.4      4       3    0     3      0
-deck/test/open.test.mjs                               0.4     20       0    0     0      0
-deck/test/nothing-hidden.test.mjs                     0.4      5       0    0     0      0
-deck/test/agents.test.mjs                             0.4     12       0    0     0      0
-deck/test/handoff-bar.test.mjs                        0.4     18       0    0     0      0
-deck/test/trace-deck.test.mjs                         0.4      5       1    0     1      0
-deck/test/status-command.test.mjs                     0.4      7       3    0     3      0
-scripts/test/glossary.test.mjs                        0.4      7       5    0     5      0
+deck/test/co-pilot-agent.test.mjs                     0.4      5       3    3     0      0
+scripts/test/audit-session-start.test.mjs             0.4     16       4    0     4      0
 deck/test/skeleton.test.mjs                           0.4     68       0    0     0      0
+deck/test/deck-secret.test.mjs                        0.4      4       3    0     3      0
+deck/test/trace-deck.test.mjs                         0.4      5       1    0     1      0
+deck/test/stop-holds-lane.test.mjs                    0.4      5       0    0     0      0
+deck/test/open.test.mjs                               0.4     20       0    0     0      0
+deck/test/agents.test.mjs                             0.4     12       0    0     0      0
+scripts/test/pilot-agents.test.mjs                    0.4     71       1    0     1      0
+scripts/test/measure-prompt.test.mjs                  0.4      9       2    0     2      0
+deck/test/handoff-bar.test.mjs                        0.4     18       0    0     0      0
+deck/test/nothing-hidden.test.mjs                     0.4      5       0    0     0      0
 deck/test/routing.test.mjs                            0.4      4       1    0     1      0
-deck/test/crew-wait.test.mjs                          0.4      4       0    0     0      0
-hooks/test/stop-gate-idle-lane.test.js                0.4      7       0    0     0      0
 deck/test/gate-resolve.test.mjs                       0.4     13       0    0     0      0
-scripts/test/readme-flow.test.mjs                     0.4      8       1    0     1      0
-scripts/test/two-devices-doc.test.mjs                 0.4      3       1    0     1      0
 deck/test/card.test.mjs                               0.4     19       0    0     0      0
-scripts/test/version-command.test.mjs                 0.4      1       1    0     1      0
-deck/test/gate-render.test.mjs                        0.3     13       0    0     0      0
-scripts/test/operating-commands.test.mjs              0.3      1       1    0     1      0
+deck/test/crew-wait.test.mjs                          0.4      4       0    0     0      0
+scripts/test/glossary.test.mjs                        0.4      7       5    0     5      0
+deck/test/gate-render.test.mjs                        0.4     13       0    0     0      0
+scripts/test/check-slices.test.mjs                    0.4     32       4    0     4      0
+hooks/test/stop-gate-idle-lane.test.js                0.4      7       0    0     0      0
+deck/test/gate-kinds.test.mjs                         0.3      7       0    0     0      0
+scripts/test/readme-flow.test.mjs                     0.3      8       1    0     1      0
+scripts/test/tree-census.test.mjs                     0.3      2       1    1     0      0
+scripts/test/version-command.test.mjs                 0.3      1       1    0     1      0
 scripts/test/readme-pitch.test.mjs                    0.3      8       1    0     1      0
+scripts/test/two-devices-doc.test.mjs                 0.3      3       1    0     1      0
+scripts/test/operating-commands.test.mjs              0.3      1       1    0     1      0
+deck/test/press-frees-lane.test.mjs                   0.3     11       0    0     0      0
+deck/test/overview-one-ticket.test.mjs                0.3     11       0    0     0      0
 deck/test/ticket-state.test.mjs                       0.3     20       0    0     0      0
-scripts/test/gate-install.test.mjs                    0.3      4       1    0     1      0
-scripts/test/pilot-agents.test.mjs                    0.3     71       1    0     1      0
+scripts/test/measure-voice.test.mjs                   0.3      8       3    0     3      0
+deck/test/register-again.test.mjs                     0.3      7       0    0     0      0
 deck/test/ticket-tool.test.mjs                        0.3      5       0    0     0      0
 deck/test/store-archive.test.mjs                      0.3      6       1    0     1      0
-deck/test/press-frees-lane.test.mjs                   0.3     11       0    0     0      0
-scripts/test/gate-slots.test.mjs                      0.3     10       2    0     0      2
-deck/test/overview-one-ticket.test.mjs                0.3     11       0    0     0      0
-deck/test/phase.test.mjs                              0.3     14       1    0     1      0
-deck/test/notices.test.mjs                            0.3     14       0    0     0      0
-deck/test/yield.test.mjs                              0.3     13       0    0     0      0
-scripts/test/measure-prompt.test.mjs                  0.3      9       2    0     2      0
-scripts/test/test-quiet.test.mjs                      0.3      3       2    0     2      0
-deck/test/register-again.test.mjs                     0.3      7       0    0     0      0
-deck/test/gate-kinds.test.mjs                         0.3      7       0    0     0      0
-deck/test/auditor-owner.test.mjs                      0.3      7       0    0     0      0
 deck/test/landing-conflict.test.mjs                   0.3      7       0    0     0      0
-deck/test/deck-state.test.mjs                         0.3     11       0    0     0      0
-deck/test/red-grilling.test.mjs                       0.3      9       0    0     0      0
+deck/test/yield.test.mjs                              0.3     13       0    0     0      0
+deck/test/phase.test.mjs                              0.3     14       1    0     1      0
+scripts/test/gate-slots.test.mjs                      0.3     10       2    0     0      2
 deck/test/budget.test.mjs                             0.3     14       0    0     0      0
+scripts/test/measure-headroom.test.mjs                0.3      5       2    0     2      0
+deck/test/auditor-owner.test.mjs                      0.3      7       0    0     0      0
+scripts/test/test-quiet.test.mjs                      0.3      3       2    0     2      0
+deck/test/blocking.test.mjs                           0.3      8       0    0     0      0
+deck/test/deck-state.test.mjs                         0.3     11       0    0     0      0
+deck/test/notices.test.mjs                            0.3     14       0    0     0      0
 deck/test/owner-read.test.mjs                         0.3      7       0    0     0      0
-deck/test/analytics.test.mjs                          0.3      9       1    1     0      0
+deck/test/red-grilling.test.mjs                       0.3      9       0    0     0      0
+scripts/test/pilot-rules.test.mjs                     0.3      8       1    0     1      0
 deck/test/merge.test.mjs                              0.3     10       0    0     0      0
-deck/test/qa-resume.test.mjs                          0.3      3       0    0     0      0
-scripts/test/check-provenance.test.mjs                0.3     14       2    0     2      0
+hooks/test/stop-gate-idle-yellow.test.js              0.3      1       0    0     0      0
 deck/test/read-window.test.mjs                        0.2     11       0    0     0      0
-deck/test/switch-lock.test.mjs                        0.2      6       0    0     0      0
-scripts/test/handoff-lanes.test.mjs                   0.2      3       6    3     0      3
-deck/test/ticket-need.test.mjs                        0.2      9       0    0     0      0
-scripts/test/measure-voice.test.mjs                   0.2      8       3    0     3      0
 hooks/test/stop-gate.test.js                          0.2      2       0    0     0      0
-deck/test/crew-handoff.test.mjs                       0.2      4       0    0     0      0
-deck/test/blocking.test.mjs                           0.2      8       0    0     0      0
-hooks/test/stop-gate-idle-yellow.test.js              0.2      1       0    0     0      0
-deck/test/recut.test.mjs                              0.2      6       0    0     0      0
-deck/test/walkthrough-concludes.test.mjs              0.2     13       0    0     0      0
-deck/test/start-session.test.mjs                      0.2     22       0    0     0      0
-hooks/test/deck-author.test.js                        0.2      7       2    0     2      0
-deck/test/tickets.test.mjs                            0.2     11       0    0     0      0
+deck/test/qa-resume.test.mjs                          0.2      3       0    0     0      0
 deck/test/dismiss-item.test.mjs                       0.2     15       0    0     0      0
-hooks/test/permission-denied.test.js                  0.2     26       1    0     1      0
+deck/test/ticket-need.test.mjs                        0.2      9       0    0     0      0
+deck/test/crew-handoff.test.mjs                       0.2      4       0    0     0      0
+deck/test/switch-lock.test.mjs                        0.2      6       0    0     0      0
+scripts/test/check-provenance.test.mjs                0.2     14       2    0     2      0
 deck/test/co-pilot-switch-lock.test.mjs               0.2      5       0    0     0      0
-scripts/test/check-spec.test.mjs                      0.2      8       2    0     2      0
-hooks/test/session-handoff-lanes.test.js              0.2      4       0    0     0      0
 deck/test/lander-one-press.test.mjs                   0.2      5       0    0     0      0
-scripts/test/measure-headroom.test.mjs                0.2      5       2    0     2      0
-deck/test/tickets-open.test.mjs                       0.2      7       0    0     0      0
-deck/test/gate-stays-signed.test.mjs                  0.2      8       0    0     0      0
+hooks/test/permission-denied.test.js                  0.2     26       1    0     1      0
+deck/test/recut.test.mjs                              0.2      6       0    0     0      0
+scripts/test/handoff-lanes.test.mjs                   0.2      3       6    3     0      3
+deck/test/start-session.test.mjs                      0.2     22       0    0     0      0
 deck/test/landing-row.test.mjs                        0.2      8       0    0     0      0
-deck/test/stage-queue-tail.test.mjs                   0.2     11       0    0     0      0
-deck/test/reply.test.mjs                              0.2     19       0    0     0      0
-hooks/test/successor-owed.test.js                     0.2      6       0    0     0      0
-deck/test/store-archive-read.test.mjs                 0.2      7       0    0     0      0
-deck/test/deck-reads.test.mjs                         0.2      5       1    1     0      0
-deck/test/switch-request.test.mjs                     0.2      7       0    0     0      0
 deck/test/architect-owner.test.mjs                    0.2      4       0    0     0      0
-deck/test/add-deck.test.mjs                           0.2     11       0    0     0      0
-deck/test/markdown.test.mjs                           0.2     47       0    0     0      0
-deck/test/ticket-tool-lanes.test.mjs                  0.2      4       0    0     0      0
-deck/test/switch-complete.test.mjs                    0.2      7       0    0     0      0
-deck/test/press-refused.test.mjs                      0.2      6       0    0     0      0
-deck/test/notifications.test.mjs                      0.2     48       0    0     0      0
-deck/test/read-brief.test.mjs                         0.2      4       0    0     0      0
-hooks/test/session-handoff-yellow.test.js             0.2      9       0    0     0      0
-hooks/test/plain-pickup.test.js                       0.2      9       0    0     0      0
-deck/test/qa-comment.test.mjs                         0.2      7       0    0     0      0
-scripts/test/rune-target.test.mjs                     0.2      6       0    0     0      0
-deck/test/remove-deck.test.mjs                        0.2     12       0    0     0      0
-deck/test/co-pilot-switch-complete.test.mjs           0.2      5       0    0     0      0
+deck/test/tickets.test.mjs                            0.2     11       0    0     0      0
+hooks/test/successor-owed.test.js                     0.2      6       0    0     0      0
+hooks/test/session-handoff-lanes.test.js              0.2      4       0    0     0      0
+deck/test/fixtures/throw-in-timer.mjs                 0.2      1       0    0     0      0
+deck/test/walkthrough-concludes.test.mjs              0.2     13       0    0     0      0
+deck/test/deck-reads.test.mjs                         0.2      5       1    1     0      0
 deck/test/architect-gate1.test.mjs                    0.2      3       0    0     0      0
-deck/test/default-taken.test.mjs                      0.2      5       0    0     0      0
-deck/test/usage.test.mjs                              0.2     44       0    0     0      0
-deck/test/move.test.mjs                               0.2      7       0    0     0      0
-deck/test/title-ref.test.mjs                          0.2     11       0    0     0      0
+deck/test/qa-comment.test.mjs                         0.2      7       0    0     0      0
+deck/test/gate-stays-signed.test.mjs                  0.2      8       0    0     0      0
+deck/test/notifications.test.mjs                      0.2     48       0    0     0      0
+deck/test/markdown.test.mjs                           0.2     47       0    0     0      0
+deck/test/switch-complete.test.mjs                    0.2      7       0    0     0      0
+deck/test/add-deck.test.mjs                           0.2     11       0    0     0      0
+deck/test/stage-queue-tail.test.mjs                   0.2     11       0    0     0      0
+deck/test/tickets-open.test.mjs                       0.2      7       0    0     0      0
+deck/test/press-refused.test.mjs                      0.2      6       0    0     0      0
+deck/test/store-archive-read.test.mjs                 0.2      7       0    0     0      0
 deck/test/co-pilot-switch.test.mjs                    0.2      8       0    0     0      0
-scripts/test/path-length.test.mjs                     0.2      2       1    1     0      0
-scripts/test/fixtures/glossary-stale/src/ledger.js    0.2      1       0    0     0      0
-deck/test/three-lanes-chain.test.mjs                  0.2      6       0    0     0      0
-deck/test/handoff-unacked.test.mjs                    0.2     13       0    0     0      0
-deck/test/number.test.mjs                             0.2      8       1    0     1      0
-hooks/test/stop-gate-yellow-lane.test.js              0.2      1       0    0     0      0
+deck/test/ticket-tool-lanes.test.mjs                  0.2      4       0    0     0      0
+hooks/test/session-handoff-yellow.test.js             0.2      9       0    0     0      0
+deck/test/co-pilot-switch-complete.test.mjs           0.2      5       0    0     0      0
+deck/test/default-taken.test.mjs                      0.2      5       0    0     0      0
+deck/test/reply.test.mjs                              0.2     19       0    0     0      0
 deck/test/confirm-sandbox.mjs                         0.2      1       0    0     0      0
-scripts/test/bump.test.mjs                            0.2      6       1    0     1      0
-deck/test/classifier-log.test.mjs                     0.2     55       0    0     0      0
+deck/test/handoff-unacked.test.mjs                    0.2     13       0    0     0      0
+deck/test/remove-deck.test.mjs                        0.2     12       0    0     0      0
+deck/test/move.test.mjs                               0.2      7       0    0     0      0
 deck/test/gate-signed-render.test.mjs                 0.2      7       0    0     0      0
-deck/test/accents.test.mjs                            0.2      8       0    0     0      0
-deck/test/moot.test.mjs                               0.2      7       0    0     0      0
-deck/test/moot-resume.test.mjs                        0.2      5       0    0     0      0
+deck/test/read-brief.test.mjs                         0.2      4       0    0     0      0
+deck/test/switch-request.test.mjs                     0.2      7       0    0     0      0
+hooks/test/plain-pickup.test.js                       0.2      9       0    0     0      0
+deck/test/yellow-resume.test.mjs                      0.2      5       0    0     0      0
+deck/test/title-ref.test.mjs                          0.2     11       0    0     0      0
+deck/test/classifier-log.test.mjs                     0.2     55       0    0     0      0
+hooks/test/stop-gate-yellow-lane.test.js              0.2      1       0    0     0      0
+deck/test/usage.test.mjs                              0.2     44       0    0     0      0
+deck/test/number.test.mjs                             0.2      8       1    0     1      0
+deck/test/three-lanes-chain.test.mjs                  0.2      6       0    0     0      0
+deck/test/short-path-gate2.test.mjs                   0.2      5       0    0     0      0
 deck/test/host-gitlab-checks.test.mjs                 0.2      4       2    0     0      2
+deck/test/moot.test.mjs                               0.2      7       0    0     0      0
 deck/test/started-route.test.mjs                      0.2      4       0    0     0      0
-deck/test/yellow-resume.test.mjs                      0.1      5       0    0     0      0
-deck/test/pilot-closes.test.mjs                       0.1      6       0    0     0      0
-deck/test/handoff-buttons.test.mjs                    0.1      8       0    0     0      0
-deck/test/short-path-gate2.test.mjs                   0.1      5       0    0     0      0
+scripts/test/bump.test.mjs                            0.2      6       1    0     1      0
+deck/test/accents.test.mjs                            0.2      8       0    0     0      0
+deck/test/handoff-buttons.test.mjs                    0.2      8       0    0     0      0
 deck/test/ticket-tool-yellow.test.mjs                 0.1      3       0    0     0      0
+deck/test/moot-resume.test.mjs                        0.1      5       0    0     0      0
 deck/test/api-items.test.mjs                          0.1      5       0    0     0      0
-deck/test/co-pilot-mark.test.mjs                      0.1      6       0    0     0      0
-deck/test/gate2-checks-table.test.mjs                 0.1      7       0    0     0      0
-scripts/test/pilot-rules.test.mjs                     0.1      8       1    0     1      0
-deck/test/unheard.test.mjs                            0.1      3       0    0     0      0
-deck/test/handoff-confirm.test.mjs                    0.1      7       0    0     0      0
-deck/test/take-order.test.mjs                         0.1      9       0    0     0      0
+deck/test/status-run.test.mjs                         0.1     10       0    0     0      0
 deck/test/co-pilot-holder.test.mjs                    0.1      4       0    0     0      0
+scripts/test/check-spec.test.mjs                      0.1      8       2    0     2      0
+deck/test/client-posted.test.mjs                      0.1      4       0    0     0      0
+deck/test/unheard.test.mjs                            0.1      3       0    0     0      0
+deck/test/gate2-checks-table.test.mjs                 0.1      7       0    0     0      0
+deck/test/pilot-closes.test.mjs                       0.1      6       0    0     0      0
+deck/test/co-pilot-mark.test.mjs                      0.1      6       0    0     0      0
+deck/test/take-order.test.mjs                         0.1      9       0    0     0      0
+deck/test/landed-closes.test.mjs                      0.1      4       0    0     0      0
 scripts/test/host-setting.test.mjs                    0.1      6       2    2     0      0
 deck/test/view-thread.test.mjs                        0.1      4       0    0     0      0
-deck/test/status-run.test.mjs                         0.1     10       0    0     0      0
-deck/test/mode-gone.test.mjs                          0.1      4       0    0     0      0
-deck/test/landed-closes.test.mjs                      0.1      4       0    0     0      0
-deck/test/view-queue.test.mjs                         0.1      6       0    0     0      0
-deck/test/three-lanes-rail.test.mjs                   0.1      5       0    0     0      0
-deck/test/merge-gate.test.mjs                         0.1      8       0    0     0      0
-deck/test/ticket-folds.test.mjs                       0.1      7       0    0     0      0
-deck/test/report-record.test.mjs                      0.1      8       0    0     0      0
-deck/test/pr-writes.test.mjs                          0.1      7       0    0     0      0
-hooks/test/session-handoff-owed.test.js               0.1      5       0    0     0      0
-scripts/test/measure-rules.test.mjs                   0.1      4       1    0     1      0
-deck/test/posters.test.mjs                            0.1      5       1    1     0      0
-deck/test/next-ticket.test.mjs                        0.1      5       0    0     0      0
-deck/test/crew-settle.test.mjs                        0.1      7       0    0     0      0
-deck/test/store-recovery.test.mjs                     0.1      8       0    0     0      0
-deck/test/client-posted.test.mjs                      0.1      4       0    0     0      0
-deck/test/number-shown.test.mjs                       0.1      5       0    0     0      0
-deck/test/lander-queue.test.mjs                       0.1      3       0    0     0      0
-scripts/test/references-writes.test.mjs               0.1      5       0    0     0      0
-deck/test/three-lanes-switch.test.mjs                 0.1      4       0    0     0      0
-scripts/test/recut-prose.test.mjs                     0.1      7       0    0     0      0
-deck/test/three-lanes-status.test.mjs                 0.1      6       0    0     0      0
-scripts/test/toolbox.test.mjs                         0.1     11       0    0     0      0
-deck/test/human-steps.test.mjs                        0.1      7       0    0     0      0
-deck/test/make-tickets.test.mjs                       0.1      7       0    0     0      0
-scripts/test/install-settings-reach.test.mjs          0.1     10       0    0     0      0
-deck/test/title-ref-ids.test.mjs                      0.1      5       0    0     0      0
-deck/test/handoff-ack.test.mjs                        0.1      7       0    0     0      0
-deck/test/confirm.test.mjs                            0.1     12       0    0     0      0
-deck/test/human-step-record.test.mjs                  0.1      3       0    0     0      0
-deck/test/gate2-stays-signed.test.mjs                 0.1      3       0    0     0      0
+deck/test/analytics.test.mjs                          0.1      9       1    1     0      0
 deck/test/away.test.mjs                               0.1      4       0    0     0      0
+deck/test/ticket-folds.test.mjs                       0.1      7       0    0     0      0
+deck/test/mode-gone.test.mjs                          0.1      4       0    0     0      0
+deck/test/handoff-confirm.test.mjs                    0.1      7       0    0     0      0
+scripts/test/rune-target.test.mjs                     0.1      6       0    0     0      0
+deck/test/pr-writes.test.mjs                          0.1      7       0    0     0      0
+deck/test/confirm.test.mjs                            0.1     12       0    0     0      0
+deck/test/view-queue.test.mjs                         0.1      6       0    0     0      0
+deck/test/posters.test.mjs                            0.1      5       1    1     0      0
+deck/test/merge-gate.test.mjs                         0.1      8       0    0     0      0
+deck/test/crew-settle.test.mjs                        0.1      7       0    0     0      0
+scripts/test/adr-format.test.mjs                      0.1      4       1    0     1      0
+deck/test/three-lanes-rail.test.mjs                   0.1      5       0    0     0      0
+scripts/test/measure-rules.test.mjs                   0.1      4       1    0     1      0
+deck/test/number-shown.test.mjs                       0.1      5       0    0     0      0
+scripts/test/toolbox.test.mjs                         0.1     11       0    0     0      0
+deck/test/no-open.mjs                                 0.1      1       0    0     0      0
+deck/test/human-steps.test.mjs                        0.1      7       0    0     0      0
+hooks/test/session-handoff-owed.test.js               0.1      5       0    0     0      0
+deck/test/store-recovery.test.mjs                     0.1      8       0    0     0      0
+hooks/test/deck-author.test.js                        0.1      7       2    0     2      0
+deck/test/lander-queue.test.mjs                       0.1      3       0    0     0      0
+deck/test/make-tickets.test.mjs                       0.1      7       0    0     0      0
+deck/test/resume.test.mjs                             0.1      4       0    0     0      0
+deck/test/gate2-stays-signed.test.mjs                 0.1      3       0    0     0      0
+deck/test/parallel.test.mjs                           0.1      2       0    0     0      0
+deck/test/three-lanes-status.test.mjs                 0.1      6       0    0     0      0
+deck/test/title-ref-ids.test.mjs                      0.1      5       0    0     0      0
+scripts/test/recut-prose.test.mjs                     0.1      7       0    0     0      0
+scripts/test/install-settings-reach.test.mjs          0.1     10       0    0     0      0
+deck/test/next-ticket.test.mjs                        0.1      5       0    0     0      0
 deck/test/doctor-deck.test.mjs                        0.1      9       0    0     0      0
 deck/test/analytics-run.mjs                           0.1      1       0    0     0      0
-deck/test/alert-switch.test.mjs                       0.1      4       0    0     0      0
+deck/test/report-record.test.mjs                      0.1      8       0    0     0      0
 hooks/test/deck-dir-guard.test.js                     0.1      4       0    0     0      0
-deck/test/resume.test.mjs                             0.1      4       0    0     0      0
-scripts/test/rules-dedup.test.mjs                     0.1      2       0    0     0      0
-deck/test/doctor-reach.test.mjs                       0.1      4       5    0     0      5
-deck/test/favicon.test.mjs                            0.1      5       0    0     0      0
 deck/test/view-route.test.mjs                         0.1      4       0    0     0      0
-deck/test/spec-gate.test.mjs                          0.1      6       0    0     0      0
-deck/test/parallel.test.mjs                           0.1      2       0    0     0      0
-deck/test/landing-display.test.mjs                    0.1      3       0    0     0      0
 deck/test/in-hand.test.mjs                            0.1      3       0    0     0      0
-deck/test/gate2-blockers.test.mjs                     0.1      3       0    0     0      0
-deck/test/owed.test.mjs                               0.1      8       0    0     0      0
-deck/test/teach.test.mjs                              0.1      9       0    0     0      0
 deck/test/seen-by.test.mjs                            0.1      5       0    0     0      0
-scripts/test/hidden-spawns.test.mjs                   0.1      4       0    0     0      0
-deck/test/steps-in-previews.test.mjs                  0.1      3       0    0     0      0
-scripts/test/wait-deadline-lint.test.mjs              0.1      1       0    0     0      0
-deck/test/estimate.test.mjs                           0.1      6       0    0     0      0
-deck/test/ui-route.test.mjs                           0.1      5       0    0     0      0
-scripts/test/adr-format.test.mjs                      0.1      4       1    0     1      0
+deck/test/human-step-record.test.mjs                  0.1      3       0    0     0      0
+deck/test/three-lanes-switch.test.mjs                 0.1      4       0    0     0      0
+deck/test/favicon.test.mjs                            0.1      5       0    0     0      0
+deck/test/alert-switch.test.mjs                       0.1      4       0    0     0      0
+deck/test/spec-gate.test.mjs                          0.1      6       0    0     0      0
+deck/test/owed.test.mjs                               0.1      8       0    0     0      0
+deck/test/landing-display.test.mjs                    0.1      3       0    0     0      0
 deck/test/walkthrough-surface.test.mjs                0.1      5       0    0     0      0
-deck/test/proposal.test.mjs                           0.1      3       0    0     0      0
-scripts/test/scripts.test.mjs                         0.1     14       0    0     0      0
-scripts/test/gate-cargo.test.mjs                      0.1     18       0    0     0      0
-deck/test/types.test.mjs                              0.1      5       0    0     0      0
-deck/test/author.test.mjs                             0.1      8       0    0     0      0
-deck/test/read-one.test.mjs                           0.1      5       0    0     0      0
-deck/test/lane-ticket.test.mjs                        0.1      4       0    0     0      0
-scripts/test/rules-globs.test.mjs                     0.1      4       0    0     0      0
-scripts/test/platform-reads.test.mjs                  0.1      1       0    0     0      0
-deck/test/analytics-cost.test.mjs                     0.1      7       0    0     0      0
-deck/test/thread-nav.test.mjs                         0.1     16       0    0     0      0
-scripts/test/install-path.test.mjs                    0.1     20       0    0     0      0
-deck/test/view-steps.test.mjs                         0.1      2       0    0     0      0
-deck/test/dismiss.test.mjs                            0.1      5       0    0     0      0
-hooks/test/wait-guard.test.js                         0.1      5       0    0     0      0
-deck/test/analytics-unrecorded.test.mjs               0.1      8       0    0     0      0
+deck/test/estimate.test.mjs                           0.1      6       0    0     0      0
+scripts/test/references-writes.test.mjs               0.1      5       0    0     0      0
+deck/test/doctor-reach.test.mjs                       0.1      4       5    0     0      5
+deck/test/steps-in-previews.test.mjs                  0.1      3       0    0     0      0
+scripts/test/hidden-spawns.test.mjs                   0.1      4       0    0     0      0
+deck/test/handoff-ack.test.mjs                        0.1      7       0    0     0      0
+scripts/test/rules-dedup.test.mjs                     0.1      2       0    0     0      0
 deck/test/analytics-buckets.test.mjs                  0.1      9       0    0     0      0
+scripts/test/wait-deadline-lint.test.mjs              0.1      1       0    0     0      0
+deck/test/analytics-cost.test.mjs                     0.1      7       0    0     0      0
+deck/test/teach.test.mjs                              0.1      9       0    0     0      0
+deck/test/gate2-blockers.test.mjs                     0.1      3       0    0     0      0
+deck/test/types.test.mjs                              0.1      5       0    0     0      0
+deck/test/read-one.test.mjs                           0.1      5       0    0     0      0
 deck/test/short-path.test.mjs                         0.1      3       0    0     0      0
-scripts/test-cost.mjs                                 0.1      1       0    0     0      0
-scripts/test/install-ask.test.mjs                     0.1      7       0    0     0      0
-deck/test/human-steps-reopen.test.mjs                 0.1      4       0    0     0      0
-deck/test/look.test.mjs                               0.1     11       0    0     0      0
-deck/test/type-buttons.test.mjs                       0.1      5       0    0     0      0
-deck/test/store-v3.test.mjs                           0.1      8       0    0     0      0
-deck/test/yellow-park.test.mjs                        0.1      5       0    0     0      0
-deck/test/fixtures/audit-18-rows.mjs                  0.1      1       0    0     0      0
-scripts/test/install-allow-reads.test.mjs             0.1      8       0    0     0      0
-deck/test/closing-main-pr.test.mjs                    0.1      3       0    0     0      0
-deck/test/handoff-unheld.test.mjs                     0.1      2       0    0     0      0
-deck/test/three-lanes.test.mjs                        0.1      7       0    0     0      0
-deck/test/record-report.test.mjs                      0.1      4       0    0     0      0
+deck/test/lane-ticket.test.mjs                        0.1      4       0    0     0      0
+scripts/test/fixtures/glossary-stale/src/ledger.js    0.1      1       0    0     0      0
+scripts/test/gate-cargo.test.mjs                      0.1     18       0    0     0      0
+deck/test/ui-route.test.mjs                           0.1      5       0    0     0      0
+scripts/test/rules-globs.test.mjs                     0.1      4       0    0     0      0
+deck/test/author.test.mjs                             0.1      8       0    0     0      0
+deck/test/analytics-unrecorded.test.mjs               0.1      8       0    0     0      0
 deck/test/view-history.test.mjs                       0.1      5       0    0     0      0
-scripts/test/fixtures/leak/deck/daemon.mjs            0.1      1       0    0     0      0
-deck/test/work.test.mjs                               0.1      4       0    0     0      0
-deck/test/tickets-region.test.mjs                     0.1      1       0    0     0      0
-deck/test/no-open.mjs                                 0.1      1       0    0     0      0
-deck/test/fixtures/throw-in-timer.mjs                 0.1      1       0    0     0      0
+hooks/test/wait-guard.test.js                         0.1      5       0    0     0      0
+deck/test/human-steps-reopen.test.mjs                 0.1      4       0    0     0      0
+deck/test/type-buttons.test.mjs                       0.1      5       0    0     0      0
+deck/test/yellow-park.test.mjs                        0.1      5       0    0     0      0
+deck/test/store-v3.test.mjs                           0.1      8       0    0     0      0
+scripts/test/install-path.test.mjs                    0.1     20       0    0     0      0
+deck/test/dismiss.test.mjs                            0.1      5       0    0     0      0
+deck/test/proposal.test.mjs                           0.1      3       0    0     0      0
 hooks/test/spawn-trace.test.js                        0.1      6       0    0     0      0
+deck/test/thread-nav.test.mjs                         0.1     16       0    0     0      0
 deck/test/yellow-shown.test.mjs                       0.1      2       0    0     0      0
-deck/test/view-tickets.test.mjs                       0.1      5       0    0     0      0
-scripts/test/methodology-skills.test.mjs              0.1     14       0    0     0      0
-deck/test/health-root.test.mjs                        0.0      3       0    0     0      0
-deck/test/paused-standing.test.mjs                    0.0     10       0    0     0      0
-deck/test/open-copy.test.mjs                          0.0     10       0    0     0      0
-hooks/test/agent-roster.test.js                       0.0      5       0    0     0      0
-deck/test/pilot-state-lapse.test.mjs                  0.0      8       0    0     0      0
-deck/test/walkthrough-render.test.mjs                 0.0      4       0    0     0      0
-scripts/test/references-hold.test.mjs                 0.0      4       0    0     0      0
+scripts/test/install-ask.test.mjs                     0.1      7       0    0     0      0
+scripts/test/scripts.test.mjs                         0.1     14       0    0     0      0
+hooks/test/context-work.test.js                       0.1      3       0    0     0      0
+deck/test/look.test.mjs                               0.1     11       0    0     0      0
+deck/test/fixtures/audit-18-rows.mjs                  0.1      1       0    0     0      0
+deck/test/record-report.test.mjs                      0.1      4       0    0     0      0
+deck/test/handoff-unheld.test.mjs                     0.1      2       0    0     0      0
+deck/test/work.test.mjs                               0.1      4       0    0     0      0
+deck/test/closing-main-pr.test.mjs                    0.1      3       0    0     0      0
+scripts/test-cost.mjs                                 0.1      1       0    0     0      0
+deck/test/walkthrough-render.test.mjs                 0.1      4       0    0     0      0
+scripts/test/fixtures/leak/deck/daemon.mjs            0.1      1       0    0     0      0
+deck/test/tickets-region.test.mjs                     0.1      1       0    0     0      0
+deck/test/view-steps.test.mjs                         0.1      2       0    0     0      0
+deck/test/open-copy.test.mjs                          0.1     10       0    0     0      0
+scripts/test/platform-reads.test.mjs                  0.1      1       0    0     0      0
+deck/test/three-lanes.test.mjs                        0.0      7       0    0     0      0
+scripts/test/install-allow-reads.test.mjs             0.0      8       0    0     0      0
+deck/test/view-tickets.test.mjs                       0.0      5       0    0     0      0
 scripts/test/rules-references.test.mjs                0.0      2       0    0     0      0
 deck/test/turn-stamps-gone.test.mjs                   0.0      2       0    0     0      0
+deck/test/thread-state.test.mjs                       0.0      4       0    0     0      0
+deck/test/pilot-state-lapse.test.mjs                  0.0      8       0    0     0      0
+scripts/test/path-length.test.mjs                     0.0      2       1    1     0      0
+scripts/test/methodology-skills.test.mjs              0.0     14       0    0     0      0
+deck/test/paused-standing.test.mjs                    0.0     10       0    0     0      0
+deck/test/landing-parity.test.mjs                     0.0      1       0    0     0      0
+scripts/test/install-allow-merge.test.mjs             0.0      6       0    0     0      0
+hooks/test/agent-roster.test.js                       0.0      5       0    0     0      0
+deck/test/health-root.test.mjs                        0.0      3       0    0     0      0
 deck/test/rail-states.test.mjs                        0.0      2       0    0     0      0
 deck/test/doctor-power.test.mjs                       0.0     12       0    0     0      0
-scripts/test/install-allow-gc.test.mjs                0.0      6       0    0     0      0
 deck/test/standing.test.mjs                           0.0      9       0    0     0      0
-hooks/test/context-work.test.js                       0.0      3       0    0     0      0
-deck/test/thread-state.test.mjs                       0.0      4       0    0     0      0
 deck/test/view-status.test.mjs                        0.0     14       0    0     0      0
-scripts/test/update.test.mjs                          0.0      7       0    0     0      0
-deck/test/landing-parity.test.mjs                     0.0      1       0    0     0      0
-deck/test/walkthrough-shape.test.mjs                  0.0     20       0    0     0      0
+scripts/test/install-allow-gc.test.mjs                0.0      6       0    0     0      0
 deck/test/wait-holder.test.mjs                        0.0      4       0    0     0      0
-scripts/test/install-allow-merge.test.mjs             0.0      6       0    0     0      0
-deck/test/crew-waiting.test.mjs                       0.0      7       0    0     0      0
+deck/test/report-shape.test.mjs                       0.0      8       0    0     0      0
+deck/test/walkthrough-shape.test.mjs                  0.0     20       0    0     0      0
 scripts/test/live-root.test.mjs                       0.0      7       0    0     0      0
 scripts/test/crew-toolsearch.test.mjs                 0.0      2       0    0     0      0
-deck/test/blocked-shape.test.mjs                      0.0      3       0    0     0      0
+deck/test/host-none-report.test.mjs                   0.0      2       0    0     0      0
+deck/test/crew-waiting.test.mjs                       0.0      7       0    0     0      0
+scripts/test/update.test.mjs                          0.0      7       0    0     0      0
 deck/test/card-history.test.mjs                       0.0     12       0    0     0      0
-deck/test/report-shape.test.mjs                       0.0      8       0    0     0      0
+scripts/test/references-hold.test.mjs                 0.0      4       0    0     0      0
+deck/test/blocked-shape.test.mjs                      0.0      3       0    0     0      0
+deck/test/signoff.test.mjs                            0.0      3       0    0     0      0
+deck/test/audit-kind.test.mjs                         0.0      2       0    0     0      0
 deck/test/record-feature.test.mjs                     0.0      2       0    0     0      0
+deck/test/qa-gate2.test.mjs                           0.0      2       0    0     0      0
+deck/test/handoff-supersede.test.mjs                  0.0      2       0    0     0      0
+deck/test/doctor.test.mjs                             0.0     14       0    0     0      0
 deck/test/everything.test.mjs                         0.0     13       0    0     0      0
 deck/test/no-subdeck-state.test.mjs                   0.0      3       0    0     0      0
-scripts/test/gate.test.mjs                            0.0     12       0    0     0      0
-deck/test/qa-gate2.test.mjs                           0.0      2       0    0     0      0
+deck/test/report-friction.test.mjs                    0.0      4       0    0     0      0
 deck/test/ticket-shape.test.mjs                       0.0      7       0    0     0      0
 deck/test/awake.test.mjs                              0.0      5       0    0     0      0
-deck/test/lanes-idle.test.mjs                         0.0      5       0    0     0      0
 deck/test/yield-walkthrough.test.mjs                  0.0      4       0    0     0      0
-scripts/test/gate-home-store.test.mjs                 0.0      5       0    0     0      0
-deck/test/architect-relay.test.mjs                    0.0      1       0    0     0      0
-deck/test/record-friction.test.mjs                    0.0      4       0    0     0      0
-deck/test/doctor.test.mjs                             0.0     14       0    0     0      0
-deck/test/walkthrough-fields.test.mjs                 0.0      5       0    0     0      0
-deck/test/signoff.test.mjs                            0.0      3       0    0     0      0
-deck/test/small-retired.test.mjs                      0.0      3       0    0     0      0
-deck/test/report-friction.test.mjs                    0.0      4       0    0     0      0
-deck/test/host-none-report.test.mjs                   0.0      2       0    0     0      0
-deck/test/handoff-supersede.test.mjs                  0.0      2       0    0     0      0
-deck/test/look-apply.test.mjs                         0.0      5       0    0     0      0
-hooks/test/private-store.test.js                      0.0      9       0    0     0      0
-scripts/test/references-host.test.mjs                 0.0      3       0    0     0      0
-scripts/test/shell-rules.test.mjs                     0.0      4       0    0     0      0
-scripts/test/install-allow-checks.test.mjs            0.0      2       0    0     0      0
-deck/test/doctor-mods.test.mjs                        0.0      2       0    0     0      0
-hooks/test/trace-step.test.js                         0.0      5       0    0     0      0
-scripts/test/state-words.test.mjs                     0.0      1       0    0     0      0
-deck/test/days.test.mjs                               0.0     17       0    0     0      0
-deck/test/audit-kind.test.mjs                         0.0      2       0    0     0      0
-deck/test/architect-status.test.mjs                   0.0      2       0    0     0      0
-deck/test/doctor-advised.test.mjs                     0.0      7       0    0     0      0
-deck/test/spec-retired.test.mjs                       0.0      3       0    0     0      0
-deck/test/graph.test.mjs                              0.0     19       0    0     0      0
-scripts/test/qa-preview.test.mjs                      0.0      4       0    0     0      0
-scripts/test/frontmatter-crlf.test.mjs                0.0      3       0    0     0      0
-deck/test/view-strip.test.mjs                         0.0      6       0    0     0      0
-deck/test/tree.test.mjs                               0.0      9       0    0     0      0
-deck/test/look-gaps.test.mjs                          0.0      3       0    0     0      0
 scripts/test/install-allow-landing.test.mjs           0.0      3       0    0     0      0
-scripts/test/reach.test.mjs                           0.0      4       0    0     0      0
-deck/test/pilot-start.test.mjs                        0.0      5       0    0     0      0
+deck/test/small-retired.test.mjs                      0.0      3       0    0     0      0
+scripts/test/gate.test.mjs                            0.0     12       0    0     0      0
+hooks/test/private-store.test.js                      0.0      9       0    0     0      0
+scripts/test/gate-home-store.test.mjs                 0.0      5       0    0     0      0
+deck/test/lanes-idle.test.mjs                         0.0      5       0    0     0      0
+deck/test/walkthrough-fields.test.mjs                 0.0      5       0    0     0      0
+deck/test/look-apply.test.mjs                         0.0      5       0    0     0      0
+deck/test/doctor-mods.test.mjs                        0.0      2       0    0     0      0
+deck/test/record-friction.test.mjs                    0.0      4       0    0     0      0
+scripts/test/references-host.test.mjs                 0.0      3       0    0     0      0
+hooks/test/trace-step.test.js                         0.0      5       0    0     0      0
+deck/test/architect-relay.test.mjs                    0.0      1       0    0     0      0
 deck/test/card-standing.test.mjs                      0.0      3       0    0     0      0
-deck/test/path-key.test.mjs                           0.0      2       0    0     0      0
+deck/test/days.test.mjs                               0.0     17       0    0     0      0
+deck/test/spec-retired.test.mjs                       0.0      3       0    0     0      0
+deck/test/doctor-advised.test.mjs                     0.0      7       0    0     0      0
+deck/test/architect-status.test.mjs                   0.0      2       0    0     0      0
+scripts/test/qa-preview.test.mjs                      0.0      4       0    0     0      0
+deck/test/graph.test.mjs                              0.0     19       0    0     0      0
+scripts/test/install-allow-checks.test.mjs            0.0      2       0    0     0      0
+scripts/test/shell-rules.test.mjs                     0.0      4       0    0     0      0
+deck/test/look-gaps.test.mjs                          0.0      3       0    0     0      0
+scripts/test/install-leftovers.test.mjs               0.0      6       0    0     0      0
+deck/test/pilot-start.test.mjs                        0.0      5       0    0     0      0
+deck/test/tree.test.mjs                               0.0      9       0    0     0      0
+deck/test/view-strip.test.mjs                         0.0      6       0    0     0      0
+deck/test/store-upgrade.test.mjs                      0.0      6       0    0     0      0
 scripts/test/line-bar.test.mjs                        0.0      2       0    0     0      0
 deck/test/doctor-host.test.mjs                        0.0      8       0    0     0      0
+scripts/test/frontmatter-crlf.test.mjs                0.0      3       0    0     0      0
+scripts/test/state-words.test.mjs                     0.0      1       0    0     0      0
+scripts/test/reach.test.mjs                           0.0      4       0    0     0      0
+deck/test/path-key.test.mjs                           0.0      2       0    0     0      0
 deck/test/step-shell-syntax.test.mjs                  0.0      9       0    0     0      0
-scripts/test/adr-index-placeholder.test.mjs           0.0      3       0    0     0      0
-deck/test/look-contrast.test.mjs                      0.0      8       0    0     0      0
-deck/test/store-upgrade.test.mjs                      0.0      6       0    0     0      0
-deck/test/resize.test.mjs                             0.0     49       0    0     0      0
 scripts/test/gate-slot-scope.test.mjs                 0.0      5       0    0     0      0
-scripts/test/install-leftovers.test.mjs               0.0      6       0    0     0      0
-deck/test/step-shell.test.mjs                         0.0      5       0    0     0      0
-deck/test/view-agents-reports.test.mjs                0.0     10       0    0     0      0
-deck/test/home-write-guard.test.mjs                   0.0      3       0    0     0      0
-deck/test/transcripts.test.mjs                        0.0      7       0    0     0      0
-deck/test/view-usage.test.mjs                         0.0      4       0    0     0      0
-deck/test/step-prefix-render.test.mjs                 0.0      3       0    0     0      0
-scripts/test/gate-workflow.test.mjs                   0.0      9       0    0     0      0
-hooks/test/join.test.js                               0.0     10       0    0     0      0
-scripts/test/ticket-states.test.mjs                   0.0      4       0    0     0      0
-deck/test/lanes-why.test.mjs                          0.0      5       0    0     0      0
-deck/test/question-shape.test.mjs                     0.0      7       0    0     0      0
-deck/test/records-for.test.mjs                        0.0      2       0    0     0      0
-deck/test/view-graph.test.mjs                         0.0      4       0    0     0      0
 deck/test/audit-body.test.mjs                         0.0     10       0    0     0      0
-scripts/test/ticket-making.test.mjs                   0.0      8       0    0     0      0
-deck/test/view-reply.test.mjs                         0.0      9       0    0     0      0
+deck/test/home-write-guard.test.mjs                   0.0      3       0    0     0      0
+deck/test/view-agents-reports.test.mjs                0.0     10       0    0     0      0
+deck/test/transcripts.test.mjs                        0.0      7       0    0     0      0
+scripts/test/adr-index-placeholder.test.mjs           0.0      3       0    0     0      0
+deck/test/step-shell.test.mjs                         0.0      5       0    0     0      0
+deck/test/question-shape.test.mjs                     0.0      7       0    0     0      0
 scripts/test/yellow-co-pilot.test.mjs                 0.0     11       0    0     0      0
-hooks/test/atomic-write.test.js                       0.0      4       0    0     0      0
+deck/test/look-contrast.test.mjs                      0.0      8       0    0     0      0
+deck/test/resize.test.mjs                             0.0     49       0    0     0      0
+deck/test/records-for.test.mjs                        0.0      2       0    0     0      0
+deck/test/view-usage.test.mjs                         0.0      4       0    0     0      0
+scripts/test/gate-workflow.test.mjs                   0.0      9       0    0     0      0
 deck/test/pilot-state-overview.test.mjs               0.0      3       0    0     0      0
+hooks/test/join.test.js                               0.0     10       0    0     0      0
+deck/test/step-prefix-render.test.mjs                 0.0      3       0    0     0      0
+scripts/test/ticket-states.test.mjs                   0.0      4       0    0     0      0
+deck/test/view-graph.test.mjs                         0.0      4       0    0     0      0
+deck/test/lanes-why.test.mjs                          0.0      5       0    0     0      0
+scripts/test/checks.test.mjs                          0.0      8       0    0     0      0
 deck/test/view-notifications.test.mjs                 0.0      5       0    0     0      0
-hooks/test/listener-join.test.js                      0.0      8       0    0     0      0
+deck/test/view-reply.test.mjs                         0.0      9       0    0     0      0
+deck/test/pilot-state-render.test.mjs                 0.0      4       0    0     0      0
+hooks/test/atomic-write.test.js                       0.0      4       0    0     0      0
 hooks/test/platform-claude.test.js                    0.0      4       0    0     0      0
 scripts/test/one-line-wording.test.mjs                0.0      2       0    0     0      0
 deck/test/trace.test.mjs                              0.0     11       0    0     0      0
-scripts/test/checks.test.mjs                          0.0      8       0    0     0      0
-deck/test/view-chat.test.mjs                          0.0      5       0    0     0      0
-deck/test/lanes.test.mjs                              0.0      7       0    0     0      0
-deck/test/pilot-state-render.test.mjs                 0.0      4       0    0     0      0
+scripts/test/ticket-making.test.mjs                   0.0      8       0    0     0      0
+hooks/test/listener-join.test.js                      0.0      8       0    0     0      0
 hooks/test/guard-status.test.js                       0.0      1       0    0     0      0
-deck/test/stalled-waits.test.mjs                      0.0      5       0    0     0      0
-scripts/test/gate-select.test.mjs                     0.0      3       0    0     0      0
+deck/test/view-chat.test.mjs                          0.0      5       0    0     0      0
 scripts/test/crew-voice.test.mjs                      0.0      3       0    0     0      0
-scripts/test/glossary-prose.test.mjs                  0.0      3       0    0     0      0
-deck/test/lanes-yellow.test.mjs                       0.0      4       0    0     0      0
-scripts/test/ui-design.test.mjs                       0.0      5       0    0     0      0
-scripts/test/checks-cli.test.mjs                      0.0     11       0    0     0      0
-hooks/test/handoff-mod.test.mjs                       0.0      9       0    0     0      0
-scripts/test/security-trigger.test.mjs                0.0      3       0    0     0      0
-scripts/test/cd-shape-wording.test.mjs                0.0      2       0    0     0      0
+deck/test/lanes.test.mjs                              0.0      7       0    0     0      0
+deck/test/stalled-waits.test.mjs                      0.0      5       0    0     0      0
 scripts/test/crew-waits.test.mjs                      0.0      7       0    0     0      0
-scripts/test/run-remote-prose.test.mjs                0.0      2       0    0     0      0
-scripts/test/three-lanes-wording.test.mjs             0.0      3       0    0     0      0
-scripts/test/principles-sweep.test.mjs                0.0      7       0    0     0      0
+scripts/test/gate-select.test.mjs                     0.0      3       0    0     0      0
+scripts/test/cd-shape-wording.test.mjs                0.0      2       0    0     0      0
+deck/test/lanes-yellow.test.mjs                       0.0      4       0    0     0      0
+scripts/test/glossary-prose.test.mjs                  0.0      3       0    0     0      0
+scripts/test/checks-cli.test.mjs                      0.0     11       0    0     0      0
 scripts/test/gate-syntax.test.mjs                     0.0      4       0    0     0      0
-scripts/test/fresh-repo-runbook.test.mjs              0.0      5       0    0     0      0
-hooks/test/platform.test.js                           0.0      5       0    0     0      0
+scripts/test/three-lanes-wording.test.mjs             0.0      3       0    0     0      0
+scripts/test/ui-design.test.mjs                       0.0      5       0    0     0      0
+scripts/test/principles-sweep.test.mjs                0.0      7       0    0     0      0
+hooks/test/handoff-mod.test.mjs                       0.0      9       0    0     0      0
 scripts/test/audit-agent.test.mjs                     0.0      4       0    0     0      0
 scripts/test/slice-graph.test.mjs                     0.0      4       0    0     0      0
 deck/test/closing-feature-pr.test.mjs                 0.0      8       0    0     0      0
+hooks/test/user-thread-reply.test.js                  0.0      6       0    0     0      0
+scripts/test/run-remote-prose.test.mjs                0.0      2       0    0     0      0
 scripts/test/deck-readme.test.mjs                     0.0      2       0    0     0      0
 scripts/test/handoff-wording.test.mjs                 0.0      4       0    0     0      0
-scripts/test/seam-change.test.mjs                     0.0      2       0    0     0      0
 deck/test/pilot-state-windows.test.mjs                0.0      7       0    0     0      0
-hooks/test/user-thread-reply.test.js                  0.0      6       0    0     0      0
-deck/test/pilot-state.test.mjs                        0.0      5       0    0     0      0
-scripts/test/ci-gate-wording.test.mjs                 0.0      4       0    0     0      0
-scripts/test/slice-interface.test.mjs                 0.0      3       0    0     0      0
+scripts/test/fresh-repo-runbook.test.mjs              0.0      5       0    0     0      0
+scripts/test/seam-change.test.mjs                     0.0      2       0    0     0      0
+hooks/test/platform.test.js                           0.0      5       0    0     0      0
+scripts/test/security-trigger.test.mjs                0.0      3       0    0     0      0
+scripts/test/checks-proof.test.mjs                    0.0      3       0    0     0      0
 scripts/test/landing-wording.test.mjs                 0.0      3       0    0     0      0
-scripts/test/rune-one-binary.test.mjs                 0.0      1       0    0     0      0
-scripts/test/lander-adrs.test.mjs                     0.0      3       0    0     0      0
-scripts/test/install-reach-wording.test.mjs           0.0      1       0    0     0      0
-deck/test/chat-scroll.test.mjs                        0.0      7       0    0     0      0
-scripts/test/stuck-prose.test.mjs                     0.0      4       0    0     0      0
 deck/test/short-path-lanes.test.mjs                   0.0      3       0    0     0      0
+scripts/test/decision-triage.test.mjs                 0.0      4       0    0     0      0
 scripts/test/test-cost.test.mjs                       0.0      5       0    0     0      0
+scripts/test/install-reach-wording.test.mjs           0.0      1       0    0     0      0
+deck/test/pilot-state.test.mjs                        0.0      5       0    0     0      0
+deck/test/chat-scroll.test.mjs                        0.0      7       0    0     0      0
+scripts/test/slice-interface.test.mjs                 0.0      3       0    0     0      0
+deck/test/audit-share.test.mjs                        0.0      3       0    0     0      0
 hooks/test/platform-kill.test.js                      0.0      5       0    0     0      0
 scripts/test/install-permissions.test.mjs             0.0      6       0    0     0      0
-deck/test/power-writes.test.mjs                       0.0      3       0    0     0      0
-scripts/test/audit-navigability.test.mjs              0.0      2       0    0     0      0
-deck/test/audit-share.test.mjs                        0.0      3       0    0     0      0
-scripts/test/report-record-wording.test.mjs           0.0      2       0    0     0      0
-scripts/test/probe-clear-survival.test.mjs            0.0     10       0    0     0      0
-scripts/test/checks-proof.test.mjs                    0.0      3       0    0     0      0
-scripts/test/bigger-jobs-ceiling.test.mjs             0.0      1       0    0     0      0
-scripts/test/run-split.test.mjs                       0.0      3       0    0     0      0
-scripts/test/model-policy.test.mjs                    0.0      3       0    0     0      0
-scripts/test/architect-runs-red-wording.test.mjs      0.0      2       0    0     0      0
-scripts/test/three-lanes-architect-wording.test.mjs   0.0      2       0    0     0      0
-deck/test/schedule-pushed.test.mjs                    0.0      3       0    0     0      0
-hooks/test/away.test.js                               0.0      3       0    0     0      0
-scripts/test/lander-wording.test.mjs                  0.0      3       0    0     0      0
+scripts/test/rune-one-binary.test.mjs                 0.0      1       0    0     0      0
 deck/test/rail-size.test.mjs                          0.0      2       0    0     0      0
-scripts/test/pilot-defender-wizard.test.mjs           0.0      1       0    0     0      0
+scripts/test/lander-adrs.test.mjs                     0.0      3       0    0     0      0
+scripts/test/model-policy.test.mjs                    0.0      3       0    0     0      0
+scripts/test/ci-gate-wording.test.mjs                 0.0      4       0    0     0      0
+scripts/test/stuck-prose.test.mjs                     0.0      4       0    0     0      0
+scripts/test/run-remote-readme.test.mjs               0.0      1       0    0     0      0
+deck/test/audit-measured.test.mjs                     0.0      3       0    0     0      0
+scripts/test/security-reviewer.test.mjs               0.0      4       0    0     0      0
+deck/test/schedule-pushed.test.mjs                    0.0      3       0    0     0      0
+deck/test/power-writes.test.mjs                       0.0      3       0    0     0      0
+scripts/test/test-depth.test.mjs                      0.0      2       0    0     0      0
+scripts/test/bigger-jobs-ceiling.test.mjs             0.0      1       0    0     0      0
 scripts/test/pilot-need.test.mjs                      0.0      2       0    0     0      0
 scripts/test/three-lanes-qa-wording.test.mjs          0.0      2       0    0     0      0
-scripts/test/test-depth.test.mjs                      0.0      2       0    0     0      0
-scripts/test/run-remote-readme.test.mjs               0.0      1       0    0     0      0
-scripts/test/suite-at-landing-wording.test.mjs        0.0      1       0    0     0      0
+scripts/test/report-record-wording.test.mjs           0.0      2       0    0     0      0
+scripts/test/lander-wording.test.mjs                  0.0      3       0    0     0      0
+hooks/test/away.test.js                               0.0      3       0    0     0      0
+scripts/test/probe-clear-survival.test.mjs            0.0     10       0    0     0      0
 scripts/test/start-slugs.test.mjs                     0.0      1       0    0     0      0
-deck/test/audit-measured.test.mjs                     0.0      3       0    0     0      0
-scripts/test/architect-deeper.test.mjs                0.0      1       0    0     0      0
+scripts/test/architect-runs-red-wording.test.mjs      0.0      2       0    0     0      0
+scripts/test/audit-navigability.test.mjs              0.0      2       0    0     0      0
+scripts/test/pilot-defender-wizard.test.mjs           0.0      1       0    0     0      0
+scripts/test/run-split.test.mjs                       0.0      3       0    0     0      0
+scripts/test/suite-at-landing-wording.test.mjs        0.0      1       0    0     0      0
 scripts/test/fundamentalist-decisions.test.mjs        0.0      6       0    0     0      0
-deck/test/doctor-allow.test.mjs                       0.0      4       0    0     0      0
-scripts/test/pilot-branch-rules.test.mjs              0.0      4       0    0     0      0
 scripts/test/install-defender.test.mjs                0.0      3       0    0     0      0
-scripts/test/security-reviewer.test.mjs               0.0      4       0    0     0      0
-scripts/test/chain-prose.test.mjs                     0.0      1       0    0     0      0
-hooks/test/report-record.test.js                      0.0      2       0    0     0      0
-scripts/test/decision-triage.test.mjs                 0.0      4       0    0     0      0
-scripts/test/read-window-wording.test.mjs             0.0      1       0    0     0      0
-scripts/test/general-purpose.test.mjs                 0.0      1       0    0     0      0
-scripts/test/fundamentalist-terms.test.mjs            0.0      2       0    0     0      0
-scripts/test/verdict-pass-pilot.test.mjs              0.0      1       0    0     0      0
-scripts/test/bigger-jobs-pilot.test.mjs               0.0      2       0    0     0      0
-scripts/test/bigger-jobs-architect.test.mjs           0.0      4       0    0     0      0
-scripts/test/short-path-wording.test.mjs              0.0      1       0    0     0      0
-scripts/test/trivial-work.test.mjs                    0.0      1       0    0     0      0
-hooks/test/inbox-alert.test.js                        0.0      3       0    0     0      0
-deck/test/gate2-evidence.test.mjs                     0.0      2       0    0     0      0
-scripts/test/audit-rederived.test.mjs                 0.0      1       0    0     0      0
 scripts/test/fundamentalist-case.test.mjs             0.0      1       0    0     0      0
+scripts/test/pilot-branch-rules.test.mjs              0.0      4       0    0     0      0
+hooks/test/report-record.test.js                      0.0      2       0    0     0      0
+scripts/test/chain-prose.test.mjs                     0.0      1       0    0     0      0
+scripts/test/architect-deeper.test.mjs                0.0      1       0    0     0      0
+scripts/test/read-window-wording.test.mjs             0.0      1       0    0     0      0
+scripts/test/three-lanes-architect-wording.test.mjs   0.0      2       0    0     0      0
+scripts/test/general-purpose.test.mjs                 0.0      1       0    0     0      0
+deck/test/doctor-allow.test.mjs                       0.0      4       0    0     0      0
+scripts/test/fundamentalist-terms.test.mjs            0.0      2       0    0     0      0
+scripts/test/bigger-jobs-architect.test.mjs           0.0      4       0    0     0      0
+scripts/test/verdict-pass-pilot.test.mjs              0.0      1       0    0     0      0
+hooks/test/inbox-alert.test.js                        0.0      3       0    0     0      0
+scripts/test/audit-rederived.test.mjs                 0.0      1       0    0     0      0
+scripts/test/trivial-work.test.mjs                    0.0      1       0    0     0      0
+scripts/test/bigger-jobs-pilot.test.mjs               0.0      2       0    0     0      0
+scripts/test/short-path-wording.test.mjs              0.0      1       0    0     0      0
+deck/test/gate2-evidence.test.mjs                     0.0      2       0    0     0      0
 scripts/test/grilling-voice.test.mjs                  0.0      1       0    0     0      0
-scripts/test/hang-timeout.test.mjs                    0.0      1       0    0     0      0
 scripts/test/adr-index-stop.test.mjs                  0.0      2       0    0     0      0
 hooks/test/guard-advice.test.js                       0.0      2       0    0     0      0
+scripts/test/hang-timeout.test.mjs                    0.0      1       0    0     0      0
 scripts/test/operating-runbook.test.mjs               0.0      1       0    0     0      0
 scripts/test/deepening.test.mjs                       0.0      1       0    0     0      0
-scripts/test/implementer-steps.test.mjs               0.0      1       0    0     0      0
-scripts/test/fixtures/spawns/spawns.test.mjs          0.0      1       0    0     0      0
-deck/test/run-record-legacy.test.mjs                  0.0      1       0    0     0      0
-scripts/test/fixtures/leak/leak.test.mjs              0.0      1       0    0     0      0
 hooks/test/standing.test.js                           0.0      1       0    0     0      0
+deck/test/run-record-legacy.test.mjs                  0.0      1       0    0     0      0
+scripts/test/implementer-steps.test.mjs               0.0      1       0    0     0      0
 scripts/test/audit-open.test.mjs                      0.0      1       0    0     0      0
+scripts/test/fixtures/leak/leak.test.mjs              0.0      1       0    0     0      0
+scripts/test/fixtures/spawns/spawns.test.mjs          0.0      1       0    0     0      0
 -                                                     0.0      0      80    0    80      0
-total 643 files 1442.0 s 12815 spawns (git 11676)
-exit 0
+total 644 files 1632.8 s 12807 spawns (git 11668)

@@ -52,12 +52,18 @@ const POLL_MS = 1_000;
  *   full suites; the acceptance run in docs/design/cheap-suite/cost-after.txt, ceiling 13571 + 10%.
  * 2026-11-26, land-batching S7: 12815 (node 848, git 11676, other 291) on Windows, Node 26, product cut only (S1-S5, S8, S9);
  *   it missed the 11,000 / 10,000 bars, so both ceilings are this run's own numbers (docs/design/land-batching/cost-after.txt);
- *   S6 lowers them to the signed ones.
+ *   S6 was to lower them to the signed ones.
  * 2026-11-25: CI windows-latest on ef9ee6c, the highest runner (local 12815 / 11676): 12823 (node 848, git 11682, other 293).
+ * 2026-11-26, land-batching S6: the fixture helpers it owns fold 2 git per seeded origin and its own test adds 32, while
+ *   the rest of the fixture git is in test bodies, so the bars are still missed. Its local run, the same machine as S7's,
+ *   read 12807 (node 848, git 11668, other 291) (docs/design/land-batching/cost-after.txt), 8 under S7's 12815 / 11676.
+ *   CI's windows-latest read S7's tip ef9ee6c at 12823 (node 848, git 11682, other 293), the highest of the runners
+ *   (ubuntu and macOS passed under 12815 / 11676); less the same 8 that is 12815 / 11674, and the ceilings are that
+ *   highest count (A5: the CI count, itm_470ec6f7a434).
  */
-export const SPAWN_CEILING = 12823;
-/** The most git processes a full suite may start (land-batching S7); see the dated line above. */
-export const GIT_CEILING = 11682;
+export const SPAWN_CEILING = 12815;
+/** The most git processes a full suite may start (land-batching S7, S6); see the dated lines above. */
+export const GIT_CEILING = 11674;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 
