@@ -42,7 +42,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 33adbf6 on fb45e61, ts WARN (both MEDIUMs fixed, lease test red->green), security APPROVE; landing 32 -> 27",
+      "state": "integrated 469510d; checks green at 469510d",
       "after": [
         "S2"
       ],
@@ -78,15 +78,17 @@
     },
     {
       "slice": "S9",
-      "state": "planned (added: integrate reaches spec 4's 18 of 24; symbolic-ref argv unify + deletion tail reuses the fetch)",
+      "state": "pushed fc97ef4 on 469510d, ts approve, security approve; integrate 20 -> 18",
       "after": [
         "S5",
         "S8"
-      ]
+      ],
+      "branch": "slice/land-batching-s9",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s9"
     }
   ],
-  "next": "Integrating S5 33adbf6; then S9 (added, integrate to 18); then S7, S6.",
-  "updatedAt": "2026-11-25T14:02:29.858Z",
+  "next": "Integrating S9 fc97ef4; then S7, S6.",
+  "updatedAt": "2026-11-25T14:28:34.378Z",
   "friction": [
     {
       "agent": "architect",
@@ -233,6 +235,24 @@
       "what": "S5's 27 bar needed origin tips from the local ref snapshot, not only the skipped fetches (28); land-clear's fault injection had to change because the tail no longer fetches",
       "evidence": "scripts/test/land-clear.test.mjs:148-166",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9.md's mechanism (unify symbolic-ref argv) saved nothing: integrate's fetch empties the view between the two reads; baseOf took the branch name instead",
+      "evidence": "S9 report: traced argv, symbolic-ref before and after fetch -q --prune origin",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a slice that drops a git must own the test pinning that git's argv; S9 was told to edit no assert",
+      "evidence": "integrate-remote.test.mjs:130 expected 'fetch -q origin'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no per-argv trace helper; a scratch spawn_sync patch was written again (third slice)",
+      "evidence": "S4, S8, S9 reports",
+      "size": 2
     }
   ]
 }
