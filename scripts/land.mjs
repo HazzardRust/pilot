@@ -25,7 +25,7 @@ import path from 'node:path';
 import { hostFor } from '../deck/host.mjs';
 import { deleteMerged } from './branches.mjs';
 import { checksGate, provenTree } from './checks.mjs';
-import { gitView } from './git-view.mjs';
+import { gitView, holdsIn, tipOf } from './git-view.mjs';
 import { assertPushable, firstLine, holds, PILOT_BRANCH } from './pilot-branch.mjs';
 import { baseOf, chainLanded, commitRecords, git as gitAt, landingMessage } from './integrate.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
@@ -37,6 +37,13 @@ import { isWorktreeOf, mergeIntoPilot, removeWorktree, resume } from './sync.mjs
 import { holderFrom, prune, runRecord } from './worktrees.mjs';
 
 const fail = (message, exitCode = 1) => Object.assign(new Error(`NOT landed: ${message}`), { exitCode });
+
+/** The run's pilot tip through `tipOf`; a missing ref throws, as the `rev-parse` it replaces did. */
+function pilotTip(git, ref) {
+  const sha = tipOf(git, ref);
+  if (sha === null) throw new Error(`${ref} does not exist`);
+  return sha;
+}
 
 /** A failed push's reason: git's ` ! [rejected]`, `error:` or `fatal:` line, not its `To <url>`. */
 const reason = (err) =>
@@ -114,10 +121,13 @@ export function catchUp({ cwd, git, head }) {
     }
   };
   ask(['fetch', '-q', '--prune', 'origin']);
-  // Empty when origin has no `head` yet; a git that cannot answer throws, never reads as absent.
-  const theirs = ask(['for-each-ref', '--format=%(objectname)', `refs/remotes/origin/${head}`]);
+  // Null when origin has no `head` yet; a git that cannot answer throws, never reads as absent.
+  // The snapshot that answers it answers the landing's pilot too, until the next write (L4).
+  const theirs = tipOf(ask, `refs/remotes/origin/${head}`);
   if (!theirs) return { moved: 0 };
-  const ours = ask(['rev-parse', 'HEAD']);
+  const ours = tipOf(ask, 'HEAD');
+  // Level: nothing to count, and no rev-list, a write, to end the epoch the landing reads on in.
+  if (ours === theirs) return { moved: 0 };
   // Commits only ours holds, then only theirs: a git that cannot answer throws, never reads as diverged.
   const [ahead, moved] = ask(['rev-list', '--left-right', '--count', `${ours}...${theirs}`]).split(/\s+/).map(Number);
   if (moved === 0) return { moved: 0 };
@@ -220,13 +230,13 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
   }
   chainGuard({ cwd, runs });
   // The caught-up tip's checks, before the record commit or any push (ci-gate L4, A2): red, pending, unread refuse.
-  const tip = git(['rev-parse', 'HEAD']);
+  const tip = tipOf(git, 'HEAD');
   const checks = checksGate({ host, git, sha: tip });
   if (!checks.ok) throw fail(`${checks.line}; nothing pushed`);
   // The tree green CI proved on this tip (cheap-suite spec 5, A2): the merge tests only what differs from it; no proof, the full suite.
   let proof;
   try {
-    proof = provenTree({ host, git, sha: tip, base: git(['rev-parse', runRef(runs, PILOT_BRANCH)]) });
+    proof = provenTree({ host, git, sha: tip, base: pilotTip(git, runRef(runs, PILOT_BRANCH)) });
   } catch (err) {
     proof = { tree: null, line: `no ci proof: ${firstLine(err)}` };
   }
@@ -236,15 +246,15 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
   // The deck's run record rides in the landing merge (lander L10): committed, not discarded.
   // A record commit is a write made outside the view (L3).
   if (commitRecords(cwd)) git.forget();
-  const source = git(['rev-parse', 'HEAD']);
+  const source = tipOf(git, 'HEAD');
   const pushSkipped = pushFeature({ git, head, source });
   const keep = keptDir(mainCheckout(git), head);
   const message = landingMessage(head);
   // The run remote's pilot as last fetched, or the local pilot under `none`.
   const pilotRef = runRef(runs, PILOT_BRANCH);
   for (let retried = false; ; retried = true) {
-    const before = git(['rev-parse', pilotRef]);
-    const reuse = fs.existsSync(keep) && !holds(cwd, ['merge-base', '--is-ancestor', source, before]) && resume({ cwd, dir: keep, pilotTip: before, source, message, side: 'theirs', refuse: fail, conflict: (left, why) => conflict(head, left, keep, why) });
+    const before = pilotTip(git, pilotRef);
+    const reuse = fs.existsSync(keep) && !holdsIn(git, ['merge-base', '--is-ancestor', source, before]) && resume({ cwd, dir: keep, pilotTip: before, source, message, side: 'theirs', refuse: fail, conflict: (left, why) => conflict(head, left, keep, why) });
     // A resumed land dir is written outside the view (L3).
     if (fs.existsSync(keep)) git.forget();
     let merge;
@@ -257,7 +267,7 @@ function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
       if (!err.pushRejected || (runs !== null && !holds(cwd, ['fetch', '-q', '--prune', runs]))) throw failed;
       // The fetch, the resume and the merge's own worktree wrote outside the view (L3).
       git.forget();
-      if (git(['rev-parse', pilotRef]) === before) throw failed;
+      if (pilotTip(git, pilotRef) === before) throw failed;
       if (retried) throw fail(`${PILOT_BRANCH} moved again after one retry; ${head} is pushed, ${PILOT_BRANCH} is not: run pilot land again`);
       continue;
     }
@@ -389,7 +399,7 @@ export function pushFeature({ git, head, source }) {
     } catch (err) {
       if (!unreachable(err)) throw fail(`the push of ${head} failed (${reason(err)}); ${PILOT_BRANCH} not pushed`);
       if (tried === 0) continue;
-      const theirs = git(['for-each-ref', '--format=%(objectname)', `refs/remotes/origin/${head}`]);
+      const theirs = tipOf(git, `refs/remotes/origin/${head}`);
       if (theirs !== source) throw fail(`the push of ${head} failed twice, origin could not be asked (${reason(err)}); ${PILOT_BRANCH} not pushed`);
       // Not git's own words: they name origin's URL, which may carry a credential, on a landing that succeeds.
       return `origin could not be asked for the push; ${head} at ${source.slice(0, 7)} is on origin already`;
