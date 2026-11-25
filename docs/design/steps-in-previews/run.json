@@ -1,0 +1,46 @@
+{
+  "slug": "steps-in-previews",
+  "feature": "Steps threads in previews",
+  "ticket": "itm_3eee1845d039",
+  "branch": "feat/steps-in-previews",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-steps-in-previews",
+  "artefact": "docs/design/steps-in-previews/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/steps-in-previews-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-steps-in-previews-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    }
+  ],
+  "next": "Short path, lane held by itm_3eee1845d039, plan f313347. S1 dc5109c integrating (pilot integrate, then pilot checks --wait); then spawn S2 implementer (rust-reviewer) from the new feat tip; then own gate2 with walkthrough (surface true; S1's look was a static render, live look still owed), integrate --trial sha.",
+  "updatedAt": "2026-11-25T10:00:10.450Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "pilot wait prints the same REPLY for a user's press and the deck's timeout default; deck.json had to be read to tell them apart",
+      "evidence": "resolution 'Assumed: ... (no answer 20 min)' only in the item",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck_post refused a question until its body opened with the Research: line; the same line at the end was refused twice",
+      "evidence": "question post refusals",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "hand-backs cross with main's verdict or confirmation message four times this session (architects twice, co-pilots twice); each cost a resume",
+      "evidence": "reports saying 'your verdict message has not reached me' after it was sent",
+      "size": 4
+    }
+  ]
+}
