@@ -227,7 +227,7 @@ fn toggle(words: String, key: String, on: bool, cx: &mut Cx<State>) -> El {
         .color(ink)
 }
 
-/// The search box, a toggle per kind and a toggle per column. A column pressed again flips its order;
+/// The search box and a toggle per column on one line, a toggle per kind on the lines below. A column pressed again flips its order;
 /// Date starts ascending, since the view already runs newest first.
 fn bar(kinds: &[Kind], local: &Local, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
@@ -238,10 +238,12 @@ fn bar(kinds: &[Kind], local: &Local, cx: &mut Cx<State>) -> El {
         .placeholder("Search titles and fields", theme::tokens(dark).quiet)
         .on_edit(|s: &mut State| &mut s.regions.archive.search);
     let mut bar = row().w_full().gap(space::between).child(search);
+    // The kind toggles wrap onto their own lines, so every one stays inside the window's width (QA2).
+    let mut kind_row = row().w_full().flex_wrap().gap(space::between);
     for k in kinds {
         let on = local.kind.as_deref() == Some(k.kind);
         let kind = k.kind.to_string();
-        bar = bar.child(
+        kind_row = kind_row.child(
             toggle(
                 k.label.to_string(),
                 format!("archive-kind-{}", k.kind),
@@ -277,7 +279,7 @@ fn bar(kinds: &[Kind], local: &Local, cx: &mut Cx<State>) -> El {
             }),
         );
     }
-    bar
+    col().w_full().gap(space::pad).child(bar).child(kind_row)
 }
 
 pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {

@@ -394,6 +394,58 @@ fn stamp(day: usize, minute: usize) -> String {
     )
 }
 
+/// A mouse click at the middle of `key`'s drawn rect, which must lie inside the window.
+fn click(rt: &mut Runtime<State>, key: &str) {
+    let (x, y) = rt.find(key).unwrap_or_else(|| panic!("{key} is drawn"));
+    assert!(
+        (0.0..1280.0).contains(&x) && (0.0..800.0).contains(&y),
+        "{key} is drawn at ({x}, {y}), outside the 1280 x 800 window"
+    );
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(1.0 / 60.0);
+}
+
+#[test]
+fn every_bar_control_takes_a_mouse_click() {
+    // QA2: the bar's controls were reachable by key but 8 of 17 lay where the mouse could not press them.
+    let region = recorded(&[closed("Alpha", 20, 10), closed("Bravo", 19, 12)]);
+    let kinds: Vec<String> = region["kinds"]
+        .as_array()
+        .expect("the region's kinds")
+        .iter()
+        .map(|k| k["kind"].as_str().expect("a kind's name").to_string())
+        .collect();
+    assert!(kinds.len() >= 13, "every record kind has a toggle: {kinds:?}");
+    let mut rt = archive_window(region);
+    rt.frame(0.0);
+    rt.frame(1.0 / 60.0);
+
+    click(&mut rt, "archive-search");
+    rt.paste("zz");
+    rt.frame(1.0 / 60.0);
+    assert_eq!(rt.state.regions.archive.search.text, "zz", "the click focused the search box");
+    rt.update(|s, _| s.regions.archive.search = TextEdit::new(""));
+    rt.frame(1.0 / 60.0);
+
+    for kind in &kinds {
+        click(&mut rt, &format!("archive-kind-{kind}"));
+        assert_eq!(
+            rt.state.regions.archive.kind.as_deref(),
+            Some(kind.as_str()),
+            "the click on {kind}'s toggle picked it"
+        );
+    }
+    for (name, column) in [("date", Column::Date), ("kind", Column::Kind), ("title", Column::Title)] {
+        click(&mut rt, &format!("archive-sort-{name}"));
+        assert!(
+            rt.state.regions.archive.sort == Some((column, true)),
+            "the click on the {name} sort set it ascending"
+        );
+    }
+}
+
 #[test]
 fn a_region_with_no_days_yet_draws_nothing() {
     // Every other screen's archive region is `{}` (deck/view/archive.mjs): until the archive's own view lands,
