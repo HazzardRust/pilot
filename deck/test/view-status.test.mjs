@@ -125,6 +125,25 @@ test('a held ticket with no record has no rows', () => {
   assert.deepEqual(statusView(reads(), { run: MINE, ticket: red.id }).rows, []);
 });
 
+// rune-panes S2 (spec 1c): a held ticket with no record is flagged, so the window says "no slice table yet".
+test('a held ticket with no record is flagged, on its deck and under its overview group', () => {
+  const heldOnly = { ...reads([red]), lanes: { coPilots: {}, switches: {}, records: [] } };
+  const kettle = { ...aRun(), id: 'run_000000000002', repo: THEIRS, name: 'kettle', slices: [{ slice: 'S1 brew', state: 'merged' }] };
+  const both = { ...heldOnly, runs: [...heldOnly.runs, kettle] };
+
+  assert.equal(statusView(heldOnly, { run: MINE }).held, true, 'the deck tab');
+  assert.equal(statusView(both, { run: THEIRS }).held, undefined, 'a tab with no ticket');
+  const groups = statusView(both, {}).groups;
+  assert.deepEqual(
+    groups.map(({ tab, held }) => ({ tab, held })),
+    [
+      { tab: 'pilot', held: true },
+      { tab: 'kettle', held: undefined },
+    ],
+  );
+  assert.equal(statusView(reads(), { run: MINE, ticket: yellow.id }).held, undefined, 'a held ticket with a record');
+});
+
 test('the region is the view\'s status', () => {
   const view = viewOf(reads(), { screen: 'home', run: MINE, ticket: green.id });
 
@@ -194,6 +213,22 @@ test('a deck tab keeps one table', () => {
     heading: 'kettle',
     started: hhmm(AT),
   });
+});
+
+test('a State cell sends the link ranges the page draws, as UTF-8 byte offsets (spec 1b, L7)', () => {
+  const linked = 'see HTTPS://a.b/c?d=1), then é http://x';
+  const posted = { ...aRun(), slices: [{ slice: 'S1', state: linked }, { slice: 'S2', state: 'file:///C:/x and mailto:a@b.c' }] };
+  const bare = { ...reads([]), runs: [posted], lanes: { coPilots: {}, switches: {}, records: [] } };
+
+  const { rows } = statusView(bare, { run: MINE });
+
+  assert.deepEqual(rows[0].links, [{ start: 4, end: 21 }, { start: 32, end: 40 }]);
+  const bytes = Buffer.from(linked);
+  const urls = rows[0].links.map(({ start, end }) => bytes.subarray(start, end).toString());
+  const tab = tabFor(tabsOf(bare.runs, bare.items, bare.numbers, bare.agents, bare.added, bare.lanes), MINE);
+  const page = [...renderStrips(tab, [tab], []).matchAll(/<a [^>]*>(https?:[^<]*)<\/a>/gi)].map(([, url]) => url);
+  assert.deepEqual(urls, page, 'the ranges cut the URLs the page links');
+  assert.equal(rows[1].links, undefined, 'no http(s) URL, no links');
 });
 
 test('with no held lane the newest run that posted a table is drawn', () => {
