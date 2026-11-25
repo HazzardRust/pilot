@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed 558aa76",
+      "state": "integrated 9769f57",
       "branch": "slice/rune-panes-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s1"
     },
@@ -56,8 +56,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s7"
     }
   ],
-  "next": "co-pilot: integrating S1 558aa76; then S6 02cb698, S7 9b4121a; then the fundamentalist; the fix round also takes the found issue that \"no tickets\" should replace empty queue folds (render-rail.mjs:588); then QA.",
-  "updatedAt": "2026-11-25T00:37:41.041Z",
+  "next": "co-pilot: S1 integrated 9769f57, checks running; then S6 02cb698, S7 9b4121a; then the fundamentalist, fix round, QA.",
+  "updatedAt": "2026-11-25T00:38:39.698Z",
   "friction": [
     {
       "agent": "pilot-architect",
