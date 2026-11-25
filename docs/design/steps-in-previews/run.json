@@ -9,20 +9,22 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "integrated",
+      "state": "integrated at 2436041; gate 5132 pass, 0 fail; checks green",
       "branch": "slice/steps-in-previews-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-steps-in-previews-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/steps-in-previews-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-steps-in-previews-s2"
     }
   ],
-  "next": "Short path, lane held by itm_3eee1845d039, plan f313347. S1 dc5109c integrating (pilot integrate, then pilot checks --wait); then spawn S2 implementer (rust-reviewer) from the new feat tip; then own gate2 with walkthrough (surface true; S1's look was a static render, live look still owed), integrate --trial sha.",
-  "updatedAt": "2026-11-25T10:00:10.450Z",
+  "next": "Short path, lane held by itm_3eee1845d039, plan f313347. S2 06065c9 integrating (pilot integrate, then pilot checks --wait). Then added slice S3: Rune draws no Reopen on a closed steps thread (regions/reply.rs), found by S2. Then own gate2: integrate --trial sha, Verdict per slice, Gate line, walkthrough; name the silent refused Done (app.rs prohibited) there.",
+  "updatedAt": "2026-11-25T10:28:21.772Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -41,6 +43,36 @@
       "what": "hand-backs cross with main's verdict or confirmation message four times this session (architects twice, co-pilots twice); each cost a resume",
       "evidence": "reports saying 'your verdict message has not reached me' after it was sent",
       "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed ran the whole node suite plus cargo in the shared target, not a selection; nothing says it reaches cargo",
+      "evidence": "S1 gate: 5121 tests and cargo test on deck/rune"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "testUtils.mjs deletes PILOT_DECK_DIR on import, so seeding a scratch deck through it silently wrote to a temp home",
+      "evidence": "S1 wrote its own seeder"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no Chrome DevTools MCP in the session and headless Chrome never finishes loading the live deck page; look was a static render",
+      "evidence": "S1 B6"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Rune --script JSON format is not documented in the repo; read from the cargo checkout's tooling/script.rs",
+      "evidence": "S2 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice Verification line `cargo test --test deck queue thread` is not valid cargo; one filter only",
+      "evidence": "S2 ran -- queue thread"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md trailer names Fable as co-author on slices written by Opus",
+      "evidence": "S2 pushback"
     }
   ]
 }
