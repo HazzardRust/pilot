@@ -33,6 +33,11 @@ The user's words: "an entire separate ui page for me to view logging ... organis
 | 7 | The screen only reads. It makes GETs only, and visiting it or a detail changes no stored byte and clears no notice. | Test: all 3 sha256s, of `deck.json`, the month files and `classifier.log`, are unchanged after `screen=archive` and every `&id=`, including for an item that carries a notice, on a current-format store (L10). |
 | 8 | Credentials are withheld. `deck.secret`, `deck-open.html` and `logs/*.log` are never opened. Every string shown passes `findCredential` and is replaced by `<withheld: credential>` on a hit. *practitioner: security reviewer* | A seeded classifier row and a `deck.log` line, each holding an `sk-` token, render withheld. A spy shows the three never-shown paths are not read. |
 | 9 | The Archive screen copes with the real store's scale: about 1,500 live items plus 2 month files and the logs. *practitioner: log-explorer engineer* (assumed A5) | The view is served in under 2 s from a copy of `~/.claude/pilot` under `PILOT_DECK_DIR`, timed 3 times; a Rune frame over 10,000 rows with Today open draws in under 50 ms, 3 runs. |
+| 10 | *Added (rework, the user on itm_00bd1d6f40e3).* The Archive is the last entry of the left icon bar, below Tickets and Closing reports; it opens the Archive screen and is marked while that screen is up. The right strip has no Archive button (A9 overturned). | Rust test presses `icon-archive` and finds the rows; no `strip-archive`; a look at the running Rune deck. |
+| 11 | *Added (rework).* The Archive screen is not laggy: its cost is measured against the home screen on a copy of the real store first, then fixed. | Measurement table in S17's report (before and after); release frame over 10,000 rows and a search keystroke's frame each under 16 ms, 3 runs; an unchanged view is parsed once. |
+| 12 | *Added (rework).* The search and sort bar is set apart from the list by a rule, and sits under the deck tabs with the same gap as home's first region. | Rust test: `archive-bar-rule` between bar and list; the bar's top gap equals home's within 1 px; a look. |
+| 13 | *Added (rework).* The default sort is Date, newest first; the user's sort (column and direction) is saved and restored across restarts. | Rust test: fresh prefs draw `Date ↓` on and newest first; a chosen sort survives a new `State` from the same prefs dir. |
+| 14 | *Added (rework).* Rows and the bar are aligned and grouped: kind, time and title columns start at the same x on every row; fields sit under the title; the bar groups as search, Sort, Kinds; detail labels line up. | Rust layout tests at 1280 and 900 wide; a look at list and detail. |
 
 `handoff-trace.jsonl` (crew-handoff-trace, Gate 2 signed 2026-11-21) is a kind here once that run lands: S11 (A8 overturned).
 
@@ -163,6 +168,7 @@ Deletion test: `store-archive` survives, because three callers need it, and the 
   - *Rejected:* an Archive entry in the header tab strip (`regions/tabs.rs`), which mixes a page among the deck tabs.
   - Answered "Strip beside Items" on itm_d1836b2773f6 (the default).
   Verdict: stands — the user pressed "Strip beside Items" on itm_d1836b2773f6
+  - *Overturned by the user* on walkthrough itm_00bd1d6f40e3 (2026-11-25): "have the archive just be one of the things on the left side of the screen, it can go at the very bottom below tickets". The Archive is the last icon-bar entry, a page opened in the centre, not a pane (spec 10, S16).
 
 ## 7. Out of scope
 
@@ -188,6 +194,10 @@ Width 9; longest stem 3
 | S9 Deck and wrapper logs, line by line | 3, 6, 8 | `deck/archive-kinds/textlogs.mjs` (new), `deck/test/archive-textlogs.test.mjs` (new) | S1 (record-kind seam) | typescript, security | [S9](slices/S9.md) |
 | S11 Hand-off trace rows | 3, 6 | `deck/archive-kinds/trace.mjs` (new), `deck/test/archive-trace.test.mjs` (new) | S1 (record-kind seam) | typescript | [S11](slices/S11.md) |
 | S10 Every store is covered, at real scale | 3, 9 | `deck/test/archive-coverage.test.mjs` (new), `scripts/archive-timing.mjs` (new), `docs/adr/NNNN-archive-page.md` (new) | S4 (thread kinds claimed), S5 (records kinds), S6 (classifier kind), S7 (usage, memory kinds), S8 (audits, switches kinds), S9 (text-log kinds), S11 (trace kind) | typescript | [S10](slices/S10.md) |
+| S16 Archive is the last entry of the left icon bar (added) | 10 | `deck/rune/src/layout.rs`, `deck/rune/src/regions/strip.rs`, `deck/view/strip.mjs`, archive and strip tests | drift merge 2d38b22 | rust, typescript | [S16](slices/S16.md) |
+| S17 The archive's lag, measured and then fixed (added) | 11 | `deck/rune/src/regions/archive.rs`, `deck/rune/src/app.rs` (cache only), `deck/rune/tests/deck/archive_lag.rs` (new) | drift merge 2d38b22 | rust | [S17](slices/S17.md) |
+| S18 Bar set apart, gap closed, date-newest default saved (added) | 12, 13 | `deck/rune/src/regions/archive.rs`, `deck/rune/src/prefs.rs`, `deck/rune/src/app.rs`, `deck/rune/tests/deck/archive_bar.rs` (new) | S17 | rust | [S18](slices/S18.md) |
+| S19 Rows and bar aligned and grouped (added) | 14 | `deck/rune/src/regions/archive.rs`, `deck/rune/src/regions/archive_detail.rs`, `deck/rune/tests/deck/archive_align.rs` (new) | S18 | rust | [S19](slices/S19.md) |
 
 Walking skeleton: S1, across both sides: a pure store read, the month files, one record kind, withholding, the `archive` region and screen, the strip button, and the Rune list in day sections. Estimated near 400 lines, the brief's limit; past it, S1's implementer stops and asks main.
 
