@@ -10,7 +10,7 @@
  * string.
  */
 
-import { firstLine, landingSubjects, pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
+import { firstLine, landingSubjects, LEGACY_PILOT, pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
 import { runRef, runRemote } from './remotes.mjs';
 
 const LABEL = 'release';
@@ -88,7 +88,9 @@ export function releasePr({ git, host, name, already = false }) {
   if (!open && already) return { number: null, opened: false, none: true };
   let notes;
   try {
-    const features = host.reviews({ base: name, state: 'merged', limit: 200 });
+    // A landing from before the move (L8) has its PR merged into the legacy pilot.
+    const merged = (into) => host.reviews({ base: into, state: 'merged', limit: 200 });
+    const features = name === LEGACY_PILOT ? merged(name) : [...merged(name), ...merged(LEGACY_PILOT)];
     notes = releaseNotes({ git, pilotRef: runRef(runs, name), mainRef: runRef(runs, base), prs: features });
   } catch (err) {
     return unknown(`release notes failed: ${firstLine(err)}`);

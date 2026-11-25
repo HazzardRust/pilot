@@ -43,6 +43,14 @@ const NO_REPO = () => {
 };
 /** The name an exported step means when its caller passes none (the pinned suite, L7): the env's only, never a config or a host. */
 const envName = () => pilotBranch(NO_REPO);
+/** The env's name for a line, or `the pilot branch` when there is none: a line never throws in place of the failure it reports. */
+const labelOf = () => {
+  try {
+    return envName();
+  } catch {
+    return 'the pilot branch';
+  }
+};
 
 /** A failed push's reason: git's ` ! [rejected]`, `error:` or `fatal:` line, not its `To <url>`. */
 const reason = (err) =>
@@ -393,10 +401,10 @@ export function pushFeature({ git, head, source, name }) {
       git(['push', '-q', 'origin', head]);
       return undefined;
     } catch (err) {
-      if (!unreachable(err)) throw fail(`the push of ${head} failed (${reason(err)}); ${name ?? envName()} not pushed`);
+      if (!unreachable(err)) throw fail(`the push of ${head} failed (${reason(err)}); ${name ?? labelOf()} not pushed`);
       if (tried === 0) continue;
       const theirs = git(['for-each-ref', '--format=%(objectname)', `refs/remotes/origin/${head}`]);
-      if (theirs !== source) throw fail(`the push of ${head} failed twice, origin could not be asked (${reason(err)}); ${name ?? envName()} not pushed`);
+      if (theirs !== source) throw fail(`the push of ${head} failed twice, origin could not be asked (${reason(err)}); ${name ?? labelOf()} not pushed`);
       // Not git's own words: they name origin's URL, which may carry a credential, on a landing that succeeds.
       return `origin could not be asked for the push; ${head} at ${source.slice(0, 7)} is on origin already`;
     }

@@ -13,7 +13,7 @@ const { test } = await import('node:test');
 const { default: assert } = await import('node:assert/strict');
 
 const { retarget, mainLine } = await import('../land.mjs');
-const { releaseNotes } = await import('../release.mjs');
+const { releaseNotes, releasePr } = await import('../release.mjs');
 const { stepsOf } = await import('../../deck/closing-report.mjs');
 
 const NAME = 'hazzardrust-pilot';
@@ -63,6 +63,26 @@ test('release notes see pre-move landings', (t) => {
   const { rows } = releaseNotes({ git: (args) => git(repo, ...args), pilotRef: `refs/heads/${NAME}`, mainRef: 'refs/heads/main', prs: [] });
 
   assert.deepEqual(rows.map((row) => row.slug), ['a', 'b'], 'a landing onto the legacy pilot and onto the user\'s branch; another user\'s is not one');
+});
+
+test('a pre-move landing keeps its PR in the release notes', () => {
+  // origin is the run remote with main its HEAD; main..the user's branch holds one landing from before the move.
+  const git = (args) => {
+    const key = args.join(' ');
+    if (key === 'config --get pilot.remote') throw Object.assign(new Error('unset'), { status: 1 });
+    if (key === 'remote') return 'origin';
+    if (key === 'ls-remote --symref origin HEAD') return 'ref: refs/heads/main\tHEAD\n';
+    if (args[0] === 'log') return `${'a'.repeat(40)}\t${'b'.repeat(40)} ${'c'.repeat(40)}\tMerge feat/a into pilot`;
+    throw new Error(`unexpected git ${key}`);
+  };
+  const { host, calls } = fakeGh([{ number: 7, headRefName: 'feat/a', baseRefName: 'pilot', state: 'MERGED' }]);
+
+  const main = releasePr({ git, host, name: NAME });
+
+  const create = calls.find((args) => args[0] === 'pr' && args[1] === 'create');
+  assert.ok(create, JSON.stringify(main));
+  assert.equal(create[create.indexOf('--head') + 1], NAME);
+  assert.match(create[create.indexOf('--body') + 1], /^\| a \| #7 \| a{40} \|$/m, 'the feature PR merged into the legacy pilot is found');
 });
 
 test('the closing report names the branch', () => {
