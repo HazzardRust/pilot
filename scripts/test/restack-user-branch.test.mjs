@@ -14,6 +14,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { syncFeaturePr } from '../feature-pr.mjs';
 import { restack } from '../stack.mjs';
 
 const ME = 'HazzardRust';
@@ -104,6 +105,56 @@ test('another user\'s PRs are untouched', (t) => {
   assert.equal(theirs.base, 'pilot');
   assert.ok(!out.lines.some((line) => line.includes('#3')), out.lines.join('\n'));
   assert.deepEqual(out.calls.filter((args) => args[0] === 'push'), []);
+});
+
+/**
+ * After the move: origin's `NAME` holds feat/b's landing under the legacy subject (`into pilot`), copied from the legacy
+ * pilot, and feat/a gains a fix after feat/b was cut from it. No `pilot` on origin, so only `NAME` can show the landing.
+ */
+function buildMoved(dir) {
+  const origin = path.join(dir, 'origin.git');
+  run(dir, 'init', '-q', '--bare', '-b', 'main', origin);
+  const seed = path.join(dir, 'seed');
+  run(dir, 'clone', '-q', origin, seed);
+  run(seed, 'checkout', '-q', '-b', 'main');
+  const commitFile = (file, text, message) => {
+    fs.writeFileSync(path.join(seed, file), text);
+    run(seed, 'add', file);
+    run(seed, 'commit', '-q', '-m', message);
+  };
+  commitFile('x.txt', 'x\n', 'main');
+  run(seed, 'checkout', '-q', '-b', 'feat/a');
+  commitFile('a.txt', 'a\n', 'feat a');
+  run(seed, 'checkout', '-q', '-b', 'feat/b');
+  commitFile('b.txt', 'b\n', 'feat b');
+  const moved = run(seed, 'commit-tree', 'feat/b^{tree}', '-p', 'main', '-p', 'feat/b', '-m', 'Merge feat/b into pilot');
+  run(seed, 'checkout', '-q', 'feat/a');
+  commitFile('a.txt', 'a fixed\n', 'fix a');
+  run(seed, 'push', '-q', 'origin', 'main', 'feat/a', 'feat/b', `${moved}:refs/heads/${NAME}`);
+  const work = path.join(dir, 'work');
+  run(dir, 'clone', '-q', origin, work);
+  return { work };
+}
+
+test('a landing copied from the legacy pilot still merges forward', (t) => {
+  unpinned(t);
+  const { work } = gitFixture(t, 'restack-user-branch:moved', buildMoved);
+  const { host, edits } = stubHost([pr({ number: 2, head: 'feat/b', base: 'feat/a' })]);
+
+  const out = restackIn(work, host);
+
+  assert.deepEqual(out.lines, ['merged feat/a into feat/b']);
+  assert.equal(out.exitCode, 0);
+  assert.deepEqual(edits, []);
+});
+
+test('pilot pr with host none and no base reads no name', (t) => {
+  unpinned(t);
+  const { work } = repos(t);
+
+  const out = syncFeaturePr({ host: null, git: (args) => run(work, ...args), record: { slug: 'abc' } });
+
+  assert.deepEqual(out, { line: 'no PR: host none', wrote: 'none' });
 });
 
 test('a second restack is level', (t) => {
