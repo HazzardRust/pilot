@@ -135,65 +135,31 @@
     },
     {
       "slice": "S15 Upgrade backups and the defender marker (added)",
-      "state": "pushed 8712de7",
+      "state": "integrated e5580a6; checks green",
       "after": [
         "S10"
       ],
       "branch": "slice/archive-page-s15",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s15"
+    },
+    {
+      "slice": "archive-page",
+      "state": "paused: fix round done at 5b1582f (npm test 5250/0 fail, cargo 191/0, ts+rust APPROVE); no child live; QA2 open for QA",
+      "branch": "feat/archive-page",
+      "worktree": "C:/Users/jrylk/Projects/pilot-qa-archive-page",
+      "pr": 139
+    },
+    {
+      "slice": "feature",
+      "state": "failed gate: base NOT taken: pilot@fb6cac4 merged red (cargo: rune-target pilot-deck.exe locked by pid 4744); local feat stale at d27351e, origin 5b1582f; CI macos cancelled, rerun"
     }
   ],
-  "next": "Integrating S15 8712de7; then checks, fundamentalist, QA.",
-  "updatedAt": "2026-11-24T14:44:45.232Z",
+  "findings": [
+    "kept: F7 simplify — user chose a simple log read over the chunked tail reader on itm_973b6c14330a; A6 overturned"
+  ],
+  "next": "Waiting on main: bring local feat to origin 5b1582f and free rune-target's pilot-deck.exe; then pilot integrate --dir feat (base), sha to main, checks, respawn QA (fix tip + QA2 + F9, F7 user finds).",
+  "updatedAt": "2026-11-25T11:27:45.924Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S1 pushed twice on a non-npm exit code; final full gate red on an unlisted deck module (deck/README.md)",
-      "evidence": "gate-final.log: npm exit 1, 5079/5108, every deck module is listed scripts/test/deck-readme.test.mjs:27",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "fix commit 651900b carries its own model and session in the trailer, not brief.md's trailer lines",
-      "evidence": "git show 651900b: Co-Authored-By: Claude Sonnet 5.5, session_01NXgSFrR7...; brief.md names Claude Fable 5.2, session_01NXgSFpzNB8...",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S1's kinds pin listed every kind, so each kind slice (S4-S9, S11) had to edit S1's test: parallel conflicts; S4 made it ignore zero-count kinds",
-      "evidence": "437602a test(archive-page): S4 the kinds pin ignores kinds with no rows",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "region names pinned in live.rs and view-route.test.mjs outside the slice; S2 added archiveDetail to both",
-      "evidence": "S2 first cargo run: live::a_heartbeat_refreshes_every_region_from_one_view failed",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "a report cannot be seeded in a Rust test (deck_post refuses a report on a red ticket); hand-written store fixture",
-      "evidence": "deck_post 400: a report's ticket is an open green ticket",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "the slice verification command runs a debug build, so the 50 ms frame bar (B5) is only asserted by a separate cargo test --release run",
-      "evidence": "S3 archive_filter asserts under cfg(not(debug_assertions)); release 6/6 at 13-14 ms",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "clippy red on a base file no slice owns: tickets.rs:459 ticket_row has 8 args, from ae00199, already on pilot",
-      "evidence": "git merge-base --is-ancestor ae00199 origin/pilot: on pilot",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "S2's report evidence rows were lost with my context before integration; pilot integrate refuses without per-behaviour Evidence trailers, and a transcript cannot be read back",
-      "evidence": "NOT integrated slice/archive-page-s2: S2: B1 has no --trailer; SendMessage to the S2 implementer: not reachable",
-      "size": 1
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S2 and S3 each register a test module in deck/rune/tests/deck/main.rs, so parallel slices conflict on one line",
@@ -384,6 +350,54 @@
       "agent": "pilot:pilot-implementer",
       "what": "testUtils seeds a v2 deck, so any archive test over a seeded store now sees an upgrade backup row; cost one npm test red and a rerun",
       "evidence": "S15: archive-page.test.mjs rows sit in daySections' sections failed alone",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context compacted mid-review; findings rebuilt from scratch and the evidence runner spawned late, so no tool table",
+      "evidence": "fundamentalist report: evidence pass not run",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "report fixtures carried resolvedAt that real reports never get, so every slice test passed while 0 of 128 real reports showed",
+      "evidence": "QA: archive-items.test.mjs:96, archive-detail.test.mjs:40",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner never reported; the principles review has no tool table",
+      "evidence": "co-pilot triage note; worktree pilot-fund-archive-page left behind",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "Node column only, no Rust rows; Stryker dry run failed on the 50 ms timing test classifier-log.test.mjs:262 at 109 ms under load, so no mutation score",
+      "evidence": "main's relay of the runner table",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "report reached main, not the fundamentalist, after the review was triaged; Stryker dry run failed on a 50 ms timing test under load so no mutation score; no Rust rows (root manifest picks Node); knip ran whole-repo",
+      "evidence": "classifier-log.test.mjs:262 109 ms; Unused files (732)",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 3/4 evidence is key-driven Rust tests, which pass while the mouse cannot reach 8 of 17 bar controls; Rune has no click driver for a live window, QA drove it via UI Automation",
+      "evidence": "QA2, live-archive.png",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA brief named cargo --test archive_filter, which matches no target; the frame test runs as a_frame_stays in tests/deck/main.rs",
+      "evidence": "QA report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "F1 snap needed a scratch deck serving a store copy: PILOT_DECK_DIR alone does not point Rune at a store, and no release binary existed (~3 min build)",
+      "evidence": "fix round report",
       "size": 2
     }
   ]
