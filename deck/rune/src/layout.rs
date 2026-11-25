@@ -592,18 +592,16 @@ pub fn strips(s: &State, cx: &mut Cx<State>) -> El {
         .pl(space::s0)
         .gap(space::panels)
         .child(left)
-        // The centre scrolls past the window's foot, so Reply stays reachable under a tall thread
-        // or a reply holding a table (QA at 1280 × 800, reply-markdown).
+        // The centre is held to the window (min_h 0) and its body is the one viewport
+        // (`app::center`), holding thread and reply, so Reply stays reachable under a tall thread
+        // or a reply holding a table (QA at 1280 × 800, reply-markdown). An outer scroll here
+        // would unbound that viewport and lose its stick-to-bottom.
         .child(
             app::center(s, cx)
                 .key("centre")
                 .grow(1.0)
                 .min_w(space::s0)
-                .h_full()
-                .min_h(space::s0)
-                .scroll(ScrollSpec {
-                    stick_bottom: false,
-                }),
+                .min_h(space::s0),
         )
         .child(regions::strip::draw(
             strip,
