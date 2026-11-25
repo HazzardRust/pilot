@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed b442158 on 756c840, ts APPROVE, security APPROVE; sync 19 -> 14",
+      "state": "integrated fb45e61; checks green at fb45e61",
       "after": [
         "S2"
       ],
@@ -42,7 +42,7 @@
     },
     {
       "slice": "S5",
-      "state": "implementing",
+      "state": "pushed 33adbf6 on fb45e61, ts WARN (both MEDIUMs fixed, lease test red->green), security APPROVE; landing 32 -> 27",
       "after": [
         "S2"
       ],
@@ -69,7 +69,7 @@
     },
     {
       "slice": "S8",
-      "state": "pushed f7555bb on 756c840, ts APPROVE; integrate 20 -> 20, landing 32 -> 31",
+      "state": "pushed f7555bb; integrate 1 red: deck gate1-verdicts 5 s git timeout under load (no deck file imports git-view); re-integrating once",
       "after": [
         "S2"
       ],
@@ -85,8 +85,8 @@
       ]
     }
   ],
-  "next": "Integrating S4 b442158; then S8 f7555bb; S5 implementing; S9 (added, integrate to 18) after S5 and S8; then S7, S6.",
-  "updatedAt": "2026-11-25T12:51:11.356Z",
+  "next": "S8 re-integrating; then integrate S5 33adbf6; then S9 (added, integrate to 18); then S7, S6.",
+  "updatedAt": "2026-11-25T13:43:09.093Z",
   "friction": [
     {
       "agent": "architect",
@@ -209,6 +209,30 @@
       "what": "S8's brief assumed the three new reads would move integrate; they are each asked once there, so 20 -> 20; one more slice needed for spec 4's 18",
       "evidence": "S8 report counts table",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "integrate of S8 went red on a deck test unrelated to the diff: lineage's 5 s git timeout fires under parallel gate load",
+      "evidence": "deck/test/gate1-verdicts.test.mjs:105, deck/lineage.mjs:36; log 20261125T131656697Z-slice-land-batching-s8.log",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "parallel slices load the machine: one integrate test took 650 s vs 12 s; reviewer runs timed out on 'gate: waiting for a slot'",
+      "evidence": "S5 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed --since runs the whole suite, same as npm test",
+      "evidence": "package.json test:changed: node scripts/gate.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5's 27 bar needed origin tips from the local ref snapshot, not only the skipped fetches (28); land-clear's fault injection had to change because the tail no longer fetches",
+      "evidence": "scripts/test/land-clear.test.mjs:148-166",
+      "size": 1
     }
   ]
 }
