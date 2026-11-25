@@ -73,9 +73,20 @@ test('an id in the overview is refused', () => {
 
 test('a long overview is refused', () => {
   const sentence = 'The deck shows a short plain line above each table.';
-  const at150 = Array(15).fill(sentence).join(' ');
+  const at150 = ['- **What changes**: the deck shows a line above each table.', ...Array(14).fill(sentence)].join(' ');
   assert.deepEqual(checkSpec(withOverview(at150)), []);
   assert.deepEqual(refusals(withOverview(`${at150} Done.`)), [{ line: 3, rule: 'overview-plain' }]);
+});
+
+test('an overview with no What changes label is refused', () => {
+  assert.deepEqual(refusals(withOverview('- **What change**: the deck pauses a ticket.')), [{ line: 3, rule: 'overview-plain' }]);
+});
+
+test('an overview whose sentences run long is refused', () => {
+  const long = 'The deck now shows a plain line above every table so that anyone opening the pull request can see at a glance what the change does for them.';
+  const markdown = withOverview(`- **What changes**: ${long} ${long}`);
+  assert.deepEqual(refusals(markdown), [{ line: 3, rule: 'overview-plain' }]);
+  assert.match(checkSpec(markdown)[0].message, /sentences average/);
 });
 
 test('the CLI routes architecture.md to the spec check', () => {

@@ -25,7 +25,7 @@ import { RUN_BASE, SLUG } from '../deck/runs.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { listeningRepo } from '../deck/wait.mjs';
 import { firstLine, git as gitAt, PILOT_BRANCH } from './pilot-branch.mjs';
-import { overviewBlock } from './pr-overview.mjs';
+import { overviewBlock, quiet } from './pr-overview.mjs';
 import { runRemote } from './remotes.mjs';
 import { prBase } from './stack.mjs';
 
@@ -48,11 +48,6 @@ class StepError extends Error {}
 const BREAKS = new RegExp(`[\\x00-\\x1f\\x7f-\\x9f${String.fromCharCode(0x2028, 0x2029)}]+`, 'g');
 /** Every line break and control character folded to one space: text that stays on one line. */
 const oneLine = (value) => String(value ?? '').replace(BREAKS, ' ').trim();
-
-/** An @ that opens a GitHub mention: not after a word character, so an email address is left alone. */
-const MENTION = /(?<!\w)@(?=[A-Za-z0-9])/g;
-/** `text` with a zero-width joiner after every mention's @: it reads the same, and GitHub notifies nobody. */
-const quiet = (text) => text.replace(MENTION, `@${String.fromCharCode(0x200d)}`);
 
 /** One table cell: a pipe escaped, line breaks folded, so a row stays one row. */
 const cell = (value) => oneLine(value).replace(/\|/g, '\\|');

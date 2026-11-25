@@ -1,7 +1,7 @@
 /**
  * The `## Overview` of a feature's artefact, the plain summary a PR opens with (pr-overview S1; L2, L3):
  * the section read out of the markdown, the rules a person-facing text has to meet, and the built count
- * the feature PR adds under it. Pure: the caller hands in the markdown, the record and the role names.
+ * the feature PR adds under it. Reads no host or git: the caller hands in the markdown, the record and the role names.
  */
 
 import fs from 'node:fs';
@@ -42,6 +42,11 @@ export function crewRoles(agentsDir) {
 
 const escape = (word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+/** The text after the overview's `- **What changes**:` label; null when it has none. */
+export function whatChangesOf(overviewText) {
+  return /^\s*-\s*\*\*What changes\*\*:[ \t]*(\S.*)$/m.exec(String(overviewText))?.[1].trim() || null;
+}
+
 /** `{ line, rule, message }` for each place `text` breaks a rule; `roles` are the crew role words. */
 export function overviewProblems(text, roles) {
   const problems = [];
@@ -61,6 +66,8 @@ export function overviewProblems(text, roles) {
     }
   });
 
+  if (whatChangesOf(text) === null) problems.push({ line: 1, rule: 'overview-label', message: 'no `- **What changes**:` line' });
+
   const words = (chunk) => chunk.split(/\s+/).filter((word) => /[\p{L}\p{N}]/u.test(word)).length;
   const total = words(String(text));
   if (total > MAX_WORDS) problems.push({ line: 1, rule: 'overview-long', message: `${total} words, at most ${MAX_WORDS}` });
@@ -71,9 +78,14 @@ export function overviewProblems(text, roles) {
   return problems.sort((a, b) => a.line - b.line);
 }
 
-/** `Built so far: <k> of <n> parts.`, k the record's slices whose state starts `integrated`. */
+/** An @ that opens a GitHub mention: not after a word character, so an email address is left alone. */
+const MENTION = /(?<!\w)@(?=[A-Za-z0-9])/g;
+/** `text` with a zero-width joiner after every mention's @: it reads the same, and GitHub notifies nobody. */
+export const quiet = (text) => text.replace(MENTION, `@${String.fromCharCode(0x200d)}`);
+
+/** `Built so far: <k> of <n> parts.`, n the record's slice rows (`S<digits>`, not the feature's own row), k those whose state starts `integrated`. */
 export function builtLine(record) {
-  const slices = record?.slices ?? [];
+  const slices = (record?.slices ?? []).filter((row) => /^S\d+/.test(String(row?.slice ?? '')));
   const built = slices.filter((row) => String(row?.state ?? '').startsWith('integrated')).length;
   return `Built so far: ${built} of ${slices.length} parts.`;
 }
