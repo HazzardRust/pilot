@@ -34,7 +34,7 @@ import { releasePr } from './release.mjs';
 import { runRef, runRemote } from './remotes.mjs';
 import { prBase } from './stack.mjs';
 import { isWorktreeOf, mergeIntoPilot, removeWorktree, resume } from './sync.mjs';
-import { holderFrom, prune, runRecord } from './worktrees.mjs';
+import { holderFrom, prune, runRecord, WORKTREE_LIST } from './worktrees.mjs';
 
 const fail = (message, exitCode = 1) => Object.assign(new Error(`NOT landed: ${message}`), { exitCode });
 
@@ -126,7 +126,7 @@ export function catchUp({ cwd, git, head }) {
   const theirs = tipOf(ask, `refs/remotes/origin/${head}`);
   if (!theirs) return { moved: 0 };
   const ours = tipOf(ask, 'HEAD');
-  // Level: nothing to count, and no rev-list, a write, to end the epoch the landing reads on in.
+  // Level: nothing to count, so no rev-list is spawned.
   if (ours === theirs) return { moved: 0 };
   // Commits only ours holds, then only theirs: a git that cannot answer throws, never reads as diverged.
   const [ahead, moved] = ask(['rev-list', '--left-right', '--count', `${ours}...${theirs}`]).split(/\s+/).map(Number);
@@ -162,7 +162,8 @@ function deleteRunBranches({ git, host, head }) {
   const numbered = (prefix, name) => name.startsWith(prefix) && /^\d+$/.test(name.slice(prefix.length));
   const ours = (name) => name === `design/${slug}` || name === `qa/${slug}` || numbered(`fix/${slug}-s`, name) || numbered(`slice/${slug}-s`, name);
   try {
-    return deleteMerged({ git, host, select: ours, into: head });
+    // The landing fetched origin itself (`catchUp`) and pushed since (A3): no second fetch.
+    return deleteMerged({ git, host, select: ours, into: head, fetched: true });
   } catch (err) {
     return { deleted: err.deleted ?? [], kept: err.kept ?? [], deleteFailed: firstLine(err) };
   }
@@ -178,13 +179,15 @@ function deleteRunBranches({ git, host, head }) {
 function clear({ cwd, git, head, holder, remove }) {
   const run = head.slice('feat/'.length);
   try {
-    const checkout = git(['worktree', 'list', '--porcelain']).split('\n')[0].replace(/^worktree /, '');
+    // The list `prune` reads too, so the view answers it once.
+    const checkout = git(WORKTREE_LIST).split('\0')[0].replace(/^worktree /, '');
     const inFeature = path.relative(fs.realpathSync.native(cwd), fs.realpathSync.native(process.cwd()));
     if (inFeature !== '..' && !inFeature.startsWith(`..${path.sep}`) && !path.isAbsolute(inFeature)) process.chdir(checkout);
     const pilot = runRef(runRemote(git), PILOT_BRANCH);
     // A branch in the landed pilot goes with -D: its remote copy, git's other judge, may be deleted already.
     const merged = git(['for-each-ref', '--merged', pilot, '--format=%(refname)', 'refs/heads/']).split('\n').map((ref) => ref.slice('refs/heads/'.length));
-    const { removed, kept, failed } = prune(checkout, pilot, { run, merged, keep: [`feat/${run}`, `qa/${run}`], holder });
+    // The landing's push left `pilot` current (A3): prune fetches nothing, and reads its list and pilot's tip through the view.
+    const { removed, kept, failed } = prune(checkout, pilot, { run, merged, keep: [`feat/${run}`, `qa/${run}`], holder, git, fetched: true });
     // The land dir a conflict kept is the landing's own tail: gone once the landing is (lander-tail S3).
     const land = keptDir(checkout, head);
     const landLine = removeLand(remove, checkout, land);

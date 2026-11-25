@@ -55,6 +55,21 @@ export function tipsOn(git, remote) {
 }
 
 /**
+ * `remote`'s branches as a name → sha map, from the remote-tracking refs a caller's fetch left (land-batching
+ * A3). The argv is the one `tipOf` snapshots, so on a landing's view the read is shared, not a spawn of its own.
+ */
+function fetchedTips(git, remote) {
+  const prefix = `refs/remotes/${remote}/`;
+  const tips = new Map();
+  for (const line of step(git, ['for-each-ref', '--format=%(objectname) %(refname)', 'refs/heads', 'refs/remotes'], 'git for-each-ref failed').split(/\r?\n/)) {
+    const space = line.indexOf(' ');
+    const ref = line.slice(space + 1);
+    if (space > 0 && ref.startsWith(prefix) && ref !== `${prefix}HEAD`) tips.set(ref.slice(prefix.length), line.slice(0, space));
+  }
+  return tips;
+}
+
+/**
  * Every same-repository review, any state, by head branch, in one host read; none at all when `host` is null
  * (`none`, A1), so every branch is judged by ancestry. An Error when the read fails or the list may be cut short.
  */
@@ -80,15 +95,19 @@ function prsByHead(host) {
  * (L5). With `dryRun`, `deleted` is what would be deleted and nothing is pushed. A failed
  * push throws with `deleted`, what went before it, and `kept`. Throws, deleting nothing,
  * when the run remote, origin's default branch or a remote's branch list cannot be read.
+ * With `fetched`, the caller fetched origin itself (a landing, A3): nothing is fetched, origin's
+ * branches are read from its remote-tracking refs and any other remote's still from the remote.
+ * The push's lease stays the arbiter: a branch moved since is refused there, never deleted.
  */
-export function deleteMerged({ git, host, select, into, wait = 0, dryRun = false }) {
+export function deleteMerged({ git, host, select, into, wait = 0, dryRun = false, fetched = false }) {
   const runs = runRemote(git);
   const defaultName = remoteDefaultBranch(git);
   const target = into ?? defaultName;
   const remotes = runs === null || runs === 'origin' ? ['origin'] : ['origin', runs];
-  for (const remote of remotes) step(git, ['fetch', '-q', remote], `git fetch ${remote} failed`);
+  if (!fetched) for (const remote of remotes) step(git, ['fetch', '-q', remote], `git fetch ${remote} failed`);
+  const tipsOf = (remote) => (fetched && remote === 'origin' ? fetchedTips(git, remote) : tipsOn(git, remote));
   const candidates = remotes.flatMap((remote) =>
-    [...tipsOn(git, remote)].filter(([branch]) => remoteOf(runs, branch) === remote && select(branch)).map(([branch, tip]) => ({ remote, branch, tip })));
+    [...tipsOf(remote)].filter(([branch]) => remoteOf(runs, branch) === remote && select(branch)).map(([branch, tip]) => ({ remote, branch, tip })));
 
   const deleted = [];
   const kept = [];

@@ -148,20 +148,19 @@ test('a landing reads the process table once, and keeps a slice worktree a live 
 test('a prune that throws is one line, and the landing still exits 0', (t) => {
   const { origin, dir, listed } = run(t);
   const before = listed();
-  // Origin goes away once the merge is pushed, as the clear begins: prune's fetch fails.
+  // Once the clear has listed the worktrees, the tip snapshot prune reads pilot's tip from fails
+  // (the landing's tail fetches nothing, land-batching S5).
   let lists = 0;
-  const gone = `${origin}-gone`;
-  t.after(() => fs.existsSync(gone) && fs.renameSync(gone, origin));
   const losing = (args) => {
-    if (args[0] === 'worktree' && args[1] === 'list' && ++lists === 2) fs.renameSync(origin, gone);
+    if (args[0] === 'worktree' && args[1] === 'list') lists += 1;
+    if (lists === 2 && args[0] === 'for-each-ref' && args[1].startsWith('--format=')) throw new Error('for-each-ref failed');
     return git(dir('feat'), ...args);
   };
 
   const said = landFrom(dir('feat'), gh, losing);
 
   assert.equal(said.code, 0, said.out);
-  assert.match(said.out, /^deleted: design\/s, slice\/s-s1\nNOT removed the worktrees of s: git fetch origin failed: .+\nlanded feat\/s on pilot at /);
-  fs.renameSync(gone, origin);
+  assert.match(said.out, /^deleted: design\/s, slice\/s-s1\nNOT removed the worktrees of s: for-each-ref failed\nlanded feat\/s on pilot at /);
   assert.equal(git(origin, 'rev-parse', 'pilot^2'), git(origin, 'rev-parse', 'feat/s'), 'landed');
   assert.deepEqual(listed(), before, 'nothing removed');
 });
