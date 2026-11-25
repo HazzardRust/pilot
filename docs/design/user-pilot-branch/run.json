@@ -66,8 +66,8 @@
       "pr": 157
     }
   ],
-  "next": "Red: gate1 itm_178637b5acc6 awaits press. Green: gate2 itm_1d819d4586dc, itm_589b847f8e5c await press. stay-awake: gate2 ready with QA abe6640a3baabf2c1, held by blocking itm_21b8b7cc40fa. rune-panes: walkthrough itm_477988ef5154 with QA ad61fd567e97db855; open itm_e2c98baab42a, blocking itm_200e69778201. Yellow: pr-overview itm_1dc34cf2a81a released mid-run. Each record's next is current.",
-  "updatedAt": "2026-11-25T03:02:01.985Z",
+  "next": "Red: gate1 itm_178637b5acc6 awaits press. Green: gate2 itm_1d819d4586dc, itm_589b847f8e5c await press; pr-overview walkthrough itm_2c7938dcf978 (pilot owns; on reply resume QA a41acfb3c2f0c0a04, rewrite #144 first); rune-panes QA ad61fd567e97db855, stay-awake QA abe6640a3baabf2c1 live. Yellow: portable-store BLOCKED itm_f654d687ec15, no co-pilot live. Each record's next is current.",
+  "updatedAt": "2026-11-25T06:12:06.618Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -130,6 +130,41 @@
       "kind": "drain",
       "what": "deck_status next capped at 400 chars: six calls rejected and rewritten",
       "size": 5
+    },
+    {
+      "kind": "drain",
+      "what": "five co-pilots across two tickets each forced to hand back with a child live; the pilot took about 12 agent reports (3-8k tokens each) and ran every integration, both fix rounds and all CI triage itself",
+      "size": 40
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait restarted 5 times on 50-minute timeouts; one REPLY was the deck's own 20-minute default, and its hook notice called it a landing ended short on a gate2",
+      "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "auto mode gave no verdict on a call sharing a response with a deck call, four times; each reissued alone",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "deck_status next capped at 400 chars: three calls rejected and rewritten",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "every deck status or comment write reverts PR #144's body to the installed code's, so the feature's own overview cannot stay visible for the Gate 2 read",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "evidence rows live only in agent reports: the pilot wrote a trailer file to its scratchpad so the hand-off would not lose S2's and S3's",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "a context summary dropped the details of one deck_post and one TaskStop mid-turn; the pilot could not say what it had posted",
+      "size": 2
     }
   ]
 }
