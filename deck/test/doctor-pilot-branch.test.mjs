@@ -76,12 +76,12 @@ test('no name and signed out fails with the steps', () => {
   });
 });
 
-test('no name but signed in warns that the next base stores it, writing nothing', () => {
+test('no name but signed in warns that the next base derives it, writing nothing', () => {
   withEnv(undefined, () => {
     const { git, calls } = gitStoring(null);
     const row = pilotBranchRow({ git, host: hostWith('Other') });
     assert.equal(row.verdict, 'warn');
-    assert.match(row.detail, /other-pilot/);
+    assert.match(row.detail, /none stored yet/);
     assert.equal(calls.length, 1);
   });
 });
