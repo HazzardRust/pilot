@@ -288,7 +288,7 @@ function overviewPlain(lines, inFence) {
     return [{ line: 1, rule: 'overview-plain', message: 'no `## Overview` section, or an empty one (skills/pr-overview)' }];
   }
   let first = heading + 1;
-  while (lines[first].trim() === '') first++;
+  while (first < lines.length - 1 && lines[first].trim() === '') first++;
   return overviewProblems(text, crewRoles(AGENTS)).map(({ line, rule, message }) => ({
     line: rule === 'overview-token' ? first + line : heading + 1,
     rule: 'overview-plain',
