@@ -158,12 +158,9 @@ test('the human steps name the main PR, and the report none', (t) => {
   const { ticket, gate } = aSignedGate2(repo);
   const { record } = recordForTicket(repo, ticket);
   const landing = (line) => ({ ...gate, landing: { state: 'landed', sha: '1a2b3c4', line } });
-  const stepsWith = (line) => stepsOf(record, landing(line), []).map((step) => step.text);
+  const stepsWith = (line) => stepsOf(record, landing(line)).map((step) => step.text);
 
-  assert.deepEqual(stepsWith(LAND_LINE), [
-    'Merge #600 with a merge commit, when you want main to have it.',
-    "Prune other runs' branches: pilot branches prune --dry-run first.",
-  ]);
+  assert.deepEqual(stepsWith(LAND_LINE), ['Merge #600 with a merge commit, when you want main to have it.']);
   assert.doesNotMatch(closingReportOf(record, landing(LAND_LINE), []).body, /Human step/);
   const byHand = stepsWith(LAND_LINE.replace('main gets pilot: #600', 'main gets pilot: open a PR from fork/pilot to main by hand'));
   assert.equal(byHand[0], 'Open a PR from fork/pilot to main by hand, and merge it with a merge commit.');

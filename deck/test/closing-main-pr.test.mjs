@@ -23,11 +23,11 @@ import { tempDeck, withTicket } from '../testUtils.mjs';
 const record = { feature: 'x', slug: 'x', slices: [] };
 const landed = (line) => ({ pr: '#590', landing: { state: 'landed', sha: '1a2b3c4', line } });
 const reportFor = (line) => closingReportOf(record, landed(line), []).body;
-const stepsFor = (line) => stepsOf(record, landed(line), []).map((step) => step.text).join('\n');
+const stepsFor = (line) => stepsOf(record, landed(line)).map((step) => step.text).join('\n');
 
 test("the landing's first step is the main PR", () => {
   const line = 'landed feat/x on pilot at 1a2b3c4\nmain gets pilot: #901';
-  const [first] = stepsOf(record, landed(line), []);
+  const [first] = stepsOf(record, landed(line));
   // No branch name: the PR's base is the host's default branch, which land never printed (QA F3: GitLab's was master).
   assert.equal(first.text, 'Merge #901 with a merge commit, when you want main to have it.');
   assert.match(reportFor(line), /^main gets pilot: #901$/m, 'the main line is shown');
