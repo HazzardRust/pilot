@@ -8,7 +8,7 @@
 
 import path from 'node:path';
 import { autoResolves, keptDir, mainCheckout } from '../scripts/merge-generated.mjs';
-import { firstLine, gitUnder, PILOT_BRANCH } from '../scripts/pilot-branch.mjs';
+import { firstLine, gitUnder, pilotBranch } from '../scripts/pilot-branch.mjs';
 import { runRef, runRemote, shortRef } from '../scripts/remotes.mjs';
 import { SHA_FIELD } from './items-bounds.mjs';
 
@@ -41,13 +41,13 @@ export function checkGit(repo) {
  * source conflicts; `why` what git said when the question could not be asked, a timeout included.
  */
 export function cleanOnPilot(repo, sha, { git = checkGit(repo) } = {}) {
-  const at = { onto: `origin/${PILOT_BRANCH}`, paths: [] };
+  const at = { onto: 'the pilot branch', paths: [] };
   // Checked before git sees it, so a caller's string never reaches argv as an option: the store's
   // own gate2 `sha` shape, in which no hex digit is a `-`.
   if (typeof sha !== 'string' || !SHA_FIELD.shape.test(sha)) return { ok: false, ...at, why: `${JSON.stringify(sha)} is not a commit sha` };
   const run = (args) => git(repo, args);
   try {
-    const ref = runRef(runRemote(run), PILOT_BRANCH);
+    const ref = runRef(runRemote(run), pilotBranch((args) => run(args)));
     at.onto = shortRef(ref);
     let onto;
     try {

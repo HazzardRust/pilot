@@ -6,9 +6,10 @@
 
 import path from 'node:path';
 
-import { gitUnder, PILOT_BRANCH, pilotLineage } from '../scripts/pilot-branch.mjs';
-import { shortRef } from '../scripts/remotes.mjs';
+import { gitUnder, LEGACY_PILOT, pilotBranch, pilotLineage } from '../scripts/pilot-branch.mjs';
+import { runRef, runRemote, shortRef } from '../scripts/remotes.mjs';
 import { assumedIds, unverdicted, verdictsOf } from '../scripts/verdicts.mjs';
+import { checkGit } from './gate2-base.mjs';
 import { SHA_FIELD } from './items-bounds.mjs';
 import { RUN_BASE, repoOf } from './runs.mjs';
 import { DeckRefusal } from './store.mjs';
@@ -23,15 +24,31 @@ const LINEAGE_MS = 5000;
  * `repo` that is not a git repository is not checked. Git gets the branch name, a caller's
  * string, as an argument, never through a shell, and the repo's own `core.fsmonitor` is off
  * for every git call. `timeout` is the deadline in ms, injectable for tests. `base` is the run record's base
- * (audit-f14 S2): unset or `pilot` reads the run remote's pilot as before; any other run base is read as
+ * (audit-f14 S2): unset is the user's pilot branch (`pilotBranch`), read, like the legacy `pilot`, off the run remote; any other run base is read as
  * origin's, where L9 puts every run cut from another base, and a base `RUN_BASE` refuses is refused here.
  */
-export function assertOnPilotTip(repo, branch, { timeout = LINEAGE_MS, base = PILOT_BRANCH } = {}) {
+export function assertOnPilotTip(repo, branch, { timeout = LINEAGE_MS, base } = {}) {
   if (typeof repo !== 'string' || !path.isAbsolute(repo) || repoOf(repo) === null || typeof branch !== 'string') return;
+  const read = checkGit(repo);
+  const run = (args) => read(repo, args);
+  let own = null;
+  let unnamed = null;
+  try {
+    own = pilotBranch(run);
+  } catch (err) {
+    unnamed = err;
+  }
+  // An unset base is the user's pilot branch (L5); a repository naming none cannot be checked against one.
+  if (base === undefined) {
+    if (unnamed) throw new DeckRefusal(`a gate1's pilot branch could not be named in ${repo}: ${unnamed.message}`);
+    base = own;
+  }
   if (typeof base !== 'string' || !RUN_BASE.test(base)) throw new DeckRefusal(`a gate1's run base ${JSON.stringify(base)} is not a branch name`);
   let lineage;
   try {
-    lineage = pilotLineage(repo, branch, { timeout, ...(base !== PILOT_BRANCH && { base: `refs/remotes/origin/${base}` }) });
+    // The pilot branch, the user's or the legacy one, lives on the run remote; any other base on origin (L9).
+    const onRuns = base === own || base === LEGACY_PILOT;
+    lineage = pilotLineage(repo, branch, { timeout, base: onRuns ? runRef(runRemote(run), base) : `refs/remotes/origin/${base}` });
   } catch (err) {
     if (err.code === 'ETIMEDOUT') throw new DeckRefusal(`git did not answer on a gate1's branch ${branch} within 5 s; post again`);
     throw new DeckRefusal(`a gate1's branch ${branch} could not be read in ${repo}: ${err.message}`);

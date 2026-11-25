@@ -13,9 +13,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { pilotBranch } from './pilot-branch.mjs';
 import { runRef, runRemote, shortRef } from './remotes.mjs';
 
-const PILOT = 'pilot';
 const FETCH_MS = 30_000;
 
 function gitIn(cwd) {
@@ -31,12 +31,13 @@ function gitIn(cwd) {
     });
 }
 
-/** `{ ref, sha, behind }` for the run's pilot ref, or null: not a repo, no such ref, a bad `pilot.remote`, a git error. */
+/** `{ ref, sha, behind }` for the run's pilot ref, or null: not a repo, no such ref, no pilot branch name, a bad `pilot.remote`, a git error. */
 export function pilotTip({ cwd, fetch = false }) {
   const git = gitIn(cwd);
   try {
     const runs = runRemote(git);
-    const ref = runRef(runs, PILOT);
+    const name = pilotBranch((args) => git(args));
+    const ref = runRef(runs, name);
     const sha = () => git(['rev-parse', '--verify', '-q', `${ref}^{commit}`]).trim();
     const known = sha();
     if (fetch && runs !== null) {
@@ -44,7 +45,7 @@ export function pilotTip({ cwd, fetch = false }) {
         // Writes the tracking ref and its objects only: no FETCH_HEAD, no submodules, no auto gc.
         git(
           ['-c', 'gc.auto=0', '-c', 'maintenance.auto=false', 'fetch', '-q', '--no-tags', '--no-write-fetch-head',
-            '--no-recurse-submodules', runs, `+refs/heads/${PILOT}:${ref}`],
+            '--no-recurse-submodules', runs, `+refs/heads/${name}:${ref}`],
           // No pipes: a grandchild ssh holding them cannot keep the call past the timeout.
           { timeout: FETCH_MS, killSignal: 'SIGKILL', stdio: ['ignore', 'ignore', 'ignore'] },
         );
