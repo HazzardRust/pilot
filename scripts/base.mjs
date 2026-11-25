@@ -34,7 +34,7 @@ import { checksAt } from './checks.mjs';
 import { hostFor, hostOf } from '../deck/host.mjs';
 import { RUN_BASE, SLUG } from '../deck/runs.mjs';
 import { readTickets } from '../deck/tickets.mjs';
-import { ensurePilotBranch, firstLine, pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
+import { ensurePilotBranch, firstLine, LEGACY_PILOT, pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
 
 /** The deck's concluding feature for the repository at `cwd`, `{ ticket, slug, branch }` or null; throws when the deck does not answer. */
 const deckConcluding = (cwd) => async () => (await readTickets(cwd)).concluding ?? null;
@@ -91,6 +91,8 @@ export async function base({ cwd = process.cwd(), say = (text) => process.stdout
     return 1;
   }
   const from = pilot.created ? ` (created from ${pilot.from})` : '';
+  // The move (L1) is said on stderr on every path: stdout's first token is parsed, and the host path drops `from`.
+  if (pilot.created && pilot.from === LEGACY_PILOT) warn(`created ${pilotBranch(git)} from ${LEGACY_PILOT}; the legacy pilot is left for you to delete\n`);
   const { runs } = pilot;
   const where = runs === 'origin' ? '' : runs === null ? ' local' : ` on ${runs}`;
   let deck = '';
