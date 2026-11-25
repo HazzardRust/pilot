@@ -9,13 +9,13 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed 796378a",
+      "state": "integrated",
       "branch": "slice/prune-worktrees-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s1"
     },
     {
       "slice": "S2",
-      "state": "implementing",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -30,7 +30,7 @@
     },
     {
       "slice": "S4",
-      "state": "implementing",
+      "state": "implementing (rebased on d019953 as d4d0763 wip; gate running, not pushed)",
       "after": [
         "S1"
       ],
@@ -66,8 +66,8 @@
       ]
     }
   ],
-  "next": "co-pilot: checks green at 50e8a4a; integrating S1 796378a; S2, S4 building on S1 (rebase on the new tip).",
-  "updatedAt": "2026-11-25T07:12:50.426Z",
+  "next": "Pilot integrating itself (two co-pilots forced back). S2 24d4063 reviewed APPROVE x2: pilot integrate running, then pilot checks. Duplicate S2 implementer a16a6ca802db32422 stopped; its uncommitted edits left in the S2 worktree, unreviewed, not integrated. S4: implementer a236dd572759ee5cd live (wip d4d0763), report due to pilot. Then S5/S6/S7 (after S2), S8, fundamentalist (co-A4), QA.",
+  "updatedAt": "2026-11-25T08:12:34.236Z",
   "friction": [
     {
       "kind": "drain",
@@ -126,6 +126,21 @@
       "what": "a seam-doc push to feat/prune-worktrees cancelled the CI runs pilot checks was waiting on, which read as red",
       "evidence": "gh run list: e277e34 Gate and Rune deck conclusion cancelled; pilot checks printed checks red at e277e34",
       "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "spawned S2 resume implementer with isolation: worktree by mistake; an unused agent worktree was created under the shared checkout's .claude/worktrees",
+      "evidence": "C:/Users/jrylk/Projects/pilot/.claude/worktrees/agent-a16a6ca802db32422"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "forced to hand back with two implementers live; TaskStop on a child refused for the co-pilot",
+      "evidence": "The main session, the user or the agent itself can stop task a16a6ca802db32422"
+    },
+    {
+      "kind": "drain",
+      "what": "two co-pilots forced to hand back with children live; the successor judged a gating implementer dead and started a duplicate on the same worktree; the pilot stopped it and integrates slices itself, each report 3-5k tokens",
+      "size": 15
     }
   ]
 }
