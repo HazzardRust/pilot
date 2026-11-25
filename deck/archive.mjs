@@ -5,10 +5,22 @@
  * every row; a kind naming a never-shown file is refused by name before anything is read.
  */
 
-import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import audits from './archive-kinds/audits.mjs';
+import backups from './archive-kinds/backups.mjs';
+import classifier from './archive-kinds/classifier.mjs';
+import friction from './archive-kinds/friction.mjs';
+import handoffs from './archive-kinds/handoffs.mjs';
+import memory from './archive-kinds/memory.mjs';
+import reports from './archive-kinds/reports.mjs';
+import runs from './archive-kinds/runs.mjs';
+import switches from './archive-kinds/switches.mjs';
+import textlogs from './archive-kinds/textlogs.mjs';
+import threads from './archive-kinds/threads.mjs';
+import tickets from './archive-kinds/tickets.mjs';
+import trace from './archive-kinds/trace.mjs';
+import usage from './archive-kinds/usage.mjs';
 import { WITHHELD } from './classifier-log.mjs';
 import { findCredential } from './credential.mjs';
 import { isOpen } from './items.mjs';
@@ -19,28 +31,11 @@ import { readDeckFile } from './store-recovery.mjs';
 /** The store files the archive never opens (spec 8, L9): they hold the secret or raw test output. */
 export const NEVER_SHOWN = ['deck.secret', 'deck-open.html', 'logs/*.log'];
 
-const KINDS_DIR = fileURLToPath(new URL('./archive-kinds/', import.meta.url));
-
 /**
- * Each kind module under `deck/archive-kinds/`, in file-name order (L4): a kind slice adds one file. A module whose
- * default export is no kind (a helper beside them) is not one.
+ * Every record kind, a fixed list in file-name order (L4, moved by the user on itm_96d80caf8aee): a new kind adds
+ * its import here, and a kind module that fails to load fails the deck's start instead of vanishing from the page.
  */
-const KINDS = (
-  await Promise.all(
-    fs
-      .readdirSync(KINDS_DIR)
-      .filter((name) => name.endsWith('.mjs'))
-      .sort()
-      .map(async (name) => {
-        try {
-          return (await import(pathToFileURL(path.join(KINDS_DIR, name)).href)).default;
-        } catch (error) {
-          console.error(`[deck] archive kind ${name} failed to load; skipped: ${error.message}`);
-          return undefined;
-        }
-      }),
-  )
-).filter((kind) => typeof kind?.kind === 'string' && Array.isArray(kind.files) && typeof kind.rowsOf === 'function');
+const KINDS = [audits, backups, classifier, friction, handoffs, memory, reports, runs, switches, textlogs, threads, tickets, trace, usage];
 
 export function archiveKinds() {
   return KINDS;
