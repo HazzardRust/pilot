@@ -87,13 +87,15 @@ fn create_lands() {
         .expect("Create lands on its new thread");
     let made = item(&deck, id);
     assert_eq!(made["title"], "Try the strip");
-    assert_eq!(made["repo"], "C:/work/alpha");
+    // The server returns a repo in its native spelling (portable-store S1).
+    assert_eq!(made["repo"], r"C:\work\alpha");
 }
 
 #[test]
 fn move_lands() {
     let deck = support::Scratch::start();
-    let repo = "C:/work/alpha";
+    // The native spelling, so the filter on the server's repo matches.
+    let repo = r"C:\work\alpha";
     let first = ticket(&deck, repo, "First");
     let second = ticket(&deck, repo, "Second");
     let client = client_for(&deck);

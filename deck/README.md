@@ -83,6 +83,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `status-command.mjs` | `pilot status`: the deck's url, pid, version against the plugin's, uptime, live agents, and deck.log's last 20 lines; reads only (daemon-lifecycle spec 8, 9) |
 | `status.mjs` | the slice table and its Yours column |
 | `store-archive.mjs` | the store's month archive: closed items over 30 days old moved to `deck.archive-YYYY-MM.json`, read back by id |
+| `store-codec.mjs` | stored paths: every structured path in deck.json as `@<root>/<rel>` against this machine's roots |
 | `store-core.mjs` | the store's core: reading and writing deck.json, the refusals and validators, added decks |
 | `store-defaults.mjs` | a plain question's default, taken by the deck at 20 minutes; re-exported by `store-items.mjs` |
 | `store-dir.mjs` | where the deck keeps its files, loadable without the store |

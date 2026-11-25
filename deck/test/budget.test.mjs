@@ -14,7 +14,7 @@ import path from 'node:path';
 import { CEILING, DEFAULT_BUDGET, budget, checkBudget } from '../budget.mjs';
 import { repoKey } from '../items.mjs';
 import { registerRun, storeFile } from '../store.mjs';
-import { deckOnAPort } from '../testUtils.mjs';
+import { deckOnAPort, storedDeck } from '../testUtils.mjs';
 import { secretFile } from '../../hooks/lib/deck-secret.js';
 
 const MAIN = path.resolve('D:/work/pilot');
@@ -66,12 +66,12 @@ test('pilot budget prints main and yellow', async (t) => {
 test('a stored sub split reads as yellow', async (t) => {
   const base = await deckOnAPort(t);
   runs();
-  const deck = JSON.parse(fs.readFileSync(storeFile(), 'utf8'));
+  const deck = storedDeck();
   deck.budgets = { [repoKey(MAIN)]: { main: 2, sub: 6 } };
   fs.writeFileSync(storeFile(), JSON.stringify(deck));
   assert.equal((await cli(base, MAIN, [])).out, 'budget main 2 yellow 6\n', 'read as yellow');
   await cli(base, MAIN, ['--main', '3']);
-  assert.deepEqual(JSON.parse(fs.readFileSync(storeFile(), 'utf8')).budgets[repoKey(MAIN)], { main: 3, yellow: 6 }, 'written as yellow');
+  assert.deepEqual(storedDeck().budgets[repoKey(MAIN)], { main: 3, yellow: 6 }, 'written as yellow');
 });
 
 test('a deck with no setting reports 5 to the main deck', async (t) => {

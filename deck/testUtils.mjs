@@ -13,10 +13,11 @@ import net from 'node:net';
 import path from 'node:path';
 
 import { ensureSecret } from '../hooks/lib/deck-secret.js';
-import { isWindows } from '../hooks/lib/platform.js';
+import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
 import { createDeckHttpServer } from './server.mjs';
 import { liveTicketOf } from './items.mjs';
 import { deckLanes, listItems, parkTicket, postItem, registerRun, storeFile } from './store.mjs';
+import { defaultRoots, fromStored } from './store-codec.mjs';
 import { install } from './ui/js/page.mjs';
 import { renderHomePage } from './ui/render.mjs';
 
@@ -171,6 +172,12 @@ export const takeLive = (id) => {
   fs.writeFileSync(file, JSON.stringify(deck), 'utf8');
   return listItems().find((item) => item.id === id);
 };
+
+/**
+ * deck.json as it is on disk with only its stored paths decoded (portable-store S1, L1): a test that asserts
+ * the file's own shape reads it here, so a path field reads back absolute and every other byte as written.
+ */
+export const storedDeck = () => fromStored(JSON.parse(fs.readFileSync(storeFile(), 'utf8')), defaultRoots(os.homedir(), hostPlatform()));
 
 /**
  * An item as one stored before a rule it would now break reads (thread-types-phase L3,

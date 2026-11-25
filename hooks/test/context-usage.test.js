@@ -41,15 +41,21 @@ function makeHome() {
   return home;
 }
 
-/** The store pointed at a scratch deck for the length of one call, and put back. */
+/**
+ * The store pointed at a scratch deck for the length of one call, and put back. The home is the deck's own
+ * scratch home too, as `runStatusline` gives the hook: a stored `@home/` path names the same dir to both.
+ */
 async function withDeckDir(dir, run) {
-  const previous = process.env.PILOT_DECK_DIR;
-  process.env.PILOT_DECK_DIR = dir;
+  const previous = { PILOT_DECK_DIR: process.env.PILOT_DECK_DIR, HOME: process.env.HOME, USERPROFILE: process.env.USERPROFILE };
+  const home = path.dirname(path.dirname(dir));
+  Object.assign(process.env, { PILOT_DECK_DIR: dir, HOME: home, USERPROFILE: home });
   try {
     return await run();
   } finally {
-    if (previous === undefined) delete process.env.PILOT_DECK_DIR;
-    else process.env.PILOT_DECK_DIR = previous;
+    for (const [name, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
   }
 }
 
@@ -1023,19 +1029,23 @@ test('the number on the line is the one the deck minted for this directory', asy
     registerRun({ repo: repo, pid: process.pid });
     return statusline.readDeck(path.join(home, '.claude', 'pilot', 'deck.json'));
   });
+  assert.deepStrictEqual(Object.keys(store.decks), ['@home/work/pilot'], 'the key is a v4 stored path (portable-store S1)');
 
-  for (const spelling of SPELLINGS) {
+  // Read under the home the store wrote under, as the hook is when the harness launches it.
+  await withDeckDir(path.join(home, '.claude', 'pilot'), async function () {
+    for (const spelling of SPELLINGS) {
+      assert.strictEqual(
+        statusline.deckNumberFor(store, spelling[1](repo)),
+        1,
+        'the directory ' + spelling[0] + ' is the same deck'
+      );
+    }
     assert.strictEqual(
-      statusline.deckNumberFor(store, spelling[1](repo)),
-      1,
-      'the directory ' + spelling[0] + ' is the same deck'
+      statusline.deckNumberFor(store, path.join(home, 'work', 'kettle')),
+      null,
+      'and a directory the deck has never seen has no number of its own'
     );
-  }
-  assert.strictEqual(
-    statusline.deckNumberFor(store, path.join(home, 'work', 'kettle')),
-    null,
-    'and a directory the deck has never seen has no number of its own'
-  );
+  });
 });
 
 test('a deck that is absent, corrupt or older than the numbering shows no number', function () {

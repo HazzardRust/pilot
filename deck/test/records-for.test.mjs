@@ -21,7 +21,7 @@ test('recordsFor returns every slug of one repository and none of another', (t) 
   tempDeck(t);
   const entry = (repo, slug) => ({ repo: repoKey(repo), record: { slug, updatedAt: '2026-09-28T10:00:00.000Z' } });
   const deck = {
-    version: 3, items: [], runs: [], seq: 0, deckSeq: 0, decks: {},
+    version: 4, items: [], runs: [], seq: 0, deckSeq: 0, decks: {},
     records: [entry(MINE, 'first'), entry(THEIRS, 'elsewhere'), entry(MINE, 'second')],
   };
   fs.writeFileSync(storeFile(), `${JSON.stringify(deck)}\n`);

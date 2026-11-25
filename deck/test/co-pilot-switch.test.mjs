@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { repoKey } from '../items.mjs';
-import { aTicket, deckOnAPort, page, rowsOf, takeLive, tempDeck } from '../testUtils.mjs';
+import { aTicket, deckOnAPort, page, rowsOf, storedDeck, takeLive, tempDeck } from '../testUtils.mjs';
 
 // Destructured from the namespaces, so a name a slice has yet to export fails only the tests that call it.
 const { DeckRefusal, requestSwitch, setCoPilot, storeFile } = await import('../store.mjs');
@@ -23,7 +23,7 @@ const { printed } = await import('../wait.mjs');
 const REPO = path.resolve('D:/work/pilot');
 
 const switchOf = (row) => row.match(/<form class="switch" method="post" action="\/switch"[^>]*>.*?<\/form>/s)?.[0];
-const stored = () => JSON.parse(fs.readFileSync(storeFile(), 'utf8'));
+const stored = storedDeck;
 
 /** A held yellow ticket and another open yellow one beside it. */
 function coPilotLane() {

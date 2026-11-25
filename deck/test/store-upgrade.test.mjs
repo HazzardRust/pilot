@@ -64,13 +64,13 @@ test('it runs once', () => {
   assert.deepEqual(again, once, 'a v2 store comes back identical');
 });
 
-test('readDeck upgrades a v1 file and writes v3 before answering', (t) => {
+test('readDeck upgrades a v1 file and writes v4 before answering', (t) => {
   tempDeck(t);
   fs.writeFileSync(storeFile(), JSON.stringify(v1()));
   const read = Object.fromEntries(listItems().filter((item) => item.kind === KIND_TICKET && item.status !== 'resolved').map((item) => [item.id, item.state]));
   assert.deepEqual(read, { planning: 'red', implementing: 'yellow', concluding: 'green', stateless: undefined });
   const stored = JSON.parse(fs.readFileSync(storeFile(), 'utf8'));
-  assert.equal(stored.version, 3, 'the file on disk is v3 after one read');
+  assert.equal(stored.version, 4, 'the file on disk is v4 after one read (portable-store S1)');
   assert.equal(stateById(stored).planning, 'red');
   assert.equal(stateById(stored).concluding, 'green');
   listItems();
@@ -79,8 +79,8 @@ test('readDeck upgrades a v1 file and writes v3 before answering', (t) => {
 
 test('a store of another version is still refused', (t) => {
   tempDeck(t);
-  fs.writeFileSync(storeFile(), JSON.stringify({ ...v1(), version: 4 }));
-  assert.throws(() => listItems(), /is version 4, and this deck reads version 3/);
+  fs.writeFileSync(storeFile(), JSON.stringify({ ...v1(), version: 5 }));
+  assert.throws(() => listItems(), /is version 5, and this deck reads version 4/);
 });
 
 test('the lanes read the new names', () => {
