@@ -300,3 +300,38 @@ fn an_open_row_ends_with_its_tab() {
         assert!(shown.iter().any(|t| t == want), "no {want:?} in {shown:?}");
     }
 }
+
+/// Spec 2 for a long title: the row wraps, as the page's `.notice` does, so its " · <tab>" is never
+/// cut off by an ellipsis; a row of one short line stays one line tall.
+#[test]
+fn a_long_open_row_wraps_and_keeps_its_tab() {
+    let long = "A question whose title runs far past the width of the side pane it is listed in";
+    let open = json!({ "notices": [], "open": [
+        { "id": "itm_000000000001", "title": long, "writes": 1, "tab": "qa-repo-c" },
+        { "id": "itm_000000000002", "title": "Bare", "writes": 1, "tab": "kettle" },
+    ] });
+    let mut state = State {
+        view: pilot_deck::client::View {
+            screen: "home".into(),
+            seq: 1,
+            regions: [("notifications".to_string(), open)].into_iter().collect(),
+        },
+        ..State::default()
+    };
+    state.prefs.open_panels.insert("notifications".into());
+    let mut rt = Runtime::new(state, app::view, (1280.0, 800.0), Env::new(true, 1.0));
+    rt.frame(0.0);
+
+    let height = |key: &str| {
+        rt.elements()
+            .into_iter()
+            .find(|e| e.key.as_deref() == Some(key))
+            .unwrap_or_else(|| panic!("no {key} drawn"))
+            .rect[3]
+    };
+    let (long_row, short_row) = (height("open-0"), height("open-1"));
+    assert!(
+        long_row > short_row * 1.5,
+        "the long row is {long_row} tall, the one-line row {short_row}: cut to one line"
+    );
+}
