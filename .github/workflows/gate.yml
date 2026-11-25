@@ -47,6 +47,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # stay-awake S5: logind grants a sleep:idle inhibitor to a process in no login session, as the runner's
+      # is, only with admin auth. This rule grants the two inhibit actions to the runner user on this CI
+      # machine alone (the package ships no polkit file), and the flag makes the holder tests require it.
+      - name: Grant the runner a logind inhibitor
+        if: runner.os == 'Linux'
+        shell: bash
+        env:
+          RULE: |
+            polkit.addRule(function (action, subject) {
+              if ((action.id == 'org.freedesktop.login1.inhibit-block-sleep' || action.id == 'org.freedesktop.login1.inhibit-block-idle') && subject.user == 'runner') return polkit.Result.YES;
+            });
+        run: echo "$RULE" | sudo tee /etc/polkit-1/rules.d/49-pilot-ci-inhibit.rules && echo PILOT_REQUIRE_LINUX_HOLDER=1 >> "$GITHUB_ENV"
+
       - name: Test suite
         run: npm test
 
