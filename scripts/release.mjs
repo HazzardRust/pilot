@@ -10,13 +10,13 @@
  * string.
  */
 
-import { firstLine, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
+import { firstLine, landingSubjects, pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
 import { runRef, runRemote } from './remotes.mjs';
 
 const LABEL = 'release';
 const TITLE_MAX = 120;
-/** A landing's subject, `landingMessage`'s shape; a slug of ref-safe characters only, so no row breaks the table. */
-const LANDING = new RegExp(`^Merge feat/([A-Za-z0-9._/-]+) into ${PILOT_BRANCH}$`);
+/** A merge of a feature, a slug of ref-safe characters only, so no row breaks the table; a landing when `landingSubjects` names it. */
+const FEATURE_MERGE = /^Merge (feat\/([A-Za-z0-9._/-]+)) into \S+$/;
 
 /** `Release: a, b, c +N more`, as many slugs as fit in `TITLE_MAX` characters. */
 function titleOf(slugs) {
@@ -31,22 +31,26 @@ function titleOf(slugs) {
 
 /**
  * The release PR's title, body and rows from git (L3). `git` is `(args) => string`; `pilotRef`
- * and `mainRef` are refs git takes literally; `prs` is the host's merged **Review**s into pilot
+ * and `mainRef` are refs git takes literally, `pilotRef` the pilot branch's, whose last segment is its
+ * name; a row is each merge `landingSubjects` names, onto that branch or the legacy pilot (L8).
+ * `prs` is the host's merged **Review**s into pilot
  * (the newest 200; an older one reads `–`), the feature PR of each row, never a fork's, the
  * highest number when several.
  */
 export function releaseNotes({ git, pilotRef, mainRef, prs }) {
+  const name = pilotRef.split('/').at(-1);
   const log = git(['log', '--first-parent', '--reverse', '--format=%H%x09%P%x09%s', `${mainRef}..${pilotRef}`]);
   const rows = [];
   for (const line of String(log).split(/\r?\n/)) {
-    const [sha, parents, ...subject] = line.split('\t');
-    const slug = LANDING.exec(subject.join('\t'))?.[1];
-    if (!slug || parents.split(' ').length !== 2) continue;
+    const [sha, parents, ...rest] = line.split('\t');
+    const subject = rest.join('\t');
+    const [, head, slug] = FEATURE_MERGE.exec(subject) ?? [];
+    if (!slug || !landingSubjects(head, name).includes(subject) || parents.split(' ').length !== 2) continue;
     const numbers = prs.filter((pr) => pr?.head === `feat/${slug}` && pr.crossRepo !== true && Number.isSafeInteger(pr.number) && pr.number > 0).map((pr) => pr.number);
     rows.push({ slug, pr: numbers.length ? Math.max(...numbers) : null, sha });
   }
   const table = ['| Feature | PR | Landing |', '| --- | --- | --- |', ...rows.map(({ slug, pr, sha }) => `| ${slug} | ${pr === null ? '–' : `#${pr}`} | ${sha} |`)];
-  return { title: titleOf(rows.map((row) => row.slug)), body: rows.length ? table.join('\n') : `No feature landed on ${PILOT_BRANCH} since main.`, rows };
+  return { title: titleOf(rows.map((row) => row.slug)), body: rows.length ? table.join('\n') : `No feature landed on ${name} since main.`, rows };
 }
 
 /**
@@ -58,32 +62,34 @@ export function releaseNotes({ git, pilotRef, mainRef, prs }) {
  * cannot answer, `{ number: null, why }`. `already`, the feature on pilot before this landing,
  * rewrites an open one but opens none: with none, `{ number: null, none: true }`. Never merges and
  * never throws: the feature is already landed.
- * @param {{ git: (args: string[]) => string, host: import('../deck/host.mjs').Host | null, already?: boolean }} options
+ * `name` is the pilot branch, `pilotBranch`'s when none is passed.
+ * @param {{ git: (args: string[]) => string, host: import('../deck/host.mjs').Host | null, name?: string, already?: boolean }} options
  */
-export function releasePr({ git, host, already = false }) {
+export function releasePr({ git, host, name, already = false }) {
   const unknown = (why) => ({ number: null, opened: false, why });
   let runs;
   let base;
   try {
+    name ??= pilotBranch(git);
     runs = runRemote(git);
     if (runs === 'origin' && host !== null) base = remoteDefaultBranch(git);
   } catch (err) {
     return unknown(firstLine(err));
   }
-  if (host === null || runs !== 'origin') return { number: null, opened: false, byHand: runs === null || runs === 'origin' ? PILOT_BRANCH : `${runs}/${PILOT_BRANCH}` };
+  if (host === null || runs !== 'origin') return { number: null, opened: false, byHand: runs === null || runs === 'origin' ? name : `${runs}/${name}` };
   let open;
   try {
-    // A fork's branch named pilot is never the release PR.
-    open = host.reviews({ head: PILOT_BRANCH, base, state: 'open' })
-      .find((pr) => pr.head === PILOT_BRANCH && pr.base === base && pr.crossRepo === false && Number.isSafeInteger(pr.number) && pr.number > 0);
+    // A fork's branch of that name is never the release PR.
+    open = host.reviews({ head: name, base, state: 'open' })
+      .find((pr) => pr.head === name && pr.base === base && pr.crossRepo === false && Number.isSafeInteger(pr.number) && pr.number > 0);
   } catch (err) {
     return unknown(`${host.cli} pr list failed: ${firstLine(err)}`);
   }
   if (!open && already) return { number: null, opened: false, none: true };
   let notes;
   try {
-    const features = host.reviews({ base: PILOT_BRANCH, state: 'merged', limit: 200 });
-    notes = releaseNotes({ git, pilotRef: runRef(runs, PILOT_BRANCH), mainRef: runRef(runs, base), prs: features });
+    const features = host.reviews({ base: name, state: 'merged', limit: 200 });
+    notes = releaseNotes({ git, pilotRef: runRef(runs, name), mainRef: runRef(runs, base), prs: features });
   } catch (err) {
     return unknown(`release notes failed: ${firstLine(err)}`);
   }
@@ -94,7 +100,7 @@ export function releasePr({ git, host, already = false }) {
       const { why } = host.edit(open.number, { title, body, label: LABEL });
       return { number: open.number, opened: false, ...(why === undefined ? {} : { labelWhy: why }) };
     }
-    const { number, why } = host.open({ base, head: PILOT_BRANCH, title, body, label: LABEL });
+    const { number, why } = host.open({ base, head: name, title, body, label: LABEL });
     return { number, opened: true, ...(why === undefined ? {} : { labelWhy: why }) };
   } catch (err) {
     return unknown(`${host.cli} pr ${verb} failed: ${firstLine(err)}`);
