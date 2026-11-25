@@ -212,7 +212,7 @@ test('the command prints the table, and --json prints the rows', (t) => {
 // Merge origin/pilot 8391b00 into feat/handoff-no-wait (2026-11-23) set it to the measured 12143.75 (L8, L2, L5): ui-design-workflow's step 4 paragraphs and handoff-no-wait's hand-off and first-turn edits both stand, measured together.
 // pr-overview S3 (2026-11-25) raised it from 12143.75 to the measured 12159.75 (spec 3; A6, L6): the trivial-work PR body opens with a `## Overview` written per `skills/pr-overview`, 16.
 // handoff-self-close S1 (2026-11-25) lowered it from 12143.75 to the measured 12142 (spec 7): the crew-handoff clause says the deck closes a ticketed one, and the pilot replies to a press only once it has briefed, -1.75.
-// Merge origin/pilot into feat/pr-overview (2026-11-25) set it to the measured 12158: pr-overview's `## Overview` clause and handoff-self-close's crew-handoff edit both stand, measured together.
+// Merge origin/pilot into feat/pr-overview (2026-11-25) set it to the measured 12158 (spec 3, 7): pr-overview's `## Overview` clause and handoff-self-close's crew-handoff edit both stand, measured together.
 test('the pilot pin holds at its new number', async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
