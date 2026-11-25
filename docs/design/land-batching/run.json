@@ -51,14 +51,16 @@
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "pushed dcfbb14 on 355d0e1, ts APPROVE; product-only run 12,815 / git 11,676 (bars 11,000 / 10,000); ceilings set to the run's own",
       "after": [
         "S3",
         "S4",
         "S5",
         "S8",
         "S9"
-      ]
+      ],
+      "branch": "slice/land-batching-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s7"
     },
     {
       "slice": "S6",
@@ -78,7 +80,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed fc97ef4 on 469510d, ts approve, security approve; integrate 20 -> 18",
+      "state": "integrated 355d0e1; checks green at 355d0e1",
       "after": [
         "S5",
         "S8"
@@ -87,8 +89,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s9"
     }
   ],
-  "next": "Integrating S9 fc97ef4; then S7, S6.",
-  "updatedAt": "2026-11-25T14:28:34.378Z",
+  "next": "Integrating S7 dcfbb14; then S6.",
+  "updatedAt": "2026-11-25T14:51:28.375Z",
   "friction": [
     {
       "agent": "architect",
@@ -253,6 +255,18 @@
       "what": "no per-argv trace helper; a scratch spawn_sync patch was written again (third slice)",
       "evidence": "S4, S8, S9 reports",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Monitor unavailable to the implementer; Bash moved polling loops to background after ~120 s",
+      "evidence": "S7 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "product cut saved ~896 git against an estimated 1,500-2,100; fixture git rose 149; S6 must close 1,815 total / 1,676 git against its -500 to -900 estimate",
+      "evidence": "S7 cost-after.txt, spawns-after.txt vs spawns-before.txt",
+      "size": 3
     }
   ]
 }
