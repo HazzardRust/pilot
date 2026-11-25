@@ -28,7 +28,8 @@ const FIELDS = {
   landingPids: (value) => mapOf(value, Number.isInteger),
 };
 
-export const emptyMachine = () => ({ roots: {}, sessions: {}, coPilots: {}, switches: {}, live: [], landingPids: {} });
+/** No machine state; `coPilots` and `switches` are absent, not empty, as a deck without them has none (F4). */
+export const emptyMachine = () => ({ roots: {}, sessions: {}, live: [], landingPids: {} });
 
 /**
  * `raw` as a machine, or null when it does not parse or breaks a field's rule. A key this build does not know is

@@ -149,7 +149,8 @@ const SESSION = ['pid', 'session', 'lastSeenAt'];
  * `PATH_FIELDS` encoded and no machine state; `machine`, the machine file's state with absolute keys, no roots.
  */
 export function toStored(deck, roots) {
-  const { coPilots = {}, switches = {}, ...portable } = deck;
+  const { coPilots, switches, ...portable } = deck;
+  // A map the deck has, even empty, is kept; one it lacks stays absent (`JSON.stringify` drops undefined).
   const machine = { sessions: {}, coPilots, switches, live: [], landingPids: {} };
   // Only what has an id to be found by moves: anything else stays where it is, so nothing is dropped.
   const runs = (portable.runs ?? []).map((run) => {
@@ -185,9 +186,9 @@ export function fromStored(stored, machine, roots) {
     if (flavourOf(abs) === (hostPlatform() === 'win32' ? path.win32 : path.posix)) return pathKey(abs);
     return flavourOf(abs) === path.win32 ? abs.toLowerCase() : abs;
   }) };
-  // A map neither file holds an entry of reads absent, as it did before the split.
+  // A map neither file holds reads absent, and one either holds, even empty, reads as a map, as before the split.
   for (const name of ['coPilots', 'switches']) {
-    if (deck[name] !== undefined || Object.keys(machine[name]).length > 0) deck[name] = { ...deck[name], ...machine[name] };
+    if (deck[name] !== undefined || machine[name] !== undefined) deck[name] = { ...deck[name], ...machine[name] };
   }
   if (Array.isArray(deck.runs)) deck.runs = deck.runs.map((run) => (isMap(run) && isMap(machine.sessions[run.id]) ? { ...run, ...machine.sessions[run.id] } : run));
   if (Array.isArray(deck.items)) {
