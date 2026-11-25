@@ -6,10 +6,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { builtLine, crewRoles, overviewBlock, overviewOf, overviewProblems } from '../pr-overview.mjs';
+import { builtLine, crewRoles, overviewBlock, overviewOf, overviewProblems as allProblems, whatChangesOf } from '../pr-overview.mjs';
 
+// The token and length pins below speak of the other rules; the label rule has its own test.
+const overviewProblems = (text, roles) => allProblems(text, roles).filter((p) => p.rule !== 'overview-label');
 const ROLES = ['architect', 'implementer', 'qa'];
-const states = (...list) => ({ slices: list.map((state) => ({ slice: 'x', state })) });
+const states = (...list) => ({ slices: list.map((state, at) => ({ slice: `S${at + 1}`, state })) });
 
 test('overviewOf reads the section to the next heading outside a fence, or null', () => {
   const md = ['# T', '', '## Overview', '', 'Plain text.', '', '```', '## not a heading', '```', '', '## 1. Problem', 'Other.'].join('\n');
@@ -26,6 +28,8 @@ test('overviewBlock is null without an overview, else heading, text, built line'
 test('the built line follows the record', () => {
   assert.equal(builtLine(states('integrated', 'pushed', 'planned')), 'Built so far: 1 of 3 parts.');
   assert.equal(builtLine(states('integrated', 'integrated (S2)', 'planned')), 'Built so far: 2 of 3 parts.');
+  const rows = [...states('integrated', 'integrated', 'integrated').slices, { slice: 'feature', state: 'pushed' }, { slice: 'pr-overview', state: 'planned' }];
+  assert.equal(builtLine({ slices: rows }), 'Built so far: 3 of 3 parts.', 'the feature row is no part');
   assert.equal(builtLine({}), 'Built so far: 0 of 0 parts.');
 });
 
@@ -49,6 +53,14 @@ test('length rules: over 150 words, or sentences averaging over 20 words', () =>
   assert.equal(overviewProblems('The Implementer and QA.', ROLES).length, 2, 'role words match any case');
   assert.deepEqual(overviewProblems(`${words(21)}.`, ROLES).map((p) => p.rule), ['overview-sentences']);
   assert.deepEqual(overviewProblems(`${words(20)}.`, ROLES), []);
+});
+
+test('a What changes label is read, and its absence is a problem', () => {
+  assert.equal(whatChangesOf('- **Why**: x.\n- **What changes**: the deck is faster.  '), 'the deck is faster.');
+  assert.equal(whatChangesOf('- **What change**: the deck is faster.'), null);
+  assert.equal(whatChangesOf('- **What changes**:\n- **Why**: x.'), null, 'an empty label does not borrow the next line');
+  assert.deepEqual(allProblems('- **What change**: the deck is faster.', ROLES).map((p) => [p.line, p.rule]), [[1, 'overview-label']]);
+  assert.deepEqual(allProblems('- **What changes**: the deck is faster.', ROLES), []);
 });
 
 test('crewRoles lists agents/pilot-*.md minus the prefix', () => {

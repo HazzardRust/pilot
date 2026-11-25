@@ -46,6 +46,7 @@ test('two landings name both slugs', (t) => {
   assert.deepEqual(notes.rows.map(({ slug, pr }) => ({ slug, pr })), [{ slug: 'a', pr: 7 }, { slug: 'b', pr: null }]);
   assert.match(notes.rows[1].sha, /^[0-9a-f]{40}$/);
   assert.equal(git(b, 'log', '-1', '--format=%s', notes.rows[1].sha), 'Merge feat/b into pilot');
+  assert.ok(notes.body.startsWith('## Overview\n\n- a\n- b\n\n| Feature | PR | Landing |'), notes.body);
   assert.match(notes.body, /\| a \| #7 \|/);
   assert.match(notes.body, new RegExp(`\\| b \\| – \\| ${notes.rows[1].sha} \\|`));
 });
@@ -108,6 +109,14 @@ test('one line per landed feature', (t) => {
 
   const [overview] = notes.body.split('\n\n| Feature |');
   assert.equal(overview, '## Overview\n\n- first: the deck shows a clock.\n- second: logs are shorter');
+});
+
+test('a mention in a sentence is written so nobody is notified', (t) => {
+  const repo = landedWith(t, 'mention', [['first', artefact('thanks to @someone for the clock.')]]);
+
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), pilotRef: 'pilot', mainRef: 'main', prs: [] });
+
+  assert.ok(notes.body.startsWith(`## Overview\n\n- first: thanks to @${String.fromCharCode(0x200d)}someone for the clock.\n\n| Feature |`), notes.body);
 });
 
 test('the table is unchanged', (t) => {
@@ -194,7 +203,7 @@ test('the main PR opens labelled', (t) => {
   const creates = called(calls, 'pr', 'create');
   assert.equal(creates.length, 1);
   assert.equal(creates[0][creates[0].indexOf('--label') + 1], 'release');
-  assert.match(creates[0][creates[0].indexOf('--body') + 1], /^\| Feature \| PR \| Landing \|\n/);
+  assert.match(creates[0][creates[0].indexOf('--body') + 1], /^## Overview\n\n- a\n\n\| Feature \| PR \| Landing \|\n/);
   assert.ok(calls.findIndex((args) => args[0] === 'label') < calls.findIndex((args) => args[0] === 'pr' && args[1] === 'create'));
 });
 

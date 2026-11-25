@@ -11,7 +11,7 @@
  */
 
 import { firstLine, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
-import { overviewOf } from './pr-overview.mjs';
+import { overviewOf, quiet, whatChangesOf } from './pr-overview.mjs';
 import { runRef, runRemote } from './remotes.mjs';
 
 const LABEL = 'release';
@@ -50,9 +50,10 @@ export function releaseNotes({ git, pilotRef, mainRef, prs }) {
   const table = ['| Feature | PR | Landing |', '| --- | --- | --- |', ...rows.map(({ slug, pr, sha }) => `| ${slug} | ${pr === null ? '–' : `#${pr}`} | ${sha} |`)];
   if (!rows.length) return { title: titleOf([]), body: `No feature landed on ${PILOT_BRANCH} since main.`, rows };
   const title = titleOf(rows.map((row) => row.slug));
-  const sentences = rows.map(({ slug }) => whatChanges(git, pilotRef, slug));
-  // A list of bare slugs only repeats the table, so the block needs one sentence to stand.
-  if (!sentences.some(Boolean)) return { title, body: table.join('\n'), rows };
+  const sentences = rows.map(({ slug }) => {
+    const sentence = whatChanges(git, pilotRef, slug);
+    return sentence === null ? null : quiet(sentence);
+  });
   const overview = ['## Overview', '', ...rows.map(({ slug }, at) => (sentences[at] ? `- ${slug}: ${sentences[at]}` : `- ${slug}`))];
   return { title, body: `${overview.join('\n')}\n\n${table.join('\n')}`, rows };
 }
@@ -71,7 +72,7 @@ function whatChanges(git, pilotRef, slug) {
   } catch {
     return null;
   }
-  const what = /^\s*-\s*\*\*What changes\*\*:\s*(.+)$/m.exec(overviewOf(markdown) ?? '')?.[1].trim();
+  const what = whatChangesOf(overviewOf(markdown) ?? '');
   return what ? /^.*?[.!?](?=\s|$)|^.*$/.exec(what)[0] : null;
 }
 
