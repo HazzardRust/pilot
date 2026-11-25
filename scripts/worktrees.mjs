@@ -1,7 +1,8 @@
 /**
  * `pilot worktrees [prune] [--repo <dir>] [--base <ref>] [--dry-run] [--run <slug>]` — lists
  * every worktree of a repository by state, and prunes the merged-clean ones, with `--run` only
- * run <slug>'s (audit-fixes spec 9, 10; ADR 0081; clean-landing L5).
+ * run <slug>'s (audit-fixes spec 9, 10; ADR 0081; clean-landing L5). `pilot worktrees remove <path>`
+ * removes one tree through `removeTree`, or prints the one `kept <state> <dir>` line (prune-worktrees S1).
  *
  * A worktree is merged-clean when it is not the main checkout, not locked, has moved since
  * it was created (its HEAD differs from the oldest entry of its branch's reflog, if on one,
@@ -25,6 +26,7 @@ import { holderOf, pilotProcesses, processTable } from '../deck/procs.mjs';
 import { keptDir } from './merge-generated.mjs';
 import { PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
 import { runRef, runRemote } from './remotes.mjs';
+import { keptLine, removeTree } from './worktree-remove.mjs';
 
 /** Runs git in `cwd`; answers `{ ok, out, err }`, never throws. */
 function git(cwd, ...args) {
@@ -263,11 +265,37 @@ export function holderFrom(read) {
   };
 }
 
-const USAGE = 'usage: pilot worktrees [prune] [--repo <dir>] [--base <ref>] [--dry-run] [--run <slug>]\n';
+const USAGE = 'usage: pilot worktrees [prune] [--repo <dir>] [--base <ref>] [--dry-run] [--run <slug>]\n' +
+  '       pilot worktrees remove <path> [--repo <dir>]\n';
 
-/** The CLI: exit 0 done, 1 a failed fetch or a refused removal, 2 a usage error. */
+/** `remove <path>`: exit 0 removed, 1 kept (its one line), 2 a usage error. */
+function removeMain(args, { out, err, read }) {
+  let repo = null;
+  let dir = null;
+  while (args.length) {
+    const arg = args.shift();
+    if (arg === '--repo' && args.length && !args[0].startsWith('--')) repo = args.shift();
+    else if (dir === null && arg && !arg.startsWith('-')) dir = arg;
+    else dir = undefined;
+  }
+  if (!dir) {
+    err.write(USAGE);
+    return 2;
+  }
+  dir = path.resolve(dir);
+  const result = removeTree(repo ?? dir, dir, { holder: holderFrom(read) });
+  if (result.kept) {
+    out.write(`${keptLine(dir, result.kept)}\n`);
+    return 1;
+  }
+  out.write(`removed ${dir}${result.branch ? ` and branch ${result.branch}` : ''}\n`);
+  return 0;
+}
+
+/** The CLI: exit 0 done, 1 a failed fetch, a refused removal or a kept tree, 2 a usage error. */
 export function main(argv, { out = process.stdout, err = process.stderr, read = processTable } = {}) {
   const args = [...argv];
+  if (args[0] === 'remove') return removeMain(args.slice(1), { out, err, read });
   const isPrune = args[0] === 'prune';
   if (isPrune) args.shift();
   let repo = process.cwd();
