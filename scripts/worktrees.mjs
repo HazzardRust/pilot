@@ -14,6 +14,8 @@
  *
  * `pilot worktrees add --run <slug> …` tags the tree it adds to the run (S2, A1).
  * `pilot worktrees prune --run <slug> --stage planned|abandoned` is a mid-run job end's prune (`stagePrune`, S5).
+ * `pilot worktrees prune` with neither `--run` nor `--base` is the sweep of landed runs' leftovers (S8,
+ * spec 11): merged means in the run remote's pilot or in the default branch, and a pilot-landed branch goes with `-D`.
  *
  * The prune removes through `removeTree`: `git worktree remove` (never `--force`) and then `git branch -d`
  * (`-D` only for a branch the caller names as reachable from its landed pilot), so git itself refuses a dirty tree or an unmerged branch even if the test
@@ -201,29 +203,35 @@ function stateOf(repo, base, tree, index, mirror, landedSlug) {
   if (tree.locked) return 'locked';
   if (tree.prunable || !tree.head || (!landedSlug && !moved(repo, tree))) return 'open';
   const head = landedSlug ? withoutRecordTail(repo, tree.head, landedSlug) : tree.head;
-  if (!git(repo, 'merge-base', '--is-ancestor', head, base).ok) return 'open';
+  if (![base].flat().some((ref) => git(repo, 'merge-base', '--is-ancestor', head, ref).ok)) return 'open';
   const dirt = dirtOf(tree.path, mirror, { tracked: Boolean(landedSlug) });
   if (dirt === null) return 'open';
   return dirt.length ? 'merged-dirty' : 'merged-clean';
 }
 
 /**
- * Every worktree of `repo` with its state against `base`, which is not fetched here; with
- * `run`, that run's tracked run record changed in place does not make a worktree dirty; with
+ * Every worktree of `repo` with its state against `base`, which is not fetched here, a ref or a
+ * list of refs a merged head need be in only one of (the sweep's pilot and default branch, S8); with
+ * `run`, that run's tracked run record changed in place does not make a worktree dirty (without it,
+ * a `feat/<slug>` tree's own); with
  * `run` and `landed`, the landed run's rule (ADR 0171). `view`, a caller's `Git`, answers the worktree
  * list, and a full branch ref `base` from its tip snapshot (`tipOf`).
  */
 export function classify(repo, base, { run, landed = false, view } = {}) {
   const mirror = run === undefined ? undefined : runRecord(run);
-  const known = view && /^refs\/(?:heads|remotes)\//.test(base)
-    ? tipOf(view, base) !== null
-    : git(repo, 'rev-parse', '--verify', '--quiet', `${base}^{commit}`).ok;
-  if (!known) throw new Error(`base ${base} is not a commit in ${repo}`);
+  for (const ref of [base].flat()) {
+    const known = view && /^refs\/(?:heads|remotes)\//.test(ref)
+      ? tipOf(view, ref) !== null
+      : git(repo, 'rev-parse', '--verify', '--quiet', `${ref}^{commit}`).ok;
+    if (!known) throw new Error(`base ${ref} is not a commit in ${repo}`);
+  }
   const slug = landed ? run : undefined;
+  // With no run named, a feat tree's own record is its run's mirror (the sweep's landed feat trees, S8).
+  const mirrorOf = (tree) => mirror ?? (/^feat\/(\w[\w.-]*)$/.exec(tree.branch ?? '') ? runRecord(tree.branch.slice(5)) : undefined);
   return worktrees(repo, view).map((tree, index) => ({
     path: tree.path,
     branch: tree.branch,
-    state: stateOf(repo, base, tree, index, mirror, slug),
+    state: stateOf(repo, base, tree, index, mirrorOf(tree), slug),
   }));
 }
 
@@ -271,7 +279,7 @@ function fetchBase(repo, base) {
  * passes it; `pilot worktrees prune` always fetches.
  */
 export function prune(repo, base, { dryRun = false, run, merged = [], keep = [], holder = () => null, landed = false, remove, git: view, fetched = false } = {}) {
-  if (!fetched) fetchBase(repo, base);
+  if (!fetched) for (const ref of [base].flat()) fetchBase(repo, ref);
   const removed = [];
   const kept = [];
   const failed = [];
@@ -488,21 +496,25 @@ export function main(argv, { out = process.stdout, err = process.stderr, read = 
   }
   try {
     // A run's trees are judged against the run remote's pilot, as the landing does; else the default branch
-    // as origin says it. --base wins.
-    const onPilot = run !== undefined && base === null;
-    if (onPilot) {
-      const probeGit = (gitArgs) => {
-        const probe = git(repo, ...gitArgs);
-        if (!probe.ok) throw Object.assign(new Error(probe.err), { status: probe.status });
-        return probe.out;
-      };
-      base = runRef(runRemote(probeGit), pilotBranch(probeGit));
-    }
+    // as origin says it. --base wins. The sweep, a prune with neither, takes a tree in either (S8).
+    const onPilot = isPrune && base === null;
+    const probeGit = (gitArgs) => {
+      const probe = git(repo, ...gitArgs);
+      if (!probe.ok) throw Object.assign(new Error(probe.err), { status: probe.status });
+      return probe.out;
+    };
+    const pilotRef = onPilot ? runRef(runRemote(probeGit), pilotBranch(probeGit)) : null;
+    if (onPilot && run !== undefined) base = pilotRef;
     base ??= `origin/${remoteDefaultBranch((gitArgs) => {
       const run = git(repo, ...gitArgs);
       if (!run.ok) throw Object.assign(new Error(run.err), { stderr: run.err });
       return run.out;
     })}`;
+    if (onPilot && run === undefined) {
+      fetchBase(repo, pilotRef);
+      // A remote with no pilot branch leaves the sweep the default branch alone.
+      if (git(repo, 'rev-parse', '--verify', '--quiet', `${pilotRef}^{commit}`).ok) base = [pilotRef, base];
+    }
     if (!isPrune) {
       fetchBase(repo, base);
       for (const row of classify(repo, base)) {
@@ -513,8 +525,9 @@ export function main(argv, { out = process.stdout, err = process.stderr, read = 
     // A branch in the landed pilot goes with -D, as the landing does: git's own -d judges against main.
     // Fetched first, so the list and landedRun read the base as origin has it.
     if (run !== undefined) fetchBase(repo, base);
-    const merged = onPilot
-      ? git(repo, 'for-each-ref', '--merged', base, '--format=%(refname:short)', 'refs/heads/').out.split(/\r?\n/).filter(Boolean)
+    const landedOn = [base].flat().includes(pilotRef) ? pilotRef : null;
+    const merged = landedOn
+      ? git(repo, 'for-each-ref', '--merged', landedOn, '--format=%(refname:short)', 'refs/heads/').out.split(/\r?\n/).filter(Boolean)
       : [];
     const landed = run !== undefined && landedRun(repo, base, run);
     const { removed, kept, failed } = prune(repo, base, { dryRun, run, merged, landed, holder: holderFrom(read) });
