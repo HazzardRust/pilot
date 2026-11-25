@@ -52,7 +52,7 @@
     },
     {
       "slice": "S6",
-      "state": "implementing",
+      "state": "pushed 6f41b35",
       "after": [
         "S2",
         "S3",
@@ -64,7 +64,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed 0314e48",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -86,15 +86,9 @@
       "pr": 157
     }
   ],
-  "next": "S4 checks running at 33f3477; S6 implementing from 33f3477; then integrate S7, S8, S6; then fundamentalist and QA",
-  "updatedAt": "2026-11-25T20:20:33.228Z",
+  "next": "S7 checks running at 5b9178a; then integrate S8 (e7295aa), then S6 (6f41b35); then base check, fundamentalist, QA",
+  "updatedAt": "2026-11-25T20:51:24.241Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "hand-back forced while waiting on main's verdict message; gate1 steps left undone",
-      "evidence": "architect hand-back: formal verdict message never arrived before this handback was forced",
-      "size": 2
-    },
     {
       "agent": "pilot:pilot-architect",
       "what": "grep for the pilot branch name drowns in plugin, agent and CLI uses of the same word; a hook blocks sed -i on tracked docs",
@@ -303,6 +297,18 @@
       "what": "S3: pinned tests call exported land helpers without a name, forcing env-fallback defaults that lean on the PILOT_BRANCH pin S6 removes",
       "evidence": "S3 report: retarget/comment/pushFeature/releasePr optional name",
       "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: tree-census rule (folder-listing tests must be in TREE_TESTS) is enforced only by the full gate",
+      "evidence": "tree-census.test.mjs red in full run, fixed in 6f41b35",
+      "size": 600
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: 3 Rust deck tests time out on the scratch deck under full-suite load (flakes, green alone)",
+      "evidence": "no scratch deck answered … none after 10000ms; act_thread/act_deck",
+      "size": 3
     }
   ]
 }
