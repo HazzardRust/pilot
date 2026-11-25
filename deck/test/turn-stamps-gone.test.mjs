@@ -41,8 +41,8 @@ function hits(pattern) {
 }
 
 test('no stamp is read', () => {
-  // lint: no-turn-stamps. `--turn-ended` is run-look's flag for the mod's turn.complete time, not a stamp.
-  assert.deepEqual(hits(/(?<!-)\b(turn-ended|tool-ran)\b/), []);
+  // lint: no-turn-stamps. The `--turn-ended` flag went too (handoff-no-wait QA N5), so no form of the name is left.
+  assert.deepEqual(hits(/\b(turn-ended|tool-ran)\b/), []);
 });
 
 test('no run env is read', () => {

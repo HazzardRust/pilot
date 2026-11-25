@@ -16,19 +16,19 @@ import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 
 import { bearer } from '../../hooks/lib/deck-secret.js';
 import { freePort, tempDeck } from '../testUtils.mjs';
 import { PLUGIN_VERSION } from '../version.mjs';
 
-const DAEMON = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'daemon.mjs');
-const { START_TIMEOUT_MS, JOIN_ATTEMPTS } = await import('../client.mjs');
+const { JOIN_ATTEMPTS } = await import('../client.mjs');
 
 // --- harness ---------------------------------------------------------------
 
@@ -67,22 +67,27 @@ const killed = async (pid) => {
   }
 };
 
-/** A real daemon on this test's port and store, the way a session would have found one. */
-async function aDaemon(t, port) {
-  const child = spawn(process.execPath, [DAEMON], { env: process.env, stdio: 'ignore', windowsHide: true });
-  t.after(() => killed(child.pid));
-  const deadline = Date.now() + START_TIMEOUT_MS;
-  while (Date.now() < deadline) {
-    if ((await healthAt(port))?.pid === child.pid) return child.pid;
-    await sleep(100);
-  }
-  throw new Error(`no daemon answered port ${port}`);
-}
-
-/** Kills `pid` and waits until the port refuses, so the next call meets a dead deck. */
-async function dies(port, pid) {
-  await killed(pid);
-  while (await healthAt(port)) await sleep(100);
+/**
+ * The deck a session first joined, answering health and the register as a current deck does, under a pid
+ * no process holds (cheap-suite S7: one daemon per test, the rejoin's). Its `close` is the deck dying: the
+ * port refuses, which is all the client sees of a crash.
+ */
+async function aFirstDeck(t, port) {
+  const pid = 2 ** 22 + 1;
+  const server = http.createServer((request, response) => {
+    response.setHeader('content-type', 'application/json');
+    // No kept-alive socket outlives the close, as none outlives a daemon's exit by the time it is waited for.
+    response.setHeader('connection', 'close');
+    if (request.url === '/api/health') return response.end(JSON.stringify({ ok: true, pid, version: PLUGIN_VERSION }));
+    if (request.method === 'POST' && request.url === '/api/runs') {
+      return response.end(JSON.stringify({ run: { id: 'r1', repo: process.cwd() }, seq: 0 }));
+    }
+    response.writeHead(404).end(JSON.stringify({ error: 'not the first deck' }));
+  });
+  await new Promise((resolve) => server.listen(port, '127.0.0.1', resolve));
+  const close = () => new Promise((resolve) => (server.closeAllConnections(), server.close(() => resolve())));
+  t.after(() => server.listening && close());
+  return { pid, close };
 }
 
 /** A joined session whose deck has just died: the client, the port and the dead deck's pid. */
@@ -90,10 +95,11 @@ async function aSessionWhoseDeckDied(t) {
   tempDeck(t);
   const port = await freePort();
   setEnv(t, 'PILOT_DECK_PORT', String(port));
-  const dead = await aDaemon(t, port);
+  const first = await aFirstDeck(t, port);
   const client = await freshClient();
   assert.equal(await client.ensureOnTheDeck(), true, 'the session joined the first deck');
-  await dies(port, dead);
+  await first.close();
+  const dead = first.pid;
   // The deck the rejoin starts is detached from this test; end it with the test.
   t.after(async () => {
     const pid = (await healthAt(port))?.pid;
@@ -139,7 +145,10 @@ test('the session registers again on the new deck', { timeout: 30_000 }, async (
 
 // --- the cap (ADR 0120) ----------------------------------------------------
 
-test('the rejoin never passes three starts', { timeout: 4 * START_TIMEOUT_MS + 15_000 }, async (t) => {
+// Each start here fails, so each is waited out: at a 1 s budget, not the 10 s default (cheap-suite S7).
+const CAP_BUDGET = { startTimeoutMs: 1000 };
+
+test('the rejoin never passes three starts', { timeout: 4 * CAP_BUDGET.startTimeoutMs + 15_000 }, async (t) => {
   const dir = tempDeck(t);
   setEnv(t, 'PILOT_DECK_PORT', String(await freePort()));
   // Every daemon a client spawns inherits this, so each start is counted and then fails.
@@ -152,13 +161,35 @@ test('the rejoin never passes three starts', { timeout: 4 * START_TIMEOUT_MS + 1
   const client = await freshClient();
 
   // Two calls spend the three starts: each joins at its top, and the first rejoins once more.
-  await assert.rejects(() => client.callDeckTool('deck_read', {}), 'no deck: the call is a tool error');
-  await assert.rejects(() => client.callDeckTool('deck_read', {}), 'still no deck');
+  const call = () => client.callDeckTool('deck_read', {}, undefined, undefined, CAP_BUDGET);
+  await assert.rejects(call, 'no deck: the call is a tool error');
+  await assert.rejects(call, 'still no deck');
   assert.equal(starts(), JOIN_ATTEMPTS, 'three starts were made');
 
-  await assert.rejects(() => client.callDeckTool('deck_read', {}), 'past the cap the call is a tool error');
+  await assert.rejects(call, 'past the cap the call is a tool error');
   await sleep(500);
   assert.equal(starts(), JOIN_ATTEMPTS, 'and no fourth daemon is spawned');
+});
+
+// --- the start budget (cheap-suite S7) ---------------------------------------
+
+test('the client gives up at its injected budget', { timeout: 15_000 }, async (t) => {
+  tempDeck(t);
+  setEnv(t, 'PILOT_DECK_PORT', String(await freePort()));
+  const lines = [];
+  t.mock.method(console, 'error', (...args) => lines.push(args.join(' ')));
+  // A start that never serves: the spawn is a process that never binds the port.
+  const spawnProcess = () => Object.assign(new EventEmitter(), { unref() {} });
+  const client = await freshClient();
+
+  const started = Date.now();
+  const up = await client.ensureDaemon({ resolve: () => ({ root: os.tmpdir(), version: PLUGIN_VERSION }), spawnProcess, startTimeoutMs: 1000 });
+  const took = Date.now() - started;
+
+  assert.equal(up, false, 'no deck answered');
+  assert.ok(took < 3000, `it gave up at its budget, not the default; it took ${took}ms`);
+  assert.ok(took >= 1000, `and not before it; it took ${took}ms`);
+  assert.ok(lines.some((line) => line.includes('after 1000ms')), `the line names the budget; stderr was ${JSON.stringify(lines)}`);
 });
 
 // --- what is not a dead deck -----------------------------------------------

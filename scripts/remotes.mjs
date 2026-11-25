@@ -12,11 +12,26 @@ const LOCAL = 'none';
 const NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 /**
+ * `ask(git)` remembered per `git` runner (cheap-suite spec 3): one runner is one command's
+ * view of the repository, so it asks git once; a new runner asks again, and a throw is not
+ * remembered, so the next call asks again.
+ */
+export function oncePerRunner(ask) {
+  const answers = new WeakMap();
+  return (git) => {
+    if (!answers.has(git)) answers.set(git, ask(git));
+    return answers.get(git);
+  };
+}
+
+/**
  * The run remote's name, or null in local mode. The only reader of `pilot.remote`. Throws,
  * naming the key, when the value is not a plain name or not listed by `git remote`, so a
- * config value never reaches argv or a ref path unchecked.
+ * config value never reaches argv or a ref path unchecked. Asked once per `git` runner.
  */
-export function runRemote(git) {
+export const runRemote = oncePerRunner(readRunRemote);
+
+function readRunRemote(git) {
   let value;
   try {
     value = git(['config', '--get', RUN_REMOTE_KEY]).replace(/\r?\n$/, '');

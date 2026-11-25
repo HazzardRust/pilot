@@ -59,6 +59,14 @@ test('a listed second remote is the run remote', (t) => {
   assert.deepEqual(['feat/x', 'slice/x-s1'].map((b) => remoteOf('second', b)), ['origin', 'second']);
 });
 
+test('one runner asks once (cheap-suite spec 3)', (t) => {
+  const { work, git, seen } = scratchClone(t);
+  run(work, 'config', 'pilot.remote', 'second');
+  const answers = [runRemote(git), runRemote(git), runRemote(git)];
+  assert.deepEqual(answers, ['second', 'second', 'second']);
+  assert.equal(seen.filter((args) => args.join(' ') === 'config --get pilot.remote').length, 1, 'pilot.remote is read once per runner');
+});
+
 test('a configured name that is not a remote stops the command', (t) => {
   const { work, git, seen } = scratchClone(t);
   run(work, 'config', 'pilot.remote', '--upload-pack=x');

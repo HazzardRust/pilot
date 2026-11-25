@@ -1,0 +1,233 @@
+{
+  "slug": "ui-design-workflow",
+  "feature": "UI design workflow",
+  "ticket": "itm_132a653de1fc",
+  "branch": "feat/ui-design-workflow",
+  "base": "main",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-ui-design-workflow",
+  "artefact": "docs/design/ui-design-workflow/architecture.md",
+  "slices": [
+    {
+      "slice": "feature",
+      "state": "fixing: fix round pushed 885e1c0, integrating"
+    },
+    {
+      "slice": "S1",
+      "state": "integrated at b15b9df (checks green)",
+      "branch": "slice/ui-design-workflow-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at 44de2da (checks green)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/ui-design-workflow-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at 2f2c198 (checks green)",
+      "branch": "slice/ui-design-workflow-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at 46606ab (checks green at 5bc3390, rune-deck success)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/ui-design-workflow-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at af5e4ad (checks running)",
+      "after": [
+        "S4",
+        "S2"
+      ],
+      "branch": "slice/ui-design-workflow-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated at 5451f22 (checks green)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/ui-design-workflow-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "integrated at 946446b (checks green)",
+      "branch": "slice/ui-design-workflow-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "integrated at 1d7d1e2 (checks green)",
+      "branch": "slice/ui-design-workflow-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "integrated at 8e099da (checks green at drift merge 1098535)",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/ui-design-workflow-s9",
+      "worktree": "C:/Users/jrylk/Projects/pilot-ui-design-workflow-s9"
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S5"
+      ],
+      "branch": "fix/ui-design-workflow-principles",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-ui-design-workflow-principles"
+    }
+  ],
+  "findings": [
+    "kept: F1 finding — tokens.contrast rounds before the 4.5 threshold, so 4.495-4.4999 pass AA unflagged; return the unrounded ratio, round on display only",
+    "kept: F2 finding — the <4.5 flag lives only in page code; move the predicate into tokens.js and test both edges plus a 4.495 pair",
+    "kept: F3 simplify — S2's --mode re-parses what Rune's own --theme already takes; drop Start.dark/MODE, surface.json argv passes --theme {mode} (about -30 lines)",
+    "kept: N1 nit — drop export of look.mjs shape if nothing outside look.mjs imports it",
+    "kept: N2 nit — name the two other homes of the screen list in app.rs SCREENS comment",
+    "dropped: N3 nit — one switch over verbs is churn on tested parsing for small cognitive gain",
+    "dropped: N4 nit — the printed path must exist, so the copy on print is defensible",
+    "kept: Q1 QA — skills/ui-design/SKILL.md Commands table lacks shape and apply, adapter example lacks preview",
+    "kept: Q2 QA — the Differences refusal runs only when the walkthrough carries ticket; pilot-qa.md's walkthrough line now names ticket (pin by measured delta)",
+    "dropped: Q3 QA — Rune contrast table pairs only text on surface; spec 12's bar is met and extending pairs is a new behaviour, not a defect",
+    "kept: Q4 QA — store-items.mjs:168 refuses with the first gap only; a gate1 missing three look lines takes three refusals; refuse with all gaps at once"
+  ],
+  "humanSteps": [
+    {
+      "text": "Screen-off on mains was set to never (powercfg /change monitor-timeout-ac 0) on this laptop; restore with powercfg /change monitor-timeout-ac 3 when no run is live."
+    },
+    {
+      "text": "Screen-off on mains is back at 3 min (the earlier 'never' was undone). Overnight stall was the lid closing at 00:42, not the screen timer; lid-close-on-mains is still 'sleep'. A keep-awake task (bwuxoob75) runs only while this pilot session lives."
+    },
+    {
+      "text": "Lid close on mains was set to 'do nothing' at the user's ask (was sleep); restore with: powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 1; powercfg /setactive SCHEME_CURRENT. On battery, lid close still sleeps."
+    }
+  ],
+  "next": "Integrating the fix round (fix/ui-design-workflow-principles 885e1c0) into feat; then checks, base check, resume QA with the tip.",
+  "updatedAt": "2026-11-22T14:19:26.031Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "pilot misdiagnosed the overnight stall as the screen-off timer; the event log shows lid close at 00:42 then standby until the lid opened at 16:42",
+      "size": 9000
+    },
+    {
+      "agent": "pilot",
+      "what": "deck_resolve on a pressed-but-superseded gate1 granted its old plan and moved the ticket to yellow; needed deck_ticket recut and take to undo",
+      "evidence": "ticket plan sha f48f103 after resolving itm_7c608c7dab46 as Superseded"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "fresh gate1 refused three times: verdict lines missing for A7-A10, old gate1 still open and owned by pilot, git timeout of 5 s on the design branch",
+      "evidence": "architect hand-backs on ui-design-workflow"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S8's slice file named only facades.test.mjs and no gate1 fixtures posting surface: true, so three test files outside the slice changed, one found only by the reviewer; two npm test runs wrote one log, one extra full run",
+      "evidence": "S8 report, slice/ui-design-workflow-s8 2d6198f"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S7: node --test default reporter printed nothing through grep; B4 asked the log to print a step a clean cargo fmt --check never prints, forcing a second 10-minute gate",
+      "evidence": "S7 report, e081b1e"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S1: two structural lints for a new deck/*.mjs (README module row; process.platform only via hooks/lib/platform.js) are in neither brief nor slice, one extra 15-minute gate; estimate of 250 lines left out fixture, ADR and skill (652 landed)",
+      "evidence": "S1 report, 1da7017"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S3: openDeck names the open file, refused under node --test unless deck/testUtils.mjs's home is loaded; no comment in open.mjs or no-open.mjs says so, found by tracing hooks/lib/deck-secret.js:36",
+      "evidence": "S3 report, 731040c"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S4: Chrome DevTools MCP tools absent from the session; wrote a 60-line CDP driver for the browser check. Both verdicts came on b1ecc6c before the fixes, so a re-review was needed",
+      "evidence": "S4 report, slice/ui-design-workflow-s4 fd96c69"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S2: a fresh worktree has no deck/rune/target, so the red cargo test and the release build each took about 6 minutes cold; the slice's premise that --snap honours State::load's mode was false (headless reads only --theme)",
+      "evidence": "S2 report, slice/ui-design-workflow-s2 93f1a86"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S6: TREE_TESTS in scripts/select-tests.mjs is checked only by the full suite; a new test that reads a directory passed alone and went red in the one full run (tree-census, 4970/1); neither slice nor brief names it",
+      "evidence": "S6 report, slice/ui-design-workflow-s6 7169aea"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S9: L8's 80-token cap on pilot.md took four edit-and-measure rounds (99.25, 91.75, 82.75, 79.5); deck/testUtils.mjs repoints HOME and PILOT_DECK_DIR on import, so a scratch store script must import it first",
+      "evidence": "S9 report, slice/ui-design-workflow-s9 5b4d712"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back hook forced two hand-backs while the S5 implementer sat in its full-suite gate; the first read as 'paused' and nearly released the ticket",
+      "evidence": "co-pilot hand-backs at 1098535, S5 gate running",
+      "size": 4
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S5: hidden-spawns runs only in the full suite and went red on deck/look.mjs; the fix renamed the import (spawn as spawnDetached) so the lint stopped matching, which evades it; the reviews were on 2c3ece4 and saw none of c175b01; its hand-back reached main, not the co-pilot",
+      "evidence": "S5 c175b01, deck/look.mjs:11,217-219"
+    },
+    {
+      "agent": "S5",
+      "what": "hidden-spawns lint matches only spawn\\w*( call text; a spawner injected under another name (start() passes unflagged; cost a fix round",
+      "evidence": "deck/look.mjs:220 at b0fffb9; scripts/test/hidden-spawns.test.mjs"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "context summarised mid-run; the evidence runner's table was lost, so the six checks have no result",
+      "evidence": "fundamentalist report §3 Tools, evidence runner row: not run here"
+    },
+    {
+      "agent": "pilot-fundamentalist",
+      "what": "full 2760-file worktree checkout for a read-only review; git diff --stat cut at 60 lines hid pilot-architect.md",
+      "evidence": "fundamentalist report §5"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "predecessor's hand-back with S5's trailers did not survive the hand-off; Evidence trailers rebuilt from probes, B3/B4 looks deferred to QA",
+      "evidence": "S5 integrated at af5e4ad"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "Chrome DevTools MCP tools did not load; QA wrote its own ~60-line CDP driver",
+      "evidence": "QA hand-back friction, ToolSearch found no matching tool"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "spec 2's bar names a scratch piloted run the brief did not budget; covered structurally on the co-pilot's assumed default",
+      "evidence": "QA question, spec 2"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "harness forced a hand-back before the fix tip arrived; QA must be resumed",
+      "evidence": "QA hand-back 13:55Z"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "loadTokens returns objects from another vm realm, so assert.deepEqual failed on equal objects; test copies them first",
+      "evidence": "fix round report, 2d1f2e6"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fresh worktree Rust test plus release build about 5 min; gate logs briefly written to C:/Users/jrylk/Projects/",
+      "evidence": "fix round report, 885e1c0"
+    }
+  ]
+}

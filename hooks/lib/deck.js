@@ -312,6 +312,9 @@ function isChat(item) {
   return Boolean(item && item.kind === 'chat');
 }
 
+/** A harness agent id, as the deck stamps it on a co-pilot's entry; never an option, a path or a space. */
+const AGENT_ID = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;
+
 /**
  * The stored spellings (co-pilot-tickets L11): the ticket kind, the field an item names its ticket by,
  * and the record's co-pilot keys. The one place on the hooks side that spells them; `join.test.js`
@@ -720,6 +723,7 @@ const OPEN_READ_LIMIT = 20;
 
 /** What the two hooks call. Nothing else here is anybody's business. */
 module.exports = {
+  AGENT_ID: AGENT_ID,
   STORED: STORED,
   OPEN_READ_LIMIT: OPEN_READ_LIMIT,
   log: require('./wrapper-log.js').log,
