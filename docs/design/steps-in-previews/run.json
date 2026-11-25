@@ -5,6 +5,11 @@
   "branch": "feat/steps-in-previews",
   "base": "pilot",
   "worktree": "C:/Users/jrylk/Projects/pilot-feat-steps-in-previews",
+  "qa": {
+    "branch": "feat/steps-in-previews",
+    "worktree": "C:/Users/jrylk/Projects/pilot-feat-steps-in-previews",
+    "url": "http://127.0.0.1:49671"
+  },
   "artefact": "docs/design/steps-in-previews/architecture.md",
   "slices": [
     {
@@ -24,7 +29,7 @@
     },
     {
       "slice": "S3",
-      "state": "integrated",
+      "state": "integrated at 62d2394; gate 5135 pass, 0 fail; checks green",
       "after": [
         "S2"
       ],
@@ -32,8 +37,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-steps-in-previews-s3"
     }
   ],
-  "next": "Short path, lane held by itm_3eee1845d039, plan f313347, feat e3ac661 = S1+S2 checks green. S3 6707238 integrating (pilot integrate), then pilot checks --wait, then own gate2: integrate --trial sha, Verdict per slice, Gate line, walkthrough (live look of HTML home card, Rune card, steps thread, Done, no Reopen); name silent refused Done and thread kind line 'steps'.",
-  "updatedAt": "2026-11-25T10:55:33.176Z",
+  "next": "Green. gate2 itm_98c905ce70af at 62d2394 (PR #153), walkthrough itm_00daf65a9844; waits on the user's look and Sign off; on the press spawn pilot-lander. Teardown owed at report: from the feat worktree node bin/pilot.mjs deck --stop 21512 (scratch 49671); Stop-Process -Id 35608 (Rune window, runs from scratchpad/rune-look copy).",
+  "updatedAt": "2026-11-25T11:28:32.716Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -92,6 +97,21 @@
       "agent": "pilot:pilot-implementer",
       "what": "test:changed fell back to the full suite: selection 33288 characters of argv, over 24000",
       "evidence": "S3 gate"
+    },
+    {
+      "agent": "pilot",
+      "what": "a walkthrough's Rune window run from the shared cargo target locked pilot-deck.exe and failed another ticket's cargo gate with Access is denied; relaunched from a copy",
+      "evidence": "log 20261125T111723573Z-pilot@fb6cac4.log"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "feat worktree was 8 commits behind origin (fix round pushed from the fix worktree); integrate merged base into the stale tip and its reset failed on deck/rune/build.rs not uptodate",
+      "evidence": "local d27351e on e5580a6 vs origin 5b1582f"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot deck --help ran the deck command and opened the user's deck window instead of printing usage",
+      "size": 300
     }
   ]
 }
