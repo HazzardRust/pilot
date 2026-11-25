@@ -117,8 +117,8 @@ export const KINDS = [
 export const POSTABLE_KINDS = [...KINDS, KIND_LESSON, KIND_HANDOFF, KIND_CREW_HANDOFF];
 
 /**
- * The standing kinds (L6): open, but never waiting on the user, never in Yours,
- * and never holding a turn at the Stop gate. The daemon's
+ * The standing kinds (L6): open, but never in Yours and never holding a turn at the Stop gate;
+ * never waiting on the user either, but for a steps thread, which is (`isQueued`; ADR NNNN). The daemon's
  * one spelling; `hooks/lib/deck.js` is the hooks', and `join.test.js` pins both.
  */
 export const STANDING_KINDS = [KIND_TICKET, KIND_REPORT, KIND_STEPS];
@@ -518,10 +518,12 @@ export function isUnacknowledged(item, now = Date.now()) {
  *
  * A user thread (Create) is queued for as long as it is open, whoever spoke last
  * (2026-09-28); `queueOf` sorts it below everything that waits on an answer.
+ * A steps thread is queued too, while still standing for agents: only the user's Done
+ * closes it (steps-in-previews A1; ADR NNNN, amending ADR 0202 A4).
  */
 export function isQueued(item) {
-  if (!isOpen(item) || isStanding(item)) return false;
-  return item?.kind !== KIND_CHAT;
+  if (!isOpen(item) || item?.kind === KIND_CHAT) return false;
+  return item?.kind === KIND_STEPS || !isStanding(item);
 }
 
 /** The kinds the user may close from the thread page (spec 7; a user thread since 2026-09-28; a steps thread's Done, human-steps). */
@@ -695,15 +697,18 @@ export function accentOf(item, items) {
   return state === 'closed' ? 'plain' : state;
 }
 
+/** A ticket's one word while an open steps thread names it: its row, its cards and its thread say it alike (steps-in-previews L4). */
+export const STEPS_WAITING = 'waiting on your steps';
+
 /**
  * Where a ticket stands (ticket-state-accents spec 8): `closed`, `co-pilot` when it is the ticket this
- * repository's live co-pilot builds, `landing` once its gate2 is pressed (gate2-frees-lane spec 1) and `human steps` once landed while an open steps thread names it (human-steps spec 3), `in hand` on the main slot (live or next, L21), else `parked`.
+ * repository's live co-pilot builds, `landing` once its gate2 is pressed (gate2-frees-lane spec 1) and `STEPS_WAITING` once landed while an open steps thread names it (human-steps spec 3), `in hand` on the main slot (live or next, L21), else `parked`.
  */
 export function standingOf(ticket, items, coPilotTicket) {
   if (!isOpen(ticket)) return 'closed';
   if (ticket.id === coPilotTicket) return 'co-pilot';
   if (isPaused(ticket)) return 'paused';
-  if (isLanding(ticket, items)) return items.some((each) => each?.kind === KIND_STEPS && each.ticket === ticket.id && isOpen(each)) ? 'human steps' : 'landing';
+  if (isLanding(ticket, items)) return items.some((each) => each?.kind === KIND_STEPS && each.ticket === ticket.id && isOpen(each)) ? STEPS_WAITING : 'landing';
   // In hand on its own stage's lane (three-lanes spec 4); a yellow ticket off the co-pilot is never in hand.
   const state = stateOf(ticket);
   return state !== 'yellow' && inHandOf(items, ticket.repo, state)?.id === ticket.id ? 'in hand' : 'parked';
