@@ -220,7 +220,10 @@ const usage = () => `pilot — the deck for piloted runs
   pilot doctor   on Windows, whether Defender's real-time scan sits in front of the projects
                  root (the repository's parent): off, on a Dev Drive in performance mode,
                  excluded, not, or cannot tell without an administrator, and the admin step
-                 if it is not; then Node against package.json's engines, the deck's
+                 if it is not; then Power: whether the deck holds its keep-awake request,
+                 the power source, the lid and power-button actions and Modern Standby,
+                 failing on battery or a lid that sleeps, with the setting to change;
+                 then Node against package.json's engines, the deck's
                  dependency installed, the store directory writable, and gh, git and claude
                  on PATH. One row each as <pass|fail|cannot tell>  <check>: <detail>, any
                  step indented below; changes nothing; exit 1 when a row fails, else 0
