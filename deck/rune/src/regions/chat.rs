@@ -114,12 +114,15 @@ pub fn answered(c: &mut Local, key: &str, refused: Option<String>) {
 
 pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
-    // No deck on this page, or a view that cannot be read: a sentence, never a dead window.
-    let none = |threads| {
-        thread_rows(threads, dark).fold(
-            col().child(theme::empty("No chat open.", "chat-none", dark)),
-            |panel, el| panel.child(el),
-        )
+    // No chat open: the tab's Create threads under a sentence, or blank with none, as the HTML deck
+    // (rune-panes A2); a view that cannot be read draws the same, never a dead window.
+    let none = |threads: Vec<Thread>| {
+        let panel = if threads.is_empty() {
+            col()
+        } else {
+            col().child(theme::empty("No chat open.", "chat-none", dark))
+        };
+        thread_rows(threads, dark).fold(panel, |panel, el| panel.child(el))
     };
     let Ok(chat) = Chat::deserialize(v) else {
         return none(Vec::new());

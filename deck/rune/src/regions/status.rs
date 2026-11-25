@@ -389,9 +389,8 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         && status.rows.is_empty()
         && status.groups.is_empty()
     {
-        return col()
-            .key("status")
-            .child(theme::empty("No tickets to show.", "status-none", dark));
+        // Blank, as the HTML deck (rune-panes A2).
+        return col().key("status");
     }
     // The page's order: the selector, the held sentence, then the table.
     let mut pane = col().key("status").gap(space::between).child(selector);

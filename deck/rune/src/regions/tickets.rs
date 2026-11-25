@@ -576,7 +576,7 @@ pub fn draw(
     let view = Tickets::deserialize(v).unwrap_or_default();
     let dark = cx.system_dark();
     let t = tok::theme(dark);
-    const NONE: &str = "No tickets yet.";
+    const NONE: &str = "no tickets";
     let Some(repo) = view.repo else {
         return col()
             .key("tickets")
@@ -671,7 +671,7 @@ pub fn draw(
         }
         panel = panel.child(fold);
     }
-    if view.groups.is_empty() {
+    if view.groups.iter().all(|g| g.rows.is_empty()) {
         panel = panel.child(theme::empty(NONE, "tickets-none", dark));
     }
     panel
