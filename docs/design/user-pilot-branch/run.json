@@ -52,7 +52,7 @@
     },
     {
       "slice": "S6",
-      "state": "failed gate: checks none at c55c12e (S6's L11 triggers drop base pilot; feature PR #157 targets pilot)",
+      "state": "integrated",
       "after": [
         "S2",
         "S3",
@@ -82,52 +82,50 @@
     },
     {
       "slice": "feature",
-      "state": "planned; Gate 1 itm_178637b5acc6 signed by the user 2026-11-25 at eaf07b6",
+      "state": "QA read-only pass complete at fa26db6; fix round implementing",
+      "branch": "feat/user-pilot-branch",
       "pr": 157
     },
     {
       "slice": "S9",
-      "state": "pushed d3e4ba0 (added; A6 assumed, departs from L11)",
+      "state": "integrated",
       "after": [
         "S6"
       ],
       "branch": "slice/user-pilot-branch-s9",
       "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s9"
+    },
+    {
+      "slice": "fix",
+      "state": "implementing (principles fix round; gate running)",
+      "after": [
+        "S9"
+      ],
+      "branch": "fix/user-pilot-branch",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-fix"
     }
   ],
-  "next": "integrating S9 as the fix for S6's checks none (PR #157 base pilot no longer triggers CI); then checks on S9's sha must be green before anything else",
-  "updatedAt": "2026-11-25T21:51:44.251Z",
+  "findings": [
+    "kept: F2 simplify — delete feature-pr's nameOf and checked (-9)",
+    "kept: F3 simplify — branches.mjs pilot clause unreachable past DELETABLE; its pilotBranch(git) call at :87 makes `pilot branches` exit NO_NAME in a clone with no stored name, a defect (-3)",
+    "kept: F4 simplify — doctor takes the source from namePilotBranch's .source; drop loginOf; record S7's interface change (-12)",
+    "kept: F5 simplify — lineage.mjs resolves pilotBranch only when base is undefined (-6)",
+    "kept: F6 needed-test — tests for the spec 5 refusal at pilot sync, land and pr (+30)",
+    "kept: F8 doc — S9.md fails check-slices (+4)",
+    "kept: N1 N2 N3 N5 — name passed to releaseNotes; isPilotName via isLogin; assertPushable before storing the name; drop the run wrapper and repeated base",
+    "kept: QA1 — L1's 'one line says it can be deleted' was docs only; pilot base prints one stderr line when the branch is created from `pilot`",
+    "dropped: F1 simplify — removing land/release env fallbacks reads L7 narrower; asked of the user as itm_e592f00ed101, default keep",
+    "dropped: F7 — mutation dry run timed out, tooling limit, no code change; diff coverage 97% (1023/1044) stands",
+    "dropped: N4 — raising the prompt pin is a budget decision outside this feature"
+  ],
+  "humanSteps": [
+    {
+      "text": "After Gate 2: delete the private scratch repo HazzardRust/pilot-branch-scratch (QA's seed: branches, PRs #1-#4, Actions on)."
+    }
+  ],
+  "next": "Pilot holds the lane (co-pilot spent). feat fa26db6 = S1-S9 in, checks green. QA a98275cc1bd5ba3e7 (worktree pilot-user-pilot-branch-qa) read-only pass done, waits for fix tip. Fix implementer aa87d1f23e0a2c7c6 on fix/user-pilot-branch reports to main. Next: verify fix vs diff (F3, N3), integrate, checks, send QA tip, deck_ticket need. Gate2 names S9/A6 assumed.",
+  "updatedAt": "2026-11-25T22:41:28.201Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "auto mode gave no verdict on a Bash call sharing a response with a deck call; reissued alone",
-      "size": 1
-    },
-    {
-      "kind": "drain",
-      "what": "deck_status next capped at 400 chars: five calls rejected and rewritten",
-      "size": 5
-    },
-    {
-      "kind": "drain",
-      "what": "co-pilot forced to hand back twice with children live; the pilot collected five implementer reports directly and integrated four slices itself, each report 3-6k tokens in the pilot's context",
-      "size": 30
-    },
-    {
-      "kind": "drain",
-      "what": "a blocking co-pilot question yields its ticket after 20 min unanswered: two tickets paused mid-build while the user was away, each costing a pause, a hand-back and a re-brief",
-      "size": 12
-    },
-    {
-      "kind": "drain",
-      "what": "evidence rows live only in agent reports: the pilot wrote four trailer files to its scratchpad so a hand-off would not lose them",
-      "size": 6
-    },
-    {
-      "kind": "drain",
-      "what": "pilot wait restarted 9 times; stop hook and idle notices each read and answered",
-      "size": 8
-    },
     {
       "kind": "drain",
       "what": "three co-pilots forced to hand back with children live; the pilot relayed nine agent reports and integrated one fix round itself, each report 2-5k tokens in its context",
@@ -317,6 +315,42 @@
       "kind": "drain",
       "what": "machine hibernated twice on CPU heat (user's HeatGuard, shutdown /h at 95C sustained) under parallel gates; 2 h of frozen agents read as a stalled co-pilot",
       "size": 3
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "Stryker dry run cannot finish over this suite in 5 min; mutation evidence unavailable for scripts/ diffs; knip reports 722 unused files repo-wide, unscopable",
+      "evidence": "Initial test run timed out!; knip truncated list",
+      "size": 303
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "L5 gave the seam but no thread-vs-re-resolve rule; S2/S5 re-resolve, S3/S4 thread, S3 added fallbacks: three rules for one fact",
+      "evidence": "F1, F2, F4, F5",
+      "size": 4
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "`pilot land` from the CLI runs landSweep, which stops orphan processes machine-wide; QA drove land.mjs main() through its own driver in the scratch repo",
+      "evidence": "bin/pilot.mjs:421",
+      "size": 2
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "`pilot base` reads the live deck (GET /api/tickets) even from a scratch repo; later runs pinned PILOT_DECK_PORT",
+      "evidence": "base.mjs:146 deckConcluding",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "seed fixtures in a top-level dir fail the README-coverage test: one red CI run (~7 min) and a re-push",
+      "evidence": "Gate run 45709408515",
+      "size": 1
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "`gh run watch --exit-status` exited while the run was in progress; replaced by a poll loop. Private repo: land never trusts CI (1 gate job), full suite locally per landing",
+      "evidence": "QA report, 'no ci proof: 1 gate jobs, fewer than 3'",
+      "size": 1
     }
   ]
 }
