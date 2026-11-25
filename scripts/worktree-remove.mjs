@@ -19,6 +19,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { isWindows } from '../hooks/lib/platform.js';
 import { PILOT_BRANCH } from './pilot-branch.mjs';
 
 /** Runs git in `cwd`; answers `{ ok, out, raw, err }`, `raw` untrimmed, never throws. */
@@ -37,7 +38,7 @@ export const keptLine = (dir, state) => `kept ${state} ${dir}`;
 /** A path as git and the file system may both spell it, case-blind on Windows. */
 const norm = (p) => {
   const slashed = path.resolve(p).replaceAll('\\', '/');
-  return process.platform === 'win32' ? slashed.toLowerCase() : slashed;
+  return isWindows() ? slashed.toLowerCase() : slashed;
 };
 const same = (a, b) => norm(a) === norm(b);
 /** Whether `p` lies strictly under `dir`. */
