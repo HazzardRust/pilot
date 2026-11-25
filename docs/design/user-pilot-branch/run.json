@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed 1fc0a6a",
+      "state": "integrated",
       "after": [
         "S1",
         "S2"
@@ -84,8 +84,8 @@
       "pr": 157
     }
   ],
-  "next": "S2 checks running at 691a3d3; then integrate S3, S4, S7, S8 one at a time, each after green checks; then S6",
-  "updatedAt": "2026-11-25T19:49:35.484Z",
+  "next": "S3 integrated at c88d5d9, checks running; then integrate S4, S7, S8, each after green checks; then S6",
+  "updatedAt": "2026-11-25T20:00:36.078Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
