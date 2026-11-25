@@ -154,6 +154,31 @@ fn a_card_draws_its_parts() {
 }
 
 #[test]
+fn a_steps_card_names_its_ticket_and_counts_its_steps() {
+    let deck = Scratch::start();
+    let id = support::seed_steps(&deck, "C:/work/alpha", 3);
+
+    let rt = drawn(&deck);
+    let shown = texts(&rt);
+
+    assert!(
+        shown.iter().any(|text| text == "human steps · 3 steps"),
+        "no count among {shown:?}"
+    );
+    let ticket = rt
+        .elements()
+        .into_iter()
+        .find(|element| element.key.as_deref() == Some(&format!("card-{id}-ticket")))
+        .and_then(|element| element.text);
+    assert!(
+        ticket
+            .as_deref()
+            .is_some_and(|line| line.starts_with("Seeded ticket ")),
+        "the card's ticket line: {ticket:?} among {shown:?}"
+    );
+}
+
+#[test]
 fn an_option_press_is_sent_once() {
     let deck = Scratch::start();
     let id = question(&deck, "Which port?", "C:/work/alpha");
