@@ -47,7 +47,7 @@ export function cleanOnPilot(repo, sha, { git = checkGit(repo) } = {}) {
   if (typeof sha !== 'string' || !SHA_FIELD.shape.test(sha)) return { ok: false, ...at, why: `${JSON.stringify(sha)} is not a commit sha` };
   const run = (args) => git(repo, args);
   try {
-    const ref = runRef(runRemote(run), pilotBranch((args) => run(args)));
+    const ref = runRef(runRemote(run), pilotBranch(run));
     at.onto = shortRef(ref);
     let onto;
     try {
