@@ -44,7 +44,7 @@ export const NO_NAME = 'no pilot branch name: run `gh auth login` (or `glab auth
  * A pilot branch name a config value or the env may hold (A4): `<login>-pilot` in lower case with no `..`, or the
  * legacy `pilot`. Neither an option, a refspec, `HEAD`, a `feat/` or `slice/` branch nor `main` fits it.
  */
-const isPilotName = (name) => name === LEGACY_PILOT || (/^[a-z0-9][a-z0-9._-]*-pilot$/.test(name) && !name.includes('..'));
+export const isPilotName = (name) => name === LEGACY_PILOT || (/^[a-z0-9][a-z0-9._-]*-pilot$/.test(name) && !name.includes('..'));
 
 /** A lowered login git would take as the head of a branch name as it is, never cleaned (spec 6; L4). */
 const isLogin = (login) => /^[a-z0-9][a-z0-9._-]*$/.test(login) && !login.includes('..') && !/(?:\.|\.lock)$/.test(login);

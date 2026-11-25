@@ -48,7 +48,7 @@ import { checkLine, checksAt } from './checks.mjs';
 import { takeSlot } from './gate-slots.mjs';
 import { mergeIntoPilot } from './sync.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
-import { assertPushable, firstLine, git, holds, isPilotBase, landingSubjects, PILOT_BRANCH, pilotBranch, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
+import { assertPushable, firstLine, git, holds, isPilotBase, isPilotName, landingSubjects, PILOT_BRANCH, pilotBranch, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRef, runRemote, shortRef } from './remotes.mjs';
 import { scopeOf } from './select-tests.mjs';
 import { runRecord } from './worktrees.mjs';
@@ -396,8 +396,8 @@ export function integrate(branch, options = {}) {
   try {
     head = git(cwd, 'symbolic-ref', '--short', 'HEAD');
     pilot = pilotIn(cwd);
-    // The legacy pilot too: it is read, never written (L1).
-    if (isPilotBase(head.toLowerCase(), pilot)) throw new Error(`refusing to integrate onto ${head.toLowerCase()}: pilot land is the only way onto it`);
+    // Any user's pilot branch, the legacy one too (read, never written; L1): only `pilot land` writes one.
+    if (isPilotName(head.toLowerCase())) throw new Error(`refusing to integrate onto ${head.toLowerCase()}: pilot land is the only way onto it`);
     assertPushable(head, { git: (args) => git(cwd, ...args) });
     // The merge's subject, from the run record before any merge: a slice it does not name is refused here.
     if (slice) subject = subjectOf(cwd, head, slice);
@@ -558,7 +558,7 @@ export function trial({ cwd = process.cwd() } = {}) {
   try {
     head = git(cwd, 'symbolic-ref', '--short', 'HEAD');
     pilot = pilotIn(cwd);
-    if (isPilotBase(head.toLowerCase(), pilot)) throw new Error(`refusing to try ${head.toLowerCase()} on itself: pilot land is the only way onto it`);
+    if (isPilotName(head.toLowerCase())) throw new Error(`refusing to try ${head.toLowerCase()} on itself: pilot land is the only way onto it`);
     assertPushable(head, { git: (args) => git(cwd, ...args) });
     const runs = runRemote(gitIn(cwd));
     // --prune: a pilot branch deleted on a remote must not survive as a stale tracking ref.

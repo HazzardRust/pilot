@@ -16,7 +16,7 @@ import path from 'node:path';
 
 delete process.env.PILOT_BRANCH;
 
-const { baseOf, landedOnPilot, landingMessage } = await import('../integrate.mjs');
+const { baseOf, integrate, landedOnPilot, landingMessage, trial } = await import('../integrate.mjs');
 const { sync } = await import('../sync.mjs');
 const { pilotBranch } = await import('../pilot-branch.mjs');
 
@@ -90,6 +90,20 @@ test('a record based on pilot reads as the branch', (t) => {
   fs.writeFileSync(record, `${JSON.stringify({ slug: 'm', branch: 'feat/m', base: 'pilot' }, null, 2)}\n`);
 
   assert.deepEqual(baseOf(work, 'origin'), { ref: 'origin/hazzardrust-pilot' });
+});
+
+test("no integration or trial onto another user's pilot branch", (t) => {
+  const { work } = movedRepos(t);
+  git(work, 'checkout', '-q', '-b', 'bob-pilot');
+
+  const said = integrate(undefined, { cwd: work, test: 'node -e ""', install: () => {}, push: false });
+  const tried = trial({ cwd: work });
+
+  assert.equal(said.ok, false);
+  assert.match(said.line, /refusing to integrate onto bob-pilot.*nothing merged or pushed$/);
+  assert.equal(tried.ok, false);
+  assert.match(tried.line, /^trial NOT run: refusing to try bob-pilot on itself/);
+  assert.equal(git(work, 'ls-remote', '--heads', 'origin', 'bob-pilot'), '', 'nothing pushed');
 });
 
 test('sync touches only its own branch', (t) => {

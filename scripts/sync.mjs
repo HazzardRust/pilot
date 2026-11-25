@@ -242,12 +242,14 @@ export function resume({ cwd, dir, pilotTip, source, message, side, refuse, conf
     return false;
   }
   if (first === pilotTip) return true;
+  // Read before the merge, so a failure to read it never replaces the merge's own refusal.
+  const pilot = pilotBranch((args) => gitAt(cwd, ...args));
   gitAt(dir, 'checkout', '-q', '--detach', pilotTip);
   let merge;
   try {
     merge = mergeResolved(dir, resolution, message, { side });
   } catch (err) {
-    throw refuse(`the merge of the resolution ${resolution} in ${dir} ${err.stage === 'merge' ? 'stopped' : 'could not be committed'} (${err.message}); ${pilotBranch((args) => gitAt(cwd, ...args))} not pushed`);
+    throw refuse(`the merge of the resolution ${resolution} in ${dir} ${err.stage === 'merge' ? 'stopped' : 'could not be committed'} (${err.message}); ${pilot} not pushed`);
   }
   if (merge.left.length) throw conflict(merge.left, merge.why);
   return true;
