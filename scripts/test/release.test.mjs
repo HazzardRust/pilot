@@ -40,7 +40,7 @@ test('two landings name both slugs', (t) => {
   land(a, gitIn);
   land(b, gitIn);
 
-  const notes = releaseNotes({ git: gitIn(b), pilotRef: PILOT, mainRef: MAIN, prs: [{ number: 7, head: 'feat/a' }] });
+  const notes = releaseNotes({ git: gitIn(b), name: 'pilot', pilotRef: PILOT, mainRef: MAIN, prs: [{ number: 7, head: 'feat/a' }] });
 
   assert.equal(notes.title, 'Release: a, b');
   assert.deepEqual(notes.rows.map(({ slug, pr }) => ({ slug, pr })), [{ slug: 'a', pr: 7 }, { slug: 'b', pr: null }]);
@@ -57,7 +57,7 @@ test('a sync merge is no row', (t) => {
   git(repo, 'checkout', '-q', 'pilot');
   git(repo, 'merge', '-q', '--no-ff', '-m', 'Merge main into pilot', 'main');
 
-  const notes = releaseNotes({ git: (args) => git(repo, ...args), pilotRef: 'pilot', mainRef: 'main~1', prs: [] });
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main~1', prs: [] });
 
   assert.deepEqual(notes.rows.map((row) => row.slug), ['a']);
   assert.equal(notes.title, 'Release: a');
@@ -67,7 +67,7 @@ test('the title is bounded', (t) => {
   const slugs = Array.from({ length: 30 }, (_, i) => `feature-number-${i}`);
   const repo = landed(t, slugs);
 
-  const notes = releaseNotes({ git: (args) => git(repo, ...args), pilotRef: 'pilot', mainRef: 'main', prs: [] });
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [] });
 
   assert.equal(notes.rows.length, 30);
   assert.ok(notes.title.length <= 120, notes.title);

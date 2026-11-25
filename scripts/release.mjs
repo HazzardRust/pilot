@@ -31,14 +31,13 @@ function titleOf(slugs) {
 
 /**
  * The release PR's title, body and rows from git (L3). `git` is `(args) => string`; `pilotRef`
- * and `mainRef` are refs git takes literally, `pilotRef` the pilot branch's, whose last segment is its
- * name; a row is each merge `landingSubjects` names, onto that branch or the legacy pilot (L8).
+ * and `mainRef` are refs git takes literally, `pilotRef` the ref of the pilot branch `name`; a row is
+ * each merge `landingSubjects` names, onto that branch or the legacy pilot (L8).
  * `prs` is the host's merged **Review**s into pilot
  * (the newest 200; an older one reads `–`), the feature PR of each row, never a fork's, the
  * highest number when several.
  */
-export function releaseNotes({ git, pilotRef, mainRef, prs }) {
-  const name = pilotRef.split('/').at(-1);
+export function releaseNotes({ git, name, pilotRef, mainRef, prs }) {
   const log = git(['log', '--first-parent', '--reverse', '--format=%H%x09%P%x09%s', `${mainRef}..${pilotRef}`]);
   const rows = [];
   for (const line of String(log).split(/\r?\n/)) {
@@ -91,7 +90,7 @@ export function releasePr({ git, host, name, already = false }) {
     // A landing from before the move (L8) has its PR merged into the legacy pilot.
     const merged = (into) => host.reviews({ base: into, state: 'merged', limit: 200 });
     const features = name === LEGACY_PILOT ? merged(name) : [...merged(name), ...merged(LEGACY_PILOT)];
-    notes = releaseNotes({ git, pilotRef: runRef(runs, name), mainRef: runRef(runs, base), prs: features });
+    notes = releaseNotes({ git, name, pilotRef: runRef(runs, name), mainRef: runRef(runs, base), prs: features });
   } catch (err) {
     return unknown(`release notes failed: ${firstLine(err)}`);
   }

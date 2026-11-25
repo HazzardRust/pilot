@@ -74,7 +74,7 @@ test('release notes see pre-move landings', (t) => {
     return dir;
   });
 
-  const { rows } = releaseNotes({ git: (args) => git(repo, ...args), pilotRef: `refs/heads/${NAME}`, mainRef: 'refs/heads/main', prs: [] });
+  const { rows } = releaseNotes({ git: (args) => git(repo, ...args), name: NAME, pilotRef: `refs/heads/${NAME}`, mainRef: 'refs/heads/main', prs: [] });
 
   assert.deepEqual(rows.map((row) => row.slug), ['a', 'b'], 'a landing onto the legacy pilot and onto the user\'s branch; another user\'s is not one');
 });
