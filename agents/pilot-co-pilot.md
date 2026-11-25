@@ -53,9 +53,9 @@ Read steps 4 to 8 of `${CLAUDE_PLUGIN_ROOT}/agents/pilot.md`, and its
   `base check: in` or `missing`; on a miss, `pilot integrate --dir <feat>` with no
   branch first, so review and QA see the base.
 - Step 7's `pilot land` prints `landed … at <sha>`: the feature row reads
-  `landed on pilot at <sha>`. A `NOT landed` conflict line goes to `main`
+  `landed on <login>-pilot at <sha>`. A `NOT landed` conflict line goes to `main`
   verbatim: its hunks are the lander's. On `NOT landed`, or a refused call, never retry
-  or merge into `pilot` another way, which would skip the landing's checks: send QA `feat/<slug>`'s tip and name it a
+  or merge into your pilot branch another way, which would skip the landing's checks: send QA `feat/<slug>`'s tip and name it a
   blocked step in the hand-back; nothing waits on it.
 - The verdicts of step 7 are yours: judge each finding before a fixer sees it.
   A fix brief for a defect, not a tidy, names `pilot:diagnosing-bugs`, so the

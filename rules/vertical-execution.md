@@ -87,10 +87,10 @@ on into the degraded zone or compact and continue.
 **Gate 1** is before implementation: the user signs off the design agreement and the
 slice DAG together, because approving a ticket list without the reasoning behind it
 is approving the wrong artefact.
-**Gate 2** is before the feature PR lands on `pilot`: the user has worked through the QA agent's
+**Gate 2** is before the feature PR lands on your pilot branch: the user has worked through the QA agent's
 step-by-step procedure on the whole feature, running where it is meant to run, and
 pressed Sign off, and only then does the feature land — every ticket has
-one. Main gets pilot by the one main PR, `pilot` → main, which only the user merges. The procedure walks them through whatever
+one. Main gets it by the one main PR, your pilot branch → main, which only the user merges. The procedure walks them through whatever
 the feature is: a GUI first, then pictures, video, audio, plots, games, rendered
 documents, a CLI, a config applied to a cluster, a binary, a notebook. A slice is a
 pushed branch, integrated as one `feat(<slug>): S<n> <title>` commit with
