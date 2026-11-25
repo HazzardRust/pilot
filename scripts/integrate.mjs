@@ -325,14 +325,16 @@ function pilotBase(cwd, runs, git = gitView(cwd)) {
  * `feat/<N>` is N's tip on origin, `{ ref: 'origin/feat/<N>', chained: 'feat/<N>' }`, until that tip
  * is in the default branch by ancestry, then the default branch. N's landing on pilot does not end
  * the chain. Any other record base throws. `runs` is `runRemote`'s answer, read here when not given;
- * `git` is the command's view, a new one when not given.
+ * `git` is the command's view, a new one when not given; `head` the branch checked out, read here when
+ * not given (integrate read it before its fetch, a write that empties the view, S9).
  */
-export function baseOf(cwd, runs, git = gitView(cwd)) {
+export function baseOf(cwd, runs, git = gitView(cwd), head = undefined) {
   if (runs === undefined) runs = runRemote(git);
-  let head;
-  try {
-    head = git(['symbolic-ref', '-q', '--short', 'HEAD']);
-  } catch {} // detached: no record to read, so pilot
+  if (head === undefined) {
+    try {
+      head = git(['symbolic-ref', '-q', '--short', 'HEAD']);
+    } catch {} // detached: no record to read, so pilot
+  }
   const base = recordIn(cwd, head)?.record.base;
   if (base === undefined || base === PILOT_BRANCH) return pilotBase(cwd, runs, git);
   if (typeof base !== 'string' || !RUN_BASE.test(base)) throw new Error(`run record base ${JSON.stringify(base)} is not ${PILOT_BRANCH}, the default branch or feat/<slug>`);
@@ -435,7 +437,7 @@ export function integrate(branch, options = {}) {
     // --prune: a pilot branch deleted on a remote must not survive as a stale tracking ref.
     view(['fetch', '-q', '--prune', 'origin']);
     if (runs !== null && runs !== 'origin') view(['fetch', '-q', '--prune', runs]);
-    base = baseOf(cwd, runs, view);
+    base = baseOf(cwd, runs, view, head);
     name = nameOf(base, runs);
     if (base.chained && !holdsVia(view, verifyShort(base.ref))) throw new Error(`${base.chained} is gone from origin and has not landed on ${PILOT_BRANCH}`);
     // Pilot by its full ref, as `pilotBase` checked it: the same argv, so the view answers it.
@@ -621,7 +623,9 @@ function trialOnPilot({ cwd, git, head }) {
  */
 function pruneSlice(cwd, host, slice, head, git) {
   try {
-    const { deleted, kept } = deleteMerged({ git, host: host === undefined ? hostFor(cwd, { git }) : host, select: (name) => name === slice, into: head });
+    // `fetched` (A3): integrate fetched origin before its merge and pushed `head` itself, so origin's branches
+    // are its remote-tracking refs; a slice moved since is refused by the delete's lease, never deleted.
+    const { deleted, kept } = deleteMerged({ git, host: host === undefined ? hostFor(cwd, { git }) : host, select: (name) => name === slice, into: head, fetched: true });
     if (deleted.includes(slice)) return `; deleted ${slice}`;
     return kept.length ? `; kept ${slice}: ${kept[0].why}` : '';
   } catch (err) {

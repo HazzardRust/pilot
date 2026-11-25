@@ -11,7 +11,7 @@ import { countGit } from './lib/count-git.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-const { integrate } = await import('../integrate.mjs');
+const { integrate, trial } = await import('../integrate.mjs');
 
 const normal = (text) => text.replace(/\b[0-9a-f]{7,40}\b/g, '<sha>');
 
@@ -40,12 +40,24 @@ test('integrate prints what it printed on the base and leaves the same merge on 
 });
 
 // 24 measured on the base 493bd48 for this integration (land-batching S3); after the view, 20; still 20 with
-// rev-list, diff and log as reads (S8), since this integration asks each of them once.
+// rev-list, diff and log as reads (S8), since this integration asks each of them once; 18, 75% of 24, once the
+// current branch is one argv and the deletion tail reads origin from integrate's own fetch (S9).
 const BASE_GIT = 24;
-const BAR_GIT = 20;
+const BAR_GIT = 18;
 
-// The bar is 20, not 75% of 24 (18): every git left is a write or a read alone in its epoch (L3).
-test('one integrate spawns at most 20 git, 24 on the base', (t) => {
+// The lines the base printed on a detached HEAD (S9): `-q` answers it with no error text of its own.
+test('integrate and its trial on a detached HEAD refuse as on the base', (t) => {
+  const { origin, x } = seeded(t);
+  const tip = git(origin, 'rev-parse', 'feat/x');
+  git(x, 'checkout', '-q', '--detach');
+
+  assert.equal(integrate('slice/x-s1', options(x)).line, 'NOT integrated slice/x-s1: fatal: ref HEAD is not a symbolic ref; nothing merged or pushed');
+  assert.equal(integrate(undefined, options(x)).line, 'base NOT taken: fatal: ref HEAD is not a symbolic ref; nothing merged or pushed');
+  assert.equal(trial({ cwd: x }).line, 'trial NOT run: fatal: ref HEAD is not a symbolic ref');
+  assert.equal(git(origin, 'rev-parse', 'feat/x'), tip);
+});
+
+test('one integrate spawns at most 18 git, 24 on the base', (t) => {
   const { x } = seeded(t);
   const { value, git: spawned } = countGit(() => integrate('slice/x-s1', options(x)));
   assert.equal(value.ok, true);
