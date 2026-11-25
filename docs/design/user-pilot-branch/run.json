@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "implementing",
+      "state": "pushed 052019f",
       "after": [
         "S1"
       ],
@@ -34,7 +34,7 @@
     },
     {
       "slice": "S4",
-      "state": "implementing",
+      "state": "pushed 0c8db99",
       "after": [
         "S1"
       ],
@@ -43,7 +43,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 2217a46",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -62,7 +62,7 @@
     },
     {
       "slice": "S7",
-      "state": "implementing",
+      "state": "pushed 0314e48",
       "after": [
         "S1"
       ],
@@ -84,8 +84,8 @@
       "pr": 157
     }
   ],
-  "next": "S1 checks green at bbe2b8c; integrating S5; S2, S4, S7 implementing; S3 waits on S2; S8 after S5",
-  "updatedAt": "2026-11-25T18:56:57.741Z",
+  "next": "S5 checks green at 3690751; integrating S2, then S7, S8, S4; resume S3 on new tip; then S6",
+  "updatedAt": "2026-11-25T19:29:13.596Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -265,6 +265,36 @@
       "what": "S3: plan's after: S1 omitted S2; land pushes via sync.mjs TARGET (S2-owned), so B1 cannot go green alone",
       "evidence": "sync.mjs:32 refs/heads/${PILOT_BRANCH}; B1 red on S3 branch",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: slice file kept head === PILOT_BRANCH refusal; with per-user branches integrate could merge and push onto another user's *-pilot (caught by security review, fixed with B5)",
+      "evidence": "B5 red: said.ok true with HEAD bob-pilot",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: early context compaction with no summary; reviewer's test run outlived its 120 s call and ran beside the gate",
+      "evidence": "S2 report friction table",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: slice Interface pilotBranchRow({git, host, env}) could not hold against S1's process.env reads; env dropped (seam change)",
+      "evidence": "typescript-reviewer HIGH: label used injected env, name used process.env",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: slice file's feature-pr 'record.base ?? name' ran before the host-none return (ordering hazard unnamed); typescript reviewer not re-run after its REQUEST CHANGES fix round",
+      "evidence": "S4 report: Verdict REQUEST CHANGES on pre-fix diff; co-pilot spawned a re-review",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot checks --wait returns 'pending' on the macos-latest job instead of waiting to a verdict; every integration needs a second wait",
+      "evidence": "checks pending at bbe2b8c and at 3690751: gate (macos-latest)",
+      "size": 2
     }
   ]
 }
