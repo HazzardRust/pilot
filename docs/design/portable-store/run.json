@@ -1,0 +1,110 @@
+{
+  "slug": "portable-store",
+  "feature": "Portable store, export and import",
+  "ticket": "itm_d9b831208266",
+  "branch": "feat/portable-store",
+  "base": "main",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-portable-store",
+  "artefact": "docs/design/portable-store/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "implementing",
+      "branch": "slice/portable-store-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S4"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S5"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S4"
+      ]
+    },
+    {
+      "slice": "S8",
+      "state": "pushed 0d20e59",
+      "branch": "slice/portable-store-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s8"
+    }
+  ],
+  "next": "S8 integrating (pilot integrate running); S1 implementing; next: checks on S8's sha, then S2 and S3 after S1",
+  "updatedAt": "2026-11-25T04:27:07.366Z",
+  "friction": [
+    {
+      "agent": "architect",
+      "what": "No list of which store fields hold paths; two children traced about 40 readers to build one",
+      "evidence": "3,290 paths over 29 field paths in a 4.6 MB deck.json"
+    },
+    {
+      "agent": "architect",
+      "what": "Repo identity stored two ways",
+      "evidence": "folded keys in decks/coPilots/switches/budgets/records.repo; raw spellings in items.repo/runs.repo/worktrees"
+    },
+    {
+      "agent": "architect",
+      "what": "Several writers hard-code ~/.claude/pilot and ignore PILOT_DECK_DIR",
+      "evidence": "wrapper-log.js:34, apply-reach.mjs:27, run-env.mjs:38, live-root.mjs:52, integrate.mjs:162"
+    },
+    {
+      "agent": "architect",
+      "what": "store-core.mjs at 774 of the 800-line facade bar",
+      "evidence": "constrains portable-store S1 and S2"
+    },
+    {
+      "agent": "architect",
+      "what": "Auto mode gives no verdict when a deck call is paired with another call in one response",
+      "evidence": "architect once, pilot three times this session; re-running alone passed"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exited 1 on a deck timeout six times in one session; each restart is a turn",
+      "size": 6
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "pilot verdicts finds only a bold - **A<n>** id; the predecessor wrote plain - A<n>, one failed run; it also placed the last id's verdict after the following paragraph, moved by hand",
+      "evidence": "architect hand-back, design/portable-store 9196b44"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit refused a file not just Read, costing a round trip on three files; a sed -i on a tracked file was hook-blocked, redone as six Edit calls",
+      "evidence": "S8 implementer report",
+      "size": 4
+    }
+  ]
+}
