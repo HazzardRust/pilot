@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed e24e6d0 on 313ae31, ts-reviewer APPROVE; NOT integrated; trailers verbatim in the pilot scratchpad file land-batching-S2-trailers.txt (session 529378b5)",
+      "state": "integrated 756c840; checks green at 756c840",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "integrated c5a576c (feat 313ae31); macOS job rerun 138596795957 running",
+      "state": "integrated c5a576c; checks green at 313ae31",
       "after": [
         "S1"
       ],
@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4",
-      "state": "implementing",
+      "state": "pushed b442158 on 756c840, ts APPROVE, security APPROVE; sync 19 -> 14",
       "after": [
         "S2"
       ],
@@ -56,7 +56,8 @@
         "S3",
         "S4",
         "S5",
-        "S8"
+        "S8",
+        "S9"
       ]
     },
     {
@@ -68,16 +69,24 @@
     },
     {
       "slice": "S8",
-      "state": "implementing",
+      "state": "pushed f7555bb on 756c840, ts APPROVE; integrate 20 -> 20, landing 32 -> 31",
       "after": [
         "S2"
       ],
       "branch": "slice/land-batching-s8",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "planned (added: integrate reaches spec 4's 18 of 24; symbolic-ref argv unify + deletion tail reuses the fetch)",
+      "after": [
+        "S5",
+        "S8"
+      ]
     }
   ],
-  "next": "S4, S5, S8 implementing from S2's tip e24e6d0; checks 313ae31 waiting on macOS rerun, then integrate S2 and send the three the new feat tip; then S7, S6.",
-  "updatedAt": "2026-11-25T12:00:05.620Z",
+  "next": "Integrating S4 b442158; then S8 f7555bb; S5 implementing; S9 (added, integrate to 18) after S5 and S8; then S7, S6.",
+  "updatedAt": "2026-11-25T12:51:11.356Z",
   "friction": [
     {
       "agent": "architect",
@@ -158,6 +167,48 @@
       "what": "parallel slices share one gate slot; single test files waited 3+ min",
       "evidence": "gate: waiting for a slot: pid 876 in ...-s3; 2 gate runs stopped stale",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate selection ~16 min, ran three times (rebase onto feat tip, reviewer's test change)",
+      "evidence": "S4 report: final duration_ms 945894",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 census said 18 git; fixture measures 19 (config --get pilot.test)",
+      "evidence": "S4 report, GIT_TRACE",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no helper lists which git argv a run spawned; a throwaway GIT_TRACE test was written and deleted",
+      "evidence": "S4 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "merge-tree --write-tree counts as a write in the view and flushes it; run outside the view to reach 14",
+      "evidence": "scripts/sync.mjs mergeTree, S4 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "countGit counts but does not log argv; finding which git a count saves took a temporary spawn_sync probe test",
+      "evidence": "S8 report: scratch zz-measure-s8*.test.mjs deleted",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate selection since origin/main ran ~5,000 tests for a 6-file slice; two deck tests timed out at 5 s under load",
+      "evidence": "deck/test/lineage-base, gate1-lineage: green alone",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S8's brief assumed the three new reads would move integrate; they are each asked once there, so 20 -> 20; one more slice needed for spec 4's 18",
+      "evidence": "S8 report counts table",
+      "size": 2
     }
   ]
 }
