@@ -7,12 +7,12 @@
  *   contains origin/<default>, say so and stop; otherwise, in a temporary detached worktree at
  *   that pilot, merge --no-ff origin/<default>, npm ci when there is a package.json, the
  *   repository's test command, and on green push the merge's SHA to the run remote's
- *   refs/heads/pilot, never forced, or under `pilot.remote none` move the local pilot with
- *   `git update-ref refs/heads/pilot <new> <old>` (pilot-fork spec 4; L1, L3).
+ *   refs/heads/<pilot branch> (`pilotBranch`), never forced, or under `pilot.remote none` move the
+ *   local one with `git update-ref` from its old tip (pilot-fork spec 4; L1, L3).
  *
  * The caller's checkout and its HEAD are never touched or read: the merge happens in the
  * temporary worktree, which is removed whatever happens, and the only push names
- * `refs/heads/pilot`, passed through `assertPushable` before the merge and again at the
+ * that pilot branch, passed through `assertPushable` before the merge and again at the
  * push (spec 4; L4). No rebase. A conflict throws with `exitCode` 3 and the conflicting
  * paths; a red run, a failed install or a failed push throws with `exitCode` 1. Either
  * way nothing is pushed.
@@ -23,13 +23,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { assertPushable, firstLine, holds, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
+import { assertPushable, firstLine, holds, namePilotBranch, pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
 import { runRef, runRemote, shortRef } from './remotes.mjs';
 import { git as gitAt, installWithNpm, NO_TEST, redLine, runTests, testCommand } from './integrate.mjs';
 import { conflictLine, conflictPaths, mergeResolved } from './merge-generated.mjs';
 import { allocateAdr } from './adr-allocate.mjs';
+import { hostFor } from '../deck/host.mjs';
 
-const TARGET = `refs/heads/${PILOT_BRANCH}`;
+/** The one ref a sync or a landing writes: the pilot branch `name` (user-pilot-branch L5). */
+const targetOf = (name) => `refs/heads/${name}`;
 
 const fail = (reason, exitCode = 1) => Object.assign(new Error(`NOT synced: ${reason}; nothing pushed`), { exitCode, reason });
 const short = (sha) => sha.slice(0, 7);
@@ -59,15 +61,19 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
   if (!/^[0-9a-f]{40}(?:[0-9a-f]{24})?$/.test(String(source))) throw fail(`${JSON.stringify(source)} is not a full commit SHA`);
   let runs;
   let pilotTip;
+  let pilot;
+  let target;
   try {
-    assertPushable(TARGET, { git });
+    pilot = pilotBranch(git);
+    target = targetOf(pilot);
+    assertPushable(target, { git });
     runs = runRemote(git);
-    pilotTip = pilotTipOf(git, runs);
+    pilotTip = pilotTipOf(git, runs, pilot);
   } catch (err) {
     throw fail(firstLine(err));
   }
   if (holds(cwd, ['merge-base', '--is-ancestor', source, pilotTip])) {
-    return { sha: pilotTip, merged: false, line: `${PILOT_BRANCH} already has ${taken}`, counts: null, adr: null };
+    return { sha: pilotTip, merged: false, line: `${pilot} already has ${taken}`, counts: null, adr: null };
   }
 
   const dir = keep ?? fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-sync-'));
@@ -85,9 +91,9 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
       if (left.length) {
         kept = keep !== undefined;
         const paths = conflictPaths(left, why);
-        const stop = fail(`${taken} conflicts with ${PILOT_BRANCH} in ${paths}`, 3);
+        const stop = fail(`${taken} conflicts with ${pilot} in ${paths}`, 3);
         // A kept worktree ends the line on the lander that resolves it, as the deck parses it.
-        if (kept) stop.message = `NOT synced: ${conflictLine({ head: taken, onto: PILOT_BRANCH, paths: [paths], dir })}`;
+        if (kept) stop.message = `NOT synced: ${conflictLine({ head: taken, onto: pilot, paths: [paths], dir })}`;
         throw Object.assign(stop, { paths: left, why }, kept && { dir });
       }
     }
@@ -107,7 +113,7 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
     if (!push) {
       // Prepared for the press: the landing reuses it, and tests and pushes it then.
       kept = true;
-      return { sha, merged: true, line: `prepared ${PILOT_BRANCH} ${short(sha)} (${taken}) in ${dir}`, counts: null, adr: null };
+      return { sha, merged: true, line: `prepared ${pilot} ${short(sha)} (${taken}) in ${dir}`, counts: null, adr: null };
     }
     // Given `since`, the selection since it, in no slot (suite-at-landing L4, L9); absent, the full command.
     const chosen = test ? { command: test, selected: false } : testCommand(dir, { since });
@@ -138,16 +144,16 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
       }
     }
     try {
-      assertPushable(`${pushed}:${TARGET}`, { git });
+      assertPushable(`${pushed}:${target}`, { git });
     } catch (err) {
       throw fail(firstLine(err));
     }
     // A local pilot checked out in a worktree is not moved under it (git would leave that worktree stale).
-    const holder = runs === null && git(['worktree', 'list', '--porcelain']).split('\n\n').find((tree) => tree.split('\n').includes(`branch ${TARGET}`));
-    if (holder) throw fail(`${PILOT_BRANCH} is checked out in ${holder.split('\n')[0].slice('worktree '.length)}`);
+    const holder = runs === null && git(['worktree', 'list', '--porcelain']).split('\n\n').find((tree) => tree.split('\n').includes(`branch ${target}`));
+    if (holder) throw fail(`${pilot} is checked out in ${holder.split('\n')[0].slice('worktree '.length)}`);
     try {
-      if (runs === null) git(['update-ref', TARGET, pushed, pilotTip]);
-      else git(['push', '-q', runs, `${pushed}:${TARGET}`]);
+      if (runs === null) git(['update-ref', target, pushed, pilotTip]);
+      else git(['push', '-q', runs, `${pushed}:${target}`]);
     } catch (err) {
       // A kept resolution goes back to the tested merge, so the retry resumes it, not afterGreen's remerge.
       try {
@@ -160,16 +166,16 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
     kept = false;
     // The counts, then `; <scope>` when the run printed one, as integrate's line has them (R10).
     const summary = [run.counts, run.scope].filter(Boolean).join('; ');
-    const line = `synced ${PILOT_BRANCH} ${short(pushed)} (${taken})${summary ? `: ${summary}` : ''}`;
+    const line = `synced ${pilot} ${short(pushed)} (${taken})${summary ? `: ${summary}` : ''}`;
     return { sha: pushed, merged: true, line, counts: run.counts, adr };
   } finally {
     if (!kept) removeWorktree(cwd, dir);
   }
 }
 
-/** The pilot branch's tip on the run remote as last fetched, or the local one under `none`. */
-function pilotTipOf(git, runs) {
-  const ref = runRef(runs, PILOT_BRANCH);
+/** The pilot branch `pilot`'s tip on the run remote as last fetched, or the local one under `none`. */
+function pilotTipOf(git, runs, pilot) {
+  const ref = runRef(runs, pilot);
   try {
     return git(['rev-parse', '-q', '--verify', `${ref}^{commit}`]);
   } catch (err) {
@@ -241,7 +247,7 @@ export function resume({ cwd, dir, pilotTip, source, message, side, refuse, conf
   try {
     merge = mergeResolved(dir, resolution, message, { side });
   } catch (err) {
-    throw refuse(`the merge of the resolution ${resolution} in ${dir} ${err.stage === 'merge' ? 'stopped' : 'could not be committed'} (${err.message}); ${PILOT_BRANCH} not pushed`);
+    throw refuse(`the merge of the resolution ${resolution} in ${dir} ${err.stage === 'merge' ? 'stopped' : 'could not be committed'} (${err.message}); ${pilotBranch((args) => gitAt(cwd, ...args))} not pushed`);
   }
   if (merge.left.length) throw conflict(merge.left, merge.why);
   return true;
@@ -260,27 +266,29 @@ export function sync({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args),
   let runs;
   let pilotTip;
   let checkout;
+  let pilot;
   try {
+    pilot = pilotBranch(git);
     // --prune: a pilot branch deleted on origin must not survive as a stale tracking ref.
     git(['fetch', '-q', '--prune', 'origin']);
     runs = runRemote(git);
     if (runs !== null && runs !== 'origin') git(['fetch', '-q', '--prune', runs]);
     fallback = remoteDefaultBranch(git);
     mainTip = git(['rev-parse', '--verify', `refs/remotes/origin/${fallback}^{commit}`]);
-    pilotTip = pilotTipOf(git, runs);
+    pilotTip = pilotTipOf(git, runs, pilot);
     // The main checkout is the parent of the common git dir; `worktree list` is land's to count.
     checkout = path.dirname(git(['rev-parse', '--path-format=absolute', '--git-common-dir']));
   } catch (err) {
     throw fail(firstLine(err));
   }
   keep ??= `${checkout}-sync`;
-  const message = `Merge ${fallback} into ${PILOT_BRANCH}`;
+  const message = `Merge ${fallback} into ${pilot}`;
   const label = `${fallback}@${short(mainTip)}`;
   const stop = (reason, exitCode) => Object.assign(new Error(`NOT synced: ${reason}`), { exitCode });
-  const conflict = (paths, why) => stop(conflictLine({ head: label, onto: PILOT_BRANCH, paths: [conflictPaths(paths, why)], dir: keep }), 3);
+  const conflict = (paths, why) => stop(conflictLine({ head: label, onto: pilot, paths: [conflictPaths(paths, why)], dir: keep }), 3);
   // Main's merge changes no file (it holds only pilot's work, by merge or squash): nothing to push or test.
   if (!holds(cwd, ['merge-base', '--is-ancestor', mainTip, pilotTip]) && mergeTree(git, pilotTip, mainTip) === git(['rev-parse', `${pilotTip}^{tree}`])) {
-    return { sha: pilotTip, merged: false, line: `${PILOT_BRANCH} already has ${label}` };
+    return { sha: pilotTip, merged: false, line: `${pilot} already has ${label}` };
   }
   const reuse = fs.existsSync(keep) && !holds(cwd, ['merge-base', '--is-ancestor', mainTip, pilotTip]) && resume({ cwd, dir: keep, pilotTip, source: mainTip, message, side: 'ours', refuse: stop, conflict });
   // Pilot writes the run records it carries; the default branch holds older copies (clean-landing L3).
@@ -294,7 +302,23 @@ export function main(argv) {
     return 1;
   }
   try {
-    process.stdout.write(`${sync().line}\n`);
+    const cwd = process.cwd();
+    const git = (args) => gitAt(cwd, ...args);
+    let host = null;
+    let unchosen = '';
+    try {
+      host = hostFor(cwd, { git });
+    } catch (err) {
+      // A host that cannot be chosen derives no name: a stored or env name still syncs, and a failure names it.
+      unchosen = ` (no host: ${firstLine(err)})`;
+    }
+    // The one entry point here holding a host: it names (and on a first run stores) the pilot branch (L5).
+    try {
+      namePilotBranch({ git, host });
+    } catch (err) {
+      throw fail(`${firstLine(err)}${unchosen}`);
+    }
+    process.stdout.write(`${sync({ cwd, git }).line}\n`);
     return 0;
   } catch (err) {
     process.stdout.write(`${err.message}\n`);
