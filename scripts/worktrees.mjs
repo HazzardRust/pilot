@@ -289,9 +289,16 @@ export function prune(repo, base, { dryRun = false, run, merged = [], keep = [],
       return branch;
     };
     // removeTree re-reads every guard, puts the run record back and forces only for a landed run (L1, L6).
-    const result = removeTree(repo, tree.path, { landed: relaxed, remove, branch: dropBranch });
+    let why = null;
+    const removing = (at, dir, force) => {
+      const step = remove ? remove(at, dir, force) : git(at, 'worktree', 'remove', ...(force ? ['--force'] : []), dir);
+      if (!step.ok) why = step.err;
+      return step;
+    };
+    const result = removeTree(repo, tree.path, { landed: relaxed, remove: removing, branch: dropBranch });
     if (result.kept === 'leftover') {
-      failed.push({ path: tree.path, reason: keptLine(tree.path, result.kept) });
+      // git's own refusal, when it refused, says more than the kept line.
+      failed.push({ path: tree.path, reason: why || keptLine(tree.path, result.kept) });
       continue;
     }
     if (result.kept) {
