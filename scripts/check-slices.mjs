@@ -16,13 +16,16 @@
  *   A directory means its *.md files; a SKILL.md means its ````markdown worked example(s).
  *   Only the paths given are checked (L3): earlier features' slice files predate the shape.
  *   An architecture.md is checked by `checkSpec` instead: every §2 spec line carries a bar
- *   (architect-deeper spec 3, L2-L4).
+ *   (architect-deeper spec 3, L2-L4), and its `## Overview` is plain (pr-overview S3).
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { crewRoles, overviewOf, overviewProblems } from './pr-overview.mjs';
 
+/** The plugin's own `agents/`, whose `pilot-<role>.md` names are the overview's banned role words. */
+const AGENTS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'agents');
 const MAX_LINES = 60;
 const TEST_ITEM = /^\s*(?:\d+[.)]|[-*+])(?:\s|$)/;
 const SEAM_FIRST = /^\d+\.\s+`[^`]+`:\s+`([^`]+)`\s+→\s+\S/;
@@ -271,7 +274,26 @@ export function checkSpec(markdown) {
   if (!marked([...sixth, ...sectionLines(lines, 8)], /\bred team:/i)) {
     problems.push({ line: sixth.length ? sixth[0].line - 1 : 1, rule: 'spec-red-team', message: '§6 and §8 carry no `red team:` line' });
   }
-  return problems;
+  return [...problems, ...overviewPlain(lines, inFence)];
+}
+
+/**
+ * Rule `overview-plain` (pr-overview S3, L6): the artefact's `## Overview` exists and meets
+ * `overviewProblems` against the crew's role words; a token at its line, a bound at the heading's.
+ */
+function overviewPlain(lines, inFence) {
+  const heading = lines.findIndex((text, at) => !inFence[at] && /^## Overview\s*$/.test(text));
+  const text = overviewOf(lines.join('\n'));
+  if (heading === -1 || text === null) {
+    return [{ line: 1, rule: 'overview-plain', message: 'no `## Overview` section, or an empty one (skills/pr-overview)' }];
+  }
+  let first = heading + 1;
+  while (lines[first].trim() === '') first++;
+  return overviewProblems(text, crewRoles(AGENTS)).map(({ line, rule, message }) => ({
+    line: rule === 'overview-token' ? first + line : heading + 1,
+    rule: 'overview-plain',
+    message: `the overview carries ${message}`,
+  }));
 }
 
 /** Each slice text a path stands for, with the line its text starts after. */

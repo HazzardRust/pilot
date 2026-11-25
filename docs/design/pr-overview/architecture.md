@@ -4,10 +4,10 @@ Ticket `itm_1dc34cf2a81a`. Base `origin/pilot` (86957ec). Grilling depth: forks 
 
 ## Overview
 
-- **What changes**: every pull request the pilot opens now starts with a short plain-language summary, above the detailed tables.
-- **Why**: today the first thing a reader sees is a table written for the build agents, so nobody can tell at a glance what the change is.
-- **What you'll notice**: a few lines at the top of each PR say what changes, why, what a user notices and whether it can be undone; the tables follow unchanged.
-- **Can it be undone**: two-way door; it only changes PR text, and only for runs that write a summary.
+- **What changes**: every pull request the pilot opens now starts with a short plain summary. The detailed tables follow it unchanged.
+- **Why**: today a reader first sees a table written for the build agents. Nobody can tell at a glance what the change is.
+- **What you'll notice**: a few lines at the top of each PR. They say what changes, why, what a user notices and whether it can be undone.
+- **Can it be undone**: two-way door. It only changes PR text, and only for runs that write a summary.
 
 ## 1. Problem
 
