@@ -1,0 +1,25 @@
+{
+  "slug": "lineage-slow-git",
+  "feature": "Gate1 lineage tests survive a slow git",
+  "ticket": "itm_ad02d595d1c2",
+  "branch": "feat/lineage-slow-git",
+  "base": "feat/pr-overview",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-lineage-slow-git",
+  "artefact": "docs/design/lineage-slow-git/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "planned"
+    }
+  ],
+  "next": "Open for user: gate1 itm_aa9fc14c7393 (this), gate2 itm_4e8b54399a97 pr-overview (press: lander), itm_9ac7a84014e9 land-batching bars, itm_4c410e19d219 prune-worktrees ff. Yellow empty: co-pilot itm_0476cd419c86. prune S8 impl a70f6f2e7660bbeb7 may report. archive-page pivoted, queued; QA a46725a1845de5802 idle. Each slug's record has its next.",
+  "updatedAt": "2026-11-25T18:10:41.631Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "one ~5,500-line land log per landing; finding the failing test meant grepping -B12 around 'within 5 s'",
+      "evidence": "lineage-slow-git architect report",
+      "size": 1
+    }
+  ]
+}
