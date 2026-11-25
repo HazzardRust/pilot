@@ -270,6 +270,24 @@ pub fn question(deck: &Scratch, repo: &str) -> String {
     ))
 }
 
+/// A green ticket titled `Seeded ticket` on `repo` and its open steps thread of `n` steps, written to the
+/// scratch store by `seed-steps.mjs` (`deck_post` refuses the kind); answers the thread's id.
+pub fn seed_steps(deck: &Scratch, repo: &str, n: usize) -> String {
+    let out = Command::new("node")
+        .arg(manifest_dir().join("tests/deck/support/seed-steps.mjs"))
+        .arg(&deck.dir)
+        .arg(repo)
+        .arg(n.to_string())
+        .output()
+        .expect("node is on PATH");
+    assert!(
+        out.status.success(),
+        "seed-steps: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    id_in(&String::from_utf8_lossy(&out.stdout))
+}
+
 /// A read route's answer, behind the secret.
 pub fn get(deck: &Scratch, path: &str) -> ureq::http::Response<ureq::Body> {
     ureq::get(format!("{}{path}", deck.url))

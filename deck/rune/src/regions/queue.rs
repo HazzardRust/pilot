@@ -61,6 +61,8 @@ pub struct Card {
     pub tone: String,
     pub kind: String,
     pub at: Option<String>,
+    /// The ticket line, `<ticket title> <standing>`, on every card that belongs to a ticket (A2).
+    pub ticket: Option<String>,
     pub excerpt: String,
     pub tab: Option<TabRef>,
     pub options: Vec<Opt>,
@@ -139,8 +141,10 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
     let key = |part: &str| format!("card-{}-{part}", c.id);
     // The kind line is part of the way into the thread below, a label, so it is not selectable.
     let said = |words: String, ink: Color| text(words).font(type_::CAPTION).color(ink);
+    // A ticket line too long for the card wraps the kind line onto a second line.
     let mut line = row()
         .gap(space::within)
+        .flex_wrap()
         .child(said(c.state.clone(), tone(&t, &c.tone)).key(key("state")));
     if let Some(tab) = &c.tab {
         line = line.child(said(tab.code.clone(), t.quiet));
@@ -150,6 +154,9 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
         when = when.help(at.as_str());
     }
     line = line.child(said(c.kind.clone(), t.quiet)).child(when);
+    if let Some(ticket) = &c.ticket {
+        line = line.child(said(ticket.clone(), t.quiet).key(key("ticket")));
+    }
     // The way into the thread: the title and the kind line above it, one target under one hover
     // (the walkthrough of 2026-11-21; the page's link is the title alone).
     let to = c.id.clone();
