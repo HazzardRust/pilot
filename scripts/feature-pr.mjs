@@ -25,6 +25,7 @@ import { RUN_BASE, SLUG } from '../deck/runs.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { listeningRepo } from '../deck/wait.mjs';
 import { firstLine, git as gitAt, PILOT_BRANCH } from './pilot-branch.mjs';
+import { overviewBlock } from './pr-overview.mjs';
 import { runRemote } from './remotes.mjs';
 import { prBase } from './stack.mjs';
 
@@ -60,12 +61,12 @@ const cell = (value) => oneLine(value).replace(/\|/g, '\\|');
  * The feature PR's body: `spec` (the artefact's §2) as it stands, the record's slices as a
  * `Slice | State | PR` table, one row per record row, and `footer` last when there is one.
  */
-export function featureBody(spec, record, footer) {
+export function featureBody(spec, record, footer, overview = null) {
   const rows = (record.slices ?? []).map((row) => {
     const pr = Number.isInteger(row.pr) ? `#${row.pr}` : '';
     return `| ${cell(row.slice)} | ${cell(row.state)} | ${pr} |`;
   });
-  const parts = [spec.trimEnd(), ['| Slice | State | PR |', '| --- | --- | --- |', ...rows].join('\n')];
+  const parts = [...(overview ? [overview.trimEnd()] : []), spec.trimEnd(), ['| Slice | State | PR |', '| --- | --- | --- |', ...rows].join('\n')];
   if (footer?.trim()) parts.push(footer.trim());
   return quiet(`${parts.join('\n\n')}\n`);
 }
@@ -156,11 +157,12 @@ export function syncFeaturePr({ host, git, record }) {
   }
   gitStep(git, ['fetch', '-q', 'origin', `+refs/heads/${head}:refs/remotes/origin/${head}`]);
   const tip = `refs/remotes/origin/${head}`;
-  const spec = specOf(gitStep(git, ['show', `${tip}:${artefact}`]));
+  const markdown = gitStep(git, ['show', `${tip}:${artefact}`]);
+  const spec = specOf(markdown);
   const briefPath = `docs/design/${slug}/brief.md`;
   const hasBrief = gitStep(git, ['ls-tree', '--name-only', tip, '--', briefPath]).trim() !== '';
   const footer = hasBrief ? footerOf(gitStep(git, ['show', `${tip}:${briefPath}`])) : '';
-  const body = featureBody(spec, record, footer);
+  const body = featureBody(spec, record, footer, overviewBlock(markdown, record));
 
   // `head` matches a branch name from any fork: only this repository's own PR is the feature PR.
   const open = step(host, 'reviews', () => host.reviews({ head, state: 'open', limit: LIST_LIMIT })).filter((pr) => pr?.crossRepo === false);
