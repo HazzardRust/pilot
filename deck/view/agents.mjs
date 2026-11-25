@@ -5,6 +5,7 @@
  */
 import { authorKind } from '../items.mjs';
 import { landingFor, tabFor, tabsOf } from '../tabs.mjs';
+import { relative } from '../ui/js/time.mjs';
 
 /** Seconds of silence from which a row dims (L11). */
 export const QUIET_S = 30;
@@ -13,12 +14,16 @@ export function agentsView(reads, query = {}, now = Date.now()) {
   const { run = null } = query;
   const tabs = tabsOf(reads.runs, reads.items, reads.numbers, reads.agents, reads.added, reads.lanes);
   const tab = run === null ? landingFor(tabs) : tabFor(tabs, run);
-  const roster = tab ? tab.agents : tabs.flatMap((each) => each.agents);
-  const agents = roster.map((agent) => {
+  const row = (agent) => {
     const quietS = Math.max(Math.floor((now - Date.parse(agent.lastSeen)) / 1000), 0);
-    return { name: agent.agentType, kind: authorKind(agent.agentType), since: agent.since, quietS, quiet: quietS >= QUIET_S };
-  });
-  return { agents };
+    // "3 mins ago" in the HTML deck's own words, as `view/usage.mjs` gives a reset (rune-panes S6).
+    const started = relative(now - Date.parse(agent.since));
+    return { name: agent.agentType, kind: authorKind(agent.agentType), since: agent.since, started, quietS, quiet: quietS >= QUIET_S };
+  };
+  if (tab) return { agents: tab.agents.map(row) };
+  // The overview: one section per deck with anybody live, in the strip's order, as the page's `run-section`s.
+  const groups = tabs.filter((each) => each.agents.length > 0).map((each) => ({ tab: each.name, agents: each.agents.map(row) }));
+  return { agents: groups.flatMap((group) => group.agents), groups };
 }
 
 export default ({ reads, query }) => agentsView(reads, query);
