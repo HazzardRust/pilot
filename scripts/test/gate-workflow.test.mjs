@@ -194,6 +194,16 @@ test('a draft PR to a pilot branch runs the gate', () => {
   assert.deepEqual(osesFor(event('pull_request', { draft: true, baseRef: 'feat/x', isPrivate: false })), [], 'a draft slice PR still skips');
 });
 
+// user-pilot-branch A6 (added): until a repository moves, the legacy `pilot` branch stays a trigger.
+test('a draft PR to the legacy pilot branch runs the gate until the move', () => {
+  assert.deepEqual(osesFor(event('pull_request', { draft: true, baseRef: 'pilot', isPrivate: false })), THREE, 'a public draft to pilot');
+  assert.deepEqual(osesFor(event('pull_request', { draft: true, baseRef: 'pilot' })), ['ubuntu-latest'], 'a private draft to pilot');
+  const on = block(workflowText(), 'on');
+  for (const trigger of ['pull_request', 'push']) {
+    assert.match(block(block(on, trigger), 'branches'), /(^|[\s[,])pilot($|[\s\],])/, `${trigger} names pilot (A6)`);
+  }
+});
+
 test('the gate workflow cancels a superseded run', () => {
   const text = workflowText();
   const concurrency = block(text, 'concurrency');

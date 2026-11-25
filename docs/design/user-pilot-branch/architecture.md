@@ -21,6 +21,7 @@ working branch. The user wants it named `<gh-user>-pilot`, here `hazzardrust-pil
 | 7 | `pilot doctor` has a pilot-branch row: the name and its source (env, stored); a signed-in account whose `<login>-pilot` differs from the stored name is a warn row, never a switch (user, itm_5eefba8d691c). | test per state | 4 states, 4 rows: pass, pass, warn, fail |
 | 8 | Two devices on one account (ADR 0207) get the same branch with no shared state. practitioner: release engineer — a line must not depend on which machine landed. | test, two clones, same seeded login | 1 name across 2 clones; 0 deck reads |
 | 9 | A second user joining a repository that has already moved starts from the default branch's tip, never from the stale `pilot`. red team: the legacy copy alone would hand user B user A's old line. | test: `a-pilot` and `pilot` on origin, login `b` | `b-pilot` tip = default tip; 0 commits from `pilot` |
+| 10 | (added, A6) Until a repository moves, a push or PR to the legacy `pilot` still runs the Gate and Rune deck CI. | gate-workflow test: a draft to `pilot` runs | 1 draft to `pilot` runs the gate |
 
 Spec 1, 6 and 7 are the user's (main, 2026-11-24); 2-5, 8, 9 stand *assumed* as proposed.
 
@@ -115,6 +116,10 @@ function because the name is now per repository. `pilot-tip.mjs` survives (hooks
   hand. Rejected: refusing every push whose name differs from the signed-in `<login>-pilot` (a login read per push,
   and no answer under `pilot.host none`).
   Verdict: stands — setting another user's name is a deliberate local act; refusing would break host none
+- **A6 Legacy `pilot` kept as a CI trigger until the move** (added) — assumed from itm_7a23388d2dec's default,
+  unanswered; departs from L11 as signed; awaits the user at Gate 2. Trades one more trigger name on two workflows
+  for CI on the 10 PRs still based on `pilot` until `pilot restack` retargets them. Rejected: L11 as signed
+  (`*-pilot` only), under which those PRs run no CI until the move.
 
 ## 7. Out of scope
 
@@ -133,6 +138,7 @@ Width 6; longest stem 3 (S1 → S2 → S6).
 | S4 | Restack retargets your `pilot` PRs and leaves others' | 2, 3 | `scripts/stack.mjs`, `scripts/feature-pr.mjs`, `scripts/test/restack-user-branch.test.mjs` (new) | S1 (`namePilotBranch`, `isPilotBase`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S4](slices/S4.md) |
 | S5 | The deck and the tip reads follow your pilot branch | 1, 4 | `deck/gate2-base.mjs`, `deck/lineage.mjs`, `deck/recut.mjs`, `deck/tickets.mjs`, `deck/runs.mjs`, `deck/tools.mjs`, `scripts/pilot-tip.mjs`, `scripts/branches.mjs`, `deck/test/deck-user-branch.test.mjs` (new) | S1 (`pilotBranch`, `isPilotBase`) | `pilot:typescript-reviewer` | [S5](slices/S5.md) |
 | S6 | One name: the constant goes, CI triggers on `*-pilot` | 4 | `scripts/pilot-branch.mjs` (the `PILOT_BRANCH` export deleted), `.github/workflows/ci.yml`, `.github/workflows/gate.yml`, `bin/pilot.mjs`, `scripts/test/one-branch-name.test.mjs` (new) | S2 (`PILOT_BRANCH` consumers), S3 (same), S4 (same), S5 (same) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S6](slices/S6.md) |
+| S9 | (added) Legacy `pilot` stays a CI trigger until the move | 10 | `.github/workflows/ci.yml`, `.github/workflows/gate.yml`, `scripts/test/gate-workflow.test.mjs` | S6 | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S9](slices/S9.md) |
 | S7 | `pilot doctor` shows your pilot branch and warns on a switched account | 7 | `deck/doctor.mjs`, `deck/test/doctor-pilot-branch.test.mjs` (new) | S1 (`namePilotBranch`, `login`) | `pilot:typescript-reviewer` | [S7](slices/S7.md) |
 | S8 | Agents and docs say "your pilot branch" | 4 | `agents/pilot.md`, `agents/pilot-lander.md`, `agents/pilot-architect.md`, `agents/pilot-auditor.md`, `agents/pilot-co-pilot.md`, `rules/vertical-execution.md`, `README.md`, `GLOSSARY.md`, `CLAUDE.excerpt.md`, `docs/OPERATING.md`, `docs/INSTALL.md`, `skills/domain-modeling/ADR-FORMAT.md` | – | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S8](slices/S8.md) |
 
@@ -180,6 +186,7 @@ This repository moves when the released plugin runs its first `pilot base` here:
 | S4 | planned | | | | S1 | 2, 3 |
 | S5 | planned | | | | S1 | 1, 4 |
 | S6 | planned | | | | S2, S3, S4, S5 | 4 |
+| S9 | planned (added) | | | | S6 | 10 |
 | S7 | planned | | | | S1 | 7 |
 | S8 | planned | | | | – | 4 |
 | feature | planned | `feat/user-pilot-branch` | | | | 1-9 |
