@@ -120,11 +120,15 @@ function unlinkLinks(entry) {
 /** The default remove step: git's own, from the main checkout. */
 const gitRemove = (home, dir, force) => git(home, 'worktree', 'remove', ...(force ? ['--force'] : []), dir);
 
+/** The default branch step: `-D`, the tree's tip being a safe head. */
+const gitDropBranch = (home, name) => git(home, 'branch', '-D', name);
+
 /**
  * Removes worktree `dir` of `repo` and its local branch, or keeps it and says why. Answers
- * `{ removed: true, branch }` (the branch deleted, null for a detached tree) or `{ kept: state }`.
+ * `{ removed: true, branch }` (the branch deleted, null for a detached tree or one `branch` refused)
+ * or `{ kept: state }`. `branch(home, name)` deletes the local branch and answers `{ ok }` (prune-worktrees S2).
  */
-export function removeTree(repo, dir, { landed = false, holder = () => null, remove = gitRemove } = {}) {
+export function removeTree(repo, dir, { landed = false, holder = () => null, remove = gitRemove, branch: dropBranch = gitDropBranch } = {}) {
   const trees = worktrees(repo);
   const index = trees ? trees.findIndex((tree) => same(tree.path, dir)) : -1;
   if (index < 0) return { kept: 'not a worktree' };
@@ -173,6 +177,6 @@ export function removeTree(repo, dir, { landed = false, holder = () => null, rem
   if (!removal.ok || fs.existsSync(tree.path)) return { kept: 'leftover' };
   // The local pilot branch is every run's base: it stays even when a tree had it checked out.
   if (!tree.branch || tree.branch === PILOT_BRANCH) return { removed: true, branch: null };
-  const branch = git(home, 'branch', '-D', tree.branch);
+  const branch = dropBranch(home, tree.branch);
   return { removed: true, branch: branch.ok ? tree.branch : null };
 }
