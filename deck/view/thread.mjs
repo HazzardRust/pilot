@@ -5,7 +5,7 @@
  * `threadView` is pure; `seeThread` is the one write, the notice clear `GET /thread/<id>` makes.
  */
 import {
-  KIND_TICKET, KIND_USER, accentOf, isBlocking, isOpen, lastSaidAt, messagesOf, noteFor, ownerOf, repoKey,
+  KIND_STEPS, KIND_TICKET, KIND_USER, accentOf, isBlocking, isOpen, lastSaidAt, messagesOf, noteFor, ownerOf, repoKey,
   standingOf, threadState, ticketWornBy, waitingOn,
 } from '../items.mjs';
 import { clearNotice, listItems } from '../store.mjs';
@@ -18,8 +18,8 @@ import { tabCode } from '../ui/render-strip.mjs';
 export const titled = (text, items) =>
   String(text ?? '').replace(/(\/thread\/)?\b(itm_[0-9a-f]{12})\b/g, (said, _path, id) => items.find((each) => each.id === id)?.title ?? said);
 
-/** The ticket line of `renderTicketStanding`, as words: the ticket's title and where it stands. */
-function standingLine(item, items, lanes) {
+/** The ticket line of `renderTicketStanding`, as words: the ticket's title and where it stands; a card's too (A2). */
+export function ticketLineOf(item, items, lanes) {
   const ticket = item.kind === KIND_TICKET ? undefined : ticketWornBy(item, items);
   if (!ticket) return undefined;
   const coPilot = typeof ticket.repo === 'string' ? lanes.coPilots[repoKey(ticket.repo)] ?? null : null;
@@ -51,7 +51,7 @@ export function threadView(reads, { id, all = false }) {
       tone: STATE_BUCKETS[state] ?? 'waiting',
       kind: kindOf(item),
       at: lastSaidAt(item),
-      standing: standingLine(item, items, lanes),
+      standing: ticketLineOf(item, items, lanes),
       owner: ownerOf(item),
     },
     // `run` is the owning deck's address, as the page's way back (`hrefFor(tab)`) carries it: Escape goes there.
@@ -66,6 +66,8 @@ export function threadView(reads, { id, all = false }) {
     body: titled(item.body, items),
     messages: messagesOf(item).map((message) => ({ by: byOf(message), at: message.repliedAt, text: titled(message.text, items) })),
     resolution: isOpen(item) ? undefined : titled(item.resolution, items),
+    // A steps thread's list, with Done while it is open (L5): drawn by the thread region, not the reply box.
+    ...(item.kind === KIND_STEPS ? { steps: { texts: (item.steps ?? []).map((each) => String(each?.text ?? '')), open: isOpen(item) } } : {}),
     archived: false,
   };
 }
