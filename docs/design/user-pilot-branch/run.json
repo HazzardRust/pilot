@@ -52,7 +52,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 6f41b35",
+      "state": "failed gate: checks none at c55c12e (S6's L11 triggers drop base pilot; feature PR #157 targets pilot)",
       "after": [
         "S2",
         "S3",
@@ -95,8 +95,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s9"
     }
   ],
-  "next": "S6 integrating; then checks, integrate S9 (d3e4ba0); then base check, fundamentalist, QA",
-  "updatedAt": "2026-11-25T21:24:12.879Z",
+  "next": "integrating S9 as the fix for S6's checks none (PR #157 base pilot no longer triggers CI); then checks on S9's sha must be green before anything else",
+  "updatedAt": "2026-11-25T21:51:44.251Z",
   "friction": [
     {
       "kind": "drain",
