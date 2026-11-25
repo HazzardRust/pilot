@@ -10,6 +10,7 @@ use rune::tok;
 use rune::{Cx, El, ScrollSpec, TextEdit, Tx, col, row, text, text_input};
 use serde::Deserialize;
 
+use super::notifications::open_thread;
 use super::reply::line_height;
 use crate::act::{self, Action};
 use crate::app::State;
@@ -44,11 +45,39 @@ struct Message {
     text: String,
 }
 
+/// A thread Create opened, as `deck/view/chat.mjs` lists it.
+#[derive(Debug, Deserialize)]
+struct Thread {
+    id: String,
+    title: String,
+}
+
 #[derive(Debug, Default, Deserialize)]
 struct Chat {
     id: Option<String>,
     #[serde(default)]
     messages: Vec<Message>,
+    #[serde(default)]
+    threads: Vec<Thread>,
+}
+
+/// One link row per thread, each opening its thread as a notification's does.
+fn thread_rows(threads: Vec<Thread>, dark: bool) -> impl Iterator<Item = El> {
+    let t = tok::theme(dark);
+    threads.into_iter().enumerate().map(move |(i, thread)| {
+        let id = thread.id;
+        theme::list_row(row())
+            .key(format!("chat-thread-{i}"))
+            .child(
+                theme::control(text(thread.title), dark)
+                    .font(type_::BODY)
+                    .color(t.text)
+                    .role("link")
+                    .truncate()
+                    .grow(1.0)
+                    .on_press(move |s: &mut State| open_thread(s, &id)),
+            )
+    })
 }
 
 /// Enter in the box: the draft, trimmed, goes to thread `id` once; a blank draft or one already
@@ -85,13 +114,16 @@ pub fn answered(c: &mut Local, key: &str, refused: Option<String>) {
 
 pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
-    // No deck on this page, or a view that cannot be read: a sentence, never a dead window.
-    let none = || col().child(theme::empty("No chat open.", "chat-none", dark));
+    // No chat open: the tab's Create threads alone, or blank with none, as the HTML deck
+    // (render-rail.mjs `if (!chat) return threads;`); a view that cannot be read draws the same,
+    // never a dead window.
+    let none =
+        |threads: Vec<Thread>| thread_rows(threads, dark).fold(col(), |panel, el| panel.child(el));
     let Ok(chat) = Chat::deserialize(v) else {
-        return none();
+        return none(Vec::new());
     };
     let Some(id) = chat.id else {
-        return none();
+        return none(chat.threads);
     };
     let (t, k) = (tok::theme(dark), theme::tokens(dark));
 
@@ -156,9 +188,11 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     .self_start()
     .disabled(local.sending())
     .on_press(move |s: &mut State| send(s, &to));
-    let mut panel = col()
-        .key("chat")
-        .gap(space::within)
+    let mut panel = col().key("chat").gap(space::within);
+    for el in thread_rows(chat.threads, dark) {
+        panel = panel.child(el);
+    }
+    panel = panel
         .child(messages)
         .child(draft.color(t.text))
         .child(send_button);
