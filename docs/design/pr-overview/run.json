@@ -1,0 +1,82 @@
+{
+  "slug": "pr-overview",
+  "feature": "Every PR opens with a plain overview",
+  "ticket": "itm_1dc34cf2a81a",
+  "branch": "feat/pr-overview",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-pr-overview",
+  "artefact": "docs/design/pr-overview/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed a5ee4ac",
+      "branch": "slice/pr-overview-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-pr-overview-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    }
+  ],
+  "next": "Yellow: S1 a5ee4ac reported (TS reviewer APPROVE, 22 slice tests pass; full suite ran before review fixes). Report and trailers sent to co-pilot a3243245f8f5497bc, resumed, to integrate S1, pilot checks, then S2 and S3 in parallel, fundamentalist, fix round, QA. If the co-pilot is silent, integrate S1 from the report in the pilot's transcript.",
+  "updatedAt": "2026-11-25T02:32:17.740Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "no single map of where PR bodies are written",
+      "evidence": "4 greps to find scripts/feature-pr.mjs featureBody, scripts/release.mjs releaseNotes and 3 triggers in deck/server-tools.mjs"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "slice states in feature PR tables go stale",
+      "evidence": "#142's table reads planned for every slice"
+    },
+    {
+      "kind": "drain",
+      "what": "implementer reports of a co-pilot's children delivered to main and relayed by hand",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "S7 and S1 implementer reports of the ui-design-workflow co-pilot delivered to main and retyped to it",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "co-pilot forced to hand back with children live, resumed by hand each time",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "third co-pilot forced to hand back while its first child was still gating; each pause costs a hand-back, a relay and a resume",
+      "evidence": "pr-overview: hand-back after S1's interim waiting notice, nothing integrated",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm run test:quiet took about 25 min under load and prints no node summary line (counts on line 7 of the log)",
+      "evidence": "S1 report: 5112 tests, 5084 pass, 0 fail, read from log line 7"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Edit tool lost read state mid-run",
+      "evidence": "S1 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm run test:quiet took about 25 min under load and prints no node summary line; Edit lost its read state mid-run",
+      "evidence": "pr-overview S1 report: counts on line 7 of the log",
+      "size": 4
+    }
+  ]
+}
