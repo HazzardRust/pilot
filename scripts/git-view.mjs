@@ -15,16 +15,22 @@ const options = (args) => args.slice(1).filter((arg) => arg.startsWith('-'));
 const operands = (args) => args.slice(1).filter((arg) => !arg.startsWith('-'));
 
 /**
- * Whether `args` only reads: rev-parse, for-each-ref, ls-remote, `config --get <key>`, `worktree list`,
- * `merge-base --is-ancestor`, and `symbolic-ref` naming one ref with no delete or message. A global
- * option first (`-c`, `-C`) is never a read.
+ * Whether `args` only reads: rev-parse, for-each-ref, ls-remote, rev-list, `diff` and `log` without
+ * `--output` (itm_bd575183ec2f), `config --get <key>`, `worktree list`, `merge-base --is-ancestor`, and
+ * `symbolic-ref` naming one ref with no delete or message. A global option first (`-c`, `-C`) is never a
+ * read. A diff of the working tree or the index moves with a file the command writes itself, which the
+ * view cannot see: that caller calls `git.forget()` after the write.
  */
 export function isRead(args) {
   switch (args[0]) {
     case 'rev-parse':
     case 'for-each-ref':
     case 'ls-remote':
+    case 'rev-list':
       return true;
+    case 'diff':
+    case 'log':
+      return !options(args).some((opt) => opt === '--output' || opt.startsWith('--output='));
     case 'config':
       return args.length === 3 && args[1] === '--get' && !args[2].startsWith('-');
     case 'worktree':

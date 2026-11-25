@@ -66,7 +66,8 @@ adopts, not a move.
 
 - **view**: one command's `Git` runner from `gitView`; it remembers read answers until a write passes through it.
 - **read**: a git call on the view's allowlist (rev-parse, symbolic-ref, config --get, ls-remote, for-each-ref,
-  worktree list, merge-base --is-ancestor); everything else is a **write**.
+  worktree list, merge-base --is-ancestor, and, added by S8 on itm_bd575183ec2f, rev-list, diff and log without
+  `--output`); everything else is a **write**.
 - **epoch**: the stretch of a view between two writes; a remembered answer lives one epoch.
 - **pin**: a spec 3 test written on the base that records a command's printed lines and resulting tips.
 - **census**: the per-entry-module, per-argv git count of a full run (`spawns-before.txt`, `spawns-after.txt`).
@@ -129,6 +130,7 @@ stay at S7's product-only run (A1's rejected path).
 | S5 | The landing's tail reuses its fetch and worktree list | 4 | `scripts/branches.mjs`, `scripts/land.mjs` (passes its view to the tail), `scripts/worktrees.mjs`, `scripts/test/land-tail-spawns.test.mjs` (new), `scripts/test/land-pin.test.mjs` | S2 (`scripts/land.mjs` passes its view; `tipOf`) | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S5](slices/S5.md) |
 | S6 | Test fixture helpers close the rest and the bars read the signed numbers | 5, 1, 2 | `scripts/test/lib/land-repos.mjs`, `scripts/test/lib/git-fixture.mjs`, `scripts/test/lib/fixture-git.test.mjs` (new), `scripts/gate.mjs` (the two constants), `docs/design/cheap-suite/architecture.md`, `docs/design/land-batching/cost-after.txt`, `docs/design/land-batching/spawns-after.txt` | S7 (`scripts/gate.mjs`, `cost-after.txt`) | `pilot:typescript-reviewer` | [S6](slices/S6.md) |
 | S7 | The gate holds a git ceiling and the product-only run is measured | 1, 2, 6 | `scripts/gate.mjs`, `scripts/test/gate-spawns.test.mjs`, `docs/design/cheap-suite/architecture.md`, `docs/design/land-batching/cost-after.txt` (new), `docs/design/land-batching/spawns-after.txt` (new) | S3 (suite), S4 (suite), S5 (suite) | `pilot:typescript-reviewer` | [S7](slices/S7.md) |
+| S8 (added) | rev-list, diff and log are reads | 4 | `scripts/git-view.mjs` (`isRead`), `scripts/test/git-view.test.mjs`, `scripts/integrate.mjs` (a `forget()` only if the audit needs one), `scripts/test/integrate-pin.test.mjs` (the bar), `docs/adr/NNNN-land-batching.md` (L4) | S2 (`scripts/git-view.mjs`) | `pilot:typescript-reviewer` | [S8](slices/S8.md) |
 
 S5 edits `land.mjs` only to pass its view to `deleteMerged` and `clear`, after S2. Census: `spawns-before.txt`, made by `census-probe.mjs` (run: `PROBE_OUT=<file> NODE_OPTIONS=--import=file:///<abs>/census-probe.mjs npm run test:cost`).
 red team: `land` calls `commitRecords` (`integrate.mjs`, S3's file), a commit made outside the view, before reading HEAD again: a stale HEAD would push the wrong source. S1 adds `Git.forget()` and calls it there; L3 names it. red team: the 26 landing bar first sat on S2, but four of its savings are S5's fetches and lists: bars now S1 ≤ 36, S2 ≤ 32, S5 ≤ 27.
@@ -157,4 +159,5 @@ test's repo; its pin is the full suite's unchanged test count and pass count.
 | S5 | planned | | | | S2 | 4 |
 | S6 | planned | | | | S7 | 5, 1, 2 |
 | S7 | planned | | | | S3, S4, S5 | 1, 2, 6 |
+| S8 (added) | planned | `slice/land-batching-s8` | | | S2 | 4 |
 | feature | planned | `feat/land-batching` | | | | 1-6 |
