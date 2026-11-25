@@ -592,7 +592,19 @@ pub fn strips(s: &State, cx: &mut Cx<State>) -> El {
         .pl(space::s0)
         .gap(space::panels)
         .child(left)
-        .child(app::center(s, cx).key("centre").grow(1.0).min_w(space::s0))
+        // The centre scrolls past the window's foot, so Reply stays reachable under a tall thread
+        // or a reply holding a table (QA at 1280 × 800, reply-markdown).
+        .child(
+            app::center(s, cx)
+                .key("centre")
+                .grow(1.0)
+                .min_w(space::s0)
+                .h_full()
+                .min_h(space::s0)
+                .scroll(ScrollSpec {
+                    stick_bottom: false,
+                }),
+        )
         .child(regions::strip::draw(
             strip,
             &s.regions.strip,

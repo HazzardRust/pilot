@@ -1,0 +1,339 @@
+{
+  "slug": "reply-markdown",
+  "feature": "Reply box renders markdown as you type",
+  "ticket": "itm_864c47669387",
+  "branch": "feat/reply-markdown",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-reply-markdown",
+  "qa": {
+    "branch": "qa/reply-markdown",
+    "worktree": "C:/Users/jrylk/Projects/pilot-qa-reply-markdown",
+    "url": "http://127.0.0.1:63171"
+  },
+  "artefact": "docs/design/reply-markdown/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated b9a6760; checks green at 52ae2c7",
+      "branch": "slice/reply-markdown-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-reply-markdown-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated 118333f",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/reply-markdown-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-reply-markdown-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated 3c4a8fb",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/reply-markdown-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-reply-markdown-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated ddc8ebd",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/reply-markdown-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-reply-markdown-s4"
+    },
+    {
+      "slice": "feature",
+      "state": "paused in QA at 20d107d: probes 1-13 pass headless; spec 14 finding (mid-range Size cell unpainted); no walkthrough, no gate2",
+      "after": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "pr": 137
+    },
+    {
+      "slice": "Added: Enter, Table button row, bullets",
+      "state": "integrated c8ef952 (QA fixes; live look not done)"
+    },
+    {
+      "slice": "Added: table insert 2x2 and Obsidian-style grow",
+      "state": "integrated ca4ddb6",
+      "branch": "slice/reply-markdown-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-reply-markdown-s5"
+    },
+    {
+      "slice": "Added: thread table selection",
+      "state": "integrated 20d107d; checks green (B2-B4; B1 moved to S8; ~510 lines, size assumed by main)",
+      "after": [
+        "Added: heading sizes"
+      ],
+      "branch": "slice/reply-markdown-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-reply-markdown-s7"
+    },
+    {
+      "slice": "Added: heading sizes",
+      "state": "integrated 0ea0041",
+      "branch": "slice/reply-markdown-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-reply-markdown-s6"
+    },
+    {
+      "slice": "Added: centre column scrolls (Reply reachable at 1280x800 with a table)",
+      "state": "built by QA on feat/reply-markdown (main's decision on QA's live finding)"
+    },
+    {
+      "slice": "Added: S8 whole-cell highlight (Rune patch)",
+      "state": "paused: wip pushed 53f933a, unpinned; Rune a6b4dccf local (push 403, itm_83caaf8110ef); B1 B2 red-green via local patch; no review yet",
+      "after": [
+        "Added: thread table selection"
+      ],
+      "branch": "slice/reply-markdown-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-reply-markdown-s8"
+    },
+    {
+      "slice": "S8",
+      "state": "not built in this run: stashed on fork HazzardRust/rune select-whole a6b4dccf (user, itm_83caaf8110ef)"
+    }
+  ],
+  "findings": [
+    "dropped: F6 link test expected value — rune-kit has no public path from parse + markdown_style to a link's colour; no independent source exists",
+    "kept: F8 (QA) Table pressed with the caret in a cell inserts after that grid — fixed in ed2b6ca with a red-then-green test"
+  ],
+  "next": "Green, feat 0321a78. QA a418f693a8ff8fa45 live on walkthrough itm_f8b501335867 (may not survive the hand-off: respawn pilot-qa from this line). User asked to render the actual table; QA proposed a ~60-line grid restyle in reply.rs, waits on their yes. User has a draft in Rune window pid 26648: ask before restart. On Sign off: QA comment, integrate --trial, checks, fresh gate2.",
+  "updatedAt": "2026-11-24T13:39:34.274Z",
+  "friction": [
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot cannot TaskStop children it spawned; on a pause it has to message them",
+      "evidence": "co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "fix implementer would not report to main while a co-pilot directed the slice, so the pilot learned of the push from git",
+      "evidence": "817c519 found by fetch; fixer hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "pilot wait-for --match 'exit ' matched a test name in the log",
+      "evidence": "S1 fixer report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "ending a turn to wait on live children triggers a forced hand-back, twice in one run; co-pilot cannot idle on its implementers",
+      "evidence": "[handback-send-enforce] Your report has not been delivered. Call SubagentHandback({message: <your full report>}) now; the call ends your run.",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "hand-off notice said architect owed for itm_0ddca8a8e2f0 while the original architect a17960 was still live; a duplicate was spawned on the same worktree and stopped after 2 commits",
+      "evidence": "owed row: architect owed; a17960 reported commits 82630d7, 7ba4d20 it did not make",
+      "size": 64000
+    },
+    {
+      "agent": "pilot:pilot-implementer S2",
+      "what": "vocabulary guard rejects 'task' inside a Rust test string; only found by the 10-minute npm test",
+      "evidence": "deck/rune/tests/deck/preview.rs:197:task, 1 retired word(s)",
+      "size": 12
+    },
+    {
+      "agent": "pilot:pilot-implementer S3/S4",
+      "what": "live check has no recipe: no example --script or --open route, no CLI to post a thread on a scratch deck",
+      "evidence": "--open /thread/<id> rejected with 'is not key=value'; S4 wrote a script POSTing deck_post to /api/tool",
+      "size": 12
+    },
+    {
+      "agent": "pilot:pilot-implementer S4",
+      "what": "S3 test click helper ran pointer down+up with no frame between, hiding a focus-blur bug the live run found",
+      "evidence": "script: no element with key \"table-0-remove-row\"",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner picks its stack from the manifest at the worktree root (package.json), so a Rust feature under deck/rune got no diff coverage, mutation, complexity, duplication or dead-code evidence",
+      "evidence": "runner chose the Node column; Cargo.toml is at deck/rune; npm ci 4.4s wasted",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "forced hand-back while waiting read-only for the fix-round tip; walkthrough and gate2 now need a resume or a fresh QA",
+      "evidence": "QA report: 'this handback was forced: no fix-round tip had arrived yet'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot-deck window talks to the live deck on 4321 when PILOT_DECK_PORT is unset; a script file with a BOM fails with only 'expected value at line 1 column 1'",
+      "evidence": "client.rs:99-112; p6-nosend.json written with Set-Content -Encoding utf8",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "brief says about 10 tests skipped; the gate skips 28",
+      "evidence": "gate.log: 5103 tests, 28 skipped",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer fix",
+      "what": "Rune exposes no rendered span colours to tests; F6 could not be done; headless --script grammar documented only in rune tooling/script.rs",
+      "evidence": "MarkdownStyle fields pub(super), Renderer::spans private",
+      "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "pilot land has no help text; pilot.md step 7 and pilot-co-pilot.md:55 disagree with step 9 on whether it lands on pilot before Gate 2; read the co-pilot definition to decide",
+      "size": 20
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "live deck at 4321 stalled while two full suites ran on the machine; pilot wait died three times",
+      "evidence": "curl exit 28 on /api/health; health 2-6 s under load",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "a walkthrough Sign off was retracted 40 s after the press; QA had already closed it and posted gate2",
+      "evidence": "itm_766edd40c97d seq 3410-3411, gate2 itm_21617ae25e07 superseded",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck refused QA's reply once the thread's owner had changed; pilot had to relay",
+      "evidence": "item is owned by pilot refusal on itm_766edd40c97d",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "design skipped research of existing editors; Return, heading sizes and table controls all came back as user finds",
+      "evidence": "7 finds on the walkthrough, three added slices",
+      "size": 5
+    },
+    {
+      "kind": "drain",
+      "what": "pilot missed a Sign off press made before the hand-off and asked the user for it again",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 archive-page pushed twice while red: a wrapper's echo exit was read as npm's",
+      "evidence": "254884d gate log: cargo 1 fail; final gate node 1 fail deck-readme.test.mjs:27",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Rust deck tests fail with ERR_MODULE_NOT_FOUND until npm ci runs in a new worktree; no recipe for driving pilot-deck headless",
+      "evidence": "S5 and S6 reports",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a native context menu cannot be snapped headless, so the live-look gate for it cannot be met by an agent",
+      "evidence": "rune popup_menu/mod.rs:12-13",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot budget refuses from a co-pilot; harness forced a hand-back while a non-child implementer was live",
+      "evidence": "has no session on this deck",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "pilot tickets --open lists only a PR's design docs, not its planned code files; run-record write path split across store-runs.mjs:660 and server-tools.mjs:199",
+      "evidence": "tested-once report",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "auto-mode classifier gave no verdict on mixed parallel calls four times; each cost a reissue",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "pilot tickets --open output 47 KB for a one-row proposal check",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7 slice file cited wrong rune-kit lines (blocks.rs:463, parser.rs:409; table drawn at blocks.rs:483 -> table.rs:425) and B1's Rune dependency was not checked before Gate 1; ~10 Rune source reads to establish it",
+      "evidence": "S7 report friction; fact sheet flagged both cites",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Runtime::new takes a fn pointer, so a closure test harness did not compile; a drag point at a glyph centre lands on a boundary and selects nothing",
+      "evidence": "S7 report friction",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back enforcement forced a hand-back while the S8 implementer was still live, third time on this ticket",
+      "evidence": "[handback-send-enforce] after S7 checks green, S8 live",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no recipe for the live check of a thread drag: scratch deck, hand-written /api/tool post, --tree dump for rects, Rune --script drag grammar documented only in tooling/script.rs",
+      "evidence": "S8 report; run.json already notes this three times",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot live-root printed untrusted; fell back to pilot deck --scratch",
+      "evidence": "C:\\Users\\jrylk\\.claude\\pilot\\live untrusted",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice assumed push rights on anomalyco/rune the account lacks",
+      "evidence": "git push -u origin select-whole -> 403",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "script runner: type events run into the next event; no clipboard shortcut (ctrl+c/cmd+c unknown shortcut registration); --tree has no font sizes",
+      "evidence": "qa-a-dark.png first run; script shortcut error; qa-a2-dark.json",
+      "size": 2
+    },
+    {
+      "agent": "implementer S8",
+      "what": "a second implementer was spawned into the same clone and worktree while the first still ran, after a forced co-pilot hand-back",
+      "evidence": "commit d1943687 appeared over its uncommitted diff; cost a base-comparison worktree and a full stop"
+    },
+    {
+      "agent": "implementer S8",
+      "what": "Rune base 7cba77c has 7 lib tests failing on Windows plus 2 flakes; 5 more reds in the full run unchecked at base",
+      "evidence": "detached worktree at 7cba77c; names in the S8 final report"
+    },
+    {
+      "agent": "qa",
+      "what": "the Rune window ignores keys sent from outside, so live typing needs the user's keyboard; first screenshot caught the user's desktop because MainWindowHandle was 0",
+      "evidence": "keyboard steps rest on the earlier QA's presses on unchanged source"
+    },
+    {
+      "agent": "qa",
+      "what": "brief pointed at slices/brief.md; the file is docs/design/reply-markdown/brief.md",
+      "evidence": "one failed lookup"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exits on every deck timeout; restarted about ten times and read each output",
+      "size": 20
+    },
+    {
+      "kind": "drain",
+      "what": "auto mode gave no verdict whenever SendMessage, Agent or Bash shared a response with another call; each was reissued alone",
+      "size": 8
+    },
+    {
+      "kind": "drain",
+      "what": "forced co-pilot hand-backs with children running: three successors briefed, one duplicated implementer untangled",
+      "size": 15
+    }
+  ]
+}
