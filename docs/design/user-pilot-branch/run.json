@@ -66,8 +66,8 @@
       "pr": 157
     }
   ],
-  "next": "Red: gate1 itm_178637b5acc6 awaits press. Green: gate2 itm_1d819d4586dc (reply-markdown) and itm_589b847f8e5c (handoff-self-close; scratch deck port 4399 pid 40724) await press, then a lander each. Yellow: stay-awake itm_498e739e2bcb mid-run, see its record. Paused on questions: tested-once itm_ce0954d114aa, classifier-env itm_36f9b943921e. Each record's next is current.",
-  "updatedAt": "2026-11-24T20:35:47.456Z",
+  "next": "Red: gate1 itm_178637b5acc6 awaits press. Green: gate2 itm_1d819d4586dc, itm_589b847f8e5c await press. stay-awake: gate2 ready with QA abe6640a3baabf2c1, held by blocking itm_21b8b7cc40fa. rune-panes: walkthrough itm_477988ef5154 with QA ad61fd567e97db855; open itm_e2c98baab42a, blocking itm_200e69778201. Yellow: pr-overview itm_1dc34cf2a81a released mid-run. Each record's next is current.",
+  "updatedAt": "2026-11-25T03:02:01.985Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -115,6 +115,21 @@
       "kind": "drain",
       "what": "pilot wait restarted 9 times; stop hook and idle notices each read and answered",
       "size": 8
+    },
+    {
+      "kind": "drain",
+      "what": "three co-pilots forced to hand back with children live; the pilot relayed nine agent reports and integrated one fix round itself, each report 2-5k tokens in its context",
+      "size": 30
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait restarted about 14 times: 50-minute timeouts, three deck timeouts under load, two deck-written lines (yield, auto-default) printed as REPLY",
+      "size": 12
+    },
+    {
+      "kind": "drain",
+      "what": "deck_status next capped at 400 chars: six calls rejected and rewritten",
+      "size": 5
     }
   ]
 }
