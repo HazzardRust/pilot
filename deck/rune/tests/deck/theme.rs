@@ -363,6 +363,8 @@ fn theme_json_is_read_and_is_the_only_source() {
         ("header", theme::type_::HEADER),
         ("body", theme::type_::BODY),
         ("caption", theme::type_::CAPTION),
+        ("h1", theme::type_::H1),
+        ("h2", theme::type_::H2),
     ] {
         is(&format!("type.{name}.size"), n(scale.size));
         is(&format!("type.{name}.weight"), n(scale.weight));
