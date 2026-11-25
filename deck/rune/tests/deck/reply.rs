@@ -179,6 +179,73 @@ fn a_sent_reply_empties_the_box() {
     assert_eq!(local.sent, None);
 }
 
+/// reply-markdown spec 3: the preview styles by decoration only, so what is sent is the typed
+/// text byte for byte, after the caret has moved and the lines have re-rendered.
+#[test]
+fn the_sent_text_is_the_typed_text() {
+    let typed_text = "**a**\n# b";
+    let mut local = typed(typed_text);
+    local.draft.focused = true;
+    local.draft.set_caret(typed_text.len());
+    pilot_deck::preview::spans(&local.draft, false);
+    local.draft.set_caret(0);
+    pilot_deck::preview::spans(&local.draft, false);
+    assert_eq!(local.send(ID), Some(reply(typed_text, None)));
+}
+
+/// reply-markdown spec 4: a link in the draft renders as the thread draws one, and a press on it
+/// only moves the caret: no opener, no post.
+#[test]
+fn a_link_renders_as_a_link_and_is_never_followed() {
+    // 0 `[`, 1 `t`, 2..16 `](https://e.x)`, 16 `\n`, 17 `x`.
+    let draft = "[t](https://e.x)\nx";
+    let mut caret_below = TextEdit::new(draft);
+    caret_below.focused = true;
+    caret_below.set_caret(17);
+    let spans = pilot_deck::preview::spans(&caret_below, true);
+    let kit = rune_kit::Kit::neutral(true);
+    let (accent, underline) = (kit.c.text_accent, kit.alpha(kit.c.text_accent, 0.4));
+    let quiet = pilot_deck::theme::tokens(true).quiet;
+    let over = |at: std::ops::Range<u32>| {
+        spans
+            .iter()
+            .find(|s| s.start == at.start && s.end == at.end)
+    };
+    assert!(
+        over(1..2).is_some_and(|s| s.color == Some(accent) && s.underline == Some(underline)),
+        "t in the link colour, underlined: {spans:?}"
+    );
+    for marker in [0..1, 2..16] {
+        assert!(
+            over(marker.clone()).is_some_and(|s| s.color == Some(quiet)),
+            "quiet {marker:?}: {spans:?}"
+        );
+    }
+
+    let mut rt = box_drawn(typed(draft));
+    let field = at(&rt, "reply-text");
+    let (x, y) = (
+        field.rect[0] + pilot_deck::theme::space::pad + 5.0,
+        field.rect[1] + pilot_deck::theme::space::pad + 6.0,
+    );
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(1.0 / 60.0);
+    rt.update(|s, _| {
+        let reply = &s.regions.reply;
+        assert!(
+            (1..=2).contains(&reply.draft.focus),
+            "the press landed on t: caret at {}",
+            reply.draft.focus
+        );
+        assert_eq!(reply.draft.text, draft, "the draft is unchanged");
+        assert!(!s.pending.is_sent("reply-press"), "nothing posted");
+        assert_eq!(reply.sent, None);
+        assert_eq!(reply.confirming, None);
+    });
+}
+
 #[test]
 fn the_recommended_option_draws_the_pages_quiet_mark() {
     use pilot_deck::app::{self, State};
@@ -416,6 +483,32 @@ fn at(rt: &rune::Runtime<pilot_deck::app::State>, key: &str) -> rune::runtime::E
         .into_iter()
         .find(|e| e.key.as_deref() == Some(key))
         .unwrap_or_else(|| panic!("no {key} drawn"))
+}
+
+/// The light window draws the draft in the page's ink, black on light (deck.css), never Rune's white.
+#[test]
+fn the_light_window_draws_the_draft_in_its_ink() {
+    use pilot_deck::app::{self, State};
+    use pilot_deck::client::View;
+
+    let reply = serde_json::json!({ "mode": "reply", "id": ID, "options": [] });
+    let mut state = State {
+        view: View {
+            screen: "thread".into(),
+            seq: 1,
+            regions: [("reply".to_string(), reply)].into_iter().collect(),
+        },
+        ..State::default()
+    };
+    state.regions.reply = typed("words");
+    let mut rt = rune::Runtime::new(
+        state,
+        app::view,
+        (1280.0, 800.0),
+        rune::Env::new(false, 1.0),
+    );
+    rt.frame(1.0);
+    assert_eq!(at(&rt, "reply-text").text_color, Some(rune::Color::BLACK));
 }
 
 /// The walkthrough of 2026-11-21: under the input, Reply at the box's left edge and Close beside it,

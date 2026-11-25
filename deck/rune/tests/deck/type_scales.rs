@@ -9,8 +9,9 @@ use pilot_deck::app::{self, State};
 use pilot_deck::client::Query;
 use rune::{Env, Runtime};
 
-/// The line heights of the three scales (Rune's default is 1.25 x the size) and the markdown's 20.
-const LINES: [f32; 3] = [16.25, 13.75, 20.0];
+/// The line heights of the three scales (Rune's default is 1.25 x the size), the markdown's 20, and
+/// the 24 of a markdown H1 or H2 (reply-markdown S6: the one exception to the three scales).
+const LINES: [f32; 4] = [16.25, 13.75, 20.0, 24.0];
 
 fn on_a_scale(height: f32) -> bool {
     LINES.iter().any(|line| {
