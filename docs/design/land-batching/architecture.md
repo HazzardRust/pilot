@@ -67,7 +67,7 @@ adopts, not a move.
 - **view**: one command's `Git` runner from `gitView`; it remembers read answers until a write passes through it.
 - **read**: a git call on the view's allowlist (rev-parse, symbolic-ref, config --get, ls-remote, for-each-ref,
   worktree list, merge-base --is-ancestor, and, added by S8 on itm_bd575183ec2f, rev-list, diff and log without
-  `--output`); everything else is a **write**.
+  `--output` or `--no-index`); everything else is a **write**.
 - **epoch**: the stretch of a view between two writes; a remembered answer lives one epoch.
 - **pin**: a spec 3 test written on the base that records a command's printed lines and resulting tips.
 - **census**: the per-entry-module, per-argv git count of a full run (`spawns-before.txt`, `spawns-after.txt`).

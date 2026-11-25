@@ -70,15 +70,16 @@ test('rev-list, diff and log are asked once per epoch', (t) => {
   }
 });
 
-test('a diff or log that writes a file is never a read', (t) => {
+test('a diff or log that writes a file, or diffs files outside git, is never a read', (t) => {
   const work = clone(t);
   const asked = [];
   const git = gitView(work, { run: (args) => (asked.push(args.join(' ')), 'x') });
-  for (const args of [['diff', '--output=d.patch', 'HEAD'], ['log', '--output', 'l.txt', '-1']]) {
+  const shapes = [['diff', '--output=d.patch', 'HEAD'], ['diff', '--output', 'd.patch'], ['log', '--output=l.txt', '-1'], ['log', '--output', 'l.txt', '-1'], ['diff', '--no-index', 'a', 'b']];
+  for (const args of shapes) {
     git(args);
     git(args);
   }
-  assert.equal(asked.length, 4);
+  assert.equal(asked.length, shapes.length * 2);
 });
 
 test('forget drops every answer, for a write made outside the view', (t) => {
