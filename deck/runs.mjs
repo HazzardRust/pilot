@@ -255,7 +255,7 @@ export const isSlug = (word) => typeof word === 'string' && word.length <= MAX_S
  * on, or the default branch's own name. It reaches git as an argument, so it never starts with `-`, holds no `..` or
  * `//`, is never `HEAD`, and ends in no `/`, `.` or `.lock`; a `feat/` segment is only ever the slug form.
  */
-export const RUN_BASE = new RegExp(`^(?:pilot|feat/${SLUG.source.slice(1, -1)}|(?!HEAD$)(?!(?:.*/)?feat/)(?!.*(?:\\.\\.|//|\\.lock$|[./]$))[A-Za-z0-9_][A-Za-z0-9._/-]*)$`);
+export const RUN_BASE = new RegExp(`^(?:feat/${SLUG.source.slice(1, -1)}|(?!HEAD$)(?!(?:.*/)?feat/)(?!.*(?:\\.\\.|//|\\.lock$|[./]$))[A-Za-z0-9_][A-Za-z0-9._/-]*)$`);
 
 const TICKET_ID = /^itm_[0-9a-f]+$/;
 
