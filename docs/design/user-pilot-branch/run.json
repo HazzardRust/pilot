@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed 052019f",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "built 74b141e locally, not pushed: waits on S2 integration for B1, then gate, reviewers, push",
+      "state": "pushed 1fc0a6a",
       "after": [
         "S1",
         "S2"
@@ -84,8 +84,8 @@
       "pr": 157
     }
   ],
-  "next": "S5 checks green at 3690751; integrating S2, then S7, S8, S4; resume S3 on new tip; then S6",
-  "updatedAt": "2026-11-25T19:29:13.596Z",
+  "next": "S2 checks running at 691a3d3; then integrate S3, S4, S7, S8 one at a time, each after green checks; then S6",
+  "updatedAt": "2026-11-25T19:49:35.484Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -295,6 +295,12 @@
       "what": "pilot checks --wait returns 'pending' on the macos-latest job instead of waiting to a verdict; every integration needs a second wait",
       "evidence": "checks pending at bbe2b8c and at 3690751: gate (macos-latest)",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: pinned tests call exported land helpers without a name, forcing env-fallback defaults that lean on the PILOT_BRANCH pin S6 removes",
+      "evidence": "S3 report: retarget/comment/pushFeature/releasePr optional name",
+      "size": 4
     }
   ]
 }
