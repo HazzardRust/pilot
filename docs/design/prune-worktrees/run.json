@@ -1,0 +1,125 @@
+{
+  "slug": "prune-worktrees",
+  "feature": "Prune worktrees when jobs end",
+  "ticket": "itm_0ddca8a8e2f0",
+  "branch": "feat/prune-worktrees",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-prune-worktrees",
+  "artefact": "docs/design/prune-worktrees/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed 796378a (security re-review on the fix)",
+      "branch": "slice/prune-worktrees-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "implementing",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/prune-worktrees-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "pushed 14b7eb8",
+      "branch": "slice/prune-worktrees-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "implementing",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/prune-worktrees-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S8",
+      "state": "planned",
+      "after": [
+        "S5"
+      ]
+    }
+  ],
+  "next": "co-pilot: S2, S4 pipelined from S1 796378a; S1 security re-review then integrate; S3 integrate running.",
+  "updatedAt": "2026-11-25T06:53:04.348Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "landing drift for two queued yellow tickets merged by the pilot in throwaway worktrees; a feat branch checked out in another session's worktree cannot be merged in place",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "hook notices kept naming a ticket thread 'still unanswered' after the deck's own replan note and after the pilot had replied",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "pilot base printed 'base main' but the deck requires the gate1 branch on origin/pilot; found only from the gate1 refusal, needed a merge after push",
+      "evidence": "gate1 refused: design/prune-worktrees not on pilot's tip; merge 7c84c28",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "pilot wait on a thread the deck closed by timeout runs its full 50 minutes and ends NO REPLY",
+      "evidence": "deck_resolve and deck_reply errors on closed items",
+      "size": 50
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "sed -i blocked by a hook, one call lost; Edit needs a Read first per file; python3 is a Windows-store stub",
+      "evidence": "S3 report friction row",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm run test:changed ran about 8 minutes with no summary until the end",
+      "evidence": "S3 gate: 5102 tests, 5074 pass, 0 fail",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "two context compactions lost the worktree, fact sheet and hello; recovered from git status",
+      "evidence": "S1 report friction row",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the process.platform rule fails only in the full suite (platform-reads.test.mjs), one extra cycle",
+      "evidence": "S1 gate 5114 tests, 1 fail: only the seam reads process.platform",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "full gate about 10 minutes; 3-file rerun passed the 120 s shell default",
+      "evidence": "S1 gate",
+      "size": 10
+    }
+  ]
+}
