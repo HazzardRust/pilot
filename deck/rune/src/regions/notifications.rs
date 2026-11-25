@@ -197,12 +197,9 @@ pub fn draw(
         .filter(|one| shown(prefs, &one.id, one.writes))
         .collect();
     let mut panel = col().key("notifications").gap(space::within);
+    // Nothing to show draws blank, as the HTML deck (rune-panes A2).
     if view.notices.is_empty() && unseen.is_empty() {
-        return panel.child(theme::empty(
-            "No notifications.",
-            "notifications-none",
-            dark,
-        ));
+        return panel;
     }
 
     let listed: Vec<(String, u32)> = unseen
