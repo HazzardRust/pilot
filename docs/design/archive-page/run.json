@@ -156,57 +156,56 @@
     },
     {
       "slice": "feature",
-      "state": "in QA: F9 8991e37, F7 e3a67be, QA2 ce6f022 (+follow-up), ts+rust APPROVE; live look, full gate, walkthrough next"
+      "state": "pivoted to implementing on the user's walkthrough feedback (itm_00bd1d6f40e3, 13:12Z); tip f76ceca"
+    },
+    {
+      "slice": "pivot facts (QA, f76ceca)",
+      "state": "lag: /api/view archive 0.57-0.80 s, 4.84 MB, 6,867 rows vs home 0.11 s, 0.28 MB, refetched whole on each refresh; idle draw 0% CPU; release 50 ms frame test archive_filter.rs:331 not run. Toggle rows likely cut off at display scale >1: every_bar_control_takes_a_mouse_click runs at scale 1.0 only; probe at 1.5"
+    },
+    {
+      "slice": "merge origin/pilot",
+      "state": "integrated at 2d38b22",
+      "branch": "feat/archive-page"
+    },
+    {
+      "slice": "S16",
+      "state": "pushed 6b16f65",
+      "after": [
+        "merge origin/pilot"
+      ],
+      "branch": "slice/archive-page-s16",
+      "worktree": "C:/Users/jrylk/Projects/pilot-s16-archive-page"
+    },
+    {
+      "slice": "S17",
+      "state": "implementing",
+      "after": [
+        "merge origin/pilot"
+      ],
+      "branch": "slice/archive-page-s17",
+      "worktree": "C:/Users/jrylk/Projects/pilot-s17-archive-page"
+    },
+    {
+      "slice": "S18",
+      "state": "planned (added)",
+      "after": [
+        "S17"
+      ]
+    },
+    {
+      "slice": "S19",
+      "state": "planned (added)",
+      "after": [
+        "S18"
+      ]
     }
   ],
   "findings": [
     "kept: F7 simplify — user chose a simple log read over the chunked tail reader on itm_973b6c14330a; A6 overturned"
   ],
-  "next": "Green: QA a46725a1845de5802 live on walkthrough itm_00bd1d6f40e3, tip f76ceca (PR #139), carries to gate2. Yellow lane empty: co-pilot itm_0476cd419c86 next; prune itm_0ddca8a8e2f0 blocked on itm_eff02e94eb77 (S5 b5cdcc1 pushed). Pilot's open gate2s: itm_98c905ce70af steps-in-previews (scratch 21512, window 35608), itm_6a7bd8959178 rune-panes: lander on each press.",
-  "updatedAt": "2026-11-25T11:55:27.884Z",
+  "next": "integrating S16 6b16f65; S17 measuring",
+  "updatedAt": "2026-11-25T23:44:56.648Z",
   "friction": [
-    {
-      "agent": "pilot-implementer",
-      "what": "any .mjs in deck/archive-kinds/ is auto-discovered as a kind, so adapters duplicate isObject/text/linesOf rather than share a helper",
-      "evidence": "S7 typescript-reviewer LOW",
-      "size": 1
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "a shared CARGO_TARGET_DIR across worktrees reused a stale test binary, faking a regression; a red proof needs its own target dir",
-      "evidence": "S2: live.rs panic literal lacked archiveDetail; cargo clean -p pilot-deck fixed; ~15 min",
-      "size": 3
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "snapping a seeded deck needs an undocumented deck.secret in PILOT_DECK_DIR even with secret: null",
-      "evidence": "S2 B5 first snap showed deck not running",
-      "size": 1
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "rebase --continue chained after a failed Edit committed conflict markers (caught before push)",
-      "evidence": "S2 main.rs:7-11, reset to 5cee353",
-      "size": 1
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "S8.md names audit Top rows as what - size; real audit rows carry finding and effort (deck/audit.mjs rowProblems)",
-      "evidence": "S8 report; seam change recorded in S8.md",
-      "size": 1
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "pilot integrate selection ran 5089 tests; daemon-replace 'a newer caller stops the daemon' timed out at 30 s under parallel implementer load, passes alone in 1.2 s; cost one ~8 min integrate",
-      "evidence": "C:/Users/jrylk/.claude/pilot/logs/20261124T094023757Z-slice-archive-page-s5.log:5506",
-      "size": 2
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "repo has no eslint flat config and no lint script, so npx eslint fails and slices have no lint gate",
-      "evidence": "S11 report",
-      "size": 1
-    },
     {
       "agent": "pilot-implementer",
       "what": "S6's slice Misses line handed credential coverage to the reviewer, but closing it means editing shared deck/credential.mjs outside the slice; security review found prefixed env names and ~10 token shapes missed",
@@ -398,6 +397,43 @@
       "agent": "pilot:pilot-qa",
       "what": "spec 9's 50 ms bar only runs under cargo test --release, which the gate never runs; Rune controls had no pointer-click test until QA",
       "evidence": "QA2 pushback"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "bar-control click test runs at Env scale 1.0 only, so a wrap computed at the wrong width on a scaled display passed; archive view refetches 4.8 MB per refresh with no test on payload size",
+      "evidence": "QA at f76ceca: PrintWindow 1295x807 capture, /api/view 5 runs",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "hand-back crossed main's verdict message, costing a resend and one extra architect resume",
+      "evidence": "lineage-slow-git: design tip c5bd6cb unpushed at first hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed ran over 180 s and went to the background; one wait cost two turns",
+      "evidence": "merge 2d38b22 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "$? read after a pipe hid a cargo fmt failure",
+      "evidence": "merge 2d38b22 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a new worktree needs npm ci before cargo deck tests pass; the failure reads as ERR_MODULE_NOT_FOUND",
+      "evidence": "S16 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed fell back to the full suite (argv limit): ~15 min of heat",
+      "evidence": "S16 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a copied store carries the live deck's deck.pid",
+      "evidence": "S16 scratch daemon log"
     }
   ]
 }
