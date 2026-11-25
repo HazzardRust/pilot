@@ -24,7 +24,7 @@ import { hostFor } from '../deck/host.mjs';
 import { RUN_BASE, SLUG } from '../deck/runs.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { listeningRepo } from '../deck/wait.mjs';
-import { firstLine, git as gitAt, namePilotBranch, pilotBranch } from './pilot-branch.mjs';
+import { firstLine, git as gitAt, namePilotBranch } from './pilot-branch.mjs';
 import { runRemote } from './remotes.mjs';
 import { prBase } from './stack.mjs';
 
@@ -118,15 +118,14 @@ function gitStep(git, args) {
 
 /**
  * Throws unless the record names a slug and, when it names one, a base `gh` and git may take as argv; `base` is null
- * for a record with none, the user's pilot branch. `nameOf` answers that branch's name, or null when none can be read,
- * for the refusal.
+ * for a record with none, the user's pilot branch.
  */
-function checked(record, nameOf) {
+function checked(record) {
   if (!record || typeof record !== 'object') throw new StepError('record: none');
   if (typeof record.slug !== 'string' || !SLUG.test(record.slug)) throw new StepError(`record: slug ${JSON.stringify(record.slug)} is not a slug`);
   const base = record.base ?? null;
   if (base !== null && (typeof base !== 'string' || !RUN_BASE.test(base))) {
-    throw new StepError(`record: base ${JSON.stringify(base)} is not ${nameOf() ?? '<login>-pilot'} or feat/<slug>`);
+    throw new StepError(`record: base ${JSON.stringify(base)} is not <login>-pilot, the default branch or feat/<slug>`);
   }
   const artefact = record.artefact ?? `docs/design/${record.slug}/architecture.md`;
   if (typeof artefact !== 'string' || !/^[\w./-]+$/.test(artefact) || artefact.split('/').includes('..')) {
@@ -142,15 +141,7 @@ function checked(record, nameOf) {
  * is `(args) => string` in the repository, argv only. Throws, naming the step, on a failure.
  */
 export function syncFeaturePr({ host, git, record }) {
-  // A refusal names the stored pilot branch, never deriving one.
-  const nameOf = () => {
-    try {
-      return pilotBranch(git);
-    } catch {
-      return null;
-    }
-  };
-  const { slug, base: recorded, artefact, feature } = checked(record, nameOf);
+  const { slug, base: recorded, artefact, feature } = checked(record);
   const head = `feat/${slug}`;
   if (host === null) return { line: 'no PR: host none', wrote: 'none' };
   // The user's pilot branch (user-pilot-branch L5), derived from `host` and stored when neither the env nor the config

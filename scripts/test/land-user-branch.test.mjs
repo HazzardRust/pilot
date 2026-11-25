@@ -37,6 +37,20 @@ test('a landing pushes the user\'s branch', (t) => {
   assert.equal(create[create.indexOf('--head') + 1], NAME, 'the release PR is opened from the user\'s branch');
 });
 
+test('a landing with no pilot branch name, signed out, is refused and writes nothing', (t) => {
+  const { origin, x } = repos(t, 'x');
+  const refsBefore = git(origin, 'for-each-ref');
+  const { host, calls } = fakeGh(); // `gh api user` is not answered: signed out
+
+  const { code, out } = mainSays([], { cwd: x, git: (args) => git(x, ...args), host, test: passing, wait: 0 });
+
+  assert.equal(code, 1, out);
+  assert.match(out, /no pilot branch name.*; nothing pushed/);
+  assert.equal(git(origin, 'for-each-ref'), refsBefore, 'no ref written on origin');
+  assert.throws(() => git(x, 'config', '--get', 'pilot.branch'), 'no name stored');
+  assert.deepEqual(calls.filter((args) => args[0] === 'pr'), [], 'no PR touched');
+});
+
 test('a landed PR moves to the user\'s branch', () => {
   const { host, calls } = fakeGh([{ number: 12, headRefName: 'feat/m', baseRefName: 'feat/n', state: 'OPEN' }]);
 
@@ -60,7 +74,7 @@ test('release notes see pre-move landings', (t) => {
     return dir;
   });
 
-  const { rows } = releaseNotes({ git: (args) => git(repo, ...args), pilotRef: `refs/heads/${NAME}`, mainRef: 'refs/heads/main', prs: [] });
+  const { rows } = releaseNotes({ git: (args) => git(repo, ...args), name: NAME, pilotRef: `refs/heads/${NAME}`, mainRef: 'refs/heads/main', prs: [] });
 
   assert.deepEqual(rows.map((row) => row.slug), ['a', 'b'], 'a landing onto the legacy pilot and onto the user\'s branch; another user\'s is not one');
 });

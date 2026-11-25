@@ -36,7 +36,7 @@ export function pilotTip({ cwd, fetch = false }) {
   const git = gitIn(cwd);
   try {
     const runs = runRemote(git);
-    const name = pilotBranch((args) => git(args));
+    const name = pilotBranch(git);
     const ref = runRef(runs, name);
     const sha = () => git(['rev-parse', '--verify', '-q', `${ref}^{commit}`]).trim();
     const known = sha();

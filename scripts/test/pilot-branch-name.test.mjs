@@ -79,6 +79,14 @@ test('a login git would not take is refused', (t) => {
   }
 });
 
+test('a derived name that is the default branch is refused before it is stored', (t) => {
+  const { origin, work } = repos(t, 'default-is-pilot', ['octo-pilot']);
+  git(origin, 'symbolic-ref', 'HEAD', 'refs/heads/octo-pilot');
+  const before = { config: config(work), origin: refs(origin) };
+  assert.throws(() => ensurePilotBranch({ git: runnerIn(work), host: hostWith('Octo') }), /it is the default branch/);
+  assert.deepEqual({ config: config(work), origin: refs(origin) }, before, 'no pilot.branch stored, no ref pushed');
+});
+
 test('a hand-set name off the shape is refused', (t) => {
   for (const bad of ['main', 'feat/x', '-x-pilot', 'a..b-pilot', 'HZ-pilot']) {
     const { work } = repos(t, 'plain');

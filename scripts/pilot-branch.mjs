@@ -26,7 +26,7 @@ export const NO_NAME = 'no pilot branch name: run `gh auth login` (or `glab auth
  * A pilot branch name a config value or the env may hold (A4): `<login>-pilot` in lower case with no `..`, or the
  * legacy `pilot`. Neither an option, a refspec, `HEAD`, a `feat/` or `slice/` branch nor `main` fits it.
  */
-export const isPilotName = (name) => name === LEGACY_PILOT || (/^[a-z0-9][a-z0-9._-]*-pilot$/.test(name) && !name.includes('..'));
+export const isPilotName = (name) => name === LEGACY_PILOT || (typeof name === 'string' && name.endsWith('-pilot') && isLogin(name));
 
 /** A lowered login git would take as the head of a branch name as it is, never cleaned (spec 6; L4). */
 const isLogin = (login) => /^[a-z0-9][a-z0-9._-]*$/.test(login) && !login.includes('..') && !/(?:\.|\.lock)$/.test(login);
@@ -65,9 +65,10 @@ export const pilotBranch = oncePerRunner((git) => {
 /**
  * The pilot branch's name and where it came from, deriving and storing it when neither the env nor the config
  * holds one (spec 1; L3): the host's login, lower-cased, `-pilot` added, written to `git config --local`. A host
- * that is null or signed out, or a login git would not take, throws `NO_NAME` with nothing written.
+ * that is null or signed out, or a login git would not take, throws `NO_NAME` with nothing written; `check`, when
+ * given, runs on a derived name before it is stored, so a name it throws on is never written.
  */
-export function namePilotBranch({ git, host }) {
+export function namePilotBranch({ git, host, check }) {
   const env = envName();
   if (env !== null) return { name: env, source: 'env' };
   const stored = storedName(git);
@@ -76,6 +77,7 @@ export function namePilotBranch({ git, host }) {
   const lowered = typeof login === 'string' ? login.toLowerCase() : '';
   if (!isLogin(lowered)) throw new Error(NO_NAME);
   const name = `${lowered}-pilot`;
+  check?.(name);
   step(git, ['config', '--local', BRANCH_KEY, name], 'git config failed');
   return { name, source: 'derived' };
 }
@@ -198,7 +200,9 @@ export function assertPushable(ref, { git }) {
  */
 export function ensurePilotBranch({ git, host = null }) {
   const runs = runRemote(git);
-  const { name } = namePilotBranch({ git, host });
+  // A derived name is held to the push guard before it is stored, so a refused one leaves no `pilot.branch`.
+  const pushable = (candidate) => assertPushable(candidate, { git });
+  const { name } = namePilotBranch({ git, host, check: runs === null ? undefined : pushable });
   step(git, ['fetch', '-q', 'origin'], 'git fetch failed');
   if (runs !== null && runs !== 'origin') step(git, ['fetch', '-q', runs], 'git fetch failed');
   // Before an existing branch is answered, so a name naming the default is never a base.
