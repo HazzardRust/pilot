@@ -305,3 +305,49 @@ test('a verb outside the table is refused', (t) => {
     '',
   ].join('\n'));
 });
+
+// pr-overview S1: the artefact's `## Overview` opens the body, the tables below it unchanged.
+const OVERVIEW = '- **What changes**: the demo says what it does.\n- **Why**: a reader needs it.';
+const BLOCK = `## Overview\n\n${OVERVIEW}\n\nBuilt so far: 1 of 2 parts.`;
+
+test('the body opens with the overview and the tables are untouched', () => {
+  const body = featureBody(SPEC, record(), FOOTER, BLOCK);
+  assert.equal(body.split('\n')[0], '## Overview');
+  const section = body.split('\n## 2')[0];
+  assert.ok(section.includes(OVERVIEW) && section.includes('Built so far: 1 of 2 parts.'));
+  assert.equal(body.slice(`${BLOCK}\n\n`.length), featureBody(SPEC, record(), FOOTER));
+  assert.equal(featureBody(SPEC, record(), FOOTER, null), featureBody(SPEC, record(), FOOTER));
+});
+
+/** `pushOverview` commits an artefact carrying `## Overview` above §1 to origin's feature branch. */
+function pushOverview(clone, text) {
+  const file = path.join(clone, 'docs', 'design', SLUG, 'architecture.md');
+  fs.writeFileSync(file, ARTEFACT.replace('## 1. Problem', `## Overview\n\n${text}\n\n## 1. Problem`));
+  gitAt(clone, 'commit', '-q', '-am', 'overview');
+  gitAt(clone, 'push', '-q', 'origin', `feat/${SLUG}`);
+}
+
+test('an artefact with an overview opens the PR with it, and a changed one is one edit', (t) => {
+  const cwd = repo(t);
+  pushOverview(cwd, 'First text.');
+  const first = fakeGh();
+  syncFeaturePr({ host: first.host, git: gitIn(cwd), record: record() });
+  assert.equal(first.bodies[0], featureBody(SPEC, record(), FOOTER, '## Overview\n\nFirst text.\n\nBuilt so far: 1 of 2 parts.'));
+
+  const same = fakeGh({ open: [{ number: 7, body: first.bodies[0], baseRefName: 'pilot' }] });
+  assert.equal(syncFeaturePr({ host: same.host, git: gitIn(cwd), record: record() }).wrote, 'unchanged');
+  assert.deepEqual(same.writes(), []);
+
+  pushOverview(cwd, 'Second text.');
+  const edit = fakeGh({ open: [{ number: 7, body: first.bodies[0], baseRefName: 'pilot' }] });
+  syncFeaturePr({ host: edit.host, git: gitIn(cwd), record: record() });
+  assert.equal(edit.writes().length, 1);
+  assert.ok(edit.bodies[0].includes('Second text.') && !edit.bodies[0].includes('First text.'));
+});
+
+test('an artefact with no overview gets today\'s body', (t) => {
+  const cwd = repo(t);
+  const fake = fakeGh();
+  syncFeaturePr({ host: fake.host, git: gitIn(cwd), record: record() });
+  assert.equal(fake.bodies[0], bodyOf());
+});
