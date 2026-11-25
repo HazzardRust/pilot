@@ -256,7 +256,8 @@ fn the_state_column_starts_at_one_x_whatever_the_other_cells_hold() {
 
 #[test]
 fn a_url_in_state_opens_the_browser() {
-    let rows = json!({ "rows": [{ "slice": "S1 the slice", "state": "walkthrough on http://localhost:3260/jobs.", "after": [] }] });
+    // The view's range (`deck/view/status.mjs`): the trailing stop is outside it.
+    let rows = json!({ "rows": [{ "slice": "S1 the slice", "state": "walkthrough on http://localhost:3260/jobs.", "links": [{ "start": 15, "end": 41 }], "after": [] }] });
     let mut rt = frame(State {
         view: view_with(rows),
         ..State::default()
@@ -285,32 +286,32 @@ fn a_url_in_state_opens_the_browser() {
 }
 
 #[test]
-fn a_file_url_stays_text() {
-    assert_eq!(
-        status::links("file:///C:/x"),
-        [status::Part::Text("file:///C:/x".into())]
-    );
-}
-
-#[test]
-fn a_state_splits_where_the_pages_url_in_text_does() {
-    use status::Part::{Text, Url};
-    assert_eq!(
-        status::links("see HTTPS://a.b/c?d=1), then é http://x"),
-        [
-            Text("see ".into()),
-            Url("HTTPS://a.b/c?d=1".into()),
-            Text("), then é ".into()),
-            Url("http://x".into()),
-        ]
-    );
-    for text in ["mailto:a@b.c", "http://.", "javascript:alert(1)", ""] {
-        let parts = status::links(text);
+fn a_range_off_the_text_draws_no_link() {
+    // The window draws only ranges that cut the text it was given: the URL's own (byte 3, after
+    // "é ") opens; any other draws nothing and never panics.
+    let press = |links: Value| {
+        let rows = json!({ "rows": [{ "slice": "S1", "state": "é http://x", "links": links, "after": [] }] });
+        let mut rt = frame(State {
+            view: view_with(rows),
+            ..State::default()
+        });
+        rt.frame(1.0);
         assert!(
-            parts.iter().all(|part| matches!(part, Text(_))),
-            "{text:?} stays text: {parts:?}"
+            texts(&rt).iter().any(|t| t == "é http://x"),
+            "the cell reads as posted"
         );
-    }
+        if let Some((x, y)) = rt.find("http://x") {
+            rt.pointer_move(x, y);
+            rt.pointer_down(x, y);
+            rt.pointer_up(x, y);
+            rt.frame(0.0);
+        }
+        rt.take_url_requests()
+    };
+    assert_eq!(press(json!([{ "start": 3, "end": 11 }])), ["http://x"]);
+    // Inside "é", past the end, reversed and empty.
+    let off = json!([{ "start": 1, "end": 3 }, { "start": 3, "end": 99 }, { "start": 11, "end": 3 }, { "start": 3, "end": 3 }]);
+    assert!(press(off).is_empty());
 }
 
 #[test]

@@ -35,6 +35,15 @@ struct Slice {
     yours: Option<String>,
     #[serde(default)]
     kind: Option<String>,
+    /// The URLs in `state`, as the view found them: UTF-8 byte ranges (`deck/view/status.mjs`).
+    #[serde(default)]
+    links: Vec<Range>,
+}
+
+#[derive(Debug, Deserialize)]
+struct Range {
+    start: usize,
+    end: usize,
 }
 
 /// One tab's table on the overview, under the tab's name, as the page's sections are.
@@ -88,67 +97,18 @@ fn shares(rows: &[Slice]) -> [f32; 3] {
 /// The chosen ticket's bar, as wide as the page's `inset 2px` shadow.
 const BAR: f32 = 2.0;
 
-/// A piece of a State cell: text as posted, or an http(s) URL drawn as a link.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Part {
-    Text(String),
-    Url(String),
-}
-
-/// What the page's `URL_IN_TEXT` (`deck/ui/render-strip.mjs`) leaves off a URL's end.
-const TRAILING: &[char] = &['.', ',', ';', ':', '!', '?', ')', ']', '}', '\'', '"'];
-
-/// A State cell split as the page's `renderState` splits it: each `http://` or `https://` run up to
-/// whitespace or `<`, its trailing punctuation left as text, is a URL; every other scheme is text.
-/// The parts joined are `state` unchanged.
-pub fn links(state: &str) -> Vec<Part> {
-    let mut parts = Vec::new();
-    let (mut text_from, mut at) = (0, 0);
-    while let Some(next) = state[at..].chars().next() {
-        let rest = &state[at..];
-        let scheme = ["https://", "http://"]
-            .iter()
-            .find(|s| {
-                rest.as_bytes()
-                    .get(..s.len())
-                    .is_some_and(|b| b.eq_ignore_ascii_case(s.as_bytes()))
-            })
-            .map(|s| s.len());
-        if let Some(scheme) = scheme {
-            let run = rest
-                .find(|c: char| c.is_whitespace() || c == '<')
-                .unwrap_or(rest.len());
-            let url = rest[..run].trim_end_matches(TRAILING);
-            if url.len() > scheme {
-                if at > text_from {
-                    parts.push(Part::Text(state[text_from..at].to_string()));
-                }
-                parts.push(Part::Url(url.to_string()));
-                at += url.len();
-                text_from = at;
-                continue;
-            }
-        }
-        at += next.len_utf8();
-    }
-    if text_from < state.len() {
-        parts.push(Part::Text(state[text_from..].to_string()));
-    }
-    parts
-}
-
-/// A State cell as the page's: the text as posted, each URL in it an underlined link that opens in
-/// the browser through `Tx::open_url`, which refuses every scheme past http, https and mailto.
-fn state_cell(state: &str, key: String, ink: rune::Color) -> El {
-    let mut at = 0;
-    let mut urls = Vec::new();
-    for part in links(state) {
-        let (Part::Text(words) | Part::Url(words)) = &part;
-        if let Part::Url(url) = &part {
-            urls.push((at..at + url.len(), url.clone()));
-        }
-        at += words.len();
-    }
+/// A State cell as the page's: the text as posted, each range the view sent (`links`, the page's
+/// `URL_IN_TEXT`, L7) an underlined link that opens in the browser through `Tx::open_url`, which
+/// refuses every scheme past http, https and mailto. A range off the text or off a char boundary is
+/// dropped, never drawn.
+fn state_cell(slice: &Slice, key: String, ink: rune::Color) -> El {
+    let state = slice.state.as_str();
+    let urls: Vec<_> = slice
+        .links
+        .iter()
+        .filter(|l| l.start < l.end)
+        .filter_map(|l| Some((l.start..l.end, state.get(l.start..l.end)?.to_string())))
+        .collect();
     let spans = urls
         .iter()
         .map(|(range, _)| Span::new(range.start, range.end).underline(ink))
@@ -271,7 +231,7 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
                 ))
                 .child(cell(
                     theme::content(
-                        state_cell(&slice.state, format!("{row_key}{i}-state"), t.text),
+                        state_cell(slice, format!("{row_key}{i}-state"), t.text),
                         dark,
                     ),
                     state_share,

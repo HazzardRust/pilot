@@ -17,7 +17,7 @@ in CI's `Rune deck` job; every `look` line is the user's, on the walkthrough, be
 | # | Behaviour | Evidence | Bar |
 | --- | --- | --- | --- |
 | 1a | The status ticket selector lists one ticket per line as "<lane> · <title>", the chosen one with a 2 px left bar. | Rune test on a seeded two-lane view | 2 lines, each with " · "; 1 bar, on the chosen row only |
-| 1b | An http or https URL inside a State cell is a link that opens in the browser; other schemes stay text. | Rune test: press the link, read `take_url_requests` | 1 request, the URL without trailing punctuation; 0 for `file:` |
+| 1b | An http or https URL inside a State cell is a link that opens in the browser; other schemes stay text. *L7* | view test: the row's `links` cut the URLs the page links; Rune test: press the link, read `take_url_requests` | the view's ranges equal the page's anchors, 0 for `file:`; 1 request, the URL without trailing punctuation |
 | 1c | A held ticket with no slice record says "no slice table yet", on its deck and under its overview heading. | view test and Rune test on a seeded held ticket | 1 sentence per such ticket; 0 on a tab with no ticket |
 | 2 | An open notification row ends " · <tab name>". | view test and Rune test on a seeded open notice | 1 of 1 seeded rows ends " · <tab>"; 0 suffix for an unknown repo |
 | 3a | "blocking" and "re-cut" are red 1 px outlined badges on a ticket row. | Rune test on seeded rows | 2 badges stroked in the `red` token; 0 when neither applies |
@@ -103,6 +103,11 @@ module, since one caller draws it. Every `test` behaviour targets one of these t
 - **L5** One slice per pane, each owning its region file, view module and tests; the empty texts last, since
   `tests/empty.rs` and four regions' empty lines are shared. Rejected: one empty-text edit per pane slice (a
   shared table edited by four parallel slices).
+- **L7** A State cell's links come from the view: `deck/view/status.mjs` runs the page's own `URL_IN_TEXT`
+  (`deck/ui/render-strip.mjs`, now exported, its only change, so L2 holds in behaviour) and sends each row's
+  `links` as `{ start, end }` UTF-8 byte ranges; `regions/status.rs` draws those spans and keeps no copy of the
+  rule, dropping a range off the text or a char boundary. The user's press on itm_e2c98baab42a, overturning A8
+  (L3: the view resolves every string, Rust only draws). Rejected: a Rust port of `URL_IN_TEXT` (two copies drift).
 
 ## 6. Assumed decisions
 
@@ -135,6 +140,8 @@ module, since one caller draws it. Every `test` behaviour targets one of these t
   Verdict: stands — matches the HTML deck, as the ticket asks
 - **A8** A State link uses `Tx::open_url` (http, https; trailing `.,;:!?)]}'"` trimmed as `URL_IN_TEXT` does).
   Rejected: a deck route that opens it (a new write path).
+  Verdict: overturned — the user pressed "View sends link ranges (overturn A8)" on itm_e2c98baab42a; replaced by L7.
+  `Tx::open_url` stays the opener; only where the URL rule lives changed.
 
 red team: walked S1 against `layout.rs:595`: the centre has no `min_h(0)`, so a viewport inside `app::center` alone
 resolves to its content height and never scrolls; S1 owns that one line of `layout.rs`. Walked S1 against
