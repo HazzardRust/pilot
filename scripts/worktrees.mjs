@@ -13,6 +13,7 @@
  * `concluding` (landing-keeps-worktrees S1).
  *
  * `pilot worktrees add --run <slug> …` tags the tree it adds to the run (S2, A1).
+ * `pilot worktrees prune --run <slug> --stage planned|abandoned` is a mid-run job end's prune (`stagePrune`, S5).
  *
  * The prune removes through `removeTree`: `git worktree remove` (never `--force`) and then `git branch -d`
  * (`-D` only for a branch the caller names as reachable from its landed pilot), so git itself refuses a dirty tree or an unmerged branch even if the test
@@ -328,6 +329,34 @@ export function prune(repo, base, { dryRun = false, run, merged = [], keep = [],
   return { removed, kept, failed };
 }
 
+/** The stages a mid-run prune takes (prune-worktrees A4): Gate 1 signed, and the run abandoned. */
+const STAGES = ['planned', 'abandoned'];
+
+/** Whether `head` is in run `slug`'s feat branch, local or on a remote. */
+function inFeat(repo, head, slug) {
+  const refs = git(repo, 'for-each-ref', '--contains', head, '--format=%(refname)', 'refs/heads/feat', 'refs/remotes');
+  if (!refs.ok) return false;
+  return refs.out.split('\n').some((ref) => ref === `refs/heads/feat/${slug}` ||
+    (ref.startsWith('refs/remotes/') && ref.split('/').slice(3).join('/') === `feat/${slug}`));
+}
+
+/**
+ * A mid-run job end's prune of run `slug` (prune-worktrees spec 2, 4; A3, A4), every removal through
+ * `removeTree`'s mid-run rule. `planned`: only the `design/<slug>` tree, and only once `feat/<slug>` holds
+ * its head, else `kept unpushed`. `abandoned`: every `runWorktrees` tree. Answers one line per tree.
+ */
+export function stagePrune(repo, slug, stage, { holder = () => null } = {}) {
+  const trees = stage === 'planned'
+    ? worktrees(repo).slice(1).filter((tree) => tree.branch === `design/${slug}`)
+    : runWorktrees(repo, slug).map((dir) => ({ path: dir }));
+  return trees.map((tree) => {
+    if (stage === 'planned' && !(tree.head && inFeat(repo, tree.head, slug))) return keptLine(tree.path, 'unpushed');
+    const result = removeTree(repo, tree.path, { holder });
+    if (result.kept) return keptLine(tree.path, result.kept);
+    return `removed ${tree.path}${result.branch ? ` and branch ${result.branch}` : ''}`;
+  });
+}
+
 /**
  * A `prune` holder over the process table `read` answers, read once, on the first tree asked
  * about. A read that fails, or rows that cannot be mapped, hold every tree as `'unsure'` (L3).
@@ -348,6 +377,7 @@ export function holderFrom(read) {
 }
 
 const USAGE = 'usage: pilot worktrees [prune] [--repo <dir>] [--base <ref>] [--dry-run] [--run <slug>]\n' +
+  '       pilot worktrees prune --run <slug> --stage planned|abandoned [--repo <dir>]\n' +
   '       pilot worktrees remove <path> [--repo <dir>]\n' +
   '       pilot worktrees add --run <slug> [--repo <dir>] <git worktree add args...>\n';
 
@@ -423,6 +453,7 @@ export function main(argv, { out = process.stdout, err = process.stderr, read = 
   let base = null;
   let dryRun = false;
   let run;
+  let stage;
   while (args.length) {
     const flag = args.shift();
     if ((flag === '--repo' || flag === '--base') && args.length && !args[0].startsWith('--')) {
@@ -430,11 +461,29 @@ export function main(argv, { out = process.stdout, err = process.stderr, read = 
       else base = args.shift();
     } else if (flag === '--run' && isPrune && SLUG.test(args[0] ?? '')) {
       run = args.shift();
+    } else if (flag === '--stage' && isPrune && STAGES.includes(args[0])) {
+      stage = args.shift();
     } else if (flag === '--dry-run' && isPrune) {
       dryRun = true;
     } else {
       err.write(USAGE);
       return 2;
+    }
+  }
+  if (stage !== undefined) {
+    // A stage prune judges each tree by removeTree alone: no base, nothing fetched, no --base or --dry-run.
+    if (run === undefined || base !== null || dryRun) {
+      err.write(USAGE);
+      return 2;
+    }
+    try {
+      const lines = stagePrune(repo, run, stage, { holder: holderFrom(read) });
+      for (const line of lines) out.write(`${line}\n`);
+      if (!lines.length) out.write(`no ${stage === 'planned' ? 'design ' : ''}tree of run ${run}\n`);
+      return lines.some((line) => line.startsWith('kept leftover ')) ? 1 : 0;
+    } catch (error) {
+      err.write(`pilot worktrees: ${error.message}; nothing removed\n`);
+      return 1;
     }
   }
   try {

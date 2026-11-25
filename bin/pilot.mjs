@@ -139,6 +139,9 @@ const usage = () => `pilot — the deck for piloted runs
                  against the fetched base (default origin/main); prune removes only the
                  merged-clean ones and their local branches, never forced; --run, only
                  run <slug>'s
+  pilot worktrees prune --run <slug> --stage planned|abandoned [--repo <dir>]
+                 a mid-run job end, run by the deck: planned takes the design tree once
+                 feat/<slug> holds it, abandoned every tree of the run, each as remove does
   pilot worktrees remove <path> [--repo <dir>]
                  remove one worktree, its links unlinked first, and its local branch, or
                  print one line kept <state> <dir>; exit 0 removed, 1 kept, 2 usage
