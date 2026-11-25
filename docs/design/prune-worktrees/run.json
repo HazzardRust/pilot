@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "integrated",
+      "state": "integrated at 5411d61; gate 5089 pass, 0 fail; CI checks running",
       "after": [
         "S1"
       ],
@@ -30,7 +30,7 @@
     },
     {
       "slice": "S4",
-      "state": "implementing (rebased on d019953 as d4d0763 wip; gate running, not pushed)",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -66,8 +66,8 @@
       ]
     }
   ],
-  "next": "Pilot integrating itself (two co-pilots forced back). S2 24d4063 reviewed APPROVE x2: pilot integrate running, then pilot checks. Duplicate S2 implementer a16a6ca802db32422 stopped; its uncommitted edits left in the S2 worktree, unreviewed, not integrated. S4: implementer a236dd572759ee5cd live (wip d4d0763), report due to pilot. Then S5/S6/S7 (after S2), S8, fundamentalist (co-A4), QA.",
-  "updatedAt": "2026-11-25T08:12:34.236Z",
+  "next": "Pilot integrates itself, no co-pilot live. feat 5411d61 = S1,S3,S2 (checks wait running). S4 65ff92c: ts-reviewer WARN then re-review APPROVE; pilot integrate running, then pilot checks. Hold S5/S6/S7 spawns until the three stuck landings retried on a quiet machine. Then S8, fundamentalist (co-A4), QA. Stray S2 edits in S2 worktree unintegrated.",
+  "updatedAt": "2026-11-25T08:44:14.206Z",
   "friction": [
     {
       "kind": "drain",
