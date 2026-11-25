@@ -39,7 +39,7 @@ test('the landing prints what it printed on the base and leaves the same merge o
 
 // 36 measured on the base for this landing (land-batching S1), 35 after S1; S2's bar is 32, S5's 27 (A2).
 const BASE_GIT = 36;
-const BAR_GIT = 32;
+const BAR_GIT = 27;
 
 test('one landing spawns fewer git than on the base', (t) => {
   const { gitIn, x } = repos(t, 'x');
