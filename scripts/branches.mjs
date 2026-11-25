@@ -14,7 +14,7 @@ import { execFileSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 
 import { hostFor } from '../deck/host.mjs';
-import { firstLine, LEGACY_PILOT, pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
+import { firstLine, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRemote } from './remotes.mjs';
 import { isRunBranch } from './worktrees.mjs';
 
@@ -25,11 +25,11 @@ const POLL_MS = 1000;
 const PR_LIMIT = 1000;
 
 /** Why `branch` may not be deleted, or null when it may; the guard's one rule. */
-function refusal(branch, defaultName, pilot) {
+function refusal(branch, defaultName) {
   const name = String(branch);
+  // No pilot name, legacy or `<login>-pilot`, has a `/`, so DELETABLE already refuses every one.
   if (!DELETABLE.test(name) || /\.(lock)?$/.test(name)) return 'not a plain run branch';
-  const lower = name.toLowerCase();
-  if (lower === pilot || lower === LEGACY_PILOT || lower === defaultName.toLowerCase()) return 'it is the pilot or the default branch';
+  if (name.toLowerCase() === defaultName.toLowerCase()) return 'it is the default branch';
   return null;
 }
 
@@ -84,7 +84,6 @@ function prsByHead(host) {
 export function deleteMerged({ git, host, select, into, wait = 0, dryRun = false }) {
   const runs = runRemote(git);
   const defaultName = remoteDefaultBranch(git);
-  const pilot = pilotBranch(git);
   const target = into ?? defaultName;
   const remotes = runs === null || runs === 'origin' ? ['origin'] : ['origin', runs];
   for (const remote of remotes) step(git, ['fetch', '-q', remote], `git fetch ${remote} failed`);
@@ -96,7 +95,7 @@ export function deleteMerged({ git, host, select, into, wait = 0, dryRun = false
   const doomed = new Map();
   const pr = { list: null, read: () => (pr.list = prsByHead(host)) }; // one host read, again only to poll
   for (const { remote, branch, tip } of candidates) {
-    const why = whyKept({ git, pr, branch, tip, into: target, wait, refused: refusal(branch, defaultName, pilot) });
+    const why = whyKept({ git, pr, branch, tip, into: target, wait, refused: refusal(branch, defaultName) });
     if (why) {
       kept.push({ branch, why });
     } else {
