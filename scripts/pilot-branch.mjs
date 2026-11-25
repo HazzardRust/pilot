@@ -20,6 +20,7 @@ const PLAIN = /^(?!-)(?!.*\.\.)[A-Za-z0-9._/-]+$/;
  * take literally, one spelled `refs/…`/`heads/…`, or one with an upper-case letter (so `HEAD`
  * too: the guards keeping a run off this branch compare a lowered head with it) throws here,
  * naming the env. The default branch is still refused at every push, by `assertPushable`.
+ * Kept for the consumers not yet folded onto `pilotBranch` (user-pilot-branch S6 deletes it).
  */
 export const PILOT_BRANCH = pilotBranchFrom(process.env);
 
@@ -30,6 +31,78 @@ function pilotBranchFrom(env) {
   }
   return name;
 }
+
+/** The branch every run landed on before the pilot branch was named for its user: read, never written (L1, L8). */
+export const LEGACY_PILOT = 'pilot';
+
+const BRANCH_KEY = 'pilot.branch';
+
+/** The one line when no name can be read (spec 5, 6): signed out, `pilot.host none`, or a login git would not take. */
+export const NO_NAME = 'no pilot branch name: run `gh auth login` (or `glab auth login`), or `git config pilot.branch <login>-pilot`';
+
+/**
+ * A pilot branch name a config value or the env may hold (A4): `<login>-pilot` in lower case with no `..`, or the
+ * legacy `pilot`. Neither an option, a refspec, `HEAD`, a `feat/` or `slice/` branch nor `main` fits it.
+ */
+const isPilotName = (name) => name === LEGACY_PILOT || (/^[a-z0-9][a-z0-9._-]*-pilot$/.test(name) && !name.includes('..'));
+
+/** A lowered login git would take as the head of a branch name as it is, never cleaned (spec 6; L4). */
+const isLogin = (login) => /^[a-z0-9][a-z0-9._-]*$/.test(login) && !login.includes('..') && !/(?:\.|\.lock)$/.test(login);
+
+/** `pilot.branch` from the repository's local config, or null when unset; throws, naming the key, off the shape. */
+function storedName(git) {
+  let value;
+  try {
+    value = git(['config', '--local', '--get', BRANCH_KEY]).replace(/\r?\n$/, '');
+  } catch (err) {
+    if (err.status === 1) return null;
+    throw err;
+  }
+  if (!isPilotName(value)) throw new Error(`${BRANCH_KEY} names ${JSON.stringify(value)}: not <login>-pilot or ${LEGACY_PILOT}`);
+  return value;
+}
+
+/** `PILOT_BRANCH` from the env, or null when unset; throws, naming the env, off the shape. */
+function envName() {
+  const value = process.env.PILOT_BRANCH;
+  if (!value) return null;
+  if (!isPilotName(value)) throw new Error(`PILOT_BRANCH is ${JSON.stringify(value)}: not <login>-pilot or ${LEGACY_PILOT}`);
+  return value;
+}
+
+/**
+ * The pilot branch's name (L5): env `PILOT_BRANCH`, else the stored `pilot.branch`; neither throws `NO_NAME`. Reads
+ * no host and nothing off this repository's config. Asked once per `git` runner; a throw is asked again.
+ */
+export const pilotBranch = oncePerRunner((git) => {
+  const name = envName() ?? storedName(git);
+  if (name === null) throw new Error(NO_NAME);
+  return name;
+});
+
+/**
+ * The pilot branch's name and where it came from, deriving and storing it when neither the env nor the config
+ * holds one (spec 1; L3): the host's login, lower-cased, `-pilot` added, written to `git config --local`. A host
+ * that is null or signed out, or a login git would not take, throws `NO_NAME` with nothing written.
+ */
+export function namePilotBranch({ git, host }) {
+  const env = envName();
+  if (env !== null) return { name: env, source: 'env' };
+  const stored = storedName(git);
+  if (stored !== null) return { name: stored, source: 'stored' };
+  const login = host ? host.login() : null;
+  const lowered = typeof login === 'string' ? login.toLowerCase() : '';
+  if (!isLogin(lowered)) throw new Error(NO_NAME);
+  const name = `${lowered}-pilot`;
+  step(git, ['config', '--local', BRANCH_KEY, name], 'git config failed');
+  return { name, source: 'derived' };
+}
+
+/** True when a run record's `base` is the pilot branch, or the legacy one it was before the move (L8). */
+export const isPilotBase = (base, name) => base === name || base === LEGACY_PILOT;
+
+/** The subjects a landing of `head` carries: onto `name`, or onto the legacy pilot before the move (L8). */
+export const landingSubjects = (head, name) => [`Merge ${head} into ${name}`, `Merge ${head} into ${LEGACY_PILOT}`];
 
 /** `git` in `cwd`, argv only, its output trimmed; throws when git exits non-zero. */
 export const git = (cwd, ...args) =>
@@ -129,46 +202,58 @@ export function assertPushable(ref, { git }) {
 }
 
 /**
- * Fetches origin (and a named run remote) and answers the pilot branch's tip on the run
- * remote, or the local `pilot` in local mode (pilot-fork spec 3; L7); off local mode the name
- * passes `assertPushable` first, found or not (blocked-steps spec 7). When there is none,
- * creates it, never forced: from origin's `pilot` when the run remote is not origin and
- * origin has one, else from origin's default tip; it is pushed through `assertPushable`, or
- * made a local branch in local mode. Answers `runs`, `runRemote`'s answer, and `created: true` and
- * `from`, `'origin pilot'` or the default branch's name, then. Throws on a bad `pilot.remote`, a failed fetch, an unknown
- * default branch or a failed push.
+ * Names the pilot branch (`namePilotBranch`, so `host` may derive and store it), fetches origin
+ * (and a named run remote) and answers its tip on the run remote, or the local branch in local
+ * mode (pilot-fork spec 3; L7); off local mode the name passes `assertPushable` first, found or
+ * not (blocked-steps spec 7). When there is none, creates it, never forced: from origin's branch
+ * of that name when the run remote is not origin and origin has one (`from: 'origin <name>'`);
+ * else, the move (L1, L10), from the legacy `pilot` when the run remote holds it and no
+ * `*-pilot` branch (`from: 'pilot'`), leaving `pilot` as it is; else from origin's default tip
+ * (`from`, its name; spec 9). It is pushed through `assertPushable`, or made a local branch in
+ * local mode. Answers `runs`, `runRemote`'s answer. Throws `NO_NAME` with nothing written when no
+ * name can be read, and on a bad `pilot.remote`, a failed fetch, an unknown default branch or a
+ * failed push.
  */
-export function ensurePilotBranch({ git }) {
+export function ensurePilotBranch({ git, host = null }) {
   const runs = runRemote(git);
+  const { name } = namePilotBranch({ git, host });
   step(git, ['fetch', '-q', 'origin'], 'git fetch failed');
   if (runs !== null && runs !== 'origin') step(git, ['fetch', '-q', runs], 'git fetch failed');
-  // Before an existing branch is answered, so a PILOT_BRANCH naming the default is never a base.
-  if (runs !== null) assertPushable(PILOT_BRANCH, { git });
-  const tipOn = (remote) => step(git, ['ls-remote', remote, `refs/heads/${PILOT_BRANCH}`], 'git ls-remote failed').split(/\s/)[0];
-  const existing = runs === null ? localTip(git, `refs/heads/${PILOT_BRANCH}`) : tipOn(runs);
-  if (existing) return { sha: existing, created: false, runs };
-  let sha = runs === 'origin' ? '' : tipOn('origin');
-  let from = 'origin pilot';
-  if (!sha) {
+  // Before an existing branch is answered, so a name naming the default is never a base.
+  if (runs !== null) assertPushable(name, { git });
+  const here = headsOn(git, runs);
+  if (here.has(name)) return { sha: here.get(name), created: false, runs };
+  const origin = runs === 'origin' ? here : headsOn(git, 'origin');
+  const moved = [...here.keys()].some((head) => head !== LEGACY_PILOT && isPilotName(head));
+  let sha;
+  let from;
+  if (runs !== 'origin' && origin.has(name)) {
+    [sha, from] = [origin.get(name), `origin ${name}`];
+  } else if (here.has(LEGACY_PILOT) && !moved) {
+    [sha, from] = [here.get(LEGACY_PILOT), LEGACY_PILOT];
+  } else {
     from = remoteDefaultBranch(git);
     sha = step(git, ['rev-parse', '--verify', `refs/remotes/origin/${from}^{commit}`], `origin/${from} could not be read`);
   }
   if (runs === null) {
-    step(git, ['branch', '--no-track', PILOT_BRANCH, sha], 'git branch failed');
+    step(git, ['branch', '--no-track', name, sha], 'git branch failed');
   } else {
-    step(git, ['push', '-q', runs, `${sha}:refs/heads/${PILOT_BRANCH}`], 'git push failed');
+    step(git, ['push', '-q', runs, `${sha}:refs/heads/${name}`], 'git push failed');
   }
   return { sha, created: true, from, runs };
 }
 
-/** `ref`'s commit, or '' when it does not exist; any other git failure throws. */
-function localTip(git, ref) {
-  try {
-    return git(['rev-parse', '-q', '--verify', `${ref}^{commit}`]).trim();
-  } catch (err) {
-    if (err.status === 1) return '';
-    throw new Error(`git rev-parse failed: ${firstLine(err)}`);
+/** The branches on `remote` (live, `ls-remote --heads`), or the local ones when it is null, as name -> sha. */
+function headsOn(git, remote) {
+  const said = remote === null
+    ? step(git, ['for-each-ref', '--format=%(objectname)\t%(refname)', 'refs/heads/'], 'git for-each-ref failed')
+    : step(git, ['ls-remote', '--heads', remote], 'git ls-remote failed');
+  const heads = new Map();
+  for (const line of said.split(/\r?\n/)) {
+    const [sha, ref] = line.split('\t');
+    if (ref?.startsWith('refs/heads/')) heads.set(ref.slice('refs/heads/'.length), sha);
   }
+  return heads;
 }
 
 /**

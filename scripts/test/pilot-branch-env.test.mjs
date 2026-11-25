@@ -70,7 +70,8 @@ test('the default branch stays refused', (t) => {
       process.stdout.write(err.message);
     }`, work);
   assert.equal(run.status, 0, run.stderr);
-  assert.match(run.stdout, /^refusing to push main\b/);
+  // user-pilot-branch A4: the name's shape refuses it now, before the push guard is reached.
+  assert.match(run.stdout, /^PILOT_BRANCH is "main": not <login>-pilot or pilot$/);
   assert.equal(refs(), before, "origin's refs do not move");
 });
 
