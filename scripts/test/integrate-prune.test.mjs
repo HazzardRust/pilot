@@ -91,7 +91,7 @@ test('a merged slice is deleted after the push', (t) => {
 /** A worktree of `work` on a new local `slice/x-s1` at `tip`, in a temp dir removed after the test. */
 function sliceTree(t, work, tip) {
   // The slashes git prints, which the line carries.
-  const dir = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'integrate-tree-')), 'slice-tree').replaceAll('\\', '/');
+  const dir = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'integrate tree-')), 'slice-tree').replaceAll('\\', '/');
   git(work, 'worktree', 'add', '-q', '-b', 'slice/x-s1', dir, tip);
   t.after(() => {
     try { git(work, 'worktree', 'remove', '--force', dir); } catch { /* already gone */ }
@@ -134,7 +134,7 @@ test('a red integration removes no tree', (t) => {
   const result = integrate('slice/x-s1', options(work, ghWith('MERGED', tip), { test: failing }));
 
   assert.equal(result.ok, false);
-  assert.doesNotMatch(result.line, /removed|kept/);
+  assert.doesNotMatch(result.line, /; (removed|kept \w+) /);
   assert.equal(treesOn(work, 'slice/x-s1'), 1);
   assert.ok(fs.existsSync(dir));
 });

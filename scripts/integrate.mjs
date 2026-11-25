@@ -43,7 +43,7 @@ import { FULL_SHA } from '../deck/host-github.mjs';
 import { RUN_BASE } from '../deck/runs.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
 import { deleteMerged } from './branches.mjs';
-import { keptLine, removeTree } from './worktree-remove.mjs';
+import { keptLine, removeTree, worktrees } from './worktree-remove.mjs';
 import { behavioursOf } from './check-slices.mjs';
 import { checkLine, checksAt } from './checks.mjs';
 import { takeSlot } from './gate-slots.mjs';
@@ -593,18 +593,17 @@ function pruneSlice(cwd, host, slice, head) {
 
 /** The worktree on `slice`, if any, through `removeTree`: `; removed <dir>`, `; kept <state> <dir>`, or nothing. */
 function removeSliceTree(cwd, slice) {
-  let dir;
+  let dir = cwd;
   try {
-    const listed = spawnSync('git', ['worktree', 'list', '--porcelain'], { cwd, encoding: 'utf8', windowsHide: true });
-    if (listed.status !== 0) return '';
-    const blocks = listed.stdout.split(/\r?\n\r?\n/).map((block) => block.split(/\r?\n/));
-    const tree = blocks.slice(1).find((lines) => lines.includes(`branch refs/heads/${slice}`));
-    dir = tree?.find((line) => line.startsWith('worktree '))?.slice('worktree '.length);
-    if (!dir) return '';
+    const trees = worktrees(cwd);
+    if (!trees) return `; ${keptLine(cwd, 'leftover')}`;
+    const tree = trees.slice(1).find((t) => t.branch === slice);
+    if (!tree) return '';
+    dir = tree.path;
     const result = removeTree(cwd, dir);
     return result.removed ? `; removed ${dir}` : `; ${keptLine(dir, result.kept)}`;
-  } catch (err) {
-    return `; ${keptLine(dir ?? slice, 'leftover')}`;
+  } catch {
+    return `; ${keptLine(dir, 'leftover')}`;
   }
 }
 

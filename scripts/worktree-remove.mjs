@@ -45,7 +45,7 @@ const same = (a, b) => norm(a) === norm(b);
 const inside = (p, dir) => norm(p).startsWith(`${norm(dir).replace(/\/$/, '')}/`);
 
 /** `git worktree list` records; the first is the main checkout. Null when git fails. */
-function worktrees(repo) {
+export function worktrees(repo) {
   const list = git(repo, 'worktree', 'list', '--porcelain', '-z');
   if (!list.ok) return null;
   return list.out.split('\0\0').filter(Boolean).map((block) => {
