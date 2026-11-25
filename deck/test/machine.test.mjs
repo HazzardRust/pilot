@@ -106,7 +106,7 @@ test('an unreadable machine file is set aside, never overwritten', (t) => {
 
   assert.deepEqual(readMachine(dir).sessions, {}, 'it reads as an empty machine');
   listItems(); // the v3 read writes
-  assert.equal(fs.readFileSync(path.join(dir, `machine.unreadable-${today()}.json`), 'utf8'), bad, 'its bytes survive the write');
+  assert.equal(fs.readFileSync(path.join(dir, `machine.json.unreadable-${today()}`), 'utf8'), bad, 'its bytes survive the write');
   assert.equal(onDisk(dir, 'machine.json').sessions.run_1.session, 'sess-1', 'a fresh machine file');
 });
 
@@ -126,13 +126,15 @@ test('a machine file that cannot be written leaves deck.json as it was', (t) => 
 test('machine.json wins over machine state an older deck.json still holds, entry by entry', (t) => {
   const { dir, key } = seed(t);
   const other = pathKey(path.join(os.homedir(), 'Projects', 'other'));
-  fs.writeFileSync(path.join(dir, 'machine.json'), JSON.stringify({ sessions: { run_1: { pid: 7, session: 'sess-2' } }, coPilots: { [other]: { ticket: 'itm_000000000009' } } }));
+  fs.writeFileSync(path.join(dir, 'machine.json'), JSON.stringify({ sessions: { run_1: { pid: 7, session: 'sess-2' } }, coPilots: { [other]: { ticket: 'itm_000000000009' } }, later: { kept: true } }));
 
   const deck = readDeck();
   assert.equal(deck.runs[0].session, 'sess-2', "the machine file's session");
   assert.equal(deck.runs[0].lastSeenAt, AT, 'a field it lacks comes from deck.json');
   assert.deepEqual(Object.keys(deck.coPilots).sort(), [key, other].sort(), 'both leases');
   assert.equal(storedDeck().runs[0].session, 'sess-2', 'storedDeck reads through the machine file');
+  writeDeck(deck);
+  assert.deepEqual(onDisk(dir, 'machine.json').later, { kept: true }, 'a key this build does not know survives its write');
 });
 
 test('a run re-registers under another spelling as one run', (t) => {

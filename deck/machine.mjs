@@ -11,7 +11,7 @@ import path from 'node:path';
 import { atomicWriteFileSync } from '../hooks/lib/atomic-write.js';
 import { defaultRoots, toStored } from './store-codec.mjs';
 import { refuseGateHomeWrite } from './store-dir.mjs';
-import { localDay } from './store-recovery.mjs';
+import { setAside } from './store-recovery.mjs';
 
 const FILE = 'machine.json';
 
@@ -30,7 +30,10 @@ const FIELDS = {
 
 export const emptyMachine = () => ({ roots: {}, sessions: {}, coPilots: {}, switches: {}, live: [], landingPids: {} });
 
-/** `raw` as a machine, or null when it does not parse or breaks a field's rule. */
+/**
+ * `raw` as a machine, or null when it does not parse or breaks a field's rule. A key this build does not know is
+ * kept, so a later build's field survives this one's write.
+ */
 function parsed(raw) {
   let value;
   try {
@@ -39,7 +42,7 @@ function parsed(raw) {
     return null;
   }
   if (!isMap(value) || Object.entries(FIELDS).some(([name, ok]) => Object.hasOwn(value, name) && !ok(value[name]))) return null;
-  return { ...emptyMachine(), ...Object.fromEntries(Object.keys(FIELDS).filter((name) => Object.hasOwn(value, name)).map((name) => [name, value[name]])) };
+  return { ...emptyMachine(), ...value };
 }
 
 /** The machine file in `dir`; a missing or unreadable one reads as an empty machine (the latter said on stderr). */
@@ -58,11 +61,11 @@ export function readMachine(dir) {
 }
 
 /**
- * An unreadable machine file linked to `machine.unreadable-<day>[-n].json` before it is replaced, never overwriting
- * one (as the store's version backups): its bytes may hold root overrides a hand can still recover. A file that
- * cannot be set aside throws, so it is never replaced.
+ * An unreadable machine file set aside as `machine.json.unreadable-<day>[-n]` before it is replaced, by the store's own
+ * `setAside` (linked, or copied where links fail, never overwriting one): its bytes may hold root overrides a hand can
+ * still recover. A file that cannot be read or set aside throws, so it is never replaced.
  */
-function setAside(file) {
+function keepUnreadable(file) {
   let raw;
   try {
     raw = fs.readFileSync(file, 'utf8');
@@ -71,16 +74,10 @@ function setAside(file) {
     throw new Error(`machine file ${file} cannot be read (${err.message}), so it was not replaced`);
   }
   if (parsed(raw)) return;
-  const at = (n) => path.join(path.dirname(file), `machine.unreadable-${localDay()}${n > 1 ? `-${n}` : ''}.json`);
-  for (let n = 1; ; n += 1) {
-    try {
-      fs.linkSync(file, at(n));
-      console.error(`[deck] unreadable machine file ${file} set aside as ${at(n)}`);
-      return;
-    } catch (err) {
-      if (err.code !== 'EEXIST') throw new Error(`machine file ${file} could not be set aside (${err.message}), so it was not replaced`);
-      if (fs.readFileSync(at(n), 'utf8') === raw) return;
-    }
+  try {
+    console.error(`[deck] unreadable machine file ${file} set aside as ${setAside(file, 'unreadable')}`);
+  } catch (err) {
+    throw new Error(`machine file ${file} could not be set aside (${err.message}), so it was not replaced`);
   }
 }
 
@@ -89,7 +86,7 @@ export function writeMachine(dir, machine) {
   // The gate names the home store by its deck.json; the machine file beside it is that store's too.
   refuseGateHomeWrite(path.join(dir, 'deck.json'));
   const file = path.join(dir, FILE);
-  setAside(file);
+  keepUnreadable(file);
   atomicWriteFileSync(file, `${JSON.stringify(machine, null, 2)}\n`);
 }
 
@@ -106,6 +103,6 @@ export function rootsOf(machine, home, platform) {
 export function storeMachine(dir, deck, home, platform) {
   const machine = readMachine(dir);
   const { stored, machine: live } = toStored(deck, rootsOf(machine, home, platform));
-  writeMachine(dir, { roots: machine.roots, ...live });
+  writeMachine(dir, { ...machine, ...live });
   return stored;
 }

@@ -151,16 +151,18 @@ const SESSION = ['pid', 'session', 'lastSeenAt'];
 export function toStored(deck, roots) {
   const { coPilots = {}, switches = {}, ...portable } = deck;
   const machine = { sessions: {}, coPilots, switches, live: [], landingPids: {} };
+  // Only what has an id to be found by moves: anything else stays where it is, so nothing is dropped.
   const runs = (portable.runs ?? []).map((run) => {
-    const session = Object.fromEntries(SESSION.filter((name) => run?.[name] !== undefined).map((name) => [name, run[name]]));
+    if (!isMap(run) || typeof run.id !== 'string') return run;
+    const session = Object.fromEntries(SESSION.filter((name) => run[name] !== undefined).map((name) => [name, run[name]]));
     if (Object.keys(session).length > 0) machine.sessions[run.id] = session;
-    return isMap(run) ? Object.fromEntries(Object.entries(run).filter(([name]) => !SESSION.includes(name))) : run;
+    return Object.fromEntries(Object.entries(run).filter(([name]) => !SESSION.includes(name)));
   });
   const items = (portable.items ?? []).map((item) => {
-    if (!isMap(item)) return item;
+    if (!isMap(item) || typeof item.id !== 'string') return item;
     const { live, ...rest } = item;
     if (live === true) machine.live.push(item.id);
-    if (!isMap(item.landing) || item.landing.pid === undefined) return rest;
+    if (!isMap(item.landing) || !Number.isInteger(item.landing.pid)) return rest;
     machine.landingPids[item.id] = item.landing.pid;
     const { pid, ...landing } = item.landing;
     return { ...rest, landing };
@@ -171,7 +173,8 @@ export function toStored(deck, roots) {
 /**
  * The deck as memory holds it: every stored path decoded, map keys and `records[].repo` re-folded by `pathKey`, and
  * the machine file's state rejoined. Machine state a `deck.json` from before the split still holds is read too, the
- * machine file winning entry by entry; the next write moves it out.
+ * machine file winning entry by entry; the next write moves it out. Winning only adds or overrides: a pre-split
+ * `deck.json` put back by hand (`pilot store restore`, a version backup) brings its leases and live marks back with it.
  */
 export function fromStored(stored, machine, roots) {
   const deck = { ...eachField(stored, (field) => (value) => {
