@@ -43,6 +43,7 @@ import { FULL_SHA } from '../deck/host-github.mjs';
 import { RUN_BASE } from '../deck/runs.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
 import { deleteMerged } from './branches.mjs';
+import { keptLine, removeTree } from './worktree-remove.mjs';
 import { behavioursOf } from './check-slices.mjs';
 import { checkLine, checksAt } from './checks.mjs';
 import { takeSlot } from './gate-slots.mjs';
@@ -587,6 +588,28 @@ function trialOnPilot({ cwd, git = gitIn(cwd), head }) {
  * or nothing when the slice is not on its remote. A failure keeps it and names why.
  */
 function pruneSlice(cwd, host, slice, head) {
+  return removeSliceTree(cwd, slice) + deleteSlice(cwd, host, slice, head);
+}
+
+/** The worktree on `slice`, if any, through `removeTree`: `; removed <dir>`, `; kept <state> <dir>`, or nothing. */
+function removeSliceTree(cwd, slice) {
+  let dir;
+  try {
+    const listed = spawnSync('git', ['worktree', 'list', '--porcelain'], { cwd, encoding: 'utf8', windowsHide: true });
+    if (listed.status !== 0) return '';
+    const blocks = listed.stdout.split(/\r?\n\r?\n/).map((block) => block.split(/\r?\n/));
+    const tree = blocks.slice(1).find((lines) => lines.includes(`branch refs/heads/${slice}`));
+    dir = tree?.find((line) => line.startsWith('worktree '))?.slice('worktree '.length);
+    if (!dir) return '';
+    const result = removeTree(cwd, dir);
+    return result.removed ? `; removed ${dir}` : `; ${keptLine(dir, result.kept)}`;
+  } catch (err) {
+    return `; ${keptLine(dir ?? slice, 'leftover')}`;
+  }
+}
+
+/** The pushed slice through `deleteMerged`; see `pruneSlice`. */
+function deleteSlice(cwd, host, slice, head) {
   try {
     const git = gitIn(cwd);
     const { deleted, kept } = deleteMerged({ git, host: host === undefined ? hostFor(cwd, { git }) : host, select: (name) => name === slice, into: head });
