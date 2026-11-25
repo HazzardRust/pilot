@@ -15,7 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { KIND_GATE2, KIND_QUESTION, SIGN_OFF, repoKey } from '../items.mjs';
-import { aTicket, deckOnAPort, page, postStored, rowsOf, takeLive, tempDeck } from '../testUtils.mjs';
+import { aTicket, deckOnAPort, page, postStored, rowsOf, storedDeck, takeLive, tempDeck } from '../testUtils.mjs';
 
 const {
   DeckRefusal,
@@ -37,7 +37,7 @@ const {
 
 const REPO = path.resolve('D:/work/pilot');
 
-const stored = () => JSON.parse(fs.readFileSync(storeFile(), 'utf8'));
+const stored = storedDeck;
 const lockedBy = (to) => (err) =>
   err instanceof DeckRefusal && err.message === `a switch to ${to} is pending in this directory; complete or cancel it first`;
 

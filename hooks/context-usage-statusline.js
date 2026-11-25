@@ -59,6 +59,15 @@ function readDeck(file) {
   }
 }
 
+// A v4 store's key, `@<root>/<rel>` (portable-store L2, deck/store-codec.mjs), as the key of the dir it names
+// under the default roots; null for a root this reader does not derive or a `..`, so it matches nothing.
+function storedKey(key) {
+  const [, name = '', rel = ''] = /^@([^/\\]+)\/(.*)$/s.exec(key) || [];
+  const drive = /^drive-([a-z])$/.exec(name);
+  const root = name === 'home' ? os.homedir() : drive ? `${drive[1].toUpperCase()}:\\` : name === 'root' ? '/' : null;
+  return root && !rel.split(/[\\/]/).includes('..') ? repoKey(path.join(root, ...rel.split('/'))) : null;
+}
+
 // The number the deck minted for this directory, or null — which is the ordinary
 // answer for a deck that has not registered since numbering arrived, because a
 // number is minted lazily (A5). Null rather than a placeholder: the status line
@@ -66,7 +75,9 @@ function readDeck(file) {
 function deckNumberFor(deck, dir) {
   const decks = deck && deck.decks;
   if (!decks || typeof decks !== 'object') return null;
-  const number = decks[repoKey(dir)];
+  const want = repoKey(dir);
+  const key = Object.keys(decks).find((k) => (k.startsWith('@') ? storedKey(k) : k) === want);
+  const number = key === undefined ? undefined : decks[key];
   return Number.isInteger(number) && number > 0 ? number : null;
 }
 

@@ -332,7 +332,8 @@ fn creating_in_the_window_opens_the_scratch_decks_new_thread() {
     let id = id.expect("the new thread's id");
     let made = support::item(&deck, &id);
     assert_eq!(made["title"], "Try the strip");
-    assert_eq!(made["repo"], "C:/work/alpha");
+    // The server returns a repo in its native spelling (portable-store S1).
+    assert_eq!(made["repo"], r"C:\work\alpha");
 }
 
 /// What the window draws at `key`.

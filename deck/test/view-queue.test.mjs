@@ -7,6 +7,7 @@ import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
 
 import { HANDOFF_FAILED, KIND_HANDOFF, KIND_TICKET, askFor } from '../items.mjs';
 import { postStored, tempDeck } from '../testUtils.mjs';
@@ -16,9 +17,10 @@ const { renderHomePage } = await import('../ui/render-pages.mjs');
 const { queueView } = await import('../view/queue.mjs');
 const { readDeck } = await import('../view/reads.mjs');
 
-const ALPHA = 'D:/work/alpha';
-const BETA = 'D:/work/beta';
-const GAMMA = 'D:/work/gamma';
+// The native spelling the store reads back (portable-store L2).
+const ALPHA = path.resolve('D:/work/alpha');
+const BETA = path.resolve('D:/work/beta');
+const GAMMA = path.resolve('D:/work/gamma');
 
 const ask = (title, repo, extra = {}) => postItem({ kind: 'question', title, body: 'A or B', repo, author: '', ...extra });
 

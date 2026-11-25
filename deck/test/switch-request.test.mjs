@@ -15,13 +15,13 @@ import path from 'node:path';
 
 import { repoKey } from '../items.mjs';
 import { DeckRefusal, registerRun, requestSwitch, storeFile } from '../store.mjs';
-import { aTicket, deckOnAPort, page, rowsOf, takeLive, tempDeck } from '../testUtils.mjs';
+import { aTicket, deckOnAPort, page, rowsOf, storedDeck, takeLive, tempDeck } from '../testUtils.mjs';
 
 const REPO = path.resolve('D:/work/pilot');
 const OTHER = path.resolve('D:/work/other');
 
 const switchOf = (row) => row.match(/<form class="switch" method="post" action="\/switch"[^>]*>.*?<\/form>/s)?.[0];
-const stored = () => JSON.parse(fs.readFileSync(storeFile(), 'utf8'));
+const stored = storedDeck;
 
 test('Continue is drawn on green and red rows not in hand, never on the in-hand row', (t) => {
   tempDeck(t);

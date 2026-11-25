@@ -50,7 +50,7 @@ const handoffStatus = (run) => ({
       slice: 'S1',
       state: 'integrated at 733afa1',
       branch: 'slice/1-author',
-      worktree: 'C:/work/pilot-s1',
+      worktree: path.resolve('C:/work/pilot-s1'), // native spelling, as the store reads it back (portable-store L2)
       pr: 75,
     },
     { slice: 'S2', state: 'draft', after: ['S1'], branch: 'slice/2-record', pr: 76 },
@@ -146,7 +146,7 @@ test('the record holds every field the spec names, and no thread ids (L5, L6)', 
       slice: 'S1',
       state: 'integrated at 733afa1',
       branch: 'slice/1-author',
-      worktree: 'C:/work/pilot-s1',
+      worktree: path.resolve('C:/work/pilot-s1'), // native spelling, as the store reads it back (portable-store L2)
       pr: 75,
     },
     { slice: 'S2', state: 'draft', after: ['S1'], branch: 'slice/2-record', pr: 76 },

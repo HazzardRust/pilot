@@ -15,6 +15,7 @@ import './no-open.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import path from 'node:path';
 
 import { deckOnAPort, tempDeck } from '../testUtils.mjs';
 import { KINDS, KIND_CHAT, appearsInYours, isKnownKind, isOpen, isQueued, messagesOf } from '../items.mjs';
@@ -36,8 +37,9 @@ const {
 
 // --- harness ---------------------------------------------------------------
 
-const ALPHA = 'D:/work/alpha';
-const BETA = 'D:/work/beta';
+// The native spelling the store reads back (portable-store L2).
+const ALPHA = path.resolve('D:/work/alpha');
+const BETA = path.resolve('D:/work/beta');
 
 /** The L7 sentence, which every refusal to end a chat says. */
 const NEVER_CLOSED = /a chat is never closed; answer it with deck_reply/;
