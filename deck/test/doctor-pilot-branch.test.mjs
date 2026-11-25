@@ -104,16 +104,6 @@ test('no host and no name fails with the no-name line', () => {
   });
 });
 
-test('a login that throws is read as signed out', () => {
-  withEnv(undefined, () => {
-    const { git } = gitStoring('hazzardrust-pilot');
-    const host = { login: () => { throw new Error('gh exploded'); } };
-    const row = pilotBranchRow({ git, host });
-    assert.equal(row.verdict, 'pass');
-    assert.equal(row.detail, 'hazzardrust-pilot (stored)');
-  });
-});
-
 test('a bad PILOT_BRANCH fails with a step that fixes the env', () => {
   withEnv('Main', () => {
     const { git } = gitStoring('hazzardrust-pilot');

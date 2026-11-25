@@ -25,7 +25,7 @@ import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
 import { MIN_MODS_VERSION, claudeVersion } from '../scripts/handoff.mjs';
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
-import { LEGACY_PILOT, NO_NAME, pilotBranch } from '../scripts/pilot-branch.mjs';
+import { LEGACY_PILOT, NO_NAME, namePilotBranch } from '../scripts/pilot-branch.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { powerRow, readPower } from './power.mjs';
@@ -182,38 +182,27 @@ function hostOrNull(hostFor, cwd, git) {
   }
 }
 
-/** `host.login()`, or null when there is no host, it is signed out or it cannot answer. */
-function loginOf(host) {
-  try {
-    const login = host ? host.login() : null;
-    return typeof login === 'string' && login ? login : null;
-  } catch {
-    return null;
-  }
-}
-
 /**
  * The pilot branch row (user-pilot-branch spec 7): the name and where it came from, and a warning when the stored
- * name is another account's. Reads only (`pilotBranch`, `Host.login`): it derives and writes nothing. `host` is
- * null when none is set or it could not be built.
+ * name is another account's. Reads only (`namePilotBranch` with no host, `Host.login`): it derives and writes
+ * nothing. `host` is null when none is set or it could not be built.
  */
 export function pilotBranchRow({ git, host }) {
   const name = 'pilot branch';
   let branch;
+  let source;
   try {
-    branch = pilotBranch(git);
+    ({ name: branch, source } = namePilotBranch({ git, host: null }));
   } catch (error) {
     if (error.message !== NO_NAME) {
-      const step = error.message.startsWith('PILOT_BRANCH') ? 'unset PILOT_BRANCH, or set it to <login>-pilot' : 'git config pilot.branch <login>-pilot';
-      return { name, verdict: 'fail', detail: error.message, steps: [step] };
+      return { name, verdict: 'fail', detail: error.message, steps: ['unset PILOT_BRANCH, or set it to <login>-pilot', 'git config pilot.branch <login>-pilot'] };
     }
-    const login = loginOf(host);
-    return login
+    return host?.login()
       ? { name, verdict: 'warn', detail: `none stored yet; the next \`pilot base\` derives it from the signed-in account` }
       : { name, verdict: 'fail', detail: NO_NAME, steps: ['gh auth login (or glab auth login)', 'git config pilot.branch <login>-pilot'] };
   }
-  if (process.env.PILOT_BRANCH) return { name, verdict: 'pass', detail: `${branch} (PILOT_BRANCH)` };
-  const login = loginOf(host);
+  if (source === 'env') return { name, verdict: 'pass', detail: `${branch} (PILOT_BRANCH)` };
+  const login = host?.login() ?? null;
   const own = login ? `${login.toLowerCase()}-pilot` : null;
   if (own !== null && branch !== LEGACY_PILOT && branch !== own) {
     return {
