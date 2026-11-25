@@ -9,13 +9,13 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "integrated, checks green at f5c5a2f",
+      "state": "integrated",
       "branch": "slice/pr-overview-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-pr-overview-s1"
     },
     {
       "slice": "S2",
-      "state": "pushed 5ac4956",
+      "state": "integrated, checks green at 6c2090d",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "fixing: integrate red, vendor/methodology.md mixes upstreams 1.2.3 and 1.3.2",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -32,8 +32,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-pr-overview-s3"
     }
   ],
-  "next": "S3 fixing (split the 1.3.2 ledger row into vendor/pr-overview.md); meanwhile integrate S2 (5ac4956) on f5c5a2f",
-  "updatedAt": "2026-11-25T02:51:46.259Z",
+  "next": "S3 308beb4 being integrated by the pilot (TS + security APPROVE). Then pilot checks <sha7> --wait, release/co-pilot, spawn co-pilot for fundamentalist on whole feature, verdicts by main, fix round, QA. A7 (own ledger fragment vendor/pr-overview.md) assumed: name it at Gate 2. No co-pilot or implementer live.",
+  "updatedAt": "2026-11-25T03:19:05.084Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -106,6 +106,53 @@
       "agent": "pilot:pilot-implementer",
       "what": "Three probes could not find where production git's stderr goes (gitAt defined elsewhere than integrate.mjs)",
       "evidence": "worked around with a git ls-tree existence check before show"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "the integrate gate's ledger check (mixed upstream versions) was not named in S3's slice file or brief, so S3's own gate missed it",
+      "evidence": "pilot integrate refused 4c3d403: vendor/methodology.md mixes mattpocock-skills 1.2.3 and 1.3.2",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2's Interface line and its unedited-test clause contradict each other; S3's own artefact failed the overview rule S3 introduces",
+      "evidence": "land-main-pr.test.mjs:49; check-slices :5 overview-plain 23.8 words",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 moved the vendoring row to a new ledger on a refusal that no check produced; the only red came after the move, from the move itself",
+      "evidence": "implementer: 'None recorded: I have no test or check output that refused the 1.3.2 row'; toolbox.test.mjs:183 excludes methodology-ledger files",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "Correction to the previous S3 ledger row: the refusal was real (build-vendor-ledger.mjs:76-88, one fragment is one upstream version). The pilot's check missed that file and sent S3 back to the signed plan for one round; the implementer had kept no copy of the failing output and cited the wrong test",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm run test:quiet exited 1 with no failure line while npm test on the same state exited 0; cause not found, cost an extra 8-minute run",
+      "evidence": "S3 report: log showed only Rune output, 'ledgers current' and spawn counts",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm test printed 'home store changed: ~/.claude/pilot/deck.json; live deck up': the gate touched the user's home deck store",
+      "evidence": "S3 report, final gate run",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "signed plan put a 1.3.2 row in a 1.2.3 ledger fragment, which the gate's ledger builder refuses; build-vendor-ledger.mjs --check at Gate 1 would have caught it",
+      "evidence": "build-vendor-ledger.mjs:76-88 'mixes upstreams'",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "compaction lost the original evidence rows and red runs of B1-B3; rows re-observed on the final state",
+      "evidence": "S3 report: 'original rows from 6961c71 were lost when my context was compacted'",
+      "size": 3
     }
   ]
 }
