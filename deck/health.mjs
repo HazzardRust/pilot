@@ -7,6 +7,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { awakeState } from './awake.mjs';
 import { isCheckout } from './spawn-root.mjs';
 import { currentSeq } from './store.mjs';
 import { deckUrl } from './tools.mjs';
@@ -29,4 +30,6 @@ export const healthOf = () => ({
   startedAt: STARTED_AT,
   root: ROOT,
   checkout: CHECKOUT,
+  // Whether this deck holds the keep-awake request now, which `pilot doctor` reads (stay-awake L6).
+  awake: awakeState(),
 });

@@ -1,0 +1,120 @@
+{
+  "slug": "handoff-self-close",
+  "feature": "a crew hand-off item closes itself",
+  "ticket": "itm_a28fc03b3ae5",
+  "branch": "feat/handoff-self-close",
+  "base": "main",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-handoff-self-close",
+  "artefact": "docs/design/handoff-self-close/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated e9e31fa; checks green",
+      "branch": "slice/handoff-self-close-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-self-close-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated 3c98028; CI checks running",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/handoff-self-close-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-self-close-s2"
+    },
+    {
+      "slice": "feature",
+      "state": "concluding; gate2 itm_589b847f8e5c at 3c98028 awaits the user's Sign off; walkthrough itm_7f84d4ca3b05",
+      "pr": 145
+    }
+  ],
+  "humanSteps": [
+    {
+      "text": "After handoff-self-close lands: restart the deck so it picks up the self-close; its first write then closes old ticketed crew-handoffs whose ticket already moved on."
+    }
+  ],
+  "next": "Green. gate2 itm_589b847f8e5c (PR #145, 3c98028, checks green, trial clean) and walkthrough itm_7f84d4ca3b05 await the user. On press: spawn pilot-lander with the gate2 id; stop the scratch deck I started (port 4399, pid 40724, background task b0st0v0lw); reply Findings: on the closing report (no fundamentalist on the short path). Step: deck restart needed after landing.",
+  "updatedAt": "2026-11-24T18:54:41.796Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "items.mjs and server-wait.mjs sit at the 800-line facade bar, forcing two new modules",
+      "evidence": "wc -l 799 each (L5)",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "ticket-leaves-yellow has 6 write sites",
+      "evidence": "store-stage.mjs:19, store-steps.mjs:18, store-items.mjs:590, mergeTicket",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck_post refuses a question without a Research: line; the rule is not in the architect prompt (hit the pilot once too)",
+      "evidence": "3 refused posts, ADR 0119",
+      "size": 3
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "Edit tool lost read state after each commit",
+      "evidence": "3 re-reads",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "verdict message to the architect queued past its hand-back; gate1 delayed one round and two hand-back reports read",
+      "size": 4000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "--since selection overflowed argv (47927 chars over 24000) and fell back to the full suite: a slice selection became a 6-minute run ending in a Rust compile",
+      "evidence": "handoff-self-close S1 report",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spec 4 needed deck/trace.mjs, not in the slice's owned files; slice file's items.mjs line count stale (799 vs 789)",
+      "evidence": "handoff-self-close S1 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Chrome DevTools MCP tools not available to the implementer; live check read HTML over HTTP instead",
+      "evidence": "handoff-self-close S1 report, blocked steps",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "security reviewer ran before the fixes it asked for; a second pass was left to the pilot",
+      "evidence": "handoff-self-close S1: Verdict WARN on a pre-fix state",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "fact sheet missed that crewWaitingOf is new and gave no items.mjs line count; Edit refused post-commit edits as not read, a fresh Read each time",
+      "evidence": "handoff-self-close S2 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "harness commit trailer (Sonnet, this session) differs from the brief.md trailer",
+      "evidence": "handoff-self-close S2 report, commit trailer",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "integrate refused S2 after the queue wait: evidence kind `look` cannot be met by an implementer with no browser tools; one extra implementer resume and integrate run",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "integrate fell back to the full suite twice on argv overflow (44300 chars over 24000): two 5000-test runs on a two-slice short path",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "gate2 post refused three times on field shape (checks one line, pr as #n, Verdict: line per slice); stop hook corrected a wrong 'nothing runnable' call on the yellow lane",
+      "size": 3
+    }
+  ]
+}
