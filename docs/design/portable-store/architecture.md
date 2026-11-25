@@ -133,6 +133,12 @@ machine file seam has two adapters (a real dir, a test's temp dir). `store-resto
 - L2 Stored form is a string `@<root>/<rel>`, not an object, so every field keeps its type. Encoding resolves
   through the realpath when the path exists, so spellings collapse; decoding re-folds map keys with `pathKey`.
   Rejected: objects `{root, rel}` (every reader's type changes).
+  *assumed: narrowed to case, user question pending.* The realpath's spelling is taken only where it differs from
+  the given one by case (`projects` stores as `Projects`); a junction, symlink, 8.3 name (`RUNNER~1`) or macOS
+  `/var` keeps its given spelling and reads back as it, since taking the realpath there changed a worktree's
+  spelling across a store round trip (CI at fae3569). Map keys still collapse, as `pathKey` folds them in memory;
+  a field such as `items[].repo` given in two link spellings stores two. Only a path absolute in the roots' own
+  flavour is encoded; anything else is stored and read back as it is.
 - L3 Default roots are derived, not stored: `home` and one per drive (`drive-c`) or `/`; so a lost machine file
   loses no path. Only `--root` overrides are stored. Rejected: a root per repo parent dir (dozens, from leaked
   test scratch dirs).
@@ -187,7 +193,9 @@ there, the rest lives in the codec. (2) `backUp` writes beside a guarded home st
 session's cwd: S2 swaps it for `sameRepo`. (4) S4 exporting before S2 lands would carry pids: S4 comes after S2.
 (5) Month archives hold `repo` too: without S3 spec 1's scan fails on them, so S3 is a slice, not a follow-up.
 (6) A folded key decoded on a case-sensitive machine could miss the real case: L2 stores the realpath
-spelling, and a cross-OS move is out (§7).
+spelling, and a cross-OS move is out (§7). It holds under L2 narrowed to case: Linux keeps the given spelling,
+which on a case-sensitive file system is the real case of any path that exists by that spelling (a symlink
+`Foo -> foo` is not folded there).
 
 ## 7. Out of scope
 

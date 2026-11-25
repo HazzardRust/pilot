@@ -4,13 +4,14 @@
  */
 
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { isWindows } from '../../hooks/lib/platform.js';
-import { decodePath, defaultRoots, encodePath, toStored } from '../store-codec.mjs';
+import { hostPlatform, isWindows, pathKey } from '../../hooks/lib/platform.js';
+import { decodePath, defaultRoots, encodePath, fromStored, toStored } from '../store-codec.mjs';
 
 test('a path round-trips through its root', () => {
   const win = defaultRoots('C:\\Users\\a', 'win32');
@@ -30,6 +31,86 @@ test('a path round-trips through its root', () => {
   assert.throws(() => decodePath('@elsewhere/x', posix), /does not have/);
   assert.throws(() => decodePath('C:\\Users\\a\\x', win), /not a stored path/);
   assert.equal(encodePath('relative/dir', win), 'relative/dir', 'what is not absolute is not a path to store');
+});
+
+test('a path that is not absolute under these roots is stored and read back as it is', () => {
+  const posix = defaultRoots('/home/a', 'linux');
+  const win = defaultRoots('C:\\Users\\a', 'win32');
+  for (const [roots, given] of [
+    [posix, ['D:\\work\\pilot', 'C:/work/alpha']],
+    [win, ['/srv/repo', '/home/a/x']],
+  ]) {
+    const deck = { version: 4, items: given.map((repo) => ({ repo })) };
+    assert.deepEqual(toStored(deck, roots), deck, 'another flavour is not a path to store');
+    assert.deepEqual(fromStored(toStored(deck, roots), roots), deck);
+  }
+});
+
+test('a posix name holding a backslash keeps it, so two such keys do not meet', () => {
+  const posix = defaultRoots('/home/runner', 'linux');
+  // The keys pathKey made on ubuntu-latest from the fixture D:\work\pilot and its '/' twin (CI at fae3569).
+  const keys = ['/home/runner/work/pilot/pilot/D:\\work\\pilot', '/home/runner/work/pilot/pilot/D:/work/pilot'];
+  const deck = { version: 4, decks: Object.fromEntries(keys.map((key, n) => [key, n])) };
+  const stored = toStored(deck, posix);
+  assert.deepEqual(Object.keys(stored.decks), ['@home/work/pilot/pilot/D:\\work\\pilot', '@home/work/pilot/pilot/D:/work/pilot']);
+  assert.deepEqual(Object.keys(fromStored(stored, posix).decks), keys);
+  assert.equal(decodePath('@home/a\\..\\x', posix), '/home/runner/a\\..\\x', 'a backslash is a name character on posix');
+});
+
+test('a missing path under a root spelled through a link is stored under that root', (t) => {
+  const base = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-codec-link-')));
+  t.after(() => fs.rmSync(base, { recursive: true, force: true }));
+  const target = path.join(base, 'target');
+  fs.mkdirSync(target);
+  const home = path.join(base, 'link'); // stands in for an 8.3 spelling (C:\Users\RUNNER~1) or macOS /var
+  fs.symlinkSync(target, home, 'junction');
+  const roots = defaultRoots(home, hostPlatform());
+  assert.equal(encodePath(path.join(home, 'work', 'pilot'), roots), '@home/work/pilot');
+});
+
+test('a missing path takes the case of its existing ancestors', (t) => {
+  if (!isWindows()) return t.skip('case folds on win32');
+  const home = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-codec-case-')));
+  t.after(() => fs.rmSync(home, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(home, 'Projects'));
+  assert.equal(encodePath(path.join(home, 'projects', 'newrepo'), defaultRoots(home, 'win32')), '@home/Projects/newrepo');
+});
+
+/** A home holding `Projects/pilot`, and a junction (a symlink off win32) `alias` beside it to that repo. */
+function linkedRepo(t) {
+  const home = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-codec-alias-')));
+  t.after(() => fs.rmSync(home, { recursive: true, force: true }));
+  const repo = path.join(home, 'Projects', 'pilot');
+  fs.mkdirSync(repo, { recursive: true });
+  const alias = path.join(home, 'alias');
+  fs.symlinkSync(repo, alias, 'junction');
+  return { home, repo, alias, roots: defaultRoots(home, hostPlatform()) };
+}
+
+test('a link spelling of an existing dir is stored and read back as given (L2 narrowed to case, assumed)', (t) => {
+  const { alias, roots } = linkedRepo(t);
+  assert.equal(encodePath(alias, roots), '@home/alias');
+  assert.equal(decodePath(encodePath(alias, roots), roots), alias);
+});
+
+test('an 8.3 short spelling of an existing dir is stored and read back as given', (t) => {
+  const { repo, roots } = linkedRepo(t);
+  if (!isWindows()) return t.skip('8.3 names are win32 only');
+  const out = execFileSync('cmd.exe', ['/d', '/c', `for %I in ("${repo}") do @echo %~sI`], { windowsHide: true, windowsVerbatimArguments: true });
+  const short = String(out).trim(); // as os.tmpdir() reads on a runner: C:\Users\RUNNER~1\...
+  if (short.toLowerCase() === repo.toLowerCase()) return t.skip('this volume makes no 8.3 names');
+  assert.equal(decodePath(encodePath(short, roots), roots), short);
+});
+
+test('one repo in two link spellings is two stored strings but one deck key, and no collision', (t) => {
+  const { repo, alias, roots } = linkedRepo(t);
+  const deck = { version: 4, items: [{ repo }, { repo: alias }], decks: { [pathKey(repo)]: 1 } };
+  deck.decks[pathKey(alias)] = 2; // the deck folds both spellings to one key before anything is stored
+  const stored = toStored(deck, roots);
+  assert.deepEqual(stored.items.map((item) => item.repo), ['@home/Projects/pilot', '@home/alias']);
+  const read = fromStored(stored, roots);
+  assert.deepEqual(Object.keys(read.decks), [pathKey(repo)]);
+  assert.deepEqual(read.items.map((item) => item.repo), [repo, alias]);
 });
 
 test('spellings of one repo collapse', (t) => {

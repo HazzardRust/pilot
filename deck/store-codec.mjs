@@ -61,8 +61,8 @@ const SPELLED = new Map();
 const SPELLED_MAX = 8192;
 
 /**
- * `abs` resolved, in its realpath spelling when it exists on this host (L2), so `projects` and `Projects` are one
- * stored path. A path that does not exist, or cannot be read, keeps its resolved spelling: the spelling is never a
+ * `abs` resolved, in its realpath's case when it exists on this host (L2, see `caseOnly`), so `projects` and
+ * `Projects` are one stored path. A path that does not exist, or cannot be read, keeps its resolved spelling: the spelling is never a
  * reason to refuse a write, as `pathKey` never refuses a key. Remembered per process, misses included, since a
  * store write encodes thousands of worktrees that are long gone.
  */
@@ -70,21 +70,40 @@ function spelled(abs, P) {
   const resolved = P.resolve(abs);
   if (P !== (hostPlatform() === 'win32' ? path.win32 : path.posix)) return resolved;
   if (SPELLED.has(resolved)) return SPELLED.get(resolved);
+  // A missing path takes its deepest existing ancestor's realpath, so it meets a root spelled through a link or an
+  // 8.3 name (C:\Users\RUNNER~1) the way the root itself is spelled; with no readable ancestor it keeps its spelling.
   let real = resolved;
-  try {
-    real = fs.realpathSync.native(resolved);
-  } catch {
-    // Missing or unreadable: kept as spelled (see above).
+  for (let dir = resolved, rest = []; ; rest.unshift(P.basename(dir)), dir = P.dirname(dir)) {
+    try {
+      real = P.join(fs.realpathSync.native(dir), ...rest);
+      break;
+    } catch (error) {
+      // Only a missing ancestor is walked past; anything else (EACCES, ELOOP) keeps the given spelling.
+      if (!['ENOENT', 'ENOTDIR'].includes(error.code) || P.dirname(dir) === dir) break;
+    }
   }
+  const kept = caseOnly(resolved, real);
   if (SPELLED.size >= SPELLED_MAX) SPELLED.clear();
-  SPELLED.set(resolved, real);
-  return real;
+  SPELLED.set(resolved, kept);
+  return kept;
 }
 
-/** `abs` as `@<root>/<rel>` under the deepest root holding it; anything not absolute, or under no root, as it is. */
+/**
+ * Assumed, L2 narrowed to case (user question pending): the realpath's spelling is taken only where it differs from
+ * the given one by case, so `projects` stores as `Projects` while a junction, symlink, 8.3 name (`RUNNER~1`) or
+ * macOS `/var` keeps the spelling it was given and reads back as it. L2 as written is this returning `real`. Linux
+ * folds no case, so there a case-only difference is a symlink to another directory and the given spelling stands.
+ */
+const caseOnly = (resolved, real) =>
+  hostPlatform() !== 'linux' && real.toLowerCase() === resolved.toLowerCase() ? real : resolved;
+
+/**
+ * `abs` as `@<root>/<rel>` under the deepest root holding it; anything not absolute in the roots' own flavour (a
+ * Windows-shaped fixture on a posix host, a posix path on win32), or under no root, as it is, never resolved.
+ */
 export function encodePath(abs, roots) {
   const P = flavourOf(abs);
-  if (!P) return abs;
+  if (!P || !Object.values(roots).some((dir) => flavourOf(dir) === P)) return abs;
   const real = spelled(abs, P);
   const fold = P === path.win32 ? (s) => s.toLowerCase() : (s) => s;
   const drive = P === path.win32 ? { [`drive-${real[0].toLowerCase()}`]: `${real[0].toUpperCase()}:\\` } : {};
@@ -105,11 +124,12 @@ export function decodePath(stored, roots) {
   const match = typeof stored === 'string' ? STORED.exec(stored) : null;
   if (!match) throw new Error(`not a stored path: ${JSON.stringify(stored)}`);
   const [, name, rel] = match;
-  const segments = rel.split(/[\\/]/);
-  if (segments.includes('..')) throw new Error(`stored path ${stored} climbs out of its root`);
   const dir = rootDir(name, roots);
   const P = flavourOf(dir);
   if (!P) throw new Error(`stored path ${stored} names root ${name}, which this machine does not have`);
+  // A backslash separates on win32 only; under a posix root it is a character of the name, as encodePath kept it.
+  const segments = rel.split(P === path.win32 ? /[\\/]/ : '/');
+  if (segments.includes('..')) throw new Error(`stored path ${stored} climbs out of its root`);
   return P.join(dir, ...segments.filter(Boolean));
 }
 
