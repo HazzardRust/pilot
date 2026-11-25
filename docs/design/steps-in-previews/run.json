@@ -15,16 +15,25 @@
     },
     {
       "slice": "S2",
-      "state": "integrated",
+      "state": "integrated at e3ac661; gate 5134 pass, 0 fail; checks green",
       "after": [
         "S1"
       ],
       "branch": "slice/steps-in-previews-s2",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-steps-in-previews-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/steps-in-previews-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-steps-in-previews-s3"
     }
   ],
-  "next": "Short path, lane held by itm_3eee1845d039, plan f313347. S2 06065c9 integrating (pilot integrate, then pilot checks --wait). Then added slice S3: Rune draws no Reopen on a closed steps thread (regions/reply.rs), found by S2. Then own gate2: integrate --trial sha, Verdict per slice, Gate line, walkthrough; name the silent refused Done (app.rs prohibited) there.",
-  "updatedAt": "2026-11-25T10:28:21.772Z",
+  "next": "Short path, lane held by itm_3eee1845d039, plan f313347, feat e3ac661 = S1+S2 checks green. S3 6707238 integrating (pilot integrate), then pilot checks --wait, then own gate2: integrate --trial sha, Verdict per slice, Gate line, walkthrough (live look of HTML home card, Rune card, steps thread, Done, no Reopen); name silent refused Done and thread kind line 'steps'.",
+  "updatedAt": "2026-11-25T10:55:33.176Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -73,6 +82,16 @@
       "agent": "pilot:pilot-implementer",
       "what": "brief.md trailer names Fable as co-author on slices written by Opus",
       "evidence": "S2 pushback"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "native pilot-deck needs PILOT_DECK_PORT as well as PILOT_DECK_DIR to find a scratch deck; without it reads deck not running",
+      "evidence": "S3 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed fell back to the full suite: selection 33288 characters of argv, over 24000",
+      "evidence": "S3 gate"
     }
   ]
 }
