@@ -16,7 +16,7 @@ const HOME = path.join('scripts', 'pilot-branch.mjs');
 /** The shipped `.mjs`/`.js` files directly in `bin/`, `scripts/` and `deck/`, test files and helpers aside. */
 function shipped() {
   return ['bin', 'scripts', 'deck'].flatMap((dir) => readdirSync(path.join(ROOT, dir), { withFileTypes: true })
-    .filter((entry) => entry.isFile() && /\.m?js$/.test(entry.name) && !/test/i.test(entry.name))
+    .filter((entry) => entry.isFile() && /\.m?js$/.test(entry.name) && !/\.test\.m?js$/.test(entry.name) && entry.name !== 'testUtils.mjs')
     .map((entry) => path.join(dir, entry.name)));
 }
 

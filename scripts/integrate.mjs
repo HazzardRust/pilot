@@ -466,7 +466,7 @@ export function integrate(branch, options = {}) {
     // many. The count only adds to the line; git failing to give it leaves the line as it was.
     let copies = 0;
     try {
-      copies = pilotLineage(cwd, start).copies ?? 0;
+      copies = pilotLineage(cwd, start, { base: runRef(runs, pilot) }).copies ?? 0;
     } catch {}
     const are = copies === 1 ? 'commits is a copy' : 'commits are copies';
     const carried = copies ? `; ${copies} of ${head}'s ${are} of ${pilot}'s` : '';
