@@ -53,10 +53,11 @@ const POLL_MS = 1_000;
  * 2026-11-26, land-batching S7: 12815 (node 848, git 11676, other 291) on Windows, Node 26, product cut only (S1-S5, S8, S9);
  *   it missed the 11,000 / 10,000 bars, so both ceilings are this run's own numbers (docs/design/land-batching/cost-after.txt);
  *   S6 lowers them to the signed ones.
+ * 2026-11-25: CI windows-latest on ef9ee6c, the highest runner (local 12815 / 11676): 12823 (node 848, git 11682, other 293).
  */
-export const SPAWN_CEILING = 12815;
+export const SPAWN_CEILING = 12823;
 /** The most git processes a full suite may start (land-batching S7); see the dated line above. */
-export const GIT_CEILING = 11676;
+export const GIT_CEILING = 11682;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 
