@@ -37,7 +37,7 @@ function withEnv(value, body) {
 test('a stored name passes', () => {
   withEnv(undefined, () => {
     const { git } = gitStoring('hazzardrust-pilot');
-    const row = pilotBranchRow({ git, host: hostWith('HazzardRust'), env: process.env });
+    const row = pilotBranchRow({ git, host: hostWith('HazzardRust') });
     assert.equal(row.name, 'pilot branch');
     assert.equal(row.verdict, 'pass');
     assert.equal(row.detail, 'hazzardrust-pilot (stored)');
@@ -47,7 +47,7 @@ test('a stored name passes', () => {
 test('an env override passes and says so', () => {
   withEnv('x-pilot', () => {
     const { git, calls } = gitStoring('hazzardrust-pilot');
-    const row = pilotBranchRow({ git, host: hostWith('Other'), env: process.env });
+    const row = pilotBranchRow({ git, host: hostWith('Other') });
     assert.equal(row.verdict, 'pass');
     assert.equal(row.detail, 'x-pilot (PILOT_BRANCH)');
     assert.deepEqual(calls, [], 'an env name reads no config');
@@ -57,7 +57,7 @@ test('an env override passes and says so', () => {
 test('a switched account warns, never switches', () => {
   withEnv(undefined, () => {
     const { git, calls } = gitStoring('hazzardrust-pilot');
-    const row = pilotBranchRow({ git, host: hostWith('Other'), env: process.env });
+    const row = pilotBranchRow({ git, host: hostWith('Other') });
     assert.equal(row.verdict, 'warn');
     assert.match(row.detail, /hazzardrust-pilot/);
     assert.match(row.detail, /Other/);
@@ -68,7 +68,7 @@ test('a switched account warns, never switches', () => {
 test('no name and signed out fails with the steps', () => {
   withEnv(undefined, () => {
     const { git } = gitStoring(null);
-    const row = pilotBranchRow({ git, host: hostWith(null), env: process.env });
+    const row = pilotBranchRow({ git, host: hostWith(null) });
     assert.equal(row.verdict, 'fail');
     const steps = row.steps.join('\n');
     assert.match(steps, /gh auth login/);
@@ -79,7 +79,7 @@ test('no name and signed out fails with the steps', () => {
 test('no name but signed in warns that the next base stores it, writing nothing', () => {
   withEnv(undefined, () => {
     const { git, calls } = gitStoring(null);
-    const row = pilotBranchRow({ git, host: hostWith('Other'), env: process.env });
+    const row = pilotBranchRow({ git, host: hostWith('Other') });
     assert.equal(row.verdict, 'warn');
     assert.match(row.detail, /other-pilot/);
     assert.equal(calls.length, 1);
@@ -89,16 +89,45 @@ test('no name but signed in warns that the next base stores it, writing nothing'
 test('a stored name off the shape fails naming the key', () => {
   withEnv(undefined, () => {
     const { git } = gitStoring('main');
-    const row = pilotBranchRow({ git, host: hostWith('Other'), env: process.env });
+    const row = pilotBranchRow({ git, host: hostWith('Other') });
     assert.equal(row.verdict, 'fail');
     assert.match(row.detail, /pilot\.branch/);
+  });
+});
+
+test('no host and no name fails with the no-name line', () => {
+  withEnv(undefined, () => {
+    const { git } = gitStoring(null);
+    const row = pilotBranchRow({ git, host: null });
+    assert.equal(row.verdict, 'fail');
+    assert.match(row.detail, /no pilot branch name/);
+  });
+});
+
+test('a login that throws is read as signed out', () => {
+  withEnv(undefined, () => {
+    const { git } = gitStoring('hazzardrust-pilot');
+    const host = { login: () => { throw new Error('gh exploded'); } };
+    const row = pilotBranchRow({ git, host });
+    assert.equal(row.verdict, 'pass');
+    assert.equal(row.detail, 'hazzardrust-pilot (stored)');
+  });
+});
+
+test('a bad PILOT_BRANCH fails with a step that fixes the env', () => {
+  withEnv('Main', () => {
+    const { git } = gitStoring('hazzardrust-pilot');
+    const row = pilotBranchRow({ git, host: hostWith('Other') });
+    assert.equal(row.verdict, 'fail');
+    assert.match(row.detail, /PILOT_BRANCH/);
+    assert.match(row.steps.join('\n'), /unset PILOT_BRANCH/);
   });
 });
 
 test('the legacy name is no mismatch', () => {
   withEnv(undefined, () => {
     const { git } = gitStoring('pilot');
-    const row = pilotBranchRow({ git, host: hostWith('Other'), env: process.env });
+    const row = pilotBranchRow({ git, host: hostWith('Other') });
     assert.equal(row.verdict, 'pass');
   });
 });
