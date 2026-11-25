@@ -33,7 +33,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed a338bf6",
+      "state": "integrated 92af40b",
       "branch": "slice/rune-panes-s5",
       "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s5"
     },
@@ -54,8 +54,8 @@
       ]
     }
   ],
-  "next": "co-pilot: S2 integrated 256ed51, checks running; then integrate S1 558aa76, S4 20eda6f, S5 a338bf6, S6 02cb698; S7 after S5 integrates.",
-  "updatedAt": "2026-11-24T23:37:35.216Z",
+  "next": "co-pilot: S5 integrated 92af40b, checks running; then S4 20eda6f, S1 558aa76, S6 02cb698; S7 after S4 integrates.",
+  "updatedAt": "2026-11-24T23:53:28.948Z",
   "friction": [
     {
       "agent": "pilot-architect",
