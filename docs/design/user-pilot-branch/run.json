@@ -34,7 +34,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 0c8db99",
+      "state": "integrated",
       "after": [
         "S1"
       ],
@@ -52,13 +52,15 @@
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S2",
         "S3",
         "S4",
         "S5"
-      ]
+      ],
+      "branch": "slice/user-pilot-branch-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s6"
     },
     {
       "slice": "S7",
@@ -84,8 +86,8 @@
       "pr": 157
     }
   ],
-  "next": "S3 integrated at c88d5d9, checks running; then integrate S4, S7, S8, each after green checks; then S6",
-  "updatedAt": "2026-11-25T20:00:36.078Z",
+  "next": "S4 checks running at 33f3477; S6 implementing from 33f3477; then integrate S7, S8, S6; then fundamentalist and QA",
+  "updatedAt": "2026-11-25T20:20:33.228Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
