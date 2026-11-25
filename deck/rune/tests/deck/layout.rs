@@ -707,6 +707,10 @@ fn the_archive_entry_opens_the_archive_screen_and_is_marked_there() {
     rt.frame(1.0);
     assert_eq!(rt.state.query.screen, "archive");
     assert_eq!(rt.state.prefs.open_panels, open_before, "a pane moved");
+    // On a first start Chat and Status are open and the rest shut; the press moves none of them.
+    for (panel, open) in [("chat", true), ("status", true), ("tickets", false)] {
+        assert_eq!(body(&rt, panel)[3] > 0.0, open, "{panel} moved");
+    }
     assert!(marked(&rt), "not marked on the archive screen");
 
     press(&mut rt, "icon-archive");
