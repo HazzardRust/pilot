@@ -69,7 +69,7 @@
     },
     {
       "slice": "S8",
-      "state": "pushed f7555bb; integrate 1 red: deck gate1-verdicts 5 s git timeout under load (no deck file imports git-view); re-integrating once",
+      "state": "integrated c937a2f; checks green at c937a2f",
       "after": [
         "S2"
       ],
@@ -85,8 +85,8 @@
       ]
     }
   ],
-  "next": "S8 re-integrating; then integrate S5 33adbf6; then S9 (added, integrate to 18); then S7, S6.",
-  "updatedAt": "2026-11-25T13:43:09.093Z",
+  "next": "Integrating S5 33adbf6; then S9 (added, integrate to 18); then S7, S6.",
+  "updatedAt": "2026-11-25T14:02:29.858Z",
   "friction": [
     {
       "agent": "architect",
