@@ -27,7 +27,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 20eda6f",
+      "state": "integrated 3501cd7",
       "branch": "slice/rune-panes-s4",
       "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s4"
     },
@@ -45,17 +45,19 @@
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "pushed 9b4121a",
       "after": [
         "S2",
         "S3",
         "S4",
         "S5"
-      ]
+      ],
+      "branch": "slice/rune-panes-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s7"
     }
   ],
-  "next": "co-pilot: S5 integrated 92af40b, checks running; then S4 20eda6f, S1 558aa76, S6 02cb698; S7 after S4 integrates.",
-  "updatedAt": "2026-11-24T23:53:28.948Z",
+  "next": "co-pilot: integrating S1 558aa76; then S6 02cb698, S7 9b4121a; then the fundamentalist; the fix round also takes the found issue that \"no tickets\" should replace empty queue folds (render-rail.mjs:588); then QA.",
+  "updatedAt": "2026-11-25T00:37:41.041Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -131,6 +133,11 @@
       "agent": "pilot-implementer",
       "what": "Rune's --open refuses run=, and opening a side pane headless needs an undocumented open_panels entry in rune-deck.json",
       "evidence": "S6 report: run= is not key=value; {\"open_panels\":[\"agents\"]}"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S7's empty-lines-only prohibition kept it from matching the HTML deck, which replaces the queue folds with \"no tickets\" when every queue is empty; left to the fix round",
+      "evidence": "render-rail.mjs:588; S7 reviewer nit 1"
     }
   ]
 }
