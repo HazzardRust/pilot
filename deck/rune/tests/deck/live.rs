@@ -278,7 +278,7 @@ fn a_deck_down_at_first_load_claims_no_empty_regions() {
     for claim in [
         "Nothing is waiting on you.",
         "No finished threads yet.",
-        "No tickets to show.",
+        "no tickets",
         "No chat open.",
     ] {
         assert!(

@@ -81,12 +81,8 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
 }
 
 fn agent_row(agent: &Agent, i: usize, ink: Color, dark: bool) -> El {
-    // The view's words for the start, as the page's `<type> · started 3 mins ago`; a view without them names the type.
-    let who = if agent.started.is_empty() {
-        agent.name.clone()
-    } else {
-        format!("{} · started {}", agent.name, agent.started)
-    };
+    // The view's words for the start, as the page's `<type> · started 3 mins ago`.
+    let who = format!("{} · started {}", agent.name, agent.started);
     theme::list_row(row())
         .key(format!("agent-{i}"))
         .gap(space::within)

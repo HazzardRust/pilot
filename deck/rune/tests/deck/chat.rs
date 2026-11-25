@@ -262,9 +262,10 @@ fn the_threads_show_with_no_chat_open() {
             "{title} is drawn: {texts:?}"
         );
     }
+    // The HTML deck draws the rows alone (render-rail.mjs `if (!chat) return threads;`).
     assert!(
-        texts.iter().any(|t| t.contains("No chat open")),
-        "the sentence stays: {texts:?}"
+        !texts.iter().any(|t| t.contains("No chat open")),
+        "no sentence above the rows: {texts:?}"
     );
 }
 

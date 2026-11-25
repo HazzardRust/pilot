@@ -608,6 +608,11 @@ pub fn draw(
         t: &t,
         dark,
     };
+    // The page's `tickets.length ? queues : "no tickets"`: with every queue empty, the sentence stands
+    // in place of the folds.
+    if view.groups.iter().all(|g| g.rows.is_empty()) {
+        return panel.child(theme::empty(NONE, "tickets-none", dark));
+    }
     for (n, g) in view.groups.iter().enumerate() {
         // A group's line between Red, Yellow and Green, none above the first.
         if n > 0 {
@@ -670,9 +675,6 @@ pub fn draw(
             }
         }
         panel = panel.child(fold);
-    }
-    if view.groups.iter().all(|g| g.rows.is_empty()) {
-        panel = panel.child(theme::empty(NONE, "tickets-none", dark));
     }
     panel
 }

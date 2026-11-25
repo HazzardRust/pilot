@@ -65,15 +65,20 @@ fn reports() -> Value {
 fn the_agents_are_the_views_roster_with_their_ages() {
     let rt = window(
         json!({ "agents": { "agents": [
-            { "name": "Explore", "kind": "other", "since": "2026-11-20T12:00:00.000Z", "quietS": 5, "quiet": false },
-            { "name": "pilot:pilot-qa", "kind": "qa", "since": "2026-11-20T12:00:00.000Z", "quietS": 45, "quiet": true },
+            { "name": "Explore", "kind": "other", "since": "2026-11-20T12:00:00.000Z", "started": "now", "quietS": 5, "quiet": false },
+            { "name": "pilot:pilot-qa", "kind": "qa", "since": "2026-11-20T12:00:00.000Z", "started": "now", "quietS": 45, "quiet": true },
         ] } }),
         Prefs::default(),
     );
 
     let shown = texts(&rt);
 
-    for want in ["Explore", "5s", "pilot:pilot-qa", "45s"] {
+    for want in [
+        "Explore · started now",
+        "5s",
+        "pilot:pilot-qa · started now",
+        "45s",
+    ] {
         assert!(shown.iter().any(|t| t == want), "{want} drawn: {shown:?}");
     }
 }

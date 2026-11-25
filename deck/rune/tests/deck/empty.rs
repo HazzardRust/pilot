@@ -138,6 +138,59 @@ fn a_deck_with_tickets_but_none_in_a_queue_keeps_its_queues() {
     );
 }
 
+/// A repository tab with no ticket in any queue draws "no tickets" in place of the folds, as the
+/// HTML deck (`tickets.length ? queues : 'no tickets'`), whatever the prefs hold open.
+#[test]
+fn an_empty_repository_draws_no_tickets_in_place_of_its_queues() {
+    const REPO: &str = "C:/work/beta";
+    let deck = Scratch::start();
+    // A question gives the repository its tab; it is no ticket.
+    support::tool(
+        &deck,
+        "deck_post",
+        json!({ "kind": "question", "title": "Which?", "body": "A or B", "repo": REPO, "author": "", "options": ["A", "B"] }),
+    );
+    let mut rt = live_window(&deck);
+    rt.update(|s, _| {
+        s.prefs
+            .folds
+            .entry(REPO.into())
+            .or_default()
+            .insert("yellow".into());
+        pilot_deck::app::go(
+            s,
+            pilot_deck::client::Query {
+                run: Some(REPO.into()),
+                ..Default::default()
+            },
+        )
+    });
+    support::frame_until(&mut rt, "the repository's tickets", |rt| {
+        rt.state.view.regions.get("tickets").is_some_and(|t| {
+            t["repo"].as_str() == Some(REPO)
+                && t["groups"].as_array().is_some_and(|g| {
+                    g.iter()
+                        .all(|g| g["rows"].as_array().is_some_and(Vec::is_empty))
+                })
+        })
+    });
+    open_every_panel(&mut rt);
+
+    let elements = rt.elements();
+    assert!(
+        elements
+            .iter()
+            .any(|e| e.text.as_deref() == Some("no tickets")),
+        "no tickets is drawn"
+    );
+    let folds: Vec<_> = elements
+        .iter()
+        .filter_map(|e| e.key.as_deref())
+        .filter(|k| k.starts_with("tickets-fold-"))
+        .collect();
+    assert!(folds.is_empty(), "no queue folds: {folds:?}");
+}
+
 /// The thread page lists no queue and no settled threads by design (view/queue.mjs, history.mjs),
 /// so neither region may say there are none while another question waits.
 #[test]
