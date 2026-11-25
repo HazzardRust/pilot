@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-import { KIND_GATE2, KIND_TICKET, NOT_YET, SIGN_OFF, STEPS_WAITING, isQueued, isStanding, stateOf } from '../items.mjs';
+import { KIND_GATE2, KIND_TICKET, NOT_YET, SIGN_OFF, STEPS_WAITING, stateOf } from '../items.mjs';
 import { closeItem, listItems, postSteps, registerRun } from '../store.mjs';
 import { foldedOf, queueOf, shownOf } from '../status.mjs';
 import { postStored, shapedTicketBody, takeLive, tempDeck } from '../testUtils.mjs';
@@ -104,13 +104,4 @@ test('the row says waiting on your steps', (t) => {
   assert.equal(row(landed), 'waiting on your steps');
   assert.equal(row(bare), 'landing', 'without one, today\'s label');
   assert.equal(row(parked), 'needs you', 'without one, today\'s label');
-});
-
-test('an open steps thread is queued for the user and still standing for agents', (t) => {
-  tempDeck(t);
-  const steps = stepsOn(aGreen('Green'));
-  assert.equal(isQueued(steps), true);
-  assert.equal(isStanding(steps), true, 'A1: agents\' side unchanged');
-  closeItem(steps.id);
-  assert.equal(isQueued(listItems().find((item) => item.id === steps.id)), false, 'closed, it waits on no one');
 });

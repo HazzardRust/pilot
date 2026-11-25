@@ -15,7 +15,8 @@ every waiter are unchanged.
 ## Context
 
 After a landing the deck posts a human steps thread per ticket, and the user could not find it: no home card, no count
-and no notification in either deck, so green tickets sat unmoved on steps nobody saw. The chain that hid it:
+and no notification in either deck, so green tickets sat unmoved on steps nobody saw. The chain that hid it, at the
+lines of the design base (`origin/pilot` 307e236):
 
 1. `deck/items.mjs:123` `STANDING_KINDS = [KIND_TICKET, KIND_REPORT, KIND_STEPS]` (ADR 0202 A4).
 2. `deck/items.mjs:522` `isQueued` returned false for every standing kind.
@@ -42,6 +43,9 @@ and no notification in either deck, so green tickets sat unmoved on steps nobody
 ## Consequences
 
 - "Standing" no longer implies "not queued": `isQueued` carries one kind-specific line.
+- Every reader of `isQueued` counts a steps thread: home, the tab and strip counts, Notifications, the thread arrows,
+  and `registerRun`'s `waiting`, so an ended run's tab stays while its repository owes a Done. No agent path reads it:
+  the Stop gate reads the hooks' `isStanding`, and `deck/wait.mjs` waits by owner and reply.
 
 ## Amends
 
