@@ -39,7 +39,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 02cb698",
+      "state": "integrated dfe9055",
       "branch": "slice/rune-panes-s6",
       "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s6"
     },
@@ -56,8 +56,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-rune-panes-s7"
     }
   ],
-  "next": "co-pilot: S1 integrated 9769f57, checks running; then S6 02cb698, S7 9b4121a; then the fundamentalist, fix round, QA.",
-  "updatedAt": "2026-11-25T00:38:39.698Z",
+  "next": "co-pilot: S6 integrated dfe9055, checks running; then S7 9b4121a; then the fundamentalist, fix round, QA.",
+  "updatedAt": "2026-11-25T01:02:08.720Z",
   "friction": [
     {
       "agent": "pilot-architect",
