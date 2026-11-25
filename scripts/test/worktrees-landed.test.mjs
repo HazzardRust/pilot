@@ -143,7 +143,8 @@ test('a record-only tail is still landed', (t) => {
 
 test("the land dir is the run's", (t) => {
   const { work } = fixture(t);
-  assert.deepEqual(names(runWorktrees(work, SLUG)), ['feat', 'fix', 'qa', 's1', 's2', 'work-land-run']);
+  assert.equal(cli('add', '--repo', work, '--run', SLUG, '--detach', path.join(path.dirname(work), 'tagged'), BASE).status, 0);
+  assert.deepEqual(names(runWorktrees(work, SLUG)), ['feat', 'fix', 'qa', 's1', 's2', 'tagged', 'work-land-run']);
   assert.deepEqual(names(runWorktrees(work, 'other')), ['other']);
 });
 

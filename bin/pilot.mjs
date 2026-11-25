@@ -142,6 +142,9 @@ const usage = () => `pilot — the deck for piloted runs
   pilot worktrees remove <path> [--repo <dir>]
                  remove one worktree, its links unlinked first, and its local branch, or
                  print one line kept <state> <dir>; exit 0 removed, 1 kept, 2 usage
+  pilot worktrees add --run <slug> [--repo <dir>] <git worktree add args...>
+                 git worktree add, then the tree tagged to run <slug>, so a landed
+                 prune --run finds it wherever it lives; git's exit, 2 usage
   pilot live-root [--dir <name>]
                  print the trusted live root ~/.claude/pilot/live and whether Claude Code
                  trusts it; --dir makes a plain subdirectory there for a live check

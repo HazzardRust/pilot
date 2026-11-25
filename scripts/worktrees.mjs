@@ -12,7 +12,9 @@
  * A tree whose branch the caller passes in `keep` is never pruned, whatever its state: it reads
  * `concluding` (landing-keeps-worktrees S1).
  *
- * The prune removes with `git worktree remove` (never `--force`) and then `git branch -d`
+ * `pilot worktrees add --run <slug> …` tags the tree it adds to the run (S2, A1).
+ *
+ * The prune removes through `removeTree`: `git worktree remove` (never `--force`) and then `git branch -d`
  * (`-D` only for a branch the caller names as reachable from its landed pilot), so git itself refuses a dirty tree or an unmerged branch even if the test
  * above were wrong (L5). Remote branches are never touched (L6). The base is fetched first,
  * and a failed fetch stops the prune before anything is removed. A landed run's prune is
@@ -20,9 +22,11 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 
 import { holderOf, pilotProcesses, processTable } from '../deck/procs.mjs';
+import { isWindows } from '../hooks/lib/platform.js';
 import { keptDir } from './merge-generated.mjs';
 import { PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
 import { runRef, runRemote } from './remotes.mjs';
@@ -104,12 +108,66 @@ export function landedRun(repo, base, slug) {
   return movedFrom(repo, ref, work) && git(repo, 'merge-base', '--is-ancestor', work, base).ok;
 }
 
-/** Run `slug`'s worktrees: its branches' and the land dir beside the main checkout, never the main checkout itself. */
+/** A run slug as `--run` takes it: a name, never a path. */
+const SLUG = /^\w[\w.-]*$/;
+
+/** The tag file in a tree's git admin dir (prune-worktrees A1): never in the work tree, so never tracked. */
+const TAG = 'pilot-run';
+
+/** A path as git and the file system may both spell it, case-blind on Windows. */
+const norm = (p) => {
+  const slashed = path.resolve(p).replaceAll('\\', '/');
+  return isWindows() ? slashed.toLowerCase() : slashed;
+};
+
+/**
+ * Each linked tree's tag by its normalized path, read from `<common>/worktrees/*`: a tree's
+ * `gitdir` file names its `.git`, so a tree whose dir moved under `git worktree move` is still found.
+ */
+function tags(repo) {
+  const common = git(repo, 'rev-parse', '--path-format=absolute', '--git-common-dir');
+  if (!common.ok) throw new Error(`git rev-parse failed in ${repo}: ${common.err}`);
+  const admin = path.join(common.out, 'worktrees');
+  const found = new Map();
+  let names;
+  try {
+    names = fs.readdirSync(admin);
+  } catch (error) {
+    if (error.code === 'ENOENT') return found;
+    throw error;
+  }
+  for (const name of names) {
+    const read = (file) => {
+      try {
+        return fs.readFileSync(path.join(admin, name, file), 'utf8').trim();
+      } catch (error) {
+        if (error.code === 'ENOENT' || error.code === 'ENOTDIR') return null;
+        throw error;
+      }
+    };
+    const slug = read(TAG);
+    const gitdir = read('gitdir');
+    if (slug === null || gitdir === null || !SLUG.test(slug)) continue;
+    found.set(norm(path.dirname(path.resolve(admin, name, gitdir))), slug);
+  }
+  return found;
+}
+
+/** The run slug tree `dir` of `repo` was tagged to at creation, or null. */
+export function tagOf(repo, dir) {
+  return tags(repo).get(norm(dir)) ?? null;
+}
+
+/**
+ * Run `slug`'s worktrees: those tagged to it, on its branches, and the land dir beside the main
+ * checkout; never the main checkout itself.
+ */
 export function runWorktrees(repo, slug) {
   const [home, ...rest] = worktrees(repo);
   const land = path.resolve(keptDir(home.path, `feat/${slug}`));
+  const tagged = tags(repo);
   return rest
-    .filter((tree) => isRunBranch(tree.branch, slug) || path.resolve(tree.path) === land)
+    .filter((tree) => tagged.get(norm(tree.path)) === slug || isRunBranch(tree.branch, slug) || path.resolve(tree.path) === land)
     .map((tree) => tree.path);
 }
 
@@ -191,16 +249,16 @@ function fetchBase(repo, base) {
  * With `run` and `landed`, the run has landed (ADR 0171): `runWorktrees` are looked at, the land dir
  * among them, and a merged tree goes unless a tracked change or a holder keeps it, with `--force`
  * once its tracked status reads clean again, and its branch with `-D`. Without `run`, `landed` is ignored.
+ * Every removal goes through `removeTree` (prune-worktrees S2, L1), `remove` its remove step: a tree it
+ * keeps is `kept` with its state, `leftover` aside, which is `failed`.
  */
-export function prune(repo, base, { dryRun = false, run, merged = [], keep = [], holder = () => null, landed = false } = {}) {
+export function prune(repo, base, { dryRun = false, run, merged = [], keep = [], holder = () => null, landed = false, remove } = {}) {
   fetchBase(repo, base);
   const removed = [];
   const kept = [];
   const failed = [];
   const relaxed = landed && run !== undefined;
   const trees = classify(repo, base, { run, landed: relaxed });
-  // Removals run from the main checkout, never from inside a worktree being removed.
-  const home = trees[0].path;
   const theirs = relaxed ? new Set(runWorktrees(repo, run)) : null;
   const ours = (tree, index) => run === undefined ||
     (index > 0 && (relaxed ? theirs.has(tree.path) : isRunBranch(tree.branch, run)));
@@ -222,26 +280,33 @@ export function prune(repo, base, { dryRun = false, run, merged = [], keep = [],
       removed.push(tree.path);
       continue;
     }
-    // The mirror's copy goes first, so the removal, forced only for a landed run, finds a clean tree.
-    if (run !== undefined) git(tree.path, 'checkout', '-q', 'HEAD', '--', `:(literal)${runRecord(run)}`);
-    if (relaxed) {
-      // --force takes tracked changes too, so the tracked status is read again right before it.
-      const dirt = dirtOf(tree.path, undefined, { tracked: true });
-      if (dirt === null || dirt.length) {
-        kept.push({ path: tree.path, state: dirt === null ? 'open' : 'merged-dirty' });
-        continue;
-      }
+    // A landed run's removed tree was merged once its record-only tail was stripped, which git's -d cannot see.
+    const flag = (relaxed && isRunBranch(tree.branch, run)) || merged.includes(tree.branch) ? '-D' : '-d';
+    let refused = null;
+    const dropBranch = (at, name) => {
+      const branch = git(at, 'branch', flag, name);
+      if (!branch.ok) refused = branch.err;
+      return branch;
+    };
+    // removeTree re-reads every guard, puts the run record back and forces only for a landed run (L1, L6).
+    let why = null;
+    const removing = (at, dir, force) => {
+      const step = remove ? remove(at, dir, force) : git(at, 'worktree', 'remove', ...(force ? ['--force'] : []), dir);
+      if (!step.ok) why = step.err;
+      return step;
+    };
+    const result = removeTree(repo, tree.path, { landed: relaxed, remove: removing, branch: dropBranch });
+    if (result.kept === 'leftover') {
+      // git's own refusal, when it refused, says more than the kept line.
+      failed.push({ path: tree.path, reason: why || keptLine(tree.path, result.kept) });
+      continue;
     }
-    const remove = git(home, 'worktree', 'remove', ...(relaxed ? ['--force'] : []), tree.path);
-    if (!remove.ok) {
-      failed.push({ path: tree.path, reason: remove.err });
+    if (result.kept) {
+      kept.push({ path: tree.path, state: result.kept });
       continue;
     }
     removed.push(tree.path);
-    if (!tree.branch) continue;
-    // A landed run's removed tree was merged once its record-only tail was stripped, which git's -d cannot see.
-    const branch = git(home, 'branch', (relaxed && isRunBranch(tree.branch, run)) || merged.includes(tree.branch) ? '-D' : '-d', tree.branch);
-    if (!branch.ok) failed.push({ path: `branch ${tree.branch}`, reason: branch.err });
+    if (refused !== null) failed.push({ path: `branch ${tree.branch}`, reason: refused });
   }
   return { removed, kept, failed };
 }
@@ -266,7 +331,45 @@ export function holderFrom(read) {
 }
 
 const USAGE = 'usage: pilot worktrees [prune] [--repo <dir>] [--base <ref>] [--dry-run] [--run <slug>]\n' +
-  '       pilot worktrees remove <path> [--repo <dir>]\n';
+  '       pilot worktrees remove <path> [--repo <dir>]\n' +
+  '       pilot worktrees add --run <slug> [--repo <dir>] <git worktree add args...>\n';
+
+/**
+ * `add --run <slug> <git worktree add args…>`: git's own add, then the slug written to the new
+ * tree's `<gitdir>/pilot-run` (A1). Answers git's exit; 2 a usage error, nothing added; 1 when git
+ * added a tree this could not tag, said on stderr.
+ */
+function addMain(args, { out, err }) {
+  let repo = process.cwd();
+  let run;
+  while (args[0] === '--repo' || args[0] === '--run') {
+    const [flag, value] = args.splice(0, 2);
+    if (flag === '--repo' && value) repo = value;
+    else if (flag === '--run' && SLUG.test(value ?? '')) run = value;
+    else run = null;
+  }
+  if (!run || !args.length) {
+    err.write(USAGE);
+    return 2;
+  }
+  try {
+    const before = new Set(worktrees(repo).map((tree) => norm(tree.path)));
+    const added = git(repo, 'worktree', 'add', ...args);
+    if (added.out) out.write(`${added.out}\n`);
+    if (added.err) err.write(`${added.err}\n`);
+    if (!added.ok) return added.status || 1;
+    const fresh = worktrees(repo).filter((tree) => !before.has(norm(tree.path)));
+    if (fresh.length !== 1) throw new Error(`found ${fresh.length} new trees, not one`);
+    const admin = git(fresh[0].path, 'rev-parse', '--absolute-git-dir');
+    if (!admin.ok) throw new Error(admin.err);
+    fs.writeFileSync(path.join(admin.out, TAG), `${run}\n`);
+    out.write(`tagged ${fresh[0].path} to run ${run}\n`);
+    return 0;
+  } catch (error) {
+    err.write(`pilot worktrees add: ${error.message}; the tree, if added, is untagged\n`);
+    return 1;
+  }
+}
 
 /** `remove <path>`: exit 0 removed, 1 kept (its one line), 2 a usage error. */
 function removeMain(args, { out, err, read }) {
@@ -296,6 +399,7 @@ function removeMain(args, { out, err, read }) {
 export function main(argv, { out = process.stdout, err = process.stderr, read = processTable } = {}) {
   const args = [...argv];
   if (args[0] === 'remove') return removeMain(args.slice(1), { out, err, read });
+  if (args[0] === 'add') return addMain(args.slice(1), { out, err });
   const isPrune = args[0] === 'prune';
   if (isPrune) args.shift();
   let repo = process.cwd();
@@ -307,7 +411,7 @@ export function main(argv, { out = process.stdout, err = process.stderr, read = 
     if ((flag === '--repo' || flag === '--base') && args.length && !args[0].startsWith('--')) {
       if (flag === '--repo') repo = args.shift();
       else base = args.shift();
-    } else if (flag === '--run' && isPrune && /^\w[\w.-]*$/.test(args[0] ?? '')) {
+    } else if (flag === '--run' && isPrune && SLUG.test(args[0] ?? '')) {
       run = args.shift();
     } else if (flag === '--dry-run' && isPrune) {
       dryRun = true;
