@@ -9,9 +9,18 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { hostFor } from '../deck/host.mjs';
-import { landingMessage } from './integrate.mjs';
 import { conflictPaths, mergeResolved } from './merge-generated.mjs';
-import { assertPushable, firstLine, git as gitAt, holds, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
+import {
+  assertPushable,
+  firstLine,
+  git as gitAt,
+  holds,
+  isPilotBase,
+  landingSubjects,
+  namePilotBranch,
+  PILOT_BRANCH,
+  remoteDefaultBranch,
+} from './pilot-branch.mjs';
 import { removeWorktree } from './sync.mjs';
 
 /** How many PRs on the lower head are read, so a fork's PR of the same branch name cannot hide this repository's. */
@@ -24,26 +33,29 @@ const OPEN_LIMIT = 100;
 const FEATURE = /^(?!.*\.\.)feat\/\w[\w.-]*(?:\/\w[\w.-]*)*(?<!\.lock)$/;
 
 /**
- * The base a feature PR targets, from the run record's `base`: `pilot` stays `pilot` (a legacy run, A3);
+ * The base a feature PR targets, from the run record's `base`: the pilot branch `name`, or the legacy `pilot`
+ * before the move, is `name` (`isPilotBase`; user-pilot-branch L1, L8);
  * the default branch (as origin says it now, `remoteDefaultBranch`) stays itself; `feat/<N>` stays
  * `feat/<N>` while N's own-repository PR does not read merged on `host`, then the default branch.
  * `git` is `(args) => string`, argv only. Throws on any other base, or when the host or origin cannot be asked.
  */
-export function prBase({ git, host, base }) {
-  if (base === PILOT_BRANCH) return PILOT_BRANCH;
+export function prBase({ git, host, base, name = PILOT_BRANCH }) {
+  if (isPilotBase(base, name)) return name;
   const main = remoteDefaultBranch(git);
   if (base === main) return main;
-  if (typeof base !== 'string' || !/^feat\//.test(base)) throw new Error(`record base ${JSON.stringify(base)} is not ${PILOT_BRANCH}, ${main} or feat/<slug>`);
+  if (typeof base !== 'string' || !/^feat\//.test(base)) throw new Error(`record base ${JSON.stringify(base)} is not ${name}, ${main} or feat/<slug>`);
   const merged = host.reviews({ head: base, state: 'merged', limit: LIST_LIMIT }).some((pr) => pr?.crossRepo === false && pr.state === 'merged');
   return merged ? main : base;
 }
 
 /**
- * Brings each open own-repository feature PR (head `feat/`) level with its base (audit-f14 spec 6, 10; L2, L4, A5):
+ * Brings each open own-repository feature PR (head `feat/`) of the signed-in user (`mine`; user-pilot-branch L9) level
+ * with its base (audit-f14 spec 6, 10; L2, L4, A5). The pilot branch is `namePilotBranch`'s, so a PR on the legacy
+ * `pilot` is retargeted to it (L1):
  * a PR whose `prBase` differs from its base is retargeted (`host.edit`); then a branch landed on pilot and behind a lower `feat/<N>` takes
  * N's tip, and one that no longer merges clean onto the default branch takes it, each merged in a temporary worktree
- * (generated paths regenerated, the branch's own run record kept) and pushed to origin, never forced. A `pilot` base
- * (A3) is only retargeted. `git` is `(args) => string` run in `cwd`. Answers `{ lines, exitCode }`: one line per change,
+ * (generated paths regenerated, the branch's own run record kept) and pushed to origin, never forced. A PR on the
+ * pilot branch (A3) is only retargeted. `git` is `(args) => string` run in `cwd`. Answers `{ lines, exitCode }`: one line per change,
  * `level #<n>` for a PR left as it was; exit 3 a hand conflict (nothing pushed for that branch), 1 any failure,
  * which outranks a conflict on another PR (every line is still printed).
  * After a squash of the lower branch (`squashOf`) the PR's branch is instead rebased onto the default branch and
@@ -53,11 +65,14 @@ export function prBase({ git, host, base }) {
  */
 export function restack({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args), host }) {
   let main;
+  let name;
   let open;
   try {
     git(['fetch', '-q', '--prune', 'origin']);
     main = remoteDefaultBranch(git);
-    open = host.reviews({ state: 'open', limit: OPEN_LIMIT });
+    ({ name } = namePilotBranch({ git, host }));
+    // The signed-in user's PRs only (L9): another user's are never retargeted or merged forward.
+    open = host.reviews({ state: 'open', mine: true, limit: OPEN_LIMIT });
   } catch (err) {
     return { lines: [`restack failed: ${firstLine(err)}`], exitCode: 1 };
   }
@@ -68,14 +83,14 @@ export function restack({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...arg
     if (review?.crossRepo !== false || review.state !== 'open' || !FEATURE.test(String(review.head)) || !Number.isSafeInteger(review.number)) continue;
     const { number, head } = review;
     try {
-      const base = prBase({ git, host, base: review.base });
+      const base = prBase({ git, host, base: review.base, name });
       // prBase passes any `feat/` text; only a plain branch name reaches the edit, the refs and the lines.
-      if (base !== PILOT_BRANCH && base !== main && !FEATURE.test(base)) throw new Error(`base ${JSON.stringify(base)} is not a plain feat/ branch`);
+      if (base !== name && base !== main && !FEATURE.test(base)) throw new Error(`base ${JSON.stringify(base)} is not a plain feat/ branch`);
       // A squash of the lower branch: rebased first, retargeted only once rebased, so a refused rebase keeps the
       // lower name for the next restack to try again.
       if (base === main && base !== review.base && !FEATURE.test(review.base)) throw new Error(`lower ${JSON.stringify(review.base)} is not a plain feat/ branch`);
       const lowerTip = base === main && base !== review.base ? squashOf({ cwd, git, host, lower: review.base, main }) : null;
-      const rebase = lowerTip && rebaseAfterSquash({ cwd, git, head, lower: review.base, lowerTip, main });
+      const rebase = lowerTip && rebaseAfterSquash({ cwd, git, head, lower: review.base, lowerTip, main, name });
       if (rebase) {
         lines.push(rebase.line);
         failed ||= rebase.failed === true;
@@ -87,7 +102,7 @@ export function restack({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...arg
       }
       if (rebase) continue;
       // Only a feature landed on pilot is merged forward (A5): an unlanded one is left as its author pushed it.
-      const forward = base === PILOT_BRANCH || !landedOnOriginPilot(cwd, git, head) ? 'level' : mergeForward({ cwd, git, head, base, main });
+      const forward = base === name || !landedOnOriginPilot(cwd, git, head, name) ? 'level' : mergeForward({ cwd, git, head, base, main });
       if (forward === 'level') {
         if (base === review.base) lines.push(`level #${number}`);
       } else {
@@ -148,16 +163,19 @@ function squashOf({ cwd, git, host, lower, main }) {
   return holds(cwd, ['merge-base', '--is-ancestor', tip, mainTip]) ? null : tip;
 }
 
-/** Whether `head`'s landing (`landingMessage`, two parents) is on origin's pilot's first-parent history (L3). */
-function landedOnOriginPilot(cwd, git, head) {
-  const ref = `refs/remotes/origin/${PILOT_BRANCH}`;
+/**
+ * Whether `head`'s landing (two parents, subjected onto `name` or, before the move, onto the legacy pilot:
+ * `landingSubjects`) is on origin's `name`'s first-parent history (L3; user-pilot-branch L8).
+ */
+function landedOnOriginPilot(cwd, git, head, name) {
+  const ref = `refs/remotes/origin/${name}`;
   if (!holds(cwd, ['rev-parse', '--verify', '-q', `${ref}^{commit}`])) return false;
-  const subject = landingMessage(head);
+  const subjects = landingSubjects(head, name);
   return git(['log', '--first-parent', '--format=%P%x00%s', ref])
     .split('\n')
     .some((line) => {
       const [parents, said] = line.split('\0');
-      return said === subject && parents.split(' ').length === 2;
+      return subjects.includes(said) && parents.split(' ').length === 2;
     });
 }
 
@@ -168,12 +186,12 @@ function landedOnOriginPilot(cwd, git, head) {
  * with `failed` for a refusal the pilot must act on, a rebase that stopped included; nothing is pushed unless
  * `rebased`. Throws on any other failure.
  */
-function rebaseAfterSquash({ cwd, git, head, lower, lowerTip, main }) {
+function rebaseAfterSquash({ cwd, git, head, lower, lowerTip, main, name }) {
   const refuse = (why, more) => ({ line: `not rebased ${head}: ${why}`, rebased: false, ...more });
   const fetched = git(['rev-parse', '--verify', `refs/remotes/origin/${head}^{commit}`]);
   // A branch holding none of the squashed tip (already rebased, by an earlier restack or by hand) only retargets.
   if (!holds(cwd, ['merge-base', '--is-ancestor', lowerTip, fetched])) return null;
-  if (!landedOnOriginPilot(cwd, git, head)) return refuse(`not landed on ${PILOT_BRANCH}`);
+  if (!landedOnOriginPilot(cwd, git, head, name)) return refuse(`not landed on ${name}`);
   const mainTip = git(['rev-parse', '--verify', `refs/remotes/origin/${main}^{commit}`]);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-restack-'));
   try {
