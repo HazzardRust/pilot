@@ -177,7 +177,7 @@ flowchart TD
   walkthrough(["the walkthrough: QA's steps for you to run and look at"])
   gate2(["Gate 2: you sign off the finished feature"])
   lander["pilot:pilot-lander"]
-  pr["the feature, landed on the pilot branch"]
+  pr["the feature, landed on your pilot branch"]
   report(["the closing report: what was built, and any step left to you"])
 
   user -->|"your first prompt or question"| pilot
@@ -222,7 +222,7 @@ flowchart TD
 Three steps stay yours through a run, in order:
 
 - **Spec design** — you sign off the architecture artefact at Gate 1, before a slice is built.
-- **Quality assurance** — you work the QA agent's walkthrough of the feature where it is meant to run, at Gate 2, before the feature PR lands on the pilot branch.
+- **Quality assurance** — you work the QA agent's walkthrough of the feature where it is meant to run, at Gate 2, before the feature PR lands on your pilot branch.
 - **Code review** — mostly AI: a language reviewer per slice, then one principles pass per feature. The plugin stops short of merging the feature PR; to have it merge its own PRs, say so as a standing rule in your own `CLAUDE.md`.
 
 ## Layout

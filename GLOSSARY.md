@@ -39,7 +39,7 @@ _Avoid_: Ticket, ticket, step
 _Avoid_: Feature branch, trunk, release branch
 
 **Pilot branch**:
-`<login>-pilot`, the signed-in user's own branch in a repository and the one their Gate 2 lands on; derived once from the host CLI's login, lower-cased, and stored as the `pilot.branch` git setting. Each user of a repository has their own.
+`<login>-pilot`, the signed-in user's own branch in a repository and the one their Gate 2 lands on; derived once from the host CLI's login, lower-cased (set by hand with no host), and stored as the `pilot.branch` git setting. Each user of a repository has their own.
 _Avoid_: Trunk, develop, staging
 
 **Legacy pilot**:

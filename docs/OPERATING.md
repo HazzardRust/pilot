@@ -69,7 +69,7 @@ one remote each land on their own line and `pilot restack` retargets only your o
 - **`pilot.branch`.** The name is stored once, in the repository's local git config, and every later command reads
   it there with no login read: `git config pilot.branch` prints it. The environment variable `PILOT_BRANCH`
   overrides it for one process. Either is accepted only as `<name>-pilot` in lower-case letters, digits, `.`, `_`
-  and `-`. With no host (`pilot host none`), or signed out with nothing stored, a command stops with one line naming
+  and `-`, starting with a letter or digit, or as the legacy `pilot`. With no host (`pilot host none`), or signed out with nothing stored, a command stops with one line naming
   `gh auth login` (or `glab auth login`) and `git config pilot.branch <name>`; set it by hand once with
   `git config pilot.branch <name>-pilot`. `pilot doctor` shows the name and where it came from, and warns, never
   switches, when the signed-in account's `<login>-pilot` is not the stored name.
