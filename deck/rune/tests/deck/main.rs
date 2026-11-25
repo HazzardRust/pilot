@@ -22,6 +22,7 @@ mod notifications;
 mod preview;
 mod queue;
 mod reply;
+mod scroll;
 mod skeleton;
 mod startup;
 mod status;

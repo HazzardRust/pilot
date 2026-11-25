@@ -135,6 +135,14 @@ test('a closed thread offers reopen, as the page does, and nothing else', () => 
   assert.match(renderThreadPage(closed, [closed]), /action="\/reopen"/);
 });
 
+test('a closed steps thread offers no reopen, as the page draws none, and a closed question still does', () => {
+  const steps = anItem({ kind: 'steps', steps: [{ text: 'Do it' }], resolution: 'Done.', resolvedAt: AT });
+  const question = anItem({ resolution: 'Done.', resolvedAt: AT });
+  assert.equal(replyView(readsOf([steps]), { id: steps.id }).mode, 'none');
+  assert.doesNotMatch(renderThreadPage(steps, [steps]), /action="\/reopen"/);
+  assert.equal(replyView(readsOf([question]), { id: question.id }).mode, 'reopen');
+});
+
 test('a record, an archived thread or an unknown id offers nothing', () => {
   const report = anItem({ kind: 'report' });
   const none = { mode: 'none', options: [], dismiss: false };

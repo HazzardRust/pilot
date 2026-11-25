@@ -337,6 +337,18 @@ fn slot(control: Option<El>) -> El {
     }
 }
 
+/// A red outlined badge (deck.css `.badge`): the label in the `red` token, a 1 px stroke of it, the
+/// button's corner.
+fn badge(label: &str, dark: bool) -> El {
+    let red = theme::tokens(dark).accent.red;
+    text(label)
+        .font(type_::CAPTION)
+        .color(red)
+        .border(1.0, red)
+        .radius(theme::radius::button)
+        .px(space::s2)
+}
+
 /// One line of a row's text, in `ink`.
 fn said(words: impl Into<String>, ink: rune::Color) -> El {
     text(words.into()).font(type_::BODY).color(ink).wrap()
@@ -405,20 +417,17 @@ fn lines(r: &Row, colour: &str, local: &Local, t: &tok::Theme, dark: bool) -> El
         dark,
     ));
     if let Some(why) = &r.recut {
-        state = state.child(said("re-cut", t.text_secondary).help(why.as_str()));
+        let key = format!("ticket-{}-recut", r.id);
+        state = state.child(badge("re-cut", dark).key(key).help(why.as_str()));
     }
     let q = &r.questions;
     if q.count > 0 {
         let plural = if q.count == 1 { "" } else { "s" };
-        let blocking = if q.blocking > 0 {
-            format!(" ({} blocking)", q.blocking)
-        } else {
-            String::new()
-        };
-        state = state.child(said(
-            format!("{} question{plural}{blocking}", q.count),
-            t.text,
-        ));
+        state = state.child(said(format!("{} question{plural}", q.count), t.text));
+    }
+    if q.blocking > 0 {
+        let key = format!("ticket-{}-blocking", r.id);
+        state = state.child(badge("blocking", dark).key(key));
     }
     body = body.child(state);
     if let Some(n) = r.slices {
@@ -456,23 +465,25 @@ fn lines(r: &Row, colour: &str, local: &Local, t: &tok::Theme, dark: bool) -> El
 const HAND_TINT: f32 = 0.14;
 const HAND_BAR: f32 = 3.0;
 
-/// The queue a row sits in: its lane's colour and the repo it belongs to.
-struct Lane<'a> {
-    colour: &'a str,
+/// What every row of a panel is drawn against.
+struct Around<'a> {
     repo: &'a str,
+    local: &'a Local,
+    pending: &'a Pending,
+    t: &'a tok::Theme,
+    dark: bool,
 }
 
-fn ticket_row(
-    r: &Row,
-    lane: &Lane,
-    mids: &Mids,
-    local: &Local,
-    pending: &Pending,
-    t: &tok::Theme,
-    dark: bool,
-) -> El {
+fn ticket_row(r: &Row, colour: &str, mids: &Mids, around: &Around) -> El {
+    let Around {
+        repo,
+        local,
+        pending,
+        t,
+        dark,
+    } = *around;
     let key = format!("ticket-{}", r.id);
-    let play = continue_of(r, lane.repo, local, pending, t, dark);
+    let play = continue_of(r, repo, local, pending, t, dark);
     // A play asking Confirm takes the whole row, as the page blanks the row around its confirm step.
     if local.confirming.as_deref() == Some(r.id.as_str()) {
         let sure = row()
@@ -518,7 +529,7 @@ fn ticket_row(
     let line = row()
         .pr(space::s4)
         .gap(space::within)
-        .child(lines(r, lane.colour, local, t, dark))
+        .child(lines(r, colour, local, t, dark))
         .child(controls)
         .child(slot(grip).self_center());
     // deck.css `li.in-hand` / `li.co-pilot-held`: the row tinted at 14% of its lane's colour, a 3 px bar
@@ -549,6 +560,11 @@ fn ticket_row(
     }
 }
 
+/// Whether the queue holds the row in hand or the co-pilot's.
+fn held(g: &Group) -> bool {
+    g.rows.iter().any(|r| r.mark.is_some())
+}
+
 pub fn draw(
     v: &serde_json::Value,
     local: &Local,
@@ -560,11 +576,10 @@ pub fn draw(
     let view = Tickets::deserialize(v).unwrap_or_default();
     let dark = cx.system_dark();
     let t = tok::theme(dark);
-    const NONE: &str = "No tickets yet.";
+    const NONE: &str = "no tickets";
+    // The overview draws nothing, as the HTML deck draws tickets only on a tab (render-rail.mjs).
     let Some(repo) = view.repo else {
-        return col()
-            .key("tickets")
-            .child(theme::empty(NONE, "tickets-none", dark));
+        return col().key("tickets");
     };
     let add = repo.clone();
     // Add as a plain + centred above Red (the user, 2026-11-20); its name is its label and hover.
@@ -585,6 +600,18 @@ pub fn draw(
         .self_center(),
     );
     let open = prefs.folds.get(&repo);
+    let around = Around {
+        repo: &repo,
+        local,
+        pending,
+        t: &t,
+        dark,
+    };
+    // The page's `tickets.length ? queues : "no tickets"`: with every queue empty, the sentence stands
+    // in place of the folds.
+    if view.groups.iter().all(|g| g.rows.is_empty()) {
+        return panel.child(theme::empty(NONE, "tickets-none", dark));
+    }
     for (n, g) in view.groups.iter().enumerate() {
         // A group's line between Red, Yellow and Green, none above the first.
         if n > 0 {
@@ -593,11 +620,18 @@ pub fn draw(
         }
         let (fold_repo, colour) = (repo.clone(), g.colour.clone());
         let ink = accent(&theme::tokens(dark), &g.colour);
+        // A fold holding the row in hand or the co-pilot's opens itself, and a press does not shut it.
+        let held = held(g);
         let header = theme::control(row(), dark)
             .key(format!("tickets-fold-{}", g.colour))
             .gap(space::within)
-            .role("button")
-            .on_press(move |s: &mut State| toggle(s, &fold_repo, &colour))
+            .role("button");
+        let header = if held {
+            header
+        } else {
+            header.on_press(move |s: &mut State| toggle(s, &fold_repo, &colour))
+        };
+        let header = header
             // deck.css `.ticket-queue > summary`: the label and its count in capitals, in the queue's pastel.
             .child(
                 text(g.label.to_uppercase())
@@ -611,7 +645,11 @@ pub fn draw(
                     .color(ink),
             );
         let mut fold = col().gap(space::within).child(header);
-        if open.is_some_and(|set| set.contains(&g.colour)) {
+        if held || open.is_some_and(|set| set.contains(&g.colour)) {
+            if g.rows.is_empty() {
+                let key = format!("tickets-fold-{}-none", g.colour);
+                fold = fold.child(said("none", t.text_secondary).key(key));
+            }
             // deck.css `.tickets-list li`: a hairline between items, none after the last.
             let last = g.rows.len().saturating_sub(1);
             let mut mids: Vec<(String, f32)> = g
@@ -627,12 +665,8 @@ pub fn draw(
                 mids.clear();
             }
             let mids: Mids = Rc::new(mids);
-            let lane = Lane {
-                colour: &g.colour,
-                repo: &repo,
-            };
             for (i, r) in g.rows.iter().enumerate() {
-                fold = fold.child(ticket_row(r, &lane, &mids, local, pending, &t, dark));
+                fold = fold.child(ticket_row(r, &g.colour, &mids, &around));
                 if i != last {
                     let key = format!("ticket-{}-rule", r.id);
                     fold = fold.child(theme::rule(theme::Rule::Item, dark).key(key));
@@ -640,9 +674,6 @@ pub fn draw(
             }
         }
         panel = panel.child(fold);
-    }
-    if view.groups.is_empty() {
-        panel = panel.child(theme::empty(NONE, "tickets-none", dark));
     }
     panel
 }
