@@ -422,7 +422,10 @@ fn every_bar_control_takes_a_mouse_click() {
         .iter()
         .map(|k| k["kind"].as_str().expect("a kind's name").to_string())
         .collect();
-    assert!(kinds.len() >= 13, "every record kind has a toggle: {kinds:?}");
+    assert!(
+        kinds.len() >= 13,
+        "every record kind has a toggle: {kinds:?}"
+    );
     for width in [1280.0, 900.0] {
         let mut rt = archive_window_at(region.clone(), width);
         rt.frame(0.0);
@@ -431,7 +434,10 @@ fn every_bar_control_takes_a_mouse_click() {
         click(&mut rt, "archive-search", width);
         rt.paste("zz");
         rt.frame(1.0 / 60.0);
-        assert_eq!(rt.state.regions.archive.search.text, "zz", "{width}: the click focused the search box");
+        assert_eq!(
+            rt.state.regions.archive.search.text, "zz",
+            "{width}: the click focused the search box"
+        );
         rt.update(|s, _| s.regions.archive.search = TextEdit::new(""));
         rt.frame(1.0 / 60.0);
 
@@ -443,7 +449,11 @@ fn every_bar_control_takes_a_mouse_click() {
                 "{width}: the click on {kind}'s toggle picked it"
             );
         }
-        for (name, column) in [("date", Column::Date), ("kind", Column::Kind), ("title", Column::Title)] {
+        for (name, column) in [
+            ("date", Column::Date),
+            ("kind", Column::Kind),
+            ("title", Column::Title),
+        ] {
             click(&mut rt, &format!("archive-sort-{name}"), width);
             assert!(
                 rt.state.regions.archive.sort == Some((column, true)),
