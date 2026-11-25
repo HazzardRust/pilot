@@ -5,6 +5,11 @@
   "branch": "feat/archive-page",
   "base": "pilot",
   "worktree": "C:/Users/jrylk/Projects/pilot-feat-archive-page",
+  "qa": {
+    "branch": "qa2/archive-page",
+    "worktree": "C:/Users/jrylk/Projects/pilot-qa2-archive-page",
+    "url": "http://127.0.0.1:38517"
+  },
   "artefact": "docs/design/archive-page/architecture.md",
   "slices": [
     {
@@ -151,51 +156,15 @@
     },
     {
       "slice": "feature",
-      "state": "failed gate: base NOT taken: pilot@fb6cac4 merged red (cargo: rune-target pilot-deck.exe locked by pid 4744); local feat stale at d27351e, origin 5b1582f; CI macos cancelled, rerun"
+      "state": "in QA: F9 8991e37, F7 e3a67be, QA2 ce6f022 (+follow-up), ts+rust APPROVE; live look, full gate, walkthrough next"
     }
   ],
   "findings": [
     "kept: F7 simplify — user chose a simple log read over the chunked tail reader on itm_973b6c14330a; A6 overturned"
   ],
-  "next": "Waiting on main: bring local feat to origin 5b1582f and free rune-target's pilot-deck.exe; then pilot integrate --dir feat (base), sha to main, checks, respawn QA (fix tip + QA2 + F9, F7 user finds).",
-  "updatedAt": "2026-11-25T11:27:45.924Z",
+  "next": "Green: QA a46725a1845de5802 live on walkthrough itm_00bd1d6f40e3, tip f76ceca (PR #139), carries to gate2. Yellow lane empty: co-pilot itm_0476cd419c86 next; prune itm_0ddca8a8e2f0 blocked on itm_eff02e94eb77 (S5 b5cdcc1 pushed). Pilot's open gate2s: itm_98c905ce70af steps-in-previews (scratch 21512, window 35608), itm_6a7bd8959178 rune-panes: lander on each press.",
+  "updatedAt": "2026-11-25T11:55:27.884Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S2 and S3 each register a test module in deck/rune/tests/deck/main.rs, so parallel slices conflict on one line",
-      "evidence": "git merge-tree dc80540 5cee353: CONFLICT deck/rune/tests/deck/main.rs",
-      "size": 1
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "run record shape (deck.records[] as {repo, record}, slice cells {slice, state}) not documented for an adapter author",
-      "evidence": "S5: six greps over deck/store-runs.mjs, deck/runs.mjs, deck/status.mjs",
-      "size": 1
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "storeFile lives in deck/store.mjs, not store-dir.mjs; first S5 test run failed on the import",
-      "evidence": "TypeError: storeFile is not a function",
-      "size": 1
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "a fresh worktree has no node_modules, so deck/rune cargo tests fail (61) until npm ci; brief gate did not say so",
-      "evidence": "S12: ERR_MODULE_NOT_FOUND @modelcontextprotocol/sdk from deck/client.mjs",
-      "size": 2
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "one clippy error masked two field_reassign_with_default lints in tests/deck/layout.rs:279,337",
-      "evidence": "S12 fixed them in-slice after too_many_arguments cleared",
-      "size": 1
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "usage.jsonl line shape not given in S7's Interface; read from deck/telemetry.mjs appendWindow and deck/usage.mjs readSnapshot",
-      "evidence": "S7 report",
-      "size": 1
-    },
     {
       "agent": "pilot-implementer",
       "what": "any .mjs in deck/archive-kinds/ is auto-discovered as a kind, so adapters duplicate isObject/text/linesOf rather than share a helper",
@@ -399,6 +368,36 @@
       "what": "F1 snap needed a scratch deck serving a store copy: PILOT_DECK_DIR alone does not point Rune at a store, and no release binary existed (~3 min build)",
       "evidence": "fix round report",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "forced hand-back a third time with a child (QA) live; main takes the child's report instead",
+      "evidence": "handback-send-enforce, archive-page"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot checks read red at 434dc69 when both runs were only cancelled by QA's superseding pushes",
+      "evidence": "checks 434dc69"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot deck --help has no help branch: it runs the deck launcher against the live deck",
+      "evidence": "QA2 and pilot both hit it"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "gate's home-store check trips whenever the user's live deck writes during the gate",
+      "evidence": "home store changed ... live deck 8472 up"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "brief does not say /api/view needs the Bearer deck.secret or that --open screen=archive picks the first screen; port 49712 refused (reserved range)",
+      "evidence": "401 until client.rs read; listen EACCES"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 9's 50 ms bar only runs under cargo test --release, which the gate never runs; Rune controls had no pointer-click test until QA",
+      "evidence": "QA2 pushback"
     }
   ]
 }
