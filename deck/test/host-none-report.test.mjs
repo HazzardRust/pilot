@@ -47,11 +47,11 @@ test('the report names branches', () => {
   const record = { feature: 'x', slug: 'x', slices: [] };
   const gate = { pr: 'feat/x', landing: { state: 'landed', sha: '1a2b3c4', line: `landed feat/x on pilot at 1a2b3c4\n${line}` } };
   const { body } = closingReportOf(record, gate, []);
-  const texts = stepsOf(record, gate, []).map((step) => step.text);
+  const texts = stepsOf(record, gate).map((step) => step.text);
   assert.match(body, /^main gets pilot: merge pilot into main by hand$/m);
   assert.equal(texts[0], 'Merge pilot into main by hand, with a merge commit.');
   assert.doesNotMatch(`${body}\n${texts.join('\n')}`, /#\d+/);
 
-  const other = stepsOf(record, { pr: 'feat/x', landing: { state: 'landed', sha: '1a2b3c4', line: mainLine({ byHand: 'fork-pilot', host: null }) } }, []);
+  const other = stepsOf(record, { pr: 'feat/x', landing: { state: 'landed', sha: '1a2b3c4', line: mainLine({ byHand: 'fork-pilot', host: null }) } });
   assert.equal(other[0].text, 'Merge fork-pilot into main by hand, with a merge commit.');
 });
