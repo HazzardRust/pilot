@@ -17,7 +17,7 @@ The user works on this repository from two devices that both have pilot and the 
 ## Decision
 
 - **The rule** (spec 1): `docs/OPERATING.md` `## Two devices, one repo` states four rules: git is the shared state; each device runs its own deck; one device owns the queue and the landings on `pilot`; the other hands work over by a pushed branch and a PR. `agents/pilot.md` links it.
-- **No store sync** (L2, spec 4): nothing syncs, exports, imports or commits the store, tickets or records.
+- **No store sync** (L2, spec 4): nothing syncs the store; `pilot store export` and `pilot store import` move it by hand (ADR NNNN).
 - **Owner by convention** (A1): no setting names the owner device; a Sign off on device 2 lands safely.
 - **The slug check** (L3, L4, L8): one module, `deck/slug-clash.mjs`, read by `pilot doctor slug <slug>`, bare `pilot doctor`'s `slugs` row and `pilot start`. It reads `origin` and the run remote live, never tracking refs; an unreachable remote reads `cannot tell`, never free. The slug is held to kebab-case before any process starts and passed as one argv element.
 - **Warn, not refuse** (A2, A4): `pilot doctor slug` exits 1 on a clash and the pilot picks another slug at step 1; `pilot start` and bare `pilot doctor` only print.
