@@ -572,6 +572,7 @@ export function worktreesRow({ repo, git, statfs, now, sizeOf, budgetMs }) {
   let home;
   let linked;
   let stale;
+  let untagged;
   try {
     [home, ...linked] = listTrees(git);
     if (!home?.path) throw new Error(`git listed no worktree in ${repo}`);
@@ -583,13 +584,15 @@ export function worktreesRow({ repo, git, statfs, now, sizeOf, budgetMs }) {
           })
         : [],
     );
+    const unread = linked.find((tree) => !Number.isFinite(times.get(tree.head)));
+    if (unread) throw new Error(`no commit time for ${unread.path}`);
     const old = linked.filter((tree) => now() - times.get(tree.head) > STALE_MS);
     const out = notInPilot(git, old);
     stale = old.filter((tree) => out.has(tree.head));
+    untagged = linked.filter((tree) => !tree.branch && tagOf(home.path, tree.path) === null).length;
   } catch (error) {
     return { name, verdict: 'cannot tell', detail: `git could not list the trees: ${firstLine(error)}` };
   }
-  const untagged = linked.filter((tree) => !tree.branch && tagOf(home.path, tree.path) === null).length;
   const listed = new Set([home, ...linked].map((tree) => samePath(tree.path)));
   const parent = path.dirname(home.path);
   const prefix = `${path.basename(home.path)}-`;
@@ -626,6 +629,7 @@ export function worktreesRow({ repo, git, statfs, now, sizeOf, budgetMs }) {
   }
   const free = volume.bavail * volume.bsize;
   const total = volume.blocks * volume.bsize;
+  if (!(total > 0) || !(free >= 0)) return { name, verdict: 'cannot tell', detail: `${census}; free space unread (the volume reports no size); ${output}` };
   const detail = `${census}; ${gb(free)} free of ${gb(total)}; ${output}`;
   if (free < total * LOW_FREE) {
     return { name, verdict: 'fail', detail, steps: ['under 10% free: pilot worktrees prune --dry-run lists the trees that can go, then pilot worktrees prune'] };
