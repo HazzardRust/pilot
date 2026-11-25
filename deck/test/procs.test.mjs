@@ -3,6 +3,7 @@
  * injected table; only the last test reads the real one, and it stops what it starts.
  */
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import fs from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
@@ -11,7 +12,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 
+import { hostPlatform } from '../../hooks/lib/platform.js';
 import './no-open.mjs';
+import { REASON, holderFor } from '../awake.mjs';
 import { elapsedSeconds, isDeckDaemon, main, pilotProcesses, processTable } from '../procs.mjs';
 
 const DAEMON = fileURLToPath(new URL('../daemon.mjs', import.meta.url));
@@ -356,4 +359,53 @@ test('a wait whose --dir holds a space reads the whole path', () => {
   const rows = pilotProcesses(table, { userDeckPid: null, exists: all });
   assert.equal(byPid(rows, 52)?.kind, 'wait');
   assert.equal(byPid(rows, 52)?.worktree, '/home/me/my tree');
+});
+
+/** The command line Windows reports for a spawn of `holder`: node quotes an arg with a space and escapes its `"`. */
+const spawned = ({ cmd, args }) => [cmd, ...args].map((a) => (/[\s"]/.test(a) ? `"${a.replaceAll('"', '\\"')}"` : a)).join(' ');
+const holderRow = (pid, ppid, watched) => proc(pid, ppid, spawned(holderFor('win32', watched)), 'powershell.exe');
+
+test("a holder is a leftover when its deck is gone or an orphan, never the user's deck's", () => {
+  const table = [
+    proc(10, 1, 'node /plugin/deck/daemon.mjs'),
+    holderRow(11, 10, 10),
+    proc(20, 1, 'node /w/s4/deck/daemon.mjs --leash 30'),
+    holderRow(21, 20, 20),
+    holderRow(41, 40, 40),
+  ];
+  const rows = pilotProcesses(table, { userDeckPid: 10, exists: all });
+  assert.deepEqual(
+    [11, 21, 41].map((pid) => [byPid(rows, pid)?.kind, byPid(rows, pid)?.owner, byPid(rows, pid)?.orphan]),
+    [
+      ['holder', 10, null],
+      ['holder', 20, 'deck 20 is an orphan'],
+      ['holder', 40, 'deck 40 gone'],
+    ],
+  );
+});
+
+test('a PowerShell or caffeinate row that is not a holder is not listed', () => {
+  // S2's darwin form, stubbed: caffeinate carries no reason, so only the deck it watches being its parent makes it pilot's.
+  const build = (platform, pid) => (platform === 'darwin' ? { cmd: '/usr/bin/caffeinate', args: ['-i', '-w', String(pid)] } : holderFor(platform, pid));
+  const table = [
+    proc(10, 1, 'node /plugin/deck/daemon.mjs'),
+    proc(12, 500, `powershell.exe -Command "Write-Output '${REASON}'; Get-Process -Id 10"`, 'powershell.exe'),
+    proc(13, 500, '/usr/bin/caffeinate -i -w 10', 'caffeinate'),
+    proc(14, 10, '/usr/bin/caffeinate -i -w 104', 'caffeinate'),
+    proc(15, 10, '/usr/bin/caffeinate -i -w 10', 'caffeinate'),
+  ];
+  const rows = pilotProcesses(table, { userDeckPid: 10, exists: all, holderFor: build });
+  assert.deepEqual(rows.map((row) => [row.pid, row.kind]), [[10, 'daemon'], [15, 'holder']]);
+});
+
+test('pilot ps lists a real Windows holder by its watched pid', { skip: hostPlatform() !== 'win32' && 'the Windows holder runs on win32 only' }, async (t) => {
+  const watched = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1e9)'], { stdio: 'ignore', windowsHide: true });
+  killing(t, watched.pid);
+  const { cmd, args } = holderFor('win32', watched.pid);
+  const holder = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true });
+  killing(t, holder.pid);
+  await once(holder.stdout, 'data');
+
+  const row = byPid(pilotProcesses(processTable(), { userDeckPid: watched.pid }), holder.pid);
+  assert.deepEqual([row?.kind, row?.owner, row?.orphan], ['holder', watched.pid, null]);
 });

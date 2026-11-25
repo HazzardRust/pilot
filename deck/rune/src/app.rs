@@ -319,6 +319,8 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
 
 /// The window: the side strips around the centre column (`layout`).
 pub fn view(s: &State, cx: &mut Cx<State>) -> El {
+    // Text and fields given no colour draw in the page's ink, not Rune's white.
+    cx.foreground(theme::tokens(cx.system_dark()).text);
     layout::strips(s, cx)
 }
 
