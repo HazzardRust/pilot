@@ -3,13 +3,15 @@
   "feature": "The pilot branch is named for its user",
   "ticket": "itm_0476cd419c86",
   "branch": "feat/user-pilot-branch",
-  "base": "feat/reply-markdown",
+  "base": "pilot",
   "worktree": "C:/Users/jrylk/Projects/pilot-feat-user-pilot-branch",
   "artefact": "docs/design/user-pilot-branch/architecture.md",
   "slices": [
     {
       "slice": "S1",
-      "state": "planned"
+      "state": "pushed ffa98e0",
+      "branch": "slice/user-pilot-branch-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s1"
     },
     {
       "slice": "S2",
@@ -58,16 +60,21 @@
     },
     {
       "slice": "S8",
-      "state": "planned"
+      "state": "pushed e7295aa",
+      "after": [
+        "S5"
+      ],
+      "branch": "slice/user-pilot-branch-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s8"
     },
     {
       "slice": "feature",
-      "state": "planned; Gate 1 itm_178637b5acc6 at eaf07b6 awaits the user's Sign off",
+      "state": "planned; Gate 1 itm_178637b5acc6 signed by the user 2026-11-25 at eaf07b6",
       "pr": 157
     }
   ],
-  "next": "Red: gate1 itm_178637b5acc6 awaits press. Green: gate2 itm_1d819d4586dc, itm_589b847f8e5c await press; pr-overview walkthrough itm_2c7938dcf978 (pilot owns; on reply resume QA a41acfb3c2f0c0a04, rewrite #144 first); rune-panes QA ad61fd567e97db855, stay-awake QA abe6640a3baabf2c1 live. Yellow: portable-store BLOCKED itm_f654d687ec15, no co-pilot live. Each record's next is current.",
-  "updatedAt": "2026-11-25T06:12:06.618Z",
+  "next": "S1 pushed ffa98e0, both approve, gate green; integrating S1, then pilot checks and pilot ready for S2-S5, S7",
+  "updatedAt": "2026-11-25T18:28:00.240Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -165,6 +172,76 @@
       "kind": "drain",
       "what": "a context summary dropped the details of one deck_post and one TaskStop mid-turn; the pilot could not say what it had posted",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 implementer stalled before its first edit; stream watchdog killed it after 600s with no progress",
+      "evidence": "task-notification failed: Agent stalled: no progress for 600s; worktree clean at 841e71e",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S1 fact-sheet helper stalled 600 s (stream watchdog) and the co-pilot then made no tool call for 20 min, ignoring a pause; main stopped it",
+      "evidence": "task a6d84248a9d90790f failed; deck Idle notice on itm_0476cd419c86 18:10Z",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "GitHub partial outage: 9 'feature PR not updated' notices each woke pilot wait and needed a read, a reply and a restart",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "prompt pins at near-zero headroom after S8 (pilot 0.5 tokens, pilot-architect 1.25, always-loaded rules 2): every wording change costs a re-measure and the next slice touching them breaks a pin",
+      "evidence": "user-pilot-branch S8 report, measure-prompt",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate fails on a stale shipped-rules ledger after every rule edit; two extra gate runs of ~100 s",
+      "evidence": "user-pilot-branch S8 report: 'ledger stale: … rebuilt; commit it'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "harness forced a hand-back while its S1 implementer was live; pilot had to resume it",
+      "evidence": "co-pilot hand-back, handback-send-enforce notice",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "pilot ready --slots 6 did not print S8 though it names no blockers; pilot budget refuses to run from the feat worktree",
+      "evidence": "co-pilot hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "prompt pins have near-zero headroom after S8 (pilot 12141.5/12142, architect 10680.5/10681.75, rules 3498/3500)",
+      "evidence": "S8 implementer report via main"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate fails on stale shipped-rules ledger after every rule edit",
+      "evidence": "2 extra ~100 s gate runs in S8",
+      "size": 200
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot ready did not print S8 though the plan names no blockers; a duplicate S8 implementer was spawned (stopped by message, touched nothing) since TaskStop from the co-pilot is refused",
+      "evidence": "pilot ready --slots 6 printed only 'feature from feat'; TaskStop: 'agent cannot stop it'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no-fixture-edit rule collided with A4: pilot-branch-env.test.mjs asserted assertPushable wording; HOST_KEYS in host-contract test sits outside slice files",
+      "evidence": "S1 report: 2 one-line edits outside owned files",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "full gate ~10 min, 13,882 spawns (12,751 git)",
+      "evidence": "S1 npm test run",
+      "size": 600
     }
   ]
 }
