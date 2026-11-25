@@ -151,6 +151,7 @@ Deletion test: `store-archive` survives, because three callers need it, and the 
   - *Trades:* older lines are not shown.
   - *Rejected:* the whole file.
   Verdict: stands — no recorded preference asks for whole logs; the files stay on disk
+  - *Overturned in part at Gate 2* (F7, itm_973b6c14330a: "Yes"): the file is read whole with one `readFileSync`, not by the chunked tail reader, and the newest 2,000 lines are taken from it. What the page shows is unchanged.
 - **A7 Items show only once settled** (closed or resolved). Open items stay on the deck itself. Run records, logs and switch files show whatever is current.
   - *Rejected:* duplicating the open queue.
   Verdict: stands — open items are on the deck itself, and the side-panes ticket itm_f9162b87414f owns their panes

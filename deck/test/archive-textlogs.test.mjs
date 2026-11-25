@@ -93,11 +93,10 @@ test('an indented first word past 120 is never cut into either', (t) => {
   assert.equal(row.fields.find((field) => field.label === 'Line').value, `  ${'y'.repeat(200)}`);
 });
 
-test('lines across read boundaries are whole, and the last line needs no newline', (t) => {
+test('multi-byte text is whole, a long line is clipped in its row, and the last line needs no newline', (t) => {
   const dir = tempDeck(t);
-  // 655 lines of 100 bytes and 35 more bytes put the 64 KiB read boundary inside the two-byte `é`.
   const split = `${'k'.repeat(35)}é split`;
-  // A 100,000-byte line spans the next read boundary too, and is cut at a word in its row.
+  // A 100,000-byte line is cut at a word in its row.
   const long = 'word '.repeat(20000).trimEnd();
   const lines = [...Array(655).fill('x'.repeat(99)), split, long, 'after'];
   fs.writeFileSync(path.join(dir, 'wrapper.log.old'), `${lines.join('\n')}\nunterminated`);
