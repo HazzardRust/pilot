@@ -149,11 +149,37 @@ test('--force only on a landed run: untracked files keep a tree mid-run, not onc
   const tree = add('scratchy');
   fs.writeFileSync(path.join(tree, 'scratch.log'), 'x');
   const forces = [];
-  const spy = (home, dir, force) => { forces.push(force); return { ok: false, err: 'refused' }; };
+  const spy = (home, dir, force) => {
+    forces.push(force);
+    git(home, 'worktree', 'remove', ...(force ? ['--force'] : []), dir);
+    return { ok: true, err: '' };
+  };
   assert.deepEqual(removeTree(work, tree, { remove: spy }), { kept: 'dirty' });
   assert.deepEqual(forces, [], 'a dirty tree never reaches the remove step');
-  assert.deepEqual(removeTree(work, tree, { landed: true }), { removed: true, branch: 'scratchy' });
+  assert.deepEqual(removeTree(work, tree, { landed: true, remove: spy }), { removed: true, branch: 'scratchy' });
+  assert.deepEqual(forces, [true]);
   assert.equal(fs.existsSync(tree), false);
+
+  const clean = add('clean');
+  assert.deepEqual(removeTree(work, clean, { remove: spy }), { removed: true, branch: 'clean' });
+  assert.deepEqual(forces, [true, false], 'mid-run the removal is never forced');
+});
+
+test('a tree holding another worktree inside it is kept, and so is the inner one', (t) => {
+  const { work, add } = scratch(t);
+  const outer = add('outer');
+  const inner = path.join(outer, 'node_modules', 'inner');
+  git(work, 'worktree', 'add', '-q', '-b', 'inner', inner, 'origin/main');
+  fs.writeFileSync(path.join(inner, 'work.txt'), 'uncommitted');
+  assert.deepEqual(removeTree(work, outer), { kept: 'nested' });
+  assert.equal(fs.readFileSync(path.join(inner, 'work.txt'), 'utf8'), 'uncommitted');
+});
+
+test('a deleted run record is dirt', (t) => {
+  const { work, add } = scratch(t);
+  const tree = add('deleted', { files: { 'docs/design/x/run.json': '{}' } });
+  fs.rmSync(path.join(tree, 'docs/design/x/run.json'));
+  assert.deepEqual(removeTree(work, tree), { kept: 'dirty' });
 });
 
 test('keptLine names the state and the dir in one line', () => {
