@@ -24,7 +24,7 @@ import { hostFor } from '../deck/host.mjs';
 import { RUN_BASE, SLUG } from '../deck/runs.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { listeningRepo } from '../deck/wait.mjs';
-import { firstLine, git as gitAt, PILOT_BRANCH } from './pilot-branch.mjs';
+import { firstLine, git as gitAt, namePilotBranch, PILOT_BRANCH, pilotBranch } from './pilot-branch.mjs';
 import { runRemote } from './remotes.mjs';
 import { prBase } from './stack.mjs';
 
@@ -116,12 +116,18 @@ function gitStep(git, args) {
   }
 }
 
-/** Throws unless the record names a slug and a base `gh` and git may take as argv. */
-function checked(record) {
+/**
+ * Throws unless the record names a slug and, when it names one, a base `gh` and git may take as argv; `base` is null
+ * for a record with none, the user's pilot branch. `nameOf` answers that branch's name, or null when none can be read,
+ * for the refusal.
+ */
+function checked(record, nameOf) {
   if (!record || typeof record !== 'object') throw new StepError('record: none');
   if (typeof record.slug !== 'string' || !SLUG.test(record.slug)) throw new StepError(`record: slug ${JSON.stringify(record.slug)} is not a slug`);
-  const base = record.base ?? PILOT_BRANCH;
-  if (typeof base !== 'string' || !RUN_BASE.test(base)) throw new StepError(`record: base ${JSON.stringify(base)} is not ${PILOT_BRANCH} or feat/<slug>`);
+  const base = record.base ?? null;
+  if (base !== null && (typeof base !== 'string' || !RUN_BASE.test(base))) {
+    throw new StepError(`record: base ${JSON.stringify(base)} is not ${nameOf() ?? '<login>-pilot'} or feat/<slug>`);
+  }
   const artefact = record.artefact ?? `docs/design/${record.slug}/architecture.md`;
   if (typeof artefact !== 'string' || !/^[\w./-]+$/.test(artefact) || artefact.split('/').includes('..')) {
     throw new StepError(`record: artefact ${JSON.stringify(artefact)} is not a repository path`);
@@ -136,9 +142,28 @@ function checked(record) {
  * is `(args) => string` in the repository, argv only. Throws, naming the step, on a failure.
  */
 export function syncFeaturePr({ host, git, record }) {
-  const { slug, base, artefact, feature } = checked(record);
+  // A refusal names the stored pilot branch, never deriving one.
+  const nameOf = () => {
+    try {
+      return pilotBranch(git);
+    } catch {
+      return null;
+    }
+  };
+  const { slug, base: recorded, artefact, feature } = checked(record, nameOf);
   const head = `feat/${slug}`;
   if (host === null) return { line: 'no PR: host none', wrote: 'none' };
+  // The user's pilot branch (user-pilot-branch L5), derived from `host` and stored when neither the env nor the config
+  // names it; a `feat/` base never needs it.
+  let name = PILOT_BRANCH;
+  if (recorded === null || !recorded.startsWith('feat/')) {
+    try {
+      ({ name } = namePilotBranch({ git, host }));
+    } catch (err) {
+      throw new StepError(`pilot branch: ${firstLine(err)}`);
+    }
+  }
+  const base = recorded ?? name;
 
   let runs;
   try {
@@ -168,7 +193,7 @@ export function syncFeaturePr({ host, git, record }) {
   // The PR's base is worked out on every write, so a write never undoes a retarget (audit-f14 L6).
   let prOn;
   try {
-    prOn = prBase({ git, host, base });
+    prOn = prBase({ git, host, base, name });
   } catch (err) {
     throw new StepError(`base: ${firstLine(err)}`);
   }
