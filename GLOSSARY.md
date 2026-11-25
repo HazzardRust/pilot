@@ -35,15 +35,19 @@ One vertical cut of a design that a user can exercise end to end, implemented on
 _Avoid_: Ticket, ticket, step
 
 **Integration branch**:
-`feat/<slug>`, the branch every slice is integrated into and the head of the one feature PR, which lands on `pilot` at the Gate 2 Sign off press.
+`feat/<slug>`, the branch every slice is integrated into and the head of the one feature PR, which lands on the pilot branch at the Gate 2 Sign off press.
 _Avoid_: Feature branch, trunk, release branch
 
 **Pilot branch**:
-`pilot`, the one branch per repository the pilot owns and treats as its default; every run is cut from it and every finished run lands on it.
+`<login>-pilot`, the signed-in user's own branch in a repository and the one their Gate 2 lands on; derived once from the host CLI's login, lower-cased (set by hand with no host), and stored as the `pilot.branch` git setting. Each user of a repository has their own.
 _Avoid_: Trunk, develop, staging
 
+**Legacy pilot**:
+`pilot`, the one shared branch from before each user had a pilot branch; read, never written. The first `pilot base` copies its tip to your pilot branch, and you delete it when content.
+_Avoid_: Pilot branch, old pilot
+
 **Base**:
-The ref a run is cut from and keeps taking: the pilot branch, always.
+The ref a run is cut from and keeps taking, as `pilot base` prints it: the default branch or the lower `feat/<N>` on a host, the pilot branch with no host or another run remote.
 _Avoid_: Parent branch, upstream, target
 
 **Take the base**:
@@ -59,7 +63,7 @@ Merge the default branch into the pilot branch with `pilot sync`; the only way t
 _Avoid_: Take the base, rebase, pull
 
 **Promote**:
-Merge the one main PR, `pilot` → the default branch, with a merge commit; the user's act, never the pilot's.
+Merge the one main PR, the pilot branch → the default branch, with a merge commit; the user's act, never the pilot's.
 _Avoid_: Release, ship, land
 
 **Open run**:
