@@ -25,6 +25,7 @@ import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
 import { MIN_MODS_VERSION, claudeVersion } from '../scripts/handoff.mjs';
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
+import { LEGACY_PILOT, NO_NAME, pilotBranch } from '../scripts/pilot-branch.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { powerRow, readPower } from './power.mjs';
@@ -170,6 +171,59 @@ function hostRow({ git, hostFor, onPath, cwd }) {
   return signedIn
     ? { name, verdict: 'pass', detail: `${which}: ${cli} signed in` }
     : { name, verdict: 'fail', detail: `${which}: ${cli} is not signed in`, steps: [`run \`${cli} auth login\``] };
+}
+
+/** The Host `hostFor` builds, or null when none is set or it cannot be built (the host row says why). */
+function hostOrNull(hostFor, cwd, git) {
+  try {
+    return hostFor(cwd, { git });
+  } catch {
+    return null;
+  }
+}
+
+/** `host.login()`, or null when there is no host, it is signed out or it cannot answer. */
+function loginOf(host) {
+  try {
+    const login = host ? host.login() : null;
+    return typeof login === 'string' && login ? login : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The pilot branch row (user-pilot-branch spec 7): the name and where it came from, and a warning when the stored
+ * name is another account's. Reads only (`pilotBranch`, `Host.login`): it derives and writes nothing. `host` is
+ * null when none is set or it could not be built.
+ */
+export function pilotBranchRow({ git, host }) {
+  const name = 'pilot branch';
+  let branch;
+  try {
+    branch = pilotBranch(git);
+  } catch (error) {
+    if (error.message !== NO_NAME) {
+      const step = error.message.startsWith('PILOT_BRANCH') ? 'unset PILOT_BRANCH, or set it to <login>-pilot' : 'git config pilot.branch <login>-pilot';
+      return { name, verdict: 'fail', detail: error.message, steps: [step] };
+    }
+    const login = loginOf(host);
+    return login
+      ? { name, verdict: 'warn', detail: `none stored yet; the next \`pilot base\` derives it from the signed-in account` }
+      : { name, verdict: 'fail', detail: NO_NAME, steps: ['gh auth login (or glab auth login)', 'git config pilot.branch <login>-pilot'] };
+  }
+  if (process.env.PILOT_BRANCH) return { name, verdict: 'pass', detail: `${branch} (PILOT_BRANCH)` };
+  const login = loginOf(host);
+  const own = login ? `${login.toLowerCase()}-pilot` : null;
+  if (own !== null && branch !== LEGACY_PILOT && branch !== own) {
+    return {
+      name,
+      verdict: 'warn',
+      detail: `${branch} (stored) but ${login} is signed in, who would be ${own}; nothing is switched`,
+      steps: [`to follow this account: git config pilot.branch ${own}`],
+    };
+  }
+  return { name, verdict: 'pass', detail: `${branch} (stored)` };
 }
 
 /** A design path in a ticket body; its segment is held to `SLUG` before it is used anywhere. */
@@ -508,6 +562,7 @@ export async function checkAll({
     storeRow({ storeDir, canWrite }),
     reachRow({ reach: readReach(), enabled: readEnabled() }),
     hostRow({ git, hostFor, onPath, cwd }),
+    pilotBranchRow({ git, host: hostOrNull(hostFor, cwd, git) }),
     slugsRow({ view, git, hostFor, cwd }),
     ...CLIS.map((cmd) => cliRow(cmd, onPath)),
     allowRow({ readSettings }),
