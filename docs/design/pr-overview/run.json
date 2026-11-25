@@ -30,10 +30,39 @@
       ],
       "branch": "slice/pr-overview-s3",
       "worktree": "C:/Users/jrylk/Projects/pilot-pr-overview-s3"
+    },
+    {
+      "slice": "pr-overview",
+      "state": "fix round running: principles F1-F4 and QA-F1, F2, F4, F5; QA read-only at fab31ea",
+      "after": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "branch": "feat/pr-overview",
+      "pr": 144
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated",
+      "after": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "branch": "fix/pr-overview-fixes",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-pr-overview"
     }
   ],
-  "next": "S3 308beb4 being integrated by the pilot (TS + security APPROVE). Then pilot checks <sha7> --wait, release/co-pilot, spawn co-pilot for fundamentalist on whole feature, verdicts by main, fix round, QA. A7 (own ledger fragment vendor/pr-overview.md) assumed: name it at Gate 2. No co-pilot or implementer live.",
-  "updatedAt": "2026-11-25T03:19:05.084Z",
+  "findings": [
+    "kept: QA-F1 — builtLine counts the feature's own row (reads 3 of 4): count only rows named S<n>",
+    "kept: QA-F2 — release overview lines skip quiet, an @name would notify a person: share quiet from pr-overview.mjs",
+    "kept: QA-F4 — vendor/pr-overview.md lacks the Re-syncing section VENDOR.md promises",
+    "kept: QA-F5 — docstring says Pure while the module imports fs",
+    "dropped: QA-F6 — missing @name test is covered by the QA-F2 test"
+  ],
+  "next": "Fix round 368c645 (F1-F4, QA-F1,F2,F4,F5; TS reviewer WARN, medium fixed) being integrated by the pilot. Then pilot checks <sha7> --wait, resume QA a41acfb3c2f0c0a04 with the tip (it becomes writer, writes #144 once: QA-F3 b assumed), evidence checks once on fixed tip. A7 assumed: name at Gate 2. On QA walkthrough: deck_ticket need.",
+  "updatedAt": "2026-11-25T03:56:50.743Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -153,6 +182,23 @@
       "what": "compaction lost the original evidence rows and red runs of B1-B3; rows re-observed on the final state",
       "evidence": "S3 report: 'original rows from 6961c71 were lost when my context was compacted'",
       "size": 3
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner's result lost to context compaction; six evidence checks not run",
+      "evidence": "hand-back §3: runner spawned once, result lost, not re-spawned",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "default node --test reporter printed no summary; first grep exited 1",
+      "evidence": "re-ran with --test-reporter=tap",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "two co-pilots on one ticket each forced to hand back within minutes with a child live; the pilot judged findings and ran integration and the fix round itself",
+      "size": 20
     }
   ]
 }
