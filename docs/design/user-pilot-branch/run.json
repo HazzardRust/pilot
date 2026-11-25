@@ -9,37 +9,46 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed ffa98e0",
+      "state": "integrated",
       "branch": "slice/user-pilot-branch-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/user-pilot-branch-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s2"
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "built 74b141e locally, not pushed: waits on S2 integration for B1, then gate, reviewers, push",
       "after": [
-        "S1"
-      ]
+        "S1",
+        "S2"
+      ],
+      "branch": "slice/user-pilot-branch-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s3"
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/user-pilot-branch-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s4"
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "pushed 2217a46",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/user-pilot-branch-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s5"
     },
     {
       "slice": "S6",
@@ -53,10 +62,12 @@
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/user-pilot-branch-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s7"
     },
     {
       "slice": "S8",
@@ -73,8 +84,8 @@
       "pr": 157
     }
   ],
-  "next": "S1 pushed ffa98e0, both approve, gate green; integrating S1, then pilot checks and pilot ready for S2-S5, S7",
-  "updatedAt": "2026-11-25T18:28:00.240Z",
+  "next": "S1 checks green at bbe2b8c; integrating S5; S2, S4, S7 implementing; S3 waits on S2; S8 after S5",
+  "updatedAt": "2026-11-25T18:56:57.741Z",
   "friction": [
     {
       "agent": "pilot:pilot-architect",
@@ -242,6 +253,18 @@
       "what": "full gate ~10 min, 13,882 spawns (12,751 git)",
       "evidence": "S1 npm test run",
       "size": 600
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: pilot prompt pin has no headroom; tools.mjs base field text cut to 'branch, feat/<N>' after 5 measure rounds; slice wording cannot hold under the pin",
+      "evidence": "measure-prompt.test.mjs 12145 > 12142",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3: plan's after: S1 omitted S2; land pushes via sync.mjs TARGET (S2-owned), so B1 cannot go green alone",
+      "evidence": "sync.mjs:32 refs/heads/${PILOT_BRANCH}; B1 red on S3 branch",
+      "size": 1
     }
   ]
 }
