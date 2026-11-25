@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed 796378a (security re-review on the fix)",
+      "state": "pushed 796378a",
       "branch": "slice/prune-worktrees-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s1"
     },
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed 14b7eb8",
+      "state": "integrated",
       "branch": "slice/prune-worktrees-s3",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s3"
     },
@@ -66,8 +66,8 @@
       ]
     }
   ],
-  "next": "co-pilot: S2, S4 pipelined from S1 796378a; S1 security re-review then integrate; S3 integrate running.",
-  "updatedAt": "2026-11-25T06:53:04.348Z",
+  "next": "co-pilot: checks green at 50e8a4a; integrating S1 796378a; S2, S4 building on S1 (rebase on the new tip).",
+  "updatedAt": "2026-11-25T07:12:50.426Z",
   "friction": [
     {
       "kind": "drain",
@@ -120,6 +120,12 @@
       "what": "full gate about 10 minutes; 3-file rerun passed the 120 s shell default",
       "evidence": "S1 gate",
       "size": 10
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a seam-doc push to feat/prune-worktrees cancelled the CI runs pilot checks was waiting on, which read as red",
+      "evidence": "gh run list: e277e34 Gate and Rune deck conclusion cancelled; pilot checks printed checks red at e277e34",
+      "size": 1
     }
   ]
 }
