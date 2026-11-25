@@ -9,7 +9,7 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "implementing",
+      "state": "integrated",
       "branch": "slice/portable-store-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s1"
     },
@@ -57,13 +57,13 @@
     },
     {
       "slice": "S8",
-      "state": "pushed 0d20e59",
+      "state": "integrated 3bf2e27, checks green (B3 run deferred to QA)",
       "branch": "slice/portable-store-s8",
       "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s8"
     }
   ],
-  "next": "S8 integrating (pilot integrate running); S1 implementing; next: checks on S8's sha, then S2 and S3 after S1",
-  "updatedAt": "2026-11-25T04:27:07.366Z",
+  "next": "Pilot integrating S1 39e439e (TS WARNING; silent-failure BLOCK, then APPROVE on re-review). Then checks, release/co-pilot, spawn co-pilot for S2+S3. Fix round: store-v4 test asserts .bak bytes, no .corrupt-*, a v3 foreign-root case. Gate 2 names: mangled item repo stays raw; rootless paths stay absolute; API repo spelling native.",
+  "updatedAt": "2026-11-25T05:04:09.351Z",
   "friction": [
     {
       "agent": "architect",
@@ -105,6 +105,42 @@
       "what": "Edit refused a file not just Read, costing a round trip on three files; a sed -i on a tracked file was hook-blocked, redone as six Edit calls",
       "evidence": "S8 implementer report",
       "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed falls back to the full suite (selection argv over 24000 chars), so every S1 gate is ~15 min on a shared machine",
+      "evidence": "S1 gate log s1-gate-1.log",
+      "size": 15
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "~31 test files read deck.json raw, so any store-format change ripples across the suite; S1 went 379 to ~600 lines on it",
+      "evidence": "S1 handoff: ripple kinds list",
+      "size": 250
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 implementer hit its context advisory mid-slice and handed off",
+      "evidence": "S1 HANDOFF message",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1's slice file had no behaviour for a store this deck cannot decode; the rollback-over-live-store path was caught only by the silent-failure reviewer (BLOCK), then needed a second review of the fix",
+      "evidence": "S1 report pushback; store-core.mjs:176-180",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "platform-reads.test.mjs runs only in the full suite: a process.platform read in testUtils was found 15 minutes in; full suite not rerun after the one-line fix",
+      "evidence": "S1 report: gate node 5080 pass, 1 fail",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "two commit trailers in play: the co-pilot's brief gave one model and session, the feature brief.md another",
+      "evidence": "S1 report decision 6",
+      "size": 1
     }
   ]
 }
