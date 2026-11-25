@@ -139,26 +139,67 @@ function mapAt(value, steps, change, field) {
 }
 
 const eachField = (deck, changeFor) => PATH_FIELDS.reduce((next, field) => mapAt(next, stepsOf(field), changeFor(field), field), deck);
+const encoded = (deck, roots) => eachField(deck, () => (value) => (typeof value === 'string' ? encodePath(value, roots) : value));
 
-/** The deck as `deck.json` holds it: every field and map key of `PATH_FIELDS` encoded. */
+/** A run's fields that name this machine's process (F4), kept in the machine file by run id. */
+const SESSION = ['pid', 'session', 'lastSeenAt'];
+
+/**
+ * The deck split as the store keeps it (spec 2, F4): `stored`, what `deck.json` holds, every field and map key of
+ * `PATH_FIELDS` encoded and no machine state; `machine`, the machine file's state with absolute keys, no roots.
+ */
 export function toStored(deck, roots) {
-  return eachField(deck, () => (value) => (typeof value === 'string' ? encodePath(value, roots) : value));
+  const { coPilots = {}, switches = {}, ...portable } = deck;
+  const machine = { sessions: {}, coPilots, switches, live: [], landingPids: {} };
+  const runs = (portable.runs ?? []).map((run) => {
+    const session = Object.fromEntries(SESSION.filter((name) => run?.[name] !== undefined).map((name) => [name, run[name]]));
+    if (Object.keys(session).length > 0) machine.sessions[run.id] = session;
+    return isMap(run) ? Object.fromEntries(Object.entries(run).filter(([name]) => !SESSION.includes(name))) : run;
+  });
+  const items = (portable.items ?? []).map((item) => {
+    if (!isMap(item)) return item;
+    const { live, ...rest } = item;
+    if (live === true) machine.live.push(item.id);
+    if (!isMap(item.landing) || item.landing.pid === undefined) return rest;
+    machine.landingPids[item.id] = item.landing.pid;
+    const { pid, ...landing } = item.landing;
+    return { ...rest, landing };
+  });
+  return { stored: encoded({ ...portable, ...(portable.runs && { runs }), ...(portable.items && { items }) }, roots), machine };
 }
 
-/** The deck as memory holds it: every stored path decoded, and map keys and `records[].repo` re-folded by `pathKey`. */
-export function fromStored(stored, roots) {
-  return eachField(stored, (field) => (value) => {
+/**
+ * The deck as memory holds it: every stored path decoded, map keys and `records[].repo` re-folded by `pathKey`, and
+ * the machine file's state rejoined. Machine state a `deck.json` from before the split still holds is read too, the
+ * machine file winning entry by entry; the next write moves it out.
+ */
+export function fromStored(stored, machine, roots) {
+  const deck = { ...eachField(stored, (field) => (value) => {
     if (typeof value !== 'string' || !value.startsWith('@')) return value;
     const abs = decodePath(value, roots);
     if (!FOLDED.has(field)) return abs;
     // Another host's flavour is folded by its own rule, never resolved against this host's cwd.
     if (flavourOf(abs) === (hostPlatform() === 'win32' ? path.win32 : path.posix)) return pathKey(abs);
     return flavourOf(abs) === path.win32 ? abs.toLowerCase() : abs;
-  });
+  }) };
+  // A map neither file holds an entry of reads absent, as it did before the split.
+  for (const name of ['coPilots', 'switches']) {
+    if (deck[name] !== undefined || Object.keys(machine[name]).length > 0) deck[name] = { ...deck[name], ...machine[name] };
+  }
+  if (Array.isArray(deck.runs)) deck.runs = deck.runs.map((run) => (isMap(run) && isMap(machine.sessions[run.id]) ? { ...run, ...machine.sessions[run.id] } : run));
+  if (Array.isArray(deck.items)) {
+    deck.items = deck.items.map((item) => {
+      if (!isMap(item)) return item;
+      const live = machine.live.includes(item.id) ? { live: true } : {};
+      const pid = machine.landingPids[item.id];
+      return { ...item, ...live, ...(isMap(item.landing) && pid !== undefined && { landing: { ...item.landing, pid } }) };
+    });
+  }
+  return deck;
 }
 
-/** Version 3 to version 4 (L6): the same deck with its paths stored against `roots`. */
+/** Version 3 to version 4 (L6): the same deck with its paths stored against `roots`; its machine state moves at the next write. */
 export function upgradeV3(deck, roots) {
   if (deck.version !== 3) throw new Error(`upgradeV3 takes a version 3 deck, not version ${deck.version}`);
-  return { ...toStored(deck, roots), version: 4 };
+  return { ...encoded(deck, roots), version: 4 };
 }

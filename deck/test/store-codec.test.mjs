@@ -43,7 +43,7 @@ test('spellings of one repo collapse', (t) => {
     ? [path.join(home, 'projects', 'pilot').replaceAll('\\', '/'), path.join(home.toLowerCase(), 'Projects', 'pilot')]
     : [path.join(home, 'Projects', 'pilot'), `${path.join(home, 'Projects', '.', 'pilot')}/`];
 
-  const stored = toStored({ version: 3, items: spellings.map((repo) => ({ repo })) }, roots);
+  const { stored } = toStored({ version: 3, items: spellings.map((repo) => ({ repo })) }, roots);
 
   assert.deepEqual([...new Set(stored.items.map((item) => item.repo))], ['@home/Projects/pilot']);
 });

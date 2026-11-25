@@ -79,7 +79,7 @@ test('a write leaves no temporary file behind', (t) => {
   const dir = tempDeck(t);
   postItem({ kind: 'walkthrough', title: 'Slice 1', body: 'open the deck' });
 
-  assert.deepEqual(fs.readdirSync(dir).sort(), [path.basename(storeFile()), 'deck.secret'].sort());
+  assert.deepEqual(fs.readdirSync(dir).sort(), [path.basename(storeFile()), 'deck.secret', 'machine.json'].sort());
 });
 
 test('a corrupt store is reported, never silently discarded', (t) => {

@@ -13,7 +13,8 @@ import path from 'node:path';
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { hostPlatform } from '../hooks/lib/platform.js';
 import { findCredential } from './credential.mjs';
-import { defaultRoots, fromStored, toStored, upgradeV3 } from './store-codec.mjs';
+import { readMachine, rootsOf, storeMachine } from './machine.mjs';
+import { fromStored, upgradeV3 } from './store-codec.mjs';
 import { stampLegacyGrants } from './recut.mjs';
 import { refuseGateHomeWrite, storeDir } from './store-dir.mjs';
 import { isDeck, keepBackup, localDay, noteParsed, recoverStore } from './store-recovery.mjs';
@@ -50,7 +51,7 @@ import { andList } from './tools.mjs';
 
 const STORE_FILENAME = 'deck.json';
 const STORE_VERSION = 4;
-const roots = () => defaultRoots(os.homedir(), hostPlatform()); // derived each call, never stored (L3)
+const roots = (machine) => rootsOf(machine, os.homedir(), hostPlatform()); // derived each call, overrides stored (L3)
 
 /**
  * The most text the deck will take in one field, wherever it came from. It lives here
@@ -173,8 +174,9 @@ function readDeck(recovered = false) {
 
   const old = deck.version !== STORE_VERSION;
   if (old) backUp(file, raw, deck.version);
+  const machine = readMachine(path.dirname(file));
   try {
-    deck = fromStored(old ? upgradeV3(upgradeStore(deck), roots()) : deck, roots());
+    deck = fromStored(old ? upgradeV3(upgradeStore(deck), roots(machine)) : deck, machine, roots(machine));
   } catch (err) {
     throw unreadableStore(file, `holds a path this deck cannot read (${err.message})`); // refused, never recovered over
   }
@@ -314,7 +316,7 @@ function writeDeck(deck) {
   } catch (err) {
     console.error(`[deck] deck store ${file} is written without a fresh backup: ${err.message}`);
   }
-  atomicWriteFileSync(file, `${JSON.stringify(toStored(deck, roots()), null, 2)}\n`);
+  atomicWriteFileSync(file, `${JSON.stringify(storeMachine(dir, deck, os.homedir(), hostPlatform()), null, 2)}\n`);
 }
 
 /**
