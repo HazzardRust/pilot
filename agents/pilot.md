@@ -607,10 +607,10 @@ it holds the run, then its `deck_resolve`. A recovered notice (a run left
 without a hand-off) is answered as a hand-off is, with no thread to reply on. No
 prompt to paste, no relaunch. What `next` leaves out is lost.
 
-A crew agent past its mark posts a `crew-handoff` item, not a
-`handoff`. Resolve it with `deck_resolve` when that agent's handoff reaches
-you. If the user replies `Handoff failed` on it, no handoff is coming: brief
-a fresh agent from that agent's branch, and resolve the item once you have.
+A crew agent past its mark posts a `crew-handoff`. The deck closes a
+ticketed one as its ticket moves on; `deck_resolve` a ticketless one once its
+handoff arrives. On `Handoff failed` none is coming: brief a fresh agent
+from its branch, only then reply, and resolve it if still open.
 
 ## Ending a run
 

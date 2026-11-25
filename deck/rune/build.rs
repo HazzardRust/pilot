@@ -63,7 +63,8 @@ fn main() {
         out
     };
 
-    // The type scales: `header`, `body` and `caption`, each a size and a weight, in two families.
+    // The type scales: `header`, `body` and `caption`, each a size and a weight, in two families;
+    // `h1` and `h2` are the markdown bodies' two larger headings (`theme::type_::heading`).
     let ty = section(&root, "type");
     let family = |key: &str| {
         ty[key]
@@ -75,7 +76,7 @@ fn main() {
         family("ui"),
         family("mono")
     );
-    for name in ["header", "body", "caption"] {
+    for name in ["header", "body", "caption", "h1", "h2"] {
         let scale = &ty[name];
         let _ = writeln!(
             scales,
