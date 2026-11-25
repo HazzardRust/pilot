@@ -16,14 +16,14 @@ ADR 0207 kept the two devices apart: each deck's tickets, threads and run record
 
 ## Decision
 
-- **L1** The codec sits at the persistence seam: in memory the deck keeps absolute paths and folded keys; only `deck.json`, month archives and audit directory names hold stored paths.
-- **L2** A stored path is the string `@<root>/<rel>`. Default roots (`home`, one per drive or `/`) are derived, never stored; only `--root` overrides are.
-- **L3** Machine-bound state (run sessions, pids, leases, lane switches, a landing's pid, root overrides) lives in `machine.json`, never in `deck.json`.
-- **L4** The bundle is one gzipped JSON document `{ manifest, entries }`. Entry names are held to an allowlist, so a traversal cannot be expressed.
-- **L5** Import trusts nothing it did not write: every check runs before the first write, which is staged then renamed. `--replace` sets the old files aside, never over them.
-- **L6** Store version 4 is one-way like version 3; `deck.v3-<date>.json` is the way back.
-- **L7** Export reads the files as they are and needs no daemon; import refuses while one serves. The export mark is its own file, `exported.json`.
-- **L8** Nothing runs export or import on its own: no timer, watcher or hook. The user moves the store by hand; sync of any kind, and merging two stores, stay out.
+- **D1** The codec sits at the persistence seam: in memory the deck keeps absolute paths and folded keys; only `deck.json`, month archives and audit directory names hold stored paths.
+- **D2** A stored path is the string `@<root>/<rel>`. Default roots (`home`, one per drive or `/`) are derived, never stored; only `--root` overrides are.
+- **D3** Machine-bound state (run sessions, pids, leases, lane switches, a landing's pid, root overrides) lives in `machine.json`, never in `deck.json`.
+- **D4** The bundle is one gzipped JSON document `{ manifest, entries }`. Entry names are held to an allowlist, so a traversal cannot be expressed.
+- **D5** Import trusts nothing it did not write: every check runs before the first write, which is staged then renamed. `--replace` sets the old files aside, never over them.
+- **D6** Store version 4 is one-way like version 3; `deck.v3-<date>.json` is the way back.
+- **D7** Export reads the files as they are and needs no daemon; import refuses while one serves. The export mark is its own file, `exported.json`.
+- **D8** Nothing runs export or import on its own: no timer, watcher or hook. The user moves the store by hand; sync of any kind, and merging two stores, stay out.
 
 ## Rejected
 
