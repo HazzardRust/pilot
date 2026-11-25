@@ -15,16 +15,26 @@
     },
     {
       "slice": "S2",
-      "state": "integrated",
+      "state": "integrated 3c98028; CI checks running",
       "after": [
         "S1"
       ],
       "branch": "slice/handoff-self-close-s2",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-handoff-self-close-s2"
+    },
+    {
+      "slice": "feature",
+      "state": "concluding; gate2 itm_589b847f8e5c at 3c98028 awaits the user's Sign off; walkthrough itm_7f84d4ca3b05",
+      "pr": 145
     }
   ],
-  "next": "Short path. S1 integrated at feat e9e31fa, checks green. pilot integrate S2 b47a9b5 re-running with B6 look (pilot saw WAITING 14M on home card and thread header in Edge screenshots). On pass: pilot checks <sha> --wait, pilot integrate --trial in the feat worktree, post walkthrough (surface: true; Rune label not drawn or seen) and gate2 with a Verdict line per slice and a Gate line.",
-  "updatedAt": "2026-11-24T18:25:47.431Z",
+  "humanSteps": [
+    {
+      "text": "After handoff-self-close lands: restart the deck so it picks up the self-close; its first write then closes old ticketed crew-handoffs whose ticket already moved on."
+    }
+  ],
+  "next": "Green. gate2 itm_589b847f8e5c (PR #145, 3c98028, checks green, trial clean) and walkthrough itm_7f84d4ca3b05 await the user. On press: spawn pilot-lander with the gate2 id; stop the scratch deck I started (port 4399, pid 40724, background task b0st0v0lw); reply Findings: on the closing report (no fundamentalist on the short path). Step: deck restart needed after landing.",
+  "updatedAt": "2026-11-24T18:54:41.796Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -94,6 +104,16 @@
     {
       "kind": "drain",
       "what": "integrate refused S2 after the queue wait: evidence kind `look` cannot be met by an implementer with no browser tools; one extra implementer resume and integrate run",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "integrate fell back to the full suite twice on argv overflow (44300 chars over 24000): two 5000-test runs on a two-slice short path",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "gate2 post refused three times on field shape (checks one line, pr as #n, Verdict: line per slice); stop hook corrected a wrong 'nothing runnable' call on the yellow lane",
       "size": 3
     }
   ]
