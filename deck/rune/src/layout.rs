@@ -592,7 +592,13 @@ pub fn strips(s: &State, cx: &mut Cx<State>) -> El {
         .pl(space::s0)
         .gap(space::panels)
         .child(left)
-        .child(app::center(s, cx).key("centre").grow(1.0).min_w(space::s0))
+        .child(
+            app::center(s, cx)
+                .key("centre")
+                .grow(1.0)
+                .min_w(space::s0)
+                .min_h(space::s0),
+        )
         .child(regions::strip::draw(
             strip,
             &s.regions.strip,
