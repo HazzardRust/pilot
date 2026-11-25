@@ -98,6 +98,15 @@ test('every thread kind has one view', (t) => {
   }
 });
 
+test('every kind module under deck/archive-kinds/ is in the fixed list (L4)', async () => {
+  const dir = path.join(ROOT, 'deck', 'archive-kinds');
+  const modules = await Promise.all(
+    fs.readdirSync(dir).filter((name) => name.endsWith('.mjs')).map(async (name) => [name, (await import(`../archive-kinds/${name}`)).default]),
+  );
+  const unlisted = modules.filter(([, kind]) => typeof kind?.kind === 'string' && !archiveKinds().includes(kind)).map(([name]) => name);
+  assert.deepEqual(unlisted, [], `kind modules missing from archive.mjs's list: ${unlisted.join(', ')}`);
+});
+
 test('every store file is viewed or never shown', () => {
   assert.ok(STORE_FILES.includes('handoff-trace.jsonl'), 'the scan finds the hand-off trace writer');
   for (const built of ['${file}.bak', 'deck.json.corrupt-*', 'deck.json.replaced-*']) {

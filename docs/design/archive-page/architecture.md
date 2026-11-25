@@ -112,8 +112,9 @@ Deletion test: `store-archive` survives, because three callers need it, and the 
   - *Rejected:* a new grouping for the Tickets tab, which groups nothing today.
 - **L3** One read-only seam, `archiveRows`, reads the files directly with `readDeckFile`, `archivedItems` and `readFileSync`. It never calls `readDeck` or a store writer, because `readDeck` upgrades the store and recovers from `.bak`, and both of those are writes.
   - *Rejected:* `listItems()`, which reaches `readDeck`.
-- **L4** Record kinds are found by reading the `deck/archive-kinds/` directory, the same way `deck/ui/js/` is served. Each kind slice owns one new file, so they run side by side.
+- **L4** (moved by the user at Gate 2, F9 on itm_96d80caf8aee: "Yes, fixed list") Record kinds are a fixed list of imports in `deck/archive.mjs`, one module per kind under `deck/archive-kinds/`. A kind that fails to load fails the deck's start loudly, and a coverage test fails on a kind module missing from the list.
   - *Rejected:* one `switch` in `archive.mjs`, which would put 6 slices in a row on one file.
+  - *Overturned:* discovering kinds by reading the `deck/archive-kinds/` directory, which let each kind slice own one new file but skipped a broken kind with only a log line.
 - **L5** Credentials are withheld once, at the seam: every string in every row goes through `findCredential`. The never-shown files are refused by name, before anything is read.
   - *Rejected:* filtering in each adapter, where one forgotten field would leak.
 - **L6** (re-cut) The server computes every row, its display strings and its day section in the `archive` region (Rune L2). Rune only draws, sorts, filters and searches the rows it holds.
@@ -150,6 +151,7 @@ Deletion test: `store-archive` survives, because three callers need it, and the 
   - *Trades:* older lines are not shown.
   - *Rejected:* the whole file.
   Verdict: stands — no recorded preference asks for whole logs; the files stay on disk
+  - *Overturned in part at Gate 2* (F7, itm_973b6c14330a: "Yes"): the file is read whole with one `readFileSync`, not by the chunked tail reader, and the newest 2,000 lines are taken from it. What the page shows is unchanged.
 - **A7 Items show only once settled** (closed or resolved). Open items stay on the deck itself. Run records, logs and switch files show whatever is current.
   - *Rejected:* duplicating the open queue.
   Verdict: stands — open items are on the deck itself, and the side-panes ticket itm_f9162b87414f owns their panes

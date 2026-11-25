@@ -310,6 +310,11 @@ fn typing_filters_with_no_request() {
 
 /// The window on a recorded archive view, with no deck behind it.
 fn archive_window(region: Value) -> Runtime<State> {
+    archive_window_at(region, 1280.0)
+}
+
+/// [`archive_window`] `width` points wide.
+fn archive_window_at(region: Value, width: f32) -> Runtime<State> {
     let mut state = State {
         view: View {
             screen: "archive".into(),
@@ -319,7 +324,7 @@ fn archive_window(region: Value) -> Runtime<State> {
         ..State::default()
     };
     state.query.screen = "archive".into();
-    Runtime::new(state, app::view, (1280.0, 800.0), Env::new(true, 1.0))
+    Runtime::new(state, app::view, (width, 800.0), Env::new(true, 1.0))
 }
 
 #[test]
@@ -392,6 +397,70 @@ fn stamp(day: usize, minute: usize) -> String {
         8 + minute / 60,
         minute % 60
     )
+}
+
+/// A mouse click at the middle of `key`'s drawn rect, which must lie inside a window `width` wide.
+fn click(rt: &mut Runtime<State>, key: &str, width: f32) {
+    let (x, y) = rt.find(key).unwrap_or_else(|| panic!("{key} is drawn"));
+    assert!(
+        (0.0..width).contains(&x) && (0.0..800.0).contains(&y),
+        "{key} is drawn at ({x}, {y}), outside the {width} x 800 window"
+    );
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(1.0 / 60.0);
+}
+
+#[test]
+fn every_bar_control_takes_a_mouse_click() {
+    // QA2: the bar's controls were reachable by key but 8 of 17 lay where the mouse could not press them.
+    let region = recorded(&[closed("Alpha", 20, 10), closed("Bravo", 19, 12)]);
+    let kinds: Vec<String> = region["kinds"]
+        .as_array()
+        .expect("the region's kinds")
+        .iter()
+        .map(|k| k["kind"].as_str().expect("a kind's name").to_string())
+        .collect();
+    assert!(
+        kinds.len() >= 13,
+        "every record kind has a toggle: {kinds:?}"
+    );
+    for width in [1280.0, 900.0] {
+        let mut rt = archive_window_at(region.clone(), width);
+        rt.frame(0.0);
+        rt.frame(1.0 / 60.0);
+
+        click(&mut rt, "archive-search", width);
+        rt.paste("zz");
+        rt.frame(1.0 / 60.0);
+        assert_eq!(
+            rt.state.regions.archive.search.text, "zz",
+            "{width}: the click focused the search box"
+        );
+        rt.update(|s, _| s.regions.archive.search = TextEdit::new(""));
+        rt.frame(1.0 / 60.0);
+
+        for kind in &kinds {
+            click(&mut rt, &format!("archive-kind-{kind}"), width);
+            assert_eq!(
+                rt.state.regions.archive.kind.as_deref(),
+                Some(kind.as_str()),
+                "{width}: the click on {kind}'s toggle picked it"
+            );
+        }
+        for (name, column) in [
+            ("date", Column::Date),
+            ("kind", Column::Kind),
+            ("title", Column::Title),
+        ] {
+            click(&mut rt, &format!("archive-sort-{name}"), width);
+            assert!(
+                rt.state.regions.archive.sort == Some((column, true)),
+                "{width}: the click on the {name} sort set it ascending"
+            );
+        }
+    }
 }
 
 #[test]
