@@ -58,7 +58,7 @@ test('a main-cut run\'s PR targets main', (t) => {
   const { host } = stubHost([]);
   assert.equal(prBase({ git: gitIn(cwd), host, base: 'trunk' }), 'trunk');
   // The legacy base is unchanged (A3).
-  assert.equal(prBase({ git: gitIn(cwd), host, base: 'pilot' }), 'pilot');
+  assert.equal(prBase({ git: gitIn(cwd), host, base: 'pilot', name: 'pilot' }), 'pilot');
   // A plain branch name that is not the default branch is no run base.
   assert.throws(() => prBase({ git: gitIn(cwd), host, base: 'main' }), /record base "main"/);
 });

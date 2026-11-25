@@ -48,7 +48,7 @@ import { checkLine, checksAt } from './checks.mjs';
 import { takeSlot } from './gate-slots.mjs';
 import { mergeIntoPilot } from './sync.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
-import { assertPushable, firstLine, git, holds, isPilotBase, isPilotName, landingSubjects, PILOT_BRANCH, pilotBranch, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
+import { assertPushable, firstLine, git, holds, isPilotBase, isPilotName, landingSubjects, pilotBranch, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRef, runRemote, shortRef } from './remotes.mjs';
 import { scopeOf } from './select-tests.mjs';
 import { runRecord } from './worktrees.mjs';
@@ -332,11 +332,8 @@ export const chainLanded = (cwd, head, runs) => landingsOf(cwd, head, pilotBase(
 /** The branch name a base is merged as: `chained`, the pilot branch `pilot` as `pilotBranch` resolved it (`pilotBase`'s exact ref on `runs`), or the default branch of `origin/<default>`. */
 const nameOf = (base, runs, pilot) => base.chained ?? (base.ref === shortRef(runRef(runs, pilot)) ? pilot : base.ref.replace(/^origin\//, ''));
 
-/**
- * The message of the merge `pilot land` writes onto the pilot branch `name`. `name` defaults to
- * `PILOT_BRANCH` only for the callers not yet folded onto `pilotBranch` (user-pilot-branch S6 drops it).
- */
-export const landingMessage = (head, name = PILOT_BRANCH) => `Merge ${head} into ${name}`;
+/** The message of the merge `pilot land` writes onto the pilot branch `name`. */
+export const landingMessage = (head, name) => `Merge ${head} into ${name}`;
 
 /**
  * `head`'s landing merges on `ref`'s first-parent history: two-parent commits subjected with one of

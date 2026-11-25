@@ -24,7 +24,7 @@ import { hostFor } from '../deck/host.mjs';
 import { RUN_BASE, SLUG } from '../deck/runs.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { listeningRepo } from '../deck/wait.mjs';
-import { firstLine, git as gitAt, namePilotBranch, PILOT_BRANCH, pilotBranch } from './pilot-branch.mjs';
+import { firstLine, git as gitAt, namePilotBranch, pilotBranch } from './pilot-branch.mjs';
 import { runRemote } from './remotes.mjs';
 import { prBase } from './stack.mjs';
 
@@ -155,7 +155,7 @@ export function syncFeaturePr({ host, git, record }) {
   if (host === null) return { line: 'no PR: host none', wrote: 'none' };
   // The user's pilot branch (user-pilot-branch L5), derived from `host` and stored when neither the env nor the config
   // names it; a `feat/` base never needs it.
-  let name = PILOT_BRANCH;
+  let name = null;
   if (recorded === null || !recorded.startsWith('feat/')) {
     try {
       ({ name } = namePilotBranch({ git, host }));

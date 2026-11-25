@@ -289,7 +289,7 @@ function landCaughtUp({ cwd, git, host, test, head, name, wait, sleep }) {
       }
     }
     // A main-cut run's PR is its own to main (audit-f14 spec 4): no release PR, no retarget (restack's).
-    if (!legacy) return { ...landed, feature: featurePr({ git, host, head, base: recorded }) };
+    if (!legacy) return { ...landed, feature: featurePr({ git, host, head, base: recorded, name }) };
     // Pilot pushed: a chained run's PR based on this feature now shows only its own diff (A6),
     // on the host's origin only, where pilot is.
     const retargeted = runs === 'origin' && host !== null ? retarget({ host, head, name }) : [];
@@ -312,11 +312,11 @@ function recordBase(cwd, head) {
  * `prBase`'s and `below` the open PR of the `feat/<N>` it stacks on; `{ number: null }` with no host,
  * `{ number: null, why }` when the host cannot say. Never throws: the feature is landed.
  */
-function featurePr({ git, host, head, base: recorded }) {
+function featurePr({ git, host, head, base: recorded, name }) {
   if (host === null) return { number: null };
   const openOf = (branch) => host.reviews({ head: branch, state: 'open' }).find((pr) => pr.head === branch && pr.crossRepo === false && Number.isSafeInteger(pr.number) && pr.number > 0)?.number;
   try {
-    const base = prBase({ git, host, base: recorded });
+    const base = prBase({ git, host, base: recorded, name });
     const number = openOf(head);
     if (number === undefined) return { number: null, why: `no open PR has head ${head}` };
     const below = base.startsWith('feat/') ? openOf(base) : undefined;

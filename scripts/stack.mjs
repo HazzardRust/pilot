@@ -18,7 +18,6 @@ import {
   isPilotBase,
   landingSubjects,
   namePilotBranch,
-  PILOT_BRANCH,
   remoteDefaultBranch,
 } from './pilot-branch.mjs';
 import { removeWorktree } from './sync.mjs';
@@ -39,7 +38,7 @@ const FEATURE = /^(?!.*\.\.)feat\/\w[\w.-]*(?:\/\w[\w.-]*)*(?<!\.lock)$/;
  * `feat/<N>` while N's own-repository PR does not read merged on `host`, then the default branch.
  * `git` is `(args) => string`, argv only. Throws on any other base, or when the host or origin cannot be asked.
  */
-export function prBase({ git, host, base, name = PILOT_BRANCH }) {
+export function prBase({ git, host, base, name }) {
   if (isPilotBase(base, name)) return name;
   const main = remoteDefaultBranch(git);
   if (base === main) return main;
