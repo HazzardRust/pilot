@@ -7,7 +7,7 @@ upstream: mattpocock-skills 1.3.2 - skills/engineering/pr/SKILL.md
 copyright: Copyright (c) 2026 Matt Pocock
 licence: MIT - see THIRD-PARTY-NOTICES.md
 adapted: three lines taken - skip all preambles and keep prose brief; use the user's domain language from GLOSSARY.md; the one-way or two-way door and blast radius, here the overview's last line; the reader is a person outside the build rather than the reviewer, so the diagram Summary (credited upstream to another author) and the Evidence section (the tables carry it) are not taken; the four labelled lines, the bounds and the banned tokens are this package's (pr-overview A2, A3, L6)
-ledger: vendor/methodology.md
+ledger: vendor/pr-overview.md
 -->
 
 # The PR overview

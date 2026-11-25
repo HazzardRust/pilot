@@ -24,7 +24,7 @@ Matt Pocock's PR-writing skill.
 | 2 | The tables stay below, byte-identical to today's. | Test: the body with the overview block removed equals the body written with no overview, 0 bytes differ. The user's read of one real feature PR at Gate 2. |
 | 3 | The pilot -> main release PR opens with an overview: one plain line per landed feature, then today's table unchanged; a trivial-work PR's body opens with an overview too. | `releaseNotes` test with 2 seeded landings: 2 overview lines above the unchanged table; a wording pin on `agents/pilot.md`'s trivial-work line (A6). |
 | 4 | The overview is never stale: an edited overview, or a changed slice record, changes the body at the next write. | Test: a second `syncFeaturePr` with a changed overview makes exactly 1 `edit` carrying it; with 1 more slice `integrated`, the `Built so far: k of n parts.` line moves from 1 to 2. |
-| 5 | Matt Pocock's `pr` skill is read first; what is taken is recorded, prompt text only, nothing installed. | §3 names source and lines taken; `skills/pr-overview/SKILL.md` carries the provenance header and `vendor/methodology.md` a row; the diff adds 0 hooks, 0 `.mcp.json`, 0 network calls. |
+| 5 | Matt Pocock's `pr` skill is read first; what is taken is recorded, prompt text only, nothing installed. | §3 names source and lines taken; `skills/pr-overview/SKILL.md` carries the provenance header and `vendor/pr-overview.md` a row (A7); the diff adds 0 hooks, 0 `.mcp.json`, 0 network calls. |
 | 6 | The overview is short and plain: at most 150 words, sentences averaging at most 20 words. practitioner: a technical writer works to plain-language rules (short sentences, the reader's words), not to a template. | `checkSpec` refuses an artefact whose overview is over either bound, or missing, or holds a banned token: 4 cases in `check-spec.test.mjs`. |
 | 7 | A run whose artefact has no overview (runs already in flight) gets exactly today's body. | Test: `featureBody` with no overview returns the bytes it returns on `origin/pilot` today; the release line falls back to the slug. |
 | 8 | The overview uses the project's own words. practitioner: Pocock's rule, "use the user's domain language from `GLOSSARY.md`". | The skill names `GLOSSARY.md` when one exists; the user's Gate 2 read finds 0 terms they do not know (reader check, *assumed*). |
@@ -88,12 +88,14 @@ Deletion test: deleting `pr-overview.mjs` puts the section parse and rules back 
   Verdict: stands — the user pressed Four labelled lines on itm_62f0a9fec739
 - **A3** Banned tokens: `S<n>`, `itm_`, `A<n>`, `L<n>`, `ADR <4 digits>`, and the crew role names, from `agents/pilot-*.md` basenames minus `pilot-` (architect, implementer, fundamentalist, co-pilot, lander, teacher, explorer, qa ...); "pilot" itself stays, it is the product. Tradeoff: "explorer" or "teacher" in honest prose is refused too.
   Verdict: stands — the ticket's line 1 names these ids; pilot is the product's name
-- **A4** Pocock's text adapted into a new skill rather than quoted in agent prose; ledger row at 1.3.2 beside the 1.2.3 rows. Tradeoff: one more skill file to re-sync.
+- **A4** Pocock's text adapted into a new skill rather than quoted in agent prose; ledger row at 1.3.2 in its own fragment, vendor/pr-overview.md, since build-vendor-ledger.mjs refuses two upstream versions in one fragment. Tradeoff: one more skill file to re-sync.
   Verdict: stands — glossary left the prompt pins at 0 headroom, a pointer line fits
 - **A5** Release overview: one line per landed feature, the first sentence of its What changes; no artefact at `pilotRef`, the slug. Rejected: a written paragraph at landing (needs a model, stale between landings). Stated in thread `itm_cc3f54ddd01d`'s default.
   Verdict: stands — one line per landed feature was in the default the user pressed on itm_cc3f54ddd01d
 - **A6** The trivial PR is proved by a wording pin on `agents/pilot.md` (ADR 0082 allows one where wording is the product). Rejected: a `pilot pr-body` helper, a CLI for one prompt line.
   Verdict: stands — no deck code writes the trivial PR body
+
+- **A7** The pr skill's ledger row lives in its own fragment, vendor/pr-overview.md, because scripts/build-vendor-ledger.mjs:76-88 refuses two upstream versions (1.2.3, 1.3.2) in one fragment. Rejected: dropping the version from the builder key, which weakens one-version-per-fragment for every ledger; a 1.2.3 header, which is false provenance. Taken by default in S3.
 - red team: S3's prompt lines land on `agents/pilot.md` and `agents/pilot-architect.md` while project-glossary lands; S3 merges `origin/pilot` first and re-measures the pins, never edits a pin to fit unmeasured.
 - red team: `specOf` stops at the next `## `, so `## Overview` above §1 never leaks into §2; walked against `scripts/feature-pr.mjs:74-90`.
 - red team: an overview carrying `@name` would notify; it passes through `quiet` like the rest (spec 1 test covers it).
