@@ -577,10 +577,9 @@ pub fn draw(
     let dark = cx.system_dark();
     let t = tok::theme(dark);
     const NONE: &str = "no tickets";
+    // The overview draws nothing, as the HTML deck draws tickets only on a tab (render-rail.mjs).
     let Some(repo) = view.repo else {
-        return col()
-            .key("tickets")
-            .child(theme::empty(NONE, "tickets-none", dark));
+        return col().key("tickets");
     };
     let add = repo.clone();
     // Add as a plain + centred above Red (the user, 2026-11-20); its name is its label and hover.

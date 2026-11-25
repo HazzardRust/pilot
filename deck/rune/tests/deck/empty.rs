@@ -1,6 +1,6 @@
 //! rune-panes S7 (spec 6, A2): on a deck with nothing in it each region reads as the HTML deck
 //! draws it, read from a real empty scratch deck's own view. This reverses rune-deck-ui S32 (spec 21)
-//! for notifications, chat and status, which the HTML deck leaves blank.
+//! for notifications, chat, status and the overview's tickets, which the HTML deck leaves blank.
 
 use crate::support;
 
@@ -17,7 +17,9 @@ const SENTENCES: [(&str, Option<&str>); 8] = [
     ("chat", None),
     ("status", None),
     ("agents", Some("no agents live")),
-    ("tickets", Some("no tickets")),
+    // The overview: the HTML deck draws tickets only on a tab (render-rail.mjs `TICKETS: tab ? … : ''`);
+    // a tab with none says "no tickets" (an_empty_repository_draws_no_tickets_in_place_of_its_queues).
+    ("tickets", None),
     ("reports", Some("no reports")),
 ];
 
