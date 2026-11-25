@@ -91,7 +91,8 @@ test('a merged slice is deleted after the push', (t) => {
 /** A worktree of `work` on a new local `slice/x-s1` at `tip`, in a temp dir removed after the test. */
 function sliceTree(t, work, tip) {
   // The slashes git prints, which the line carries.
-  const dir = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'integrate tree-')), 'slice-tree').replaceAll('\\', '/');
+  // realpath: on macOS os.tmpdir() is under the /var symlink, and git prints /private/var.
+  const dir = path.join(fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'integrate tree-'))), 'slice-tree').replaceAll('\\', '/');
   git(work, 'worktree', 'add', '-q', '-b', 'slice/x-s1', dir, tip);
   t.after(() => {
     try { git(work, 'worktree', 'remove', '--force', dir); } catch { /* already gone */ }
