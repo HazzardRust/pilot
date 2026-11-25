@@ -102,6 +102,12 @@ function rosterSize() {
   return count;
 }
 
+/** The last heartbeat the roster took, from any agent, or null: it outlives the sweep (stay-awake A1). */
+let heardAt = null;
+
+/** When any agent was last heard, as ms, or null when none has been since the start. */
+export const lastHeardAt = () => heardAt;
+
 /** Who to tell when membership changes. The daemon sets this; a test may too. */
 let announce = () => {};
 
@@ -176,6 +182,7 @@ export function noteAgent(heartbeat, now = Date.now()) {
   const joined = held === undefined || !isLive(held, now);
   agents.set(agentId, { agentType, since: joined ? now : held.since, lastSeen: now });
   decks.set(key, agents);
+  heardAt = Math.max(heardAt ?? now, now);
 
   // Activity counts for the repository a worktree belongs to, which is where its threads are.
   noteActive({ cwd: repoOf(key) ?? key, kind: authorKind(heartbeat.agentType) }, now);
@@ -353,6 +360,7 @@ export function forgetAgents() {
   activity.clear();
   crewSeen.clear();
   held.clear();
+  heardAt = null;
   startedAt = Date.now();
   if (sweeping) clearTimeout(sweeping);
   sweeping = null;
