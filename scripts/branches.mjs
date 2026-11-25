@@ -97,7 +97,8 @@ function prsByHead(host) {
  * when the run remote, origin's default branch or a remote's branch list cannot be read.
  * With `fetched`, the caller fetched origin itself (a landing, A3): nothing is fetched, origin's
  * branches are read from its remote-tracking refs and any other remote's still from the remote.
- * The push's lease stays the arbiter: a branch moved since is refused there, never deleted.
+ * The push's lease stays the arbiter: a branch moved or deleted since is refused there, never deleted,
+ * and the refusal throws as any failed push does.
  */
 export function deleteMerged({ git, host, select, into, wait = 0, dryRun = false, fetched = false }) {
   const runs = runRemote(git);

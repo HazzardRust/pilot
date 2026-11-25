@@ -148,12 +148,12 @@ test('a landing reads the process table once, and keeps a slice worktree a live 
 test('a prune that throws is one line, and the landing still exits 0', (t) => {
   const { origin, dir, listed } = run(t);
   const before = listed();
-  // Once the clear has listed the worktrees, the tip snapshot prune reads pilot's tip from fails
+  // Once the clear has read the branches pilot holds, the next ref read, prune's of pilot's tip, fails
   // (the landing's tail fetches nothing, land-batching S5).
-  let lists = 0;
+  let clearing = false;
   const losing = (args) => {
-    if (args[0] === 'worktree' && args[1] === 'list') lists += 1;
-    if (lists === 2 && args[0] === 'for-each-ref' && args[1].startsWith('--format=')) throw new Error('for-each-ref failed');
+    if (clearing && args[0] === 'for-each-ref') throw new Error('for-each-ref failed');
+    if (args[0] === 'for-each-ref' && args[1] === '--merged') clearing = true;
     return git(dir('feat'), ...args);
   };
 
