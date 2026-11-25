@@ -85,9 +85,15 @@ test('a landed feat tree whose own run record the deck rewrote in place goes', (
   git(dir, 'commit', '-q', '-m', 'done');
   git(dir, 'push', '-q', 'origin', `feat/done:${PILOT_BRANCH}`);
   fs.writeFileSync(record, '{"stage":"landed"}\n');
+  // A tracked edit beside the record is work, and keeps the tree.
+  fs.writeFileSync(path.join(dir, 'landed.txt'), 'real work');
+  const dirty = cli('prune', '--repo', work);
+  assert.ok(said(dirty.stdout, 'kept merged-dirty', dir), dirty.stdout);
+  git(dir, 'checkout', '--', 'landed.txt');
   const run = cli('prune', '--repo', work);
   assert.equal(run.status, 0, run.stderr);
   assert.ok(said(run.stdout, 'removed', dir), run.stdout);
+  assert.equal(git(work, 'branch', '--list', 'feat/done'), '');
 });
 
 test('a live run\'s tree stays: an unlanded head, and a tree just added at the pilot tip', (t) => {
