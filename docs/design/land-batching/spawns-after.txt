@@ -1,0 +1,172 @@
+git census, full npm run test:cost on feat/land-batching 355d0e1 + S7, 2026-11-26, Windows; gate line: spawns 12815 (node 848, git 11676, other 291)
+probe: one line per node-spawned git, outermost product frame as owner (test frames and count-spawns excluded); 11817 git traced
+
+== git by entry module
+ 4197  fixture
+ 3045  scripts/land.mjs
+ 1094  scripts/integrate.mjs
+  569  scripts/sync.mjs
+  414  scripts/worktrees.mjs
+  231  deck/server-tools.mjs
+  211  scripts/base.mjs
+  180  scripts/stack.mjs
+  176  scripts/select-tests.mjs
+  174  scripts/glossary-diff.mjs
+  151  scripts/pilot-branch.mjs
+  148  scripts/handoff.mjs
+  127  scripts/feature-pr.mjs
+  115  scripts/gate.mjs
+  105  scripts/branches.mjs
+   85  deck/landing.mjs
+   68  deck/wait.mjs
+   62  deck/lineage.mjs
+   60  scripts/build-rules-ledger.mjs
+   59  deck/recut.mjs
+   56  deck/telemetry.mjs
+   56  scripts/pilot-tip.mjs
+   42  scripts/git-view.mjs
+   41  bin/pilot.mjs
+   39  scripts/audit-spend.mjs
+   36  scripts/ledgers.mjs
+   35  deck/gate2-base.mjs
+   33  deck/gate2-checks.mjs
+   29  scripts/fresh-repo.mjs
+   23  scripts/adr-allocate.mjs
+   18  deck/slug-clash.mjs
+   18  scripts/glossary-stale.mjs
+   16  scripts/audit-context.mjs
+   16  scripts/uninstall.mjs
+   14  scripts/remotes.mjs
+   13  scripts/release.mjs
+   10  deck/doctor.mjs
+    9  deck/closing-report.mjs
+    6  deck/schedule.mjs
+    6  deck/server-routes.mjs
+
+== scripts/land.mjs by argv (top 30)
+  316  for-each-ref --format=%(objectname) %(refname) refs/heads refs/remotes
+  233  rev-parse HEAD
+  121  ls-remote --symref origin HEAD
+  118  fetch -q --prune origin
+  115  merge-base --is-ancestor SHA SHA
+  108  config --get pilot.remote
+  102  symbolic-ref -q --short HEAD
+  101  symbolic-ref --short HEAD
+   99  worktree list --porcelain
+   94  ls-files -m -o --exclude-standard -- :(glob)docs/design/*/run.json
+   92  diff --name-only --no-renames -z SHA...SHA --
+   88  rev-parse -q --verify --short refs/remotes/origin/pilot^{commit}
+   84  worktree add -q --detach PATH SHA
+   83  worktree remove --force PATH
+   76  worktree list --porcelain -z
+   73  status --porcelain --untracked-files=all
+   70  for-each-ref --merged refs/remotes/origin/pilot --format=%(refname) refs/heads/
+   70  push -q origin SHA:refs/heads/pilot
+   67  reflog show --format=%H HEAD --
+   60  merge-base --is-ancestor SHA refs/remotes/origin/pilot
+   51  log --first-parent --reverse --format=%H%x09%P%x09%s refs/remotes/origin/main..refs/remotes/origin/pilot
+   35  push -q origin feat/a
+   32  checkout -q --detach SHA
+   32  commit -q -m Merge feat/a into pilot
+   32  merge -q --no-ff --no-commit -m Merge feat/a into pilot SHA
+   25  rev-parse --path-format=absolute --git-common-dir
+   22  commit -q -m Merge feat/x into pilot
+   22  merge -q --no-ff --no-commit -m Merge feat/x into pilot SHA
+   22  push -q origin feat/b
+   21  checkout -q HEAD -- :(literal)docs/design/s/run.json
+
+== scripts/integrate.mjs by argv (top 30)
+   88  ls-remote --symref origin HEAD
+   83  symbolic-ref --short HEAD
+   81  config --get pilot.remote
+   71  fetch -q --prune origin
+   71  rev-parse HEAD
+   68  rev-parse -q --verify --short refs/remotes/origin/pilot^{commit}
+   65  log --first-parent --format=%H %P%x00%s origin/pilot
+   50  rev-parse -q --verify MERGE_HEAD
+   49  rev-parse --short HEAD
+   48  ls-files -m -o --exclude-standard -- :(glob)docs/design/*/run.json
+   41  merge -q --no-ff -m Merge base pilot origin/pilot
+   23  merge --no-ff --no-commit origin/slice/a
+   21  push -q origin feat/x
+   16  for-each-ref --format=%(objectname) %(refname) refs/heads refs/remotes
+   15  diff --cached --name-only -z --diff-filter=d -- . :(exclude,glob)docs/design/*/run.json
+   15  reset -q --merge SHA
+   14  commit -q -m Merge slice/a
+   12  checkout --pathspec-from-file=- --pathspec-file-nul
+   11  merge-base --is-ancestor SHA refs/remotes/origin/feat/x
+   11  rev-parse refs/remotes/origin/feat/x
+   11  symbolic-ref -q --short HEAD
+   10  config --local --no-includes --get pilot.test
+   10  rev-parse --path-format=absolute --git-common-dir
+    9  commit -q -m Merge slice/x-s1
+    7  diff --cached --name-only SHA -- package-lock.json
+    7  merge --no-ff --no-commit origin/slice/demo-s1
+    7  merge --no-ff --no-commit origin/slice/x-s1
+    7  rev-parse -q --verify --short origin/feat/a^{commit}
+    6  -c core.fsmonitor=false diff-tree --stdin --root -p
+    6  -c core.fsmonitor=false patch-id --stable
+
+== scripts/sync.mjs by argv (top 30)
+   98  for-each-ref --format=%(objectname) %(refname) refs/heads refs/remotes
+   66  merge-base --is-ancestor SHA SHA
+   43  config --get pilot.remote
+   43  ls-remote --symref origin HEAD
+   35  worktree add -q --detach PATH SHA
+   34  worktree remove --force PATH
+   33  rev-parse HEAD
+   32  fetch -q --prune origin
+   29  rev-parse --path-format=absolute --git-common-dir SHA^{tree}
+   28  merge-tree --write-tree SHA SHA
+   24  merge -q --no-ff --no-commit -m Merge main into pilot SHA
+   21  commit -q -m Merge main into pilot
+   20  push -q origin SHA:refs/heads/pilot
+    7  merge -q --no-ff --no-commit -m Merge feat/x into pilot SHA
+    6  commit -q -m Merge feat/x into pilot
+    5  diff --name-only --diff-filter=U
+    4  config --local --no-includes --get pilot.test
+    4  rev-parse --path-format=absolute --git-common-dir
+    3  add -- docs/adr/README.md
+    3  worktree list --porcelain
+    2  commit -q --amend --no-edit
+    2  commit -q -m Land feat/one
+    2  diff --name-only -z SHA...HEAD^2
+    2  fetch -q --prune second
+    2  merge -q --no-ff --no-commit -m Land feat/one SHA
+    2  remote
+    2  rev-parse --show-toplevel
+    2  rev-parse -q --verify MERGE_HEAD
+    2  update-ref refs/heads/pilot SHA SHA
+    1  add -- docs/design/x/run.json
+
+== fixture by argv (top 30)
+  244  rev-parse HEAD
+  162  clone -q PATH PATH
+   89  rev-parse pilot
+   86  push -q origin main
+   73  checkout -q main
+   69  add shared.txt
+   69  init -q --bare -b main PATH
+   61  checkout -q pilot
+   58  add -A
+   52  add .
+   52  init --bare -b main PATH
+   52  push -q origin pilot
+   51  checkout -q -b main
+   50  add a.txt
+   48  commit -q -m main
+   48  fetch -q origin
+   43  push -q origin main main:pilot
+   35  push -q origin feat/a
+   32  commit -q -m base
+   32  init -q -b main
+   32  remote set-head origin main
+   31  init -q
+   31  status --porcelain
+   30  -c core.autocrlf=false -c user.name=t -c user.email=t@t add -A
+   28  --literal-pathspecs ls-files -z -- f.md
+   28  push -q origin feat/x
+   27  rev-parse refs/heads/pilot
+   25  config core.logAllRefUpdates always
+   24  commit -q -m feat a
+   24  rev-parse refs/heads/feat/b
