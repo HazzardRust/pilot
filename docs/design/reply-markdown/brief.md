@@ -46,7 +46,7 @@ https://claude.ai/code/session_01NXgSFpzNB8zPpKs1Y5s2eU
 ## Artefact
 
 `docs/design/reply-markdown/architecture.md`, slices in `slices/S1.md` to `slices/S4.md`. The run's ADR is
-`docs/adr/NNNN-reply-markdown.md` (S1).
+`docs/adr/0213-reply-markdown.md` (S1).
 
 ## Environment
 

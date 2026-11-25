@@ -1,7 +1,7 @@
 # The reply box renders markdown as you type
 
 Ticket `itm_864c47669387` · slug `reply-markdown` · base `origin/feat/rune-deck-ui` 415914f8 (lands on `pilot`
-first) · ADR NNNN (`docs/adr/NNNN-reply-markdown.md`, S1) · surface: true (spec 1, 2, 7-9, 11-12 are looks; the
+first) · ADR 0213 (`docs/adr/0213-reply-markdown.md`, S1) · surface: true (spec 1, 2, 7-9, 11-12 are looks; the
 implementer's live check feeds the walkthrough) · re-cut of Gate 1 itm_f65f56809e26 (2 slices) for tables
 
 ## 1. Problem
@@ -116,7 +116,7 @@ shallow module to fold; no fold slice.
   real thread).
 - **L9** No grilling round (the user, itm_620aace73f0b, "No grilling"): the spec and A1-A3 as answered stand.
   Rejected: a grilling round over the design.
-- **L7** Recorded as ADR NNNN (`docs/adr/NNNN-reply-markdown.md`), written by S1; the landing numbers it. S3 adds
+- **L7** Recorded as ADR 0213 (`docs/adr/0213-reply-markdown.md`), written by S1; the landing numbers it. S3 adds
   L10-L12 to it.
 - **L10** The draft is prose parts and grids in order: `Local::draft: TextEdit` stays the first prose part, and
   `Local::tables: Vec<(Table, TextEdit)>` holds each grid with the prose part after it. `Local::text()` joins them
@@ -196,9 +196,9 @@ Width 2; longest stem 3
 
 | Slice | Title | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- | --- |
-| S1 | Walking skeleton: bold, italic and code render off the caret's line, and the draft is sent unchanged | 1, 2, 3, 5, 7 | `deck/rune/Cargo.toml`, `Cargo.lock`, `src/lib.rs`, `src/preview.rs` (new), `src/regions/reply.rs`, `tests/preview.rs` (new), `tests/reply.rs`, `docs/adr/NNNN-reply-markdown.md` (new) | – | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S1](slices/S1.md) |
+| S1 | Walking skeleton: bold, italic and code render off the caret's line, and the draft is sent unchanged | 1, 2, 3, 5, 7 | `deck/rune/Cargo.toml`, `Cargo.lock`, `src/lib.rs`, `src/preview.rs` (new), `src/regions/reply.rs`, `tests/preview.rs` (new), `tests/reply.rs`, `docs/adr/0213-reply-markdown.md` (new) | – | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S1](slices/S1.md) |
 | S2 | Headings, list markers and inert links render, within a frame | 1, 4, 6 | `deck/rune/src/preview.rs`, `tests/preview.rs`, `tests/reply.rs` | S1 (`preview::spans`, `preview.rs`) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S2](slices/S2.md) |
-| S3 | Table skeleton: the Table button inserts a grid, typing fills its cells, the reply is sent with a GFM table | 3, 8, 9, 10 | `deck/rune/src/table.rs` (new), `src/lib.rs`, `src/regions/reply.rs`, `tests/table.rs` (new), `docs/adr/NNNN-reply-markdown.md` | S1 (`reply.rs`, `lib.rs`, the ADR) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
+| S3 | Table skeleton: the Table button inserts a grid, typing fills its cells, the reply is sent with a GFM table | 3, 8, 9, 10 | `deck/rune/src/table.rs` (new), `src/lib.rs`, `src/regions/reply.rs`, `tests/table.rs` (new), `docs/adr/0213-reply-markdown.md` | S1 (`reply.rs`, `lib.rs`, the ADR) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
 | S4 | Moving through cells, adding and removing rows and columns, cells rendering | 11, 12, 13 | `deck/rune/src/table.rs`, `src/regions/reply.rs`, `tests/table.rs` | S3 (`table::Table`, the grid in `reply.rs`, `tests/table.rs`) | `pilot:rust-reviewer`, `pilot:security-reviewer` | [S4](slices/S4.md) |
 | S5 | Table inserts 2 × 2 and grows the Obsidian way *(added)* | 8, 11, 12 | `deck/rune/src/regions/reply.rs`, `src/table.rs`, `tests/deck/table.rs` | S4 (`Local::reshape`, `Local::step`, `tests/deck/table.rs`) | `pilot:rust-reviewer` | [S5](slices/S5.md) |
 | S6 | Headings have real sizes in the reply box and the thread *(added)* | 1, 7 | `deck/rune/theme.json`, `build.rs`, `src/theme.rs`, `src/preview.rs`, `tests/preview.rs`, `tests/theme.rs` | S2 (`preview::spans`) | `pilot:rust-reviewer` | [S6](slices/S6.md) |
