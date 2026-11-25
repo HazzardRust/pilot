@@ -73,7 +73,7 @@
     },
     {
       "slice": "S8",
-      "state": "pushed e7295aa",
+      "state": "integrated",
       "after": [
         "S5"
       ],
@@ -84,22 +84,20 @@
       "slice": "feature",
       "state": "planned; Gate 1 itm_178637b5acc6 signed by the user 2026-11-25 at eaf07b6",
       "pr": 157
+    },
+    {
+      "slice": "S9",
+      "state": "pushed d3e4ba0 (added; A6 assumed, departs from L11)",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/user-pilot-branch-s9",
+      "worktree": "C:/Users/jrylk/Projects/pilot-user-pilot-branch-s9"
     }
   ],
-  "next": "S7 checks running at 5b9178a; then integrate S8 (e7295aa), then S6 (6f41b35); then base check, fundamentalist, QA",
-  "updatedAt": "2026-11-25T20:51:24.241Z",
+  "next": "S6 integrating; then checks, integrate S9 (d3e4ba0); then base check, fundamentalist, QA",
+  "updatedAt": "2026-11-25T21:24:12.879Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "grep for the pilot branch name drowns in plugin, agent and CLI uses of the same word; a hook blocks sed -i on tracked docs",
-      "evidence": "53 files, 132 occurrences; A1 to L13 redone with Edit",
-      "size": 2
-    },
-    {
-      "kind": "drain",
-      "what": "pilot wait restarted about 12 times; every exit output read; two exits were deck-written lines (auto-assumed default, yield) printed as REPLY",
-      "size": 15
-    },
     {
       "kind": "drain",
       "what": "auto mode gave no verdict on a Bash call sharing a response with a deck call; reissued alone",
@@ -308,6 +306,16 @@
       "agent": "pilot:pilot-implementer",
       "what": "S6: 3 Rust deck tests time out on the scratch deck under full-suite load (flakes, green alone)",
       "evidence": "no scratch deck answered … none after 10000ms; act_thread/act_deck",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "hook notice mislabelled a question's auto-assumed close as 'a landing ended short' and pilot wait printed it as REPLY; pilot nearly relayed a deck default as the user's press",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "machine hibernated twice on CPU heat (user's HeatGuard, shutdown /h at 95C sustained) under parallel gates; 2 h of frozen agents read as a stalled co-pilot",
       "size": 3
     }
   ]
