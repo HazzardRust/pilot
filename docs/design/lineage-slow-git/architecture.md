@@ -48,6 +48,7 @@ Three signed landings in a row (gate2 threads `itm_1d819d4586dc`, `itm_c0593fe10
 
 - **A1** (thread `itm_a79189682a51`) How spec 2 proves the 5 s refusal. Default taken: a deadline already spent (`timeout: 0`, the two existing tests) plus one new `callTool` test that `lineageTimeout` reaches the check. Trade: no test runs against a git that is itself slow; the slowness is the clock's, not the process's. Rejected: a PATH `git` script that sleeps >5 s: runs on ubuntu CI only (Windows finds only `git.exe`, `pilot-branch.mjs:184`) and adds ≥5 s per test.
   User's answer: "Default: deadline 0 + seam test", the default as written.
+  Verdict: stands — the user pressed "Default: deadline 0 + seam test" on itm_a79189682a51
 - red team: walked S1's first behaviour against `gate1-lineage.test.mjs`: arming only direct calls would leave `postGate1` (:61) on the live deadline, the failure at :74; hence L1 and the seam test. Walked `lineage-base.test.mjs:91`: it already passes `deps` (`{ prWrite }`), so the arm merges into that object, not a second argument. Walked `handoff-lineage-remote.test.mjs`: the first cut put `GIT_SLOW_MS` in `deck/testUtils.mjs`, whose import redirects HOME and drops `PILOT_DECK_DIR` (:26-30), which that file does not take today; moved to `git-fixture.mjs` (L2).
 
 ## 7. Out of scope
