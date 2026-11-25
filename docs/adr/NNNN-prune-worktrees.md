@@ -19,7 +19,7 @@ Trees outlived their jobs: design trees beside their feat trees, detached QA scr
 - **L1** One guarded removal, `removeTree(repo, dir, { landed, holder, remove })`; every crew removal is `pilot worktrees remove|prune`. `sync.mjs`'s `removeWorktree` stays for the deck's own temp dirs.
 - **L2** Links and junctions among a tree's untracked and ignored entries are unlinked first, never followed; after the remove step the dir must be gone, else `kept leftover`. A removal git refuses is `leftover` too.
 - **L3** The deck's `docs/design/*/run.json` is never dirt, modified, added or untracked: it is put back to HEAD, or deleted when HEAD has none, before the removal. A deleted or renamed record is dirt.
-- **L4** A live holder keeps a tree (`live <pid>`) and is never killed (ADR 0163). A locked tree, the main checkout and a dir git does not list are kept.
+- **L4** A live holder keeps a tree (`live <pid>`) and is never killed (ADR 0163). A locked tree, the main checkout, a dir git does not list, and a tree holding another worktree inside it (`nested`) are kept. Nothing in a tree is changed before every keep check has passed.
 - **L5** Remote branches are never touched. A tree's HEAD, less a run.json-only tail, must be a safe head, reachable from a remote-tracking ref, the local pilot branch (its name read, never a literal) or a local `feat/*` other than the tree's own branch; else `kept unpushed`, branch and all. A removed tree's local branch goes with it.
 - **L6** `--force` only on a landed run, after the tracked status is read clean again (ADR 0171 kept). Mid-run an untracked non-ignored file keeps a tree; once landed only tracked dirt does.
 - **L7** The run set is not widened by branch name; new trees are tagged at creation instead.
