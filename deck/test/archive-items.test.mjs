@@ -13,6 +13,7 @@ import { postStored, shapedTicketBody, tempDeck } from '../testUtils.mjs';
 
 const { archiveOld, listItems } = await import('../store.mjs');
 const { archiveRows } = await import('../archive.mjs');
+const { localStamp } = await import('../archive-time.mjs');
 
 const REPO = 'D:/work/alpha';
 const HOUR = 60 * 60 * 1000;
@@ -27,7 +28,8 @@ const labelled = (row, label) => row.fields.find((field) => field.label === labe
 
 test('a closing report reads as named fields', (t) => {
   tempDeck(t);
-  const report = settled('report', { title: 'a report title', feature: { slug: 'archive-page' }, ticket: 'itm_abc123', body: 'Landed at abc123.' });
+  const posted = '2026-03-04T05:06:00.000Z';
+  const report = settled('report', { title: 'a report title', feature: { slug: 'archive-page' }, ticket: 'itm_abc123', body: 'Landed at abc123.', postedAt: posted, resolvedAt: undefined });
   listItems();
 
   const rows = rowsOfKind('report');
@@ -36,7 +38,7 @@ test('a closing report reads as named fields', (t) => {
   assert.equal(labelled(rows[0], 'Ticket'), 'itm_abc123');
   assert.equal(labelled(rows[0], 'Feature'), String({ slug: 'archive-page' }), 'an object-valued field is not stringified to JSON');
   assert.equal(labelled(rows[0], 'Body'), 'Landed at abc123.');
-  assert.match(labelled(rows[0], 'Landed'), /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+  assert.equal(labelled(rows[0], 'Landed'), localStamp(posted), 'a report is never resolved: it landed when it was posted');
   assert.ok(rows[0].fields.every((field) => !field.value.includes('{"')), 'no raw JSON in a field');
 });
 
@@ -91,12 +93,24 @@ test('an open thread is no row', (t) => {
   assert.ok(!archiveRows().some((row) => row.id === open.id));
 });
 
+test('a markdown field keeps its flag through archiveRows (spec 6)', (t) => {
+  tempDeck(t);
+  settled('report', { body: '## Landed' });
+  listItems();
+
+  const [row] = rowsOfKind('report');
+
+  assert.equal(row.fields.find((field) => field.label === 'Body').markdown, true);
+  assert.equal(row.fields.find((field) => field.label === 'Ticket').markdown, undefined, 'an unflagged field gains no flag');
+});
+
 test('archived items are included', (t) => {
   tempDeck(t);
-  const old = settled('report', { postedAt: ago(41 * DAY), resolvedAt: ago(40 * DAY) });
+  const old = settled('report', { postedAt: ago(41 * DAY), resolvedAt: undefined });
   const oldThread = settled('question', { postedAt: ago(41 * DAY), resolvedAt: ago(40 * DAY) });
   archiveOld();
-  assert.ok(!listItems().some((item) => item.id === old.id), 'the report sits only in a month file');
+  assert.ok(listItems().some((item) => item.id === old.id), 'a report is never resolved, so it stays live');
+  assert.ok(!listItems().some((item) => item.id === oldThread.id), 'the thread sits only in a month file');
 
   assert.deepEqual(rowsOfKind('report').map((row) => row.id), [old.id]);
   assert.deepEqual(rowsOfKind('thread').map((row) => row.id), [oldThread.id]);

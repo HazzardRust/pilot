@@ -9,15 +9,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { WITHHELD } from './classifier-log.mjs';
 import { findCredential } from './credential.mjs';
+import { isOpen } from './items.mjs';
 import { archivedItems } from './store-archive.mjs';
 import { storeDir } from './store-dir.mjs';
 import { readDeckFile } from './store-recovery.mjs';
 
 /** The store files the archive never opens (spec 8, L9): they hold the secret or raw test output. */
 export const NEVER_SHOWN = ['deck.secret', 'deck-open.html', 'logs/*.log'];
-
-const WITHHELD = '<withheld: credential>';
 
 const KINDS_DIR = fileURLToPath(new URL('./archive-kinds/', import.meta.url));
 
@@ -56,19 +56,33 @@ const neverShown = (file) => NEVER.some((pattern) => pattern.test(path.posix.nor
 
 export const withheld = (value) => (typeof value === 'string' && findCredential(value) ? WITHHELD : value);
 
-/** One row with every string through `findCredential` (L5). */
+/** One row as text (null as ''), every string through `findCredential` (L5); a field's `markdown` flag (spec 6) is kept. */
 const shown = (row) => ({
   kind: withheld(row.kind),
   id: withheld(row.id),
   at: withheld(row.at ?? null),
-  title: withheld(row.title),
-  fields: (row.fields ?? []).map((field) => ({ label: withheld(String(field.label ?? '')), value: withheld(String(field.value ?? '')) })),
+  title: withheld(String(row.title ?? '')),
+  fields: (row.fields ?? []).map((field) => ({
+    label: withheld(String(field.label ?? '')),
+    value: withheld(String(field.value ?? '')),
+    ...(field.markdown === true && { markdown: true }),
+  })),
 });
 
 /** The live store as it stands on disk, or an empty one where it is missing or unreadable: never recovered here. */
 export function liveDeck(dir) {
   const raw = readDeckFile(path.join(dir, 'deck.json'));
   return raw === null ? { items: [] } : JSON.parse(raw);
+}
+
+/** The settled items with an id, one per id, the live copy first where a failed archive pass left one in both. */
+function settledOnce(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    if (isOpen(item) || typeof item?.id !== 'string' || seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
 }
 
 /** Every kind's rows from `dir`, every string withheld where it holds a credential. */
@@ -78,6 +92,8 @@ export function archiveRows(dir = storeDir()) {
     if (refused.length) console.error(`[deck] archive kind ${kind.kind} names never-shown ${refused.join(', ')}; refused`);
     return refused.length === 0;
   });
-  const source = { dir, deck: liveDeck(dir), months: archivedItems(dir) };
+  const deck = liveDeck(dir);
+  const months = archivedItems(dir);
+  const source = { dir, deck, months, settled: settledOnce([...(deck.items ?? []), ...months]) };
   return kinds.flatMap((kind) => kind.rowsOf(source).map(shown));
 }

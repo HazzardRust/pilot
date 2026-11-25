@@ -6,8 +6,6 @@
 
 import { readRefusals } from '../classifier-log.mjs';
 
-const text = (value) => (value === undefined || value === null ? '' : String(value));
-
 function rowsOf({ dir }) {
   return readRefusals({ dir }).map((refusal, index) => ({
     kind: 'classifier',
@@ -17,7 +15,7 @@ function rowsOf({ dir }) {
     fields: [
       { label: 'Verdict', value: refusal.verdict },
       { label: 'Repo', value: refusal.repo },
-      { label: 'Ticket', value: text(refusal.ticket) },
+      { label: 'Ticket', value: refusal.ticket },
       { label: 'Agent', value: refusal.agent },
       { label: 'Tool', value: refusal.tool },
       { label: 'Command', value: refusal.command },

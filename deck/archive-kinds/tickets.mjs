@@ -4,22 +4,18 @@
  */
 
 import { localStamp } from '../archive-time.mjs';
-import { KIND_TICKET, isOpen, lastSaidAt } from '../items.mjs';
+import { KIND_TICKET, lastSaidAt } from '../items.mjs';
 
-const text = (value) => (value === undefined || value === null ? '' : String(value));
-
-function rowsOf({ deck, months }) {
-  const seen = new Set();
+function rowsOf({ settled }) {
   const rows = [];
-  for (const item of [...(deck.items ?? []), ...months]) {
-    if (item?.kind !== KIND_TICKET || isOpen(item) || typeof item.id !== 'string' || seen.has(item.id)) continue;
-    seen.add(item.id);
+  for (const item of settled) {
+    if (item.kind !== KIND_TICKET) continue;
     const fields = [
-      { label: 'Repository', value: text(item.repo) },
-      { label: 'State', value: text(item.state) },
+      { label: 'Repository', value: item.repo },
+      { label: 'State', value: item.state },
       { label: 'Closed', value: localStamp(item.resolvedAt) },
     ];
-    rows.push({ kind: 'tickets', id: item.id, at: lastSaidAt(item) ?? null, title: text(item.title), fields });
+    rows.push({ kind: 'tickets', id: item.id, at: lastSaidAt(item) ?? null, title: item.title, fields });
   }
   return rows;
 }

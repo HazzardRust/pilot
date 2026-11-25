@@ -44,6 +44,7 @@ const NOT_A_STORE_FILE = new Map([
   ['agent-${id}.meta.json', 'a session transcript\'s sidecar, owned by Claude Code'],
   ['.jsonl', 'a transcript extension, not a name'],
   ['.json', 'an extension, not a name'],
+  ['.bak', 'an extension in a comment, not a name'],
   ['.held.json', 'a suffix on a per-session hook state file in the hooks\' own state dir'],
   ['.posted.json', 'a suffix on a per-session hook state file in the hooks\' own state dir'],
   ['${base}.json', 'the audit report path, which `audits/*/*.json` covers'],
@@ -52,7 +53,10 @@ const NOT_A_STORE_FILE = new Map([
 
 const SKIPPED_DIRS = new Set(['node_modules', 'target', 'test', 'rune', 'archive-kinds', 'ui']);
 
-/** Every `.json`, `.jsonl` or `.log` string literal in the source under `deck/` and `hooks/`, tests and kinds aside. */
+/**
+ * Every `.json`, `.jsonl`, `.log` or `.bak` string literal in the source under `deck/` and `hooks/`, tests and kinds
+ * aside, and every name `setAside(file, why)` builds (`deck.json.<why>-<day>[-n]`, store-recovery.mjs).
+ */
 function literalsUnder(dir, found = new Set()) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const file = path.join(dir, entry.name);
@@ -60,7 +64,8 @@ function literalsUnder(dir, found = new Set()) {
       if (!SKIPPED_DIRS.has(entry.name)) literalsUnder(file, found);
     } else if (/\.(mjs|js)$/.test(entry.name)) {
       const source = fs.readFileSync(file, 'utf8');
-      for (const match of source.matchAll(/(['"`])([A-Za-z0-9_.\/*${}-]*\.(?:jsonl?|log))\1/g)) found.add(match[2]);
+      for (const match of source.matchAll(/(['"`])([A-Za-z0-9_.\/*${}-]*\.(?:jsonl?|log|bak))\1/g)) found.add(match[2]);
+      for (const match of source.matchAll(/\bsetAside\([^,()]+,\s*'([a-z]+)'\)/g)) found.add(`deck.json.${match[1]}-*`);
     }
   }
   return found;
@@ -73,9 +78,11 @@ const STORE_FILES = [...literalsUnder(path.join(ROOT, 'deck')), ...literalsUnder
 /** A file name as a glob: a template's `${...}` is any run of characters. */
 const asName = (literal) => literal.replace(/\$\{[^}]*\}/g, '*');
 
+/** Viewed where a kind's pattern fits the name, or a templated name (`${file}.bak`) fits a kind's pattern. */
 const viewed = (name) =>
-  archiveKinds().some((kind) => kind.files.some((pattern) => pattern === name || globOf(pattern).test(asName(name)))) ||
-  NEVER_SHOWN.some((pattern) => globOf(pattern).test(asName(name)));
+  archiveKinds().some((kind) =>
+    kind.files.some((pattern) => pattern === name || globOf(pattern).test(asName(name)) || globOf(asName(name)).test(pattern)),
+  ) || NEVER_SHOWN.some((pattern) => globOf(pattern).test(asName(name)));
 
 test('every thread kind has one view', (t) => {
   tempDeck(t);
@@ -93,6 +100,9 @@ test('every thread kind has one view', (t) => {
 
 test('every store file is viewed or never shown', () => {
   assert.ok(STORE_FILES.includes('handoff-trace.jsonl'), 'the scan finds the hand-off trace writer');
+  for (const built of ['${file}.bak', 'deck.json.corrupt-*', 'deck.json.replaced-*']) {
+    assert.ok(STORE_FILES.includes(built), `the scan finds ${built}`);
+  }
   assert.ok(STORE_FILES.length > 10, 'the scan finds the store writers');
   const unviewed = STORE_FILES.filter((name) => !viewed(name));
   assert.deepEqual(unviewed, [], `store files with neither a kind's files nor a NEVER_SHOWN entry: ${unviewed.join(', ')}`);
