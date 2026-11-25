@@ -237,8 +237,8 @@ fn bar(kinds: &[Kind], local: &Local, cx: &mut Cx<State>) -> El {
         .grow(1.0)
         .placeholder("Search titles and fields", theme::tokens(dark).quiet)
         .on_edit(|s: &mut State| &mut s.regions.archive.search);
-    let mut bar = row().w_full().gap(space::between).child(search);
-    // The kind toggles wrap onto their own lines, so every one stays inside the window's width (QA2).
+    let mut bar = row().w_full().flex_wrap().gap(space::between).child(search);
+    // Both lines wrap, so every control stays inside the window's width at any size (QA2).
     let mut kind_row = row().w_full().flex_wrap().gap(space::between);
     for k in kinds {
         let on = local.kind.as_deref() == Some(k.kind);
