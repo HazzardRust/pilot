@@ -31,18 +31,18 @@ function child(value, body, cwd = ROOT) {
   return spawnSync(process.execPath, ['--input-type=module', '-e', source], { cwd, env: envWith(value), encoding: 'utf8', windowsHide: true });
 }
 
+/** Prints `pilotBranch` over a runner that reads no repository, so only the env can answer. */
+const READ = "process.stdout.write(mod.pilotBranch(() => { throw Object.assign(new Error('no repo'), { status: 1 }); }));";
+
 test('the env names the pilot branch', () => {
-  const set = child('qa-scratch', 'process.stdout.write(mod.PILOT_BRANCH);');
+  const set = child('qa-scratch-pilot', READ);
   assert.equal(set.status, 0, set.stderr);
-  assert.equal(set.stdout, 'qa-scratch');
-  const unset = child(undefined, 'process.stdout.write(mod.PILOT_BRANCH);');
-  assert.equal(unset.status, 0, unset.stderr);
-  assert.equal(unset.stdout, 'pilot');
+  assert.equal(set.stdout, 'qa-scratch-pilot');
 });
 
-test('a bad name is refused at start', () => {
-  for (const bad of ['--all', 'a..b', 'refs/heads/x', 'heads/x', 'HEAD', 'a b', 'Qa-Scratch']) {
-    const run = child(bad, 'process.stdout.write(mod.PILOT_BRANCH);');
+test('a bad name is refused when read', () => {
+  for (const bad of ['--all', 'a..b', 'refs/heads/x', 'heads/x', 'HEAD', 'a b', 'Qa-Scratch', 'Qa-Scratch-pilot', 'a..b-pilot']) {
+    const run = child(bad, READ);
     assert.notEqual(run.status, 0, `${bad} is refused`);
     assert.equal(run.stdout, '', `${bad} is never used`);
     assert.match(run.stderr, /PILOT_BRANCH/, `${bad}: the error names the env`);

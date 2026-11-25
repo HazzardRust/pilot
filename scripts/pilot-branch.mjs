@@ -14,24 +14,6 @@ import { hostPlatform } from '../hooks/lib/platform.js';
 /** A ref side git takes literally: no option, glob, revision syntax, `HEAD`, `@` or whitespace. */
 const PLAIN = /^(?!-)(?!.*\.\.)[A-Za-z0-9._/-]+$/;
 
-/**
- * The pilot branch's name, read once from `PILOT_BRANCH` (default `pilot`), so a scratch clone
- * lands on its own branch with no file edit (blocked-steps spec 7; A4). A name git would not
- * take literally, one spelled `refs/…`/`heads/…`, or one with an upper-case letter (so `HEAD`
- * too: the guards keeping a run off this branch compare a lowered head with it) throws here,
- * naming the env. The default branch is still refused at every push, by `assertPushable`.
- * Kept for the consumers not yet folded onto `pilotBranch` (user-pilot-branch S6 deletes it).
- */
-export const PILOT_BRANCH = pilotBranchFrom(process.env);
-
-function pilotBranchFrom(env) {
-  const name = env.PILOT_BRANCH || 'pilot';
-  if (!PLAIN.test(name) || /^(?:refs|heads)\//.test(name) || name !== name.toLowerCase()) {
-    throw new Error(`PILOT_BRANCH is ${JSON.stringify(name)}: not a plain branch name`);
-  }
-  return name;
-}
-
 /** The branch every run landed on before the pilot branch was named for its user: read, never written (L1, L8). */
 export const LEGACY_PILOT = 'pilot';
 
@@ -282,8 +264,8 @@ export function gitUnder(cwd, { timeout } = {}) {
 }
 
 /**
- * `ref`'s lineage against the run remote's `pilot` as last fetched (`origin/pilot` unset, the
- * local `pilot` in local mode; pilot-fork L1), with no fetch here (design-docs-only
+ * `ref`'s lineage against the run remote's pilot branch (`pilotBranch`) as last fetched (on origin
+ * with `pilot.remote` unset, the local branch in local mode; pilot-fork L1), with no fetch here (design-docs-only
  * L3, L7): `upstream`, that pilot's full ref (`runRef`); `tip` when pilot's tip is an ancestor of `ref`; and `copies`, how many of
  * `ref`'s own commits (not reachable from pilot) carry the same patch as one of pilot's
  * commits the branch did not start from. Patch equivalence, as `git cherry` judges it,
@@ -307,7 +289,7 @@ export function pilotLineage(cwd, ref, { timeout, base } = {}) {
     return out.stdout;
   };
   const run = (args, input) => text(args, input).split('\n').filter(Boolean);
-  const upstream = base ?? runRef(runRemote(text), PILOT_BRANCH);
+  const upstream = base ?? runRef(runRemote(text), pilotBranch(text));
   if (!ok(['rev-parse', '-q', '--verify', `${upstream}^{commit}`])) return { upstream };
   const [sha] = run(['rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`]);
   const tip = ok(['merge-base', '--is-ancestor', upstream, sha]);
