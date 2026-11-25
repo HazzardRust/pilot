@@ -9,27 +9,31 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed a5ee4ac",
+      "state": "integrated, checks green at f5c5a2f",
       "branch": "slice/pr-overview-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-pr-overview-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "pushed 5ac4956",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/pr-overview-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-pr-overview-s2"
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "fixing: integrate red, vendor/methodology.md mixes upstreams 1.2.3 and 1.3.2",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/pr-overview-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-pr-overview-s3"
     }
   ],
-  "next": "Yellow: S1 a5ee4ac reported (TS reviewer APPROVE, 22 slice tests pass; full suite ran before review fixes). Report and trailers sent to co-pilot a3243245f8f5497bc, resumed, to integrate S1, pilot checks, then S2 and S3 in parallel, fundamentalist, fix round, QA. If the co-pilot is silent, integrate S1 from the report in the pilot's transcript.",
-  "updatedAt": "2026-11-25T02:32:17.740Z",
+  "next": "S3 fixing (split the 1.3.2 ledger row into vendor/pr-overview.md); meanwhile integrate S2 (5ac4956) on f5c5a2f",
+  "updatedAt": "2026-11-25T02:51:46.259Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -77,6 +81,31 @@
       "what": "npm run test:quiet took about 25 min under load and prints no node summary line; Edit lost its read state mid-run",
       "evidence": "pr-overview S1 report: counts on line 7 of the log",
       "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "This run's own artefact failed the overview-plain rule it introduces (sentence average 23.8 > 20); S3 split the overview's sentences",
+      "evidence": "check-slices exit 1 `:5 overview-plain ... 23.8 words`, then exit 0"
+    },
+    {
+      "agent": "pilot:pilot-fact-sheet",
+      "what": "Misquoted qa-preview.test.mjs:84's assertion message",
+      "evidence": "gave 'over its 5264'; real text is `pilot-qa's own share is ${own} tokens`"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Upstream Pocock pr 1.3.2 not on the machine; skill built from artefact section 3's quoted lines only",
+      "evidence": "~/.claude/plugins/cache/claude-plugins-official/mattpocock-skills/ absent"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2 slice file contradicts itself: Interface shows the overview block always, but land-main-pr.test.mjs must stay unedited and expects a table-only body",
+      "evidence": "land-main-pr.test.mjs:49; first version 21 of 23 pass; resolved by omitting the block when no landed feature has a What changes sentence (assumed, co-pilot accepted under L4)"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Three probes could not find where production git's stderr goes (gitAt defined elsewhere than integrate.mjs)",
+      "evidence": "worked around with a git ls-tree existence check before show"
     }
   ]
 }
