@@ -5,7 +5,7 @@ name: Rune deck
 # out of scope. The tests start scratch daemons through node, so the node install comes first.
 on:
   pull_request:
-    branches: [main, 'feat/**', '*-pilot']
+    branches: [main, 'feat/**', '*-pilot', pilot]
     paths: ['deck/**', 'bin/**', 'scripts/gate.mjs', '.github/workflows/ci.yml']
   push:
     branches: [main]
