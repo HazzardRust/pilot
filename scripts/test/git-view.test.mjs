@@ -48,6 +48,40 @@ test('a read is asked once per epoch', (t) => {
   assert.equal(across.git, 3, 'the read, the fetch, the read again');
 });
 
+test('rev-list, diff and log are asked once per epoch', (t) => {
+  const work = clone(t);
+  for (const read of [['rev-list', '--count', 'HEAD'], ['diff', '--name-only', 'HEAD'], ['log', '-1', '--format=%H']]) {
+    const twice = countGit(() => {
+      const git = gitView(work);
+      return [git(read), git(read)];
+    });
+    assert.equal(twice.value[0], twice.value[1]);
+    assert.equal(twice.git, 1, `${read[0]} asked twice in one epoch`);
+
+    for (const write of [['commit', '-q', '--allow-empty', '-m', 'between'], ['fetch', '-q', 'origin']]) {
+      const across = countGit(() => {
+        const git = gitView(work);
+        git(read);
+        git(write);
+        git(read);
+      });
+      assert.equal(across.git, 3, `${read[0]}, ${write[0]}, ${read[0]} again`);
+    }
+  }
+});
+
+test('a diff or log that writes a file, or diffs files outside git, is never a read', (t) => {
+  const work = clone(t);
+  const asked = [];
+  const git = gitView(work, { run: (args) => (asked.push(args.join(' ')), 'x') });
+  const shapes = [['diff', '--output=d.patch', 'HEAD'], ['diff', '--output', 'd.patch'], ['log', '--output=l.txt', '-1'], ['log', '--output', 'l.txt', '-1'], ['diff', '--no-index', 'a', 'b']];
+  for (const args of shapes) {
+    git(args);
+    git(args);
+  }
+  assert.equal(asked.length, shapes.length * 2);
+});
+
 test('forget drops every answer, for a write made outside the view', (t) => {
   const work = clone(t);
   const { git: spawned } = countGit(() => {

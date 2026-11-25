@@ -39,7 +39,8 @@ test('integrate prints what it printed on the base and leaves the same merge on 
   assert.equal(git(origin, 'log', '-1', '--format=%P', 'feat/x'), `${before} ${slice}`);
 });
 
-// 24 measured on the base 493bd48 for this integration (land-batching S3); after the view, 20.
+// 24 measured on the base 493bd48 for this integration (land-batching S3); after the view, 20; still 20 with
+// rev-list, diff and log as reads (S8), since this integration asks each of them once.
 const BASE_GIT = 24;
 const BAR_GIT = 20;
 
