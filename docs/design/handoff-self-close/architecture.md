@@ -1,6 +1,6 @@
 # handoff-self-close: a crew hand-off item closes itself
 
-Ticket `itm_a28fc03b3ae5` · base `main` (da9a644) · merge thread `itm_531dc27b41b3` (merged none) · ADR NNNN
+Ticket `itm_a28fc03b3ae5` · base `main` (da9a644) · merge thread `itm_531dc27b41b3` (merged none) · ADR 0214
 
 ## 1. Problem
 
@@ -84,7 +84,7 @@ seam); `crewWaitOf` survives (it wakes the pilot, a different reader). No fold s
 - **L7 Grilling depth: forks** (assumed). Taken by the deck's default after 20 minutes with no answer
   (`itm_b43b3bb41f75`), not by the user.
 
-ADR NNNN records L1-L3 as an extension of ADR 0208 L3.
+ADR 0214 records L1-L3 as an extension of ADR 0208 L3.
 
 ## 6. Assumed decisions
 
@@ -121,7 +121,7 @@ Width 1; longest stem 2
 
 | Slice | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- |
-| S1 The deck closes a crew-handoff when its ticket moves on | 1, 2, 3, 4, 6, 7 | `deck/crew-handoff.mjs`, `deck/crew-settle.mjs` (new), `deck/server-tools.mjs`, `deck/server-wait.mjs`, `deck/items.mjs` (line 282), `agents/pilot.md`, `docs/adr/NNNN-handoff-self-close.md` (new), `deck/test/crew-settle.test.mjs` (new) | – | typescript, security | [S1](slices/S1.md) |
+| S1 The deck closes a crew-handoff when its ticket moves on | 1, 2, 3, 4, 6, 7 | `deck/crew-handoff.mjs`, `deck/crew-settle.mjs` (new), `deck/server-tools.mjs`, `deck/server-wait.mjs`, `deck/items.mjs` (line 282), `agents/pilot.md`, `docs/adr/0214-handoff-self-close.md` (new), `deck/test/crew-settle.test.mjs` (new) | – | typescript, security | [S1](slices/S1.md) |
 | S2 A stuck crew-handoff reads waiting with its age | 5 | `deck/crew-wait.mjs` (new), `deck/crew-handoff.mjs`, `deck/crew-settle.mjs`, `deck/items.mjs` (threadState), `deck/test/crew-waiting.test.mjs` (new) | S1 (`deck/crew-handoff.mjs`, `deck/crew-settle.mjs`, `deck/items.mjs`) | typescript | [S2](slices/S2.md) |
 
 ## 9. Acceptance evidence

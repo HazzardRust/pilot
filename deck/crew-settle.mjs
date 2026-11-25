@@ -1,5 +1,5 @@
 /**
- * The deck's closes of a crew-handoff (handoff-self-close S1, ADR NNNN): a ticket's `co-pilot` grant closes its open
+ * The deck's closes of a crew-handoff (handoff-self-close S1, ADR 0214): a ticket's `co-pilot` grant closes its open
  * ones (ADR 0208 L3), and `settleCrew`, run after every deck change, closes each one whose ticket has left yellow
  * (L1), each through `resolveItem` with its `resolved` trace row (L2), never over an unanswered press (A1).
  */

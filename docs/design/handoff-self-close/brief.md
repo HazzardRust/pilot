@@ -48,7 +48,7 @@ https://claude.ai/code/session_01NXgSForDWcHA67cB28cNrm
 ## Artefact
 
 `docs/design/handoff-self-close/architecture.md`, slices in `slices/S1.md` and `slices/S2.md`. The run's ADR is
-`docs/adr/NNNN-handoff-self-close.md` (S1); the landing numbers it.
+`docs/adr/0214-handoff-self-close.md` (S1); the landing numbers it.
 
 ## Gate command
 
