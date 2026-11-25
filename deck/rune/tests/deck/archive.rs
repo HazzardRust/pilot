@@ -52,8 +52,8 @@ fn the_archive_button_opens_the_closed_tickets_by_day() {
 
     rt.frame(1.0);
     let (x, y) = rt
-        .find("strip-archive")
-        .expect("an Archive button in the strip");
+        .find("icon-archive")
+        .expect("the Archive icon in the bar");
     rt.pointer_move(x, y);
     rt.pointer_down(x, y);
     rt.pointer_up(x, y);

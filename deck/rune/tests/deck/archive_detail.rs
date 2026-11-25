@@ -103,7 +103,7 @@ fn a_press_opens_the_detail_and_back_returns() {
     std::fs::write(&store, stored.to_string()).expect("the store written");
     let mut rt = live_window(&deck);
     rt.frame(1.0);
-    press(&mut rt, "strip-archive");
+    press(&mut rt, "icon-archive");
     let row = format!("archive-row-{id}");
     frame_until(&mut rt, "the archive's row", |rt| keys(rt).contains(&row));
 

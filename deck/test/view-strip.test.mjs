@@ -80,7 +80,7 @@ test('an ended tab offers Start, or Resume when it holds a ticket, and Close; a 
   assert.equal(stripView(reads(), { run: ENDED }).start, 'start');
   assert.equal(stripView(reads({ items: [held] }), { run: ENDED }).start, 'resume');
   assert.equal(stripView(reads(), { run: ENDED }).close, true);
-  assert.deepEqual(stripView(reads(), { run: LIVE }), { all: false, items: { count: 0, here: false }, archive: { here: false }, tab: { repo: LIVE, code: 'D1' }, create: {}, close: false, alerts: { weekly: true } });
+  assert.deepEqual(stripView(reads(), { run: LIVE }), { all: false, items: { count: 0, here: false }, tab: { repo: LIVE, code: 'D1' }, create: {}, close: false, alerts: { weekly: true } });
 });
 
 test('the overview asks which numbered deck, named as its tab', () => {
