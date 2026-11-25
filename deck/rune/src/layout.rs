@@ -56,6 +56,11 @@ static REPORT: Icon = line_icon!(
     r#"<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>"#
 );
 
+static ARCHIVE: Icon = line_icon!(
+    "deck-archive",
+    r#"<path d="M3 4h18v4H3z"/><path d="M5 8v12h14V8"/><path d="M10 12h4"/>"#
+);
+
 /// The icon bar, top to bottom, as the page's rail: each panel's name in the prefs, its label and
 /// its icon. The side area stacks the open ones in the same order.
 static PANELS: [(&str, &str, &Icon); 6] = [
@@ -355,6 +360,37 @@ fn icon_item(
     item
 }
 
+/// The bar's last entry, Archive: a page, not a pane, so its press goes to the archive screen
+/// (and back on a second) and opens no side pane. Marked while that screen is up.
+fn archive_icon(s: &State, dark: bool) -> El {
+    let t = tok::theme(dark);
+    let here = s.query.screen == "archive";
+    let mut item = theme::control(el(), dark)
+        .key("icon-archive")
+        .size(size::icon_bar, size::icon_bar)
+        .center()
+        .role("button")
+        .label("Archive")
+        .help("Archive")
+        .expanded(here)
+        .on_press(regions::strip::archive_page)
+        .child(
+            icon(&ARCHIVE, size::icon)
+                .key("icon-archive-glyph")
+                .color(if here { t.text } else { t.text_secondary }),
+        );
+    if here {
+        item = item.child(
+            el().key("icon-archive-marker")
+                .w(space::s2)
+                .h_full()
+                .pin(Some(space::s0), Some(space::s0), None, Some(space::s0))
+                .fill(theme::roles(dark).primary),
+        );
+    }
+    item
+}
+
 /// An icon's count: a solid badge as wide as its digits on the icon's top-right corner, so it
 /// covers no more of the glyph than that corner. Out of the flow, so its width moves nothing (6e).
 fn icon_badge(count: usize, dark: bool) -> El {
@@ -489,14 +525,17 @@ fn left_side(s: &State, cx: &mut Cx<State>) -> El {
         space::s0
     };
     // The first glyph and the first heading start at the centre header's top (`app::center`).
-    let bar = PANELS.iter().fold(
-        col()
-            .key("icon-bar")
-            .w(size::icon_bar)
-            .h_full()
-            .pt(space::s7 - (size::icon_bar - size::icon) / 2.0),
-        |bar, &panel| bar.child(icon_item(s, panel, dark)),
-    );
+    let bar = PANELS
+        .iter()
+        .fold(
+            col()
+                .key("icon-bar")
+                .w(size::icon_bar)
+                .h_full()
+                .pt(space::s7 - (size::icon_bar - size::icon) / 2.0),
+            |bar, &panel| bar.child(icon_item(s, panel, dark)),
+        )
+        .child(archive_icon(s, dark));
     // The open pane above the one being drawn, which its border resizes with it.
     let mut above: Option<&'static str> = None;
     // Panes take their contents' height and the area scrolls past the last; room left over stays

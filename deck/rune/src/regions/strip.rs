@@ -65,19 +65,11 @@ struct Items {
     here: bool,
 }
 
-/// The way to the archive screen; `here` on it, where it leads back.
-#[derive(Debug, Deserialize)]
-struct Archive {
-    here: bool,
-}
-
 #[derive(Debug, Deserialize)]
 struct Strip {
     all: bool,
     #[serde(default)]
     items: Option<Items>,
-    #[serde(default)]
-    archive: Option<Archive>,
     #[serde(default)]
     tab: Option<Tab>,
     #[serde(default)]
@@ -339,10 +331,6 @@ pub fn draw(v: &serde_json::Value, local: &Local, pending: &Pending, cx: &mut Cx
             format!("Items {}", items.count)
         };
         out = out.child(btn(&label, "strip-items", Look::Quiet).on_press(items_page));
-    }
-    if let Some(archive) = &strip.archive {
-        let label = if archive.here { "Back" } else { "Archive" };
-        out = out.child(btn(label, "strip-archive", Look::Quiet).on_press(archive_page));
     }
 
     // Create: the tab's repository, or on the overview the deck the confirm has chosen.
