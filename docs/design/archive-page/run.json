@@ -149,7 +149,7 @@
     },
     {
       "slice": "archive-page",
-      "state": "fixing: integrate red (archive_lag debug 128 ms bar, 134-143 ms); dropping the debug wall-clock bar",
+      "state": "fix round integrated",
       "branch": "fix2/archive-page",
       "worktree": "C:/Users/jrylk/Projects/pilot-fix2-archive-page",
       "pr": 139
@@ -220,8 +220,8 @@
     "kept: S19d finding — 900 px unbroken tokens clip in the title/field column",
     "kept: S19e simplify — third 0.6 advance copy, kinds parsed twice, app.rs archive condition twice, println! in archive_align and archive_lag"
   ],
-  "next": "fix2: drop debug lag bar, push; re-integrate fix2/archive-page; checks; fresh QA posts a NEW walkthrough (itm_00bd1d6f40e3 closed by user)",
-  "updatedAt": "2026-11-26T05:18:36.972Z",
+  "next": "feat/archive-page at 31e2deb; checks --wait; then fresh pilot-qa posts a NEW walkthrough at the tip (itm_00bd1d6f40e3 closed by user)",
+  "updatedAt": "2026-11-26T05:28:39.440Z",
   "friction": [
     {
       "agent": "pilot:pilot-co-pilot",
