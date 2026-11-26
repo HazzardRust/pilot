@@ -6,11 +6,11 @@
 
 import './no-open.mjs';
 import { gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
+import { seed } from '../../scripts/test/lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 
 import { KIND_GATE1, KIND_GATE2, KIND_TICKET, SIGN_OFF } from '../items.mjs';
@@ -36,26 +36,21 @@ const architecture = (edits = {}) => ['# X', '', ...Object.entries(SECTIONS).fla
  */
 function repo(t) {
   return gitFixture(t, 'replan:repo', (root) => {
+    // `first` is the plan's branch; `main` grows `same` from it, and each re-cut is a branch off it. One seed, one clone.
+    const off = (branch, files) => ({ branch, from: 'first', files, message: branch });
+    const { origin, sha } = seed(root, [
+      { branch: 'first', files: { [ARTEFACT]: architecture(), [SLICE]: '# S1\n\n## Files owned\n\n- `deck/lanes.mjs`\n' }, message: 'plan' },
+      { branch: 'main', from: 'first', files: { 'deck/lanes.mjs': 'landed on pilot\n' }, message: 'plan' },
+      off('recut', { [SLICE]: '# S1\n\n## Files owned\n\n- `deck/lanes.mjs`\n- `deck/wait.mjs`\n' }),
+      off('reworded', { [ARTEFACT]: architecture({ 3: 'The anchor is server-tools.mjs:240.' }), [SLICE]: '# S1, reworded\n\n## Files owned\n\n- `deck/lanes.mjs`\n' }),
+      off('spec', { [ARTEFACT]: architecture({ 2: '| 1 | a red ticket moves |' }) }),
+      off('locked', { [ARTEFACT]: architecture({ 5: '- **L1** Two replans.' }) }),
+      off('graph', { [ARTEFACT]: architecture({ 8: '| S1 | `deck/wait.mjs` |' }) }),
+      off('headless', { [ARTEFACT]: architecture({ 8: null }) }),
+    ]);
     const work = path.join(root, 'work');
-    git(root, 'init', '-q', '-b', 'main', work);
-    const write = (files, branch) => {
-      if (branch) git(work, 'checkout', '-q', '-b', branch, first);
-      for (const [file, text] of Object.entries(files)) {
-        fs.mkdirSync(path.join(work, path.dirname(file)), { recursive: true });
-        fs.writeFileSync(path.join(work, file), text);
-      }
-      git(work, 'add', '--', ...Object.keys(files));
-      git(work, 'commit', '-q', '-m', branch ?? 'plan');
-      return git(work, 'rev-parse', 'HEAD');
-    };
-    const first = write({ [ARTEFACT]: architecture(), [SLICE]: '# S1\n\n## Files owned\n\n- `deck/lanes.mjs`\n' });
-    const same = write({ 'deck/lanes.mjs': 'landed on pilot\n' });
-    const changed = write({ [SLICE]: '# S1\n\n## Files owned\n\n- `deck/lanes.mjs`\n- `deck/wait.mjs`\n' }, 'recut');
-    const reworded = write({ [ARTEFACT]: architecture({ 3: 'The anchor is server-tools.mjs:240.' }), [SLICE]: '# S1, reworded\n\n## Files owned\n\n- `deck/lanes.mjs`\n' }, 'reworded');
-    const spec = write({ [ARTEFACT]: architecture({ 2: '| 1 | a red ticket moves |' }) }, 'spec');
-    const locked = write({ [ARTEFACT]: architecture({ 5: '- **L1** Two replans.' }) }, 'locked');
-    const graph = write({ [ARTEFACT]: architecture({ 8: '| S1 | `deck/wait.mjs` |' }) }, 'graph');
-    const headless = write({ [ARTEFACT]: architecture({ 8: null }) }, 'headless');
+    git(root, 'clone', '-q', origin, work);
+    const { first, main: same, recut: changed, reworded, spec, locked, graph, headless } = sha;
     return { work, first, same, changed, reworded, spec, locked, graph, headless };
   });
 }
