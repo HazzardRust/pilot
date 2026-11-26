@@ -187,7 +187,7 @@
     },
     {
       "slice": "S18",
-      "state": "pushed 8a6a7f6",
+      "state": "integrated at 5012b7e, checks green at f33ee09",
       "after": [
         "S17"
       ],
@@ -196,78 +196,20 @@
     },
     {
       "slice": "S19",
-      "state": "planned (added)",
+      "state": "pushed 05509ee",
       "after": [
         "S18"
-      ]
+      ],
+      "branch": "slice/archive-page-s19",
+      "worktree": "C:/Users/jrylk/Projects/pilot-s19-archive-page"
     }
   ],
   "findings": [
-    "dropped: QA-note-2 log kind reads live deck.log — textlogs reads <dir>/deck.log with dir=storeDir() (archive.mjs:84, textlogs.mjs:54); post-copy lines are the scratch daemon's own stderr tee (daemon.mjs:87) naming the copied deck.pid"
+    "kept: S19-found S17's windowed archive region grew into the viewport, so the centre never scrolled the list (centre_y stayed 0 after Page Down) — fixed in S19 with the fixed bar"
   ],
-  "next": "integrating S18 8a6a7f6",
-  "updatedAt": "2026-11-26T00:29:11.699Z",
+  "next": "self-pause; feat/archive-page at f33ee097; next: integrate slice/archive-page-s19 (05509ee, rust-reviewer approve, Evidence B1-B7 in hand-back), checks --wait, fundamentalist 2d38b22..tip, fix brief adds S19 review findings (see hand-back), QA re-walk itm_00bd1d6f40e3",
+  "updatedAt": "2026-11-26T04:07:00.999Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "S11 evidence rows lived only in the earlier co-pilot's context; a re-proof spawn was needed",
-      "evidence": "record next names B1-B4, no rows stored",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "no TaskOutput tool, cannot wait on a child; hand-back forced with the S11 implementer live (fourth time across runs)",
-      "evidence": "ToolSearch select:TaskOutput: No matching deferred tools found",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "npm test takes ~9 min and prints a fail 0 line for nested sub-runs, so a wait on that line fires early",
-      "evidence": "S11 re-proof, relayed by main",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S10 Interface says STORE_FILES is found by grep, but a raw literal grep gives ~35 names, over half not store files; the implementer wrote an exclusion list with reasons",
-      "evidence": "S10 report: NOT_A_STORE_FILE 19 names",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "co-pilot brief asked for ADR 0213 against L7's NNNN placeholder; implementer followed L7",
-      "evidence": "S10 report pushback",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "testUtils seeds a v2 deck, so any archive test over a seeded store now sees an upgrade backup row; cost one npm test red and a rerun",
-      "evidence": "S15: archive-page.test.mjs rows sit in daySections' sections failed alone",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-fundamentalist",
-      "what": "context compacted mid-review; findings rebuilt from scratch and the evidence runner spawned late, so no tool table",
-      "evidence": "fundamentalist report: evidence pass not run",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-qa",
-      "what": "report fixtures carried resolvedAt that real reports never get, so every slice test passed while 0 of 128 real reports showed",
-      "evidence": "QA: archive-items.test.mjs:96, archive-detail.test.mjs:40",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-fundamentalist",
-      "what": "evidence runner never reported; the principles review has no tool table",
-      "evidence": "co-pilot triage note; worktree pilot-fund-archive-page left behind",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-evidence-runner",
-      "what": "Node column only, no Rust rows; Stryker dry run failed on the 50 ms timing test classifier-log.test.mjs:262 at 109 ms under load, so no mutation score",
-      "evidence": "main's relay of the runner table",
-      "size": 2
-    },
     {
       "agent": "pilot:pilot-evidence-runner",
       "what": "report reached main, not the fundamentalist, after the review was triaged; Stryker dry run failed on a 50 ms timing test under load so no mutation score; no Rust rows (root manifest picks Node); knip ran whole-repo",
@@ -428,6 +370,59 @@
       "agent": "pilot:pilot-implementer",
       "what": "`pilot deck --help` has no help and reaches for the live deck at 4321",
       "evidence": "S18 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot checks prints `checks red` for runs CI cancelled when a newer push superseded them; a docs push right after an integrate reads as a failed gate",
+      "evidence": "checks red at 5012b7e; gh run list: Gate cancelled, Rune deck cancelled"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S19 reports its context compacted with nothing saved right after spawn, the third child in a row (S17, S18, S19)",
+      "evidence": "S19 first message"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "`pilot checks` prints `checks red` when runs were cancelled by a newer push superseding them",
+      "evidence": "archive-page S18 at 5012b7e vs f33ee09",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S17, S18 and S19 each lost their context right after spawn with nothing saved",
+      "evidence": "archive-page co-pilot hand-back",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "no `pilot deck --scratch --from <store>`: every look copies the store by hand, and one copy took deck.secret with it; `pilot deck --help` has no help and reaches for the live deck",
+      "evidence": "S16-S18 reports; harness PII flag on S18",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "third HeatGuard hibernate of the session (10:51 local, ~3 h) despite a one-cargo-at-a-time lock; deck read it as an idle lane",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "two writers on one S19 worktree: brief said the prior implementer was dead; its reset --soft and squash rewrote the live implementer's tip",
+      "evidence": "05509ee9 replaces 626a723d..365fa2da; ac36f123 alive"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared CARGO_TARGET_DIR with the red-proof worktree reused a stale test binary; needed touch to rebuild",
+      "evidence": "first cargo run Finished in 3.11s, 6 failed"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot live-root --dir archive-page-s19 printed untrusted; --open archive rejected (needs screen=archive)",
+      "evidence": "live-root output; --open refusal"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "TaskStop on own spawned implementer refused (only main/user/agent itself)",
+      "evidence": "TaskStop a91f33ff274ccf1e5 refused"
     }
   ]
 }
