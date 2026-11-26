@@ -41,9 +41,9 @@ function checkPath(file) {
 
 /** `name <email>` from the global config the fixture seam wrote. */
 function identity() {
-  const text = fs.readFileSync(process.env.GIT_CONFIG_GLOBAL, 'utf8');
-  const name = text.match(/^\s*name\s*=\s*(.+?)\s*$/m)?.[1];
-  const email = text.match(/^\s*email\s*=\s*(.+?)\s*$/m)?.[1];
+  const user = fs.readFileSync(process.env.GIT_CONFIG_GLOBAL, 'utf8').match(/^\s*\[user\]\s*$([^[]*)/m)?.[1] ?? '';
+  const name = user.match(/^\s*name\s*=\s*(.+?)\s*$/m)?.[1];
+  const email = user.match(/^\s*email\s*=\s*(.+?)\s*$/m)?.[1];
   if (!name || !email || /[<>\n]/.test(name + email)) throw new Error(`seed: no identity in ${process.env.GIT_CONFIG_GLOBAL}`);
   return `${name} <${email}>`;
 }
@@ -64,7 +64,8 @@ export function seed(dir, history, refs = {}) {
       return tips.get(name);
     });
     const parent = tips.get(commit.branch) ?? (i > 0 ? i - 1 : undefined);
-    const tree = { ...(parent === undefined ? {} : planned[parent].tree) };
+    // No prototype: a file named `__proto__` is a file.
+    const tree = Object.assign(Object.create(null), parent === undefined ? {} : planned[parent].tree);
     for (const from of merge) Object.assign(tree, planned[from].tree);
     Object.assign(tree, commit.files);
     planned[i] = { ...commit, parent, mergeMarks: merge, tree };
@@ -74,13 +75,14 @@ export function seed(dir, history, refs = {}) {
     checkBranch(name);
     checkBranch(target);
     if (!tips.has(target)) throw new Error(`seed: ref to a branch not in history: ${target}`);
+    if (tips.has(name)) throw new Error(`seed: ref names a branch the history already writes: ${name}`);
   }
 
   const who = identity();
   const stream = [];
   planned.forEach((commit, i) => {
     const when = `${who} ${EPOCH + i} +0000`;
-    stream.push(`commit refs/heads/${commit.branch}\nmark :${i + 1}\nauthor ${when}\ncommitter ${when}\n${data(commit.message)}`);
+    stream.push(`commit refs/heads/${commit.branch}\nmark :${i + 1}\nauthor ${when}\ncommitter ${when}\n${data(commit.message.endsWith('\n') ? commit.message : `${commit.message}\n`)}`);
     if (commit.parent !== undefined) stream.push(`from :${commit.parent + 1}\n`);
     for (const from of commit.mergeMarks) stream.push(`merge :${from + 1}\n`);
     stream.push('deleteall\n');
@@ -96,7 +98,7 @@ export function seed(dir, history, refs = {}) {
   try {
     execFileSync('git', [`--git-dir=${origin}`, 'fast-import', '--quiet', '--done', `--export-marks=${marks}`], { cwd: dir, input: stream.join(''), stdio: 'pipe' });
     const byMark = new Map(fs.readFileSync(marks, 'utf8').split('\n').filter(Boolean).map((line) => line.slice(1).split(' ')));
-    const sha = {};
+    const sha = Object.create(null);
     for (const [branch, i] of tips) sha[branch] = byMark.get(String(i + 1));
     for (const [name, target] of Object.entries(refs)) sha[name] = sha[target];
     return { origin, sha };

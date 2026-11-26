@@ -118,16 +118,21 @@ export function tally(lines) {
 
 function main(files) {
   const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-census-')), 'census.txt');
-  fs.writeFileSync(out, '');
-  const run = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'gate.mjs'), ...files], {
-    cwd: ROOT,
-    encoding: 'utf8',
-    maxBuffer: 1 << 30,
-    stdio: ['ignore', 'pipe', 'inherit'],
-    env: { ...process.env, CENSUS_OUT: out, NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --import=${pathToFileURL(SELF).href}`.trim() },
-  });
-  const owners = tally(fs.readFileSync(out, 'utf8').split('\n').filter(Boolean));
-  fs.rmSync(path.dirname(out), { recursive: true, force: true });
+  let run;
+  let owners;
+  try {
+    fs.writeFileSync(out, '');
+    run = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'gate.mjs'), ...files], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      maxBuffer: 1 << 30,
+      stdio: ['ignore', 'pipe', 'inherit'],
+      env: { ...process.env, CENSUS_OUT: out, NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --import=${pathToFileURL(SELF).href}`.trim() },
+    });
+    owners = tally(fs.readFileSync(out, 'utf8').split('\n').filter(Boolean));
+  } finally {
+    fs.rmSync(path.dirname(out), { recursive: true, force: true });
+  }
 
   const rows = [...owners].filter(([owner]) => owner !== '-').map(([file, c]) => [file, c.built, c.body, c.lib, c.built + c.body + c.lib]);
   rows.sort((a, b) => b[4] - a[4] || a[0].localeCompare(b[0]));
@@ -139,7 +144,7 @@ function main(files) {
   const print = [line(['file', 'built', 'body', 'lib', 'total']), ...rows.map(line), line(['total', sum(1), sum(2), sum(3), sum(4)])];
   print.push(`git ${sum(4) + product + unread} (fixture ${sum(4)}, product ${product}, unread ${unread})`);
   for (const gate of (run.stdout ?? '').split('\n')) if (/^(spawns |ℹ (tests|pass|fail) )/.test(gate)) print.push(`gate: ${gate}`);
-  print.push(`gate exit ${run.status ?? run.signal}`);
+  print.push(`gate exit ${run.status ?? run.signal ?? run.error?.message}`);
   process.stdout.write(`${print.join('\n')}\n`);
   return run.status === 0 ? 0 : 1;
 }

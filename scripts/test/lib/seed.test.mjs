@@ -23,7 +23,10 @@ function shape(repo, branch) {
   return rows.map(([, tree, parents, author, s]) => `${s} | ${tree} | ${author} | ${parents.split(' ').filter(Boolean).map((p) => subject.get(p)).join(', ')}`).sort();
 }
 
-const BRANCHES = ['main', 'feat/a', 'side', 'release'];
+/** `branch`'s raw commit messages, untrimmed, children first (the porcelain build's dates tie). */
+const messages = (repo, branch) => execFileSync('git', ['log', '--topo-order', branch, '--format=%B%x00'], { cwd: repo, encoding: 'utf8' });
+
+const BRANCHES =['main', 'feat/a', 'side', 'release'];
 
 /** The porcelain way: three branches, four commits (one a merge), and `release` on feat/a's tip. */
 function porcelain(dir) {
@@ -70,6 +73,7 @@ test('a seeded origin equals a built one', (t) => {
   assert.equal(git(origin, 'symbolic-ref', 'HEAD'), 'refs/heads/main');
   for (const branch of BRANCHES) {
     assert.deepEqual(shape(origin, branch), shape(built.value, branch), `${branch}: trees, subjects, authors and parents`);
+    assert.equal(messages(origin, branch), messages(built.value, branch), `${branch}: whole messages, trailing newline and all`);
     assert.equal(sha[branch], git(origin, 'rev-parse', branch), `${branch}: its tip in sha`);
   }
   assert.equal(sha.release, sha['feat/a'], 'a ref names the tip it was set to');
@@ -94,6 +98,7 @@ test('a branch or path that could break the stream is refused before any git', (
     [[{ branch: 'main', files: {}, message: 'm', merge: ['nowhere'] }], undefined, /nowhere/],
     [[{ branch: 'main', files: {}, message: 'm' }], { 'x y': 'main' }, /branch/],
     [[{ branch: 'main', files: {}, message: 'm' }], { pilot: 'nowhere' }, /nowhere/],
+    [[{ branch: 'main', files: {}, message: 'm' }, { branch: 'side', files: {}, message: 's' }], { side: 'main' }, /already/],
   ];
   for (const [history, refs, error] of bad) {
     const { git: spawned } = countGit(() => assert.throws(() => seed(dir, history, refs), error));
