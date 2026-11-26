@@ -72,6 +72,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `run-claim.mjs` | the hand-off mod's claims and stamps: the once-only `/clear` claim, the lane's marker, the posted and reported-in stamps and the session pid |
 | `run-env.mjs` | a pilot session's start: its settings and arguments (`runSettings`, `startArgs`) and environment (`runEnv`) |
 | `run-look.mjs` | the hand-off mod's look: one `Outcome` per op (`turn`, `cleared`) as a CLI the mod runs |
+| `rune-bin.mjs` | which Rune deck runs: the local build, else the pinned binary `pilot deck` downloads and verifies by sha256 |
 | `runs.mjs` | what a run is and whether its session is still there |
 | `schedule.mjs` | the co-pilot's scheduler: which slices of a run's record may start now, and from which tip |
 | `scratch.mjs` | `pilot deck --scratch`: an agent's own deck on a free port, its store under the temp directory |
