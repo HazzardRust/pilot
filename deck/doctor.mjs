@@ -523,7 +523,9 @@ export function runeRow({ state, version }) {
   const name = 'rune deck';
   if (state.source === 'built') return { name, verdict: 'pass', detail: `built here, ${state.file}` };
   if (state.source === 'fetched') return { name, verdict: 'pass', detail: `fetched ${version}, verified` };
-  return { name, verdict: 'warn', detail: `missing: ${state.reason}`, ...(state.fetchable ? { steps: ['pilot deck'] } : {}) };
+  // findRune's reasons are written for `pilot deck`, which opens the page instead; doctor opens nothing.
+  const reason = state.reason.replace(/, opening the page$/, '');
+  return { name, verdict: 'warn', detail: `missing: ${reason}`, ...(state.fetchable ? { steps: ['pilot deck'] } : {}) };
 }
 
 /** `findRune`'s state, and where it would fetch, Smart App Control read as `ensureRune` reads it (spec 10); never a download. */

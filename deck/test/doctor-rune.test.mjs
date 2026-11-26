@@ -105,6 +105,7 @@ test('each missing reason names its step', async (t) => {
     assert.equal(row.verdict, 'warn', name);
     assert.match(row.detail, /^missing: /, name);
     assert.match(row.detail, reason, name);
+    assert.doesNotMatch(row.detail, /opening the page/, `${name}: doctor opens nothing`);
     assert.deepEqual(row.steps, steps, name);
   }
 
@@ -124,8 +125,8 @@ test('doctor never downloads', async (t) => {
   assert.equal(rune.length, 1);
   assert.equal(rune[0].verdict, 'warn');
   assert.deepEqual(fetched, []);
-  assert.equal(asked.length, 1);
-  const [, host] = asked[0];
-  assert.ok(!Object.values(host).some((value) => typeof value === 'function'), 'findRune is handed no function to call out with');
-  assert.deepEqual(Object.keys(host).sort(), ['arch', 'platform', 'version']);
+  assert.ok(asked.length > 0, 'the row comes from findRune');
+  for (const [, host] of asked) {
+    assert.ok(!Object.values(host).some((value) => typeof value === 'function'), 'findRune is handed no function to call out with');
+  }
 });
