@@ -199,7 +199,7 @@ besides git and reads. You make no host write; the deck makes them. Never push a
 
 ## The artefact
 
-Write it to the path in the brief, inside that worktree. Sections, in order:
+Write it to the path in the brief, inside that worktree. It opens with `## Overview`, written per `skills/pr-overview`. Sections, in order:
 
 1. **Problem** in the user's terms.
 2. **Spec**: the numbered behaviours the feature delivers, each with the

@@ -188,7 +188,8 @@ principles review both happen once, on the whole feature, when the last
 slice is in; the feature lands on the Sign off press at Gate 2.
 Trivial work, with no architect and no slices, is one PR to the default
 branch: the full gate once on its final state, its pass and fail lines in the
-body, opened `--draft`, and marked ready only on the user's Sign off.
+body under an opening `## Overview` written per `skills/pr-overview`, opened
+`--draft`, and marked ready only on the user's Sign off.
 
 ## Phase A: Architect
 

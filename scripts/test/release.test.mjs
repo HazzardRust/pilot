@@ -46,6 +46,7 @@ test('two landings name both slugs', (t) => {
   assert.deepEqual(notes.rows.map(({ slug, pr }) => ({ slug, pr })), [{ slug: 'a', pr: 7 }, { slug: 'b', pr: null }]);
   assert.match(notes.rows[1].sha, /^[0-9a-f]{40}$/);
   assert.equal(git(b, 'log', '-1', '--format=%s', notes.rows[1].sha), 'Merge feat/b into pilot');
+  assert.ok(notes.body.startsWith('## Overview\n\n- a\n- b\n\n| Feature | PR | Landing |'), notes.body);
   assert.match(notes.body, /\| a \| #7 \|/);
   assert.match(notes.body, new RegExp(`\\| b \\| – \\| ${notes.rows[1].sha} \\|`));
 });
@@ -74,6 +75,90 @@ test('the title is bounded', (t) => {
   assert.match(notes.title, /^Release: feature-number-0, feature-number-1, .* \+\d+ more$/);
   const named = notes.title.slice('Release: '.length).replace(/ \+\d+ more$/, '').split(', ').length;
   assert.equal(Number(/\+(\d+) more$/.exec(notes.title)[1]), 30 - named);
+});
+
+/** An artefact whose overview's What changes line is `what`. */
+const artefact = (what) => `# x\n\n## Overview\n\n- **What changes**: ${what}\n- **Why**: because.\n\n## 1. Problem\n\nText.\n`;
+
+/** One repository whose pilot holds a landing per `[slug, artefact | null]`, each feature committing its artefact when it has one. */
+function landedWith(t, key, features) {
+  return gitFixture(t, `release:overview:${key}`, (dir) => {
+    git(dir, 'init', '-q', '-b', 'main');
+    commitFile(dir, 'shared.txt', 'one\n', 'main');
+    git(dir, 'branch', 'pilot');
+    for (const [slug, markdown] of features) {
+      git(dir, 'checkout', '-q', '-b', `feat/${slug}`, 'main');
+      if (markdown === null) commitFile(dir, `${slug}.txt`, `${slug}\n`, `feat ${slug}`);
+      else {
+        fs.mkdirSync(`${dir}/docs/design/${slug}`, { recursive: true });
+        commitFile(dir, `docs/design/${slug}/architecture.md`, markdown, `feat ${slug}`);
+      }
+      git(dir, 'checkout', '-q', 'pilot');
+      git(dir, 'merge', '-q', '--no-ff', '-m', `Merge feat/${slug} into pilot`, `feat/${slug}`);
+    }
+    return dir;
+  });
+}
+
+const shaOf = (repo, slug) => git(repo, 'log', '-1', '--format=%H', '--grep', `^Merge feat/${slug} into pilot$`, 'pilot').trim();
+
+test('one line per landed feature', (t) => {
+  const repo = landedWith(t, 'two', [['first', artefact('the deck shows a clock. It ticks.')], ['second', artefact('logs are shorter')]]);
+
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [] });
+
+  const [overview] = notes.body.split('\n\n| Feature |');
+  assert.equal(overview, '## Overview\n\n- first: the deck shows a clock.\n- second: logs are shorter');
+});
+
+test('a mention in a sentence is written so nobody is notified', (t) => {
+  const repo = landedWith(t, 'mention', [['first', artefact('thanks to @someone for the clock.')]]);
+
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [] });
+
+  assert.ok(notes.body.startsWith(`## Overview\n\n- first: thanks to @${String.fromCharCode(0x200d)}someone for the clock.\n\n| Feature |`), notes.body);
+});
+
+test('the table is unchanged', (t) => {
+  const repo = landedWith(t, 'table', [['first', artefact('one thing.')], ['second', artefact('another thing.')]]);
+
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [{ number: 7, head: 'feat/first' }] });
+
+  const at = notes.body.indexOf('\n\n| Feature |');
+  assert.ok(at > 0, notes.body);
+  assert.equal(
+    notes.body.slice(at + 2),
+    `| Feature | PR | Landing |\n| --- | --- | --- |\n| first | #7 | ${shaOf(repo, 'first')} |\n| second | – | ${shaOf(repo, 'second')} |`,
+  );
+});
+
+test('a feature with no overview', (t) => {
+  const repo = landedWith(t, 'bare', [['missing', null], ['plain', '# plain\n\n## 1. Problem\n\nNo overview here.\n'], ['told', artefact('it works.')]]);
+
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [] });
+
+  assert.ok(notes.body.startsWith('## Overview\n\n- missing\n- plain\n- told: it works.\n\n| Feature |'), notes.body);
+});
+
+test('a git that fails on one artefact costs only its sentence', (t) => {
+  const repo = landedWith(t, 'shaky', [['unread', artefact('never seen.')], ['told', artefact('it works.')]]);
+  const failing = (args) => {
+    if (args[0] === 'show' && String(args[1]).endsWith(':docs/design/unread/architecture.md')) throw new Error('fatal: bad object');
+    return git(repo, ...args);
+  };
+
+  const notes = releaseNotes({ git: failing, name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [] });
+
+  assert.ok(notes.body.startsWith('## Overview\n\n- unread\n- told: it works.\n\n| Feature |'), notes.body);
+});
+
+test("no landing, today's text", (t) => {
+  const repo = landedWith(t, 'none', []);
+
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [] });
+
+  assert.equal(notes.body, 'No feature landed on pilot since main.');
+  assert.deepEqual(notes.rows, []);
 });
 
 test('every landing rewrites and labels', (t) => {
@@ -118,7 +203,7 @@ test('the main PR opens labelled', (t) => {
   const creates = called(calls, 'pr', 'create');
   assert.equal(creates.length, 1);
   assert.equal(creates[0][creates[0].indexOf('--label') + 1], 'release');
-  assert.match(creates[0][creates[0].indexOf('--body') + 1], /^\| Feature \| PR \| Landing \|\n/);
+  assert.match(creates[0][creates[0].indexOf('--body') + 1], /^## Overview\n\n- a\n\n\| Feature \| PR \| Landing \|\n/);
   assert.ok(calls.findIndex((args) => args[0] === 'label') < calls.findIndex((args) => args[0] === 'pr' && args[1] === 'create'));
 });
 
