@@ -6,7 +6,8 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
-import { repos, passing, fakeGh, git, commitFile, land as landFeature } from './lib/land-repos.mjs';
+import { buildRepos, repos, passing, fakeGh, git, land as landFeature } from './lib/land-repos.mjs';
+import { seed } from './lib/seed.mjs';
 
 import fs from 'node:fs';
 import { test } from 'node:test';
@@ -19,21 +20,24 @@ const PILOT = 'refs/remotes/origin/pilot';
 const MAIN = 'refs/remotes/origin/main';
 const called = (calls, ...verb) => calls.filter((args) => verb.every((word, i) => args[i] === word));
 
-/** One repository whose pilot holds a landing merge per slug, each feature cut from main. */
-function landed(t, slugs) {
-  return gitFixture(t, `release:landed:${slugs.length}`, (dir) => {
-    git(dir, 'init', '-q', '-b', 'main');
-    commitFile(dir, 'shared.txt', 'one\n', 'main');
-    git(dir, 'branch', 'pilot');
-    for (const slug of slugs) {
-      git(dir, 'checkout', '-q', '-b', `feat/${slug}`, 'main');
-      commitFile(dir, `${slug}.txt`, `${slug}\n`, `feat ${slug}`);
-      git(dir, 'checkout', '-q', 'pilot');
-      git(dir, 'merge', '-q', '--no-ff', '-m', `Merge feat/${slug} into pilot`, `feat/${slug}`);
-    }
-    return dir;
+/**
+ * A seeded bare repository (test-body-git S11): main holds `shared.txt`, and pilot, cut from main, one
+ * `Merge feat/<slug> into pilot` per `[slug, files]`, each feature cut from main with `files` as its one
+ * commit; `after` is laid on last. One init and one fast-import per key, where porcelain spent five git a landing.
+ */
+function seeded(t, key, features, after = []) {
+  return gitFixture(t, key, (dir) => {
+    const history = [{ branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'main' }];
+    features.forEach(([slug, files], i) => history.push(
+      { branch: `feat/${slug}`, from: 'main', files, message: `feat ${slug}` },
+      { branch: 'pilot', ...(i === 0 && { from: 'main' }), files: {}, merge: [`feat/${slug}`], message: `Merge feat/${slug} into pilot` },
+    ));
+    return seed(dir, [...history, ...after], features.length ? {} : { pilot: 'main' }).origin;
   });
 }
+
+/** One repository whose pilot holds a landing merge per slug, each feature cut from main. */
+const landed = (t, key, slugs, after) => seeded(t, `release:landed:${key}`, slugs.map((slug) => [slug, { [`${slug}.txt`]: `${slug}\n` }]), after);
 
 test('two landings name both slugs', (t) => {
   const { gitIn, a, b } = repos(t, 'a', 'b');
@@ -52,11 +56,11 @@ test('two landings name both slugs', (t) => {
 });
 
 test('a sync merge is no row', (t) => {
-  const repo = landed(t, ['a']);
-  git(repo, 'checkout', '-q', 'main');
-  commitFile(repo, 'main.txt', 'moved\n', 'main moved');
-  git(repo, 'checkout', '-q', 'pilot');
-  git(repo, 'merge', '-q', '--no-ff', '-m', 'Merge main into pilot', 'main');
+  // Main moves after a's landing, and pilot merges it: seeded with the history, not run in the body.
+  const repo = landed(t, 'synced', ['a'], [
+    { branch: 'main', files: { 'main.txt': 'moved\n' }, message: 'main moved' },
+    { branch: 'pilot', files: {}, merge: ['main'], message: 'Merge main into pilot' },
+  ]);
 
   const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main~1', prs: [] });
 
@@ -66,7 +70,7 @@ test('a sync merge is no row', (t) => {
 
 test('the title is bounded', (t) => {
   const slugs = Array.from({ length: 30 }, (_, i) => `feature-number-${i}`);
-  const repo = landed(t, slugs);
+  const repo = landed(t, 'bounded', slugs);
 
   const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [] });
 
@@ -81,24 +85,8 @@ test('the title is bounded', (t) => {
 const artefact = (what) => `# x\n\n## Overview\n\n- **What changes**: ${what}\n- **Why**: because.\n\n## 1. Problem\n\nText.\n`;
 
 /** One repository whose pilot holds a landing per `[slug, artefact | null]`, each feature committing its artefact when it has one. */
-function landedWith(t, key, features) {
-  return gitFixture(t, `release:overview:${key}`, (dir) => {
-    git(dir, 'init', '-q', '-b', 'main');
-    commitFile(dir, 'shared.txt', 'one\n', 'main');
-    git(dir, 'branch', 'pilot');
-    for (const [slug, markdown] of features) {
-      git(dir, 'checkout', '-q', '-b', `feat/${slug}`, 'main');
-      if (markdown === null) commitFile(dir, `${slug}.txt`, `${slug}\n`, `feat ${slug}`);
-      else {
-        fs.mkdirSync(`${dir}/docs/design/${slug}`, { recursive: true });
-        commitFile(dir, `docs/design/${slug}/architecture.md`, markdown, `feat ${slug}`);
-      }
-      git(dir, 'checkout', '-q', 'pilot');
-      git(dir, 'merge', '-q', '--no-ff', '-m', `Merge feat/${slug} into pilot`, `feat/${slug}`);
-    }
-    return dir;
-  });
-}
+const landedWith = (t, key, features) => seeded(t, `release:overview:${key}`, features.map(([slug, markdown]) =>
+  [slug, markdown === null ? { [`${slug}.txt`]: `${slug}\n` } : { [`docs/design/${slug}/architecture.md`]: markdown }]));
 
 const shaOf = (repo, slug) => git(repo, 'log', '-1', '--format=%H', '--grep', `^Merge feat/${slug} into pilot$`, 'pilot').trim();
 
@@ -192,9 +180,15 @@ test('the first landing opens it labelled', (t) => {
   assert.ok(calls.findIndex((args) => args[0] === 'label') < calls.findIndex((args) => args[1] === 'create' && args[0] === 'pr'));
 });
 
+/** `repos(t, 'a')` with a already landed once on pilot, as three releasePr tests start: the landing runs once per file (test-body-git S11). */
+const aLanded = (t) => gitFixture(t, 'release:a-landed', (dir) => {
+  const built = buildRepos(dir, ['a']);
+  land(built.a, built.gitIn);
+  return built;
+});
+
 test('the main PR opens labelled', (t) => {
-  const { gitIn, a } = repos(t, 'a');
-  land(a, gitIn);
+  const { gitIn, a } = aLanded(t);
   const { gh, calls } = fakeGh([], undefined, { created: 904 });
 
   const release = releasePr({ git: gitIn(a), host: githubHost(inlined(gh)) });
@@ -208,16 +202,14 @@ test('the main PR opens labelled', (t) => {
 });
 
 test('none hands it to the user', (t) => {
-  const { gitIn, a } = repos(t, 'a');
-  land(a, gitIn);
+  const { gitIn, a } = aLanded(t);
 
   assert.deepEqual(releasePr({ git: gitIn(a), host: null }), { number: null, opened: false, byHand: 'pilot' });
   assert.deepEqual(releasePr({ git: gitIn(a), host: null, already: true }), { number: null, opened: false, byHand: 'pilot' });
 });
 
 test('a failed label still opens', (t) => {
-  const { gitIn, a } = repos(t, 'a');
-  land(a, gitIn);
+  const { gitIn, a } = aLanded(t);
   const { gh: answer, calls } = fakeGh([], undefined, { created: 903 });
   const gh = (args) => {
     if (args[0] === 'label') {

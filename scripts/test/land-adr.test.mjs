@@ -54,8 +54,9 @@ test('two features land with consecutive numbers', (t) => {
   assert.deepEqual(adrs(origin), ['docs/adr/0167-base.md', 'docs/adr/0168-x.md', 'docs/adr/0169-y.md']);
   assert.equal(firstParents(origin), before + 2, 'one commit for the second landing');
   assert.deepEqual(second.adr, { from: 'NNNN-y', to: '0169' });
-  assert.equal(git(origin, 'rev-parse', 'pilot'), second.sha, 'the allocated merge is the one pushed');
-  assert.equal(git(origin, 'rev-parse', 'pilot^2'), git(y, 'rev-parse', 'HEAD'), 'still a merge of the feature');
+  const [pilot, merged] = git(origin, 'rev-parse', 'pilot', 'pilot^2').split('\n');
+  assert.equal(pilot, second.sha, 'the allocated merge is the one pushed');
+  assert.equal(merged, git(y, 'rev-parse', 'HEAD'), 'still a merge of the feature');
 });
 
 test('the prepared trial allocates nothing', (t) => {

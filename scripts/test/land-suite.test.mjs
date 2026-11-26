@@ -6,7 +6,8 @@
  * runs since it. `gh` is faked; the landing runs against a scratch bare "origin".
  */
 
-import { repos, land, fakeGh, git, commitFile, mainSays } from './lib/land-repos.mjs';
+import { gitFixture } from './lib/git-fixture.mjs';
+import { buildRepos, repos, land, fakeGh, git, commitFile, mainSays } from './lib/land-repos.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -51,15 +52,18 @@ test('the feature merge is the full run', (t) => {
  * called, and `feat/a` cut from it changing only `a.txt`, so no trigger file stands in the feature's diff.
  */
 function suiteOnPilot(t) {
-  const { seed, clone } = repos(t);
-  const trace = path.join(path.dirname(seed), 'suite-trace.txt');
-  commitFile(seed, 'run.mjs', `import fs from 'node:fs';\nfs.appendFileSync(${JSON.stringify(trace)}, process.argv.slice(2).join(' ') + '\\n');\nconsole.log('ℹ pass 12');\nconsole.log('ℹ fail 0');\n`, 'run');
-  const pkg = { name: 'fixture', version: '1.0.0', scripts: { test: 'node run.mjs full', 'test:changed': 'node run.mjs changed' } };
-  commitFile(seed, 'package.json', `${JSON.stringify(pkg, null, 2)}\n`, 'package');
-  commitFile(seed, 'package-lock.json', `${JSON.stringify({ name: 'fixture', version: '1.0.0', lockfileVersion: 3, requires: true, packages: { '': { name: 'fixture', version: '1.0.0' } } }, null, 2)}\n`, 'lock');
-  git(seed, 'push', '-q', 'origin', 'main', 'main:pilot');
-  const work = clone('a');
-  return { work, trace, tree: git(work, 'rev-parse', 'HEAD^{tree}') };
+  // Built once per file and restored per test (test-body-git S11): four tests start from it.
+  return gitFixture(t, 'land-suite:on-pilot', (dir) => {
+    const { seed, clone } = buildRepos(dir, []);
+    const trace = path.join(dir, 'suite-trace.txt');
+    commitFile(seed, 'run.mjs', `import fs from 'node:fs';\nfs.appendFileSync(${JSON.stringify(trace)}, process.argv.slice(2).join(' ') + '\\n');\nconsole.log('ℹ pass 12');\nconsole.log('ℹ fail 0');\n`, 'run');
+    const pkg = { name: 'fixture', version: '1.0.0', scripts: { test: 'node run.mjs full', 'test:changed': 'node run.mjs changed' } };
+    commitFile(seed, 'package.json', `${JSON.stringify(pkg, null, 2)}\n`, 'package');
+    commitFile(seed, 'package-lock.json', `${JSON.stringify({ name: 'fixture', version: '1.0.0', lockfileVersion: 3, requires: true, packages: { '': { name: 'fixture', version: '1.0.0' } } }, null, 2)}\n`, 'lock');
+    git(seed, 'push', '-q', 'origin', 'main', 'main:pilot');
+    const work = clone('a');
+    return { work, trace, tree: git(work, 'rev-parse', 'HEAD^{tree}') };
+  });
 }
 
 const OSES = ['ubuntu-latest', 'windows-latest', 'macos-latest'];
