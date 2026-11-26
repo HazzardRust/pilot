@@ -114,7 +114,7 @@
     },
     {
       "slice": "S13",
-      "state": "paused: suite 11481/10338 over L7 bars; wip 2160acd local; resumes after S14, S15",
+      "state": "paused: holds for the user's bar answer (itm_df6654893518); wip 2160acd local",
       "after": [
         "S2",
         "S3",
@@ -127,7 +127,8 @@
         "S11",
         "S12",
         "S14",
-        "S15"
+        "S15",
+        "S16"
       ],
       "branch": "slice/test-body-git-s13",
       "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s13"
@@ -143,37 +144,26 @@
     },
     {
       "slice": "S15",
-      "state": "added; pushed fb783b9 (cut -203; last fix commit answers reviewer's LOW, unreviewed, assumed), integrating",
+      "state": "added; integrated, checks green at cded122",
       "after": [
         "S12"
       ],
       "branch": "slice/test-body-git-s15",
       "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s15"
+    },
+    {
+      "slice": "S16",
+      "state": "added; pushed e426621 (fixture -31, node -10), integrating",
+      "after": [
+        "S15"
+      ],
+      "branch": "slice/test-body-git-s16",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s16"
     }
   ],
-  "next": "integrate S15 (running), checks; then npm run test:cost once under lock; numbers to main before any third slice, or resume S13 if under both bars",
-  "updatedAt": "2026-11-26T21:59:12.873Z",
+  "next": "Yielding: integrate S16 (running), checks, one test:cost; then hand back paused; S13 held for itm_df6654893518",
+  "updatedAt": "2026-11-26T22:52:14.706Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "plain node --test on integrate.test.mjs fails 10+ tests on a clean base; needs gate env (PILOT_BRANCH)",
-      "evidence": "S1 report"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "every gate builds the Rust deck in one shared cargo target; two concurrent gates fail LNK1104",
-      "evidence": "S1 base census run exited 1 with LNK1104 on rune-target deck-*.exe"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S1 report went to main, not the co-pilot; resent on request",
-      "evidence": "coordinator relayed it"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "census reads the working tree, so a base census after the first edit measures edited files",
-      "evidence": "S3 base census showed 139 not 256; re-ran in detached worktree at 1958fb9"
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "co-pilot's gate.lock until-loop refused by the wait hook as unbounded",
@@ -362,6 +352,30 @@
     {
       "kind": "drain",
       "what": "S15's report delivered to main, relayed by hand",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "co-pilot relayed implementers' 'big cuts sit in clone()' to main unchecked; S16 census showed clone() worth ~8 git",
+      "evidence": "26-file land-repos census at cded122",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S16 cut targets set from helper names and census totals, not a per-file look at what L5 allows; 150 needed 73% of owned body+lib git",
+      "evidence": "S16 report: cut 31",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "per-file product git needs one census run per file (~1 min each, cargo rebuild every run)",
+      "evidence": "S16 B3: 20 census runs",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S16 context compacted early and kept no work; restarted from the brief",
+      "evidence": "S16 message",
       "size": 1
     }
   ]
