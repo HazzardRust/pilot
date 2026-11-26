@@ -11,13 +11,17 @@ import { gitFixture } from './lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const { sync } = await import('../sync.mjs');
 const { assertPushable } = await import('../pilot-branch.mjs');
 const { NO_TEST } = await import('../integrate.mjs');
+const { ghStub } = await import('../gh-stub.mjs');
+
+const PILOT = fileURLToPath(new URL('../../bin/pilot.mjs', import.meta.url));
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
@@ -232,4 +236,21 @@ test("the test command is the merged tree's, not the caller's", (t) => {
     (err) => err.exitCode === 1 && err.message === `NOT synced: ${NO_TEST}; nothing pushed`,
   );
   assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip);
+});
+
+test('pilot sync with no pilot branch name, signed out, is refused and writes nothing', (t) => {
+  const { origin, seed, work } = repos(t);
+  pushTo(seed, 'main', 'm3.txt', 'm3\n');
+  const stub = ghStub(); // answers `gh api user` with nothing: signed out
+  t.after(() => fs.rmSync(stub.dir, { recursive: true, force: true }));
+  const env = { ...process.env, ...stub.env };
+  delete env.PILOT_BRANCH;
+  const refsBefore = git(origin, 'for-each-ref');
+
+  const run = spawnSync(process.execPath, [PILOT, 'sync'], { cwd: work, env, encoding: 'utf8', windowsHide: true });
+
+  assert.equal(run.status, 1, run.stdout + run.stderr);
+  assert.match(run.stdout, /no pilot branch name/);
+  assert.equal(git(origin, 'for-each-ref'), refsBefore, 'no ref written on origin');
+  assert.throws(() => git(work, 'config', '--get', 'pilot.branch'), 'no name stored');
 });

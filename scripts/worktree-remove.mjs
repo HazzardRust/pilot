@@ -20,7 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { isWindows } from '../hooks/lib/platform.js';
-import { PILOT_BRANCH } from './pilot-branch.mjs';
+import { git as gitText, isPilotName, LEGACY_PILOT, pilotBranch } from './pilot-branch.mjs';
 
 /** Runs git in `cwd`; answers `{ ok, out, raw, err }`, `raw` untrimmed, never throws. */
 function git(cwd, ...args) {
@@ -94,10 +94,20 @@ function withoutRecordTail(repo, sha) {
   return sha;
 }
 
-/** Whether `head` is a safe head: reachable from a remote-tracking ref, the local pilot branch or a local `feat/*` other than `own`. */
+/** The pilot branch's name as read (`pilotBranch`, never a literal), or the legacy `pilot` when none can be read. */
+function pilotName(repo) {
+  try {
+    return pilotBranch((args) => gitText(repo, ...args));
+  } catch {
+    return LEGACY_PILOT;
+  }
+}
+
+/** Whether `head` is a safe head: reachable from a remote-tracking ref, the local pilot branch (or the legacy one) or a local `feat/*` other than `own`. */
 function safeHead(repo, head, own) {
+  const pilots = [...new Set([pilotName(repo), LEGACY_PILOT])].map((name) => `refs/heads/${name}`);
   const refs = git(repo, 'for-each-ref', '--contains', withoutRecordTail(repo, head), '--format=%(refname)',
-    'refs/remotes', `refs/heads/${PILOT_BRANCH}`, 'refs/heads/feat');
+    'refs/remotes', ...pilots, 'refs/heads/feat');
   if (!refs.ok) return false;
   return refs.out.split('\n').some((ref) => ref && ref !== `refs/heads/${own}`);
 }
@@ -127,9 +137,10 @@ const gitDropBranch = (home, name) => git(home, 'branch', '-D', name);
  * Removes worktree `dir` of `repo` and its local branch, or keeps it and says why. Answers
  * `{ removed: true, branch }` (the branch deleted, null for a detached tree or one `branch` refused)
  * or `{ kept: state }`. `branch(home, name)` deletes the local branch and answers `{ ok }` (prune-worktrees S2).
+ * `trees`, a caller's worktree records as listed (main checkout first), is judged instead of listing again.
  */
-export function removeTree(repo, dir, { landed = false, holder = () => null, remove = gitRemove, branch: dropBranch = gitDropBranch } = {}) {
-  const trees = worktrees(repo);
+export function removeTree(repo, dir, { landed = false, holder = () => null, remove = gitRemove, branch: dropBranch = gitDropBranch, trees: listed } = {}) {
+  const trees = listed ?? worktrees(repo);
   const index = trees ? trees.findIndex((tree) => same(tree.path, dir)) : -1;
   if (index < 0) return { kept: 'not a worktree' };
   if (index === 0) return { kept: 'main' };
@@ -175,8 +186,8 @@ export function removeTree(repo, dir, { landed = false, holder = () => null, rem
 
   const removal = remove(home, tree.path, landed);
   if (!removal.ok || fs.existsSync(tree.path)) return { kept: 'leftover' };
-  // The local pilot branch is every run's base: it stays even when a tree had it checked out.
-  if (!tree.branch || tree.branch === PILOT_BRANCH) return { removed: true, branch: null };
+  // A local pilot branch, the read one or the legacy one, is a run's base: it stays even when a tree had it checked out.
+  if (!tree.branch || isPilotName(tree.branch)) return { removed: true, branch: null };
   const branch = dropBranch(home, tree.branch);
   return { removed: true, branch: branch.ok ? tree.branch : null };
 }

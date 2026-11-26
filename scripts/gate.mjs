@@ -24,6 +24,7 @@ import { hostPlatform, onSearchPath } from '../hooks/lib/platform.js';
 import { deckPidNow, stopper } from '../deck/gc.mjs';
 import { isClaude, pilotProcesses, processTable } from '../deck/procs.mjs';
 import { takeSlot } from './gate-slots.mjs';
+import { LEGACY_PILOT } from './pilot-branch.mjs';
 import { rebuildLedgers } from './ledgers.mjs';
 import { RUNE_TARGET_MAX, boundTarget, runeTargetDir, staleRoot } from './rune-target.mjs';
 import { FULL_TRIGGERS, TEST_GLOB, scopeLine, selectTests } from './select-tests.mjs';
@@ -50,8 +51,23 @@ const POLL_MS = 1_000;
  *   tests, this round's landing retry, stacked and unlanded restack fixtures among them.
  * 2026-11-24, cheap-suite S10: 13571 (node 831, git 12472, other 268) on Windows, Node 26, under two other
  *   full suites; the acceptance run in docs/design/cheap-suite/cost-after.txt, ceiling 13571 + 10%.
+ * 2026-11-26, land-batching S7: 12815 (node 848, git 11676, other 291) on Windows, Node 26, product cut only (S1-S5, S8, S9);
+ *   it missed the 11,000 / 10,000 bars, so both ceilings are this run's own numbers (docs/design/land-batching/cost-after.txt);
+ *   S6 was to lower them to the signed ones.
+ * 2026-11-25: CI windows-latest on ef9ee6c, the highest runner (local 12815 / 11676): 12823 (node 848, git 11682, other 293).
+ * 2026-11-26, land-batching S6: the fixture helpers it owns fold 2 git per seeded origin and its own test adds 32, while
+ *   the rest of the fixture git is in test bodies, so the bars are still missed. Its local run, the same machine as S7's,
+ *   read 12807 (node 848, git 11668, other 291) (docs/design/land-batching/cost-after.txt), 8 under S7's 12815 / 11676.
+ *   CI's windows-latest read S7's tip ef9ee6c at 12823 (node 848, git 11682, other 293), the highest of the runners
+ *   (ubuntu and macOS passed under 12815 / 11676); less the same 8 that is 12815 / 11674, and the ceilings are that
+ *   highest count (A5: the CI count, itm_470ec6f7a434).
+ * 2026-11-26, land-batching S6 on the base 6e1806b (user-pilot-branch, pr-overview landed): their added tests read
+ *   13589 (node 850, git 12447, other 292) locally (docs/design/land-batching/cost-after.txt); the ceilings are that
+ *   plus the Windows-CI delta above (8 spawns / 6 git), 13597 / 12453: the measured bars (itm_9ac7a84014e9).
  */
-export const SPAWN_CEILING = 14929;
+export const SPAWN_CEILING = 13597;
+/** The most git processes a full suite may start (land-batching S7, S6); see the dated lines above. */
+export const GIT_CEILING = 12453;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 
@@ -106,6 +122,8 @@ export function gateEnv(env, slot, spawns, guard) {
   }
   options.push(cap);
   const named = {
+    // The suite's ~67 fixtures seed the legacy `pilot`; a test of the derivation unsets it (user-pilot-branch L7).
+    PILOT_BRANCH: env.PILOT_BRANCH || LEGACY_PILOT,
     ...(slot === undefined ? {} : { PILOT_GATE_SLOT: String(slot) }),
     ...(guard === undefined ? {} : { PILOT_GATE_HOME_STORE: guard.store, PILOT_GATE_HOME_LOG: guard.log }),
   };
@@ -209,15 +227,17 @@ export function census(before, { cwd, read = processTable, kill = stopper, deckP
  * The spawn line, and `spawns over <ceiling>; most: <owner> <n>, …` when the count is above it,
  * naming the three test files that spent most (S12); the unowned `-` is the runner's, never named.
  */
-function spawnLines(count, ceiling) {
+function spawnLines(count, ceiling, gitCeiling) {
   const lines = [`spawns ${count.total} (node ${count.node}, git ${count.git}, other ${count.other})`];
-  if (count.total <= ceiling) return lines;
-  const most = [...count.owners]
-    .filter(([owner]) => owner !== '-')
-    .sort(([a, n], [b, m]) => m.total - n.total || (a < b ? -1 : 1))
-    .slice(0, 3)
-    .map(([owner, n]) => `${owner} ${n.total}`);
-  lines.push(`spawns over ${ceiling}${most.length ? `; most: ${most.join(', ')}` : ''}`);
+  if (count.total > ceiling) {
+    const most = [...count.owners]
+      .filter(([owner]) => owner !== '-')
+      .sort(([a, n], [b, m]) => m.total - n.total || (a < b ? -1 : 1))
+      .slice(0, 3)
+      .map(([owner, n]) => `${owner} ${n.total}`);
+    lines.push(`spawns over ${ceiling}${most.length ? `; most: ${most.join(', ')}` : ''}`);
+  }
+  if (count.git > gitCeiling) lines.push(`git over ${gitCeiling}`);
   return lines;
 }
 
@@ -379,7 +399,7 @@ function writerLines(log) {
  * given the selection and bounding the shared target with `bound` first.
  * With `--cost` (cheap-suite S1; L4) it adds the cost reporter and prints the cost table last, its status unchanged.
  */
-export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, which, platform = hostPlatform(), bound = boundTarget, stale = staleRoot, ...rest } = {}) {
+export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, gitCeiling = GIT_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, which, platform = hostPlatform(), bound = boundTarget, stale = staleRoot, ...rest } = {}) {
   if (!syntaxClean(syntax, cwd)) return 1;
   const cost = args.includes('--cost');
   args = args.filter((arg) => arg !== '--cost');
@@ -435,7 +455,7 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
       after = { red: true, lines: [`left running: cannot tell, the process table did not read (${firstLine(err)})`] };
     }
     const count = spawnCount(file);
-    const counted = spawnLines(count, ceiling);
+    const counted = spawnLines(count, ceiling, gitCeiling);
     const home = homeStore === undefined ? undefined : homeStoreLine(homeStore, storeBefore, deckPid);
     const written = guard ? writerLines(guard.log) : [];
     process.stdout.write(`${[...after.lines, ...counted, ...(home ? [home.line] : []), ...written].join('\n')}\n`);

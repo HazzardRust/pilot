@@ -108,20 +108,20 @@ const usage = () => `pilot — the deck for piloted runs
                  record's base, or rewrite its body (spec and slice table) and base when they
                  differ; prints one line, nothing written when GitHub already matches
   pilot base     print the ref the next run is cut from and its tip: the default branch, or
-                 the feat/<N> it chains on; pilot under pilot.host none or another run remote,
-                 pilot itself created from the default branch's tip when origin has none
+                 the feat/<N> it chains on; your pilot branch (<login>-pilot) under pilot.host none
+                 or another run remote, created from the default branch's tip when origin has none
   pilot gh-stub [--dir <d>] [--powershell]
                  print the lines that put a stub gh first on PATH, answering reply.txt and logging calls.jsonl
   pilot sync
                  at a ticket's take or by hand, never inside a landing: merge origin's default
-                 branch into the pilot branch in a temporary worktree, test the selection, push
-                 pilot; prints pilot already has main@<sha7> and pushes nothing when the merge
+                 branch into your pilot branch in a temporary worktree, test the selection, push
+                 it; prints <pilot branch> already has main@<sha7> and pushes nothing when the merge
                  would change no file; exit 1 red or failed, 3 a conflict
   pilot land
-                 in the feat/<slug> worktree: push the feature, merge only it into pilot
-                 in a temporary worktree (no sync), run the full suite (the only full run), push pilot (merged again once if it moved),
+                 in the feat/<slug> worktree: push the feature, merge only it into your pilot branch
+                 in a temporary worktree (no sync), run the full suite (the only full run), push it (merged again once if it moved),
                  and print the feature PR last, feature PR: #<n> into <base> or why not (a run based
-                 on pilot keeps its PR from pilot to main); exit 3 a conflict
+                 on the pilot branch keeps its PR from it to main); exit 3 a conflict
   pilot restack
                  after a feature PR merges, or by hand: retarget each open feat/ PR whose lower feature merged,
                  merge a lower branch or a clashing default branch into it, push never forced; one line per PR;
@@ -260,7 +260,7 @@ Any command can be given as \`pilot --dir <path> <command> …\` to run it in <p
 The deck is normally started by the first Claude session that needs it; run it by
 hand when you want to watch it. Five environment variables change how it behaves:
 
-  PILOT_BRANCH         the pilot branch base, integrate and land use (default pilot; never the default branch)
+  PILOT_BRANCH         overrides pilot.branch, the pilot branch (default <login>-pilot; never the default branch)
   PILOT_DECK_DIR       where the deck keeps its store (default ~/.claude/pilot)
   PILOT_DECK_PORT      the port it serves on (default ${DECK_PORT}; only for tests and hand checks)
   PILOT_DECK_NO_OPEN   set it to stop the deck opening a browser when a session starts

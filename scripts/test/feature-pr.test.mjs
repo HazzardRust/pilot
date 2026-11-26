@@ -237,6 +237,22 @@ test('pilot pr reads pilot.host: none is exit 0, an unknown name one line and ex
   assert.match(said[1], /^host: .*"bogus".*\n$/);
 });
 
+test('pilot pr with no pilot branch name, signed out, is refused and writes nothing', async (t) => {
+  const cwd = repo(t);
+  const pinned = process.env.PILOT_BRANCH;
+  delete process.env.PILOT_BRANCH;
+  t.after(() => (pinned === undefined ? delete process.env.PILOT_BRANCH : (process.env.PILOT_BRANCH = pinned)));
+  const fake = fakeGh(); // `gh api user` answers nothing: signed out
+  const refsBefore = gitAt(cwd, 'for-each-ref');
+  const said = [];
+  const code = await main(['--ticket', 'itm_0123abcd'], { host: fake.host, git: gitIn(cwd), readRecord: async () => record(), say: (s) => said.push(s) });
+  assert.equal(code, 1);
+  assert.match(said.join(''), /^pilot branch: no pilot branch name/);
+  assert.deepEqual(fake.writes(), []);
+  assert.throws(() => gitAt(cwd, 'config', '--get', 'pilot.branch'), 'no name stored');
+  assert.equal(gitAt(cwd, 'for-each-ref'), refsBefore, 'no ref written');
+});
+
 test('create then edit', (t) => {
   const cwd = repo(t);
   // One fake GitHub across three runs: what `pr create` and `pr edit` write is what `pr list` answers next.
@@ -304,4 +320,50 @@ test('a verb outside the table is refused', (t) => {
     '["api","user","--jq",".login"]',
     '',
   ].join('\n'));
+});
+
+// pr-overview S1: the artefact's `## Overview` opens the body, the tables below it unchanged.
+const OVERVIEW = '- **What changes**: the demo says what it does.\n- **Why**: a reader needs it.';
+const BLOCK = `## Overview\n\n${OVERVIEW}\n\nBuilt so far: 1 of 2 parts.`;
+
+test('the body opens with the overview and the tables are untouched', () => {
+  const body = featureBody(SPEC, record(), FOOTER, BLOCK);
+  assert.equal(body.split('\n')[0], '## Overview');
+  const section = body.split('\n## 2')[0];
+  assert.ok(section.includes(OVERVIEW) && section.includes('Built so far: 1 of 2 parts.'));
+  assert.equal(body.slice(`${BLOCK}\n\n`.length), featureBody(SPEC, record(), FOOTER));
+  assert.equal(featureBody(SPEC, record(), FOOTER, null), featureBody(SPEC, record(), FOOTER));
+});
+
+/** `pushOverview` commits an artefact carrying `## Overview` above §1 to origin's feature branch. */
+function pushOverview(clone, text) {
+  const file = path.join(clone, 'docs', 'design', SLUG, 'architecture.md');
+  fs.writeFileSync(file, ARTEFACT.replace('## 1. Problem', `## Overview\n\n${text}\n\n## 1. Problem`));
+  gitAt(clone, 'commit', '-q', '-am', 'overview');
+  gitAt(clone, 'push', '-q', 'origin', `feat/${SLUG}`);
+}
+
+test('an artefact with an overview opens the PR with it, and a changed one is one edit', (t) => {
+  const cwd = repo(t);
+  pushOverview(cwd, 'First text.');
+  const first = fakeGh();
+  syncFeaturePr({ host: first.host, git: gitIn(cwd), record: record() });
+  assert.equal(first.bodies[0], featureBody(SPEC, record(), FOOTER, '## Overview\n\nFirst text.\n\nBuilt so far: 1 of 2 parts.'));
+
+  const same = fakeGh({ open: [{ number: 7, body: first.bodies[0], baseRefName: 'pilot' }] });
+  assert.equal(syncFeaturePr({ host: same.host, git: gitIn(cwd), record: record() }).wrote, 'unchanged');
+  assert.deepEqual(same.writes(), []);
+
+  pushOverview(cwd, 'Second text.');
+  const edit = fakeGh({ open: [{ number: 7, body: first.bodies[0], baseRefName: 'pilot' }] });
+  syncFeaturePr({ host: edit.host, git: gitIn(cwd), record: record() });
+  assert.equal(edit.writes().length, 1);
+  assert.ok(edit.bodies[0].includes('Second text.') && !edit.bodies[0].includes('First text.'));
+});
+
+test('an artefact with no overview gets today\'s body', (t) => {
+  const cwd = repo(t);
+  const fake = fakeGh();
+  syncFeaturePr({ host: fake.host, git: gitIn(cwd), record: record() });
+  assert.equal(fake.bodies[0], bodyOf());
 });

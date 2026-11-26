@@ -1156,6 +1156,13 @@ test('one installer', () => {
   assert.match(agentSection('pilot-fundamentalist', 'The evidence pass[^\n]*'), /install failed \(exit <n>\)/, 'a failed install is reported as that');
 });
 
+test('each overview writer is pointed at the pr-overview skill', () => {
+  // pr-overview S3 (spec 1, 3; A1, A6, L6): a wording pin, since the line is the product (ADR 0082).
+  assert.match(agentSection('pilot-architect', 'The artefact'), /opens with `## Overview`, written per `skills\/pr-overview`/, 'the architect writes it at Gate 1');
+  assert.match(agentSection('pilot-qa', 'Fixes'), /changes what a user sees rewrites the artefact's `## Overview` per `skills\/pr-overview` on `feat\/<slug>`/, 'QA rewrites it after a visible fix');
+  assert.match(agentSection('pilot', 'The shape of a run'), /Trivial work[^.]*opening `## Overview` written per `skills\/pr-overview`/, 'the trivial PR opens with one');
+});
+
 test('the rule budgets the fundamentalist one child', () => {
   // cheaper-crew S2 (spec 4): the budget follows the helper.
   const rule = flat(read('rules/orchestration.md'));

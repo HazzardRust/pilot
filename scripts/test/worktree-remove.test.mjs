@@ -13,8 +13,6 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { PILOT_BRANCH } from '../pilot-branch.mjs';
-
 const { removeTree, keptLine } = await import('../worktree-remove.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }).trim();
@@ -103,8 +101,13 @@ test('unpushed work keeps a tree and its branch; the pilot branch or a feat bran
   assert.equal(fs.existsSync(path.join(lone, 'lone.txt')), true);
   assert.equal(hasBranch(work, 'lone'), true);
 
+  // The pilot branch's name is read (user-pilot-branch), here from the repository's config.
+  const saved = process.env.PILOT_BRANCH;
+  delete process.env.PILOT_BRANCH;
+  t.after(() => { if (saved !== undefined) process.env.PILOT_BRANCH = saved; });
+  git(work, 'config', '--local', 'pilot.branch', 'me-pilot');
   const landed = add('landed', { push: false });
-  git(work, 'branch', PILOT_BRANCH, 'landed');
+  git(work, 'branch', 'me-pilot', 'landed');
   assert.deepEqual(removeTree(work, landed), { removed: true, branch: 'landed' });
 
   const integrated = add('integrated', { push: false });

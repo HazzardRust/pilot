@@ -25,7 +25,8 @@ import path from 'node:path';
 import { hostFor } from '../deck/host.mjs';
 import { deleteMerged } from './branches.mjs';
 import { checksGate, provenTree } from './checks.mjs';
-import { assertPushable, firstLine, holds, PILOT_BRANCH } from './pilot-branch.mjs';
+import { gitView, holdsIn, tipOf } from './git-view.mjs';
+import { assertPushable, firstLine, holds, isPilotBase, namePilotBranch, pilotBranch } from './pilot-branch.mjs';
 import { baseOf, chainLanded, commitRecords, git as gitAt, landingMessage } from './integrate.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
 import { afterGreen } from './land-adr.mjs';
@@ -33,9 +34,31 @@ import { releasePr } from './release.mjs';
 import { runRef, runRemote } from './remotes.mjs';
 import { prBase } from './stack.mjs';
 import { isWorktreeOf, mergeIntoPilot, removeWorktree, resume } from './sync.mjs';
-import { holderFrom, prune, runRecord } from './worktrees.mjs';
+import { holderFrom, prune, runRecord, WORKTREE_LIST } from './worktrees.mjs';
 
 const fail = (message, exitCode = 1) => Object.assign(new Error(`NOT landed: ${message}`), { exitCode });
+
+/** The run's pilot tip through `tipOf`; a missing ref throws, as the `rev-parse` it replaces did. */
+function pilotTip(git, ref) {
+  const sha = tipOf(git, ref);
+  if (sha === null) throw new Error(`${ref} does not exist`);
+  return sha;
+}
+
+/** A runner that reads no repository: `pilotBranch` over it answers the env's `PILOT_BRANCH` or throws. */
+const NO_REPO = () => {
+  throw new Error('no pilot branch passed, and PILOT_BRANCH is unset');
+};
+/** The name an exported step means when its caller passes none (the pinned suite, L7): the env's only, never a config or a host. */
+const envName = () => pilotBranch(NO_REPO);
+/** The env's name for a line, or `the pilot branch` when there is none: a line never throws in place of the failure it reports. */
+const labelOf = () => {
+  try {
+    return envName();
+  } catch {
+    return 'the pilot branch';
+  }
+};
 
 /** A failed push's reason: git's ` ! [rejected]`, `error:` or `fatal:` line, not its `To <url>`. */
 const reason = (err) =>
@@ -58,7 +81,9 @@ const reason = (err) =>
  * `gc`'s (process-gc L14): `() => string[]`, none by default, so only the CLI stops processes.
  * `holder` is `prune`'s (landing-keeps-worktrees L2): none by default, so nothing is held.
  */
-export function land({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args), host, test, gc = () => [], holder, remove = removeWorktree, wait, sleep } = {}) {
+export function land({ cwd = process.cwd(), git: run = (args) => gitAt(cwd, ...args), host, test, gc = () => [], holder, remove = removeWorktree, wait, sleep } = {}) {
+  // One view for the whole landing (land-batching L2): every callee below reads git through it.
+  const git = gitView(cwd, { run });
   let head;
   try {
     head = git(['symbolic-ref', '--short', 'HEAD']);
@@ -79,15 +104,23 @@ export function land({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args),
       throw fail(`${firstLine(err)}; nothing pushed`);
     }
   }
+  // The pilot branch's name (L5), derived and stored from the host's login when none is set, and never the default branch.
+  let name;
+  try {
+    ({ name } = namePilotBranch({ git, host }));
+    assertPushable(name, { git });
+  } catch (err) {
+    throw fail(`${firstLine(err)}; nothing pushed`);
+  }
 
   const { moved } = catchUp({ cwd, git, head });
   // Said above the landing's line, red or green: the worktree moved either way.
   const caughtUp = moved > 0 ? `caught up ${moved} commits from origin/${head}\n` : '';
   try {
-    const landed = landCaughtUp({ cwd, git, host, test, head, wait, sleep });
+    const landed = landCaughtUp({ cwd, git, host, test, head, name, wait, sleep });
     const branches = deleteRunBranches({ git, host, head });
-    const cleared = clear({ cwd, git, head, holder, remove });
-    return { ...landed, ...branches, host, caughtUp, cleared: [...cleared, ...collect(gc)] };
+    const cleared = clear({ cwd, git, head, name, holder, remove });
+    return { ...landed, ...branches, host, name, caughtUp, cleared: [...cleared, ...collect(gc)] };
   } catch (err) {
     throw Object.assign(err, { caughtUp });
   }
@@ -111,10 +144,13 @@ export function catchUp({ cwd, git, head }) {
     }
   };
   ask(['fetch', '-q', '--prune', 'origin']);
-  // Empty when origin has no `head` yet; a git that cannot answer throws, never reads as absent.
-  const theirs = ask(['for-each-ref', '--format=%(objectname)', `refs/remotes/origin/${head}`]);
+  // Null when origin has no `head` yet; a git that cannot answer throws, never reads as absent.
+  // The snapshot that answers it answers the landing's pilot too, until the next write (L4).
+  const theirs = tipOf(ask, `refs/remotes/origin/${head}`);
   if (!theirs) return { moved: 0 };
-  const ours = ask(['rev-parse', 'HEAD']);
+  const ours = tipOf(ask, 'HEAD');
+  // Level: nothing to count, so no rev-list is spawned.
+  if (ours === theirs) return { moved: 0 };
   // Commits only ours holds, then only theirs: a git that cannot answer throws, never reads as diverged.
   const [ahead, moved] = ask(['rev-list', '--left-right', '--count', `${ours}...${theirs}`]).split(/\s+/).map(Number);
   if (moved === 0) return { moved: 0 };
@@ -149,7 +185,8 @@ function deleteRunBranches({ git, host, head }) {
   const numbered = (prefix, name) => name.startsWith(prefix) && /^\d+$/.test(name.slice(prefix.length));
   const ours = (name) => name === `design/${slug}` || name === `qa/${slug}` || numbered(`fix/${slug}-s`, name) || numbered(`slice/${slug}-s`, name);
   try {
-    return deleteMerged({ git, host, select: ours, into: head });
+    // The landing fetched origin itself (`catchUp`) and pushed since (A3): no second fetch.
+    return deleteMerged({ git, host, select: ours, into: head, fetched: true });
   } catch (err) {
     return { deleted: err.deleted ?? [], kept: err.kept ?? [], deleteFailed: firstLine(err) };
   }
@@ -162,16 +199,18 @@ function deleteRunBranches({ git, host, head }) {
  * `removed <path>`, `kept <state> <path>` (`kept concluding` for those two) or `NOT removed <path>: <reason>`. Never throws: a
  * removal that fails is a line, never a failed landing. The land dir a conflict kept (`keptDir`) goes too, `removed <dir>` or `NOT removed <dir>: <why>`, when it exists.
  */
-function clear({ cwd, git, head, holder, remove }) {
+function clear({ cwd, git, head, name, holder, remove }) {
   const run = head.slice('feat/'.length);
   try {
-    const checkout = git(['worktree', 'list', '--porcelain']).split('\n')[0].replace(/^worktree /, '');
+    // The list `prune` reads too, so the view answers it once.
+    const checkout = git(WORKTREE_LIST).split('\0')[0].replace(/^worktree /, '');
     const inFeature = path.relative(fs.realpathSync.native(cwd), fs.realpathSync.native(process.cwd()));
     if (inFeature !== '..' && !inFeature.startsWith(`..${path.sep}`) && !path.isAbsolute(inFeature)) process.chdir(checkout);
-    const pilot = runRef(runRemote(git), PILOT_BRANCH);
+    const pilot = runRef(runRemote(git), name);
     // A branch in the landed pilot goes with -D: its remote copy, git's other judge, may be deleted already.
     const merged = git(['for-each-ref', '--merged', pilot, '--format=%(refname)', 'refs/heads/']).split('\n').map((ref) => ref.slice('refs/heads/'.length));
-    const { removed, kept, failed } = prune(checkout, pilot, { run, merged, keep: [`feat/${run}`, `qa/${run}`], holder });
+    // The landing's push left `pilot` current (A3): prune fetches nothing, and reads its list and pilot's tip through the view.
+    const { removed, kept, failed } = prune(checkout, pilot, { run, merged, keep: [`feat/${run}`, `qa/${run}`], holder, git, fetched: true });
     // The land dir a conflict kept is the landing's own tail: gone once the landing is (lander-tail S3).
     const land = keptDir(checkout, head);
     const landLine = removeLand(remove, checkout, land);
@@ -208,70 +247,77 @@ function collect(gc) {
 }
 
 /** The landing once the worktree is caught up: push the feature, merge it into pilot. */
-function landCaughtUp({ cwd, git, host, test, head, wait, sleep }) {
+function landCaughtUp({ cwd, git, host, test, head, name, wait, sleep }) {
   let runs;
   try {
     runs = runRemote(git);
   } catch (err) {
     throw fail(`${firstLine(err)}; nothing pushed`);
   }
-  chainGuard({ cwd });
+  chainGuard({ cwd, runs, git });
   // The caught-up tip's checks, before the record commit or any push (ci-gate L4, A2): red, pending, unread refuse.
-  const tip = git(['rev-parse', 'HEAD']);
+  const tip = tipOf(git, 'HEAD');
   const checks = checksGate({ host, git, sha: tip });
   if (!checks.ok) throw fail(`${checks.line}; nothing pushed`);
   // The tree green CI proved on this tip (cheap-suite spec 5, A2): the merge tests only what differs from it; no proof, the full suite.
   let proof;
   try {
-    proof = provenTree({ host, git, sha: tip, base: git(['rev-parse', runRef(runs, PILOT_BRANCH)]) });
+    proof = provenTree({ host, git, sha: tip, base: pilotTip(git, runRef(runs, name)) });
   } catch (err) {
     proof = { tree: null, line: `no ci proof: ${firstLine(err)}` };
   }
-  // A record base of pilot is a legacy run, and so is a record with no base, or no record: it keeps the release PR (audit-f14 A3).
+  // A record base of the pilot branch, or the legacy pilot it moved from (L8), is a legacy run, and so is a record with no base, or no record: it keeps the release PR (audit-f14 A3).
   const recorded = recordBase(cwd, head);
-  const legacy = recorded === undefined || recorded === PILOT_BRANCH;
+  const legacy = recorded === undefined || isPilotBase(recorded, name);
   // The deck's run record rides in the landing merge (lander L10): committed, not discarded.
-  commitRecords(cwd);
-  const source = git(['rev-parse', 'HEAD']);
-  const pushSkipped = pushFeature({ git, head, source });
+  // A record commit is a write made outside the view (L3).
+  if (commitRecords(cwd)) git.forget();
+  const source = tipOf(git, 'HEAD');
+  const pushSkipped = pushFeature({ git, head, source, name });
   const keep = keptDir(mainCheckout(git), head);
-  const message = landingMessage(head);
+  const message = landingMessage(head, name);
   // The run remote's pilot as last fetched, or the local pilot under `none`.
-  const pilotRef = runRef(runs, PILOT_BRANCH);
+  const pilotRef = runRef(runs, name);
   for (let retried = false; ; retried = true) {
-    const before = git(['rev-parse', pilotRef]);
-    const reuse = fs.existsSync(keep) && !holds(cwd, ['merge-base', '--is-ancestor', source, before]) && resume({ cwd, dir: keep, pilotTip: before, source, message, side: 'theirs', refuse: fail, conflict: (left, why) => conflict(head, left, keep, why) });
+    const before = pilotTip(git, pilotRef);
+    const reuse = fs.existsSync(keep) && !holdsIn(git, ['merge-base', '--is-ancestor', source, before]) && resume({ cwd, dir: keep, pilotTip: before, source, message, side: 'theirs', refuse: fail, conflict: (left, why) => conflict(head, name, left, keep, why) });
+    // A resumed land dir is written outside the view (L3).
+    if (fs.existsSync(keep)) git.forget();
     let merge;
     try {
       merge = mergeIntoPilot({ cwd, git, source, message, test, label: head, keep, reuse, ...(proof.tree !== null && { since: proof.tree }), ...(!legacy && { afterGreen }) });
     } catch (err) {
-      if (err.dir) throw conflict(head, err.paths, err.dir, err.why);
-      const failed = Object.assign(new Error(`NOT landed: ${err.reason ?? err.message}; ${PILOT_BRANCH} not pushed`, { cause: err }), err);
+      if (err.dir) throw conflict(head, name, err.paths, err.dir, err.why);
+      const failed = Object.assign(new Error(`NOT landed: ${err.reason ?? err.message}; ${name} not pushed`, { cause: err }), err);
       // Rejected because pilot moved since the fetch: fetch and merge again once. Anything else stops here.
       if (!err.pushRejected || (runs !== null && !holds(cwd, ['fetch', '-q', '--prune', runs]))) throw failed;
-      if (git(['rev-parse', pilotRef]) === before) throw failed;
-      if (retried) throw fail(`${PILOT_BRANCH} moved again after one retry; ${head} is pushed, ${PILOT_BRANCH} is not: run pilot land again`);
+      // The fetch, the resume and the merge's own worktree wrote outside the view (L3).
+      git.forget();
+      if (pilotTip(git, pilotRef) === before) throw failed;
+      if (retried) throw fail(`${name} moved again after one retry; ${head} is pushed, ${name} is not: run pilot land again`);
       continue;
     }
+    // The merge's worktree, and `afterGreen`'s number on feat, wrote outside the view (L3).
+    git.forget();
     const landed = { head, sha: merge.sha, retried, already: !merge.merged, adr: merge.adr ?? null, proof: proof.line, ...(pushSkipped && { pushSkipped }) };
     // A feature already on pilot comments on nothing (spec 2), nor does one with no host (other-host
     // A1). Landed already: neither a refused comment nor an unreadable PR list reads as a failed landing.
     if (host !== null) {
       try {
         // Only a legacy run's PR targets pilot, so only it is polled to read merged from the push (A3).
-        const stillOpen = comment({ host, head, sha: merge.sha, counts: merge.counts, ...(proof.tree !== null && { proved: proof.line }), already: !merge.merged, wait, sleep });
+        const stillOpen = comment({ host, head, sha: merge.sha, counts: merge.counts, ...(proof.tree !== null && { proved: proof.line }), already: !merge.merged, name, wait, sleep });
         if (stillOpen.length) landed.stillOpen = stillOpen;
       } catch (err) {
         landed.commentFailed = firstLine(err);
       }
     }
     // A main-cut run's PR is its own to main (audit-f14 spec 4): no release PR, no retarget (restack's).
-    if (!legacy) return { ...landed, feature: featurePr({ git, host, head, base: recorded }) };
+    if (!legacy) return { ...landed, feature: featurePr({ git, host, head, base: recorded, name }) };
     // Pilot pushed: a chained run's PR based on this feature now shows only its own diff (A6),
     // on the host's origin only, where pilot is.
-    const retargeted = runs === 'origin' && host !== null ? retarget({ host, head }) : [];
+    const retargeted = runs === 'origin' && host !== null ? retarget({ host, head, name }) : [];
     // Only now, pilot pushed, and on an already-landed feature too: main gets pilot through one PR (A1).
-    return { ...landed, retargeted, main: releasePr({ git, host, already: !merge.merged }) };
+    return { ...landed, retargeted, main: releasePr({ git, host, name, already: !merge.merged }) };
   }
 }
 
@@ -289,11 +335,11 @@ function recordBase(cwd, head) {
  * `prBase`'s and `below` the open PR of the `feat/<N>` it stacks on; `{ number: null }` with no host,
  * `{ number: null, why }` when the host cannot say. Never throws: the feature is landed.
  */
-function featurePr({ git, host, head, base: recorded }) {
+function featurePr({ git, host, head, base: recorded, name }) {
   if (host === null) return { number: null };
   const openOf = (branch) => host.reviews({ head: branch, state: 'open' }).find((pr) => pr.head === branch && pr.crossRepo === false && Number.isSafeInteger(pr.number) && pr.number > 0)?.number;
   try {
-    const base = prBase({ git, host, base: recorded });
+    const base = prBase({ git, host, base: recorded, name });
     const number = openOf(head);
     if (number === undefined) return { number: null, why: `no open PR has head ${head}` };
     const below = base.startsWith('feat/') ? openOf(base) : undefined;
@@ -316,15 +362,16 @@ export function featureLine({ number, base, below, why, host }) {
 /**
  * Refuses, exit 1, a feature built on `feat/<N>` while N has not landed on pilot (pilot-develop-line
  * spec 4b; L6): `baseOf`'s `chained`, read from the run record against the run remote's pilot as
- * last fetched. A record or pilot `baseOf` cannot read refuses too. Never reverts N (A2).
+ * last fetched. A record or pilot `baseOf` cannot read refuses too. Never reverts N (A2). `runs`, the run
+ * remote the landing already read, is read again when absent; `git` is the landing's view (L2), a new one when absent.
  */
-export function chainGuard({ cwd }) {
+export function chainGuard({ cwd, runs, git = gitView(cwd) }) {
   let base;
   let landed;
   try {
-    base = baseOf(cwd);
+    base = baseOf(cwd, runs, git);
     // The chain outlives N's landing for integrate (audit-f14 L5); the guard's end is still that landing.
-    landed = base.chained !== undefined && chainLanded(cwd, base.chained);
+    landed = base.chained !== undefined && chainLanded(cwd, base.chained, runs, git);
   } catch (err) {
     throw fail(`${firstLine(err)}; nothing pushed`);
   }
@@ -332,13 +379,14 @@ export function chainGuard({ cwd }) {
 }
 
 /**
- * Moves each open feature PR (head `feat/`) based on `head` to pilot, `host.edit(n, { base: 'pilot' })` (spec 4c; A6), and
- * answers one `retargeted #<n> to pilot` line each. Never throws: the feature is landed, so a list or
- * an edit that fails is a `retarget failed` line.
+ * Moves each open feature PR (head `feat/`) based on `head` to the pilot branch `name`, `host.edit(n, { base: name })`
+ * (spec 4c; A6), and answers one `retargeted #<n> to <name>` line each; with no `name`, the env's (L7). Never throws:
+ * the feature is landed, so a list or an edit that fails, or no name, is a `retarget failed` line.
  */
-export function retarget({ host, head }) {
+export function retarget({ host, head, name }) {
   let reviews;
   try {
+    name ??= envName();
     reviews = host.reviews({ base: head, state: 'open' });
   } catch (err) {
     return [`retarget failed: ${firstLine(err)}`];
@@ -350,8 +398,8 @@ export function retarget({ host, head }) {
     .filter(Number.isSafeInteger)
     .map((number) => {
       try {
-        host.edit(number, { base: PILOT_BRANCH });
-        return `retargeted #${number} to ${PILOT_BRANCH}`;
+        host.edit(number, { base: name });
+        return `retargeted #${number} to ${name}`;
       } catch (err) {
         return `retarget failed for #${number}: ${firstLine(err)}`;
       }
@@ -368,43 +416,45 @@ const unreachable = (err) => {
 /**
  * Pushes `head` to origin, never forced (three-lanes spec 17). A push origin could not be asked
  * for is retried once; still unreachable, it is no failure when origin's `head` as `catchUp` just
- * fetched it is `source` already, and answers the line that says so. Anything else throws.
+ * fetched it is `source` already, and answers the line that says so. Anything else throws, naming the pilot branch
+ * `name` (the env's when none is passed, L7) as not pushed.
  */
-export function pushFeature({ git, head, source }) {
+export function pushFeature({ git, head, source, name }) {
   for (let tried = 0; ; tried += 1) {
     try {
       git(['push', '-q', 'origin', head]);
       return undefined;
     } catch (err) {
-      if (!unreachable(err)) throw fail(`the push of ${head} failed (${reason(err)}); ${PILOT_BRANCH} not pushed`);
+      if (!unreachable(err)) throw fail(`the push of ${head} failed (${reason(err)}); ${name ?? labelOf()} not pushed`);
       if (tried === 0) continue;
-      const theirs = git(['for-each-ref', '--format=%(objectname)', `refs/remotes/origin/${head}`]);
-      if (theirs !== source) throw fail(`the push of ${head} failed twice, origin could not be asked (${reason(err)}); ${PILOT_BRANCH} not pushed`);
+      const theirs = tipOf(git, `refs/remotes/origin/${head}`);
+      if (theirs !== source) throw fail(`the push of ${head} failed twice, origin could not be asked (${reason(err)}); ${name ?? labelOf()} not pushed`);
       // Not git's own words: they name origin's URL, which may carry a credential, on a landing that succeeds.
       return `origin could not be asked for the push; ${head} at ${source.slice(0, 7)} is on origin already`;
     }
   }
 }
 
-const conflict = (head, paths, dir, why) => fail(conflictLine({ head, onto: PILOT_BRANCH, paths: [conflictPaths(paths, why)], dir }), 3);
+const conflict = (head, name, paths, dir, why) => fail(conflictLine({ head, onto: name, paths: [conflictPaths(paths, why)], dir }), 3);
 
 /**
- * Puts `landed on pilot at <sha>`, then `; full suite <counts>` when the feature merge's run
+ * Puts `landed on <name> at <sha>` (`name` the pilot branch, the env's when none is passed, L7), then `; full suite <counts>` when the feature merge's run
  * printed counts (suite-at-landing L8), or `; <proved>, then <counts>` when the run was the selection since the
  * tree `proved` names (cheap-suite spec 5), on each open or merged PR from this repository whose head
- * is `head`. An open one against pilot is first polled, every `POLL_MS` up to `wait` ms, for
+ * is `head`. An open one against `name` is first polled, every `POLL_MS` up to `wait` ms, for
  * GitHub to read it merged from the push (A1); no PR is ever closed. Throws when there is no
  * such PR. `already`, the feature on pilot before this landing, comments on nothing (spec 2).
  * Answers the numbers still reading open after the wait, commented all the same.
  */
-export function comment({ host, head, sha, counts, proved, already = false, wait = 30_000, sleep = pause }) {
+export function comment({ host, head, sha, counts, proved, already = false, name, wait = 30_000, sleep = pause }) {
   if (already) return [];
+  name ??= envName();
   const ours = host.reviews({ head, state: 'all' }).filter((review) => Number.isSafeInteger(review.number) && review.crossRepo === false && (review.state === 'open' || review.state === 'merged'));
   if (!ours.length) throw new Error(`no open or merged PR has head ${head}`);
-  const body = `landed on pilot at ${sha}${counts ? `; ${proved ? `${proved}, then` : 'full suite'} ${counts}` : ''}`;
+  const body = `landed on ${name} at ${sha}${counts ? `; ${proved ? `${proved}, then` : 'full suite'} ${counts}` : ''}`;
   const stillOpen = [];
   for (const { number, state, base } of ours) {
-    if (state === 'open' && base === PILOT_BRANCH && !readsMerged({ host, number, wait, sleep })) stillOpen.push(number);
+    if (state === 'open' && base === name && !readsMerged({ host, number, wait, sleep })) stillOpen.push(number);
     host.comment(number, body);
   }
   return stillOpen;
@@ -478,8 +528,8 @@ export function main(argv, inject = {}) {
   const table = inject.read && once(inject.read);
   const shared = table ? { holder: holderFrom(table), gc: inject.gc && (() => inject.gc(table)) } : {};
   try {
-    const { head, sha, retried, already, adr, host, main: mainPr, feature, pushSkipped, commentFailed, stillOpen = [], retargeted = [], deleted, kept, deleteFailed, caughtUp, cleared, proof } = land({ ...inject, ...shared });
-    const said = already ? `${head} already on ${PILOT_BRANCH}` : `landed ${head} on ${PILOT_BRANCH}`;
+    const { head, sha, retried, already, adr, host, name, main: mainPr, feature, pushSkipped, commentFailed, stillOpen = [], retargeted = [], deleted, kept, deleteFailed, caughtUp, cleared, proof } = land({ ...inject, ...shared });
+    const said = already ? `${head} already on ${name}` : `landed ${head} on ${name}`;
     // Above the main line: what the test run trusted (cheap-suite spec 5), the comment that failed, then the number the landing allocated (S8).
     const above = `${proof}\n${commentFailed === undefined ? '' : `pr comment failed: ${commentFailed}\n`}${stillOpen.map((number) => `feature PR #${number} still reads open\n`).join('')}${adr ? `ADR ${adr.from} is ${adr.to}\n` : ''}${adr && feature ? `${head} moved on origin: git pull --ff-only before a fix\n` : ''}`;
     // The deck's row keeps only the output's tail (S8): the branch and clear lines go first, so
@@ -492,7 +542,7 @@ export function main(argv, inject = {}) {
       ...(pushSkipped === undefined ? [] : [pushSkipped]),
       ...retargeted,
     ];
-    process.stdout.write(`${caughtUp}${[...branches, ...cleared].map((line) => `${line}\n`).join('')}${said} at ${sha.slice(0, 7)}${retried ? ' (pilot moved; merged again once)' : ''}\n${above}${feature ? featureLine({ ...feature, host }) : `${labelLine(mainPr)}${mainLine({ ...mainPr, host })}`}\n`);
+    process.stdout.write(`${caughtUp}${[...branches, ...cleared].map((line) => `${line}\n`).join('')}${said} at ${sha.slice(0, 7)}${retried ? ` (${name} moved; merged again once)` : ''}\n${above}${feature ? featureLine({ ...feature, host }) : `${labelLine(mainPr)}${mainLine({ ...mainPr, host })}`}\n`);
     return 0;
   } catch (err) {
     process.stdout.write(`${err.caughtUp ?? ''}${err.message}\n`);

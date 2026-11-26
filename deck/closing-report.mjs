@@ -124,8 +124,9 @@ function mainStep(number, byHand, merged) {
   if (number !== undefined) return `Merge #${number} with a merge commit, when you want main to have it.`;
   // Run host `none` (other-host spec 3): no PR exists to open, so the branch itself is merged by hand.
   if (merged !== undefined) return `Merge ${said(merged)} into main by hand, with a merge commit.`;
-  // A bare branch is on no remote yet (run remote `none`): it is pushed before a PR can name it.
-  if (byHand === 'pilot') return 'Push pilot, then open a PR from pilot to main by hand, and merge it with a merge commit.';
+  // A bare branch is on no remote yet (run remote `none`): it is pushed before a PR can name it. A pilot branch's
+  // name holds no `/`; on a run remote it reads `<remote>/<name>`.
+  if (byHand !== undefined && !byHand.includes('/')) return `Push ${said(byHand)}, then open a PR from ${said(byHand)} to main by hand, and merge it with a merge commit.`;
   if (byHand !== undefined) return `Open a PR from ${said(byHand)} to main by hand, and merge it with a merge commit.`;
   return 'land named no main PR, so check which PR brings pilot to main.';
 }

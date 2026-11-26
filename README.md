@@ -103,7 +103,7 @@ Model and harness agnosticity is the intent for later; today Pilot is built on C
 - **Hand-off and recovery**: a context hands off at specific token caps (e.g. 230k tokens) to a fresh session rather than compact, and a crashed run recovers from its record.
 - **Observability**: CLI remains open on the terminal to inspect agents at the lower level whilst they work,
 - **Fact sheet**: before an implementer reads the code, a Haiku helper lists every symbol, call site and test its slice names.
-- **Landing from the deck**: a finished feature lands on the pilot branch before QA, and your Gate 2 Sign off merges the last fixes and readies its PR.
+- **Landing from the deck**: a finished feature lands on your pilot branch (`<login>-pilot`, one per user of a repository) before QA, and your Gate 2 Sign off merges the last fixes and readies its PR.
 - **Closing report**: every run ends with its slices, its PRs and the crew's friction ranked into "make agents cheaper here".
 - **Mechanisms over habits**: a move agents keep re-deriving becomes a script, a record or a refusal.
 - **Budgets**: the agents are capped per lane, and each role and slice gets the model its job needs.
@@ -127,9 +127,9 @@ An average run, then the same steps drawn:
 4. You press **Gate 1** on the plan, and its ticket queues to be built.
 5. `pilot:pilot-co-pilot` builds that ticket in the background while the pilot plans the next.
 6. `pilot:pilot-implementer` builds each slice to its behaviours, with evidence for each, through the gate and one reviewer; the co-pilot merges it into the feature's branch.
-7. `pilot:pilot-fundamentalist` argues against the whole feature once, subtraction first, by principles from the literature; the kept findings are fixed and the feature lands on the pilot branch.
+7. `pilot:pilot-fundamentalist` argues against the whole feature once, subtraction first, by principles from the literature; the kept findings are fixed and the feature lands on your pilot branch.
 8. `pilot:pilot-qa` runs the feature where it is meant to run and hands you a walkthrough to work.
-9. You press **Gate 2**: the deck lands the feature on the pilot branch, QA's fixes with it.
+9. You press **Gate 2**: the deck lands the feature on your pilot branch, QA's fixes with it.
 
 ```mermaid
 ---
@@ -177,7 +177,7 @@ flowchart TD
   walkthrough(["the walkthrough: QA's steps for you to run and look at"])
   gate2(["Gate 2: you sign off the finished feature"])
   lander["pilot:pilot-lander"]
-  pr["the feature, landed on the pilot branch"]
+  pr["the feature, landed on your pilot branch"]
   report(["the closing report: what was built, and any step left to you"])
 
   user -->|"your first prompt or question"| pilot
@@ -222,7 +222,7 @@ flowchart TD
 Three steps stay yours through a run, in order:
 
 - **Spec design** — you sign off the architecture artefact at Gate 1, before a slice is built.
-- **Quality assurance** — you work the QA agent's walkthrough of the feature where it is meant to run, at Gate 2, before the feature PR lands on the pilot branch.
+- **Quality assurance** — you work the QA agent's walkthrough of the feature where it is meant to run, at Gate 2, before the feature PR lands on your pilot branch.
 - **Code review** — mostly AI: a language reviewer per slice, then one principles pass per feature. The plugin stops short of merging the feature PR; to have it merge its own PRs, say so as a standing rule in your own `CLAUDE.md`.
 
 ## Layout

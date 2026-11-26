@@ -13,9 +13,6 @@ use crate::app::State;
 use crate::regions::notifications::open_thread;
 use crate::theme::{self, Tokens, motion, space};
 
-/// A monospace glyph's advance as a share of the font size: how wide one `ch` of a status column is.
-const MONO_ADVANCE: f32 = 0.6;
-
 /// The `act::send` key a card's reply goes under, before the card's id.
 const SENT: &str = "reply-card-";
 
@@ -275,7 +272,7 @@ pub fn card(c: &Card, cx: &mut Cx<State>) -> El {
 /// One status line in three columns (L10): the state fixed and left, the name flexible and clipped, the
 /// time fixed and right, `cols.gap` apart.
 fn state_line(i: usize, l: &Line, t: &Tokens, ink: Color, dark: bool) -> El {
-    let ch = type_::BODY.size * MONO_ADVANCE;
+    let ch = type_::BODY.size * crate::layout::ADVANCE;
     let key = |part: &str| format!("line-{i}-{part}");
     let name = match (&l.name, &l.ticket) {
         (Some(name), Some(ticket)) => format!("{name}  {ticket}"),

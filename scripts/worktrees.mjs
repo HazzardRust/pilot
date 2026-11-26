@@ -27,8 +27,9 @@ import path from 'node:path';
 
 import { holderOf, pilotProcesses, processTable } from '../deck/procs.mjs';
 import { isWindows } from '../hooks/lib/platform.js';
+import { tipOf } from './git-view.mjs';
 import { keptDir } from './merge-generated.mjs';
-import { PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
+import { pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
 import { runRef, runRemote } from './remotes.mjs';
 import { keptLine, removeTree } from './worktree-remove.mjs';
 
@@ -39,12 +40,21 @@ function git(cwd, ...args) {
   return { ok, status: run.status, out: (run.stdout ?? '').trim(), err: (run.stderr || run.error?.message || '').trim() };
 }
 
-/** `git worktree list --porcelain` as records; the first is the main checkout. */
-function worktrees(repo) {
+/** The argv of the one worktree list; a caller's view that asked it already answers it again for nothing (land-batching S5). */
+export const WORKTREE_LIST = ['worktree', 'list', '--porcelain', '-z'];
+
+/** `git worktree list --porcelain` as records, through `view` when given (any worktree of `repo` lists the same); the first is the main checkout. */
+function worktrees(repo, view) {
   // -z: a path git would quote, or one holding a newline, arrives as written.
-  const list = git(repo, 'worktree', 'list', '--porcelain', '-z');
-  if (!list.ok) throw new Error(`git worktree list failed in ${repo}: ${list.err}`);
-  return list.out.split('\0\0').filter(Boolean).map((block) => {
+  let out;
+  if (view) {
+    out = view(WORKTREE_LIST);
+  } else {
+    const list = git(repo, ...WORKTREE_LIST);
+    if (!list.ok) throw new Error(`git worktree list failed in ${repo}: ${list.err}`);
+    out = list.out;
+  }
+  return out.split('\0\0').filter(Boolean).map((block) => {
     const record = { path: null, head: null, branch: null, locked: false, prunable: false };
     for (const line of block.split('\0')) {
       const [key, ...rest] = line.split(' ');
@@ -160,10 +170,10 @@ export function tagOf(repo, dir) {
 
 /**
  * Run `slug`'s worktrees: those tagged to it, on its branches, and the land dir beside the main
- * checkout; never the main checkout itself.
+ * checkout; never the main checkout itself. Listed through `view` when given (`worktrees`).
  */
-export function runWorktrees(repo, slug) {
-  const [home, ...rest] = worktrees(repo);
+export function runWorktrees(repo, slug, view) {
+  const [home, ...rest] = worktrees(repo, view);
   const land = path.resolve(keptDir(home.path, `feat/${slug}`));
   const tagged = tags(repo);
   return rest
@@ -199,15 +209,17 @@ function stateOf(repo, base, tree, index, mirror, landedSlug) {
 /**
  * Every worktree of `repo` with its state against `base`, which is not fetched here; with
  * `run`, that run's tracked run record changed in place does not make a worktree dirty; with
- * `run` and `landed`, the landed run's rule (ADR 0171).
+ * `run` and `landed`, the landed run's rule (ADR 0171). `view`, a caller's `Git`, answers the worktree
+ * list, and a full branch ref `base` from its tip snapshot (`tipOf`).
  */
-export function classify(repo, base, { run, landed = false } = {}) {
+export function classify(repo, base, { run, landed = false, view } = {}) {
   const mirror = run === undefined ? undefined : runRecord(run);
-  if (!git(repo, 'rev-parse', '--verify', '--quiet', `${base}^{commit}`).ok) {
-    throw new Error(`base ${base} is not a commit in ${repo}`);
-  }
+  const known = view && /^refs\/(?:heads|remotes)\//.test(base)
+    ? tipOf(view, base) !== null
+    : git(repo, 'rev-parse', '--verify', '--quiet', `${base}^{commit}`).ok;
+  if (!known) throw new Error(`base ${base} is not a commit in ${repo}`);
   const slug = landed ? run : undefined;
-  return worktrees(repo).map((tree, index) => ({
+  return worktrees(repo, view).map((tree, index) => ({
     path: tree.path,
     branch: tree.branch,
     state: stateOf(repo, base, tree, index, mirror, slug),
@@ -251,15 +263,21 @@ function fetchBase(repo, base) {
  * once its tracked status reads clean again, and its branch with `-D`. Without `run`, `landed` is ignored.
  * Every removal goes through `removeTree` (prune-worktrees S2, L1), `remove` its remove step: a tree it
  * keeps is `kept` with its state, `leftover` aside, which is `failed`.
+ * `git`, a landing's view, answers the worktree list and the base's tip (`classify`); `removeTree`
+ * judges each tree off that same list, less the trees already removed, so it is listed once. `fetched`
+ * says the caller's own fetch left `base` current (land-batching A3): no fetch then. Only a landing
+ * passes it; `pilot worktrees prune` always fetches.
  */
-export function prune(repo, base, { dryRun = false, run, merged = [], keep = [], holder = () => null, landed = false, remove } = {}) {
-  fetchBase(repo, base);
+export function prune(repo, base, { dryRun = false, run, merged = [], keep = [], holder = () => null, landed = false, remove, git: view, fetched = false } = {}) {
+  if (!fetched) fetchBase(repo, base);
   const removed = [];
   const kept = [];
   const failed = [];
   const relaxed = landed && run !== undefined;
-  const trees = classify(repo, base, { run, landed: relaxed });
-  const theirs = relaxed ? new Set(runWorktrees(repo, run)) : null;
+  const trees = classify(repo, base, { run, landed: relaxed, view });
+  // The records classify read, from the view's cache when one is given (land-batching S5); read on the first removal.
+  let listed;
+  const theirs = relaxed ? new Set(runWorktrees(repo, run, view)) : null;
   const ours = (tree, index) => run === undefined ||
     (index > 0 && (relaxed ? theirs.has(tree.path) : isRunBranch(tree.branch, run)));
   for (const tree of trees.filter(ours)) {
@@ -295,7 +313,9 @@ export function prune(repo, base, { dryRun = false, run, merged = [], keep = [],
       if (!step.ok) why = step.err;
       return step;
     };
-    const result = removeTree(repo, tree.path, { landed: relaxed, remove: removing, branch: dropBranch });
+    listed ??= worktrees(repo, view);
+    const left = listed.filter((other) => !removed.includes(other.path));
+    const result = removeTree(repo, tree.path, { landed: relaxed, remove: removing, branch: dropBranch, trees: left });
     if (result.kept === 'leftover') {
       // git's own refusal, when it refused, says more than the kept line.
       failed.push({ path: tree.path, reason: why || keptLine(tree.path, result.kept) });
@@ -425,11 +445,12 @@ export function main(argv, { out = process.stdout, err = process.stderr, read = 
     // as origin says it. --base wins.
     const onPilot = run !== undefined && base === null;
     if (onPilot) {
-      base = runRef(runRemote((gitArgs) => {
+      const probeGit = (gitArgs) => {
         const probe = git(repo, ...gitArgs);
         if (!probe.ok) throw Object.assign(new Error(probe.err), { status: probe.status });
         return probe.out;
-      }), PILOT_BRANCH);
+      };
+      base = runRef(runRemote(probeGit), pilotBranch(probeGit));
     }
     base ??= `origin/${remoteDefaultBranch((gitArgs) => {
       const run = git(repo, ...gitArgs);
