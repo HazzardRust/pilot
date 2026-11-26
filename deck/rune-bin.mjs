@@ -14,7 +14,18 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { runeBinary } from './open.mjs';
+/**
+ * The Rune deck built under `root` by `cargo build --release`, or null. A debug build is not the deck,
+ * and only a regular file counts, so a half-built target directory opens the page as before.
+ */
+export function runeBinary(root, platform) {
+  const file = path.join(root, 'deck', 'rune', 'target', 'release', platform === 'win32' ? 'pilot-deck.exe' : 'pilot-deck');
+  try {
+    return fs.statSync(file).isFile() ? file : null;
+  } catch {
+    return null;
+  }
+}
 
 /** The one place a binary is downloaded from (L6). */
 const RELEASES = 'https://github.com/HazzardRust/pilot/releases/download';
@@ -71,10 +82,16 @@ export function findRune(root, host) {
   }
   const got = sha256(bytes);
   if (got === pin.sha256) return { source: 'fetched', file };
-  fs.rmSync(file, { force: true });
+  let deleted = 'deleted';
+  try {
+    fs.rmSync(file, { force: true });
+  } catch (err) {
+    // A lock (antivirus, a window still running it) leaves it in place; it is never run while it differs.
+    deleted = `could not delete it: ${err.message}`;
+  }
   return {
     source: null,
-    reason: `${pin.file} changed on disk (sha256 ${prefix(got)}…, pinned ${prefix(pin.sha256)}…); deleted, opening the page`,
+    reason: `${pin.file} changed on disk (sha256 ${prefix(got)}…, pinned ${prefix(pin.sha256)}…); ${deleted}, opening the page`,
     fetchable: false,
   };
 }
@@ -120,6 +137,8 @@ async function download(url, get) {
   let at = url;
   for (let hop = 0; hop <= MAX_HOPS; hop += 1) {
     const res = await get(at, { signal });
+    // Frees the connection of a response whose body is never read.
+    if (res.status !== 200) await res.body?.cancel?.().catch(() => {});
     if (REDIRECT.has(res.status)) {
       const next = new URL(res.headers?.get?.('location') ?? '', at);
       // The signed URL a redirect names is never printed (L6): only its scheme is.

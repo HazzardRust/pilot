@@ -17,7 +17,7 @@
  */
 
 import { spawn } from 'node:child_process';
-import nodeFs, { statSync } from 'node:fs';
+import nodeFs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,21 +26,11 @@ import { openFile } from './launch.mjs';
 import { findRune } from './rune-bin.mjs';
 import { PLUGIN_VERSION } from './version.mjs';
 
+// The release build's lookup is findRune's first step, so it lives beside it (prebuilt-rune).
+export { runeBinary } from './rune-bin.mjs';
+
 /** This package's root: the one place a Rune deck binary is looked for, never a path from the environment. */
 export const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-
-/**
- * The Rune deck built under `root` by `cargo build --release`, or null. A debug build is not the deck,
- * and only a regular file counts, so a half-built target directory opens the page as before.
- */
-export function runeBinary(root, platform) {
-  const file = path.join(root, 'deck', 'rune', 'target', 'release', platform === 'win32' ? 'pilot-deck.exe' : 'pilot-deck');
-  try {
-    return statSync(file).isFile() ? file : null;
-  } catch {
-    return null;
-  }
-}
 
 /** A copy `launchCopy` made: the build's mtime in milliseconds, and `.exe` on Windows. */
 const COPY_NAME = /^pilot-deck-(\d+)(\.exe)?$/;
@@ -141,12 +131,7 @@ export function runCopy(rune) {
  * to start a process, and that must never happen while the suite is running — so the
  * tests hand it a recorder, and the daemon hands it nothing.
  */
-export function openDeck(
-  spawnOpener = spawn,
-  platform = hostPlatform(),
-  // A built binary, else a fetched one that still matches its pin; never a download (prebuilt-rune A6).
-  rune = findRune(PACKAGE_ROOT, { platform, arch: process.arch, version: PLUGIN_VERSION }).file ?? null,
-) {
+export function openDeck(spawnOpener = spawn, platform = hostPlatform(), runeArg) {
   const off = process.env.PILOT_DECK_NO_OPEN;
   // Any value at all, not only `1`: the one reason to set this is to stop a browser
   // appearing, and `PILOT_DECK_NO_OPEN=0` is nobody's way of asking for one.
@@ -160,6 +145,9 @@ export function openDeck(
   if (now - lastTriedAt < REOPEN_GUARD_MS) return false;
   lastTriedAt = now;
 
+  // Looked up only when something will open: a built binary, else a fetched one that still matches its pin,
+  // hashed here; never a download (prebuilt-rune A6). A test names its own, or null for none.
+  const rune = runeArg === undefined ? findRune(PACKAGE_ROOT, { platform, arch: process.arch, version: PLUGIN_VERSION }).file : runeArg;
   const file = openFile();
   const { command, args } = openerFor(platform, file, rune && runCopy(rune));
   try {
