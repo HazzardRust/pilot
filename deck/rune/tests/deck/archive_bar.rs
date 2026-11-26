@@ -136,8 +136,16 @@ fn date_newest_first_is_the_default() {
         ],
         Prefs::default(),
     );
-    assert_eq!(words(&rt, "archive-sort-date"), "Date ↓", "Date is on, newest first");
-    assert_eq!(words(&rt, "archive-sort-title"), "Title", "no other column is on");
+    assert_eq!(
+        words(&rt, "archive-sort-date"),
+        "Date ↓",
+        "Date is on, newest first"
+    );
+    assert_eq!(
+        words(&rt, "archive-sort-title"),
+        "Title",
+        "no other column is on"
+    );
     assert_eq!(
         rows(&rt),
         [id(1), id(0), id(2)],
@@ -162,10 +170,9 @@ fn the_sort_is_saved() {
     press(&mut rt, "archive-sort-title");
     press(&mut rt, "archive-sort-title");
     let saved = Prefs::load(&dir).archive_sort;
-    let file: Value = serde_json::from_slice(
-        &std::fs::read(dir.join("rune-deck.json")).expect("the prefs file"),
-    )
-    .expect("the prefs file's json");
+    let file: Value =
+        serde_json::from_slice(&std::fs::read(dir.join("rune-deck.json")).expect("the prefs file"))
+            .expect("the prefs file's json");
 
     let restarted = archive(&today, Prefs::load(&dir));
     unsafe { std::env::remove_var("PILOT_DECK_DIR") };
@@ -185,5 +192,9 @@ fn the_sort_is_saved() {
     );
     assert_eq!(words(&restarted, "archive-sort-title"), "Title ↓");
     assert_eq!(words(&restarted, "archive-sort-date"), "Date");
-    assert_eq!(rows(&restarted), [id(1), id(0), id(2)], "Charlie, Bravo, Alpha");
+    assert_eq!(
+        rows(&restarted),
+        [id(1), id(0), id(2)],
+        "Charlie, Bravo, Alpha"
+    );
 }

@@ -99,7 +99,12 @@ enum Item {
 
 impl List {
     /// Brings the list up to `v`, `local`'s filter and folds and `sort`; `Err` when `v` cannot be read.
-    fn update(&mut self, v: &Value, local: &Local, sort: ArchiveSort) -> Result<(), serde_json::Error> {
+    fn update(
+        &mut self,
+        v: &Value,
+        local: &Local,
+        sort: ArchiveSort,
+    ) -> Result<(), serde_json::Error> {
         let from = From {
             view: v as *const Value as usize,
             kind: local.kind.clone(),
