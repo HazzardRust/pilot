@@ -169,8 +169,9 @@ test('ubuntu keeps main-never-red\'s triggers', () => {
   }
   assert.ok(osesFor(event('pull_request')).includes('ubuntu-latest'), 'a non-draft PR');
   assert.ok(osesFor(event('push')).includes('ubuntu-latest'), 'a push to main');
-  assert.deepEqual(osesFor(event('pull_request', { draft: true, labels: ['docs'] })), [], 'a draft without the label');
-  assert.deepEqual(osesFor(event('pull_request', { draft: true, isPrivate: false })), [], 'a public draft');
+  assert.deepEqual(osesFor(event('pull_request', { draft: true, labels: ['docs'], baseRef: 'feat/x' })), [], 'a draft slice PR without the label');
+  // cheap-suite A2: a draft PR to main runs Gate too, so the landing has a run to read its proof from.
+  assert.deepEqual(osesFor(event('pull_request', { draft: true, isPrivate: false })), THREE, 'a public draft to main');
   for (const trigger of ['pull_request_target', 'issue_comment', 'workflow_run']) {
     assert.doesNotMatch(code(text), new RegExp(`\\b${trigger}\\b`), `no ${trigger}`);
   }
@@ -199,12 +200,15 @@ test('the gate workflow runs the full gate', () => {
   const text = workflowText();
   assert.deepEqual(values(text, 'run'), [
     'npm ci',
+    `echo "$RULE" | sudo tee /etc/polkit-1/rules.d/49-pilot-ci-inhibit.rules && echo PILOT_REQUIRE_LINUX_HOLDER=1 >> "$GITHUB_ENV"`,
     'npm test',
     'node scripts/check-references.mjs',
     'node scripts/check-provenance.mjs agents/ skills/ rules/',
+    `echo "::notice title=tested-tree::$(git rev-parse 'HEAD^{tree}')"`,
   ]);
   assert.doesNotMatch(code(text), /continue-on-error/);
-  assert.equal(values(text, 'if').length, 1, 'no step-level if skips a step');
+  // stay-awake S5: the one step-level if is ubuntu's logind grant, which no other OS needs.
+  assert.deepEqual(values(text, 'if').slice(1), ["runner.os == 'Linux'"], 'no other step-level if skips a step');
 });
 
 test('no job gains a write permission or a secret', () => {

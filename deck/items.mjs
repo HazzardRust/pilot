@@ -19,6 +19,7 @@
  */
 
 import { pathKey as repoKey } from '../hooks/lib/platform.js';
+import { crewWaitingOf } from './crew-wait.mjs';
 
 import {
   DISMISSED_BY_USER, KIND_STEPS, REPORT_DUE, SIGN_OFF, NOT_YET, SHA_FIELD, URL_FIELD, LOGIN_FIELD, SCREENS_FIELD, SLICE_FIELD, REPO_FIELD, NEXT_FIELD, DIR_FIELD, WORKDIR_FIELD, SHELL_FIELD, COMMENT_FIELD, CHECKS_FIELD,
@@ -279,7 +280,7 @@ const SPECS = {
     options: false,
     fields: [SLICE_FIELD, REPO_FIELD, TICKET_ID_FIELD],
     buttons: [HANDOFF_FAILED],
-    note: "The pilot closes this when the agent's own handoff arrives. Handoff failed has it brief a fresh agent from the agent's branch.",
+    note: "The deck closes this as its ticket moves on, the pilot a ticketless one. Handoff failed has it brief a fresh agent from the branch.",
     ask: 'Treat this agent as lost, and brief a fresh one from its branch?',
   },
 };
@@ -306,9 +307,9 @@ export function buttonsFor(kind) {
   return specFor(kind).buttons ?? null;
 }
 
-/** The sentence a kind's Handoff failed confirms in place with (handoff-failed-confirm L3), or null; a held `item`'s re-arms (held-handoff L3). */
-export function askFor(kind, item) {
-  return isHeld(item) ? "Stop waiting for the co-pilot, and type /clear at this session's next turn end?" : specFor(kind).ask ?? null;
+/** The sentence a kind's Handoff failed confirms in place with (handoff-failed-confirm L3), or null. */
+export function askFor(kind) {
+  return specFor(kind).ask ?? null;
 }
 
 /**
@@ -320,9 +321,6 @@ export function noteFor(item) {
   if (item?.kind === KIND_QUESTION && item.away && item.recommended) {
     return `Posted while you were away: the pilot went with ${item.recommended}. Reply to revise.`;
   }
-  // The hand-off mod holds the `/clear` for a live co-pilot (held-handoff spec 1, L2): the card says so, not "picks this up".
-  // Handoff failed re-arms it (spec 3, L3), and the card says that until the pick-up ends the hold.
-  if (isHeld(item)) return item.hold.rearmedAt ? 're-armed: /clear at the next turn end' : `held: /clear waits on ${item.hold.ticket}'s co-pilot`;
   if (item?.kind === KIND_HANDOFF && /^superseded by itm_\w+$/.test(item.resolution ?? '')) return item.resolution; // not "press Handoff failed" (QA Q3)
   const { note, buttons } = specFor(item?.kind);
   if (!note) return null;
@@ -501,19 +499,13 @@ export function isOpen(item) {
 /** How long a hand-off may sit with no word from the pilot before it reads `unacknowledged` (thread-kinds spec 19, L7, A8): read off the clock and the thread, never stored or swept. */
 export const HANDOFF_ACK_MS = 3 * 60 * 1000;
 
-// A hand-off whose `/clear` the mod holds for a live co-pilot (held-handoff L2), until the pick-up (the pilot's first word).
-function isHeld(item) {
-  if (item?.kind !== KIND_HANDOFF || !isOpen(item) || typeof item.hold?.ticket !== 'string') return false;
-  return !messagesOf(item).some((message) => message?.from === 'pilot');
-}
-
 /**
  * A hand-off nobody has picked up (spec 19, 21): open, kind `handoff`, nothing from the
  * pilot on it, and `HANDOFF_ACK_MS` past its posting. A chain
  * hand-off the lane resolved is closed, so it never reads this way.
  */
 export function isUnacknowledged(item, now = Date.now()) {
-  if (item?.kind !== KIND_HANDOFF || !isOpen(item) || isHeld(item)) return false;
+  if (item?.kind !== KIND_HANDOFF || !isOpen(item)) return false;
   if (messagesOf(item).some((message) => message?.from === 'pilot')) return false;
   const posted = timeOf(item.postedAt);
   return !Number.isNaN(posted) && now - posted >= HANDOFF_ACK_MS;
@@ -767,12 +759,9 @@ export function appearsInYours(item) {
 
 /**
  * The five states of a thread, worded as the spec words them (line 4, A7). They
- * are *derived*: no agent types one, nothing is stored on the item to hold one,
- * and the clock is consulted only for a hand-off's `unacknowledged` (spec 19) —
- * otherwise two facts the thread already carries decide it,
- * the last message in it and whether the hand-off of that message was recorded
- * (D4). So a state cannot drift from the thread it describes, and a deck nobody
- * has touched for a week still reads correctly.
+ * are *derived*: nothing is stored on the item to hold one, and the clock is consulted only for
+ * `unacknowledged` (spec 19) and a crew-handoff's `waiting <age>`; otherwise the last message and whether
+ * its hand-off was recorded (D4) decide it, so a state cannot drift from the thread it describes.
  *
  * The last message is what the state is read off, because it is the only one
  * that can still be waiting on anybody: an older reply that was handed over
@@ -785,7 +774,8 @@ export function appearsInYours(item) {
  */
 export function threadState(item, now = Date.now()) {
   if (!isOpen(item)) return 'resolved';
-  if (isHeld(item)) return 'held';
+  const waiting = crewWaitingOf(item, now);
+  if (waiting !== null) return waiting;
   if (isUnacknowledged(item, now)) return 'unacknowledged';
   // A user's word on a record is never picked up (report-record spec 3), so the state reads past it.
   const last = lastSaid(isRecord(item) ? { replies: messagesOf(item).filter((message) => message.from !== 'user') } : item);

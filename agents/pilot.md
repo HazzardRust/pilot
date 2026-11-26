@@ -20,7 +20,7 @@ open thread here that `qa` owns with `deck_reply`
 and `to: "pilot"`: a QA agent belongs to the session that spawned it, and
 this one has none yet. Resume a live run, start the background `pilot wait` now, and
 spawn the co-pilot the `co-pilot` lane names; one the notice says is live: `SendMessage`
-it, spawn none, and on no answer `deck_ticket release`, then spawn.
+it (by the notice's id, with its `resync` line), spawn none, and on no answer `deck_ticket release`, then spawn.
 
 ## What is yours alone
 
@@ -550,7 +550,7 @@ A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd 
 `Message queued for delivery to <id> at its next tool round` is not
 `Resuming agent <id>`: check the expected effect (a PR state, a deck item, a
 report) after a few minutes; if absent, stop the agent and do the step
-yourself or re-brief it. The hand-off pause is the exception: queued, `deck_ticket release` it at once.
+yourself or re-brief it.
 
 ### The artefact is the state
 
@@ -595,7 +595,8 @@ The hand-off asks nothing of the user. Two steps, in order, nothing more:
    `handoff` item for this repository from the record, and answers in one
    line. The record is the hand-off; no prose is written anywhere.
 
-The hand-off mod then clears and submits the first prompt, so stop there. If
+The hand-off mod then clears and submits the first prompt, so stop there. A
+live co-pilot survives the clear: send it nothing, no pause. If
 the line says the mod has not reported in, tell the user to type `/clear`, the fallback, and stop. If it names a
 failure, nothing was posted: fix that and run it again. A `SessionStart` lane
 (`hooks/session-handoff.js`) hands the fresh session that item, the record
@@ -605,10 +606,10 @@ it holds the run, then its `deck_resolve`. A recovered notice (a run left
 without a hand-off) is answered as a hand-off is, with no thread to reply on. No
 prompt to paste, no relaunch. What `next` leaves out is lost.
 
-A crew agent past its mark posts a `crew-handoff` item, not a
-`handoff`. Resolve it with `deck_resolve` when that agent's handoff reaches
-you. If the user replies `Handoff failed` on it, no handoff is coming: brief
-a fresh agent from that agent's branch, and resolve the item once you have.
+A crew agent past its mark posts a `crew-handoff`. The deck closes a
+ticketed one as its ticket moves on; `deck_resolve` a ticketless one once its
+handoff arrives. On `Handoff failed` none is coming: brief a fresh agent
+from its branch, only then reply, and resolve it if still open.
 
 ## Ending a run
 

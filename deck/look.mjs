@@ -1,5 +1,5 @@
 /**
- * `pilot look`: the surface adapter (ui-design-workflow S1, ADR NNNN).
+ * `pilot look`: the surface adapter (ui-design-workflow S1, ADR 0210).
  *
  * A surface's `surface.json` names its token file, its ruleset, its screens by start-up route,
  * and how to open one. `snap` captures a screen by starting one process from an argv, never a

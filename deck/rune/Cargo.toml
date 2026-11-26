@@ -14,10 +14,19 @@ path = "src/main.rs"
 rune = { git = "https://github.com/anomalyco/rune", rev = "7cba77c86b7c203bcf68c5ca539640cb81ec50ad", features = ["tooling"] }
 # Bodies and messages are drawn as markdown by rune-kit's `Markdown`, never a port of markdown.mjs (L8).
 rune-kit = { git = "https://github.com/anomalyco/rune", rev = "7cba77c86b7c203bcf68c5ca539640cb81ec50ad", default-features = false, features = ["markdown"] }
+# The reply box's preview parses with rune-kit's own parser, so it styles what the thread renders.
+pulldown-cmark = { version = "0.13", default-features = false }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Plain HTTP only: no TLS, no proxy, no redirects (spec 9); the client talks to loopback.
 ureq = { version = "3", default-features = false, features = ["json"] }
+
+# Backtraces keep file and line; the debug info that makes the PDBs huge goes (L6).
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
 
 # build.rs turns theme.json's space and motion into consts.
 [build-dependencies]

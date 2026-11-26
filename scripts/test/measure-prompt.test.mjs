@@ -207,13 +207,17 @@ test('the command prints the table, and --json prints the rows', (t) => {
 // Merge origin/pilot d282a698 into feat/human-steps (2026-11-20) set it to the measured 12035 (about 9 of it the steps-thread line naming land's feature PR step): human-steps' step field and Findings cut and ci-gate's checks field and short-path wait all stand, measured together.
 // two-devices S3 (2026-11-21) raised it from 12035 to the measured 12069.5 (spec 1, 2a; L8): step 1 runs `pilot doctor slug <slug>` before naming a slug and links OPERATING.md's two-devices section, 34.5.
 // ui-design-workflow S9 (2026-11-22) raised it from 12069.5 to the measured 12140.25 (spec 2, 9, 14; L8): step 4's Shape the look, a Look notes and a Design notes paragraph, 79.5 (12060.75 to 12140.25).
+// handoff-no-wait S1 (2026-11-23) lowered it from 12069.5 to the measured 12053 (spec 1; L2): the hand-off pause's queued-release clause goes, and the hand-off section says a live co-pilot is sent nothing, net -4.
+// handoff-no-wait S5 (2026-11-23) raised it from 12053 to the measured 12066.5 (spec 3, 4; L5): the first-turn rule sends a live co-pilot the notice's `resync` line by its id if it names one, 13.5.
+// Merge origin/pilot 8391b00 into feat/handoff-no-wait (2026-11-23) set it to the measured 12143.75 (L8, L2, L5): ui-design-workflow's step 4 paragraphs and handoff-no-wait's hand-off and first-turn edits both stand, measured together.
+// handoff-self-close S1 (2026-11-25) lowered it from 12143.75 to the measured 12142 (spec 7): the crew-handoff clause says the deck closes a ticketed one, and the pilot replies to a press only once it has briefed, -1.75.
 test('the pilot pin holds at its new number', async (t) => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-share-'));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const rows = await measure({ root: ROOT, home });
   const pilot = rows.find((row) => row.agent === 'pilot');
   const own = (pilot.definition + pilot.skills + pilot.tools) / 4;
-  assert.ok(own <= 12140.25, `pilot's own share is ${own} tokens, over its 12140.25`);
+  assert.ok(own <= 12142, `pilot's own share is ${own} tokens, over its 12142`);
 });
 
 // research-first S1 raised the explorer's from 2209 to the measured 2409 (L5): `## A research brief` cost 200.5 (2208.5 to 2409), 41 of it the security-review sentence on fetched pages and queries.

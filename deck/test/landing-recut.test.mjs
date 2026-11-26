@@ -33,9 +33,12 @@ const LANDED = 'landed feat/y on pilot at 1a2b3c4\n';
 const reread = (id) => listItems().find((item) => item.id === id);
 const deckLines = (id) => reread(id).replies.filter((message) => message.author === 'deck').map((message) => message.text);
 
-/** A bare origin and `work`, the deck's clone, holding a plan on `feat/x` one commit past `pilot`, its slice owning `deck/store-items.mjs`. */
-function repos(t) {
-  return gitFixture(t, 'landing-recut:repos', (root) => {
+/**
+ * A bare origin and `work`, the deck's clone, holding a plan on `feat/x` one commit past `pilot`, its slice owning
+ * `deck/store-items.mjs`, and then the first landing over that file on `pilot`, as `landOn` makes it.
+ */
+function landed(t) {
+  return gitFixture(t, 'landing-recut:landed', (root) => {
     const origin = path.join(root, 'origin.git');
     const work = path.join(root, 'work');
     git(root, 'init', '-q', '--bare', '-b', 'main', origin);
@@ -52,7 +55,9 @@ function repos(t) {
     git(work, 'checkout', '-q', '-b', 'feat/x');
     write(ARTEFACT, '# X\n\n## 2. Spec\n\n| 1 |\n\n## 5. Locked decisions\n\n- L1\n\n## 8. Slices\n\n| S1 |\n');
     git(work, 'push', '-q', 'origin', 'feat/x');
-    return { work, plan: { artefact: ARTEFACT, branch: 'feat/x', sha: git(work, 'rev-parse', 'HEAD') } };
+    const plan = { artefact: ARTEFACT, branch: 'feat/x', sha: git(work, 'rev-parse', 'HEAD') };
+    landOn(work, 'deck/store-items.mjs');
+    return { work, plan };
   });
 }
 
@@ -96,10 +101,9 @@ function grant(id) {
 
 test('a landing over an owned file leaves the ticket yellow', async (t) => {
   tempDeck(t);
-  const { work, plan } = repos(t);
+  const { work, plan } = landed(t);
   const gate = aLandedGate2(work);
   const ticket = signed(work, plan);
-  landOn(work, 'deck/store-items.mjs');
   const items = listItems().length;
 
   assert.deepEqual(await driftAfterLanding(gate.id), [ticket.id]);
@@ -117,10 +121,9 @@ test('a landing over an owned file leaves the ticket yellow', async (t) => {
 
 test('a drift is noted once: a later landing repeats nothing, one over a new owned file notes again (spec 2)', async (t) => {
   tempDeck(t);
-  const { work, plan } = repos(t);
+  const { work, plan } = landed(t);
   const first = aLandedGate2(work);
   const ticket = signed(work, plan);
-  landOn(work, 'deck/store-items.mjs');
   await driftAfterLanding(first.id);
   const second = aGate2(work);
   settleLanding(second.id, { ok: true, sha: '5e6f7a8', line: 'landed feat/z on pilot at 5e6f7a8' });
@@ -144,10 +147,9 @@ test('a drift is noted once: a later landing repeats nothing, one over a new own
 
 test('after a replan the same drift is a new one, and is noted', async (t) => {
   tempDeck(t);
-  const { work, plan } = repos(t);
+  const { work, plan } = landed(t);
   const first = aLandedGate2(work);
   const ticket = signed(work, plan);
-  landOn(work, 'deck/store-items.mjs');
   await driftAfterLanding(first.id);
   git(work, 'checkout', '-q', 'feat/x');
   git(work, 'merge', '-q', '--no-edit', 'origin/pilot');
@@ -163,10 +165,9 @@ test('after a replan the same drift is a new one, and is noted', async (t) => {
 
 test('after a re-cut and a gate1 re-sign the same drift is a new one, and is noted', async (t) => {
   tempDeck(t);
-  const { work, plan } = repos(t);
+  const { work, plan } = landed(t);
   const first = aLandedGate2(work);
   const ticket = signed(work, plan);
-  landOn(work, 'deck/store-items.mjs');
   await driftAfterLanding(first.id);
   await callTool('deck_ticket', { id: ticket.id, action: 'recut' });
   git(work, 'checkout', '-q', 'feat/x');

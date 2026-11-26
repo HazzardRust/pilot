@@ -126,7 +126,7 @@ Deletion test:
 - **L6** One leaf parser, `tokens.js`, is loaded by the page as a classic script and by the CLI through `vm`. Rejected: a second parser in `deck/` (drift on the byte-stable rule).
 - **L7** Two adapter kinds: `command`, an argv template run with no shell, and `web`, a headless Chromium found on the machine, with a temporary profile. Rejected: a shell string in `surface.json` (injection).
 - **L8** Each crew prompt addition points at the skill, and its pin rises by the measured delta with a dated comment: at most 80 tokens each for the pilot, QA and the architect. Rejected: cutting other prose to fit, which is out of scope.
-- **L9** The run's ADR is `docs/adr/NNNN-ui-design-workflow.md`, cited ADR NNNN. The landing numbers it.
+- **L9** The run's ADR is `docs/adr/0210-ui-design-workflow.md`, cited ADR 0210. The landing numbers it.
 - **L10** Replaces A5 (user, itm_47ebe79d7ce4). The notes file and DESIGN.md §8 are unrecoverable. DESIGN.md §7 is read line by line against the spec (§2.1), and its uncovered workflow rule becomes spec 13. From now on a run's design notes live in the repo (spec 14). Rejected: proceeding without them.
 
 ## 6. Assumed decisions
@@ -172,7 +172,7 @@ Width 6; longest stem 3 (S1 → S4 → S5, S1 → S6 → S9)
 
 | Slice | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- |
-| S1 `pilot look snap` captures a web fixture screen in light and dark | 1, 7, 13 | `deck/look.mjs` (new), `bin/pilot.mjs`, `fixtures/surface-web/` (new: `index.html`, `tokens.json`, `surface.json`, `DESIGN.md`), `skills/ui-design/SKILL.md` (new), `deck/test/look.test.mjs` (new), `docs/adr/NNNN-ui-design-workflow.md` (new) | – | typescript, security | [S1](slices/S1.md) |
+| S1 `pilot look snap` captures a web fixture screen in light and dark | 1, 7, 13 | `deck/look.mjs` (new), `bin/pilot.mjs`, `fixtures/surface-web/` (new: `index.html`, `tokens.json`, `surface.json`, `DESIGN.md`), `skills/ui-design/SKILL.md` (new), `deck/test/look.test.mjs` (new), `docs/adr/0210-ui-design-workflow.md` (new) | – | typescript, security | [S1](slices/S1.md) |
 | S2 The Rune deck opens any screen in either mode by start-up route | 1, 7, 13 | `deck/rune/src/app.rs`, `deck/rune/src/main.rs`, `deck/rune/tests/startup.rs` (new), `deck/rune/surface.json` (new) | S1 (`surface.json` shape) | rust, security | [S2](slices/S2.md) |
 | S3 A rebuild keeps the user's Rune window | 8 | `deck/open.mjs`, `deck/test/open-copy.test.mjs` (new) | – | typescript, security | [S3](slices/S3.md) |
 | S4 `pilot look apply` changes only the touched tokens | 3 | `skills/ui-design/playground/tokens.js` (new), `deck/rune/playground/index.html` (parser out), `deck/look.mjs` (`apply`), `deck/test/look-apply.test.mjs` (new) | S1 (`deck/look.mjs`) | typescript, security | [S4](slices/S4.md) |

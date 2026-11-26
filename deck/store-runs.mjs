@@ -343,7 +343,7 @@ export function coPilotFor(dir) {
   requireText('repo', dir);
   const deck = readDeck();
   const entry = storedCoPilot(deck, dir);
-  return entry ? { ticket: entry.ticket, live: isLiveCoPilot(deck, entry), at: entry.at } : null;
+  return entry ? { ticket: entry.ticket, live: isLiveCoPilot(deck, entry), at: entry.at, ...(typeof entry.agent === 'string' && { agent: entry.agent }) } : null;
 }
 
 /**
