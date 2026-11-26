@@ -48,7 +48,7 @@ test('an overturn needs its why', () => {
  * A clone whose `pilot` holds a base commit, checked out on `design/x` at pilot's tip, so the lineage
  * check passes; `at` names each artefact commit a test posts or reads, each one commit off pilot
  * (`verdicted` two: the unverdicted A1, then its verdict). The verdict check reads `<sha>:<artefact>`
- * whatever branch holds the sha. One seed and one clone.
+ * whatever branch holds the sha, and no check here asks that the sha be on `design/x`. One seed and one clone.
  */
 function scratch(t) {
   return gitFixture(t, 'gate1-verdicts:scratch', buildScratch);

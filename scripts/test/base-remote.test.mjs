@@ -51,7 +51,7 @@ async function printed(cwd) {
 
 test("base creates pilot on the second remote from origin's pilot", (t) => {
   const { origin, second, work, pilotTip, inWork } = scratchRepos(t);
-  setRunRemote(work,'second');
+  setRunRemote(work, 'second');
   const before = refs(origin);
   assert.deepEqual(ensurePilotBranch({ git: inWork }), { sha: pilotTip, created: true, from: 'origin pilot', runs: 'second' });
   assert.equal(git(second, 'rev-parse', 'refs/heads/pilot'), pilotTip);
@@ -61,7 +61,7 @@ test("base creates pilot on the second remote from origin's pilot", (t) => {
 
 test('base under none creates a local pilot', (t) => {
   const { origin, second, work, pilotTip, inWork } = scratchRepos(t);
-  setRunRemote(work,'none');
+  setRunRemote(work, 'none');
   const before = refs(origin);
   assert.deepEqual(ensurePilotBranch({ git: inWork }), { sha: pilotTip, created: true, from: 'origin pilot', runs: null });
   assert.equal(git(work, 'rev-parse', 'refs/heads/pilot'), pilotTip);
@@ -73,7 +73,7 @@ test('base under none creates a local pilot', (t) => {
 test('base seeds pilot from the default tip when origin has no pilot', (t) => {
   const { origin, second, work, inWork } = scratchRepos(t);
   git(origin, 'update-ref', '-d', 'refs/heads/pilot');
-  setRunRemote(work,'second');
+  setRunRemote(work, 'second');
   const main = git(origin, 'rev-parse', 'refs/heads/main');
   assert.deepEqual(ensurePilotBranch({ git: inWork }), { sha: main, created: true, from: 'main', runs: 'second' });
   assert.equal(git(second, 'rev-parse', 'refs/heads/pilot'), main);
@@ -90,16 +90,16 @@ test('base with the setting unset prints the default branch', async (t) => {
 test('base says where pilot is when the run remote is not origin', async (t) => {
   const { work, pilotTip } = scratchRepos(t);
   const short = git(work, 'rev-parse', '--short', pilotTip);
-  setRunRemote(work,'second');
+  setRunRemote(work, 'second');
   assert.deepEqual(await printed(work), { code: 0, out: `base pilot ${short} (created from origin pilot) on second\n`, err: '' });
   assert.deepEqual(await printed(work), { code: 0, out: `base pilot ${short} on second\n`, err: '' });
-  setRunRemote(work,'none');
+  setRunRemote(work, 'none');
   assert.deepEqual(await printed(work), { code: 0, out: `base pilot ${short} (created from origin pilot) local\n`, err: '' });
 });
 
 test('base stops, naming the key, when pilot.remote is not a remote', async (t) => {
   const { origin, work } = scratchRepos(t);
-  setRunRemote(work,'--upload-pack=x');
+  setRunRemote(work, '--upload-pack=x');
   const before = refs(origin);
   const { code, out, err } = await printed(work);
   assert.deepEqual({ code, out }, { code: 1, out: '' });
@@ -109,13 +109,13 @@ test('base stops, naming the key, when pilot.remote is not a remote', async (t) 
 
 test("pilotLineage reads the run remote's pilot, or the local one under none", (t) => {
   const { work, pilotTip, inWork } = scratchRepos(t);
-  setRunRemote(work,'second');
+  setRunRemote(work, 'second');
   const [upstream, local] = ['refs/remotes/second/pilot', 'refs/heads/pilot'];
   assert.deepEqual(pilotLineage(work, pilotTip), { upstream }, 'second has no pilot yet');
   ensurePilotBranch({ git: inWork });
   assert.deepEqual(pilotLineage(work, pilotTip), { upstream, tip: true, copies: 0 });
   assert.deepEqual(pilotLineage(work, 'main'), { upstream, tip: false, copies: 0 });
-  setRunRemote(work,'none');
+  setRunRemote(work, 'none');
   assert.deepEqual(pilotLineage(work, pilotTip), { upstream: local }, 'no local pilot yet');
   // A new command is a new runner: one runner keeps the run remote it read first (cheap-suite spec 3).
   ensurePilotBranch({ git: (args) => inWork(args) });

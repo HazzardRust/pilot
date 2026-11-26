@@ -45,8 +45,8 @@ const gate2s = () => listItems().filter((item) => item.kind === KIND_GATE2);
 /**
  * A bare origin and `work`, a clone of it on `main`: origin's pilot changed `shared.txt` and the
  * ADR index from main; `conflict` (feat/x) changes `shared.txt` too, `indexOnly` (feat/y) only the
- * index, and `behind` (feat/z, off pilot) is one commit behind main, which moved on after it.
- * One seed and one clone.
+ * index, and `behind` (feat/z, off pilot) is one commit behind main, which moved on after it,
+ * so every test meets a main one commit past the branches cut from it. One seed and one clone.
  */
 function onPilot(t) {
   return gitFixture(t, 'gate2-base:on-pilot', (root) => {

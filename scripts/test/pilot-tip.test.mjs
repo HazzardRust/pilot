@@ -59,17 +59,17 @@ test('the run remote and local mode name their ref', (t) => {
   git(root, 'init', '-q', '--bare', '-b', 'main', fork);
   git(work, 'remote', 'add', 'fork', fork);
   git(work, 'push', '-q', 'fork', `${tip}:refs/heads/pilot`);
-  setRunRemote(work,'fork');
+  setRunRemote(work, 'fork');
   assert.deepEqual(pilotTip({ cwd: work }), { ref: 'fork/pilot', sha: tip, behind: 3 });
 
   git(work, 'branch', 'pilot', tip);
-  setRunRemote(work,'none');
+  setRunRemote(work, 'none');
   assert.deepEqual(pilotTip({ cwd: work }), { ref: 'pilot', sha: tip, behind: 3 });
 });
 
 test('a bad remote, no repo and no ref answer null', (t) => {
   const { work } = stale(t);
-  setRunRemote(work,'nowhere');
+  setRunRemote(work, 'nowhere');
   assert.equal(pilotTip({ cwd: work }), null, 'a pilot.remote that is not a remote here');
 
   const plain = emptyDir(t);
