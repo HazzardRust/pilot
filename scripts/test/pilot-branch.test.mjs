@@ -4,6 +4,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -15,20 +16,17 @@ const { base } = await import('../base.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
-/** A bare origin with one commit on `main`, and a clone of it with origin/HEAD set. */
+/** A bare origin with one commit on `main`, `main` its tip, and a clone of it with origin/HEAD set. */
 function scratchRepos(t) {
   return gitFixture(t, 'pilot-branch:scratchRepos', buildScratchRepos);
 }
 
 function buildScratchRepos(root) {
-  const origin = path.join(root, 'origin.git');
+  const { origin, sha } = seed(root, [{ branch: 'main', files: {}, message: 'main' }]);
   const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
+  // A clone of a repository with a HEAD sets origin/HEAD itself.
   git(root, 'clone', '-q', origin, work);
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'main');
-  git(work, 'push', '-q', 'origin', 'main');
-  git(work, 'remote', 'set-head', 'origin', 'main');
-  return { origin, work };
+  return { origin, work, main: sha.main };
 }
 
 async function printed(cwd) {
@@ -39,8 +37,7 @@ async function printed(cwd) {
 }
 
 test('base creates pilot from the default tip when the remote has none', async (t) => {
-  const { origin, work } = scratchRepos(t);
-  const main = git(origin, 'rev-parse', 'refs/heads/main');
+  const { origin, work, main } = scratchRepos(t);
   const { code, out } = await printed(work);
   assert.equal(code, 0);
   assert.equal(git(origin, 'rev-parse', 'refs/heads/pilot'), main, 'origin has pilot at main\'s tip');
@@ -49,12 +46,16 @@ test('base creates pilot from the default tip when the remote has none', async (
 });
 
 test('base never creates pilot over an existing one', async (t) => {
-  const { origin, work } = scratchRepos(t);
-  git(work, 'checkout', '-q', '-b', 'pilot');
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'landed');
-  git(work, 'push', '-q', 'origin', 'pilot');
-  git(work, 'checkout', '-q', 'main');
-  const ahead = git(origin, 'rev-parse', 'refs/heads/pilot');
+  // Origin's pilot one commit past main, landed before this clone was made.
+  const { origin, work, pilot: ahead } = gitFixture(t, 'pilot-branch:landed', (root) => {
+    const { origin: bare, sha } = seed(root, [
+      { branch: 'main', files: {}, message: 'main' },
+      { branch: 'pilot', from: 'main', files: {}, message: 'landed' },
+    ]);
+    const clone = path.join(root, 'work');
+    git(root, 'clone', '-q', bare, clone);
+    return { origin: bare, work: clone, pilot: sha.pilot };
+  });
   const { code, out } = await printed(work);
   assert.equal(code, 0);
   assert.equal(git(origin, 'rev-parse', 'refs/heads/pilot'), ahead, 'the existing pilot is kept');
