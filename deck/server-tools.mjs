@@ -19,7 +19,7 @@ import {
   KIND_CREW_HANDOFF, KIND_GATE1, KIND_GATE2, KIND_HANDOFF, KIND_TICKET, KIND_WALKTHROUGH, OWNER_KINDS, SIGN_OFF, authorKind, isChainHandoff, isGate, isOpen, isRecord, liveTicketOf, messagesOf, ownerOf, stateOf, waiterKind,
 } from './items.mjs';
 import { postFilled } from './closing-report.mjs';
-import { openCrewHandoffsOf } from './crew-handoff.mjs';
+import { closeCrewHandoffs } from './crew-settle.mjs';
 import { assertOnPilotTip, assertVerdicts } from './lineage.mjs';
 import { selectItems } from './read.mjs';
 import { laneOf, lanesOf } from './lanes.mjs';
@@ -52,20 +52,6 @@ function replacedClause(id, entry) {
 }
 /** A co-pilot `granted` or `released` on a ticket, as a crew hand-off's step (crew-handoff-trace spec 1), after the store took it. */
 const coPilotStep = (name, ticket) => step({ step: name, kind: KIND_CREW_HANDOFF, ticket });
-/** A grant closes its ticket's open crew-handoffs, each with its `resolved` row; `; closed <id>` per close (crew-handoff-trace spec 5). */
-function closeCrewHandoffs(ticket) {
-  return openCrewHandoffsOf(listItems(), ticket).map((item) => {
-    // The grant has already taken: a refused close is named in its answer, never thrown over it.
-    try {
-      resolveItem(item.id, 'successor granted');
-    } catch (err) {
-      if (!(err instanceof DeckRefusal)) throw err;
-      return `; ${item.id} left open: ${err.message}`;
-    }
-    step({ step: 'resolved', kind: item.kind, item: item.id, ticket });
-    return `; closed ${item.id}`;
-  }).join('');
-}
 /** The `why` of a re-cut the pilot asks for by hand; the deck's own drift checks name theirs (never-stuck S2, S3). */
 const RECUT_BY_PILOT = 'sent back to planning by the pilot';
 

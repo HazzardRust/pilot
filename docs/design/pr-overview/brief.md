@@ -50,7 +50,7 @@ https://claude.ai/code/session_01NXgSForDWcHA67cB28cNrm
 
 `docs/design/pr-overview/architecture.md`, slices in `slices/S<n>.md`. Terms (§4) are fixed; locked decisions (§5)
 are not moved by a slice. S2 and S3 read S1's `overviewOf`, `overviewProblems` and `crewRoles` from the integration
-branch by name. The run's ADR is `docs/adr/NNNN-pr-overview.md` (S3); the landing numbers it.
+branch by name. The run's ADR is `docs/adr/0219-pr-overview.md` (S3); the landing numbers it.
 
 ## Tests
 

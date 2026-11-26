@@ -237,6 +237,22 @@ test('pilot pr reads pilot.host: none is exit 0, an unknown name one line and ex
   assert.match(said[1], /^host: .*"bogus".*\n$/);
 });
 
+test('pilot pr with no pilot branch name, signed out, is refused and writes nothing', async (t) => {
+  const cwd = repo(t);
+  const pinned = process.env.PILOT_BRANCH;
+  delete process.env.PILOT_BRANCH;
+  t.after(() => (pinned === undefined ? delete process.env.PILOT_BRANCH : (process.env.PILOT_BRANCH = pinned)));
+  const fake = fakeGh(); // `gh api user` answers nothing: signed out
+  const refsBefore = gitAt(cwd, 'for-each-ref');
+  const said = [];
+  const code = await main(['--ticket', 'itm_0123abcd'], { host: fake.host, git: gitIn(cwd), readRecord: async () => record(), say: (s) => said.push(s) });
+  assert.equal(code, 1);
+  assert.match(said.join(''), /^pilot branch: no pilot branch name/);
+  assert.deepEqual(fake.writes(), []);
+  assert.throws(() => gitAt(cwd, 'config', '--get', 'pilot.branch'), 'no name stored');
+  assert.equal(gitAt(cwd, 'for-each-ref'), refsBefore, 'no ref written');
+});
+
 test('create then edit', (t) => {
   const cwd = repo(t);
   // One fake GitHub across three runs: what `pr create` and `pr edit` write is what `pr list` answers next.

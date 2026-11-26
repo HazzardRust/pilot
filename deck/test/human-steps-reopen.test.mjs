@@ -1,6 +1,6 @@
 /**
  * S5 of human-steps: a closed steps thread offers no Reopen, since `reopenItem` always refuses it, and still
- * lists its steps; while one is open its ticket stands at `human steps`, as the rail says (spec 3).
+ * lists its steps; while one is open its ticket stands at `STEPS_WAITING`, as the rail says (spec 3; steps-in-previews L4).
  */
 
 import './no-open.mjs';
@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-import { KIND_GATE2, KIND_QUESTION, KIND_TICKET, NOT_YET, SIGN_OFF, standingOf } from '../items.mjs';
+import { KIND_GATE2, KIND_QUESTION, KIND_TICKET, NOT_YET, SIGN_OFF, STEPS_WAITING, standingOf } from '../items.mjs';
 import { closeItem, listItems, postItem, postSteps, resolveItem } from '../store.mjs';
 import { postStored, shapedTicketBody, tempDeck } from '../testUtils.mjs';
 import { renderThreadPage } from '../ui/render.mjs';
@@ -50,11 +50,11 @@ test('a closed steps thread still lists its steps', (t) => {
   assert.ok(!REOPEN_FORM.test(page), 'and still no Reopen');
 });
 
-test('a landed ticket with an open steps thread stands at human steps, not landing', (t) => {
+test('a landed ticket with an open steps thread stands waiting on your steps, not landing', (t) => {
   tempDeck(t);
   const steps = aStepsThread();
 
-  assert.equal(standingOf(reread(steps.ticket), listItems(), null), 'human steps');
+  assert.equal(standingOf(reread(steps.ticket), listItems(), null), STEPS_WAITING);
 });
 
 test('any other closed thread still draws Reopen', (t) => {

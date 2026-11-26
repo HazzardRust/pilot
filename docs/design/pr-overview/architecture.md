@@ -77,7 +77,7 @@ Deletion test: deleting `pr-overview.mjs` puts the section parse and rules back 
 - **L3** One pure module `scripts/pr-overview.mjs` owns the parse and the rules; `featureBody`, `releaseNotes` and `checkSpec` call it. Rejected: the rules inline in each caller.
 - **L4** No overview means today's body, byte for byte (spec 7): runs in flight are not broken. Rejected: refusing a gate1 without one (would touch `deck/store-items.mjs`, which ui-design-workflow S8 owns).
 - **L5** The built line is the one record-derived line, counted from states starting `integrated` (507 of the record states in `docs/design/*/run.json` do); never a slice id.
-- **L6** The overview's own rules live in an adapted skill, `skills/pr-overview/SKILL.md`; each writer's agent file gains one line naming it. ADR NNNN records L2-L6. Rejected: the rules restated in three agent files (prompt pins at 0 headroom).
+- **L6** The overview's own rules live in an adapted skill, `skills/pr-overview/SKILL.md`; each writer's agent file gains one line naming it. ADR 0219 records L2-L6. Rejected: the rules restated in three agent files (prompt pins at 0 headroom).
 - **L7** QA's environment is this feature's own draft PR on GitHub; other open PRs keep their bodies until their runs next update them. The user's press on `itm_121c01811a63`.
 
 ## 6. Assumed decisions
@@ -113,7 +113,7 @@ Width 2; longest stem 2
 | --- | --- | --- | --- | --- | --- | --- |
 | S1 | A feature PR opens with its overview | 1, 2, 4, 7 | `scripts/pr-overview.mjs` (new), `scripts/feature-pr.mjs`, `scripts/test/pr-overview.test.mjs` (new), `scripts/test/feature-pr.test.mjs` | – | typescript | [S1](slices/S1.md) |
 | S2 | The release PR opens with one line per feature | 3, 7 | `scripts/release.mjs`, `scripts/test/release.test.mjs` | S1 (`overviewOf`) | typescript | [S2](slices/S2.md) |
-| S3 | The writers write it and the check holds them to it | 1, 3, 4, 5, 6, 8 | `scripts/check-slices.mjs`, `scripts/test/check-spec.test.mjs`, `skills/pr-overview/SKILL.md` (new), `vendor/methodology.md`, `THIRD-PARTY-NOTICES.md`, `agents/pilot-architect.md`, `agents/pilot-qa.md`, `agents/pilot.md`, `scripts/test/measure-prompt.test.mjs`, `scripts/test/qa-preview.test.mjs`, `scripts/test/pilot-agents.test.mjs`, `docs/adr/NNNN-pr-overview.md` (new) | S1 (`overviewProblems`) | typescript, security | [S3](slices/S3.md) |
+| S3 | The writers write it and the check holds them to it | 1, 3, 4, 5, 6, 8 | `scripts/check-slices.mjs`, `scripts/test/check-spec.test.mjs`, `skills/pr-overview/SKILL.md` (new), `vendor/methodology.md`, `THIRD-PARTY-NOTICES.md`, `agents/pilot-architect.md`, `agents/pilot-qa.md`, `agents/pilot.md`, `scripts/test/measure-prompt.test.mjs`, `scripts/test/qa-preview.test.mjs`, `scripts/test/pilot-agents.test.mjs`, `docs/adr/0219-pr-overview.md` (new) | S1 (`overviewProblems`) | typescript, security | [S3](slices/S3.md) |
 
 S1 is the walking skeleton: this artefact's own overview reaches its own feature PR's top at Gate 1.
 

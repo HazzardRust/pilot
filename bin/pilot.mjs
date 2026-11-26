@@ -108,20 +108,20 @@ const usage = () => `pilot — the deck for piloted runs
                  record's base, or rewrite its body (spec and slice table) and base when they
                  differ; prints one line, nothing written when GitHub already matches
   pilot base     print the ref the next run is cut from and its tip: the default branch, or
-                 the feat/<N> it chains on; pilot under pilot.host none or another run remote,
-                 pilot itself created from the default branch's tip when origin has none
+                 the feat/<N> it chains on; your pilot branch (<login>-pilot) under pilot.host none
+                 or another run remote, created from the default branch's tip when origin has none
   pilot gh-stub [--dir <d>] [--powershell]
                  print the lines that put a stub gh first on PATH, answering reply.txt and logging calls.jsonl
   pilot sync
                  at a ticket's take or by hand, never inside a landing: merge origin's default
-                 branch into the pilot branch in a temporary worktree, test the selection, push
-                 pilot; prints pilot already has main@<sha7> and pushes nothing when the merge
+                 branch into your pilot branch in a temporary worktree, test the selection, push
+                 it; prints <pilot branch> already has main@<sha7> and pushes nothing when the merge
                  would change no file; exit 1 red or failed, 3 a conflict
   pilot land
-                 in the feat/<slug> worktree: push the feature, merge only it into pilot
-                 in a temporary worktree (no sync), run the full suite (the only full run), push pilot (merged again once if it moved),
+                 in the feat/<slug> worktree: push the feature, merge only it into your pilot branch
+                 in a temporary worktree (no sync), run the full suite (the only full run), push it (merged again once if it moved),
                  and print the feature PR last, feature PR: #<n> into <base> or why not (a run based
-                 on pilot keeps its PR from pilot to main); exit 3 a conflict
+                 on the pilot branch keeps its PR from it to main); exit 3 a conflict
   pilot restack
                  after a feature PR merges, or by hand: retarget each open feat/ PR whose lower feature merged,
                  merge a lower branch or a clashing default branch into it, push never forced; one line per PR;
@@ -220,7 +220,10 @@ const usage = () => `pilot — the deck for piloted runs
   pilot doctor   on Windows, whether Defender's real-time scan sits in front of the projects
                  root (the repository's parent): off, on a Dev Drive in performance mode,
                  excluded, not, or cannot tell without an administrator, and the admin step
-                 if it is not; then Node against package.json's engines, the deck's
+                 if it is not; then Power: whether the deck holds its keep-awake request,
+                 the power source, the lid and power-button actions and Modern Standby,
+                 failing on battery or a lid that sleeps, with the setting to change;
+                 then Node against package.json's engines, the deck's
                  dependency installed, the store directory writable, and gh, git and claude
                  on PATH. One row each as <pass|fail|cannot tell>  <check>: <detail>, any
                  step indented below; changes nothing; exit 1 when a row fails, else 0
@@ -251,7 +254,7 @@ Any command can be given as \`pilot --dir <path> <command> …\` to run it in <p
 The deck is normally started by the first Claude session that needs it; run it by
 hand when you want to watch it. Five environment variables change how it behaves:
 
-  PILOT_BRANCH         the pilot branch base, integrate and land use (default pilot; never the default branch)
+  PILOT_BRANCH         overrides pilot.branch, the pilot branch (default <login>-pilot; never the default branch)
   PILOT_DECK_DIR       where the deck keeps its store (default ~/.claude/pilot)
   PILOT_DECK_PORT      the port it serves on (default ${DECK_PORT}; only for tests and hand checks)
   PILOT_DECK_NO_OPEN   set it to stop the deck opening a browser when a session starts

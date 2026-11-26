@@ -451,6 +451,72 @@ fn the_kind_line_is_as_big_as_the_title_and_wraps_with_the_nav_centred() {
     }
 }
 
+/// steps-in-previews spec 3: a steps thread opened in Rune lists its steps, numbered, with one Done
+/// that closes it and its ticket at one press, no confirm (L5, L6).
+#[test]
+fn a_steps_thread_lists_its_steps_and_done_closes_it_and_its_ticket() {
+    let deck = support::Scratch::start();
+    let id = support::seed_steps(&deck, "C:/work/alpha", 3);
+    let client = support::client_for(&deck);
+    let query = Query {
+        screen: "thread".into(),
+        id: Some(id.clone()),
+        ..Query::default()
+    };
+    let view = client.view(&query).expect("the thread's view");
+    let mut state = State {
+        view,
+        query,
+        ..State::default()
+    };
+    state.pending.deck = Some(Arc::new(client));
+    let mut rt = Runtime::new(state, thread_only, (1280.0, 800.0), Env::new(true, 1.0));
+    rt.frame(0.0);
+
+    let keyed = |rt: &Runtime<State>, prefix: &str| {
+        rt.elements()
+            .into_iter()
+            .filter(|e| e.key.as_deref().is_some_and(|k| k.starts_with(prefix)))
+            .collect::<Vec<_>>()
+    };
+    let rows: Vec<String> = keyed(&rt, "step-")
+        .into_iter()
+        .filter_map(|e| e.text)
+        .collect();
+    assert_eq!(
+        rows,
+        [
+            "1. Step 1 by hand.",
+            "2. Step 2 by hand.",
+            "3. Step 3 by hand."
+        ],
+        "the numbered steps"
+    );
+    let done = keyed(&rt, "steps-done");
+    assert_eq!(done.len(), 1, "one Done");
+    let at = done[0].rect;
+    let (x, y) = (at[0] + at[2] / 2.0, at[1] + at[3] / 2.0);
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(0.0);
+
+    let start = std::time::Instant::now();
+    let steps = loop {
+        let steps = support::item(&deck, &id);
+        if steps["resolvedAt"].is_string() || start.elapsed() > Duration::from_secs(3) {
+            break steps;
+        }
+        std::thread::sleep(Duration::from_millis(20));
+    };
+    assert!(
+        steps["resolvedAt"].is_string(),
+        "the thread is closed: {steps}"
+    );
+    let ticket = support::item(&deck, steps["ticket"].as_str().expect("its ticket"));
+    assert_eq!(ticket["state"], "closed", "and its ticket: {ticket}");
+}
+
 /// The user, 2026-11-21: "the agent needs to be colour coded same as the html version", each crew
 /// kind in its `--by-*` colour (deck.css), the owner on the kind line and a message's byline.
 #[test]

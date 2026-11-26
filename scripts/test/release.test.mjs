@@ -40,7 +40,7 @@ test('two landings name both slugs', (t) => {
   land(a, gitIn);
   land(b, gitIn);
 
-  const notes = releaseNotes({ git: gitIn(b), pilotRef: PILOT, mainRef: MAIN, prs: [{ number: 7, head: 'feat/a' }] });
+  const notes = releaseNotes({ git: gitIn(b), name: 'pilot', pilotRef: PILOT, mainRef: MAIN, prs: [{ number: 7, head: 'feat/a' }] });
 
   assert.equal(notes.title, 'Release: a, b');
   assert.deepEqual(notes.rows.map(({ slug, pr }) => ({ slug, pr })), [{ slug: 'a', pr: 7 }, { slug: 'b', pr: null }]);
@@ -58,7 +58,7 @@ test('a sync merge is no row', (t) => {
   git(repo, 'checkout', '-q', 'pilot');
   git(repo, 'merge', '-q', '--no-ff', '-m', 'Merge main into pilot', 'main');
 
-  const notes = releaseNotes({ git: (args) => git(repo, ...args), pilotRef: 'pilot', mainRef: 'main~1', prs: [] });
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main~1', prs: [] });
 
   assert.deepEqual(notes.rows.map((row) => row.slug), ['a']);
   assert.equal(notes.title, 'Release: a');
@@ -68,7 +68,7 @@ test('the title is bounded', (t) => {
   const slugs = Array.from({ length: 30 }, (_, i) => `feature-number-${i}`);
   const repo = landed(t, slugs);
 
-  const notes = releaseNotes({ git: (args) => git(repo, ...args), pilotRef: 'pilot', mainRef: 'main', prs: [] });
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [] });
 
   assert.equal(notes.rows.length, 30);
   assert.ok(notes.title.length <= 120, notes.title);
@@ -105,7 +105,7 @@ const shaOf = (repo, slug) => git(repo, 'log', '-1', '--format=%H', '--grep', `^
 test('one line per landed feature', (t) => {
   const repo = landedWith(t, 'two', [['first', artefact('the deck shows a clock. It ticks.')], ['second', artefact('logs are shorter')]]);
 
-  const notes = releaseNotes({ git: (args) => git(repo, ...args), pilotRef: 'pilot', mainRef: 'main', prs: [] });
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [] });
 
   const [overview] = notes.body.split('\n\n| Feature |');
   assert.equal(overview, '## Overview\n\n- first: the deck shows a clock.\n- second: logs are shorter');
@@ -114,7 +114,7 @@ test('one line per landed feature', (t) => {
 test('a mention in a sentence is written so nobody is notified', (t) => {
   const repo = landedWith(t, 'mention', [['first', artefact('thanks to @someone for the clock.')]]);
 
-  const notes = releaseNotes({ git: (args) => git(repo, ...args), pilotRef: 'pilot', mainRef: 'main', prs: [] });
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [] });
 
   assert.ok(notes.body.startsWith(`## Overview\n\n- first: thanks to @${String.fromCharCode(0x200d)}someone for the clock.\n\n| Feature |`), notes.body);
 });
@@ -122,7 +122,7 @@ test('a mention in a sentence is written so nobody is notified', (t) => {
 test('the table is unchanged', (t) => {
   const repo = landedWith(t, 'table', [['first', artefact('one thing.')], ['second', artefact('another thing.')]]);
 
-  const notes = releaseNotes({ git: (args) => git(repo, ...args), pilotRef: 'pilot', mainRef: 'main', prs: [{ number: 7, head: 'feat/first' }] });
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [{ number: 7, head: 'feat/first' }] });
 
   const at = notes.body.indexOf('\n\n| Feature |');
   assert.ok(at > 0, notes.body);
@@ -135,7 +135,7 @@ test('the table is unchanged', (t) => {
 test('a feature with no overview', (t) => {
   const repo = landedWith(t, 'bare', [['missing', null], ['plain', '# plain\n\n## 1. Problem\n\nNo overview here.\n'], ['told', artefact('it works.')]]);
 
-  const notes = releaseNotes({ git: (args) => git(repo, ...args), pilotRef: 'pilot', mainRef: 'main', prs: [] });
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [] });
 
   assert.ok(notes.body.startsWith('## Overview\n\n- missing\n- plain\n- told: it works.\n\n| Feature |'), notes.body);
 });
@@ -147,7 +147,7 @@ test('a git that fails on one artefact costs only its sentence', (t) => {
     return git(repo, ...args);
   };
 
-  const notes = releaseNotes({ git: failing, pilotRef: 'pilot', mainRef: 'main', prs: [] });
+  const notes = releaseNotes({ git: failing, name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [] });
 
   assert.ok(notes.body.startsWith('## Overview\n\n- unread\n- told: it works.\n\n| Feature |'), notes.body);
 });
@@ -155,7 +155,7 @@ test('a git that fails on one artefact costs only its sentence', (t) => {
 test("no landing, today's text", (t) => {
   const repo = landedWith(t, 'none', []);
 
-  const notes = releaseNotes({ git: (args) => git(repo, ...args), pilotRef: 'pilot', mainRef: 'main', prs: [] });
+  const notes = releaseNotes({ git: (args) => git(repo, ...args), name: 'pilot', pilotRef: 'pilot', mainRef: 'main', prs: [] });
 
   assert.equal(notes.body, 'No feature landed on pilot since main.');
   assert.deepEqual(notes.rows, []);

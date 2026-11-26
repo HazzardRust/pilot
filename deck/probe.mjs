@@ -5,6 +5,8 @@
  */
 
 const isText = (value) => typeof value === 'string' && value !== '';
+/** `awake.since` is printed by `pilot doctor`, so only a `toISOString()` shape is copied, never a control character. */
+const ISO_TIME = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d{3})?Z$/;
 
 export async function probeDeck(url, { timeoutMs = 1000 } = {}) {
   let response;
@@ -33,5 +35,7 @@ export async function probeDeck(url, { timeoutMs = 1000 } = {}) {
     ...(isText(health.startedAt) && { startedAt: health.startedAt }),
     ...(isText(health.root) && { root: health.root }),
     ...(typeof health.checkout === 'boolean' && { checkout: health.checkout }),
+    // stay-awake L6: whether the deck holds its keep-awake request, and since when.
+    ...(typeof health.awake?.held === 'boolean' && { awake: { held: health.awake.held, since: ISO_TIME.test(health.awake.since) ? health.awake.since : null } }),
   };
 }
