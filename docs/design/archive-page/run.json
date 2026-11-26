@@ -178,7 +178,7 @@
     },
     {
       "slice": "S17",
-      "state": "pushed efbf390",
+      "state": "integrated at 6dbec59, checks green",
       "after": [
         "merge origin/pilot"
       ],
@@ -187,10 +187,12 @@
     },
     {
       "slice": "S18",
-      "state": "planned (added)",
+      "state": "pushed 8a6a7f6",
       "after": [
         "S17"
-      ]
+      ],
+      "branch": "slice/archive-page-s18",
+      "worktree": "C:/Users/jrylk/Projects/pilot-s18-archive-page"
     },
     {
       "slice": "S19",
@@ -201,35 +203,11 @@
     }
   ],
   "findings": [
-    "kept: F7 simplify — user chose a simple log read over the chunked tail reader on itm_973b6c14330a; A6 overturned"
+    "dropped: QA-note-2 log kind reads live deck.log — textlogs reads <dir>/deck.log with dir=storeDir() (archive.mjs:84, textlogs.mjs:54); post-copy lines are the scratch daemon's own stderr tee (daemon.mjs:87) naming the copied deck.pid"
   ],
-  "next": "integrating S17 efbf390",
-  "updatedAt": "2026-11-26T00:10:14.477Z",
+  "next": "integrating S18 8a6a7f6",
+  "updatedAt": "2026-11-26T00:29:11.699Z",
   "friction": [
-    {
-      "agent": "pilot-co-pilot",
-      "what": "S14 brief listed the credential test files from S6's report; record.test.mjs also pins findCredential and was not in the gate, so a regression surfaced only at integrate",
-      "evidence": "C:/Users/jrylk/.claude/pilot/logs/20261124T121113866Z-slice-archive-page-s14.log:5604",
-      "size": 2
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "grep for credential pins (withheld, DeckRefusal, findCredential) matches 96 test files; no narrower index of what pins credential.mjs",
-      "evidence": "S14 fix report",
-      "size": 1
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "S1's Rust test counts every archive row, so each kind whose store the scratch daemon writes breaks it; adapter slices ran only node tests and missed it",
-      "evidence": "C:/Users/jrylk/.claude/pilot/logs/20261124T121934154Z-slice-archive-page-s7.log, archive.rs:73 left 4 right 3",
-      "size": 2
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "archive row keys are the item id for ticket, handoff and report rows, so tests cannot tell kinds apart by key; the ticket caption 'tickets' had to be found by running the test",
-      "evidence": "S7 fix 30e8b06, archive.rs",
-      "size": 1
-    },
     {
       "agent": "pilot:pilot-co-pilot",
       "what": "S11 evidence rows lived only in the earlier co-pilot's context; a re-proof spawn was needed",
@@ -430,6 +408,26 @@
       "agent": "pilot:pilot-implementer",
       "what": "View.seq reads like a change counter but is the reply sequence",
       "evidence": "S17 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S18 reports its context compacted with nothing saved right after the co-pilot's hello, as S17 did: the hello's resume may restart the child",
+      "evidence": "S17 and S18 first messages"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the store copy for a scratch deck carries deck.secret; the harness flagged it PII; copy is local temp, removed after the look",
+      "evidence": "S18 table; C:/Users/jrylk/AppData/Local/Temp/s18-store"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no `pilot deck --scratch --from <store>`: every look hand-copies the store and starts a daemon by hand",
+      "evidence": "S16, S17, S18 reports"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "`pilot deck --help` has no help and reaches for the live deck at 4321",
+      "evidence": "S18 report"
     }
   ]
 }
