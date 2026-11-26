@@ -105,7 +105,7 @@
     },
     {
       "slice": "S12",
-      "state": "integrating",
+      "state": "integrated, checks green at 0687915",
       "after": [
         "S10"
       ],
@@ -114,7 +114,7 @@
     },
     {
       "slice": "S13",
-      "state": "planned",
+      "state": "paused: suite 11481/10338 over L7 bars; wip 2160acd local; resumes after S14, S15",
       "after": [
         "S2",
         "S3",
@@ -125,49 +125,35 @@
         "S8",
         "S9",
         "S11",
+        "S12",
+        "S14",
+        "S15"
+      ],
+      "branch": "slice/test-body-git-s13",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s13"
+    },
+    {
+      "slice": "S14",
+      "state": "added; pushed 82c7052 (cut -163), integrating",
+      "after": [
         "S12"
-      ]
+      ],
+      "branch": "slice/test-body-git-s14",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s14"
+    },
+    {
+      "slice": "S15",
+      "state": "added; implementing (2nd agent after context hand-off; wip b197fc4, cut 161 so far)",
+      "after": [
+        "S12"
+      ],
+      "branch": "slice/test-body-git-s15",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s15"
     }
   ],
-  "next": "integrate S12 (running), checks; then spawn S13 (sonnet)",
-  "updatedAt": "2026-11-26T20:42:28.533Z",
+  "next": "integrate S14 (running), checks; S15 finishing; then test:cost; if over L7 tell main; else resume S13",
+  "updatedAt": "2026-11-26T21:25:45.649Z",
   "friction": [
-    {
-      "agent": "pilot-architect",
-      "what": "no per-test-file fixture census existed; one 110-file probe run needed",
-      "evidence": "land-batching's census attributes by product frame only",
-      "size": 1
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "heredoc via Git Bash stripped backslashes in the probe script",
-      "evidence": "one rerun",
-      "size": 1
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "hook blocked sed -i on tracked docs; edits redone with Edit",
-      "evidence": "architect report",
-      "size": 1
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "architect handed back before the queued verdict message was delivered",
-      "evidence": "SendMessage answered 'queued'; hand-back says verdict message has not arrived",
-      "size": 1
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "hand-back enforcer forces a hand-back each time the co-pilot ends a turn to wait on a live implementer",
-      "evidence": "two forced hand-backs on itm_07647401bb5e with S1 still implementing; a 'continue' resume hit it again",
-      "size": 2
-    },
-    {
-      "agent": "pilot-implementer S1",
-      "what": "plain node --test on integrate.test.mjs fails 10+ tests on a clean base; only node scripts/gate.mjs <file> reads true (needs PILOT_BRANCH)",
-      "evidence": "bare run printed fails; same file under the gate passed 21 of 21",
-      "size": 1
-    },
     {
       "agent": "pilot-implementer S1",
       "what": "a single-file gate still builds and runs the Rust deck suite, and all gates share one cargo folder (rune-target); two gates at once fail to link",
@@ -329,6 +315,54 @@
       "agent": "pilot:pilot-co-pilot",
       "what": "slice reports go to main unless the co-pilot hello lands before the child's first round",
       "evidence": "S1 report delivered to main twice"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S13 found the suite over the signed bars only at its full test:cost run; no slice before it measured the whole suite",
+      "evidence": "spawns 11481 (git 10338) vs 11000/10000",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Bash moves calls past 180 s to background; Monitor not available to the implementer, polled with short loops",
+      "evidence": "S13 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S13 gate-spawns test reads ceiling as arguments, so B1 does not exercise the new constants",
+      "evidence": "S13 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S15 ran out of context at 161 of 300 cut; 300 target and the 400-line limit pull against each other on already-folded files (~2-3 changed lines per git saved)",
+      "evidence": "S15 wip b197fc4, 437 lines changed",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S15 and S14 serialized on the gate lock for minutes per run",
+      "evidence": "S15 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census-after.txt carries cargo build noise",
+      "evidence": "S15 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census 'built' counts later calls to a closure the build returned, over-reading a fixture's real cost",
+      "evidence": "worktrees: ~8 build git vs census 31 built",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "most of S14's time read already-folded files with nothing left to fold; a per-slice target needed a per-file look first",
+      "evidence": "~15 files surveyed, 5 touched",
+      "size": 2
     }
   ]
 }
