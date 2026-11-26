@@ -4,6 +4,7 @@
  * pins it to `pilot`), so the name is the repository's `pilot.branch`.
  */
 
+import { GIT_SLOW_MS } from '../../scripts/test/lib/git-fixture.mjs';
 import './no-open.mjs';
 
 import { test } from 'node:test';
@@ -54,9 +55,9 @@ test('plan drift reads the user\'s branch', (t) => {
   const { dir, a, b } = scratch(t);
   git(dir, 'branch', 'design/on-user', b);
   git(dir, 'branch', 'design/on-legacy', a);
-  assert.doesNotThrow(() => assertOnPilotTip(dir, 'design/on-user'));
+  assert.doesNotThrow(() => assertOnPilotTip(dir, 'design/on-user', { timeout: GIT_SLOW_MS }));
   assert.throws(
-    () => assertOnPilotTip(dir, 'design/on-legacy'),
+    () => assertOnPilotTip(dir, 'design/on-legacy', { timeout: GIT_SLOW_MS }),
     (err) => err instanceof DeckRefusal && err.message.includes(`is not on ${NAME}'s tip`),
   );
 });
@@ -80,10 +81,10 @@ test('the legacy pilot is never pruned', (t) => {
 test('plan drift with no pilot branch name is refused, and a legacy base still reads', (t) => {
   const { dir, a } = scratch(t);
   git(dir, 'branch', 'design/on-legacy', a);
-  assert.doesNotThrow(() => assertOnPilotTip(dir, 'design/on-legacy', { base: 'pilot' }));
+  assert.doesNotThrow(() => assertOnPilotTip(dir, 'design/on-legacy', { base: 'pilot', timeout: GIT_SLOW_MS }));
   git(dir, 'config', '--unset', 'pilot.branch');
   assert.throws(
-    () => assertOnPilotTip(dir, 'design/on-legacy'),
+    () => assertOnPilotTip(dir, 'design/on-legacy', { timeout: GIT_SLOW_MS }),
     (err) => err instanceof DeckRefusal && /could not be named/.test(err.message),
   );
 });

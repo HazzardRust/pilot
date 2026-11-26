@@ -127,8 +127,7 @@ test('with the setting unset the argv is today\'s', (t) => {
     "merge -q --no-ff -m 'Merge base pilot' origin/pilot",
     'merge --no-ff --no-commit origin/slice/x-s1',
     'push -q origin feat/x',
-    // S7: the merged slice is deleted after the push.
-    'fetch -q origin',
+    // S7: the merged slice is deleted after the push; land-batching S9 (A3): off integrate's own fetch, with no second one.
     `push -q --force-with-lease=refs/heads/slice/x-s1:${tip} origin --delete refs/heads/slice/x-s1`,
   ]);
 });

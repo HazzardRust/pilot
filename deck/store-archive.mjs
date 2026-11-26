@@ -101,24 +101,35 @@ export function archiveOld({ now = new Date(), writeLive = writeDeck } = {}) {
  * that cannot be read is named on stderr and passed over, so one corrupt month fails no other read.
  */
 export function archivedItem(id) {
-  let names;
-  try {
-    names = fs.readdirSync(storeDir());
-  } catch (err) {
-    if (err.code === 'ENOENT') return null;
-    throw err;
-  }
-  const months = names.filter((name) => MONTH_FILE.test(name)).sort().reverse();
-  for (const name of months) {
-    let items;
-    try {
-      items = readMonth(path.join(storeDir(), name));
-    } catch (err) {
-      console.error(`[deck] ${err.message}; passed over in the read of ${id}`);
-      continue;
-    }
+  for (const items of monthsNewestFirst(storeDir(), `the read of ${id}`)) {
     const found = items.find((item) => item?.id === id);
     if (found) return found;
   }
   return null;
+}
+
+/**
+ * Every archived item in `dir`'s month files, newest month first (archive-page L3): a pure read, with a month
+ * file that cannot be read named on stderr and passed over, as `archivedItem` does.
+ */
+export function archivedItems(dir = storeDir()) {
+  return [...monthsNewestFirst(dir, 'the archive listing')].flat();
+}
+
+/** Each month file's items in `dir`, newest first; `reading` names the read a corrupt month is passed over in. */
+function* monthsNewestFirst(dir, reading) {
+  let names;
+  try {
+    names = fs.readdirSync(dir);
+  } catch (err) {
+    if (err.code === 'ENOENT') return;
+    throw err;
+  }
+  for (const name of names.filter((each) => MONTH_FILE.test(each)).sort().reverse()) {
+    try {
+      yield readMonth(path.join(dir, name));
+    } catch (err) {
+      console.error(`[deck] ${err.message}; passed over in ${reading}`);
+    }
+  }
 }
