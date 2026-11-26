@@ -7,6 +7,7 @@
 
 import './no-open.mjs';
 import { gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
+import { seed } from '../../scripts/test/lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -42,51 +43,30 @@ const gate2s = () => listItems().filter((item) => item.kind === KIND_GATE2);
 // committed merge of the sha. Local git only, no fetch.
 
 /**
- * `scratch`'s shape plus a pilot at origin that changed `shared.txt` and the ADR index from
- * main; `conflict` (on feat/x) changes `shared.txt` too, and `indexOnly` (on feat/y) only the index.
+ * A bare origin and `work`, a clone of it on `main`: origin's pilot changed `shared.txt` and the
+ * ADR index from main; `conflict` (feat/x) changes `shared.txt` too, `indexOnly` (feat/y) only the
+ * index, and `behind` (feat/z, off pilot) is one commit behind main, which moved on after it.
+ * One seed and one clone.
  */
 function onPilot(t) {
   return gitFixture(t, 'gate2-base:on-pilot', (root) => {
-    const origin = path.join(root, 'origin.git');
+    const { origin, sha } = seed(root, [
+      { branch: 'main', files: { 'shared.txt': 'base\n', 'docs/adr/README.md': 'index\n' }, message: 'base' },
+      { branch: 'pilot', from: 'main', files: { 'shared.txt': 'pilot\n', 'docs/adr/README.md': 'index pilot\n' }, message: 'pilot moves' },
+      { branch: 'feat/y', from: 'main', files: { 'docs/adr/README.md': 'index feat\n' }, message: 'feat/y index' },
+      { branch: 'feat/x', from: 'main', files: { 'shared.txt': 'feat\n' }, message: 'feat/x shared' },
+      { branch: 'feat/z', from: 'pilot', files: { 'z.txt': 'feature\n' }, message: 'feat/z' },
+      { branch: 'main', files: { 'main.txt': 'moved on\n' }, message: 'main moves' },
+    ]);
     const work = path.join(root, 'work');
-    git(root, 'init', '-q', '--bare', '-b', 'main', origin);
     git(root, 'clone', '-q', origin, work);
-    const commit = (files, message) => {
-      for (const [file, text] of Object.entries(files)) {
-        fs.mkdirSync(path.dirname(path.join(work, file)), { recursive: true });
-        fs.writeFileSync(path.join(work, file), text);
-        git(work, 'add', file);
-      }
-      git(work, 'commit', '-q', '-m', message);
-      return git(work, 'rev-parse', 'HEAD');
-    };
-    commit({ 'shared.txt': 'base\n', 'docs/adr/README.md': 'index\n' }, 'base');
-    git(work, 'push', '-q', 'origin', 'HEAD:main');
-    git(work, 'remote', 'set-head', 'origin', 'main');
-    git(work, 'checkout', '-q', '-b', 'pilot');
-    commit({ 'shared.txt': 'pilot\n', 'docs/adr/README.md': 'index pilot\n' }, 'pilot moves');
-    git(work, 'push', '-q', 'origin', 'pilot');
-    git(work, 'checkout', '-q', '-b', 'feat/y', 'main');
-    const indexOnly = commit({ 'docs/adr/README.md': 'index feat\n' }, 'feat/y index');
-    git(work, 'checkout', '-q', '-b', 'feat/x', 'main');
-    const conflict = commit({ 'shared.txt': 'feat\n' }, 'feat/x shared');
-    return { work, conflict, indexOnly };
+    return { work, conflict: sha['feat/x'], indexOnly: sha['feat/y'], behind: sha['feat/z'] };
   });
 }
 
 test('a tip behind origin/main is accepted', (t) => {
   tempDeck(t);
-  const { work } = onPilot(t);
-  git(work, 'checkout', '-q', '-b', 'feat/z', 'origin/pilot');
-  fs.writeFileSync(path.join(work, 'z.txt'), 'feature\n');
-  git(work, 'add', 'z.txt');
-  git(work, 'commit', '-q', '-m', 'feat/z');
-  const tip = git(work, 'rev-parse', 'HEAD');
-  git(work, 'checkout', '-q', 'main');
-  fs.writeFileSync(path.join(work, 'main.txt'), 'moved on\n');
-  git(work, 'add', 'main.txt');
-  git(work, 'commit', '-q', '-m', 'main moves');
-  git(work, 'push', '-q', 'origin', 'main');
+  const { work, behind: tip } = onPilot(t);
   assert.equal(git(work, 'rev-list', '--count', `${tip}..origin/main`), '1', 'origin/main is one commit ahead of the tip');
   assert.match(postGate2(work, tip).content[0].text, /^Posted itm_/);
   assert.equal(gate2s().length, 1);
