@@ -9,6 +9,7 @@
 // A red run's log goes under a home of this process's own, never the real one; the
 // fixture seam imports fake-home.mjs first.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -37,49 +38,27 @@ const ECHO = [
 const PACKAGE = `${JSON.stringify({ name: 's6', private: true, scripts: { test: 'node echo.mjs full', 'test:changed': 'node echo.mjs changed' } }, null, 2)}\n`;
 const LOCK = `${JSON.stringify({ name: 's6', lockfileVersion: 3, requires: true, packages: { '': { name: 's6' } } }, null, 2)}\n`;
 
-function commitFile(work, file, text, message) {
-  fs.writeFileSync(path.join(work, file), text);
-  git(work, 'add', file);
-  git(work, 'commit', '-q', '-m', message);
-}
-
 /**
  * origin.git: main holds package.json, its lock and echo.mjs; pilot is main plus one commit;
  * feat/x is cut from main with one commit; slice/a adds a.txt to feat/x; then main moves by one
- * commit. The clone is on feat/x with origin/HEAD naming main.
+ * commit. The clone is on feat/x with origin/HEAD naming main; `tip` is each branch's seeded tip.
  */
 function repos(t) {
   return gitFixture(t, 'integrate-select:repos', buildRepos);
 }
 
 function buildRepos(root) {
-  const origin = path.join(root, 'origin.git');
   const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
-  git(root, 'clone', '-q', origin, work);
-  git(work, 'checkout', '-q', '-b', 'main');
-  fs.writeFileSync(path.join(work, 'package.json'), PACKAGE);
-  fs.writeFileSync(path.join(work, 'package-lock.json'), LOCK);
-  fs.writeFileSync(path.join(work, 'echo.mjs'), ECHO);
-  git(work, 'add', 'package.json', 'package-lock.json', 'echo.mjs');
-  git(work, 'commit', '-q', '-m', 'main');
-  git(work, 'push', '-q', 'origin', 'main');
-  git(work, 'remote', 'set-head', 'origin', 'main');
-  git(work, 'checkout', '-q', '-b', 'pilot');
-  commitFile(work, 'pilot.txt', 'pilot\n', 'pilot only');
-  git(work, 'push', '-q', 'origin', 'pilot');
-  git(work, 'checkout', '-q', '-b', 'feat/x', 'main');
-  commitFile(work, 'feat.txt', 'feat\n', 'feat');
-  git(work, 'push', '-q', '-u', 'origin', 'feat/x');
-  git(work, 'checkout', '-q', '-b', 'slice/a');
-  commitFile(work, 'a.txt', 'a\n', 'the slice');
-  git(work, 'push', '-q', 'origin', 'slice/a');
-  git(work, 'checkout', '-q', 'main');
-  commitFile(work, 'moved.txt', 'moved\n', 'main moved');
-  git(work, 'push', '-q', 'origin', 'main');
-  git(work, 'checkout', '-q', 'feat/x');
-  git(work, 'branch', '-q', '-D', 'slice/a', 'main', 'pilot');
-  return { origin, work };
+  const { origin, sha } = seed(root, [
+    { branch: 'main', files: { 'package.json': PACKAGE, 'package-lock.json': LOCK, 'echo.mjs': ECHO }, message: 'main' },
+    { branch: 'pilot', files: { 'pilot.txt': 'pilot\n' }, message: 'pilot only' },
+    { branch: 'feat/x', from: 'main', files: { 'feat.txt': 'feat\n' }, message: 'feat' },
+    { branch: 'slice/a', files: { 'a.txt': 'a\n' }, message: 'the slice' },
+    { branch: 'main', files: { 'moved.txt': 'moved\n' }, message: 'main moved' },
+  ]);
+  // The clone holds feat/x alone, tracking origin's; origin/HEAD names main.
+  git(root, 'clone', '-q', '-b', 'feat/x', origin, work);
+  return { origin, work, tip: sha };
 }
 
 /** Points S6_ARGV at a fresh file beside the fixture and answers a reader of its lines. */
@@ -97,9 +76,9 @@ const gh = (args) => (args[0] === 'pr' && args[1] === 'view' ? JSON.stringify({ 
 const quiet = { install: () => {}, host: githubHost(gh) };
 
 test('a slice merge runs the selection since the tip before it', (t) => {
-  const { work } = repos(t);
+  const { work, tip } = repos(t);
   const lines = echoed(work);
-  const start = git(work, 'rev-parse', 'HEAD');
+  const start = tip['feat/x'];
 
   const result = integrate('slice/a', { cwd: work, ...quiet });
 
@@ -109,21 +88,22 @@ test('a slice merge runs the selection since the tip before it', (t) => {
 });
 
 test("sync selects since pilot's tip", (t) => {
-  const { origin, work } = repos(t);
+  const { origin, work, tip } = repos(t);
   const lines = echoed(work);
-  const pilotTip = git(origin, 'rev-parse', 'refs/heads/pilot');
+  const pilotTip = tip.pilot;
 
   const result = sync({ cwd: work, keep: path.join(path.dirname(work), 'kept-sync') });
 
   assert.equal(result.merged, true, result.line);
-  assert.equal(git(origin, 'rev-parse', `refs/heads/pilot^2`), git(origin, 'rev-parse', 'refs/heads/main'), 'main is merged into pilot');
+  const [mergedIn, mainTip] = git(origin, 'rev-parse', 'refs/heads/pilot^2', 'refs/heads/main').split('\n');
+  assert.equal(mergedIn, mainTip, 'main is merged into pilot');
   assert.deepEqual(lines(), [`changed --since=${pilotTip} ${NO_SLOT}`]);
 });
 
 test('a merge into pilot without since runs full', (t) => {
-  const { origin, work } = repos(t);
+  const { origin, work, tip } = repos(t);
   const lines = echoed(work);
-  const source = git(work, 'rev-parse', 'origin/feat/x');
+  const source = tip['feat/x'];
 
   const result = mergeIntoPilot({ cwd: work, source, message: 'Merge feat/x into pilot', label: 'feat/x' });
 
