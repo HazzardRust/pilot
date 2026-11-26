@@ -62,7 +62,8 @@ function build(dir, stacked, landed, after) {
       ? { branch: 'feat/b', files: { 'b.txt': 'b\n' }, message: 'feat b' }
       : { branch: 'feat/b', from: 'main', files: adrs(dir, '0001', '0003'), message: 'feat b' },
   ];
-  // Landings as two-parent commits with the landing's own subject: restack reads pilot's first-parent subjects.
+  // Landings as two-parent commits with the landing's own subject: restack reads pilot's first-parent subjects
+  // only, so pilot's tree (the merged branches' files, where a real landing's would differ) is never read.
   if (landed) {
     history.push(
       { branch: 'pilot', from: 'main', merge: ['feat/a'], files: {}, message: landingMessage('feat/a', 'pilot') },
