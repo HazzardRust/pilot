@@ -93,14 +93,17 @@ No fold slice: `seed` is new code that builders adopt.
   `feat/land-batching` concluding). Trades: a third of the cut (S10 to S12, ~930 fixture git) and the bars wait on
   land-batching's lane, queued behind archive-page. Rejected: stacking now (the deck names no concluding
   land-batching; its tip still moves with S6 and the fix); holding the whole run (idles nine slices).
+  Verdict: stands — land-batching is implementing and queued behind archive-page; S10-S13 wait for it in base
 - **A2** Fixtures shared per file, not cached across files (`itm_38ac1acda6fa`, posted). Default per file: est.
   −1,500 to −2,000 git, no new invalidation. Trades a thin margin on 1,824. Rejected: an on-disk cross-file template,
   ≤ ~300 git (only `buildRepos` repeats across files), path rewriting git-light-tests A1 rejected.
   **Answered**: the user pressed "Per file (default)" on `itm_38ac1acda6fa`.
+  Verdict: stands — user pressed "Per file (default)" on itm_38ac1acda6fa
 - **A3** No per-file git budget test (`itm_50c164279757`, posted). Default: `GIT_CEILING` plus `census.mjs` on
   demand. Trades: a regression is a suite-wide red naming product owners, not the test file. Rejected: ~90 budgets
   in the gate, edited by most future features.
   **Answered**: the user pressed "No budget test (default)" on `itm_50c164279757`.
+  Verdict: stands — user pressed "No budget test (default)" on itm_50c164279757
 
 ## 7. Out of scope
 
