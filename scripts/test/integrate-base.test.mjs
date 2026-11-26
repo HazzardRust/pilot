@@ -26,20 +26,6 @@ const short = (cwd, ref) => git(cwd, 'rev-parse', '--short', ref);
 const revs = (cwd, ...refs) => git(cwd, 'rev-parse', ...refs).split('\n');
 const root = path.resolve(import.meta.dirname, '..', '..');
 
-function commitFile(work, file, text, message) {
-  fs.writeFileSync(path.join(work, file), text);
-  git(work, 'add', file);
-  git(work, 'commit', '-q', '-m', message);
-}
-
-/** On `branch` in `work`, commit one file and push it, then come back to `feat/b`. */
-function pushTo(work, branch, file, text) {
-  git(work, 'checkout', '-q', branch);
-  commitFile(work, file, text, `${branch}: ${file}`);
-  git(work, 'push', '-q', 'origin', branch);
-  git(work, 'checkout', '-q', 'feat/b');
-}
-
 const BASE = [
   { branch: 'main', files: { 'main.txt': 'main\n' }, message: 'main' },
   { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'shared' },
@@ -47,7 +33,7 @@ const BASE = [
   { branch: 'slice/b-s1', files: { 's.txt': 's\n' }, message: 'the slice' },
 ];
 
-/** The commit `pushTo` makes on `branch`, as seed history; `from` cuts the branch's first commit. */
+/** One commit of `file` on `branch`, as seed history; `from` cuts the branch's first commit. */
 const pushed = (branch, file, text, from) => ({ branch, from, files: { [file]: text }, message: `${branch}: ${file}` });
 
 /**
@@ -69,6 +55,9 @@ function pilotRepos(t, key = 'base', later = []) {
 
 /** pilot one commit past main: what most cases take as the base. */
 const pilotMoved = (t) => pilotRepos(t, 'p2', [pushed('pilot', 'p2.txt', 'p2\n', 'main')]);
+
+/** pilot one commit past main, then main one commit on past where pilot was cut. */
+const bothMoved = (t) => pilotRepos(t, 'p2-m2', [pushed('pilot', 'p2.txt', 'p2\n', 'main'), pushed('main', 'm2.txt', 'm2\n')]);
 
 /** The GitHub **Host** over a `gh` that records every call and answers none. */
 function recordingGh() {
@@ -114,8 +103,7 @@ test('integrate with no branch takes pilot alone', (t) => {
 });
 
 test('the base is pilot even when main moved, and no PR is read for it', (t) => {
-  const { work, pilotTip } = pilotRepos(t);
-  pushTo(work, 'main', 'm2.txt', 'm2\n');
+  const { work, pilotTip } = bothMoved(t);
   const host = recordingGh();
 
   const result = integrate('slice/b-s1', { cwd: work, host, ...quiet });
@@ -139,7 +127,7 @@ test('a missing origin/pilot exits 1 naming pilot base', (t) => {
 });
 
 test('a pilot branch deleted on origin is missing, though the clone still has its tracking ref', (t) => {
-  const { origin, work } = pilotRepos(t);
+  const { origin, work } = bothMoved(t);
   git(origin, 'branch', '-D', 'pilot');
 
   const result = integrate('slice/b-s1', { cwd: work, host: recordingGh(), ...quiet });

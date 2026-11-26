@@ -21,7 +21,7 @@ const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8',
 const refs = (repo) => git(repo, 'for-each-ref', '--format=%(refname) %(objectname)');
 const green = 'node -e "0"';
 
-/** origin.git holds `main` and a `pilot` one commit ahead, then a newer `main`; second.git is empty; work clones origin. */
+/** origin.git holds `main` and a `pilot` one commit ahead, then a newer `main`; second.git is empty; work clones origin; `before` is origin's refs. */
 function scratchRepos(t) {
   return gitFixture(t, 'sync-remote:scratchRepos', buildScratchRepos);
 }
@@ -40,7 +40,7 @@ function buildScratchRepos(root) {
   git(work, 'remote', 'add', 'second', second);
   const { pilot: pilotTip, main: mainTip } = sha;
   const inWork = (args) => execFileSync('git', args, { cwd: work, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-  return { origin, second, work, pilotTip, mainTip, inWork };
+  return { origin, before: refs(origin), second, work, pilotTip, mainTip, inWork };
 }
 
 /** `tip` is a merge whose first parent is `pilot` and whose second is `main`. */
@@ -50,10 +50,9 @@ function assertMerge(repo, tip, pilotTip, mainTip) {
 }
 
 test('sync pushes the merge to the second remote\'s pilot', (t) => {
-  const { origin, second, work, pilotTip, mainTip, inWork } = scratchRepos(t);
+  const { origin, before, second, work, pilotTip, mainTip, inWork } = scratchRepos(t);
   git(work, 'push', '-q', 'second', `${pilotTip}:refs/heads/pilot`);
   git(work, 'config', 'pilot.remote', 'second');
-  const before = refs(origin);
 
   const result = sync({ cwd: work, git: inWork, test: green });
 
@@ -65,10 +64,9 @@ test('sync pushes the merge to the second remote\'s pilot', (t) => {
 });
 
 test('sync under none moves the local pilot only', (t) => {
-  const { origin, second, work, pilotTip, mainTip, inWork } = scratchRepos(t);
+  const { origin, before, second, work, pilotTip, mainTip, inWork } = scratchRepos(t);
   git(work, 'branch', '-q', '--no-track', 'pilot', pilotTip);
   git(work, 'config', 'pilot.remote', 'none');
-  const before = refs(origin);
 
   const result = sync({ cwd: work, git: inWork, test: green });
 
@@ -81,10 +79,9 @@ test('sync under none moves the local pilot only', (t) => {
 });
 
 test('a local pilot that moved meanwhile is not overwritten', (t) => {
-  const { origin, work, pilotTip, mainTip, inWork } = scratchRepos(t);
+  const { origin, before, work, pilotTip, mainTip, inWork } = scratchRepos(t);
   git(work, 'branch', '-q', '--no-track', 'pilot', pilotTip);
   git(work, 'config', 'pilot.remote', 'none');
-  const before = refs(origin);
   // The suite run moves the shared local pilot, as another session would while it ran.
   const moving = `git update-ref refs/heads/pilot ${mainTip}`;
 
@@ -97,8 +94,7 @@ test('a local pilot that moved meanwhile is not overwritten', (t) => {
 });
 
 test("sync names the run remote's missing pilot, and pushes nothing", (t) => {
-  const { origin, second, work, inWork } = scratchRepos(t);
-  const before = refs(origin);
+  const { origin, before, second, work, inWork } = scratchRepos(t);
   for (const [mode, ref] of [['second', 'second/pilot'], ['none', 'pilot']]) {
     git(work, 'config', 'pilot.remote', mode);
     // Each mode is its own command, so its own runner: one runner keeps the run remote it read first (cheap-suite spec 3).
