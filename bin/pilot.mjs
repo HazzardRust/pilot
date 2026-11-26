@@ -35,7 +35,7 @@ import { fromLeash, startScratch, stopScratch } from '../deck/scratch.mjs';
 import { fromRoot } from '../deck/spawn-root.mjs';
 import { openFile, rotateSecret } from '../deck/launch.mjs';
 import { openDeck, PACKAGE_ROOT, runCopy } from '../deck/open.mjs';
-import { defaultGet, ensureRune } from '../deck/rune-bin.mjs';
+import { defaultGet, defaultRun, ensureRune } from '../deck/rune-bin.mjs';
 import { main as serveDeck } from '../deck/daemon.mjs';
 import { storeDir } from '../deck/store.mjs';
 import { readUsageSwitch, setUsageSwitch } from '../deck/usage-switch.mjs';
@@ -390,7 +390,7 @@ export async function run(argv, deps) {
     for (let tries = 0; up && tries < 20 && !existsSync(openFile()); tries += 1) await new Promise((r) => setTimeout(r, 100));
     // Where the Rune deck is built, or its pinned binary verifies, it is what opens (rune-deck-ui A2; prebuilt-rune L4);
     // `deps.root` is a test's package root and `deps.get` its stub. Only this verb downloads (A6), and only once the deck is up.
-    const host = { platform: hostPlatform(), arch: process.arch, version: PLUGIN_VERSION };
+    const host = { platform: hostPlatform(), arch: process.arch, version: PLUGIN_VERSION, run: deps?.run ?? defaultRun };
     const state = up ? await ensureRune(deps?.root ?? PACKAGE_ROOT, host, deps?.get ?? defaultGet) : {};
     if (state.line) process.stderr.write(`${state.line}\n`);
     const rune = state.file;
