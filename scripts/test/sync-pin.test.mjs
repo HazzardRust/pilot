@@ -62,6 +62,20 @@ test('one sync spawns at most 14 git', (t) => {
   assert.ok(spawned <= BAR_GIT, `one sync spawned ${spawned} git, over ${BAR_GIT} (${BASE_GIT} on the base)`);
 });
 
+test('with no pilot branch name and no host to derive one, sync refuses naming why the host could not be chosen', (t) => {
+  const { origin, x, before } = ahead(t);
+  git(x, 'config', 'pilot.host', 'not-a-host');
+  const was = process.env.PILOT_BRANCH;
+  delete process.env.PILOT_BRANCH;
+  t.after(() => (was === undefined ? delete process.env.PILOT_BRANCH : (process.env.PILOT_BRANCH = was)));
+
+  const { code, out } = pilotSync(t, x);
+
+  assert.equal(code, 1);
+  assert.match(out, /^NOT synced: no pilot branch name: .* \(no host: pilot\.host names "not-a-host": .+\); nothing pushed\n$/);
+  assert.equal(git(origin, 'rev-parse', 'pilot'), before);
+});
+
 /** A detached worktree of `x` at `<x>-wt`, its path. */
 function worktree(x) {
   const dir = `${x}-wt`;

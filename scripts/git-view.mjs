@@ -16,7 +16,7 @@ const operands = (args) => args.slice(1).filter((arg) => !arg.startsWith('-'));
 
 /**
  * Whether `args` only reads: rev-parse, for-each-ref, ls-remote, rev-list, `diff` and `log` without
- * `--output` or `--no-index` (itm_bd575183ec2f), `config --get <key>`, `worktree list`, `merge-base --is-ancestor`, and
+ * `--output` or `--no-index` (itm_bd575183ec2f), `config [--local] --get <key>`, `worktree list`, `merge-base --is-ancestor`, and
  * `symbolic-ref` naming one ref with no delete or message. A global option first (`-c`, `-C`) is never a
  * read. A diff of the working tree or the index moves with a file the command writes itself, which the
  * view cannot see: that caller calls `git.forget()` after the write.
@@ -33,6 +33,8 @@ export function isRead(args) {
       // `--output` writes a file; `--no-index` reads files outside git, which no write through the view moves.
       return !options(args).some((opt) => opt === '--output' || opt.startsWith('--output=') || opt === '--no-index');
     case 'config':
+      // `config [--local] --get <key>`: `pilotBranch` reads its name with `--local` (user-pilot-branch L5).
+      if (args[1] === '--local') args = ['config', ...args.slice(2)];
       return args.length === 3 && args[1] === '--get' && !args[2].startsWith('-');
     case 'worktree':
       return args[1] === 'list';

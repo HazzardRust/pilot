@@ -43,9 +43,10 @@ export function buildRepos(dir, names) {
   const origin = path.join(dir, 'origin.git');
   const seed = path.join(dir, 'seed');
   git(dir, 'init', '--bare', '-b', 'main', origin);
-  git(origin, 'config', 'core.logAllRefUpdates', 'always');
+  // The line `git config core.logAllRefUpdates always` adds to the [core] that ends a new bare config, one git fewer (land-batching S6).
+  fs.appendFileSync(path.join(origin, 'config'), '\tlogAllRefUpdates = always\n');
+  // A clone of the empty origin is already on its unborn `main`: no `checkout -b main` (land-batching S6).
   git(dir, 'clone', '-q', origin, seed);
-  git(seed, 'checkout', '-q', '-b', 'main');
   commitFile(seed, 'shared.txt', 'one\n', 'main');
   git(seed, 'push', '-q', 'origin', 'main', 'main:pilot');
   /** A clone on a new `feat/<name>` cut from `from`, origin's pilot tip by default, with one commit, pushed. */
