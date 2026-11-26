@@ -165,7 +165,6 @@ ADR NNNN (`docs/adr/NNNN-prebuilt-rune.md`; the landing numbers it).
   Verdict: stands — user pressed "Allow scratch prerelease" on itm_bb030b7c165e
 - **A10** QA runs on this Windows machine in a scratch home with cargo off PATH; macOS and Linux by CI build and
   header check only; HazzardLaptop a human step after landing (pilot's itm_e374d036106d).
-  Verdict: stands — QA on this Windows machine, laptop as a human step
 
 red team (re-cut): S3's `warn` was a new verdict word against its own Prohibited line; it is now named as the
 non-failing word user-pilot-branch also adds, so the two meet on one meaning. red team (re-cut): every S1-S3 gate
@@ -176,6 +175,7 @@ red team: S3 needs the SAC reason S2 adds, so S3 now comes after S2, not only S1
 cannot run from a feature branch, so spec 1, 2 and 9 had no in-run evidence; L7's scratch tag added to S4. red team:
 S1 and S4 each half-built `release.json`'s shape; S1 owns the reader and the format, S4 round-trips through it.
 red team: a fetched file on Linux/macOS lacks the exec bit; S1 sets 0755 before the rename.
+  Verdict: stands — QA on this Windows machine, laptop as a human step
 
 ## 7. Out of scope
 
