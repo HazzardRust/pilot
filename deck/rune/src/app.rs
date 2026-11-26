@@ -411,10 +411,11 @@ pub fn center(s: &State, cx: &mut Cx<State>) -> El {
         &s.pending,
         cx,
     )));
+    // The archive lists its own rows, or with a row's `id` draws that row's detail instead (A3).
+    let archive_list = s.query.screen == "archive" && s.query.id.is_none();
     // The archive's bar stays put beside the tabs while its list scrolls (archive-page S19): still one
     // viewport (L4), the bar above it.
-    if s.query.screen == "archive"
-        && s.query.id.is_none()
+    if archive_list
         && let Some(band) =
             regions::archive::band(region("archive"), &r.archive, s.prefs.archive_sort, cx)
     {
@@ -444,18 +445,17 @@ pub fn center(s: &State, cx: &mut Cx<State>) -> El {
             .child(regions::thread::draw(region("thread"), &r.thread, cx))
             .child(regions::reply::draw(region("reply"), &r.reply, cx));
     }
-    // The archive lists its own rows and withholds history's (archive-page L11); with a row's `id` it draws
-    // that row's detail instead of the list (A3).
-    if s.query.screen == "archive" && s.query.id.is_some() {
-        let detail = regions::archive_detail::Detail::of(region("archiveDetail"));
-        body = body.child(regions::archive_detail::draw(&detail, cx));
-    } else if s.query.screen == "archive" {
+    // The archive withholds history's rows (archive-page L11).
+    if archive_list {
         body = body.child(regions::archive::draw(
             region("archive"),
             &r.archive,
             s.prefs.archive_sort,
             cx,
         ));
+    } else if s.query.screen == "archive" {
+        let detail = regions::archive_detail::Detail::of(region("archiveDetail"));
+        body = body.child(regions::archive_detail::draw(&detail, cx));
     } else if s.query.screen != "thread" {
         body = body.child(regions::history::draw(region("history"), &r.history, cx));
     }

@@ -13,8 +13,8 @@ use std::time::{Duration, Instant};
 
 use pilot_deck::app::{self, State};
 use pilot_deck::client::View;
-use pilot_deck::prefs::ArchiveSort;
-use pilot_deck::regions::archive::{Column, Day, filter_rows, sort_rows};
+use pilot_deck::prefs::{ArchiveSort, Column};
+use pilot_deck::regions::archive::{Day, filter_rows, sort_rows};
 use rune::{Env, Runtime, TextEdit};
 use serde::Deserialize;
 use serde_json::{Value, json};

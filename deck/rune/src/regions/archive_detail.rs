@@ -77,7 +77,14 @@ fn fields(list: &[Field], name: &str, label_w: f32, cx: &mut Cx<State>) -> El {
             let value = if f.markdown {
                 theme::markdown(f.value.clone(), dark)
             } else {
-                theme::content(text(&f.value).font(type_::BODY).color(ui.text).wrap(), dark)
+                // A path breaks inside itself rather than run past the window (fix d).
+                theme::content(
+                    text(&f.value)
+                        .font(type_::BODY)
+                        .color(ui.text)
+                        .wrap_anywhere(),
+                    dark,
+                )
             };
             out.child(
                 row()
@@ -140,16 +147,20 @@ pub fn draw(detail: &Option<Detail>, cx: &mut Cx<State>) -> El {
     let Some(d) = detail else {
         return region;
     };
+    let labels = label_width(d);
     region = region
         .child(theme::content(
-            text(&d.title).font(type_::BODY).color(ui.text).wrap(),
+            text(&d.title)
+                .font(type_::BODY)
+                .color(ui.text)
+                .wrap_anywhere(),
             dark,
         ))
-        .child(fields(&d.fields, "field", label_width(d), cx));
+        .child(fields(&d.fields, "field", labels, cx));
     if let Some(plan) = &d.plan {
         region = region
             .child(heading("Plan", cx))
-            .child(fields(plan, "plan", label_width(d), cx));
+            .child(fields(plan, "plan", labels, cx));
     }
     if !d.replies.is_empty() {
         region = region.child(heading("Thread", cx));

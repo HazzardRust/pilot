@@ -14,6 +14,7 @@ use rune_kit::glyphs;
 use serde_json::Value;
 
 use crate::app::{self, State};
+use crate::client::Query;
 use crate::prefs::Prefs;
 use crate::regions::{self, notifications::keep};
 use crate::theme::{self, Rule, motion, size, space, type_};
@@ -84,7 +85,7 @@ const SET: &str = "~";
 /// nothing.
 const COUNT_CH: f32 = 4.0;
 /// The advance of one monospace glyph as a share of the font size, as the status columns take it.
-const ADVANCE: f32 = 0.6;
+pub(crate) const ADVANCE: f32 = 0.6;
 
 /// The drag in hand: the side area's width as drawn at the press, which each move adds the
 /// pointer's travel to, and the prefs' width and hidden flag then, which a cancel puts back.
@@ -318,14 +319,16 @@ fn border_drag(s: &mut State, panes: [&'static str; 2], drawn: [f32; 2], d: &Dra
 }
 
 /// One icon of the icon bar: its label on hover and to a reader, the 4 px primary bar on its left
-/// while its pane shows, and its count as a pill on its corner, out of the flow.
+/// while `active` (its pane shows, or its page is up), and its count as a pill on its corner, out of
+/// the flow.
 fn icon_item(
     s: &State,
     (name, label, glyph): (&'static str, &str, &'static Icon),
+    active: bool,
+    press: impl Fn(&mut State) + 'static,
     dark: bool,
 ) -> El {
     let t = tok::theme(dark);
-    let active = !s.prefs.side_hidden && is_open(&s.prefs, name);
     let mut item = theme::control(el(), dark)
         .key(format!("icon-{name}"))
         .size(size::icon_bar, size::icon_bar)
@@ -334,7 +337,7 @@ fn icon_item(
         .label(label)
         .help(label)
         .expanded(active)
-        .on_press(move |s: &mut State| toggle(&mut s.prefs, name))
+        .on_press(press)
         .child(
             icon(glyph, size::icon)
                 .key(format!("icon-{name}-glyph"))
@@ -360,35 +363,19 @@ fn icon_item(
     item
 }
 
-/// The bar's last entry, Archive: a page, not a pane, so its press goes to the archive screen
-/// (and back on a second) and opens no side pane. Marked while that screen is up.
-fn archive_icon(s: &State, dark: bool) -> El {
-    let t = tok::theme(dark);
-    let here = s.query.screen == "archive";
-    let mut item = theme::control(el(), dark)
-        .key("icon-archive")
-        .size(size::icon_bar, size::icon_bar)
-        .center()
-        .role("button")
-        .label("Archive")
-        .help("Archive")
-        .expanded(here)
-        .on_press(regions::strip::archive_page)
-        .child(
-            icon(&ARCHIVE, size::icon)
-                .key("icon-archive-glyph")
-                .color(if here { t.text } else { t.text_secondary }),
-        );
-    if here {
-        item = item.child(
-            el().key("icon-archive-marker")
-                .w(space::s2)
-                .h_full()
-                .pin(Some(space::s0), Some(space::s0), None, Some(space::s0))
-                .fill(theme::roles(dark).primary),
-        );
-    }
-    item
+/// Archive's press: the archive screen, or from it the home screen of the scope it was left from.
+fn archive_page(s: &mut State) {
+    let screen = if s.query.screen == "archive" {
+        "home"
+    } else {
+        "archive"
+    };
+    let query = Query {
+        screen: screen.into(),
+        id: None,
+        ..s.query.clone()
+    };
+    app::go(s, query);
 }
 
 /// An icon's count: a solid badge as wide as its digits on the icon's top-right corner, so it
@@ -533,9 +520,27 @@ fn left_side(s: &State, cx: &mut Cx<State>) -> El {
                 .w(size::icon_bar)
                 .h_full()
                 .pt(space::s7 - (size::icon_bar - size::icon) / 2.0),
-            |bar, &panel| bar.child(icon_item(s, panel, dark)),
+            |bar, &panel| {
+                let (name, ..) = panel;
+                let active = !s.prefs.side_hidden && is_open(&s.prefs, name);
+                bar.child(icon_item(
+                    s,
+                    panel,
+                    active,
+                    move |s: &mut State| toggle(&mut s.prefs, name),
+                    dark,
+                ))
+            },
         )
-        .child(archive_icon(s, dark));
+        // The bar's last entry, Archive: a page, not a pane, so its press goes to the archive screen
+        // (and back on a second) and opens no side pane. Marked while that screen is up.
+        .child(icon_item(
+            s,
+            ("archive", "Archive", &ARCHIVE),
+            s.query.screen == "archive",
+            archive_page,
+            dark,
+        ));
     // The open pane above the one being drawn, which its border resizes with it.
     let mut above: Option<&'static str> = None;
     // Panes take their contents' height and the area scrolls past the last; room left over stays

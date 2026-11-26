@@ -143,21 +143,6 @@ pub fn items_page(s: &mut State) {
     go(s, query);
 }
 
-/// Archive: the archive screen, or from it the home screen of the scope it was left from.
-pub fn archive_page(s: &mut State) {
-    let screen = if s.query.screen == "archive" {
-        "home"
-    } else {
-        "archive"
-    };
-    let query = Query {
-        screen: screen.into(),
-        id: None,
-        ..s.query.clone()
-    };
-    go(s, query);
-}
-
 /// The `act::send` keys of the strip's writes, each its control's own key.
 const CREATE: &str = "strip-confirm";
 const ALERTS: &str = "strip-alerts";

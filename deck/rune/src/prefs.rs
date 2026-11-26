@@ -7,8 +7,6 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::regions::archive::Column;
-
 const FILE: &str = "rune-deck.json";
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -47,6 +45,15 @@ fn or_default<'de, D: Deserializer<'de>>(d: D) -> Result<ArchiveSort, D::Error> 
 pub struct ArchiveSort {
     pub column: Column,
     pub ascending: bool,
+}
+
+/// A column the archive list sorts by, pressed as `archive-sort-<column>`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Column {
+    Date,
+    Kind,
+    Title,
 }
 
 impl Default for ArchiveSort {

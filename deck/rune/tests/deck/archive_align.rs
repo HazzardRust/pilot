@@ -238,6 +238,19 @@ fn the_bar_is_grouped() {
         sort.rect,
         kinds.rect
     );
+    // The Sort group reads Date, Kind, Title, in reading order.
+    let mut sorts = rects(&rt, "archive-sort-", "");
+    sorts.sort_by(|a, b| {
+        (a.1[1], a.1[0])
+            .partial_cmp(&(b.1[1], b.1[0]))
+            .expect("numbers")
+    });
+    let read: Vec<String> = sorts
+        .iter()
+        .map(|(key, _)| element(&rt, key).text.unwrap_or_default())
+        .map(|words| words.trim_end_matches([' ', '↑', '↓']).to_string())
+        .collect();
+    assert_eq!(read, ["Date", "Kind", "Title"], "the Sort group's order");
     let date = rect(&rt, "archive-sort-date");
     let first_kind = rects(&rt, "archive-kind-", "")
         .into_iter()
@@ -347,12 +360,88 @@ fn the_bar_stays_put_while_the_list_scrolls() {
     rt.update(|_, tx| tx.scroll_page(format!("{}-archive-", app::CENTRE), 1));
     settle(&mut rt);
     let moved = first_row(&rt);
-    println!(
-        "a page down: centre_y {} px, first row {row:?} -> {moved:?}",
-        rt.state.centre_y.get()
-    );
     assert!(rt.state.centre_y.get() > 0.0, "the centre scrolled");
     assert_eq!(rect(&rt, "archive-bar")[1], bar[1], "the bar stays");
     assert_eq!(rect(&rt, "archive-bar-rule")[1], rule[1], "its rule stays");
     assert_ne!(moved, row, "the list scrolled under it");
+}
+
+#[test]
+fn no_bar_over_a_list_that_cannot_be_read() {
+    let (mut list, _) = served(0);
+    // A row the list cannot read: its id is no string.
+    list["days"][0]["rows"][0]["id"] = Value::from(5);
+    let rt = window("archive", list, None, 1280.0);
+    for key in ["archive-bar", "archive-bar-rule", "archive-list"] {
+        assert!(
+            !rt.elements()
+                .iter()
+                .any(|e| e.key.as_deref() == Some(key) && !e.exiting),
+            "{key} drawn over a list that was not"
+        );
+    }
+}
+
+#[test]
+fn the_bar_fits_the_centre_at_640() {
+    let (list, _) = served(0);
+    let mut rt = window("archive", list, None, 640.0);
+    // The right strip as the deck serves it on every screen, which takes its column from the centre.
+    let strip = serde_json::json!({ "all": false, "create": {}, "close": false, "alerts": { "weekly": true } });
+    rt.update(move |s, _| {
+        s.view.regions.insert("strip".into(), strip);
+    });
+    settle(&mut rt);
+    let centre = rect(&rt, "centre");
+    let mut controls = rects(&rt, "archive-bar", "");
+    for prefix in [
+        "archive-search",
+        "archive-group-",
+        "archive-sort-",
+        "archive-kind-",
+    ] {
+        controls.extend(rects(&rt, prefix, ""));
+    }
+    assert!(controls.len() > 5, "the bar's controls: {controls:?}");
+    for (key, r) in controls {
+        assert!(
+            r[0] >= centre[0] - 0.5 && r[0] + r[2] <= centre[0] + centre[2] + 0.5,
+            "{key} leaves the centre: {r:?} {centre:?}"
+        );
+    }
+}
+
+#[test]
+fn a_long_path_wraps_inside_its_row() {
+    let (mut list, _) = served(0);
+    // One token: no space or hyphen to break at.
+    let path = "C:/Users/someone/Projects/a_repository_with_a_rather_long_name/docs/design/the_feature/slices/S19.md";
+    let row = &mut list["days"][0]["rows"][0];
+    row["title"] = Value::from(path);
+    row["fields"][0]["value"] = Value::from(path);
+    let id = row["id"].as_str().expect("an id").to_string();
+    let rt = window("archive", list, None, 900.0);
+    let edge = {
+        let r = rect(&rt, &format!("archive-row-{id}"));
+        r[0] + r[2]
+    };
+    let title = element(&rt, &cell("title", &id));
+    assert_eq!(title.text.as_deref(), Some(path), "the whole path is kept");
+    let fields = rect(&rt, &cell("fields", &id));
+    for (part, r) in [("title", title.rect), ("fields", fields)] {
+        assert!(
+            r[0] + r[2] <= edge + 0.5,
+            "the {part} ends inside the row: {r:?} {edge}"
+        );
+    }
+    // Taller than two lines' size: wrapped, not cut at the row's edge.
+    assert!(
+        title.rect[3] > theme::type_::BODY.size * 2.0,
+        "the title wraps: {:?}",
+        title.rect
+    );
+    assert!(
+        fields[3] > theme::type_::CAPTION.size * 2.0,
+        "the field wraps: {fields:?}"
+    );
 }

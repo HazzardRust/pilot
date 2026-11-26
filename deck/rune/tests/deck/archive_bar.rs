@@ -6,8 +6,7 @@ use crate::support::ENV;
 
 use pilot_deck::app::{self, State};
 use pilot_deck::client::View;
-use pilot_deck::prefs::{ArchiveSort, Prefs};
-use pilot_deck::regions::archive::Column;
+use pilot_deck::prefs::{ArchiveSort, Column, Prefs};
 use rune::{Env, Runtime};
 use serde_json::{Value, json};
 
