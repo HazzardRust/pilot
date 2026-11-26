@@ -9,6 +9,7 @@
 import '../../deck/test/no-open.mjs';
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed as seedHistory } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -43,23 +44,20 @@ function mergeInto(seed, into, branch, message) {
  */
 function stackRepos(t) {
   const { root, origin, seed } = gitFixture(t, 'integrate-main:stackRepos', (dir) => {
-    const origin = path.join(dir, 'origin.git');
+    const feature = (branch, from) => ({ branch, from, files: { [`${branch.slice(5)}.txt`]: `${branch}\n` }, message: `${branch}: ${branch.slice(5)}.txt` });
+    const { origin } = seedHistory(dir, [
+      { branch: 'trunk', files: { 'trunk.txt': 'trunk\n' }, message: 'trunk' },
+      { branch: 'feat/x', from: 'trunk', files: { 'x.txt': 'x\n' }, message: 'feat/x: x.txt' },
+      { branch: 'pilot', from: 'trunk', files: {}, merge: ['feat/x'], message: 'Merge feat/x into pilot' },
+      feature('feat/a', 'trunk'),
+      feature('feat/b', 'trunk'),
+      feature('feat/c', 'feat/a'),
+    ]);
+    git(origin, 'symbolic-ref', 'HEAD', 'refs/heads/trunk');
     const seed = path.join(dir, 'seed');
-    git(dir, 'init', '--bare', '-b', 'trunk', origin);
     git(dir, 'clone', '-q', origin, seed);
-    git(seed, 'checkout', '-q', '-b', 'trunk');
-    commitFile(seed, 'trunk.txt', 'trunk\n', 'trunk');
-    git(seed, 'push', '-q', 'origin', 'trunk', 'trunk:pilot');
-    git(seed, 'checkout', '-q', '-b', 'feat/x');
-    commitFile(seed, 'x.txt', 'x\n', 'feat/x: x.txt');
-    git(seed, 'push', '-q', 'origin', 'feat/x');
-    mergeInto(seed, 'pilot', 'feat/x', 'Merge feat/x into pilot');
-    for (const [branch, from] of [['feat/a', 'origin/trunk'], ['feat/b', 'origin/trunk'], ['feat/c', 'origin/feat/a']]) {
-      git(seed, 'fetch', '-q', 'origin');
-      git(seed, 'checkout', '-q', '-b', branch, from);
-      commitFile(seed, `${branch.slice(5)}.txt`, `${branch}\n`, `${branch}: ${branch.slice(5)}.txt`);
-      git(seed, 'push', '-q', 'origin', branch);
-    }
+    // seed's own feat/a, which outlives a delete on origin.
+    git(seed, 'branch', '-q', 'feat/a', 'origin/feat/a');
     return { root: dir, origin, seed };
   });
   const clone = (branch, slug, base) => {
