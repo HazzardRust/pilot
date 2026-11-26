@@ -66,7 +66,7 @@ test('the last two merges that change no trigger, one row each', (t) => {
   assert.deepEqual(rows.map((r) => r.selected), [2, 1]);
   assert.ok(rows.every((r) => r.total === 4 && /^[0-9a-f]{40}$/.test(r.sha)));
   assert.equal(median, 0.375, 'shares 2/4 and 1/4');
-  assert.equal(state(dir), before,'the caller\'s worktree is untouched');
+  assert.equal(state(dir), before, 'the caller\'s worktree is untouched');
 });
 
 test('a merge that changes a trigger is skipped', (t) => {
