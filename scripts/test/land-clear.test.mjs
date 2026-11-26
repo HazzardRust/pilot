@@ -70,12 +70,17 @@ function buildRun(root) {
   // QA's worktree (pilot-qa.md), at the feature's tip as QA is.
   git(work, 'worktree', 'add', '-q', '-b', 'qa/s', dir('qa'), 'origin/feat/s');
   git(work, 'worktree', 'add', '-q', '-b', 'slice/s-s1', dir('slice'), 'origin/slice/s-s1');
-  // The design and slice worktrees were cut one commit back and committed on, so their reflogs say they moved
-  // (worktrees.mjs `moved`): the branch's and the worktree HEAD's logs become the cut and the commit.
-  for (const [name, branch, from, message] of [['design', 'design/s', sha.main, 'design s'], ['slice', 'slice/s-s1', sha['design/s'], 'slice s1']]) {
+  // Each run worktree was cut one commit back and then moved (committed, merged or fast-forwarded), so its reflogs
+  // say it moved (worktrees.mjs `moved`): the branch's and the worktree HEAD's logs become the cut and the move.
+  for (const [name, branch, from, cut, move] of [
+    ['design', 'design/s', sha.main, 'origin/pilot', 'commit: design s'],
+    ['feat', 'feat/s', sha['design/s'], 'origin/design/s', 'merge slice/s-s1: Merge made by the \'ort\' strategy.'],
+    ['qa', 'qa/s', sha['design/s'], 'origin/feat/s', 'merge origin/feat/s: Fast-forward'],
+    ['slice', 'slice/s-s1', sha['design/s'], 'origin/feat/s', 'commit: slice s1'],
+  ]) {
     const branchLog = path.join(work, '.git', 'logs', 'refs', 'heads', ...branch.split('/'));
     const [, tip, stamp] = fs.readFileSync(branchLog, 'utf8').match(/^0{40} ([0-9a-f]{40}) ([^\t\n]*)/);
-    const entries = `${'0'.repeat(40)} ${from} ${stamp}\tbranch: Created from origin/${branch}\n${from} ${tip} ${stamp}\tcommit: ${message}\n`;
+    const entries = `${'0'.repeat(40)} ${from} ${stamp}\tbranch: Created from ${cut}\n${from} ${tip} ${stamp}\t${move}\n`;
     for (const log of [branchLog, path.join(work, '.git', 'worktrees', name, 'logs', 'HEAD')]) fs.writeFileSync(log, entries);
   }
 
