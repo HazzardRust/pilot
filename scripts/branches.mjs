@@ -14,6 +14,7 @@ import { execFileSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 
 import { hostFor } from '../deck/host.mjs';
+import { tips } from './git-view.mjs';
 import { firstLine, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRemote } from './remotes.mjs';
 import { isRunBranch } from './worktrees.mjs';
@@ -55,6 +56,23 @@ export function tipsOn(git, remote) {
 }
 
 /**
+ * `remote`'s branches as a name → sha map, from the remote-tracking refs a caller's fetch left (land-batching
+ * A3). Read from `tipOf`'s snapshot, so on a landing's view the read is shared, not a spawn of its own.
+ */
+function fetchedTips(git, remote) {
+  const prefix = `refs/remotes/${remote}/`;
+  let all;
+  try {
+    all = tips(git);
+  } catch (err) {
+    throw Object.assign(new Error(`git for-each-ref failed: ${firstLine(err)}`), { status: err.status });
+  }
+  const found = new Map();
+  for (const [ref, sha] of all) if (ref.startsWith(prefix) && ref !== `${prefix}HEAD`) found.set(ref.slice(prefix.length), sha);
+  return found;
+}
+
+/**
  * Every same-repository review, any state, by head branch, in one host read; none at all when `host` is null
  * (`none`, A1), so every branch is judged by ancestry. An Error when the read fails or the list may be cut short.
  */
@@ -80,15 +98,20 @@ function prsByHead(host) {
  * (L5). With `dryRun`, `deleted` is what would be deleted and nothing is pushed. A failed
  * push throws with `deleted`, what went before it, and `kept`. Throws, deleting nothing,
  * when the run remote, origin's default branch or a remote's branch list cannot be read.
+ * With `fetched`, the caller fetched origin itself (a landing, A3): nothing is fetched, origin's
+ * branches are read from its remote-tracking refs and any other remote's still from the remote.
+ * The push's lease stays the arbiter: a branch moved or deleted since is refused there, never deleted,
+ * and the refusal throws as any failed push does.
  */
-export function deleteMerged({ git, host, select, into, wait = 0, dryRun = false }) {
+export function deleteMerged({ git, host, select, into, wait = 0, dryRun = false, fetched = false }) {
   const runs = runRemote(git);
   const defaultName = remoteDefaultBranch(git);
   const target = into ?? defaultName;
   const remotes = runs === null || runs === 'origin' ? ['origin'] : ['origin', runs];
-  for (const remote of remotes) step(git, ['fetch', '-q', remote], `git fetch ${remote} failed`);
+  if (!fetched) for (const remote of remotes) step(git, ['fetch', '-q', remote], `git fetch ${remote} failed`);
+  const tipsOf = (remote) => (fetched && remote === 'origin' ? fetchedTips(git, remote) : tipsOn(git, remote));
   const candidates = remotes.flatMap((remote) =>
-    [...tipsOn(git, remote)].filter(([branch]) => remoteOf(runs, branch) === remote && select(branch)).map(([branch, tip]) => ({ remote, branch, tip })));
+    [...tipsOf(remote)].filter(([branch]) => remoteOf(runs, branch) === remote && select(branch)).map(([branch, tip]) => ({ remote, branch, tip })));
 
   const deleted = [];
   const kept = [];
