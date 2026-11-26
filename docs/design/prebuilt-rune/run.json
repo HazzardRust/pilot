@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "failed gate: merged red, every store file is viewed or never shown (drift: base 5c326bd2)",
+      "state": "pushed 7705d77",
       "after": [
         "S1"
       ],
@@ -42,7 +42,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 74321f6 (added: base drift merge, release.json is not a store file)",
+      "state": "integrated at 1ee1c64, checks green (added: base drift 5c326bd2, release.json is not a store file)",
       "after": [
         "S1"
       ],
@@ -55,8 +55,8 @@
       "text": "Before prebuilt-rune S4 pushes its workflow file: gh auth refresh -h github.com -s workflow"
     }
   ],
-  "next": "co-pilot: integrating S5 (added: base drift 5c326bd2 + release.json not a store file, 74321f6); then S2, S4, S3",
-  "updatedAt": "2026-11-26T13:47:26.852Z",
+  "next": "co-pilot: checks green at 1ee1c64; integrating S2 (7705d77); then S4, S3",
+  "updatedAt": "2026-11-26T14:10:56.743Z",
   "friction": [
     {
       "agent": "pilot-architect",
