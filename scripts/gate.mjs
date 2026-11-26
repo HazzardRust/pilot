@@ -61,10 +61,13 @@ const POLL_MS = 1_000;
  *   CI's windows-latest read S7's tip ef9ee6c at 12823 (node 848, git 11682, other 293), the highest of the runners
  *   (ubuntu and macOS passed under 12815 / 11676); less the same 8 that is 12815 / 11674, and the ceilings are that
  *   highest count (A5: the CI count, itm_470ec6f7a434).
+ * 2026-11-26, land-batching S6 on the base 6e1806b (user-pilot-branch, pr-overview landed): their added tests read
+ *   13589 (node 850, git 12447, other 292) locally (docs/design/land-batching/cost-after.txt); the ceilings are that
+ *   plus the Windows-CI delta above (8 spawns / 6 git), 13597 / 12453: the measured bars (itm_9ac7a84014e9).
  */
-export const SPAWN_CEILING = 12815;
+export const SPAWN_CEILING = 13597;
 /** The most git processes a full suite may start (land-batching S7, S6); see the dated lines above. */
-export const GIT_CEILING = 11674;
+export const GIT_CEILING = 12453;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 

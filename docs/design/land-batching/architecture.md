@@ -13,8 +13,8 @@ signed numbers".
 
 | # | Behaviour | Evidence and bar |
 |---|---|---|
-| 1 | A full suite run spawns at most the measured bars, 12,815 processes, at most 11,674 of them git: the highest runner's count after S6 (CI windows-latest). The signed 11,000 / 10,000 were not reached; the user answered "Lower the bars to measured, ticket the rest" (itm_9ac7a84014e9), and the rest, the fixture git in test bodies, is ticket itm_07647401bb5e. | `npm run test:cost` on the feature tip prints `spawns <t> (node …, git <g>, …)` with t ≤ 12,815 and g ≤ 11,674; recorded as `docs/design/land-batching/cost-after.txt` (S6). Before: 13,677 / 12,572. |
-| 2 | The gate holds the measured bars: `SPAWN_CEILING` reads 12,815 and a new `GIT_CEILING` 11,674; a run over either is red. cheap-suite's spec 3 and A4 name 12,815 / 11,674 (itm_9ac7a84014e9). | `scripts/test/gate-spawns.test.mjs`: a count one over `SPAWN_CEILING` total is red, one over `GIT_CEILING` git under the total ceiling is red, the two ceilings exactly are green (3 cases). The cheap-suite rows read the same numbers. |
+| 1 | A full suite run spawns at most the measured bars, 13,597 processes, at most 12,453 of them git: S6's local run on the base after user-pilot-branch and pr-overview landed (13,589 / 12,447), plus the Windows-CI runner's delta (8 / 6). The signed 11,000 / 10,000 were not reached; the user answered "Lower the bars to measured, ticket the rest" (itm_9ac7a84014e9), and the rest, the fixture git in test bodies, is ticket itm_07647401bb5e. | `npm run test:cost` on the feature tip prints `spawns <t> (node …, git <g>, …)` with t ≤ 13,597 and g ≤ 12,453; recorded as `docs/design/land-batching/cost-after.txt` (S6). Before: 13,677 / 12,572. |
+| 2 | The gate holds the measured bars: `SPAWN_CEILING` reads 13,597 and a new `GIT_CEILING` 12,453; a run over either is red. cheap-suite's spec 3 and A4 name 13,597 / 12,453 (itm_9ac7a84014e9). | `scripts/test/gate-spawns.test.mjs`: a count one over `SPAWN_CEILING` total is red, one over `GIT_CEILING` git under the total ceiling is red, the two ceilings exactly are green (3 cases). The cheap-suite rows read the same numbers. |
 | 3 | `pilot land`, `pilot integrate` and `pilot sync` behave as before: same printed lines, refusals, commits and pushes. | All existing land*, integrate*, sync* tests pass unchanged (0 edited asserts). One pin per command on a seeded repo, written on the base before any product change: printed lines (SHAs normalised), pilot's and the feature's tips, the merge commit's parents and subject. |
 | 4 | The saving comes first from product code: one landing, one integrate and one sync each spawn fewer git, asserted. *assumed* (A2) | `countGit` per command on a seeded repo: landing 39 → ≤ 27 (S5); `pilot sync` main-merge 18 → ≤ 14; integrate one slice ≤ 75% of its base count, both numbers in the test. |
 | 5 | Any remainder past spec 4 comes from the shared test fixture helpers, with no test skipped, cut or weakened. User pressed "Fixtures make up the rest" (A1, itm_6b7ac21774f1), a press, not the 20-minute default. This rewrites the ticket's spec 4 ("not from fixtures"), which the user's Yes covered; S6 alone delivers it and nothing comes after it, so a no at Gate 1 drops S6 alone. | S6's diff touches only `scripts/test/lib/` and helper call sites; the test count of the full run equals the base's (629 files) and 0 asserts removed. |
@@ -107,8 +107,8 @@ adopts, not a move.
   (integrate.mjs, its `pruneSlice` neighbour) merge `origin/main` before they start, and S7 measures after it, its
   added tests included. archive-page, reply-markdown, classifier-env share no file with this run (checked by diff).
   Verdict: stands — prune-worktrees itm_0ddca8a8e2f0 is signed and yellow, ahead of this ticket in the implementing queue, and the ticket's own text orders them so
-- **A5** The bars carry no headroom: `SPAWN_CEILING` 12,815 and `GIT_CEILING` 11,674 flat, the highest runner's measured
-  count, not measured + 10% (gate.mjs L16's rule). The signed 11,000 / 10,000 were missed; the user answered "Lower the
+- **A5** The bars carry no headroom: `SPAWN_CEILING` 13,597 and `GIT_CEILING` 12,453 flat, the measured count
+  plus the Windows-CI runner's delta, not measured + 10% (gate.mjs L16's rule). The signed 11,000 / 10,000 were missed; the user answered "Lower the
   bars to measured, ticket the rest" (itm_9ac7a84014e9), the rest being ticket itm_07647401bb5e. Trades: the next
   feature adding spawns past them must cut or ask. Rejected: measured + 10% (headroom the user did not choose).
   Verdict: stands — the user chose the CI count on itm_470ec6f7a434, which is the guard for bars with no headroom
@@ -147,9 +147,9 @@ test's repo; its pin is the full suite's unchanged test count and pass count.
 
 1. A landing on a seeded repo prints the same lines as on the base and spawns ≤ 27 git (S1, S2, S5 pins and counts).
 2. `pilot integrate` and `pilot sync` print the same lines and spawn fewer git (S3, S4).
-3. A full `npm run test:cost` prints spawns ≤ 12,815, git ≤ 11,674, the measured bars (itm_9ac7a84014e9; S6, `cost-after.txt`).
+3. A full `npm run test:cost` prints spawns ≤ 13,597, git ≤ 12,453, the measured bars (itm_9ac7a84014e9; S6, `cost-after.txt`).
 4. `spawns-before.txt` against `spawns-after.txt`: where the 2,572+ went, per entry module (S7).
-5. A gate over `SPAWN_CEILING` (12,815) or over `GIT_CEILING` (11,674) git reads red (S7 test).
+5. A gate over `SPAWN_CEILING` (13,597) or over `GIT_CEILING` (12,453) git reads red (S7 test).
 
 ## 10. Status
 
