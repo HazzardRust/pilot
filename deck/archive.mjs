@@ -28,11 +28,8 @@ import { archivedItems } from './store-archive.mjs';
 import { storeDir } from './store-dir.mjs';
 import { readDeckFile } from './store-recovery.mjs';
 
-/**
- * The store files the archive never opens (spec 8, L9): they hold the secret or raw test output. `release.json` is
- * no store file: it is the Rune pin the plugin ships (`deck/rune/release.json`, read by `rune-bin.mjs`).
- */
-export const NEVER_SHOWN = ['deck.secret', 'deck-open.html', 'logs/*.log', 'release.json', 'deck/rune/release.json'];
+/** The store files the archive never opens (spec 8, L9): they hold the secret or raw test output. */
+export const NEVER_SHOWN = ['deck.secret', 'deck-open.html', 'logs/*.log'];
 
 /**
  * Every record kind, a fixed list in file-name order (L4, moved by the user on itm_96d80caf8aee): a new kind adds
