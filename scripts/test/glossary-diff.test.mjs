@@ -4,12 +4,14 @@
  * glossary entry is the real `Crew` entry and every log row is written by S6's `appendLog`.
  */
 
+import { seed } from './lib/seed.mjs';
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { termsInDiff } from '../glossary-diff.mjs';
@@ -20,33 +22,14 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const CREW = termOf('Crew', fs.readFileSync(path.join(ROOT, 'GLOSSARY.md'), 'utf8'));
 const CLI = path.join(ROOT, 'scripts', 'glossary-diff.mjs');
 
-/** A scratch repository: `base` committed and tagged `base`, then `head` written over it and tagged `head`. */
+/** A scratch (bare) repository: branch `base` holding `base`, then branch `head` with `head` written over it. */
 function makeRepo(t, base, head) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'glossary-diff-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const git = (...args) =>
-    execFileSync('git', ['-c', 'core.autocrlf=false', '-c', 'user.name=t', '-c', 'user.email=t@t', ...args], {
-      cwd: dir,
-      stdio: 'pipe',
-    });
-  const commit = (files, tag) => {
-    for (const [file, text] of Object.entries(files)) {
-      const full = path.join(dir, file);
-      if (text === null) {
-        fs.rmSync(full);
-        continue;
-      }
-      fs.mkdirSync(path.dirname(full), { recursive: true });
-      fs.writeFileSync(full, text);
-    }
-    git('add', '-A');
-    git('commit', '-q', '--allow-empty', '-m', tag);
-    git('tag', tag);
-  };
-  git('init', '-q');
-  commit(base, 'base');
-  commit(head, 'head');
-  return dir;
+  return seed(dir, [
+    { branch: 'base', files: base, message: 'base' },
+    { branch: 'head', from: 'base', files: head, message: 'head' },
+  ]).origin;
 }
 
 const BASE = { 'GLOSSARY.md': `# Glossary\n\n${CREW}\n`, 'README.md': 'The Crew does the work.\n' };

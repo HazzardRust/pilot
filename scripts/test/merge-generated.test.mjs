@@ -6,6 +6,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,14 +27,19 @@ const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
-/** Writes ADR `number` and, unless `index` is false, the generated index; commits both. */
-function addAdr(repo, number, { index = true } = {}) {
+/** Writes ADR `number` and, unless `index` is false, the generated index. */
+function addAdrFiles(repo, number, { index = true } = {}) {
   const adr = path.join(repo, 'docs', 'adr');
   fs.mkdirSync(adr, { recursive: true });
   const file = `${number}-decision-${number}.md`;
   const front = ['---', 'status: accepted', 'date: 2026-10-11', 'tags: []', 'supersedes: []', 'superseded_by: []', 'paths: []', '---'];
   fs.writeFileSync(path.join(adr, file), [...front, `# Decision ${number}`, '', `We decided ${number}.`, ''].join('\n'));
   if (index) fs.writeFileSync(path.join(adr, 'README.md'), renderIndex(adr));
+}
+
+/** Writes ADR `number` and, unless `index` is false, the generated index; commits both. */
+function addAdr(repo, number, options) {
+  addAdrFiles(repo, number, options);
   git(repo, 'add', '-A');
   git(repo, 'commit', '-q', '-m', `adr ${number}`);
 }
@@ -51,14 +57,40 @@ function buildScratch(dir, attributes) {
   return { dir, repo };
 }
 
-/** Branch `a` adds `first`, `main` adds `second`; answers the merge of `a` into `main`. */
-function twoAdrs(repo, { first, second }) {
-  git(repo, 'checkout', '-q', '-b', 'a');
-  addAdr(repo, first);
-  git(repo, 'checkout', '-q', 'main');
-  addAdr(repo, second);
-  return spawnSync('git', ['merge', '-q', '--no-ff', '--no-commit', 'a'], { cwd: repo, encoding: 'utf8' });
+/**
+ * The files `addAdr` would leave for ADRs `numbers` (each index regenerated), `extra` laid over: a
+ * tree for `seed`, rendered in a staging directory under `dir` that git never sees.
+ */
+function adrTree(dir, numbers, extra = {}) {
+  const stage = fs.mkdtempSync(path.join(dir, 'stage-'));
+  for (const number of numbers) addAdrFiles(stage, number);
+  const adr = path.join(stage, 'docs', 'adr');
+  const files = Object.fromEntries(fs.readdirSync(adr).map((name) => [`docs/adr/${name}`, fs.readFileSync(path.join(adr, name), 'utf8')]));
+  fs.rmSync(stage, { recursive: true, force: true });
+  return { ...files, ...extra };
 }
+
+/**
+ * A clone of an origin where `main` holds ADR 0001, branch `a` adds `0002` and `main` then adds
+ * `0003`, `.gitattributes` as given: built once per file, so each test only merges.
+ */
+function twoAdrsRepo(t, attributes = ATTRIBUTES) {
+  return gitFixture(t, `merge-generated:two-adrs:${attributes === null ? 'none' : 'repo'}`, (dir) => {
+    const base = attributes === null ? {} : { '.gitattributes': attributes };
+    const { origin } = seed(dir, [
+      { branch: 'main', files: adrTree(dir, ['0001'], base), message: 'adr 0001' },
+      { branch: 'a', files: adrTree(dir, ['0001', '0002']), message: 'adr 0002' },
+      { branch: 'main', files: adrTree(dir, ['0001', '0003']), message: 'adr 0003' },
+    ]);
+    const repo = path.join(dir, 'repo');
+    git(dir, 'clone', '-q', origin, repo);
+    git(repo, 'branch', '-q', 'a', 'origin/a');
+    return { dir, repo };
+  });
+}
+
+/** Answers the merge of `a` into `main` in a `twoAdrsRepo`. */
+const twoAdrs = (repo) => spawnSync('git', ['merge', '-q', '--no-ff', '--no-commit', 'a'], { cwd: repo, encoding: 'utf8' });
 
 const conflicted = (repo) => git(repo, 'diff', '--name-only', '--diff-filter=U').split('\n').filter(Boolean);
 const indexed = (repo) => fs.readFileSync(path.join(repo, INDEX), 'utf8').match(/^\| \d{4} \|/gm);
@@ -83,9 +115,9 @@ test('a conflicted landing committed with --no-edit keeps the landing message as
 });
 
 test('two branches each adding an ADR row merge with no conflict', (t) => {
-  const { repo } = scratch(t);
+  const { repo } = twoAdrsRepo(t);
 
-  const merge = twoAdrs(repo, { first: '0002', second: '0003' });
+  const merge = twoAdrs(repo);
 
   assert.equal(merge.status, 0, merge.stdout + merge.stderr);
   assert.deepEqual(conflicted(repo), []);
@@ -93,8 +125,8 @@ test('two branches each adding an ADR row merge with no conflict', (t) => {
 });
 
 test('rows merged out of number order are regenerated', (t) => {
-  const { repo } = scratch(t);
-  const merge = twoAdrs(repo, { first: '0002', second: '0003' });
+  const { repo } = twoAdrsRepo(t);
+  const merge = twoAdrs(repo);
   assert.equal(merge.status, 0, merge.stdout + merge.stderr);
   assert.equal(checkIndex(path.join(repo, 'docs', 'adr')).ok, false, 'union keeps ours first: 0003 before 0002');
 
@@ -105,19 +137,26 @@ test('rows merged out of number order are regenerated', (t) => {
   assert.equal(refreshIndex(repo), false, 'a current index is left alone');
 });
 
+/**
+ * A clone on `pilot`, tracking origin's, of an origin where `main` holds ADR 0001 with `base`,
+ * `feat/one` adds 0002 with `feature` laid over, and `pilot`, cut from `main`, adds 0003 with
+ * `pilot`; `feature` is the sha of `feat/one`. Built once per `key`.
+ */
+function landingRepo(t, key, { base = {}, feature = {}, pilot = {} }) {
+  return gitFixture(t, `merge-generated:landing:${key}`, (dir) => {
+    const { origin, sha } = seed(dir, [
+      { branch: 'main', files: adrTree(dir, ['0001'], base), message: 'adr 0001' },
+      { branch: 'feat/one', files: adrTree(dir, ['0001', '0002'], feature), message: 'adr 0002' },
+      { branch: 'pilot', from: 'main', files: adrTree(dir, ['0001', '0003'], pilot), message: 'adr 0003' },
+    ]);
+    const repo = path.join(dir, 'repo');
+    git(dir, 'clone', '-q', '-b', 'pilot', origin, repo);
+    return { dir, repo, origin, feature: sha['feat/one'] };
+  });
+}
+
 test('mergeIntoPilot lands two features that each add an ADR', (t) => {
-  const { dir, repo } = scratch(t);
-  const origin = path.join(dir, 'origin.git');
-  git(dir, 'clone', '-q', '--bare', repo, origin);
-  git(repo, 'remote', 'add', 'origin', origin);
-  git(repo, 'push', '-q', 'origin', 'main:pilot');
-  git(repo, 'checkout', '-q', '-b', 'feat/one');
-  addAdr(repo, '0002');
-  const feature = git(repo, 'rev-parse', 'HEAD');
-  git(repo, 'checkout', '-q', '-b', 'pilot', 'origin/pilot');
-  addAdr(repo, '0003');
-  git(repo, 'push', '-q', 'origin', 'pilot');
-  git(repo, 'fetch', '-q', 'origin');
+  const { dir, repo, origin, feature } = landingRepo(t, 'repo', { base: { '.gitattributes': ATTRIBUTES } });
 
   const result = mergeIntoPilot({ cwd: repo, source: feature, message: 'Land feat/one', test: passing, label: 'feat/one' });
 
@@ -186,8 +225,8 @@ test('an index under a symlinked docs/adr is never followed', (t) => {
 
 test('the gitattributes line is pinned', (t) => {
   assert.match(ATTRIBUTES, /^docs\/adr\/README\.md merge=union$/m);
-  const { repo } = scratch(t, null);
-  const merge = twoAdrs(repo, { first: '0002', second: '0003' });
+  const { repo } = twoAdrsRepo(t, null);
+  const merge = twoAdrs(repo);
   assert.notEqual(merge.status, 0, 'without the line the rows conflict');
   assert.deepEqual(conflicted(repo), [INDEX]);
 
@@ -200,33 +239,19 @@ test('the gitattributes line is pinned', (t) => {
 
 const EXEMPT = 'scripts/vocabulary-exempt.txt';
 
-/** Appends `prefix` to the exempt list and adds ADR `number`, one commit: a feature that exempts a path and decides something. */
-function exemptAndDecide(repo, prefix, number) {
-  fs.appendFileSync(path.join(repo, EXEMPT), `${prefix}\n`);
-  addAdr(repo, number);
-}
-
 const readExempt = (repo) => fs.readFileSync(path.join(repo, EXEMPT), 'utf8').split('\n').filter(Boolean);
 
-/** A repository on `main` with this repository's `.gitattributes`, its exempt list, and ADR 0001. */
-function exemptScratch(t) {
-  return gitFixture(t, 'merge-generated:exempt', (dir) => {
-    const repo = path.join(dir, 'repo');
-    git(dir, 'init', '-q', '-b', 'main', repo);
-    fs.writeFileSync(path.join(repo, '.gitattributes'), ATTRIBUTES);
-    fs.mkdirSync(path.join(repo, 'scripts'), { recursive: true });
-    fs.writeFileSync(path.join(repo, EXEMPT), `${exemptPaths().join('\n')}\n`);
-    addAdr(repo, '0001');
-    return { dir, repo };
+/**
+ * A `landingRepo` with this repository's `.gitattributes` and exempt list on `main`, where the
+ * feature and `pilot` each exempt a path and decide something, one commit each.
+ */
+function exemptLanding(t) {
+  const listed = `${exemptPaths().join('\n')}\n`;
+  return landingRepo(t, 'exempt', {
+    base: { '.gitattributes': ATTRIBUTES, [EXEMPT]: listed },
+    feature: { [EXEMPT]: `${listed}docs/design/one/\n` },
+    pilot: { [EXEMPT]: `${listed}docs/design/two/\n` },
   });
-}
-
-/** A bare origin of `repo` with main pushed as `branch`, and the checkout on `main` with origin set. */
-function withOrigin(dir, repo) {
-  const origin = path.join(dir, 'origin.git');
-  git(dir, 'clone', '-q', '--bare', repo, origin);
-  git(repo, 'remote', 'add', 'origin', origin);
-  return origin;
 }
 
 function assertBothKept(repo) {
@@ -239,16 +264,7 @@ function assertBothKept(repo) {
 }
 
 test('land merges two features that each add an exempt path and an ADR', (t) => {
-  const { dir, repo } = exemptScratch(t);
-  const origin = withOrigin(dir, repo);
-  git(repo, 'push', '-q', 'origin', 'main:pilot');
-  git(repo, 'checkout', '-q', '-b', 'feat/one');
-  exemptAndDecide(repo, 'docs/design/one/', '0002');
-  const feature = git(repo, 'rev-parse', 'HEAD');
-  git(repo, 'checkout', '-q', '-b', 'pilot', 'origin/pilot');
-  exemptAndDecide(repo, 'docs/design/two/', '0003');
-  git(repo, 'push', '-q', 'origin', 'pilot');
-  git(repo, 'fetch', '-q', 'origin');
+  const { dir, repo, origin, feature } = exemptLanding(t);
 
   const result = mergeIntoPilot({ cwd: repo, source: feature, message: 'Land feat/one', test: passing, label: 'feat/one', side: 'theirs' });
 
@@ -259,16 +275,8 @@ test('land merges two features that each add an exempt path and an ADR', (t) => 
 });
 
 test('sync merges both', (t) => {
-  const { dir, repo } = exemptScratch(t);
-  const origin = withOrigin(dir, repo);
-  git(repo, 'push', '-q', 'origin', 'main:pilot');
-  git(repo, 'checkout', '-q', '-b', 'main-moved');
-  exemptAndDecide(repo, 'docs/design/one/', '0002');
-  const mainTip = git(repo, 'rev-parse', 'HEAD');
-  git(repo, 'checkout', '-q', '-b', 'pilot', 'origin/pilot');
-  exemptAndDecide(repo, 'docs/design/two/', '0003');
-  git(repo, 'push', '-q', 'origin', 'pilot');
-  git(repo, 'fetch', '-q', 'origin');
+  // main moved on by the commit `landingRepo` calls the feature.
+  const { dir, repo, origin, feature: mainTip } = exemptLanding(t);
 
   const result = mergeIntoPilot({ cwd: repo, source: mainTip, message: 'Sync main', test: passing, label: 'main', side: 'ours' });
 
