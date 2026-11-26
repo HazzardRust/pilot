@@ -5,6 +5,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,12 +24,12 @@ const write = (dir, rel, text) => {
 
 /** One commit on main holding every trigger, a test, and a module that test imports. */
 const REPO = (dir) => {
-  git(dir, 'init', '-q', '-b', 'main');
-  for (const rel of [...FULL_TRIGGERS, 'lib/used.mjs']) write(dir, rel, 'x\n');
-  write(dir, 'test/t.test.mjs', "import '../lib/used.mjs';\n");
-  git(dir, 'add', '.');
-  git(dir, 'commit', '-q', '-m', 'one');
-  return { dir };
+  const files = Object.fromEntries([...FULL_TRIGGERS, 'lib/used.mjs'].map((rel) => [rel, 'x\n']));
+  files['test/t.test.mjs'] = "import '../lib/used.mjs';\n";
+  const { origin } = seed(dir, [{ branch: 'main', files, message: 'one' }]);
+  const work = path.join(dir, 'work');
+  git(dir, 'clone', '-q', origin, work);
+  return { dir: work };
 };
 
 const touched = (t, rel) => {
@@ -52,8 +53,12 @@ test('the lockfile runs full', (t) => {
 test('the gate runs full', (t) => {
   const scripts = ['scripts/gate.mjs', 'scripts/gate-slots.mjs', 'scripts/count-spawns.mjs', 'scripts/select-tests.mjs'];
   for (const rel of scripts) assert.ok(FULL_TRIGGERS.includes(rel), rel);
+  const { dir } = gitFixture(t, 'fallback:repo', REPO);
   for (const rel of scripts) {
-    const s = touched(t, rel);
+    fs.appendFileSync(path.join(dir, rel), 'more\n');
+    const s = selectTests({ cwd: dir, since: 'main' });
+    // Back to the committed text, so the next script is the only change.
+    write(dir, rel, 'x\n');
     assert.equal(s.files, null, rel);
     assert.equal(s.reason, `${rel} changed`);
   }
