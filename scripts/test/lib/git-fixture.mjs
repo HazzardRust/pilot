@@ -48,6 +48,13 @@ fs.writeFileSync(GLOBAL_CONFIG, [
 ].join('\n'));
 process.env.GIT_CONFIG_GLOBAL = GLOBAL_CONFIG;
 
+/**
+ * The test deadline: what a gate1 lineage or verdict check under test arms when the test is not
+ * about the deadline, so a slow git under a parallel suite never trips the deck's live 5 s one
+ * (lineage-slow-git L2). Finite, so a hung git still fails the test rather than hanging it.
+ */
+export const GIT_SLOW_MS = 120_000;
+
 /** key -> { dir, template, value, test }: `test` is the TestContext that last had `dir`. */
 const fixtures = new Map();
 const made = [];
