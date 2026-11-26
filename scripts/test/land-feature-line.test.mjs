@@ -78,10 +78,9 @@ function landedLower(seed) {
   fs.writeFileSync(path.join(seed, 'x.txt'), 'x\n');
   git(seed, 'add', 'x.txt');
   git(seed, 'commit', '-q', '-m', 'x');
-  git(seed, 'push', '-q', 'origin', 'feat/x');
   git(seed, 'checkout', '-q', '-B', 'landing', 'origin/pilot');
   git(seed, 'merge', '-q', '--no-ff', '-m', 'Merge feat/x into pilot', 'feat/x');
-  git(seed, 'push', '-q', 'origin', 'landing:pilot');
+  git(seed, 'push', '-q', 'origin', 'feat/x', 'landing:pilot');
 }
 
 test('a landing based on feat/x names the PR below', (t) => {

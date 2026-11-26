@@ -63,6 +63,9 @@ function buildScratchRepos(root, runs) {
   return { origin, second, work };
 }
 
+/** origin's feat/x a.txt and pilot.txt, one line each, in one `git show`. */
+const shown = (bare) => git(bare, 'show', 'feat/x:a.txt', 'feat/x:pilot.txt').split('\n');
+
 const listed = (bare) => git(bare, 'for-each-ref', '--format=%(refname:short)', 'refs/heads/').split('\n');
 
 test('integrate merges a slice from the second remote and pushes feat to origin', (t) => {
@@ -71,10 +74,12 @@ test('integrate merges a slice from the second remote and pushes feat to origin'
   const result = integrate('slice/x-s1', { cwd: work, test: passing, install: () => {}, host: githubHost(noPr()) });
 
   assert.equal(result.ok, true, result.line);
-  assert.equal(git(origin, 'rev-parse', 'feat/x'), git(work, 'rev-parse', 'HEAD'), 'feat/x pushed to origin');
-  assert.equal(git(origin, 'show', 'feat/x:a.txt'), 'a', "origin's feat/x holds the slice");
-  assert.equal(git(origin, 'show', 'feat/x:pilot.txt'), 'pilot', "and second's pilot as the base");
-  assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge slice/x-s1');
+  const [head, subject] = git(work, 'log', '-1', '--format=%H%n%s').split('\n');
+  const [slice, base] = shown(origin);
+  assert.equal(git(origin, 'rev-parse', 'feat/x'), head, 'feat/x pushed to origin');
+  assert.equal(slice, 'a', "origin's feat/x holds the slice");
+  assert.equal(base, 'pilot', "and second's pilot as the base");
+  assert.equal(subject, 'Merge slice/x-s1');
   assert.deepEqual(listed(origin).sort(), ['feat/x', 'main'], 'origin lists no slice/ or pilot');
   assert.ok(!listed(second).includes('feat/x'), 'feat/ never pushed to the run remote');
 });
@@ -87,8 +92,9 @@ test('integrate under none merges a local slice', (t) => {
   assert.equal(result.ok, true, result.line);
   assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge slice/x-s1');
   assert.match(result.line, new RegExp(`\(base pilot@${git(work, 'rev-parse', '--short', 'pilot')}\)`), 'the base is the local pilot');
-  assert.equal(git(origin, 'show', 'feat/x:pilot.txt'), 'pilot');
-  assert.equal(git(origin, 'show', 'feat/x:a.txt'), 'a');
+  const [slice, base] = shown(origin);
+  assert.equal(base, 'pilot');
+  assert.equal(slice, 'a');
   assert.deepEqual(listed(origin).sort(), ['feat/x', 'main'], 'origin lists no slice/ or pilot');
 });
 

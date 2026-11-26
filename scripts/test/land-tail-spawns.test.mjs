@@ -21,14 +21,13 @@ const listed = (repo) => git(repo, 'worktree', 'list', '--porcelain').split('\n'
 test('the tail deletes and removes what it did before', (t) => {
   const { gitIn, x } = repos(t, 'x');
   const root = path.dirname(x);
-  // A merged design/x on origin, and a slice worktree merged into the feature.
-  git(x, 'push', '-q', 'origin', 'HEAD:refs/heads/design/x');
+  // A merged design/x on origin, and a slice worktree merged into the feature: design/x at the feature's tip
+  // before the merge (its first parent), pushed with the slice and the feature in one push.
   const slice = path.join(root, 'x-s1');
   git(x, 'worktree', 'add', '-q', '-b', 'slice/x-s1', slice, 'HEAD');
   commitFile(slice, 's1.txt', 's1\n', 'slice s1');
-  git(slice, 'push', '-q', 'origin', 'slice/x-s1');
   git(x, 'merge', '-q', '--no-ff', '-m', 'feat(x): S1', 'slice/x-s1');
-  git(x, 'push', '-q', 'origin', 'feat/x');
+  git(x, 'push', '-q', 'origin', 'HEAD^1:refs/heads/design/x', 'slice/x-s1', 'feat/x');
   const as = Object.fromEntries(listed(x).map((p) => [path.basename(p), p]));
 
   const value = land({ cwd: x, git: gitIn(x), host: fakeGh().host, test: passing });

@@ -19,10 +19,9 @@ test('the landing prints what it printed on the base and leaves the same merge o
   // A slice integrated into the feature, so the tail's deletion prints too.
   git(x, 'checkout', '-q', '-b', 'slice/x-s1');
   commitFile(x, 's1.txt', 's1\n', 'slice s1');
-  git(x, 'push', '-q', 'origin', 'slice/x-s1');
   git(x, 'checkout', '-q', 'feat/x');
   git(x, 'merge', '-q', '--no-ff', '-m', 'feat(x): S1', 'slice/x-s1');
-  git(x, 'push', '-q', 'origin', 'feat/x');
+  git(x, 'push', '-q', 'origin', 'slice/x-s1', 'feat/x');
   // origin's pilot as the setup left it (it pushes no pilot), and the feature's tip as pushed: one read.
   const [before, tip] = git(origin, 'rev-parse', 'pilot', 'feat/x').split('\n');
 
