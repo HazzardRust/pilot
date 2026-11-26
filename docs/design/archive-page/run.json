@@ -149,7 +149,7 @@
     },
     {
       "slice": "archive-page",
-      "state": "fix round integrated",
+      "state": "merging base pilot@6e1806b (feat at 461d49e lacked it)",
       "branch": "fix2/archive-page",
       "worktree": "C:/Users/jrylk/Projects/pilot-fix2-archive-page",
       "pr": 139
@@ -220,8 +220,8 @@
     "kept: S19d finding — 900 px unbroken tokens clip in the title/field column",
     "kept: S19e simplify — third 0.6 advance copy, kinds parsed twice, app.rs archive condition twice, println! in archive_align and archive_lag"
   ],
-  "next": "feat/archive-page at 31e2deb; checks --wait; then fresh pilot-qa posts a NEW walkthrough at the tip (itm_00bd1d6f40e3 closed by user)",
-  "updatedAt": "2026-11-26T05:28:39.440Z",
+  "next": "co-pilot resumed; integrating pilot 6e1806b into feat/archive-page, then checks --wait, then fresh pilot-qa posts a new walkthrough",
+  "updatedAt": "2026-11-26T06:27:29.895Z",
   "friction": [
     {
       "agent": "pilot:pilot-co-pilot",
