@@ -65,25 +65,49 @@ fn to_list(s: &mut State) {
     go(s, query);
 }
 
-fn fields(list: &[Field], cx: &mut Cx<State>) -> El {
+/// A list's `label value` lines, every label in one column `label_w` wide, so every value starts at one x
+/// (S19); each value keyed `archive-detail-<name>-<i>`.
+fn fields(list: &[Field], name: &str, label_w: f32, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
     let (t, ui) = (theme::tokens(dark), tok::theme(dark));
-    list.iter().fold(col().gap(space::within), |out, f| {
-        // Beside its label a Markdown block takes the row's rest and wraps there, never its own full width.
-        let value = if f.markdown {
-            theme::markdown(f.value.clone(), dark)
-                .grow(1.0)
-                .min_w(space::s0)
-        } else {
-            theme::content(text(&f.value).font(type_::BODY).color(ui.text).wrap(), dark)
-        };
-        out.child(
-            row()
-                .gap(space::between)
-                .child(text(&f.label).font(type_::CAPTION).color(t.quiet))
-                .child(value),
-        )
-    })
+    list.iter()
+        .enumerate()
+        .fold(col().gap(space::within), |out, (i, f)| {
+            // Beside its label a value takes the row's rest and wraps there, never its own full width.
+            let value = if f.markdown {
+                theme::markdown(f.value.clone(), dark)
+            } else {
+                theme::content(text(&f.value).font(type_::BODY).color(ui.text).wrap(), dark)
+            };
+            out.child(
+                row()
+                    .gap(space::between)
+                    .child(
+                        text(&f.label)
+                            .font(type_::CAPTION)
+                            .color(t.quiet)
+                            .w(label_w),
+                    )
+                    .child(
+                        value
+                            .key(format!("archive-detail-{name}-{i}"))
+                            .grow(1.0)
+                            .min_w(space::s0),
+                    ),
+            )
+        })
+}
+
+/// The label column's width: the longest label of the detail's fields and its plan's, in caption `ch`.
+fn label_width(d: &Detail) -> f32 {
+    let longest = d
+        .fields
+        .iter()
+        .chain(d.plan.iter().flatten())
+        .map(|f| f.label.chars().count())
+        .max()
+        .unwrap_or(0);
+    longest as f32 * crate::regions::archive::ch()
 }
 
 fn heading(words: &str, cx: &mut Cx<State>) -> El {
@@ -121,9 +145,11 @@ pub fn draw(detail: &Option<Detail>, cx: &mut Cx<State>) -> El {
             text(&d.title).font(type_::BODY).color(ui.text).wrap(),
             dark,
         ))
-        .child(fields(&d.fields, cx));
+        .child(fields(&d.fields, "field", label_width(d), cx));
     if let Some(plan) = &d.plan {
-        region = region.child(heading("Plan", cx)).child(fields(plan, cx));
+        region = region
+            .child(heading("Plan", cx))
+            .child(fields(plan, "plan", label_width(d), cx));
     }
     if !d.replies.is_empty() {
         region = region.child(heading("Thread", cx));
