@@ -64,10 +64,12 @@ const POLL_MS = 1_000;
  * 2026-11-26, land-batching S6 on the base 6e1806b (user-pilot-branch, pr-overview landed): their added tests read
  *   13589 (node 850, git 12447, other 292) locally (docs/design/land-batching/cost-after.txt); the ceilings are that
  *   plus the Windows-CI delta above (8 spawns / 6 git), 13597 / 12453: the measured bars (itm_9ac7a84014e9).
+ * 2026-11-27, test-body-git S13: the fixture git folded out of the test bodies, so the signed bars are met again and the
+ *   ceilings are 11000 / 10000, flat, no headroom (L7; docs/design/test-body-git/cost-after.txt).
  */
-export const SPAWN_CEILING = 13597;
-/** The most git processes a full suite may start (land-batching S7, S6); see the dated lines above. */
-export const GIT_CEILING = 12453;
+export const SPAWN_CEILING = 11000;
+/** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13); see the dated lines above. */
+export const GIT_CEILING = 10000;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 
