@@ -14,7 +14,6 @@ const { agentsView } = await import('../view/agents.mjs');
 const { reportsView } = await import('../view/reports.mjs');
 const { viewOf } = await import('../view/index.mjs');
 const { renderAgents, reportsOf } = await import('../ui/render-rail.mjs');
-
 const MINE = 'C:/work/pilot';
 const NOW = Date.parse('2026-11-20T12:00:00.000Z');
 
@@ -74,6 +73,50 @@ test('quiet begins at 30 s', () => {
   assert.deepEqual(agents.map(({ quietS, quiet }) => ({ quietS, quiet })).sort((a, b) => a.quietS - b.quietS), [
     { quietS: 29, quiet: false }, { quietS: 30, quiet: true },
   ]);
+  forgetAgents();
+});
+
+test('an agent\'s start reads as the HTML deck\'s', () => {
+  forgetAgents();
+  // The first heartbeat starts the agent; the next ones, inside the 90 s window, keep it live.
+  for (const ageS of [180, 120, 60, 5]) beat('a1', 'pilot:pilot-implementer', ageS);
+
+  const { agents } = agentsView(reads([], listAgents(NOW)), { run: MINE }, NOW);
+
+  assert.equal(agents[0].started, '3 mins ago');
+  assert.equal(agents[0].quietS, 5);
+  forgetAgents();
+});
+
+test('the overview groups by deck', () => {
+  forgetAgents();
+  const OTHER = 'C:/work/elsewhere';
+  noteAgent({ agentId: 'b1', agentType: 'Explore', cwd: OTHER }, NOW - 5000);
+  beat('a1', 'pilot:pilot-qa', 5);
+  const three = reads([], listAgents(NOW));
+  // A third deck with nobody live has no section, as the page drops a scope with no agents.
+  three.runs = [
+    ...three.runs,
+    { repo: OTHER, startedAt: '2026-11-01T09:30:00.000Z', pid: process.pid },
+    { repo: 'C:/work/idle', startedAt: '2026-11-01T09:45:00.000Z', pid: process.pid },
+  ];
+
+  const { groups } = agentsView(three, { run: '' }, NOW);
+
+  assert.deepEqual(groups.map(({ tab, agents }) => [tab, agents.map(({ name }) => name)]), [
+    ['pilot', ['pilot:pilot-qa']],
+    ['elsewhere', ['Explore']],
+  ]);
+  forgetAgents();
+});
+
+test('a deck\'s own tab has no groups', () => {
+  forgetAgents();
+  beat('a1', 'pilot:pilot-qa', 5);
+
+  const view = agentsView(reads([], listAgents(NOW)), { run: MINE }, NOW);
+
+  assert.equal(view.groups, undefined);
   forgetAgents();
 });
 

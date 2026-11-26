@@ -67,8 +67,8 @@ const isReview = (review) => {
   assert.ok(Number.isSafeInteger(review.number));
 };
 
-/** The **Host** surface, whole: no `whoami` and no `name` (user answer itm_6eca66849bdb). */
-const HOST_KEYS = ['checks', 'cli', 'comment', 'edit', 'open', 'review', 'reviews', 'signedIn', 'testedTrees', 'upsertComment'];
+/** The **Host** surface, whole: no `whoami` and no `name` (user answer itm_6eca66849bdb); `login` names the pilot branch (user-pilot-branch L3). */
+const HOST_KEYS = ['checks', 'cli', 'comment', 'edit', 'login', 'open', 'review', 'reviews', 'signedIn', 'testedTrees', 'upsertComment'];
 
 const CONTRACT = [
   ['reviews', (host) => host.reviews({ state: 'all' }), (said) => { assert.equal(said.length, 3); said.forEach(isReview); assert.deepEqual(said.map((r) => r.state), ['open', 'merged', 'closed']); }],

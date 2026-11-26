@@ -79,6 +79,8 @@ function evaluate(source, context) {
   }, context);
   const functions = {
     contains: (haystack, needle) => (Array.isArray(haystack) || typeof haystack === 'string') && haystack.includes(needle),
+    // Actions compares without case.
+    endsWith: (text, suffix) => String(text ?? '').toLowerCase().endsWith(String(suffix ?? '').toLowerCase()),
     fromJSON: (json) => JSON.parse(json),
   };
   function primary() {
@@ -161,7 +163,6 @@ test('ubuntu keeps main-never-red\'s triggers', () => {
   assert.ok(namesMain(block(pullRequest, 'branches')), 'pull_request names main');
   assert.match(block(pullRequest, 'branches'), /['"]feat\/\*\*['"]/, 'a slice PR into a feature branch (A3)');
   assert.ok(namesMain(block(block(on, 'push'), 'branches')), 'push names main');
-  assert.ok(/(^|[\s[,'"-])pilot($|[\s\],'"])/.test(block(block(on, 'push'), 'branches')), 'push names pilot, so a base reads a run');
   assert.doesNotMatch(block(block(on, 'push'), 'branches'), /feat/, 'push stays on main and pilot, never feat');
   const types = block(pullRequest, 'types');
   for (const type of ['opened', 'synchronize', 'reopened', 'ready_for_review', 'labeled']) {
@@ -177,16 +178,30 @@ test('ubuntu keeps main-never-red\'s triggers', () => {
   }
 });
 
-test('a PR to pilot runs the gate', () => {
-  const branches = block(block(block(workflowText(), 'on'), 'pull_request'), 'branches');
-  assert.match(branches, /(^|[\s[,'"-])pilot($|[\s\],'"])/, 'pull_request names pilot (L6)');
-  assert.deepEqual(osesFor(event('pull_request', { baseRef: 'pilot', isPrivate: false })), THREE, 'a public PR to pilot');
+// user-pilot-branch L11: the pilot branch is `<login>-pilot`, so the triggers and the draft rule follow the suffix.
+test('a PR to a pilot branch runs the gate', () => {
+  const on = block(workflowText(), 'on');
+  for (const trigger of ['pull_request', 'push']) {
+    assert.match(block(block(on, trigger), 'branches'), /['"]\*-pilot['"]/, `${trigger} names '*-pilot' (L6, L11)`);
+  }
+  assert.deepEqual(osesFor(event('pull_request', { baseRef: 'hazzardrust-pilot', isPrivate: false })), THREE, 'a public PR to a pilot branch');
 });
 
-test('a draft PR to pilot runs the gate', () => {
+test('a draft PR to a pilot branch runs the gate', () => {
+  assert.deepEqual(osesFor(event('pull_request', { draft: true, baseRef: 'hazzardrust-pilot', isPrivate: false })), THREE, 'a public draft to a pilot branch');
+  assert.deepEqual(osesFor(event('pull_request', { draft: true, baseRef: 'hazzardrust-pilot' })), ['ubuntu-latest'], 'a private draft to a pilot branch');
+  assert.deepEqual(osesFor(event('pull_request', { draft: true, baseRef: 'pilots' })), [], 'a draft to a branch that only ends in pilot skips');
+  assert.deepEqual(osesFor(event('pull_request', { draft: true, baseRef: 'feat/x', isPrivate: false })), [], 'a draft slice PR still skips');
+});
+
+// user-pilot-branch A6 (added): until a repository moves, the legacy `pilot` branch stays a trigger.
+test('a draft PR to the legacy pilot branch runs the gate until the move', () => {
   assert.deepEqual(osesFor(event('pull_request', { draft: true, baseRef: 'pilot', isPrivate: false })), THREE, 'a public draft to pilot');
   assert.deepEqual(osesFor(event('pull_request', { draft: true, baseRef: 'pilot' })), ['ubuntu-latest'], 'a private draft to pilot');
-  assert.deepEqual(osesFor(event('pull_request', { draft: true, baseRef: 'feat/x', isPrivate: false })), [], 'a draft slice PR still skips');
+  const on = block(workflowText(), 'on');
+  for (const trigger of ['pull_request', 'push']) {
+    assert.match(block(block(on, trigger), 'branches'), /(^|[\s[,])pilot($|[\s\],])/, `${trigger} names pilot (A6)`);
+  }
 });
 
 test('the gate workflow cancels a superseded run', () => {
