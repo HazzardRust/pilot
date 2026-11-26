@@ -51,7 +51,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed dcfbb14 on 355d0e1, ts APPROVE; product-only run 12,815 / git 11,676 (bars 11,000 / 10,000); ceilings set to the run's own",
+      "state": "integrated ef9ee6c; ceiling fix 510fe3f (12823 / 11682); checks green at 510fe3f",
       "after": [
         "S3",
         "S4",
@@ -64,10 +64,12 @@
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "integrating slice/land-batching-s6-base at 7e42c6e (ts approve, B1-B8)",
       "after": [
         "S7"
-      ]
+      ],
+      "branch": "slice/land-batching-s6-base",
+      "worktree": "C:/Users/jrylk/Projects/pilot-land-batching-s6-base"
     },
     {
       "slice": "S8",
@@ -89,8 +91,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s9"
     }
   ],
-  "next": "Integrating S7 dcfbb14; then S6.",
-  "updatedAt": "2026-11-25T14:51:28.375Z",
+  "next": "Co-pilot (successor) integrating S6-base; then checks, base check, fundamentalist on PR 156, triage, fix round, QA.",
+  "updatedAt": "2026-11-26T08:06:16.612Z",
   "friction": [
     {
       "agent": "architect",
@@ -267,6 +269,66 @@
       "what": "product cut saved ~896 git against an estimated 1,500-2,100; fixture git rose 149; S6 must close 1,815 total / 1,676 git against its -500 to -900 estimate",
       "evidence": "S7 cost-after.txt, spawns-after.txt vs spawns-before.txt",
       "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 implementer handed back after 3 tool calls claiming lost context; nothing had been built; resumed with a continue",
+      "evidence": "S6 first hand-back: 3 tool uses, 26 s",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S7 set zero-headroom ceilings from one local run; Windows CI counts 8 more spawns / 6 more git and goes red",
+      "evidence": "run 45640034010 windows: spawns 12823 (git 11682) vs ceilings 12815 / 11676",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "full test:cost with the census probe took ~27 min; the census summariser is not in the repo, rebuilt in scratch",
+      "evidence": "S6 report: total 644 files 1632.8 s",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "A1's fixture estimate assumed shared helpers; ~90% of fixture git lives in ~100 test bodies",
+      "evidence": "S6 census: land-repos.mjs ~474 of 4,197",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "forced hand-back with an implementer live again: no TaskOutput, an until-loop Monitor refused by a hook, then handback-send-enforce while the child's 27-min test:cost ran",
+      "evidence": "land-batching co-pilot, S6-base implementer mid test:cost",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "int-s6.log held only the refusal line, no evidence rows; B1-B3 re-taken from S6's own verification in a throwaway worktree",
+      "evidence": "4d016387 scratchpad int-s6.log: NOT integrated ... checks red at ef9ee6c",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "base pilot moved under the run: integrate/land/sync conflicted and the base's tests added ~780 spawns, moving the measured bars again",
+      "evidence": "test:changed spawns 13590 (git 12447) vs 12815/11674",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "suite needs PILOT_BRANCH set; bare node --test on land/integrate/sync files fails 197 of 288",
+      "evidence": "first run 91/288 pass; one full file-set rerun",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "test:changed --since=origin/pilot runs the full suite whenever gate.mjs differs, so selection gate and test:cost were two ~30 min full runs back to back",
+      "evidence": "implementer report",
+      "size": 30
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot forced to hand back with a child implementer live; its report had no reader until main redirected it",
+      "evidence": "hand-back named live implementer mid test:cost",
+      "size": 1
     }
   ]
 }
