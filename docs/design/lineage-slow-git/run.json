@@ -12,13 +12,23 @@
       "state": "planned"
     }
   ],
-  "next": "Open for user: gate1 itm_aa9fc14c7393 (this), gate2 itm_4e8b54399a97 pr-overview (press: lander), itm_9ac7a84014e9 land-batching bars, itm_4c410e19d219 prune-worktrees ff. Yellow empty: co-pilot itm_0476cd419c86. prune S8 impl a70f6f2e7660bbeb7 may report. archive-page pivoted, queued; QA a46725a1845de5802 idle. Each slug's record has its next.",
-  "updatedAt": "2026-11-25T18:10:41.631Z",
+  "next": "Open for user: gate1 itm_aa9fc14c7393 (this); gate2 itm_f0032b7402c6 user-pilot-branch PR #157 and gate2 itm_4e8b54399a97 pr-overview (both pilot-owned; on press spawn pilot-lander); itm_9ac7a84014e9 land-batching bars; itm_4c410e19d219 prune ff. Yellow empty: co-pilot archive-page itm_2fe34eca6f66 (S19 in flight, see its record). HeatGuard hibernates the laptop at 95C: one heavy gate at a time.",
+  "updatedAt": "2026-11-26T03:56:14.537Z",
   "friction": [
     {
       "agent": "pilot-architect",
       "what": "one ~5,500-line land log per landing; finding the failing test meant grepping -B12 around 'within 5 s'",
       "evidence": "lineage-slow-git architect report",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "pilot took over two co-pilot lanes after forced hand-backs (7 across two co-pilots); reports and trailers relayed by hand",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "deck_status `next` 400-char cap refused 4 calls; each cost a resend",
       "size": 1
     }
   ]
