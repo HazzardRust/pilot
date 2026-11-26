@@ -43,6 +43,11 @@ impl Local {
     pub fn builds(&self) -> usize {
         self.list.borrow().builds
     }
+
+    /// The view was replaced: the next frame builds the list again.
+    pub fn new_view(&mut self) {
+        self.list.get_mut().from = None;
+    }
 }
 
 /// The list as places in the view (S17): rebuilt only when the view, the kind, the search or the sort
@@ -63,8 +68,9 @@ struct List {
     layouts: usize,
 }
 
-/// What the list was built from. The view is the archive region's address: the live reader replaces the
-/// whole `View` while the one drawn still stands (`app::poll`), so a new view never takes its address.
+/// What the list was built from. The view is the archive region's address, which a view put in place of
+/// the drawn one never shares; `app::poll` also calls [`Local::new_view`], since several views can land
+/// with no draw between them (a hidden window) and a later one take a freed address.
 #[derive(Debug, PartialEq)]
 struct From {
     view: usize,
@@ -80,6 +86,7 @@ enum Item {
     Day {
         section: usize,
         first: bool,
+        open: bool,
         rows: bool,
     },
     Row {
@@ -139,6 +146,7 @@ impl List {
             items.push(Item::Day {
                 section,
                 first: section == 0,
+                open,
                 rows: shown > 0,
             });
             key(format!("archive-section-{day_key}"));
@@ -158,7 +166,8 @@ impl List {
     }
 }
 
-/// The sections `from`'s filter and sort leave of `v`, as places in it.
+/// The sections `from`'s filter and sort leave of `v`, as places in it, found again by day key and row id,
+/// which the view writes unique (`deck/view/archive.mjs`; the rows were already keyed by id).
 fn sections(v: &Value, from: &From) -> Result<Vec<(usize, Vec<usize>)>, serde_json::Error> {
     let days = Vec::<Day>::deserialize(&v["days"])?;
     let search = from.search.as_str();
@@ -377,18 +386,11 @@ fn item(s: &State, i: usize, dark: bool) -> El {
         Some(Item::Day {
             section,
             first,
+            open,
             rows,
         }) => {
             let (d, kept) = &list.sections[section];
-            let day = &days[*d];
-            let open = s
-                .regions
-                .archive
-                .folded
-                .get(day["key"].as_str().unwrap_or_default())
-                .copied()
-                .unwrap_or_else(|| day["open"].as_bool().unwrap_or(false));
-            heading(day, kept.len(), open, dark)
+            heading(&days[*d], kept.len(), open, dark)
                 .pt(if first { 0.0 } else { space::between })
                 .pb(if rows { space::pad } else { 0.0 })
         }
