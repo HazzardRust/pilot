@@ -8,11 +8,11 @@
 // A red run's log goes under a home of this process's own, never the real one; the
 // fixture seam imports fake-home.mjs first.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 
 const { mergeIntoPilot, sync } = await import('../sync.mjs');
@@ -27,26 +27,18 @@ function scratchRepos(t) {
 }
 
 function buildScratchRepos(root) {
-  const origin = path.join(root, 'origin.git');
+  const { origin, sha } = seed(root, [
+    { branch: 'main', files: {}, message: 'main' },
+    { branch: 'pilot', files: {}, message: 'landed on pilot' },
+    // A file, not an empty commit: a main that changes nothing is synced as a no-op (one-integration-line S6).
+    { branch: 'main', files: { 'new.txt': 'new\n' }, message: 'new on main' },
+  ]);
   const second = path.join(root, 'second.git');
   const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
   git(root, 'init', '-q', '--bare', '-b', 'main', second);
-  git(root, 'clone', '-q', origin, work);
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'main');
-  git(work, 'push', '-q', 'origin', 'main');
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'landed on pilot');
-  git(work, 'push', '-q', 'origin', 'HEAD:pilot');
-  git(work, 'reset', '-q', '--hard', 'origin/main');
-  // A file, not an empty commit: a main that changes nothing is synced as a no-op (one-integration-line S6).
-  fs.writeFileSync(path.join(work, 'new.txt'), 'new\n');
-  git(work, 'add', 'new.txt');
-  git(work, 'commit', '-q', '-m', 'new on main');
-  git(work, 'push', '-q', 'origin', 'main');
-  git(work, 'remote', 'set-head', 'origin', 'main');
+  git(root, 'clone', '-q', origin, work); // origin's HEAD is main, so the clone sets origin/HEAD
   git(work, 'remote', 'add', 'second', second);
-  const pilotTip = git(origin, 'rev-parse', 'refs/heads/pilot');
-  const mainTip = git(origin, 'rev-parse', 'refs/heads/main');
+  const { pilot: pilotTip, main: mainTip } = sha;
   const inWork = (args) => execFileSync('git', args, { cwd: work, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   return { origin, second, work, pilotTip, mainTip, inWork };
 }

@@ -4,6 +4,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,30 +17,16 @@ const { sync } = await import('../sync.mjs');
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
 
-function commitFile(repo, file, text, message) {
-  fs.writeFileSync(path.join(repo, file), text);
-  git(repo, 'add', file);
-  git(repo, 'commit', '-q', '-m', message);
-}
-
+/** Origin with pilot and main each changing main's shared.txt their own way; `work` clones it. */
 function build(dir) {
-  const origin = path.join(dir, 'origin.git');
-  const seed = path.join(dir, 'seed');
+  const { origin, sha } = seed(dir, [
+    { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'main' },
+    { branch: 'pilot', files: { 'shared.txt': 'pilot\n' }, message: 'pilot' },
+    { branch: 'main', files: { 'shared.txt': 'main\n' }, message: 'main again' },
+  ]);
   const work = path.join(dir, 'work');
-  git(dir, 'init', '--bare', '-b', 'main', origin);
-  git(dir, 'clone', '-q', origin, seed);
-  git(seed, 'checkout', '-q', '-b', 'main');
-  commitFile(seed, 'shared.txt', 'one\n', 'main');
-  git(seed, 'push', '-q', 'origin', 'main');
-  git(seed, 'push', '-q', 'origin', 'main:pilot');
-  git(seed, 'checkout', '-q', '-b', 'pilot');
-  commitFile(seed, 'shared.txt', 'pilot\n', 'pilot');
-  git(seed, 'push', '-q', 'origin', 'pilot');
-  git(seed, 'checkout', '-q', 'main');
-  commitFile(seed, 'shared.txt', 'main\n', 'main again');
-  git(seed, 'push', '-q', 'origin', 'main');
   git(dir, 'clone', '-q', origin, work);
-  return { origin, work, gitIn: (args) => git(work, ...args) };
+  return { origin, work, sha, gitIn: (args) => git(work, ...args) };
 }
 
 /** A conflicted sync, leaving the kept worktree `dir` mid-merge. */
@@ -51,7 +38,7 @@ function conflicted(t) {
 }
 
 test('a committed resolution in the sync worktree is tested and pushed', (t) => {
-  const { origin, work, gitIn, dir } = conflicted(t);
+  const { origin, work, sha, gitIn, dir } = conflicted(t);
   fs.writeFileSync(path.join(dir, 'shared.txt'), 'resolved\n');
   git(dir, 'add', 'shared.txt');
   git(dir, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--no-edit');
@@ -59,14 +46,14 @@ test('a committed resolution in the sync worktree is tested and pushed', (t) => 
 
   const result = sync({ cwd: work, git: gitIn, test: passing });
 
-  assert.equal(result.line, `synced pilot ${resolution.slice(0, 7)} (main@${git(origin, 'rev-parse', 'main').slice(0, 7)}): 3 pass, 0 fail`);
+  assert.equal(result.line, `synced pilot ${resolution.slice(0, 7)} (main@${sha.main.slice(0, 7)}): 3 pass, 0 fail`);
   assert.equal(git(origin, 'rev-parse', 'pilot'), resolution);
   assert.equal(fs.existsSync(dir), false, 'the worktree is removed');
 });
 
 test('a sync worktree still mid-merge is refused and kept', (t) => {
-  const { origin, work, gitIn, dir } = conflicted(t);
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
+  const { origin, work, sha, gitIn, dir } = conflicted(t);
+  const pilotTip = sha.pilot;
 
   assert.throws(
     () => sync({ cwd: work, git: gitIn, test: passing }),
