@@ -23,6 +23,11 @@ const { land } = await import('../land.mjs');
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 const refs = (repo) => git(repo, 'for-each-ref', '--format=%(refname) %(objectname)');
 const green = 'node -e "0"';
+/** `repo`'s pilot as one `log -1` (L5): its SHA, subject and parents. */
+const pilotOf = (repo) => {
+  const [sha, subject, parents] = git(repo, 'log', '-1', '--format=%H%n%s%n%P', 'refs/heads/pilot').split('\n');
+  return { sha, subject, parents: parents.split(' ') };
+};
 
 /**
  * origin.git holds `main`, `pilot` at it, and `feat/x`, one commit adding x.txt cut from pilot, or
@@ -80,9 +85,9 @@ test("land pushes the landing to the second remote's pilot", (t) => {
 
   const result = land({ cwd: work, git: inWork, host, test: green });
 
-  const tip = git(second, 'rev-parse', 'refs/heads/pilot');
-  assert.equal(git(second, 'log', '-1', '--format=%s', tip), 'Merge feat/x into pilot');
-  assert.equal(git(second, 'rev-parse', `${tip}^2`), xTip, 'the feature tip is the second parent');
+  const { sha: tip, subject, parents } = pilotOf(second);
+  assert.equal(subject, 'Merge feat/x into pilot');
+  assert.equal(parents[1], xTip, 'the feature tip is the second parent');
   assert.equal(result.sha, tip);
   assert.equal(result.already, false);
   const [originPilot, originFeat] = git(origin, 'rev-parse', 'refs/heads/pilot', 'refs/heads/feat/x').split('\n');
@@ -103,9 +108,8 @@ test('land under none lands on the local pilot', (t) => {
 
   const result = land({ cwd: work, git: inWork, host: fakeGh().host, test: moving });
 
-  const tip = git(work, 'rev-parse', 'refs/heads/pilot');
-  assert.equal(git(work, 'log', '-1', '--format=%s', tip), 'Merge feat/x into pilot');
-  const [first, secondParent] = git(work, 'rev-parse', `${tip}^1`, `${tip}^2`).split('\n');
+  const { sha: tip, subject, parents: [first, secondParent] } = pilotOf(work);
+  assert.equal(subject, 'Merge feat/x into pilot');
   assert.equal(first, moved, 'merged again onto the moved pilot');
   assert.equal(secondParent, xTip, 'the feature tip is the second parent');
   assert.equal(result.sha, tip);
@@ -126,9 +130,8 @@ test("a second remote's pilot that moved meanwhile is fetched and merged again o
 
   const result = land({ cwd: work, git: inWork, host: fakeGh().host, test: moving });
 
-  const tip = git(second, 'rev-parse', 'refs/heads/pilot');
-  assert.equal(git(second, 'log', '-1', '--format=%s', tip), 'Merge feat/x into pilot');
-  const [first, secondParent] = git(second, 'rev-parse', `${tip}^1`, `${tip}^2`).split('\n');
+  const { subject, parents: [first, secondParent] } = pilotOf(second);
+  assert.equal(subject, 'Merge feat/x into pilot');
   assert.equal(first, moved, 'merged again onto the moved pilot');
   assert.equal(secondParent, xTip, 'the feature tip is the second parent');
   assert.equal(result.retried, true);

@@ -130,8 +130,11 @@ test('a landing keeps its qa and feat worktrees', (t) => {
   assert.deepEqual(listed().map((p) => path.basename(p)).sort(), ['feat', 'other', 'qa', 'work'], "the slice and design worktrees are gone; another run's stays");
   assert.deepEqual(branches(work), ['feat/s', 'main', 'qa/s', 'slice/other-s1']);
   assert.doesNotMatch(said.out, /NOT removed/, 'the local design/s goes too, though its upstream is gone');
-  assert.match(git(origin, 'rev-parse', 'feat/s'), /^[0-9a-f]{40}$/, 'origin keeps feat/s');
-  assert.throws(() => git(origin, 'rev-parse', '--verify', '-q', 'refs/heads/slice/s-s1'), 'the merged slice branch is gone from origin');
+  // Both of origin's branches in one `for-each-ref` (L5): `<ref> <sha>` for each that exists.
+  const onOrigin = Object.fromEntries(git(origin, 'for-each-ref', '--format=%(refname) %(objectname)', 'refs/heads/feat/s', 'refs/heads/slice/s-s1')
+    .split('\n').filter(Boolean).map((line) => line.split(' ')));
+  assert.match(onOrigin['refs/heads/feat/s'] ?? '', /^[0-9a-f]{40}$/, 'origin keeps feat/s');
+  assert.equal(onOrigin['refs/heads/slice/s-s1'], undefined, 'the merged slice branch is gone from origin');
 });
 
 test('a landing reads the process table once, and keeps a slice worktree a live deck holds', (t) => {
@@ -170,7 +173,8 @@ test('a prune that throws is one line, and the landing still exits 0', (t) => {
 
   assert.equal(said.code, 0, said.out);
   assert.match(said.out, /^deleted: design\/s, slice\/s-s1\nNOT removed the worktrees of s: for-each-ref failed\nlanded feat\/s on pilot at /);
-  assert.equal(git(origin, 'rev-parse', 'pilot^2'), git(origin, 'rev-parse', 'feat/s'), 'landed');
+  const [merged, feat] = git(origin, 'rev-parse', 'pilot^2', 'feat/s').split('\n');
+  assert.equal(merged, feat, 'landed');
   assert.deepEqual(listed(), before, 'nothing removed');
 });
 
@@ -234,7 +238,8 @@ test('a dirty slice worktree is kept and named', (t) => {
 test('under none the clear reads the local pilot the landing moved', (t) => {
   const { work, dir, as } = run(t);
   git(work, 'branch', '-q', '--no-track', 'pilot', 'origin/pilot');
-  git(work, 'config', 'pilot.remote', 'none');
+  // `git config pilot.remote none`, one git fewer: a line in work's config.
+  fs.appendFileSync(path.join(work, '.git', 'config'), '[pilot]\n\tremote = none\n');
 
   const said = landFrom(dir('feat'));
 

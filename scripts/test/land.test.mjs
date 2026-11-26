@@ -7,7 +7,7 @@
 
 // A red run's log goes under a home of this process's own, never the real one.
 import { gitFixture } from './lib/git-fixture.mjs';
-import { git, isAncestor, commitFile, buildRepos, repos, passing, fakeGh, greenChecks, merges, mainSays, land } from './lib/land-repos.mjs';
+import { git, isAncestor, commitFile, buildRepos, repos, passing, fakeGh, greenChecks, mainSays, land } from './lib/land-repos.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -24,6 +24,12 @@ const mainMoved = (t) => gitFixture(t, 'land:main-moved', (dir) => {
   return built;
 });
 
+/** `merges(repo, rev)` with each commit's SHA and subject beside it, in one `log` (L5): `line` as `merges` gives it. */
+const firstParents = (repo, rev) => git(repo, 'log', '--first-parent', '--format=%H%x09%s%x09%P', rev).split('\n').map((entry) => {
+  const [sha, subject, parents] = entry.split('\t');
+  return { sha, subject, line: `${subject} ${parents}` };
+});
+
 // One landing, both checks (S8 of cheap-suite): main moves before it, as the second test had it.
 test('land merges the feature into pilot; land takes nothing from main', (t) => {
   const { origin, gitIn, a: work } = mainMoved(t);
@@ -33,13 +39,14 @@ test('land merges the feature into pilot; land takes nothing from main', (t) => 
 
   const result = land({ cwd: work, git: gitIn(work), host, test: passing });
 
-  assert.equal(git(origin, 'rev-list', '--first-parent', '--count', pilotTip + '..pilot'), '1', 'pilot gains one first-parent commit');
-  assert.equal(git(origin, 'log', '-1', '--format=%s', 'pilot'), 'Merge feat/a into pilot');
+  const onPilot = firstParents(origin, 'pilot');
+  assert.equal(String(onPilot.findIndex(({ sha }) => sha === pilotTip)), '1', 'pilot gains one first-parent commit');
+  assert.equal(onPilot[0].subject, 'Merge feat/a into pilot');
   assert.ok(!git(origin, 'log', '--format=%s', pilotTip + '..pilot').includes('Merge main into pilot'));
   assert.ok(!isAncestor(origin, mainTip, 'pilot'), "main's new commit is not on pilot");
 
   const tip = git(work, 'rev-parse', 'feat/a');
-  assert.equal(merges(origin, 'pilot')[0], `Merge feat/a into pilot ${before} ${tip}`, 'a merge with the feature tip as second parent');
+  assert.equal(onPilot[0].line, `Merge feat/a into pilot ${before} ${tip}`, 'a merge with the feature tip as second parent');
   const [pushed, pilot] = git(origin, 'rev-parse', 'feat/a', 'pilot').split('\n');
   assert.equal(pushed, tip, 'the feature is pushed');
   assert.equal(result.sha, pilot);
@@ -58,9 +65,9 @@ test('a pilot that moved while the merge was tested is merged again once and lan
   // Feature a lands while b's merge is tested: b's first push to pilot is no longer a fast-forward.
   const result = land({ cwd: b, git: gitIn(b), host: fakeGh().host, test: mover(a, 'feat/a', 1) });
 
-  const pilot = git(origin, 'rev-parse', 'pilot');
+  const [{ sha: pilot, line }] = firstParents(origin, 'pilot');
   assert.equal(result.retried, true);
-  assert.equal(merges(origin, 'pilot')[0], `Merge feat/b into pilot ${aTip} ${git(b, 'rev-parse', 'feat/b')}`);
+  assert.equal(line, `Merge feat/b into pilot ${aTip} ${git(b, 'rev-parse', 'feat/b')}`);
   assert.equal(result.sha, pilot);
   assert.ok(!isAncestor(b, aTip, 'feat/b'), 'feat/b never takes a');
 });

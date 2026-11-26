@@ -79,7 +79,7 @@ function landByHand(origin, work, name) {
   git(work, 'fetch', '-q', 'origin');
   const pilotTip = git(work, 'rev-parse', 'origin/pilot');
   const tree = path.join(path.dirname(work), `${name}-landing`);
-  git(work, 'worktree', 'add', '-q', '--detach', tree, git(work, 'rev-parse', 'HEAD'));
+  git(work, 'worktree', 'add', '-q', '--detach', tree, 'HEAD');
   const allocated = allocateAdr(tree, { since: pilotTip, onto: 'branch' });
   const numbered = git(tree, 'rev-parse', 'HEAD');
   git(tree, 'checkout', '-q', '--detach', pilotTip);
