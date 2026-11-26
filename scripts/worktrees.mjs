@@ -24,7 +24,7 @@ import path from 'node:path';
 import { holderOf, pilotProcesses, processTable } from '../deck/procs.mjs';
 import { tipOf } from './git-view.mjs';
 import { keptDir } from './merge-generated.mjs';
-import { PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
+import { pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
 import { runRef, runRemote } from './remotes.mjs';
 
 /** Runs git in `cwd`; answers `{ ok, out, err }`, never throws. */
@@ -308,11 +308,12 @@ export function main(argv, { out = process.stdout, err = process.stderr, read = 
     // as origin says it. --base wins.
     const onPilot = run !== undefined && base === null;
     if (onPilot) {
-      base = runRef(runRemote((gitArgs) => {
+      const probeGit = (gitArgs) => {
         const probe = git(repo, ...gitArgs);
         if (!probe.ok) throw Object.assign(new Error(probe.err), { status: probe.status });
         return probe.out;
-      }), PILOT_BRANCH);
+      };
+      base = runRef(runRemote(probeGit), pilotBranch(probeGit));
     }
     base ??= `origin/${remoteDefaultBranch((gitArgs) => {
       const run = git(repo, ...gitArgs);

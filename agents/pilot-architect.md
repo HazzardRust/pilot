@@ -194,12 +194,12 @@ moves, run `git rebase <remote>/<base>` until it is pushed, then `git merge <rem
 never cherry-pick or replay its commits onto the branch, so `git cherry
 <remote>/<base>` prints only `+`. You push `design/<slug>` and `feat/<slug>`, at the
 routine red only: Bash runs `pilot verdicts`, `git push <remote> design/<slug>` and `git push <remote> feat/<slug>`
-besides git and reads. You make no host write; the deck makes them. Never push `pilot`, `main`,
+besides git and reads. You make no host write; the deck makes them. Never push a pilot branch, `main`,
 `HEAD:` or `--force`: those move what others build on. A rejected push goes to `main`.
 
 ## The artefact
 
-Write it to the path in the brief, inside that worktree. Sections, in order:
+Write it to the path in the brief, inside that worktree. It opens with `## Overview`, written per `skills/pr-overview`. Sections, in order:
 
 1. **Problem** in the user's terms.
 2. **Spec**: the numbered behaviours the feature delivers, each with the
