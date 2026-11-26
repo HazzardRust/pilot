@@ -69,7 +69,7 @@
     },
     {
       "slice": "S8",
-      "state": "pushed 7c65e6d (512 lines, over limit accepted: net -56, assumed)",
+      "state": "integrated, checks green at 99d5d48",
       "after": [
         "S1"
       ],
@@ -87,7 +87,7 @@
     },
     {
       "slice": "S10",
-      "state": "pushed c6363e5",
+      "state": "integrating (successor co-pilot)",
       "after": [
         "S1"
       ],
@@ -105,7 +105,7 @@
     },
     {
       "slice": "S12",
-      "state": "pushed be685b4 (on S10's c6363e5; review on f32ffc5, be685b4 +15/-17 folds unreviewed, assumed)",
+      "state": "pushed be685b4; be685b4 re-reviewed: approve",
       "after": [
         "S10"
       ],
@@ -129,8 +129,8 @@
       ]
     }
   ],
-  "next": "S6 checks green at 98b39db; S8 integrating; then S10, S9, S11, S12; then S13",
-  "updatedAt": "2026-11-26T19:19:20.954Z",
+  "next": "integrate S10 (running), checks; then S9, S11, S12, each with checks green between; then spawn S13 (sonnet)",
+  "updatedAt": "2026-11-26T19:44:01.872Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -319,6 +319,16 @@
       "agent": "pilot:pilot-implementer",
       "what": "S12 bar margin 2 (107 vs <=109)",
       "evidence": "S12 census"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "CI checks take ~20-30 min per integration and integrations are serialized behind them; 6 integrations cost ~3 h of waiting",
+      "evidence": "pilot checks waits on 1958fb9..99d5d48 each needed 2-3 nine-minute waits"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "slice reports go to main unless the co-pilot hello lands before the child's first round",
+      "evidence": "S1 report delivered to main twice"
     }
   ]
 }
