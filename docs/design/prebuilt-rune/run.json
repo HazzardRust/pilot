@@ -1,0 +1,100 @@
+{
+  "slug": "prebuilt-rune",
+  "feature": "prebuilt Rune deck",
+  "ticket": "itm_ff5ace129388",
+  "branch": "feat/prebuilt-rune",
+  "base": "hazzardrust-pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-prebuilt-rune",
+  "artefact": "docs/design/prebuilt-rune/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed f13e861",
+      "branch": "slice/prebuilt-rune-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-prebuilt-rune-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "pushed d3e89fc",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/prebuilt-rune-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-prebuilt-rune-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S2"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "pushed 2947413",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/prebuilt-rune-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-prebuilt-rune-s4"
+    }
+  ],
+  "humanSteps": [
+    {
+      "text": "Before prebuilt-rune S4 pushes its workflow file: gh auth refresh -h github.com -s workflow"
+    }
+  ],
+  "next": "co-pilot: S1 --since gate running; S2 security re-review approve on d3e89fc5; S4 security re-review on 29474137 running; gates S2 then S4 after S1 integrates",
+  "updatedAt": "2026-11-26T12:50:18.152Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "gate1 body must name every A<n> with its verdict; neither gate1 rules nor the brief said so",
+      "evidence": "first post refused: 'a gate1's body leaves out A2..A9'; accepted on second post",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "deck_read open limit 100 to look for an archive-page crew-handoff item: ~100 closing-report rows, none relevant",
+      "size": 6000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "handback-enforce hook forced a hand-back while the implementer held its gate for the co-pilot's full suite",
+      "evidence": "S1 report: 'The harness made me hand back while I was still waiting for suite done'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot deck has no seam for host or version beyond deps.root/deps.get, so B5 runs only on one of the three targets",
+      "evidence": "S1 report, Friction row 3"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "handback forced before the co-pilot's go for the serialised heavy gate; the gate is owed after a resume",
+      "evidence": "S2 report: 'go S2 never arrived before I was made to hand back'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Git Bash rewrites /v in a reg.exe call; PowerShell used to capture its output",
+      "evidence": "S2 report, Friction row 1"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no YAML parser or actionlint on the machine; the workflow checked only via uvx pyyaml",
+      "evidence": "S4 report, Friction row 1"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "handback forced while waiting for go S4; slice gate still owed",
+      "evidence": "S4 report, Friction row 3",
+      "size": 1
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "none: re-review of S2 approved in 3 tool uses",
+      "evidence": "Verdict: approve — the reg.exe finding is fixed with a full path"
+    }
+  ]
+}
