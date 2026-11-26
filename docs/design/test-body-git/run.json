@@ -134,7 +134,7 @@
     },
     {
       "slice": "S14",
-      "state": "added; pushed 82c7052 (cut -163), integrating",
+      "state": "added; integrated, checks green at 65aa753",
       "after": [
         "S12"
       ],
@@ -143,7 +143,7 @@
     },
     {
       "slice": "S15",
-      "state": "added; implementing (2nd agent after context hand-off; wip b197fc4, cut 161 so far)",
+      "state": "added; pushed fb783b9 (cut -203; last fix commit answers reviewer's LOW, unreviewed, assumed), integrating",
       "after": [
         "S12"
       ],
@@ -151,26 +151,9 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s15"
     }
   ],
-  "next": "integrate S14 (running), checks; S15 finishing; then test:cost; if over L7 tell main; else resume S13",
-  "updatedAt": "2026-11-26T21:25:45.649Z",
+  "next": "integrate S15 (running), checks; then npm run test:cost once under lock; numbers to main before any third slice, or resume S13 if under both bars",
+  "updatedAt": "2026-11-26T21:59:12.873Z",
   "friction": [
-    {
-      "agent": "pilot-implementer S1",
-      "what": "a single-file gate still builds and runs the Rust deck suite, and all gates share one cargo folder (rune-target); two gates at once fail to link",
-      "evidence": "LNK1104 cannot open rune-target deck exe when two census runs overlapped",
-      "size": 2
-    },
-    {
-      "agent": "pilot-implementer S1",
-      "what": "land-batching's census probe was not reusable; census.mjs written and debugged from scratch",
-      "evidence": "two bugs en route: node:child_process stack line read as repo file; gate counter frame counted every git as product",
-      "size": 1
-    },
-    {
-      "kind": "drain",
-      "what": "S1 implementer's full report delivered to main instead of its co-pilot; relayed by hand",
-      "size": 1
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "plain node --test on integrate.test.mjs fails 10+ tests on a clean base; needs gate env (PILOT_BRANCH)",
@@ -363,6 +346,23 @@
       "what": "most of S14's time read already-folded files with nothing left to fold; a per-slice target needed a per-file look first",
       "evidence": "~15 files surveyed, 5 touched",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census prints product git only as a suite total; finding the file took a scratch per-owner script and two more gate-length runs",
+      "evidence": "S15 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census-after.txt has no per-file product numbers; 'product unchanged' needs a base rerun in a throwaway worktree with its own npm ci",
+      "evidence": "S15 report",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "S15's report delivered to main, relayed by hand",
+      "size": 1
     }
   ]
 }
