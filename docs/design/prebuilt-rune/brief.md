@@ -46,7 +46,7 @@ Taken from `docs/design/portable-store/brief.md` (on `origin/design/portable-sto
 - The gate1 lineage and verdict tests fail under load (ticket itm_ad02d595d1c2, fix planned): rerun that file alone
   before calling it a regression.
 - A `--since` gate whose diff touches `deck/` also runs the Rune `cargo fmt --check` and `cargo test`
-  (`scripts/gate.mjs:301-312`); S1-S3 all do, so each slice gate is heavy.
+  (`scripts/gate.mjs:304-314`, `cargoStep`; its doc at 295-303); S1-S3 all do, so each slice gate is heavy.
 
 ## Machine
 

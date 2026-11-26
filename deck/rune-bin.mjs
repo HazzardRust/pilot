@@ -10,6 +10,7 @@
  * constants, the tag and file name come from the pin, and both are checked before they are used.
  */
 
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -34,10 +35,8 @@ const TAG = /^v\d+\.\d+\.\d+$|^rune-scratch-[0-9a-f]{7,40}$/;
 /** A plain file name, so a pin cannot point a download outside `fetched/`. */
 const ASSET = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const SHA256 = /^[0-9a-f]{64}$/;
-/** The download rule (A2): https on every hop, at most this many, this long in all, this large. */
-const MAX_HOPS = 5;
-const TIMEOUT_MS = 30_000;
-const MAX_BYTES = 100 * 1024 * 1024;
+/** The download rule (A2): https on every hop, at most `hops` redirects, `timeoutMs` in all, `maxBytes` large. */
+export const RUNE_LIMITS = Object.freeze({ hops: 5, timeoutMs: 30_000, maxBytes: 100 * 1024 * 1024 });
 const REDIRECT = new Set([301, 302, 303, 307, 308]);
 
 const fetchedDir = (root) => path.join(root, 'deck', 'rune', 'target', 'fetched');
@@ -105,6 +104,10 @@ export async function ensureRune(root, host, get) {
   const state = findRune(root, host);
   if (state.source) return state;
   if (!state.fetchable) return { ...state, line: `Rune deck: ${state.reason}` };
+  if (host.platform === 'win32' && host.run && smartAppControl(host.run) === 'on') {
+    const reason = 'Windows Smart App Control is on and blocks an unsigned Rune deck; nothing downloaded, opening the page';
+    return { source: null, reason, fetchable: false, line: `Rune deck: ${reason}` };
+  }
   const pin = readPin(root, host.version, `${host.platform}-${host.arch}`);
   let bytes;
   try {
@@ -125,39 +128,89 @@ export async function ensureRune(root, host, get) {
     fs.chmodSync(part, 0o755);
     fs.renameSync(part, file);
   } catch (err) {
-    fs.rmSync(part, { force: true });
+    try {
+      fs.rmSync(part, { force: true });
+    } catch {
+      // A lock leaves the part file; it is never run, since only the pinned name is looked up.
+    }
     return { source: null, reason: err.message, fetchable: true, line: `Rune deck: could not store ${pin.file}: ${err.message}; opening the page` };
   }
   return { source: 'fetched', file, line: `Rune deck: fetched ${pin.file}, sha256 ${prefix(got)}… verified` };
 }
 
-/** The body at `url`, following at most MAX_HOPS redirects, each to https, within TIMEOUT_MS and MAX_BYTES. */
+/**
+ * The body at `url` under RUNE_LIMITS. The deadline is raced against every step, so a `get` or a body
+ * that ignores the signal still stops at it; no step is retried.
+ */
 async function download(url, get) {
-  const signal = AbortSignal.timeout(TIMEOUT_MS);
-  let at = url;
-  for (let hop = 0; hop <= MAX_HOPS; hop += 1) {
-    const res = await get(at, { signal });
-    // Frees the connection of a response whose body is never read.
-    if (res.status !== 200) await res.body?.cancel?.().catch(() => {});
-    if (REDIRECT.has(res.status)) {
-      const next = new URL(res.headers?.get?.('location') ?? '', at);
-      // The signed URL a redirect names is never printed (L6): only its scheme is.
-      if (next.protocol !== 'https:') throw new Error(`a redirect left https (${next.protocol})`);
-      at = next.href;
-      continue;
+  const { hops, timeoutMs, maxBytes } = RUNE_LIMITS;
+  const controller = new AbortController();
+  let timer;
+  const deadline = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const err = new Error(`the download took over ${timeoutMs / 1000} s`);
+      controller.abort(err);
+      reject(err);
+    }, timeoutMs);
+  });
+  deadline.catch(() => {});
+  const inTime = (step) => Promise.race([step, deadline]);
+  let reader;
+  try {
+    let at = url;
+    for (let hop = 0; hop <= hops; hop += 1) {
+      const res = await inTime(get(at, { signal: controller.signal }));
+      // Frees the connection of a response whose body is never read.
+      if (res.status !== 200) Promise.resolve(res.body?.cancel?.()).catch(() => {});
+      if (REDIRECT.has(res.status)) {
+        const next = new URL(res.headers?.get?.('location') ?? '', at);
+        // The signed URL a redirect names is never printed (L6): only its scheme is.
+        if (next.protocol !== 'https:') throw new Error(`a redirect left https (${next.protocol})`);
+        at = next.href;
+        continue;
+      }
+      if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
+      reader = res.body[Symbol.asyncIterator]();
+      const chunks = [];
+      let size = 0;
+      for (;;) {
+        const { done, value } = await inTime(reader.next());
+        if (done) {
+          reader = undefined;
+          return Buffer.concat(chunks);
+        }
+        size += value.byteLength;
+        if (size > maxBytes) throw new Error(`the download is over ${maxBytes / 1024 / 1024} MB`);
+        chunks.push(value);
+      }
     }
-    if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
-    const chunks = [];
-    let size = 0;
-    for await (const chunk of res.body) {
-      size += chunk.byteLength;
-      if (size > MAX_BYTES) throw new Error(`the download is over ${MAX_BYTES / 1024 / 1024} MB`);
-      chunks.push(chunk);
-    }
-    return Buffer.concat(chunks);
+    throw new Error(`more than ${hops} redirects`);
+  } finally {
+    clearTimeout(timer);
+    // A body left mid-read is released, never awaited: one that ignores the signal may never settle.
+    if (reader) Promise.resolve(reader.return?.()).catch(() => {});
   }
-  throw new Error(`more than ${MAX_HOPS} redirects`);
 }
+
+/**
+ * Windows Smart App Control's state, from the registry through `run` (spec 10, A5): it blocks unsigned
+ * code when on, so `ensureRune` downloads nothing then. Anything unreadable is 'unknown'.
+ */
+export function smartAppControl(run) {
+  // The system's own reg.exe by full path: a bare name is looked up in the working directory first on Windows.
+  const reg = path.win32.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'reg.exe');
+  let out;
+  try {
+    out = run(reg, ['query', 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\CI\\Policy', '/v', 'VerifiedAndReputablePolicyState']);
+  } catch {
+    return 'unknown';
+  }
+  const value = /VerifiedAndReputablePolicyState\s+REG_DWORD\s+0x([0-9a-f]+)/i.exec(String(out))?.[1];
+  return { 1: 'on', 2: 'evaluation', 0: 'off' }[value === undefined ? '' : parseInt(value, 16)] ?? 'unknown';
+}
+
+/** The real `run`: a hidden, bounded child process whose stdout is returned. */
+export const defaultRun = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8', windowsHide: true, timeout: 5000, stdio: ['ignore', 'pipe', 'ignore'] });
 
 /** The real `get`: the platform's fetch, redirects handed back so each hop is checked above. */
 export const defaultGet = (url, { signal }) => fetch(url, { redirect: 'manual', signal });

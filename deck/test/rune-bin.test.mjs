@@ -155,7 +155,8 @@ test('pilot deck names the fetched copy', { skip: !TARGETS.includes(`${process.p
     process.exitCode = undefined;
   });
 
-  await pilot(['deck'], { root, get: net.get });
+  // `run` stands in for the registry read (S2): Smart App Control off.
+  await pilot(['deck'], { root, get: net.get, run: () => '    VerifiedAndReputablePolicyState    REG_DWORD    0x0' });
   t.mock.restoreAll();
 
   const lines = said.join('\n').split(/\r?\n/);
