@@ -60,7 +60,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed 05bb482",
+      "state": "integrated, checks green at 2d64224",
       "after": [
         "S1"
       ],
@@ -105,10 +105,11 @@
     },
     {
       "slice": "S12",
-      "state": "implementing (from S10's tip)",
+      "state": "pushed be685b4 (on S10's c6363e5; review on f32ffc5, be685b4 +15/-17 folds unreviewed, assumed)",
       "after": [
         "S10"
       ],
+      "branch": "slice/test-body-git-s12",
       "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s12"
     },
     {
@@ -128,8 +129,8 @@
       ]
     }
   ],
-  "next": "S5 checks green at 436fe0c; S7 integrating; then S6, S8, S10, S9, S11; S12 implementing",
-  "updatedAt": "2026-11-26T18:41:30.464Z",
+  "next": "S7 checks green at 2d64224; S6 integrating; then S8, S10, S9, S11, S12; then S13",
+  "updatedAt": "2026-11-26T18:59:36.717Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -303,6 +304,21 @@
       "agent": "pilot:pilot-implementer",
       "what": "census counts clone() from a test body as built; slice bars phrased per helper cannot be read off it",
       "evidence": "S11 B1 583 -> 309 total vs 545 -> 263 outside buildRepos, bar 236 matches neither base"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census prints only 'fail N', not the failing tests; a second gate run needed to see them",
+      "evidence": "S12 integrate-remote 2 reds spawnSync git ENOENT"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice files' base numbers disagree with S10's tip (S12 207 vs 219, S11 236 matches neither)",
+      "evidence": "S11 and S12 reports"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12 bar margin 2 (107 vs <=109)",
+      "evidence": "S12 census"
     }
   ]
 }
