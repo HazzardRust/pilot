@@ -1,6 +1,7 @@
 //! archive-page S3 (spec 4, 9; A4, A5): the archive's rows sort by a column, filter by kind and search,
 //! all in the window over the rows it holds, on a view `deck/view/archive.mjs` itself recorded.
 
+use crate::archive_bar::ScratchPrefs;
 use crate::support;
 
 use std::io::{Read, Write};
@@ -12,6 +13,7 @@ use std::time::{Duration, Instant};
 
 use pilot_deck::app::{self, State};
 use pilot_deck::client::View;
+use pilot_deck::prefs::ArchiveSort;
 use pilot_deck::regions::archive::{Column, Day, filter_rows, sort_rows};
 use rune::{Env, Runtime, TextEdit};
 use serde::Deserialize;
@@ -362,7 +364,14 @@ fn a_frame_stays_under_50_ms_at_real_scale() {
     ] {
         rt.update(|s, _| {
             s.regions.archive.search = TextEdit::new(search);
-            s.regions.archive.sort = (!search.is_empty()).then_some((Column::Title, true));
+            s.prefs.archive_sort = if search.is_empty() {
+                ArchiveSort::default()
+            } else {
+                ArchiveSort {
+                    column: Column::Title,
+                    ascending: true,
+                }
+            };
         });
         rt.frame(1.0 / 60.0);
         assert_eq!(
@@ -432,6 +441,8 @@ fn every_bar_control_takes_a_mouse_click() {
         kinds.len() >= 13,
         "every record kind has a toggle: {kinds:?}"
     );
+    // A sort pressed is saved (S18): into a scratch dir, never the user's store.
+    let _scratch = ScratchPrefs::new("archive-clicks");
     for width in [1280.0, 900.0] {
         let mut rt = archive_window_at(region.clone(), width);
         rt.frame(0.0);
@@ -461,8 +472,12 @@ fn every_bar_control_takes_a_mouse_click() {
             ("title", Column::Title),
         ] {
             click(&mut rt, &format!("archive-sort-{name}"), width);
-            assert!(
-                rt.state.regions.archive.sort == Some((column, true)),
+            assert_eq!(
+                rt.state.prefs.archive_sort,
+                ArchiveSort {
+                    column,
+                    ascending: true
+                },
                 "{width}: the click on the {name} sort set it ascending"
             );
         }
