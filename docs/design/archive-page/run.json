@@ -149,9 +149,9 @@
     },
     {
       "slice": "archive-page",
-      "state": "paused: fix round done at 5b1582f (npm test 5250/0 fail, cargo 191/0, ts+rust APPROVE); no child live; QA2 open for QA",
-      "branch": "feat/archive-page",
-      "worktree": "C:/Users/jrylk/Projects/pilot-qa-archive-page",
+      "state": "fixing: integrate red (archive_lag debug 128 ms bar, 134-143 ms); dropping the debug wall-clock bar",
+      "branch": "fix2/archive-page",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix2-archive-page",
       "pr": 139
     },
     {
@@ -196,7 +196,7 @@
     },
     {
       "slice": "S19",
-      "state": "pushed 05509ee",
+      "state": "integrated",
       "after": [
         "S18"
       ],
@@ -205,40 +205,24 @@
     }
   ],
   "findings": [
-    "kept: S19-found S17's windowed archive region grew into the viewport, so the centre never scrolled the list (centre_y stayed 0 after Page Down) — fixed in S19 with the fixed bar"
+    "kept: F1 finding — archive_lag.rs:62-71 the keystroke (rebuild) frame is untimed; counted as a rebuild per run",
+    "dropped: F2 finding — a debug wall-clock bar flakes on this throttling laptop (integrate red: 134-143 ms vs 128 ms); the 16 ms bar stays release-only and F1's rebuild count is the gated check; QA measures spec 11 in release",
+    "kept: F3 simplify — archive.rs From.view heap-address key; delete, test calls new_view (-4)",
+    "dropped: F4 simplify — duplicate-key guard archive.rs:144-153 keeps a repeated key from taking the UI down; 8 lines of crash safety outweigh the load",
+    "kept: F5 simplify — layout.rs archive_icon copies icon_item; fold into icon_item (-18)",
+    "kept: N1 nit — strip.rs archive_page moves to layout.rs, its only caller",
+    "kept: N2 nit — prefs/archive module cycle; Column into prefs.rs",
+    "kept: N3 nit — archive_detail label_width bound once",
+    "dropped: D1 simplify — rebuild the S17 RefCell list cache where inputs change; past 150 lines, cost outweighs cognitive load now that F3 removes the address key",
+    "kept: S19a finding — band() draws bar and rule when draw bails on a failed list update",
+    "kept: S19b finding — the_bar_is_grouped asserts Date, Kind, Title order",
+    "kept: S19c finding — 640 px fixed bar overflows the centre over the right rail",
+    "kept: S19d finding — 900 px unbroken tokens clip in the title/field column",
+    "kept: S19e simplify — third 0.6 advance copy, kinds parsed twice, app.rs archive condition twice, println! in archive_align and archive_lag"
   ],
-  "next": "self-pause; feat/archive-page at f33ee097; next: integrate slice/archive-page-s19 (05509ee, rust-reviewer approve, Evidence B1-B7 in hand-back), checks --wait, fundamentalist 2d38b22..tip, fix brief adds S19 review findings (see hand-back), QA re-walk itm_00bd1d6f40e3",
-  "updatedAt": "2026-11-26T04:07:00.999Z",
+  "next": "fix2: drop debug lag bar, push; re-integrate fix2/archive-page; checks; fresh QA posts a NEW walkthrough (itm_00bd1d6f40e3 closed by user)",
+  "updatedAt": "2026-11-26T05:18:36.972Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-evidence-runner",
-      "what": "report reached main, not the fundamentalist, after the review was triaged; Stryker dry run failed on a 50 ms timing test under load so no mutation score; no Rust rows (root manifest picks Node); knip ran whole-repo",
-      "evidence": "classifier-log.test.mjs:262 109 ms; Unused files (732)",
-      "size": 4
-    },
-    {
-      "agent": "pilot:pilot-qa",
-      "what": "spec 3/4 evidence is key-driven Rust tests, which pass while the mouse cannot reach 8 of 17 bar controls; Rune has no click driver for a live window, QA drove it via UI Automation",
-      "evidence": "QA2, live-archive.png",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-qa",
-      "what": "QA brief named cargo --test archive_filter, which matches no target; the frame test runs as a_frame_stays in tests/deck/main.rs",
-      "evidence": "QA report",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "F1 snap needed a scratch deck serving a store copy: PILOT_DECK_DIR alone does not point Rune at a store, and no release binary existed (~3 min build)",
-      "evidence": "fix round report",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "forced hand-back a third time with a child (QA) live; main takes the child's report instead",
-      "evidence": "handback-send-enforce, archive-page"
-    },
     {
       "agent": "pilot:pilot-co-pilot",
       "what": "pilot checks read red at 434dc69 when both runs were only cancelled by QA's superseding pushes",
@@ -423,6 +407,31 @@
       "agent": "pilot:pilot-co-pilot",
       "what": "TaskStop on own spawned implementer refused (only main/user/agent itself)",
       "evidence": "TaskStop a91f33ff274ccf1e5 refused"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner refused the bare-sha base 2d38b22 (needs origin/<name>); one-spawn rule left all six checks unrun",
+      "evidence": "base does not match ^origin/[A-Za-z0-9._/-]+$"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context compacted mid-run; redid review in a second worktree",
+      "evidence": "pilot-fund2-archive-page"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "briefed fix/archive-page and its worktree already existed from the earlier fix round; took fix2",
+      "evidence": "git worktree add: a branch named 'fix/archive-page' already exists"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "rune grow forces flex-basis 0, so a flex-wrap row never wraps; needed a breakpoint read",
+      "evidence": "rune el/layout.rs:103"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a 640 test without the strip region cannot show the overflow",
+      "evidence": "first red passed until the strip was in the view"
     }
   ]
 }
