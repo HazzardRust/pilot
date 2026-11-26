@@ -116,6 +116,17 @@ test('unpushed work keeps a tree and its branch; the pilot branch or a feat bran
   assert.equal(hasBranch(work, 'feat/x'), true);
 });
 
+test('a branch under the pilot branch name is not the pilot branch', (t) => {
+  const { work, add } = scratch(t);
+  const saved = process.env.PILOT_BRANCH;
+  delete process.env.PILOT_BRANCH;
+  t.after(() => { if (saved !== undefined) process.env.PILOT_BRANCH = saved; });
+  const under = add('under', { push: false });
+  git(work, 'branch', 'pilot/x', 'under');
+  assert.deepEqual(removeTree(work, under), { kept: 'unpushed' });
+  assert.equal(hasBranch(work, 'under'), true);
+});
+
 test('a local feat tree is not its own safe head', (t) => {
   const { work, add } = scratch(t);
   const feat = add('feat/y', { push: false, files: { 'y.txt': 'y' } });

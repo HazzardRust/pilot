@@ -47,7 +47,7 @@ import { keptLine, removeTree, worktrees } from './worktree-remove.mjs';
 import { behavioursOf } from './check-slices.mjs';
 import { checkLine, checksAt } from './checks.mjs';
 import { takeSlot } from './gate-slots.mjs';
-import { gitView, holdsIn } from './git-view.mjs';
+import { gitView, holdsIn, tipOf } from './git-view.mjs';
 import { mergeIntoPilot } from './sync.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
 import { assertPushable, firstLine, git, isPilotBase, isPilotName, landingSubjects, pilotBranch, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
@@ -624,19 +624,25 @@ function trialOnPilot({ cwd, git, head }) {
  * or nothing when the slice is not on its remote. A failure keeps it and names why.
  */
 function pruneSlice(cwd, host, slice, head, git) {
-  return removeSliceTree(cwd, slice) + deleteSlice(cwd, host, slice, head, git);
+  return removeSliceTree(cwd, slice, git) + deleteSlice(cwd, host, slice, head, git);
 }
 
-/** The worktree on `slice`, if any, through `removeTree`: `; removed <dir>`, `; kept <state> <dir>`, or nothing. */
-function removeSliceTree(cwd, slice) {
+/**
+ * The worktree on `slice`, if any, through `removeTree`: `; removed <dir>`, `; kept <state> <dir>`, or nothing.
+ * No local `slice` in the view's tip snapshot, which `deleteSlice` reads next, means no tree is on it: nothing listed.
+ */
+function removeSliceTree(cwd, slice, git) {
   let dir = cwd;
   try {
+    if (tipOf(git, `refs/heads/${slice}`) === null) return '';
+    // removeTree's own git does not go through the view, so the view forgets what it saw.
+    git.forget?.();
     const trees = worktrees(cwd);
     if (!trees) return `; ${keptLine(cwd, 'leftover')}`;
     const tree = trees.slice(1).find((t) => t.branch === slice);
     if (!tree) return '';
     dir = tree.path;
-    const result = removeTree(cwd, dir, { trees });
+    const result = removeTree(cwd, dir);
     return result.removed ? `; removed ${dir}` : `; ${keptLine(dir, result.kept)}`;
   } catch {
     return `; ${keptLine(dir, 'leftover')}`;

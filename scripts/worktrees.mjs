@@ -263,8 +263,9 @@ function fetchBase(repo, base) {
  * once its tracked status reads clean again, and its branch with `-D`. Without `run`, `landed` is ignored.
  * Every removal goes through `removeTree` (prune-worktrees S2, L1), `remove` its remove step: a tree it
  * keeps is `kept` with its state, `leftover` aside, which is `failed`.
- * `git`, a landing's view, answers the worktree list and the base's tip (`classify`); `removeTree`
- * judges each tree off that same list, less the trees already removed, so it is listed once. `fetched`
+ * `git`, a landing's view, answers the worktree list for selection (`classify`, `runWorktrees`) and the
+ * base's tip; `removeTree` still lists afresh before each removal, since its guards must see the tree as
+ * it is then, not as the landing first read it. `fetched`
  * says the caller's own fetch left `base` current (land-batching A3): no fetch then. Only a landing
  * passes it; `pilot worktrees prune` always fetches.
  */
@@ -275,8 +276,6 @@ export function prune(repo, base, { dryRun = false, run, merged = [], keep = [],
   const failed = [];
   const relaxed = landed && run !== undefined;
   const trees = classify(repo, base, { run, landed: relaxed, view });
-  // The records classify read, from the view's cache when one is given (land-batching S5); read on the first removal.
-  let listed;
   const theirs = relaxed ? new Set(runWorktrees(repo, run, view)) : null;
   const ours = (tree, index) => run === undefined ||
     (index > 0 && (relaxed ? theirs.has(tree.path) : isRunBranch(tree.branch, run)));
@@ -313,9 +312,7 @@ export function prune(repo, base, { dryRun = false, run, merged = [], keep = [],
       if (!step.ok) why = step.err;
       return step;
     };
-    listed ??= worktrees(repo, view);
-    const left = listed.filter((other) => !removed.includes(other.path));
-    const result = removeTree(repo, tree.path, { landed: relaxed, remove: removing, branch: dropBranch, trees: left });
+    const result = removeTree(repo, tree.path, { landed: relaxed, remove: removing, branch: dropBranch });
     if (result.kept === 'leftover') {
       // git's own refusal, when it refused, says more than the kept line.
       failed.push({ path: tree.path, reason: why || keptLine(tree.path, result.kept) });

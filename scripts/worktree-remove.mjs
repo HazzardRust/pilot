@@ -109,7 +109,9 @@ function safeHead(repo, head, own) {
   const refs = git(repo, 'for-each-ref', '--contains', withoutRecordTail(repo, head), '--format=%(refname)',
     'refs/remotes', ...pilots, 'refs/heads/feat');
   if (!refs.ok) return false;
-  return refs.out.split('\n').some((ref) => ref && ref !== `refs/heads/${own}`);
+  // A pattern also matches refs under it (`refs/heads/pilot/x`): a pilot branch counts only as itself.
+  const safe = (ref) => ref.startsWith('refs/remotes/') || ref.startsWith('refs/heads/feat/') || pilots.includes(ref);
+  return refs.out.split('\n').some((ref) => ref && ref !== `refs/heads/${own}` && safe(ref));
 }
 
 /**
@@ -137,10 +139,9 @@ const gitDropBranch = (home, name) => git(home, 'branch', '-D', name);
  * Removes worktree `dir` of `repo` and its local branch, or keeps it and says why. Answers
  * `{ removed: true, branch }` (the branch deleted, null for a detached tree or one `branch` refused)
  * or `{ kept: state }`. `branch(home, name)` deletes the local branch and answers `{ ok }` (prune-worktrees S2).
- * `trees`, a caller's worktree records as listed (main checkout first), is judged instead of listing again.
  */
-export function removeTree(repo, dir, { landed = false, holder = () => null, remove = gitRemove, branch: dropBranch = gitDropBranch, trees: listed } = {}) {
-  const trees = listed ?? worktrees(repo);
+export function removeTree(repo, dir, { landed = false, holder = () => null, remove = gitRemove, branch: dropBranch = gitDropBranch } = {}) {
+  const trees = worktrees(repo);
   const index = trees ? trees.findIndex((tree) => same(tree.path, dir)) : -1;
   if (index < 0) return { kept: 'not a worktree' };
   if (index === 0) return { kept: 'main' };
