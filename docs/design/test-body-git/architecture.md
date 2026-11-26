@@ -21,6 +21,7 @@ Line 1's cut is 1,824, not the ticket's 1,700: only git is cut, so the 11,000 to
 | 3 | No assertion is removed or weakened, no test deleted, skipped or `todo`. | `assert-count.mjs` per touched file, base against tip: tests equal, asserts equal or higher, 0 files lower; its table in every slice report and the feature PR body; full suite test total equals the base's plus added tests. |
 | 4 | practitioner: test-infrastructure engineers — a per-test-file fixture git census, before and after, sits beside the design. | `census-before.txt` (S1) and `census-after.txt` (S13): fixture git per file split builder / body / lib, from `census.mjs`; each covers ≥ 99% of the run's fixture git. |
 | 5 | *added (S14, S15)*: S14 and S15 fold enough of the remaining per-test fixture git for the full suite to meet L7's 11,000 / 10,000. | Each slice's census cut of 300 or more; S13's `test:cost` run. |
+| 6 | *added (S16)*: S16 folds body and lib git in the land test files so the full suite meets L7's 11,000 spawns. | Census cut ≥ 150 over the owned files; per-file product git identical to the base for every owned file; `test:cost` after S13. |
 
 Cannot mean: any product-code change. Product git is land-batching's; this run edits test code, test helpers, the two
 gate constants and docs only (L6).
@@ -134,6 +135,7 @@ S2 to S9 1,411, S10 238, S11 118, S12 104: 1,928 against 1,824 needed, a margin 
 | S12 | land-batching's pin and spawn tests | 1, 3 | `scripts/test/{integrate-remote,integrate-pin,land-tail-spawns,land-feature-line,sync-pin,land-chain,land-pin,land-checks,land-none,land-main-pr,land-merged-read,git-view-tips}.test.mjs` | S10 (`land-repos.mjs`) | `pilot:typescript-reviewer` | [S12](slices/S12.md) |
 | S14 | Fold the remaining per-test fixtures (scripts and deck) *(added)* | 5 | the census's test files but `land*`, `integrate*`, `release*`, `sync*`, `restack*`, `lib/fixture-git`, `lib/seed` and `deck/test/gate1-lineage`; `docs/design/test-body-git/census-after.txt` (copied from S13) | S13's census | `pilot:typescript-reviewer` | [S14](slices/S14.md) |
 | S15 | Fold the remaining land, integrate, release, sync and restack fixtures *(added)* | 5 | the census's `land*`, `integrate*`, `release*`, `sync*`, `restack*` test files | S13's census | `pilot:typescript-reviewer` | [S15](slices/S15.md) |
+| S16 | Fold the land files' body and lib git *(added)* | 6 | `scripts/test/{land-clear,land-prune,land-catchup,land-remote,land,land-adr-branch,land-tail-spawns}.test.mjs`, `deck/test/{tabs,stale,record}.test.mjs` | S14, S15 (integrated) | `pilot:typescript-reviewer` | [S16](slices/S16.md) |
 | S13 | The bars read 11,000 / 10,000 again | 1, 2, 4 | `scripts/gate.mjs` (the two constants and the dated line), `docs/design/cheap-suite/architecture.md`, `docs/design/land-batching/architecture.md` (spec 1, 2 rows), `docs/design/test-body-git/{cost-after,census-after}.txt` (new) | S2 to S9 (suite), S11 (suite), S12 (suite) | `pilot:typescript-reviewer` | [S13](slices/S13.md) |
 
 S10 to S13 also wait for land-batching in the base (A1); the after column names slices only.
@@ -172,5 +174,6 @@ S13 stops on a short run (L7).
 | S12 | planned | | | | S10 | 1, 3 |
 | S14 | planned (added) | `slice/test-body-git-s14` | | | – | 5 |
 | S15 | planned (added) | `slice/test-body-git-s15` | | | – | 5 |
+| S16 | planned (added) | `slice/test-body-git-s16` | | | – | 6 |
 | S13 | planned | | | | S2-S9, S11, S12 | 1, 2, 4 |
 | feature | planned | `feat/test-body-git` | | | | 1-4 |

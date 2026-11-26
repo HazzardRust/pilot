@@ -80,9 +80,10 @@ const host = githubHost(greenChecks(gh));
 // run's branches are untouched, and the dry run after it lists only the feature branch.
 test("land deletes the run's merged slice branches; the gate1 and slice merge shas still resolve; another run's branches are untouched; after a landing the dry run lists only the feature branch", (t) => {
   const { root, origin, work, inWork, gate1, sliceMerge } = scratchRun(t);
-  const tipOf = (name) => git(origin, 'rev-parse', `refs/heads/${name}`);
+  // The tips of `names` on origin, one `rev-parse` for them all (L5).
+  const tipsOf = (names) => git(origin, 'rev-parse', ...names.map((name) => `refs/heads/${name}`)).split('\n');
   const others = ['slice/y-s1', 'slice/xx-s1', 'design/x-y', 'fix/x-y-s1'];
-  const tips = others.map(tipOf);
+  const tips = tipsOf(others);
 
   const result = land({ cwd: work, git: inWork, host,test: green });
 
@@ -92,9 +93,11 @@ test("land deletes the run's merged slice branches; the gate1 and slice merge sh
 
   const fresh = path.join(root, 'fresh');
   git(root, 'clone', '-q', origin, fresh);
-  for (const sha of [gate1, sliceMerge]) git(fresh, 'cat-file', '-e', `${sha}^{commit}`);
+  // Both shas in one `cat-file --batch-check`: each line reads `<sha> commit <size>`, `<sha> missing` when gone.
+  const kinds = execFileSync('git', ['cat-file', '--batch-check=%(objectname) %(objecttype)'], { cwd: fresh, encoding: 'utf8', input: `${gate1}\n${sliceMerge}\n` });
+  assert.deepEqual(kinds.trim().split('\n'), [`${gate1} commit`, `${sliceMerge} commit`], 'the gate1 and slice merge shas still resolve');
 
-  assert.deepEqual(others.map(tipOf), tips, 'still on origin at the same tips');
+  assert.deepEqual(tipsOf(others), tips, 'still on origin at the same tips');
   const passed = [...result.deleted, ...result.kept.map(({ branch: b }) => b)];
   assert.ok(!passed.some((b) => others.includes(b) || b.startsWith('feat/')), `another slug or feat/ is never passed: ${passed}`);
 
@@ -128,7 +131,8 @@ test('a planted unmerged fix branch survives and is named', (t) => {
 test('under none, land lists and deletes nothing', (t) => {
   const { origin, work, inWork } = scratchRun(t);
   git(work, 'branch', '-q', '--no-track', 'pilot', 'origin/pilot');
-  git(work, 'config', 'pilot.remote', 'none');
+  // `git config pilot.remote none`, one git fewer: a line in work's config.
+  fs.appendFileSync(path.join(work, '.git', 'config'), '[pilot]\n\tremote = none\n');
   const before = heads(origin);
 
   const result = land({ cwd: work, git: inWork, host,test: green });
@@ -162,5 +166,6 @@ test('a refused deletion is named after the landing, with what was kept', (t) =>
   assert.equal(code, 0, out);
   assert.match(out, /^kept: fix\/x-s2 \(not merged into origin\/feat\/x\)$/m);
   assert.match(out, /^branch deletion failed, some may be gone; check the run remote: git push origin --delete failed: /m);
-  assert.ok(['design/x', 'fix/x-s1', 'qa/x', 'slice/x-s1'].every((name) => heads(origin).includes(name)), 'nothing deleted');
+  const after = heads(origin);
+  assert.ok(['design/x', 'fix/x-s1', 'qa/x', 'slice/x-s1'].every((name) => after.includes(name)), 'nothing deleted');
 });
