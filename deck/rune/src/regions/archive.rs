@@ -3,11 +3,14 @@
 //! open one by the view's word; a row shows its kind, local time, title and `label: value` fields, and a
 //! press asks for that row's detail on the same screen (`&id=`), which never opens a thread.
 
-use std::collections::BTreeMap;
+use std::borrow::Cow;
+use std::cell::RefCell;
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use rune::tok;
-use rune::{Cx, El, ScrollSpec, TextEdit, col, row, text, text_input};
+use rune::{Cx, El, GrowthSpec, TextEdit, col, row, text, text_input};
 use serde::Deserialize;
+use serde_json::Value;
 
 use crate::app::{State, go};
 use crate::client::Query;
@@ -22,6 +25,187 @@ pub struct Local {
     pub kind: Option<String>,
     /// The pressed column and whether it runs ascending; `None` keeps the view's own order.
     pub sort: Option<(Column, bool)>,
+    /// What the list shows, kept between frames (S17); `draw` brings it up to date.
+    list: RefCell<List>,
+}
+
+impl Local {
+    /// The rows of the list's open sections, built or not.
+    pub fn listed(&self) -> usize {
+        let list = self.list.borrow();
+        list.items
+            .iter()
+            .filter(|item| matches!(item, Item::Row { .. }))
+            .count()
+    }
+
+    /// How many times the view's rows have been parsed: once per view, kind, search and sort.
+    pub fn builds(&self) -> usize {
+        self.list.borrow().builds
+    }
+
+    /// The view was replaced: the next frame builds the list again.
+    pub fn new_view(&mut self) {
+        self.list.get_mut().from = None;
+    }
+}
+
+/// The list as places in the view (S17): rebuilt only when the view, the kind, the search or the sort
+/// changes, so a frame over the same view parses none of its rows, and its items laid out again only
+/// when a fold changes. The rows themselves stay in the view; a row is read from it when it is built.
+#[derive(Debug, Default)]
+struct List {
+    from: Option<From>,
+    /// Each section shown, in order: its place in the view's `days`, and its kept rows' places in that
+    /// day's `rows`, in the order shown.
+    sections: Vec<(usize, Vec<usize>)>,
+    builds: usize,
+    /// The folds `items` was laid out with, and the build it was laid out over.
+    folds: Option<(usize, BTreeMap<String, bool>)>,
+    items: Vec<Item>,
+    /// Each item's key, unique; `layouts` changes whenever they do.
+    keys: Vec<String>,
+    layouts: usize,
+}
+
+/// What the list was built from. The view is the archive region's address, which a view put in place of
+/// the drawn one never shares; `app::poll` also calls [`Local::new_view`], since several views can land
+/// with no draw between them (a hidden window) and a later one take a freed address.
+#[derive(Debug, PartialEq)]
+struct From {
+    view: usize,
+    kind: Option<String>,
+    search: String,
+    sort: Option<(Column, bool)>,
+}
+
+/// One item of the list: a section's heading (spaced from the section above unless `first`, from its
+/// rows while it shows some), or one of an open section's rows (spaced from the next unless `last`).
+#[derive(Debug, Clone, Copy)]
+enum Item {
+    Day {
+        section: usize,
+        first: bool,
+        open: bool,
+        rows: bool,
+    },
+    Row {
+        section: usize,
+        row: usize,
+        last: bool,
+    },
+}
+
+impl List {
+    /// Brings the list up to `v` and `local`'s filter, sort and folds; `Err` when `v` cannot be read.
+    fn update(&mut self, v: &Value, local: &Local) -> Result<(), serde_json::Error> {
+        let from = From {
+            view: v as *const Value as usize,
+            kind: local.kind.clone(),
+            search: local.search.text.clone(),
+            sort: local.sort,
+        };
+        if self.from.as_ref() != Some(&from) {
+            self.from = None;
+            self.sections = sections(v, &from)?;
+            self.builds += 1;
+            self.from = Some(from);
+        }
+        if self
+            .folds
+            .as_ref()
+            .is_none_or(|(built, folds)| *built != self.builds || *folds != local.folded)
+        {
+            self.lay_out(v, &local.folded);
+            self.folds = Some((self.builds, local.folded.clone()));
+        }
+        Ok(())
+    }
+
+    fn lay_out(&mut self, v: &Value, folded: &BTreeMap<String, bool>) {
+        let days = &v["days"];
+        let (mut items, mut keys, mut taken) = (vec![], vec![], HashSet::new());
+        let mut key = |words: String| {
+            // A key repeated in the view would take the list down; a repeat is told apart instead.
+            let mut unique = words.clone();
+            let mut n = 1;
+            while !taken.insert(unique.clone()) {
+                n += 1;
+                unique = format!("{words}~{n}");
+            }
+            keys.push(unique);
+        };
+        for (section, (d, rows)) in self.sections.iter().enumerate() {
+            let day = &days[*d];
+            let day_key = day["key"].as_str().unwrap_or_default();
+            let open = folded
+                .get(day_key)
+                .copied()
+                .unwrap_or_else(|| day["open"].as_bool().unwrap_or(false));
+            let shown = if open { rows.len() } else { 0 };
+            items.push(Item::Day {
+                section,
+                first: section == 0,
+                open,
+                rows: shown > 0,
+            });
+            key(format!("archive-section-{day_key}"));
+            for (row, r) in rows.iter().take(shown).enumerate() {
+                items.push(Item::Row {
+                    section,
+                    row,
+                    last: row + 1 == shown,
+                });
+                let id = day["rows"][*r]["id"].as_str().unwrap_or_default();
+                key(format!("archive-item-{id}"));
+            }
+        }
+        self.items = items;
+        self.keys = keys;
+        self.layouts += 1;
+    }
+}
+
+/// The sections `from`'s filter and sort leave of `v`, as places in it, found again by day key and row id,
+/// which the view writes unique (`deck/view/archive.mjs`; the rows were already keyed by id).
+fn sections(v: &Value, from: &From) -> Result<Vec<(usize, Vec<usize>)>, serde_json::Error> {
+    let days = Vec::<Day>::deserialize(&v["days"])?;
+    let search = from.search.as_str();
+    if from.kind.is_none() && search.trim().is_empty() && from.sort.is_none() {
+        return Ok(days
+            .iter()
+            .enumerate()
+            .map(|(d, day)| (d, (0..day.rows.len()).collect()))
+            .collect());
+    }
+    let mut kept = filter_rows(&days, from.kind.as_deref(), search);
+    if let Some((by, asc)) = from.sort {
+        kept = sort_rows(&kept, by, asc);
+    }
+    let place: HashMap<&str, usize> = days
+        .iter()
+        .enumerate()
+        .map(|(d, day)| (day.key, d))
+        .collect();
+    Ok(kept
+        .iter()
+        .filter_map(|k| {
+            let d = *place.get(k.key)?;
+            let at: HashMap<&str, usize> = days[d]
+                .rows
+                .iter()
+                .enumerate()
+                .map(|(r, row)| (row.id, r))
+                .collect();
+            Some((
+                d,
+                k.rows
+                    .iter()
+                    .filter_map(|r| at.get(r.id).copied())
+                    .collect(),
+            ))
+        })
+        .collect())
 }
 
 /// A column the list sorts by, pressed as `archive-sort-<column>`.
@@ -73,15 +257,6 @@ pub struct Day<'a> {
 struct Kind<'a> {
     kind: &'a str,
     label: &'a str,
-}
-
-#[derive(Debug, Default, Deserialize)]
-#[serde(default)]
-struct Archive<'a> {
-    #[serde(borrow)]
-    kinds: Vec<Kind<'a>>,
-    #[serde(borrow)]
-    days: Vec<Day<'a>>,
 }
 
 /// `days` with each section's rows ordered by `by` (A4): a section is never dropped or merged, and only
@@ -138,8 +313,7 @@ fn ask(s: &mut State, id: &str) {
     go(s, query);
 }
 
-fn archive_row(r: &Row, cx: &mut Cx<State>) -> El {
-    let dark = cx.system_dark();
+fn archive_row(r: &Row, dark: bool) -> El {
     let (t, ui) = (theme::tokens(dark), tok::theme(dark));
     let caption = |words: &str| text(words).font(type_::CAPTION).color(t.quiet);
     let line = row()
@@ -177,17 +351,17 @@ fn archive_row(r: &Row, cx: &mut Cx<State>) -> El {
         .on_press(move |s: &mut State| ask(s, &id))
 }
 
-fn day(d: &Day, local: &Local, cx: &mut Cx<State>) -> El {
-    let dark = cx.system_dark();
+/// A section's heading over `count` kept rows: its words fold or open it.
+fn heading(day: &Value, count: usize, open: bool, dark: bool) -> El {
     let (t, ui) = (theme::tokens(dark), tok::theme(dark));
-    let open = local.folded.get(d.key).copied().unwrap_or(d.open);
-    let key = d.key.to_string();
-    let heading = row()
+    let day_key = day["key"].as_str().unwrap_or_default();
+    let key = day_key.to_string();
+    row()
         .w_full()
         .gap(space::pad)
         .child(
-            theme::control(text(d.heading), dark)
-                .key(format!("archive-day-{}", d.key))
+            theme::control(text(day["heading"].as_str().unwrap_or_default()), dark)
+                .key(format!("archive-day-{day_key}"))
                 .role("button")
                 .font(type_::CAPTION)
                 .color(ui.text)
@@ -196,20 +370,44 @@ fn day(d: &Day, local: &Local, cx: &mut Cx<State>) -> El {
                 }),
         )
         .child(theme::content(
-            text(d.rows.len().to_string())
-                .font(type_::CAPTION)
-                .color(t.quiet),
+            text(count.to_string()).font(type_::CAPTION).color(t.quiet),
             dark,
-        ));
-    let mut section = col().w_full().gap(space::pad).child(heading);
-    if open {
-        for r in &d.rows {
-            section = section
-                .child(archive_row(r, cx))
-                .child(theme::separator(dark));
+        ))
+}
+
+/// The list's item `i`, read from the view as it is built: only the items near the viewport are
+/// (`El::virtual_rows`). The spacing is the sections' as they were drawn whole: `pad` inside a
+/// section, `between` from one section to the next.
+fn item(s: &State, i: usize, dark: bool) -> El {
+    let list = s.regions.archive.list.borrow();
+    let none = Value::Null;
+    let days = s.view.regions.get("archive").map_or(&none, |v| &v["days"]);
+    match list.items.get(i).copied() {
+        Some(Item::Day {
+            section,
+            first,
+            open,
+            rows,
+        }) => {
+            let (d, kept) = &list.sections[section];
+            heading(&days[*d], kept.len(), open, dark)
+                .pt(if first { 0.0 } else { space::between })
+                .pb(if rows { space::pad } else { 0.0 })
         }
+        Some(Item::Row { section, row, last }) => {
+            let (d, kept) = &list.sections[section];
+            match Row::deserialize(&days[*d]["rows"][kept[row]]) {
+                Ok(r) => col()
+                    .w_full()
+                    .gap(space::pad)
+                    .pb(if last { 0.0 } else { space::pad })
+                    .child(archive_row(&r, dark))
+                    .child(theme::separator(dark)),
+                Err(_) => col(),
+            }
+        }
+        None => col(),
     }
-    section
 }
 
 /// One toggle of the bar above the list, drawn in the text colour while `on`.
@@ -285,49 +483,54 @@ fn bar(kinds: &[Kind], local: &Local, cx: &mut Cx<State>) -> El {
 pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     // A region the view cannot be read as, or not yet loaded (every other screen's `{}`, with no `days`),
     // draws nothing rather than taking the window down or claiming the archive is empty.
-    let Some(archive) = v
-        .get("days")
-        .is_some()
-        .then(|| Archive::deserialize(v).ok())
-        .flatten()
-    else {
+    let kinds = v.get("kinds").map_or(Ok(vec![]), Vec::<Kind>::deserialize);
+    // Every filter and sort runs here, over the rows the window holds (L6): a keystroke asks the deck
+    // nothing, and a frame that changed none of them reads no row (S17).
+    let (Some(days), Ok(kinds), Ok(())) = (
+        v.get("days").and_then(Value::as_array),
+        kinds,
+        local.list.borrow_mut().update(v, local),
+    ) else {
         return col().key("archive");
     };
+    let dark = cx.system_dark();
     let region = col()
         .key("archive")
         .w_full()
         .grow(1.0)
         .min_h(space::s0)
         .gap(space::between);
-    if archive.days.is_empty() {
-        return region.child(theme::empty(
-            "Nothing archived yet.",
-            "archive-none",
-            cx.system_dark(),
-        ));
+    if days.is_empty() {
+        return region.child(theme::empty("Nothing archived yet.", "archive-none", dark));
     }
-    let region = region.child(bar(&archive.kinds, local, cx));
-    // Every filter and sort runs here, over the rows the window holds (L6): a keystroke asks the deck nothing.
-    let (kind, search) = (local.kind.as_deref(), local.search.text.as_str());
-    let mut days = if kind.is_none() && search.trim().is_empty() {
-        archive.days
-    } else {
-        filter_rows(&archive.days, kind, search)
+    let region = region.child(bar(&kinds, local, cx));
+    let (count, layouts) = {
+        let list = local.list.borrow();
+        (list.items.len(), list.layouts)
     };
-    if let Some((by, asc)) = local.sort {
-        days = sort_rows(&days, by, asc);
-    }
-    let mut list = col()
+    // Only the items near the centre's viewport are built and laid out, however many the list holds:
+    // every row stays in the view (A5), and scrolling reaches each.
+    let list = col()
         .key("archive-list")
         .w_full()
-        .grow(1.0)
-        .min_h(space::s0)
-        .gap(space::between)
-        .scroll(ScrollSpec {
-            stick_bottom: false,
-        });
-    for d in &days {
-        list = list.child(day(d, local, cx));
-    }
+        .growth(GrowthSpec::default())
+        .virtual_rows(
+            count,
+            ROW_ESTIMATE,
+            |s: &State, i| {
+                let list = s.regions.archive.list.borrow();
+                Cow::Owned(
+                    list.keys
+                        .get(i)
+                        .cloned()
+                        .unwrap_or_else(|| format!("archive-gone-{i}")),
+                )
+            },
+            move |s: &State, i| item(s, i, dark),
+        )
+        .virtual_rows_version(layouts);
     region.child(list)
 }
+
+/// An unbuilt item's height until it is measured: a row's two lines, its separator and their spacing.
+const ROW_ESTIMATE: f32 = 64.0;

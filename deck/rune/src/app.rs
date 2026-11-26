@@ -349,6 +349,7 @@ pub fn poll(s: &mut State, _: f64, tx: &mut Tx) -> bool {
             // Data the server brought lands instantly unless asked: a card arriving live springs in (spec 5).
             tx.animated();
             s.view = view;
+            s.regions.archive.new_view();
             s.down = false;
             true
         }
