@@ -25,6 +25,7 @@ import path from 'node:path';
 
 import { assertPushable, firstLine, holds, namePilotBranch, pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
 import { runRef, runRemote, shortRef } from './remotes.mjs';
+import { gitView, holdsIn, tipOf } from './git-view.mjs';
 import { git as gitAt, installWithNpm, NO_TEST, redLine, runTests, testCommand } from './integrate.mjs';
 import { conflictLine, conflictPaths, mergeResolved } from './merge-generated.mjs';
 import { allocateAdr } from './adr-allocate.mjs';
@@ -72,7 +73,7 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
   } catch (err) {
     throw fail(firstLine(err));
   }
-  if (holds(cwd, ['merge-base', '--is-ancestor', source, pilotTip])) {
+  if (holdsIn(git, ['merge-base', '--is-ancestor', source, pilotTip])) {
     return { sha: pilotTip, merged: false, line: `${pilot} already has ${taken}`, counts: null, adr: null };
   }
 
@@ -169,37 +170,56 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
     const line = `synced ${pilot} ${short(pushed)} (${taken})${summary ? `: ${summary}` : ''}`;
     return { sha: pushed, merged: true, line, counts: run.counts, adr };
   } finally {
-    if (!kept) removeWorktree(cwd, dir);
+    if (!kept) {
+      // On its own runner, not the injected one (whose argv a caller may audit for --force),
+      // then the view forgets: the worktree list it may hold has lost an entry.
+      removeWorktree(cwd, dir);
+      git.forget?.();
+    }
   }
 }
 
-/** The pilot branch `pilot`'s tip on the run remote as last fetched, or the local one under `none`. */
+/** The pilot branch `pilot`'s tip on the run remote as last fetched, or the local one under `none`: read from `git`'s one ref snapshot. */
 function pilotTipOf(git, runs, pilot) {
   const ref = runRef(runs, pilot);
-  try {
-    return git(['rev-parse', '-q', '--verify', `${ref}^{commit}`]);
-  } catch (err) {
-    if (err.status === 1) throw new Error(`no ${shortRef(ref)} (run pilot base first)`);
-    throw err;
-  }
+  const tip = tipOf(git, ref);
+  if (tip === null) throw new Error(`no ${shortRef(ref)} (run pilot base first)`);
+  return tip;
 }
 
-/** The tree git would make merging `theirs` into `ours`, or null on a conflict. */
-function mergeTree(git, ours, theirs) {
+/**
+ * The tree git would make merging `theirs` into `ours`, or null on a conflict. Run in `cwd`, outside the
+ * view: it writes objects only, never a ref or HEAD, so no answer the view holds goes stale, and through
+ * the view it would count as a write and drop them all.
+ */
+function mergeTree(cwd, ours, theirs) {
   try {
-    return git(['merge-tree', '--write-tree', ours, theirs]);
+    return gitAt(cwd, 'merge-tree', '--write-tree', ours, theirs);
   } catch {
     return null;
   }
 }
 
-/** Removes the worktree at `dir`, best effort: a Windows handle still open there must not replace the outcome. Answers whether `dir` is gone. */
+/**
+ * Removes the worktree at `dir`, best effort: a Windows handle still open there must not replace the outcome.
+ * `worktree prune` runs only when `worktree remove` failed (a locked tree, a handle), since a removal that
+ * succeeded left no entry to prune. Answers whether `dir` is gone.
+ */
 export function removeWorktree(cwd, dir) {
-  spawnSync('git', ['worktree', 'remove', '--force', dir], { cwd, windowsHide: true });
+  let removed = true;
+  try {
+    gitAt(cwd, 'worktree', 'remove', '--force', dir);
+  } catch {
+    removed = false;
+  }
   try {
     fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   } catch {}
-  spawnSync('git', ['worktree', 'prune'], { cwd, windowsHide: true });
+  if (!removed) {
+    try {
+      gitAt(cwd, 'worktree', 'prune');
+    } catch {}
+  }
   return !fs.existsSync(dir);
 }
 
@@ -268,6 +288,7 @@ export function sync({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args),
   let runs;
   let pilotTip;
   let checkout;
+  let pilotTree;
   let pilot;
   try {
     pilot = pilotBranch(git);
@@ -276,10 +297,14 @@ export function sync({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args),
     runs = runRemote(git);
     if (runs !== null && runs !== 'origin') git(['fetch', '-q', '--prune', runs]);
     fallback = remoteDefaultBranch(git);
-    mainTip = git(['rev-parse', '--verify', `refs/remotes/origin/${fallback}^{commit}`]);
+    // Both tips from the one snapshot taken after the fetches.
+    mainTip = tipOf(git, `refs/remotes/origin/${fallback}`);
+    if (mainTip === null) throw new Error(`no origin/${fallback}`);
     pilotTip = pilotTipOf(git, runs, pilot);
     // The main checkout is the parent of the common git dir; `worktree list` is land's to count.
-    checkout = path.dirname(git(['rev-parse', '--path-format=absolute', '--git-common-dir']));
+    // One rev-parse answers it and pilot's tree, a line each.
+    [checkout, pilotTree] = git(['rev-parse', '--path-format=absolute', '--git-common-dir', `${pilotTip}^{tree}`]).split('\n');
+    checkout = path.dirname(checkout);
   } catch (err) {
     throw fail(firstLine(err));
   }
@@ -289,10 +314,11 @@ export function sync({ cwd = process.cwd(), git = (args) => gitAt(cwd, ...args),
   const stop = (reason, exitCode) => Object.assign(new Error(`NOT synced: ${reason}`), { exitCode });
   const conflict = (paths, why) => stop(conflictLine({ head: label, onto: pilot, paths: [conflictPaths(paths, why)], dir: keep }), 3);
   // Main's merge changes no file (it holds only pilot's work, by merge or squash): nothing to push or test.
-  if (!holds(cwd, ['merge-base', '--is-ancestor', mainTip, pilotTip]) && mergeTree(git, pilotTip, mainTip) === git(['rev-parse', `${pilotTip}^{tree}`])) {
+  const landed = holdsIn(git, ['merge-base', '--is-ancestor', mainTip, pilotTip]);
+  if (!landed && mergeTree(cwd, pilotTip, mainTip) === pilotTree) {
     return { sha: pilotTip, merged: false, line: `${pilot} already has ${label}` };
   }
-  const reuse = fs.existsSync(keep) && !holds(cwd, ['merge-base', '--is-ancestor', mainTip, pilotTip]) && resume({ cwd, dir: keep, pilotTip, source: mainTip, message, side: 'ours', refuse: stop, conflict });
+  const reuse = fs.existsSync(keep) && !landed && resume({ cwd, dir: keep, pilotTip, source: mainTip, message, side: 'ours', refuse: stop, conflict });
   // Pilot writes the run records it carries; the default branch holds older copies (clean-landing L3).
   return mergeIntoPilot({ cwd, git, source: mainTip, message, test, label, keep, reuse, side: 'ours', since: pilotTip });
 }
@@ -304,16 +330,25 @@ export function main(argv) {
     return 1;
   }
   try {
+    // One view for the whole command: each read asked once between writes (land-batching L2-L4).
     const cwd = process.cwd();
-    const git = (args) => gitAt(cwd, ...args);
-    let host = null;
+    const git = gitView(cwd);
     let unchosen = '';
-    try {
-      host = hostFor(cwd, { git });
-    } catch (err) {
-      // A host that cannot be chosen derives no name: a stored or env name still syncs, and a failure names it.
-      unchosen = ` (no host: ${firstLine(err)})`;
-    }
+    // Chosen only when a name must be derived, so an env or stored name costs no host read (land-batching spec 4).
+    // Only `login` is given: namePilotBranch reads nothing else off the host.
+    const host = {
+      login: () => {
+        let chosen;
+        try {
+          chosen = hostFor(cwd, { git });
+        } catch (err) {
+          // A host that cannot be chosen derives no name: a stored or env name still syncs, and a failure names it.
+          unchosen = ` (no host: ${firstLine(err)})`;
+          return null;
+        }
+        return chosen ? chosen.login() : null;
+      },
+    };
     // The one entry point here holding a host: it names (and on a first run stores) the pilot branch (L5).
     try {
       namePilotBranch({ git, host });

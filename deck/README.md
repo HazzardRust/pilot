@@ -19,6 +19,9 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `agents.mjs` | who is live in each deck, from the roster sessions declare |
 | `alert-switch.mjs` | the Weekly alerts on/off switch file |
 | `analytics.mjs` | `pilot analytics`: a run's tokens, tool calls, time and cost per agent |
+| `archive-detail.mjs` | the read-only join of an archived item with its plan and closing report, for the detail view |
+| `archive-time.mjs` | the archive's one local time format, `YYYY-MM-DD HH:MM`, for every row and the view alike |
+| `archive.mjs` | the archive's one read-only seam: every record kind's rows off the store files, credentials withheld |
 | `audit.mjs` | the housekeeping audit report: checked, ranked, rendered, kept in the store |
 | `awake.mjs` | the keep-awake hold: the in-flight rule, the per-OS holder, the tick |
 | `blocked-shape.mjs` | checks a ticketed `Blocked:` question or walkthrough is posted blocking |
