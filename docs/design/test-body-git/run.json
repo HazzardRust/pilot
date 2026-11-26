@@ -96,7 +96,7 @@
     },
     {
       "slice": "S11",
-      "state": "integrating",
+      "state": "integrated, checks green at 401452b",
       "after": [
         "S10"
       ],
@@ -105,7 +105,7 @@
     },
     {
       "slice": "S12",
-      "state": "pushed be685b4; be685b4 re-reviewed: approve",
+      "state": "integrating",
       "after": [
         "S10"
       ],
@@ -129,8 +129,8 @@
       ]
     }
   ],
-  "next": "integrate S11 (running), checks; then S12; then spawn S13 (sonnet)",
-  "updatedAt": "2026-11-26T20:24:59.440Z",
+  "next": "integrate S12 (running), checks; then spawn S13 (sonnet)",
+  "updatedAt": "2026-11-26T20:42:28.533Z",
   "friction": [
     {
       "agent": "pilot-architect",
