@@ -7,6 +7,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,23 +23,9 @@ const { pilotBranch } = await import('../pilot-branch.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
-function commitFile(repo, file, message) {
-  fs.writeFileSync(path.join(repo, file), `${file}\n`);
-  git(repo, 'add', file);
-  git(repo, 'commit', '-q', '-m', message);
-}
-
-/** origin with `main` and the seed on it; answers the paths. */
-function seeded(dir) {
-  const origin = path.join(dir, 'origin.git');
-  const seed = path.join(dir, 'seed');
-  git(dir, 'init', '--bare', '-b', 'main', origin);
-  git(dir, 'clone', '-q', origin, seed);
-  git(seed, 'checkout', '-q', '-b', 'main');
-  commitFile(seed, 'main.txt', 'main');
-  git(seed, 'push', '-q', 'origin', 'main');
-  return { origin, seed };
-}
+/** One seeded commit on `branch` adding `file`, its text the file's name, as the porcelain build wrote it. */
+const commit = (branch, file, message, more = {}) => ({ branch, files: { [file]: `${file}\n` }, message, ...more });
+const MAIN = commit('main', 'main.txt', 'main');
 
 /** A clone of `origin` at `dir/<name>` storing `branch` as its pilot branch. */
 function clone(dir, origin, name, branch, at = 'main') {
@@ -54,16 +41,15 @@ function clone(dir, origin, name, branch, at = 'main') {
  */
 function movedRepos(t) {
   return gitFixture(t, 'integrate-user-branch:moved', (dir) => {
-    const { origin, seed } = seeded(dir);
-    git(seed, 'checkout', '-q', '-b', 'pilot');
-    for (const [head, into] of [['feat/x', 'pilot'], ['feat/y', 'hazzardrust-pilot']]) {
-      if (into !== 'pilot') git(seed, 'checkout', '-q', '-B', into);
-      git(seed, 'checkout', '-q', '-b', head);
-      commitFile(seed, `${head.replace('/', '-')}.txt`, `${head}: work`);
-      git(seed, 'checkout', '-q', into);
-      git(seed, 'merge', '-q', '--no-ff', '-m', `Merge ${head} into ${into}`, head);
-    }
-    git(seed, 'push', '-q', 'origin', 'hazzardrust-pilot');
+    const { origin } = seed(dir, [
+      MAIN,
+      commit('feat/x', 'feat-x.txt', 'feat/x: work'),
+      { branch: 'pilot', from: 'main', files: {}, merge: ['feat/x'], message: 'Merge feat/x into pilot' },
+      commit('feat/y', 'feat-y.txt', 'feat/y: work'),
+      { branch: 'hazzardrust-pilot', from: 'pilot', files: {}, merge: ['feat/y'], message: 'Merge feat/y into hazzardrust-pilot' },
+    ]);
+    // Only main and hazzardrust-pilot were ever pushed: the legacy pilot is gone from origin.
+    git(origin, 'branch', '-D', 'pilot', 'feat/x', 'feat/y');
     return { work: clone(dir, origin, 'work', 'hazzardrust-pilot') };
   });
 }
@@ -107,14 +93,11 @@ test("no integration or trial onto another user's pilot branch", (t) => {
 });
 
 test('sync touches only its own branch', (t) => {
-  const { origin, a, b } = gitFixture(t, 'integrate-user-branch:two', (dir) => {
-    const { origin, seed } = seeded(dir);
-    git(seed, 'push', '-q', 'origin', 'main:a-pilot', 'main:b-pilot');
-    commitFile(seed, 'later.txt', 'main: later');
-    git(seed, 'push', '-q', 'origin', 'main');
-    return { origin, a: clone(dir, origin, 'a', 'a-pilot'), b: clone(dir, origin, 'b', 'b-pilot') };
+  const { origin, a, b, before } = gitFixture(t, 'integrate-user-branch:two', (dir) => {
+    // a-pilot and b-pilot at main's first commit; main one commit on.
+    const { origin, sha } = seed(dir, [{ ...MAIN, branch: 'a-pilot' }, commit('main', 'later.txt', 'main: later')], { 'b-pilot': 'a-pilot' });
+    return { origin, a: clone(dir, origin, 'a', 'a-pilot'), b: clone(dir, origin, 'b', 'b-pilot'), before: sha['b-pilot'] };
   });
-  const before = git(origin, 'rev-parse', 'b-pilot');
   const passing = `node -e "console.log('ℹ pass 1'); console.log('ℹ fail 0')"`;
 
   const said = sync({ cwd: a, git: (args) => git(a, ...args), test: passing, keep: path.join(path.dirname(a), 'a-sync') });

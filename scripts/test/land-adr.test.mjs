@@ -5,7 +5,8 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
-import { buildRepos, commitFile, fakeGh, git, mainSays, passing } from './lib/land-repos.mjs';
+import { buildRepos, fakeGh, git, mainSays, passing } from './lib/land-repos.mjs';
+import { seed as seedHistory } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,17 +21,27 @@ const adr = (title) => `---\nstatus: proposed\ndate: 2026-10-19\ntags: [x]\nsupe
 function adrRepos(t) {
   return gitFixture(t, 'land-adr', (dir) => {
     const built = buildRepos(dir, []);
-    fs.mkdirSync(path.join(built.seed, 'docs/adr'), { recursive: true });
-    commitFile(built.seed, 'docs/adr/0167-base.md', adr('the base'), 'adr 0167');
-    git(built.seed, 'push', '-q', 'origin', 'HEAD:pilot');
-    const feature = (name) => {
-      const work = built.clone(name);
-      fs.mkdirSync(path.join(work, 'docs/adr'), { recursive: true });
-      commitFile(work, `docs/adr/NNNN-${name}.md`, adr(name), `adr ${name}`);
-      git(work, 'push', '-q', 'origin', `feat/${name}`);
+    // The history the porcelain build committed and pushed, seeded beside origin and fetched into it in one git.
+    const feature = (name) => [
+      { branch: `feat/${name}`, from: 'pilot', files: { [`${name}.txt`]: `${name}\n` }, message: `feat ${name}` },
+      { branch: `feat/${name}`, files: { [`docs/adr/NNNN-${name}.md`]: adr(name) }, message: `adr ${name}` },
+    ];
+    const beside = path.join(dir, 'history');
+    fs.mkdirSync(beside);
+    const { origin: history, sha } = seedHistory(beside, [
+      { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'main' },
+      { branch: 'pilot', files: { 'docs/adr/0167-base.md': adr('the base') }, message: 'adr 0167' },
+      ...feature('x'), ...feature('y'),
+    ]);
+    git(built.origin, 'fetch', '-q', history, '+refs/heads/*:refs/heads/*');
+    // Each feature is one clone of its branch, holding a local main as the clone the build cut it in did.
+    const clone = (name) => {
+      const work = path.join(dir, name);
+      git(dir, 'clone', '-q', '-b', `feat/${name}`, built.origin, work);
+      fs.writeFileSync(path.join(work, '.git', 'refs', 'heads', 'main'), `${sha.main}\n`);
       return work;
     };
-    return { ...built, dir, x: feature('x'), y: feature('y') };
+    return { ...built, dir, x: clone('x'), y: clone('y') };
   });
 }
 

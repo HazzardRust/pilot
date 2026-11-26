@@ -13,7 +13,6 @@ import { seed } from './lib/seed.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 
 const { integrate } = await import('../integrate.mjs');
@@ -21,12 +20,6 @@ const { pilotLineage } = await import('../pilot-branch.mjs');
 const UP = 'refs/remotes/origin/pilot';
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
-
-function commitFile(work, file, text, message) {
-  fs.writeFileSync(path.join(work, file), text);
-  git(work, 'add', file);
-  git(work, 'commit', '-q', '-m', message);
-}
 
 /**
  * origin has `main` (base, shared.txt) and, unless `pilot: false`, `pilot` two commits
@@ -37,56 +30,68 @@ function repos(t, { pilot = true } = {}) {
   return gitFixture(t, `integrate-copies:repos:${pilot}`, (dir) => buildRepos(dir, pilot));
 }
 
+/**
+ * Each shape of `feat/x` a test checks out, seeded with the history and kept in `work` unreferenced (its branch gone
+ * from origin and the clone): the copies are new commits with pilot's patches, as `cherry-pick -x` made them.
+ */
+const P1 = { 'p1.txt': 'p1\n' };
+const P2 = { 'p2.txt': 'p2\n', 'shared.txt': 'pilot\n' };
+const X = { files: { 'x.txt': 'x\n' }, message: 'x' };
+const SHAPES = [
+  { branch: 'x/tip', from: 'pilot', ...X },
+  { branch: 'x/copy', from: 'main', files: P1, message: 'p1 (copy)' },
+  { branch: 'x/copy', ...X },
+  { branch: 'x/merged', from: 'main', files: P1, message: 'p1 (copy)' },
+  { branch: 'x/merged', files: {}, merge: ['pilot'], message: 'merge pilot' },
+  { branch: 'x/merged-on', from: 'x/merged', ...X },
+  { branch: 'x/conflict-copies', from: 'main', files: P1, message: 'p1 (copy)' },
+  { branch: 'x/conflict-copies', files: P2, message: 'p2 (copy)' },
+  { branch: 'x/conflict-copies', files: { 'shared.txt': 'feature\n' }, message: 'x: shared' },
+  { branch: 'x/conflict-clean', from: 'main', files: { 'shared.txt': 'feature\n' }, message: 'x: shared' },
+];
+
 function buildRepos(dir, pilot) {
   const work = path.join(dir, 'work');
   const { origin, sha } = seed(dir, [
     { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'base' },
-    ...(pilot ? [
-      { branch: 'pilot', files: { 'p1.txt': 'p1\n' }, message: 'p1' },
-      { branch: 'pilot', files: { 'p2.txt': 'p2\n', 'shared.txt': 'pilot\n' }, message: 'p2' },
-    ] : []),
+    ...(pilot ? [{ branch: 'pilot', files: P1, message: 'p1' }, { branch: 'pilot', files: P2, message: 'p2' }, ...SHAPES] : []),
   ]);
   git(dir, 'clone', '-q', origin, work);
-  if (!pilot) return { origin, work, pilotCommits: [] };
+  if (!pilot) return { origin, work };
+  const shapes = [...new Set(SHAPES.map((commit) => commit.branch))];
+  git(origin, 'branch', '-q', '-D', ...shapes);
+  git(work, 'branch', '-q', '-D', '-r', ...shapes.map((shape) => `origin/${shape}`));
   // The clone holds a local pilot too, as the build that committed it there did.
   git(work, 'branch', '-q', '--no-track', 'pilot', 'origin/pilot');
-  return { origin, work, pilotCommits: [git(work, 'rev-parse', 'pilot~1'), sha.pilot] };
+  return { origin, work, shape: Object.fromEntries(shapes.map((shape) => [shape.slice(2), sha[shape]])) };
 }
 
-/** `feat/x` from `from`, with `picks` cherry-picked onto it (`-x`, so a new commit with the same patch even onto pilot's own parent). */
-function featFrom(work, from, picks = []) {
-  git(work, 'checkout', '-q', '-b', 'feat/x', from);
-  for (const sha of picks) git(work, 'cherry-pick', '-x', sha);
-}
+/** `feat/x` checked out at `sha`, one of the seeded shapes. */
+const featAt = (work, sha) => git(work, 'checkout', '-q', '-b', 'feat/x', sha);
 
 test('a branch cut from pilot\'s tip has no copies', (t) => {
-  const { work } = repos(t);
-  featFrom(work, 'origin/pilot');
-  commitFile(work, 'x.txt', 'x\n', 'x');
+  const { work, shape } = repos(t);
+  featAt(work, shape.tip);
   assert.deepEqual(pilotLineage(work, 'feat/x'), { upstream: UP, tip: true, copies: 0 });
 });
 
 test('a branch with one pilot commit cherry-picked onto an older base', (t) => {
-  const { work, pilotCommits } = repos(t);
-  featFrom(work, 'main', [pilotCommits[0]]);
-  commitFile(work, 'x.txt', 'x\n', 'x');
+  const { work, shape } = repos(t);
+  featAt(work, shape.copy);
   assert.deepEqual(pilotLineage(work, 'feat/x'), { upstream: UP, tip: false, copies: 1 });
 });
 
 test('a branch that merged pilot after a replay still counts its copies', (t) => {
-  const { work, pilotCommits } = repos(t);
-  featFrom(work, 'main', [pilotCommits[0]]);
-  git(work, 'merge', '-q', '--no-ff', '-m', 'merge pilot', 'origin/pilot');
+  const { work, shape } = repos(t);
+  featAt(work, shape.merged);
   const lineage = pilotLineage(work, 'feat/x');
   assert.equal(lineage.tip, true);
   assert.equal(lineage.copies, 1);
 });
 
 test('a branch that commits on after merging pilot still counts its copies', (t) => {
-  const { work, pilotCommits } = repos(t);
-  featFrom(work, 'main', [pilotCommits[0]]);
-  git(work, 'merge', '-q', '--no-ff', '-m', 'merge pilot', 'origin/pilot');
-  commitFile(work, 'x.txt', 'x\n', 'x');
+  const { work, shape } = repos(t);
+  featAt(work, shape['merged-on']);
   assert.deepEqual(pilotLineage(work, 'feat/x'), { upstream: UP, tip: true, copies: 1 });
 });
 
@@ -102,19 +107,18 @@ test('a ref that does not resolve throws', (t) => {
 });
 
 /** feat/x pushed to origin, with a commit of its own to shared.txt that pilot's p2 conflicts with. */
-function conflicting(work, picks) {
-  featFrom(work, 'main', picks);
-  commitFile(work, 'shared.txt', 'feature\n', 'x: shared');
+function conflicting(work, tip) {
+  featAt(work, tip);
   git(work, 'push', '-q', 'origin', 'feat/x');
-  return git(work, 'rev-parse', 'HEAD');
+  return tip;
 }
 
 const run = (work) => integrate(undefined, { cwd: work, test: 'exit 0', install: () => {} });
 
 test('a base conflict on a branch carrying copies names the count', (t) => {
-  const { origin, work, pilotCommits } = repos(t);
+  const { origin, work, shape } = repos(t);
   // p1 and p2 are copied cleanly; feat/x's own change to shared.txt is what conflicts.
-  const tip = conflicting(work, pilotCommits);
+  const tip = conflicting(work, shape['conflict-copies']);
   const result = run(work);
   assert.equal(result.ok, false);
   assert.match(result.line, /^base NOT taken: taking base pilot stopped \(.+\); not pushed; 2 of feat\/x's commits are copies of pilot's$/);
@@ -123,8 +127,8 @@ test('a base conflict on a branch carrying copies names the count', (t) => {
 });
 
 test('a base conflict on a clean branch names no count', (t) => {
-  const { origin, work } = repos(t);
-  const tip = conflicting(work, []);
+  const { origin, work, shape } = repos(t);
+  const tip = conflicting(work, shape['conflict-clean']);
   const result = run(work);
   assert.equal(result.ok, false);
   assert.match(result.line, /^base NOT taken: taking base pilot stopped \(.+\); not pushed$/);

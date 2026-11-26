@@ -8,6 +8,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -49,31 +50,39 @@ function run(t) {
 }
 
 function buildRun(root) {
-  const origin = path.join(root, 'origin.git');
+  // Origin's history in one fast-import (test-body-git S1): feat/s is design/s with slice/s-s1 merged no-ff.
+  const { origin, sha } = seed(root, [
+    { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'main' },
+    { branch: 'design/s', files: { 'design.md': 'design\n' }, message: 'design s' },
+    { branch: 'slice/s-s1', files: { 's1.mjs': 'export const s1 = 1;\n' }, message: 'slice s1' },
+    { branch: 'feat/s', from: 'design/s', files: {}, merge: ['slice/s-s1'], message: 'merge s1' },
+  ], { pilot: 'main' });
   const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
   git(root, 'clone', '-q', origin, work);
+  // As the clone of an empty origin left it: no origin/HEAD.
+  fs.rmSync(path.join(work, '.git', 'refs', 'remotes', 'origin', 'HEAD'));
   git(work, 'config', 'pilot.test', passing);
-  git(work, 'checkout', '-q', '-b', 'main');
-  commitFile(work, 'shared.txt', 'one\n', 'main');
-  git(work, 'push', '-q', 'origin', 'main', 'main:pilot');
 
+  // Each run branch tracks its own origin branch, as the porcelain build's `push -u` left it.
   const dir = (name) => path.join(root, name);
-  git(work, 'worktree', 'add', '-q', '-b', 'design/s', dir('design'), 'origin/pilot');
-  commitFile(dir('design'), 'design.md', 'design\n', 'design s');
-  git(dir('design'), 'push', '-q', '-u', 'origin', 'design/s');
-
-  git(work, 'worktree', 'add', '-q', '-b', 'feat/s', dir('feat'), 'origin/design/s');
-  git(dir('feat'), 'push', '-q', '-u', 'origin', 'feat/s');
-
-  // QA's worktree (pilot-qa.md), cut from the feature and brought to its tip as QA is.
+  git(work, 'worktree', 'add', '-q', '-b', 'design/s', dir('design'), 'origin/design/s');
+  git(work, 'worktree', 'add', '-q', '-b', 'feat/s', dir('feat'), 'origin/feat/s');
+  // QA's worktree (pilot-qa.md), at the feature's tip as QA is.
   git(work, 'worktree', 'add', '-q', '-b', 'qa/s', dir('qa'), 'origin/feat/s');
-  git(work, 'worktree', 'add', '-q', '-b', 'slice/s-s1', dir('slice'), 'origin/feat/s');
-  commitFile(dir('slice'), 's1.mjs', 'export const s1 = 1;\n', 'slice s1');
-  git(dir('slice'), 'push', '-q', '-u', 'origin', 'slice/s-s1');
-  git(dir('feat'), 'merge', '-q', '--no-ff', '-m', 'merge s1', 'slice/s-s1');
-  git(dir('feat'), 'push', '-q', 'origin', 'feat/s');
-  git(dir('qa'), 'merge', '-q', '--ff-only', 'origin/feat/s');
+  git(work, 'worktree', 'add', '-q', '-b', 'slice/s-s1', dir('slice'), 'origin/slice/s-s1');
+  // Each run worktree was cut one commit back and then moved (committed, merged or fast-forwarded), so its reflogs
+  // say it moved (worktrees.mjs `moved`): the branch's and the worktree HEAD's logs become the cut and the move.
+  for (const [name, branch, from, cut, move] of [
+    ['design', 'design/s', sha.main, 'origin/pilot', 'commit: design s'],
+    ['feat', 'feat/s', sha['design/s'], 'origin/design/s', 'merge slice/s-s1: Merge made by the \'ort\' strategy.'],
+    ['qa', 'qa/s', sha['design/s'], 'origin/feat/s', 'merge origin/feat/s: Fast-forward'],
+    ['slice', 'slice/s-s1', sha['design/s'], 'origin/feat/s', 'commit: slice s1'],
+  ]) {
+    const branchLog = path.join(work, '.git', 'logs', 'refs', 'heads', ...branch.split('/'));
+    const [, tip, stamp] = fs.readFileSync(branchLog, 'utf8').match(/^0{40} ([0-9a-f]{40}) ([^\t\n]*)/);
+    const entries = `${'0'.repeat(40)} ${from} ${stamp}\tbranch: Created from ${cut}\n${from} ${tip} ${stamp}\t${move}\n`;
+    for (const log of [branchLog, path.join(work, '.git', 'worktrees', name, 'logs', 'HEAD')]) fs.writeFileSync(log, entries);
+  }
 
   git(work, 'worktree', 'add', '-q', '-b', 'slice/other-s1', dir('other'), 'origin/design/s');
   git(dir('other'), 'merge', '-q', '--ff-only', 'origin/feat/s');

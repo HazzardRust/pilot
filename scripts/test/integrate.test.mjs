@@ -30,15 +30,15 @@ function scratchRepos(t, sliceFiles = { 'a.txt': 'a\n' }) {
   return gitFixture(t, `integrate:scratchRepos:${JSON.stringify(sliceFiles)}`, (root) => buildScratchRepos(root, sliceFiles));
 }
 
-/** origin seeded in two git (test-body-git S1), then `work` cloned on `feat/x`, origin/HEAD at main. */
+/** origin seeded in two git (test-body-git S1), then `work` cloned on `feat/x`, origin/HEAD at main; `before` is the tip feat/x, main and pilot share. */
 function buildScratchRepos(root, sliceFiles) {
-  const { origin } = seed(root, [
+  const { origin, sha } = seed(root, [
     { branch: 'feat/x', files: { 'base.txt': 'base\n' }, message: 'base' },
     { branch: 'slice/a', files: sliceFiles, message: 'the slice' },
   ], { main: 'feat/x', pilot: 'feat/x' });
   const work = path.join(root, 'work');
   git(root, 'clone', '-q', '-b', 'feat/x', origin, work);
-  return { origin, work };
+  return { origin, work, before: sha['feat/x'] };
 }
 
 const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
@@ -80,8 +80,7 @@ test('green: the run record the deck wrote is committed after the merge and push
 });
 
 test('red: nothing merged, committed or pushed, and the failing tests are named', (t) => {
-  const { origin, work } = scratchRepos(t);
-  const before = git(work, 'rev-parse', 'HEAD');
+  const { before, origin, work } = scratchRepos(t);
 
   const result = integrate('slice/a', { cwd: work, test: failing, ...quiet });
 
@@ -94,8 +93,7 @@ test('red: nothing merged, committed or pushed, and the failing tests are named'
 });
 
 test('a red gate that rewrote a merged file still resets', (t) => {
-  const { work } = scratchRepos(t, { 'a.txt': 'a\n' });
-  const before = git(work, 'rev-parse', 'HEAD');
+  const { before, work } = scratchRepos(t, { 'a.txt': 'a\n' });
   const rewriting = `node -e "require('fs').writeFileSync('a.txt','rebuilt\\n'); console.log('ℹ pass 0'); console.log('ℹ fail 1'); process.exit(1)"`;
 
   const result = integrate('slice/a', { cwd: work, test: rewriting, ...quiet });
@@ -130,8 +128,7 @@ test('a reset that cannot run is named', (t) => {
 });
 
 test('a failed npm ci aborts the merge and answers in one line, rather than throwing mid-merge', (t) => {
-  const { work } = scratchRepos(t, { 'package-lock.json': '{}\n', 'package.json': '{}\n' });
-  const before = git(work, 'rev-parse', 'HEAD');
+  const { before, work } = scratchRepos(t, { 'package-lock.json': '{}\n', 'package.json': '{}\n' });
   const install = () => {
     throw new Error('npm ci exited 1');
   };
@@ -156,10 +153,8 @@ test('a push that fails after a green run says the merge is local, in one line',
 });
 
 test('integrate on a default-branch HEAD refuses and pushes nothing', (t) => {
-  const { origin, work } = scratchRepos(t);
+  const { before, origin, work } = scratchRepos(t);
   git(work, 'checkout', '-q', '-b', 'main', 'origin/main');
-  const before = git(work, 'rev-parse', 'HEAD');
-  const remoteMain = git(origin, 'rev-parse', 'main');
 
   const result = integrate('slice/a', { cwd: work, test: passing, ...quiet });
 
@@ -167,13 +162,12 @@ test('integrate on a default-branch HEAD refuses and pushes nothing', (t) => {
   assert.match(result.line, /^NOT integrated slice\/a: refusing to push main: it is the default branch \(main\); nothing merged or pushed$/);
   assert.equal(git(work, 'rev-parse', 'HEAD'), before, 'nothing merged');
   assert.equal(git(work, 'status', '--porcelain'), '');
-  assert.equal(git(origin, 'rev-parse', 'main'), remoteMain, 'nothing pushed');
+  assert.equal(git(origin, 'rev-parse', 'main'), before, 'nothing pushed');
 });
 
 test('integrate on the pilot branch refuses by name: land is the only way onto pilot', (t) => {
-  const { origin, work } = scratchRepos(t);
+  const { before, origin, work } = scratchRepos(t);
   git(work, 'checkout', '-q', '-b', 'pilot', 'origin/pilot');
-  const before = git(work, 'rev-parse', 'HEAD');
 
   const result = integrate('slice/a', { cwd: work, test: passing, ...quiet });
 
@@ -192,8 +186,7 @@ test('a red run with no count line says the tests were red', (t) => {
 });
 
 test('--no-push merges and tests but leaves origin alone', (t) => {
-  const { origin, work } = scratchRepos(t);
-  const before = git(origin, 'rev-parse', 'feat/x');
+  const { before, origin, work } = scratchRepos(t);
 
   const result = integrate('slice/a', { cwd: work, test: passing, push: false, ...quiet });
 
@@ -262,8 +255,7 @@ test('main exits 2 when it refuses for a missing test command outside npm', (t) 
 });
 
 test('a repository without package.json and without git config pilot.test is refused before any merge', (t) => {
-  const { origin, work } = scratchRepos(t);
-  const before = git(work, 'rev-parse', 'HEAD');
+  const { before, origin, work } = scratchRepos(t);
 
   const result = integrate('slice/a', { cwd: work, push: false, ...quiet });
 
