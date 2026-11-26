@@ -169,7 +169,7 @@
     },
     {
       "slice": "S16",
-      "state": "pushed 6b16f65",
+      "state": "integrated at 68cad41, checks green",
       "after": [
         "merge origin/pilot"
       ],
@@ -178,7 +178,7 @@
     },
     {
       "slice": "S17",
-      "state": "implementing",
+      "state": "pushed efbf390",
       "after": [
         "merge origin/pilot"
       ],
@@ -203,63 +203,9 @@
   "findings": [
     "kept: F7 simplify — user chose a simple log read over the chunked tail reader on itm_973b6c14330a; A6 overturned"
   ],
-  "next": "integrating S16 6b16f65; S17 measuring",
-  "updatedAt": "2026-11-25T23:44:56.648Z",
+  "next": "integrating S17 efbf390",
+  "updatedAt": "2026-11-26T00:10:14.477Z",
   "friction": [
-    {
-      "agent": "pilot-implementer",
-      "what": "S6's slice Misses line handed credential coverage to the reviewer, but closing it means editing shared deck/credential.mjs outside the slice; security review found prefixed env names and ~10 token shapes missed",
-      "evidence": "S6 security-reviewer request changes; fixed prefixed names in 8998f3b, rest added as S13",
-      "size": 3
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "S6 looked for the Archive control in the icon bar; it is strip-archive in the right strip (strip.rs:345)",
-      "evidence": "S6 report look row",
-      "size": 1
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "S9 Interface said only 'the line clipped to 120 chars'; a plain cut can expose a token prefix findCredential only catches whole; cut at a word boundary instead",
-      "evidence": "S9 report; seam recorded in S9.md",
-      "size": 1
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "S6's 64 KiB probes never exercised the name rule or the JWT shape; both were quadratic (~1 s at 64 KiB), found only by S13's security review",
-      "evidence": "S13 6944328: 908/987/1258 ms before, 1-5 ms after",
-      "size": 2
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "Edit refused after a Bash-only read ('File has not been read yet'), twice",
-      "evidence": "S13 report",
-      "size": 1
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "credential denylist is open-ended: each security review of findCredential lists another round of shapes (S13: 10, S14: 5 more groups); stopped at S14 by co-pilot decision",
-      "evidence": "S14 report findings 3-7",
-      "size": 3
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "brief's mixed-case long rule caught camelCase identifiers and broke landing.test.mjs fixtures outside the slice",
-      "evidence": "landing.test.mjs:217,:319",
-      "size": 1
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "briefing slices to skip the full suite let S2 miss deck-readme.test.mjs's module list; caught only at integrate (~8 min)",
-      "evidence": "C:/Users/jrylk/.claude/pilot/logs/20261124T101939797Z-slice-archive-page-s2.log:5513",
-      "size": 2
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "S12 gate ran clippy and cargo test but not cargo fmt --check; integrate refused on a one-line fmt diff",
-      "evidence": "C:/Users/jrylk/.claude/pilot/logs/20261124T102800275Z-slice-archive-page-s12.log:860",
-      "size": 1
-    },
     {
       "agent": "pilot-co-pilot",
       "what": "S14 brief listed the credential test files from S6's report; record.test.mjs also pins findCredential and was not in the gate, so a regression surfaced only at integrate",
@@ -434,6 +380,56 @@
       "agent": "pilot:pilot-implementer",
       "what": "a copied store carries the live deck's deck.pid",
       "evidence": "S16 scratch daemon log"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a new worktree needs `npm ci` before the cargo deck tests pass; the failure reads ERR_MODULE_NOT_FOUND",
+      "evidence": "archive-page S16 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "test:changed and pilot integrate both fall back to the full suite (selection argv over 24000 chars): ~15 min of CPU heat per run on a laptop that hibernates at 95C",
+      "evidence": "S16 report; integrate line 'selection is 43948 characters of argv, over 24000'",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a copied store carries the live deck's deck.pid",
+      "evidence": "S16 scratch daemon",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S17's context was reset early and it restarted from the brief; ran to ~215k tokens",
+      "evidence": "co-pilot hand-back, task usage",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "calls sent beside another call come back with no classifier verdict and must be reissued alone; hit by pilot and co-pilot repeatedly",
+      "evidence": "tool results, 6+ times this session",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S17's context reset twice mid-slice with nothing committed",
+      "evidence": "S17 report to main"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "heat-lock queue cost ~10 min",
+      "evidence": "S17 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "--open archive refused; needs screen=archive",
+      "evidence": "S17 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "View.seq reads like a change counter but is the reply sequence",
+      "evidence": "S17 report"
     }
   ]
 }
