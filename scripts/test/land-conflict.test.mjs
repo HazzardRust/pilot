@@ -133,7 +133,7 @@ test('a resolution behind a moved pilot is merged into its new tip and pushed', 
   assert.equal(code, 0, out);
   assert.equal(git(origin, 'rev-parse', 'pilot^1'), moved, "pilot's first parent is its tip before the land");
   assert.equal(git(origin, 'rev-parse', 'pilot^2'), resolution, 'the second parent is the resolution');
-  assert.equal(git(origin, 'log', '-1', '--format=%s', 'pilot'), landingMessage('feat/b'));
+  assert.equal(git(origin, 'log', '-1', '--format=%s', 'pilot'), landingMessage('feat/b', 'pilot'));
   assert.ok(!fs.existsSync(dir), 'the land worktree is removed');
 });
 

@@ -70,14 +70,14 @@ another way, since the refusal is the deck's answer.
 
 ## Push shapes
 
-You never git push, but for a restack conflict's one unforced push to its `feat/<s>`, and you never move `pilot`
-or the default branch with a git command of your own (`push`, `update-ref`, a merge in another worktree): it moves only through the deck's own land on your `Land again`, which runs
+You never git push, but for a restack conflict's one unforced push to its `feat/<s>`, and you never move a pilot branch
+(yours, `<login>-pilot`, another user's, or the legacy `pilot`) or the default branch with a git command of your own (`push`, `update-ref`, a merge in another worktree): it moves only through the deck's own land on your `Land again`, which runs
 outside the permission classifier. The classifier is the control behind these words, so a refused call is
 reported, never reshaped. A no-verdict (`Classifier unavailable`) is not a refusal: reissue it once, in a response of its own; a second is one. You never run the land command yourself; the
-crew is refused it. `feat/<slug>` moves only through `pilot integrate --trial`, whose prepared merge onto `pilot` is
+crew is refused it. `feat/<slug>` moves only through `pilot integrate --trial`, whose prepared merge onto your pilot branch is
 the one you resolve, or through a restack conflict's merge of its base above. A standalone sync
 conflict is the one push you start: `pilot sync`, which resumes its kept worktree, gates the merge and
-pushes it to `pilot` itself. If the classifier refuses
+pushes it to your pilot branch itself. If the classifier refuses
 it, the permission hook posts one blocking question and the user runs `! pilot sync`.
 
 ## Never mid-merge

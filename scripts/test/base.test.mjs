@@ -55,6 +55,29 @@ async function printed(cwd) {
   return { code, out: said.join(''), err: warned.join('') };
 }
 
+test('the move from the legacy pilot says so on stderr, with a host and under none', async (t) => {
+  const pinned = process.env.PILOT_BRANCH;
+  delete process.env.PILOT_BRANCH;
+  t.after(() => (pinned === undefined ? delete process.env.PILOT_BRANCH : (process.env.PILOT_BRANCH = pinned)));
+  const moved = 'created octo-pilot from pilot; the legacy pilot is left for you to delete\n';
+
+  const hosted = scratchRepos(t).work;
+  const said = [];
+  const warned = [];
+  const code = await base({ cwd: hosted, say: (text) => said.push(text), warn: (text) => warned.push(text), host: { login: () => 'Octo' } });
+  assert.equal(code, 0, warned.join(''));
+  assert.match(said.join(''), /^base main [0-9a-f]+\n$/, 'stdout is unchanged');
+  assert.equal(warned.join(''), moved);
+
+  const none = scratchRepos(t).work;
+  git(none, 'config', 'pilot.host', 'none');
+  git(none, 'config', 'pilot.branch', 'octo-pilot');
+  const { code: noneCode, out, err } = await printed(none);
+  assert.equal(noneCode, 0, err);
+  assert.match(out, /^base octo-pilot [0-9a-f]+ \(created from pilot\)\n$/);
+  assert.equal(err, moved);
+});
+
 test('base prints the default branch even with open feat/ branches', async (t) => {
   const { work } = scratchRepos(t);
   const { code, out } = await printed(work);

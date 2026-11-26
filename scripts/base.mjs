@@ -4,8 +4,11 @@
  *
  *   base <default> <sha>                      a run on origin with a host: the default branch and its tip
  *                                             (audit-f14 L9); pilot is still ensured, since Gate 2 lands there
- *   base pilot <sha>                          origin's pilot branch and its tip, under `pilot.host none`
- *   base pilot <sha> (created from <default>) origin had none: the default tip, pushed
+ *   base <name> <sha>                         origin's pilot branch (`<login>-pilot`, stored as `pilot.branch`) and its
+ *                                             tip, under `pilot.host none`
+ *   base <name> <sha> (created from <default>) origin had none: the default tip, pushed; `(created from pilot)`, the
+ *                                             legacy `pilot`'s tip when origin holds no `*-pilot` (user-pilot-branch L10)
+ *   no name to read (signed out, or `none` with no `pilot.branch`): exit 1 with the `NO_NAME` line, nothing created
  *   ... on <remote> / ... local               the run remote is not origin (pilot-fork spec 2,
  *                                             3; L7), and a new pilot is "created from origin pilot"
  *
@@ -31,7 +34,7 @@ import { checksAt } from './checks.mjs';
 import { hostFor, hostOf } from '../deck/host.mjs';
 import { RUN_BASE, SLUG } from '../deck/runs.mjs';
 import { readTickets } from '../deck/tickets.mjs';
-import { ensurePilotBranch, firstLine, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
+import { ensurePilotBranch, firstLine, LEGACY_PILOT, pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
 
 /** The deck's concluding feature for the repository at `cwd`, `{ ticket, slug, branch }` or null; throws when the deck does not answer. */
 const deckConcluding = (cwd) => async () => (await readTickets(cwd)).concluding ?? null;
@@ -81,12 +84,15 @@ export async function base({ cwd = process.cwd(), say = (text) => process.stdout
   }
   let pilot;
   try {
-    pilot = ensurePilotBranch({ git });
+    // The host's login names the pilot branch on first use (user-pilot-branch L3); none and no stored name exits 1.
+    pilot = ensurePilotBranch({ git, host });
   } catch (err) {
     warn(`pilot base: ${firstLine(err)}\n`);
     return 1;
   }
   const from = pilot.created ? ` (created from ${pilot.from})` : '';
+  // The move (L1) is said on stderr on every path: stdout's first token is parsed, and the host path drops `from`.
+  if (pilot.created && pilot.from === LEGACY_PILOT) warn(`created ${pilotBranch(git)} from ${LEGACY_PILOT}; the legacy pilot is left for you to delete\n`);
   const { runs } = pilot;
   const where = runs === 'origin' ? '' : runs === null ? ' local' : ` on ${runs}`;
   let deck = '';
@@ -122,7 +128,7 @@ export async function base({ cwd = process.cwd(), say = (text) => process.stdout
       return 0;
     }
   }
-  say(`base ${PILOT_BRANCH} ${git(['rev-parse', '--short', pilot.sha])}${from}${where}${deck}${ciSuffix(host, git, pilot.sha)}\n`);
+  say(`base ${pilotBranch(git)} ${git(['rev-parse', '--short', pilot.sha])}${from}${where}${deck}${ciSuffix(host, git, pilot.sha)}\n`);
   return 0;
 }
 

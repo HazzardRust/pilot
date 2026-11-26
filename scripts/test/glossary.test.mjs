@@ -60,7 +60,7 @@ test('the parser keeps terms, multi-line definitions and Avoid lists, and skips 
 
 test("the repository's glossary is clean", () => {
   const text = read('GLOSSARY.md');
-  assert.equal(parseGlossary(text).length, 78);
+  assert.equal(parseGlossary(text).length, 79);
   assert.deepEqual(lintGlossary(text), []);
   const run = cli('check', 'GLOSSARY.md');
   assert.equal(run.status, 0, run.stdout + run.stderr);
