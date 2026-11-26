@@ -10,10 +10,11 @@ the first test run.
 
 ## Base and PR target
 
-The base is `feat/prebuilt-rune`, cut from `feat/ui-design-workflow` (`pilot base`: `base feat/ui-design-workflow
-fee2e59 (concluding itm_132a653de1fc)`). The feature PR targets `feat/ui-design-workflow` until that lands, then
-the branch `pilot base` names. A slice is a pushed branch `slice/prebuilt-rune-s<n>`, integrated by the co-pilot
-with `pilot integrate`; never a PR.
+The base is `feat/prebuilt-rune`, carrying `origin/main` at 6701cc7 (`pilot base`: `base main 6701cc72`) merged
+into the first plan (re-cut 2026-11-26). The feature PR (#150, draft) targets `main`, ADR 0200's computed base
+since `feat/ui-design-workflow` (#140) merged. Gate 2 lands on the pilot branch, `hazzardrust-pilot` once
+user-pilot-branch (#157) lands, `pilot` before. A slice is a pushed branch `slice/prebuilt-rune-s<n>`, integrated
+by the co-pilot with `pilot integrate`; never a PR.
 
 ## Remote
 
@@ -42,12 +43,21 @@ Taken from `docs/design/portable-store/brief.md` (on `origin/design/portable-sto
   `deck/store-core.mjs` is at 774.
 - The machine is shared with other runs' gates: never run the full suite twice in a slice, and time only what the
   slice says to time.
+- The gate1 lineage and verdict tests fail under load (ticket itm_ad02d595d1c2, fix planned): rerun that file alone
+  before calling it a regression.
+- A `--since` gate whose diff touches `deck/` also runs the Rune `cargo fmt --check` and `cargo test`
+  (`scripts/gate.mjs:301-312`); S1-S3 all do, so each slice gate is heavy.
+
+## Machine
+
+HeatGuard hibernates this laptop at 95 C sustained for 2 minutes: one heavy gate at a time across the run (a
+`cargo` build or test, the full suite), never two slices' gates at once.
 
 ## Human steps
 
-- Before S4's first push: this machine's GitHub credential lacks the `workflow` scope, so a push adding
-  `.github/workflows/rune-release.yml` is refused until the user runs `gh auth refresh -h github.com -s workflow`
-  (asked on itm_daa1ea49125f; still missing as of 2026-11-23: the token has gist, read:org, repo). S4 stops and asks `main` if the push is refused; the design branch carries no workflow file.
+- S4's push of `.github/workflows/rune-release.yml` needs the `workflow` scope: held since 2026-11-26 (`gh auth
+  status`: gist, read:org, repo, workflow; itm_daa1ea49125f). S4 stops and asks `main` if the push is refused
+  anyway; the design branch carries no workflow file.
 - After landing: on HazzardLaptop, `pilot deck` after the first real release (spec 9, A10).
 
 ## Network

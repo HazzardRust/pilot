@@ -1,6 +1,10 @@
 # A plugin install gets a prebuilt Rune deck
 
-Ticket `itm_ff5ace129388` · slug `prebuilt-rune` · base `feat/ui-design-workflow` at fee2e59 · design branch `design/prebuilt-rune`
+Ticket `itm_ff5ace129388` · slug `prebuilt-rune` · base `main` at 6701cc7 (`pilot base`; ADR 0200) · design branch `design/prebuilt-rune`
+
+Re-cut 2026-11-26 from gate1 itm_dcb61dfe0b0c (6966e99, cut on `feat/ui-design-workflow`, merged to main as #140):
+`origin/main` merged in, every anchor re-read. Spec, L0-L7 and A1-A10 unchanged; changes: ADR number, anchors,
+S3's verdict word, the brief.
 
 ## 1. Problem
 
@@ -55,24 +59,30 @@ Nothing the download sends but the GET: no query string, no custom header, no ve
 
 - `deck/open.mjs:34` `runeBinary(root, platform)` stats `deck/rune/target/release/pilot-deck[.exe]`; callers are
   `openDeck`'s default (`open.mjs:142`, the daemon's auto-open on `POST /api/runs`) and `pilot deck`
-  (`bin/pilot.mjs:388`), which prints `open <copy>` and never spawns. `runCopy`/`launchCopy` (`open.mjs:55-131`) copy
+  (`bin/pilot.mjs:391`), which prints `open <copy>` and never spawns. `runCopy`/`launchCopy` (`open.mjs:55-131`) copy
   to `target/run` so Windows' exe lock spares the build (A9 of rune-deck-ui); a fetched file reuses them unchanged.
 - The binary is self-contained: fonts `include_bytes!` (`deck/rune/src/app.rs:247`), theme `include_str!`
-  (`theme.rs:231`); it finds the deck from the secret file and port itself.
+  (`theme.rs:233`); it finds the deck from the secret file and port itself.
 - Rune at the pinned rev targets macOS, Windows and Linux; a Linux build needs `libxkbcommon-dev libwayland-dev`
   (Rune `crates/rune/README.md:2461`). `.github/workflows/ci.yml` builds and tests on Windows only (ADR 0206 A3).
 - `HazzardRust/pilot` is public; no tags or releases exist; neither `main` nor `pilot` is protected. Versions move by
-  hand with `npm run bump` (`scripts/bump.mjs`; last 2530153). Public-repo runners, macOS included, cost nothing;
+  hand with `npm run bump` (`scripts/bump.mjs`; 0.9.11 at 579c3f3). Public-repo runners, macOS included, cost nothing;
   each release costs ~3 jobs × 10-20 min wall time.
 - Every `fetch` in the plugin today is loopback (`deck/probe.mjs:12`, `client.mjs:151`, ...): this is the first
   outbound call. Node's fetch follows an https→http redirect (undici `httpRedirectFetch`), so https is enforced per hop
   by hand. GitHub release downloads redirect once, to `release-assets.githubusercontent.com` since 2025.
 - A Node-written file carries no Mark-of-the-Web or quarantine, so SmartScreen and Gatekeeper do not prompt; Smart
-  App Control, when enforced, blocks unsigned code regardless (Microsoft Learn); `doctor.mjs:49-62` already reads
-  Windows state through an injected `run`.
-- Overlap: `deck/doctor.mjs` (portable-store S7, stay-awake S3) and `bin/pilot.mjs` (portable-store S4-S5,
-  stay-awake S3, cheap-suite S8) are edited elsewhere; this run adds one row and edits only the `deck` branch
-  (`bin/pilot.mjs:382-393`). `deck/rune/` (rune-panes) is not touched.
+  App Control, when enforced, blocks unsigned code regardless (Microsoft Learn); `doctor.mjs:51-63` (Defender) and
+  `deck/power.mjs` (stay-awake's row, `doctor.mjs:505`) already read Windows state through an injected `run`.
+- Doctor's verdicts on main are `pass`, `fail`, `cannot tell` (`doctor.mjs:583` fails on `fail` only); `warn` arrives
+  with user-pilot-branch (PR #157, on the pilot branch, not main).
+- The gate's `--since` selection runs `cargo fmt --check` and `cargo test` of the Rune deck whenever a file under
+  `deck/` changed (`scripts/gate.mjs:301-312`), into the shared `CARGO_TARGET_DIR` (`scripts/rune-target.mjs`, cheap-suite).
+  It never sets the release build's target: a built deck is still `deck/rune/target/release`.
+- ADR 0211 is taken (`0211-handoff-no-wait.md`), so this run's ADR is `NNNN`, numbered at landing.
+- Overlap: `deck/doctor.mjs` and `bin/pilot.mjs` are edited by user-pilot-branch (PR #157, landing); this run adds
+  one row and edits only the `deck` branch (`bin/pilot.mjs:385-396`). `deck/rune/` (rune-panes, on the pilot branch)
+  is not touched.
 
 ### Seams
 
@@ -95,7 +105,7 @@ Deletion test: `runeBinary` alone is shallow (one stat); it stays as `findRune`'
 
 ## 5. Locked decisions
 
-ADR 0211 (`docs/adr/0211-prebuilt-rune.md`).
+ADR NNNN (`docs/adr/NNNN-prebuilt-rune.md`; the landing numbers it).
 
 - **L0** Grilling depth: forks (itm_dd645b74ccff, closed 06:10Z by the deck's 20-minute default, not a press): no
   Gate 1 walk; the gate1 is the only item once every question thread is closed. Rejected: a full walk.
@@ -155,12 +165,17 @@ ADR 0211 (`docs/adr/0211-prebuilt-rune.md`).
   Verdict: stands — user pressed "Allow scratch prerelease" on itm_bb030b7c165e
 - **A10** QA runs on this Windows machine in a scratch home with cargo off PATH; macOS and Linux by CI build and
   header check only; HazzardLaptop a human step after landing (pilot's itm_e374d036106d).
+  Verdict: stands — QA on this Windows machine, laptop as a human step
 
+red team (re-cut): S3's `warn` was a new verdict word against its own Prohibited line; it is now named as the
+non-failing word user-pilot-branch also adds, so the two meet on one meaning. red team (re-cut): every S1-S3 gate
+touches `deck/`, so each runs the Rune `cargo test`; the brief serialises heavy gates (heat). red team (re-cut):
+PR #157's rename leaves this run's cut (main) and its CI alone: `rune-release.yml`'s `pull_request` has no branch
+filter, and `ci.yml`/`gate.yml` already run on PRs to main.
 red team: S3 needs the SAC reason S2 adds, so S3 now comes after S2, not only S1. red team: `workflow_dispatch`
 cannot run from a feature branch, so spec 1, 2 and 9 had no in-run evidence; L7's scratch tag added to S4. red team:
 S1 and S4 each half-built `release.json`'s shape; S1 owns the reader and the format, S4 round-trips through it.
 red team: a fetched file on Linux/macOS lacks the exec bit; S1 sets 0755 before the rename.
-  Verdict: stands — QA on this Windows machine, laptop as a human step
 
 ## 7. Out of scope
 
@@ -174,7 +189,7 @@ Width 2; longest stem 3 (S1 → S2 → S3)
 
 | Slice | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- |
-| S1 `pilot deck` downloads, verifies and opens a pinned Rune binary | 3, 4, 7 | `deck/rune-bin.mjs` (new), `deck/open.mjs`, `bin/pilot.mjs`, `deck/test/rune-bin.test.mjs` (new), `docs/adr/0211-prebuilt-rune.md` (new) | – | typescript, security | [S1](slices/S1.md) |
+| S1 `pilot deck` downloads, verifies and opens a pinned Rune binary | 3, 4, 7 | `deck/rune-bin.mjs` (new), `deck/open.mjs`, `bin/pilot.mjs`, `deck/test/rune-bin.test.mjs` (new), `docs/adr/NNNN-prebuilt-rune.md` (new) | – | typescript, security | [S1](slices/S1.md) |
 | S2 every failure opens HTML with one line | 5, 6, 10 | `deck/rune-bin.mjs`, `deck/test/rune-fail.test.mjs` (new) | S1 (`deck/rune-bin.mjs`) | typescript, security | [S2](slices/S2.md) |
 | S3 `pilot doctor` has a Rune row | 8 | `deck/doctor.mjs`, `deck/test/doctor-rune.test.mjs` (new) | S2 (`findRune`'s reasons) | typescript | [S3](slices/S3.md) |
 | S4 a release run publishes three binaries and pins them | 1, 2, 9 | `.github/workflows/rune-release.yml` (new), `scripts/rune-pin.mjs` (new), `scripts/test/rune-pin.test.mjs` (new), `docs/OPERATING.md` | S1 (`release.json` format, `readPin`) | typescript, security | [S4](slices/S4.md) |
