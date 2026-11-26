@@ -217,5 +217,5 @@ test('Smart App Control enforced downloads nothing', async (t) => {
   const blocked = findRune(fetchedRoot, { ...HOST, run: run('0x1') });
   assert.equal(blocked.source, null);
   assert.match(blocked.reason, /Smart App Control/);
-  assert.equal(fetchedFiles(fetchedRoot).length, 1);
+  assert.deepEqual(fetchedFiles(fetchedRoot), [ASSET]);
 });
