@@ -24,6 +24,7 @@ import { hostPlatform, onSearchPath } from '../hooks/lib/platform.js';
 import { deckPidNow, stopper } from '../deck/gc.mjs';
 import { isClaude, pilotProcesses, processTable } from '../deck/procs.mjs';
 import { takeSlot } from './gate-slots.mjs';
+import { LEGACY_PILOT } from './pilot-branch.mjs';
 import { rebuildLedgers } from './ledgers.mjs';
 import { RUNE_TARGET_MAX, boundTarget, runeTargetDir, staleRoot } from './rune-target.mjs';
 import { FULL_TRIGGERS, TEST_GLOB, scopeLine, selectTests } from './select-tests.mjs';
@@ -118,6 +119,8 @@ export function gateEnv(env, slot, spawns, guard) {
   }
   options.push(cap);
   const named = {
+    // The suite's ~67 fixtures seed the legacy `pilot`; a test of the derivation unsets it (user-pilot-branch L7).
+    PILOT_BRANCH: env.PILOT_BRANCH || LEGACY_PILOT,
     ...(slot === undefined ? {} : { PILOT_GATE_SLOT: String(slot) }),
     ...(guard === undefined ? {} : { PILOT_GATE_HOME_STORE: guard.store, PILOT_GATE_HOME_LOG: guard.log }),
   };

@@ -48,6 +48,17 @@ test('a read is asked once per epoch', (t) => {
   assert.equal(across.git, 3, 'the read, the fetch, the read again');
 });
 
+test('a local config read, the pilot branch name pilotBranch asks, is asked once per epoch', (t) => {
+  const work = clone(t);
+  const read = ['config', '--local', '--get', 'pilot.remote'];
+  const twice = countGit(() => {
+    const git = gitView(work);
+    return [git(read), git(read)];
+  });
+  assert.deepEqual(twice.value, ['origin', 'origin']);
+  assert.equal(twice.git, 1);
+});
+
 test('rev-list, diff and log are asked once per epoch', (t) => {
   const work = clone(t);
   for (const read of [['rev-list', '--count', 'HEAD'], ['diff', '--name-only', 'HEAD'], ['log', '-1', '--format=%H']]) {

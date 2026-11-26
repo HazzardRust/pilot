@@ -283,7 +283,7 @@ export const TOOLS = [
         ticket: { type: 'string', description: 'its ticket id' },
         author: AUTHOR,
         branch: { type: 'string', maxLength: MAX_STATE_CHARS, description: 'feat/<slug>' },
-        base: { type: 'string', maxLength: MAX_STATE_CHARS, description: 'pilot or feat/<N>' },
+        base: { type: 'string', maxLength: MAX_STATE_CHARS, description: 'branch, feat/<N>' },
         worktree: {
           type: 'string',
           maxLength: MAX_STATE_CHARS,

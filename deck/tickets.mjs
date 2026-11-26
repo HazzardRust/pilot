@@ -15,7 +15,7 @@
 import { execFileSync } from 'node:child_process';
 
 import { bearer } from '../hooks/lib/deck-secret.js';
-import { defaultBranch } from '../scripts/pilot-branch.mjs';
+import { defaultBranch, LEGACY_PILOT } from '../scripts/pilot-branch.mjs';
 import { hostFor } from './host.mjs';
 import { liveTicketOf, mergeDecisionOf, messagesOf, ticketQueueOf } from './items.mjs';
 import { laneTicketOf } from './lane-ticket.mjs';
@@ -91,7 +91,7 @@ export function queueView(items, repo, records = [], { open = false, agent, coPi
   const decided = live && mergeDecisionOf(items, live.id);
   const filed = agent === undefined ? undefined : laneTicketOf(items, repo, agent, coPilot) ?? null;
   const green = liveTicketOf(items, repo, 'green');
-  const run = green && records.find((record) => record?.ticket === green.id && typeof record.branch === 'string' && !/^feat\//i.test(record.base ?? 'pilot'));
+  const run = green && records.find((record) => record?.ticket === green.id && typeof record.branch === 'string' && !/^feat\//i.test(record.base ?? LEGACY_PILOT));
   return {
     live: live && asTicket(live),
     red: ticketQueueOf(items, repo).filter((item) => item !== live).map(asTicket),
