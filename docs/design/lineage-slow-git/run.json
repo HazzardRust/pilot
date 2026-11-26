@@ -9,13 +9,13 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "integrated",
+      "state": "integrated 6d5ea01; 5212 pass 0 fail; CI running",
       "branch": "slice/lineage-slow-git-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-lineage-slow-git-s1"
     }
   ],
-  "next": "S1 pushed fae0514, reviewer APPROVE, being integrated. Then pilot checks <sha7> --wait; green: pilot integrate --trial and post gate2 (surface false, Verdict line + Gate line). Note in gate2: deck-user-branch.test.mjs armed outside owned files (design miss).",
-  "updatedAt": "2026-11-26T12:07:10.045Z",
+  "next": "S1 integrated at 6d5ea01 (pushed). pilot checks 6d5ea010 --wait running; green: pilot integrate --trial in the feat worktree, post gate2 (#159, surface false) with Verdict: APPROVE and Gate line, naming deck-user-branch.test.mjs armed outside owned files. Red: row failed gate, route its line.",
+  "updatedAt": "2026-11-26T12:16:15.522Z",
   "friction": [
     {
       "agent": "pilot-architect",
