@@ -73,7 +73,7 @@ function build(dir, stacked, landed) {
   if (landed) {
     // Landings as their two-parent commits only, with the landing's own subject: restack reads pilot's first-parent subjects.
     let pilot = run(seed, 'rev-parse', 'main');
-    for (const branch of ['feat/a', 'feat/b']) pilot = run(seed, 'commit-tree', 'main^{tree}', '-p', pilot, '-p', branch, '-m', landingMessage(branch));
+    for (const branch of ['feat/a', 'feat/b']) pilot = run(seed, 'commit-tree', 'main^{tree}', '-p', pilot, '-p', branch, '-m', landingMessage(branch, 'pilot'));
     run(seed, 'push', '-q', 'origin', `${pilot}:refs/heads/pilot`);
   }
   const work = path.join(dir, 'work');

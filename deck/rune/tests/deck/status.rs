@@ -56,8 +56,8 @@ fn the_table_and_selector_are_the_views() {
 
     let shown = texts(&rt);
     for want in [
-        "implementing Build the kettle",
-        "concluding Ship the kettle",
+        "implementing · Build the kettle",
+        "concluding · Ship the kettle",
         "S1 the yellow slice",
         "implementing",
         "SLICE",
@@ -72,6 +72,45 @@ fn the_table_and_selector_are_the_views() {
         !shown.iter().any(|t| t == "slice/s1" || t == "#7"),
         "{shown:?}"
     );
+}
+
+#[test]
+fn the_selector_reads_lane_and_title_one_per_line_a_bar_on_the_chosen() {
+    let rt = frame(State {
+        view: view_with(two_lanes("green")),
+        ..State::default()
+    });
+    let rect = |key: &str| {
+        rt.elements()
+            .into_iter()
+            .filter(|e| !e.exiting)
+            .find(|e| e.key.as_deref() == Some(key))
+            .unwrap_or_else(|| panic!("{key} is drawn"))
+            .rect
+    };
+    let (first, second) = (rect("status-ticket-0"), rect("status-ticket-1"));
+    assert!(
+        first[1] + first[3] <= second[1] + 0.5,
+        "one ticket per line: {first:?} {second:?}"
+    );
+    let bars: Vec<_> = rt
+        .elements()
+        .into_iter()
+        .filter(|e| !e.exiting)
+        .filter(|e| {
+            e.key
+                .as_deref()
+                .is_some_and(|k| k.starts_with("status-ticket-") && k.ends_with("-bar"))
+        })
+        .collect();
+    assert_eq!(bars.len(), 1, "one bar");
+    let bar = bars[0].rect;
+    assert!((bar[2] - 2.0).abs() < 0.01, "the bar is 2 px wide: {bar:?}");
+    assert!(
+        bar[1] >= second[1] - 0.5 && bar[1] + bar[3] <= second[1] + second[3] + 0.5,
+        "the bar is beside the chosen ticket: {bar:?} {second:?}"
+    );
+    assert!(bar[0] <= second[0] + 0.5, "at its left: {bar:?} {second:?}");
 }
 
 #[test]
@@ -213,6 +252,94 @@ fn the_state_column_starts_at_one_x_whatever_the_other_cells_hold() {
             "row {i}'s state at {at}, row 0's at {first}"
         );
     }
+}
+
+#[test]
+fn a_url_in_state_opens_the_browser() {
+    // The view's range (`deck/view/status.mjs`): the trailing stop is outside it.
+    let rows = json!({ "rows": [{ "slice": "S1 the slice", "state": "walkthrough on http://localhost:3260/jobs.", "links": [{ "start": 15, "end": 41 }], "after": [] }] });
+    let mut rt = frame(State {
+        view: view_with(rows),
+        ..State::default()
+    });
+    rt.frame(1.0);
+    assert!(
+        texts(&rt)
+            .iter()
+            .any(|t| t == "walkthrough on http://localhost:3260/jobs."),
+        "the State cell still reads as posted"
+    );
+
+    let (x, y) = rt
+        .find("http://localhost:3260/jobs")
+        .expect("the URL is a link, the trailing stop outside it");
+    rt.pointer_move(x, y);
+    rt.pointer_down(x, y);
+    rt.pointer_up(x, y);
+    rt.frame(0.0);
+
+    assert_eq!(rt.take_url_requests(), ["http://localhost:3260/jobs"]);
+    assert_eq!(
+        rt.state.query.screen, "home",
+        "the window stays where it was"
+    );
+}
+
+#[test]
+fn a_range_off_the_text_draws_no_link() {
+    // The window draws only ranges that cut the text it was given: the URL's own (byte 3, after
+    // "é ") opens; any other draws nothing and never panics.
+    let press = |links: Value| {
+        let rows = json!({ "rows": [{ "slice": "S1", "state": "é http://x", "links": links, "after": [] }] });
+        let mut rt = frame(State {
+            view: view_with(rows),
+            ..State::default()
+        });
+        rt.frame(1.0);
+        assert!(
+            texts(&rt).iter().any(|t| t == "é http://x"),
+            "the cell reads as posted"
+        );
+        if let Some((x, y)) = rt.find("http://x") {
+            rt.pointer_move(x, y);
+            rt.pointer_down(x, y);
+            rt.pointer_up(x, y);
+            rt.frame(0.0);
+        }
+        rt.take_url_requests()
+    };
+    assert_eq!(press(json!([{ "start": 3, "end": 11 }])), ["http://x"]);
+    // Inside "é", past the end, reversed and empty.
+    let off = json!([{ "start": 1, "end": 3 }, { "start": 3, "end": 99 }, { "start": 11, "end": 3 }, { "start": 3, "end": 3 }]);
+    assert!(press(off).is_empty());
+}
+
+#[test]
+fn the_held_ticket_says_so_on_its_deck_and_under_its_group() {
+    let count = |status: Value| {
+        let rt = frame(State {
+            view: view_with(status),
+            ..State::default()
+        });
+        texts(&rt)
+            .iter()
+            .filter(|t| *t == "no slice table yet")
+            .count()
+    };
+    assert_eq!(
+        count(json!({ "tickets": [], "rows": [], "held": true })),
+        1,
+        "on the deck"
+    );
+    assert_eq!(
+        count(json!({ "tickets": [], "rows": [], "groups": [
+            { "tab": "alpha deck", "tickets": [], "rows": [], "held": true },
+            { "tab": "bravo deck", "tickets": [], "rows": [{ "slice": "S1 brew", "state": "merged", "after": [] }] },
+        ] })),
+        1,
+        "under the held deck's group only"
+    );
+    assert_eq!(count(two_lanes("yellow")), 0, "a ticket with a record");
 }
 
 #[test]

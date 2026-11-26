@@ -290,10 +290,15 @@ function renderThreadState(item) {
 /**
  * What a card and a thread's kind line call the item. A thread the user made
  * with Create is a user thread, named for who made it: "user generated",
- * styled as the kind line it sits in; a gate is "Gate 1" or "Gate 2".
+ * styled as the kind line it sits in; a gate is "Gate 1" or "Gate 2"; a steps thread
+ * counts its steps, each unfinished until Done (steps-in-previews L3).
  */
 function renderKind(item) {
   if (item.kind === KIND_USER) return '<span data-kind="user">user generated</span>';
+  if (item.kind === KIND_STEPS) {
+    const count = Array.isArray(item.steps) ? item.steps.length : 0;
+    return `human steps · ${count} step${count === 1 ? '' : 's'}`;
+  }
   if (Object.hasOwn(GATE_NAMES, item.kind)) return `<span data-kind="${item.kind}">${GATE_NAMES[item.kind]}</span>`;
   // A blocking question says so on its card and its page (ticket-states spec 17, S18).
   return escapeHtml(item.kind) + (isBlocking(item) ? BLOCKING_BADGE : '');
