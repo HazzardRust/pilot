@@ -78,7 +78,7 @@
     },
     {
       "slice": "S9",
-      "state": "integrating",
+      "state": "integrated, checks green at df62bf5",
       "after": [
         "S1"
       ],
@@ -96,7 +96,7 @@
     },
     {
       "slice": "S11",
-      "state": "pushed ea8aab0 (on S10's c6363e5; B1 read as fixture git outside buildRepos 545 -> 263, assumed)",
+      "state": "integrating",
       "after": [
         "S10"
       ],
@@ -129,8 +129,8 @@
       ]
     }
   ],
-  "next": "integrate S9 (running), checks; then S11, S12, each with checks green between; then spawn S13 (sonnet)",
-  "updatedAt": "2026-11-26T20:05:06.713Z",
+  "next": "integrate S11 (running), checks; then S12; then spawn S13 (sonnet)",
+  "updatedAt": "2026-11-26T20:24:59.440Z",
   "friction": [
     {
       "agent": "pilot-architect",
