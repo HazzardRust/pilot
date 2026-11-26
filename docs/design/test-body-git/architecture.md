@@ -1,6 +1,6 @@
 # test-body-git: test bodies spawn far fewer git
 
-Ticket `itm_07647401bb5e`. Grilling depth: forks, assumed until `itm_6d01850fa5fb` answers (L1). Brief: `brief.md`.
+Ticket `itm_07647401bb5e`. Grilling depth: forks, assumed by timeout (L1). Brief: `brief.md`.
 Base `main` at `6701cc7`; S10 to S13 wait for land-batching in the base (A1).
 
 ## 1. Problem
@@ -71,7 +71,7 @@ No fold slice: `seed` is new code that builders adopt.
 
 ## 5. Locked decisions
 
-- **L1** Grilling depth forks, assumed (`itm_6d01850fa5fb` open): only questions whose paths give a different deliverable are posted.
+- **L1** Grilling depth forks, assumed by timeout: `itm_6d01850fa5fb` was closed by the deck ("no answer 20 min"), not by the user's press. Only questions whose paths give a different deliverable are posted.
 - **L2** Spec as in §2, accepted by the pilot on the sharpened draft (1,824 replaces 1,700).
 - **L3** History is seeded: `seed` writes origin's branches, commits and merges with one `git init --bare` and one
   `git fast-import`, commit times counting up from a fixed epoch; working copies stay `git clone`. Rejected: porcelain
