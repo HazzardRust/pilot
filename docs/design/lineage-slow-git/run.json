@@ -3,17 +3,19 @@
   "feature": "Gate1 lineage tests survive a slow git",
   "ticket": "itm_ad02d595d1c2",
   "branch": "feat/lineage-slow-git",
-  "base": "feat/pr-overview",
+  "base": "pilot",
   "worktree": "C:/Users/jrylk/Projects/pilot-feat-lineage-slow-git",
   "artefact": "docs/design/lineage-slow-git/architecture.md",
   "slices": [
     {
       "slice": "S1",
-      "state": "planned"
+      "state": "integrated",
+      "branch": "slice/lineage-slow-git-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-lineage-slow-git-s1"
     }
   ],
-  "next": "Open for user: gate1 itm_aa9fc14c7393 (this); gate2 itm_f0032b7402c6 user-pilot-branch PR #157 and gate2 itm_4e8b54399a97 pr-overview (both pilot-owned; on press spawn pilot-lander); itm_9ac7a84014e9 land-batching bars; itm_4c410e19d219 prune ff. Yellow empty: co-pilot archive-page itm_2fe34eca6f66 (S19 in flight, see its record). HeatGuard hibernates the laptop at 95C: one heavy gate at a time.",
-  "updatedAt": "2026-11-26T03:56:14.537Z",
+  "next": "S1 pushed fae0514, reviewer APPROVE, being integrated. Then pilot checks <sha7> --wait; green: pilot integrate --trial and post gate2 (surface false, Verdict line + Gate line). Note in gate2: deck-user-branch.test.mjs armed outside owned files (design miss).",
+  "updatedAt": "2026-11-26T12:07:10.045Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -30,6 +32,86 @@
       "kind": "drain",
       "what": "deck_status `next` 400-char cap refused 4 calls; each cost a resend",
       "size": 1
+    },
+    {
+      "agent": "pilot-auditor",
+      "what": "204 of 218 refusal-log entries for this repo are 'Classifier unavailable' no-verdicts: recorded blocks are outages, not habits",
+      "evidence": "audit 2026-11-26T04-39-43 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot-auditor",
+      "what": "pilot wait exited 1 when the deck did not answer in time after a hibernate; restart worked",
+      "evidence": "auditor hand-back; pilot's own wait bergjneew",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "two writers on the S19 worktree: hand-off record called a live implementer dead, successor squashed its tip",
+      "evidence": "05509ee9 replaces 626a723d..365fa2da",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "HeatGuard hibernated the laptop 5 times in a day under gates (27 min to 3 h each); deck defaults fired and gates spanned the sleep",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "auto-mode classifier gave no verdict on 4 batched calls this session; each reissued alone",
+      "size": 1
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "a fix commit on top of the land merge fails sync resume (scripts/sync.mjs:234-243); deck discarded the resolution and re-merged, one extra land round",
+      "evidence": "pr-overview lander hand-back",
+      "size": 2
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "land worktree has no node_modules and a re-merge drops it; each gate first failed with 'run npm ci'",
+      "evidence": "pr-overview lander hand-back, 2 reinstalls",
+      "size": 1
+    },
+    {
+      "agent": "pilot-lander",
+      "what": "prune removed nothing: all 13 run worktrees of a closed run read 'live unsure'; a clean-tail brief still opens with a Resolving claim the closed gate2 refuses; tail needs no Opus",
+      "evidence": "user-pilot-branch lander hand-back",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck checks a gate1's LOCAL branch, stale in an earlier session's worktree, so a pushed re-cut is refused; replan refused over an ADR number change",
+      "evidence": "itm_49ed2de0638f",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "pilot briefed the prebuilt-rune re-cut against pilot when pilot base says main; architect merged and backed out",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot's brief said read hazzardrust-pilot for pilot; the suite's fixtures push legacy pilot and gate.mjs defaults PILOT_BRANCH to it, so the first red run failed for the wrong reason",
+      "evidence": "a gate1 needs the hazzardrust-pilot base: has no origin/hazzardrust-pilot; scripts/gate.mjs:111",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1.md's B4 command names origin/feat/pr-overview, pruned after landing",
+      "evidence": "fatal: bad revision 'origin/feat/pr-overview'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "design's list of real-git sites missed deck/test/deck-user-branch.test.mjs; slice grep over deck/test returns ~50 non-gate1 posts to sift",
+      "evidence": "S1 report: +5/-4 outside owned files",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "parallel tool calls beside an Agent or Bash call lose their auto-mode verdict and must be reissued alone",
+      "size": 2
     }
   ]
 }
