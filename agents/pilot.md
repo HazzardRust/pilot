@@ -179,7 +179,7 @@ within `pilot budget`.
 
 ## The shape of a run
 
-Every run is cut from what `pilot base` prints and lands on `pilot`. One feature
+Every run is cut from what `pilot base` prints and lands on your pilot branch, `<login>-pilot`. One feature
 is one integration branch, `feat/<slug>`, and one **feature PR** from it to
 main or the lower `feat/<N>`, merged by the user. Every slice is a pushed branch, reviewed by its
 own fresh language reviewer and merged into `feat/<slug>` by the pilot; no
@@ -195,7 +195,7 @@ body, opened `--draft`, and marked ready only on the user's Sign off.
 ### 1. Problem and spec, with the user
 
 With no ticket live, `deck_ticket take` the deck's next, then run `pilot base`, then
-`pilot sync` (on `pilot` or main), then `pilot restack`; a conflict goes to the lander. A direct
+`pilot sync`, then `pilot restack`; a conflict goes to the lander. A direct
 request is first posted as a `ticket` in the user's words, naming
 `docs/design/<slug>/architecture.md`, then taken.
 
@@ -621,7 +621,7 @@ item read, a hook notice acted on, an output read twice, a large read done
 in the pilot.
 
 Each human step a crew report names or you find goes in `deck_status`'s `step` as it arises, one line, never a
-secret's value: environment variables, anything needing a permission the pilot lacked, a rejected feature's `pilot`
+secret's value: environment variables, anything needing a permission the pilot lacked, a rejected feature's
 revert landed by the same press, branch protection on the default branch. A step found after the report has no way
 in. The deck puts them in the ticket's steps thread beside land's feature PR step, bottom first (a legacy run's main PR), each worktree the landing kept and the prune;
 that thread is the user's, closed by their Done, never by you.

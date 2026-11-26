@@ -34,7 +34,7 @@ function feature(seed, name, from = 'pilot') {
 }
 
 /** Merge `name` into `into` the way `pilot land` words it, on first parents unless `into` is a side branch. */
-function land(seed, name, into = 'pilot', message = landingMessage(name)) {
+function land(seed, name, into = 'pilot', message = landingMessage(name, into)) {
   git(seed, 'checkout', '-q', into);
   git(seed, 'merge', '-q', '--no-ff', '-m', message, name);
   git(seed, 'push', '-q', 'origin', into);
@@ -120,7 +120,7 @@ test('landing is read from the first-parent history', (t) => {
 test('a one-parent commit with the subject, or a new branch reusing a landed slug, is not landed', (t) => {
   const { work } = repos(t);
   git(work, 'checkout', '-q', '--detach', 'origin/pilot');
-  git(work, 'commit', '-q', '--allow-empty', '-m', landingMessage('feat/e'));
+  git(work, 'commit', '-q', '--allow-empty', '-m', landingMessage('feat/e', 'pilot'));
   git(work, 'push', '-q', 'origin', 'HEAD:pilot');
   git(work, 'checkout', '-q', 'main');
   git(work, 'fetch', '-q', 'origin');

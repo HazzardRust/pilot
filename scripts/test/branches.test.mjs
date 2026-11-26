@@ -74,6 +74,21 @@ test('the guard refuses anything but run prefixes', (t) => {
   ]);
 });
 
+test('a clone with no pilot branch name still prunes', (t) => {
+  const { git, commit, work } = scratchRepos(t);
+  const pinned = process.env.PILOT_BRANCH;
+  delete process.env.PILOT_BRANCH;
+  t.after(() => {
+    if (pinned === undefined) delete process.env.PILOT_BRANCH;
+    else process.env.PILOT_BRANCH = pinned;
+  });
+  assert.throws(() => run(work, 'config', '--get', 'pilot.branch'), 'no stored name');
+  commit('slice/x-s1');
+  run(work, 'push', '-q', 'origin', 'slice/x-s1');
+  const { kept } = deleteMerged({ git, host: null, select: only('slice/x-s1'), dryRun: true });
+  assert.deepEqual(kept, [{ branch: 'slice/x-s1', why: 'not merged into origin/main' }]);
+});
+
 test('a merged review deletes, an open one keeps', (t) => {
   const { git, commit, work, origin, heads } = scratchRepos(t);
   const open = commit('feat/x');

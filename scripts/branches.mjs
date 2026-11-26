@@ -14,7 +14,7 @@ import { execFileSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 
 import { hostFor } from '../deck/host.mjs';
-import { firstLine, PILOT_BRANCH, remoteDefaultBranch } from './pilot-branch.mjs';
+import { firstLine, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRemote } from './remotes.mjs';
 import { isRunBranch } from './worktrees.mjs';
 
@@ -27,9 +27,9 @@ const PR_LIMIT = 1000;
 /** Why `branch` may not be deleted, or null when it may; the guard's one rule. */
 function refusal(branch, defaultName) {
   const name = String(branch);
+  // No pilot name, legacy or `<login>-pilot`, has a `/`, so DELETABLE already refuses every one.
   if (!DELETABLE.test(name) || /\.(lock)?$/.test(name)) return 'not a plain run branch';
-  const lower = name.toLowerCase();
-  if (lower === PILOT_BRANCH || lower === defaultName.toLowerCase()) return 'it is the pilot or the default branch';
+  if (name.toLowerCase() === defaultName.toLowerCase()) return 'it is the default branch';
   return null;
 }
 

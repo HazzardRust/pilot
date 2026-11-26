@@ -22,8 +22,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/pilot-tip.mjs" --fetch
 git worktree add --detach <scratchpad>/audit-<stamp> <sha>
 ```
 
-The first prints one line, `<ref> <sha>` (`origin/pilot <sha>`, or `HEAD
-<sha>` with no pilot ref); that line is the report's `base`, and its second
+The first prints one line, `<ref> <sha>` (`origin/<login>-pilot <sha>`, your
+pilot branch, or `HEAD <sha>` with no pilot ref); that line is the report's `base`, and its second
 word is `<sha>`.
 
 A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
