@@ -14,6 +14,7 @@ import { execFileSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 
 import { hostFor } from '../deck/host.mjs';
+import { tips } from './git-view.mjs';
 import { firstLine, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRemote } from './remotes.mjs';
 import { isRunBranch } from './worktrees.mjs';
@@ -56,17 +57,19 @@ export function tipsOn(git, remote) {
 
 /**
  * `remote`'s branches as a name → sha map, from the remote-tracking refs a caller's fetch left (land-batching
- * A3). The argv is the one `tipOf` snapshots, so on a landing's view the read is shared, not a spawn of its own.
+ * A3). Read from `tipOf`'s snapshot, so on a landing's view the read is shared, not a spawn of its own.
  */
 function fetchedTips(git, remote) {
   const prefix = `refs/remotes/${remote}/`;
-  const tips = new Map();
-  for (const line of step(git, ['for-each-ref', '--format=%(objectname) %(refname)', 'refs/heads', 'refs/remotes'], 'git for-each-ref failed').split(/\r?\n/)) {
-    const space = line.indexOf(' ');
-    const ref = line.slice(space + 1);
-    if (space > 0 && ref.startsWith(prefix) && ref !== `${prefix}HEAD`) tips.set(ref.slice(prefix.length), line.slice(0, space));
+  let all;
+  try {
+    all = tips(git);
+  } catch (err) {
+    throw Object.assign(new Error(`git for-each-ref failed: ${firstLine(err)}`), { status: err.status });
   }
-  return tips;
+  const found = new Map();
+  for (const [ref, sha] of all) if (ref.startsWith(prefix) && ref !== `${prefix}HEAD`) found.set(ref.slice(prefix.length), sha);
+  return found;
 }
 
 /**

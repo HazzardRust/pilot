@@ -89,14 +89,18 @@ function inEpoch(git, key, compute) {
 export function tipOf(git, ref) {
   if (ref === 'HEAD') return git(['rev-parse', 'HEAD']);
   if (!/^refs\/(?:heads|remotes)\//.test(ref)) throw new Error(`tipOf takes a full branch ref (refs/heads/, refs/remotes/) or HEAD, not ${ref}`);
+  return tips(git).get(ref) ?? null;
+}
+
+/** Every branch tip, full ref → SHA, from `tipOf`'s one `for-each-ref` snapshot per epoch (L4). */
+export function tips(git) {
   // Branches only: a repository's tags could outgrow the runner's output buffer, and no caller reads one.
   const text = git(['for-each-ref', '--format=%(objectname) %(refname)', 'refs/heads', 'refs/remotes']);
   // The parse lives in the same epoch as the snapshot it parses, so the two are forgotten together.
-  const tips = inEpoch(git, '{"tips":true}', () => new Map(text.split('\n').filter(Boolean).map((line) => {
+  return inEpoch(git, '{"tips":true}', () => new Map(text.split('\n').filter(Boolean).map((line) => {
     const space = line.indexOf(' ');
     return [line.slice(space + 1), line.slice(0, space)];
   })));
-  return tips.get(ref) ?? null;
 }
 
 /**

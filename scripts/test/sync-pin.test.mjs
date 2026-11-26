@@ -101,16 +101,11 @@ test('a locked worktree, which remove refuses, still prunes', (t) => {
   const { x } = repos(t, 'x');
   const dir = worktree(x);
   git(x, 'worktree', 'lock', dir);
-  const calls = [];
-  const recording = (args) => {
-    calls.push(args.join(' '));
-    return git(x, ...args);
-  };
 
-  const gone = removeWorktree(x, dir, recording);
+  const { value: gone, git: spawned } = countGit(() => removeWorktree(x, dir));
 
   assert.equal(gone, true);
   assert.equal(fs.existsSync(path.join(dir, '.git')), false);
-  // The removal was refused, so the prune ran after it.
-  assert.equal(calls.at(-1), 'worktree prune');
+  // The removal was refused, so the prune ran after it (git keeps a locked entry listed, so the count tells).
+  assert.equal(spawned, 2);
 });

@@ -205,10 +205,10 @@ function mergeTree(cwd, ours, theirs) {
  * `worktree prune` runs only when `worktree remove` failed (a locked tree, a handle), since a removal that
  * succeeded left no entry to prune. Answers whether `dir` is gone.
  */
-export function removeWorktree(cwd, dir, git = (args) => gitAt(cwd, ...args)) {
+export function removeWorktree(cwd, dir) {
   let removed = true;
   try {
-    git(['worktree', 'remove', '--force', dir]);
+    gitAt(cwd, 'worktree', 'remove', '--force', dir);
   } catch {
     removed = false;
   }
@@ -217,7 +217,7 @@ export function removeWorktree(cwd, dir, git = (args) => gitAt(cwd, ...args)) {
   } catch {}
   if (!removed) {
     try {
-      git(['worktree', 'prune']);
+      gitAt(cwd, 'worktree', 'prune');
     } catch {}
   }
   return !fs.existsSync(dir);
@@ -335,6 +335,7 @@ export function main(argv) {
     const git = gitView(cwd);
     let unchosen = '';
     // Chosen only when a name must be derived, so an env or stored name costs no host read (land-batching spec 4).
+    // Only `login` is given: namePilotBranch reads nothing else off the host.
     const host = {
       login: () => {
         let chosen;

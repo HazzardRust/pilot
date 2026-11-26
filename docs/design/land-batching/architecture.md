@@ -112,6 +112,21 @@ adopts, not a move.
   bars to measured, ticket the rest" (itm_9ac7a84014e9), the rest being ticket itm_07647401bb5e. Trades: the next
   feature adding spawns past them must cut or ask. Rejected: measured + 10% (headroom the user did not choose).
   Verdict: stands — the user chose the CI count on itm_470ec6f7a434, which is the guard for bars with no headroom
+- **A-S5** (S5's implementer) A landing's tail reads origin's branches from the remote-tracking refs the landing's
+  own fetch left (`deleteMerged({ fetched: true })`, `fetchedTips` off `tipOf`'s snapshot), not from `ls-remote`:
+  skipping the fetches alone measured 28, over the 27 bar. Trades: a branch another session pushes after the
+  landing's fetch is judged at the next landing (A3's trade, widened to the list); `land-clear.test.mjs`'s fault
+  injection moved off the tail's fetch. Rejected: `ls-remote` per landing (one spawn over the bar).
+- **A-S9** (S9's implementer) `integrate` reads HEAD's branch once, before its fetch, and passes it to
+  `baseOf(cwd, runs, git, head)` (S9's seam), in place of S9.md's one-argv mechanism, which saved nothing: the fetch
+  between the two reads empties the view. The tail passes `fetched: true`, so `integrate-remote.test.mjs`'s
+  `fetch -q origin` argv pin was the one assert edited. Trades: `baseOf` grows a fourth, optional parameter.
+  Rejected: unifying the `symbolic-ref` argv (0 saved, measured).
+- **A-base1** (the co-pilot) When `pilot` moved under the run (user-pilot-branch and pr-overview landed, `6e1806b`),
+  `origin/pilot` was merged into `feat/land-batching` (`31c4f543`), the conflicts in `integrate.mjs`, `land.mjs` and
+  `sync.mjs` taking the resolution reviewed on `slice/land-batching-s6-base` (`7eaa6f6`), and the bars re-measured on
+  that base (spec 1, A5). Trades: the base's own tests' ~780 spawns sit inside this feature's bars. Rejected:
+  measuring on the old base (bars a landing on today's pilot would break).
 
 ## 7. Out of scope
 

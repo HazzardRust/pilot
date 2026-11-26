@@ -254,7 +254,7 @@ function landCaughtUp({ cwd, git, host, test, head, name, wait, sleep }) {
   } catch (err) {
     throw fail(`${firstLine(err)}; nothing pushed`);
   }
-  chainGuard({ cwd, runs });
+  chainGuard({ cwd, runs, git });
   // The caught-up tip's checks, before the record commit or any push (ci-gate L4, A2): red, pending, unread refuse.
   const tip = tipOf(git, 'HEAD');
   const checks = checksGate({ host, git, sha: tip });
@@ -363,15 +363,15 @@ export function featureLine({ number, base, below, why, host }) {
  * Refuses, exit 1, a feature built on `feat/<N>` while N has not landed on pilot (pilot-develop-line
  * spec 4b; L6): `baseOf`'s `chained`, read from the run record against the run remote's pilot as
  * last fetched. A record or pilot `baseOf` cannot read refuses too. Never reverts N (A2). `runs`, the run
- * remote the landing already read, is read again when absent.
+ * remote the landing already read, is read again when absent; `git` is the landing's view (L2), a new one when absent.
  */
-export function chainGuard({ cwd, runs }) {
+export function chainGuard({ cwd, runs, git = gitView(cwd) }) {
   let base;
   let landed;
   try {
-    base = baseOf(cwd, runs);
+    base = baseOf(cwd, runs, git);
     // The chain outlives N's landing for integrate (audit-f14 L5); the guard's end is still that landing.
-    landed = base.chained !== undefined && chainLanded(cwd, base.chained, runs);
+    landed = base.chained !== undefined && chainLanded(cwd, base.chained, runs, git);
   } catch (err) {
     throw fail(`${firstLine(err)}; nothing pushed`);
   }

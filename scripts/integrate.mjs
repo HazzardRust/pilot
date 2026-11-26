@@ -46,7 +46,7 @@ import { deleteMerged } from './branches.mjs';
 import { behavioursOf } from './check-slices.mjs';
 import { checkLine, checksAt } from './checks.mjs';
 import { takeSlot } from './gate-slots.mjs';
-import { gitView } from './git-view.mjs';
+import { gitView, holdsIn } from './git-view.mjs';
 import { mergeIntoPilot } from './sync.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
 import { assertPushable, firstLine, git, isPilotBase, isPilotName, landingSubjects, pilotBranch, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
@@ -280,16 +280,6 @@ export function commitRecords(cwd, trailers = [], view = (args) => git(cwd, ...a
   return true;
 }
 
-/** Whether `args` exits 0 through `git`, a view or runner: `holds` asked through it, so a view remembers a yes. */
-const holdsVia = (git, args) => {
-  try {
-    git(args);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 /** `ref` as a commit, its short SHA: the one argv every existence check and `taken` ask, so one view answers both. */
 const verifyShort = (ref) => ['rev-parse', '-q', '--verify', '--short', `${ref}^{commit}`];
 
@@ -313,7 +303,7 @@ const shortOf = (git, ref) => {
  */
 function pilotBase(cwd, runs, git = gitView(cwd)) {
   const ref = runRef(runs === undefined ? runRemote(git) : runs, pilotBranch(git));
-  if (!holdsVia(git, verifyShort(ref))) {
+  if (!holdsIn(git, verifyShort(ref))) {
     throw new Error(`no ${shortRef(ref)} (run pilot base first)`);
   }
   return { ref: shortRef(ref) }; // short, so an unset pilot.remote merges with today's argv (L3)
@@ -347,8 +337,8 @@ export function baseOf(cwd, runs, git = gitView(cwd), head = undefined) {
   if (!/^feat\//.test(base)) throw new Error(`run record base ${JSON.stringify(base)} is not ${pilot}, ${main} or feat/<slug>`);
   const ref = shortRef(runRef(remoteOf(runs, base), base));
   // N's branch gone (deleted on merge, then pruned): no tip to test, so the chain ends only once N has landed on pilot.
-  if (!holdsVia(git, verifyShort(ref))) return chainLanded(cwd, base, runs, git) ? trunk : { ref, chained: base };
-  return holdsVia(git, ['merge-base', '--is-ancestor', ref, trunk.ref]) ? trunk : { ref, chained: base };
+  if (!holdsIn(git, verifyShort(ref))) return chainLanded(cwd, base, runs, git) ? trunk : { ref, chained: base };
+  return holdsIn(git, ['merge-base', '--is-ancestor', ref, trunk.ref]) ? trunk : { ref, chained: base };
 }
 
 /** Whether `feat/<N>`'s landing merge is on the pilot branch's first-parent history, contained in HEAD or not: `chainGuard`'s end of a chain (L5). */
@@ -448,7 +438,7 @@ export function integrate(branch, options = {}) {
     if (runs !== null && runs !== 'origin') view(['fetch', '-q', '--prune', runs]);
     base = baseOf(cwd, runs, view, head);
     name = nameOf(base, runs, pilot);
-    if (base.chained && !holdsVia(view, verifyShort(base.ref))) throw new Error(`${base.chained} is gone from origin and has not landed on ${pilot}`);
+    if (base.chained && !holdsIn(view, verifyShort(base.ref))) throw new Error(`${base.chained} is gone from origin and has not landed on ${pilot}`);
     // Pilot by its full ref, as `pilotBase` checked it: the same argv, so the view answers it.
     taken = `${name}@${shortOf(view, name === pilot ? runRef(runs, pilot) : base.ref)}`;
     // Only a run based on pilot can have landed on it: a chained run's base N has not (L5).
@@ -510,7 +500,7 @@ export function integrate(branch, options = {}) {
       // A conflict leaves a merge to undo; a branch that does not exist leaves none.
       return fail(`${not}: the merge stopped (${firstLine(err)})`);
     }
-    const merging = holdsVia(view, ['rev-parse', '-q', '--verify', 'MERGE_HEAD']);
+    const merging = holdsIn(view, ['rev-parse', '-q', '--verify', 'MERGE_HEAD']);
     if (!merging) {
       return fail(`${not}: nothing to merge`);
     }
