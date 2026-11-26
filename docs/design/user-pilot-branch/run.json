@@ -82,7 +82,7 @@
     },
     {
       "slice": "feature",
-      "state": "QA read-only pass complete at fa26db6; fix round implementing",
+      "state": "gate2 itm_f0032b7402c6 posted at 156149e, awaiting Sign off",
       "branch": "feat/user-pilot-branch",
       "pr": 157
     },
@@ -97,7 +97,7 @@
     },
     {
       "slice": "fix",
-      "state": "implementing (principles fix round; gate running)",
+      "state": "integrated",
       "after": [
         "S9"
       ],
@@ -123,29 +123,9 @@
       "text": "After Gate 2: delete the private scratch repo HazzardRust/pilot-branch-scratch (QA's seed: branches, PRs #1-#4, Actions on)."
     }
   ],
-  "next": "Pilot holds the lane (co-pilot spent). feat fa26db6 = S1-S9 in, checks green. QA a98275cc1bd5ba3e7 (worktree pilot-user-pilot-branch-qa) read-only pass done, waits for fix tip. Fix implementer aa87d1f23e0a2c7c6 on fix/user-pilot-branch reports to main. Next: verify fix vs diff (F3, N3), integrate, checks, send QA tip, deck_ticket need. Gate2 names S9/A6 assumed.",
-  "updatedAt": "2026-11-25T22:41:28.201Z",
+  "next": "Green. Gate2 itm_f0032b7402c6 (PR #157, 156149e, checks green, trial clean) owned by pilot; QA a98275cc1bd5ba3e7 ended. On press: spawn pilot-lander with the gate2 id; then remove worktree pilot-user-pilot-branch-qa and scratch clones in the old scratchpad. On Not yet naming S9 or F1: resume QA as writer (revert d3e4ba04 for S9; F1 ~30 lines).",
+  "updatedAt": "2026-11-25T23:09:55.893Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "three co-pilots forced to hand back with children live; the pilot relayed nine agent reports and integrated one fix round itself, each report 2-5k tokens in its context",
-      "size": 30
-    },
-    {
-      "kind": "drain",
-      "what": "pilot wait restarted about 14 times: 50-minute timeouts, three deck timeouts under load, two deck-written lines (yield, auto-default) printed as REPLY",
-      "size": 12
-    },
-    {
-      "kind": "drain",
-      "what": "deck_status next capped at 400 chars: six calls rejected and rewritten",
-      "size": 5
-    },
-    {
-      "kind": "drain",
-      "what": "five co-pilots across two tickets each forced to hand back with a child live; the pilot took about 12 agent reports (3-8k tokens each) and ran every integration, both fix rounds and all CI triage itself",
-      "size": 40
-    },
     {
       "kind": "drain",
       "what": "pilot wait restarted 5 times on 50-minute timeouts; one REPLY was the deck's own 20-minute default, and its hook notice called it a landing ended short on a gate2",
@@ -350,6 +330,29 @@
       "agent": "pilot-qa",
       "what": "`gh run watch --exit-status` exited while the run was in progress; replaced by a poll loop. Private repo: land never trusts CI (1 gate job), full suite locally per landing",
       "evidence": "QA report, 'no ci proof: 1 gate jobs, fewer than 3'",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a single test file run without PILOT_BRANCH=pilot gives 9 false reds because only the gate pins it",
+      "evidence": "user-pilot-branch fix round report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "gate log prints 'home store changed: ~/.claude/pilot/deck.json; live deck 8472 up' on every run while a live deck writes its own store; reads like a test fault",
+      "evidence": "fix round gate, both runs; same line in archive-page QA",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "co-pilot forced to hand back 3 times with children live and spent at 227k; pilot took over integrate, fix verification and QA routing",
+      "size": 3
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "gate2 post refuses pr: \"157\" and wants the table header verbatim; 2 extra posts",
+      "evidence": "user-pilot-branch QA report",
       "size": 1
     }
   ]
