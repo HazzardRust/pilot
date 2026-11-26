@@ -12,6 +12,7 @@
 // A red run's log goes under a home of this process's own, never the real one; the
 // fixture seam imports fake-home.mjs first.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -29,28 +30,14 @@ function scratchRepos(t, sliceFiles = { 'a.txt': 'a\n' }) {
   return gitFixture(t, `integrate:scratchRepos:${JSON.stringify(sliceFiles)}`, (root) => buildScratchRepos(root, sliceFiles));
 }
 
+/** origin seeded in two git (test-body-git S1), then `work` cloned on `feat/x`, origin/HEAD at main. */
 function buildScratchRepos(root, sliceFiles) {
-  const origin = path.join(root, 'origin.git');
+  const { origin } = seed(root, [
+    { branch: 'feat/x', files: { 'base.txt': 'base\n' }, message: 'base' },
+    { branch: 'slice/a', files: sliceFiles, message: 'the slice' },
+  ], { main: 'feat/x', pilot: 'feat/x' });
   const work = path.join(root, 'work');
-  git(root, 'init', '--bare', '-b', 'main', origin);
-  git(root, 'clone', '-q', origin, work);
-  git(work, 'checkout', '-q', '-b', 'feat/x');
-  fs.writeFileSync(path.join(work, 'base.txt'), 'base\n');
-  git(work, 'add', 'base.txt');
-  git(work, 'commit', '-q', '-m', 'base');
-  git(work, 'push', '-q', '-u', 'origin', 'feat/x');
-  git(work, 'push', '-q', 'origin', 'HEAD:main', 'HEAD:pilot');
-  git(work, 'remote', 'set-head', 'origin', 'main');
-  git(work, 'checkout', '-q', '-b', 'slice/a');
-  for (const [file, text] of Object.entries(sliceFiles)) {
-    fs.mkdirSync(path.dirname(path.join(work, file)), { recursive: true });
-    fs.writeFileSync(path.join(work, file), text);
-  }
-  git(work, 'add', ...Object.keys(sliceFiles));
-  git(work, 'commit', '-q', '-m', 'the slice');
-  git(work, 'push', '-q', 'origin', 'slice/a');
-  git(work, 'checkout', '-q', 'feat/x');
-  git(work, 'branch', '-q', '-D', 'slice/a');
+  git(root, 'clone', '-q', '-b', 'feat/x', origin, work);
   return { origin, work };
 }
 
@@ -66,11 +53,12 @@ test('green: a no-ff merge naming the slice, pushed, reported in one line', (t) 
   const result = integrate('slice/a', { cwd: work, test: passing, ...quiet });
 
   assert.equal(result.ok, true);
-  const head = git(work, 'rev-parse', '--short', 'HEAD');
+  // One read per repository state where the asserts below each keep their own expected value (L5).
+  const [head, subject, parents] = git(work, 'log', '-1', '--format=%h%n%s%n%P').split('\n');
   assert.equal(result.line, `integrated slice/a at ${head} (base pilot@${git(work, 'rev-parse', '--short', 'origin/pilot')}): 3 pass, 0 fail; pushed; deleted slice/a`);
   assert.doesNotMatch(result.line, /\n/);
-  assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge slice/a');
-  assert.equal(git(work, 'log', '-1', '--format=%P').split(' ').length, 2, 'a merge commit, not a fast-forward');
+  assert.equal(subject, 'Merge slice/a');
+  assert.equal(parents.split(' ').length, 2, 'a merge commit, not a fast-forward');
   assert.equal(git(origin, 'rev-parse', 'feat/x'), git(work, 'rev-parse', 'HEAD'), 'pushed');
 });
 
@@ -84,8 +72,9 @@ test('green: the run record the deck wrote is committed after the merge and push
 
   assert.equal(result.ok, true);
   assert.equal(git(work, 'status', '--porcelain'), '', 'nothing left uncommitted');
-  assert.equal(git(work, 'log', '-1', '--format=%s'), 'chore(x): run record');
-  assert.match(git(work, 'log', '-1', '--format=%B'), /Claude-Session: s/, 'the trailer rides on it');
+  const [subject, body] = git(work, 'log', '-1', '--format=%s%x00%B').split('\0');
+  assert.equal(subject, 'chore(x): run record');
+  assert.match(body, /Claude-Session: s/, 'the trailer rides on it');
   assert.match(git(work, 'log', '-2', '--format=%B'), /feat\(x\): S1 the first slice[\s\S]*Claude-Session: s/, 'and on the merge, subjected from the record');
   assert.equal(git(origin, 'rev-parse', 'feat/x'), git(work, 'rev-parse', 'HEAD'), 'both pushed');
 });
