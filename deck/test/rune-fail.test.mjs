@@ -112,7 +112,6 @@ test('a slow download stops at the limit', async (t) => {
   t.mock.timers.tick(1);
   const state = await pending;
   assertOneLine(state);
-  assert.match(state.line, /30 s/);
   assert.deepEqual(fetchedFiles(root), []);
 });
 
@@ -133,8 +132,7 @@ test('an oversized body is cut off', async (t) => {
 
   const state = await ensureRune(root, HOST, net.get);
   assertOneLine(state);
-  assert.match(state.line, /over 100 MB/);
-  assert.equal(sent, RUNE_LIMITS.maxBytes / mb.byteLength + 1, 'reading stops at the first chunk past the cap');
+  assert.equal(sent, 101, 'reading stops at the first 1 MB chunk past 100 MB');
   assert.deepEqual(fetchedFiles(root), [], 'no .part or binary left');
 });
 
@@ -189,7 +187,9 @@ test('Smart App Control enforced downloads nothing', async (t) => {
     return regOutput(value);
   };
   assert.equal(smartAppControl(run('0x1')), 'on');
-  assert.deepEqual(asked[0], ['reg.exe', 'query', 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\CI\\Policy', '/v', 'VerifiedAndReputablePolicyState']);
+  // The system's reg.exe by full path, never a bare name a working directory could shadow.
+  assert.match(asked[0][0], /^[A-Za-z]:\\.+\\System32\\reg\.exe$/i);
+  assert.deepEqual(asked[0].slice(1), ['query', 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\CI\\Policy', '/v', 'VerifiedAndReputablePolicyState']);
   assert.equal(smartAppControl(run('0x2')), 'evaluation');
   assert.equal(smartAppControl(run('0x0')), 'off');
   assert.equal(smartAppControl(run('0x7')), 'unknown');

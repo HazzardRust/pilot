@@ -128,7 +128,11 @@ export async function ensureRune(root, host, get) {
     fs.chmodSync(part, 0o755);
     fs.renameSync(part, file);
   } catch (err) {
-    fs.rmSync(part, { force: true });
+    try {
+      fs.rmSync(part, { force: true });
+    } catch {
+      // A lock leaves the part file; it is never run, since only the pinned name is looked up.
+    }
     return { source: null, reason: err.message, fetchable: true, line: `Rune deck: could not store ${pin.file}: ${err.message}; opening the page` };
   }
   return { source: 'fetched', file, line: `Rune deck: fetched ${pin.file}, sha256 ${prefix(got)}… verified` };
@@ -157,7 +161,7 @@ async function download(url, get) {
     for (let hop = 0; hop <= hops; hop += 1) {
       const res = await inTime(get(at, { signal: controller.signal }));
       // Frees the connection of a response whose body is never read.
-      if (res.status !== 200) res.body?.cancel?.().catch(() => {});
+      if (res.status !== 200) Promise.resolve(res.body?.cancel?.()).catch(() => {});
       if (REDIRECT.has(res.status)) {
         const next = new URL(res.headers?.get?.('location') ?? '', at);
         // The signed URL a redirect names is never printed (L6): only its scheme is.
@@ -193,9 +197,11 @@ async function download(url, get) {
  * code when on, so `ensureRune` downloads nothing then. Anything unreadable is 'unknown'.
  */
 export function smartAppControl(run) {
+  // The system's own reg.exe by full path: a bare name is looked up in the working directory first on Windows.
+  const reg = path.win32.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'reg.exe');
   let out;
   try {
-    out = run('reg.exe', ['query', 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\CI\\Policy', '/v', 'VerifiedAndReputablePolicyState']);
+    out = run(reg, ['query', 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\CI\\Policy', '/v', 'VerifiedAndReputablePolicyState']);
   } catch {
     return 'unknown';
   }
