@@ -11,6 +11,7 @@
  */
 
 import { firstLine, landingSubjects, LEGACY_PILOT, pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
+import { overviewOf, quiet, whatChangesOf } from './pr-overview.mjs';
 import { runRef, runRemote } from './remotes.mjs';
 
 const LABEL = 'release';
@@ -35,7 +36,8 @@ function titleOf(slugs) {
  * each merge `landingSubjects` names, onto that branch or the legacy pilot (L8).
  * `prs` is the host's merged **Review**s into pilot
  * (the newest 200; an older one reads `–`), the feature PR of each row, never a fork's, the
- * highest number when several.
+ * highest number when several. Above the table, `## Overview` with one line per row (pr-overview
+ * A5), left out when no landed feature's artefact has a What changes sentence.
  */
 export function releaseNotes({ git, name, pilotRef, mainRef, prs }) {
   const log = git(['log', '--first-parent', '--reverse', '--format=%H%x09%P%x09%s', `${mainRef}..${pilotRef}`]);
@@ -49,7 +51,32 @@ export function releaseNotes({ git, name, pilotRef, mainRef, prs }) {
     rows.push({ slug, pr: numbers.length ? Math.max(...numbers) : null, sha });
   }
   const table = ['| Feature | PR | Landing |', '| --- | --- | --- |', ...rows.map(({ slug, pr, sha }) => `| ${slug} | ${pr === null ? '–' : `#${pr}`} | ${sha} |`)];
-  return { title: titleOf(rows.map((row) => row.slug)), body: rows.length ? table.join('\n') : `No feature landed on ${name} since main.`, rows };
+  if (!rows.length) return { title: titleOf([]), body: `No feature landed on ${name} since main.`, rows };
+  const title = titleOf(rows.map((row) => row.slug));
+  const sentences = rows.map(({ slug }) => {
+    const sentence = whatChanges(git, pilotRef, slug);
+    return sentence === null ? null : quiet(sentence);
+  });
+  const overview = ['## Overview', '', ...rows.map(({ slug }, at) => (sentences[at] ? `- ${slug}: ${sentences[at]}` : `- ${slug}`))];
+  return { title, body: `${overview.join('\n')}\n\n${table.join('\n')}`, rows };
+}
+
+/**
+ * The first sentence of the What changes line in the overview of `slug`'s artefact at `pilotRef`
+ * (pr-overview A5); null when git cannot show the artefact or it has no such line.
+ */
+function whatChanges(git, pilotRef, slug) {
+  const file = `docs/design/${slug}/architecture.md`;
+  let markdown;
+  try {
+    // ls-tree answers empty for a missing path where show would print `fatal:` into the landing's output.
+    if (!String(git(['ls-tree', '--name-only', pilotRef, '--', file])).trim()) return null;
+    markdown = git(['show', `${pilotRef}:${file}`]);
+  } catch {
+    return null;
+  }
+  const what = whatChangesOf(overviewOf(markdown) ?? '');
+  return what ? /^.*?[.!?](?=\s|$)|^.*$/.exec(what)[0] : null;
 }
 
 /**
