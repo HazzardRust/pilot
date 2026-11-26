@@ -30,6 +30,7 @@ import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { powerRow, readPower } from './power.mjs';
 import { probeDeck } from './probe.mjs';
+import { findRune as defaultFindRune, smartAppControl } from './rune-bin.mjs';
 import { isSlug } from './runs.mjs';
 import { clashText, leashedGit, slugClashes } from './slug-clash.mjs';
 import { storeDir as defaultStoreDir } from './store-dir.mjs';
@@ -514,6 +515,26 @@ function deckRows({ found, port }) {
   return port === String(DECK_PORT) ? [...rows, rootRow] : rows;
 }
 
+/**
+ * The Rune deck row (prebuilt-rune spec 8): `pass` only for a built or a verified fetched binary, else `warn`
+ * with `findRune`'s reason, and `pilot deck` as the step only where a download is what would help.
+ */
+export function runeRow({ state, version }) {
+  const name = 'rune deck';
+  if (state.source === 'built') return { name, verdict: 'pass', detail: `built here, ${state.file}` };
+  if (state.source === 'fetched') return { name, verdict: 'pass', detail: `fetched ${version}, verified` };
+  return { name, verdict: 'warn', detail: `missing: ${state.reason}`, ...(state.fetchable ? { steps: ['pilot deck'] } : {}) };
+}
+
+/** `findRune`'s state, and where it would fetch, Smart App Control read as `ensureRune` reads it (spec 10); never a download. */
+function runeState({ findRune, host, run }) {
+  const state = findRune(PLUGIN_ROOT, host);
+  if (state.fetchable && host.platform === 'win32' && smartAppControl(run) === 'on') {
+    return { source: null, reason: 'Windows Smart App Control is on and blocks an unsigned Rune deck', fetchable: false };
+  }
+  return state;
+}
+
 /** Every local check as a row, in the order `pilot doctor` prints them. */
 export async function checkAll({
   platform = hostPlatform(),
@@ -535,6 +556,7 @@ export async function checkAll({
   git = leashedGit(cwd),
   hostFor = hostForDefault,
   readView = () => readOpenView(cwd, url),
+  findRune = defaultFindRune,
 } = {}) {
   const [found, view] = await Promise.all([probe(url), readView()]);
   let settings;
@@ -557,6 +579,7 @@ export async function checkAll({
     allowRow({ readSettings }),
     modsRow({ version: claudeVersion(run), settings, env }),
     ...deckRows({ found, port: new URL(url).port }),
+    runeRow({ state: runeState({ findRune, host: { platform, arch: process.arch, version: PLUGIN_VERSION }, run }), version: PLUGIN_VERSION }),
   ];
 }
 
