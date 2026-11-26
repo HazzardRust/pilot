@@ -23,6 +23,8 @@ import { fileURLToPath } from 'node:url';
 
 import { hostPlatform } from '../hooks/lib/platform.js';
 import { openFile } from './launch.mjs';
+import { findRune } from './rune-bin.mjs';
+import { PLUGIN_VERSION } from './version.mjs';
 
 /** This package's root: the one place a Rune deck binary is looked for, never a path from the environment. */
 export const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -139,7 +141,12 @@ export function runCopy(rune) {
  * to start a process, and that must never happen while the suite is running — so the
  * tests hand it a recorder, and the daemon hands it nothing.
  */
-export function openDeck(spawnOpener = spawn, platform = hostPlatform(), rune = runeBinary(PACKAGE_ROOT, platform)) {
+export function openDeck(
+  spawnOpener = spawn,
+  platform = hostPlatform(),
+  // A built binary, else a fetched one that still matches its pin; never a download (prebuilt-rune A6).
+  rune = findRune(PACKAGE_ROOT, { platform, arch: process.arch, version: PLUGIN_VERSION }).file ?? null,
+) {
   const off = process.env.PILOT_DECK_NO_OPEN;
   // Any value at all, not only `1`: the one reason to set this is to stop a browser
   // appearing, and `PILOT_DECK_NO_OPEN=0` is nobody's way of asking for one.
