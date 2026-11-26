@@ -9,44 +9,51 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed 996517b",
+      "state": "integrated, checks green at 1958fb9",
       "branch": "slice/test-body-git-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s1"
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "pushed c6b17b4",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/test-body-git-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s2"
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "pushed 6ca534e (carries S2's bbb74ca cherry-pick; integrates after S2, rebased)",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/test-body-git-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s3"
     },
     {
       "slice": "S4",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s4"
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s5"
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s6"
     },
     {
       "slice": "S7",
@@ -107,8 +114,8 @@
       ]
     }
   ],
-  "next": "self-pause (forced hand-back); feat/test-body-git at 8284be0; next: on S1 implementer's report (slice/test-body-git-s1, agent a6face4367a82072e), integrate S1 with typescript+security Verdict trailers, then pilot ready for S2-S10",
-  "updatedAt": "2026-11-26T16:23:44.806Z",
+  "next": "S2,S4,S5,S6 implementing; S3 pushed, integrates after S2 (rebase drops cherry-pick); S7-S10 when budget frees",
+  "updatedAt": "2026-11-26T17:07:19.468Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -177,6 +184,31 @@
       "agent": "pilot:pilot-implementer",
       "what": "S1 report went to main, not the co-pilot; resent on request",
       "evidence": "coordinator relayed it"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census reads the working tree, so a base census after the first edit measures edited files",
+      "evidence": "S3 base census showed 139 not 256; re-ran in detached worktree at 1958fb9"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "co-pilot's gate.lock until-loop refused by the wait hook as unbounded",
+      "evidence": "S3 used bounded for i in $(seq 90)"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed --since selects nothing; runs the whole suite (~20 min) behind the lock",
+      "evidence": "S3 gate: 5422 tests"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "seed could cut a branch only from the previous commit; four of five builders needed siblings: a seam change round trip",
+      "evidence": "S2 added seed from at bbb74ca"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "every red/green run costs a Rust compile under the shared gate lock; changed selection ~15 min mostly lock wait",
+      "evidence": "S2 report"
     }
   ]
 }
