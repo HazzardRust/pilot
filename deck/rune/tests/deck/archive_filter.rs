@@ -26,11 +26,11 @@ const NOW: &str = "2026-11-20T12:00:00.000Z";
 static RECORDS: AtomicUsize = AtomicUsize::new(0);
 
 /// A closed ticket for `recorded`: its title, its repository and when it closed.
-struct Closed<'a>(&'a str, &'a str, String);
+pub(crate) struct Closed<'a>(pub &'a str, pub &'a str, pub String);
 
 /// The archive region `deck/view/archive.mjs` serves at `NOW` over a store holding exactly `closed`: the
 /// producer's own output, never a region typed here.
-fn recorded(closed: &[Closed]) -> Value {
+pub(crate) fn recorded(closed: &[Closed]) -> Value {
     let dir = std::env::temp_dir().join(format!(
         "pilot-archive-filter-{}-{}",
         std::process::id(),
@@ -309,7 +309,7 @@ fn typing_filters_with_no_request() {
 }
 
 /// The window on a recorded archive view, with no deck behind it.
-fn archive_window(region: Value) -> Runtime<State> {
+pub(crate) fn archive_window(region: Value) -> Runtime<State> {
     archive_window_at(region, 1280.0)
 }
 
@@ -365,11 +365,17 @@ fn a_frame_stays_under_50_ms_at_real_scale() {
             s.regions.archive.sort = (!search.is_empty()).then_some((Column::Title, true));
         });
         rt.frame(1.0 / 60.0);
-        let rows = keys(&rt)
+        assert_eq!(
+            rt.state.regions.archive.listed(),
+            drawn,
+            "{case}: Today's rows listed"
+        );
+        // The list builds only the rows near its viewport (S17), however many it holds.
+        let built = keys(&rt)
             .iter()
             .filter(|key| key.starts_with("archive-row-"))
             .count();
-        assert_eq!(rows, drawn, "{case}: Today's rows drawn");
+        assert!(built > 0 && built < 100, "{case}: {built} rows built");
         for run in 1..=3 {
             // Each timed frame re-runs the whole view, as a keystroke's does.
             rt.invalidate();
@@ -386,7 +392,7 @@ fn a_frame_stays_under_50_ms_at_real_scale() {
 }
 
 /// `NOW`'s day less `day` days (under 50, so November or October), at 08:00 UTC plus `minute` minutes.
-fn stamp(day: usize, minute: usize) -> String {
+pub(crate) fn stamp(day: usize, minute: usize) -> String {
     let (month, date) = if day < 20 {
         (11, 20 - day)
     } else {

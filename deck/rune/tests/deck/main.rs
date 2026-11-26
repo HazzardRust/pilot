@@ -6,6 +6,7 @@ mod agents_reports;
 mod archive;
 mod archive_detail;
 mod archive_filter;
+mod archive_lag;
 mod centre;
 mod chat;
 mod empty;
