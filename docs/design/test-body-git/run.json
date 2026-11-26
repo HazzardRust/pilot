@@ -33,7 +33,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 0838d1b",
+      "state": "integrated, checks green at 8e7109e",
       "after": [
         "S1"
       ],
@@ -51,10 +51,11 @@
     },
     {
       "slice": "S6",
-      "state": "implementing",
+      "state": "pushed f475e35 (rebased on 8e7109e)",
       "after": [
         "S1"
       ],
+      "branch": "slice/test-body-git-s6",
       "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s6"
     },
     {
@@ -68,41 +69,46 @@
     },
     {
       "slice": "S8",
-      "state": "implementing",
+      "state": "pushed 7c65e6d (512 lines, over limit accepted: net -56, assumed)",
       "after": [
         "S1"
       ],
+      "branch": "slice/test-body-git-s8",
       "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s8"
     },
     {
       "slice": "S9",
-      "state": "implementing",
+      "state": "pushed 27b5426 (408 lines, over limit accepted, assumed)",
       "after": [
         "S1"
       ],
+      "branch": "slice/test-body-git-s9",
       "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s9"
     },
     {
       "slice": "S10",
-      "state": "implementing",
+      "state": "pushed c6363e5",
       "after": [
         "S1"
       ],
+      "branch": "slice/test-body-git-s10",
       "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s10"
     },
     {
       "slice": "S11",
-      "state": "planned",
+      "state": "implementing (from S10's tip)",
       "after": [
         "S10"
-      ]
+      ],
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s11"
     },
     {
       "slice": "S12",
-      "state": "planned",
+      "state": "implementing (from S10's tip)",
       "after": [
         "S10"
-      ]
+      ],
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s12"
     },
     {
       "slice": "S13",
@@ -121,8 +127,8 @@
       ]
     }
   ],
-  "next": "S3 checks green at 5838679; S4 integrating; then S5, S7; S6, S8, S9, S10 implementing",
-  "updatedAt": "2026-11-26T17:52:08.304Z",
+  "next": "S4 checks green at 8e7109e; S5 integrating; then S7, S6, S8, S10; S9, S11, S12 implementing",
+  "updatedAt": "2026-11-26T18:18:56.191Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -246,6 +252,46 @@
       "agent": "pilot:pilot-implementer",
       "what": "co-pilot's briefs said test:changed runs the whole suite; it selects ~43 files since the feat tip",
       "evidence": "S7: selected 43 of 662 test files since 93a70d3"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "seed returns only branch tips, so any commit a test needs by sha becomes its own seeded branch",
+      "evidence": "S8 origins carry plan, old, first branches for that reason"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8 reading 13 files (~2300 lines) took most of the context; 225k advisory before the final gate",
+      "evidence": "S8 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10's B2 bar (398 -> <=160 under land-repos) cannot be read off census.mjs, which does not split built git by helper; estimated 186 -> 74",
+      "evidence": "S10 census built 595 -> 483 over 18 files"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10's owned test fixture-git.test.mjs had been deleted by land-batching F6; recreated",
+      "evidence": "583ecac0"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "behaviour 3's git diff --stat origin/main cannot hold on a stacked branch",
+      "evidence": "S6: 36 files against origin/hazzardrust-pilot"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot wait-for --match 'exit ' woke early on a test name",
+      "evidence": "S10 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "seed refs can only point at a branch's final tip; earlier-commit fixtures need history-order tricks",
+      "evidence": "S9 red-line, adr-allocate"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9 bar 111 has no slack (tip 108)",
+      "evidence": "S9 census"
     }
   ]
 }
