@@ -660,3 +660,61 @@ fn the_frame_is_a_drag_band_with_the_content_below_it() {
         );
     }
 }
+
+fn archive_window(screen: &str) -> Runtime<State> {
+    let mut state = State::default();
+    state.query.screen = screen.into();
+    let mut rt = Runtime::new(state, app::view, (1280.0, 800.0), Env::new(true, 1.0));
+    rt.frame(0.0);
+    rt.frame(1.0);
+    rt
+}
+
+/// archive-page S16 (spec 10): the Archive is the bar's last entry, below Tickets and Closing reports.
+#[test]
+fn the_archive_entry_is_the_last_icon_of_the_bar() {
+    let rt = archive_window("home");
+    let order = [
+        "icon-notifications",
+        "icon-chat",
+        "icon-status",
+        "icon-agents",
+        "icon-tickets",
+        "icon-reports",
+        "icon-archive",
+    ];
+    let tops: Vec<f32> = order.iter().map(|key| rects(&rt, key).0[1]).collect();
+    assert!(
+        tops.windows(2).all(|w| w[0] < w[1]),
+        "{order:?} at {tops:?}"
+    );
+    assert_eq!(
+        rects(&rt, "icon-archive").0[0],
+        rects(&rt, "icon-reports").0[0]
+    );
+}
+
+/// Spec 10: a press goes to the archive screen and moves no pane; the icon is marked there, and a
+/// second press goes back.
+#[test]
+fn the_archive_entry_opens_the_archive_screen_and_is_marked_there() {
+    let mut rt = archive_window("home");
+    let marked = |rt: &Runtime<State>| rt.find("icon-archive-marker").is_some();
+    assert!(!marked(&rt), "marked on home");
+    let open_before = rt.state.prefs.open_panels.clone();
+
+    press(&mut rt, "icon-archive");
+    rt.frame(1.0);
+    assert_eq!(rt.state.query.screen, "archive");
+    assert_eq!(rt.state.prefs.open_panels, open_before, "a pane moved");
+    // On a first start Chat and Status are open and the rest shut; the press moves none of them.
+    for (panel, open) in [("chat", true), ("status", true), ("tickets", false)] {
+        assert_eq!(body(&rt, panel)[3] > 0.0, open, "{panel} moved");
+    }
+    assert!(marked(&rt), "not marked on the archive screen");
+
+    press(&mut rt, "icon-archive");
+    rt.frame(1.0);
+    assert_eq!(rt.state.query.screen, "home");
+    assert!(!marked(&rt), "still marked after Back");
+}

@@ -1,0 +1,163 @@
+git census, full npm run test:cost on main ffc8384, 2026-11-24, Windows; gate line: spawns 13677 (node 831, git 12572, other 274)
+probe: one line per node-spawned git, outermost product frame as owner (test frames and count-spawns excluded); 12709 git traced
+
+== git by entry module
+  4048  fixture
+  3942  scripts/land.mjs
+  1264  scripts/integrate.mjs
+   596  scripts/sync.mjs
+   404  scripts/worktrees.mjs
+   231  deck/server-tools.mjs
+   211  scripts/base.mjs
+   188  scripts/stack.mjs
+   176  scripts/select-tests.mjs
+   174  scripts/glossary-diff.mjs
+   151  scripts/pilot-branch.mjs
+   148  scripts/handoff.mjs
+   127  scripts/feature-pr.mjs
+   111  scripts/gate.mjs
+    99  scripts/branches.mjs
+    85  deck/landing.mjs
+    68  deck/wait.mjs
+    62  deck/lineage.mjs
+    60  scripts/build-rules-ledger.mjs
+    59  deck/recut.mjs
+    56  deck/telemetry.mjs
+    56  scripts/pilot-tip.mjs
+    42  bin/pilot.mjs
+    39  scripts/audit-spend.mjs
+    36  scripts/ledgers.mjs
+    35  deck/gate2-base.mjs
+    33  deck/gate2-checks.mjs
+    29  scripts/fresh-repo.mjs
+    23  scripts/adr-allocate.mjs
+    18  deck/slug-clash.mjs
+
+== scripts/land.mjs by argv (top 30)
+   403  rev-parse HEAD
+   201  config --get pilot.remote
+   179  rev-parse refs/remotes/origin/pilot
+   169  rev-parse -q --verify refs/remotes/origin/pilot^{commit}
+   169  worktree list --porcelain
+   139  fetch -q origin
+   118  ls-remote --symref origin HEAD
+   115  fetch -q --prune origin
+   113  merge-base --is-ancestor SHA SHA
+   109  for-each-ref --format=%(objectname) refs/remotes/origin/feat/X
+   104  rev-list --left-right --count SHA...SHA
+    99  symbolic-ref -q --short HEAD
+    98  symbolic-ref --short HEAD
+    91  ls-files -m MSG
+    90  push -q origin feat/X
+    89  diff --name-only --no-renames -z SHA...SHA --
+    84  merge -q --no-ff --no-commit -m MSG
+    83  commit -q -m MSG
+    80  worktree prune
+    74  remote
+    72  ls-remote --heads origin
+    72  worktree list --porcelain -z
+    72  status --porcelain --untracked-files=all
+    67  push -q origin SHA:refs/heads/pilot
+    67  for-each-ref --merged refs/remotes/origin/pilot --format=%(refname) refs/heads/
+    66  rev-parse --verify --quiet refs/remotes/origin/pilot^{commit}
+    66  reflog show --format=%H HEAD --
+    59  merge-base --is-ancestor SHA refs/remotes/origin/pilot
+    48  log --first-parent --reverse --format=%H%x09%P%x09%s refs/remotes/origin/main..r
+    37  reflog show --format=%H refs/heads/slice/X --
+
+== scripts/integrate.mjs by argv (top 30)
+   132  ls-remote --symref origin HEAD
+    96  config --get pilot.remote
+    78  symbolic-ref --short HEAD
+    77  symbolic-ref -q --short HEAD
+    73  rev-parse -q --verify refs/remotes/origin/pilot^{commit}
+    69  fetch -q --prune origin
+    69  rev-parse HEAD
+    63  log --first-parent --format=%H %P%x00%s origin/pilot
+    56  merge -q --no-ff -m MSG
+    53  rev-parse --short origin/pilot
+    48  rev-parse -q --verify MERGE_HEAD
+    47  rev-parse --short HEAD
+    46  ls-files -m MSG
+    44  commit -q -m MSG
+    43  merge --no-ff --no-commit origin/slice/X
+    29  push -q origin feat/X
+    15  diff --cached --name-only -z --diff-filter=d -- . :(exclude,glob)docs/design/*/r
+    15  reset -q --merge SHA
+    14  rev-parse -q --verify origin/feat/X^{commit}
+    13  fetch -q origin
+    13  ls-remote --heads origin
+    12  checkout --pathspec-from-file=- --pathspec-file-nul
+    10  rev-parse --path-format=absolute --git-common-dir
+    10  config --local --no-includes --get pilot.test
+     9  rev-parse refs/remotes/origin/feat/X
+     9  merge-base --is-ancestor SHA refs/remotes/origin/feat/X
+     7  push -q --force-with-lease=refs/heads/slice/X:SHA origin --delete refs/heads/sli
+     7  diff --cached --name-only SHA -- package-lock.json
+     6  diff-tree --stdin --root -p
+     6  patch-id --stable
+
+== scripts/sync.mjs by argv (top 30)
+    66  merge-base --is-ancestor SHA SHA
+    57  rev-parse -q --verify refs/remotes/origin/pilot^{commit}
+    41  config --get pilot.remote
+    41  ls-remote --symref origin HEAD
+    33  merge -q --no-ff --no-commit -m MSG
+    31  rev-parse --path-format=absolute --git-common-dir
+    31  rev-parse HEAD
+    30  fetch -q --prune origin
+    30  rev-parse --verify refs/remotes/origin/main^{commit}
+    30  worktree prune
+    29  commit -q -m MSG
+    26  merge-tree --write-tree SHA SHA
+    26  rev-parse SHA^{tree}
+    20  worktree add -q --detach PATH SHA
+    18  push -q origin SHA:refs/heads/pilot
+    18  worktree remove --force PATH
+     6  rev-parse -q --verify refs/heads/pilot^{commit}
+     5  diff --name-only --diff-filter=U
+     3  add -- docs/adr/README.md
+     3  rev-parse -q --verify refs/remotes/second/pilot^{commit}
+     3  worktree list --porcelain
+     2  diff --name-only -z SHA...HEAD^2
+     2  commit -q --amend --no-edit
+     2  remote
+     2  fetch -q --prune second
+     2  update-ref refs/heads/pilot SHA SHA
+     2  rev-parse --show-toplevel
+     2  rev-parse -q --verify MERGE_HEAD
+     2  config --local --no-includes --get pilot.test
+     1  worktree add -q --detach C:\Users\jrylk\AppData\Local\Temp\pilot-fixture-1XJEX4\
+
+== fixture by argv (top 30)
+   479  commit -q -m MSG
+   238  rev-parse HEAD
+   101  push -q origin feat/X
+   100  commit -q --allow-empty -m MSG
+    88  add -A
+    86  rev-parse pilot
+    85  merge -q --no-ff -m MSG
+    82  push -q origin main
+    74  checkout -q main
+    65  add shared.txt
+    63  add .
+    61  checkout -q pilot
+    59  rev-parse feat/X
+    57  checkout -q -b feat/X main
+    55  init -q
+    52  push -q origin pilot
+    50  add a.txt
+    47  checkout -q -b main
+    46  fetch -q origin
+    44  init -q -b main
+    39  checkout -q feat/X
+    39  push -q origin main main:pilot
+    36  checkout -q -b feat/X origin/pilot
+    34  checkout -q -b feat/X
+    32  remote set-head origin main
+    32  rev-parse refs/heads/feat/X
+    32  --literal-pathspecs -C C:\Users\jrylk\AppData\Local\Temp\swg-Qe7w7m ls-files -z 
+    31  status --porcelain
+    31  commit -q -m MSG
+
+    27  rev-parse refs/heads/pilot

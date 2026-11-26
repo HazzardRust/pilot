@@ -5,7 +5,7 @@
  */
 
 import './no-open.mjs';
-import { gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
+import { GIT_SLOW_MS, gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -71,7 +71,7 @@ function postGate1(repo, sha, body, verdicts) {
   const evidence = withTicket({ artefact: ARTEFACT, sha, locked: 1, slices: '| S1 |' }, repo);
   resolveItem(postItem({ kind: 'question', title: 'Merge?', body: 'None.', repo, ticket: evidence.ticket, author: 'pilot:pilot-architect' }).id, 'merged nothing', 'pilot:pilot-architect');
   if (verdicts !== undefined) recordVerdicts(evidence.ticket, verdicts);
-  return callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body, repo, ...evidence, branch: 'design/x' });
+  return callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body, repo, ...evidence, branch: 'design/x' }, { lineageTimeout: GIT_SLOW_MS });
 }
 
 const gate1s = () => listItems().filter((item) => item.kind === KIND_GATE1);
@@ -115,7 +115,7 @@ test("an architect's gate1 that differs from the record is refused through deck_
   const evidence = withTicket({ artefact: ARTEFACT, sha, locked: 1, slices: '| S1 |' }, work);
   resolveItem(postItem({ kind: 'question', title: 'Merge?', body: 'None.', repo: work, ticket: evidence.ticket, author: 'pilot:pilot-architect' }).id, 'merged nothing', 'pilot:pilot-architect');
   recordVerdicts(evidence.ticket, 'A1 Verdict: stands');
-  const post = (extra) => () => callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'A1 overturned.', repo: work, ...evidence, branch: 'design/x', author: 'pilot:pilot-architect', ...extra });
+  const post = (extra) => () => callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'A1 overturned.', repo: work, ...evidence, branch: 'design/x', author: 'pilot:pilot-architect', ...extra }, { lineageTimeout: GIT_SLOW_MS });
   assert.throws(post({}), refused('verdict record', 'A1'));
   // A padded sha, which the store trims and accepts, is checked as the store keeps it.
   assert.throws(post({ sha: `${sha} \n` }), refused('verdict record', 'A1'));
@@ -126,8 +126,8 @@ test('a body missing an id is refused', (t) => {
   const { work, commit } = scratch(t);
   const sha = commit(ARTEFACT, section6('- **A1 One.** x', '  Verdict: stands', '- **A2 Two.** y', '  Verdict: overturned: B instead'));
   const record = { record: { A1: 'stands', A2: 'overturned: B instead' } };
-  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: 'A1 stands. A20 is another run.' }, record), refused('A2', 'body'));
-  assert.doesNotThrow(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: 'A1 stands; A2 overturned.' }, record));
+  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: 'A1 stands. A20 is another run.' }, { ...record, timeout: GIT_SLOW_MS }), refused('A2', 'body'));
+  assert.doesNotThrow(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: 'A1 stands; A2 overturned.' }, { ...record, timeout: GIT_SLOW_MS }));
 });
 
 test('an artefact absent at sha is refused', (t) => {
@@ -136,7 +136,7 @@ test('an artefact absent at sha is refused', (t) => {
   // The working file is not what the gate signs: present on disk, absent at `sha`.
   fs.mkdirSync(path.join(work, path.dirname(ARTEFACT)), { recursive: true });
   fs.writeFileSync(path.join(work, ARTEFACT), section6());
-  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }), refused(ARTEFACT, sha));
+  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }, { timeout: GIT_SLOW_MS }), refused(ARTEFACT, sha));
   assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }, { timeout: 0 }), refused(ARTEFACT, 'within 5 s'));
 });
 
@@ -148,15 +148,15 @@ test("a gate1's repo config runs no command while the deck reads an absent sha",
   git(work, 'config', 'remote.origin.promisor', 'true');
   git(work, 'config', 'remote.origin.uploadpack', 'touch PWNED; git-upload-pack');
   const sha = '0123456789abcdef0123456789abcdef01234567';
-  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }), refused(ARTEFACT, sha));
+  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }, { timeout: GIT_SLOW_MS }), refused(ARTEFACT, sha));
   assert.equal(fs.existsSync(path.join(work, 'PWNED')), false, 'no lazy fetch ran');
 });
 
 test('no A‹n› passes and a non-git repo is not checked', (t) => {
   const { work, commit } = scratch(t);
   const sha = commit(ARTEFACT, section6());
-  assert.doesNotThrow(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }));
+  assert.doesNotThrow(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }, { timeout: GIT_SLOW_MS }));
   const plain = fs.mkdtempSync(path.join(os.tmpdir(), 'gate1-verdicts-plain-'));
   t.after(() => fs.rmSync(plain, { recursive: true, force: true }));
-  assert.doesNotThrow(() => assertVerdicts(plain, { sha: '0305827', artefact: ARTEFACT, body: '' }));
+  assert.doesNotThrow(() => assertVerdicts(plain, { sha: '0305827', artefact: ARTEFACT, body: '' }, { timeout: GIT_SLOW_MS }));
 });

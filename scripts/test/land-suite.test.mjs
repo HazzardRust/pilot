@@ -99,8 +99,10 @@ test('a proof that cannot be read is no proof: the landing runs the full suite a
   // The first read of pilot's tip, the proof's base, answers no sha: provenTree throws before it asks the host.
   let first = true;
   const garbled = (args) => {
-    if (first && args[0] === 'rev-parse' && args.length === 2 && args[1].endsWith('/pilot')) return ((first = false), 'not-a-sha');
-    return git(work, ...args);
+    const said = git(work, ...args);
+    // The tip read is the for-each-ref snapshot's pilot line (land-batching S2); garble that line, first snapshot only.
+    if (!first || args[0] !== 'for-each-ref' || !/ refs\/remotes\/origin\/pilot$/m.test(said)) return said;
+    return ((first = false), said.replace(/^\S+(?= refs\/remotes\/origin\/pilot$)/m, 'not-a-sha'));
   };
 
   const said = mainSays([], { cwd: work, git: garbled, host: proving(host, tree) });
