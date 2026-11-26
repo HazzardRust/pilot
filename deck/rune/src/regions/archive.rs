@@ -226,6 +226,22 @@ fn sections(v: &Value, from: &From) -> Result<Vec<(usize, Vec<usize>)>, serde_js
 pub struct Field<'a> {
     pub label: &'a str,
     pub value: &'a str,
+    /// A Markdown body (spec 6): the list shows its first line only, the detail all of it (QA3 Q1, Q2).
+    pub markdown: bool,
+}
+
+impl Field<'_> {
+    /// What the list draws: a Markdown body's first non-blank line, any other value whole.
+    fn shown(&self) -> &str {
+        if !self.markdown {
+            return self.value;
+        }
+        self.value
+            .lines()
+            .map(str::trim)
+            .find(|line| !line.is_empty())
+            .unwrap_or_default()
+    }
 }
 
 /// One archive row: its kind, id, ISO stamp `at`, local time `when`, title and fields.
@@ -340,20 +356,20 @@ fn archive_row(r: &Row, kind_ch: usize, dark: bool) -> El {
             // A wrapped line sits `within` under the last, as the lines of one field do.
             .gaps(space::within, space::between),
         |out, f| {
-            // A value longer than the line wraps under the title's x rather than running past the row.
+            // A value longer than the line wraps under the title's x rather than running past the row; a
+            // Markdown body's one line is cut at the row's edge instead.
+            let value = text(f.shown()).font(type_::CAPTION).color(ui.text).shrink();
+            let value = if f.markdown {
+                value.truncate()
+            } else {
+                value.wrap_anywhere()
+            };
             out.child(
                 row()
                     .shrink()
                     .gap(space::within)
                     .child(caption(f.label))
-                    .child(theme::content(
-                        text(f.value)
-                            .font(type_::CAPTION)
-                            .color(ui.text)
-                            .shrink()
-                            .wrap_anywhere(),
-                        dark,
-                    )),
+                    .child(theme::content(value, dark)),
             )
         },
     );

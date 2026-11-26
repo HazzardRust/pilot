@@ -135,3 +135,49 @@ fn an_unchanged_view_is_not_re_parsed_per_frame() {
         "a new view parses again"
     );
 }
+
+/// The texts the window draws now.
+fn texts(rt: &Runtime<State>) -> Vec<String> {
+    rt.elements()
+        .into_iter()
+        .filter(|e| !e.exiting)
+        .filter_map(|e| e.text)
+        .collect()
+}
+
+/// QA3 Q1, Q2: a settled thread's body, many lines of Markdown, is one line in the list. Laid out whole it
+/// cost the real store's search keys 20 to 43 ms a frame and showed `**` and table pipes raw; the whole
+/// body stays in the detail, and search still finds a word on any of its lines.
+#[test]
+fn a_markdown_body_is_one_line_in_the_list() {
+    let body = "Built: Gate 2 lands.\n\n| spec | result |\n|---|---|\n| 1 | pass |\n\n**For you to confirm** zulu";
+    let region = serde_json::json!({
+        "kinds": [{ "kind": "thread", "label": "Settled threads" }],
+        "days": [{ "key": "2026-11-20", "heading": "Fri 20 Nov", "open": true, "rows": [{
+            "kind": "thread", "id": "itm_000000000001", "at": "2026-11-20T10:00:00.000Z", "when": "10:00",
+            "title": "A settled thread",
+            "fields": [{ "label": "Kind", "value": "gate2" }, { "label": "Body", "value": body, "markdown": true }]
+        }] }]
+    });
+    let mut rt = archive_window(region);
+    rt.frame(0.0);
+    rt.frame(1.0 / 60.0);
+    let drawn = texts(&rt);
+    assert!(
+        drawn.iter().any(|t| t == "Built: Gate 2 lands."),
+        "the body's first line shows: {drawn:?}"
+    );
+    assert!(
+        drawn
+            .iter()
+            .all(|t| !t.contains("**") && !t.contains("|---|") && !t.contains("zulu")),
+        "no later line of the body is drawn in the list: {drawn:?}"
+    );
+    rt.update(|s, _| s.regions.archive.search = TextEdit::new("zulu"));
+    rt.frame(2.0 / 60.0);
+    assert_eq!(
+        rt.state.regions.archive.listed(),
+        1,
+        "a word on the body's last line still finds its row"
+    );
+}
