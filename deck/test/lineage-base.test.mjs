@@ -5,7 +5,7 @@
  */
 
 import './no-open.mjs';
-import { gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
+import { GIT_SLOW_MS, gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -54,8 +54,8 @@ test('a gate1 cut from main is accepted', (t) => {
   const { work, commit } = scratch(t);
   git(work, 'checkout', '-q', '-b', 'design/x', 'origin/main');
   commit('docs.md', 'design\n');
-  assert.doesNotThrow(() => assertOnPilotTip(work, 'design/x', { base: 'main' }));
-  assert.throws(() => assertOnPilotTip(work, 'design/x'), refused("is not on pilot's tip"), 'pilot stays the default base');
+  assert.doesNotThrow(() => assertOnPilotTip(work, 'design/x', { base: 'main', timeout: GIT_SLOW_MS }));
+  assert.throws(() => assertOnPilotTip(work, 'design/x', { timeout: GIT_SLOW_MS }), refused("is not on pilot's tip"), 'pilot stays the default base');
 });
 
 test("a branch carrying a copy of one of main's commits is refused, naming origin/main", (t) => {
@@ -64,19 +64,19 @@ test("a branch carrying a copy of one of main's commits is refused, naming origi
   // A replay: main's patch under another message, so never main's own sha.
   commit('b.txt', 'main\n', 'replayed from main');
   commit('docs.md', 'design\n');
-  assert.throws(() => assertOnPilotTip(work, 'design/x', { base: 'main' }), refused('design/x', "1 copy of main's commits", 'git rebase origin/main'));
+  assert.throws(() => assertOnPilotTip(work, 'design/x', { base: 'main', timeout: GIT_SLOW_MS }), refused('design/x', "1 copy of main's commits", 'git rebase origin/main'));
 });
 
 test('a base the repository does not hold is refused, naming it', (t) => {
   const { work } = scratch(t);
-  assert.throws(() => assertOnPilotTip(work, 'origin/main', { base: 'trunk' }), refused('has no origin/trunk', 'git fetch origin trunk'));
+  assert.throws(() => assertOnPilotTip(work, 'origin/main', { base: 'trunk', timeout: GIT_SLOW_MS }), refused('has no origin/trunk', 'git fetch origin trunk'));
 });
 
 test('an option-shaped base is refused', (t) => {
   for (const bad of ['--upload-pack=x', '-x', 'a..b', 'HEAD', '', 'main/', 'main.', 'a//b', 'main.lock']) assert.equal(RUN_BASE.test(bad), false, bad);
   for (const good of ['pilot', 'feat/x', 'main', 'trunk', 'release/1.2']) assert.equal(RUN_BASE.test(good), true, good);
   const { work } = scratch(t);
-  assert.throws(() => assertOnPilotTip(work, 'origin/main', { base: '--upload-pack=x' }), refused('--upload-pack=x'));
+  assert.throws(() => assertOnPilotTip(work, 'origin/main', { base: '--upload-pack=x', timeout: GIT_SLOW_MS }), refused('--upload-pack=x'));
 });
 
 test("the deck accepts a gate1 cut from main when the ticket's record names base main", (t) => {
@@ -88,6 +88,6 @@ test("the deck accepts a gate1 cut from main when the ticket's record names base
   const evidence = withTicket({ artefact: ARTEFACT, sha, locked: 3, slices: '| S1 |' }, work);
   resolveItem(postItem({ kind: 'question', title: 'Merge?', body: 'None.', repo: work, ticket: evidence.ticket, author: 'pilot:pilot-architect' }).id, 'merged nothing', 'pilot:pilot-architect');
   setSlices(registerRun({ repo: work, pid: process.pid }).id, [{ slice: 'S1', state: 'planned' }], undefined, { slug: 'x', ticket: evidence.ticket, base: 'main' });
-  callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: work, ...evidence, branch: 'design/x' }, { prWrite: () => {} });
+  callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: work, ...evidence, branch: 'design/x' }, { prWrite: () => {}, lineageTimeout: GIT_SLOW_MS });
   assert.equal(listItems().filter((item) => item.kind === KIND_GATE1).length, 1);
 });

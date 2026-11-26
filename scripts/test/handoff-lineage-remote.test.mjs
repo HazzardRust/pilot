@@ -6,7 +6,7 @@
  */
 
 // The fixture seam imports fake-home.mjs first and gives every git below its identity.
-import { gitFixture } from './lib/git-fixture.mjs';
+import { GIT_SLOW_MS, gitFixture } from './lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -149,19 +149,19 @@ test('the gate1 lineage reads the local pilot under none', (t) => {
   git(work, 'branch', 'pilot', 'origin/pilot');
   git(work, 'checkout', '-q', '-b', 'design/x', 'pilot');
   git(work, 'commit', '-q', '--allow-empty', '-m', 'docs');
-  assert.doesNotThrow(() => assertOnPilotTip(work, 'design/x'), 'a design branch cut from the local pilot passes');
+  assert.doesNotThrow(() => assertOnPilotTip(work, 'design/x', { timeout: GIT_SLOW_MS }), 'a design branch cut from the local pilot passes');
 
   git(work, 'checkout', '-q', 'pilot');
   git(work, 'commit', '-q', '--allow-empty', '-m', 'pilot moves');
-  assert.throws(() => assertOnPilotTip(work, 'design/x'), refused('design/x', "is not on pilot's tip", 'git merge pilot)'));
+  assert.throws(() => assertOnPilotTip(work, 'design/x', { timeout: GIT_SLOW_MS }), refused('design/x', "is not on pilot's tip", 'git merge pilot)'));
 
   git(work, 'checkout', '-q', 'design/x');
   git(work, 'branch', '-D', 'pilot');
-  assert.throws(() => assertOnPilotTip(work, 'design/x'), refused('a gate1 needs the pilot base:', 'has no pilot;'));
+  assert.throws(() => assertOnPilotTip(work, 'design/x', { timeout: GIT_SLOW_MS }), refused('a gate1 needs the pilot base:', 'has no pilot;'));
 });
 
 test('the gate1 lineage names the run remote pilot when it is missing', (t) => {
   const { work } = scratchRepos(t);
   git(work, 'config', 'pilot.remote', 'second');
-  assert.throws(() => assertOnPilotTip(work, 'main'), refused('has no second/pilot;', 'git fetch second pilot'));
+  assert.throws(() => assertOnPilotTip(work, 'main', { timeout: GIT_SLOW_MS }), refused('has no second/pilot;', 'git fetch second pilot'));
 });

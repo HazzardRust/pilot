@@ -5,7 +5,7 @@
  */
 
 import './no-open.mjs';
-import { gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
+import { GIT_SLOW_MS, gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -48,8 +48,11 @@ function buildScratch(root, pilot) {
   return { work, commit };
 }
 
-/** Posts a gate1 for `branch` in `repo` at the branch's own sha where it resolves, through `callTool`, its red ticket put first. */
-function postGate1(repo, branch) {
+/**
+ * Posts a gate1 for `branch` in `repo` at the branch's own sha where it resolves, through `callTool`, its red ticket put first,
+ * under the test deadline unless `lineageTimeout` names another.
+ */
+function postGate1(repo, branch, { lineageTimeout = GIT_SLOW_MS } = {}) {
   let sha = GATE1.sha;
   try {
     sha = git(repo, 'rev-parse', '--verify', '-q', branch);
@@ -58,7 +61,7 @@ function postGate1(repo, branch) {
   }
   const evidence = withTicket({ ...GATE1, sha }, repo);
   resolveItem(postItem({ kind: 'question', title: 'Merge?', body: 'None.', repo, ticket: evidence.ticket, author: 'pilot:pilot-architect' }).id, 'merged nothing', 'pilot:pilot-architect');
-  return callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo, ...evidence, branch });
+  return callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo, ...evidence, branch }, { lineageTimeout });
 }
 
 const gate1s = () => listItems().filter((item) => item.kind === KIND_GATE1);
@@ -137,4 +140,15 @@ test('a gate1 whose lineage git does not answer before the deadline is refused',
   git(work, 'checkout', '-q', '-b', 'design/x', 'origin/pilot');
   commit('docs.md', 'design\n');
   assert.throws(() => assertOnPilotTip(work, 'design/x', { timeout: 0 }), refused('design/x', 'within 5 s'));
+});
+
+test("the deck's post path takes the deadline its caller injects", (t) => {
+  tempDeck(t);
+  const { work, commit } = scratch(t);
+  git(work, 'checkout', '-q', '-b', 'design/x', 'origin/pilot');
+  commit('docs.md', 'design\n');
+  assert.throws(() => postGate1(work, 'design/x', { lineageTimeout: 0 }), refused('design/x', 'within 5 s'));
+  assert.equal(gate1s().length, 0, 'no gate1 stored');
+  assert.match(postGate1(work, 'design/x').content[0].text, /^Posted itm_/);
+  assert.equal(gate1s().length, 1);
 });
