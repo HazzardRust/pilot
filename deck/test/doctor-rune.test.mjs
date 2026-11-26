@@ -53,9 +53,10 @@ async function doctorOn(t, root, { platform = 'win32', sac = '0x0' } = {}) {
   t.after(() => {
     globalThis.fetch = realFetch;
   });
-  const asked = [];
   const rows = await checkAll({
     platform,
+    // The host's own arch has no asset on an arm64 Windows runner; every case here is win32-x64.
+    arch: 'x64',
     run: (cmd) => {
       if (/reg\.exe$/i.test(cmd)) return regOutput(sac);
       throw new Error('not read in this test');
@@ -69,12 +70,9 @@ async function doctorOn(t, root, { platform = 'win32', sac = '0x0' } = {}) {
     probe: async () => ({ state: 'none' }),
     readView: async () => null,
     readSettings: () => ({}),
-    findRune: (...args) => {
-      asked.push(args);
-      return findRune(root, args[1]);
-    },
+    findRune: (_root, host) => findRune(root, host),
   });
-  return { rows, fetched, asked, rune: rows.filter((row) => row.name === 'rune deck') };
+  return { rows, fetched, rune: rows.filter((row) => row.name === 'rune deck') };
 }
 
 test('a built deck is named', () => {
@@ -109,7 +107,7 @@ test('each missing reason names its step', async (t) => {
     assert.deepEqual(row.steps, steps, name);
   }
 
-  // Smart App Control is read by doctor itself, only where a download is what would help.
+  // Smart App Control is read by findRune through doctor's `run`, so doctor and `pilot deck` agree (spec 10).
   const enforced = await doctorOn(t, packageRoot(t), { sac: '0x1' });
   assert.equal(enforced.rune.length, 1);
   assert.equal(enforced.rune[0].verdict, 'warn');
@@ -120,13 +118,9 @@ test('each missing reason names its step', async (t) => {
 });
 
 test('doctor never downloads', async (t) => {
-  const { rows, fetched, asked, rune } = await doctorOn(t, packageRoot(t));
+  const { rows, fetched, rune } = await doctorOn(t, packageRoot(t));
   assert.equal(rows.at(-1), rune[0], 'the Rune row comes last, after the deck rows');
   assert.equal(rune.length, 1);
   assert.equal(rune[0].verdict, 'warn');
   assert.deepEqual(fetched, []);
-  assert.ok(asked.length > 0, 'the row comes from findRune');
-  for (const [, host] of asked) {
-    assert.ok(!Object.values(host).some((value) => typeof value === 'function'), 'findRune is handed no function to call out with');
-  }
 });

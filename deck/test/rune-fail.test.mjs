@@ -210,5 +210,12 @@ test('Smart App Control enforced downloads nothing', async (t) => {
 
   // Evaluation mode does not block, so the download goes ahead.
   const ok = stubGet(() => reply(200, { body: (async function* one() { yield new Uint8Array(BINARY); })() }));
-  assert.equal((await ensureRune(packageRoot(t), { ...HOST, run: run('0x2') }, ok.get)).source, 'fetched');
+  const fetchedRoot = packageRoot(t);
+  assert.equal((await ensureRune(fetchedRoot, { ...HOST, run: run('0x2') }, ok.get)).source, 'fetched');
+
+  // Turned on later, it blocks the binary already fetched too, and lookup deletes nothing.
+  const blocked = findRune(fetchedRoot, { ...HOST, run: run('0x1') });
+  assert.equal(blocked.source, null);
+  assert.match(blocked.reason, /Smart App Control/);
+  assert.equal(fetchedFiles(fetchedRoot).length, 1);
 });

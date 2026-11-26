@@ -11,6 +11,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { TAG } from '../deck/rune-bin.mjs';
+
 /** Each target's asset name (A8). */
 export const ASSETS = {
   'win32-x64': 'pilot-deck-win32-x64.exe',
@@ -19,8 +21,6 @@ export const ASSETS = {
 };
 
 const SEMVER = /^\d+\.\d+\.\d+$/;
-/** A scratch prerelease's tag (A9), as `readPin` accepts it (L6). */
-const SCRATCH = /^rune-scratch-[0-9a-f]{7,40}$/;
 
 const u16 = (b, at) => (b.length >= at + 2 ? b.readUInt16LE(at) : -1);
 const u32 = (b, at) => (b.length >= at + 4 ? b.readUInt32LE(at) : -1);
@@ -60,7 +60,8 @@ const HEADERS = {
 export function pinRelease({ version, tag, dir }) {
   const problems = [];
   if (typeof version !== 'string' || !SEMVER.test(version)) problems.push(`version must be x.y.z, got ${JSON.stringify(version)}`);
-  else if (tag !== `v${version}` && !SCRATCH.test(tag ?? '')) problems.push(`tag ${JSON.stringify(tag)} is neither v${version} nor a rune-scratch-<sha> tag`);
+  // A release tag must be this version's; any other tag `readPin` accepts is a scratch prerelease's (A9, L6).
+  else if (tag?.startsWith('v') ? tag !== `v${version}` : !TAG.test(tag ?? '')) problems.push(`tag ${JSON.stringify(tag)} is neither v${version} nor a rune-scratch-<sha> tag`);
   const assets = {};
   for (const [target, file] of Object.entries(ASSETS)) {
     let bytes;

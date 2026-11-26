@@ -26,9 +26,6 @@ import { openFile } from './launch.mjs';
 import { findRune } from './rune-bin.mjs';
 import { PLUGIN_VERSION } from './version.mjs';
 
-// The release build's lookup is findRune's first step, so it lives beside it (prebuilt-rune).
-export { runeBinary } from './rune-bin.mjs';
-
 /** This package's root: the one place a Rune deck binary is looked for, never a path from the environment. */
 export const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 

@@ -31,7 +31,7 @@ export function runeBinary(root, platform) {
 /** The one place a binary is downloaded from (L6). */
 const RELEASES = 'https://github.com/HazzardRust/pilot/releases/download';
 /** A release tag or a scratch prerelease's (L6, A9). */
-const TAG = /^v\d+\.\d+\.\d+$|^rune-scratch-[0-9a-f]{7,40}$/;
+export const TAG = /^v\d+\.\d+\.\d+$|^rune-scratch-[0-9a-f]{7,40}$/;
 /** A plain file name, so a pin cannot point a download outside `fetched/`. */
 const ASSET = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const SHA256 = /^[0-9a-f]{64}$/;
@@ -63,8 +63,10 @@ export function readPin(root, version, target) {
 }
 
 /**
- * The Rune deck to run, from disk alone: the release build, else the fetched binary while it matches its
- * pin. A fetched file that no longer matches is deleted here and this launch runs nothing (spec 4).
+ * The Rune deck to run, from disk alone and changing nothing: the release build, else the fetched binary
+ * while it matches its pin. A fetched file that no longer matches comes back as `stale`, for `ensureRune`
+ * to delete (spec 4). Smart App Control, read only through `host.run` and only on Windows, blocks a fetched
+ * or fetchable binary alike (spec 10); 'unknown' does not block.
  */
 export function findRune(root, host) {
   const built = runeBinary(root, host.platform);
@@ -76,23 +78,20 @@ export function findRune(root, host) {
   try {
     bytes = fs.readFileSync(file);
   } catch (err) {
-    if (err.code === 'ENOENT') return { source: null, reason: 'the Rune deck has not been fetched yet', fetchable: true };
+    if (err.code === 'ENOENT') return sacBlocks(host) ?? { source: null, reason: 'the Rune deck has not been fetched yet', fetchable: true };
     return { source: null, reason: `could not read ${file}: ${err.message}`, fetchable: false };
   }
   const got = sha256(bytes);
-  if (got === pin.sha256) return { source: 'fetched', file };
-  let deleted = 'deleted';
-  try {
-    fs.rmSync(file, { force: true });
-  } catch (err) {
-    // A lock (antivirus, a window still running it) leaves it in place; it is never run while it differs.
-    deleted = `could not delete it: ${err.message}`;
+  if (got !== pin.sha256) {
+    return { source: null, reason: `${pin.file} changed on disk (sha256 ${prefix(got)}…, pinned ${prefix(pin.sha256)}…)`, fetchable: false, stale: file };
   }
-  return {
-    source: null,
-    reason: `${pin.file} changed on disk (sha256 ${prefix(got)}…, pinned ${prefix(pin.sha256)}…); ${deleted}, opening the page`,
-    fetchable: false,
-  };
+  return sacBlocks(host) ?? { source: 'fetched', file };
+}
+
+/** The state Smart App Control leaves an unsigned binary in, or null where it does not block. */
+function sacBlocks(host) {
+  if (host.platform !== 'win32' || !host.run || smartAppControl(host.run) !== 'on') return null;
+  return { source: null, reason: 'Windows Smart App Control is on and blocks an unsigned Rune deck, opening the page', fetchable: false };
 }
 
 /**
@@ -103,11 +102,18 @@ export function findRune(root, host) {
 export async function ensureRune(root, host, get) {
   const state = findRune(root, host);
   if (state.source) return state;
-  if (!state.fetchable) return { ...state, line: `Rune deck: ${state.reason}` };
-  if (host.platform === 'win32' && host.run && smartAppControl(host.run) === 'on') {
-    const reason = 'Windows Smart App Control is on and blocks an unsigned Rune deck; nothing downloaded, opening the page';
+  if (state.stale) {
+    let deleted = 'deleted';
+    try {
+      fs.rmSync(state.stale, { force: true });
+    } catch (err) {
+      // A lock (antivirus, a window still running it) leaves it in place; it is never run while it differs.
+      deleted = `could not delete it: ${err.message}`;
+    }
+    const reason = `${state.reason}; ${deleted}, opening the page`;
     return { source: null, reason, fetchable: false, line: `Rune deck: ${reason}` };
   }
+  if (!state.fetchable) return { ...state, line: `Rune deck: ${state.reason}` };
   const pin = readPin(root, host.version, `${host.platform}-${host.arch}`);
   let bytes;
   try {
@@ -194,7 +200,7 @@ async function download(url, get) {
 
 /**
  * Windows Smart App Control's state, from the registry through `run` (spec 10, A5): it blocks unsigned
- * code when on, so `ensureRune` downloads nothing then. Anything unreadable is 'unknown'.
+ * code when on, so `findRune` offers no binary then and `ensureRune` downloads nothing. Anything unreadable is 'unknown'.
  */
 export function smartAppControl(run) {
   // The system's own reg.exe by full path: a bare name is looked up in the working directory first on Windows.

@@ -198,6 +198,8 @@ jobs:
 
       - name: Commit the pin to the dispatched branch
         if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           cp release.json deck/rune/release.json
           git config user.name 'github-actions[bot]'
@@ -205,6 +207,8 @@ jobs:
           git add deck/rune/release.json
           git commit -m "chore(rune): pin the Rune deck for $TAG"
           git push origin "HEAD:refs/heads/$BRANCH"
+          # A draft's tag is made at publish, on its target: the pin commit, so the tagged tree carries its pin.
+          gh release edit "$TAG" --target "$(git rev-parse HEAD)"
 
       - name: Publish the release
         env:

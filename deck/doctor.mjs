@@ -30,7 +30,7 @@ import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { powerRow, readPower } from './power.mjs';
 import { probeDeck } from './probe.mjs';
-import { findRune as defaultFindRune, smartAppControl } from './rune-bin.mjs';
+import { findRune as defaultFindRune } from './rune-bin.mjs';
 import { isSlug } from './runs.mjs';
 import { clashText, leashedGit, slugClashes } from './slug-clash.mjs';
 import { storeDir as defaultStoreDir } from './store-dir.mjs';
@@ -528,18 +528,10 @@ export function runeRow({ state, version }) {
   return { name, verdict: 'warn', detail: `missing: ${reason}`, ...(state.fetchable ? { steps: ['pilot deck'] } : {}) };
 }
 
-/** `findRune`'s state, and where it would fetch, Smart App Control read as `ensureRune` reads it (spec 10); never a download. */
-function runeState({ findRune, host, run }) {
-  const state = findRune(PLUGIN_ROOT, host);
-  if (state.fetchable && host.platform === 'win32' && smartAppControl(run) === 'on') {
-    return { source: null, reason: 'Windows Smart App Control is on and blocks an unsigned Rune deck', fetchable: false };
-  }
-  return state;
-}
-
 /** Every local check as a row, in the order `pilot doctor` prints them. */
 export async function checkAll({
   platform = hostPlatform(),
+  arch = process.arch,
   run = defaultRun,
   root = projectsRoot(),
   nodeVersion = process.versions.node,
@@ -581,7 +573,7 @@ export async function checkAll({
     allowRow({ readSettings }),
     modsRow({ version: claudeVersion(run), settings, env }),
     ...deckRows({ found, port: new URL(url).port }),
-    runeRow({ state: runeState({ findRune, host: { platform, arch: process.arch, version: PLUGIN_VERSION }, run }), version: PLUGIN_VERSION }),
+    runeRow({ state: findRune(PLUGIN_ROOT, { platform, arch, version: PLUGIN_VERSION, run }), version: PLUGIN_VERSION }),
   ];
 }
 

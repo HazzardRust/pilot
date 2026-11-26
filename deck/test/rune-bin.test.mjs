@@ -100,15 +100,17 @@ test('a stored file changed on disk is refused at reuse', async (t) => {
   bytes[0] ^= 0xff;
   fs.writeFileSync(file, bytes);
 
+  // Lookup, which doctor and auto-open call, refuses it and deletes nothing.
   const state = findRune(root, HOST);
   assert.equal(state.source, null);
-  assert.equal(fs.existsSync(file), false, 'the changed file is deleted');
+  assert.equal(fs.existsSync(file), true, 'a lookup changes nothing on disk');
   assert.ok(state.reason.includes(ASSET), state.reason);
 
-  // That launch runs nothing and downloads nothing (spec 4); the next one fetches a fresh copy.
-  fs.writeFileSync(file, bytes);
+  // `pilot deck` deletes it, runs nothing and downloads nothing (spec 4); the next one fetches a fresh copy.
   const launch = await ensureRune(root, HOST, net.get);
   assert.equal(launch.source, null);
+  assert.deepEqual(fetchedFiles(root), [], 'the changed file is deleted');
+  assert.match(launch.line, /deleted, opening the page$/);
   assert.equal(net.calls.length, 1, 'no download on the launch that found it changed');
   assert.equal((await ensureRune(root, HOST, net.get)).source, 'fetched');
 });
