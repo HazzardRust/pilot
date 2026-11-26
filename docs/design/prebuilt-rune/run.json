@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed 7705d77",
+      "state": "integrated at d224384, checks green",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed 1bd4fd7",
+      "state": "pushed d7d35dc",
       "after": [
         "S2"
       ],
@@ -55,8 +55,8 @@
       "text": "Before prebuilt-rune S4 pushes its workflow file: gh auth refresh -h github.com -s workflow"
     }
   ],
-  "next": "co-pilot: checks green at 1ee1c64; integrating S2 (7705d77); then S4, S3",
-  "updatedAt": "2026-11-26T14:10:56.743Z",
+  "next": "co-pilot: checks green at d224384; integrating S4 (047ef5e), then S3 (d7d35dc), then fundamentalist and QA",
+  "updatedAt": "2026-11-26T14:32:11.859Z",
   "friction": [
     {
       "agent": "pilot-architect",
