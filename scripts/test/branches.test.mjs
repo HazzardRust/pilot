@@ -136,7 +136,9 @@ test('a branch with no PR is deleted only when its tip is in into', (t) => {
   const kept = [{ branch: 'design/x-late', why: 'not merged into origin/feat/x' }];
   assert.deepEqual(deleteMerged({ git, host, select: only('design/x', 'design/x-late'), into: 'feat/x' }), { deleted: ['design/x'], kept });
   assert.equal(heads(second).split('\n').filter((line) => line.startsWith('design/')).join(), `design/x-late ${sha['design/x-late']}`);
-  assert.match(heads(origin), /^feat\/x /m, 'origin is not touched');
+  const onOrigin = heads(origin);
+  assert.match(onOrigin, /^feat\/x /m, 'origin is not touched');
+  assert.match(onOrigin, /^design\/x /m, "origin's copy is the run remote's to judge, so it stays");
 });
 
 test('a branch with no PR and no commits of its own is kept, since nothing has landed', (t) => {
@@ -185,6 +187,7 @@ test('dry-run deletes nothing', (t) => {
   const left = heads(origin);
   assert.doesNotMatch(left, /^feat\/x /m);
   assert.match(left, /^feat\/y /m, "another run's branch is not judged");
+  assert.match(heads(second), /^feat\/x /m, "the run remote's copy of a feat branch is origin's to judge, so it stays");
 });
 
 test("prune needs --slug, and leaves another run's fresh branch alone", (t) => {

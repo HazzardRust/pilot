@@ -39,9 +39,9 @@ const commit = (dir, file, text, message = file) => {
  * modified). Plus another slug's merged tree, which is never this run's.
  *
  * Origin is seeded: main's first commit names `node_modules/` in `.gitignore`, then feat, s2 and fix,
- * each cut from it, merge into main, then the other slug's branch, then feat's record-only tail. A worked tree is cut at main's first commit and moved to its
- * branch's tip, so its reflog says it moved; an unmoved one is cut where the base stood before the
- * other slug merged (`origin/main~1`).
+ * each cut from it, merge into main, then the other slug's branch, then feat's record-only tail. A
+ * worked tree is cut at main's first commit and moved to its branch's tip, so its reflog says it
+ * moved; an unmoved one is cut where the base stood before the other slug merged (`origin/main~1`).
  */
 function landedFixture(root) {
   const { origin } = seed(root, [
