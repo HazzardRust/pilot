@@ -55,6 +55,12 @@ function macho({ signed = true } = {}) {
   return b;
 }
 
+/** `b` with the 32-bit little-endian `value` written at `at`. */
+function withU32(b, at, value) {
+  b.writeUInt32LE(value, at);
+  return b;
+}
+
 /** A directory holding `files` (asset name to bytes), removed after the test. */
 function distDir(t, files) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-rune-pin-'));
@@ -105,6 +111,8 @@ test('a wrong header is a problem', (t) => {
     ['a Windows PE under the Linux name', { [ASSETS['linux-x64']]: pe() }, ASSETS['linux-x64']],
     ['an unsigned Mach-O', { [ASSETS['darwin-arm64']]: macho({ signed: false }) }, ASSETS['darwin-arm64']],
     ['an empty file', { [ASSETS['darwin-arm64']]: Buffer.alloc(0) }, ASSETS['darwin-arm64']],
+    ['a Mach-O claiming 2^32-1 load commands', { [ASSETS['darwin-arm64']]: withU32(macho({ signed: false }), 16, 0xffffffff) }, ASSETS['darwin-arm64']],
+    ['a PE offset past the end', { [ASSETS['win32-x64']]: withU32(pe(), 0x3c, 0xffffffff) }, ASSETS['win32-x64']],
   ];
   for (const [what, swap, file] of cases) {
     const { problems } = pinRelease({ version: '1.2.3', tag: 'v1.2.3', dir: distDir(t, { ...goodFiles(), ...swap }) });

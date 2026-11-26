@@ -119,6 +119,9 @@ jobs:
         run: |
           version=$(node -p "require('./.claude-plugin/plugin.json').version")
           if [ "$EVENT" = push ]; then tag="$REF_NAME"; else tag="v$version"; fi
+          case "$tag" in
+            rune-scratch-*) [[ "$GITHUB_SHA" == "${tag#rune-scratch-}"* ]] || { echo "::error::$tag does not name $GITHUB_SHA"; exit 1; } ;;
+          esac
           node scripts/rune-pin.mjs "$version" "$tag" dist > release.json
           {
             echo "### deck/rune/release.json"
@@ -146,7 +149,6 @@ jobs:
     permissions:
       contents: write
     env:
-      GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       EVENT: ${{ github.event_name }}
       VERSION: ${{ needs.pin.outputs.version }}
@@ -182,15 +184,17 @@ jobs:
           node scripts/rune-pin.mjs "$VERSION" "$TAG" dist > release.json
           cmp release.json pinned/release.json
 
-      # Draft first, every asset uploaded, then published (L5): nothing is uploaded after publish.
-      - name: Publish the release
+      # Draft first, every asset uploaded, the pin committed, then published (L5): nothing is uploaded or
+      # committed after publish, and a failed step before it leaves only a draft, deleted below.
+      - name: Draft the release and upload the binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           prerelease=()
           if [ "$EVENT" = push ]; then prerelease=(--prerelease); fi
           gh release create "$TAG" --draft "${prerelease[@]}" --target "$GITHUB_SHA" --title "Rune deck $TAG" \
             --notes "The Rune deck for pilot $VERSION, built from $GITHUB_SHA. Its sha256 pins are in deck/rune/release.json."
           gh release upload "$TAG" dist/pilot-deck-win32-x64.exe dist/pilot-deck-darwin-arm64 dist/pilot-deck-linux-x64
-          gh release edit "$TAG" --draft=false
 
       - name: Commit the pin to the dispatched branch
         if: github.event_name == 'workflow_dispatch'
@@ -201,3 +205,17 @@ jobs:
           git add deck/rune/release.json
           git commit -m "chore(rune): pin the Rune deck for $TAG"
           git push origin "HEAD:refs/heads/$BRANCH"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$TAG" --draft=false
+
+      - name: Delete the draft of a failed run
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null)" = true ]; then
+            gh release delete "$TAG" --yes
+          fi

@@ -188,9 +188,9 @@ A plugin install fetches the Rune deck CI built for its version, checked against
 `deck/rune/release.json`. To release: run `npm run bump <x.y.z>` on a branch and push it; then
 `gh workflow run rune-release.yml --ref <branch>` (Actions, Rune release, Run workflow); then merge the
 branch once the run is green. The run builds the three binaries, publishes release `v<x.y.z>` holding
-them, and commits the pin to that branch, so a version without its pin commit has no prebuilt deck and
-opens the page. Merge only after that commit lands: if the push of the pin failed because the branch
-moved, take `release.json` from the run's artifacts and commit it as `deck/rune/release.json` by hand.
+them, and commits the pin to that branch before it publishes, so a version without its pin commit has no
+prebuilt deck and opens the page. Merge only after that commit lands. A run that fails before publishing,
+a branch that moved under the pin's push among them, deletes its draft: dispatch it again.
 
 ## Slow gates on Windows
 
