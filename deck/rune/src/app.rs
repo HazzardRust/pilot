@@ -428,16 +428,25 @@ pub fn center(s: &State, cx: &mut Cx<State>) -> El {
     if s.query.screen == "home" {
         body = body.child(regions::queue::draw(region("queue"), &r.queue, cx));
     }
-    body = body
-        .child(regions::thread::draw(region("thread"), &r.thread, cx))
-        .child(regions::reply::draw(region("reply"), &r.reply, cx));
+    // The archive has no thread or reply: their empty slots would each still take a `between` gap
+    // above it, 48 px between the tabs and the archive's bar (archive-page S18).
+    if s.query.screen != "archive" {
+        body = body
+            .child(regions::thread::draw(region("thread"), &r.thread, cx))
+            .child(regions::reply::draw(region("reply"), &r.reply, cx));
+    }
     // The archive lists its own rows and withholds history's (archive-page L11); with a row's `id` it draws
     // that row's detail instead of the list (A3).
     if s.query.screen == "archive" && s.query.id.is_some() {
         let detail = regions::archive_detail::Detail::of(region("archiveDetail"));
         body = body.child(regions::archive_detail::draw(&detail, cx));
     } else if s.query.screen == "archive" {
-        body = body.child(regions::archive::draw(region("archive"), &r.archive, cx));
+        body = body.child(regions::archive::draw(
+            region("archive"),
+            &r.archive,
+            s.prefs.archive_sort,
+            cx,
+        ));
     } else if s.query.screen != "thread" {
         body = body.child(regions::history::draw(region("history"), &r.history, cx));
     }

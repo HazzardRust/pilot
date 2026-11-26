@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
+use crate::regions::archive::Column;
+
 const FILE: &str = "rune-deck.json";
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -28,6 +30,25 @@ pub struct Prefs {
     /// The open panes folded to their heading row; a pane shut and opened again keeps its fold.
     pub folded_panels: BTreeSet<String>,
     pub hidden_reports: BTreeSet<String>,
+    /// The archive list's sort as the user last pressed it; a file from before archive-page S18 has
+    /// none, which is Date, newest first.
+    pub archive_sort: ArchiveSort,
+}
+
+/// The archive list's sort: a column and whether it runs ascending.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArchiveSort {
+    pub column: Column,
+    pub ascending: bool,
+}
+
+impl Default for ArchiveSort {
+    fn default() -> ArchiveSort {
+        ArchiveSort {
+            column: Column::Date,
+            ascending: false,
+        }
+    }
 }
 
 impl Prefs {

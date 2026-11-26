@@ -9,22 +9,23 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 
 use rune::tok;
 use rune::{Cx, El, GrowthSpec, TextEdit, col, row, text, text_input};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::app::{State, go};
 use crate::client::Query;
+use crate::prefs::ArchiveSort;
+use crate::regions::notifications::keep;
 use crate::theme::{self, space, type_};
 
-/// This window's folds (day key to open, over the view's own `open`), and its search, kind filter and
-/// column sort (L6): all three act on the rows the window holds, so none of them asks the deck anything.
+/// This window's folds (day key to open, over the view's own `open`), and its search and kind filter
+/// (L6), which with the column sort the prefs keep (S18) act on the rows the window holds, so none of
+/// them asks the deck anything.
 #[derive(Debug, Default)]
 pub struct Local {
     pub folded: BTreeMap<String, bool>,
     pub search: TextEdit,
     pub kind: Option<String>,
-    /// The pressed column and whether it runs ascending; `None` keeps the view's own order.
-    pub sort: Option<(Column, bool)>,
     /// What the list shows, kept between frames (S17); `draw` brings it up to date.
     list: RefCell<List>,
 }
@@ -76,7 +77,7 @@ struct From {
     view: usize,
     kind: Option<String>,
     search: String,
-    sort: Option<(Column, bool)>,
+    sort: ArchiveSort,
 }
 
 /// One item of the list: a section's heading (spaced from the section above unless `first`, from its
@@ -97,13 +98,13 @@ enum Item {
 }
 
 impl List {
-    /// Brings the list up to `v` and `local`'s filter, sort and folds; `Err` when `v` cannot be read.
-    fn update(&mut self, v: &Value, local: &Local) -> Result<(), serde_json::Error> {
+    /// Brings the list up to `v`, `local`'s filter and folds and `sort`; `Err` when `v` cannot be read.
+    fn update(&mut self, v: &Value, local: &Local, sort: ArchiveSort) -> Result<(), serde_json::Error> {
         let from = From {
             view: v as *const Value as usize,
             kind: local.kind.clone(),
             search: local.search.text.clone(),
-            sort: local.sort,
+            sort,
         };
         if self.from.as_ref() != Some(&from) {
             self.from = None;
@@ -170,18 +171,11 @@ impl List {
 /// which the view writes unique (`deck/view/archive.mjs`; the rows were already keyed by id).
 fn sections(v: &Value, from: &From) -> Result<Vec<(usize, Vec<usize>)>, serde_json::Error> {
     let days = Vec::<Day>::deserialize(&v["days"])?;
-    let search = from.search.as_str();
-    if from.kind.is_none() && search.trim().is_empty() && from.sort.is_none() {
-        return Ok(days
-            .iter()
-            .enumerate()
-            .map(|(d, day)| (d, (0..day.rows.len()).collect()))
-            .collect());
-    }
-    let mut kept = filter_rows(&days, from.kind.as_deref(), search);
-    if let Some((by, asc)) = from.sort {
-        kept = sort_rows(&kept, by, asc);
-    }
+    let kept = sort_rows(
+        &filter_rows(&days, from.kind.as_deref(), &from.search),
+        from.sort.column,
+        from.sort.ascending,
+    );
     let place: HashMap<&str, usize> = days
         .iter()
         .enumerate()
@@ -209,7 +203,8 @@ fn sections(v: &Value, from: &From) -> Result<Vec<(usize, Vec<usize>)>, serde_js
 }
 
 /// A column the list sorts by, pressed as `archive-sort-<column>`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Column {
     Date,
     Kind,
@@ -425,9 +420,10 @@ fn toggle(words: String, key: String, on: bool, cx: &mut Cx<State>) -> El {
         .color(ink)
 }
 
-/// The search box and a toggle per column on one line, a toggle per kind on the lines below. A column pressed again flips its order;
-/// Date starts ascending, since the view already runs newest first.
-fn bar(kinds: &[Kind], local: &Local, cx: &mut Cx<State>) -> El {
+/// The search box and a toggle per column on one line, a toggle per kind on the lines below. The column
+/// sorted by is on, its arrow its order: pressed again it flips, and another column starts ascending.
+/// The sort is kept in the prefs, so the window opens on it again (S18).
+fn bar(kinds: &[Kind], local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
     let search = text_input(&local.search, type_::BODY)
         .key("archive-search")
@@ -459,28 +455,37 @@ fn bar(kinds: &[Kind], local: &Local, cx: &mut Cx<State>) -> El {
         (Column::Kind, "kind", "Kind"),
         (Column::Title, "title", "Title"),
     ] {
-        let now = local.sort.filter(|(by, _)| *by == column);
-        let arrow = match now {
-            Some((_, true)) => " ↑",
-            Some((_, false)) => " ↓",
-            None => "",
+        let on = sort.column == column;
+        let arrow = match (on, sort.ascending) {
+            (false, _) => "",
+            (true, true) => " ↑",
+            (true, false) => " ↓",
         };
         bar = bar.child(
             toggle(
                 format!("{label}{arrow}"),
                 format!("archive-sort-{name}"),
-                now.is_some(),
+                on,
                 cx,
             )
             .on_press(move |s: &mut State| {
-                s.regions.archive.sort = Some((column, now.is_none_or(|(_, asc)| !asc)));
+                s.prefs.archive_sort = ArchiveSort {
+                    column,
+                    ascending: !on || !sort.ascending,
+                };
+                keep(&s.prefs);
             }),
         );
     }
-    col().w_full().gap(space::pad).child(bar).child(kind_row)
+    col()
+        .key("archive-bar")
+        .w_full()
+        .gap(space::pad)
+        .child(bar)
+        .child(kind_row)
 }
 
-pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
+pub fn draw(v: &serde_json::Value, local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> El {
     // A region the view cannot be read as, or not yet loaded (every other screen's `{}`, with no `days`),
     // draws nothing rather than taking the window down or claiming the archive is empty.
     let kinds = v.get("kinds").map_or(Ok(vec![]), Vec::<Kind>::deserialize);
@@ -489,7 +494,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     let (Some(days), Ok(kinds), Ok(())) = (
         v.get("days").and_then(Value::as_array),
         kinds,
-        local.list.borrow_mut().update(v, local),
+        local.list.borrow_mut().update(v, local, sort),
     ) else {
         return col().key("archive");
     };
@@ -503,7 +508,10 @@ pub fn draw(v: &serde_json::Value, local: &Local, cx: &mut Cx<State>) -> El {
     if days.is_empty() {
         return region.child(theme::empty("Nothing archived yet.", "archive-none", dark));
     }
-    let region = region.child(bar(&kinds, local, cx));
+    // The bar is its own band, ruled off from the list it filters (S18).
+    let region = region
+        .child(bar(&kinds, local, sort, cx))
+        .child(theme::separator(dark).key("archive-bar-rule"));
     let (count, layouts) = {
         let list = local.list.borrow();
         (list.items.len(), list.layouts)
