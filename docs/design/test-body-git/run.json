@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2",
-      "state": "pushed c6b17b4",
+      "state": "integrated, checks green at 93a70d3",
       "after": [
         "S1"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed 6ca534e (carries S2's bbb74ca cherry-pick; integrates after S2, rebased)",
+      "state": "pushed ab8b152 (rebased on 93a70d3), integrating",
       "after": [
         "S1"
       ],
@@ -33,18 +33,20 @@
     },
     {
       "slice": "S4",
-      "state": "implementing",
+      "state": "pushed 0838d1b",
       "after": [
         "S1"
       ],
+      "branch": "slice/test-body-git-s4",
       "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s4"
     },
     {
       "slice": "S5",
-      "state": "implementing",
+      "state": "pushed c24a08b",
       "after": [
         "S1"
       ],
+      "branch": "slice/test-body-git-s5",
       "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s5"
     },
     {
@@ -57,17 +59,19 @@
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s7"
     },
     {
       "slice": "S8",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s8"
     },
     {
       "slice": "S9",
@@ -78,10 +82,11 @@
     },
     {
       "slice": "S10",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s10"
     },
     {
       "slice": "S11",
@@ -114,8 +119,8 @@
       ]
     }
   ],
-  "next": "S2,S4,S5,S6 implementing; S3 pushed, integrates after S2 (rebase drops cherry-pick); S7-S10 when budget frees",
-  "updatedAt": "2026-11-26T17:07:19.468Z",
+  "next": "S3 integrating; then S4, S5 integrate serially; S6, S7, S8, S10 implementing; S9 when budget frees; S11, S12 after S10",
+  "updatedAt": "2026-11-26T17:35:37.723Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -209,6 +214,26 @@
       "agent": "pilot:pilot-implementer",
       "what": "every red/green run costs a Rust compile under the shared gate lock; changed selection ~15 min mostly lock wait",
       "evidence": "S2 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 waited on S2 for a cherry-picked seed seam, costing a rebase and a second gate run under the lock",
+      "evidence": "S3 6ca534e -> ab8b152"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared scratchpad: S3, S5, S6 wrote census to the same scratchpad path; base census re-run in a detached worktree",
+      "evidence": "S5 report: scratchpad/census-base.txt overwritten"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate lock heavily contended; first wrapped run got no lock in 30 min",
+      "evidence": "S4 run btquta5e1 printed nolock, lock held 02:48 to past 03:08"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 bar margin 1 (160 vs <=161)",
+      "evidence": "S4 final census"
     }
   ]
 }
