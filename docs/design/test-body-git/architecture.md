@@ -109,7 +109,8 @@ own git (its subject); `hooks/test/*.js` (≤ 11 git each, CommonJS); merging th
 
 Width 9; longest stem 4 (S1 → S10 → S11 → S13). Each fold slice cuts its owned files' fixture git by ≥ 50%, summed
 (`census.mjs` on those files, base against tip); S10 cuts `buildRepos`' 398 built to ≤ 160. Bars summed: S1 57,
-S2 to S9 1,432, S10 238, S11 118, S12 104: 1,949 against 1,824 needed, a margin of 125 (L7 covers a short run).
+S2 to S9 1,411, S10 238, S11 118, S12 104: 1,928 against 1,824 needed, a margin of 104 (L7 covers a short run).
+`deck/test/gate1-lineage.test.mjs` (42 fixture git) is in no slice: itm_ad02d595d1c2 owns its slowness; no bar needs it.
 
 | Slice | Title | Spec | Files owned | After | Reviewers | File |
 |---|---|---|---|---|---|---|
@@ -120,7 +121,7 @@ S2 to S9 1,432, S10 238, S11 118, S12 104: 1,949 against 1,824 needed, a margin 
 | S5 | Sync and restack tests | 1, 3 | `scripts/test/{restack,restack-squash,sync,sync-remote,sync-noop,sync-resume,merge-into-pilot}.test.mjs` | S1 (`seed`) | `pilot:typescript-reviewer` | [S5](slices/S5.md) |
 | S6 | Land tests on their own builders | 1, 3 | `scripts/test/land-{catchup,generated,conflict,remote,prune,record,offline,gc}.test.mjs` | S1 (`seed`) | `pilot:typescript-reviewer` | [S6](slices/S6.md) |
 | S7 | Files that build a repo per test adopt `gitFixture` | 1, 3 | `scripts/test/{glossary-diff,merge-generated,audit-context,rules-ledger,glossary-stale,install,audit-spend-runs,gitignore,line-endings}.test.mjs`, `deck/test/{landing-recreate,telemetry-line}.test.mjs` | S1 (`seed`) | `pilot:typescript-reviewer` | [S7](slices/S7.md) |
-| S8 | Deck, base and handoff tests | 1, 3 | `deck/test/{gate1-lineage,landing-recut,gate2-base,plan-drift,gate1-verdicts,replan,lineage-base}.test.mjs`, `scripts/test/{handoff-lineage-remote,base-remote,pilot-tip,handoff,base-main,base-chain,base}.test.mjs` | S1 (`seed`) | `pilot:typescript-reviewer` | [S8](slices/S8.md) |
+| S8 | Deck, base and handoff tests | 1, 3 | `deck/test/{landing-recut,gate2-base,plan-drift,gate1-verdicts,replan,lineage-base}.test.mjs`, `scripts/test/{handoff-lineage-remote,base-remote,pilot-tip,handoff,base-main,base-chain,base}.test.mjs` | S1 (`seed`) | `pilot:typescript-reviewer` | [S8](slices/S8.md) |
 | S9 | Select, ADR and branch-helper tests | 1, 3 | `scripts/test/{select-tests,adr-allocate,fresh-repo,pilot-branch,select-replay,red-line,test-command,select-fallback}.test.mjs` | S1 (`seed`) | `pilot:typescript-reviewer` | [S9](slices/S9.md) |
 | S10 | `buildRepos` seeds its origin | 1, 3 | `scripts/test/lib/land-repos.mjs` (`buildRepos`), `scripts/test/lib/fixture-git.test.mjs` | S1 (`seed`) | `pilot:typescript-reviewer` | [S10](slices/S10.md) |
 | S11 | Land and release bodies on `buildRepos` | 1, 3 | `scripts/test/{release,land,land-suite,land-adr-branch,land-adr,land-clear}.test.mjs` | S10 (`land-repos.mjs`) | `pilot:typescript-reviewer` | [S11](slices/S11.md) |
