@@ -6,8 +6,9 @@
 
 delete process.env.PILOT_BRANCH;
 
-const { repos, passing, fakeGh, merges, mainSays, git, commitFile } = await import('./lib/land-repos.mjs');
+const { repos, passing, fakeGh, merges, mainSays, git } = await import('./lib/land-repos.mjs');
 const { gitFixture } = await import('./lib/git-fixture.mjs');
+const { seed } = await import('./lib/seed.mjs');
 
 const { test } = await import('node:test');
 const { default: assert } = await import('node:assert/strict');
@@ -62,16 +63,15 @@ test('a landed PR moves to the user\'s branch', () => {
 
 test('release notes see pre-move landings', (t) => {
   const repo = gitFixture(t, 'land-user-branch:notes', (dir) => {
-    git(dir, 'init', '-q', '-b', 'main');
-    commitFile(dir, 'base.txt', 'base\n', 'main');
-    git(dir, 'branch', NAME);
+    // The notes read refs/heads only, so the seeded bare repository stands in for the porcelain-built one.
+    const history = [{ branch: 'main', files: { 'base.txt': 'base\n' }, message: 'main' }];
     for (const [slug, onto] of [['a', 'pilot'], ['b', NAME], ['c', 'other-pilot']]) {
-      git(dir, 'checkout', '-q', '-b', `feat/${slug}`, NAME);
-      commitFile(dir, `${slug}.txt`, `${slug}\n`, `feat ${slug}`);
-      git(dir, 'checkout', '-q', NAME);
-      git(dir, 'merge', '-q', '--no-ff', '-m', `Merge feat/${slug} into ${onto}`, `feat/${slug}`);
+      history.push(
+        { branch: `feat/${slug}`, from: slug === 'a' ? 'main' : NAME, files: { [`${slug}.txt`]: `${slug}\n` }, message: `feat ${slug}` },
+        { branch: NAME, ...(slug === 'a' && { from: 'main' }), files: {}, merge: [`feat/${slug}`], message: `Merge feat/${slug} into ${onto}` },
+      );
     }
-    return dir;
+    return seed(dir, history).origin;
   });
 
   const { rows } = releaseNotes({ git: (args) => git(repo, ...args), name: NAME, pilotRef: `refs/heads/${NAME}`, mainRef: 'refs/heads/main', prs: [] });
