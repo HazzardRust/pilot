@@ -5,7 +5,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::regions::archive::Column;
 
@@ -31,8 +31,15 @@ pub struct Prefs {
     pub folded_panels: BTreeSet<String>,
     pub hidden_reports: BTreeSet<String>,
     /// The archive list's sort as the user last pressed it; a file from before archive-page S18 has
-    /// none, which is Date, newest first.
+    /// none, which is Date, newest first, as is one it cannot read (a column a later build added).
+    #[serde(deserialize_with = "or_default")]
     pub archive_sort: ArchiveSort,
+}
+
+/// The sort as written, or the default when it cannot be read: an unknown sort costs the sort, not
+/// every other pref with it, which a failed `load` would.
+fn or_default<'de, D: Deserializer<'de>>(d: D) -> Result<ArchiveSort, D::Error> {
+    Ok(ArchiveSort::deserialize(serde_json::Value::deserialize(d)?).unwrap_or_default())
 }
 
 /// The archive list's sort: a column and whether it runs ascending.

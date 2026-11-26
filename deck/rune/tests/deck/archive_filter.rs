@@ -1,6 +1,7 @@
 //! archive-page S3 (spec 4, 9; A4, A5): the archive's rows sort by a column, filter by kind and search,
 //! all in the window over the rows it holds, on a view `deck/view/archive.mjs` itself recorded.
 
+use crate::archive_bar::ScratchPrefs;
 use crate::support;
 
 use std::io::{Read, Write};
@@ -441,10 +442,7 @@ fn every_bar_control_takes_a_mouse_click() {
         "every record kind has a toggle: {kinds:?}"
     );
     // A sort pressed is saved (S18): into a scratch dir, never the user's store.
-    let _held = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    let dir = std::env::temp_dir().join(format!("pilot-archive-clicks-{}", std::process::id()));
-    // SAFETY: every test that touches the environment does it holding `ENV`.
-    unsafe { std::env::set_var("PILOT_DECK_DIR", &dir) };
+    let _scratch = ScratchPrefs::new("archive-clicks");
     for width in [1280.0, 900.0] {
         let mut rt = archive_window_at(region.clone(), width);
         rt.frame(0.0);
@@ -484,8 +482,6 @@ fn every_bar_control_takes_a_mouse_click() {
             );
         }
     }
-    unsafe { std::env::remove_var("PILOT_DECK_DIR") };
-    let _ = std::fs::remove_dir_all(&dir);
 }
 
 #[test]

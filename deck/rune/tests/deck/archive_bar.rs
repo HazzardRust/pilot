@@ -153,13 +153,55 @@ fn date_newest_first_is_the_default() {
     );
 }
 
+/// `PILOT_DECK_DIR` pointed at a fresh scratch dir while held, so a press saves the prefs there and
+/// never in the user's store; dropped, even by a failed assertion, it unsets the var and removes the dir.
+pub(crate) struct ScratchPrefs {
+    pub dir: std::path::PathBuf,
+    _held: std::sync::MutexGuard<'static, ()>,
+}
+
+impl ScratchPrefs {
+    pub fn new(name: &str) -> ScratchPrefs {
+        let held = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let dir = std::env::temp_dir().join(format!("pilot-deck-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        // SAFETY: every test that touches the environment does it holding `ENV`.
+        unsafe { std::env::set_var("PILOT_DECK_DIR", &dir) };
+        ScratchPrefs { dir, _held: held }
+    }
+}
+
+impl Drop for ScratchPrefs {
+    fn drop(&mut self) {
+        // SAFETY: `ENV` is still held; it is released after this, as the field drops.
+        unsafe { std::env::remove_var("PILOT_DECK_DIR") };
+        let _ = std::fs::remove_dir_all(&self.dir);
+    }
+}
+
+#[test]
+fn a_saved_sort_it_cannot_read_loses_no_other_pref() {
+    let scratch = ScratchPrefs::new("archive-bad-sort");
+    std::fs::create_dir_all(&scratch.dir).expect("a scratch dir");
+    let file = json!({
+        "open_panels": ["agents"],
+        "archive_sort": { "column": "size", "ascending": true }
+    });
+    std::fs::write(scratch.dir.join("rune-deck.json"), file.to_string()).expect("a prefs file");
+
+    let prefs = Prefs::load(&scratch.dir);
+    assert!(prefs.open_panels.contains("agents"), "{prefs:?}");
+    assert_eq!(
+        prefs.archive_sort,
+        ArchiveSort::default(),
+        "Date, newest first"
+    );
+}
+
 #[test]
 fn the_sort_is_saved() {
-    let _held = ENV.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    let dir = std::env::temp_dir().join(format!("pilot-deck-archive-bar-{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&dir);
-    // SAFETY: every test that touches the environment does it holding `ENV`.
-    unsafe { std::env::set_var("PILOT_DECK_DIR", &dir) };
+    let scratch = ScratchPrefs::new("archive-bar");
+    let dir = scratch.dir.clone();
     let today = [
         closed("Bravo", 20, 10),
         closed("Charlie", 20, 13),
@@ -175,8 +217,7 @@ fn the_sort_is_saved() {
             .expect("the prefs file's json");
 
     let restarted = archive(&today, Prefs::load(&dir));
-    unsafe { std::env::remove_var("PILOT_DECK_DIR") };
-    let _ = std::fs::remove_dir_all(&dir);
+    drop(scratch);
 
     assert_eq!(
         saved,
