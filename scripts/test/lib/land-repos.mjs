@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { githubHost } from '../../../deck/host-github.mjs';
+import { seed as seedHistory } from './seed.mjs';
 
 const { land, main } = await import('../../land.mjs');
 export { land };
@@ -39,16 +40,89 @@ export function repos(t, ...names) {
   return gitFixture(t, `land:repos:${names}`, (dir) => buildRepos(dir, names));
 }
 
+/**
+ * Rewrites the refs, reflogs and branch config a one-git `git clone` of the seeded origin wrote in `repo` (`origin`
+ * when bare) to what the porcelain build left there (test-body-git S10): `loose` and `packed` map a ref to a SHA or
+ * a `ref: …` symref, `logs` a ref (or HEAD) to its `[from, to, message]` entries, `branches` the config's
+ * `[branch]` sections to their merge ref. Each entry is stamped `stamp`, an identity and time.
+ */
+function setRefs(repo, stamp, { bare = false, loose, packed = {}, logs, branches = {} }) {
+  const gitDir = bare ? repo : path.join(repo, '.git');
+  const at = (...parts) => path.join(gitDir, ...parts);
+  for (const old of ['refs/heads', 'refs/remotes', 'logs', 'packed-refs']) fs.rmSync(at(old), { recursive: true, force: true });
+  const write = (file, text) => {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, text);
+  };
+  for (const [ref, value] of Object.entries(loose)) write(at(ref), `${value}\n`);
+  const sorted = Object.keys(packed).sort();
+  if (sorted.length) write(at('packed-refs'), `# pack-refs with: peeled fully-peeled sorted \n${sorted.map((ref) => `${packed[ref]} ${ref}\n`).join('')}`);
+  for (const [ref, entries] of Object.entries(logs)) write(at('logs', ref), entries.map(([from, to, message]) => `${from} ${to} ${stamp}\t${message}\n`).join(''));
+  if (bare) return;
+  const config = fs.readFileSync(at('config'), 'utf8');
+  const cut = config.indexOf('[branch ');
+  if (cut < 0) throw new Error(`setRefs: no [branch] section in ${at('config')}`);
+  write(at('config'), config.slice(0, cut) + Object.entries(branches).map(([branch, merge]) => `[branch "${branch}"]\n\tremote = origin\n\tmerge = ${merge}\n`).join(''));
+}
+
+const NONE = '0'.repeat(40);
+
+/** The identity and time a fresh clone's first reflog entry carries. */
+const stampOf = (work) => fs.readFileSync(path.join(work, '.git', 'logs', 'HEAD'), 'utf8').match(/^\S+ \S+ (.*? \d+ [+-]\d{4})\t/)[1];
+
 export function buildRepos(dir, names) {
-  const origin = path.join(dir, 'origin.git');
   const seed = path.join(dir, 'seed');
-  git(dir, 'init', '--bare', '-b', 'main', origin);
-  // The line `git config core.logAllRefUpdates always` adds to the [core] that ends a new bare config, one git fewer (land-batching S6).
+  // Origin's main, pilot and each feat/<name> in one fast-import: the history is known up front (test-body-git S10).
+  const { origin, sha } = seedHistory(dir, [
+    { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'main' },
+    ...names.map((name) => ({ branch: `feat/${name}`, from: 'main', files: { [`${name}.txt`]: `${name}\n` }, message: `feat ${name}` })),
+  ], { pilot: 'main' });
+  // The line `git config core.logAllRefUpdates always` adds to the [core] that ends a new bare config (land-batching S6).
   fs.appendFileSync(path.join(origin, 'config'), '\tlogAllRefUpdates = always\n');
-  // A clone of the empty origin is already on its unborn `main`: no `checkout -b main` (land-batching S6).
+  // Each repository is one clone (origin none), its refs and reflogs then set to what the porcelain build's commits and pushes left.
   git(dir, 'clone', '-q', origin, seed);
-  commitFile(seed, 'shared.txt', 'one\n', 'main');
-  git(seed, 'push', '-q', 'origin', 'main', 'main:pilot');
+  const stamp = stampOf(seed);
+  const pushed = (at) => [[NONE, at, 'push']];
+  setRefs(origin, stamp, {
+    bare: true,
+    loose: Object.fromEntries(Object.entries(sha).map(([branch, at]) => [`refs/heads/${branch}`, at])),
+    logs: { HEAD: pushed(sha.main), ...Object.fromEntries(Object.entries(sha).map(([branch, at]) => [`refs/heads/${branch}`, pushed(at)])) },
+  });
+  setRefs(seed, stamp, {
+    loose: { 'refs/heads/main': sha.main, 'refs/remotes/origin/main': sha.main, 'refs/remotes/origin/pilot': sha.main },
+    logs: {
+      HEAD: [[NONE, sha.main, 'commit (initial): main']],
+      'refs/heads/main': [[NONE, sha.main, 'commit (initial): main']],
+      'refs/remotes/origin/main': [[NONE, sha.main, 'update by push']],
+      'refs/remotes/origin/pilot': [[NONE, sha.main, 'update by push']],
+    },
+    branches: { main: 'refs/heads/main' },
+  });
+  const seeded = (name, earlier) => {
+    const work = path.join(dir, name);
+    const feat = `feat/${name}`;
+    git(dir, 'clone', '-q', '-b', feat, origin, work);
+    const cloned = `clone: from ${origin}`;
+    setRefs(work, stampOf(work), {
+      loose: {
+        'refs/heads/main': sha.main,
+        [`refs/heads/${feat}`]: sha[feat],
+        'refs/remotes/origin/HEAD': 'ref: refs/remotes/origin/main',
+        [`refs/remotes/origin/${feat}`]: sha[feat],
+      },
+      packed: Object.fromEntries([['main', sha.main], ['pilot', sha.main], ...earlier.map((other) => [`feat/${other}`, sha[`feat/${other}`]])]
+        .map(([branch, at]) => [`refs/remotes/origin/${branch}`, at])),
+      logs: {
+        HEAD: [[NONE, sha.main, cloned], [sha.main, sha.main, `checkout: moving from main to ${feat}`], [sha.main, sha[feat], `commit: feat ${name}`]],
+        [`refs/heads/${feat}`]: [[NONE, sha.main, 'branch: Created from origin/pilot'], [sha.main, sha[feat], `commit: feat ${name}`]],
+        'refs/heads/main': [[NONE, sha.main, cloned]],
+        [`refs/remotes/origin/${feat}`]: [[NONE, sha[feat], 'update by push']],
+        'refs/remotes/origin/HEAD': [[NONE, sha.main, cloned]],
+      },
+      branches: { main: 'refs/heads/main', [feat]: 'refs/heads/pilot' },
+    });
+    return work;
+  };
   /** A clone on a new `feat/<name>` cut from `from`, origin's pilot tip by default, with one commit, pushed. */
   const clone = (name, from = 'origin/pilot') => {
     const work = path.join(dir, name);
@@ -85,7 +159,7 @@ console.log('ℹ pass 1'); console.log('ℹ fail 0');
     );
     return `node "${script}"`;
   };
-  const cloned = Object.fromEntries(names.map((name) => [name, clone(name)]));
+  const cloned = Object.fromEntries(names.map((name, i) => [name, seeded(name, names.slice(0, i))]));
   return { origin, seed, clone, mover, gitIn: (repo) => (args) => git(repo, ...args), ...cloned };
 }
 
