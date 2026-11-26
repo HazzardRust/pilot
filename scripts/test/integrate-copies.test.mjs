@@ -8,6 +8,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -37,26 +38,19 @@ function repos(t, { pilot = true } = {}) {
 }
 
 function buildRepos(dir, pilot) {
-  const origin = path.join(dir, 'origin.git');
   const work = path.join(dir, 'work');
-  git(dir, 'init', '--bare', '-b', 'main', origin);
+  const { origin, sha } = seed(dir, [
+    { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'base' },
+    ...(pilot ? [
+      { branch: 'pilot', files: { 'p1.txt': 'p1\n' }, message: 'p1' },
+      { branch: 'pilot', files: { 'p2.txt': 'p2\n', 'shared.txt': 'pilot\n' }, message: 'p2' },
+    ] : []),
+  ]);
   git(dir, 'clone', '-q', origin, work);
-  git(work, 'checkout', '-q', '-b', 'main');
-  commitFile(work, 'shared.txt', 'one\n', 'base');
-  git(work, 'push', '-q', 'origin', 'main');
-  const pilotCommits = [];
-  if (pilot) {
-    git(work, 'checkout', '-q', '-b', 'pilot');
-    commitFile(work, 'p1.txt', 'p1\n', 'p1');
-    pilotCommits.push(git(work, 'rev-parse', 'HEAD'));
-    fs.writeFileSync(path.join(work, 'p2.txt'), 'p2\n');
-    commitFile(work, 'shared.txt', 'pilot\n', 'p2');
-    pilotCommits.push(git(work, 'rev-parse', 'HEAD'));
-    git(work, 'push', '-q', 'origin', 'pilot');
-    git(work, 'checkout', '-q', 'main');
-  }
-  git(work, 'fetch', '-q', 'origin');
-  return { origin, work, pilotCommits };
+  if (!pilot) return { origin, work, pilotCommits: [] };
+  // The clone holds a local pilot too, as the build that committed it there did.
+  git(work, 'branch', '-q', '--no-track', 'pilot', 'origin/pilot');
+  return { origin, work, pilotCommits: [git(work, 'rev-parse', 'pilot~1'), sha.pilot] };
 }
 
 /** `feat/x` from `from`, with `picks` cherry-picked onto it (`-x`, so a new commit with the same patch even onto pilot's own parent). */

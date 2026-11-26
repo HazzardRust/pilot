@@ -10,6 +10,7 @@ import '../../deck/test/no-open.mjs';
 
 // The fixture seam imports fake-home.mjs first and gives every git below its identity.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed as seedHistory } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -37,27 +38,28 @@ function commitFile(work, file, text, message) {
 /**
  * main, `pilot` from main, N's `feat/n` from pilot, and the chained run `feat/m` cut from
  * `feat/n`; the clone is on `feat/m` with a run record saying `base: feat/n`, and `seed`
- * moves the other branches.
+ * moves the other branches. `waiting`: main and feat/n have each moved by one commit since the
+ * cut (`p2.txt`; N's fix round `n-fix.txt`), as `pushTo` from `seed` would have moved them.
  */
-function chainRepos(t) {
-  return gitFixture(t, 'integrate-chain:chainRepos', (dir) => {
-    const origin = path.join(dir, 'origin.git');
-    const seed = path.join(dir, 'seed');
+function chainRepos(t, { waiting = false } = {}) {
+  return gitFixture(t, `integrate-chain:chainRepos${waiting ? ':waiting' : ''}`, (dir) => {
+    const mover = path.join(dir, 'seed');
     const work = path.join(dir, 'work');
-    git(dir, 'init', '--bare', '-b', 'main', origin);
-    git(dir, 'clone', '-q', origin, seed);
-    git(seed, 'checkout', '-q', '-b', 'main');
-    commitFile(seed, 'main.txt', 'main\n', 'main');
-    git(seed, 'push', '-q', 'origin', 'main', 'main:pilot');
-    git(seed, 'checkout', '-q', '-b', 'feat/n');
-    commitFile(seed, 'n.txt', 'n\n', 'feat/n: n.txt');
-    git(seed, 'push', '-q', 'origin', 'feat/n');
-    git(seed, 'checkout', '-q', '-b', 'feat/m');
-    commitFile(seed, 'm.txt', 'm\n', 'feat/m: m.txt');
-    git(seed, 'push', '-q', 'origin', 'feat/m');
+    // Pilot stays at the cut; with `waiting` main moves past it, so main is cut from pilot's tip.
+    const cut = waiting ? 'pilot' : 'main';
+    const { origin } = seedHistory(dir, [
+      { branch: cut, files: { 'main.txt': 'main\n' }, message: 'main' },
+      { branch: 'feat/n', files: { 'n.txt': 'n\n' }, message: 'feat/n: n.txt' },
+      { branch: 'feat/m', files: { 'm.txt': 'm\n' }, message: 'feat/m: m.txt' },
+      ...(waiting ? [
+        { branch: 'main', from: 'pilot', files: { 'p2.txt': 'p2\n' }, message: 'main: p2.txt' },
+        { branch: 'feat/n', files: { 'n-fix.txt': 'fix\n' }, message: 'feat/n: n-fix.txt' },
+      ] : []),
+    ], waiting ? {} : { pilot: 'main' });
+    git(dir, 'clone', '-q', origin, mover);
     git(dir, 'clone', '-q', '-b', 'feat/m', origin, work);
     writeRecord(work, { slug: 'm', branch: 'feat/m', base: 'feat/n' });
-    return { origin, seed, work };
+    return { origin, seed: mover, work };
   });
 }
 
@@ -106,16 +108,16 @@ test('a record base that is neither pilot nor feat/<slug> is refused, never merg
 });
 
 test('the base switches once N\'s tip is in the default branch, not at its landing, and stays there', (t) => {
-  const { origin, seed, work } = chainRepos(t);
-  pushTo(seed, 'main', 'p2.txt', 'p2\n');
-  pushTo(seed, 'feat/n', 'n-fix.txt', 'fix\n'); // N's fix round while it waits in concluding
+  // main has moved (p2.txt) and N has a fix round (n-fix.txt) while it waits in concluding.
+  const { origin, seed, work } = chainRepos(t, { waiting: true });
 
   const first = integrate(undefined, { cwd: work, ...quiet });
   assert.equal(first.ok, true, first.line);
   assert.match(first.line, /^took base feat\/n@[0-9a-f]+ at /);
-  const merge = git(work, 'log', '-1', '--merges', '--format=%H');
-  assert.equal(git(work, 'log', '-1', '--format=%s', merge), 'Merge base feat/n');
-  assert.equal(git(work, 'rev-parse', `${merge}^2`), git(work, 'rev-parse', 'origin/feat/n'), 'N\'s tip, not pilot');
+  const [merge, mergeSubject] = git(work, 'log', '-1', '--merges', '--format=%H%n%s').split('\n');
+  assert.equal(mergeSubject, 'Merge base feat/n');
+  const [mergedTip, nTip] = git(work, 'rev-parse', `${merge}^2`, 'origin/feat/n').split('\n');
+  assert.equal(mergedTip, nTip, 'N\'s tip, not pilot');
   assert.ok(fs.existsSync(path.join(work, 'n-fix.txt')), 'N\'s fix round is taken');
   assert.ok(!fs.existsSync(path.join(work, 'p2.txt')), 'main is not taken while N waits');
 
@@ -133,9 +135,10 @@ test('the base switches once N\'s tip is in the default branch, not at its landi
   const second = integrate(undefined, { cwd: work, ...quiet });
   assert.equal(second.ok, true, second.line);
   assert.match(second.line, /^took base main@[0-9a-f]+ at /);
-  const taken = git(work, 'log', '-1', '--merges', '--format=%H');
-  assert.equal(git(work, 'log', '-1', '--format=%s', taken), 'Merge base main');
-  assert.equal(git(work, 'rev-parse', `${taken}^2`), git(work, 'rev-parse', 'origin/main'));
+  const [taken, takenSubject] = git(work, 'log', '-1', '--merges', '--format=%H%n%s').split('\n');
+  assert.equal(takenSubject, 'Merge base main');
+  const [takenTip, mainTip] = git(work, 'rev-parse', `${taken}^2`, 'origin/main').split('\n');
+  assert.equal(takenTip, mainTip);
   assert.ok(fs.existsSync(path.join(work, 'p2.txt')), 'main is taken once N is in it');
 
   pushTo(seed, 'main', 'p3.txt', 'p3\n');

@@ -8,6 +8,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,43 +23,33 @@ const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' 
 /**
  * main, a pilot that changed `pilotFile`, and feat/x (cut from main, pushed) that changed
  * shared.txt and holds one commit more than origin has; main moves on after the cut, so feat
- * is behind origin/main. With `pilotFile` shared.txt the feature conflicts with pilot.
+ * is behind origin/main. With `pilotFile` shared.txt the feature conflicts with pilot. `tip` is
+ * feat/x's local tip, `pilot` origin's pilot.
  */
 function repos(t, pilotFile) {
   return gitFixture(t, `integrate-trial:${pilotFile}`, (dir) => {
-    const origin = path.join(dir, 'origin.git');
     const work = path.join(dir, 'work');
-    git(dir, 'init', '-q', '--bare', '-b', 'main', origin);
+    const { origin, sha } = seed(dir, [
+      { branch: 'main', files: { 'shared.txt': 'base\n' }, message: 'base' },
+      { branch: 'pilot', files: { [pilotFile]: 'pilot\n' }, message: 'pilot change' },
+      { branch: 'feat/x', from: 'main', files: { 'shared.txt': 'feat\n' }, message: 'feat shared' },
+      { branch: 'main', files: { 'main.txt': 'main\n' }, message: 'main moves on' },
+    ]);
     git(dir, 'clone', '-q', origin, work);
-    const commit = (file, text, message) => {
-      fs.writeFileSync(path.join(work, file), text);
-      git(work, 'add', file);
-      git(work, 'commit', '-q', '-m', message);
-    };
-    git(work, 'checkout', '-q', '-b', 'main');
-    commit('shared.txt', 'base\n', 'base');
-    git(work, 'push', '-q', 'origin', 'main');
-    git(work, 'remote', 'set-head', 'origin', 'main');
-    git(work, 'checkout', '-q', '-b', 'pilot');
-    commit(pilotFile, 'pilot\n', 'pilot change');
-    git(work, 'push', '-q', 'origin', 'pilot');
-    git(work, 'checkout', '-q', 'main');
-    commit('main.txt', 'main\n', 'main moves on');
-    git(work, 'push', '-q', 'origin', 'main');
-    git(work, 'checkout', '-q', '-b', 'feat/x', 'main~1');
-    commit('shared.txt', 'feat\n', 'feat shared');
-    git(work, 'push', '-q', 'origin', 'feat/x');
-    commit('feat.txt', 'more\n', 'feat, not yet pushed');
-    return { origin, work };
+    // Local pilot and feat/x with no upstream, as the build that pushed them from here had them.
+    git(work, 'branch', '-q', '--no-track', 'pilot', 'origin/pilot');
+    git(work, 'checkout', '-q', '--no-track', '-b', 'feat/x', 'origin/feat/x');
+    fs.writeFileSync(path.join(work, 'feat.txt'), 'more\n');
+    git(work, 'add', 'feat.txt');
+    git(work, 'commit', '-q', '-m', 'feat, not yet pushed');
+    return { origin, work, tip: git(work, 'rev-parse', 'HEAD'), pilot: sha.pilot };
   });
 }
 
 const merges = (work) => Number(git(work, 'rev-list', '--count', '--merges', 'HEAD'));
 
 test('the trial pushes the tip and merges nothing', (t) => {
-  const { origin, work } = repos(t, 'pilot.txt');
-  const tip = git(work, 'rev-parse', 'HEAD');
-  const pilot = git(origin, 'rev-parse', 'refs/heads/pilot');
+  const { origin, work, tip, pilot } = repos(t, 'pilot.txt');
   assert.throws(() => git(work, 'merge-base', '--is-ancestor', 'origin/main', 'HEAD'), 'feat is behind origin/main');
 
   const result = trial({ cwd: work });
@@ -67,14 +58,13 @@ test('the trial pushes the tip and merges nothing', (t) => {
   assert.equal(result.line, `on pilot: clean at ${tip.slice(0, 7)}`);
   assert.equal(git(work, 'rev-parse', 'HEAD'), tip, "feat's tip is unchanged");
   assert.equal(merges(work), 0, 'no merge commit made');
-  assert.equal(git(origin, 'rev-parse', 'refs/heads/feat/x'), tip, 'the tip is pushed');
-  assert.equal(git(origin, 'rev-parse', 'refs/heads/pilot'), pilot, 'pilot is unmoved');
+  const [pushed, pilotAfter] = git(origin, 'rev-parse', 'refs/heads/feat/x', 'refs/heads/pilot').split('\n');
+  assert.equal(pushed, tip, 'the tip is pushed');
+  assert.equal(pilotAfter, pilot, 'pilot is unmoved');
 });
 
 test("a conflicted trial prepares the lander's merge", (t) => {
-  const { origin, work } = repos(t, 'shared.txt');
-  const pilot = git(origin, 'rev-parse', 'refs/heads/pilot');
-  const tip = git(work, 'rev-parse', 'HEAD');
+  const { origin, work, tip, pilot } = repos(t, 'shared.txt');
   const dir = path.join(path.dirname(work), `${path.basename(work)}-land-x`);
 
   const result = trial({ cwd: work });
@@ -82,11 +72,13 @@ test("a conflicted trial prepares the lander's merge", (t) => {
   assert.equal(result.code, 3, result.line);
   assert.equal(result.ok, false);
   assert.equal(result.line, `feat/x conflicts with pilot in shared.txt; the lander resolves in ${dir}`);
-  assert.equal(git(dir, 'rev-parse', 'HEAD'), pilot, "the kept dir is on pilot's tip");
-  assert.equal(git(dir, 'rev-parse', 'MERGE_HEAD'), tip, 'mid-merge of the feature');
+  const [keptHead, mergeHead] = git(dir, 'rev-parse', 'HEAD', 'MERGE_HEAD').split('\n');
+  assert.equal(keptHead, pilot, "the kept dir is on pilot's tip");
+  assert.equal(mergeHead, tip, 'mid-merge of the feature');
   assert.match(git(dir, 'status', '--porcelain'), /^UU shared\.txt/m);
-  assert.equal(git(origin, 'rev-parse', 'refs/heads/pilot'), pilot, 'pilot is unmoved');
-  assert.equal(git(origin, 'rev-parse', 'refs/heads/feat/x'), tip, 'the tip is pushed');
+  const [pilotAfter, pushed] = git(origin, 'rev-parse', 'refs/heads/pilot', 'refs/heads/feat/x').split('\n');
+  assert.equal(pilotAfter, pilot, 'pilot is unmoved');
+  assert.equal(pushed, tip, 'the tip is pushed');
   assert.equal(git(work, 'rev-parse', 'HEAD'), tip, 'the feature worktree is where it was');
   assert.equal(merges(work), 0, 'no merge commit made');
 });
