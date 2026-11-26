@@ -78,7 +78,7 @@
     },
     {
       "slice": "S9",
-      "state": "pushed 27b5426 (408 lines, over limit accepted, assumed)",
+      "state": "integrating",
       "after": [
         "S1"
       ],
@@ -87,7 +87,7 @@
     },
     {
       "slice": "S10",
-      "state": "integrating (successor co-pilot)",
+      "state": "integrated, checks green at e1a3cba",
       "after": [
         "S1"
       ],
@@ -129,8 +129,8 @@
       ]
     }
   ],
-  "next": "integrate S10 (running), checks; then S9, S11, S12, each with checks green between; then spawn S13 (sonnet)",
-  "updatedAt": "2026-11-26T19:44:01.872Z",
+  "next": "integrate S9 (running), checks; then S11, S12, each with checks green between; then spawn S13 (sonnet)",
+  "updatedAt": "2026-11-26T20:05:06.713Z",
   "friction": [
     {
       "agent": "pilot-architect",
