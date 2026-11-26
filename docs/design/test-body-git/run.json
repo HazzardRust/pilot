@@ -1,0 +1,182 @@
+{
+  "slug": "test-body-git",
+  "feature": "Test bodies spawn far fewer git",
+  "ticket": "itm_07647401bb5e",
+  "branch": "feat/test-body-git",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-test-body-git",
+  "artefact": "docs/design/test-body-git/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "pushed 996517b",
+      "branch": "slice/test-body-git-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S3",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S4",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S5",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S6",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S7",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S8",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S9",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S10",
+      "state": "planned",
+      "after": [
+        "S1"
+      ]
+    },
+    {
+      "slice": "S11",
+      "state": "planned",
+      "after": [
+        "S10"
+      ]
+    },
+    {
+      "slice": "S12",
+      "state": "planned",
+      "after": [
+        "S10"
+      ]
+    },
+    {
+      "slice": "S13",
+      "state": "planned",
+      "after": [
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S11",
+        "S12"
+      ]
+    }
+  ],
+  "next": "self-pause (forced hand-back); feat/test-body-git at 8284be0; next: on S1 implementer's report (slice/test-body-git-s1, agent a6face4367a82072e), integrate S1 with typescript+security Verdict trailers, then pilot ready for S2-S10",
+  "updatedAt": "2026-11-26T16:23:44.806Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "no per-test-file fixture census existed; one 110-file probe run needed",
+      "evidence": "land-batching's census attributes by product frame only",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "heredoc via Git Bash stripped backslashes in the probe script",
+      "evidence": "one rerun",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "hook blocked sed -i on tracked docs; edits redone with Edit",
+      "evidence": "architect report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "architect handed back before the queued verdict message was delivered",
+      "evidence": "SendMessage answered 'queued'; hand-back says verdict message has not arrived",
+      "size": 1
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "hand-back enforcer forces a hand-back each time the co-pilot ends a turn to wait on a live implementer",
+      "evidence": "two forced hand-backs on itm_07647401bb5e with S1 still implementing; a 'continue' resume hit it again",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer S1",
+      "what": "plain node --test on integrate.test.mjs fails 10+ tests on a clean base; only node scripts/gate.mjs <file> reads true (needs PILOT_BRANCH)",
+      "evidence": "bare run printed fails; same file under the gate passed 21 of 21",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer S1",
+      "what": "a single-file gate still builds and runs the Rust deck suite, and all gates share one cargo folder (rune-target); two gates at once fail to link",
+      "evidence": "LNK1104 cannot open rune-target deck exe when two census runs overlapped",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer S1",
+      "what": "land-batching's census probe was not reusable; census.mjs written and debugged from scratch",
+      "evidence": "two bugs en route: node:child_process stack line read as repo file; gate counter frame counted every git as product",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "S1 implementer's full report delivered to main instead of its co-pilot; relayed by hand",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "plain node --test on integrate.test.mjs fails 10+ tests on a clean base; needs gate env (PILOT_BRANCH)",
+      "evidence": "S1 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "every gate builds the Rust deck in one shared cargo target; two concurrent gates fail LNK1104",
+      "evidence": "S1 base census run exited 1 with LNK1104 on rune-target deck-*.exe"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1 report went to main, not the co-pilot; resent on request",
+      "evidence": "coordinator relayed it"
+    }
+  ]
+}
