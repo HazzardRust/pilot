@@ -20,7 +20,8 @@ function checkIgnore(files) {
   assert.ok(status === 0 || status === 1, `check-ignore failed: ${stderr}`);
   const pattern = new Map(stdout.split('\n').filter(Boolean).map((line) => {
     const [source, file] = line.split('\t');
-    return [file, source.split(':').slice(2).join(':')];
+    // `<source>:<line>:<pattern>`, or `::` for none; the source may be an absolute path with a drive colon.
+    return [file, source.match(/^(?:.*?:\d+:|::)(.*)$/s)[1]];
   }));
   const ignored = (file) => {
     assert.ok(pattern.has(file), `check-ignore printed no line for ${file}`);

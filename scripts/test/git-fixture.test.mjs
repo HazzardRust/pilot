@@ -15,10 +15,12 @@ import path from 'node:path';
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
-/** A repository with one (empty) commit; returns its directory and that commit's SHA. */
+/** A repository with one commit; returns its directory and that commit's SHA. */
 function oneCommit(dir) {
   git(dir, 'init', '-q', '-b', 'main');
-  git(dir, 'commit', '-q', '--allow-empty', '-m', 'one');
+  fs.writeFileSync(path.join(dir, 'a.txt'), 'a\n');
+  git(dir, 'add', 'a.txt');
+  git(dir, 'commit', '-q', '-m', 'one');
   return { dir, sha: git(dir, 'rev-parse', 'HEAD') };
 }
 
