@@ -9,12 +9,12 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 
 use rune::tok;
 use rune::{Cx, El, GrowthSpec, TextEdit, col, row, text, text_input};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::app::{State, go};
 use crate::client::Query;
-use crate::prefs::ArchiveSort;
+use crate::prefs::{ArchiveSort, Column};
 use crate::regions::notifications::keep;
 use crate::theme::{self, space, type_};
 
@@ -67,16 +67,16 @@ struct List {
     /// Each item's key, unique; `layouts` changes whenever they do.
     keys: Vec<String>,
     layouts: usize,
-    /// The kind column's width in `ch`: the longest kind name the view lists (S19).
+    /// The kinds the view lists, for the bar's toggles, and the kind column's width in `ch`: the longest
+    /// kind name among them (S19).
+    kinds: Vec<Kind>,
     kind_ch: usize,
 }
 
-/// What the list was built from. The view is the archive region's address, which a view put in place of
-/// the drawn one never shares; `app::poll` also calls [`Local::new_view`], since several views can land
-/// with no draw between them (a hidden window) and a later one take a freed address.
+/// What the list was built from, besides the view: `app::poll` calls [`Local::new_view`] on every view
+/// it lands.
 #[derive(Debug, PartialEq)]
 struct From {
-    view: usize,
     kind: Option<String>,
     search: String,
     sort: ArchiveSort,
@@ -108,20 +108,20 @@ impl List {
         sort: ArchiveSort,
     ) -> Result<(), serde_json::Error> {
         let from = From {
-            view: v as *const Value as usize,
             kind: local.kind.clone(),
             search: local.search.text.clone(),
             sort,
         };
         if self.from.as_ref() != Some(&from) {
             self.from = None;
+            self.kinds = v
+                .get("kinds")
+                .map_or(Ok(vec![]), Vec::<Kind>::deserialize)?;
             self.sections = sections(v, &from)?;
-            self.kind_ch = v["kinds"]
-                .as_array()
-                .into_iter()
-                .flatten()
-                .filter_map(|k| k["kind"].as_str())
-                .map(|k| k.chars().count())
+            self.kind_ch = self
+                .kinds
+                .iter()
+                .map(|k| k.kind.chars().count())
                 .max()
                 .unwrap_or(0);
             self.builds += 1;
@@ -217,15 +217,6 @@ fn sections(v: &Value, from: &From) -> Result<Vec<(usize, Vec<usize>)>, serde_js
         .collect())
 }
 
-/// A column the list sorts by, pressed as `archive-sort-<column>`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Column {
-    Date,
-    Kind,
-    Title,
-}
-
 // Every string borrows the view's own (A5): a frame reads 10,000 rows without copying one, which an
 // owned `String` per string cost a release build about 20 ms of the 50 ms bar.
 
@@ -262,11 +253,11 @@ pub struct Day<'a> {
     pub rows: Vec<Row<'a>>,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
-struct Kind<'a> {
-    kind: &'a str,
-    label: &'a str,
+struct Kind {
+    kind: String,
+    label: String,
 }
 
 /// `days` with each section's rows ordered by `by` (A4): a section is never dropped or merged, and only
@@ -325,7 +316,7 @@ fn ask(s: &mut State, id: &str) {
 
 /// One caption `ch`, the advance the deck's fixed columns are measured in (`queue`, `layout`).
 pub(crate) fn ch() -> f32 {
-    type_::CAPTION.size * 0.6
+    type_::CAPTION.size * crate::layout::ADVANCE
 }
 
 /// The time column's width in `ch`: the view's local `HH:MM`.
@@ -360,7 +351,7 @@ fn archive_row(r: &Row, kind_ch: usize, dark: bool) -> El {
                             .font(type_::CAPTION)
                             .color(ui.text)
                             .shrink()
-                            .wrap(),
+                            .wrap_anywhere(),
                         dark,
                     )),
             )
@@ -376,7 +367,8 @@ fn archive_row(r: &Row, kind_ch: usize, dark: bool) -> El {
                 .font(type_::BODY)
                 .color(ui.text)
                 .w_full()
-                .wrap(),
+                // A path or other unbroken token breaks inside itself rather than run past the row.
+                .wrap_anywhere(),
             dark,
         ))
         .child(fields);
@@ -463,11 +455,14 @@ fn toggle(words: String, key: String, on: bool, cx: &mut Cx<State>) -> El {
     } else {
         theme::tokens(dark).quiet
     };
+    // Cut with an ellipsis only where the centre is narrower than the toggle (fix c).
     theme::control(text(words), dark)
         .key(key)
         .role("button")
         .font(type_::CAPTION)
         .color(ink)
+        .shrink()
+        .truncate()
 }
 
 /// The bar as labelled groups in a fixed order (S19): the search box across the bar, then `Sort` with a
@@ -476,29 +471,34 @@ fn toggle(words: String, key: String, on: bool, cx: &mut Cx<State>) -> El {
 /// window opens on it again (S18).
 fn bar(kinds: &[Kind], local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
+    // Last frame's width of the bar, re-read only when it crosses the breakpoint.
+    let is_narrow = cx.layout_with("archive-bar", |r| narrow(r[2])) == Some(true);
+    // A field's placeholder is not cut at its edge, so a narrow bar's is one word.
+    let hint = if is_narrow {
+        "Search"
+    } else {
+        "Search titles and fields"
+    };
     let search = text_input(&local.search, type_::BODY)
         .key("archive-search")
         .label("Search the archive")
         .w_full()
-        .placeholder("Search titles and fields", theme::tokens(dark).quiet)
+        .single_line()
+        .placeholder(hint, theme::tokens(dark).quiet)
         .on_edit(|s: &mut State| &mut s.regions.archive.search);
     // Both groups wrap, so every control stays inside the window's width at any size (QA2).
     let mut sort_row = row().flex_wrap().gaps(space::within, space::between);
     let mut kind_row = row().flex_wrap().gaps(space::within, space::between);
     for k in kinds {
-        let on = local.kind.as_deref() == Some(k.kind);
-        let kind = k.kind.to_string();
+        let on = local.kind.as_deref() == Some(k.kind.as_str());
+        let kind = k.kind.clone();
         kind_row = kind_row.child(
-            toggle(
-                k.label.to_string(),
-                format!("archive-kind-{}", k.kind),
-                on,
-                cx,
-            )
-            .on_press(move |s: &mut State| {
-                let picked = &mut s.regions.archive.kind;
-                *picked = (picked.as_deref() != Some(kind.as_str())).then(|| kind.clone());
-            }),
+            toggle(k.label.clone(), format!("archive-kind-{}", k.kind), on, cx).on_press(
+                move |s: &mut State| {
+                    let picked = &mut s.regions.archive.kind;
+                    *picked = (picked.as_deref() != Some(kind.as_str())).then(|| kind.clone());
+                },
+            ),
         );
     }
     for (column, name, label) in [
@@ -535,8 +535,8 @@ fn bar(kinds: &[Kind], local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> 
         .w_full()
         .gap(space::pad)
         .child(search)
-        .child(group("sort", "Sort", sort_row, dark))
-        .child(group("kinds", "Kinds", kind_row, dark))
+        .child(group("sort", "Sort", sort_row, is_narrow, dark))
+        .child(group("kinds", "Kinds", kind_row, is_narrow, dark))
 }
 
 /// A sort toggle's room for its arrow, ` ↓`, in `ch`.
@@ -545,12 +545,27 @@ const ARROW_CH: f32 = 2.0;
 /// The group labels' column, in `ch`: the longer label, `Kinds`.
 const GROUP_CH: f32 = 5.0;
 
+/// The least room a group's controls take beside its label, in `ch`: about the Sort group's toggles.
+const CONTROLS_CH: f32 = 20.0;
+
+/// Whether a bar `w` wide leaves its groups' controls less than [`CONTROLS_CH`] beside their labels.
+fn narrow(w: f32) -> bool {
+    w < (GROUP_CH + CONTROLS_CH) * ch() + space::between
+}
+
 /// One labelled group of the bar: its caption keyed `archive-group-<name>` in a fixed column, so every
-/// group's controls start at one x, and its controls wrapping beside it.
-fn group(name: &str, label: &str, controls: El, dark: bool) -> El {
-    row()
-        .w_full()
-        .gap(space::between)
+/// group's controls start at one x, and its controls wrapping beside it; in a `narrow` bar, under it, so
+/// they wrap inside the centre however narrow (fix c).
+fn group(name: &str, label: &str, controls: El, narrow: bool, dark: bool) -> El {
+    let (out, controls) = if narrow {
+        (col().gap(space::within), controls.w_full())
+    } else {
+        (
+            row().gap(space::between),
+            controls.grow(1.0).min_w(space::s0),
+        )
+    };
+    out.w_full()
         .child(
             text(label)
                 .key(format!("archive-group-{name}"))
@@ -558,19 +573,24 @@ fn group(name: &str, label: &str, controls: El, dark: bool) -> El {
                 .color(theme::tokens(dark).quiet)
                 .w(GROUP_CH * ch()),
         )
-        .child(controls.grow(1.0).min_w(space::s0))
+        .child(controls)
+}
+
+/// The region's days, with the list brought up to them; `None` while the region cannot be read or is not
+/// yet loaded (every other screen's `{}`, with no `days`), when neither the bar nor the list is drawn.
+fn days<'v>(v: &'v Value, local: &Local, sort: ArchiveSort) -> Option<&'v Vec<Value>> {
+    let days = v.get("days").and_then(Value::as_array)?;
+    local.list.borrow_mut().update(v, local, sort).ok()?;
+    Some(days)
 }
 
 /// The archive's bar and the rule under it, drawn above the centre's viewport so it stays put while the list
-/// scrolls (S19, ADR 0217 L4); none while the region cannot be read or holds no day.
+/// scrolls (S19, ADR 0217 L4); none while the list is not drawn or holds no day.
 pub fn band(v: &Value, local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> Option<El> {
-    let kinds = v
-        .get("kinds")
-        .map_or(Ok(vec![]), Vec::<Kind>::deserialize)
-        .ok()?;
-    if v.get("days").and_then(Value::as_array)?.is_empty() {
+    if days(v, local, sort)?.is_empty() {
         return None;
     }
+    let kinds = local.list.borrow().kinds.clone();
     let dark = cx.system_dark();
     // The bar is its own band, ruled off from the list it filters (S18).
     Some(
@@ -583,16 +603,10 @@ pub fn band(v: &Value, local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> 
 }
 
 pub fn draw(v: &serde_json::Value, local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> El {
-    // A region the view cannot be read as, or not yet loaded (every other screen's `{}`, with no `days`),
-    // draws nothing rather than taking the window down or claiming the archive is empty.
-    let kinds = v.get("kinds").map_or(Ok(vec![]), Vec::<Kind>::deserialize);
-    // Every filter and sort runs here, over the rows the window holds (L6): a keystroke asks the deck
-    // nothing, and a frame that changed none of them reads no row (S17).
-    let (Some(days), Ok(_), Ok(())) = (
-        v.get("days").and_then(Value::as_array),
-        kinds,
-        local.list.borrow_mut().update(v, local, sort),
-    ) else {
+    // A region the view cannot be read as draws nothing rather than taking the window down or claiming the
+    // archive is empty. Every filter and sort runs in `days`, over the rows the window holds (L6): a
+    // keystroke asks the deck nothing, and a frame that changed none of them reads no row (S17).
+    let Some(days) = days(v, local, sort) else {
         return col().key("archive");
     };
     let dark = cx.system_dark();

@@ -47,34 +47,45 @@ fn real_scale() -> serde_json::Value {
     recorded(&closed)
 }
 
+/// Spec 11's bar, a 60 Hz frame, in a release build as the window ships. A debug build is unoptimised and a
+/// wall-clock bar there flakes under load, so it asserts the rebuild counts alone, no time bar.
+const BAR: Option<Duration> = if cfg!(debug_assertions) {
+    None
+} else {
+    Some(Duration::from_millis(16))
+};
+
 #[test]
 fn the_archive_frame_is_as_cheap_as_homes() {
     let mut rt = archive_window(real_scale());
     rt.frame(0.0);
     rt.frame(1.0 / 60.0);
-    // The bar is a release build's, as the window ships; a debug build prints its times only.
-    let bar = (!cfg!(debug_assertions)).then_some(Duration::from_millis(16));
-    // "number 1" is in Today's 1, 10 to 19 and 100 to 199: 111 rows.
+    // "number 1" is in Today's 1, 10 to 19 and 100 to 199: 111 rows. Each run's search differs from the
+    // last only by spaces the filter trims, so every timed frame rebuilds the list, as a keystroke's does.
     for (case, search, listed) in [
         ("Today open", "", 1_000),
         ("a search keystroke", "number 1", 111),
     ] {
-        rt.update(|s, _| s.regions.archive.search = TextEdit::new(search));
-        rt.frame(1.0 / 60.0);
-        let took: Vec<Duration> = (1..=3)
-            .map(|_| {
-                rt.invalidate();
+        let took: Vec<Duration> = (0..3)
+            .map(|run| {
+                let typed = format!("{search}{}", " ".repeat(run + 1));
+                rt.update(move |s, _| s.regions.archive.search = TextEdit::new(&typed));
+                let builds = rt.state.regions.archive.builds();
                 let start = Instant::now();
                 rt.frame(1.0 / 60.0);
-                start.elapsed()
+                let took = start.elapsed();
+                assert_eq!(
+                    rt.state.regions.archive.builds(),
+                    builds + 1,
+                    "{case}: the timed frame rebuilt the list"
+                );
+                took
             })
             .collect();
         let on = mounted(&rt);
-        println!("archive frame, {case}: {took:?}, {on} rows built");
-        assert!(
-            took.iter().all(|took| bar.is_none_or(|bar| *took < bar)),
-            "{case}: {took:?}"
-        );
+        if let Some(bar) = BAR {
+            assert!(took.iter().all(|took| *took < bar), "{case}: {took:?}");
+        }
         assert!(
             on > 0 && on < 100,
             "{case}: {on} rows built, only those near the viewport"
@@ -113,7 +124,10 @@ fn an_unchanged_view_is_not_re_parsed_per_frame() {
         seq: 1,
         regions: [("archive".to_string(), region)].into_iter().collect(),
     };
-    rt.update(move |s, _| s.view = view);
+    rt.update(move |s, _| {
+        s.view = view;
+        s.regions.archive.new_view();
+    });
     rt.frame(1.0 / 60.0);
     assert_eq!(
         rt.state.regions.archive.builds(),
