@@ -45,19 +45,20 @@ test('a branch moved since the landing fetched is refused by the lease, not dele
   // One commit behind feat/x, so merged into it; at its tip it would be kept as nothing landed.
   git(x, 'push', '-q', 'origin', 'HEAD~1:refs/heads/design/x', 'HEAD~1:refs/heads/design/other');
   git(x, 'fetch', '-q', '--prune', 'origin');
-  // Another session moves design/x after the fetch the landing made.
-  git(seed, 'fetch', '-q', 'origin');
-  git(seed, 'checkout', '-q', '-b', 'design/x', 'origin/design/x');
-  commitFile(seed, 'late.txt', 'late\n', 'late');
-  git(seed, 'push', '-q', 'origin', 'design/x');
-  const moved = git(seed, 'rev-parse', 'HEAD');
+  // Another session moves design/x after the fetch the landing made: one commit on design/x's tip (seed's main,
+  // feat/x's parent), pushed from seed, which x never fetches.
+  const moved = git(seed, 'commit-tree', 'HEAD^{tree}', '-p', 'HEAD', '-m', 'late');
+  git(seed, 'push', '-q', 'origin', `${moved}:refs/heads/design/x`);
 
   assert.throws(
     () => deleteMerged({ git: gitIn(x), host: null, select: (name) => name === 'design/x', into: 'feat/x', fetched: true }),
     /git push origin --delete failed/,
   );
-  assert.equal(git(seed, 'ls-remote', 'origin', 'refs/heads/design/x').split('\t')[0], moved, 'origin keeps the moved branch');
-  assert.notEqual(git(seed, 'ls-remote', 'origin', 'refs/heads/design/other'), '', 'a branch select does not take stays');
+  // Both branches in one `ls-remote` (L5): `<sha>\t<ref>` lines.
+  const remote = Object.fromEntries(git(seed, 'ls-remote', 'origin', 'refs/heads/design/x', 'refs/heads/design/other').split('\n')
+    .map((line) => line.split('\t').reverse()));
+  assert.equal(remote['refs/heads/design/x'], moved, 'origin keeps the moved branch');
+  assert.notEqual(remote['refs/heads/design/other'] ?? '', '', 'a branch select does not take stays');
 });
 
 /** A clone of a bare origin with a worktree merged into origin/main, then origin made unreachable. */
@@ -68,7 +69,13 @@ function unreachable(t) {
   commitFile(dir, 'm.txt', 'm\n', 'merged');
   git(work, 'merge', '-q', '--ff-only', 'merged');
   git(work, 'push', '-q', 'origin', 'main');
-  git(work, 'remote', 'set-url', 'origin', path.join(path.dirname(work), 'gone.git'));
+  // `git remote set-url origin <gone>`, one git fewer: origin's url line in work's config rewritten.
+  const config = path.join(work, '.git', 'config');
+  const gone = path.join(path.dirname(work), 'gone.git');
+  const text = fs.readFileSync(config, 'utf8');
+  const moved = text.replace(/(\[remote "origin"\]\n\turl = ).*\n/, (_, head) => `${head}${gone.replaceAll('\\', '\\\\')}\n`);
+  if (moved === text) throw new Error(`unreachable: no origin url in ${config}`);
+  fs.writeFileSync(config, moved);
   return { work, dir };
 }
 
