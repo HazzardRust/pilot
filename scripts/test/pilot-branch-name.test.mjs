@@ -7,10 +7,12 @@
 
 // The fixture seam imports fake-home.mjs first and gives every git below its identity.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 
 delete process.env.PILOT_BRANCH;
@@ -33,19 +35,11 @@ function hostWith(login) {
 /** origin.git holds `main` and the branches `extra` names, each one commit ahead of main; work clones it. */
 function repos(t, key, extra = []) {
   return gitFixture(t, `pilot-branch-name:${key}`, (root) => {
-    const origin = path.join(root, 'origin.git');
+    const history = [{ branch: 'main', files: {}, message: 'main' }, ...extra.map((branch) => ({ branch, from: 'main', files: {}, message: `on ${branch}` }))];
+    const { origin, sha } = seed(root, history);
     const work = path.join(root, 'work');
-    git(root, 'init', '-q', '--bare', '-b', 'main', origin);
     git(root, 'clone', '-q', origin, work);
-    git(work, 'commit', '-q', '--allow-empty', '-m', 'main');
-    git(work, 'push', '-q', 'origin', 'main');
-    for (const branch of extra) {
-      git(work, 'commit', '-q', '--allow-empty', '-m', `on ${branch}`);
-      git(work, 'push', '-q', 'origin', `HEAD:${branch}`);
-      git(work, 'reset', '-q', '--hard', 'origin/main');
-    }
-    git(work, 'remote', 'set-head', 'origin', 'main');
-    return { origin, work, main: git(origin, 'rev-parse', 'refs/heads/main') };
+    return { origin, work, main: sha.main };
   });
 }
 
@@ -59,9 +53,10 @@ test('the login names the branch and is stored', (t) => {
   assert.equal(pilotBranch(runnerIn(work)), 'hazzardrust-pilot');
 });
 
+// The loops below share one repository: each case asserts it writes nothing, or overwrites one key.
 test('no login, no name, nothing written', (t) => {
+  const { origin, work } = repos(t, 'plain');
   for (const host of [hostWith(null), null]) {
-    const { origin, work } = repos(t, 'plain');
     const before = { config: config(work), work: refs(work), origin: refs(origin) };
     assert.throws(() => namePilotBranch({ git: runnerIn(work), host }), { message: NO_NAME });
     assert.throws(() => ensurePilotBranch({ git: runnerIn(work), host }), { message: NO_NAME });
@@ -71,8 +66,8 @@ test('no login, no name, nothing written', (t) => {
 });
 
 test('a login git would not take is refused', (t) => {
+  const { work } = repos(t, 'plain');
   for (const login of ['a..b', 'x.', 'x.lock', 'a b', '-x', 'a/b', '']) {
-    const { work } = repos(t, 'plain');
     const before = config(work);
     assert.throws(() => namePilotBranch({ git: runnerIn(work), host: hostWith(login) }), { message: NO_NAME }, login);
     assert.equal(config(work), before, `${JSON.stringify(login)}: nothing stored`);
@@ -88,13 +83,14 @@ test('a derived name that is the default branch is refused before it is stored',
 });
 
 test('a hand-set name off the shape is refused', (t) => {
+  const { work } = repos(t, 'plain');
+  // `git config pilot.branch <name>` with no git spawned: `config --get` reads the last value a key has.
+  const setBranch = (name) => fs.appendFileSync(path.join(work, '.git', 'config'), `[pilot]\n\tbranch = ${name}\n`);
   for (const bad of ['main', 'feat/x', '-x-pilot', 'a..b-pilot', 'HZ-pilot']) {
-    const { work } = repos(t, 'plain');
-    git(work, 'config', '--local', 'pilot.branch', bad);
+    setBranch(bad);
     assert.throws(() => pilotBranch(runnerIn(work)), /pilot\.branch/, bad);
   }
-  const { work } = repos(t, 'plain');
-  git(work, 'config', '--local', 'pilot.branch', 'pilot');
+  setBranch('pilot');
   assert.equal(pilotBranch(runnerIn(work)), LEGACY_PILOT, 'the legacy name stands');
 });
 

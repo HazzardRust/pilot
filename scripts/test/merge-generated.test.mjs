@@ -12,6 +12,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -44,17 +45,15 @@ function addAdr(repo, number, options) {
   git(repo, 'commit', '-q', '-m', `adr ${number}`);
 }
 
-/** A repository on `main` with ADR 0001 and its index, `.gitattributes` as given. */
-function scratch(t, attributes = ATTRIBUTES) {
-  return gitFixture(t, `merge-generated:scratch:${attributes === null ? 'none' : 'repo'}`, (dir) => buildScratch(dir, attributes));
-}
-
-function buildScratch(dir, attributes) {
-  const repo = path.join(dir, 'repo');
-  git(dir, 'init', '-q', '-b', 'main', repo);
-  if (attributes !== null) fs.writeFileSync(path.join(repo, '.gitattributes'), attributes);
-  addAdr(repo, '0001');
-  return { dir, repo };
+/** A repository on `main` with ADR 0001, its index and this repository's `.gitattributes`. */
+function scratch(t) {
+  return gitFixture(t, 'merge-generated:scratch:repo', (dir) => {
+    const repo = path.join(dir, 'repo');
+    git(dir, 'init', '-q', '-b', 'main', repo);
+    fs.writeFileSync(path.join(repo, '.gitattributes'), ATTRIBUTES);
+    addAdr(repo, '0001');
+    return { dir, repo };
+  });
 }
 
 /**
@@ -89,6 +88,24 @@ function twoAdrsRepo(t, attributes = ATTRIBUTES) {
   });
 }
 
+/**
+ * A clone of an origin where `main` holds `base`, branch `a` lays `feature` over it and `main` then lays
+ * `ours` over it, with a local `a`: the two sides a test merges, built once per `key`.
+ */
+function twoSidesRepo(t, key, { base, feature, ours }) {
+  return gitFixture(t, `merge-generated:two-sides:${key}`, (dir) => {
+    const { origin } = seed(dir, [
+      { branch: 'main', files: base, message: 'base' },
+      { branch: 'a', files: feature, message: 'a' },
+      { branch: 'main', files: ours, message: 'main' },
+    ]);
+    const repo = path.join(dir, 'repo');
+    git(dir, 'clone', '-q', origin, repo);
+    git(repo, 'branch', '-q', 'a', 'origin/a');
+    return { dir, repo };
+  });
+}
+
 /** Answers the merge of `a` into `main` in a `twoAdrsRepo`. */
 const twoAdrs = (repo) => spawnSync('git', ['merge', '-q', '--no-ff', '--no-commit', 'a'], { cwd: repo, encoding: 'utf8' });
 
@@ -96,17 +113,11 @@ const conflicted = (repo) => git(repo, 'diff', '--name-only', '--diff-filter=U')
 const indexed = (repo) => fs.readFileSync(path.join(repo, INDEX), 'utf8').match(/^\| \d{4} \|/gm);
 
 test('a conflicted landing committed with --no-edit keeps the landing message as its subject', (t) => {
-  const { repo } = scratch(t);
-  const write = (text) => {
-    fs.writeFileSync(path.join(repo, 'f.txt'), text);
-    git(repo, 'add', 'f.txt');
-    git(repo, 'commit', '-q', '-m', text);
-  };
-  write('base\n');
-  git(repo, 'checkout', '-q', '-b', 'a');
-  write('feature\n');
-  git(repo, 'checkout', '-q', 'main');
-  write('pilot\n');
+  const { repo } = twoSidesRepo(t, 'conflict', {
+    base: adrTree(os.tmpdir(), ['0001'], { '.gitattributes': ATTRIBUTES, 'f.txt': 'base\n' }),
+    feature: { 'f.txt': 'feature\n' },
+    ours: { 'f.txt': 'pilot\n' },
+  });
   assert.deepEqual(mergeResolved(repo, 'a', 'Merge feat/a into pilot', { side: 'theirs' }).left, ['f.txt']);
   fs.writeFileSync(path.join(repo, 'f.txt'), 'both\n');
   git(repo, 'add', 'f.txt');
@@ -169,15 +180,12 @@ test('mergeIntoPilot lands two features that each add an ADR', (t) => {
 });
 
 test('a hand-written README is not regenerated', (t) => {
-  const { repo } = scratch(t, null);
-  fs.writeFileSync(path.join(repo, INDEX), '# Our decisions\n\n- 0001\n');
-  git(repo, 'commit', '-q', '-am', 'hand-written');
-  git(repo, 'checkout', '-q', '-b', 'a');
-  fs.appendFileSync(path.join(repo, INDEX), '- 0002\n');
-  git(repo, 'commit', '-q', '-am', 'a');
-  git(repo, 'checkout', '-q', 'main');
-  fs.appendFileSync(path.join(repo, INDEX), '- 0003\n');
-  git(repo, 'commit', '-q', '-am', 'main');
+  const hand = '# Our decisions\n\n- 0001\n';
+  const { repo } = twoSidesRepo(t, 'hand-written', {
+    base: adrTree(os.tmpdir(), ['0001'], { [INDEX]: hand }),
+    feature: { [INDEX]: `${hand}- 0002\n` },
+    ours: { [INDEX]: `${hand}- 0003\n` },
+  });
   assert.notEqual(spawnSync('git', ['merge', '-q', '--no-ff', '--no-commit', 'a'], { cwd: repo }).status, 0);
 
   const outcome = resolveGenerated(repo, conflicted(repo), { side: 'theirs' });
