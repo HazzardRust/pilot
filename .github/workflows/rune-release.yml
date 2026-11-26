@@ -1,0 +1,203 @@
+name: Rune release
+
+# prebuilt-rune S4 (ADR NNNN): build the Rune deck for its three targets (A8), pin each binary's sha256 in
+# deck/rune/release.json (L1, A1), and publish them as release assets. A pull_request touching the release
+# inputs builds and pins only, the 3 binaries and release.json as artifacts (L7). A rune-scratch-<sha> tag
+# push also publishes a prerelease on that tag (A9), and commits nothing. A dispatch on a branch releases
+# v<version> from .claude-plugin/plugin.json and commits the pin to that branch (A7). Only GITHUB_TOKEN, only
+# first-party actions (L5); only the publish job can write, and it uploads everything before it publishes.
+on:
+  pull_request:
+    paths:
+      - .github/workflows/rune-release.yml
+      - scripts/rune-pin.mjs
+      - deck/rune/Cargo.toml
+      - deck/rune/Cargo.lock
+  push:
+    tags: ['rune-scratch-*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rune-release-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: windows-latest
+            built: pilot-deck.exe
+            asset: pilot-deck-win32-x64.exe
+          - os: macos-latest
+            built: pilot-deck
+            asset: pilot-deck-darwin-arm64
+          - os: ubuntu-22.04
+            built: pilot-deck
+            asset: pilot-deck-linux-x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install the Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-dev libwayland-dev
+
+      - name: Set up Rust
+        shell: bash
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          cargo --version
+
+      - name: Build the Rune deck
+        run: cargo build --release --locked --manifest-path deck/rune/Cargo.toml
+
+      - name: Name the binary for its target
+        shell: bash
+        env:
+          BUILT: ${{ matrix.built }}
+          ASSET: ${{ matrix.asset }}
+        run: |
+          mkdir dist
+          cp "deck/rune/target/release/$BUILT" "dist/$ASSET"
+
+      - name: Upload the binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+          if-no-files-found: error
+          retention-days: 14
+
+  pin:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.pin.outputs.version }}
+      tag: ${{ steps.pin.outputs.tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26
+
+      - name: Download the binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pilot-deck-*
+          path: dist
+          merge-multiple: true
+
+      # The tag of a scratch push is the pushed ref; everything else pins v<version>. rune-pin.mjs refuses a tag
+      # that is neither, and a binary without its target's header, so a problem fails the job here.
+      - name: Pin the binaries
+        id: pin
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          version=$(node -p "require('./.claude-plugin/plugin.json').version")
+          if [ "$EVENT" = push ]; then tag="$REF_NAME"; else tag="v$version"; fi
+          node scripts/rune-pin.mjs "$version" "$tag" dist > release.json
+          {
+            echo "### deck/rune/release.json"
+            echo
+            echo '```json'
+            cat release.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the pin
+        uses: actions/upload-artifact@v4
+        with:
+          name: release.json
+          path: release.json
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: pin
+    if: (github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/')) || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/rune-scratch-'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      EVENT: ${{ github.event_name }}
+      VERSION: ${{ needs.pin.outputs.version }}
+      TAG: ${{ needs.pin.outputs.tag }}
+      BRANCH: ${{ github.ref_name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26
+
+      - name: Download the binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pilot-deck-*
+          path: dist
+          merge-multiple: true
+
+      - name: Download the pin
+        uses: actions/download-artifact@v4
+        with:
+          name: release.json
+          path: pinned
+
+      # What is uploaded is what was pinned: the pin is made again from the bytes about to ship and must match.
+      - name: Check the binaries against the pin
+        run: |
+          node scripts/rune-pin.mjs "$VERSION" "$TAG" dist > release.json
+          cmp release.json pinned/release.json
+
+      # Draft first, every asset uploaded, then published (L5): nothing is uploaded after publish.
+      - name: Publish the release
+        run: |
+          prerelease=()
+          if [ "$EVENT" = push ]; then prerelease=(--prerelease); fi
+          gh release create "$TAG" --draft "${prerelease[@]}" --target "$GITHUB_SHA" --title "Rune deck $TAG" \
+            --notes "The Rune deck for pilot $VERSION, built from $GITHUB_SHA. Its sha256 pins are in deck/rune/release.json."
+          gh release upload "$TAG" dist/pilot-deck-win32-x64.exe dist/pilot-deck-darwin-arm64 dist/pilot-deck-linux-x64
+          gh release edit "$TAG" --draft=false
+
+      - name: Commit the pin to the dispatched branch
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          cp release.json deck/rune/release.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deck/rune/release.json
+          git commit -m "chore(rune): pin the Rune deck for $TAG"
+          git push origin "HEAD:refs/heads/$BRANCH"
