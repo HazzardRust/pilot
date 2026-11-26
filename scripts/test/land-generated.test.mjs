@@ -15,6 +15,7 @@ import path from 'node:path';
 
 import { githubHost } from '../../deck/host-github.mjs';
 import { greenChecks } from './lib/land-repos.mjs';
+import { seed } from './lib/seed.mjs';
 
 const { main } = await import('../land.mjs');
 const { sync } = await import('../sync.mjs');
@@ -36,44 +37,53 @@ function commit(repo, files, message) {
   git(repo, 'commit', '-q', '-m', message);
 }
 
+const adrFile = (number) => {
+  const front = ['---', 'status: accepted', 'date: 2026-10-11', 'tags: []', 'supersedes: []', 'superseded_by: []', 'paths: []', '---'];
+  return { [`docs/adr/${number}-decision-${number}.md`]: [...front, `# Decision ${number}`, '', `We decided ${number}.`, ''].join('\n') };
+};
+
 /** ADR `number` and the generated index over every ADR the checkout holds. */
 function adr(repo, number) {
-  const front = ['---', 'status: accepted', 'date: 2026-10-11', 'tags: []', 'supersedes: []', 'superseded_by: []', 'paths: []', '---'];
-  write(repo, `docs/adr/${number}-decision-${number}.md`, [...front, `# Decision ${number}`, '', `We decided ${number}.`, ''].join('\n'));
+  for (const [file, text] of Object.entries(adrFile(number))) write(repo, file, text);
   return { [INDEX]: renderIndex(path.join(repo, 'docs', 'adr')) };
 }
 
+/** ADRs `numbers` and their generated index, rendered in a scratch directory under `dir`, since a seeded tree has no checkout. */
+function adrs(dir, ...numbers) {
+  const scratchDir = fs.mkdtempSync(path.join(dir, 'adr-'));
+  try {
+    const files = Object.assign({}, ...numbers.map(adrFile));
+    for (const [file, text] of Object.entries(files)) write(scratchDir, file, text);
+    return { ...files, [INDEX]: renderIndex(path.join(scratchDir, 'docs', 'adr')) };
+  } finally {
+    fs.rmSync(scratchDir, { recursive: true, force: true });
+  }
+}
+
 /**
- * Origin with main and pilot at a commit holding ADR 0001, its index, a run record and
- * src/a.mjs; `b` is a clone on feat/b from pilot. `feature` and `pilotSide` each commit their
- * own change (`(repo) => void`), the feature's pushed to feat/b, pilot's to pilot. `name`
- * keys the shape: one name, one pair of changes.
+ * Origin with main at a commit holding ADR 0001, its index, a run record and src/a.mjs; feat/b
+ * and pilot each grow one commit from it, `feature(dir)` and `pilotSide(dir)` answering
+ * `{ files, message }` (no `feature`: feat/b is main). `seed` is a clone on pilot, `b` one on
+ * feat/b. `name` keys the shape: one name, one pair of changes.
  */
 function scratch(t, name, { feature, pilotSide }) {
   return gitFixture(t, `land-generated:${name}`, (dir) => buildScratch(dir, { feature, pilotSide }));
 }
 
 function buildScratch(dir, { feature, pilotSide }) {
-  const origin = path.join(dir, 'origin.git');
-  git(dir, 'init', '--bare', '-b', 'main', origin);
-  const clone = (name) => {
+  const history = [{ branch: 'main', files: { ...adrs(dir, '0001'), [RUN]: '{"slices":[]}\n', 'src/a.mjs': 'export const a = 1;\n' }, message: 'main' }];
+  if (feature) history.push({ branch: 'feat/b', from: 'main', ...feature(dir) });
+  history.push({ branch: 'pilot', from: 'main', ...pilotSide(dir) });
+  const { origin } = seed(dir, history, feature ? {} : { 'feat/b': 'main' });
+  const clone = (name, branch) => {
     const repo = path.join(dir, name);
-    git(dir, 'clone', '-q', origin, repo);
+    git(dir, 'clone', '-q', '-b', branch, origin, repo);
     return repo;
   };
-  const seed = clone('seed');
-  git(seed, 'checkout', '-q', '-b', 'main');
-  commit(seed, { ...adr(seed, '0001'), [RUN]: '{"slices":[]}\n', 'src/a.mjs': 'export const a = 1;\n' }, 'main');
-  git(seed, 'push', '-q', 'origin', 'main', 'main:pilot');
-  const b = clone('b');
-  git(b, 'checkout', '-q', '-b', 'feat/b', 'origin/pilot');
-  feature(b);
-  git(b, 'push', '-q', 'origin', 'feat/b');
-  git(seed, 'checkout', '-q', '-B', 'pilot', 'origin/pilot');
-  pilotSide(seed);
-  git(seed, 'push', '-q', 'origin', 'pilot');
+  const pilotClone = clone('seed', 'pilot');
+  const b = clone('b', 'feat/b');
   const land = () => mainSays({ cwd: b, git: (args) => git(b, ...args), host: githubHost(greenChecks(() => '[]')), test: passing });
-  return { dir, origin, seed, b, land };
+  return { dir, origin, seed: pilotClone, b, land };
 }
 
 /** `main`'s stdout and exit code. */
@@ -90,8 +100,8 @@ function mainSays(inject) {
 
 const keptDir = (out) => out.match(/; the lander resolves in (.+)\n$/)?.[1];
 
-/** `file` as origin's pilot holds it, fetched into `seed`; git's object, not a checkout's line endings. */
-const onPilot = (seed, file) => (git(seed, 'fetch', '-q', 'origin'), git(seed, 'show', `origin/pilot:${file}`));
+/** `file` as origin's pilot holds it, read from origin itself; git's object, not a checkout's line endings. */
+const onPilot = (origin, file) => git(origin, 'show', `pilot:${file}`);
 
 /** Origin's pilot, checked out fresh in `seed`. */
 function pilotIn(seed) {
@@ -107,21 +117,21 @@ function pilotIn(seed) {
  */
 const sourceAndIndex = (t) =>
   scratch(t, 'source-and-index', {
-    feature: (b) => commit(b, { ...adr(b, '0003'), 'src/a.mjs': 'export const a = 3;\n' }, 'b'),
-    pilotSide: (seed) => commit(seed, { ...adr(seed, '0002'), 'src/a.mjs': 'export const a = 2;\n' }, 'pilot'),
+    feature: (dir) => ({ files: { ...adrs(dir, '0001', '0003'), 'src/a.mjs': 'export const a = 3;\n' }, message: 'b' }),
+    pilotSide: (dir) => ({ files: { ...adrs(dir, '0001', '0002'), 'src/a.mjs': 'export const a = 2;\n' }, message: 'pilot' }),
   });
 
 test('a run.json changed on both sides lands with the feature\'s record', (t) => {
-  const { seed, land } = scratch(t, 'run-json', {
-    feature: (b) => commit(b, { [RUN]: '{"slices":["feature"]}\n' }, 'b records'),
-    pilotSide: (seed) => commit(seed, { [RUN]: '{"slices":["pilot"]}\n' }, 'pilot records'),
+  const { origin, land } = scratch(t, 'run-json', {
+    feature: () => ({ files: { [RUN]: '{"slices":["feature"]}\n' }, message: 'b records' }),
+    pilotSide: () => ({ files: { [RUN]: '{"slices":["pilot"]}\n' }, message: 'pilot records' }),
   });
 
   const { code, out } = land();
 
   assert.equal(code, 0, out);
   assert.match(out, /^landed feat\/b on pilot at /);
-  assert.equal(onPilot(seed, RUN), '{"slices":["feature"]}');
+  assert.equal(onPilot(origin, RUN), '{"slices":["feature"]}');
 });
 
 test('a source conflict beside an index conflict names only the source file', (t) => {
@@ -137,8 +147,8 @@ test('a source conflict beside an index conflict names only the source file', (t
 test('a resolver that cannot finish stops on every path and says why', (t) => {
   // A directory named as an ADR: the index cannot be rendered over it.
   const { land } = scratch(t, 'resolver', {
-    feature: (b) => commit(b, { ...adr(b, '0003'), 'docs/adr/0005-a-directory.md/keep.txt': 'x\n' }, 'b'),
-    pilotSide: (seed) => commit(seed, adr(seed, '0002'), 'pilot'),
+    feature: (dir) => ({ files: { ...adrs(dir, '0001', '0003'), 'docs/adr/0005-a-directory.md/keep.txt': 'x\n' }, message: 'b' }),
+    pilotSide: (dir) => ({ files: adrs(dir, '0001', '0002'), message: 'pilot' }),
   });
 
   const { code, out } = land();
@@ -148,7 +158,7 @@ test('a resolver that cannot finish stops on every path and says why', (t) => {
 });
 
 test('a kept resolution re-merged after pilot moved resolves the index', (t) => {
-  const { seed, land } = sourceAndIndex(t);
+  const { origin, seed, land } = sourceAndIndex(t);
   const dir = keptDir(land().out);
   write(dir, 'src/a.mjs', 'export const a = 23;\n');
   git(dir, 'add', '-A');
@@ -161,14 +171,13 @@ test('a kept resolution re-merged after pilot moved resolves the index', (t) => 
   assert.equal(code, 0, out);
   assert.match(out, /^landed feat\/b on pilot at /);
   const tip = pilotIn(seed);
-  assert.equal(onPilot(seed, 'src/a.mjs'), 'export const a = 23;', 'the resolution is kept');
+  assert.equal(onPilot(origin, 'src/a.mjs'), 'export const a = 23;', 'the resolution is kept');
   assert.deepEqual(checkIndex(path.join(tip, 'docs', 'adr')), { ok: true, problems: [] });
 });
 
 test('sync keeps pilot\'s run.json', (t) => {
-  const { seed, b } = scratch(t, 'sync', {
-    feature: () => {},
-    pilotSide: (seed) => commit(seed, { [RUN]: '{"slices":["pilot"]}\n' }, 'pilot records'),
+  const { origin, seed, b } = scratch(t, 'sync', {
+    pilotSide: () => ({ files: { [RUN]: '{"slices":["pilot"]}\n' }, message: 'pilot records' }),
   });
   git(seed, 'checkout', '-q', 'main');
   commit(seed, { [RUN]: '{"slices":["main"]}\n' }, 'main holds an older record');
@@ -177,5 +186,5 @@ test('sync keeps pilot\'s run.json', (t) => {
   const { merged } = sync({ cwd: b, git: (args) => git(b, ...args), test: passing });
 
   assert.equal(merged, true);
-  assert.equal(onPilot(seed, RUN), '{"slices":["pilot"]}');
+  assert.equal(onPilot(origin, RUN), '{"slices":["pilot"]}');
 });
