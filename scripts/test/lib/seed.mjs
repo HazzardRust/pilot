@@ -4,8 +4,9 @@
  * build spends an init, add, commit, checkout, merge and push per step. Working copies stay `git clone`.
  *
  * - `history` is `{ branch, files, message, merge?, from? }[]`, one commit each, in order. A branch's
- *   first commit grows from `from`'s tip when it names a branch already in history, else from the
- *   previous commit in history (none for the first); later ones from its tip.
+ *   first commit grows from `from`'s tip if given, else from the previous commit in history (none for
+ *   the first); later ones from its tip. `from` must name a branch already in history, and is
+ *   refused on a branch's later commits.
  * - A commit's tree is its parent's files with its own `files` laid over. A merge (`merge`: branch
  *   names, joined after the first parent) lays each merged branch's files over the first parent's,
  *   then its own: a history whose merge would conflict, or needs a merge base, is not one to seed.
