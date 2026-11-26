@@ -9,13 +9,13 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed f13e861",
+      "state": "integrated at dd896e7, checks green",
       "branch": "slice/prebuilt-rune-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-prebuilt-rune-s1"
     },
     {
       "slice": "S2",
-      "state": "pushed d3e89fc",
+      "state": "failed gate: merged red, every store file is viewed or never shown (drift: base 5c326bd2)",
       "after": [
         "S1"
       ],
@@ -24,19 +24,30 @@
     },
     {
       "slice": "S3",
-      "state": "planned",
+      "state": "pushed 1bd4fd7",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/prebuilt-rune-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-prebuilt-rune-s3"
     },
     {
       "slice": "S4",
-      "state": "pushed 2947413",
+      "state": "pushed 047ef5e",
       "after": [
         "S1"
       ],
       "branch": "slice/prebuilt-rune-s4",
       "worktree": "C:/Users/jrylk/Projects/pilot-prebuilt-rune-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "pushed 74321f6 (added: base drift merge, release.json is not a store file)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/prebuilt-rune-drift",
+      "worktree": "C:/Users/jrylk/Projects/pilot-prebuilt-rune-drift"
     }
   ],
   "humanSteps": [
@@ -44,8 +55,8 @@
       "text": "Before prebuilt-rune S4 pushes its workflow file: gh auth refresh -h github.com -s workflow"
     }
   ],
-  "next": "co-pilot: S1 --since gate running; S2 security re-review approve on d3e89fc5; S4 security re-review on 29474137 running; gates S2 then S4 after S1 integrates",
-  "updatedAt": "2026-11-26T12:50:18.152Z",
+  "next": "co-pilot: integrating S5 (added: base drift 5c326bd2 + release.json not a store file, 74321f6); then S2, S4, S3",
+  "updatedAt": "2026-11-26T13:47:26.852Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -95,6 +106,33 @@
       "agent": "pilot:security-reviewer",
       "what": "none: re-review of S2 approved in 3 tool uses",
       "evidence": "Verdict: approve — the reg.exe finding is fixed with a full path"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "doctor.test.mjs passing() helper red when run alone with PILOT_BRANCH unset; gate.mjs:111 sets it, so only gates passed it. Fixed in S3",
+      "evidence": "S3 report: 13 pass 1 fail on 7705d77a alone; 14/0 with PILOT_BRANCH set"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 handed back before go S3; gate owed after resume",
+      "evidence": "S3 report first line",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "findRune returns no structured mismatch flag, so doctor cannot offer pilot deck after a mismatch without parsing text",
+      "evidence": "S3 report, Pushback"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "lineage-base.test.mjs 'a gate1 cut from main is accepted' red in S4's full gate; its rerun alone ran without the gate's PILOT_BRANCH default and so could not tell flake from regression; with PILOT_BRANCH=pilot 2/0. Known lineage flake itm_ad02d595d1c2",
+      "evidence": "S4 report: 5221 pass 1 fail; alone with PILOT_BRANCH=pilot 2 pass 0 fail"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "co-pilot's fix brief named NEVER_SHOWN; the right list was the test's NOT_A_STORE_FILE, found by the reviewer; one extra round",
+      "evidence": "drift report: reviewer MEDIUM, then 2-line fix 74321f6 approved",
+      "size": 1
     }
   ]
 }
