@@ -3,8 +3,9 @@
  * commits and merges, written by one `git init --bare` and one `git fast-import`, where a porcelain
  * build spends an init, add, commit, checkout, merge and push per step. Working copies stay `git clone`.
  *
- * - `history` is `{ branch, files, message, merge? }[]`, one commit each, in order. A branch's first
- *   commit grows from the previous commit in history (none for the first); later ones from its tip.
+ * - `history` is `{ branch, files, message, merge?, from? }[]`, one commit each, in order. A branch's
+ *   first commit grows from `from`'s tip when it names a branch already in history, else from the
+ *   previous commit in history (none for the first); later ones from its tip.
  * - A commit's tree is its parent's files with its own `files` laid over. A merge (`merge`: branch
  *   names, joined after the first parent) lays each merged branch's files over the first parent's,
  *   then its own: a history whose merge would conflict, or needs a merge base, is not one to seed.
@@ -63,7 +64,12 @@ export function seed(dir, history, refs = {}) {
       if (!tips.has(name)) throw new Error(`seed: merge of a branch not yet in history: ${name}`);
       return tips.get(name);
     });
-    const parent = tips.get(commit.branch) ?? (i > 0 ? i - 1 : undefined);
+    if (commit.from !== undefined) {
+      checkBranch(commit.from);
+      if (tips.has(commit.branch)) throw new Error(`seed: from on a branch past its first commit: ${commit.branch}`);
+      if (!tips.has(commit.from)) throw new Error(`seed: from a branch not yet in history: ${commit.from}`);
+    }
+    const parent = tips.get(commit.branch) ?? (commit.from !== undefined ? tips.get(commit.from) : i > 0 ? i - 1 : undefined);
     // No prototype: a file named `__proto__` is a file.
     const tree = Object.assign(Object.create(null), parent === undefined ? {} : planned[parent].tree);
     for (const from of merge) Object.assign(tree, planned[from].tree);

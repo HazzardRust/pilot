@@ -90,6 +90,18 @@ test('commit times count up in history order', (t) => {
   assert.equal(new Set(at).size, HISTORY.length, 'no two commits share a time');
 });
 
+test('a branch cut `from` another grows from that branch\'s tip, not the previous commit', (t) => {
+  const dir = gitFixture(t, 'seed:from', (root) => root);
+  const { origin, sha } = seed(dir, [
+    { branch: 'main', files: { 'a.txt': 'a\n' }, message: 'base' },
+    { branch: 'feat/a', files: { 'b.txt': 'b\n' }, message: 'feature' },
+    { branch: 'feat/c', from: 'main', files: { 'c.txt': 'c\n' }, message: 'sibling' },
+  ]);
+
+  assert.equal(git(origin, 'rev-parse', 'feat/c^'), sha.main, 'its parent is main\'s tip');
+  assert.equal(git(origin, 'ls-tree', '--name-only', 'feat/c'), 'a.txt\nc.txt', 'its tree is main\'s files and its own, not feat/a\'s');
+});
+
 test('a branch or path that could break the stream is refused before any git', (t) => {
   const dir = gitFixture(t, 'seed:refused', (root) => root);
   const bad = [
@@ -99,6 +111,8 @@ test('a branch or path that could break the stream is refused before any git', (
     [[{ branch: 'main', files: {}, message: 'm' }], { 'x y': 'main' }, /branch/],
     [[{ branch: 'main', files: {}, message: 'm' }], { pilot: 'nowhere' }, /nowhere/],
     [[{ branch: 'main', files: {}, message: 'm' }, { branch: 'side', files: {}, message: 's' }], { side: 'main' }, /already/],
+    [[{ branch: 'main', files: {}, message: 'm' }, { branch: 'side', from: 'nowhere', files: {}, message: 's' }], undefined, /nowhere/],
+    [[{ branch: 'main', files: {}, message: 'm' }, { branch: 'main', from: 'main', files: {}, message: 's' }], undefined, /first commit/],
   ];
   for (const [history, refs, error] of bad) {
     const { git: spawned } = countGit(() => assert.throws(() => seed(dir, history, refs), error));
