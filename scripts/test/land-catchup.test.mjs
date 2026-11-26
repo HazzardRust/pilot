@@ -14,6 +14,7 @@ import path from 'node:path';
 
 import { githubHost } from '../../deck/host-github.mjs';
 import { greenChecks } from './lib/land-repos.mjs';
+import { seed } from './lib/seed.mjs';
 
 const { catchUp, main } = await import('../land.mjs');
 
@@ -31,40 +32,38 @@ function commitFile(repo, file, text, message) {
 /**
  * A bare origin with main and pilot, and `work`: a clone on `feat/a` with `a.mjs` committed,
  * pushed unless `push` is false, then with the run's own `run.json` committed and pushed when
- * `record` is true. Once `feat/a` is pushed, `fix(n)` pushes `fix(n)` to it from a second clone,
- * as QA's worktree does before the press, and answers the new tip.
+ * `record` is true. Once `feat/a` is pushed, `fix(n)` adds a commit holding `fix<n>.mjs` to
+ * origin's `feat/a` in one fast-import, as QA's worktree pushes one before the press, and answers the new tip.
+ * `pilotTip` and `workTip` are origin's pilot and work's HEAD as built.
  */
 function repos(t, { push = true, record = false } = {}) {
   return gitFixture(t, `land-catchup:repos:${push}:${record}`, (dir) => buildRepos(dir, { push, record }));
 }
 
 function buildRepos(dir, { push, record }) {
-  const origin = path.join(dir, 'origin.git');
-  git(dir, 'init', '--bare', '-b', 'main', origin);
-  const seed = path.join(dir, 'seed');
-  git(dir, 'clone', '-q', origin, seed);
-  git(seed, 'checkout', '-q', '-b', 'main');
-  commitFile(seed, 'shared.txt', 'one\n', 'main');
-  git(seed, 'push', '-q', 'origin', 'main', 'main:pilot');
+  const history = [
+    { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'main' },
+    { branch: 'feat/a', files: { 'a.mjs': 'export const a = 1;\n' }, message: 'feat a' },
+  ];
+  if (record) history.push({ branch: 'feat/a', files: { 'docs/design/a/run.json': '{"slug":"a"}\n' }, message: 'chore(a): run record' });
+  const { origin, sha } = seed(dir, history, { pilot: 'main' });
   const work = path.join(dir, 'work');
-  git(dir, 'clone', '-q', origin, work);
-  git(work, 'checkout', '-q', '-b', 'feat/a', 'origin/pilot');
-  commitFile(work, 'a.mjs', 'export const a = 1;\n', 'feat a');
-  if (push) git(work, 'push', '-q', 'origin', 'feat/a');
-  git(work, 'config', 'pilot.test', passing);
-  if (record) {
-    fs.mkdirSync(path.join(work, 'docs', 'design', 'a'), { recursive: true });
-    commitFile(work, 'docs/design/a/run.json', '{"slug":"a"}\n', 'chore(a): run record');
-    git(work, 'push', '-q', 'origin', 'feat/a');
-  }
-  const qa = path.join(dir, 'qa');
-  if (push) git(dir, 'clone', '-q', '-b', 'feat/a', origin, qa);
+  git(dir, 'clone', '-q', '-b', 'feat/a', origin, work);
+  // Never pushed: deleting origin's feat/a from work drops work's origin/feat/a with it.
+  if (!push) git(work, 'push', '-q', 'origin', '--delete', 'feat/a');
+  // `git config pilot.test`, one git fewer: the value quoted, since `;` starts a config comment.
+  fs.appendFileSync(path.join(work, '.git', 'config'), `[pilot]\n\ttest = ${JSON.stringify(passing)}\n`);
+  const marks = path.join(dir, 'fix.marks');
   const fix = (n) => {
-    commitFile(qa, `fix${n}.mjs`, `${n}\n`, `qa fix ${n}`);
-    git(qa, 'push', '-q', 'origin', 'feat/a');
-    return git(qa, 'rev-parse', 'HEAD');
+    const data = (text) => `data ${Buffer.byteLength(text)}\n${text}`;
+    const stream = [
+      'commit refs/heads/feat/a', 'mark :1', `committer test <t@example.com> ${1_700_001_000 + n} +0000`, data(`qa fix ${n}\n`),
+      'from refs/heads/feat/a^0', `M 100644 inline fix${n}.mjs`, data(`${n}\n`), 'done', '',
+    ].join('\n');
+    execFileSync('git', [`--git-dir=${origin}`, 'fast-import', '--quiet', '--done', `--export-marks=${marks}`], { input: stream, stdio: 'pipe' });
+    return fs.readFileSync(marks, 'utf8').trim().split(' ')[1];
   };
-  return { origin, work, fix };
+  return { origin, work, fix, pilotTip: sha.pilot, workTip: sha['feat/a'] };
 }
 
 /** `main`'s stdout and stderr and exit code. */
@@ -100,11 +99,10 @@ test("a worktree one commit behind origin lands with origin's commit", (t) => {
 });
 
 test('a diverged worktree is refused with both SHAs', (t) => {
-  const { origin, work, fix } = repos(t);
+  const { origin, work, fix, pilotTip } = repos(t);
   const theirs = fix(1);
   commitFile(work, 'mine.mjs', 'mine\n', 'local work');
   const ours = git(work, 'rev-parse', 'HEAD');
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
   const message = `NOT landed: feat/a has diverged from origin/feat/a (local ${ours.slice(0, 7)}, origin ${theirs.slice(0, 7)}); nothing pushed`;
 
   assert.throws(() => catchUp({ cwd: work, git: gitIn(work), head: 'feat/a' }), (err) => err.exitCode === 1 && err.message === message);
@@ -112,8 +110,9 @@ test('a diverged worktree is refused with both SHAs', (t) => {
   assert.equal(said.code, 1);
   assert.equal(said.out, `${message}\n`);
   assert.equal(git(work, 'rev-parse', 'HEAD'), ours, 'the worktree unmoved');
-  assert.equal(git(origin, 'rev-parse', 'feat/a'), theirs, 'origin unmoved');
-  assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip, 'pilot unmoved');
+  const [originFeat, originPilot] = git(origin, 'rev-parse', 'feat/a', 'pilot').split('\n');
+  assert.equal(originFeat, theirs, 'origin unmoved');
+  assert.equal(originPilot, pilotTip, 'pilot unmoved');
 
   // A git that cannot answer is a refusal that says nothing was pushed, never read as diverged or absent.
   for (const broken of ['for-each-ref', 'rev-parse', 'rev-list']) {
@@ -130,11 +129,9 @@ test('a diverged worktree is refused with both SHAs', (t) => {
 });
 
 test('tracked changes are refused by name; an untracked file is not', (t) => {
-  const { origin, work, fix } = repos(t);
+  const { origin, work, fix, pilotTip, workTip: before } = repos(t);
   const fixed = fix(1);
-  const before = git(work, 'rev-parse', 'HEAD');
   fs.writeFileSync(path.join(work, 'a.mjs'), 'export const a = 2;\n');
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
 
   assert.throws(
     () => catchUp({ cwd: work, git: gitIn(work), head: 'feat/a' }),
@@ -192,22 +189,20 @@ test("the run's own run.json is discarded before the fast-forward; any other cha
 });
 
 test('no origin branch yet lands as today', (t) => {
-  const { origin, work } = repos(t, { push: false });
-  const tip = git(work, 'rev-parse', 'HEAD');
+  const { origin, work, workTip: tip } = repos(t, { push: false });
 
   assert.deepEqual(catchUp({ cwd: work, git: gitIn(work), head: 'feat/a' }), { moved: 0 });
   const said = mainSays([], { cwd: work, git: gitIn(work), host });
   assert.equal(said.code, 0, said.out);
   assert.match(said.out, /^landed feat\/a on pilot/);
-  assert.equal(git(origin, 'rev-parse', 'feat/a'), tip, 'the first push creates it');
-  assert.equal(git(origin, 'rev-parse', 'pilot^2'), tip);
+  const [originFeat, secondParent] = git(origin, 'rev-parse', 'feat/a', 'pilot^2').split('\n');
+  assert.equal(originFeat, tip, 'the first push creates it');
+  assert.equal(secondParent, tip);
 });
 
 test('pilot land --test is a usage error', (t) => {
-  const { origin, work, fix } = repos(t);
-  const before = git(work, 'rev-parse', 'HEAD');
+  const { origin, work, fix, pilotTip, workTip: before } = repos(t);
   fix(1);
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
   const ran = path.join(work, 'ran.txt');
   const command = `node -e "require('fs').writeFileSync('ran.txt', '')"`;
 

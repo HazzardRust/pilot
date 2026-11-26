@@ -62,8 +62,7 @@ function buildScratchRun(root, unmerged) {
   execFileSync('git', ['fast-import', '--quiet', `--export-marks=${exported}`], { cwd: origin, input: stream.join('\n') });
   const sha = Object.fromEntries(fs.readFileSync(exported, 'utf8').trim().split('\n').map((line) => line.slice(1).split(' ')));
   fs.rmSync(exported);
-  git(root, 'clone', '-q', origin, work);
-  git(work, 'checkout', '-q', '-b', 'feat/x', 'origin/feat/x');
+  git(root, 'clone', '-q', '-b', 'feat/x', origin, work);
   const inWork = (args) => execFileSync('git', args, { cwd: work, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   return { root, origin, work, inWork, gate1: sha[gate1], sliceMerge: sha[sliceMerge] };
 }
