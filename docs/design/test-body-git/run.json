@@ -51,7 +51,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed f475e35 (rebased on 8e7109e)",
+      "state": "integrated, checks green at 98b39db",
       "after": [
         "S1"
       ],
@@ -129,8 +129,8 @@
       ]
     }
   ],
-  "next": "S7 checks green at 2d64224; S6 integrating; then S8, S10, S9, S11, S12; then S13",
-  "updatedAt": "2026-11-26T18:59:36.717Z",
+  "next": "S6 checks green at 98b39db; S8 integrating; then S10, S9, S11, S12; then S13",
+  "updatedAt": "2026-11-26T19:19:20.954Z",
   "friction": [
     {
       "agent": "pilot-architect",
