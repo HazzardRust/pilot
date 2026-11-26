@@ -472,9 +472,9 @@ fn toggle(words: String, key: String, on: bool, cx: &mut Cx<State>) -> El {
 fn bar(kinds: &[Kind], local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
     // Last frame's width of the bar, re-read only when it crosses the breakpoint.
-    let narrow = cx.layout_with("archive-bar", |r| narrow(r[2])) == Some(true);
+    let is_narrow = cx.layout_with("archive-bar", |r| narrow(r[2])) == Some(true);
     // A field's placeholder is not cut at its edge, so a narrow bar's is one word.
-    let hint = if narrow {
+    let hint = if is_narrow {
         "Search"
     } else {
         "Search titles and fields"
@@ -535,8 +535,8 @@ fn bar(kinds: &[Kind], local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> 
         .w_full()
         .gap(space::pad)
         .child(search)
-        .child(group("sort", "Sort", sort_row, narrow, dark))
-        .child(group("kinds", "Kinds", kind_row, narrow, dark))
+        .child(group("sort", "Sort", sort_row, is_narrow, dark))
+        .child(group("kinds", "Kinds", kind_row, is_narrow, dark))
 }
 
 /// A sort toggle's room for its arrow, ` ↓`, in `ch`.
