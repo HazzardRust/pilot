@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3",
-      "state": "pushed ab8b152 (rebased on 93a70d3), integrating",
+      "state": "integrated, checks green at 5838679",
       "after": [
         "S1"
       ],
@@ -59,10 +59,11 @@
     },
     {
       "slice": "S7",
-      "state": "implementing",
+      "state": "pushed 05bb482",
       "after": [
         "S1"
       ],
+      "branch": "slice/test-body-git-s7",
       "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s7"
     },
     {
@@ -75,10 +76,11 @@
     },
     {
       "slice": "S9",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S1"
-      ]
+      ],
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s9"
     },
     {
       "slice": "S10",
@@ -119,8 +121,8 @@
       ]
     }
   ],
-  "next": "S3 integrating; then S4, S5 integrate serially; S6, S7, S8, S10 implementing; S9 when budget frees; S11, S12 after S10",
-  "updatedAt": "2026-11-26T17:35:37.723Z",
+  "next": "S3 checks green at 5838679; S4 integrating; then S5, S7; S6, S8, S9, S10 implementing",
+  "updatedAt": "2026-11-26T17:52:08.304Z",
   "friction": [
     {
       "agent": "pilot-architect",
@@ -234,6 +236,16 @@
       "agent": "pilot:pilot-implementer",
       "what": "S4 bar margin 1 (160 vs <=161)",
       "evidence": "S4 final census"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7 bar margin 2 (204 vs <=206); a seed spawn change could push it over",
+      "evidence": "S7 tip census"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "co-pilot's briefs said test:changed runs the whole suite; it selects ~43 files since the feat tip",
+      "evidence": "S7: selected 43 of 662 test files since 93a70d3"
     }
   ]
 }
