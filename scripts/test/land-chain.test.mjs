@@ -5,7 +5,8 @@
  * `feat/<N>` to pilot (`retarget`), so N+1's PR shows only its own diff. The host is `githubHost` over a faked `gh`.
  */
 
-import { repos, passing, fakeGh, merges, mainSays, git } from './lib/land-repos.mjs';
+import { gitFixture } from './lib/git-fixture.mjs';
+import { buildRepos, passing, fakeGh, merges, mainSays, git } from './lib/land-repos.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,20 +17,24 @@ import { githubHost } from '../../deck/host-github.mjs';
 
 const { chainGuard, retarget } = await import('../land.mjs');
 
-/** N's `feat/n` from pilot, and N+1's `feat/m` cut from it, its run record saying `base: feat/n`. */
+/** N's `feat/n` from pilot, and N+1's `feat/m` cut from it, its run record saying `base: feat/n`; built once per file. */
 function chain(t) {
-  const { origin, clone, gitIn, n } = repos(t, 'n');
-  const m = clone('m', 'origin/feat/n');
-  const file = path.join(m, 'docs', 'design', 'm', 'run.json');
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${JSON.stringify({ slug: 'm', branch: 'feat/m', base: 'feat/n' }, null, 2)}\n`);
-  return { origin, gitIn, n, m };
+  return gitFixture(t, 'land-chain:chain', (dir) => {
+    const { origin, clone, gitIn, n } = buildRepos(dir, ['n']);
+    const m = clone('m', 'origin/feat/n');
+    const file = path.join(m, 'docs', 'design', 'm', 'run.json');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, `${JSON.stringify({ slug: 'm', branch: 'feat/m', base: 'feat/n' }, null, 2)}\n`);
+    return { origin, gitIn, n, m };
+  });
 }
+
+/** origin's pilot and feat/m, in one read. */
+const tips = (origin) => git(origin, 'rev-parse', 'pilot', 'feat/m').split('\n');
 
 test('N+1 before N is refused', (t) => {
   const { origin, gitIn, m } = chain(t);
-  const pilotBefore = git(origin, 'rev-parse', 'pilot');
-  const featBefore = git(origin, 'rev-parse', 'feat/m');
+  const [pilotBefore, featBefore] = tips(origin);
   const { host, calls } = fakeGh();
 
   assert.throws(() => chainGuard({ cwd: m }), /built on feat\/n, which has not landed/);
@@ -37,8 +42,9 @@ test('N+1 before N is refused', (t) => {
 
   assert.equal(code, 1);
   assert.match(out, /^NOT landed: built on feat\/n, which has not landed; land it first, or revert it \(fix round\); nothing pushed$/m);
-  assert.equal(git(origin, 'rev-parse', 'pilot'), pilotBefore);
-  assert.equal(git(origin, 'rev-parse', 'feat/m'), featBefore);
+  const [pilotAfter, featAfter] = tips(origin);
+  assert.equal(pilotAfter, pilotBefore);
+  assert.equal(featAfter, featBefore);
   assert.equal(calls.length, 0);
 });
 
@@ -86,8 +92,8 @@ test('a failed retarget is a line', (t) => {
   };
   assert.deepEqual(retarget({ host: githubHost(throwing), head: 'feat/n' }), ['retarget failed: no GitHub host']);
 
-  // The landing itself: gh refuses the edit, and the feature is landed all the same.
-  const { gitIn, n } = repos(t, 'n');
+  // The landing itself: gh refuses the edit, and the feature is landed all the same (feat/m beside it, as N's own landing above).
+  const { gitIn, n } = chain(t);
   const { gh: listing } = fakeGh([{ number: 12, headRefName: 'feat/m', baseRefName: 'feat/n', state: 'OPEN' }]);
   const host = githubHost((args) => (args[0] === 'pr' && args[1] === 'edit' ? throwing() : listing(args)));
 

@@ -4,7 +4,8 @@
  * the landing runs against a scratch bare "origin" whose HEAD is main.
  */
 
-import { repos, land, fakeGh, git, passing, mainSays } from './lib/land-repos.mjs';
+import { gitFixture } from './lib/git-fixture.mjs';
+import { repos, buildRepos, land, fakeGh, git, passing, mainSays } from './lib/land-repos.mjs';
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -22,11 +23,18 @@ function recordBase(work, base) {
   git(work, 'push', '-q', 'origin', 'feat/a');
 }
 
+/** The seeded repos with feat/a's run record saying `base: main`, built once per file. */
+const mainCut = (t) =>
+  gitFixture(t, 'land-feature-line:main-cut', (dir) => {
+    const built = buildRepos(dir, ['a']);
+    recordBase(built.a, 'main');
+    return built;
+  });
+
 const verb = (calls, name) => calls.filter((args) => args[0] === 'pr' && args[1] === name);
 
 test('a main-cut landing opens no PR from pilot', (t) => {
-  const { gitIn, a } = repos(t, 'a');
-  recordBase(a, 'main');
+  const { gitIn, a } = mainCut(t);
   const { host, calls } = fakeGh([{ number: 12, headRefName: 'feat/a', baseRefName: 'main', state: 'OPEN' }]);
 
   const said = mainSays([], { cwd: a, git: gitIn(a), host, test: passing });
@@ -50,8 +58,7 @@ test('a stacked landing names the PR below', () => {
 });
 
 test('no wait for a PR that cannot read merged', (t) => {
-  const { gitIn, a } = repos(t, 'a');
-  recordBase(a, 'main');
+  const { gitIn, a } = mainCut(t);
   const { host, calls } = fakeGh([{ number: 12, headRefName: 'feat/a', baseRefName: 'main', state: 'OPEN' }]);
   let slept = 0;
 
@@ -93,8 +100,7 @@ test('a landing based on feat/x names the PR below', (t) => {
 });
 
 test('a host that throws reads number null, with why', (t) => {
-  const { gitIn, a } = repos(t, 'a');
-  recordBase(a, 'main');
+  const { gitIn, a } = mainCut(t);
   const host = {
     reviews: () => {
       throw new Error('gh is down');
@@ -109,8 +115,7 @@ test('a host that throws reads number null, with why', (t) => {
 });
 
 test('a feature whose PR cannot be found reads unknown', (t) => {
-  const { gitIn, a } = repos(t, 'a');
-  recordBase(a, 'main');
+  const { gitIn, a } = mainCut(t);
   const { host } = fakeGh([]);
 
   const said = mainSays([], { cwd: a, git: gitIn(a), host, test: passing });

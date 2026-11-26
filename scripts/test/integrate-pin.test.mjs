@@ -5,7 +5,8 @@
  * here reaches a real remote.
  */
 
-import { git, commitFile, repos, passing, fakeGh } from './lib/land-repos.mjs';
+import { gitFixture } from './lib/git-fixture.mjs';
+import { git, commitFile, buildRepos, passing, fakeGh } from './lib/land-repos.mjs';
 import { countGit } from './lib/count-git.mjs';
 
 import { test } from 'node:test';
@@ -15,15 +16,18 @@ const { integrate, trial } = await import('../integrate.mjs');
 
 const normal = (text) => text.replace(/\b[0-9a-f]{7,40}\b/g, '<sha>');
 
-/** The seeded repos with `slice/x-s1` pushed off `feat/x` and `feat/x` checked out again. */
+/** The seeded repos with `slice/x-s1` pushed off `feat/x` and `feat/x` checked out again, built once per file. */
 function seeded(t) {
-  const { origin, x } = repos(t, 'x');
-  git(x, 'checkout', '-q', '-b', 'slice/x-s1');
-  commitFile(x, 's1.txt', 's1\n', 'slice s1');
-  git(x, 'push', '-q', 'origin', 'slice/x-s1');
-  git(x, 'checkout', '-q', 'feat/x');
-  git(x, 'branch', '-q', '-D', 'slice/x-s1');
-  return { origin, x, before: git(x, 'rev-parse', 'HEAD'), slice: git(x, 'rev-parse', 'origin/slice/x-s1') };
+  return gitFixture(t, 'integrate-pin:seeded', (dir) => {
+    const { origin, x } = buildRepos(dir, ['x']);
+    git(x, 'checkout', '-q', '-b', 'slice/x-s1');
+    commitFile(x, 's1.txt', 's1\n', 'slice s1');
+    git(x, 'push', '-q', 'origin', 'slice/x-s1');
+    git(x, 'checkout', '-q', 'feat/x');
+    git(x, 'branch', '-q', '-D', 'slice/x-s1');
+    const [before, slice] = git(x, 'rev-parse', 'HEAD', 'origin/slice/x-s1').split('\n');
+    return { origin, x, before, slice };
+  });
 }
 
 const options = (x) => ({ cwd: x, test: passing, install: () => {}, host: fakeGh().host, trailers: ['Reviewed-by: pilot:typescript-reviewer: approve'] });
@@ -35,8 +39,10 @@ test('integrate prints what it printed on the base and leaves the same merge on 
 
   assert.equal(result.ok, true);
   assert.equal(normal(result.line), 'integrated slice/x-s1 at <sha> (base pilot@<sha>): 3 pass, 0 fail; pushed; deleted slice/x-s1');
-  assert.equal(git(origin, 'log', '-1', '--format=%B', 'feat/x'), 'Merge slice/x-s1\n\nReviewed-by: pilot:typescript-reviewer: approve');
-  assert.equal(git(origin, 'log', '-1', '--format=%P', 'feat/x'), `${before} ${slice}`);
+  // One read of the merge: its parents on the first line, its message after.
+  const [parents, ...message] = git(origin, 'log', '-1', '--format=%P%n%B', 'feat/x').split('\n');
+  assert.equal(message.join('\n').trim(), 'Merge slice/x-s1\n\nReviewed-by: pilot:typescript-reviewer: approve');
+  assert.equal(parents, `${before} ${slice}`);
 });
 
 // 24 measured on the base 493bd48 for this integration (land-batching S3); after the view, 20; still 20 with
@@ -47,8 +53,8 @@ const BAR_GIT = 18;
 
 // The lines the base printed on a detached HEAD (S9): `-q` answers it with no error text of its own.
 test('integrate and its trial on a detached HEAD refuse as on the base', (t) => {
-  const { origin, x } = seeded(t);
-  const tip = git(origin, 'rev-parse', 'feat/x');
+  // `before` is x's HEAD, pushed as origin's feat/x.
+  const { origin, x, before: tip } = seeded(t);
   git(x, 'checkout', '-q', '--detach');
 
   assert.equal(integrate('slice/x-s1', options(x)).line, 'NOT integrated slice/x-s1: fatal: ref HEAD is not a symbolic ref; nothing merged or pushed');
