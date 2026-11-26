@@ -67,6 +67,8 @@ struct List {
     /// Each item's key, unique; `layouts` changes whenever they do.
     keys: Vec<String>,
     layouts: usize,
+    /// The kind column's width in `ch`: the longest kind name the view lists (S19).
+    kind_ch: usize,
 }
 
 /// What the list was built from. The view is the archive region's address, which a view put in place of
@@ -114,6 +116,14 @@ impl List {
         if self.from.as_ref() != Some(&from) {
             self.from = None;
             self.sections = sections(v, &from)?;
+            self.kind_ch = v["kinds"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(|k| k["kind"].as_str())
+                .map(|k| k.chars().count())
+                .max()
+                .unwrap_or(0);
             self.builds += 1;
             self.from = Some(from);
         }
@@ -313,52 +323,84 @@ fn ask(s: &mut State, id: &str) {
     go(s, query);
 }
 
-fn archive_row(r: &Row, dark: bool) -> El {
+/// One caption `ch`, the advance the deck's fixed columns are measured in (`queue`, `layout`).
+pub(crate) fn ch() -> f32 {
+    type_::CAPTION.size * 0.6
+}
+
+/// The time column's width in `ch`: the view's local `HH:MM`.
+const TIME_CH: f32 = 5.0;
+
+/// A row as fixed columns (S19): its kind `kind_ch` wide and its time `TIME_CH` wide, so every row's title
+/// starts at one x, and its fields wrapping under the title, never under the kind.
+fn archive_row(r: &Row, kind_ch: usize, dark: bool) -> El {
     let (t, ui) = (theme::tokens(dark), tok::theme(dark));
     let caption = |words: &str| text(words).font(type_::CAPTION).color(t.quiet);
-    let line = row()
-        .w_full()
-        .gap(space::between)
-        .child(caption(r.kind))
-        .child(caption(r.when))
+    // Keyed apart from `archive-row-`, whose keys are one per row.
+    let part = |name: &str| format!("archive-col-{name}-{}", r.id);
+    let column = |words: &str, name: &str, width: f32| {
+        caption(words).key(part(name)).truncate().w(width * ch())
+    };
+    let fields = r.fields.iter().fold(
+        row()
+            .key(part("fields"))
+            .w_full()
+            .flex_wrap()
+            // A wrapped line sits `within` under the last, as the lines of one field do.
+            .gaps(space::within, space::between),
+        |out, f| {
+            // A value longer than the line wraps under the title's x rather than running past the row.
+            out.child(
+                row()
+                    .shrink()
+                    .gap(space::within)
+                    .child(caption(f.label))
+                    .child(theme::content(
+                        text(f.value)
+                            .font(type_::CAPTION)
+                            .color(ui.text)
+                            .shrink()
+                            .wrap(),
+                        dark,
+                    )),
+            )
+        },
+    );
+    let body = col()
+        .grow(1.0)
+        .min_w(space::s0)
+        .gap(space::within)
         .child(theme::content(
             text(r.title)
+                .key(part("title"))
                 .font(type_::BODY)
                 .color(ui.text)
-                .grow(1.0)
+                .w_full()
                 .wrap(),
             dark,
-        ));
-    let fields = r.fields.iter().fold(row().gap(space::between), |out, f| {
-        out.child(
-            row()
-                .gap(space::within)
-                .child(caption(f.label))
-                .child(theme::content(
-                    text(f.value).font(type_::CAPTION).color(ui.text),
-                    dark,
-                )),
-        )
-    });
+        ))
+        .child(fields);
     let id = r.id.to_string();
-    theme::control(col(), dark)
+    theme::control(row(), dark)
         .key(format!("archive-row-{}", r.id))
         .role("button")
         .w_full()
-        .gap(space::within)
-        .child(line)
-        .child(fields)
+        .gap(space::between)
+        .child(column(r.kind, "kind", kind_ch as f32))
+        .child(column(r.when, "time", TIME_CH))
+        .child(body)
         .on_press(move |s: &mut State| ask(s, &id))
 }
 
-/// A section's heading over `count` kept rows: its words fold or open it.
+/// A section's heading over `count` kept rows, starting at the rows' kind column with its count right after
+/// it: its words fold or open it.
 fn heading(day: &Value, count: usize, open: bool, dark: bool) -> El {
     let (t, ui) = (theme::tokens(dark), tok::theme(dark));
     let day_key = day["key"].as_str().unwrap_or_default();
     let key = day_key.to_string();
     row()
         .w_full()
-        .gap(space::pad)
+        .gap(space::within)
         .child(
             theme::control(text(day["heading"].as_str().unwrap_or_default()), dark)
                 .key(format!("archive-day-{day_key}"))
@@ -370,7 +412,10 @@ fn heading(day: &Value, count: usize, open: bool, dark: bool) -> El {
                 }),
         )
         .child(theme::content(
-            text(count.to_string()).font(type_::CAPTION).color(t.quiet),
+            text(count.to_string())
+                .key(format!("archive-count-{day_key}"))
+                .font(type_::CAPTION)
+                .color(t.quiet),
             dark,
         ))
 }
@@ -401,7 +446,7 @@ fn item(s: &State, i: usize, dark: bool) -> El {
                     .w_full()
                     .gap(space::pad)
                     .pb(if last { 0.0 } else { space::pad })
-                    .child(archive_row(&r, dark))
+                    .child(archive_row(&r, list.kind_ch, dark))
                     .child(theme::separator(dark)),
                 Err(_) => col(),
             }
@@ -425,20 +470,21 @@ fn toggle(words: String, key: String, on: bool, cx: &mut Cx<State>) -> El {
         .color(ink)
 }
 
-/// The search box and a toggle per column on one line, a toggle per kind on the lines below. The column
-/// sorted by is on, its arrow its order: pressed again it flips, and another column starts ascending.
-/// The sort is kept in the prefs, so the window opens on it again (S18).
+/// The bar as labelled groups in a fixed order (S19): the search box across the bar, then `Sort` with a
+/// toggle per column, then `Kinds` with a toggle per kind. The column sorted by is on, its arrow its order:
+/// pressed again it flips, and another column starts ascending. The sort is kept in the prefs, so the
+/// window opens on it again (S18).
 fn bar(kinds: &[Kind], local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> El {
     let dark = cx.system_dark();
     let search = text_input(&local.search, type_::BODY)
         .key("archive-search")
         .label("Search the archive")
-        .grow(1.0)
+        .w_full()
         .placeholder("Search titles and fields", theme::tokens(dark).quiet)
         .on_edit(|s: &mut State| &mut s.regions.archive.search);
-    let mut bar = row().w_full().flex_wrap().gap(space::between).child(search);
-    // Both lines wrap, so every control stays inside the window's width at any size (QA2).
-    let mut kind_row = row().w_full().flex_wrap().gap(space::between);
+    // Both groups wrap, so every control stays inside the window's width at any size (QA2).
+    let mut sort_row = row().flex_wrap().gaps(space::within, space::between);
+    let mut kind_row = row().flex_wrap().gaps(space::within, space::between);
     for k in kinds {
         let on = local.kind.as_deref() == Some(k.kind);
         let kind = k.kind.to_string();
@@ -466,13 +512,15 @@ fn bar(kinds: &[Kind], local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> 
             (true, true) => " ↑",
             (true, false) => " ↓",
         };
-        bar = bar.child(
+        // Each sort toggle is as wide as its label with an arrow, so turning one on moves nothing (S19).
+        sort_row = sort_row.child(
             toggle(
                 format!("{label}{arrow}"),
                 format!("archive-sort-{name}"),
                 on,
                 cx,
             )
+            .w((label.chars().count() as f32 + ARROW_CH) * ch())
             .on_press(move |s: &mut State| {
                 s.prefs.archive_sort = ArchiveSort {
                     column,
@@ -486,8 +534,52 @@ fn bar(kinds: &[Kind], local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> 
         .key("archive-bar")
         .w_full()
         .gap(space::pad)
-        .child(bar)
-        .child(kind_row)
+        .child(search)
+        .child(group("sort", "Sort", sort_row, dark))
+        .child(group("kinds", "Kinds", kind_row, dark))
+}
+
+/// A sort toggle's room for its arrow, ` ↓`, in `ch`.
+const ARROW_CH: f32 = 2.0;
+
+/// The group labels' column, in `ch`: the longer label, `Kinds`.
+const GROUP_CH: f32 = 5.0;
+
+/// One labelled group of the bar: its caption keyed `archive-group-<name>` in a fixed column, so every
+/// group's controls start at one x, and its controls wrapping beside it.
+fn group(name: &str, label: &str, controls: El, dark: bool) -> El {
+    row()
+        .w_full()
+        .gap(space::between)
+        .child(
+            text(label)
+                .key(format!("archive-group-{name}"))
+                .font(type_::CAPTION)
+                .color(theme::tokens(dark).quiet)
+                .w(GROUP_CH * ch()),
+        )
+        .child(controls.grow(1.0).min_w(space::s0))
+}
+
+/// The archive's bar and the rule under it, drawn above the centre's viewport so it stays put while the list
+/// scrolls (S19, ADR 0217 L4); none while the region cannot be read or holds no day.
+pub fn band(v: &Value, local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> Option<El> {
+    let kinds = v
+        .get("kinds")
+        .map_or(Ok(vec![]), Vec::<Kind>::deserialize)
+        .ok()?;
+    if v.get("days").and_then(Value::as_array)?.is_empty() {
+        return None;
+    }
+    let dark = cx.system_dark();
+    // The bar is its own band, ruled off from the list it filters (S18).
+    Some(
+        col()
+            .w_full()
+            .gap(space::between)
+            .child(bar(&kinds, local, sort, cx))
+            .child(theme::separator(dark).key("archive-bar-rule")),
+    )
 }
 
 pub fn draw(v: &serde_json::Value, local: &Local, sort: ArchiveSort, cx: &mut Cx<State>) -> El {
@@ -496,7 +588,7 @@ pub fn draw(v: &serde_json::Value, local: &Local, sort: ArchiveSort, cx: &mut Cx
     let kinds = v.get("kinds").map_or(Ok(vec![]), Vec::<Kind>::deserialize);
     // Every filter and sort runs here, over the rows the window holds (L6): a keystroke asks the deck
     // nothing, and a frame that changed none of them reads no row (S17).
-    let (Some(days), Ok(kinds), Ok(())) = (
+    let (Some(days), Ok(_), Ok(())) = (
         v.get("days").and_then(Value::as_array),
         kinds,
         local.list.borrow_mut().update(v, local, sort),
@@ -504,19 +596,11 @@ pub fn draw(v: &serde_json::Value, local: &Local, sort: ArchiveSort, cx: &mut Cx
         return col().key("archive");
     };
     let dark = cx.system_dark();
-    let region = col()
-        .key("archive")
-        .w_full()
-        .grow(1.0)
-        .min_h(space::s0)
-        .gap(space::between);
+    // As tall as its list, so the centre's viewport scrolls it (S19); the bar is `band`'s, above it.
+    let region = col().key("archive").w_full().gap(space::between);
     if days.is_empty() {
         return region.child(theme::empty("Nothing archived yet.", "archive-none", dark));
     }
-    // The bar is its own band, ruled off from the list it filters (S18).
-    let region = region
-        .child(bar(&kinds, local, sort, cx))
-        .child(theme::separator(dark).key("archive-bar-rule"));
     let (count, layouts) = {
         let list = local.list.borrow();
         (list.items.len(), list.layouts)

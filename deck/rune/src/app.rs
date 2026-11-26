@@ -411,6 +411,15 @@ pub fn center(s: &State, cx: &mut Cx<State>) -> El {
         &s.pending,
         cx,
     )));
+    // The archive's bar stays put beside the tabs while its list scrolls (archive-page S19): still one
+    // viewport (L4), the bar above it.
+    if s.query.screen == "archive"
+        && s.query.id.is_none()
+        && let Some(band) =
+            regions::archive::band(region("archive"), &r.archive, s.prefs.archive_sort, cx)
+    {
+        screen = screen.child(band);
+    }
     // The queue is the home page's and the thread page lists no settled threads
     // (view/queue.mjs, history.mjs): a region a screen withholds is not drawn, rather than saying
     // there is nothing in it.
