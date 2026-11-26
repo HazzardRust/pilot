@@ -59,9 +59,7 @@ function buildRun(root) {
   ], { pilot: 'main' });
   const work = path.join(root, 'work');
   git(root, 'clone', '-q', origin, work);
-  // As the clone of an empty origin left it: main pushed without tracking, and no origin/HEAD.
-  const config = path.join(work, '.git', 'config');
-  fs.writeFileSync(config, fs.readFileSync(config, 'utf8').replace(/\[branch "main"\]\n(\t.*\n)*/, ''));
+  // As the clone of an empty origin left it: no origin/HEAD.
   fs.rmSync(path.join(work, '.git', 'refs', 'remotes', 'origin', 'HEAD'));
   git(work, 'config', 'pilot.test', passing);
 
