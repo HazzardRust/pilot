@@ -6,6 +6,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -21,31 +22,46 @@ const PILOT = fileURLToPath(new URL('../../bin/pilot.mjs', import.meta.url));
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 const BASE = 'origin/main';
 
-/** A clone of a bare origin; `add(name, { merged, dirty, locked })` cuts and works a worktree. */
+/** The worked trees' commits: origin's main merges the first list, never the second. */
+const MERGED = ['clean', 'dirty', 'locked', 'nolog', 'reused', 'mine', 'feat', 'other', 'plain'];
+const UNMERGED = ['unmerged', 'landed'];
+
+/**
+ * A clone of a seeded origin; `add(name, { merged, dirty, locked })` cuts a worktree. Origin holds
+ * each name's commit (`<name>.txt`) on a branch of that name, grown from main and, for MERGED,
+ * merged into it, so a worked tree is cut at main's first commit and fast-forwarded to its commit:
+ * its reflog says it moved. Origin's branches are only remote-tracking refs here; a test's local
+ * branches are the ones its trees cut.
+ */
 function scratch(t) {
   return gitFixture(t, 'worktrees:scratch', buildScratch);
 }
 
+/** `scratch` with `clean`, merged, already cut: the tree most tests prune. */
+function withClean(t) {
+  return gitFixture(t, 'worktrees:clean', (root) => {
+    const repo = buildScratch(root);
+    return { ...repo, clean: repo.add('clean', { merged: true }) };
+  });
+}
+
 function buildScratch(root) {
-  const origin = path.join(root, 'origin.git');
+  const commit = (name) => ({ branch: name, files: { [`${name}.txt`]: name }, message: name });
+  const { origin } = seed(root, [
+    { branch: 'main', files: {}, message: 'main' },
+    ...MERGED.flatMap((name) => [commit(name), { branch: 'main', files: {}, message: `merge ${name}`, merge: [name] }]),
+    ...UNMERGED.map((name) => ({ ...commit(name), from: 'main' })),
+  ]);
   const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
   git(root, 'clone', '-q', origin, work);
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'main');
-  git(work, 'push', '-q', 'origin', 'main');
+  // Main's first commit, which the first merged name grew from.
+  const first = `origin/${MERGED[0]}~1`;
   const add = (name, { merged = false, dirty = false, locked = false, commit = true, detach = false, branch = name } = {}) => {
+    if (commit && merged !== MERGED.includes(name)) throw new Error(`scratch: ${name} is ${merged ? 'not ' : ''}merged in origin`);
     const dir = path.join(root, name);
     if (detach) git(work, 'worktree', 'add', '-q', '--detach', dir, BASE);
-    else git(work, 'worktree', 'add', '-q', '-b', branch, dir, BASE);
-    if (commit) {
-      fs.writeFileSync(path.join(dir, `${name}.txt`), name);
-      git(dir, 'add', `${name}.txt`);
-      git(dir, 'commit', '-q', '-m', name);
-    }
-    if (merged) {
-      git(work, 'merge', '-q', '--no-ff', '-m', `merge ${name}`, branch);
-      git(work, 'push', '-q', 'origin', 'main');
-    }
+    else git(work, 'worktree', 'add', '-q', '-b', branch, dir, commit ? first : BASE);
+    if (commit) git(dir, 'merge', '-q', '--ff-only', `origin/${name}`);
     if (dirty) fs.writeFileSync(path.join(dir, 'stray.txt'), 'untracked');
     if (locked) git(work, 'worktree', 'lock', dir);
     return dir;
@@ -68,8 +84,7 @@ const names = (paths) => paths.map((p) => path.basename(p)).sort();
 const branches = (work) => git(work, 'branch', '--format=%(refname:short)').split('\n').sort();
 
 test('list names each state', (t) => {
-  const { work, add } = scratch(t);
-  add('clean', { merged: true });
+  const { work, add } = withClean(t);
   add('dirty', { merged: true, dirty: true });
   add('unmerged');
   add('locked', { merged: true, locked: true });
@@ -82,8 +97,7 @@ test('list names each state', (t) => {
 });
 
 test('prune removes only the merged-clean worktree and its local branch', (t) => {
-  const { work, add } = scratch(t);
-  const clean = add('clean', { merged: true });
+  const { work, add, clean } = withClean(t);
   add('unmerged');
   const result = prune(work, BASE);
   assert.deepEqual(names(result.removed), ['clean']);
@@ -93,8 +107,7 @@ test('prune removes only the merged-clean worktree and its local branch', (t) =>
 });
 
 test('keep wins over merged-clean', (t) => {
-  const { work, add } = scratch(t);
-  const clean = add('clean', { merged: true });
+  const { work, clean } = withClean(t);
   const result = prune(work, BASE, { keep: ['clean'] });
   assert.deepEqual(result.removed, []);
   assert.deepEqual(result.kept.map(({ path: p, state }) => [path.basename(p), state]), [['work', 'main'], ['clean', 'concluding']]);
@@ -132,8 +145,7 @@ test('prune never removes the main checkout or a locked worktree', (t) => {
 });
 
 test('a failed fetch stops prune before anything is removed', (t) => {
-  const { root, work, add } = scratch(t);
-  const clean = add('clean', { merged: true });
+  const { root, work, clean } = withClean(t);
   git(work, 'remote', 'set-url', 'origin', path.join(root, 'gone.git'));
   assert.throws(() => prune(work, BASE), /fetch/);
   assert.ok(fs.existsSync(clean));
@@ -141,8 +153,7 @@ test('a failed fetch stops prune before anything is removed', (t) => {
 });
 
 test('--dry-run removes nothing and names what it would', (t) => {
-  const { work, add } = scratch(t);
-  const clean = add('clean', { merged: true });
+  const { work, clean } = withClean(t);
   const result = prune(work, BASE, { dryRun: true });
   assert.deepEqual(names(result.removed), ['clean']);
   assert.ok(fs.existsSync(clean));
@@ -167,8 +178,7 @@ test('a worktree with no reflog is listed as open', (t) => {
 });
 
 test('pilot worktrees prints one row per worktree, and prune --dry-run names its pick', (t) => {
-  const { work, add } = scratch(t);
-  const clean = add('clean', { merged: true });
+  const { work, clean } = withClean(t);
   const run = (...args) => spawnSync(process.execPath, [PILOT, 'worktrees', ...args, '--repo', work], { encoding: 'utf8' });
   const list = run();
   assert.equal(list.status, 0, list.stderr);
