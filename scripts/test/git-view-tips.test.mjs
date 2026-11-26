@@ -6,6 +6,7 @@
 
 import { gitFixture } from './lib/git-fixture.mjs';
 import { countGit } from './lib/count-git.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,25 +17,23 @@ import { gitView, holdsIn, tipOf } from '../git-view.mjs';
 
 const run = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
-/** A clone of a bare origin with `pilot` at one commit and `feat/x` one commit past it. */
+/**
+ * A clone of a seeded bare origin with `pilot` at one commit and `feat/x` (and main, checked out) one commit
+ * past it; `pilot` and `feature` are their SHAs as seeded.
+ */
 const clone = (t) =>
   gitFixture(t, 'git-view-tips:clone', (dir) => {
-    const origin = path.join(dir, 'origin.git');
+    const { origin, sha } = seed(dir, [
+      { branch: 'pilot', files: {}, message: 'one' },
+      { branch: 'feat/x', from: 'pilot', files: {}, message: 'two' },
+    ], { main: 'feat/x' });
     const work = path.join(dir, 'work');
-    run(dir, 'init', '-q', '--bare', '-b', 'main', origin);
     run(dir, 'clone', '-q', origin, work);
-    run(work, 'commit', '-q', '--allow-empty', '-m', 'one');
-    run(work, 'push', '-q', 'origin', 'HEAD:refs/heads/pilot');
-    run(work, 'commit', '-q', '--allow-empty', '-m', 'two');
-    run(work, 'push', '-q', 'origin', 'HEAD:refs/heads/feat/x');
-    run(work, 'fetch', '-q', 'origin');
-    return { work };
-  }).work;
+    return { work, pilot: sha.pilot, feature: sha['feat/x'] };
+  });
 
 test('every tip in an epoch costs one spawn', (t) => {
-  const work = clone(t);
-  const pilot = run(work, 'rev-parse', 'refs/remotes/origin/pilot');
-  const feature = run(work, 'rev-parse', 'refs/remotes/origin/feat/x');
+  const { work, pilot, feature } = clone(t);
 
   const { value, git: spawned } = countGit(() => {
     const git = gitView(work);
@@ -47,7 +46,7 @@ test('every tip in an epoch costs one spawn', (t) => {
 });
 
 test('a write refreshes the snapshot', (t) => {
-  const work = clone(t);
+  const { work } = clone(t);
   const git = gitView(work);
   const before = tipOf(git, 'refs/heads/main');
   const head = tipOf(git, 'HEAD');
@@ -62,9 +61,7 @@ test('a write refreshes the snapshot', (t) => {
 });
 
 test('an ancestry check is asked once', (t) => {
-  const work = clone(t);
-  const pilot = run(work, 'rev-parse', 'refs/remotes/origin/pilot');
-  const feature = run(work, 'rev-parse', 'refs/remotes/origin/feat/x');
+  const { work, pilot, feature } = clone(t);
   const ancestor = ['merge-base', '--is-ancestor', pilot, feature];
   const not = ['merge-base', '--is-ancestor', feature, pilot];
 
@@ -78,8 +75,7 @@ test('an ancestry check is asked once', (t) => {
 });
 
 test('a remembered false and a remembered null are asked again after a write', (t) => {
-  const work = clone(t);
-  const feature = run(work, 'rev-parse', 'refs/remotes/origin/feat/x');
+  const { work, feature } = clone(t);
   const git = gitView(work);
   const ancestor = ['merge-base', '--is-ancestor', feature, 'refs/heads/later'];
   assert.equal(tipOf(git, 'refs/heads/later'), null);
@@ -92,7 +88,7 @@ test('a remembered false and a remembered null are asked again after a write', (
 });
 
 test('a short or non-branch ref name is refused', (t) => {
-  const git = gitView(clone(t));
+  const git = gitView(clone(t).work);
   assert.throws(() => tipOf(git, 'pilot'), /full branch ref/);
   assert.throws(() => tipOf(git, 'refs/tags/v1'), /full branch ref/);
 });
