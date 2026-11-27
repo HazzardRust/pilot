@@ -111,59 +111,51 @@
     },
     {
       "slice": "S10 Prune starts less git (added)",
-      "state": "pushed e351a75 (on 0061fc1); gate 5470/0 exit 0; spawns 14166/13018; temp ceilings 14175/13024; ts + security approve",
+      "state": "integrated at 8c4a18d; checks green",
       "after": [
         "S8"
       ],
       "branch": "slice/prune-worktrees-s10",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s10"
+    },
+    {
+      "slice": "Feature",
+      "state": "fix round implementing; security review APPROVE (SEC1 kept, SEC2 nit, SEC3 dropped)",
+      "branch": "feat/prune-worktrees",
+      "worktree": "C:/Users/jrylk/Projects/pilot-feat-prune-worktrees"
+    },
+    {
+      "slice": "Fix round",
+      "state": "failed gate: spawns 14252 (git 13103) over 14249 / 13100 on the integrate merge, 5443 pass 0 fail; temp ceilings to the merge's count, then integrate again",
+      "after": [
+        "S10 Prune starts less git (added)"
+      ],
+      "branch": "fix/prune-worktrees"
+    },
+    {
+      "slice": "S11 One porcelain parser and one path-equality export (added)",
+      "state": "planned: after the fix round, before QA; removal only",
+      "after": [
+        "Fix round"
+      ]
     }
   ],
-  "next": "integrating S10 e351a75 under lock; then checks; fundamentalist + QA on final diff.",
-  "updatedAt": "2026-11-27T02:23:54.213Z",
+  "findings": [
+    "kept: F1 defect — integrate.mjs:645 removeTree(cwd, dir) uses default holder () => null (worktree-remove.mjs:155), so integrate removes a tree a live process holds, against L4; pilot checked both lines",
+    "kept: SEC1 defect — worktrees.mjs prune calls removeTree with no holder, so removeTree's own re-check defaults to () => null (security-reviewer LOW); pass holder through, same family as F1, +1",
+    "kept: F3 defect — record rule has two homes that disagree (RECORD_CODES vs dirtOf); classify uses status + isRecord, delete the mirror set and featRecords; not checked by pilot",
+    "kept: F2 simplify — three porcelain -z parsers and three Windows path-equality functions become one export each, about -35; over the fix round's limit, so built as added slice S11 (main, option A)",
+    "kept: F4 simplify — prune's remove/branch callbacks replaced by { branchFlag } and a returned err, about -10",
+    "kept: F5 simplify — worktrees.mjs:351 remove option used by one test only; delete option and spy, keep on-disk asserts",
+    "dropped: F6 simplify — renaming the flag across agent prose costs more than the glossary collision",
+    "kept: nits simplify — keptLine at worktrees.mjs:614; lstat links only at worktree-remove.mjs:133-141; S10.md after-reason and behaviour form; SEC2 worktree-remove.mjs header claims nothing changes before every check passes, but unlinkLinks runs before remove: fix the wording, 0 net",
+    "dropped: SEC3 simplify — landed removal with --force deletes untracked files, an embedded repo included: by design under A3, and guarding it would overturn A3 for a rare case",
+    "dropped: S10-dual-moved simplify — it is spec 13's spawn budget while the ceiling question itm_1b18772998c1 is open",
+    "dropped: A4/S5 simplify — user kept A4 on itm_421941fbcb07"
+  ],
+  "next": "Lane held; co-pilot aad052b77a9abad54 (resume by SendMessage; hook ends its turns). Fix round fix/prune-worktrees e65c63d9+constants commit (a0b40edcff62fab16) integrating; then merge origin/hazzardrust-pilot 71991cb (drift; main runs deck_ticket replan on its sha), S11 (F2), final constants (exact, or +25 if itm_cc4171bdb60c says), QA fresh, gate2 naming share ~630.",
+  "updatedAt": "2026-11-27T06:44:08.478Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "pilot wait restarted about 14 times; every reply exit read; several replies arrived as hook notices mid-call and were answered twice over",
-      "size": 12
-    },
-    {
-      "kind": "drain",
-      "what": "auto mode gave no verdict on a Bash, Agent or SendMessage call sharing a response with a deck call, five times; each reissued alone",
-      "size": 4
-    },
-    {
-      "kind": "drain",
-      "what": "deck_status next capped at 400 chars: four calls rejected and rewritten",
-      "size": 3
-    },
-    {
-      "kind": "drain",
-      "what": "pilot told the user twice that landings ran side by side and that a retry was running; the deck queues lands, found only from a gate2's landing record",
-      "size": 3
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "tests calling integrate() wait on 2 machine-wide gate slots; a test file sat 280 s in 'gate: waiting for a slot' and timed out; PILOT_GATE_SLOT=1 makes it pass in 60 s",
-      "evidence": "S4 report: scripts/gate-slots.mjs, integrate-prune.test.mjs",
-      "size": 12
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "commit trailer names Fable 5.2 for every slice whatever model ran it",
-      "evidence": "S2 report pushback row",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "hand-back enforced while its S5 implementer was live, mid Monitor wait",
-      "evidence": "handback-send-enforce notice during task bbwt2nlbn"
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "gh run view --log-failed returned nothing while the run was in progress; CI log needed the jobs logs API",
-      "evidence": "gh api .../jobs/139088332132/logs"
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "worktree add plus 2832-file checkout ran long enough to be moved to the background",
@@ -338,6 +330,50 @@
       "what": "S10: count-spawns.mjs records file and kind but not git arguments; a separate tracer was needed to find hot call sites",
       "evidence": "S10 report; scratchpad s10-trace.mjs",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "QA brief and installed definition create the QA tree with bare git worktree add (untagged), while branch's pilot-qa.md:35 says pilot worktrees add --run",
+      "evidence": "QA report; agents/pilot-qa.md:35",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner did not return before the enforced hand-back; evidence pass not run",
+      "evidence": "fundamentalist report tools table",
+      "size": 2
+    },
+    {
+      "agent": "pilot-evidence-runner",
+      "what": "mutation run hit its 900 s timeout with 4256 mutants and no verdicts; report arrived after the fundamentalist had finished; Stryker sandbox left locked in its scratch dir",
+      "evidence": "exit 124; fundamentalist reported its evidence runner never returned",
+      "size": 2
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "S4 and S7 hashes are merge commits, so git show printed no diff",
+      "evidence": "diffed against first parent instead"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a test file run alone fails every integrate test with 'no pilot branch name', since only the gate sets PILOT_BRANCH; one false red on F1's first run",
+      "evidence": "integrate-prune.test.mjs 0 pass / 10 fail until PILOT_BRANCH=pilot was exported",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "handed back while holding for the limit answer, so the round needed a resume; two nits too terse in the brief to apply",
+      "evidence": "report at 84fef7e1, unpushed; asked for lstat and S10.md nits verbatim"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "spawn ceilings sit at the base's exact count, so any new git-fixture test turns the gate red and needs a probe to find the cause",
+      "evidence": "+29 git from two red-green tests equals the whole overshoot 13053 - 13024 on fix/prune-worktrees cf155eaf"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a test file run alone fails every integrate test with 'no pilot branch name' unless PILOT_BRANCH is exported; cost a false red",
+      "evidence": "integrate-prune.test.mjs 0 pass / 10 fail until PILOT_BRANCH=pilot was set"
     }
   ]
 }
