@@ -72,10 +72,11 @@ const POLL_MS = 1_000;
  * 2026-11-27, prune-worktrees S8 on S7: spawns 14580 (node 853, git 13432, other 295) locally + Windows-CI delta 9/6; temporary, folded back by the fixture slice
  * 2026-11-27, prune-worktrees S10 on S6 (0061fc1): spawns 14166 (node 853, git 13018, other 295) locally + Windows-CI delta 9/6,
  *   14175 / 13024; temporary, still over the base bars 13597 / 12453, which the user decides.
+ * 2026-11-27, prune-worktrees fix round: 14249 (853, 13100, 296) locally at 7342ece; the four defect tests' fixture git; temporary until S11 (itm_1b18772998c1).
  */
-export const SPAWN_CEILING = 14175;
+export const SPAWN_CEILING = 14249;
 /** The most git processes a full suite may start (land-batching S7, S6); see the dated lines above. */
-export const GIT_CEILING = 13024;
+export const GIT_CEILING = 13100;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 
