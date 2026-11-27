@@ -9,13 +9,13 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "pushed c1bc236; ts-reviewer warn, security-reviewer approve (re-review of 41d59c4..c1bc236); integrate after S3",
+      "state": "integrating 5c603cb (ts APPROVE, security APPROVE; sec MEDIUM command-not-in-key kept for fix round)",
       "branch": "slice/tested-once-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s1"
     },
     {
       "slice": "S2",
-      "state": "implementing",
+      "state": "implementing: (b) committed 6dc46a1 local, B5 red then green; waits for S1 on feat to rebase, gate, review",
       "after": [
         "S1"
       ],
@@ -24,13 +24,13 @@
     },
     {
       "slice": "S3",
-      "state": "pushed 2c67f4e; ts-reviewer approve; integrating",
+      "state": "integrated at 4504f10; re-pin fix at dc9ddd4 (11769/10627), checks running",
       "branch": "slice/tested-once-s3",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s3"
     },
     {
       "slice": "S4",
-      "state": "implementing (+ testCli suite-ledger read fix from S1 security re-review)",
+      "state": "pushed 5da919f (on c1bc236, not rebased); ts-reviewer approve, security-reviewer approve; slice tests 21/21; full gate NOT run (stopped waiting for slot at pause); NOT integrated",
       "after": [
         "S1"
       ],
@@ -39,7 +39,7 @@
     },
     {
       "slice": "S5",
-      "state": "implementing",
+      "state": "pushed 8dc009c (on c1bc236, not rebased); ts approve af6525c + 8dc009c (3 LOW: 799/800 headroom, import golf, homedir read in runs.mjs; left for fundamentalist); NOT integrated",
       "after": [
         "S1"
       ],
@@ -57,10 +57,23 @@
         "S5"
       ],
       "branch": "feat/tested-once"
+    },
+    {
+      "slice": "S6 slice-scope runs reusable (added)",
+      "state": "implementing",
+      "after": [
+        "S3"
+      ],
+      "branch": "slice/tested-once-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s6"
     }
   ],
-  "next": "S3 integrating; then integrate S1 (security approve); send S2/S4/S5 (pipelined from S1 c1bc236) the new feat tip to rebase. A6 vs L4 question with main, default keep as built.",
-  "updatedAt": "2026-11-24T17:13:38.808Z",
+  "findings": [
+    "dropped: S2-sec-LOW SCOPE regex fail-open — does not hold on feat: S3 (4504f10) select-tests.mjs:108 SCOPE matches '; deferred: …'",
+    "kept: S1-sec-MEDIUM reuse key omits the test command — a changed pilot.test or package.json test script reuses a row a different command produced; fix: command in the row and in fits (fix round)"
+  ],
+  "next": "Co-pilot (successor) on lane: S1 security re-review, then integrate S1 5c603cb + checks; S6 implementing; then S2 resume (6dc46a1), S4/S5 rebase+gate (S5 runs.mjs move unreviewed); then fundamentalist, QA.",
+  "updatedAt": "2026-11-27T22:20:36.712Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -90,6 +103,91 @@
       "what": "A6 and L4 conflict found only at build: slice-scope runs always say deferred, so they are never reusable",
       "evidence": "S1 pushback 1; S3 B3 row deferred: cargo",
       "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: store-runs.mjs sat 1 line under the 800-line deck facade bar only the full suite enforces; a gate run plus a refactor into deck/runs.mjs",
+      "evidence": "facades.test.mjs: store-runs.mjs 819 > 800",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fact-sheet",
+      "what": "reported testRunsFor not found; it is at scripts/test-ledger.mjs:101",
+      "evidence": "S5 implementer report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4: three parallel slice gates queue on the machine's test slot; S4's full gate never got a slot before the pause",
+      "evidence": "gate: waiting for a slot behind pids 13520, 11136",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot-qa prompt pin 5264 has 0.75 headroom; three wording trims to add the L2 scratch-home line",
+      "evidence": "measure-prompt 5263.25 vs 5264",
+      "size": 1
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "S2 ts-reviewer handed back findings without a Verdict line; a follow-up ask was refused after its report, so a second review was spawned",
+      "evidence": "S2 implementer report: Verdict lines, ts: none",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: gh-stub fails once HOME points at a scratch dir; Git Bash mktemp paths need cygpath -m for node; tests under load 373-398 s",
+      "evidence": "plugin is not installed",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S2: the brief named no trailer and the session's attribution differs from brief.md's, so the first commit was redone",
+      "evidence": "S2 report: reset --soft HEAD~1, recommitted with brief.md trailer",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spawn pins in gate.mjs are exact, so each drift merge costs a red CI round trip to learn the count; the fixer also took the session's trailer, not brief.md's",
+      "evidence": "Gate run 45992689173: spawns 11769 over 11758; dc9ddd4 trailer",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S1: suite needs PILOT_BRANCH that only gate.mjs sets, so bare node --test looked like a broken base; the drift also broke sync.mjs (removed PILOT_BRANCH export) and leaked PILOT_TEST_SCOPE into nested gates",
+      "evidence": "13 red on the rebased tree; fixes f10dab7, e99a578; two diagnosis rounds",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce hook fires on a child's interim 'waiting on its own background work' notice, forcing the co-pilot to hand back paused with a live child",
+      "evidence": "two forced hand-backs in one resume on tested-once while fixer afeb57737626c0c57 was live"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "could not resume S1 rebase implementer a8eaae4cc446e3896: no transcript found; trailers rebuilt from scratchpad copy",
+      "evidence": "co-pilot hand-back, tested-once S1"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "local full-suite spawn counts read above CI (11790/10651 local vs 11769/10627 CI on dc9ddd4), so a ceiling pinned from local+delta is loose or wrong",
+      "evidence": "S1 fix round cost runs, base-cost.log"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "two full gates at once share the Rune cargo target; the second's link fails LNK1104",
+      "evidence": "S1 fix round, merge-cost.log"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "'pilot test reuses a green tree' test takes a gate slot and waited ~9.6 min while cost runs held the slots",
+      "evidence": "S1 fix round"
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "S5 store-runs.mjs fix buys one line of headroom under the 800-line facade bar; next addition breaks it again",
+      "evidence": "store-runs.mjs 799 lines after 8dc009c",
+      "size": 1
     }
   ]
 }
