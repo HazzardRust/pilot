@@ -84,7 +84,7 @@ export function status(dir, ...flags) {
 
 /** A run record modified, added or untracked: not dirt (L3), here and in `classify`. A deleted, renamed or unmerged one is. */
 const RECORD_CODES = new Set([' M', 'M ', 'MM', ' A', 'A ', 'AM', '??']);
-export const isRecord =({ code, file }) => RECORD.test(file) && RECORD_CODES.has(code);
+export const isRecord = ({ code, file }) => RECORD.test(file) && RECORD_CODES.has(code);
 
 /**
  * `sha`'s parents and changed files in one git call (prune-worktrees S10): `<parents>\0\n<file>\0…`.

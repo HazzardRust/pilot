@@ -137,7 +137,7 @@ export const runRecord = (slug) => `docs/design/${slug}/run.json`;
  * `sha` less its trailing commits that change only run `slug`'s record (lander-tail A1): each
  * stripped commit has one parent and touches that one path. A merge or the root ends the walk.
  */
-function withoutRecordTail(repo, sha, slug) {
+function withoutRunRecordTail(repo, sha, slug) {
   const record = runRecord(slug);
   for (let hops = 0; hops < 100; hops += 1) {
     const { parents, files } = commitStep(repo, sha);
@@ -155,7 +155,7 @@ export function landedRun(repo, base, slug) {
   const ref = `refs/heads/feat/${slug}`;
   const head = git(repo, 'rev-parse', '--verify', '--quiet', `${ref}^{commit}`);
   if (!head.ok) return false;
-  const work = withoutRecordTail(repo, head.out, slug);
+  const work = withoutRunRecordTail(repo, head.out, slug);
   return movedFrom(repo, ref, work) && git(repo, 'merge-base', '--is-ancestor', work, base).ok;
 }
 
@@ -233,7 +233,7 @@ function stateOf(repo, base, tree, index, landedSlug, movedOf) {
   const inBase = (sha) => [base].flat().some((ref) => git(repo, 'merge-base', '--is-ancestor', sha, ref).ok);
   if (!inBase(tree.head)) {
     // A base that holds the head holds its record-free part too, so a landed run's tail is walked only when the head is not in (S10).
-    const work = landedSlug ? withoutRecordTail(repo, tree.head, landedSlug) : tree.head;
+    const work = landedSlug ? withoutRunRecordTail(repo, tree.head, landedSlug) : tree.head;
     if (work === tree.head || !inBase(work)) return 'open';
   }
   const dirt = dirtOf(tree.path, { tracked: Boolean(landedSlug) });
