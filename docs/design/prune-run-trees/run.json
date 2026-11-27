@@ -23,8 +23,8 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-run-trees-s2"
     }
   ],
-  "next": "Short path, lane held. S1 integrated 4e12c0a4, checks green. S2 pushed e641245 (final pins 11900/10758), integrating; then pilot checks <sha7> --wait, pilot integrate --trial in feat worktree, post gate2 for PR 165 (surface false; Verdict line per slice + Gate line). tested-once paused, itm_eb725daab752 open.",
-  "updatedAt": "2026-11-27T14:12:53.461Z",
+  "next": "Concluding. gate2 itm_b688c4848a4e posted for PR 165 at a5b8e8f3 (checks green, trial clean). On the user's Sign off press: spawn pilot-lander with the gate2 id; on landed, reply Findings: on the report (short path: no principles review).",
+  "updatedAt": "2026-11-27T14:39:55.655Z",
   "friction": [
     {
       "agent": "pilot-architect",
