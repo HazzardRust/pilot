@@ -1,0 +1,59 @@
+{
+  "slug": "prune-run-trees",
+  "feature": "prune --run reaches every tree",
+  "ticket": "itm_01399e7fa4db",
+  "branch": "feat/prune-run-trees",
+  "base": "hazzardrust-pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-prune-run-trees",
+  "artefact": "docs/design/prune-run-trees/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 run membership",
+      "state": "failed gate: merged red on spawn ceilings, spawns 11953 over 11758, git 10814 over 10616; fix round live",
+      "branch": "slice/prune-run-trees-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-run-trees-s1"
+    },
+    {
+      "slice": "S2 strict rule for name-inferred trees",
+      "state": "planned",
+      "after": [
+        "S1 run membership"
+      ]
+    }
+  ],
+  "next": "Short path, lane held. S1 (97a4d26) refused at integrate on spawn ceilings only; implementer a45b4241777075a2c resumed: fold test git, re-pin gate.mjs temp. On its push: integrate S1 (trailers as before + fix reviewer), pilot checks --wait, spawn S2 (opus; verification needs PILOT_BRANCH=pilot), integrate, --trial, gate2. tested-once paused, itm_eb725daab752 open.",
+  "updatedAt": "2026-11-27T13:27:29.835Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "worktrees.mjs keeps two tree selections side by side, one branch-only, which hid the bug",
+      "evidence": "scripts/worktrees.mjs:331-333; 1 read to see"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "installed plugin 0.9.11 lags the repo on worktree tagging; proving it took a loop over .git/worktrees/*/pilot-run",
+      "evidence": "0 of 41 trees tagged"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "installed pilot CLI 0.9.11 has no `worktrees add`; feat tree made with plain git, untagged",
+      "evidence": "pilot worktrees add printed usage"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "gate1 posted on the 3rd try: a git timeout, then refused for a body missing A2",
+      "evidence": "itm_b550cfe960c5",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "exact-pinned spawn ceilings turn every slice that adds a git-fixture test red at integrate, after the implementer's own gate exits 0 printing 'spawns over'; costs a fix round and a second full gate per slice",
+      "evidence": "tested-once S1 (11997 over 11769) and prune-run-trees S1 (11953 over 11758), both 0 fail, same day"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "slice verification line fails 90 of 171 under plain node --test without PILOT_BRANCH=pilot; brief does not say so",
+      "evidence": "prune-run-trees S1 report; cost one extra npm ci and a selection run"
+    }
+  ]
+}
