@@ -44,13 +44,13 @@ The deck does, by `pilot pr`, and the crew never does (ADR 0182). On a gate1 pos
 
 ## What the classifier is told
 
-A Start writes an `autoMode.environment` block into `~/.claude/pilot/start-settings.json`, the settings file the session is started with, so the auto-mode classifier knows about the pilot's own environment. The block is `"$defaults"` (the classifier's built-in environment) followed by two lines: one says the repository is trusted, the other says build output the pilot writes is expected. The lines are the `CLASSIFIER_ENVIRONMENT` constant in `deck/run-env.mjs`; read them there.
+A Start writes an `autoMode.environment` block into `~/.claude/pilot/start-settings.json`, the settings file the session is started with, so the auto-mode classifier knows about the pilot's own environment. The block is `"$defaults"` (the classifier's built-in environment) followed by the pilot's lines: one on the trusted repository, one saying that in a confirmed pilot worktree the git-ignored build output at the root (`node_modules`, `dist`, `build`, `target`, `coverage`) is regenerable, so deleting one by its literal path loses no work. The lines are the `CLASSIFIER_ENVIRONMENT` constant in `deck/run-env.mjs`; read them there.
 
 The block loosens no rule. It adds no `allow` rule and grants no permission: it only gives the classifier context for its own judgement. Your own `autoMode` block in `~/.claude/settings.json` is not touched; `claude auto-mode reset` resets that block, and does nothing to the pilot's.
 
-To see what the classifier is told, run `claude --settings ~/.claude/pilot/start-settings.json auto-mode config`; the merged environment starts with `"$defaults"` and ends with the pilot's two lines.
+To see what the classifier is told, run `claude --settings ~/.claude/pilot/start-settings.json auto-mode config`; the merged environment lists your own lines first (if you have an `autoMode` block), then `"$defaults"`, then the pilot's lines.
 
-To turn the block off, start with `PILOT_CLASSIFIER_ENV`=off set in the environment. `CLASSIFIER_SWITCH` in `deck/run-env.mjs` names the variable, and it matches the value `off` exactly, case-sensitive: `OFF`, `0` or any other value keeps the block. With it off, the Start writes no `autoMode` entry.
+To turn the block off, start with `PILOT_CLASSIFIER_ENV`=off set in the environment. `CLASSIFIER_SWITCH` in `deck/run-env.mjs` names the variable, and it matches the value `off` exactly, case-sensitive: `OFF`, `0` or any other value keeps the block. With it off, the Start writes no `autoMode` entry. The deck's Start reads the deck process's environment, so to turn the block off for deck Starts, set the variable and restart the deck (for `pilot start`, it is the shell's environment).
 
 ## Which tests run when
 
