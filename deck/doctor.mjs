@@ -26,12 +26,14 @@ import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
 import { MIN_MODS_VERSION, claudeVersion } from '../scripts/handoff.mjs';
 import { runRef, runRemote } from '../scripts/remotes.mjs';
 import { tagOf } from '../scripts/worktrees.mjs';
+import { norm as pathKey, parseWorktrees } from '../scripts/worktree-remove.mjs';
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
 import { LEGACY_PILOT, NO_NAME, firstLine, namePilotBranch, pilotBranch } from '../scripts/pilot-branch.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { powerRow, readPower } from './power.mjs';
 import { probeDeck } from './probe.mjs';
+import { findRune as defaultFindRune } from './rune-bin.mjs';
 import { isSlug } from './runs.mjs';
 import { clashText, leashedGit, slugClashes } from './slug-clash.mjs';
 import { storeDir as defaultStoreDir } from './store-dir.mjs';
@@ -489,11 +491,6 @@ const SIZE_BUDGET_MS = 10_000;
 /** The top-level dirs of a tree counted as its build output: what a build or an install writes. */
 const BUILD_OUTPUT = ['node_modules', 'dist', 'build', 'out', 'target', '.next', 'coverage', '.venv'];
 const gb = (bytes) => `${(bytes / 1024 ** 3).toFixed(1)} GB`;
-/** A path as git and the file system may both spell it, case-blind on Windows. */
-const samePath = (p) => {
-  const slashed = path.resolve(p).replaceAll('\\', '/');
-  return isWindows() ? slashed.toLowerCase() : slashed;
-};
 
 /**
  * The bytes under `dir`'s build-output dirs, walked by `lstat` so a link or junction is never followed (a QA
@@ -527,19 +524,7 @@ export function buildOutputSize(dir, { until, now = Date.now }) {
 
 /** `git worktree list --porcelain -z` as `{ path, head, branch }` records; the first is the main checkout. */
 function listTrees(git) {
-  return git(['worktree', 'list', '--porcelain', '-z'])
-    .split('\0\0')
-    .filter((block) => block.trim())
-    .map((block) => {
-      const tree = { path: null, head: null, branch: null };
-      for (const line of block.split('\0')) {
-        const [key, ...rest] = line.split(' ');
-        if (key === 'worktree') tree.path = rest.join(' ');
-        else if (key === 'HEAD') tree.head = rest.join(' ');
-        else if (key === 'branch') tree.branch = rest.join(' ');
-      }
-      return tree;
-    });
+  return parseWorktrees(git(['worktree', 'list', '--porcelain', '-z']));
 }
 
 /**
@@ -601,13 +586,13 @@ export function worktreesRow({ repo, git, statfs, now, sizeOf, budgetMs }) {
   } catch (error) {
     return { name, verdict: 'cannot tell', detail: `git could not list the trees: ${firstLine(error)}` };
   }
-  const listed = new Set([home, ...linked].map((tree) => samePath(tree.path)));
+  const listed = new Set([home, ...linked].map((tree) => pathKey(tree.path)));
   const parent = path.dirname(home.path);
   const prefix = `${path.basename(home.path)}-`;
   let orphans = 0;
   try {
     for (const entry of fs.readdirSync(parent, { withFileTypes: true })) {
-      if (entry.isDirectory() && entry.name.startsWith(prefix) && !listed.has(samePath(path.join(parent, entry.name)))) orphans += 1;
+      if (entry.isDirectory() && entry.name.startsWith(prefix) && !listed.has(pathKey(path.join(parent, entry.name)))) orphans += 1;
     }
   } catch (error) {
     return { name, verdict: 'cannot tell', detail: `${parent} could not be read: ${error.code ?? error.message}` };
@@ -676,9 +661,23 @@ function deckRows({ found, port }) {
   return port === String(DECK_PORT) ? [...rows, rootRow] : rows;
 }
 
+/**
+ * The Rune deck row (prebuilt-rune spec 8): `pass` only for a built or a verified fetched binary, else `warn`
+ * with `findRune`'s reason, and `pilot deck` as the step only where a download is what would help.
+ */
+export function runeRow({ state, version }) {
+  const name = 'rune deck';
+  if (state.source === 'built') return { name, verdict: 'pass', detail: `built here, ${state.file}` };
+  if (state.source === 'fetched') return { name, verdict: 'pass', detail: `fetched ${version}, verified` };
+  // findRune's reasons are written for `pilot deck`, which opens the page instead; doctor opens nothing.
+  const reason = state.reason.replace(/, opening the page$/, '');
+  return { name, verdict: 'warn', detail: `missing: ${reason}`, ...(state.fetchable ? { steps: ['pilot deck'] } : {}) };
+}
+
 /** Every local check as a row, in the order `pilot doctor` prints them. */
 export async function checkAll({
   platform = hostPlatform(),
+  arch = process.arch,
   run = defaultRun,
   root = projectsRoot(),
   nodeVersion = process.versions.node,
@@ -699,6 +698,7 @@ export async function checkAll({
   readView = () => readOpenView(cwd, url),
   statfs = fs.statfsSync,
   sizeOf = buildOutputSize,
+  findRune = defaultFindRune,
 } = {}) {
   // The census has a leash of its own, so a slow remote read by the slugs row never leaves it no time.
   const git = injected ?? leashedGit(cwd);
@@ -726,6 +726,7 @@ export async function checkAll({
     allowRow({ readSettings }),
     modsRow({ version: claudeVersion(run), settings, env }),
     ...deckRows({ found, port: new URL(url).port }),
+    runeRow({ state: findRune(PLUGIN_ROOT, { platform, arch, version: PLUGIN_VERSION, run }), version: PLUGIN_VERSION }),
   ];
 }
 

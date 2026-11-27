@@ -68,6 +68,10 @@ const POLL_MS = 1_000;
  *   measured 11083 on the highest runner (CI windows-latest, Gate run 45907856887 on cd15ab4: `spawns 11083 (node 843, git
  *   9947, other 293)`; local 11074 + Windows delta 9; later local runs on S13's tip read 11074, 11074 and 11079, so the count moves by a few between runs);
  *   GIT_CEILING 10000 is the signed bar. No headroom. L7 and spec line 1 of test-body-git moved on that decision (docs/design/test-body-git/cost-after.txt).
+ * 2026-11-27, prebuilt-rune: CI windows-latest, Gate run 45953779329 on f5713db: `spawns 11084 (node 845, git 9947, other 292)`;
+ *   SPAWN_CEILING re-pinned to that 11084, exact (assumed by the deck's default, itm_8b82a8c0fff2). GIT_CEILING unchanged.
+ * 2026-11-27, prebuilt-rune: CI windows-latest, Gate run 45959300810 on c2cb913: `spawns 11085 (node 845, git 9947, other 293)`;
+ *   "other" read 292 then 293 on the same code. SPAWN_CEILING re-pinned to 11085, exact (the user's decision, itm_abcdde7d29e5).
  * 2026-11-27, prune-worktrees drift merge on 5c326bd: 14110 (node 853, git 12962, other 295) locally; S1-S4 fixture
  *   tests (worktree-remove, worktrees-tagged, worktrees-landed, integrate-prune); plus the Windows-CI delta 8/6, 14118 / 12968.
  * 2026-11-27, prune-worktrees S5: 14189 (node 853, git 13041, other 295) locally + Windows-CI delta 9/6; temporary,
@@ -79,10 +83,11 @@ const POLL_MS = 1_000;
  * 2026-11-27, prune-worktrees fix round: 14252 (node 853, git 13103, other 296) on the integrate merge with feat 8c4a18d; the four defect tests' fixture git; temporary until S11 (itm_1b18772998c1).
  * 2026-11-27, prune-worktrees drift merge on 71991cb: 11753 (node 843, git 10616, other 294) locally + Windows-CI delta 9/6; temporary until S11 and the final exact pins; worktrees.test.mjs MERGED gains raced and gone (gone last, for its HEAD~1) and the gone test drops --unset-upstream, the fix round's two tests on test-body-git's fixture.
  * 2026-11-27, prune-worktrees S11 (one porcelain parser, one path-equality export): 11753 (node 843, git 10616, other 294) locally, unchanged by the removal; final exact pins, the Windows-CI delta 9/6 and no other headroom: 11762 / 10622 (itm_cc4171bdb60c).
+ * 2026-11-27, prune-worktrees drift merge on 74b3604: 11749 (node 845, git 10610, other 294) locally + Windows-CI delta 9/6; the final exact pins (itm_abcdde7d29e5); deck/doctor.mjs takes norm and parseWorktrees from worktree-remove.mjs (QA B2), which keeps it under facades' 800 bar after prebuilt-rune's +17.
  */
-export const SPAWN_CEILING = 11762;
+export const SPAWN_CEILING = 11758;
 /** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13, prune-worktrees); see the dated lines above. */
-export const GIT_CEILING = 10622;
+export const GIT_CEILING = 10616;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 
