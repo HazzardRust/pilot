@@ -76,6 +76,16 @@ test('a missing path takes the case of its existing ancestors', (t) => {
   assert.equal(encodePath(path.join(home, 'projects', 'newrepo'), defaultRoots(home, 'win32')), '@home/Projects/newrepo');
 });
 
+test('a case respelling under a home spelled through a link takes the case on disk below the link', (t) => {
+  if (!isWindows()) return t.skip('case folds on win32');
+  const base = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-codec-case-link-')));
+  t.after(() => fs.rmSync(base, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(base, 'target', 'Projects', 'pilot'), { recursive: true });
+  const home = path.join(base, 'link'); // as a runner's home under C:\Users\RUNNER~1, whose realpath differs above the case
+  fs.symlinkSync(path.join(base, 'target'), home, 'junction');
+  assert.equal(encodePath(path.join(home, 'PROJECTS', 'PILOT'), defaultRoots(home, 'win32')), '@home/Projects/pilot');
+});
+
 /** A home holding `Projects/pilot`, and a junction (a symlink off win32) `alias` beside it to that repo. */
 function linkedRepo(t) {
   const home = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-codec-alias-')));

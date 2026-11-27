@@ -82,7 +82,7 @@ function spelled(abs, P) {
       if (!['ENOENT', 'ENOTDIR'].includes(error.code) || P.dirname(dir) === dir) break;
     }
   }
-  const kept = caseOnly(resolved, real);
+  const kept = caseOnly(resolved, real, P);
   if (SPELLED.size >= SPELLED_MAX) SPELLED.clear();
   SPELLED.set(resolved, kept);
   return kept;
@@ -93,9 +93,17 @@ function spelled(abs, P) {
  * the given one by case, so `projects` stores as `Projects` while a junction, symlink, 8.3 name (`RUNNER~1`) or
  * macOS `/var` keeps the spelling it was given and reads back as it. L2 as written is this returning `real`. Linux
  * folds no case, so there a case-only difference is a symlink to another directory and the given spelling stands.
+ * Compared segment by segment from the leaf, so the segments below a link take the disk's case while the link
+ * itself, and all above it, keep theirs: `RUNNER~1\...\PROJECTS` is stored as `RUNNER~1\...\Projects`.
  */
-const caseOnly = (resolved, real) =>
-  hostPlatform() !== 'linux' && real.toLowerCase() === resolved.toLowerCase() ? real : resolved;
+function caseOnly(resolved, real, P) {
+  if (hostPlatform() === 'linux') return resolved;
+  const given = resolved.split(P.sep);
+  const disk = real.split(P.sep);
+  let same = 0;
+  while (same < Math.min(given.length, disk.length) && given.at(-1 - same).toLowerCase() === disk.at(-1 - same).toLowerCase()) same++;
+  return [...given.slice(0, given.length - same), ...disk.slice(disk.length - same)].join(P.sep);
+}
 
 /**
  * `abs` as `@<root>/<rel>` under the deepest root holding it; anything not absolute in the roots' own flavour (a
