@@ -330,7 +330,7 @@ function fetchBases(repo, bases) {
  * With `run` and `landed`, the run has landed (ADR 0171): `runWorktrees` are looked at, the land dir
  * among them, and a merged tree goes unless a tracked change or a holder keeps it, with `--force`
  * once its tracked status reads clean again, and its branch with `-D`. Without `run`, `landed` is ignored.
- * Every removal goes through `removeTree` (prune-worktrees S2, L1), `remove` its remove step: a tree it
+ * Every removal goes through `removeTree` (prune-worktrees S2, L1): a tree it
  * keeps is `kept` with its state, `leftover` aside, which is `failed`.
  * `git`, a landing's view, answers the worktree list for selection (`classify`, `runWorktrees`) and the
  * base's tip; `removeTree` still lists afresh before each removal, since its guards must see the tree as
@@ -338,7 +338,7 @@ function fetchBases(repo, bases) {
  * says the caller's own fetch left `base` current (land-batching A3): no fetch then. Only a landing
  * passes it; `pilot worktrees prune` always fetches.
  */
-export function prune(repo, base, { dryRun = false, run, merged = [], keep = [], holder = () => null, landed = false, remove, git: view, fetched = false } = {}) {
+export function prune(repo, base, { dryRun = false, run, merged = [], keep = [], holder = () => null, landed = false, git: view, fetched = false } = {}) {
   if (!fetched) fetchBases(repo, [base].flat());
   const removed = [];
   const kept = [];
@@ -369,24 +369,12 @@ export function prune(repo, base, { dryRun = false, run, merged = [], keep = [],
       continue;
     }
     // A landed run's removed tree was merged once its record-only tail was stripped, which git's -d cannot see.
-    const flag = (relaxed && isRunBranch(tree.branch, run)) || merged.includes(tree.branch) ? '-D' : '-d';
-    let refused = null;
-    const dropBranch = (at, name) => {
-      const branch = git(at, 'branch', flag, name);
-      if (!branch.ok) refused = branch.err;
-      return branch;
-    };
+    const branchFlag = (relaxed && isRunBranch(tree.branch, run)) || merged.includes(tree.branch) ? '-D' : '-d';
     // removeTree re-reads every guard, puts the run record back and forces only for a landed run (L1, L6).
-    let why = null;
-    const removing = (at, dir, force) => {
-      const step = remove ? remove(at, dir, force) : git(at, 'worktree', 'remove', ...(force ? ['--force'] : []), dir);
-      if (!step.ok) why = step.err;
-      return step;
-    };
-    const result = removeTree(repo, tree.path, { landed: relaxed, holder, remove: removing, branch: dropBranch });
+    const result = removeTree(repo, tree.path, { landed: relaxed, holder, branchFlag });
     if (result.kept === 'leftover') {
       // git's own refusal, when it refused, says more than the kept line.
-      failed.push({ path: tree.path, reason: why || keptLine(tree.path, result.kept) });
+      failed.push({ path: tree.path, reason: result.err || keptLine(tree.path, result.kept) });
       continue;
     }
     if (result.kept) {
@@ -394,7 +382,7 @@ export function prune(repo, base, { dryRun = false, run, merged = [], keep = [],
       continue;
     }
     removed.push(tree.path);
-    if (refused !== null) failed.push({ path: `branch ${tree.branch}`, reason: refused });
+    if (result.err !== undefined) failed.push({ path: `branch ${tree.branch}`, reason: result.err });
   }
   return { removed, kept, failed };
 }

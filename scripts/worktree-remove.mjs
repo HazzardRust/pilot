@@ -144,15 +144,13 @@ function unlinkLinks(entry) {
 /** The default remove step: git's own, from the main checkout. */
 const gitRemove = (home, dir, force) => git(home, 'worktree', 'remove', ...(force ? ['--force'] : []), dir);
 
-/** The default branch step: `-D`, the tree's tip being a safe head. */
-const gitDropBranch = (home, name) => git(home, 'branch', '-D', name);
-
 /**
  * Removes worktree `dir` of `repo` and its local branch, or keeps it and says why. Answers
- * `{ removed: true, branch }` (the branch deleted, null for a detached tree or one `branch` refused)
- * or `{ kept: state }`. `branch(home, name)` deletes the local branch and answers `{ ok }` (prune-worktrees S2).
+ * `{ removed: true, branch }` (the branch deleted, null for a detached tree or one git refused)
+ * or `{ kept: state }`, with `err`, git's own words, when git refused the removal or the branch.
+ * The branch goes with `git branch <branchFlag>`, `-D` by default, the tree's tip being a safe head (prune-worktrees S2).
  */
-export function removeTree(repo, dir, { landed = false, holder = () => null, remove = gitRemove, branch: dropBranch = gitDropBranch } = {}) {
+export function removeTree(repo, dir, { landed = false, holder = () => null, remove = gitRemove, branchFlag = '-D' } = {}) {
   const trees = worktrees(repo);
   const index = trees ? trees.findIndex((tree) => same(tree.path, dir)) : -1;
   if (index < 0) return { kept: 'not a worktree' };
@@ -203,9 +201,10 @@ export function removeTree(repo, dir, { landed = false, holder = () => null, rem
   }
 
   const removal = remove(home, tree.path, landed);
-  if (!removal.ok || fs.existsSync(tree.path)) return { kept: 'leftover' };
+  if (!removal.ok) return { kept: 'leftover', ...(removal.err && { err: removal.err }) };
+  if (fs.existsSync(tree.path)) return { kept: 'leftover' };
   // A local pilot branch, the read one or the legacy one, is a run's base: it stays even when a tree had it checked out.
   if (!tree.branch || isPilotName(tree.branch)) return { removed: true, branch: null };
-  const branch = dropBranch(home, tree.branch);
-  return { removed: true, branch: branch.ok ? tree.branch : null };
+  const branch = git(home, 'branch', branchFlag, tree.branch);
+  return branch.ok ? { removed: true, branch: tree.branch } : { removed: true, branch: null, err: branch.err };
 }
