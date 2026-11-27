@@ -75,7 +75,8 @@ function ghWith(state, tip, asked = []) {
 }
 
 const listed = (bare) => git(bare, 'for-each-ref', '--format=%(refname:short)', 'refs/heads/').split('\n');
-const options = (work, gh, more = {}) => ({ cwd: work, test: passing, install: () => {}, host: githubHost(gh), wait: 0, ...more });
+// No holder by default: the real process table would make the verdict depend on this machine.
+const options = (work, gh, more = {}) => ({ cwd: work, test: passing, install: () => {}, host: githubHost(gh), wait: 0, holder: () => null, ...more });
 
 test('a merged slice is deleted after the push', (t) => {
   const { origin, work, tip } = scratchRepos(t, 'origin');
@@ -114,6 +115,17 @@ test('an integrated slice\'s tree goes before its branch is deleted', (t) => {
   assert.ok(result.line.endsWith(`; pushed; removed ${dir}; deleted slice/x-s1`), result.line);
   assert.equal(treesOn(work, 'slice/x-s1'), 0);
   assert.equal(fs.existsSync(dir), false);
+});
+
+test('a slice tree a live process holds is kept and named (L4)', (t) => {
+  const { work, tip } = scratchRepos(t, 'origin');
+  const dir = sliceTree(t, work, tip);
+
+  const result = integrate('slice/x-s1', options(work, ghWith('MERGED', tip), { holder: (at) => (path.resolve(at) === path.resolve(dir) ? 4242 : null) }));
+
+  assert.equal(result.ok, true, result.line);
+  assert.ok(result.line.includes(`; pushed; kept live 4242 ${dir}`), result.line);
+  assert.equal(fs.existsSync(dir), true, 'the held tree is intact');
 });
 
 test('a dirty slice tree is kept and named, the merge still pushed', (t) => {
