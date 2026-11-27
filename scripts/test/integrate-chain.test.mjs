@@ -10,6 +10,7 @@ import '../../deck/test/no-open.mjs';
 
 // The fixture seam imports fake-home.mjs first and gives every git below its identity.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed as seedHistory } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -28,59 +29,46 @@ const { callTool, TOOLS } = await import('../../deck/server.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
-function commitFile(work, file, text, message) {
-  fs.writeFileSync(path.join(work, file), text);
-  git(work, 'add', file);
-  git(work, 'commit', '-q', '-m', message);
-}
+/** The commits the waiting case moves origin's branches to, seeded up front and left unreferenced on origin. */
+const NEXT = [
+  { branch: 'next/pilot-n', from: 'pilot', files: {}, merge: ['feat/n'], message: 'Merge feat/n into pilot' },
+  { branch: 'next/main-n', from: 'main', files: {}, merge: ['feat/n'], message: 'Merge pull request #1 from feat/n' },
+  { branch: 'next/main-p3', from: 'next/main-n', files: { 'p3.txt': 'p3\n' }, message: 'main: p3.txt' },
+];
 
 /**
  * main, `pilot` from main, N's `feat/n` from pilot, and the chained run `feat/m` cut from
- * `feat/n`; the clone is on `feat/m` with a run record saying `base: feat/n`, and `seed`
- * moves the other branches.
+ * `feat/n`; the clone is on `feat/m` with a run record saying `base: feat/n`. `waiting`: main and
+ * feat/n have each moved by one commit since the cut (`p2.txt`; N's fix round `n-fix.txt`), and
+ * `move(branch, sha)` sets origin's branch to one of `next`, as a push of it would.
  */
-function chainRepos(t) {
-  return gitFixture(t, 'integrate-chain:chainRepos', (dir) => {
-    const origin = path.join(dir, 'origin.git');
-    const seed = path.join(dir, 'seed');
+function chainRepos(t, { waiting = false } = {}) {
+  const repos = gitFixture(t, `integrate-chain:chainRepos${waiting ? ':waiting' : ''}`, (dir) => {
     const work = path.join(dir, 'work');
-    git(dir, 'init', '--bare', '-b', 'main', origin);
-    git(dir, 'clone', '-q', origin, seed);
-    git(seed, 'checkout', '-q', '-b', 'main');
-    commitFile(seed, 'main.txt', 'main\n', 'main');
-    git(seed, 'push', '-q', 'origin', 'main', 'main:pilot');
-    git(seed, 'checkout', '-q', '-b', 'feat/n');
-    commitFile(seed, 'n.txt', 'n\n', 'feat/n: n.txt');
-    git(seed, 'push', '-q', 'origin', 'feat/n');
-    git(seed, 'checkout', '-q', '-b', 'feat/m');
-    commitFile(seed, 'm.txt', 'm\n', 'feat/m: m.txt');
-    git(seed, 'push', '-q', 'origin', 'feat/m');
+    // Pilot stays at the cut; with `waiting` main moves past it, so main is cut from pilot's tip.
+    const cut = waiting ? 'pilot' : 'main';
+    const { origin, sha } = seedHistory(dir, [
+      { branch: cut, files: { 'main.txt': 'main\n' }, message: 'main' },
+      { branch: 'feat/n', files: { 'n.txt': 'n\n' }, message: 'feat/n: n.txt' },
+      { branch: 'feat/m', files: { 'm.txt': 'm\n' }, message: 'feat/m: m.txt' },
+      ...(waiting ? [
+        { branch: 'main', from: 'pilot', files: { 'p2.txt': 'p2\n' }, message: 'main: p2.txt' },
+        { branch: 'feat/n', files: { 'n-fix.txt': 'fix\n' }, message: 'feat/n: n-fix.txt' },
+        ...NEXT,
+      ] : []),
+    ], waiting ? {} : { pilot: 'main' });
+    if (waiting) git(origin, 'branch', '-q', '-D', ...NEXT.map((commit) => commit.branch));
     git(dir, 'clone', '-q', '-b', 'feat/m', origin, work);
     writeRecord(work, { slug: 'm', branch: 'feat/m', base: 'feat/n' });
-    return { origin, seed, work };
+    return { origin, work, next: Object.fromEntries(NEXT.map(({ branch }) => [branch.slice(5), sha[branch]])) };
   });
+  return { ...repos, move: (branch, sha) => git(repos.origin, 'update-ref', `refs/heads/${branch}`, sha) };
 }
 
 function writeRecord(work, record) {
   const file = path.join(work, 'docs', 'design', 'm', 'run.json');
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`);
-}
-
-/** In `seed`, commit one file on `branch` and push it. */
-function pushTo(seed, branch, file, text) {
-  git(seed, 'checkout', '-q', branch);
-  commitFile(seed, file, text, `${branch}: ${file}`);
-  git(seed, 'push', '-q', 'origin', branch);
-}
-
-/** N's landing, as `pilot land` writes it: `Merge feat/n into pilot`, two parents, on pilot's first-parent line. */
-function landN(seed) {
-  git(seed, 'fetch', '-q', 'origin');
-  git(seed, 'checkout', '-q', 'pilot');
-  git(seed, 'reset', '-q', '--hard', 'origin/pilot');
-  git(seed, 'merge', '-q', '--no-ff', '-m', 'Merge feat/n into pilot', 'origin/feat/n');
-  git(seed, 'push', '-q', 'origin', 'pilot');
 }
 
 const quiet = { install: () => {}, test: `node -e "console.log('ℹ pass 1'); console.log('ℹ fail 0')"`, host: githubHost(() => { throw new Error('no gh'); }) };
@@ -106,39 +94,37 @@ test('a record base that is neither pilot nor feat/<slug> is refused, never merg
 });
 
 test('the base switches once N\'s tip is in the default branch, not at its landing, and stays there', (t) => {
-  const { origin, seed, work } = chainRepos(t);
-  pushTo(seed, 'main', 'p2.txt', 'p2\n');
-  pushTo(seed, 'feat/n', 'n-fix.txt', 'fix\n'); // N's fix round while it waits in concluding
+  // main has moved (p2.txt) and N has a fix round (n-fix.txt) while it waits in concluding.
+  const { origin, work, next, move } = chainRepos(t, { waiting: true });
 
   const first = integrate(undefined, { cwd: work, ...quiet });
   assert.equal(first.ok, true, first.line);
   assert.match(first.line, /^took base feat\/n@[0-9a-f]+ at /);
-  const merge = git(work, 'log', '-1', '--merges', '--format=%H');
-  assert.equal(git(work, 'log', '-1', '--format=%s', merge), 'Merge base feat/n');
-  assert.equal(git(work, 'rev-parse', `${merge}^2`), git(work, 'rev-parse', 'origin/feat/n'), 'N\'s tip, not pilot');
+  const [merge, mergeSubject] = git(work, 'log', '-1', '--merges', '--format=%H%n%s').split('\n');
+  assert.equal(mergeSubject, 'Merge base feat/n');
+  const [mergedTip, nTip] = git(work, 'rev-parse', `${merge}^2`, 'origin/feat/n').split('\n');
+  assert.equal(mergedTip, nTip, 'N\'s tip, not pilot');
   assert.ok(fs.existsSync(path.join(work, 'n-fix.txt')), 'N\'s fix round is taken');
   assert.ok(!fs.existsSync(path.join(work, 'p2.txt')), 'main is not taken while N waits');
 
-  // N's landing on pilot does not end the chain (audit-f14 L5).
-  landN(seed);
+  // N's landing on pilot, as `pilot land` writes it, does not end the chain (audit-f14 L5).
+  move('pilot', next['pilot-n']);
   const landed = integrate(undefined, { cwd: work, ...quiet });
   assert.equal(landed.ok, true, landed.line);
   assert.match(landed.line, /^took base feat\/n@/);
 
   // N's PR merged into main: N's tip is in main by ancestry.
-  git(seed, 'checkout', '-q', 'main');
-  git(seed, 'reset', '-q', '--hard', 'origin/main');
-  git(seed, 'merge', '-q', '--no-ff', '-m', 'Merge pull request #1 from feat/n', 'origin/feat/n');
-  git(seed, 'push', '-q', 'origin', 'main');
+  move('main', next['main-n']);
   const second = integrate(undefined, { cwd: work, ...quiet });
   assert.equal(second.ok, true, second.line);
   assert.match(second.line, /^took base main@[0-9a-f]+ at /);
-  const taken = git(work, 'log', '-1', '--merges', '--format=%H');
-  assert.equal(git(work, 'log', '-1', '--format=%s', taken), 'Merge base main');
-  assert.equal(git(work, 'rev-parse', `${taken}^2`), git(work, 'rev-parse', 'origin/main'));
+  const [taken, takenSubject] = git(work, 'log', '-1', '--merges', '--format=%H%n%s').split('\n');
+  assert.equal(takenSubject, 'Merge base main');
+  const [takenTip, mainTip] = git(work, 'rev-parse', `${taken}^2`, 'origin/main').split('\n');
+  assert.equal(takenTip, mainTip);
   assert.ok(fs.existsSync(path.join(work, 'p2.txt')), 'main is taken once N is in it');
 
-  pushTo(seed, 'main', 'p3.txt', 'p3\n');
+  move('main', next['main-p3']);
   const third = integrate(undefined, { cwd: work, ...quiet });
   assert.equal(third.ok, true, third.line);
   assert.match(third.line, /^took base main@/, 'the chain does not come back');

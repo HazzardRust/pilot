@@ -8,52 +8,39 @@
 // A red run's log goes under a home of this process's own, never the real one; the
 // fixture seam imports fake-home.mjs first.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 
 const { mergeIntoPilot } = await import('../sync.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
-function commitFile(repo, file, text, message) {
-  fs.writeFileSync(path.join(repo, file), text);
-  git(repo, 'add', file);
-  git(repo, 'commit', '-q', '-m', message);
-}
-
-/** A bare origin with main and `pilot`, and a clone with a fetched feature commit `source` on `feat/x`. */
+/** A bare origin with main, `pilot` and `feat/x` off main, and a clone on `feat/x`, whose tip is `source`. */
 function repos(t, featText = 'x\n', featFile = 'x.txt') {
   return gitFixture(t, `merge-into-pilot:repos:${featFile}:${featText}`, (dir) => buildRepos(dir, featText, featFile));
 }
 
 function buildRepos(dir, featText, featFile) {
-  const origin = path.join(dir, 'origin.git');
+  const { origin, sha } = seed(dir, [
+    { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'main' },
+    { branch: 'pilot', files: { 'shared.txt': 'pilot\n' }, message: 'pilot' },
+    { branch: 'feat/x', from: 'main', files: { [featFile]: featText }, message: 'feat' },
+  ]);
   const work = path.join(dir, 'work');
-  git(dir, 'init', '--bare', '-b', 'main', origin);
-  git(dir, 'clone', '-q', origin, work);
-  git(work, 'checkout', '-q', '-b', 'main');
-  commitFile(work, 'shared.txt', 'one\n', 'main');
-  git(work, 'push', '-q', 'origin', 'main');
-  git(work, 'checkout', '-q', '-b', 'pilot');
-  commitFile(work, 'shared.txt', 'pilot\n', 'pilot');
-  git(work, 'push', '-q', 'origin', 'pilot');
-  git(work, 'checkout', '-q', '-b', 'feat/x', 'main');
-  commitFile(work, featFile, featText, 'feat');
-  git(work, 'push', '-q', 'origin', 'feat/x');
-  git(work, 'fetch', '-q', 'origin');
-  return { origin, work, source: git(work, 'rev-parse', 'HEAD'), gitIn: (args) => git(work, ...args) };
+  git(dir, 'clone', '-q', '-b', 'feat/x', origin, work);
+  return { origin, work, sha, source: sha['feat/x'], gitIn: (args) => git(work, ...args) };
 }
 
 const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
 const failing = `node -e "console.log('ℹ pass 2'); console.log('ℹ fail 1'); process.exit(1)"`;
 
 test('a source merges into pilot as a new merge commit', (t) => {
-  const { origin, work, source, gitIn } = repos(t);
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
+  const { origin, work, sha, source, gitIn } = repos(t);
+  const pilotTip = sha.pilot;
 
   const result = mergeIntoPilot({ cwd: work, git: gitIn, source, message: 'Merge feat/x into pilot', label: 'feat/x', test: passing });
 
@@ -66,8 +53,8 @@ test('a source merges into pilot as a new merge commit', (t) => {
 });
 
 test('a red run leaves pilot unmoved', (t) => {
-  const { origin, work, source, gitIn } = repos(t);
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
+  const { origin, work, sha, source, gitIn } = repos(t);
+  const pilotTip = sha.pilot;
 
   assert.throws(
     () => mergeIntoPilot({ cwd: work, git: gitIn, source, message: 'Merge feat/x into pilot', label: 'feat/x', test: failing }),
@@ -77,8 +64,8 @@ test('a red run leaves pilot unmoved', (t) => {
 });
 
 test('a conflict names its paths and pushes nothing', (t) => {
-  const { origin, work, source, gitIn } = repos(t, 'feat\n', 'shared.txt');
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
+  const { origin, work, sha, source, gitIn } = repos(t, 'feat\n', 'shared.txt');
+  const pilotTip = sha.pilot;
 
   assert.throws(
     () => mergeIntoPilot({ cwd: work, git: gitIn, source, message: 'Merge feat/x into pilot', label: 'feat/x', test: passing }),
@@ -88,9 +75,9 @@ test('a conflict names its paths and pushes nothing', (t) => {
 });
 
 test('a source already on pilot merges nothing', (t) => {
-  const { origin, work, gitIn } = repos(t);
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
-  const source = git(origin, 'rev-parse', 'main');
+  const { origin, work, sha, gitIn } = repos(t);
+  const pilotTip = sha.pilot;
+  const source = sha.main;
 
   const result = mergeIntoPilot({ cwd: work, git: gitIn, source, message: 'Merge main into pilot', label: 'main', test: passing });
 
@@ -100,8 +87,8 @@ test('a source already on pilot merges nothing', (t) => {
 });
 
 test('a source that is not a full SHA is refused before git sees it', (t) => {
-  const { origin, work, source, gitIn } = repos(t);
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
+  const { origin, work, sha, source, gitIn } = repos(t);
+  const pilotTip = sha.pilot;
 
   for (const bad of [source.slice(0, 7), '--upload-pack=x', 'feat/x']) {
     assert.throws(

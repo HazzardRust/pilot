@@ -15,10 +15,14 @@ import { checkSpec } from '../check-slices.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const FIXTURES = path.join(ROOT, 'scripts/test/fixtures/spec');
-const fixture = (name) => fs.readFileSync(path.join(FIXTURES, name), 'utf8');
+// pr-overview S3: every artefact needs a plain `## Overview`; appended last, so the fixtures' line numbers hold.
+const OVERVIEW = ['', '## Overview', '', '- **What changes**: the deck pauses a ticket that waits too long.'];
+const fixture = (name) => `${fs.readFileSync(path.join(FIXTURES, name), 'utf8').replace(/\s+$/, '')}\n${OVERVIEW.join('\n')}\n`;
 const MARKERS = ['practitioner: an on-call engineer', '', '## 6. Assumed decisions', '', 'red team: none found.', ''];
-const spec = (...lines) => ['# t', '', '## 2. Spec', '', ...lines, '', ...MARKERS].join('\n');
+const bare = (...lines) => ['# t', '', '## 2. Spec', '', ...lines, '', ...MARKERS].join('\n');
+const spec = (...lines) => [bare(...lines), ...OVERVIEW].join('\n');
 const refusals = (markdown) => checkSpec(markdown).map(({ line, rule }) => ({ line, rule }));
+const withOverview = (...body) => ['# t', '', '## Overview', '', ...body, '', bare('1. A ticket pauses after 20 minutes.').slice('# t\n\n'.length)].join('\n');
 
 test('a list line with a numeral passes', () => {
   assert.deepEqual(checkSpec(spec('1. A ticket pauses after 20 minutes.')), []);
@@ -56,13 +60,42 @@ test('an artefact with no red-team line is refused once', () => {
   assert.deepEqual(refusals(fixture('no-red-team.md')), [{ line: 9, rule: 'spec-red-team' }]);
 });
 
+test('a missing overview is refused', () => {
+  assert.deepEqual(refusals(bare('1. A ticket pauses after 20 minutes.')), [{ line: 1, rule: 'overview-plain' }]);
+  assert.deepEqual(refusals(withOverview()), [{ line: 1, rule: 'overview-plain' }], 'an empty overview is a missing one');
+});
+
+test('an id in the overview is refused', () => {
+  const markdown = withOverview('- **What changes**: the deck pauses a ticket.', '- **Why**: S2 left it waiting.');
+  assert.deepEqual(refusals(markdown), [{ line: 6, rule: 'overview-plain' }]);
+  assert.match(checkSpec(markdown)[0].message, /S2/);
+});
+
+test('a long overview is refused', () => {
+  const sentence = 'The deck shows a short plain line above each table.';
+  const at150 = ['- **What changes**: the deck shows a line above each table.', ...Array(14).fill(sentence)].join(' ');
+  assert.deepEqual(checkSpec(withOverview(at150)), []);
+  assert.deepEqual(refusals(withOverview(`${at150} Done.`)), [{ line: 3, rule: 'overview-plain' }]);
+});
+
+test('an overview with no What changes label is refused', () => {
+  assert.deepEqual(refusals(withOverview('- **What change**: the deck pauses a ticket.')), [{ line: 3, rule: 'overview-plain' }]);
+});
+
+test('an overview whose sentences run long is refused', () => {
+  const long = 'The deck now shows a plain line above every table so that anyone opening the pull request can see at a glance what the change does for them.';
+  const markdown = withOverview(`- **What changes**: ${long} ${long}`);
+  assert.deepEqual(refusals(markdown), [{ line: 3, rule: 'overview-plain' }]);
+  assert.match(checkSpec(markdown)[0].message, /sentences average/);
+});
+
 test('the CLI routes architecture.md to the spec check', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'check-spec-'));
   try {
     const cli = (name) => {
       fs.mkdirSync(path.join(dir, name));
       const file = path.join(dir, name, 'architecture.md');
-      fs.copyFileSync(path.join(FIXTURES, `${name}.md`), file);
+      fs.writeFileSync(file, fixture(`${name}.md`));
       return { file, run: spawnSync(process.execPath, ['scripts/check-slices.mjs', file], { cwd: ROOT, encoding: 'utf8' }) };
     };
     const bad = cli('no-bar');

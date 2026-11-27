@@ -33,7 +33,7 @@
  * would go in `store.postItem`, and the page would not have to change.
  */
 
-import { KIND_GATE1, KIND_GATE2, KIND_SIGNOFF, KIND_USER, MAX_SLICE_CHARS, appearsInYours, isBehind, isQueued, newestSaidFirst, repoKey } from './items.mjs';
+import { KIND_GATE1, KIND_GATE2, KIND_SIGNOFF, KIND_STEPS, KIND_USER, MAX_SLICE_CHARS, appearsInYours, isBehind, isQueued, newestSaidFirst, repoKey } from './items.mjs';
 
 /**
  * What a slice may be called, in characters. The number lives in `items.mjs`
@@ -483,7 +483,7 @@ export function yoursFor(run, row, index) {
  * The queue: what is open, whichever slice it belongs to and whether it belongs
  * to one at all. A question the pilot asked before any slice existed is still
  * waiting on the user, and the home screen is the only inbox there is. A chat is
- * open and never waiting, so it is never in the queue (L6). A user thread is,
+ * open and never waiting, so it is never in the queue (L6); a steps thread is (A1). A user thread is,
  * below every item that waits on the user's answer (2026-09-28); each group is
  * newest message first (L13), the order the overview draws and the thread arrows
  * walk. A tab's queue is this one narrowed (`tabsOf`). The Tickets queue is not
@@ -494,8 +494,8 @@ export const queueOf = (items) =>
     .filter(isQueued)
     .sort((a, b) => (a.kind === KIND_USER) - (b.kind === KIND_USER) || newestSaidFirst(a, b));
 
-/** The owed presses (nothing-hidden L1; ADR 0204): a press the user owes, a card whichever ticket it names. */
-const OWED_KINDS = [KIND_GATE1, KIND_GATE2, KIND_SIGNOFF];
+/** The owed presses (nothing-hidden L1; ADR 0204): a press the user owes, a card whichever ticket it names; a steps thread's Done since steps-in-previews L2. */
+const OWED_KINDS = [KIND_GATE1, KIND_GATE2, KIND_SIGNOFF, KIND_STEPS];
 const isFolded = (item, items) => !OWED_KINDS.includes(item.kind) && isBehind(item, items);
 
 /**

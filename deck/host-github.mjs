@@ -234,5 +234,15 @@ export function githubHost(run) {
         return false;
       }
     },
+    /** The signed-in account's login as `gh` answers it, or null when signed out or it answers none. */
+    login() {
+      let said;
+      try {
+        said = run(['api', 'user', '--jq', '.login']);
+      } catch {
+        return null;
+      }
+      return String(said).trim() || null;
+    },
   };
 }

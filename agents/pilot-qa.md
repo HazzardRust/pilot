@@ -181,7 +181,7 @@ first, the minimal change, one fresh-context reviewer matched to the language
 or input), targeted tests for the changed files. Gates run once, on the
 final state. Commit with the trailer from the brief and push each fix to
 `feat/<slug>` as it lands, with the new tip SHA in your next message to
-your addressee and where the user should look to see the fix. If a fix grows past a
+your addressee and where the user should look to see the fix. A fix that changes what a user sees rewrites the artefact's `## Overview` per `skills/pr-overview` on `feat/<slug>`. If a fix grows past a
 small diff (the number in the brief; absent one, about 150 changed lines or a
 third file outside the feature's owned files), stop, state the minimal fix to
 your addressee, and continue with what does not depend on it. Children are Sonnet

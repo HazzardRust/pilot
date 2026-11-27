@@ -8,63 +8,50 @@
 // A red run's log goes under a home of this process's own, never the real one; the
 // fixture seam imports fake-home.mjs first.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const { sync } = await import('../sync.mjs');
 const { assertPushable } = await import('../pilot-branch.mjs');
 const { NO_TEST } = await import('../integrate.mjs');
+const { ghStub } = await import('../gh-stub.mjs');
+
+const PILOT = fileURLToPath(new URL('../../bin/pilot.mjs', import.meta.url));
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
-function commitFile(repo, file, text, message) {
-  fs.writeFileSync(path.join(repo, file), text);
-  git(repo, 'add', file);
-  git(repo, 'commit', '-q', '-m', message);
+/** One commit of `file` on `branch`, subjected as a push of it would be. */
+const pushed = (branch, file, text) => ({ branch, files: { [file]: text }, message: `${branch}: ${file}` });
+
+/**
+ * A bare origin with main, `pilot` one file ahead of it and `feat/b` at pilot, then `more` commits; the caller's
+ * clone on `feat/b`; `sha` each branch's tip. `shape` names the key: what moved on origin.
+ */
+function repos(t, shape = 'pilot ahead', ...more) {
+  return gitFixture(t, `sync:${shape}`, (dir) => {
+    const { origin, sha } = seed(dir, [{ branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'main' }, pushed('pilot', 'p.txt', 'p\n'), ...more], { 'feat/b': 'pilot' });
+    const work = path.join(dir, 'work');
+    git(dir, 'clone', '-q', '-b', 'feat/b', origin, work);
+    return { origin, work, sha, gitIn: (args) => git(work, ...args) };
+  });
 }
 
-/** On `branch` in `seed`, commit one file and push it. */
-function pushTo(seed, branch, file, text) {
-  git(seed, 'checkout', '-q', branch);
-  commitFile(seed, file, text, `${branch}: ${file}`);
-  git(seed, 'push', '-q', 'origin', branch);
-}
-
-/** A bare origin with main and `pilot` from it, a seed clone to move them, and the caller's clone on `feat/b`. */
-function repos(t) {
-  return gitFixture(t, 'sync:repos', buildRepos);
-}
-
-function buildRepos(dir) {
-  const origin = path.join(dir, 'origin.git');
-  const seed = path.join(dir, 'seed');
-  const work = path.join(dir, 'work');
-  git(dir, 'init', '--bare', '-b', 'main', origin);
-  git(dir, 'clone', '-q', origin, seed);
-  git(seed, 'checkout', '-q', '-b', 'main');
-  commitFile(seed, 'shared.txt', 'one\n', 'main');
-  git(seed, 'push', '-q', 'origin', 'main');
-  git(seed, 'push', '-q', 'origin', 'main:pilot');
-  git(seed, 'branch', '-q', 'pilot', 'origin/pilot');
-  pushTo(seed, 'pilot', 'p.txt', 'p\n');
-  git(seed, 'checkout', '-q', '-b', 'feat/b', 'pilot');
-  git(seed, 'push', '-q', 'origin', 'feat/b');
-  git(dir, 'clone', '-q', '-b', 'feat/b', origin, work);
-  return { origin, seed, work, gitIn: (args) => git(work, ...args) };
-}
+/** Origin with a new main commit since pilot. */
+const mainAhead = (t) => repos(t, 'main ahead', pushed('main', 'm2.txt', 'm2\n'));
 
 const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
 const failing = `node -e "console.log('ℹ pass 2'); console.log('ℹ fail 1'); process.exit(1)"`;
 
 test('sync merges a new main commit into pilot', (t) => {
-  const { origin, seed, work, gitIn } = repos(t);
-  pushTo(seed, 'main', 'm2.txt', 'm2\n');
-  const mainTip = git(origin, 'rev-parse', 'main');
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
+  const { origin, work, sha, gitIn } = mainAhead(t);
+  const mainTip = sha.main;
+  const pilotTip = sha.pilot;
 
   const result = sync({ cwd: work, git: gitIn, test: passing });
 
@@ -77,9 +64,7 @@ test('sync merges a new main commit into pilot', (t) => {
 });
 
 test("sync's main merge allocates no placeholder ADR", (t) => {
-  const { origin, seed, work, gitIn } = repos(t);
-  fs.mkdirSync(path.join(seed, 'docs/adr'), { recursive: true });
-  pushTo(seed, 'main', 'docs/adr/NNNN-x.md', '# x\n');
+  const { origin, work, gitIn } = repos(t, 'main adds a placeholder ADR', pushed('main', 'docs/adr/NNNN-x.md', '# x\n'));
 
   const result = sync({ cwd: work, git: gitIn, test: passing });
 
@@ -89,9 +74,8 @@ test("sync's main merge allocates no placeholder ADR", (t) => {
 });
 
 test('a green run with no count line prints what is known, and no ?', (t) => {
-  const { origin, seed, work, gitIn } = repos(t);
-  pushTo(seed, 'main', 'm2.txt', 'm2\n');
-  const mainTip = git(origin, 'rev-parse', 'main');
+  const { origin, work, sha, gitIn } = mainAhead(t);
+  const mainTip = sha.main;
 
   const result = sync({ cwd: work, git: gitIn, test: 'node -e "0"' });
 
@@ -99,9 +83,8 @@ test('a green run with no count line prints what is known, and no ?', (t) => {
 });
 
 test('the sync line carries the scope the run printed', (t) => {
-  const { origin, seed, work, gitIn } = repos(t);
-  pushTo(seed, 'main', 'm2.txt', 'm2\n');
-  const mainTip = git(origin, 'rev-parse', 'main');
+  const { origin, work, sha, gitIn } = mainAhead(t);
+  const mainTip = sha.main;
   const scoped = `node -e "console.log('selected 2 of 9 test files since abc1234'); console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
 
   const result = sync({ cwd: work, git: gitIn, test: scoped });
@@ -120,9 +103,8 @@ test('with no origin/pilot sync stops naming pilot base, and pushes nothing', (t
 });
 
 test('a refused push says so, and pilot is unchanged', (t) => {
-  const { origin, seed, work, gitIn } = repos(t);
-  pushTo(seed, 'main', 'm2.txt', 'm2\n');
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
+  const { origin, work, sha, gitIn } = mainAhead(t);
+  const pilotTip = sha.pilot;
   fs.writeFileSync(path.join(origin, 'hooks', 'pre-receive'), '#!/bin/sh\necho refused >&2\nexit 1\n', { mode: 0o755 });
 
   assert.throws(() => sync({ cwd: work, git: gitIn, test: 'node -e "0"' }), (err) =>
@@ -131,9 +113,9 @@ test('a refused push says so, and pilot is unchanged', (t) => {
 });
 
 test('sync with nothing new pushes nothing', (t) => {
-  const { origin, work, gitIn } = repos(t);
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
-  const mainTip = git(origin, 'rev-parse', 'main');
+  const { origin, work, sha, gitIn } = repos(t);
+  const pilotTip = sha.pilot;
+  const mainTip = sha.main;
 
   const result = sync({ cwd: work, git: gitIn, test: failing });
 
@@ -143,10 +125,8 @@ test('sync with nothing new pushes nothing', (t) => {
 });
 
 test('a conflicting main keeps the sync worktree for the lander', (t) => {
-  const { origin, seed, work, gitIn } = repos(t);
-  pushTo(seed, 'pilot', 'shared.txt', 'pilot\n');
-  pushTo(seed, 'main', 'shared.txt', 'main\n');
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
+  const { origin, work, sha, gitIn } = repos(t, 'pilot and main both change shared.txt', pushed('pilot', 'shared.txt', 'pilot\n'), pushed('main', 'shared.txt', 'main\n'));
+  const pilotTip = sha.pilot;
   const dir = path.join(path.dirname(work), `${path.basename(work)}-sync`).replaceAll(path.sep, '/'); // git's spelling
 
   assert.throws(
@@ -159,9 +139,8 @@ test('a conflicting main keeps the sync worktree for the lander', (t) => {
 });
 
 test('red tests push nothing', (t) => {
-  const { origin, seed, work, gitIn } = repos(t);
-  pushTo(seed, 'main', 'm2.txt', 'm2\n');
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
+  const { origin, work, sha, gitIn } = mainAhead(t);
+  const pilotTip = sha.pilot;
 
   assert.throws(
     () => sync({ cwd: work, git: gitIn, test: failing }),
@@ -171,10 +150,9 @@ test('red tests push nothing', (t) => {
 });
 
 test('from a checkout on the default branch, sync pushes only pilot', (t) => {
-  const { origin, seed, work, gitIn } = repos(t);
-  pushTo(seed, 'main', 'm2.txt', 'm2\n');
+  const { origin, work, sha, gitIn } = mainAhead(t);
   git(work, 'checkout', '-q', 'main');
-  const mainTip = git(origin, 'rev-parse', 'main');
+  const mainTip = sha.main;
   const refsBefore = git(origin, 'for-each-ref', '--format=%(refname) %(objectname)', 'refs/heads/');
 
   const result = sync({ cwd: work, git: gitIn, test: passing });
@@ -189,16 +167,14 @@ test('from a checkout on the default branch, sync pushes only pilot', (t) => {
 });
 
 test('the guard refuses the push refspec sync uses when it names the default branch', (t) => {
-  const { origin, gitIn } = repos(t);
-  const sha = git(origin, 'rev-parse', 'pilot');
-  assert.throws(() => assertPushable(`${sha}:refs/heads/main`, { git: gitIn }), /default branch/);
-  assert.doesNotThrow(() => assertPushable(`${sha}:refs/heads/pilot`, { git: gitIn }));
+  const { sha, gitIn } = repos(t);
+  assert.throws(() => assertPushable(`${sha.pilot}:refs/heads/main`, { git: gitIn }), /default branch/);
+  assert.doesNotThrow(() => assertPushable(`${sha.pilot}:refs/heads/pilot`, { git: gitIn }));
 });
 
 test('sync leaves the caller\'s checkout untouched', (t) => {
-  const { seed, work, gitIn } = repos(t);
-  pushTo(seed, 'main', 'm2.txt', 'm2\n');
-  const head = git(work, 'rev-parse', 'HEAD');
+  const { work, sha, gitIn } = mainAhead(t);
+  const head = sha.pilot; // the clone's feat/b, cut at pilot
 
   sync({ cwd: work, git: gitIn, test: passing });
 
@@ -210,9 +186,8 @@ test('sync leaves the caller\'s checkout untouched', (t) => {
 });
 
 test('with no package.json and no pilot.test, sync refuses and pushes nothing', (t) => {
-  const { origin, seed, work, gitIn } = repos(t);
-  pushTo(seed, 'main', 'm2.txt', 'm2\n');
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
+  const { origin, work, sha, gitIn } = mainAhead(t);
+  const pilotTip = sha.pilot;
 
   assert.throws(
     () => sync({ cwd: work, git: gitIn }),
@@ -222,14 +197,29 @@ test('with no package.json and no pilot.test, sync refuses and pushes nothing', 
 });
 
 test("the test command is the merged tree's, not the caller's", (t) => {
-  const { origin, seed, work, gitIn } = repos(t);
-  pushTo(seed, 'main', 'm2.txt', 'm2\n');
+  const { origin, work, sha, gitIn } = mainAhead(t);
   fs.writeFileSync(path.join(work, 'package.json'), '{}');
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
+  const pilotTip = sha.pilot;
 
   assert.throws(
     () => sync({ cwd: work, git: gitIn }),
     (err) => err.exitCode === 1 && err.message === `NOT synced: ${NO_TEST}; nothing pushed`,
   );
   assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip);
+});
+
+test('pilot sync with no pilot branch name, signed out, is refused and writes nothing', (t) => {
+  const { origin, work } = mainAhead(t);
+  const stub = ghStub(); // answers `gh api user` with nothing: signed out
+  t.after(() => fs.rmSync(stub.dir, { recursive: true, force: true }));
+  const env = { ...process.env, ...stub.env };
+  delete env.PILOT_BRANCH;
+  const refsBefore = git(origin, 'for-each-ref');
+
+  const run = spawnSync(process.execPath, [PILOT, 'sync'], { cwd: work, env, encoding: 'utf8', windowsHide: true });
+
+  assert.equal(run.status, 1, run.stdout + run.stderr);
+  assert.match(run.stdout, /no pilot branch name/);
+  assert.equal(git(origin, 'for-each-ref'), refsBefore, 'no ref written on origin');
+  assert.throws(() => git(work, 'config', '--get', 'pilot.branch'), 'no name stored');
 });

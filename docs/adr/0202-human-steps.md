@@ -35,6 +35,8 @@ The user closes closing reports as records and does not read them, so the human 
 - A landed ticket can stay green for days; it holds no lane and no next-ticket pick.
 - A closed steps thread is not reopened: its Done closed the ticket too, and reopening one alone would split them.
 
+Amended 2026-11-24 (ADR 0216): A4's "never in Yours" stands for agents only. An open steps thread is queued for the user (`isQueued`), an owed press drawn as a home card, and its ticket's row reads `waiting on your steps`, not `human steps`. `STANDING_KINDS`, its hooks mirror and the Stop gate stand.
+
 ## Amends
 
 - ADR 0148: `RECORD_KINDS` holds `steps` beside `report`.

@@ -15,6 +15,7 @@ import path from 'node:path';
 import { gc } from '../../deck/gc.mjs';
 import { githubHost } from '../../deck/host-github.mjs';
 import { greenChecks } from './lib/land-repos.mjs';
+import { seed } from './lib/seed.mjs';
 import { pilotProcesses } from '../../deck/procs.mjs';
 
 const { main } = await import('../land.mjs');
@@ -29,16 +30,13 @@ function scratchRun(t) {
 }
 
 function buildScratchRun(root) {
-  const origin = path.join(root, 'origin.git');
+  const { origin } = seed(root, [
+    { branch: 'main', files: {}, message: 'main' },
+    { branch: 'feat/x', files: {}, message: 'x' },
+  ], { pilot: 'main' });
   const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
-  git(root, 'clone', '-q', origin, work);
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'main');
-  git(work, 'push', '-q', 'origin', 'main', 'main:pilot');
-  git(work, 'remote', 'set-head', 'origin', 'main');
-  git(work, 'checkout', '-q', '-b', 'feat/x', 'origin/pilot');
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'x');
-  git(work, 'push', '-q', '-u', 'origin', 'feat/x');
+  // A clone sets origin/HEAD and feat/x's upstream, as `remote set-head` and `push -u` did.
+  git(root, 'clone', '-q', '-b', 'feat/x', origin, work);
   return { work, inWork: (args) => git(work, ...args) };
 }
 

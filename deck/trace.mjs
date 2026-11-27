@@ -41,7 +41,8 @@ export function timeline(rows, id, now) {
   const last = mine.at(-1);
   if (last === undefined) return { rows: mine, tail: 'no hand-off' };
   const kind = last.kind === 'crew-handoff' ? 'crew' : 'pilot';
-  if (FINISHED[kind].has(last.step)) return { rows: mine, tail: 'done' };
+  // The deck's own close of a crew-handoff whose ticket moved on (handoff-self-close spec 4) has no successor to spawn.
+  if (FINISHED[kind].has(last.step) || (last.step === 'resolved' && last.agent === 'deck')) return { rows: mine, tail: 'done' };
   const order = STEPS[kind];
   const next = order.includes(last.step) ? order[order.indexOf(last.step) + 1] : 'unknown';
   return { rows: mine, tail: `waiting: ${next}, ${ageOf(now - Date.parse(last.at))}` };

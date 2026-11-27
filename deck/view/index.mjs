@@ -6,6 +6,8 @@
  */
 import { landingFor, tabFor, tabsOf } from '../tabs.mjs';
 import agents from './agents.mjs';
+import archive from './archive.mjs';
+import archiveDetail from './archive-detail.mjs';
 import chat from './chat.mjs';
 import graph from './graph.mjs';
 import history from './history.mjs';
@@ -21,9 +23,9 @@ import tickets from './tickets.mjs';
 import usage from './usage.mjs';
 
 /** Every region by name, one module each (L5), so a region slice owns its own file. */
-export const REGIONS = { agents, chat, graph, history, notifications, queue, reply, reports, status, strip, tabs, thread, tickets, usage };
+export const REGIONS = { agents, archive, archiveDetail, chat, graph, history, notifications, queue, reply, reports, status, strip, tabs, thread, tickets, usage };
 
-export const SCREENS = new Set(['home', 'thread', 'items']);
+export const SCREENS = new Set(['home', 'thread', 'items', 'archive']);
 
 /** `query` is `{ screen, run, all, ticket, id }`, each as the URL gave it; null for the overview. */
 export function viewOf(reads, query) {

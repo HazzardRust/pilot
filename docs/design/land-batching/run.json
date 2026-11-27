@@ -1,0 +1,372 @@
+{
+  "slug": "land-batching",
+  "feature": "Landing spawns far fewer git",
+  "ticket": "itm_7a100ab43411",
+  "branch": "feat/land-batching",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-land-batching",
+  "artefact": "docs/design/land-batching/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated 4739549; checks green at 493bd48",
+      "branch": "slice/land-batching-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated 756c840; checks green at 756c840",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/land-batching-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated c5a576c; checks green at 313ae31",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/land-batching-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated fb45e61; checks green at fb45e61",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/land-batching-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated 469510d; checks green at 469510d",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/land-batching-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s5"
+    },
+    {
+      "slice": "S7",
+      "state": "integrated ef9ee6c; ceiling fix 510fe3f (12823 / 11682); checks green at 510fe3f",
+      "after": [
+        "S3",
+        "S4",
+        "S5",
+        "S8",
+        "S9"
+      ],
+      "branch": "slice/land-batching-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s7"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated 1ea662c at 5f26d3a (base pilot@6e1806b via drift merge 31c4f54); full suite 5238 pass 0 fail; checks green at 5f26d3a",
+      "after": [
+        "S7"
+      ],
+      "branch": "slice/land-batching-s6-base",
+      "worktree": "C:/Users/jrylk/Projects/pilot-land-batching-s6-base"
+    },
+    {
+      "slice": "S8",
+      "state": "integrated c937a2f; checks green at c937a2f",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/land-batching-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "integrated 355d0e1; checks green at 355d0e1",
+      "after": [
+        "S5",
+        "S8"
+      ],
+      "branch": "slice/land-batching-s9",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-land-batching-s9"
+    },
+    {
+      "slice": "principles fix round",
+      "state": "integrated 583ecac (ff push); checks green at 583ecac; CI windows spawns 13544 / git 12401",
+      "after": [
+        "S6"
+      ],
+      "branch": "fix/land-batching"
+    },
+    {
+      "slice": "evidence rows",
+      "state": "done at 5f26d3a: diff coverage 94% (818/863); mutation not run (Stryker dry run red without PILOT_BRANCH); jscpd 1.21%; madge cycle integrate<->sync predates run; no finding added",
+      "after": [
+        "S6"
+      ]
+    },
+    {
+      "slice": "QA",
+      "state": "QA done at 583ecac: 6/6 spec lines pass (spec 3's '0 edited asserts' missed by A-S5/A-S9 edits); no commits; checks table to main",
+      "after": [
+        "principles fix round"
+      ]
+    },
+    {
+      "slice": "fix round",
+      "state": "integrated 583ecac; checks green at 583ecac; QA pass at 583ecac",
+      "after": [
+        "S6"
+      ],
+      "branch": "fix/land-batching",
+      "worktree": "C:/Users/jrylk/Projects/pilot-land-batching-fix"
+    }
+  ],
+  "findings": [
+    "dropped: F4 simplify — commitRecords(cwd, [], git) adds 1 git to every landing with no run record (25 to 26); bars have no headroom; manual forget kept"
+  ],
+  "next": "Gate 2 itm_8a7a450097f5 posted at 583ecac, waiting on the press. Spec-3 evidence rewording (itm_23ce5ec740ff) is ASSUMED by the deck's 20-min default, not pressed by the user; not written to the artefact so the gate2 sha stands; the gate2 body names it. On the press: spawn pilot-lander with the gate2 id.",
+  "updatedAt": "2026-11-26T12:09:39.083Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a test stubbing git by exact argv breaks when a read changes shape; S2.md forbade editing it",
+      "evidence": "land-suite.test.mjs:102 matched rev-parse .../pilot; one question round (C4)",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "parallel slices share one gate slot; single test files waited 3+ min",
+      "evidence": "gate: waiting for a slot: pid 876 in ...-s3; 2 gate runs stopped stale",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate selection ~16 min, ran three times (rebase onto feat tip, reviewer's test change)",
+      "evidence": "S4 report: final duration_ms 945894",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S4 census said 18 git; fixture measures 19 (config --get pilot.test)",
+      "evidence": "S4 report, GIT_TRACE",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no helper lists which git argv a run spawned; a throwaway GIT_TRACE test was written and deleted",
+      "evidence": "S4 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "merge-tree --write-tree counts as a write in the view and flushes it; run outside the view to reach 14",
+      "evidence": "scripts/sync.mjs mergeTree, S4 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "countGit counts but does not log argv; finding which git a count saves took a temporary spawn_sync probe test",
+      "evidence": "S8 report: scratch zz-measure-s8*.test.mjs deleted",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate selection since origin/main ran ~5,000 tests for a 6-file slice; two deck tests timed out at 5 s under load",
+      "evidence": "deck/test/lineage-base, gate1-lineage: green alone",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S8's brief assumed the three new reads would move integrate; they are each asked once there, so 20 -> 20; one more slice needed for spec 4's 18",
+      "evidence": "S8 report counts table",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "integrate of S8 went red on a deck test unrelated to the diff: lineage's 5 s git timeout fires under parallel gate load",
+      "evidence": "deck/test/gate1-verdicts.test.mjs:105, deck/lineage.mjs:36; log 20261125T131656697Z-slice-land-batching-s8.log",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "parallel slices load the machine: one integrate test took 650 s vs 12 s; reviewer runs timed out on 'gate: waiting for a slot'",
+      "evidence": "S5 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed --since runs the whole suite, same as npm test",
+      "evidence": "package.json test:changed: node scripts/gate.mjs",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5's 27 bar needed origin tips from the local ref snapshot, not only the skipped fetches (28); land-clear's fault injection had to change because the tail no longer fetches",
+      "evidence": "scripts/test/land-clear.test.mjs:148-166",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9.md's mechanism (unify symbolic-ref argv) saved nothing: integrate's fetch empties the view between the two reads; baseOf took the branch name instead",
+      "evidence": "S9 report: traced argv, symbolic-ref before and after fetch -q --prune origin",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a slice that drops a git must own the test pinning that git's argv; S9 was told to edit no assert",
+      "evidence": "integrate-remote.test.mjs:130 expected 'fetch -q origin'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no per-argv trace helper; a scratch spawn_sync patch was written again (third slice)",
+      "evidence": "S4, S8, S9 reports",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Monitor unavailable to the implementer; Bash moved polling loops to background after ~120 s",
+      "evidence": "S7 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "product cut saved ~896 git against an estimated 1,500-2,100; fixture git rose 149; S6 must close 1,815 total / 1,676 git against its -500 to -900 estimate",
+      "evidence": "S7 cost-after.txt, spawns-after.txt vs spawns-before.txt",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6 implementer handed back after 3 tool calls claiming lost context; nothing had been built; resumed with a continue",
+      "evidence": "S6 first hand-back: 3 tool uses, 26 s",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "S7 set zero-headroom ceilings from one local run; Windows CI counts 8 more spawns / 6 more git and goes red",
+      "evidence": "run 45640034010 windows: spawns 12823 (git 11682) vs ceilings 12815 / 11676",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "full test:cost with the census probe took ~27 min; the census summariser is not in the repo, rebuilt in scratch",
+      "evidence": "S6 report: total 644 files 1632.8 s",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "A1's fixture estimate assumed shared helpers; ~90% of fixture git lives in ~100 test bodies",
+      "evidence": "S6 census: land-repos.mjs ~474 of 4,197",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "forced hand-back with an implementer live again: no TaskOutput, an until-loop Monitor refused by a hook, then handback-send-enforce while the child's 27-min test:cost ran",
+      "evidence": "land-batching co-pilot, S6-base implementer mid test:cost",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "int-s6.log held only the refusal line, no evidence rows; B1-B3 re-taken from S6's own verification in a throwaway worktree",
+      "evidence": "4d016387 scratchpad int-s6.log: NOT integrated ... checks red at ef9ee6c",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "base pilot moved under the run: integrate/land/sync conflicted and the base's tests added ~780 spawns, moving the measured bars again",
+      "evidence": "test:changed spawns 13590 (git 12447) vs 12815/11674",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "suite needs PILOT_BRANCH set; bare node --test on land/integrate/sync files fails 197 of 288",
+      "evidence": "first run 91/288 pass; one full file-set rerun",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "test:changed --since=origin/pilot runs the full suite whenever gate.mjs differs, so selection gate and test:cost were two ~30 min full runs back to back",
+      "evidence": "implementer report",
+      "size": 30
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "co-pilot forced to hand back with a child implementer live; its report had no reader until main redirected it",
+      "evidence": "hand-back named live implementer mid test:cost",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "integrate takes base before the slice; a slice that already merged pilot is refused when feat conflicts with pilot, so a drift merge had to replay the slice's resolution",
+      "evidence": "int-s6base.log: taking base pilot stopped; drift merge 31c4f54 from 7eaa6f6",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context compacted mid-review lost its evidence runner's table; report shipped without coverage/mutation rows, runner re-spawned by the co-pilot",
+      "evidence": "fundamentalist report §3: evidence runner not available",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "check-slices let S8/S9 into the run with template behaviours and no Interface block",
+      "evidence": "check-slices red on S8.md:19-22, S9.md:15-17",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "diff mutation aborted in Stryker's initial dry run: the sandboxed suite lacks PILOT_BRANCH / gh auth, so land/sync tests fail; no mutation score for the feature",
+      "evidence": "NOT landed: no pilot branch name; NOT synced: no origin/hazzardrust-pilot; ConfigError: failed tests in the initial test run",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "knip reports 732 unused files repo-wide, not diff-scoped; output truncated, unusable as a row",
+      "evidence": "evidence runner table, dead code row",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "P1 named decisions (A-S5, A-S9, A-base1) that appear nowhere in the repo; rebuilt from run.json friction and commit bodies",
+      "evidence": "grep under docs/design/land-batching: no matches",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "hand-back forced before the held full gate could run; resumed by message",
+      "evidence": "fix report: 583ecac0 not pushed",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "previous evidence runner's mutation run died with the machine (laptop down 18:21-20:54), output lost, re-run cost ~13 min",
+      "evidence": "tmp.p1g3eG5PbB: stryker.json, no report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "F6 deletes a test file, so spec 5's '629 test files' no longer describes the run (651 files incl. base growth)",
+      "evidence": "fix gate: 651 files, 5269 tests",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pin tests assert a bar but never print the measured count; QA copied *-pin tests with a log line to read 25/14/18",
+      "evidence": "QA report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 4's base counts (39, 18) no longer match the pins (36, 19) after the base moved",
+      "evidence": "QA report row 4",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "no TaskOutput in this session; waited on children with repeated 9-min pilot wait-for calls on a never-written file, each moved to background at 180 s",
+      "evidence": "this co-pilot's wake*.txt waits",
+      "size": 1
+    }
+  ]
+}

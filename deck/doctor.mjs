@@ -25,9 +25,12 @@ import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
 import { MIN_MODS_VERSION, claudeVersion } from '../scripts/handoff.mjs';
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
+import { LEGACY_PILOT, NO_NAME, namePilotBranch } from '../scripts/pilot-branch.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
+import { powerRow, readPower } from './power.mjs';
 import { probeDeck } from './probe.mjs';
+import { findRune as defaultFindRune } from './rune-bin.mjs';
 import { isSlug } from './runs.mjs';
 import { clashText, leashedGit, slugClashes } from './slug-clash.mjs';
 import { storeDir as defaultStoreDir } from './store-dir.mjs';
@@ -169,6 +172,48 @@ function hostRow({ git, hostFor, onPath, cwd }) {
   return signedIn
     ? { name, verdict: 'pass', detail: `${which}: ${cli} signed in` }
     : { name, verdict: 'fail', detail: `${which}: ${cli} is not signed in`, steps: [`run \`${cli} auth login\``] };
+}
+
+/** The Host `hostFor` builds, or null when none is set or it cannot be built (the host row says why). */
+function hostOrNull(hostFor, cwd, git) {
+  try {
+    return hostFor(cwd, { git });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The pilot branch row (user-pilot-branch spec 7): the name and where it came from, and a warning when the stored
+ * name is another account's. Reads only (`namePilotBranch` with no host, `Host.login`): it derives and writes
+ * nothing. `host` is null when none is set or it could not be built.
+ */
+export function pilotBranchRow({ git, host }) {
+  const name = 'pilot branch';
+  let branch;
+  let source;
+  try {
+    ({ name: branch, source } = namePilotBranch({ git, host: null }));
+  } catch (error) {
+    if (error.message !== NO_NAME) {
+      return { name, verdict: 'fail', detail: error.message, steps: ['unset PILOT_BRANCH, or set it to <login>-pilot', 'git config pilot.branch <login>-pilot'] };
+    }
+    return host?.login()
+      ? { name, verdict: 'warn', detail: `none stored yet; the next \`pilot base\` derives it from the signed-in account` }
+      : { name, verdict: 'fail', detail: NO_NAME, steps: ['gh auth login (or glab auth login)', 'git config pilot.branch <login>-pilot'] };
+  }
+  if (source === 'env') return { name, verdict: 'pass', detail: `${branch} (PILOT_BRANCH)` };
+  const login = host?.login() ?? null;
+  const own = login ? `${login.toLowerCase()}-pilot` : null;
+  if (own !== null && branch !== LEGACY_PILOT && branch !== own) {
+    return {
+      name,
+      verdict: 'warn',
+      detail: `${branch} (stored) but ${login} is signed in, who would be ${own}; nothing is switched`,
+      steps: [`to follow this account: git config pilot.branch ${own}`],
+    };
+  }
+  return { name, verdict: 'pass', detail: `${branch} (stored)` };
 }
 
 /** A design path in a ticket body; its segment is held to `SLUG` before it is used anywhere. */
@@ -470,9 +515,23 @@ function deckRows({ found, port }) {
   return port === String(DECK_PORT) ? [...rows, rootRow] : rows;
 }
 
+/**
+ * The Rune deck row (prebuilt-rune spec 8): `pass` only for a built or a verified fetched binary, else `warn`
+ * with `findRune`'s reason, and `pilot deck` as the step only where a download is what would help.
+ */
+export function runeRow({ state, version }) {
+  const name = 'rune deck';
+  if (state.source === 'built') return { name, verdict: 'pass', detail: `built here, ${state.file}` };
+  if (state.source === 'fetched') return { name, verdict: 'pass', detail: `fetched ${version}, verified` };
+  // findRune's reasons are written for `pilot deck`, which opens the page instead; doctor opens nothing.
+  const reason = state.reason.replace(/, opening the page$/, '');
+  return { name, verdict: 'warn', detail: `missing: ${reason}`, ...(state.fetchable ? { steps: ['pilot deck'] } : {}) };
+}
+
 /** Every local check as a row, in the order `pilot doctor` prints them. */
 export async function checkAll({
   platform = hostPlatform(),
+  arch = process.arch,
   run = defaultRun,
   root = projectsRoot(),
   nodeVersion = process.versions.node,
@@ -491,6 +550,7 @@ export async function checkAll({
   git = leashedGit(cwd),
   hostFor = hostForDefault,
   readView = () => readOpenView(cwd, url),
+  findRune = defaultFindRune,
 } = {}) {
   const [found, view] = await Promise.all([probe(url), readView()]);
   let settings;
@@ -501,16 +561,19 @@ export async function checkAll({
   }
   return [
     defenderRow({ platform, run, root }),
+    powerRow({ power: readPower({ platform, run }), awake: found.awake, platform }),
     nodeRow({ nodeVersion, engines }),
     dependencyRow({ resolveDep }),
     storeRow({ storeDir, canWrite }),
     reachRow({ reach: readReach(), enabled: readEnabled() }),
     hostRow({ git, hostFor, onPath, cwd }),
+    pilotBranchRow({ git, host: hostOrNull(hostFor, cwd, git) }),
     slugsRow({ view, git, hostFor, cwd }),
     ...CLIS.map((cmd) => cliRow(cmd, onPath)),
     allowRow({ readSettings }),
     modsRow({ version: claudeVersion(run), settings, env }),
     ...deckRows({ found, port: new URL(url).port }),
+    runeRow({ state: findRune(PLUGIN_ROOT, { platform, arch, version: PLUGIN_VERSION, run }), version: PLUGIN_VERSION }),
   ];
 }
 
