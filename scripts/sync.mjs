@@ -129,7 +129,7 @@ export function mergeIntoPilot({ cwd = process.cwd(), git = (args) => gitAt(cwd,
     let run;
     try {
       run = runTests(dir, chosen.command, {
-        label: taken, where: side === 'ours' ? 'sync' : 'land', branch: side === 'ours' ? PILOT_BRANCH : taken,
+        label: taken, where: side === 'ours' ? 'sync' : 'land', branch: side === 'ours' ? pilot : taken,
         since: test ? 'injected' : chosen.selected ? since : null, slot: !chosen.selected,
       });
     } catch (err) {
