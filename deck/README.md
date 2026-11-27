@@ -84,11 +84,13 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `status-command.mjs` | `pilot status`: the deck's url, pid, version against the plugin's, uptime, live agents, and deck.log's last 20 lines; reads only (daemon-lifecycle spec 8, 9) |
 | `status.mjs` | the slice table and its Yours column |
 | `store-archive.mjs` | the store's month archive: closed items over 30 days old moved to `deck.archive-YYYY-MM.json`, read back by id |
+| `store-bundle.mjs` | the bundle: the allowlisted portable part of a store as one gzipped JSON document with a manifest |
 | `store-codec.mjs` | stored paths: every structured path in deck.json as `@<root>/<rel>` against this machine's roots |
 | `store-core.mjs` | the store's core: reading and writing deck.json, the refusals and validators, added decks |
 | `store-defaults.mjs` | a plain question's default, taken by the deck at 20 minutes; re-exported by `store-items.mjs` |
 | `store-dir.mjs` | where the deck keeps its files, loadable without the store |
 | `store-items.mjs` | the store's items: posting, replies, the gates, resolving, reopening and closing |
+| `store-move.mjs` | `pilot store export`: the bundle written, `exported.json` marked, and work on no remote listed |
 | `store-recovery.mjs` | the store's backup: `deck.json.bak` kept before each write, and a corrupt store set aside and recovered from it |
 | `store-restore.mjs` | `pilot store restore`: the backup swapped in by hand, refused while a deck serves the store on any port |
 | `store-steps.mjs` | a ticket's human steps: the steps thread's one writer, the user's Done, and the ticket's one close the report shares |

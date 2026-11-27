@@ -10,7 +10,7 @@ import { gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
@@ -20,6 +20,11 @@ import { exportStore } from '../store-move.mjs';
 import { tempDeck } from '../testUtils.mjs';
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+/** The runner `exportStore` is handed: real git, by argv, as `bin/pilot.mjs` hands it. */
+const runner = (args, cwd) => {
+  const run = spawnSync('git', args, { cwd, encoding: 'utf8', windowsHide: true });
+  return { status: run.status, stdout: run.stdout ?? '', stderr: run.stderr ?? '' };
+};
 
 /** A repository pushed to a bare remote, and a run worktree on a pushed branch with one commit more. */
 function aRepo(t) {
@@ -45,7 +50,7 @@ test('unpushed work is listed and the bundle still written', (t) => {
   const file = path.join(path.dirname(repo), 'moved.pilotstore');
   const said = [];
 
-  const code = exportStore([file], { now: () => new Date('2026-11-28T10:00:00.000Z'), host: 'source-host', out: (line) => said.push(line), err: (line) => said.push(line) });
+  const code = exportStore([file], { git: runner, now: () => new Date('2026-11-28T10:00:00.000Z'), host: 'source-host', out: (line) => said.push(line), err: (line) => said.push(line) });
 
   assert.equal(code, 0, said.join('\n'));
   const listed = said.filter((line) => line.startsWith('not on a remote: '));

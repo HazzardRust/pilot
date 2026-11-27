@@ -6,7 +6,6 @@
  * `deck.json` (L7).
  */
 
-import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -21,12 +20,6 @@ import { localDay } from './store-recovery.mjs';
 
 const USAGE = 'usage: pilot store export [<file>] [--logs]';
 const IN_FLIGHT = new Set(['running', 'queued']);
-
-/** git with an argv array in `cwd`, never a shell (S4 prohibited shortcut). */
-function runGit(args, cwd) {
-  const run = spawnSync('git', args, { cwd, encoding: 'utf8', windowsHide: true, timeout: 30_000 });
-  return { status: run.status, stdout: run.stdout ?? '', stderr: run.stderr || run.error?.message || '' };
-}
 
 /** The flags of `argv`: the bundle file (or undefined for the default name) and `--logs`. Throws the usage. */
 function parseArgs(argv) {
@@ -91,9 +84,10 @@ function decodedDeck(dir) {
  * `pilot store export [<file>] [--logs]`: the bundle written to `<file>`, by default
  * `pilot-store-<host>-<yyyy-mm-dd>.pilotstore` in the cwd, then `exported.json` beside the store; then each piece of
  * work not on a remote and their count. Exit 0 once the bundle is written, whatever the list says (A2); 1 on bad
- * arguments or a store that cannot be bundled, writing nothing.
+ * arguments or a store that cannot be bundled, writing nothing. `git(args, cwd)` is the caller's runner, returning
+ * `{ status, stdout, stderr }`: a store module starts no process itself (deck/test/create.test.mjs, ADR 0039).
  */
-export function exportStore(argv, { git = runGit, now = () => new Date(), host = os.hostname(), out = console.log, err = console.error } = {}) {
+export function exportStore(argv, { git, now = () => new Date(), host = os.hostname(), out = console.log, err = console.error } = {}) {
   let parsed;
   try {
     parsed = parseArgs(argv);

@@ -15,6 +15,7 @@
  * under `deck/`, and the exit code it answers with is this process's.
  */
 
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
@@ -579,7 +580,12 @@ export async function run(argv, deps) {
   }
 
   if (command === 'store' && flag === 'export') {
-    process.exitCode = exportStore(argv.slice(2));
+    // git by argv, never a shell (portable-store S4); passed in, since a store module starts no process (ADR 0039).
+    const git = (args, cwd) => {
+      const run = spawnSync('git', args, { cwd, encoding: 'utf8', windowsHide: true, timeout: 30_000 });
+      return { status: run.status, stdout: run.stdout ?? '', stderr: run.stderr || run.error?.message || '' };
+    };
+    process.exitCode = exportStore(argv.slice(2), { git });
     return undefined;
   }
 
