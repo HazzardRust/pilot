@@ -204,16 +204,68 @@ export function tagOf(repo, dir) {
 }
 
 /**
- * Run `slug`'s worktrees: those tagged to it, on its branches, and the land dir beside the main
- * checkout; never the main checkout itself. Listed through `view` when given (`worktrees`).
+ * The known runs of `repo` (prune-run-trees glossary): each slug with a `feat/<s>` or `design/<s>` ref,
+ * local or on any remote, a `design/` one not ending `-recut` (a re-cut is its run's, never a run), and
+ * each slug a tree is tagged to.
  */
-export function runWorktrees(repo, slug, view) {
+function knownRuns(repo, tagged) {
+  const refs = git(repo, 'for-each-ref', '--format=%(refname)', 'refs/heads/feat/', 'refs/heads/design/', 'refs/remotes/');
+  if (!refs.ok) throw new Error(`git for-each-ref failed in ${repo}: ${refs.err}`);
+  const known = new Set(tagged.values());
+  for (const ref of refs.out.split('\n').filter(Boolean)) {
+    const name = ref.startsWith('refs/remotes/') ? ref.split('/').slice(3).join('/') : ref.slice('refs/heads/'.length);
+    const run = /^(feat|design)\/(.+)$/.exec(name);
+    if (!run || !SLUG.test(run[2]) || (run[1] === 'design' && run[2].endsWith('-recut'))) continue;
+    known.add(run[2]);
+  }
+  return known;
+}
+
+/**
+ * Whether untagged `tree` is run `slug`'s by name alone (A1): on `fix/<slug>-<any>` but not a run
+ * branch, on `design/<slug>-recut`, or detached at `<home>-fund-<slug>`.
+ */
+function namedFor(tree, slug, home) {
+  const { branch } = tree;
+  if (typeof branch === 'string') {
+    return (branch.startsWith(`fix/${slug}-`) && branch.length > `fix/${slug}-`.length && !isRunBranch(branch, slug)) ||
+      branch === `design/${slug}-recut`;
+  }
+  return norm(tree.path) === norm(`${home}-fund-${slug}`);
+}
+
+/**
+ * Run `slug`'s worktrees, each with how it was reached (prune-run-trees L1, L3): the land dir beside
+ * the main checkout (`land`), a tree tagged to it (`tag`), one on its run branches (`branch`), and an
+ * untagged tree its name gives it (`name`) unless a longer known run's name or branch claims it too, so
+ * the longest known slug wins. Never the main checkout. Listed through `view` when given (`worktrees`).
+ */
+export function runTrees(repo, slug, view) {
   const [home, ...rest] = worktrees(repo, view);
-  const land = path.resolve(keptDir(home.path, `feat/${slug}`));
+  const land = norm(keptDir(home.path, `feat/${slug}`));
   const tagged = tags(repo);
-  return rest
-    .filter((tree) => tagged.get(norm(tree.path)) === slug || isRunBranch(tree.branch, slug) || path.resolve(tree.path) === land)
-    .map((tree) => tree.path);
+  let known;
+  const found = [];
+  for (const tree of rest) {
+    const tag = tagged.get(norm(tree.path));
+    let by = null;
+    if (norm(tree.path) === land) by = 'land';
+    else if (tag === slug) by = 'tag';
+    else if (isRunBranch(tree.branch, slug)) by = 'branch';
+    else if (tag === undefined && namedFor(tree, slug, home.path)) {
+      known ??= knownRuns(repo, tagged);
+      const longer = [...known].some((other) => other.length > slug.length &&
+        (isRunBranch(tree.branch, other) || namedFor(tree, other, home.path)));
+      if (!longer) by = 'name';
+    }
+    if (by) found.push({ path: tree.path, by });
+  }
+  return found;
+}
+
+/** Run `slug`'s worktrees: `runTrees`' paths. */
+export function runWorktrees(repo, slug, view) {
+  return runTrees(repo, slug, view).map((tree) => tree.path);
 }
 
 /**
@@ -308,8 +360,8 @@ function fetchBases(repo, bases) {
  * whose branch is in `keep` is a concluding run's: kept with state `concluding`, merged-clean or not.
  * A merged-clean tree `holder` answers a pid or `'unsure'` for is kept as `live <pid>` or
  * `live unsure` (landing-keeps-worktrees L2, L3); no holder, nothing is held.
- * With `run` and `landed`, the run has landed (ADR 0171): `runWorktrees` are looked at, the land dir
- * among them, and a merged tree goes unless a tracked change or a holder keeps it, with `--force`
+ * With `run`, `runTrees` are looked at, less the land dir (prune-run-trees L2). With `run` and `landed`, the run
+ * has landed (ADR 0171): the land dir is among them, and a merged tree goes unless a tracked change or a holder keeps it, with `--force`
  * once its tracked status reads clean again, and its branch with `-D`. Without `run`, `landed` is ignored.
  * Every removal goes through `removeTree` (prune-worktrees S2, L1): a tree it
  * keeps is `kept` with its state, `leftover` aside, which is `failed`.
@@ -326,11 +378,12 @@ export function prune(repo, base, { dryRun = false, run, merged = [], keep = [],
   const failed = [];
   const relaxed = landed && run !== undefined;
   // A landed run's selection lists twice (classify, runWorktrees): a view of its own lists once (S10). Selection only: removeTree lists afresh.
-  const reads = view ?? (relaxed ? gitView(repo) : undefined);
+  const reads = view ?? (run !== undefined ? gitView(repo) : undefined);
   const trees = classify(repo, base, { run, landed: relaxed, view: reads });
-  const theirs = relaxed ? new Set(runWorktrees(repo, run, reads)) : null;
-  const ours = (tree, index) => run === undefined ||
-    (index > 0 && (relaxed ? theirs.has(tree.path) : isRunBranch(tree.branch, run)));
+  // One selection on both paths (prune-run-trees L2): the land dir only once landed, since the landing removes it itself after (F4).
+  const theirs = run === undefined ? null
+    : new Set(runTrees(repo, run, reads).filter(({ by }) => relaxed || by !== 'land').map((tree) => tree.path));
+  const ours = (tree, index) => run === undefined || (index > 0 && theirs.has(tree.path));
   for (const tree of trees.filter(ours)) {
     if (tree.branch && keep.includes(tree.branch) && tree.state !== 'main') {
       kept.push({ path: tree.path, state: 'concluding' });
