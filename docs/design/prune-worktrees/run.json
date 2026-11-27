@@ -66,7 +66,7 @@
     },
     {
       "slice": "S8",
-      "state": "pushed 46f4814 (on 9dbfd75; temp ceilings 14589/13438); gate 5433/0 bar old ceiling; ts APPROVE",
+      "state": "integrated at 768684d; checks green",
       "after": [
         "S5"
       ],
@@ -102,20 +102,26 @@
     },
     {
       "slice": "S9 Fixture fold (added)",
-      "state": "planned: fold feature fixture tests onto shared fixtures until test:cost <= 13597/12453, restore constants",
+      "state": "superseded by S10 (fold cannot reach the bar); slice file c4e5f1e not integrated",
       "after": [
         "S8"
-      ]
+      ],
+      "branch": "slice/prune-worktrees-s9",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s9"
+    },
+    {
+      "slice": "S10 Prune starts less git (added)",
+      "state": "implementing (itm_6eeb81c29d9b default a)",
+      "after": [
+        "S8"
+      ],
+      "branch": "slice/prune-worktrees-s10",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s10"
     }
   ],
-  "next": "S8 integrating; then checks; then integrate S6 f04cded; checks; fixture fold slice; fundamentalist; QA.",
-  "updatedAt": "2026-11-27T01:32:12.376Z",
+  "next": "integrating S6 f04cded under lock; then checks; S10 live; integrate S10; fundamentalist + QA.",
+  "updatedAt": "2026-11-27T02:01:07.055Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "two co-pilots forced to hand back with children live; the successor judged a gating implementer dead and started a duplicate on the same worktree; the pilot stopped it and integrates slices itself, each report 3-5k tokens",
-      "size": 15
-    },
     {
       "kind": "drain",
       "what": "three signed landings stopped red on the same 5 s git timeout in gate1 lineage tests (deck/lineage.mjs:17); each needed a log read and a deck reply; one 30-min land timeout undiagnosed (possibly the 2 machine-wide gate slots)",
@@ -325,6 +331,12 @@
       "what": "S6: gate log absent until the lock is taken, so pilot wait-for returned early; Monitor and until loops unavailable",
       "evidence": "S6 report f04cded",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S9: context summary came back empty, work re-derived; no documented per-file spawn counter and integrate-prune fails alone without PILOT_BRANCH",
+      "evidence": "S9 report c4e5f1e; pw-s9-count.sh",
+      "size": 2
     }
   ]
 }
