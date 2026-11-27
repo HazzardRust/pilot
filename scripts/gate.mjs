@@ -132,7 +132,9 @@ export function gateArgv(args, cores, root) {
  * for the suite (none when `slot` is undefined); given `spawns`, the counter preloaded and writing there;
  * given `guard`, the home store the deck store refuses to write and the log it names each writer in (home-store-guard L4).
  */
-export function gateEnv(env, slot, spawns, guard) {
+export function gateEnv(given, slot, spawns, guard) {
+  // The scope is this gate's own; a gate the suite starts under test runs wide (tested-once S1).
+  const { PILOT_TEST_SCOPE: _scope, ...env } = given;
   const cap = `--max-old-space-size=${CHILD_HEAP_MB}`;
   const options = [];
   const inherited = (env.NODE_OPTIONS ?? '').split(/\s+/).filter(Boolean);

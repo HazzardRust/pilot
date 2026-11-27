@@ -40,6 +40,12 @@ test("the gate caps each child's heap", () => {
   assert.equal(gateEnv({ NODE_OPTIONS: cap }, 0).NODE_OPTIONS, cap, 'the cap is added once, not twice');
 });
 
+test("a slice-scope gate's tests see no scope of their own", () => {
+  const env = gateEnv({ PILOT_TEST_SCOPE: 'slice', KEEP: 'x' }, 0);
+  assert.equal(env.PILOT_TEST_SCOPE, undefined, 'a gate the suite starts runs wide');
+  assert.equal(env.KEEP, 'x');
+});
+
 test('flags pass through', () => {
   const reporter = '--test-reporter=./scripts/quiet-reporter.mjs';
   const argv = gateArgv([reporter], 16, ROOT);
