@@ -124,7 +124,7 @@ export function openPilot(
   requireOnTheLine(home);
   let args;
   try {
-    args = startArgs(reach, { home });
+    args = startArgs(reach, { home, env });
   } catch (err) {
     throw new DeckRefusal(`could not write the session settings: ${err.message}`, 500);
   }
