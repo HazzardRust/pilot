@@ -440,8 +440,8 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
   // The wide call is unchanged: `selectTests`'s default scope is wide.
   if (sinceArg !== undefined) selection = select({ cwd, since: sinceArg.slice('--since='.length), ...(scope === 'slice' ? { scope } : {}) });
   const cargo = homeStore !== undefined && which ? cargoStep({ ...process.env, PILOT_TEST_SCOPE: scope }, which, platform, selection) : undefined;
-  // A deferred cargo step is named in the scope line, so the run reads as incomplete (tested-once spec 1, 3).
-  if (selection && cargo?.skip === CARGO_DEFERRED) selection = { ...selection, deferred: [...(selection.deferred ?? []), 'cargo'] };
+  // The standing cargo deferral is not named in the scope line: a slice-scope run that left nothing else out is
+  // complete, so `pilot test` reuses it; cargo runs at land's full suite (tested-once spec 3a, A6).
   if (sinceArg !== undefined) {
     process.stdout.write(`${scopeLine(selection)}\n`);
     args = args.filter((arg) => !/^--since(=|$)/.test(arg));
