@@ -219,3 +219,27 @@ test('Smart App Control enforced downloads nothing', async (t) => {
   assert.match(blocked.reason, /Smart App Control/);
   assert.deepEqual(fetchedFiles(fetchedRoot), [ASSET]);
 });
+
+test("Smart App Control enforced keeps the daemon's auto-open off a fetched binary too", async (t) => {
+  // The user's deck: no scratch dir or port, nothing saying not to open, a temp home for its open file; restored after.
+  const root = packageRoot(t);
+  for (const [name, value] of [['PILOT_DECK_NO_OPEN'], ['PILOT_DECK_DIR'], ['PILOT_DECK_PORT'], ['HOME', root], ['USERPROFILE', root]]) {
+    const previous = process.env[name];
+    if (value === undefined) delete process.env[name];
+    else process.env[name] = value;
+    t.after(() => (previous === undefined ? delete process.env[name] : (process.env[name] = previous)));
+  }
+  fs.mkdirSync(fetchedDir(root), { recursive: true });
+  fs.writeFileSync(path.join(fetchedDir(root), ASSET), BINARY);
+  const opened = async (value) => {
+    // A module copy of its own, so the reopen guard of one open does not hide the next.
+    const { openDeck } = await import(`../open.mjs?sac=${value}`);
+    const calls = [];
+    const spawnOpener = (command) => (calls.push(command), { on() {}, unref() {} });
+    assert.equal(openDeck(spawnOpener, 'win32', undefined, { root, arch: 'x64', version: HOST.version, run: () => regOutput(value) }), true);
+    return calls[0];
+  };
+  // Off, the fetched binary is what opens; enforced, the page does.
+  assert.match(await opened('0x0'), /pilot-deck-\d+\.exe$/);
+  assert.equal(await opened('0x1'), 'cmd');
+});

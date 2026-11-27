@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 import { hostPlatform } from '../hooks/lib/platform.js';
 import { openFile } from './launch.mjs';
-import { findRune } from './rune-bin.mjs';
+import { defaultRun, findRune } from './rune-bin.mjs';
 import { PLUGIN_VERSION } from './version.mjs';
 
 /** This package's root: the one place a Rune deck binary is looked for, never a path from the environment. */
@@ -128,7 +128,7 @@ export function runCopy(rune) {
  * to start a process, and that must never happen while the suite is running — so the
  * tests hand it a recorder, and the daemon hands it nothing.
  */
-export function openDeck(spawnOpener = spawn, platform = hostPlatform(), runeArg) {
+export function openDeck(spawnOpener = spawn, platform = hostPlatform(), runeArg, lookup = {}) {
   const off = process.env.PILOT_DECK_NO_OPEN;
   // Any value at all, not only `1`: the one reason to set this is to stop a browser
   // appearing, and `PILOT_DECK_NO_OPEN=0` is nobody's way of asking for one.
@@ -143,8 +143,10 @@ export function openDeck(spawnOpener = spawn, platform = hostPlatform(), runeArg
   lastTriedAt = now;
 
   // Looked up only when something will open: a built binary, else a fetched one that still matches its pin,
-  // hashed here; never a download (prebuilt-rune A6). A test names its own, or null for none.
-  const rune = runeArg === undefined ? findRune(PACKAGE_ROOT, { platform, arch: process.arch, version: PLUGIN_VERSION }).file : runeArg;
+  // hashed here; never a download (prebuilt-rune A6). Smart App Control is read as `pilot deck` reads it (spec 10).
+  // A test names its own binary, or null for none, or a `lookup` of its own root, version and `run`.
+  const { root = PACKAGE_ROOT, arch = process.arch, version = PLUGIN_VERSION, run = defaultRun } = lookup;
+  const rune = runeArg === undefined ? findRune(root, { platform, arch, version, run }).file : runeArg;
   const file = openFile();
   const { command, args } = openerFor(platform, file, rune && runCopy(rune));
   try {
