@@ -8,6 +8,7 @@
 // A red run's log goes under a home of this process's own, never the real one; the
 // fixture seam imports fake-home.mjs first.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,7 +26,7 @@ const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`
 const failing = `node -e "console.log('✖ broken thing (1.2ms)'); console.log('ℹ pass 2'); console.log('ℹ fail 1'); process.exit(1)"`;
 
 /**
- * `origin.git` with `main` and `feat/x`, and `second.git`, named `second` in the work clone.
+ * `origin.git` with `main` and `feat/x`, and a second bare repository, named `second` in the work clone.
  * `pilot` and `slice/x-s1` (adding a.txt) go where `runs` says: `origin`, `second`, or `none`
  * for local branches.
  */
@@ -34,33 +35,29 @@ function scratchRepos(t, runs) {
 }
 
 function buildScratchRepos(root, runs) {
-  const origin = path.join(root, 'origin.git');
-  const second = path.join(root, 'second.git');
+  const base = { branch: 'main', files: { 'base.txt': 'base\n' }, message: 'base' };
+  const slice = { branch: 'slice/x-s1', files: { 'a.txt': 'a\n' }, message: 'the slice' };
+  // Off origin, `pilot` and the slice are seeded apart: the same history fast-imported again
+  // writes the same commits, so its base is origin's feat/x.
+  const apart = () => {
+    const dir = path.join(root, 'apart');
+    fs.mkdirSync(dir);
+    return seed(dir, [{ ...base, branch: 'pilot' }, slice]);
+  };
+  const { origin, sha } = runs === 'origin' ? seed(root, [base, slice], { 'feat/x': 'main', pilot: 'main' }) : seed(root, [base], { 'feat/x': 'main' });
+  const elsewhere = runs === 'origin' ? undefined : apart();
+  const second = runs === 'second' ? elsewhere.origin : path.join(root, 'second.git');
+  if (runs !== 'second') git(root, 'init', '-q', '--bare', '-b', 'main', second);
   const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
-  git(root, 'init', '-q', '--bare', '-b', 'main', second);
-  git(root, 'clone', '-q', origin, work);
+  git(root, 'clone', '-q', '-b', 'feat/x', origin, work);
   git(work, 'remote', 'add', 'second', second);
-  git(work, 'checkout', '-q', '-b', 'feat/x');
-  fs.writeFileSync(path.join(work, 'base.txt'), 'base\n');
-  git(work, 'add', 'base.txt');
-  git(work, 'commit', '-q', '-m', 'base');
-  git(work, 'push', '-q', '-u', 'origin', 'feat/x', 'HEAD:main');
-  git(work, 'remote', 'set-head', 'origin', 'main');
   if (runs !== 'origin') git(work, 'config', 'pilot.remote', runs);
-  git(work, 'checkout', '-q', '-b', 'slice/x-s1');
-  fs.writeFileSync(path.join(work, 'a.txt'), 'a\n');
-  git(work, 'add', 'a.txt');
-  git(work, 'commit', '-q', '-m', 'the slice');
-  const tip = git(work, 'rev-parse', 'HEAD');
-  git(work, 'checkout', '-q', 'feat/x');
+  if (runs === 'second') git(work, 'fetch', '-q', 'second');
   if (runs === 'none') {
+    git(work, 'fetch', '-q', elsewhere.origin, 'slice/x-s1:slice/x-s1');
     git(work, 'branch', '-q', 'pilot', 'feat/x');
-  } else {
-    git(work, 'push', '-q', runs, 'feat/x:pilot', 'slice/x-s1');
-    git(work, 'branch', '-q', '-D', 'slice/x-s1');
   }
-  return { origin, second, work, tip };
+  return { origin, second, work, tip: (elsewhere ?? { sha }).sha['slice/x-s1'] };
 }
 
 /** A gh answering PR #4 for slice/x-s1 in `state` at `tip`, or no PR when `state` is null. */

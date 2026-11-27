@@ -64,6 +64,10 @@ const POLL_MS = 1_000;
  * 2026-11-26, land-batching S6 on the base 6e1806b (user-pilot-branch, pr-overview landed): their added tests read
  *   13589 (node 850, git 12447, other 292) locally (docs/design/land-batching/cost-after.txt); the ceilings are that
  *   plus the Windows-CI delta above (8 spawns / 6 git), 13597 / 12453: the measured bars (itm_9ac7a84014e9).
+ * 2026-11-27, test-body-git S13 (itm_fa71edea84e2): the fixture git folded out of the test bodies. SPAWN_CEILING is the
+ *   measured 11083 on the highest runner (CI windows-latest, Gate run 45907856887 on cd15ab4: `spawns 11083 (node 843, git
+ *   9947, other 293)`; local 11074 + Windows delta 9; later local runs on S13's tip read 11074, 11074 and 11079, so the count moves by a few between runs);
+ *   GIT_CEILING 10000 is the signed bar. No headroom. L7 and spec line 1 of test-body-git moved on that decision (docs/design/test-body-git/cost-after.txt).
  * 2026-11-27, prune-worktrees drift merge on 5c326bd: 14110 (node 853, git 12962, other 295) locally; S1-S4 fixture
  *   tests (worktree-remove, worktrees-tagged, worktrees-landed, integrate-prune); plus the Windows-CI delta 8/6, 14118 / 12968.
  * 2026-11-27, prune-worktrees S5: 14189 (node 853, git 13041, other 295) locally + Windows-CI delta 9/6; temporary,
@@ -73,10 +77,11 @@ const POLL_MS = 1_000;
  * 2026-11-27, prune-worktrees S10 on S6 (0061fc1): spawns 14166 (node 853, git 13018, other 295) locally + Windows-CI delta 9/6,
  *   14175 / 13024; temporary, still over the base bars 13597 / 12453, which the user decides.
  * 2026-11-27, prune-worktrees fix round: 14252 (node 853, git 13103, other 296) on the integrate merge with feat 8c4a18d; the four defect tests' fixture git; temporary until S11 (itm_1b18772998c1).
+ * 2026-11-27, prune-worktrees drift merge on 71991cb: 11753 (node 843, git 10616, other 294) locally + Windows-CI delta 9/6; temporary until S11 and the final exact pins; worktrees.test.mjs MERGED gains raced and gone (gone last, for its HEAD~1) and the gone test drops --unset-upstream, the fix round's two tests on test-body-git's fixture.
  */
-export const SPAWN_CEILING = 14252;
-/** The most git processes a full suite may start (land-batching S7, S6); see the dated lines above. */
-export const GIT_CEILING = 13103;
+export const SPAWN_CEILING = 11762;
+/** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13, prune-worktrees); see the dated lines above. */
+export const GIT_CEILING = 10622;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 

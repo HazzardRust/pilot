@@ -7,11 +7,11 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 
 import { syncFeaturePr } from '../feature-pr.mjs';
@@ -20,19 +20,11 @@ import { restack } from '../stack.mjs';
 const ME = 'HazzardRust';
 const NAME = 'hazzardrust-pilot';
 const run = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
+const MAIN = { branch: 'main', files: { 'x.txt': 'x\n' }, message: 'main' };
 
 /** Origin with main, the legacy `pilot`, and feat/a, feat/b, feat/c off main; `work` is the clone restack runs in. */
 function build(dir) {
-  const origin = path.join(dir, 'origin.git');
-  run(dir, 'init', '-q', '--bare', '-b', 'main', origin);
-  const seed = path.join(dir, 'seed');
-  run(dir, 'clone', '-q', origin, seed);
-  run(seed, 'checkout', '-q', '-b', 'main');
-  fs.writeFileSync(path.join(seed, 'x.txt'), 'x\n');
-  run(seed, 'add', 'x.txt');
-  run(seed, 'commit', '-q', '-m', 'main');
-  for (const branch of ['pilot', 'feat/a', 'feat/b', 'feat/c']) run(seed, 'branch', branch);
-  run(seed, 'push', '-q', 'origin', 'main', 'pilot', 'feat/a', 'feat/b', 'feat/c');
+  const { origin } = seed(dir, [MAIN], { pilot: 'main', 'feat/a': 'main', 'feat/b': 'main', 'feat/c': 'main' });
   const work = path.join(dir, 'work');
   run(dir, 'clone', '-q', origin, work);
   return { work };
@@ -112,25 +104,14 @@ test('another user\'s PRs are untouched', (t) => {
  * pilot, and feat/a gains a fix after feat/b was cut from it. No `pilot` on origin, so only `NAME` can show the landing.
  */
 function buildMoved(dir) {
-  const origin = path.join(dir, 'origin.git');
-  run(dir, 'init', '-q', '--bare', '-b', 'main', origin);
-  const seed = path.join(dir, 'seed');
-  run(dir, 'clone', '-q', origin, seed);
-  run(seed, 'checkout', '-q', '-b', 'main');
-  const commitFile = (file, text, message) => {
-    fs.writeFileSync(path.join(seed, file), text);
-    run(seed, 'add', file);
-    run(seed, 'commit', '-q', '-m', message);
-  };
-  commitFile('x.txt', 'x\n', 'main');
-  run(seed, 'checkout', '-q', '-b', 'feat/a');
-  commitFile('a.txt', 'a\n', 'feat a');
-  run(seed, 'checkout', '-q', '-b', 'feat/b');
-  commitFile('b.txt', 'b\n', 'feat b');
-  const moved = run(seed, 'commit-tree', 'feat/b^{tree}', '-p', 'main', '-p', 'feat/b', '-m', 'Merge feat/b into pilot');
-  run(seed, 'checkout', '-q', 'feat/a');
-  commitFile('a.txt', 'a fixed\n', 'fix a');
-  run(seed, 'push', '-q', 'origin', 'main', 'feat/a', 'feat/b', `${moved}:refs/heads/${NAME}`);
+  // NAME's merge has feat/b's tree, as the `commit-tree feat/b^{tree}` the porcelain build ran gave it.
+  const { origin } = seed(dir, [
+    MAIN,
+    { branch: 'feat/a', files: { 'a.txt': 'a\n' }, message: 'feat a' },
+    { branch: 'feat/b', files: { 'b.txt': 'b\n' }, message: 'feat b' },
+    { branch: NAME, from: 'main', files: {}, merge: ['feat/b'], message: 'Merge feat/b into pilot' },
+    { branch: 'feat/a', files: { 'a.txt': 'a fixed\n' }, message: 'fix a' },
+  ]);
   const work = path.join(dir, 'work');
   run(dir, 'clone', '-q', origin, work);
   return { work };

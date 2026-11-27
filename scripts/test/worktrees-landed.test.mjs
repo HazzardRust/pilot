@@ -7,6 +7,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,43 +32,41 @@ const commit = (dir, file, text, message = file) => {
   git(dir, 'commit', '-q', '-m', message);
 };
 
-/** A clone of a bare origin whose `.gitignore` names `node_modules/`; `add` cuts a worktree on a new branch at the base. */
-function repo(root) {
-  const origin = path.join(root, 'origin.git');
-  const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
-  git(root, 'clone', '-q', origin, work);
-  commit(work, '.gitignore', 'node_modules/\n');
-  git(work, 'push', '-q', 'origin', 'main');
-  const add = (name, branch) => {
-    const dir = path.join(root, name);
-    git(work, 'worktree', 'add', '-q', '-b', branch, dir, BASE);
-    return dir;
-  };
-  const merge = (branch) => {
-    git(work, 'merge', '-q', '--no-ff', '-m', `merge ${branch}`, branch);
-    git(work, 'push', '-q', 'origin', 'main');
-  };
-  return { root, work, add, merge };
-}
-
 /**
  * The six trees of a landed run: feat (landed, then a record-only commit, run.json modified in
  * place), qa (unmoved, an untracked file and an ignored `node_modules/`), fix (merged, an untracked
  * file), slice s1 (unmoved), the detached `work-land-run`, and slice s2 (merged, a tracked file
  * modified). Plus another slug's merged tree, which is never this run's.
+ *
+ * Origin is seeded: main's first commit names `node_modules/` in `.gitignore`, then feat, s2 and fix,
+ * each cut from it, merge into main, then the other slug's branch, then feat's record-only tail. A
+ * worked tree is cut at main's first commit and moved to its branch's tip, so its reflog says it
+ * moved; an unmoved one is cut where the base stood before the other slug merged (`origin/main~1`).
  */
 function landedFixture(root) {
-  const { work, add, merge } = repo(root);
-  const feat = add('feat', `feat/${SLUG}`);
-  commit(feat, RECORD, '{"v":1}');
-  commit(feat, 'feature.txt', 'feature');
-  const s2 = add('s2', `slice/${SLUG}-s2`);
-  commit(s2, 's2.txt', 's2');
-  const fix = add('fix', `fix/${SLUG}`);
-  commit(fix, 'fix.txt', 'fix');
-  for (const branch of [`feat/${SLUG}`, `slice/${SLUG}-s2`, `fix/${SLUG}`]) merge(branch);
-  commit(feat, RECORD, '{"v":2}', 'chore: run record');
+  const { origin } = seed(root, [
+    { branch: 'main', files: { '.gitignore': 'node_modules/\n' }, message: '.gitignore' },
+    { branch: `feat/${SLUG}`, files: { [RECORD]: '{"v":1}' }, message: RECORD },
+    { branch: `feat/${SLUG}`, files: { 'feature.txt': 'feature' }, message: 'feature.txt' },
+    { branch: `slice/${SLUG}-s2`, from: 'main', files: { 's2.txt': 's2' }, message: 's2.txt' },
+    { branch: `fix/${SLUG}`, from: 'main', files: { 'fix.txt': 'fix' }, message: 'fix.txt' },
+    ...[`feat/${SLUG}`, `slice/${SLUG}-s2`, `fix/${SLUG}`].map((branch) => ({ branch: 'main', files: {}, message: `merge ${branch}`, merge: [branch] })),
+    { branch: 'slice/other-s1', files: { 'other.txt': 'other' }, message: 'other.txt' },
+    { branch: 'main', files: {}, message: 'merge slice/other-s1', merge: ['slice/other-s1'] },
+    { branch: `feat/${SLUG}`, files: { [RECORD]: '{"v":2}' }, message: 'chore: run record' },
+  ]);
+  const work = path.join(root, 'work');
+  git(root, 'clone', '-q', origin, work);
+  const add = (name, branch, from) => {
+    const dir = path.join(root, name);
+    git(work, 'worktree', 'add', '-q', '-b', branch, dir, from ?? 'origin/main~1');
+    if (from) git(dir, 'merge', '-q', '--ff-only', `origin/${branch}`);
+    return dir;
+  };
+  const first = 'origin/main~4';
+  const feat = add('feat', `feat/${SLUG}`, first);
+  const s2 = add('s2', `slice/${SLUG}-s2`, first);
+  const fix = add('fix', `fix/${SLUG}`, first);
   write(feat, RECORD, '{"v":3}');
   write(fix, 'stray.txt', 'untracked');
   write(s2, 's2.txt', 'changed');
@@ -76,10 +75,8 @@ function landedFixture(root) {
   write(qa, 'node_modules/x/y.js', 'ignored');
   const s1 = add('s1', `slice/${SLUG}-s1`);
   const land = path.join(root, 'work-land-run');
-  git(work, 'worktree', 'add', '-q', '--detach', land, BASE);
-  const other = add('other', 'slice/other-s1');
-  commit(other, 'other.txt', 'other');
-  merge('slice/other-s1');
+  git(work, 'worktree', 'add', '-q', '--detach', land, 'origin/main~1');
+  const other = add('other', 'slice/other-s1', first);
   return { work, trees: { feat, qa, fix, s1, land, s2 }, other };
 }
 

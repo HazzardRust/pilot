@@ -21,7 +21,8 @@ const gate = (host) => checksGate({ host, git: () => assert.fail('no tree read')
 test('a red feature does not land', (t) => {
   const { origin, gitIn, a: work } = repos(t, 'a');
   commitFile(work, 'more.txt', 'more\n', 'unpushed');
-  const [pilot, feat, tip] = [git(origin, 'rev-parse', 'pilot'), git(origin, 'rev-parse', 'feat/a'), git(work, 'rev-parse', 'HEAD')];
+  const [pilot, feat] = git(origin, 'rev-parse', 'pilot', 'feat/a').split('\n');
+  const tip = git(work, 'rev-parse', 'HEAD');
   const { host, calls } = fakeGh([], undefined, { checks: PR121 });
 
   assert.throws(() => land({ cwd: work, git: gitIn(work), host, test: passing }), (err) => {
@@ -29,8 +30,9 @@ test('a red feature does not land', (t) => {
     assert.equal(err.message, `NOT landed: checks red at ${tip.slice(0, 7)}: gate (ubuntu-latest), gate (windows-latest), gate (macos-latest); nothing pushed`);
     return true;
   });
-  assert.equal(git(origin, 'rev-parse', 'pilot'), pilot, 'origin/pilot unmoved');
-  assert.equal(git(origin, 'rev-parse', 'feat/a'), feat, 'the feature is not pushed');
+  const [pilotAfter, featAfter] = git(origin, 'rev-parse', 'pilot', 'feat/a').split('\n');
+  assert.equal(pilotAfter, pilot, 'origin/pilot unmoved');
+  assert.equal(featAfter, feat, 'the feature is not pushed');
   assert.ok(calls.some((args) => args[0] === 'api' && args[1].includes(`/commits/${tip}/check-runs`)), 'the tip itself is read');
 });
 

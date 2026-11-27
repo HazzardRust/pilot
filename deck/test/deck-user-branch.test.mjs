@@ -4,14 +4,13 @@
  * pins it to `pilot`), so the name is the repository's `pilot.branch`.
  */
 
-import { GIT_SLOW_MS } from '../../scripts/test/lib/git-fixture.mjs';
+import { GIT_SLOW_MS, gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
 import './no-open.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 
 import { assertOnPilotTip } from '../lineage.mjs';
@@ -26,24 +25,23 @@ const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8',
 function scratch(t) {
   const saved = process.env.PILOT_BRANCH;
   delete process.env.PILOT_BRANCH;
-  const dir = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'deck-user-branch-')));
   t.after(() => {
     if (saved === undefined) delete process.env.PILOT_BRANCH;
     else process.env.PILOT_BRANCH = saved;
-    fs.rmSync(dir, { recursive: true, force: true });
   });
-  git(dir, 'init', '-q', '-b', 'main');
-  git(dir, 'config', 'user.email', 't@example.com');
-  git(dir, 'config', 'user.name', 't');
-  git(dir, 'config', 'pilot.branch', NAME);
-  git(dir, 'commit', '-q', '--allow-empty', '-m', 'A');
-  const a = git(dir, 'rev-parse', 'HEAD');
-  git(dir, 'update-ref', 'refs/remotes/origin/pilot', a);
-  git(dir, 'commit', '-q', '--allow-empty', '-m', 'B');
-  const b = git(dir, 'rev-parse', 'HEAD');
-  git(dir, 'update-ref', `refs/remotes/origin/${NAME}`, b);
-  git(dir, 'checkout', '-q', '--detach', a);
-  return { dir, a, b };
+  // Built once per file and restored before each test; the identity is the fixture seam's global config.
+  return gitFixture(t, 'deck-user-branch:scratch', (dir) => {
+    git(dir, 'init', '-q', '-b', 'main');
+    git(dir, 'config', 'pilot.branch', NAME);
+    git(dir, 'commit', '-q', '--allow-empty', '-m', 'A');
+    const a = git(dir, 'rev-parse', 'HEAD');
+    git(dir, 'update-ref', 'refs/remotes/origin/pilot', a);
+    git(dir, 'commit', '-q', '--allow-empty', '-m', 'B');
+    const b = git(dir, 'rev-parse', 'HEAD');
+    git(dir, 'update-ref', `refs/remotes/origin/${NAME}`, b);
+    git(dir, 'checkout', '-q', '--detach', a);
+    return { dir, a, b };
+  });
 }
 
 test('the tip read names the branch', (t) => {

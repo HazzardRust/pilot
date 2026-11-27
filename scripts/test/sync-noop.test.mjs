@@ -5,6 +5,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,69 +17,48 @@ const { sync } = await import('../sync.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
-function commitFile(repo, file, text, message) {
-  fs.writeFileSync(path.join(repo, file), text);
-  git(repo, 'add', file);
-  git(repo, 'commit', '-q', '-m', message);
-}
-
-/** A bare origin with main and pilot (one file ahead), a seed clone to move them, and the caller's clone. */
-function repos(t) {
-  return gitFixture(t, 'sync-noop:repos', (dir) => {
-    const origin = path.join(dir, 'origin.git');
-    const seed = path.join(dir, 'seed');
+/**
+ * A bare origin with main and pilot (one file ahead), then main's own `next` commit, and the caller's clone on pilot;
+ * `dir` is the fixture's directory, `sha` each branch's tip.
+ */
+function repos(t, next) {
+  return gitFixture(t, `sync-noop:${next.message}`, (dir) => {
+    const { origin, sha } = seed(dir, [
+      { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'main' },
+      { branch: 'pilot', files: { 'p.txt': 'p\n' }, message: 'pilot: p.txt' },
+      { branch: 'main', ...next },
+    ]);
     const work = path.join(dir, 'work');
-    git(dir, 'init', '--bare', '-b', 'main', origin);
-    git(dir, 'clone', '-q', origin, seed);
-    git(seed, 'checkout', '-q', '-b', 'main');
-    commitFile(seed, 'shared.txt', 'one\n', 'main');
-    git(seed, 'push', '-q', 'origin', 'main');
-    git(seed, 'checkout', '-q', '-b', 'pilot');
-    commitFile(seed, 'p.txt', 'p\n', 'pilot: p.txt');
-    git(seed, 'push', '-q', 'origin', 'pilot');
     git(dir, 'clone', '-q', '-b', 'pilot', origin, work);
-    return { origin, seed, work, gitIn: (args) => git(work, ...args) };
+    return { dir, origin, work, sha, gitIn: (args) => git(work, ...args) };
   });
 }
 
 /** A test command that leaves a mark when run. */
 const marked = (dir) => `node -e "require('fs').writeFileSync('${path.join(dir, 'ran').replaceAll('\\', '/')}', '')"`;
 
-function assertNoop(result, { origin, seed }, pilotTip) {
-  const mainTip = git(origin, 'rev-parse', 'main');
+function assertNoop(result, { dir, origin, sha }) {
   assert.equal(result.merged, false);
-  assert.equal(result.sha, pilotTip);
-  assert.equal(result.line, `pilot already has main@${mainTip.slice(0, 7)}`);
-  assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip, 'nothing pushed');
-  assert.equal(fs.existsSync(path.join(seed, 'ran')), false, 'no suite run');
+  assert.equal(result.sha, sha.pilot);
+  assert.equal(result.line, `pilot already has main@${sha.main.slice(0, 7)}`);
+  assert.equal(git(origin, 'rev-parse', 'pilot'), sha.pilot, 'nothing pushed');
+  assert.equal(fs.existsSync(path.join(dir, 'ran')), false, 'no suite run');
 }
 
 test('main that merged pilot is a no-op', (t) => {
-  const r = repos(t);
-  const pilotTip = git(r.origin, 'rev-parse', 'pilot');
-  git(r.seed, 'checkout', '-q', 'main');
-  git(r.seed, 'merge', '-q', '--no-ff', '-m', 'Merge pilot', 'pilot');
-  git(r.seed, 'push', '-q', 'origin', 'main');
+  const r = repos(t, { merge: ['pilot'], files: {}, message: 'Merge pilot' });
 
-  assertNoop(sync({ cwd: r.work, git: r.gitIn, test: marked(r.seed) }), r, pilotTip);
+  assertNoop(sync({ cwd: r.work, git: r.gitIn, test: marked(r.dir) }), r);
 });
 
 test('a squash of pilot is a no-op too', (t) => {
-  const r = repos(t);
-  const pilotTip = git(r.origin, 'rev-parse', 'pilot');
-  git(r.seed, 'checkout', '-q', 'main');
-  git(r.seed, 'merge', '-q', '--squash', 'pilot');
-  git(r.seed, 'commit', '-q', '-m', 'Squash pilot');
-  git(r.seed, 'push', '-q', 'origin', 'main');
+  const r = repos(t, { files: { 'p.txt': 'p\n' }, message: 'Squash pilot' });
 
-  assertNoop(sync({ cwd: r.work, git: r.gitIn, test: marked(r.seed) }), r, pilotTip);
+  assertNoop(sync({ cwd: r.work, git: r.gitIn, test: marked(r.dir) }), r);
 });
 
 test('real work on main still syncs', (t) => {
-  const r = repos(t);
-  git(r.seed, 'checkout', '-q', 'main');
-  commitFile(r.seed, 'm2.txt', 'm2\n', 'main: m2.txt');
-  git(r.seed, 'push', '-q', 'origin', 'main');
+  const r = repos(t, { files: { 'm2.txt': 'm2\n' }, message: 'main: m2.txt' });
 
   const result = sync({ cwd: r.work, git: r.gitIn, test: 'node -e "0"' });
 

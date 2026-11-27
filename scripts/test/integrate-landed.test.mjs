@@ -7,11 +7,11 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 
 const { integrate, landedOnPilot, landingMessage } = await import('../integrate.mjs');
@@ -19,65 +19,50 @@ const { integrate, landedOnPilot, landingMessage } = await import('../integrate.
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 const short = (cwd, ref) => git(cwd, 'rev-parse', '--short', ref);
 
-function commitFile(repo, file, message) {
-  fs.writeFileSync(path.join(repo, file), `${file}\n`);
-  git(repo, 'add', file);
-  git(repo, 'commit', '-q', '-m', message);
+/** One commit adding `<branch with - for />.txt`, cut from `from`'s tip when given. */
+function commitFile(branch, message, from) {
+  const file = `${branch.replace('/', '-')}.txt`;
+  return { branch, from, files: { [file]: `${file}\n` }, message };
 }
 
-/** In `seed`, cut `feature` from `from` with one commit, push it, and come back to `pilot`. */
-function feature(seed, name, from = 'pilot') {
-  git(seed, 'checkout', '-q', '-b', name, from);
-  commitFile(seed, `${name.replace('/', '-')}.txt`, `${name}: work`);
-  git(seed, 'push', '-q', 'origin', name);
-  git(seed, 'checkout', '-q', 'pilot');
-}
+/** A feature cut from `from` (pilot by default) with one commit. */
+const feature = (name, from = 'pilot') => commitFile(name, `${name}: work`, from);
 
-/** Merge `name` into `into` the way `pilot land` words it, on first parents unless `into` is a side branch. */
-function land(seed, name, into = 'pilot', message = landingMessage(name, into)) {
-  git(seed, 'checkout', '-q', into);
-  git(seed, 'merge', '-q', '--no-ff', '-m', message, name);
-  git(seed, 'push', '-q', 'origin', into);
-  git(seed, 'checkout', '-q', 'pilot');
-}
+/** `name` merged into `into` the way `pilot land` words it; `from` cuts `into` when it is new. */
+const land = (name, into = 'pilot', { message = landingMessage(name, into), from } = {}) => ({ branch: into, from, files: {}, merge: [name], message });
 
 /**
  * origin with main and pilot; feat/a landed, then feat/b (cut on pilot after A) landed;
  * feat/c never landed; feat/d's merge message reaches pilot only as a second parent.
- * A slice is pushed off feat/a and feat/c. Answers the clone `work` and B's commit.
+ * A slice is pushed off feat/a and feat/c; then `later`'s commits. Answers the clone `work`,
+ * B's commit and feat/a's tip `aTip`.
  */
-function repos(t) {
-  return gitFixture(t, 'integrate-landed:repos', buildRepos);
+function repos(t, key = 'repos', later = []) {
+  return gitFixture(t, `integrate-landed:${key}`, (dir) => buildRepos(dir, later));
 }
 
-function buildRepos(dir) {
-  const origin = path.join(dir, 'origin.git');
-  const seed = path.join(dir, 'seed');
+function buildRepos(dir, later) {
   const work = path.join(dir, 'work');
-  git(dir, 'init', '--bare', '-b', 'main', origin);
-  git(dir, 'clone', '-q', origin, seed);
-  git(seed, 'checkout', '-q', '-b', 'main');
-  commitFile(seed, 'main.txt', 'main');
-  git(seed, 'push', '-q', 'origin', 'main', 'main:pilot');
-  git(seed, 'checkout', '-q', '-b', 'pilot', 'origin/pilot');
-  feature(seed, 'feat/a');
-  feature(seed, 'feat/c');
-  land(seed, 'feat/a');
-  feature(seed, 'feat/b');
-  land(seed, 'feat/b');
-  const bCommit = git(seed, 'rev-parse', 'feat/b');
-  feature(seed, 'feat/d');
-  git(seed, 'checkout', '-q', '-b', 'side', 'pilot');
-  land(seed, 'feat/d', 'side');
-  land(seed, 'side', 'pilot', 'Merge side');
-  for (const [slice, from] of [['slice/a-s2', 'feat/a'], ['slice/c-s1', 'feat/c']]) {
-    git(seed, 'checkout', '-q', '-b', slice, from);
-    commitFile(seed, `${slice.replace('/', '-')}.txt`, `${slice}: the slice`);
-    git(seed, 'push', '-q', 'origin', slice);
-  }
+  const { origin, sha } = seed(dir, [
+    { branch: 'main', files: { 'main.txt': 'main.txt\n' }, message: 'main' },
+    feature('feat/a', 'main'),
+    feature('feat/c', 'main'),
+    land('feat/a', 'pilot', { from: 'main' }),
+    feature('feat/b'),
+    land('feat/b'),
+    feature('feat/d'),
+    land('feat/d', 'side', { from: 'pilot' }),
+    land('side', 'pilot', { message: 'Merge side' }),
+    commitFile('slice/a-s2', 'slice/a-s2: the slice', 'feat/a'),
+    commitFile('slice/c-s1', 'slice/c-s1: the slice', 'feat/c'),
+    ...later,
+  ]);
   git(dir, 'clone', '-q', origin, work);
-  return { work, bCommit };
+  return { work, bCommit: sha['feat/b'], aTip: sha['feat/a'] };
 }
+
+/** Several refs in one rev-parse (L5): each assert still reads its own. */
+const revs = (cwd, ...refs) => git(cwd, 'rev-parse', ...refs).split('\n');
 
 const passing = `node -e "console.log('ℹ pass 3'); console.log('ℹ fail 0')"`;
 const quiet = { install: () => {}, test: passing, push: false };
@@ -91,8 +76,9 @@ test("a landed feature's integration takes no base", (t) => {
   assert.equal(result.ok, true, result.line);
   assert.equal(result.line, `integrated slice/a-s2 at ${short(work, 'HEAD')} (base skipped: feat/a is on pilot): 3 pass, 0 fail; not pushed (--no-push)`);
   assert.notEqual(spawnStatus(work, 'merge-base', '--is-ancestor', bCommit, 'HEAD'), 0, "B's commit stays out of feat/a");
-  assert.equal(git(work, 'rev-parse', 'HEAD^1'), git(work, 'rev-parse', 'origin/feat/a'), 'the slice merges straight onto feat/a');
-  assert.equal(git(work, 'rev-parse', 'HEAD^2'), git(work, 'rev-parse', 'origin/slice/a-s2'));
+  const [first, feat, second, slice] = revs(work, 'HEAD^1', 'origin/feat/a', 'HEAD^2', 'origin/slice/a-s2');
+  assert.equal(first, feat, 'the slice merges straight onto feat/a');
+  assert.equal(second, slice);
 });
 
 test('an unlanded feature still takes the base', (t) => {
@@ -104,7 +90,8 @@ test('an unlanded feature still takes the base', (t) => {
   assert.equal(result.ok, true, result.line);
   assert.ok(result.line.includes(`(base pilot@${short(work, 'origin/pilot')})`), result.line);
   assert.equal(git(work, 'log', '-1', '--format=%s', 'HEAD^1'), 'Merge base pilot');
-  assert.equal(git(work, 'rev-parse', 'HEAD^1^2'), git(work, 'rev-parse', 'origin/pilot'));
+  const [base, pilot] = revs(work, 'HEAD^1^2', 'origin/pilot');
+  assert.equal(base, pilot);
 });
 
 test('landing is read from the first-parent history', (t) => {
@@ -118,12 +105,8 @@ test('landing is read from the first-parent history', (t) => {
 });
 
 test('a one-parent commit with the subject, or a new branch reusing a landed slug, is not landed', (t) => {
-  const { work } = repos(t);
-  git(work, 'checkout', '-q', '--detach', 'origin/pilot');
-  git(work, 'commit', '-q', '--allow-empty', '-m', landingMessage('feat/e', 'pilot'));
-  git(work, 'push', '-q', 'origin', 'HEAD:pilot');
-  git(work, 'checkout', '-q', 'main');
-  git(work, 'fetch', '-q', 'origin');
+  // pilot then gains an empty one-parent commit carrying feat/e's landing subject.
+  const { work } = repos(t, 'squash', [{ branch: 'pilot', files: {}, message: landingMessage('feat/e', 'pilot') }]);
   assert.equal(landedOnPilot(work, 'feat/e'), false, 'a squash titled as a landing is not one');
 
   git(work, 'checkout', '-q', '-B', 'feat/a', 'origin/pilot');
@@ -131,9 +114,8 @@ test('a one-parent commit with the subject, or a new branch reusing a landed slu
 });
 
 test('a landed feature with no slice and nothing to merge pushes nothing', (t) => {
-  const { work } = repos(t);
+  const { work, aTip: before } = repos(t);
   git(work, 'checkout', '-q', 'feat/a');
-  const before = git(work, 'rev-parse', 'origin/feat/a');
 
   const result = integrate(undefined, { cwd: work, ...quiet, push: true });
 

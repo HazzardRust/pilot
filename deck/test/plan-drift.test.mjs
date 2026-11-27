@@ -6,6 +6,7 @@
 
 import './no-open.mjs';
 import { gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
+import { seed } from '../../scripts/test/lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -27,40 +28,32 @@ const SLICE = path.resolve(import.meta.dirname, 'fixtures/slice-owned.md');
 const ARTEFACT = 'docs/design/x/architecture.md';
 
 /**
- * A bare origin; `work`, the deck's clone, holding a plan on `feat/x` one commit past `pilot`, whose one slice file
- * is S10's; and `other`, a second clone that lands changes on origin as another session would.
+ * A bare origin; `work`, the deck's clone on `feat/x`, holding a plan one commit past `pilot`, whose one slice file
+ * is S10's; and `other`, a second clone on `pilot` that lands changes on origin as another session would. One seed
+ * and two clones.
  */
 function repos(t) {
   return gitFixture(t, 'plan-drift:repos', (root) => {
-    const origin = path.join(root, 'origin.git');
+    const { origin, sha } = seed(root, [
+      { branch: 'pilot', files: { 'deck/store-items.mjs': 'one\n' }, message: 'deck/store-items.mjs' },
+      { branch: 'pilot', files: { 'deck/server-wait.mjs': 'one\n' }, message: 'deck/server-wait.mjs' },
+      { branch: 'pilot', files: { 'docs/design/x/slices/S1.md': fs.readFileSync(SLICE, 'utf8') }, message: 'docs/design/x/slices/S1.md' },
+      { branch: 'feat/x', from: 'pilot', files: { [ARTEFACT]: '# X\n' }, message: ARTEFACT },
+    ]);
     const work = path.join(root, 'work');
     const other = path.join(root, 'other');
-    git(root, 'init', '-q', '--bare', '-b', 'main', origin);
-    git(root, 'clone', '-q', origin, work);
-    const write = (dir, file, text) => {
-      fs.mkdirSync(path.join(dir, path.dirname(file)), { recursive: true });
-      fs.writeFileSync(path.join(dir, file), text);
-      git(dir, 'add', file);
-      git(dir, 'commit', '-q', '-m', file);
-    };
-    write(work, 'deck/store-items.mjs', 'one\n');
-    write(work, 'deck/server-wait.mjs', 'one\n');
-    write(work, 'docs/design/x/slices/S1.md', fs.readFileSync(SLICE, 'utf8'));
-    git(work, 'push', '-q', 'origin', 'HEAD:pilot');
-    const pilotSha = git(work, 'rev-parse', 'HEAD');
-    git(work, 'checkout', '-q', '-b', 'feat/x');
-    write(work, ARTEFACT, '# X\n');
-    git(work, 'push', '-q', 'origin', 'feat/x');
-    git(root, 'clone', '-q', origin, other);
-    return { origin, work, other, write, pilotSha, plan: { artefact: ARTEFACT, branch: 'feat/x', sha: git(work, 'rev-parse', 'HEAD') } };
+    git(root, 'clone', '-q', '-b', 'feat/x', origin, work);
+    git(root, 'clone', '-q', '-b', 'pilot', origin, other);
+    return { origin, work, other, pilotSha: sha.pilot, plan: { artefact: ARTEFACT, branch: 'feat/x', sha: sha['feat/x'] } };
   });
 }
 
-/** `other` lands one change to `file` on origin's `pilot`. */
-function land({ other, write }, file) {
-  git(other, 'fetch', '-q', 'origin');
-  git(other, 'checkout', '-q', '-B', 'pilot', 'origin/pilot');
-  write(other, file, `changed ${file}\n`);
+/** `other`, on origin's `pilot` as cloned, lands one change to `file` on it: each test lands once. */
+function land({ other }, file) {
+  fs.mkdirSync(path.join(other, path.dirname(file)), { recursive: true });
+  fs.writeFileSync(path.join(other, file), `changed ${file}\n`);
+  git(other, 'add', file);
+  git(other, 'commit', '-q', '-m', file);
   git(other, 'push', '-q', 'origin', 'pilot');
 }
 
