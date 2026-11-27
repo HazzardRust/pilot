@@ -34,7 +34,7 @@ import { gitView, tipOf } from './git-view.mjs';
 import { keptDir } from './merge-generated.mjs';
 import { pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
 import { runRef, runRemote } from './remotes.mjs';
-import { commitStep, keptLine, removeTree } from './worktree-remove.mjs';
+import { commitStep, isRecord, keptLine, removeTree, status } from './worktree-remove.mjs';
 
 /** Runs git in `cwd`; answers `{ ok, out, err }`, never throws. */
 function git(cwd, ...args) {
@@ -236,20 +236,16 @@ export function runWorktrees(repo, slug, view) {
 }
 
 /**
- * The status lines of `dir` that are dirt, or null when status fails; untracked files count unless
- * `tracked` (a landed run's rule). A tracked mirror modified in place is not dirt; an untracked,
- * deleted or unmerged one is. The first line's leading space is trimmed with the output, so ` M`
- * reads there as `M `.
+ * The status entries of `dir` that are dirt, or null when status fails; untracked files count unless
+ * `tracked` (a landed run's rule). A run record is judged by `removeTree`'s own rule (`isRecord`, L3).
  */
-function dirtOf(dir, mirror, { tracked = false } = {}) {
-  const status = git(dir, 'status', '--porcelain', `--untracked-files=${tracked ? 'no' : 'all'}`);
-  if (!status.ok) return null;
-  const modified = new Set(mirror === undefined ? [] : [` M ${mirror}`, `M ${mirror}`, `M  ${mirror}`, `MM ${mirror}`]);
-  return status.out.split('\n').filter((line) => line && !modified.has(line));
+function dirtOf(dir, { tracked = false } = {}) {
+  const entries = status(dir, `--untracked-files=${tracked ? 'no' : 'all'}`);
+  return entries === null ? null : entries.filter((entry) => !isRecord(entry));
 }
 
 /** A tree's state; with `landedSlug`, the landed run's, unmoved is no longer open and a record-only tail is stripped. */
-function stateOf(repo, base, tree, index, mirror, landedSlug, movedOf) {
+function stateOf(repo, base, tree, index, landedSlug, movedOf) {
   if (index === 0) return 'main';
   if (tree.locked) return 'locked';
   if (tree.prunable || !tree.head || (!landedSlug && !movedOf(tree))) return 'open';
@@ -259,21 +255,18 @@ function stateOf(repo, base, tree, index, mirror, landedSlug, movedOf) {
     const work = landedSlug ? withoutRecordTail(repo, tree.head, landedSlug) : tree.head;
     if (work === tree.head || !inBase(work)) return 'open';
   }
-  const dirt = dirtOf(tree.path, mirror, { tracked: Boolean(landedSlug) });
+  const dirt = dirtOf(tree.path, { tracked: Boolean(landedSlug) });
   if (dirt === null) return 'open';
   return dirt.length ? 'merged-dirty' : 'merged-clean';
 }
 
 /**
  * Every worktree of `repo` with its state against `base`, which is not fetched here, a ref or a
- * list of refs a merged head need be in only one of (the sweep's pilot and default branch, S8); with
- * `run`, that run's tracked run record changed in place does not make a worktree dirty (without it but
- * with `featRecords`, the sweep's rule, a `feat/<slug>` tree's own); with
- * `run` and `landed`, the landed run's rule (ADR 0171). `view`, a caller's `Git`, answers the worktree
- * list, and a full branch ref `base` from its tip snapshot (`tipOf`).
+ * list of refs a merged head need be in only one of (the sweep's pilot and default branch, S8); a run
+ * record is never dirt (L3); with `run` and `landed`, the landed run's rule (ADR 0171). `view`, a
+ * caller's `Git`, answers the worktree list, and a full branch ref `base` from its tip snapshot (`tipOf`).
  */
-export function classify(repo, base, { run, landed = false, view, featRecords = false } = {}) {
-  const mirror = run === undefined ? undefined : runRecord(run);
+export function classify(repo, base, { run, landed = false, view } = {}) {
   for (const ref of [base].flat()) {
     const known = view && /^refs\/(?:heads|remotes)\//.test(ref)
       ? tipOf(view, ref) !== null
@@ -281,14 +274,12 @@ export function classify(repo, base, { run, landed = false, view, featRecords = 
     if (!known) throw new Error(`base ${ref} is not a commit in ${repo}`);
   }
   const slug = landed ? run : undefined;
-  // In the sweep, with no run named, a feat tree's own record is its run's mirror (its landed feat trees, S8).
-  const mirrorOf = (tree) => mirror ?? (featRecords && /^feat\/\w[\w.-]*$/.test(tree.branch ?? '') ? runRecord(tree.branch.slice(5)) : undefined);
   const trees = worktrees(repo, view);
   const movedOf = movedReader(repo, trees.slice(1));
   return trees.map((tree, index) => ({
     path: tree.path,
     branch: tree.branch,
-    state: stateOf(repo, base, tree, index, mirrorOf(tree), slug, movedOf),
+    state: stateOf(repo, base, tree, index, slug, movedOf),
   }));
 }
 
@@ -339,16 +330,15 @@ function fetchBases(repo, bases) {
  * With `run` and `landed`, the run has landed (ADR 0171): `runWorktrees` are looked at, the land dir
  * among them, and a merged tree goes unless a tracked change or a holder keeps it, with `--force`
  * once its tracked status reads clean again, and its branch with `-D`. Without `run`, `landed` is ignored.
- * Every removal goes through `removeTree` (prune-worktrees S2, L1), `remove` its remove step: a tree it
+ * Every removal goes through `removeTree` (prune-worktrees S2, L1): a tree it
  * keeps is `kept` with its state, `leftover` aside, which is `failed`.
  * `git`, a landing's view, answers the worktree list for selection (`classify`, `runWorktrees`) and the
  * base's tip; `removeTree` still lists afresh before each removal, since its guards must see the tree as
  * it is then, not as the landing first read it. `fetched`
  * says the caller's own fetch left `base` current (land-batching A3): no fetch then. Only a landing
- * passes it; `pilot worktrees prune` always fetches. `sweep`, the CLI's prune with neither `--run` nor
- * `--base` (S8), reads a feat tree's own run record changed in place as no dirt (`classify`'s `featRecords`).
+ * passes it; `pilot worktrees prune` always fetches.
  */
-export function prune(repo, base, { dryRun = false, run, merged = [], keep = [], holder = () => null, landed = false, remove, git: view, fetched = false, sweep = false } = {}) {
+export function prune(repo, base, { dryRun = false, run, merged = [], keep = [], holder = () => null, landed = false, git: view, fetched = false } = {}) {
   if (!fetched) fetchBases(repo, [base].flat());
   const removed = [];
   const kept = [];
@@ -356,7 +346,7 @@ export function prune(repo, base, { dryRun = false, run, merged = [], keep = [],
   const relaxed = landed && run !== undefined;
   // A landed run's selection lists twice (classify, runWorktrees): a view of its own lists once (S10). Selection only: removeTree lists afresh.
   const reads = view ?? (relaxed ? gitView(repo) : undefined);
-  const trees = classify(repo, base, { run, landed: relaxed, view: reads, featRecords: sweep });
+  const trees = classify(repo, base, { run, landed: relaxed, view: reads });
   const theirs = relaxed ? new Set(runWorktrees(repo, run, reads)) : null;
   const ours = (tree, index) => run === undefined ||
     (index > 0 && (relaxed ? theirs.has(tree.path) : isRunBranch(tree.branch, run)));
@@ -379,24 +369,12 @@ export function prune(repo, base, { dryRun = false, run, merged = [], keep = [],
       continue;
     }
     // A landed run's removed tree was merged once its record-only tail was stripped, which git's -d cannot see.
-    const flag = (relaxed && isRunBranch(tree.branch, run)) || merged.includes(tree.branch) ? '-D' : '-d';
-    let refused = null;
-    const dropBranch = (at, name) => {
-      const branch = git(at, 'branch', flag, name);
-      if (!branch.ok) refused = branch.err;
-      return branch;
-    };
+    const branchFlag = (relaxed && isRunBranch(tree.branch, run)) || merged.includes(tree.branch) ? '-D' : '-d';
     // removeTree re-reads every guard, puts the run record back and forces only for a landed run (L1, L6).
-    let why = null;
-    const removing = (at, dir, force) => {
-      const step = remove ? remove(at, dir, force) : git(at, 'worktree', 'remove', ...(force ? ['--force'] : []), dir);
-      if (!step.ok) why = step.err;
-      return step;
-    };
-    const result = removeTree(repo, tree.path, { landed: relaxed, remove: removing, branch: dropBranch });
+    const result = removeTree(repo, tree.path, { landed: relaxed, holder, branchFlag });
     if (result.kept === 'leftover') {
       // git's own refusal, when it refused, says more than the kept line.
-      failed.push({ path: tree.path, reason: why || keptLine(tree.path, result.kept) });
+      failed.push({ path: tree.path, reason: result.err || keptLine(tree.path, result.kept) });
       continue;
     }
     if (result.kept) {
@@ -404,7 +382,7 @@ export function prune(repo, base, { dryRun = false, run, merged = [], keep = [],
       continue;
     }
     removed.push(tree.path);
-    if (refused !== null) failed.push({ path: `branch ${tree.branch}`, reason: refused });
+    if (result.err !== undefined) failed.push({ path: `branch ${tree.branch}`, reason: result.err });
   }
   return { removed, kept, failed };
 }
@@ -609,9 +587,9 @@ export function main(argv, { out = process.stdout, err = process.stderr, read = 
     const landed = run !== undefined && landedRun(repo, base, run);
     // Fetched above for a run and for the sweep; a plain --base prune fetches in prune.
     const fetched = sweep || run !== undefined;
-    const { removed, kept, failed } = prune(repo, base, { dryRun, run, merged, landed, holder: holderFrom(read), sweep, fetched, git: view });
+    const { removed, kept, failed } = prune(repo, base, { dryRun, run, merged, landed, holder: holderFrom(read), fetched, git: view });
     for (const p of removed) out.write(`${dryRun ? 'would remove' : 'removed'}  ${p}\n`);
-    for (const { path, state } of kept) out.write(`kept ${state.padEnd(12)}  ${path}\n`);
+    for (const { path, state } of kept) out.write(`${keptLine(path, state)}\n`);
     for (const { path, reason } of failed) err.write(`NOT removed ${path}: ${reason}\n`);
     return failed.length ? 1 : 0;
   } catch (error) {

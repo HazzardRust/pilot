@@ -9,7 +9,7 @@ import { gitFixture } from './lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -60,17 +60,6 @@ const has = (list, dir) => list.some((p) => norm(p) === norm(dir));
 const listed = (work) => git(work, 'worktree', 'list', '--porcelain').split('\n')
   .filter((line) => line.startsWith('worktree ')).map((line) => line.slice('worktree '.length));
 
-/** A git remove step that records each dir it is asked to remove. */
-function spyRemove() {
-  const calls = [];
-  const remove = (home, dir, force) => {
-    calls.push(dir);
-    const run = spawnSync('git', ['worktree', 'remove', ...(force ? ['--force'] : []), dir], { cwd: home, encoding: 'utf8', windowsHide: true });
-    return { ok: run.status === 0, err: run.stderr };
-  };
-  return { calls, remove };
-}
-
 test('a tagged detached tree is the run\'s', (t) => {
   const { root, work } = fixture(t);
   const mine = addTagged(work, SLUG, path.join(root, 'mine'));
@@ -98,11 +87,9 @@ test('a landed prune takes tagged trees wherever they live', (t) => {
   const { root, work } = fixture(t);
   const detached = addTagged(work, SLUG, path.join(root, 'detached'));
   const outside = addTagged(work, SLUG, path.join(elsewhere(t), 'tree'));
-  const { calls, remove } = spyRemove();
-  const result = prune(work, BASE, { run: SLUG, landed: true, remove });
+  const result = prune(work, BASE, { run: SLUG, landed: true });
   assert.deepEqual(result.failed, []);
-  assert.ok(has(calls, detached) && has(calls, outside), `removeTree removed both: ${calls}`);
-  assert.equal(calls.length, 2);
+  assert.equal(result.removed.length, 2);
   for (const dir of [detached, outside]) {
     assert.equal(fs.existsSync(dir), false, dir);
     assert.ok(!has(listed(work), dir), `${dir} is not in git worktree list`);
