@@ -42,36 +42,43 @@
     },
     {
       "slice": "feat/classifier-env",
-      "state": "checks green at 2bf5f4f; integrating fix 7a516ec; in QA"
+      "state": "implementing at 4477029; S4 added on plan/classifier-env-s4 04f3255"
     },
     {
       "slice": "fix: principles F2 F3 F8 F9",
-      "state": "pushed 7a516ec",
+      "state": "integrated",
       "after": [
         "S2",
         "S3"
       ],
       "branch": "fix/classifier-env-principles"
+    },
+    {
+      "slice": "S4 reword pilot lines (added)",
+      "state": "pushed 9360552",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/classifier-env-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-classifier-env-s4"
     }
   ],
   "findings": [
-    "kept: F1 consider — doctor row lists `environment`, though L2 already splices $defaults into pilot sessions; moves A4 and acceptance 5, so it is the user's question itm_fd0bc1175c6e",
-    "kept: F2 simplify — OPERATING.md:51 says the merged environment starts with $defaults; with a user block the user's lines come first",
-    "kept: F3 simplify — OPERATING.md:47,:51 hard-code \"two lines\" that CLASSIFIER_ENVIRONMENT owns",
-    "kept: F8 simplify — OPERATING.md:47 says build output is \"expected\"; the line says deleting it by literal path loses no work",
-    "kept: F9 simplify (QA) — OPERATING.md off switch omits that the deck's Start reads the deck's own environment, so the deck needs a restart",
-    "dropped: F4 nit — the read counter pins S3's Prohibited line (no new settings read), so it is the assertion the slice asked for",
-    "dropped: F5 nit — +4 lines of formatting, no consequence",
-    "dropped: F6 nit — taste, no consequence; the freeze is part of the constant's contract",
-    "dropped: F7 nit — two copies, rule of three not met"
+    "kept: F1 decision A4 — user chose Keep as built on itm_fd0bc1175c6e; doctor row keeps checking environment, no change"
   ],
   "humanSteps": [
     {
       "text": "Your own ~/.claude/settings.json autoMode block has no \"$defaults\" and says \"no identifiable trusted repo\": run `claude auto-mode reset`, or rerun the setup prompt inside a repo. Pilot never writes that file."
+    },
+    {
+      "text": "Delete the half-removed, unregistered directory C:/Users/jrylk/Projects/pilot-fund-classifier-env (git worktree remove failed with Permission denied)"
+    },
+    {
+      "text": "Add \"$defaults\" to autoMode environment in ~/.claude/settings.json (or reset it): `pilot doctor` exits 1 on this machine until then"
     }
   ],
-  "next": "fix integrate running; checks on its tip; send QA the tip",
-  "updatedAt": "2026-11-27T11:24:49.949Z",
+  "next": "integrate S4 9360552 into feat/classifier-env, pilot checks --wait, QA re-probe spec 6 (critique from inside a repo) from qa/classifier-env, QA posts gate2 for PR 155.",
+  "updatedAt": "2026-11-27T14:46:10.659Z",
   "friction": [
     {
       "agent": "architect",
@@ -204,6 +211,30 @@
       "agent": "pilot:pilot-implementer",
       "what": "the brief's `npm test -- --since <ref>` form is rejected by scripts/gate.mjs, which takes --since=<ref>",
       "evidence": "gate: --since takes its ref as --since=<ref>",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "surface: false was discoverable only by refused walkthrough posts; the brief listed CLI surfaces",
+      "evidence": "deck: plan marks no surface: no walkthrough; the checks table goes in the gate2",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 6's critique bar is model judgement, not a check; it varies by run and is skewed by the user's home block",
+      "evidence": "QA critique at 2bf5f4f; run.json:94",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the no-path lint bans / \\ ~ in the pilot lines, so 'build/' had to be written without the slash; the critique reads the user's home autoMode block, so most remarks were about the user's own lines",
+      "evidence": "deck/test/classifier-env.test.mjs:74; S4 critique remarks 3-6",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the critique ran from a home-dir context, so R2 is answered by reading the wording, not seen working from inside a repo",
+      "evidence": "S4 critique remark 1",
       "size": 1
     }
   ]
