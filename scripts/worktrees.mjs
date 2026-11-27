@@ -29,12 +29,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { holderOf, pilotProcesses, processTable } from '../deck/procs.mjs';
-import { isWindows } from '../hooks/lib/platform.js';
 import { gitView, tipOf } from './git-view.mjs';
 import { keptDir } from './merge-generated.mjs';
 import { pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
 import { runRef, runRemote } from './remotes.mjs';
-import { commitStep, isRecord, keptLine, removeTree, status } from './worktree-remove.mjs';
+import { commitStep, isRecord, keptLine, norm, parseWorktrees, removeTree, status } from './worktree-remove.mjs';
 
 /** Runs git in `cwd`; answers `{ ok, out, err }`, never throws. */
 function git(cwd, ...args) {
@@ -57,19 +56,7 @@ function worktrees(repo, view) {
     if (!list.ok) throw new Error(`git worktree list failed in ${repo}: ${list.err}`);
     out = list.out;
   }
-  return out.split('\0\0').filter(Boolean).map((block) => {
-    const record = { path: null, head: null, branch: null, locked: false, prunable: false };
-    for (const line of block.split('\0')) {
-      const [key, ...rest] = line.split(' ');
-      const value = rest.join(' ');
-      if (key === 'worktree') record.path = value;
-      else if (key === 'HEAD') record.head = value;
-      else if (key === 'branch') record.branch = value.replace(/^refs\/heads\//, '');
-      else if (key === 'locked') record.locked = true;
-      else if (key === 'prunable') record.prunable = true;
-    }
-    return record;
-  });
+  return parseWorktrees(out);
 }
 
 /** Whether `ref`'s reflog has entries and HEAD differs from the oldest one's value. */
@@ -177,12 +164,6 @@ const SLUG = /^\w[\w.-]*$/;
 
 /** The tag file in a tree's git admin dir (prune-worktrees A1): never in the work tree, so never tracked. */
 const TAG = 'pilot-run';
-
-/** A path as git and the file system may both spell it, case-blind on Windows. */
-const norm = (p) => {
-  const slashed = path.resolve(p).replaceAll('\\', '/');
-  return isWindows() ? slashed.toLowerCase() : slashed;
-};
 
 /**
  * Each linked tree's tag by its normalized path, read from `<common>/worktrees/*`: a tree's
