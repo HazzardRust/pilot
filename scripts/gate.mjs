@@ -68,8 +68,10 @@ const POLL_MS = 1_000;
  *   measured 11083 on the highest runner (CI windows-latest, Gate run 45907856887 on cd15ab4: `spawns 11083 (node 843, git
  *   9947, other 293)`; local 11074 + Windows delta 9; later local runs on S13's tip read 11074, 11074 and 11079, so the count moves by a few between runs);
  *   GIT_CEILING 10000 is the signed bar. No headroom. L7 and spec line 1 of test-body-git moved on that decision (docs/design/test-body-git/cost-after.txt).
+ * 2026-11-27, prebuilt-rune: CI windows-latest, Gate run 45953779329 on f5713db: `spawns 11084 (node 845, git 9947, other 292)`;
+ *   SPAWN_CEILING re-pinned to that 11084, exact (assumed by the deck's default, itm_8b82a8c0fff2). GIT_CEILING unchanged.
  */
-export const SPAWN_CEILING = 11083;
+export const SPAWN_CEILING = 11084;
 /** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13); see the dated lines above. */
 export const GIT_CEILING = 10000;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
