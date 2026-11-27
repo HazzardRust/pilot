@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2 OPERATING.md section and lint",
-      "state": "integrating afb1c66",
+      "state": "integrated",
       "after": [
         "S1 Start writes the classifier block"
       ],
@@ -42,16 +42,36 @@
     },
     {
       "slice": "feat/classifier-env",
-      "state": "checks green at cecea5b"
+      "state": "checks green at 2bf5f4f; integrating fix 7a516ec; in QA"
+    },
+    {
+      "slice": "fix: principles F2 F3 F8 F9",
+      "state": "pushed 7a516ec",
+      "after": [
+        "S2",
+        "S3"
+      ],
+      "branch": "fix/classifier-env-principles"
     }
+  ],
+  "findings": [
+    "kept: F1 consider — doctor row lists `environment`, though L2 already splices $defaults into pilot sessions; moves A4 and acceptance 5, so it is the user's question itm_fd0bc1175c6e",
+    "kept: F2 simplify — OPERATING.md:51 says the merged environment starts with $defaults; with a user block the user's lines come first",
+    "kept: F3 simplify — OPERATING.md:47,:51 hard-code \"two lines\" that CLASSIFIER_ENVIRONMENT owns",
+    "kept: F8 simplify — OPERATING.md:47 says build output is \"expected\"; the line says deleting it by literal path loses no work",
+    "kept: F9 simplify (QA) — OPERATING.md off switch omits that the deck's Start reads the deck's own environment, so the deck needs a restart",
+    "dropped: F4 nit — the read counter pins S3's Prohibited line (no new settings read), so it is the assertion the slice asked for",
+    "dropped: F5 nit — +4 lines of formatting, no consequence",
+    "dropped: F6 nit — taste, no consequence; the freeze is part of the constant's contract",
+    "dropped: F7 nit — two copies, rule of three not met"
   ],
   "humanSteps": [
     {
       "text": "Your own ~/.claude/settings.json autoMode block has no \"$defaults\" and says \"no identifiable trusted repo\": run `claude auto-mode reset`, or rerun the setup prompt inside a repo. Pilot never writes that file."
     }
   ],
-  "next": "S2 integrate running; then checks, base check, fundamentalist, QA",
-  "updatedAt": "2026-11-27T11:04:31.123Z",
+  "next": "fix integrate running; checks on its tip; send QA the tip",
+  "updatedAt": "2026-11-27T11:24:49.949Z",
   "friction": [
     {
       "agent": "architect",
@@ -161,6 +181,30 @@
       "what": "a context reset lost the S3 and S2 implementer reports, so their evidence trailers were re-run by the co-pilot instead of copied verbatim",
       "evidence": "S3 integrate cecea5b trailers; agent ids in the tasks dir not resumable",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "its evidence runner never returned a table, so the review has no coverage, mutation or complexity signal on the changed lines",
+      "evidence": "fundamentalist report §3: runner 'waiting on its own background work' at handback",
+      "size": 6
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "worktree remove failed with Permission denied; registration gone, directory C:/Users/jrylk/Projects/pilot-fund-classifier-env left on disk",
+      "evidence": "git worktree remove --force exit 255",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "report went to main, not to the fundamentalist; its npm test exit 1 was the fund tree (half-deleted by a failed worktree remove: no deck/rune/src, no node_modules), not the feature; diff mutation had no input files",
+      "evidence": "fund tree lacks deck/rune/src; feat tree integrate 1854 pass and CI green at cecea5b; co-pilot coverage re-run: doctor-automode.mjs 100%, run-env.mjs 98% with uncovered 99-100 pre-existing (blame 6c07bae5, 18a5d2f)",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the brief's `npm test -- --since <ref>` form is rejected by scripts/gate.mjs, which takes --since=<ref>",
+      "evidence": "gate: --since takes its ref as --since=<ref>",
+      "size": 1
     }
   ]
 }
