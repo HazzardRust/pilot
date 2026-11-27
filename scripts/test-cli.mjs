@@ -71,7 +71,7 @@ export function testCli(argv, { cwd = process.cwd(), home, host, print = console
   }
   const tree = worktreeTree(cwd);
   const ledgerHome = home ?? (process.env.PILOT_GATE_HOME_STORE ? null : os.homedir());
-  const reused = ledgerHome === null ? null : reusableRun({ tree, since: since ?? null, home: ledgerHome });
+  const reused = ledgerHome === null ? null : reusableRun({ tree, since: since ?? null, home: ledgerHome, scope: opts.scope });
   if (reused) {
     print(`tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}`);
     return 0;

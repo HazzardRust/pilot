@@ -94,11 +94,15 @@ function rowsIn(home) {
 /** A scope line that defers part of the run to a later step: the row is not complete. */
 const deferred = (scope) => typeof scope === 'string' && /\bdeferred\b/.test(scope);
 
-/** The latest green, complete row for exactly `tree` on this platform and node, since `since` or full; else null. */
-export function reusableRun({ tree, since = null, home }) {
+/**
+ * The latest green row for exactly `tree` on this platform and node, since `since` or full; else null.
+ * A row that deferred part of its run matches only an asking `scope` of `slice`, since only a
+ * slice-scope run defers; integrate and QA need a complete row (L4, amended by itm_ce0954d114aa).
+ */
+export function reusableRun({ tree, since = null, home, scope = null }) {
   if (typeof tree !== 'string' || !tree) return null;
   const fits = (row) =>
-    row.exit === 0 && row.tree === tree && !deferred(row.scope) && (row.since === null || row.since === since) &&
+    row.exit === 0 && row.tree === tree && (scope === 'slice' || !deferred(row.scope)) && (row.since === null || row.since === since) &&
     row.platform === hostPlatform() && row.node === nodeMajor();
   return rowsIn(home).filter(fits).at(-1) ?? null;
 }

@@ -18,6 +18,7 @@ import path from 'node:path';
 const { integrate, runTests } = await import('../integrate.mjs');
 const { githubHost } = await import('../../deck/host-github.mjs');
 const { recordRun } = await import('../test-ledger.mjs');
+const { testCli } = await import('../test-cli.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }).trim();
 
@@ -141,6 +142,28 @@ test('a red or deferred row runs', async (t) => {
     assert.equal(result.ok, true, result.line);
     assert.equal(s.runs(), 1);
   });
+});
+
+// L4 as amended by itm_ce0954d114aa: the asking run's scope decides whether a deferred row may match.
+test('a slice-scope run reuses a deferred slice row; integrate does not', (t) => {
+  const s = setup(t);
+  assert.equal(gate(s).status, 0);
+  const [green] = ledgerRows(s.home);
+  fs.rmSync(path.join(s.home, '.claude', 'pilot', 'tests', 'ledger.jsonl'));
+  recordRun({ ...green, scope: 'selected 1 of 2 test files; deferred: cargo' }, { home: s.home });
+  s.reset();
+  const printed = [];
+
+  const status = testCli(['--as', 'implementer', '--scope', 'slice', '--since', green.since], { cwd: s.slice, home: s.home, print: (line) => printed.push(line) });
+
+  assert.equal(status, 0, printed.join('\n'));
+  assert.equal(s.runs(), 0, 'the slice-scope run starts no test process');
+  assert.match(printed.join('\n'), /^tests reused: implementer [0-9a-f]{7}$/);
+
+  const result = integrate('slice/a', { cwd: s.work, home: s.home, ...quiet });
+
+  assert.equal(result.ok, true, result.line);
+  assert.equal(s.runs(), 1, 'integrate runs the tests a deferred row left out');
 });
 
 test('an injected test command runs whatever the ledger holds', (t) => {

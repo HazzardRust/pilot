@@ -88,7 +88,9 @@ would have to remember it. `testCommand` is a pass-through for agents, folded be
   `exit === 0`). A run that threw before exit writes no row. Rejected: the implementer's trailer claim (a
   slice was pushed twice on a wrapper's exit code while red).
 - **L4** Reuse matches the exact tree, never a branch name or sha alone; plus since (or a full row),
-  complete, same `process.platform` and node major. A stale row is still a proof of identical content
+  complete for integrate and QA (nothing deferred), while a slice-scope run may reuse a slice-scope row
+  that deferred something (amended by itm_ce0954d114aa, so `deferred: cargo` on Windows does not void
+  A6), same `process.platform` and node major. A stale row is still a proof of identical content
   (`package-lock.json` is in the tree); a copied row needs the same tree, platform and node. The ledger is
   `~/.claude/pilot/tests/ledger.jsonl`, mode 0600; any process of the user can append to it, as to the
   deck store, so agents are told never to write it; land's full run and CI remain the backstop.
