@@ -212,12 +212,12 @@ function stateOf(repo, base, tree, index, mirror, landedSlug) {
 /**
  * Every worktree of `repo` with its state against `base`, which is not fetched here, a ref or a
  * list of refs a merged head need be in only one of (the sweep's pilot and default branch, S8); with
- * `run`, that run's tracked run record changed in place does not make a worktree dirty (without it,
- * a `feat/<slug>` tree's own); with
+ * `run`, that run's tracked run record changed in place does not make a worktree dirty (without it but
+ * with `featRecords`, the sweep's rule, a `feat/<slug>` tree's own); with
  * `run` and `landed`, the landed run's rule (ADR 0171). `view`, a caller's `Git`, answers the worktree
  * list, and a full branch ref `base` from its tip snapshot (`tipOf`).
  */
-export function classify(repo, base, { run, landed = false, view } = {}) {
+export function classify(repo, base, { run, landed = false, view, featRecords = false } = {}) {
   const mirror = run === undefined ? undefined : runRecord(run);
   for (const ref of [base].flat()) {
     const known = view && /^refs\/(?:heads|remotes)\//.test(ref)
@@ -226,8 +226,8 @@ export function classify(repo, base, { run, landed = false, view } = {}) {
     if (!known) throw new Error(`base ${ref} is not a commit in ${repo}`);
   }
   const slug = landed ? run : undefined;
-  // With no run named, a feat tree's own record is its run's mirror (the sweep's landed feat trees, S8).
-  const mirrorOf = (tree) => mirror ?? (/^feat\/(\w[\w.-]*)$/.exec(tree.branch ?? '') ? runRecord(tree.branch.slice(5)) : undefined);
+  // In the sweep, with no run named, a feat tree's own record is its run's mirror (its landed feat trees, S8).
+  const mirrorOf = (tree) => mirror ?? (featRecords && /^feat\/\w[\w.-]*$/.test(tree.branch ?? '') ? runRecord(tree.branch.slice(5)) : undefined);
   return worktrees(repo, view).map((tree, index) => ({
     path: tree.path,
     branch: tree.branch,
@@ -276,15 +276,16 @@ function fetchBase(repo, base) {
  * base's tip; `removeTree` still lists afresh before each removal, since its guards must see the tree as
  * it is then, not as the landing first read it. `fetched`
  * says the caller's own fetch left `base` current (land-batching A3): no fetch then. Only a landing
- * passes it; `pilot worktrees prune` always fetches.
+ * passes it; `pilot worktrees prune` always fetches. `sweep`, the CLI's prune with neither `--run` nor
+ * `--base` (S8), reads a feat tree's own run record changed in place as no dirt (`classify`'s `featRecords`).
  */
-export function prune(repo, base, { dryRun = false, run, merged = [], keep = [], holder = () => null, landed = false, remove, git: view, fetched = false } = {}) {
+export function prune(repo, base, { dryRun = false, run, merged = [], keep = [], holder = () => null, landed = false, remove, git: view, fetched = false, sweep = false } = {}) {
   if (!fetched) for (const ref of [base].flat()) fetchBase(repo, ref);
   const removed = [];
   const kept = [];
   const failed = [];
   const relaxed = landed && run !== undefined;
-  const trees = classify(repo, base, { run, landed: relaxed, view });
+  const trees = classify(repo, base, { run, landed: relaxed, view, featRecords: sweep });
   const theirs = relaxed ? new Set(runWorktrees(repo, run, view)) : null;
   const ours = (tree, index) => run === undefined ||
     (index > 0 && (relaxed ? theirs.has(tree.path) : isRunBranch(tree.branch, run)));
@@ -530,7 +531,7 @@ export function main(argv, { out = process.stdout, err = process.stderr, read = 
       ? git(repo, 'for-each-ref', '--merged', landedOn, '--format=%(refname:short)', 'refs/heads/').out.split(/\r?\n/).filter(Boolean)
       : [];
     const landed = run !== undefined && landedRun(repo, base, run);
-    const { removed, kept, failed } = prune(repo, base, { dryRun, run, merged, landed, holder: holderFrom(read) });
+    const { removed, kept, failed } = prune(repo, base, { dryRun, run, merged, landed, holder: holderFrom(read), sweep: onPilot && run === undefined });
     for (const p of removed) out.write(`${dryRun ? 'would remove' : 'removed'}  ${p}\n`);
     for (const { path, state } of kept) out.write(`kept ${state.padEnd(12)}  ${path}\n`);
     for (const { path, reason } of failed) err.write(`NOT removed ${path}: ${reason}\n`);

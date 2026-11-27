@@ -13,8 +13,11 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
+// The pilot branch's name is read, never a literal (A5/A6): a user-shaped one, pinned for this file's process.
+const PILOT_BRANCH = 'sweeper-pilot';
+process.env.PILOT_BRANCH = PILOT_BRANCH;
+
 const { main } = await import('../worktrees.mjs');
-const { PILOT_BRANCH } = await import('../pilot-branch.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }).trim();
 
@@ -96,7 +99,49 @@ test('a landed feat tree whose own run record the deck rewrote in place goes', (
   assert.equal(git(work, 'branch', '--list', 'feat/done'), '');
 });
 
-test('a live run\'s tree stays: an unlanded head, and a tree just added at the pilot tip', (t) => {
+test('the plain listing still reads a feat tree with its record rewritten in place as merged-dirty', (t) => {
+  const { work, root } = sweepRepo(t);
+  const dir = path.join(root, 'feat-listed');
+  git(work, 'worktree', 'add', '-q', '-b', 'feat/listed', dir, `origin/${PILOT_BRANCH}`);
+  const record = path.join(dir, 'docs', 'design', 'listed', 'run.json');
+  fs.mkdirSync(path.dirname(record), { recursive: true });
+  fs.writeFileSync(record, '{}\n');
+  git(dir, 'add', '.');
+  git(dir, 'commit', '-q', '-m', 'listed');
+  git(dir, 'push', '-q', 'origin', `feat/listed:${PILOT_BRANCH}`);
+  fs.writeFileSync(record, '{"stage":"landed"}\n');
+  const run = cli('--repo', work, '--base', `origin/${PILOT_BRANCH}`);
+  assert.equal(run.status, 0, run.stderr);
+  assert.match(run.stdout, /^merged-dirty\s+feat\/listed\s/m);
+});
+
+test('a tree landed on the default branch but not on pilot goes', (t) => {
+  const { work, root } = sweepRepo(t);
+  const dir = path.join(root, 'onmain');
+  git(work, 'worktree', 'add', '-q', '-b', 'onmain', dir, 'origin/main');
+  fs.writeFileSync(path.join(dir, 'onmain.txt'), 'onmain');
+  git(dir, 'add', 'onmain.txt');
+  git(dir, 'commit', '-q', '-m', 'onmain');
+  git(dir, 'push', '-q', 'origin', 'onmain:main');
+  const run = cli('prune', '--repo', work);
+  assert.equal(run.status, 0, run.stderr);
+  assert.ok(said(run.stdout, 'removed', dir), run.stdout);
+  assert.equal(git(work, 'branch', '--list', 'onmain'), '');
+});
+
+test('in local mode the sweep judges by the local pilot branch', (t) => {
+  const { work, landed } = sweepRepo(t);
+  git(work, 'branch', PILOT_BRANCH, `origin/${PILOT_BRANCH}`);
+  git(work, 'push', '-q', 'origin', '--delete', PILOT_BRANCH);
+  git(work, 'fetch', '-q', '--prune', 'origin');
+  git(work, 'config', 'pilot.remote', 'none');
+  const run = cli('prune', '--repo', work);
+  assert.equal(run.status, 0, run.stderr);
+  assert.ok(said(run.stdout, 'removed', landed), run.stdout);
+  assert.equal(git(work, 'branch', '--list', 'landed'), '');
+});
+
+test('a live run\'s tree stays:an unlanded head, and a tree just added at the pilot tip', (t) => {
   const { work, live, fresh } = sweepRepo(t);
   const run = cli('prune', '--repo', work);
   assert.equal(run.status, 0, run.stderr);
