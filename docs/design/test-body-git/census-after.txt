@@ -1,9 +1,3 @@
-   Compiling pilot-deck v0.1.0 (C:\Users\jrylk\Projects\pilot-test-body-git-s13\deck\rune)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.42s
-     Running unittests src\lib.rs (C:\Users\jrylk\AppData\Local\pilot\rune-target\debug\build\pilot-deck/051a3896c378a756\out\pilot_deck-051a3896c378a756.exe)
-     Running unittests src\main.rs (C:\Users\jrylk\AppData\Local\pilot\rune-target\debug\build\pilot-deck/628be8ce561dabdb\out\pilot_deck-628be8ce561dabdb.exe)
-     Running tests\deck\main.rs (C:\Users\jrylk\AppData\Local\pilot\rune-target\debug\build\pilot-deck/8a6d5f545bd79372\out\deck-8a6d5f545bd79372.exe)
-   Doc-tests pilot_deck
 file                                          built   body    lib  total
 scripts/test/lib/fixture-git.test.mjs             0      0     76     76
 scripts/test/branches.test.mjs                   53     22      0     75
