@@ -62,7 +62,7 @@ branch-only selection.
 ## 4. Ubiquitous language
 
 - **run tree**: a registered linked worktree that `runTrees` names for a slug.
-- **known run**: a slug with a `feat/<s>` or `design/<s>` ref (local or any remote) or a tag.
+- **known run**: a slug with a `feat/<s>` or `design/<s>` ref (local or any remote) or a tag; a `design/<s>` ref whose name ends `-recut` makes no known run.
 - **guessed tree**: a run tree reached by name alone (`by: 'name'`); it carries no tag and is on no exact run branch.
 
 ## 5. Locked decisions
