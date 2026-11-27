@@ -1,0 +1,44 @@
+{
+  "slug": "remote-run-branches",
+  "feature": "remote-run-branches",
+  "ticket": "itm_233f0feecc01",
+  "branch": "feat/remote-run-branches",
+  "base": "hazzardrust-pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-remote-run-branches",
+  "artefact": "docs/design/remote-run-branches/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated",
+      "branch": "slice/remote-run-branches-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/remote-run-branches-s2"
+    }
+  ],
+  "next": "Concluding. gate2 itm_72e7f50b9aa6 posted for PR 166 at e1125321 (checks green, trial clean). On the user's Sign off press: spawn pilot-lander with the gate2 id (gate.mjs ceilings conflict if PR 165 landed first); on landed, reply Findings: on the report (short path: no principles review).",
+  "updatedAt": "2026-11-27T17:07:46.242Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "ticket named the wrong selector for the landing: land.mjs has its own `ours`, not isRunBranch, and it misses exact fix/<slug>",
+      "evidence": "scripts/land.mjs:183-186; 2 extra reads",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "a landing's deleted/kept output is recorded nowhere, so why qa/prune-worktrees survived on origin cannot be traced",
+      "evidence": "F3, remote-run-branches notes"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "deck refuses worktree in an architect's deck_status, so run.json needs a second call from the pilot",
+      "evidence": "deck_status from the architect carries ticket, slices and feature only"
+    }
+  ]
+}

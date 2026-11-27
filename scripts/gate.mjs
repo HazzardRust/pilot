@@ -88,10 +88,13 @@ const POLL_MS = 1_000;
  * 2026-11-27, prune-run-trees S1: 11915 (node 845, git 10776, other 294) locally + Windows-CI delta 9/6, 11924 / 10782; the new
  *   worktrees-run-trees fixtures (folded, 84 git) and the not-landed prune's run-tree read in every landing; temporary until S2 re-pins.
  * 2026-11-28, prune-run-trees S2: 11891 (node 845, git 10752, other 294) locally + Windows-CI delta 9/6, 11900 / 10758; runTrees reads the tags from the main checkout's .git and the known runs from the landing's view, the final pins.
+ * 2026-11-28, remote-run-branches S1: 11810 (node 845, git 10670, other 295) locally + Windows-CI delta 9/6, 11819 / 10676; land-prune +44 (one landing on the leftovers fixture), branches +15 (deleteMerged's local-ref read), land-tail-spawns +1; temporary until S2 re-pins.
+ * 2026-11-28, remote-run-branches S2: 11823 (node 845, git 10683, other 295) locally + Windows-CI delta 9/6, 11832 / 10689; branches +13 (one prune --slug on the none fixture, grown by the sweep's branches); the final exact pins.
+ * 2026-11-28, remote-run-branches landing merge on 27fae97: 11968 (node 845, git 10828, other 295) locally + Windows-CI delta 9/6, 11977 / 10834; both features' tests, the final exact pins.
  */
-export const SPAWN_CEILING = 11900;
-/** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13, prune-worktrees, prune-run-trees); see the dated lines above. */
-export const GIT_CEILING = 10758;
+export const SPAWN_CEILING = 11977;
+/** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13, prune-worktrees, prune-run-trees, remote-run-branches); see the dated lines above. */
+export const GIT_CEILING = 10834;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 
