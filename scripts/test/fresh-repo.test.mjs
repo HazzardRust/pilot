@@ -8,6 +8,7 @@
 // The fixture seam imports fake-home.mjs first and gives every git below the identity
 // t@example.com, which is the "other" address the builder must never pick up.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -33,21 +34,14 @@ function scratchDir(t) {
 /** A source repository with two commits on `main`, `pilot` at `main`, and `ahead` one file past it. */
 function source(t) {
   return gitFixture(t, 'fresh-repo:source', (root) => {
+    const { origin } = seed(root, [
+      { branch: 'main', files: { 'a.txt': 'one\n', 'dir/b.txt': 'two\n' }, message: 'first' },
+      { branch: 'main', files: { 'a.txt': 'one again\n' }, message: 'second' },
+      { branch: 'ahead', from: 'main', files: { 'unlanded.txt': 'wip\n' }, message: 'unlanded' },
+    ], { pilot: 'main' });
     const work = path.join(root, 'work');
-    git(root, 'init', '-q', '-b', 'main', work);
-    fs.mkdirSync(path.join(work, 'dir'));
-    fs.writeFileSync(path.join(work, 'a.txt'), 'one\n');
-    fs.writeFileSync(path.join(work, 'dir', 'b.txt'), 'two\n');
-    git(work, 'add', '.');
-    git(work, 'commit', '-q', '-m', 'first');
-    fs.writeFileSync(path.join(work, 'a.txt'), 'one again\n');
-    git(work, 'commit', '-q', '-am', 'second');
-    git(work, 'branch', 'pilot');
-    git(work, 'checkout', '-q', '-b', 'ahead');
-    fs.writeFileSync(path.join(work, 'unlanded.txt'), 'wip\n');
-    git(work, 'add', '.');
-    git(work, 'commit', '-q', '-m', 'unlanded');
-    git(work, 'checkout', '-q', 'main');
+    // Every branch local, as in the repository the builder runs in: the refspec fetches heads to heads.
+    git(root, 'clone', '-q', '-c', 'remote.origin.fetch=+refs/heads/*:refs/heads/*', origin, work);
     return { work };
   });
 }
@@ -57,9 +51,11 @@ test('the orphan has one commit and the source tree', (t) => {
   const out = path.join(scratchDir(t), 'out.git');
   const built = buildOrphan({ cwd: work, from: 'main', pilot: 'pilot', email: NOREPLY, out });
   assert.equal(git(out, 'rev-list', '--count', 'main'), '1');
-  assert.equal(git(out, 'rev-parse', 'main^{tree}'), git(work, 'rev-parse', 'main^{tree}'));
-  assert.equal(built.tree, git(work, 'rev-parse', 'main^{tree}'));
-  assert.equal(built.sha, git(out, 'rev-parse', 'main'));
+  const [outTree, outSha] = git(out, 'rev-parse', 'main^{tree}', 'main').split('\n');
+  const sourceTree = git(work, 'rev-parse', 'main^{tree}');
+  assert.equal(outTree, sourceTree);
+  assert.equal(built.tree, sourceTree);
+  assert.equal(built.sha, outSha);
   assert.equal(git(out, 'for-each-ref', '--format=%(refname)'), 'refs/heads/main', 'main is the only ref');
   const held = git(out, 'cat-file', '--batch-all-objects', '--batch-check=%(objectname)').split('\n').sort();
   const wanted = [built.sha, ...git(work, 'rev-list', '--objects', '--no-object-names', built.tree).split('\n')].sort();
@@ -83,8 +79,9 @@ test('the commit carries only the given address', (t) => {
   assert.equal(git(work, 'config', 'user.email'), 't@example.com', 'the source repo has another address');
   const out = path.join(scratchDir(t), 'out.git');
   buildOrphan({ cwd: work, from: 'main', pilot: 'pilot', email: NOREPLY, name: 'Someone', out });
-  assert.equal(git(out, 'log', '-1', '--format=%ae %ce', 'main'), `${NOREPLY} ${NOREPLY}`);
-  assert.equal(git(out, 'log', '-1', '--format=%an %cn', 'main'), 'Someone Someone');
+  const [emails, names] = git(out, 'log', '-1', '--format=%ae %ce%n%an %cn', 'main').split('\n');
+  assert.equal(emails, `${NOREPLY} ${NOREPLY}`);
+  assert.equal(names, 'Someone Someone');
 });
 
 test('pilot ahead of main is refused and nothing is built', (t) => {

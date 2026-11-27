@@ -24,15 +24,15 @@ A run needs only `pilot start`; the rest is what the agents call under it. Who r
 | `pilot tickets` | the architect | at a run's start, to read the red queue |
 | `pilot ready` | the co-pilot | to name the slices that can start |
 | `pilot integrate` | the co-pilot (and QA, or the pilot) | to merge each slice into `feat/<slug>` |
-| `pilot integrate --trial` | QA | before its gate2, to try the feature's tip on `pilot`; merges nothing into it |
+| `pilot integrate --trial` | QA | before its gate2, to try the feature's tip on your pilot branch; merges nothing into it |
 | `pilot pr --ticket <itm_id>` | the deck | after a gate1, each `deck_status` of its ticket, and QA's walkthrough or gate2 comment, to open or update the feature PR and QA's one comment on it |
-| `pilot land` | the deck | after your Gate 2 Sign off, to merge only the feature into `pilot` (no sync) and name its own PR to main: `feature PR: #<n> into <base>`; a legacy run (based on `pilot`) still keeps one open PR `pilot → main`: `main gets pilot: #<n>` |
-| `pilot sync` | the pilot | at a ticket's take (or by hand), never inside a landing, to take the default branch into `pilot` |
+| `pilot land` | the deck | after your Gate 2 Sign off, to merge only the feature into your pilot branch (no sync) and name its own PR to main: `feature PR: #<n> into <base>`; a legacy run (based on your pilot branch, or on the legacy `pilot`) still keeps one open PR from your pilot branch to main: `main gets pilot: #<n>` |
+| `pilot sync` | the pilot | at a ticket's take (or by hand), never inside a landing, to take the default branch into your pilot branch |
 | `pilot restack` | the pilot, and you | at a ticket's take after `pilot sync`, and by hand after you merge a feature PR, to retarget each open feature PR to its base and merge that base forward; after a squash, a leased rebase of a landed feature. Exit 3 names a conflict for the lander |
 | `pilot handoff` | the pilot | when its context is full |
 | `pilot landing <gate2-id>` | whoever wants to watch it, in the background | after your Gate 2 Sign off; waits for the deck's landing and prints how it went |
 
-Each feature is its own PR to main (ADR 0200): you merge them, bottom of the stack first, whenever you like, and `pilot` stays the private line Gate 2 lands on. A merge commit is the default; if you squash, run `git config pilot.merge squash` once, so the human step says so. Under squash the stack's upper PR shows the lower feature's commits until `pilot restack` rebases it.
+Each feature is its own PR to main (ADR 0200): you merge them, bottom of the stack first, whenever you like, and your pilot branch stays the private line Gate 2 lands on. A merge commit is the default; if you squash, run `git config pilot.merge squash` once, so the human step says so. Under squash the stack's upper PR shows the lower feature's commits until `pilot restack` rebases it.
 
 For looking under a run: `pilot budget` sets how many agents each lane holds, `pilot analytics <slug>`
 prints a run's tokens, tool calls and time per agent, `pilot ps` and `pilot gc` list and stop
@@ -54,26 +54,50 @@ A ticket whose signed plan has 2 slices or fewer takes the **short path**: the p
 | the fix round, QA, the lander's resolution | the selection (`npm run test:changed`), wide |
 | `pilot integrate` (the slice, the base, a resumed merge) | the selection since the start of the merge, wide: what the phase gate deferred runs here |
 | `pilot sync` | the selection, wide |
-| `pilot land`'s merge of the feature into `pilot` | the full suite, once |
+| `pilot land`'s merge of the feature into your pilot branch | the full suite, once |
 
 A repository with no `test:changed` script, or one tested by `git config pilot.test`, runs its own full test command at every step. The Linux referee and CI run `node scripts/gate.mjs`, full, unchanged (ADR 0166).
 
+## Your pilot branch
+
+Gate 2 lands on your pilot branch, `<login>-pilot`, never on a branch shared with another user, so two people on
+one remote each land on their own line and `pilot restack` retargets only your own PRs.
+
+- **Derivation.** The first `pilot base`, `pilot sync`, `pilot land`, `pilot restack` or `pilot doctor` in a
+  repository reads your login from the host CLI (`gh api user`, or `glab api user` under `gitlab`), lower-cases it
+  and appends `-pilot`: `HazzardRust` becomes `hazzardrust-pilot`. A login git would not take as a branch name as it
+  stands is refused, never cleaned into one.
+- **`pilot.branch`.** The name is stored once, in the repository's local git config, and every later command reads
+  it there with no login read: `git config pilot.branch` prints it. The environment variable `PILOT_BRANCH`
+  overrides it for one process. Either is accepted only as `<name>-pilot` in lower-case letters, digits, `.`, `_`
+  and `-`, starting with a letter or digit, or as the legacy `pilot`. With no host (`pilot host none`), or signed out with nothing stored, a command stops with one line naming
+  `gh auth login` (or `glab auth login`) and `git config pilot.branch <name>`; set it by hand once with
+  `git config pilot.branch <name>-pilot`. `pilot doctor` shows the name and where it came from, and warns, never
+  switches, when the signed-in account's `<login>-pilot` is not the stored name.
+- **The move.** In a repository that has the legacy branch `pilot` and no `*-pilot` branch on `origin`, the first
+  `pilot base` creates your pilot branch at `pilot`'s tip. `pilot restack` then retargets your open feature PRs
+  whose base is `pilot` to it. Run records with that base, and landings made before the move, read as yours. A second
+  user joining after the move starts from the default branch's tip, never from the stale `pilot`.
+- **Deleting `pilot`.** Nothing writes, moves or deletes `pilot`: it is left for you to delete, on the host and in
+  each clone, once your open PRs show their new base. Until then it is read only.
+
 ## Where run branches live
 
-A run's branches (`pilot`, `design/`, `slice/`, `fix/` and `qa/`) go to `origin` by default, and all but `pilot` are deleted from the remote they live on once they are merged, never before. `feat/<slug>`, the head of the feature PR, is always on `origin`, and is deleted there by `pilot branches prune` once its PR merges. The git setting `pilot.remote` moves the rest: `git config pilot.remote none` keeps run branches local, and `git config pilot.remote <name>` sends them to that remote instead (it must be a name `git remote` lists). `pilot branches prune --slug <slug>` deletes that run's merged ones that are still around; add `--dry-run` to see them first (ADR 0134).
+A run's branches (your pilot branch, `design/`, `slice/`, `fix/` and `qa/`) go to `origin` by default, and all but the pilot branch are deleted from the remote they live on once they are merged, never before. `feat/<slug>`, the head of the feature PR, is always on `origin`, and is deleted there by `pilot branches prune` once its PR merges. The git setting `pilot.remote` moves the rest: `git config pilot.remote none` keeps run branches local, and `git config pilot.remote <name>` sends them to that remote instead (it must be a name `git remote` lists). `pilot branches prune --slug <slug>` deletes that run's merged ones that are still around; add `--dry-run` to see them first (ADR 0134).
 
 ## Two devices, one repo
 
 You can carry on work on one repository from a second device that has pilot and the same accounts signed in. Git is
 what the two devices share, and nothing else (ADR 0207):
 
-1. Git is the shared state: work moves between the devices only as pushed branches, `pilot` and the PRs on the remote.
+1. Git is the shared state: work moves between the devices only as pushed branches, your pilot branch and the PRs on the remote. Both devices sign in to
+   the same account, so both derive the same `<login>-pilot` with nothing shared but git.
 2. Each device runs its own deck. Its tickets, threads and run records stay on that device; nothing syncs, exports or
    commits them.
-3. One device, the owner, holds the queue and lands on `pilot`. Which one is your convention; no setting enforces it.
+3. One device, the owner, holds the queue and lands on your pilot branch. Which one is your convention; no setting enforces it.
 4. The other device hands its work over as a pushed branch and a PR, never as deck data.
 
-Two decks landing is already safe in git: `pilot land` fetches, re-merges once onto a `pilot` that moved, pushes
+Two decks landing is already safe in git: `pilot land` fetches, re-merges once onto a pilot branch that moved, pushes
 without force, and on a second move stops and asks you to run it again. So the owner rule is about the queue: two decks
 must not cut the same slug. `pilot doctor slug <slug>` says whether a slug is taken on either remote, never free when
 it cannot tell (`pilot help` has its output); the pilot runs it before it names a slug, and bare `pilot doctor` and
@@ -115,9 +139,9 @@ In the old checkout, with `git fetch origin` run first:
    `mkdir tree` and `tar -xf tree.tar -C tree` (a pipe corrupts the archive in Windows PowerShell 5.1), then `gitleaks dir <scratch>/tree --redact -r <scratch>/gitleaks.json` exits 0 and
    the report is `[]`. Without gitleaks installed, `docker run --rm -v <scratch>:/s zricethezav/gitleaks:latest dir /s/tree --redact -r /s/gitleaks.json`
    runs the same scan.
-3. The builder makes the one commit: `node scripts/fresh-repo.mjs --from origin/main --pilot origin/pilot --email <noreply> --out <scratch>/new.git`
+3. The builder makes the one commit: `node scripts/fresh-repo.mjs --from origin/main --pilot origin/<login>-pilot --email <noreply> --out <scratch>/new.git`
    prints the commit's sha and the push command, and pushes nothing. It refuses, building nothing,
-   when `pilot` holds changes `main` lacks or the address is not a noreply one.
+   when your pilot branch holds changes `main` lacks or the address is not a noreply one.
 4. Check what it built: `git -C <scratch>/new.git rev-list --count main` prints `1`, and
    `git -C <scratch>/new.git log --format='%ae %ce' main` prints only `<noreply>`.
 
@@ -158,6 +182,16 @@ PR numbers and mergeShas written before the move, in run records (`docs/design/*
 briefs, point at the archive, `HazzardRust/<archive>`, which stays private and archived. The same
 number on the new repository is a different PR, and a pre-move sha is in none of its history. Nothing
 rewrites them.
+
+## Releasing the Rune deck
+
+A plugin install fetches the Rune deck CI built for its version, checked against the pin it ships in
+`deck/rune/release.json`. To release: run `npm run bump <x.y.z>` on a branch and push it; then
+`gh workflow run rune-release.yml --ref <branch>` (Actions, Rune release, Run workflow); then merge the
+branch once the run is green. The run builds the three binaries, publishes release `v<x.y.z>` holding
+them, and commits the pin to that branch before it publishes, so a version without its pin commit has no
+prebuilt deck and opens the page. Merge only after that commit lands. A run that fails before publishing,
+a branch that moved under the pin's push among them, deletes its draft: dispatch it again.
 
 ## Slow gates on Windows
 

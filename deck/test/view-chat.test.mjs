@@ -75,9 +75,32 @@ test('a deck with no chat thread has no id and no messages, as the page draws no
   const view = chatView(reads, { run: MINE });
 
   assert.equal(pageChat(reads, MINE).id, undefined);
-  assert.deepEqual(view, { messages: [] });
+  assert.deepEqual(view, { messages: [], threads: [] });
 });
 
 test('the overview, a page naming no deck, has no chat', () => {
-  assert.deepEqual(chatView(readsOf([mine]), { run: null }), { messages: [] });
+  assert.deepEqual(chatView(readsOf([mine]), { run: null }), { messages: [], threads: [] });
+});
+
+const aUser = (id, repo, title, extra = {}) => ({ id, kind: 'user', title, body: 'Create said so.', repo, postedAt: AT, replies: [], ...extra });
+
+test("the tab's Create threads are listed, open and closed alike, and not another deck's", () => {
+  const open = aUser('itm_0000000000c1', MINE, 'Add a dark mode');
+  const closed = aUser('itm_0000000000c2', MINE, 'Fix the header', { resolution: { at: AT, by: 'user' } });
+  const other = aUser('itm_0000000000c3', THEIRS, 'Not this deck');
+  const view = chatView(readsOf([mine, theirs, other, open, closed]), { run: MINE });
+
+  assert.deepEqual(view.threads, [
+    { id: open.id, title: 'Add a dark mode', href: '/thread/itm_0000000000c1' },
+    { id: closed.id, title: 'Fix the header', href: '/thread/itm_0000000000c2' },
+  ]);
+});
+
+test('the threads are listed with no chat open too', () => {
+  const open = aUser('itm_0000000000c1', MINE, 'Add a dark mode');
+  const view = chatView(readsOf([theirs, open]), { run: MINE });
+
+  assert.equal(view.id, undefined);
+  assert.deepEqual(view.messages, []);
+  assert.deepEqual(view.threads.map((thread) => thread.id), [open.id]);
 });

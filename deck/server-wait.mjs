@@ -12,6 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { crewSeenAt, quietAt, watchAgents } from './agents.mjs';
+import { settleCrew } from './crew-settle.mjs';
 import { HANDOFF_ACK_MS, KIND_GATE2, KIND_HANDOFF, KIND_QUESTION, KIND_WALKTHROUGH, NOTE_SEPARATOR, PASS_KINDS, SIGN_OFF, isOpen, sameRepo } from './items.mjs';
 import { CONFLICT_TITLE } from './landing-replies.mjs';
 import { idleYellowOf, yieldsDue } from './lanes.mjs';
@@ -368,13 +369,12 @@ function announceChange() {
 const handoffTimers = new Map();
 
 /**
- * One one-shot timer per open hand-off, at its `postedAt + HANDOFF_ACK_MS` (thread-kinds
- * spec 19, L7), so the pages repaint the moment it crosses: the state itself is
- * `isUnacknowledged`, read off the clock at render, never stored or swept. Set again on
- * every change, the way a parked wait's due timer is; one already past is not set, and one
- * that fires early finds its moment still ahead and is set again by the change it announces.
+ * First the crew-handoff settle (handoff-self-close L1), whose close re-announces and arms the rest. Then one one-shot
+ * timer per open hand-off at `postedAt + HANDOFF_ACK_MS` (thread-kinds spec 19, L7), so the pages repaint as it reads
+ * `isUnacknowledged`, off the clock at render; set again on every change, never one already past.
  */
 function armHandoffs() {
+  if (settleCrew(announceChange) > 0) return;
   let items;
   let runs;
   try {

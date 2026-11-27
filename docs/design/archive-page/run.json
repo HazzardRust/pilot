@@ -1,0 +1,437 @@
+{
+  "slug": "archive-page",
+  "feature": "Archive page",
+  "ticket": "itm_2fe34eca6f66",
+  "branch": "feat/archive-page",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-archive-page",
+  "qa": {
+    "branch": "qa2/archive-page",
+    "worktree": "C:/Users/jrylk/Projects/pilot-qa2-archive-page",
+    "url": "http://127.0.0.1:38517"
+  },
+  "artefact": "docs/design/archive-page/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated 7fb3b9d; checks green",
+      "branch": "slice/archive-page-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated 0487cdb; checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/archive-page-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated dc80540; checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/archive-page-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated 48b8f51; checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/archive-page-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated a93d0b6; checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/archive-page-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated e307a13; checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/archive-page-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "integrated 2522ad7; checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/archive-page-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "integrated 933eafb; checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/archive-page-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "integrated 7e02602; checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/archive-page-s9",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s9"
+    },
+    {
+      "slice": "S11",
+      "state": "integrated 21961f8; checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/archive-page-s11",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s11"
+    },
+    {
+      "slice": "S10",
+      "state": "integrated 1ea5ee7; checks green",
+      "after": [
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S11"
+      ],
+      "branch": "slice/archive-page-s10",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s10"
+    },
+    {
+      "slice": "S12 clippy ticket_row args (added)",
+      "state": "integrated f56c544; checks green",
+      "branch": "slice/archive-page-s12",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s12"
+    },
+    {
+      "slice": "S13 findCredential knows more shapes (added)",
+      "state": "integrated f9e23f0; checks green",
+      "after": [
+        "S6"
+      ],
+      "branch": "slice/archive-page-s13",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s13"
+    },
+    {
+      "slice": "S14 findCredential name rule and vendor prefixes (added)",
+      "state": "integrated 84c2bed; checks green",
+      "after": [
+        "S13 findCredential knows more shapes (added)"
+      ],
+      "branch": "slice/archive-page-s14",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s14"
+    },
+    {
+      "slice": "S15 Upgrade backups and the defender marker (added)",
+      "state": "integrated e5580a6; checks green",
+      "after": [
+        "S10"
+      ],
+      "branch": "slice/archive-page-s15",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-archive-page-s15"
+    },
+    {
+      "slice": "archive-page",
+      "state": "merging base pilot@6e1806b (feat at 461d49e lacked it)",
+      "branch": "fix2/archive-page",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix2-archive-page",
+      "pr": 139
+    },
+    {
+      "slice": "feature",
+      "state": "pivoted to implementing on the user's walkthrough feedback (itm_00bd1d6f40e3, 13:12Z); tip f76ceca"
+    },
+    {
+      "slice": "pivot facts (QA, f76ceca)",
+      "state": "lag: /api/view archive 0.57-0.80 s, 4.84 MB, 6,867 rows vs home 0.11 s, 0.28 MB, refetched whole on each refresh; idle draw 0% CPU; release 50 ms frame test archive_filter.rs:331 not run. Toggle rows likely cut off at display scale >1: every_bar_control_takes_a_mouse_click runs at scale 1.0 only; probe at 1.5"
+    },
+    {
+      "slice": "merge origin/pilot",
+      "state": "integrated at 2d38b22",
+      "branch": "feat/archive-page"
+    },
+    {
+      "slice": "S16",
+      "state": "integrated at 68cad41, checks green",
+      "after": [
+        "merge origin/pilot"
+      ],
+      "branch": "slice/archive-page-s16",
+      "worktree": "C:/Users/jrylk/Projects/pilot-s16-archive-page"
+    },
+    {
+      "slice": "S17",
+      "state": "integrated at 6dbec59, checks green",
+      "after": [
+        "merge origin/pilot"
+      ],
+      "branch": "slice/archive-page-s17",
+      "worktree": "C:/Users/jrylk/Projects/pilot-s17-archive-page"
+    },
+    {
+      "slice": "S18",
+      "state": "integrated at 5012b7e, checks green at f33ee09",
+      "after": [
+        "S17"
+      ],
+      "branch": "slice/archive-page-s18",
+      "worktree": "C:/Users/jrylk/Projects/pilot-s18-archive-page"
+    },
+    {
+      "slice": "S19",
+      "state": "integrated",
+      "after": [
+        "S18"
+      ],
+      "branch": "slice/archive-page-s19",
+      "worktree": "C:/Users/jrylk/Projects/pilot-s19-archive-page"
+    }
+  ],
+  "findings": [
+    "kept: F1 finding — archive_lag.rs:62-71 the keystroke (rebuild) frame is untimed; counted as a rebuild per run",
+    "dropped: F2 finding — a debug wall-clock bar flakes on this throttling laptop (integrate red: 134-143 ms vs 128 ms); the 16 ms bar stays release-only and F1's rebuild count is the gated check; QA measures spec 11 in release",
+    "kept: F3 simplify — archive.rs From.view heap-address key; delete, test calls new_view (-4)",
+    "dropped: F4 simplify — duplicate-key guard archive.rs:144-153 keeps a repeated key from taking the UI down; 8 lines of crash safety outweigh the load",
+    "kept: F5 simplify — layout.rs archive_icon copies icon_item; fold into icon_item (-18)",
+    "kept: N1 nit — strip.rs archive_page moves to layout.rs, its only caller",
+    "kept: N2 nit — prefs/archive module cycle; Column into prefs.rs",
+    "kept: N3 nit — archive_detail label_width bound once",
+    "dropped: D1 simplify — rebuild the S17 RefCell list cache where inputs change; past 150 lines, cost outweighs cognitive load now that F3 removes the address key",
+    "kept: S19a finding — band() draws bar and rule when draw bails on a failed list update",
+    "kept: S19b finding — the_bar_is_grouped asserts Date, Kind, Title order",
+    "kept: S19c finding — 640 px fixed bar overflows the centre over the right rail",
+    "kept: S19d finding — 900 px unbroken tokens clip in the title/field column",
+    "kept: S19e simplify — third 0.6 advance copy, kinds parsed twice, app.rs archive condition twice, println! in archive_align and archive_lag"
+  ],
+  "next": "co-pilot resumed; integrating pilot 6e1806b into feat/archive-page, then checks --wait, then fresh pilot-qa posts a new walkthrough",
+  "updatedAt": "2026-11-26T06:27:29.895Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot checks read red at 434dc69 when both runs were only cancelled by QA's superseding pushes",
+      "evidence": "checks 434dc69"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "pilot deck --help has no help branch: it runs the deck launcher against the live deck",
+      "evidence": "QA2 and pilot both hit it"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "gate's home-store check trips whenever the user's live deck writes during the gate",
+      "evidence": "home store changed ... live deck 8472 up"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "brief does not say /api/view needs the Bearer deck.secret or that --open screen=archive picks the first screen; port 49712 refused (reserved range)",
+      "evidence": "401 until client.rs read; listen EACCES"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "spec 9's 50 ms bar only runs under cargo test --release, which the gate never runs; Rune controls had no pointer-click test until QA",
+      "evidence": "QA2 pushback"
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "bar-control click test runs at Env scale 1.0 only, so a wrap computed at the wrong width on a scaled display passed; archive view refetches 4.8 MB per refresh with no test on payload size",
+      "evidence": "QA at f76ceca: PrintWindow 1295x807 capture, /api/view 5 runs",
+      "size": 2
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "hand-back crossed main's verdict message, costing a resend and one extra architect resume",
+      "evidence": "lineage-slow-git: design tip c5bd6cb unpushed at first hand-back",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed ran over 180 s and went to the background; one wait cost two turns",
+      "evidence": "merge 2d38b22 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "$? read after a pipe hid a cargo fmt failure",
+      "evidence": "merge 2d38b22 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a new worktree needs npm ci before cargo deck tests pass; the failure reads as ERR_MODULE_NOT_FOUND",
+      "evidence": "S16 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed fell back to the full suite (argv limit): ~15 min of heat",
+      "evidence": "S16 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a copied store carries the live deck's deck.pid",
+      "evidence": "S16 scratch daemon log"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a new worktree needs `npm ci` before the cargo deck tests pass; the failure reads ERR_MODULE_NOT_FOUND",
+      "evidence": "archive-page S16 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "test:changed and pilot integrate both fall back to the full suite (selection argv over 24000 chars): ~15 min of CPU heat per run on a laptop that hibernates at 95C",
+      "evidence": "S16 report; integrate line 'selection is 43948 characters of argv, over 24000'",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "a copied store carries the live deck's deck.pid",
+      "evidence": "S16 scratch daemon",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S17's context was reset early and it restarted from the brief; ran to ~215k tokens",
+      "evidence": "co-pilot hand-back, task usage",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "calls sent beside another call come back with no classifier verdict and must be reissued alone; hit by pilot and co-pilot repeatedly",
+      "evidence": "tool results, 6+ times this session",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S17's context reset twice mid-slice with nothing committed",
+      "evidence": "S17 report to main"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "heat-lock queue cost ~10 min",
+      "evidence": "S17 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "--open archive refused; needs screen=archive",
+      "evidence": "S17 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "View.seq reads like a change counter but is the reply sequence",
+      "evidence": "S17 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S18 reports its context compacted with nothing saved right after the co-pilot's hello, as S17 did: the hello's resume may restart the child",
+      "evidence": "S17 and S18 first messages"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the store copy for a scratch deck carries deck.secret; the harness flagged it PII; copy is local temp, removed after the look",
+      "evidence": "S18 table; C:/Users/jrylk/AppData/Local/Temp/s18-store"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no `pilot deck --scratch --from <store>`: every look hand-copies the store and starts a daemon by hand",
+      "evidence": "S16, S17, S18 reports"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "`pilot deck --help` has no help and reaches for the live deck at 4321",
+      "evidence": "S18 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot checks prints `checks red` for runs CI cancelled when a newer push superseded them; a docs push right after an integrate reads as a failed gate",
+      "evidence": "checks red at 5012b7e; gh run list: Gate cancelled, Rune deck cancelled"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S19 reports its context compacted with nothing saved right after spawn, the third child in a row (S17, S18, S19)",
+      "evidence": "S19 first message"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "`pilot checks` prints `checks red` when runs were cancelled by a newer push superseding them",
+      "evidence": "archive-page S18 at 5012b7e vs f33ee09",
+      "size": 2
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "S17, S18 and S19 each lost their context right after spawn with nothing saved",
+      "evidence": "archive-page co-pilot hand-back",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "no `pilot deck --scratch --from <store>`: every look copies the store by hand, and one copy took deck.secret with it; `pilot deck --help` has no help and reaches for the live deck",
+      "evidence": "S16-S18 reports; harness PII flag on S18",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "third HeatGuard hibernate of the session (10:51 local, ~3 h) despite a one-cargo-at-a-time lock; deck read it as an idle lane",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "two writers on one S19 worktree: brief said the prior implementer was dead; its reset --soft and squash rewrote the live implementer's tip",
+      "evidence": "05509ee9 replaces 626a723d..365fa2da; ac36f123 alive"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared CARGO_TARGET_DIR with the red-proof worktree reused a stale test binary; needed touch to rebuild",
+      "evidence": "first cargo run Finished in 3.11s, 6 failed"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot live-root --dir archive-page-s19 printed untrusted; --open archive rejected (needs screen=archive)",
+      "evidence": "live-root output; --open refusal"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "TaskStop on own spawned implementer refused (only main/user/agent itself)",
+      "evidence": "TaskStop a91f33ff274ccf1e5 refused"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "evidence runner refused the bare-sha base 2d38b22 (needs origin/<name>); one-spawn rule left all six checks unrun",
+      "evidence": "base does not match ^origin/[A-Za-z0-9._/-]+$"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context compacted mid-run; redid review in a second worktree",
+      "evidence": "pilot-fund2-archive-page"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "briefed fix/archive-page and its worktree already existed from the earlier fix round; took fix2",
+      "evidence": "git worktree add: a branch named 'fix/archive-page' already exists"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "rune grow forces flex-basis 0, so a flex-wrap row never wraps; needed a breakpoint read",
+      "evidence": "rune el/layout.rs:103"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a 640 test without the strip region cannot show the overflow",
+      "evidence": "first red passed until the strip was in the view"
+    }
+  ]
+}

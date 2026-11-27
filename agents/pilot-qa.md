@@ -32,7 +32,7 @@ nothing before that hello, and nothing to `main`, which would resume the wrong s
 Your own worktree, cut from the integration branch:
 
 ```bash
-git fetch origin && git worktree add -b qa/<slug> <path> origin/feat/<slug>
+git fetch origin && pilot worktrees add --run <slug> -b qa/<slug> <path> origin/feat/<slug>
 ```
 
 Every push goes to the integration branch itself, `git push origin
@@ -40,7 +40,7 @@ HEAD:feat/<slug>`, and fast-forwards; if the remote tip is not where you last sa
 report rather than force anything. Never the shared checkout or another worktree, which may hold another session's uncommitted work; never `git add -A`,
 `git commit -a`, `--amend` or a bare `git stash`, which sweep in others' work, never a credential in a
 tracked file, which a push publishes. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
-Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove with `pilot worktrees remove`.
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 Copy any environment file from where the brief says and confirm
 `git check-ignore` agrees before you start. Scaffolding you
@@ -181,7 +181,7 @@ first, the minimal change, one fresh-context reviewer matched to the language
 or input), targeted tests for the changed files. Gates run once, on the
 final state. Commit with the trailer from the brief and push each fix to
 `feat/<slug>` as it lands, with the new tip SHA in your next message to
-your addressee and where the user should look to see the fix. If a fix grows past a
+your addressee and where the user should look to see the fix. A fix that changes what a user sees rewrites the artefact's `## Overview` per `skills/pr-overview` on `feat/<slug>`. If a fix grows past a
 small diff (the number in the brief; absent one, about 150 changed lines or a
 third file outside the feature's owned files), stop, state the minimal fix to
 your addressee, and continue with what does not depend on it. Children are Sonnet
@@ -204,7 +204,7 @@ down", step 5 only. Nothing else after a sign-off: the walkthrough is settled.
 3. Name in it anything the feature PR body says that QA proved wrong.
 4. Copy your scaffolding and a README note of what now exists in the
    environment to the seed folder named in the brief.
-5. Stop what you started, remove your worktree, and report.
+5. Stop what you started, remove your worktree with `pilot worktrees remove <path>`, and report.
 
 Never merge, never request review, never flip the feature PR ready (the
 landing merges it, after the `gate2`).

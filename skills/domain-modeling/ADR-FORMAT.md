@@ -9,7 +9,7 @@ ledger: vendor/methodology.md
 
 ADRs live in `docs/adr/` and use sequential numbering: `0001-slug.md`, `0002-slug.md`, etc. The slug names the decision, not the topic: `0004-the-deck-is-the-only-inbox.md`, not `0004-deck.md`.
 
-Under a piloted run the number is `NNNN` until landing: the feature's one ADR is `docs/adr/NNNN-<slug>.md`, cited `ADR NNNN`, and the landing renames it to one past the highest number on `pilot` and rewrites its citations in the files the feature changed. A feature carries at most one.
+Under a piloted run the number is `NNNN` until landing: the feature's one ADR is `docs/adr/NNNN-<slug>.md`, cited `ADR NNNN`, and the landing renames it to one past the highest number on your pilot branch and rewrites its citations in the files the feature changed. A feature carries at most one.
 
 Create the `docs/adr/` directory lazily: only when the first ADR is needed.
 

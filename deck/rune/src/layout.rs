@@ -14,6 +14,7 @@ use rune_kit::glyphs;
 use serde_json::Value;
 
 use crate::app::{self, State};
+use crate::client::Query;
 use crate::prefs::Prefs;
 use crate::regions::{self, notifications::keep};
 use crate::theme::{self, Rule, motion, size, space, type_};
@@ -56,6 +57,11 @@ static REPORT: Icon = line_icon!(
     r#"<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>"#
 );
 
+static ARCHIVE: Icon = line_icon!(
+    "deck-archive",
+    r#"<path d="M3 4h18v4H3z"/><path d="M5 8v12h14V8"/><path d="M10 12h4"/>"#
+);
+
 /// The icon bar, top to bottom, as the page's rail: each panel's name in the prefs, its label and
 /// its icon. The side area stacks the open ones in the same order.
 static PANELS: [(&str, &str, &Icon); 6] = [
@@ -79,7 +85,7 @@ const SET: &str = "~";
 /// nothing.
 const COUNT_CH: f32 = 4.0;
 /// The advance of one monospace glyph as a share of the font size, as the status columns take it.
-const ADVANCE: f32 = 0.6;
+pub(crate) const ADVANCE: f32 = 0.6;
 
 /// The drag in hand: the side area's width as drawn at the press, which each move adds the
 /// pointer's travel to, and the prefs' width and hidden flag then, which a cancel puts back.
@@ -313,14 +319,16 @@ fn border_drag(s: &mut State, panes: [&'static str; 2], drawn: [f32; 2], d: &Dra
 }
 
 /// One icon of the icon bar: its label on hover and to a reader, the 4 px primary bar on its left
-/// while its pane shows, and its count as a pill on its corner, out of the flow.
+/// while `active` (its pane shows, or its page is up), and its count as a pill on its corner, out of
+/// the flow.
 fn icon_item(
     s: &State,
     (name, label, glyph): (&'static str, &str, &'static Icon),
+    active: bool,
+    press: impl Fn(&mut State) + 'static,
     dark: bool,
 ) -> El {
     let t = tok::theme(dark);
-    let active = !s.prefs.side_hidden && is_open(&s.prefs, name);
     let mut item = theme::control(el(), dark)
         .key(format!("icon-{name}"))
         .size(size::icon_bar, size::icon_bar)
@@ -329,7 +337,7 @@ fn icon_item(
         .label(label)
         .help(label)
         .expanded(active)
-        .on_press(move |s: &mut State| toggle(&mut s.prefs, name))
+        .on_press(press)
         .child(
             icon(glyph, size::icon)
                 .key(format!("icon-{name}-glyph"))
@@ -353,6 +361,21 @@ fn icon_item(
         );
     }
     item
+}
+
+/// Archive's press: the archive screen, or from it the home screen of the scope it was left from.
+fn archive_page(s: &mut State) {
+    let screen = if s.query.screen == "archive" {
+        "home"
+    } else {
+        "archive"
+    };
+    let query = Query {
+        screen: screen.into(),
+        id: None,
+        ..s.query.clone()
+    };
+    app::go(s, query);
 }
 
 /// An icon's count: a solid badge as wide as its digits on the icon's top-right corner, so it
@@ -489,14 +512,35 @@ fn left_side(s: &State, cx: &mut Cx<State>) -> El {
         space::s0
     };
     // The first glyph and the first heading start at the centre header's top (`app::center`).
-    let bar = PANELS.iter().fold(
-        col()
-            .key("icon-bar")
-            .w(size::icon_bar)
-            .h_full()
-            .pt(space::s7 - (size::icon_bar - size::icon) / 2.0),
-        |bar, &panel| bar.child(icon_item(s, panel, dark)),
-    );
+    let bar = PANELS
+        .iter()
+        .fold(
+            col()
+                .key("icon-bar")
+                .w(size::icon_bar)
+                .h_full()
+                .pt(space::s7 - (size::icon_bar - size::icon) / 2.0),
+            |bar, &panel| {
+                let (name, ..) = panel;
+                let active = !s.prefs.side_hidden && is_open(&s.prefs, name);
+                bar.child(icon_item(
+                    s,
+                    panel,
+                    active,
+                    move |s: &mut State| toggle(&mut s.prefs, name),
+                    dark,
+                ))
+            },
+        )
+        // The bar's last entry, Archive: a page, not a pane, so its press goes to the archive screen
+        // (and back on a second) and opens no side pane. Marked while that screen is up.
+        .child(icon_item(
+            s,
+            ("archive", "Archive", &ARCHIVE),
+            s.query.screen == "archive",
+            archive_page,
+            dark,
+        ));
     // The open pane above the one being drawn, which its border resizes with it.
     let mut above: Option<&'static str> = None;
     // Panes take their contents' height and the area scrolls past the last; room left over stays
@@ -592,7 +636,17 @@ pub fn strips(s: &State, cx: &mut Cx<State>) -> El {
         .pl(space::s0)
         .gap(space::panels)
         .child(left)
-        .child(app::center(s, cx).key("centre").grow(1.0).min_w(space::s0))
+        // The centre is held to the window (min_h 0) and its body is the one viewport
+        // (`app::center`), holding thread and reply, so Reply stays reachable under a tall thread
+        // or a reply holding a table (QA at 1280 × 800, reply-markdown). An outer scroll here
+        // would unbound that viewport and lose its stick-to-bottom.
+        .child(
+            app::center(s, cx)
+                .key("centre")
+                .grow(1.0)
+                .min_w(space::s0)
+                .min_h(space::s0),
+        )
         .child(regions::strip::draw(
             strip,
             &s.regions.strip,

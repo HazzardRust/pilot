@@ -65,17 +65,80 @@ fn reports() -> Value {
 fn the_agents_are_the_views_roster_with_their_ages() {
     let rt = window(
         json!({ "agents": { "agents": [
-            { "name": "Explore", "kind": "other", "since": "2026-11-20T12:00:00.000Z", "quietS": 5, "quiet": false },
-            { "name": "pilot:pilot-qa", "kind": "qa", "since": "2026-11-20T12:00:00.000Z", "quietS": 45, "quiet": true },
+            { "name": "Explore", "kind": "other", "since": "2026-11-20T12:00:00.000Z", "started": "now", "quietS": 5, "quiet": false },
+            { "name": "pilot:pilot-qa", "kind": "qa", "since": "2026-11-20T12:00:00.000Z", "started": "now", "quietS": 45, "quiet": true },
         ] } }),
         Prefs::default(),
     );
 
     let shown = texts(&rt);
 
-    for want in ["Explore", "5s", "pilot:pilot-qa", "45s"] {
+    for want in [
+        "Explore · started now",
+        "5s",
+        "pilot:pilot-qa · started now",
+        "45s",
+    ] {
         assert!(shown.iter().any(|t| t == want), "{want} drawn: {shown:?}");
     }
+}
+
+/// rune-panes S6: a roster on two decks, as `agentsView` gives the overview.
+fn two_decks() -> Value {
+    let implementer = json!({ "name": "pilot-implementer", "kind": "implementer", "since": "2026-11-20T11:57:00.000Z", "started": "3 mins ago", "quietS": 5, "quiet": false });
+    let qa = json!({ "name": "pilot:pilot-qa", "kind": "qa", "since": "2026-11-20T11:59:00.000Z", "started": "1 min ago", "quietS": 45, "quiet": true });
+    json!({ "agents": {
+        "agents": [implementer, qa],
+        "groups": [ { "tab": "alpha", "agents": [implementer] }, { "tab": "beta", "agents": [qa] } ],
+    } })
+}
+
+#[test]
+fn each_row_reads_type_then_started_and_keeps_its_quiet_age() {
+    let rt = window(two_decks(), Prefs::default());
+
+    let shown = texts(&rt);
+
+    for want in [
+        "pilot-implementer · started 3 mins ago",
+        "5s",
+        "pilot:pilot-qa · started 1 min ago",
+        "45s",
+    ] {
+        assert!(shown.iter().any(|t| t == want), "{want} drawn: {shown:?}");
+    }
+}
+
+#[test]
+fn the_overview_draws_a_section_per_deck() {
+    let rt = window(two_decks(), Prefs::default());
+    let top = |key: &str| {
+        rt.elements()
+            .into_iter()
+            .find(|e| e.key.as_deref() == Some(key))
+            .unwrap_or_else(|| panic!("{key} is drawn"))
+            .rect[1]
+    };
+
+    let shown = texts(&rt);
+    for heading in ["alpha", "beta"] {
+        assert!(
+            shown.iter().any(|t| t == heading),
+            "{heading} drawn: {shown:?}"
+        );
+    }
+    assert!(
+        top("agents-group-0-heading") < top("agent-0"),
+        "alpha above its row"
+    );
+    assert!(
+        top("agent-0") < top("agents-group-1-heading"),
+        "beta below alpha's row"
+    );
+    assert!(
+        top("agents-group-1-heading") < top("agent-1"),
+        "beta above its row"
+    );
 }
 
 #[test]

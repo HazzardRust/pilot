@@ -18,7 +18,7 @@ export function historyView(reads, query = {}, now = Date.now()) {
   if (screen === 'items') {
     const queue = queueOf(items);
     const ordered = [...queue, ...items.filter((item) => !queue.includes(item)).sort(newestSaidFirst)];
-    const cards = ordered.map((item) => cardOf(item, { items, tab: null, back: '/items', all: false }));
+    const cards = ordered.map((item) => cardOf(item, { items, lanes: reads.lanes, tab: null, back: '/items', all: false }));
     const runs = liveRuns(reads.runs).map(({ id, name }) => ({ id, name, dismissable: true }));
     return { days: cards.length ? [{ key: 'items', heading: 'Everything', open: true, cards }] : [], runs };
   }
@@ -30,7 +30,7 @@ export function historyView(reads, query = {}, now = Date.now()) {
   const done = items.filter((item) => !isOpen(item) && (tab === null || tabFor(tabs, item.repo) === tab));
   const days = daySections(done, now).map(({ key, label, open, items: each }) => ({
     key, heading: label, open,
-    cards: each.map((item) => cardOf(item, { items, tab: tab ? null : tabFor(tabs, item.repo), back, all })),
+    cards: each.map((item) => cardOf(item, { items, lanes: reads.lanes, tab: tab ? null : tabFor(tabs, item.repo), back, all })),
   }));
   return { days };
 }

@@ -6,7 +6,8 @@
  */
 
 // A red run's log goes under a home of this process's own, never the real one.
-import { git, isAncestor, commitFile, repos, passing, fakeGh, greenChecks, merges, mainSays, land } from './lib/land-repos.mjs';
+import { gitFixture } from './lib/git-fixture.mjs';
+import { git, isAncestor, commitFile, buildRepos, repos, passing, fakeGh, greenChecks, mainSays, land } from './lib/land-repos.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -15,27 +16,40 @@ import path from 'node:path';
 
 import { githubHost } from '../../deck/host-github.mjs';
 
+/** `repos(t, 'a')` with main moved on origin after pilot was cut, as two tests start (test-body-git S11). */
+const mainMoved = (t) => gitFixture(t, 'land:main-moved', (dir) => {
+  const built = buildRepos(dir, ['a']);
+  commitFile(built.seed, 'm2.txt', 'm2\n', 'main moves');
+  git(built.seed, 'push', '-q', 'origin', 'main');
+  return built;
+});
+
+/** `merges(repo, rev)` with each commit's SHA and subject beside it, in one `log` (L5): `line` as `merges` gives it. */
+const firstParents = (repo, rev) => git(repo, 'log', '--first-parent', '--format=%H%x09%s%x09%P', rev).split('\n').map((entry) => {
+  const [sha, subject, parents] = entry.split('\t');
+  return { sha, subject, line: `${subject} ${parents}` };
+});
+
 // One landing, both checks (S8 of cheap-suite): main moves before it, as the second test had it.
 test('land merges the feature into pilot; land takes nothing from main', (t) => {
-  const { origin, seed, gitIn, a: work } = repos(t, 'a');
+  const { origin, gitIn, a: work } = mainMoved(t);
   const { host, calls } = fakeGh();
-  commitFile(seed, 'm2.txt', 'm2\n', 'main moves');
-  git(seed, 'push', '-q', 'origin', 'main');
-  const mainTip = git(origin, 'rev-parse', 'main');
-  const before = git(origin, 'rev-parse', 'pilot');
+  const [mainTip, before] = git(origin, 'rev-parse', 'main', 'pilot').split('\n');
   const pilotTip = before;
 
   const result = land({ cwd: work, git: gitIn(work), host, test: passing });
 
-  assert.equal(git(origin, 'rev-list', '--first-parent', '--count', pilotTip + '..pilot'), '1', 'pilot gains one first-parent commit');
-  assert.equal(git(origin, 'log', '-1', '--format=%s', 'pilot'), 'Merge feat/a into pilot');
+  const onPilot = firstParents(origin, 'pilot');
+  assert.equal(String(onPilot.findIndex(({ sha }) => sha === pilotTip)), '1', 'pilot gains one first-parent commit');
+  assert.equal(onPilot[0].subject, 'Merge feat/a into pilot');
   assert.ok(!git(origin, 'log', '--format=%s', pilotTip + '..pilot').includes('Merge main into pilot'));
   assert.ok(!isAncestor(origin, mainTip, 'pilot'), "main's new commit is not on pilot");
 
   const tip = git(work, 'rev-parse', 'feat/a');
-  assert.equal(merges(origin, 'pilot')[0], `Merge feat/a into pilot ${before} ${tip}`, 'a merge with the feature tip as second parent');
-  assert.equal(git(origin, 'rev-parse', 'feat/a'), tip, 'the feature is pushed');
-  assert.equal(result.sha, git(origin, 'rev-parse', 'pilot'));
+  assert.equal(onPilot[0].line, `Merge feat/a into pilot ${before} ${tip}`, 'a merge with the feature tip as second parent');
+  const [pushed, pilot] = git(origin, 'rev-parse', 'feat/a', 'pilot').split('\n');
+  assert.equal(pushed, tip, 'the feature is pushed');
+  assert.equal(result.sha, pilot);
   assert.equal(result.already, false);
   assert.equal(result.retried, false);
   assert.deepEqual(result.main, { number: 900, opened: true });
@@ -51,9 +65,9 @@ test('a pilot that moved while the merge was tested is merged again once and lan
   // Feature a lands while b's merge is tested: b's first push to pilot is no longer a fast-forward.
   const result = land({ cwd: b, git: gitIn(b), host: fakeGh().host, test: mover(a, 'feat/a', 1) });
 
-  const pilot = git(origin, 'rev-parse', 'pilot');
+  const [{ sha: pilot, line }] = firstParents(origin, 'pilot');
   assert.equal(result.retried, true);
-  assert.equal(merges(origin, 'pilot')[0], `Merge feat/b into pilot ${aTip} ${git(b, 'rev-parse', 'feat/b')}`);
+  assert.equal(line, `Merge feat/b into pilot ${aTip} ${git(b, 'rev-parse', 'feat/b')}`);
   assert.equal(result.sha, pilot);
   assert.ok(!isAncestor(b, aTip, 'feat/b'), 'feat/b never takes a');
 });
@@ -110,8 +124,7 @@ test('a push to pilot refused while pilot stays put fails once, with no retry', 
 
 test('land refuses outside a feat/ branch', (t) => {
   const { origin, seed, gitIn } = repos(t);
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
-  const mainTip = git(origin, 'rev-parse', 'main');
+  const [pilotTip, mainTip] = git(origin, 'rev-parse', 'pilot', 'main').split('\n');
 
   for (const branch of ['main', 'pilot']) {
     git(seed, 'checkout', '-q', '-B', branch, `origin/${branch}`);
@@ -120,14 +133,13 @@ test('land refuses outside a feat/ branch', (t) => {
       (err) => err.exitCode === 1 && err.message.includes(branch) && /feat\//.test(err.message),
     );
   }
-  assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip, 'pilot unmoved');
-  assert.equal(git(origin, 'rev-parse', 'main'), mainTip, 'main unmoved');
+  const [pilotNow, mainNow] = git(origin, 'rev-parse', 'pilot', 'main').split('\n');
+  assert.equal(pilotNow, pilotTip, 'pilot unmoved');
+  assert.equal(mainNow, mainTip, 'main unmoved');
 });
 
 test('a red main does not stop the landing', (t) => {
-  const { origin, seed, gitIn, a: work } = repos(t, 'a');
-  commitFile(seed, 'm2.txt', 'm2\n', 'main moves');
-  git(seed, 'push', '-q', 'origin', 'main');
+  const { origin, gitIn, a: work } = mainMoved(t);
   // Red only if main's file is present, as it would be had main been merged.
   const redIfMain = 'node -e "process.exit(require(\'fs\').existsSync(\'m2.txt\') ? 1 : 0)"';
 
@@ -139,14 +151,14 @@ test('a red main does not stop the landing', (t) => {
 test('an unusable pilot.remote stops land before anything is pushed', (t) => {
   const { origin, gitIn, a: work } = repos(t, 'a');
   commitFile(work, 'f2.txt', 'f2\n', 'feature moves');
-  const pilotTip = git(origin, 'rev-parse', 'pilot');
-  const featTip = git(origin, 'rev-parse', 'feat/a');
+  const [pilotTip, featTip] = git(origin, 'rev-parse', 'pilot', 'feat/a').split('\n');
   git(work, 'config', 'pilot.remote', 'nowhere');
 
   assert.throws(() => land({ cwd: work, git: gitIn(work), host: fakeGh().host, test: passing }), (err) =>
     err.exitCode === 1 && /^NOT landed: .*; nothing pushed$/.test(err.message));
-  assert.equal(git(origin, 'rev-parse', 'feat/a'), featTip, 'feat/a was not pushed');
-  assert.equal(git(origin, 'rev-parse', 'pilot'), pilotTip);
+  const [pilotNow, featNow] = git(origin, 'rev-parse', 'pilot', 'feat/a').split('\n');
+  assert.equal(featNow, featTip, 'feat/a was not pushed');
+  assert.equal(pilotNow, pilotTip);
 });
 
 test('a red run leaves pilot unmoved and says why', (t) => {
@@ -177,13 +189,12 @@ test('a feature already on pilot merges nothing', (t) => {
 });
 
 test('main prints the main line, and unknown with the reason when gh fails', (t) => {
-  const { clone, gitIn, a } = repos(t, 'a');
+  const { gitIn, a, b } = repos(t, 'a', 'b');
   git(a, 'config', 'pilot.test', passing);
   const none = mainSays([], { cwd: a, git: gitIn(a), host: fakeGh([{ number: 11, headRefName: 'feat/a', headRefOid: git(a, 'rev-parse', 'HEAD') }]).host });
   assert.equal(none.code, 0);
   assert.match(none.out, /^landed feat\/a on pilot at [0-9a-f]{7}\nno ci proof: 0 gate jobs, fewer than 3\nmain gets pilot: #900 \(opened\)\n$/);
 
-  const b = clone('b');
   const failing = () => {
     throw new Error('no GitHub host');
   };

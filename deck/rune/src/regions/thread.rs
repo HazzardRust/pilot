@@ -8,6 +8,7 @@ use rune::tok;
 use rune::{Color, Cx, El, Key, col, el, row, text};
 use serde::Deserialize;
 
+use crate::act::{self, Action};
 use crate::app::{self, State, go};
 use crate::client::Query;
 use crate::regions::queue::hhmm;
@@ -63,6 +64,25 @@ struct Thread {
     #[serde(default)]
     messages: Vec<Message>,
     resolution: Option<String>,
+    steps: Option<Steps>,
+}
+
+/// A steps thread's list as `threadView` sends it, and whether Done is still to press (L5).
+#[derive(Debug, Default, Deserialize)]
+struct Steps {
+    texts: Vec<String>,
+    open: bool,
+}
+
+/// The key Done posts under: one press in flight at a time.
+const DONE: &str = "done";
+
+/// Done (L6): the thread on screen closed at once, no confirm, as the HTML deck's Done posts; the
+/// deck closes its ticket in the same write and the live reader brings the closed thread back.
+fn done(s: &mut State) {
+    if let Some(id) = s.query.id.clone() {
+        act::send(&mut s.pending, DONE, Action::Close { id });
+    }
 }
 
 /// Off the thread, as the HTML deck's back arrow goes (`app::leave`), to the deck page behind it or
@@ -270,6 +290,37 @@ pub fn draw(v: &serde_json::Value, _: &Local, cx: &mut Cx<State>) -> El {
         page = page.child(line(note));
     }
     page = page.child(theme::markdown(th.body, dark).key("body"));
+    if let Some(steps) = th.steps {
+        let list = steps.texts.iter().enumerate().fold(
+            col().key("steps").gap(space::within),
+            |list, (i, step)| {
+                list.child(theme::content(
+                    text(format!("{}. {step}", i + 1))
+                        .key(format!("step-{}", i + 1))
+                        .font(type_::BODY)
+                        .color(t.text)
+                        .wrap(),
+                    dark,
+                ))
+            },
+        );
+        page = page.child(list);
+        if steps.open {
+            page = page.child(
+                row().child(
+                    theme::control(row(), dark)
+                        .key("steps-done")
+                        .role("button")
+                        .label("Done")
+                        .padding(space::pad)
+                        .border(1.0, k.rule)
+                        .fill(t.card)
+                        .child(text("Done").font(type_::CAPTION).color(t.text))
+                        .on_press(done),
+                ),
+            );
+        }
+    }
     for (i, message) in th.messages.into_iter().enumerate() {
         // deck.css's `.who`: the crew kind that wrote it in that kind's colour, `you` and the deck's
         // own line quiet; the time beside it in the same ink, the whole stamp on hover.
