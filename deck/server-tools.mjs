@@ -15,6 +15,7 @@ import { checksRefusal } from './gate2-checks.mjs';
 import { startLanding } from './landing.mjs';
 import { LAND_AGAIN, LANDING_KINDS } from './landing-replies.mjs';
 import { startPrWrite } from './pr-writes.mjs';
+import { pruneStageOf, startRunPrune } from './run-prune.mjs';
 import {
   KIND_CREW_HANDOFF, KIND_GATE1, KIND_GATE2, KIND_HANDOFF, KIND_TICKET, KIND_WALKTHROUGH, OWNER_KINDS, SIGN_OFF, authorKind, isChainHandoff, isGate, isOpen, isRecord, liveTicketOf, messagesOf, ownerOf, stateOf, waiterKind,
 } from './items.mjs';
@@ -285,7 +286,12 @@ function rewordedSections(was, now, artefact) {
  * (lineage-slow-git L1).
  */
 export function callTool(name, args, deps = {}) {
-  const { prWrite = (ticket, repo) => startPrWrite(ticket, repo, deps), lineageTimeout, ...land } = deps;
+  const {
+    prWrite = (ticket, repo) => startPrWrite(ticket, repo, deps),
+    runPrune = (ticket, repo, slug, stage) => startRunPrune(ticket, repo, slug, stage, deps),
+    lineageTimeout,
+    ...land
+  } = deps;
   if (name === 'deck_post') {
     // `repo` is the caller's own directory, stamped by the stdio client; a ticket may be
     // filed under a worktree of it and nowhere else (run-chaining S6).
@@ -468,6 +474,9 @@ export function callTool(name, args, deps = {}) {
     // Every status of a ticket with a gate1 rewrites its feature PR from the record just saved (spec 2).
     const gate1 = record?.ticket === undefined ? undefined : listItems().find((item) => item.kind === KIND_GATE1 && item.ticket === record.ticket);
     if (gate1) prWrite(gate1.ticket, gate1.repo);
+    // Gate 1 signed or the run abandoned: a detached child prunes the run's trees, no git in this request (A4).
+    const stage = pruneStageOf(args?.finished);
+    if (stage !== null && typeof runRepo === 'string') runPrune(record?.ticket, runRepo, record?.slug, stage);
     // One line, never the record (spec 22.2): the answer is paid in the pilot's context
     // on every call, and the record is on disk for anything that needs it. A ticket taken
     // in place under the mark is named, so the same session knows it holds it (handoff-over-mark L2).

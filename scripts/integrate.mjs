@@ -40,19 +40,21 @@ import path from 'node:path';
 import { cleanOnPilot } from '../deck/gate2-base.mjs';
 import { hostFor } from '../deck/host.mjs';
 import { FULL_SHA } from '../deck/host-github.mjs';
+import { processTable } from '../deck/procs.mjs';
 import { RUN_BASE } from '../deck/runs.mjs';
 import { privateDir } from '../hooks/lib/atomic-write.js';
 import { deleteMerged } from './branches.mjs';
+import { keptLine, removeTree, worktrees } from './worktree-remove.mjs';
 import { behavioursOf } from './check-slices.mjs';
 import { checkLine, checksAt } from './checks.mjs';
 import { takeSlot } from './gate-slots.mjs';
-import { gitView, holdsIn } from './git-view.mjs';
+import { gitView, holdsIn, tipOf } from './git-view.mjs';
 import { mergeIntoPilot } from './sync.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
 import { assertPushable, firstLine, git, isPilotBase, isPilotName, landingSubjects, pilotBranch, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRef, runRemote, shortRef } from './remotes.mjs';
 import { scopeOf } from './select-tests.mjs';
-import { runRecord } from './worktrees.mjs';
+import { holderFrom, runRecord } from './worktrees.mjs';
 
 const RECORDS = ':(glob)docs/design/*/run.json';
 /** One trailer line: a key of letters and hyphens, a colon, a space, a value on the same line. */
@@ -377,7 +379,7 @@ export function landedOnPilot(cwd, head, ref, git = gitView(cwd)) {
 /**
  * Integrate one slice branch, or with none take the base alone. `test` is the shell
  * command, run as given (default the repository's own since the tip before the merge, `runChosen`), `push` false keeps origin untouched, `trailers` are
- * `Key: value` lines for every commit made. `install` and `host` are the calls
+ * `Key: value` lines for every commit made. `install`, `host` and `holder` are the calls
  * out to other tools, replaceable for a test. Answers `{ ok, line, failing }`, plus `code` 2 when it was refused for want of a test command.
  */
 export function integrate(branch, options = {}) {
@@ -388,6 +390,7 @@ export function integrate(branch, options = {}) {
     trailers = [],
     host, // the **Host**, null at none; unset, `hostFor(cwd)` when the prune asks
     install = installWithNpm,
+    holder = holderFrom(processTable), // a slice tree a live process holds is kept (L4)
   } = options;
   const slice = branch?.replace(/^origin\//, '');
   const not = slice ? `NOT integrated ${slice}` : 'base NOT taken';
@@ -556,7 +559,7 @@ export function integrate(branch, options = {}) {
   let said = 'not pushed (--no-push)';
   if (push) said = pushed ? 'pushed' : 'nothing to push';
   // A feature branch merged in is not a slice: only a run branch's is ever deleted here.
-  const pruned = slice && pushed && runs !== null && !/^feat\//i.test(slice) ? pruneSlice(cwd, host, slice, head, view) : '';
+  const pruned = slice && pushed && runs !== null && !/^feat\//i.test(slice) ? pruneSlice(cwd, host, slice, head, view, holder) : '';
   return { ok: true, line: `${what(`at ${tip}`)}: ${counts}; ${said}${pruned}`, failing: [] };
 }
 
@@ -622,7 +625,34 @@ function trialOnPilot({ cwd, git, head }) {
  * The pushed slice through `deleteMerged` into `head`: `; deleted <slice>`, `; kept <slice>: <why>`,
  * or nothing when the slice is not on its remote. A failure keeps it and names why.
  */
-function pruneSlice(cwd, host, slice, head, git) {
+function pruneSlice(cwd, host, slice, head, git, holder) {
+  return removeSliceTree(cwd, slice, git, holder) + deleteSlice(cwd, host, slice, head, git);
+}
+
+/**
+ * The worktree on `slice`, if any, through `removeTree`: `; removed <dir>`, `; kept <state> <dir>`, or nothing.
+ * No local `slice` in the view's tip snapshot, which `deleteSlice` reads next, means no tree is on it: nothing listed.
+ */
+function removeSliceTree(cwd, slice, git, holder) {
+  let dir = cwd;
+  try {
+    if (tipOf(git, `refs/heads/${slice}`) === null) return '';
+    // removeTree's own git does not go through the view, so the view forgets what it saw.
+    git.forget?.();
+    const trees = worktrees(cwd);
+    if (!trees) return `; ${keptLine(cwd, 'leftover')}`;
+    const tree = trees.slice(1).find((t) => t.branch === slice);
+    if (!tree) return '';
+    dir = tree.path;
+    const result = removeTree(cwd, dir, { holder });
+    return result.removed ? `; removed ${dir}` : `; ${keptLine(dir, result.kept)}`;
+  } catch {
+    return `; ${keptLine(dir, 'leftover')}`;
+  }
+}
+
+/** The pushed slice through `deleteMerged`; see `pruneSlice`. */
+function deleteSlice(cwd, host, slice, head, git) {
   try {
     // `fetched` (A3): integrate fetched origin before its merge and pushed `head` itself, so origin's branches
     // are its remote-tracking refs; a slice moved since is refused by the delete's lease, never deleted.

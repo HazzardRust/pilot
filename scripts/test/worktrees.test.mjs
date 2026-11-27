@@ -23,7 +23,7 @@ const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8',
 const BASE = 'origin/main';
 
 /** The worked trees' commits: origin's main merges the first list, never the second. */
-const MERGED = ['clean', 'dirty', 'locked', 'nolog', 'reused', 'mine', 'feat', 'other', 'plain'];
+const MERGED = ['clean', 'dirty', 'locked', 'nolog', 'reused', 'mine', 'feat', 'other', 'plain', 'raced', 'gone'];
 const UNMERGED = ['unmerged', 'landed'];
 
 /**
@@ -104,6 +104,30 @@ test('prune removes only the merged-clean worktree and its local branch', (t) =>
   assert.equal(fs.existsSync(clean), false);
   assert.deepEqual(branches(work), ['main', 'unmerged']);
   assert.deepEqual(result.failed, []);
+});
+
+test("a branch git's -d refuses is named in failed with git's own words, its tree still removed", (t) => {
+  const { work, add } = scratch(t);
+  const tree = add('gone', { merged: true });
+  // In origin/main, so a safe head, but in neither the main checkout's HEAD nor an upstream: -d refuses.
+  git(work, 'reset', '-q', '--hard', 'HEAD~1');
+  const result = prune(work, BASE);
+  assert.deepEqual(names(result.removed), ['gone']);
+  assert.equal(fs.existsSync(tree), false);
+  assert.equal(result.failed.length, 1, JSON.stringify(result.failed));
+  assert.equal(result.failed[0].path, 'branch gone');
+  assert.match(result.failed[0].reason, /not fully merged/);
+  assert.ok(branches(work).includes('gone'), 'the refused branch stays');
+});
+
+test("a removal git refuses is failed with git's own words", (t) => {
+  const { work, add } = scratch(t);
+  const tree = add('raced', { merged: true });
+  // Locked by another session once removeTree has listed it (its holder is asked second): git refuses.
+  let asked = 0;
+  const result = prune(work, BASE, { holder: (dir) => (asked++ && git(work, 'worktree', 'lock', dir), null) });
+  assert.deepEqual([result.removed, result.failed.length, fs.existsSync(tree)], [[], 1, true]);
+  assert.match(result.failed[0].reason, /locked/);
 });
 
 test('keep wins over merged-clean', (t) => {
