@@ -14,14 +14,15 @@
     },
     {
       "slice": "S2",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S1"
-      ]
+      ],
+      "branch": "slice/remote-run-branches-s2"
     }
   ],
-  "next": "Short path, lane held. S1 pushed 3c8364eb (ceilings temp 11819/10676), integrating. Then pilot checks --wait; S2 implementer (opus; ts+security; prune --slug must never delete feat/<slug>: runOwns alone returns true for it; final re-pin); integrate, checks, --trial, gate2. gate.mjs will conflict with prune-run-trees (PR 165) at landing. L11: no real deletes on origin.",
-  "updatedAt": "2026-11-27T16:13:04.127Z",
+  "next": "Short path, lane held. S1 integrated 3aed5f3e, checks green. S2 pushed ed3dae34 (final pins 11832/10689), integrating. Then pilot checks <sha7> --wait, pilot integrate --trial in feat worktree, gate2 (pr #n, full sha, checks line, spec-line table). gate.mjs ceilings conflict with prune-run-trees (PR 165) at the second landing.",
+  "updatedAt": "2026-11-27T16:40:15.500Z",
   "friction": [
     {
       "agent": "pilot-architect",
