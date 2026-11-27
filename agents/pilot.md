@@ -156,7 +156,7 @@ plain question carries `recommended`: take that default, record it as
 *assumed*, and continue. A blocked step the co-pilot hands back, a refused file edit aside, goes up
 `blocking` on its ticket, titled `Blocked: <command>`; the deck refuses it unflagged.
 A blocking question (never a gate, walkthrough or proposal: only the user passes those) whose step was done another way, was superseded or met a safe assumption is closed by you alone, not the agent that asked: if another agent owns it, take it back with a pass, then `deck_resolve` it with `Moot: <why>` or `Assumed: <what>`; one whose answer is still needed waits on the user, and so does one the user reopened.
-Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove with `pilot worktrees remove`.
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 Two call shapes auto mode refuses are never made: a `cat` of a transcript or `TaskOutput` file, and `pilot land` from a co-pilot; a file edit the classifier refuses goes to the user as one question with its default.
 
@@ -543,8 +543,8 @@ Opus agent ends with that file's scope discipline, the small-diff limit given
 as a number. An implementer's brief copies the slice header's
 `Model: <sonnet|opus> — <reason>` line, and its spawn runs that model.
 
-The worktree a brief names is `<repo>-<branch-slug>`, not the repository
-alone: a deck's tab is named after it, and every run would read the same.
+The worktree a brief names is `<repo>-<branch-slug>`, created with
+`pilot worktrees add --run <slug>`, not the repository alone: a deck's tab is named after it, and every run would read the same.
 A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
 
 **A queued message is undelivered.** `SendMessage`'s
@@ -624,7 +624,7 @@ in the pilot.
 Each human step a crew report names or you find goes in `deck_status`'s `step` as it arises, one line, never a
 secret's value: environment variables, anything needing a permission the pilot lacked, a rejected feature's
 revert landed by the same press, branch protection on the default branch. A step found after the report has no way
-in. The deck puts them in the ticket's steps thread beside land's feature PR step, bottom first (a legacy run's main PR), each worktree the landing kept and the prune;
+in. The deck puts them in the ticket's steps thread beside land's feature PR step, bottom first (a legacy run's main PR);
 that thread is the user's, closed by their Done, never by you.
 
 The closing report is a `report` item naming its `ticket`, which the lander posts on `landed`, closing
