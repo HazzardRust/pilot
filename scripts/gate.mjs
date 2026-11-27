@@ -85,10 +85,11 @@ const POLL_MS = 1_000;
  * 2026-11-27, prune-worktrees S11 (one porcelain parser, one path-equality export): 11753 (node 843, git 10616, other 294) locally, unchanged by the removal; final exact pins, the Windows-CI delta 9/6 and no other headroom: 11762 / 10622 (itm_cc4171bdb60c).
  * 2026-11-27, prune-worktrees drift merge on 74b3604: 11749 (node 845, git 10610, other 294) locally + Windows-CI delta 9/6; the final exact pins (itm_abcdde7d29e5); deck/doctor.mjs takes norm and parseWorktrees from worktree-remove.mjs (QA B2), which keeps it under facades' 800 bar after prebuilt-rune's +17.
  * 2026-11-27, tested-once drift merge on 5336235: CI windows-latest, Gate run 45992689173: spawns 11769 (node 845, git 10627, other 297); S3's select-scope fixture tests on prune-worktrees' exact pins; temporary until tested-once's last slice re-pins.
+ * 2026-11-27, tested-once S1 on dc9ddd4: 11857 (node 845, git 10713, other 299) locally + Windows-CI delta 9/6, 11866 / 10719; the test ledger's +62 git (test-ledger.test.mjs on the shared fixture, 54; a ledger row per runTests, 5 git) after the fold; temporary until tested-once's last slice re-pins.
  */
-export const SPAWN_CEILING = 11769;
+export const SPAWN_CEILING = 11866;
 /** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13, prune-worktrees); see the dated lines above. */
-export const GIT_CEILING = 10627;
+export const GIT_CEILING = 10719;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 
@@ -133,7 +134,9 @@ export function gateArgv(args, cores, root) {
  * for the suite (none when `slot` is undefined); given `spawns`, the counter preloaded and writing there;
  * given `guard`, the home store the deck store refuses to write and the log it names each writer in (home-store-guard L4).
  */
-export function gateEnv(env, slot, spawns, guard) {
+export function gateEnv(given, slot, spawns, guard) {
+  // The scope is this gate's own; a gate the suite starts under test runs wide (tested-once S1).
+  const { PILOT_TEST_SCOPE: _scope, ...env } = given;
   const cap = `--max-old-space-size=${CHILD_HEAP_MB}`;
   const options = [];
   const inherited = (env.NODE_OPTIONS ?? '').split(/\s+/).filter(Boolean);
