@@ -3,28 +3,46 @@
   "feature": "classifier env",
   "ticket": "itm_2295bb1ac43e",
   "branch": "feat/classifier-env",
-  "base": "pilot",
+  "base": "hazzardrust-pilot",
   "worktree": "C:/Users/jrylk/Projects/pilot-feat-classifier-env",
   "artefact": "docs/design/classifier-env/architecture.md",
   "slices": [
     {
       "slice": "S1 Start writes the classifier block",
-      "state": "pushed c77478a",
+      "state": "integrated",
       "branch": "slice/classifier-env-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-classifier-env-s1"
     },
     {
       "slice": "S2 OPERATING.md section and lint",
-      "state": "planned",
+      "state": "pushed afb1c66",
       "after": [
         "S1 Start writes the classifier block"
-      ]
+      ],
+      "branch": "slice/classifier-env-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-classifier-env-s2"
     },
     {
       "slice": "S3 doctor autoMode row",
-      "state": "pushed 737adc0",
+      "state": "pushed 5e7bda6",
       "branch": "slice/classifier-env-s3",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-classifier-env-s3"
+    },
+    {
+      "slice": "drift merge hazzardrust-pilot 74b3604",
+      "state": "integrated da62bcb, checks green",
+      "branch": "drift/classifier-env",
+      "worktree": "C:/Users/jrylk/Projects/pilot-drift-classifier-env"
+    },
+    {
+      "slice": "drift merge hazzardrust-pilot 0146ce6",
+      "state": "integrated ae7e0ab",
+      "branch": "drift2/classifier-env",
+      "worktree": "C:/Users/jrylk/Projects/pilot-drift2-classifier-env"
+    },
+    {
+      "slice": "feat/classifier-env",
+      "state": "checks green at ae7e0ab"
     }
   ],
   "humanSteps": [
@@ -32,8 +50,8 @@
       "text": "Your own ~/.claude/settings.json autoMode block has no \"$defaults\" and says \"no identifiable trusted repo\": run `claude auto-mode reset`, or rerun the setup prompt inside a repo. Pilot never writes that file."
     }
   ],
-  "next": "S1 integrating; then integrate S3 737adc0; then S2 from feat tip",
-  "updatedAt": "2026-11-24T19:15:53.582Z",
+  "next": "wait checks green on ae7e0ab; integrate S3 5e7bda6 (typescript APPROVE, security APPROVE, B1-B5), then S2 afb1c66; fundamentalist; QA",
+  "updatedAt": "2026-11-27T10:41:27.943Z",
   "friction": [
     {
       "agent": "architect",
@@ -80,6 +98,62 @@
       "agent": "pilot-implementer",
       "what": "node --test prints 'ℹ pass N' not TAP '# pass N', so a count grep came back empty and the run was repeated",
       "evidence": "S3 gate count rerun",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "node_modules absent in a fresh slice worktree; npm ci needed before the first test run",
+      "evidence": "S2 worktree, npm ci exit 0",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "full gate takes over 3 minutes, run in background; the 800 line bar lives in deck/test/facades.test.mjs and scripts/test/line-bar.test.mjs, an extra probe to find which applies",
+      "evidence": "drift merge da62bcb gate",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate runs over 3 minutes, run twice in background; Monitor tool unavailable to implementer",
+      "evidence": "drift2 gate runs 1 and 2",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "facades bar counts split('\\n').length = wc -l + 1, so the brief's line arithmetic was one short",
+      "evidence": "deck/test/facades.test.mjs:58; S3 refresh",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a new deck module needs a deck/README.md row; no slice file says so, found by a red after a 7-minute gate",
+      "evidence": "scripts/test/deck-readme.test.mjs red on 4f19981",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "plain git push printed Everything up-to-date while remote lagged; explicit refspec needed",
+      "evidence": "slice/classifier-env-s3 5e7bda6 push",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "two landings in one main session (prebuilt-rune, prune-worktrees): each a lander spawn, a Findings reply, leftover clean trees prune did not name (2, then 6) checked and removed by main, and a drift merge + replan of the live ticket",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "deck echoes of main's own replans and 20-min defaults arrive as REPLY and 'landing ended short' notices; each cost a read to see from: deck, and one pilot wait restart",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "implementer and QA reports of a co-pilot's children were delivered to main, not the co-pilot; main forwarded each",
+      "size": 2
+    },
+    {
+      "kind": "drain",
+      "what": "open ticket proposal itm_21df4aebd2b9 (prune --run misses fix/*, recut and fund trees): only the user's own Yes queues it, a deck default does not; leftover trees pilot-slice-prune-worktrees-s2 (uncommitted edits) and -s9 (one unmerged docs commit c4e5f1eb) are the user's to decide",
       "size": 1
     }
   ]
