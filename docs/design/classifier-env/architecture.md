@@ -23,7 +23,7 @@ itm_1d8272a673d9.*
 | 3 | The block loosens no rule: `autoMode` carries `environment` only; every pilot line that speaks of deleting or removing names git-ignored output and a pilot worktree. | key-set test; prose lint over `CLASSIFIER_ENVIRONMENT` | key set exactly `["environment"]`; 0 lint failures |
 | 4 | The user's `~/.claude/settings.json` is never written. | test: scratch home seeded with a user file carrying its own `autoMode`, a Start | 0 bytes changed after 1 Start |
 | 5 | With `PILOT_CLASSIFIER_ENV=off` in its environment, a Start writes no `autoMode` key and the rest of the file unchanged. | test with the variable set and unset | zero `autoMode` keys; all other keys deep-equal (2 runs) |
-| 6 | In a pilot session the block is in effect: `claude --settings <start-settings.json> auto-mode config` lists the pilot lines after the user's lines and the defaults; `claude auto-mode critique` is read once on them (practitioner: Claude Code's own critique tool as the outside reader). | run in S1 and once in QA, output in the PR | config `environment` length = user lines + 21 defaults + pilot lines; critique flags 0 pilot lines as ambiguous or over-broad |
+| 6 | In a pilot session the block is in effect: `claude --settings <start-settings.json> auto-mode config` lists the pilot lines after the user's lines and the defaults; `claude auto-mode critique` is read once on them (practitioner: Claude Code's own critique tool as the outside reader). | run in S1 and once in QA, output in the PR | config `environment` length = user lines + 21 defaults + pilot lines; critique flags 0 pilot lines as ambiguous or over-broad; *amended by the user on itm_7f600eaaf111: the named remarks are answered (S4)* |
 | 7 | `docs/OPERATING.md` says what the block adds, that it loosens no rule, how to see it, and how to turn it off. | doc lint over the section | all 3 names present: `PILOT_CLASSIFIER_ENV`, `auto-mode config`, `"$defaults"` |
 | 8 | *Assumed, itm_1d8272a673d9.* `pilot doctor` fails a row when the user-level `autoMode` sets a list without `"$defaults"`, and names `claude auto-mode reset`; it reads that file only. | test per state: absent, with, without | 3 verdicts: pass, pass, fail; settings bytes unchanged |
 
@@ -138,6 +138,7 @@ Width 2; longest stem 2
 | S1 | Walking skeleton: a Start writes the pilot lines into start-settings.json, with an off switch | 1, 2, 3, 4, 5, 6 | `deck/run-env.mjs`, `deck/session.mjs`, `deck/test/classifier-env.test.mjs` (new), `docs/adr/NNNN-classifier-env.md` (new) | – | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S1](slices/S1.md) |
 | S2 | OPERATING.md says what the block adds and how to turn it off | 7 | `docs/OPERATING.md`, `scripts/test/operating-classifier.test.mjs` (new) | S1 (`CLASSIFIER_SWITCH`) | `pilot:typescript-reviewer` | [S2](slices/S2.md) |
 | S3 | `pilot doctor` fails when the user's autoMode drops the defaults | 8 | `deck/doctor.mjs`, `deck/test/doctor-automode.test.mjs` (new) | – | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
+| S4 | *Added.* Reword the two pilot lines so the critique's named remarks are answered | 6 | `deck/run-env.mjs` (`CLASSIFIER_ENVIRONMENT`) | S1, S2 | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S4](slices/S4.md) |
 
 ## 9. Acceptance evidence
 
