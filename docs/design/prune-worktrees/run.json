@@ -126,7 +126,7 @@
     },
     {
       "slice": "Fix round",
-      "state": "failed gate: spawns 14252 (git 13103) over 14249 / 13100 on the integrate merge, 5443 pass 0 fail; temp ceilings to the merge's count, then integrate again",
+      "state": "integrated at 90e14461; checks green at eb120a0 (after drift merge 2)",
       "after": [
         "S10 Prune starts less git (added)"
       ],
@@ -134,17 +134,28 @@
     },
     {
       "slice": "S11 One porcelain parser and one path-equality export (added)",
-      "state": "planned: after the fix round, before QA; removal only",
+      "state": "pushed 1505446; review approve; integrating",
       "after": [
         "Fix round"
-      ]
+      ],
+      "branch": "slice/prune-worktrees-s11",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s11"
+    },
+    {
+      "slice": "Drift merge 2",
+      "state": "on feat at 3ba6a2d; checks green at eb120a0",
+      "after": [
+        "Fix round"
+      ],
+      "branch": "fix/prune-worktrees-drift2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-prune-worktrees-drift2"
     }
   ],
   "findings": [
     "kept: F1 defect — integrate.mjs:645 removeTree(cwd, dir) uses default holder () => null (worktree-remove.mjs:155), so integrate removes a tree a live process holds, against L4; pilot checked both lines",
     "kept: SEC1 defect — worktrees.mjs prune calls removeTree with no holder, so removeTree's own re-check defaults to () => null (security-reviewer LOW); pass holder through, same family as F1, +1",
     "kept: F3 defect — record rule has two homes that disagree (RECORD_CODES vs dirtOf); classify uses status + isRecord, delete the mirror set and featRecords; not checked by pilot",
-    "kept: F2 simplify — three porcelain -z parsers and three Windows path-equality functions become one export each, about -35; over the fix round's limit, so built as added slice S11 (main, option A)",
+    "kept: F2 simplify — built as added slice S11 at 1505446: two porcelain parsers (not three) and the path helpers to one home, net -13; same/inside exported with no importer, left as a nit",
     "kept: F4 simplify — prune's remove/branch callbacks replaced by { branchFlag } and a returned err, about -10",
     "kept: F5 simplify — worktrees.mjs:351 remove option used by one test only; delete option and spy, keep on-disk asserts",
     "dropped: F6 simplify — renaming the flag across agent prose costs more than the glossary collision",
@@ -153,30 +164,9 @@
     "dropped: S10-dual-moved simplify — it is spec 13's spawn budget while the ceiling question itm_1b18772998c1 is open",
     "dropped: A4/S5 simplify — user kept A4 on itm_421941fbcb07"
   ],
-  "next": "Lane held; co-pilot aad052b77a9abad54 (resume by SendMessage; hook ends its turns). Fix round fix/prune-worktrees e65c63d9+constants commit (a0b40edcff62fab16) integrating; then merge origin/hazzardrust-pilot 71991cb (drift; main runs deck_ticket replan on its sha), S11 (F2), final constants (exact, or +25 if itm_cc4171bdb60c says), QA fresh, gate2 naming share ~630.",
-  "updatedAt": "2026-11-27T06:44:08.478Z",
+  "next": "integrate S11, pilot checks; base check; QA",
+  "updatedAt": "2026-11-27T08:15:40.145Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "worktree add plus 2832-file checkout ran long enough to be moved to the background",
-      "evidence": "macOS fix report, friction row",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "a red feature tip has no path for its own CI fix: pilot integrate refuses any branch on red, auto mode refuses the hand fast-forward",
-      "evidence": "scripts/integrate.mjs:445; itm_eff02e94eb77"
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "forced hand-back twice with the S5 implementer live",
-      "evidence": "handback-send-enforce"
-    },
-    {
-      "kind": "drain",
-      "what": "45-item brief deck read to find one closed gate2 id",
-      "size": 4000
-    },
     {
       "kind": "drain",
       "what": "duplicate Blocked question posted by pilot beside the deck's own, then closed",
@@ -374,6 +364,30 @@
       "agent": "pilot-implementer",
       "what": "a test file run alone fails every integrate test with 'no pilot branch name' unless PILOT_BRANCH is exported; cost a false red",
       "evidence": "integrate-prune.test.mjs 0 pass / 10 fail until PILOT_BRANCH=pilot was set"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "base's fixture refactor (test-body-git S13) and the fix round's two tests collide silently: scratch add() throws on names outside the seeded MERGED/UNMERGED",
+      "evidence": "merge-tree showed one conflict (gate.mjs); merged gate 2 reds at worktrees.test.mjs:109,:124 'scratch: gone is not merged in origin'",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the fixture refactor hid a second assumption in the gone test: its tracked upstream, which the new add() does not create",
+      "evidence": "worktrees.test.mjs:113 fatal: branch 'gone' has no upstream information",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the shared MERGED list orders merge commits on main, so appending a name shifts every HEAD~n that assumes it is last",
+      "evidence": "worktrees.test.mjs:117 0 !== 1 after MERGED gained raced last",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S11 worktree had no node_modules, so the first gate run exited 1",
+      "evidence": "implementer report: first gate exit 1, rerun after install",
+      "size": 15
     }
   ]
 }
