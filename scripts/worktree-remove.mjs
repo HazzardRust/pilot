@@ -10,8 +10,8 @@
  * the remove step, or git refused it, or a link would not unlink). Nothing in the tree is changed
  * before every other check has passed. The deck's `docs/design/<slug>/run.json` is never dirt (L3): it is put back
  * before the removal. Links and junctions among the tree's untracked and ignored entries are unlinked
- * first and never followed (L2, F5). `--force` is passed only when `landed`, after the tracked status
- * is read clean again (L6). A local branch goes with the tree, its tip being a safe head (L5); remote
+ * first and never followed (L2, F5). `--force` is passed only when `landed`, after the tracked status,
+ * read once the safe-head walk is done, is clean (L6). A local branch goes with the tree, its tip being a safe head (L5); remote
  * branches are never touched.
  */
 
@@ -81,14 +81,22 @@ function status(dir, ...flags) {
 const RECORD_CODES = new Set([' M', 'M ', 'MM', ' A', 'A ', 'AM', '??']);
 const isRecord = ({ code, file }) => RECORD.test(file) && RECORD_CODES.has(code);
 
+/**
+ * `sha`'s parents and changed files in one git call (prune-worktrees S10): `<parents>\0\n<file>\0…`.
+ * A merge, the root, an empty diff and a failure print no file, and answer no files.
+ */
+export function commitStep(repo, sha) {
+  const step = git(repo, 'diff-tree', '-r', '-z', '--name-only', '--format=%P', sha);
+  if (!step.ok) return { parents: [], files: [] };
+  const [parents = '', ...files] = step.raw.split('\0');
+  return { parents: parents.split(' ').filter(Boolean), files: files.map((file, i) => (i ? file : file.replace(/^\n/, ''))).filter(Boolean) };
+}
+
 /** `sha` less its trailing commits that each change only run records; a merge or the root ends the walk. */
 function withoutRecordTail(repo, sha) {
   for (let hops = 0; hops < 100; hops += 1) {
-    const [, ...parents] = git(repo, 'rev-list', '--parents', '-n', '1', sha).out.split(' ');
-    if (parents.length !== 1) return sha;
-    const files = git(repo, 'diff-tree', '--no-commit-id', '--name-only', '-r', '-z', sha);
-    const changed = files.out.split('\0').filter(Boolean);
-    if (!files.ok || !changed.length || !changed.every((file) => RECORD.test(file))) return sha;
+    const { parents, files } = commitStep(repo, sha);
+    if (parents.length !== 1 || !files.length || !files.every((file) => RECORD.test(file))) return sha;
     sha = parents[0];
   }
   return sha;
@@ -106,12 +114,16 @@ function pilotName(repo) {
 /** Whether `head` is a safe head: reachable from a remote-tracking ref, the local pilot branch (or the legacy one) or a local `feat/*` other than `own`. */
 function safeHead(repo, head, own) {
   const pilots = [...new Set([pilotName(repo), LEGACY_PILOT])].map((name) => `refs/heads/${name}`);
-  const refs = git(repo, 'for-each-ref', '--contains', withoutRecordTail(repo, head), '--format=%(refname)',
-    'refs/remotes', ...pilots, 'refs/heads/feat');
-  if (!refs.ok) return false;
   // A pattern also matches refs under it (`refs/heads/pilot/x`): a pilot branch counts only as itself.
   const safe = (ref) => ref.startsWith('refs/remotes/') || ref.startsWith('refs/heads/feat/') || pilots.includes(ref);
-  return refs.out.split('\n').some((ref) => ref && ref !== `refs/heads/${own}` && safe(ref));
+  const contained = (sha) => {
+    const refs = git(repo, 'for-each-ref', '--contains', sha, '--format=%(refname)', 'refs/remotes', ...pilots, 'refs/heads/feat');
+    return refs.ok && refs.out.split('\n').some((ref) => ref && ref !== `refs/heads/${own}` && safe(ref));
+  };
+  // A ref that holds the head holds its record-free base too, so the tail is walked only when the head is not held (S10).
+  if (contained(head)) return true;
+  const work = withoutRecordTail(repo, head);
+  return work !== head && contained(work);
 }
 
 /**
@@ -154,14 +166,19 @@ export function removeTree(repo, dir, { landed = false, holder = () => null, rem
   const held = holder(tree.path);
   if (held !== null && held !== undefined) return { kept: `live ${held}` };
 
-  const entries = status(tree.path, `--untracked-files=${landed ? 'no' : 'all'}`);
-  if (entries === null || entries.some((entry) => !isRecord(entry))) return { kept: 'dirty' };
-  if (!tree.head || !safeHead(repo, tree.head, tree.branch)) return { kept: 'unpushed' };
-
+  const dirty = (read) => read === null || read.some((entry) => !isRecord(entry));
+  let entries;
   if (landed) {
-    // --force takes tracked changes too, so the tracked status is read again right before it.
-    const tracked = status(tree.path, '--untracked-files=no');
-    if (tracked === null || tracked.some((entry) => !isRecord(entry))) return { kept: 'dirty' };
+    // --force takes tracked changes too, so the one tracked status is read after the safe-head walk, right
+    // before it (S10: the walk used to sit between two equal reads); dirt still outranks unpushed.
+    const safe = Boolean(tree.head) && safeHead(repo, tree.head, tree.branch);
+    entries = status(tree.path, '--untracked-files=no');
+    if (dirty(entries)) return { kept: 'dirty' };
+    if (!safe) return { kept: 'unpushed' };
+  } else {
+    entries = status(tree.path, '--untracked-files=all');
+    if (dirty(entries)) return { kept: 'dirty' };
+    if (!tree.head || !safeHead(repo, tree.head, tree.branch)) return { kept: 'unpushed' };
   }
   const loose = status(tree.path, '--ignored', '--untracked-files=normal');
   if (loose === null) return { kept: 'leftover' };
