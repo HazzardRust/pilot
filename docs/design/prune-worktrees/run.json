@@ -48,7 +48,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed f04cded (on 9dbfd75, clean); gate 5461/0 exit 0, spawns 14289; ts + security APPROVE (e0e514e) carry",
+      "state": "integrated at 0061fc1; checks green",
       "after": [
         "S2"
       ],
@@ -111,7 +111,7 @@
     },
     {
       "slice": "S10 Prune starts less git (added)",
-      "state": "implementing (itm_6eeb81c29d9b default a)",
+      "state": "pushed e351a75 (on 0061fc1); gate 5470/0 exit 0; spawns 14166/13018; temp ceilings 14175/13024; ts + security approve",
       "after": [
         "S8"
       ],
@@ -119,14 +119,9 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s10"
     }
   ],
-  "next": "integrating S6 f04cded under lock; then checks; S10 live; integrate S10; fundamentalist + QA.",
-  "updatedAt": "2026-11-27T02:01:07.055Z",
+  "next": "integrating S10 e351a75 under lock; then checks; fundamentalist + QA on final diff.",
+  "updatedAt": "2026-11-27T02:23:54.213Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "three signed landings stopped red on the same 5 s git timeout in gate1 lineage tests (deck/lineage.mjs:17); each needed a log read and a deck reply; one 30-min land timeout undiagnosed (possibly the 2 machine-wide gate slots)",
-      "size": 20
-    },
     {
       "kind": "drain",
       "what": "pilot wait restarted about 14 times; every reply exit read; several replies arrived as hook notices mid-call and were answered twice over",
@@ -337,6 +332,12 @@
       "what": "S9: context summary came back empty, work re-derived; no documented per-file spawn counter and integrate-prune fails alone without PILOT_BRANCH",
       "evidence": "S9 report c4e5f1e; pw-s9-count.sh",
       "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S10: count-spawns.mjs records file and kind but not git arguments; a separate tracer was needed to find hot call sites",
+      "evidence": "S10 report; scratchpad s10-trace.mjs",
+      "size": 1
     }
   ]
 }
