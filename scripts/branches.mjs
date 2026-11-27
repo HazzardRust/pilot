@@ -17,8 +17,7 @@ import { hostFor } from '../deck/host.mjs';
 import { tips } from './git-view.mjs';
 import { firstLine, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRemote } from './remotes.mjs';
-import { knownRuns } from './run-names.mjs';
-import { isRunBranch } from './worktrees.mjs';
+import { knownRuns, runOwns } from './run-names.mjs';
 
 /** A run branch name: a run prefix, then plain `/`-separated segments; no `..`, no option. */
 const DELETABLE = /^(slice|fix|qa|design|feat)\/(?!.*\.\.)(?!.*\/\/)[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*$/i;
@@ -181,8 +180,9 @@ function whyKept({ git, pr, branch, tip, into, wait, refused }) {
 const USAGE = 'usage: pilot branches prune --slug <slug> [--dry-run]\n';
 
 /**
- * `pilot branches prune --slug <slug> [--dry-run]`: the run `<slug>`'s branches (`isRunBranch`)
- * on origin and the run remote through `deleteMerged`, never another run's, a line per branch
+ * `pilot branches prune --slug <slug> [--dry-run]`: the branches run `<slug>` owns (`runOwns`, the
+ * landing's rule, remote-run-branches L7) on origin and the run remote through `deleteMerged`, never
+ * a longer known run's, a line per branch
  * and a count. Exit 0 done, 1 failed, 2 a usage error, a missing `--slug` included.
  */
 export function main(argv, inject = {}) {
@@ -200,7 +200,7 @@ export function main(argv, inject = {}) {
   const said = (kept) => kept.map(({ branch, why }) => `kept ${branch}: ${why}`);
   try {
     const host = 'host' in inject ? inject.host : hostFor(cwd, { git }); // a bad pilot.host is NOT pruned, below
-    const { deleted, kept } = deleteMerged({ git, host, select: (name) => isRunBranch(name, slug), dryRun });
+    const { deleted, kept } = deleteMerged({ git, host, select: (name, known) => runOwns(name, slug, known), dryRun });
     const lines = [...deleted.map((branch) => `${dryRun ? 'would delete' : 'deleted'} ${branch}`), ...said(kept)];
     const count = `${dryRun ? 'dry run: would delete' : 'deleted'} ${deleted.length}, kept ${kept.length}${dryRun ? '; nothing deleted' : ''}`;
     write(`${[...lines, count].join('\n')}\n`);

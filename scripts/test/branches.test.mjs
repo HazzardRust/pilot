@@ -99,10 +99,18 @@ test('a merged review deletes, an open one keeps', (t) => {
   assert.doesNotMatch(left, /slice\/x-s1/);
 });
 
+/**
+ * Origin at `none`: main merges feat/x, fix/x-drift and fix/x-y-drift, and the longer run x-y is known
+ * by its feat/x-y; slice/x-s1 is cut before and never merged.
+ */
+const NONE = [
+  MAIN, cut('slice/x-s1'), cut('feat/x'), merge('feat/x'), cut('feat/x-y'),
+  cut('fix/x-drift'), merge('fix/x-drift'), cut('fix/x-y-drift'), merge('fix/x-y-drift'),
+];
+const atNone = (t) => scratchRepos(t, 'none', NONE, { config: { 'pilot.host': 'none' } });
+
 test('none judges by ancestry', (t) => {
-  // Main merges feat/x, so it is ahead of it.
-  const history = [MAIN, cut('slice/x-s1'), cut('feat/x'), merge('feat/x')];
-  const { git, work, origin, heads, sha } = scratchRepos(t, 'none', history, { config: { 'pilot.host': 'none' } });
+  const { git, work, origin, heads, sha } = atNone(t);
   const late = sha['slice/x-s1'];
   const host = hostFor(work);
   assert.equal(host, null, 'no host, so no host call, at none');
@@ -199,6 +207,17 @@ test("prune needs --slug, and leaves another run's fresh branch alone", (t) => {
   assert.equal(prune(work, host).code, 2, 'no --slug is a usage error');
   assert.deepEqual(prune(work, host, '--slug', 'x').lines, ['deleted 0, kept 0']);
   assert.equal(heads(origin), before, 'slice/y-s1 survives, though its tip is in origin/main');
+});
+
+test("the sweep takes the run's leftovers and no longer run's", (t) => {
+  const { work, origin, heads } = atNone(t);
+  const { code, lines } = prune(work, null, '--slug', 'x');
+  assert.equal(code, 0);
+  assert.deepEqual(lines, ['deleted feat/x', 'deleted fix/x-drift', 'kept slice/x-s1: not merged into origin/main', 'deleted 2, kept 1']);
+  const left = heads(origin);
+  assert.doesNotMatch(left, /^fix\/x-drift /m);
+  assert.match(left, /^fix\/x-y-drift /m, "run x-y's, though merged and named by x");
+  assert.match(left, /^feat\/x-y /m);
 });
 
 test('a branch that moves after it is judged is not deleted', (t) => {
