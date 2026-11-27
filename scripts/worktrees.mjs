@@ -589,7 +589,7 @@ export function main(argv, { out = process.stdout, err = process.stderr, read = 
     const fetched = sweep || run !== undefined;
     const { removed, kept, failed } = prune(repo, base, { dryRun, run, merged, landed, holder: holderFrom(read), fetched, git: view });
     for (const p of removed) out.write(`${dryRun ? 'would remove' : 'removed'}  ${p}\n`);
-    for (const { path, state } of kept) out.write(`kept ${state.padEnd(12)}  ${path}\n`);
+    for (const { path, state } of kept) out.write(`${keptLine(path, state)}\n`);
     for (const { path, reason } of failed) err.write(`NOT removed ${path}: ${reason}\n`);
     return failed.length ? 1 : 0;
   } catch (error) {

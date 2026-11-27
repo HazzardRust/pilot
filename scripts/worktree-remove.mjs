@@ -8,7 +8,7 @@
  * (its HEAD, less a run.json-only tail, is not reachable from a remote-tracking ref, the local pilot
  * branch or another local `feat/*`), and `leftover` (the dir is missing before, or still on disk after,
  * the remove step, or git refused it, or a link would not unlink). Nothing in the tree is changed
- * before every other check has passed. The deck's `docs/design/<slug>/run.json` is never dirt (L3): it is put back
+ * before every guard but the remove step's own has passed. The deck's `docs/design/<slug>/run.json` is never dirt (L3): it is put back
  * before the removal. Links and junctions among the tree's untracked and ignored entries are unlinked
  * first and never followed (L2, F5). `--force` is passed only when `landed`, after the tracked status,
  * read once the safe-head walk is done, is clean (L6). A local branch goes with the tree, its tip being a safe head (L5); remote
