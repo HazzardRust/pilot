@@ -88,6 +88,7 @@ branch-only selection.
 - **A3** *assumed, on the deck (itm_a25add987239)*: leftover remote `fix/<slug>-*` branches (land.mjs `deleteRunBranches`)
   are out of scope here and go to a separate ticket. Trade: origin keeps `fix/prune-worktrees-drift*` until then. Rejected:
   folding it in, which moves pilot-fork L4/L5 and touches the shared remote.
+  Answer (user, itm_a25add987239): "Separate ticket (default)".
 - **A4** *assumed, on the deck (itm_f4215582c876)*: QA runs prune for real only in a scratch git repo fixture, and
   read-only (`runTrees`, never `prune`) over this repo's registered trees. Trade: no real removal on the shared checkout is
   watched. Rejected: a live prune on the shared checkout, which could remove another session's tree.
