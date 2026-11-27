@@ -158,6 +158,14 @@ test('a dir left on disk after the remove step is leftover, and its branch stays
   assert.equal(hasBranch(work, 'stuck'), true);
 });
 
+test("a remove step git refused is leftover with git's own words", (t) => {
+  const { work, add } = scratch(t);
+  const tree = add('refused');
+  const remove = () => ({ ok: false, err: 'fatal: cannot remove' });
+  assert.deepEqual(removeTree(work, tree, { remove }), { kept: 'leftover', err: 'fatal: cannot remove' });
+  assert.equal(fs.existsSync(tree), true);
+});
+
 test('--force only on a landed run: untracked files keep a tree mid-run, not once landed', (t) => {
   const { work, add } = scratch(t);
   const tree = add('scratchy');
