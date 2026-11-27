@@ -15,7 +15,7 @@
     },
     {
       "slice": "S2 OPERATING.md section and lint",
-      "state": "pushed afb1c66",
+      "state": "integrating afb1c66",
       "after": [
         "S1 Start writes the classifier block"
       ],
@@ -24,7 +24,7 @@
     },
     {
       "slice": "S3 doctor autoMode row",
-      "state": "pushed 5e7bda6",
+      "state": "integrated",
       "branch": "slice/classifier-env-s3",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-classifier-env-s3"
     },
@@ -42,7 +42,7 @@
     },
     {
       "slice": "feat/classifier-env",
-      "state": "checks green at ae7e0ab"
+      "state": "checks green at cecea5b"
     }
   ],
   "humanSteps": [
@@ -50,8 +50,8 @@
       "text": "Your own ~/.claude/settings.json autoMode block has no \"$defaults\" and says \"no identifiable trusted repo\": run `claude auto-mode reset`, or rerun the setup prompt inside a repo. Pilot never writes that file."
     }
   ],
-  "next": "wait checks green on ae7e0ab; integrate S3 5e7bda6 (typescript APPROVE, security APPROVE, B1-B5), then S2 afb1c66; fundamentalist; QA",
-  "updatedAt": "2026-11-27T10:41:27.943Z",
+  "next": "S2 integrate running; then checks, base check, fundamentalist, QA",
+  "updatedAt": "2026-11-27T11:04:31.123Z",
   "friction": [
     {
       "agent": "architect",
@@ -155,6 +155,12 @@
       "kind": "drain",
       "what": "open ticket proposal itm_21df4aebd2b9 (prune --run misses fix/*, recut and fund trees): only the user's own Yes queues it, a deck default does not; leftover trees pilot-slice-prune-worktrees-s2 (uncommitted edits) and -s9 (one unmerged docs commit c4e5f1eb) are the user's to decide",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a context reset lost the S3 and S2 implementer reports, so their evidence trailers were re-run by the co-pilot instead of copied verbatim",
+      "evidence": "S3 integrate cecea5b trailers; agent ids in the tasks dir not resumable",
+      "size": 2
     }
   ]
 }
