@@ -20,7 +20,6 @@ import { tempDeck, withTicket } from '../testUtils.mjs';
 
 const SLUG = 'x';
 const MAIN = 'Merge #901 with a merge commit, when you want main to have it.';
-const PRUNE = "Prune other runs' branches: pilot branches prune --dry-run first.";
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
 /** A repository with one run worktree (`qa/x`) on disk, at `<root>/<dir>`. */
@@ -60,11 +59,12 @@ test('a landing posts one steps thread in order', (t) => {
   const threads = ofKind(KIND_STEPS, ticket);
   assert.equal(threads.length, 1, 'one steps thread');
   const texts = threads[0].steps.map((step) => step.text);
-  assert.equal(texts.length, 4);
-  assert.deepEqual([texts[0], texts[1], texts[3]], [MAIN, 'Set STRIPE_KEY in Vercel', PRUNE]);
-  const removed = texts[2].match(/^Remove (.+) when you are done with it\.$/);
-  assert.ok(removed, texts[2]);
-  assert.equal(path.resolve(removed[1]), path.resolve(qa), 'the worktree left');
+  assert.deepEqual(texts, [MAIN, 'Set STRIPE_KEY in Vercel'], 'the merge and the recorded step only');
+  const [report] = ofKind(KIND_REPORT, ticket);
+  const left = report.body.slice(report.body.indexOf('Worktrees left:')).split('\n\n')[0];
+  assert.ok(left.includes(path.basename(qa)), `the tree left stays in the report: ${left}`);
+  assert.ok(!texts.some((text) => text.includes(path.basename(qa))), 'and out of the steps');
+  assert.ok(!texts.some((text) => /^Remove |branches prune/.test(text)), 'no removal and no branch prune step');
   assert.equal(stateOf(listItems().find((item) => item.id === ticket)), 'green', 'the thread holds the ticket open');
 });
 
@@ -102,36 +102,25 @@ test('a second report is refused', (t) => {
 
 test('a full record still fits one thread', () => {
   const record = { feature: SLUG, slug: SLUG, slices: [], humanSteps: Array.from({ length: 20 }, (_, i) => ({ text: `step ${i + 1}` })) };
-  const steps = stepsOf(record, { landing: { line: 'main gets pilot: #901' } }, ['C:/w/a', 'C:/w/b']).map((step) => step.text);
+  const steps = stepsOf(record, { landing: { line: 'main gets pilot: #901' } }).map((step) => step.text);
 
   assert.equal(steps.length, 20, "postSteps' bound");
-  assert.deepEqual([steps[0], steps.at(-1)], [MAIN, PRUNE]);
-  assert.equal(steps[16], 'step 16');
-  assert.equal(steps[17], "4 more steps are in the run record's humanSteps.");
-  assert.equal(steps[18], 'Remove the 2 worktrees the closing report lists when you are done with them.');
+  assert.equal(steps[0], MAIN);
+  assert.equal(steps[18], 'step 18');
+  assert.equal(steps[19], "2 more steps are in the run record's humanSteps.");
 });
 
 test('exactly 20 steps fold nothing', () => {
-  const record = { slug: SLUG, humanSteps: Array.from({ length: 17 }, (_, i) => ({ text: `step ${i + 1}` })) };
-  const steps = stepsOf(record, { landing: { line: 'main gets pilot: #901' } }, ['C:/w/a']).map((step) => step.text);
+  const record = { slug: SLUG, humanSteps: Array.from({ length: 19 }, (_, i) => ({ text: `step ${i + 1}` })) };
+  const steps = stepsOf(record, { landing: { line: 'main gets pilot: #901' } }).map((step) => step.text);
 
   assert.equal(steps.length, 20);
-  assert.equal(steps[17], 'step 17');
-  assert.equal(steps[18], 'Remove C:/w/a when you are done with it.');
-});
-
-test('past 20 with one Remove keeps it and folds the recorded steps', () => {
-  const record = { slug: SLUG, humanSteps: Array.from({ length: 18 }, (_, i) => ({ text: `step ${i + 1}` })) };
-  const steps = stepsOf(record, { landing: { line: 'main gets pilot: #901' } }, ['C:/w/a']).map((step) => step.text);
-
-  assert.equal(steps.length, 20);
-  assert.equal(steps[16], 'step 16');
-  assert.equal(steps[17], "2 more steps are in the run record's humanSteps.");
-  assert.equal(steps[18], 'Remove C:/w/a when you are done with it.');
+  assert.equal(steps[19], 'step 19');
 });
 
 test('a step past 300 characters is clipped to 300', () => {
-  const steps = stepsOf({ slug: SLUG }, { landing: { line: 'main gets pilot: #901' } }, [`C:/${'a'.repeat(400)}`]).map((step) => step.text);
+  const record = { slug: SLUG, humanSteps: [{ text: `C:/${'a'.repeat(400)}` }] };
+  const steps = stepsOf(record, { landing: { line: 'main gets pilot: #901' } }).map((step) => step.text);
 
   assert.equal(steps[1].length, 300);
   assert.equal(steps[1].at(-1), '…');
@@ -147,12 +136,12 @@ test('a worktree path shaped like a credential still lets the thread and the rep
   const [report] = ofKind(KIND_REPORT, ticket);
   assert.ok(thread && report, 'both posted');
   assert.ok(!JSON.stringify([thread, report]).includes(key), 'no credential stored');
-  assert.ok(thread.steps.some((step) => /^Remove a worktree the closing report lists/.test(step.text)), 'a neutral pointer');
+  assert.ok(thread.steps.every((step) => !/^Remove /.test(step.text)), 'no removal step');
 });
 
 test('every main-line shape still yields its step', () => {
   const record = { feature: SLUG, slug: SLUG, slices: [] };
-  const firstStep = (main) => stepsOf(record, { pr: '#590', landing: { state: 'landed', sha: '1a2b3c4', line: `landed feat/x on pilot at 1a2b3c4\n${main}` } }, [])[0].text;
+  const firstStep = (main) => stepsOf(record, { pr: '#590', landing: { state: 'landed', sha: '1a2b3c4', line: `landed feat/x on pilot at 1a2b3c4\n${main}` } })[0].text;
 
   assert.equal(firstStep('main gets pilot: #901 (opened)'), MAIN);
   assert.equal(firstStep('main gets pilot: merge fork-pilot into main by hand'), 'Merge fork-pilot into main by hand, with a merge commit.');

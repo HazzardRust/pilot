@@ -24,8 +24,11 @@ import { fileURLToPath } from 'node:url';
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
 import { MIN_MODS_VERSION, claudeVersion } from '../scripts/handoff.mjs';
+import { runRef, runRemote } from '../scripts/remotes.mjs';
+import { tagOf } from '../scripts/worktrees.mjs';
+import { norm as pathKey, parseWorktrees } from '../scripts/worktree-remove.mjs';
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
-import { LEGACY_PILOT, NO_NAME, namePilotBranch } from '../scripts/pilot-branch.mjs';
+import { LEGACY_PILOT, NO_NAME, firstLine, namePilotBranch, pilotBranch } from '../scripts/pilot-branch.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { powerRow, readPower } from './power.mjs';
@@ -142,7 +145,6 @@ export function projectsRoot(cwd = process.cwd()) {
 /** The plugin's own root, where its package.json and node_modules sit. */
 const PLUGIN_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DECK_DEP = '@modelcontextprotocol/sdk';
-const CLIS = ['git', 'claude'];
 
 /**
  * The host row: `pilot.host`'s forge and, at github or gitlab, its CLI on PATH and signed in. At `none` no
@@ -479,6 +481,150 @@ function defaultOnPath(cmd) {
   }
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** A tree with no commit for this long, and not in the pilot branch, is stale (prune-worktrees A5). */
+const STALE_MS = 14 * DAY_MS;
+/** Under this share of the volume free, the row fails (A5); a stale tree alone never does. */
+const LOW_FREE = 0.1;
+/** How long the stale trees' build-output walk may run before its figure is a floor (A5). */
+const SIZE_BUDGET_MS = 10_000;
+/** The top-level dirs of a tree counted as its build output: what a build or an install writes. */
+const BUILD_OUTPUT = ['node_modules', 'dist', 'build', 'out', 'target', '.next', 'coverage', '.venv'];
+const gb = (bytes) => `${(bytes / 1024 ** 3).toFixed(1)} GB`;
+
+/**
+ * The bytes under `dir`'s build-output dirs, walked by `lstat` so a link or junction is never followed (a QA
+ * tree's `node_modules` may be a junction into another tree), stopping once `now()` passes `until`:
+ * `{ bytes, partial }`, `partial` when the walk stopped early. An entry that cannot be read is skipped.
+ */
+export function buildOutputSize(dir, { until, now = Date.now }) {
+  let bytes = 0;
+  const stack = BUILD_OUTPUT.map((name) => path.join(dir, name));
+  let seen = 0;
+  while (stack.length) {
+    if (++seen % 256 === 0 && now() > until) return { bytes, partial: true };
+    const at = stack.pop();
+    let stat;
+    try {
+      stat = fs.lstatSync(at);
+    } catch {
+      continue;
+    }
+    if (stat.isFile()) bytes += stat.size;
+    else if (stat.isDirectory()) {
+      try {
+        for (const name of fs.readdirSync(at)) stack.push(path.join(at, name));
+      } catch {
+        // An unreadable dir is not counted; the figure is a floor either way.
+      }
+    }
+  }
+  return { bytes, partial: false };
+}
+
+/** `git worktree list --porcelain -z` as `{ path, head, branch }` records; the first is the main checkout. */
+function listTrees(git) {
+  return parseWorktrees(git(['worktree', 'list', '--porcelain', '-z']));
+}
+
+/**
+ * The linked trees not in the pilot branch as last fetched (`runRef`, the name read where `pilot base` and land
+ * read it): every one of `trees` when that branch does not resolve here, since nothing of theirs has landed.
+ */
+function notInPilot(git, branch, trees) {
+  if (!trees.length) return new Set();
+  const upstream = runRef(runRemote(git), branch);
+  try {
+    git(['rev-parse', '-q', '--verify', `${upstream}^{commit}`]);
+  } catch (error) {
+    if (error.status === 1) return new Set(trees.map((tree) => tree.head));
+    throw error;
+  }
+  return new Set(git(['rev-list', ...new Set(trees.map((tree) => tree.head)), '--not', upstream]).split('\n').filter(Boolean));
+}
+
+/**
+ * The worktrees row (prune-worktrees spec 6; A5): how many linked trees `repo` has, how many are stale (no
+ * commit for 14 days and not in the pilot branch), untagged and detached (S2's `tagOf`), and the `<repo>-*`
+ * dirs beside the main checkout git does not list; the free space on the main checkout's volume (`statfs`); and
+ * the build output of the stale trees only, `sizeOf(dir, { until, now })` walking them until `budgetMs` has
+ * passed, the figure then a floor (`≥`). `fail` under 10% free, else `pass`; `cannot tell` when git or the
+ * volume cannot be read. `git` is `(args) => trimmed stdout` in `repo`, throwing with `status`.
+ */
+export function worktreesRow({ repo, git, statfs, now, sizeOf, budgetMs }) {
+  const name = 'worktrees';
+  let home;
+  let linked;
+  let stale;
+  let untagged;
+  // No name to read leaves only the stale count unknown, and only when a tree is old enough to need it; the free
+  // space is still read, so a full disk still fails (the pilot branch row says how to name it).
+  let branch = 'the pilot branch';
+  let noName = null;
+  try {
+    branch = pilotBranch(git);
+  } catch (error) {
+    noName = firstLine(error);
+  }
+  try {
+    [home, ...linked] = listTrees(git);
+    if (!home?.path) throw new Error(`git listed no worktree in ${repo}`);
+    const times = new Map(
+      linked.length
+        ? git(['show', '-s', '--format=%H %ct', ...new Set(linked.map((tree) => tree.head))]).split('\n').map((line) => {
+            const [sha, seconds] = line.split(' ');
+            return [sha, Number(seconds) * 1000];
+          })
+        : [],
+    );
+    const unread = linked.find((tree) => !Number.isFinite(times.get(tree.head)));
+    if (unread) throw new Error(`no commit time for ${unread.path}`);
+    const old = linked.filter((tree) => now() - times.get(tree.head) > STALE_MS);
+    const out = noName && old.length ? null : notInPilot(git, branch, old);
+    stale = out && old.filter((tree) => out.has(tree.head));
+    untagged = linked.filter((tree) => !tree.branch && tagOf(home.path, tree.path) === null).length;
+  } catch (error) {
+    return { name, verdict: 'cannot tell', detail: `git could not list the trees: ${firstLine(error)}` };
+  }
+  const listed = new Set([home, ...linked].map((tree) => pathKey(tree.path)));
+  const parent = path.dirname(home.path);
+  const prefix = `${path.basename(home.path)}-`;
+  let orphans = 0;
+  try {
+    for (const entry of fs.readdirSync(parent, { withFileTypes: true })) {
+      if (entry.isDirectory() && entry.name.startsWith(prefix) && !listed.has(pathKey(path.join(parent, entry.name)))) orphans += 1;
+    }
+  } catch (error) {
+    return { name, verdict: 'cannot tell', detail: `${parent} could not be read: ${error.code ?? error.message}` };
+  }
+  const until = now() + budgetMs;
+  let bytes = 0;
+  let partial = false;
+  for (const tree of stale ?? []) {
+    const walked = now() > until ? { bytes: 0, partial: true } : sizeOf(tree.path, { until, now });
+    bytes += walked.bytes;
+    partial = walked.partial;
+    if (partial) break;
+  }
+  const staleText = stale ? `${stale.length} stale (>14 d, not in ${branch})` : `? stale (>14 d; ${noName})`;
+  const census = `${linked.length} trees, ${staleText}, ${untagged} untagged detached, ${orphans} orphan dirs`;
+  const output = `stale build output ${partial ? '≥' : ''}${gb(bytes)}`;
+  let volume;
+  try {
+    volume = statfs(home.path);
+  } catch (error) {
+    return { name, verdict: 'cannot tell', detail: `${census}; free space unread (${error.code ?? error.message}); ${output}` };
+  }
+  const free = volume.bavail * volume.bsize;
+  const total = volume.blocks * volume.bsize;
+  if (!(total > 0) || !(free >= 0)) return { name, verdict: 'cannot tell', detail: `${census}; free space unread (the volume reports no size); ${output}` };
+  const detail = `${census}; ${gb(free)} free of ${gb(total)}; ${output}`;
+  if (free < total * LOW_FREE) {
+    return { name, verdict: 'fail', detail, steps: ['under 10% free: pilot worktrees prune --dry-run lists the trees that can go, then pilot worktrees prune'] };
+  }
+  return { name, verdict: stale ? 'pass' : 'cannot tell', detail };
+}
+
 /** The port, version and root rows, from one probe of the deck's url; nothing here stops or starts a deck. */
 function deckRows({ found, port }) {
   const portName = `port ${port}`;
@@ -547,11 +693,16 @@ export async function checkAll({
   readSettings = defaultReadSettings,
   env = process.env,
   cwd = process.cwd(),
-  git = leashedGit(cwd),
+  git: injected,
   hostFor = hostForDefault,
   readView = () => readOpenView(cwd, url),
+  statfs = fs.statfsSync,
+  sizeOf = buildOutputSize,
   findRune = defaultFindRune,
 } = {}) {
+  // The census has a leash of its own, so a slow remote read by the slugs row never leaves it no time.
+  const git = injected ?? leashedGit(cwd);
+  const censusGit = injected ?? leashedGit(cwd);
   const [found, view] = await Promise.all([probe(url), readView()]);
   let settings;
   try {
@@ -569,7 +720,9 @@ export async function checkAll({
     hostRow({ git, hostFor, onPath, cwd }),
     pilotBranchRow({ git, host: hostOrNull(hostFor, cwd, git) }),
     slugsRow({ view, git, hostFor, cwd }),
-    ...CLIS.map((cmd) => cliRow(cmd, onPath)),
+    cliRow('git', onPath),
+    worktreesRow({ repo: cwd, git: censusGit, statfs, now: Date.now, sizeOf, budgetMs: SIZE_BUDGET_MS }),
+    cliRow('claude', onPath),
     allowRow({ readSettings }),
     modsRow({ version: claudeVersion(run), settings, env }),
     ...deckRows({ found, port: new URL(url).port }),
