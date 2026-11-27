@@ -107,6 +107,16 @@ test("a branch git's -d refuses is named in failed with git's own words, its tre
   assert.ok(branches(work).includes('gone'), 'the refused branch stays');
 });
 
+test("a removal git refuses is failed with git's own words", (t) => {
+  const { work, add } = scratch(t);
+  const tree = add('raced', { merged: true });
+  // Locked by another session once removeTree has listed it (its holder is asked second): git refuses.
+  let asked = 0;
+  const result = prune(work, BASE, { holder: (dir) => (asked++ && git(work, 'worktree', 'lock', dir), null) });
+  assert.deepEqual([result.removed, result.failed.length, fs.existsSync(tree)], [[], 1, true]);
+  assert.match(result.failed[0].reason, /locked/);
+});
+
 test('keep wins over merged-clean', (t) => {
   const { work, add } = scratch(t);
   const clean = add('clean', { merged: true });
