@@ -32,6 +32,7 @@ import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-gene
 import { afterGreen } from './land-adr.mjs';
 import { releasePr } from './release.mjs';
 import { runRef, runRemote } from './remotes.mjs';
+import { runOwns } from './run-names.mjs';
 import { prBase } from './stack.mjs';
 import { isWorktreeOf, mergeIntoPilot, removeWorktree, resume } from './sync.mjs';
 import { holderFrom, prune, runRecord, WORKTREE_LIST } from './worktrees.mjs';
@@ -174,16 +175,15 @@ export function catchUp({ cwd, git, head }) {
 }
 
 /**
- * Once landed (pilot-fork spec 6, 8; L4, L5): deletes the run's merged `design/<slug>`,
- * `fix/<slug>-s<n>`, `slice/<slug>-s<n>` and `qa/<slug>` branches on the run remote through `deleteMerged`, merged
- * meaning into `feat/<slug>`. Only those exact names are selected, never `feat/<slug>` nor a
- * longer slug's `design/<slug>-y`; under `none` there is no remote to delete on (A2). Answers
+ * Once landed (pilot-fork spec 6, 8; L4, L5; remote-run-branches L2, L6): deletes every merged branch
+ * the run owns (`runOwns`) on the run remote through `deleteMerged`, merged meaning into `feat/<slug>`:
+ * `design|fix|qa/<slug>`, `fix|slice|qa/<slug>-<any>` and `design/<slug>-recut`, never `feat/<slug>` nor
+ * a branch a longer known run names; under `none` there is no remote to delete on (A2). Answers
  * `{ deleted, kept, deleteFailed? }`. Never throws: the feature is already landed.
  */
 function deleteRunBranches({ git, host, head }) {
   const slug = head.slice('feat/'.length);
-  const numbered = (prefix, name) => name.startsWith(prefix) && /^\d+$/.test(name.slice(prefix.length));
-  const ours = (name) => name === `design/${slug}` || name === `qa/${slug}` || numbered(`fix/${slug}-s`, name) || numbered(`slice/${slug}-s`, name);
+  const ours = (name, known) => name !== head && runOwns(name, slug, known);
   try {
     // The landing fetched origin itself (`catchUp`) and pushed since (A3): no second fetch.
     return deleteMerged({ git, host, select: ours, into: head, fetched: true });

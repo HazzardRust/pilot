@@ -17,6 +17,7 @@ import { hostFor } from '../deck/host.mjs';
 import { tips } from './git-view.mjs';
 import { firstLine, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRemote } from './remotes.mjs';
+import { knownRuns } from './run-names.mjs';
 import { isRunBranch } from './worktrees.mjs';
 
 /** A run branch name: a run prefix, then plain `/`-separated segments; no `..`, no option. */
@@ -61,15 +62,23 @@ export function tipsOn(git, remote) {
  */
 function fetchedTips(git, remote) {
   const prefix = `refs/remotes/${remote}/`;
-  let all;
+  const found = new Map();
+  for (const [ref, sha] of localTips(git)) if (ref.startsWith(prefix) && ref !== `${prefix}HEAD`) found.set(ref.slice(prefix.length), sha);
+  return found;
+}
+
+/** The local branches and remote-tracking refs as a ref → sha map, `tipOf`'s snapshot; throws when git cannot list them. */
+function localTips(git) {
   try {
-    all = tips(git);
+    return tips(git);
   } catch (err) {
     throw Object.assign(new Error(`git for-each-ref failed: ${firstLine(err)}`), { status: err.status });
   }
-  const found = new Map();
-  for (const [ref, sha] of all) if (ref.startsWith(prefix) && ref !== `${prefix}HEAD`) found.set(ref.slice(prefix.length), sha);
-  return found;
+}
+
+/** The branch names of the local refs: `refs/heads/<b>` and `refs/remotes/<remote>/<b>` both give `<b>`. */
+function localNames(git) {
+  return [...localTips(git).keys()].map((ref) => ref.replace(/^refs\/heads\/|^refs\/remotes\/[^/]+\//, ''));
 }
 
 /**
@@ -90,7 +99,7 @@ function prsByHead(host) {
 }
 
 /**
- * Deletes each branch `select` takes that is merged, on the remote it lives on (origin and
+ * Deletes each branch `select(branch, known)` takes that is merged, on the remote it lives on (origin and
  * the run remote, each listed here), with one `git push <remote> --delete` per remote, and
  * answers `{ deleted, kept }`: the names deleted, and `{ branch, why }` for each one kept.
  * `into` (default origin's default branch) is what a branch with no PR must be an ancestor
@@ -101,7 +110,8 @@ function prsByHead(host) {
  * With `fetched`, the caller fetched origin itself (a landing, A3): nothing is fetched, origin's
  * branches are read from its remote-tracking refs and any other remote's still from the remote.
  * The push's lease stays the arbiter: a branch moved or deleted since is refused there, never deleted,
- * and the refusal throws as any failed push does.
+ * and the refusal throws as any failed push does. `known` is `knownRuns` over every name read: each
+ * remote's list and the local refs (remote-run-branches L5).
  */
 export function deleteMerged({ git, host, select, into, wait = 0, dryRun = false, fetched = false }) {
   const runs = runRemote(git);
@@ -110,8 +120,11 @@ export function deleteMerged({ git, host, select, into, wait = 0, dryRun = false
   const remotes = runs === null || runs === 'origin' ? ['origin'] : ['origin', runs];
   if (!fetched) for (const remote of remotes) step(git, ['fetch', '-q', remote], `git fetch ${remote} failed`);
   const tipsOf = (remote) => (fetched && remote === 'origin' ? fetchedTips(git, remote) : tipsOn(git, remote));
-  const candidates = remotes.flatMap((remote) =>
-    [...tipsOf(remote)].filter(([branch]) => remoteOf(runs, branch) === remote && select(branch)).map(([branch, tip]) => ({ remote, branch, tip })));
+  const lists = remotes.map((remote) => [remote, tipsOf(remote)]);
+  // Every name read, each remote's and the local refs', so a run known anywhere keeps its branches (L5).
+  const known = knownRuns([...lists.flatMap(([, list]) => [...list.keys()]), ...localNames(git)]);
+  const candidates = lists.flatMap(([remote, list]) =>
+    [...list].filter(([branch]) => remoteOf(runs, branch) === remote && select(branch, known)).map(([branch, tip]) => ({ remote, branch, tip })));
 
   const deleted = [];
   const kept = [];
