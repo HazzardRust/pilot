@@ -114,7 +114,7 @@
     },
     {
       "slice": "S13",
-      "state": "failed gate: checks red at 4405b7c: gate (windows-latest)",
+      "state": "integrated; B3: windows-latest `spawns 11083 (node 843, git 9947, other 293)` (Gate run 45935281463 on 0b3b9e7, checks green)",
       "after": [
         "S2",
         "S3",
@@ -162,70 +162,44 @@
     },
     {
       "slice": "S17 host-contract teardown",
-      "state": "pushed 516ef2c (on feat, awaiting CI)",
+      "state": "integrated",
       "after": [
         "S16"
       ]
+    },
+    {
+      "slice": "principles review",
+      "state": "integrated: fix round fb63347, checks green (Gate run 45938231857; windows 11083 / git 9947)",
+      "after": [
+        "S13"
+      ]
+    },
+    {
+      "slice": "QA",
+      "state": "in QA on fb63347 (started 04:21Z)",
+      "after": [
+        "principles review"
+      ],
+      "branch": "qa/test-body-git",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-qa"
+    },
+    {
+      "slice": "test-body-git",
+      "state": "landing started in C:/Users/jrylk/Projects/pilot-feat-test-body-git"
     }
   ],
-  "next": "Wait on pilot checks 516ef2c; on green, integrate S13 910502b with its trailers, then checks on the integrated sha (any runner over 11083 / 10000: stop, send main the three lines).",
-  "updatedAt": "2026-11-27T03:18:41.200Z",
+  "findings": [
+    "kept: pin init.defaultRefFormat = files in lib/git-fixture.mjs's global config, so the fixtures' hand-written loose refs stay valid under a reftable default (+2, 0 spawns)",
+    "kept: drop setRefs' packed param in lib/land-repos.mjs and write every ref loose; for-each-ref and every git reader treat the two the same (-5)",
+    "dropped: reflog oracle compares hashes only; the exact porcelain messages are S10's fidelity check, and loosening the oracle weakens an assert to save ~7 lines",
+    "kept: seed.mjs identity() reparses the literal git-fixture.mjs writes; export the identity and delete identity() (-6)",
+    "dropped: shared setRunRemote helper across 3 tests; net -1 against a new import in each",
+    "kept: wrap the over-200-char comment line in gate.mjs:68 (0)",
+    "kept: S13 slice title's stale 11,000, and the after-reasons check-slices flags at S14.md:3 and S16.md:3 (0)"
+  ],
+  "next": "Gate2 itm_b0bc915d3874 signed by the user 06:17Z at 2e4fea0; lander aacd122f11682d581 spawned. On landed: reply Findings on the closing report (lander's line; dropped: reflog oracle, setRunRemote helper; evidence checks not re-run). Then prune-worktrees and prebuilt-rune merge the new pilot branch (drift).",
+  "updatedAt": "2026-11-27T06:18:04.811Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S4 bar margin 1 (160 vs <=161)",
-      "evidence": "S4 final census"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S7 bar margin 2 (204 vs <=206); a seed spawn change could push it over",
-      "evidence": "S7 tip census"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "co-pilot's briefs said test:changed runs the whole suite; it selects ~43 files since the feat tip",
-      "evidence": "S7: selected 43 of 662 test files since 93a70d3"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "seed returns only branch tips, so any commit a test needs by sha becomes its own seeded branch",
-      "evidence": "S8 origins carry plan, old, first branches for that reason"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S8 reading 13 files (~2300 lines) took most of the context; 225k advisory before the final gate",
-      "evidence": "S8 report"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S10's B2 bar (398 -> <=160 under land-repos) cannot be read off census.mjs, which does not split built git by helper; estimated 186 -> 74",
-      "evidence": "S10 census built 595 -> 483 over 18 files"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S10's owned test fixture-git.test.mjs had been deleted by land-batching F6; recreated",
-      "evidence": "583ecac0"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "behaviour 3's git diff --stat origin/main cannot hold on a stacked branch",
-      "evidence": "S6: 36 files against origin/hazzardrust-pilot"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "pilot wait-for --match 'exit ' woke early on a test name",
-      "evidence": "S10 report"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "seed refs can only point at a branch's final tip; earlier-commit fixtures need history-order tricks",
-      "evidence": "S9 red-line, adr-allocate"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S9 bar 111 has no slack (tip 108)",
-      "evidence": "S9 census"
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "a reviewer ran node scripts/gate.mjs outside the gate lock; LNK1104 killed two selection runs with no summary",
@@ -385,6 +359,61 @@
       "agent": "pilot:pilot-co-pilot",
       "what": "handback-send-enforce ends the co-pilot's run at every turn end, so it cannot wait on a live child across turns",
       "evidence": "two forced hand-backs while S13 was implementing"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "a context summary mid-run dropped the evidence runner's output; the six evidence checks were not re-run",
+      "evidence": "fundamentalist report section 3"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the scratchpad is shared with another agent's census, cost and gate logs, which cost a probe to tell apart",
+      "evidence": "fundamentalist report section 5"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "check-slices accepts only `S<n> (<file or seam>)` as an after-reason, which is not documented",
+      "evidence": "its error output during the fix round"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "land-suite.test.mjs needs PILOT_BRANCH set when run alone; the gate sets it",
+      "evidence": "`NOT landed: no pilot branch name` on a direct run"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Monitor is not available to the implementer, so waiting on the gate meant polling Bash loops",
+      "evidence": "tool error on its first wait"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "it reported 87 touched lines and pushed past the 60-line limit; the real diff is 19+/24- (43)",
+      "evidence": "git diff --stat 0b3b9e73 fb63347e"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "scratchpad held another run's files (gate.log, l7.mjs, rungate.sh) that nearly passed for its own results",
+      "evidence": "files dated before its spawn, 14:08 local"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "per-slice cuts for added spec lines 5 and 6 live only in commit bodies, not the slice table",
+      "evidence": "git show -s on 2c69a358, 678f95f2, aa7e868e"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "the decision commit amended spec 1, 2 and L7 but not added spec lines 5 and 6, so QA found artefact and build disagreeing",
+      "evidence": "QA F1 on fb63347e; architecture.md lines 23-24"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "deck refused a gate2 pr of `161` (wants `#161`) and a no-walkthrough gate2 without a lowercase checks table in body",
+      "evidence": "two deck_post errors on itm_b0bc915d3874"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "Edit tool dropped a trailing space from a recorded census header row; caught in the diff",
+      "evidence": "git diff with cat -A on census-after.txt"
     }
   ]
 }
