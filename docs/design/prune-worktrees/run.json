@@ -39,7 +39,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed f396322; integrate refused on red tip e931e74; retry after checks c7cc702 green",
+      "state": "integrated at 01feb88; checks green",
       "after": [
         "S2"
       ],
@@ -57,7 +57,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed d8992f4 (rebased on e931e74; PILOT_BRANCH fix; temp ceilings 14210/13062 local, conflicts with S5's); gate 5450/0; ts APPROVE on pre-fix, re-review of d8992f4 running",
+      "state": "pushed 8277689 (on 01feb88; temp ceilings 14301/13150); gate 5457/0 bar old ceiling; ts APPROVE (d8992f4)",
       "after": [
         "S2"
       ],
@@ -66,7 +66,7 @@
     },
     {
       "slice": "S8",
-      "state": "pushed b58b4cc",
+      "state": "pushed 61c7179 (on 01feb88; mirrorOf defect fixed red->green; spec 11 default-branch + local-mode tests by mutation); gate 5419/0 bar ceiling (14479/13331); ts APPROVE",
       "after": [
         "S5"
       ],
@@ -93,7 +93,7 @@
     },
     {
       "slice": "Drift merge",
-      "state": "red at e931e74 on ceiling by 1; feat moved to c7cc702 (S5's temp ceilings 14198/13047 cherry-picked); checks pending",
+      "state": "on feat; ceiling red at e931e74 answered by c7cc702 (checks green)",
       "after": [
         "S4"
       ],
@@ -108,20 +108,9 @@
       ]
     }
   ],
-  "next": "checks c7cc702 pending; then integrate S5 f396322; S7 d8992f4 needs re-review (running) and a rebase onto feat-after-S5 merging both temp ceiling raises (+CI delta); S6 rebase re-measuring pins; S8 fix round; fixture fold.",
-  "updatedAt": "2026-11-27T00:29:53.468Z",
+  "next": "S7 integrating; then S8 rebases onto it + temp ceiling raise (measured +9/6), integrate S8; S6 rebase re-measure pins; fixture fold; fundamentalist; QA.",
+  "updatedAt": "2026-11-27T01:06:39.093Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "a seam-doc push to feat/prune-worktrees cancelled the CI runs pilot checks was waiting on, which read as red",
-      "evidence": "gh run list: e277e34 Gate and Rune deck conclusion cancelled; pilot checks printed checks red at e277e34",
-      "size": 1
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "spawned S2 resume implementer with isolation: worktree by mistake; an unused agent worktree was created under the shared checkout's .claude/worktrees",
-      "evidence": "C:/Users/jrylk/Projects/pilot/.claude/worktrees/agent-a16a6ca802db32422"
-    },
     {
       "agent": "pilot-co-pilot",
       "what": "forced to hand back with two implementers live; TaskStop on a child refused for the co-pilot",
@@ -323,6 +312,18 @@
       "what": "S7: deck 800-line source bar and spawn ceilings fail only in the full gate, one extra 10-minute gate",
       "evidence": "facades.test.mjs doctor.mjs 807 lines; s7-gate.log",
       "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7 rebase: every slice landing moves the spawn ceilings, so every rebase conflicts in gate.mjs and needs a full 10-minute suite to measure",
+      "evidence": "S7 report 8277689; S5 f396322",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S8: worktrees.test.mjs fails alone without PILOT_BRANCH (only gate.mjs pins it); ceilings already over on base so no slice gate can exit 0",
+      "evidence": "S8 report 61c7179",
+      "size": 1
     }
   ]
 }
