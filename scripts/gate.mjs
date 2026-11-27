@@ -70,8 +70,10 @@ const POLL_MS = 1_000;
  *   GIT_CEILING 10000 is the signed bar. No headroom. L7 and spec line 1 of test-body-git moved on that decision (docs/design/test-body-git/cost-after.txt).
  * 2026-11-27, prebuilt-rune: CI windows-latest, Gate run 45953779329 on f5713db: `spawns 11084 (node 845, git 9947, other 292)`;
  *   SPAWN_CEILING re-pinned to that 11084, exact (assumed by the deck's default, itm_8b82a8c0fff2). GIT_CEILING unchanged.
+ * 2026-11-27, prebuilt-rune: CI windows-latest, Gate run 45959300810 on c2cb913: `spawns 11085 (node 845, git 9947, other 293)`;
+ *   "other" read 292 then 293 on the same code. SPAWN_CEILING re-pinned to 11085, exact (the user's decision, itm_abcdde7d29e5).
  */
-export const SPAWN_CEILING = 11084;
+export const SPAWN_CEILING = 11085;
 /** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13); see the dated lines above. */
 export const GIT_CEILING = 10000;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
