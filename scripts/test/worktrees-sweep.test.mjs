@@ -99,7 +99,7 @@ test('a landed feat tree whose own run record the deck rewrote in place goes', (
   assert.equal(git(work, 'branch', '--list', 'feat/done'), '');
 });
 
-test('the plain listing still reads a feat tree with its record rewritten in place as merged-dirty', (t) => {
+test('the plain listing reads a run record as removeTree does, never dirt (L3)', (t) => {
   const { work, root } = sweepRepo(t);
   const dir = path.join(root, 'feat-listed');
   git(work, 'worktree', 'add', '-q', '-b', 'feat/listed', dir, `origin/${PILOT_BRANCH}`);
@@ -110,9 +110,12 @@ test('the plain listing still reads a feat tree with its record rewritten in pla
   git(dir, 'commit', '-q', '-m', 'listed');
   git(dir, 'push', '-q', 'origin', `feat/listed:${PILOT_BRANCH}`);
   fs.writeFileSync(record, '{"stage":"landed"}\n');
+  // Another run's record, untracked: removeTree takes it too, so the listing must not call it dirt.
+  fs.mkdirSync(path.join(dir, 'docs', 'design', 'other'));
+  fs.writeFileSync(path.join(dir, 'docs', 'design', 'other', 'run.json'), '{}\n');
   const run = cli('--repo', work, '--base', `origin/${PILOT_BRANCH}`);
   assert.equal(run.status, 0, run.stderr);
-  assert.match(run.stdout, /^merged-dirty\s+feat\/listed\s/m);
+  assert.match(run.stdout, /^merged-clean\s+feat\/listed\s/m);
 });
 
 test('a tree landed on the default branch but not on pilot goes', (t) => {
