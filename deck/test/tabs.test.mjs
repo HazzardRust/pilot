@@ -48,8 +48,9 @@ const AT = '2026-09-16T09:14:00.000Z';
 const MINE = path.join('D:', 'work', 'pilot');
 const THEIRS = path.join('D:', 'work', 'kettle');
 
-/** A pid that has certainly exited: the child is gone before `spawnSync` returns. */
-const exitedPid = () => spawnSync(process.execPath, ['-e', '0']).pid;
+/** A pid that has certainly exited: the child is gone before `spawnSync` returns. One child per file (test-body-git S16). */
+let exited;
+const exitedPid = () => (exited ??= spawnSync(process.execPath, ['-e', '0']).pid);
 
 /** A run as `registerRun` stores one, with a table on it. */
 const aRun = (over = {}) => ({

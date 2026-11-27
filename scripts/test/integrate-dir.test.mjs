@@ -10,11 +10,11 @@
 
 // A red run's log goes under a home of this process's own; the fixture seam imports fake-home.mjs first.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 
 const { main } = await import('../integrate.mjs');
@@ -22,31 +22,23 @@ const { githubHost } = await import('../../deck/host-github.mjs');
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
-/** A bare origin, a clone on `feat/x` that pilot already holds, and a pushed `slice/a` adding one file. */
+/**
+ * A bare origin, a clone on `feat/x` that pilot already holds, and a pushed `slice/a` adding one
+ * file; `base` is feat/x's tip, where the clone and the `from` worktree start.
+ */
 function scratchRepos(t) {
   return gitFixture(t, 'integrate-dir:scratchRepos', (root) => {
-    const origin = path.join(root, 'origin.git');
     const work = path.join(root, 'work');
-    git(root, 'init', '--bare', '-b', 'main', origin);
-    git(root, 'clone', '-q', origin, work);
-    git(work, 'checkout', '-q', '-b', 'feat/x');
-    fs.writeFileSync(path.join(work, 'base.txt'), 'base\n');
-    git(work, 'add', 'base.txt');
-    git(work, 'commit', '-q', '-m', 'base');
-    git(work, 'push', '-q', '-u', 'origin', 'feat/x');
-    git(work, 'push', '-q', 'origin', 'HEAD:main', 'HEAD:pilot');
-    git(work, 'remote', 'set-head', 'origin', 'main');
-    git(work, 'checkout', '-q', '-b', 'slice/a');
-    fs.writeFileSync(path.join(work, 'a.txt'), 'a\n');
-    git(work, 'add', 'a.txt');
-    git(work, 'commit', '-q', '-m', 'the slice');
-    git(work, 'push', '-q', 'origin', 'slice/a');
-    git(work, 'checkout', '-q', 'feat/x');
-    git(work, 'branch', '-q', '-D', 'slice/a');
+    // main and pilot at feat/x's one commit; the clone on feat/x, tracking it, origin/HEAD naming main.
+    const { origin, sha } = seed(root, [
+      { branch: 'feat/x', files: { 'base.txt': 'base\n' }, message: 'base' },
+      { branch: 'slice/a', files: { 'a.txt': 'a\n' }, message: 'the slice' },
+    ], { main: 'feat/x', pilot: 'feat/x' });
+    git(root, 'clone', '-q', '-b', 'feat/x', origin, work);
     // A second worktree of the same repository, the one the command is run from.
     const from = path.join(root, 'from');
     git(work, 'worktree', 'add', '-q', '--detach', from);
-    return { origin, work, from };
+    return { origin, work, from, base: sha['feat/x'] };
   });
 }
 
@@ -73,9 +65,8 @@ function run(argv, from, inject = { ...quiet, cwd: from }) {
 }
 
 test('--dir runs the integration in that worktree', (t) => {
-  const { work, from } = scratchRepos(t);
+  const { work, from, base: here } = scratchRepos(t);
   const cwd = process.cwd();
-  const here = git(from, 'rev-parse', 'HEAD');
 
   const { code, out } = run(['slice/a', '--no-push', '--dir', work], from);
 
@@ -87,8 +78,7 @@ test('--dir runs the integration in that worktree', (t) => {
 });
 
 test('--dir outside the repository it is run from is refused', (t) => {
-  const { work } = scratchRepos(t);
-  const before = git(work, 'rev-parse', 'HEAD');
+  const { work, base: before } = scratchRepos(t);
 
   // From this process's own cwd, the pilot checkout: another repository than the fixture.
   const { code, out, err } = run(['slice/a', '--no-push', '--dir', work], undefined, quiet);
@@ -100,8 +90,7 @@ test('--dir outside the repository it is run from is refused', (t) => {
 });
 
 test('--dir with no directory is a usage error', (t) => {
-  const { work, from } = scratchRepos(t);
-  const before = git(work, 'rev-parse', 'HEAD');
+  const { work, from, base: before } = scratchRepos(t);
   const missing = path.join(work, 'no-such-dir');
   const file = path.join(work, 'base.txt');
 
@@ -126,8 +115,9 @@ test('--dir after the branch parses the same', (t) => {
 
   for (const [{ code, out }, { work, origin }] of [[before, first], [after, second]]) {
     assert.equal(code, 0, out);
-    assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge slice/a');
-    assert.match(git(work, 'log', '-1', '--format=%B'), new RegExp(`^${trailer}$`, 'm'), 'the trailer still reaches the merge');
+    const [subject, body] = git(work, 'log', '-1', '--format=%s%x00%B').split('\0');
+    assert.equal(subject, 'Merge slice/a');
+    assert.match(body, new RegExp(`^${trailer}$`, 'm'), 'the trailer still reaches the merge');
     assert.notEqual(git(origin, 'rev-parse', 'feat/x'), git(work, 'rev-parse', 'HEAD'), '--no-push still holds');
   }
 });

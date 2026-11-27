@@ -90,7 +90,7 @@ function stubbed(t) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
-    fs.rmSync(stub.dir, { recursive: true, force: true });
+    fs.rmSync(stub.dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   });
   Object.assign(process.env, stub.env);
   return stub.dir;
@@ -209,7 +209,7 @@ if (/^glab(\\.exe)?$/i.test(path.basename(process.execPath))) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
-    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   });
   process.env.PATH = `${dir}${path.delimiter}${process.env.PATH ?? ''}`;
   process.env.NODE_OPTIONS = `--require "${stub.replaceAll('\\', '/')}"`;

@@ -6,13 +6,14 @@
  */
 
 import './no-open.mjs';
+import { gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
+import { seed } from '../../scripts/test/lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 
 import { KIND_GATE2 } from '../items.mjs';
@@ -26,33 +27,29 @@ const LANDED = 'landed feat/x on pilot at 1a2b3c4';
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
+const commit = (cwd, file, text) => {
+  fs.writeFileSync(path.join(cwd, file), text);
+  git(cwd, 'add', file);
+  git(cwd, 'commit', '-q', '-m', `${file}: ${text}`);
+  return git(cwd, 'rev-parse', 'HEAD');
+};
+
 /**
  * A bare origin holding `feat/x`, the clone the gate2 names as its repository, and a real linked
- * worktree of that clone on `feat/x`, all under one temp directory removed when the test ends.
+ * worktree of that clone on `feat/x` with no upstream, all under one fixture directory built once.
  */
 function scratch(t) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-landing-recreate-'));
-  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const origin = path.join(root, 'origin.git');
-  const repo = path.join(root, 'repo');
-  const worktree = path.join(root, 'wt');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
-  git(root, 'clone', '-q', origin, repo);
-  for (const [key, value] of [['user.name', 'test'], ['user.email', 't@example.com'], ['commit.gpgsign', 'false']]) {
-    git(repo, 'config', key, value);
-  }
-  const commit = (cwd, file, text) => {
-    fs.writeFileSync(path.join(cwd, file), text);
-    git(cwd, 'add', file);
-    git(cwd, 'commit', '-q', '-m', `${file}: ${text}`);
-    return git(cwd, 'rev-parse', 'HEAD');
-  };
-  commit(repo, 'a.txt', 'base\n');
-  git(repo, 'push', '-q', 'origin', 'HEAD:main');
-  git(repo, 'worktree', 'add', '-q', '-b', BRANCH, worktree);
-  const sha = commit(worktree, 'b.txt', 'feature\n');
-  git(worktree, 'push', '-q', 'origin', `HEAD:${BRANCH}`);
-  return { root, origin, repo, worktree, sha, commit };
+  return gitFixture(t, 'landing-recreate:scratch', (root) => {
+    const { origin, sha } = seed(root, [
+      { branch: 'main', files: { 'a.txt': 'base\n' }, message: 'a.txt: base\n' },
+      { branch: BRANCH, from: 'main', files: { 'b.txt': 'feature\n' }, message: 'b.txt: feature\n' },
+    ]);
+    const repo = path.join(root, 'repo');
+    const worktree = path.join(root, 'wt');
+    git(root, 'clone', '-q', origin, repo);
+    git(repo, 'worktree', 'add', '-q', '--no-track', '-b', BRANCH, worktree, `origin/${BRANCH}`);
+    return { root, origin, repo, worktree, sha: sha[BRANCH], commit };
+  });
 }
 
 /** A gate2 at `sha` on a yellow ticket whose run record names `worktree` under the slug. */
