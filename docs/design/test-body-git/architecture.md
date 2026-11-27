@@ -16,8 +16,8 @@ Line 1's cut is 1,824, not the ticket's 1,700: only git is cut, so the 11,000 to
 
 | # | Behaviour | Evidence and bar |
 |---|---|---|
-| 1 | A full suite run starts at most 11,000 processes, at most 10,000 of them git, on the highest runner. | `npm run test:cost` on the feature tip prints `spawns <t> (… git <g> …)` with t ≤ 11,000, g ≤ 10,000, recorded as `cost-after.txt`; the feature PR's CI windows run reads the same bars. Today 12,823 / 11,682: git must fall ≥ 1,824. |
-| 2 | The gate holds the signed bars: `SPAWN_CEILING` 11000, `GIT_CEILING` 10000 in `scripts/gate.mjs`; cheap-suite spec 3 / A4 and land-batching's rows name them. | `scripts/test/gate-spawns.test.mjs`: 11,001 total red, 10,001 git red, 11,000 / 10,000 green (3 cases, land-batching's); a full run prints both at or under them. |
+| 1 | A full suite run starts at most 11,083 processes, at most 10,000 of them git, on the highest runner. *User's decision, itm_fa71edea84e2 (2026-11-27, option (a), "Move the spawn bar, no new ticket"): the spawn bar is the measured value on the highest runner, 11,083 (CI windows-latest `spawns 11083 (node 843, git 9947, other 293)` on cd15ab4, Gate run 45907856887; local 11,074, Windows delta +9); the git bar stays 10,000; no new ticket.* | `npm run test:cost` on the feature tip prints `spawns <t> (… git <g> …)` with t ≤ 11,083, g ≤ 10,000, recorded as `cost-after.txt`; the feature PR's CI windows run reads the same bars. Today 12,823 / 11,682: git must fall ≥ 1,824. |
+| 2 | The gate holds the bars: `SPAWN_CEILING` 11083, `GIT_CEILING` 10000 in `scripts/gate.mjs` (itm_fa71edea84e2, the user's decision under L7); cheap-suite spec 3 / A4 and land-batching's rows name them. | `scripts/test/gate-spawns.test.mjs`: one over `SPAWN_CEILING` total red, one over `GIT_CEILING` git red, the two ceilings exactly green (3 cases, land-batching's); a full run prints both at or under them. |
 | 3 | No assertion is removed or weakened, no test deleted, skipped or `todo`. | `assert-count.mjs` per touched file, base against tip: tests equal, asserts equal or higher, 0 files lower; its table in every slice report and the feature PR body; full suite test total equals the base's plus added tests. |
 | 4 | practitioner: test-infrastructure engineers — a per-test-file fixture git census, before and after, sits beside the design. | `census-before.txt` (S1) and `census-after.txt` (S13): fixture git per file split builder / body / lib, from `census.mjs`; each covers ≥ 99% of the run's fixture git. |
 | 5 | *added (S14, S15)*: S14 and S15 fold enough of the remaining per-test fixture git for the full suite to meet L7's 11,000 / 10,000. | Each slice's census cut of 300 or more; S13's `test:cost` run. |
@@ -86,6 +86,7 @@ No fold slice: `seed` is new code that builders adopt.
 - **L6** No product code: edits are confined to `scripts/test/**`, `deck/test/**`, the two gate constants and docs.
 - **L7** The bars carry no headroom (land-batching A5); a final run over either bar stops S13, which reports the census
   to `main`; no ceiling above 11,000 / 10,000 without the user.
+  User's decision, itm_fa71edea84e2 (2026-11-27, option (a), "Move the spawn bar, no new ticket"): the spawn bar is the measured value on the highest runner, 11,083 (CI windows-latest `spawns 11083 (node 843, git 9947, other 293)` on cd15ab4, Gate run 45907856887; local 11,074, Windows delta +9); the git bar stays 10,000; no new ticket. S13 sets `SPAWN_CEILING` 11083 and `GIT_CEILING` 10000, no headroom over the measured value.
 - **L8** The run's ADR is `docs/adr/NNNN-test-body-git.md` (ADR NNNN, S1): fixture history is seeded in one spawn.
 
 ## 6. Assumed decisions
@@ -153,8 +154,8 @@ S13 stops on a short run (L7).
 
 1. `census-before.txt` against `census-after.txt`: fixture git per file, where the ≥ 1,824 went (S1, S13).
 2. Each slice's assert-count table: tests equal, asserts equal or higher, per touched file (S1 to S12).
-3. A full `npm run test:cost` prints spawns ≤ 11,000, git ≤ 10,000; the CI windows run of the feature PR the same (S13).
-4. A gate over 11,000 or over 10,000 git reads red (`gate-spawns.test.mjs`, S13).
+3. A full `npm run test:cost` prints spawns ≤ 11,083, git ≤ 10,000 (itm_fa71edea84e2); the CI windows run of the feature PR the same (S13).
+4. A gate over 11,083 or over 10,000 git reads red (`gate-spawns.test.mjs`, S13).
 
 ## 10. Status
 
