@@ -35,6 +35,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `crew-settle.mjs` | the deck's crew-handoff closes: a `co-pilot` grant's, and the settle after every change, each traced |
 | `credential.mjs` | the one credential check, `findCredential`, for every deck post, land's output and the classifier log |
 | `daemon.mjs` | the deck process: starts the server over the store; holds a leash, or the idle rule on the user's deck |
+| `doctor-automode.mjs` | the doctor's `auto mode defaults` row: fails when a user autoMode list drops `"$defaults"`, never a write (classifier-env spec 8) |
 | `doctor.mjs` | `pilot doctor`: one row per local check, `pass`, `fail` or `cannot tell` (Defender over the projects root and its admin step, Power from `power.mjs`, Node against engines, the deck dependency, the store directory writable, `gh`, `git`, `claude` on PATH); exit 1 on a fail; reads only, bar one temp file it removes (process-gc L12, daemon-lifecycle spec 10) |
 | `exit-route.mjs` | `POST /api/exit { version }`: 202 and the daemon's shutdown only for a newer caller, 409 for one not newer or while a landing runs (daemon-lifecycle L3, ADR 0156) |
 | `gc.mjs` | `pilot gc`: stops each orphan `procs.mjs` names and nothing else, a test root as a tree; one line per stop, and `pilot land` runs it once landed (process-gc L11, L14) |
