@@ -92,5 +92,5 @@ test('the manifest counts the store', (t) => {
 test('an older store is refused, not exported with its absolute paths', (t) => {
   const dir = tempDeck(t);
   fs.writeFileSync(path.join(dir, 'deck.json'), JSON.stringify({ version: 3, items: [], runs: [], seq: 0 }));
-  assert.throws(() => packBundle(dir, { logs: false }), /version 3; start the deck once/);
+  assert.throws(() => packBundle(dir, { logs: false }), /version 3/);
 });

@@ -221,7 +221,8 @@ const usage = () => `pilot — the deck for piloted runs
   pilot store export [<file>] [--logs]
                  write the store's portable part to one bundle (default
                  pilot-store-<host>-<yyyy-mm-dd>.pilotstore here), never machine.json,
-                 deck.secret, deck.pid or a backup; --logs adds the deck's logs. Then list
+                 deck.secret, deck.pid or a backup; --logs adds the deck's logs, as written,
+                 whatever they hold; threads travel as written too. Then list
                  each open run's worktree with work on no remote, and landings in flight;
                  exit 0 once written, whatever the list says
   pilot doctor   on Windows, whether Defender's real-time scan sits in front of the projects

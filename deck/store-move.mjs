@@ -103,18 +103,27 @@ export function exportStore(argv, { git = runGit, now = () => new Date(), host =
   }
   const dir = storeDir();
   const at = now();
+  const file = path.resolve(parsed.file ?? `pilot-store-${host.replace(/[^A-Za-z0-9.-]/g, '-')}-${localDay(at)}.pilotstore`);
   let bundle;
   try {
+    // A bundle written into the store dir could land on a store file (`deck.json`, `machine.json`).
+    // Keyed by the parent, which exists for any file that can be written, so its realpath (macOS /private/var) is read.
+    const parent = pathKey(path.dirname(file));
+    if (parent === pathKey(dir) || parent.startsWith(pathKey(dir) + path.sep)) throw new Error(`${file} is inside the store directory ${dir}; write the bundle elsewhere`);
+    // The gate names the home store by its deck.json; the mark beside it is that store's too (as the machine file).
+    refuseGateHomeWrite(path.join(dir, 'deck.json'));
     bundle = packBundle(dir, { logs: parsed.logs, host, now: at });
+    atomicWriteFileSync(file, bundle.bytes);
   } catch (error) {
     err(`pilot store export: ${error.message}; nothing written`);
     return 1;
   }
-  const file = path.resolve(parsed.file ?? `pilot-store-${host.replace(/[^A-Za-z0-9.-]/g, '-')}-${localDay(at)}.pilotstore`);
-  atomicWriteFileSync(file, bundle.bytes);
-  // The gate names the home store by its deck.json; the mark beside it is that store's too (as the machine file).
-  refuseGateHomeWrite(path.join(dir, 'deck.json'));
-  atomicWriteFileSync(path.join(dir, 'exported.json'), `${JSON.stringify({ at: at.toISOString(), file }, null, 2)}\n`);
+  try {
+    atomicWriteFileSync(path.join(dir, 'exported.json'), `${JSON.stringify({ at: at.toISOString(), file }, null, 2)}\n`);
+  } catch (error) {
+    err(`pilot store export: ${file} is written, but the exported mark is not (${error.message})`);
+    return 1;
+  }
 
   const { counts } = bundle.manifest;
   out(`exported ${file}: ${bundle.bytes.length} bytes, ${counts.items} items, ${counts.records} records, ${counts.archives} month archives`);

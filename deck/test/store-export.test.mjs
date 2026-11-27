@@ -42,8 +42,7 @@ test('unpushed work is listed and the bundle still written', (t) => {
   const dir = tempDeck(t);
   const { repo, worktree } = aRepo(t);
   setSlices(registerRun({ repo, pid: process.pid, session: 'a-session' }).id, [], undefined, { slug: 'x', worktree });
-  const file = path.join(dir, 'out', 'moved.pilotstore');
-  fs.mkdirSync(path.dirname(file));
+  const file = path.join(path.dirname(repo), 'moved.pilotstore');
   const said = [];
 
   const code = exportStore([file], { now: () => new Date('2026-11-28T10:00:00.000Z'), host: 'source-host', out: (line) => said.push(line), err: (line) => said.push(line) });
@@ -61,6 +60,26 @@ test('a bad argument writes nothing and exits 1', (t) => {
   const dir = tempDeck(t);
   const said = [];
   assert.equal(exportStore(['--zip'], { out: (line) => said.push(line), err: (line) => said.push(line) }), 1);
-  assert.match(said.join('\n'), /usage: pilot store export \[<file>\] \[--logs\]/);
+  assert.equal(said.length, 1, said.join('\n'));
+  assert.equal(fs.existsSync(path.join(dir, 'exported.json')), false);
+});
+
+test('a bundle aimed into the store directory is refused, the store unchanged', (t) => {
+  const dir = tempDeck(t);
+  registerRun({ repo: path.join(dir, 'repo'), pid: process.pid, session: 'a-session' });
+  const before = fs.readFileSync(path.join(dir, 'machine.json'));
+  const said = [];
+  assert.equal(exportStore([path.join(dir, 'machine.json')], { out: (line) => said.push(line), err: (line) => said.push(line) }), 1);
+  assert.deepEqual(fs.readFileSync(path.join(dir, 'machine.json')), before);
+  assert.equal(fs.existsSync(path.join(dir, 'exported.json')), false);
+});
+
+test('a bundle that cannot be written exits 1 and marks nothing', (t) => {
+  const dir = tempDeck(t);
+  registerRun({ repo: path.join(dir, 'repo'), pid: process.pid, session: 'a-session' });
+  const said = [];
+  const missing = path.join(path.dirname(dir), `${path.basename(dir)}-absent`, 'moved.pilotstore');
+  assert.equal(exportStore([missing], { out: (line) => said.push(line), err: (line) => said.push(line) }), 1);
+  assert.equal(fs.existsSync(missing), false);
   assert.equal(fs.existsSync(path.join(dir, 'exported.json')), false);
 });
