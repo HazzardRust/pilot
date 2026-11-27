@@ -66,8 +66,8 @@ const POLL_MS = 1_000;
  *   plus the Windows-CI delta above (8 spawns / 6 git), 13597 / 12453: the measured bars (itm_9ac7a84014e9).
  * 2026-11-27, test-body-git S13 (itm_fa71edea84e2): the fixture git folded out of the test bodies. SPAWN_CEILING is the
  *   measured 11083 on the highest runner (CI windows-latest, Gate run 45907856887 on cd15ab4: `spawns 11083 (node 843, git
- *   9947, other 293)`; local 11074 + Windows delta 9; later local runs on S13's tip read 11074, 11074 and 11079, so the count moves by a few between runs); GIT_CEILING 10000 is the signed bar. No headroom. L7 and spec line 1
- *   of test-body-git moved on that decision (docs/design/test-body-git/cost-after.txt).
+ *   9947, other 293)`; local 11074 + Windows delta 9; later local runs on S13's tip read 11074, 11074 and 11079, so the count moves by a few between runs);
+ *   GIT_CEILING 10000 is the signed bar. No headroom. L7 and spec line 1 of test-body-git moved on that decision (docs/design/test-body-git/cost-after.txt).
  */
 export const SPAWN_CEILING = 11083;
 /** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13); see the dated lines above. */

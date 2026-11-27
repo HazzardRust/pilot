@@ -42,11 +42,11 @@ export function repos(t, ...names) {
 
 /**
  * Rewrites the refs, reflogs and branch config a one-git `git clone` of the seeded origin wrote in `repo` (`origin`
- * when bare) to what the porcelain build left there (test-body-git S10): `loose` and `packed` map a ref to a SHA or
- * a `ref: …` symref, `logs` a ref (or HEAD) to its `[from, to, message]` entries, `branches` the config's
+ * when bare) to what the porcelain build left there (test-body-git S10): `loose` maps a ref to a SHA or
+ * a `ref: …` symref (every ref is written loose, whatever the porcelain build packed), `logs` a ref (or HEAD) to its `[from, to, message]` entries, `branches` the config's
  * `[branch]` sections to their merge ref. Each entry is stamped `stamp`, an identity and time.
  */
-function setRefs(repo, stamp, { bare = false, loose, packed = {}, logs, branches = {} }) {
+function setRefs(repo, stamp, { bare = false, loose, logs, branches = {} }) {
   const gitDir = bare ? repo : path.join(repo, '.git');
   const at = (...parts) => path.join(gitDir, ...parts);
   for (const old of ['refs/heads', 'refs/remotes', 'logs', 'packed-refs']) fs.rmSync(at(old), { recursive: true, force: true });
@@ -55,8 +55,6 @@ function setRefs(repo, stamp, { bare = false, loose, packed = {}, logs, branches
     fs.writeFileSync(file, text);
   };
   for (const [ref, value] of Object.entries(loose)) write(at(ref), `${value}\n`);
-  const sorted = Object.keys(packed).sort();
-  if (sorted.length) write(at('packed-refs'), `# pack-refs with: peeled fully-peeled sorted \n${sorted.map((ref) => `${packed[ref]} ${ref}\n`).join('')}`);
   for (const [ref, entries] of Object.entries(logs)) write(at('logs', ref), entries.map(([from, to, message]) => `${from} ${to} ${stamp}\t${message}\n`).join(''));
   if (bare) return;
   const config = fs.readFileSync(at('config'), 'utf8');
@@ -109,9 +107,10 @@ export function buildRepos(dir, names) {
         [`refs/heads/${feat}`]: sha[feat],
         'refs/remotes/origin/HEAD': 'ref: refs/remotes/origin/main',
         [`refs/remotes/origin/${feat}`]: sha[feat],
+        'refs/remotes/origin/main': sha.main,
+        'refs/remotes/origin/pilot': sha.main,
+        ...Object.fromEntries(earlier.map((other) => [`refs/remotes/origin/feat/${other}`, sha[`feat/${other}`]])),
       },
-      packed: Object.fromEntries([['main', sha.main], ['pilot', sha.main], ...earlier.map((other) => [`feat/${other}`, sha[`feat/${other}`]])]
-        .map(([branch, at]) => [`refs/remotes/origin/${branch}`, at])),
       logs: {
         HEAD: [[NONE, sha.main, cloned], [sha.main, sha.main, `checkout: moving from main to ${feat}`], [sha.main, sha[feat], `commit: feat ${name}`]],
         [`refs/heads/${feat}`]: [[NONE, sha.main, 'branch: Created from origin/pilot'], [sha.main, sha[feat], `commit: feat ${name}`]],

@@ -33,9 +33,14 @@ import os from 'node:os';
 import path from 'node:path';
 
 const GLOBAL_CONFIG = path.join(FAKE_HOME, '.gitconfig');
+/** The identity every fixture commit carries: the global config's [user] below, and seed.mjs's fast-import stream. */
+export const IDENTITY = { name: 'test', email: 't@example.com' };
+
 fs.writeFileSync(GLOBAL_CONFIG, [
-  '[user]', '\tname = test', '\temail = t@example.com',
+  '[user]', `\tname = ${IDENTITY.name}`, `\temail = ${IDENTITY.email}`,
   '[commit]', '\tgpgsign = false',
+  // Fixtures write loose refs and reflogs by hand (land-repos.mjs setRefs, `.git/refs/heads/*` in tests), which only the files format reads.
+  '[init]', '\tdefaultRefFormat = files',
   // A restored file keeps its mtime and size but not its inode or ctime; compare only those two.
   '[core]', '\tcheckStat = minimal',
   // Fixtures never convert line endings, whatever the system gitconfig says: no CRLF warning.

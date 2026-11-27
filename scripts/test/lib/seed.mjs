@@ -19,7 +19,7 @@
  * only, never a shell string.
  */
 
-import './git-fixture.mjs';
+import { IDENTITY } from './git-fixture.mjs';
 
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -39,15 +39,6 @@ function checkPath(file) {
   if (/[\0\r\n\\]/.test(file) || file === '' || parts.some((part) => part === '' || part === '.' || part === '..' || part === '.git')) {
     throw new Error(`seed: not a relative path: ${JSON.stringify(file)}`);
   }
-}
-
-/** `name <email>` from the global config the fixture seam wrote. */
-function identity() {
-  const user = fs.readFileSync(process.env.GIT_CONFIG_GLOBAL, 'utf8').match(/^\s*\[user\]\s*$([^[]*)/m)?.[1] ?? '';
-  const name = user.match(/^\s*name\s*=\s*(.+?)\s*$/m)?.[1];
-  const email = user.match(/^\s*email\s*=\s*(.+?)\s*$/m)?.[1];
-  if (!name || !email || /[<>\n]/.test(name + email)) throw new Error(`seed: no identity in ${process.env.GIT_CONFIG_GLOBAL}`);
-  return `${name} <${email}>`;
 }
 
 const data = (text) => `data ${Buffer.byteLength(text)}\n${text}\n`;
@@ -85,7 +76,7 @@ export function seed(dir, history, refs = {}) {
     if (tips.has(name)) throw new Error(`seed: ref names a branch the history already writes: ${name}`);
   }
 
-  const who = identity();
+  const who = `${IDENTITY.name} <${IDENTITY.email}>`;
   const stream = [];
   planned.forEach((commit, i) => {
     const when = `${who} ${EPOCH + i} +0000`;
