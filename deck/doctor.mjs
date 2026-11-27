@@ -24,11 +24,10 @@ import { fileURLToPath } from 'node:url';
 import { atomicWriteFileSync, privateDir } from '../hooks/lib/atomic-write.js';
 import { hostPlatform, isWindows } from '../hooks/lib/platform.js';
 import { MIN_MODS_VERSION, claudeVersion } from '../scripts/handoff.mjs';
-import { PILOT_BRANCH, firstLine } from '../scripts/pilot-branch.mjs';
 import { runRef, runRemote } from '../scripts/remotes.mjs';
 import { tagOf } from '../scripts/worktrees.mjs';
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
-import { LEGACY_PILOT, NO_NAME, namePilotBranch } from '../scripts/pilot-branch.mjs';
+import { LEGACY_PILOT, NO_NAME, firstLine, namePilotBranch, pilotBranch } from '../scripts/pilot-branch.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { powerRow, readPower } from './power.mjs';
@@ -547,9 +546,9 @@ function listTrees(git) {
  * The linked trees not in the pilot branch as last fetched (`runRef`, the name read where `pilot base` and land
  * read it): every one of `trees` when that branch does not resolve here, since nothing of theirs has landed.
  */
-function notInPilot(git, trees) {
+function notInPilot(git, branch, trees) {
   if (!trees.length) return new Set();
-  const upstream = runRef(runRemote(git), PILOT_BRANCH);
+  const upstream = runRef(runRemote(git), branch);
   try {
     git(['rev-parse', '-q', '--verify', `${upstream}^{commit}`]);
   } catch (error) {
@@ -573,6 +572,15 @@ export function worktreesRow({ repo, git, statfs, now, sizeOf, budgetMs }) {
   let linked;
   let stale;
   let untagged;
+  // No name to read leaves only the stale count unknown, and only when a tree is old enough to need it; the free
+  // space is still read, so a full disk still fails (the pilot branch row says how to name it).
+  let branch = 'the pilot branch';
+  let noName = null;
+  try {
+    branch = pilotBranch(git);
+  } catch (error) {
+    noName = firstLine(error);
+  }
   try {
     [home, ...linked] = listTrees(git);
     if (!home?.path) throw new Error(`git listed no worktree in ${repo}`);
@@ -587,8 +595,8 @@ export function worktreesRow({ repo, git, statfs, now, sizeOf, budgetMs }) {
     const unread = linked.find((tree) => !Number.isFinite(times.get(tree.head)));
     if (unread) throw new Error(`no commit time for ${unread.path}`);
     const old = linked.filter((tree) => now() - times.get(tree.head) > STALE_MS);
-    const out = notInPilot(git, old);
-    stale = old.filter((tree) => out.has(tree.head));
+    const out = noName && old.length ? null : notInPilot(git, branch, old);
+    stale = out && old.filter((tree) => out.has(tree.head));
     untagged = linked.filter((tree) => !tree.branch && tagOf(home.path, tree.path) === null).length;
   } catch (error) {
     return { name, verdict: 'cannot tell', detail: `git could not list the trees: ${firstLine(error)}` };
@@ -607,19 +615,14 @@ export function worktreesRow({ repo, git, statfs, now, sizeOf, budgetMs }) {
   const until = now() + budgetMs;
   let bytes = 0;
   let partial = false;
-  for (const tree of stale) {
-    if (now() > until) {
-      partial = true;
-      break;
-    }
-    const walked = sizeOf(tree.path, { until, now });
+  for (const tree of stale ?? []) {
+    const walked = now() > until ? { bytes: 0, partial: true } : sizeOf(tree.path, { until, now });
     bytes += walked.bytes;
-    if (walked.partial) {
-      partial = true;
-      break;
-    }
+    partial = walked.partial;
+    if (partial) break;
   }
-  const census = `${linked.length} trees, ${stale.length} stale (>14 d, not in ${PILOT_BRANCH}), ${untagged} untagged detached, ${orphans} orphan dirs`;
+  const staleText = stale ? `${stale.length} stale (>14 d, not in ${branch})` : `? stale (>14 d; ${noName})`;
+  const census = `${linked.length} trees, ${staleText}, ${untagged} untagged detached, ${orphans} orphan dirs`;
   const output = `stale build output ${partial ? '≥' : ''}${gb(bytes)}`;
   let volume;
   try {
@@ -634,7 +637,7 @@ export function worktreesRow({ repo, git, statfs, now, sizeOf, budgetMs }) {
   if (free < total * LOW_FREE) {
     return { name, verdict: 'fail', detail, steps: ['under 10% free: pilot worktrees prune --dry-run lists the trees that can go, then pilot worktrees prune'] };
   }
-  return { name, verdict: 'pass', detail };
+  return { name, verdict: stale ? 'pass' : 'cannot tell', detail };
 }
 
 /** The port, version and root rows, from one probe of the deck's url; nothing here stops or starts a deck. */

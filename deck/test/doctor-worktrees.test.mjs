@@ -16,12 +16,15 @@ import path from 'node:path';
 
 import { buildOutputSize, worktreesRow } from '../doctor.mjs';
 import { leashedGit } from '../slug-clash.mjs';
-import { PILOT_BRANCH } from '../../scripts/pilot-branch.mjs';
+import { NO_NAME } from '../../scripts/pilot-branch.mjs';
 import { main as worktrees } from '../../scripts/worktrees.mjs';
 
 const run = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }).trim();
 const DAY = 24 * 60 * 60 * 1000;
 const GiB = 1024 ** 3;
+/** The pilot branch's name, pinned here (each test file is its own process) so the row reads it, never a literal. */
+const PILOT_BRANCH = 'tester-pilot';
+process.env.PILOT_BRANCH = PILOT_BRANCH;
 /** The pilot branch as last fetched from origin, the run remote while `pilot.remote` is unset. */
 const PILOT_REF = `refs/remotes/origin/${PILOT_BRANCH}`;
 
@@ -173,4 +176,33 @@ test('a repository git cannot list is cannot tell', () => {
   });
   assert.equal(row.verdict, 'cannot tell');
   assert.match(row.detail, /not a git repository/);
+});
+
+/** Runs `body` with no pilot branch name to read (the seeded repo stores none), then pins the name again. */
+function unnamed(t, body) {
+  delete process.env.PILOT_BRANCH;
+  t.after(() => {
+    process.env.PILOT_BRANCH = PILOT_BRANCH;
+  });
+  return body();
+}
+
+test('with no pilot branch name and an old tree, the stale count is cannot tell and names the fix', (t) => {
+  const { repo } = fixture(t);
+  const row = unnamed(t, () => census(repo, { sizeOf: () => assert.fail('nothing is walked') }, 15));
+  assert.equal(row.verdict, 'cannot tell');
+  assert.ok(row.detail.startsWith(`4 trees, ? stale (>14 d; ${NO_NAME}), 1 untagged detached, 1 orphan dirs; 50.0 GB free`), row.detail);
+});
+
+test('with no pilot branch name, a full disk still fails', (t) => {
+  const { repo } = fixture(t);
+  const row = unnamed(t, () => census(repo, { statfs: volume(5 * GiB, 100 * GiB) }, 15));
+  assert.equal(row.verdict, 'fail', row.detail);
+});
+
+test('with no pilot branch name and no old tree, nothing is unknown and the row passes', (t) => {
+  const { repo } = fixture(t);
+  const row = unnamed(t, () => census(repo));
+  assert.equal(row.verdict, 'pass', row.detail);
+  assert.ok(row.detail.startsWith('4 trees, 0 stale (>14 d, not in the pilot branch), '), row.detail);
 });
