@@ -36,29 +36,34 @@ const RECORD = /^docs\/design\/[^/]+\/run\.json$/;
 export const keptLine = (dir, state) => `kept ${state} ${dir}`;
 
 /** A path as git and the file system may both spell it, case-blind on Windows. */
-const norm = (p) => {
+export const norm = (p) => {
   const slashed = path.resolve(p).replaceAll('\\', '/');
   return isWindows() ? slashed.toLowerCase() : slashed;
 };
-const same = (a, b) => norm(a) === norm(b);
+export const same = (a, b) => norm(a) === norm(b);
 /** Whether `p` lies strictly under `dir`. */
-const inside = (p, dir) => norm(p).startsWith(`${norm(dir).replace(/\/$/, '')}/`);
+export const inside = (p, dir) => norm(p).startsWith(`${norm(dir).replace(/\/$/, '')}/`);
 
-/** `git worktree list` records; the first is the main checkout. Null when git fails. */
-export function worktrees(repo) {
-  const list = git(repo, 'worktree', 'list', '--porcelain', '-z');
-  if (!list.ok) return null;
-  return list.out.split('\0\0').filter(Boolean).map((block) => {
-    const tree = { path: null, head: null, branch: null, locked: false };
+/** `git worktree list --porcelain -z` output as records; the first is the main checkout. */
+export function parseWorktrees(out) {
+  return out.split('\0\0').filter(Boolean).map((block) => {
+    const tree = { path: null, head: null, branch: null, locked: false, prunable: false };
     for (const line of block.split('\0')) {
       const [key, ...rest] = line.split(' ');
       if (key === 'worktree') tree.path = rest.join(' ');
       else if (key === 'HEAD') tree.head = rest.join(' ');
       else if (key === 'branch') tree.branch = rest.join(' ').replace(/^refs\/heads\//, '');
       else if (key === 'locked') tree.locked = true;
+      else if (key === 'prunable') tree.prunable = true;
     }
     return tree;
   });
+}
+
+/** `git worktree list` records; the first is the main checkout. Null when git fails. */
+export function worktrees(repo) {
+  const list = git(repo, 'worktree', 'list', '--porcelain', '-z');
+  return list.ok ? parseWorktrees(list.out) : null;
 }
 
 /** `git status -z` entries of `dir` as `{ code, file }`, or null when status fails. */

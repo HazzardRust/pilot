@@ -78,6 +78,7 @@ const POLL_MS = 1_000;
  *   14175 / 13024; temporary, still over the base bars 13597 / 12453, which the user decides.
  * 2026-11-27, prune-worktrees fix round: 14252 (node 853, git 13103, other 296) on the integrate merge with feat 8c4a18d; the four defect tests' fixture git; temporary until S11 (itm_1b18772998c1).
  * 2026-11-27, prune-worktrees drift merge on 71991cb: 11753 (node 843, git 10616, other 294) locally + Windows-CI delta 9/6; temporary until S11 and the final exact pins; worktrees.test.mjs MERGED gains raced and gone (gone last, for its HEAD~1) and the gone test drops --unset-upstream, the fix round's two tests on test-body-git's fixture.
+ * 2026-11-27, prune-worktrees S11 (one porcelain parser, one path-equality export): 11753 (node 843, git 10616, other 294) locally, unchanged by the removal; final exact pins, the Windows-CI delta 9/6 and no other headroom: 11762 / 10622 (itm_cc4171bdb60c).
  */
 export const SPAWN_CEILING = 11762;
 /** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13, prune-worktrees); see the dated lines above. */
