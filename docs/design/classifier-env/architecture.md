@@ -65,7 +65,7 @@ fold slice.
 | --- | --- | --- | --- |
 | `runSettings` (`deck/run-env.mjs`) | `runSettings(level, pluginRoot?, { home?, env? })`, `CLASSIFIER_ENVIRONMENT`, `CLASSIFIER_SWITCH` | the `autoMode` block, its constant prose, the off switch | in-process |
 | `startArgs` (`deck/run-env.mjs`) | `startArgs(reach, { settingsFile?, home?, env? }) -> string[]` | writing the file whole; threading `env` to `runSettings` | local-substitutable (scratch home) |
-| `autoModeRow` (`deck/doctor.mjs`) | `autoModeRow({ settings }) -> { name, verdict, detail, steps }` | which user lists lack `"$defaults"` | in-process |
+| `autoModeRow` (`deck/doctor-automode.mjs`) | `autoModeRow({ settings }) -> { name, verdict, detail, steps }` | which user lists lack `"$defaults"` | in-process |
 
 ## 4. Ubiquitous language
 

@@ -2,7 +2,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { autoModeRow, checkAll } from '../doctor.mjs';
+import { autoModeRow } from '../doctor-automode.mjs';
+import { checkAll } from '../doctor.mjs';
 import { tempDeck } from '../testUtils.mjs';
 
 test('no autoMode block passes', () => {

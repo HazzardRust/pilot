@@ -30,6 +30,7 @@ import { norm as pathKey, parseWorktrees } from '../scripts/worktree-remove.mjs'
 import { PILOT_MERGE_ALLOW, defaultSettingsPath, denyCovers, readSettings, resolvePluginRoot } from '../scripts/install-settings.mjs';
 import { LEGACY_PILOT, NO_NAME, firstLine, namePilotBranch, pilotBranch } from '../scripts/pilot-branch.mjs';
 import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/reach.mjs';
+import { autoModeRow } from './doctor-automode.mjs';
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { powerRow, readPower } from './power.mjs';
 import { probeDeck } from './probe.mjs';
@@ -400,30 +401,6 @@ export function allowRow({ readSettings = defaultReadSettings }) {
   };
 }
 
-/** The autoMode lists whose setting replaces the classifier's defaults unless it keeps `"$defaults"`. */
-const AUTO_MODE_LISTS = ['environment', 'allow', 'soft_deny', 'hard_deny'];
-
-/**
- * Fail when the user settings' autoMode sets environment, allow, soft_deny or hard_deny without "$defaults"
- * (classifier-env spec 8). `settings` is the user settings object or null; read-only, and it never runs the reset.
- */
-export function autoModeRow({ settings }) {
-  const name = 'auto mode defaults';
-  if (!settings) return { name, verdict: 'cannot tell', detail: 'the user settings file could not be read as JSON' };
-  const block = settings.autoMode ?? {};
-  const dropped = AUTO_MODE_LISTS.filter((list) => Array.isArray(block[list]) && !block[list].includes('$defaults'));
-  if (!dropped.length) return { name, verdict: 'pass', detail: 'no user autoMode list drops "$defaults"' };
-  return {
-    name,
-    verdict: 'fail',
-    detail: `your user autoMode ${dropped.join(', ')} ${dropped.length > 1 ? 'drop' : 'drops'} "$defaults", so the classifier loses its default rules there`,
-    steps: [
-      `add "$defaults" to each list named in ${defaultSettingsPath()}`,
-      'or: claude auto-mode reset (removes your whole autoMode block, custom rules included)',
-    ],
-  };
-}
-
 /** A `CLAUDE_CODE_SAFE_MODE` that is set and not plainly off. */
 const safeMode = (value) => typeof value === 'string' && value !== '' && !/^(0|false)$/i.test(value);
 
@@ -729,11 +706,7 @@ export async function checkAll({
   const censusGit = injected ?? leashedGit(cwd);
   const [found, view] = await Promise.all([probe(url), readView()]);
   let settings;
-  try {
-    settings = readSettings();
-  } catch {
-    settings = null;
-  }
+  try { settings = readSettings(); } catch { settings = null; }
   return [
     defenderRow({ platform, run, root }),
     powerRow({ power: readPower({ platform, run }), awake: found.awake, platform }),
