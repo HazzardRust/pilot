@@ -19,17 +19,23 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `agents.mjs` | who is live in each deck, from the roster sessions declare |
 | `alert-switch.mjs` | the Weekly alerts on/off switch file |
 | `analytics.mjs` | `pilot analytics`: a run's tokens, tool calls, time and cost per agent |
+| `archive-detail.mjs` | the read-only join of an archived item with its plan and closing report, for the detail view |
+| `archive-time.mjs` | the archive's one local time format, `YYYY-MM-DD HH:MM`, for every row and the view alike |
+| `archive.mjs` | the archive's one read-only seam: every record kind's rows off the store files, credentials withheld |
 | `audit.mjs` | the housekeeping audit report: checked, ranked, rendered, kept in the store |
+| `awake.mjs` | the keep-awake hold: the in-flight rule, the per-OS holder, the tick |
 | `blocked-shape.mjs` | checks a ticketed `Blocked:` question or walkthrough is posted blocking |
 | `budget.mjs` | the per-session agent split set by `pilot budget` |
 | `chain.mjs` | hands the next open ticket to a session when a run finishes cleanly |
 | `classifier-log.mjs` | the classifier log: one line per auto-mode denial, credentials withheld, newest 10,000 kept; a record, never a permission |
 | `client.mjs` | the stdio MCP server each session spawns; owns no state |
 | `closing-report.mjs` | writes the closing report when a landing lands: resolves the gate2, finishes its record, closes the ticket |
-| `crew-handoff.mjs` | a ticket's open crew-handoffs, which a successor's `deck_ticket co-pilot` grant closes |
+| `crew-handoff.mjs` | which crew-handoffs a grant or the settle closes: a ticket's open ones, those whose ticket left yellow, never over an unanswered press |
+| `crew-wait.mjs` | `CREW_WAIT_MS` and `crewWaitingOf`: an open crew-handoff 10 minutes old reads `waiting <age>`, derived off the clock, never stored |
+| `crew-settle.mjs` | the deck's crew-handoff closes: a `co-pilot` grant's, and the settle after every change, each traced |
 | `credential.mjs` | the one credential check, `findCredential`, for every deck post, land's output and the classifier log |
 | `daemon.mjs` | the deck process: starts the server over the store; holds a leash, or the idle rule on the user's deck |
-| `doctor.mjs` | `pilot doctor`: one row per local check, `pass`, `fail` or `cannot tell` (Defender over the projects root and its admin step, Node against engines, the deck dependency, the store directory writable, `gh`, `git`, `claude` on PATH); exit 1 on a fail; reads only, bar one temp file it removes (process-gc L12, daemon-lifecycle spec 10) |
+| `doctor.mjs` | `pilot doctor`: one row per local check, `pass`, `fail` or `cannot tell` (Defender over the projects root and its admin step, Power from `power.mjs`, Node against engines, the deck dependency, the store directory writable, `gh`, `git`, `claude` on PATH); exit 1 on a fail; reads only, bar one temp file it removes (process-gc L12, daemon-lifecycle spec 10) |
 | `exit-route.mjs` | `POST /api/exit { version }`: 202 and the daemon's shutdown only for a newer caller, 409 for one not newer or while a landing runs (daemon-lifecycle L3, ADR 0156) |
 | `gc.mjs` | `pilot gc`: stops each orphan `procs.mjs` names and nothing else, a test root as a tree; one line per stop, and `pilot land` runs it once landed (process-gc L11, L14) |
 | `gate2-base.mjs` | the gate2 base check: refuses a gate2 whose sha does not merge clean onto pilot, local git only |
@@ -57,6 +63,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `open.mjs` | opens the deck page in a browser when a run registers |
 | `owed.mjs` | the threads the pilot still owes a directory: unanswered, or promised with `deck_reply`'s `promise`; served on `/api/record` |
 | `pilot-state.mjs` | `pilotStateOf`: the pilot's state for a repository, read at render time from items, runs and held waits and stored nowhere, in the precedence ADR 0149 records |
+| `power.mjs` | the doctor's `Power` row: per-OS reads of the power source, the lid and power-button actions and Modern Standby, never a write (stay-awake spec 4, 9) |
 | `pr-writes.mjs` | `startPrWrite`: the deck write, `pilot pr --ticket <id>` spawned on a gate1 and each status of its ticket, one in flight per ticket plus one rerun, a failure one line on the ticket (deck-writes-github spec 2, 7) |
 | `probe.mjs` | `probeDeck`: the one answer to who holds a url, a deck by pid and version, nothing, or not a deck (daemon-lifecycle §3) |
 | `procs.mjs` | `pilot ps`: the process table (one PowerShell CIM or `ps` read), the pilot-owned daemons, waits and test roots, and which are orphans and why (process-gc L5-L6) |
@@ -68,6 +75,8 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `run-claim.mjs` | the hand-off mod's claims and stamps: the once-only `/clear` claim, the lane's marker, the posted and reported-in stamps and the session pid |
 | `run-env.mjs` | a pilot session's start: its settings and arguments (`runSettings`, `startArgs`) and environment (`runEnv`) |
 | `run-look.mjs` | the hand-off mod's look: one `Outcome` per op (`turn`, `cleared`) as a CLI the mod runs |
+| `run-prune.mjs` | `startRunPrune`: `pilot worktrees prune --run <slug> --stage planned\|abandoned` spawned on `deck_status` `finished` `planned` or `abandoned…`, its lines one note on the ticket (prune-worktrees spec 2, 4) |
+| `rune-bin.mjs` | which Rune deck runs: the local build, else the pinned binary `pilot deck` downloads and verifies by sha256 |
 | `runs.mjs` | what a run is and whether its session is still there |
 | `schedule.mjs` | the co-pilot's scheduler: which slices of a run's record may start now, and from which tip |
 | `scratch.mjs` | `pilot deck --scratch`: an agent's own deck on a free port, its store under the temp directory |

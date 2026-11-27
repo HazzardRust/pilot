@@ -24,6 +24,7 @@ import { hostPlatform, onSearchPath } from '../hooks/lib/platform.js';
 import { deckPidNow, stopper } from '../deck/gc.mjs';
 import { isClaude, pilotProcesses, processTable } from '../deck/procs.mjs';
 import { takeSlot } from './gate-slots.mjs';
+import { LEGACY_PILOT } from './pilot-branch.mjs';
 import { rebuildLedgers } from './ledgers.mjs';
 import { RUNE_TARGET_MAX, boundTarget, runeTargetDir, staleRoot } from './rune-target.mjs';
 import { FULL_TRIGGERS, TEST_GLOB, scopeLine, selectTests } from './select-tests.mjs';
@@ -50,8 +51,44 @@ const POLL_MS = 1_000;
  *   tests, this round's landing retry, stacked and unlanded restack fixtures among them.
  * 2026-11-24, cheap-suite S10: 13571 (node 831, git 12472, other 268) on Windows, Node 26, under two other
  *   full suites; the acceptance run in docs/design/cheap-suite/cost-after.txt, ceiling 13571 + 10%.
+ * 2026-11-26, land-batching S7: 12815 (node 848, git 11676, other 291) on Windows, Node 26, product cut only (S1-S5, S8, S9);
+ *   it missed the 11,000 / 10,000 bars, so both ceilings are this run's own numbers (docs/design/land-batching/cost-after.txt);
+ *   S6 was to lower them to the signed ones.
+ * 2026-11-25: CI windows-latest on ef9ee6c, the highest runner (local 12815 / 11676): 12823 (node 848, git 11682, other 293).
+ * 2026-11-26, land-batching S6: the fixture helpers it owns fold 2 git per seeded origin and its own test adds 32, while
+ *   the rest of the fixture git is in test bodies, so the bars are still missed. Its local run, the same machine as S7's,
+ *   read 12807 (node 848, git 11668, other 291) (docs/design/land-batching/cost-after.txt), 8 under S7's 12815 / 11676.
+ *   CI's windows-latest read S7's tip ef9ee6c at 12823 (node 848, git 11682, other 293), the highest of the runners
+ *   (ubuntu and macOS passed under 12815 / 11676); less the same 8 that is 12815 / 11674, and the ceilings are that
+ *   highest count (A5: the CI count, itm_470ec6f7a434).
+ * 2026-11-26, land-batching S6 on the base 6e1806b (user-pilot-branch, pr-overview landed): their added tests read
+ *   13589 (node 850, git 12447, other 292) locally (docs/design/land-batching/cost-after.txt); the ceilings are that
+ *   plus the Windows-CI delta above (8 spawns / 6 git), 13597 / 12453: the measured bars (itm_9ac7a84014e9).
+ * 2026-11-27, test-body-git S13 (itm_fa71edea84e2): the fixture git folded out of the test bodies. SPAWN_CEILING is the
+ *   measured 11083 on the highest runner (CI windows-latest, Gate run 45907856887 on cd15ab4: `spawns 11083 (node 843, git
+ *   9947, other 293)`; local 11074 + Windows delta 9; later local runs on S13's tip read 11074, 11074 and 11079, so the count moves by a few between runs);
+ *   GIT_CEILING 10000 is the signed bar. No headroom. L7 and spec line 1 of test-body-git moved on that decision (docs/design/test-body-git/cost-after.txt).
+ * 2026-11-27, prebuilt-rune: CI windows-latest, Gate run 45953779329 on f5713db: `spawns 11084 (node 845, git 9947, other 292)`;
+ *   SPAWN_CEILING re-pinned to that 11084, exact (assumed by the deck's default, itm_8b82a8c0fff2). GIT_CEILING unchanged.
+ * 2026-11-27, prebuilt-rune: CI windows-latest, Gate run 45959300810 on c2cb913: `spawns 11085 (node 845, git 9947, other 293)`;
+ *   "other" read 292 then 293 on the same code. SPAWN_CEILING re-pinned to 11085, exact (the user's decision, itm_abcdde7d29e5).
+ * 2026-11-27, prune-worktrees drift merge on 5c326bd: 14110 (node 853, git 12962, other 295) locally; S1-S4 fixture
+ *   tests (worktree-remove, worktrees-tagged, worktrees-landed, integrate-prune); plus the Windows-CI delta 8/6, 14118 / 12968.
+ * 2026-11-27, prune-worktrees S5: 14189 (node 853, git 13041, other 295) locally + Windows-CI delta 9/6; temporary,
+ *   folded back by the fixture slice. 14198 / 13047.
+ * 2026-11-27, prune-worktrees S7 on S5: 14292 (node 853, git 13144, other 295) locally + Windows-CI delta 9/6; temporary, folded back by the fixture slice
+ * 2026-11-27, prune-worktrees S8 on S7: spawns 14580 (node 853, git 13432, other 295) locally + Windows-CI delta 9/6; temporary, folded back by the fixture slice
+ * 2026-11-27, prune-worktrees S10 on S6 (0061fc1): spawns 14166 (node 853, git 13018, other 295) locally + Windows-CI delta 9/6,
+ *   14175 / 13024; temporary, still over the base bars 13597 / 12453, which the user decides.
+ * 2026-11-27, prune-worktrees fix round: 14252 (node 853, git 13103, other 296) on the integrate merge with feat 8c4a18d; the four defect tests' fixture git; temporary until S11 (itm_1b18772998c1).
+ * 2026-11-27, prune-worktrees drift merge on 71991cb: 11753 (node 843, git 10616, other 294) locally + Windows-CI delta 9/6; temporary until S11 and the final exact pins; worktrees.test.mjs MERGED gains raced and gone (gone last, for its HEAD~1) and the gone test drops --unset-upstream, the fix round's two tests on test-body-git's fixture.
+ * 2026-11-27, prune-worktrees S11 (one porcelain parser, one path-equality export): 11753 (node 843, git 10616, other 294) locally, unchanged by the removal; final exact pins, the Windows-CI delta 9/6 and no other headroom: 11762 / 10622 (itm_cc4171bdb60c).
+ * 2026-11-27, prune-worktrees drift merge on 74b3604: 11749 (node 845, git 10610, other 294) locally + Windows-CI delta 9/6; the final exact pins (itm_abcdde7d29e5); deck/doctor.mjs takes norm and parseWorktrees from worktree-remove.mjs (QA B2), which keeps it under facades' 800 bar after prebuilt-rune's +17.
+ * 2026-11-27, classifier-env drift merge on 0146ce6: 11746 (node 845, git 10607, other 294) locally + Windows-CI delta 9/6; the final exact pins, 11755 / 10613 (itm_abcdde7d29e5).
  */
-export const SPAWN_CEILING = 14929;
+export const SPAWN_CEILING = 11755;
+/** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13, prune-worktrees); see the dated lines above. */
+export const GIT_CEILING = 10613;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 
@@ -106,6 +143,8 @@ export function gateEnv(env, slot, spawns, guard) {
   }
   options.push(cap);
   const named = {
+    // The suite's ~67 fixtures seed the legacy `pilot`; a test of the derivation unsets it (user-pilot-branch L7).
+    PILOT_BRANCH: env.PILOT_BRANCH || LEGACY_PILOT,
     ...(slot === undefined ? {} : { PILOT_GATE_SLOT: String(slot) }),
     ...(guard === undefined ? {} : { PILOT_GATE_HOME_STORE: guard.store, PILOT_GATE_HOME_LOG: guard.log }),
   };
@@ -130,10 +169,17 @@ function namesPathUnder(command, cwd, platform) {
   return false;
 }
 
-/** The pilot-owned processes under `cwd` in `after` and not in `before`, by pid and command, so a reused pid is new. */
+/**
+ * The pilot-owned processes under `cwd` in `after` and not in `before`, by pid and command, so a reused pid is new.
+ * A keep-awake holder names no path: it is the suite's when the deck it watches is, or that deck is gone.
+ */
 export function leftovers(before, after, cwd, platform = hostPlatform()) {
   const was = new Set(before.map((p) => `${p.pid} ${p.command}`));
-  return after.filter((p) => !was.has(`${p.pid} ${p.command}`) && namesPathUnder(p.command, cwd, platform));
+  const fresh = after.filter((p) => !was.has(`${p.pid} ${p.command}`));
+  const left = fresh.filter((p) => namesPathUnder(p.command, cwd, platform));
+  const decks = new Set(left.map((p) => p.pid));
+  const holders = fresh.filter((p) => p.kind === 'holder' && !left.includes(p) && (decks.has(p.owner) || p.orphan === `deck ${p.owner} gone`));
+  return [...left, ...holders];
 }
 
 const pause = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -173,12 +219,17 @@ export function census(before, { cwd, read = processTable, kill = stopper, deckP
   };
   const first = watch(before);
   const deck = first.left.length ? deckPid() : undefined;
+  // The user's deck and the holder it watches are neither stopped nor named.
+  const users = (r) => r.pid === deck || (r.kind === 'holder' && r.owner === deck);
   const lines = [];
+  // An unanswered probe cannot tell a leashless daemon, or its holder, from the user's deck: named, never stopped.
+  // The set is taken before the loop, so a holder listed ahead of its deck is spared too.
+  const leashless = (r) => r.kind === 'daemon' && !/\s--leash\s/.test(` ${r.command} `);
+  const unsure = new Set(deck === undefined ? first.left.filter(leashless).map((r) => r.pid) : []);
   const stop = kill(first.table);
-  for (const row of first.left.filter((r) => r.pid !== deck)) {
+  for (const row of first.left.filter((r) => !users(r))) {
     try {
-      // An unanswered probe cannot tell a leashless daemon from the user's deck: named, never stopped.
-      if (deck === undefined && row.kind === 'daemon' && !/\s--leash\s/.test(` ${row.command} `)) {
+      if (unsure.has(row.pid) || (row.kind === 'holder' && unsure.has(row.owner))) {
         lines.push(`not stopped ${row.pid}: cannot tell it from the user's deck`);
         continue;
       }
@@ -188,7 +239,7 @@ export function census(before, { cwd, read = processTable, kill = stopper, deckP
       lines.push(`could not stop ${row.pid}: ${firstLine(err)}`);
     }
   }
-  const survivors = lines.length ? watch([...before, ...first.left.filter((r) => r.pid === deck)]).left : [];
+  const survivors = lines.length ? watch([...before, ...first.left.filter(users)]).left : [];
   lines.push(...(survivors.length ? survivors.map((row) => `left running: ${named(row)}`) : ['left running: none']));
   return { red: survivors.length > 0, lines };
 }
@@ -197,15 +248,17 @@ export function census(before, { cwd, read = processTable, kill = stopper, deckP
  * The spawn line, and `spawns over <ceiling>; most: <owner> <n>, …` when the count is above it,
  * naming the three test files that spent most (S12); the unowned `-` is the runner's, never named.
  */
-function spawnLines(count, ceiling) {
+function spawnLines(count, ceiling, gitCeiling) {
   const lines = [`spawns ${count.total} (node ${count.node}, git ${count.git}, other ${count.other})`];
-  if (count.total <= ceiling) return lines;
-  const most = [...count.owners]
-    .filter(([owner]) => owner !== '-')
-    .sort(([a, n], [b, m]) => m.total - n.total || (a < b ? -1 : 1))
-    .slice(0, 3)
-    .map(([owner, n]) => `${owner} ${n.total}`);
-  lines.push(`spawns over ${ceiling}${most.length ? `; most: ${most.join(', ')}` : ''}`);
+  if (count.total > ceiling) {
+    const most = [...count.owners]
+      .filter(([owner]) => owner !== '-')
+      .sort(([a, n], [b, m]) => m.total - n.total || (a < b ? -1 : 1))
+      .slice(0, 3)
+      .map(([owner, n]) => `${owner} ${n.total}`);
+    lines.push(`spawns over ${ceiling}${most.length ? `; most: ${most.join(', ')}` : ''}`);
+  }
+  if (count.git > gitCeiling) lines.push(`git over ${gitCeiling}`);
   return lines;
 }
 
@@ -367,7 +420,7 @@ function writerLines(log) {
  * given the selection and bounding the shared target with `bound` first.
  * With `--cost` (cheap-suite S1; L4) it adds the cost reporter and prints the cost table last, its status unchanged.
  */
-export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, which, platform = hostPlatform(), bound = boundTarget, stale = staleRoot, ...rest } = {}) {
+export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, gitCeiling = GIT_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, which, platform = hostPlatform(), bound = boundTarget, stale = staleRoot, ...rest } = {}) {
   if (!syntaxClean(syntax, cwd)) return 1;
   const cost = args.includes('--cost');
   args = args.filter((arg) => arg !== '--cost');
@@ -423,7 +476,7 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
       after = { red: true, lines: [`left running: cannot tell, the process table did not read (${firstLine(err)})`] };
     }
     const count = spawnCount(file);
-    const counted = spawnLines(count, ceiling);
+    const counted = spawnLines(count, ceiling, gitCeiling);
     const home = homeStore === undefined ? undefined : homeStoreLine(homeStore, storeBefore, deckPid);
     const written = guard ? writerLines(guard.log) : [];
     process.stdout.write(`${[...after.lines, ...counted, ...(home ? [home.line] : []), ...written].join('\n')}\n`);

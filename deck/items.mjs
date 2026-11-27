@@ -19,6 +19,7 @@
  */
 
 import { pathKey as repoKey } from '../hooks/lib/platform.js';
+import { crewWaitingOf } from './crew-wait.mjs';
 
 import {
   DISMISSED_BY_USER, KIND_STEPS, REPORT_DUE, SIGN_OFF, NOT_YET, SHA_FIELD, URL_FIELD, LOGIN_FIELD, SCREENS_FIELD, SLICE_FIELD, REPO_FIELD, NEXT_FIELD, DIR_FIELD, WORKDIR_FIELD, SHELL_FIELD, COMMENT_FIELD, CHECKS_FIELD,
@@ -116,8 +117,8 @@ export const KINDS = [
 export const POSTABLE_KINDS = [...KINDS, KIND_LESSON, KIND_HANDOFF, KIND_CREW_HANDOFF];
 
 /**
- * The standing kinds (L6): open, but never waiting on the user, never in Yours,
- * and never holding a turn at the Stop gate. The daemon's
+ * The standing kinds (L6): open, but never in Yours and never holding a turn at the Stop gate;
+ * never waiting on the user either, but for a steps thread, which is (`isQueued`; ADR 0216). The daemon's
  * one spelling; `hooks/lib/deck.js` is the hooks', and `join.test.js` pins both.
  */
 export const STANDING_KINDS = [KIND_TICKET, KIND_REPORT, KIND_STEPS];
@@ -279,7 +280,7 @@ const SPECS = {
     options: false,
     fields: [SLICE_FIELD, REPO_FIELD, TICKET_ID_FIELD],
     buttons: [HANDOFF_FAILED],
-    note: "The pilot closes this when the agent's own handoff arrives. Handoff failed has it brief a fresh agent from the agent's branch.",
+    note: "The deck closes this as its ticket moves on, the pilot a ticketless one. Handoff failed has it brief a fresh agent from the branch.",
     ask: 'Treat this agent as lost, and brief a fresh one from its branch?',
   },
 };
@@ -517,10 +518,12 @@ export function isUnacknowledged(item, now = Date.now()) {
  *
  * A user thread (Create) is queued for as long as it is open, whoever spoke last
  * (2026-09-28); `queueOf` sorts it below everything that waits on an answer.
+ * A steps thread is queued too, while still standing for agents: only the user's Done
+ * closes it (steps-in-previews A1; ADR 0216, amending ADR 0202 A4).
  */
 export function isQueued(item) {
-  if (!isOpen(item) || isStanding(item)) return false;
-  return item?.kind !== KIND_CHAT;
+  if (!isOpen(item) || item?.kind === KIND_CHAT) return false;
+  return item?.kind === KIND_STEPS || !isStanding(item);
 }
 
 /** The kinds the user may close from the thread page (spec 7; a user thread since 2026-09-28; a steps thread's Done, human-steps). */
@@ -694,15 +697,18 @@ export function accentOf(item, items) {
   return state === 'closed' ? 'plain' : state;
 }
 
+/** A ticket's one word while an open steps thread names it: its row, its cards and its thread say it alike (steps-in-previews L4). */
+export const STEPS_WAITING = 'waiting on your steps';
+
 /**
  * Where a ticket stands (ticket-state-accents spec 8): `closed`, `co-pilot` when it is the ticket this
- * repository's live co-pilot builds, `landing` once its gate2 is pressed (gate2-frees-lane spec 1) and `human steps` once landed while an open steps thread names it (human-steps spec 3), `in hand` on the main slot (live or next, L21), else `parked`.
+ * repository's live co-pilot builds, `landing` once its gate2 is pressed (gate2-frees-lane spec 1) and `STEPS_WAITING` once landed while an open steps thread names it (human-steps spec 3), `in hand` on the main slot (live or next, L21), else `parked`.
  */
 export function standingOf(ticket, items, coPilotTicket) {
   if (!isOpen(ticket)) return 'closed';
   if (ticket.id === coPilotTicket) return 'co-pilot';
   if (isPaused(ticket)) return 'paused';
-  if (isLanding(ticket, items)) return items.some((each) => each?.kind === KIND_STEPS && each.ticket === ticket.id && isOpen(each)) ? 'human steps' : 'landing';
+  if (isLanding(ticket, items)) return items.some((each) => each?.kind === KIND_STEPS && each.ticket === ticket.id && isOpen(each)) ? STEPS_WAITING : 'landing';
   // In hand on its own stage's lane (three-lanes spec 4); a yellow ticket off the co-pilot is never in hand.
   const state = stateOf(ticket);
   return state !== 'yellow' && inHandOf(items, ticket.repo, state)?.id === ticket.id ? 'in hand' : 'parked';
@@ -758,12 +764,9 @@ export function appearsInYours(item) {
 
 /**
  * The five states of a thread, worded as the spec words them (line 4, A7). They
- * are *derived*: no agent types one, nothing is stored on the item to hold one,
- * and the clock is consulted only for a hand-off's `unacknowledged` (spec 19) —
- * otherwise two facts the thread already carries decide it,
- * the last message in it and whether the hand-off of that message was recorded
- * (D4). So a state cannot drift from the thread it describes, and a deck nobody
- * has touched for a week still reads correctly.
+ * are *derived*: nothing is stored on the item to hold one, and the clock is consulted only for
+ * `unacknowledged` (spec 19) and a crew-handoff's `waiting <age>`; otherwise the last message and whether
+ * its hand-off was recorded (D4) decide it, so a state cannot drift from the thread it describes.
  *
  * The last message is what the state is read off, because it is the only one
  * that can still be waiting on anybody: an older reply that was handed over
@@ -776,6 +779,8 @@ export function appearsInYours(item) {
  */
 export function threadState(item, now = Date.now()) {
   if (!isOpen(item)) return 'resolved';
+  const waiting = crewWaitingOf(item, now);
+  if (waiting !== null) return waiting;
   if (isUnacknowledged(item, now)) return 'unacknowledged';
   // A user's word on a record is never picked up (report-record spec 3), so the state reads past it.
   const last = lastSaid(isRecord(item) ? { replies: messagesOf(item).filter((message) => message.from !== 'user') } : item);

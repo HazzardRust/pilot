@@ -7,6 +7,7 @@
 import { yoursFor, yoursIndex } from '../status.mjs';
 import { landingFor, tabFor, tabsOf } from '../tabs.mjs';
 import { heldTicketsOf } from '../ui/render-rail.mjs';
+import { URL_IN_TEXT } from '../ui/render-strip.mjs';
 
 const hasTable = (record) => Array.isArray(record?.slices) && record.slices.length > 0;
 
@@ -16,6 +17,7 @@ const hasTable = (record) => Array.isArray(record?.slices) && record.slices.leng
  * default lane's rows, as `renderStrips` draws its sections (S22). A run naming no tab has nothing.
  */
 export function statusView(reads, query = {}) {
+  // `held: true`, on the table or a group, is a held ticket with no record (rune-panes S2, spec 1c).
   const { run = null, ticket: asked = null } = query;
   const tabs = tabsOf(reads.runs, reads.items, reads.numbers, reads.agents, reads.added, reads.lanes);
   const tab = run === null ? landingFor(tabs) : tabFor(tabs, run);
@@ -37,6 +39,17 @@ function clock(stamp) {
   return [at.getHours(), at.getMinutes()].map((n) => String(n).padStart(2, '0')).join(':');
 }
 
+/**
+ * The URLs the page's `renderState` links in a State cell, as `{ start, end }` UTF-8 byte offsets into it, the
+ * window's string indices (rune-panes L7): the page's own `URL_IN_TEXT`, so the window has no copy of the rule.
+ */
+function linksIn(state) {
+  return [...state.matchAll(URL_IN_TEXT)].map(({ index, 0: url }) => {
+    const start = Buffer.byteLength(state.slice(0, index));
+    return { start, end: start + Buffer.byteLength(url) };
+  });
+}
+
 /** One tab's table: the chosen held lane's record (`asked` only picks among them), and its selector. */
 function tableOf(tab, items, asked) {
   const held = heldTicketsOf(tab, items);
@@ -48,9 +61,12 @@ function tableOf(tab, items, asked) {
   const yours = yoursIndex(items.filter((item) => tab.open.includes(item)));
   const rows = slices.map((row) => {
     const item = yoursFor({ repo: tab.repo }, row, yours);
+    const state = String(row.state ?? '');
+    const links = linksIn(state);
     return {
       slice: row.slice,
-      state: row.state ?? '',
+      state,
+      ...(links.length > 0 && { links }),
       ...(row.branch && { branch: row.branch }),
       ...(row.pr && { pr: row.pr }),
       // The page's Yours cell: the thread's title, its kind on hover (`renderYours`).
@@ -62,7 +78,8 @@ function tableOf(tab, items, asked) {
     held.length < 2
       ? []
       : held.map(({ stage, ticket }) => ({ id: ticket.id, name: ticket.title, lane: stage, chosen: ticket.id === chosen.id }));
-  if (rows.length === 0) return { tickets, rows };
+  // A held ticket with no record: the page's "no slice table yet" (`renderStrips`), drawn by the window off `held`.
+  if (rows.length === 0) return { tickets, rows, ...(chosen && !record && { held: true }) };
   // The heading `renderStrips` gives the table and its graph: the record's own feature, else the tab's name,
   // and when the newest run started (QA F1).
   const heading = record?.feature || tab.name;

@@ -7,17 +7,17 @@
  */
 
 // A red run's log goes under a home of this process's own, never the real one.
-import './lib/fake-home.mjs';
+import { gitFixture } from './lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 
 import { githubHost } from '../../deck/host-github.mjs';
 import { greenChecks } from './lib/land-repos.mjs';
+import { seed } from './lib/seed.mjs';
 
 const { main, pushFeature } = await import('../land.mjs');
 const { remoteDefaultBranch } = await import('../pilot-branch.mjs');
@@ -59,21 +59,19 @@ test("the guard's read of an unreachable origin fails closed; only land falls ba
 });
 
 test('a tip already on origin reads landed', (t) => {
-  // origin.git holds main and feat/x; work, its clone, keeps pilot locally (`pilot.remote none`).
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-land-offline-'));
-  t.after(() => fs.rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }));
-  const origin = path.join(root, 'origin.git');
-  const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
-  git(root, 'clone', '-q', origin, work);
-  fs.appendFileSync(path.join(work, '.git', 'config'), '[user]\n\tname = test\n\temail = t@example.com\n[commit]\n\tgpgsign = false\n[pilot]\n\tremote = none\n');
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'main');
-  git(work, 'branch', 'pilot');
-  git(work, 'checkout', '-q', '-b', 'feat/x');
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'feat x');
-  git(work, 'push', '-q', 'origin', 'main', 'feat/x');
-  fs.writeFileSync(path.join(work, '.git', 'refs', 'remotes', 'origin', 'HEAD'), 'ref: refs/remotes/origin/main\n');
-  const tip = git(work, 'rev-parse', 'HEAD');
+  // origin.git holds main and feat/x; work, its clone on feat/x, keeps pilot locally at main (`pilot.remote none`).
+  const { origin, work, tip } = gitFixture(t, 'land-offline:tip-on-origin', (root) => {
+    const { origin, sha } = seed(root, [
+      { branch: 'main', files: {}, message: 'main' },
+      { branch: 'feat/x', files: {}, message: 'feat x' },
+    ]);
+    const work = path.join(root, 'work');
+    // The clone sets origin/HEAD; `git branch pilot` and `git config` are a ref file and a config line.
+    git(root, 'clone', '-q', '-b', 'feat/x', origin, work);
+    fs.appendFileSync(path.join(work, '.git', 'config'), '[pilot]\n\tremote = none\n');
+    fs.writeFileSync(path.join(work, '.git', 'refs', 'heads', 'pilot'), `${sha.main}\n`);
+    return { origin, work, tip: sha['feat/x'] };
+  });
 
   // origin cannot be asked for the feature's push, and for anything once the local pilot has moved.
   const calls = [];

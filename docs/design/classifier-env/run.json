@@ -1,0 +1,86 @@
+{
+  "slug": "classifier-env",
+  "feature": "classifier env",
+  "ticket": "itm_2295bb1ac43e",
+  "branch": "feat/classifier-env",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-classifier-env",
+  "artefact": "docs/design/classifier-env/architecture.md",
+  "slices": [
+    {
+      "slice": "S1 Start writes the classifier block",
+      "state": "pushed c77478a",
+      "branch": "slice/classifier-env-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-classifier-env-s1"
+    },
+    {
+      "slice": "S2 OPERATING.md section and lint",
+      "state": "planned",
+      "after": [
+        "S1 Start writes the classifier block"
+      ]
+    },
+    {
+      "slice": "S3 doctor autoMode row",
+      "state": "pushed 737adc0",
+      "branch": "slice/classifier-env-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-classifier-env-s3"
+    }
+  ],
+  "humanSteps": [
+    {
+      "text": "Your own ~/.claude/settings.json autoMode block has no \"$defaults\" and says \"no identifiable trusted repo\": run `claude auto-mode reset`, or rerun the setup prompt inside a repo. Pilot never writes that file."
+    }
+  ],
+  "next": "S1 integrating; then integrate S3 737adc0; then S2 from feat tip",
+  "updatedAt": "2026-11-24T19:15:53.582Z",
+  "friction": [
+    {
+      "agent": "architect",
+      "what": "start-settings.json is one per home, not per repo; only found by reading run-env.mjs",
+      "evidence": "deck/run-env.mjs:38; ticket assumed per-repo"
+    },
+    {
+      "agent": "architect",
+      "what": "docs-lookup returned a truncated settings-reference page; a live probe decided it",
+      "evidence": "claude --settings <probe> auto-mode config, 1 call"
+    },
+    {
+      "agent": "architect",
+      "what": "pilot wait gives up on a deck timeout and does not retry when the deck comes back",
+      "evidence": "4 exits in a row on 4321, each within minutes; pilot's own wait exhausted 10 retries"
+    },
+    {
+      "agent": "architect",
+      "what": "deck refused question posts for a missing or unlisted Research: reason",
+      "evidence": "4 refused posts"
+    },
+    {
+      "agent": "architect",
+      "what": "gate1 post refused once on a 5 s git timeout, once for a body missing A2-A5",
+      "evidence": "stored on the third post"
+    },
+    {
+      "kind": "drain",
+      "what": "relayed six timeout closes and read ten threads by hand because the architect lost the deck",
+      "size": 12
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "the --since selection gate silently became a ~9.5-minute full suite, run in parallel with S3's",
+      "evidence": "full suite: selection is 31221 characters of argv, over 24000; duration_ms 574127",
+      "size": 10
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "auto-mode critique cannot be read against the pilot lines alone and its advice changes between runs",
+      "evidence": "4 critique runs; runs 2 and 3 gave opposite advice on transcript visibility; user's home block skews it"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "node --test prints 'ℹ pass N' not TAP '# pass N', so a count grep came back empty and the run was repeated",
+      "evidence": "S3 gate count rerun",
+      "size": 1
+    }
+  ]
+}

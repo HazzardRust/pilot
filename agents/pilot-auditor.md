@@ -19,23 +19,21 @@ sha:
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/pilot-tip.mjs" --fetch
-git worktree add --detach <scratchpad>/audit-<stamp> <sha>
+pilot worktrees add --run audit-<stamp> --detach <scratchpad>/audit-<stamp> <sha>
 ```
 
-The first prints one line, `<ref> <sha>` (`origin/pilot <sha>`, or `HEAD
-<sha>` with no pilot ref); that line is the report's `base`, and its second
+The first prints one line, `<ref> <sha>` (`origin/<login>-pilot <sha>`, your
+pilot branch, or `HEAD <sha>` with no pilot ref); that line is the report's `base`, and its second
 word is `<sha>`.
 
 A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
-Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove with `pilot worktrees remove`.
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 
 `<stamp>` is the start time as `YYYYMMDD-HHMMSS`. When the areas are done,
 stop anything you started there by its own PID, then run
-`git worktree remove --force <scratchpad>/audit-<stamp>`; if
-Windows refuses a long path, delete the directory with `Remove-Item -Recurse
--Force` and run `git worktree prune`. Confirm it is gone from
-`git worktree list` before you report.
+`pilot worktrees remove <scratchpad>/audit-<stamp>`; if it prints
+`kept <state> <dir>`, leave the tree and put that line in the report.
 
 ## Never
 

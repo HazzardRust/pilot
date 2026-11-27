@@ -7,6 +7,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,23 +21,22 @@ const { holderFrom, prune } = await import('../worktrees.mjs');
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 const BASE = 'origin/main';
 
-/** A clone of a bare origin and `run`: run `s`'s feature worktree, worked and merged, so merged-clean. */
+/**
+ * A clone of a seeded origin and `run`: run `s`'s feature worktree, cut at main's first commit and
+ * moved to its commit `a`, which main has merged, so merged-clean.
+ */
 function scratch(t) {
   return gitFixture(t, 'worktrees-holder:scratch', (root) => {
-    const origin = path.join(root, 'origin.git');
+    const { origin } = seed(root, [
+      { branch: 'main', files: {}, message: 'main' },
+      { branch: 'slice/s-s1', files: { 'deck/a.txt': 'a' }, message: 'a' },
+      { branch: 'main', files: {}, message: 'merge', merge: ['slice/s-s1'] },
+    ]);
     const work = path.join(root, 'work');
-    git(root, 'init', '-q', '--bare', '-b', 'main', origin);
     git(root, 'clone', '-q', origin, work);
-    git(work, 'commit', '-q', '--allow-empty', '-m', 'main');
-    git(work, 'push', '-q', 'origin', 'main');
     const run = path.join(root, 'run');
-    git(work, 'worktree', 'add', '-q', '-b', 'slice/s-s1', run, BASE);
-    fs.mkdirSync(path.join(run, 'deck'));
-    fs.writeFileSync(path.join(run, 'deck', 'a.txt'), 'a');
-    git(run, 'add', 'deck/a.txt');
-    git(run, 'commit', '-q', '-m', 'a');
-    git(work, 'merge', '-q', '--no-ff', '-m', 'merge', 'slice/s-s1');
-    git(work, 'push', '-q', 'origin', 'main');
+    git(work, 'worktree', 'add', '-q', '-b', 'slice/s-s1', run, 'origin/slice/s-s1~1');
+    git(run, 'merge', '-q', '--ff-only', 'origin/slice/s-s1');
     return { root, work, run };
   });
 }
@@ -47,6 +47,15 @@ const keptOf = (result) => result.kept.filter(({ state }) => state !== 'main').m
 test('a live leash keeps its worktree', (t) => {
   const { work, run } = scratch(t);
   const result = prune(work, BASE, { run: 's', holder: (dir) => (path.basename(dir) === 'run' ? 4242 : null) });
+  assert.deepEqual(result.removed, []);
+  assert.deepEqual(keptOf(result), [['run', 'live 4242']]);
+  assert.equal(fs.existsSync(run), true);
+});
+
+test('a holder that arrives after selection still keeps the tree: removeTree asks it again', (t) => {
+  const { work, run } = scratch(t);
+  let asked = 0;
+  const result = prune(work, BASE, { run: 's', holder: () => (asked++ ? 4242 : null) });
   assert.deepEqual(result.removed, []);
   assert.deepEqual(keptOf(result), [['run', 'live 4242']]);
   assert.equal(fs.existsSync(run), true);

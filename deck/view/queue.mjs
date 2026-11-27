@@ -10,6 +10,7 @@ import { renderByline, renderCardClose } from '../ui/render-parts.mjs';
 import { ENDED_NOTE } from '../ui/render-rail.mjs';
 import { tabCode } from '../ui/render-strip.mjs';
 import { confirmWords, optionsOf } from './reply.mjs';
+import { ticketLineOf } from './thread.mjs';
 
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", '#x27': "'" };
 const unescape = (text) => text.replace(/&(amp|lt|gt|quot|#39|#x27);/g, (_, name) => ENTITIES[name]);
@@ -26,8 +27,10 @@ function excerptOf(body) {
   return [...text.split('\n').slice(0, PREVIEW_LINES).join('\n')].slice(0, PREVIEW_CHARS).join('');
 }
 
-export function cardOf(item, { items, tab, back, all }) {
+/** `lanes` is `readDeck()`'s: the ticket line reads where the card's ticket stands from it, as the thread page's does. */
+export function cardOf(item, { items, lanes, tab, back, all }) {
   const state = threadState(item);
+  const ticket = ticketLineOf(item, items, lanes);
   return {
     id: item.id,
     title: String(item.title ?? ''),
@@ -39,6 +42,8 @@ export function cardOf(item, { items, tab, back, all }) {
     kind: plain(renderKind(item).replace(BLOCKING_BADGE, ' · blocking')),
     by: plain(renderByline(item.author)),
     at: lastSaidAt(item) ?? null,
+    // Every card that belongs to a ticket names it, as the HTML card does (A2).
+    ...(ticket ? { ticket } : {}),
     excerpt: excerptOf(item.body),
     ...(tab ? { tab: { code: tabCode(tab), href: hrefFor(tab, all) } } : {}),
     options: isOpen(item) ? cardOptions(item) : [],
@@ -68,7 +73,7 @@ export function queueView(reads, query = {}, now = Date.now()) {
   const tab = run === null ? landingFor(tabs) : tabFor(tabs, run);
   const back = hrefFor(tab, all);
   const cards = shownOf(tab ? tab.open : queueOf(items), items)
-    .map((item) => cardOf(item, { items, tab: tab ? null : tabFor(tabs, item.repo), back, all }));
+    .map((item) => cardOf(item, { items, lanes: reads.lanes, tab: tab ? null : tabFor(tabs, item.repo), back, all }));
   const line = (each, name) => {
     const { state, ticket, since } = pilotStateOf(each, items, reads.held, now);
     return { state, ...(name ? { name } : {}), ...(ticket ? { ticket } : {}), ...(since ? { since } : {}) };

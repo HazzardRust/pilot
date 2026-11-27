@@ -9,6 +9,7 @@ import {
   KIND_REPORT,
   KIND_STEPS,
   KIND_USER,
+  STEPS_WAITING,
   isBlocking,
   isLanding,
   isOpen,
@@ -79,8 +80,8 @@ const PARKED_LABEL = { ...STATE_LABEL, yellow: 'planned', green: 'awaiting sign-
 
 /** A ticket's label: a parked green ticket awaits sign-off only while an open gate2 names it; turned green by `need`, it needs you. */
 export function ticketLabelOf(item, state, items) {
-  // Its report posted, it waits only on the user's Done on its steps thread (human-steps A4).
-  if (items.some((other) => other.kind === KIND_STEPS && other.ticket === item.id && isOpen(other))) return 'human steps';
+  // Its report posted, it waits only on the user's Done on its steps thread (human-steps A4; steps-in-previews L4).
+  if (items.some((other) => other.kind === KIND_STEPS && other.ticket === item.id && isOpen(other))) return STEPS_WAITING;
   // A signed ticket holds no lane, whatever its stored `live` (gate2-frees-lane spec 1, L1).
   if (isLanding(item, items)) return 'landing';
   if (item.live === true) return STATE_LABEL[state];
@@ -120,8 +121,7 @@ function renderQuestionCount(asked) {
  * when none is open. On every row, so a thread behind the ticket in hand is a press away.
  */
 function renderPreviews(ticket, items) {
-  // A steps thread is standing, never queued, and still drawn under its ticket: the way to its Done (human-steps A4).
-  const links = items.filter((item) => item.ticket === ticket.id && (isQueued(item) || (item.kind === KIND_STEPS && isOpen(item)))).map((item) => `<p>${item.kind} ${renderStandingLink(item)}</p>`);
+  const links = items.filter((item) => item.ticket === ticket.id && isQueued(item)).map((item) => `<p>${item.kind} ${renderStandingLink(item)}</p>`);
   return links.length ? `<details class="previews"><summary>threads</summary>${links.join('')}</details>` : '';
 }
 
