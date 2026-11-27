@@ -66,10 +66,12 @@ const POLL_MS = 1_000;
  *   plus the Windows-CI delta above (8 spawns / 6 git), 13597 / 12453: the measured bars (itm_9ac7a84014e9).
  * 2026-11-27, prune-worktrees drift merge on 5c326bd: 14110 (node 853, git 12962, other 295) locally; S1-S4 fixture
  *   tests (worktree-remove, worktrees-tagged, worktrees-landed, integrate-prune); plus the Windows-CI delta 8/6, 14118 / 12968.
+ * 2026-11-27, prune-worktrees S5: 14189 (node 853, git 13041, other 295) locally + Windows-CI delta 9/6; temporary,
+ *   folded back by the fixture slice. 14198 / 13047.
  */
-export const SPAWN_CEILING = 14118;
+export const SPAWN_CEILING = 14198;
 /** The most git processes a full suite may start (land-batching S7, S6); see the dated lines above. */
-export const GIT_CEILING = 12968;
+export const GIT_CEILING = 13047;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 
