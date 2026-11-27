@@ -82,16 +82,20 @@ branch-only selection.
 - **A1** *assumed*: untagged trees are reached by name (`fix/<slug>-<any>`, `design/<slug>-recut`, detached
   `<repo>-fund-<slug>`), with the known-run guard. Trade: a name guess can still misattribute a tree of a run with no ref
   and no tag; A2 bounds that. Rejected: tags only, which reach none of today's 41 trees (F3).
+  Verdict: stands — 0 of 41 registered trees carry a tag, so tags alone reach nothing today; the longest-known-slug guard keeps another run's tree out
 - **A2** *assumed*: a guessed tree is judged by the strict rule (untracked counts, no `--force`) even after a landing.
   Trade: a guessed fix tree with stray scratch files stays and is named `kept dirty`. Rejected: one rule for all, which lets a
   wrong guess delete untracked work.
+  Verdict: stands — a guessed tree may hold work; keeping one with untracked files costs a line, removing it costs the work
 - **A3** *assumed, on the deck (itm_a25add987239)*: leftover remote `fix/<slug>-*` branches (land.mjs `deleteRunBranches`)
   are out of scope here and go to a separate ticket. Trade: origin keeps `fix/prune-worktrees-drift*` until then. Rejected:
   folding it in, which moves pilot-fork L4/L5 and touches the shared remote.
   Settled by timeout, not the user's press: itm_a25add987239 closed "Assumed: Separate ticket (default)" after 20 min.
+  Verdict: stands — deck default on itm_a25add987239, not the user; widening remote deletes moves a locked exact-names rule and is proposed separately as itm_0a3ba385d6ac
 - **A4** *assumed, on the deck (itm_f4215582c876)*: QA runs prune for real only in a scratch git repo fixture, and
   read-only (`runTrees`, never `prune`) over this repo's registered trees. Trade: no real removal on the shared checkout is
   watched. Rejected: a live prune on the shared checkout, which could remove another session's tree.
+  Verdict: stands — deck default on itm_f4215582c876, not the user; a real prune here would act on the run holding the user's two unmerged trees
 - red team: S1's first behaviour, walked against `land.mjs:213-216`. Taking the land dir in the not-landed path printed two
   lines for one dir (F4), so L2 excludes it. A tagged tree on the not-landed path is new reach; it is judged by the strict
   rule and the existing pin `worktrees-landed.test.mjs:117-124` stays green, since the land dir is outside it.
