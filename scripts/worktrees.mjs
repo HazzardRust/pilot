@@ -30,11 +30,11 @@ import path from 'node:path';
 
 import { holderOf, pilotProcesses, processTable } from '../deck/procs.mjs';
 import { isWindows } from '../hooks/lib/platform.js';
-import { tipOf } from './git-view.mjs';
+import { gitView, tipOf } from './git-view.mjs';
 import { keptDir } from './merge-generated.mjs';
 import { pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
 import { runRef, runRemote } from './remotes.mjs';
-import { keptLine, removeTree } from './worktree-remove.mjs';
+import { commitStep, keptLine, removeTree } from './worktree-remove.mjs';
 
 /** Runs git in `cwd`; answers `{ ok, out, err }`, never throws. */
 function git(cwd, ...args) {
@@ -90,6 +90,59 @@ function moved(repo, tree) {
   return movedFrom(tree.path, 'HEAD', tree.head);
 }
 
+/** Linked tree `dir`'s admin id, from its `.git` file (`gitdir: <common>/worktrees/<id>`), or null. */
+function adminId(dir) {
+  let text;
+  try {
+    text = fs.readFileSync(path.join(dir, '.git'), 'utf8');
+  } catch {
+    return null;
+  }
+  const gitdir = /^gitdir: (.+)$/m.exec(text)?.[1].trim();
+  if (!gitdir || path.basename(path.dirname(gitdir)) !== 'worktrees') return null;
+  const id = path.basename(gitdir);
+  return /^[\w.-]+$/.test(id) ? id : null;
+}
+
+/** The oldest entry of each of `refs`' reflogs, from one walk; a ref with none is absent. Null when git refuses or a line will not parse. */
+function oldestEntries(repo, refs) {
+  const log = git(repo, 'log', '-g', '--format=%gD %H', ...refs, '--');
+  if (!log.ok) return null;
+  const oldest = new Map();
+  for (const line of log.out.split('\n').filter(Boolean)) {
+    const entry = /^(.+)@\{(\d+)\} ([0-9a-f]+)$/.exec(line);
+    if (!entry || !refs.includes(entry[1])) return null;
+    const n = Number(entry[2]);
+    if (!oldest.has(entry[1]) || oldest.get(entry[1]).n < n) oldest.set(entry[1], { n, sha: entry[3] });
+  }
+  return new Map([...oldest].map(([ref, { sha }]) => [ref, sha]));
+}
+
+/**
+ * `moved` for each of `trees` from one reflog walk (S10): a tree's branch log and its own HEAD log,
+ * the latter as `worktrees/<id>/HEAD`. A tree whose id cannot be read, or a walk that fails, is
+ * asked by `moved`'s own two reads.
+ */
+function movedReader(repo, trees) {
+  const asked = new Map();
+  for (const tree of trees) {
+    if (tree.locked || tree.prunable || !tree.head) continue;
+    const id = adminId(tree.path);
+    if (id !== null) asked.set(tree, { branch: tree.branch ? `refs/heads/${tree.branch}` : null, own: `worktrees/${id}/HEAD` });
+  }
+  const refs = [...asked.values()].flatMap(({ branch, own }) => (branch ? [branch, own] : [own]));
+  // Walked on the first ask, so a classify that asks none (a landed run's) walks nothing.
+  let oldest;
+  const movedBy = (ref, head) => (oldest.get(ref) ?? head) !== head;
+  return (tree) => {
+    const pair = asked.get(tree);
+    if (pair && oldest === undefined) oldest = oldestEntries(repo, refs);
+    if (!oldest || !pair) return moved(repo, tree);
+    if (pair.branch && !movedBy(pair.branch, tree.head)) return false;
+    return movedBy(pair.own, tree.head);
+  };
+}
+
 /** The run record the deck mirrors into run `slug`'s feature worktree: generated (clean-landing L3), never a change. */
 export const runRecord = (slug) => `docs/design/${slug}/run.json`;
 
@@ -100,10 +153,8 @@ export const runRecord = (slug) => `docs/design/${slug}/run.json`;
 function withoutRecordTail(repo, sha, slug) {
   const record = runRecord(slug);
   for (let hops = 0; hops < 100; hops += 1) {
-    const [, ...parents] = git(repo, 'rev-list', '--parents', '-n', '1', sha).out.split(' ');
-    if (parents.length !== 1) return sha;
-    const files = git(repo, 'diff-tree', '--no-commit-id', '--name-only', '-r', '-z', sha);
-    if (!files.ok || files.out.split('\0').filter(Boolean).join('\0') !== record) return sha;
+    const { parents, files } = commitStep(repo, sha);
+    if (parents.length !== 1 || files.join('\0') !== record) return sha;
     sha = parents[0];
   }
   return sha;
@@ -198,12 +249,16 @@ function dirtOf(dir, mirror, { tracked = false } = {}) {
 }
 
 /** A tree's state; with `landedSlug`, the landed run's, unmoved is no longer open and a record-only tail is stripped. */
-function stateOf(repo, base, tree, index, mirror, landedSlug) {
+function stateOf(repo, base, tree, index, mirror, landedSlug, movedOf) {
   if (index === 0) return 'main';
   if (tree.locked) return 'locked';
-  if (tree.prunable || !tree.head || (!landedSlug && !moved(repo, tree))) return 'open';
-  const head = landedSlug ? withoutRecordTail(repo, tree.head, landedSlug) : tree.head;
-  if (![base].flat().some((ref) => git(repo, 'merge-base', '--is-ancestor', head, ref).ok)) return 'open';
+  if (tree.prunable || !tree.head || (!landedSlug && !movedOf(tree))) return 'open';
+  const inBase = (sha) => [base].flat().some((ref) => git(repo, 'merge-base', '--is-ancestor', sha, ref).ok);
+  if (!inBase(tree.head)) {
+    // A base that holds the head holds its record-free part too, so a landed run's tail is walked only when the head is not in (S10).
+    const work = landedSlug ? withoutRecordTail(repo, tree.head, landedSlug) : tree.head;
+    if (work === tree.head || !inBase(work)) return 'open';
+  }
   const dirt = dirtOf(tree.path, mirror, { tracked: Boolean(landedSlug) });
   if (dirt === null) return 'open';
   return dirt.length ? 'merged-dirty' : 'merged-clean';
@@ -228,10 +283,12 @@ export function classify(repo, base, { run, landed = false, view, featRecords = 
   const slug = landed ? run : undefined;
   // In the sweep, with no run named, a feat tree's own record is its run's mirror (its landed feat trees, S8).
   const mirrorOf = (tree) => mirror ?? (featRecords && /^feat\/\w[\w.-]*$/.test(tree.branch ?? '') ? runRecord(tree.branch.slice(5)) : undefined);
-  return worktrees(repo, view).map((tree, index) => ({
+  const trees = worktrees(repo, view);
+  const movedOf = movedReader(repo, trees.slice(1));
+  return trees.map((tree, index) => ({
     path: tree.path,
     branch: tree.branch,
-    state: stateOf(repo, base, tree, index, mirrorOf(tree), slug),
+    state: stateOf(repo, base, tree, index, mirrorOf(tree), slug, movedOf),
   }));
 }
 
@@ -246,16 +303,28 @@ export function isRunBranch(branch, slug) {
     ['slice', 'fix'].some((kind) => branch.startsWith(`${kind}/${slug}-`) && /^s\d+$/.test(branch.slice(`${kind}/${slug}-`.length)));
 }
 
-/** Fetches the remote `base` tracks, or nothing for a local `refs/heads/` base; throws when it is neither or the fetch fails. */
-function fetchBase(repo, base) {
-  if (base.startsWith('-')) throw new Error(`base ${base} is not a ref; nothing fetched`);
-  if (base.startsWith('refs/heads/')) return; // a local base (pilot.remote none) has nothing to fetch
-  const remotes = git(repo, 'remote');
-  if (!remotes.ok) throw new Error(`git remote failed in ${repo}: ${remotes.err}`);
-  const remote = remotes.out.split('\n').find((name) => name && base.replace(/^refs\/remotes\//, '').startsWith(`${name}/`));
-  if (!remote) throw new Error(`base ${base} is not a remote-tracking ref; nothing fetched`);
-  const fetch = git(repo, 'fetch', '-q', remote);
-  if (!fetch.ok) throw new Error(`git fetch ${remote} failed: ${fetch.err}`);
+/**
+ * Fetches the remote each of `bases` tracks, each remote once and `git remote` asked once (S10), or
+ * nothing for a local `refs/heads/` base; throws when a base is neither or a fetch fails.
+ */
+function fetchBases(repo, bases) {
+  let remotes = null;
+  const fetched = new Set();
+  for (const base of bases) {
+    if (base.startsWith('-')) throw new Error(`base ${base} is not a ref; nothing fetched`);
+    if (base.startsWith('refs/heads/')) continue; // a local base (pilot.remote none) has nothing to fetch
+    if (remotes === null) {
+      const list = git(repo, 'remote');
+      if (!list.ok) throw new Error(`git remote failed in ${repo}: ${list.err}`);
+      remotes = list.out.split('\n').filter(Boolean);
+    }
+    const remote = remotes.find((name) => base.replace(/^refs\/remotes\//, '').startsWith(`${name}/`));
+    if (!remote) throw new Error(`base ${base} is not a remote-tracking ref; nothing fetched`);
+    if (fetched.has(remote)) continue;
+    const fetch = git(repo, 'fetch', '-q', remote);
+    if (!fetch.ok) throw new Error(`git fetch ${remote} failed: ${fetch.err}`);
+    fetched.add(remote);
+  }
 }
 
 /**
@@ -280,13 +349,15 @@ function fetchBase(repo, base) {
  * `--base` (S8), reads a feat tree's own run record changed in place as no dirt (`classify`'s `featRecords`).
  */
 export function prune(repo, base, { dryRun = false, run, merged = [], keep = [], holder = () => null, landed = false, remove, git: view, fetched = false, sweep = false } = {}) {
-  if (!fetched) for (const ref of [base].flat()) fetchBase(repo, ref);
+  if (!fetched) fetchBases(repo, [base].flat());
   const removed = [];
   const kept = [];
   const failed = [];
   const relaxed = landed && run !== undefined;
-  const trees = classify(repo, base, { run, landed: relaxed, view, featRecords: sweep });
-  const theirs = relaxed ? new Set(runWorktrees(repo, run, view)) : null;
+  // A landed run's selection lists twice (classify, runWorktrees): a view of its own lists once (S10). Selection only: removeTree lists afresh.
+  const reads = view ?? (relaxed ? gitView(repo) : undefined);
+  const trees = classify(repo, base, { run, landed: relaxed, view: reads, featRecords: sweep });
+  const theirs = relaxed ? new Set(runWorktrees(repo, run, reads)) : null;
   const ours = (tree, index) => run === undefined ||
     (index > 0 && (relaxed ? theirs.has(tree.path) : isRunBranch(tree.branch, run)));
   for (const tree of trees.filter(ours)) {
@@ -511,13 +582,18 @@ export function main(argv, { out = process.stdout, err = process.stderr, read = 
       if (!run.ok) throw Object.assign(new Error(run.err), { stderr: run.err });
       return run.out;
     })}`;
-    if (onPilot && run === undefined) {
-      fetchBase(repo, pilotRef);
+    const sweep = onPilot && run === undefined;
+    // The sweep's selection view, made after its fetch: its tip snapshot answers pilot here and in classify (S10).
+    let view;
+    if (sweep) {
+      // Both bases fetched here, once a remote (S10), so the prune below fetches nothing.
+      fetchBases(repo, [pilotRef, base]);
+      view = gitView(repo);
       // A remote with no pilot branch leaves the sweep the default branch alone.
-      if (git(repo, 'rev-parse', '--verify', '--quiet', `${pilotRef}^{commit}`).ok) base = [pilotRef, base];
+      if (tipOf(view, pilotRef) !== null) base = [pilotRef, base];
     }
     if (!isPrune) {
-      fetchBase(repo, base);
+      fetchBases(repo, [base]);
       for (const row of classify(repo, base)) {
         out.write(`${row.state.padEnd(12)}  ${(row.branch ?? '(detached)').padEnd(24)}  ${row.path}\n`);
       }
@@ -525,13 +601,15 @@ export function main(argv, { out = process.stdout, err = process.stderr, read = 
     }
     // A branch in the landed pilot goes with -D, as the landing does: git's own -d judges against main.
     // Fetched first, so the list and landedRun read the base as origin has it.
-    if (run !== undefined) fetchBase(repo, base);
+    if (run !== undefined) fetchBases(repo, [base]);
     const landedOn = [base].flat().includes(pilotRef) ? pilotRef : null;
     const merged = landedOn
       ? git(repo, 'for-each-ref', '--merged', landedOn, '--format=%(refname:short)', 'refs/heads/').out.split(/\r?\n/).filter(Boolean)
       : [];
     const landed = run !== undefined && landedRun(repo, base, run);
-    const { removed, kept, failed } = prune(repo, base, { dryRun, run, merged, landed, holder: holderFrom(read), sweep: onPilot && run === undefined });
+    // Fetched above for a run and for the sweep; a plain --base prune fetches in prune.
+    const fetched = sweep || run !== undefined;
+    const { removed, kept, failed } = prune(repo, base, { dryRun, run, merged, landed, holder: holderFrom(read), sweep, fetched, git: view });
     for (const p of removed) out.write(`${dryRun ? 'would remove' : 'removed'}  ${p}\n`);
     for (const { path, state } of kept) out.write(`kept ${state.padEnd(12)}  ${path}\n`);
     for (const { path, reason } of failed) err.write(`NOT removed ${path}: ${reason}\n`);
