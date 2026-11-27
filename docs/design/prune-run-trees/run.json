@@ -9,20 +9,22 @@
   "slices": [
     {
       "slice": "S1 run membership",
-      "state": "failed gate: merged red on spawn ceilings, spawns 11953 over 11758, git 10814 over 10616; fix round live",
+      "state": "integrated",
       "branch": "slice/prune-run-trees-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-run-trees-s1"
     },
     {
       "slice": "S2 strict rule for name-inferred trees",
-      "state": "planned",
+      "state": "integrated",
       "after": [
         "S1 run membership"
-      ]
+      ],
+      "branch": "slice/prune-run-trees-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-run-trees-s2"
     }
   ],
-  "next": "Short path, lane held. S1 (97a4d26) refused at integrate on spawn ceilings only; implementer a45b4241777075a2c resumed: fold test git, re-pin gate.mjs temp. On its push: integrate S1 (trailers as before + fix reviewer), pilot checks --wait, spawn S2 (opus; verification needs PILOT_BRANCH=pilot), integrate, --trial, gate2. tested-once paused, itm_eb725daab752 open.",
-  "updatedAt": "2026-11-27T13:27:29.835Z",
+  "next": "Short path, lane held. S1 integrated 4e12c0a4, checks green. S2 pushed e641245 (final pins 11900/10758), integrating; then pilot checks <sha7> --wait, pilot integrate --trial in feat worktree, post gate2 for PR 165 (surface false; Verdict line per slice + Gate line). tested-once paused, itm_eb725daab752 open.",
+  "updatedAt": "2026-11-27T14:12:53.461Z",
   "friction": [
     {
       "agent": "pilot-architect",
