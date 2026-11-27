@@ -137,7 +137,7 @@ test('a run over either ceiling is red', async (t) => {
     try {
       status = runGate([], {
         spawns: file,
-        ceiling: 11_000,
+        ceiling: 11_083,
         gitCeiling: 10_000,
         read: () => [],
         slot: () => ({ slot: 1, release() {} }),
@@ -152,16 +152,16 @@ test('a run over either ceiling is red', async (t) => {
     }
     return { out: out.join(''), status };
   };
-  const total = gate(5_000, 6_001);
-  assert.match(total.out, /^spawns over 11000; most: a\.test\.mjs 11001$/m);
+  const total = gate(5_000, 6_084);
+  assert.match(total.out, /^spawns over 11083; most: a\.test\.mjs 11084$/m);
   assert.doesNotMatch(total.out, /git over/);
   assert.equal(total.status, 1);
   const git = gate(10_001, 0);
   assert.match(git.out, /^git over 10000$/m);
   assert.doesNotMatch(git.out, /spawns over/);
   assert.equal(git.status, 1);
-  const edge = gate(10_000, 1_000);
-  assert.match(edge.out, /^spawns 11000 \(node 1000, git 10000, other 0\)$/m);
+  const edge = gate(10_000, 1_083);
+  assert.match(edge.out, /^spawns 11083 \(node 1083, git 10000, other 0\)$/m);
   assert.doesNotMatch(edge.out, /over/);
   assert.equal(edge.status, 0);
 });
