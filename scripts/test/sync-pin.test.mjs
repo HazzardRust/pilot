@@ -5,7 +5,8 @@
  * the removal failed. Nothing here reaches a real remote.
  */
 
-import { git, commitFile, repos, passing } from './lib/land-repos.mjs';
+import { gitFixture } from './lib/git-fixture.mjs';
+import { git, commitFile, buildRepos, passing } from './lib/land-repos.mjs';
 import { countGit } from './lib/count-git.mjs';
 
 import { test } from 'node:test';
@@ -15,13 +16,19 @@ import path from 'node:path';
 
 const { main, removeWorktree } = await import('../sync.mjs');
 
-/** A clone `x` whose origin has main one commit ahead of pilot, and `pilot.test` set so `pilot sync` runs as it is used. */
+/**
+ * A clone `x` whose origin has main one commit ahead of pilot, and `pilot.test` set so `pilot sync` runs as it is
+ * used; built once per file, and the worktree tests below start from it too.
+ */
 function ahead(t) {
-  const { origin, seed, x } = repos(t, 'x');
-  commitFile(seed, 'm.txt', 'm\n', 'main ahead');
-  git(seed, 'push', '-q', 'origin', 'main');
-  git(x, 'config', 'pilot.test', passing);
-  return { origin, x, before: git(origin, 'rev-parse', 'pilot'), mainTip: git(origin, 'rev-parse', 'main') };
+  return gitFixture(t, 'sync-pin:ahead', (dir) => {
+    const { origin, seed, x } = buildRepos(dir, ['x']);
+    commitFile(seed, 'm.txt', 'm\n', 'main ahead');
+    git(seed, 'push', '-q', 'origin', 'main');
+    git(x, 'config', 'pilot.test', passing);
+    const [before, mainTip] = git(origin, 'rev-parse', 'pilot', 'main').split('\n');
+    return { origin, x, before, mainTip };
+  });
 }
 
 /** `pilot sync` run in `cwd` as the CLI runs it: its exit code and stdout. */
@@ -47,8 +54,9 @@ test('sync prints what it printed on the base and leaves the same merge on pilot
 
   assert.equal(code, 0);
   assert.equal(out.replace(/\b[0-9a-f]{7,40}\b/g, '<sha>'), 'synced pilot <sha> (main@<sha>): 3 pass, 0 fail\n');
-  assert.equal(git(origin, 'log', '-1', '--format=%s', 'pilot'), 'Merge main into pilot');
-  assert.equal(git(origin, 'log', '-1', '--format=%P', 'pilot'), `${before} ${mainTip}`);
+  const [subject, parents] = git(origin, 'log', '-1', '--format=%s%n%P', 'pilot').split('\n');
+  assert.equal(subject, 'Merge main into pilot');
+  assert.equal(parents, `${before} ${mainTip}`);
 });
 
 // 19 measured on the base for this sync (land-batching S4; the slice's census said 18), 14 after; the bar is 14.
@@ -86,7 +94,7 @@ function worktree(x) {
 const listed = (x, dir) => git(x, 'worktree', 'list', '--porcelain').replaceAll('\\', '/').includes(`worktree ${dir.replaceAll('\\', '/')}\n`);
 
 test('a removed worktree is not pruned again', (t) => {
-  const { x } = repos(t, 'x');
+  const { x } = ahead(t);
   const dir = worktree(x);
 
   const { value: gone, git: spawned } = countGit(() => removeWorktree(x, dir));
@@ -98,7 +106,7 @@ test('a removed worktree is not pruned again', (t) => {
 });
 
 test('a locked worktree, which remove refuses, still prunes', (t) => {
-  const { x } = repos(t, 'x');
+  const { x } = ahead(t);
   const dir = worktree(x);
   git(x, 'worktree', 'lock', dir);
 

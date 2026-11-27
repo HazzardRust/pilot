@@ -30,6 +30,7 @@ import { PLUGIN_ID, readReach as defaultReadReach, rulesPlan } from '../scripts/
 import { HOST_NAMES, hostFor as hostForDefault, hostOf } from './host.mjs';
 import { powerRow, readPower } from './power.mjs';
 import { probeDeck } from './probe.mjs';
+import { findRune as defaultFindRune } from './rune-bin.mjs';
 import { isSlug } from './runs.mjs';
 import { clashText, leashedGit, slugClashes } from './slug-clash.mjs';
 import { storeDir as defaultStoreDir } from './store-dir.mjs';
@@ -514,9 +515,23 @@ function deckRows({ found, port }) {
   return port === String(DECK_PORT) ? [...rows, rootRow] : rows;
 }
 
+/**
+ * The Rune deck row (prebuilt-rune spec 8): `pass` only for a built or a verified fetched binary, else `warn`
+ * with `findRune`'s reason, and `pilot deck` as the step only where a download is what would help.
+ */
+export function runeRow({ state, version }) {
+  const name = 'rune deck';
+  if (state.source === 'built') return { name, verdict: 'pass', detail: `built here, ${state.file}` };
+  if (state.source === 'fetched') return { name, verdict: 'pass', detail: `fetched ${version}, verified` };
+  // findRune's reasons are written for `pilot deck`, which opens the page instead; doctor opens nothing.
+  const reason = state.reason.replace(/, opening the page$/, '');
+  return { name, verdict: 'warn', detail: `missing: ${reason}`, ...(state.fetchable ? { steps: ['pilot deck'] } : {}) };
+}
+
 /** Every local check as a row, in the order `pilot doctor` prints them. */
 export async function checkAll({
   platform = hostPlatform(),
+  arch = process.arch,
   run = defaultRun,
   root = projectsRoot(),
   nodeVersion = process.versions.node,
@@ -535,6 +550,7 @@ export async function checkAll({
   git = leashedGit(cwd),
   hostFor = hostForDefault,
   readView = () => readOpenView(cwd, url),
+  findRune = defaultFindRune,
 } = {}) {
   const [found, view] = await Promise.all([probe(url), readView()]);
   let settings;
@@ -557,6 +573,7 @@ export async function checkAll({
     allowRow({ readSettings }),
     modsRow({ version: claudeVersion(run), settings, env }),
     ...deckRows({ found, port: new URL(url).port }),
+    runeRow({ state: findRune(PLUGIN_ROOT, { platform, arch, version: PLUGIN_VERSION, run }), version: PLUGIN_VERSION }),
   ];
 }
 

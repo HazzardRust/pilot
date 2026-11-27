@@ -7,11 +7,11 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 
 const { integrate, sliceSubject } = await import('../integrate.mjs');
@@ -28,32 +28,24 @@ const RECORD = {
   ],
 };
 
-/** A bare origin, a clone on `feat/demo` holding the run record, and pushed `slice/demo-s1` and `slice/demo-s9`. */
-function scratchRepos(t) {
-  return gitFixture(t, 'integrate-slice-commit', (root) => {
-    const origin = path.join(root, 'origin.git');
+/**
+ * A bare origin, a clone on `feat/demo` holding the run record, and pushed `slice/demo-s1` and
+ * `slice/demo-s9`. Under `key`, `sliceText` is then committed on `feat/demo` as `slices/S1.md`.
+ * Answers `before`, feat/demo's tip.
+ */
+function scratchRepos(t, key = 'base', sliceText) {
+  return gitFixture(t, `integrate-slice-commit:${key}`, (root) => {
+    const slice = (name) => ({ branch: name, from: 'main', files: { [`${name.split('/')[1]}.txt`]: 'x\n' }, message: 'implementer commit' });
+    const history = [
+      { branch: 'main', files: { 'docs/design/demo/run.json': `${JSON.stringify(RECORD, null, 2)}\n` }, message: 'base' },
+      slice('slice/demo-s1'),
+      slice('slice/demo-s9'),
+    ];
+    if (sliceText !== undefined) history.push({ branch: 'feat/demo', from: 'main', files: { 'docs/design/demo/slices/S1.md': sliceText }, message: 'slice file' });
+    const { origin, sha } = seed(root, history, sliceText === undefined ? { 'feat/demo': 'main', pilot: 'main' } : { pilot: 'main' });
     const work = path.join(root, 'work');
-    git(root, 'init', '-q', '--bare', '-b', 'main', origin);
-    git(root, 'clone', '-q', origin, work);
-    git(work, 'checkout', '-q', '-b', 'feat/demo');
-    const record = path.join(work, 'docs', 'design', 'demo', 'run.json');
-    fs.mkdirSync(path.dirname(record), { recursive: true });
-    fs.writeFileSync(record, `${JSON.stringify(RECORD, null, 2)}\n`);
-    git(work, 'add', '.');
-    git(work, 'commit', '-q', '-m', 'base');
-    git(work, 'push', '-q', '-u', 'origin', 'feat/demo');
-    git(work, 'push', '-q', 'origin', 'HEAD:main', 'HEAD:pilot');
-    git(work, 'remote', 'set-head', 'origin', 'main');
-    for (const slice of ['slice/demo-s1', 'slice/demo-s9']) {
-      git(work, 'checkout', '-q', '-b', slice, 'feat/demo');
-      fs.writeFileSync(path.join(work, `${slice.split('/')[1]}.txt`), 'x\n');
-      git(work, 'add', '.');
-      git(work, 'commit', '-q', '-m', 'implementer commit');
-      git(work, 'push', '-q', 'origin', slice);
-    }
-    git(work, 'checkout', '-q', 'feat/demo');
-    git(work, 'branch', '-q', '-D', 'slice/demo-s1', 'slice/demo-s9');
-    return { origin, work };
+    git(root, 'clone', '-q', '-b', 'feat/demo', origin, work);
+    return { origin, work, before: sha['feat/demo'] };
   });
 }
 
@@ -90,8 +82,7 @@ test('every trailer rides the slice commit', (t) => {
 });
 
 test('a slice no row names is refused', (t) => {
-  const { origin, work } = scratchRepos(t);
-  const before = git(work, 'rev-parse', 'HEAD');
+  const { origin, work, before } = scratchRepos(t);
 
   const result = integrate('slice/demo-s9', { cwd: work, test: passing, install: () => {}, host: recordingGh().host });
 
@@ -118,9 +109,9 @@ test('a trailer with a line break or off the Key: value form is refused, naming 
     ['Reviewed by: approve', 'Reviewed by'],
     ['Reviewed-by:', 'Reviewed-by'],
   ];
+  // One repository for every case: each refusal asserts it left HEAD and origin where they were.
+  const { origin, work, before } = scratchRepos(t);
   for (const [bad, key] of cases) {
-    const { origin, work } = scratchRepos(t);
-    const before = git(work, 'rev-parse', 'HEAD');
     const trailers = ['Reviewed-by: pilot:typescript-reviewer: approve', bad];
 
     const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, trailers });
@@ -133,14 +124,7 @@ test('a trailer with a line break or off the Key: value form is refused, naming 
 });
 
 test('a slice whose Reviewers line names security integrates only with its Reviewed-by trailer', (t) => {
-  const { origin, work } = scratchRepos(t);
-  const file = path.join(work, 'docs', 'design', 'demo', 'slices', 'S1.md');
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, '# S1 One thing\n\nReviewers: `pilot:typescript-reviewer`, `pilot:security-reviewer`\n');
-  git(work, 'add', '.');
-  git(work, 'commit', '-q', '-m', 'slice file');
-  git(work, 'push', '-q', 'origin', 'feat/demo');
-  const before = git(work, 'rev-parse', 'HEAD');
+  const { origin, work, before } = scratchRepos(t, 'security', '# S1 One thing\n\nReviewers: `pilot:typescript-reviewer`, `pilot:security-reviewer`\n');
   const typescript = 'Reviewed-by: pilot:typescript-reviewer: approve';
 
   const refused = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, trailers: [typescript] });
@@ -164,17 +148,6 @@ test('a slice whose Reviewers line names security integrates only with its Revie
   assert.equal(git(work, 'log', '--first-parent', '-1', '--format=%s'), 'feat(demo): S1 one thing');
 });
 
-/** Commits `docs/design/demo/slices/S1.md` holding `text` on `feat/demo` and pushes it; answers the tip. */
-function sliceFile(work, text) {
-  const file = path.join(work, 'docs', 'design', 'demo', 'slices', 'S1.md');
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, text);
-  git(work, 'add', '.');
-  git(work, 'commit', '-q', '-m', 'slice file');
-  git(work, 'push', '-q', 'origin', 'feat/demo');
-  return git(work, 'rev-parse', 'HEAD');
-}
-
 const BEHAVIOURS = [
   '# S1 One thing',
   '',
@@ -187,9 +160,11 @@ const BEHAVIOURS = [
   '',
 ].join('\n');
 
+/** The repositories with BEHAVIOURS committed as the slice file. */
+const behaviourRepos = (t) => scratchRepos(t, 'behaviours', BEHAVIOURS);
+
 test('every behaviour evidenced integrates', (t) => {
-  const { work } = scratchRepos(t);
-  sliceFile(work, BEHAVIOURS);
+  const { work } = behaviourRepos(t);
   const trailers = [
     'Reviewed-by: pilot:typescript-reviewer: approve',
     'Evidence: B1 test: lookup red before, green after',
@@ -204,8 +179,7 @@ test('every behaviour evidenced integrates', (t) => {
 });
 
 test('evidence of another kind than the slice file names still covers the behaviour', (t) => {
-  const { work } = scratchRepos(t);
-  sliceFile(work, BEHAVIOURS);
+  const { work } = behaviourRepos(t);
   const trailers = [
     'Reviewed-by: pilot:typescript-reviewer: approve',
     'Evidence: B1 test: lookup red before, green after',
@@ -218,8 +192,7 @@ test('evidence of another kind than the slice file names still covers the behavi
 });
 
 test('a missing behaviour refuses', (t) => {
-  const { origin, work } = scratchRepos(t);
-  const before = sliceFile(work, BEHAVIOURS);
+  const { origin, work, before } = behaviourRepos(t);
   const cases = [
     ['Evidence: B1 test: lookup red before, green after'],
     // Two trailers for B1 are not evidence for B2: the count alone is not the check.
@@ -238,8 +211,7 @@ test('a missing behaviour refuses', (t) => {
 });
 
 test('an old-shape slice needs no evidence', (t) => {
-  const { work } = scratchRepos(t);
-  sliceFile(work, '# S1 One thing\n\nReviewers: `pilot:typescript-reviewer`\n\n## Tests\n\n1. `a known word returns its entry`: `lookup` → the entry\n');
+  const { work } = scratchRepos(t, 'old-shape', '# S1 One thing\n\nReviewers: `pilot:typescript-reviewer`\n\n## Tests\n\n1. `a known word returns its entry`: `lookup` → the entry\n');
 
   const result = integrate('slice/demo-s1', { cwd: work, test: passing, install: () => {}, host: recordingGh().host, push: false, trailers: ['Reviewed-by: pilot:typescript-reviewer: approve'] });
 
@@ -248,8 +220,7 @@ test('an old-shape slice needs no evidence', (t) => {
 });
 
 test('the security refusal still holds', (t) => {
-  const { origin, work } = scratchRepos(t);
-  const before = sliceFile(work, BEHAVIOURS.replace('`pilot:typescript-reviewer`', '`pilot:typescript-reviewer`, `pilot:security-reviewer`'));
+  const { origin, work, before } = scratchRepos(t, 'security-behaviours', BEHAVIOURS.replace('`pilot:typescript-reviewer`', '`pilot:typescript-reviewer`, `pilot:security-reviewer`'));
   const trailers = [
     'Reviewed-by: pilot:typescript-reviewer: approve',
     'Evidence: B1 test: lookup red before, green after',

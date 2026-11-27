@@ -4,11 +4,11 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,39 +16,43 @@ const { medianShare, replay } = await import('../select-tests.mjs');
 const SCRIPT = fileURLToPath(new URL('../select-tests.mjs', import.meta.url));
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-const write = (dir, rel, text) => {
-  fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
-  fs.writeFileSync(path.join(dir, rel), text);
-};
 
-/** Merge `subject` into main from a branch that applies `files`, always with a merge commit. */
-function merge(dir, subject, files) {
+/** `subject` merged into main from a branch that applies `files`, always with a merge commit: two commits of a history. */
+function merge(subject, files) {
   const branch = `b-${subject.replace(/\W+/g, '-')}`;
-  git(dir, 'checkout', '-q', '-b', branch);
-  for (const [rel, text] of Object.entries(files)) write(dir, rel, text);
-  git(dir, 'add', '.');
-  git(dir, 'commit', '-q', '-m', `work ${subject}`);
-  git(dir, 'checkout', '-q', 'main');
-  git(dir, 'merge', '-q', '--no-ff', '-m', subject, branch);
+  return [
+    { branch, from: 'main', files, message: `work ${subject}` },
+    { branch: 'main', merge: [branch], files: {}, message: subject },
+  ];
 }
 
 /** Four tests; S1 touches `lib/a.mjs` (one importer), S2 `package.json` (full), S3 `lib/c.mjs`. */
 function threeMerges(dir) {
-  git(dir, 'init', '-q', '-b', 'main');
-  write(dir, 'lib/a.mjs', 'export const a = 1;\n');
-  write(dir, 'lib/c.mjs', 'export const c = 1;\n');
-  write(dir, 'package.json', '{}\n');
-  write(dir, 'test/a.test.mjs', "import { a } from '../lib/a.mjs';\n");
-  write(dir, 'test/b.test.mjs', 'export {};\n');
-  write(dir, 'test/c.test.mjs', "import { c } from '../lib/c.mjs';\n");
-  write(dir, 'test/d.test.mjs', "import { c } from '../lib/c.mjs';\n");
-  git(dir, 'add', '.');
-  git(dir, 'commit', '-q', '-m', 'base');
-  merge(dir, 'Merge S1: a', { 'lib/a.mjs': 'export const a = 2;\n' });
-  merge(dir, 'Merge S2: pkg', { 'package.json': '{"x":1}\n' });
-  merge(dir, 'Merge S3: c', { 'lib/c.mjs': 'export const c = 2;\n' });
-  return { dir };
+  const { origin } = seed(dir, [
+    {
+      branch: 'main',
+      message: 'base',
+      files: {
+        'lib/a.mjs': 'export const a = 1;\n',
+        'lib/c.mjs': 'export const c = 1;\n',
+        'package.json': '{}\n',
+        'test/a.test.mjs': "import { a } from '../lib/a.mjs';\n",
+        'test/b.test.mjs': 'export {};\n',
+        'test/c.test.mjs': "import { c } from '../lib/c.mjs';\n",
+        'test/d.test.mjs': "import { c } from '../lib/c.mjs';\n",
+      },
+    },
+    ...merge('Merge S1: a', { 'lib/a.mjs': 'export const a = 2;\n' }),
+    ...merge('Merge S2: pkg', { 'package.json': '{"x":1}\n' }),
+    ...merge('Merge S3: c', { 'lib/c.mjs': 'export const c = 2;\n' }),
+  ]);
+  const work = path.join(dir, 'work');
+  git(dir, 'clone', '-q', origin, work);
+  return { dir: work };
 }
+
+/** The worktree's state and HEAD in one read: `--branch` heads the porcelain with `branch.oid`. */
+const state = (dir) => git(dir, 'status', '--porcelain=v2', '--branch');
 
 /** One replay of the fixture, shared: each replay spawns git per merge, and the spawn count is gated. */
 let once;
@@ -56,13 +60,13 @@ const replayOnce = (dir) => (once ??= replay({ cwd: dir, count: 2 }));
 
 test('the last two merges that change no trigger, one row each', (t) => {
   const { dir } = gitFixture(t, 'replay', threeMerges);
-  const before = git(dir, 'status', '--porcelain') + git(dir, 'rev-parse', 'HEAD');
+  const before = state(dir);
   const { rows, median } = replayOnce(dir);
   assert.deepEqual(rows.map((r) => r.subject), ['Merge S3: c', 'Merge S1: a']);
   assert.deepEqual(rows.map((r) => r.selected), [2, 1]);
   assert.ok(rows.every((r) => r.total === 4 && /^[0-9a-f]{40}$/.test(r.sha)));
   assert.equal(median, 0.375, 'shares 2/4 and 1/4');
-  assert.equal(git(dir, 'status', '--porcelain') + git(dir, 'rev-parse', 'HEAD'), before, 'the caller\'s worktree is untouched');
+  assert.equal(state(dir), before, 'the caller\'s worktree is untouched');
 });
 
 test('a merge that changes a trigger is skipped', (t) => {

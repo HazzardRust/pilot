@@ -8,6 +8,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -49,31 +50,39 @@ function run(t) {
 }
 
 function buildRun(root) {
-  const origin = path.join(root, 'origin.git');
+  // Origin's history in one fast-import (test-body-git S1): feat/s is design/s with slice/s-s1 merged no-ff.
+  const { origin, sha } = seed(root, [
+    { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'main' },
+    { branch: 'design/s', files: { 'design.md': 'design\n' }, message: 'design s' },
+    { branch: 'slice/s-s1', files: { 's1.mjs': 'export const s1 = 1;\n' }, message: 'slice s1' },
+    { branch: 'feat/s', from: 'design/s', files: {}, merge: ['slice/s-s1'], message: 'merge s1' },
+  ], { pilot: 'main' });
   const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
   git(root, 'clone', '-q', origin, work);
+  // As the clone of an empty origin left it: no origin/HEAD.
+  fs.rmSync(path.join(work, '.git', 'refs', 'remotes', 'origin', 'HEAD'));
   git(work, 'config', 'pilot.test', passing);
-  git(work, 'checkout', '-q', '-b', 'main');
-  commitFile(work, 'shared.txt', 'one\n', 'main');
-  git(work, 'push', '-q', 'origin', 'main', 'main:pilot');
 
+  // Each run branch tracks its own origin branch, as the porcelain build's `push -u` left it.
   const dir = (name) => path.join(root, name);
-  git(work, 'worktree', 'add', '-q', '-b', 'design/s', dir('design'), 'origin/pilot');
-  commitFile(dir('design'), 'design.md', 'design\n', 'design s');
-  git(dir('design'), 'push', '-q', '-u', 'origin', 'design/s');
-
-  git(work, 'worktree', 'add', '-q', '-b', 'feat/s', dir('feat'), 'origin/design/s');
-  git(dir('feat'), 'push', '-q', '-u', 'origin', 'feat/s');
-
-  // QA's worktree (pilot-qa.md), cut from the feature and brought to its tip as QA is.
+  git(work, 'worktree', 'add', '-q', '-b', 'design/s', dir('design'), 'origin/design/s');
+  git(work, 'worktree', 'add', '-q', '-b', 'feat/s', dir('feat'), 'origin/feat/s');
+  // QA's worktree (pilot-qa.md), at the feature's tip as QA is.
   git(work, 'worktree', 'add', '-q', '-b', 'qa/s', dir('qa'), 'origin/feat/s');
-  git(work, 'worktree', 'add', '-q', '-b', 'slice/s-s1', dir('slice'), 'origin/feat/s');
-  commitFile(dir('slice'), 's1.mjs', 'export const s1 = 1;\n', 'slice s1');
-  git(dir('slice'), 'push', '-q', '-u', 'origin', 'slice/s-s1');
-  git(dir('feat'), 'merge', '-q', '--no-ff', '-m', 'merge s1', 'slice/s-s1');
-  git(dir('feat'), 'push', '-q', 'origin', 'feat/s');
-  git(dir('qa'), 'merge', '-q', '--ff-only', 'origin/feat/s');
+  git(work, 'worktree', 'add', '-q', '-b', 'slice/s-s1', dir('slice'), 'origin/slice/s-s1');
+  // Each run worktree was cut one commit back and then moved (committed, merged or fast-forwarded), so its reflogs
+  // say it moved (worktrees.mjs `moved`): the branch's and the worktree HEAD's logs become the cut and the move.
+  for (const [name, branch, from, cut, move] of [
+    ['design', 'design/s', sha.main, 'origin/pilot', 'commit: design s'],
+    ['feat', 'feat/s', sha['design/s'], 'origin/design/s', 'merge slice/s-s1: Merge made by the \'ort\' strategy.'],
+    ['qa', 'qa/s', sha['design/s'], 'origin/feat/s', 'merge origin/feat/s: Fast-forward'],
+    ['slice', 'slice/s-s1', sha['design/s'], 'origin/feat/s', 'commit: slice s1'],
+  ]) {
+    const branchLog = path.join(work, '.git', 'logs', 'refs', 'heads', ...branch.split('/'));
+    const [, tip, stamp] = fs.readFileSync(branchLog, 'utf8').match(/^0{40} ([0-9a-f]{40}) ([^\t\n]*)/);
+    const entries = `${'0'.repeat(40)} ${from} ${stamp}\tbranch: Created from ${cut}\n${from} ${tip} ${stamp}\t${move}\n`;
+    for (const log of [branchLog, path.join(work, '.git', 'worktrees', name, 'logs', 'HEAD')]) fs.writeFileSync(log, entries);
+  }
 
   git(work, 'worktree', 'add', '-q', '-b', 'slice/other-s1', dir('other'), 'origin/design/s');
   git(dir('other'), 'merge', '-q', '--ff-only', 'origin/feat/s');
@@ -121,8 +130,11 @@ test('a landing keeps its qa and feat worktrees', (t) => {
   assert.deepEqual(listed().map((p) => path.basename(p)).sort(), ['feat', 'other', 'qa', 'work'], "the slice and design worktrees are gone; another run's stays");
   assert.deepEqual(branches(work), ['feat/s', 'main', 'qa/s', 'slice/other-s1']);
   assert.doesNotMatch(said.out, /NOT removed/, 'the local design/s goes too, though its upstream is gone');
-  assert.match(git(origin, 'rev-parse', 'feat/s'), /^[0-9a-f]{40}$/, 'origin keeps feat/s');
-  assert.throws(() => git(origin, 'rev-parse', '--verify', '-q', 'refs/heads/slice/s-s1'), 'the merged slice branch is gone from origin');
+  // Both of origin's branches in one `for-each-ref` (L5): `<ref> <sha>` for each that exists.
+  const onOrigin = Object.fromEntries(git(origin, 'for-each-ref', '--format=%(refname) %(objectname)', 'refs/heads/feat/s', 'refs/heads/slice/s-s1')
+    .split('\n').filter(Boolean).map((line) => line.split(' ')));
+  assert.match(onOrigin['refs/heads/feat/s'] ?? '', /^[0-9a-f]{40}$/, 'origin keeps feat/s');
+  assert.equal(onOrigin['refs/heads/slice/s-s1'], undefined, 'the merged slice branch is gone from origin');
 });
 
 test('a landing reads the process table once, and keeps a slice worktree a live deck holds', (t) => {
@@ -161,7 +173,8 @@ test('a prune that throws is one line, and the landing still exits 0', (t) => {
 
   assert.equal(said.code, 0, said.out);
   assert.match(said.out, /^deleted: design\/s, slice\/s-s1\nNOT removed the worktrees of s: for-each-ref failed\nlanded feat\/s on pilot at /);
-  assert.equal(git(origin, 'rev-parse', 'pilot^2'), git(origin, 'rev-parse', 'feat/s'), 'landed');
+  const [merged, feat] = git(origin, 'rev-parse', 'pilot^2', 'feat/s').split('\n');
+  assert.equal(merged, feat, 'landed');
   assert.deepEqual(listed(), before, 'nothing removed');
 });
 
@@ -225,7 +238,8 @@ test('a dirty slice worktree is kept and named', (t) => {
 test('under none the clear reads the local pilot the landing moved', (t) => {
   const { work, dir, as } = run(t);
   git(work, 'branch', '-q', '--no-track', 'pilot', 'origin/pilot');
-  git(work, 'config', 'pilot.remote', 'none');
+  // `git config pilot.remote none`, one git fewer: a line in work's config.
+  fs.appendFileSync(path.join(work, '.git', 'config'), '[pilot]\n\tremote = none\n');
 
   const said = landFrom(dir('feat'));
 

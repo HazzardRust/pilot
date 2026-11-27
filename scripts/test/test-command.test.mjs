@@ -9,6 +9,7 @@
 
 // The fixture seam imports fake-home.mjs first and gives every git below its identity.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -38,20 +39,13 @@ function scratch(t) {
 }
 
 function buildScratch(root) {
-  const origin = path.join(root, 'origin.git');
+  const { origin } = seed(root, [
+    { branch: 'feat/x', files: {}, message: 'base' },
+    { branch: 'slice/a', from: 'feat/x', files: { 'a.txt': 'a\n' }, message: 'the slice' },
+  ], { main: 'feat/x', pilot: 'feat/x' });
   const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
-  git(root, 'clone', '-q', origin, work);
-  git(work, 'checkout', '-q', '-b', 'feat/x');
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'base');
-  git(work, 'push', '-q', '-u', 'origin', 'feat/x', 'HEAD:main', 'HEAD:pilot');
-  git(work, 'checkout', '-q', '-b', 'slice/a');
-  fs.writeFileSync(path.join(work, 'a.txt'), 'a\n');
-  git(work, 'add', 'a.txt');
-  git(work, 'commit', '-q', '-m', 'the slice');
-  git(work, 'push', '-q', 'origin', 'slice/a');
-  git(work, 'checkout', '-q', 'feat/x');
-  git(work, 'branch', '-q', '-D', 'slice/a');
+  // `-b` checks out feat/x tracking origin/feat/x; slice/a is on origin only.
+  git(root, 'clone', '-q', '-b', 'feat/x', origin, work);
   return work;
 }
 

@@ -141,9 +141,11 @@ function passing(overrides = {}) {
     storeDir: '/home/dev/.claude/pilot',
     canWrite: () => true,
     onPath: () => true,
-    git: () => 'none',
+    // A stored pilot branch, so the row passes whether or not PILOT_BRANCH is set (the gate sets it, a lone run may not).
+    git: (args) => (args.includes('pilot.branch') ? 'pilot' : 'none'),
     probe: async () => ({ state: 'none' }),
     readSettings: () => ({ permissions: { allow: PILOT_MERGE_ALLOW } }),
+    findRune: () => ({ source: 'built', file: '/plugin/deck/rune/target/release/pilot-deck' }),
     ...overrides,
   };
 }
@@ -210,5 +212,5 @@ test('doctor exits 1 on a fail and 0 otherwise', async () => {
   printed.length = 0;
   assert.equal(await main({ deps: passing({ canWrite: () => false }), log }), 1);
   assert.ok(printed.some((line) => line.startsWith('fail  store directory: ')), printed.join('\n'));
-  assert.equal(printed.filter((line) => /^(pass|fail|cannot tell)  /.test(line)).length, (await checkAll(passing())).length);
+  assert.equal(printed.filter((line) => /^(pass|warn|fail|cannot tell)  /.test(line)).length, (await checkAll(passing())).length);
 });
