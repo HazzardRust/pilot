@@ -52,6 +52,15 @@ test('a live leash keeps its worktree', (t) => {
   assert.equal(fs.existsSync(run), true);
 });
 
+test('a holder that arrives after selection still keeps the tree: removeTree asks it again', (t) => {
+  const { work, run } = scratch(t);
+  let asked = 0;
+  const result = prune(work, BASE, { run: 's', holder: () => (asked++ ? 4242 : null) });
+  assert.deepEqual(result.removed, []);
+  assert.deepEqual(keptOf(result), [['run', 'live 4242']]);
+  assert.equal(fs.existsSync(run), true);
+});
+
 test('an orphaned leash lets it go', (t) => {
   const { work, run } = scratch(t);
   const holder = procs.holderOf([row({ worktree: run, orphan: 'leash 4242 gone' })]);

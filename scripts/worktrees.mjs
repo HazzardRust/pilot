@@ -393,7 +393,7 @@ export function prune(repo, base, { dryRun = false, run, merged = [], keep = [],
       if (!step.ok) why = step.err;
       return step;
     };
-    const result = removeTree(repo, tree.path, { landed: relaxed, remove: removing, branch: dropBranch });
+    const result = removeTree(repo, tree.path, { landed: relaxed, holder, remove: removing, branch: dropBranch });
     if (result.kept === 'leftover') {
       // git's own refusal, when it refused, says more than the kept line.
       failed.push({ path: tree.path, reason: why || keptLine(tree.path, result.kept) });
