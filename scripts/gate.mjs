@@ -86,10 +86,11 @@ const POLL_MS = 1_000;
  * 2026-11-27, prune-worktrees drift merge on 74b3604: 11749 (node 845, git 10610, other 294) locally + Windows-CI delta 9/6; the final exact pins (itm_abcdde7d29e5); deck/doctor.mjs takes norm and parseWorktrees from worktree-remove.mjs (QA B2), which keeps it under facades' 800 bar after prebuilt-rune's +17.
  * 2026-11-27, prune-run-trees S1: 11915 (node 845, git 10776, other 294) locally + Windows-CI delta 9/6, 11924 / 10782; the new
  *   worktrees-run-trees fixtures (folded, 84 git) and the not-landed prune's run-tree read in every landing; temporary until S2 re-pins.
+ * 2026-11-28, prune-run-trees S2: 11891 (node 845, git 10752, other 294) locally + Windows-CI delta 9/6, 11900 / 10758; runTrees reads the tags from the main checkout's .git and the known runs from the landing's view, the final pins.
  */
-export const SPAWN_CEILING = 11924;
-/** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13, prune-worktrees); see the dated lines above. */
-export const GIT_CEILING = 10782;
+export const SPAWN_CEILING = 11900;
+/** The most git processes a full suite may start (land-batching S7, S6, test-body-git S13, prune-worktrees, prune-run-trees); see the dated lines above. */
+export const GIT_CEILING = 10758;
 /** The preload every node of the suite loads, so a grandchild's spawns count too. */
 const COUNTER = pathToFileURL(fileURLToPath(new URL('./count-spawns.mjs', import.meta.url))).href;
 

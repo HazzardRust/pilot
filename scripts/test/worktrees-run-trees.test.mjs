@@ -12,6 +12,7 @@ import { seed } from './lib/seed.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 
 const { prune, runTrees } = await import('../worktrees.mjs');
@@ -90,6 +91,28 @@ test('a landed prune removes them all', (t) => {
   assert.deepEqual(sorted(result.removed), sorted(Object.values(trees)));
   const left = listed(work);
   for (const dir of Object.values(trees)) assert.ok(!left.includes(base(dir)), `${dir} is still registered`);
+});
+
+// prune-run-trees S2 (spec 4, A2): ADR 0171's forced removal is for a tree the run owns, not one it guessed.
+test('a guessed tree with an untracked file is kept', (t) => {
+  const { work, trees } = kinds(t);
+  const scratch = path.join(trees.drift, 'scratch.txt');
+  fs.writeFileSync(scratch, 'work in progress');
+  const dry = prune(work, BASE, { run: SLUG, landed: true, dryRun: true, fetched: true });
+  assert.deepEqual(dry.kept.map(({ path: p, state }) => [base(p), state]), [[base(trees.drift), 'dirty']], 'a dry run says what the real one does');
+  const result = prune(work, BASE, { run: SLUG, landed: true, fetched: true });
+  assert.deepEqual(result.kept.map(({ path: p, state }) => [base(p), state]), [[base(trees.drift), 'dirty']]);
+  assert.ok(fs.existsSync(scratch), 'the untracked file is still on disk');
+});
+
+test('a tagged tree in the same state still goes', (t) => {
+  const { work, trees } = kinds(t);
+  fs.writeFileSync(path.join(git(trees.recut, 'rev-parse', '--absolute-git-dir'), 'pilot-run'), `${SLUG}\n`);
+  fs.writeFileSync(path.join(trees.recut, 'scratch.txt'), 'work in progress');
+  assert.ok(runTrees(work, SLUG).some(({ path: p, by }) => base(p) === base(trees.recut) && by === 'tag'), 'the tag is read');
+  const result = prune(work, BASE, { run: SLUG, landed: true, fetched: true });
+  assert.ok(result.removed.map(base).includes(base(trees.recut)), 'the tagged tree is removed, its untracked file with it');
+  assert.ok(!fs.existsSync(trees.recut));
 });
 
 test('every run tree gets one line on both paths', (t) => {
