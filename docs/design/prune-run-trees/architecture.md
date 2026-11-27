@@ -73,6 +73,8 @@ branch-only selection.
   two selections, which is the bug.
 - **L3** One fold per tree: the `by` field travels with the path, so `prune` never re-derives provenance. Rejected: a
   second lookup inside `prune`.
+- **L4** Grilling depth: `forks`, assumed. itm_c083f5b319f1 closed on the deck's 20-minute default, not on the user's
+  press. Rejected: a deeper grill, which waits on an answer that did not come.
 - The run's ADR, `docs/adr/NNNN-prune-run-trees.md`, records L1-L3 and A1, A2. The landing numbers it.
 
 ## 6. Assumed decisions
@@ -86,6 +88,9 @@ branch-only selection.
 - **A3** *assumed, on the deck (itm_a25add987239)*: leftover remote `fix/<slug>-*` branches (land.mjs `deleteRunBranches`)
   are out of scope here and go to a separate ticket. Trade: origin keeps `fix/prune-worktrees-drift*` until then. Rejected:
   folding it in, which moves pilot-fork L4/L5 and touches the shared remote.
+- **A4** *assumed, on the deck (itm_f4215582c876)*: QA runs prune for real only in a scratch git repo fixture, and
+  read-only (`runTrees`, never `prune`) over this repo's registered trees. Trade: no real removal on the shared checkout is
+  watched. Rejected: a live prune on the shared checkout, which could remove another session's tree.
 - red team: S1's first behaviour, walked against `land.mjs:213-216`. Taking the land dir in the not-landed path printed two
   lines for one dir (F4), so L2 excludes it. A tagged tree on the not-landed path is new reach; it is judged by the strict
   rule and the existing pin `worktrees-landed.test.mjs:117-124` stays green, since the land dir is outside it.
