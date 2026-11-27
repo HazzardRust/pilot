@@ -3,19 +3,19 @@
   "feature": "Prune worktrees when jobs end",
   "ticket": "itm_0ddca8a8e2f0",
   "branch": "feat/prune-worktrees",
-  "base": "pilot",
+  "base": "hazzardrust-pilot",
   "worktree": "C:/Users/jrylk/Projects/pilot-feat-prune-worktrees",
   "artefact": "docs/design/prune-worktrees/architecture.md",
   "slices": [
     {
       "slice": "S1",
-      "state": "integrated",
+      "state": "integrated at d019953; checks green",
       "branch": "slice/prune-worktrees-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s1"
     },
     {
       "slice": "S2",
-      "state": "integrated at 5411d61; gate 5089 pass, 0 fail; CI checks running",
+      "state": "integrated at 5411d61; gate 5089 pass, 0 fail; checks green",
       "after": [
         "S1"
       ],
@@ -24,13 +24,13 @@
     },
     {
       "slice": "S3",
-      "state": "integrated",
+      "state": "integrated (50e8a4a); checks green",
       "branch": "slice/prune-worktrees-s3",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s3"
     },
     {
       "slice": "S4",
-      "state": "integrated",
+      "state": "integrated; Windows fix 0bf3f09 on feat, checks green at 0bf3f09",
       "after": [
         "S1"
       ],
@@ -39,88 +39,78 @@
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "pushed f396322; integrate refused on red tip e931e74; retry after checks c7cc702 green",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/prune-worktrees-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s5"
     },
     {
       "slice": "S6",
-      "state": "planned",
+      "state": "pushed e0e514e; gate 5440/0; ts + security APPROVE",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/prune-worktrees-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s6"
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "pushed d8992f4 (rebased on e931e74; PILOT_BRANCH fix; temp ceilings 14210/13062 local, conflicts with S5's); gate 5450/0; ts APPROVE on pre-fix, re-review of d8992f4 running",
       "after": [
         "S2"
-      ]
+      ],
+      "branch": "slice/prune-worktrees-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s7"
     },
     {
       "slice": "S8",
-      "state": "planned",
+      "state": "pushed b58b4cc",
       "after": [
         "S5"
+      ],
+      "branch": "slice/prune-worktrees-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-prune-worktrees-s8"
+    },
+    {
+      "slice": "macOS test fix",
+      "state": "on feat at 1bdf03d",
+      "after": [
+        "S4"
+      ],
+      "branch": "fix/prune-worktrees-macos",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-prune-worktrees-macos"
+    },
+    {
+      "slice": "Windows test fix",
+      "state": "on feat at 0bf3f09 (user ff, itm_4c410e19d219 closed); checks green",
+      "after": [
+        "S4"
+      ],
+      "branch": "fix/prune-worktrees-windows",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-prune-worktrees-windows"
+    },
+    {
+      "slice": "Drift merge",
+      "state": "red at e931e74 on ceiling by 1; feat moved to c7cc702 (S5's temp ceilings 14198/13047 cherry-picked); checks pending",
+      "after": [
+        "S4"
+      ],
+      "branch": "fix/prune-worktrees-drift",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-prune-worktrees-drift"
+    },
+    {
+      "slice": "S9 Fixture fold (added)",
+      "state": "planned: fold feature fixture tests onto shared fixtures until test:cost <= 13597/12453, restore constants",
+      "after": [
+        "S8"
       ]
     }
   ],
-  "next": "Pilot integrates itself, no co-pilot live. feat 5411d61 = S1,S3,S2 (checks wait running). S4 65ff92c: ts-reviewer WARN then re-review APPROVE; pilot integrate running, then pilot checks. Hold S5/S6/S7 spawns until the three stuck landings retried on a quiet machine. Then S8, fundamentalist (co-A4), QA. Stray S2 edits in S2 worktree unintegrated.",
-  "updatedAt": "2026-11-25T08:44:14.206Z",
+  "next": "checks c7cc702 pending; then integrate S5 f396322; S7 d8992f4 needs re-review (running) and a rebase onto feat-after-S5 merging both temp ceiling raises (+CI delta); S6 rebase re-measuring pins; S8 fix round; fixture fold.",
+  "updatedAt": "2026-11-27T00:29:53.468Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "landing drift for two queued yellow tickets merged by the pilot in throwaway worktrees; a feat branch checked out in another session's worktree cannot be merged in place",
-      "size": 4
-    },
-    {
-      "kind": "drain",
-      "what": "hook notices kept naming a ticket thread 'still unanswered' after the deck's own replan note and after the pilot had replied",
-      "size": 4
-    },
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "pilot base printed 'base main' but the deck requires the gate1 branch on origin/pilot; found only from the gate1 refusal, needed a merge after push",
-      "evidence": "gate1 refused: design/prune-worktrees not on pilot's tip; merge 7c84c28",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-architect",
-      "what": "pilot wait on a thread the deck closed by timeout runs its full 50 minutes and ends NO REPLY",
-      "evidence": "deck_resolve and deck_reply errors on closed items",
-      "size": 50
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "sed -i blocked by a hook, one call lost; Edit needs a Read first per file; python3 is a Windows-store stub",
-      "evidence": "S3 report friction row",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "npm run test:changed ran about 8 minutes with no summary until the end",
-      "evidence": "S3 gate: 5102 tests, 5074 pass, 0 fail",
-      "size": 8
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "two context compactions lost the worktree, fact sheet and hello; recovered from git status",
-      "evidence": "S1 report friction row",
-      "size": 2
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "the process.platform rule fails only in the full suite (platform-reads.test.mjs), one extra cycle",
-      "evidence": "S1 gate 5114 tests, 1 fail: only the seam reads process.platform",
-      "size": 1
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "full gate about 10 minutes; 3-file rerun passed the 120 s shell default",
-      "evidence": "S1 gate",
-      "size": 10
-    },
     {
       "agent": "pilot:pilot-co-pilot",
       "what": "a seam-doc push to feat/prune-worktrees cancelled the CI runs pilot checks was waiting on, which read as red",
@@ -141,6 +131,198 @@
       "kind": "drain",
       "what": "two co-pilots forced to hand back with children live; the successor judged a gating implementer dead and started a duplicate on the same worktree; the pilot stopped it and integrates slices itself, each report 3-5k tokens",
       "size": 15
+    },
+    {
+      "kind": "drain",
+      "what": "three signed landings stopped red on the same 5 s git timeout in gate1 lineage tests (deck/lineage.mjs:17); each needed a log read and a deck reply; one 30-min land timeout undiagnosed (possibly the 2 machine-wide gate slots)",
+      "size": 20
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait restarted about 14 times; every reply exit read; several replies arrived as hook notices mid-call and were answered twice over",
+      "size": 12
+    },
+    {
+      "kind": "drain",
+      "what": "auto mode gave no verdict on a Bash, Agent or SendMessage call sharing a response with a deck call, five times; each reissued alone",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "deck_status next capped at 400 chars: four calls rejected and rewritten",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "pilot told the user twice that landings ran side by side and that a retry was running; the deck queues lands, found only from a gate2's landing record",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "tests calling integrate() wait on 2 machine-wide gate slots; a test file sat 280 s in 'gate: waiting for a slot' and timed out; PILOT_GATE_SLOT=1 makes it pass in 60 s",
+      "evidence": "S4 report: scripts/gate-slots.mjs, integrate-prune.test.mjs",
+      "size": 12
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "commit trailer names Fable 5.2 for every slice whatever model ran it",
+      "evidence": "S2 report pushback row",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "hand-back enforced while its S5 implementer was live, mid Monitor wait",
+      "evidence": "handback-send-enforce notice during task bbwt2nlbn"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "gh run view --log-failed returned nothing while the run was in progress; CI log needed the jobs logs API",
+      "evidence": "gh api .../jobs/139088332132/logs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "worktree add plus 2832-file checkout ran long enough to be moved to the background",
+      "evidence": "macOS fix report, friction row",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "a red feature tip has no path for its own CI fix: pilot integrate refuses any branch on red, auto mode refuses the hand fast-forward",
+      "evidence": "scripts/integrate.mjs:445; itm_eff02e94eb77"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "forced hand-back twice with the S5 implementer live",
+      "evidence": "handback-send-enforce"
+    },
+    {
+      "kind": "drain",
+      "what": "45-item brief deck read to find one closed gate2 id",
+      "size": 4000
+    },
+    {
+      "kind": "drain",
+      "what": "duplicate Blocked question posted by pilot beside the deck's own, then closed",
+      "size": 600
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "deck README module table is pinned by a test only the full suite runs, so a new deck module cost a second 20-minute gate",
+      "evidence": "every deck module is listed: run-prune.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "git prints worktree paths with / while path.join gives backslashes on Windows; first asserts failed on spelling",
+      "evidence": "B2/B3 kept unpushed C:/.../design"
+    },
+    {
+      "agent": "pilot:pilot-lander",
+      "what": "shared cargo target across worktrees: a concurrent build failed a landing with LNK1104 after a green node suite",
+      "evidence": "land log 20261125T091619281Z line 5552"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "quiet reporter gives no skipped count",
+      "evidence": "gate line `tests 5199 · pass 5167 · fail 0` leaves 32 unaccounted"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 evidence rows lost with an earlier transcript forced a full re-proof with a throwaway red worktree",
+      "evidence": "S5 re-proof at 2bfb4fc, 14 tests red-then-green",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "QA prompt-size pin lives in qa-preview.test.mjs, not measure-prompt.test.mjs where the slice puts the pins",
+      "evidence": "measure-prompt showed pilot-qa -20.75 headroom; found by grep 5264"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "prompt-size change needs a base measurement from a second full checkout",
+      "evidence": "detached worktree of 9d717761 only to run measure-prompt.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "implementer-steps.test.mjs pins a bare command string in agent text, forcing an edit outside the slice",
+      "evidence": "implementer-steps.test.mjs:14 indexOf('git worktree add')"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "first push rejected with GitHub Internal Server Error; retry worked",
+      "evidence": "S7 push of slice/prune-worktrees-s7"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "mklink /J fails from Git Bash, so the red throwaway worktree ran without node_modules",
+      "evidence": "'Invalid switch' from mklink /J"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice says probes injected but tagOf is not injectable, so tests need seeded real git repos at 0.5-3.5 s a case",
+      "evidence": "deck/test/doctor-worktrees.test.mjs"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "npm run test:changed stops on node_modules missing in a fresh worktree, first gate run wasted",
+      "evidence": "\"node_modules missing: run npm ci\""
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "integrate-prune.test.mjs takes ~40 s; piped through tail it passed the Bash 120 s default",
+      "evidence": "needed run_in_background plus pilot wait-for"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "first reviewer's report lost, could not be resumed (No transcript found); a second Sonnet review was run on the final head",
+      "evidence": "prune-worktrees S8 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "live prune --dry-run cannot show a 'would remove': the holder check keeps all 19 landed trees 'live unsure' on this machine, so B3 is evidenced by tests only",
+      "evidence": "prune-worktrees S8 report, B3 run of 89 lines",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "bare node --test without PILOT_BRANCH gives 9 false NO_NAME failures; gate.mjs:126 sets it",
+      "evidence": "drift merge report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "spawn ceiling and integrate pin surface only in a 10-minute full gate, so the merge gated twice",
+      "evidence": "gate 1 on f0bd43f6 integrate-pin 19>18; gate 2 spawns 14110>13597",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5: ceiling rule changed three times mid-run, one extra 10-minute gate",
+      "evidence": "S5 report, f396322",
+      "size": 10
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: rebasing pin-history commits onto pins upstream also moved leaves an empty fixup",
+      "evidence": "S6 report, e0e514e",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "S5 and S6 reports delivered to main after forced co-pilot hand-back, relayed by hand",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: a textually clean rebase was semantically broken (upstream removed the PILOT_BRANCH export); found only at test import",
+      "evidence": "S7 report, d8992f4",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S7: deck 800-line source bar and spawn ceilings fail only in the full gate, one extra 10-minute gate",
+      "evidence": "facades.test.mjs doctor.mjs 807 lines; s7-gate.log",
+      "size": 10
     }
   ]
 }
