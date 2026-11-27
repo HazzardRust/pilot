@@ -21,8 +21,8 @@
       "branch": "slice/remote-run-branches-s2"
     }
   ],
-  "next": "Short path, lane held. S1 integrated 3aed5f3e, checks green. S2 pushed ed3dae34 (final pins 11832/10689), integrating. Then pilot checks <sha7> --wait, pilot integrate --trial in feat worktree, gate2 (pr #n, full sha, checks line, spec-line table). gate.mjs ceilings conflict with prune-run-trees (PR 165) at the second landing.",
-  "updatedAt": "2026-11-27T16:40:15.500Z",
+  "next": "Concluding. gate2 itm_72e7f50b9aa6 posted for PR 166 at e1125321 (checks green, trial clean). On the user's Sign off press: spawn pilot-lander with the gate2 id (gate.mjs ceilings conflict if PR 165 landed first); on landed, reply Findings: on the report (short path: no principles review).",
+  "updatedAt": "2026-11-27T17:07:46.242Z",
   "friction": [
     {
       "agent": "pilot-architect",
