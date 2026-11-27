@@ -48,7 +48,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed e0e514e; gate 5440/0; ts + security APPROVE",
+      "state": "pushed f04cded (on 9dbfd75, clean); gate 5461/0 exit 0, spawns 14289; ts + security APPROVE (e0e514e) carry",
       "after": [
         "S2"
       ],
@@ -57,7 +57,7 @@
     },
     {
       "slice": "S7",
-      "state": "pushed 8277689 (on 01feb88; temp ceilings 14301/13150); gate 5457/0 bar old ceiling; ts APPROVE (d8992f4)",
+      "state": "integrated at 9dbfd75; checks green",
       "after": [
         "S2"
       ],
@@ -66,7 +66,7 @@
     },
     {
       "slice": "S8",
-      "state": "pushed 61c7179 (on 01feb88; mirrorOf defect fixed red->green; spec 11 default-branch + local-mode tests by mutation); gate 5419/0 bar ceiling (14479/13331); ts APPROVE",
+      "state": "pushed 46f4814 (on 9dbfd75; temp ceilings 14589/13438); gate 5433/0 bar old ceiling; ts APPROVE",
       "after": [
         "S5"
       ],
@@ -108,14 +108,9 @@
       ]
     }
   ],
-  "next": "S7 integrating; then S8 rebases onto it + temp ceiling raise (measured +9/6), integrate S8; S6 rebase re-measure pins; fixture fold; fundamentalist; QA.",
-  "updatedAt": "2026-11-27T01:06:39.093Z",
+  "next": "S8 integrating; then checks; then integrate S6 f04cded; checks; fixture fold slice; fundamentalist; QA.",
+  "updatedAt": "2026-11-27T01:32:12.376Z",
   "friction": [
-    {
-      "agent": "pilot-co-pilot",
-      "what": "forced to hand back with two implementers live; TaskStop on a child refused for the co-pilot",
-      "evidence": "The main session, the user or the agent itself can stop task a16a6ca802db32422"
-    },
     {
       "kind": "drain",
       "what": "two co-pilots forced to hand back with children live; the successor judged a gating implementer dead and started a duplicate on the same worktree; the pilot stopped it and integrates slices itself, each report 3-5k tokens",
@@ -323,6 +318,12 @@
       "agent": "pilot:pilot-implementer",
       "what": "S8: worktrees.test.mjs fails alone without PILOT_BRANCH (only gate.mjs pins it); ceilings already over on base so no slice gate can exit 0",
       "evidence": "S8 report 61c7179",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: gate log absent until the lock is taken, so pilot wait-for returned early; Monitor and until loops unavailable",
+      "evidence": "S6 report f04cded",
       "size": 1
     }
   ]
