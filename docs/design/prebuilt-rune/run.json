@@ -1,0 +1,138 @@
+{
+  "slug": "prebuilt-rune",
+  "feature": "prebuilt Rune deck",
+  "ticket": "itm_ff5ace129388",
+  "branch": "feat/prebuilt-rune",
+  "base": "hazzardrust-pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-prebuilt-rune",
+  "artefact": "docs/design/prebuilt-rune/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated at dd896e7, checks green",
+      "branch": "slice/prebuilt-rune-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-prebuilt-rune-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at d224384, checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/prebuilt-rune-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-prebuilt-rune-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "pushed d7d35dc",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/prebuilt-rune-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-prebuilt-rune-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated at f3cc925, checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/prebuilt-rune-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-prebuilt-rune-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated at 1ee1c64, checks green (added: base drift 5c326bd2, release.json is not a store file)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/prebuilt-rune-drift",
+      "worktree": "C:/Users/jrylk/Projects/pilot-prebuilt-rune-drift"
+    }
+  ],
+  "humanSteps": [
+    {
+      "text": "Before prebuilt-rune S4 pushes its workflow file: gh auth refresh -h github.com -s workflow"
+    }
+  ],
+  "next": "co-pilot: checks green at f3cc925; integrating S3 (d7d35dc); then fundamentalist and QA",
+  "updatedAt": "2026-11-26T14:48:06.108Z",
+  "friction": [
+    {
+      "agent": "pilot-architect",
+      "what": "gate1 body must name every A<n> with its verdict; neither gate1 rules nor the brief said so",
+      "evidence": "first post refused: 'a gate1's body leaves out A2..A9'; accepted on second post",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "deck_read open limit 100 to look for an archive-page crew-handoff item: ~100 closing-report rows, none relevant",
+      "size": 6000
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "handback-enforce hook forced a hand-back while the implementer held its gate for the co-pilot's full suite",
+      "evidence": "S1 report: 'The harness made me hand back while I was still waiting for suite done'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot deck has no seam for host or version beyond deps.root/deps.get, so B5 runs only on one of the three targets",
+      "evidence": "S1 report, Friction row 3"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "handback forced before the co-pilot's go for the serialised heavy gate; the gate is owed after a resume",
+      "evidence": "S2 report: 'go S2 never arrived before I was made to hand back'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Git Bash rewrites /v in a reg.exe call; PowerShell used to capture its output",
+      "evidence": "S2 report, Friction row 1"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no YAML parser or actionlint on the machine; the workflow checked only via uvx pyyaml",
+      "evidence": "S4 report, Friction row 1"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "handback forced while waiting for go S4; slice gate still owed",
+      "evidence": "S4 report, Friction row 3",
+      "size": 1
+    },
+    {
+      "agent": "pilot:security-reviewer",
+      "what": "none: re-review of S2 approved in 3 tool uses",
+      "evidence": "Verdict: approve — the reg.exe finding is fixed with a full path"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "doctor.test.mjs passing() helper red when run alone with PILOT_BRANCH unset; gate.mjs:111 sets it, so only gates passed it. Fixed in S3",
+      "evidence": "S3 report: 13 pass 1 fail on 7705d77a alone; 14/0 with PILOT_BRANCH set"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3 handed back before go S3; gate owed after resume",
+      "evidence": "S3 report first line",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "findRune returns no structured mismatch flag, so doctor cannot offer pilot deck after a mismatch without parsing text",
+      "evidence": "S3 report, Pushback"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "lineage-base.test.mjs 'a gate1 cut from main is accepted' red in S4's full gate; its rerun alone ran without the gate's PILOT_BRANCH default and so could not tell flake from regression; with PILOT_BRANCH=pilot 2/0. Known lineage flake itm_ad02d595d1c2",
+      "evidence": "S4 report: 5221 pass 1 fail; alone with PILOT_BRANCH=pilot 2 pass 0 fail"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "co-pilot's fix brief named NEVER_SHOWN; the right list was the test's NOT_A_STORE_FILE, found by the reviewer; one extra round",
+      "evidence": "drift report: reviewer MEDIUM, then 2-line fix 74321f6 approved",
+      "size": 1
+    }
+  ]
+}

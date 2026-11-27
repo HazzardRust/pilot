@@ -34,7 +34,8 @@ import { ensureDaemon, isDeckUp } from '../deck/client.mjs';
 import { fromLeash, startScratch, stopScratch } from '../deck/scratch.mjs';
 import { fromRoot } from '../deck/spawn-root.mjs';
 import { openFile, rotateSecret } from '../deck/launch.mjs';
-import { openDeck, PACKAGE_ROOT, runCopy, runeBinary } from '../deck/open.mjs';
+import { openDeck, PACKAGE_ROOT, runCopy } from '../deck/open.mjs';
+import { defaultGet, defaultRun, ensureRune } from '../deck/rune-bin.mjs';
 import { main as serveDeck } from '../deck/daemon.mjs';
 import { storeDir } from '../deck/store.mjs';
 import { readUsageSwitch, setUsageSwitch } from '../deck/usage-switch.mjs';
@@ -387,8 +388,12 @@ export async function run(argv, deps) {
     // The path, never the URL with its key (deck-token A2): opening the file signs the browser in.
     // A deck that has just come up writes it a moment after it answers; one older than it never does.
     for (let tries = 0; up && tries < 20 && !existsSync(openFile()); tries += 1) await new Promise((r) => setTimeout(r, 100));
-    // Where the Rune deck is built it is what opens (rune-deck-ui A2); `deps.root` is a test's package root.
-    const rune = runeBinary(deps?.root ?? PACKAGE_ROOT, hostPlatform());
+    // Where the Rune deck is built, or its pinned binary verifies, it is what opens (rune-deck-ui A2; prebuilt-rune L4);
+    // `deps.root` is a test's package root and `deps.get` its stub. Only this verb downloads (A6), and only once the deck is up.
+    const host = { platform: hostPlatform(), arch: process.arch, version: PLUGIN_VERSION, run: deps?.run ?? defaultRun };
+    const state = up ? await ensureRune(deps?.root ?? PACKAGE_ROOT, host, deps?.get ?? defaultGet) : {};
+    if (state.line) process.stderr.write(`${state.line}\n`);
+    const rune = state.file;
     const open = rune ? `open ${runCopy(rune)}` : existsSync(openFile()) ? `open ${openFile()}` : 'no open file: `pilot deck --rotate` writes one';
     console.log(up ? `The deck is up at ${deckUrl()}\n${open}` : `No deck answered at ${deckUrl()}`);
     process.exitCode = up ? 0 : 1;

@@ -37,6 +37,8 @@ const NOT_A_STORE_FILE = new Map([
   ['./prices.json', 'a table shipped with the plugin'],
   ['prices.json', 'a table shipped with the plugin'],
   ['deck/prices.json', 'a table shipped with the plugin'],
+  ['release.json', 'the Rune pin shipped with the plugin, read by rune-bin.mjs'],
+  ['deck/rune/release.json', 'the Rune pin shipped with the plugin, read by rune-bin.mjs'],
   ['run.json', 'a run record inside a repository\'s docs/design folder'],
   ['surface.json', 'a surface file in a repository'],
   ['context-usage-state.json', 'written under ~/.claude, beside the store, not in it'],
