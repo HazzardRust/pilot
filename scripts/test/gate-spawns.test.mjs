@@ -128,7 +128,7 @@ test('over the ceiling the gate names the top three owners', async (t) => {
 });
 
 test('a run over either ceiling is red', async (t) => {
-  const { runGate } = await import(GATE);
+  const { runGate, SPAWN_CEILING, GIT_CEILING } = await import(GATE);
   const gate = (git, node) => {
     const file = spawnFile(t, []);
     const out = [];
@@ -137,8 +137,6 @@ test('a run over either ceiling is red', async (t) => {
     try {
       status = runGate([], {
         spawns: file,
-        ceiling: 11_000,
-        gitCeiling: 10_000,
         read: () => [],
         slot: () => ({ slot: 1, release() {} }),
         spawn: () => {
@@ -152,16 +150,17 @@ test('a run over either ceiling is red', async (t) => {
     }
     return { out: out.join(''), status };
   };
-  const total = gate(5_000, 6_001);
-  assert.match(total.out, /^spawns over 11000; most: a\.test\.mjs 11001$/m);
+  const total = gate(5_000, SPAWN_CEILING + 1 - 5_000);
+  assert.match(total.out, new RegExp(`^spawns over ${SPAWN_CEILING}; most: a\\.test\\.mjs ${SPAWN_CEILING + 1}$`, 'm'));
   assert.doesNotMatch(total.out, /git over/);
   assert.equal(total.status, 1);
-  const git = gate(10_001, 0);
-  assert.match(git.out, /^git over 10000$/m);
+  const git = gate(GIT_CEILING + 1, 0);
+  assert.match(git.out, new RegExp(`^git over ${GIT_CEILING}$`, 'm'));
   assert.doesNotMatch(git.out, /spawns over/);
   assert.equal(git.status, 1);
-  const edge = gate(10_000, 1_000);
-  assert.match(edge.out, /^spawns 11000 \(node 1000, git 10000, other 0\)$/m);
+  const node = SPAWN_CEILING - GIT_CEILING;
+  const edge = gate(GIT_CEILING, node);
+  assert.match(edge.out, new RegExp(`^spawns ${SPAWN_CEILING} \\(node ${node}, git ${GIT_CEILING}, other 0\\)$`, 'm'));
   assert.doesNotMatch(edge.out, /over/);
   assert.equal(edge.status, 0);
 });

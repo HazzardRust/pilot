@@ -7,6 +7,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -30,58 +31,65 @@ const isAncestor = (repo, a, b) => {
   }
 };
 
-function commit(repo, files, message) {
-  for (const [file, text] of Object.entries(files)) {
-    fs.mkdirSync(path.dirname(path.join(repo, file)), { recursive: true });
-    fs.writeFileSync(path.join(repo, file), text);
-  }
-  run(repo, 'add', '-A');
-  run(repo, 'commit', '-q', '-m', message);
-}
-
-/** ADR `number` written into `repo`, and the generated index over every ADR it holds. */
-function adr(repo, number) {
+/** ADRs `numbers` as files, and the generated index over exactly those, rendered in a scratch directory under `dir`. */
+function adrs(dir, ...numbers) {
   const front = ['---', 'status: accepted', 'date: 2026-11-19', 'tags: []', 'supersedes: []', 'superseded_by: []', 'paths: []', '---'];
-  const file = `docs/adr/${number}-decision-${number}.md`;
-  const text = [...front, `# Decision ${number}`, '', `We decided ${number}.`, ''].join('\n');
-  fs.mkdirSync(path.join(repo, 'docs', 'adr'), { recursive: true });
-  fs.writeFileSync(path.join(repo, file), text);
-  return { [file]: text, [INDEX]: renderIndex(path.join(repo, 'docs', 'adr')) };
+  const scratch = fs.mkdtempSync(path.join(dir, 'adr-'));
+  const files = {};
+  for (const number of numbers) {
+    const file = `${number}-decision-${number}.md`;
+    files[`docs/adr/${file}`] = [...front, `# Decision ${number}`, '', `We decided ${number}.`, ''].join('\n');
+    fs.writeFileSync(path.join(scratch, file), files[`docs/adr/${file}`]);
+  }
+  files[INDEX] = renderIndex(scratch);
+  fs.rmSync(scratch, { recursive: true, force: true });
+  return files;
 }
 
 /**
- * Origin with main holding ADR 0001, its index and src/x.mjs; `seed` moves branches; `work` is the checkout restack
- * runs in. `stacked`: feat/a off main, feat/b off feat/a. Otherwise siblings: feat/a and feat/b both off main, each
- * adding an ADR (so the index clashes), feat/a also changing src/x.mjs. Both land on pilot unless `landed` is false.
+ * Origin with main holding ADR 0001, its index and src/x.mjs; `work` is the checkout restack runs in. `stacked`:
+ * feat/a off main, feat/b off feat/a. Otherwise siblings: feat/a and feat/b both off main, each adding an ADR (so the
+ * index clashes), feat/a also changing src/x.mjs. Both land on pilot unless `landed` is false. `after` is what moved
+ * on origin since, as `seed` history: a fix pushed, or main merging a branch as the user's merge button does.
  */
-function build(dir, stacked, landed) {
-  const origin = path.join(dir, 'origin.git');
-  run(dir, 'init', '-q', '--bare', '-b', 'main', origin);
-  run(origin, 'config', 'core.logAllRefUpdates', 'always');
-  const seed = path.join(dir, 'seed');
-  run(dir, 'clone', '-q', origin, seed);
-  run(seed, 'checkout', '-q', '-b', 'main');
-  commit(seed, { ...adr(seed, '0001'), 'src/x.mjs': 'export const x = 1;\n' }, 'main');
-  run(seed, 'push', '-q', 'origin', 'main');
-  run(seed, 'checkout', '-q', '-b', 'feat/a', 'main');
-  if (stacked) commit(seed, { 'a.txt': 'a\n' }, 'feat a');
-  else commit(seed, { ...adr(seed, '0002'), 'src/x.mjs': 'export const x = 2;\n' }, 'feat a');
-  run(seed, 'checkout', '-q', '-b', 'feat/b', stacked ? 'feat/a' : 'main');
-  if (stacked) commit(seed, { 'b.txt': 'b\n' }, 'feat b');
-  else commit(seed, adr(seed, '0003'), 'feat b');
-  run(seed, 'push', '-q', 'origin', 'feat/a', 'feat/b');
+function build(dir, stacked, landed, after) {
+  const history = [
+    { branch: 'main', files: { ...adrs(dir, '0001'), 'src/x.mjs': 'export const x = 1;\n' }, message: 'main' },
+    stacked
+      ? { branch: 'feat/a', files: { 'a.txt': 'a\n' }, message: 'feat a' }
+      : { branch: 'feat/a', files: { ...adrs(dir, '0001', '0002'), 'src/x.mjs': 'export const x = 2;\n' }, message: 'feat a' },
+    stacked
+      ? { branch: 'feat/b', files: { 'b.txt': 'b\n' }, message: 'feat b' }
+      : { branch: 'feat/b', from: 'main', files: adrs(dir, '0001', '0003'), message: 'feat b' },
+  ];
+  // Landings as two-parent commits with the landing's own subject: restack reads pilot's first-parent subjects
+  // only, so pilot's tree (the merged branches' files, where a real landing's would differ) is never read.
   if (landed) {
-    // Landings as their two-parent commits only, with the landing's own subject: restack reads pilot's first-parent subjects.
-    let pilot = run(seed, 'rev-parse', 'main');
-    for (const branch of ['feat/a', 'feat/b']) pilot = run(seed, 'commit-tree', 'main^{tree}', '-p', pilot, '-p', branch, '-m', landingMessage(branch, 'pilot'));
-    run(seed, 'push', '-q', 'origin', `${pilot}:refs/heads/pilot`);
+    history.push(
+      { branch: 'pilot', from: 'main', merge: ['feat/a'], files: {}, message: landingMessage('feat/a', 'pilot') },
+      { branch: 'pilot', merge: ['feat/b'], files: {}, message: landingMessage('feat/b', 'pilot') },
+    );
   }
+  const { origin, sha } = seed(dir, [...history, ...after]);
   const work = path.join(dir, 'work');
   run(dir, 'clone', '-q', origin, work);
-  return { origin, seed, work };
+  return { origin, work, sha };
 }
 
-const repos = (t, stacked, landed = true) => gitFixture(t, `restack:${stacked ? 'stacked' : 'siblings'}:${landed}`, (dir) => build(dir, stacked, landed));
+const MERGE_A = { branch: 'main', merge: ['feat/a'], files: {}, message: 'Merge feat/a' };
+
+/** Each repository shape the tests start from, built once per file. */
+const repos = (t, shape) => {
+  const [stacked, landed, after] = {
+    stacked: [true, true, []],
+    'stacked, a merged': [true, true, [MERGE_A]],
+    'stacked, a fixed': [true, true, [{ branch: 'feat/a', files: { 'a.txt': 'a, fixed\n' }, message: 'fix a' }]],
+    'siblings, a merged': [false, true, [MERGE_A]],
+    'siblings unlanded, a merged': [false, false, [MERGE_A]],
+    'siblings, b changes x, a merged': [false, true, [{ branch: 'feat/b', files: { 'src/x.mjs': 'export const x = 3;\n' }, message: 'b changes x' }, MERGE_A]],
+  }[shape];
+  return gitFixture(t, `restack:${shape}`, (dir) => build(dir, stacked, landed, after));
+};
 
 /** A host whose `reviews` filters `prs` by the query's head, base and state; every edit is kept. */
 function stubHost(prs) {
@@ -103,18 +111,9 @@ function restackIn(work, host) {
   return { ...restack({ cwd: work, git, host }), calls };
 }
 
-/** Merges `branch` into main in `seed` with a merge commit, as the user's merge button does, and pushes main. */
-function mergeIntoMain(seed, branch) {
-  run(seed, 'fetch', '-q', 'origin');
-  run(seed, 'checkout', '-q', '-B', 'main', 'origin/main');
-  run(seed, 'merge', '-q', '--no-ff', '-m', `Merge ${branch}`, `origin/${branch}`);
-  run(seed, 'push', '-q', 'origin', 'main');
-}
-
 test('a merge commit retargets without a rewrite', (t) => {
-  const { origin, seed, work } = repos(t, true);
-  mergeIntoMain(seed, 'feat/a');
-  const before = tip(origin, 'feat/b');
+  const { origin, work, sha } = repos(t, 'stacked, a merged');
+  const before = sha['feat/b'];
   const { host, edits } = stubHost([pr({ number: 1, head: 'feat/a', state: 'merged' }), pr({ number: 2, head: 'feat/b', base: 'feat/a' })]);
 
   const out = restackIn(work, host);
@@ -126,12 +125,9 @@ test('a merge commit retargets without a rewrite', (t) => {
 });
 
 test('a fix on A reaches B', (t) => {
-  const { origin, seed, work } = repos(t, true);
-  run(seed, 'checkout', '-q', 'feat/a');
-  commit(seed, { 'a.txt': 'a, fixed\n' }, 'fix a');
-  run(seed, 'push', '-q', 'origin', 'feat/a');
-  const fix = tip(origin, 'feat/a');
-  const before = tip(origin, 'feat/b');
+  const { origin, work, sha } = repos(t, 'stacked, a fixed');
+  const fix = sha['feat/a'];
+  const before = sha['feat/b'];
   const { host, edits } = stubHost([pr({ number: 1, head: 'feat/a' }), pr({ number: 2, head: 'feat/b', base: 'feat/a' })]);
 
   const out = restackIn(work, host);
@@ -148,9 +144,8 @@ test('a fix on A reaches B', (t) => {
 });
 
 test('an unlanded feature PR is never merged forward', (t) => {
-  const { origin, seed, work } = repos(t, false, false);
-  mergeIntoMain(seed, 'feat/a');
-  const before = tip(origin, 'feat/b');
+  const { origin, work, sha } = repos(t, 'siblings unlanded, a merged');
+  const before = sha['feat/b'];
   const { host } = stubHost([pr({ number: 1, head: 'feat/a', state: 'merged' }), pr({ number: 2, head: 'feat/b' })]);
 
   const out = restackIn(work, host);
@@ -162,9 +157,8 @@ test('an unlanded feature PR is never merged forward', (t) => {
 });
 
 test('a sibling\'s generated clash heals', (t) => {
-  const { origin, seed, work } = repos(t, false);
-  mergeIntoMain(seed, 'feat/a');
-  const main = tip(origin, 'main');
+  const { origin, work, sha } = repos(t, 'siblings, a merged');
+  const main = sha.main;
   const { host } = stubHost([pr({ number: 1, head: 'feat/a', state: 'merged' }), pr({ number: 2, head: 'feat/b' })]);
 
   const out = restackIn(work, host);
@@ -178,12 +172,8 @@ test('a sibling\'s generated clash heals', (t) => {
 });
 
 test('a hand conflict stops', (t) => {
-  const { origin, seed, work } = repos(t, false);
-  run(seed, 'checkout', '-q', 'feat/b');
-  commit(seed, { 'src/x.mjs': 'export const x = 3;\n' }, 'b changes x');
-  run(seed, 'push', '-q', 'origin', 'feat/b');
-  mergeIntoMain(seed, 'feat/a');
-  const before = tip(origin, 'feat/b');
+  const { origin, work, sha } = repos(t, 'siblings, b changes x, a merged');
+  const before = sha['feat/b'];
   const { host } = stubHost([pr({ number: 1, head: 'feat/a', state: 'merged' }), pr({ number: 2, head: 'feat/b' })]);
 
   const out = restackIn(work, host);
@@ -195,15 +185,14 @@ test('a hand conflict stops', (t) => {
 });
 
 test('only an open own-repository feature PR is touched', (t) => {
-  const { origin, seed, work } = repos(t, true);
-  mergeIntoMain(seed, 'feat/a');
+  const { origin, work, sha } = repos(t, 'stacked, a merged');
   const { host, edits } = stubHost([
     pr({ number: 1, head: 'feat/a', state: 'merged' }),
     pr({ number: 2, head: 'feat/b', base: 'feat/a', crossRepo: true }),
     pr({ number: 3, head: 'slice/b-s1', base: 'feat/a' }),
     pr({ number: 4, head: 'feat/-x', base: 'feat/a' }),
   ]);
-  const before = tip(origin, 'feat/b');
+  const before = sha['feat/b'];
 
   const out = restackIn(work, host);
 
@@ -214,9 +203,9 @@ test('only an open own-repository feature PR is touched', (t) => {
 });
 
 test('a lower branch gone from origin fails that PR', (t) => {
-  const { origin, seed, work } = repos(t, true);
-  run(seed, 'push', '-q', 'origin', '--delete', 'feat/a');
-  const before = tip(origin, 'feat/b');
+  const { origin, work, sha } = repos(t, 'stacked');
+  run(origin, 'branch', '-q', '-D', 'feat/a');
+  const before = sha['feat/b'];
   const { host } = stubHost([pr({ number: 2, head: 'feat/b', base: 'feat/a' })]);
 
   const out = restackIn(work, host);
@@ -229,7 +218,7 @@ test('a lower branch gone from origin fails that PR', (t) => {
 });
 
 test('a base that is no plain branch name fails that PR', (t) => {
-  const { work } = repos(t, true);
+  const { work } = repos(t, 'stacked');
   const { host, edits } = stubHost([pr({ number: 2, head: 'feat/b', base: 'feat/a b' })]);
 
   const out = restackIn(work, host);
@@ -240,7 +229,7 @@ test('a base that is no plain branch name fails that PR', (t) => {
 });
 
 test('a host that cannot be asked fails', (t) => {
-  const { work } = repos(t, true);
+  const { work } = repos(t, 'stacked');
   const host = {
     reviews: () => {
       throw new Error('gh: not logged in');

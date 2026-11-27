@@ -1,0 +1,419 @@
+{
+  "slug": "test-body-git",
+  "feature": "Test bodies spawn far fewer git",
+  "ticket": "itm_07647401bb5e",
+  "branch": "feat/test-body-git",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-test-body-git",
+  "artefact": "docs/design/test-body-git/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated, checks green at 1958fb9",
+      "branch": "slice/test-body-git-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated, checks green at 93a70d3",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/test-body-git-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated, checks green at 5838679",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/test-body-git-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s3"
+    },
+    {
+      "slice": "S4",
+      "state": "integrated, checks green at 8e7109e",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/test-body-git-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s4"
+    },
+    {
+      "slice": "S5",
+      "state": "integrated, checks green at 436fe0c",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/test-body-git-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s5"
+    },
+    {
+      "slice": "S6",
+      "state": "integrated, checks green at 98b39db",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/test-body-git-s6",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s6"
+    },
+    {
+      "slice": "S7",
+      "state": "integrated, checks green at 2d64224",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/test-body-git-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s7"
+    },
+    {
+      "slice": "S8",
+      "state": "integrated, checks green at 99d5d48",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/test-body-git-s8",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s8"
+    },
+    {
+      "slice": "S9",
+      "state": "integrated, checks green at df62bf5",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/test-body-git-s9",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s9"
+    },
+    {
+      "slice": "S10",
+      "state": "integrated, checks green at e1a3cba",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/test-body-git-s10",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s10"
+    },
+    {
+      "slice": "S11",
+      "state": "integrated, checks green at 401452b",
+      "after": [
+        "S10"
+      ],
+      "branch": "slice/test-body-git-s11",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s11"
+    },
+    {
+      "slice": "S12",
+      "state": "integrated, checks green at 0687915",
+      "after": [
+        "S10"
+      ],
+      "branch": "slice/test-body-git-s12",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s12"
+    },
+    {
+      "slice": "S13",
+      "state": "integrated; B3: windows-latest `spawns 11083 (node 843, git 9947, other 293)` (Gate run 45935281463 on 0b3b9e7, checks green)",
+      "after": [
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S11",
+        "S12",
+        "S14",
+        "S15",
+        "S16"
+      ],
+      "branch": "slice/test-body-git-s13",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s13"
+    },
+    {
+      "slice": "S14",
+      "state": "added; integrated, checks green at 65aa753",
+      "after": [
+        "S12"
+      ],
+      "branch": "slice/test-body-git-s14",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s14"
+    },
+    {
+      "slice": "S15",
+      "state": "added; integrated, checks green at cded122",
+      "after": [
+        "S12"
+      ],
+      "branch": "slice/test-body-git-s15",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s15"
+    },
+    {
+      "slice": "S16",
+      "state": "added; integrated, checks green at cd15ab4",
+      "after": [
+        "S15"
+      ],
+      "branch": "slice/test-body-git-s16",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s16"
+    },
+    {
+      "slice": "S17 host-contract teardown",
+      "state": "integrated",
+      "after": [
+        "S16"
+      ]
+    },
+    {
+      "slice": "principles review",
+      "state": "integrated: fix round fb63347, checks green (Gate run 45938231857; windows 11083 / git 9947)",
+      "after": [
+        "S13"
+      ]
+    },
+    {
+      "slice": "QA",
+      "state": "in QA on fb63347 (started 04:21Z)",
+      "after": [
+        "principles review"
+      ],
+      "branch": "qa/test-body-git",
+      "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-qa"
+    },
+    {
+      "slice": "test-body-git",
+      "state": "landing started in C:/Users/jrylk/Projects/pilot-feat-test-body-git"
+    }
+  ],
+  "findings": [
+    "kept: pin init.defaultRefFormat = files in lib/git-fixture.mjs's global config, so the fixtures' hand-written loose refs stay valid under a reftable default (+2, 0 spawns)",
+    "kept: drop setRefs' packed param in lib/land-repos.mjs and write every ref loose; for-each-ref and every git reader treat the two the same (-5)",
+    "dropped: reflog oracle compares hashes only; the exact porcelain messages are S10's fidelity check, and loosening the oracle weakens an assert to save ~7 lines",
+    "kept: seed.mjs identity() reparses the literal git-fixture.mjs writes; export the identity and delete identity() (-6)",
+    "dropped: shared setRunRemote helper across 3 tests; net -1 against a new import in each",
+    "kept: wrap the over-200-char comment line in gate.mjs:68 (0)",
+    "kept: S13 slice title's stale 11,000, and the after-reasons check-slices flags at S14.md:3 and S16.md:3 (0)"
+  ],
+  "next": "Gate2 itm_b0bc915d3874 signed by the user 06:17Z at 2e4fea0; lander aacd122f11682d581 spawned. On landed: reply Findings on the closing report (lander's line; dropped: reflog oracle, setRunRemote helper; evidence checks not re-run). Then prune-worktrees and prebuilt-rune merge the new pilot branch (drift).",
+  "updatedAt": "2026-11-27T06:18:04.811Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "a reviewer ran node scripts/gate.mjs outside the gate lock; LNK1104 killed two selection runs with no summary",
+      "evidence": "S11: two runs exit 1, 436 and 414 pass, no failing test line"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census counts clone() from a test body as built; slice bars phrased per helper cannot be read off it",
+      "evidence": "S11 B1 583 -> 309 total vs 545 -> 263 outside buildRepos, bar 236 matches neither base"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census prints only 'fail N', not the failing tests; a second gate run needed to see them",
+      "evidence": "S12 integrate-remote 2 reds spawnSync git ENOENT"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice files' base numbers disagree with S10's tip (S12 207 vs 219, S11 236 matches neither)",
+      "evidence": "S11 and S12 reports"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S12 bar margin 2 (107 vs <=109)",
+      "evidence": "S12 census"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "CI checks take ~20-30 min per integration and integrations are serialized behind them; 6 integrations cost ~3 h of waiting",
+      "evidence": "pilot checks waits on 1958fb9..99d5d48 each needed 2-3 nine-minute waits"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "slice reports go to main unless the co-pilot hello lands before the child's first round",
+      "evidence": "S1 report delivered to main twice"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S13 found the suite over the signed bars only at its full test:cost run; no slice before it measured the whole suite",
+      "evidence": "spawns 11481 (git 10338) vs 11000/10000",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Bash moves calls past 180 s to background; Monitor not available to the implementer, polled with short loops",
+      "evidence": "S13 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S13 gate-spawns test reads ceiling as arguments, so B1 does not exercise the new constants",
+      "evidence": "S13 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S15 ran out of context at 161 of 300 cut; 300 target and the 400-line limit pull against each other on already-folded files (~2-3 changed lines per git saved)",
+      "evidence": "S15 wip b197fc4, 437 lines changed",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S15 and S14 serialized on the gate lock for minutes per run",
+      "evidence": "S15 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census-after.txt carries cargo build noise",
+      "evidence": "S15 report",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census 'built' counts later calls to a closure the build returned, over-reading a fixture's real cost",
+      "evidence": "worktrees: ~8 build git vs census 31 built",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "most of S14's time read already-folded files with nothing left to fold; a per-slice target needed a per-file look first",
+      "evidence": "~15 files surveyed, 5 touched",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census prints product git only as a suite total; finding the file took a scratch per-owner script and two more gate-length runs",
+      "evidence": "S15 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "census-after.txt has no per-file product numbers; 'product unchanged' needs a base rerun in a throwaway worktree with its own npm ci",
+      "evidence": "S15 report",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "S15's report delivered to main, relayed by hand",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "co-pilot relayed implementers' 'big cuts sit in clone()' to main unchecked; S16 census showed clone() worth ~8 git",
+      "evidence": "26-file land-repos census at cded122",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S16 cut targets set from helper names and census totals, not a per-file look at what L5 allows; 150 needed 73% of owned body+lib git",
+      "evidence": "S16 report: cut 31",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "per-file product git needs one census run per file (~1 min each, cargo rebuild every run)",
+      "evidence": "S16 B3: 20 census runs",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S16 context compacted early and kept no work; restarted from the brief",
+      "evidence": "S16 message",
+      "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "implementer and co-pilot reports repeatedly delivered to main and relayed by hand (S1, S15, S5, S6); hand-back enforcer forced four early co-pilot hand-backs, each needing a push watch and a resume",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exits every 50 minutes with no reply; each restart re-sends the whole context",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce hook ends the co-pilot's run at every turn end, so it cannot wait on a live implementer; its report was orphaned twice and main had to re-route it",
+      "evidence": "two forced hand-backs from a343c059d21bbd4bf on itm_07647401bb5e while S13 implementer aac29451dc69e1c4f was live, the second after main told it to keep waiting"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:cost under the gate lock took about 21 min and the census about 18 min",
+      "evidence": "S13 report",
+      "size": 39
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "cost-after.txt and census-after.txt open with raw cargo output; cost-after.txt is ~1000 lines of diff",
+      "evidence": "S13 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the first rebased wip numbers were stale and had to be regenerated",
+      "evidence": "S13 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "handback-send-enforce ends the co-pilot's run at every turn end, so it cannot wait on a live child across turns",
+      "evidence": "two forced hand-backs while S13 was implementing"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "a context summary mid-run dropped the evidence runner's output; the six evidence checks were not re-run",
+      "evidence": "fundamentalist report section 3"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "the scratchpad is shared with another agent's census, cost and gate logs, which cost a probe to tell apart",
+      "evidence": "fundamentalist report section 5"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "check-slices accepts only `S<n> (<file or seam>)` as an after-reason, which is not documented",
+      "evidence": "its error output during the fix round"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "land-suite.test.mjs needs PILOT_BRANCH set when run alone; the gate sets it",
+      "evidence": "`NOT landed: no pilot branch name` on a direct run"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Monitor is not available to the implementer, so waiting on the gate meant polling Bash loops",
+      "evidence": "tool error on its first wait"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "it reported 87 touched lines and pushed past the 60-line limit; the real diff is 19+/24- (43)",
+      "evidence": "git diff --stat 0b3b9e73 fb63347e"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "scratchpad held another run's files (gate.log, l7.mjs, rungate.sh) that nearly passed for its own results",
+      "evidence": "files dated before its spawn, 14:08 local"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "per-slice cuts for added spec lines 5 and 6 live only in commit bodies, not the slice table",
+      "evidence": "git show -s on 2c69a358, 678f95f2, aa7e868e"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "the decision commit amended spec 1, 2 and L7 but not added spec lines 5 and 6, so QA found artefact and build disagreeing",
+      "evidence": "QA F1 on fb63347e; architecture.md lines 23-24"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "deck refused a gate2 pr of `161` (wants `#161`) and a no-walkthrough gate2 without a lowercase checks table in body",
+      "evidence": "two deck_post errors on itm_b0bc915d3874"
+    },
+    {
+      "agent": "pilot-qa",
+      "what": "Edit tool dropped a trailing space from a recorded census header row; caught in the diff",
+      "evidence": "git diff with cat -A on census-after.txt"
+    }
+  ]
+}

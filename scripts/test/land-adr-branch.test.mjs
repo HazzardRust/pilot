@@ -5,7 +5,8 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
-import { buildRepos, commitFile, fakeGh, git, land, mainSays, passing } from './lib/land-repos.mjs';
+import { buildRepos, fakeGh, git, land, mainSays, passing } from './lib/land-repos.mjs';
+import { seed as seedHistory } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,22 +24,33 @@ const failing = `node -e "console.log('ℹ pass 0'); console.log('ℹ fail 1'); 
 function adrRepos(t) {
   return gitFixture(t, 'land-adr-branch', (dir) => {
     const built = buildRepos(dir, []);
-    fs.mkdirSync(path.join(built.seed, 'docs/adr'), { recursive: true });
-    commitFile(built.seed, 'docs/adr/0192-base.md', adr('the base'), 'adr 0192');
-    git(built.seed, 'push', '-q', 'origin', 'HEAD:main', 'HEAD:pilot');
-    const feature = (name, placeholder = true) => {
-      const work = built.clone(name);
-      fs.mkdirSync(path.join(work, 'docs/adr'), { recursive: true });
-      if (placeholder) commitFile(work, `docs/adr/NNNN-${name}.md`, adr(name), `adr ${name}`);
-      fs.mkdirSync(path.join(work, `docs/design/${name}`), { recursive: true });
-      commitFile(work, `docs/design/${name}/run.json`, `${JSON.stringify({ slug: name, base: 'main' }, null, 2)}\n`, 'run record');
-      git(work, 'push', '-q', 'origin', `feat/${name}`);
+    // The history the porcelain build committed and pushed, seeded beside origin and fetched into it in one git.
+    const feature = (name, placeholder = true) => [
+      { branch: `feat/${name}`, from: 'main', files: { [`${name}.txt`]: `${name}\n` }, message: `feat ${name}` },
+      ...(placeholder ? [{ branch: `feat/${name}`, files: { [`docs/adr/NNNN-${name}.md`]: adr(name) }, message: `adr ${name}` }] : []),
+      { branch: `feat/${name}`, files: { [`docs/design/${name}/run.json`]: `${JSON.stringify({ slug: name, base: 'main' }, null, 2)}\n` }, message: 'run record' },
+    ];
+    const beside = path.join(dir, 'history');
+    fs.mkdirSync(beside);
+    const { origin: history, sha } = seedHistory(beside, [
+      { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'main' },
+      { branch: 'main', files: { 'docs/adr/0192-base.md': adr('the base') }, message: 'adr 0192' },
+      ...feature('x'), ...feature('y'), ...feature('bare', false),
+    ], { pilot: 'main' });
+    git(built.origin, 'fetch', '-q', history, '+refs/heads/*:refs/heads/*');
+    // Each feature is one clone of its branch, holding a local main as the clone the build cut it in did.
+    const clone = (name) => {
+      const work = path.join(dir, name);
+      git(dir, 'clone', '-q', '-b', `feat/${name}`, built.origin, work);
+      fs.writeFileSync(path.join(work, '.git', 'refs', 'heads', 'main'), `${sha.main}\n`);
       return work;
     };
-    return { ...built, dir, x: feature('x'), y: feature('y'), bare: feature('bare', false) };
+    return { ...built, dir, x: clone('x'), y: clone('y'), bare: clone('bare') };
   });
 }
 
+/** The SHAs of `refs` in `repo`, one `rev-parse` for them all (test-body-git S11, L5). */
+const revs = (repo, ...refs) => git(repo, 'rev-parse', ...refs).split('\n');
 const featFiles = (origin, name) => git(origin, 'diff', '--name-only', `main..feat/${name}`).split('\n');
 const host = (name) => fakeGh([{ number: 12, headRefName: `feat/${name}`, baseRefName: 'main', state: 'OPEN' }]).host;
 
@@ -54,8 +66,9 @@ test('the PR carries the number; the landed lines say feat moved on origin', (t)
   assert.deepEqual(files.filter((f) => f.includes('NNNN-')), []);
   const [, from, to] = said.out.match(/^ADR (\S+) is (\S+)$/m) ?? [];
   assert.deepEqual({ from, to }, { from: 'NNNN-x', to: '0193' });
-  assert.equal(git(origin, 'rev-parse', 'pilot^2'), git(origin, 'rev-parse', 'feat/x'), 'pilot merges the numbered feature');
-  assert.equal(git(origin, 'rev-parse', 'feat/x^'), git(x, 'rev-parse', 'HEAD'), 'one commit on top of the landed tip');
+  const [merged, feat, under] = revs(origin, 'pilot^2', 'feat/x', 'feat/x^');
+  assert.equal(merged, feat, 'pilot merges the numbered feature');
+  assert.equal(under, git(x, 'rev-parse', 'HEAD'), 'one commit on top of the landed tip');
 
   assert.equal(said.code, 0, said.out);
   assert.match(said.out, /\nADR NNNN-x is 0193\nfeat\/x moved on origin: git pull --ff-only before a fix\nfeature PR: #12 into main\n$/);
@@ -66,7 +79,7 @@ function landByHand(origin, work, name) {
   git(work, 'fetch', '-q', 'origin');
   const pilotTip = git(work, 'rev-parse', 'origin/pilot');
   const tree = path.join(path.dirname(work), `${name}-landing`);
-  git(work, 'worktree', 'add', '-q', '--detach', tree, git(work, 'rev-parse', 'HEAD'));
+  git(work, 'worktree', 'add', '-q', '--detach', tree, 'HEAD');
   const allocated = allocateAdr(tree, { since: pilotTip, onto: 'branch' });
   const numbered = git(tree, 'rev-parse', 'HEAD');
   git(tree, 'checkout', '-q', '--detach', pilotTip);
@@ -113,8 +126,9 @@ test('a retry after pilot moved pushes the same numbered commit', (t) => {
 
   assert.equal(landed.retried, true);
   assert.deepEqual(landed.adr, { from: 'NNNN-x', to: '0193' });
-  assert.equal(git(origin, 'rev-parse', 'feat/x^'), git(x, 'rev-parse', 'HEAD'), 'still one commit on the landed tip');
-  assert.equal(git(origin, 'rev-parse', 'pilot^2'), git(origin, 'rev-parse', 'feat/x'));
+  const [under, merged, feat] = revs(origin, 'feat/x^', 'pilot^2', 'feat/x');
+  assert.equal(under, git(x, 'rev-parse', 'HEAD'), 'still one commit on the landed tip');
+  assert.equal(merged, feat);
   assert.ok(git(origin, 'ls-tree', '--name-only', 'pilot', 'moved0.txt'), 'the move is kept');
 });
 
@@ -148,8 +162,9 @@ console.log('ℹ pass 1'); console.log('ℹ fail 0');
   const files = featFiles(origin, 'x');
   assert.ok(files.includes('docs/adr/0194-x.md'), files.join(', '));
   assert.ok(!files.includes('docs/adr/0193-x.md'), files.join(', '));
-  assert.equal(git(origin, 'rev-parse', 'feat/x^^'), git(x, 'rev-parse', 'HEAD'), 'the renumber sits on the first number');
-  assert.equal(git(origin, 'rev-parse', 'pilot^2'), git(origin, 'rev-parse', 'feat/x'));
+  const [under, merged, feat] = revs(origin, 'feat/x^^', 'pilot^2', 'feat/x');
+  assert.equal(under, git(x, 'rev-parse', 'HEAD'), 'the renumber sits on the first number');
+  assert.equal(merged, feat);
 });
 
 test('a feature with no placeholder gets no commit on feat', (t) => {
@@ -159,6 +174,7 @@ test('a feature with no placeholder gets no commit on feat', (t) => {
   const landed = land({ cwd: bare, git: (args) => git(bare, ...args), host: host('bare'), test: passing });
 
   assert.equal(landed.adr, null);
-  assert.equal(git(origin, 'rev-parse', 'feat/bare'), tip);
-  assert.equal(git(origin, 'rev-parse', 'pilot^2'), tip);
+  const [feat, merged] = revs(origin, 'feat/bare', 'pilot^2');
+  assert.equal(feat, tip);
+  assert.equal(merged, tip);
 });

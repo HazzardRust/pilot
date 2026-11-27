@@ -8,6 +8,7 @@
 // A red run's log goes under a home of this process's own, never the real one; the
 // fixture seam imports fake-home.mjs first.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -35,40 +36,35 @@ function scratchRepos(t, runs) {
   return gitFixture(t, `integrate-remote:scratchRepos:${runs}`, (root) => buildScratchRepos(root, runs));
 }
 
-function buildScratchRepos(root, runs) {
-  const origin = path.join(root, 'origin.git');
-  const second = path.join(root, 'second.git');
-  const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
-  git(root, 'init', '-q', '--bare', '-b', 'main', second);
-  git(root, 'clone', '-q', origin, work);
-  git(work, 'remote', 'add', 'second', second);
-  git(work, 'checkout', '-q', '-b', 'feat/x');
-  fs.writeFileSync(path.join(work, 'base.txt'), 'base\n');
-  git(work, 'add', 'base.txt');
-  git(work, 'commit', '-q', '-m', 'base');
-  git(work, 'push', '-q', '-u', 'origin', 'feat/x', 'HEAD:main');
-  git(work, 'remote', 'set-head', 'origin', 'main');
-  if (runs !== 'origin') git(work, 'config', 'pilot.remote', runs);
+// The base commit, then `pilot` and the slice each one commit off it (test-body-git S12: seeded, L3). Seeded alone
+// into another directory, the same base is the same commit, since `seed`'s times and identity are fixed.
+const BASE = { branch: 'main', files: { 'base.txt': 'base\n' }, message: 'base' };
+const RUN = [
+  { ...BASE, branch: 'slice/x-s1' },
+  { branch: 'pilot', from: 'slice/x-s1', files: { 'pilot.txt': 'pilot\n' }, message: 'on pilot' },
+  { branch: 'slice/x-s1', files: { 'a.txt': 'a\n' }, message: 'the slice' },
+];
 
-  const place = (branch) => {
-    if (runs === 'none') return;
-    git(work, 'push', '-q', runs, branch);
-    git(work, 'branch', '-q', '-D', branch);
-  };
-  git(work, 'checkout', '-q', '-b', 'pilot');
-  fs.writeFileSync(path.join(work, 'pilot.txt'), 'pilot\n');
-  git(work, 'add', 'pilot.txt');
-  git(work, 'commit', '-q', '-m', 'on pilot');
-  git(work, 'checkout', '-q', '-b', 'slice/x-s1', 'feat/x');
-  fs.writeFileSync(path.join(work, 'a.txt'), 'a\n');
-  git(work, 'add', 'a.txt');
-  git(work, 'commit', '-q', '-m', 'the slice');
-  git(work, 'checkout', '-q', 'feat/x');
-  place('pilot');
-  place('slice/x-s1');
+function buildScratchRepos(root, runs) {
+  const work = path.join(root, 'work');
+  // Under `origin` the run's branches are origin's own; else origin holds main and feat/x, and the run's
+  // branches are in `second.git` (the second remote, fetched) or fetched into the work clone as local branches.
+  const { origin } = runs === 'origin'
+    ? seed(root, [BASE, { ...RUN[1], from: 'main' }, { ...RUN[2], from: 'main' }], { 'feat/x': 'main' })
+    : seed(root, [BASE], { 'feat/x': 'main' });
+  const other = path.join(root, runs);
+  if (runs !== 'origin') fs.mkdirSync(other);
+  const second = runs === 'origin' ? path.join(root, 'second.git') : seed(other, RUN).origin;
+  const remote = runs === 'second' ? ['-c', `remote.second.url=${second}`, '-c', 'remote.second.fetch=+refs/heads/*:refs/remotes/second/*'] : [];
+  const setting = runs === 'origin' ? [] : ['-c', `pilot.remote=${runs}`];
+  git(root, 'clone', '-q', ...remote, ...setting, '-b', 'feat/x', origin, work);
+  if (runs === 'second') git(work, 'fetch', '-q', 'second');
+  if (runs === 'none') git(work, 'fetch', '-q', second, 'pilot:pilot', 'slice/x-s1:slice/x-s1');
   return { origin, second, work };
 }
+
+/** origin's feat/x a.txt and pilot.txt, one line each, in one `git show`. */
+const shown = (bare) => git(bare, 'show', 'feat/x:a.txt', 'feat/x:pilot.txt').split('\n');
 
 const listed = (bare) => git(bare, 'for-each-ref', '--format=%(refname:short)', 'refs/heads/').split('\n');
 
@@ -78,10 +74,12 @@ test('integrate merges a slice from the second remote and pushes feat to origin'
   const result = integrate('slice/x-s1', { cwd: work, test: passing, install: () => {}, host: githubHost(noPr()) });
 
   assert.equal(result.ok, true, result.line);
-  assert.equal(git(origin, 'rev-parse', 'feat/x'), git(work, 'rev-parse', 'HEAD'), 'feat/x pushed to origin');
-  assert.equal(git(origin, 'show', 'feat/x:a.txt'), 'a', "origin's feat/x holds the slice");
-  assert.equal(git(origin, 'show', 'feat/x:pilot.txt'), 'pilot', "and second's pilot as the base");
-  assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge slice/x-s1');
+  const [head, subject] = git(work, 'log', '-1', '--format=%H%n%s').split('\n');
+  const [slice, base] = shown(origin);
+  assert.equal(git(origin, 'rev-parse', 'feat/x'), head, 'feat/x pushed to origin');
+  assert.equal(slice, 'a', "origin's feat/x holds the slice");
+  assert.equal(base, 'pilot', "and second's pilot as the base");
+  assert.equal(subject, 'Merge slice/x-s1');
   assert.deepEqual(listed(origin).sort(), ['feat/x', 'main'], 'origin lists no slice/ or pilot');
   assert.ok(!listed(second).includes('feat/x'), 'feat/ never pushed to the run remote');
 });
@@ -94,8 +92,9 @@ test('integrate under none merges a local slice', (t) => {
   assert.equal(result.ok, true, result.line);
   assert.equal(git(work, 'log', '-1', '--format=%s'), 'Merge slice/x-s1');
   assert.match(result.line, new RegExp(`\(base pilot@${git(work, 'rev-parse', '--short', 'pilot')}\)`), 'the base is the local pilot');
-  assert.equal(git(origin, 'show', 'feat/x:pilot.txt'), 'pilot');
-  assert.equal(git(origin, 'show', 'feat/x:a.txt'), 'a');
+  const [slice, base] = shown(origin);
+  assert.equal(base, 'pilot');
+  assert.equal(slice, 'a');
   assert.deepEqual(listed(origin).sort(), ['feat/x', 'main'], 'origin lists no slice/ or pilot');
 });
 

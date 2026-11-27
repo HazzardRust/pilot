@@ -7,6 +7,7 @@
 
 // The fixture seam imports fake-home.mjs first and gives every git below its identity.
 import { GIT_SLOW_MS, gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -30,18 +31,18 @@ function scratchRepos(t) {
   return gitFixture(t, 'handoff-lineage-remote:scratchRepos', buildScratchRepos);
 }
 
+/** One seed, one init and one clone: the clone's `-c` writes the remote `second` as `git remote add` does. */
 function buildScratchRepos(root) {
-  const origin = path.join(root, 'origin.git');
+  const { origin } = seed(root, [{ branch: 'main', files: {}, message: 'main' }], { pilot: 'main' });
   const second = path.join(root, 'second.git');
   const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
   git(root, 'init', '-q', '--bare', '-b', 'main', second);
-  git(root, 'clone', '-q', origin, work);
-  git(work, 'remote', 'add', 'second', second);
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'main');
-  git(work, 'push', '-q', 'origin', 'main', 'main:pilot');
+  git(root, 'clone', '-q', '-c', `remote.second.url=${second}`, '-c', 'remote.second.fetch=+refs/heads/*:refs/remotes/second/*', origin, work);
   return { origin, second, work };
 }
+
+/** `git config pilot.remote <name>` with no git spawned: git reads the last value a key has in `.git/config`. */
+const setRunRemote = (repo, name) => fs.appendFileSync(path.join(repo, '.git', 'config'), `[pilot]\n\tremote = ${name}\n`);
 
 /** `branch` checked out in `work` with the deck's run.json written but not committed. */
 function recordOn(work, branch) {
@@ -74,7 +75,7 @@ const branches = (bare) => git(bare, 'for-each-ref', '--format=%(refname:short)'
 
 test("a design branch's record goes to the run remote", async (t) => {
   const { origin, second, work } = scratchRepos(t);
-  git(work, 'config', 'pilot.remote', 'second');
+  setRunRemote(work, 'second');
   recordOn(work, 'design/x');
   await stubDeck(t, { slug: 'x', worktree: work, next: 'n' });
 
@@ -88,7 +89,7 @@ test("a design branch's record goes to the run remote", async (t) => {
 
 test('under none a design record stays local', async (t) => {
   const { origin, second, work } = scratchRepos(t);
-  git(work, 'config', 'pilot.remote', 'none');
+  setRunRemote(work, 'none');
   recordOn(work, 'design/x');
   await stubDeck(t, { slug: 'x', worktree: work, next: 'n' });
 
@@ -103,7 +104,7 @@ test('under none a design record stays local', async (t) => {
 
 test('a feat/ record still goes to origin under a second run remote', async (t) => {
   const { origin, second, work } = scratchRepos(t);
-  git(work, 'config', 'pilot.remote', 'second');
+  setRunRemote(work, 'second');
   recordOn(work, 'feat/x');
   await stubDeck(t, { slug: 'x', worktree: work, next: 'n' });
 
@@ -117,7 +118,7 @@ test('a feat/ record still goes to origin under a second run remote', async (t) 
 
 test('a feat/ record still goes to origin under none', async (t) => {
   const { origin, work } = scratchRepos(t);
-  git(work, 'config', 'pilot.remote', 'none');
+  setRunRemote(work, 'none');
   recordOn(work, 'feat/x');
   await stubDeck(t, { slug: 'x', worktree: work, next: 'n' });
 
@@ -130,7 +131,7 @@ test('a feat/ record still goes to origin under none', async (t) => {
 
 test('a bad pilot.remote refuses the hand-off before anything is committed', async (t) => {
   const { work } = scratchRepos(t);
-  git(work, 'config', 'pilot.remote', 'nowhere');
+  setRunRemote(work, 'nowhere');
   recordOn(work, 'design/x');
   await stubDeck(t, { slug: 'x', worktree: work, next: 'n' });
 
@@ -145,7 +146,7 @@ const refused = (...parts) => (error) => error instanceof DeckRefusal && parts.e
 
 test('the gate1 lineage reads the local pilot under none', (t) => {
   const { work } = scratchRepos(t);
-  git(work, 'config', 'pilot.remote', 'none');
+  setRunRemote(work, 'none');
   git(work, 'branch', 'pilot', 'origin/pilot');
   git(work, 'checkout', '-q', '-b', 'design/x', 'pilot');
   git(work, 'commit', '-q', '--allow-empty', '-m', 'docs');
@@ -162,6 +163,6 @@ test('the gate1 lineage reads the local pilot under none', (t) => {
 
 test('the gate1 lineage names the run remote pilot when it is missing', (t) => {
   const { work } = scratchRepos(t);
-  git(work, 'config', 'pilot.remote', 'second');
+  setRunRemote(work, 'second');
   assert.throws(() => assertOnPilotTip(work, 'main', { timeout: GIT_SLOW_MS }), refused('has no second/pilot;', 'git fetch second pilot'));
 });
