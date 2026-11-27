@@ -63,7 +63,7 @@ link to another checkout), never `npm install`, never a retry.
 Each cell is cwd · command. Run a cell as one Bash call, `cd <dir> && { <command>; }`
 with the cwd as `<dir>`, or `git -C <dir>` for a git command; never `cd <dir>; …` or a
 lone `cd`, so a failed `cd` never runs on in the shared checkout.
-Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove with `pilot worktrees remove`.
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 `$W`, the worktree your caller created and handed you, is yours for this table alone, so a mutation cell that rewrites its source and restores it keeps the first rule.
 An empty cell is `no tool for this

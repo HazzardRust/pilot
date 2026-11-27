@@ -39,13 +39,13 @@ and agreeing with the artefact is not a finding and is not evidence.
 Your own worktree, detached at the PR branch:
 
 ```bash
-git fetch origin && git worktree add --detach <path> origin/feat/<slug>
+git fetch origin && pilot worktrees add --run <slug> --detach <path> origin/feat/<slug>
 ```
 
 You read; you do not change the code. Never edit a tracked file, commit,
 push, comment on the PR, or touch another worktree: the fix round is another
 agent's. A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
-Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove with `pilot worktrees remove`.
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 
 The runner installs a worktree with no `node_modules` itself. Install nothing; use the
@@ -53,7 +53,7 @@ project's tools or run one ephemerally (`npx --yes`, `uvx`, `pipx run`, `go
 run <pkg>@<version>`), since an added dependency changes the reviewed code.
 Copy the environment file only if the brief says the
 tests need it, and confirm `git check-ignore` agrees first. Remove the
-worktree when you report.
+worktree with `pilot worktrees remove <path>` when you report.
 
 ## The decisions pass
 

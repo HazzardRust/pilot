@@ -14,6 +14,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 const { integrate } = await import('../integrate.mjs');
@@ -71,7 +72,8 @@ function ghWith(state, tip, asked = []) {
 }
 
 const listed = (bare) => git(bare, 'for-each-ref', '--format=%(refname:short)', 'refs/heads/').split('\n');
-const options = (work, gh, more = {}) => ({ cwd: work, test: passing, install: () => {}, host: githubHost(gh), wait: 0, ...more });
+// No holder by default: the real process table would make the verdict depend on this machine.
+const options = (work, gh, more = {}) => ({ cwd: work, test: passing, install: () => {}, host: githubHost(gh), wait: 0, holder: () => null, ...more });
 
 test('a merged slice is deleted after the push', (t) => {
   const { origin, work, tip } = scratchRepos(t, 'origin');
@@ -82,6 +84,70 @@ test('a merged slice is deleted after the push', (t) => {
   assert.match(result.line, /; pushed; deleted slice\/x-s1$/);
   assert.equal(git(origin, 'rev-parse', 'feat/x'), git(work, 'rev-parse', 'HEAD'), 'feat/x pushed first');
   assert.ok(!listed(origin).includes('slice/x-s1'), 'origin no longer lists the slice');
+});
+
+/** A worktree of `work` on a new local `slice/x-s1` at `tip`, in a temp dir removed after the test. */
+function sliceTree(t, work, tip) {
+  // The slashes git prints, which the line carries.
+  // realpath.native: on macOS os.tmpdir() is under the /var symlink, and git prints /private/var;
+  // on Windows it may be an 8.3 short name (RUNNER~1), and git prints the long form.
+  const dir = path.join(fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'integrate tree-'))), 'slice-tree').replaceAll('\\', '/');
+  git(work, 'worktree', 'add', '-q', '-b', 'slice/x-s1', dir, tip);
+  t.after(() => {
+    try { git(work, 'worktree', 'remove', '--force', dir); } catch { /* already gone */ }
+    fs.rmSync(path.dirname(dir), { recursive: true, force: true });
+  });
+  return dir;
+}
+
+const treesOn = (work, branch) => git(work, 'worktree', 'list', '--porcelain').split(/\r?\n/).filter((l) => l === `branch refs/heads/${branch}`).length;
+
+test('an integrated slice\'s tree goes before its branch is deleted', (t) => {
+  const { work, tip } = scratchRepos(t, 'origin');
+  const dir = sliceTree(t, work, tip);
+
+  const result = integrate('slice/x-s1', options(work, ghWith('MERGED', tip)));
+
+  assert.equal(result.ok, true, result.line);
+  assert.ok(result.line.endsWith(`; pushed; removed ${dir}; deleted slice/x-s1`), result.line);
+  assert.equal(treesOn(work, 'slice/x-s1'), 0);
+  assert.equal(fs.existsSync(dir), false);
+});
+
+test('a slice tree a live process holds is kept and named (L4)', (t) => {
+  const { work, tip } = scratchRepos(t, 'origin');
+  const dir = sliceTree(t, work, tip);
+
+  const result = integrate('slice/x-s1', options(work, ghWith('MERGED', tip), { holder: (at) => (path.resolve(at) === path.resolve(dir) ? 4242 : null) }));
+
+  assert.equal(result.ok, true, result.line);
+  assert.ok(result.line.includes(`; pushed; kept live 4242 ${dir}`), result.line);
+  assert.equal(fs.existsSync(dir), true, 'the held tree is intact');
+});
+
+test('a dirty slice tree is kept and named, the merge still pushed', (t) => {
+  const { origin, work, tip } = scratchRepos(t, 'origin');
+  const dir = sliceTree(t, work, tip);
+  fs.writeFileSync(path.join(dir, 'scratch.txt'), 'mine\n');
+
+  const result = integrate('slice/x-s1', options(work, ghWith('MERGED', tip)));
+
+  assert.equal(result.ok, true, result.line);
+  assert.ok(result.line.endsWith(`; pushed; kept dirty ${dir}; deleted slice/x-s1`), result.line);
+  assert.ok(fs.existsSync(path.join(dir, 'scratch.txt')), 'the tree is intact');
+  assert.equal(git(origin, 'rev-parse', 'feat/x'), git(work, 'rev-parse', 'HEAD'), 'feat/x pushed');
+});
+
+test('a red integration removes no tree', (t) => {
+  const { work, tip } = scratchRepos(t, 'origin');
+  const dir = sliceTree(t, work, tip);
+
+  const result = integrate('slice/x-s1', options(work, ghWith('MERGED', tip), { test: failing }));
+
+  assert.equal(result.ok, false);
+  assert.doesNotMatch(result.line, /; (removed|kept \w+) /);
+  assert.equal(treesOn(work, 'slice/x-s1'), 1);
+  assert.ok(fs.existsSync(dir));
 });
 
 test('a PR gh still reads open keeps the branch', (t) => {
