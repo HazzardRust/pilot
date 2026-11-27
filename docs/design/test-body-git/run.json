@@ -114,7 +114,7 @@
     },
     {
       "slice": "S13",
-      "state": "paused: holds for the user's bar answer (itm_df6654893518); wip 2160acd local",
+      "state": "failed gate: checks red at 4405b7c: gate (windows-latest)",
       "after": [
         "S2",
         "S3",
@@ -153,52 +153,24 @@
     },
     {
       "slice": "S16",
-      "state": "added; pushed e426621 (fixture -31, node -10), integrating",
+      "state": "added; integrated, checks green at cd15ab4",
       "after": [
         "S15"
       ],
       "branch": "slice/test-body-git-s16",
       "worktree": "C:/Users/jrylk/Projects/pilot-test-body-git-s16"
+    },
+    {
+      "slice": "S17 host-contract teardown",
+      "state": "pushed 516ef2c (on feat, awaiting CI)",
+      "after": [
+        "S16"
+      ]
     }
   ],
-  "next": "Yielding: integrate S16 (running), checks, one test:cost; then hand back paused; S13 held for itm_df6654893518",
-  "updatedAt": "2026-11-26T22:52:14.706Z",
+  "next": "Wait on pilot checks 516ef2c; on green, integrate S13 910502b with its trailers, then checks on the integrated sha (any runner over 11083 / 10000: stop, send main the three lines).",
+  "updatedAt": "2026-11-27T03:18:41.200Z",
   "friction": [
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "co-pilot's gate.lock until-loop refused by the wait hook as unbounded",
-      "evidence": "S3 used bounded for i in $(seq 90)"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "test:changed --since selects nothing; runs the whole suite (~20 min) behind the lock",
-      "evidence": "S3 gate: 5422 tests"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "seed could cut a branch only from the previous commit; four of five builders needed siblings: a seam change round trip",
-      "evidence": "S2 added seed from at bbb74ca"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "every red/green run costs a Rust compile under the shared gate lock; changed selection ~15 min mostly lock wait",
-      "evidence": "S2 report"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "S3 waited on S2 for a cherry-picked seed seam, costing a rebase and a second gate run under the lock",
-      "evidence": "S3 6ca534e -> ab8b152"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "shared scratchpad: S3, S5, S6 wrote census to the same scratchpad path; base census re-run in a detached worktree",
-      "evidence": "S5 report: scratchpad/census-base.txt overwritten"
-    },
-    {
-      "agent": "pilot:pilot-implementer",
-      "what": "gate lock heavily contended; first wrapped run got no lock in 30 min",
-      "evidence": "S4 run btquta5e1 printed nolock, lock held 02:48 to past 03:08"
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "S4 bar margin 1 (160 vs <=161)",
@@ -377,6 +349,42 @@
       "what": "S16 context compacted early and kept no work; restarted from the brief",
       "evidence": "S16 message",
       "size": 1
+    },
+    {
+      "kind": "drain",
+      "what": "implementer and co-pilot reports repeatedly delivered to main and relayed by hand (S1, S15, S5, S6); hand-back enforcer forced four early co-pilot hand-backs, each needing a push watch and a resume",
+      "size": 3
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait exits every 50 minutes with no reply; each restart re-sends the whole context",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce hook ends the co-pilot's run at every turn end, so it cannot wait on a live implementer; its report was orphaned twice and main had to re-route it",
+      "evidence": "two forced hand-backs from a343c059d21bbd4bf on itm_07647401bb5e while S13 implementer aac29451dc69e1c4f was live, the second after main told it to keep waiting"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:cost under the gate lock took about 21 min and the census about 18 min",
+      "evidence": "S13 report",
+      "size": 39
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "cost-after.txt and census-after.txt open with raw cargo output; cost-after.txt is ~1000 lines of diff",
+      "evidence": "S13 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the first rebased wip numbers were stale and had to be regenerated",
+      "evidence": "S13 report"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "handback-send-enforce ends the co-pilot's run at every turn end, so it cannot wait on a live child across turns",
+      "evidence": "two forced hand-backs while S13 was implementing"
     }
   ]
 }
