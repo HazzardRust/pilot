@@ -168,11 +168,16 @@ function countsOf(output) {
  * throw before the exit writes none. Inside the suite (`PILOT_GATE_HOME_STORE` set) no row is
  * written unless `home` is passed (L8). `minutes` is the run's wall time.
  */
-export function runTests(cwd, test, { label = 'tests', where = 'tests', branch, since = null, home, slots = {}, slot: inSlot = true } = {}) {
+export function runTests(cwd, test, { label = 'tests', where = 'tests', branch, since = null, home, tree, slots = {}, slot: inSlot = true } = {}) {
   const ledgerHome = home ?? (process.env.PILOT_GATE_HOME_STORE ? null : os.homedir());
   home ??= os.homedir();
-  // The tree, sha and branch the run starts on, read before it can move them.
-  const start = ledgerHome === null ? null : { tree: worktreeTree(cwd), ...headOf(cwd) };
+  // The tree, sha and branch the run starts on, read before it can move them; `tree` is a caller's that just read it.
+  let start = null;
+  if (ledgerHome !== null) {
+    const taken = tree !== undefined ? tree : worktreeTree(cwd);
+    // No work tree, no HEAD to ask git about.
+    start = { tree: taken, ...(taken === null ? { sha: null, branch: null } : headOf(cwd)) };
+  }
   const dir = path.join(home, '.claude', 'pilot', 'logs');
   privateDir(path.dirname(dir)); // the store, if this is its first writer (L6)
   fs.mkdirSync(dir, { recursive: true });

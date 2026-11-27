@@ -50,7 +50,8 @@ export function testCli(argv, { cwd = process.cwd(), home, print = console.log }
       return 2;
     }
   }
-  const reused = reusableRun({ tree: worktreeTree(cwd), since: since ?? null, home: home ?? os.homedir() });
+  const tree = worktreeTree(cwd);
+  const reused = reusableRun({ tree, since: since ?? null, home: home ?? os.homedir() });
   if (reused) {
     print(`tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}`);
     return 0;
@@ -65,7 +66,7 @@ export function testCli(argv, { cwd = process.cwd(), home, print = console.log }
   let run;
   try {
     run = runTests(cwd, chosen.command, {
-      label: `test-${opts.as}`, where: opts.as, since: chosen.selected ? since : null, home, slot: !chosen.selected,
+      label: `test-${opts.as}`, where: opts.as, since: chosen.selected ? since : null, home, tree, slot: !chosen.selected,
     });
   } finally {
     if (saved === undefined) delete process.env.PILOT_TEST_SCOPE;

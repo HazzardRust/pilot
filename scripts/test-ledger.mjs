@@ -25,8 +25,14 @@ const gitIn = (cwd, args, env = process.env) => execFileSync('git', args, { cwd,
 
 /** `{ sha, branch }` of `cwd`'s HEAD, each null where git names none (no repository, unborn, detached). */
 export function headOf(cwd) {
-  const out = (args) => spawnSync('git', args, { cwd, encoding: 'utf8', windowsHide: true }).stdout?.trim() || null;
-  return { sha: out(['rev-parse', '-q', '--verify', 'HEAD']), branch: out(['branch', '--show-current']) };
+  const out = (args) => spawnSync('git', args, { cwd, encoding: 'utf8', windowsHide: true });
+  // One git for a born HEAD; an unborn one (or none) fails it, and only then is the branch asked for.
+  const both = out(['rev-parse', 'HEAD', '--symbolic-full-name', 'HEAD']);
+  if (both.status === 0) {
+    const [sha, ref] = both.stdout.trim().split('\n');
+    return { sha, branch: ref.startsWith('refs/heads/') ? ref.slice('refs/heads/'.length) : null };
+  }
+  return { sha: null, branch: out(['branch', '--show-current']).stdout?.trim() || null };
 }
 
 /**
@@ -35,10 +41,10 @@ export function headOf(cwd) {
  * tree. Any other git failure throws.
  */
 export function worktreeTree(cwd) {
-  const inside = spawnSync('git', ['rev-parse', '--is-inside-work-tree'], { cwd, encoding: 'utf8', windowsHide: true });
-  if (inside.status !== 0 || inside.stdout.trim() !== 'true') return null;
-  const top = gitIn(cwd, ['rev-parse', '--show-toplevel']);
-  const index = path.resolve(top, gitIn(top, ['rev-parse', '--git-path', 'index']));
+  const where = spawnSync('git', ['rev-parse', '--is-inside-work-tree', '--show-toplevel', '--git-path', 'index'], { cwd, encoding: 'utf8', windowsHide: true });
+  const [inside, top, gitIndex] = (where.stdout ?? '').trim().split('\n');
+  if (where.status !== 0 || inside !== 'true') return null;
+  const index = path.resolve(cwd, gitIndex);
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-tree-'));
   try {
     const copy = path.join(scratch, 'index');

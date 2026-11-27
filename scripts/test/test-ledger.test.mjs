@@ -1,7 +1,7 @@
 // tested-once S1 (spec 4; L3-L5, L8): the ledger's rows and their reuse. Scratch repositories and homes.
 
 // Before anything reads the home directory: a test that forgets `home` writes into a temp dir.
-import './lib/fake-home.mjs';
+import { gitFixture } from './lib/git-fixture.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,32 +22,34 @@ function tmp(t, name) {
   return dir;
 }
 
-/** A repository on `slice/demo-s1` with one commit holding a file and a run record. */
-function repo(t) {
-  const cwd = tmp(t, 'repo');
+/**
+ * `{ cwd, sha }`: a repository on `slice/demo-s1` with one commit holding a file and a run record,
+ * built once per process and restored before each test (test-body-git S13's fixture).
+ */
+const repo = (t) => gitFixture(t, 'ledger-repo', (cwd) => {
   git(cwd, 'init', '-q', '-b', 'slice/demo-s1');
   fs.writeFileSync(path.join(cwd, 'a.txt'), 'a\n');
   fs.mkdirSync(path.join(cwd, 'docs', 'design', 'x'), { recursive: true });
   fs.writeFileSync(path.join(cwd, 'docs', 'design', 'x', 'run.json'), '{"slices":[]}\n');
   git(cwd, 'add', '.');
-  git(cwd, '-c', 'user.email=t@example.com', '-c', 'user.name=t', 'commit', '-q', '-m', 'one');
-  return cwd;
-}
+  git(cwd, 'commit', '-q', '-m', 'one');
+  return { cwd, sha: git(cwd, 'rev-parse', 'HEAD') };
+});
 
 const ledgerOf = (home) => path.join(home, '.claude', 'pilot', 'tests', 'ledger.jsonl');
 const rowsOf = (home) => fs.readFileSync(ledgerOf(home), 'utf8').trim().split('\n').map((line) => JSON.parse(line));
 
-/** A row as `runTests` writes it for `cwd`, `over` laid on top. */
-function row(cwd, over = {}) {
+/** A row as `runTests` writes it at commit `sha` on worktree `tree`, `over` laid on top. */
+function row({ sha, tree }, over = {}) {
   return {
-    at: new Date().toISOString(), where: 'implementer', branch: 'slice/demo-s1', slug: null, sha: git(cwd, 'rev-parse', 'HEAD'),
-    tree: worktreeTree(cwd), since: null, scope: null, exit: 0, minutes: 0.01, platform: process.platform,
+    at: new Date().toISOString(), where: 'implementer', branch: 'slice/demo-s1', slug: null, sha,
+    tree, since: null, scope: null, exit: 0, minutes: 0.01, platform: process.platform,
     node: Number(process.versions.node.split('.')[0]), ...over,
   };
 }
 
 test('a run writes one row with its own exit', (t) => {
-  const cwd = repo(t);
+  const { cwd, sha: head } = repo(t);
   const home = tmp(t, 'home');
   const tree = worktreeTree(cwd);
   const red = runTests(cwd, 'node -e "process.exit(3)"', { label: 'red', where: 'integrate', home, slot: false });
@@ -55,51 +57,53 @@ test('a run writes one row with its own exit', (t) => {
   assert.equal(typeof red.minutes, 'number');
   const { exit, where, branch, slug, sha } = rowsOf(home)[0];
   assert.deepEqual({ exit, where, tree: rowsOf(home)[0].tree, branch, slug, sha },
-    { exit: 3, where: 'integrate', tree, branch: 'slice/demo-s1', slug: 'demo', sha: git(cwd, 'rev-parse', 'HEAD') });
+    { exit: 3, where: 'integrate', tree, branch: 'slice/demo-s1', slug: 'demo', sha: head });
   runTests(cwd, 'node -e "process.exit(0)"', { label: 'green', where: 'integrate', home, slot: false });
   assert.deepEqual(rowsOf(home).map((row) => row.exit), [3, 0]);
   if (process.platform !== 'win32') assert.equal(fs.statSync(ledgerOf(home)).mode & 0o777, 0o600);
 });
 
 test('a red row is never reused', (t) => {
-  const cwd = repo(t);
+  const { cwd, sha } = repo(t);
   const home = tmp(t, 'home');
   const tree = worktreeTree(cwd);
-  recordRun(row(cwd, { exit: 3 }), { home });
+  recordRun(row({ sha, tree }, { exit: 3 }), { home });
   assert.equal(reusableRun({ tree, since: null, home }), null);
-  recordRun(row(cwd, { scope: 'selected 2 of 9 test files since abc1234; cargo deferred to integrate' }), { home });
+  recordRun(row({ sha, tree }, { scope: 'selected 2 of 9 test files since abc1234; cargo deferred to integrate' }), { home });
   assert.equal(reusableRun({ tree, since: null, home }), null);
-  recordRun(row(cwd, { exit: '3' }), { home });
+  recordRun(row({ sha, tree }, { exit: '3' }), { home });
   assert.equal(reusableRun({ tree, since: null, home }), null);
-  recordRun(row(cwd), { home });
+  recordRun(row({ sha, tree }), { home });
   assert.equal(reusableRun({ tree, since: null, home })?.exit, 0);
 });
 
 test('reuse is the exact tree', (t) => {
-  const cwd = repo(t);
+  const { cwd, sha } = repo(t);
   const home = tmp(t, 'home');
   fs.writeFileSync(path.join(cwd, 'untracked.txt'), 'one\n');
-  const since = git(cwd, 'rev-parse', 'HEAD');
-  recordRun(row(cwd, { since }), { home });
-  assert.ok(reusableRun({ tree: worktreeTree(cwd), since, home }));
+  const since = sha;
+  const tree = worktreeTree(cwd);
+  recordRun(row({ sha, tree }, { since }), { home });
+  assert.ok(reusableRun({ tree, since, home }));
   // Another since is not the same run; a full row stands for any since.
-  assert.equal(reusableRun({ tree: worktreeTree(cwd), since: 'b'.repeat(40), home }), null);
+  assert.equal(reusableRun({ tree, since: 'b'.repeat(40), home }), null);
   fs.writeFileSync(path.join(cwd, 'docs', 'design', 'x', 'run.json'), '{"slices":[1]}\n');
   assert.ok(reusableRun({ tree: worktreeTree(cwd), since, home }), 'run.json is taken from HEAD');
   fs.writeFileSync(path.join(cwd, 'untracked.txt'), 'onf\n');
-  assert.equal(reusableRun({ tree: worktreeTree(cwd), since, home }), null);
+  const changed = worktreeTree(cwd);
+  assert.equal(reusableRun({ tree: changed, since, home }), null);
   const other = tmp(t, 'other');
-  recordRun(row(cwd, { platform: process.platform === 'win32' ? 'linux' : 'win32' }), { home: other });
-  assert.equal(reusableRun({ tree: worktreeTree(cwd), since, home: other }), null);
-  recordRun(row(cwd, { node: Number(process.versions.node.split('.')[0]) - 1 }), { home: other });
-  assert.equal(reusableRun({ tree: worktreeTree(cwd), since, home: other }), null);
-  recordRun(row(cwd), { home: other });
-  assert.ok(reusableRun({ tree: worktreeTree(cwd), since, home: other }), 'a full row stands for any since');
+  recordRun(row({ sha, tree: changed }, { platform: process.platform === 'win32' ? 'linux' : 'win32' }), { home: other });
+  assert.equal(reusableRun({ tree: changed, since, home: other }), null);
+  recordRun(row({ sha, tree: changed }, { node: Number(process.versions.node.split('.')[0]) - 1 }), { home: other });
+  assert.equal(reusableRun({ tree: changed, since, home: other }), null);
+  recordRun(row({ sha, tree: changed }), { home: other });
+  assert.ok(reusableRun({ tree: changed, since, home: other }), 'a full row stands for any since');
   assert.deepEqual([testRunsFor({ slug: 'demo', home: other }).length, testRunsFor({ slug: 'else', home: other }).length], [3, 0]);
 });
 
 test('pilot test reuses a green tree', (t) => {
-  const cwd = repo(t);
+  const { cwd, sha } = repo(t);
   const home = tmp(t, 'home');
   const counter = path.join(tmp(t, 'count'), 'count.txt');
   const script = path.join(path.dirname(counter), 'suite.cjs');
@@ -111,7 +115,7 @@ test('pilot test reuses a green tree', (t) => {
   assert.equal(fs.readFileSync(counter, 'utf8'), 'x');
   assert.equal(testCli(['--as', 'implementer', '--since', 'HEAD'], { cwd, home, print }), 0);
   assert.equal(fs.readFileSync(counter, 'utf8'), 'x', 'no test process for a green tree');
-  assert.match(out.at(-1), new RegExp(`^tests reused: implementer ${git(cwd, 'rev-parse', '--short=7', 'HEAD')}$`));
+  assert.match(out.at(-1), new RegExp(`^tests reused: implementer ${sha.slice(0, 7)}$`));
   fs.writeFileSync(path.join(cwd, 'a.txt'), 'b\n');
   assert.equal(testCli(['--as', 'implementer', '--since', 'HEAD'], { cwd, home, print }), 0);
   assert.equal(fs.readFileSync(counter, 'utf8'), 'xx', 'a changed tree runs');
@@ -119,7 +123,7 @@ test('pilot test reuses a green tree', (t) => {
 });
 
 test('no row from inside the suite', (t) => {
-  const cwd = repo(t);
+  const { cwd } = repo(t);
   const saved = process.env.PILOT_GATE_HOME_STORE;
   process.env.PILOT_GATE_HOME_STORE = path.join(tmp(t, 'store'), 'deck.json');
   t.after(() => (saved === undefined ? delete process.env.PILOT_GATE_HOME_STORE : (process.env.PILOT_GATE_HOME_STORE = saved)));
