@@ -5,11 +5,16 @@
  * `--scope slice` sets `PILOT_TEST_SCOPE=slice` for the run. Exit 0 green, the run's status red, 2 usage.
  */
 
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import os from 'node:os';
 
+import { hostFor } from '../deck/host.mjs';
+import { provenTree } from './checks.mjs';
 import { NO_TEST, runTests, testCommand } from './integrate.mjs';
 import { reusableRun, worktreeTree } from './test-ledger.mjs';
+
+/** QA reuses CI's proof of the tip (L6, A3); false makes QA ledger-only. */
+export const CI_REUSE = true;
 
 const USAGE = 'usage: pilot test [--as <role>] [--scope slice] [--since <ref>]';
 const ROLE = /^[a-z][a-z-]*$/;
@@ -35,8 +40,22 @@ function commitOf(cwd, ref) {
   return out.status === 0 ? out.stdout.trim() : null;
 }
 
-// `home` reaches `runTests` as given: inside the suite an unpassed one writes no row (L8).
-export function testCli(argv, { cwd = process.cwd(), home, print = console.log } = {}) {
+/** `provenTree` on `cwd`'s HEAD since `base`, `host` resolved from `cwd` when not given; a throw is no proof. */
+function ciProof(cwd, host, base) {
+  const head = commitOf(cwd, 'HEAD');
+  if (head === null) return { tree: null, line: 'no ci proof: no HEAD' };
+  const git = (args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+  try {
+    return provenTree({ host: host === undefined ? hostFor(cwd) : host, git, sha: head, base });
+  } catch (err) {
+    return { tree: null, line: `no ci proof: ${String(err?.message ?? err).split(/\r?\n/)[0]}` };
+  }
+}
+
+// `home` reaches `runTests` as given: inside the suite an unpassed one reads and writes no row (L8).
+// `--as qa --since <ref>` with no ledger row asks CI's proof of HEAD (spec 2, L6): the proved tree is this
+// worktree's, no process; another tree, the selection since it.
+export function testCli(argv, { cwd = process.cwd(), home, host, print = console.log } = {}) {
   const opts = parse(argv);
   if (opts.error) {
     print(opts.error);
@@ -51,10 +70,20 @@ export function testCli(argv, { cwd = process.cwd(), home, print = console.log }
     }
   }
   const tree = worktreeTree(cwd);
-  const reused = reusableRun({ tree, since: since ?? null, home: home ?? os.homedir() });
+  const ledgerHome = home ?? (process.env.PILOT_GATE_HOME_STORE ? null : os.homedir());
+  const reused = ledgerHome === null ? null : reusableRun({ tree, since: since ?? null, home: ledgerHome });
   if (reused) {
     print(`tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}`);
     return 0;
+  }
+  if (CI_REUSE && opts.as === 'qa' && since !== undefined) {
+    const proof = ciProof(cwd, host, since);
+    if (proof.tree !== null && proof.tree === tree) {
+      print(`tests reused: ${proof.line}`);
+      return 0;
+    }
+    print(proof.line);
+    if (proof.tree !== null) since = proof.tree;
   }
   const chosen = testCommand(cwd, since === undefined ? {} : { since });
   if (chosen === undefined) {

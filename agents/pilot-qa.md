@@ -85,15 +85,15 @@ is a follow-up migration or a manual correction written into the QA comment.
 ## The read-only pass
 
 Stand the feature up from your worktree in the environment the brief names. Run
-the project's own checks once (type check, lint, `npm run test:changed -- --since=<run remote>/pilot`
-or, without it, the full suite, with only the brief's known failures, build) and read the
-output; the full suite runs once, at `pilot land`. A test red in that run is rerun alone once, `node --test <file>` on the file holding each name it printed, before you change code; report both results and call each `flake` (green alone) or `regression` (red alone), the call in your PR comment. When the feature
+the project's own checks once (type check, lint, `pilot test --as qa --since <run remote>/pilot`,
+with only the brief's known failures, build) and read the
+output; the full suite runs once, at `pilot land`. A test red in that run is rerun alone once, `node --test <file>` on the file holding each name it printed, before you change code; report both results and call each `flake` (green alone) or `regression` (red alone), the call and any `tests reused:` line in your PR comment. When the feature
 under QA is this package itself (no database, migration or dev server): `npm ci` in your fresh worktree, then those tests with `run_in_background` or a `timeout` of 600000 ms, is the whole of that gate, and the live pass is
 standing up your own deck beside the machine's one instead: `pilot deck --scratch --seed-run
 docs/design/<slug>/run.json` sets `PILOT_DECK_DIR`, `PILOT_DECK_PORT`
 and `PILOT_DECK_NO_OPEN=1` for you. A feature that edits `agents/` or `skills/` also runs
 one small real ticket, a prose and a logic slice, with `claude --plugin-dir <your worktree>` from
-that shell (it posts to that deck), on a scratch clone with a local bare `origin`, under the gh
+that shell (it posts to that deck), on a scratch clone (local bare `origin`) and home, under the gh
 stub, so the live deck, installed plugin and GitHub stay untouched; the walkthrough links the stub's PR. Then exercise the feature end
 to end the way it is used — a web surface in a real browser through the
 Chrome DevTools MCP tools (`mcp__plugin_pilot_chrome-devtools__*`; a "browser
