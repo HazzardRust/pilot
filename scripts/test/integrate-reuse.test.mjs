@@ -31,7 +31,7 @@ const COUNT = [
   '',
 ].join('\n');
 
-const PACKAGE = `${JSON.stringify({ name: 's2', private: true, scripts: { test: 'node count.mjs full', 'test:changed': 'node count.mjs changed' } }, null, 2)}\n`;
+const PACKAGE = `${JSON.stringify({ name: 's2', private: true, scripts: { test: 'node count.mjs full', 'test:changed': 'node count.mjs changed', 'test:cargo': 'node count.mjs cargo' } }, null, 2)}\n`;
 
 function commitFile(work, file, text, message) {
   fs.writeFileSync(path.join(work, file), text);
@@ -76,9 +76,10 @@ function setup(t) {
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   const file = path.join(home, 'count.txt');
   process.env.S2_COUNT = file;
-  const runs = () => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).length : 0);
+  const started = () => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter(Boolean) : []);
+  const runs = () => started().length;
   const reset = () => fs.rmSync(file, { force: true });
-  return { ...repos, home, runs, reset };
+  return { ...repos, home, runs, started, reset };
 }
 
 /** The implementer's phase gate in the slice clone, since the feat tip: `runTests` writes its row. */
@@ -164,6 +165,51 @@ test('a slice-scope run reuses a deferred slice row; integrate does not', (t) =>
 
   assert.equal(result.ok, true, result.line);
   assert.equal(s.runs(), 1, 'integrate runs the tests a deferred row left out');
+});
+
+// F1 of S2's review: a row that skipped cargo proves the node selection only.
+test('integrate over a reused row that skipped cargo starts cargo once', (t) => {
+  const s = setup(t);
+  assert.equal(gate(s).status, 0);
+  const [green] = ledgerRows(s.home);
+  fs.rmSync(path.join(s.home, '.claude', 'pilot', 'tests', 'ledger.jsonl'));
+  recordRun({ ...green, cargo: 'skipped' }, { home: s.home });
+  s.reset();
+
+  const result = integrate('slice/a', { cwd: s.work, home: s.home, ...quiet });
+
+  assert.equal(result.ok, true, result.line);
+  assert.deepEqual(s.started(), ['cargo'], 'cargo once, the node selection never');
+  assert.match(result.line, /tests reused: implementer [0-9a-f]{7}; cargo /);
+  // A cargo-only run proves no node test: its row never stands for the tree.
+  s.reset();
+  assert.equal(testCli(['--as', 'qa'], { cwd: s.work, home: s.home, print: () => {} }), 0);
+  assert.deepEqual(s.started(), ['full']);
+});
+
+test('a reused row with no cargo skip starts no cargo', (t) => {
+  const s = setup(t);
+  assert.equal(gate(s).status, 0);
+  assert.equal(ledgerRows(s.home)[0].cargo, null);
+  s.reset();
+
+  const result = integrate('slice/a', { cwd: s.work, home: s.home, ...quiet });
+
+  assert.equal(result.ok, true, result.line);
+  assert.deepEqual(s.started(), []);
+});
+
+// F2 of S2's review: the reuse key holds the command that ran.
+test('a row with a different test command is not reused', (t) => {
+  const s = setup(t);
+  const since = git(s.work, 'rev-parse', 'HEAD');
+  assert.equal(gate(s, `node count.mjs other --since=${since}`).status, 0);
+  s.reset();
+
+  const result = integrate('slice/a', { cwd: s.work, home: s.home, ...quiet });
+
+  assert.equal(result.ok, true, result.line);
+  assert.deepEqual(s.started(), [`changed --since=${since}`]);
 });
 
 test('an injected test command runs whatever the ledger holds', (t) => {

@@ -69,9 +69,14 @@ export function testCli(argv, { cwd = process.cwd(), home, host, print = console
       return 2;
     }
   }
+  let chosen = testCommand(cwd, since === undefined ? {} : { since });
+  if (chosen === undefined) {
+    print(NO_TEST);
+    return 2;
+  }
   const tree = worktreeTree(cwd);
   const ledgerHome = home ?? (process.env.PILOT_GATE_HOME_STORE ? null : os.homedir());
-  const reused = ledgerHome === null ? null : reusableRun({ tree, since: since ?? null, home: ledgerHome, scope: opts.scope });
+  const reused = ledgerHome === null ? null : reusableRun({ tree, since: since ?? null, home: ledgerHome, scope: opts.scope, command: chosen.command });
   if (reused) {
     print(`tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}`);
     return 0;
@@ -83,12 +88,14 @@ export function testCli(argv, { cwd = process.cwd(), home, host, print = console
       return 0;
     }
     print(proof.line);
-    if (proof.tree !== null) since = proof.tree;
-  }
-  const chosen = testCommand(cwd, since === undefined ? {} : { since });
-  if (chosen === undefined) {
-    print(NO_TEST);
-    return 2;
+    if (proof.tree !== null) {
+      since = proof.tree;
+      chosen = testCommand(cwd, { since });
+      if (chosen === undefined) {
+        print(NO_TEST);
+        return 2;
+      }
+    }
   }
   const saved = process.env.PILOT_TEST_SCOPE;
   if (opts.scope === 'slice') process.env.PILOT_TEST_SCOPE = 'slice';

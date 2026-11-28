@@ -53,7 +53,7 @@ import { mergeIntoPilot } from './sync.mjs';
 import { conflictLine, conflictPaths, keptDir, mainCheckout } from './merge-generated.mjs';
 import { assertPushable, firstLine, git, isPilotBase, isPilotName, landingSubjects, pilotBranch, pilotLineage, remoteDefaultBranch } from './pilot-branch.mjs';
 import { remoteOf, runRef, runRemote, shortRef } from './remotes.mjs';
-import { scopeOf } from './select-tests.mjs';
+import { CARGO_DEFERRED, scopeOf } from './select-tests.mjs';
 import { headOf, nodeMajor, recordRun, reusableRun, worktreeTree } from './test-ledger.mjs';
 import { hostPlatform } from '../hooks/lib/platform.js';
 import { holderFrom, runRecord } from './worktrees.mjs';
@@ -164,7 +164,8 @@ function countsOf(output) {
  * that falls back to the full suite takes its own (suite-at-landing L9).
  *
  * Once the process has exited, one ledger row (`recordRun`; tested-once L3) holds its own status,
- * `where`, `branch` (default the checked-out one), `since` and the tree taken before it started; a
+ * `where`, `branch` (default the checked-out one), `since`, the `command` that ran, `cargo` `skipped` when
+ * the gate printed `CARGO_DEFERRED` (else null), and the tree taken before it started; a
  * throw before the exit writes none. Inside the suite (`PILOT_GATE_HOME_STORE` set) no row is
  * written unless `home` is passed (L8). `minutes` is the run's wall time.
  */
@@ -203,7 +204,7 @@ export function runTests(cwd, test, { label = 'tests', where = 'tests', branch, 
   if (start !== null) {
     recordRun({
       at: new Date().toISOString(), where, branch: branch ?? start.branch, slug: null, sha: start.sha, tree: start.tree, since, scope,
-      exit: status, minutes, platform: hostPlatform(), node: nodeMajor(),
+      command: test, cargo: output.split(/\r?\n/).includes(CARGO_DEFERRED) ? 'skipped' : null, exit: status, minutes, platform: hostPlatform(), node: nodeMajor(),
     }, { home: ledgerHome });
   }
   if (status === 0) fs.rmSync(log, { force: true });
@@ -275,8 +276,14 @@ function runChosen(cwd, test, since, label, home) {
 function provenRun(cwd, test, since, home) {
   if (test !== undefined) return null;
   const ledgerHome = home ?? (process.env.PILOT_GATE_HOME_STORE ? null : os.homedir());
-  return ledgerHome === null ? null : reusableRun({ tree: worktreeTree(cwd), since, home: ledgerHome });
+  const command = testCommand(cwd, { since })?.command;
+  const row = ledgerHome === null ? null : reusableRun({ tree: worktreeTree(cwd), since, home: ledgerHome, command, runsCargo: true });
+  // A row that skipped cargo stands only where integrate can run cargo alone (S2's F1).
+  return row?.cargo === 'skipped' && cargoCommand(cwd) === undefined ? null : row;
 }
+
+/** The repository's cargo-only command, `npm run test:cargo`, or undefined where package.json has no such script. */
+const cargoCommand = (cwd) => (hasPackage(cwd) && typeof packageScripts(cwd)['test:cargo'] === 'string' ? 'npm run test:cargo' : undefined);
 
 /** A green run's `<counts>`, then `; <scope>` when it printed one. */
 const summaryOf = (run) => `${run.counts ?? `exit ${run.status}`}${run.scope ? `; ${run.scope}` : ''}`;
@@ -559,10 +566,10 @@ export function integrate(branch, options = {}) {
   let reused;
   try {
     reused = provenRun(cwd, test, start, home);
-    if (!reused) {
-      run = runChosen(cwd, test, start, merged, home);
-      view.forget(); // the test command is git's to touch too, outside the view (L3)
-    }
+    if (!reused) run = runChosen(cwd, test, start, merged, home);
+    // The node selection is proved; the cargo step it skipped runs here. Its row's since names no request, so it is never reused.
+    else if (reused.cargo === 'skipped') run = runTests(cwd, cargoCommand(cwd), { label: merged, where: 'integrate', since: 'cargo', home });
+    if (run) view.forget(); // the test command is git's to touch too, outside the view (L3)
   } catch (err) {
     // The log could not be written, or the ledger not read: the merge in hand is undone, as on red.
     return fail(`${not}: the tests could not run (${firstLine(err)}); not pushed`);
@@ -570,7 +577,7 @@ export function integrate(branch, options = {}) {
   if (run && run.status !== 0) {
     return fail(`${not}: ${redLine(merged, run)}; not pushed`, run.failing);
   }
-  const counts = reused ? `tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}` : summaryOf(run);
+  const counts = reused ? `tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}${run ? `; cargo ${summaryOf(run)}` : ''}` : summaryOf(run);
 
   try {
     if (slice) commit(view, subject, trailers);

@@ -27,7 +27,7 @@ import { takeSlot } from './gate-slots.mjs';
 import { LEGACY_PILOT } from './pilot-branch.mjs';
 import { rebuildLedgers } from './ledgers.mjs';
 import { RUNE_TARGET_MAX, boundTarget, runeTargetDir, staleRoot } from './rune-target.mjs';
-import { FULL_TRIGGERS, TEST_GLOB, scopeLine, selectTests } from './select-tests.mjs';
+import { CARGO_DEFERRED, FULL_TRIGGERS, TEST_GLOB, scopeLine, selectTests } from './select-tests.mjs';
 import { costTable } from './test-cost.mjs';
 
 export const MAX_CONCURRENCY = 4;
@@ -342,9 +342,6 @@ function homeStoreLine(file, before, deckPid) {
   return { red: false, line: `home store changed: ${file}; live deck ${deck ?? 'unknown'} up` };
 }
 
-/** The skip line of a slice-scope gate's cargo step: integrate's wide gate runs it (tested-once spec 3). */
-const CARGO_DEFERRED = 'rune deck: deferred to integrate';
-
 /**
  * The Rune deck's `cargo fmt --check` then `cargo test` (rune-deck-ui S19; A3; ui-design-workflow S7) when
  * `which('cargo')` finds it on Windows, else the one line the gate prints instead: off Windows the deck's tests
@@ -432,7 +429,8 @@ function writerLines(log) {
  * killed, could not start, left a process running, or started more than `ceiling` processes; a
  * process table that cannot be read is red. The count goes to `spawns`, or a temporary file.
  * With `--since=<ref>` (suite-at-landing S1; L7) it prints the scope line first and runs only the
- * selection, the flag kept from `node`; an empty selection runs nothing and passes, a null one runs full.
+ * selection, the flag kept from `node`; an empty selection runs no node, only the cargo step, a null one runs full.
+ * With `--cargo-only` it runs the cargo step alone, wide (integrate's run for a reused row that skipped it).
  * With `homeStore` it is red too when that file's stat changed and `deckPid()` names no deck.
  * With `homeStore` and `which` it runs `cargoStep`'s steps after the suite, in that window, red when one fails,
  * given the selection and bounding the shared target with `bound` first.
@@ -441,26 +439,37 @@ function writerLines(log) {
 export function runGate(args, { syntax = () => undefined, ledgers = () => [], cwd = ROOT, spawn = spawnSync, slot = takeSlot, read = processTable, spawns, ceiling = SPAWN_CEILING, gitCeiling = GIT_CEILING, select = selectTests, homeStore, deckPid = deckPidNow, which, platform = hostPlatform(), bound = boundTarget, stale = staleRoot, ...rest } = {}) {
   if (!syntaxClean(syntax, cwd)) return 1;
   const cost = args.includes('--cost');
-  args = args.filter((arg) => arg !== '--cost');
+  // `--cargo-only`: integrate's run of the cargo step a reused row skipped (S2's F1); no node test starts.
+  const cargoOnly = args.includes('--cargo-only');
+  args = args.filter((arg) => arg !== '--cost' && arg !== '--cargo-only');
   const sinceArg = args.findLast((arg) => /^--since(=|$)/.test(arg));
   let selection;
   if (sinceArg === '--since') {
     process.stderr.write('gate: --since takes its ref as --since=<ref>\n');
     return 1;
   }
-  // tested-once A2: `pilot test --scope slice` sets it; anything else is wide.
-  const scope = process.env.PILOT_TEST_SCOPE === 'slice' ? 'slice' : 'wide';
+  // tested-once A2: `pilot test --scope slice` sets it; anything else is wide, and a cargo-only run never defers.
+  const scope = !cargoOnly && process.env.PILOT_TEST_SCOPE === 'slice' ? 'slice' : 'wide';
   // The wide call is unchanged: `selectTests`'s default scope is wide.
   if (sinceArg !== undefined) selection = select({ cwd, since: sinceArg.slice('--since='.length), ...(scope === 'slice' ? { scope } : {}) });
   const cargo = homeStore !== undefined && which ? cargoStep({ ...process.env, PILOT_TEST_SCOPE: scope }, which, platform, selection) : undefined;
-  // The standing cargo deferral is not named in the scope line: a slice-scope run that left nothing else out is
-  // complete, so `pilot test` reuses it; cargo runs at land's full suite (tested-once spec 3a, A6).
+  if (cargoOnly && !cargo) {
+    process.stderr.write('gate: --cargo-only has no cargo step to run here\n');
+    return 1;
+  }
+  // The standing cargo deferral is not named in the scope line, so `pilot test` reuses a slice-scope run that left
+  // nothing else out (tested-once spec 3a, A6); its own `CARGO_DEFERRED` line marks the row, and integrate runs cargo.
   if (sinceArg !== undefined) {
     process.stdout.write(`${scopeLine(selection)}\n`);
     args = args.filter((arg) => !/^--since(=|$)/.test(arg));
   }
   if (!ledgersCurrent(ledgers, cwd)) return 1;
-  if (selection?.files?.length === 0) return 0;
+  // An empty selection starts no node; its cargo step still runs, or prints why not, which marks a deferral.
+  const nodeless = cargoOnly || selection?.files?.length === 0;
+  if (nodeless && !cargo?.steps) {
+    if (cargo?.skip) process.stdout.write(`${cargo.skip}\n`);
+    return 0;
+  }
   // `node --test` reads a file argument as a glob, so a metacharacter in the checkout's path is escaped.
   if (selection?.files) args = [...args, ...selection.files.map(escapeGlob)];
   // Only a full run takes a slot (suite-at-landing S4; L9): a selected run is cheap and starts at once,
@@ -482,7 +491,7 @@ export function runGate(args, { syntax = () => undefined, ledgers = () => [], cw
       before = err;
     }
     const storeBefore = homeStore === undefined ? undefined : storeStat(homeStore);
-    const run = spawn(process.execPath, gateArgv(args, os.availableParallelism(), cwd), {
+    const run = nodeless ? { status: 0 } : spawn(process.execPath, gateArgv(args, os.availableParallelism(), cwd), {
       cwd,
       env: gateEnv(process.env, held.slot, file, guard),
       stdio: 'inherit',

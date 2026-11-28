@@ -36,6 +36,9 @@ const repo = (t) => gitFixture(t, 'ledger-repo', (cwd) => {
   return { cwd, sha: git(cwd, 'rev-parse', 'HEAD') };
 });
 
+/** The command every hand-made row ran, and every reuse below asks for. */
+const CMD = 'npm test';
+
 const ledgerOf = (home) => path.join(home, '.claude', 'pilot', 'tests', 'ledger.jsonl');
 const rowsOf = (home) => fs.readFileSync(ledgerOf(home), 'utf8').trim().split('\n').map((line) => JSON.parse(line));
 
@@ -43,7 +46,7 @@ const rowsOf = (home) => fs.readFileSync(ledgerOf(home), 'utf8').trim().split('\
 function row({ sha, tree }, over = {}) {
   return {
     at: new Date().toISOString(), where: 'implementer', branch: 'slice/demo-s1', slug: null, sha,
-    tree, since: null, scope: null, exit: 0, minutes: 0.01, platform: process.platform,
+    tree, since: null, scope: null, command: CMD, cargo: null, exit: 0, minutes: 0.01, platform: process.platform,
     node: Number(process.versions.node.split('.')[0]), ...over,
   };
 }
@@ -68,13 +71,20 @@ test('a red row is never reused', (t) => {
   const home = tmp(t, 'home');
   const tree = worktreeTree(cwd);
   recordRun(row({ sha, tree }, { exit: 3 }), { home });
-  assert.equal(reusableRun({ tree, since: null, home }), null);
+  assert.equal(reusableRun({ tree, since: null, home, command: CMD }), null);
   recordRun(row({ sha, tree }, { scope: 'selected 2 of 9 test files since abc1234; cargo deferred to integrate' }), { home });
-  assert.equal(reusableRun({ tree, since: null, home }), null);
+  assert.equal(reusableRun({ tree, since: null, home, command: CMD }), null);
   recordRun(row({ sha, tree }, { exit: '3' }), { home });
-  assert.equal(reusableRun({ tree, since: null, home }), null);
+  assert.equal(reusableRun({ tree, since: null, home, command: CMD }), null);
+  // A row that skipped cargo is complete only to an asker that runs cargo itself, or to a slice-scope run.
+  recordRun(row({ sha, tree }, { cargo: 'skipped' }), { home });
+  assert.equal(reusableRun({ tree, since: null, home, command: CMD }), null);
+  assert.equal(reusableRun({ tree, since: null, home, command: CMD, runsCargo: true })?.cargo, 'skipped');
+  assert.equal(reusableRun({ tree, since: null, home, command: CMD, scope: 'slice' })?.cargo, 'skipped');
+  assert.equal(reusableRun({ tree, since: null, home, command: 'npm run other', runsCargo: true }), null);
+  assert.equal(reusableRun({ tree, since: null, home }), null, 'no command asked, none reused');
   recordRun(row({ sha, tree }), { home });
-  assert.equal(reusableRun({ tree, since: null, home })?.exit, 0);
+  assert.equal(reusableRun({ tree, since: null, home, command: CMD })?.exit, 0);
 });
 
 test('reuse is the exact tree', (t) => {
@@ -84,21 +94,21 @@ test('reuse is the exact tree', (t) => {
   const since = sha;
   const tree = worktreeTree(cwd);
   recordRun(row({ sha, tree }, { since }), { home });
-  assert.ok(reusableRun({ tree, since, home }));
+  assert.ok(reusableRun({ tree, since, home, command: CMD }));
   // Another since is not the same run; a full row stands for any since.
-  assert.equal(reusableRun({ tree, since: 'b'.repeat(40), home }), null);
+  assert.equal(reusableRun({ tree, since: 'b'.repeat(40), home, command: CMD }), null);
   fs.writeFileSync(path.join(cwd, 'docs', 'design', 'x', 'run.json'), '{"slices":[1]}\n');
-  assert.ok(reusableRun({ tree: worktreeTree(cwd), since, home }), 'run.json is taken from HEAD');
+  assert.ok(reusableRun({ tree: worktreeTree(cwd), since, home, command: CMD }), 'run.json is taken from HEAD');
   fs.writeFileSync(path.join(cwd, 'untracked.txt'), 'onf\n');
   const changed = worktreeTree(cwd);
-  assert.equal(reusableRun({ tree: changed, since, home }), null);
+  assert.equal(reusableRun({ tree: changed, since, home, command: CMD }), null);
   const other = tmp(t, 'other');
   recordRun(row({ sha, tree: changed }, { platform: process.platform === 'win32' ? 'linux' : 'win32' }), { home: other });
-  assert.equal(reusableRun({ tree: changed, since, home: other }), null);
+  assert.equal(reusableRun({ tree: changed, since, home: other, command: CMD }), null);
   recordRun(row({ sha, tree: changed }, { node: Number(process.versions.node.split('.')[0]) - 1 }), { home: other });
-  assert.equal(reusableRun({ tree: changed, since, home: other }), null);
+  assert.equal(reusableRun({ tree: changed, since, home: other, command: CMD }), null);
   recordRun(row({ sha, tree: changed }), { home: other });
-  assert.ok(reusableRun({ tree: changed, since, home: other }), 'a full row stands for any since');
+  assert.ok(reusableRun({ tree: changed, since, home: other, command: CMD }), 'a full row stands for any since');
   assert.deepEqual([testRunsFor({ slug: 'demo', home: other }).length, testRunsFor({ slug: 'else', home: other }).length], [3, 0]);
 });
 
