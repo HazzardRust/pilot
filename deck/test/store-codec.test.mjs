@@ -41,8 +41,9 @@ test('a path that is not absolute under these roots is stored and read back as i
     [win, ['/srv/repo', '/home/a/x']],
   ]) {
     const deck = { version: 4, items: given.map((repo) => ({ repo })) };
-    assert.deepEqual(toStored(deck, roots), deck, 'another flavour is not a path to store');
-    assert.deepEqual(fromStored(toStored(deck, roots), roots), deck);
+    const { stored, machine } = toStored(deck, roots);
+    assert.deepEqual(stored, deck, 'another flavour is not a path to store');
+    assert.deepEqual(fromStored(stored, machine, roots), deck);
   }
 });
 
@@ -51,9 +52,9 @@ test('a posix name holding a backslash keeps it, so two such keys do not meet', 
   // The keys pathKey made on ubuntu-latest from the fixture D:\work\pilot and its '/' twin (CI at fae3569).
   const keys = ['/home/runner/work/pilot/pilot/D:\\work\\pilot', '/home/runner/work/pilot/pilot/D:/work/pilot'];
   const deck = { version: 4, decks: Object.fromEntries(keys.map((key, n) => [key, n])) };
-  const stored = toStored(deck, posix);
+  const { stored, machine } = toStored(deck, posix);
   assert.deepEqual(Object.keys(stored.decks), ['@home/work/pilot/pilot/D:\\work\\pilot', '@home/work/pilot/pilot/D:/work/pilot']);
-  assert.deepEqual(Object.keys(fromStored(stored, posix).decks), keys);
+  assert.deepEqual(Object.keys(fromStored(stored, machine, posix).decks), keys);
   assert.equal(decodePath('@home/a\\..\\x', posix), '/home/runner/a\\..\\x', 'a backslash is a name character on posix');
 });
 
@@ -116,9 +117,9 @@ test('one repo in two link spellings is two stored strings but one deck key, and
   const { repo, alias, roots } = linkedRepo(t);
   const deck = { version: 4, items: [{ repo }, { repo: alias }], decks: { [pathKey(repo)]: 1 } };
   deck.decks[pathKey(alias)] = 2; // the deck folds both spellings to one key before anything is stored
-  const stored = toStored(deck, roots);
+  const { stored, machine } = toStored(deck, roots);
   assert.deepEqual(stored.items.map((item) => item.repo), ['@home/Projects/pilot', '@home/alias']);
-  const read = fromStored(stored, roots);
+  const read = fromStored(stored, machine, roots);
   assert.deepEqual(Object.keys(read.decks), [pathKey(repo)]);
   assert.deepEqual(read.items.map((item) => item.repo), [repo, alias]);
 });
