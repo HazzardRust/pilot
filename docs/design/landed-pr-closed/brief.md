@@ -18,7 +18,7 @@ Remote: origin
 
 ## Known flaky
 
-- `scripts/test/test-ledger.test.mjs` "pilot test reuses a green tree" (line 132, `'x' !== 'xx'`), intermittent, tracked by ticket itm_f9cbce1dd9ea; not this run's to fix.
+None named. The test-ledger flake is S5's to fix (merged ticket itm_f9cbce1dd9ea): until S5 lands, a red on `test-ledger.test.mjs:132` is that flake, so re-run once.
 
 ## Host writes
 

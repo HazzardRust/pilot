@@ -5,10 +5,11 @@ cutting rule (each run its own PR to main) and amends ADR 0218 L2
 
 ## Overview
 
+- **Also**: the flaky green-tree reuse test is fixed.
 - **What changes**: Every run is cut from your pilot branch again, and main receives features only through the one release PR. When a run that was cut from main lands, its PR is now moved onto your pilot branch first, so the landing merges it and does not leave it behind.
 - **Why**: Two shapes were running side by side. #149 (portable-store, cut from main) stayed open as a draft after its landing, while its commits also rode release PR #167 to main.
 - **What you'll notice**: After a landing, no draft PR is left open. `pilot base` names your pilot branch. A gate1 shows a `Base:` line. A run record can no longer be given base `main`.
-- **Can it be undone**: Yes, by reverting the feature PR. No run record or PR is rewritten, and records that already say `main` still land.
+- **Can it be undone**: Yes, by reverting the feature PR. No record or PR is rewritten; old `main` records still land.
 
 ## 1. Problem
 
@@ -24,6 +25,8 @@ also in release PR #167. "There should be no drafts." The question is how this h
 | 3 | The deck refuses a run record write that sets `base` to anything but the pilot branch, the legacy `pilot` or `feat/<slug>`. A record that already holds `main` still reads, and still lands through spec 1. | deck test: `base: "main"` refused 1 of 1, naming the allowed forms; a stored `main` record reads back unchanged and its landing passes spec 1's test |
 | 4 | A gate1 carries a `Base: <base>` line matching its ticket's run record, so the user sees at Gate 1 what the run was cut from. | deck test: a gate1 with no `Base:` line is refused 1 of 1; one naming another base is refused; a matching one is accepted |
 | 5 | The crew and the docs describe one shape: runs are cut from the pilot branch, and main gets them through the release PR. | `git grep -n "own PR to main\|feature PR: #" agents docs/OPERATING.md`: 0 hits outside legacy wording; ADR 0200 `superseded_by` names this run's ADR |
+| 6 | `scripts/test/test-ledger.test.mjs` "pilot test reuses a green tree" is deterministic: its changed-tree step cannot be read as unchanged. (merged ticket itm_f9cbce1dd9ea) | The test run 200 times in a loop on CI's OS: 200 passes; before the change the same loop fails at least once, or S5 says the cause was something else and shows it |
+| 7 | The other 3 Gate failures of the last 60 runs are each named with their cause, and any that is a flaky test is fixed here. | A table: run id, failing test, cause, fixed or not-a-flake; 3 rows |
 
 Draft line 3 (why portable-store got base `main`) is answered in §3 F1-F3. It needs no slice. The draft's lines 1-2 are
 sharpened into 1-4 here. Line 5 follows from them.
@@ -52,6 +55,7 @@ sharpened into 1-4 here. Line 5 follows from them.
   field only (`:426-429`), so tightening it leaves stored records alone.
 - **F7 gate1 checks.** `deck/store-items.mjs:167` collects gate1 gaps from `deck/gate2-evidence.mjs` (`recutGate1Gaps`,
   `surfaceGate1Gaps`). A base gap fits beside them, reading `deck.records` the way `ownBranchGaps` (`:126`) does.
+- **F8 the flake.** Gate run 46137559499 (pull_request, `e634fdd8`) failed at `test-ledger.test.mjs:132` (`a changed tree runs: 'x' !== 'xx'`), while the push run of the same sha passed, and attempt 2 passed. Suspected, not reproduced: `worktreeTree` (`scripts/test-ledger.mjs:53-56`) copies the index with `copyFileSync`, which gives the copy a new mtime. Git's racy-entry check compares a file's mtime against the index's own, so a same-size rewrite of `a.txt` in the same second as the first run reads as clean to `git add -A`. S5 confirms or rejects this.
 
 ### Seams
 
@@ -61,6 +65,7 @@ sharpened into 1-4 here. Line 5 follows from them.
 | `scripts/base.mjs` | `base` | which ref a run is cut from | local-substitutable (git) |
 | `deck/runs.mjs` | `RUN_BASE`, the record write | the allowed base forms | in-process |
 | `deck/gate2-evidence.mjs` | `baseGate1Gaps` | the gate1's base line against the record | in-process |
+| `scripts/test-ledger.mjs` | `worktreeTree` | how the worktree's tree is read | local-substitutable (git) |
 
 Deletion test: `featurePr` and `featureLine` exist only for the main-cut return. Once every landing takes the release path,
 deleting them removes complexity rather than moving it, so they go in S1. `restack`, `prBase`'s main and `feat/` arms, and
@@ -95,12 +100,11 @@ closing-report's `FEATURE_LINE` parse still serve any main PR left open. They st
 ## 7. Out of scope
 
 - Removing restack, prBase arms, FEATURE_LINE and lineage's main path (A5).
-- The flaky `test-ledger` test (itm_f9cbce1dd9ea).
 - Any ready press, or a `gh pr close` verb.
 
 ## 8. Slices
 
-Width 4; longest stem 1
+Width 5; longest stem 1
 
 | Slice | Title | Spec | Files owned | After | Reviewers | File |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -108,6 +112,7 @@ Width 4; longest stem 1
 | S2 | Every run is cut from the pilot branch | 2, 3 | `scripts/base.mjs`, `scripts/test/base-main.test.mjs`, `deck/runs.mjs`, `deck/test/run-base.test.mjs` (new) | – | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S2](slices/S2.md) |
 | S3 | A gate1 shows the run's base | 4 | `deck/gate2-evidence.mjs`, `deck/store-items.mjs`, `deck/test/base-gaps.test.mjs` (new), `agents/pilot-architect.md` | – | `pilot:typescript-reviewer`, `pilot:security-reviewer` | [S3](slices/S3.md) |
 | S4 | The crew and docs say one line | 5 | `docs/adr/NNNN-landed-pr-closed.md` (new), `docs/adr/0200-stacked-feature-prs.md`, `docs/adr/README.md`, `agents/pilot.md`, `agents/pilot-lander.md`, `docs/OPERATING.md` | – | `pilot:security-reviewer` | [S4](slices/S4.md) |
+| S5 | The gate stops failing on the green-tree reuse test | 6, 7 | `scripts/test/test-ledger.test.mjs`, `scripts/test-ledger.mjs` (if the cause is there) | – | `pilot:typescript-reviewer` | [S5](slices/S5.md) |
 
 ## 9. Acceptance evidence
 
@@ -115,7 +120,8 @@ Width 4; longest stem 1
 2. `deck_status` with `base: "main"` on a scratch ticket is refused, naming the allowed forms (spec 3).
 3. A gate1 without `Base:` is refused, and one with it is accepted (spec 4).
 4. The scratch-remote landing test shows `retarget #<n> to <pilot>` before the push, `main gets pilot: #<m>`, and 0 open PRs with that head (spec 1).
-5. The grep in spec 5 shows 0 stale hits, and `npm run test:quiet` is green.
+5. S5's loop: 200 of 200 passes, and its table names the other 3 Gate failures (spec 6, 7).
+6. The grep in spec 5 shows 0 stale hits, and `npm run test:quiet` is green.
 
 ## 10. Status
 
@@ -125,4 +131,5 @@ Width 4; longest stem 1
 | S2 | planned | `slice/landed-pr-closed-s2` | – | – | – | 2, 3 |
 | S3 | planned | `slice/landed-pr-closed-s3` | – | – | – | 4 |
 | S4 | planned | `slice/landed-pr-closed-s4` | – | – | – | 5 |
-| landed-pr-closed | planned | `feat/landed-pr-closed` | – | – | S1-S4 | 1-5 |
+| S5 | planned | `slice/landed-pr-closed-s5` | – | – | – | 6, 7 |
+| landed-pr-closed | planned | `feat/landed-pr-closed` | – | – | S1-S5 | 1-7 |
