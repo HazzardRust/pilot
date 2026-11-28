@@ -59,6 +59,7 @@ each Claude session spawns. Read the modules in this order, then the rest as the
 | `leash.mjs` | the leash a daemon that is not the user's deck holds: its pid and paths from argv, the 2 s poll that ends it, and the session's `CLAUDE_PID` (process-gc L1-L4) |
 | `lineage.mjs` | the gate1 lineage check: refuses a design-docs-only post whose branch is not on pilot's lineage |
 | `look.mjs` | `pilot look`: reads a surface's `surface.json` and captures a screen by route with one argv-started process; `apply` lays a playground export onto the token file |
+| `machine.mjs` | `machine.json`: the store's machine-bound state (sessions, leases, switches, live tickets, landing pids) and root overrides |
 | `memory.mjs` | each deck process's memory readings, one JSON line each |
 | `one-line.mjs` | `oneLine`: text from a peer or caller made one printable line, for logs and stderr |
 | `open.mjs` | opens the deck page in a browser when a run registers |

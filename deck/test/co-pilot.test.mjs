@@ -89,7 +89,9 @@ test('the stored deck gains co-pilots and no other key', async (t) => {
 
   const after = Object.keys(JSON.parse(fs.readFileSync(storeFile(), 'utf8')));
   // A store written before grant stamps gains their mark on its first write too (never-stuck QA-F1).
-  assert.deepEqual(after.filter((key) => !before.includes(key)).sort(), ['coPilots', 'grantsStamped']);
+  // The lease itself is machine state, kept in machine.json (portable-store S2).
+  assert.deepEqual(after.filter((key) => !before.includes(key)).sort(), ['grantsStamped']);
+  assert.ok('coPilots' in JSON.parse(fs.readFileSync(path.join(path.dirname(storeFile()), 'machine.json'), 'utf8')));
   assert.deepEqual(before.filter((key) => !after.includes(key)), []);
 });
 

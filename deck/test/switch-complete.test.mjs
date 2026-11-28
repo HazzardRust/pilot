@@ -23,11 +23,15 @@ const REPO = path.resolve('D:/work/pilot');
 
 const stored = storedDeck;
 const itemOf = (id) => stored().items.find((item) => item.id === id);
-/** A co-pilot lane's record beside the main one, written straight in: completing or cancelling main must keep it. */
+/**
+ * A co-pilot lane's record beside the main one, written straight into machine.json, where switches live
+ * (portable-store S2): completing or cancelling main must keep it.
+ */
 const withCoPilotLane = () => {
-  const deck = stored();
-  deck.switches[repoKey(REPO)].coPilot = { from: null, to: 'itm_0000000000ff', at: 'then' };
-  fs.writeFileSync(storeFile(), JSON.stringify(deck), 'utf8');
+  const file = path.join(path.dirname(storeFile()), 'machine.json');
+  const machine = JSON.parse(fs.readFileSync(file, 'utf8'));
+  machine.switches[repoKey(REPO)].coPilot = { from: null, to: 'itm_0000000000ff', at: 'then' };
+  fs.writeFileSync(file, JSON.stringify(machine), 'utf8');
 };
 
 /** How many times `fn` replaced the store file. */
