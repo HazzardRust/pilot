@@ -8,6 +8,7 @@ import '../../deck/test/no-open.mjs';
 
 // The fixture seam imports fake-home.mjs first and gives every git below its identity.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -62,18 +63,13 @@ test('no green ticket, no chain', (t) => {
 /** A bare origin with `main`, `pilot` and a pushed `feat/n`, and a clone of it. */
 function scratchRepos(t) {
   return gitFixture(t, 'base-chain:scratchRepos', (root) => {
-    const origin = path.join(root, 'origin.git');
+    // One seed and one clone, which checks out `main` alone.
+    const { origin } = seed(root, [
+      { branch: 'main', files: {}, message: 'main' },
+      { branch: 'feat/n', from: 'main', files: {}, message: 'feat/n' },
+    ], { pilot: 'main' });
     const work = path.join(root, 'work');
-    git(root, 'init', '-q', '--bare', '-b', 'main', origin);
     git(root, 'clone', '-q', origin, work);
-    git(work, 'commit', '-q', '--allow-empty', '-m', 'main');
-    git(work, 'push', '-q', 'origin', 'main', 'main:pilot');
-    git(work, 'remote', 'set-head', 'origin', 'main');
-    git(work, 'checkout', '-q', '-b', 'feat/n', 'main');
-    git(work, 'commit', '-q', '--allow-empty', '-m', 'feat/n');
-    git(work, 'push', '-q', 'origin', 'feat/n');
-    git(work, 'checkout', '-q', 'main');
-    git(work, 'branch', '-q', '-D', 'feat/n');
     return { origin, work };
   });
 }
@@ -95,15 +91,17 @@ test('base prints the chained line', async (t) => {
 test('a concluding branch origin lacks falls back', async (t) => {
   const { work } = scratchRepos(t);
   const gone = await printed(work, async () => ({ ticket: 'itm_1', slug: 'gone', branch: 'feat/gone' }));
+  // origin/main is read once, after the first base, and never moves: no base here pushes or fetches a new main.
+  const main = git(work, 'rev-parse', '--short', 'origin/main');
   // Unchained, a run on origin with a host is cut from the default branch (audit-f14 L9).
-  assert.equal(gone.out, `base main ${git(work, 'rev-parse', '--short', 'origin/main')} (feat/gone not on origin)\n`);
+  assert.equal(gone.out, `base main ${main} (feat/gone not on origin)\n`);
   for (const feature of [{ ticket: 'itm_1', branch: '--upload-pack=x' }, { ticket: 'itm_1) (x', branch: 'feat/n' }, { ticket: 'itm_1', branch: 'main' }]) {
     const { code, out } = await printed(work, async () => ({ slug: 'gone', ...feature }));
     assert.equal(code, 0);
-    assert.equal(out, `base main ${git(work, 'rev-parse', '--short', 'origin/main')}\n`, feature.ticket);
+    assert.equal(out, `base main ${main}\n`, feature.ticket);
   }
   const none = await printed(work, async () => null);
-  assert.equal(none.out, `base main ${git(work, 'rev-parse', '--short', 'origin/main')}\n`);
+  assert.equal(none.out, `base main ${main}\n`);
 });
 
 test('an unreachable deck falls back and says so', async (t) => {

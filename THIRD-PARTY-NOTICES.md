@@ -12,6 +12,7 @@ from where and what this project changed.
 | What | Where it came from | Licence | Ledger |
 | --- | --- | --- | --- |
 | Eight methodology skills under `skills/` | mattpocock-skills 1.2.3, <https://github.com/mattpocock/mattpocock-skills> | MIT | [`vendor/methodology.md`](vendor/methodology.md) |
+| The PR overview skill, `skills/pr-overview/SKILL.md` | mattpocock-skills 1.3.2, <https://github.com/mattpocock/mattpocock-skills> | MIT | [`vendor/pr-overview.md`](vendor/pr-overview.md) |
 | Ten agents, six skills, a hook with the library it requires, and the language directories of `rules/` | ECC 2.2.0, <https://github.com/affaan-m/ECC> | MIT | [`vendor/toolbox.md`](vendor/toolbox.md) |
 | The QA agent's taste checklist, `skills/design-review/SKILL.md` | claude-code-workflows at `6a65344`, <https://github.com/OneRedOak/claude-code-workflows> | MIT | [`vendor/taste.md`](vendor/taste.md) |
 

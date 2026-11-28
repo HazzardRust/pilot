@@ -14,7 +14,8 @@
  *   open(pr: { base: string, head: string, title: string, body: string, draft?: boolean, label?: string }): { number: number, why?: string },
  *   edit(n: number, change: { base?: string, title?: string, body?: string, label?: string }): { why?: string },
  *   comment(n: number, body: string): void, upsertComment(n: number, marker: string, body: string): 'posted'|'edited'|'none',
- *   signedIn(): boolean, checks(sha: string): Check[], testedTrees(sha: string): TestedTree[] }} Host
+ *   signedIn(): boolean, login(): string | null, checks(sha: string): Check[], testedTrees(sha: string): TestedTree[] }} Host
+ *   `login` is the signed-in account's name, null when signed out; it names the pilot branch (user-pilot-branch L3)
  * @typedef {{ name: string, outcome: 'pass'|'fail'|'pending' }} Check  one host CI result on one commit (ci-gate)
  * @typedef {{ name: string, conclusion: string, tree: string | null }} TestedTree  one `gate (<os>)` run and the
  *   tree its `tested-tree` annotation names (cheap-suite L7)

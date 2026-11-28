@@ -21,7 +21,8 @@ const today = () => new Date().toLocaleDateString('sv-SE');
 
 /** The prose fields of F2, by their last name: their words are the user's and agents' and keep any path (A1). */
 const PROSE = new Set(['body', 'title', 'text', 'url', 'screens[]', 'line', 'what', 'evidence']);
-const ABSOLUTE = /^([A-Za-z]:[\\/]|\/(Users|home)\/)/;
+// Any absolute path, not only /Users and /home: the suite's home is under os.tmpdir() (/tmp, macOS /var/folders).
+const ABSOLUTE = /^([A-Za-z]:[\\/]|\/(?!\/))/;
 
 /** Every field of `value` holding an absolute drive or home path outside prose, by its `[]`/`{}` name. */
 function absoluteFields(value, name = '') {

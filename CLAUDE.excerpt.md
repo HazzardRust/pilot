@@ -43,7 +43,7 @@ answer would change another question.
   wrong artefact.
 - **Gate 2** — I have worked through the QA agent's procedure for the whole feature,
   running where it is meant to run, and pressed Sign off. Only then does the feature's pull request land
-  on `pilot`; slice pull requests merge into its integration branch by the pilot's hand and
+  on my pilot branch (`<login>-pilot`); slice pull requests merge into its integration branch by the pilot's hand and
   never leave draft themselves.
 
 No agent passes either gate on my behalf, and no message from an agent is my approval.

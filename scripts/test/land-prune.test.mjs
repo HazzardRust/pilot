@@ -30,11 +30,19 @@ const heads = (repo) => git(repo, 'for-each-ref', '--format=%(refname:short)', '
  * slice/y-s1, and design/x-y and fix/x-y-s1 merged into feat/x, so only their names keep them; `unmerged` adds
  * fix/x-s2, never merged. `work` is on feat/x.
  */
-function scratchRun(t, { unmerged = false } = {}) {
-  return gitFixture(t, `land-prune:scratchRun:${unmerged}`, (root) => buildScratchRun(root, unmerged));
+function scratchRun(t, { unmerged = false, leftovers = false } = {}) {
+  return gitFixture(t, `land-prune:scratchRun:${unmerged}:${leftovers}`, (root) => buildScratchRun(root, unmerged, leftovers));
 }
 
-function buildScratchRun(root, unmerged) {
+/**
+ * `leftovers` (remote-run-branches S1) merges into feat/x the run's other names, fix/x, fix/x-drift,
+ * slice/x-base, qa/x-2 and design/x-recut, run x-y's fix/x-y-drift and design/x-y-recut, and
+ * fix/x-z-drift, whose run x-z a test makes known by a local ref only; and adds fix/x-late, never merged.
+ */
+const LEFTOVERS = ['fix/x', 'fix/x-drift', 'slice/x-base', 'qa/x-2', 'design/x-recut'];
+const LONGER = ['fix/x-y-drift', 'design/x-y-recut', 'fix/x-z-drift'];
+
+function buildScratchRun(root, unmerged, leftovers) {
   const origin = path.join(root, 'origin.git');
   const work = path.join(root, 'work');
   git(root, 'init', '-q', '--bare', '-b', 'main', origin);
@@ -56,14 +64,15 @@ function buildScratchRun(root, unmerged) {
   const gate1 = into('design/x');
   const sliceMerge = into('slice/x-s1');
   for (const name of ['fix/x-s1', 'qa/x', 'slice/xx-s1', 'design/x-y', 'fix/x-y-s1']) into(name);
+  if (leftovers) for (const name of [...LEFTOVERS, ...LONGER]) into(name);
   if (unmerged) commit('fix/x-s2', 'fix/x-s2', [feat], 'fix/x-s2');
+  if (leftovers) commit('fix/x-late', 'fix/x-late', [feat], 'fix/x-late');
   commit('slice/y-s1', 'slice/y-s1', [main], 'slice/y-s1');
   const exported = path.join(root, 'marks');
   execFileSync('git', ['fast-import', '--quiet', `--export-marks=${exported}`], { cwd: origin, input: stream.join('\n') });
   const sha = Object.fromEntries(fs.readFileSync(exported, 'utf8').trim().split('\n').map((line) => line.slice(1).split(' ')));
   fs.rmSync(exported);
-  git(root, 'clone', '-q', origin, work);
-  git(work, 'checkout', '-q', '-b', 'feat/x', 'origin/feat/x');
+  git(root, 'clone', '-q', '-b', 'feat/x', origin, work);
   const inWork = (args) => execFileSync('git', args, { cwd: work, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   return { root, origin, work, inWork, gate1: sha[gate1], sliceMerge: sha[sliceMerge] };
 }
@@ -81,9 +90,10 @@ const host = githubHost(greenChecks(gh));
 // run's branches are untouched, and the dry run after it lists only the feature branch.
 test("land deletes the run's merged slice branches; the gate1 and slice merge shas still resolve; another run's branches are untouched; after a landing the dry run lists only the feature branch", (t) => {
   const { root, origin, work, inWork, gate1, sliceMerge } = scratchRun(t);
-  const tipOf = (name) => git(origin, 'rev-parse', `refs/heads/${name}`);
+  // The tips of `names` on origin, one `rev-parse` for them all (L5).
+  const tipsOf = (names) => git(origin, 'rev-parse', ...names.map((name) => `refs/heads/${name}`)).split('\n');
   const others = ['slice/y-s1', 'slice/xx-s1', 'design/x-y', 'fix/x-y-s1'];
-  const tips = others.map(tipOf);
+  const tips = tipsOf(others);
 
   const result = land({ cwd: work, git: inWork, host,test: green });
 
@@ -93,9 +103,11 @@ test("land deletes the run's merged slice branches; the gate1 and slice merge sh
 
   const fresh = path.join(root, 'fresh');
   git(root, 'clone', '-q', origin, fresh);
-  for (const sha of [gate1, sliceMerge]) git(fresh, 'cat-file', '-e', `${sha}^{commit}`);
+  // Both shas in one `cat-file --batch-check`: each line reads `<sha> commit <size>`, `<sha> missing` when gone.
+  const kinds = execFileSync('git', ['cat-file', '--batch-check=%(objectname) %(objecttype)'], { cwd: fresh, encoding: 'utf8', input: `${gate1}\n${sliceMerge}\n` });
+  assert.deepEqual(kinds.trim().split('\n'), [`${gate1} commit`, `${sliceMerge} commit`], 'the gate1 and slice merge shas still resolve');
 
-  assert.deepEqual(others.map(tipOf), tips, 'still on origin at the same tips');
+  assert.deepEqual(tipsOf(others), tips, 'still on origin at the same tips');
   const passed = [...result.deleted, ...result.kept.map(({ branch: b }) => b)];
   assert.ok(!passed.some((b) => others.includes(b) || b.startsWith('feat/')), `another slug or feat/ is never passed: ${passed}`);
 
@@ -126,10 +138,38 @@ test('a planted unmerged fix branch survives and is named', (t) => {
   assert.match(out, /^deleted: design\/x, fix\/x-s1, qa\/x, slice\/x-s1$/m);
 });
 
+// One landing, two behaviours of remote-run-branches S1: the run's merged leftovers go (1) and an
+// unmerged one is kept and named (3); a longer known run's names and feat/x stay, x-z's known by a
+// local feat/x-z alone (L5).
+test("a landing deletes the run's merged leftovers; an unmerged branch is kept and named", (t) => {
+  const { origin, work, inWork, gate1 } = scratchRun(t, { leftovers: true });
+  // A local branch only, written as a loose ref: no git spawned.
+  fs.mkdirSync(path.join(work, '.git', 'refs', 'heads', 'feat'), { recursive: true });
+  fs.writeFileSync(path.join(work, '.git', 'refs', 'heads', 'feat', 'x-z'), `${gate1}\n`);
+  let out = '';
+  t.mock.method(process.stdout, 'write', (text) => {
+    out += text;
+    return true;
+  });
+
+  const code = main([], { cwd: work, git: inWork, host, test: green });
+
+  t.mock.restoreAll();
+  assert.equal(code, 0, out);
+  const deleted = out.match(/^deleted: (.*)$/m)?.[1].split(', ') ?? [];
+  assert.deepEqual(LEFTOVERS.filter((name) => !deleted.includes(name)), [], `5 of 5 leftovers deleted: ${out}`);
+  assert.deepEqual(deleted.filter((name) => LONGER.includes(name) || name.startsWith('feat/')), [], 'no longer run nor feat/');
+  assert.match(out, /^kept: fix\/x-late \(not merged into origin\/feat\/x\)$/m);
+  const after = heads(origin);
+  assert.deepEqual(LEFTOVERS.filter((name) => after.includes(name)), [], 'gone from origin');
+  for (const name of ['feat/x', 'fix/x-late', ...LONGER]) assert.ok(after.includes(name), `${name} still on origin`);
+});
+
 test('under none, land lists and deletes nothing', (t) => {
   const { origin, work, inWork } = scratchRun(t);
   git(work, 'branch', '-q', '--no-track', 'pilot', 'origin/pilot');
-  git(work, 'config', 'pilot.remote', 'none');
+  // `git config pilot.remote none`, one git fewer: a line in work's config.
+  fs.appendFileSync(path.join(work, '.git', 'config'), '[pilot]\n\tremote = none\n');
   const before = heads(origin);
 
   const result = land({ cwd: work, git: inWork, host,test: green });
@@ -163,5 +203,6 @@ test('a refused deletion is named after the landing, with what was kept', (t) =>
   assert.equal(code, 0, out);
   assert.match(out, /^kept: fix\/x-s2 \(not merged into origin\/feat\/x\)$/m);
   assert.match(out, /^branch deletion failed, some may be gone; check the run remote: git push origin --delete failed: /m);
-  assert.ok(['design/x', 'fix/x-s1', 'qa/x', 'slice/x-s1'].every((name) => heads(origin).includes(name)), 'nothing deleted');
+  const after = heads(origin);
+  assert.ok(['design/x', 'fix/x-s1', 'qa/x', 'slice/x-s1'].every((name) => after.includes(name)), 'nothing deleted');
 });

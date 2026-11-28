@@ -35,7 +35,7 @@ import {
   recordFields,
   repoKey,
   sameRepo,
-  withHumanStep,
+  withHumanStep, withTestRuns,
 } from './runs.mjs';
 import { neverGranted } from './recut.mjs';
 import { SliceRefusal, mergeSliceTable } from './status.mjs';
@@ -662,12 +662,12 @@ function upsertRecord(deck, run, table, fields, name) {
   const records = recordsOf(deck);
   const mine = recordOf(run, fields.slug);
   const previous = records.find(mine)?.record ?? {};
-  const record = nextRecord(previous, {
+  const record = withTestRuns(nextRecord(previous, {
     ...fields,
     feature: name ?? previous.feature,
     slices: table,
     updatedAt: new Date().toISOString(),
-  });
+  }), previous.tests);
   // A 0.7.19 sub-deck stamped the record it wrote (A17); the sub-deck is gone (L10), so a write drops it.
   delete record.subdeck;
   deck.records = [...records.filter((entry) => !mine(entry)), { repo: key, record }];

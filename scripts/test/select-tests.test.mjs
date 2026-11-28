@@ -8,6 +8,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -19,35 +20,30 @@ const { selectTests, scopeLine, scopeOf, TREE_TESTS, TEST_GLOB } = await import(
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
-/** Three tests: `a` imports nothing, `b1` and `b2` import `lib/b.mjs`. One commit on main. */
-function threeTests(dir) {
-  git(dir, 'init', '-q', '-b', 'main');
-  const files = {
-    'lib/b.mjs': 'export const b = 1;\n',
-    'test/a.test.mjs': "import { test } from 'node:test';\ntest('a', () => {});\n",
-    'test/b1.test.mjs': "import { b } from '../lib/b.mjs';\n",
-    'test/b2.test.mjs': "const { b } = await import('../lib/b.mjs');\n",
-  };
-  for (const [rel, text] of Object.entries(files)) {
-    fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
-    fs.writeFileSync(path.join(dir, rel), text);
-  }
-  git(dir, 'add', '.');
-  git(dir, 'commit', '-q', '-m', 'one');
-  return { dir, sha: git(dir, 'rev-parse', 'HEAD') };
+/** `history` seeded and cloned to `<dir>/work`, on main: `{ dir, sha, origin }`, `sha` each branch's tip. */
+function seeded(dir, history) {
+  const { origin, sha } = seed(dir, history);
+  const work = path.join(dir, 'work');
+  git(dir, 'clone', '-q', origin, work);
+  return { dir: work, sha, origin };
 }
 
-/** A builder for `gitFixture`: writes `files`, commits them on main, and returns `{ dir, sha }`. */
+/** A builder for `gitFixture`: commits `files` on main and returns `{ dir, sha }`. */
 const repoOf = (files) => (dir) => {
-  git(dir, 'init', '-q', '-b', 'main');
-  for (const [rel, text] of Object.entries(files)) {
-    fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
-    fs.writeFileSync(path.join(dir, rel), text);
-  }
-  git(dir, 'add', '.');
-  git(dir, 'commit', '-q', '-m', 'one');
-  return { dir, sha: git(dir, 'rev-parse', 'HEAD') };
+  const { dir: work, sha } = seeded(dir, [{ branch: 'main', files, message: 'one' }]);
+  return { dir: work, sha: sha.main };
 };
+
+/** Three tests: `a` imports nothing, `b1` and `b2` import `lib/b.mjs`. */
+const THREE = {
+  'lib/b.mjs': 'export const b = 1;\n',
+  'test/a.test.mjs': "import { test } from 'node:test';\ntest('a', () => {});\n",
+  'test/b1.test.mjs': "import { b } from '../lib/b.mjs';\n",
+  'test/b2.test.mjs': "const { b } = await import('../lib/b.mjs');\n",
+};
+
+/** `THREE` in one commit on main. */
+const threeTests = repoOf(THREE);
 
 /** `t` reaches `lib/b.mjs` through `lib/a.mjs`; `dyn` imports `lib/c.mjs` by `import()`; `pin` names `agents/x.md`. */
 const CHAIN = repoOf({
@@ -93,7 +89,7 @@ test('whole-tree tests ride every selection', (t) => {
 });
 
 /** Each test reaches its module in a way the plain import regex misses, `q` and `r` through a hub. */
-const EDGES = repoOf({
+const EDGE_FILES = {
   'lib/q.mjs': 'export const q = 1;\n',
   'lib/q-hub.mjs': "export { q } from './q.mjs';\n",
   'lib/r.js': 'module.exports = 1;\n',
@@ -104,24 +100,27 @@ const EDGES = repoOf({
   'test/require.test.mjs': "const r = createRequire(import.meta.url)('../lib/r-hub.js');\n",
   'test/renamed.test.mjs': "import { s } from '../lib/s.mjs';\n",
   'test/dotfile.test.mjs': "const file = path.join(ROOT, '.gitattributes');\n",
-});
+};
+const EDGES = repoOf(EDGE_FILES);
 
 test('a query, a require, a rename and a dotfile still reach their tests', (t) => {
   const select = (dir) => selectTests({ cwd: dir, since: 'main' }).files.map((file) => path.relative(dir, file).split(path.sep).join('/'));
-  let { dir } = gitFixture(t, 'select:edges', EDGES);
-  fs.appendFileSync(path.join(dir, 'lib/q.mjs'), '//\n');
-  assert.deepEqual(select(dir), ['test/query.test.mjs'], 'a cache-busting query');
-  ({ dir } = gitFixture(t, 'select:edges', EDGES));
-  fs.appendFileSync(path.join(dir, 'lib/r.js'), '//\n');
-  assert.deepEqual(select(dir), ['test/require.test.mjs'], 'a createRequire call');
-  ({ dir } = gitFixture(t, 'select:edges', EDGES));
+  const { dir } = gitFixture(t, 'select:edges', EDGES);
+  // Each edit is undone to the committed text before the next, so every selection sees one change.
+  const touch = (rel, more) => {
+    fs.appendFileSync(path.join(dir, rel), more);
+    const selected = select(dir);
+    fs.writeFileSync(path.join(dir, rel), EDGE_FILES[rel]);
+    return selected;
+  };
+  assert.deepEqual(touch('lib/q.mjs', '//\n'), ['test/query.test.mjs'], 'a cache-busting query');
+  assert.deepEqual(touch('lib/r.js', '//\n'), ['test/require.test.mjs'], 'a createRequire call');
+  assert.deepEqual(touch('.gitattributes', '*.md text\n'), ['test/dotfile.test.mjs'], 'a dotfile named by a test');
+  // Last, as the one edit to the index.
   git(dir, 'mv', 'lib/s.mjs', 'lib/t.mjs');
   const renamed = selectTests({ cwd: dir, since: 'main' });
   assert.equal(renamed.reason, 'lib/t.mjs reaches no test', 'a staged rename runs full: its new path is imported by no one');
   assert.equal(renamed.changed, undefined, 'a full run names no diff: only a selection with files reads one');
-  ({ dir } = gitFixture(t, 'select:edges', EDGES));
-  fs.appendFileSync(path.join(dir, '.gitattributes'), '*.md text\n');
-  assert.deepEqual(select(dir), ['test/dotfile.test.mjs'], 'a dotfile named by a test');
 });
 
 test('a deleted test file is not listed', (t) => {
@@ -172,24 +171,21 @@ test('an unresolvable ref runs full and says so', (t) => {
 /**
  * A proved tree beside `threeTests`' HEAD, as CI's merge tree stands beside the landing's (cheap-suite F9): `side`, off
  * `one`, made the change to `test/a.test.mjs` that main then made too, and main went on to change `lib/b.mjs`.
- * Answers the side commit's tree, which is no ancestor of HEAD and no commit at all.
+ * Answers `{ dir, tree }`, `tree` the side commit's tree, which is no ancestor of HEAD and no commit at all.
  */
 function provedBeside(dir) {
-  git(dir, 'checkout', '-q', '-b', 'side');
-  fs.appendFileSync(path.join(dir, 'test/a.test.mjs'), '// touched\n');
-  git(dir, 'commit', '-q', '-am', 'side');
-  const tree = git(dir, 'rev-parse', 'HEAD^{tree}');
-  git(dir, 'checkout', '-q', 'main');
-  fs.appendFileSync(path.join(dir, 'test/a.test.mjs'), '// touched\n');
-  git(dir, 'commit', '-q', '-am', 'same change on main');
-  fs.appendFileSync(path.join(dir, 'lib/b.mjs'), 'export const c = 2;\n');
-  git(dir, 'commit', '-q', '-am', 'main goes on');
-  return tree;
+  const touched = { 'test/a.test.mjs': `${THREE['test/a.test.mjs']}// touched\n` };
+  const { dir: work, origin } = seeded(dir, [
+    { branch: 'main', files: THREE, message: 'one' },
+    { branch: 'side', from: 'main', files: touched, message: 'side' },
+    { branch: 'main', files: touched, message: 'same change on main' },
+    { branch: 'main', files: { 'lib/b.mjs': `${THREE['lib/b.mjs']}export const c = 2;\n` }, message: 'main goes on' },
+  ]);
+  return { dir: work, tree: git(dir, `--git-dir=${origin}`, 'rev-parse', 'side^{tree}') };
 }
 
 test('a tree since diffs exactly', (t) => {
-  const { dir } = gitFixture(t, 'select:three', threeTests);
-  const tree = provedBeside(dir);
+  const { dir, tree } = gitFixture(t, 'select:beside', provedBeside);
 
   const selection = selectTests({ cwd: dir, since: tree });
 
@@ -199,8 +195,7 @@ test('a tree since diffs exactly', (t) => {
 
 for (const trigger of ['.github/workflows/gate.yml', 'package.json']) {
   test(`a tree since runs full when ${trigger} changed after it`, (t) => {
-    const { dir } = gitFixture(t, 'select:three', threeTests);
-    const tree = provedBeside(dir);
+    const { dir, tree } = gitFixture(t, 'select:beside', provedBeside);
     fs.mkdirSync(path.dirname(path.join(dir, trigger)), { recursive: true });
     fs.writeFileSync(path.join(dir, trigger), '{}\n');
     git(dir, 'add', trigger);

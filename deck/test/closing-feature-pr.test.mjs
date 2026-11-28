@@ -58,7 +58,7 @@ test('an unreadable setting is named in the step', () => {
 test('the steps thread carries the step first; the closing report carries the line and no step', () => {
   const line = 'landed feat/a on pilot at 1a2b3c4\nfeature PR: #13 into feat/a (after #12)';
   const gate = { pr: '#590', landing: { state: 'landed', sha: '1a2b3c4', line } };
-  assert.equal(stepsOf({ slug: 'a' }, gate, [], 'squash')[0].text, 'Merge #12, then #13 with a squash.');
+  assert.equal(stepsOf({ slug: 'a' }, gate, 'squash')[0].text, 'Merge #12, then #13 with a squash.');
   const { body } = closingReportOf({ slug: 'a', slices: [] }, gate, []);
   assert.match(body, /^feature PR: #13 into feat\/a \(after #12\)$/m);
   assert.doesNotMatch(body, /Human step|main gets pilot/);

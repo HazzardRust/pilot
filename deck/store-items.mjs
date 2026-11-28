@@ -479,7 +479,7 @@ export function settleLanding(gate2Id, outcome) {
 }
 
 /** What a landing the last daemon left running reads once this one starts (spec 7, A3). */
-export const LANDING_INTERRUPTED = 'landing interrupted: the deck restarted; check origin/pilot';
+export const LANDING_INTERRUPTED = 'landing interrupted: the deck restarted; check your pilot branch on origin';
 
 /**
  * The daemon's start-up sweep (spec 7, A3): each landing still `running` reads interrupted, in one write, before this daemon takes a press, but one `spare`

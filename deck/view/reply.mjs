@@ -6,7 +6,7 @@
  */
 import {
   ASSUME_DEFAULT, CLOSABLE_KINDS, GATED_KINDS, HANDOFF_FAILED, KIND_AUDIT, KIND_CREW_HANDOFF, KIND_HANDOFF, KIND_LESSON,
-  KIND_QUESTION, KIND_WALKTHROUGH, NOT_YET, SIGN_OFF, TEACH_ME, askFor, chosenOf, isBlocking, isGate, isKnownKind, isOpen, isRecord,
+  KIND_QUESTION, KIND_STEPS, KIND_WALKTHROUGH, NOT_YET, SIGN_OFF, TEACH_ME, askFor, chosenOf, isBlocking, isGate, isKnownKind, isOpen, isRecord,
   lastSaid,
 } from '../items.mjs';
 
@@ -63,7 +63,8 @@ export const confirmWords = (item, label) => ({
 export function replyView(reads, { id }) {
   const item = reads.items.find((each) => each.id === id);
   if (!item) return NONE;
-  if (!isOpen(item)) return { mode: 'reopen', id, options: [], dismiss: false };
+  // A steps thread's Done closed its ticket too, so `reopenItem` refuses it and the page draws no press (human-steps L4).
+  if (!isOpen(item)) return item.kind === KIND_STEPS ? NONE : { mode: 'reopen', id, options: [], dismiss: false };
   if (isRecord(item)) return NONE;
   const view = { mode: 'reply', id, options: optionsOf(item), dismiss: !isKnownKind(item.kind) || isGate(item.kind) };
   return CLOSABLE_KINDS.includes(item.kind) ? { ...view, close: { confirm: true } } : view;

@@ -18,7 +18,7 @@ import { postStored, shapedTicketBody, tempDeck } from '../testUtils.mjs';
 const REPO = path.join('D:', 'work', 'pilot');
 const CHECKS = 'Walk it.\n\n| spec | result | evidence |\n| --- | --- | --- |\n| 1 | pass | ok |';
 const reread = (id) => listItems().find((item) => item.id === id);
-const STEPS = [{ text: 'Merge the main PR #140 on GitHub.' }, { text: 'Remove D:/work/pilot-s1 when you are done with it.' }];
+const STEPS = [{ text: 'Merge the main PR #140 on GitHub.' }, { text: 'Set STRIPE_KEY in Vercel.' }];
 
 /** A green ticket whose gate2 the user signed and the deck landed: what the lander's report closes today. */
 const aLandedTicket = (title = 'land the thing') => {

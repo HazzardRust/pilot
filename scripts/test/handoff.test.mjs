@@ -14,6 +14,7 @@
 
 // The fixture seam imports fake-home.mjs first and gives every git below its identity.
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -41,16 +42,11 @@ function scratchWorktree(t) {
   return gitFixture(t, 'handoff:scratchWorktree', buildScratchWorktree);
 }
 
+/** One seed and one clone; `-b` gives `feat/x` the upstream `push -u` did. */
 function buildScratchWorktree(root) {
-  const origin = path.join(root, 'origin.git');
+  const { origin } = seed(root, [{ branch: 'feat/x', files: { 'base.txt': 'base\n' }, message: 'base' }]);
   const work = path.join(root, 'work');
-  git(root, 'init', '--bare', '-b', 'main', origin);
-  git(root, 'clone', '-q', origin, work);
-  git(work, 'checkout', '-q', '-b', 'feat/x');
-  fs.writeFileSync(path.join(work, 'base.txt'), 'base\n');
-  git(work, 'add', 'base.txt');
-  git(work, 'commit', '-q', '-m', 'base');
-  git(work, 'push', '-q', '-u', 'origin', 'feat/x');
+  git(root, 'clone', '-q', '-b', 'feat/x', origin, work);
   fs.mkdirSync(path.join(work, 'docs', 'design', 'x'), { recursive: true });
   fs.writeFileSync(path.join(work, 'docs', 'design', 'x', 'run.json'), '{"slug":"x"}\n');
   return { origin, work };
@@ -122,9 +118,11 @@ test('reported in: the record is committed and pushed, one handoff item is poste
   assert.equal(result.ok, true, result.line);
   assert.deepEqual(deck.asked.map((asked) => path.resolve(asked)), [path.resolve(work)], 'the record is asked for the checkout (L11)');
   assert.equal(git(work, 'status', '--porcelain'), '', 'nothing is left uncommitted');
-  assert.equal(git(work, 'log', '-1', '--format=%s'), 'chore(x): run record');
-  assert.match(git(work, 'log', '-1', '--format=%B'), /Claude-Session: s/);
-  assert.equal(git(origin, 'rev-parse', 'feat/x'), git(work, 'rev-parse', 'HEAD'), 'and it is pushed');
+  // HEAD's sha, subject and message in one read.
+  const [head, subject, message] = git(work, 'log', '-1', '--format=%H%x00%s%x00%B').split('\0');
+  assert.equal(subject, 'chore(x): run record');
+  assert.match(message, /Claude-Session: s/);
+  assert.equal(git(origin, 'rev-parse', 'feat/x'), head, 'and it is pushed');
 
   assert.equal(deck.posts.length, 1, 'one item');
   const [{ name, arguments: args }] = deck.posts;

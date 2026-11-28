@@ -12,6 +12,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const { leftovers, census, runGate } = await import('../gate.mjs');
+const { holderFor } = await import('../../deck/awake.mjs');
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CWD = 'C:/work/pilot';
 
@@ -97,6 +98,35 @@ test("a process a claude session started beside the gate is not the suite's", ()
   assert.deepEqual(runCensus([[claude, gate, beside]]).lines, ['left running: none'], 'a session process is never stopped');
   const under = { ...daemon(31), ppid: 99 };
   assert.deepEqual(runCensus([[claude, gate, under]], { dies: true }).stops, [{ pid: 31, tree: false }], 'one under the gate is');
+});
+
+/** A keep-awake holder watching `watched`, as Windows reports node's spawn of it (stay-awake S4). */
+const holder = (pid, watched) => {
+  const { cmd, args } = holderFor('win32', watched);
+  const command = [cmd, ...args].map((a) => (/[\s"]/.test(a) ? `"${a.replaceAll('"', '\\"')}"` : a)).join(' ');
+  return { pid, ppid: watched, name: 'powershell.exe', command, ageS: 1 };
+};
+
+test("a test deck's holder left running is counted, and one whose deck is gone", () => {
+  const { red, lines, stops } = runCensus([[daemon(10), holder(11, 10), holder(13, 12)]], { dies: true });
+  assert.equal(red, false);
+  assert.deepEqual(stops.map(({ pid }) => pid), [10, 11, 13]);
+  assert.match(lines[1], /^stopped 11 holder /);
+});
+
+test("the user's deck's holder is not counted", () => {
+  const { lines, stops } = runCensus([[daemon(10), holder(11, 10)]], { deckPid: () => 10 });
+  assert.deepEqual(stops, []);
+  assert.deepEqual(lines, ['left running: none']);
+  const elsewhere = { ...daemon(20, 'C:/elsewhere'), ppid: 1 };
+  assert.deepEqual(runCensus([[elsewhere, holder(21, 20)]]).lines, ['left running: none'], "a deck outside the suite: its holder is not the suite's");
+});
+
+test("a leashless daemon's holder is not stopped when the user's deck cannot be read", () => {
+  const leashless = { ...daemon(32), command: `node ${CWD}/deck/daemon.mjs` };
+  const { stops, lines } = runCensus([[leashless, holder(33, 32)]], { deckPid: () => undefined });
+  assert.deepEqual(stops, []);
+  assert.deepEqual(lines.slice(0, 2), ["not stopped 32: cannot tell it from the user's deck", "not stopped 33: cannot tell it from the user's deck"]);
 });
 
 test("a leashless daemon is not stopped when the user's deck cannot be read", () => {
