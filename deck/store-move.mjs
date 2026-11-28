@@ -178,11 +178,21 @@ function mappedRoots(used, given, { home, platform, hasDrive }) {
   return roots;
 }
 
-/** Every stored path of `deck.json` and each month archive decoded against `roots`, and refused unless it stays under its root (L5). */
+/**
+ * Every stored path of `deck.json` and each month archive decoded against `roots`, and refused unless it stays under
+ * its root (L5); first each is read as the deck will read it, so one the deck could not load (two map keys that read
+ * as one path) is refused before the store it would replace is set aside.
+ */
 function checkDecoded(entries, roots, P) {
   for (const [name, bytes] of entries) {
     if (name !== 'deck.json' && !name.startsWith('deck.archive-')) continue;
-    eachStructuredPath(JSON.parse(bytes.toString('utf8')), (value, field) => {
+    const doc = JSON.parse(bytes.toString('utf8'));
+    try {
+      fromStored(doc, emptyMachine(), roots);
+    } catch (error) {
+      throw new Error(`load: ${name} would not load here (${error.message})`);
+    }
+    eachStructuredPath(doc, (value, field) => {
       if (!value.startsWith('@')) return;
       const root = roots[value.slice(1, value.indexOf('/'))];
       const rel = P.relative(root, decodePath(value, roots));
@@ -248,7 +258,8 @@ export function importStore(argv, deps = {}) {
   try {
     plan = importPlan(argv, { storePid, home, platform, hasDrive, maxBytes });
   } catch (error) {
-    err(`pilot store import: ${error.message}; nothing written`);
+    // A parse error quotes the bundle's own bytes: none of its control characters reach the terminal.
+    err(`pilot store import: ${error.message.replace(/[\x00-\x1f\x7f-\x9f]/g, '?')}; nothing written`);
     return 1;
   }
   const { file, dir, bundle, roots, existing, given } = plan;

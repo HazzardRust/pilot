@@ -134,6 +134,11 @@ test('a non-empty store is kept', (t) => {
   assert.equal(fs.readFileSync(path.join(aside, 'deck.json'), 'utf8'), Buffer.from(before['deck.json'], 'base64').toString('utf8'));
   assert.equal(listItems().some((item) => item.title === 'Only here?'), false, 'the bundle replaced the store');
   assert.equal(fs.readdirSync(dir).some((name) => name.startsWith('.import-')), false, 'no staging left behind');
+
+  const first = snapshot(aside);
+  assert.equal(anImport([file, '--replace'], home).code, 0);
+  assert.deepEqual(snapshot(aside), first, 'a second replace the same day never overwrites the first');
+  assert.ok(fs.existsSync(path.join(dir, 'replaced-2026-11-28-2', 'deck.json')));
 });
 
 test('a dry run writes nothing', (t) => {

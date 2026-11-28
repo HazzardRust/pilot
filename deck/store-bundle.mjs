@@ -147,6 +147,8 @@ function parsedEntry(name, text) {
 function checkedRoots(name, doc, roots) {
   eachStructuredPath(doc, (value, field) => {
     const where = `${name} ${field} ${JSON.stringify(value)}`;
+    // As a map key the codec assigns it, which would set the decoded map's prototype rather than add an entry.
+    if (value === '__proto__') throw new Error(`stored path: ${where} is not a path`);
     const stored = STORED_PATH.exec(value);
     if (stored) {
       if (!ROOT_NAME.test(stored[1])) throw new Error(`stored path: ${where} names no root a deck writes`);
@@ -190,6 +192,7 @@ export function unpackBundle(bytes, { maxBytes }) {
 
   const names = Object.keys(entries).sort();
   const hashed = Object.keys(manifest.entries).sort();
+  if (new Set(names.map((name) => name.toLowerCase())).size !== names.length) throw new Error('entry: two entry names differ only by case, and would meet in one file where case folds');
   for (const name of names) {
     if (!allowedEntry(name, { logs: true }) || (name.startsWith('audits/') && UNSAFE_DIR.test(name.split('/')[1]))) throw new Error(`entry: ${JSON.stringify(name)} is not one a bundle may carry`);
     if (typeof entries[name] !== 'string') throw new Error(`entry: ${name} is not text`);
