@@ -42,7 +42,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 411305d; integrating on 38b2bf7",
+      "state": "integrated, checks green at 1efde98 after macOS import test fix",
       "after": [
         "S4"
       ],
@@ -51,7 +51,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 239e540 (ts approve, round 3)",
+      "state": "pushed 239e540; integrating on 1efde98",
       "after": [
         "S5"
       ],
@@ -119,10 +119,19 @@
       ],
       "branch": "fix/portable-store-s3-mac",
       "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-s3-mac"
+    },
+    {
+      "slice": "macOS import test fix",
+      "state": "integrated (ff) at 1efde98, checks green",
+      "after": [
+        "S5"
+      ],
+      "branch": "fix/portable-store-s5-mac",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-s5-mac"
     }
   ],
-  "next": "co-pilot: integrating S5 411305d on 38b2bf7 (checks green); then S6 239e540; fundamentalist; QA.",
-  "updatedAt": "2026-11-28T08:55:12.300Z",
+  "next": "co-pilot: integrating S6 239e540 on 1efde98 (checks green); then checks, base check, fundamentalist on PR 149; QA.",
+  "updatedAt": "2026-11-28T09:30:42.546Z",
   "friction": [
     {
       "kind": "drain",
