@@ -11,9 +11,11 @@ import { seed } from '../../scripts/test/lib/seed.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 
 import { KIND_GATE1 } from '../items.mjs';
+import { storeFile } from '../store-core.mjs';
 import { assertOnPilotTip } from '../lineage.mjs';
 import { RUN_BASE } from '../runs.mjs';
 import { DeckRefusal, listItems, postItem, registerRun, resolveItem, setSlices } from '../store.mjs';
@@ -81,7 +83,11 @@ test("the deck accepts a gate1 cut from main when the ticket's record names base
   const { work, design: sha } = scratch(t);
   const evidence = withTicket({ artefact: ARTEFACT, sha, locked: 3, slices: '| S1 |' }, work);
   resolveItem(postItem({ kind: 'question', title: 'Merge?', body: 'None.', repo: work, ticket: evidence.ticket, author: 'pilot:pilot-architect' }).id, 'merged nothing', 'pilot:pilot-architect');
-  setSlices(registerRun({ repo: work, pid: process.pid }).id, [{ slice: 'S1', state: 'planned' }], undefined, { slug: 'x', ticket: evidence.ticket, base: 'main' });
+  setSlices(registerRun({ repo: work, pid: process.pid }).id, [{ slice: 'S1', state: 'planned' }], undefined, { slug: 'x', ticket: evidence.ticket, base: 'pilot' });
+  // A main base is no longer written (landed-pr-closed spec 3), so a record from before holds it, seeded by file.
+  const deck = JSON.parse(fs.readFileSync(storeFile(), 'utf8'));
+  deck.records.find((entry) => entry.record.slug === 'x').record.base = 'main';
+  fs.writeFileSync(storeFile(), JSON.stringify(deck), 'utf8');
   callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: work, ...evidence, branch: 'design/x' }, { prWrite: () => {}, lineageTimeout: GIT_SLOW_MS });
   assert.equal(listItems().filter((item) => item.kind === KIND_GATE1).length, 1);
 });

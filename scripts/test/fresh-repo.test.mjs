@@ -128,7 +128,7 @@ test('pilot base accepts the result', async (t) => {
   const said = [];
   const code = await base({ cwd: clone, say: (text) => said.push(text), warn: (text) => said.push(text) });
   assert.equal(code, 0, said.join(''));
-  assert.equal(said.join(''), `base main ${git(clone, 'rev-parse', '--short', sha)}\n`);
+  assert.equal(said.join(''), `base pilot ${git(clone, 'rev-parse', '--short', sha)} (created from main)\n`);
 });
 
 test('the CLI exits 1 with the refusal on stderr and builds nothing', (t) => {

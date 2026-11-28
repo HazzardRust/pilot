@@ -156,9 +156,8 @@ test('deck_status keeps base', (t) => {
   assert.deepEqual(Object.keys(recordFor(repo)).slice(0, 3), ['slug', 'branch', 'base'], 'stored after branch, in RECORD_ORDER');
   assert.equal(JSON.parse(fs.readFileSync(path.join(worktree, 'docs', 'design', 'm', 'run.json'), 'utf8')).base, 'feat/n');
   assert.equal(recordFields({ slug: 'm', base: 'pilot' }).base, 'pilot');
-  // The default branch's own name is a run base (audit-f14 A7).
-  assert.equal(recordFields({ slug: 'm', base: 'main' }).base, 'main');
-  for (const base of ['feat/', '-x', 'feat/N', 'origin/feat/n']) {
+  // The default branch is no longer newly written (landed-pr-closed spec 3); a stored one still reads.
+  for (const base of ['main', 'feat/', '-x', 'feat/N', 'origin/feat/n']) {
     assert.throws(() => recordFields({ slug: 'm', base }), { name: 'RunRefusal', message: /base/ }, base);
   }
 });

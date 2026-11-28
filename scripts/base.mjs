@@ -2,10 +2,8 @@
  * `pilot base` — the ref the next run is cut from, in one line (pilot-branch spec 1; L12).
  * Run in the repository the run is for:
  *
- *   base <default> <sha>                      a run on origin with a host: the default branch and its tip
- *                                             (audit-f14 L9); pilot is still ensured, since Gate 2 lands there
  *   base <name> <sha>                         origin's pilot branch (`<login>-pilot`, stored as `pilot.branch`) and its
- *                                             tip, under `pilot.host none`
+ *                                             tip, with a host or under `pilot.host none` (landed-pr-closed A1)
  *   base <name> <sha> (created from <default>) origin had none: the default tip, pushed; `(created from pilot)`, the
  *                                             legacy `pilot`'s tip when origin holds no `*-pilot` (user-pilot-branch L10)
  *   no name to read (signed out, or `none` with no `pilot.branch`): exit 1 with the `NO_NAME` line, nothing created
@@ -31,10 +29,10 @@
 
 import { execFileSync } from 'node:child_process';
 import { checksAt } from './checks.mjs';
-import { hostFor, hostOf } from '../deck/host.mjs';
-import { RUN_BASE, SLUG } from '../deck/runs.mjs';
+import { hostFor } from '../deck/host.mjs';
+import { SLUG } from '../deck/runs.mjs';
 import { readTickets } from '../deck/tickets.mjs';
-import { ensurePilotBranch, firstLine, LEGACY_PILOT, pilotBranch, remoteDefaultBranch } from './pilot-branch.mjs';
+import { ensurePilotBranch, firstLine, LEGACY_PILOT, pilotBranch } from './pilot-branch.mjs';
 
 /** The deck's concluding feature for the repository at `cwd`, `{ ticket, slug, branch }` or null; throws when the deck does not answer. */
 const deckConcluding = (cwd) => async () => (await readTickets(cwd)).concluding ?? null;
@@ -91,7 +89,7 @@ export async function base({ cwd = process.cwd(), say = (text) => process.stdout
     return 1;
   }
   const from = pilot.created ? ` (created from ${pilot.from})` : '';
-  // The move (L1) is said on stderr on every path: stdout's first token is parsed, and the host path drops `from`.
+  // The move (L1) is said on stderr on every path: stdout's first token is parsed, and the chained line drops `from`.
   if (pilot.created && pilot.from === LEGACY_PILOT) warn(`created ${pilotBranch(git)} from ${LEGACY_PILOT}; the legacy pilot is left for you to delete\n`);
   const { runs } = pilot;
   const where = runs === 'origin' ? '' : runs === null ? ' local' : ` on ${runs}`;
@@ -109,25 +107,7 @@ export async function base({ cwd = process.cwd(), say = (text) => process.stdout
       deck = ' (deck not reached)';
     }
   }
-  if (runs === 'origin') {
-    // An unchained run on origin with a host is cut from the default branch, whose PR it opens (audit-f14 L9).
-    let line;
-    try {
-      if (hostOf(git) !== 'none') {
-        const main = remoteDefaultBranch(git);
-        // The remote's name for it is printed for an agent to cut from: a run base or nothing.
-        if (!RUN_BASE.test(main)) throw new Error(`origin's default branch ${JSON.stringify(main)} is not a plain branch name`);
-        line = `base ${main} ${git(['rev-parse', '--short', '--verify', `refs/remotes/origin/${main}^{commit}`])}${deck}${ciSuffix(host, git, `refs/remotes/origin/${main}`)}\n`;
-      }
-    } catch (err) {
-      warn(`pilot base: ${firstLine(err)}\n`);
-      return 1;
-    }
-    if (line) {
-      say(line);
-      return 0;
-    }
-  }
+  // Every unchained run is cut from the pilot branch, host or none; main gets it by the release PR (landed-pr-closed A1).
   say(`base ${pilotBranch(git)} ${git(['rev-parse', '--short', pilot.sha])}${from}${where}${deck}${ciSuffix(host, git, pilot.sha)}\n`);
   return 0;
 }
