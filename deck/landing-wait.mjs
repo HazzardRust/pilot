@@ -69,7 +69,8 @@ export async function landing(id, {
         if (err.fatal || misses >= MAX_MISSES) throw err;
       }
       const { state = 'unanswered', line } = answer ?? {};
-      if (state === 'landed' || state === 'refused') {
+      // `interrupted`: a landing an imported store's old machine had in flight (portable-store S6), never settling here.
+      if (state === 'landed' || state === 'refused' || state === 'interrupted') {
         say(`${line ?? state}\n`);
         return state === 'landed' ? 0 : 1;
       }
