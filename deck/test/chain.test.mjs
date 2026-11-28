@@ -162,7 +162,7 @@ test('a signed gate1 starts no process and says nothing of a sub-deck', async (t
   const ticket = postStored({ kind: KIND_TICKET, title: 'fix the thing', body: shapedTicketBody('f'), repo: ALPHA });
   takeLive(ticket.id);
   const evidence = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', surface: false };
-  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: ALPHA, ...evidence, ticket: ticket.id });
+  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo: ALPHA, ...evidence, ticket: ticket.id });
   addReply(gate.id, SIGN_OFF);
 
   const answer = await fetch(`${base}/api/tool`, {

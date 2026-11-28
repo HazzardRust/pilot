@@ -122,6 +122,18 @@ export function recutGate1Gaps(ticket, body) {
   return [`a re-cut's gate1 lists what changed since ${from}: add a line \`Changed since ${from}: <what>\` to its body`];
 }
 
+/**
+ * What a gate1 on `ticket` owes about its base (landed-pr-closed spec 4, A3): a body line `Base: <base>` naming the
+ * base its run record holds, so the user sees at Gate 1 what the run was cut from. Any base while the record has none.
+ */
+export function baseGate1Gaps(records, ticket, body) {
+  if (!ticket) return [];
+  const base = (Array.isArray(records) ? records : []).findLast((entry) => sameRepo(entry?.repo, ticket.repo) && entry?.record?.ticket === ticket.id)?.record?.base;
+  const named = /^[ \t]*Base:[ \t]*(\S+)[ \t]*$/m.exec(String(body))?.[1];
+  if (named !== undefined && (typeof base !== 'string' || named === base)) return [];
+  return [`a gate1 names its run's base: add \`Base: ${typeof base === 'string' ? base : '<base>'}\``];
+}
+
 /** A gate2 naming a branch (host none, other-host spec 3) names its ticket's own, from its run record (QA F1). */
 export function ownBranchGaps(records, ticket, pr) {
   if (typeof pr !== 'string' || !pr.startsWith('feat/')) return [];

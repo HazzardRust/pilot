@@ -27,7 +27,7 @@ const GATE1 = {
 };
 const reread = (id) => listItems().find((item) => item.id === id);
 const aTicket = () => takeLive(postItem({ kind: KIND_TICKET, title: 'Apple', body: shapedTicketBody(), repo: REPO, sliceCount: 180 }).id);
-const aGate1 = (ticket, fields = GATE1) => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, ...fields, ticket });
+const aGate1 = (ticket, fields = GATE1) => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo: REPO, ...fields, ticket });
 
 test('signing a gate1 writes the plan with slug and slice count and no estimate', (t) => {
   tempDeck(t);

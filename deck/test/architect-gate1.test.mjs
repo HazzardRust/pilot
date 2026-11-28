@@ -64,7 +64,7 @@ test('an architect-stamped gate1 passes the poster check', () => {
 test('an architect-posted gate1 is stored', (t) => {
   tempDeck(t);
   const repo = plainRepo(t);
-  const said = callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo, ...gate1Evidence(repo), author: ARCHITECT });
+  const said = callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo, ...gate1Evidence(repo), author: ARCHITECT });
   assert.match(said.content[0].text, /^Posted itm_/);
   assert.equal(listItems().filter((item) => item.kind === KIND_GATE1).length, 1);
 });
@@ -73,7 +73,7 @@ test("an architect-posted gate1 is the pilot's thread", async (t) => {
   const base = await deckOnAPort(t);
   const repo = plainRepo(t);
   registerRun({ repo, pid: process.pid });
-  const gate1 = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo, ...gate1Evidence(repo), author: ARCHITECT });
+  const gate1 = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo, ...gate1Evidence(repo), author: ARCHITECT });
   assert.equal(ownerOf(stored(gate1.id)), 'pilot');
   addReply(gate1.id, 'Sign off');
 

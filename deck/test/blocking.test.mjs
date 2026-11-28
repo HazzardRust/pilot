@@ -60,7 +60,7 @@ test('a gate2 post is refused by name only by an open blocking question on its o
 test("a gate1 is refused by its own ticket's open question and an unticketed one, never another ticket's (spec 17)", (t) => {
   tempDeck(t);
   const aGate1 = (ticket) => postItem({
-    kind: 'gate1', title: 'Gate 1', body: 'design', repo: REPO, artefact: 'docs/design/x/architecture.md', sha: '0305827',
+    kind: 'gate1', title: 'Gate 1', body: 'design\nBase: pilot', repo: REPO, artefact: 'docs/design/x/architecture.md', sha: '0305827',
     locked: 1, slices: '| S1 |', sliceCount: 1, surface: false, branch: 'feat/x', ticket: ticket.id,
   });
   const green = aTicket('Green', 'green');

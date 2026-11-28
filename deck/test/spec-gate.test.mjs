@@ -36,7 +36,7 @@ const aGate1 = () => {
   return postItem({
     kind: KIND_GATE1,
     title: 'Gate 1',
-    body: 'The design.',
+    body: 'The design.\nBase: pilot',
     repo: REPO,
     artefact: 'docs/design/x/architecture.md',
     sha: '0305827',

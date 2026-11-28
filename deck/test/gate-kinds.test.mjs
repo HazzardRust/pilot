@@ -35,7 +35,7 @@ const merged = (ticket) =>
 const post = (kind, fields, over = {}) => {
   const evidence = TICKET_STATE[kind] ? withTicket(fields, REPO, TICKET_STATE[kind]) : fields;
   if (kind === KIND_GATE1) merged(evidence.ticket);
-  return postItem({ kind, title: `A ${kind}`, body: 'The evidence.', repo: REPO, ...evidence, ...over });
+  return postItem({ kind, title: `A ${kind}`, body: 'The evidence.\nBase: pilot', repo: REPO, ...evidence, ...over });
 };
 const without = (fields, name) => Object.fromEntries(Object.entries(fields).filter(([key]) => key !== name));
 const refusedNaming = (name) => (error) => error instanceof DeckRefusal && new RegExp(`\\b${name}\\b`).test(error.message);

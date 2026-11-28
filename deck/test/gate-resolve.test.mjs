@@ -23,7 +23,7 @@ const REPO = path.join('D:', 'work', 'pilot');
 const GATE1 = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', surface: false };
 const reread = (id) => listItems().find((item) => item.id === id);
 const aTicket = () => takeLive(postItem({ kind: KIND_TICKET, sliceCount: 60, title: 'Apple', body: shapedTicketBody(), repo: REPO }).id);
-const aGate1 = (ticket) => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, ...GATE1, ticket });
+const aGate1 = (ticket) => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo: REPO, ...GATE1, ticket });
 const resolve = (id) => callTool('deck_resolve', { id, resolution: 'Signed off.' });
 const refusedForThePress = (id, kind) => (error) =>
   error instanceof DeckRefusal &&
@@ -117,7 +117,7 @@ test("the user's Dismiss closes an unsigned gate2, the ticket stays green, and a
 test('posting a gate answers that it closes on the press, not with deck_resolve', (t) => {
   tempDeck(t);
   const ticket = aTicket();
-  const said = callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, ...GATE1, ticket: ticket.id }).content[0].text;
+  const said = callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo: REPO, ...GATE1, ticket: ticket.id }).content[0].text;
   assert.match(said, /^Posted itm_/);
   assert.match(said, /Sign off press/);
   assert.doesNotMatch(said, /close it with deck_resolve/);

@@ -38,7 +38,7 @@ const evidence = (gate) => withTicket(EVIDENCE[gate], MINE, gate === '1' ? 'red'
 function deckIn(t, ...gates) {
   tempDeck(t);
   for (const gate of gates) {
-    const { id } = postItem({ kind: `gate${gate}`, title: `Gate ${gate}`, body: 'b', repo: MINE, ...evidence(gate) });
+    const { id } = postItem({ kind: `gate${gate}`, title: `Gate ${gate}`, body: 'b\nBase: pilot', repo: MINE, ...evidence(gate) });
     // Only a Sign off reply turns a gate1's ticket yellow (ticket-states L11).
     addReply(id, 'Sign off');
     resolveItem(id, 'Sign off');
@@ -54,7 +54,7 @@ test('a question in planning or concluding is not away', (t) => {
   assert.equal(stored(planning.id).away, undefined, 'planning');
   resolveItem(planning.id, 'Yes');
   for (const gate of ['1', '2']) {
-    const { id } = postItem({ kind: `gate${gate}`, title: `Gate ${gate}`, body: 'b', repo: MINE, ...evidence(gate) });
+    const { id } = postItem({ kind: `gate${gate}`, title: `Gate ${gate}`, body: 'b\nBase: pilot', repo: MINE, ...evidence(gate) });
     addReply(id, 'Sign off'); // a gate closes only on its press (merge-first L12)
     resolveItem(id, 'Sign off');
   }

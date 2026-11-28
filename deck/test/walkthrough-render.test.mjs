@@ -54,7 +54,7 @@ test('a closing report and a gate keep the body first', (t) => {
   assert.ok(report.includes('<ol class="steps">'));
   assert.ok(report.indexOf('<table') < report.indexOf('<ol class="steps">'));
   const gate = threadOf(postItem({
-    kind: KIND_GATE1, title: 'A gate1', body: TABLE, repo: REPO,
+    kind: KIND_GATE1, title: 'A gate1', body: `${TABLE}\nBase: pilot`, repo: REPO,
     ...withTicket({ artefact: 'a.md', sha: 'abc1234', locked: 1, slices: '| S | D |\n| --- | --- |\n| S1 | x |' }, REPO, 'red'),
   }));
   assert.ok(gate.indexOf('<table') < gate.indexOf('<dl class="detail">'));

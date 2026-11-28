@@ -159,10 +159,10 @@ records its verdicts with `deck_ticket verdicts` and sends you the same text, on
 3. Create `feat/<slug>` from the design tip in its worktree `<repo>-feat-<slug>`, and push it:
    `pilot worktrees add --run <slug> -b feat/<slug> <repo>-feat-<slug> design/<slug>`. Open no PR: the deck opens the draft feature PR when the gate1 lands.
 4. `deck_status` with `ticket`, `slices` (every row `planned`) and `feature` only.
-5. Post the gate1 with the fields and body the pilot's step 3 names, on `surface: true`
-   a `Fonts:`, a `Colour means:` and a `Reference:` line (one per region). A refused post
-   stores nothing: fix the cause it names and post again, at most 3 times, then send
-   the last refusal to `main`. A stored gate1 is the only one: post no second.
+5. Post the gate1 with the fields and body the pilot's step 3 names, a `Base: <base>` line,
+   and on `surface: true` a `Fonts:`, a `Colour means:` and a `Reference:` line (one per
+   region). A refused post stores nothing: fix what it names and repost, at most 3 times,
+   then send `main` the last refusal. Once one is stored, post none.
 
 Hand back to `main` with the gate1's id, and stop. The press, `Not yet`, `finished` and the ticket's states are the pilot's; never
 resolve the gate1.

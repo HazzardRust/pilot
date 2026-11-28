@@ -82,6 +82,6 @@ test("the deck accepts a gate1 cut from main when the ticket's record names base
   const evidence = withTicket({ artefact: ARTEFACT, sha, locked: 3, slices: '| S1 |' }, work);
   resolveItem(postItem({ kind: 'question', title: 'Merge?', body: 'None.', repo: work, ticket: evidence.ticket, author: 'pilot:pilot-architect' }).id, 'merged nothing', 'pilot:pilot-architect');
   setSlices(registerRun({ repo: work, pid: process.pid }).id, [{ slice: 'S1', state: 'planned' }], undefined, { slug: 'x', ticket: evidence.ticket, base: 'main' });
-  callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: work, ...evidence, branch: 'design/x' }, { prWrite: () => {}, lineageTimeout: GIT_SLOW_MS });
+  callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: main', repo: work, ...evidence, branch: 'design/x' }, { prWrite: () => {}, lineageTimeout: GIT_SLOW_MS });
   assert.equal(listItems().filter((item) => item.kind === KIND_GATE1).length, 1);
 });

@@ -21,7 +21,7 @@ const ARCHITECT = 'pilot:pilot-architect';
 const GATE1 = { artefact: 'docs/design/x/architecture.md', sha: '31efcb0', locked: 3, slices: '| S1 | x | 1 |', sliceCount: 1, surface: false, branch: 'feat/x' };
 
 const ticket = (title, repo = ALPHA) => postItem({ kind: 'ticket', title, body: shapedTicketBody(title), repo, sliceCount: 30 });
-const gate1 = (ticketId, repo = ALPHA) => postItem({ kind: 'gate1', title: 'Gate 1', body: 'The artefact.', repo, ticket: ticketId, ...GATE1 });
+const gate1 = (ticketId, repo = ALPHA) => postItem({ kind: 'gate1', title: 'Gate 1', body: 'The artefact.\nBase: pilot', repo, ticket: ticketId, ...GATE1 });
 // `author` undefined is the pilot: the inbox and Stop hooks call unstamped (A8).
 const mergeThread = (ticketId, author) =>
   postItem({ kind: 'question', title: 'Merge into the live ticket?', body: 'itm_a shares its surface', repo: ALPHA, ticket: ticketId, author });

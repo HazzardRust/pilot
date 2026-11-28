@@ -103,7 +103,7 @@ test('a gate1 signed later is the yellow tail', (t) => {
   const other = stored('already yellow', 'yellow');
   takeLive(older.id);
   const evidence = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', surface: false };
-  const gate1 = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, ...evidence, ticket: older.id });
+  const gate1 = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo: REPO, ...evidence, ticket: older.id });
 
   addReply(gate1.id, SIGN_OFF);
   resolveItem(gate1.id, 'Signed off.');

@@ -64,7 +64,7 @@ const breakOrigin = ({ origin }) => fs.renameSync(origin, `${origin}.moved`);
 function signed(repo, plan) {
   const ticket = postItem({ kind: KIND_TICKET, sliceCount: 60, title: 'drifting', body: shapedTicketBody('drifting'), repo });
   takeLive(ticket.id);
-  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo, ...plan, locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
+  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo, ...plan, locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
   addReply(gate.id, SIGN_OFF);
   resolveItem(gate.id, 'Signed off.');
   return listItems().find((item) => item.id === ticket.id);

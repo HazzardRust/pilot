@@ -21,7 +21,7 @@ const GATE1 = { artefact: 'docs/design/x/architecture.md', sha: '0305827', locke
 const GATE2 = { pr: '#250', sha: '0305827' };
 
 const post = (kind, fields) =>
-  postItem({ kind, title: `A ${kind}`, body: 'The evidence.', repo: REPO, ...withTicket(fields, REPO, kind === KIND_GATE1 ? 'red' : 'yellow') });
+  postItem({ kind, title: `A ${kind}`, body: 'The evidence.\nBase: pilot', repo: REPO, ...withTicket(fields, REPO, kind === KIND_GATE1 ? 'red' : 'yellow') });
 const pageOf = (id) => renderThreadPage(listItems().find((item) => item.id === id), listItems(), []);
 const labelOf = (page) => page.match(/<label for="reply-text">([^<]*)<\/label>/)?.[1];
 

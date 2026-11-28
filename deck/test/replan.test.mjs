@@ -59,7 +59,7 @@ function repo(t) {
 function signed(dir, sha, artefact = ARTEFACT) {
   const ticket = postItem({ kind: KIND_TICKET, sliceCount: 60, title: 'stale plan', body: shapedTicketBody('stale plan'), repo: dir });
   takeLive(ticket.id);
-  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: dir, artefact, sha, branch: 'feat/x', locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
+  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo: dir, artefact, sha, branch: 'feat/x', locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
   addReply(gate.id, SIGN_OFF);
   resolveItem(gate.id, 'Signed off.');
   return reread(ticket.id);
@@ -218,7 +218,7 @@ test('a re-cut written while the replan reads git refuses the replan', async (t)
   const ticket = recut(work, first);
   const pending = replan(ticket.id, same);
   takeLive(ticket.id);
-  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: `Re-cut.\n\nChanged since ${first.slice(0, 7)}: S1 owns deck/wait.mjs.`, repo: work, artefact: ARTEFACT, sha: changed, branch: 'feat/x', locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
+  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: `Re-cut.\n\nChanged since ${first.slice(0, 7)}: S1 owns deck/wait.mjs.\nBase: pilot`, repo: work, artefact: ARTEFACT, sha: changed, branch: 'feat/x', locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
   addReply(gate.id, SIGN_OFF);
   resolveItem(gate.id, 'Signed off.');
   recutTicket(ticket.id, 're-cut check due: deck/wait.mjs');
@@ -237,7 +237,7 @@ test('a re-cut gate1 without the line is refused, with it accepted', (t) => {
   assert.throws(() => gate1('The design, re-cut.'), refusedNaming(`a re-cut's gate1 lists what changed since ${first.slice(0, 7)}`));
   assert.equal(gate1sOn(ticket.id).filter((item) => item.resolution === undefined).length, 0, 'nothing stored');
 
-  const posted = gate1(`The design, re-cut.\n\nChanged since ${first.slice(0, 7)}: S1 owns deck/wait.mjs too.`);
+  const posted = gate1(`The design, re-cut.\n\nChanged since ${first.slice(0, 7)}: S1 owns deck/wait.mjs too.\nBase: pilot`);
   assert.equal(posted.ticket, ticket.id);
 });
 

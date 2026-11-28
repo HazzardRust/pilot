@@ -22,7 +22,7 @@ const reread = (id) => listItems().find((item) => item.id === id);
 
 function aGate1() {
   const ticket = takeLive(postItem({ kind: KIND_TICKET, sliceCount: 60, title: 'Apple', body: shapedTicketBody(), repo: REPO }).id);
-  return { ticket, gate: postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, ...GATE1, ticket: ticket.id }) };
+  return { ticket, gate: postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo: REPO, ...GATE1, ticket: ticket.id }) };
 }
 
 function aGate2() {

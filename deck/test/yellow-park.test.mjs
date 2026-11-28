@@ -37,7 +37,7 @@ test('a stored yellow ticket live with no holder does not stop a main take of a 
 test('a gate1 Sign off leaves its now-yellow ticket not live', (t) => {
   tempDeck(t);
   const ticket = takeLive(postItem({ kind: KIND_TICKET, sliceCount: 3, title: 'Apple', body: shapedTicketBody(), repo: REPO }).id);
-  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, ...GATE1, ticket: ticket.id });
+  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo: REPO, ...GATE1, ticket: ticket.id });
   addReply(gate.id, SIGN_OFF);
   resolveItem(gate.id, 'Signed off.');
 

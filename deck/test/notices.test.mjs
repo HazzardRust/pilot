@@ -26,7 +26,7 @@ const reread = (id) => listItems().find((item) => item.id === id);
 const aQuestion = (title = 'Which?') => postItem({ kind: KIND_QUESTION, title, body: 'which?', repo: REPO, options: ['A', 'B'], recommended: 'A' });
 const aGate1 = () => {
   const ticket = takeLive(postItem({ kind: KIND_TICKET, sliceCount: 60, title: 'Apple', body: shapedTicketBody(), repo: REPO }).id);
-  return postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', surface: false, ticket: ticket.id });
+  return postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo: REPO, artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', surface: false, ticket: ticket.id });
 };
 
 /** A form post as the browser makes it, over `node:http` so the headers are the test's own. */

@@ -30,7 +30,7 @@ const GATE2 = { pr: 'https://github.com/HazzardRust/pilot/pull/250', sha: '03058
 const post = (kind, fields) => {
   const evidence = withTicket(fields, REPO, kind === KIND_GATE1 ? 'red' : 'yellow');
   const walk = evidence.walkthrough && postItem({ kind: KIND_WALKTHROUGH, title: 'Try it', body: 'Step one.', repo: REPO, ticket: evidence.ticket });
-  return postItem({ kind, title: `A ${kind}`, body: 'The evidence.', repo: REPO, ...evidence, ...(walk ? { walkthrough: walk.id } : {}) });
+  return postItem({ kind, title: `A ${kind}`, body: 'The evidence.\nBase: pilot', repo: REPO, ...evidence, ...(walk ? { walkthrough: walk.id } : {}) });
 };
 const detailOf = (page) => page.match(/<dl class="detail">.*?<\/dl>/s)?.[0] ?? '';
 const labelsIn = (detail) => [...detail.matchAll(/<dt>([^<]*)<\/dt>/g)].map((match) => match[1]);

@@ -22,7 +22,7 @@ const reread = (id) => listItems().find((item) => item.id === id);
 const refusedNaming = (...words) => (error) => error instanceof DeckRefusal && words.every((word) => error.message.includes(word));
 
 const aTicket = (title) => postItem({ kind: KIND_TICKET, sliceCount: 60, title, body: shapedTicketBody(title), repo: REPO });
-const aGate1 = (ticket, sha, body = 'The design.') => postItem({ kind: KIND_GATE1, title: 'Gate 1', body, repo: REPO, ...EVIDENCE, sha, ticket });
+const aGate1 = (ticket, sha, body = 'The design.') => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: `${body}\nBase: pilot`, repo: REPO, ...EVIDENCE, sha, ticket });
 
 /** A ticket signed through its own gate1, as the user signs one: yellow, its plan at `sha`. */
 function aSigned(title, sha = '0305827') {

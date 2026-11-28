@@ -25,7 +25,7 @@ const aTicket = (title, sliceCount = 5) =>
 function signedPlan(title, sliceCount) {
   const ticket = takeLive(aTicket(title).id);
   const gate = postItem({
-    kind: KIND_GATE1, title: 'Gate 1', body: 'The artefact.', repo: REPO, artefact: 'docs/design/small/architecture.md',
+    kind: KIND_GATE1, title: 'Gate 1', body: 'The artefact.\nBase: pilot', repo: REPO, artefact: 'docs/design/small/architecture.md',
     sha: '31efcb0', locked: 1, slices: '| S1 |', sliceCount, branch: 'feat/small', ticket: ticket.id, surface: false,
   });
   addReply(gate.id, SIGN_OFF);

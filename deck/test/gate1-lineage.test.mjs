@@ -61,7 +61,7 @@ function postGate1(repo, branch, { lineageTimeout = GIT_SLOW_MS } = {}) {
   }
   const evidence = withTicket({ ...GATE1, sha }, repo);
   resolveItem(postItem({ kind: 'question', title: 'Merge?', body: 'None.', repo, ticket: evidence.ticket, author: 'pilot:pilot-architect' }).id, 'merged nothing', 'pilot:pilot-architect');
-  return callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo, ...evidence, branch }, { lineageTimeout });
+  return callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo, ...evidence, branch }, { lineageTimeout });
 }
 
 const gate1s = () => listItems().filter((item) => item.kind === KIND_GATE1);

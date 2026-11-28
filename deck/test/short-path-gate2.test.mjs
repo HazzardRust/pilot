@@ -23,7 +23,7 @@ const redTicket = () => takeLive(postItem({ kind: KIND_TICKET, title: 'Small', b
 
 const gate1 = (ticket, sliceCount, extra = {}) =>
   postItem({
-    kind: KIND_GATE1, title: 'Gate 1', body: 'The artefact.\nFonts: Inter\nColour means: red is blocked\nReference: VS Code', repo: REPO, artefact: 'docs/design/small/architecture.md',
+    kind: KIND_GATE1, title: 'Gate 1', body: 'The artefact.\nFonts: Inter\nColour means: red is blocked\nReference: VS Code\nBase: pilot', repo: REPO, artefact: 'docs/design/small/architecture.md',
     sha: '31efcb0', locked: 1, slices: '| S1 |', sliceCount, branch: 'feat/small', ticket: ticket.id, ...extra,
   });
 

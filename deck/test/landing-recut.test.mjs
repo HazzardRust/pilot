@@ -81,7 +81,7 @@ function aLandedGate2(repo) {
 function signed(repo, plan) {
   const ticket = postItem({ kind: KIND_TICKET, sliceCount: 60, title: 'queued plan', body: shapedTicketBody('queued plan'), repo });
   takeLive(ticket.id);
-  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo, ...plan, locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
+  const gate = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo, ...plan, locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
   addReply(gate.id, SIGN_OFF);
   resolveItem(gate.id, 'Signed off.');
   return reread(ticket.id);
@@ -162,7 +162,7 @@ test('after a re-cut and a gate1 re-sign the same drift is a new one, and is not
   await driftAfterLanding(first.id);
   await callTool('deck_ticket', { id: ticket.id, action: 'recut' });
   takeLive(ticket.id);
-  const gate1 = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: `Changed since ${plan.sha.slice(0, 7)}: pilot merged`, repo: work, ...plan, sha: merged, locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
+  const gate1 = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: `Changed since ${plan.sha.slice(0, 7)}: pilot merged\nBase: pilot`, repo: work, ...plan, sha: merged, locked: 3, slices: '| S1 |', sliceCount: 1, surface: false, ticket: ticket.id });
   addReply(gate1.id, SIGN_OFF);
   resolveItem(gate1.id, 'Signed off.');
   assert.equal(reread(ticket.id).state, 'yellow');

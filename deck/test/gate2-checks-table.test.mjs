@@ -32,7 +32,7 @@ const refused = (message) => (error) => error instanceof DeckRefusal && error.me
 function signedPlan(surface) {
   const ticket = takeLive(postItem({ kind: KIND_TICKET, title: 'Wide', body: shapedTicketBody('wide'), repo: REPO, sliceCount: 3 }).id);
   const gate = postItem({
-    kind: KIND_GATE1, title: 'Gate 1', body: 'The artefact.\nFonts: Inter\nColour means: red is blocked\nReference: VS Code', repo: REPO, artefact: 'docs/design/x/architecture.md',
+    kind: KIND_GATE1, title: 'Gate 1', body: 'The artefact.\nFonts: Inter\nColour means: red is blocked\nReference: VS Code\nBase: pilot', repo: REPO, artefact: 'docs/design/x/architecture.md',
     sha: '31efcb0', locked: 1, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', ticket: ticket.id, surface,
   });
   addReply(gate.id, SIGN_OFF);

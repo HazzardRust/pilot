@@ -42,7 +42,7 @@ function gate1Evidence(repo) {
 }
 
 const postGate1 = (repo, evidence, deps) =>
-  callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo, ...evidence, author: ARCHITECT }, deps);
+  callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo, ...evidence, author: ARCHITECT }, deps);
 
 /** A child process as `spawn` answers one, driven by the test; every call is kept (as `landing.test.mjs`'s). */
 function aSpawn() {

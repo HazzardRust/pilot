@@ -53,7 +53,7 @@ test('a gate1 from QA is refused', async (t) => {
   const { callTool } = await import('../server.mjs');
   // No evidence and no ticket: the poster is refused first, before any field or the store is read.
   assert.throws(
-    () => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, author: 'pilot:pilot-qa' }),
+    () => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo: REPO, author: 'pilot:pilot-qa' }),
     refusedNaming('a gate1 is posted by pilot and architect, not pilot:pilot-qa'),
   );
   // Through the tool, before the gate's lineage is read: a QA call makes the deck run no git.
@@ -61,7 +61,7 @@ test('a gate1 from QA is refused', async (t) => {
   t.after(() => fs.rmSync(repo, { recursive: true, force: true }));
   execFileSync('git', ['init', '-q', repo]);
   assert.throws(
-    () => callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo, ...GATE1, author: 'pilot:pilot-qa' }),
+    () => callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo, ...GATE1, author: 'pilot:pilot-qa' }),
     refusedNaming('a gate1 is posted by pilot and architect, not pilot:pilot-qa'),
   );
 });
@@ -69,12 +69,12 @@ test('a gate1 from QA is refused', async (t) => {
 test("an unstamped gate1 is the pilot's", (t) => {
   tempDeck(t);
   const ticket = aRedTicket();
-  const gate1 = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, ...GATE1, ticket: ticket.id });
+  const gate1 = postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo: REPO, ...GATE1, ticket: ticket.id });
   assert.equal(reread(gate1.id).kind, KIND_GATE1);
   // The main session's stamp is the empty agent_type, which is the pilot's too: it passes the
   // posters and is refused only by the gate's own shape further on.
   assert.throws(
-    () => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, author: '' }),
+    () => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo: REPO, author: '' }),
     (error) => error instanceof DeckRefusal && !error.message.includes('is posted by'),
   );
 });

@@ -75,7 +75,7 @@ function postGate1(repo, sha, body, verdicts) {
   const evidence = withTicket({ artefact: ARTEFACT, sha, locked: 1, slices: '| S1 |' }, repo);
   resolveItem(postItem({ kind: 'question', title: 'Merge?', body: 'None.', repo, ticket: evidence.ticket, author: 'pilot:pilot-architect' }).id, 'merged nothing', 'pilot:pilot-architect');
   if (verdicts !== undefined) recordVerdicts(evidence.ticket, verdicts);
-  return callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body, repo, ...evidence, branch: 'design/x' }, { lineageTimeout: GIT_SLOW_MS });
+  return callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: `${body}\nBase: pilot`, repo, ...evidence, branch: 'design/x' }, { lineageTimeout: GIT_SLOW_MS });
 }
 
 const gate1s = () => listItems().filter((item) => item.kind === KIND_GATE1);
@@ -118,7 +118,7 @@ test("an architect's gate1 that differs from the record is refused through deck_
   const evidence = withTicket({ artefact: ARTEFACT, sha, locked: 1, slices: '| S1 |' }, work);
   resolveItem(postItem({ kind: 'question', title: 'Merge?', body: 'None.', repo: work, ticket: evidence.ticket, author: 'pilot:pilot-architect' }).id, 'merged nothing', 'pilot:pilot-architect');
   recordVerdicts(evidence.ticket, 'A1 Verdict: stands');
-  const post = (extra) => () => callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'A1 overturned.', repo: work, ...evidence, branch: 'design/x', author: 'pilot:pilot-architect', ...extra }, { lineageTimeout: GIT_SLOW_MS });
+  const post = (extra) => () => callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'A1 overturned.\nBase: pilot', repo: work, ...evidence, branch: 'design/x', author: 'pilot:pilot-architect', ...extra }, { lineageTimeout: GIT_SLOW_MS });
   assert.throws(post({}), refused('verdict record', 'A1'));
   // A padded sha, which the store trims and accepts, is checked as the store keeps it.
   assert.throws(post({ sha: `${sha} \n` }), refused('verdict record', 'A1'));

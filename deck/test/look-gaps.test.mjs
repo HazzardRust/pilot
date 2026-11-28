@@ -51,5 +51,5 @@ test('the post path refuses', (t) => {
   assert.throws(() => gate1('The artefact.'), (error) => error instanceof DeckRefusal && /Fonts:/.test(error.message)
     && /Colour means:/.test(error.message) && /Reference:/.test(error.message), 'every gap in one refusal');
   assert.equal(listItems().filter((item) => item.kind === KIND_GATE1).length, 0, 'nothing stored');
-  assert.equal(gate1(`The artefact.\n${LOOK}`).kind, KIND_GATE1);
+  assert.equal(gate1(`The artefact.\n${LOOK}\nBase: pilot`).kind, KIND_GATE1);
 });

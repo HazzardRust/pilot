@@ -1069,7 +1069,7 @@ async function seedGate1(deck, repo) {
     const ticket = store.postItem({ kind: 'ticket', title: 'The ticket', body: shapedTicketBody(), repo: repo, sliceCount: 60 });
     takeLive(ticket.id);
     return store.postItem({
-      kind: 'gate1', title: 'Gate 1', body: 'The design.', repo: repo, ticket: ticket.id,
+      kind: 'gate1', title: 'Gate 1', body: 'The design.\nBase: pilot', repo: repo, ticket: ticket.id,
       artefact: 'docs/design/x/architecture.md', sha: '0305827', locked: 3, slices: '| S1 |', sliceCount: 3, branch: 'feat/x', surface: false,
     });
   } finally {

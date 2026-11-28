@@ -34,7 +34,7 @@ const EVIDENCE = { gate1: { artefact: 'docs/design/x/architecture.md', sha: '030
 const anItem = (kind) => ({
   kind,
   title: `A ${kind}`,
-  body: kind === 'ticket' ? shapedTicketBody() : 'The body.',
+  body: kind === 'ticket' ? shapedTicketBody() : 'The body.\nBase: pilot',
   ...(kind === 'ticket' ? { sliceCount: 60 } : {}),
   // A gate1 names a red ticket and a gate2 a yellow one (ticket-states spec 2), put here first.
   ...(kind === 'gate1' ? withTicket(EVIDENCE.gate1) : kind === 'gate2' ? withTicket(EVIDENCE.gate2, undefined, 'yellow') : EVIDENCE[kind]),

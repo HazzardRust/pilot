@@ -58,7 +58,7 @@ test('a proposal holds no gate1, signoff or gate2', (t) => {
   const proposal = reread(id);
 
   takeLive(red.id);
-  assert.equal(postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The artefact.', repo: REPO, ticket: red.id, ...GATE1 }).kind, KIND_GATE1);
+  assert.equal(postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The artefact.\nBase: pilot', repo: REPO, ticket: red.id, ...GATE1 }).kind, KIND_GATE1);
   assert.equal(postItem({ kind: KIND_SIGNOFF, title: 'Ship it?', body: 'Ready?', repo: REPO }).kind, KIND_SIGNOFF);
   takeLive(yellow.id);
   assert.equal(postItem({ kind: KIND_GATE2, title: 'Gate 2', body: 'Walk it.', repo: REPO, pr: '#250', sha: '0305827', ticket: yellow.id }).kind, KIND_GATE2);

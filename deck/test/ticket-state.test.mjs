@@ -28,7 +28,7 @@ const merged = (ticket) =>
 
 const aTicket = (words = 'fix the thing') =>
   postItem({ kind: KIND_TICKET, sliceCount: 60, title: words, body: shapedTicketBody(words), repo: REPO });
-const aGate1 = (ticket) => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.', repo: REPO, ...EVIDENCE, ticket });
+const aGate1 = (ticket) => postItem({ kind: KIND_GATE1, title: 'Gate 1', body: 'The design.\nBase: pilot', repo: REPO, ...EVIDENCE, ticket });
 const CHECKS = 'Walk it.\n\n| spec | result | evidence |\n| --- | --- | --- |\n| 1 | pass | ok |';
 const aGate2 = (ticket) => postItem({ kind: KIND_GATE2, title: 'Gate 2', body: CHECKS, repo: REPO, pr: '#250', sha: '0305827', ticket });
 const aReport = (ticket) => postItem({ kind: KIND_REPORT, title: 'Closing report', body: 'Done.', repo: REPO, ticket });

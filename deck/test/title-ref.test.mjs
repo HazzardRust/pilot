@@ -42,7 +42,7 @@ test("a card's ticket line wraps the ticket title", (t) => {
 test("the thread header's ticket line and a gate's Ticket row wrap it too", (t) => {
   tempDeck(t);
   const gate = postItem({
-    kind: KIND_GATE1, title: 'A gate1', body: 'The evidence.', repo: REPO,
+    kind: KIND_GATE1, title: 'A gate1', body: 'The evidence.\nBase: pilot', repo: REPO,
     ...withTicket({ artefact: 'docs/a.md', sha: '31efcb0', locked: 1, slices: '| S |\n| --- |\n| S1 |' }, REPO),
   });
   const question = ask(gate.ticket);

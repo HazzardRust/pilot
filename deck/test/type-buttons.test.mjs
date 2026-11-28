@@ -12,7 +12,7 @@ import { tempDeck, withTicket } from '../testUtils.mjs';
 
 const REPO = 'D:/work/alpha';
 
-const post = (kind, over = {}) => postItem({ kind, title: `A ${kind}`, body: 'The body.', repo: REPO, ...over });
+const post = (kind, over = {}) => postItem({ kind, title: `A ${kind}`, body: 'The body.\nBase: pilot', repo: REPO, ...over });
 const pageOf = (item) => renderThreadPage(item, [item], []);
 const cardOf = (item) => renderHomePage(listItems().filter((candidate) => candidate.id === item.id));
 const buttonsIn = (html) => [...html.matchAll(/name="choice" value="([^"]*)"(?![^>]*>Confirm<)/g)].map((match) => match[1]);

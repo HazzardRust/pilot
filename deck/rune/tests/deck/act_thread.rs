@@ -23,7 +23,7 @@ fn gate1(deck: &support::Scratch, repo: &str) -> String {
     id_in(&tool(
         deck,
         "deck_post",
-        json!({ "kind": "gate1", "title": "Gate 1", "body": "the plan", "repo": repo, "author": "",
+        json!({ "kind": "gate1", "title": "Gate 1", "body": "the plan\nBase: pilot", "repo": repo, "author": "",
                 "artefact": "docs/design/x/architecture.md", "sha": "0305827", "locked": 1, "slices": "| S1 |",
                 "sliceCount": 1, "surface": false, "branch": "feat/x", "ticket": ticket }),
     ))
