@@ -23,6 +23,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { isPilotName } from '../scripts/pilot-branch.mjs';
 import { testRunsFor } from '../scripts/test-ledger.mjs';
 import { MAX_HUMAN_STEPS, MAX_HUMAN_STEP_CHARS, isOneLine } from './items-bounds.mjs';
 import { MAX_STATE_CHARS } from './status.mjs';
@@ -253,11 +254,18 @@ export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const isSlug = (word) => typeof word === 'string' && word.length <= MAX_SLUG_CHARS && SLUG.test(word);
 
 /**
- * A run's base (pilot-develop-line L6; audit-f14 A7): `pilot`, the concluding feature's `feat/<slug>` it is chained
- * on, or the default branch's own name. It reaches git as an argument, so it never starts with `-`, holds no `..` or
+ * A run's base as read (pilot-develop-line L6; audit-f14 A7): `pilot`, the concluding feature's `feat/<slug>` it is
+ * chained on, or the default branch's own name a record written before landed-pr-closed may hold. It reaches git as an argument, so it never starts with `-`, holds no `..` or
  * `//`, is never `HEAD`, and ends in no `/`, `.` or `.lock`; a `feat/` segment is only ever the slug form.
  */
 export const RUN_BASE = new RegExp(`^(?:feat/${SLUG.source.slice(1, -1)}|(?!HEAD$)(?!(?:.*/)?feat/)(?!.*(?:\\.\\.|//|\\.lock$|[./]$))[A-Za-z0-9_][A-Za-z0-9._/-]*)$`);
+
+/**
+ * A base a record may newly take (landed-pr-closed spec 3; L4): the pilot branch, `<login>-pilot` or the legacy
+ * `pilot`, or a chained `feat/<slug>`. Checked at the write only, so a record already holding another `RUN_BASE`
+ * such as `main` reads as written (L3).
+ */
+export const isWriteBase = (base) => RUN_BASE.test(base) && (isPilotName(base) || base.startsWith('feat/'));
 
 const TICKET_ID = /^itm_[0-9a-f]+$/;
 
@@ -425,7 +433,7 @@ export function recordFields({ slug, ticket, branch, base, worktree, qa, artefac
   // The ref `pilot integrate` merges at every slice, so never anything git could read as an option.
   if (base !== undefined) {
     fields.base = recordCell('base', base);
-    if (!RUN_BASE.test(fields.base)) throw new RunRefusal(`base must be pilot, feat/<slug> or a branch name, not ${JSON.stringify(fields.base)}`);
+    if (!isWriteBase(fields.base)) throw new RunRefusal(`base must be your pilot branch, pilot or feat/<slug>, not ${JSON.stringify(fields.base)}`);
   }
   if (worktree !== undefined) {
     // Where the daemon writes run.json (independence spec 22.2), so never a relative path.

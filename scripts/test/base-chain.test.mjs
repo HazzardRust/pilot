@@ -91,17 +91,17 @@ test('base prints the chained line', async (t) => {
 test('a concluding branch origin lacks falls back', async (t) => {
   const { work } = scratchRepos(t);
   const gone = await printed(work, async () => ({ ticket: 'itm_1', slug: 'gone', branch: 'feat/gone' }));
-  // origin/main is read once, after the first base, and never moves: no base here pushes or fetches a new main.
-  const main = git(work, 'rev-parse', '--short', 'origin/main');
-  // Unchained, a run on origin with a host is cut from the default branch (audit-f14 L9).
-  assert.equal(gone.out, `base main ${main} (feat/gone not on origin)\n`);
+  // origin/pilot is read once, after the first base, and never moves: no base here pushes a new pilot.
+  const pilot = git(work, 'rev-parse', '--short', 'origin/pilot');
+  // Unchained, every run is cut from the pilot branch (landed-pr-closed A1).
+  assert.equal(gone.out, `base pilot ${pilot} (feat/gone not on origin)\n`);
   for (const feature of [{ ticket: 'itm_1', branch: '--upload-pack=x' }, { ticket: 'itm_1) (x', branch: 'feat/n' }, { ticket: 'itm_1', branch: 'main' }]) {
     const { code, out } = await printed(work, async () => ({ slug: 'gone', ...feature }));
     assert.equal(code, 0);
-    assert.equal(out, `base main ${main}\n`, feature.ticket);
+    assert.equal(out, `base pilot ${pilot}\n`, feature.ticket);
   }
   const none = await printed(work, async () => null);
-  assert.equal(none.out, `base main ${main}\n`);
+  assert.equal(none.out, `base pilot ${pilot}\n`);
 });
 
 test('an unreachable deck falls back and says so', async (t) => {
@@ -110,5 +110,5 @@ test('an unreachable deck falls back and says so', async (t) => {
     throw new Error('connect ECONNREFUSED');
   });
   assert.equal(code, 0);
-  assert.equal(out, `base main ${git(work, 'rev-parse', '--short', 'origin/main')} (deck not reached)\n`);
+  assert.equal(out, `base pilot ${git(work, 'rev-parse', '--short', 'origin/pilot')} (deck not reached)\n`);
 });

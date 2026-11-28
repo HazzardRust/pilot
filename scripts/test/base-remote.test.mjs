@@ -80,11 +80,11 @@ test('base seeds pilot from the default tip when origin has no pilot', (t) => {
   assert.equal(git(origin, 'for-each-ref', 'refs/heads/pilot'), '', 'origin gets no pilot');
 });
 
-test('base with the setting unset prints the default branch', async (t) => {
+test('base with the setting unset prints the pilot branch on origin', async (t) => {
   const { work } = scratchRepos(t);
   const { code, out } = await printed(work);
   assert.equal(code, 0);
-  assert.equal(out, `base main ${git(work, 'rev-parse', '--short', 'origin/main')}\n`);
+  assert.equal(out, `base pilot ${git(work, 'rev-parse', '--short', 'origin/pilot')}\n`);
 });
 
 test('base says where pilot is when the run remote is not origin', async (t) => {
