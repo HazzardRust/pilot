@@ -35,13 +35,15 @@ import { ensureDaemon, isDeckUp } from '../deck/client.mjs';
 import { fromLeash, startScratch, stopScratch } from '../deck/scratch.mjs';
 import { fromRoot } from '../deck/spawn-root.mjs';
 import { openFile, rotateSecret } from '../deck/launch.mjs';
-import { openDeck, PACKAGE_ROOT, runCopy, runeBinary } from '../deck/open.mjs';
+import { openDeck, PACKAGE_ROOT, runCopy } from '../deck/open.mjs';
+import { defaultGet, defaultRun, ensureRune } from '../deck/rune-bin.mjs';
 import { main as serveDeck } from '../deck/daemon.mjs';
 import { storeDir } from '../deck/store.mjs';
 import { readUsageSwitch, setUsageSwitch } from '../deck/usage-switch.mjs';
 import { main as handoff } from '../scripts/handoff.mjs';
 import { main as deckStatus } from '../deck/status-command.mjs';
 import { main as integrate } from '../scripts/integrate.mjs';
+import { main as testCli } from '../scripts/test-cli.mjs';
 import { main as featurePr } from '../scripts/feature-pr.mjs';
 import { main as land } from '../scripts/land.mjs';
 import { main as landing } from '../deck/landing-wait.mjs';
@@ -105,25 +107,28 @@ const usage = () => `pilot — the deck for piloted runs
                  in the feat/<slug> worktree, before the gate2: push the feature and try its
                  tip on pilot, merging nothing into it; prints on pilot: clean at <sha7>, the
                  sha the gate2 names, or exit 3 a conflict prepared for the lander
+  pilot test [--as <role>] [--scope slice] [--since <ref>]
+                 run the repository's tests (the selection since <ref>) and record the run in
+                 the test ledger; a green run of the same tree is reused: tests reused: <where> <sha7>
   pilot pr --ticket <itm_id>
                  the deck's write of a run's feature PR: open the draft feat/<slug> PR on the
                  record's base, or rewrite its body (spec and slice table) and base when they
                  differ; prints one line, nothing written when GitHub already matches
   pilot base     print the ref the next run is cut from and its tip: the default branch, or
-                 the feat/<N> it chains on; pilot under pilot.host none or another run remote,
-                 pilot itself created from the default branch's tip when origin has none
+                 the feat/<N> it chains on; your pilot branch (<login>-pilot) under pilot.host none
+                 or another run remote, created from the default branch's tip when origin has none
   pilot gh-stub [--dir <d>] [--powershell]
                  print the lines that put a stub gh first on PATH, answering reply.txt and logging calls.jsonl
   pilot sync
                  at a ticket's take or by hand, never inside a landing: merge origin's default
-                 branch into the pilot branch in a temporary worktree, test the selection, push
-                 pilot; prints pilot already has main@<sha7> and pushes nothing when the merge
+                 branch into your pilot branch in a temporary worktree, test the selection, push
+                 it; prints <pilot branch> already has main@<sha7> and pushes nothing when the merge
                  would change no file; exit 1 red or failed, 3 a conflict
   pilot land
-                 in the feat/<slug> worktree: push the feature, merge only it into pilot
-                 in a temporary worktree (no sync), run the full suite (the only full run), push pilot (merged again once if it moved),
+                 in the feat/<slug> worktree: push the feature, merge only it into your pilot branch
+                 in a temporary worktree (no sync), run the full suite (the only full run), push it (merged again once if it moved),
                  and print the feature PR last, feature PR: #<n> into <base> or why not (a run based
-                 on pilot keeps its PR from pilot to main); exit 3 a conflict
+                 on the pilot branch keeps its PR from it to main); exit 3 a conflict
   pilot restack
                  after a feature PR merges, or by hand: retarget each open feat/ PR whose lower feature merged,
                  merge a lower branch or a clashing default branch into it, push never forced; one line per PR;
@@ -141,6 +146,15 @@ const usage = () => `pilot — the deck for piloted runs
                  against the fetched base (default origin/main); prune removes only the
                  merged-clean ones and their local branches, never forced; --run, only
                  run <slug>'s
+  pilot worktrees prune --run <slug> --stage planned|abandoned [--repo <dir>]
+                 a mid-run job end, run by the deck: planned takes the design tree once
+                 feat/<slug> holds it, abandoned every tree of the run, each as remove does
+  pilot worktrees remove <path> [--repo <dir>]
+                 remove one worktree, its links unlinked first, and its local branch, or
+                 print one line kept <state> <dir>; exit 0 removed, 1 kept, 2 usage
+  pilot worktrees add --run <slug> [--repo <dir>] <git worktree add args...>
+                 git worktree add, then the tree tagged to run <slug>, so a landed
+                 prune --run finds it wherever it lives; git's exit, 2 usage
   pilot live-root [--dir <name>]
                  print the trusted live root ~/.claude/pilot/live and whether Claude Code
                  trusts it; --dir makes a plain subdirectory there for a live check
@@ -229,7 +243,10 @@ const usage = () => `pilot — the deck for piloted runs
   pilot doctor   on Windows, whether Defender's real-time scan sits in front of the projects
                  root (the repository's parent): off, on a Dev Drive in performance mode,
                  excluded, not, or cannot tell without an administrator, and the admin step
-                 if it is not; then Node against package.json's engines, the deck's
+                 if it is not; then Power: whether the deck holds its keep-awake request,
+                 the power source, the lid and power-button actions and Modern Standby,
+                 failing on battery or a lid that sleeps, with the setting to change;
+                 then Node against package.json's engines, the deck's
                  dependency installed, the store directory writable, and gh, git and claude
                  on PATH. One row each as <pass|fail|cannot tell>  <check>: <detail>, any
                  step indented below; changes nothing; exit 1 when a row fails, else 0
@@ -260,7 +277,7 @@ Any command can be given as \`pilot --dir <path> <command> …\` to run it in <p
 The deck is normally started by the first Claude session that needs it; run it by
 hand when you want to watch it. Five environment variables change how it behaves:
 
-  PILOT_BRANCH         the pilot branch base, integrate and land use (default pilot; never the default branch)
+  PILOT_BRANCH         overrides pilot.branch, the pilot branch (default <login>-pilot; never the default branch)
   PILOT_DECK_DIR       where the deck keeps its store (default ~/.claude/pilot)
   PILOT_DECK_PORT      the port it serves on (default ${DECK_PORT}; only for tests and hand checks)
   PILOT_DECK_NO_OPEN   set it to stop the deck opening a browser when a session starts
@@ -393,8 +410,12 @@ export async function run(argv, deps) {
     // The path, never the URL with its key (deck-token A2): opening the file signs the browser in.
     // A deck that has just come up writes it a moment after it answers; one older than it never does.
     for (let tries = 0; up && tries < 20 && !existsSync(openFile()); tries += 1) await new Promise((r) => setTimeout(r, 100));
-    // Where the Rune deck is built it is what opens (rune-deck-ui A2); `deps.root` is a test's package root.
-    const rune = runeBinary(deps?.root ?? PACKAGE_ROOT, hostPlatform());
+    // Where the Rune deck is built, or its pinned binary verifies, it is what opens (rune-deck-ui A2; prebuilt-rune L4);
+    // `deps.root` is a test's package root and `deps.get` its stub. Only this verb downloads (A6), and only once the deck is up.
+    const host = { platform: hostPlatform(), arch: process.arch, version: PLUGIN_VERSION, run: deps?.run ?? defaultRun };
+    const state = up ? await ensureRune(deps?.root ?? PACKAGE_ROOT, host, deps?.get ?? defaultGet) : {};
+    if (state.line) process.stderr.write(`${state.line}\n`);
+    const rune = state.file;
     const open = rune ? `open ${runCopy(rune)}` : existsSync(openFile()) ? `open ${openFile()}` : 'no open file: `pilot deck --rotate` writes one';
     console.log(up ? `The deck is up at ${deckUrl()}\n${open}` : `No deck answered at ${deckUrl()}`);
     process.exitCode = up ? 0 : 1;
@@ -408,6 +429,11 @@ export async function run(argv, deps) {
 
   if (command === 'integrate') {
     process.exitCode = integrate(argv.slice(1));
+    return undefined;
+  }
+
+  if (command === 'test') {
+    process.exitCode = testCli(argv.slice(1));
     return undefined;
   }
 

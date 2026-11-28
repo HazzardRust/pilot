@@ -34,7 +34,9 @@ const { callTool, TOOLS } = await import('../server.mjs');
 const MINE = path.join('D:', 'work', 'pilot');
 const THEIRS = path.join('D:', 'work', 'kettle');
 
-const exitedPid = () => spawnSync(process.execPath, ['-e', '0']).pid;
+/** A pid that has certainly exited, one child per file (test-body-git S16). */
+let exited;
+const exitedPid = () => (exited ??= spawnSync(process.execPath, ['-e', '0']).pid);
 
 /** A whole `deck_status` call of the shape the pilot sends at a hand-off. */
 const handoffStatus = (run) => ({

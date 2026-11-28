@@ -4,6 +4,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,22 +19,27 @@ import { pilotTip } from '../pilot-tip.mjs';
 const CLI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'pilot-tip.mjs');
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
-/** A bare origin whose `pilot` is three commits ahead of a clone's HEAD on `main`. */
-function stale(t) {
-  return gitFixture(t, 'pilot-tip:stale', (root) => {
-    const origin = path.join(root, 'origin.git');
+/**
+ * A bare origin whose `pilot` is three commits ahead of a clone's HEAD on `main`, at `tip`. Under `newer`,
+ * origin's `pilot` has moved two commits past `tip`, to `newer`, and `tip` is branch `old`; the clone has
+ * fetched `newer`. One seed and one clone each.
+ */
+function stale(t, { newer = false } = {}) {
+  return gitFixture(t, `pilot-tip:${newer ? 'newer' : 'stale'}`, (root) => {
+    const ahead = newer ? 'old' : 'pilot';
+    const { origin, sha } = seed(root, [
+      { branch: 'main', files: {}, message: 'base' },
+      ...[1, 2, 3].map((n) => ({ branch: ahead, files: {}, message: `pilot ${n}`, ...(n === 1 ? { from: 'main' } : {}) })),
+      ...(newer ? [4, 5].map((n) => ({ branch: 'pilot', files: {}, message: `pilot ${n}`, ...(n === 4 ? { from: 'old' } : {}) })) : []),
+    ]);
     const work = path.join(root, 'work');
-    git(root, 'init', '-q', '--bare', '-b', 'main', origin);
     git(root, 'clone', '-q', origin, work);
-    git(work, 'commit', '-q', '--allow-empty', '-m', 'base');
-    git(work, 'push', '-q', 'origin', 'HEAD:main');
-    for (const n of [1, 2, 3]) git(work, 'commit', '-q', '--allow-empty', '-m', `pilot ${n}`);
-    const tip = git(work, 'rev-parse', 'HEAD');
-    git(work, 'push', '-q', 'origin', 'HEAD:pilot');
-    git(work, 'reset', '-q', '--hard', 'HEAD~3');
-    return { root, origin, work, tip };
+    return { root, origin, work, tip: sha[ahead], newer: sha.pilot };
   });
 }
+
+/** `git config pilot.remote <name>` with no git spawned: git reads the last value a key has in `.git/config`. */
+const setRunRemote = (repo, name) => fs.appendFileSync(path.join(repo, '.git', 'config'), `[pilot]\n\tremote = ${name}\n`);
 
 function emptyDir(t) {
   const dir = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-tip-')));
@@ -53,17 +59,17 @@ test('the run remote and local mode name their ref', (t) => {
   git(root, 'init', '-q', '--bare', '-b', 'main', fork);
   git(work, 'remote', 'add', 'fork', fork);
   git(work, 'push', '-q', 'fork', `${tip}:refs/heads/pilot`);
-  git(work, 'config', 'pilot.remote', 'fork');
+  setRunRemote(work, 'fork');
   assert.deepEqual(pilotTip({ cwd: work }), { ref: 'fork/pilot', sha: tip, behind: 3 });
 
   git(work, 'branch', 'pilot', tip);
-  git(work, 'config', 'pilot.remote', 'none');
+  setRunRemote(work, 'none');
   assert.deepEqual(pilotTip({ cwd: work }), { ref: 'pilot', sha: tip, behind: 3 });
 });
 
 test('a bad remote, no repo and no ref answer null', (t) => {
   const { work } = stale(t);
-  git(work, 'config', 'pilot.remote', 'nowhere');
+  setRunRemote(work, 'nowhere');
   assert.equal(pilotTip({ cwd: work }), null, 'a pilot.remote that is not a remote here');
 
   const plain = emptyDir(t);
@@ -74,10 +80,8 @@ test('a bad remote, no repo and no ref answer null', (t) => {
   const bare = emptyDir(t);
   const origin = path.join(bare, 'origin.git');
   const clone = path.join(bare, 'clone');
-  git(bare, 'init', '-q', '--bare', '-b', 'main', origin);
+  seed(bare, [{ branch: 'main', files: {}, message: 'base' }], { pilot: 'main' });
   git(bare, 'clone', '-q', origin, clone);
-  git(clone, 'commit', '-q', '--allow-empty', '-m', 'base');
-  git(clone, 'push', '-q', 'origin', 'HEAD:main', 'HEAD:pilot');
   git(clone, 'update-ref', '-d', 'refs/remotes/origin/pilot');
   assert.equal(pilotTip({ cwd: clone, fetch: true }), null, 'no tracking ref');
   assert.throws(() => git(clone, 'rev-parse', '--verify', '-q', 'refs/remotes/origin/pilot'), 'fetch made no tracking ref (A2)');
@@ -89,14 +93,8 @@ test('a bad remote, no repo and no ref answer null', (t) => {
 });
 
 test("fetch reads the remote's newer tip, offline keeps the tracking ref", (t) => {
-  const { root, work, tip } = stale(t);
-  git(work, 'checkout', '-q', '--detach', tip);
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'pilot 4');
-  git(work, 'commit', '-q', '--allow-empty', '-m', 'pilot 5');
-  const newer = git(work, 'rev-parse', 'HEAD');
-  git(work, 'push', '-q', 'origin', 'HEAD:pilot');
+  const { root, work, tip, newer } = stale(t, { newer: true });
   git(work, 'update-ref', 'refs/remotes/origin/pilot', tip);
-  git(work, 'checkout', '-q', 'main');
 
   assert.equal(pilotTip({ cwd: work }).sha, tip, 'no fetch without fetch');
   git(work, 'remote', 'set-url', 'origin', path.join(root, 'missing.git'));

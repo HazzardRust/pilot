@@ -2,6 +2,13 @@
 
 Ticket `itm_d9b831208266` · slug `portable-store` · base `main` at 69e315c · design branch `design/portable-store`
 
+## Overview
+
+- **What changes**: The deck's saved state no longer names this computer's folders, and two commands move it to another computer.
+- **Why**: Moving the state by hand broke whenever the user name or drive differed, and secrets travelled in the copy.
+- **What you'll notice**: One export on the old machine, one import on the new; threads, queue and chat read as before.
+- **Can it be undone**: One-way for the saved state. It upgrades in place, with a backup kept beside it. An older plugin refuses it.
+
 ## 1. Problem
 
 "Make the system more plausible to export and transfer the state, and we can think about syncing later";
@@ -101,6 +108,11 @@ commit (`scripts/land.mjs`, its own ticket), merging two queues, rebuilding work
   `PILOT_GATE_HOME_STORE` (`deck/store-dir.mjs`); `backUp` does not pass through it (store-core.mjs:231).
   Existing store tests: `deck/test/store-upgrade.test.mjs`, `store-v3.test.mjs`, `store-archive*.test.mjs`,
   `store-restore.test.mjs`.
+- F8 (re-cut, 2026-11-28) `encodePath` resolves before it encodes (`deck/store-codec.mjs` `spelled`), so a win32
+  path reads back with backslashes whatever it was given: 177 live items carry `C:/Users/jrylk/Projects/pilot`
+  and will read `C:\...`. The Rune keys a repo's ticket folds on the API's repo string
+  (`deck/rune/src/regions/tickets.rs:244,602`); the live `rune-deck.json` fold key is already native. Two Rune
+  tests keyed on `C:/work/alpha` went red on feat at 697d10d (S9).
 
 ### Seams
 
@@ -132,7 +144,7 @@ machine file seam has two adapters (a real dir, a test's temp dir). `store-resto
   carry root-relative paths (wide diff, every reader a migration risk).
 - L2 Stored form is a string `@<root>/<rel>`, not an object, so every field keeps its type. Encoding resolves
   through the realpath when the path exists, so spellings collapse; decoding re-folds map keys with `pathKey`.
-  Rejected: objects `{root, rel}` (every reader's type changes).
+  Rejected: objects `{root, rel}` (every reader's type changes). The realpath clause is narrowed to case by A8.
 - L3 Default roots are derived, not stored: `home` and one per drive (`drive-c`) or `/`; so a lost machine file
   loses no path. Only `--root` overrides are stored. Rejected: a root per repo parent dir (dozens, from leaked
   test scratch dirs).
@@ -180,6 +192,18 @@ L7 itm_dff14db22111; L8 itm_5156b85885e2; L4 had no walk item, A5's question (it
   never the live store; the live store migrates only when the user upgrades after Gate 2.
   Rejected: QA on the live store. Question itm_35e3a9c9a548: closed "Scratch homes, real-store copy", a deck default after 20 min with no answer, not the user\'s press.
   Verdict: stands — deck default on itm_35e3a9c9a548, not the user; the live store holds every run and is never the test bed
+- **A8** L2 narrowed to case (S1 CI fix f5230910). The realpath's spelling is taken only where it differs from the
+  given one by case (`projects` stores as `Projects`); a junction, symlink, 8.3 name (`RUNNER~1`) or macOS `/var`
+  keeps its given spelling and reads back as it, since the full realpath changed a worktree's spelling across a
+  store round trip (CI at fae3569). Map keys still collapse (`pathKey` in memory); a field such as `items[].repo`
+  given in two link spellings stores two, and an audit folder (S3) is named once per link spelling. Only a path
+  absolute in the roots' own flavour is encoded; anything else is stored and read back as it is. Windows
+  consequence (L2 either way, F8): a repo reads back native (`C:\work\alpha` for `C:/work/alpha`), so the API's
+  repo spelling is native and a Rune fold saved under a forward-slash spelling resets once after the upgrade.
+  Rejected: L2 as signed, the realpath always (~15 test files move to real paths; a restart re-spells
+  worktrees; not undoable for a migrated store). Question itm_ad2385df32fa (2026-11-25): closed "B: collapse case
+  only", a deck default after 20 min with no answer, not the user's press. Re-asked at the re-cut as
+  itm_e2c73d1c2d6a (2026-11-28): closed "B: collapse case only", again a deck default after 20 min, not the user's press.
 
 red team: (1) `store-core.mjs` sits at 774 of the 800-line facade bar: S1 and S2 may add at most 10 lines
 there, the rest lives in the codec. (2) `backUp` writes beside a guarded home store (F7): S1 routes it through
@@ -187,7 +211,16 @@ there, the rest lives in the codec. (2) `backUp` writes beside a guarded home st
 session's cwd: S2 swaps it for `sameRepo`. (4) S4 exporting before S2 lands would carry pids: S4 comes after S2.
 (5) Month archives hold `repo` too: without S3 spec 1's scan fails on them, so S3 is a slice, not a follow-up.
 (6) A folded key decoded on a case-sensitive machine could miss the real case: L2 stores the realpath
-spelling, and a cross-OS move is out (§7).
+spelling, and a cross-OS move is out (§7). It holds under A8: Linux keeps the given spelling, which on a
+case-sensitive file system is the real case of any path that exists by that spelling (a symlink `Foo -> foo` is
+not folded there).
+red team (re-cut, 2026-11-28), attacked: the built S2, S3, S4 diffs and the drift fix against A8. S2 dedupes runs
+on `sameRepo` (`pathKey`, realpath), S4 lists worktrees through git on decoded paths: neither reads a stored
+spelling, both hold. S3's `directoryFor` hashes `encodePath(repo)`: under A8 a repo reached by two link
+spellings gets two audit folders, written into A8 rather than re-cut (L2 accepts two stored spellings; behaviour
+2's cross-host pin forbids hashing the win32-lowered `pathKey`). The drift fix holds under L2 and A8 alike (F8).
+No built slice is re-cut; S9 is added.
+  Verdict: stands — deck default twice (itm_ad2385df32fa, itm_e2c73d1c2d6a), not the user; taking a link's realpath changed a worktree's spelling across a store round trip on CI, and it is what S1 on feat already does
 
 ## 7. Out of scope
 
@@ -198,7 +231,7 @@ the hard-coded `~/.claude/pilot` writers that ignore `PILOT_DECK_DIR` (F5 `wrapp
 
 ## 8. Slices
 
-Width 4; longest stem 5 (S1 → S2 → S4 → S5 → S6).
+Width 5; longest stem 5 (S1 → S2 → S4 → S5 → S6). Re-cut 2026-11-28: S9 added after S1.
 
 | Slice | Title | Spec | Files owned | After | Reviewers | File |
 |---|---|---|---|---|---|---|
@@ -210,6 +243,7 @@ Width 4; longest stem 5 (S1 → S2 → S4 → S5 → S6).
 | S6 | An imported store waits on nothing from the old machine | 8, 11 | `deck/store-gone.mjs` (new), `deck/store-move.mjs`, tests | S5 (`importStore`) | typescript | [S6](slices/S6.md) |
 | S7 | The exporting deck warns its queue may live elsewhere | 10 | `deck/exported.mjs` (new), `deck/daemon.mjs`, `deck/doctor.mjs`, tests | S4 (`exported.json`) | typescript | [S7](slices/S7.md) |
 | S8 | The ADRs say the store is exportable, not synced | 6, 7 | `docs/adr/NNNN-portable-store.md` (new), `docs/adr/0207-two-devices.md`, `docs/OPERATING.md` | – | typescript | [S8](slices/S8.md) |
+| S9 | The Rune deck keys a repository on the spelling the store answers (added at re-cut) | 1 | `deck/rune/tests/deck/empty.rs` | S1 (`decodePath`, native spelling) | rust | [S9](slices/S9.md) |
 
 Walking skeleton: S1, a copy of the real store read, migrated and read back with every path under a root.
 red team: S6 and S7 both touched `deck/doctor.mjs`: spec 8's evidence is now the landing's state, so only S7
@@ -231,12 +265,13 @@ landing; rebuild lines) → import again without `--replace` (refused, bytes unc
 
 | Slice | State | Branch | PR | Worktree | After | Spec |
 |---|---|---|---|---|---|---|
-| S1 | planned | | | | – | 1, 3 |
-| S2 | planned | | | | S1 | 2, 8 |
-| S3 | planned | | | | S1 | 1, 3 |
-| S4 | planned | | | | S2 | 4, 9, 12 |
+| S1 | integrated | slice/portable-store-s1 | | | – | 1, 3 |
+| S2 | pushed | slice/portable-store-s2 | | | S1 | 2, 8 |
+| S3 | pushed | slice/portable-store-s3 | | | S1 | 1, 3 |
+| S4 | pushed | slice/portable-store-s4 | | | S2 | 4, 9, 12 |
 | S5 | planned | | | | S4 | 5, 12 |
 | S6 | planned | | | | S5 | 8, 11 |
 | S7 | planned | | | | S4 | 10 |
-| S8 | planned | | | | – | 6, 7 |
-| Feature | planned | feat/portable-store | | | S1-S8 | 1-12 |
+| S8 | integrated | slice/portable-store-s8 | | | – | 6, 7 |
+| S9 | pushed | fix/portable-store-drift | | | S1 | 1 |
+| Feature | implementing | feat/portable-store | #149 | | S1-S9 | 1-12 |

@@ -409,4 +409,4 @@ function renderSessionForm(tab, verb, what, reason) {
   ].join('');
 }
 
-export { renderRunStatus, renderLink, renderRunGraph, tabCode, renderStrip, renderEverything, renderToggle };
+export { renderRunStatus, renderLink, renderRunGraph, tabCode, renderStrip, renderEverything, renderToggle, URL_IN_TEXT };

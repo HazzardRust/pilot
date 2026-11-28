@@ -54,8 +54,9 @@ const { renderDeckPage, renderHomePage, renderThreadPage } = await import('../ui
 const REPO = path.join('D:', 'work', 'pilot');
 const OTHER = path.join('D:', 'work', 'kettle');
 
-/** A pid that has certainly exited: the child is gone before `spawnSync` returns. */
-const exitedPid = () => spawnSync(process.execPath, ['-e', '0']).pid;
+/** A pid that has certainly exited: the child is gone before `spawnSync` returns. One child per file (test-body-git S16). */
+let exited;
+const exitedPid = () => (exited ??= spawnSync(process.execPath, ['-e', '0']).pid);
 
 /**
  * A second live session's pid — a child that sleeps until the test kills it. Two

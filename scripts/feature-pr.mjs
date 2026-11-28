@@ -24,7 +24,8 @@ import { hostFor } from '../deck/host.mjs';
 import { RUN_BASE, SLUG } from '../deck/runs.mjs';
 import { deckUrl } from '../deck/tools.mjs';
 import { listeningRepo } from '../deck/wait.mjs';
-import { firstLine, git as gitAt, PILOT_BRANCH } from './pilot-branch.mjs';
+import { firstLine, git as gitAt, namePilotBranch } from './pilot-branch.mjs';
+import { overviewBlock, quiet } from './pr-overview.mjs';
 import { runRemote } from './remotes.mjs';
 import { prBase } from './stack.mjs';
 
@@ -48,11 +49,6 @@ const BREAKS = new RegExp(`[\\x00-\\x1f\\x7f-\\x9f${String.fromCharCode(0x2028, 
 /** Every line break and control character folded to one space: text that stays on one line. */
 const oneLine = (value) => String(value ?? '').replace(BREAKS, ' ').trim();
 
-/** An @ that opens a GitHub mention: not after a word character, so an email address is left alone. */
-const MENTION = /(?<!\w)@(?=[A-Za-z0-9])/g;
-/** `text` with a zero-width joiner after every mention's @: it reads the same, and GitHub notifies nobody. */
-const quiet = (text) => text.replace(MENTION, `@${String.fromCharCode(0x200d)}`);
-
 /** One table cell: a pipe escaped, line breaks folded, so a row stays one row. */
 const cell = (value) => oneLine(value).replace(/\|/g, '\\|');
 
@@ -60,12 +56,12 @@ const cell = (value) => oneLine(value).replace(/\|/g, '\\|');
  * The feature PR's body: `spec` (the artefact's §2) as it stands, the record's slices as a
  * `Slice | State | PR` table, one row per record row, and `footer` last when there is one.
  */
-export function featureBody(spec, record, footer) {
+export function featureBody(spec, record, footer, overview = null) {
   const rows = (record.slices ?? []).map((row) => {
     const pr = Number.isInteger(row.pr) ? `#${row.pr}` : '';
     return `| ${cell(row.slice)} | ${cell(row.state)} | ${pr} |`;
   });
-  const parts = [spec.trimEnd(), ['| Slice | State | PR |', '| --- | --- | --- |', ...rows].join('\n')];
+  const parts = [...(overview ? [overview.trimEnd()] : []), spec.trimEnd(), ['| Slice | State | PR |', '| --- | --- | --- |', ...rows].join('\n')];
   if (footer?.trim()) parts.push(footer.trim());
   return quiet(`${parts.join('\n\n')}\n`);
 }
@@ -116,12 +112,17 @@ function gitStep(git, args) {
   }
 }
 
-/** Throws unless the record names a slug and a base `gh` and git may take as argv. */
+/**
+ * Throws unless the record names a slug and, when it names one, a base `gh` and git may take as argv; `base` is null
+ * for a record with none, the user's pilot branch.
+ */
 function checked(record) {
   if (!record || typeof record !== 'object') throw new StepError('record: none');
   if (typeof record.slug !== 'string' || !SLUG.test(record.slug)) throw new StepError(`record: slug ${JSON.stringify(record.slug)} is not a slug`);
-  const base = record.base ?? PILOT_BRANCH;
-  if (typeof base !== 'string' || !RUN_BASE.test(base)) throw new StepError(`record: base ${JSON.stringify(base)} is not ${PILOT_BRANCH} or feat/<slug>`);
+  const base = record.base ?? null;
+  if (base !== null && (typeof base !== 'string' || !RUN_BASE.test(base))) {
+    throw new StepError(`record: base ${JSON.stringify(base)} is not <login>-pilot, the default branch or feat/<slug>`);
+  }
   const artefact = record.artefact ?? `docs/design/${record.slug}/architecture.md`;
   if (typeof artefact !== 'string' || !/^[\w./-]+$/.test(artefact) || artefact.split('/').includes('..')) {
     throw new StepError(`record: artefact ${JSON.stringify(artefact)} is not a repository path`);
@@ -136,9 +137,20 @@ function checked(record) {
  * is `(args) => string` in the repository, argv only. Throws, naming the step, on a failure.
  */
 export function syncFeaturePr({ host, git, record }) {
-  const { slug, base, artefact, feature } = checked(record);
+  const { slug, base: recorded, artefact, feature } = checked(record);
   const head = `feat/${slug}`;
   if (host === null) return { line: 'no PR: host none', wrote: 'none' };
+  // The user's pilot branch (user-pilot-branch L5), derived from `host` and stored when neither the env nor the config
+  // names it; a `feat/` base never needs it.
+  let name = null;
+  if (recorded === null || !recorded.startsWith('feat/')) {
+    try {
+      ({ name } = namePilotBranch({ git, host }));
+    } catch (err) {
+      throw new StepError(`pilot branch: ${firstLine(err)}`);
+    }
+  }
+  const base = recorded ?? name;
 
   let runs;
   try {
@@ -156,11 +168,12 @@ export function syncFeaturePr({ host, git, record }) {
   }
   gitStep(git, ['fetch', '-q', 'origin', `+refs/heads/${head}:refs/remotes/origin/${head}`]);
   const tip = `refs/remotes/origin/${head}`;
-  const spec = specOf(gitStep(git, ['show', `${tip}:${artefact}`]));
+  const markdown = gitStep(git, ['show', `${tip}:${artefact}`]);
+  const spec = specOf(markdown);
   const briefPath = `docs/design/${slug}/brief.md`;
   const hasBrief = gitStep(git, ['ls-tree', '--name-only', tip, '--', briefPath]).trim() !== '';
   const footer = hasBrief ? footerOf(gitStep(git, ['show', `${tip}:${briefPath}`])) : '';
-  const body = featureBody(spec, record, footer);
+  const body = featureBody(spec, record, footer, overviewBlock(markdown, record));
 
   // `head` matches a branch name from any fork: only this repository's own PR is the feature PR.
   const open = step(host, 'reviews', () => host.reviews({ head, state: 'open', limit: LIST_LIMIT })).filter((pr) => pr?.crossRepo === false);
@@ -168,7 +181,7 @@ export function syncFeaturePr({ host, git, record }) {
   // The PR's base is worked out on every write, so a write never undoes a retarget (audit-f14 L6).
   let prOn;
   try {
-    prOn = prBase({ git, host, base });
+    prOn = prBase({ git, host, base, name });
   } catch (err) {
     throw new StepError(`base: ${firstLine(err)}`);
   }

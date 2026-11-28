@@ -20,8 +20,10 @@
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
+import { testRunsFor } from '../scripts/test-ledger.mjs';
 import { MAX_HUMAN_STEPS, MAX_HUMAN_STEP_CHARS, isOneLine } from './items-bounds.mjs';
 import { MAX_STATE_CHARS } from './status.mjs';
 import { MAX_FEATURE_CHARS, MAX_FINDINGS, MAX_SLUG_CHARS } from './tools.mjs';
@@ -255,7 +257,7 @@ export const isSlug = (word) => typeof word === 'string' && word.length <= MAX_S
  * on, or the default branch's own name. It reaches git as an argument, so it never starts with `-`, holds no `..` or
  * `//`, is never `HEAD`, and ends in no `/`, `.` or `.lock`; a `feat/` segment is only ever the slug form.
  */
-export const RUN_BASE = new RegExp(`^(?:pilot|feat/${SLUG.source.slice(1, -1)}|(?!HEAD$)(?!(?:.*/)?feat/)(?!.*(?:\\.\\.|//|\\.lock$|[./]$))[A-Za-z0-9_][A-Za-z0-9._/-]*)$`);
+export const RUN_BASE = new RegExp(`^(?:feat/${SLUG.source.slice(1, -1)}|(?!HEAD$)(?!(?:.*/)?feat/)(?!.*(?:\\.\\.|//|\\.lock$|[./]$))[A-Za-z0-9_][A-Za-z0-9._/-]*)$`);
 
 const TICKET_ID = /^itm_[0-9a-f]+$/;
 
@@ -494,4 +496,21 @@ export function nextRecord(previous, given) {
     if (merged[field] !== undefined) record[field] = merged[field];
   }
   return record;
+}
+
+/**
+ * `record` with its feature's test-ledger rows (tested-once spec 4), read from the ledger under this
+ * user's home and trimmed to what the record keeps; no `tests` when the ledger holds none for the slug.
+ * A ledger that cannot be read keeps the rows the record had (`kept`), said on stderr, since a status
+ * write must not fail on it.
+ */
+export function withTestRuns(record, kept) {
+  let tests = kept;
+  try {
+    const rows = testRunsFor({ slug: record.slug, home: os.homedir() });
+    tests = rows.length === 0 ? undefined : rows.map(({ where, branch, sha, scope, exit, minutes, at }) => ({ where, branch, sha, scope, exit, minutes, at }));
+  } catch (err) {
+    console.error(`[deck] the test ledger could not be read: ${err.message}`);
+  }
+  return tests === undefined ? record : { ...record, tests };
 }

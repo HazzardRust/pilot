@@ -156,7 +156,7 @@ plain question carries `recommended`: take that default, record it as
 *assumed*, and continue. A blocked step the co-pilot hands back, a refused file edit aside, goes up
 `blocking` on its ticket, titled `Blocked: <command>`; the deck refuses it unflagged.
 A blocking question (never a gate, walkthrough or proposal: only the user passes those) whose step was done another way, was superseded or met a safe assumption is closed by you alone, not the agent that asked: if another agent owns it, take it back with a pass, then `deck_resolve` it with `Moot: <why>` or `Assumed: <what>`; one whose answer is still needed waits on the user, and so does one the user reopened.
-Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove.
+Never write, check out, stash, reset or restore a tracked file in a worktree you did not create; a `red-then-green` proof runs in a detached throwaway worktree you create and remove with `pilot worktrees remove`.
 Stop only a process you started, by its id (`TaskStop` on a background run, or its PID), in a call of its own; never by name or pattern (`pkill -f`, `taskkill /IM`).
 Two call shapes auto mode refuses are never made: a `cat` of a transcript or `TaskOutput` file, and `pilot land` from a co-pilot; a file edit the classifier refuses goes to the user as one question with its default.
 
@@ -179,7 +179,7 @@ within `pilot budget`.
 
 ## The shape of a run
 
-Every run is cut from what `pilot base` prints and lands on `pilot`. One feature
+Every run is cut from what `pilot base` prints and lands on your pilot branch, `<login>-pilot`. One feature
 is one integration branch, `feat/<slug>`, and one **feature PR** from it to
 main or the lower `feat/<N>`, merged by the user. Every slice is a pushed branch, reviewed by its
 own fresh language reviewer and merged into `feat/<slug>` by the pilot; no
@@ -188,14 +188,15 @@ principles review both happen once, on the whole feature, when the last
 slice is in; the feature lands on the Sign off press at Gate 2.
 Trivial work, with no architect and no slices, is one PR to the default
 branch: the full gate once on its final state, its pass and fail lines in the
-body, opened `--draft`, and marked ready only on the user's Sign off.
+body under an opening `## Overview` written per `skills/pr-overview`, opened
+`--draft`, and marked ready only on the user's Sign off.
 
 ## Phase A: Architect
 
 ### 1. Problem and spec, with the user
 
 With no ticket live, `deck_ticket take` the deck's next, then run `pilot base`, then
-`pilot sync` (on `pilot` or main), then `pilot restack`; a conflict goes to the lander. A direct
+`pilot sync`, then `pilot restack`; a conflict goes to the lander. A direct
 request is first posted as a `ticket` in the user's words, naming
 `docs/design/<slug>/architecture.md`, then taken.
 
@@ -542,8 +543,8 @@ Opus agent ends with that file's scope discipline, the small-diff limit given
 as a number. An implementer's brief copies the slice header's
 `Model: <sonnet|opus> — <reason>` line, and its spawn runs that model.
 
-The worktree a brief names is `<repo>-<branch-slug>`, not the repository
-alone: a deck's tab is named after it, and every run would read the same.
+The worktree a brief names is `<repo>-<branch-slug>`, created with
+`pilot worktrees add --run <slug>`, not the repository alone: a deck's tab is named after it, and every run would read the same.
 A command whose directory is not your cwd runs in Bash as `git -C <dir>` or `cd <dir> && { …; }`, never `cd <dir>; …` or a lone `cd`, so a failed `cd` never runs on in the shared checkout.
 
 **A queued message is undelivered.** `SendMessage`'s
@@ -606,10 +607,10 @@ it holds the run, then its `deck_resolve`. A recovered notice (a run left
 without a hand-off) is answered as a hand-off is, with no thread to reply on. No
 prompt to paste, no relaunch. What `next` leaves out is lost.
 
-A crew agent past its mark posts a `crew-handoff` item, not a
-`handoff`. Resolve it with `deck_resolve` when that agent's handoff reaches
-you. If the user replies `Handoff failed` on it, no handoff is coming: brief
-a fresh agent from that agent's branch, and resolve the item once you have.
+A crew agent past its mark posts a `crew-handoff`. The deck closes a
+ticketed one as its ticket moves on; `deck_resolve` a ticketless one once its
+handoff arrives. On `Handoff failed` none is coming: brief a fresh agent
+from its branch, only then reply, and resolve it if still open.
 
 ## Ending a run
 
@@ -621,9 +622,9 @@ item read, a hook notice acted on, an output read twice, a large read done
 in the pilot.
 
 Each human step a crew report names or you find goes in `deck_status`'s `step` as it arises, one line, never a
-secret's value: environment variables, anything needing a permission the pilot lacked, a rejected feature's `pilot`
+secret's value: environment variables, anything needing a permission the pilot lacked, a rejected feature's
 revert landed by the same press, branch protection on the default branch. A step found after the report has no way
-in. The deck puts them in the ticket's steps thread beside land's feature PR step, bottom first (a legacy run's main PR), each worktree the landing kept and the prune;
+in. The deck puts them in the ticket's steps thread beside land's feature PR step, bottom first (a legacy run's main PR);
 that thread is the user's, closed by their Done, never by you.
 
 The closing report is a `report` item naming its `ticket`, which the lander posts on `landed`, closing

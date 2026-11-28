@@ -109,8 +109,9 @@ test('the fixture dir is its realpath', (t) => {
   assert.ok(seen.startsWith(real + path.sep), 'the dir is spelled through the real directory, not the link');
 });
 
+// The three tests below read the global config through one shared key, built once.
 test('fixture git runs no auto maintenance', (t) => {
-  const { dir } = gitFixture(t, 'quiet', oneCommit);
+  const { dir } = gitFixture(t, 'one-commit', oneCommit);
   assert.equal(git(dir, 'config', '--get', 'maintenance.auto'), 'false');
   assert.equal(git(dir, 'config', '--get', 'maintenance.autoDetach'), 'false');
   assert.equal(git(dir, 'config', '--get', 'gc.auto'), '0');
@@ -118,14 +119,14 @@ test('fixture git runs no auto maintenance', (t) => {
 });
 
 test('identity comes from the global file', (t) => {
-  const { dir, sha } = gitFixture(t, 'identity', oneCommit);
+  const { dir, sha } = gitFixture(t, 'one-commit', oneCommit);
   assert.match(sha, /^[0-9a-f]{40}$/, 'git commit succeeded with no git config call');
   assert.equal(git(dir, 'config', 'user.email'), 't@example.com');
   assert.equal(git(dir, 'config', '--local', '--list').includes('user.'), false, 'no identity in the repository config');
 });
 
 test('fixture git converts no line endings', (t) => {
-  const { dir } = gitFixture(t, 'eol', oneCommit);
+  const { dir } = gitFixture(t, 'one-commit', oneCommit);
   assert.equal(git(dir, 'config', '--get', 'core.autocrlf'), 'false');
   fs.writeFileSync(path.join(dir, 'lf.txt'), 'one\ntwo\n');
   const add = spawnSync('git', ['add', 'lf.txt'], { cwd: dir, encoding: 'utf8' });

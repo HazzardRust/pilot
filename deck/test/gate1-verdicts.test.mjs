@@ -5,7 +5,8 @@
  */
 
 import './no-open.mjs';
-import { gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
+import { GIT_SLOW_MS, gitFixture } from '../../scripts/test/lib/git-fixture.mjs';
+import { seed } from '../../scripts/test/lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -43,27 +44,30 @@ test('an overturn needs its why', () => {
   assert.deepEqual(unverdicted(section6('- **A1 One.** x', '  Verdict: overturned: the user wants B')), []);
 });
 
-/** A clone whose `pilot` holds a base commit, checked out on `design/x` from pilot's tip. */
+/**
+ * A clone whose `pilot` holds a base commit, checked out on `design/x` at pilot's tip, so the lineage
+ * check passes; `at` names each artefact commit a test posts or reads, each one commit off pilot
+ * (`verdicted` two: the unverdicted A1, then its verdict). The verdict check reads `<sha>:<artefact>`
+ * whatever branch holds the sha, and no check here asks that the sha be on `design/x`. One seed and one clone.
+ */
 function scratch(t) {
   return gitFixture(t, 'gate1-verdicts:scratch', buildScratch);
 }
 
 function buildScratch(root) {
-  const origin = path.join(root, 'origin.git');
+  const off = (branch, files, from = 'pilot') => ({ branch, from, files, message: Object.keys(files)[0] });
+  const { origin, sha } = seed(root, [
+    { branch: 'pilot', files: { 'a.txt': 'base\n' }, message: 'a.txt' },
+    off('unverdicted', { [ARTEFACT]: section6('- **A1 One.** x') }),
+    off('verdicted', { [ARTEFACT]: section6('- **A1 One.** x', '  Verdict: stands — the default is the user\'s pick') }, 'unverdicted'),
+    off('overturned', { [ARTEFACT]: section6('- **A1 One.** x', '  Verdict: overturned: B instead') }),
+    off('two', { [ARTEFACT]: section6('- **A1 One.** x', '  Verdict: stands', '- **A2 Two.** y', '  Verdict: overturned: B instead') }),
+    off('other', { 'other.md': 'x\n' }),
+    off('none', { [ARTEFACT]: section6() }),
+  ], { 'design/x': 'pilot' });
   const work = path.join(root, 'work');
-  git(root, 'init', '-q', '--bare', '-b', 'main', origin);
-  git(root, 'clone', '-q', origin, work);
-  const commit = (file, text) => {
-    fs.mkdirSync(path.dirname(path.join(work, file)), { recursive: true });
-    fs.writeFileSync(path.join(work, file), text);
-    git(work, 'add', file);
-    git(work, 'commit', '-q', '-m', file);
-    return git(work, 'rev-parse', 'HEAD');
-  };
-  commit('a.txt', 'base\n');
-  git(work, 'push', '-q', 'origin', 'HEAD:pilot');
-  git(work, 'checkout', '-q', '-b', 'design/x', 'origin/pilot');
-  return { work, commit };
+  git(root, 'clone', '-q', '-b', 'design/x', origin, work);
+  return { work, at: sha };
 }
 
 /** Posts a gate1 for `design/x` at `sha` through `callTool`, its red ticket put first, with the pilot's `verdicts` recorded when given. */
@@ -71,7 +75,7 @@ function postGate1(repo, sha, body, verdicts) {
   const evidence = withTicket({ artefact: ARTEFACT, sha, locked: 1, slices: '| S1 |' }, repo);
   resolveItem(postItem({ kind: 'question', title: 'Merge?', body: 'None.', repo, ticket: evidence.ticket, author: 'pilot:pilot-architect' }).id, 'merged nothing', 'pilot:pilot-architect');
   if (verdicts !== undefined) recordVerdicts(evidence.ticket, verdicts);
-  return callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body, repo, ...evidence, branch: 'design/x' });
+  return callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body, repo, ...evidence, branch: 'design/x' }, { lineageTimeout: GIT_SLOW_MS });
 }
 
 const gate1s = () => listItems().filter((item) => item.kind === KIND_GATE1);
@@ -90,17 +94,16 @@ test('a long run of spaces after an overturn is judged in linear time', () => {
 
 test('a gate1 with an unverdicted A1 is refused naming it', (t) => {
   tempDeck(t);
-  const { work, commit } = scratch(t);
-  const sha = commit(ARTEFACT, section6('- **A1 One.** x'));
+  const { work, at } = scratch(t);
+  const sha = at.unverdicted;
   assert.throws(() => postGate1(work, sha, 'Assumed: A1.'), refused('A1', 'Verdict:'));
   assert.equal(gate1s().length, 0, 'no gate1 stored');
 });
 
 test('the same post passes once the verdict is committed', (t) => {
   tempDeck(t);
-  const { work, commit } = scratch(t);
-  commit(ARTEFACT, section6('- **A1 One.** x'));
-  const sha = commit(ARTEFACT, section6('- **A1 One.** x', '  Verdict: stands — the default is the user\'s pick'));
+  const { work, at } = scratch(t);
+  const sha = at.verdicted;
   // A pilot-posted gate1 with no record is refused too (architect-runs-red A1).
   assert.throws(() => postGate1(work, sha, 'Assumed: A1 stands.'), refused('verdict record', 'A1'));
   const verdicts = 'A1 Verdict: stands — the default is the user\'s pick';
@@ -110,12 +113,12 @@ test('the same post passes once the verdict is committed', (t) => {
 
 test("an architect's gate1 that differs from the record is refused through deck_post", (t) => {
   tempDeck(t);
-  const { work, commit } = scratch(t);
-  const sha = commit(ARTEFACT, section6('- **A1 One.** x', '  Verdict: overturned: B instead'));
+  const { work, at } = scratch(t);
+  const sha = at.overturned;
   const evidence = withTicket({ artefact: ARTEFACT, sha, locked: 1, slices: '| S1 |' }, work);
   resolveItem(postItem({ kind: 'question', title: 'Merge?', body: 'None.', repo: work, ticket: evidence.ticket, author: 'pilot:pilot-architect' }).id, 'merged nothing', 'pilot:pilot-architect');
   recordVerdicts(evidence.ticket, 'A1 Verdict: stands');
-  const post = (extra) => () => callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'A1 overturned.', repo: work, ...evidence, branch: 'design/x', author: 'pilot:pilot-architect', ...extra });
+  const post = (extra) => () => callTool('deck_post', { kind: KIND_GATE1, title: 'Gate 1', body: 'A1 overturned.', repo: work, ...evidence, branch: 'design/x', author: 'pilot:pilot-architect', ...extra }, { lineageTimeout: GIT_SLOW_MS });
   assert.throws(post({}), refused('verdict record', 'A1'));
   // A padded sha, which the store trims and accepts, is checked as the store keeps it.
   assert.throws(post({ sha: `${sha} \n` }), refused('verdict record', 'A1'));
@@ -123,20 +126,20 @@ test("an architect's gate1 that differs from the record is refused through deck_
 });
 
 test('a body missing an id is refused', (t) => {
-  const { work, commit } = scratch(t);
-  const sha = commit(ARTEFACT, section6('- **A1 One.** x', '  Verdict: stands', '- **A2 Two.** y', '  Verdict: overturned: B instead'));
+  const { work, at } = scratch(t);
+  const sha = at.two;
   const record = { record: { A1: 'stands', A2: 'overturned: B instead' } };
-  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: 'A1 stands. A20 is another run.' }, record), refused('A2', 'body'));
-  assert.doesNotThrow(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: 'A1 stands; A2 overturned.' }, record));
+  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: 'A1 stands. A20 is another run.' }, { ...record, timeout: GIT_SLOW_MS }), refused('A2', 'body'));
+  assert.doesNotThrow(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: 'A1 stands; A2 overturned.' }, { ...record, timeout: GIT_SLOW_MS }));
 });
 
 test('an artefact absent at sha is refused', (t) => {
-  const { work, commit } = scratch(t);
-  const sha = commit('other.md', 'x\n');
+  const { work, at } = scratch(t);
+  const sha = at.other;
   // The working file is not what the gate signs: present on disk, absent at `sha`.
   fs.mkdirSync(path.join(work, path.dirname(ARTEFACT)), { recursive: true });
   fs.writeFileSync(path.join(work, ARTEFACT), section6());
-  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }), refused(ARTEFACT, sha));
+  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }, { timeout: GIT_SLOW_MS }), refused(ARTEFACT, sha));
   assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }, { timeout: 0 }), refused(ARTEFACT, 'within 5 s'));
 });
 
@@ -148,15 +151,15 @@ test("a gate1's repo config runs no command while the deck reads an absent sha",
   git(work, 'config', 'remote.origin.promisor', 'true');
   git(work, 'config', 'remote.origin.uploadpack', 'touch PWNED; git-upload-pack');
   const sha = '0123456789abcdef0123456789abcdef01234567';
-  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }), refused(ARTEFACT, sha));
+  assert.throws(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }, { timeout: GIT_SLOW_MS }), refused(ARTEFACT, sha));
   assert.equal(fs.existsSync(path.join(work, 'PWNED')), false, 'no lazy fetch ran');
 });
 
 test('no A‹n› passes and a non-git repo is not checked', (t) => {
-  const { work, commit } = scratch(t);
-  const sha = commit(ARTEFACT, section6());
-  assert.doesNotThrow(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }));
+  const { work, at } = scratch(t);
+  const sha = at.none;
+  assert.doesNotThrow(() => assertVerdicts(work, { sha, artefact: ARTEFACT, body: '' }, { timeout: GIT_SLOW_MS }));
   const plain = fs.mkdtempSync(path.join(os.tmpdir(), 'gate1-verdicts-plain-'));
   t.after(() => fs.rmSync(plain, { recursive: true, force: true }));
-  assert.doesNotThrow(() => assertVerdicts(plain, { sha: '0305827', artefact: ARTEFACT, body: '' }));
+  assert.doesNotThrow(() => assertVerdicts(plain, { sha: '0305827', artefact: ARTEFACT, body: '' }, { timeout: GIT_SLOW_MS }));
 });

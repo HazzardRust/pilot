@@ -6,6 +6,7 @@
  */
 
 import { gitFixture } from './lib/git-fixture.mjs';
+import { seed } from './lib/seed.mjs';
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -19,52 +20,32 @@ import { sync } from '../sync.mjs';
 const run = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 const tip = (origin, branch) => run(origin, 'rev-parse', `refs/heads/${branch}`);
 
-function commit(repo, files, message) {
-  for (const [file, text] of Object.entries(files)) fs.writeFileSync(path.join(repo, file), text);
-  run(repo, 'add', ...Object.keys(files));
-  run(repo, 'commit', '-q', '-m', message);
-}
-
-/** Merges origin's `branch` into pilot in `seed` with the landing's subject, and pushes pilot. */
-function land(seed, branch) {
-  run(seed, 'checkout', '-q', 'pilot');
-  run(seed, 'merge', '-q', '--no-ff', '-m', `Merge ${branch} into pilot`, `origin/${branch}`);
-  run(seed, 'push', '-q', 'origin', 'pilot');
-}
-
 /**
- * Origin with main, pilot off main, feat/a off main and feat/b off feat/a (two commits); A, and B when `landed`,
- * merged into pilot; then A squashed into main, as the user's squash button does. `work` is restack's checkout.
+ * Origin with main, feat/a off main and feat/b off feat/a (two commits); pilot off main with A, and B when `landed`,
+ * merged in with the landing's subject; then A squashed into main, as the user's squash button does, and `after`.
+ * `hand/b` is feat/b plus one commit, the tip a push by hand would leave. Every later ref update is logged; `work`
+ * is restack's checkout.
  */
-function build(dir, landed) {
-  const origin = path.join(dir, 'origin.git');
-  run(dir, 'init', '-q', '--bare', '-b', 'main', origin);
-  run(origin, 'config', 'core.logAllRefUpdates', 'always');
-  const seed = path.join(dir, 'seed');
-  run(dir, 'clone', '-q', origin, seed);
-  run(seed, 'checkout', '-q', '-b', 'main');
-  commit(seed, { 'x.txt': 'x\n' }, 'main');
-  run(seed, 'branch', 'pilot');
-  run(seed, 'push', '-q', 'origin', 'main', 'pilot');
-  run(seed, 'checkout', '-q', '-b', 'feat/a', 'main');
-  commit(seed, { 'a.txt': 'a\n' }, 'feat a');
-  run(seed, 'checkout', '-q', '-b', 'feat/b', 'feat/a');
-  commit(seed, { 'b.txt': 'b\n' }, 'feat b one');
-  commit(seed, { 'b2.txt': 'b2\n' }, 'feat b two');
-  run(seed, 'push', '-q', 'origin', 'feat/a', 'feat/b');
-  run(seed, 'fetch', '-q', 'origin');
-  land(seed, 'feat/a');
-  if (landed) land(seed, 'feat/b');
-  run(seed, 'checkout', '-q', 'main');
-  run(seed, 'merge', '-q', '--squash', 'origin/feat/a');
-  run(seed, 'commit', '-q', '-m', 'feat a (#1)');
-  run(seed, 'push', '-q', 'origin', 'main');
+function build(dir, landed, after) {
+  const { origin, sha } = seed(dir, [
+    { branch: 'main', files: { 'x.txt': 'x\n' }, message: 'main' },
+    { branch: 'feat/a', files: { 'a.txt': 'a\n' }, message: 'feat a' },
+    { branch: 'feat/b', files: { 'b.txt': 'b\n' }, message: 'feat b one' },
+    { branch: 'feat/b', files: { 'b2.txt': 'b2\n' }, message: 'feat b two' },
+    { branch: 'hand/b', from: 'feat/b', files: { 'b3.txt': 'b3\n' }, message: 'pushed by hand' },
+    { branch: 'pilot', from: 'main', merge: ['feat/a'], files: {}, message: 'Merge feat/a into pilot' },
+    ...(landed ? [{ branch: 'pilot', merge: ['feat/b'], files: {}, message: 'Merge feat/b into pilot' }] : []),
+    { branch: 'main', files: { 'a.txt': 'a\n' }, message: 'feat a (#1)' },
+    ...after,
+  ]);
+  // `git config core.logAllRefUpdates always`, as a line on the [core] that ends a new bare config: no git.
+  fs.appendFileSync(path.join(origin, 'config'), '\tlogAllRefUpdates = always\n');
   const work = path.join(dir, 'work');
   run(dir, 'clone', '-q', origin, work);
-  return { origin, seed, work, aTip: tip(origin, 'feat/a') };
+  return { origin, work, sha, aTip: sha['feat/a'] };
 }
 
-const repos = (t, landed = true) => gitFixture(t, `restack-squash:${landed}`, (dir) => build(dir, landed));
+const repos = (t, landed = true, after = []) => gitFixture(t, `restack-squash:${landed}:${after.map((c) => c.message)}`, (dir) => build(dir, landed, after));
 
 /** A host whose `reviews` filters `prs` by the query's head and state; every edit is kept in `host.edits`. */
 function stubHost(prs) {
@@ -110,8 +91,8 @@ function isAncestor(repo, a, b) {
 }
 
 test('a squash leaves B with only its commits', (t) => {
-  const { origin, work, aTip } = repos(t);
-  const before = tip(origin, 'feat/b');
+  const { origin, work, sha, aTip } = repos(t);
+  const before = sha['feat/b'];
 
   const host = squashed(aTip);
 
@@ -128,14 +109,12 @@ test('a squash leaves B with only its commits', (t) => {
 });
 
 test('the lease holds', (t) => {
-  const { origin, seed, work, aTip } = repos(t);
+  const { origin, work, sha, aTip } = repos(t);
   let moved;
   const elsewhere = () => {
     if (moved) return;
-    run(seed, 'checkout', '-q', '-B', 'feat/b', 'origin/feat/b');
-    commit(seed, { 'b3.txt': 'b3\n' }, 'pushed by hand');
-    run(seed, 'push', '-q', 'origin', 'feat/b');
-    moved = tip(origin, 'feat/b');
+    run(origin, 'update-ref', 'refs/heads/feat/b', sha['hand/b'], sha['feat/b']);
+    moved = sha['hand/b'];
   };
 
   const host = squashed(aTip);
@@ -150,8 +129,8 @@ test('the lease holds', (t) => {
 });
 
 test('an unlanded run is never rewritten', (t) => {
-  const { origin, work, aTip } = repos(t, false);
-  const before = tip(origin, 'feat/b');
+  const { origin, work, sha, aTip } = repos(t, false);
+  const before = sha['feat/b'];
 
   const out = restackIn(work, squashed(aTip));
 
@@ -161,10 +140,8 @@ test('an unlanded run is never rewritten', (t) => {
 });
 
 test('a rebase that conflicts is a failure, not a hand conflict', (t) => {
-  const { origin, seed, work, aTip } = repos(t);
-  commit(seed, { 'b.txt': 'main\n' }, 'main takes b.txt');
-  run(seed, 'push', '-q', 'origin', 'main');
-  const before = tip(origin, 'feat/b');
+  const { origin, work, sha, aTip } = repos(t, true, [{ branch: 'main', files: { 'b.txt': 'main\n' }, message: 'main takes b.txt' }]);
+  const before = sha['feat/b'];
 
   const out = restackIn(work, squashed(aTip));
 
@@ -174,8 +151,8 @@ test('a rebase that conflicts is a failure, not a hand conflict', (t) => {
 });
 
 test('a squashed lower that is no plain feat/ branch is refused', (t) => {
-  const { origin, work, aTip } = repos(t);
-  const before = tip(origin, 'feat/b');
+  const { origin, work, sha, aTip } = repos(t);
+  const before = sha['feat/b'];
   const lower = 'feat/a..x';
   const host = stubHost([pr({ number: 1, head: lower, state: 'merged', headSha: aTip }), pr({ number: 2, head: 'feat/b', base: lower })]);
 

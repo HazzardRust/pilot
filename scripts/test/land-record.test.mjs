@@ -13,6 +13,7 @@ import path from 'node:path';
 
 import { githubHost } from '../../deck/host-github.mjs';
 import { greenChecks } from './lib/land-repos.mjs';
+import { seed } from './lib/seed.mjs';
 
 const { land } = await import('../land.mjs');
 
@@ -22,21 +23,14 @@ const record = '{"slug":"a","next":"land"}\n';
 
 function repos(t) {
   return gitFixture(t, 'land-record:repos', (dir) => {
-    const origin = path.join(dir, 'origin.git');
-    git(dir, 'init', '--bare', '-b', 'main', origin);
+    const { origin } = seed(dir, [
+      { branch: 'main', files: { 'shared.txt': 'one\n' }, message: 'main' },
+      { branch: 'feat/a', files: { 'a.mjs': 'export const a = 1;\n' }, message: 'feat a' },
+    ], { pilot: 'main' });
     const work = path.join(dir, 'work');
-    git(dir, 'clone', '-q', origin, work);
-    git(work, 'checkout', '-q', '-b', 'main');
-    fs.writeFileSync(path.join(work, 'shared.txt'), 'one\n');
-    git(work, 'add', 'shared.txt');
-    git(work, 'commit', '-q', '-m', 'main');
-    git(work, 'push', '-q', 'origin', 'main', 'main:pilot');
-    git(work, 'checkout', '-q', '-b', 'feat/a');
-    fs.writeFileSync(path.join(work, 'a.mjs'), 'export const a = 1;\n');
-    git(work, 'add', 'a.mjs');
-    git(work, 'commit', '-q', '-m', 'feat a');
-    git(work, 'push', '-q', 'origin', 'feat/a');
-    git(work, 'config', 'pilot.test', `node -e "console.log('ℹ pass 1'); console.log('ℹ fail 0')"`);
+    git(dir, 'clone', '-q', '-b', 'feat/a', origin, work);
+    // `git config pilot.test`, one git fewer: the value quoted, since `;` starts a config comment.
+    fs.appendFileSync(path.join(work, '.git', 'config'), `[pilot]\n\ttest = ${JSON.stringify(`node -e "console.log('ℹ pass 1'); console.log('ℹ fail 0')"`)}\n`);
     return { origin, work };
   });
 }

@@ -6,7 +6,8 @@
   "screens": {
     "home": "screen=home",
     "thread": "screen=thread",
-    "items": "screen=items"
+    "items": "screen=items",
+    "archive": "screen=archive"
   },
   "open": {
     "kind": "command",

@@ -360,7 +360,7 @@ test('openDeck never puts the key in argv', async (t) => {
 
 // --- the Rune deck (rune-deck-ui S3) ---------------------------------------
 
-const { runeBinary } = await import('../open.mjs');
+const { runeBinary } = await import('../rune-bin.mjs');
 
 /** A package root of its own, holding a file at `deck/rune/target/<profile>/<name>` when named. */
 const rootWith = (t, profile, name) => {

@@ -1,0 +1,117 @@
+{
+  "slug": "steps-in-previews",
+  "feature": "Steps threads in previews",
+  "ticket": "itm_3eee1845d039",
+  "branch": "feat/steps-in-previews",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-steps-in-previews",
+  "qa": {
+    "branch": "feat/steps-in-previews",
+    "worktree": "C:/Users/jrylk/Projects/pilot-feat-steps-in-previews",
+    "url": "http://127.0.0.1:49671"
+  },
+  "artefact": "docs/design/steps-in-previews/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated at 2436041; gate 5132 pass, 0 fail; checks green",
+      "branch": "slice/steps-in-previews-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-steps-in-previews-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated at e3ac661; gate 5134 pass, 0 fail; checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/steps-in-previews-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-steps-in-previews-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated at 62d2394; gate 5135 pass, 0 fail; checks green",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/steps-in-previews-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-steps-in-previews-s3"
+    }
+  ],
+  "next": "Green. gate2 itm_98c905ce70af at 62d2394 (PR #153), walkthrough itm_00daf65a9844; waits on the user's look and Sign off; on the press spawn pilot-lander. Teardown owed at report: from the feat worktree node bin/pilot.mjs deck --stop 21512 (scratch 49671); Stop-Process -Id 35608 (Rune window, runs from scratchpad/rune-look copy).",
+  "updatedAt": "2026-11-25T11:28:32.716Z",
+  "friction": [
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "pilot wait prints the same REPLY for a user's press and the deck's timeout default; deck.json had to be read to tell them apart",
+      "evidence": "resolution 'Assumed: ... (no answer 20 min)' only in the item",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-architect",
+      "what": "deck_post refused a question until its body opened with the Research: line; the same line at the end was refused twice",
+      "evidence": "question post refusals",
+      "size": 2
+    },
+    {
+      "agent": "pilot",
+      "what": "hand-backs cross with main's verdict or confirmation message four times this session (architects twice, co-pilots twice); each cost a resume",
+      "evidence": "reports saying 'your verdict message has not reached me' after it was sent",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed ran the whole node suite plus cargo in the shared target, not a selection; nothing says it reaches cargo",
+      "evidence": "S1 gate: 5121 tests and cargo test on deck/rune"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "testUtils.mjs deletes PILOT_DECK_DIR on import, so seeding a scratch deck through it silently wrote to a temp home",
+      "evidence": "S1 wrote its own seeder"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "no Chrome DevTools MCP in the session and headless Chrome never finishes loading the live deck page; look was a static render",
+      "evidence": "S1 B6"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Rune --script JSON format is not documented in the repo; read from the cargo checkout's tooling/script.rs",
+      "evidence": "S2 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "slice Verification line `cargo test --test deck queue thread` is not valid cargo; one filter only",
+      "evidence": "S2 ran -- queue thread"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md trailer names Fable as co-author on slices written by Opus",
+      "evidence": "S2 pushback"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "native pilot-deck needs PILOT_DECK_PORT as well as PILOT_DECK_DIR to find a scratch deck; without it reads deck not running",
+      "evidence": "S3 report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "test:changed fell back to the full suite: selection 33288 characters of argv, over 24000",
+      "evidence": "S3 gate"
+    },
+    {
+      "agent": "pilot",
+      "what": "a walkthrough's Rune window run from the shared cargo target locked pilot-deck.exe and failed another ticket's cargo gate with Access is denied; relaunched from a copy",
+      "evidence": "log 20261125T111723573Z-pilot@fb6cac4.log"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "feat worktree was 8 commits behind origin (fix round pushed from the fix worktree); integrate merged base into the stale tip and its reset failed on deck/rune/build.rs not uptodate",
+      "evidence": "local d27351e on e5580a6 vs origin 5b1582f"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot deck --help ran the deck command and opened the user's deck window instead of printing usage",
+      "size": 300
+    }
+  ]
+}

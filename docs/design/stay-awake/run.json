@@ -1,0 +1,283 @@
+{
+  "slug": "stay-awake",
+  "feature": "machine stays awake while agents run",
+  "ticket": "itm_498e739e2bcb",
+  "branch": "feat/stay-awake",
+  "base": "pilot",
+  "worktree": "C:/Users/jrylk/Projects/pilot-feat-stay-awake",
+  "artefact": "docs/design/stay-awake/architecture.md",
+  "slices": [
+    {
+      "slice": "S1",
+      "state": "integrated 28f3e1f; checks green",
+      "branch": "slice/stay-awake-s1",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-stay-awake-s1"
+    },
+    {
+      "slice": "S2",
+      "state": "integrated (checks green at 595e4df)",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/stay-awake-s2",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-stay-awake-s2"
+    },
+    {
+      "slice": "S3",
+      "state": "integrated",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/stay-awake-s3",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-stay-awake-s3"
+    },
+    {
+      "slice": "S4 the gate's census counts a leftover holder (added)",
+      "state": "integrated 1df4c7f; CI checks not yet run",
+      "after": [
+        "S1"
+      ],
+      "branch": "slice/stay-awake-s4",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-stay-awake-s4"
+    },
+    {
+      "slice": "S5 the Linux holder is proved on CI (added)",
+      "state": "integrated",
+      "after": [
+        "S2"
+      ],
+      "branch": "slice/stay-awake-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-slice-stay-awake-s5"
+    },
+    {
+      "slice": "stay-awake",
+      "state": "fixing (principles round) + QA read-only; feat 3d631df checks green"
+    },
+    {
+      "slice": "fix round",
+      "state": "fixing F1-F5, N1, N2, N4, N5",
+      "after": [
+        "S5 the Linux holder is proved on CI (added)"
+      ],
+      "branch": "fix/stay-awake",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-stay-awake"
+    },
+    {
+      "slice": "feature",
+      "state": "QA read-only at 3d631df",
+      "pr": 142
+    }
+  ],
+  "findings": [
+    "kept: F1 consider — Windows desktop with no lid fails the Power row at default LIDACTION; read LidPresent (caps byte 2), no lid exempts the lid verdict (+6)",
+    "kept: F2 drop — census select seam and its order-reversing test, one caller (-12)",
+    "kept: F3 simplify — S3.md Interface records /qh, GetPwrCapabilities, UPower busctl as built (0)",
+    "kept: F4 drop — elevator basename loop in awake-holder.test guards nothing argv pins don't (-5)",
+    "kept: F5 simplify — test the daemon's awakeFacts composition instead of a re-implemented armed() (0)",
+    "kept: N1 drop — dead NONE / ?? NONE in power.mjs (-1)",
+    "kept: N2 simplify — comma side effect in procs.mjs:170 predicate to a plain loop (0)",
+    "dropped: N3 simplify — gate matches procs message text, already pinned by gate-census test",
+    "kept: N4 simplify — rename shadowing `required` to `env` (0)",
+    "kept: N5 simplify — killGroup param recorded in S2.md Interface (+1)",
+    "dropped: S4 attack — census holder rows kept: pilot gc reaps a crashed Windows deck's holder; fundamentalist recorded it as attack, not finding",
+    "dropped: killGroupOf pid>1 guard — Number.isInteger(proc.pid) behind spawn makes 0/1 unreachable",
+    "dropped: polkit grant outliving its step — ephemeral runner",
+    "dropped: RULE body pin — CI config, step pinned by gate-workflow test",
+    "dropped: SEC1 consider — bare `tail` resolved via PATH: attacker already controls the deck's PATH; /usr/bin/tail is not universal across distros",
+    "dropped: SEC2 consider — bare `ps` in processTable: outside this diff, same PATH precondition",
+    "dropped: SEC3 consider — user's own caffeinate -i -w $$ matched as holder: theoretical",
+    "dropped: SEC4 consider — gc pid reuse window: pre-existing pattern for every kind",
+    "dropped: T1 complexity — powerRow 25, census 19, pilotProcesses 36 are whole-function figures not mapped to hunks; a split is a tidy with no named consequence; F2 already trims census",
+    "dropped: T2 duplication/cycles — 1 clone 0.33% unlocated; both cycles in unchanged files"
+  ],
+  "humanSteps": [
+    {
+      "text": "At the user's ask, on battery too: sleep timeout never and lid close 'do nothing' (were 3 min and sleep). Restore: powercfg /change standby-timeout-dc 3; powercfg /setdcvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 1; powercfg /setactive SCHEME_CURRENT."
+    },
+    {
+      "text": "Low battery on this laptop set to 20% with action sleep (was lower); restore in Power Options if unwanted."
+    },
+    {
+      "text": "stay-awake S1 behaviour 6: `powercfg /requests` needs an administrator shell, so no agent could run it; run it elevated while an agent is live to see the deck's keep-awake request listed."
+    }
+  ],
+  "next": "feat 3d631df = S1-S5. Co-pilot paused twice; pilot runs the tail. Fixer a8c318d2f1cd99ac4 (fix/stay-awake) and QA abe6640a3baabf2c1 (read-only) report to main. On fixer report: verify, pilot integrate with trailers, pilot checks --wait, send QA the tip. Rerun diff coverage once. Blocked-Stryker question open. Remove pilot-fund-stay-awake worktree at close.",
+  "updatedAt": "2026-11-24T22:07:34.665Z",
+  "friction": [
+    {
+      "kind": "drain",
+      "what": "pilot session ran to 260k: three tickets, four standby recoveries, power-settings work and two gate re-posts in one context",
+      "size": 260000
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "architect and pilot both posted the spec branches: 4 duplicate question threads opened and closed",
+      "evidence": "itm_2a997c92e396, itm_e489689c8b2c, itm_82d90a300b0b, itm_76e5b0b2d372 closed as duplicates of the pilot's"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "research was OS power docs on the web, not the repo",
+      "evidence": "PowerSetRequest docs, caffeinate man page"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "pilot base names main while runs build on pilot",
+      "evidence": "base main 5fd835e, 343 commits behind origin/pilot"
+    },
+    {
+      "agent": "pilot-architect",
+      "what": "Edit failed after a Bash commit because the file had not been read first",
+      "evidence": "two Edit retries"
+    },
+    {
+      "kind": "drain",
+      "what": "deck defaults and notices read as 'user answered' by the hook, each needing a deck_read to tell apart",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "no TaskOutput tool, so it could only watch its child through a Monitor on the branch push; the harness then forced a hand-back with the S1 implementer still live",
+      "evidence": "select:TaskOutput -> No matching deferred tools found",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "first deck_status refused: full slice titles sent where the record held rows named S1/S2/S3",
+      "evidence": "S1 and S1 The user's deck holds ... are both S1; one identifier is one slice.",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "brief.md is stale: trailer names another session, flaky list copied from crew-handoff-trace, names test:changed which is the same gate as npm test, and never mentions the deck-readme test that any new deck/*.mjs turns red (cost a gate cycle on three slices today)",
+      "evidence": "stay-awake S1 report; same miss in handoff-self-close S1 and tested-once",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "the process census counts only node processes, so B7 as worded cannot fail for a PowerShell holder; needed an own process-table query",
+      "evidence": "stay-awake S1 report, pushback",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "400-line slice limit left no room for the reviewer's spawn-throw test; slice estimate was 330",
+      "evidence": "stay-awake S1: 399 changed lines",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "harness forced a second hand-back with three implementers live (no TaskOutput wait tool); the pilot re-routed each child's report by hand",
+      "evidence": "[handback-send-enforce] with S2, S3 and S4 live",
+      "size": 4
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "some shells cannot find powershell.exe for the process-table read: a reviewer's Git Bash timed out an existing test, and one gate-log test failed the read",
+      "evidence": "stay-awake S4 report",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "implementer rebutted a reviewer's HIGH and reported the slice as done with REQUEST CHANGES standing; the pilot had to read the diff to judge it",
+      "evidence": "stay-awake S4: Verdict: REQUEST CHANGES",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Git Bash rewrites powercfg /qh into a path unless MSYS_NO_PATHCONV=1; fixtures captured by shell redirect are CRLF in the working copy and turned line-endings.test red, costing a ten-minute gate run",
+      "evidence": "stay-awake S3 report",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S3.md's B6 fixture and Interface comment did not match the machine: dc lid is do-nothing here, powercfg /q hides LIDACTION, /a is localised",
+      "evidence": "stay-awake S3 report, pushback",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node:test books a failing test given skip: null as a skip; linux holder failures read as skips on CI",
+      "evidence": "S2 report: one CI round to find; linuxSkip() now returns false",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "ubuntu-latest has no login session, polkit refuses systemd-inhibit; cross-OS behaviour only visible on CI, minutes per round",
+      "evidence": "Failed to inhibit: Access denied as the requested operation requires interactive authentication",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "reviewer Verdict line for b4c3139 lost in the session hand-off; a fresh security reviewer spawned on the whole diff",
+      "evidence": "S2 report, Reviewers section",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "foreground waits backgrounded at 180 s, no TaskOutput, until-loop blocked by the Monitor hook: each wait ended the turn and the harness forced a hand-back with a child live",
+      "evidence": "pilot checks moved to background bz77u8sur; forced hand-back with S5 implementer running",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "classifier gave no verdict on a parallel Bash call",
+      "evidence": "pilot checks 187c309: one reissue, then accepted",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "Git Bash rewrites /qh into a path unless MSYS_NO_PATHCONV=1; fixtures captured by shell redirect are CRLF",
+      "evidence": "S3: one gate red and a 10-minute rerun",
+      "size": 4
+    },
+    {
+      "kind": "drain",
+      "what": "two pilot wait processes were live after the hand-off; both timeouts read",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "gate-workflow.test.mjs pins every run line of gate.yml and forbids step ifs; the S5 brief owned gate.yml but not its pinning test",
+      "evidence": "S5 report: found by grep, 1 extra file; a dispatched CI run takes about 10 min so LOW fixes were left out",
+      "size": 3
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S5 took one file outside its owned list (scripts/test/gate-workflow.test.mjs pins gate.yml run lines) and a long CI wait",
+      "evidence": "report relayed by main: +3/-1 outside owned; CI run 45490413987"
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context reset mid-run; evidence runner did not return before hand-back, so coverage/mutation/complexity/duplication/dead code/dependency checks not run; its worktree pilot-fund-stay-awake left behind",
+      "evidence": "fundamentalist report section 3 and 5"
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "reported to main instead of its fundamentalist (parent had handed back); Stryker denied by classifier; diff coverage lost to a rune LNK1104 locked exe after Node tests passed",
+      "evidence": "main relay: npm test 5114 pass 0 fail, then LNK1104 deck-*.exe"
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "forced hand-back a second time with two children live (fixer, QA); their reports redirected to main",
+      "evidence": "second paused hand-back, feat at 3d631df",
+      "size": 8
+    },
+    {
+      "agent": "pilot:pilot-fundamentalist",
+      "what": "context reset mid-run; handed back before its evidence runner returned, so the tool table was triaged by the co-pilot",
+      "evidence": "co-pilot hand-back, friction table",
+      "size": 5
+    },
+    {
+      "agent": "pilot:pilot-evidence-runner",
+      "what": "reported to main, not its parent; Stryker denied by the classifier; diff coverage lost to a locked rune exe (LNK1104) after 646 s of npm test",
+      "evidence": "evidence report relayed by the pilot",
+      "size": 6
+    },
+    {
+      "kind": "drain",
+      "what": "evidence runner's full table read and relayed by the pilot",
+      "size": 4
+    }
+  ]
+}
