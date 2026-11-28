@@ -202,7 +202,8 @@ L7 itm_dff14db22111; L8 itm_5156b85885e2; L4 had no walk item, A5's question (it
   repo spelling is native and a Rune fold saved under a forward-slash spelling resets once after the upgrade.
   Rejected: L2 as signed, the realpath always (~15 test files move to real paths; a restart re-spells
   worktrees; not undoable for a migrated store). Question itm_ad2385df32fa (2026-11-25): closed "B: collapse case
-  only", a deck default after 20 min with no answer, not the user's press; re-asked at the re-cut.
+  only", a deck default after 20 min with no answer, not the user's press. Re-asked at the re-cut as
+  itm_e2c73d1c2d6a (2026-11-28): closed "B: collapse case only", again a deck default after 20 min, not the user's press.
 
 red team: (1) `store-core.mjs` sits at 774 of the 800-line facade bar: S1 and S2 may add at most 10 lines
 there, the rest lives in the codec. (2) `backUp` writes beside a guarded home store (F7): S1 routes it through
