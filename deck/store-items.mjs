@@ -732,6 +732,7 @@ export function dismissItem(id) {
 function settledLanding(landing) {
   if (landing?.state === 'landed') return `landed ${landing.sha?.slice(0, 7) ?? 'at an unknown SHA'}`;
   if (landing?.state === 'refused') return 'landing refused';
+  if (landing?.state === 'interrupted') return 'landing interrupted'; // an imported store's (portable-store S6)
   return undefined;
 }
 

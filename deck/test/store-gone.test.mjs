@@ -14,6 +14,7 @@ import path from 'node:path';
 
 import { KIND_GATE2 } from '../items.mjs';
 import { markGone, rebuildLines } from '../store-gone.mjs';
+import { exportStore, importStore } from '../store-move.mjs';
 import { queueLanding } from '../store-items.mjs';
 import { beginLanding, postItem, registerRun, setSlices, settleLanding } from '../store.mjs';
 import { storedDeck, tempDeck, withTicket } from '../testUtils.mjs';
@@ -67,6 +68,43 @@ test('a missing worktree gets one rebuild line', (t) => {
   assert.equal(lines.length, 1, lines.join('\n'));
   assert.match(lines[0], /^git -C .+ worktree add .+ feat\/beta$/);
   assert.ok(lines[0].includes(gone), lines[0]);
+});
+
+// A crafted bundle is the input here, so these decks are written as an attacker would write them, not by the deck.
+test("a bundle's host and branch reach the terminal inert", () => {
+  const deck = { items: [{ id: 'itm_a', replies: [], landing: { state: 'running', pid: 1 } }] };
+  assert.doesNotMatch(markGone(deck, 'evil\x1b[31m‮host', AT).items[0].landing.line, /[\x1b‮]/);
+  assert.match(markGone(deck, { not: 'a host' }, AT).items[0].landing.line, /interrupted on the old machine/);
+  assert.equal(deck.items[0].landing.state, 'running', 'the deck passed in is not changed');
+
+  const runs = (branch) => ({ runs: [{ id: 'run_a', repo: path.resolve(os.tmpdir(), 'pilot-gone-r'), worktree: path.resolve(os.tmpdir(), "pilot gone'wt"), branch }] });
+  const [line] = rebuildLines(runs('feat/$(calc)`x`'), () => false);
+  const quote = process.platform === 'win32' ? "''" : "'\\''";
+  assert.ok(line.includes(`gone${quote}wt'`), line);
+  assert.ok(line.endsWith(" 'feat/$(calc)`x`'"), line);
+  assert.deepEqual(rebuildLines(runs('--force'), () => false), [], 'an argument git would read as an option gets no line');
+});
+
+test('an import marks the landing interrupted and prints the rebuild line', (t) => {
+  tempDeck(t);
+  const repo = aDir(t, 'repo');
+  const gate = aGate2(repo);
+  beginLanding(gate.id, { worktree: repo });
+  const run = registerRun({ repo, pid: process.pid });
+  setSlices(run.id, [], undefined, { slug: 'moved', branch: 'feat/moved', worktree: path.join(os.tmpdir(), `pilot-gone-moved-${process.pid}`) });
+  const file = path.join(aDir(t, 'bundle'), 'moved.pilotstore');
+  const quiet = () => ({ status: 0, stdout: '', stderr: '' });
+  assert.equal(exportStore([file], { git: quiet, host: 'source-host', out() {}, err() {} }), 0);
+
+  const target = tempDeck(t);
+  const said = [];
+  const code = importStore([file], { storePid: () => null, out: (line) => said.push(line), err: (line) => said.push(line) });
+
+  assert.equal(code, 0, said.join('\n'));
+  const landing = JSON.parse(fs.readFileSync(path.join(target, 'deck.json'), 'utf8')).items.find((item) => item.id === gate.id).landing;
+  assert.equal(landing.state, 'interrupted');
+  assert.match(landing.line, /interrupted on source-host/);
+  assert.equal(said.filter((line) => /^rebuild: git -C .* worktree add .* feat\/moved$/.test(line)).length, 1, said.join('\n'));
 });
 
 test('no open run, or a finished one, gets no rebuild line', (t) => {

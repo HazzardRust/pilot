@@ -6,12 +6,14 @@
 
 import path from 'node:path';
 
-import { pathKey } from '../hooks/lib/platform.js';
+import { hostPlatform, pathKey } from '../hooks/lib/platform.js';
 
 const IN_FLIGHT = new Set(['running', 'queued']);
 const isMap = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
-// A bundle's own strings reach the terminal: none of their control characters do.
-const printable = (text) => String(text).replace(/[\x00-\x1f\x7f-\x9f]/g, '?');
+// Control characters, and the ones that reorder or break the text around them (bidi marks, line and paragraph separators).
+const UNPRINTABLE = [[0x00, 0x1f], [0x7f, 0x9f], [0x200e, 0x200f], [0x2028, 0x2029], [0x202a, 0x202e], [0x2066, 0x2069]];
+// A bundle's own strings reach the terminal: none of those characters do.
+const printable = (text) => [...String(text)].map((char) => (UNPRINTABLE.some(([from, to]) => char.codePointAt(0) >= from && char.codePointAt(0) <= to) ? '?' : char)).join('');
 
 /**
  * `deck` with each landing still `running` or `queued` set to `interrupted`, its pid dropped and a deck line on its
@@ -19,7 +21,8 @@ const printable = (text) => String(text).replace(/[\x00-\x1f\x7f-\x9f]/g, '?');
  */
 export function markGone(deck, sourceHost, at) {
   if (!Array.isArray(deck?.items)) return deck;
-  const line = `landing interrupted on ${printable(sourceHost)}: the store moved to this machine; check your pilot branch on origin`;
+  const host = typeof sourceHost === 'string' && sourceHost !== '' ? printable(sourceHost).slice(0, 255) : 'the old machine';
+  const line = `landing interrupted on ${host}: the store moved to this machine; check your pilot branch on origin`;
   const items = deck.items.map((item) => {
     if (!isMap(item) || !isMap(item.landing) || !IN_FLIGHT.has(item.landing.state)) return item;
     const { pid, ...landing } = item.landing;
@@ -29,7 +32,11 @@ export function markGone(deck, sourceHost, at) {
   return { ...deck, items };
 }
 
-const shellArg = (text) => (/^[\w@%+=:,./\\-]+$/.test(text) ? text : `"${text.replace(/["\\$`]/g, '\\$&')}"`);
+/**
+ * One argument as a shell takes it pasted: a plain token as it is, anything else single-quoted, which neither sh nor
+ * PowerShell expands (`$`, a backtick, `\`); a quote inside is doubled for PowerShell on win32, `'\''` for sh elsewhere.
+ */
+const shellArg = (text, platform) => (/^[\w@+=:,./-]+$/.test(text) ? text : `'${text.replace(/'/g, platform === 'win32' ? "''" : "'\\''")}'`);
 
 /** Each worktree a row names with the branch it was on: the feature's (`feat/<slug>` when none is recorded), QA's, each slice's. */
 const worktreesOf = (row) => [
@@ -53,7 +60,7 @@ export function rebuildLines(deck, exists) {
       if (typeof worktree !== 'string' || !path.isAbsolute(worktree) || typeof branch !== 'string' || branch === '') continue;
       if ([row.repo, worktree, branch].some((arg) => arg.startsWith('-')) || seen.has(pathKey(worktree)) || exists(worktree)) continue;
       seen.add(pathKey(worktree));
-      lines.push(`git -C ${[row.repo, 'worktree', 'add', worktree, branch].map((arg) => shellArg(printable(arg))).join(' ')}`);
+      lines.push(`git -C ${[row.repo, 'worktree', 'add', worktree, branch].map((arg) => shellArg(printable(arg), hostPlatform())).join(' ')}`);
     }
   }
   return lines;
