@@ -89,10 +89,15 @@ closing-report's `FEATURE_LINE` parse still serve any main PR left open. They st
 ## 6. Assumed decisions
 
 - **A1** *assumed*, answered by the user on itm_0a129aaf2c8a: "One line: release PR only (default)", the default taken: one line. Every run is cut from the pilot branch, and main gets it through the release PR. Trade: a feature no longer shows on main as its own PR (ADR 0200's SOP). Rejected path: per-feature PRs. That would force runs onto main, add a `ready` host verb (an allowlist change) for the landing, retire the release PR, and build every run on a main 175 commits stale (F5).
+  Verdict: stands — the user's own answer on itm_0a129aaf2c8a
 - **A2** *assumed*: retarget, not close. Trade: the PR reads merged into the pilot branch rather than closed with a comment. Rejected: `gh pr close`, a new host verb the allowlist lacks.
+  Verdict: stands — retarget needs no new host verb and the PR reads merged, which is true
 - **A3** *assumed*: refuse plus show. The deck refuses a new `main` base (spec 3), and the gate1 shows the base (spec 4). Trade: about 40 lines more than showing alone. Rejected: show only, which leaves the drift F2 measured free to recur.
+  Verdict: stands — show alone leaves the base drift free to recur
 - **A4** *assumed* (the pilot's call, not the user's): this run is cut from `origin/hazzardrust-pilot`, because a session-start notice said the checkout was behind it. If A1 goes to per-feature PRs, `design/landed-pr-closed` is re-cut from main.
+  Verdict: stands — consistent with A1 as the user settled it
 - **A5** *assumed*: the remaining main-cut machinery stays for a follow-up ticket. That is `pilot restack`'s retarget, rebase and merge-forward, `prBase`'s main and `feat/` arms, closing-report's `FEATURE_LINE`, and the main path in `deck/lineage.mjs`. It serves no open PR today (`gh pr list --base main --state open`: only #167). Rejected: deleting it here, which adds about 300 changed lines across 4 more files.
+  Verdict: stands — nothing open uses the main-cut machinery; its removal is proposed to the user as a ticket after this run
 - red team: S1 alone would be undone by `feature-pr.mjs:184-189`, which re-edits a PR's base to `prBase(record.base)` on every status write. Between the retarget and the push there is no status write, because the landing is one process. After the push the PR reads merged, and an edit to a merged PR's base is refused by the host and caught by `syncFeaturePr`'s step. Recorded in S1's Misses.
 - red team: spec 3's refusal was checked against `deck/test/lineage-base.test.mjs`, which passes `base: 'main'` to `assertOnPilotTip` and never writes a record, so it stands. Any test seeding a `main` record through `deck_status` turns red in S2's gate; S2 seeds main-cut records by file, as `land-feature-line.test.mjs:18-24` does.
 - red team: spec 1's "0 open PRs" cannot be read from a fake `gh`, which never turns a PR merged. The bar is the order instead: the `pr edit --base` call lands while origin's pilot is still the pre-landing tip. The merged read on a real host is QA's.
