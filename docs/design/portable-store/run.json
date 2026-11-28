@@ -5,6 +5,11 @@
   "branch": "feat/portable-store",
   "base": "main",
   "worktree": "C:/Users/jrylk/Projects/pilot-feat-portable-store",
+  "qa": {
+    "branch": "qa/portable-store",
+    "worktree": "C:/Users/jrylk/Projects/pilot-qa-portable-store",
+    "url": "http://127.0.0.1:4391"
+  },
   "artefact": "docs/design/portable-store/architecture.md",
   "slices": [
     {
@@ -51,7 +56,7 @@
     },
     {
       "slice": "S6",
-      "state": "pushed 239e540; integrating on 1efde98",
+      "state": "integrated, checks green at fe77302",
       "after": [
         "S5"
       ],
@@ -128,103 +133,32 @@
       ],
       "branch": "fix/portable-store-s5-mac",
       "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-s5-mac"
+    },
+    {
+      "slice": "portable-store",
+      "state": "landing started in C:/Users/jrylk/Projects/pilot-feat-portable-store"
+    },
+    {
+      "slice": "principles fix round",
+      "state": "fixing",
+      "after": [
+        "S6"
+      ],
+      "branch": "fix/portable-store-principles",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-principles"
+    },
+    {
+      "slice": "feature",
+      "state": "walkthrough itm_1bc081da6aaa posted at d95b2ec (checks green); Differences itm_3c365be0375b open; ticket green (concluding)",
+      "branch": "feat/portable-store"
     }
   ],
-  "next": "co-pilot: integrating S6 239e540 on 1efde98 (checks green); then checks, base check, fundamentalist on PR 149; QA.",
-  "updatedAt": "2026-11-28T09:30:42.546Z",
+  "findings": [
+    "dropped: QA F-new — import rebuild lines spell 2 feature-row repos lowercased (deck/store-gone.mjs:83-94); cosmetic, command works on win32; left to the user as Differences row 4"
+  ],
+  "next": "Gate 2 itm_f827f86a1a73 posted (PR #149, d95b2ecb, trial clean, checks green); no agent live. Waiting on user's Sign off press. On press: spawn pilot-lander with the gate2 id; on `report due`: stop scratch decks 4390/4391/4392 (qa2 deck-down.sh), reply Findings:. User owes: merge PR #167.",
+  "updatedAt": "2026-11-28T10:53:46.095Z",
   "friction": [
-    {
-      "kind": "drain",
-      "what": "pilot integrate refuses every branch while the feature tip is red in CI, including the branch that fixes it; auto mode refused the fast-forward push as a way round: a red tip can only be fixed by the user's own push",
-      "size": 10
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "hand-back forced again while two children were live in their gate runs",
-      "evidence": "handback-send-enforce while fix2 and S4 awaited gates",
-      "size": 2
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "five forced hand-backs in one spawn on portable-store while two children ran gates; each re-sends ~80k tokens and changes nothing",
-      "evidence": "hand-backs 1-5 from the portable-store co-pilot, state identical in 1-3 and 4-5"
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "no POSIX runtime locally, so POSIX evidence needs a ~20 min dispatched CI run; an 8.3 TEMP would have reproduced the Windows CI failure before push",
-      "evidence": "portable-store codec fix 2, Gate run 46039380175"
-    },
-    {
-      "agent": "pilot-implementer",
-      "what": "two repo rules (no child_process in deck/store*.mjs; every module listed in deck/README.md) surface only in the full gate, costing two commits and a second gate",
-      "evidence": "portable-store S4, create.test.mjs:220, deck-readme.test.mjs:27"
-    },
-    {
-      "agent": "pilot:pilot-co-pilot",
-      "what": "Record's S4 row lagged the branch: said 'implementing, not pushed' while origin had feba0f1, so a successor re-derives state from git",
-      "evidence": "git ls-remote slice/portable-store-s4 = feba0f13 vs run.json S4 row"
-    },
-    {
-      "kind": "drain",
-      "what": "deck_read open brief limit 100: ~100 closing reports still listed as open",
-      "size": 12000
-    },
-    {
-      "kind": "drain",
-      "what": "co-pilot spawned on a ticket blocked on the user's push, at the Stop hook's direction; it could start nothing",
-      "size": 39879
-    },
-    {
-      "agent": "pilot",
-      "what": "Windows CI flake: host-contract.test.mjs:93 after-hook rmSync of its temp dir throws EPERM, failing 'the allowlist still refuses'; same sha green on the prior run",
-      "evidence": "Gate 46039483257 on 8d2b2b81: 5094 pass, 1 fail, windows only; Gate 46039380175 same sha success x3"
-    },
-    {
-      "agent": "pilot-lander",
-      "what": "Landing of prune-run-trees printed 'no ci proof: scripts/gate.mjs changed'; it landed without CI proof",
-      "evidence": "pilot landing itm_b688c4848a4e output line 8"
-    },
-    {
-      "agent": "pilot-lander",
-      "what": "deck_status finished came after prune removed the feat worktree, so run.json was not written; the clean tail's order loses that write",
-      "evidence": "'run.json not written: the recorded worktree is gone'"
-    },
-    {
-      "agent": "pilot-lander",
-      "what": "pilot landing ran past 180s and was moved to the background by the harness",
-      "evidence": "task bjlbcx2o2"
-    },
-    {
-      "agent": "pilot",
-      "what": "pilot checks reads the newest run on a sha: a flaky workflow_dispatch run on the fix branch made the feat tip read red though an earlier run on the same sha was green; push to feat triggered no run",
-      "evidence": "pilot checks 8d2b2b8: 'checks red: gate (windows-latest)' from run 46039483257"
-    },
-    {
-      "agent": "pilot-lander",
-      "what": "pilot checks on the gate2's sha read green, but the deck lands the feature tip one run-record commit later, which CI never ran on; land refused 'checks none'",
-      "evidence": "checks green at e112532; NOT landed: checks none at 41f5760"
-    },
-    {
-      "agent": "pilot-lander",
-      "what": "land worktree was cut before an earlier queued landing finished, so the resolved merge sat on a stale pilot tip and the lander reported the stale tip as current",
-      "evidence": "d77dda1c parents f8a49be8 41f5760a; origin/hazzardrust-pilot 27fae979"
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "handback-send-enforce hook forced four hand-backs on one ticket while its children were live",
-      "evidence": "a75e5a8 hand-backs: 'hook-forced, children live, nothing new' x2 after two full tables"
-    },
-    {
-      "agent": "pilot:typescript-reviewer",
-      "what": "a read-only reviewer cannot run a slice's tests on the merged tree: creating a throwaway worktree was denied, so it reads merge-tree output instead",
-      "evidence": "S4 re-review: 'my attempt to create a throwaway worktree was denied'"
-    },
-    {
-      "agent": "pilot-co-pilot",
-      "what": "a successor co-pilot inherits no Verdict or Evidence rows for pushed slices: the predecessor's implementer reports lived only in its context, so S2, S3, S4 were re-reviewed",
-      "evidence": "run.json S2/S3 state 'pushed' with no verdicts; 4 reviewer spawns",
-      "size": 4
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "context compacted during diagnosis before any commit, losing every finding; it restarted from a clean worktree",
@@ -348,6 +282,101 @@
       "agent": "pilot:pilot-implementer",
       "what": "test:changed log ends with no summary line and the run did not exit on its own; completion inferred from the log going quiet",
       "evidence": "S7 merge fix gate, 5258 passing lines, no final ℹ summary",
+      "size": 1
+    },
+    {
+      "agent": "evidence-runner",
+      "what": "No diff coverage: npm test exited 1 in the runner's worktree (10 deck tests red, timing and deck-port ones) so diff-coverage never ran; the same tree was 5604/0 at integrate and green on CI",
+      "evidence": "35 min run on fe77302 while other gates ran; e.g. a 50 ms bound hit 119 ms"
+    },
+    {
+      "agent": "evidence-runner",
+      "what": "No mutation score: stryker hit its 900 s cap after instrumenting 4322 mutants in 9 files",
+      "evidence": "exit 124; only the initial test run finished"
+    },
+    {
+      "agent": "evidence-runner",
+      "what": "Gate prints `home store changed: ~/.claude/pilot/deck.json; live deck 7288 up` whenever the live deck writes during a run; cannot tell a test's write from the deck's own",
+      "evidence": "printed in the runner's npm test and in integrate gates"
+    },
+    {
+      "agent": "evidence-runner",
+      "what": "Its report reached main after its parent fundamentalist had finished",
+      "evidence": "hand-back to main, ~35 min after the review was triaged"
+    },
+    {
+      "agent": "fix implementer",
+      "what": "glossary.test pins the term count, so any glossary addition reds the gate",
+      "evidence": "5 new terms cost one gate red and a rerun (pin 81 -> 86); same pin bit tested-once"
+    },
+    {
+      "agent": "co-pilot",
+      "what": "pilot integrate refuses any branch on a red tip, even the fix for that red",
+      "evidence": "two macOS fixes went onto feat by fast-forward"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot wait timed out twice under machine load (deck slow to answer; doctor showed git config > 5 s): 2 restarts, 1 doctor run",
+      "size": 3000
+    },
+    {
+      "kind": "drain",
+      "what": "Forced early hand-backs (co-pilot x3, QA x2, architect x3) pushed their tails and reports into the pilot's context",
+      "size": 60000
+    },
+    {
+      "agent": "qa",
+      "what": "Thread views are slow and write the store: /api/view?screen=thread calls seeThread, so each read writes the 6 MB deck",
+      "evidence": "1,276 threads ran over 15 min; QA sampled 228"
+    },
+    {
+      "agent": "qa",
+      "what": "Scratch decks running beside the suite caused the reds",
+      "evidence": "30 flakes at fe77302d; 0 with the decks stopped"
+    },
+    {
+      "agent": "qa",
+      "what": "No DevTools MCP anywhere in the chain, so every page look is pushed to the user",
+      "evidence": "5 walkthrough screens owed by eye"
+    },
+    {
+      "kind": "drain",
+      "what": "pilot checks reports a superseded, cancelled CI run as `checks red`; the pilot had to list runs with gh to tell",
+      "size": 1500
+    },
+    {
+      "kind": "drain",
+      "what": "QA ran out of context before the walkthrough twice (tested-once, portable-store); the pilot wrote its hand-back to a scratchpad file for the successor",
+      "size": 6000
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "/api/items needs the bearer secret; a first probe came back 401 and read as 0 items",
+      "evidence": "items-439x.json 401",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "deck_post walkthrough refuses pr and sha; the definition does not say which fields it takes",
+      "evidence": "'a walkthrough item takes no pr'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-qa",
+      "what": "artefact has no Reference: line, yet surface: true still requires the Differences question",
+      "evidence": "grep architecture.md: none",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "ticket plan.sha on the deck reads e39480a (a drift merge on feat) while the signed gate1 is 8a0f3e4 on design/portable-store",
+      "evidence": "deck_read itm_d9b831208266 plan.sha e39480a; gate1 itm_259407da6fc7 sha 8a0f3e48",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "GET /api/record needs the deck secret, so a successor reads run.json in the feat worktree instead",
+      "evidence": "'the deck wants its secret'",
       "size": 1
     }
   ]
