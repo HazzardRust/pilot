@@ -42,10 +42,12 @@
     },
     {
       "slice": "S5",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S4"
-      ]
+      ],
+      "branch": "slice/portable-store-s5",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s5"
     },
     {
       "slice": "S6",
@@ -56,10 +58,12 @@
     },
     {
       "slice": "S7",
-      "state": "planned",
+      "state": "implementing",
       "after": [
         "S4"
-      ]
+      ],
+      "branch": "slice/portable-store-s7",
+      "worktree": "C:/Users/jrylk/Projects/pilot-portable-store-s7"
     },
     {
       "slice": "S8",
@@ -86,51 +90,29 @@
       "worktree": "C:/Users/jrylk/Projects/pilot-fix2-portable-store-s1"
     },
     {
-      "slice": "drift fix",
-      "state": "pushed 6d4a74e (rust-reviewer approve; fixture spelled native repo path; not integrated: paused)",
-      "after": [
-        "S1"
-      ],
-      "branch": "fix/portable-store-drift",
-      "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-drift"
-    },
-    {
       "slice": "drift 8ff2d9a",
       "state": "merged at 697d10d, pushed; gate red on 2 rune empty:: tests until the drift fix integrates"
     },
     {
       "slice": "S9 drift fix (added)",
-      "state": "pushed 6d4a74e; rust approve; not integrated",
+      "state": "integrated",
       "after": [
         "S1"
       ],
       "branch": "fix/portable-store-drift",
       "worktree": "C:/Users/jrylk/Projects/pilot-fix-portable-store-drift"
+    },
+    {
+      "slice": "drift 3c08423",
+      "state": "merged at e39480a, pushed, clean; replanned, plan kept",
+      "after": [
+        "S9 drift fix (added)"
+      ]
     }
   ],
-  "next": "YELLOW: plan signed at 8a0f3e4 (gate1 itm_259407da6fc7); feat = 8a0f3e4. Co-pilot ad3eb51b1b3c58ec5 live: integrate S9 6d4a74e, S3 8c6b4d2, S2 c93ad90, S4 feba0f1; then S5, S7, S6; fundamentalist; QA; hand back for need. Drift expected when tested-once lands: merge pilot into feat, replan.",
-  "updatedAt": "2026-11-28T06:03:12.321Z",
+  "next": "co-pilot: S3 integrating on e39480a; S2 B4/S4 B5 evidence in hand (API, browser look for QA); S5, S7 implementing; then S2, S4 integrate, S6, fundamentalist, QA.",
+  "updatedAt": "2026-11-28T06:32:08.013Z",
   "friction": [
-    {
-      "agent": "architect",
-      "what": "store-core.mjs at 774 of the 800-line facade bar",
-      "evidence": "constrains portable-store S1 and S2"
-    },
-    {
-      "agent": "architect",
-      "what": "Auto mode gives no verdict when a deck call is paired with another call in one response",
-      "evidence": "architect once, pilot three times this session; re-running alone passed"
-    },
-    {
-      "kind": "drain",
-      "what": "pilot wait exited 1 on a deck timeout six times in one session; each restart is a turn",
-      "size": 6
-    },
-    {
-      "agent": "pilot-architect",
-      "what": "pilot verdicts finds only a bold - **A<n>** id; the predecessor wrote plain - A<n>, one failed run; it also placed the last id's verdict after the following paragraph, moved by hand",
-      "evidence": "architect hand-back, design/portable-store 9196b44"
-    },
     {
       "agent": "pilot:pilot-implementer",
       "what": "Edit refused a file not just Read, costing a round trip on three files; a sed -i on a tracked file was hook-blocked, redone as six Edit calls",
@@ -321,6 +303,30 @@
       "agent": "implementer",
       "what": "14 rune test files use C:/work literals the deck now answers back in native form",
       "evidence": "2 empty:: tests red after the drift merge"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "pilot deck --scratch cannot take an existing store (always mkdtemp); a copied store needs node deck/daemon.mjs with PILOT_DECK_DIR by hand",
+      "evidence": "S2 B4 evidence run on feba0f1",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node bin/pilot.mjs deck --help starts the deck launcher against the live store instead of printing help",
+      "evidence": "printed 'The deck is up at 127.0.0.1:4321'",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "chrome-devtools tools not reachable from a Sonnet implementer; S2 B4 read over the HTTP API, no screenshot",
+      "evidence": "ToolSearch found none",
+      "size": 1
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "slice implementer reports lost at a pause leave integrate refusing (no Evidence rows); re-gathering cost one agent",
+      "evidence": "NOT integrated slice/portable-store-s3: S3: B1 has no --trailer Evidence",
+      "size": 2
     }
   ]
 }
