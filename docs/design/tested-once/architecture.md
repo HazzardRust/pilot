@@ -61,7 +61,7 @@ would have to remember it. `testCommand` is a pass-through for agents, folded be
 
 | Seam | Interface | Folded behind it | Category |
 | --- | --- | --- | --- |
-| Test ledger (`scripts/test-ledger.mjs`) | `worktreeTree(cwd)`, `recordRun(row, {home})`, `reusableRun({tree, since, home})`, `testRunsFor({slug, home})` | the jsonl file, its lock-free append, tree hashing with a temp index | local-substitutable (a scratch `home`) |
+| Test ledger (`scripts/test-ledger.mjs`) | `worktreeTree(cwd)`, `recordRun(row, {home})`, `reusableRun({tree, since, home, scope, command, runsCargo})`, `testRunsFor({slug, home})` | the jsonl file, its lock-free append, tree hashing with a temp index | local-substitutable (a scratch `home`) |
 | Runner (`runTests` in `scripts/integrate.mjs`) | `runTests(cwd, test, {label, where, branch, since, home, slots, slot})` | the spawn, the log, the slot, the exit status, one ledger row | local-substitutable |
 | Agent test command (`scripts/test-cli.mjs`) | `pilot test [--as <role>] [--scope slice] [--since <ref>]`; `testCli(argv, {cwd, host, home})` | ledger reuse, CI proof reuse, `testCommand`, `PILOT_TEST_SCOPE` | remote-but-owned (the host, stubbed) |
 | Selection scope (`selectTests`, `cargoStep`) | `selectTests({cwd, since, scope})`, `scopeLine(selection)`, env `PILOT_TEST_SCOPE=slice` | which fallbacks run where | in-process |
@@ -90,7 +90,8 @@ would have to remember it. `testCommand` is a pass-through for agents, folded be
 - **L4** Reuse matches the exact tree, never a branch name or sha alone; plus since (or a full row),
   complete for integrate and QA (nothing deferred), while a slice-scope run may reuse a slice-scope row
   that deferred something (amended by itm_ce0954d114aa, so `deferred: cargo` on Windows does not void
-  A6), same `process.platform` and node major. A stale row is still a proof of identical content
+  A6), the same `command` (S2's F2), same `process.platform` and node major. A row whose `cargo` is `skipped`
+  is complete only to a slice-scope run or to integrate, which then runs `npm run test:cargo` (S2's F1). A stale row is still a proof of identical content
   (`package-lock.json` is in the tree); a copied row needs the same tree, platform and node. The ledger is
   `~/.claude/pilot/tests/ledger.jsonl`, mode 0600; any process of the user can append to it, as to the
   deck store, so agents are told never to write it; land's full run and CI remain the backstop.

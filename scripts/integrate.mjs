@@ -204,7 +204,7 @@ export function runTests(cwd, test, { label = 'tests', where = 'tests', branch, 
   if (start !== null) {
     recordRun({
       at: new Date().toISOString(), where, branch: branch ?? start.branch, slug: null, sha: start.sha, tree: start.tree, since, scope,
-      command: test, cargo: output.split(/\r?\n/).includes(CARGO_DEFERRED) ? 'skipped' : null, exit: status, minutes, platform: hostPlatform(), node: nodeMajor(),
+      command: test, cargo: output.split(/\r?\n/).some((line) => line.endsWith(CARGO_DEFERRED)) ? 'skipped' : null, exit: status, minutes, platform: hostPlatform(), node: nodeMajor(),
     }, { home: ledgerHome });
   }
   if (status === 0) fs.rmSync(log, { force: true });
@@ -276,8 +276,8 @@ function runChosen(cwd, test, since, label, home) {
 function provenRun(cwd, test, since, home) {
   if (test !== undefined) return null;
   const ledgerHome = home ?? (process.env.PILOT_GATE_HOME_STORE ? null : os.homedir());
-  const command = testCommand(cwd, { since })?.command;
-  const row = ledgerHome === null ? null : reusableRun({ tree: worktreeTree(cwd), since, home: ledgerHome, command, runsCargo: true });
+  if (ledgerHome === null) return null;
+  const row = reusableRun({ tree: worktreeTree(cwd), since, home: ledgerHome, command: testCommand(cwd, { since })?.command, runsCargo: true });
   // A row that skipped cargo stands only where integrate can run cargo alone (S2's F1).
   return row?.cargo === 'skipped' && cargoCommand(cwd) === undefined ? null : row;
 }
@@ -575,7 +575,7 @@ export function integrate(branch, options = {}) {
     return fail(`${not}: the tests could not run (${firstLine(err)}); not pushed`);
   }
   if (run && run.status !== 0) {
-    return fail(`${not}: ${redLine(merged, run)}; not pushed`, run.failing);
+    return fail(`${not}: ${redLine(reused ? `${merged} cargo` : merged, run)}; not pushed`, run.failing);
   }
   const counts = reused ? `tests reused: ${reused.where} ${String(reused.sha ?? reused.tree).slice(0, 7)}${run ? `; cargo ${summaryOf(run)}` : ''}` : summaryOf(run);
 
