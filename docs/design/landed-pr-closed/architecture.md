@@ -1,7 +1,7 @@
 # A landing leaves no draft PR behind
 
 Feature `landed-pr-closed` · ticket `itm_8ae644730463` · base `hazzardrust-pilot` at `e634fdd8` · supersedes ADR 0200's
-cutting rule (each run its own PR to main) and amends ADR 0218 L2, pending A1
+cutting rule (each run its own PR to main) and amends ADR 0218 L2
 
 ## Overview
 
@@ -26,7 +26,7 @@ also in release PR #167. "There should be no drafts." The question is how this h
 | 5 | The crew and the docs describe one shape: runs are cut from the pilot branch, and main gets them through the release PR. | `git grep -n "own PR to main\|feature PR: #" agents docs/OPERATING.md`: 0 hits outside legacy wording; ADR 0200 `superseded_by` names this run's ADR |
 
 Draft line 3 (why portable-store got base `main`) is answered in §3 F1-F3. It needs no slice. The draft's lines 1-2 are
-sharpened into 1-4 here. Line 5 follows from them. All of this is conditional on A1.
+sharpened into 1-4 here. Line 5 follows from them.
 
 ## 3. Findings
 
@@ -83,7 +83,7 @@ closing-report's `FEATURE_LINE` parse still serve any main PR left open. They st
 
 ## 6. Assumed decisions
 
-- **A1** *assumed*, posted as itm_0a129aaf2c8a (blocking): one line. Every run is cut from the pilot branch, and main gets it through the release PR. Trade: a feature no longer shows on main as its own PR (ADR 0200's SOP). Rejected path: per-feature PRs. That would force runs onto main, add a `ready` host verb (an allowlist change) for the landing, retire the release PR, and build every run on a main 175 commits stale (F5).
+- **A1** *assumed*, answered by the user on itm_0a129aaf2c8a: "One line: release PR only (default)", the default taken: one line. Every run is cut from the pilot branch, and main gets it through the release PR. Trade: a feature no longer shows on main as its own PR (ADR 0200's SOP). Rejected path: per-feature PRs. That would force runs onto main, add a `ready` host verb (an allowlist change) for the landing, retire the release PR, and build every run on a main 175 commits stale (F5).
 - **A2** *assumed*: retarget, not close. Trade: the PR reads merged into the pilot branch rather than closed with a comment. Rejected: `gh pr close`, a new host verb the allowlist lacks.
 - **A3** *assumed*: refuse plus show. The deck refuses a new `main` base (spec 3), and the gate1 shows the base (spec 4). Trade: about 40 lines more than showing alone. Rejected: show only, which leaves the drift F2 measured free to recur.
 - **A4** *assumed* (the pilot's call, not the user's): this run is cut from `origin/hazzardrust-pilot`, because a session-start notice said the checkout was behind it. If A1 goes to per-feature PRs, `design/landed-pr-closed` is re-cut from main.
