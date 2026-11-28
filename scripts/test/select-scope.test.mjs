@@ -164,7 +164,7 @@ test('a slice-scope gate with a lonely file still says deferred', (t) => {
   assert.ok(!calls.includes(CARGO), 'cargo never starts');
 });
 
-// F1 of S2's review: the row says cargo was skipped, apart from the scope line, so integrate runs it.
+// F1 of S2's review: the row says cargo was skipped, apart from the scope line, so integrate takes the row and cargo runs at CI and land (L4).
 test('a slice-scope run with no --since writes the cargo-skipped field', async (t) => {
   const { runTests } = await import('../integrate.mjs');
   const { testRunsFor } = await import('../test-ledger.mjs');
