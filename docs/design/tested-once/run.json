@@ -9,13 +9,13 @@
   "slices": [
     {
       "slice": "S1",
-      "state": "integrating 5c603cb (ts APPROVE, security APPROVE; sec MEDIUM command-not-in-key kept for fix round)",
+      "state": "integrated 5a24691; checks none (PR #154 conflicts with pilot f8a49be until drift merge)",
       "branch": "slice/tested-once-s1",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s1"
     },
     {
       "slice": "S2",
-      "state": "implementing: (b) committed 6dc46a1 local, B5 red then green; waits for S1 on feat to rebase, gate, review",
+      "state": "fixing: security REQUEST CHANGES kept by main (cargo-skipped row reused as complete); fix after S6/S5/S4 integrate",
       "after": [
         "S1"
       ],
@@ -30,7 +30,7 @@
     },
     {
       "slice": "S4",
-      "state": "pushed 5da919f (on c1bc236, not rebased); ts-reviewer approve, security-reviewer approve; slice tests 21/21; full gate NOT run (stopped waiting for slot at pause); NOT integrated",
+      "state": "pushed 6cfa6a68; gate green; ts + security approve (fresh on re-pin); not integrated",
       "after": [
         "S1"
       ],
@@ -39,7 +39,7 @@
     },
     {
       "slice": "S5",
-      "state": "pushed 8dc009c (on c1bc236, not rebased); ts approve af6525c + 8dc009c (3 LOW: 799/800 headroom, import golf, homedir read in runs.mjs; left for fundamentalist); NOT integrated",
+      "state": "pushed 9e48750; gate 5489/0; ts-reviewer APPROVE; not integrated",
       "after": [
         "S1"
       ],
@@ -48,7 +48,7 @@
     },
     {
       "slice": "feature",
-      "state": "planned",
+      "state": "implementing: drift in at 1a1410f",
       "after": [
         "S1",
         "S2",
@@ -60,20 +60,29 @@
     },
     {
       "slice": "S6 slice-scope runs reusable (added)",
-      "state": "implementing",
+      "state": "integrated",
       "after": [
         "S3"
       ],
       "branch": "slice/tested-once-s6",
       "worktree": "C:/Users/jrylk/Projects/pilot-slice-tested-once-s6"
+    },
+    {
+      "slice": "drift 27fae97",
+      "state": "integrated 1a1410f; checks green",
+      "after": [
+        "S1"
+      ],
+      "branch": "fix/tested-once-drift",
+      "worktree": "C:/Users/jrylk/Projects/pilot-fix-tested-once-drift"
     }
   ],
   "findings": [
-    "dropped: S2-sec-LOW SCOPE regex fail-open — does not hold on feat: S3 (4504f10) select-tests.mjs:108 SCOPE matches '; deferred: …'",
-    "kept: S1-sec-MEDIUM reuse key omits the test command — a changed pilot.test or package.json test script reuses a row a different command produced; fix: command in the row and in fits (fix round)"
+    "kept: S1-sec-MEDIUM needed-fix — reuse key omits the test command; put the command in the ledger row and in fits (folded into the S2 fix)",
+    "kept: S2-sec-cargo needed-fix — a slice-scope row that skipped cargo is reused as complete; row records cargo skipped, integrate/QA run cargo alone over a reused row"
   ],
-  "next": "Co-pilot (successor) on lane: S1 security re-review, then integrate S1 5c603cb + checks; S6 implementing; then S2 resume (6dc46a1), S4/S5 rebase+gate (S5 runs.mjs move unreviewed); then fundamentalist, QA.",
-  "updatedAt": "2026-11-27T22:20:36.712Z",
+  "next": "integrating S6 067a1ee on 1a1410f (checks green); then S5, S4; then S2 fix",
+  "updatedAt": "2026-11-27T23:54:32.097Z",
   "friction": [
     {
       "agent": "pilot:pilot-implementer",
@@ -188,6 +197,65 @@
       "what": "S5 store-runs.mjs fix buys one line of headroom under the 800-line facade bar; next addition breaks it again",
       "evidence": "store-runs.mjs 799 lines after 8dc009c",
       "size": 1
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "S6: PILOT_TEST_SCOPE=slice set in the env for test:changed leaks into gate-cargo tests, which then fail; new slice worktree had no node_modules (npm ci first)",
+      "evidence": "S6 report, gate-cargo red under the env var",
+      "size": 2
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce fired on a child's interim 'waiting on its own background work' notice again, forcing a hand-back with three children live",
+      "evidence": "tested-once successor co-pilot, drift fixer + S2 + S4 live",
+      "size": 3
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "handback-send-enforce hook forced a hand-back on a child's interim 'waiting on background work' notice, with three children live; a successor had to be spawned",
+      "evidence": "co-pilot hand-back, 120k tokens, 66 tool uses"
+    },
+    {
+      "agent": "pilot:typescript-reviewer",
+      "what": "store-runs.mjs at 799 of 800 line ceiling",
+      "evidence": "S5 review LOW"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "PILOT_TEST_SCOPE env leaks into the gate-cargo tests; new worktree has no node_modules",
+      "evidence": "S6 implementer report"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "shared test slot and exact spawn ceilings cost two long full-gate runs; first gate red only on ceilings (+142 git)",
+      "evidence": "slice verification waited on 'gate: waiting for a slot' behind S5 (927 s test); gate 1 exit 1 at 12009/10855 vs 11866/10719",
+      "size": 2
+    },
+    {
+      "agent": "pilot:pilot-co-pilot",
+      "what": "pilot integrate takes the base before the branch, so a drift-merge branch cannot be integrated: the base merge conflicts on what the branch resolves",
+      "evidence": "NOT integrated fix/tested-once-drift: taking base hazzardrust-pilot stopped (integrate.mjs:511); fast-forwarded feat instead"
+    },
+    {
+      "agent": "pilot:pilot-implementer",
+      "what": "node --test outside the gate lacks PILOT_BRANCH, so integrate tests fail 'no pilot branch name' until set by hand",
+      "evidence": "all 12 integrate tests failed until PILOT_BRANCH=pilot; one ~3 min slice run lost; both reviewers hit it",
+      "size": 3
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "node --test outside the gate lacks PILOT_BRANCH; 12 integrate tests failed until PILOT_BRANCH=pilot was set by hand; reviewers could not run them",
+      "evidence": "S2 first slice-test log: 5 pass / 12 fail"
+    },
+    {
+      "agent": "pilot-implementer",
+      "what": "every slice adding scratch-repo tests fails its first full gate on the spawn ceilings with 0 test failures, costing a second full run; each then re-pins gate.mjs and conflicts with its siblings",
+      "evidence": "S2 12130 > 11866; S4 12009 > 11866; drift, S2, S4 all re-pinned"
+    },
+    {
+      "agent": "pilot-co-pilot",
+      "what": "children adopted by a successor co-pilot still hand back to main, so the pilot relays full slice reports",
+      "evidence": "a9c8e7a, ab785dd, ac7efc4 hand-backs arrived at main"
     }
   ]
 }
