@@ -102,7 +102,7 @@ test('the scope line says what was deferred', () => {
 });
 
 /** Runs the gate at slice scope over a stubbed selection; returns what it asked, wrote and spawned. */
-const sliceGate = (t, selection) => {
+const sliceGate = (t, selection, args = ['--since=main']) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-select-scope-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const store = path.join(dir, 'deck.json');
@@ -119,7 +119,7 @@ const sliceGate = (t, selection) => {
   const out = t.mock.method(process.stdout, 'write', (chunk) => written.push(String(chunk)) > 0);
   let code;
   try {
-    code = runGate(['--since=main'], {
+    code = runGate(args, {
       cwd: dir,
       slot: () => ({ slot: 1, release() {} }),
       select: (opts) => (asked.push(opts), selection),
@@ -152,4 +152,26 @@ test('a slice-scope gate with a lonely file still says deferred', (t) => {
   assert.equal(scopeOf(text), 'selected 1 of 9 test files since 0123456; deferred: lib/lonely.mjs reaches no test');
   assert.ok(text.includes('rune deck: deferred to integrate\n'), text);
   assert.ok(!calls.includes(CARGO), 'cargo never starts');
+});
+
+// F1 of S2's review: the row says cargo was skipped, apart from the scope line, so integrate runs it.
+test('a slice-scope run with no --since writes the cargo-skipped field', async (t) => {
+  const { runTests } = await import('../integrate.mjs');
+  const runs = {
+    'no --since': sliceGate(t, undefined, []),
+    'an empty selection': sliceGate(t, { ...selected(['deck/view.mjs']), files: [] }),
+  };
+  for (const [name, { code, text }] of Object.entries(runs)) {
+    assert.equal(code, 0, name);
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-select-scope-row-'));
+    t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+    // The command replays what the gate itself printed, so the row reads the producer's own line.
+    fs.writeFileSync(path.join(dir, 'out.txt'), text);
+    fs.writeFileSync(path.join(dir, 'replay.cjs'), "process.stdout.write(require('fs').readFileSync(__dirname + '/out.txt', 'utf8'));\n");
+    const home = path.join(dir, 'home');
+    assert.equal(runTests(dir, 'node replay.cjs', { label: 'slice', where: 'implementer', home, slot: false }).status, 0, name);
+    const [row] = fs.readFileSync(path.join(home, '.claude', 'pilot', 'tests', 'ledger.jsonl'), 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+    assert.equal(row.cargo, 'skipped', `${name}: ${text}`);
+    assert.equal(row.command, 'node replay.cjs', name);
+  }
 });
